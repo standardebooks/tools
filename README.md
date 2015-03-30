@@ -69,6 +69,39 @@ Change the ASIN of a mobi file.
 ##wordcount
 
 Get a word count of an XHTML file.
+
+#What a Standard Ebooks source directory looks like
+
+Many of these tools act on Standard Ebooks source directories.  Such directories have a consistent minimal structure:
+
+	.
+	|-dist/
+	|-images/
+	|--cover.jpg
+	|--cover.source.jpg
+	|--cover.svg
+	|--titlepage.svg
+	|-src/
+	|--epub/
+	|---css/
+	|----core.css
+	|----local.css
+	|---images/
+	|----cover.svg
+	|----titlepage.svg
+	|---text/
+	|---content.opf
+	|---onix.xml
+	|---toc.xhtml
+	|--META-INF/
+	|---container.xml
+	|--mimetype
+	
+./dist/ contains built ebook files ready for distribution.
+
+./images/ contains source images for the cover and titlepages, as well as ebook-specific source images.  Source images should be in their maximum available resolution, then compressed and placed in ./src/epub/images/ for distribution.
+
+./src/epub/ contains the actual epub files.
 	
 #Setting up your build environment
 
