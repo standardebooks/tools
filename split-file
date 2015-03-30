@@ -1,0 +1,44 @@
+#!/bin/bash
+usage(){
+	fmt <<EOF
+DESCRIPTION
+	Split an xhtml file into many files at all instances of <!--se:split-->
+
+USAGE
+	split-file FILE
+EOF
+	exit
+}
+die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
+require(){ command -v $1 > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
+if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
+#End boilerplate
+
+if [ $# -eq 0 ]; then
+	usage
+fi
+
+scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+rm -f "/tmp/chapter-*.xhtml" &> /dev/null
+
+awk 'BEGIN {i=1}/<!--se:split-->/{i++}{print > "/tmp/chapter-"i".xhtml"}' "$1"
+
+for file in $(find "/tmp/" -name "chapter-*.xhtml" 2> /dev/null)
+do
+	chapterNumber=$(echo "${file}" | sed "s/chapter-//" | grep --extended-regexp --only-matching "[0-9]+")
+	
+	sed "s/NUMBER/${chapterNumber}/g" "${scriptDir}"/templates/header.xhtml > /tmp/chapter-temp.xhtml
+	
+	cat "${file}" >> /tmp/chapter-temp.xhtml
+	
+	echo "</section></body></html>" >> /tmp/chapter-temp.xhtml
+	
+	sed --in-place --regexp-extended "s/<!--se:split-->//g" /tmp/chapter-temp.xhtml
+	
+	filename=$(basename "${file}")
+	
+	mv /tmp/chapter-temp.xhtml ./"${filename}"
+done
+
+rm -f "/tmp/chapter-*.xhtml" &> /dev/null

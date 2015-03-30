@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 1400 2100">
+	<image height="2100" width="1400" x="0" y="0" xlink:href="cover.jpg"/>
+	<path d="M 50,1620 1350,1620 1350,2050 50,2050 Z" style="color:#000;fill-opacity:0.75"/>
+	<text style="fill:#fff;font-family:League Spartan;font-size:93.56725311px;letter-spacing:5px" text-anchor="middle" x="700" y="1775">NOVEL</text>
+	<text style="fill:#fff;font-family:League Spartan;font-size:93.56725311px;letter-spacing:5px" text-anchor="middle" x="700" y="1875">NOVEL</text>
+	<text style="fill:#fff;font-family:League Spartan;font-size:46.7840004px;letter-spacing:5px" text-anchor="middle" x="700" y="1975">AUTHOR</text>
+</svg>

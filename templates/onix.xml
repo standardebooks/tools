@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ONIXMessage xmlns="http://ns.editeur.org/onix/3.0/reference" release="3.0">
+	<Header>
+		<Sender>
+			<SenderName>Standard Ebooks</SenderName>
+		</Sender>
+		<SentDateTime>2014-05-25T00:00:00Z</SentDateTime>
+	</Header>
+	<Product>
+		<DescriptiveDetail>
+			<ProductFormFeature>
+				<!--No reading system accessibility options disabled-->
+				<ProductFormFeatureType>09</ProductFormFeatureType>
+				<ProductFormFeatureValue>10</ProductFormFeatureValue>
+			</ProductFormFeature>
+			<ProductFormFeature>
+				<!--Table of contents navigation-->
+				<ProductFormFeatureType>09</ProductFormFeatureType>
+				<ProductFormFeatureValue>11</ProductFormFeatureValue>
+			</ProductFormFeature>
+			<ProductFormFeature>
+				<!--Reading order-->
+				<ProductFormFeatureType>09</ProductFormFeatureType>
+				<ProductFormFeatureValue>13</ProductFormFeatureValue>
+			</ProductFormFeature>
+			<ProductFormFeature>
+				<!--Short alternative descriptions-->
+				<ProductFormFeatureType>09</ProductFormFeatureType>
+				<ProductFormFeatureValue>14</ProductFormFeatureValue>
+			</ProductFormFeature>
+			<ProductFormFeature>
+				<!--Language tagging provided-->
+				<ProductFormFeatureType>09</ProductFormFeatureType>
+				<ProductFormFeatureValue>22</ProductFormFeatureValue>
+			</ProductFormFeature>
+		</DescriptiveDetail>
+	</Product>
+</ONIXMessage>

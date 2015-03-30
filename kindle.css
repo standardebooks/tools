@@ -1,0 +1,10 @@
+
+.rearnotes p[id],
+.footnotes p[id]{
+	text-indent: 0em;
+	margin-top: 1em;
+}
+
+.no-break{
+	white-space: nowrap;
+}

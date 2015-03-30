@@ -1,0 +1,230 @@
+#!/bin/bash
+usage(){
+	fmt <<EOF
+DESCRIPTION
+	Apply typography tweaks to a Standard Ebooks ebook source directory.
+
+USAGE
+	typogrify [-v,--verbose] [-nq,--no-quotes] DIRECTORY [DIRECTORY...]
+		DIRECTORY is the source directory, which must contain DIRECTORY/src/.
+		If called with the --no-quotes option, don't convert to smart quotes before doing other adjustments.
+EOF
+	exit
+}
+die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
+require(){ command -v $1 > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
+if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
+#End boilerplate
+
+if [ $# -eq 0 ]; then
+	usage
+fi
+
+# This script relies on readers implementing the Unicode line-break algorithm, with some small modifications.
+# The algorithm is here: http://www.unicode.org/reports/tr14/#Dictionary
+# UAX #14 is not very well written and is often unclear for beginners.  Table 2 is helpful. Additional enlightenment might be found here: https://www.cs.tut.fi/~jkorpela/unicode/linebr.html
+# You can find the line break class of arbitrary Unicode characters here: http://unicode.org/cldr/utility/character.jsp
+# Notes:
+# -Quotation marks and thin/hair spaces shouldn't break according to the standard.  They are QU x BA.
+# -Likewise ellipses and thin/hair spaces also shouldn't break: IN x BA
+# - <a-z0-9,quote>[NB]<hairsp>[NB]<ellip>[NB]<hairsp>[NB]<.,!,?>
+# - <a-z0-9,quote>[NB]<ellip>[NB]<period>
+# Standard Ebooks exceptions:
+# -Don't break before an em-dash or double-em-dash
+# -Don't break before or after an en-dash
+# -Don't break after some abbreviations (Mr., Mrs., etc; see regex below for full list)
+
+require "recode" "Try: apt-get install recode"
+require "xml2asc" "Try: apt-get install html-xml-utils"
+
+scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+smartypantsPath="${scriptDir}/smartypants.pl"
+type="file"
+verbose="false"
+runSmartypants="true"
+dirs=""
+
+#Some convenience aliases
+wj="\xE2\x81\xA0" #word joiner, U+2060
+hairsp="\xE2\x80\x8A" #thin space, U+2009
+nbsp=" " #no-break space, U+00A0
+
+while [ $# -gt 0 ]
+do
+	case $1 in
+		-v|--verbose)
+			verbose="true"
+		;;
+		-nq|--no-quotes)
+			runSmartypants="false"
+		;;
+		*)
+			dirs=$(printf "%s\n%s" "${dirs}" "$1")
+		;;
+	esac
+	shift
+done
+
+if [ "${verbose}" = "true" ]; then
+	if [ "${runSmartypants}" != "true" ]; then
+		printf "Skipping smart quotes ...\n"
+	fi
+fi
+
+printf "%s\n" "${dirs}" | while IFS= read -r i;
+do
+	if [ "${i}" = "" ]; then
+		continue
+	fi
+	
+	srcDir="$(realpath "${i%/}")"
+	
+	if [ ! -d "${srcDir}/src" ]; then
+		die "${srcDir} doesn't look like a Standard Ebooks ebook source directory."
+	fi
+
+	if [ "${verbose}" = "true" ]; then
+		printf "Typogrifying %s ...\n" "${srcDir}"
+	fi
+
+	for file in $(find "${srcDir}" -name "*htm*")
+	do
+		#Skip symlinked files
+		if [ -h "${file}" ]; then
+			if [ "${verbose}" = "true" ]; then
+				printf "\t%s is a symlink, skipping ... OK\n" "${file}"
+			fi
+			continue
+		fi
+		
+		if [ "${verbose}" = "true" ]; then
+			printf "\tTypogrifying %s ..." "${file}"
+		fi
+
+		#Prettify quotes
+		if [ "${runSmartypants}" = "true" ]; then
+			"${smartypantsPath}" "${file}" | xml2asc | recode HTML | sed "s/&/&amp;/g" > "${file}.tmp";
+			mv "${file}.tmp" "${file}"
+		fi
+		
+		#Replace sequential em dashes with the two or three em dash character
+		sed --in-place --regexp-extended "s/———/⸻/ig" "${file}"
+		sed --in-place --regexp-extended "s/——/⸺/ig" "${file}"
+		
+		#Smartypants doesn't do well on em dashes followed by open quotes. Fix that here.
+		sed --in-place --regexp-extended "s/—”([a-z])/—“\1/ig" "${file}"
+		sed --in-place --regexp-extended "s/—’([a-z])/—‘\1/ig" "${file}"
+
+		#Remove spaces between en and em dashes
+		#Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
+		#Sed doesn't seem to think tabs are whitespace?
+		sed --in-place --regexp-extended "s/([^[:space:]	])\s*([–—])\s*/\1\2/ig" "${file}"
+		
+		#Some older texts use the ,— construct; remove that archaichism
+		sed --in-place --regexp-extended "s/,${wj}?—/—/ig" "${file}"
+		
+		#Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
+		sed --in-place --regexp-extended "s/([^[:space:]<>${wj}])([—⸻])/\1${wj}\2/ig" "${file}"
+		
+		#Add a word joiner on both sides of en dashes
+		sed --in-place --regexp-extended "s/${wj}?–${wj}?/${wj}–${wj}/ig" "${file}"
+		
+		#Finally fix some other mistakes
+		sed --in-place --regexp-extended "s/⁠—-/⁠—/ig" "${file}"
+
+		#Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
+		sed --in-place --regexp-extended "s/([^a-z]+)Mr(\.?)\s+/\1<abbr>Mr.<\/abbr>${nbsp}/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)Mrs(\.?)\s+/\1<abbr>Mrs.<\/abbr>${nbsp}/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)Ms(\.?)\s+/\1<abbr>Ms.<\/abbr>${nbsp}/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)Dr(\.?)\s+/\1<abbr>Dr.<\/abbr>${nbsp}/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)Fr(\.?)\s+/\1<abbr>Fr.<\/abbr>${nbsp}/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)Lt(\.?)\s+/\1<abbr>Lt.<\/abbr>${nbsp}/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)Capt(\.?)\s+/\1<abbr>Capt.<\/abbr>${nbsp}/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)Pvt(\.?)\s+/\1<abbr>Pvt.<\/abbr>${nbsp}/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)Ph(\.?)D(\.?)(\s*)/\1<abbr>Ph.D.<\/abbr>\4/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)Esq([^a-z\.])/\1<abbr>Esq.<\/abbr>\2/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)Mt(\.?)\s+/\1<abbr>Mt.<\/abbr>${nbsp}/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)St(\.?)(\s+)/\1<abbr>St.<\/abbr>\3/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)MM(\.?)(\s+)/\1<abbr xml:lang=\"fr\">MM.<\/abbr>\3/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)Mme(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mme.<\/abbr>\3/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)Mmes(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mmes.<\/abbr>\3/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)Mlle(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mlle.<\/abbr>\3/g" "${file}"
+		sed --in-place --regexp-extended "s/([^a-z]+)Mlles(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mlles.<\/abbr>\3/g" "${file}"
+		
+		
+		#Sometimes the above abbreviations might get caught up in an image's alt tag, so remove the <abbr> tag from those cases.
+		#The funny construction of this sed command makes it recursive, since we may have multiple <abbr>s embedded in a tag.
+		sed --in-place --regexp-extended --expression=":loop" --expression="s|alt=\"([^\"]*?)<\/?abbr>|alt=\"\1|g" --expression="t loop" "${file}"
+		sed --in-place --regexp-extended --expression=":loop" --expression="s|<title>([^<]*?)<\/?abbr>|<title>\1|g" --expression="t loop" "${file}"
+		
+		#A note on spacing:
+		#					ibooks	kindle (mobi7)
+		#thin space U+2009:			yes	yes
+		#word joiner U+2060:			no	yes
+		#zero-width no-break space U+FEFF:	yes	yes
+		#narrow no-break space U+202F:		no	yes
+		#punctuation space U+2008:		yes	yes
+
+		#Fix common abbreviatons
+		sed --in-place --regexp-extended "s/(\s)‘a’(\s)/\1’a’\2/ig" "${file}"
+		sed --in-place --regexp-extended "s/‘([0-9]+[^a-zA-Z0-9’])/’\1/ig" "${file}" #Years
+		sed --in-place --regexp-extended "s/‘([Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Tt]is|[Tt]was|[Tt]wixt|[Tt]were|[Tt]ween)(\b)/’\1\2/g" "${file}"
+		
+		#House style: remove spacing from common Latinisms
+		sed --in-place --regexp-extended "s/i\.\s+e\./i.e./g" "${file}"
+		sed --in-place --regexp-extended "s/e\.\s+g\./e.g./g" "${file}"
+		sed --in-place --regexp-extended "s/([\d[:space:]])A\.\s+D\./\1<abbr class=\"era\">AD/g" "${file}" #WARNING! This and below can remove the ending period of a sentence, if AD or BC is the last word!  We need interactive S&R for this
+		sed --in-place --regexp-extended "s/B\.\s+C\./<abbr class=\"era\">BC/g" "${file}"
+		
+		#Put spacing next to close quotes
+		sed --in-place --regexp-extended "s/“[[:space:]${nbsp}]*‘/“${hairsp}‘/ig" "${file}"
+		sed --in-place --regexp-extended "s/’[[:space:]${nbsp}]*”/’${hairsp}”/ig" "${file}"
+		sed --in-place --regexp-extended "s/“[[:space:]${nbsp}]*’/“${hairsp}’/ig" "${file}"
+		sed --in-place --regexp-extended "s/‘[[:space:]${nbsp}]*“/‘${hairsp}“/ig" "${file}"
+		sed --in-place --regexp-extended "s/”[[:space:]${nbsp}]*’([^a-zA-Z])/”${hairsp}’\1/ig" "${file}" #We require a non-letter char at the end, otherwise we might match a contraction: “Hello,” ’e said.
+
+		#Fix ellipses spacing
+		sed --in-place --regexp-extended "s/\s*\.\s*\.\s*\.\s*/…/ig" "${file}"
+		sed --in-place --regexp-extended "s/\s?…\s?\./.${hairsp}…/ig" "${file}"
+		sed --in-place --regexp-extended "s/([a-zA-Z])\s?…/\1${hairsp}…/ig" "${file}"
+		sed --in-place --regexp-extended "s/…\s+([\)”’])/…\1/ig" "${file}"
+		sed --in-place --regexp-extended "s/…\s?([\!\?\.\;])/…${hairsp}\1/ig" "${file}"
+		sed --in-place --regexp-extended "s/([\!\?\.\;”’])\s?…/\1${hairsp}…/ig" "${file}"
+		sed --in-place --regexp-extended "s/\,\s?…/,${hairsp}…/ig" "${file}"
+		
+		#Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
+		sed --in-place --regexp-extended "s/([0-9])\s([a-z]{1,3}\.)/\1${nbsp}\2/ig" "${file}"
+		
+		#Fix some spelling archaisms
+		sed --in-place --regexp-extended "s/([Nn])aïve/\1aive/g" "${file}"
+		sed --in-place --regexp-extended "s/([Nn])a[ïi]vet[ée]/\1aivete/g" "${file}"
+		sed --in-place --regexp-extended "s/&amp;c\./<abbr>etc.<\/abbr>/g" "${file}"
+		
+		#Add <abbr class="name"> tag around initials: [A-Z]\.\s*([A-Z]\.\s*)+
+		
+		#Small caps AM and PM; thin space before Arabic numbers, but not if spelled out.  3&nbsp;<span class="time">a.m.</span>, one <span class="time">a.m.</span>
+
+		#Search coordinates: ([0-9])+’/\1′ and ([0-9])+”/\1″
+
+		#Search for em-dashes that were not closed correctly by smartypants: —[’”][^<\s]
+
+		#Search for en-dash candidates: /([0-9]+)[\-—]([0-9]+)/\1–\2/sig
+		
+		#Surround ampersands in proper names with nbsp: hawkins & harker [a-zA-Z]\.?\s*&amp;\s*[a-zA-Z]
+		
+		#Text in all caps should be converted to correct case, surrounded by <b> styled for small caps: /[A-Z]{3,}/
+		
+		#Temperature: use unicode minus sign, not hyphen; small caps F and C:  /\-\d+\b/
+		
+		#Measurements: A x B x C should be A × B × C: /\sx\s/
+
+		#Convert fractions to characters: 1/2 -> ½, ¼, ¾; see U+00BC thru U+00BE, U+2150 thru U+2189
+		
+		#Search common abbreviations: Co., Inc., M., Messe?rs., etc., &c., i.e., e.g.
+		#Messrs gets <abbr xml:lang="fr">
+		
+		if [ "${verbose}" = "true" ]; then
+			printf " OK\n"
+		fi
+	done
+done

@@ -1,0 +1,103 @@
+#!/bin/bash
+usage(){
+	fmt <<EOF
+DESCRIPTION
+	Create a skeleton of a new Standard Ebooks ebook.
+
+USAGE
+	create-ebook [-e,--email=EMAIL] AUTHOR TITLE
+		Create a new ebook skeleton in ../drafts/AUTHOR/TITLE/
+
+		If --email is specified, initialize the Git repository using that email address as the main commiter.
+EOF
+	exit
+}
+die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
+if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
+#End boilerplate
+
+if [ $# -lt 2 ]; then
+	usage
+fi
+
+customEmail=''
+author=''
+title=''
+
+if [ $# -eq 2 ]; then
+	author="${1}"
+	title="${2}"
+fi
+
+if [ $# -eq 3 ]; then
+	customEmail=$(echo "$1" | sed --regexp-extended "s/.+\=//")
+	author="${2}"
+	title="${3}"
+fi
+
+scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+#Convert the title to something URL and filesystem friendly.
+#1. Convert accented characters to unaccented characters
+#2. Trim title.
+#3. Convert title to lowercase.
+#4. Remove apostrophes.
+#5. Convert any non-digit, non-letter character to a space.
+#6. Convert any instance of one or more space to a dash.
+urlAuthor=$(printf "%s" "${author}" \
+	| iconv -f utf8 -t ascii//TRANSLIT \
+	| sed --expression="s/^ *//" --expression="s/ *$//" \
+	| tr '[:upper:]' '[:lower:]' \
+	| sed "s/'//g" \
+	| sed "s/[^0-9a-zA-Z]/ /g" \
+	| sed --regexp-extended "s/\s+/-/g")
+
+urlTitle=$(printf "%s" "${title}" \
+	| iconv -f utf8 -t ascii//TRANSLIT \
+	| sed --expression="s/^ *//" --expression="s/ *$//" \
+	| tr '[:upper:]' '[:lower:]' \
+	| sed "s/'//g" \
+	| sed "s/[^0-9a-zA-Z]/ /g" \
+	| sed --regexp-extended "s/\s+/-/g")
+
+root="${urlAuthor}/${urlTitle}"
+
+mkdir -p "${root}/images"
+mkdir -p "${root}/dist"
+mkdir -p "${root}/src/epub/css"
+mkdir -p "${root}/src/epub/images"
+mkdir -p "${root}/src/epub/text"
+
+cp -r "${scriptDir}/templates/META-INF/" "${root}/src/"
+cp "${scriptDir}/templates/mimetype" "${root}/src/"
+cp "${scriptDir}/templates/onix.xml" "${root}/src/epub/"
+cp "${scriptDir}/templates/core.css" "${root}/src/epub/css/"
+cp "${scriptDir}/templates/logo.svg" "${root}/src/epub/images/"
+cp "${scriptDir}/templates/unlicense.xhtml" "${root}/src/epub/text/"
+
+cp "${scriptDir}/templates/cover.svg" "${root}/images/"
+cp "${scriptDir}/templates/titlepage.svg" "${root}/images/"
+cp "${scriptDir}/templates/local.css"  "${root}/src/epub/css/"
+cp "${scriptDir}/templates/colophon.xhtml"  "${root}/src/epub/text/"
+cp "${scriptDir}/templates/titlepage.xhtml"  "${root}/src/epub/text/"
+cp "${scriptDir}/templates/content.opf"  "${root}/src/epub/"
+
+sed --in-place --regexp-extended "s/TITLE/${title}/g" "${root}/src/epub/text/titlepage.xhtml"
+sed --in-place --regexp-extended "s/AUTHOR/${author}/g" "${root}/src/epub/text/titlepage.xhtml"
+sed --in-place --regexp-extended "s/URLAUTHOR/${urlAuthor}/g" "${root}/src/epub/content.opf"
+sed --in-place --regexp-extended "s/URLTITLE/${urlTitle}/g" "${root}/src/epub/content.opf"
+sed --in-place --regexp-extended "s/AUTHOR/${author}/g" "${root}/src/epub/content.opf"
+sed --in-place --regexp-extended "s/TITLE/${title}/g" "${root}/src/epub/content.opf"
+sed --in-place --regexp-extended "s/URLAUTHOR/${urlAuthor}/g" "${root}/src/epub/text/colophon.xhtml"
+sed --in-place --regexp-extended "s/URLTITLE/${urlTitle}/g" "${root}/src/epub/text/colophon.xhtml"
+sed --in-place --regexp-extended "s/TITLE/${title}/g" "${root}/src/epub/text/colophon.xhtml"
+sed --in-place --regexp-extended "s/AUTHOR/${author}/g" "${root}/src/epub/text/colophon.xhtml"
+
+git init --quiet "${root}"
+printf "dist/*\n" > "${root}/.gitignore"
+cp "${scriptDir}/pre-commit"  "${root}/.git/hooks/"
+
+if [ "${customEmail}" != "" ]; then
+	cd "${root}"
+	git config user.email "${customEmail}"
+fi

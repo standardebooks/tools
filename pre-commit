@@ -1,0 +1,55 @@
+#!/bin/sh
+
+timestamp="$(date --utc +%s)"
+isoTimestamp="$(date -d @${timestamp} --utc +"%Y-%m-%dT%H:%M:%SZ")"
+friendlyTimestamp="$(date -d @${timestamp} --utc +"%B %e, %Y, %l:%M <abbr class=\"time\">%p</abbr>" | sed --regexp-extended "s/\s+/ /g" | sed "s/>AM/>a.m./" | sed "s/>PM/>p.m./")"
+wordcountPath="/standardebooks.org/tools/wordcount"
+contentOpfFilePath="${ebookRoot}src/epub/content.opf"
+colophonPath="${ebookRoot}src/epub/text/colophon.xhtml"
+ebookRoot="./"
+
+#Do we need to update our word count?
+git status --porcelain  | sed --regexp-extended "/(titlepage|halftitle|colophon|unlicense|endnotes|toc).xhtml/d" | grep --extended-regexp "text/.*\.xhtml" > /dev/null
+
+if [ $? -ne 1 ]; then
+	printf "Updating word count in %s ..." "${ebookRoot}"
+	
+	wordCount=0
+	for file in $(find "${ebookRoot}" -name "*.xhtml")
+	do
+		filename=$(basename "${file}")
+		if [ "${filename}" != "titlepage.xhtml" -a "${filename}" != "colophon.xhtml" -a "${filename}" != "halftitle.xhtml" -a "${filename}" != "unlicense.xhtml" -a "${filename}" != "endnotes.xhtml" -a "${filename}" != "toc.xhtml" ]; then
+			currentCount=$("${wordcountPath}" "${file}")
+			wordCount=$((${wordCount} + ${currentCount}))
+		fi
+	done
+	sed --in-place --regexp-extended "s|<meta property=\"se:word-count\">[^<]*<\/meta>|<meta property=\"se:word-count\">${wordCount}<\/meta>|g" "${contentOpfFilePath}" > /dev/null 2>&1
+	
+	if [ $? -ne 0 ]; then
+		printf " Oops! Couldn't update the word count.  Aborting commit.\n"
+		exit 1
+	fi
+
+	printf " Done.\n"
+else
+	printf "Word count doesn't need updating ... OK\n"
+fi
+
+printf "Updating modified date in %s ..." "${ebookRoot}"
+
+sed --in-place --regexp-extended "s|<meta property=\"dcterms:modified\">[^<]*<\/meta>|<meta property=\"dcterms:modified\">${isoTimestamp}<\/meta>|g" "${contentOpfFilePath}" > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+	printf " Oops! Couldn't update the modified date.  Aborting commit.\n"
+	exit 1
+fi
+
+sed --in-place --regexp-extended "s|<span class=\"revision-date\">.+?<\/span>|<span class=\"revision-date\">${friendlyTimestamp}<\/span>|g" "${colophonPath}" > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+	printf " Oops! Couldn't update the modified date.  Aborting commit.\n"
+	exit 1
+fi
+
+printf " Done.\n"
+
+git add "${contentOpfFilePath}"
+git add "${colophonPath}"

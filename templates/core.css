@@ -1,0 +1,129 @@
+@charset "UTF-8";
+@namespace epub "http://www.idpf.org/2007/ops";
+
+body{
+	font-variant-numeric: oldstyle-nums;
+}
+
+section[epub|type~="titlepage"]{
+	margin: 0;
+	padding: 0;
+}
+
+section[epub|type~="titlepage"] img{
+	height: 100%;
+	margin-top: 10%;
+}
+
+p{
+	margin: 0;
+	text-indent: 1em;
+}
+
+hr{
+	border: none;
+	border-top: 1px solid;
+	height: 0;
+	margin: 1.5em auto;
+	width: 25%;
+}
+
+q:before,
+q:after{
+	content: '';
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6{
+	font-variant: small-caps;
+	hyphens: none;
+	page-break-after: avoid;
+	text-align: center;
+	margin: 3em 0;
+}
+
+blockquote + p,
+blockquote p:first-child,
+h2 + p,
+h3 + p,
+header + p,
+hr + p,
+section[epub|type~="rearnotes"] > ol > li > p:first-child{
+	text-indent: 0;
+}
+
+cite{
+	font-style: normal;
+}
+
+abbr{
+	border: none;
+	white-space: nowrap;
+}
+
+blockquote cite{
+	display: block;
+	font-style: italic;
+	text-align: right;
+}
+
+blockquote cite i{
+	font-style: normal;
+}
+
+strong{
+	font-weight: normal;
+	font-variant: all-small-caps;
+}
+
+a[epub|type~="noteref"]{
+	font-size: .75em;
+	vertical-align: super;
+}
+
+section[epub|type~="rearnotes"] > ol > li{
+	margin: 1em 0;
+}
+
+section[epub|type~="colophon"]{
+	text-align: center;
+	line-height: 1.5em;
+}
+
+section[epub|type~="colophon"] h2{
+	display: none;
+}
+
+section[epub|type~="colophon"] p{
+	margin: 1em 0 0 0;
+	text-align: center;
+	text-indent: 0;
+}
+
+section[epub|type~="colophon"] p + p:before{
+	border-top: 1px solid;
+	content: "";
+	display: block;
+	margin: auto auto 1em auto;
+	width: 25%;
+}
+
+section[epub|type~="colophon"] a,
+section[epub|type~="colophon"] .name,
+section[epub|type~="colophon"] .release-date,
+section[epub|type~="colophon"] .revision-date{
+	font-variant: small-caps;
+}
+
+section[epub|type~="copyright-page"] p{
+	margin: 1em auto;
+	text-indent: 0;
+}
+
+section[epub|type~="copyright-page"] blockquote{
+	font-style: italic;
+}

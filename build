@@ -1,0 +1,312 @@
+#!/bin/bash
+usage(){
+	fmt <<EOF
+DESCRIPTION
+	Build an ebook from a Standard Ebooks ebook source directory and place the output in DIRECTORY/dist/.
+
+USAGE
+	build [-v,--verbose] [-m,--mobi] [-c,--check] DIRECTORY [DIRECTORY...]
+		DIRECTORY is the source directory, which must contain DIRECTORY/src/.
+		With the -m flag, use Calibre to create a mobi file in addition to epub files.
+		With the -c flag, use epubcheck to validate the epub.  If -m is also specified and epubcheck fails, don't create a mobi file.
+EOF
+	exit
+}
+die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
+require(){ command -v $1 > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
+if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
+#End boilerplate
+
+#Check for dependencies
+require "xsltproc" "Try: apt-get install xsltproc"
+require "xmllint" "Try: apt-get install libxml2-utils"
+require "xmlstarlet" "Try: apt-get install xmlstarlet"
+require "xpath" "Try: apt-get install libxml-xpath-perl"
+
+if [ $# -eq 0 ]; then
+	usage
+fi
+
+scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+curDir="$(pwd)"
+srcDir="."
+mobi="false"
+verbose="false"
+check="false"
+dirs=""
+updateAsinPath="${scriptDir}/update-asin"
+buildImagesPath="${scriptDir}/build-images"
+
+#Some convenience aliases
+wj="\xE2\x81\xA0" #word joiner, U+2060
+thinsp=" " #thin space, U+2009
+nbsp=" " #no-break space, U+00A0
+zwnbsp="\xEF\xBB\xBF" #zero-width no-break space, U+FEFF
+
+while [ $# -gt 0 ]
+do
+	case "$1" in
+		-m|--mobi)
+			mobi="true"
+		;;
+		-c|--check)
+			check="true"
+		;;
+		-v|--verbose)
+			verbose="true"
+		;;
+		*)
+			dirs=$(printf "%s\n%s" "${dirs}" "$1")
+		;;
+	esac
+	shift
+done
+
+if [ "${check}" = "true" ]; then
+	require "epubcheck" "See: https://github.com/IDPF/epubcheck"
+fi
+
+if [ "${mobi}" = "true" ]; then
+	require "ebook-convert" "Try: http://calibre-ebook.com/download"
+	require "ebook-meta" "Try: http://calibre-ebook.com/download"
+fi
+
+printf "%s\n" "${dirs}" | while IFS= read -r i;
+do
+	if [ "${i}" = "" ]; then
+		continue
+	fi
+	
+	cd "${curDir}" #Reset when starting the loop over
+
+	srcDir="$(realpath "${i%/}")"
+
+	if [ ! -d "${srcDir}/src" ]; then
+		die "${srcDir} doesn't look like a Standard Ebooks ebook source directory."
+	fi
+
+	if [ "${verbose}" = "true" ]; then
+		printf "Building %s ...\n" "${srcDir}"
+	fi
+
+	destDir="${srcDir}/dist"
+
+	#Check if the destination folder exists.
+	mkdir --parents "${destDir}"
+	rm --force "${destDir}"/*
+
+	destDir="$(realpath "${destDir}")"
+	
+	#Build images if necessary
+	if [ "${verbose}" = "true" ]; then
+		"${buildImagesPath}" -v "${srcDir}"
+	else
+		"${buildImagesPath}" "${srcDir}"
+	fi
+	
+	#Get work title
+	#We have to use xmlstarlet here because xpath chokes on utf8
+	title="$(xmlstarlet sel -N dc="http://purl.org/dc/elements/1.1/" -t -m "//dc:title" -v "." -n "${srcDir}/src/epub/content.opf" | head -n 1)"
+
+	#Convert the title to something URL and filesystem friendly.
+	#1. Convert accented characters to unaccented characters
+	#2. Trim title.
+	#3. Convert title to lowercase.
+	#4. Remove apostrophes.
+	#5. Convert any non-digit, non-letter character to a space.
+	#6. Convert any instance of one or more space to a dash.
+	outputFilename=$(printf "%s" "${title}" \
+		| iconv -f utf8 -t ascii//TRANSLIT \
+		| sed --expression="s/^ *//" --expression="s/ *$//" \
+		| tr '[:upper:]' '[:lower:]' \
+		| sed "s/'//g" \
+		| sed "s/[^0-9a-zA-Z]/ /g" \
+		| sed "s/\s/-/g")
+	workDir="/tmp/${outputFilename}.epub"
+	epub2OutputFilename="${outputFilename}.epub"
+	mobiOutputFilename="${outputFilename}.mobi"
+	outputFilename="${outputFilename}.base.epub"
+
+	if [ "${verbose}" = "true" ]; then
+		printf "\tBuilding %s ..." "${outputFilename}"
+	fi
+
+	#Set up our working directory in /tmp/.
+	rm --force --recursive "${workDir}"
+	mkdir "${workDir}"
+	cp --recursive --dereference "${srcDir}/src"/* "${workDir}"
+	cd "${workDir}"
+
+	#Find the epub source directory.
+	epubDir="$(xpath -e "string(//rootfile/@full-path)" "META-INF/container.xml" 2> /dev/null | sed "s/\/content.opf//")"
+
+	#Output a pure epub3 file.
+	zip -9 --no-dir-entries -X --recurse-paths "${destDir}/${outputFilename}" mimetype META-INF "${epubDir}" > /dev/null 2>&1
+
+	if [ "${verbose}" = "true" ]; then
+		printf " OK\n"
+		printf "\tBuilding %s ..." "${epub2OutputFilename}"
+	fi
+
+	#Now add epub2 compatibility.
+	#Set xmllint to use tab indentation.
+	export XMLLINT_INDENT=$(printf "\t")
+	
+	#Replace some poorly supported CSS values with equivalents if possible
+	find "${workDir}" -iname "*.css" -print0 | xargs -0 sed --in-place --regexp-extended "s/all-small-caps;/small-caps; text-transform: lowercase;/g"
+	
+	#To get popup footnotes in iBooks, we have to change epub:rearnote to epub:footnote.
+	#Remember to get our custom style selectors too.
+	find "${workDir}" -iname "*.xhtml" -print0 | xargs -0 sed --in-place --regexp-extended "s/epub:type=\"([^\"]*?)rearnote([^\"]*?)\"/epub:type=\"\1footnote\2\"/g"
+	find "${workDir}" -iname "*.css" -print0 | xargs -0 sed --in-place --regexp-extended "s/rearnote/footnote/g"
+
+	#Many readers don't correctly handle CSS namespaces yet.  Until they do, replace them with classes.
+	#Find all namespace selectors we used in the CSS file and add classes for them in the body text.
+	#Also remove colons from class names (for example z3998:roman becomes z3998-roman), otherwise we get confused with css pseudo classes
+	grep --only-match --extended-regexp "\[epub\|type\~\=\"[^\"]*?\"\]" "${workDir}/${epubDir}/css/"/* | sed --regexp-extended "s/.*?\"([^\"]*)\".*?/\1/g" | sort | uniq | while read line ; do
+		filteredLine="$(printf "%s" "${line}" | sed "s/[^a-z0-9]/-/g")"
+		
+		#Note that we can't use a trailing \b to check the line, because \b includes dashes.  We need to EXCLUDE dashes because some epub:types like z3998:diary-entry should count as one word.
+		sed --in-place --regexp-extended "s/epub\:type=\"([^\"]*?)\b${line}(\s?[^\"]*?)\"/class=\"${filteredLine}\" epub:type=\"\1${line}\2\"/g" "${workDir}/${epubDir}/text"/*
+		
+		#If a tag with epub:type already had a class attribute, we have to merge the one we added just now to prevent parse errors.
+		sed --in-place --regexp-extended "s/class=\"([^\"]*?)\"\s*class=\"([^\"]*?)\"/class=\"\1 \2\"/g" "${workDir}/${epubDir}/text"/*
+		
+		#Now replace the selectors in the CSS file with class selectors.
+		sed --in-place --regexp-extended "s/\[epub\|type\~\=\"\b${line}\b\"\]/.${filteredLine}/g" "${workDir}/${epubDir}/css/"/*
+	done
+	
+	#Include extra lang tag for accessibility compatibility.
+	find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/xml\:lang\=\"([^\"]+?)\"/lang=\"\1\" xml:lang=\"\1\"/g" "{}" \;
+
+	#Typography: replace double and triple em dash characters with extra em dashes.
+	find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/⸺/——/g" "{}" \;
+	find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/⸻/———/g" "{}" \;
+	
+	#Typograhpy: replace some other less common characters.
+	find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/⅒/1\/10/g" "{}" \;
+	
+	#Many e-readers don't support the word joiner character (U+2060 aka &#8288; aka 0xE2 0x81 0xA0).
+	#They DO, however, support the now-deprecated zero-width non-breaking space, (U+FEFF aka &#65279; aka 0xEF 0xBB 0xBF)
+	#For epubs, do this replacement.  Kindle now seems to handle everything fortunately.
+	find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/${wj}/${zwnbsp}/ig" "{}" \;
+
+	#Include epub2 cover metadata
+	coverId="$(xpath -e "string(//item[@properties=\"cover-image\"]/@id)" "${workDir}/${epubDir}/content.opf" 2> /dev/null)"
+	sed --in-place --regexp-extended "s/(<metadata.*)/\1<meta content=\"${coverId}\" name=\"cover\" \/>/g" "${workDir}/${epubDir}/content.opf"
+
+	#Generate our NCX file for epub2 compatibility.
+	#First fine the ToC file.
+	tocFilename="$(xpath -e "string(//item[@properties=\"nav\"]/@href)" "${workDir}/${epubDir}/content.opf" 2> /dev/null)"
+	sed --in-place "s/<spine>/<spine toc=\"ncx\">/g" "${workDir}/${epubDir}/content.opf"
+	sed --in-place "s/<manifest>/<manifest><item href=\"toc.ncx\" id=\"ncx\" media-type=\"application\/x-dtbncx+xml\" \/>/g" "${workDir}/${epubDir}/content.opf"
+	xsltproc --stringparam cwd "${workDir}/" "${scriptDir}/navdoc2ncx.xsl" "${workDir}/${epubDir}/${tocFilename}" > "${workDir}/${epubDir}/toc.ncx"
+	sed --in-place --regexp-extended "s/ xml\:lang=\"\?\?\"//g" "${workDir}/${epubDir}/toc.ncx"
+	#Make nicely incrementing navpoint IDs and playOrders
+	sed --in-place "s/<navMap id=\".*\">/<navMap id=\"navmap\">/" "${workDir}/${epubDir}/toc.ncx"
+	perl -pi -e 's/\<navPoint id\="idp[0-9]+"/"<navPoint id=\"navpoint-" . ++$n . "\""/ge' "${workDir}/${epubDir}/toc.ncx"
+	perl -pi -e 's/\<navPoint/"<navPoint playOrder=\"" . ++$n . "\""/ge' "${workDir}/${epubDir}/toc.ncx"
+	xmllint --c14n "${workDir}/${epubDir}/toc.ncx" | (printf "%s\n" "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" && cat) | xmllint --output "${workDir}/epub/toc.ncx" --format -
+
+	#Convert the guide
+	#We add the 'text' attribute to the titlepage to tell the reader to start there
+	xpath -q -e "//nav[@epub:type=\"landmarks\"]/ol/li/a" "${workDir}/${epubDir}/$tocFilename" \
+		| sed --regexp-extended "s/epub:type=\"([^\"]*)(\s*frontmatter\s*|\s*backmatter\s*)([^\"]*)\"/type=\"\1\3\"/g" \
+		| sed --regexp-extended "s/epub:type=\"[^\"]*(acknowledgements|bibliography|colophon|copyright-page|cover|dedication|epigraph|foreword|glossary|index|loi|lot|notes|preface|bodymatter|titlepage|toc)[^\"]*\"/type=\"\1\"/g" \
+		| sed "s/type=\"copyright\-page/type=\"copyright page/g" \
+		| sed "s/type=\"titlepage/type=\"title-page text/g" \
+		| sed "s/type=\"appendix/type=\"/g" \
+		| sed "/type=\"\s*\"/d" \
+		| sed "s/<a/<reference/g" \
+		| sed --regexp-extended "s/>(.+)<\/a>/ title=\"\1\" \/>/g" \
+		| (printf "%s\n" "<guide>" && cat) \
+		| (cat && printf "%s\n" "</guide>") >> "${workDir}/${epubDir}/content.opf"
+	sed --in-place "s/<\/package>//g" "${workDir}/${epubDir}/content.opf"
+	printf "%s\n" "</package>" >> "${workDir}/${epubDir}/content.opf"
+	xmllint --c14n "${workDir}/${epubDir}/content.opf" | (printf "%s\n" "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" && cat) | xmllint --output "${workDir}/${epubDir}/content.opf" --format -
+
+	#Convert svg images to png images
+	find "${workDir}" -iname "cover.svg" -exec mogrify -format jpg "{}" \; -exec rm "{}" \;			#Convert the cover to jpg, then delete svg.
+	find "${workDir}" -iname "*.svg" -exec mogrify -background none -format png "{}" \; -exec rm "{}" \;	#Convert svg to png, then delete svg. The background flag ensure we get transparency.
+	find "${workDir}" -type f \( ! -iname "*.jpg" \) -print0 | xargs -0 sed --in-place "s/cover.svg/cover.jpg/g" 	#Replace references to .svg with .png. Ignore png files, because otherwise this command will corrupt them.
+	sed --in-place --regexp-extended "s/id=\"cover.jpg\" media\-type=\"image\/svg\+xml\"/id=\"cover.jpg\" media\-type=\"image\/jpeg\"/g" "${workDir}/${epubDir}/content.opf"	#Replace mime type declarations in content.opf
+	find "${workDir}" -type f \( ! -iname "*.png" \) -print0 | xargs -0 sed --in-place "s/\.svg/.png/g" 		#Replace references to .svg with .png. Ignore png files, because otherwise this command will corrupt them.
+	sed --in-place --regexp-extended "s/image\/svg\+xml/image\/png/g" "${workDir}/${epubDir}/content.opf"	#Replace mime type declarations in content.opf
+	sed --in-place "s/properties=\"svg\"//g" "${workDir}/${epubDir}/content.opf"				#We have to remove these references to satisfy epubcheck.
+
+	#Add some compatibility CSS rules
+	find "${workDir}" -iname "*.css" -print0 | xargs -0 sed --in-place --regexp-extended "s/(page\-break\-(before|after|inside)\s*\:\s*(.+))/\1\n\t-webkit-column-break-\2: \3 \/* For Readium *\//g" 
+	find "${workDir}" -iname "*.css" -print0 | xargs -0 sed --in-place --regexp-extended "s/hyphens\s*\:\s*(.+)/hyphens: \1\n\t-webkit-hyphens: \1\n\t-moz-hyphens: \1/g" 
+
+	#Create the compatible epub file
+	zip -9 --no-dir-entries -X --recurse-paths "${destDir}/${epub2OutputFilename}" mimetype META-INF "${epubDir}" > /dev/null 2>&1
+	
+	if [ "${verbose}" = "true" ]; then
+		printf " OK\n"
+	fi
+			
+	if [ "${check}" = "true" ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\tRunning epubcheck ..."
+		fi
+		output="$(epubcheck ${destDir}/${epub2OutputFilename} 2>&1)"
+		if [ $? -ne 0 ]; then
+			printf "%s\n" "${output}"
+			exit 1
+		fi
+		if [ "${verbose}" = "true" ]; then
+			printf " OK\n"
+		fi
+	fi
+	
+	if [ "${mobi}" = "true" ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\tBuilding %s ..." "${mobiOutputFilename}"
+		fi
+		
+		epubSource="/tmp/${epub2OutputFilename}.tmp.epub"
+		
+		#Kindle doesn't recognize most zero-width spaces or word joiners, so just remove them.
+		#It does recognize the word joiner character, but only in the old mobi7 format.  The new format renders them as spaces.
+		find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/${zwnbsp}//ig" "{}" \;
+		
+		#Append our kindle compatibility CSS file to the core CSS file.
+		cat "${scriptDir}/kindle.css" >> "${workDir}/${epubDir}/css/core.css"
+		
+		#Convert endnotes to Kindle popup compatible notes
+		if [ -f "${workDir}/${epubDir}/text/endnotes.xhtml" ]; then
+			php "${scriptDir}/endnotes2kindle.php" "${workDir}/${epubDir}/text/endnotes.xhtml"
+		fi
+		
+		#Remove the epub:type attribute, as Calibre turns it into just "type"
+		find "${workDir}" -iname "*.xhtml" -print0 | xargs -0 sed --in-place --regexp-extended "s/epub:type=\"[^\"]*?\"//g"
+			
+		#Re-ceate the compatible epub file
+		zip -9 --no-dir-entries -X --recurse-paths "${epubSource}" mimetype META-INF "${epubDir}" > /dev/null 2>&1
+		
+		#Generate the mobi file
+		coverPath="$(xpath -e "string(//item[@properties=\"cover-image\"]/@href)" "${workDir}/${epubDir}/content.opf" 2> /dev/null)"
+		ebook-convert "${epubSource}" "${destDir}/${mobiOutputFilename}" --mobi-file-type="both" --pretty-print --no-inline-toc --max-toc-links=0 --prefer-metadata-cover --cover="${workDir}/${epubDir}/${coverPath}" > /dev/null 2>&1
+		
+		if [ $? -eq 0 ]; then
+			#Get the ASIN for the thumbnail
+			#The ASIN is set to the SHA-1 sum of the book's identifying URL.
+			bookId=$(grep --only-matching --extended-regexp "<dc:identifier id=\"uid\">url:[^<]+</dc:identifier>" "${workDir}/${epubDir}/content.opf" | sed --regexp-extended "s/<[^>]+>//g" | sed "s/^url://")
+			asin=$(printf "%s" "${bookId}" | sha1sum | cut -d " " -f 1)
+			
+			#Update the ASIN in the generated mobi
+			"${updateAsinPath}" "${asin}" "${destDir}/${mobiOutputFilename}" "${workDir}/${mobiOutputFilename}" > /dev/null
+			mv "${workDir}/${mobiOutputFilename}" "${destDir}/${mobiOutputFilename}"
+			
+			#Extract the mobi thumbnail
+			asin="$(ebook-meta "${destDir}/${mobiOutputFilename}" | grep --only-matching --extended-regexp "mobi\-asin:.+" | cut -c11-)"
+			convert "${workDir}/${epubDir}/${coverPath}" -resize 432x660 "${destDir}/thumbnail_${asin}_EBOK_portrait.jpg" > /dev/null 2>&1
+			
+			if [ "${verbose}" = "true" ]; then
+				printf " OK\n"
+			fi
+		fi
+	fi
+
+	#rm -rf "${workDir}"
+done

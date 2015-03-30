@@ -1,0 +1,90 @@
+#!/bin/bash
+
+#!/bin/sh
+usage(){
+	fmt <<EOF
+DESCRIPTION
+	Try to convert British quote style to American quote style in DIRECTORY/src/epub/text/.
+	Quotes must already be "typogrified"--i.e. curly.
+	This script isn't perfect; proofreading is required, especially near closing quotes near to em-dashes.
+
+USAGE
+	british2american [-v,--verbose] DIRECTORY [DIRECTORY...]
+		DIRECTORY is the source directory, which must contain DIRECTORY/images/ and DIRECTORY/src/.
+EOF
+	exit
+}
+die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
+require(){ command -v $1 > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
+if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
+#End boilerplate
+
+if [ $# -eq 0 ]; then
+	usage
+fi
+
+curDir="$(pwd)"
+verbose="false"
+dirs=""
+
+while [ $# -gt 0 ]
+do
+	case "$1" in
+		-v|--verbose)
+			verbose="true"
+		;;
+		*)
+			dirs=$(printf "%s\n%s" "${dirs}" "$1")
+		;;
+	esac
+	shift
+done
+
+printf "%s\n" "${dirs}" | while IFS= read -r i;
+do
+	if [ "${i}" = "" ]; then
+		continue
+	fi
+	
+	srcDir="$(realpath "${i%/}")"
+	
+	if [ "${verbose}" = "true" ]; then
+		printf "Converting %s ...\n" "${srcDir}"
+	fi
+	
+	for file in $(find "${srcDir}" -name "*htm*")
+	do
+		#Skip symlinked files
+		if [ -h "${file}" ]; then
+			if [ "${verbose}" = "true" ]; then
+				printf "\t%s is a symlink, skipping ... OK\n" "${file}"
+			fi
+			continue
+		fi
+		
+		if [ "${verbose}" = "true" ]; then
+			printf "\tConverting %s ..." "${file}"
+		fi
+		
+		sed --in-place --regexp-extended "s|“|<ldq>|ig" "${file}"
+		sed --in-place --regexp-extended "s|”|<rdq>|ig" "${file}"
+		sed --in-place --regexp-extended "s|‘|<lsq>|ig" "${file}" #opening dialog quotes
+		sed --in-place --regexp-extended "s|<rdq>⁠ ’(\s+)|<rdq> <rsq>\1|ig" "${file}" #thin spaced closing nested quotes
+		sed --in-place --regexp-extended "s|<rdq>⁠ ’</|<rdq> <rsq></|ig" "${file}" #thin spaced closing nested quotes
+		sed --in-place --regexp-extended "s|([\.\,\!\?\…\:\;])’|\1<rsq>|ig" "${file}" #closing dialog quotes
+		sed --in-place --regexp-extended "s|—’(\s+)|—<rsq>\1|ig" "${file}" #closing dialog quotes broken by a dash, followed by space
+		sed --in-place --regexp-extended "s|—’</|—<rsq></|ig" "${file}" #closing dialog quotes broken by a dash, followed by an ending tag
+		sed --in-place --regexp-extended "s|([a-z])’([a-z])|\1<ap>\2|ig" "${file}" #contractions
+		sed --in-place --regexp-extended "s|(\s+)’([a-z])|\1<ap>\2|ig" "${file}" #leading apostrophes: pork ’n beans
+		
+		sed --in-place --regexp-extended "s|<ldq>|‘|ig" "${file}"
+		sed --in-place --regexp-extended "s|<rdq>|’|ig" "${file}"
+		sed --in-place --regexp-extended "s|<lsq>|“|ig" "${file}"
+		sed --in-place --regexp-extended "s|<rsq>|”|ig" "${file}"
+		sed --in-place --regexp-extended "s|<ap>|’|ig" "${file}"
+		
+		if [ "${verbose}" = "true" ]; then
+			printf " OK\n"
+		fi
+	done
+done
