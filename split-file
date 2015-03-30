@@ -2,7 +2,7 @@
 usage(){
 	fmt <<EOF
 DESCRIPTION
-	Split an xhtml file into many files at all instances of <!--se:split-->
+	Split an XHTML file into many files at all instances of <!--se:split-->, and include a header template for each file.
 
 USAGE
 	split-file FILE
