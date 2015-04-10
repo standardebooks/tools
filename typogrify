@@ -119,15 +119,21 @@ do
 		#Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
 		#Sed doesn't seem to think tabs are whitespace?
 		sed --in-place --regexp-extended "s/([^[:space:]	])\s*([–—])\s*/\1\2/ig" "${file}"
+
+		#First, remove stray word joiners
+		sed --in-place --regexp-extended "s/${wj}//ig" "${file}"
 		
 		#Some older texts use the ,— construct; remove that archaichism
-		sed --in-place --regexp-extended "s/,${wj}?—/—/ig" "${file}"
+		sed --in-place --regexp-extended "s/,—/—/ig" "${file}"
 		
 		#Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
-		sed --in-place --regexp-extended "s/([^[:space:]<>${wj}])([—⸻])/\1${wj}\2/ig" "${file}"
+		sed --in-place --regexp-extended "s/([^[:space:]${wj}])([—⸻])/\1${wj}\2/ig" "${file}"
 		
 		#Add a word joiner on both sides of en dashes
 		sed --in-place --regexp-extended "s/${wj}?–${wj}?/${wj}–${wj}/ig" "${file}"
+
+		#Remove word joiners that start a new paragraph
+		sed --in-place --regexp-extended "s/<p([^>]*?)>${wj}/<p\1>/ig" "${file}"
 		
 		#Finally fix some other mistakes
 		sed --in-place --regexp-extended "s/⁠—-/⁠—/ig" "${file}"
