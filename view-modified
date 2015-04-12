@@ -27,7 +27,6 @@ for dir in "${rootDir}"/*/*/; do
 	git status | grep "nothing to commit, working directory clean" > /dev/null
 	if [ $? -ne 0 ]; then
 		echo "${dir}"
-		echo -n "\t"
 		git status -s
 		echo ""
 	fi
