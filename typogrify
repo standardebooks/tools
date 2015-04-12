@@ -107,62 +107,68 @@ do
 			mv "${file}.tmp" "${file}"
 		fi
 		
-		#Replace sequential em dashes with the two or three em dash character
-		sed --in-place --regexp-extended "s/———/⸻/ig" "${file}"
-		sed --in-place --regexp-extended "s/——/⸺/ig" "${file}"
 		
-		#Smartypants doesn't do well on em dashes followed by open quotes. Fix that here.
-		sed --in-place --regexp-extended "s/—”([a-z])/—“\1/ig" "${file}"
-		sed --in-place --regexp-extended "s/—’([a-z])/—‘\1/ig" "${file}"
+		sed --in-place --regexp-extended "
+		#Replace sequential em dashes with the two or three em dash character
+		s/———/⸻/ig
+		s/——/⸺/ig
+
+		#Smartypants doesn't do well on em dashes followed by open quotes. Fix that here
+		s/—”([a-z])/—“\1/ig
+		s/—’([a-z])/—‘\1/ig
 
 		#Remove spaces between en and em dashes
 		#Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
 		#Sed doesn't seem to think tabs are whitespace?
-		sed --in-place --regexp-extended "s/([^[:space:]	])\s*([–—])\s*/\1\2/ig" "${file}"
+		s/([^[:space:]	])\s*([–—])\s*/\1\2/ig
 
 		#First, remove stray word joiners
-		sed --in-place --regexp-extended "s/${wj}//ig" "${file}"
-		
-		#Some older texts use the ,— construct; remove that archaichism
-		sed --in-place --regexp-extended "s/,—/—/ig" "${file}"
-		
-		#Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
-		sed --in-place --regexp-extended "s/([^[:space:]${wj}])([—⸻])/\1${wj}\2/ig" "${file}"
-		
-		#Add a word joiner on both sides of en dashes
-		sed --in-place --regexp-extended "s/${wj}?–${wj}?/${wj}–${wj}/ig" "${file}"
+		s/${wj}//ig
 
-		#Remove word joiners that start a new paragraph
-		sed --in-place --regexp-extended "s/<p([^>]*?)>${wj}/<p\1>/ig" "${file}"
-		
+		#Some older texts use the ,— construct; remove that archaichism
+		s/,—/—/ig
+
+		#Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
+		s/([^[:space:]${wj}])([—⸻])/\1${wj}\2/ig
+
+		#Add a word joiner on both sides of en dashes
+		s/${wj}?–${wj}?/${wj}–${wj}/ig
+
+		#Remove word joiners from following opening tags--they're usually never correct
+		s/<([a-z]+)([^>]*?)>${wj}/<\1\2>/ig
+
 		#Finally fix some other mistakes
-		sed --in-place --regexp-extended "s/⁠—-/⁠—/ig" "${file}"
+		s/⁠—-/⁠—/ig
 
 		#Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
-		sed --in-place --regexp-extended "s/([^a-z]+)Mr(\.?)\s+/\1<abbr>Mr.<\/abbr>${nbsp}/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)Mrs(\.?)\s+/\1<abbr>Mrs.<\/abbr>${nbsp}/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)Ms(\.?)\s+/\1<abbr>Ms.<\/abbr>${nbsp}/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)Dr(\.?)\s+/\1<abbr>Dr.<\/abbr>${nbsp}/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)Fr(\.?)\s+/\1<abbr>Fr.<\/abbr>${nbsp}/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)Lt(\.?)\s+/\1<abbr>Lt.<\/abbr>${nbsp}/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)Capt(\.?)\s+/\1<abbr>Capt.<\/abbr>${nbsp}/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)Pvt(\.?)\s+/\1<abbr>Pvt.<\/abbr>${nbsp}/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)Ph(\.?)D(\.?)(\s*)/\1<abbr>Ph.D.<\/abbr>\4/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)Esq([^a-z\.])/\1<abbr>Esq.<\/abbr>\2/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)Mt(\.?)\s+/\1<abbr>Mt.<\/abbr>${nbsp}/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)St(\.?)(\s+)/\1<abbr>St.<\/abbr>\3/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)MM(\.?)(\s+)/\1<abbr xml:lang=\"fr\">MM.<\/abbr>\3/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)Mme(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mme.<\/abbr>\3/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)Mmes(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mmes.<\/abbr>\3/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)Mlle(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mlle.<\/abbr>\3/g" "${file}"
-		sed --in-place --regexp-extended "s/([^a-z]+)Mlles(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mlles.<\/abbr>\3/g" "${file}"
-		
-		
+		s/([^a-z]+)Mr(\.?)\s+/\1<abbr>Mr.<\/abbr>${nbsp}/g
+		s/([^a-z]+)Mrs(\.?)\s+/\1<abbr>Mrs.<\/abbr>${nbsp}/g
+		s/([^a-z]+)Ms(\.?)\s+/\1<abbr>Ms.<\/abbr>${nbsp}/g
+		s/([^a-z]+)Dr(\.?)\s+/\1<abbr>Dr.<\/abbr>${nbsp}/g
+		s/([^a-z]+)Fr(\.?)\s+/\1<abbr>Fr.<\/abbr>${nbsp}/g
+		s/([^a-z]+)Lt(\.?)\s+/\1<abbr>Lt.<\/abbr>${nbsp}/g
+		s/([^a-z]+)Capt(\.?)\s+/\1<abbr>Capt.<\/abbr>${nbsp}/g
+		s/([^a-z]+)Pvt(\.?)\s+/\1<abbr>Pvt.<\/abbr>${nbsp}/g
+		s/([^a-z]+)Ph(\.?)D(\.?)(\s*)/\1<abbr>Ph.D.<\/abbr>\4/g
+		s/([^a-z]+)Esq([^a-z\.])/\1<abbr>Esq.<\/abbr>\2/g
+		s/([^a-z]+)Mt(\.?)\s+/\1<abbr>Mt.<\/abbr>${nbsp}/g
+		s/([^a-z]+)St(\.?)(\s+)/\1<abbr>St.<\/abbr>\3/g
+		s/([^a-z]+)MM(\.?)(\s+)/\1<abbr xml:lang=\"fr\">MM.<\/abbr>\3/g
+		s/([^a-z]+)Mme(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mme.<\/abbr>\3/g
+		s/([^a-z]+)Mmes(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mmes.<\/abbr>\3/g
+		s/([^a-z]+)Mlle(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mlle.<\/abbr>\3/g
+		s/([^a-z]+)Mlles(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mlles.<\/abbr>\3/g
+
 		#Sometimes the above abbreviations might get caught up in an image's alt tag, so remove the <abbr> tag from those cases.
 		#The funny construction of this sed command makes it recursive, since we may have multiple <abbr>s embedded in a tag.
-		sed --in-place --regexp-extended --expression=":loop" --expression="s|alt=\"([^\"]*?)<\/?abbr>|alt=\"\1|g" --expression="t loop" "${file}"
-		sed --in-place --regexp-extended --expression=":loop" --expression="s|<title>([^<]*?)<\/?abbr>|<title>\1|g" --expression="t loop" "${file}"
-		
+		:loop
+		s|alt=\"([^\"]*?)<\/?abbr>|alt=\"\1|g
+		t loop
+
+		:loop
+		s|<title>([^<]*?)<\/?abbr>|<title>\1|g
+		t loop
+
 		#A note on spacing:
 		#					ibooks	kindle (mobi7)
 		#thin space U+2009:			yes	yes
@@ -172,39 +178,48 @@ do
 		#punctuation space U+2008:		yes	yes
 
 		#Fix common abbreviatons
-		sed --in-place --regexp-extended "s/(\s)‘a’(\s)/\1’a’\2/ig" "${file}"
-		sed --in-place --regexp-extended "s/‘([0-9]+[^a-zA-Z0-9’])/’\1/ig" "${file}" #Years
-		sed --in-place --regexp-extended "s/‘([Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Tt]is|[Tt]was|[Tt]wixt|[Tt]were|[Tt]ween)(\b)/’\1\2/g" "${file}"
+		s/(\s)‘a’(\s)/\1’a’\2/ig
+
+		#Years
+		s/‘([0-9]+[^a-zA-Z0-9’])/’\1/ig
+		
+		s/‘([Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Tt]is|[Tt]was|[Tt]wixt|[Tt]were|[Tt]ween)(\b)/’\1\2/g
 		
 		#House style: remove spacing from common Latinisms
-		sed --in-place --regexp-extended "s/i\.\s+e\./i.e./g" "${file}"
-		sed --in-place --regexp-extended "s/e\.\s+g\./e.g./g" "${file}"
-		sed --in-place --regexp-extended "s/([\d[:space:]])A\.\s+D\./\1<abbr class=\"era\">AD/g" "${file}" #WARNING! This and below can remove the ending period of a sentence, if AD or BC is the last word!  We need interactive S&R for this
-		sed --in-place --regexp-extended "s/B\.\s+C\./<abbr class=\"era\">BC/g" "${file}"
-		
+		s/i\.\s+e\./i.e./g
+		s/e\.\s+g\./e.g./g
+
+		#WARNING! This and below can remove the ending period of a sentence, if AD or BC is the last word!  We need interactive S&R for this
+		s/([\d[:space:]])A\.\s+D\./\1<abbr class=\"era\">AD/g
+		s/B\.\s+C\./<abbr class=\"era\">BC/g
+
 		#Put spacing next to close quotes
-		sed --in-place --regexp-extended "s/“[[:space:]${nbsp}]*‘/“${hairsp}‘/ig" "${file}"
-		sed --in-place --regexp-extended "s/’[[:space:]${nbsp}]*”/’${hairsp}”/ig" "${file}"
-		sed --in-place --regexp-extended "s/“[[:space:]${nbsp}]*’/“${hairsp}’/ig" "${file}"
-		sed --in-place --regexp-extended "s/‘[[:space:]${nbsp}]*“/‘${hairsp}“/ig" "${file}"
-		sed --in-place --regexp-extended "s/”[[:space:]${nbsp}]*’([^a-zA-Z])/”${hairsp}’\1/ig" "${file}" #We require a non-letter char at the end, otherwise we might match a contraction: “Hello,” ’e said.
+		s/“[[:space:]${nbsp}]*‘/“${hairsp}‘/ig
+		s/’[[:space:]${nbsp}]*”/’${hairsp}”/ig
+		s/“[[:space:]${nbsp}]*’/“${hairsp}’/ig
+		s/‘[[:space:]${nbsp}]*“/‘${hairsp}“/ig
+
+		#We require a non-letter char at the end, otherwise we might match a contraction: “Hello,” ’e said.
+		s/”[[:space:]${nbsp}]*’([^a-zA-Z])/”${hairsp}’\1/ig
 
 		#Fix ellipses spacing
-		sed --in-place --regexp-extended "s/\s*\.\s*\.\s*\.\s*/…/ig" "${file}"
-		sed --in-place --regexp-extended "s/\s?…\s?\./.${hairsp}…/ig" "${file}"
-		sed --in-place --regexp-extended "s/([a-zA-Z])\s?…/\1${hairsp}…/ig" "${file}"
-		sed --in-place --regexp-extended "s/…\s+([\)”’])/…\1/ig" "${file}"
-		sed --in-place --regexp-extended "s/…\s?([\!\?\.\;])/…${hairsp}\1/ig" "${file}"
-		sed --in-place --regexp-extended "s/([\!\?\.\;”’])\s?…/\1${hairsp}…/ig" "${file}"
-		sed --in-place --regexp-extended "s/\,\s?…/,${hairsp}…/ig" "${file}"
-		
+		s/\s*\.\s*\.\s*\.\s*/…/ig
+		s/\s?…\s?\./.${hairsp}…/ig
+		s/([a-zA-Z])\s?…/\1${hairsp}…/ig
+		s/…\s+([\)”’])/…\1/ig
+		s/…\s?([\!\?\.\;])/…${hairsp}\1/ig
+		s/([\!\?\.\;”’])\s?…/\1${hairsp}…/ig
+		s/\,\s?…/,${hairsp}…/ig
+
 		#Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
-		sed --in-place --regexp-extended "s/([0-9])\s([a-z]{1,3}\.)/\1${nbsp}\2/ig" "${file}"
+		s/([0-9])\s([a-z]{1,3}\.)/\1${nbsp}\2/ig
 		
 		#Fix some spelling archaisms
-		sed --in-place --regexp-extended "s/([Nn])aïve/\1aive/g" "${file}"
-		sed --in-place --regexp-extended "s/([Nn])a[ïi]vet[ée]/\1aivete/g" "${file}"
-		sed --in-place --regexp-extended "s/&amp;c\./<abbr>etc.<\/abbr>/g" "${file}"
+		s/([Nn])aïve/\1aive/g
+		s/([Nn])a[ïi]vet[ée]/\1aivete/g
+		s/&amp;c\./<abbr>etc.<\/abbr>/g
+
+		" "${file}"
 		
 		#Add <abbr class="name"> tag around initials: [A-Z]\.\s*([A-Z]\.\s*)+
 		
