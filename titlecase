@@ -1,13 +1,11 @@
 #!/usr/bin/python
 
-import argparse
 import sys
 from titlecase import titlecase
 
-parser = argparse.ArgumentParser()
-parser.add_argument("TEXT", help="Text to convert to title case", nargs="+")
-parser.parse_args()
-
+for line in sys.stdin:
+	sys.stdout.write(titlecase(line))
+	
 for argument in sys.argv[1:]:
 	sys.stdout.write(titlecase(argument))
 	
