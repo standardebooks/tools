@@ -22,7 +22,10 @@ scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 rm -f "/tmp/chapter-*.xhtml" &> /dev/null
 
-awk 'BEGIN {i=1}/<!--se:split-->/{i++}{print > "/tmp/chapter-"i".xhtml"}' "$1"
+#Remove leading split tags
+perl -0pe 's/^\s*<\!--se:split-->//' "$1" > /tmp/file-temp.xhtml
+
+awk 'BEGIN {i=1}/<!--se:split-->/{i++}{print > "/tmp/chapter-"i".xhtml"}' /tmp/file-temp.xhtml
 
 for file in $(find "/tmp/" -name "chapter-*.xhtml" 2> /dev/null)
 do
@@ -41,4 +44,5 @@ do
 	mv /tmp/chapter-temp.xhtml ./"${filename}"
 done
 
+rm -f /tmp/file-temp.xhtml &> /dev/null
 rm -f "/tmp/chapter-*.xhtml" &> /dev/null
