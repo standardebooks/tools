@@ -117,6 +117,6 @@ Many of these tools act on Standard Ebooks source directories.  Such directories
 		
 		sudo apt-add-repository ppa:svg-cleaner-team/svgcleaner
 		sudo apt-get install xsltproc libxml2-utils xmlstarlet libxml-xpath-perl svgcleaner recode html-xml-utils
-		sudo pip install roman titlecase beautifulsoup4
+		pip install roman titlecase beautifulsoup4
 		
 That should be it!

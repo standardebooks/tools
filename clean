@@ -75,7 +75,7 @@ do
 
 	#Add trailing newlines to files that don't have one.
 	find "${srcDir}" \( -iname "*.xhtml" -o -iname "*.svg" -o -iname "*.css" -o -iname "*.opf" -o -iname "*.xml" \) -type f -exec sed -i -e '$a\' "{}" \;
-	
+
 	if [ "${verbose}" = "true" ]; then
 		printf "%s\n" " OK"
 	fi
