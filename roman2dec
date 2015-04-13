@@ -1,12 +1,10 @@
 #!/usr/bin/python
 
-import argparse
 import sys
 import roman
 
-parser = argparse.ArgumentParser()
-parser.add_argument("ROMANNUMERAL", help="A Roman numeral to convert to decimal", nargs="+")
-parser.parse_args()
+for line in sys.stdin:
+	sys.stdout.write(roman.fromRoman(line.upper()))
 
 for argument in sys.argv[1:]:
-	print(roman.fromRoman(argument.upper()))
+	sys.stdout.write(roman.fromRoman(argument.upper()))
