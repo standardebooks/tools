@@ -218,6 +218,7 @@ do
 		s/([Nn])aïve/\1aive/g
 		s/([Nn])a[ïi]vet[ée]/\1aivete/g
 		s/&amp;c\./<abbr>etc.<\/abbr>/g
+		s/([Pp])rotege/\1rotégé/g
 
 		" "${file}"
 		
