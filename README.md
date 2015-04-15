@@ -105,11 +105,11 @@ Many of these tools act on Standard Ebooks source directories.  Such directories
 	
 #Setting up your build environment
 
-1.	Download and install Calibre: http://calibre-ebook.com/download
+1.	Download and install Calibre: [http://calibre-ebook.com/download](http://calibre-ebook.com/download)
 
 	**Important:** Don't use the version of Calibre included with your system's package manager.  That's almost always an out-of-date version that will cause problems.  Install it by downloading it directly from the Calibre website.
 	
-2.	Download and install epubcheck: https://github.com/IDPF/epubcheck/releases
+2.	Download and install epubcheck: [https://github.com/IDPF/epubcheck/releases](https://github.com/IDPF/epubcheck/releases)
 	
 	Currently you have to place it in /opt/epubcheck/.
 
@@ -118,5 +118,7 @@ Many of these tools act on Standard Ebooks source directories.  Such directories
 		sudo apt-add-repository ppa:svg-cleaner-team/svgcleaner
 		sudo apt-get install xsltproc libxml2-utils xmlstarlet libxml-xpath-perl svgcleaner recode html-xml-utils
 		pip install roman titlecase beautifulsoup4
-		
+
+4.	If you plan on editing cover or titlepage images, make sure the League Spartan font is installed on your system: [https://github.com/theleagueof/league-spartan](https://github.com/theleagueof/league-spartan)
+
 That should be it!
