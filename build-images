@@ -20,6 +20,9 @@ if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
 require "inkscape" "Try: sudo apt-get install inkscape"
 require "svgcleaner-cli" "Try: sudo apt-get install svgcleaner"
 
+#Check if the League Spartan font is installed before continuing
+fc-list | grep --quiet "League Spartan" || die "The League Spartan font doesn't seem to be installed.  See https://github.com/theleagueof/league-spartan"
+
 if [ $# -eq 0 ]; then
 	usage
 fi
