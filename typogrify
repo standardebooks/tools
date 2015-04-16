@@ -101,6 +101,9 @@ do
 			printf "\tTypogrifying %s ..." "${file}"
 		fi
 
+		#Some Gutenberg works have a weird single quote style: `this is a quote'.  Clean that up here before running Smartypants.
+		sed --in-place --regexp-extended "s/\`/\'/g" "${file}"
+
 		#Prettify quotes
 		if [ "${runSmartypants}" = "true" ]; then
 			"${smartypantsPath}" "${file}" | xml2asc | recode HTML | sed "s/&/&amp;/g" > "${file}.tmp";
