@@ -1,0 +1,103 @@
+#!/bin/bash
+usage(){
+	fmt <<EOF
+DESCRIPTION
+	Create a <manifest> and <spine> tag for content.opf based on the passed Standard Ebooks source directory and print to standard output.
+
+USAGE
+	print-manifest-and-spine DIRECTORY [DIRECTORY...]
+		DIRECTORY is the source directory, which must contain DIRECTORY/images/ and DIRECTORY/src/.
+EOF
+	exit
+}
+die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
+require(){ command -v $1 > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
+if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
+#End boilerplate
+
+dirs=""
+
+while [ $# -gt 0 ]
+do
+	case "$1" in
+		*)
+			dirs=$(printf "%s\n%s" "${dirs}" "$1")
+		;;
+	esac
+	shift
+done
+
+printf "%s\n" "${dirs}" | while IFS= read -r i;
+do
+	if [ "${i}" = "" ]; then
+		continue
+	fi
+	
+	cd "${curDir}" #Reset when starting the loop over
+
+	srcDir="$(realpath "${i%/}")"
+
+	if [ ! -d "${srcDir}/src" ]; then
+		die "${srcDir} doesn't look like a Standard Ebooks ebook source directory."
+	fi
+
+	#Build the manifest
+	echo -e "\t<manifest>" > /tmp/manifest
+
+	#Get the CSS
+	ls -v "${srcDir}/src/epub/css/" | sed --regexp-extended "
+	s|(.*)|\t\t<item href=\"css/\1\" id=\"\1\" media-type=\"text/css\"/>|g
+	" >> /tmp/manifest
+
+	#Get all of our images
+	ls -v "${srcDir}/src/epub/images/" | sed --regexp-extended "
+	s|(.*)|\t\t<item href=\"images/\1\" id=\"\1\"/>|g
+	s|id=\"(.*\.svg)\"|id=\"\1\" media-type=\"image/svg+xml\"|g
+	s|id=\"(.*\.png)\"|id=\"\1\" media-type=\"image/png\"|g
+	s|id=\"(.*\.jpg)\"|id=\"\1\" media-type=\"image/jpeg\"|g
+	s|id=\"cover.svg\" media\-type=\"image/svg\+xml\"|id=\"cover.svg\" media-type=\"image/svg+xml\" properties=\"cover-image\"|g
+	" >> /tmp/manifest
+
+	#Get all of our text documents
+	ls -v "${srcDir}/src/epub/text/" | sed --regexp-extended "
+	s|(.*)|\t\t<item href=\"text/\1\" id=\"\1\" media-type=\"application/xhtml+xml\"/>|g
+	s|id=\"titlepage.xhtml\" media\-type=\"application/xhtml\+xml\"|id=\"titlepage.xhtml\" media-type=\"application/xhtml+xml\" properties=\"svg\"|g
+	" >> /tmp/manifest
+
+	echo -e "\t</manifest>" >> /tmp/manifest
+
+	cat /tmp/manifest
+
+	#Build the spine
+	echo -e "\t<spine>" > /tmp/spine
+	echo -e "\t\t<itemref id=\"titlepage.xhtml\"/>" >> /tmp/spine
+
+	ls "${srcDir}/src/epub/text/" | grep --quiet "introduction.xhtml" && echo -e "\t\t<itemref id=\"introduction.xhtml\"/>" >> /tmp/spine
+	ls "${srcDir}/src/epub/text/" | grep --quiet "preface.xhtml" && echo -e "\t\t<itemref id=\"preface.xhtml\"/>" >> /tmp/spine
+	ls "${srcDir}/src/epub/text/" | grep --quiet "epigraph.xhtml" && echo -e "\t\t<itemref id=\"epigraph.xhtml\"/>" >> /tmp/spine
+	ls "${srcDir}/src/epub/text/" | grep --quiet "halftitle.xhtml" && echo -e "\t\t<itemref id=\"halftitle.xhtml\"/>" >> /tmp/spine
+
+	ls -v "${srcDir}/src/epub/text/" | sed --regexp-extended "
+	/titlepage.xhtml/d
+	/colophon.xhtml/d
+	/unlicense.xhtml/d
+	/introduction.xhtml/d
+	/halftitle.xhtml/d
+	/epigraph.xhtml/d
+	/preface.xhtml/d
+	/loi.xhtml/d
+	/endnotes.xhtml/d
+	s|(.*)|\t\t<itemref idef=\"\1\"/>|g
+	" >> /tmp/spine
+
+	ls "${srcDir}/src/epub/text/" | grep --quiet "endnotes.xhtml" && echo -e "\t\t<itemref id=\"endnotes.xhtml\"/>" >> /tmp/spine
+	ls "${srcDir}/src/epub/text/" | grep --quiet "loi.xhtml" && echo -e "\t\t<itemref id=\"loi.xhtml\"/>" >> /tmp/spine
+
+	echo -e "\t\t<itemref id=\"colophon.xhtml\"/>" >> /tmp/spine
+	echo -e "\t\t<itemref id=\"unlicense.xhtml\"/>" >> /tmp/spine
+	echo -e "\t</spine>" >> /tmp/spine
+
+	cat /tmp/spine
+
+	rm -f /tmp/manifest /tmp/spine
+done

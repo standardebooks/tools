@@ -30,6 +30,10 @@ Create a skeleton of a new Standard Ebooks ebook.
 
 Convert epub-friendly endnotes to Kindle-friendly popup endnotes.  Generally only used by the `build` script and not called independently.
 
+##print-manifest-and-spine
+
+Create a <manifest> and <spine> tag for content.opf based on the passed Standard Ebooks source directory and print to standard output.
+
 ##modernize-hyphenation
 
 Replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace "ash-tray" with "ashtray".
