@@ -61,7 +61,7 @@ do
 			printf "\tReplacing in %s ...\n" "${file}"
 		fi
 		
-		for word in $(grep --only-matching --ignore-case --extended-regexp "\b[[:alpha:]]+\-[[:alpha:]]+\b" "${file}" | uniq -u | sed --regexp-extended "/en-(US|GB)/d")
+		for word in $(grep --only-matching --ignore-case --extended-regexp "\b[[:alpha:]]+\-[[:alpha:]]+\b" "${file}" | uniq | sed --regexp-extended "/en-(US|GB)/d")
 		do
 			newWord=$(printf "%s" "${word}" | sed "s/\-//g" | tr "[:upper:]" "[:lower:]")
 			found="false"
