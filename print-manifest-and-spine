@@ -44,6 +44,9 @@ do
 	#Build the manifest
 	echo -e "\t<manifest>" > /tmp/manifest
 
+	echo -e "\t\t<item href=\"onix.xml\" id=\"onix.xml\" media-type=\"application/xml\"/>" >> /tmp/manifest
+	echo -e "\t\t<item href=\"toc.xhtml\" id=\"toc.xhtml\" media-type=\"application/xhtml+xml\" properties=\"nav\"/>" >> /tmp/manifest
+	
 	#Get the CSS
 	ls -v "${srcDir}/src/epub/css/" | sed --regexp-extended "
 	s|(.*)|\t\t<item href=\"css/\1\" id=\"\1\" media-type=\"text/css\"/>|g
@@ -70,7 +73,7 @@ do
 
 	#Build the spine
 	echo -e "\t<spine>" > /tmp/spine
-	echo -e "\t\t<itemref id=\"titlepage.xhtml\"/>" >> /tmp/spine
+	echo -e "\t\t<itemref idref=\"titlepage.xhtml\"/>" >> /tmp/spine
 
 	ls "${srcDir}/src/epub/text/" | grep --quiet "introduction.xhtml" && echo -e "\t\t<itemref id=\"introduction.xhtml\"/>" >> /tmp/spine
 	ls "${srcDir}/src/epub/text/" | grep --quiet "preface.xhtml" && echo -e "\t\t<itemref id=\"preface.xhtml\"/>" >> /tmp/spine
@@ -87,14 +90,14 @@ do
 	/preface.xhtml/d
 	/loi.xhtml/d
 	/endnotes.xhtml/d
-	s|(.*)|\t\t<itemref idef=\"\1\"/>|g
+	s|(.*)|\t\t<itemref idref=\"\1\"/>|g
 	" >> /tmp/spine
 
 	ls "${srcDir}/src/epub/text/" | grep --quiet "endnotes.xhtml" && echo -e "\t\t<itemref id=\"endnotes.xhtml\"/>" >> /tmp/spine
 	ls "${srcDir}/src/epub/text/" | grep --quiet "loi.xhtml" && echo -e "\t\t<itemref id=\"loi.xhtml\"/>" >> /tmp/spine
 
-	echo -e "\t\t<itemref id=\"colophon.xhtml\"/>" >> /tmp/spine
-	echo -e "\t\t<itemref id=\"unlicense.xhtml\"/>" >> /tmp/spine
+	echo -e "\t\t<itemref idref=\"colophon.xhtml\"/>" >> /tmp/spine
+	echo -e "\t\t<itemref idref=\"unlicense.xhtml\"/>" >> /tmp/spine
 	echo -e "\t</spine>" >> /tmp/spine
 
 	cat /tmp/spine
