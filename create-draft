@@ -76,12 +76,17 @@ cp "${scriptDir}/templates/core.css" "${root}/src/epub/css/"
 cp "${scriptDir}/templates/logo.svg" "${root}/src/epub/images/"
 cp "${scriptDir}/templates/unlicense.xhtml" "${root}/src/epub/text/"
 
-cp "${scriptDir}/templates/cover.svg" "${root}/images/"
 cp "${scriptDir}/templates/titlepage.svg" "${root}/images/"
 cp "${scriptDir}/templates/local.css"  "${root}/src/epub/css/"
 cp "${scriptDir}/templates/colophon.xhtml"  "${root}/src/epub/text/"
 cp "${scriptDir}/templates/titlepage.xhtml"  "${root}/src/epub/text/"
 cp "${scriptDir}/templates/content.opf"  "${root}/src/epub/"
+
+if [ ${#title} -lt 15 ]; then
+	cp "${scriptDir}/templates/cover-short.svg" "${root}/images/cover.svg"
+else
+	cp "${scriptDir}/templates/cover.svg" "${root}/images/cover.svg"
+fi
 
 sed --in-place --regexp-extended "s/TITLE/${title}/g" "${root}/src/epub/text/titlepage.xhtml"
 sed --in-place --regexp-extended "s/AUTHOR/${author}/g" "${root}/src/epub/text/titlepage.xhtml"
