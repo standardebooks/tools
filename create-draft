@@ -50,7 +50,6 @@ urlAuthor=$(printf "%s" "${author}" \
 	| tr '[:upper:]' '[:lower:]' \
 	| sed "s/'//g" \
 	| sed "s/[^0-9a-zA-Z]/ /g" \
-	| sed "s/\s/-/g"\
 	| sed --regexp-extended "s/\s+/-/g")
 
 urlTitle=$(printf "%s" "${title}" \
@@ -59,7 +58,6 @@ urlTitle=$(printf "%s" "${title}" \
 	| tr '[:upper:]' '[:lower:]' \
 	| sed "s/'//g" \
 	| sed "s/[^0-9a-zA-Z]/ /g" \
-	| sed "s/\s/-/g"\
 	| sed --regexp-extended "s/\s+/-/g")
 
 root="${urlAuthor}/${urlTitle}"

@@ -121,8 +121,7 @@ do
 		| tr '[:upper:]' '[:lower:]' \
 		| sed "s/'//g" \
 		| sed "s/[^0-9a-zA-Z]/ /g" \
-		| sed "s/\s/-/g"\
-		| sed --regexp-extended "s/\-+/-/g")
+		| sed --regexp-extended "s/\s+/-/g")
 		
 	workDir="/tmp/${outputFilename}.epub"
 	epub2OutputFilename="${outputFilename}.epub"
