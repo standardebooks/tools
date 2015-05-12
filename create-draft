@@ -5,10 +5,12 @@ DESCRIPTION
 	Create a skeleton of a new Standard Ebooks ebook.
 
 USAGE
-	create-ebook [-e,--email=EMAIL] AUTHOR TITLE
+	create-ebook [-e,--email=EMAIL] [-g,--github] AUTHOR TITLE
 		Create a new ebook skeleton in ../drafts/AUTHOR/TITLE/
 
-		If --email is specified, initialize the Git repository using that email address as the main commiter.
+		If --email is specified, initialize the Git repository using that email address as the main committer.
+
+		If --github is specified, initialize a new Github repository for this ebook.  You must be a member of the standardebooks Github organization.
 EOF
 	exit
 }
@@ -23,16 +25,27 @@ fi
 customEmail=''
 author=''
 title=''
+initializeGithub=false
+
+for i in "$@"
+do
+case $i in
+	-e=*|--email=*)
+		customEmail=$(echo "${i}" | sed 's/[-a-zA-Z0-9]*=//')
+		shift
+	;;
+	-g|--github)
+		initializeGithub=true
+		shift
+	;;
+esac
+done
 
 if [ $# -eq 2 ]; then
 	author="${1}"
 	title="${2}"
-fi
-
-if [ $# -eq 3 ]; then
-	customEmail=$(echo "$1" | sed --regexp-extended "s/.+\=//")
-	author="${2}"
-	title="${3}"
+else
+	die "Incorrect number of arguments"
 fi
 
 scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -106,4 +119,32 @@ cp "${scriptDir}/pre-commit"  "${root}/.git/hooks/"
 if [ "${customEmail}" != "" ]; then
 	cd "${root}"
 	git config user.email "${customEmail}"
+fi
+
+#Create github repo
+if [ "${initializeGithub}" = true ]; then
+	defaultRepoName="${urlAuthor}-${urlTitle}"
+	echo "Enter a name for a new Github repository.  The format for Github repositories is: <url-author>-<url-title>[-<url-contributors>]."
+	echo "Leave blank to use: ${defaultRepoName}"
+	read repoName
+
+	if [ "${repoName}" = "" ]; then
+		repoName="${defaultRepoName}"
+	fi
+
+	sed --in-place "s|VCSLINK|https://github.com/standardebooks/${repoName}|" "${root}/src/epub/content.opf"
+
+	echo "Enter your Github username:"
+	read githubUsername
+
+	output=$(curl -s -i -u "${githubUsername}" https://api.github.com/orgs/standardebooks/repos -d "{\"name\":\"${repoName}\"}")
+
+	echo "${output}" | grep -q -i "201 OK"
+	if [ $? -ne 0 ]; then
+		cd "${root}"
+		git remote add github git@github.com:"standardebooks/${repoName}.git"
+	else
+		echo "Error during Github request:" 1>&2
+		die "${output}"
+	fi
 fi
