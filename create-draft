@@ -135,14 +135,17 @@ if [ "${urlIllustrator}" != "" ]; then
 	identifier="${identifier}/${urlIllustrator}"
 fi
 
-sed --in-place --regexp-extended "s|TITLE|${title}|g" "${root}/src/epub/text/titlepage.xhtml"
-sed --in-place --regexp-extended "s|AUTHOR|${author}|g" "${root}/src/epub/text/titlepage.xhtml"
-sed --in-place --regexp-extended "s|SEIDENTIFIER|${identifier}|g" "${root}/src/epub/content.opf"
-sed --in-place --regexp-extended "s|AUTHOR|${author}|g" "${root}/src/epub/content.opf"
-sed --in-place --regexp-extended "s|TITLE|${title}|g" "${root}/src/epub/content.opf"
-sed --in-place --regexp-extended "s|SEIDENTIFIER|${identifier}|g" "${root}/src/epub/text/colophon.xhtml"
-sed --in-place --regexp-extended "s|TITLE|${title}|g" "${root}/src/epub/text/colophon.xhtml"
-sed --in-place --regexp-extended "s|AUTHOR|${author}|g" "${root}/src/epub/text/colophon.xhtml"
+repoName=$(echo "${identifier}" | sed "s|/|_|g")
+
+sed --in-place "s|TITLE|${title}|g" "${root}/src/epub/text/titlepage.xhtml"
+sed --in-place "s|AUTHOR|${author}|g" "${root}/src/epub/text/titlepage.xhtml"
+sed --in-place "s|SEIDENTIFIER|${identifier}|g" "${root}/src/epub/content.opf"
+sed --in-place "s|AUTHOR|${author}|g" "${root}/src/epub/content.opf"
+sed --in-place "s|TITLE|${title}|g" "${root}/src/epub/content.opf"
+sed --in-place "s|VCSIDENTIFIER|${repoName}|" "${root}/src/epub/content.opf"
+sed --in-place "s|SEIDENTIFIER|${identifier}|g" "${root}/src/epub/text/colophon.xhtml"
+sed --in-place "s|TITLE|${title}|g" "${root}/src/epub/text/colophon.xhtml"
+sed --in-place "s|AUTHOR|${author}|g" "${root}/src/epub/text/colophon.xhtml"
 
 git init --quiet "${root}"
 printf "dist/*\n" > "${root}/.gitignore"
@@ -155,10 +158,6 @@ fi
 
 #Create github repo
 if [ "${initializeGithub}" = true ]; then
-	repoName=$(echo "${identifier}" | sed "s|/|-|g")
-
-	sed --in-place "s|VCSIDENTIFIER|${repoName}|" "${root}/src/epub/content.opf"
-
 	echo "Enter your Github username:"
 	read githubUsername
 
