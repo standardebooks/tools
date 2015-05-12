@@ -36,6 +36,7 @@ check="false"
 dirs=""
 updateAsinPath="${scriptDir}/update-asin"
 buildImagesPath="${scriptDir}/build-images"
+makeUrlSafePath="${scriptDir}/make-url-safe"
 
 #Some convenience aliases
 wj="\xE2\x81\xA0" #word joiner, U+2060
@@ -85,10 +86,6 @@ do
 		die "${srcDir} doesn't look like a Standard Ebooks ebook source directory."
 	fi
 
-	if [ "${verbose}" = "true" ]; then
-		printf "Building %s ...\n" "${srcDir}"
-	fi
-
 	destDir="${srcDir}/dist"
 
 	#Check if the destination folder exists.
@@ -103,26 +100,13 @@ do
 	else
 		"${buildImagesPath}" "${srcDir}"
 	fi
-	
+
 	#Get work title
 	#We have to use xmlstarlet here because xpath chokes on utf8
 	title="$(xmlstarlet sel -N dc="http://purl.org/dc/elements/1.1/" -t -m "//dc:title" -v "." -n "${srcDir}/src/epub/content.opf" | head -n 1)"
 
-	#Convert the title to something URL and filesystem friendly.
-	#1. Convert accented characters to unaccented characters
-	#2. Trim title.
-	#3. Convert title to lowercase.
-	#4. Remove apostrophes.
-	#5. Convert any non-digit, non-letter character to a space.
-	#6. Convert any instance of one or more space to a dash.
-	outputFilename=$(printf "%s" "${title}" \
-		| iconv -f utf8 -t ascii//TRANSLIT \
-		| sed --expression="s/^ *//" --expression="s/ *$//" \
-		| tr '[:upper:]' '[:lower:]' \
-		| sed "s/'//g" \
-		| sed "s/[^0-9a-zA-Z]/ /g" \
-		| sed --regexp-extended "s/\s+/-/g")
-		
+	outputFilename=$("${makeUrlSafePath}" "${title}")
+
 	workDir="/tmp/${outputFilename}.epub"
 	epub2OutputFilename="${outputFilename}.epub"
 	mobiOutputFilename="${outputFilename}.mobi"

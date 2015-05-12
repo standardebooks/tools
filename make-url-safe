@@ -1,0 +1,32 @@
+#!/bin/sh
+usage(){
+	fmt <<EOF
+DESCRIPTION
+	Convert all arguments to URL-safe strings.
+
+USAGE
+	make-url-save STRING [STRING...]
+EOF
+	exit
+}
+die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
+if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
+#End boilerplate
+
+for i in "$@"
+do
+	#Convert the title to something URL and filesystem friendly.
+	#1. Convert accented characters to unaccented characters
+	#2. Trim title.
+	#3. Convert title to lowercase.
+	#4. Remove apostrophes.
+	#5. Convert any non-digit, non-letter character to a space.
+	#6. Convert any instance of one or more space to a dash.
+	printf "%s\n" "${i}" \
+		| iconv -f utf8 -t ascii//TRANSLIT \
+		| sed --expression="s/^ *//" --expression="s/ *$//" \
+		| tr '[:upper:]' '[:lower:]' \
+		| sed "s/'//g" \
+		| sed "s/[^0-9a-zA-Z]/ /g" \
+		| sed --regexp-extended "s/\s+/-/g"
+done

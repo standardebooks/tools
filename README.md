@@ -34,6 +34,10 @@ Convert epub-friendly endnotes to Kindle-friendly popup endnotes.  Generally onl
 
 Create a <manifest> and <spine> tag for content.opf based on the passed Standard Ebooks source directory and print to standard output.
 
+##make-url-safe
+
+Convert all arguments to URL-safe strings.
+
 ##modernize-hyphenation
 
 Replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace "ash-tray" with "ashtray".

@@ -5,12 +5,14 @@ DESCRIPTION
 	Create a skeleton of a new Standard Ebooks ebook.
 
 USAGE
-	create-ebook [-e,--email=EMAIL] [-g,--github] AUTHOR TITLE
+	create-ebook [-e,--email=EMAIL] [-g,--github] [-f,--force] -a,--author=AUTHOR -t,--title=TITLE [-r,--translator=TRANSLATOR] [-i,--illustrator=ILLUSTRATOR]
 		Create a new ebook skeleton in ../drafts/AUTHOR/TITLE/
 
 		If --email is specified, initialize the Git repository using that email address as the main committer.
 
-		If --github is specified, initialize a new Github repository for this ebook.  You must be a member of the standardebooks Github organization.
+		With --github, initialize a new Github repository for this ebook.  You must be a member of the standardebooks Github organization.
+
+		With --force, don't ask to overwrite an existing draft directory.
 EOF
 	exit
 }
@@ -18,14 +20,15 @@ die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
 if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
 #End boilerplate
 
-if [ $# -lt 2 ]; then
-	usage
-fi
-
-customEmail=''
-author=''
-title=''
+customEmail=""
+author=""
+title=""
+translator=""
+illustrator=""
 initializeGithub=false
+force=false
+scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+makeUrlSafePath="${scriptDir}/make-url-safe"
 
 for i in "$@"
 do
@@ -38,42 +41,65 @@ case $i in
 		initializeGithub=true
 		shift
 	;;
+	-f|--force)
+		force=true
+		shift
+	;;
+	-a=*|--author=*)
+		author=$(echo "${i}" | sed 's/[-a-zA-Z0-9]*=//')
+		shift
+	;;
+	-t=*|--title=*)
+		title=$(echo "${i}" | sed 's/[-a-zA-Z0-9]*=//')
+		shift
+	;;
+	-r=*|--translator=*)
+		translator=$(echo "${i}" | sed 's/[-a-zA-Z0-9]*=//')
+		shift
+	;;
+	-i=*|--illustrator=*)
+		illustrator=$(echo "${i}" | sed 's/[-a-zA-Z0-9]*=//')
+		shift
+	;;
 esac
 done
 
-if [ $# -eq 2 ]; then
-	author="${1}"
-	title="${2}"
-else
-	die "Incorrect number of arguments"
+if [ "${author}" = "" ]; then
+	die "Author is required."
+fi
+
+if [ "${title}" = "" ]; then
+	die "Title is required."
 fi
 
 scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-#Convert the title to something URL and filesystem friendly.
-#1. Convert accented characters to unaccented characters
-#2. Trim title.
-#3. Convert title to lowercase.
-#4. Remove apostrophes.
-#5. Convert any non-digit, non-letter character to a space.
-#6. Convert any instance of one or more space to a dash.
-urlAuthor=$(printf "%s" "${author}" \
-	| iconv -f utf8 -t ascii//TRANSLIT \
-	| sed --expression="s/^ *//" --expression="s/ *$//" \
-	| tr '[:upper:]' '[:lower:]' \
-	| sed "s/'//g" \
-	| sed "s/[^0-9a-zA-Z]/ /g" \
-	| sed --regexp-extended "s/\s+/-/g")
-
-urlTitle=$(printf "%s" "${title}" \
-	| iconv -f utf8 -t ascii//TRANSLIT \
-	| sed --expression="s/^ *//" --expression="s/ *$//" \
-	| tr '[:upper:]' '[:lower:]' \
-	| sed "s/'//g" \
-	| sed "s/[^0-9a-zA-Z]/ /g" \
-	| sed --regexp-extended "s/\s+/-/g")
+urlAuthor=$("${makeUrlSafePath}" "${author}")
+urlTitle=$("${makeUrlSafePath}" "${title}")
+urlTranslator=$("${makeUrlSafePath}" "${translator}")
+urlIllustrator=$("${makeUrlSafePath}" "${illustrator}")
 
 root="${urlAuthor}/${urlTitle}"
+
+if [ -d "${root}" ]; then
+	if [ "${force}" != true ]; then
+		while true; do
+		    read -p "./${root}/ already exists.  Overwrite? " yn
+		    case $yn in
+		        [Yy]* )
+					force=true
+					break
+				;;
+		        * )
+					exit
+				;;
+		    esac
+		done
+	fi
+	if [ "${force}" = true ]; the
+		rm -rf "${root}"
+	fi
+fi
 
 mkdir -p "${root}/images"
 mkdir -p "${root}/dist"
@@ -101,16 +127,22 @@ else
 	cp "${scriptDir}/templates/cover.svg" "${root}/images/cover.svg"
 fi
 
-sed --in-place --regexp-extended "s/TITLE/${title}/g" "${root}/src/epub/text/titlepage.xhtml"
-sed --in-place --regexp-extended "s/AUTHOR/${author}/g" "${root}/src/epub/text/titlepage.xhtml"
-sed --in-place --regexp-extended "s/URLAUTHOR/${urlAuthor}/g" "${root}/src/epub/content.opf"
-sed --in-place --regexp-extended "s/URLTITLE/${urlTitle}/g" "${root}/src/epub/content.opf"
-sed --in-place --regexp-extended "s/AUTHOR/${author}/g" "${root}/src/epub/content.opf"
-sed --in-place --regexp-extended "s/TITLE/${title}/g" "${root}/src/epub/content.opf"
-sed --in-place --regexp-extended "s/URLAUTHOR/${urlAuthor}/g" "${root}/src/epub/text/colophon.xhtml"
-sed --in-place --regexp-extended "s/URLTITLE/${urlTitle}/g" "${root}/src/epub/text/colophon.xhtml"
-sed --in-place --regexp-extended "s/TITLE/${title}/g" "${root}/src/epub/text/colophon.xhtml"
-sed --in-place --regexp-extended "s/AUTHOR/${author}/g" "${root}/src/epub/text/colophon.xhtml"
+identifier="${urlAuthor}/${urlTitle}"
+if [ "${urlTranslator}" != "" ]; then
+	identifier="${identifier}/${urlTranslator}"
+fi
+if [ "${urlIllustrator}" != "" ]; then
+	identifier="${identifier}/${urlIllustrator}"
+fi
+
+sed --in-place --regexp-extended "s|TITLE|${title}|g" "${root}/src/epub/text/titlepage.xhtml"
+sed --in-place --regexp-extended "s|AUTHOR|${author}|g" "${root}/src/epub/text/titlepage.xhtml"
+sed --in-place --regexp-extended "s|SEIDENTIFIER|${identifier}|g" "${root}/src/epub/content.opf"
+sed --in-place --regexp-extended "s|AUTHOR|${author}|g" "${root}/src/epub/content.opf"
+sed --in-place --regexp-extended "s|TITLE|${title}|g" "${root}/src/epub/content.opf"
+sed --in-place --regexp-extended "s|SEIDENTIFIER|${identifier}|g" "${root}/src/epub/text/colophon.xhtml"
+sed --in-place --regexp-extended "s|TITLE|${title}|g" "${root}/src/epub/text/colophon.xhtml"
+sed --in-place --regexp-extended "s|AUTHOR|${author}|g" "${root}/src/epub/text/colophon.xhtml"
 
 git init --quiet "${root}"
 printf "dist/*\n" > "${root}/.gitignore"
@@ -123,16 +155,9 @@ fi
 
 #Create github repo
 if [ "${initializeGithub}" = true ]; then
-	defaultRepoName="${urlAuthor}-${urlTitle}"
-	echo "Enter a name for a new Github repository.  The format for Github repositories is: <url-author>-<url-title>[-<url-contributors>]."
-	echo "Leave blank to use: ${defaultRepoName}"
-	read repoName
+	repoName=$(echo "${identifier}" | sed "s|/|-|g")
 
-	if [ "${repoName}" = "" ]; then
-		repoName="${defaultRepoName}"
-	fi
-
-	sed --in-place "s|VCSLINK|https://github.com/standardebooks/${repoName}|" "${root}/src/epub/content.opf"
+	sed --in-place "s|VCSIDENTIFIER|${repoName}|" "${root}/src/epub/content.opf"
 
 	echo "Enter your Github username:"
 	read githubUsername

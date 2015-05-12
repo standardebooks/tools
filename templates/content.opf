@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" prefix="cc: http://creativecommons.org/ns, se: http://standardebooks.org/vocab/1.0" unique-identifier="uid" version="3.0" xml:lang="en-US">
 	<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
-		<dc:identifier id="uid">url:https://standardebooks.org/ebooks/URLAUTHOR/URLTITLE</dc:identifier>
+		<dc:identifier id="uid">url:https://standardebooks.org/ebooks/SEIDENTIFIER</dc:identifier>
 		<dc:date>2014-05-25T00:00:00Z</dc:date>
 		<meta property="dcterms:modified">2014-10-24T04:27:23Z</meta>
 		<dc:publisher id="publisher">Standard Ebooks</dc:publisher>
@@ -33,7 +33,7 @@
 		<dc:source>LINK</dc:source>
 		<meta property="se:word-count">WORDCOUNT</meta>
 		<meta property="se:url.encyclopedia.wikipedia">WIKILINK</meta>
-		<meta property="se:url.vcs.github">VCSLINK</meta>
+		<meta property="se:url.vcs.github">https://github.com/standardebooks/VCSIDENTIFIER</meta>
 		<dc:creator id="author">AUTHOR</dc:creator>
 		<meta property="file-as" refines="#author">SORT</meta>
 		<meta property="se:name.person.full-name" refines="#author">FULLNAME</meta>
