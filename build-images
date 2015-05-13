@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 usage(){
 	fmt <<EOF
 DESCRIPTION
@@ -33,6 +33,9 @@ dirs=""
 currentCoverSha1=""
 currentTitleSha1=""
 force="false"
+
+#Set xmllint to use tab indentation.
+export XMLLINT_INDENT=$(printf "\t")
 
 while [ $# -gt 0 ]
 do
@@ -129,6 +132,9 @@ do
 		#Embed our sha1sum
 		sed --regexp-extended --in-place "s|<svg|<svg xmlns:se=\"https://standardebooks.org/vocab/1.0\" se:generated-from=\"${currentCoverSha1}\"|" "${destDir}/cover.svg"
 
+		#Clean up the final SVG
+		xmllint --c14n "${destDir}/cover.svg" | (printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' && cat) | xmllint --output "${destDir}/cover.svg" --format -
+
 		if [ "${verbose}" = "true" ]; then
 			printf " OK\n"
 		fi
@@ -175,6 +181,9 @@ do
 		
 		#Embed our sha1sum
 		sed --regexp-extended --in-place "s|<svg|<svg xmlns:se=\"https://standardebooks.org/vocab/1.0\" se:generated-from=\"${currentTitleSha1}\"|" "${destDir}/titlepage.svg"
+
+		#Clean up the final SVG
+		xmllint --c14n "${destDir}/titlepage.svg" | (printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' && cat) | xmllint --output "${destDir}/titlepage.svg" --format -
 
 		if [ "${verbose}" = "true" ]; then
 			printf " OK\n"
