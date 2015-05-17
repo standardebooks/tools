@@ -161,6 +161,7 @@ do
 		s/([^a-z]+)Mmes(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mmes.<\/abbr>\3/g
 		s/([^a-z]+)Mlle(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mlle.<\/abbr>\3/g
 		s/([^a-z]+)Mlles(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mlles.<\/abbr>\3/g
+		s/P\.S\./<abbr>P.S.<\/abbr>/g
 
 		#Sometimes the above abbreviations might get caught up in an image's alt tag, so remove the <abbr> tag from those cases.
 		#The funny construction of this sed command makes it recursive, since we may have multiple <abbr>s embedded in a tag.
