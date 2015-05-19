@@ -96,7 +96,7 @@ if [ -d "${root}" ]; then
 		    esac
 		done
 	fi
-	if [ "${force}" = true ]; the
+	if [ "${force}" = true ]; then
 		rm -rf "${root}"
 	fi
 fi
