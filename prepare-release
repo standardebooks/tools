@@ -47,7 +47,7 @@ do
 	srcDir="$(realpath "${i%/}")"
 
 	if [ ! -d "${srcDir}/src" ]; then
-		die "${srcDir} doesn't look like a Standard Ebooks ebook source directory."
+		die "${srcDir} doesn't look like a Standard Ebook source directory."
 	fi
 
 	if [ "${verbose}" = "true" ]; then

@@ -12,19 +12,19 @@ This script isn't perfect; proofreading is required, especially near closing quo
 
 ##build
 
-Build an ebook from a Standard Ebooks ebook source directory and place the output in DIRECTORY/dist/.
+Build an ebook from a Standard Ebook source directory and place the output in DIRECTORY/dist/.
 
 ##build-cover
 
-Build an ebook cover a Standard Ebooks ebook source directory and place the output in DIRECTORY/src/epub/images/.
+Build an ebook cover a Standard Ebook source directory and place the output in DIRECTORY/src/epub/images/.
 
 ##clean
 
-Prettify source files in a Standard Ebooks ebook source directory, including canonicalizing XML and minifying SVGs. Note that this only prettifies the source code; it doesn't perform typography changes.
+Prettify source files in a Standard Ebook source directory, including canonicalizing XML and minifying SVGs. Note that this only prettifies the source code; it doesn't perform typography changes.
 
 ##create-draft
 
-Create a skeleton of a new Standard Ebooks ebook.
+Create a skeleton of a new Standard Ebook.
 
 ##endnotes2kindle
 
@@ -65,6 +65,10 @@ Convert a Roman numeral to a decimal number.
 ##titlecase
 
 Convert a string to titlecase.
+
+##typogrify
+
+Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory.
 
 ##unicode-names
 

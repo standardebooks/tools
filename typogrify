@@ -2,7 +2,7 @@
 usage(){
 	fmt <<EOF
 DESCRIPTION
-	Apply typography tweaks to a Standard Ebooks ebook source directory.
+	Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory.
 
 USAGE
 	typogrify [-v,--verbose] [-nq,--no-quotes] DIRECTORY [DIRECTORY...]
@@ -80,7 +80,7 @@ do
 	srcDir="$(realpath "${i%/}")"
 	
 	if [ ! -d "${srcDir}/src" ]; then
-		die "${srcDir} doesn't look like a Standard Ebooks ebook source directory."
+		die "${srcDir} doesn't look like a Standard Ebook source directory."
 	fi
 
 	if [ "${verbose}" = "true" ]; then

@@ -2,7 +2,7 @@
 usage(){
 	fmt <<EOF
 DESCRIPTION
-	Create a skeleton of a new Standard Ebooks ebook.
+	Create a skeleton of a new Standard Ebook.
 
 USAGE
 	create-ebook [-e,--email=EMAIL] [-g,--github] [-f,--force] -a,--author=AUTHOR -t,--title=TITLE [-r,--translator=TRANSLATOR] [-i,--illustrator=ILLUSTRATOR]
