@@ -1,0 +1,85 @@
+#!/bin/bash
+
+timestamp="$(date --utc +%s)"
+isoTimestamp="$(date -d @${timestamp} --utc +"%Y-%m-%dT%H:%M:%SZ")"
+friendlyTimestamp="$(date -d @${timestamp} --utc +"%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>" | sed --regexp-extended "s/\s+/ /g" | sed "s/>AM/>a.m./" | sed "s/>PM/>p.m./")"
+scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+wordcountPath="${scriptDir}/wordcount"
+contentOpfFilePath="${ebookRoot}src/epub/content.opf"
+colophonPath="${ebookRoot}src/epub/text/colophon.xhtml"
+dirs=""
+verbose="false"
+
+while [ $# -gt 0 ]
+do
+	case "$1" in
+		-v|--verbose)
+			verbose="true"
+		;;
+		*)
+			dirs=$(printf "%s\n%s" "${dirs}" "$1")
+		;;
+	esac
+	shift
+done
+
+printf "%s\n" "${dirs}" | while IFS= read -r i;
+do
+	if [ "${i}" = "" ]; then
+		continue
+	fi
+
+	srcDir="$(realpath "${i%/}")"
+
+	if [ ! -d "${srcDir}/src" ]; then
+		die "${srcDir} doesn't look like a Standard Ebooks ebook source directory."
+	fi
+
+	if [ "${verbose}" = "true" ]; then
+		printf "Preparing %s ...\n" "${srcDir}"
+	fi
+
+	if [ "${verbose}" = "true" ]; then
+		printf "\tUpdating word count ..."
+	fi
+
+	wordCount=0
+	for file in $(find "${srcDir}" -name "*.xhtml")
+	do
+		filename=$(basename "${file}")
+		if [ "${filename}" != "titlepage.xhtml" -a "${filename}" != "colophon.xhtml" -a "${filename}" != "halftitle.xhtml" -a "${filename}" != "unlicense.xhtml" -a "${filename}" != "endnotes.xhtml" -a "${filename}" != "toc.xhtml" ]; then
+			currentCount=$("${wordcountPath}" "${file}")
+			wordCount=$((${wordCount} + ${currentCount}))
+		fi
+	done
+	sed --in-place --regexp-extended "s|<meta property=\"se:word-count\">[^<]*</meta>|<meta property=\"se:word-count\">${wordCount}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+
+	if [ "${verbose}" = "true" ]; then
+		printf " Done.\n"
+	fi
+
+	grep --quiet "RELEASEDATE" "${srcDir}/src/epub/content.opf"
+	if [ $? -eq 0 ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\tSetting release date ..."
+		fi
+		
+		sed --in-place --regexp-extended "s|<dc:date>[^<]*</dc:date>|<dc:date>${isoTimestamp}</dc:date>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+		sed --in-place --regexp-extended "s|<span class=\"release-date\">.+?</span>|<span class=\"release-date\">${friendlyTimestamp}</span>|g" "${srcDir}/src/epub/text/colophon.xhtml" > /dev/null 2>&1
+
+		if [ "${verbose}" = "true" ]; then
+			printf " Done.\n"
+		fi
+	fi
+
+	if [ "${verbose}" = "true" ]; then
+		printf "\tSetting modified date ..."
+	fi
+
+	sed --in-place --regexp-extended "s|<meta property=\"dcterms:modified\">[^<]*</meta>|<meta property=\"dcterms:modified\">${isoTimestamp}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+	sed --in-place --regexp-extended "s|<span class=\"revision-date\">.+?</span>|<span class=\"revision-date\">${friendlyTimestamp}</span>|g" "${srcDir}/src/epub/text/colophon.xhtml" > /dev/null 2>&1
+
+	if [ "${verbose}" = "true" ]; then
+		printf " Done.\n"
+	fi
+done

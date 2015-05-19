@@ -149,7 +149,6 @@ sed --in-place "s|AUTHOR|${author}|g" "${root}/src/epub/text/colophon.xhtml"
 
 git init --quiet "${root}"
 printf "dist/*\n" > "${root}/.gitignore"
-cp "${scriptDir}/pre-commit"  "${root}/.git/hooks/"
 
 if [ "${customEmail}" != "" ]; then
 	cd "${root}"

@@ -42,9 +42,9 @@ Convert all arguments to URL-safe strings.
 
 Replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace "ash-tray" with "ashtray".
 
-##pre-commit
+##prepare-release
 
-A useful script to put in .git/hooks that will automatically update content.opf and colophon.xhtml with word count and timestamp information.
+Calculate the ebook's word count, and update content.opf and colophon.xhtml with release and modified timestamps.
 
 ##split-file
 
