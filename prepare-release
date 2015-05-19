@@ -1,4 +1,19 @@
 #!/bin/bash
+usage(){
+	fmt <<EOF
+DESCRIPTION
+	Calculate work word count, insert release date if none set, update modified date, and check for the presence of draft CSS rules.
+
+USAGE
+	build [-v,--verbose] DIRECTORY [DIRECTORY...]
+		DIRECTORY is the source directory, which must contain DIRECTORY/src/.
+EOF
+	exit
+}
+die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
+require(){ command -v $1 > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
+if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
+#End boilerplate
 
 timestamp="$(date --utc +%s)"
 isoTimestamp="$(date -d @${timestamp} --utc +"%Y-%m-%dT%H:%M:%SZ")"
@@ -81,5 +96,13 @@ do
 
 	if [ "${verbose}" = "true" ]; then
 		printf " Done.\n"
+	fi
+
+	grep --quiet -i "helpful during drafting" "${srcDir}/src/epub/css/local.css"
+	if [ $? -eq 0 ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\t"
+		fi
+		printf "Warning: There seem to be draft CSS rules in local.css!\n" 1>&2
 	fi
 done
