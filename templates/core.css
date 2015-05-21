@@ -101,6 +101,10 @@ section[epub|type~="colophon"] p{
 	text-indent: 0;
 }
 
+section[epub|type~="colophon"] img[epub|type~="z3998:publisher-logo"]{
+	width: 25%;
+}
+
 section[epub|type~="colophon"] p + p:before{
 	border-top: 1px solid;
 	content: "";
