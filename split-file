@@ -27,7 +27,7 @@ perl -0pe 's/^\s*<\!--se:split-->//' "$1" > /tmp/file-temp.xhtml
 
 awk 'BEGIN {i=1}/<!--se:split-->/{i++}{print > "/tmp/chapter-"i".xhtml"}' /tmp/file-temp.xhtml
 
-for file in $(find "/tmp/" -name "chapter-*.xhtml" 2> /dev/null)
+for file in $(find "/tmp/" -maxdepth 1 -name "chapter-*.xhtml" 2> /dev/null)
 do
 	chapterNumber=$(echo "${file}" | sed "s/chapter-//" | grep --extended-regexp --only-matching "[0-9]+")
 	
