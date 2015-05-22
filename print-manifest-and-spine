@@ -96,8 +96,8 @@ do
 	s|(.*)|\t\t<itemref idref=\"\1\"/>|g
 	" >> /tmp/spine
 
-	ls "${srcDir}/src/epub/text/" | grep --quiet "endnotes.xhtml" && echo -e "\t\t<itemref id=\"endnotes.xhtml\"/>" >> /tmp/spine
-	ls "${srcDir}/src/epub/text/" | grep --quiet "loi.xhtml" && echo -e "\t\t<itemref id=\"loi.xhtml\"/>" >> /tmp/spine
+	ls "${srcDir}/src/epub/text/" | grep --quiet "endnotes.xhtml" && echo -e "\t\t<itemref idref=\"endnotes.xhtml\"/>" >> /tmp/spine
+	ls "${srcDir}/src/epub/text/" | grep --quiet "loi.xhtml" && echo -e "\t\t<itemref idref=\"loi.xhtml\"/>" >> /tmp/spine
 
 	echo -e "\t\t<itemref idref=\"colophon.xhtml\"/>" >> /tmp/spine
 	echo -e "\t\t<itemref idref=\"unlicense.xhtml\"/>" >> /tmp/spine
