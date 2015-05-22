@@ -2,18 +2,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" height="140" version="1.1" width="220">
 	<title>The Standard Ebooks logo</title>
 	<desc>The logo portrays an open book with the letter "S" on the left page and the letter "E" on the right page.  A power cord is attached to the bottom of the book and curled beneath it.  The book is surrounded by laurels.</desc>
-	<metadata>
-		<rdf:RDF xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xhtml="http://www.w3.org/1999/xhtml/vocab#">
-			<cc:Work rdf:about="">
-				<dc:title>The Standard Ebooks logo</dc:title>
-				<dc:format>image/svg+xml</dc:format>
-				<dc:date>2015-05-01</dc:date>
-				<dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-        			<cc:attributionURL rdf:reource="https://standardebooks.org"/>
-				<dc:description>The logo portrays an open book with the letter "S" on the left page and the letter "E" on the right page.  A power cord is attached to the bottom of the book and curled beneath it.  The book is surrounded by laurels.</dc:description>
-			</cc:Work>
-		</rdf:RDF>
-	</metadata>
 	<path d="M 110,127 110,120 C 110,120 87.197171,110.99223 78.550691,114.75819 75.816431,115.9491 75.816431,119.67752 78.550691,120.86841 95.843641,128.40035 121.92594,101.11604 139.2189,108.64798 144.68742,111.02978 145.1622,118.94631 139.2189,120.86841 128.50449,124.33354 110,110 110,110 L 110,105" id="path1570-7" style="fill:none;stroke:#222222;stroke-width:2.99999976;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"/>
 	<path d="M 113.0937,139.99839 C 113.65666,139.99825 114.11029,139.54103 114.11013,138.97385 L 114.10911,134.80548 116.65971,134.80488 C 116.83802,134.8052 117.00037,134.6415 117,134.46187 L 116.99901,130.49058 C 116.99815,127.11752 114.65802,124.30624 111.52131,123.60803 L 111.51968,121.53452 C 111.51949,120.6839 110.84007,119.99978 109.99574,120 109.15141,120.00021 108.47234,120.68467 108.47257,121.5353 L 108.4742,123.60879 C 105.33789,124.30862 102.99918,127.12107 103,130.4941 L 103.001,134.46539 C 103.00067,134.64504 103.16318,134.80857 103.34149,134.80822 L 105.89207,134.80761 105.89311,138.97599 C 105.89323,139.54314 106.34708,140.00015 106.91005,140 107.47303,139.99987 107.92664,139.54264 107.9265,138.97546 L 107.92548,134.80709 112.07547,134.80601 112.07652,138.97438 C 112.07665,139.54154 112.53048,139.99854 113.09347,139.99839 Z" id="path2821-0" style="color:#000000;fill:#222222;fill-opacity:1"/>
 	<g id="g1012-0" style="fill:#222222;fill-opacity:1" transform="matrix(2.4863146,0,0,2.4844821,-1.1839191,-866.43627)">
