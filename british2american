@@ -1,6 +1,4 @@
 #!/bin/bash
-
-#!/bin/sh
 usage(){
 	fmt <<EOF
 DESCRIPTION
