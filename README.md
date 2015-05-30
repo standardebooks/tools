@@ -34,6 +34,10 @@ Convert epub-friendly endnotes to Kindle-friendly popup endnotes.  Generally onl
 
 Generate the "All Standard Ebooks" OPDS feed and send to standard output.
 
+##generate-words
+
+Generate the `words` file used by the `modernize-hyphenation` script and print to standard output.
+
 ##print-manifest-and-spine
 
 Create a <manifest> and <spine> tag for content.opf based on the passed Standard Ebooks source directory and print to standard output.
