@@ -1,6 +1,10 @@
 @charset "UTF-8";
 @namespace epub "http://www.idpf.org/2007/ops";
 
+body{
+	hyphens: auto;
+}
+
 section[epub|type~="titlepage"]{
 	margin: 0;
 	padding: 0;
@@ -125,6 +129,18 @@ section[epub|type~="copyright-page"] p{
 	text-indent: 0;
 }
 
-section[epub|type~="copyright-page"] blockquote{
+section[epub|type~="copyright-page"] blockquote p{
 	font-style: italic;
+	text-align: left;
+	text-indent: 0;
+}
+
+section[epub|type~="copyright-page"] blockquote p span{
+	display: block;
+	padding-left: 1em;
+	text-indent: -1em;
+}
+
+section[epub|type~="copyright-page"] blockquote br{
+	display: none;
 }

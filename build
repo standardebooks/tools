@@ -221,7 +221,7 @@ do
 
 	#Add some compatibility CSS rules
 	find "${workDir}" -iname "*.css" -print0 | xargs -0 sed --in-place --regexp-extended "s/(page\-break\-(before|after|inside)\s*\:\s*(.+))/\1\n\t-webkit-column-break-\2: \3 \/* For Readium *\//g" 
-	find "${workDir}" -iname "*.css" -print0 | xargs -0 sed --in-place --regexp-extended "s/hyphens\s*\:\s*(.+)/hyphens: \1\n\t-webkit-hyphens: \1\n\t-moz-hyphens: \1/g" 
+	find "${workDir}" -iname "*.css" -print0 | xargs -0 sed --in-place --regexp-extended "s/hyphens\s*\:\s*(.+)/hyphens: \1\n\t-webkit-hyphens: \1\n\t-epub-hyphens: \1\n\t-moz-hyphens: \1/g" 
 
 	#Create the compatible epub file
 	zip -9 --no-dir-entries -X --recurse-paths "${destDir}/${epub2OutputFilename}" mimetype META-INF "${epubDir}" > /dev/null 2>&1
