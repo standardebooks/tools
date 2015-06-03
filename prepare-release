@@ -5,8 +5,9 @@ DESCRIPTION
 	Calculate work word count, insert release date if none set, update modified date, and check for the presence of draft CSS rules.
 
 USAGE
-	build [-v,--verbose] DIRECTORY [DIRECTORY...]
+	build [-v,--verbose] [-n,--no-word-count] DIRECTORY [DIRECTORY...]
 		DIRECTORY is the source directory, which must contain DIRECTORY/src/.
+		With the --no-word-count option, don't perform a word count calculation.
 EOF
 	exit
 }
@@ -24,12 +25,16 @@ contentOpfFilePath="${ebookRoot}src/epub/content.opf"
 colophonPath="${ebookRoot}src/epub/text/colophon.xhtml"
 dirs=""
 verbose="false"
+doWordCount="true"
 
 while [ $# -gt 0 ]
 do
 	case "$1" in
 		-v|--verbose)
 			verbose="true"
+		;;
+		-n|--no-word-count)
+			doWordCount="false"
 		;;
 		*)
 			dirs=$(printf "%s\n%s" "${dirs}" "$1")
@@ -54,23 +59,25 @@ do
 		printf "Preparing %s ...\n" "${srcDir}"
 	fi
 
-	if [ "${verbose}" = "true" ]; then
-		printf "\tUpdating word count ..."
-	fi
-
-	wordCount=0
-	for file in $(find "${srcDir}" -name "*.xhtml")
-	do
-		filename=$(basename "${file}")
-		if [ "${filename}" != "titlepage.xhtml" -a "${filename}" != "colophon.xhtml" -a "${filename}" != "halftitle.xhtml" -a "${filename}" != "unlicense.xhtml" -a "${filename}" != "endnotes.xhtml" -a "${filename}" != "toc.xhtml" ]; then
-			currentCount=$("${wordcountPath}" "${file}")
-			wordCount=$((${wordCount} + ${currentCount}))
+	if [ "${doWordCount}" = "true" ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\tUpdating word count ..."
 		fi
-	done
-	sed --in-place --regexp-extended "s|<meta property=\"se:word-count\">[^<]*</meta>|<meta property=\"se:word-count\">${wordCount}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
 
-	if [ "${verbose}" = "true" ]; then
-		printf " Done.\n"
+		wordCount=0
+		for file in $(find "${srcDir}" -name "*.xhtml")
+		do
+			filename=$(basename "${file}")
+			if [ "${filename}" != "titlepage.xhtml" -a "${filename}" != "colophon.xhtml" -a "${filename}" != "halftitle.xhtml" -a "${filename}" != "unlicense.xhtml" -a "${filename}" != "endnotes.xhtml" -a "${filename}" != "toc.xhtml" ]; then
+				currentCount=$("${wordcountPath}" "${file}")
+				wordCount=$((${wordCount} + ${currentCount}))
+			fi
+		done
+		sed --in-place --regexp-extended "s|<meta property=\"se:word-count\">[^<]*</meta>|<meta property=\"se:word-count\">${wordCount}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+
+		if [ "${verbose}" = "true" ]; then
+			printf " Done.\n"
+		fi
 	fi
 
 	grep --quiet "RELEASEDATE" "${srcDir}/src/epub/content.opf"
