@@ -23,11 +23,6 @@ if [ $# -eq 0 ]; then
 	usage
 fi
 
-#OTHER COMMON HYPHENATION ISSUES
-# *-pocket
-# *-room
-# *-tree
-
 scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 dictPath="${scriptDir}/words"
 
