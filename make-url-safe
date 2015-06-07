@@ -22,11 +22,13 @@ do
 	#4. Remove apostrophes.
 	#5. Convert any non-digit, non-letter character to a space.
 	#6. Convert any instance of one or more space to a dash.
+	#7. Remove trailing dashes
 	printf "%s\n" "${i}" \
 		| iconv -f utf8 -t ascii//TRANSLIT \
 		| sed --expression="s/^ *//" --expression="s/ *$//" \
 		| tr '[:upper:]' '[:lower:]' \
 		| sed "s/'//g" \
 		| sed "s/[^0-9a-zA-Z]/ /g" \
-		| sed --regexp-extended "s/\s+/-/g"
+		| sed --regexp-extended "s/\s+/-/g" \
+		| sed --regexp-extended "s/\-$//g"
 done
