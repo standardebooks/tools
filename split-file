@@ -20,7 +20,7 @@ fi
 
 scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-rm -f "/tmp/chapter-*.xhtml" &> /dev/null
+rm -f /tmp/chapter-*.xhtml &> /dev/null
 
 #Remove leading split tags
 perl -0pe 's/^\s*<\!--se:split-->//' "$1" > /tmp/file-temp.xhtml
@@ -29,6 +29,8 @@ awk 'BEGIN {i=1}/<!--se:split-->/{i++}{print > "/tmp/chapter-"i".xhtml"}' /tmp/f
 
 for file in $(find "/tmp/" -maxdepth 1 -name "chapter-*.xhtml" 2> /dev/null)
 do
+	rm -f /tmp/file-temp.xhtml /tmp/chapter-temp.xhtml &> /dev/null
+
 	chapterNumber=$(echo "${file}" | sed "s/chapter-//" | grep --extended-regexp --only-matching "[0-9]+")
 	
 	sed "s/NUMBER/${chapterNumber}/g" "${scriptDir}"/templates/header.xhtml > /tmp/chapter-temp.xhtml
@@ -44,5 +46,4 @@ do
 	mv /tmp/chapter-temp.xhtml ./"${filename}"
 done
 
-rm -f /tmp/file-temp.xhtml &> /dev/null
-rm -f "/tmp/chapter-*.xhtml" &> /dev/null
+rm -f /tmp/chapter-*.xhtml &> /dev/null
