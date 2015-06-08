@@ -150,8 +150,9 @@ sed --in-place "s|AUTHOR|${author}|g" "${root}/src/epub/text/colophon.xhtml"
 git init --quiet "${root}"
 printf "dist/*\n" > "${root}/.gitignore"
 
+cd "${root}"
+
 if [ "${customEmail}" != "" ]; then
-	cd "${root}"
 	git config user.email "${customEmail}"
 fi
 
@@ -164,7 +165,6 @@ if [ "${initializeGithub}" = true ]; then
 
 	echo "${output}" | grep -q -i "201 OK"
 	if [ $? -ne 0 ]; then
-		cd "${root}"
 		git remote add github git@github.com:"standardebooks/${repoName}.git"
 	else
 		echo "Error during Github request:" 1>&2
