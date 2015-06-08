@@ -38,18 +38,18 @@
 		<meta property="file-as" refines="#author">SORT</meta>
 		<meta property="se:name.person.full-name" refines="#author">FULLNAME</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#author">WIKILINK</meta>
-		<meta property="url.authority.nacoaf" refines="#author">NACOAFLINK</meta>
+		<meta property="se:url.authority.nacoaf" refines="#author">NACOAFLINK</meta>
 		<meta property="role" refines="#author" scheme="marc:relators">aut</meta>
 		<dc:contributor id="translator">CONTRIB1</dc:contributor>
 		<meta property="file-as" refines="#translator">CONTRIB1SORT</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#translator">WIKILINK</meta>
-		<meta property="url.authority.nacoaf" refines="#translator">NACOAFLINK</meta>
+		<meta property="se:url.authority.nacoaf" refines="#translator">NACOAFLINK</meta>
 		<meta property="display-seq" refines="#translator">1</meta>
 		<meta property="role" refines="#translator" scheme="marc:relators">trl</meta>
 		<dc:contributor id="artist">COVERARTIST</dc:contributor>
 		<meta property="file-as" refines="#artist">COVERARTISTSORT</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#artist">WIKILINK</meta>
-		<meta property="url.authority.nacoaf" refines="#artist">NACOAFLINK</meta>
+		<meta property="se:url.authority.nacoaf" refines="#artist">NACOAFLINK</meta>
 		<meta property="role" refines="#artist" scheme="marc:relators">art</meta>
 		<dc:contributor id="transcriber-1">TRANSCRIBER</dc:contributor>
 		<meta property="file-as" refines="#transcriber-1">TRANSCRIBERSORT</meta>
