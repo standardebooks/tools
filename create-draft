@@ -128,17 +128,21 @@ else
 fi
 
 identifier="${urlAuthor}/${urlTitle}"
+titleString="${title}, by ${author}"
 if [ "${urlTranslator}" != "" ]; then
 	identifier="${identifier}/${urlTranslator}"
+	titleString="${titleString}. Translated by ${translator}"
 fi
 if [ "${urlIllustrator}" != "" ]; then
 	identifier="${identifier}/${urlIllustrator}"
+	titleString="${titleString}. Illustrated by ${illustrator}"
 fi
 
 repoName=$(echo "${identifier}" | sed "s|/|_|g")
 
-sed --in-place "s|TITLE|${title}|g" "${root}/src/epub/text/titlepage.xhtml"
-sed --in-place "s|AUTHOR|${author}|g" "${root}/src/epub/text/titlepage.xhtml"
+sed --in-place "s|TITLESTRING|${titleString}|g" "${root}/src/epub/text/titlepage.xhtml"
+sed --in-place "s|TITLESTRING|${titleString}|g" "${root}/images/titlepage.svg"
+sed --in-place "s|TITLESTRING|${titleString}|g" "${root}/images/cover.svg"
 sed --in-place "s|SEIDENTIFIER|${identifier}|g" "${root}/src/epub/content.opf"
 sed --in-place "s|AUTHOR|${author}|g" "${root}/src/epub/content.opf"
 sed --in-place "s|TITLE|${title}|g" "${root}/src/epub/content.opf"
