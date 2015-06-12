@@ -104,9 +104,12 @@ do
 	#Get work title
 	#We have to use xmlstarlet here because xpath chokes on utf8
 	title="$(xmlstarlet sel -N dc="http://purl.org/dc/elements/1.1/" -t -m "//dc:title" -v "." -n "${srcDir}/src/epub/content.opf" | head -n 1)"
+	author="$(xmlstarlet sel -N dc="http://purl.org/dc/elements/1.1/" -t -m "//dc:creator" -v "." -n "${srcDir}/src/epub/content.opf" | head -n 1)"
 
-	outputFilename=$("${makeUrlSafePath}" "${title}")
-
+	urlTitle=$("${makeUrlSafePath}" "${title}")
+	urlAuthor=$("${makeUrlSafePath}" "${author}")
+	outputFilename="${urlAuthor}_${urlTitle}"
+	
 	workDir="/tmp/${outputFilename}.epub"
 	epub2OutputFilename="${outputFilename}.epub"
 	mobiOutputFilename="${outputFilename}.mobi"
