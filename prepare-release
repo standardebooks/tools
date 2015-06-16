@@ -112,4 +112,17 @@ do
 		fi
 		printf "Warning: There seem to be draft CSS rules in local.css!\n" 1>&2
 	fi
+
+	grep --extended-regexp --no-filename --only-matching "<abbr[^<]+>" "${srcDir}/src/epub/text/"* | sed 's/<abbr class=\"//g' | sed 's/<abbr xml:lang="//g' | sed 's/">//g' | sed --regexp-extended "s/\s+/\n/g" | sort | uniq | while read class;
+	do
+		if [ "${class}" = "name" -o "${class}" = "era" -o "${class}" = "degree" -o "${class}" = "initiialism" -o "${class}" = "acronym" -o "${class}" = "temperature" -o "${class}" = "postal" -o "${class}" = "timezone" ]; then
+			grep --quiet "abbr\.${class}" "${srcDir}/src/epub/css/local.css"
+			if [ $? -ne 0 ]; then
+				if [ "${verbose}" = "true" ]; then
+					printf "\t"
+				fi
+				printf "Warning: There seem to be an <abbr class=\"${class}\"> tag, but no abbr.${class} styling!\n" 1>&2
+			fi
+		fi
+	done
 done
