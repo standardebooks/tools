@@ -148,11 +148,12 @@ do
 		s/([^a-z]+)Mrs(\.?)\s+/\1<abbr>Mrs.<\/abbr>${nbsp}/g
 		s/([^a-z]+)Ms(\.?)\s+/\1<abbr>Ms.<\/abbr>${nbsp}/g
 		s/([^a-z]+)Dr(\.?)\s+/\1<abbr>Dr.<\/abbr>${nbsp}/g
+		s/([^a-z]+)Dr(\.?)\s+/\1<abbr>Prof.<\/abbr>${nbsp}/g
+		s/([^a-z]+)Dr(\.?)\s+/\1<abbr>Lieut.<\/abbr>${nbsp}/g
 		s/([^a-z]+)Fr(\.?)\s+/\1<abbr>Fr.<\/abbr>${nbsp}/g
 		s/([^a-z]+)Lt(\.?)\s+/\1<abbr>Lt.<\/abbr>${nbsp}/g
 		s/([^a-z]+)Capt(\.?)\s+/\1<abbr>Capt.<\/abbr>${nbsp}/g
 		s/([^a-z]+)Pvt(\.?)\s+/\1<abbr>Pvt.<\/abbr>${nbsp}/g
-		s/([^a-z]+)Ph(\.?)D(\.?)(\s*)/\1<abbr>Ph.D.<\/abbr>\4/g
 		s/([^a-z]+)Esq([^a-z\.])/\1<abbr>Esq.<\/abbr>\2/g
 		s/([^a-z]+)Mt(\.?)\s+/\1<abbr>Mt.<\/abbr>${nbsp}/g
 		s/([^a-z]+)St(\.?)(\s+)/\1<abbr>St.<\/abbr>\3/g
@@ -161,7 +162,7 @@ do
 		s/([^a-z]+)Mmes(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mmes.<\/abbr>\3/g
 		s/([^a-z]+)Mlle(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mlle.<\/abbr>\3/g
 		s/([^a-z]+)Mlles(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mlles.<\/abbr>\3/g
-		s/P\.S\./<abbr>P.S.<\/abbr>/g
+		s/(\b)No\.(\s+[0-9]+)/\1<abbr>No.<\/abbr>\2/g
 
 		#Sometimes the above abbreviations might get caught up in an image's alt tag, so remove the <abbr> tag from those cases.
 		#The funny construction of this sed command makes it recursive, since we may have multiple <abbr>s embedded in a tag.
@@ -210,7 +211,8 @@ do
 		s/\s*\.\s*\.\s*\.\s*/…/ig
 		s/\s?…\s?\./.${hairsp}…/ig
 		s/([a-zA-Z])\s?…/\1${hairsp}…/ig
-		s/…\s+([\)”’])/…\1/ig
+		s/…[[:space:]${nbsp}]+([\)”’])/…\1/ig
+		s/([\(“‘])[[:space:]${nbsp}]+…/\1…/ig
 		s/…\s?([\!\?\.\;])/…${hairsp}\1/ig
 		s/([\!\?\.\;”’])\s?…/\1${hairsp}…/ig
 		s/\,\s?…/,${hairsp}…/ig
@@ -225,6 +227,12 @@ do
 		s/([Pp])rotege/\1rotégé/g
 
 		" "${file}"
+
+		perl -pi -e "s/(?<!\<abbr\>)Ph(\.?)D(\.?)/\<abbr class=\"degree\"\>Ph(\.?)D(\.?)\<\/abbr\>/g;" "${file}"
+		perl -pi -e "s/(?<!\<abbr\>)P\.\s*S\./\<abbr\>P.S.\<\/abbr\>/g;" "${file}"
+		perl -pi -e "s/(?<!\<abbr\>)Co\./\<abbr\>Co.\<\/abbr\>/g;" "${file}"
+		perl -pi -e "s/(?<!\<abbr\>)Messrs\./\<abbr\>Messrs.\<\/abbr\>/g;" "${file}"
+		perl -pi -e "s/(?<!\<abbr\>)Prof\./\<abbr\>Prof.\<\/abbr\>/g;" "${file}"
 		
 		#Add <abbr class="name"> tag around initials: [A-Z]\.\s*([A-Z]\.\s*)+
 		
