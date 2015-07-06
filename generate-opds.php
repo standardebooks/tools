@@ -14,7 +14,7 @@ print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 		<name>Standard Ebooks</name>
 		<uri>https://standardebooks.org</uri>
 	</author>
-	<? foreach($contentFiles as $path){ 
+	<? foreach($contentFiles as $path){
 	if($path == '')
 		continue;
 
@@ -77,6 +77,8 @@ print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 		<? foreach($subjects as $subject){ ?>
 		<category scheme="http://purl.org/dc/terms/LCSH" term="<?= htmlentities($subject) ?>"/>
 		<? } ?>
+		<link href="<?= $relativeUrl ?>/dist/cover.jpg" rel="http://opds-spec.org/image" type="image/jpeg"/>
+		<link href="<?= $relativeUrl ?>/dist/cover-thumbnail.jpg" rel="http://opds-spec.org/image/thumbnail" type="image/jpeg"/>
 		<link href="<?= $relativeUrl ?>/src/epub/images/cover.svg" rel="http://opds-spec.org/image" type="image/svg+xml"/>
 		<link href="<?= $relativeUrl ?>/dist/<?= $epubFilename ?>.epub" rel="http://opds-spec.org/acquisition/open-access" type="application/epub+zip"/>
 		<link href="<?= $relativeUrl ?>/dist/<?= $epubFilename ?>.base.epub" rel="http://opds-spec.org/acquisition/open-access" type="application/epub+zip"/>
