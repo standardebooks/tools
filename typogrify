@@ -76,9 +76,9 @@ do
 	if [ "${i}" = "" ]; then
 		continue
 	fi
-	
+
 	srcDir="$(realpath "${i%/}")"
-	
+
 	if [ ! -d "${srcDir}/src" ]; then
 		die "${srcDir} doesn't look like a Standard Ebook source directory."
 	fi
@@ -96,7 +96,7 @@ do
 			fi
 			continue
 		fi
-		
+
 		if [ "${verbose}" = "true" ]; then
 			printf "\tTypogrifying %s ..." "${file}"
 		fi
@@ -109,8 +109,8 @@ do
 			"${smartypantsPath}" "${file}" | xml2asc | recode HTML | sed "s/&/&amp;/g" > "${file}.tmp";
 			mv "${file}.tmp" "${file}"
 		fi
-		
-		
+
+
 		sed --in-place --regexp-extended "
 		#Replace sequential em dashes with the two or three em dash character
 		s/———/⸻/ig
@@ -156,7 +156,6 @@ do
 		s/([^a-z]+)Pvt(\.?)\s+/\1<abbr>Pvt.<\/abbr>${nbsp}/g
 		s/([^a-z]+)Esq([^a-z\.])/\1<abbr>Esq.<\/abbr>\2/g
 		s/([^a-z]+)Mt(\.?)\s+/\1<abbr>Mt.<\/abbr>${nbsp}/g
-		s/([^a-z]+)St(\.?)(\s+)/\1<abbr>St.<\/abbr>\3/g
 		s/([^a-z]+)MM(\.?)(\s+)/\1<abbr xml:lang=\"fr\">MM.<\/abbr>\3/g
 		s/([^a-z]+)Mme(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mme.<\/abbr>\3/g
 		s/([^a-z]+)Mmes(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mmes.<\/abbr>\3/g
@@ -187,9 +186,9 @@ do
 
 		#Years
 		s/‘([0-9]+[^a-zA-Z0-9’])/’\1/ig
-		
+
 		s/‘([Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Tt]is|[Tt]was|[Tt]wixt|[Tt]were|[Tt]ween)(\b)/’\1\2/g
-		
+
 		#House style: remove spacing from common Latinisms
 		s/i\.\s+e\./i.e./g
 		s/e\.\s+g\./e.g./g
@@ -219,23 +218,51 @@ do
 
 		#Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
 		s/([0-9])\s([a-z]{1,3}\.)/\1${nbsp}\2/ig
-		
+
 		#Fix some spelling archaisms
 		s/([Nn])aïve/\1aive/g
 		s/([Nn])a[ïi]vet[ée]/\1aivete/g
 		s/&amp;c\./<abbr>etc.<\/abbr>/g
 		s/([Pp])rotege/\1rotégé/g
 
+		#Fractions
+		s/1\/4/¼/g
+		s/1\/2/½/g
+		s/3\/4/¾/g
+		s/1\/3/⅓/g
+		s/2\/3/⅔/g
+		s/1\/5/⅕/g
+		s/2\/5/⅖/g
+		s/3\/5/⅗/g
+		s/4\/5/⅘/g
+		s/1\/6/⅙/g
+		s/5\/6/⅚/g
+		s/1\/8/⅛/g
+		s/3\/8/⅜/g
+		s/5\/8/⅝/g
+		s/7\/8/⅞/g
+		#Remove spaces between whole numbers and fractions
+		s/([0-9,]+)\s+([¼½¾⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/\1\2/g
+
 		" "${file}"
 
-		perl -pi -e "s/(?<!\<abbr\>)Ph(\.?)D(\.?)/\<abbr class=\"degree\"\>Ph(\.?)D(\.?)\<\/abbr\>/g;" "${file}"
+		perl -pi -e "s/(?<!\<abbr\>)Ph(\.?)D(\.?)/\<abbr class=\"degree\"\>PhD\<\/abbr\>/g;" "${file}"
 		perl -pi -e "s/(?<!\<abbr\>)P\.\s*S\./\<abbr\>P.S.\<\/abbr\>/g;" "${file}"
 		perl -pi -e "s/(?<!\<abbr\>)Co\./\<abbr\>Co.\<\/abbr\>/g;" "${file}"
-		perl -pi -e "s/(?<!\<abbr\>)Messrs\./\<abbr\>Messrs.\<\/abbr\>/g;" "${file}"
+		perl -pi -e "s/(?<!\<abbr\>)Inc\./\<abbr\>Inc.\<\/abbr\>/g;" "${file}"
+		perl -pi -e "s/(?<!\<abbr\>)St\./\<abbr\>St.\<\/abbr\>/g;" "${file}"
+		perl -pi -e "s/(?<!\<abbr\>)Messrs\./\<abbr xml:lang=\"fr\"\>Messrs.\<\/abbr\>/g;" "${file}"
+		perl -pi -e "s/(?<!\<abbr\>)Messers\./\<abbr xml:lang=\"fr\"\>Messers.\<\/abbr\>/g;" "${file}"
 		perl -pi -e "s/(?<!\<abbr\>)Prof\./\<abbr\>Prof.\<\/abbr\>/g;" "${file}"
-		
+
+		#Get Roman numerals >= 2 characters
+		perl -pi -e "s/(?<!\<span epub\:type=\"z3998\:roman\"\>)(\b)([ixv]{2,})(\b)/\1\<span epub:type=\"z3998:roman\"\>\2\<\/span\>\3/ig;" "${file}"
+
+		#Get Roman numerals that are X or V and single characters.  We can't do I for obvious reasons.
+		perl -pi -e "s/(?<!\<span epub\:type=\"z3998\:roman\"\>)(\b)([vx])(\b)/\1\<span epub:type=\"z3998:roman\"\>\2\<\/span\>\3/ig;" "${file}"
+
 		#Add <abbr class="name"> tag around initials: [A-Z]\.\s*([A-Z]\.\s*)+
-		
+
 		#Small caps AM and PM; thin space before Arabic numbers, but not if spelled out.  3&nbsp;<span class="time">a.m.</span>, one <span class="time">a.m.</span>
 
 		#Search coordinates: ([0-9])+’/\1′ and ([0-9])+”/\1″
@@ -243,20 +270,17 @@ do
 		#Search for em-dashes that were not closed correctly by smartypants: —[’”][^<\s]
 
 		#Search for en-dash candidates: /([0-9]+)[\-—]([0-9]+)/\1–\2/sig
-		
+
 		#Surround ampersands in proper names with nbsp: hawkins & harker [a-zA-Z]\.?\s*&amp;\s*[a-zA-Z]
-		
+
 		#Text in all caps should be converted to correct case, surrounded by <b> styled for small caps: /[A-Z]{3,}/
-		
+
 		#Temperature: use unicode minus sign, not hyphen; small caps F and C:  /\-\d+\b/
-		
+
 		#Measurements: A x B x C should be A × B × C: /\sx\s/
 
-		#Convert fractions to characters: 1/2 -> ½, ¼, ¾; see U+00BC thru U+00BE, U+2150 thru U+2189
-		
-		#Search common abbreviations: Co., Inc., M., Messe?rs., etc., &c., i.e., e.g.
-		#Messrs gets <abbr xml:lang="fr">
-		
+		#Search common abbreviations: M., etc., &c., i.e., e.g.
+
 		if [ "${verbose}" = "true" ]; then
 			printf " OK\n"
 		fi
