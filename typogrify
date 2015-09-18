@@ -148,8 +148,9 @@ do
 		s/([^a-z]+)Mrs(\.?)\s+/\1<abbr>Mrs.<\/abbr>${nbsp}/g
 		s/([^a-z]+)Ms(\.?)\s+/\1<abbr>Ms.<\/abbr>${nbsp}/g
 		s/([^a-z]+)Dr(\.?)\s+/\1<abbr>Dr.<\/abbr>${nbsp}/g
-		s/([^a-z]+)Dr(\.?)\s+/\1<abbr>Prof.<\/abbr>${nbsp}/g
-		s/([^a-z]+)Dr(\.?)\s+/\1<abbr>Lieut.<\/abbr>${nbsp}/g
+		s/([^a-z]+)Drs(\.?)\s+/\1<abbr>Drs.<\/abbr>${nbsp}/g
+		s/([^a-z]+)Prof(\.?)\s+/\1<abbr>Prof.<\/abbr>${nbsp}/g
+		s/([^a-z]+)Lieut(\.?)\s+/\1<abbr>Lieut.<\/abbr>${nbsp}/g
 		s/([^a-z]+)Fr(\.?)\s+/\1<abbr>Fr.<\/abbr>${nbsp}/g
 		s/([^a-z]+)Lt(\.?)\s+/\1<abbr>Lt.<\/abbr>${nbsp}/g
 		s/([^a-z]+)Capt(\.?)\s+/\1<abbr>Capt.<\/abbr>${nbsp}/g
@@ -254,6 +255,8 @@ do
 		perl -pi -e "s/(?<!\<abbr\>)Messrs\./\<abbr xml:lang=\"fr\"\>Messrs.\<\/abbr\>/g;" "${file}"
 		perl -pi -e "s/(?<!\<abbr\>)Messers\./\<abbr xml:lang=\"fr\"\>Messers.\<\/abbr\>/g;" "${file}"
 		perl -pi -e "s/(?<!\<abbr\>)Prof\./\<abbr\>Prof.\<\/abbr\>/g;" "${file}"
+		perl -pi -e "s/(?<!\<abbr\>)Lieut\./\<abbr\>Lieut.\<\/abbr\>/g;" "${file}"
+
 
 		#Get Roman numerals >= 2 characters
 		perl -pi -e "s/(?<!\<span epub\:type=\"z3998\:roman\"\>)(\b)([ixv]{2,})(\b)/\1\<span epub:type=\"z3998:roman\"\>\2\<\/span\>\3/ig;" "${file}"
