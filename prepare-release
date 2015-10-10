@@ -85,7 +85,7 @@ do
 		if [ "${verbose}" = "true" ]; then
 			printf "\tSetting release date ..."
 		fi
-		
+
 		sed --in-place --regexp-extended "s|<dc:date>[^<]*</dc:date>|<dc:date>${isoTimestamp}</dc:date>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
 		sed --in-place --regexp-extended "s|<span class=\"release-date\">.+?</span>|<span class=\"release-date\">${friendlyTimestamp}</span>|g" "${srcDir}/src/epub/text/colophon.xhtml" > /dev/null 2>&1
 
@@ -111,6 +111,14 @@ do
 			printf "\t"
 		fi
 		printf "Warning: There seem to be draft CSS rules in local.css!\n" 1>&2
+	fi
+
+	grep --quiet -i -R "�" "${srcDir}/src/"
+	if [ $? -eq 0 ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\t"
+		fi
+		printf "Warning: UTF replacement character detected!  Transcription encoding error?\n" 1>&2
 	fi
 
 	grep --extended-regexp --no-filename --only-matching "<abbr[^<]+>" "${srcDir}/src/epub/text/"* | sed 's/<abbr class=\"//g' | sed 's/<abbr xml:lang="//g' | sed 's/">//g' | sed --regexp-extended "s/\s+/\n/g" | sort | uniq | while read class;
