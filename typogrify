@@ -256,6 +256,7 @@ do
 		perl -pi -e "s/(?<!\<abbr\>)Messers\./\<abbr xml:lang=\"fr\"\>Messers.\<\/abbr\>/g;" "${file}"
 		perl -pi -e "s/(?<!\<abbr\>)Prof\./\<abbr\>Prof.\<\/abbr\>/g;" "${file}"
 		perl -pi -e "s/(?<!\<abbr\>)Lieut\./\<abbr\>Lieut.\<\/abbr\>/g;" "${file}"
+		perl -pi -e "s/(?<!\<abbr\>)No\. ([0-9]+)/\<abbr\>No.\<\/abbr\> \1/g;" "${file}"
 
 
 		#Get Roman numerals >= 2 characters
