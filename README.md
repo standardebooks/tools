@@ -139,6 +139,6 @@ Many of these tools act on Standard Ebooks source directories.  Such directories
 		sudo apt-get install xsltproc libxml2-utils xmlstarlet libxml-xpath-perl svgcleaner recode html-xml-utils
 		pip install roman titlecase beautifulsoup4
 
-4.	If you plan on editing cover or titlepage images, make sure the League Spartan font is installed on your system: [https://github.com/theleagueof/league-spartan](https://github.com/theleagueof/league-spartan)
+4.	If you plan on editing cover or titlepage images, make sure the League Spartan and Sorts Mill Goudy fonts are installed on your system: [https://github.com/theleagueof/league-spartan](https://github.com/theleagueof/league-spartan), [https://github.com/theleagueof/sorts-mill-goudy](https://github.com/theleagueof/sorts-mill-goudy)
 
 That should be it!
