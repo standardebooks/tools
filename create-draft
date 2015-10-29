@@ -123,6 +123,8 @@ cp "${scriptDir}/templates/content.opf"  "${root}/src/epub/"
 
 if [ ${#title} -lt 15 ]; then
 	cp "${scriptDir}/templates/cover-short.svg" "${root}/images/cover.svg"
+elif [ ${#title} -ge 30 ]; then
+	cp "${scriptDir}/templates/cover-long.svg" "${root}/images/cover.svg"
 else
 	cp "${scriptDir}/templates/cover.svg" "${root}/images/cover.svg"
 fi
