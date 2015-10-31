@@ -78,7 +78,6 @@ do
 	ls "${srcDir}/src/epub/text/" | grep --quiet "introduction.xhtml" && echo -e "\t\t<itemref idref=\"introduction.xhtml\"/>" >> /tmp/spine
 	ls "${srcDir}/src/epub/text/" | grep --quiet "foreword.xhtml" && echo -e "\t\t<itemref idref=\"foreword.xhtml\"/>" >> /tmp/spine
 	ls "${srcDir}/src/epub/text/" | grep --quiet "preface.xhtml" && echo -e "\t\t<itemref idref=\"preface.xhtml\"/>" >> /tmp/spine
-	ls "${srcDir}/src/epub/text/" | grep --quiet "introduction.xhtml" && echo -e "\t\t<itemref idref=\"introduction.xhtml\"/>" >> /tmp/spine
 	ls "${srcDir}/src/epub/text/" | grep --quiet "epigraph.xhtml" && echo -e "\t\t<itemref idref=\"epigraph.xhtml\"/>" >> /tmp/spine
 	ls "${srcDir}/src/epub/text/" | grep --quiet "halftitle.xhtml" && echo -e "\t\t<itemref idref=\"halftitle.xhtml\"/>" >> /tmp/spine
 
