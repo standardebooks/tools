@@ -65,6 +65,7 @@ do
 	ls -v "${srcDir}/src/epub/text/" | sed --regexp-extended "
 	s|(.*)|\t\t<item href=\"text/\1\" id=\"\1\" media-type=\"application/xhtml+xml\"/>|g
 	s|id=\"titlepage.xhtml\" media\-type=\"application/xhtml\+xml\"|id=\"titlepage.xhtml\" media-type=\"application/xhtml+xml\" properties=\"svg\"|g
+	s|id=\"colophon.xhtml\" media\-type=\"application/xhtml\+xml\"|id=\"colophon.xhtml\" media-type=\"application/xhtml+xml\" properties=\"svg\"|g
 	" >> /tmp/manifest
 
 	echo -e "\t</manifest>" >> /tmp/manifest
