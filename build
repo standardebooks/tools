@@ -188,6 +188,9 @@ do
 	coverId="$(xpath -e "string(//item[@properties=\"cover-image\"]/@id)" "${workDir}/${epubDir}/content.opf" 2> /dev/null)"
 	sed --in-place --regexp-extended "s/(<metadata.*)/\1<meta content=\"${coverId}\" name=\"cover\" \/>/g" "${workDir}/${epubDir}/content.opf"
 
+	#Add metadata to content.opf indicating this file is a Standard Ebooks compatibility build
+	sed --in-place --regexp-extended "s/<dc:publisher/<meta property=\"se:transform\">compatibility<\/meta>\n\t\t<dc:publisher/g" "${workDir}/${epubDir}/content.opf"
+
 	#Generate our NCX file for epub2 compatibility.
 	#First fine the ToC file.
 	tocFilename="$(xpath -e "string(//item[@properties=\"nav\"]/@href)" "${workDir}/${epubDir}/content.opf" 2> /dev/null)"
