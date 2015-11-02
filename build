@@ -116,9 +116,9 @@ do
 	outputFilename="${urlAuthor}_${urlTitle}"
 
 	workDir="/tmp/${outputFilename}.epub"
-	epub2OutputFilename="${outputFilename}.epub"
+	epub2OutputFilename="${outputFilename}.compatible.epub"
 	mobiOutputFilename="${outputFilename}.mobi"
-	outputFilename="${outputFilename}.base.epub"
+	outputFilename="${outputFilename}.epub"
 
 	if [ "${verbose}" = "true" ]; then
 		printf "\tBuilding %s ..." "${outputFilename}"
