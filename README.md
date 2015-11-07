@@ -30,6 +30,10 @@ Create a skeleton of a new Standard Ebook.
 
 Convert epub-friendly endnotes to Kindle-friendly popup endnotes.  Generally only used by the `build` script and not called independently.
 
+##find-unused-selectors
+
+Find unused local.css CSS selectors in Standard Ebook source directories.
+
 ##generate-opds
 
 Generate the "All Standard Ebooks" OPDS feed and send to standard output.
