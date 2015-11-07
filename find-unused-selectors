@@ -3,7 +3,7 @@
 import argparse
 import re
 import glob
-from lxml.cssselect import CSSSelector
+import lxml.cssselect
 import subprocess
 import sys
 import os
@@ -51,8 +51,12 @@ for dir in args.directories:
 
 	#Now iterate over each CSS selector and see if it's used in any of the files we found
 	for selector in selectors:
-		xpath = CSSSelector(selector, translator="xhtml", namespaces={"epub": "http://www.idpf.org/2007/ops"})
-		
+		try:
+			xpath = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces={"epub": "http://www.idpf.org/2007/ops"})
+		except lxml.cssselect.ExpressionError:
+			#This gets thrown if we use pseudo-elements, which lxml doesn't support
+			pass
+
 		for filename in filenames:
 			#We have to use a call to xpath here because the lxml library doesn't select *[epub|type~=""] type selectors
 			output = subprocess.check_output(["xpath", "-q", "-e", xpath.path, filename], stderr=subprocess.DEVNULL)
