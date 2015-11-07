@@ -63,7 +63,7 @@
 		<meta property="role" refines="#producer-1" scheme="marc:relators">cov</meta>
 		<meta property="role" refines="#producer-1" scheme="marc:relators">mrk</meta>
 		<meta property="role" refines="#producer-1" scheme="marc:relators">pfr</meta>
-		<meta property="role" refines="#producer-1" scheme="marc:relators">typ</meta>
+		<meta property="role" refines="#producer-1" scheme="marc:relators">tyg</meta>
 	</metadata>
 	<manifest>
 		<item href="onix.xml" id="onix.xml" media-type="application/xml"/>
