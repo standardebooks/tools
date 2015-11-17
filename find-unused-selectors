@@ -14,16 +14,19 @@ parser.add_argument("-v", "--verbose", help="increase output verbosity", action=
 parser.add_argument('directories', metavar='DIRECTORY', nargs='+', help='a Standard Ebooks source directory')
 args = parser.parse_args()
 
+#First test if we're looking at a Standard Ebooks source directory
 for dir in args.directories:
-	#First test if we're looking at a Standard Ebooks source directory
+	dir = os.path.abspath(dir)
 	sourceDir = os.path.join(dir, "src/")
 	if not os.path.isdir(sourceDir):
 		print(dir + " doesn't look like a Standard Ebook source directory.", file=sys.stderr)
 		exit(1)
 
+#Check!
 for dir in args.directories:
+	dir = os.path.abspath(dir)
 	sourceDir = os.path.join(dir, "src/")
-	
+
 	if args.verbose:
 		print("Checking " + dir + " ...", end="", flush=True)
 
