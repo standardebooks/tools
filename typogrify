@@ -123,7 +123,7 @@ do
 		#Remove spaces between en and em dashes
 		#Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
 		#Sed doesn't seem to think tabs are whitespace?
-		s/([^[:space:]	])\s*([–—])\s*/\1\2/ig
+		s/([^\.[:space:]	])\s*([–—])\s*/\1\2/ig
 
 		#First, remove stray word joiners
 		s/${wj}//ig
@@ -144,35 +144,67 @@ do
 		s/⁠—-/⁠—/ig
 
 		#Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
-		s/([^a-z]+)Mr(\.?)\s+/\1<abbr>Mr.<\/abbr>${nbsp}/g
-		s/([^a-z]+)Mrs(\.?)\s+/\1<abbr>Mrs.<\/abbr>${nbsp}/g
-		s/([^a-z]+)Ms(\.?)\s+/\1<abbr>Ms.<\/abbr>${nbsp}/g
-		s/([^a-z]+)Dr(\.?)\s+/\1<abbr>Dr.<\/abbr>${nbsp}/g
-		s/([^a-z]+)Drs(\.?)\s+/\1<abbr>Drs.<\/abbr>${nbsp}/g
-		s/([^a-z]+)Prof(\.?)\s+/\1<abbr>Prof.<\/abbr>${nbsp}/g
-		s/([^a-z]+)Lieut(\.?)\s+/\1<abbr>Lieut.<\/abbr>${nbsp}/g
-		s/([^a-z]+)Fr(\.?)\s+/\1<abbr>Fr.<\/abbr>${nbsp}/g
-		s/([^a-z]+)Lt(\.?)\s+/\1<abbr>Lt.<\/abbr>${nbsp}/g
-		s/([^a-z]+)Capt(\.?)\s+/\1<abbr>Capt.<\/abbr>${nbsp}/g
-		s/([^a-z]+)Pvt(\.?)\s+/\1<abbr>Pvt.<\/abbr>${nbsp}/g
-		s/([^a-z]+)Esq([^a-z\.])/\1<abbr>Esq.<\/abbr>\2/g
-		s/([^a-z]+)Mt(\.?)\s+/\1<abbr>Mt.<\/abbr>${nbsp}/g
-		s/([^a-z]+)MM(\.?)(\s+)/\1<abbr xml:lang=\"fr\">MM.<\/abbr>\3/g
-		s/([^a-z]+)Mme(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mme.<\/abbr>\3/g
-		s/([^a-z]+)Mmes(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mmes.<\/abbr>\3/g
-		s/([^a-z]+)Mlle(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mlle.<\/abbr>\3/g
-		s/([^a-z]+)Mlles(\.?)(\s+)/\1<abbr xml:lang=\"fr\">Mlles.<\/abbr>\3/g
-		s/(\b)No\.(\s+[0-9]+)/\1<abbr>No.<\/abbr>\2/g
+		s/([^a-z]+)Mr\.?\s+/\1Mr.${nbsp}/g
+		s/<abbr>Mr\.?<\/abbr>\s+/<abbr>Mr.<\/abbr>${nbsp}/g
 
-		#Sometimes the above abbreviations might get caught up in an image's alt tag, so remove the <abbr> tag from those cases.
-		#The funny construction of this sed command makes it recursive, since we may have multiple <abbr>s embedded in a tag.
-		:loop
-		s|alt=\"([^\"]*?)<\/?abbr>|alt=\"\1|g
-		t loop
+		s/([^a-z]+)Mrs\.?\s+/\1Mrs.${nbsp}/g
+		s/<abbr>Mrs\.?<\/abbr>\s+/<abbr>Mrs.<\/abbr>${nbsp}/g
 
-		:loop
-		s|<title>([^<]*?)<\/?abbr>|<title>\1|g
-		t loop
+		s/([^a-z]+)Ms\.?\s+/\1Ms.${nbsp}/g
+		s/<abbr>Ms\.?<\/abbr>\s+/<abbr>Ms.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Dr\.?\s+/\1Dr.${nbsp}/g
+		s/<abbr>Dr\.?<\/abbr>\s+/<abbr>Dr.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Drs\.?\s+/\1Drs.${nbsp}/g
+		s/<abbr>Drs\.?<\/abbr>\s+/<abbr>Drs.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Prof\.?\s+/\1Prof.${nbsp}/g
+		s/<abbr>Prof\.?<\/abbr>\s+/<abbr>Prof.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Lieut\.?\s+/\1Lieut.${nbsp}/g
+		s/<abbr>Lieut\.?<\/abbr>\s+/<abbr>Lieut.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Fr\.?\s+/\1Fr.${nbsp}/g
+		s/<abbr>Fr\.?<\/abbr>\s+/<abbr>Fr.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Lt\.?\s+/\1Lt.${nbsp}/g
+		s/<abbr>Lt\.?<\/abbr>\s+/<abbr>Lt.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Capt\.?\s+/\1Capt.${nbsp}/g
+		s/<abbr>Capt\.?<\/abbr>\s+/<abbr>Capt.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Pvt\.?\s+/\1Pvt.${nbsp}/g
+		s/<abbr>Pvt\.?<\/abbr>\s+/<abbr>Pvt.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Esq\.?\s+/\1Esq.${nbsp}/g
+		s/<abbr>Esq\.?<\/abbr>\s+/<abbr>Esq.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Mt\.?\s+/\1Mt.${nbsp}/g
+		s/<abbr>Mt\.?<\/abbr>\s+/<abbr>Mt.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)MM\.?\s+/\1MM.${nbsp}/g
+		s/<abbr>MM\.?<\/abbr>\s+/<abbr>MM.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Mme\.?\s+/\1Mme.${nbsp}/g
+		s/<abbr>Mme\.?<\/abbr>\s+/<abbr>Mme.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Mmes\.?\s+/\1Mmes.${nbsp}/g
+		s/<abbr>Mmes\.?<\/abbr>\s+/<abbr>Mmes.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Mlle\.?\s+/\1Mlle.${nbsp}/g
+		s/<abbr>Mlle\.?<\/abbr>\s+/<abbr>Mlle.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Mlles\.?\s+/\1Mlles.${nbsp}/g
+		s/<abbr>Mlles\.?<\/abbr>\s+/<abbr>Mlles.<\/abbr>${nbsp}/g
+
+		s/([^a-z]+)Mme\.?\s+/\1Mme.${nbsp}/g
+		s/<abbr>Mme\.?<\/abbr>\s+/<abbr>Mme.<\/abbr>${nbsp}/g
+
+		s/(\b)No\.\s+([0-9]+)/\1No.${nbsp}\2/g
+		s/<abbr>No\.<\/abbr>\s+/<abbr>No.<\/abbr>${nbsp}/g
+
+		s/([0-9]+)\s<abbr/\1${nbsp}<abbr/g
 
 		#A note on spacing:
 		#					ibooks	kindle (mobi7)
@@ -191,12 +223,12 @@ do
 		s/‘([Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Cc]os|[Tt]is|[Tt]was|[Tt]wixt|[Tt]were|[Tt]would|[Tt]wouldn|[Tt]ween|[Tt]will)(\b)/’\1\2/g
 
 		#House style: remove spacing from common Latinisms
-		s/i\.\s+e\./i.e./g
-		s/e\.\s+g\./e.g./g
+		s/([Ii])\.\s+e\./\1.e./g
+		s/([Ee])\.\s+g\./\1.g./g
 
 		#WARNING! This and below can remove the ending period of a sentence, if AD or BC is the last word!  We need interactive S&R for this
-		s/([\d[:space:]])A\.\s+D\./\1<abbr class=\"era\">AD/g
-		s/B\.\s+C\./<abbr class=\"era\">BC/g
+		s/([\d[:space:]])A\.\s+D\./\1AD/g
+		s/B\.\s+C\./BC/g
 
 		#Put spacing next to close quotes
 		s/“[[:space:]${nbsp}]*‘/“${hairsp}‘/ig
@@ -223,8 +255,11 @@ do
 		#Fix some spelling archaisms
 		s/([Nn])aïve/\1aive/g
 		s/([Nn])a[ïi]vet[ée]/\1aivete/g
-		s/&amp;c\./<abbr>etc.<\/abbr>/g
+		s/&amp;c\./etc./g
 		s/([Pp])rotege/\1rotégé/g
+
+		s/Ph\.D/PhD/g
+		s/P\.\s*S\./P.S./g
 
 		#Fractions
 		s/1\/4/¼/g
@@ -242,28 +277,14 @@ do
 		s/3\/8/⅜/g
 		s/5\/8/⅝/g
 		s/7\/8/⅞/g
+
 		#Remove spaces between whole numbers and fractions
 		s/([0-9,]+)\s+([¼½¾⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/\1\2/g
 
+		#Use the Unicode Minus glyph (U+2212) for negative numbers
+		s/([[:space:]\>])\-([0-9,]+)/\1−\2/g
+
 		" "${file}"
-
-		perl -pi -e "s/(?<!\<abbr\>)Ph(\.?)D(\.?)/\<abbr class=\"degree\"\>PhD\<\/abbr\>/g;" "${file}"
-		perl -pi -e "s/(?<!\<abbr\>)P\.\s*S\./\<abbr\>P.S.\<\/abbr\>/g;" "${file}"
-		perl -pi -e "s/(?<!\<abbr\>)Co\./\<abbr\>Co.\<\/abbr\>/g;" "${file}"
-		perl -pi -e "s/(?<!\<abbr\>)Inc\./\<abbr\>Inc.\<\/abbr\>/g;" "${file}"
-		perl -pi -e "s/(?<!\<abbr\>)St\./\<abbr\>St.\<\/abbr\>/g;" "${file}"
-		perl -pi -e "s/(?<!\<abbr\>)Messrs\./\<abbr xml:lang=\"fr\"\>Messrs.\<\/abbr\>/g;" "${file}"
-		perl -pi -e "s/(?<!\<abbr\>)Messers\./\<abbr xml:lang=\"fr\"\>Messers.\<\/abbr\>/g;" "${file}"
-		perl -pi -e "s/(?<!\<abbr\>)Prof\./\<abbr\>Prof.\<\/abbr\>/g;" "${file}"
-		perl -pi -e "s/(?<!\<abbr\>)Lieut\./\<abbr\>Lieut.\<\/abbr\>/g;" "${file}"
-		perl -pi -e "s/(?<!\<abbr\>)No\. ([0-9]+)/\<abbr\>No.\<\/abbr\> \1/g;" "${file}"
-
-
-		#Get Roman numerals >= 2 characters
-		perl -pi -e "s/(?<!\<span epub\:type=\"z3998\:roman\"\>)(\b)([ixv]{2,})(\b)/\1\<span epub:type=\"z3998:roman\"\>\2\<\/span\>\3/ig;" "${file}"
-
-		#Get Roman numerals that are X or V and single characters.  We can't do I for obvious reasons.
-		perl -pi -e "s/(?<!\<span epub\:type=\"z3998\:roman\"\>)(\b)([vx])(\b)/\1\<span epub:type=\"z3998:roman\"\>\2\<\/span\>\3/ig;" "${file}"
 
 		#Add <abbr class="name"> tag around initials: [A-Z]\.\s*([A-Z]\.\s*)+
 
@@ -279,11 +300,9 @@ do
 
 		#Text in all caps should be converted to correct case, surrounded by <b> styled for small caps: /[A-Z]{3,}/
 
-		#Temperature: use unicode minus sign, not hyphen; small caps F and C:  /\-\d+\b/
+		#Temperature: small caps F and C:  /\-\d+\b/
 
 		#Measurements: A x B x C should be A × B × C: /\sx\s/
-
-		#Search common abbreviations: M., etc., &c., i.e., e.g.
 
 		if [ "${verbose}" = "true" ]; then
 			printf " OK\n"
