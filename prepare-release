@@ -105,6 +105,65 @@ do
 		printf " Done.\n"
 	fi
 
+	#See if we have necessary MARC relator in metadata
+	for file in $(find "${srcDir}" -name "*.xhtml")
+	do
+		filename=$(basename "${file}")
+		if [ "${filename}" = "introduction.xhtml" ]; then
+			grep --quiet -i ">aui<" "${srcDir}/src/epub/content.opf"
+			if [ $? -ne 0 ]; then
+
+				grep --quiet -i ">win<" "${srcDir}/src/epub/content.opf"
+				if [ $? -ne 0 ]; then
+					if [ "${verbose}" = "true" ]; then
+						printf "\t"
+					fi
+					printf "Warning: introduction.xhtml found, but no MARC relator 'aui' (Author of introduction, but not the chief author) or 'win' (Writer of introduction) \n" 1>&2
+				fi
+			fi
+		fi
+
+		if [ "${filename}" = "preface.xhtml" ]; then
+			grep --quiet -i ">wpr<" "${srcDir}/src/epub/content.opf"
+			if [ $? -ne 0 ]; then
+				if [ "${verbose}" = "true" ]; then
+					printf "\t"
+				fi
+				printf "Warning: preface.xhtml found, but no MARC relator 'wpr' (Writer of preface)\n" 1>&2
+			fi
+		fi
+
+		if [ "${filename}" = "afterword.xhtml" ]; then
+			grep --quiet -i ">aft<" "${srcDir}/src/epub/content.opf"
+			if [ $? -ne 0 ]; then
+				if [ "${verbose}" = "true" ]; then
+					printf "\t"
+				fi
+				printf "Warning: afterword.xhtml found, but no MARC relator 'aft' (Author of colophon, afterword, etc.)\n" 1>&2
+			fi
+		fi
+
+		if [ "${filename}" = "endnotes.xhtml" ]; then
+			grep --quiet -i ">ann<" "${srcDir}/src/epub/content.opf"
+			if [ $? -ne 0 ]; then
+				if [ "${verbose}" = "true" ]; then
+					printf "\t"
+				fi
+				printf "Warning: endnotes.xhtml found, but no MARC relator 'ann' (Annotator)\n" 1>&2
+			fi
+		fi
+
+		if [ "${filename}" = "loi.xhtml" ]; then
+			grep --quiet -i ">ill<" "${srcDir}/src/epub/content.opf"
+			if [ $? -ne 0 ]; then
+				if [ "${verbose}" = "true" ]; then
+					printf "\t"
+				fi
+				printf "Warning: loi.xhtml found, but no MARC relator 'ill' (Illustrator)\n" 1>&2
+			fi
+		fi
+	done
+
 	grep --quiet -i "helpful during drafting" "${srcDir}/src/epub/css/local.css"
 	if [ $? -eq 0 ]; then
 		if [ "${verbose}" = "true" ]; then
