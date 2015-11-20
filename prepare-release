@@ -164,6 +164,24 @@ do
 		fi
 	done
 
+	#Check the language defined in content.opf against the body text
+	language="$(xmlstarlet sel -N dc="http://purl.org/dc/elements/1.1/" -t -m "//dc:language" -v "." -n "${srcDir}/src/epub/content.opf")"
+
+	for file in $(find "${srcDir}" -name "*.xhtml")
+	do
+		filename=$(basename "${file}")
+		if [ "${filename}" != "colophon.xhtml" -a "${filename}" != "titlepage.xhtml" -a "${filename}" != "halftitle.xhtml" -a "${filename}" != "unlicense.xhtml" -a "${filename}" != "loi.xhtml" -a "${filename}" != "toc.xhtml" ]; then
+			fileLanguage="$(grep --only-matching -E "<html[^<]+xml\:lang=\"[^\"]+\"" "${file}" | sed -E "s/.+xml\:lang=\"([^\"]+)\"/\1/")"
+			if [ "${fileLanguage}" != "${language}" ]; then
+				if [ "${verbose}" = "true" ]; then
+					printf "\t"
+				fi
+				printf "Warning: ${filename} language is ${fileLanguage}, but content.opf language is ${language}!\n" 1>&2
+			fi
+		fi
+	done
+
+	#Find draft CSS rules
 	grep --quiet -i "helpful during drafting" "${srcDir}/src/epub/css/local.css"
 	if [ $? -eq 0 ]; then
 		if [ "${verbose}" = "true" ]; then
