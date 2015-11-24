@@ -32,7 +32,7 @@ do
 	if [ "${i}" = "" ]; then
 		continue
 	fi
-	
+
 	cd "${curDir}" #Reset when starting the loop over
 
 	srcDir="$(realpath "${i%/}")"
@@ -44,9 +44,8 @@ do
 	#Build the manifest
 	echo -e "\t<manifest>" > /tmp/manifest
 
-	echo -e "\t\t<item href=\"onix.xml\" id=\"onix.xml\" media-type=\"application/xml\"/>" >> /tmp/manifest
 	echo -e "\t\t<item href=\"toc.xhtml\" id=\"toc.xhtml\" media-type=\"application/xhtml+xml\" properties=\"nav\"/>" >> /tmp/manifest
-	
+
 	#Get the CSS
 	ls -v "${srcDir}/src/epub/css/" | sed --regexp-extended "
 	s|(.*)|\t\t<item href=\"css/\1\" id=\"\1\" media-type=\"text/css\"/>|g
