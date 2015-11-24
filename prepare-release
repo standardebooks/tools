@@ -5,9 +5,10 @@ DESCRIPTION
 	Calculate work word count, insert release date if none set, update modified date, and check for the presence of draft CSS rules.
 
 USAGE
-	build [-v,--verbose] [-n,--no-word-count] DIRECTORY [DIRECTORY...]
+	build [-v,--verbose] [-n,--no-word-count] [-d,--no-dates] DIRECTORY [DIRECTORY...]
 		DIRECTORY is the source directory, which must contain DIRECTORY/src/.
 		With the --no-word-count option, don't perform a word count calculation.
+		With the --no-dates option, don't change the release and modified dates.
 EOF
 	exit
 }
@@ -26,6 +27,7 @@ colophonPath="${ebookRoot}src/epub/text/colophon.xhtml"
 dirs=""
 verbose="false"
 doWordCount="true"
+noDates="false"
 
 while [ $# -gt 0 ]
 do
@@ -35,6 +37,9 @@ do
 		;;
 		-n|--no-word-count)
 			doWordCount="false"
+		;;
+		-d|--no-dates)
+			noDates="true"
 		;;
 		*)
 			dirs=$(printf "%s\n%s" "${dirs}" "$1")
@@ -80,29 +85,31 @@ do
 		fi
 	fi
 
-	grep --quiet "RELEASEDATE" "${srcDir}/src/epub/content.opf"
-	if [ $? -eq 0 ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\tSetting release date ..."
+	if [ "${noDates}" = "false" ]; then
+		grep --quiet "RELEASEDATE" "${srcDir}/src/epub/content.opf"
+		if [ $? -eq 0 ]; then
+			if [ "${verbose}" = "true" ]; then
+				printf "\tSetting release date ..."
+			fi
+
+			sed --in-place --regexp-extended "s|<dc:date>[^<]*</dc:date>|<dc:date>${isoTimestamp}</dc:date>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+			sed --in-place --regexp-extended "s|<span class=\"release-date\">.+?</span>|<span class=\"release-date\">${friendlyTimestamp}</span>|g" "${srcDir}/src/epub/text/colophon.xhtml" > /dev/null 2>&1
+
+			if [ "${verbose}" = "true" ]; then
+				printf " Done.\n"
+			fi
 		fi
 
-		sed --in-place --regexp-extended "s|<dc:date>[^<]*</dc:date>|<dc:date>${isoTimestamp}</dc:date>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
-		sed --in-place --regexp-extended "s|<span class=\"release-date\">.+?</span>|<span class=\"release-date\">${friendlyTimestamp}</span>|g" "${srcDir}/src/epub/text/colophon.xhtml" > /dev/null 2>&1
+		if [ "${verbose}" = "true" ]; then
+			printf "\tSetting modified date ..."
+		fi
+
+		sed --in-place --regexp-extended "s|<meta property=\"dcterms:modified\">[^<]*</meta>|<meta property=\"dcterms:modified\">${isoTimestamp}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+		sed --in-place --regexp-extended "s|<span class=\"revision-date\">.+?</span>|<span class=\"revision-date\">${friendlyTimestamp}</span>|g" "${srcDir}/src/epub/text/colophon.xhtml" > /dev/null 2>&1
 
 		if [ "${verbose}" = "true" ]; then
 			printf " Done.\n"
 		fi
-	fi
-
-	if [ "${verbose}" = "true" ]; then
-		printf "\tSetting modified date ..."
-	fi
-
-	sed --in-place --regexp-extended "s|<meta property=\"dcterms:modified\">[^<]*</meta>|<meta property=\"dcterms:modified\">${isoTimestamp}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
-	sed --in-place --regexp-extended "s|<span class=\"revision-date\">.+?</span>|<span class=\"revision-date\">${friendlyTimestamp}</span>|g" "${srcDir}/src/epub/text/colophon.xhtml" > /dev/null 2>&1
-
-	if [ "${verbose}" = "true" ]; then
-		printf " Done.\n"
 	fi
 
 	#See if we have necessary MARC relator in metadata
