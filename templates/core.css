@@ -3,6 +3,7 @@
 
 body{
 	hyphens: auto;
+	-epub-hyphens: auto;
 }
 
 section[epub|type~="titlepage"]{
@@ -42,6 +43,7 @@ h5,
 h6{
 	font-variant: small-caps;
 	hyphens: none;
+	-epub-hyphens: none;
 	page-break-after: avoid;
 	text-align: center;
 	margin: 3em 0;
