@@ -176,8 +176,9 @@ do
 	find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/⸺/——/g" "{}" \;
 	find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/⸻/———/g" "{}" \;
 
-	#Typograhpy: replace some other less common characters.
+	#Typography: replace some other less common characters.
 	find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/⅒/1\/10/g" "{}" \;
+	find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/℅/c\/o/g" "{}" \;
 
 	#Many e-readers don't support the word joiner character (U+2060 aka &#8288; aka 0xE2 0x81 0xA0).
 	#They DO, however, support the now-deprecated zero-width non-breaking space, (U+FEFF aka &#65279; aka 0xEF 0xBB 0xBF)
