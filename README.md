@@ -58,6 +58,10 @@ Replace words that may be archaically compounded with a dash to a more modern sp
 
 Calculate the ebook's word count, and update content.opf and colophon.xhtml with release and modified timestamps.
 
+##reading-ease
+
+Calculate the Flesch reading ease for a Standard Ebooks source directory.
+
 ##split-file
 
 Split an XHTML file into many files at all instances of <!--se:split-->, and include a header template for each file.

@@ -32,6 +32,7 @@
 		<dc:language>LANG</dc:language>
 		<dc:source>LINK</dc:source>
 		<meta property="se:word-count">WORDCOUNT</meta>
+		<meta property="se:reading-ease.flesch">READINGEASE</meta>
 		<meta property="se:url.encyclopedia.wikipedia">WIKILINK</meta>
 		<meta property="se:url.vcs.github">https://github.com/standardebooks/VCSIDENTIFIER</meta>
 		<dc:creator id="author">AUTHOR</dc:creator>
