@@ -86,7 +86,7 @@ do
 	fi
 
 	if [ "${noDates}" = "false" ]; then
-		grep --quiet "RELEASEDATE" "${srcDir}/src/epub/content.opf"
+		grep --quiet "1900-01-01T00:00:00Z" "${srcDir}/src/epub/content.opf"
 		if [ $? -eq 0 ]; then
 			if [ "${verbose}" = "true" ]; then
 				printf "\tSetting release date ..."
