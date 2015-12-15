@@ -61,12 +61,13 @@ for dir in args.directories:
 			pass
 
 		for filename in filenames:
-			#We have to use a call to xpath here because the lxml library doesn't select *[epub|type~=""] type selectors
-			output = subprocess.check_output(["xpath", "-q", "-e", xpath.path, filename], stderr=subprocess.DEVNULL)
+			if not filename.endswith("colophon.xhtml") and not filename.endswith("titlepage.xhtml") and not filename.endswith("halftitle.xhtml"):
+				#We have to use a call to xpath here because the lxml library doesn't select *[epub|type~=""] type selectors
+				output = subprocess.check_output(["xpath", "-q", "-e", xpath.path, filename], stderr=subprocess.DEVNULL)
 
-			if output != b"":
-				unusedSelectors.remove(selector)
-				break
+				if output != b"":
+					unusedSelectors.remove(selector)
+					break
 
 	#Did we find any unused selectors?
 	if len(unusedSelectors) > 0:
