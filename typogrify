@@ -119,6 +119,7 @@ do
 		#Smartypants doesn't do well on em dashes followed by open quotes. Fix that here
 		s/—”([a-z])/—“\1/ig
 		s/—’([a-z])/—‘\1/ig
+		s/-“<\/p>/—”<\/p>/ig
 
 		#Remove spaces between en and em dashes
 		#Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
@@ -257,6 +258,11 @@ do
 		s/([Nn])a[ïi]vet[ée]/\1aivete/g
 		s/&amp;c\./etc./g
 		s/([Pp])rotege/\1rotégé/g
+		s/([Tt])ete-a-tete/\1ête-à-tête/g
+		s/([Ff])acade/\1açade/g
+		#We break up cafe so that we don't catch 'cafeteria'
+		s/(\b[Cc])afe(\b)/\1afé\2/g
+		s/(\b[Cc])afes(\b)/\1afés\2/g
 
 		s/Ph\.D/PhD/g
 		s/P\.\s*S\./P.S./g
