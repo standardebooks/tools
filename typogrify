@@ -260,6 +260,7 @@ do
 		s/([Pp])rotege/\1rotégé/g
 		s/([Tt])ete-a-tete/\1ête-à-tête/g
 		s/([Ff])acade/\1açade/g
+		s/([Cc])hateau/\1âteau/g
 		#We break up cafe so that we don't catch 'cafeteria'
 		s/(\b[Cc])afe(\b)/\1afé\2/g
 		s/(\b[Cc])afes(\b)/\1afés\2/g
