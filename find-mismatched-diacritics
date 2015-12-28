@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import fnmatch
+import regex #We use the regex module, not the re module, because it allows matching by character class
+from bs4 import BeautifulSoup
+import unicodedata
+
+def main():
+	parser = argparse.ArgumentParser(description="Find words with mismatched diacritics in Standard Ebook source directories.  For example, 'cafe' in one file and 'café' in another.")
+
+	parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+	parser.add_argument('directories', metavar='DIRECTORY', nargs='+', help='a Standard Ebooks source directory')
+	args = parser.parse_args()
+
+	#First test if we're looking at a Standard Ebooks source directory
+	for directory in args.directories:
+		directory = os.path.abspath(directory)
+		if not os.path.isdir(os.path.join(directory, "src/")):
+			print(directory + " doesn't look like a Standard Ebook source directory.", file=sys.stderr)
+			exit(1)
+
+	for directory in args.directories:
+		directory = os.path.abspath(directory)
+		source_dir = os.path.join(directory, "src/")
+
+		if args.verbose:
+			print("Checking " + directory + " ...", end="", flush=True)
+
+		accentedWords = []
+
+		#First build a list of unique words with accents
+		for root, dirnames, filenames in os.walk(source_dir):
+			for filename in fnmatch.filter(filenames, '*.xhtml'):
+				with open(os.path.join(root, filename), 'r+', encoding="utf-8") as file:
+					text = file.read()
+					file.seek(0)
+
+					decomposedText = unicodedata.normalize('NFKD', text)
+
+					pattern = regex.compile(r'\b\w*\p{M}\w*\b')
+					for decomposedWord in pattern.findall(decomposedText):
+						word = unicodedata.normalize('NFKC', decomposedWord)
+
+						if len(word) > 2:
+							accentedWords.append(word.lower())
+
+		#Remove duplicates from the list
+		accentedWords = set(accentedWords)
+
+		mismatches = {}
+
+		#Now iterate over the list and search files for unaccented versions of the words
+		if len(accentedWords) > 0:
+			for root, dirnames, filenames in os.walk(source_dir):
+				for filename in fnmatch.filter(filenames, '*.xhtml'):
+					with open(os.path.join(root, filename), 'r+', encoding="utf-8") as file:
+						text = file.read()
+						file.seek(0)
+
+						for accentedWord in accentedWords:
+							plainWord = regex.sub(r'\p{M}', '', unicodedata.normalize('NFKD', accentedWord))
+
+							pattern = regex.compile(r'\b' + plainWord + r'\b')
+							if pattern.search(text) != None:
+								mismatches[accentedWord] = plainWord
+
+		if len(mismatches) > 0:
+			if args.verbose:
+				print("")
+			else:
+				print(directory)
+
+			for accentedWord, plainWord in mismatches.items():
+				print("\tFound " + accentedWord + " and " + plainWord)
+		else:
+			if args.verbose:
+				print(" OK")
+
+if __name__ == "__main__":
+	main()

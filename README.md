@@ -1,4 +1,4 @@
-#About this repository
+f#About this repository
 
 This repository contains various tools Standard Ebooks uses to produce its ebooks.
 
@@ -33,6 +33,10 @@ Convert epub-friendly endnotes to Kindle-friendly popup endnotes.  Generally onl
 ##find-unused-selectors
 
 Find unused local.css CSS selectors in Standard Ebook source directories.
+
+##find-mismatched-diacritics
+
+Find words with mismatched diacritics in Standard Ebook source directories.  For example, 'cafe' in one file and 'café' in another.
 
 ##generate-opds
 
@@ -152,7 +156,7 @@ Many of these tools act on Standard Ebooks source directories.  Such directories
 3.	Install other dependencies.  On Ubuntu 15.04, you can do:
 
 		sudo apt-add-repository ppa:svg-cleaner-team/svgcleaner
-		sudo apt-get install xsltproc libxml2-utils xmlstarlet libxml-xpath-perl svgcleaner recode html-xml-utils python3-cssselect
+		sudo apt-get install xsltproc libxml2-utils xmlstarlet libxml-xpath-perl svgcleaner recode html-xml-utils python3-cssselect  python3-regex
 		pip install roman titlecase beautifulsoup4
 
 4.	If you plan on editing cover or titlepage images, make sure the League Spartan and Sorts Mill Goudy fonts are installed on your system: [https://github.com/theleagueof/league-spartan](https://github.com/theleagueof/league-spartan), [https://github.com/theleagueof/sorts-mill-goudy](https://github.com/theleagueof/sorts-mill-goudy)
