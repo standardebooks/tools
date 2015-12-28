@@ -264,6 +264,7 @@ do
 		#We break up cafe so that we don't catch 'cafeteria'
 		s/(\b[Cc])afe(\b)/\1afé\2/g
 		s/(\b[Cc])afes(\b)/\1afés\2/g
+		s/([Mm])êlée/\1elee/g
 
 		s/Ph\.D/PhD/g
 		s/P\.\s*S\./P.S./g
