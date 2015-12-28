@@ -265,6 +265,8 @@ do
 		s/(\b[Cc])afe(\b)/\1afé\2/g
 		s/(\b[Cc])afes(\b)/\1afés\2/g
 		s/([Mm])êlée/\1elee/g
+		s/(\b[Ff])ete(\b)/\1ête\2/g
+		s/(\b[Rr])ôle(\b)/\1ole\2/g
 
 		s/Ph\.D/PhD/g
 		s/P\.\s*S\./P.S./g
