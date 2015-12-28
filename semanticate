@@ -93,6 +93,7 @@ def main():
 					text = re.sub(r"<title>.+?</title>", "<title>" + title + "</title>", text)
 
 					file.write(text)
+					file.truncate()
 
 if __name__ == "__main__":
 	main()
