@@ -193,7 +193,7 @@ do
 	sed --in-place --regexp-extended "s/<dc:publisher/<meta property=\"se:transform\">compatibility<\/meta>\n\t\t<dc:publisher/g" "${workDir}/${epubDir}/content.opf"
 
 	#Generate our NCX file for epub2 compatibility.
-	#First fine the ToC file.
+	#First find the ToC file.
 	tocFilename="$(xpath -e "string(//item[@properties=\"nav\"]/@href)" "${workDir}/${epubDir}/content.opf" 2> /dev/null)"
 	sed --in-place "s/<spine>/<spine toc=\"ncx\">/g" "${workDir}/${epubDir}/content.opf"
 	sed --in-place "s/<manifest>/<manifest><item href=\"toc.ncx\" id=\"ncx\" media-type=\"application\/x-dtbncx+xml\" \/>/g" "${workDir}/${epubDir}/content.opf"
@@ -271,6 +271,17 @@ do
 		fi
 
 		epubSource="/tmp/${epub2OutputFilename}.tmp.epub"
+
+		#Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.  We copy and paste some of the code above...
+		#later we should update it to a less hacky way of doing things.
+		"${scriptDir}/toc2kindle" "${workDir}/${epubDir}/${tocFilename}"
+		xsltproc --stringparam cwd "${workDir}/" "${scriptDir}/navdoc2ncx.xsl" "${workDir}/${epubDir}/${tocFilename}" > "${workDir}/${epubDir}/toc.ncx"
+		sed --in-place --regexp-extended "s/ xml\:lang=\"\?\?\"//g" "${workDir}/${epubDir}/toc.ncx"
+		#Make nicely incrementing navpoint IDs and playOrders
+		sed --in-place "s/<navMap id=\".*\">/<navMap id=\"navmap\">/" "${workDir}/${epubDir}/toc.ncx"
+		perl -pi -e 's/\<navPoint id\="idp[0-9]+"/"<navPoint id=\"navpoint-" . ++$n . "\""/ge' "${workDir}/${epubDir}/toc.ncx"
+		perl -pi -e 's/\<navPoint/"<navPoint playOrder=\"" . ++$n . "\""/ge' "${workDir}/${epubDir}/toc.ncx"
+		xmllint --c14n "${workDir}/${epubDir}/toc.ncx" | (printf "%s\n" "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" && cat) | xmllint --output "${workDir}/epub/toc.ncx" --format -
 
 		#Kindle doesn't recognize most zero-width spaces or word joiners, so just remove them.
 		#It does recognize the word joiner character, but only in the old mobi7 format.  The new format renders them as spaces.

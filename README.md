@@ -82,6 +82,10 @@ Convert a Roman numeral to a decimal number.
 
 Apply some scriptable semantics rules from the Standard Ebooks semantics manual to a Standard Ebook source directory.
 
+##toc2kindle
+
+Flatten ToC to be at most 2 levels deep for Kindle compatibility.  Generally only used by the `build` script and not called independently.
+
 ##titlecase
 
 Convert a string to titlecase.
