@@ -275,6 +275,7 @@ do
 		#Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.  We copy and paste some of the code above...
 		#later we should update it to a less hacky way of doing things.
 		"${scriptDir}/toc2kindle" "${workDir}/${epubDir}/${tocFilename}"
+		"${scriptDir}/clean" "${workDir}/${epubDir}/${tocFilename}"
 		xsltproc --stringparam cwd "${workDir}/" "${scriptDir}/navdoc2ncx.xsl" "${workDir}/${epubDir}/${tocFilename}" > "${workDir}/${epubDir}/toc.ncx"
 		sed --in-place --regexp-extended "s/ xml\:lang=\"\?\?\"//g" "${workDir}/${epubDir}/toc.ncx"
 		#Make nicely incrementing navpoint IDs and playOrders
