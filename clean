@@ -39,12 +39,15 @@ do
 	shift
 done
 
+#Set xmllint to use tab indentation.
+export XMLLINT_INDENT=$(printf "\t")
+
 printf "%s\n" "${dirs}" | while IFS= read -r i;
 do
 	if [ "${i}" = "" ]; then
 		continue
 	fi
-	
+
 	srcDir="$(realpath "${i%/}")"
 
 	if [ ! -d "${srcDir}/src" ]; then
@@ -54,9 +57,6 @@ do
 	if [ "${verbose}" = "true" ]; then
 		printf "Cleaning %s ..." "${srcDir}"
 	fi
-
-	#Set xmllint to use tab indentation.
-	export XMLLINT_INDENT=$(printf "\t")
 
 	#Epub3 doesn't allow named entities, so convert them to their unicode equivalents
 	#First we use xml2asc to convert *all* special characters to named entities.
