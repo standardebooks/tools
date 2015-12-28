@@ -46,6 +46,10 @@ Generate the "All Standard Ebooks" OPDS feed and send to standard output.
 
 Generate the `words` file used by the `modernize-hyphenation` script and print to standard output.
 
+##interactive-sr
+
+A macro for calling Vim to interactively search and replace a regex on a list of files.
+
 ##print-manifest-and-spine
 
 Create a <manifest> and <spine> tag for content.opf based on the passed Standard Ebooks source directory and print to standard output.
