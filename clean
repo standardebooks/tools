@@ -5,8 +5,10 @@ DESCRIPTION
 	Prettify source files in a Standard Ebook source directory, including canonicalizing XML and minifying SVGs.  Note that this only prettifies the source code; it doesn't perform typography changes.
 
 USAGE
-	clean [-v,--verbose] DIRECTORY [DIRECTORY...]
-		DIRECTORY is the source directory, which must contain DIRECTORY/src/.
+	clean [-v,--verbose] DIRECTORY,FILE [DIRECTORY,FILE...]
+		DIRECTORY is a Standard Ebooks source directory, which must contain DIRECTORY/src/.
+		FILE must be an XHTML file.
+		Multiple directories and files can be included in a single invocation.
 EOF
 	exit
 }
@@ -50,26 +52,40 @@ do
 
 	srcDir="$(realpath "${i%/}")"
 
-	if [ ! -d "${srcDir}/src" ]; then
-		die "${srcDir} does't look like a Standard Ebook source directory."
+	isDir="false"
+
+	if [ -d "${srcDir}" ]; then
+		if [ ! -d "${srcDir}/src" ]; then
+			die "${srcDir} does't look like a Standard Ebook source directory."
+		else
+			isDir="true"
+		fi
 	fi
 
 	if [ "${verbose}" = "true" ]; then
 		printf "Cleaning %s ..." "${srcDir}"
 	fi
 
-	#Epub3 doesn't allow named entities, so convert them to their unicode equivalents
-	#First we use xml2asc to convert *all* special characters to named entities.
-	#Then recode converts named entities to unicode.
-	find "${srcDir}" -iname "*.xhtml" -type f -exec sh -c "xml2asc < "{}" | recode HTML | sed \"s/&/&amp;/g\" > /tmp/tmp.xhtml; mv /tmp/tmp.xhtml "{}"" \;
+	if [ "${isDir}" = "true" ]; then
+		#Epub3 doesn't allow named entities, so convert them to their unicode equivalents
+		#First we use xml2asc to convert *all* special characters to named entities.
+		#Then recode converts named entities to unicode.
+		find "${srcDir}" -iname "*.xhtml" -type f -exec sh -c "xml2asc < "{}" | recode HTML | sed \"s/&/&amp;/g\" > /tmp/tmp.xhtml; mv /tmp/tmp.xhtml "{}"" \;
 
-	#Clean files with xmllint.
-	#The --c14n flag removes the XML declaration, so we re-add it before formatting.  Otherwise we get problems.
-	find "${srcDir}" -iname "*.xhtml" -type f -exec sh -c "xmllint --c14n "{}" | (printf '%s\n' '<?xml version=\"1.0\" encoding=\"UTF-8\"?>' && cat) | xmllint --output "{}" --format -" \;
-	find "${srcDir}" \( -iname "*.svg" -o -iname "*.opf" -o -iname "*.xml" \) -type f -exec sh -c "xmllint --c14n "{}" | (printf '%s\n' '<?xml version=\"1.0\" encoding=\"UTF-8\"?>' && cat) | xmllint --output "{}" --format -" \;
+		#Clean files with xmllint.
+		#The --c14n flag removes the XML declaration, so we re-add it before formatting.  Otherwise we get problems.
+		find "${srcDir}" -iname "*.xhtml" -type f -exec sh -c "xmllint --c14n "{}" | (printf '%s\n' '<?xml version=\"1.0\" encoding=\"UTF-8\"?>' && cat) | xmllint --output "{}" --format -" \;
+		find "${srcDir}" \( -iname "*.svg" -o -iname "*.opf" -o -iname "*.xml" \) -type f -exec sh -c "xmllint --c14n "{}" | (printf '%s\n' '<?xml version=\"1.0\" encoding=\"UTF-8\"?>' && cat) | xmllint --output "{}" --format -" \;
 
-	#Add trailing newlines to files that don't have one.
-	find "${srcDir}" \( -iname "*.xhtml" -o -iname "*.svg" -o -iname "*.css" -o -iname "*.opf" -o -iname "*.xml" \) -type f -exec sed -i -e '$a\' "{}" \;
+		#Add trailing newlines to files that don't have one.
+		find "${srcDir}" \( -iname "*.xhtml" -o -iname "*.svg" -o -iname "*.css" -o -iname "*.opf" -o -iname "*.xml" \) -type f -exec sed -i -e '$a\' "{}" \;
+	else
+		xml2asc < "${srcDir}" | recode HTML | sed "s/&/&amp;/g" > /tmp/tmp.xhtml; mv /tmp/tmp.xhtml "${srcDir}"
+
+		xmllint --c14n "${srcDir}" | (printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' && cat) | xmllint --output "${srcDir}" --format -
+
+		sed --in-place -e '$a\' "${srcDir}"
+	fi
 
 	if [ "${verbose}" = "true" ]; then
 		printf "%s\n" " OK"
