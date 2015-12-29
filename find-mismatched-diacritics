@@ -62,7 +62,7 @@ def main():
 						for accentedWord in accentedWords:
 							plainWord = regex.sub(r'\p{M}', '', unicodedata.normalize('NFKD', accentedWord))
 
-							pattern = regex.compile(r'\b' + plainWord + r'\b')
+							pattern = regex.compile(r'\b' + plainWord + r'\b', regex.IGNORECASE)
 							if pattern.search(text) != None:
 								mismatches[accentedWord] = plainWord
 
@@ -72,7 +72,7 @@ def main():
 			else:
 				print(directory)
 
-			for accentedWord, plainWord in mismatches.items():
+			for accentedWord, plainWord in sorted(mismatches.items()):
 				print("\tFound " + accentedWord + " and " + plainWord)
 		else:
 			if args.verbose:
