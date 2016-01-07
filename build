@@ -192,6 +192,16 @@ do
 	#Add metadata to content.opf indicating this file is a Standard Ebooks compatibility build
 	sed --in-place --regexp-extended "s/<dc:publisher/<meta property=\"se:transform\">compatibility<\/meta>\n\t\t<dc:publisher/g" "${workDir}/${epubDir}/content.opf"
 
+	#If we have extremely long endnotes (like Don Quixote), break the endnotes file up
+	#if [ -f "${workDir}/${epubDir}/text/endnotes.xhtml" ]; then
+	#	#Get the number of endnotes
+	#	endnoteCount=$(grep --only-matching --extended-regexp "data-se-note-number=\"[0-9]+\"" "${workDir}/${epubDir}/text/endnotes.xhtml" | sed "s/[^0-9]//g" | sort --human-numeric-sort | tail -n 1)
+	#	if [ ${endnoteCount} > 200 ]; then
+	#	fi
+	#fi
+
+
+
 	#Generate our NCX file for epub2 compatibility.
 	#First find the ToC file.
 	tocFilename="$(xpath -e "string(//item[@properties=\"nav\"]/@href)" "${workDir}/${epubDir}/content.opf" 2> /dev/null)"
