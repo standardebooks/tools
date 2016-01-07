@@ -270,6 +270,8 @@ do
 		s/(\b[Cc])oö/\1oo/g
 		s/(\b[Rr])eë/\1ee/g
 		s/(\b[Dd])aïs(\b)/\1ais\2/g
+		s/([Cc])oup\-de\-grace/\1oup-de-grâce/g
+		s/([Cc])anape/\1anapé/g
 
 		s/Ph\.D/PhD/g
 		s/P\.\s*S\./P.S./g
