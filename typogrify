@@ -259,6 +259,7 @@ do
 		s/&amp;c\./etc./g
 		s/([Pp])rotege/\1rotégé/g
 		s/([Tt])ete-a-tete/\1ête-à-tête/g
+		s/([Vv])is-a-vis/\1is-à-vis/g
 		s/([Ff])acade/\1açade/g
 		s/([Cc])hateau/\1âteau/g
 		#We break up cafe so that we don't catch 'cafeteria'
@@ -272,6 +273,7 @@ do
 		s/(\b[Dd])aïs(\b)/\1ais\2/g
 		s/([Cc])oup\-de\-grace/\1oup-de-grâce/g
 		s/([Cc])anape/\1anapé/g
+		s/([Pp])recis(\b)/\1récis\2/g
 
 		s/Ph\.D/PhD/g
 		s/P\.\s*S\./P.S./g
