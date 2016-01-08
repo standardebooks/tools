@@ -6,7 +6,10 @@ DESCRIPTION
 
 USAGE
 	interactive-sr REGEX FILE [FILE...]
-		REGEX is in the form of "/FIND/REPLACE/".  Do not pass any flags to REGEX.
+		REGEX is in the form of "/FIND/REPLACE/".
+		If using () backreferences, parentheses must be escaped.
+		REGEX is vim-flavored.
+		Do not pass any flags to REGEX.
 
 EOF
 	exit
@@ -26,4 +29,4 @@ shift
 #'set title' shows the filename in the terminal title
 #'set eventignore-=Syntax' enables syntax highlighting in all files
 #'wqa writes and quits all buffers
-vim "+set title" "+bufdo set eventignore-=Syntax | %s${regex}gc" "+wqa" $@ > /dev/null 2>&1
+vim "+set title" "+bufdo set eventignore-=Syntax | %s${regex}gc | w" "+qa" $@
