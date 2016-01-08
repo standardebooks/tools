@@ -62,6 +62,7 @@ def main():
 					text = re.sub(r"(?<!\<abbr\>)Inc\.", r"<abbr>Inc.</abbr>", text)
 					text = re.sub(r"(?<!\<abbr\>)Ltd\.", r"<abbr>Ltd.</abbr>", text)
 					text = re.sub(r"(?<!\<abbr\>)St\.", r"<abbr>St.</abbr>", text)
+					text = re.sub(r"(?<!\<abbr\>)([Vv])iz\.", r"<abbr>\1iz.</abbr>", text)
 					text = re.sub(r"(\b)(?<!\<abbr\>)etc\.", r"\1<abbr>etc.</abbr>", text)
 					text = re.sub(r"(\b)(?<!\<abbr\>)ed\.", r"\1<abbr>ed.</abbr>", text)
 					text = re.sub(r"(?<!\<abbr\>)([Ii])\.e\.", r"<abbr>\1.e.</abbr>", text)
