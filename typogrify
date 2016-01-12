@@ -251,7 +251,11 @@ do
 		s/\,\s?…/,${hairsp}…/ig
 
 		#Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
-		s/([0-9])\s([a-z]{1,3}\.)/\1${nbsp}\2/ig
+		s/([0-9])\s+([a-z]{1,3}\.)/\1${nbsp}\2/ig
+
+		#Add non-breaking spaces between Arabic numbers and AM/PM
+		s/([0-9])\s+([ap])\.m\./\1${nbsp}\2.m./ig
+		s/([0-9])\s+<abbr([^>]*?)>([ap])\.m\./\1${nbsp}<abbr\2>\3.m./ig
 
 		#Fix some spelling archaisms
 		s/([Nn])aïve/\1aive/g
@@ -302,24 +306,6 @@ do
 		s/([[:space:]\>])\-([0-9,]+)/\1−\2/g
 
 		" "${file}"
-
-		#Add <abbr class="name"> tag around initials: [A-Z]\.\s*([A-Z]\.\s*)+
-
-		#Small caps AM and PM; thin space before Arabic numbers, but not if spelled out.  3&nbsp;<span class="time">a.m.</span>, one <span class="time">a.m.</span>
-
-		#Search coordinates: ([0-9])+’/\1′ and ([0-9])+”/\1″
-
-		#Search for em-dashes that were not closed correctly by smartypants: —[’”][^<\s]
-
-		#Search for en-dash candidates: /([0-9]+)[\-—]([0-9]+)/\1–\2/sig
-
-		#Surround ampersands in proper names with nbsp: hawkins & harker [a-zA-Z]\.?\s*&amp;\s*[a-zA-Z]
-
-		#Text in all caps should be converted to correct case, surrounded by <b> styled for small caps: /[A-Z]{3,}/
-
-		#Temperature: small caps F and C:  /\-\d+\b/
-
-		#Measurements: A x B x C should be A × B × C: /\sx\s/
 
 		if [ "${verbose}" = "true" ]; then
 			printf " OK\n"
