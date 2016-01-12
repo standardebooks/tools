@@ -67,13 +67,15 @@ def main():
 					text = re.sub(r"(\b)(?<!\<abbr\>)ed\.", r"\1<abbr>ed.</abbr>", text)
 					text = re.sub(r"(?<!\<abbr\>)([Ii])\.e\.", r"<abbr>\1.e.</abbr>", text)
 					text = re.sub(r"(?<!\<abbr\>)([Ee])\.g\.", r"<abbr>\1.g.</abbr>", text)
-					text = re.sub(r"(\b)(?<!\<abbr\>)([Ll])bs\.", r"\1<abbr>\1bs.</abbr>", text)
-					text = re.sub(r"(\b)(?<!\<abbr\>)([Oo])z\.", r"\1<abbr>\1z.</abbr>", text)
+					text = re.sub(r"(\b)(?<!\<abbr\>)([Ll])bs\.", r"\1<abbr>\2bs.</abbr>", text)
+					text = re.sub(r"(\b)(?<!\<abbr\>)([Oo])z\.", r"\1<abbr>\2z.</abbr>", text)
 					text = re.sub(r"(?<!\<abbr\>)(Jan\.|Feb\.|Mar\.|Apr\.|Jun\.|Jul\.|Aug\.|Sep\.|Sept\.|Oct\.|Nov\.|Dec\.)", r"<abbr>\1</abbr>", text)
 					text = re.sub(r"(?<!\<abbr\>)No\.(\s+[0-9]+)", r"<abbr>No.</abbr>\1", text)
 					text = re.sub(r"""(?<!\<abbr class="degree"\>)PhD""", r"""<abbr class="degree">PhD</abbr>""", text)
+					text = re.sub(r"""(?<!\<abbr class="initialism"\>)IOU""", r"""<abbr class="initialism">IOU</abbr>""", text)
 					text = re.sub(r"""(?<!\<abbr class="era"\>)AD""", r"""<abbr class="era">AD</abbr>""", text)
 					text = re.sub(r"""(?<!\<abbr class="era"\>)BC""", r"""<abbr class="era">BC</abbr>""", text)
+					text = re.sub(r"""(?<!\<abbr class="time"\>)([ap])\.m\.""", r"""<abbr class="time">\2.m.</abbr>""", text)
 
 					#Guess at adding eoc class
 					text = re.sub(r"""<abbr>([a-zA-Z\.]+?\.)</abbr></p>""", r"""<abbr class="eoc">\1</abbr></p>""", text)
