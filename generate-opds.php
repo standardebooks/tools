@@ -73,7 +73,7 @@ print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 		<dc:source><?= $source ?></dc:source>
 		<? } ?>
 		<rights>Public domain in the United States.</rights>
-		<content type="text"><?= htmlentities($description) ?></content>
+		<content type="text"><?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8') ?></content>
 		<? foreach($subjects as $subject){ ?>
 		<category scheme="http://purl.org/dc/terms/LCSH" term="<?= htmlentities($subject) ?>"/>
 		<? } ?>
