@@ -75,7 +75,7 @@ def main():
 					text = re.sub(r"""(?<!\<abbr class="initialism"\>)IOU""", r"""<abbr class="initialism">IOU</abbr>""", text)
 					text = re.sub(r"""(?<!\<abbr class="era"\>)AD""", r"""<abbr class="era">AD</abbr>""", text)
 					text = re.sub(r"""(?<!\<abbr class="era"\>)BC""", r"""<abbr class="era">BC</abbr>""", text)
-					text = re.sub(r"""(?<!\<abbr class="time"\>)([ap])\.m\.""", r"""<abbr class="time">\2.m.</abbr>""", text)
+					text = re.sub(r"""(?<!\<abbr class="time"\>)([ap])\.m\.""", r"""<abbr class="time">\1.m.</abbr>""", text)
 
 					#Guess at adding eoc class
 					text = re.sub(r"""<abbr>([a-zA-Z\.]+?\.)</abbr></p>""", r"""<abbr class="eoc">\1</abbr></p>""", text)
