@@ -36,7 +36,6 @@ verbose="false"
 check="false"
 dirs=""
 updateAsinPath="${scriptDir}/update-asin"
-buildImagesPath="${scriptDir}/build-images"
 makeUrlSafePath="${scriptDir}/make-url-safe"
 svgWidth="1400"
 svgHeight="2100"
@@ -98,13 +97,6 @@ do
 	rm --force "${destDir}"/*
 
 	destDir="$(realpath "${destDir}")"
-
-	#Build images if necessary
-	if [ "${verbose}" = "true" ]; then
-		"${buildImagesPath}" -v "${srcDir}"
-	else
-		"${buildImagesPath}" "${srcDir}"
-	fi
 
 	#Get work title
 	#We have to use xmlstarlet here because xpath chokes on utf8
