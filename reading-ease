@@ -10,7 +10,7 @@ import fnmatch
 from bs4 import BeautifulSoup
 import unicodedata
 
-ignoredFiles = ["colophon.xhtml", "titlepage.xhtml", "unlicense.xhtml", "halftitle.xhtml", "toc.xhtml"]
+ignoredFiles = ["colophon.xhtml", "titlepage.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml"]
 includedCharacters = list(string.whitespace) + list(string.digits) + [":",";",".","?","!"]
 
 def word_count(text):

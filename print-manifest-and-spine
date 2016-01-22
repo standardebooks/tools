@@ -84,7 +84,7 @@ do
 	ls -v "${srcDir}/src/epub/text/" | sed --regexp-extended "
 	/titlepage.xhtml/d
 	/colophon.xhtml/d
-	/unlicense.xhtml/d
+	/uncopyright.xhtml/d
 	/introduction.xhtml/d
 	/halftitle.xhtml/d
 	/epigraph.xhtml/d
@@ -99,7 +99,7 @@ do
 	ls "${srcDir}/src/epub/text/" | grep --quiet "loi.xhtml" && echo -e "\t\t<itemref idref=\"loi.xhtml\"/>" >> /tmp/spine
 
 	echo -e "\t\t<itemref idref=\"colophon.xhtml\"/>" >> /tmp/spine
-	echo -e "\t\t<itemref idref=\"unlicense.xhtml\"/>" >> /tmp/spine
+	echo -e "\t\t<itemref idref=\"uncopyright.xhtml\"/>" >> /tmp/spine
 	echo -e "\t</spine>" >> /tmp/spine
 
 	cat /tmp/spine

@@ -74,7 +74,7 @@ do
 		for file in $(find "${srcDir}" -name "*.xhtml")
 		do
 			filename=$(basename "${file}")
-			if [ "${filename}" != "titlepage.xhtml" -a "${filename}" != "colophon.xhtml" -a "${filename}" != "halftitle.xhtml" -a "${filename}" != "unlicense.xhtml" -a "${filename}" != "endnotes.xhtml" -a "${filename}" != "toc.xhtml" ]; then
+			if [ "${filename}" != "titlepage.xhtml" -a "${filename}" != "colophon.xhtml" -a "${filename}" != "halftitle.xhtml" -a "${filename}" != "uncopyright.xhtml" -a "${filename}" != "endnotes.xhtml" -a "${filename}" != "toc.xhtml" ]; then
 				currentCount=$("${wordcountPath}" "${file}")
 				wordCount=$((${wordCount} + ${currentCount}))
 			fi
@@ -190,7 +190,7 @@ do
 	for file in $(find "${srcDir}" -name "*.xhtml")
 	do
 		filename=$(basename "${file}")
-		if [ "${filename}" != "colophon.xhtml" -a "${filename}" != "titlepage.xhtml" -a "${filename}" != "halftitle.xhtml" -a "${filename}" != "unlicense.xhtml" -a "${filename}" != "loi.xhtml" -a "${filename}" != "toc.xhtml" ]; then
+		if [ "${filename}" != "colophon.xhtml" -a "${filename}" != "titlepage.xhtml" -a "${filename}" != "halftitle.xhtml" -a "${filename}" != "uncopyright.xhtml" -a "${filename}" != "loi.xhtml" -a "${filename}" != "toc.xhtml" ]; then
 			fileLanguage="$(grep --only-matching -E "<html[^<]+xml\:lang=\"[^\"]+\"" "${file}" | sed -E "s/.+xml\:lang=\"([^\"]+)\"/\1/")"
 			if [ "${fileLanguage}" != "${language}" ]; then
 				if [ "${verbose}" = "true" ]; then
