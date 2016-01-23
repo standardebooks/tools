@@ -46,7 +46,7 @@ dirs=""
 
 #Some convenience aliases
 wj="\xE2\x81\xA0" #word joiner, U+2060
-hairsp="\xE2\x80\x8A" #thin space, U+2009
+hairsp="\xE2\x80\x8A" #hair space, U+200A
 nbsp=" " #no-break space, U+00A0
 
 while [ $# -gt 0 ]
