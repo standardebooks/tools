@@ -5,7 +5,7 @@ import sys
 from bs4 import BeautifulSoup
 import re
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description="Count the number of words in an HTML file and optionally categorize by length.")
 parser.add_argument("-v", "--verbose", help="Include filename, wordcount, and length categorization in output", action="store_true")
 parser.add_argument("FILE", help="An HTML file to count the words of", nargs="+")
 args = parser.parse_args()

@@ -116,7 +116,7 @@ Change the ASIN of a mobi file.
 
 ##wordcount
 
-Get a word count of an XHTML file.
+Count the number of words in an HTML file and optionally categorize by length.
 
 #What a Standard Ebooks source directory looks like
 
