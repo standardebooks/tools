@@ -1,10 +1,20 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
+import argparse
 import sys
 import roman
 
-for line in sys.stdin:
-	sys.stdout.write(roman.toRoman(int(line)))
+def main():
+	parser = argparse.ArgumentParser(description="Convert a decimal number to a Roman numeral.")
+	parser.add_argument('numbers', metavar='INTEGER', nargs='*', help='An integer to convert to a Roman numeral.')
+	args = parser.parse_args()
 
-for argument in sys.argv[1:]:
-	sys.stdout.write(roman.toRoman(int(argument)))
+	if not sys.stdin.isatty():
+		for line in sys.stdin:
+			print(roman.toRoman(int(line)))
+	else:
+		for argument in args.numbers:
+			print(roman.toRoman(int(argument)))
+
+if __name__ == "__main__":
+	main()
