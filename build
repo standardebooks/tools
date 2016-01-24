@@ -331,5 +331,5 @@ do
 		fi
 	fi
 
-	#rm -rf "${workDir}"
+	rm -rf "${workDir}"
 done
