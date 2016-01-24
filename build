@@ -290,6 +290,9 @@ do
 		#It does recognize the word joiner character, but only in the old mobi7 format.  The new format renders them as spaces.
 		find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/${zwnbsp}//ig" "{}" \;
 
+		#Add soft hyphens
+		find "${workDir}" -iname "*.xhtml" -exec "${scriptDir}/hyphenate" "{}" \;
+
 		#Append our kindle compatibility CSS file to the core CSS file.
 		cat "${scriptDir}/kindle.css" >> "${workDir}/${epubDir}/css/core.css"
 
