@@ -26,17 +26,21 @@ Prettify source files in a Standard Ebook source directory, including canonicali
 
 Create a skeleton of a new Standard Ebook.
 
+##dec2roman
+
+Convert a decimal number to a Roman numeral.
+
 ##endnotes2kindle
 
 Convert epub-friendly endnotes to Kindle-friendly popup endnotes.  Generally only used by the `build` script and not called independently.
 
-##find-unused-selectors
-
-Find unused local.css CSS selectors in Standard Ebook source directories.
-
 ##find-mismatched-diacritics
 
 Find words with mismatched diacritics in Standard Ebook source directories.  For example, 'cafe' in one file and 'café' in another.
+
+##find-unused-selectors
+
+Find unused local.css CSS selectors in Standard Ebook source directories.
 
 ##generate-opds
 
@@ -54,10 +58,6 @@ Insert soft hyphens at syllable breaks in an XHTML file.
 
 A macro for calling Vim to interactively search and replace a regex on a list of files.
 
-##print-manifest-and-spine
-
-Create a <manifest> and <spine> tag for content.opf based on the passed Standard Ebooks source directory and print to standard output.
-
 ##make-url-safe
 
 Convert all arguments to URL-safe strings.
@@ -70,21 +70,13 @@ Replace words that may be archaically compounded with a dash to a more modern sp
 
 Calculate the ebook's word count, and update content.opf and colophon.xhtml with release and modified timestamps.
 
+##print-manifest-and-spine
+
+Create a <manifest> and <spine> tag for content.opf based on the passed Standard Ebooks source directory and print to standard output.
+
 ##reading-ease
 
 Calculate the Flesch reading ease for a Standard Ebooks source directory.
-
-##split-file
-
-Split an XHTML file into many files at all instances of <!--se:split-->, and include a header template for each file.
-
-##view-modified
-
-Check all author directories in the current or specified directory to see if there are changes that need to be committed.
-
-##dec2roman
-
-Convert a decimal number to a Roman numeral.
 
 ##roman2dec
 
@@ -94,13 +86,17 @@ Convert a Roman numeral to a decimal number.
 
 Apply some scriptable semantics rules from the Standard Ebooks semantics manual to a Standard Ebook source directory.
 
-##toc2kindle
+##split-file
 
-Flatten ToC to be at most 2 levels deep for Kindle compatibility.  Generally only used by the `build` script and not called independently.
+Split an XHTML file into many files at all instances of <!--se:split-->, and include a header template for each file.
 
 ##titlecase
 
 Convert a string to titlecase.
+
+##toc2kindle
+
+Flatten ToC to be at most 2 levels deep for Kindle compatibility.  Generally only used by the `build` script and not called independently.
 
 ##typogrify
 
@@ -117,6 +113,10 @@ Change the ASIN of a mobi file.
 ##wordcount
 
 Count the number of words in an HTML file and optionally categorize by length.
+
+##view-modified
+
+Check all author directories in the current or specified directory to see if there are changes that need to be committed.
 
 #What a Standard Ebooks source directory looks like
 
@@ -165,8 +165,8 @@ Many of these tools act on Standard Ebooks source directories.  Such directories
 
 		sudo apt-add-repository ppa:svg-cleaner-team/svgcleaner
 		sudo apt-get install xsltproc libxml2-utils xmlstarlet libxml-xpath-perl svgcleaner recode html-xml-utils python3-cssselect  python3-regex python3-pip
-		pip install roman titlecase beautifulsoup4
-		pip3 install pyhyphen
+		pip install titlecase beautifulsoup4
+		pip3 install pyhyphen roman
 
 4.	If you plan on editing cover or titlepage images, make sure the League Spartan and Sorts Mill Goudy fonts are installed on your system: [https://github.com/theleagueof/league-spartan](https://github.com/theleagueof/league-spartan), [https://github.com/theleagueof/sorts-mill-goudy](https://github.com/theleagueof/sorts-mill-goudy)
 
