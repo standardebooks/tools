@@ -9,8 +9,8 @@ import unicodedata
 
 def main():
 	parser = argparse.ArgumentParser(description="Find words with mismatched diacritics in Standard Ebook source directories.  For example, 'cafe' in one file and 'café' in another.")
-	parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
-	parser.add_argument('directories', metavar='DIRECTORY', nargs='+', help='a Standard Ebooks source directory')
+	parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true")
+	parser.add_argument('directories', metavar='DIRECTORY', nargs='+', help='A Standard Ebooks source directory')
 	args = parser.parse_args()
 
 	#First test if we're looking at a Standard Ebooks source directory

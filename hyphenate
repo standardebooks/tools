@@ -9,7 +9,7 @@ import re
 
 def main():
 	parser = argparse.ArgumentParser(description="Insert soft hyphens at syllable breaks in an XHTML file.")
-	parser.add_argument("-v", "--verbose", help="More verbose output", action="store_true")
+	parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true")
 	parser.add_argument("FILE", help="An XHTML file to hyphenate", nargs="+")
 	args = parser.parse_args()
 

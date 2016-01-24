@@ -140,9 +140,8 @@ def syllable_count(word):
 
 def main():
 	parser = argparse.ArgumentParser(description="Calculate the Flesch reading ease for a Standard Ebooks source directory.")
-
-	parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
-	parser.add_argument('directories', metavar='DIRECTORY', nargs='+', help='a Standard Ebooks source directory')
+	parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true")
+	parser.add_argument('directories', metavar='DIRECTORY', nargs='+', help='A Standard Ebooks source directory')
 	args = parser.parse_args()
 
 	#First test if we're looking at a Standard Ebooks source directory
