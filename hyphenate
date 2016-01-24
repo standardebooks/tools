@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+
+from hyphen import Hyphenator, dict_info
+from hyphen.dictools import *
+from bs4 import BeautifulSoup
+import argparse
+import sys
+import re
+
+parser = argparse.ArgumentParser(description="Insert soft hyphens at syllable breaks in an XHTML file.")
+parser.add_argument("-v", "--verbose", help="More verbose output", action="store_true")
+parser.add_argument("FILE", help="An XHTML file to hyphenate", nargs="+")
+args = parser.parse_args()
+
+hyphenators = {}
+
+for argument in args.FILE:
+	with open(argument, 'r+') as fh:
+		if args.verbose:
+			print("Hyphenating " + argument + " ...", end="", flush=True)
+
+		html = fh.read()
+		soup = BeautifulSoup(html)
+
+		#What language are we looking at?
+		language = soup.html["xml:lang"]
+		if language == "en-US":
+			if "en-US" not in hyphenators:
+				hyphenators["en-US"] = Hyphenator('en_US')
+		elif language == "en-GB":
+			if "en-GB" not in hyphenators:
+				hyphenators["en-GB"] = Hyphenator('en_GB')
+
+		if language not in hyphenators:
+			print("Error: Hyphenator for language '" + language + "' not available.", file=sys.stderr)
+			exit(1)
+
+		hyphenator = hyphenators[language]
+
+		text = str(soup.body)
+		result = text
+		word = ""
+		inTag = False
+		pos = 1
+
+		#The general idea here is to read the whole contents of the <body> tag character by character.
+		#If we hit a <, we ignore the contents until we hit the next >.
+		#Otherwise, we consider a word to be an unbroken sequence of alphanumeric characters.
+		#We can't just split at whitespace because HTML tags can contain whitespace (attributes for example)
+		for c in text:
+			process = False
+
+			if c == "<":
+				process = True
+				inTag = True
+			elif inTag == True and c == ">":
+				inTag = False
+				word = ""
+			elif inTag == False and c.isalnum():
+				word = word + c
+			elif inTag == False:
+				process = True
+
+			if process == True:
+				if word != "":
+					newWord = word
+					syllables = hyphenator.syllables(word)
+
+					if len(syllables) > 0:
+						newWord = "\u00AD".join(syllables)
+
+					result = result[:pos - len(word) - 1] + newWord + c + result[pos:]
+					pos = pos + len(newWord) - len(word)
+				word = ""
+
+			pos = pos + 1
+
+		html = re.sub(r'<body.+<\/body>', '', html, flags=re.UNICODE | re.MULTILINE | re.DOTALL)
+		html = html.replace('</head>', "</head>\n\t" + result)
+
+		fh.seek(0)
+		fh.write(html)
+		fh.truncate()
+		fh.close()
+
+		if args.verbose:
+			print(" OK")
