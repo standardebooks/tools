@@ -5,10 +5,10 @@ DESCRIPTION
 	Build an ebook from a Standard Ebook source directory and place the output in DIRECTORY/dist/.
 
 USAGE
-	build [-v,--verbose] [-m,--mobi] [-c,--check] DIRECTORY [DIRECTORY...]
+	build [-v,--verbose] [-k,--kindle] [-c,--check] DIRECTORY [DIRECTORY...]
 		DIRECTORY is the source directory, which must contain DIRECTORY/src/.
-		With the -m flag, use Calibre to create a mobi file in addition to epub files.
-		With the -c flag, use epubcheck to validate the epub.  If -m is also specified and epubcheck fails, don't create a mobi file.
+		With the -k flag, use Calibre to create an azw3 file in addition to epub files.
+		With the -c flag, use epubcheck to validate the epub.  If -k is also specified and epubcheck fails, don't create a Kindle file.
 EOF
 	exit
 }
@@ -31,7 +31,7 @@ fi
 scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 curDir="$(pwd)"
 srcDir="."
-mobi="false"
+kindle="false"
 verbose="false"
 check="false"
 dirs=""
@@ -51,8 +51,8 @@ zwnbsp="\xEF\xBB\xBF" #zero-width no-break space, U+FEFF
 while [ $# -gt 0 ]
 do
 	case "$1" in
-		-m|--mobi)
-			mobi="true"
+		-k|--kindle)
+			kindle="true"
 		;;
 		-c|--check)
 			check="true"
@@ -71,7 +71,7 @@ if [ "${check}" = "true" ]; then
 	require "epubcheck" "See: https://github.com/IDPF/epubcheck"
 fi
 
-if [ "${mobi}" = "true" ]; then
+if [ "${kindle}" = "true" ]; then
 	require "ebook-convert" "Try: http://calibre-ebook.com/download"
 	require "ebook-meta" "Try: http://calibre-ebook.com/download"
 fi
@@ -109,7 +109,7 @@ do
 
 	workDir="/tmp/${outputFilename}.epub"
 	epub2OutputFilename="${outputFilename}.compatible.epub"
-	mobiOutputFilename="${outputFilename}.mobi"
+	kindleOutputFilename="${outputFilename}.azw3"
 	outputFilename="${outputFilename}.epub"
 
 	if [ "${verbose}" = "true" ]; then
@@ -267,9 +267,9 @@ do
 		fi
 	fi
 
-	if [ "${mobi}" = "true" ]; then
+	if [ "${kindle}" = "true" ]; then
 		if [ "${verbose}" = "true" ]; then
-			printf "\tBuilding %s ..." "${mobiOutputFilename}"
+			printf "\tBuilding %s ..." "${kindleOutputFilename}"
 		fi
 
 		epubSource="/tmp/${epub2OutputFilename}.tmp.epub"
@@ -280,6 +280,7 @@ do
 		"${scriptDir}/clean" "${workDir}/${epubDir}/${tocFilename}"
 		xsltproc --stringparam cwd "${workDir}/" "${scriptDir}/navdoc2ncx.xsl" "${workDir}/${epubDir}/${tocFilename}" > "${workDir}/${epubDir}/toc.ncx"
 		sed --in-place --regexp-extended "s/ xml\:lang=\"\?\?\"//g" "${workDir}/${epubDir}/toc.ncx"
+
 		#Make nicely incrementing navpoint IDs and playOrders
 		sed --in-place "s/<navMap id=\".*\">/<navMap id=\"navmap\">/" "${workDir}/${epubDir}/toc.ncx"
 		perl -pi -e 's/\<navPoint id\="idp[0-9]+"/"<navPoint id=\"navpoint-" . ++$n . "\""/ge' "${workDir}/${epubDir}/toc.ncx"
@@ -307,9 +308,10 @@ do
 		#Re-ceate the compatible epub file
 		zip -9 --no-dir-entries -X --recurse-paths "${epubSource}" mimetype META-INF "${epubDir}" > /dev/null 2>&1
 
-		#Generate the mobi file
+		#Generate the kindle file
 		coverPath="$(xpath -e "string(//item[@properties=\"cover-image\"]/@href)" "${workDir}/${epubDir}/content.opf" 2> /dev/null)"
-		ebook-convert "${epubSource}" "${destDir}/${mobiOutputFilename}" --mobi-file-type="both" --pretty-print --no-inline-toc --max-toc-links=0 --prefer-metadata-cover --cover="${workDir}/${epubDir}/${coverPath}" > /dev/null 2>&1
+		#ebook-convert "${epubSource}" "${destDir}/${kindleOutputFilename}" --mobi-file-type="both" --pretty-print --no-inline-toc --max-toc-links=0 --prefer-metadata-cover --cover="${workDir}/${epubDir}/${coverPath}" > /dev/null 2>&1
+		ebook-convert "${epubSource}" "${destDir}/${kindleOutputFilename}" --pretty-print --no-inline-toc --max-toc-links=0 --prefer-metadata-cover --cover="${workDir}/${epubDir}/${coverPath}" > /dev/null 2>&1
 
 		if [ $? -eq 0 ]; then
 			#Get the ASIN for the thumbnail
@@ -317,12 +319,12 @@ do
 			bookId=$(grep --only-matching --extended-regexp "<dc:identifier id=\"uid\">url:[^<]+</dc:identifier>" "${workDir}/${epubDir}/content.opf" | sed --regexp-extended "s/<[^>]+>//g" | sed "s/^url://")
 			asin=$(printf "%s" "${bookId}" | sha1sum | cut -d " " -f 1)
 
-			#Update the ASIN in the generated mobi
-			"${updateAsinPath}" "${asin}" "${destDir}/${mobiOutputFilename}" "${workDir}/${mobiOutputFilename}" > /dev/null
-			mv "${workDir}/${mobiOutputFilename}" "${destDir}/${mobiOutputFilename}"
+			#Update the ASIN in the generated file
+			"${updateAsinPath}" "${asin}" "${destDir}/${kindleOutputFilename}" "${workDir}/${kindleOutputFilename}" > /dev/null
+			mv "${workDir}/${kindleOutputFilename}" "${destDir}/${kindleOutputFilename}"
 
-			#Extract the mobi thumbnail
-			asin="$(ebook-meta "${destDir}/${mobiOutputFilename}" | grep --only-matching --extended-regexp "mobi\-asin:.+" | cut -c11-)"
+			#Extract the thumbnail
+			asin="$(ebook-meta "${destDir}/${kindleOutputFilename}" | grep --only-matching --extended-regexp "mobi\-asin:.+" | cut -c11-)"
 			convert "${workDir}/${epubDir}/${coverPath}" -resize 432x660 "${destDir}/thumbnail_${asin}_EBOK_portrait.jpg" > /dev/null 2>&1
 
 			if [ "${verbose}" = "true" ]; then

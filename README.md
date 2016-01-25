@@ -108,7 +108,7 @@ Display Unicode code points, descriptions, and links to more details for each ch
 
 ##update-asin
 
-Change the ASIN of a mobi file.
+Change the ASIN of a mobi/azw3 file.
 
 ##wordcount
 

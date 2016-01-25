@@ -47,7 +47,7 @@ print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 
 	$filesystemPath = preg_replace('/\/src\/epub\/content.opf$/ius', '', $path);
 	$epubFilename = preg_replace('/(\.compatible|\.epub)/ius', '', preg_replace('/.+\//ius', '', array_shift(glob($filesystemPath . '/dist/*.epub'))));
-	$mobiFilename = preg_replace('/.+\//ius', '', array_shift(glob($filesystemPath . '/dist/*.mobi')));
+	$kindleFilename = preg_replace('/.+\//ius', '', array_shift(glob($filesystemPath . '/dist/*.azw3')));
 
 	?>
 	<entry>
@@ -82,7 +82,7 @@ print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 		<link href="<?= $relativeUrl ?>/src/epub/images/cover.svg" rel="http://opds-spec.org/image" type="image/svg+xml"/>
 		<link href="<?= $relativeUrl ?>/dist/<?= $epubFilename ?>.compatible.epub" rel="http://opds-spec.org/acquisition/open-access" type="application/epub+zip"/>
 		<link href="<?= $relativeUrl ?>/dist/<?= $epubFilename ?>.epub" rel="http://opds-spec.org/acquisition/open-access" type="application/epub+zip"/>
-		<link href="<?= $relativeUrl ?>/dist/<?= $mobiFilename ?>" rel="http://opds-spec.org/acquisition/open-access" type="application/x-mobipocket-ebook"/>
+		<link href="<?= $relativeUrl ?>/dist/<?= $kindleFilename ?>" rel="http://opds-spec.org/acquisition/open-access" type="application/x-mobipocket-ebook"/>
 	</entry>
 	<? } ?>
 </feed>
