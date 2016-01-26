@@ -13,7 +13,7 @@ def main():
 
 	for argument in args.FILE:
 		fh = open(argument, "r")
-		soup = BeautifulSoup(fh.read())
+		soup = BeautifulSoup(fh.read(), "lxml")
 		fh.close()
 
 		#This removes HTML tags

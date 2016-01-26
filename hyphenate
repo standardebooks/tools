@@ -21,7 +21,7 @@ def main():
 				print("Hyphenating " + argument + " ...", end="", flush=True)
 
 			html = fh.read()
-			soup = BeautifulSoup(html)
+			soup = BeautifulSoup(html, "lxml")
 
 			#What language are we looking at?
 			language = soup.html["xml:lang"]

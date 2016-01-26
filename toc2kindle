@@ -14,7 +14,7 @@ def main():
 		text = file.read()
 		file.seek(0)
 
-		soup = BeautifulSoup(text)
+		soup = BeautifulSoup(text, "lxml")
 
 		for match in soup.select('ol > li > ol > li > ol'):
 			match.unwrap()

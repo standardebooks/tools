@@ -165,7 +165,7 @@ def main():
 			for filename in fnmatch.filter(filenames, '*.xhtml'):
 				if filename not in ignoredFiles:
 					fh = open(os.path.join(root, filename), "r")
-					text += BeautifulSoup(fh.read()).body.get_text() + " "
+					text += BeautifulSoup(fh.read(), "lxml").body.get_text() + " "
 					fh.close()
 
 		#Remove non-sentence-ending punctuation from source text

@@ -91,7 +91,7 @@ def main():
 					text = re.sub(r"""([^a-zA-Z>\"])([vxVX])(\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", text)
 
 					#We may have added HTML tags within title tags.  Remove those here
-					soup = BeautifulSoup(text)
+					soup = BeautifulSoup(text, "lxml")
 					title = soup.title.get_text()
 					text = re.sub(r"<title>.+?</title>", "<title>" + title + "</title>", text)
 
