@@ -5,10 +5,11 @@ DESCRIPTION
 	Build an ebook from a Standard Ebook source directory and place the output in DIRECTORY/dist/.
 
 USAGE
-	build [-v,--verbose] [-k,--kindle] [-c,--check] DIRECTORY [DIRECTORY...]
+	build [-v,--verbose] [-k,--kindle] [-c,--check] [-p,--proofreading-css] DIRECTORY [DIRECTORY...]
 		DIRECTORY is the source directory, which must contain DIRECTORY/src/.
 		With the -k flag, use Calibre to create an azw3 file in addition to epub files.
 		With the -c flag, use epubcheck to validate the epub.  If -k is also specified and epubcheck fails, don't create a Kindle file.
+		With the -p flag, insert additional CSS rules that are helpful for proofreading.
 EOF
 	exit
 }
@@ -34,6 +35,7 @@ srcDir="."
 kindle="false"
 verbose="false"
 check="false"
+proofreadingCss="false"
 dirs=""
 updateAsinPath="${scriptDir}/update-asin"
 makeUrlSafePath="${scriptDir}/make-url-safe"
@@ -59,6 +61,9 @@ do
 		;;
 		-v|--verbose)
 			verbose="true"
+		;;
+		-p|--proofreading-css)
+			proofreadingCss="true"
 		;;
 		*)
 			dirs=$(printf "%s\n%s" "${dirs}" "$1")
@@ -124,6 +129,11 @@ do
 
 	#Find the epub source directory.
 	epubDir="$(xpath -e "string(//rootfile/@full-path)" "META-INF/container.xml" 2> /dev/null | sed "s/\/content.opf//")"
+
+	#Are we including proofing CSS?
+	if [ "${proofreadingCss}" = "true" ]; then
+		cat "${scriptDir}/templates/proofreading.css" >> "${workDir}/${epubDir}/css/core.css"
+	fi
 
 	#Output a pure epub3 file.
 	zip -9 --no-dir-entries -X --recurse-paths "${destDir}/${outputFilename}" mimetype META-INF "${epubDir}" > /dev/null 2>&1
