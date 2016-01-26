@@ -2,12 +2,12 @@
 usage(){
 	fmt <<EOF
 DESCRIPTION
-	Prettify source files in a Standard Ebook source directory, including canonicalizing XML and minifying SVGs.  Note that this only prettifies the source code; it doesn't perform typography changes.
+	Prettify individual source files, or all XHTML and SVG files in a source directory, including canonicalizing XML and minifying SVGs.  Note that this only prettifies the source code; it doesn't perform typography changes.
 
 USAGE
 	clean [-v,--verbose] DIRECTORY,FILE [DIRECTORY,FILE...]
-		DIRECTORY is a Standard Ebooks source directory, which must contain DIRECTORY/src/.
-		FILE must be an XHTML file.
+		DIRECTORY is a directory containing one or more XHTML or SVG files.
+		FILE is an XHTML or SVG file.
 		Multiple directories and files can be included in a single invocation.
 EOF
 	exit
@@ -55,11 +55,7 @@ do
 	isDir="false"
 
 	if [ -d "${srcDir}" ]; then
-		if [ ! -d "${srcDir}/src" ]; then
-			die "${srcDir} does't look like a Standard Ebook source directory."
-		else
-			isDir="true"
-		fi
+		isDir="true"
 	fi
 
 	if [ "${verbose}" = "true" ]; then
