@@ -194,16 +194,6 @@ do
 	#Add metadata to content.opf indicating this file is a Standard Ebooks compatibility build
 	sed --in-place --regexp-extended "s/<dc:publisher/<meta property=\"se:transform\">compatibility<\/meta>\n\t\t<dc:publisher/g" "${workDir}/${epubDir}/content.opf"
 
-	#If we have extremely long endnotes (like Don Quixote), break the endnotes file up
-	#if [ -f "${workDir}/${epubDir}/text/endnotes.xhtml" ]; then
-	#	#Get the number of endnotes
-	#	endnoteCount=$(grep --only-matching --extended-regexp "data-se-note-number=\"[0-9]+\"" "${workDir}/${epubDir}/text/endnotes.xhtml" | sed "s/[^0-9]//g" | sort --human-numeric-sort | tail -n 1)
-	#	if [ ${endnoteCount} > 200 ]; then
-	#	fi
-	#fi
-
-
-
 	#Generate our NCX file for epub2 compatibility.
 	#First find the ToC file.
 	tocFilename="$(xpath -e "string(//item[@properties=\"nav\"]/@href)" "${workDir}/${epubDir}/content.opf" 2> /dev/null)"
@@ -256,6 +246,12 @@ do
 	find "${workDir}" -iname "*.css" -print0 | xargs -0 sed --in-place --regexp-extended "s/^\s*hyphens\s*\:\s*(.+)/\thyphens: \1\n\tadobe-hyphenate: \1\n\t-webkit-hyphens: \1\n\t-epub-hyphens: \1\n\t-moz-hyphens: \1/g"
 	find "${workDir}" -iname "*.css" -print0 | xargs -0 sed --in-place --regexp-extended "s/^\s*hyphens\s*\:\s*none;/\thyphens: none;\n\tadobe-text-layout: optimizeSpeed; \/* For Nook *\//g"
 
+	#Add soft hyphens
+	find "${workDir}" -iname "*.xhtml" -exec "${scriptDir}/hyphenate" "{}" \;
+
+	#Hyphenate screws up our nice XHTML formatting so clean it up for distribution
+	"${scriptDir}/clean" "${workDir}/"
+
 	#Create the compatible epub file
 	zip -9 --no-dir-entries -X --recurse-paths "${destDir}/${epub2OutputFilename}" mimetype META-INF "${epubDir}" > /dev/null 2>&1
 
@@ -301,8 +297,6 @@ do
 		#It does recognize the word joiner character, but only in the old mobi7 format.  The new format renders them as spaces.
 		find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/${zwnbsp}//ig" "{}" \;
 
-		#Add soft hyphens
-		find "${workDir}" -iname "*.xhtml" -exec "${scriptDir}/hyphenate" "{}" \;
 
 		#Append our kindle compatibility CSS file to the core CSS file.
 		cat "${scriptDir}/kindle.css" >> "${workDir}/${epubDir}/css/core.css"
