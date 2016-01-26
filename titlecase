@@ -1,11 +1,20 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
+import argparse
 import sys
 from titlecase import titlecase
 
-for line in sys.stdin:
-	sys.stdout.write(titlecase(line))
-	
-for argument in sys.argv[1:]:
-	sys.stdout.write(titlecase(argument))
-	
+def main():
+	parser = argparse.ArgumentParser(description="Convert a string to titlecase.")
+	parser.add_argument('titles', metavar='STRING', nargs='*', help='A string to titlecase.')
+	args = parser.parse_args()
+
+	if not sys.stdin.isatty():
+		for line in sys.stdin:
+			print(titlecase(line.rstrip("\n")))
+	else:
+		for argument in args.titles:
+			print(titlecase(argument))
+
+if __name__ == "__main__":
+	main()
