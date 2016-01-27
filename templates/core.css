@@ -92,23 +92,42 @@ section[epub|type~="rearnotes"] > ol > li{
 	margin: 1em 0;
 }
 
-section[epub|type~="colophon"]{
+section[epub|type~="colophon"],
+section[epub|type~="imprint"]{
 	text-align: center;
-	line-height: 1.5em;
 }
 
-section[epub|type~="colophon"] h2{
+section[epub|type~="colophon"] header,
+section[epub|type~="imprint"] header{
+	font-size: 0;
+	margin: 5% auto;
+}
+
+section[epub|type~="colophon"] h2,
+section[epub|type~="imprint"] h2{
 	display: none;
 }
 
-section[epub|type~="colophon"] p{
-	margin: 1em 0 0 0;
-	text-align: center;
+section[epub|type~="colophon"] img[epub|type~="z3998:publisher-logo"],
+section[epub|type~="imprint"] img[epub|type~="z3998:publisher-logo"]{
+	max-width: 25%;
+}
+
+section[epub|type~="colophon"] p,
+section[epub|type~="imprint"] p{
+	margin: 1em auto;
 	text-indent: 0;
 }
 
-section[epub|type~="colophon"] img[epub|type~="z3998:publisher-logo"]{
-	width: 25%;
+section[epub|type~="imprint"] p{
+	font-size: .75em;
+	text-align: justify;
+	width: 75%;
+}
+
+section[epub|type~="imprint"] a.self-referential{
+	hyphens: none;
+	-epub-hyphens: none;
 }
 
 section[epub|type~="colophon"] p + p:before{
@@ -129,10 +148,6 @@ section[epub|type~="colophon"] .revision-date{
 section[epub|type~="copyright-page"] p{
 	margin: 1em auto;
 	text-indent: 0;
-}
-
-section[epub|type~="copyright-page"] p b{
-	font-weight: bold;
 }
 
 section[epub|type~="copyright-page"] blockquote p{
