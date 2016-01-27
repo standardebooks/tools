@@ -2,7 +2,7 @@
 usage(){
 	fmt <<EOF
 DESCRIPTION
-	Calculate work word count, insert release date if none set, update modified date, and check for the presence of draft CSS rules.
+	Calculate work word count, insert release date if none set, update modified date, and check for various common errors.
 
 USAGE
 	build [-v,--verbose] [-n,--no-word-count] [-d,--no-dates] DIRECTORY [DIRECTORY...]
@@ -200,15 +200,6 @@ do
 			fi
 		fi
 	done
-
-	#Find draft CSS rules
-	grep --quiet -i "helpful during drafting" "${srcDir}/src/epub/css/local.css"
-	if [ $? -eq 0 ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\t"
-		fi
-		printf "Warning: There seem to be draft CSS rules in local.css!\n" 1>&2
-	fi
 
 	grep --quiet -i -R "�" "${srcDir}/src/"
 	if [ $? -eq 0 ]; then
