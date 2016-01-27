@@ -131,6 +131,10 @@ section[epub|type~="copyright-page"] p{
 	text-indent: 0;
 }
 
+section[epub|type~="copyright-page"] p b{
+	font-weight: bold;
+}
+
 section[epub|type~="copyright-page"] blockquote p{
 	font-style: italic;
 	text-align: left;
