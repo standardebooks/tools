@@ -113,6 +113,7 @@ cp "${scriptDir}/templates/onix.xml" "${root}/src/epub/"
 cp "${scriptDir}/templates/toc.xhtml" "${root}/src/epub/"
 cp "${scriptDir}/templates/core.css" "${root}/src/epub/css/"
 cp "${scriptDir}/templates/logo.svg" "${root}/src/epub/images/"
+cp "${scriptDir}/templates/imprint.xhtml" "${root}/src/epub/text/"
 cp "${scriptDir}/templates/uncopyright.xhtml" "${root}/src/epub/text/"
 
 cp "${scriptDir}/templates/titlepage.svg" "${root}/images/"
