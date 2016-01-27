@@ -299,7 +299,7 @@ do
 
 
 		#Append our kindle compatibility CSS file to the core CSS file.
-		cat "${scriptDir}/kindle.css" >> "${workDir}/${epubDir}/css/core.css"
+		cat "${scriptDir}/templates/kindle.css" >> "${workDir}/${epubDir}/css/core.css"
 
 		#Convert endnotes to Kindle popup compatible notes
 		if [ -f "${workDir}/${epubDir}/text/endnotes.xhtml" ]; then
