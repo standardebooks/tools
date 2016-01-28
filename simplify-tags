@@ -103,6 +103,7 @@ def main():
 						#Joke's on us though, because the CSSSelector library doesn't include that!
 						#We have to do our best to add it by hand here
 						fixedXPath = re.sub(r"descendant\-or\-self\:\:([a-z]+)", "descendant-or-self::xhtml:\\1", sel.path)
+						fixedXPath = re.sub(r"descendant\-or\-self\:\:\*\/([a-z]+)", "descendant-or-self::*/xhtml:\\1", fixedXPath)
 
 						if "abbr" in selector:
 							for el in tree.xpath(fixedXPath, namespaces=xhtmlNamespaces):
