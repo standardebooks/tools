@@ -61,7 +61,7 @@ def main():
 				pass
 
 			for filename in filenames:
-				if not filename.endswith("colophon.xhtml") and not filename.endswith("titlepage.xhtml") and not filename.endswith("halftitle.xhtml"):
+				if not filename.endswith("colophon.xhtml") and not filename.endswith("titlepage.xhtml") and not filename.endswith("halftitle.xhtml") and not filename.endswith("imprint.xhtml"):
 					#We have to use a call to xpath here because the lxml library doesn't select *[epub|type~=""] type selectors
 					output = subprocess.check_output(["xpath", "-q", "-e", xpath.path, filename], stderr=subprocess.DEVNULL)
 
