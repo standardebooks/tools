@@ -69,7 +69,7 @@ def main():
 			fixedXPath = re.sub(r"descendant\-or\-self\:\:\*\/([a-z]+)", "descendant-or-self::*/xhtml:\\1", fixedXPath)
 
 			for filename in filenames:
-				if not filename.endswith("colophon.xhtml") and not filename.endswith("titlepage.xhtml") and not filename.endswith("halftitle.xhtml") and not filename.endswith("imprint.xhtml"):
+				if not filename.endswith("titlepage.xhtml") and not filename.endswith("halftitle.xhtml") and not filename.endswith("imprint.xhtml"):
 					tree = etree.parse(filename)
 					if len(tree.xpath(fixedXPath, namespaces=xhtmlNamespaces)) > 0:
 						unusedSelectors.remove(selector)
