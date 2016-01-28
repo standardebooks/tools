@@ -150,6 +150,9 @@ do
 	#Simplify tags
 	"${scriptDir}/simplify-tags" "${workDir}"
 
+	#Include compatibility CSS
+	cat "${scriptDir}/templates/compatibility.css" >> "${workDir}/${epubDir}/css/core.css"
+
 	#To get popup footnotes in iBooks, we have to change epub:rearnote to epub:footnote.
 	#Remember to get our custom style selectors too.
 	find "${workDir}" -iname "*.xhtml" -print0 | xargs -0 sed --in-place --regexp-extended "s/epub:type=\"([^\"]*?)rearnote([^\"]*?)\"/epub:type=\"\1footnote\2\"/g"
