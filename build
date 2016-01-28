@@ -234,7 +234,7 @@ do
 	rm "${workDir}/epub/images/cover.svg"
 	rm "${destDir}/cover-thumbnail.svg"
 
-	find "${workDir}" -iname "*.svg" -exec mogrify -background none -format png "{}" \; -exec rm "{}" \;	#Convert svg to png, then delete svg. The background flag ensure we get transparency.
+	find "${workDir}" -iname "*.svg" -exec sh -c 'rsvg-convert -z 2 -a -f png -o "${0%.svg}.png" "$0"' "{}" \; -exec rm "{}" \; #Convert svg to png, then delete svg. The background flag ensure we get transparency.
 	find "${workDir}" -type f \( ! -iname "*.jpg" \) -print0 | xargs -0 sed --in-place "s/cover.svg/cover.jpg/g" 	#Replace references to .svg with .png. Ignore png files, because otherwise this command will corrupt them.
 	sed --in-place --regexp-extended "s/id=\"cover.jpg\" media\-type=\"image\/svg\+xml\"/id=\"cover.jpg\" media\-type=\"image\/jpeg\"/g" "${workDir}/${epubDir}/content.opf"	#Replace mime type declarations in content.opf
 	find "${workDir}" -type f \( ! -iname "*.png" \) -print0 | xargs -0 sed --in-place "s/\.svg/.png/g" 		#Replace references to .svg with .png. Ignore png files, because otherwise this command will corrupt them.
