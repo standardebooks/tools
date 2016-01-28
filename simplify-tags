@@ -94,10 +94,11 @@ def main():
 					#Now iterate over each CSS selector and see if it's used in any of the files we found
 					for selector in selectors:
 						try:
+							print(selector)
 							sel = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces=xhtmlNamespaces)
 						except lxml.cssselect.ExpressionError:
 							#This gets thrown if we use pseudo-elements, which lxml doesn't support
-							pass
+							continue
 
 						#lxml won't select an element unless we explicitly declare the xhtml namespace each time in the xpath expression.
 						#Joke's on us though, because the CSSSelector library doesn't include that!
