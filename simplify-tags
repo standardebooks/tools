@@ -44,14 +44,13 @@ def main():
 	#Check!
 	for dir in args.directories:
 		dir = os.path.abspath(dir)
-		sourceDir = dir
 
 		if args.verbose:
 			print("Checking " + dir + " ...", end="", flush=True)
 
 		totalCss = ""
 
-		for root, dirnames, filenames in os.walk(sourceDir):
+		for root, dirnames, filenames in os.walk(dir):
 			for basename in fnmatch.filter(filenames, '*.css'):
 				filename = os.path.join(root, basename)
 				with open(filename, "r+", encoding="utf-8") as file:
@@ -83,11 +82,9 @@ def main():
 		unusedSelectors = list(selectors)
 
 		#Get a list of .xhtml files to search
-		for root, dirnames, filenames in os.walk(sourceDir):
+		for root, dirnames, filenames in os.walk(dir):
 			for basename in fnmatch.filter(filenames, '*.xhtml'):
 				filename = os.path.join(root, basename)
-				if "chapter-46" not in filename:
-					continue
 
 				with open(filename, "r+", encoding="utf-8") as file:
 					rawXhtml = file.read()
