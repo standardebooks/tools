@@ -46,7 +46,7 @@ def main():
 		css = re.sub("^@.+", "", css, flags=re.MULTILINE)
 
 		#Construct a dictionary of selectors
-		selectors = list(filter(None, css.splitlines()))
+		selectors = list(set(filter(None, css.splitlines())))
 		unusedSelectors = list(selectors)
 
 		#Get a list of .xhtml files to search
