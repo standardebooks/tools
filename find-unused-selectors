@@ -4,6 +4,7 @@ import argparse
 import re
 import glob
 import lxml.cssselect
+import lxml.etree as etree
 import subprocess
 import sys
 import os
@@ -13,6 +14,8 @@ def main():
 	parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true")
 	parser.add_argument('directories', metavar='DIRECTORY', nargs='+', help='A Standard Ebooks source directory')
 	args = parser.parse_args()
+
+	xhtmlNamespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "http://standardebooks.org/vocab/1.0"}
 
 	#First test if we're looking at a Standard Ebooks source directory
 	for dir in args.directories:
@@ -25,12 +28,11 @@ def main():
 	#Check!
 	for dir in args.directories:
 		dir = os.path.abspath(dir)
-		sourceDir = os.path.join(dir, "src/")
 
 		if args.verbose:
 			print("Checking " + dir + " ...", end="", flush=True)
 
-		with open(os.path.join(sourceDir, "epub/css/local.css"), encoding="utf-8") as file:
+		with open(os.path.join(dir, "src/epub/css/local.css"), encoding="utf-8") as file:
 			css = file.read()
 
 		#Remove actual content of css selectors
@@ -50,22 +52,26 @@ def main():
 		unusedSelectors = list(selectors)
 
 		#Get a list of .xhtml files to search
-		filenames = glob.glob(os.path.join(sourceDir, "epub/text/") + "*.xhtml")
+		filenames = glob.glob(os.path.join(dir, "src/epub/text/") + "*.xhtml")
 
 		#Now iterate over each CSS selector and see if it's used in any of the files we found
 		for selector in selectors:
 			try:
-				xpath = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces={"epub": "http://www.idpf.org/2007/ops"})
+				sel = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces=xhtmlNamespaces)
 			except lxml.cssselect.ExpressionError:
 				#This gets thrown if we use pseudo-elements, which lxml doesn't support
 				pass
 
+			#lxml won't select an element unless we explicitly declare the xhtml namespace each time in the xpath expression.
+			#Joke's on us though, because the CSSSelector library doesn't include that!
+			#We have to do our best to add it by hand here
+			fixedXPath = re.sub(r"descendant\-or\-self\:\:([a-z]+)", "descendant-or-self::xhtml:\\1", sel.path)
+			fixedXPath = re.sub(r"descendant\-or\-self\:\:\*\/([a-z]+)", "descendant-or-self::*/xhtml:\\1", fixedXPath)
+
 			for filename in filenames:
 				if not filename.endswith("colophon.xhtml") and not filename.endswith("titlepage.xhtml") and not filename.endswith("halftitle.xhtml") and not filename.endswith("imprint.xhtml"):
-					#We have to use a call to xpath here because the lxml library doesn't select *[epub|type~=""] type selectors
-					output = subprocess.check_output(["xpath", "-q", "-e", xpath.path, filename], stderr=subprocess.DEVNULL)
-
-					if output != b"":
+					tree = etree.parse(filename)
+					if len(tree.xpath(fixedXPath, namespaces=xhtmlNamespaces)) > 0:
 						unusedSelectors.remove(selector)
 						break
 
