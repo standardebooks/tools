@@ -86,6 +86,9 @@ Convert a Roman numeral to a decimal number.
 
 Apply some scriptable semantics rules from the Standard Ebooks semantics manual to a Standard Ebook source directory.
 
+##simplify-tags
+Simplify some HTML and CSS to be more compatible with crappier reading systems (ADE I'm looking at you...)
+
 ##split-file
 
 Split an XHTML file into many files at all instances of <!--se:split-->, and include a header template for each file.

@@ -147,8 +147,8 @@ do
 	#Set xmllint to use tab indentation.
 	export XMLLINT_INDENT=$(printf "\t")
 
-	#Replace some poorly supported CSS values with equivalents if possible
-	find "${workDir}" -iname "*.css" -print0 | xargs -0 sed --in-place --regexp-extended "s/all-small-caps;/small-caps; text-transform: lowercase;/g"
+	#Simplify tags
+	"${scriptDir}/simplify-tags" "${workDir}"
 
 	#To get popup footnotes in iBooks, we have to change epub:rearnote to epub:footnote.
 	#Remember to get our custom style selectors too.
@@ -336,6 +336,4 @@ do
 			fi
 		fi
 	fi
-
-	rm -rf "${workDir}"
 done
