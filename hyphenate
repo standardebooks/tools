@@ -65,10 +65,14 @@ def main():
 				if process == True:
 					if word != "":
 						newWord = word
-						syllables = hyphenator.syllables(word)
 
-						if len(syllables) > 0:
-							newWord = "\u00AD".join(syllables)
+						#100 is the hard coded max word length in the hyphenator module
+						#Check here to avoid an error
+						if len(word) < 100:
+							syllables = hyphenator.syllables(word)
+
+							if len(syllables) > 0:
+								newWord = "\u00AD".join(syllables)
 
 						result = result[:pos - len(word) - 1] + newWord + c + result[pos:]
 						pos = pos + len(newWord) - len(word)
