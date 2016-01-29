@@ -61,6 +61,7 @@ def main():
 				sel = lxml.cssselect.CSSSelector(selector, translator="html", namespaces=xhtmlNamespaces)
 			except lxml.cssselect.ExpressionError:
 				#This gets thrown if we use pseudo-elements, which lxml doesn't support
+				unusedSelectors.remove(selector)
 				continue
 
 			for filename in filenames:
