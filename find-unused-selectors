@@ -65,7 +65,7 @@ def main():
 				continue
 
 			for filename in filenames:
-				if not filename.endswith("titlepage.xhtml") and not filename.endswith("halftitle.xhtml") and not filename.endswith("imprint.xhtml"):
+				if not filename.endswith("titlepage.xhtml") and not filename.endswith("imprint.xhtml"):
 					#We have to remove the default namespace declaration from our document, otherwise
 					#xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 					with open(filename, "r") as file:
