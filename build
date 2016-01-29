@@ -49,6 +49,7 @@ wj="\xE2\x81\xA0" #word joiner, U+2060
 thinsp=" " #thin space, U+2009
 nbsp=" " #no-break space, U+00A0
 zwnbsp="\xEF\xBB\xBF" #zero-width no-break space, U+FEFF
+shy="\xC2\xAD" #soft hyphen, U+00AD
 
 while [ $# -gt 0 ]
 do
@@ -300,13 +301,15 @@ do
 		#It does recognize the word joiner character, but only in the old mobi7 format.  The new format renders them as spaces.
 		find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/${zwnbsp}//ig" "{}" \;
 
-
 		#Append our kindle compatibility CSS file to the core CSS file.
 		cat "${scriptDir}/templates/kindle.css" >> "${workDir}/${epubDir}/css/core.css"
 
 		#Convert endnotes to Kindle popup compatible notes
 		if [ -f "${workDir}/${epubDir}/text/endnotes.xhtml" ]; then
 			php "${scriptDir}/endnotes2kindle.php" "${workDir}/${epubDir}/text/endnotes.xhtml"
+
+			#While Kindle now supports soft hyphens, popup endnotes break words but don't insert the hyphen characters.  So for now, remove soft hyphens from the endnotes file.
+			sed --in-place "s/${shy}//g" "${workDir}/${epubDir}/text/endnotes.xhtml"
 		fi
 
 		#Remove the epub:type attribute, as Calibre turns it into just "type"
