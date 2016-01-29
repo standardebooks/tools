@@ -87,27 +87,22 @@ def main():
 				filename = os.path.join(root, basename)
 
 				with open(filename, "r+", encoding="utf-8") as file:
-					rawXhtml = file.read()
+					#We have to remove the default namespace declaration from our document, otherwise
+					#xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
+					rawXhtml = file.read().replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
 					processedXhtml = rawXhtml;
 					tree = etree.fromstring(str.encode(rawXhtml))
 
 					#Now iterate over each CSS selector and see if it's used in any of the files we found
 					for selector in selectors:
 						try:
-							print(selector)
 							sel = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces=xhtmlNamespaces)
 						except lxml.cssselect.ExpressionError:
 							#This gets thrown if we use pseudo-elements, which lxml doesn't support
 							continue
 
-						#lxml won't select an element unless we explicitly declare the xhtml namespace each time in the xpath expression.
-						#Joke's on us though, because the CSSSelector library doesn't include that!
-						#We have to do our best to add it by hand here
-						fixedXPath = re.sub(r"descendant\-or\-self\:\:([a-z]+)", "descendant-or-self::xhtml:\\1", sel.path)
-						fixedXPath = re.sub(r"descendant\-or\-self\:\:\*\/([a-z]+)", "descendant-or-self::*/xhtml:\\1", fixedXPath)
-
 						if "abbr" in selector:
-							for el in tree.xpath(fixedXPath, namespaces=xhtmlNamespaces):
+							for el in tree.xpath(sel.path, namespaces=xhtmlNamespaces):
 								#Why would you want the tail to output by default?!?
 								rawString = etree.tostring(el, encoding=str, with_tail=False)
 
@@ -126,9 +121,9 @@ def main():
 								tree = etree.fromstring(str.encode(processedXhtml))
 
 						if ":first-child" in selector:
-							for el in tree.xpath(fixedXPath, namespaces=xhtmlNamespaces):
+							for el in tree.xpath(sel.path, namespaces=xhtmlNamespaces):
 								currentClass = el.get('class')
-								if currentClass is not None:
+								if currentClass is not None and "first-child" not in currentClass:
 									currentClass = currentClass + ' first-child'
 								else:
 									currentClass = "first-child"
@@ -143,7 +138,7 @@ def main():
 
 					if processedXhtml != rawXhtml:
 						file.seek(0)
-						file.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print="true"))
+						file.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print="true").replace("<html", "<html xmlns=\"http://www.w3.org/1999/xhtml\""))
 						file.truncate()
 
 if __name__ == "__main__":

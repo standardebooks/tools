@@ -5,6 +5,7 @@ import re
 import glob
 import lxml.cssselect
 import lxml.etree as etree
+import lxml.html as html
 import subprocess
 import sys
 import os
@@ -57,21 +58,20 @@ def main():
 		#Now iterate over each CSS selector and see if it's used in any of the files we found
 		for selector in selectors:
 			try:
-				sel = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces=xhtmlNamespaces)
+				sel = lxml.cssselect.CSSSelector(selector, translator="html", namespaces=xhtmlNamespaces)
 			except lxml.cssselect.ExpressionError:
 				#This gets thrown if we use pseudo-elements, which lxml doesn't support
 				continue
 
-			#lxml won't select an element unless we explicitly declare the xhtml namespace each time in the xpath expression.
-			#Joke's on us though, because the CSSSelector library doesn't include that!
-			#We have to do our best to add it by hand here
-			fixedXPath = re.sub(r"descendant\-or\-self\:\:([a-z]+)", "descendant-or-self::xhtml:\\1", sel.path)
-			fixedXPath = re.sub(r"descendant\-or\-self\:\:\*\/([a-z]+)", "descendant-or-self::*/xhtml:\\1", fixedXPath)
-
 			for filename in filenames:
 				if not filename.endswith("titlepage.xhtml") and not filename.endswith("halftitle.xhtml") and not filename.endswith("imprint.xhtml"):
-					tree = etree.parse(filename)
-					if len(tree.xpath(fixedXPath, namespaces=xhtmlNamespaces)) > 0:
+					#We have to remove the default namespace declaration from our document, otherwise
+					#xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
+					with open(filename, "r") as file:
+						xhtml = file.read().replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
+
+					tree = etree.fromstring(str.encode(xhtml))
+					if len(tree.xpath(sel.path, namespaces=xhtmlNamespaces)) > 0:
 						unusedSelectors.remove(selector)
 						break
 
