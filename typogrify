@@ -266,6 +266,7 @@ do
 		s/([Vv])is-a-vis/\1is-à-vis/g
 		s/([Ff])acade/\1açade/g
 		s/([Cc])hateau/\1âteau/g
+		s/([Hh])abitue/\1abitué/g
 		#We break up cafe so that we don't catch 'cafeteria'
 		s/(\b[Cc])afe(\b)/\1afé\2/g
 		s/(\b[Cc])afes(\b)/\1afés\2/g
