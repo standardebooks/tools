@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+
+import argparse
+import sys
+import re
+import lxml.etree as etree
+
+def main():
+	parser = argparse.ArgumentParser(description="Convert epub-friendly endnotes to Kindle-friendly popup endnotes.")
+	parser.add_argument("FILE", help="An XHTML endnotes file in Standard Ebooks endnotes file format", nargs="+")
+	args = parser.parse_args()
+
+	xhtmlNamespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "http://standardebooks.org/vocab/1.0"}
+
+	for argument in args.FILE:
+		#We have to remove the default namespace declaration from our document, otherwise
+		#xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
+		with open(argument, "r+", encoding="utf-8") as file:
+			xhtml = file.read()
+
+			tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
+
+			notes = tree.xpath("//li[@epub:type=\"rearnote\" or @epub:type=\"footnote\"]", namespaces=xhtmlNamespaces)
+
+			processedEndnotes = ""
+
+			for note in notes:
+				noteId = note.get("id")
+				noteNumber = note.get("data-se-note-number")
+
+				#First, fixup the reference link for this endnote
+				try:
+					refLink = etree.tostring(note.xpath("p[last()]/a[last()]")[0], encoding="unicode", pretty_print=True, with_tail=False).replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "").strip()
+				except:
+					print("Can't find ref link for #" + noteId)
+					exit()
+
+				newRefLink = re.sub(r">.*?<\/a>", ">" + noteNumber + "</a>.", refLink)
+
+				#Now remove the wrapping li node from the note
+				noteText = re.sub(r"^<li[^>]*?>(.*)<\/li>$", "\\1", etree.tostring(note, encoding="unicode", pretty_print=True, with_tail=False), flags=re.UNICODE | re.IGNORECASE | re.DOTALL)
+
+				#Insert our new ref link
+				result = re.subn(r"^\s*<p([^>]*?)>", "<p\\1 id=\"" + noteId + "\">" + newRefLink + " ", noteText)
+
+				#Sometimes there is no leading <p> tag (for example, if the endnote starts with a blockquote
+				#If that's the case, just insert one in front.
+				noteText = result[0]
+				if result[1] == 0:
+					noteText = "<p id=\"" + noteId + "\">" + newRefLink + "</p>" + noteText
+
+				#Now remove the old reflink
+				noteText = noteText.replace(refLink, "")
+
+				#Trim trailing spaces left over after removing the ref link
+				noteText = re.sub(r"\s+</p>", "</p>", noteText).strip()
+
+				#Sometimes ref links are in their own p tag--remove that too
+				noteText = re.sub(r"<p>\s*<\/p>", "", noteText)
+
+				processedEndnotes += noteText + "\n"
+
+			#All done with endnotes, so drop them back in
+			xhtml = re.sub(r"<ol>.*<\/ol>", processedEndnotes, xhtml, flags=re.UNICODE | re.IGNORECASE | re.DOTALL);
+
+			file.seek(0)
+			file.write(xhtml)
+			file.truncate()
+
+if __name__ == "__main__":
+	main()

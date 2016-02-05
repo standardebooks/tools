@@ -32,7 +32,7 @@ Convert a decimal number to a Roman numeral.
 
 ##endnotes2kindle
 
-Convert epub-friendly endnotes to Kindle-friendly popup endnotes.  Generally only used by the `build` script and not called independently.
+Convert epub-friendly endnotes to Kindle-friendly popup endnotes.
 
 ##find-mismatched-diacritics
 

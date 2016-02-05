@@ -306,7 +306,7 @@ do
 
 		#Convert endnotes to Kindle popup compatible notes
 		if [ -f "${workDir}/${epubDir}/text/endnotes.xhtml" ]; then
-			php "${scriptDir}/endnotes2kindle.php" "${workDir}/${epubDir}/text/endnotes.xhtml"
+			"${scriptDir}/endnotes2kindle" "${workDir}/${epubDir}/text/endnotes.xhtml"
 
 			#While Kindle now supports soft hyphens, popup endnotes break words but don't insert the hyphen characters.  So for now, remove soft hyphens from the endnotes file.
 			sed --in-place "s/${shy}//g" "${workDir}/${epubDir}/text/endnotes.xhtml"
