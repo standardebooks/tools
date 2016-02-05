@@ -133,7 +133,7 @@ do
 
 	#Are we including proofing CSS?
 	if [ "${proofreadingCss}" = "true" ]; then
-		cat "${scriptDir}/templates/proofreading.css" >> "${workDir}/${epubDir}/css/core.css"
+		cat "${scriptDir}/templates/proofreading.css" >> "${workDir}/${epubDir}/css/local.css"
 	fi
 
 	#Output a pure epub3 file.
