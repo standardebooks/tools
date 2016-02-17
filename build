@@ -9,7 +9,7 @@ USAGE
 		DIRECTORY is the source directory, which must contain DIRECTORY/src/.
 		With the -k flag, use Calibre to create an azw3 file in addition to epub files.
 		With the -c flag, use epubcheck to validate the epub.  If -k is also specified and epubcheck fails, don't create a Kindle file.
-		With the -p flag, insert additional CSS rules that are helpful for proofreading.
+		With the -p flag, insert additional CSS rules that are helpful for proofreading.  Output filenames will contain ".proof".
 EOF
 	exit
 }
@@ -114,8 +114,18 @@ do
 	outputFilename="${urlAuthor}_${urlTitle}"
 
 	workDir="/tmp/${outputFilename}.epub"
-	epub2OutputFilename="${outputFilename}.epub"
-	kindleOutputFilename="${outputFilename}.azw3"
+	epub2OutputFilename="${outputFilename}"
+	kindleOutputFilename="${outputFilename}"
+	outputFilename="${outputFilename}"
+
+	if [ "${proofreadingCss}" = "true" ]; then
+		epub2OutputFilename="${epub2OutputFilename}.proof"
+		kindleOutputFilename="${kindleOutputFilename}.proof"
+		outputFilename="${outputFilename}.proof"
+	fi
+
+	epub2OutputFilename="${epub2OutputFilename}.epub"
+	kindleOutputFilename="${kindleOutputFilename}.azw3"
 	outputFilename="${outputFilename}.epub3"
 
 	if [ "${verbose}" = "true" ]; then
