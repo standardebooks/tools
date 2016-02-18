@@ -279,6 +279,7 @@ do
 		s/([Cc])oup\-de\-grace/\1oup-de-grâce/g
 		s/([Cc])anape/\1anapé/g
 		s/([Pp])recis(\b)/\1récis\2/g
+		s/([Gg])ood\-by([^e])/\1goodbye\2/g
 
 		s/Ph\.D/PhD/g
 		s/P\.\s*S\./P.S./g
