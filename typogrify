@@ -178,8 +178,8 @@ do
 		s/([^a-z]+)Pvt\.?\s+/\1Pvt.${nbsp}/g
 		s/<abbr>Pvt\.?<\/abbr>\s+/<abbr>Pvt.<\/abbr>${nbsp}/g
 
-		s/([^a-z]+)Esq\.?\s+/\1Esq.${nbsp}/g
-		s/<abbr>Esq\.?<\/abbr>\s+/<abbr>Esq.<\/abbr>${nbsp}/g
+		s/([^a-z]+)Esq\.?([^a-z]+)/\1Esq.\2/g
+		s/<abbr>Esq\.?<\/abbr>([^a-z]+)/<abbr>Esq.<\/abbr>\1/g
 
 		s/([^a-z]+)Mt\.?\s+/\1Mt.${nbsp}/g
 		s/<abbr>Mt\.?<\/abbr>\s+/<abbr>Mt.<\/abbr>${nbsp}/g
