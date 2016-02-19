@@ -168,7 +168,7 @@ if [ "${initializeGithub}" = true ]; then
 	echo "Enter your Github username:"
 	read githubUsername
 
-	output=$(curl -s -i -u "${githubUsername}" https://api.github.com/orgs/standardebooks/repos -d "{\"name\":\"${repoName}\"}")
+	output=$(curl -s -i -u "${githubUsername}" https://api.github.com/orgs/standardebooks/repos -d "{\"name\":\"${repoName}\", \"homepage\":\"https://standardebooks.org/ebooks/${identifier}\", \"has_downloads\":false, \"has_wiki\":false, \"description\":\"Epub source for the Standard Ebooks edition of ${titleString}\"}")
 
 	echo "${output}" | grep -q -i "201 OK"
 	if [ $? -ne 0 ]; then
