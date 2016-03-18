@@ -281,6 +281,8 @@ do
 		s/([Pp])recis(\b)/\1récis\2/g
 		s/([Gg])ood\-by([^e])/\1goodbye\2/g
 		s/([Bb])ete noir/\1ête noir/g
+		s/(\b)Eclat(\b)/\1Éclat\2/g
+		s/(\b)eclat(\b)/\1éclat\2/g
 
 		s/Ph\.D/PhD/g
 		s/P\.\s*S\./P.S./g
