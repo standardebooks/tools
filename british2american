@@ -43,13 +43,13 @@ do
 	if [ "${i}" = "" ]; then
 		continue
 	fi
-	
+
 	srcDir="$(realpath "${i%/}")"
-	
+
 	if [ "${verbose}" = "true" ]; then
 		printf "Converting %s ...\n" "${srcDir}"
 	fi
-	
+
 	for file in $(find "${srcDir}" -name "*htm*")
 	do
 		#Skip symlinked files
@@ -59,11 +59,19 @@ do
 			fi
 			continue
 		fi
-		
+
+		if [[ "${file}" == *"uncopyright.xhtml"* ]]; then
+			continue
+		fi
+
+		if [[ "${file}" == *"imprint.xhtml"* ]]; then
+			continue
+		fi
+
 		if [ "${verbose}" = "true" ]; then
 			printf "\tConverting %s ..." "${file}"
 		fi
-		
+
 		sed --in-place --regexp-extended "s|“|<ldq>|ig" "${file}"
 		sed --in-place --regexp-extended "s|”|<rdq>|ig" "${file}"
 		sed --in-place --regexp-extended "s|‘|<lsq>|ig" "${file}" #opening dialog quotes
@@ -74,13 +82,13 @@ do
 		sed --in-place --regexp-extended "s|—’</|—<rsq></|ig" "${file}" #closing dialog quotes broken by a dash, followed by an ending tag
 		sed --in-place --regexp-extended "s|([a-z])’([a-z])|\1<ap>\2|ig" "${file}" #contractions
 		sed --in-place --regexp-extended "s|(\s+)’([a-z])|\1<ap>\2|ig" "${file}" #leading apostrophes: pork ’n beans
-		
+
 		sed --in-place --regexp-extended "s|<ldq>|‘|ig" "${file}"
 		sed --in-place --regexp-extended "s|<rdq>|’|ig" "${file}"
 		sed --in-place --regexp-extended "s|<lsq>|“|ig" "${file}"
 		sed --in-place --regexp-extended "s|<rsq>|”|ig" "${file}"
 		sed --in-place --regexp-extended "s|<ap>|’|ig" "${file}"
-		
+
 		if [ "${verbose}" = "true" ]; then
 			printf " OK\n"
 		fi
