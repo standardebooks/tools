@@ -271,7 +271,7 @@ do
 		s/(\b[Cc])afe(\b)/\1afé\2/g
 		s/(\b[Cc])afes(\b)/\1afés\2/g
 		s/([Mm])êlée/\1elee/g
-		s/(\b[Ff])ete(\b)/\1ête\2/g
+		s/(\b[Ff])ete(s?)(\b)/\1ête\2\3/g
 		s/(\b[Rr])ôle(\b)/\1ole\2/g
 		s/(\b[Cc])oö/\1oo/g
 		s/(\b[Rr])eë/\1ee/g
@@ -280,6 +280,7 @@ do
 		s/([Cc])anape/\1anapé/g
 		s/([Pp])recis(\b)/\1récis\2/g
 		s/([Gg])ood\-by([^e])/\1goodbye\2/g
+		s/([Bb])ete noir/\1ête noir/g
 
 		s/Ph\.D/PhD/g
 		s/P\.\s*S\./P.S./g
