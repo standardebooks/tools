@@ -24,19 +24,13 @@ def main():
 			soup = BeautifulSoup(html, "lxml")
 
 			#What language are we looking at?
-			language = soup.html["xml:lang"]
-			if language == "en-US":
-				if "en-US" not in hyphenators:
-					hyphenators["en-US"] = Hyphenator('en_US')
-			elif language == "en-GB":
-				if "en-GB" not in hyphenators:
-					hyphenators["en-GB"] = Hyphenator('en_GB')
-
-			if language not in hyphenators:
+			language = soup.html["xml:lang"].replace("-", "_")
+			try:
+				if language not in hyphenators:
+					hyphenators[language] = Hyphenator(language)
+			except:
 				print("Error: Hyphenator for language '" + language + "' not available.", file=sys.stderr)
 				exit(1)
-
-			hyphenator = hyphenators[language]
 
 			text = str(soup.body)
 			result = text
@@ -69,7 +63,7 @@ def main():
 						#100 is the hard coded max word length in the hyphenator module
 						#Check here to avoid an error
 						if len(word) < 100:
-							syllables = hyphenator.syllables(word)
+							syllables = hyphenators[language].syllables(word)
 
 							if len(syllables) > 0:
 								newWord = "\u00AD".join(syllables)
