@@ -53,6 +53,7 @@ def main():
 					text = re.sub(r"(?<!\<abbr\>)Mme\.", r"<abbr>Mme.</abbr>", text)
 					text = re.sub(r"(?<!\<abbr\>)Mmes\.", r"<abbr>Mmes.</abbr>", text)
 					text = re.sub(r"(?<!\<abbr\>)Mlle\.", r"<abbr>Mlle.</abbr>", text)
+					text = re.sub(r"(?<!\<abbr\>)Mdlle\.", r"<abbr>Mdlle.</abbr>", text)
 					text = re.sub(r"(?<!\<abbr\>)Mlles\.", r"<abbr>Mlles.</abbr>", text)
 					text = re.sub(r"(?<!\<abbr\>)Messrs\.", r"<abbr>Messrs.</abbr>", text)
 					text = re.sub(r"(?<!\<abbr\>)Messers\.", r"<abbr>Messers.</abbr>", text)
