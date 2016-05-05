@@ -10,80 +10,98 @@ import re
 def main():
 	parser = argparse.ArgumentParser(description="Insert soft hyphens at syllable breaks in an XHTML file.")
 	parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true")
+	parser.add_argument("-l", "--language", help="Specify the language for the XHTML files.  If unspecified, defaults to the 'xml:lang' or 'lang' attribute of the root <html> element.", action="store")
 	parser.add_argument("FILE", help="An XHTML file to hyphenate", nargs="+")
 	args = parser.parse_args()
 
 	hyphenators = {}
 
 	for argument in args.FILE:
-		with open(argument, 'r+') as fh:
-			if args.verbose:
-				print("Hyphenating " + argument + " ...", end="", flush=True)
+		try:
+			with open(argument, 'r+') as fh:
+				if args.verbose:
+					print("Hyphenating " + argument + " ...", end="", flush=True)
 
-			html = fh.read()
-			soup = BeautifulSoup(html, "lxml")
+				html = fh.read()
+				soup = BeautifulSoup(html, "lxml")
 
-			#What language are we looking at?
-			language = soup.html["xml:lang"].replace("-", "_")
-			try:
-				if language not in hyphenators:
-					hyphenators[language] = Hyphenator(language)
-			except:
-				print("Error: Hyphenator for language '" + language + "' not available.", file=sys.stderr)
-				exit(1)
+				#What language are we looking at?
+				language = args.language
+				if language is None:
+					try:
+						language = soup.html["xml:lang"]
+					except:
+						try:
+							language = soup.html["lang"]
+						except:
+							print("Error: No 'xml:lang' or 'lang' attribute on root <html> element.  Couldn't guess file language.", file=sys.stderr)
+							exit(1)
 
-			text = str(soup.body)
-			result = text
-			word = ""
-			inTag = False
-			pos = 1
+				try:
+					language = language.replace("-", "_")
+					if language not in hyphenators:
+						hyphenators[language] = Hyphenator(language)
+				except:
+					print("Error: Hyphenator for language '" + language + "' not available.", file=sys.stderr)
+					print("Installed hyphenators: " + str(list(dict_info.keys())), file=sys.stderr)
+					exit(1)
 
-			#The general idea here is to read the whole contents of the <body> tag character by character.
-			#If we hit a <, we ignore the contents until we hit the next >.
-			#Otherwise, we consider a word to be an unbroken sequence of alphanumeric characters.
-			#We can't just split at whitespace because HTML tags can contain whitespace (attributes for example)
-			for c in text:
-				process = False
+				text = str(soup.body)
+				result = text
+				word = ""
+				inTag = False
+				pos = 1
 
-				if c == "<":
-					process = True
-					inTag = True
-				elif inTag == True and c == ">":
-					inTag = False
-					word = ""
-				elif inTag == False and c.isalnum():
-					word = word + c
-				elif inTag == False:
-					process = True
+				#The general idea here is to read the whole contents of the <body> tag character by character.
+				#If we hit a <, we ignore the contents until we hit the next >.
+				#Otherwise, we consider a word to be an unbroken sequence of alphanumeric characters.
+				#We can't just split at whitespace because HTML tags can contain whitespace (attributes for example)
+				for c in text:
+					process = False
 
-				if process == True:
-					if word != "":
-						newWord = word
+					if c == "<":
+						process = True
+						inTag = True
+					elif inTag == True and c == ">":
+						inTag = False
+						word = ""
+					elif inTag == False and c.isalnum():
+						word = word + c
+					elif inTag == False:
+						process = True
 
-						#100 is the hard coded max word length in the hyphenator module
-						#Check here to avoid an error
-						if len(word) < 100:
-							syllables = hyphenators[language].syllables(word)
+					if process == True:
+						if word != "":
+							newWord = word
 
-							if len(syllables) > 0:
-								newWord = "\u00AD".join(syllables)
+							#100 is the hard coded max word length in the hyphenator module
+							#Check here to avoid an error
+							if len(word) < 100:
+								syllables = hyphenators[language].syllables(word)
 
-						result = result[:pos - len(word) - 1] + newWord + c + result[pos:]
-						pos = pos + len(newWord) - len(word)
-					word = ""
+								if len(syllables) > 0:
+									newWord = "\u00AD".join(syllables)
 
-				pos = pos + 1
+							result = result[:pos - len(word) - 1] + newWord + c + result[pos:]
+							pos = pos + len(newWord) - len(word)
+						word = ""
 
-			html = re.sub(r'<body.+<\/body>', '', html, flags=re.UNICODE | re.MULTILINE | re.DOTALL)
-			html = html.replace('</head>', "</head>\n\t" + result)
+					pos = pos + 1
 
-			fh.seek(0)
-			fh.write(html)
-			fh.truncate()
-			fh.close()
+				html = re.sub(r'<body.+<\/body>', '', html, flags=re.UNICODE | re.MULTILINE | re.DOTALL)
+				html = html.replace('</head>', "</head>\n\t" + result)
 
-			if args.verbose:
-				print(" OK")
+				fh.seek(0)
+				fh.write(html)
+				fh.truncate()
+				fh.close()
+
+				if args.verbose:
+					print(" OK")
+
+		except Exception:
+			print("Error: Couldn't read " + argument + ".", file=sys.stderr)
+			exit(1)
 
 if __name__ == "__main__":
 	main()
