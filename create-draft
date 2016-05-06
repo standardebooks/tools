@@ -168,10 +168,21 @@ if [ "${initializeGithub}" = true ]; then
 	echo "Enter your Github username:"
 	read githubUsername
 
-	output=$(curl -s -i -u "${githubUsername}" https://api.github.com/orgs/standardebooks/repos -d "{\"name\":\"${repoName}\", \"homepage\":\"https://standardebooks.org/ebooks/${identifier}\", \"has_downloads\":false, \"has_wiki\":false, \"description\":\"Epub source for the Standard Ebooks edition of ${titleString}\"}")
+	echo "Enter your Github password:"
+	read -s githubPassword
 
-	echo "${output}" | grep -q -i "201 OK"
-	if [ $? -ne 0 ]; then
+	output=$(curl -s -i --user "${githubUsername}:${githubPassword}" https://api.github.com/orgs/standardebooks/repos -d "{\"name\":\"${repoName}\", \"homepage\":\"https://standardebooks.org/ebooks/${identifier}\", \"has_downloads\":false, \"has_wiki\":false, \"description\":\"Epub source for the Standard Ebooks edition of ${titleString}\"}")
+
+	#Check if 2fa is required
+	echo "${output}" | grep -q -i "X-GitHub-OTP: required;"
+	if [ $? -eq 0 ]; then
+		echo "Enter your 2-factor authentication code:"
+		read -s code
+		output=$(curl -s -i --user "${githubUsername}:${githubPassword}" --header "X-GitHub-OTP: ${code}" https://api.github.com/orgs/standardebooks/repos -d "{\"name\":\"${repoName}\", \"homepage\":\"https://standardebooks.org/ebooks/${identifier}\", \"has_downloads\":false, \"has_wiki\":false, \"description\":\"Epub source for the Standard Ebooks edition of ${titleString}\"}")
+	fi
+
+	echo "${output}" | grep -q -i "201 Created"
+	if [ $? -eq 0 ]; then
 		git remote add github git@github.com:"standardebooks/${repoName}.git"
 	else
 		echo "Error during Github request:" 1>&2
