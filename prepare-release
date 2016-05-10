@@ -201,6 +201,31 @@ do
 		fi
 	done
 
+	#See if we have non-https source links
+	grep --quiet -i -R "http://www.gutenberg.org/" "${srcDir}/src/"
+	if [ $? -eq 0 ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\t"
+		fi
+		printf "Warning: Non-https link detected: http://www.gutenberg.org\n" 1>&2
+	fi
+
+	grep --quiet -i -R "http://catalog.hathitrust.org/" "${srcDir}/src/"
+	if [ $? -eq 0 ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\t"
+		fi
+		printf "Warning: Non-https link detected: http://catalog.hathitrust.org\n" 1>&2
+	fi
+
+	grep --quiet -i -R "http://archive.org/" "${srcDir}/src/"
+	if [ $? -eq 0 ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\t"
+		fi
+		printf "Warning: Non-https link detected: http://catalog.hathitrust.org\n" 1>&2
+	fi
+
 	grep --quiet -i -R "�" "${srcDir}/src/"
 	if [ $? -eq 0 ]; then
 		if [ "${verbose}" = "true" ]; then
