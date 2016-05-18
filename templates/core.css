@@ -125,7 +125,7 @@ section[epub|type~="imprint"] p{
 	width: 75%;
 }
 
-section[epub|type~="imprint"] a.self-referential{
+a.raw-url{
 	hyphens: none;
 	-epub-hyphens: none;
 }
