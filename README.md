@@ -66,6 +66,10 @@ Convert all arguments to URL-safe strings.
 
 Replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace "ash-tray" with "ashtray".
 
+##ordinal
+
+Print the ordinal for one or more integers.
+
 ##prepare-release
 
 Calculate the ebook's word count, and update content.opf and colophon.xhtml with release and modified timestamps.

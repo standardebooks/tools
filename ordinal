@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+
+import argparse
+
+def main():
+	parser = argparse.ArgumentParser(description="Print the ordinal for one or more integers.")
+	parser.add_argument('numbers', metavar='NUMBER', nargs='+', help='An integer')
+	args = parser.parse_args()
+
+	for n in args.numbers:
+		n = int(n)
+		print("%d%s" % (n,"tsnrhtdd"[(n/10%10!=1)*(n%10<4)*n%10::4]))
+
+if __name__ == "__main__":
+	main()
