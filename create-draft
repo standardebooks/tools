@@ -184,6 +184,10 @@ if [ "${initializeGithub}" = true ]; then
 	echo "${output}" | grep -q -i "201 Created"
 	if [ $? -eq 0 ]; then
 		git remote add github git@github.com:"standardebooks/${repoName}.git"
+
+		#Set git to automatically push to Github
+		git config branch.master.remote github
+		git config branch.master.merge refs/heads/master
 	else
 		echo "Error during Github request:" 1>&2
 		die "${output}"
