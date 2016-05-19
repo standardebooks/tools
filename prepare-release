@@ -223,7 +223,7 @@ do
 		if [ "${verbose}" = "true" ]; then
 			printf "\t"
 		fi
-		printf "Warning: Non-https link detected: http://catalog.hathitrust.org\n" 1>&2
+		printf "Warning: Non-https link detected: http://archive.org/\n" 1>&2
 	fi
 
 	grep --quiet -i -R "�" "${srcDir}/src/"
