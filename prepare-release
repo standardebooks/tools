@@ -5,10 +5,11 @@ DESCRIPTION
 	Calculate work word count, insert release date if none set, update modified date, and check for various common errors.
 
 USAGE
-	build [-v,--verbose] [-n,--no-word-count] [-d,--no-dates] DIRECTORY [DIRECTORY...]
+	build [-v,--verbose] [-w,--no-word-count] [-d,--no-dates] [-r,--no-revision] DIRECTORY [DIRECTORY...]
 		DIRECTORY is the source directory, which must contain DIRECTORY/src/.
 		With the --no-word-count option, don't perform a word count calculation.
 		With the --no-dates option, don't change the release and modified dates.
+		With the --no-revision option, don't increment the revision number.
 EOF
 	exit
 }
@@ -23,12 +24,14 @@ friendlyTimestamp="$(date -d @${timestamp} --utc +"%B %e, %Y, %l:%M <abbr class
 scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 wordcountPath="${scriptDir}/wordcount"
 readingEasePath="${scriptDir}/reading-ease"
+ordinalPath="${scriptDir}/ordinal"
 contentOpfFilePath="${ebookRoot}src/epub/content.opf"
 colophonPath="${ebookRoot}src/epub/text/colophon.xhtml"
 dirs=""
 verbose="false"
 doWordCount="true"
-noDates="false"
+doDates="true"
+doRevision="true"
 
 while [ $# -gt 0 ]
 do
@@ -36,11 +39,14 @@ do
 		-v|--verbose)
 			verbose="true"
 		;;
-		-n|--no-word-count)
+		-w|--no-word-count)
 			doWordCount="false"
 		;;
 		-d|--no-dates)
-			noDates="true"
+			doDates="false"
+		;;
+		-r|--no-revision)
+			doRevision="false"
 		;;
 		*)
 			dirs=$(printf "%s\n%s" "${dirs}" "$1")
@@ -98,7 +104,36 @@ do
 		fi
 	fi
 
-	if [ "${noDates}" = "false" ]; then
+	if [ "${doRevision}" = "true" ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\tUpdating revision number ..."
+		fi
+
+		revision=$(grep -E "<meta property=\"se:revision-number\">[0-9]+</meta>" "${srcDir}/src/epub/content.opf" | grep --only-matching -E "[0-9]+")
+		revision=$((revision + 1))
+
+		sed --in-place --regexp-extended "s|<meta property=\"se:revision-number\">[^<]+</meta>|<meta property=\"se:revision-number\">${revision}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+
+		if [ "${revision}" != "1" ]; then
+			ordinal=$("${ordinalPath}" "${revision}")
+
+			#Are we moving from the first edition to the nth edition?
+			grep --quiet -E "<p>This is the first edition of this ebook.<br/>" "${srcDir}/src/epub/text/colophon.xhtml"
+			if [ $? -eq 0 ]; then
+				sed --in-place --regexp-extended "s|This edition was released on<br/>|The first edition was released on<br/>|" "${srcDir}/src/epub/text/colophon.xhtml"
+				sed --in-place --regexp-extended "s|<p>This is the first edition of this ebook.<br/>|<p>This is the <span class=\"revision-number\">${ordinal}</span> edition of this ebook.<br/>\n\t\t\tThis edition was released on<br/>\n\t\t\t<span class=\"revision-date\">${friendlyTimestamp}</span><br/>|" "${srcDir}/src/epub/text/colophon.xhtml"
+			else
+				sed --in-place --regexp-extended "s|<span class=\"revision-number\">[^<]+</span>|<span class=\"revision-number\">${ordinal}</span>|" "${srcDir}/src/epub/text/colophon.xhtml"
+			fi
+		fi
+
+
+		if [ "${verbose}" = "true" ]; then
+			printf " Done.\n"
+		fi
+	fi
+
+	if [ "${doDates}" = "true" ]; then
 		grep --quiet "1900-01-01T00:00:00Z" "${srcDir}/src/epub/content.opf"
 		if [ $? -eq 0 ]; then
 			if [ "${verbose}" = "true" ]; then
