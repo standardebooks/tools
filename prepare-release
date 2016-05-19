@@ -226,6 +226,14 @@ do
 		printf "Warning: Non-https link detected: http://archive.org/\n" 1>&2
 	fi
 
+	grep --quiet -E -i -R "id.loc.gov/authorities/names/[^\.]+.html" "${srcDir}/src/"
+	if [ $? -eq 0 ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\t"
+		fi
+		printf "Warning: LoC identifier with .html extension detected!\n" 1>&2
+	fi
+
 	grep --quiet -i -R "�" "${srcDir}/src/"
 	if [ $? -eq 0 ]; then
 		if [ "${verbose}" = "true" ]; then
