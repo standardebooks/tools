@@ -5,10 +5,12 @@ DESCRIPTION
 	Prettify individual source files, or all XHTML and SVG files in a source directory, including canonicalizing XML and minifying SVGs.  Note that this only prettifies the source code; it doesn't perform typography changes.
 
 USAGE
-	clean [-v,--verbose] DIRECTORY,FILE [DIRECTORY,FILE...]
+	clean [-v,--verbose] [-s,--single-lines] DIRECTORY,FILE [DIRECTORY,FILE...]
 		DIRECTORY is a directory containing one or more XHTML or SVG files.
 		FILE is an XHTML or SVG file.
 		Multiple directories and files can be included in a single invocation.
+
+		With --single-lines, remove hard line wrapping.
 EOF
 	exit
 }
@@ -26,6 +28,7 @@ if [ $# -eq 0 ]; then
 fi
 
 verbose="false"
+singleLines="false"
 dirs=""
 
 while [ $# -gt 0 ]
@@ -33,6 +36,9 @@ do
 	case "$1" in
 		-v|--verbose)
 			verbose="true"
+		;;
+		-s|--single-lines)
+			singleLines="true"
 		;;
 		*)
 			dirs=$(printf "%s\n%s" "${dirs}" "$1")
@@ -63,6 +69,11 @@ do
 	fi
 
 	if [ "${isDir}" = "true" ]; then
+		if [ "${singleLines}" = "true" ]; then
+			find "${srcDir}" -iname "*.xhtml" -type f -exec sh -c "perl -i -pe \"s/\n/ /\" "{}"" \;
+			find "${srcDir}" -iname "*.xhtml" -type f -exec sh -c "sed --in-place --regexp-extended \"s|\s+| |g\" "{}"" \;
+		fi
+
 		#Epub3 doesn't allow named entities, so convert them to their unicode equivalents
 		#First we use xml2asc to convert *all* special characters to named entities.
 		#Then recode converts named entities to unicode.
@@ -76,6 +87,11 @@ do
 		#Add trailing newlines to files that don't have one.
 		find "${srcDir}" \( -iname "*.xhtml" -o -iname "*.svg" -o -iname "*.css" -o -iname "*.opf" -o -iname "*.xml" \) -type f -exec sed -i -e '$a\' "{}" \;
 	else
+		if [ "${singleLines}" = "true" ]; then
+			perl -i -pe "s/\n/ /" "${srcDir}"
+			sed --in-place --regexp-extended "s|\s+| |g" "${srcDir}"
+		fi
+
 		xml2asc < "${srcDir}" | recode HTML | sed "s/&/&amp;/g" > /tmp/tmp.xhtml; mv /tmp/tmp.xhtml "${srcDir}"
 
 		xmllint --c14n "${srcDir}" | (printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' && cat) | xmllint --output "${srcDir}" --format -
