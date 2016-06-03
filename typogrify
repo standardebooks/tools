@@ -285,6 +285,7 @@ do
 		s/(\b)eclat(\b)/\1éclat\2/g
 		s/(\b)a la(\b)/\1à la\2/g
 		s/(\b)a propos(\b)/\1apropos\2/g
+		s/(\b)per cent(\b)/\1percent\2/g
 
 		s/Ph\.D/PhD/g
 		s/P\.\s*S\./P.S./g
