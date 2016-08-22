@@ -7,7 +7,7 @@ DESCRIPTION
 USAGE
 	build-images [-v,--verbose] [-f,--force] DIRECTORY [DIRECTORY...]
 		DIRECTORY is the source directory, which must contain DIRECTORY/images/ and DIRECTORY/src/.
-		
+
 		With --force, build the images regardless of whether the source checksums are different.
 EOF
 	exit
@@ -19,6 +19,7 @@ if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
 
 require "inkscape" "Try: sudo apt-get install inkscape"
 require "svgcleaner-cli" "Try: sudo apt-get install svgcleaner"
+require "exiftool" "Try: sudo apt-get install libimage-exiftool-perl"
 
 #Check if the League Spartan and Sorts Mill Gaudy fonts are installed before continuing
 fc-list | grep --quiet "League Spartan" || die "The League Spartan font doesn't seem to be installed.  See https://github.com/theleagueof/league-spartan"
@@ -59,7 +60,7 @@ do
 	if [ "${i}" = "" ]; then
 		continue
 	fi
-	
+
 	cd "${curDir}" #Reset when starting the loop over
 
 	srcDir="$(realpath "${i%/}")"
@@ -68,7 +69,7 @@ do
 	if [ ! -d "${srcDir}/src" ]; then
 		die "${srcDir} doesn't look like a Standard Ebook source directory."
 	fi
-	
+
 	if [ ! -d "${srcDir}/src/epub/images" ]; then
 		die "${srcDir} is missing the images folder."
 	fi
@@ -84,23 +85,31 @@ do
 		if [ "${verbose}" = "true" ]; then
 			printf "\timages/cover.svg not found, skipping ... ERROR\n" 1>&2
 		fi
-		
+
 		canBuildCover="false"
 	fi
-	
+
 	if [ ! -f "${srcDir}/images/cover.jpg" ]; then
 		if [ "${verbose}" = "true" ]; then
 			printf "\timages/cover.jpg not found, skipping ... ERROR\n" 1>&2
 		fi
-		
+
 		canBuildCover="false"
+	else
+		#Remove useless metadata from cover images
+		exiftool -overwrite_original -all= "${srcDir}/images/cover.jpg" &> /dev/null
 	fi
-	
+
+	if [ -f "${srcDir}/images/cover.source.jpg" ]; then
+		#Remove useless metadata from cover images
+		exiftool -overwrite_original -all= "${srcDir}/images/cover.source.jpg" &> /dev/null
+	fi
+
 	buildCover="true"
 	#Source svg exists, check if the sources match the already built image
 	if [ "${canBuildCover}" = "true" ]; then
 		currentCoverSha1=$(cat "${srcDir}/images/cover.svg" "${srcDir}/images/cover.jpg" | sha1sum | cut -d " " -f 1)
-	
+
 		if [ -f "${srcDir}/src/epub/images/cover.svg" ]; then
 			oldSha1=$(grep --extended-regexp --only-matching "se\:generated\-from=\"[a-fA-F0-9]{40}\"" "${srcDir}/src/epub/images/cover.svg" | cut -d "\"" -f 2)
 
@@ -112,24 +121,24 @@ do
 			fi
 		fi
 	fi
-	
+
 	if [ "${canBuildCover}" = "true" ] && ( [ "${buildCover}" = "true" ] || [ "${force}" = "true" ] ); then
 		if [ "${verbose}" = "true" ]; then
 			printf "\tBuilding cover.svg ..."
 		fi
-	
+
 		#Convert text to paths
 		inkscape "${srcDir}/images/cover.svg" --export-text-to-path --export-plain-svg "/tmp/cover.svg"
-		
+
 		#Embed linked images
 		printf "s|xlink:href=\"[^\"]+cover.jpg|xlink:href=\"data:image/jpeg;base64," > /tmp/cover.sed
 		base64 -w 0 "${srcDir}/images/cover.jpg" >> /tmp/cover.sed
 		printf "|" >> /tmp/cover.sed
 		sed --regexp-extended --file=/tmp/cover.sed "/tmp/cover.svg" > "${destDir}/cover.svg"
-		
+
 		#This huge list of flags emulates `svgcleaner-cli --type-complete`, but WITHOUT the paths options, which usually messes things up.
 		svgcleaner-cli "${destDir}/cover.svg" "${destDir}/cover.svg" --remove-comments --remove-unused-defs --remove-nonsvg-elts --remove-metadata-elts --remove-inkscape-elts --remove-sodipodi-elts --remove-ai-elts --remove-corel-elts --remove-msvisio-elts --remove-sketch-elts --remove-invisible-elts --remove-empty-containers --remove-duplicated-defs --remove-outside-elts --equal-elts-to-use --ungroup-containers --merge-gradients --remove-unreferenced-ids --trim-ids --remove-notappl-atts --remove-default-atts --remove-inkscape-atts --remove-sodipodi-atts --remove-ai-atts --remove-corel-atts --remove-msvisio-atts --remove-sketch-atts --remove-stroke-props --remove-fill-props --remove-unused-xlinks --join-style-atts --simplify-transform-matrix --apply-transforms-to-defs --apply-transforms-to-shapes --colors-to-rrggbb --rrggbb-to-rgb --convert-basic-shapes --create-viewbox --apply-transforms-to-defs --sort-defs > /dev/null 2>&1
-		
+
 		#Embed our sha1sum
 		sed --regexp-extended --in-place "s|<svg|<svg xmlns:se=\"https://standardebooks.org/vocab/1.0\" se:generated-from=\"${currentCoverSha1}\"|" "${destDir}/cover.svg"
 
@@ -140,7 +149,7 @@ do
 			printf " OK\n"
 		fi
 	fi
-	
+
 	#Do we need to build titlepage.svg?
 	canBuildTitle="true"
 	#Check if the source svg exists
@@ -148,15 +157,15 @@ do
 		if [ "${verbose}" = "true" ]; then
 			printf "\timages/titlepage.svg not found, skipping ... ERROR\n" 1>&2
 		fi
-		
+
 		canBuildTitle="false"
 	fi
-	
+
 	buildTitle="true"
 	#Source svg exists, check if the sources match the already built image
 	if [ "${canBuildTitle}" = "true" ]; then
 		currentTitleSha1=$(cat "${srcDir}/images/titlepage.svg" | sha1sum | cut -d " " -f 1)
-	
+
 		if [ -f "${srcDir}/src/epub/images/titlepage.svg" ]; then
 			oldSha1=$(grep --extended-regexp --only-matching "se\:generated\-from=\"[a-fA-F0-9]{40}\"" "${srcDir}/src/epub/images/titlepage.svg" | cut -d "\"" -f 2)
 
@@ -168,18 +177,18 @@ do
 			fi
 		fi
 	fi
-	
+
 	if [ "${canBuildTitle}" = "true" ] && ( [ "${buildTitle}" = "true" ] || [ "${force}" = "true" ] ); then
 		if [ "${verbose}" = "true" ]; then
 			printf "\tBuilding titlepage.svg ..."
 		fi
-		
+
 		#Convert text to paths
 		inkscape "${srcDir}/images/titlepage.svg" --export-text-to-path --export-plain-svg "${destDir}/titlepage.svg"
-		
+
 		#This huge list of flags emulates `svgcleaner-cli --type-complete`, but WITHOUT the paths options, which usually messes things up.
 		svgcleaner-cli "${destDir}/titlepage.svg" "${destDir}/titlepage.svg" --remove-comments --remove-unused-defs --remove-nonsvg-elts --remove-metadata-elts --remove-inkscape-elts --remove-sodipodi-elts --remove-ai-elts --remove-corel-elts --remove-msvisio-elts --remove-sketch-elts --remove-invisible-elts --remove-empty-containers --remove-duplicated-defs --remove-outside-elts --equal-elts-to-use --ungroup-containers --merge-gradients --remove-unreferenced-ids --trim-ids --remove-notappl-atts --remove-default-atts --remove-inkscape-atts --remove-sodipodi-atts --remove-ai-atts --remove-corel-atts --remove-msvisio-atts --remove-sketch-atts --remove-stroke-props --remove-fill-props --remove-unused-xlinks --join-style-atts --simplify-transform-matrix --apply-transforms-to-defs --apply-transforms-to-shapes --colors-to-rrggbb --rrggbb-to-rgb --convert-basic-shapes --create-viewbox --apply-transforms-to-defs --sort-defs > /dev/null 2>&1
-		
+
 		#Embed our sha1sum
 		sed --regexp-extended --in-place "s|<svg|<svg xmlns:se=\"https://standardebooks.org/vocab/1.0\" se:generated-from=\"${currentTitleSha1}\"|" "${destDir}/titlepage.svg"
 
