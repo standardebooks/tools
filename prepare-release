@@ -277,6 +277,15 @@ do
 		printf "Warning: UTF replacement character detected!  Transcription encoding error?\n" 1>&2
 	fi
 
+	#Check for HTML entities in long-description
+	grep --quiet -E -i "&amp;[a-z]+?;" "${srcDir}/src/epub/content.opf"
+	if [ $? -eq 0 ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\t"
+		fi
+		printf "Warning: HTML entites detected in metadata!  Use UTF characters where possible.\n" 1>&2
+	fi
+
 	grep --extended-regexp --no-filename --only-matching "<abbr[^<]+>" "${srcDir}/src/epub/text/"* | sed 's/<abbr class=\"//g' | sed 's/<abbr xml:lang="//g' | sed 's/">//g' | sed --regexp-extended "s/\s+/\n/g" | sort | uniq | while read class;
 	do
 		if [ "${class}" = "name" -o "${class}" = "era" -o "${class}" = "degree" -o "${class}" = "initialism" -o "${class}" = "acronym" -o "${class}" = "temperature" -o "${class}" = "postal" -o "${class}" = "timezone" ]; then
