@@ -29,6 +29,8 @@ print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 
 	$description = array_shift($xml->xpath('/package/metadata/dc:description'));
 
+	$longDescription = array_shift($xml->xpath('/package/metadata/meta[@property="se:long-description"]'));
+
 	$tags = $xml->xpath('/package/metadata/meta[@property="se:subject"]');
 
 	$authors = $xml->xpath('/package/metadata/dc:creator');
@@ -72,8 +74,9 @@ print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 		<? foreach($sources as $source){ ?>
 		<dc:source><?= $source ?></dc:source>
 		<? } ?>
-		<rights>Public domain in the United States.</rights>
-		<content type="text"><?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8') ?></content>
+		<rights>Public domain in the United States; original content released to the public domain via the Creative Commons CC0 1.0 Universal Public Domain Dedication</rights>
+		<summary type="text"><?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8') ?></summary>
+		<content type="text/html"><?= $longDescription ?></content>
 		<? foreach($subjects as $subject){ ?>
 		<category scheme="http://purl.org/dc/terms/LCSH" term="<?= htmlentities($subject) ?>"/>
 		<? } ?>
