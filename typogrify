@@ -286,6 +286,7 @@ do
 		s/(\b)a la(\b)/\1à la\2/g
 		s/(\b)a propos(\b)/\1apropos\2/g
 		s/(\b)per cent(\b)/\1percent\2/g
+		s/(\b)percent\.,(\b)/\1percent,\2/g
 		s/(\b[Ff])iance/\1iancé/g
 		s/(\b[Oo])utre(\b)/\1utré\2/g
 
