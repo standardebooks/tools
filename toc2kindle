@@ -22,10 +22,14 @@ def main():
 		text = str(soup)
 
 		r = re.compile(r'(<li>\s*<a href="[^"]+?">.+?</a>\s*)<li>', re.MULTILINE)
-		text = r.sub(r'\1</li><li>', text)
+		matches = 1
+		while matches > 0:
+			text, matches = r.subn(r'\1</li><li>', text)
 
 		r = re.compile(r'</li>\s*</li>', re.MULTILINE)
-		text = r.sub('</li>', text)
+		matches = 1
+		while matches > 0:
+			text, matches = r.subn('</li>', text)
 
 		file.write(text)
 		file.truncate()
