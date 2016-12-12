@@ -168,10 +168,10 @@ Many of these tools act on Standard Ebooks source directories.  Such directories
 
 	Currently you have to place it in /opt/epubcheck/.
 
-3.	Install other dependencies.  On Ubuntu 15.04, you can do:
+3.	Install other dependencies.  On Ubuntu 16.04, you can do:
 
 		sudo apt-add-repository ppa:svg-cleaner-team/svgcleaner
-		sudo apt-get install xsltproc libxml2-utils xmlstarlet libxml-xpath-perl svgcleaner recode html-xml-utils python3-cssselect python3-regex python3-pip librsvg2-bin libimage-exiftool-perl
+		sudo apt-get install xsltproc libxml2-utils xmlstarlet libxml-xpath-perl svgcleaner recode html-xml-utils python3-cssselect python3-regex python3-pip librsvg2-bin libimage-exiftool-perl python3-lxml zip
 		sudo pip3 install pyhyphen roman titlecase beautifulsoup4
 		sudo python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
 

@@ -24,6 +24,7 @@ require "xmllint" "Try: apt-get install libxml2-utils"
 require "xmlstarlet" "Try: apt-get install xmlstarlet"
 require "xpath" "Try: apt-get install libxml-xpath-perl"
 require "mogrify" "Try: apt-get install imagemagick"
+require "zip" "Try: apt-get install zip"
 
 if [ $# -eq 0 ]; then
 	usage
@@ -74,7 +75,7 @@ do
 done
 
 if [ "${check}" = "true" ]; then
-	require "epubcheck" "See: https://github.com/IDPF/epubcheck"
+	require "epubcheck" "Try: apt-get install epubcheck"
 fi
 
 if [ "${kindle}" = "true" ]; then
