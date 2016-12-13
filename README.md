@@ -42,10 +42,6 @@ Find words with mismatched diacritics in Standard Ebook source directories.  For
 
 Find unused local.css CSS selectors in Standard Ebook source directories.
 
-##generate-opds
-
-Generate the "All Standard Ebooks" OPDS feed and send to standard output.
-
 ##generate-words
 
 Generate the `words` file used by the `modernize-hyphenation` script and print to standard output.
@@ -160,21 +156,13 @@ Many of these tools act on Standard Ebooks source directories.  Such directories
 
 #Setting up your build environment
 
-1.	Download and install Calibre: [http://calibre-ebook.com/download](http://calibre-ebook.com/download)
-
-	**Important:** Don't use the version of Calibre included with your system's package manager.  That's almost always an out-of-date version that will cause problems.  Install it by downloading it directly from the Calibre website.
-
-2.	Download and install epubcheck: [https://github.com/IDPF/epubcheck/releases](https://github.com/IDPF/epubcheck/releases)
-
-	Currently you have to place it in /opt/epubcheck/.
-
-3.	Install other dependencies.  On Ubuntu 16.04, you can do:
+1.	Install dependencies.  On Ubuntu 16.04, you can do:
 
 		sudo apt-add-repository ppa:svg-cleaner-team/svgcleaner
-		sudo apt-get install xsltproc libxml2-utils xmlstarlet libxml-xpath-perl svgcleaner recode html-xml-utils python3-cssselect python3-regex python3-pip librsvg2-bin libimage-exiftool-perl python3-lxml zip
+		sudo apt-get install xsltproc libxml2-utils xmlstarlet libxml-xpath-perl svgcleaner recode html-xml-utils python3-cssselect python3-regex python3-pip librsvg2-bin libimage-exiftool-perl python3-lxml zip epubcheck calibre
 		sudo pip3 install pyhyphen roman titlecase beautifulsoup4
 		sudo python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
 
-4.	If you plan on editing cover or titlepage images, make sure the League Spartan and Sorts Mill Goudy fonts are installed on your system: [https://github.com/theleagueof/league-spartan](https://github.com/theleagueof/league-spartan), [https://github.com/theleagueof/sorts-mill-goudy](https://github.com/theleagueof/sorts-mill-goudy)
+2.	If you plan on editing cover or titlepage images, make sure the League Spartan and Sorts Mill Goudy fonts are installed on your system: [https://github.com/theleagueof/league-spartan](https://github.com/theleagueof/league-spartan), [https://github.com/theleagueof/sorts-mill-goudy](https://github.com/theleagueof/sorts-mill-goudy)
 
 That should be it!
