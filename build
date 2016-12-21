@@ -2,11 +2,14 @@
 usage(){
 	fmt <<EOF
 DESCRIPTION
-	Build an ebook from a Standard Ebook source directory and place the output in DIRECTORY/dist/.
+	Build an ebook from a Standard Ebook source directory.
 
 USAGE
-	build [-v,--verbose] [-k,--kindle] [-c,--check] [-p,--proofreading-css] DIRECTORY [DIRECTORY...]
+	build [-v,--verbose] [-k,--kindle] [-c,--check] [-p,--proofreading-css] [-o,--output-dir=DIRECTORY] DIRECTORY [DIRECTORY...]
 		DIRECTORY is the source directory, which must contain DIRECTORY/src/.
+
+		Output is placed in the current working directory, unless a directory is specified with the --output-dir flag.
+
 		With the -k flag, use Calibre to create an azw3 file in addition to epub files.
 		With the -c flag, use epubcheck to validate the epub.  If -k is also specified and epubcheck fails, don't create a Kindle file.
 		With the -p flag, insert additional CSS rules that are helpful for proofreading.  Output filenames will contain ".proof".
@@ -44,6 +47,7 @@ svgWidth="1400"
 svgHeight="2100"
 thumbWidth=$(expr ${svgWidth} "/" 4)
 thumbHeight=$(expr ${svgHeight} "/" 4)
+destDir="$(pwd)" #no trailing slash
 
 #Some convenience aliases
 wj="\xE2\x81\xA0" #word joiner, U+2060
@@ -67,6 +71,9 @@ do
 		-p|--proofreading-css)
 			proofreadingCss="true"
 		;;
+		-o=*|--output-dir=*)
+			destDir="$(echo "${1}" | sed 's/[-a-zA-Z0-9]*=//')"
+		;;
 		*)
 			dirs=$(printf "%s\n%s" "${dirs}" "$1")
 		;;
@@ -83,6 +90,14 @@ if [ "${kindle}" = "true" ]; then
 	require "ebook-meta" "Try: http://calibre-ebook.com/download"
 fi
 
+destDir="$(realpath "${destDir}")"
+
+mkdir --parents "${destDir}" &> /dev/null
+
+if [ ! -d "${destDir}" ]; then
+	die "Couldn't create output directory."
+fi
+
 printf "%s\n" "${dirs}" | while IFS= read -r i;
 do
 	if [ "${i}" = "" ]; then
@@ -97,13 +112,8 @@ do
 		die "${srcDir} doesn't look like a Standard Ebook source directory."
 	fi
 
-	destDir="${srcDir}/dist"
-
 	#Check if the destination folder exists.
-	mkdir --parents "${destDir}"
 	rm --force "${destDir}"/*
-
-	destDir="$(realpath "${destDir}")"
 
 	#Get work title
 	#We have to use xmlstarlet here because xpath chokes on utf8

@@ -12,7 +12,7 @@ This script isn't perfect; proofreading is required, especially near closing quo
 
 ##build
 
-Build an ebook from a Standard Ebook source directory and place the output in DIRECTORY/dist/.
+Build an ebook from a Standard Ebook source directory.
 
 ##build-cover
 

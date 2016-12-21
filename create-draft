@@ -107,7 +107,6 @@ if [ -d "${root}" ]; then
 fi
 
 mkdir -p "${root}/images"
-mkdir -p "${root}/dist"
 mkdir -p "${root}/src/epub/css"
 mkdir -p "${root}/src/epub/images"
 mkdir -p "${root}/src/epub/text"
@@ -160,7 +159,6 @@ sed --in-place "s|TITLE|${title}|g" "${root}/src/epub/text/colophon.xhtml"
 sed --in-place "s|AUTHOR|${author}|g" "${root}/src/epub/text/colophon.xhtml"
 
 git init --quiet "${root}"
-printf "dist/*\n" > "${root}/.gitignore"
 
 cd "${root}"
 
