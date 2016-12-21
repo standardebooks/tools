@@ -100,9 +100,9 @@ do
 		exiftool -overwrite_original -all= "${srcDir}/images/cover.jpg" &> /dev/null
 	fi
 
-	if [ -f "${srcDir}/images/cover.source.jpg" ]; then
+	if ls "${srcDir}"/images/cover.source.* &>/dev/null; then
 		#Remove useless metadata from cover images
-		exiftool -overwrite_original -all= "${srcDir}/images/cover.source.jpg" &> /dev/null
+		exiftool -overwrite_original -all= "${srcDir}"/images/cover.source.* &> /dev/null
 	fi
 
 	buildCover="true"
