@@ -5,14 +5,14 @@ DESCRIPTION
 	Create a skeleton of a new Standard Ebook.
 
 USAGE
-	create-draft [-e,--email=EMAIL] [-g,--github] [-f,--force] -a,--author=AUTHOR -t,--title=TITLE [-r,--translator=TRANSLATOR] [-i,--illustrator=ILLUSTRATOR]
+	create-draft [-e,--email=EMAIL] [-s,--se [-g,--github]] [-f,--force] -a,--author=AUTHOR -t,--title=TITLE [-r,--translator=TRANSLATOR] [-i,--illustrator=ILLUSTRATOR]
 		Create a new ebook skeleton in the current directory.
 
 		If --email is specified, initialize the Git repository using that email address as the main committer.
 
-		With --github, initialize a new Github repository for this ebook.  You must be a member of the standardebooks Github organization.
+		With --se, initialize a new repository on the Standard Ebook server.  Must have SSH access to the Standard Ebook server.  With --github, initialize a new Github repository for this ebook.  Can only be called with --se.
 
-		With --force, don't ask to overwrite an existing draft directory.
+		With --force, don't ask to overwrite an existing draft. directory.
 EOF
 	exit
 }
@@ -26,6 +26,7 @@ title=""
 translator=""
 illustrator=""
 initializeGithub=false
+initializeSe=false
 force=false
 scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 makeUrlSafePath="${scriptDir}/make-url-safe"
@@ -43,6 +44,10 @@ case $i in
 	;;
 	-f|--force)
 		force=true
+		shift
+	;;
+	-s|--se)
+		initializeSe=true
 		shift
 	;;
 	-a=*|--author=*)
@@ -163,33 +168,17 @@ if [ "${customEmail}" != "" ]; then
 	git config user.email "${customEmail}"
 fi
 
-#Create github repo
-if [ "${initializeGithub}" = true ]; then
-	echo "Enter your Github username:"
-	read githubUsername
-
-	echo "Enter your Github password:"
-	read -s githubPassword
-
-	output=$(curl -s -i --user "${githubUsername}:${githubPassword}" https://api.github.com/orgs/standardebooks/repos -d "{\"name\":\"${repoName}\", \"homepage\":\"https://standardebooks.org/ebooks/${identifier}\", \"has_downloads\":false, \"has_wiki\":false, \"description\":\"Epub source for the Standard Ebooks edition of ${titleString}\"}")
-
-	#Check if 2fa is required
-	echo "${output}" | grep -q -i "X-GitHub-OTP: required;"
-	if [ $? -eq 0 ]; then
-		echo "Enter your 2-factor authentication code:"
-		read -s code
-		output=$(curl -s -i --user "${githubUsername}:${githubPassword}" --header "X-GitHub-OTP: ${code}" https://api.github.com/orgs/standardebooks/repos -d "{\"name\":\"${repoName}\", \"homepage\":\"https://standardebooks.org/ebooks/${identifier}\", \"has_downloads\":false, \"has_wiki\":false, \"description\":\"Epub source for the Standard Ebooks edition of ${titleString}\"}")
+if [ "${initializeSe}" = true ]; then
+	githubOption=""
+	if [ "${initializeGithub}" = true ]; then
+		githubOption="--github"
 	fi
 
-	echo "${output}" | grep -q -i "201 Created"
-	if [ $? -eq 0 ]; then
-		git remote add github git@github.com:"standardebooks/${repoName}.git"
+	git remote add origin "standardebooks.org:/standardebooks.org/ebooks/${repoName}.git"
 
-		#Set git to automatically push to Github
-		git config branch.master.remote github
-		git config branch.master.merge refs/heads/master
-	else
-		echo "Error during Github request:" 1>&2
-		die "${output}"
-	fi
+	#Set git to automatically push to SE
+	git config branch.master.remote origin
+	git config branch.master.merge refs/heads/master
+
+	ssh standardebooks.org "/standardebooks.org/scripts/init-se-repo --repo-name=${repoName} --title-string=\"${titleString}\" ${githubOption}"
 fi
