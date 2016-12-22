@@ -272,7 +272,7 @@ do
 	find "${workDir}" -iname "*.css" -print0 | xargs -0 sed --in-place --regexp-extended "s/^\s*hyphens\s*\:\s*none;/\thyphens: none;\n\tadobe-text-layout: optimizeSpeed; \/* For Nook *\//g"
 
 	#Add soft hyphens
-	find "${workDir}" -iname "*.xhtml" -exec "${scriptDir}/hyphenate" "{}" \;
+	find "${workDir}" -iname "*.xhtml" -exec sh -c "${scriptDir}/hyphenate --ignore-h-tags {}" \;
 
 	#Hyphenate screws up our nice XHTML formatting so clean it up for distribution
 	"${scriptDir}/clean" "${workDir}/"
