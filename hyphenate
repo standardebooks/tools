@@ -11,6 +11,7 @@ def main():
 	parser = argparse.ArgumentParser(description="Insert soft hyphens at syllable breaks in an XHTML file.")
 	parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true")
 	parser.add_argument("-l", "--language", help="Specify the language for the XHTML files.  If unspecified, defaults to the 'xml:lang' or 'lang' attribute of the root <html> element.", action="store")
+	parser.add_argument("-i", "--ignore-h-tags", help="Don't add soft hyphens to text in <h1-6> tags", action="store_true")
 	parser.add_argument("FILE", help="An XHTML file to hyphenate", nargs="+")
 	args = parser.parse_args()
 
@@ -50,7 +51,12 @@ def main():
 				result = text
 				word = ""
 				inTag = False
+				tagName = ""
+				readingTagName = False
+				inHTag = False
 				pos = 1
+				hOpeningTagPattern = re.compile("^h[1-6]$")
+				hClosingTagPattern = re.compile("^/h[1-6]$")
 
 				#The general idea here is to read the whole contents of the <body> tag character by character.
 				#If we hit a <, we ignore the contents until we hit the next >.
@@ -62,13 +68,30 @@ def main():
 					if c == "<":
 						process = True
 						inTag = True
+						readingTagName = True
+						tagName = ""
 					elif inTag == True and c == ">":
 						inTag = False
+						readingTagName = False
 						word = ""
+					elif inTag == True and c == " ":
+						readingTagName = False
+					elif inTag == True and readingTagName == True:
+						tagName = tagName + c
 					elif inTag == False and c.isalnum():
 						word = word + c
 					elif inTag == False:
 						process = True
+
+					#Do we ignore <h1-6> tags?
+					if readingTagName == False and hOpeningTagPattern.match(tagName):
+						inHTag = True
+
+					if readingTagName == False and hClosingTagPattern.match(tagName):
+						inHTag = False
+
+					if args.ignore_h_tags and inHTag == True:
+						process = False
 
 					if process == True:
 						if word != "":
