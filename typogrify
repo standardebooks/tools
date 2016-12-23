@@ -249,6 +249,7 @@ do
 		s/\s*\.\s*\.\s*\.\s*/…/ig
 		s/\s?…\s?\./.${hairsp}…/ig
 		s/([^[:punct:][:space:]])\s?…/\1${hairsp}…/ig
+		s/<\/abbr>…/<\/abbr>${hairsp}…/ig
 		s/…[[:space:]${nbsp}]+([\)”’])/…\1/ig
 		s/([\(“‘])[[:space:]${nbsp}]+…/\1…/ig
 		s/…\s?([\!\?\.\;])/…${hairsp}\1/ig
