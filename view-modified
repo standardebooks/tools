@@ -22,7 +22,7 @@ rootDir="$(cd -P "${rootDir}" && pwd)"
 
 cd "${rootDir}"
 
-for dir in "${rootDir}"/*/*/; do
+for dir in "${rootDir}"/*; do
 	cd "${dir}"
 	clean="true"
 	upToDate="true"
