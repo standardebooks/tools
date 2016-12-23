@@ -133,10 +133,15 @@ do
 		s/,—/—/ig
 
 		#Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
-		s/([^[:space:]${wj}])([—⸻])/\1${wj}\2/ig
+		s/([^[:space:]${wj}${nbsp}${hairsp}])([—⸻])/\1${wj}\2/ig
 
 		#Add a word joiner on both sides of en dashes
 		s/${wj}?–${wj}?/${wj}–${wj}/ig
+
+		#Add a word joiner if eliding a word with a two-em-dash
+		#Word joiner isn't necessary if punctuation follows
+		s/([^[:space:]${wj}${nbsp}${hairsp}])⸺/\1${wj}⸺/ig
+		s/⸺([^[:space:][:punct:]${wj}])/⸺${wj}\1/ig
 
 		#Remove word joiners from following opening tags--they're usually never correct
 		s/<([a-z]+)([^>]*?)>${wj}/<\1\2>/ig
