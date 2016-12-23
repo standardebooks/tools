@@ -112,8 +112,7 @@ do
 		die "${srcDir} doesn't look like a Standard Ebook source directory."
 	fi
 
-	#Check if the destination folder exists.
-	rm --force "${destDir}"/*
+	rm --force "${destDir}"/*.epub "${destDir}"/*.epub3 "${destDir}"/*.azw3 "${destDir}"/cover*.jpg "${destDir}"/thumbnail_*portrait.jpg
 
 	#Get work title
 	#We have to use xmlstarlet here because xpath chokes on utf8
