@@ -24,6 +24,7 @@ friendlyTimestamp="$(date -d @${timestamp} --utc +"%B %e, %Y, %l:%M <abbr class
 scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 wordcountPath="${scriptDir}/wordcount"
 readingEasePath="${scriptDir}/reading-ease"
+unusedSelectorPath="${scriptDir}/find-unused-selectors"
 ordinalPath="${scriptDir}/ordinal"
 contentOpfFilePath="${ebookRoot}src/epub/content.opf"
 colophonPath="${ebookRoot}src/epub/text/colophon.xhtml"
@@ -276,6 +277,9 @@ do
 		fi
 		printf "Warning: UTF replacement character detected!  Transcription encoding error?\n" 1>&2
 	fi
+
+	#Run some external checks
+	"${unusedSelectorPath}" "${srcDir}"
 
 	#Check for HTML entities in long-description
 	grep --quiet -E -i "&amp;[a-z]+?;" "${srcDir}/src/epub/content.opf"
