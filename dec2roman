@@ -6,7 +6,7 @@ import roman
 
 def main():
 	parser = argparse.ArgumentParser(description="Convert a decimal number to a Roman numeral.")
-	parser.add_argument('numbers', metavar='INTEGER', nargs='*', help='An integer to convert to a Roman numeral.')
+	parser.add_argument('numbers', metavar='INTEGER', nargs='+', help='An integer to convert to a Roman numeral.')
 	args = parser.parse_args()
 
 	if not sys.stdin.isatty():
