@@ -86,6 +86,10 @@ def main():
 			for basename in fnmatch.filter(filenames, '*.xhtml'):
 				filename = os.path.join(root, basename)
 
+				#Don't mess with the ToC, since if we have ol/li > first-child selectors we could screw it up
+				if basename == "toc.xhtml":
+					continue
+
 				with open(filename, "r+", encoding="utf-8") as file:
 					#We have to remove the default namespace declaration from our document, otherwise
 					#xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
