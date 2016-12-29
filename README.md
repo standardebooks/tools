@@ -126,7 +126,6 @@ Check all author directories in the current or specified directory to see if the
 Many of these tools act on Standard Ebooks source directories.  Such directories have a consistent minimal structure:
 
 	.
-	|-dist/
 	|-images/
 	|--cover.jpg
 	|--cover.source.jpg
@@ -147,8 +146,6 @@ Many of these tools act on Standard Ebooks source directories.  Such directories
 	|--META-INF/
 	|---container.xml
 	|--mimetype
-
-./dist/ contains built ebook files ready for distribution.
 
 ./images/ contains source images for the cover and titlepages, as well as ebook-specific source images.  Source images should be in their maximum available resolution, then compressed and placed in ./src/epub/images/ for distribution.
 
