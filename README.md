@@ -78,6 +78,10 @@ Create a <manifest> and <spine> tag for content.opf based on the passed Standard
 
 Calculate the Flesch reading ease for a Standard Ebooks source directory.
 
+##reorder-endnotes
+
+Increment the specified endnote and all following endnotes by 1.
+
 ##roman2dec
 
 Convert a Roman numeral to a decimal number.
