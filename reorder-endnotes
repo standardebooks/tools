@@ -17,7 +17,7 @@ def is_positive_integer(value):
 
 def main():
 	parser = argparse.ArgumentParser(description="Increment the specified endnote and all following endnotes by 1.")
-	parser.add_argument('target_endnote_number', type=is_positive_integer, metavar='ENDNOTE-NUMBER', help='The endnote number start incrementing at')
+	parser.add_argument('target_endnote_number', type=is_positive_integer, metavar='ENDNOTE-NUMBER', help='The endnote number to start incrementing at')
 	parser.add_argument('directory', metavar='DIRECTORY', help='A Standard Ebooks source directory')
 	args = parser.parse_args()
 
