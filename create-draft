@@ -83,13 +83,22 @@ urlAuthor=$("${makeUrlSafePath}" "${author}")
 urlTitle=$("${makeUrlSafePath}" "${title}")
 urlTranslator=$("${makeUrlSafePath}" "${translator}")
 urlIllustrator=$("${makeUrlSafePath}" "${illustrator}")
+identifier="${urlAuthor}/${urlTitle}"
+titleString="${title}, by ${author}"
+if [ "${urlTranslator}" != "" ]; then
+	identifier="${identifier}/${urlTranslator}"
+	titleString="${titleString}. Translated by ${translator}"
+fi
+if [ "${urlIllustrator}" != "" ]; then
+	identifier="${identifier}/${urlIllustrator}"
+	titleString="${titleString}. Illustrated by ${illustrator}"
+fi
+repoName=$(echo "${identifier}" | sed "s|/|_|g")
 
-root="${urlAuthor}/${urlTitle}"
-
-if [ -d "${root}" ]; then
+if [ -d "${repoName}" ]; then
 	if [ "${force}" != true ]; then
 		while true; do
-		    read -p "./${root}/ already exists.  Overwrite? " yn
+		    read -p "./${repoName}/ already exists.  Overwrite? " yn
 		    case $yn in
 		        [Yy]* )
 					force=true
@@ -102,65 +111,52 @@ if [ -d "${root}" ]; then
 		done
 	fi
 	if [ "${force}" = true ]; then
-		rm -rf "${root}"
+		rm -rf "${repoName}"
 	fi
 fi
 
-mkdir -p "${root}/images"
-mkdir -p "${root}/src/epub/css"
-mkdir -p "${root}/src/epub/images"
-mkdir -p "${root}/src/epub/text"
+mkdir -p "${repoName}/images"
+mkdir -p "${repoName}/src/epub/css"
+mkdir -p "${repoName}/src/epub/images"
+mkdir -p "${repoName}/src/epub/text"
 
-cp -r "${scriptDir}/templates/META-INF/" "${root}/src/"
-cp "${scriptDir}/templates/mimetype" "${root}/src/"
-cp "${scriptDir}/templates/onix.xml" "${root}/src/epub/"
-cp "${scriptDir}/templates/toc.xhtml" "${root}/src/epub/"
-cp "${scriptDir}/templates/core.css" "${root}/src/epub/css/"
-cp "${scriptDir}/templates/logo.svg" "${root}/src/epub/images/"
-cp "${scriptDir}/templates/imprint.xhtml" "${root}/src/epub/text/"
-cp "${scriptDir}/templates/uncopyright.xhtml" "${root}/src/epub/text/"
+cp -r "${scriptDir}/templates/META-INF/" "${repoName}/src/"
+cp "${scriptDir}/templates/mimetype" "${repoName}/src/"
+cp "${scriptDir}/templates/onix.xml" "${repoName}/src/epub/"
+cp "${scriptDir}/templates/toc.xhtml" "${repoName}/src/epub/"
+cp "${scriptDir}/templates/core.css" "${repoName}/src/epub/css/"
+cp "${scriptDir}/templates/logo.svg" "${repoName}/src/epub/images/"
+cp "${scriptDir}/templates/imprint.xhtml" "${repoName}/src/epub/text/"
+cp "${scriptDir}/templates/uncopyright.xhtml" "${repoName}/src/epub/text/"
 
-cp "${scriptDir}/templates/titlepage.svg" "${root}/images/"
-cp "${scriptDir}/templates/local.css"  "${root}/src/epub/css/"
-cp "${scriptDir}/templates/colophon.xhtml"  "${root}/src/epub/text/"
-cp "${scriptDir}/templates/titlepage.xhtml"  "${root}/src/epub/text/"
-cp "${scriptDir}/templates/content.opf"  "${root}/src/epub/"
+cp "${scriptDir}/templates/titlepage.svg" "${repoName}/images/"
+cp "${scriptDir}/templates/local.css"  "${repoName}/src/epub/css/"
+cp "${scriptDir}/templates/colophon.xhtml"  "${repoName}/src/epub/text/"
+cp "${scriptDir}/templates/titlepage.xhtml"  "${repoName}/src/epub/text/"
+cp "${scriptDir}/templates/content.opf"  "${repoName}/src/epub/"
 
 if [ ${#title} -lt 15 ]; then
-	cp "${scriptDir}/templates/cover-short.svg" "${root}/images/cover.svg"
+	cp "${scriptDir}/templates/cover-short.svg" "${repoName}/images/cover.svg"
 elif [ ${#title} -ge 30 ]; then
-	cp "${scriptDir}/templates/cover-long.svg" "${root}/images/cover.svg"
+	cp "${scriptDir}/templates/cover-long.svg" "${repoName}/images/cover.svg"
 else
-	cp "${scriptDir}/templates/cover.svg" "${root}/images/cover.svg"
+	cp "${scriptDir}/templates/cover.svg" "${repoName}/images/cover.svg"
 fi
 
-identifier="${urlAuthor}/${urlTitle}"
-titleString="${title}, by ${author}"
-if [ "${urlTranslator}" != "" ]; then
-	identifier="${identifier}/${urlTranslator}"
-	titleString="${titleString}. Translated by ${translator}"
-fi
-if [ "${urlIllustrator}" != "" ]; then
-	identifier="${identifier}/${urlIllustrator}"
-	titleString="${titleString}. Illustrated by ${illustrator}"
-fi
+sed --in-place "s|TITLESTRING|${titleString}|g" "${repoName}/src/epub/text/titlepage.xhtml"
+sed --in-place "s|TITLESTRING|${titleString}|g" "${repoName}/images/titlepage.svg"
+sed --in-place "s|TITLESTRING|${titleString}|g" "${repoName}/images/cover.svg"
+sed --in-place "s|SEIDENTIFIER|${identifier}|g" "${repoName}/src/epub/content.opf"
+sed --in-place "s|AUTHOR|${author}|g" "${repoName}/src/epub/content.opf"
+sed --in-place "s|TITLE|${title}|g" "${repoName}/src/epub/content.opf"
+sed --in-place "s|VCSIDENTIFIER|${repoName}|" "${repoName}/src/epub/content.opf"
+sed --in-place "s|SEIDENTIFIER|${identifier}|g" "${repoName}/src/epub/text/colophon.xhtml"
+sed --in-place "s|TITLE|${title}|g" "${repoName}/src/epub/text/colophon.xhtml"
+sed --in-place "s|AUTHOR|${author}|g" "${repoName}/src/epub/text/colophon.xhtml"
 
-repoName=$(echo "${identifier}" | sed "s|/|_|g")
+git init --quiet "${repoName}"
 
-sed --in-place "s|TITLESTRING|${titleString}|g" "${root}/src/epub/text/titlepage.xhtml"
-sed --in-place "s|TITLESTRING|${titleString}|g" "${root}/images/titlepage.svg"
-sed --in-place "s|TITLESTRING|${titleString}|g" "${root}/images/cover.svg"
-sed --in-place "s|SEIDENTIFIER|${identifier}|g" "${root}/src/epub/content.opf"
-sed --in-place "s|AUTHOR|${author}|g" "${root}/src/epub/content.opf"
-sed --in-place "s|TITLE|${title}|g" "${root}/src/epub/content.opf"
-sed --in-place "s|VCSIDENTIFIER|${repoName}|" "${root}/src/epub/content.opf"
-sed --in-place "s|SEIDENTIFIER|${identifier}|g" "${root}/src/epub/text/colophon.xhtml"
-sed --in-place "s|TITLE|${title}|g" "${root}/src/epub/text/colophon.xhtml"
-sed --in-place "s|AUTHOR|${author}|g" "${root}/src/epub/text/colophon.xhtml"
-
-git init --quiet "${root}"
-
-cd "${root}"
+cd "${repoName}"
 
 if [ "${customEmail}" != "" ]; then
 	git config user.email "${customEmail}"
