@@ -247,14 +247,19 @@ do
 
 		#Fix ellipses spacing
 		s/\s*\.\s*\.\s*\.\s*/…/ig
-		s/\s?…\s?\./.${hairsp}…/ig
-		s/(\w)\s?…/\1${hairsp}…/ig
-		s/<\/abbr>…/<\/abbr>${hairsp}…/ig
+		s/[[:space:]${nbsp}]?…[[:space:]${nbsp}]?\./.${hairsp}…/ig
+		s/[[:space:]${nbsp}]?…[[:space:]${nbsp}]?/${hairsp}… /ig
+		#Remove spaces between opening tags and ellipses
+		s/(<[a-z0-9]+[^<]+?>)[[:space:]${nbsp}]?…/\1…/ig
+		#Remove spaces between closing tags and ellipses
+		s/…[[:space:]${nbsp}]?(<\/[a-z0-9]+>)/…\1/ig
 		s/…[[:space:]${nbsp}]+([\)”’])/…\1/ig
 		s/([\(“‘])[[:space:]${nbsp}]+…/\1…/ig
-		s/…\s?([\!\?\.\;])/…${hairsp}\1/ig
-		s/([\!\?\.\;”’])\s?…/\1${hairsp}…/ig
-		s/\,\s?…/,${hairsp}…/ig
+		s/…[[:space:]${nbsp}]?([\!\?\.\;\,])/…${hairsp}\1/ig
+		s/([\!\?\.\;”’])[[:space:]${nbsp}]?…/\1${hairsp}…/ig
+		s/\,[[:space:]${nbsp}]?…/,${hairsp}…/ig
+		#Remove spaces between ellipses and endnotes directly after
+		s/…[[:space:]${nbsp}]?(<a[^>]+?id=\"note-[0-9]+\"[^>]*?>)/…\1/ig
 
 		#Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
 		s/([0-9])\s+([a-z]{1,3}\.)/\1${nbsp}\2/ig
