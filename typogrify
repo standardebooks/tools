@@ -226,7 +226,7 @@ do
 		#Years
 		s/‘([0-9]+[^a-zA-Z0-9’])/’\1/ig
 
-		s/‘([Aa]ve|[Oo]me|[Ii]m|[Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Cc]os|[Tt]is|[Tt]was|[Tt]wixt|[Tt]were|[Tt]would|[Tt]wouldn|[Tt]ween|[Tt]will)(\b)/’\1\2/g
+		s/‘([Aa]ve|[Oo]me|[Ii]m|[Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Cc]os|[Tt]is|[Tt]was|[Tt]wixt|[Tt]were|[Tt]would|[Tt]wouldn|[Tt]ween|[Tt]will|[Rr]ound)(\b)/’\1\2/g
 
 		#House style: remove spacing from common Latinisms
 		s/([Ii])\.\s+e\./\1.e./g
