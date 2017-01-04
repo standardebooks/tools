@@ -276,7 +276,7 @@ do
 		s/([Tt])ete-a-tete/\1ête-à-tête/g
 		s/([Vv])is-a-vis/\1is-à-vis/g
 		s/([Ff])acade/\1açade/g
-		s/([Cc])h?ateau/\1hâteau/g
+		s/([Cc])h?ateau(s?\b)/\1hâteau\2/g
 		s/([Hh])abitue/\1abitué/g
 		#We break up cafe so that we don't catch 'cafeteria'
 		s/(\b[Cc])afe(\b)/\1afé\2/g
