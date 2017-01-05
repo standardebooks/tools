@@ -70,8 +70,16 @@ do
 
 	if [ "${isDir}" = "true" ]; then
 		if [ "${singleLines}" = "true" ]; then
+			if [ -f "${srcDir}"/src/epub/text/colophon.xhtml ]; then
+				cp "${srcDir}"/src/epub/text/colophon.xhtml /tmp/colophon.xhtml
+			fi
+
 			find "${srcDir}" -iname "*.xhtml" -type f -exec sh -c "perl -i -pe \"s/\n/ /\" "{}"" \;
 			find "${srcDir}" -iname "*.xhtml" -type f -exec sh -c "sed --in-place --regexp-extended \"s|\s+| |g\" "{}"" \;
+
+			if [ -f "${srcDir}"/src/epub/text/colophon.xhtml ]; then
+				cp /tmp/colophon.xhtml "${srcDir}"/src/epub/text/colophon.xhtml
+			fi
 		fi
 
 		#Epub3 doesn't allow named entities, so convert them to their unicode equivalents
