@@ -75,6 +75,7 @@ do
 	echo -e "\t<spine>" > /tmp/spine
 	echo -e "\t\t<itemref idref=\"titlepage.xhtml\"/>\n\t\t<itemref idref=\"imprint.xhtml\"/>" >> /tmp/spine
 
+	ls "${srcDir}/src/epub/text/" | grep --quiet "dedication.xhtml" && echo -e "\t\t<itemref idref=\"dedication.xhtml\"/>" >> /tmp/spine
 	ls "${srcDir}/src/epub/text/" | grep --quiet "introduction.xhtml" && echo -e "\t\t<itemref idref=\"introduction.xhtml\"/>" >> /tmp/spine
 	ls "${srcDir}/src/epub/text/" | grep --quiet "foreword.xhtml" && echo -e "\t\t<itemref idref=\"foreword.xhtml\"/>" >> /tmp/spine
 	ls "${srcDir}/src/epub/text/" | grep --quiet "preface.xhtml" && echo -e "\t\t<itemref idref=\"preface.xhtml\"/>" >> /tmp/spine
@@ -85,6 +86,7 @@ do
 	/titlepage.xhtml/d
 	/colophon.xhtml/d
 	/uncopyright.xhtml/d
+	/dedication.xhtml/d
 	/introduction.xhtml/d
 	/halftitle.xhtml/d
 	/imprint.xhtml/d
