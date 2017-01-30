@@ -189,6 +189,9 @@ do
 		s/([^a-z]+)Mt\.?\s+/\1Mt.${nbsp}/g
 		s/<abbr>Mt\.?<\/abbr>\s+/<abbr>Mt.<\/abbr>${nbsp}/g
 
+		s/([^a-z]+)St\.?\s+/\1St.${nbsp}/g
+		s/<abbr>St\.?<\/abbr>\s+/<abbr>St.<\/abbr>${nbsp}/g
+
 		s/([^a-z]+)MM\.?\s+/\1MM.${nbsp}/g
 		s/<abbr>MM\.?<\/abbr>\s+/<abbr>MM.<\/abbr>${nbsp}/g
 
