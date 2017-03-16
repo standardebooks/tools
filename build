@@ -182,32 +182,16 @@ do
 	#Set xmllint to use tab indentation.
 	export XMLLINT_INDENT=$(printf "\t")
 
-	#Simplify tags
-	"${scriptDir}/simplify-tags" "${workDir}"
-
 	#Include compatibility CSS
 	cat "${scriptDir}/templates/compatibility.css" >> "${workDir}/${epubDir}/css/core.css"
+
+	#Simplify tags
+	"${scriptDir}/simplify-tags" "${workDir}"
 
 	#To get popup footnotes in iBooks, we have to change epub:rearnote to epub:footnote.
 	#Remember to get our custom style selectors too.
 	find "${workDir}" -iname "*.xhtml" -print0 | xargs -0 sed --in-place --regexp-extended "s/epub:type=\"([^\"]*?)rearnote([^\"]*?)\"/epub:type=\"\1footnote\2\"/g"
 	find "${workDir}" -iname "*.css" -print0 | xargs -0 sed --in-place --regexp-extended "s/rearnote/footnote/g"
-
-	#Many readers don't correctly handle CSS namespaces yet.  Until they do, replace them with classes.
-	#Find all namespace selectors we used in the CSS file and add classes for them in the body text.
-	#Also remove colons from class names (for example z3998:roman becomes z3998-roman), otherwise we get confused with css pseudo classes
-	grep --only-match --extended-regexp "\[epub\|type\~\=\"[^\"]*?\"\]" "${workDir}/${epubDir}/css/"/* | sed --regexp-extended "s/.*?\"([^\"]*)\".*?/\1/g" | sort | uniq | while read line ; do
-		filteredLine="$(printf "%s" "${line}" | sed "s/[^a-z0-9]/-/g")"
-
-		#Note that we can't use a trailing \b to check the line, because \b includes dashes.  We need to EXCLUDE dashes because some epub:types like z3998:diary-entry should count as one word.
-		sed --in-place --regexp-extended "s/epub\:type=\"([^\"]*?)\b${line}(\s?[^\"]*?)\"/class=\"${filteredLine}\" epub:type=\"\1${line}\2\"/g" "${workDir}/${epubDir}/text"/*
-
-		#If a tag with epub:type already had a class attribute, we have to merge the one we added just now to prevent parse errors.
-		sed --in-place --regexp-extended "s/class=\"([^\"]*?)\"\s*class=\"([^\"]*?)\"/class=\"\1 \2\"/g" "${workDir}/${epubDir}/text"/*
-
-		#Now replace the selectors in the CSS file with class selectors.
-		sed --in-place --regexp-extended "s/\[epub\|type\~\=\"\b${line}\b\"\]/.${filteredLine}/g" "${workDir}/${epubDir}/css/"/*
-	done
 
 	#Include extra lang tag for accessibility compatibility.
 	find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/xml\:lang\=\"([^\"]+?)\"/lang=\"\1\" xml:lang=\"\1\"/g" "{}" \;

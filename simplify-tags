@@ -10,6 +10,9 @@ import sys
 import fnmatch
 import os
 
+def namespaceToClass(selector):
+	return selector.replace(":", "-").replace("|", "-").replace("~=", "-").replace("[", ".").replace("]", "").replace("\"", "")
+
 def simplifyCss(css):
 	#First we replace :first-child selectors with a first-child class, since ADE doesn't handle them
 	#Currently this replacement isn't perfect, because occasionally lxml generates an xpath expression
@@ -30,6 +33,13 @@ def simplifyCss(css):
 
 	#Replace some more poorly-supported CSS attributes
 	css = css.replace("all-small-caps;", "small-caps;\n\ttext-transform: lowercase;")
+
+	#Replace CSS namespace selectors
+	#For example, p[epub|type~="z3998:salutation"] becomes p.epub-type-z3998-salutation
+	result = re.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", css)
+	for line in result:
+		fixedLine = namespaceToClass(line)
+		css = css.replace(line, fixedLine)
 
 	return css
 
@@ -134,7 +144,29 @@ def main():
 
 								el.set('class', currentClass)
 
-								processedXhtml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print="true")
+					for selector in selectors:
+						#We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
+						if "[epub|type" in selector:
+							result = re.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", selector)
+							for namespaceSelector in result:
+								try:
+									sel = lxml.cssselect.CSSSelector(namespaceSelector, translator="xhtml", namespaces=xhtmlNamespaces)
+								except lxml.cssselect.ExpressionError:
+									#This gets thrown if we use pseudo-elements, which lxml doesn't support
+									continue
+
+								for el in tree.xpath(sel.path, namespaces=xhtmlNamespaces):
+									newClass = re.sub(r"^\.", "", namespaceToClass(namespaceSelector))
+									currentClass = el.get('class')
+
+									if currentClass is not None and newClass not in currentClass:
+										currentClass = currentClass + ' ' + newClass
+									else:
+										currentClass = newClass
+
+									el.set('class', currentClass)
+
+					processedXhtml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print="true")
 
 					#Now we just remove all stray abbr tags that were not styled by CSS
 					processedXhtml = re.sub(r"</?abbr[^>]*?>", "", processedXhtml)
