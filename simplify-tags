@@ -34,7 +34,7 @@ def simplifyCss(css):
 	#Replace some more poorly-supported CSS attributes
 	css = css.replace("all-small-caps;", "small-caps;\n\ttext-transform: lowercase;")
 
-	#Replace CSS namespace selectors
+	#Replace CSS namespace selectors with classes
 	#For example, p[epub|type~="z3998:salutation"] becomes p.epub-type-z3998-salutation
 	result = re.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", css)
 	for line in result:
@@ -46,7 +46,7 @@ def simplifyCss(css):
 def main():
 	parser = argparse.ArgumentParser(description="Simplify some HTML and CSS to be more compatible with crappier reading systems (ADE I'm looking at you...)")
 	parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true")
-	parser.add_argument('directories', metavar='DIRECTORY', nargs='+', help='A source directory')
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A source directory")
 	args = parser.parse_args()
 
 	xhtmlNamespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "http://standardebooks.org/vocab/1.0"}
@@ -60,8 +60,10 @@ def main():
 
 		totalCss = ""
 
+		#Simplify the CSS first.  Later we'll update the document to match our simplified selectors.
+		#While we're doing this, we store the original css into a single variable so we can extract the original selectors later.
 		for root, dirnames, filenames in os.walk(dir):
-			for basename in fnmatch.filter(filenames, '*.css'):
+			for basename in fnmatch.filter(filenames, "*.css"):
 				filename = os.path.join(root, basename)
 				with open(filename, "r+", encoding="utf-8") as file:
 					css = file.read()
@@ -75,7 +77,8 @@ def main():
 					file.write(simplifyCss(css))
 					file.truncate()
 
-		#Remove actual content of css selectors
+		#Now get a list of original selectors
+		#Remove CSS rules
 		totalCss = re.sub("{[^}]+}", "", totalCss, flags=re.MULTILINE)
 
 		#Remove trailing commas
@@ -87,13 +90,13 @@ def main():
 		#Remove @ defines
 		totalCss = re.sub("^@.+", "", totalCss, flags=re.MULTILINE)
 
-		#Construct a dictionary of selectors
+		#Construct a dictionary of the original selectors
 		selectors = list(set(filter(None, totalCss.splitlines())))
 		unusedSelectors = list(selectors)
 
 		#Get a list of .xhtml files to search
 		for root, dirnames, filenames in os.walk(dir):
-			for basename in fnmatch.filter(filenames, '*.xhtml'):
+			for basename in fnmatch.filter(filenames, "*.xhtml"):
 				filename = os.path.join(root, basename)
 
 				#Don't mess with the ToC, since if we have ol/li > first-child selectors we could screw it up
@@ -115,6 +118,7 @@ def main():
 							#This gets thrown if we use pseudo-elements, which lxml doesn't support
 							continue
 
+						#Convert <abbr> to <span>
 						if "abbr" in selector:
 							for el in tree.xpath(sel.path, namespaces=xhtmlNamespaces):
 								#Why would you want the tail to output by default?!?
@@ -134,39 +138,36 @@ def main():
 
 								tree = etree.fromstring(str.encode(processedXhtml))
 
+						#Add a "first-child" class to elements that match any :first-child selectors
 						if ":first-child" in selector:
 							for el in tree.xpath(sel.path, namespaces=xhtmlNamespaces):
-								currentClass = el.get('class')
+								currentClass = el.get("class")
 								if currentClass is not None and "first-child" not in currentClass:
-									currentClass = currentClass + ' first-child'
+									currentClass = currentClass + " first-child"
 								else:
 									currentClass = "first-child"
 
-								el.set('class', currentClass)
+								el.set("class", currentClass)
 
 					for selector in selectors:
 						#We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
 						if "[epub|type" in selector:
 							result = re.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", selector)
 							for namespaceSelector in result:
-								try:
-									sel = lxml.cssselect.CSSSelector(namespaceSelector, translator="xhtml", namespaces=xhtmlNamespaces)
-								except lxml.cssselect.ExpressionError:
-									#This gets thrown if we use pseudo-elements, which lxml doesn't support
-									continue
+								sel = lxml.cssselect.CSSSelector(namespaceSelector, translator="xhtml", namespaces=xhtmlNamespaces)
 
 								for el in tree.xpath(sel.path, namespaces=xhtmlNamespaces):
 									newClass = re.sub(r"^\.", "", namespaceToClass(namespaceSelector))
-									currentClass = el.get('class')
+									currentClass = el.get("class")
 
 									if currentClass is not None and newClass not in currentClass:
-										currentClass = currentClass + ' ' + newClass
+										currentClass = currentClass + " " + newClass
 									else:
 										currentClass = newClass
 
-									el.set('class', currentClass)
+									el.set("class", currentClass)
 
-					processedXhtml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print="true")
+					processedXhtml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print=True)
 
 					#Now we just remove all stray abbr tags that were not styled by CSS
 					processedXhtml = re.sub(r"</?abbr[^>]*?>", "", processedXhtml)
@@ -174,7 +175,7 @@ def main():
 
 					if processedXhtml != rawXhtml:
 						file.seek(0)
-						file.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print="true").replace("<html", "<html xmlns=\"http://www.w3.org/1999/xhtml\""))
+						file.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print=True).replace("<html", "<html xmlns=\"http://www.w3.org/1999/xhtml\""))
 						file.truncate()
 
 if __name__ == "__main__":
