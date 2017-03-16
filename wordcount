@@ -11,7 +11,7 @@ def main():
 	parser.add_argument("files", metavar="FILE", nargs="+", help="An HTML file to count the words of")
 	args = parser.parse_args()
 
-	for argument in args.fi:
+	for argument in args.files:
 		fh = open(argument, "r")
 		soup = BeautifulSoup(fh.read(), "lxml")
 		fh.close()
