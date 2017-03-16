@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup
 
 def main():
 	parser = argparse.ArgumentParser(description="Flatten a Standard Ebooks table of contents file to at most two levels deep for Kindle compatibility.")
-	parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true")
-	parser.add_argument('tocFilename', metavar='TOCFILENAME', help='A Standard Ebooks table of contents file (typically toc.xhtml)')
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
+	parser.add_argument("tocFilename", metavar="TOC-FILENAME", help="A Standard Ebooks table of contents file (typically toc.xhtml)")
 	args = parser.parse_args()
 
 	with open(args.tocFilename, 'r+', encoding="utf-8") as file:

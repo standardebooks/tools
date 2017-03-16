@@ -4,7 +4,7 @@ import argparse
 
 def main():
 	parser = argparse.ArgumentParser(description="Print the ordinal for one or more integers.")
-	parser.add_argument('numbers', metavar='NUMBER', nargs='+', help='An integer')
+	parser.add_argument("numbers", metavar="NUMBER", nargs="+", help="An integer")
 	args = parser.parse_args()
 
 	for n in args.numbers:

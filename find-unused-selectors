@@ -12,8 +12,8 @@ import os
 
 def main():
 	parser = argparse.ArgumentParser(description="Find unused local.css CSS selectors in Standard Ebook source directories.")
-	parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true")
-	parser.add_argument('directories', metavar='DIRECTORY', nargs='+', help='A Standard Ebooks source directory')
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory")
 	args = parser.parse_args()
 
 	xhtmlNamespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "http://standardebooks.org/vocab/1.0"}

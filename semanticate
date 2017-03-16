@@ -10,8 +10,8 @@ from bs4 import BeautifulSoup
 
 def main():
 	parser = argparse.ArgumentParser(description="Automatically add semantics to Standard Ebooks source directories.")
-	parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true")
-	parser.add_argument('directories', metavar='DIRECTORY', nargs='+', help='A Standard Ebooks source directory')
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory")
 	args = parser.parse_args()
 
 	#First test if we're looking at a Standard Ebooks source directory

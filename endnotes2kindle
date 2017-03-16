@@ -7,12 +7,12 @@ import lxml.etree as etree
 
 def main():
 	parser = argparse.ArgumentParser(description="Convert epub-friendly endnotes to Kindle-friendly popup endnotes.")
-	parser.add_argument("FILE", help="An XHTML endnotes file in Standard Ebooks endnotes file format", nargs="+")
+	parser.add_argument("files", metavar="FILE", nargs="+", help="An XHTML endnotes file in Standard Ebooks endnotes file format")
 	args = parser.parse_args()
 
 	xhtmlNamespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "http://standardebooks.org/vocab/1.0"}
 
-	for argument in args.FILE:
+	for argument in args.files:
 		#We have to remove the default namespace declaration from our document, otherwise
 		#xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 		with open(argument, "r+", encoding="utf-8") as file:

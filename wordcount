@@ -7,11 +7,11 @@ import re
 
 def main():
 	parser = argparse.ArgumentParser(description="Count the number of words in an HTML file and optionally categorize by length.")
-	parser.add_argument("-v", "--verbose", help="Include filename, wordcount, and length categorization in output", action="store_true")
-	parser.add_argument("FILE", help="An HTML file to count the words of", nargs="+")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Include filename, wordcount, and length categorization in output")
+	parser.add_argument("files", metavar="FILE", nargs="+", help="An HTML file to count the words of")
 	args = parser.parse_args()
 
-	for argument in args.FILE:
+	for argument in args.fi:
 		fh = open(argument, "r")
 		soup = BeautifulSoup(fh.read(), "lxml")
 		fh.close()

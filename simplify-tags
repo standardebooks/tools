@@ -45,7 +45,7 @@ def simplifyCss(css):
 
 def main():
 	parser = argparse.ArgumentParser(description="Simplify some HTML and CSS to be more compatible with crappier reading systems (ADE I'm looking at you...)")
-	parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A source directory")
 	args = parser.parse_args()
 
