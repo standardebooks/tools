@@ -5,12 +5,13 @@ DESCRIPTION
 	Build an ebook from a Standard Ebook source directory.
 
 USAGE
-	build [-v,--verbose] [-k,--kindle] [-c,--check] [-p,--proofreading-css] [-o,--output-dir=DIRECTORY] DIRECTORY [DIRECTORY...]
+	build [-v,--verbose] [-k,--kindle] [-b,--kobo] [-c,--check] [-p,--proofreading-css] [-o,--output-dir=DIRECTORY] DIRECTORY [DIRECTORY...]
 		DIRECTORY is the source directory, which must contain DIRECTORY/src/.
 
 		Output is placed in the current working directory, unless a directory is specified with the --output-dir flag.
 
-		With the -k flag, use Calibre to create an azw3 file in addition to epub files.
+		With the -k flag, use Calibre to create an .azw3 file in addition to epub files.
+		With the -b flag, create a Kobo-compatible .kepub.epub file in addition to epub files.
 		With the -c flag, use epubcheck to validate the epub.  If -k is also specified and epubcheck fails, don't create a Kindle file.
 		With the -p flag, insert additional CSS rules that are helpful for proofreading.  Output filenames will contain ".proof".
 EOF
@@ -37,6 +38,7 @@ scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 curDir="$(pwd)"
 srcDir="."
 kindle="false"
+kobo="false"
 verbose="false"
 check="false"
 proofreadingCss="false"
@@ -61,6 +63,9 @@ do
 	case "$1" in
 		-k|--kindle)
 			kindle="true"
+		;;
+		-b|--kobo)
+			kobo="true"
 		;;
 		-c|--check)
 			check="true"
@@ -126,16 +131,19 @@ do
 	workDir="/tmp/${outputFilename}.epub"
 	epub2OutputFilename="${outputFilename}"
 	kindleOutputFilename="${outputFilename}"
+	koboOutputFilename="${outputFilename}"
 	outputFilename="${outputFilename}"
 
 	if [ "${proofreadingCss}" = "true" ]; then
 		epub2OutputFilename="${epub2OutputFilename}.proof"
 		kindleOutputFilename="${kindleOutputFilename}.proof"
+		koboOutputFilename="${koboOutputFilename}.proof"
 		outputFilename="${outputFilename}.proof"
 	fi
 
 	epub2OutputFilename="${epub2OutputFilename}.epub"
 	kindleOutputFilename="${kindleOutputFilename}.azw3"
+	koboOutputFilename="${koboOutputFilename}.kepub.epub"
 	outputFilename="${outputFilename}.epub3"
 
 	if [ "${verbose}" = "true" ]; then
@@ -159,7 +167,13 @@ do
 	#Output a pure epub3 file.
 	zip -9 --no-dir-entries -X --recurse-paths "${destDir}/${outputFilename}" mimetype META-INF "${epubDir}" > /dev/null 2>&1
 
-	if [ "${verbose}" = "true" ]; then
+
+	if [ "${kobo}" = "true" ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf " OK\n"
+			printf "\tBuilding %s ..." "${koboOutputFilename}"
+		fi
+	elif [ "${verbose}" = "true" ]; then
 		printf " OK\n"
 		printf "\tBuilding %s ..." "${epub2OutputFilename}"
 	fi
@@ -210,6 +224,25 @@ do
 	#They DO, however, support the now-deprecated zero-width non-breaking space, (U+FEFF aka &#65279; aka 0xEF 0xBB 0xBF)
 	#For epubs, do this replacement.  Kindle now seems to handle everything fortunately.
 	find "${workDir}" -iname "*.xhtml" -exec sed --in-place --regexp-extended "s/${wj}/${zwnbsp}/ig" "{}" \;
+
+	#At this point we can build the Kobo epub
+	if [ "${kobo}" = "true" ]; then
+		cp -r "${workDir}" "${workDir}.kobo"
+
+		cd "${workDir}.kobo"
+
+		"${scriptDir}/build-kobo" "${workDir}.kobo"
+
+		zip -9 --no-dir-entries -X --recurse-paths "${destDir}/${koboOutputFilename}" mimetype META-INF "${epubDir}" > /dev/null 2>&1
+
+		rm -rf "${workDir}.kobo"
+		cd "${workDir}"
+
+		if [ "${verbose}" = "true" ]; then
+			printf " OK\n"
+			printf "\tBuilding %s ..." "${epub2OutputFilename}"
+		fi
+	fi
 
 	#Include epub2 cover metadata
 	coverId="$(xpath -e "string(//item[@properties=\"cover-image\"]/@id)" "${workDir}/${epubDir}/content.opf" 2> /dev/null)"

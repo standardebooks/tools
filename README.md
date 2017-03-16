@@ -18,6 +18,10 @@ Build an ebook from a Standard Ebook source directory.
 
 Build an ebook cover a Standard Ebook source directory and place the output in DIRECTORY/src/epub/images/.
 
+##build-kobo
+
+Convert files in a Standard Ebooks source directory to be Kobo-compatible.
+
 ##clean
 
 Prettify source files in a Standard Ebook source directory, including canonicalizing XML and minifying SVGs. Note that this only prettifies the source code; it doesn't perform typography changes.
