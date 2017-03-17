@@ -3,7 +3,7 @@
 #Includes functions based on code from the Calibre Kobo Touch Extended Driver: https://www.mobileread.com/forums/showthread.php?t=211135
 
 import argparse
-import re
+import regex
 import os
 import fnmatch
 from copy import deepcopy
@@ -11,6 +11,7 @@ import lxml.etree as etree
 
 paragraph_counter = 1
 segment_counter = 1
+XHTML_NAMESPACES = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "http://standardebooks.org/vocab/1.0"}
 
 def append_kobo_spans_from_text(node, text):
 	global paragraph_counter
@@ -18,11 +19,11 @@ def append_kobo_spans_from_text(node, text):
 
 	if text is not None:
 		# if text is only whitespace, don't add spans
-		if re.match(r'^\s+$', text, flags=re.UNICODE | re.MULTILINE):
+		if regex.match(r"^\s+$", text, flags=regex.MULTILINE):
 			return False
 		else:
 			# split text in sentences
-			groups = re.split(r'(.*?[\.\!\?\:][\'"\u201d\u2019]?\s*)', text, flags=re.UNICODE | re.MULTILINE)
+			groups = regex.split(r'(.*?[\.\!\?\:][\'"\u201d\u2019]?\s*)', text, flags=regex.MULTILINE)
 			# remove empty strings resulting from split()
 			groups = [g for g in groups if g != ""]
 
@@ -45,7 +46,7 @@ def add_kobo_spans_to_node(node):
 	# process node only if it is not a comment or a processing instruction
 	if not (node is None or isinstance(node, etree._Comment) or isinstance(node, etree._ProcessingInstruction)):
 		# Special case: <img> tags
-		special_tag_match = re.search(r'^(?:\{[^\}]+\})?(\w+)$', node.tag)
+		special_tag_match = regex.search(r'^(?:\{[^\}]+\})?(\w+)$', node.tag)
 		if special_tag_match and special_tag_match.group(1) in ["img"]:
 			span = etree.Element("{%s}span" % ("http://www.w3.org/1999/xhtml", ), attrib={"id": "kobo.{0}.{1}".format(paragraph_counter, segment_counter), "class": "koboSpan"})
 			span.append(node)
@@ -94,11 +95,10 @@ def add_kobo_spans_to_node(node):
 
 def main():
 	parser = argparse.ArgumentParser(description="Convert files in a Standard Ebooks source directory to be Kobo-compatible.")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 	global paragraph_counter
 	global segment_counter
-	xhtml_namespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "http://standardebooks.org/vocab/1.0"}
 
 	for directory in args.directories:
 		directory = os.path.abspath(directory)
@@ -109,7 +109,7 @@ def main():
 					xhtml = file.read()
 					file.seek(0)
 
-					xhtml = re.sub(r"<dc:publisher", "<meta property=\"se:transform\">kobo</meta>\n\t\t<dc:publisher", xhtml)
+					xhtml = regex.sub(r"<dc:publisher", "<meta property=\"se:transform\">kobo</meta>\n\t\t<dc:publisher", xhtml)
 
 					file.write(xhtml)
 					file.truncate()
@@ -128,19 +128,19 @@ def main():
 
 					#Kobos don't have fonts that support the ↩ character in endnotes, so replace it with «
 					if filename == "endnotes.xhtml":
-						xhtml = re.sub(r"epub:type=\"se:referrer\">↩</a>", "epub:type=\"se:referrer\">«</a>", xhtml)
+						xhtml = regex.sub(r"epub:type=\"se:referrer\">↩</a>", "epub:type=\"se:referrer\">«</a>", xhtml)
 
 					#We have to remove the default namespace declaration from our document, otherwise
 					#xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 					tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 
-					add_kobo_spans_to_node(tree.xpath("./body", namespaces=xhtml_namespaces)[0])
+					add_kobo_spans_to_node(tree.xpath("./body", namespaces=XHTML_NAMESPACES)[0])
 
 					xhtml = etree.tostring(tree, encoding="unicode", pretty_print=True, with_tail=False)
-					xhtml = re.sub(r"<html:span", "<span", xhtml)
-					xhtml = re.sub(r"html:span>", "span>", xhtml)
-					xhtml = re.sub(r"<span xmlns:html=\"http://www.w3.org/1999/xhtml\"", "<span", xhtml)
-					xhtml = re.sub(r"<html", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\"", xhtml)
+					xhtml = regex.sub(r"<html:span", "<span", xhtml)
+					xhtml = regex.sub(r"html:span>", "span>", xhtml)
+					xhtml = regex.sub(r"<span xmlns:html=\"http://www.w3.org/1999/xhtml\"", "<span", xhtml)
+					xhtml = regex.sub(r"<html", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\"", xhtml)
 
 					file.write(xhtml)
 					file.truncate()

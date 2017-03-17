@@ -10,29 +10,29 @@ DICTIONARY_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
 
 def main():
 	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace \"ash-tray\" with \"ashtray\".")
-	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 
 	try:
 		dictionary = set(line.strip() for line in open(DICTIONARY_FILE_PATH))
 	except Exception:
-		print("Error: Can't open words file at " + DICTIONARY_FILE_PATH, file=sys.stderr)
+		print("Error: Can't open words file at {}".format(DICTIONARY_FILE_PATH), file=sys.stderr)
 		exit(1)
 
 	for directory in args.directories:
 		directory = os.path.abspath(directory)
 
 		if not os.path.isdir(directory):
-			print("Error: Not a directory: " + directory, file=sys.stderr)
+			print("Error: Not a directory: {}".format(directory), file=sys.stderr)
 			exit(1)
 
 		if args.verbose:
-			print("Processing " + directory + " ...", end="", flush=True)
+			print("Processing {} ...".format(directory), end="", flush=True)
 
 		for root, _, filenames in os.walk(directory):
-			for filename in fnmatch.filter(filenames, '*.xhtml'):
-				with open(os.path.join(root, filename), 'r+', encoding="utf-8") as file:
+			for filename in fnmatch.filter(filenames, "*.xhtml"):
+				with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
 					xhtml = file.read()
 					new_xhtml = xhtml
 
@@ -41,7 +41,7 @@ def main():
 					if language is None or (language.group(1) != "en-US" and language.group(1) != "en-GB"):
 						if args.verbose:
 							print("\n\t", end="", flush=True)
-						print("Error: " + filename + " doesn't have a valid xml:lang attribute in <html> root.  Only en-US and en-GB are supported.", file=sys.stderr)
+						print("Error: No valid xml:lang attribute in <html> root.  Only en-US and en-GB are supported. File: {}".format(filename), file=sys.stderr)
 						exit(1)
 
 					new_xhtml = modernize_spelling(new_xhtml, language.group(1))
@@ -83,22 +83,22 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Tt]he|[Aa]nd|[Oo]r) what not\b", "\\1 whatnot", xhtml)	# what not -> whatnot
 	xhtml = regex.sub(r"\b([Gg])ood\-bye?\b", "\\1oodbye", xhtml)			# good-by -> goodbye
 	xhtml = regex.sub(r"\b([Hh])indoo", "\\1indu", xhtml)				# hindoo -> hindu
-	xhtml = regex.sub(r"\b([Ee])xpence", "\\1xpense", xhtml)				# expence -> expense
+	xhtml = regex.sub(r"\b([Ee])xpence", "\\1xpense", xhtml)			# expence -> expense
 	xhtml = regex.sub(r"\b([Ll])otos", "\\1otus", xhtml)				# lotos -> lotus
-	xhtml = regex.sub(r"\b([Ss])collop", "\\1callop", xhtml)				# scollop -> scallop
+	xhtml = regex.sub(r"\b([Ss])collop", "\\1callop", xhtml)			# scollop -> scallop
 	xhtml = regex.sub(r"\b([Ss])ubtil", "\\1ubtle", xhtml)				# subtil -> subtle
 	xhtml = regex.sub(r"\bQuoiff", "Coif", xhtml)					# quoiff -> coif
 	xhtml = regex.sub(r"\bquoiff", "coif", xhtml)					# quoiff -> coif
-	xhtml = regex.sub(r"\bIndorse", "Endorse", xhtml)					# indorse -> endorse
-	xhtml = regex.sub(r"\bindorse", "endorse", xhtml)					# indorse -> endorse
+	xhtml = regex.sub(r"\bIndorse", "Endorse", xhtml)				# indorse -> endorse
+	xhtml = regex.sub(r"\bindorse", "endorse", xhtml)				# indorse -> endorse
 	xhtml = regex.sub(r"\bPhantasie", "Fantasy", xhtml)				# phantasie -> fantasy
 	xhtml = regex.sub(r"\bphantasie", "fantasy", xhtml)				# phantasie -> fantasy
-	xhtml = regex.sub(r"\b([Mm])enage\b", "\\1énage", xhtml)				# menage -> ménage
+	xhtml = regex.sub(r"\b([Mm])enage\b", "\\1énage", xhtml)			# menage -> ménage
 	xhtml = regex.sub(r"([Hh])ypothenuse", "\\1ypotenuse", xhtml)			# hypothenuse -> hypotenuse
 	xhtml = regex.sub(r"Moliere", "Molière", xhtml)					# Moliere -> Molière
 	xhtml = regex.sub(r"Buonaparte", "Bonaparte", xhtml)				# Buonaparte -> Bonaparte
-	xhtml = regex.sub(r"Shakespear([^ie])", "Shakespeare\\1", xhtml)			# Shakespear -> Shakespeare
-	xhtml = regex.sub(r"Raffaelle", "Raphael", xhtml)					# Raffaelle -> Raphael
+	xhtml = regex.sub(r"Shakespear([^ie])", "Shakespeare\\1", xhtml)		# Shakespear -> Shakespeare
+	xhtml = regex.sub(r"Raffaelle", "Raphael", xhtml)				# Raffaelle -> Raphael
 	xhtml = regex.sub(r"Michael Angelo", "Michaelangelo", xhtml)			# Michael Angelo -> Michaelangelo
 	xhtml = regex.sub(r"[‘’]([Bb])us\b", "\\1us", xhtml)				# ’bus -> bus
 

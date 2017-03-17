@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+
+import argparse
+import sys
+import regex
+from bs4 import BeautifulSoup
+
+def main():
+	parser = argparse.ArgumentParser(description="Count the number of words in an HTML file and optionally categorize by length.")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Include filename, word count, and length categorization in output.")
+	parser.add_argument("files", metavar="FILE", nargs="+", help="An HTML file to count the words of.")
+	args = parser.parse_args()
+
+	for filename in args.files:
+		try:
+			with open(filename, "r") as file:
+				soup = BeautifulSoup(file.read(), "lxml")
+
+		except Exception:
+			print("Error: Couldn't read file: {}".format(filename), file=sys.stderr)
+			exit(1)
+
+		#This removes HTML tags
+		text = soup.body.get_text()
+
+		#Replace some formatting characters
+		text = regex.sub(r"[…–—― ‘’“”\{\}\(\)]", " ", text, flags=regex.IGNORECASE | regex.DOTALL)
+
+		#Remove word-connecting dashes, apostrophes, commas, and slashes (and/or), they count as a word boundry but they shouldn't
+		text = regex.sub(r"[a-z0-9][\-\'\,\.\/][a-z0-9]", "aa", text, flags=regex.IGNORECASE | regex.DOTALL)
+
+		#Replace sequential spaces with one space
+		text = regex.sub(r"\s+", " ", text, flags=regex.IGNORECASE | regex.DOTALL)
+
+		#Get the word count
+		word_count = len(regex.findall(r"\b[a-z0-9]+\b", text, flags=regex.IGNORECASE | regex.DOTALL))
+
+		if args.verbose:
+			category = "se:short-story"
+			if word_count > 17500 and word_count < 40000:
+				category = "se:novella"
+			elif word_count > 40000:
+				category = "se:novel"
+
+			print("{}\t{}\t{}".format(filename, word_count, category))
+		else:
+			print(str(word_count))
+
+if __name__ == "__main__":
+	main()

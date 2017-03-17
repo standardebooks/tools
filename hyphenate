@@ -1,101 +1,100 @@
 #!/usr/bin/env python3
 
-from hyphen import Hyphenator, dict_info
-from hyphen.dictools import *
-from bs4 import BeautifulSoup
 import argparse
 import sys
-import re
+import regex
+from hyphen import Hyphenator, dict_info
+from bs4 import BeautifulSoup
 
 def main():
 	parser = argparse.ArgumentParser(description="Insert soft hyphens at syllable breaks in an XHTML file.")
-	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
-	parser.add_argument("-l", "--language", action="store", help="Specify the language for the XHTML files.  If unspecified, defaults to the 'xml:lang' or 'lang' attribute of the root <html> element.")
-	parser.add_argument("-i", "--ignore-h-tags", action="store_true", help="Don't add soft hyphens to text in <h1-6> tags")
-	parser.add_argument("files", metavar="FILE", nargs="+", help="An XHTML file to hyphenate")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
+	parser.add_argument("-l", "--language", action="store", help="Specify the language for the XHTML files.  If unspecified, defaults to the \"xml:lang\" or \"lang\" attribute of the root <html> element.")
+	parser.add_argument("-i", "--ignore-h-tags", action="store_true", help="Don't add soft hyphens to text in <h1-6> tags.")
+	parser.add_argument("files", metavar="FILE", nargs="+", help="An XHTML file to hyphenate.")
 	args = parser.parse_args()
 
 	hyphenators = {}
 
-	for argument in args.files:
+	for filename in args.files:
 		try:
-			with open(argument, 'r+') as fh:
+			with open(filename, "r+") as file:
 				if args.verbose:
-					print("Hyphenating " + argument + " ...", end="", flush=True)
+					print("Hyphenating {} ...".format(filename), end="", flush=True)
 
-				html = fh.read()
-				soup = BeautifulSoup(html, "lxml")
+				xhtml = file.read()
+				soup = BeautifulSoup(xhtml, "lxml")
 
 				#What language are we looking at?
 				language = args.language
 				if language is None:
 					try:
 						language = soup.html["xml:lang"]
-					except:
+					except Exception:
 						try:
 							language = soup.html["lang"]
-						except:
-							print("Error: No 'xml:lang' or 'lang' attribute on root <html> element.  Couldn't guess file language.", file=sys.stderr)
+						except Exception:
+							print("Error: No \"xml:lang\" or \"lang\" attribute on root <html> element.  Couldn't guess file language.", file=sys.stderr)
 							exit(1)
 
 				try:
 					language = language.replace("-", "_")
 					if language not in hyphenators:
 						hyphenators[language] = Hyphenator(language)
-				except:
-					print("Error: Hyphenator for language '" + language + "' not available.", file=sys.stderr)
-					print("Installed hyphenators: " + str(list(dict_info.keys())), file=sys.stderr)
+				except Exception:
+					print("Error: Hyphenator for language \"{}\" not available.".format(language), file=sys.stderr)
+					print("Installed hyphenators: {}".format(str(list(dict_info.keys()))), file=sys.stderr)
 					exit(1)
 
 				text = str(soup.body)
 				result = text
 				word = ""
-				inTag = False
-				tagName = ""
-				readingTagName = False
-				inHTag = False
+				in_tag = False
+				tag_name = ""
+				reading_tag_name = False
+				in_h_tag = False
 				pos = 1
-				hOpeningTagPattern = re.compile("^h[1-6]$")
-				hClosingTagPattern = re.compile("^/h[1-6]$")
+				h_opening_tag_pattern = regex.compile("^h[1-6]$")
+				h_closing_tag_pattern = regex.compile("^/h[1-6]$")
 
 				#The general idea here is to read the whole contents of the <body> tag character by character.
 				#If we hit a <, we ignore the contents until we hit the next >.
 				#Otherwise, we consider a word to be an unbroken sequence of alphanumeric characters.
 				#We can't just split at whitespace because HTML tags can contain whitespace (attributes for example)
-				for c in text:
+				for char in text:
 					process = False
 
-					if c == "<":
+					if char == "<":
 						process = True
-						inTag = True
-						readingTagName = True
-						tagName = ""
-					elif inTag == True and c == ">":
-						inTag = False
-						readingTagName = False
+						in_tag = True
+						reading_tag_name = True
+						tag_name = ""
+					elif in_tag and char == ">":
+						in_tag = False
+						reading_tag_name = False
 						word = ""
-					elif inTag == True and c == " ":
-						readingTagName = False
-					elif inTag == True and readingTagName == True:
-						tagName = tagName + c
-					elif inTag == False and c.isalnum():
-						word = word + c
-					elif inTag == False:
+					elif in_tag and char == " ":
+						reading_tag_name = False
+					elif in_tag and reading_tag_name:
+						tag_name = tag_name + char
+					elif not in_tag and char.isalnum():
+						word = word + char
+					elif not in_tag:
 						process = True
 
 					#Do we ignore <h1-6> tags?
-					if readingTagName == False and hOpeningTagPattern.match(tagName):
-						inHTag = True
+					if not reading_tag_name and h_opening_tag_pattern.match(tag_name):
+						in_h_tag = True
 
-					if readingTagName == False and hClosingTagPattern.match(tagName):
-						inHTag = False
+					if not reading_tag_name and h_closing_tag_pattern.match(tag_name):
+						in_h_tag = False
 
-					if args.ignore_h_tags and inHTag == True:
+					if args.ignore_h_tags and in_h_tag:
 						process = False
 
-					if process == True:
+					if process:
 						if word != "":
-							newWord = word
+							new_word = word
 
 							#100 is the hard coded max word length in the hyphenator module
 							#Check here to avoid an error
@@ -103,27 +102,27 @@ def main():
 								syllables = hyphenators[language].syllables(word)
 
 								if len(syllables) > 0:
-									newWord = "\u00AD".join(syllables)
+									new_word = "\u00AD".join(syllables)
 
-							result = result[:pos - len(word) - 1] + newWord + c + result[pos:]
-							pos = pos + len(newWord) - len(word)
+							result = result[:pos - len(word) - 1] + new_word + char + result[pos:]
+							pos = pos + len(new_word) - len(word)
 						word = ""
 
 					pos = pos + 1
 
-				html = re.sub(r'<body.+<\/body>', '', html, flags=re.UNICODE | re.MULTILINE | re.DOTALL)
-				html = html.replace('</head>', "</head>\n\t" + result)
+				processed_xhtml = regex.sub(r"<body.+<\/body>", "", xhtml, flags=regex.MULTILINE | regex.DOTALL)
+				processed_xhtml = processed_xhtml.replace("</head>", "</head>\n\t" + result)
 
-				fh.seek(0)
-				fh.write(html)
-				fh.truncate()
-				fh.close()
+				if processed_xhtml != xhtml:
+					file.seek(0)
+					file.write(processed_xhtml)
+					file.truncate()
 
 				if args.verbose:
 					print(" OK")
 
 		except Exception:
-			print("Error: Couldn't read " + argument + ".", file=sys.stderr)
+			print("Error: Couldn't read file: {}".format(filename), file=sys.stderr)
 			exit(1)
 
 if __name__ == "__main__":

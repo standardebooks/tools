@@ -1,89 +1,86 @@
 #!/usr/bin/env python3
 
 import argparse
-import re
 import glob
-import lxml.cssselect
-import lxml.etree as etree
-import lxml.html as html
-import subprocess
 import sys
 import os
+import regex
+import lxml.cssselect
+import lxml.etree as etree
+
+XHTML_NAMESPACES = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "http://standardebooks.org/vocab/1.0"}
 
 def main():
 	parser = argparse.ArgumentParser(description="Find unused local.css CSS selectors in Standard Ebook source directories.")
-	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 
-	xhtmlNamespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "http://standardebooks.org/vocab/1.0"}
+	for directory in args.directories:
+		directory = os.path.abspath(directory)
 
-	#First test if we're looking at a Standard Ebooks source directory
-	for dir in args.directories:
-		dir = os.path.abspath(dir)
-		sourceDir = os.path.join(dir, "src/")
-		if not os.path.isdir(sourceDir):
-			print(dir + " doesn't look like a Standard Ebook source directory.", file=sys.stderr)
+		if not os.path.isdir(directory):
+			print("Error: Not a directory: {}".format(directory), file=sys.stderr)
 			exit(1)
 
-	#Check!
-	for dir in args.directories:
-		dir = os.path.abspath(dir)
-
 		if args.verbose:
-			print("Checking " + dir + " ...", end="", flush=True)
+			print("Processing {} ...".format(directory), end="", flush=True)
 
-		with open(os.path.join(dir, "src/epub/css/local.css"), encoding="utf-8") as file:
-			css = file.read()
+		try:
+			with open(os.path.join(directory, "src/epub/css/local.css"), encoding="utf-8") as file:
+				css = file.read()
+		except Exception:
+			print("Error: Couldn't open CSS file: {}".format(os.path.join(directory, "src/epub/css/local.css")), file=sys.stderr)
+			exit(1)
 
-		#Remove actual content of css selectors
-		css = re.sub("{[^}]+}", "", css, flags=re.MULTILINE)
+		# Remove actual content of css selectors
+		css = regex.sub(r"{[^}]+}", "", css, flags=regex.MULTILINE)
 
-		#Remove trailing commas
-		css = re.sub(",", "", css)
+		# Remove trailing commas
+		css = regex.sub(r",", "", css)
 
-		#Remove comments
-		css = re.sub("\/\*.+?\*\/", "", css, flags=re.DOTALL)
+		# Remove comments
+		css = regex.sub(r"/\*.+?\*/", "", css, flags=regex.DOTALL)
 
-		#Remove @ defines
-		css = re.sub("^@.+", "", css, flags=re.MULTILINE)
+		# Remove @ defines
+		css = regex.sub(r"^@.+", "", css, flags=regex.MULTILINE)
 
-		#Construct a dictionary of selectors
-		selectors = list(set(filter(None, css.splitlines())))
-		unusedSelectors = list(selectors)
+		# Construct a dictionary of selectors
+		selectors = set([line for line in css.splitlines() if line != ""])
+		unused_selectors = set(selectors)
 
-		#Get a list of .xhtml files to search
-		filenames = glob.glob(os.path.join(dir, "src/epub/text/") + "*.xhtml")
+		# Get a list of .xhtml files to search
+		filenames = glob.glob(os.path.join(directory, "src/epub/text/") + "*.xhtml")
 
-		#Now iterate over each CSS selector and see if it's used in any of the files we found
+		# Now iterate over each CSS selector and see if it's used in any of the files we found
 		for selector in selectors:
 			try:
-				sel = lxml.cssselect.CSSSelector(selector, translator="html", namespaces=xhtmlNamespaces)
+				sel = lxml.cssselect.CSSSelector(selector, translator="html", namespaces=XHTML_NAMESPACES)
 			except lxml.cssselect.ExpressionError:
-				#This gets thrown if we use pseudo-elements, which lxml doesn't support
-				unusedSelectors.remove(selector)
+				# This gets thrown if we use pseudo-elements, which lxml doesn't support
+				unused_selectors.remove(selector)
 				continue
 
 			for filename in filenames:
 				if not filename.endswith("titlepage.xhtml") and not filename.endswith("imprint.xhtml") and not filename.endswith("uncopyright.xhtml"):
-					#We have to remove the default namespace declaration from our document, otherwise
-					#xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
+					# We have to remove the default namespace declaration from our document, otherwise
+					# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 					with open(filename, "r") as file:
 						xhtml = file.read().replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
 
 					tree = etree.fromstring(str.encode(xhtml))
-					if len(tree.xpath(sel.path, namespaces=xhtmlNamespaces)) > 0:
-						unusedSelectors.remove(selector)
+					if len(tree.xpath(sel.path, namespaces=XHTML_NAMESPACES)) > 0:
+						unused_selectors.remove(selector)
 						break
 
-		#Did we find any unused selectors?
-		if len(unusedSelectors) > 0:
+		# Did we find any unused selectors?
+		if len(unused_selectors) > 0:
 			if args.verbose:
 				print("")
 			else:
-				print(dir)
+				print(directory)
 
-			for selector in unusedSelectors:
+			for selector in unused_selectors:
 				print("\t" + selector)
 		elif args.verbose:
 			print(" OK")

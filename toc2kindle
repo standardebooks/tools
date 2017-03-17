@@ -1,38 +1,44 @@
 #!/usr/bin/env python3
 
 import argparse
-import re
+import sys
+import regex
 from bs4 import BeautifulSoup
 
 def main():
 	parser = argparse.ArgumentParser(description="Flatten a Standard Ebooks table of contents file to at most two levels deep for Kindle compatibility.")
-	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
-	parser.add_argument("tocFilename", metavar="TOC-FILENAME", help="A Standard Ebooks table of contents file (typically toc.xhtml)")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
+	parser.add_argument("filename", metavar="TOC-FILENAME", help="A Standard Ebooks table of contents file (typically toc.xhtml).")
 	args = parser.parse_args()
 
-	with open(args.tocFilename, 'r+', encoding="utf-8") as file:
-		text = file.read()
-		file.seek(0)
+	try:
+		with open(args.filename, "r+", encoding="utf-8") as file:
+			xhtml = file.read()
 
-		soup = BeautifulSoup(text, "lxml")
+			soup = BeautifulSoup(xhtml, "lxml")
 
-		for match in soup.select('ol > li > ol > li > ol'):
-			match.unwrap()
+			for match in soup.select('ol > li > ol > li > ol'):
+				match.unwrap()
 
-		text = str(soup)
+			xhtml = str(soup)
 
-		r = re.compile(r'(<li>\s*<a href="[^"]+?">.+?</a>\s*)<li>', re.MULTILINE)
-		matches = 1
-		while matches > 0:
-			text, matches = r.subn(r'\1</li><li>', text)
+			pattern = regex.compile(r"(<li>\s*<a href=\"[^\"]+?\">.+?</a>\s*)<li>", regex.MULTILINE)
+			matches = 1
+			while matches > 0:
+				xhtml, matches = pattern.subn(r"\1</li><li>", xhtml)
 
-		r = re.compile(r'</li>\s*</li>', re.MULTILINE)
-		matches = 1
-		while matches > 0:
-			text, matches = r.subn('</li>', text)
+			pattern = regex.compile(r"</li>\s*</li>", regex.MULTILINE)
+			matches = 1
+			while matches > 0:
+				xhtml, matches = pattern.subn("</li>", xhtml)
 
-		file.write(text)
-		file.truncate()
+			file.seek(0)
+			file.write(xhtml)
+			file.truncate()
+
+	except Exception:
+		print("Error: Couldn't read file: {}".format(filename), file=sys.stderr)
+		exit(1)
 
 if __name__ == "__main__":
 	main()

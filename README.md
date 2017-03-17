@@ -117,7 +117,7 @@ Display Unicode code points, descriptions, and links to more details for each ch
 
 Change the ASIN of a mobi/azw3 file.
 
-##wordcount
+##word-count
 
 Count the number of words in an HTML file and optionally categorize by length.
 

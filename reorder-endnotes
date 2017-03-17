@@ -2,11 +2,10 @@
 
 import argparse
 import os
-import regex #We use the regex module, not the re module, because it allows matching by character class
-from bs4 import BeautifulSoup
 import sys
 import fnmatch
-import re
+import regex
+from bs4 import BeautifulSoup
 
 def is_positive_integer(value):
 	int_value = int(value)
@@ -17,24 +16,19 @@ def is_positive_integer(value):
 
 def main():
 	parser = argparse.ArgumentParser(description="Increment the specified endnote and all following endnotes by 1.")
-	parser.add_argument("target_endnote_number", metavar="ENDNOTE-NUMBER", type=is_positive_integer, help="The endnote number to start incrementing at")
-	parser.add_argument("directory", metavar="DIRECTORY", help="A Standard Ebooks source directory")
+	parser.add_argument("target_endnote_number", metavar="ENDNOTE-NUMBER", type=is_positive_integer, help="The endnote number to start incrementing at.")
+	parser.add_argument("directory", metavar="DIRECTORY", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 
 	directory = os.path.abspath(args.directory)
-	target_endnote_number  = int(args.target_endnote_number)
+	target_endnote_number = int(args.target_endnote_number)
 	endnote_count = 0
 	source_directory = os.path.join(directory, "src/")
-
-	#First test if we're looking at a Standard Ebooks source directory
-	if not os.path.isdir(os.path.join(source_directory)):
-		print("Error: Doesn't look like a Standard Ebook source directory: {}".format(directory), file=sys.stderr)
-		exit(1)
 
 	#First get the highest numbered endnote
 	try:
 		endnotes_filename = os.path.join(source_directory, "epub/text/endnotes.xhtml")
-		with open(endnotes_filename, 'r+', encoding="utf-8") as file:
+		with open(endnotes_filename, "r+", encoding="utf-8") as file:
 			xhtml = file.read()
 			file.seek(0)
 			soup = BeautifulSoup(xhtml, "lxml")
@@ -52,19 +46,18 @@ def main():
 		print("Error: Couldn't open endnotes file: {}".format(endnotes_filename), file=sys.stderr)
 		exit(1)
 
-	for root, dirnames, filenames in os.walk(source_directory):
-		for basename in fnmatch.filter(filenames, '*.xhtml'):
-
+	for root, _, filenames in os.walk(source_directory):
+		for filename in fnmatch.filter(filenames, "*.xhtml"):
 			#Skip endnotes.xhtml since we already processed it
-			if basename == "endnotes.xhtml":
+			if filename == "endnotes.xhtml":
 				continue
 
-			with open(os.path.join(root, basename), 'r+', encoding="utf-8") as file:
+			with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 				file.seek(0)
 
 				for endnote_number in range(endnote_count, target_endnote_number - 1, -1):
-					xhtml = re.sub(r"(<a[^>]*?>){}<\/a>".format(endnote_number), "\g<1>{}</a>".format(endnote_number + 1), xhtml, flags=re.UNICODE | re.MULTILINE | re.DOTALL)
+					xhtml = regex.sub(r"(<a[^>]*?>){}</a>".format(endnote_number), "\g<1>{}</a>".format(endnote_number + 1), xhtml, flags=regex.MULTILINE | regex.DOTALL)
 					xhtml = xhtml.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + 1))
 					xhtml = xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + 1))
 

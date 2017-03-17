@@ -5,22 +5,22 @@ import sys
 import regex
 import lxml.etree as etree
 
+XHTML_NAMESPACES = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "http://standardebooks.org/vocab/1.0"}
+
 def main():
 	parser = argparse.ArgumentParser(description="Convert epub-friendly endnotes to Kindle-friendly popup endnotes.")
-	parser.add_argument("files", metavar="FILE", nargs="+", help="An XHTML endnotes file in Standard Ebooks endnotes file format")
+	parser.add_argument("files", metavar="FILE", nargs="+", help="An XHTML endnotes file in Standard Ebooks endnotes file format.")
 	args = parser.parse_args()
 
-	xhtml_namespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "http://standardebooks.org/vocab/1.0"}
-
-	for argument in args.files:
+	for filename in args.files:
 		#We have to remove the default namespace declaration from our document, otherwise
 		#xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
-		with open(argument, "r+", encoding="utf-8") as file:
+		with open(filename, "r+", encoding="utf-8") as file:
 			xhtml = file.read()
 
 			tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 
-			notes = tree.xpath("//li[@epub:type=\"rearnote\" or @epub:type=\"footnote\"]", namespaces=xhtml_namespaces)
+			notes = tree.xpath("//li[@epub:type=\"rearnote\" or @epub:type=\"footnote\"]", namespaces=XHTML_NAMESPACES)
 
 			processed_endnotes = ""
 
@@ -32,7 +32,7 @@ def main():
 				try:
 					ref_link = etree.tostring(note.xpath("p[last()]/a[last()]")[0], encoding="unicode", pretty_print=True, with_tail=False).replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "").strip()
 				except Exception:
-					print("Error: Can't find ref link for #" + note_id, file=sys.stderr)
+					print("Error: Can't find ref link for #{}".format(note_id), file=sys.stderr)
 					exit(1)
 
 				new_ref_link = regex.sub(r">.*?<\/a>", ">" + note_number + "</a>.", ref_link)
