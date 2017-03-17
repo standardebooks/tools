@@ -4,12 +4,10 @@
 
 import argparse
 import re
-import glob
-import sys
 import os
 import fnmatch
-import lxml.etree as etree
 from copy import deepcopy
+import lxml.etree as etree
 
 paragraph_counter = 1
 segment_counter = 1
@@ -32,9 +30,9 @@ def append_kobo_spans_from_text(node, text):
 			# prepended to the next group. Probably equivalent to make sure
 			# the space stays in the span at the end.
 			# add each sentence in its own span
-			for g in groups:
+			for group in groups:
 				span = etree.Element("{%s}span" % ("http://www.w3.org/1999/xhtml", ), attrib={"id": "kobo.{0}.{1}".format(paragraph_counter, segment_counter), "class": "koboSpan"})
-				span.text = g
+				span.text = group
 				node.append(span)
 				segment_counter += 1
 			return True
@@ -100,12 +98,12 @@ def main():
 	args = parser.parse_args()
 	global paragraph_counter
 	global segment_counter
-	xhtmlNamespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "http://standardebooks.org/vocab/1.0"}
+	xhtml_namespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "http://standardebooks.org/vocab/1.0"}
 
 	for directory in args.directories:
 		directory = os.path.abspath(directory)
 
-		for root, dirnames, filenames in os.walk(directory):
+		for root, _, filenames in os.walk(directory):
 			for filename in fnmatch.filter(filenames, "content.opf"):
 				with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
 					xhtml = file.read()
@@ -136,7 +134,7 @@ def main():
 					#xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 					tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 
-					add_kobo_spans_to_node(tree.xpath("./body", namespaces=xhtmlNamespaces)[0])
+					add_kobo_spans_to_node(tree.xpath("./body", namespaces=xhtml_namespaces)[0])
 
 					xhtml = etree.tostring(tree, encoding="unicode", pretty_print=True, with_tail=False)
 					xhtml = re.sub(r"<html:span", "<span", xhtml)
