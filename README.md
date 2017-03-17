@@ -1,131 +1,130 @@
-#About this repository
-
+# About 
 This repository contains various tools Standard Ebooks uses to produce its ebooks.
 
-##british2american
-
+## Build Tools 
+### `british2american`
 Try to convert British quote style to American quote style in DIRECTORY/src/epub/text/.
 
 Quotes must already be "typogrified"--i.e. curly.
 
 This script isn't perfect; proofreading is required, especially near closing quotes near to em-dashes.
 
-##build
+### `build`
 
 Build an ebook from a Standard Ebook source directory.
 
-##build-cover
+### `build-cover`
 
 Build an ebook cover a Standard Ebook source directory and place the output in DIRECTORY/src/epub/images/.
 
-##build-kobo
+### `build-kobo`
 
 Convert files in a Standard Ebooks source directory to be Kobo-compatible.
 
-##clean
+### `clean`
 
 Prettify source files in a Standard Ebook source directory, including canonicalizing XML and minifying SVGs. Note that this only prettifies the source code; it doesn't perform typography changes.
 
-##create-draft
+### `create-draft`
 
 Create a skeleton of a new Standard Ebook.
 
-##dec2roman
+### `dec2roman`
 
 Convert a decimal number to a Roman numeral.
 
-##endnotes2kindle
+### `endnotes2kindle`
 
 Convert epub-friendly endnotes to Kindle-friendly popup endnotes.
 
-##find-mismatched-diacritics
+### `find-mismatched-diacritics`
 
 Find words with mismatched diacritics in Standard Ebook source directories.  For example, 'cafe' in one file and 'café' in another.
 
-##find-unused-selectors
+### `find-unused-selectors`
 
 Find unused local.css CSS selectors in Standard Ebook source directories.
 
-##hyphenate
+### `hyphenate`
 
 Insert soft hyphens at syllable breaks in an XHTML file.
 
-##interactive-sr
+### `interactive-sr`
 
 A macro for calling Vim to interactively search and replace a regex on a list of files.
 
-##make-url-safe
+### `make-url-safe`
 
 Convert all arguments to URL-safe strings.
 
-##modernize-spelling
+### `modernize-spelling`
 
 Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace "ash-tray" with "ashtray".
 
-##ordinal
+### `ordinal`
 
 Print the ordinal for one or more integers.
 
-##prepare-release
+### `prepare-release`
 
 Calculate the ebook's word count, and update content.opf and colophon.xhtml with release and modified timestamps.
 
-##print-manifest-and-spine
+### `print-manifest-and-spine`
 
-Create a <manifest> and <spine> tag for content.opf based on the passed Standard Ebooks source directory and print to standard output.
+Create a ```<manifest>``` and ```<spine>``` tag for content.opf based on the passed Standard Ebooks source directory and print to standard output.
 
-##reading-ease
+### `reading-ease`
 
 Calculate the Flesch reading ease for a Standard Ebooks source directory.
 
-##reorder-endnotes
+### `reorder-endnotes`
 
 Increment the specified endnote and all following endnotes by 1.
 
-##roman2dec
+### `roman2dec`
 
 Convert a Roman numeral to a decimal number.
 
-##semanticate
+### `semanticate`
 
 Apply some scriptable semantics rules from the Standard Ebooks semantics manual to a Standard Ebook source directory.
 
-##simplify-tags
+### `simplify-tags`
 Simplify some HTML and CSS to be more compatible with crappier reading systems (ADE I'm looking at you...)
 
-##split-file
+### `split-file`
 
-Split an XHTML file into many files at all instances of <!--se:split-->, and include a header template for each file.
+Split an XHTML file into many files at all instances of `<!--se:split-->`, and include a header template for each file.
 
-##titlecase
+### `titlecase`
 
 Convert a string to titlecase.
 
-##toc2kindle
+### `toc2kindle`
 
 Flatten ToC to be at most 2 levels deep for Kindle compatibility.  Generally only used by the `build` script and not called independently.
 
-##typogrify
+### `typogrify`
 
 Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory.
 
-##unicode-names
+### `unicode-names`
 
 Display Unicode code points, descriptions, and links to more details for each character in a string.  Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.
 
-##update-asin
+### `update-asin`
 
 Change the ASIN of a mobi/azw3 file.
 
-##word-count
+### `word-count`
 
 Count the number of words in an HTML file and optionally categorize by length.
 
-##view-modified
+### `view-modified`
 
 Check all author directories in the current or specified directory to see if there are changes that need to be committed.
 
-#What a Standard Ebooks source directory looks like
+# What a Standard Ebooks source directory looks like
 
 Many of these tools act on Standard Ebooks source directories.  Such directories have a consistent minimal structure:
 
@@ -155,7 +154,7 @@ Many of these tools act on Standard Ebooks source directories.  Such directories
 
 ./src/epub/ contains the actual epub files.
 
-#Setting up your build environment
+# Setting up your build environment
 
 1.	Install dependencies.  On Ubuntu 16.04, you can do:
 
