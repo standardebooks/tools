@@ -68,8 +68,8 @@ def main():
 				with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
 					css = file.read()
 
-					#Before we do anything, we process a special case in coregex.css
-					if "coregex.css" in filename:
+					#Before we do anything, we process a special case in core.css
+					if "core.css" in filename:
 						css = regex.sub(r"abbr{.+?}", "", css, flags=regex.MULTILINE | regex.DOTALL)
 
 					total_css = total_css + css + "\n"
@@ -96,11 +96,11 @@ def main():
 		#Get a list of .xhtml files to search
 		for root, _, filenames in os.walk(directory):
 			for filename in fnmatch.filter(filenames, "*.xhtml"):
-				filename = os.path.join(root, filename)
-
 				#Don't mess with the ToC, since if we have ol/li > first-child selectors we could screw it up
 				if filename == "toc.xhtml":
 					continue
+
+				filename = os.path.join(root, filename)
 
 				with open(filename, "r+", encoding="utf-8") as file:
 					#We have to remove the default namespace declaration from our document, otherwise
