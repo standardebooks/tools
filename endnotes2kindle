@@ -32,8 +32,8 @@ def main():
 				try:
 					refLink = etree.tostring(note.xpath("p[last()]/a[last()]")[0], encoding="unicode", pretty_print=True, with_tail=False).replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "").strip()
 				except:
-					print("Can't find ref link for #" + noteId)
-					exit()
+					print("Error: Can't find ref link for #" + noteId, file=sys.stderr)
+					exit(1)
 
 				newRefLink = re.sub(r">.*?<\/a>", ">" + noteNumber + "</a>.", refLink)
 
