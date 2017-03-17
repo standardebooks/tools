@@ -46,10 +46,6 @@ Find words with mismatched diacritics in Standard Ebook source directories.  For
 
 Find unused local.css CSS selectors in Standard Ebook source directories.
 
-##generate-words
-
-Generate the `words` file used by the `modernize-hyphenation` script and print to standard output.
-
 ##hyphenate
 
 Insert soft hyphens at syllable breaks in an XHTML file.
@@ -62,9 +58,9 @@ A macro for calling Vim to interactively search and replace a regex on a list of
 
 Convert all arguments to URL-safe strings.
 
-##modernize-hyphenation
+##modernize-spelling
 
-Replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace "ash-tray" with "ashtray".
+Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace "ash-tray" with "ashtray".
 
 ##ordinal
 

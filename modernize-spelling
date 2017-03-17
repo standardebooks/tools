@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import fnmatch
+import sys
+import regex
+
+DICTIONARY_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/words")
+
+def main():
+	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace \"ash-tray\" with \"ashtray\".")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory")
+	args = parser.parse_args()
+
+	try:
+		dictionary = set(line.strip() for line in open(DICTIONARY_FILE_PATH))
+	except Exception:
+		print("Error: Can't open words file at " + DICTIONARY_FILE_PATH, file=sys.stderr)
+		exit(1)
+
+	for directory in args.directories:
+		directory = os.path.abspath(directory)
+
+		if not os.path.isdir(directory):
+			print("Error: Not a directory: " + directory, file=sys.stderr)
+			exit(1)
+
+		if args.verbose:
+			print("Processing " + directory + " ...", end="", flush=True)
+
+		for root, _, filenames in os.walk(directory):
+			for filename in fnmatch.filter(filenames, '*.xhtml'):
+				with open(os.path.join(root, filename), 'r+', encoding="utf-8") as file:
+					xhtml = file.read()
+					new_xhtml = xhtml
+
+					# What language are we using?
+					language = regex.search(r"<html[^>]+?xml:lang=\"([^\"]+)\"", xhtml)
+					if language is None or (language.group(1) != "en-US" and language.group(1) != "en-GB"):
+						if args.verbose:
+							print("\n\t", end="", flush=True)
+						print("Error: " + filename + " doesn't have a valid xml:lang attribute in <html> root.  Only en-US and en-GB are supported.", file=sys.stderr)
+						exit(1)
+
+					new_xhtml = modernize_spelling(new_xhtml, language.group(1))
+
+					new_xhtml = modernize_hyphenation(new_xhtml, dictionary)
+
+					if new_xhtml != xhtml:
+						file.seek(0)
+						file.write(new_xhtml)
+						file.truncate()
+
+		if args.verbose:
+			print(" OK")
+
+def modernize_hyphenation(xhtml, dictionary):
+	#Easy fix for a common case
+	xhtml = regex.sub(r"\b([Nn])ow-a-days\b", "\\1owadays", xhtml)			# now-a-days -> nowadays
+
+	result = regex.findall(r"\b[^\W\d_]+\-[^\W\d_]+\b", xhtml)
+
+	for word in set(result): # set() removes duplicates
+		new_word = word.replace("-", "").lower()
+		if new_word in dictionary:
+			# To preserve capitalization, we get the left-hand side of the compound, then the right-hand side,
+			# then we replace the word that way.
+			lhs = regex.sub(r"\-.+$", "", word)
+			rhs = regex.sub(r"^.+?\-", "", word)
+			xhtml = regex.sub(r"" + lhs + "-" + rhs, lhs + rhs, xhtml)
+
+	# Quick fix for a common case
+	xhtml = xhtml.replace("z3998:nonfiction", "z3998:non-fiction")
+
+	return xhtml
+
+def modernize_spelling(xhtml, language):
+	xhtml = regex.sub(r"\b([Dd])evelope\b", "\\1evelop", xhtml)			# develope -> develop
+	xhtml = regex.sub(r"\b([Oo])ker\b", "\\1cher", xhtml)				# oker -> ocher
+	xhtml = regex.sub(r"\b([Ww])ellnigh\b", "\\1ell-nigh", xhtml)			# wellnigh -> well-nigh
+	xhtml = regex.sub(r"\b([Tt]he|[Aa]nd|[Oo]r) what not\b", "\\1 whatnot", xhtml)	# what not -> whatnot
+	xhtml = regex.sub(r"\b([Gg])ood\-bye?\b", "\\1oodbye", xhtml)			# good-by -> goodbye
+	xhtml = regex.sub(r"\b([Hh])indoo", "\\1indu", xhtml)				# hindoo -> hindu
+	xhtml = regex.sub(r"\b([Ee])xpence", "\\1xpense", xhtml)				# expence -> expense
+	xhtml = regex.sub(r"\b([Ll])otos", "\\1otus", xhtml)				# lotos -> lotus
+	xhtml = regex.sub(r"\b([Ss])collop", "\\1callop", xhtml)				# scollop -> scallop
+	xhtml = regex.sub(r"\b([Ss])ubtil", "\\1ubtle", xhtml)				# subtil -> subtle
+	xhtml = regex.sub(r"\bQuoiff", "Coif", xhtml)					# quoiff -> coif
+	xhtml = regex.sub(r"\bquoiff", "coif", xhtml)					# quoiff -> coif
+	xhtml = regex.sub(r"\bIndorse", "Endorse", xhtml)					# indorse -> endorse
+	xhtml = regex.sub(r"\bindorse", "endorse", xhtml)					# indorse -> endorse
+	xhtml = regex.sub(r"\bPhantasie", "Fantasy", xhtml)				# phantasie -> fantasy
+	xhtml = regex.sub(r"\bphantasie", "fantasy", xhtml)				# phantasie -> fantasy
+	xhtml = regex.sub(r"\b([Mm])enage\b", "\\1énage", xhtml)				# menage -> ménage
+	xhtml = regex.sub(r"([Hh])ypothenuse", "\\1ypotenuse", xhtml)			# hypothenuse -> hypotenuse
+	xhtml = regex.sub(r"Moliere", "Molière", xhtml)					# Moliere -> Molière
+	xhtml = regex.sub(r"Buonaparte", "Bonaparte", xhtml)				# Buonaparte -> Bonaparte
+	xhtml = regex.sub(r"Shakespear([^ie])", "Shakespeare\\1", xhtml)			# Shakespear -> Shakespeare
+	xhtml = regex.sub(r"Raffaelle", "Raphael", xhtml)					# Raffaelle -> Raphael
+	xhtml = regex.sub(r"Michael Angelo", "Michaelangelo", xhtml)			# Michael Angelo -> Michaelangelo
+	xhtml = regex.sub(r"[‘’]([Bb])us\b", "\\1us", xhtml)				# ’bus -> bus
+
+	if language == "en-US":
+		xhtml = regex.sub(r"\b([Cc])osey", "\\1ozy", xhtml)
+		xhtml = regex.sub(r"\b([Mm])anœuvre", "\\1aneuver", xhtml)
+
+	if language == "en-GB":
+		xhtml = regex.sub(r"\b([Cc])osey", "\\1osy", xhtml)
+		xhtml = regex.sub(r"\b([Mm])anœuvre", "\\1anoeuvre", xhtml)
+
+	return xhtml
+
+if __name__ == "__main__":
+	main()
