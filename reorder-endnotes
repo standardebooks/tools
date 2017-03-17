@@ -35,18 +35,18 @@ def main():
 	try:
 		endnotes_filename = os.path.join(source_directory, "epub/text/endnotes.xhtml")
 		with open(endnotes_filename, 'r+', encoding="utf-8") as file:
-			html = file.read()
+			xhtml = file.read()
 			file.seek(0)
-			soup = BeautifulSoup(html, "lxml")
+			soup = BeautifulSoup(xhtml, "lxml")
 
 			endnote_count = len(soup.select("li[data-se-note-number]"))
 
 			for endnote_number in range(endnote_count, target_endnote_number - 1, -1):
-				html = html.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + 1))
-				html = html.replace("data-se-note-number=\"{}\"".format(endnote_number), "data-se-note-number=\"{}\"".format(endnote_number + 1))
-				html = html.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + 1))
+				xhtml = xhtml.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + 1))
+				xhtml = xhtml.replace("data-se-note-number=\"{}\"".format(endnote_number), "data-se-note-number=\"{}\"".format(endnote_number + 1))
+				xhtml = xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + 1))
 
-			file.write(html)
+			file.write(xhtml)
 
 	except Exception:
 		print("Error: Couldn't open endnotes file: {}".format(endnotes_filename), file=sys.stderr)
@@ -60,15 +60,15 @@ def main():
 				continue
 
 			with open(os.path.join(root, basename), 'r+', encoding="utf-8") as file:
-				html = file.read()
+				xhtml = file.read()
 				file.seek(0)
 
 				for endnote_number in range(endnote_count, target_endnote_number - 1, -1):
-					html = re.sub(r"(<a[^>]*?>){}<\/a>".format(endnote_number), "\g<1>{}</a>".format(endnote_number + 1), html, flags=re.UNICODE | re.MULTILINE | re.DOTALL)
-					html = html.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + 1))
-					html = html.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + 1))
+					xhtml = re.sub(r"(<a[^>]*?>){}<\/a>".format(endnote_number), "\g<1>{}</a>".format(endnote_number + 1), xhtml, flags=re.UNICODE | re.MULTILINE | re.DOTALL)
+					xhtml = xhtml.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + 1))
+					xhtml = xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + 1))
 
-				file.write(html)
+				file.write(xhtml)
 
 if __name__ == "__main__":
 	main()
