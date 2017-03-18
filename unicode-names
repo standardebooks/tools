@@ -5,13 +5,21 @@ import sys
 import unicodedata
 
 def main():
-	parser = argparse.ArgumentParser()
 	parser = argparse.ArgumentParser(description="Display Unicode code points, descriptions, and links to more details for each character in a string.  Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.")
-	parser.add_argument("STRING", nargs="+", help="The Unicode string to analyze.")
-	parser.parse_args()
+	parser.add_argument("strings", metavar="STRING", nargs="*", help="The Unicode string to analyze.")
+	args = parser.parse_args()
 
-	for argument in sys.argv[1:]:
-		for character in argument:
+	lines = []
+
+	if not sys.stdin.isatty():
+		for line in sys.stdin:
+			lines.append(line.rstrip("\n"))
+
+	for line in args.strings:
+		lines.append(line)
+
+	for line in lines:
+		for character in line:
 			print(character + "\tU+{:04X}".format(ord(character)) + "\t" + unicodedata.name(character) + "\t" + "http://unicode.org/cldr/utility/character.jsp?a={:04X}".format(ord(character)))
 
 if __name__ == "__main__":
