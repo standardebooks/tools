@@ -8,10 +8,10 @@ from bs4 import BeautifulSoup
 
 def main():
 	parser = argparse.ArgumentParser(description="Insert soft hyphens at syllable breaks in an XHTML file.")
-	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
-	parser.add_argument("-l", "--language", action="store", help="Specify the language for the XHTML files.  If unspecified, defaults to the \"xml:lang\" or \"lang\" attribute of the root <html> element.")
-	parser.add_argument("-i", "--ignore-h-tags", action="store_true", help="Don't add soft hyphens to text in <h1-6> tags.")
-	parser.add_argument("files", metavar="FILE", nargs="+", help="An XHTML file to hyphenate.")
+	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("-l", "--language", action="store", help="specify the language for the XHTML files; if unspecified, defaults to the \"xml:lang\" or \"lang\" attribute of the root <html> element")
+	parser.add_argument("-i", "--ignore-h-tags", action="store_true", help="don't add soft hyphens to text in <h1-6> tags")
+	parser.add_argument("files", metavar="FILE", nargs="+", help="an XHTML file to hyphenate")
 	args = parser.parse_args()
 
 	hyphenators = {}

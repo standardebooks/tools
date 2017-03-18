@@ -9,7 +9,7 @@ XHTML_NAMESPACES = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www
 
 def main():
 	parser = argparse.ArgumentParser(description="Convert epub-friendly endnotes to Kindle-friendly popup endnotes.")
-	parser.add_argument("files", metavar="FILE", nargs="+", help="An XHTML endnotes file in Standard Ebooks endnotes file format.")
+	parser.add_argument("files", metavar="FILE", nargs="+", help="an XHTML endnotes file in Standard Ebooks endnotes file format")
 	args = parser.parse_args()
 
 	for filename in args.files:

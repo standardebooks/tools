@@ -95,7 +95,7 @@ def add_kobo_spans_to_node(node):
 
 def main():
 	parser = argparse.ArgumentParser(description="Convert files in a Standard Ebooks source directory to be Kobo-compatible.")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 	global paragraph_counter
 	global segment_counter

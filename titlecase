@@ -6,8 +6,8 @@ from titlecase import titlecase
 
 def main():
 	parser = argparse.ArgumentParser(description="Convert a string to titlecase.")
-	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="Don't end output with a newline.")
-	parser.add_argument("titles", metavar="STRING", nargs="*", help="A string to titlecase.")
+	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="don't end output with a newline")
+	parser.add_argument("titles", metavar="STRING", nargs="*", help="a string")
 	args = parser.parse_args()
 
 	lines = []
