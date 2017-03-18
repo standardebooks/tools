@@ -1,34 +1,54 @@
-#!/bin/sh
-usage(){
-	fmt <<EOF
-DESCRIPTION
-	Convert all arguments to URL-safe strings.
+#!/usr/bin/env python3
 
-USAGE
-	make-url-save STRING [STRING...]
-EOF
-	exit
-}
-die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
-if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
-#End boilerplate
+import argparse
+import sys
+import unicodedata
+import regex
 
-for i in "$@"
-do
-	#Convert the title to something URL and filesystem friendly.
+def make_url_safe(text):
 	#1. Convert accented characters to unaccented characters
-	#2. Trim title.
+	text = regex.sub(r"\p{M}", "", unicodedata.normalize("NFKD", text))
+
+	#2. Trim
+	text = text.strip()
+
 	#3. Convert title to lowercase.
+	text = text.lower()
+
 	#4. Remove apostrophes.
+	text = text.replace("'", "")
+
 	#5. Convert any non-digit, non-letter character to a space.
+	text = regex.sub(r"[^0-9a-z]", " ", text, flags=regex.IGNORECASE)
+
 	#6. Convert any instance of one or more space to a dash.
+	text = regex.sub(r"\s+", "-", text)
+
 	#7. Remove trailing dashes
-	printf "%s\n" "${i}" \
-		| iconv -f utf8 -t ascii//TRANSLIT \
-		| sed --expression="s/^ *//" --expression="s/ *$//" \
-		| tr '[:upper:]' '[:lower:]' \
-		| sed "s/'//g" \
-		| sed "s/[^0-9a-zA-Z]/ /g" \
-		| sed --regexp-extended "s/\s+/-/g" \
-		| sed --regexp-extended "s/\-$//g"
-done
+	text = regex.sub(r"\-+$", "", text)
+
+	return text
+
+def main():
+	parser = argparse.ArgumentParser(description="Make a string URL-safe.")
+	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="Don't end output with a newline.")
+	parser.add_argument("strings", metavar="STRING", nargs="*", help="A string to make URL-safe.")
+	args = parser.parse_args()
+
+	lines = []
+
+	if not sys.stdin.isatty():
+		for line in sys.stdin:
+			lines.append(line.rstrip("\n"))
+
+	for line in args.strings:
+		lines.append(line)
+
+	for line in lines:
+		if args.newline:
+			print(make_url_safe(line))
+		else:
+			print(make_url_safe(line), end="")
+
+if __name__ == "__main__":
+	main()

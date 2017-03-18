@@ -1,7 +1,7 @@
-# About 
+# About
 This repository contains various tools Standard Ebooks uses to produce its ebooks.
 
-## Build Tools 
+## Build Tools
 ### `british2american`
 Try to convert British quote style to American quote style in DIRECTORY/src/epub/text/.
 
@@ -55,7 +55,7 @@ A macro for calling Vim to interactively search and replace a regex on a list of
 
 ### `make-url-safe`
 
-Convert all arguments to URL-safe strings.
+Make a string URL-safe.
 
 ### `modernize-spelling`
 
