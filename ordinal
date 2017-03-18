@@ -2,15 +2,36 @@
 
 import argparse
 import math
+import sys
+
+def get_ordinal(number):
+	number = int(number)
+	return "%d%s" % (number, "tsnrhtdd"[(math.floor(number / 10) % 10 != 1) * (number % 10 < 4) * number % 10::4])
 
 def main():
 	parser = argparse.ArgumentParser(description="Print the ordinal for one or more integers.")
-	parser.add_argument("numbers", metavar="NUMBER", nargs="+", help="An integer.")
+	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="Don't end output with a newline.")
+	parser.add_argument("numbers", metavar="NUMBER", nargs="*", help="An integer.")
 	args = parser.parse_args()
 
-	for number in args.numbers:
-		number = int(number)
-		print("%d%s" % (number, "tsnrhtdd"[(math.floor(number / 10) % 10 != 1) * (number % 10 < 4) * number % 10::4]))
+	lines = []
+
+	if not sys.stdin.isatty():
+		for line in sys.stdin:
+			lines.append(line.rstrip("\n"))
+
+	for line in args.numbers:
+		lines.append(line)
+
+	for line in lines:
+		if not line.isdigit():
+			print("Error: Not a digit: {}".format(line), file=sys.stderr)
+			exit(1)
+
+		if args.newline:
+			print(get_ordinal(line))
+		else:
+			print(get_ordinal(line), end="")
 
 if __name__ == "__main__":
 	main()
