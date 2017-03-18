@@ -6,15 +6,28 @@ import roman
 
 def main():
 	parser = argparse.ArgumentParser(description="Convert a decimal number to a Roman numeral.")
-	parser.add_argument("numbers", metavar="INTEGER", nargs="+", help="An integer to convert to a Roman numeral.")
+	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="Don't end output with a newline.")
+	parser.add_argument("numbers", metavar="INTEGER", nargs="*", help="An integer to convert to a Roman numeral.")
 	args = parser.parse_args()
+
+	lines = []
 
 	if not sys.stdin.isatty():
 		for line in sys.stdin:
+			lines.append(line.rstrip("\n"))
+
+	for line in args.numbers:
+		lines.append(line)
+
+	for line in lines:
+		if not line.isdigit():
+			print("Error: Not a digit: {}".format(line), file=sys.stderr)
+			exit(1)
+
+		if args.newline:
 			print(roman.toRoman(int(line)))
-	else:
-		for argument in args.numbers:
-			print(roman.toRoman(int(argument)))
+		else:
+			print(roman.toRoman(int(line)), end="")
 
 if __name__ == "__main__":
 	main()
