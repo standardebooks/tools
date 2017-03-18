@@ -6,22 +6,24 @@ from titlecase import titlecase
 
 def main():
 	parser = argparse.ArgumentParser(description="Convert a string to titlecase.")
-	parser.add_argument("-n", "--no-newline", action="store_true", help="Don't end output with a newline.")
-	parser.add_argument("titles", metavar="STRING", nargs="+", help="A string to titlecase.")
+	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="Don't end output with a newline.")
+	parser.add_argument("titles", metavar="STRING", nargs="*", help="A string to titlecase.")
 	args = parser.parse_args()
+
+	lines = []
 
 	if not sys.stdin.isatty():
 		for line in sys.stdin:
-			if args.no_newline:
-				print(titlecase(line.rstrip("\n")), end="")
-			else:
-				print(titlecase(line.rstrip("\n")))
-	else:
-		for argument in args.titles:
-			if args.no_newline:
-				print(titlecase(argument), end="")
-			else:
-				print(titlecase(argument))
+			lines.append(line.rstrip("\n"))
+
+	for line in args.titles:
+		lines.append(line)
+
+	for line in lines:
+		if args.newline:
+			print(titlecase(line))
+		else:
+			print(titlecase(line), end="")
 
 if __name__ == "__main__":
 	main()
