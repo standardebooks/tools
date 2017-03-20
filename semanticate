@@ -68,8 +68,8 @@ def main():
 					processed_xhtml = re.sub(r"(?<!\<abbr\>)No\.(\s+[0-9]+)", r"<abbr>No.</abbr>\1", processed_xhtml)
 					processed_xhtml = re.sub(r"""(?<!\<abbr class="degree"\>)PhD""", r"""<abbr class="degree">PhD</abbr>""", processed_xhtml)
 					processed_xhtml = re.sub(r"""(?<!\<abbr class="initialism"\>)IOU""", r"""<abbr class="initialism">IOU</abbr>""", processed_xhtml)
-					processed_xhtml = re.sub(r"""(?<!\<abbr class="era"\>)AD""", r"""<abbr class="era">AD</abbr>""", processed_xhtml)
-					processed_xhtml = re.sub(r"""(?<!\<abbr class="era"\>)BC""", r"""<abbr class="era">BC</abbr>""", processed_xhtml)
+					processed_xhtml = re.sub(r"""(?<!\<abbr class="era"\>)A\.?D""", r"""<abbr class="era">AD</abbr>""", processed_xhtml)
+					processed_xhtml = re.sub(r"""(?<!\<abbr class="era"\>)B\.?C""", r"""<abbr class="era">BC</abbr>""", processed_xhtml)
 					processed_xhtml = re.sub(r"""(?<!\<abbr class="time"\>)([ap])\.\s?m\.""", r"""<abbr class="time">\1.m.</abbr>""", processed_xhtml)
 
 					#Guess at adding eoc class
@@ -88,8 +88,7 @@ def main():
 
 					#We may have added HTML tags within title tags.  Remove those here
 					soup = BeautifulSoup(processed_xhtml, "lxml")
-					title = soup.title.get_processed_xhtml()
-					processed_xhtml = re.sub(r"<title>.+?</title>", "<title>" + title + "</title>", processed_xhtml)
+					processed_xhtml = re.sub(r"<title>.+?</title>", "<title>" +  soup.title.text + "</title>", processed_xhtml)
 
 					if processed_xhtml != xhtml:
 						file.seek(0)
