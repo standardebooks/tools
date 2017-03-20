@@ -58,7 +58,7 @@ def main():
 
 def modernize_hyphenation(xhtml, dictionary):
 	#Easy fix for a common case
-	xhtml = regex.sub(r"\b([Nn])ow-a-days\b", "\\1owadays", xhtml)			# now-a-days -> nowadays
+	xhtml = regex.sub(r"\b([Nn])ow-a-days\b", r"\1owadays", xhtml)			# now-a-days -> nowadays
 
 	result = regex.findall(r"\b[^\W\d_]+\-[^\W\d_]+\b", xhtml)
 
@@ -67,48 +67,79 @@ def modernize_hyphenation(xhtml, dictionary):
 		if new_word in dictionary:
 			# To preserve capitalization, we get the left-hand side of the compound, then the right-hand side,
 			# then we replace the word that way.
-			lhs = regex.sub(r"\-.+$", "", word)
-			rhs = regex.sub(r"^.+?\-", "", word)
+			lhs = regex.sub(r"\-.+$", r"", word)
+			rhs = regex.sub(r"^.+?\-", r"", word)
 			xhtml = regex.sub(r"" + lhs + "-" + rhs, lhs + rhs, xhtml)
 
 	# Quick fix for a common case
 	xhtml = xhtml.replace("z3998:nonfiction", "z3998:non-fiction")
+	xhtml = regex.sub(r"\b([Uu])nChristian\b", r"\1nchristian", xhtml)
 
 	return xhtml
 
 def modernize_spelling(xhtml, language):
-	xhtml = regex.sub(r"\b([Dd])evelope\b", "\\1evelop", xhtml)			# develope -> develop
-	xhtml = regex.sub(r"\b([Oo])ker\b", "\\1cher", xhtml)				# oker -> ocher
-	xhtml = regex.sub(r"\b([Ww])ellnigh\b", "\\1ell-nigh", xhtml)			# wellnigh -> well-nigh
-	xhtml = regex.sub(r"\b([Tt]he|[Aa]nd|[Oo]r) what not\b", "\\1 whatnot", xhtml)	# what not -> whatnot
-	xhtml = regex.sub(r"\b([Gg])ood\-bye?\b", "\\1oodbye", xhtml)			# good-by -> goodbye
-	xhtml = regex.sub(r"\b([Hh])indoo", "\\1indu", xhtml)				# hindoo -> hindu
-	xhtml = regex.sub(r"\b([Ee])xpence", "\\1xpense", xhtml)			# expence -> expense
-	xhtml = regex.sub(r"\b([Ll])otos", "\\1otus", xhtml)				# lotos -> lotus
-	xhtml = regex.sub(r"\b([Ss])collop", "\\1callop", xhtml)			# scollop -> scallop
-	xhtml = regex.sub(r"\b([Ss])ubtil", "\\1ubtle", xhtml)				# subtil -> subtle
-	xhtml = regex.sub(r"\bQuoiff", "Coif", xhtml)					# quoiff -> coif
-	xhtml = regex.sub(r"\bquoiff", "coif", xhtml)					# quoiff -> coif
-	xhtml = regex.sub(r"\bIndorse", "Endorse", xhtml)				# indorse -> endorse
-	xhtml = regex.sub(r"\bindorse", "endorse", xhtml)				# indorse -> endorse
-	xhtml = regex.sub(r"\bPhantasie", "Fantasy", xhtml)				# phantasie -> fantasy
-	xhtml = regex.sub(r"\bphantasie", "fantasy", xhtml)				# phantasie -> fantasy
-	xhtml = regex.sub(r"\b([Mm])enage\b", "\\1énage", xhtml)			# menage -> ménage
-	xhtml = regex.sub(r"([Hh])ypothenuse", "\\1ypotenuse", xhtml)			# hypothenuse -> hypotenuse
-	xhtml = regex.sub(r"Moliere", "Molière", xhtml)					# Moliere -> Molière
-	xhtml = regex.sub(r"Buonaparte", "Bonaparte", xhtml)				# Buonaparte -> Bonaparte
-	xhtml = regex.sub(r"Shakespear([^ie])", "Shakespeare\\1", xhtml)		# Shakespear -> Shakespeare
-	xhtml = regex.sub(r"Raffaelle", "Raphael", xhtml)				# Raffaelle -> Raphael
-	xhtml = regex.sub(r"Michael Angelo", "Michaelangelo", xhtml)			# Michael Angelo -> Michaelangelo
-	xhtml = regex.sub(r"[‘’]([Bb])us\b", "\\1us", xhtml)				# ’bus -> bus
+	xhtml = regex.sub(r"\b([Dd])evelope\b", r"\1evelop", xhtml)			# develope -> develop
+	xhtml = regex.sub(r"\b([Oo])ker\b", r"\1cher", xhtml)				# oker -> ocher
+	xhtml = regex.sub(r"\b([Ww])ellnigh\b", r"\1ell-nigh", xhtml)			# wellnigh -> well-nigh
+	xhtml = regex.sub(r"\b([Tt]he|[Aa]nd|[Oo]r) what not\b", r"\1 whatnot", xhtml)	# what not -> whatnot
+	xhtml = regex.sub(r"\b([Gg])ood\-bye?\b", r"\1oodbye", xhtml)			# good-by -> goodbye
+	xhtml = regex.sub(r"\b([Hh])indoo", r"\1indu", xhtml)				# hindoo -> hindu
+	xhtml = regex.sub(r"\b([Ee])xpence", r"\1xpense", xhtml)			# expence -> expense
+	xhtml = regex.sub(r"\b([Ll])otos", r"\1otus", xhtml)				# lotos -> lotus
+	xhtml = regex.sub(r"\b([Ss])collop", r"\1callop", xhtml)			# scollop -> scallop
+	xhtml = regex.sub(r"\b([Ss])ubtil", r"\1ubtle", xhtml)				# subtil -> subtle
+	xhtml = regex.sub(r"\bQuoiff", r"Coif", xhtml)					# quoiff -> coif
+	xhtml = regex.sub(r"\bquoiff", r"coif", xhtml)					# quoiff -> coif
+	xhtml = regex.sub(r"\bIndorse", r"Endorse", xhtml)				# indorse -> endorse
+	xhtml = regex.sub(r"\bindorse", r"endorse", xhtml)				# indorse -> endorse
+	xhtml = regex.sub(r"\bPhantasie", r"Fantasy", xhtml)				# phantasie -> fantasy
+	xhtml = regex.sub(r"\bphantasie", r"fantasy", xhtml)				# phantasie -> fantasy
+	xhtml = regex.sub(r"\b([Mm])enage\b", r"\1énage", xhtml)			# menage -> ménage
+	xhtml = regex.sub(r"([Hh])ypothenuse", r"\1ypotenuse", xhtml)			# hypothenuse -> hypotenuse
+	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
+	xhtml = regex.sub(r"Buonaparte", r"Bonaparte", xhtml)				# Buonaparte -> Bonaparte
+	xhtml = regex.sub(r"Shakespear([^ie])", r"Shakespeare\1", xhtml)		# Shakespear -> Shakespeare
+	xhtml = regex.sub(r"Raffaelle", r"Raphael", xhtml)				# Raffaelle -> Raphael
+	xhtml = regex.sub(r"Michael Angelo", r"Michaelangelo", xhtml)			# Michael Angelo -> Michaelangelo
+	xhtml = regex.sub(r"[‘’]([Bb])us\b", r"\1us", xhtml)				# ’bus -> bus
+	xhtml = regex.sub(r"([Nn])aïve", r"\1aive", xhtml)				# naïve -> naive
+	xhtml = regex.sub(r"([Nn])a[ïi]vet[ée]", r"\1aivete", xhtml)			# naïveté -> naivete
+	xhtml = regex.sub(r"&amp;c\.", r"etc.", xhtml)					# &c. -> etc.
+	xhtml = regex.sub(r"([Pp])rotege", r"\1rotégé", xhtml)				# protege -> protégé
+	xhtml = regex.sub(r"([Tt])ete-a-tete", r"\1ête-à-tête", xhtml)			# tete-a-tete -> tête-à-tête
+	xhtml = regex.sub(r"([Vv])is-a-vis", r"\1is-à-vis", xhtml)			# vis-a-vis _> vis-à-vis
+	xhtml = regex.sub(r"([Ff])acade", r"\1açade", xhtml)				# facade -> façade
+	xhtml = regex.sub(r"([Cc])h?ateau(s?\b)", r"\1hâteau\2", xhtml)			# chateau -> château
+	xhtml = regex.sub(r"([Hh])abitue", r"\1abitué", xhtml)				# habitue -> habitué
+	xhtml = regex.sub(r"\b([Cc])afe\b", r"\1afé", xhtml)				# cafe -> café
+	xhtml = regex.sub(r"\b([Cc])afes\b", r"\1afés", xhtml)				# cafes -> cafés; We break up cafe so that we don't catch 'cafeteria'
+	xhtml = regex.sub(r"([Mm])êlée", r"\1elee", xhtml)				# mêlée -> melee
+	xhtml = regex.sub(r"\b([Ff])ete(sd?)\b", r"\1ête\2", xhtml)			# fete -> fête
+	xhtml = regex.sub(r"\b([Rr])ôle\b", r"\1ole", xhtml)				# rôle -> role
+	xhtml = regex.sub(r"\b([Cc])oö", r"\1oo", xhtml)				# coö -> coo (as in coöperate)
+	xhtml = regex.sub(r"\b([Rr])eë", r"\1ee", xhtml)				# reë -> ree (as in reëvaluate)
+	xhtml = regex.sub(r"\b([Dd])aïs\b", r"\1ais", xhtml)				# daïs -> dais
+	xhtml = regex.sub(r"\b([Cc])oup\-de\-grace", r"\1oup-de-grâce", xhtml)		# coup-de-grace -> coup-de-grâce
+	xhtml = regex.sub(r"\b([Cc])anape", r"\1anapé", xhtml)				# canape -> canapé
+	xhtml = regex.sub(r"\b([Pp])recis\b", r"\1récis", xhtml)			# precis -> précis
+	xhtml = regex.sub(r"\b([Gg])ood\-by([^e])", r"\1oodbye\2", xhtml)		# good-by -> goodbye
+	xhtml = regex.sub(r"\b([Bb])ete noir", r"\1ête noir", xhtml)			# bete noir -> bête noir
+	xhtml = regex.sub(r"\bEclat\b", r"Éclat", xhtml)				# eclat -> éclat
+	xhtml = regex.sub(r"\beclat\b", r"éclat", xhtml)				# eclat -> éclat
+	xhtml = regex.sub(r"\ba la\b", r"à la", xhtml)					# a la -> à la
+	xhtml = regex.sub(r"\ba propos\b", r"apropos", xhtml)				# a propos -> apropos
+	xhtml = regex.sub(r"\bper cent(s?)\b", r"percent\1", xhtml)			# per cent -> percent
+	xhtml = regex.sub(r"\bpercent\.,\b", r"percent,", xhtml)			# per cent. -> percent
+	xhtml = regex.sub(r"\b([Ff])iance", r"\1iancé", xhtml)				# fiance -> fiancé
+	xhtml = regex.sub(r"\b([Oo])utre\b", r"\1utré", xhtml)				# outre -> outré
 
 	if language == "en-US":
-		xhtml = regex.sub(r"\b([Cc])osey", "\\1ozy", xhtml)
-		xhtml = regex.sub(r"\b([Mm])anœuvre", "\\1aneuver", xhtml)
+		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)
+		xhtml = regex.sub(r"\b([Mm])anœuvre", r"\1aneuver", xhtml)
 
 	if language == "en-GB":
-		xhtml = regex.sub(r"\b([Cc])osey", "\\1osy", xhtml)
-		xhtml = regex.sub(r"\b([Mm])anœuvre", "\\1anoeuvre", xhtml)
+		xhtml = regex.sub(r"\b([Cc])osey", r"\1osy", xhtml)
+		xhtml = regex.sub(r"\b([Mm])anœuvre", r"\1anoeuvre", xhtml)
 
 	return xhtml
 

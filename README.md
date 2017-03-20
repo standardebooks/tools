@@ -160,7 +160,7 @@ Many of these tools act on Standard Ebooks source directories.  Such directories
 
 		sudo apt-add-repository ppa:svg-cleaner-team/svgcleaner
 		sudo apt-get install xsltproc libxml2-utils xmlstarlet libxml-xpath-perl svgcleaner recode html-xml-utils python3-cssselect python3-regex python3-pip librsvg2-bin libimage-exiftool-perl python3-lxml zip epubcheck calibre
-		sudo pip3 install pyhyphen roman titlecase beautifulsoup4
+		sudo pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants
 		sudo python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
 
 2.	If you plan on editing cover or titlepage images, make sure the League Spartan and Sorts Mill Goudy fonts are installed on your system: [https://github.com/theleagueof/league-spartan](https://github.com/theleagueof/league-spartan), [https://github.com/theleagueof/sorts-mill-goudy](https://github.com/theleagueof/sorts-mill-goudy)

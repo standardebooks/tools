@@ -1,339 +1,196 @@
-#!/bin/bash
-usage(){
-	fmt <<EOF
-DESCRIPTION
-	Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory.
+#!/usr/bin/env python3
 
-USAGE
-	typogrify [-v,--verbose] [-nq,--no-quotes] DIRECTORY [DIRECTORY...]
-		DIRECTORY is the source directory, which must contain DIRECTORY/src/.
-		If called with the --no-quotes option, don't convert to smart quotes before doing other adjustments.
-EOF
-	exit
-}
-die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
-require(){ command -v $1 > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
-if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
-#End boilerplate
-
-if [ $# -eq 0 ]; then
-	usage
-fi
-
-# This script relies on readers implementing the Unicode line-break algorithm, with some small modifications.
-# The algorithm is here: http://www.unicode.org/reports/tr14/#Dictionary
-# UAX #14 is not very well written and is often unclear for beginners.  Table 2 is helpful. Additional enlightenment might be found here: https://www.cs.tut.fi/~jkorpela/unicode/linebr.html
-# You can find the line break class of arbitrary Unicode characters here: http://unicode.org/cldr/utility/character.jsp
-# Notes:
-# -Quotation marks and thin/hair spaces shouldn't break according to the standard.  They are QU x BA.
-# -Likewise ellipses and thin/hair spaces also shouldn't break: IN x BA
-# - <a-z0-9,quote>[NB]<hairsp>[NB]<ellip>[NB]<hairsp>[NB]<.,!,?>
-# - <a-z0-9,quote>[NB]<ellip>[NB]<period>
-# Standard Ebooks exceptions:
-# -Don't break before an em-dash or double-em-dash
-# -Don't break before or after an en-dash
-# -Don't break after some abbreviations (Mr., Mrs., etc; see regex below for full list)
-
-require "recode" "Try: apt-get install recode"
-require "xml2asc" "Try: apt-get install html-xml-utils"
-
-scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-smartypantsPath="${scriptDir}/smartypants.pl"
-type="file"
-verbose="false"
-runSmartypants="true"
-dirs=""
+import argparse
+import os
+import fnmatch
+import sys
+import html
+import regex
+import smartypants
 
 #Some convenience aliases
-wj="\xE2\x81\xA0" #word joiner, U+2060
-hairsp="\xE2\x80\x8A" #hair space, U+200A
-nbsp=" " #no-break space, U+00A0
+WORD_JOINER = "\u2060"		#word joiner, U+2060
+HAIR_SPACE = "\u200a"		#hair space, U+200A
+NBSP = "\u00a0"			#no-break space, U+00A0
 
-while [ $# -gt 0 ]
-do
-	case $1 in
-		-v|--verbose)
-			verbose="true"
-		;;
-		-nq|--no-quotes)
-			runSmartypants="false"
-		;;
-		*)
-			dirs=$(printf "%s\n%s" "${dirs}" "$1")
-		;;
-	esac
-	shift
-done
+def main():
+	parser = argparse.ArgumentParser(description="Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory.")
+	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("-n", "--no-quotes", dest="quotes", action="store_false", help="don't convert to smart quotes before doing other adjustments")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	args = parser.parse_args()
 
-if [ "${verbose}" = "true" ]; then
-	if [ "${runSmartypants}" != "true" ]; then
-		printf "Skipping smart quotes ...\n"
-	fi
-fi
+	if args.verbose and not args.quotes:
+			print("Skipping smart quotes.")
 
-printf "%s\n" "${dirs}" | while IFS= read -r i;
-do
-	if [ "${i}" = "" ]; then
-		continue
-	fi
+	for directory in args.directories:
+		directory = os.path.abspath(directory)
 
-	srcDir="$(realpath "${i%/}")"
+		if not os.path.isdir(directory):
+			print("Error: Not a directory: {}".format(directory), file=sys.stderr)
+			exit(1)
 
-	if [ ! -d "${srcDir}/src" ]; then
-		die "${srcDir} doesn't look like a Standard Ebook source directory."
-	fi
+		if args.verbose:
+			print("Processing {} ...".format(directory), end="", flush=True)
 
-	if [ "${verbose}" = "true" ]; then
-		printf "Typogrifying %s ...\n" "${srcDir}"
-	fi
+		for root, _, filenames in os.walk(directory):
+			for filename in fnmatch.filter(filenames, "*.xhtml"):
+				with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+					xhtml = file.read()
+					processed_xhtml = xhtml
 
-	for file in $(find "${srcDir}" -name "*htm*")
-	do
-		#Skip symlinked files
-		if [ -h "${file}" ]; then
-			if [ "${verbose}" = "true" ]; then
-				printf "\t%s is a symlink, skipping ... OK\n" "${file}"
-			fi
-			continue
-		fi
+					if args.quotes:
+						#Some Gutenberg works have a weird single quote style: `this is a quote'.  Clean that up here before running Smartypants.
+						processed_xhtml = processed_xhtml.replace("`", "'")
 
-		if [ "${verbose}" = "true" ]; then
-			printf "\tTypogrifying %s ..." "${file}"
-		fi
+						#First, convert entities.  Sometimes Gutenberg has entities instead of straight quotes.
+						processed_xhtml = html.unescape(processed_xhtml) #This converts html entites to unicode
+						processed_xhtml = regex.sub(r"(\s)&(\s)", r"\1&amp;\2", processed_xhtml) #Oops!  html.unescape also unescapes plain ampersands...
 
-		#Some Gutenberg works have a weird single quote style: `this is a quote'.  Clean that up here before running Smartypants.
-		sed --in-place --regexp-extended "s/\`/\'/g" "${file}"
+						processed_xhtml = smartypants.smartypants(processed_xhtml) #Attr.u *should* output unicode characters instead of HTML entities, but it doesn't work
 
-		#Prettify quotes
-		if [ "${runSmartypants}" = "true" ]; then
-			"${smartypantsPath}" "${file}" | xml2asc | recode HTML | sed "s/&/&amp;/g" > "${file}.tmp";
-			mv "${file}.tmp" "${file}"
-		fi
+						#Convert entities again
+						processed_xhtml = html.unescape(processed_xhtml) #This converts html entites to unicode
+						processed_xhtml = regex.sub(r"(\s)&(\s)", r"\1&amp;\2", processed_xhtml) #Oops!  html.unescape also unescapes plain ampersands...
 
+					#Replace sequential em dashes with the two or three em dash character
+					processed_xhtml = processed_xhtml.replace("———", "⸻")
+					processed_xhtml = processed_xhtml.replace("——", "⸺")
 
-		sed --in-place --regexp-extended "
-		#Replace sequential em dashes with the two or three em dash character
-		s/———/⸻/ig
-		s/——/⸺/ig
+					#Smartypants doesn't do well on em dashes followed by open quotes. Fix that here
+					processed_xhtml = regex.sub(r"—”([a-z])", r"—“\1", processed_xhtml, flags=regex.IGNORECASE)
+					processed_xhtml = regex.sub(r"—’([a-z])", r"—‘\1", processed_xhtml, flags=regex.IGNORECASE)
+					processed_xhtml = regex.sub(r"-“</p>", r"—”</p>", processed_xhtml, flags=regex.IGNORECASE)
 
-		#Smartypants doesn't do well on em dashes followed by open quotes. Fix that here
-		s/—”([a-z])/—“\1/ig
-		s/—’([a-z])/—‘\1/ig
-		s/-“<\/p>/—”<\/p>/ig
+					#Remove spaces between en and em dashes
+					#Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
+					processed_xhtml = regex.sub(r"([^\.\s])\s*([–—])\s*", r"\1\2", processed_xhtml)
 
-		#Remove spaces between en and em dashes
-		#Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
-		#Sed doesn't seem to think tabs are whitespace?
-		s/([^\.[:space:]	])\s*([–—])\s*/\1\2/ig
+					#First, remove stray word joiners
+					processed_xhtml = processed_xhtml.replace(WORD_JOINER, "")
 
-		#First, remove stray word joiners
-		s/${wj}//ig
+					#Some older texts use the ,— construct; remove that archaichism
+					processed_xhtml = processed_xhtml.replace(",—", "—")
 
-		#Some older texts use the ,— construct; remove that archaichism
-		s/,—/—/ig
+					#Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
+					processed_xhtml = regex.sub(r"([^\s{}{}{}])([—⸻])".format(WORD_JOINER, NBSP, HAIR_SPACE), r"\1{}\2".format(WORD_JOINER), processed_xhtml, flags=regex.IGNORECASE)
 
-		#Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
-		s/([^[:space:]${wj}${nbsp}${hairsp}])([—⸻])/\1${wj}\2/ig
+					#Add a word joiner on both sides of en dashes
+					processed_xhtml = regex.sub(r"{}?–{}?".format(WORD_JOINER, WORD_JOINER), r"{}–{}".format(WORD_JOINER, WORD_JOINER), processed_xhtml)
 
-		#Add a word joiner on both sides of en dashes
-		s/${wj}?–${wj}?/${wj}–${wj}/ig
+					#Add a word joiner if eliding a word with a two-em-dash
+					#Word joiner isn't necessary if punctuation follows
+					#Note the \p{{P}}.  We must double-curl {} because that's the escape sequence when using .format().  The actual regex should be \p{P} to match punctuation
+					processed_xhtml = regex.sub(r"([^\s{}{}{}])⸺".format(WORD_JOINER, NBSP, HAIR_SPACE), r"\1{}⸺".format(WORD_JOINER), processed_xhtml)
+					processed_xhtml = regex.sub(r"⸺([^\s\p{{P}}{}])".format(WORD_JOINER), r"⸺{}\1".format(WORD_JOINER), processed_xhtml)
 
-		#Add a word joiner if eliding a word with a two-em-dash
-		#Word joiner isn't necessary if punctuation follows
-		s/([^[:space:]${wj}${nbsp}${hairsp}])⸺/\1${wj}⸺/ig
-		s/⸺([^[:space:][:punct:]${wj}])/⸺${wj}\1/ig
+					#Remove word joiners from following opening tags--they're usually never correct
+					processed_xhtml = regex.sub(r"<([a-z]+)([^>]*?)>{}".format(WORD_JOINER), r"<\1\2>", processed_xhtml, flags=regex.IGNORECASE)
 
-		#Remove word joiners from following opening tags--they're usually never correct
-		s/<([a-z]+)([^>]*?)>${wj}/<\1\2>/ig
+					#Finally fix some other mistakes
+					processed_xhtml = processed_xhtml.replace("—-", "—")
 
-		#Finally fix some other mistakes
-		s/⁠—-/⁠—/ig
+					#Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
+					processed_xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.?\s+", r"\1.{}".format(NBSP), processed_xhtml)
+					processed_xhtml = regex.sub(r"<abbr>(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.</abbr>?\s+", r"<abbr>\1.</abbr>{}".format(NBSP), processed_xhtml)
 
-		#Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
-		s/([^a-z]+)Mr\.?\s+/\1Mr.${nbsp}/g
-		s/<abbr>Mr\.?<\/abbr>\s+/<abbr>Mr.<\/abbr>${nbsp}/g
+					processed_xhtml = regex.sub(r"\bNo\.\s+([0-9]+)", r"No.{}\1".format(NBSP), processed_xhtml)
+					processed_xhtml = regex.sub(r"<abbr>No\.</abbr>\s+", r"<abbr>No.</abbr>{}".format(NBSP), processed_xhtml)
 
-		s/([^a-z]+)Mrs\.?\s+/\1Mrs.${nbsp}/g
-		s/<abbr>Mrs\.?<\/abbr>\s+/<abbr>Mrs.<\/abbr>${nbsp}/g
+					processed_xhtml = regex.sub(r"([0-9]+)\s<abbr", r"\1{}<abbr".format(NBSP), processed_xhtml)
 
-		s/([^a-z]+)Ms\.?\s+/\1Ms.${nbsp}/g
-		s/<abbr>Ms\.?<\/abbr>\s+/<abbr>Ms.<\/abbr>${nbsp}/g
+					#A note on spacing:
+					#					ibooks	kindle (mobi7)
+					#thin space U+2009:			yes	yes
+					#word joiner U+2060:			no	yes
+					#zero-width no-break space U+FEFF:	yes	yes
+					#narrow no-break space U+202F:		no	yes
+					#punctuation space U+2008:		yes	yes
 
-		s/([^a-z]+)Dr\.?\s+/\1Dr.${nbsp}/g
-		s/<abbr>Dr\.?<\/abbr>\s+/<abbr>Dr.<\/abbr>${nbsp}/g
+					#Fix common abbreviatons
+					processed_xhtml = regex.sub(r"(\s)‘a’(\s)", r"\1’a’\2", processed_xhtml, flags=regex.IGNORECASE)
 
-		s/([^a-z]+)Drs\.?\s+/\1Drs.${nbsp}/g
-		s/<abbr>Drs\.?<\/abbr>\s+/<abbr>Drs.<\/abbr>${nbsp}/g
+					#Years
+					processed_xhtml = regex.sub(r"‘([0-9]+[^a-zA-Z0-9’])", r"’\1", processed_xhtml, flags=regex.IGNORECASE)
 
-		s/([^a-z]+)Prof\.?\s+/\1Prof.${nbsp}/g
-		s/<abbr>Prof\.?<\/abbr>\s+/<abbr>Prof.<\/abbr>${nbsp}/g
+					processed_xhtml = regex.sub(r"‘([Aa]ve|[Oo]me|[Ii]m|[Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Cc]os|[Tt]is|[Tt]was|[Tt]wixt|[Tt]were|[Tt]would|[Tt]wouldn|[Tt]ween|[Tt]will|[Rr]ound|[Pp]on)\b", r"’\1", processed_xhtml)
 
-		s/([^a-z]+)Lieut\.?\s+/\1Lieut.${nbsp}/g
-		s/<abbr>Lieut\.?<\/abbr>\s+/<abbr>Lieut.<\/abbr>${nbsp}/g
+					#House style: remove spacing from common Latinisms
+					processed_xhtml = regex.sub(r"([Ii])\.\s+e\.", r"\1.e.", processed_xhtml)
+					processed_xhtml = regex.sub(r"([Ee])\.\s+g\.", r"\1.g.", processed_xhtml)
 
-		s/([^a-z]+)Fr\.?\s+/\1Fr.${nbsp}/g
-		s/<abbr>Fr\.?<\/abbr>\s+/<abbr>Fr.<\/abbr>${nbsp}/g
+					#WARNING! This and below can remove the ending period of a sentence, if AD or BC is the last word!  We need interactive S&R for this
+					processed_xhtml = regex.sub(r"([\d\s])A\.\s+D\.", r"\1AD", processed_xhtml)
+					processed_xhtml = regex.sub(r"B\.\s+C\.", r"BC", processed_xhtml)
 
-		s/([^a-z]+)Lt\.?\s+/\1Lt.${nbsp}/g
-		s/<abbr>Lt\.?<\/abbr>\s+/<abbr>Lt.<\/abbr>${nbsp}/g
+					#Put spacing next to close quotes
+					processed_xhtml = regex.sub(r"“[\s{}]*‘".format(NBSP), r"“{}‘".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+					processed_xhtml = regex.sub(r"’[\s{}]*”".format(NBSP), r"’{}”".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+					processed_xhtml = regex.sub(r"“[\s{}]*’".format(NBSP), r"“{}’".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+					processed_xhtml = regex.sub(r"‘[\s{}]*“".format(NBSP), r"‘{}“".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
 
-		s/([^a-z]+)Capt\.?\s+/\1Capt.${nbsp}/g
-		s/<abbr>Capt\.?<\/abbr>\s+/<abbr>Capt.<\/abbr>${nbsp}/g
+					#We require a non-letter char at the end, otherwise we might match a contraction: “Hello,” ’e said.
+					processed_xhtml = regex.sub(r"”[\s{}]*’([^a-zA-Z])".format(NBSP), r"”{}’\1".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
 
-		s/([^a-z]+)Pvt\.?\s+/\1Pvt.${nbsp}/g
-		s/<abbr>Pvt\.?<\/abbr>\s+/<abbr>Pvt.<\/abbr>${nbsp}/g
+					#Fix ellipses spacing
+					processed_xhtml = regex.sub(r"\s*\.\s*\.\s*\.\s*", r"…", processed_xhtml, flags=regex.IGNORECASE)
+					processed_xhtml = regex.sub(r"[\s{}]?…[\s{}]?\.".format(NBSP, NBSP), r".{}…".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+					processed_xhtml = regex.sub(r"[\s{}]?…[\s{}]?".format(NBSP, NBSP), r"{}… ".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
 
-		s/([^a-z]+)Esq\.?([^a-z]+)/\1Esq.\2/g
-		s/<abbr>Esq\.?<\/abbr>([^a-z]+)/<abbr>Esq.<\/abbr>\1/g
+					#Remove spaces between opening tags and ellipses
+					processed_xhtml = regex.sub(r"(<[a-z0-9]+[^<]+?>)[\s{}]?…".format(NBSP), r"\1…", processed_xhtml, flags=regex.IGNORECASE)
 
-		s/([^a-z]+)Mt\.?\s+/\1Mt.${nbsp}/g
-		s/<abbr>Mt\.?<\/abbr>\s+/<abbr>Mt.<\/abbr>${nbsp}/g
+					#Remove spaces between closing tags and ellipses
+					processed_xhtml = regex.sub(r"…[\s{}]?(</[a-z0-9]+>)".format(NBSP), r"…\1", processed_xhtml, flags=regex.IGNORECASE)
+					processed_xhtml = regex.sub(r"…[\s{}]+([\)”’])".format(NBSP), r"…\1", processed_xhtml, flags=regex.IGNORECASE)
+					processed_xhtml = regex.sub(r"([\(“‘])[\s{}]+…".format(NBSP), r"\1…", processed_xhtml, flags=regex.IGNORECASE)
+					processed_xhtml = regex.sub(r"…[\s{}]?([\!\?\.\;\,])".format(NBSP), r"…{}\1".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+					processed_xhtml = regex.sub(r"([\!\?\.\;”’])[\s{}]?…".format(NBSP), r"\1{}…".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+					processed_xhtml = regex.sub(r"\,[\s{}]?…".format(NBSP), r",{}…".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
 
-		s/([^a-z]+)St\.?\s+/\1St.${nbsp}/g
-		s/<abbr>St\.?<\/abbr>\s+/<abbr>St.<\/abbr>${nbsp}/g
+					#Remove spaces between ellipses and endnotes directly after
+					processed_xhtml = regex.sub(r"…[\s{}]?(<a[^>]+?id=\"note-[0-9]+\"[^>]*?>)".format(NBSP), r"…\1", processed_xhtml, flags=regex.IGNORECASE)
 
-		s/([^a-z]+)MM\.?\s+/\1MM.${nbsp}/g
-		s/<abbr>MM\.?<\/abbr>\s+/<abbr>MM.<\/abbr>${nbsp}/g
+					#Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
+					processed_xhtml = regex.sub(r"([0-9])\s+([a-z]{1,3}\.)", r"\1{}\2".format(NBSP), processed_xhtml, flags=regex.IGNORECASE)
 
-		s/([^a-z]+)Mme\.?\s+/\1Mme.${nbsp}/g
-		s/<abbr>Mme\.?<\/abbr>\s+/<abbr>Mme.<\/abbr>${nbsp}/g
+					#Add non-breaking spaces between Arabic numbers and AM/PM
+					processed_xhtml = regex.sub(r"([0-9])\s+([ap])\.m\.", r"\1{}\2.m.".format(NBSP), processed_xhtml, flags=regex.IGNORECASE)
+					processed_xhtml = regex.sub(r"([0-9])\s+<abbr([^>]*?)>([ap])\.m\.", r"\1{}<abbr\2>\3.m.".format(NBSP), processed_xhtml, flags=regex.IGNORECASE)
 
-		s/([^a-z]+)Mmes\.?\s+/\1Mmes.${nbsp}/g
-		s/<abbr>Mmes\.?<\/abbr>\s+/<abbr>Mmes.<\/abbr>${nbsp}/g
+					processed_xhtml = processed_xhtml.replace("Ph.D", "PhD")
+					processed_xhtml = regex.sub(r"P\.\s*S\.", r"P.S.", processed_xhtml)
 
-		s/([^a-z]+)Mlle\.?\s+/\1Mlle.${nbsp}/g
-		s/<abbr>Mlle\.?<\/abbr>\s+/<abbr>Mlle.<\/abbr>${nbsp}/g
+					#Fractions
+					processed_xhtml = processed_xhtml.replace("1/4", "¼")
+					processed_xhtml = processed_xhtml.replace("1/2", "½")
+					processed_xhtml = processed_xhtml.replace("3/4", "¾")
+					processed_xhtml = processed_xhtml.replace("1/3", "⅓")
+					processed_xhtml = processed_xhtml.replace("2/3", "⅔")
+					processed_xhtml = processed_xhtml.replace("1/5", "⅕")
+					processed_xhtml = processed_xhtml.replace("2/5", "⅖")
+					processed_xhtml = processed_xhtml.replace("3/5", "⅗")
+					processed_xhtml = processed_xhtml.replace("4/5", "⅘")
+					processed_xhtml = processed_xhtml.replace("1/6", "⅙")
+					processed_xhtml = processed_xhtml.replace("5/6", "⅚")
+					processed_xhtml = processed_xhtml.replace("1/8", "⅛")
+					processed_xhtml = processed_xhtml.replace("3/8", "⅜")
+					processed_xhtml = processed_xhtml.replace("5/8", "⅝")
+					processed_xhtml = processed_xhtml.replace("7/8", "⅞")
 
-		s/([^a-z]+)Mlles\.?\s+/\1Mlles.${nbsp}/g
-		s/<abbr>Mlles\.?<\/abbr>\s+/<abbr>Mlles.<\/abbr>${nbsp}/g
+					#Remove spaces between whole numbers and fractions
+					processed_xhtml = regex.sub(r"([0-9,]+)\s+([¼½¾⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])", r"\1\2", processed_xhtml)
 
-		s/([^a-z]+)Mme\.?\s+/\1Mme.${nbsp}/g
-		s/<abbr>Mme\.?<\/abbr>\s+/<abbr>Mme.<\/abbr>${nbsp}/g
+					#Use the Unicode Minus glyph (U+2212) for negative numbers
+					processed_xhtml = regex.sub(r"([\s>])\-([0-9,]+)", r"\1−\2", processed_xhtml)
 
-		s/(\b)No\.\s+([0-9]+)/\1No.${nbsp}\2/g
-		s/<abbr>No\.<\/abbr>\s+/<abbr>No.<\/abbr>${nbsp}/g
+					if processed_xhtml != xhtml:
+						file.seek(0)
+						file.write(processed_xhtml)
+						file.truncate()
 
-		s/([0-9]+)\s<abbr/\1${nbsp}<abbr/g
+		if args.verbose:
+			print(" OK")
 
-		#A note on spacing:
-		#					ibooks	kindle (mobi7)
-		#thin space U+2009:			yes	yes
-		#word joiner U+2060:			no	yes
-		#zero-width no-break space U+FEFF:	yes	yes
-		#narrow no-break space U+202F:		no	yes
-		#punctuation space U+2008:		yes	yes
-
-		#Fix common abbreviatons
-		s/(\s)‘a’(\s)/\1’a’\2/ig
-
-		#Years
-		s/‘([0-9]+[^a-zA-Z0-9’])/’\1/ig
-
-		s/‘([Aa]ve|[Oo]me|[Ii]m|[Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Cc]os|[Tt]is|[Tt]was|[Tt]wixt|[Tt]were|[Tt]would|[Tt]wouldn|[Tt]ween|[Tt]will|[Rr]ound)(\b)/’\1\2/g
-
-		#House style: remove spacing from common Latinisms
-		s/([Ii])\.\s+e\./\1.e./g
-		s/([Ee])\.\s+g\./\1.g./g
-
-		#WARNING! This and below can remove the ending period of a sentence, if AD or BC is the last word!  We need interactive S&R for this
-		s/([\d[:space:]])A\.\s+D\./\1AD/g
-		s/B\.\s+C\./BC/g
-
-		#Put spacing next to close quotes
-		s/“[[:space:]${nbsp}]*‘/“${hairsp}‘/ig
-		s/’[[:space:]${nbsp}]*”/’${hairsp}”/ig
-		s/“[[:space:]${nbsp}]*’/“${hairsp}’/ig
-		s/‘[[:space:]${nbsp}]*“/‘${hairsp}“/ig
-
-		#We require a non-letter char at the end, otherwise we might match a contraction: “Hello,” ’e said.
-		s/”[[:space:]${nbsp}]*’([^a-zA-Z])/”${hairsp}’\1/ig
-
-		#Fix ellipses spacing
-		s/\s*\.\s*\.\s*\.\s*/…/ig
-		s/[[:space:]${nbsp}]?…[[:space:]${nbsp}]?\./.${hairsp}…/ig
-		s/[[:space:]${nbsp}]?…[[:space:]${nbsp}]?/${hairsp}… /ig
-		#Remove spaces between opening tags and ellipses
-		s/(<[a-z0-9]+[^<]+?>)[[:space:]${nbsp}]?…/\1…/ig
-		#Remove spaces between closing tags and ellipses
-		s/…[[:space:]${nbsp}]?(<\/[a-z0-9]+>)/…\1/ig
-		s/…[[:space:]${nbsp}]+([\)”’])/…\1/ig
-		s/([\(“‘])[[:space:]${nbsp}]+…/\1…/ig
-		s/…[[:space:]${nbsp}]?([\!\?\.\;\,])/…${hairsp}\1/ig
-		s/([\!\?\.\;”’])[[:space:]${nbsp}]?…/\1${hairsp}…/ig
-		s/\,[[:space:]${nbsp}]?…/,${hairsp}…/ig
-		#Remove spaces between ellipses and endnotes directly after
-		s/…[[:space:]${nbsp}]?(<a[^>]+?id=\"note-[0-9]+\"[^>]*?>)/…\1/ig
-
-		#Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
-		s/([0-9])\s+([a-z]{1,3}\.)/\1${nbsp}\2/ig
-
-		#Add non-breaking spaces between Arabic numbers and AM/PM
-		s/([0-9])\s+([ap])\.m\./\1${nbsp}\2.m./ig
-		s/([0-9])\s+<abbr([^>]*?)>([ap])\.m\./\1${nbsp}<abbr\2>\3.m./ig
-
-		#Fix some spelling archaisms
-		s/([Nn])aïve/\1aive/g
-		s/([Nn])a[ïi]vet[ée]/\1aivete/g
-		s/&amp;c\./etc./g
-		s/([Pp])rotege/\1rotégé/g
-		s/([Tt])ete-a-tete/\1ête-à-tête/g
-		s/([Vv])is-a-vis/\1is-à-vis/g
-		s/([Ff])acade/\1açade/g
-		s/([Cc])h?ateau(s?\b)/\1hâteau\2/g
-		s/([Hh])abitue/\1abitué/g
-		#We break up cafe so that we don't catch 'cafeteria'
-		s/(\b[Cc])afe(\b)/\1afé\2/g
-		s/(\b[Cc])afes(\b)/\1afés\2/g
-		s/([Mm])êlée/\1elee/g
-		s/(\b[Ff])ete(s?)(\b)/\1ête\2\3/g
-		s/(\b[Rr])ôle(\b)/\1ole\2/g
-		s/(\b[Cc])oö/\1oo/g
-		s/(\b[Rr])eë/\1ee/g
-		s/(\b[Dd])aïs(\b)/\1ais\2/g
-		s/([Cc])oup\-de\-grace/\1oup-de-grâce/g
-		s/([Cc])anape/\1anapé/g
-		s/([Pp])recis(\b)/\1récis\2/g
-		s/([Gg])ood\-by([^e])/\1goodbye\2/g
-		s/([Bb])ete noir/\1ête noir/g
-		s/(\b)Eclat(\b)/\1Éclat\2/g
-		s/(\b)eclat(\b)/\1éclat\2/g
-		s/(\b)a la(\b)/\1à la\2/g
-		s/(\b)a propos(\b)/\1apropos\2/g
-		s/(\b)per cent(\b)/\1percent\2/g
-		s/(\b)percent\.,(\b)/\1percent,\2/g
-		s/(\b[Ff])iance/\1iancé/g
-		s/(\b[Oo])utre(\b)/\1utré\2/g
-
-		s/Ph\.D/PhD/g
-		s/P\.\s*S\./P.S./g
-
-		#Fractions
-		s/1\/4/¼/g
-		s/1\/2/½/g
-		s/3\/4/¾/g
-		s/1\/3/⅓/g
-		s/2\/3/⅔/g
-		s/1\/5/⅕/g
-		s/2\/5/⅖/g
-		s/3\/5/⅗/g
-		s/4\/5/⅘/g
-		s/1\/6/⅙/g
-		s/5\/6/⅚/g
-		s/1\/8/⅛/g
-		s/3\/8/⅜/g
-		s/5\/8/⅝/g
-		s/7\/8/⅞/g
-
-		#Remove spaces between whole numbers and fractions
-		s/([0-9,]+)\s+([¼½¾⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/\1\2/g
-
-		#Use the Unicode Minus glyph (U+2212) for negative numbers
-		s/([[:space:]\>])\-([0-9,]+)/\1−\2/g
-
-		" "${file}"
-
-		if [ "${verbose}" = "true" ]; then
-			printf " OK\n"
-		fi
-	done
-done
+if __name__ == "__main__":
+	main()
