@@ -20,7 +20,7 @@ def main():
 		try:
 			with open(filename, "r+") as file:
 				if args.verbose:
-					print("Hyphenating {} ...".format(filename), end="", flush=True)
+					print("Processing {} ...".format(filename), end="", flush=True)
 
 				xhtml = file.read()
 				soup = BeautifulSoup(xhtml, "lxml")
