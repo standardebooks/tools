@@ -107,10 +107,10 @@ def main():
 			for filename in fnmatch.filter(filenames, "content.opf"):
 				with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
 					xhtml = file.read()
-					file.seek(0)
 
 					xhtml = regex.sub(r"<dc:publisher", "<meta property=\"se:transform\">kobo</meta>\n\t\t<dc:publisher", xhtml)
 
+					file.seek(0)
 					file.write(xhtml)
 					file.truncate()
 
@@ -124,8 +124,6 @@ def main():
 
 				with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
 					xhtml = file.read()
-					file.seek(0)
-
 					#Kobos don't have fonts that support the ↩ character in endnotes, so replace it with «
 					if filename == "endnotes.xhtml":
 						xhtml = regex.sub(r"epub:type=\"se:referrer\">↩</a>", "epub:type=\"se:referrer\">«</a>", xhtml)
@@ -142,6 +140,7 @@ def main():
 					xhtml = regex.sub(r"<span xmlns:html=\"http://www.w3.org/1999/xhtml\"", "<span", xhtml)
 					xhtml = regex.sub(r"<html", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\"", xhtml)
 
+					file.seek(0)
 					file.write(xhtml)
 					file.truncate()
 
