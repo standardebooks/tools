@@ -30,7 +30,6 @@ def main():
 		endnotes_filename = os.path.join(source_directory, "epub/text/endnotes.xhtml")
 		with open(endnotes_filename, "r+", encoding="utf-8") as file:
 			xhtml = file.read()
-			file.seek(0)
 			soup = BeautifulSoup(xhtml, "lxml")
 
 			endnote_count = len(soup.select("li[data-se-note-number]"))
@@ -40,7 +39,9 @@ def main():
 				xhtml = xhtml.replace("data-se-note-number=\"{}\"".format(endnote_number), "data-se-note-number=\"{}\"".format(endnote_number + 1))
 				xhtml = xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + 1))
 
+			file.seek(0)
 			file.write(xhtml)
+			file.truncate()
 
 	except Exception:
 		print("Error: Couldn't open endnotes file: {}".format(endnotes_filename), file=sys.stderr)
@@ -54,14 +55,15 @@ def main():
 
 			with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
 				xhtml = file.read()
-				file.seek(0)
 
 				for endnote_number in range(endnote_count, target_endnote_number - 1, -1):
 					xhtml = regex.sub(r"(<a[^>]*?>){}</a>".format(endnote_number), "\g<1>{}</a>".format(endnote_number + 1), xhtml, flags=regex.MULTILINE | regex.DOTALL)
 					xhtml = xhtml.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + 1))
 					xhtml = xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + 1))
 
+				file.seek(0)
 				file.write(xhtml)
+				file.truncate()
 
 if __name__ == "__main__":
 	main()
