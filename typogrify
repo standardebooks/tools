@@ -3,7 +3,6 @@
 import argparse
 import os
 import fnmatch
-import sys
 import html
 import regex
 import smartypants
@@ -14,180 +13,183 @@ HAIR_SPACE = "\u200a"		#hair space, U+200A
 NBSP = "\u00a0"			#no-break space, U+00A0
 
 def main():
-	parser = argparse.ArgumentParser(description="Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory.")
+	parser = argparse.ArgumentParser(description="Apply some scriptable typography rules from the Standard Ebooks typography manual to XHTML files.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("-n", "--no-quotes", dest="quotes", action="store_false", help="don't convert to smart quotes before doing other adjustments")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
 	if args.verbose and not args.quotes:
 			print("Skipping smart quotes.")
 
-	for directory in args.directories:
-		directory = os.path.abspath(directory)
-
-		if not os.path.isdir(directory):
-			print("Error: Not a directory: {}".format(directory), file=sys.stderr)
-			exit(1)
+	for target in args.targets:
+		target = os.path.abspath(target)
 
 		if args.verbose:
-			print("Processing {} ...".format(directory), end="", flush=True)
+			print("Processing {} ...".format(target), end="", flush=True)
 
-		for root, _, filenames in os.walk(directory):
-			for filename in fnmatch.filter(filenames, "*.xhtml"):
-				with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
-					xhtml = file.read()
-					processed_xhtml = xhtml
+		target_filenames = set()
+		if os.path.isdir(target):
+			for root, _, filenames in os.walk(target):
+				for filename in fnmatch.filter(filenames, "*.xhtml"):
+					target_filenames.add(os.path.join(root, filename))
+		else:
+			target_filenames.add(target)
 
-					if args.quotes:
-						#Some Gutenberg works have a weird single quote style: `this is a quote'.  Clean that up here before running Smartypants.
-						processed_xhtml = processed_xhtml.replace("`", "'")
+		for filename in target_filenames:
+			with open(filename, "r+", encoding="utf-8") as file:
+				xhtml = file.read()
+				processed_xhtml = xhtml
 
-						#First, convert entities.  Sometimes Gutenberg has entities instead of straight quotes.
-						processed_xhtml = html.unescape(processed_xhtml) #This converts html entites to unicode
-						processed_xhtml = regex.sub(r"(\s)&(\s)", r"\1&amp;\2", processed_xhtml) #Oops!  html.unescape also unescapes plain ampersands...
+				if args.quotes:
+					#Some Gutenberg works have a weird single quote style: `this is a quote'.  Clean that up here before running Smartypants.
+					processed_xhtml = processed_xhtml.replace("`", "'")
 
-						processed_xhtml = smartypants.smartypants(processed_xhtml) #Attr.u *should* output unicode characters instead of HTML entities, but it doesn't work
+					#First, convert entities.  Sometimes Gutenberg has entities instead of straight quotes.
+					processed_xhtml = html.unescape(processed_xhtml) #This converts html entites to unicode
+					processed_xhtml = regex.sub(r"(\s)&(\s)", r"\1&amp;\2", processed_xhtml) #Oops!  html.unescape also unescapes plain ampersands...
 
-						#Convert entities again
-						processed_xhtml = html.unescape(processed_xhtml) #This converts html entites to unicode
-						processed_xhtml = regex.sub(r"(\s)&(\s)", r"\1&amp;\2", processed_xhtml) #Oops!  html.unescape also unescapes plain ampersands...
+					processed_xhtml = smartypants.smartypants(processed_xhtml) #Attr.u *should* output unicode characters instead of HTML entities, but it doesn't work
 
-					#Replace sequential em dashes with the two or three em dash character
-					processed_xhtml = processed_xhtml.replace("———", "⸻")
-					processed_xhtml = processed_xhtml.replace("——", "⸺")
+					#Convert entities again
+					processed_xhtml = html.unescape(processed_xhtml) #This converts html entites to unicode
+					processed_xhtml = regex.sub(r"(\s)&(\s)", r"\1&amp;\2", processed_xhtml) #Oops!  html.unescape also unescapes plain ampersands...
 
-					#Smartypants doesn't do well on em dashes followed by open quotes. Fix that here
-					processed_xhtml = regex.sub(r"—”([a-z])", r"—“\1", processed_xhtml, flags=regex.IGNORECASE)
-					processed_xhtml = regex.sub(r"—’([a-z])", r"—‘\1", processed_xhtml, flags=regex.IGNORECASE)
-					processed_xhtml = regex.sub(r"-“</p>", r"—”</p>", processed_xhtml, flags=regex.IGNORECASE)
+				#Replace sequential em dashes with the two or three em dash character
+				processed_xhtml = processed_xhtml.replace("———", "⸻")
+				processed_xhtml = processed_xhtml.replace("——", "⸺")
 
-					#Remove spaces between en and em dashes
-					#Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
-					processed_xhtml = regex.sub(r"([^\.\s])\s*([–—])\s*", r"\1\2", processed_xhtml)
+				#Smartypants doesn't do well on em dashes followed by open quotes. Fix that here
+				processed_xhtml = regex.sub(r"—”([a-z])", r"—“\1", processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"—’([a-z])", r"—‘\1", processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"-“</p>", r"—”</p>", processed_xhtml, flags=regex.IGNORECASE)
 
-					#First, remove stray word joiners
-					processed_xhtml = processed_xhtml.replace(WORD_JOINER, "")
+				#Remove spaces between en and em dashes
+				#Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
+				processed_xhtml = regex.sub(r"([^\.\s])\s*([–—])\s*", r"\1\2", processed_xhtml)
 
-					#Some older texts use the ,— construct; remove that archaichism
-					processed_xhtml = processed_xhtml.replace(",—", "—")
+				#First, remove stray word joiners
+				processed_xhtml = processed_xhtml.replace(WORD_JOINER, "")
 
-					#Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
-					processed_xhtml = regex.sub(r"([^\s{}{}{}])([—⸻])".format(WORD_JOINER, NBSP, HAIR_SPACE), r"\1{}\2".format(WORD_JOINER), processed_xhtml, flags=regex.IGNORECASE)
+				#Some older texts use the ,— construct; remove that archaichism
+				processed_xhtml = processed_xhtml.replace(",—", "—")
 
-					#Add a word joiner on both sides of en dashes
-					processed_xhtml = regex.sub(r"{}?–{}?".format(WORD_JOINER, WORD_JOINER), r"{}–{}".format(WORD_JOINER, WORD_JOINER), processed_xhtml)
+				#Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
+				processed_xhtml = regex.sub(r"([^\s{}{}{}])([—⸻])".format(WORD_JOINER, NBSP, HAIR_SPACE), r"\1{}\2".format(WORD_JOINER), processed_xhtml, flags=regex.IGNORECASE)
 
-					#Add a word joiner if eliding a word with a two-em-dash
-					#Word joiner isn't necessary if punctuation follows
-					#Note the \p{{P}}.  We must double-curl {} because that's the escape sequence when using .format().  The actual regex should be \p{P} to match punctuation
-					processed_xhtml = regex.sub(r"([^\s{}{}{}])⸺".format(WORD_JOINER, NBSP, HAIR_SPACE), r"\1{}⸺".format(WORD_JOINER), processed_xhtml)
-					processed_xhtml = regex.sub(r"⸺([^\s\p{{P}}{}])".format(WORD_JOINER), r"⸺{}\1".format(WORD_JOINER), processed_xhtml)
+				#Add a word joiner on both sides of en dashes
+				processed_xhtml = regex.sub(r"{}?–{}?".format(WORD_JOINER, WORD_JOINER), r"{}–{}".format(WORD_JOINER, WORD_JOINER), processed_xhtml)
 
-					#Remove word joiners from following opening tags--they're usually never correct
-					processed_xhtml = regex.sub(r"<([a-z]+)([^>]*?)>{}".format(WORD_JOINER), r"<\1\2>", processed_xhtml, flags=regex.IGNORECASE)
+				#Add a word joiner if eliding a word with a two-em-dash
+				#Word joiner isn't necessary if punctuation follows
+				#Note the \p{{P}}.  We must double-curl {} because that's the escape sequence when using .format().  The actual regex should be \p{P} to match punctuation
+				processed_xhtml = regex.sub(r"([^\s{}{}{}])⸺".format(WORD_JOINER, NBSP, HAIR_SPACE), r"\1{}⸺".format(WORD_JOINER), processed_xhtml)
+				processed_xhtml = regex.sub(r"⸺([^\s\p{{P}}{}])".format(WORD_JOINER), r"⸺{}\1".format(WORD_JOINER), processed_xhtml)
 
-					#Finally fix some other mistakes
-					processed_xhtml = processed_xhtml.replace("—-", "—")
+				#Remove word joiners from following opening tags--they're usually never correct
+				processed_xhtml = regex.sub(r"<([a-z]+)([^>]*?)>{}".format(WORD_JOINER), r"<\1\2>", processed_xhtml, flags=regex.IGNORECASE)
 
-					#Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
-					processed_xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.?\s+", r"\1.{}".format(NBSP), processed_xhtml)
-					processed_xhtml = regex.sub(r"<abbr>(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.</abbr>?\s+", r"<abbr>\1.</abbr>{}".format(NBSP), processed_xhtml)
+				#Finally fix some other mistakes
+				processed_xhtml = processed_xhtml.replace("—-", "—")
 
-					processed_xhtml = regex.sub(r"\bNo\.\s+([0-9]+)", r"No.{}\1".format(NBSP), processed_xhtml)
-					processed_xhtml = regex.sub(r"<abbr>No\.</abbr>\s+", r"<abbr>No.</abbr>{}".format(NBSP), processed_xhtml)
+				#Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
+				processed_xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.?\s+", r"\1.{}".format(NBSP), processed_xhtml)
+				processed_xhtml = regex.sub(r"<abbr>(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.</abbr>?\s+", r"<abbr>\1.</abbr>{}".format(NBSP), processed_xhtml)
 
-					processed_xhtml = regex.sub(r"([0-9]+)\s<abbr", r"\1{}<abbr".format(NBSP), processed_xhtml)
+				processed_xhtml = regex.sub(r"\bNo\.\s+([0-9]+)", r"No.{}\1".format(NBSP), processed_xhtml)
+				processed_xhtml = regex.sub(r"<abbr>No\.</abbr>\s+", r"<abbr>No.</abbr>{}".format(NBSP), processed_xhtml)
 
-					#A note on spacing:
-					#					ibooks	kindle (mobi7)
-					#thin space U+2009:			yes	yes
-					#word joiner U+2060:			no	yes
-					#zero-width no-break space U+FEFF:	yes	yes
-					#narrow no-break space U+202F:		no	yes
-					#punctuation space U+2008:		yes	yes
+				processed_xhtml = regex.sub(r"([0-9]+)\s<abbr", r"\1{}<abbr".format(NBSP), processed_xhtml)
 
-					#Fix common abbreviatons
-					processed_xhtml = regex.sub(r"(\s)‘a’(\s)", r"\1’a’\2", processed_xhtml, flags=regex.IGNORECASE)
+				#A note on spacing:
+				#					ibooks	kindle (mobi7)
+				#thin space U+2009:			yes	yes
+				#word joiner U+2060:			no	yes
+				#zero-width no-break space U+FEFF:	yes	yes
+				#narrow no-break space U+202F:		no	yes
+				#punctuation space U+2008:		yes	yes
 
-					#Years
-					processed_xhtml = regex.sub(r"‘([0-9]+[^a-zA-Z0-9’])", r"’\1", processed_xhtml, flags=regex.IGNORECASE)
+				#Fix common abbreviatons
+				processed_xhtml = regex.sub(r"(\s)‘a’(\s)", r"\1’a’\2", processed_xhtml, flags=regex.IGNORECASE)
 
-					processed_xhtml = regex.sub(r"‘([Aa]ve|[Oo]me|[Ii]m|[Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Cc]os|[Tt]is|[Tt]was|[Tt]wixt|[Tt]were|[Tt]would|[Tt]wouldn|[Tt]ween|[Tt]will|[Rr]ound|[Pp]on)\b", r"’\1", processed_xhtml)
+				#Years
+				processed_xhtml = regex.sub(r"‘([0-9]+[^a-zA-Z0-9’])", r"’\1", processed_xhtml, flags=regex.IGNORECASE)
 
-					#House style: remove spacing from common Latinisms
-					processed_xhtml = regex.sub(r"([Ii])\.\s+e\.", r"\1.e.", processed_xhtml)
-					processed_xhtml = regex.sub(r"([Ee])\.\s+g\.", r"\1.g.", processed_xhtml)
+				processed_xhtml = regex.sub(r"‘([Aa]ve|[Oo]me|[Ii]m|[Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Cc]os|[Tt]is|[Tt]was|[Tt]wixt|[Tt]were|[Tt]would|[Tt]wouldn|[Tt]ween|[Tt]will|[Rr]ound|[Pp]on)\b", r"’\1", processed_xhtml)
 
-					#WARNING! This and below can remove the ending period of a sentence, if AD or BC is the last word!  We need interactive S&R for this
-					processed_xhtml = regex.sub(r"([\d\s])A\.\s+D\.", r"\1AD", processed_xhtml)
-					processed_xhtml = regex.sub(r"B\.\s+C\.", r"BC", processed_xhtml)
+				#House style: remove spacing from common Latinisms
+				processed_xhtml = regex.sub(r"([Ii])\.\s+e\.", r"\1.e.", processed_xhtml)
+				processed_xhtml = regex.sub(r"([Ee])\.\s+g\.", r"\1.g.", processed_xhtml)
 
-					#Put spacing next to close quotes
-					processed_xhtml = regex.sub(r"“[\s{}]*‘".format(NBSP), r"“{}‘".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
-					processed_xhtml = regex.sub(r"’[\s{}]*”".format(NBSP), r"’{}”".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
-					processed_xhtml = regex.sub(r"“[\s{}]*’".format(NBSP), r"“{}’".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
-					processed_xhtml = regex.sub(r"‘[\s{}]*“".format(NBSP), r"‘{}“".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+				#WARNING! This and below can remove the ending period of a sentence, if AD or BC is the last word!  We need interactive S&R for this
+				processed_xhtml = regex.sub(r"([\d\s])A\.\s+D\.", r"\1AD", processed_xhtml)
+				processed_xhtml = regex.sub(r"B\.\s+C\.", r"BC", processed_xhtml)
 
-					#We require a non-letter char at the end, otherwise we might match a contraction: “Hello,” ’e said.
-					processed_xhtml = regex.sub(r"”[\s{}]*’([^a-zA-Z])".format(NBSP), r"”{}’\1".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+				#Put spacing next to close quotes
+				processed_xhtml = regex.sub(r"“[\s{}]*‘".format(NBSP), r"“{}‘".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"’[\s{}]*”".format(NBSP), r"’{}”".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"“[\s{}]*’".format(NBSP), r"“{}’".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"‘[\s{}]*“".format(NBSP), r"‘{}“".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
 
-					#Fix ellipses spacing
-					processed_xhtml = regex.sub(r"\s*\.\s*\.\s*\.\s*", r"…", processed_xhtml, flags=regex.IGNORECASE)
-					processed_xhtml = regex.sub(r"[\s{}]?…[\s{}]?\.".format(NBSP, NBSP), r".{}…".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
-					processed_xhtml = regex.sub(r"[\s{}]?…[\s{}]?".format(NBSP, NBSP), r"{}… ".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+				#We require a non-letter char at the end, otherwise we might match a contraction: “Hello,” ’e said.
+				processed_xhtml = regex.sub(r"”[\s{}]*’([^a-zA-Z])".format(NBSP), r"”{}’\1".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
 
-					#Remove spaces between opening tags and ellipses
-					processed_xhtml = regex.sub(r"(<[a-z0-9]+[^<]+?>)[\s{}]?…".format(NBSP), r"\1…", processed_xhtml, flags=regex.IGNORECASE)
+				#Fix ellipses spacing
+				processed_xhtml = regex.sub(r"\s*\.\s*\.\s*\.\s*", r"…", processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"[\s{}]?…[\s{}]?\.".format(NBSP, NBSP), r".{}…".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"[\s{}]?…[\s{}]?".format(NBSP, NBSP), r"{}… ".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
 
-					#Remove spaces between closing tags and ellipses
-					processed_xhtml = regex.sub(r"…[\s{}]?(</[a-z0-9]+>)".format(NBSP), r"…\1", processed_xhtml, flags=regex.IGNORECASE)
-					processed_xhtml = regex.sub(r"…[\s{}]+([\)”’])".format(NBSP), r"…\1", processed_xhtml, flags=regex.IGNORECASE)
-					processed_xhtml = regex.sub(r"([\(“‘])[\s{}]+…".format(NBSP), r"\1…", processed_xhtml, flags=regex.IGNORECASE)
-					processed_xhtml = regex.sub(r"…[\s{}]?([\!\?\.\;\,])".format(NBSP), r"…{}\1".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
-					processed_xhtml = regex.sub(r"([\!\?\.\;”’])[\s{}]?…".format(NBSP), r"\1{}…".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
-					processed_xhtml = regex.sub(r"\,[\s{}]?…".format(NBSP), r",{}…".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+				#Remove spaces between opening tags and ellipses
+				processed_xhtml = regex.sub(r"(<[a-z0-9]+[^<]+?>)[\s{}]?…".format(NBSP), r"\1…", processed_xhtml, flags=regex.IGNORECASE)
 
-					#Remove spaces between ellipses and endnotes directly after
-					processed_xhtml = regex.sub(r"…[\s{}]?(<a[^>]+?id=\"note-[0-9]+\"[^>]*?>)".format(NBSP), r"…\1", processed_xhtml, flags=regex.IGNORECASE)
+				#Remove spaces between closing tags and ellipses
+				processed_xhtml = regex.sub(r"…[\s{}]?(</[a-z0-9]+>)".format(NBSP), r"…\1", processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"…[\s{}]+([\)”’])".format(NBSP), r"…\1", processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"([\(“‘])[\s{}]+…".format(NBSP), r"\1…", processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"…[\s{}]?([\!\?\.\;\,])".format(NBSP), r"…{}\1".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"([\!\?\.\;”’])[\s{}]?…".format(NBSP), r"\1{}…".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"\,[\s{}]?…".format(NBSP), r",{}…".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
 
-					#Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
-					processed_xhtml = regex.sub(r"([0-9])\s+([a-z]{1,3}\.)", r"\1{}\2".format(NBSP), processed_xhtml, flags=regex.IGNORECASE)
+				#Remove spaces between ellipses and endnotes directly after
+				processed_xhtml = regex.sub(r"…[\s{}]?(<a[^>]+?id=\"note-[0-9]+\"[^>]*?>)".format(NBSP), r"…\1", processed_xhtml, flags=regex.IGNORECASE)
 
-					#Add non-breaking spaces between Arabic numbers and AM/PM
-					processed_xhtml = regex.sub(r"([0-9])\s+([ap])\.m\.", r"\1{}\2.m.".format(NBSP), processed_xhtml, flags=regex.IGNORECASE)
-					processed_xhtml = regex.sub(r"([0-9])\s+<abbr([^>]*?)>([ap])\.m\.", r"\1{}<abbr\2>\3.m.".format(NBSP), processed_xhtml, flags=regex.IGNORECASE)
+				#Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
+				processed_xhtml = regex.sub(r"([0-9])\s+([a-z]{1,3}\.)", r"\1{}\2".format(NBSP), processed_xhtml, flags=regex.IGNORECASE)
 
-					processed_xhtml = processed_xhtml.replace("Ph.D", "PhD")
-					processed_xhtml = regex.sub(r"P\.\s*S\.", r"P.S.", processed_xhtml)
+				#Add non-breaking spaces between Arabic numbers and AM/PM
+				processed_xhtml = regex.sub(r"([0-9])\s+([ap])\.m\.", r"\1{}\2.m.".format(NBSP), processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"([0-9])\s+<abbr([^>]*?)>([ap])\.m\.", r"\1{}<abbr\2>\3.m.".format(NBSP), processed_xhtml, flags=regex.IGNORECASE)
 
-					#Fractions
-					processed_xhtml = processed_xhtml.replace("1/4", "¼")
-					processed_xhtml = processed_xhtml.replace("1/2", "½")
-					processed_xhtml = processed_xhtml.replace("3/4", "¾")
-					processed_xhtml = processed_xhtml.replace("1/3", "⅓")
-					processed_xhtml = processed_xhtml.replace("2/3", "⅔")
-					processed_xhtml = processed_xhtml.replace("1/5", "⅕")
-					processed_xhtml = processed_xhtml.replace("2/5", "⅖")
-					processed_xhtml = processed_xhtml.replace("3/5", "⅗")
-					processed_xhtml = processed_xhtml.replace("4/5", "⅘")
-					processed_xhtml = processed_xhtml.replace("1/6", "⅙")
-					processed_xhtml = processed_xhtml.replace("5/6", "⅚")
-					processed_xhtml = processed_xhtml.replace("1/8", "⅛")
-					processed_xhtml = processed_xhtml.replace("3/8", "⅜")
-					processed_xhtml = processed_xhtml.replace("5/8", "⅝")
-					processed_xhtml = processed_xhtml.replace("7/8", "⅞")
+				processed_xhtml = processed_xhtml.replace("Ph.D", "PhD")
+				processed_xhtml = regex.sub(r"P\.\s*S\.", r"P.S.", processed_xhtml)
 
-					#Remove spaces between whole numbers and fractions
-					processed_xhtml = regex.sub(r"([0-9,]+)\s+([¼½¾⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])", r"\1\2", processed_xhtml)
+				#Fractions
+				processed_xhtml = processed_xhtml.replace("1/4", "¼")
+				processed_xhtml = processed_xhtml.replace("1/2", "½")
+				processed_xhtml = processed_xhtml.replace("3/4", "¾")
+				processed_xhtml = processed_xhtml.replace("1/3", "⅓")
+				processed_xhtml = processed_xhtml.replace("2/3", "⅔")
+				processed_xhtml = processed_xhtml.replace("1/5", "⅕")
+				processed_xhtml = processed_xhtml.replace("2/5", "⅖")
+				processed_xhtml = processed_xhtml.replace("3/5", "⅗")
+				processed_xhtml = processed_xhtml.replace("4/5", "⅘")
+				processed_xhtml = processed_xhtml.replace("1/6", "⅙")
+				processed_xhtml = processed_xhtml.replace("5/6", "⅚")
+				processed_xhtml = processed_xhtml.replace("1/8", "⅛")
+				processed_xhtml = processed_xhtml.replace("3/8", "⅜")
+				processed_xhtml = processed_xhtml.replace("5/8", "⅝")
+				processed_xhtml = processed_xhtml.replace("7/8", "⅞")
 
-					#Use the Unicode Minus glyph (U+2212) for negative numbers
-					processed_xhtml = regex.sub(r"([\s>])\-([0-9,]+)", r"\1−\2", processed_xhtml)
+				#Remove spaces between whole numbers and fractions
+				processed_xhtml = regex.sub(r"([0-9,]+)\s+([¼½¾⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])", r"\1\2", processed_xhtml)
 
-					if processed_xhtml != xhtml:
-						file.seek(0)
-						file.write(processed_xhtml)
-						file.truncate()
+				#Use the Unicode Minus glyph (U+2212) for negative numbers
+				processed_xhtml = regex.sub(r"([\s>])\-([0-9,]+)", r"\1−\2", processed_xhtml)
+
+				if processed_xhtml != xhtml:
+					file.seek(0)
+					file.write(processed_xhtml)
+					file.truncate()
 
 		if args.verbose:
 			print(" OK")

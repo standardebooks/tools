@@ -257,7 +257,7 @@ do
 	tocFilename="$(xpath -e "string(//item[@properties=\"nav\"]/@href)" "${workDir}/${epubDir}/content.opf" 2> /dev/null)"
 	sed --in-place "s/<spine>/<spine toc=\"ncx\">/g" "${workDir}/${epubDir}/content.opf"
 	sed --in-place "s/<manifest>/<manifest><item href=\"toc.ncx\" id=\"ncx\" media-type=\"application\/x-dtbncx+xml\" \/>/g" "${workDir}/${epubDir}/content.opf"
-	xsltproc --stringparam cwd "${workDir}/" "${scriptDir}/navdoc2ncx.xsl" "${workDir}/${epubDir}/${tocFilename}" > "${workDir}/${epubDir}/toc.ncx"
+	xsltproc --stringparam cwd "${workDir}/" "${scriptDir}/data/navdoc2ncx.xsl" "${workDir}/${epubDir}/${tocFilename}" > "${workDir}/${epubDir}/toc.ncx"
 	sed --in-place --regexp-extended "s/ xml\:lang=\"\?\?\"//g" "${workDir}/${epubDir}/toc.ncx"
 	#Make nicely incrementing navpoint IDs and playOrders
 	sed --in-place "s/<navMap id=\".*\">/<navMap id=\"navmap\">/" "${workDir}/${epubDir}/toc.ncx"
@@ -288,7 +288,7 @@ do
 	find "${workDir}" -iname "*.css" -print0 | xargs -0 sed --in-place --regexp-extended "s/^\s*hyphens\s*\:\s*none;/\thyphens: none;\n\tadobe-text-layout: optimizeSpeed; \/* For Nook *\//g"
 
 	#Add soft hyphens
-	find "${workDir}" -iname "*.xhtml" -exec sh -c "${scriptDir}/hyphenate --ignore-h-tags {}" \;
+	"${scriptDir}/hyphenate" --ignore-h-tags "${workDir}"
 
 	#Hyphenate screws up our nice XHTML formatting so clean it up for distribution
 	"${scriptDir}/clean" "${workDir}/"
@@ -325,7 +325,7 @@ do
 		#later we should update it to a less hacky way of doing things.
 		"${scriptDir}/toc2kindle" "${workDir}/${epubDir}/${tocFilename}"
 		"${scriptDir}/clean" "${workDir}/${epubDir}/${tocFilename}"
-		xsltproc --stringparam cwd "${workDir}/" "${scriptDir}/navdoc2ncx.xsl" "${workDir}/${epubDir}/${tocFilename}" > "${workDir}/${epubDir}/toc.ncx"
+		xsltproc --stringparam cwd "${workDir}/" "${scriptDir}/data/navdoc2ncx.xsl" "${workDir}/${epubDir}/${tocFilename}" > "${workDir}/${epubDir}/toc.ncx"
 		sed --in-place --regexp-extended "s/ xml\:lang=\"\?\?\"//g" "${workDir}/${epubDir}/toc.ncx"
 
 		#Make nicely incrementing navpoint IDs and playOrders

@@ -77,15 +77,7 @@ do
 			printf "\tUpdating word count ..."
 		fi
 
-		wordCount=0
-		for file in $(find "${srcDir}" -name "*.xhtml")
-		do
-			filename=$(basename "${file}")
-			if [ "${filename}" != "titlepage.xhtml" -a "${filename}" != "colophon.xhtml" -a "${filename}" != "halftitle.xhtml" -a "${filename}" != "imprint.xhtml" -a "${filename}" != "uncopyright.xhtml" -a "${filename}" != "endnotes.xhtml" -a "${filename}" != "loi.xhtml" -a "${filename}" != "toc.xhtml" ]; then
-				currentCount=$("${wordcountPath}" "${file}")
-				wordCount=$((${wordCount} + ${currentCount}))
-			fi
-		done
+		wordCount=$("${wordcountPath}" -x "${srcDir}")
 		sed --in-place --regexp-extended "s|<meta property=\"se:word-count\">[^<]*</meta>|<meta property=\"se:word-count\">${wordCount}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
 
 		if [ "${verbose}" = "true" ]; then

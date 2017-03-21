@@ -37,7 +37,7 @@ def main():
 			file.truncate()
 
 	except Exception:
-		print("Error: Couldn't read file: {}".format(filename), file=sys.stderr)
+		print("Error: Couldn't read file: {}".format(args.filename), file=sys.stderr)
 		exit(1)
 
 if __name__ == "__main__":
