@@ -77,6 +77,9 @@ def main():
 				#Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
 				processed_xhtml = regex.sub(r"([^\s{}{}{}])([—⸻])".format(WORD_JOINER, NBSP, HAIR_SPACE), r"\1{}\2".format(WORD_JOINER), processed_xhtml, flags=regex.IGNORECASE)
 
+				#Add en dashes
+				processed_xhtml = regex.sub(r"([0-9]+)\-([0-9]+)", r"\1–\2", processed_xhtml)
+
 				#Add a word joiner on both sides of en dashes
 				processed_xhtml = regex.sub(r"{}?–{}?".format(WORD_JOINER, WORD_JOINER), r"{}–{}".format(WORD_JOINER, WORD_JOINER), processed_xhtml)
 
