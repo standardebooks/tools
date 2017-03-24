@@ -270,6 +270,17 @@ do
 		printf "Warning: UTF replacement character detected!  Transcription encoding error?\n" 1>&2
 	fi
 
+	grep --quiet -i -R "epub\:type=\"subtitle\"" "${srcDir}/src/epub/text/"
+	if [ $? -eq 0 ]; then
+		grep --quiet -i -R "span\[epub\|type\~=\"subtitle\"\]" "${srcDir}/src/epub/css/"
+		if [ $? -ne 0 ]; then
+			if [ "${verbose}" = "true" ]; then
+				printf "\t"
+			fi
+			printf "Warning: Subtitles detected, but no subtitle CSS detected!\n" 1>&2
+		fi
+	fi
+
 	#Run some external checks
 	"${unusedSelectorPath}" "${srcDir}"
 
