@@ -142,6 +142,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Ff])iance", r"\1iancé", xhtml)				# fiance -> fiancé
 	xhtml = regex.sub(r"\b([Oo])utre\b", r"\1utré", xhtml)				# outre -> outré
 	xhtml = regex.sub(r"\b([Ff])etich\b", r"\1etish", xhtml)			# fetich -> fetish
+	xhtml = regex.sub(r"\b([Pp])igstye\b", r"\1igsty", xhtml)			# pigstye -> pigsty
 
 	if language == "en-US":
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)
