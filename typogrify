@@ -63,6 +63,7 @@ def main():
 				processed_xhtml = regex.sub(r"—”([a-z])", r"—“\1", processed_xhtml, flags=regex.IGNORECASE)
 				processed_xhtml = regex.sub(r"—’([a-z])", r"—‘\1", processed_xhtml, flags=regex.IGNORECASE)
 				processed_xhtml = regex.sub(r"-“</p>", r"—”</p>", processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"‘”</p>", r"’{}”</p>".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
 
 				#Remove spaces between en and em dashes
 				#Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
