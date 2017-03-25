@@ -191,6 +191,7 @@ do
 	#To get popup footnotes in iBooks, we have to change epub:rearnote to epub:footnote.
 	#Remember to get our custom style selectors too.
 	find "${workDir}" -iname "*.xhtml" -print0 | xargs -0 sed --in-place --regexp-extended "s/epub:type=\"([^\"]*?)rearnote([^\"]*?)\"/epub:type=\"\1footnote\2\"/g"
+	find "${workDir}" -iname "*.xhtml" -print0 | xargs -0 sed --in-place --regexp-extended "s/class=\"([^\"]*?)epub-type-rearnote([^\"]*?)\"/class=\"\1epub-type-footnote\2\"/g"
 	find "${workDir}" -iname "*.css" -print0 | xargs -0 sed --in-place --regexp-extended "s/rearnote/footnote/g"
 
 	#Include extra lang tag for accessibility compatibility.
