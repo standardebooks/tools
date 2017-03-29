@@ -89,6 +89,8 @@ do
 		sed --in-place --regexp-extended "s|<rsq>|”|ig" "${file}"
 		sed --in-place --regexp-extended "s|<ap>|’|ig" "${file}"
 
+		sed --in-place --regexp-extended "s|’ ’|’ ”|ig" "${file}" #Correct a common error
+
 		if [ "${verbose}" = "true" ]; then
 			printf " OK\n"
 		fi
