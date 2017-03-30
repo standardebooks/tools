@@ -144,9 +144,12 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Oo])utre\b", r"\1utré", xhtml)				# outre -> outré
 	xhtml = regex.sub(r"\b([Ff])etich\b", r"\1etish", xhtml)			# fetich -> fetish
 	xhtml = regex.sub(r"\b([Pp])igstye\b", r"\1igsty", xhtml)			# pigstye -> pigsty
+	xhtml = regex.sub(r"\b([Pp])igstyes\b", r"\1igsties", xhtml)			# pigstyes -> pigsties
 	xhtml = regex.sub(r"\b([Cc])lew(s?)\b", r"\1lew\2", xhtml)			# clew -> clue
 	xhtml = regex.sub(r"\b[ÀA]\s?propos\b", r"Apropos", xhtml)			# à propos -> apropos
 	xhtml = regex.sub(r"\b[àa]\s?propos\b", r"apropos", xhtml)			# à propos -> apropos
+	xhtml = regex.sub(r"\b([Nn])ew comer(s?)\b", r"\1ewcomer\2", xhtml)		# new comer -> newcomer
+	xhtml = regex.sub(r"\b([Pp])ease\b(?! pudding)", r"\1eas\2", xhtml)		# pease -> peas
 
 	if language == "en-US":
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)

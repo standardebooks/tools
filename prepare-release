@@ -281,6 +281,14 @@ do
 		fi
 	fi
 
+	grep --quiet -i -R "<p/>" "${srcDir}/src/"
+	if [ $? -eq 0 ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\t"
+		fi
+		printf "Warning: Empty <p> tag (<p/>) detected\n" 1>&2
+	fi
+
 	#Run some external checks
 	"${unusedSelectorPath}" "${srcDir}"
 
