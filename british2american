@@ -1,98 +1,67 @@
-#!/bin/bash
-usage(){
-	fmt <<EOF
-DESCRIPTION
-	Try to convert British quote style to American quote style in DIRECTORY/src/epub/text/.
-	Quotes must already be "typogrified"--i.e. curly.
-	This script isn't perfect; proofreading is required, especially near closing quotes near to em-dashes.
+#!/usr/bin/env python3
 
-USAGE
-	british2american [-v,--verbose] DIRECTORY [DIRECTORY...]
-		DIRECTORY is the source directory, which must contain DIRECTORY/images/ and DIRECTORY/src/.
-EOF
-	exit
-}
-die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
-require(){ command -v $1 > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
-if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
-#End boilerplate
+import argparse
+import os
+import fnmatch
+import regex
 
-if [ $# -eq 0 ]; then
-	usage
-fi
+IGNORED_FILES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
 
-curDir="$(pwd)"
-verbose="false"
-dirs=""
+def main():
+	parser = argparse.ArgumentParser(description="Try to convert British quote style to American quote style.  Quotes must already be \"typogrified\"--i.e. curly.  This script isn't perfect; proofreading is required, especially near closing quotes near to em-dashes.")
+	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
+	args = parser.parse_args()
 
-while [ $# -gt 0 ]
-do
-	case "$1" in
-		-v|--verbose)
-			verbose="true"
-		;;
-		*)
-			dirs=$(printf "%s\n%s" "${dirs}" "$1")
-		;;
-	esac
-	shift
-done
+	for target in args.targets:
+		target = os.path.abspath(target)
 
-printf "%s\n" "${dirs}" | while IFS= read -r i;
-do
-	if [ "${i}" = "" ]; then
-		continue
-	fi
+		if args.verbose:
+			print("Processing {} ...".format(target), end="", flush=True)
 
-	srcDir="$(realpath "${i%/}")"
+		target_filenames = set()
+		if os.path.isdir(target):
+			for root, _, filenames in os.walk(target):
+				for filename in fnmatch.filter(filenames, "*.xhtml"):
+					if filename not in IGNORED_FILES:
+						target_filenames.add(os.path.join(root, filename))
+		else:
+			target_filenames.add(target)
 
-	if [ "${verbose}" = "true" ]; then
-		printf "Converting %s ...\n" "${srcDir}"
-	fi
+		for filename in target_filenames:
+			with open(filename, "r+", encoding="utf-8") as file:
+				xhtml = file.read()
+				new_xhtml = xhtml
 
-	for file in $(find "${srcDir}" -name "*htm*")
-	do
-		#Skip symlinked files
-		if [ -h "${file}" ]; then
-			if [ "${verbose}" = "true" ]; then
-				printf "\t%s is a symlink, skipping ... OK\n" "${file}"
-			fi
-			continue
-		fi
+				new_xhtml = british_to_american(new_xhtml)
 
-		if [[ "${file}" == *"uncopyright.xhtml"* ]]; then
-			continue
-		fi
+				if new_xhtml != xhtml:
+					file.seek(0)
+					file.write(new_xhtml)
+					file.truncate()
 
-		if [[ "${file}" == *"imprint.xhtml"* ]]; then
-			continue
-		fi
+		if args.verbose:
+			print(" OK")
 
-		if [ "${verbose}" = "true" ]; then
-			printf "\tConverting %s ..." "${file}"
-		fi
+def british_to_american(xhtml):
+	xhtml = regex.sub(r"“", r"<ldq>", xhtml)
+	xhtml = regex.sub(r"”", r"<rdq>", xhtml)
+	xhtml = regex.sub(r"‘", r"<lsq>", xhtml)
+	xhtml = regex.sub(r"<rdq>⁠ ’(\s+)", r"<rdq> <rsq>\1", xhtml)
+	xhtml = regex.sub(r"<rdq>⁠ ’</", r"<rdq> <rsq></", xhtml)
+	xhtml = regex.sub(r"([\.\,\!\?\…\:\;])’", r"\1<rsq>", xhtml)
+	xhtml = regex.sub(r"—’(\s+)", r"—<rsq>\1", xhtml)
+	xhtml = regex.sub(r"—’</", r"—<rsq></", xhtml)
+	xhtml = regex.sub(r"([a-z])’([a-z])", r"\1<ap>\2", xhtml)
+	xhtml = regex.sub(r"(\s+)’([a-z])", r"\1<ap>\2", xhtml)
+	xhtml = regex.sub(r"<ldq>", r"‘", xhtml)
+	xhtml = regex.sub(r"<rdq>", r"’", xhtml)
+	xhtml = regex.sub(r"<lsq>", r"“", xhtml)
+	xhtml = regex.sub(r"<rsq>", r"”", xhtml)
+	xhtml = regex.sub(r"<ap>", r"’", xhtml)
+	xhtml = regex.sub(r"’ ’", r"’ ”", xhtml)	#Correct a common error
 
-		sed --in-place --regexp-extended "s|“|<ldq>|ig" "${file}"
-		sed --in-place --regexp-extended "s|”|<rdq>|ig" "${file}"
-		sed --in-place --regexp-extended "s|‘|<lsq>|ig" "${file}" #opening dialog quotes
-		sed --in-place --regexp-extended "s|<rdq>⁠ ’(\s+)|<rdq> <rsq>\1|ig" "${file}" #thin spaced closing nested quotes
-		sed --in-place --regexp-extended "s|<rdq>⁠ ’</|<rdq> <rsq></|ig" "${file}" #thin spaced closing nested quotes
-		sed --in-place --regexp-extended "s|([\.\,\!\?\…\:\;])’|\1<rsq>|ig" "${file}" #closing dialog quotes
-		sed --in-place --regexp-extended "s|—’(\s+)|—<rsq>\1|ig" "${file}" #closing dialog quotes broken by a dash, followed by space
-		sed --in-place --regexp-extended "s|—’</|—<rsq></|ig" "${file}" #closing dialog quotes broken by a dash, followed by an ending tag
-		sed --in-place --regexp-extended "s|([a-z])’([a-z])|\1<ap>\2|ig" "${file}" #contractions
-		sed --in-place --regexp-extended "s|(\s+)’([a-z])|\1<ap>\2|ig" "${file}" #leading apostrophes: pork ’n beans
+	return xhtml
 
-		sed --in-place --regexp-extended "s|<ldq>|‘|ig" "${file}"
-		sed --in-place --regexp-extended "s|<rdq>|’|ig" "${file}"
-		sed --in-place --regexp-extended "s|<lsq>|“|ig" "${file}"
-		sed --in-place --regexp-extended "s|<rsq>|”|ig" "${file}"
-		sed --in-place --regexp-extended "s|<ap>|’|ig" "${file}"
-
-		sed --in-place --regexp-extended "s|’ ’|’ ”|ig" "${file}" #Correct a common error
-
-		if [ "${verbose}" = "true" ]; then
-			printf " OK\n"
-		fi
-	done
-done
+if __name__ == "__main__":
+	main()
