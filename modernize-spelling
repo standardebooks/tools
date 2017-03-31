@@ -154,6 +154,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Ee])mployé", r"\1mployee", xhtml)			# employé -> employee
 	xhtml = regex.sub(r"\b(?<!ancien )([Rr])égime", r"\1egime", xhtml)		# régime -> regime (but "ancien régime")
 	xhtml = regex.sub(r"\b([Bb])urthen", r"\1urden", xhtml)				# burthen -> burden
+	xhtml = regex.sub(r"\b[EÉ]lys[eé]e", r"Élysée", xhtml)				# Elysee -> Élysée
 
 	if language == "en-US":
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)
