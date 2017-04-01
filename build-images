@@ -18,7 +18,7 @@ if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
 #End boilerplate
 
 require "inkscape" "Try: sudo apt-get install inkscape"
-require "svgcleaner-cli" "Try: sudo apt-get install svgcleaner"
+#require "svgcleaner-cli" "Try: sudo apt-get install svgcleaner"
 require "exiftool" "Try: sudo apt-get install libimage-exiftool-perl"
 
 #Check if the League Spartan and Sorts Mill Gaudy fonts are installed before continuing
@@ -137,7 +137,7 @@ do
 		sed --regexp-extended --file=/tmp/cover.sed "/tmp/cover.svg" > "${destDir}/cover.svg"
 
 		#This huge list of flags emulates `svgcleaner-cli --type-complete`, but WITHOUT the paths options, which usually messes things up.
-		svgcleaner-cli "${destDir}/cover.svg" "${destDir}/cover.svg" --remove-comments --remove-unused-defs --remove-nonsvg-elts --remove-metadata-elts --remove-inkscape-elts --remove-sodipodi-elts --remove-ai-elts --remove-corel-elts --remove-msvisio-elts --remove-sketch-elts --remove-invisible-elts --remove-empty-containers --remove-duplicated-defs --remove-outside-elts --equal-elts-to-use --ungroup-containers --merge-gradients --remove-unreferenced-ids --trim-ids --remove-notappl-atts --remove-default-atts --remove-inkscape-atts --remove-sodipodi-atts --remove-ai-atts --remove-corel-atts --remove-msvisio-atts --remove-sketch-atts --remove-stroke-props --remove-fill-props --remove-unused-xlinks --join-style-atts --simplify-transform-matrix --apply-transforms-to-defs --apply-transforms-to-shapes --colors-to-rrggbb --rrggbb-to-rgb --convert-basic-shapes --create-viewbox --apply-transforms-to-defs --sort-defs > /dev/null 2>&1
+		#svgcleaner-cli "${destDir}/cover.svg" "${destDir}/cover.svg" --remove-comments --remove-unused-defs --remove-nonsvg-elts --remove-metadata-elts --remove-inkscape-elts --remove-sodipodi-elts --remove-ai-elts --remove-corel-elts --remove-msvisio-elts --remove-sketch-elts --remove-invisible-elts --remove-empty-containers --remove-duplicated-defs --remove-outside-elts --equal-elts-to-use --ungroup-containers --merge-gradients --remove-unreferenced-ids --trim-ids --remove-notappl-atts --remove-default-atts --remove-inkscape-atts --remove-sodipodi-atts --remove-ai-atts --remove-corel-atts --remove-msvisio-atts --remove-sketch-atts --remove-stroke-props --remove-fill-props --remove-unused-xlinks --join-style-atts --simplify-transform-matrix --apply-transforms-to-defs --apply-transforms-to-shapes --colors-to-rrggbb --rrggbb-to-rgb --convert-basic-shapes --create-viewbox --apply-transforms-to-defs --sort-defs > /dev/null 2>&1
 
 		#Embed our sha1sum
 		sed --regexp-extended --in-place "s|<svg|<svg xmlns:se=\"https://standardebooks.org/vocab/1.0\" se:generated-from=\"${currentCoverSha1}\"|" "${destDir}/cover.svg"
@@ -187,7 +187,7 @@ do
 		inkscape "${srcDir}/images/titlepage.svg" --export-text-to-path --export-plain-svg "${destDir}/titlepage.svg"
 
 		#This huge list of flags emulates `svgcleaner-cli --type-complete`, but WITHOUT the paths options, which usually messes things up.
-		svgcleaner-cli "${destDir}/titlepage.svg" "${destDir}/titlepage.svg" --remove-comments --remove-unused-defs --remove-nonsvg-elts --remove-metadata-elts --remove-inkscape-elts --remove-sodipodi-elts --remove-ai-elts --remove-corel-elts --remove-msvisio-elts --remove-sketch-elts --remove-invisible-elts --remove-empty-containers --remove-duplicated-defs --remove-outside-elts --equal-elts-to-use --ungroup-containers --merge-gradients --remove-unreferenced-ids --trim-ids --remove-notappl-atts --remove-default-atts --remove-inkscape-atts --remove-sodipodi-atts --remove-ai-atts --remove-corel-atts --remove-msvisio-atts --remove-sketch-atts --remove-stroke-props --remove-fill-props --remove-unused-xlinks --join-style-atts --simplify-transform-matrix --apply-transforms-to-defs --apply-transforms-to-shapes --colors-to-rrggbb --rrggbb-to-rgb --convert-basic-shapes --create-viewbox --apply-transforms-to-defs --sort-defs > /dev/null 2>&1
+		#svgcleaner-cli "${destDir}/titlepage.svg" "${destDir}/titlepage.svg" --remove-comments --remove-unused-defs --remove-nonsvg-elts --remove-metadata-elts --remove-inkscape-elts --remove-sodipodi-elts --remove-ai-elts --remove-corel-elts --remove-msvisio-elts --remove-sketch-elts --remove-invisible-elts --remove-empty-containers --remove-duplicated-defs --remove-outside-elts --equal-elts-to-use --ungroup-containers --merge-gradients --remove-unreferenced-ids --trim-ids --remove-notappl-atts --remove-default-atts --remove-inkscape-atts --remove-sodipodi-atts --remove-ai-atts --remove-corel-atts --remove-msvisio-atts --remove-sketch-atts --remove-stroke-props --remove-fill-props --remove-unused-xlinks --join-style-atts --simplify-transform-matrix --apply-transforms-to-defs --apply-transforms-to-shapes --colors-to-rrggbb --rrggbb-to-rgb --convert-basic-shapes --create-viewbox --apply-transforms-to-defs --sort-defs > /dev/null 2>&1
 
 		#Embed our sha1sum
 		sed --regexp-extended --in-place "s|<svg|<svg xmlns:se=\"https://standardebooks.org/vocab/1.0\" se:generated-from=\"${currentTitleSha1}\"|" "${destDir}/titlepage.svg"
