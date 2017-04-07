@@ -155,6 +155,10 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b(?<!ancien )([Rr])égime", r"\1egime", xhtml)		# régime -> regime (but "ancien régime")
 	xhtml = regex.sub(r"\b([Bb])urthen", r"\1urden", xhtml)				# burthen -> burden
 	xhtml = regex.sub(r"\b[EÉ]lys[eé]e", r"Élysée", xhtml)				# Elysee -> Élysée
+	xhtml = regex.sub(r"\bVergil", r"Virgil", xhtml)				# Vergil -> Virgil
+	xhtml = regex.sub(r"\b([Ll])aw suit", r"\1awsuit", xhtml)			# law suit -> lawsuit
+	xhtml = regex.sub(r"\bIncase", r"Encase", xhtml)				# incase -> encase
+	xhtml = regex.sub(r"\bincase", r"encase", xhtml)				# incase -> encase
 
 	if language == "en-US":
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)
