@@ -1,128 +1,147 @@
 # About
-This repository contains various tools Standard Ebooks uses to produce its ebooks.
 
-## Build Tools
-### `british2american`
-Try to convert British quote style to American quote style in DIRECTORY/src/epub/text/.
+A collection of tools Standard Ebooks uses to produce its ebooks, including basic setup of ebooks, text processing, and build tools.
 
-Quotes must already be "typogrified"--i.e. curly.
+# Installation
 
-This script isn't perfect; proofreading is required, especially near closing quotes near to em-dashes.
+Several dependencies must be installed before you can use these tools. On Ubuntu 16.04, you can install everything with:
 
-### `build`
+	sudo apt install python3-pip xsltproc libxml2-utils xmlstarlet libxml-xpath-perl recode html-xml-utils python3-cssselect python3-regex python3-pip librsvg2-bin libimage-exiftool-perl python3-lxml zip epubcheck calibre
+	sudo pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants
+	sudo python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
 
-Build an ebook from a Standard Ebook source directory.
+	#Install required fonts
+	mkdir -p ~/.fonts/
+	wget -O ~/.fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
+	wget -O ~/.fonts/OFLGoudyStM.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM.otf?raw=true"
+	wget -O ~/.fonts/OFLGoudyStM-Italic.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM-Italic.otf?raw=true"
+	sudo fc-cache -fv
 
-### `build-cover`
+# Tool descriptions
 
-Build an ebook cover a Standard Ebook source directory and place the output in DIRECTORY/src/epub/images/.
+-	### `british2american`
 
-### `build-kobo`
+	Try to convert British quote style to American quote style in DIRECTORY/src/epub/text/.
 
-Convert files in a Standard Ebooks source directory to be Kobo-compatible.
+	Quotes must already be "typogrified"--i.e. curly.
 
-### `clean`
+	This script isn't perfect; proofreading is required, especially near closing quotes near to em-dashes.
 
-Prettify source files in a Standard Ebook source directory, including canonicalizing XML and minifying SVGs. Note that this only prettifies the source code; it doesn't perform typography changes.
+-	### `build`
 
-### `create-draft`
+	Build an ebook from a Standard Ebook source directory.
 
-Create a skeleton of a new Standard Ebook.
+-	### `build-cover`
 
-### `dec2roman`
+	Build an ebook cover a Standard Ebook source directory and place the output in DIRECTORY/src/epub/images/.
 
-Convert a decimal number to a Roman numeral.
+-	### `build-kobo`
 
-### `endnotes2kindle`
+	Convert files in a Standard Ebooks source directory to be Kobo-compatible.
 
-Convert epub-friendly endnotes to Kindle-friendly popup endnotes.
+-	### `clean`
 
-### `find-mismatched-diacritics`
+	Prettify source files in a Standard Ebook source directory, including canonicalizing XML and minifying SVGs. Note that this only prettifies the source code; it doesn't perform typography changes.
 
-Find words with mismatched diacritics in Standard Ebook source directories.  For example, 'cafe' in one file and 'café' in another.
+-	### `create-draft`
 
-### `find-unused-selectors`
+	Create a skeleton of a new Standard Ebook.
 
-Find unused local.css CSS selectors in Standard Ebook source directories.
+-	### `dec2roman`
 
-### `hyphenate`
+	Convert a decimal number to a Roman numeral.
 
-Insert soft hyphens at syllable breaks in an XHTML file.
+-	### `endnotes2kindle`
 
-### `interactive-sr`
+	Convert epub-friendly endnotes to Kindle-friendly popup endnotes.
 
-A macro for calling Vim to interactively search and replace a regex on a list of files.
+-	### `find-mismatched-diacritics`
 
-### `make-url-safe`
+	Find words with mismatched diacritics in Standard Ebook source directories.  For example, 'cafe' in one file and 'café' in another.
 
-Make a string URL-safe.
+-	### `find-unused-selectors`
 
-### `modernize-spelling`
+	Find unused local.css CSS selectors in Standard Ebook source directories.
 
-Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace "ash-tray" with "ashtray".
+-	### `hyphenate`
 
-### `ordinal`
+	Insert soft hyphens at syllable breaks in an XHTML file.
 
-Print the ordinal for one or more integers.
+-	### `interactive-sr`
 
-### `prepare-release`
+	A macro for calling Vim to interactively search and replace a regex on a list of files.
 
-Calculate the ebook's word count, and update content.opf and colophon.xhtml with release and modified timestamps.
+-	### `make-url-safe`
 
-### `print-manifest-and-spine`
+	Make a string URL-safe.
 
-Create a ```<manifest>``` and ```<spine>``` tag for content.opf based on the passed Standard Ebooks source directory and print to standard output.
+-	### `modernize-spelling`
 
-### `reading-ease`
+	Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace "ash-tray" with "ashtray".
 
-Calculate the Flesch reading ease for a Standard Ebooks source directory.
+-	### `ordinal`
 
-### `reorder-endnotes`
+	Print the ordinal for one or more integers.
 
-Increment the specified endnote and all following endnotes by 1.
+-	### `prepare-release`
 
-### `roman2dec`
+	Calculate the ebook's word count, and update content.opf and colophon.xhtml with release and modified timestamps.
 
-Convert a Roman numeral to a decimal number.
+-	### `print-manifest-and-spine`
 
-### `semanticate`
+	Create a ```<manifest>``` and ```<spine>``` tag for content.opf based on the passed Standard Ebooks source directory and print to standard output.
 
-Apply some scriptable semantics rules from the Standard Ebooks semantics manual to a Standard Ebook source directory.
+-	### `reading-ease`
 
-### `simplify-tags`
-Simplify some HTML and CSS to be more compatible with crappier reading systems (ADE I'm looking at you...)
+	Calculate the Flesch reading ease for a Standard Ebooks source directory.
 
-### `split-file`
+-	### `reorder-endnotes`
 
-Split an XHTML file into many files at all instances of `<!--se:split-->`, and include a header template for each file.
+	Increment the specified endnote and all following endnotes by 1.
 
-### `titlecase`
+-	### `roman2dec`
 
-Convert a string to titlecase.
+	Convert a Roman numeral to a decimal number.
 
-### `toc2kindle`
+-	### `semanticate`
 
-Flatten ToC to be at most 2 levels deep for Kindle compatibility.  Generally only used by the `build` script and not called independently.
+	Apply some scriptable semantics rules from the Standard Ebooks semantics manual to a Standard Ebook source directory.
 
-### `typogrify`
+-	### `simplify-tags`
 
-Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory.
+	Simplify some HTML and CSS to be more compatible with crappier reading systems (ADE I'm looking at you...)
 
-### `unicode-names`
+-	### `split-file`
 
-Display Unicode code points, descriptions, and links to more details for each character in a string.  Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.
+	Split an XHTML file into many files at all instances of `<!--se:split-->`, and include a header template for each file.
 
-### `update-asin`
+-	### `titlecase`
 
-Change the ASIN of a mobi/azw3 file.
+	Convert a string to titlecase.
 
-### `word-count`
+-	### `toc2kindle`
 
-Count the number of words in an HTML file and optionally categorize by length.
+	Flatten ToC to be at most 2 levels deep for Kindle compatibility.  Generally only used by the `build` script and not called independently.
 
-### `view-modified`
+-	### `typogrify`
 
-Check all author directories in the current or specified directory to see if there are changes that need to be committed.
+	Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory.
+
+-	### `unicode-names`
+
+	Display Unicode code points, descriptions, and links to more details for each character in a string.  Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.
+
+-	### `update-asin`
+
+	Change the ASIN of a mobi/azw3 file.
+
+-	### `word-count`
+
+	Count the number of words in an HTML file and optionally categorize by length.
+
+-	### `view-modified`
+
+	Check all author directories in the current or specified directory to see if there are changes that need to be committed.
 
 # What a Standard Ebooks source directory looks like
 
@@ -150,23 +169,6 @@ Many of these tools act on Standard Ebooks source directories.  Such directories
 	|---container.xml
 	|--mimetype
 
-./images/ contains source images for the cover and titlepages, as well as ebook-specific source images.  Source images should be in their maximum available resolution, then compressed and placed in ./src/epub/images/ for distribution.
+`./images/` contains source images for the cover and titlepages, as well as ebook-specific source images.  Source images should be in their maximum available resolution, then compressed and placed in `./src/epub/images/` for distribution.
 
-./src/epub/ contains the actual epub files.
-
-# Setting up your build environment
-
-1.	Install dependencies.  On Ubuntu 16.04, you can do:
-
-		sudo apt install python3-pip xsltproc libxml2-utils xmlstarlet libxml-xpath-perl recode html-xml-utils python3-cssselect python3-regex python3-pip librsvg2-bin libimage-exiftool-perl python3-lxml zip epubcheck calibre
-		sudo pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants
-		sudo python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
-
-		#Install required fonts
-		mkdir -p ~/.fonts/
-		wget -O ~/.fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
-		wget -O ~/.fonts/OFLGoudyStM.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM.otf?raw=true"
-		wget -O ~/.fonts/OFLGoudyStM-Italic.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM-Italic.otf?raw=true"
-		sudo fc-cache -fv
-
-That should be it!
+`./src/epub/` contains the actual epub files.
