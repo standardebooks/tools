@@ -159,6 +159,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Ll])aw suit", r"\1awsuit", xhtml)			# law suit -> lawsuit
 	xhtml = regex.sub(r"\bIncase", r"Encase", xhtml)				# incase -> encase
 	xhtml = regex.sub(r"\bincase", r"encase", xhtml)				# incase -> encase
+	xhtml = regex.sub(r"\b([Cc])ocoanut", r"\1oconut", xhtml)			# cocoanut -> coconut
 
 	if language == "en-US":
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)
