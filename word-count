@@ -48,7 +48,7 @@ def main():
 			text = regex.sub(r"\s+", " ", text, flags=regex.IGNORECASE | regex.DOTALL)
 
 			#Get the word count
-			word_count = len(regex.findall(r"\b[a-z0-9]+\b", text, flags=regex.IGNORECASE | regex.DOTALL))
+			word_count = len(regex.findall(r"\b\w+\b", text, flags=regex.IGNORECASE | regex.DOTALL))
 
 			word_count_sum += word_count
 
