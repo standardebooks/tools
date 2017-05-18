@@ -116,6 +116,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"([Ff])acade", r"\1açade", xhtml)				# facade -> façade
 	xhtml = regex.sub(r"([Cc])h?ateau(s?\b)", r"\1hâteau\2", xhtml)			# chateau -> château
 	xhtml = regex.sub(r"([Hh])abitue", r"\1abitué", xhtml)				# habitue -> habitué
+	xhtml = regex.sub(r"\b([Bb])lase\b", r"\1lasé", xhtml)				# blase -> blasé
 	xhtml = regex.sub(r"\b([Cc])afe\b", r"\1afé", xhtml)				# cafe -> café
 	xhtml = regex.sub(r"\b([Cc])afes\b", r"\1afés", xhtml)				# cafes -> cafés; We break up cafe so that we don't catch 'cafeteria'
 	xhtml = regex.sub(r"([Mm])êlée", r"\1elee", xhtml)				# mêlée -> melee
