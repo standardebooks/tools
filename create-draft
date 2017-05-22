@@ -120,7 +120,7 @@ mkdir -p "${repoName}/src/epub/css"
 mkdir -p "${repoName}/src/epub/images"
 mkdir -p "${repoName}/src/epub/text"
 
-cp -r "${scriptDir}/templates/META-INF/" "${repoName}/src/"
+cp -r "${scriptDir}/templates/META-INF" "${repoName}/src/"
 cp "${scriptDir}/templates/mimetype" "${repoName}/src/"
 cp "${scriptDir}/templates/onix.xml" "${repoName}/src/epub/"
 cp "${scriptDir}/templates/toc.xhtml" "${repoName}/src/epub/"
