@@ -117,7 +117,7 @@ def main():
 				processed_xhtml = regex.sub(r"(\s)‘a’(\s)", r"\1’a’\2", processed_xhtml, flags=regex.IGNORECASE)
 
 				#Years
-				processed_xhtml = regex.sub(r"‘([0-9]+[^a-zA-Z0-9’])", r"’\1", processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"‘([0-9]{2,}[^a-zA-Z0-9’])", r"’\1", processed_xhtml, flags=regex.IGNORECASE)
 
 				processed_xhtml = regex.sub(r"‘([Aa]ve|[Oo]me|[Ii]m|[Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Cc]os|[Tt]is|[Tt]was|[Tt]wixt|[Tt]were|[Tt]would|[Tt]wouldn|[Tt]ween|[Tt]will|[Rr]ound|[Pp]on)\b", r"’\1", processed_xhtml)
 
