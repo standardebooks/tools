@@ -229,6 +229,23 @@ do
 		fi
 	done
 
+	#Check if there are non-typogrified quotes or em-dashes in metadata descriptions
+	grep --quiet --null-data --extended-regexp "<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>" "${srcDir}/src/epub/content.opf"
+	if [ $? -eq 0 ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\t"
+		fi
+		printf "Warning: non-typogrified \", ', or -- detected in metadata long description!\n" 1>&2
+	fi
+
+	grep --quiet --null-data --extended-regexp "<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</dc:description>" "${srcDir}/src/epub/content.opf"
+	if [ $? -eq 0 ]; then
+		if [ "${verbose}" = "true" ]; then
+			printf "\t"
+		fi
+		printf "Warning: non-typogrified \", ', or -- detected in metadata description!\n" 1>&2
+	fi
+
 	#See if we have non-https source links
 	grep --quiet -i -R "http://www.gutenberg.org/" "${srcDir}/src/"
 	if [ $? -eq 0 ]; then
