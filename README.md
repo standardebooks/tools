@@ -2,12 +2,18 @@
 
 A collection of tools Standard Ebooks uses to produce its ebooks, including basic setup of ebooks, text processing, and build tools.
 
+# Warning for Mac users
+
+This repository started out as all Bash scripts targeting Ubuntu 16.04, and over time the tools have been converted to Python scripts for better cross-platform compatibility.  However not all the tools are converted yet, notably `build` and `create-draft`.  There have been many reports of breakage when using these scripts in a Mac environment.  Until we finish converting these last few scripts to Python, we suggest starting up an Ubuntu 16.04 virtual machine to run the `build` script.
+
 # Installation
 
 Several dependencies must be installed before you can use these tools. On Ubuntu 16.04, you can install everything with:
 
 	sudo apt install python3-pip xsltproc libxml2-utils xmlstarlet libxml-xpath-perl recode html-xml-utils python3-cssselect python3-regex python3-pip librsvg2-bin libimage-exiftool-perl python3-lxml zip epubcheck calibre
 	sudo pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants
+
+	# Install hyphenation dictionaries for the pyhyphen library
 	sudo python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
 
 	# Install required fonts
