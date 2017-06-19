@@ -10,12 +10,16 @@ Several dependencies must be installed before you can use these tools. On Ubuntu
 	sudo pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants
 	sudo python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
 
-	#Install required fonts
+	# Install required fonts
 	mkdir -p ~/.fonts/
 	wget -O ~/.fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
 	wget -O ~/.fonts/OFLGoudyStM.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM.otf?raw=true"
 	wget -O ~/.fonts/OFLGoudyStM-Italic.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM-Italic.otf?raw=true"
 	sudo fc-cache -fv
+
+You can also install the dependencies locally via pip:
+
+    pip3 install -r requirements.txt
 
 # Tool descriptions
 

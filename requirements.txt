@@ -1,0 +1,5 @@
+beautifulsoup4==4.6.0
+PyHyphen==2.0.5
+roman==2.0.0
+smartypants==2.0.0
+titlecase==0.10.0
