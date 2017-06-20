@@ -10,7 +10,7 @@ This repository started out as all Bash scripts targeting Ubuntu 16.04, and over
 
 Several dependencies must be installed before you can use these tools. On Ubuntu 16.04, you can install everything with:
 
-	sudo apt install python3-pip xsltproc libxml2-utils xmlstarlet libxml-xpath-perl recode html-xml-utils python3-cssselect python3-regex python3-pip librsvg2-bin libimage-exiftool-perl python3-lxml zip epubcheck calibre
+	sudo apt install python3-pip xsltproc libxml2-utils xmlstarlet libxml-xpath-perl recode html-xml-utils python3-cssselect python3-regex python3-pip librsvg2-bin libimage-exiftool-perl python3-lxml zip epubcheck calibre default-jre
 	sudo pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants pillow
 
 	# Install hyphenation dictionaries for the pyhyphen library
