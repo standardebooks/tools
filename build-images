@@ -1,202 +1,149 @@
-#!/bin/bash
-usage(){
-	fmt <<EOF
-DESCRIPTION
-	Build an ebook cover a Standard Ebook source directory and place the output in DIRECTORY/src/epub/images/.
+#!/usr/bin/env python3
 
-USAGE
-	build-images [-v,--verbose] [-f,--force] DIRECTORY [DIRECTORY...]
-		DIRECTORY is the source directory, which must contain DIRECTORY/images/ and DIRECTORY/src/.
+import argparse
+import sys
+import os
+import errno
+import base64
+import fnmatch
+import shutil
+from subprocess import call
+import regex
+from PIL import Image
 
-		With --force, build the images regardless of whether the source checksums are different.
-EOF
-	exit
-}
-die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
-require(){ command -v $1 > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
-if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
-#End boilerplate
+def clean_inkscape_svg(filename, clean_path):
+	with open(filename, "r+") as file:
+		svg = file.read()
 
-require "inkscape" "Try: sudo apt-get install inkscape"
-#require "svgcleaner-cli" "Try: sudo apt-get install svgcleaner"
-require "exiftool" "Try: sudo apt-get install libimage-exiftool-perl"
+		#Time to clean up Inkscape's mess
+		svg = regex.sub(r"id=\"[^\"]+?\"", "", svg)
+		svg = regex.sub(r"<metadata[^>]*?>.*?</metadata>", "", svg, flags=regex.MULTILINE | regex.DOTALL)
+		svg = regex.sub(r"<defs[^>]*?/>", "", svg, flags=regex.MULTILINE | regex.DOTALL)
+		svg = regex.sub(r"xmlns:(dc|cc|rdf)=\"[^\"]*?\"", "", svg, flags=regex.MULTILINE | regex.DOTALL)
 
-#Check if the League Spartan and Sorts Mill Gaudy fonts are installed before continuing
-fc-list | grep --quiet "League Spartan" || die "The League Spartan font doesn't seem to be installed.  See https://github.com/theleagueof/league-spartan"
-fc-list | grep --quiet "Sorts Mill Goudy" || die "The Sorts Mill Goudy font doesn't seem to be installed.  See https://github.com/theleagueof/sorts-mill-goudy"
+		file.seek(0)
+		file.write(svg)
+		file.truncate()
 
-if [ $# -eq 0 ]; then
-	usage
-fi
+	call([clean_path, filename])
 
-curDir="$(pwd)"
-verbose="false"
-dirs=""
-currentCoverSha1=""
-currentTitleSha1=""
-force="false"
+def remove_metadata(filename):
+	with open(filename, "rb") as file:
+		image = Image.open(file)
+		data = list(image.getdata())
 
-#Set xmllint to use tab indentation.
-export XMLLINT_INDENT=$(printf "\t")
+	#Strip exif data
+	image_without_exif = Image.new(image.mode, image.size)
+	image_without_exif.putdata(data)
 
-while [ $# -gt 0 ]
-do
-	case "$1" in
-		-v|--verbose)
-			verbose="true"
-		;;
-		-f|--force)
-			force="true"
-		;;
-		*)
-			dirs=$(printf "%s\n%s" "${dirs}" "$1")
-		;;
-	esac
-	shift
-done
+	if image.format == "JPEG":
+		image_without_exif.save(filename, "JPEG", optimize=True, subsampling="4:4:4", progressive=True)
+	else:
+		image_without_exif.save(filename)
 
-printf "%s\n" "${dirs}" | while IFS= read -r i;
-do
-	if [ "${i}" = "" ]; then
-		continue
-	fi
+def main():
+	parser = argparse.ArgumentParser(description="Build ebook covers and titlepages for a Standard Ebook source directory, and place the output in DIRECTORY/src/epub/images/.")
+	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	args = parser.parse_args()
 
-	cd "${curDir}" #Reset when starting the loop over
+	#Check for required utilities
+	clean_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "clean")
+	inkscape_path = shutil.which("inkscape")
 
-	srcDir="$(realpath "${i%/}")"
-	destDir="${srcDir}/src/epub/images"
+	if inkscape_path is None:
+		print("Error: Couldn't locate Inkscape. Is it installed?", file=sys.stderr)
+		exit(1)
 
-	if [ ! -d "${srcDir}/src" ]; then
-		die "${srcDir} doesn't look like a Standard Ebook source directory."
-	fi
+	for directory in args.directories:
+		directory = os.path.abspath(directory)
 
-	if [ ! -d "${srcDir}/src/epub/images" ]; then
-		die "${srcDir} is missing the images folder."
-	fi
+		if args.verbose:
+			print("Processing {} ...".format(directory))
 
-	if [ "${verbose}" = "true" ]; then
-		printf "Building %s ...\n" "${srcDir}"
-	fi
+		if not os.path.isdir(directory):
+			if args.verbose:
+				print("\t", end="", flush=True)
 
-	#Do we need to build cover.svg?
-	canBuildCover="true"
-	#Check if the source svg exists
-	if [ ! -f "${srcDir}/images/cover.svg" ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\timages/cover.svg not found, skipping ... ERROR\n" 1>&2
-		fi
+			print("Error: Not a directory: {}".format(directory), file=sys.stderr)
+			exit(1)
 
-		canBuildCover="false"
-	fi
+		source_images_directory = os.path.join(directory, "images/")
+		source_cover_jpg_filename = os.path.join(source_images_directory, "cover.jpg")
+		source_cover_svg_filename = os.path.join(source_images_directory, "cover.svg")
+		source_titlepage_svg_filename = os.path.join(source_images_directory, "titlepage.svg")
+		dest_images_directory = os.path.join(directory, "src/epub/images/")
+		dest_cover_svg_filename = os.path.join(dest_images_directory, "cover.svg")
+		dest_titlepage_svg_filename = os.path.join(dest_images_directory, "titlepage.svg")
 
-	if [ ! -f "${srcDir}/images/cover.jpg" ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\timages/cover.jpg not found, skipping ... ERROR\n" 1>&2
-		fi
+		try:
+			os.makedirs(dest_images_directory)
+		except OSError as exception:
+			if exception.errno != errno.EEXIST:
+				if args.verbose:
+					print("\t", end="", flush=True)
 
-		canBuildCover="false"
-	else
-		#Remove useless metadata from cover images
-		exiftool -overwrite_original -all= "${srcDir}/images/cover.jpg" &> /dev/null
-	fi
+				print("Error: Couldn't create directory: {}".format(dest_images_directory), file=sys.stderr)
+				exit(1)
 
-	if ls "${srcDir}"/images/cover.source.* &>/dev/null; then
-		#Remove useless metadata from cover images
-		exiftool -overwrite_original -all= "${srcDir}"/images/cover.source.* &> /dev/null
-	fi
+		#Remove useless metadata from jpg files
+		for root, _, filenames in os.walk(source_images_directory):
+			for filename in fnmatch.filter(filenames, "cover.source.*"):
+				remove_metadata(os.path.join(root, filename))
 
-	buildCover="true"
-	#Source svg exists, check if the sources match the already built image
-	if [ "${canBuildCover}" = "true" ]; then
-		currentCoverSha1=$(cat "${srcDir}/images/cover.svg" "${srcDir}/images/cover.jpg" | sha1sum | cut -d " " -f 1)
+		#Build cover.svg
+		if os.path.isfile(source_cover_jpg_filename):
+			remove_metadata(source_cover_jpg_filename)
 
-		if [ -f "${srcDir}/src/epub/images/cover.svg" ]; then
-			oldSha1=$(grep --extended-regexp --only-matching "se\:generated\-from=\"[a-fA-F0-9]{40}\"" "${srcDir}/src/epub/images/cover.svg" | cut -d "\"" -f 2)
+			if os.path.isfile(source_cover_svg_filename):
+				if args.verbose:
+					print("\tBuilding cover.svg ...".format(directory), end="", flush=True)
 
-			if [ "${oldSha1}" = "${currentCoverSha1}" ] && [ "${force}" = "false" ]; then
-				if [ "${verbose}" = "true" ]; then
-					printf "\tcover.svg doesn't need building, skipping ... OK\n"
-				fi
-				buildCover="false"
-			fi
-		fi
-	fi
+				#base64 encode cover.jpg
+				with open(source_cover_jpg_filename, "rb") as file:
+					source_cover_jpg_base64 = base64.b64encode(file.read()).decode()
 
-	if [ "${canBuildCover}" = "true" ] && ( [ "${buildCover}" = "true" ] || [ "${force}" = "true" ] ); then
-		if [ "${verbose}" = "true" ]; then
-			printf "\tBuilding cover.svg ..."
-		fi
+				#Convert text to paths
+				#Inkscape adds a ton of crap to the SVG and we clean that crap a little later
+				call([inkscape_path, source_cover_svg_filename, "--export-text-to-path", "--export-plain-svg", dest_cover_svg_filename])
 
-		#Convert text to paths
-		inkscape "${srcDir}/images/cover.svg" --export-text-to-path --export-plain-svg "/tmp/cover.svg"
+				#Embed cover.jpg
+				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
+					svg = file.read()
 
-		#Embed linked images
-		printf "s|xlink:href=\"[^\"]+cover.jpg|xlink:href=\"data:image/jpeg;base64," > /tmp/cover.sed
-		base64 -w 0 "${srcDir}/images/cover.jpg" >> /tmp/cover.sed
-		printf "|" >> /tmp/cover.sed
-		sed --regexp-extended --file=/tmp/cover.sed "/tmp/cover.svg" > "${destDir}/cover.svg"
+					svg = regex.sub(r"xlink:href=\".*?cover\.jpg", "xlink:href=\"data:image/jpeg;base64," + source_cover_jpg_base64, svg, flags=regex.MULTILINE | regex.DOTALL)
 
-		#This huge list of flags emulates `svgcleaner-cli --type-complete`, but WITHOUT the paths options, which usually messes things up.
-		#svgcleaner-cli "${destDir}/cover.svg" "${destDir}/cover.svg" --remove-comments --remove-unused-defs --remove-nonsvg-elts --remove-metadata-elts --remove-inkscape-elts --remove-sodipodi-elts --remove-ai-elts --remove-corel-elts --remove-msvisio-elts --remove-sketch-elts --remove-invisible-elts --remove-empty-containers --remove-duplicated-defs --remove-outside-elts --equal-elts-to-use --ungroup-containers --merge-gradients --remove-unreferenced-ids --trim-ids --remove-notappl-atts --remove-default-atts --remove-inkscape-atts --remove-sodipodi-atts --remove-ai-atts --remove-corel-atts --remove-msvisio-atts --remove-sketch-atts --remove-stroke-props --remove-fill-props --remove-unused-xlinks --join-style-atts --simplify-transform-matrix --apply-transforms-to-defs --apply-transforms-to-shapes --colors-to-rrggbb --rrggbb-to-rgb --convert-basic-shapes --create-viewbox --apply-transforms-to-defs --sort-defs > /dev/null 2>&1
+					file.seek(0)
+					file.write(svg)
+					file.truncate()
 
-		#Embed our sha1sum
-		sed --regexp-extended --in-place "s|<svg|<svg xmlns:se=\"https://standardebooks.org/vocab/1.0\" se:generated-from=\"${currentCoverSha1}\"|" "${destDir}/cover.svg"
+				clean_inkscape_svg(dest_cover_svg_filename, clean_path)
 
-		#Clean up the final SVG
-		xmllint --c14n "${destDir}/cover.svg" | (printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' && cat) | xmllint --output "${destDir}/cover.svg" --format -
+				if args.verbose:
+					print(" OK")
+			else:
+				if args.verbose:
+					print("\t./images/cover.svg not found, skipping ...")
+		else:
+			if args.verbose:
+				print("\t./images/cover.jpg not found, skipping ...")
 
-		if [ "${verbose}" = "true" ]; then
-			printf " OK\n"
-		fi
-	fi
+		#Build titlepage.svg
+		if os.path.isfile(source_titlepage_svg_filename):
+			if args.verbose:
+				print("\tBuilding titlepage.svg ...".format(directory), end="", flush=True)
 
-	#Do we need to build titlepage.svg?
-	canBuildTitle="true"
-	#Check if the source svg exists
-	if [ ! -f "${srcDir}/images/titlepage.svg" ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\timages/titlepage.svg not found, skipping ... ERROR\n" 1>&2
-		fi
+			#Convert text to paths
+			#inkscape adds a ton of crap to the SVG and we clean that crap a little later
+			call([inkscape_path, source_titlepage_svg_filename, "--export-text-to-path", "--export-plain-svg", dest_titlepage_svg_filename])
 
-		canBuildTitle="false"
-	fi
+			clean_inkscape_svg(dest_titlepage_svg_filename, clean_path)
 
-	buildTitle="true"
-	#Source svg exists, check if the sources match the already built image
-	if [ "${canBuildTitle}" = "true" ]; then
-		currentTitleSha1=$(cat "${srcDir}/images/titlepage.svg" | sha1sum | cut -d " " -f 1)
+			if args.verbose:
+				print(" OK")
+		else:
+			if args.verbose:
+				print("\t./images/titlepage.svg not found, skipping ...")
 
-		if [ -f "${srcDir}/src/epub/images/titlepage.svg" ]; then
-			oldSha1=$(grep --extended-regexp --only-matching "se\:generated\-from=\"[a-fA-F0-9]{40}\"" "${srcDir}/src/epub/images/titlepage.svg" | cut -d "\"" -f 2)
-
-			if [ "${oldSha1}" = "${currentTitleSha1}" ] && [ "${force}" = "false" ]; then
-				if [ "${verbose}" = "true" ]; then
-					printf "\ttitlepage.svg doesn't need building, skipping ... OK\n"
-				fi
-				buildTitle="false"
-			fi
-		fi
-	fi
-
-	if [ "${canBuildTitle}" = "true" ] && ( [ "${buildTitle}" = "true" ] || [ "${force}" = "true" ] ); then
-		if [ "${verbose}" = "true" ]; then
-			printf "\tBuilding titlepage.svg ..."
-		fi
-
-		#Convert text to paths
-		inkscape "${srcDir}/images/titlepage.svg" --export-text-to-path --export-plain-svg "${destDir}/titlepage.svg"
-
-		#This huge list of flags emulates `svgcleaner-cli --type-complete`, but WITHOUT the paths options, which usually messes things up.
-		#svgcleaner-cli "${destDir}/titlepage.svg" "${destDir}/titlepage.svg" --remove-comments --remove-unused-defs --remove-nonsvg-elts --remove-metadata-elts --remove-inkscape-elts --remove-sodipodi-elts --remove-ai-elts --remove-corel-elts --remove-msvisio-elts --remove-sketch-elts --remove-invisible-elts --remove-empty-containers --remove-duplicated-defs --remove-outside-elts --equal-elts-to-use --ungroup-containers --merge-gradients --remove-unreferenced-ids --trim-ids --remove-notappl-atts --remove-default-atts --remove-inkscape-atts --remove-sodipodi-atts --remove-ai-atts --remove-corel-atts --remove-msvisio-atts --remove-sketch-atts --remove-stroke-props --remove-fill-props --remove-unused-xlinks --join-style-atts --simplify-transform-matrix --apply-transforms-to-defs --apply-transforms-to-shapes --colors-to-rrggbb --rrggbb-to-rgb --convert-basic-shapes --create-viewbox --apply-transforms-to-defs --sort-defs > /dev/null 2>&1
-
-		#Embed our sha1sum
-		sed --regexp-extended --in-place "s|<svg|<svg xmlns:se=\"https://standardebooks.org/vocab/1.0\" se:generated-from=\"${currentTitleSha1}\"|" "${destDir}/titlepage.svg"
-
-		#Clean up the final SVG
-		xmllint --c14n "${destDir}/titlepage.svg" | (printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' && cat) | xmllint --output "${destDir}/titlepage.svg" --format -
-
-		if [ "${verbose}" = "true" ]; then
-			printf " OK\n"
-		fi
-	fi
-done
+if __name__ == "__main__":
+	main()
