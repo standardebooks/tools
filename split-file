@@ -1,49 +1,39 @@
-#!/bin/bash
-usage(){
-	fmt <<EOF
-DESCRIPTION
-	Split an XHTML file into many files at all instances of <!--se:split-->, and include a header template for each file.
+#!/usr/bin/env python3
 
-USAGE
-	split-file FILE
-EOF
-	exit
-}
-die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
-require(){ command -v $1 > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
-if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
-#End boilerplate
+import argparse
+import os
+import regex
 
-if [ $# -eq 0 ]; then
-	usage
-fi
+def main():
+	parser = argparse.ArgumentParser(description="Split an XHTML file into many files at all instances of <!--se:split-->, and include a header template for each file.")
+	parser.add_argument("filename", metavar="FILE", help="an XHTML file")
+	args = parser.parse_args()
 
-scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	with open(args.filename, "r", encoding="utf-8") as file:
+		xhtml = file.read()
 
-rm -f /tmp/chapter-*.xhtml &> /dev/null
+	with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates/header.xhtml"), "r", encoding="utf-8") as file:
+		header_xhtml = file.read()
 
-#Remove leading split tags
-perl -0pe 's/^\s*<\!--se:split-->//' "$1" > /tmp/file-temp.xhtml
+	chapter_number = 1
+	chapter_xhtml = ""
 
-awk 'BEGIN {i=1}/<!--se:split-->/{i++}{print > "/tmp/chapter-"i".xhtml"}' /tmp/file-temp.xhtml
+	#Remove leading split tags
+	xhtml = regex.sub(r"^\s*<\!--se:split-->", "", xhtml)
 
-for file in $(find "/tmp/" -maxdepth 1 -name "chapter-*.xhtml" 2> /dev/null)
-do
-	rm -f /tmp/file-temp.xhtml /tmp/chapter-temp.xhtml &> /dev/null
+	for line in xhtml.splitlines():
+		if "<!--se:split-->" in line:
+			line = line.replace("<!--se:split-->", "")
 
-	chapterNumber=$(echo "${file}" | sed "s/chapter-//" | grep --extended-regexp --only-matching "[0-9]+")
-	
-	sed "s/NUMBER/${chapterNumber}/g" "${scriptDir}"/templates/header.xhtml > /tmp/chapter-temp.xhtml
-	
-	cat "${file}" >> /tmp/chapter-temp.xhtml
-	
-	echo "</section></body></html>" >> /tmp/chapter-temp.xhtml
-	
-	sed --in-place --regexp-extended "s/<!--se:split-->//g" /tmp/chapter-temp.xhtml
-	
-	filename=$(basename "${file}")
-	
-	mv /tmp/chapter-temp.xhtml ./"${filename}"
-done
+			with open("chapter-" + str(chapter_number) + ".xhtml", "w", encoding="utf-8") as file:
+				file.write(header_xhtml.replace("NUMBER", str(chapter_number)) + "\n" + chapter_xhtml + "\n</section></body></html>")
+				file.truncate()
 
-rm -f /tmp/chapter-*.xhtml &> /dev/null
+			chapter_number = chapter_number + 1
+			chapter_xhtml = line
+
+		else:
+			chapter_xhtml = chapter_xhtml + "\n" + line
+
+if __name__ == "__main__":
+	main()
