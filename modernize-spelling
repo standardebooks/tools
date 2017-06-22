@@ -11,6 +11,7 @@ DICTIONARY_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
 def main():
 	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace \"ash-tray\" with \"ashtray\".")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("-n", "--no-hyphens", dest="modernize_hyphenation", action="store_false", help="don't modernize hyphenation")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
@@ -50,7 +51,8 @@ def main():
 
 				new_xhtml = modernize_spelling(new_xhtml, language.group(1))
 
-				new_xhtml = modernize_hyphenation(new_xhtml, dictionary)
+				if args.modernize_hyphenation:
+					new_xhtml = modernize_hyphenation(new_xhtml, dictionary)
 
 				if new_xhtml != xhtml:
 					file.seek(0)
