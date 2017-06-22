@@ -1,179 +1,121 @@
-#!/bin/bash
-usage(){
-	fmt <<EOF
-DESCRIPTION
-	Create a skeleton of a new Standard Ebook.
+#!/usr/bin/env python3
 
-USAGE
-	create-draft [-e,--email=EMAIL] [-s,--se [-g,--github]] [-f,--force] -a,--author=AUTHOR -t,--title=TITLE [-r,--translator=TRANSLATOR] [-i,--illustrator=ILLUSTRATOR]
-		Create a new ebook skeleton in the current directory.
+import argparse
+import sys
+import os
+import shutil
+from subprocess import call
+import git
+import se.formatting
 
-		If --email is specified, initialize the Git repository using that email address as the main committer.
+def replace_in_file(filename, search, replace):
+	with open(filename, "r+", encoding="utf-8") as file:
+		data = file.read()
+		file.seek(0)
 
-		With --se, initialize a new repository on the Standard Ebook server.  Must have SSH access to the Standard Ebook server.  With --github, initialize a new Github repository for this ebook.  Can only be called with --se.
+		if isinstance(search, list):
+			for index, val in enumerate(search):
+				data = data.replace(val, replace[index])
+			file.write(data)
+		else:
+			file.write(data.replace(search, replace))
 
-		With --force, don't ask to overwrite an existing draft. directory.
-EOF
-	exit
-}
-die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
-if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
-#End boilerplate
+		file.truncate()
 
-customEmail=""
-author=""
-title=""
-translator=""
-illustrator=""
-initializeGithub=false
-initializeSe=false
-force=false
-scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-makeUrlSafePath="${scriptDir}/make-url-safe"
+def main():
+	parser = argparse.ArgumentParser(description="Create a skeleton of a new Standard Ebook in the current directory.")
+	parser.add_argument("-a", "--author", dest="author", required=True, help="the author of the ebook")
+	parser.add_argument("-t", "--title", dest="title", required=True, help="the title of the ebook")
+	parser.add_argument("-i", "--illustrator", dest="illustrator", help="the illustrator of the ebook")
+	parser.add_argument("-r", "--translator", dest="translator", help="the translator of the ebook")
+	parser.add_argument("-s", "--se", dest="init_se_repo", action="store_true", help="initialize a new repository on the Standard Ebook server")
+	parser.add_argument("-g", "--github", dest="init_github_repo", action="store_true", help="initialize a new repository on GitHub; can only be used when --se is specified")
+	parser.add_argument("-e", "--email", dest="email", help="use this email address as the main committer for the new Git repository")
+	args = parser.parse_args()
 
-for i in "$@"
-do
-case $i in
-	-e=*|--email=*)
-		customEmail=$(echo "${i}" | sed 's/[-a-zA-Z0-9]*=//')
-		shift
-	;;
-	-g|--github)
-		initializeGithub=true
-		shift
-	;;
-	-f|--force)
-		force=true
-		shift
-	;;
-	-s|--se)
-		initializeSe=true
-		shift
-	;;
-	-a=*|--author=*)
-		author=$(echo "${i}" | sed 's/[-a-zA-Z0-9]*=//')
-		shift
-	;;
-	-t=*|--title=*)
-		title=$(echo "${i}" | sed 's/[-a-zA-Z0-9]*=//')
-		shift
-	;;
-	-r=*|--translator=*)
-		translator=$(echo "${i}" | sed 's/[-a-zA-Z0-9]*=//')
-		shift
-	;;
-	-i=*|--illustrator=*)
-		illustrator=$(echo "${i}" | sed 's/[-a-zA-Z0-9]*=//')
-		shift
-	;;
-esac
-done
+	if args.init_github_repo and not args.init_se_repo:
+		print("Error: --github option specified, but --se option not specified.", file=sys.stderr)
+		exit(1)
 
-if [ "${author}" = "" ]; then
-	die "Author is required."
-fi
+	#Put together some variables for later use
+	templates_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates")
+	identifier = se.formatting.make_url_safe(args.author) + "/" + se.formatting.make_url_safe(args.title)
+	title_string = args.title + ", by " + args.author
 
-if [ "${title}" = "" ]; then
-	die "Title is required."
-fi
+	if args.translator:
+		identifier = identifier + "/" + se.formatting.make_url_safe(args.translator)
+		title_string = title_string + ". Translated by " + args.translator
 
-scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	if args.illustrator:
+		identifier = identifier + "/" + se.formatting.make_url_safe(args.illustrator)
+		title_string = title_string + ". Illustrated by " + args.illust
 
-urlAuthor=$("${makeUrlSafePath}" "${author}")
-urlTitle=$("${makeUrlSafePath}" "${title}")
-urlTranslator=$("${makeUrlSafePath}" "${translator}")
-urlIllustrator=$("${makeUrlSafePath}" "${illustrator}")
-identifier="${urlAuthor}/${urlTitle}"
-titleString="${title}, by ${author}"
-if [ "${urlTranslator}" != "" ]; then
-	identifier="${identifier}/${urlTranslator}"
-	titleString="${titleString}. Translated by ${translator}"
-fi
-if [ "${urlIllustrator}" != "" ]; then
-	identifier="${identifier}/${urlIllustrator}"
-	titleString="${titleString}. Illustrated by ${illustrator}"
-fi
-repoName=$(echo "${identifier}" | sed "s|/|_|g")
+	repo_name = identifier.replace("/", "_")
 
-if [ -d "${repoName}" ]; then
-	if [ "${force}" != true ]; then
-		while true; do
-		    read -p "./${repoName}/ already exists.  Overwrite? " yn
-		    case $yn in
-		        [Yy]* )
-					force=true
-					break
-				;;
-		        * )
-					exit
-				;;
-		    esac
-		done
-	fi
-	if [ "${force}" = true ]; then
-		rm -rf "${repoName}"
-	fi
-fi
+	if os.path.isdir(repo_name):
+		print("Error: ./{}/ already exists.".format(repo_name), file=sys.stderr)
+		exit(1)
 
-mkdir -p "${repoName}/images"
-mkdir -p "${repoName}/src/epub/css"
-mkdir -p "${repoName}/src/epub/images"
-mkdir -p "${repoName}/src/epub/text"
-mkdir -p "${repoName}/src/META-INF"
+	#Create necessary directories
+	os.makedirs(os.path.normpath(repo_name + "/images"))
+	os.makedirs(os.path.normpath(repo_name + "/src/epub/css"))
+	os.makedirs(os.path.normpath(repo_name + "/src/epub/images"))
+	os.makedirs(os.path.normpath(repo_name + "/src/epub/text"))
+	os.makedirs(os.path.normpath(repo_name + "/src/META-INF"))
 
-cp "${scriptDir}/templates/META-INF/container.xml" "${repoName}/src/META-INF/"
-cp "${scriptDir}/templates/mimetype" "${repoName}/src/"
-cp "${scriptDir}/templates/onix.xml" "${repoName}/src/epub/"
-cp "${scriptDir}/templates/toc.xhtml" "${repoName}/src/epub/"
-cp "${scriptDir}/templates/core.css" "${repoName}/src/epub/css/"
-cp "${scriptDir}/templates/logo.svg" "${repoName}/src/epub/images/"
-cp "${scriptDir}/templates/imprint.xhtml" "${repoName}/src/epub/text/"
-cp "${scriptDir}/templates/uncopyright.xhtml" "${repoName}/src/epub/text/"
+	#Copy over templates
+	shutil.copy(os.path.normpath(templates_path + "/META-INF/container.xml"), os.path.normpath(repo_name + "/src/META-INF/"))
+	shutil.copy(os.path.normpath(templates_path + "/mimetype"), os.path.normpath(repo_name + "/src/"))
+	shutil.copy(os.path.normpath(templates_path + "/content.opf"), os.path.normpath(repo_name + "/src/epub/"))
+	shutil.copy(os.path.normpath(templates_path + "/onix.xml"), os.path.normpath(repo_name + "/src/epub/"))
+	shutil.copy(os.path.normpath(templates_path + "/toc.xhtml"), os.path.normpath(repo_name + "/src/epub/"))
+	shutil.copy(os.path.normpath(templates_path + "/core.css"), os.path.normpath(repo_name + "/src/epub/css/"))
+	shutil.copy(os.path.normpath(templates_path + "/local.css"), os.path.normpath(repo_name + "/src/epub/css/"))
+	shutil.copy(os.path.normpath(templates_path + "/logo.svg"), os.path.normpath(repo_name + "/src/epub/images/"))
+	shutil.copy(os.path.normpath(templates_path + "/colophon.xhtml"), os.path.normpath(repo_name + "/src/epub/text/"))
+	shutil.copy(os.path.normpath(templates_path + "/imprint.xhtml"), os.path.normpath(repo_name + "/src/epub/text/"))
+	shutil.copy(os.path.normpath(templates_path + "/titlepage.xhtml"), os.path.normpath(repo_name + "/src/epub/text/"))
+	shutil.copy(os.path.normpath(templates_path + "/uncopyright.xhtml"), os.path.normpath(repo_name + "/src/epub/text/"))
+	shutil.copy(os.path.normpath(templates_path + "/titlepage.svg"), os.path.normpath(repo_name + "/images/"))
 
-cp "${scriptDir}/templates/titlepage.svg" "${repoName}/images/"
-cp "${scriptDir}/templates/local.css"  "${repoName}/src/epub/css/"
-cp "${scriptDir}/templates/colophon.xhtml"  "${repoName}/src/epub/text/"
-cp "${scriptDir}/templates/titlepage.xhtml"  "${repoName}/src/epub/text/"
-cp "${scriptDir}/templates/content.opf"  "${repoName}/src/epub/"
+	if len(args.title) < 15:
+		shutil.copy(os.path.normpath(templates_path + "/cover-short.svg"), os.path.normpath(repo_name + "/images/cover.svg"))
+	elif len(args.title) >= 30:
+		shutil.copy(os.path.normpath(templates_path + "/cover-long.svg"), os.path.normpath(repo_name + "/images/cover.svg"))
+	else:
+		shutil.copy(os.path.normpath(templates_path + "/cover.svg"), os.path.normpath(repo_name + "/images/cover.svg"))
 
-if [ ${#title} -lt 15 ]; then
-	cp "${scriptDir}/templates/cover-short.svg" "${repoName}/images/cover.svg"
-elif [ ${#title} -ge 30 ]; then
-	cp "${scriptDir}/templates/cover-long.svg" "${repoName}/images/cover.svg"
-else
-	cp "${scriptDir}/templates/cover.svg" "${repoName}/images/cover.svg"
-fi
+	#Pre-fill a few templates
+	replace_in_file(os.path.normpath(repo_name + "/src/epub/text/titlepage.xhtml"), "TITLESTRING", title_string)
+	replace_in_file(os.path.normpath(repo_name + "/images/titlepage.svg"), "TITLESTRING", title_string)
+	replace_in_file(os.path.normpath(repo_name + "/images/cover.svg"), "TITLESTRING", title_string)
+	replace_in_file(os.path.normpath(repo_name + "/src/epub/content.opf"), ["SEIDENTIFIER", "AUTHOR", "TITLE", "VCSIDENTIFIER"], [identifier, args.author, args.title, repo_name])
+	replace_in_file(os.path.normpath(repo_name + "/src/epub/text/colophon.xhtml"), ["SEIDENTIFIER", "AUTHOR", "TITLE"], [identifier, args.author, args.title])
 
-sed --in-place "s|TITLESTRING|${titleString}|g" "${repoName}/src/epub/text/titlepage.xhtml"
-sed --in-place "s|TITLESTRING|${titleString}|g" "${repoName}/images/titlepage.svg"
-sed --in-place "s|TITLESTRING|${titleString}|g" "${repoName}/images/cover.svg"
-sed --in-place "s|SEIDENTIFIER|${identifier}|g" "${repoName}/src/epub/content.opf"
-sed --in-place "s|AUTHOR|${author}|g" "${repoName}/src/epub/content.opf"
-sed --in-place "s|TITLE|${title}|g" "${repoName}/src/epub/content.opf"
-sed --in-place "s|VCSIDENTIFIER|${repoName}|" "${repoName}/src/epub/content.opf"
-sed --in-place "s|SEIDENTIFIER|${identifier}|g" "${repoName}/src/epub/text/colophon.xhtml"
-sed --in-place "s|TITLE|${title}|g" "${repoName}/src/epub/text/colophon.xhtml"
-sed --in-place "s|AUTHOR|${author}|g" "${repoName}/src/epub/text/colophon.xhtml"
+	#Set up local git repo
+	repo = git.Repo.init(repo_name)
 
-git init --quiet "${repoName}"
+	if args.email:
+		with repo.config_writer() as config:
+			config.set_value("user", "email", args.email)
 
-cd "${repoName}"
+	#Set up remote git repos
+	if args.init_se_repo:
+		git_command = git.cmd.Git(repo_name)
+		git_command.remote("add", "origin", "standardebooks.org:/standardebooks.org/ebooks/{}.git".format(repo_name))
 
-if [ "${customEmail}" != "" ]; then
-	git config user.email "${customEmail}"
-fi
+		#Set git to automatically push to SE
+		git_command.config("branch.master.remote", "origin")
+		git_command.config("branch.master.merge", "refs/heads/master")
 
-if [ "${initializeSe}" = true ]; then
-	githubOption=""
-	if [ "${initializeGithub}" = true ]; then
-		githubOption="--github"
-	fi
+		github_option = ""
+		if args.init_github_repo:
+			github_option = "--github"
 
-	git remote add origin "standardebooks.org:/standardebooks.org/ebooks/${repoName}.git"
+		return_code = call(["ssh", "standardebooks.org", "/standardebooks.org/scripts/init-se-repo --repo-name={} --title-string=\"{}\" {}".format(repo_name, title_string, github_option)])
+		if return_code != 0:
+			print("Error: failed to create repository on Standard Ebooks server: ssh returned code {}.".format(return_code), file=sys.stderr)
+			exit(1)
 
-	#Set git to automatically push to SE
-	git config branch.master.remote origin
-	git config branch.master.merge refs/heads/master
-
-	ssh standardebooks.org "/standardebooks.org/scripts/init-se-repo --repo-name=${repoName} --title-string=\"${titleString}\" ${githubOption}"
-fi
+if __name__ == "__main__":
+	main()
