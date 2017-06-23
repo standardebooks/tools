@@ -1,113 +1,74 @@
-#!/bin/bash
-usage(){
-	fmt <<EOF
-DESCRIPTION
-	Prettify individual source files, or all XHTML and SVG files in a source directory, including canonicalizing XML and minifying SVGs.  Note that this only prettifies the source code; it doesn't perform typography changes.
+#!/usr/bin/env python3
 
-USAGE
-	clean [-v,--verbose] [-s,--single-lines] DIRECTORY,FILE [DIRECTORY,FILE...]
-		DIRECTORY is a directory containing one or more XHTML or SVG files.
-		FILE is an XHTML or SVG file.
-		Multiple directories and files can be included in a single invocation.
+import argparse
+import os
+import fnmatch
+import html
+from subprocess import Popen, PIPE
+import regex
 
-		With --single-lines, remove hard line wrapping.
-EOF
-	exit
-}
-die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
-require(){ command -v $1 > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
-if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
-#End boilerplate
+def main():
+	parser = argparse.ArgumentParser(description="Prettify individual source files, or all XHTML and SVG files in a source directory, including canonicalizing XML.  Note that this only prettifies the source code; it doesn't perform typography changes.")
+	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("-s", "--single-lines", action="store_true", help="remove hard line wrapping")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
+	args = parser.parse_args()
 
-#Check for dependencies
-require "recode" "Try: sudo apt-get install recode"
-require "xml2asc" "Try: sudo apt-get install html-xml-utils"
+	#Tell xmllint to indent with tabs using an environmental variable
+	env = os.environ.copy()
+	env["XMLLINT_INDENT"] = "\t"
 
-if [ $# -eq 0 ]; then
-	usage
-fi
+	for target in args.targets:
+		target = os.path.abspath(target)
+		target_is_directory = False
 
-verbose="false"
-singleLines="false"
-dirs=""
+		if args.verbose:
+			print("Processing {} ...".format(target), end="", flush=True)
 
-while [ $# -gt 0 ]
-do
-	case "$1" in
-		-v|--verbose)
-			verbose="true"
-		;;
-		-s|--single-lines)
-			singleLines="true"
-		;;
-		*)
-			dirs=$(printf "%s\n%s" "${dirs}" "$1")
-		;;
-	esac
-	shift
-done
+		target_filenames = set()
+		if os.path.isdir(target):
+			target_is_directory = True
+			for root, _, filenames in os.walk(target):
+				for filename in fnmatch.filter(filenames, "*.xhtml"):
+					target_filenames.add(os.path.join(root, filename))
+		else:
+			target_filenames.add(target)
 
-#Set xmllint to use tab indentation.
-export XMLLINT_INDENT=$(printf "\t")
+		for filename in target_filenames:
+			#If we're cleaning a directory and setting single lines, skip the colophon, which has special spacing
+			if args.single_lines and target_is_directory and filename.endswith("colophon.xhtml"):
+				continue
 
-printf "%s\n" "${dirs}" | while IFS= read -r i;
-do
-	if [ "${i}" = "" ]; then
-		continue
-	fi
+			with open(filename, "r+", encoding="utf-8") as file:
+				xhtml = file.read()
+				processed_xhtml = xhtml
 
-	srcDir="$(realpath "${i%/}")"
+				if args.single_lines:
+					processed_xhtml = processed_xhtml.replace("\n", "")
+					processed_xhtml = regex.sub(r"\s+", "", processed_xhtml)
 
-	isDir="false"
+				#Epub3 doesn't allow named entities, so convert them to their unicode equivalents
+				processed_xhtml = html.unescape(processed_xhtml)
 
-	if [ -d "${srcDir}" ]; then
-		isDir="true"
-	fi
+				#First, canonicalize XHTML
+				process = Popen(["xmllint", "--c14n", "-"], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+				processed_xhtml = process.communicate(input=processed_xhtml.encode())[0].decode()
 
-	if [ "${verbose}" = "true" ]; then
-		printf "Cleaning %s ..." "${srcDir}"
-	fi
+				#Next, add the XML header that xmllint stripped during c14n
+				processed_xhtml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + processed_xhtml
 
-	if [ "${isDir}" = "true" ]; then
-		if [ "${singleLines}" = "true" ]; then
-			if [ -f "${srcDir}"/src/epub/text/colophon.xhtml ]; then
-				cp "${srcDir}"/src/epub/text/colophon.xhtml /tmp/colophon.xhtml
-			fi
+				#Next, pretty-print XML
+				process = Popen(["xmllint", "--format", "-"], stdout=PIPE, stdin=PIPE, stderr=PIPE, env=env)
+				processed_xhtml = process.communicate(input=processed_xhtml.encode())[0].decode()
 
-			find "${srcDir}" -iname "*.xhtml" -type f -exec sh -c "perl -i -pe \"s/\n/ /\" "{}"" \;
-			find "${srcDir}" -iname "*.xhtml" -type f -exec sh -c "sed --in-place --regexp-extended \"s|\s+| |g\" "{}"" \;
+				if processed_xhtml != xhtml:
+					file.seek(0)
+					file.write(processed_xhtml)
+					file.truncate()
 
-			if [ -f "${srcDir}"/src/epub/text/colophon.xhtml ]; then
-				cp /tmp/colophon.xhtml "${srcDir}"/src/epub/text/colophon.xhtml
-			fi
-		fi
+		if args.verbose:
+			print(" OK")
 
-		#Epub3 doesn't allow named entities, so convert them to their unicode equivalents
-		#First we use xml2asc to convert *all* special characters to named entities.
-		#Then recode converts named entities to unicode.
-		find "${srcDir}" -iname "*.xhtml" -type f -exec sh -c "xml2asc < "{}" | recode HTML | sed \"s/&/&amp;/g\" > /tmp/tmp.xhtml; mv /tmp/tmp.xhtml "{}"" \;
 
-		#Clean files with xmllint.
-		#The --c14n flag removes the XML declaration, so we re-add it before formatting.  Otherwise we get problems.
-		find "${srcDir}" -iname "*.xhtml" -type f -exec sh -c "xmllint --c14n "{}" | (printf '%s\n' '<?xml version=\"1.0\" encoding=\"UTF-8\"?>' && cat) | xmllint --output "{}" --format -" \;
-		find "${srcDir}" \( -iname "*.svg" -o -iname "*.opf" -o -iname "*.xml" \) -type f -exec sh -c "xmllint --c14n "{}" | (printf '%s\n' '<?xml version=\"1.0\" encoding=\"UTF-8\"?>' && cat) | xmllint --output "{}" --format -" \;
-
-		#Add trailing newlines to files that don't have one.
-		find "${srcDir}" \( -iname "*.xhtml" -o -iname "*.svg" -o -iname "*.css" -o -iname "*.opf" -o -iname "*.xml" \) -type f -exec sed -i -e '$a\' "{}" \;
-	else
-		if [ "${singleLines}" = "true" ]; then
-			perl -i -pe "s/\n/ /" "${srcDir}"
-			sed --in-place --regexp-extended "s|\s+| |g" "${srcDir}"
-		fi
-
-		xml2asc < "${srcDir}" | recode HTML | sed "s/&/&amp;/g" > /tmp/tmp.xhtml; mv /tmp/tmp.xhtml "${srcDir}"
-
-		xmllint --c14n "${srcDir}" | (printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' && cat) | xmllint --output "${srcDir}" --format -
-
-		sed --in-place -e '$a\' "${srcDir}"
-	fi
-
-	if [ "${verbose}" = "true" ]; then
-		printf "%s\n" " OK"
-	fi
-done
+if __name__ == "__main__":
+	main()
