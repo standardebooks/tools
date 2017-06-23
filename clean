@@ -51,14 +51,17 @@ def main():
 				processed_xhtml = xhtml
 
 				if args.single_lines:
-					processed_xhtml = processed_xhtml.replace("\n", "")
-					processed_xhtml = regex.sub(r"\s+", "", processed_xhtml)
+					processed_xhtml = processed_xhtml.replace("\n", " ")
+					processed_xhtml = regex.sub(r"\s+", " ", processed_xhtml)
 
 				#Epub3 doesn't allow named entities, so convert them to their unicode equivalents
 				processed_xhtml = html.unescape(processed_xhtml)
 
+				#Remove unnecessary doctypes which can cause xmllint to hang
+				processed_xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", processed_xhtml, flags=regex.MULTILINE | regex.DOTALL)
+
 				#First, canonicalize XHTML
-				process = Popen([xmllint_path, "--c14n", "-"], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+				process = Popen([xmllint_path, "--c14n", "-"], stdout=PIPE, stdin=PIPE)
 				processed_xhtml = process.communicate(input=processed_xhtml.encode())[0].decode()
 
 				#Next, add the XML header that xmllint stripped during c14n
