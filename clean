@@ -20,14 +20,12 @@ def main():
 
 	for target in args.targets:
 		target = os.path.abspath(target)
-		target_is_directory = False
 
 		if args.verbose:
 			print("Processing {} ...".format(target), end="", flush=True)
 
 		target_filenames = set()
 		if os.path.isdir(target):
-			target_is_directory = True
 			for root, _, filenames in os.walk(target):
 				for filename in fnmatch.filter(filenames, "*.xhtml"):
 					target_filenames.add(os.path.join(root, filename))
@@ -36,7 +34,7 @@ def main():
 
 		for filename in target_filenames:
 			#If we're cleaning a directory and setting single lines, skip the colophon, which has special spacing
-			if args.single_lines and target_is_directory and filename.endswith("colophon.xhtml"):
+			if args.single_lines and filename.endswith("colophon.xhtml") and os.path.isdir(target):
 				continue
 
 			with open(filename, "r+", encoding="utf-8") as file:
