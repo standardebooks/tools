@@ -61,8 +61,14 @@ def main():
 				processed_xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", processed_xhtml, flags=regex.MULTILINE | regex.DOTALL)
 
 				#First, canonicalize XHTML
-				process = Popen([xmllint_path, "--c14n", "-"], stdout=PIPE, stdin=PIPE)
-				processed_xhtml = process.communicate(input=processed_xhtml.encode())[0].decode()
+				process = Popen([xmllint_path, "--c14n", "-"], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+				processed_xhtml, error = process.communicate(input=processed_xhtml.encode())
+				processed_xhtml = processed_xhtml.decode()
+
+				if error is not None and error.decode().strip() != "":
+					print("Error: Couldn't parse {}; files must be in XHTML format, which is not the same as HTML".format(filename), file=sys.stderr)
+					print(error.decode().strip(), file=sys.stderr)
+					exit(1)
 
 				#Next, add the XML header that xmllint stripped during c14n
 				processed_xhtml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + processed_xhtml
