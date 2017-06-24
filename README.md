@@ -4,11 +4,17 @@ A collection of tools Standard Ebooks uses to produce its ebooks, including basi
 
 # Warning for Mac users
 
-This repository started out as all Bash scripts targeting Ubuntu 16.04, and over time the tools have been converted to Python scripts for better cross-platform compatibility.  However not all the tools are converted yet, notably `build` and `clean`.  There have been many reports of breakage when using these scripts in a Mac environment.  Until we finish converting these last few scripts to Python, **we suggest starting up an Ubuntu 16.04 virtual machine to run these scripts**.
+macOS support is currently **experimental**. Proceed at your own risk. See below for prerequisites and installation instructions.
+
+For a smoother experience, you may want to run the tools on your Mac through a linux virtual machine or container.
 
 # Installation
 
-Several dependencies must be installed before you can use these tools. On Ubuntu 16.04, you can install everything with:
+Several dependencies must be installed before you can use these tools. 
+
+## Linux
+
+On Ubuntu 16.04, you can install everything with:
 
 	sudo apt install python3-pip xsltproc libxml2-utils xmlstarlet libxml-xpath-perl recode html-xml-utils librsvg2-bin libimage-exiftool-perl zip epubcheck calibre default-jre
 	sudo pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants pillow gitpython cssselect regex lxml
@@ -26,6 +32,27 @@ Several dependencies must be installed before you can use these tools. On Ubuntu
 You can also install the dependencies locally via pip:
 
     pip3 install -r requirements.txt
+
+## macOS
+
+These instructions were tested on Mac OS X 10.12. Your mileage may vary.
+
+1. Install the [Homebrew package manager](https://brew.sh).
+2. Install the [calibre ebook management app](http://calibre-ebook.com).
+3. Install [Java JDK 1.7 or later](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+4. Install the required homebrew packages
+
+       brew install python3 gnu-sed xmlstarlet imagemagick librsvg epubcheck inkscape
+
+5. Install the required python packages:
+
+       pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants pillow gitpython cssselect regex lxml
+
+6. Install the required fonts:
+
+       curl -s -o ~/Library/Fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
+       curl -s -o ~/Library/Fonts/OFLGoudyStM.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM.otf?raw=true"
+       curl -s -o ~/Library/Fonts/OFLGoudyStM-Italic.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM-Italic.otf?raw=true"
 
 # Tool descriptions
 
