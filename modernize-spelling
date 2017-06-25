@@ -104,7 +104,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Mm])enage\b", r"\1énage", xhtml)			# menage -> ménage
 	xhtml = regex.sub(r"([Hh])ypothenuse", r"\1ypotenuse", xhtml)			# hypothenuse -> hypotenuse
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
-	xhtml = regex.sub(r"Tolosti", r"Tolstoy", xhtml)				# Tolstoi -> Tolstoy
+	xhtml = regex.sub(r"Tolstoi", r"Tolstoy", xhtml)				# Tolstoi -> Tolstoy
 	xhtml = regex.sub(r"Buonaparte", r"Bonaparte", xhtml)				# Buonaparte -> Bonaparte
 	xhtml = regex.sub(r"Shakespear([^ie])", r"Shakespeare\1", xhtml)		# Shakespear -> Shakespeare
 	xhtml = regex.sub(r"Raffaelle", r"Raphael", xhtml)				# Raffaelle -> Raphael
@@ -146,10 +146,10 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\bpercent\.,\b", r"percent,", xhtml)			# per cent. -> percent
 	xhtml = regex.sub(r"\b([Ff])iance", r"\1iancé", xhtml)				# fiance -> fiancé
 	xhtml = regex.sub(r"\b([Oo])utre\b", r"\1utré", xhtml)				# outre -> outré
-	xhtml = regex.sub(r"\b([Ff])etich\b", r"\1etish", xhtml)			# fetich -> fetish
+	xhtml = regex.sub(r"\b([Ff])etich", r"\1etish", xhtml)				# fetich -> fetish
 	xhtml = regex.sub(r"\b([Pp])igstye\b", r"\1igsty", xhtml)			# pigstye -> pigsty
 	xhtml = regex.sub(r"\b([Pp])igstyes\b", r"\1igsties", xhtml)			# pigstyes -> pigsties
-	xhtml = regex.sub(r"\b([Cc])lew(s?)\b", r"\1lew\2", xhtml)			# clew -> clue
+	xhtml = regex.sub(r"\b([Cc])lew(s?)\b", r"\1lue\2", xhtml)			# clew -> clue
 	xhtml = regex.sub(r"\b[ÀA]\s?propos\b", r"Apropos", xhtml)			# à propos -> apropos
 	xhtml = regex.sub(r"\b[àa]\s?propos\b", r"apropos", xhtml)			# à propos -> apropos
 	xhtml = regex.sub(r"\b([Nn])ew comer(s?)\b", r"\1ewcomer\2", xhtml)		# new comer -> newcomer
