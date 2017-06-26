@@ -84,6 +84,11 @@ def modernize_hyphenation(xhtml, dictionary):
 	return xhtml
 
 def modernize_spelling(xhtml, language):
+	#ADDING NEW WORDS TO THIS LIST:
+	#A good way to check if a word is "archaic" is to do a Google N-Gram search: https://books.google.com/ngrams/graph?case_insensitive=on&year_start=1800&year_end=2000&smoothing=3
+	#Remember that en-US and en-GB differ significantly, and just because a word might seem strange to you, doesn't mean it's not the common case in the other variant.
+	#If Google N-Gram shows that a word has declined significantly in usage in BOTH en-US and en-GB (or the SE editor makes an exception) then it may be a good candidate to add to this list.
+
 	xhtml = regex.sub(r"\b([Dd])evelope\b", r"\1evelop", xhtml)			# develope -> develop
 	xhtml = regex.sub(r"\b([Oo])ker\b", r"\1cher", xhtml)				# oker -> ocher
 	xhtml = regex.sub(r"\b([Ww])ellnigh\b", r"\1ell-nigh", xhtml)			# wellnigh -> well-nigh
