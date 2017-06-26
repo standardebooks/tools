@@ -18,9 +18,24 @@ require(){ command -v $1 > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; 
 if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
 #End boilerplate
 
-timestamp="$(date --utc +%s)"
-isoTimestamp="$(date -d @${timestamp} --utc +"%Y-%m-%dT%H:%M:%SZ")"
-friendlyTimestamp="$(date -d @${timestamp} --utc +"%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>" | sed --regexp-extended "s/\s+/ /g" | sed "s/>AM/>a.m./" | sed "s/>PM/>p.m./")"
+# detect platform
+platform="$(uname -s)"
+
+if [ "$platform" = "Darwin" ]; then
+	sedCommand="$(which gsed)"
+	realpath(){ pushd . > /dev/null; if [ -d "$1" ]; then cd "$1"; dirs -l +0; else cd "`dirname \"$1\"`"; cur_dir=`dirs -l +0`; if [ "$cur_dir" == "/" ]; then echo "$cur_dir`basename \"$1\"`"; else echo "$cur_dir/`basename \"$1\"`"; fi; fi; popd > /dev/null; }
+	
+	timestamp="$(date -u +%s)"
+	isoTimestamp="$(date -j -f "%s" ${timestamp} +"%Y-%m-%dT%H:%M:%SZ")"
+	friendlyTimestamp="$(date -j -f "%s" ${timestamp} +"%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>" | ${sedCommand} --regexp-extended "s/\s+/ /g" | ${sedCommand} "s/>AM/>a.m./" | ${sedCommand} "s/>PM/>p.m./")"
+else
+	sedCommand="$(which sed)"
+	
+	timestamp="$(date --utc +%s)"
+	isoTimestamp="$(date -d @${timestamp} --utc +"%Y-%m-%dT%H:%M:%SZ")"
+	friendlyTimestamp="$(date -d @${timestamp} --utc +"%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>" | ${sedCommand} --regexp-extended "s/\s+/ /g" | ${sedCommand} "s/>AM/>a.m./" | ${sedCommand} "s/>PM/>p.m./")"
+fi
+
 scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 wordcountPath="${scriptDir}/word-count"
 readingEasePath="${scriptDir}/reading-ease"
@@ -78,7 +93,7 @@ do
 		fi
 
 		wordCount=$("${wordcountPath}" -x "${srcDir}")
-		sed --in-place --regexp-extended "s|<meta property=\"se:word-count\">[^<]*</meta>|<meta property=\"se:word-count\">${wordCount}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+		${sedCommand} --in-place --regexp-extended "s|<meta property=\"se:word-count\">[^<]*</meta>|<meta property=\"se:word-count\">${wordCount}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
 
 		if [ "${verbose}" = "true" ]; then
 			printf " Done.\n"
@@ -90,7 +105,7 @@ do
 		fi
 
 		ease=$("${readingEasePath}" "${srcDir}")
-		sed --in-place --regexp-extended "s|<meta property=\"se:reading-ease.flesch\">[^<]*</meta>|<meta property=\"se:reading-ease.flesch\">${ease}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+		${sedCommand} --in-place --regexp-extended "s|<meta property=\"se:reading-ease.flesch\">[^<]*</meta>|<meta property=\"se:reading-ease.flesch\">${ease}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
 
 		if [ "${verbose}" = "true" ]; then
 			printf " Done.\n"
@@ -105,7 +120,7 @@ do
 		revision=$(grep -E "<meta property=\"se:revision-number\">[0-9]+</meta>" "${srcDir}/src/epub/content.opf" | grep --only-matching -E "[0-9]+")
 		revision=$((revision + 1))
 
-		sed --in-place --regexp-extended "s|<meta property=\"se:revision-number\">[^<]+</meta>|<meta property=\"se:revision-number\">${revision}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+		${sedCommand} --in-place --regexp-extended "s|<meta property=\"se:revision-number\">[^<]+</meta>|<meta property=\"se:revision-number\">${revision}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
 
 		if [ "${revision}" != "1" ]; then
 			ordinal=$("${ordinalPath}" "${revision}")
@@ -113,10 +128,10 @@ do
 			#Are we moving from the first edition to the nth edition?
 			grep --quiet -E "<p>This is the first edition of this ebook.<br/>" "${srcDir}/src/epub/text/colophon.xhtml"
 			if [ $? -eq 0 ]; then
-				sed --in-place --regexp-extended "s|This edition was released on<br/>|The first edition was released on<br/>|" "${srcDir}/src/epub/text/colophon.xhtml"
-				sed --in-place --regexp-extended "s|<p>This is the first edition of this ebook.<br/>|<p>This is the <span class=\"revision-number\">${ordinal}</span> edition of this ebook.<br/>\n\t\t\tThis edition was released on<br/>\n\t\t\t<span class=\"revision-date\">${friendlyTimestamp}</span><br/>|" "${srcDir}/src/epub/text/colophon.xhtml"
+				${sedCommand} --in-place --regexp-extended "s|This edition was released on<br/>|The first edition was released on<br/>|" "${srcDir}/src/epub/text/colophon.xhtml"
+				${sedCommand} --in-place --regexp-extended "s|<p>This is the first edition of this ebook.<br/>|<p>This is the <span class=\"revision-number\">${ordinal}</span> edition of this ebook.<br/>\n\t\t\tThis edition was released on<br/>\n\t\t\t<span class=\"revision-date\">${friendlyTimestamp}</span><br/>|" "${srcDir}/src/epub/text/colophon.xhtml"
 			else
-				sed --in-place --regexp-extended "s|<span class=\"revision-number\">[^<]+</span>|<span class=\"revision-number\">${ordinal}</span>|" "${srcDir}/src/epub/text/colophon.xhtml"
+				${sedCommand} --in-place --regexp-extended "s|<span class=\"revision-number\">[^<]+</span>|<span class=\"revision-number\">${ordinal}</span>|" "${srcDir}/src/epub/text/colophon.xhtml"
 			fi
 		fi
 
@@ -133,8 +148,8 @@ do
 				printf "\tSetting release date ..."
 			fi
 
-			sed --in-place --regexp-extended "s|<dc:date>[^<]*</dc:date>|<dc:date>${isoTimestamp}</dc:date>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
-			sed --in-place --regexp-extended "s|<span class=\"release-date\">.+?</span>|<span class=\"release-date\">${friendlyTimestamp}</span>|g" "${srcDir}/src/epub/text/colophon.xhtml" > /dev/null 2>&1
+			${sedCommand} --in-place --regexp-extended "s|<dc:date>[^<]*</dc:date>|<dc:date>${isoTimestamp}</dc:date>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+			${sedCommand} --in-place --regexp-extended "s|<span class=\"release-date\">.+?</span>|<span class=\"release-date\">${friendlyTimestamp}</span>|g" "${srcDir}/src/epub/text/colophon.xhtml" > /dev/null 2>&1
 
 			if [ "${verbose}" = "true" ]; then
 				printf " Done.\n"
@@ -145,8 +160,8 @@ do
 			printf "\tSetting modified date ..."
 		fi
 
-		sed --in-place --regexp-extended "s|<meta property=\"dcterms:modified\">[^<]*</meta>|<meta property=\"dcterms:modified\">${isoTimestamp}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
-		sed --in-place --regexp-extended "s|<span class=\"revision-date\">.+?</span>|<span class=\"revision-date\">${friendlyTimestamp}</span>|g" "${srcDir}/src/epub/text/colophon.xhtml" > /dev/null 2>&1
+		${sedCommand} --in-place --regexp-extended "s|<meta property=\"dcterms:modified\">[^<]*</meta>|<meta property=\"dcterms:modified\">${isoTimestamp}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+		${sedCommand} --in-place --regexp-extended "s|<span class=\"revision-date\">.+?</span>|<span class=\"revision-date\">${friendlyTimestamp}</span>|g" "${srcDir}/src/epub/text/colophon.xhtml" > /dev/null 2>&1
 
 		if [ "${verbose}" = "true" ]; then
 			printf " Done.\n"
@@ -219,7 +234,7 @@ do
 	do
 		filename=$(basename "${file}")
 		if [ "${filename}" != "colophon.xhtml" -a "${filename}" != "titlepage.xhtml" -a "${filename}" != "imprint.xhtml" -a "${filename}" != "halftitle.xhtml" -a "${filename}" != "uncopyright.xhtml" -a "${filename}" != "loi.xhtml" -a "${filename}" != "toc.xhtml" ]; then
-			fileLanguage="$(grep --only-matching -E "<html[^<]+xml\:lang=\"[^\"]+\"" "${file}" | sed -E "s/.+xml\:lang=\"([^\"]+)\"/\1/")"
+			fileLanguage="$(grep --only-matching -E "<html[^<]+xml\:lang=\"[^\"]+\"" "${file}" | ${sedCommand} -E "s/.+xml\:lang=\"([^\"]+)\"/\1/")"
 			if [ "${fileLanguage}" != "${language}" ]; then
 				if [ "${verbose}" = "true" ]; then
 					printf "\t"
@@ -230,7 +245,7 @@ do
 	done
 
 	#Check if there are non-typogrified quotes or em-dashes in metadata descriptions
-	grep --quiet --null-data --extended-regexp "<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>" "${srcDir}/src/epub/content.opf"
+	grep --quiet --null --extended-regexp "<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>" "${srcDir}/src/epub/content.opf"
 	if [ $? -eq 0 ]; then
 		if [ "${verbose}" = "true" ]; then
 			printf "\t"
@@ -238,7 +253,7 @@ do
 		printf "Warning: non-typogrified \", ', or -- detected in metadata long description!\n" 1>&2
 	fi
 
-	grep --quiet --null-data --extended-regexp "<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</dc:description>" "${srcDir}/src/epub/content.opf"
+	grep --quiet --null --extended-regexp "<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</dc:description>" "${srcDir}/src/epub/content.opf"
 	if [ $? -eq 0 ]; then
 		if [ "${verbose}" = "true" ]; then
 			printf "\t"
@@ -318,7 +333,7 @@ do
 		printf "Warning: HTML entites detected in metadata!  Use UTF characters where possible.\n" 1>&2
 	fi
 
-	grep --extended-regexp --no-filename --only-matching "<abbr[^<]+>" "${srcDir}/src/epub/text/"* | sed 's/<abbr class=\"//g' | sed 's/<abbr xml:lang="//g' | sed 's/">//g' | sed --regexp-extended "s/\s+/\n/g" | sort | uniq | while read class;
+	grep --extended-regexp --no-filename --only-matching "<abbr[^<]+>" "${srcDir}/src/epub/text/"* | ${sedCommand} 's/<abbr class=\"//g' | ${sedCommand} 's/<abbr xml:lang="//g' | ${sedCommand} 's/">//g' | ${sedCommand} --regexp-extended "s/\s+/\n/g" | sort | uniq | while read class;
 	do
 		if [ "${class}" = "name" -o "${class}" = "era" -o "${class}" = "degree" -o "${class}" = "initialism" -o "${class}" = "acronym" -o "${class}" = "temperature" -o "${class}" = "postal" -o "${class}" = "timezone" ]; then
 			grep --quiet "abbr\.${class}" "${srcDir}/src/epub/css/local.css"
