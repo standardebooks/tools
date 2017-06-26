@@ -97,7 +97,7 @@ def main():
 
 			if os.path.isfile(source_cover_svg_filename):
 				if args.verbose:
-					print("\tBuilding cover.svg ...".format(directory), end="", flush=True)
+					print("\tBuilding cover.svg ...", end="", flush=True)
 
 				#base64 encode cover.jpg
 				with open(source_cover_jpg_filename, "rb") as file:
@@ -131,7 +131,7 @@ def main():
 		#Build titlepage.svg
 		if os.path.isfile(source_titlepage_svg_filename):
 			if args.verbose:
-				print("\tBuilding titlepage.svg ...".format(directory), end="", flush=True)
+				print("\tBuilding titlepage.svg ...", end="", flush=True)
 
 			#Convert text to paths
 			#inkscape adds a ton of crap to the SVG and we clean that crap a little later
