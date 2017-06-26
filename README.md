@@ -51,7 +51,7 @@ You can also install the dependencies locally via pip:
 
 -	### `clean`
 
-	Prettify individual source files, or all XHTML and SVG files in a source directory, including canonicalizing XML.  Note that this only prettifies the source code; it doesn't perform typography changes.
+	Prettify and canonicalize individual XHTML or SVG files, or all XHTML and SVG files in a source directory.  Note that this only prettifies the source code; it doesn't perform typography changes.
 
 -	### `create-draft`
 

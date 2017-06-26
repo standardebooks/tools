@@ -2,7 +2,6 @@
 
 import argparse
 import os
-import fnmatch
 import html
 import shutil
 import sys
@@ -10,10 +9,10 @@ from subprocess import Popen, PIPE
 import regex
 
 def main():
-	parser = argparse.ArgumentParser(description="Prettify individual source files, or all XHTML and SVG files in a source directory, including canonicalizing XML.  Note that this only prettifies the source code; it doesn't perform typography changes.")
+	parser = argparse.ArgumentParser(description="Prettify and canonicalize individual XHTML or SVG files, or all XHTML and SVG files in a source directory.  Note that this only prettifies the source code; it doesn't perform typography changes.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("-s", "--single-lines", action="store_true", help="remove hard line wrapping")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML or SVG file, or a directory containing XHTML or SVG files")
 	args = parser.parse_args()
 
 	#Check for required utilities
@@ -36,10 +35,12 @@ def main():
 		target_filenames = set()
 		if os.path.isdir(target):
 			for root, _, filenames in os.walk(target):
-				for filename in fnmatch.filter(filenames, "*.xhtml"):
-					target_filenames.add(os.path.join(root, filename))
+				for filename in filenames:
+					if filename.lower().endswith((".xhtml", ".svg")):
+						target_filenames.add(os.path.join(root, filename))
 		else:
-			target_filenames.add(target)
+			if target.lower().endswith((".xhtml", ".svg")):
+				target_filenames.add(target)
 
 		for filename in target_filenames:
 			#If we're cleaning a directory and setting single lines, skip the colophon, which has special spacing
