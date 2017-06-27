@@ -378,7 +378,6 @@ do
 			if [ "${verbose}" = "true" ]; then
 				printf " OK\n"
 			fi
-		fi
 		else
 			if [ "${verbose}" = "true" ]; then
 				printf " ebook-convert failed\n"
