@@ -23,17 +23,23 @@ def main():
 
 	for line in xhtml.splitlines():
 		if "<!--se:split-->" in line:
-			line = line.replace("<!--se:split-->", "")
-
-			with open("chapter-" + str(chapter_number) + ".xhtml", "w", encoding="utf-8") as file:
-				file.write(header_xhtml.replace("NUMBER", str(chapter_number)) + "\n" + chapter_xhtml + "\n</section></body></html>")
-				file.truncate()
-
+			prefix, suffix = line.split("<!--se:split-->")
+			chapter_xhtml = chapter_xhtml + prefix
+			output(chapter_number, header_xhtml, chapter_xhtml)
+			
 			chapter_number = chapter_number + 1
-			chapter_xhtml = line
+			chapter_xhtml = suffix
 
 		else:
 			chapter_xhtml = chapter_xhtml + "\n" + line
+	
+	if chapter_xhtml and not chapter_xhtml.isspace():
+		output(chapter_number, header_xhtml, chapter_xhtml)
+
+def output(chapter_number, header_xhtml, chapter_xhtml):
+	with open("chapter-" + str(chapter_number) + ".xhtml", "w", encoding="utf-8") as file:
+		file.write(header_xhtml.replace("NUMBER", str(chapter_number)) + "\n" + chapter_xhtml + "\n</section></body></html>")
+		file.truncate()
 
 if __name__ == "__main__":
 	main()
