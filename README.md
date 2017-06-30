@@ -4,7 +4,9 @@ A collection of tools Standard Ebooks uses to produce its ebooks, including basi
 
 # Warning for Mac users
 
-This repository started out as all Bash scripts targeting Ubuntu 16.04, and over time the tools have been converted to Python scripts for better cross-platform compatibility.  However not all the tools are converted yet, notably `build` and `clean`.  There have been many reports of breakage when using these scripts in a Mac environment.  Until we finish converting these last few scripts to Python, **we suggest starting up an Ubuntu 16.04 virtual machine to run these scripts**.
+This repository started out as all Bash scripts targeting Ubuntu 16.04, and over time the tools have been converted to Python scripts for better cross-platform compatibility.  However not all the tools are converted yet, notably `build` and `prepare-release`.  Geoff Coffey is maintaining a branch of this repo, the `mac` branch, that is Mac-compatible.  Please use Git to checkout the `mac` branch and read the special `README.md` file there for Mac-specific installation instructions.
+
+If you prefer to use the `master` branch, you can always install an Ubuntu 16.04 virtual machine.
 
 # Installation
 
