@@ -42,7 +42,9 @@ These instructions were tested on Mac OS X 10.12. Your mileage may vary.
 3. Install [Java JDK 1.7 or later](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 4. Install the required homebrew packages
 
-       brew install python3 gnu-sed xmlstarlet imagemagick librsvg epubcheck inkscape
+       brew tap caskroom/cask
+       brew cask install xquartz inkscape
+       brew install python3 gnu-sed xmlstarlet imagemagick librsvg epubcheck
 
 5. Install the required python packages:
 
