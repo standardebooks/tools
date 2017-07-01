@@ -64,6 +64,7 @@ def main():
 	os.makedirs(os.path.normpath(repo_name + "/src/META-INF"))
 
 	#Copy over templates
+	shutil.copy(os.path.normpath(templates_path + "/LICENSE.md"), os.path.normpath(repo_name + "/"))
 	shutil.copy(os.path.normpath(templates_path + "/META-INF/container.xml"), os.path.normpath(repo_name + "/src/META-INF/"))
 	shutil.copy(os.path.normpath(templates_path + "/mimetype"), os.path.normpath(repo_name + "/src/"))
 	shutil.copy(os.path.normpath(templates_path + "/content.opf"), os.path.normpath(repo_name + "/src/epub/"))
