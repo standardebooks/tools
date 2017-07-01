@@ -6,7 +6,7 @@ A collection of tools Standard Ebooks uses to produce its ebooks, including basi
 
 This repository started out as all Bash scripts targeting Ubuntu 16.04, and over time the tools have been converted to Python scripts for better cross-platform compatibility.  However not all the tools are converted yet, notably `build` and `prepare-release`.  Geoff Coffey is maintaining a branch of this repo, the `mac` branch, that is Mac-compatible.  Please use Git to checkout the `mac` branch and read the special `README.md` file there for Mac-specific installation instructions.
 
-If you prefer to use the `master` branch, you can always install an Ubuntu 16.04 virtual machine.
+If you prefer to use the `master` branch, you can always install an Ubuntu 16.04 virtual machine.  See this [guide by Jared Updike on how to install SE tools on Macs using a VM](http://jared.updike.org/posts/2017-06-30-set-up-ubuntu-vm-for-standard-ebooks-tools-on-a-mac.html).
 
 # Installation
 
