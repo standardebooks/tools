@@ -14,7 +14,7 @@ def main():
 
 	if not sys.stdin.isatty():
 		for line in sys.stdin:
-			lines.append(line.rstrip("\n"))
+			lines.append(line.rstrip("\r\n"))
 
 	for line in args.titles:
 		lines.append(line)
