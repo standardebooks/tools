@@ -10,28 +10,32 @@ For a smoother experience, you may want to run the tools on your Mac through a l
 
 # Installation
 
-Several dependencies must be installed before you can use these tools. 
+Several dependencies must be installed before you can use these tools.
 
 ## Linux
 
 On Ubuntu 16.04, you can install everything with:
 
-	sudo apt install python3-pip xsltproc libxml2-utils xmlstarlet libxml-xpath-perl recode html-xml-utils librsvg2-bin libimage-exiftool-perl zip epubcheck calibre default-jre
-	sudo pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants pillow gitpython cssselect regex lxml
+```shell
+sudo apt install python3-pip xsltproc libxml2-utils xmlstarlet libxml-xpath-perl recode html-xml-utils librsvg2-bin libimage-exiftool-perl zip epubcheck calibre default-jre
+sudo pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants pillow gitpython cssselect regex lxml
 
-	# Install hyphenation dictionaries for the pyhyphen library
-	sudo python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
+# Install hyphenation dictionaries for the pyhyphen library
+sudo python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
 
-	# Install required fonts
-	mkdir -p ~/.fonts/
-	wget -O ~/.fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
-	wget -O ~/.fonts/OFLGoudyStM.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM.otf?raw=true"
-	wget -O ~/.fonts/OFLGoudyStM-Italic.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM-Italic.otf?raw=true"
-	sudo fc-cache -fv
+# Install required fonts
+mkdir -p ~/.fonts/
+wget -O ~/.fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
+wget -O ~/.fonts/OFLGoudyStM.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM.otf?raw=true"
+wget -O ~/.fonts/OFLGoudyStM-Italic.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM-Italic.otf?raw=true"
+sudo fc-cache -fv
+```
 
 You can also install the dependencies locally via pip:
 
-    pip3 install -r requirements.txt
+```shell
+pip3 install -r requirements.txt
+```
 
 ## macOS
 
@@ -42,17 +46,24 @@ These instructions were tested on Mac OS X 10.12. Your mileage may vary.
 3. Install [Java JDK 1.7 or later](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 4. Install the required homebrew packages
 
-       brew install python3 gnu-sed xmlstarlet imagemagick librsvg epubcheck inkscape
+```shell
+brew install python3 gnu-sed xmlstarlet imagemagick librsvg epubcheck
+brew cask install xquartz inkscape
+```
 
 5. Install the required python packages:
 
-       pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants pillow gitpython cssselect regex lxml
+```shell
+pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants pillow gitpython cssselect regex lxml
+```
 
 6. Install the required fonts:
 
-       curl -s -o ~/Library/Fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
-       curl -s -o ~/Library/Fonts/OFLGoudyStM.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM.otf?raw=true"
-       curl -s -o ~/Library/Fonts/OFLGoudyStM-Italic.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM-Italic.otf?raw=true"
+```shell
+curl -s -o ~/Library/Fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
+curl -s -o ~/Library/Fonts/OFLGoudyStM.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM.otf?raw=true"
+curl -s -o ~/Library/Fonts/OFLGoudyStM-Italic.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM-Italic.otf?raw=true"
+```
 
 # Tool descriptions
 
