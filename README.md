@@ -10,7 +10,7 @@ For a smoother experience, you may want to run the tools on your Mac through a l
 
 # Installation
 
-Several dependencies must be installed before you can use these tools. 
+Several dependencies must be installed before you can use these tools.
 
 ## Linux
 
@@ -42,17 +42,24 @@ These instructions were tested on Mac OS X 10.12. Your mileage may vary.
 3. Install [Java JDK 1.7 or later](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 4. Install the required homebrew packages
 
-       brew install python3 gnu-sed xmlstarlet imagemagick librsvg epubcheck inkscape
+```shell
+brew install python3 gnu-sed xmlstarlet imagemagick librsvg epubcheck
+brew cask install xquartz inkscape
+```
 
 5. Install the required python packages:
 
-       pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants pillow gitpython cssselect regex lxml
+```shell
+pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants pillow gitpython cssselect regex lxml
+```
 
 6. Install the required fonts:
 
-       curl -s -o ~/Library/Fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
-       curl -s -o ~/Library/Fonts/OFLGoudyStM.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM.otf?raw=true"
-       curl -s -o ~/Library/Fonts/OFLGoudyStM-Italic.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM-Italic.otf?raw=true"
+```shell
+curl -s -o ~/Library/Fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
+curl -s -o ~/Library/Fonts/OFLGoudyStM.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM.otf?raw=true"
+curl -s -o ~/Library/Fonts/OFLGoudyStM-Italic.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM-Italic.otf?raw=true"
+```
 
 # Tool descriptions
 
