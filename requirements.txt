@@ -3,7 +3,7 @@ cssselect==0.9.1
 gitpython==2.1.5
 lxml==3.5.0
 pillow==3.1.2
-PyHyphen==2.0.5
+PyHyphen==2.0.7
 regex==2016.1.10
 roman==2.0.0
 smartypants==2.0.0
