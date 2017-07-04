@@ -16,7 +16,8 @@ Several dependencies must be installed before you can use these tools. On Ubuntu
 	pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants pillow gitpython cssselect regex lxml
 
 	# Install hyphenation dictionaries for the pyhyphen library
-	sudo python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
+	# Skip this for now, it's currently broken upstream
+	# sudo python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
 
 	# Install required fonts
 	mkdir -p ~/.fonts/
