@@ -2,7 +2,7 @@ beautifulsoup4==4.6.0
 cssselect==0.9.1
 gitpython==2.1.5
 lxml==3.5.0
-PyHyphen==2.0.7
+pyhyphen==2.0.8
 regex==2016.1.10
 roman==2.0.0
 smartypants==2.0.0
