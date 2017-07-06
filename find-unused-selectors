@@ -8,7 +8,7 @@ import regex
 import lxml.cssselect
 import lxml.etree as etree
 
-XHTML_NAMESPACES = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "http://standardebooks.org/vocab/1.0"}
+XHTML_NAMESPACES = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "https://standardebooks.org/vocab/1.0"}
 
 def main():
 	parser = argparse.ArgumentParser(description="Find unused local.css CSS selectors in Standard Ebook source directories.")
