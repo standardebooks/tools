@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
-import re
 import os
 import fnmatch
+import regex
 from bs4 import BeautifulSoup
 
 def main():
@@ -33,65 +33,65 @@ def main():
 				processed_xhtml = xhtml
 
 				#Some common abbreviations
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Mr\.", r"<abbr>Mr.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Mrs\.", r"<abbr>Mrs.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Ms\.", r"<abbr>Ms.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Dr\.", r"<abbr>Dr.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Drs\.", r"<abbr>Drs.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Prof\.", r"<abbr>Prof.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Lieut\.", r"<abbr>Lieut.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Fr\.", r"<abbr>Fr.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Lt\.", r"<abbr>Lt.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Capt\.", r"<abbr>Capt.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Pvt\.", r"<abbr>Pvt.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Esq\.", r"<abbr>Esq.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Mt\.", r"<abbr>Mt.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)MM\.", r"<abbr>MM.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Mme\.", r"<abbr>Mme.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Mmes\.", r"<abbr>Mmes.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Mlle\.", r"<abbr>Mlle.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Mdlle\.", r"<abbr>Mdlle.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Mlles\.", r"<abbr>Mlles.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Messrs\.", r"<abbr>Messrs.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Messers\.", r"<abbr>Messers.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)P\.S\.", r"<abbr>P.S.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Co\.", r"<abbr>Co.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Inc\.", r"<abbr>Inc.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)Ltd\.", r"<abbr>Ltd.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)St\.", r"<abbr>St.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)([Vv])iz\.", r"<abbr>\1iz.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(\b)(?<!\<abbr\>)etc\.", r"\1<abbr>etc.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(\b)(?<!\<abbr\>)ed\.", r"\1<abbr>ed.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)([Ii])\.e\.", r"<abbr>\1.e.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)([Ee])\.g\.", r"<abbr>\1.g.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(\b)(?<!\<abbr\>)([Ll])b\.", r"\1<abbr>\2b.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(\b)(?<!\<abbr\>)([Ll])bs\.", r"\1<abbr>\2bs.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(\b)(?<!\<abbr\>)([Oo])z\.", r"\1<abbr>\2z.</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)(Jan\.|Feb\.|Mar\.|Apr\.|Jun\.|Jul\.|Aug\.|Sep\.|Sept\.|Oct\.|Nov\.|Dec\.)", r"<abbr>\1</abbr>", processed_xhtml)
-				processed_xhtml = re.sub(r"(?<!\<abbr\>)No\.(\s+[0-9]+)", r"<abbr>No.</abbr>\1", processed_xhtml)
-				processed_xhtml = re.sub(r"""(?<!\<abbr class="degree"\>)PhD""", r"""<abbr class="degree">PhD</abbr>""", processed_xhtml)
-				processed_xhtml = re.sub(r"""(?<!\<abbr class="initialism"\>)IOU""", r"""<abbr class="initialism">IOU</abbr>""", processed_xhtml)
-				processed_xhtml = re.sub(r"""(?<!\<abbr class="era"\>)A\.?D""", r"""<abbr class="era">AD</abbr>""", processed_xhtml)
-				processed_xhtml = re.sub(r"""(?<!\<abbr class="era"\>)B\.?C""", r"""<abbr class="era">BC</abbr>""", processed_xhtml)
-				processed_xhtml = re.sub(r"""(?<!\<abbr class="time"\>)([ap])\.\s?m\.""", r"""<abbr class="time">\1.m.</abbr>""", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Mr\.", r"<abbr>Mr.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Mrs\.", r"<abbr>Mrs.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Ms\.", r"<abbr>Ms.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Dr\.", r"<abbr>Dr.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Drs\.", r"<abbr>Drs.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Prof\.", r"<abbr>Prof.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Lieut\.", r"<abbr>Lieut.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Fr\.", r"<abbr>Fr.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Lt\.", r"<abbr>Lt.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Capt\.", r"<abbr>Capt.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Pvt\.", r"<abbr>Pvt.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Esq\.", r"<abbr>Esq.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Mt\.", r"<abbr>Mt.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)MM\.", r"<abbr>MM.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Mme\.", r"<abbr>Mme.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Mmes\.", r"<abbr>Mmes.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Mlle\.", r"<abbr>Mlle.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Mdlle\.", r"<abbr>Mdlle.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Mlles\.", r"<abbr>Mlles.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Messrs\.", r"<abbr>Messrs.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Messers\.", r"<abbr>Messers.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)P\.S\.", r"<abbr>P.S.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Co\.", r"<abbr>Co.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Inc\.", r"<abbr>Inc.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Ltd\.", r"<abbr>Ltd.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)St\.", r"<abbr>St.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)([Vv])iz\.", r"<abbr>\1iz.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(\b)(?<!\<abbr\>)etc\.", r"\1<abbr>etc.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(\b)(?<!\<abbr\>)ed\.", r"\1<abbr>ed.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)([Ii])\.e\.", r"<abbr>\1.e.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)([Ee])\.g\.", r"<abbr>\1.g.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(\b)(?<!\<abbr\>)([Ll])b\.", r"\1<abbr>\2b.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(\b)(?<!\<abbr\>)([Ll])bs\.", r"\1<abbr>\2bs.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(\b)(?<!\<abbr\>)([Oo])z\.", r"\1<abbr>\2z.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)(Jan\.|Feb\.|Mar\.|Apr\.|Jun\.|Jul\.|Aug\.|Sep\.|Sept\.|Oct\.|Nov\.|Dec\.)", r"<abbr>\1</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)No\.(\s+[0-9]+)", r"<abbr>No.</abbr>\1", processed_xhtml)
+				processed_xhtml = regex.sub(r"""(?<!\<abbr class="degree"\>)PhD""", r"""<abbr class="degree">PhD</abbr>""", processed_xhtml)
+				processed_xhtml = regex.sub(r"""(?<!\<abbr class="initialism"\>)IOU""", r"""<abbr class="initialism">IOU</abbr>""", processed_xhtml)
+				processed_xhtml = regex.sub(r"""(?<!\<abbr class="era"\>)A\.?D""", r"""<abbr class="era">AD</abbr>""", processed_xhtml)
+				processed_xhtml = regex.sub(r"""(?<!\<abbr class="era"\>)B\.?C""", r"""<abbr class="era">BC</abbr>""", processed_xhtml)
+				processed_xhtml = regex.sub(r"""(?<!\<abbr class="time"\>)([ap])\.\s?m\.""", r"""<abbr class="time">\1.m.</abbr>""", processed_xhtml)
 
 				#Guess at adding eoc class
-				processed_xhtml = re.sub(r"""<abbr>([a-zA-Z\.]+?\.)</abbr></p>""", r"""<abbr class="eoc">\1</abbr></p>""", processed_xhtml)
-				processed_xhtml = re.sub(r"""<abbr>etc\.</abbr>(\s+[A-Z])""", r"""<abbr class="eoc">etc.</abbr>\1""", processed_xhtml)
+				processed_xhtml = regex.sub(r"""<abbr>([a-zA-Z\.]+?\.)</abbr></p>""", r"""<abbr class="eoc">\1</abbr></p>""", processed_xhtml)
+				processed_xhtml = regex.sub(r"""<abbr>etc\.</abbr>(\s+[A-Z])""", r"""<abbr class="eoc">etc.</abbr>\1""", processed_xhtml)
 
 				#Clean up nesting errors
-				processed_xhtml = re.sub(r"""<abbr class="eoc"><abbr>([^<]+)</abbr></abbr>""", r"""<abbr class="eoc">\1</abbr>""", processed_xhtml)
+				processed_xhtml = regex.sub(r"""<abbr class="eoc"><abbr>([^<]+)</abbr></abbr>""", r"""<abbr class="eoc">\1</abbr>""", processed_xhtml)
 
 				#Get Roman numerals >= 2 characters
 				#We only wrap these if they're standalone (i.e. not already wrapped in a tag) to prevent recursion in multiple runs
-				processed_xhtml = re.sub(r"([^a-zA-Z>])([ixvIXV]{2,})(\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""", processed_xhtml)
+				processed_xhtml = regex.sub(r"([^a-zA-Z>])([ixvIXV]{2,})(\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""", processed_xhtml)
 
 				#Get Roman numerals that are X or V and single characters.  We can't do I for obvious reasons.
-				processed_xhtml = re.sub(r"""([^a-zA-Z>\"])([vxVX])(\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", processed_xhtml)
+				processed_xhtml = regex.sub(r"""([^a-zA-Z>\"])([vxVX])(\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", processed_xhtml)
 
 				#We may have added HTML tags within title tags.  Remove those here
 				soup = BeautifulSoup(processed_xhtml, "lxml")
-				processed_xhtml = re.sub(r"<title>.+?</title>", "<title>" +  soup.title.text + "</title>", processed_xhtml)
+				processed_xhtml = regex.sub(r"<title>.+?</title>", "<title>" +  soup.title.text + "</title>", processed_xhtml)
 
 				if processed_xhtml != xhtml:
 					file.seek(0)
