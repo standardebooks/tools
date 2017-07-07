@@ -6,11 +6,6 @@ import sys
 import fnmatch
 import regex
 
-try:
-    input_ = raw_input
-except NameError:
-    input_ = input
-
 
 IGNORED_FILES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
 AMERICAN_DETECTED_PROMPT = \
@@ -85,7 +80,7 @@ def confirm(question, default="yes"):
 
 	while True:
 		sys.stdout.write(question + prompt)
-		choice = input_().lower()
+		choice = input().lower()
 		if default is not None and choice == '':
 			return valid[default]
 		elif choice in valid:
