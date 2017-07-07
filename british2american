@@ -24,7 +24,7 @@ UNSURE_DETECTED_PROMPT = \
 def main():
 	parser = argparse.ArgumentParser(description="Try to convert British quote style to American quote style.  Quotes must already be \"typogrified\"--i.e. curly.  This script isn't perfect; proofreading is required, especially near closing quotes near to em-dashes.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("-f", "--force", action="store_true", help="force convertion of quote style")
+	parser.add_argument("-f", "--force", action="store_true", help="force conversion of quote style")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
