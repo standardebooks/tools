@@ -2,14 +2,29 @@
 
 import argparse
 import os
+import sys
 import fnmatch
 import regex
 
+try:
+    input_ = raw_input
+except NameError:
+    input_ = input
+
+
 IGNORED_FILES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
+AMERICAN_DETECTED_PROMPT = \
+	"{} already uses American quote style (double quotes). " \
+	"Converting will swap quote style. Convert anyway?"
+UNSURE_DETECTED_PROMPT = \
+	"{} unable to detect quote style. " \
+	"Converting will swap quote style. Convert anyway?"
+
 
 def main():
 	parser = argparse.ArgumentParser(description="Try to convert British quote style to American quote style.  Quotes must already be \"typogrified\"--i.e. curly.  This script isn't perfect; proofreading is required, especially near closing quotes near to em-dashes.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("-f", "--force", action="store_true", help="force convertion of quote style")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
@@ -32,8 +47,20 @@ def main():
 			with open(filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 				new_xhtml = xhtml
+				convert = True
+				if args.force is False:
+					detected_style = _detect_quote_type(xhtml)
+					if detected_style == "american":
+						convert = confirm(AMERICAN_DETECTED_PROMPT.format(filename),
+										  default="no")
+					elif detected_style == "unsure":
+						convert = confirm(UNSURE_DETECTED_PROMPT.format(filename),
+										  default="no")
 
-				new_xhtml = british_to_american(new_xhtml)
+				if convert:
+					new_xhtml = british_to_american(new_xhtml)
+				else:
+					print("Ignoring {}".format(filename))
 
 				if new_xhtml != xhtml:
 					file.seek(0)
@@ -42,6 +69,69 @@ def main():
 
 		if args.verbose:
 			print(" OK")
+
+
+def confirm(question, default="yes"):
+	'''Prompt user with a yes/no question and return boolean.'''
+	valid = {"yes": True, "y": True, "ye": True, "no": False, "n": False}
+	if default is None:
+		prompt = " [y/n] "
+	elif default == "yes":
+		prompt = " [Y/n] "
+	elif default == "no":
+		prompt = " [y/N] "
+	else:
+		raise ValueError("invalid default answer: '%s'" % default)
+
+	while True:
+		sys.stdout.write(question + prompt)
+		choice = input_().lower()
+		if default is not None and choice == '':
+			return valid[default]
+		elif choice in valid:
+			return valid[choice]
+		else:
+			sys.stdout.write("Please respond with 'yes' or 'no' "
+							 "(or 'y' or 'n').\n")
+
+
+def _detect_quote_type(xhtml):
+	'''
+	Attempt to guess the quote type used in the `xhtml`.
+
+	Want to discover the first quote type after a <p> tag. Doesn't have to be
+	directly after.
+
+	Count pattern matches for each quote style (disregard matches where the
+	capturing group contains opposite quote style).
+
+	Quote style percentage above the threshold is returned.
+
+	Returns:
+	`british`: single-quotes
+	`american`: double-quotes
+	`unsure`: unable to determine from text
+	'''
+	threshold = 80
+
+	ldq_pattern = regex.compile(r"\t*<p>(.*?)“", regex.MULTILINE)
+	lsq_pattern = regex.compile(r"\t*<p>(.*?)‘", regex.MULTILINE)
+
+	lsq_count = len([m for m in lsq_pattern.findall(xhtml) if m.count("“") == 0])
+	ldq_count = len([m for m in ldq_pattern.findall(xhtml) if m.count("‘") == 0])
+
+	try:
+		american_percentage = (ldq_count / (ldq_count + lsq_count) * 100)
+	except ZeroDivisionError:
+		return "unsure"
+
+	if (american_percentage >= threshold):
+		return "american"
+	elif (100 - american_percentage >= threshold):
+		return "british"
+
+	return "unsure"
+
 
 def british_to_american(xhtml):
 	xhtml = regex.sub(r"“", r"<ldq>", xhtml)
