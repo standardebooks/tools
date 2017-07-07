@@ -4,7 +4,9 @@ import argparse
 import os
 import sys
 import zipfile
+from io import TextIOWrapper, BytesIO
 import magic
+from se.kindleunpack import kindleunpack #GPLv3: https://www.mobileread.com/forums/showthread.php?t=61986
 
 def main():
 	parser = argparse.ArgumentParser(description="Extract an EPUB, MOBI, or AZW3 ebook into ./FILENAME.extracted/ or a target directory.")
@@ -31,11 +33,20 @@ def main():
 		mime_type = magic.from_file(target)
 
 		if "Mobipocket E-book" in mime_type:
-			#TODO
-			pass
+			# kindleunpack uses print() so just capture that output here
+			old_stdout = sys.stdout
+			sys.stdout = TextIOWrapper(BytesIO(), sys.stdout.encoding)
+
+			kindleunpack.unpackBook(target, extracted_path)
+
+			# Restore stdout
+			sys.stdout.close()
+			sys.stdout = old_stdout
+
 		elif "EPUB document" in mime_type:
 			with zipfile.ZipFile(target, "r") as file:
 				file.extractall(extracted_path)
+
 		else:
 			print("Error: Couldn't understand file type: {}".format(mime_type), file=sys.stderr)
 			exit(1)
