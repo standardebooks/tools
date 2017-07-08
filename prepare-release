@@ -1,333 +1,241 @@
-#!/bin/bash
-usage(){
-	fmt <<EOF
-DESCRIPTION
-	Calculate work word count, insert release date if none set, update modified date, and check for various common errors.
+#!/usr/bin/env python3
 
-USAGE
-	build [-v,--verbose] [-w,--no-word-count] [-d,--no-dates] [-r,--no-revision] DIRECTORY [DIRECTORY...]
-		DIRECTORY is the source directory, which must contain DIRECTORY/src/.
-		With the --no-word-count option, don't perform a word count calculation.
-		With the --no-dates option, don't change the release and modified dates.
-		With the --no-revision option, don't increment the revision number.
-EOF
-	exit
-}
-die(){ printf "Error: ${1}\n" 1>&2; exit 1; }
-require(){ command -v $1 > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
-if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
-#End boilerplate
+import argparse
+import os
+import sys
+import subprocess
+import datetime
+import filecmp
+import fnmatch
+import regex
 
-timestamp="$(date --utc +%s)"
-isoTimestamp="$(date -d @${timestamp} --utc +"%Y-%m-%dT%H:%M:%SZ")"
-friendlyTimestamp="$(date -d @${timestamp} --utc +"%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>" | sed --regexp-extended "s/\s+/ /g" | sed "s/>AM/>a.m./" | sed "s/>PM/>p.m./")"
-scriptDir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-wordcountPath="${scriptDir}/word-count"
-readingEasePath="${scriptDir}/reading-ease"
-unusedSelectorPath="${scriptDir}/find-unused-selectors"
-ordinalPath="${scriptDir}/ordinal"
-contentOpfFilePath="${ebookRoot}src/epub/content.opf"
-colophonPath="${ebookRoot}src/epub/text/colophon.xhtml"
-dirs=""
-verbose="false"
-doWordCount="true"
-doDates="true"
-doRevision="true"
+IGNORED_FILES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
 
-while [ $# -gt 0 ]
-do
-	case "$1" in
-		-v|--verbose)
-			verbose="true"
-		;;
-		-w|--no-word-count)
-			doWordCount="false"
-		;;
-		-d|--no-dates)
-			doDates="false"
-		;;
-		-r|--no-revision)
-			doRevision="false"
-		;;
-		*)
-			dirs=$(printf "%s\n%s" "${dirs}" "$1")
-		;;
-	esac
-	shift
-done
+def main():
+	parser = argparse.ArgumentParser(description="Calculate work word count, insert release date if not yet set, update modified date and revision number, and check for various common errors.")
+	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("-w", "--no-word-count", dest="word_count", action="store_false", help="don't calculate word count")
+	parser.add_argument("-r", "--no-revision", dest="revision", action="store_false", help="don't increment the revision number")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	args = parser.parse_args()
 
-printf "%s\n" "${dirs}" | while IFS= read -r i;
-do
-	if [ "${i}" = "" ]; then
-		continue
-	fi
+	script_path = os.path.realpath(__file__)
 
-	srcDir="$(realpath "${i%/}")"
+	license_file_path = os.path.join(os.path.dirname(script_path), "templates", "LICENSE.md")
+	core_css_file_path = os.path.join(os.path.dirname(script_path), "templates", "core.css")
+	logo_svg_file_path = os.path.join(os.path.dirname(script_path), "templates", "logo.svg")
+	uncopyright_file_path = os.path.join(os.path.dirname(script_path), "templates", "uncopyright.xhtml")
 
-	if [ ! -d "${srcDir}/src" ]; then
-		die "${srcDir} doesn't look like a Standard Ebook source directory."
-	fi
+	find_unused_selectors_path = os.path.join(os.path.dirname(script_path), "find-unused-selectors")
+	word_count_path = os.path.join(os.path.dirname(script_path), "word-count")
+	reading_ease_path = os.path.join(os.path.dirname(script_path), "reading-ease")
+	ordinal_path = os.path.join(os.path.dirname(script_path), "ordinal")
+	timestamp = datetime.datetime.utcnow()
+	iso_timestamp = regex.sub(r"\.[0-9]+$", "", timestamp.isoformat()) + "Z"
 
-	if [ "${verbose}" = "true" ]; then
-		printf "Preparing %s ...\n" "${srcDir}"
-	fi
+	# Construct the friendly timestamp
+	friendly_timestamp = "{0:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}".format(timestamp)
+	friendly_timestamp = regex.sub(r"\s+", " ", friendly_timestamp).replace("AM", "a.m.").replace("PM", "p.m.")
 
-	if [ "${doWordCount}" = "true" ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\tUpdating word count ..."
-		fi
+	for directory in args.directories:
+		directory = os.path.abspath(directory)
 
-		wordCount=$("${wordcountPath}" -x "${srcDir}")
-		sed --in-place --regexp-extended "s|<meta property=\"se:word-count\">[^<]*</meta>|<meta property=\"se:word-count\">${wordCount}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+		if not os.path.isdir(directory):
+			print("Error: Not a directory: {}".format(directory), file=sys.stderr)
+			exit(1)
 
-		if [ "${verbose}" = "true" ]; then
-			printf " Done.\n"
-		fi
+		if args.verbose:
+			print("Processing {} ...".format(directory))
 
+		with open(os.path.join(directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
+			xhtml = file.read()
+			processed_xhtml = xhtml
 
-		if [ "${verbose}" = "true" ]; then
-			printf "\tUpdating reading ease ..."
-		fi
+			if args.word_count:
+				if args.verbose:
+					print("\tUpdating word count and reading ease ...", end="", flush=True)
 
-		ease=$("${readingEasePath}" "${srcDir}")
-		sed --in-place --regexp-extended "s|<meta property=\"se:reading-ease.flesch\">[^<]*</meta>|<meta property=\"se:reading-ease.flesch\">${ease}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+				word_count = subprocess.check_output([word_count_path, "-x", directory]).decode().strip()
+				reading_ease = subprocess.check_output([reading_ease_path, directory]).decode().strip()
 
-		if [ "${verbose}" = "true" ]; then
-			printf " Done.\n"
-		fi
-	fi
+				processed_xhtml = regex.sub(r"<meta property=\"se:word-count\">[^<]*</meta>", "<meta property=\"se:word-count\">{}</meta>".format(word_count), xhtml)
+				processed_xhtml = regex.sub(r"<meta property=\"se:reading-ease\.flesch\">[^<]*</meta>", "<meta property=\"se:reading-ease.flesch\">{}</meta>".format(reading_ease), xhtml)
 
-	if [ "${doRevision}" = "true" ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\tUpdating revision number ..."
-		fi
+				if args.verbose:
+					print(" OK")
 
-		revision=$(grep -E "<meta property=\"se:revision-number\">[0-9]+</meta>" "${srcDir}/src/epub/content.opf" | grep --only-matching -E "[0-9]+")
-		revision=$((revision + 1))
+			if args.revision:
+				if args.verbose:
+					print("\tUpdating revision number ...", end="", flush=True)
 
-		sed --in-place --regexp-extended "s|<meta property=\"se:revision-number\">[^<]+</meta>|<meta property=\"se:revision-number\">${revision}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
+				# Calculate the new revision number
+				revision = int(regex.search(r"<meta property=\"se:revision-number\">([0-9]+)</meta>", xhtml).group(1))
+				revision = revision + 1
 
-		if [ "${revision}" != "1" ]; then
-			ordinal=$("${ordinalPath}" "${revision}")
+				# If this is an initial release, set the release date in content.opf
+				if revision == 1:
+					processed_xhtml = regex.sub(r"<dc:date>[^<]+?</dc:date>", "<dc:date>{}</dc:date>".format(iso_timestamp), processed_xhtml)
 
-			#Are we moving from the first edition to the nth edition?
-			grep --quiet -E "<p>This is the first edition of this ebook.<br/>" "${srcDir}/src/epub/text/colophon.xhtml"
-			if [ $? -eq 0 ]; then
-				sed --in-place --regexp-extended "s|This edition was released on<br/>|The first edition was released on<br/>|" "${srcDir}/src/epub/text/colophon.xhtml"
-				sed --in-place --regexp-extended "s|<p>This is the first edition of this ebook.<br/>|<p>This is the <span class=\"revision-number\">${ordinal}</span> edition of this ebook.<br/>\n\t\t\tThis edition was released on<br/>\n\t\t\t<span class=\"revision-date\">${friendlyTimestamp}</span><br/>|" "${srcDir}/src/epub/text/colophon.xhtml"
-			else
-				sed --in-place --regexp-extended "s|<span class=\"revision-number\">[^<]+</span>|<span class=\"revision-number\">${ordinal}</span>|" "${srcDir}/src/epub/text/colophon.xhtml"
-			fi
-		fi
+				# Set modified date and revision number in content.opf
+				processed_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">{}</meta>".format(iso_timestamp), processed_xhtml)
+				processed_xhtml = regex.sub(r"<meta property=\"se:revision-number\">[^<]+?</meta>", "<meta property=\"se:revision-number\">{}</meta>".format(revision), processed_xhtml)
+
+				# Update the colophon with release info
+				with open(os.path.join(directory, "src", "epub", "text", "colophon.xhtml"), "r+", encoding="utf-8") as colophon:
+					colophon_xhtml = colophon.read()
+
+					# Are we moving from the first edition to the nth edition?
+					if revision == 1:
+						colophon_xhtml = regex.sub(r"<span class=\"release-date\">.+?</span>", "<span class=\"release-date\">{}</span>".format(friendly_timestamp), colophon_xhtml)
+					else:
+						ordinal = subprocess.check_output([ordinal_path, str(revision)]).decode().strip()
+						if "<p>This is the first edition of this ebook.<br/>" in colophon_xhtml:
+							colophon_xhtml = colophon_xhtml.replace("This edition was released on<br/>", "The first edition was released on<br/>")
+							colophon_xhtml = colophon_xhtml.replace("<p>This is the first edition of this ebook.<br/>", "<p>This is the <span class=\"revision-number\">{}</span> edition of this ebook.<br/>\n\t\t\tThis edition was released on<br/>\n\t\t\t<span class=\"revision-date\">{}</span><br/>".format(ordinal, friendly_timestamp))
+						else:
+							colophon_xhtml = regex.sub(r"<span class=\"revision-date\">.+?</span>", "<span class=\"revision-date\">{}</span>".format(friendly_timestamp), colophon_xhtml)
+							colophon_xhtml = regex.sub(r"<span class=\"revision-number\">[^<]+?</span>", "<span class=\"revision-number\">{}</span>".format(ordinal), colophon_xhtml)
+
+					colophon.seek(0)
+					colophon.write(colophon_xhtml)
+					colophon.truncate()
+
+				if args.verbose:
+					print(" OK")
+
+			if processed_xhtml != xhtml:
+				file.seek(0)
+				file.write(processed_xhtml)
+				file.truncate()
 
 
-		if [ "${verbose}" = "true" ]; then
-			printf " Done.\n"
-		fi
-	fi
+		# Revision updates done, now do some linting (this will be pulled out into a separate tool at a later date)
 
-	if [ "${doDates}" = "true" ]; then
-		grep --quiet "1900-01-01T00:00:00Z" "${srcDir}/src/epub/content.opf"
-		if [ $? -eq 0 ]; then
-			if [ "${verbose}" = "true" ]; then
-				printf "\tSetting release date ..."
-			fi
+		# Get the ebook language, for later use
+		language = regex.search(r"<dc:language>([^>]+?)</dc:language>", xhtml).group(1)
 
-			sed --in-place --regexp-extended "s|<dc:date>[^<]*</dc:date>|<dc:date>${isoTimestamp}</dc:date>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
-			sed --in-place --regexp-extended "s|<span class=\"release-date\">.+?</span>|<span class=\"release-date\">${friendlyTimestamp}</span>|g" "${srcDir}/src/epub/text/colophon.xhtml" > /dev/null 2>&1
+		# Check local.css for various items, for later use
+		abbr_elements = []
+		with open(os.path.join(directory, "src", "epub", "css", "local.css"), "r", encoding="utf-8") as file:
+			css = file.read()
 
-			if [ "${verbose}" = "true" ]; then
-				printf " Done.\n"
-			fi
-		fi
+			local_css_has_subtitle_style = "span[epub|type~=\"subtitle\"]" in css
 
-		if [ "${verbose}" = "true" ]; then
-			printf "\tSetting modified date ..."
-		fi
+			abbr_styles = regex.findall(r"abbr\.[a-z]+", css)
 
-		sed --in-place --regexp-extended "s|<meta property=\"dcterms:modified\">[^<]*</meta>|<meta property=\"dcterms:modified\">${isoTimestamp}</meta>|g" "${srcDir}/src/epub/content.opf" > /dev/null 2>&1
-		sed --in-place --regexp-extended "s|<span class=\"revision-date\">.+?</span>|<span class=\"revision-date\">${friendlyTimestamp}</span>|g" "${srcDir}/src/epub/text/colophon.xhtml" > /dev/null 2>&1
+		# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
+		if regex.search(r"<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", xhtml) is not None:
+			print("{}Warning: non-typogrified \", ', or -- detected in metadata long description".format("\t" if args.verbose else ""))
 
-		if [ "${verbose}" = "true" ]; then
-			printf " Done.\n"
-		fi
-	fi
+		if regex.search(r"<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", xhtml) is not None:
+			print("{}Warning: non-typogrified \", ', or -- detected in metadata  dc:description".format("\t" if args.verbose else ""))
 
-	#See if we have necessary MARC relator in metadata
-	for file in $(find "${srcDir}" -name "*.xhtml")
-	do
-		filename=$(basename "${file}")
-		if [ "${filename}" = "introduction.xhtml" ]; then
-			grep --quiet -i ">aui<" "${srcDir}/src/epub/content.opf"
-			if [ $? -ne 0 ]; then
+		#Check for HTML entities in long-description
+		if regex.search(r"&amp;[a-z]+?;", xhtml):
+			print("{}Warning: HTML entites detected in metadata.  Use UTF characters where possible".format("\t" if args.verbose else ""))
 
-				grep --quiet -i ">win<" "${srcDir}/src/epub/content.opf"
-				if [ $? -ne 0 ]; then
-					if [ "${verbose}" = "true" ]; then
-						printf "\t"
-					fi
-					printf "Warning: introduction.xhtml found, but no MARC relator 'aui' (Author of introduction, but not the chief author) or 'win' (Writer of introduction) \n" 1>&2
-				fi
-			fi
-		fi
+		# Check for illegal em-dashes in <dc:subject>
+		if regex.search(r"<dc:subject id=\"[^\"]+?\">[^<]+?—[^<]+?</meta>", xhtml) is not None:
+			print("{}Warning: illegal em-dash detected in dc:subject; use --".format("\t" if args.verbose else ""))
 
-		if [ "${filename}" = "preface.xhtml" ]; then
-			grep --quiet -i ">wpr<" "${srcDir}/src/epub/content.opf"
-			if [ $? -ne 0 ]; then
-				if [ "${verbose}" = "true" ]; then
-					printf "\t"
-				fi
-				printf "Warning: preface.xhtml found, but no MARC relator 'wpr' (Writer of preface)\n" 1>&2
-			fi
-		fi
+		# Check for correct external URLs
+		if "http://www.gutenberg.org" in xhtml:
+			print("{}Warning: non-https gutenberg.org link in content.opf".format("\t" if args.verbose else ""))
 
-		if [ "${filename}" = "afterword.xhtml" ]; then
-			grep --quiet -i ">aft<" "${srcDir}/src/epub/content.opf"
-			if [ $? -ne 0 ]; then
-				if [ "${verbose}" = "true" ]; then
-					printf "\t"
-				fi
-				printf "Warning: afterword.xhtml found, but no MARC relator 'aft' (Author of colophon, afterword, etc.)\n" 1>&2
-			fi
-		fi
+		if "http://catalog.hathitrust.org" in xhtml:
+			print("{}Warning: non-https hathitrust.org link in content.opf".format("\t" if args.verbose else ""))
 
-		if [ "${filename}" = "endnotes.xhtml" ]; then
-			grep --quiet -i ">ann<" "${srcDir}/src/epub/content.opf"
-			if [ $? -ne 0 ]; then
-				if [ "${verbose}" = "true" ]; then
-					printf "\t"
-				fi
-				printf "Warning: endnotes.xhtml found, but no MARC relator 'ann' (Annotator)\n" 1>&2
-			fi
-		fi
+		if "http://archive.org" in xhtml:
+			print("{}Warning: non-https archive.org link in content.opf".format("\t" if args.verbose else ""))
 
-		if [ "${filename}" = "loi.xhtml" ]; then
-			grep --quiet -i ">ill<" "${srcDir}/src/epub/content.opf"
-			if [ $? -ne 0 ]; then
-				if [ "${verbose}" = "true" ]; then
-					printf "\t"
-				fi
-				printf "Warning: loi.xhtml found, but no MARC relator 'ill' (Illustrator)\n" 1>&2
-			fi
-		fi
-	done
+		if regex.search(r"id\.loc\.gov/authorities/names/[^\.]+\.html", xhtml):
+			print("{}Warning: id.loc.gov URL illegally ending with .html in content.opf".format("\t" if args.verbose else ""))
 
-	#Check the language defined in content.opf against the body text
-	language="$(xmlstarlet sel -N dc="http://purl.org/dc/elements/1.1/" -t -m "//dc:language" -v "." -n "${srcDir}/src/epub/content.opf")"
+		# Make sure some static files are unchanged
+		if not filecmp.cmp(license_file_path, os.path.join(directory, "LICENSE.md")):
+			print("{}Warning: LICENSE.md does not match template".format("\t" if args.verbose else ""))
 
-	for file in $(find "${srcDir}" -name "*.xhtml")
-	do
-		filename=$(basename "${file}")
-		if [ "${filename}" != "colophon.xhtml" -a "${filename}" != "titlepage.xhtml" -a "${filename}" != "imprint.xhtml" -a "${filename}" != "halftitle.xhtml" -a "${filename}" != "uncopyright.xhtml" -a "${filename}" != "loi.xhtml" -a "${filename}" != "toc.xhtml" ]; then
-			fileLanguage="$(grep --only-matching -E "<html[^<]+xml\:lang=\"[^\"]+\"" "${file}" | sed -E "s/.+xml\:lang=\"([^\"]+)\"/\1/")"
-			if [ "${fileLanguage}" != "${language}" ]; then
-				if [ "${verbose}" = "true" ]; then
-					printf "\t"
-				fi
-				printf "Warning: ${filename} language is ${fileLanguage}, but content.opf language is ${language}!\n" 1>&2
-			fi
-		fi
-	done
+		if not filecmp.cmp(core_css_file_path, os.path.join(directory, "src", "epub", "css", "core.css")):
+			print("{}Warning: core.css does not match template".format("\t" if args.verbose else ""))
 
-	#Check if there are non-typogrified quotes or em-dashes in metadata descriptions
-	grep --quiet --null-data --extended-regexp "<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>" "${srcDir}/src/epub/content.opf"
-	if [ $? -eq 0 ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\t"
-		fi
-		printf "Warning: non-typogrified \", ', or -- detected in metadata long description!\n" 1>&2
-	fi
+		if not filecmp.cmp(logo_svg_file_path, os.path.join(directory, "src", "epub", "images", "logo.svg")):
+			print("{}Warning: logo.svg does not match template".format("\t" if args.verbose else ""))
 
-	grep --quiet --null-data --extended-regexp "<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</dc:description>" "${srcDir}/src/epub/content.opf"
-	if [ $? -eq 0 ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\t"
-		fi
-		printf "Warning: non-typogrified \", ', or -- detected in metadata description!\n" 1>&2
-	fi
+		if not filecmp.cmp(uncopyright_file_path, os.path.join(directory, "src", "epub", "text", "uncopyright.xhtml")):
+			print("{}Warning: uncopyright.xhtml does not match template".format("\t" if args.verbose else ""))
 
-	#See if we have non-https source links
-	grep --quiet -i -R "http://www.gutenberg.org/" "${srcDir}/src/"
-	if [ $? -eq 0 ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\t"
-		fi
-		printf "Warning: Non-https link detected: http://www.gutenberg.org\n" 1>&2
-	fi
+		# Check for unused selectors
+		unused_selectors = subprocess.check_output([find_unused_selectors_path, directory]).decode().strip()
+		if unused_selectors:
+			if args.verbose:
+				unused_selectors = "\t\t" + "\t\t".join(unused_selectors.splitlines(True))
+			else:
+				unused_selectors = "\t" + "\t".join(unused_selectors.splitlines(True))
 
-	grep --quiet -i -R "http://catalog.hathitrust.org/" "${srcDir}/src/"
-	if [ $? -eq 0 ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\t"
-		fi
-		printf "Warning: Non-https link detected: http://catalog.hathitrust.org\n" 1>&2
-	fi
+			print("{}Warning: unused CSS selectors in local.css:\n{}".format("\t" if args.verbose else "", unused_selectors))
 
-	grep --quiet -i -R "http://archive.org/" "${srcDir}/src/"
-	if [ $? -eq 0 ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\t"
-		fi
-		printf "Warning: Non-https link detected: http://archive.org/\n" 1>&2
-	fi
+		# Now iterate over individual files for some checks
+		for root, _, filenames in os.walk(directory):
+			for filename in fnmatch.filter(filenames, "*.xhtml"):
 
-	grep --quiet -E -i -R "id.loc.gov/authorities/names/[^\.]+.html" "${srcDir}/src/"
-	if [ $? -eq 0 ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\t"
-		fi
-		printf "Warning: LoC identifier with .html extension detected!\n" 1>&2
-	fi
+				with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
+					file_xhtml = file.read()
 
-	grep --quiet -i -R "�" "${srcDir}/src/"
-	if [ $? -eq 0 ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\t"
-		fi
-		printf "Warning: UTF replacement character detected!  Transcription encoding error?\n" 1>&2
-	fi
+					# Check for non-https links
+					if "http://www.gutenberg.org" in file_xhtml:
+						print("{}Warning: non-https gutenberg.org link in {}".format("\t" if args.verbose else "", filename))
 
-	grep --quiet -i -R "epub\:type=\"subtitle\"" "${srcDir}/src/epub/text/"
-	if [ $? -eq 0 ]; then
-		grep --quiet -i -R "span\[epub\|type\~=\"subtitle\"\]" "${srcDir}/src/epub/css/"
-		if [ $? -ne 0 ]; then
-			if [ "${verbose}" = "true" ]; then
-				printf "\t"
-			fi
-			printf "Warning: Subtitles detected, but no subtitle CSS detected!\n" 1>&2
-		fi
-	fi
+					if "http://catalog.hathitrust.org" in file_xhtml:
+						print("{}Warning: non-https hathitrust.org link in {}".format("\t" if args.verbose else "", filename))
 
-	grep --quiet -i -R "<p/>" "${srcDir}/src/"
-	if [ $? -eq 0 ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\t"
-		fi
-		printf "Warning: Empty <p> tag (<p/>) detected\n" 1>&2
-	fi
+					if "http://archive.org" in file_xhtml:
+						print("{}Warning: non-https archive.org link in {}".format("\t" if args.verbose else "", filename))
 
-	#Run some external checks
-	"${unusedSelectorPath}" "${srcDir}"
+					# Check for empty <p> tags
+					if "<p/>" in file_xhtml or "<p></p>" in file_xhtml:
+						print("{}Warning: empty <p/> tag in {}".format("\t" if args.verbose else "", filename))
 
-	#Check for HTML entities in long-description
-	grep --quiet -E -i "&amp;[a-z]+?;" "${srcDir}/src/epub/content.opf"
-	if [ $? -eq 0 ]; then
-		if [ "${verbose}" = "true" ]; then
-			printf "\t"
-		fi
-		printf "Warning: HTML entites detected in metadata!  Use UTF characters where possible.\n" 1>&2
-	fi
+					# Check for missing subtitle styling
+					if "epub:type=\"subtitle\"" in file_xhtml and not local_css_has_subtitle_style:
+						print("{}Warning: Subtitles detected, but no subtitle style detected in local.css. File: {}".format("\t" if args.verbose else "", filename))
 
-	grep --extended-regexp --no-filename --only-matching "<abbr[^<]+>" "${srcDir}/src/epub/text/"* | sed 's/<abbr class=\"//g' | sed 's/<abbr xml:lang="//g' | sed 's/">//g' | sed --regexp-extended "s/\s+/\n/g" | sort | uniq | while read class;
-	do
-		if [ "${class}" = "name" -o "${class}" = "era" -o "${class}" = "degree" -o "${class}" = "initialism" -o "${class}" = "acronym" -o "${class}" = "temperature" -o "${class}" = "postal" -o "${class}" = "timezone" ]; then
-			grep --quiet "abbr\.${class}" "${srcDir}/src/epub/css/local.css"
-			if [ $? -ne 0 ]; then
-				if [ "${verbose}" = "true" ]; then
-					printf "\t"
-				fi
-				printf "Warning: There seem to be an <abbr class=\"${class}\"> tag, but no abbr.${class} styling!\n" 1>&2
-			fi
-		fi
-	done
-done
+					# Collect abbr elements for later check
+					result = regex.findall("<abbr[^<]+?>", file_xhtml)
+					result = [item.replace("eoc", "").replace(" \"", "").strip() for item in result]
+					abbr_elements = list(set(result + abbr_elements))
+
+					# Check if language tags in individual files match the language in content.opf
+					if filename not in IGNORED_FILES:
+						file_language = regex.search(r"<html[^<]+xml\:lang=\"([^\"]+)\"", file_xhtml).group(1)
+						if language != file_language:
+							print("{}Warning: {} language is {}, but content.opf language is {}".format("\t" if args.verbose else "", filename, file_language, language))
+
+				# Check for missing MARC relators
+				if filename == "introduction.xhtml" and ">aui<" not in processed_xhtml and ">win<" not in processed_xhtml:
+					print("{}Warning: introduction.xhtml found, but no MARC relator 'aui' (Author of introduction, but not the chief author) or 'win' (Writer of introduction)".format("\t" if args.verbose else ""))
+
+				if filename == "preface.xhtml" and ">wpr<" not in processed_xhtml:
+					print("{}Warning: preface.xhtml found, but no MARC relator 'wpr' (Writer of preface)".format("\t" if args.verbose else ""))
+
+				if filename == "afterword.xhtml" and ">aft<" not in processed_xhtml:
+					print("{}Warning: afterword.xhtml found, but no MARC relator 'aft' (Author of colophon, afterword, etc.)".format("\t" if args.verbose else ""))
+
+				if filename == "endnotes.xhtml" and ">ann<" not in processed_xhtml:
+					print("{}Warning: endnotes.xhtml found, but no MARC relator 'ann' (Annotator)".format("\t" if args.verbose else ""))
+
+				if filename == "loi.xhtml" and ">ill<" not in processed_xhtml:
+					print("{}Warning: loi.xhtml found, but no MARC relator 'ill' (Illustrator)".format("\t" if args.verbose else ""))
+
+
+		for element in abbr_elements:
+			try:
+				css_class = regex.search(r"class=\"([^\"]+?)\"", element).group(1)
+			except Exception:
+				continue
+			if css_class and (css_class == "name" or css_class == "temperature") and "abbr." + css_class not in abbr_styles:
+				print("{}Warning: abbr.{} element found, but no style in local.css".format("\t" if args.verbose else "", css_class))
+
+
+
+if __name__ == "__main__":
+	main()
