@@ -5,11 +5,14 @@ import os
 import fnmatch
 import regex
 
+
 IGNORED_FILES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
+
 
 def main():
 	parser = argparse.ArgumentParser(description="Try to convert British quote style to American quote style.  Quotes must already be \"typogrified\"--i.e. curly.  This script isn't perfect; proofreading is required, especially near closing quotes near to em-dashes.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("-f", "--force", action="store_true", help="force conversion of quote style")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
@@ -32,16 +35,67 @@ def main():
 			with open(filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 				new_xhtml = xhtml
+				convert = True
+				if args.force is False:
+					detected_style = _detect_quote_type(xhtml)
+					if detected_style == "american":
+						convert = False
+						print(
+							"File appears to already use American quote-style, ignoring. "
+							"Use --force to convert anyway. File: {}".format(filename)
+						)
+					else:
+						convert = True
 
-				new_xhtml = british_to_american(new_xhtml)
+				if convert:
+					new_xhtml = british_to_american(new_xhtml)
 
-				if new_xhtml != xhtml:
-					file.seek(0)
-					file.write(new_xhtml)
-					file.truncate()
+					if new_xhtml != xhtml:
+						file.seek(0)
+						file.write(new_xhtml)
+						file.truncate()
 
 		if args.verbose:
 			print(" OK")
+
+
+def _detect_quote_type(xhtml):
+	'''
+	Attempt to guess the quote type used in the `xhtml`.
+
+	Want to discover the first quote type after a <p> tag. Doesn't have to be
+	directly after.
+
+	Count pattern matches for each quote style (disregard matches where the
+	capturing group contains opposite quote style).
+
+	Quote style percentage above the threshold is returned.
+
+	Returns:
+	`british`: single-quotes
+	`american`: double-quotes
+	`unsure`: unable to determine from text
+	'''
+	threshold = 80
+
+	ldq_pattern = regex.compile(r"\t*<p>(.*?)“", regex.MULTILINE)
+	lsq_pattern = regex.compile(r"\t*<p>(.*?)‘", regex.MULTILINE)
+
+	lsq_count = len([m for m in lsq_pattern.findall(xhtml) if m.count("“") == 0])
+	ldq_count = len([m for m in ldq_pattern.findall(xhtml) if m.count("‘") == 0])
+
+	try:
+		american_percentage = (ldq_count / (ldq_count + lsq_count) * 100)
+	except ZeroDivisionError:
+		return "unsure"
+
+	if (american_percentage >= threshold):
+		return "american"
+	elif (100 - american_percentage >= threshold):
+		return "british"
+
+	return "unsure"
+
 
 def british_to_american(xhtml):
 	xhtml = regex.sub(r"“", r"<ldq>", xhtml)
@@ -59,10 +113,11 @@ def british_to_american(xhtml):
 	xhtml = regex.sub(r"<lsq>", r"“", xhtml)
 	xhtml = regex.sub(r"<rsq>", r"”", xhtml)
 	xhtml = regex.sub(r"<ap>", r"’", xhtml)
-	xhtml = regex.sub(r"’ ’", r"’ ”", xhtml)			#Correct a common error
-	xhtml = regex.sub(r"“([^‘”]+?[^s])’([!\?:;\s])", r"“\1”\2", xhtml)	#Correct a common error
+	xhtml = regex.sub(r"’ ’", r"’ ”", xhtml)			# Correct a common error
+	xhtml = regex.sub(r"“([^‘”]+?[^s])’([!\?:;\s])", r"“\1”\2", xhtml)  # Correct a common error
 
 	return xhtml
+
 
 if __name__ == "__main__":
 	main()
