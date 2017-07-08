@@ -23,11 +23,11 @@ def main():
 	directory = os.path.abspath(args.directory)
 	target_endnote_number = int(args.target_endnote_number)
 	endnote_count = 0
-	source_directory = os.path.join(directory, "src/")
+	source_directory = os.path.join(directory, "src")
 
 	#First get the highest numbered endnote
 	try:
-		endnotes_filename = os.path.join(source_directory, "epub/text/endnotes.xhtml")
+		endnotes_filename = os.path.join(source_directory, "epub", "text", "endnotes.xhtml")
 		with open(endnotes_filename, "r+", encoding="utf-8") as file:
 			xhtml = file.read()
 			soup = BeautifulSoup(xhtml, "lxml")

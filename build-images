@@ -67,7 +67,7 @@ def main():
 		source_cover_jpg_filename = os.path.join(source_images_directory, "cover.jpg")
 		source_cover_svg_filename = os.path.join(source_images_directory, "cover.svg")
 		source_titlepage_svg_filename = os.path.join(source_images_directory, "titlepage.svg")
-		dest_images_directory = os.path.join(directory, "src/epub/images/")
+		dest_images_directory = os.path.join(directory, "src", "epub", "images")
 		dest_cover_svg_filename = os.path.join(dest_images_directory, "cover.svg")
 		dest_titlepage_svg_filename = os.path.join(dest_images_directory, "titlepage.svg")
 

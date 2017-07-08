@@ -6,7 +6,7 @@ import fnmatch
 import sys
 import regex
 
-DICTIONARY_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data" + os.sep + "words")
+DICTIONARY_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data", "words")
 
 def main():
 	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace \"ash-tray\" with \"ashtray\".")

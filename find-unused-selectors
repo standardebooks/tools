@@ -27,10 +27,10 @@ def main():
 			print("Processing {} ...".format(directory), end="", flush=True)
 
 		try:
-			with open(os.path.join(directory, "src/epub/css/local.css"), encoding="utf-8") as file:
+			with open(os.path.join(directory, "src", "epub", "css", "local.css"), encoding="utf-8") as file:
 				css = file.read()
 		except Exception:
-			print("Error: Couldn't open CSS file: {}".format(os.path.join(directory, "src/epub/css/local.css")), file=sys.stderr)
+			print("Error: Couldn't open CSS file: {}".format(os.path.join(directory, "src", "epub", "css", "local.css")), file=sys.stderr)
 			exit(1)
 
 		# Remove actual content of css selectors
@@ -50,7 +50,7 @@ def main():
 		unused_selectors = set(selectors)
 
 		# Get a list of .xhtml files to search
-		filenames = glob.glob(os.path.join(directory, "src/epub/text/") + "*.xhtml")
+		filenames = glob.glob(os.path.join(directory, "src", "epub", "text") + "*.xhtml")
 
 		# Now iterate over each CSS selector and see if it's used in any of the files we found
 		for selector in selectors:

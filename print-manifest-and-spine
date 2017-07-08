@@ -25,12 +25,12 @@ def main():
 	manifest = []
 
 	#Add CSS
-	for _, _, filenames in os.walk(os.path.join(directory, "src/epub/css")):
+	for _, _, filenames in os.walk(os.path.join(directory, "src", "epub", "css")):
 		for filename in filenames:
 			manifest.append("<item href=\"css/{}\" id=\"{}\" media-type=\"text/css\"/>".format(filename, filename))
 
 	#Add images
-	for _, _, filenames in os.walk(os.path.join(directory, "src/epub/images")):
+	for _, _, filenames in os.walk(os.path.join(directory, "src", "epub", "images")):
 		for filename in filenames:
 			media_type = "image/jpeg"
 			properties = ""
@@ -47,7 +47,7 @@ def main():
 			manifest.append("<item href=\"images/{}\" id=\"{}\" media-type=\"{}\"{}/>".format(filename, filename, media_type, properties))
 
 	#Add XHTML files
-	for _, _, filenames in os.walk(os.path.join(directory, "src/epub/text")):
+	for _, _, filenames in os.walk(os.path.join(directory, "src", "epub", "text")):
 		for filename in filenames:
 			properties = ""
 
@@ -70,7 +70,7 @@ def main():
 	excluded_files = ["dedication.xhtml", "introduction.xhtml", "foreword.xhtml", "preface.xhtml", "epigraph.xhtml", "halftitle.xhtml", "titlepage.xhtml", "colophon.xhtml", "uncopyright.xhtml", "imprint.xhtml", "loi.xhtml", "endnotes.xhtml"]
 	spine = ["<itemref idref=\"titlepage.xhtml\"/>", "<itemref idref=\"imprint.xhtml\"/>"]
 
-	filenames = natural_sort(os.listdir(os.path.join(directory, "src/epub/text")))
+	filenames = natural_sort(os.listdir(os.path.join(directory, "src", "epub", "text")))
 
 	if "dedication.xhtml" in filenames:
 		spine.append("<itemref idref=\"dedication.xhtml\"/>")
