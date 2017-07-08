@@ -51,7 +51,7 @@ def main():
 		unused_selectors = set(selectors)
 
 		# Get a list of .xhtml files to search
-		filenames = glob.glob(os.path.join(directory, "src", "epub", "text") + "/*.xhtml")
+		filenames = glob.glob(os.path.join(directory, "src", "epub", "text") + os.sep + "*.xhtml")
 
 		# Now iterate over each CSS selector and see if it's used in any of the files we found
 		for selector in selectors:
