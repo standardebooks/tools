@@ -20,7 +20,7 @@ def main():
 	args = parser.parse_args()
 
 	if args.verbose and not args.quotes:
-			print("Skipping smart quotes.")
+		print("Skipping smart quotes.")
 
 	for target in args.targets:
 		target = os.path.abspath(target)
