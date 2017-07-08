@@ -2,12 +2,12 @@
 
 import argparse
 import os
-import sys
 import fnmatch
 import regex
 
 
 IGNORED_FILES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
+
 
 def main():
 	parser = argparse.ArgumentParser(description="Try to convert British quote style to American quote style.  Quotes must already be \"typogrified\"--i.e. curly.  This script isn't perfect; proofreading is required, especially near closing quotes near to em-dashes.")
@@ -39,50 +39,24 @@ def main():
 				if args.force is False:
 					detected_style = _detect_quote_type(xhtml)
 					if detected_style == "american":
-						convert = confirm("{} already uses American quote style (double quotes). " \
-										  "Converting will swap quote style. Convert anyway?".format(filename),
-										  default="no")
-					elif detected_style == "unsure":
-						convert = confirm("{} unable to detect quote style. " \
-										  "Converting will swap quote style. Convert anyway?".format(filename),
-										  default="no")
+						convert = False
+						print(
+							"File appears to already use American quote-style, ignoring. "
+							"Use --force to convert anyway. File: {}".format(filename)
+						)
+					else:
+						convert = True
 
 				if convert:
 					new_xhtml = british_to_american(new_xhtml)
-				else:
-					print("Ignoring {}".format(filename))
 
-				if new_xhtml != xhtml:
-					file.seek(0)
-					file.write(new_xhtml)
-					file.truncate()
+					if new_xhtml != xhtml:
+						file.seek(0)
+						file.write(new_xhtml)
+						file.truncate()
 
 		if args.verbose:
 			print(" OK")
-
-
-def confirm(question, default="yes"):
-	'''Prompt user with a yes/no question and return boolean.'''
-	valid = {"yes": True, "y": True, "ye": True, "no": False, "n": False}
-	if default is None:
-		prompt = " [y/n] "
-	elif default == "yes":
-		prompt = " [Y/n] "
-	elif default == "no":
-		prompt = " [y/N] "
-	else:
-		raise ValueError("invalid default answer: '%s'" % default)
-
-	while True:
-		sys.stdout.write(question + prompt)
-		choice = input().lower()
-		if default is not None and choice == '':
-			return valid[default]
-		elif choice in valid:
-			return valid[choice]
-		else:
-			sys.stdout.write("Please respond with 'yes' or 'no' "
-							 "(or 'y' or 'n').\n")
 
 
 def _detect_quote_type(xhtml):
@@ -139,10 +113,11 @@ def british_to_american(xhtml):
 	xhtml = regex.sub(r"<lsq>", r"“", xhtml)
 	xhtml = regex.sub(r"<rsq>", r"”", xhtml)
 	xhtml = regex.sub(r"<ap>", r"’", xhtml)
-	xhtml = regex.sub(r"’ ’", r"’ ”", xhtml)			#Correct a common error
-	xhtml = regex.sub(r"“([^‘”]+?[^s])’([!\?:;\s])", r"“\1”\2", xhtml)	#Correct a common error
+	xhtml = regex.sub(r"’ ’", r"’ ”", xhtml)			# Correct a common error
+	xhtml = regex.sub(r"“([^‘”]+?[^s])’([!\?:;\s])", r"“\1”\2", xhtml)  # Correct a common error
 
 	return xhtml
+
 
 if __name__ == "__main__":
 	main()
