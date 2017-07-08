@@ -35,17 +35,13 @@ def main():
 			with open(filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 				new_xhtml = xhtml
+
 				convert = True
 				if args.force is False:
 					detected_style = _detect_quote_type(xhtml)
 					if detected_style == "american":
 						convert = False
-						print(
-							"File appears to already use American quote-style, ignoring. "
-							"Use --force to convert anyway. File: {}".format(filename)
-						)
-					else:
-						convert = True
+						print("{}File appears to already use American quote style, ignoring. Use --force to convert anyway. File: {}".format("\t" if args.verbose else "", filename))
 
 				if convert:
 					new_xhtml = british_to_american(new_xhtml)
@@ -89,9 +85,9 @@ def _detect_quote_type(xhtml):
 	except ZeroDivisionError:
 		return "unsure"
 
-	if (american_percentage >= threshold):
+	if american_percentage >= threshold:
 		return "american"
-	elif (100 - american_percentage >= threshold):
+	elif 100 - american_percentage >= threshold:
 		return "british"
 
 	return "unsure"
@@ -113,8 +109,8 @@ def british_to_american(xhtml):
 	xhtml = regex.sub(r"<lsq>", r"“", xhtml)
 	xhtml = regex.sub(r"<rsq>", r"”", xhtml)
 	xhtml = regex.sub(r"<ap>", r"’", xhtml)
-	xhtml = regex.sub(r"’ ’", r"’ ”", xhtml)			# Correct a common error
-	xhtml = regex.sub(r"“([^‘”]+?[^s])’([!\?:;\s])", r"“\1”\2", xhtml)  # Correct a common error
+	xhtml = regex.sub(r"’ ’", r"’ ”", xhtml)				# Correct a common error
+	xhtml = regex.sub(r"“([^‘”]+?[^s])’([!\?:;\s])", r"“\1”\2", xhtml)	# Correct a common error
 
 	return xhtml
 
