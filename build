@@ -188,6 +188,9 @@ do
 	#Simplify tags
 	"${scriptDir}/simplify-tags" "${workDir}"
 
+	#Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
+	find "${workDir}" -type f -not -path '*/\.*' -print0 | xargs -0 sed -i -E "s|https://standardebooks.org/vocab/1.0|http://standardebooks.org/vocab/1.0|g"
+
 	#To get popup footnotes in iBooks, we have to change epub:rearnote to epub:footnote.
 	#Remember to get our custom style selectors too.
 	find "${workDir}" -iname "*.xhtml" -print0 | xargs -0 sed --in-place --regexp-extended "s/epub:type=\"([^\"]*?)rearnote([^\"]*?)\"/epub:type=\"\1footnote\2\"/g"
