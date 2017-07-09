@@ -110,7 +110,7 @@ def british_to_american(xhtml):
 	xhtml = regex.sub(r"<rsq>", r"”", xhtml)
 	xhtml = regex.sub(r"<ap>", r"’", xhtml)
 	xhtml = regex.sub(r"’ ’", r"’ ”", xhtml)				# Correct a common error
-	xhtml = regex.sub(r"“([^‘”]+?[^s])’([!\?:;\s])", r"“\1”\2", xhtml)	# Correct a common error
+	xhtml = regex.sub(r"“([^‘”]+?[^s])’([!\?:;\)\s])", r"“\1”\2", xhtml)	# Correct a common error
 
 	return xhtml
 
