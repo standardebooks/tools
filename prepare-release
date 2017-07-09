@@ -199,6 +199,11 @@ def main():
 					if "epub:type=\"subtitle\"" in file_xhtml and not local_css_has_subtitle_style:
 						print("{}Warning: Subtitles detected, but no subtitle style detected in local.css. File: {}".format("\t" if args.verbose else "", filename))
 
+					# Did someone use colons instead of dots for SE identifiers? e.g. se:name:vessel:ship
+					matches = regex.findall(r"\bse:[a-z]+:(?:[a-z]+:?)*", file_xhtml)
+					if matches:
+						print("{}Warning: Illegal colon (:) detected in SE identifier.  SE identifiers are separated by dots (.) not colons. Identifier: {} File: {}".format("\t" if args.verbose else "", matches, filename))
+
 					# Collect abbr elements for later check
 					result = regex.findall("<abbr[^<]+?>", file_xhtml)
 					result = [item.replace("eoc", "").replace(" \"", "").strip() for item in result]
