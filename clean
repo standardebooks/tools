@@ -56,7 +56,9 @@ def main():
 					processed_xhtml = regex.sub(r"\s+", " ", processed_xhtml)
 
 				#Epub3 doesn't allow named entities, so convert them to their unicode equivalents
-				processed_xhtml = html.unescape(processed_xhtml).replace("&", "&amp;")
+				#But, don't unescape the content.opf long-description accidentally
+				if not filename.endswith("content.opf"):
+					processed_xhtml = html.unescape(processed_xhtml).replace("&", "&amp;")
 
 				#Remove unnecessary doctypes which can cause xmllint to hang
 				processed_xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", processed_xhtml, flags=regex.MULTILINE | regex.DOTALL)
