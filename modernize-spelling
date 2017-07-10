@@ -6,7 +6,9 @@ import fnmatch
 import sys
 import regex
 
+
 DICTIONARY_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data", "words")
+
 
 def main():
 	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace \"ash-tray\" with \"ashtray\".")
@@ -62,8 +64,9 @@ def main():
 		if args.verbose:
 			print(" OK")
 
+
 def modernize_hyphenation(xhtml, dictionary):
-	#Easy fix for a common case
+	# Easy fix for a common case
 	xhtml = regex.sub(r"\b([Nn])ow-a-days\b", r"\1owadays", xhtml)			# now-a-days -> nowadays
 
 	result = regex.findall(r"\b[^\W\d_]+\-[^\W\d_]+\b", xhtml)
@@ -83,11 +86,12 @@ def modernize_hyphenation(xhtml, dictionary):
 
 	return xhtml
 
+
 def modernize_spelling(xhtml, language):
-	#ADDING NEW WORDS TO THIS LIST:
-	#A good way to check if a word is "archaic" is to do a Google N-Gram search: https://books.google.com/ngrams/graph?case_insensitive=on&year_start=1800&year_end=2000&smoothing=3
-	#Remember that en-US and en-GB differ significantly, and just because a word might seem strange to you, doesn't mean it's not the common case in the other variant.
-	#If Google N-Gram shows that a word has declined significantly in usage in BOTH en-US and en-GB (or the SE editor makes an exception) then it may be a good candidate to add to this list.
+	# ADDING NEW WORDS TO THIS LIST:
+	# A good way to check if a word is "archaic" is to do a Google N-Gram search: https://books.google.com/ngrams/graph?case_insensitive=on&year_start=1800&year_end=2000&smoothing=3
+	# Remember that en-US and en-GB differ significantly, and just because a word might seem strange to you, doesn't mean it's not the common case in the other variant.
+	# If Google N-Gram shows that a word has declined significantly in usage in BOTH en-US and en-GB (or the SE editor makes an exception) then it may be a good candidate to add to this list.
 
 	xhtml = regex.sub(r"\b([Dd])evelope\b", r"\1evelop", xhtml)			# develope -> develop
 	xhtml = regex.sub(r"\b([Oo])ker\b", r"\1cher", xhtml)				# oker -> ocher
@@ -108,12 +112,6 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\bphantasie", r"fantasy", xhtml)				# phantasie -> fantasy
 	xhtml = regex.sub(r"\b([Mm])enage\b", r"\1énage", xhtml)			# menage -> ménage
 	xhtml = regex.sub(r"([Hh])ypothenuse", r"\1ypotenuse", xhtml)			# hypothenuse -> hypotenuse
-	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
-	xhtml = regex.sub(r"Tolstoi", r"Tolstoy", xhtml)				# Tolstoi -> Tolstoy
-	xhtml = regex.sub(r"Buonaparte", r"Bonaparte", xhtml)				# Buonaparte -> Bonaparte
-	xhtml = regex.sub(r"Shakespear([^ie])", r"Shakespeare\1", xhtml)		# Shakespear -> Shakespeare
-	xhtml = regex.sub(r"Raffaelle", r"Raphael", xhtml)				# Raffaelle -> Raphael
-	xhtml = regex.sub(r"Michael Angelo", r"Michaelangelo", xhtml)			# Michael Angelo -> Michaelangelo
 	xhtml = regex.sub(r"[‘’]([Bb])us\b", r"\1us", xhtml)				# ’bus -> bus
 	xhtml = regex.sub(r"([Nn])aïve", r"\1aive", xhtml)				# naïve -> naive
 	xhtml = regex.sub(r"([Nn])a[ïi]vet[ée]", r"\1aivete", xhtml)			# naïveté -> naivete
@@ -164,7 +162,6 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b(?<!ancien )([Rr])égime", r"\1egime", xhtml)		# régime -> regime (but "ancien régime")
 	xhtml = regex.sub(r"\b([Bb])urthen", r"\1urden", xhtml)				# burthen -> burden
 	xhtml = regex.sub(r"\b[EÉ]lys[eé]e", r"Élysée", xhtml)				# Elysee -> Élysée
-	xhtml = regex.sub(r"\bVergil", r"Virgil", xhtml)				# Vergil -> Virgil
 	xhtml = regex.sub(r"\b([Ll])aw suit", r"\1awsuit", xhtml)			# law suit -> lawsuit
 	xhtml = regex.sub(r"\bIncase", r"Encase", xhtml)				# incase -> encase
 	xhtml = regex.sub(r"\bincase", r"encase", xhtml)				# incase -> encase
@@ -177,6 +174,15 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Dd])epôt", r"\1epot", xhtml)				# depôt -> depot
 	xhtml = regex.sub(r"\b([Cc])onnexion", r"\1onnection", xhtml)			# connexion -> connection
 
+	# Normalize some names
+	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
+	xhtml = regex.sub(r"Tolstoi", r"Tolstoy", xhtml)				# Tolstoi -> Tolstoy
+	xhtml = regex.sub(r"Buonaparte", r"Bonaparte", xhtml)				# Buonaparte -> Bonaparte
+	xhtml = regex.sub(r"Shakespear([^ie])", r"Shakespeare\1", xhtml)		# Shakespear -> Shakespeare
+	xhtml = regex.sub(r"Raffaelle", r"Raphael", xhtml)				# Raffaelle -> Raphael
+	xhtml = regex.sub(r"Michael Angelo", r"Michaelangelo", xhtml)			# Michael Angelo -> Michaelangelo
+	xhtml = regex.sub(r"\bVergil", r"Virgil", xhtml)				# Vergil -> Virgil
+
 	if language == "en-US":
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)
 		xhtml = regex.sub(r"\b([Mm])anœuvre", r"\1aneuver", xhtml)
@@ -186,6 +192,7 @@ def modernize_spelling(xhtml, language):
 		xhtml = regex.sub(r"\b([Mm])anœuvre", r"\1anoeuvre", xhtml)
 
 	return xhtml
+
 
 if __name__ == "__main__":
 	main()
