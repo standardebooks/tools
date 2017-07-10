@@ -130,6 +130,10 @@ def main():
 				#nth (as in nth degree)
 				processed_xhtml = regex.sub(r"\bn\-?th\b", r"<i>n</i>th", processed_xhtml)
 
+				#Remove double spaces that use nbsp for spacing
+				processed_xhtml = regex.sub(r"{}[{} ]+".format(NBSP, NBSP), r" ", processed_xhtml)
+				processed_xhtml = regex.sub(r" [{} ]+".format(NBSP), r" ", processed_xhtml)
+
 				#House style: remove spacing from common Latinisms
 				processed_xhtml = regex.sub(r"([Ii])\.\s+e\.", r"\1.e.", processed_xhtml)
 				processed_xhtml = regex.sub(r"([Ee])\.\s+g\.", r"\1.g.", processed_xhtml)
