@@ -36,10 +36,10 @@ def main():
 		if os.path.isdir(target):
 			for root, _, filenames in os.walk(target):
 				for filename in filenames:
-					if filename.lower().endswith((".xhtml", ".svg")):
+					if filename.lower().endswith((".xhtml", ".svg", ".opf")):
 						target_filenames.add(os.path.join(root, filename))
 		else:
-			if target.lower().endswith((".xhtml", ".svg")):
+			if target.lower().endswith((".xhtml", ".svg", ".opf")):
 				target_filenames.add(target)
 
 		for filename in target_filenames:
