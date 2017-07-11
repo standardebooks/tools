@@ -6,40 +6,55 @@ A collection of tools Standard Ebooks uses to produce its ebooks, including basi
 
 ## Step 1a: Ubuntu 16.04 users
 
+```shell
+# Install some pre-flight dependencies
+# python3-dev libxml2-dev libxslt1-dev zlib1g-dev are required for building lxml via pip
+sudo apt install -y python3-pip python3-dev libxml2-dev libxslt1-dev zlib1g-dev libxml2-utils librsvg2-bin libimage-exiftool-perl epubcheck default-jre inkscape calibre
+
+# Install required fonts
+mkdir -p ~/.fonts/
+curl -s -o ~/.fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
+curl -s -o ~/.fonts/OFLGoudyStM.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM.otf?raw=true"
+curl -s -o ~/.fonts/OFLGoudyStM-Italic.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM-Italic.otf?raw=true"
+
+# Refresh the local font cache
+sudo fc-cache -fv
+```
+
+## Step 1b: Mac OS users
+
+These instructions were tested on Mac OS X 10.12. Your mileage may vary.
+
+1. Install the [Homebrew package manager](https://brew.sh).
+
+2. Install the [calibre ebook management app](http://calibre-ebook.com).
+
+3. Install [Java JDK 1.7 or later](http://www.oracle.com/technetwork/java/javase/downloads/index.html).
+
+4. Install dependencies:
+
+	```shell
 	# Install some pre-flight dependencies
-	# python3-dev libxml2-dev libxslt1-dev zlib1g-dev are required for lxml
-	# The rest are used in the toolset
-	sudo apt install -y python3-pip python3-dev libxml2-dev libxslt1-dev zlib1g-dev libxml2-utils librsvg2-bin libimage-exiftool-perl epubcheck default-jre inkscape calibre
+	brew install python3 imagemagick librsvg epubcheck caskformula/caskformula/inkscape
 
-## Step 1b: Mac users
-
-	???
+	# Install required fonts
+	curl -s -o ~/Library/Fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
+	curl -s -o ~/Library/Fonts/OFLGoudyStM.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM.otf?raw=true"
+	curl -s -o ~/Library/Fonts/OFLGoudyStM-Italic.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM-Italic.otf?raw=true"
+	```
 
 ## Step 2: All platforms
 
-	# Clone the tools repo
-	git clone https://github.com/standardebooks/tools.git
+```shell
+# Clone the tools repo
+git clone https://github.com/standardebooks/tools.git
 
-	# Install python dependencies
-	pip3 install -r ./tools/requirements.txt
+# Install python dependencies
+pip3 install -r ./tools/requirements.txt
 
-	# Install hyphenation dictionaries for the pyhyphen library
-	python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
-
-	# Install required fonts
-	mkdir -p ~/.fonts/
-	wget -O ~/.fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
-	wget -O ~/.fonts/OFLGoudyStM.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM.otf?raw=true"
-	wget -O ~/.fonts/OFLGoudyStM-Italic.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM-Italic.otf?raw=true"
-
-## Step 3a: Ubuntu 16.04 users
-
-	# Refresh the local fonts cache
-	sudo fc-cache -fv
-
-## Step 3b: Mac users
-
-	???
+# Install hyphenation dictionaries for the pyhyphen library
+python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
+```
 
 # Tool descriptions
 
