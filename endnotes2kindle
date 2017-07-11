@@ -41,7 +41,7 @@ def main():
 				note_text = regex.sub(r"^<li[^>]*?>(.*)<\/li>$", r"\1", etree.tostring(note, encoding="unicode", pretty_print=True, with_tail=False), flags=regex.IGNORECASE | regex.DOTALL)
 
 				#Insert our new ref link
-				result = regex.subn(r"^\s*<p([^>]*?)>", r"<p\1 id=\"" + note_id + "\">" + new_ref_link + " ", note_text)
+				result = regex.subn(r"^\s*<p([^>]*?)>", "<p\\1 id=\"" + note_id + "\">" + new_ref_link + " ", note_text)
 
 				#Sometimes there is no leading <p> tag (for example, if the endnote starts with a blockquote
 				#If that's the case, just insert one in front.
