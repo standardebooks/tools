@@ -2,18 +2,26 @@
 
 A collection of tools Standard Ebooks uses to produce its ebooks, including basic setup of ebooks, text processing, and build tools.
 
-# Warning for Mac users
-
-This repository started out as all Bash scripts targeting Ubuntu 16.04, and over time the tools have been converted to Python scripts for better cross-platform compatibility.  However not all the tools are converted yet, notably `build` and `prepare-release`.  Geoff Coffey is maintaining a branch of this repo, the `mac` branch, that is Mac-compatible.  Please use Git to checkout the `mac` branch and read the special `README.md` file there for Mac-specific installation instructions.
-
-If you prefer to use the `master` branch, you can always install an Ubuntu 16.04 virtual machine.  See this [guide by Jared Updike on how to install SE tools on Macs using a VM](http://jared.updike.org/posts/2017-06-30-set-up-ubuntu-vm-for-standard-ebooks-tools-on-a-mac.html).
-
 # Installation
 
-Several dependencies must be installed before you can use these tools. On Ubuntu 16.04, you can install everything with:
+## Step 1a: Ubuntu 16.04 users
 
-	sudo apt install python3-pip xsltproc libxml2-utils xmlstarlet libxml-xpath-perl html-xml-utils librsvg2-bin libimage-exiftool-perl zip epubcheck calibre default-jre
-	pip3 install pyhyphen roman titlecase beautifulsoup4 smartypants gitpython cssselect regex lxml python-magic
+	# Install some pre-flight dependencies
+	# python3-dev libxml2-dev libxslt1-dev zlib1g-dev are required for lxml
+	# The rest are used in the toolset
+	sudo apt install -y python3-pip python3-dev libxml2-dev libxslt1-dev zlib1g-dev libxml2-utils librsvg2-bin libimage-exiftool-perl epubcheck default-jre inkscape calibre
+
+## Step 1b: Mac users
+
+	???
+
+## Step 2: All platforms
+
+	# Clone the tools repo
+	git clone https://github.com/standardebooks/tools.git
+
+	# Install python dependencies
+	pip3 install -r ./tools/requirements.txt
 
 	# Install hyphenation dictionaries for the pyhyphen library
 	python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
@@ -23,11 +31,15 @@ Several dependencies must be installed before you can use these tools. On Ubuntu
 	wget -O ~/.fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
 	wget -O ~/.fonts/OFLGoudyStM.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM.otf?raw=true"
 	wget -O ~/.fonts/OFLGoudyStM-Italic.otf "https://github.com/theleagueof/sorts-mill-goudy/blob/master/OFLGoudyStM-Italic.otf?raw=true"
+
+## Step 3a: Ubuntu 16.04 users
+
+	# Refresh the local fonts cache
 	sudo fc-cache -fv
 
-You can also install the dependencies locally via pip:
+## Step 3b: Mac users
 
-	pip3 install -r requirements.txt
+	???
 
 # Tool descriptions
 
