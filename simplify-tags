@@ -106,9 +106,7 @@ def main():
 				if filename == "toc.xhtml":
 					continue
 
-				filename = os.path.join(root, filename)
-
-				with open(filename, "r+", encoding="utf-8") as file:
+				with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
 					#We have to remove the default namespace declaration from our document, otherwise
 					#xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 					xhtml = file.read().replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
