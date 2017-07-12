@@ -25,17 +25,20 @@ sudo fc-cache -fv
 
 These instructions were tested on Mac OS X 10.12. Your mileage may vary.
 
-1. Install the [Homebrew package manager](https://brew.sh).
+1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it is up to date:
 
-2. Install the [calibre ebook management app](http://calibre-ebook.com).
+    ```shell
+    brew update
+    ```
 
-3. Install [Java JDK 1.7 or later](http://www.oracle.com/technetwork/java/javase/downloads/index.html).
-
-4. Install dependencies:
+2. Install dependencies:
 
 	```shell
 	# Install some pre-flight dependencies
-	brew install python3 imagemagick librsvg epubcheck caskformula/caskformula/inkscape
+	brew install python3 epubcheck imagemagick librsvg exiftool
+
+	# Install required applications
+	brew cask install java calibre xquartz inkscape
 
 	# Install required fonts
 	curl -s -o ~/Library/Fonts/LeagueSpartan-Bold.otf "https://github.com/theleagueof/league-spartan/blob/master/LeagueSpartan-Bold.otf?raw=true"
