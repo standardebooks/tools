@@ -10,6 +10,7 @@ import tempfile
 from hashlib import sha1
 import glob
 import subprocess
+import platform
 from subprocess import Popen, PIPE, STDOUT, DEVNULL
 import regex
 import se.formatting
@@ -188,12 +189,12 @@ def main():
 		# Extract cover and cover thumbnail
 		# Mogrify reports the svg as the wrong size, so we have to force the size.
 		# Note that we can't use percentages to resize, since mogrify auto-detects the wrong svg size to begin with.
-		subprocess.check_output(["mogrify", "-resize", "{}x{}".format(COVER_SVG_WIDTH, COVER_SVG_HEIGHT), "-format", "jpg", os.path.join(work_epub_root_directory, "epub", "images", "cover.svg")])
+		subprocess.run(["mogrify", "-resize", "{}x{}".format(COVER_SVG_WIDTH, COVER_SVG_HEIGHT), "-format", "jpg", os.path.join(work_epub_root_directory, "epub", "images", "cover.svg")])
 
 		if args.build_covers:
 			shutil.copy2(os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg"), os.path.join(output_directory, "cover.jpg"))
 			shutil.copy2(os.path.join(work_epub_root_directory, "epub", "images", "cover.svg"), os.path.join(output_directory, "cover-thumbnail.svg"))
-			subprocess.check_output(["mogrify", "-resize", "{}x{}".format(COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT), "-quality", "100", "-format", "jpg", os.path.join(output_directory, "cover-thumbnail.svg")])
+			subprocess.run(["mogrify", "-resize", "{}x{}".format(COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT), "-quality", "100", "-format", "jpg", os.path.join(output_directory, "cover-thumbnail.svg")])
 			os.remove(os.path.join(output_directory, "cover-thumbnail.svg"))
 
 		os.remove(os.path.join(work_epub_root_directory, "epub", "images", "cover.svg"))
@@ -215,7 +216,7 @@ def main():
 			for filename in filenames:
 				if filename.lower().endswith(".svg"):
 					# Convert SVGs to PNGs
-					subprocess.check_output(["rsvg-convert", "-z", "2", "-a", "-f", "png", "-o", regex.sub(r"\.svg$", r".png", os.path.join(root, filename)), os.path.join(root, filename)])
+					subprocess.run(["rsvg-convert", "-z", "2", "-a", "-f", "png", "-o", regex.sub(r"\.svg$", r".png", os.path.join(root, filename)), os.path.join(root, filename)])
 					os.remove(os.path.join(root, filename))
 
 				if filename.lower().endswith(".xhtml"):
@@ -343,11 +344,8 @@ def main():
 							file.write(processed_css)
 							file.truncate()
 
-		# Add soft hyphens
-		output = subprocess.check_output([hyphenate_path, "--ignore-h-tags", work_epub_root_directory]).decode().strip()
-
 		# All done, clean the output
-		output = subprocess.check_output([clean_path, work_epub_root_directory]).decode().strip()
+		subprocess.run([clean_path, work_epub_root_directory])
 
 		# Write the compatible epub
 		se.epub.write_epub(os.path.join(output_directory, epub_output_filename), work_epub_root_directory)
@@ -380,13 +378,13 @@ def main():
 
 
 			# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
-			output = subprocess.check_output([toc2kindle_path, os.path.join(work_epub_root_directory, "epub", toc_filename)]).decode().strip()
+			subprocess.run([toc2kindle_path, os.path.join(work_epub_root_directory, "epub", toc_filename)])
 
 			# Rebuild the NCX
 			toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, xsl_filename)
 
 			# Clean just the ToC and NCX
-			output = subprocess.check_output([clean_path, os.path.join(work_epub_root_directory, "epub", "toc.ncx"), os.path.join(work_epub_root_directory, "epub", toc_filename)]).decode().strip()
+			subprocess.run([clean_path, os.path.join(work_epub_root_directory, "epub", "toc.ncx"), os.path.join(work_epub_root_directory, "epub", toc_filename)])
 
 			# Do some compatibility replacements
 			for root, _, filenames in os.walk(work_epub_root_directory):
@@ -413,9 +411,16 @@ def main():
 				with open(os.path.join(script_directory, "templates", "kindle.css"), "r", encoding="utf-8") as compatibility_css_file:
 					core_css_file.write(compatibility_css_file.read())
 
+			# Add soft hyphens
+			# pyhyphen is currently broken on Mac, so skip this on Macs
+			if platform.system() == "Darwin":
+				print("{}Warning: pyhyphen is currently unstable on Macs, so hyphenation has been disabled.  The resulting Kindle file will not have soft hyphenation.".format("\t" if args.verbose else ""))
+			else:
+				subprocess.run([hyphenate_path, "--ignore-h-tags", work_epub_root_directory])
+
 			# Convert endnotes to Kindle popup compatible notes
 			if os.path.isfile(os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml")):
-				output = subprocess.check_output([endnotes2kindle_path, os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml")]).decode().strip()
+				subprocess.run([endnotes2kindle_path, os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml")])
 
 				# While Kindle now supports soft hyphens, popup endnotes break words but don't insert the hyphen characters.  So for now, remove soft hyphens from the endnotes file.
 				with open(os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml"), "r+", encoding="utf-8") as core_css_file:
@@ -435,7 +440,7 @@ def main():
 			# Generate the kindle file
 			# We place it in the work directory because later we have to update the asin, and the `update-asin` script will write to the final output directory
 			cover_path = os.path.join(work_epub_root_directory, "epub", metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@href")[0].replace(".svg", ".jpg"))
-			return_code = subprocess.call([ebook_convert_path, os.path.join(work_directory, epub_output_filename), os.path.join(work_directory, kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", "--cover={}".format(cover_path)], stdout=DEVNULL, stderr=DEVNULL)
+			return_code = subprocess.run([ebook_convert_path, os.path.join(work_directory, epub_output_filename), os.path.join(work_directory, kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", "--cover={}".format(cover_path)], stdout=DEVNULL, stderr=DEVNULL).returncode
 
 			if return_code:
 				print("{}Error: ebook-convert failed".format("\t" if args.verbose else ""), file=sys.stderr)
@@ -447,10 +452,10 @@ def main():
 				asin = sha1(identifier.encode("utf-8")).hexdigest()
 
 				# Update the ASIN in the generated file
-				subprocess.call([update_asin_path, asin, os.path.join(work_directory, kindle_output_filename), os.path.join(output_directory, kindle_output_filename)], stdout=DEVNULL, stderr=DEVNULL)
+				subprocess.run([update_asin_path, asin, os.path.join(work_directory, kindle_output_filename), os.path.join(output_directory, kindle_output_filename)], stdout=DEVNULL, stderr=DEVNULL)
 
 				#Extract the thumbnail
-				subprocess.call([convert_path, os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg"), "-resize", "432x660", os.path.join(output_directory, "thumbnail_{}_EBOK_portrait.jpg".format(asin))], stdout=DEVNULL, stderr=DEVNULL)
+				subprocess.run([convert_path, os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg"), "-resize", "432x660", os.path.join(output_directory, "thumbnail_{}_EBOK_portrait.jpg".format(asin))], stdout=DEVNULL, stderr=DEVNULL)
 
 			if args.verbose:
 				print(" OK")
