@@ -55,8 +55,9 @@ def main():
 				if args.verbose:
 					print("\tUpdating word count and reading ease ...", end="", flush=True)
 
-				word_count = subprocess.check_output([word_count_path, "-x", directory]).decode().strip()
-				reading_ease = subprocess.check_output([reading_ease_path, directory]).decode().strip()
+				word_count = subprocess.run([word_count_path, "-x", directory], stdout=subprocess.PIPE).stdout.decode().strip()
+
+				reading_ease = subprocess.run([reading_ease_path, directory], stdout=subprocess.PIPE).stdout.decode().strip()
 
 				processed_xhtml = regex.sub(r"<meta property=\"se:word-count\">[^<]*</meta>", "<meta property=\"se:word-count\">{}</meta>".format(word_count), xhtml)
 				processed_xhtml = regex.sub(r"<meta property=\"se:reading-ease\.flesch\">[^<]*</meta>", "<meta property=\"se:reading-ease.flesch\">{}</meta>".format(reading_ease), xhtml)
@@ -88,7 +89,7 @@ def main():
 					if revision == 1:
 						colophon_xhtml = regex.sub(r"<span class=\"release-date\">.+?</span>", "<span class=\"release-date\">{}</span>".format(friendly_timestamp), colophon_xhtml)
 					else:
-						ordinal = subprocess.check_output([ordinal_path, str(revision)]).decode().strip()
+						ordinal = subprocess.run([ordinal_path, str(revision)], stdout=subprocess.PIPE).stdout.decode().strip()
 						if "<p>This is the first edition of this ebook.<br/>" in colophon_xhtml:
 							colophon_xhtml = colophon_xhtml.replace("This edition was released on<br/>", "The first edition was released on<br/>")
 							colophon_xhtml = colophon_xhtml.replace("<p>This is the first edition of this ebook.<br/>", "<p>This is the <span class=\"revision-number\">{}</span> edition of this ebook.<br/>\n\t\t\tThis edition was released on<br/>\n\t\t\t<span class=\"revision-date\">{}</span><br/>".format(ordinal, friendly_timestamp))
@@ -165,7 +166,7 @@ def main():
 			print("{}Warning: uncopyright.xhtml does not match template".format("\t" if args.verbose else ""))
 
 		# Check for unused selectors
-		unused_selectors = subprocess.check_output([find_unused_selectors_path, directory]).decode().strip()
+		unused_selectors = subprocess.run([find_unused_selectors_path, directory], stdout=subprocess.PIPE).stdout.decode().strip()
 		if unused_selectors:
 			if args.verbose:
 				unused_selectors = "\t\t" + "\t\t".join(unused_selectors.splitlines(True))
