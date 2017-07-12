@@ -24,12 +24,12 @@ def clean_inkscape_svg(filename, clean_path):
 		file.write(svg)
 		file.truncate()
 
-	subprocess.call([clean_path, filename])
+	subprocess.run([clean_path, filename])
 
 def remove_metadata(filename, exiftool_path):
 	#After lots of research there just isn't a good way to reliably edit exif metadata in pure Python.
 	#So unfortunately we're stuck with this dependency on `exiftool`.
-	subprocess.call([exiftool_path, "-overwrite_original", "-all=", filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	subprocess.run([exiftool_path, "-overwrite_original", "-all=", filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def main():
 	parser = argparse.ArgumentParser(description="Build ebook covers and titlepages for a Standard Ebook source directory, and place the output in DIRECTORY/src/epub/images/.")
@@ -100,7 +100,7 @@ def main():
 
 				#Convert text to paths
 				#Inkscape adds a ton of crap to the SVG and we clean that crap a little later
-				subprocess.call([inkscape_path, source_cover_svg_filename, "--export-text-to-path", "--export-plain-svg", dest_cover_svg_filename])
+				subprocess.run([inkscape_path, source_cover_svg_filename, "--export-text-to-path", "--export-plain-svg", dest_cover_svg_filename])
 
 				#Embed cover.jpg
 				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
@@ -130,7 +130,7 @@ def main():
 
 			#Convert text to paths
 			#inkscape adds a ton of crap to the SVG and we clean that crap a little later
-			subprocess.call([inkscape_path, source_titlepage_svg_filename, "--export-text-to-path", "--export-plain-svg", dest_titlepage_svg_filename])
+			subprocess.run([inkscape_path, source_titlepage_svg_filename, "--export-text-to-path", "--export-plain-svg", dest_titlepage_svg_filename])
 
 			clean_inkscape_svg(dest_titlepage_svg_filename, clean_path)
 
