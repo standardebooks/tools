@@ -38,11 +38,12 @@ def convert_toc_to_ncx(epub_root_directory, toc_filename, xsl_filename):
 	return toc_tree
 
 def write_epub(file_path, directory):
-	with zipfile.ZipFile(file_path, mode="w", compression=zipfile.ZIP_DEFLATED) as epub:
+	# We can't enable global compression here because according to the spec, the `mimetype` file must be uncompressed.  The rest of the files, however, can be compressed.
+	with zipfile.ZipFile(file_path, mode="w") as epub:
 		epub.write(os.path.join(directory, "mimetype"), "mimetype")
-		epub.write(os.path.join(directory, "META-INF", "container.xml"), "META-INF/container.xml")
+		epub.write(os.path.join(directory, "META-INF", "container.xml"), "META-INF/container.xml", compress_type=zipfile.ZIP_DEFLATED)
 
 		for root, _, files in os.walk(directory):
 			for file in files:
 				if file != "mimetype" and file != "container.xml":
-					epub.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), directory))
+					epub.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), directory), compress_type=zipfile.ZIP_DEFLATED)
