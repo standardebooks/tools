@@ -170,10 +170,6 @@ def main():
 
 		# Now add epub2 compatibility.
 
-		# Tell xmllint to indent with tabs using an environmental variable
-		env = os.environ.copy()
-		env["XMLLINT_INDENT"] = "\t"
-
 		# Include compatibility CSS
 		with open(os.path.join(work_epub_root_directory, "epub", "css", "core.css"), "a", encoding="utf-8") as core_css_file:
 			with open(os.path.join(script_directory, "templates", "compatibility.css"), "r", encoding="utf-8") as compatibility_css_file:
