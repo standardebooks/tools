@@ -423,8 +423,8 @@ def main():
 				subprocess.run([endnotes2kindle_path, os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml")])
 
 				# While Kindle now supports soft hyphens, popup endnotes break words but don't insert the hyphen characters.  So for now, remove soft hyphens from the endnotes file.
-				with open(os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml"), "r+", encoding="utf-8") as core_css_file:
-					xhtml = file.read()
+				with open(os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml"), "r+", encoding="utf-8") as endnotes_file:
+					xhtml = endnotes_file.read()
 					processed_xhtml = xhtml
 
 					processed_xhtml = processed_xhtml.replace(SHY_HYPHEN, "")
