@@ -56,6 +56,7 @@ def main():
 	toc2kindle_path = os.path.join(script_directory, "toc2kindle")
 	endnotes2kindle_path = os.path.join(script_directory, "endnotes2kindle")
 	update_asin_path = os.path.join(script_directory, "update-asin")
+	build_kobo_path = os.path.join(script_directory, "build-kobo")
 	xsl_filename = os.path.join(script_directory, "data", "navdoc2ncx.xsl")
 
 	# Check for some required tools
@@ -178,8 +179,8 @@ def main():
 		# Simplify tags
 		output = subprocess.run([simplify_tags_path, work_epub_root_directory], stdout=subprocess.PIPE).stdout.decode().strip()
 		if output:
-			print("{}Error: simplify-tags failed with: ".format("\t" if args.verbose else ""), file=sys.stderr)
-			exit(1)
+			print("{}Error: simplify-tags failed with: {}".format("\t" if args.verbose else "", output), file=sys.stderr)
+			#exit(1)
 
 		# Extract cover and cover thumbnail
 		# Mogrify reports the svg as the wrong size, so we have to force the size.
@@ -200,6 +201,9 @@ def main():
 		metadata_xhtml = metadata_xhtml.replace("id=\"cover.jpg\" media-type=\"image/svg+xml\"", "id=\"cover.jpg\" media-type=\"image/jpeg\"")
 		metadata_xhtml = metadata_xhtml.replace("image/svg+xml", "image/png")
 		metadata_xhtml = metadata_xhtml.replace("properties=\"svg\"", "")
+
+		# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
+		metadata_xhtml = metadata_xhtml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
 
 		# Output the modified content.opf so that we can build the kobo book before making more epub2 compatibility hacks
 		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "w") as file:
@@ -232,7 +236,7 @@ def main():
 						processed_xhtml = regex.sub(r"class=\"([^\"]*?)epub-type-rearnote([^\"]*?)\"", "class=\"\\1epub-type-footnote\\2\"", processed_xhtml)
 
 						#Include extra lang tag for accessibility compatibility.
-						processed_xhtml = regex.sub(r"xml\:lang\=\"([^\"]+?)\"", "lang=\"\\1\" xml:lang=\"\\1\"", processed_xhtml)
+						processed_xhtml = regex.sub(r"xml:lang\=\"([^\"]+?)\"", "lang=\"\\1\" xml:lang=\"\\1\"", processed_xhtml)
 
 						# Typography: replace double and triple em dash characters with extra em dashes.
 						processed_xhtml = processed_xhtml.replace("⸺", "—{}—".format(WORD_JOINER))
@@ -270,16 +274,18 @@ def main():
 			with tempfile.TemporaryDirectory() as kobo_work_directory:
 				copy_tree(work_epub_root_directory, kobo_work_directory)
 
+				subprocess.run([build_kobo_path, kobo_work_directory])
+
 				se.epub.write_epub(os.path.join(output_directory, kobo_output_filename), kobo_work_directory)
 
 			if args.verbose:
 				print(" OK")
-				print("\tBuilding {} ...".format(kobo_output_filename), end="", flush=True)
+				print("\tBuilding {} ...".format(epub_output_filename), end="", flush=True)
 
 		# Now work on more epub2 compatibility
 
 		# Include epub2 cover metadata
-		cover_id = metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@id")[0]
+		cover_id = metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@id")[0].replace(".svg", ".jpg")
 		metadata_xhtml = regex.sub(r"(<metadata[^>]+?>)", "\\1\n\t\t<meta content=\"{}\" name=\"cover\" />".format(cover_id), metadata_xhtml)
 
 		# Add metadata to content.opf indicating this file is a Standard Ebooks compatibility build
@@ -330,9 +336,9 @@ def main():
 						css = file.read()
 						processed_css = css
 
-						processed_css = regex.sub(r"(page\-break\-(before|after|inside)\s*\:\s*(.+))", "\\1\n\t-webkit-column-break-\\2: \\3 /* For Readium */", processed_css)
-						processed_css = regex.sub(r"^\s*hyphens\s*\:\s*(.+)", "\thyphens: \\1\n\tadobe-hyphenate: \\1\n\t-webkit-hyphens: \\1\n\t-epub-hyphens: \\1\n\t-moz-hyphens: \\1", processed_css)
-						processed_css = regex.sub(r"^\s*hyphens\s*\:\s*none;", "\thyphens: none;\n\tadobe-text-layout: optimizeSpeed; /* For Nook */", processed_css)
+						processed_css = regex.sub(r"(page\-break\-(before|after|inside)\s*:\s*(.+))", "\\1\n\t-webkit-column-break-\\2: \\3 /* For Readium */", processed_css)
+						processed_css = regex.sub(r"^\s*hyphens\s*:\s*(.+)", "\thyphens: \\1\n\tadobe-hyphenate: \\1\n\t-webkit-hyphens: \\1\n\t-epub-hyphens: \\1\n\t-moz-hyphens: \\1", processed_css, flags=regex.MULTILINE)
+						processed_css = regex.sub(r"^\s*hyphens\s*:\s*none;", "\thyphens: none;\n\tadobe-text-layout: optimizeSpeed; /* For Nook */", processed_css, flags=regex.MULTILINE)
 
 						if processed_css != css:
 							file.seek(0)
