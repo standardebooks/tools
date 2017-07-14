@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ONIXMessage xmlns="http://ns.editeur.org/onix/3.0/reference" release="3.0">
 	<Header>
 		<Sender>

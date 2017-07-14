@@ -73,7 +73,7 @@ def main():
 					exit(1)
 
 				#Next, add the XML header that xmllint stripped during c14n
-				processed_xhtml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + processed_xhtml
+				processed_xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + processed_xhtml
 
 				#Next, pretty-print XML
 				processed_xhtml = subprocess.run([xmllint_path, "--format", "-"], input=processed_xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env).stdout.decode()

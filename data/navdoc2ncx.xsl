@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--Adapted from http://matt.garrish.ca/odds-n-ends/ncx-generator/ -->
 <xsl:stylesheet xmlns="http://www.daisy.org/z3986/2005/ncx/" xmlns:xhtm="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xmlns:opf="http://www.idpf.org/2007/opf" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:c="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0">
-	
+
 	<xsl:output omit-xml-declaration="no" encoding="UTF-8" indent="yes"/>
-	
+
 	<xsl:param name="cwd"/>
-	
+
 	<xsl:template match="xhtm:html">
 		<xsl:element name="ncx">
 			<xsl:attribute name="version">2005-1</xsl:attribute>
@@ -16,7 +16,7 @@
 					<xsl:otherwise>??</xsl:otherwise>
 				</xsl:choose>
 			</xsl:attribute>
-			
+
 			<xsl:element name="head">
 				<xsl:element name="meta">
 					<xsl:attribute name="name">dtb:uid</xsl:attribute>
@@ -28,13 +28,13 @@
 					</xsl:attribute>
 				</xsl:element>
 			</xsl:element>
-			
+
 			<xsl:element name="docTitle">
 				<xsl:element name="text">
 					<xsl:value-of select="xhtm:head/xhtm:title"/>
 				</xsl:element>
 			</xsl:element>
-			
+
 			<xsl:if test="xhtm:head/xhtm:meta[@name='dc:author']">
 				<xsl:for-each select="xhtm:head/xhtm:meta[@name='dc:author']">
 					<xsl:element name="docAuthor">
@@ -44,21 +44,21 @@
 					</xsl:element>
 				</xsl:for-each>
 			</xsl:if>
-			
+
 			<xsl:element name="navMap">
 				<xsl:call-template name="addID"/>
 				<xsl:apply-templates select="//xhtm:nav[@epub:type='toc']/xhtm:ol" mode="toc"/>
 			</xsl:element>
-			
+
 			<xsl:if test="//xhtm:nav[@epub:type='page-list']">
 				<xsl:element name="pageList">
 					<xsl:call-template name="addID"/>
 					<xsl:apply-templates select="//xhtm:nav[@epub:type='page-list']/xhtm:ol" mode="page-list"/>
 				</xsl:element>
 			</xsl:if>
-			
+
 			<!-- optional nav types that could be included -->
-			
+
 			<xsl:if test="//xhtm:nav[@epub:type='loi']">
 				<xsl:element name="navList">
 					<xsl:call-template name="addID"/>
@@ -69,7 +69,7 @@
 					<xsl:apply-templates select="//xhtm:nav[@epub:type='loi']/xhtm:ol" mode="flat"/>
 				</xsl:element>
 			</xsl:if>
-			
+
 			<xsl:if test="//xhtm:nav[@epub:type='lot']">
 				<xsl:element name="navList">
 					<xsl:call-template name="addID"/>
@@ -82,7 +82,7 @@
 			</xsl:if>
 		</xsl:element>
 	</xsl:template>
-	
+
 	<xsl:template name="addID">
 		<xsl:attribute name="id">
 			<xsl:choose>
@@ -95,7 +95,7 @@
 			</xsl:choose>
 		</xsl:attribute>
 	</xsl:template>
-	
+
 	<xsl:template name="addHeading">
 		<xsl:param name="navType" required="yes"/>
 		<xsl:if test="//xhtm:nav[@epub:type=$navType]/xhtm:*[starts-with(local-name(.),'h')]">
@@ -106,7 +106,7 @@
 			</xsl:element>
 		</xsl:if>
 	</xsl:template>
-	
+
 	<xsl:template match="xhtm:ol" mode="toc">
 		<xsl:for-each select="xhtm:li">
 			<xsl:choose>
@@ -144,7 +144,7 @@
 			</xsl:choose>
 		</xsl:for-each>
 	</xsl:template>
-	
+
 	<xsl:template match="xhtm:ol" mode="page-list">
 		<xsl:for-each select="xhtm:li">
 			<xsl:variable name="pageNumber" select="./xhtm:a[normalize-space()]"/>
@@ -182,7 +182,7 @@
 			</xsl:element>
 		</xsl:for-each>
 	</xsl:template>
-	
+
 	<xsl:template match="xhtm:ol" mode="flat">
 		<xsl:for-each select="xhtm:li">
 			<xsl:element name="navTarget">

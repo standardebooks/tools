@@ -144,7 +144,7 @@ def main():
 										current_class = "{} {}".format(current_class, new_class).strip()
 										element.set("class", current_class)
 
-					processed_xhtml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print=True)
+					processed_xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print=True)
 
 					# We do this round in a second pass because if we modify the tree like this, it screws up how lxml does processing later.
 					# If it's all done in one pass, we wind up in a race condition where some elements are fixed and some not
@@ -187,7 +187,7 @@ def main():
 
 					if processed_xhtml != xhtml:
 						file.seek(0)
-						file.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print=True).replace("<html", "<html xmlns=\"http://www.w3.org/1999/xhtml\""))
+						file.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print=True).replace("<html", "<html xmlns=\"http://www.w3.org/1999/xhtml\""))
 						file.truncate()
 
 		if args.verbose:

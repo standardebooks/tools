@@ -138,7 +138,7 @@ def main():
 					xhtml = regex.sub(r"<html:span", "<span", xhtml)
 					xhtml = regex.sub(r"html:span>", "span>", xhtml)
 					xhtml = regex.sub(r"<span xmlns:html=\"http://www.w3.org/1999/xhtml\"", "<span", xhtml)
-					xhtml = regex.sub(r"<html", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\"", xhtml)
+					xhtml = regex.sub(r"<html", "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\"", xhtml)
 
 					file.seek(0)
 					file.write(xhtml)
