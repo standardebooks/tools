@@ -122,7 +122,7 @@ def main():
 		copy_tree(source_directory, work_directory)
 		shutil.rmtree(os.path.join(work_directory, ".git"))
 
-		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "r") as file:
+		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "r", encoding="utf-8") as file:
 			metadata_xhtml = file.read()
 			metadata_tree = se.easy_xml.EasyXmlTree(metadata_xhtml)
 
@@ -206,7 +206,7 @@ def main():
 		metadata_xhtml = metadata_xhtml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
 
 		# Output the modified content.opf so that we can build the kobo book before making more epub2 compatibility hacks
-		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "w") as file:
+		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "w", encoding="utf-8") as file:
 			file.write(metadata_xhtml)
 			file.truncate()
 
@@ -324,7 +324,7 @@ def main():
 
 		# Guide is done, now write content.opf and clean it
 		# Output the modified content.opf so that we can build the kobo book before making more epub2 compatibility hacks
-		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "w") as file:
+		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "w", encoding="utf-8") as file:
 			file.write(metadata_xhtml)
 			file.truncate()
 
