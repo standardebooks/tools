@@ -42,8 +42,7 @@ def simplify_css(css):
 
 	# Replace CSS namespace selectors with classes
 	# For example, p[epub|type~="z3998:salutation"] becomes p.epub-type-z3998-salutation
-	result = regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", css)
-	for line in result:
+	for line in regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", css):
 		fixed_line = namespace_to_class(line)
 		css = css.replace(line, fixed_line)
 
@@ -134,20 +133,16 @@ def main():
 
 						# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
 						if "[epub|type" in selector:
-							result = regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", selector)
-							for namespace_selector in result:
+							for namespace_selector in regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", selector):
 								sel = lxml.cssselect.CSSSelector(namespace_selector, translator="xhtml", namespaces=XHTML_NAMESPACES)
 
 								for element in tree.xpath(sel.path, namespaces=XHTML_NAMESPACES):
 									new_class = regex.sub(r"^\.", "", namespace_to_class(namespace_selector))
-									current_class = element.get("class")
+									current_class = element.get("class", "")
 
-									if current_class is not None and new_class not in current_class:
-										current_class = current_class + " " + new_class
-									else:
-										current_class = new_class
-
-									element.set("class", current_class)
+									if new_class not in current_class:
+										current_class = "{} {}".format(current_class, new_class).strip()
+										element.set("class", current_class)
 
 					processed_xhtml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print=True)
 
