@@ -108,7 +108,7 @@ def main():
 
 				# Convert text to paths
 				# Inkscape adds a ton of crap to the SVG and we clean that crap a little later
-				subprocess.run([inkscape_path, source_cover_svg_filename, "--export-text-to-path", "--export-plain-svg", dest_cover_svg_filename])
+				subprocess.run([inkscape_path, source_cover_svg_filename, "--without-gui", "--export-text-to-path", "--export-plain-svg", dest_cover_svg_filename])
 
 				# Embed cover.jpg
 				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
@@ -138,7 +138,7 @@ def main():
 
 			# Convert text to paths
 			# inkscape adds a ton of crap to the SVG and we clean that crap a little later
-			subprocess.run([inkscape_path, source_titlepage_svg_filename, "--export-text-to-path", "--export-plain-svg", dest_titlepage_svg_filename])
+			subprocess.run([inkscape_path, source_titlepage_svg_filename, "--without-gui", "--export-text-to-path", "--export-plain-svg", dest_titlepage_svg_filename])
 
 			clean_inkscape_svg(dest_titlepage_svg_filename, clean_path)
 

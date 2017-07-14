@@ -20,16 +20,18 @@ import se.epub
 IGNORED_FILES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
 XHTML_NAMESPACES = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "https://standardebooks.org/vocab/1.0", "dc": "http://purl.org/dc/elements/1.1/"}
 
-#Some convenience aliases
-WORD_JOINER = "\u2060"		#word joiner, U+2060
-HAIR_SPACE = "\u200a"		#hair space, U+200A
-ZERO_WIDTH_SPACE = "\ufeff"	#zero-width no-break space, U+FEFF
-SHY_HYPHEN = "\u00ad"		#soft hyphen, U+00AD
+# Some convenience aliases
+WORD_JOINER = "\u2060"
+HAIR_SPACE = "\u200a"
+ZERO_WIDTH_SPACE = "\ufeff"
+SHY_HYPHEN = "\u00ad"
 
 COVER_SVG_WIDTH = 1400
 COVER_SVG_HEIGHT = 2100
 COVER_THUMBNAIL_WIDTH = COVER_SVG_WIDTH / 4
 COVER_THUMBNAIL_HEIGHT = COVER_SVG_HEIGHT / 4
+SVG_OUTER_STROKE_WIDTH = 2
+SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
 
 
 def main():
@@ -47,7 +49,6 @@ def main():
 	script_directory = os.path.dirname(os.path.realpath(__file__))
 	epubcheck_path = shutil.which("epubcheck")
 	ebook_convert_path = shutil.which("ebook-convert")
-	mogrify_path = shutil.which("mogrify")
 	rsvg_convert_path = shutil.which("rsvg-convert")
 	convert_path = shutil.which("convert")
 	simplify_tags_path = os.path.join(script_directory, "simplify-tags")
@@ -62,10 +63,6 @@ def main():
 	# Check for some required tools
 	if args.check and epubcheck_path is None:
 		print("Error: Couldn't locate epubcheck. Is it installed?", file=sys.stderr)
-		exit(1)
-
-	if mogrify_path is None:
-		print("Error: Couldn't locate mogrify. Is Imagemagick installed?", file=sys.stderr)
 		exit(1)
 
 	if rsvg_convert_path is None:
@@ -183,14 +180,14 @@ def main():
 			#exit(1)
 
 		# Extract cover and cover thumbnail
-		# Mogrify reports the svg as the wrong size, so we have to force the size.
-		# Note that we can't use percentages to resize, since mogrify auto-detects the wrong svg size to begin with.
-		subprocess.run(["mogrify", "-resize", "{}x{}".format(COVER_SVG_WIDTH, COVER_SVG_HEIGHT), "-format", "jpg", os.path.join(work_epub_root_directory, "epub", "images", "cover.svg")])
+		# `convert` reports the svg as the wrong size, so we have to force the size.
+		# Note that we can't use percentages to resize, since `convert` auto-detects the wrong svg size to begin with.
+		subprocess.run([convert_path, "-resize", "{}x{}".format(COVER_SVG_WIDTH, COVER_SVG_HEIGHT), "-format", "jpg", os.path.join(work_epub_root_directory, "epub", "images", "cover.svg"), os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg")])
 
 		if args.build_covers:
 			shutil.copy2(os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg"), os.path.join(output_directory, "cover.jpg"))
 			shutil.copy2(os.path.join(work_epub_root_directory, "epub", "images", "cover.svg"), os.path.join(output_directory, "cover-thumbnail.svg"))
-			subprocess.run(["mogrify", "-resize", "{}x{}".format(COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT), "-quality", "100", "-format", "jpg", os.path.join(output_directory, "cover-thumbnail.svg")])
+			subprocess.run([convert_path, "-resize", "{}x{}".format(COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT), "-quality", "100", "-format", "jpg", os.path.join(output_directory, "cover-thumbnail.svg"), os.path.join(output_directory, "cover-thumbnail.jpg")])
 			os.remove(os.path.join(output_directory, "cover-thumbnail.svg"))
 
 		os.remove(os.path.join(work_epub_root_directory, "epub", "images", "cover.svg"))
@@ -214,8 +211,56 @@ def main():
 		for root, _, filenames in os.walk(work_epub_root_directory):
 			for filename in filenames:
 				if filename.lower().endswith(".svg"):
-					# Convert SVGs to PNGs
-					subprocess.run(["rsvg-convert", "-z", "2", "-a", "-f", "png", "-o", regex.sub(r"\.svg$", r".png", os.path.join(root, filename)), os.path.join(root, filename)])
+					# For night mode compatibility, give the titlepage a 1px white stroke attribute
+					if filename.lower() == "titlepage.svg" or filename.lower() == "logo.svg":
+						with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+							svg = file.read()
+							paths = svg
+
+							# What we're doing here is faking the `stroke-align: outside` property, which is an unsupported draft spec right now.
+							# We do this by duplicating all the SVG paths, and giving the duplicates a 2px stroke.  The originals are directly on top,
+							# so the 2px stroke becomes a 1px stroke that's *outside* of the path instead of being *centered* on the path border.
+							# This looks much nicer, but we also have to increase the image size by 2px in both directions, and re-center the whole thing.
+
+							if filename.lower() == "titlepage.svg":
+								stroke_width = SVG_TITLEPAGE_OUTER_STROKE_WIDTH
+							else:
+								stroke_width = SVG_OUTER_STROKE_WIDTH
+
+							# First, strip out non-path, non-group elements
+							paths = regex.sub(r"<\?xml[^<]+?\?>", "", paths)
+							paths = regex.sub(r"</?svg[^<]*?>", "", paths)
+							paths = regex.sub(r"<title>[^<]+?</title>", "", paths)
+							paths = regex.sub(r"<desc>[^<]+?</desc>", "", paths)
+
+							# `paths` is now our "duplicate".  Add a 2px stroke.
+							paths = paths.replace("<path", "<path style=\"stroke: #ffffff; stroke-width: {}px;\"".format(stroke_width))
+
+							# Inject the duplicate under the old SVG paths.  We do this by only replacing the first regex match for <g> or <path>
+							svg = regex.sub(r"(<g|<path)", "{}\\1".format(paths), svg, 1)
+
+							# If this SVG specifies height/width, then increase height and width by 2 pixels and translate everything by 1px
+							try:
+								height = int(regex.search(r"<svg[^>]+?height=\"([0-9]+)\"", svg).group(1)) + stroke_width
+								svg = regex.sub(r"<svg([^<]*?)height=\"[0-9]+\"", "<svg\\1height=\"{}\"".format(height), svg)
+
+								width = int(regex.search(r"<svg[^>]+?width=\"([0-9]+)\"", svg).group(1)) + stroke_width
+								svg = regex.sub(r"<svg([^<]*?)width=\"[0-9]+\"", "<svg\\1width=\"{}\"".format(width), svg)
+
+								# Add a grouping element to translate everything over 1px
+								svg = regex.sub(r"(<g|<path)", "<g transform=\"translate({amount}, {amount})\">\n\\1".format(amount=(stroke_width / 2)), svg, 1)
+								svg = svg.replace("</svg>", "</g>\n</svg>")
+							except AttributeError:
+								# Thrown when the regex doesn't match (i.e. SVG doesn't specify height/width)
+								pass
+
+							file.seek(0)
+							file.write(svg)
+							file.truncate()
+
+					# Convert SVGs to PNGs at 2x resolution
+					# We use `rsvg-convert` instead of `inkscape` or `convert` because it gives us an easy way of zooming in at 2x
+					subprocess.run([rsvg_convert_path, "--zoom", "2", "--keep-aspect-ratio", "--format", "png", "--output", regex.sub(r"\.svg$", ".png", os.path.join(root, filename)), os.path.join(root, filename)])
 					os.remove(os.path.join(root, filename))
 
 				if filename.lower().endswith(".xhtml"):
@@ -230,12 +275,12 @@ def main():
 						processed_xhtml = processed_xhtml.replace("cover.svg", "cover.jpg")
 						processed_xhtml = processed_xhtml.replace(".svg", ".png")
 
-						#To get popup footnotes in iBooks, we have to change epub:rearnote to epub:footnote.
-						#Remember to get our custom style selectors too.
+						# To get popup footnotes in iBooks, we have to change epub:rearnote to epub:footnote.
+						# Remember to get our custom style selectors too.
 						processed_xhtml = regex.sub(r"epub:type=\"([^\"]*?)rearnote([^\"]*?)\"", "epub:type=\"\\1footnote\\2\"", processed_xhtml)
 						processed_xhtml = regex.sub(r"class=\"([^\"]*?)epub-type-rearnote([^\"]*?)\"", "class=\"\\1epub-type-footnote\\2\"", processed_xhtml)
 
-						#Include extra lang tag for accessibility compatibility.
+						# Include extra lang tag for accessibility compatibility.
 						processed_xhtml = regex.sub(r"xml:lang\=\"([^\"]+?)\"", "lang=\"\\1\" xml:lang=\"\\1\"", processed_xhtml)
 
 						# Typography: replace double and triple em dash characters with extra em dashes.
@@ -261,8 +306,8 @@ def main():
 						css = file.read()
 						processed_css = css
 
-						#To get popup footnotes in iBooks, we have to change epub:rearnote to epub:footnote.
-						#Remember to get our custom style selectors too.
+						# To get popup footnotes in iBooks, we have to change epub:rearnote to epub:footnote.
+						# Remember to get our custom style selectors too.
 						processed_css = processed_css.replace("rearnote", "footnote")
 
 						if processed_css != css:
@@ -454,7 +499,7 @@ def main():
 				# Update the ASIN in the generated file
 				subprocess.run([update_asin_path, asin, os.path.join(work_directory, kindle_output_filename), os.path.join(output_directory, kindle_output_filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-				#Extract the thumbnail
+				# Extract the thumbnail
 				subprocess.run([convert_path, os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg"), "-resize", "432x660", os.path.join(output_directory, "thumbnail_{}_EBOK_portrait.jpg".format(asin))], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 			if args.verbose:
