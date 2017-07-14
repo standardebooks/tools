@@ -13,11 +13,11 @@ def main():
 	args = parser.parse_args()
 
 	for filename in args.files:
-		#We have to remove the default namespace declaration from our document, otherwise
-		#xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 		with open(filename, "r+", encoding="utf-8") as file:
 			xhtml = file.read()
 
+			# We have to remove the default namespace declaration from our document, otherwise
+			# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 			tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 
 			notes = tree.xpath("//li[@epub:type=\"rearnote\" or @epub:type=\"footnote\"]", namespaces=XHTML_NAMESPACES)
@@ -28,40 +28,40 @@ def main():
 				note_id = note.get("id")
 				note_number = note.get("data-se-note-number")
 
-				#First, fixup the reference link for this endnote
+				# First, fixup the reference link for this endnote
 				try:
 					ref_link = etree.tostring(note.xpath("p[last()]/a[last()]")[0], encoding="unicode", pretty_print=True, with_tail=False).replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "").strip()
 				except Exception:
 					print("Error: Can't find ref link for #{}".format(note_id), file=sys.stderr)
 					exit(1)
 
-				new_ref_link = regex.sub(r">.*?<\/a>", ">" + note_number + "</a>.", ref_link)
+				new_ref_link = regex.sub(r">.*?</a>", ">" + note_number + "</a>.", ref_link)
 
-				#Now remove the wrapping li node from the note
-				note_text = regex.sub(r"^<li[^>]*?>(.*)<\/li>$", r"\1", etree.tostring(note, encoding="unicode", pretty_print=True, with_tail=False), flags=regex.IGNORECASE | regex.DOTALL)
+				# Now remove the wrapping li node from the note
+				note_text = regex.sub(r"^<li[^>]*?>(.*)</li>$", r"\1", etree.tostring(note, encoding="unicode", pretty_print=True, with_tail=False), flags=regex.IGNORECASE | regex.DOTALL)
 
-				#Insert our new ref link
+				# Insert our new ref link
 				result = regex.subn(r"^\s*<p([^>]*?)>", "<p\\1 id=\"" + note_id + "\">" + new_ref_link + " ", note_text)
 
-				#Sometimes there is no leading <p> tag (for example, if the endnote starts with a blockquote
-				#If that's the case, just insert one in front.
+				# Sometimes there is no leading <p> tag (for example, if the endnote starts with a blockquote
+				# If that's the case, just insert one in front.
 				note_text = result[0]
 				if result[1] == 0:
 					note_text = "<p id=\"" + note_id + "\">" + new_ref_link + "</p>" + note_text
 
-				#Now remove the old ref_link
+				# Now remove the old ref_link
 				note_text = note_text.replace(ref_link, "")
 
-				#Trim trailing spaces left over after removing the ref link
+				# Trim trailing spaces left over after removing the ref link
 				note_text = regex.sub(r"\s+</p>", "</p>", note_text).strip()
 
-				#Sometimes ref links are in their own p tag--remove that too
-				note_text = regex.sub(r"<p>\s*<\/p>", "", note_text)
+				# Sometimes ref links are in their own p tag--remove that too
+				note_text = regex.sub(r"<p>\s*</p>", "", note_text)
 
 				processed_endnotes += note_text + "\n"
 
-			#All done with endnotes, so drop them back in
-			xhtml = regex.sub(r"<ol>.*<\/ol>", processed_endnotes, xhtml, flags=regex.IGNORECASE | regex.DOTALL)
+			# All done with endnotes, so drop them back in
+			xhtml = regex.sub(r"<ol>.*</ol>", processed_endnotes, xhtml, flags=regex.IGNORECASE | regex.DOTALL)
 
 			file.seek(0)
 			file.write(xhtml)
