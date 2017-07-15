@@ -9,6 +9,31 @@ import se
 import lxml.cssselect
 import lxml.etree as etree
 
+def get_malformed_urls(xhtml):
+	messages = []
+
+	# Check for non-https URLs
+	if "http://www.gutenberg.org" in xhtml:
+		messages.append("Non-https gutenberg.org URL.")
+
+	if "http://catalog.hathitrust.org" in xhtml:
+		messages.append("Non-https hathitrust.org URL.")
+
+	if "http://archive.org" in xhtml:
+		messages.append("Non-https archive.org URL.")
+
+	# Check for malformed canonical URLs
+	if regex.search(r"books\.google\.com/books\?id=.+?[&#]", xhtml):
+		messages.append("Non-canonical Google Books URL.  Google Books URLs must look exactly like https://books.google.com/books?id=<BOOK-ID>")
+
+	if "babel.hathitrust.org" in xhtml:
+		messages.append("Non-canonical Hathi Trust URL.  Hathi Trust URLs must look exactly like https://catalog.hathitrust.org/Record/<BOOK-ID>")
+
+	if ".gutenberg.org/files/" in xhtml:
+		messages.append("Non-canonical Project Gutenberg URL.  Project Gutenberg URLs must look exactly like https://www.gutenberg.org/ebooks/<BOOK-ID>")
+
+	return messages
+
 def get_unused_selectors(se_root_directory):
 	try:
 		with open(os.path.join(se_root_directory, "src", "epub", "css", "local.css"), encoding="utf-8") as file:
@@ -100,15 +125,8 @@ def lint(se_root_directory, tools_root_directory):
 	if regex.search(r"<dc:subject id=\"[^\"]+?\">[^<]+?—[^<]+?</meta>", metadata_xhtml) is not None:
 		messages.append("Illegal em-dash detected in dc:subject; use --")
 
-	# Check for correct external URLs
-	if "http://www.gutenberg.org" in metadata_xhtml:
-		messages.append("Non-https gutenberg.org link in content.opf")
-
-	if "http://catalog.hathitrust.org" in metadata_xhtml:
-		messages.append("Non-https hathitrust.org link in content.opf")
-
-	if "http://archive.org" in metadata_xhtml:
-		messages.append("Non-https archive.org link in content.opf")
+	for message in get_malformed_urls(metadata_xhtml):
+		messages.append("{} File: content.opf".format(message))
 
 	if regex.search(r"id\.loc\.gov/authorities/names/[^\.]+\.html", metadata_xhtml):
 		messages.append("id.loc.gov URL ending with .html in content.opf; remove ending .html")
@@ -139,15 +157,8 @@ def lint(se_root_directory, tools_root_directory):
 			with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
 				xhtml = file.read()
 
-				# Check for non-https links
-				if "http://www.gutenberg.org" in xhtml:
-					messages.append("Non-https gutenberg.org link in {}".format(filename))
-
-				if "http://catalog.hathitrust.org" in xhtml:
-					messages.append("Non-https hathitrust.org link in {}".format(filename))
-
-				if "http://archive.org" in xhtml:
-					messages.append("Non-https archive.org link in {}".format(filename))
+				for message in get_malformed_urls(xhtml):
+					messages.append("{} File: {}".format(message, filename))
 
 				# Check for empty <p> tags
 				if "<p/>" in xhtml or "<p></p>" in xhtml:
