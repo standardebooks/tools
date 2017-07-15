@@ -117,7 +117,10 @@ def main():
 		work_epub_root_directory = os.path.join(work_directory, "src")
 
 		copy_tree(source_directory, work_directory)
-		shutil.rmtree(os.path.join(work_directory, ".git"))
+		try:
+			shutil.rmtree(os.path.join(work_directory, ".git"))
+		except Exception:
+			pass
 
 		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "r", encoding="utf-8") as file:
 			metadata_xhtml = file.read()
