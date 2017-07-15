@@ -15,6 +15,7 @@ import regex
 import se.formatting
 import se.easy_xml
 import se.epub
+import time
 
 
 IGNORED_FILES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
@@ -367,7 +368,6 @@ def main():
 			# We add the 'text' attribute to the titlepage to tell the reader to start there
 			element_xhtml = element_xhtml.replace("type=\"titlepage", "type=\"title-page text")
 
-			element_xhtml = element_xhtml.replace("type=\"appendix", "type=\"")
 			element_xhtml = regex.sub(r"type=\"\s*\"", "", element_xhtml)
 			element_xhtml = element_xhtml.replace("<a", "<reference")
 			element_xhtml = regex.sub(r">(.+)</a>", " title=\"\\1\" />", element_xhtml)
@@ -421,7 +421,7 @@ def main():
 					print("\n\t\t" + "\t\t".join(output.splitlines(True)), file=sys.stderr)
 				else:
 					print(output, file=sys.stderr)
-
+				time.sleep(1000)
 				exit(1)
 
 			if args.verbose:
