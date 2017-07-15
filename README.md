@@ -105,10 +105,6 @@ python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndic
 
 	Find words with mismatched diacritics in Standard Ebook source directories.  For example, 'cafe' in one file and 'café' in another.
 
--	### `find-unused-selectors`
-
-	Find unused local.css CSS selectors in Standard Ebook source directories.
-
 -	### `hyphenate`
 
 	Insert soft hyphens at syllable breaks in an XHTML file.
@@ -116,6 +112,10 @@ python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndic
 -	### `interactive-sr`
 
 	A macro for calling Vim to interactively search and replace a regex on a list of files.
+
+-	### `lint`
+
+	Check for various Standard Ebooks style errors.
 
 -	### `make-url-safe`
 
@@ -131,7 +131,7 @@ python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndic
 
 -	### `prepare-release`
 
-	Calculate the ebook's word count, and update content.opf and colophon.xhtml with release and modified timestamps.
+	Calculate work word count, insert release date if not yet set, and update modified date and revision number.
 
 -	### `print-manifest-and-spine`
 

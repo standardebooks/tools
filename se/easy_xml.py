@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
+import se
 from lxml import etree, cssselect
 import regex
-
-
-XHTML_NAMESPACES = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "https://standardebooks.org/vocab/1.0", "dc": "http://purl.org/dc/elements/1.1/", "opf": "http://www.idpf.org/2007/opf"}
 
 
 class EasyXmlTree:
@@ -18,14 +16,14 @@ class EasyXmlTree:
 		self.etree = etree.fromstring(str.encode(self._xhtml_string))
 
 	def css_select(self, selector):
-		return self.xpath(cssselect.CSSSelector(selector, translator="html", namespaces=XHTML_NAMESPACES).path)
+		return self.xpath(cssselect.CSSSelector(selector, translator="html", namespaces=se.XHTML_NAMESPACES).path)
 
 	def xpath(self, selector):
 		# Warning: lxml has no support for an element without a namepace.  So, when using xpath or css_select, make sure to include a bogus namespace if necessary.
 		# For example, in content.opf we can't do xpath("//metadata").  We have to use a bogus namespace: xpath("//opf:metadata")
 		result = []
 
-		for element in self.etree.xpath(selector, namespaces=XHTML_NAMESPACES):
+		for element in self.etree.xpath(selector, namespaces=se.XHTML_NAMESPACES):
 			if isinstance(element, str):
 				result.append(element)
 			else:

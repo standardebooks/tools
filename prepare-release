@@ -5,14 +5,11 @@ import os
 import sys
 import subprocess
 import datetime
-import filecmp
-import fnmatch
 import regex
 
-IGNORED_FILES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
 
 def main():
-	parser = argparse.ArgumentParser(description="Calculate work word count, insert release date if not yet set, update modified date and revision number, and check for various common errors.")
+	parser = argparse.ArgumentParser(description="Calculate work word count, insert release date if not yet set, and update modified date and revision number.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("-w", "--no-word-count", dest="word_count", action="store_false", help="don't calculate word count")
 	parser.add_argument("-r", "--no-revision", dest="revision", action="store_false", help="don't increment the revision number")
@@ -21,12 +18,6 @@ def main():
 
 	script_path = os.path.realpath(__file__)
 
-	license_file_path = os.path.join(os.path.dirname(script_path), "templates", "LICENSE.md")
-	core_css_file_path = os.path.join(os.path.dirname(script_path), "templates", "core.css")
-	logo_svg_file_path = os.path.join(os.path.dirname(script_path), "templates", "logo.svg")
-	uncopyright_file_path = os.path.join(os.path.dirname(script_path), "templates", "uncopyright.xhtml")
-
-	find_unused_selectors_path = os.path.join(os.path.dirname(script_path), "find-unused-selectors")
 	word_count_path = os.path.join(os.path.dirname(script_path), "word-count")
 	reading_ease_path = os.path.join(os.path.dirname(script_path), "reading-ease")
 	ordinal_path = os.path.join(os.path.dirname(script_path), "ordinal")
@@ -108,140 +99,6 @@ def main():
 				file.seek(0)
 				file.write(processed_xhtml)
 				file.truncate()
-
-
-		# Revision updates done, now do some linting (this will be pulled out into a separate tool at a later date)
-
-		# Get the ebook language, for later use
-		language = regex.search(r"<dc:language>([^>]+?)</dc:language>", xhtml).group(1)
-
-		# Check local.css for various items, for later use
-		abbr_elements = []
-		with open(os.path.join(directory, "src", "epub", "css", "local.css"), "r", encoding="utf-8") as file:
-			css = file.read()
-
-			local_css_has_subtitle_style = "span[epub|type~=\"subtitle\"]" in css
-
-			abbr_styles = regex.findall(r"abbr\.[a-z]+", css)
-
-		# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
-		if regex.search(r"<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", xhtml) is not None:
-			print("{}Warning: non-typogrified \", ', or -- detected in metadata long description".format("\t" if args.verbose else ""))
-
-		if regex.search(r"<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", xhtml) is not None:
-			print("{}Warning: non-typogrified \", ', or -- detected in metadata  dc:description".format("\t" if args.verbose else ""))
-
-		#Check for HTML entities in long-description
-		if regex.search(r"&amp;[a-z]+?;", xhtml):
-			print("{}Warning: HTML entites detected in metadata.  Use UTF characters where possible".format("\t" if args.verbose else ""))
-
-		# Check for illegal em-dashes in <dc:subject>
-		if regex.search(r"<dc:subject id=\"[^\"]+?\">[^<]+?—[^<]+?</meta>", xhtml) is not None:
-			print("{}Warning: illegal em-dash detected in dc:subject; use --".format("\t" if args.verbose else ""))
-
-		# Check for correct external URLs
-		if "http://www.gutenberg.org" in xhtml:
-			print("{}Warning: non-https gutenberg.org link in content.opf".format("\t" if args.verbose else ""))
-
-		if "http://catalog.hathitrust.org" in xhtml:
-			print("{}Warning: non-https hathitrust.org link in content.opf".format("\t" if args.verbose else ""))
-
-		if "http://archive.org" in xhtml:
-			print("{}Warning: non-https archive.org link in content.opf".format("\t" if args.verbose else ""))
-
-		if regex.search(r"id\.loc\.gov/authorities/names/[^\.]+\.html", xhtml):
-			print("{}Warning: id.loc.gov URL illegally ending with .html in content.opf".format("\t" if args.verbose else ""))
-
-		# Make sure some static files are unchanged
-		if not filecmp.cmp(license_file_path, os.path.join(directory, "LICENSE.md")):
-			print("{}Warning: LICENSE.md does not match template".format("\t" if args.verbose else ""))
-
-		if not filecmp.cmp(core_css_file_path, os.path.join(directory, "src", "epub", "css", "core.css")):
-			print("{}Warning: core.css does not match template".format("\t" if args.verbose else ""))
-
-		if not filecmp.cmp(logo_svg_file_path, os.path.join(directory, "src", "epub", "images", "logo.svg")):
-			print("{}Warning: logo.svg does not match template".format("\t" if args.verbose else ""))
-
-		if not filecmp.cmp(uncopyright_file_path, os.path.join(directory, "src", "epub", "text", "uncopyright.xhtml")):
-			print("{}Warning: uncopyright.xhtml does not match template".format("\t" if args.verbose else ""))
-
-		# Check for unused selectors
-		unused_selectors = subprocess.run([find_unused_selectors_path, directory], stdout=subprocess.PIPE).stdout.decode().strip()
-		if unused_selectors:
-			if args.verbose:
-				unused_selectors = "\t\t" + "\t\t".join(unused_selectors.splitlines(True))
-			else:
-				unused_selectors = "\t" + "\t".join(unused_selectors.splitlines(True))
-
-			print("{}Warning: unused CSS selectors in local.css:\n{}".format("\t" if args.verbose else "", unused_selectors))
-
-		# Now iterate over individual files for some checks
-		for root, _, filenames in os.walk(directory):
-			for filename in fnmatch.filter(filenames, "*.xhtml"):
-
-				with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
-					file_xhtml = file.read()
-
-					# Check for non-https links
-					if "http://www.gutenberg.org" in file_xhtml:
-						print("{}Warning: non-https gutenberg.org link in {}".format("\t" if args.verbose else "", filename))
-
-					if "http://catalog.hathitrust.org" in file_xhtml:
-						print("{}Warning: non-https hathitrust.org link in {}".format("\t" if args.verbose else "", filename))
-
-					if "http://archive.org" in file_xhtml:
-						print("{}Warning: non-https archive.org link in {}".format("\t" if args.verbose else "", filename))
-
-					# Check for empty <p> tags
-					if "<p/>" in file_xhtml or "<p></p>" in file_xhtml:
-						print("{}Warning: empty <p/> tag in {}".format("\t" if args.verbose else "", filename))
-
-					# Check for missing subtitle styling
-					if "epub:type=\"subtitle\"" in file_xhtml and not local_css_has_subtitle_style:
-						print("{}Warning: Subtitles detected, but no subtitle style detected in local.css. File: {}".format("\t" if args.verbose else "", filename))
-
-					# Did someone use colons instead of dots for SE identifiers? e.g. se:name:vessel:ship
-					matches = regex.findall(r"\bse:[a-z]+:(?:[a-z]+:?)*", file_xhtml)
-					if matches:
-						print("{}Warning: Illegal colon (:) detected in SE identifier.  SE identifiers are separated by dots (.) not colons. Identifier: {} File: {}".format("\t" if args.verbose else "", matches, filename))
-
-					# Collect abbr elements for later check
-					result = regex.findall("<abbr[^<]+?>", file_xhtml)
-					result = [item.replace("eoc", "").replace(" \"", "").strip() for item in result]
-					abbr_elements = list(set(result + abbr_elements))
-
-					# Check if language tags in individual files match the language in content.opf
-					if filename not in IGNORED_FILES:
-						file_language = regex.search(r"<html[^<]+xml\:lang=\"([^\"]+)\"", file_xhtml).group(1)
-						if language != file_language:
-							print("{}Warning: {} language is {}, but content.opf language is {}".format("\t" if args.verbose else "", filename, file_language, language))
-
-				# Check for missing MARC relators
-				if filename == "introduction.xhtml" and ">aui<" not in processed_xhtml and ">win<" not in processed_xhtml:
-					print("{}Warning: introduction.xhtml found, but no MARC relator 'aui' (Author of introduction, but not the chief author) or 'win' (Writer of introduction)".format("\t" if args.verbose else ""))
-
-				if filename == "preface.xhtml" and ">wpr<" not in processed_xhtml:
-					print("{}Warning: preface.xhtml found, but no MARC relator 'wpr' (Writer of preface)".format("\t" if args.verbose else ""))
-
-				if filename == "afterword.xhtml" and ">aft<" not in processed_xhtml:
-					print("{}Warning: afterword.xhtml found, but no MARC relator 'aft' (Author of colophon, afterword, etc.)".format("\t" if args.verbose else ""))
-
-				if filename == "endnotes.xhtml" and ">ann<" not in processed_xhtml:
-					print("{}Warning: endnotes.xhtml found, but no MARC relator 'ann' (Annotator)".format("\t" if args.verbose else ""))
-
-				if filename == "loi.xhtml" and ">ill<" not in processed_xhtml:
-					print("{}Warning: loi.xhtml found, but no MARC relator 'ill' (Illustrator)".format("\t" if args.verbose else ""))
-
-
-		for element in abbr_elements:
-			try:
-				css_class = regex.search(r"class=\"([^\"]+?)\"", element).group(1)
-			except Exception:
-				continue
-			if css_class and (css_class == "name" or css_class == "temperature") and "abbr." + css_class not in abbr_styles:
-				print("{}Warning: abbr.{} element found, but no style in local.css".format("\t" if args.verbose else "", css_class))
-
-
 
 if __name__ == "__main__":
 	main()
