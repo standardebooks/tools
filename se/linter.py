@@ -160,6 +160,10 @@ def lint(se_root_directory, tools_root_directory):
 				for message in get_malformed_urls(xhtml):
 					messages.append("{} File: {}".format(message, filename))
 
+				# Check for empty <h2> missing epub:type="title" attribute
+				if "<h2>" in xhtml:
+					messages.append("<h2> tag without epub:type=\"title\" attribute in {}".format(filename))
+
 				# Check for empty <p> tags
 				if "<p/>" in xhtml or "<p></p>" in xhtml:
 					messages.append("Empty <p/> tag in {}".format(filename))
