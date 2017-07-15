@@ -208,12 +208,17 @@ Many of these tools act on Standard Ebooks source directories.  Such directories
 	|----cover.svg
 	|----titlepage.svg
 	|---text/
+	|----colophon.xhtml
+	|----imprint.xhtml
+	|----titlepage.xhtml
+	|----uncopyright.xhtml
 	|---content.opf
 	|---onix.xml
 	|---toc.xhtml
 	|--META-INF/
 	|---container.xml
 	|--mimetype
+	|-LICENSE.md
 
 `./images/` contains source images for the cover and titlepages, as well as ebook-specific source images.  Source images should be in their maximum available resolution, then compressed and placed in `./src/epub/images/` for distribution.
 
