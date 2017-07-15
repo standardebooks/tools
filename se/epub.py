@@ -7,6 +7,16 @@ import regex
 import se.easy_xml
 from lxml import etree
 
+
+UNICODE_BOM = "\ufeff"
+
+
+def strip_bom(unicode_string):
+	if unicode_string.startswith(UNICODE_BOM):
+		unicode_string = unicode_string[1:]
+
+	return unicode_string
+
 def quiet_remove(filename):
 	try:
 		os.remove(filename)

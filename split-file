@@ -3,6 +3,7 @@
 import argparse
 import os
 import regex
+import se.epub
 
 def main():
 	parser = argparse.ArgumentParser(description="Split an XHTML file into many files at all instances of <!--se:split-->, and include a header template for each file.")
@@ -10,7 +11,7 @@ def main():
 	args = parser.parse_args()
 
 	with open(args.filename, "r", encoding="utf-8") as file:
-		xhtml = file.read()
+		xhtml = se.epub.strip_bom(file.read())
 
 	with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates", "header.xhtml"), "r", encoding="utf-8") as file:
 		header_xhtml = file.read()
