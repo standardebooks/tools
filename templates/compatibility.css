@@ -5,25 +5,22 @@ img[epub|type~="z3998:publisher-logo"]{
 }
 
 /* Give PNGs a white background for night mode compatibility... */
-img[epub|type~="se:image.color-depth.default-on-transparent"],
 img[epub|type~="se:image.color-depth.black-on-transparent"]{
 	background: #fff !important; /* `!important` is required to make sure readers respect the BG color */
 }
 
 /* Except our house PNGs, which were rendered from SVGs with a white stroke... */
-[epub|type~="titlepage"] img[epub|type~="se:image.color-depth.default-on-transparent"],
-img[epub|type~="se:image.color-depth.default-on-transparent"][epub|type~="z3998:publisher-logo"]{
+[epub|type~="titlepage"] img[epub|type~="se:image.color-depth.black-on-transparent"],
+img[epub|type~="se:image.color-depth.black-on-transparent"][epub|type~="z3998:publisher-logo"]{
 	background: transparent !important;
 }
 
 /* And except in iBooks, where we can target night mode specifically */
-:root[__ibooks_internal_theme] img[epub|type~="se:image.color-depth.black-on-transparent"],
-:root[__ibooks_internal_theme] img[epub|type~="se:image.color-depth.default-on-transparent"]{
+:root[__ibooks_internal_theme] img[epub|type~="se:image.color-depth.black-on-transparent"]{
 	background: transparent !important;
 }
 
 /* Enable night mode in iBooks */
-:root[__ibooks_internal_theme*="Night"] img[epub|type~="se:image.color-depth.black-on-transparent"],
-:root[__ibooks_internal_theme*="Night"] img[epub|type~="se:image.color-depth.default-on-transparent"]{
+:root[__ibooks_internal_theme*="Night"] img[epub|type~="se:image.color-depth.black-on-transparent"]{
 	filter: invert(100%);
 }

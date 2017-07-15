@@ -177,7 +177,7 @@ def main():
 		output = subprocess.run([simplify_tags_path, work_epub_root_directory], stdout=subprocess.PIPE).stdout.decode().strip()
 		if output:
 			print("{}Error: simplify-tags failed with: {}".format("\t" if args.verbose else "", output), file=sys.stderr)
-			#exit(1)
+			exit(1)
 
 		# Extract cover and cover thumbnail
 		# `convert` reports the svg as the wrong size, so we have to force the size.
@@ -267,6 +267,14 @@ def main():
 					with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
 						xhtml = file.read()
 						processed_xhtml = xhtml
+
+						# Since we convert SVGs to raster, here we add the color-depth semantic for night mode
+						processed_xhtml = processed_xhtml.replace("z3998:publisher-logo", "z3998:publisher-logo se:image.color-depth.black-on-transparent")
+						processed_xhtml = regex.sub(r"class=\"([^\"]*?)epub-type-z3998-publisher-logo([^\"]*?)\"", "class=\"\\1epub-type-z3998-publisher-logo epub-type-se-image-color-depth-black-on-transparent\\2\"", processed_xhtml)
+
+						# Special case for the titlepage
+						if filename == "titlepage.xhtml":
+							processed_xhtml = processed_xhtml.replace("<img", "<img class=\"epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\"")
 
 						# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
 						processed_xhtml = processed_xhtml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
