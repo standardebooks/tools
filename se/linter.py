@@ -177,6 +177,14 @@ def lint(se_root_directory, tools_root_directory):
 				if matches:
 					messages.append("Illegal colon (:) detected in SE identifier.  SE identifiers are separated by dots (.) not colons (:). Identifier: {} File: {}".format(matches, filename))
 
+				# Check for space before endnote backlinks
+				if filename == "endnotes.xhtml":
+					matches = regex.findall(r"(?:[^\s]|\s{2,})<a href=\"[^[\"]+?\" epub:type=\"se:referrer\">↩</a>", xhtml)
+					if matches:
+						messages.append("Endnote referrer link in endnotes.xhtml not preceded by exactly one space. All referrer links must be preceded by exactly one space.")
+						for match in matches:
+							messages.append(" {}".format(match[1:]))
+
 				# If we're in the imprint, are the sources represented correctly?
 				if filename == "imprint.xhtml":
 					for match in regex.finditer(r"<dc:source>([^<]+?)</dc:source>", metadata_xhtml):
