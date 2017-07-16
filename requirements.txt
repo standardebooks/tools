@@ -8,4 +8,4 @@ regex==2016.1.10
 roman==2.0.0
 smartypants==2.0.0
 titlecase==0.10.0
-termcolor=1.1.0
+termcolor==1.1.0
