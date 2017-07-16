@@ -9,9 +9,6 @@ import se.easy_xml
 from lxml import etree
 
 
-
-
-
 def strip_bom(unicode_string):
 	if unicode_string.startswith(se.UNICODE_BOM):
 		unicode_string = unicode_string[1:]

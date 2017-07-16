@@ -177,6 +177,23 @@ def lint(se_root_directory, tools_root_directory):
 				if matches:
 					messages.append("Illegal colon (:) detected in SE identifier.  SE identifiers are separated by dots (.) not colons (:). Identifier: {} File: {}".format(matches, filename))
 
+				# If we're in the imprint, are the sources represented correctly?
+				if filename == "imprint.xhtml":
+					for match in regex.finditer(r"<dc:source>([^<]+?)</dc:source>", metadata_xhtml):
+						link = match.group(1)
+
+						if "gutenberg.org" in link and "<a href=\"{}\">Project Gutenberg</a>".format(link) not in xhtml:
+							messages.append("Source not represented in imprint.xhtml. It should read: <a href=\"{}\">Project Gutenberg</a>".format(link))
+
+						if "hathitrust.org" in link and "the <a href=\"{}\">Hathi Trust Digital Library</a>".format(link) not in xhtml:
+							messages.append("Source not represented in imprint.xhtml. It should read: the <a href=\"{}\">Hathi Trust Digital Library</a>".format(link))
+
+						if "archive.org" in link and "the <a href=\"{}\">Internet Archive</a>".format(link) not in xhtml:
+							messages.append("Source not represented in imprint.xhtml. It should read: the <a href=\"{}\">Internet Archive</a>".format(link))
+
+						if "books.google.com" in link and "<a href=\"{}\">Google Books</a>".format(link) not in xhtml:
+							messages.append("Source not represented in imprint.xhtml. It should read: <a href=\"{}\">Google Books</a>".format(link))
+
 				# Collect abbr elements for later check
 				result = regex.findall("<abbr[^<]+?>", xhtml)
 				result = [item.replace("eoc", "").replace(" \"", "").strip() for item in result]
