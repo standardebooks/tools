@@ -17,32 +17,23 @@ def main():
 		if args.verbose:
 			print("Processing {} ...".format(directory), end="", flush=True)
 
-		try:
-			messages = se.linter.lint(directory, script_directory)
+		messages = se.linter.lint(directory, script_directory)
 
-			if messages and not args.verbose:
-				print("{}:".format(directory))
+		if messages and not args.verbose:
+			print("{}:".format(directory))
 
-			if messages and args.verbose:
-				print("")
+		if messages and args.verbose:
+			print("")
 
-			for message in messages:
-				if message.startswith(" "):
-					se.print_line_after_warning(message[1:], True)
-				else:
-					se.print_warning(message, True)
-
-			if not messages and args.verbose:
-				print(" OK")
-
-		except Exception as ex:
-			if args.verbose:
-				print("")
+		for message in messages:
+			if message.startswith(" "):
+				se.print_line_after_warning(message[1:], True)
 			else:
-				print("{}:".format(directory))
+				se.print_warning(message, True)
 
-			se.print_error(ex, True)
-			exit(1)
+		if not messages and args.verbose:
+			print(" OK")
+
 
 if __name__ == "__main__":
 	main()

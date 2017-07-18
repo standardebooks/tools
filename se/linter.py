@@ -153,6 +153,29 @@ def lint(se_root_directory, tools_root_directory):
 
 	# Now iterate over individual files for some checks
 	for root, _, filenames in os.walk(se_root_directory):
+		for filename in fnmatch.filter(filenames, "*.css"):
+			with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
+				css = file.read()
+
+				# Check CSS style
+				matches = regex.findall(r".+\s\{", css)
+				if matches:
+					messages.append("CSS opening braces must not be preceded by space. File: {}".format(filename))
+					for match in matches:
+						messages.append(" {}".format(match))
+
+				matches = regex.findall(r"^\s*[^\s+]\s*.+\}", css, flags=regex.MULTILINE)
+				if matches:
+					messages.append("CSS closing braces must be on their own line. File: {}".format(filename))
+					for match in matches:
+						messages.append(" {}".format(match))
+
+				matches = regex.findall(r"^\s+\}", css, flags=regex.MULTILINE)
+				if matches:
+					messages.append("No white space before CSS closing braces. File: {}".format(filename))
+					for match in matches:
+						messages.append(" {}".format(match))
+
 		for filename in fnmatch.filter(filenames, "*.xhtml"):
 			with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
 				xhtml = file.read()
