@@ -111,7 +111,7 @@ def lint(se_root_directory, tools_root_directory):
 		abbr_styles = regex.findall(r"abbr\.[a-z]+", css)
 
 	# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
-	if regex.search(r"<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", metadata_xhtml) is not None:
+	if regex.search(r"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", metadata_xhtml.replace("\"&gt;", "").replace("=\"", "")) is not None:
 		messages.append("Non-typogrified \", ', or -- detected in metadata long description")
 
 	if regex.search(r"<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", metadata_xhtml) is not None:
@@ -158,21 +158,39 @@ def lint(se_root_directory, tools_root_directory):
 				css = file.read()
 
 				# Check CSS style
+
+				# No space before CSS opening braces
 				matches = regex.findall(r".+\s\{", css)
 				if matches:
 					messages.append("CSS opening braces must not be preceded by space. File: {}".format(filename))
 					for match in matches:
 						messages.append(" {}".format(match))
 
+				# CSS closing braces on their own line
 				matches = regex.findall(r"^\s*[^\s+]\s*.+\}", css, flags=regex.MULTILINE)
 				if matches:
 					messages.append("CSS closing braces must be on their own line. File: {}".format(filename))
 					for match in matches:
 						messages.append(" {}".format(match))
 
+				# White space before CSS closing braces
 				matches = regex.findall(r"^\s+\}", css, flags=regex.MULTILINE)
 				if matches:
 					messages.append("No white space before CSS closing braces. File: {}".format(filename))
+					for match in matches:
+						messages.append(" {}".format(match))
+
+				# Properties not indented with tabs
+				matches = regex.findall(r"^[^\t@/].+:[^\{,]+?;$", css, flags=regex.MULTILINE)
+				if matches:
+					messages.append("CSS properties must be indented with exactly one tab. File: {}".format(filename))
+					for match in matches:
+						messages.append(" {}".format(match))
+
+				# Properties indented with multiple tabs
+				matches = regex.findall(r"^\t{2,}.+:[^\{,]+?;$", css, flags=regex.MULTILINE)
+				if matches:
+					messages.append("CSS properties must be indented with exactly one tab. File: {}".format(filename))
 					for match in matches:
 						messages.append(" {}".format(match))
 
