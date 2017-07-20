@@ -6,7 +6,7 @@ import fnmatch
 import regex
 
 
-IGNORED_FILES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
+IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
 
 
 def main():
@@ -26,7 +26,7 @@ def main():
 		if os.path.isdir(target):
 			for root, _, filenames in os.walk(target):
 				for filename in fnmatch.filter(filenames, "*.xhtml"):
-					if filename not in IGNORED_FILES:
+					if filename not in IGNORED_FILENAMES:
 						target_filenames.add(os.path.join(root, filename))
 		else:
 			target_filenames.add(target)

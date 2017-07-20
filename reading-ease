@@ -9,7 +9,7 @@ import unicodedata
 import regex
 from bs4 import BeautifulSoup
 
-IGNORED_FILES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
+IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
 INCLUDED_CHARACTERS = list(string.whitespace) + list(string.digits) + [":", ";", ".", "?", "!"]
 
 def get_word_count(text):
@@ -147,7 +147,7 @@ def main():
 
 		for root, _, filenames in os.walk(directory):
 			for filename in fnmatch.filter(filenames, "*.xhtml"):
-				if filename not in IGNORED_FILES:
+				if filename not in IGNORED_FILENAMES:
 					with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
 						text += BeautifulSoup(file.read(), "lxml").body.get_text() + " "
 

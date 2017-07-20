@@ -6,14 +6,14 @@ import regex
 
 
 class EasyXmlTree:
-	_xhtml_string = ""
+	__xhtml_string = ""
 	etree = None
 
 	def __init__(self, xhtml_string):
 		# We have to remove the default namespace declaration from our document, otherwise
 		# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
-		self._xhtml_string = xhtml_string#.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
-		self.etree = etree.fromstring(str.encode(self._xhtml_string))
+		self.__xhtml_string = xhtml_string#.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
+		self.etree = etree.fromstring(str.encode(self.__xhtml_string))
 
 	def css_select(self, selector):
 		return self.xpath(cssselect.CSSSelector(selector, translator="html", namespaces=se.XHTML_NAMESPACES).path)
@@ -34,13 +34,13 @@ class EasyXmlTree:
 
 
 class EasyXmlElement:
-	_lxml_element = None
+	__lxml_element = None
 
 	def __init__(self, lxml_element):
-		self._lxml_element = lxml_element
+		self.__lxml_element = lxml_element
 
 	def tostring(self):
-		return regex.sub(r" xmlns(:[a-z]+?)?=\"[^\"]+?\"", "", etree.tostring(self._lxml_element, encoding=str, with_tail=False))
+		return regex.sub(r" xmlns(:[a-z]+?)?=\"[^\"]+?\"", "", etree.tostring(self.__lxml_element, encoding=str, with_tail=False))
 
 	def inner_html(self):
-		return self._lxml_element.text
+		return self.__lxml_element.text

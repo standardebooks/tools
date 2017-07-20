@@ -3,7 +3,9 @@
 import argparse
 import os
 import se
-import se.linter
+from termcolor import colored
+from se.se_epub import SeEpub
+
 
 def main():
 	parser = argparse.ArgumentParser(description="Check for various Standard Ebooks style errors.")
@@ -11,28 +13,43 @@ def main():
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
-	script_directory = os.path.dirname(os.path.realpath(__file__))
+	first_output = True
 
 	for directory in args.directories:
-		if args.verbose:
-			print("Processing {} ...".format(directory), end="", flush=True)
+		try:
+			se_epub = SeEpub(directory, os.path.dirname(os.path.realpath(__file__)))
+		except Exception as ex:
+			se.print_error(ex)
+			exit(1)
 
-		messages = se.linter.lint(directory, script_directory)
+		messages = se_epub.lint()
 
-		if messages and not args.verbose:
-			print("{}:".format(directory))
+		table_data = []
 
-		if messages and args.verbose:
+		# Print a separator newline if more than one table is printed
+		if not first_output and (args.verbose or messages):
 			print("")
+		elif first_output:
+			first_output = False
 
-		for message in messages:
-			if message.startswith(" "):
-				se.print_line_after_warning(message[1:], True)
-			else:
-				se.print_warning(message, True)
+		# Print the table header
+		if args.verbose or (messages and len(args.directories) > 1):
+			print(colored(se_epub.directory, "white", attrs=["reverse"]))
 
-		if not messages and args.verbose:
-			print(" OK")
+		#Print the table
+		if messages:
+			for message in messages:
+				if message.startswith(" "):
+					table_data.append(["→", "\t{}".format(message.strip())])
+				else:
+					table_data.append([colored("Warning", "yellow"), message])
+
+			se.print_table(table_data, 1)
+
+		if args.verbose and not messages:
+			table_data.append([colored("OK", "green", attrs=["reverse"])])
+
+			se.print_table(table_data)
 
 
 if __name__ == "__main__":
