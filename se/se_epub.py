@@ -169,7 +169,12 @@ class SeEpub:
 					continue
 
 				with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
-					file_contents = file.read()
+					try:
+						file_contents = file.read()
+					except UnicodeDecodeError as e:
+						# This is more to help developers find weird files that might choke 'lint', hopefully unnecessary for end users
+						print('Problem decoding file as utf-8: ', filename)
+						raise e
 
 					if "UTF-8" in file_contents:
 						messages.append("String \"UTF-8\" must always be lowercase. File: {}".format(filename))
