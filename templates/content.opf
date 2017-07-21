@@ -18,7 +18,7 @@
 		<meta property="role" refines="#type-designer" scheme="marc:relators">tyd</meta>
 		<link href="onix.xml" rel="onix-record"/>
 		<dc:title id="title">TITLE</dc:title>
-		<meta property="file-as" refines="#title">SORT</meta>
+		<meta property="file-as" refines="#title">TITLESORT</meta>
 		<dc:subject id="subject-1">SUBJECT1</dc:subject>
 		<dc:subject id="subject-2">SUBJECT2</dc:subject>
 		<meta property="meta-auth" refines="#subject-1">LOCLINK1</meta>
@@ -34,24 +34,24 @@
 		<dc:source>LINK</dc:source>
 		<meta property="se:word-count">WORDCOUNT</meta>
 		<meta property="se:reading-ease.flesch">READINGEASE</meta>
-		<meta property="se:url.encyclopedia.wikipedia">WIKILINK</meta>
+		<meta property="se:url.encyclopedia.wikipedia">EBOOKWIKILINK</meta>
 		<meta property="se:url.vcs.github">https://github.com/standardebooks/VCSIDENTIFIER</meta>
 		<dc:creator id="author">AUTHOR</dc:creator>
-		<meta property="file-as" refines="#author">SORT</meta>
-		<meta property="se:name.person.full-name" refines="#author">FULLNAME</meta>
-		<meta property="se:url.encyclopedia.wikipedia" refines="#author">WIKILINK</meta>
-		<meta property="se:url.authority.nacoaf" refines="#author">NACOAFLINK</meta>
+		<meta property="file-as" refines="#author">AUTHORSORT</meta>
+		<meta property="se:name.person.full-name" refines="#author">AUTHORFULLNAME</meta>
+		<meta property="se:url.encyclopedia.wikipedia" refines="#author">AUTHORWIKILINK</meta>
+		<meta property="se:url.authority.nacoaf" refines="#author">AUTHORNACOAFLINK</meta>
 		<meta property="role" refines="#author" scheme="marc:relators">aut</meta>
-		<dc:contributor id="translator">CONTRIB1</dc:contributor>
-		<meta property="file-as" refines="#translator">CONTRIB1SORT</meta>
-		<meta property="se:url.encyclopedia.wikipedia" refines="#translator">WIKILINK</meta>
-		<meta property="se:url.authority.nacoaf" refines="#translator">NACOAFLINK</meta>
+		<dc:contributor id="translator">TRANSLATOR</dc:contributor>
+		<meta property="file-as" refines="#translator">TRANSLATORSORT</meta>
+		<meta property="se:url.encyclopedia.wikipedia" refines="#translator">TRANSLATORWIKILINK</meta>
+		<meta property="se:url.authority.nacoaf" refines="#translator">TRANSLATORNACOAFLINK</meta>
 		<meta property="display-seq" refines="#translator">1</meta>
 		<meta property="role" refines="#translator" scheme="marc:relators">trl</meta>
 		<dc:contributor id="artist">COVERARTIST</dc:contributor>
 		<meta property="file-as" refines="#artist">COVERARTISTSORT</meta>
-		<meta property="se:url.encyclopedia.wikipedia" refines="#artist">WIKILINK</meta>
-		<meta property="se:url.authority.nacoaf" refines="#artist">NACOAFLINK</meta>
+		<meta property="se:url.encyclopedia.wikipedia" refines="#artist">COVERARTISTWIKILINK</meta>
+		<meta property="se:url.authority.nacoaf" refines="#artist">COVERARTISTNACOAFLINK</meta>
 		<meta property="role" refines="#artist" scheme="marc:relators">art</meta>
 		<dc:contributor id="transcriber-1">TRANSCRIBER</dc:contributor>
 		<meta property="file-as" refines="#transcriber-1">TRANSCRIBERSORT</meta>

@@ -15,6 +15,21 @@ BACKMATTER_FILENAMES = ["endnotes.xhtml", "loi.xhtml", "epilogue.xhtml", "afterw
 BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", ".epub3"]
 
 
+def replace_in_file(filename, search, replace):
+	with open(filename, "r+", encoding="utf-8") as file:
+		data = file.read()
+		file.seek(0)
+
+		if isinstance(search, list):
+			for index, val in enumerate(search):
+				if replace[index] is not None:
+					data = data.replace(val, replace[index])
+			file.write(data)
+		else:
+			file.write(data.replace(search, replace))
+
+		file.truncate()
+
 def print_error(message, verbose=False):
 	print("{}{} {}".format(MESSAGE_INDENT if verbose else "", colored("Error:", "red", attrs=["reverse"]), message), file=sys.stderr)
 

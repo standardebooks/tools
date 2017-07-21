@@ -4,23 +4,38 @@ import argparse
 import sys
 import os
 import shutil
+from urllib import parse, request
+import requests
 from subprocess import call
 import git
+import regex
+import se
 import se.formatting
+import se.epub
+from bs4 import BeautifulSoup, UnicodeDammit
 
-def replace_in_file(filename, search, replace):
-	with open(filename, "r+", encoding="utf-8") as file:
-		data = file.read()
-		file.seek(0)
+def get_wikipedia_url(string, get_nacoaf_url=False):
+	try:
+		response = requests.get("https://en.wikipedia.org/wiki/Special:Search?{}".format(parse.urlencode({"search": string, "go": "Go"})), allow_redirects=False)
+	except Exception as ex:
+		se.print_error("Couldn't contact Wikipedia. Error: {}".format(ex))
 
-		if isinstance(search, list):
-			for index, val in enumerate(search):
-				data = data.replace(val, replace[index])
-			file.write(data)
-		else:
-			file.write(data.replace(search, replace))
+	if response.status_code == 302:
+		nacoaf_url = None
+		wiki_url = response.headers["Location"]
 
-		file.truncate()
+		if get_nacoaf_url:
+			try:
+				response = requests.get(wiki_url)
+			except Exception as ex:
+				se.print_error("Couldn't contact Wikipedia. Error: {}".format(ex))
+
+			for match in regex.findall(r"http://id\.loc\.gov/authorities/names/n[0-9]+", response.text):
+				nacoaf_url = match
+
+		return wiki_url, nacoaf_url
+
+	return None
 
 def main():
 	parser = argparse.ArgumentParser(description="Create a skeleton of a new Standard Ebook in the current directory.")
@@ -28,19 +43,25 @@ def main():
 	parser.add_argument("-t", "--title", dest="title", required=True, help="the title of the ebook")
 	parser.add_argument("-i", "--illustrator", dest="illustrator", help="the illustrator of the ebook")
 	parser.add_argument("-r", "--translator", dest="translator", help="the translator of the ebook")
+	parser.add_argument("-p", "--gutenberg-ebook-url", dest="pg_url", help="the URL of the Project Gutenberg ebook to download")
 	parser.add_argument("-s", "--se", dest="init_se_repo", action="store_true", help="initialize a new repository on the Standard Ebook server")
 	parser.add_argument("-g", "--github", dest="init_github_repo", action="store_true", help="initialize a new repository on GitHub; can only be used when --se is specified")
 	parser.add_argument("-e", "--email", dest="email", help="use this email address as the main committer for the new Git repository")
 	args = parser.parse_args()
 
 	if args.init_github_repo and not args.init_se_repo:
-		print("Error: --github option specified, but --se option not specified.", file=sys.stderr)
+		se.print_error("--github option specified, but --se option not specified.")
 		exit(1)
 
-	#Put together some variables for later use
+	if args.pg_url and not regex.match("^https?://www.gutenberg.org/ebooks/[0-9]+$", args.pg_url):
+		se.print_error("Project Gutenberg URL must look like: https://www.gutenberg.org/ebooks/<EBOOK-ID>")
+		exit(1)
+
+	# Put together some variables for later use
 	templates_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates")
 	identifier = se.formatting.make_url_safe(args.author) + "/" + se.formatting.make_url_safe(args.title)
 	title_string = args.title + ", by " + args.author
+	sorted_title = regex.sub(r"^(A|An|The) (.+)$", "\\2, \\1", args.title)
 
 	if args.translator:
 		identifier = identifier + "/" + se.formatting.make_url_safe(args.translator)
@@ -48,7 +69,7 @@ def main():
 
 	if args.illustrator:
 		identifier = identifier + "/" + se.formatting.make_url_safe(args.illustrator)
-		title_string = title_string + ". Illustrated by " + args.illust
+		title_string = title_string + ". Illustrated by " + args.illustrator
 
 	repo_name = identifier.replace("/", "_")
 
@@ -56,14 +77,105 @@ def main():
 		print("Error: ./{}/ already exists.".format(repo_name), file=sys.stderr)
 		exit(1)
 
-	#Create necessary directories
-	os.makedirs(os.path.normpath(repo_name + "/images"))
-	os.makedirs(os.path.normpath(repo_name + "/src/epub/css"))
-	os.makedirs(os.path.normpath(repo_name + "/src/epub/images"))
-	os.makedirs(os.path.normpath(repo_name + "/src/epub/text"))
-	os.makedirs(os.path.normpath(repo_name + "/src/META-INF"))
+	# Download PG HTML and do some fixups
+	if args.pg_url:
+		args.pg_url = args.pg_url.replace("http://", "https://")
 
-	#Copy over templates
+		# Get the ebook metadata
+		try:
+			response = request.urlopen(args.pg_url)
+			pg_metadata_html = response.read().decode()
+
+		except Exception as ex:
+			se.print_error("Couldn't download Project Gutenberg ebook metadata page. Error: {}".format(ex))
+			exit(1)
+
+		soup = BeautifulSoup(pg_metadata_html, "lxml")
+
+		# Get the ebook HTML URL from the metadata
+		pg_ebook_url = None
+		for element in soup.select("a[type^=\"text/html\"]"):
+			pg_ebook_url = regex.sub("^//", "https://", element["href"])
+
+		if not pg_ebook_url:
+			se.print_error("Could download ebook metadata, but couldn't find URL for the ebook HTML.")
+			exit(1)
+
+		# Get the ebook LCSH categories
+		pg_subjects = []
+		for element in soup.select("td[property=\"dcterms:subject\"]"):
+			if element["datatype"] == "dcterms:LCSH":
+				for subject_link in element.find("a"):
+					pg_subjects.append(subject_link.strip())
+
+		# Get the PG publication date
+		pg_publication_year = None
+		for element in soup.select("td[itemprop=\"datePublished\"]"):
+			pg_publication_year = regex.sub(r".+?([0-9]{4})", "\\1", element.text)
+
+		# Get the actual ebook URL
+		try:
+			response = request.urlopen(pg_ebook_url)
+			pg_ebook_html = response.read()
+
+		except Exception as ex:
+			se.print_error("Couldn't download Project Gutenberg ebook HTML. Error: {}".format(ex))
+			exit(1)
+
+		try:
+			dammit = UnicodeDammit(pg_ebook_html)
+			pg_ebook_html = se.epub.strip_bom(dammit.unicode_markup)
+
+		except Exception as ex:
+			se.print_error("Couldn't determine text encoding of Project Gutenberg HTML file. Error: {}".format(ex))
+			exit(1)
+
+		# Try to guess the ebook language
+		pg_language = "en-US"
+		if "colour" in pg_ebook_html or "favour" in pg_ebook_html or "honour" in pg_ebook_html:
+			pg_language = "en-GB"
+
+	# Create necessary directories
+	os.makedirs(os.path.join(repo_name, "images"))
+	os.makedirs(os.path.join(repo_name, "src", "epub", "css"))
+	os.makedirs(os.path.join(repo_name, "src", "epub", "images"))
+	os.makedirs(os.path.join(repo_name, "src", "epub", "text"))
+	os.makedirs(os.path.join(repo_name, "src", "META-INF"))
+
+	# Write PG data if we have it
+	if args.pg_url and pg_ebook_html:
+		soup = BeautifulSoup(pg_ebook_html, "lxml")
+
+		# Try to get the PG producers.  We only try this if there's a <pre> block with the header info (which is not always the case)
+		pg_producers = []
+		for element in soup(text=regex.compile(r"\*\*\*\s*Produced by.+$", flags=regex.DOTALL)):
+			if element.parent.name == "pre":
+				pg_producers = regex.sub(r".+?Produced by (.+?)\s*$", "\\1", element, flags=regex.DOTALL)
+				pg_producers = regex.sub(r"\(.+?\)", "", pg_producers, flags=regex.DOTALL)
+				pg_producers = regex.sub(r"(at )?http://www\.pgdp\.net", "", pg_producers, flags=regex.DOTALL)
+				pg_producers = regex.sub(r"[\r\n]+", " ", pg_producers, flags=regex.DOTALL)
+				pg_producers = regex.sub(r",? and ", ", and ", pg_producers)
+				pg_producers = pg_producers.replace(" and the Online", " and The Online")
+				pg_producers = pg_producers.replace(", and ", ", ").strip().split(", ")
+
+		# Try to strip out the PG header
+		for element in soup(text=regex.compile(r"\*\*\*\s*START OF THIS")):
+			for sibling in element.parent.find_previous_siblings():
+				sibling.decompose()
+
+			element.parent.decompose()
+
+		# Try to strip out the PG license footer
+		for element in soup(text=regex.compile(r"End of (the )?Project Gutenberg")):
+			for sibling in element.parent.find_next_siblings():
+				sibling.decompose()
+
+			element.parent.decompose()
+
+		with open(os.path.join(repo_name, "src", "epub", "text", "body.xhtml"), "w") as file:
+			file.write(str(soup))
+
+	# Copy over templates
 	shutil.copy(os.path.normpath(templates_path + "/LICENSE.md"), os.path.normpath(repo_name + "/"))
 	shutil.copy(os.path.normpath(templates_path + "/META-INF/container.xml"), os.path.normpath(repo_name + "/src/META-INF/"))
 	shutil.copy(os.path.normpath(templates_path + "/mimetype"), os.path.normpath(repo_name + "/src/"))
@@ -86,26 +198,140 @@ def main():
 	else:
 		shutil.copy(os.path.normpath(templates_path + "/cover.svg"), os.path.normpath(repo_name + "/images/cover.svg"))
 
-	#Pre-fill a few templates
-	replace_in_file(os.path.normpath(repo_name + "/src/epub/text/titlepage.xhtml"), "TITLESTRING", title_string)
-	replace_in_file(os.path.normpath(repo_name + "/images/titlepage.svg"), "TITLESTRING", title_string)
-	replace_in_file(os.path.normpath(repo_name + "/images/cover.svg"), "TITLESTRING", title_string)
-	replace_in_file(os.path.normpath(repo_name + "/src/epub/content.opf"), ["SEIDENTIFIER", "AUTHOR", "TITLE", "VCSIDENTIFIER"], [identifier, args.author, args.title, repo_name])
-	replace_in_file(os.path.normpath(repo_name + "/src/epub/text/colophon.xhtml"), ["SEIDENTIFIER", "AUTHOR", "TITLE"], [identifier, args.author, args.title])
+	# Try to find Wikipedia links if possible
+	author_wiki_url, author_nacoaf_url = get_wikipedia_url(args.author, True)
+	ebook_wiki_url, _ = get_wikipedia_url(args.title)
+	translator_wiki_url = None
+	if args.translator:
+		translator_wiki_url, translator_nacoaf_url = get_wikipedia_url(args.translator, True)
 
-	#Set up local git repo
+	# Pre-fill a few templates
+	se.replace_in_file(os.path.normpath(repo_name + "/src/epub/text/titlepage.xhtml"), "TITLESTRING", title_string)
+	se.replace_in_file(os.path.normpath(repo_name + "/images/titlepage.svg"), "TITLESTRING", title_string)
+	se.replace_in_file(os.path.normpath(repo_name + "/images/cover.svg"), "TITLESTRING", title_string)
+
+	if args.pg_url:
+		se.replace_in_file(os.path.normpath(repo_name + "/src/epub/text/imprint.xhtml"), "PGLINK", args.pg_url)
+
+	with open(os.path.join(repo_name, "src", "epub", "text", "colophon.xhtml"), "r+", encoding="utf-8") as file:
+		colophon_xhtml = file.read()
+
+		colophon_xhtml = colophon_xhtml.replace("SEIDENTIFIER", identifier)
+		colophon_xhtml = colophon_xhtml.replace(">AUTHOR<", ">{}<".format(args.author))
+		colophon_xhtml = colophon_xhtml.replace("TITLE", args.title)
+
+		if author_wiki_url:
+			colophon_xhtml = colophon_xhtml.replace("AUTHORWIKILINK", author_wiki_url)
+
+		if args.pg_url:
+			colophon_xhtml = colophon_xhtml.replace("PGLINK", args.pg_url)
+
+			if pg_publication_year:
+				colophon_xhtml = colophon_xhtml.replace("YEAR", pg_publication_year)
+
+			if pg_producers:
+				producers_xhtml = ""
+				for i, producer  in enumerate(pg_producers):
+					if "Distributed Proofreading" in producer:
+						producers_xhtml = producers_xhtml + "<a href=\"http://www.pgdp.net\">The Online Distributed Proofreading Team</a>"
+					else:
+						producers_xhtml = producers_xhtml + "<span class=\"name\">{}</span>".format(producer)
+
+					if i < len(pg_producers) - 1:
+						producers_xhtml = producers_xhtml + ", "
+
+					if i == len(pg_producers) - 2:
+						producers_xhtml = producers_xhtml + "and "
+
+				producers_xhtml = producers_xhtml + "<br/>"
+
+			colophon_xhtml = colophon_xhtml.replace("<span class=\"name\">TRANSCRIBER1</span>, <span class=\"name\">TRANSCRIBER2</span>, and <a href=\"http://www.pgdp.net\">The Online Distributed Proofreading Team</a><br/>", producers_xhtml)
+
+		file.seek(0)
+		file.write(colophon_xhtml)
+		file.truncate()
+
+
+	with open(os.path.join(repo_name, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
+		metadata_xhtml = file.read()
+
+		metadata_xhtml = metadata_xhtml.replace("SEIDENTIFIER", identifier)
+		metadata_xhtml = metadata_xhtml.replace(">AUTHOR<", ">{}<".format(args.author))
+		metadata_xhtml = metadata_xhtml.replace(">TITLESORT<", ">{}<".format(sorted_title))
+		metadata_xhtml = metadata_xhtml.replace(">TITLE<", ">{}<".format(args.title))
+		metadata_xhtml = metadata_xhtml.replace("VCSIDENTIFIER", repo_name)
+
+		if pg_producers:
+			producers_xhtml = ""
+			i = 1
+			for producer in pg_producers:
+				producers_xhtml = producers_xhtml + "\t\t<dc:contributor id=\"transcriber-{}\">{}</dc:contributor>\n".format(i, producer)
+
+				if "Distributed Proofreading" in producer:
+					producers_xhtml = producers_xhtml + "\t\t<meta property=\"file-as\" refines=\"#transcriber-{}\">Online Distributed Proofreading Team, The</meta>\n\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{}\">http://pgdp.net</meta>\n".format(i, i)
+				else:
+					producers_xhtml = producers_xhtml + "\t\t<meta property=\"file-as\" refines=\"#transcriber-{}\">TRANSCRIBERSORT</meta>\n".format(i)
+
+				producers_xhtml = producers_xhtml + "\t\t<meta property=\"role\" refines=\"#transcriber-{}\" scheme=\"marc:relators\">trc</meta>\n".format(i)
+
+				i = i + 1
+
+			metadata_xhtml = regex.sub(r"\t\t<dc:contributor id=\"transcriber-1\">TRANSCRIBER</dc:contributor>\s*<meta property=\"file-as\" refines=\"#transcriber-1\">TRANSCRIBERSORT</meta>\s*<meta property=\"se:url.homepage\" refines=\"#transcriber-1\">LINK</meta>\s*<meta property=\"role\" refines=\"#transcriber-1\" scheme=\"marc:relators\">trc</meta>", "\t\t" + producers_xhtml.strip(), metadata_xhtml, flags=regex.DOTALL)
+
+		if author_wiki_url:
+			metadata_xhtml = metadata_xhtml.replace(">AUTHORWIKILINK<", ">{}<".format(author_wiki_url))
+
+		if author_nacoaf_url:
+			metadata_xhtml = metadata_xhtml.replace(">AUTHORNACOAFLINK<", ">{}<".format(author_nacoaf_url))
+
+		if ebook_wiki_url:
+			metadata_xhtml = metadata_xhtml.replace(">EBOOKWIKILINK<", ">{}<".format(ebook_wiki_url))
+
+		if args.translator:
+			metadata_xhtml = metadata_xhtml.replace(">TRANSLATOR<", ">{}<".format(args.translator))
+
+			if translator_wiki_url:
+				metadata_xhtml = metadata_xhtml.replace(">TRANSLATORWIKILINK<", ">{}<".format(translator_wiki_url))
+
+			if translator_nacoaf_url:
+				metadata_xhtml = metadata_xhtml.replace(">TRANSLATORNACOAFLINK<", ">{}<".format(translator_nacoaf_url))
+		else:
+			metadata_xhtml = regex.sub(r"<dc:contributor id=\"translator\">.+?<dc:contributor id=\"artist\">", "<dc:contributor id=\"artist\">", metadata_xhtml, flags=regex.DOTALL)
+
+		if args.pg_url:
+			subject_xhtml = ""
+
+			i = 1
+			for subject in pg_subjects:
+				subject_xhtml = subject_xhtml + "\t\t<dc:subject id=\"subject-{}\">{}</dc:subject>\n".format(i, subject)
+				i = i + 1
+
+			i = 1
+			for subject in pg_subjects:
+				subject_xhtml = subject_xhtml + "\t\t<meta property=\"meta-auth\" refines=\"#subject-{}\">{}</meta>\n".format(i, args.pg_url)
+				i = i + 1
+
+			metadata_xhtml = regex.sub(r"\t\t<dc:subject id=\"subject-1\">SUBJECT1</dc:subject>\s*<dc:subject id=\"subject-2\">SUBJECT2</dc:subject>\s*<meta property=\"meta-auth\" refines=\"#subject-1\">LOCLINK1</meta>\s*<meta property=\"meta-auth\" refines=\"#subject-2\">LOCLINK2</meta>", "\t\t" + subject_xhtml.strip(), metadata_xhtml)
+			metadata_xhtml = metadata_xhtml.replace("<dc:language>LANG</dc:language>", "<dc:language>{}</dc:language>".format(pg_language))
+			metadata_xhtml = metadata_xhtml.replace("<dc:source>LINK</dc:source>", "<dc:source>{}</dc:source>".format(args.pg_url))
+
+		file.seek(0)
+		file.write(metadata_xhtml)
+		file.truncate()
+
+	# Set up local git repo
 	repo = git.Repo.init(repo_name)
 
 	if args.email:
 		with repo.config_writer() as config:
 			config.set_value("user", "email", args.email)
 
-	#Set up remote git repos
+	# Set up remote git repos
 	if args.init_se_repo:
 		git_command = git.cmd.Git(repo_name)
 		git_command.remote("add", "origin", "standardebooks.org:/standardebooks.org/ebooks/{}.git".format(repo_name))
 
-		#Set git to automatically push to SE
+		# Set git to automatically push to SE
 		git_command.config("branch.master.remote", "origin")
 		git_command.config("branch.master.merge", "refs/heads/master")
 
