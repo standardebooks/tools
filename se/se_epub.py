@@ -165,16 +165,19 @@ class SeEpub:
 		# Now iterate over individual files for some checks
 		for root, _, filenames in os.walk(self.directory):
 			for filename in filenames:
-				if ".git" in os.path.join(root, filename) or filename.endswith(tuple(se.BINARY_EXTENSIONS)):
+				if ".git/" in os.path.join(root, filename) or filename.endswith(tuple(se.BINARY_EXTENSIONS)):
 					continue
+
+				if filename == ".DS_Store" or filename == ".gitignore":
+					messages.append("Illegal {} file detected in {}".format(filename, root))
 
 				with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
 					try:
 						file_contents = file.read()
-					except UnicodeDecodeError as e:
+					except UnicodeDecodeError:
 						# This is more to help developers find weird files that might choke 'lint', hopefully unnecessary for end users
-						print('Problem decoding file as utf-8: ', filename)
-						raise e
+						messages.append("Problem decoding file as utf-8: {}".format(filename))
+						continue
 
 					if "UTF-8" in file_contents:
 						messages.append("String \"UTF-8\" must always be lowercase. File: {}".format(filename))
