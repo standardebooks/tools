@@ -7,6 +7,7 @@ import fnmatch
 import regex
 from bs4 import BeautifulSoup
 
+
 def is_positive_integer(value):
 	int_value = int(value)
 	if int_value <= 0:
@@ -14,9 +15,13 @@ def is_positive_integer(value):
 
 	return int_value
 
+
 def main():
 	parser = argparse.ArgumentParser(description="Increment the specified endnote and all following endnotes by 1.")
-	parser.add_argument("target_endnote_number", metavar="ENDNOTE-NUMBER", type=is_positive_integer, help="the endnote number to start incrementing at")
+	group = parser.add_mutually_exclusive_group(required=True)
+	group.add_argument("--increment", "-i", action="store_true", help="increment the target endnote number and all following endnotes")
+	group.add_argument("--decrement", "-d", action="store_true", help="decrement the target endnote number and all following endnotes")
+	parser.add_argument("target_endnote_number", metavar="ENDNOTE-NUMBER", type=is_positive_integer, help="the endnote number to start reordering at")
 	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
@@ -25,7 +30,12 @@ def main():
 	endnote_count = 0
 	source_directory = os.path.join(directory, "src")
 
-	#First get the highest numbered endnote
+	if args.increment:
+		step = 1
+	else:
+		step = -1
+
+	# First get the highest numbered endnote
 	try:
 		endnotes_filename = os.path.join(source_directory, "epub", "text", "endnotes.xhtml")
 		with open(endnotes_filename, "r+", encoding="utf-8") as file:
@@ -34,10 +44,15 @@ def main():
 
 			endnote_count = len(soup.select("li[data-se-note-number]"))
 
-			for endnote_number in range(endnote_count, target_endnote_number - 1, -1):
-				xhtml = xhtml.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + 1))
-				xhtml = xhtml.replace("data-se-note-number=\"{}\"".format(endnote_number), "data-se-note-number=\"{}\"".format(endnote_number + 1))
-				xhtml = xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + 1))
+			if args.increment:
+				note_range = range(endnote_count, target_endnote_number - 1, -1)
+			else:
+				note_range = range(target_endnote_number, endnote_count, 1)
+
+			for endnote_number in note_range:
+				xhtml = xhtml.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + step))
+				xhtml = xhtml.replace("data-se-note-number=\"{}\"".format(endnote_number), "data-se-note-number=\"{}\"".format(endnote_number + step))
+				xhtml = xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + step))
 
 			file.seek(0)
 			file.write(xhtml)
@@ -49,21 +64,22 @@ def main():
 
 	for root, _, filenames in os.walk(source_directory):
 		for filename in fnmatch.filter(filenames, "*.xhtml"):
-			#Skip endnotes.xhtml since we already processed it
+			# Skip endnotes.xhtml since we already processed it
 			if filename == "endnotes.xhtml":
 				continue
 
 			with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 
-				for endnote_number in range(endnote_count, target_endnote_number - 1, -1):
-					xhtml = regex.sub(r"(<a[^>]*?>){}</a>".format(endnote_number), "\g<1>{}</a>".format(endnote_number + 1), xhtml, flags=regex.MULTILINE | regex.DOTALL)
-					xhtml = xhtml.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + 1))
-					xhtml = xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + 1))
+				for endnote_number in note_range:
+					xhtml = regex.sub(r"(<a[^>]*?>){}</a>".format(endnote_number), "\g<1>{}</a>".format(endnote_number + step), xhtml, flags=regex.MULTILINE | regex.DOTALL)
+					xhtml = xhtml.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + step))
+					xhtml = xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + step))
 
 				file.seek(0)
 				file.write(xhtml)
 				file.truncate()
+
 
 if __name__ == "__main__":
 	main()
