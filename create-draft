@@ -152,7 +152,7 @@ def main():
 			if element.parent.name == "pre":
 				pg_producers = regex.sub(r".+?Produced by (.+?)\s*$", "\\1", element, flags=regex.DOTALL)
 				pg_producers = regex.sub(r"\(.+?\)", "", pg_producers, flags=regex.DOTALL)
-				pg_producers = regex.sub(r"(at )?http://www\.pgdp\.net", "", pg_producers, flags=regex.DOTALL)
+				pg_producers = regex.sub(r"(at )?https?://www\.pgdp\.net", "", pg_producers, flags=regex.DOTALL)
 				pg_producers = regex.sub(r"[\r\n]+", " ", pg_producers, flags=regex.DOTALL)
 				pg_producers = regex.sub(r",? and ", ", and ", pg_producers)
 				pg_producers = pg_producers.replace(" and the Online", " and The Online")
@@ -233,7 +233,7 @@ def main():
 				producers_xhtml = ""
 				for i, producer  in enumerate(pg_producers):
 					if "Distributed Proofreading" in producer:
-						producers_xhtml = producers_xhtml + "<a href=\"http://www.pgdp.net\">The Online Distributed Proofreading Team</a>"
+						producers_xhtml = producers_xhtml + "<a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a>"
 					else:
 						producers_xhtml = producers_xhtml + "<span class=\"name\">{}</span>".format(producer)
 
@@ -245,7 +245,7 @@ def main():
 
 				producers_xhtml = producers_xhtml + "<br/>"
 
-			colophon_xhtml = colophon_xhtml.replace("<span class=\"name\">TRANSCRIBER1</span>, <span class=\"name\">TRANSCRIBER2</span>, and <a href=\"http://www.pgdp.net\">The Online Distributed Proofreading Team</a><br/>", producers_xhtml)
+			colophon_xhtml = colophon_xhtml.replace("<span class=\"name\">TRANSCRIBER1</span>, <span class=\"name\">TRANSCRIBER2</span>, and <a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a><br/>", producers_xhtml)
 
 		file.seek(0)
 		file.write(colophon_xhtml)
@@ -268,7 +268,7 @@ def main():
 				producers_xhtml = producers_xhtml + "\t\t<dc:contributor id=\"transcriber-{}\">{}</dc:contributor>\n".format(i, producer)
 
 				if "Distributed Proofreading" in producer:
-					producers_xhtml = producers_xhtml + "\t\t<meta property=\"file-as\" refines=\"#transcriber-{}\">Online Distributed Proofreading Team, The</meta>\n\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{}\">http://pgdp.net</meta>\n".format(i, i)
+					producers_xhtml = producers_xhtml + "\t\t<meta property=\"file-as\" refines=\"#transcriber-{}\">Online Distributed Proofreading Team, The</meta>\n\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{}\">https://pgdp.net</meta>\n".format(i, i)
 				else:
 					producers_xhtml = producers_xhtml + "\t\t<meta property=\"file-as\" refines=\"#transcriber-{}\">TRANSCRIBERSORT</meta>\n".format(i)
 
