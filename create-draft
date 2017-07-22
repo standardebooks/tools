@@ -4,9 +4,8 @@ import argparse
 import sys
 import os
 import shutil
-from urllib import parse, request
-import requests
 from subprocess import call
+import requests
 import git
 import regex
 import se
@@ -14,9 +13,14 @@ import se.formatting
 import se.epub
 from bs4 import BeautifulSoup, UnicodeDammit
 
+
 def get_wikipedia_url(string, get_nacoaf_url=False):
+	# We try to get the Wikipedia URL by the subject by taking advantage of the fact that Wikipedia's special search will redirect you immediately
+	# if there's an article match.  So if the search page tries to redirect us, we use that redirect link as the Wiki URL.  If the search page
+	# returns HTTP 200, then we didn't find a direct match and return nothing.
+
 	try:
-		response = requests.get("https://en.wikipedia.org/wiki/Special:Search?{}".format(parse.urlencode({"search": string, "go": "Go"})), allow_redirects=False)
+		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go"}, allow_redirects=False)
 	except Exception as ex:
 		se.print_error("Couldn't contact Wikipedia. Error: {}".format(ex))
 
@@ -35,7 +39,8 @@ def get_wikipedia_url(string, get_nacoaf_url=False):
 
 		return wiki_url, nacoaf_url
 
-	return None
+	return None, None
+
 
 def main():
 	parser = argparse.ArgumentParser(description="Create a skeleton of a new Standard Ebook in the current directory.")
@@ -83,9 +88,8 @@ def main():
 
 		# Get the ebook metadata
 		try:
-			response = request.urlopen(args.pg_url)
-			pg_metadata_html = response.read().decode()
-
+			response = requests.get(args.pg_url)
+			pg_metadata_html = response.text
 		except Exception as ex:
 			se.print_error("Couldn't download Project Gutenberg ebook metadata page. Error: {}".format(ex))
 			exit(1)
@@ -104,6 +108,7 @@ def main():
 		# Get the ebook LCSH categories
 		pg_subjects = []
 		for element in soup.select("td[property=\"dcterms:subject\"]"):
+			print(element)
 			if element["datatype"] == "dcterms:LCSH":
 				for subject_link in element.find("a"):
 					pg_subjects.append(subject_link.strip())
@@ -115,9 +120,8 @@ def main():
 
 		# Get the actual ebook URL
 		try:
-			response = request.urlopen(pg_ebook_url)
-			pg_ebook_html = response.read()
-
+			response = requests.get(pg_ebook_url)
+			pg_ebook_html = response.text
 		except Exception as ex:
 			se.print_error("Couldn't download Project Gutenberg ebook HTML. Error: {}".format(ex))
 			exit(1)
@@ -125,7 +129,6 @@ def main():
 		try:
 			dammit = UnicodeDammit(pg_ebook_html)
 			pg_ebook_html = se.epub.strip_bom(dammit.unicode_markup)
-
 		except Exception as ex:
 			se.print_error("Couldn't determine text encoding of Project Gutenberg HTML file. Error: {}".format(ex))
 			exit(1)
@@ -299,19 +302,21 @@ def main():
 			metadata_xhtml = regex.sub(r"<dc:contributor id=\"translator\">.+?<dc:contributor id=\"artist\">", "<dc:contributor id=\"artist\">", metadata_xhtml, flags=regex.DOTALL)
 
 		if args.pg_url:
-			subject_xhtml = ""
+			if pg_subjects:
+				subject_xhtml = ""
 
-			i = 1
-			for subject in pg_subjects:
-				subject_xhtml = subject_xhtml + "\t\t<dc:subject id=\"subject-{}\">{}</dc:subject>\n".format(i, subject)
-				i = i + 1
+				i = 1
+				for subject in pg_subjects:
+					subject_xhtml = subject_xhtml + "\t\t<dc:subject id=\"subject-{}\">{}</dc:subject>\n".format(i, subject)
+					i = i + 1
 
-			i = 1
-			for subject in pg_subjects:
-				subject_xhtml = subject_xhtml + "\t\t<meta property=\"meta-auth\" refines=\"#subject-{}\">{}</meta>\n".format(i, args.pg_url)
-				i = i + 1
+				i = 1
+				for subject in pg_subjects:
+					subject_xhtml = subject_xhtml + "\t\t<meta property=\"meta-auth\" refines=\"#subject-{}\">{}</meta>\n".format(i, args.pg_url)
+					i = i + 1
 
-			metadata_xhtml = regex.sub(r"\t\t<dc:subject id=\"subject-1\">SUBJECT1</dc:subject>\s*<dc:subject id=\"subject-2\">SUBJECT2</dc:subject>\s*<meta property=\"meta-auth\" refines=\"#subject-1\">LOCLINK1</meta>\s*<meta property=\"meta-auth\" refines=\"#subject-2\">LOCLINK2</meta>", "\t\t" + subject_xhtml.strip(), metadata_xhtml)
+				metadata_xhtml = regex.sub(r"\t\t<dc:subject id=\"subject-1\">SUBJECT1</dc:subject>\s*<dc:subject id=\"subject-2\">SUBJECT2</dc:subject>\s*<meta property=\"meta-auth\" refines=\"#subject-1\">LOCLINK1</meta>\s*<meta property=\"meta-auth\" refines=\"#subject-2\">LOCLINK2</meta>", "\t\t" + subject_xhtml.strip(), metadata_xhtml)
+
 			metadata_xhtml = metadata_xhtml.replace("<dc:language>LANG</dc:language>", "<dc:language>{}</dc:language>".format(pg_language))
 			metadata_xhtml = metadata_xhtml.replace("<dc:source>LINK</dc:source>", "<dc:source>{}</dc:source>".format(args.pg_url))
 
@@ -343,6 +348,7 @@ def main():
 		if return_code != 0:
 			print("Error: failed to create repository on Standard Ebooks server: ssh returned code {}.".format(return_code), file=sys.stderr)
 			exit(1)
+
 
 if __name__ == "__main__":
 	main()
