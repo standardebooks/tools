@@ -30,6 +30,9 @@ class SeEpub:
 		if "http://www.gutenberg.org" in xhtml:
 			messages.append("Non-https gutenberg.org URL.")
 
+		if "http://www.pgdp.net" in xhtml:
+			messages.append("Non-https pgdp.net URL.")
+
 		if "http://catalog.hathitrust.org" in xhtml:
 			messages.append("Non-https hathitrust.org URL.")
 
