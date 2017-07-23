@@ -242,7 +242,9 @@ class SeEpub:
 
 						# If the chapter has a number and subtitle, check the <title> tag
 						matches = regex.findall(r"<h([0-6]) epub:type=\"title\">\s*<span epub:type=\"z3998:roman\">([^<]+)</span>\s*<span epub:type=\"subtitle\">(.+?)</span>\s*</h\1>", file_contents, flags=regex.DOTALL)
-						if matches:
+
+						# But only make the correction if there's one <h#> tag.  If there's more than one, then the xhtml file probably requires an overarching title
+						if len(matches) == 1:
 							chapter_number = roman.fromRoman(matches[0][1].upper())
 							chapter_title = regex.sub(r"<[^<]+?>", "", matches[0][2])
 							if "<title>Chapter {}: {}".format(chapter_number, chapter_title) not in file_contents:
