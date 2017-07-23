@@ -241,10 +241,10 @@ class SeEpub:
 							messages.append("No Roman numerals allowed in <title> tag; use decimal numbers. File: {}".format(filename))
 
 						# If the chapter has a number and subtitle, check the <title> tag
-						matches = regex.findall(r"<h([0-6]) epub:type=\"title\">\s*<span epub:type=\"z3998:roman\">([^<]+)</span>\s*<span epub:type=\"subtitle\">([^<]+)</span>\s*</h\1>", file_contents, flags=regex.DOTALL)
+						matches = regex.findall(r"<h([0-6]) epub:type=\"title\">\s*<span epub:type=\"z3998:roman\">([^<]+)</span>\s*<span epub:type=\"subtitle\">(.+?)</span>\s*</h\1>", file_contents, flags=regex.DOTALL)
 						if matches:
 							chapter_number = roman.fromRoman(matches[0][1].upper())
-							chapter_title = matches[0][2]
+							chapter_title = regex.sub(r"<[^<]+?>", "", matches[0][2])
 							if "<title>Chapter {}: {}".format(chapter_number, chapter_title) not in file_contents:
 								messages.append("<title> tag doesn't match expected value; should be \"Chapter {}: {}\". (Beware hidden Unicode characters!) File: {}".format(chapter_number, chapter_title, filename))
 
