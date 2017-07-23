@@ -5,6 +5,7 @@ import filecmp
 import glob
 import regex
 import se
+import roman
 import lxml.cssselect
 import lxml.etree as etree
 
@@ -234,6 +235,18 @@ class SeEpub:
 						# Check for empty <p> tags
 						if "<p/>" in file_contents or "<p></p>" in file_contents:
 							messages.append("Empty <p/> tag in {}".format(filename))
+
+						# Check for Roman numerals in <title> tag
+						if regex.findall(r"<title>[Cc]hapter [XxIiVv]+", file_contents):
+							messages.append("No Roman numerals allowed in <title> tag; use decimal numbers. File: {}".format(filename))
+
+						# If the chapter has a number and subtitle, check the <title> tag
+						matches = regex.findall(r"<h([0-6]) epub:type=\"title\">\s*<span epub:type=\"z3998:roman\">([^<]+)</span>\s*<span epub:type=\"subtitle\">([^<]+)</span>\s*</h\1>", file_contents, flags=regex.DOTALL)
+						if matches:
+							chapter_number = roman.fromRoman(matches[0][1].upper())
+							chapter_title = matches[0][2]
+							if "<title>Chapter {}: {}".format(chapter_number, chapter_title) not in file_contents:
+								messages.append("<title> tag doesn't match expected value; should be \"Chapter {}: {}\". (Beware hidden Unicode characters!) File: {}".format(chapter_number, chapter_title, filename))
 
 						# Check for missing subtitle styling
 						if "epub:type=\"subtitle\"" in file_contents and not local_css_has_subtitle_style:
