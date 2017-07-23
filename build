@@ -15,7 +15,6 @@ import regex
 import se.formatting
 import se.easy_xml
 import se.epub
-import time
 
 
 IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
@@ -421,7 +420,6 @@ def main():
 					print("\n\t\t" + "\t\t".join(output.splitlines(True)), file=sys.stderr)
 				else:
 					print(output, file=sys.stderr)
-				time.sleep(1000)
 				exit(1)
 
 			if args.verbose:
