@@ -246,8 +246,13 @@ class SeEpub:
 						# But only make the correction if there's one <h#> tag.  If there's more than one, then the xhtml file probably requires an overarching title
 						if len(matches) == 1:
 							chapter_number = roman.fromRoman(matches[0][1].upper())
-							chapter_title = regex.sub(r"<[^<]+?>", "", matches[0][2])
-							if "<title>Chapter {}: {}".format(chapter_number, chapter_title) not in file_contents:
+
+							# First, remove endnotes in the subtitle, then remove all other tags (but not tag contents)
+							chapter_title = regex.sub(r"<a[^<]+?epub:type=\"noteref\"[^<]*?>[^<]+?</a>", "", matches[0][2]).strip()
+							chapter_title = regex.sub(r"<[^<]+?>", "", chapter_title)
+
+							regex_string = r"<title>(Chapter|Section|Part) {}: {}".format(chapter_number, regex.escape(chapter_title))
+							if not regex.findall(regex_string, file_contents):
 								messages.append("<title> tag doesn't match expected value; should be \"Chapter {}: {}\". (Beware hidden Unicode characters!) File: {}".format(chapter_number, chapter_title, filename))
 
 						# Check for missing subtitle styling
