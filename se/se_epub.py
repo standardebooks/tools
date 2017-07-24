@@ -140,6 +140,15 @@ class SeEpub:
 		if regex.search(r"<dc:subject id=\"[^\"]+?\">[^<]+?—[^<]+?</meta>", metadata_xhtml) is not None:
 			messages.append("Illegal em-dash detected in dc:subject; use --")
 
+		# Check for illegal se:subject tags
+		matches = regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", metadata_xhtml)
+		if matches:
+			for match in matches:
+				if match not in se.SE_GENRES:
+					messages.append("Illegal se:subject in content.opf: {}".format(match))
+		else:
+			messages.append("No se:subject <meta> tag found. File: content.opf")
+
 		for message in self.__get_malformed_urls(metadata_xhtml):
 			messages.append("{} File: content.opf".format(message))
 
