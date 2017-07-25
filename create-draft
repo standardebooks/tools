@@ -68,7 +68,6 @@ def main():
 	title_string = args.title + ", by " + args.author
 	sorted_title = regex.sub(r"^(A|An|The) (.+)$", "\\2, \\1", args.title)
 	pg_producers = []
-	producers_xhtml = ""
 
 	if args.translator:
 		identifier = identifier + "/" + se.formatting.make_url_safe(args.translator)
@@ -233,6 +232,7 @@ def main():
 				colophon_xhtml = colophon_xhtml.replace("YEAR", pg_publication_year)
 
 			if pg_producers:
+				producers_xhtml = ""
 				for i, producer  in enumerate(pg_producers):
 					if "Distributed Proofreading" in producer:
 						producers_xhtml = producers_xhtml + "<a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a>"
@@ -247,7 +247,7 @@ def main():
 
 				producers_xhtml = producers_xhtml + "<br/>"
 
-			colophon_xhtml = colophon_xhtml.replace("<span class=\"name\">TRANSCRIBER1</span>, <span class=\"name\">TRANSCRIBER2</span>, and <a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a><br/>", producers_xhtml)
+				colophon_xhtml = colophon_xhtml.replace("<span class=\"name\">TRANSCRIBER1</span>, <span class=\"name\">TRANSCRIBER2</span>, and <a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a><br/>", producers_xhtml)
 
 		file.seek(0)
 		file.write(colophon_xhtml)
