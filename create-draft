@@ -67,6 +67,8 @@ def main():
 	identifier = se.formatting.make_url_safe(args.author) + "/" + se.formatting.make_url_safe(args.title)
 	title_string = args.title + ", by " + args.author
 	sorted_title = regex.sub(r"^(A|An|The) (.+)$", "\\2, \\1", args.title)
+	pg_producers = []
+	producers_xhtml = ""
 
 	if args.translator:
 		identifier = identifier + "/" + se.formatting.make_url_safe(args.translator)
@@ -79,7 +81,7 @@ def main():
 	repo_name = identifier.replace("/", "_")
 
 	if os.path.isdir(repo_name):
-		print("Error: ./{}/ already exists.".format(repo_name), file=sys.stderr)
+		se.print_error("./{}/ already exists.".format(repo_name))
 		exit(1)
 
 	# Download PG HTML and do some fixups
@@ -108,7 +110,6 @@ def main():
 		# Get the ebook LCSH categories
 		pg_subjects = []
 		for element in soup.select("td[property=\"dcterms:subject\"]"):
-			print(element)
 			if element["datatype"] == "dcterms:LCSH":
 				for subject_link in element.find("a"):
 					pg_subjects.append(subject_link.strip())
@@ -150,7 +151,6 @@ def main():
 		soup = BeautifulSoup(pg_ebook_html, "lxml")
 
 		# Try to get the PG producers.  We only try this if there's a <pre> block with the header info (which is not always the case)
-		pg_producers = []
 		for element in soup(text=regex.compile(r"\*\*\*\s*Produced by.+$", flags=regex.DOTALL)):
 			if element.parent.name == "pre":
 				pg_producers = regex.sub(r".+?Produced by (.+?)\s*$", "\\1", element, flags=regex.DOTALL)
@@ -233,7 +233,6 @@ def main():
 				colophon_xhtml = colophon_xhtml.replace("YEAR", pg_publication_year)
 
 			if pg_producers:
-				producers_xhtml = ""
 				for i, producer  in enumerate(pg_producers):
 					if "Distributed Proofreading" in producer:
 						producers_xhtml = producers_xhtml + "<a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a>"
@@ -346,7 +345,7 @@ def main():
 
 		return_code = call(["ssh", "standardebooks.org", "/standardebooks.org/scripts/init-se-repo --repo-name={} --title-string=\"{}\" {}".format(repo_name, title_string, github_option)])
 		if return_code != 0:
-			print("Error: failed to create repository on Standard Ebooks server: ssh returned code {}.".format(return_code), file=sys.stderr)
+			se.print_error("Failed to create repository on Standard Ebooks server: ssh returned code {}.".format(return_code))
 			exit(1)
 
 
