@@ -40,6 +40,9 @@ class SeEpub:
 		if "http://archive.org" in xhtml:
 			messages.append("Non-https archive.org URL.")
 
+		if "http://www.archive.org" in xhtml:
+			messages.append("Non-https archive.org URL.")
+
 		# Check for malformed canonical URLs
 		if regex.search(r"books\.google\.com/books\?id=.+?[&#]", xhtml):
 			messages.append("Non-canonical Google Books URL.  Google Books URLs must look exactly like https://books.google.com/books?id=<BOOK-ID>")
