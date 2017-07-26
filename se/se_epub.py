@@ -274,6 +274,13 @@ class SeEpub:
 						if "epub:type=\"subtitle\"" in file_contents and not local_css_has_subtitle_style:
 							messages.append("Subtitles detected, but no subtitle style detected in local.css. File: {}".format(filename))
 
+						# Check for nbsp in measurements, for example: 90 mm
+						matches = regex.findall(r"[0-9]+[\- ][mck][mgl]", file_contents)
+						if matches:
+							messages.append("Measurements must be separated by a no-break space, not a dash or regular space.")
+							for match in matches:
+								messages.append(" {}".format(match))
+
 						# Did someone use colons instead of dots for SE identifiers? e.g. se:name:vessel:ship
 						matches = regex.findall(r"\bse:[a-z]+:(?:[a-z]+:?)*", file_contents)
 						if matches:
