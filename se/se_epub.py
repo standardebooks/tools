@@ -168,8 +168,11 @@ class SeEpub:
 			messages.append("id.loc.gov URL ending with .html in content.opf; remove ending .html")
 
 		# Make sure some static files are unchanged
-		if not filecmp.cmp(license_file_path, os.path.join(self.directory, "LICENSE.md")):
-			messages.append("LICENSE.md does not match {}".format(license_file_path))
+		try:
+			if not filecmp.cmp(license_file_path, os.path.join(self.directory, "LICENSE.md")):
+				messages.append("LICENSE.md does not match {}".format(license_file_path))
+		except Exception:
+			messages.append("Missing ./LICENSE.md")
 
 		if not filecmp.cmp(core_css_file_path, os.path.join(self.directory, "src", "epub", "css", "core.css")):
 			messages.append("core.css does not match {}".format(core_css_file_path))
