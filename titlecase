@@ -2,7 +2,7 @@
 
 import argparse
 import sys
-from titlecase import titlecase
+import se.formatting
 
 def main():
 	parser = argparse.ArgumentParser(description="Convert a string to titlecase.")
@@ -21,9 +21,9 @@ def main():
 
 	for line in lines:
 		if args.newline:
-			print(titlecase(line))
+			print(se.formatting.titlecase(line))
 		else:
-			print(titlecase(line), end="")
+			print(se.formatting.titlecase(line), end="")
 
 if __name__ == "__main__":
 	main()

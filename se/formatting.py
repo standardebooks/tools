@@ -2,6 +2,10 @@
 
 import unicodedata
 import regex
+from titlecase import titlecase as pip_titlecase
+
+def titlecase(text):
+	return pip_titlecase(text)
 
 def make_url_safe(text):
 	#1. Convert accented characters to unaccented characters
