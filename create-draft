@@ -65,7 +65,7 @@ def main():
 	# Put together some variables for later use
 	templates_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates")
 	identifier = se.formatting.make_url_safe(args.author) + "/" + se.formatting.make_url_safe(args.title)
-	title_string = args.title + ", by " + args.author
+	title_string = args.title.replace("'", "’") + ", by " + args.author.replace("'", "’")
 	sorted_title = regex.sub(r"^(A|An|The) (.+)$", "\\2, \\1", args.title)
 	pg_producers = []
 
