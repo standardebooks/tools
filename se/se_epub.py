@@ -135,6 +135,12 @@ class SeEpub:
 		if regex.search(r"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", metadata_xhtml.replace("\"&gt;", "").replace("=\"", "")) is not None:
 			messages.append("Non-typogrified \", ', or -- detected in metadata long description")
 
+		# Check for double spacing
+		regex_string = r"[{}{} ]{{2,}}".format(se.NO_BREAK_SPACE, se.HAIR_SPACE)
+		matches = regex.findall(regex_string, metadata_xhtml)
+		if matches:
+			messages.append("Double spacing detected in file. Sentences should be single-spaced. File: content.opf")
+
 		if regex.search(r"<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", metadata_xhtml) is not None:
 			messages.append("Non-typogrified \", ', or -- detected in metadata dc:description")
 
@@ -297,7 +303,7 @@ class SeEpub:
 								messages.append(" {}".format(match))
 
 						# Check for double spacing
-						regex_string = r"[{} ]{{2,}}".format(se.NO_BREAK_SPACE)
+						regex_string = r"[{}{} ]{{2,}}".format(se.NO_BREAK_SPACE, se.HAIR_SPACE)
 						matches = regex.findall(regex_string, file_contents)
 						if matches:
 							messages.append("Double spacing detected in file. Sentences should be single-spaced. File: {}".format(filename))
