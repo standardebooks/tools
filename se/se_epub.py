@@ -40,8 +40,8 @@ class SeEpub:
 		if "http://archive.org" in xhtml:
 			messages.append("Non-https archive.org URL.")
 
-		if "http://www.archive.org" in xhtml:
-			messages.append("Non-https archive.org URL.")
+		if "www.archive.org" in xhtml:
+			messages.append("archive.org URL should not have leading www.")
 
 		if "http://en.wikipedia.org" in xhtml:
 			messages.append("Non-https en.wikipedia.org URL.")
@@ -273,6 +273,21 @@ class SeEpub:
 						# Check for missing subtitle styling
 						if "epub:type=\"subtitle\"" in file_contents and not local_css_has_subtitle_style:
 							messages.append("Subtitles detected, but no subtitle style detected in local.css. File: {}".format(filename))
+
+						# Check for <figure> tags without id attributes
+						if "<figure>" in file_contents:
+							messages.append("<figure> tag without ID attribute; <figure> tags should have the ID attribute, not their children <img> tags. File: {}".format(filename))
+
+						# Check for non-typogrified img alt attributes
+						matches = regex.findall(r"alt=\"[^\"]*?('|--|&quot;)[^\"]*?\"", file_contents)
+						if matches:
+							messages.append("Non-typogrified ', \" (as &quot;), or -- in image alt attribute. File: {}".format(filename))
+
+						# Check alt attributes not ending in punctuation
+						if filename not in se.IGNORED_FILENAMES:
+							matches = regex.findall(r"alt=\"[^\"]*?[a-zA-Z]\"", file_contents)
+							if matches:
+								messages.append("Alt attribute doesn't appear to end with puncutation. Alt attributes must be composed of complete sentences ending in appropriate punctuation. File: {}".format(filename))
 
 						# Check for nbsp in measurements, for example: 90 mm
 						matches = regex.findall(r"[0-9]+[\- ][mck][mgl]", file_contents)
