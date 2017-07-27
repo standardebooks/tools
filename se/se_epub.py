@@ -305,6 +305,10 @@ class SeEpub:
 							for match in matches:
 								messages.append(" {}".format(match))
 
+						# Check for <pre> tags
+						if "<pre" in file_contents:
+							messages.append("Illegal <pre> tag. File: {}".format(filename))
+
 						# Check for double spacing
 						regex_string = r"[{}{} ]{{2,}}".format(se.NO_BREAK_SPACE, se.HAIR_SPACE)
 						matches = regex.findall(regex_string, file_contents)
