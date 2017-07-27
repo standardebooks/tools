@@ -296,6 +296,12 @@ class SeEpub:
 							for match in matches:
 								messages.append(" {}".format(match))
 
+						# Check for double spacing
+						regex_string = r"[{} ]{{2,}}".format(se.NO_BREAK_SPACE)
+						matches = regex.findall(regex_string, file_contents)
+						if matches:
+							messages.append("Double spacing detected in file. Sentences should be single-spaced. File: {}".format(filename))
+
 						# Did someone use colons instead of dots for SE identifiers? e.g. se:name:vessel:ship
 						matches = regex.findall(r"\bse:[a-z]+:(?:[a-z]+:?)*", file_contents)
 						if matches:
