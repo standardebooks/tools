@@ -101,7 +101,12 @@ class SeEpub:
 					with open(filename, "r") as file:
 						xhtml = file.read().replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
 
-					tree = etree.fromstring(str.encode(xhtml))
+					try:
+						tree = etree.fromstring(str.encode(xhtml))
+					except Exception:
+						se.print_error("Couldn't parse XHTML in file: {}".format(filename))
+						exit(1)
+
 					if tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
 						unused_selectors.remove(selector)
 						break
@@ -334,21 +339,22 @@ class SeEpub:
 									messages.append(" {}".format(match[1:]))
 
 						# If we're in the imprint, are the sources represented correctly?
+						# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
 						if filename == "imprint.xhtml":
-							for match in regex.finditer(r"<dc:source>([^<]+?)</dc:source>", metadata_xhtml):
-								link = match.group(1)
+							matches = regex.findall(r"<dc:source>([^<]+?)</dc:source>", metadata_xhtml)
+							if len(matches) <= 2:
+								for link in matches:
+									if "gutenberg.org" in link and "<a href=\"{}\">Project Gutenberg</a>".format(link) not in file_contents:
+										messages.append("Source not represented in imprint.xhtml. It should read: <a href=\"{}\">Project Gutenberg</a>".format(link))
 
-								if "gutenberg.org" in link and "<a href=\"{}\">Project Gutenberg</a>".format(link) not in file_contents:
-									messages.append("Source not represented in imprint.xhtml. It should read: <a href=\"{}\">Project Gutenberg</a>".format(link))
+									if "hathitrust.org" in link and "the <a href=\"{}\">Hathi Trust Digital Library</a>".format(link) not in file_contents:
+										messages.append("Source not represented in imprint.xhtml. It should read: the <a href=\"{}\">Hathi Trust Digital Library</a>".format(link))
 
-								if "hathitrust.org" in link and "the <a href=\"{}\">Hathi Trust Digital Library</a>".format(link) not in file_contents:
-									messages.append("Source not represented in imprint.xhtml. It should read: the <a href=\"{}\">Hathi Trust Digital Library</a>".format(link))
+									if "archive.org" in link and "the <a href=\"{}\">Internet Archive</a>".format(link) not in file_contents:
+										messages.append("Source not represented in imprint.xhtml. It should read: the <a href=\"{}\">Internet Archive</a>".format(link))
 
-								if "archive.org" in link and "the <a href=\"{}\">Internet Archive</a>".format(link) not in file_contents:
-									messages.append("Source not represented in imprint.xhtml. It should read: the <a href=\"{}\">Internet Archive</a>".format(link))
-
-								if "books.google.com" in link and "<a href=\"{}\">Google Books</a>".format(link) not in file_contents:
-									messages.append("Source not represented in imprint.xhtml. It should read: <a href=\"{}\">Google Books</a>".format(link))
+									if "books.google.com" in link and "<a href=\"{}\">Google Books</a>".format(link) not in file_contents:
+										messages.append("Source not represented in imprint.xhtml. It should read: <a href=\"{}\">Google Books</a>".format(link))
 
 						# Collect abbr elements for later check
 						result = regex.findall("<abbr[^<]+?>", file_contents)
