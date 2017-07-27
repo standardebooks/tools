@@ -303,7 +303,7 @@ class SeEpub:
 							messages.append("Double spacing detected in file. Sentences should be single-spaced. File: {}".format(filename))
 
 						# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
-						matches = regex.findall(r"[”][,.]", file_contents)
+						matches = regex.findall(r"[a-zA-Z][”][,.]", file_contents)
 						if matches:
 							messages.append("Comma or period outside of double quote. Generally punctuation should go within single and double quotes. (Note that double spaces might be with no-break spaces!) File: {}".format(filename))
 
