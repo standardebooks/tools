@@ -8,6 +8,6 @@ regex==2016.1.10
 requests==2.9.1
 roman==2.0.0
 smartypants==2.0.0
-titlecase==0.10.0
+titlecase==0.11.0
 termcolor==1.1.0
 terminaltables==3.1.0
