@@ -310,7 +310,7 @@ class SeEpub:
 								title = match.group(3).strip()
 
 								# Remove leading roman numerals first
-								title = regex.sub(r"^<span epub:type=\"z3998:roman\">(.*?)</span>", "", title, flags=regex.DOTALL)
+								title = regex.sub(r"^<span epub:type=\"[^\"]*?z3998:roman[^\"]*?\">(.*?)</span>", "", title, flags=regex.DOTALL)
 
 								# Remove leading leftover spacing and punctuation
 								title = regex.sub(r"^[\s\.\,\!\?\:\;]*", "", title)
