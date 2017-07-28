@@ -39,12 +39,17 @@ def main():
 		#Print the table
 		if messages:
 			for message in messages:
-				if message.startswith(" "):
-					table_data.append(["→", "\t{}".format(message.strip())])
+				if message.is_submessage:
+					table_data.append([" ", "→", "{}".format(message.text)])
 				else:
-					table_data.append([colored("Warning", "yellow"), message])
+					alert = colored("Warning", "yellow")
 
-			se.print_table(table_data, 1)
+					if message.message_type == se.MESSAGE_TYPE_ERROR:
+						alert = colored("Error", "red")
+
+					table_data.append([alert, message.filename, message.text])
+
+			se.print_table(table_data, 2)
 
 		if args.verbose and not messages:
 			table_data.append([colored("OK", "green", attrs=["reverse"])])

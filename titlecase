@@ -4,6 +4,7 @@ import argparse
 import sys
 import se.formatting
 
+
 def main():
 	parser = argparse.ArgumentParser(description="Convert a string to titlecase.")
 	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="don't end output with a newline")

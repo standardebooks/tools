@@ -5,6 +5,7 @@ import regex
 import se
 from titlecase import titlecase as pip_titlecase
 
+
 def remove_tags(text):
 	return regex.sub(r"</?([a-z]+)[^>]*?>", "", text, flags=regex.DOTALL)
 
@@ -20,7 +21,7 @@ def titlecase(text):
 	# If etc. is the last word in the title, leave it lowercased
 	text = regex.sub(r" Etc\.$", " etc.", text)
 
-	# Lowercase "de" and "von", as in "Charles de Gaulle"
+	# Lowercase "de" and "von", as in "Charles de Gaulle", "Werner von Braun"
 	text = regex.sub(r"\b(De|Von)\b", lambda result: result.group(1).lower(), text)
 
 	# Lowercase "and", even if preceded by punctuation

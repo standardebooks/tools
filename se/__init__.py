@@ -19,7 +19,8 @@ FRONTMATTER_FILENAMES = ["dedication.xhtml", "introduction.xhtml", "preface.xhtm
 BACKMATTER_FILENAMES = ["endnotes.xhtml", "loi.xhtml", "epilogue.xhtml", "afterword.xhtml", "appendix.xhtml", "colophon.xhtml", "uncopyright.xhtml"]
 BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", ".epub3"]
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Childrens", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Romance", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
-
+MESSAGE_TYPE_WARNING = 1
+MESSAGE_TYPE_ERROR = 2
 
 def replace_in_file(filename, search, replace):
 	with open(filename, "r+", encoding="utf-8") as file:
