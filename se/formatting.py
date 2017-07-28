@@ -18,12 +18,6 @@ def titlecase(text):
 	# since they're typically lowercased anyway. (Except for things like `alt`, but we won't be titlecasing images!)
 	text = regex.sub(r"<(/?)([^>]+?)>", lambda result: "<" + result.group(1) + result.group(2).lower() + ">", text)
 
-	# If etc. is the last word in the title, leave it lowercased
-	text = regex.sub(r" Etc\.$", " etc.", text)
-
-	# Lowercase "de" and "von", as in "Charles de Gaulle", "Werner von Braun"
-	text = regex.sub(r"\b(De|Von)\b", lambda result: result.group(1).lower(), text)
-
 	# Lowercase leading "d', as in "Marie d'Elle"
 	text = regex.sub(r"\bD’([A-Z]+?)", "d’\\1", text)
 
@@ -39,6 +33,15 @@ def titlecase(text):
 
 	# Lowercase "the" if preceded by "vs."
 	text = regex.sub(r"(?:vs\.) The\b", "vs. the", text)
+
+	# Lowercase "de" and "von", as in "Charles de Gaulle", "Werner von Braun"
+	text = regex.sub(r"\b(De|Von)\b", lambda result: result.group(1).lower(), text)
+
+	# Fix html entities
+	text = text.replace("&Amp;", "&amp;")
+
+	# Lowercase etc.
+	text = text.replace("Etc.", "etc.")
 
 	return text
 
