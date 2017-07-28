@@ -211,7 +211,7 @@ class SeEpub:
 
 		# Now iterate over individual files for some checks
 		for root, _, filenames in os.walk(self.directory):
-			for filename in filenames:
+			for filename in sorted(filenames, key=se.natural_sort_key):
 				if ".git/" in os.path.join(root, filename) or filename.endswith(tuple(se.BINARY_EXTENSIONS)):
 					continue
 
@@ -308,6 +308,7 @@ class SeEpub:
 						for match in matches:
 							if "z3998:roman" not in match.group(2):
 								title = match.group(3).strip()
+
 								# Remove leading roman numerals first
 								title = regex.sub(r"^<span epub:type=\"z3998:roman\">(.*?)</span>", "", title, flags=regex.DOTALL)
 
@@ -321,12 +322,12 @@ class SeEpub:
 								title = regex.sub(r"\s+", " ", title, flags=regex.DOTALL).strip()
 
 								# Do we have a subtitle? If so the first letter of that must be capitalized, so we pull that out
-								subtitle_matches = regex.finditer(r"(.*?)<span epub:type=\"subtitle\">(.*?)</span>(.*?)", title, regex.DOTALL)
+								subtitle_matches = regex.findall(r"(.*?)<span epub:type=\"subtitle\">(.*?)</span>(.*?)", title, regex.DOTALL)
 								if subtitle_matches:
-									for subtitle_match in subtitle_matches:
-										title_header = se.formatting.remove_tags(subtitle_match.group(1)).strip()
-										subtitle = se.formatting.remove_tags(subtitle_match.group(2)).strip()
-										title_footer = se.formatting.remove_tags(subtitle_match.group(3)).strip()
+									for title_header, subtitle, title_footer in subtitle_matches:
+										title_header = se.formatting.remove_tags(title_header).strip()
+										subtitle = se.formatting.remove_tags(subtitle).strip()
+										title_footer = se.formatting.remove_tags(title_footer).strip()
 
 										titlecased_title = se.formatting.titlecase(title_header) + " " + se.formatting.titlecase(subtitle) + " " + se.formatting.titlecase(title_footer)
 										titlecased_title = titlecased_title.strip()

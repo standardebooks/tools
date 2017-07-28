@@ -4,6 +4,7 @@ import sys
 from textwrap import wrap
 from termcolor import colored
 import terminaltables
+import regex
 
 
 MESSAGE_INDENT = "    "
@@ -21,6 +22,11 @@ BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", 
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Childrens", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Romance", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
 MESSAGE_TYPE_WARNING = 1
 MESSAGE_TYPE_ERROR = 2
+
+
+def natural_sort_key(text, _nsre=regex.compile('([0-9]+)')):
+	return [int(text) if text.isdigit() else text.lower()
+		for text in regex.split(_nsre, text)]
 
 def replace_in_file(filename, search, replace):
 	with open(filename, "r+", encoding="utf-8") as file:

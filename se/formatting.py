@@ -24,6 +24,9 @@ def titlecase(text):
 	# Lowercase "de" and "von", as in "Charles de Gaulle", "Werner von Braun"
 	text = regex.sub(r"\b(De|Von)\b", lambda result: result.group(1).lower(), text)
 
+	# Lowercase leading "d', as in "Marie d'Elle"
+	text = regex.sub(r"\bD’([A-Z]+?)", "d’\\1", text)
+
 	# Lowercase "and", even if preceded by punctuation
 	text = regex.sub(r"([^a-zA-Z]) (And|Or)", lambda result: result.group(1) + " " + result.group(2).lower(), text)
 
