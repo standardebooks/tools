@@ -4,6 +4,7 @@ import argparse
 import os
 import fnmatch
 import regex
+import se
 from bs4 import BeautifulSoup
 
 EXCLUDED_FILES = ["colophon.xhtml", "endnotes.xhtml", "halftitle.xhtml", "imprint.xhtml", "loi.xhtml", "titlepage.xhtml", "toc.xhtml", "uncopyright.xhtml"]
@@ -32,8 +33,12 @@ def main():
 			if args.exclude_se_files and filename.endswith(tuple(EXCLUDED_FILES)): # str.endswith() only accepts tuples, not lists
 				continue
 
-			with open(filename, "r", encoding="utf-8") as file:
-				soup = BeautifulSoup(file.read(), "lxml")
+			try:
+				with open(filename, "r", encoding="utf-8") as file:
+					soup = BeautifulSoup(file.read(), "lxml")
+			except Exception:
+				se.print_error("Couldn't open file: {}".format(filename))
+				exit(1)
 
 			#This removes HTML tags
 			text = soup.body.get_text()
