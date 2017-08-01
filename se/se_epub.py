@@ -189,18 +189,18 @@ class SeEpub:
 		# Make sure some static files are unchanged
 		try:
 			if not filecmp.cmp(license_file_path, os.path.join(self.directory, "LICENSE.md")):
-				messages.append(LintMessage("LICENSE.md does not match {}".format(license_file_path), se.MESSAGE_TYPE_ERROR))
+				messages.append(LintMessage("LICENSE.md does not match {}".format(license_file_path), se.MESSAGE_TYPE_ERROR, "LICENSE.md"))
 		except Exception:
-			messages.append(LintMessage("Missing ./LICENSE.md", se.MESSAGE_TYPE_ERROR))
+			messages.append(LintMessage("Missing ./LICENSE.md", se.MESSAGE_TYPE_ERROR, "LICENSE.md"))
 
 		if not filecmp.cmp(core_css_file_path, os.path.join(self.directory, "src", "epub", "css", "core.css")):
-			messages.append(LintMessage("core.css does not match {}".format(core_css_file_path), se.MESSAGE_TYPE_ERROR))
+			messages.append(LintMessage("core.css does not match {}".format(core_css_file_path), se.MESSAGE_TYPE_ERROR, "core.css"))
 
 		if not filecmp.cmp(logo_svg_file_path, os.path.join(self.directory, "src", "epub", "images", "logo.svg")):
-			messages.append(LintMessage("logo.svg does not match {}".format(logo_svg_file_path), se.MESSAGE_TYPE_ERROR))
+			messages.append(LintMessage("logo.svg does not match {}".format(logo_svg_file_path), se.MESSAGE_TYPE_ERROR, "logo.svg"))
 
 		if not filecmp.cmp(uncopyright_file_path, os.path.join(self.directory, "src", "epub", "text", "uncopyright.xhtml")):
-			messages.append(LintMessage("uncopyright.xhtml does not match {}".format(uncopyright_file_path), se.MESSAGE_TYPE_ERROR))
+			messages.append(LintMessage("uncopyright.xhtml does not match {}".format(uncopyright_file_path), se.MESSAGE_TYPE_ERROR, "uncopyright.xhtml"))
 
 		# Check for unused selectors
 		unused_selectors = self.__get_unused_selectors()
