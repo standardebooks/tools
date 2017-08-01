@@ -173,6 +173,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Kk])iosque", r"\1iosk", xhtml)				# kiosque -> kiosk
 	xhtml = regex.sub(r"\b([Dd])epôt", r"\1epot", xhtml)				# depôt -> depot
 	xhtml = regex.sub(r"\b([Cc])onnexion", r"\1onnection", xhtml)			# connexion -> connection
+	xhtml = regex.sub(r"\b([Dd])ulness", r"\1ullness", xhtml)			# dulness -> dullness
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
