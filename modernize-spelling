@@ -3,8 +3,8 @@
 import argparse
 import os
 import fnmatch
-import sys
 import regex
+import se
 
 
 DICTIONARY_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data", "words")
@@ -20,7 +20,7 @@ def main():
 	try:
 		dictionary = set(line.strip().lower() for line in open(DICTIONARY_FILE_PATH))
 	except Exception:
-		print("Error: Can't open words file at {}".format(DICTIONARY_FILE_PATH), file=sys.stderr)
+		se.print_error("Couldn't open words file at {}".format(DICTIONARY_FILE_PATH))
 		exit(1)
 
 	for target in args.targets:
@@ -48,7 +48,7 @@ def main():
 				if language is None or (language.group(1) != "en-US" and language.group(1) != "en-GB"):
 					if args.verbose:
 						print("\n\t", end="", flush=True)
-					print("Error: No valid xml:lang attribute in <html> root.  Only en-US and en-GB are supported. File: {}".format(filename), file=sys.stderr)
+					se.print_error("No valid xml:lang attribute in <html> root.  Only en-US and en-GB are supported. File: {}".format(filename))
 					exit(1)
 
 				new_xhtml = modernize_spelling(new_xhtml, language.group(1))

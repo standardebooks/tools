@@ -3,6 +3,7 @@
 import argparse
 import sys
 import roman
+import se
 
 def main():
 	parser = argparse.ArgumentParser(description="Convert a decimal number to a Roman numeral.")
@@ -21,7 +22,7 @@ def main():
 
 	for line in lines:
 		if not line.isdigit():
-			print("Error: Not a digit: {}".format(line), file=sys.stderr)
+			se.print_error("Not a digit: {}".format(line))
 			exit(1)
 
 		if args.newline:

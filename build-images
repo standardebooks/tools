@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import sys
 import os
 import errno
 import base64
@@ -9,6 +8,7 @@ import fnmatch
 import shutil
 import subprocess
 import regex
+import se
 
 def clean_inkscape_svg(filename, clean_path):
 	with open(filename, "r+") as file:
@@ -51,11 +51,11 @@ def main():
 	exiftool_path = shutil.which("exiftool")
 
 	if inkscape_path is None:
-		print("Error: Couldn't locate Inkscape. Is it installed?", file=sys.stderr)
+		se.print_error("Couldn't locate Inkscape. Is it installed?")
 		exit(1)
 
 	if exiftool_path is None:
-		print("Error: Couldn't locate exiftool. Is it installed?", file=sys.stderr)
+		se.print_error("Couldn't locate exiftool. Is it installed?")
 		exit(1)
 
 	for directory in args.directories:
@@ -68,7 +68,7 @@ def main():
 			if args.verbose:
 				print("\t", end="", flush=True)
 
-			print("Error: Not a directory: {}".format(directory), file=sys.stderr)
+			se.print_error("Not a directory: {}".format(directory))
 			exit(1)
 
 		source_images_directory = os.path.join(directory, "images")
@@ -86,7 +86,7 @@ def main():
 				if args.verbose:
 					print("\t", end="", flush=True)
 
-				print("Error: Couldn't create directory: {}".format(dest_images_directory), file=sys.stderr)
+				se.print_error("Couldn't create directory: {}".format(dest_images_directory))
 				exit(1)
 
 		# Remove useless metadata from jpg files

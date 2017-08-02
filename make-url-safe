@@ -2,8 +2,6 @@
 
 import argparse
 import sys
-import unicodedata
-import regex
 import se.formatting
 
 def main():

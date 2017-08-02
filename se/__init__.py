@@ -25,8 +25,7 @@ MESSAGE_TYPE_ERROR = 2
 
 
 def natural_sort_key(text, _nsre=regex.compile('([0-9]+)')):
-	return [int(text) if text.isdigit() else text.lower()
-		for text in regex.split(_nsre, text)]
+	return [int(text) if text.isdigit() else text.lower() for text in regex.split(_nsre, text)]
 
 def replace_in_file(filename, search, replace):
 	with open(filename, "r+", encoding="utf-8") as file:

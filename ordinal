@@ -3,6 +3,7 @@
 import argparse
 import math
 import sys
+import se
 
 def get_ordinal(number):
 	number = int(number)
@@ -25,7 +26,7 @@ def main():
 
 	for line in lines:
 		if not line.isdigit():
-			print("Error: Not a digit: {}".format(line), file=sys.stderr)
+			se.print_error("Not a digit: {}".format(line))
 			exit(1)
 
 		if args.newline:

@@ -6,7 +6,8 @@ import sys
 import zipfile
 from io import TextIOWrapper, BytesIO
 import magic
-from se.kindleunpack import kindleunpack #GPLv3: https://www.mobileread.com/forums/showthread.php?t=61986
+from se.kindleunpack import kindleunpack # GPLv3: https://www.mobileread.com/forums/showthread.php?t=61986
+import se
 
 def main():
 	parser = argparse.ArgumentParser(description="Extract an EPUB, MOBI, or AZW3 ebook into ./FILENAME.extracted/ or a target directory.")
@@ -27,7 +28,7 @@ def main():
 			extracted_path = args.destination
 
 		if os.path.exists(extracted_path):
-			print("Error: Directory already exists: {}".format(extracted_path), file=sys.stderr)
+			se.print_error("Directory already exists: {}".format(extracted_path))
 			exit(1)
 
 		mime_type = magic.from_file(target)
@@ -48,7 +49,7 @@ def main():
 				file.extractall(extracted_path)
 
 		else:
-			print("Error: Couldn't understand file type: {}".format(mime_type), file=sys.stderr)
+			se.print_error("Couldn't understand file type: {}".format(mime_type))
 			exit(1)
 
 		if args.verbose:

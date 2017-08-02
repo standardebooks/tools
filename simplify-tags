@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
 import argparse
-import sys
 import fnmatch
 import os
 import regex
 import lxml.cssselect
 import lxml.etree as etree
+import se
+
 
 XHTML_NAMESPACES = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "https://standardebooks.org/vocab/1.0"}
+
 
 def namespace_to_class(selector):
 	# First, remove periods from epub:type.  We can't remove periods in the entire selector because there might be class selectors involved
@@ -58,7 +60,7 @@ def main():
 		directory = os.path.abspath(directory)
 
 		if not os.path.isdir(directory):
-			print("Error: Not a directory: {}".format(directory), file=sys.stderr)
+			se.print_error("Not a directory: {}".format(directory))
 			exit(1)
 
 		if args.verbose:

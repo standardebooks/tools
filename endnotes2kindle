@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 import argparse
-import sys
 import regex
 import lxml.etree as etree
+import se
+
 
 XHTML_NAMESPACES = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "https://standardebooks.org/vocab/1.0"}
+
 
 def main():
 	parser = argparse.ArgumentParser(description="Convert epub-friendly endnotes to Kindle-friendly popup endnotes.")
@@ -32,7 +34,7 @@ def main():
 				try:
 					ref_link = etree.tostring(note.xpath("p[last()]/a[last()]")[0], encoding="unicode", pretty_print=True, with_tail=False).replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "").strip()
 				except Exception:
-					print("Error: Can't find ref link for #{}".format(note_id), file=sys.stderr)
+					se.print_error("Can't find ref link for #{}".format(note_id))
 					exit(1)
 
 				new_ref_link = regex.sub(r">.*?</a>", ">" + note_number + "</a>.", ref_link)

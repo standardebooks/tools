@@ -43,8 +43,8 @@ def main():
 
 		mismatches = {}
 
-		#Now iterate over the list and search files for unaccented versions of the words
-		if len(accented_words) > 0:
+		# Now iterate over the list and search files for unaccented versions of the words
+		if accented_words:
 			for filename in target_filenames:
 				with open(filename, "r", encoding="utf-8") as file:
 					text = file.read()
@@ -56,7 +56,7 @@ def main():
 						if pattern.search(text) != None:
 							mismatches[accented_word] = plain_word
 
-		if len(mismatches) > 0:
+		if mismatches:
 			if args.verbose:
 				print("")
 			else:

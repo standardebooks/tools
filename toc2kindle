@@ -4,6 +4,7 @@ import argparse
 import sys
 import regex
 from bs4 import BeautifulSoup
+import se
 
 def main():
 	parser = argparse.ArgumentParser(description="Flatten a Standard Ebooks table of contents file to at most two levels deep for Kindle compatibility.")
@@ -37,7 +38,7 @@ def main():
 			file.truncate()
 
 	except Exception:
-		print("Error: Couldn't read file: {}".format(args.filename), file=sys.stderr)
+		se.print_error("Couldn't read file: {}".format(args.filename))
 		exit(1)
 
 if __name__ == "__main__":

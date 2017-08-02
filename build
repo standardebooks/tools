@@ -62,19 +62,19 @@ def main():
 
 	# Check for some required tools
 	if args.check and epubcheck_path is None:
-		print("Error: Couldn't locate epubcheck. Is it installed?", file=sys.stderr)
+		se.print_error("Couldn't locate epubcheck. Is it installed?")
 		exit(1)
 
 	if rsvg_convert_path is None:
-		print("Error: Couldn't locate rsvg-convert. Is librsvg2-bin installed?", file=sys.stderr)
+		se.print_error("Couldn't locate rsvg-convert. Is librsvg2-bin installed?")
 		exit(1)
 
 	if args.build_kindle and ebook_convert_path is None:
-		print("Error: Couldn't locate ebook-convert. Is Calibre installed?", file=sys.stderr)
+		se.print_error("Couldn't locate ebook-convert. Is Calibre installed?")
 		exit(1)
 
 	if args.build_kindle and convert_path is None:
-		print("Error: Couldn't locate convert. Is Imagemagick installed?", file=sys.stderr)
+		se.print_error("Couldn't locate convert. Is Imagemagick installed?")
 		exit(1)
 
 	# Check the output directory and create it if it doesn't exist
@@ -87,7 +87,7 @@ def main():
 
 	if os.path.exists(output_directory):
 		if not os.path.isdir(output_directory):
-			print("Error: Not a directory: {}".format(output_directory), file=sys.stderr)
+			se.print_error("Not a directory: {}".format(output_directory))
 			exit(1)
 	else:
 		# Doesn't exist, try to create it
@@ -95,18 +95,18 @@ def main():
 			os.makedirs(output_directory)
 		except OSError as exception:
 			if exception.errno != errno.EEXIST:
-				print("Error: Couldn't create output directory", file=sys.stderr)
+				se.print_error("Couldn't create output directory")
 				exit(1)
 
 	# Confirm source directory exists and is an SE source directory
 	if not os.path.exists(args.source_directory) or not os.path.isdir(args.source_directory):
-		print("Error: Not a directory: {}".format(args.source_directory), file=sys.stderr)
+		se.print_error("Not a directory: {}".format(args.source_directory))
 		exit(1)
 
 	source_directory = os.path.abspath(args.source_directory)
 
 	if not os.path.isdir(os.path.join(source_directory, "src")):
-		print("Error: Doesn't look like a Standard Ebooks source directory: {}".format(source_directory), file=sys.stderr)
+		se.print_error("Doesn't look like a Standard Ebooks source directory: {}".format(source_directory))
 		exit(1)
 
 	# All clear to start building!

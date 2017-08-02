@@ -3,6 +3,8 @@
 import argparse
 import sys
 import roman
+import se
+
 
 def main():
 	parser = argparse.ArgumentParser(description="Convert a Roman numeral to a decimal number.")
@@ -27,7 +29,7 @@ def main():
 				print(roman.fromRoman(line.upper()), end="")
 
 		except roman.InvalidRomanNumeralError:
-			print("Error: Not a Roman numeral: {}".format(line), file=sys.stderr)
+			se.print_error("Not a Roman numeral: {}".format(line))
 			exit(1)
 
 if __name__ == "__main__":

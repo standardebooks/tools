@@ -2,15 +2,17 @@
 
 import argparse
 import string
-import sys
 import os
 import fnmatch
 import unicodedata
 import regex
 from bs4 import BeautifulSoup
+import se
+
 
 IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
 INCLUDED_CHARACTERS = list(string.whitespace) + list(string.digits) + [":", ";", ".", "?", "!"]
+
 
 def get_word_count(text):
 	return len(text.split())
@@ -137,7 +139,7 @@ def main():
 		directory = os.path.abspath(directory)
 
 		if not os.path.isdir(directory):
-			print("Error: Not a directory: {}".format(directory), file=sys.stderr)
+			se.print_error("Not a directory: {}".format(directory))
 			exit(1)
 
 		if args.verbose:
@@ -151,19 +153,19 @@ def main():
 					with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
 						text += BeautifulSoup(file.read(), "lxml").body.get_text() + " "
 
-		#Remove non-sentence-ending punctuation from source text
+		# Remove non-sentence-ending punctuation from source text
 		processed_text = regex.sub(r"[—–\n]", " ", text.lower())
 		processed_text = "".join(c for c in processed_text if c.isalpha() or c in INCLUDED_CHARACTERS).strip()
 
-		#Remove accents
+		# Remove accents
 		processed_text = "".join(c for c in unicodedata.normalize("NFD", processed_text) if unicodedata.category(c) != "Mn")
 
-		#Get word count
+		# Get word count
 		word_count = get_word_count(processed_text)
 		if word_count <= 0:
 			word_count = 1
 
-		#Get average sentence length
+		# Get average sentence length
 		ignore_count = 0
 		sentences = regex.split(r" *[\.\?!]['\"\)\]]* *", processed_text)
 		for sentence in sentences:
@@ -176,7 +178,7 @@ def main():
 
 		average_sentence_length = round(float(word_count) / float(sentence_count), 1)
 
-		#Get average syllables per word
+		# Get average syllables per word
 		syllable_count = 0
 		for word in processed_text.split():
 			syllable_count += get_syllable_count(word)

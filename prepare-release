@@ -6,6 +6,7 @@ import sys
 import subprocess
 import datetime
 import regex
+import se
 
 
 def main():
@@ -32,7 +33,7 @@ def main():
 		directory = os.path.abspath(directory)
 
 		if not os.path.isdir(directory):
-			print("Error: Not a directory: {}".format(directory), file=sys.stderr)
+			se.print_error("Not a directory: {}".format(directory))
 			exit(1)
 
 		if args.verbose:

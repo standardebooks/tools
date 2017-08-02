@@ -2,8 +2,9 @@
 
 import argparse
 import os
-import sys
 import regex
+import se
+
 
 def natural_sort(list_to_sort):
 	convert = lambda text: int(text) if text.isdigit() else text.lower()
@@ -18,7 +19,7 @@ def main():
 	directory = os.path.abspath(args.directory)
 
 	if not os.path.isdir(directory):
-		print("Error: Not a directory: {}".format(directory), file=sys.stderr)
+		se.print_error("Not a directory: {}".format(directory))
 		exit(1)
 
 	#Build the manifest
