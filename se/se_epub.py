@@ -450,7 +450,7 @@ class SeEpub:
 				css_class = regex.search(r"class=\"([^\"]+?)\"", element).group(1)
 			except Exception:
 				continue
-			if css_class and (css_class == "name" or css_class == "temperature" or css_class == "era") and "abbr." + css_class not in abbr_styles:
+			if css_class and (css_class == "name" or css_class == "temperature" or css_class == "era" or css_class == "compass" or css_class == "acronym") and "abbr." + css_class not in abbr_styles:
 				messages.append(LintMessage("abbr.{} element found, but no style in local.css".format(css_class), se.MESSAGE_TYPE_ERROR, "local.css"))
 
 		return messages
