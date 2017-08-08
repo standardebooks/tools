@@ -373,12 +373,12 @@ class SeEpub:
 						regex_string = r"[{}{} ]{{2,}}".format(se.NO_BREAK_SPACE, se.HAIR_SPACE)
 						matches = regex.findall(regex_string, file_contents)
 						if matches:
-							messages.append(LintMessage("Double spacing detected in file. Sentences should be single-spaced.", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage("Double spacing detected in file. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)", se.MESSAGE_TYPE_ERROR, filename))
 
 						# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 						matches = regex.findall(r"[a-zA-Z][”][,.]", file_contents)
 						if matches:
-							messages.append(LintMessage("Comma or period outside of double quote. Generally punctuation should go within single and double quotes. (Note that double spaces might be with no-break spaces!)", se.MESSAGE_TYPE_WARNING, filename))
+							messages.append(LintMessage("Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename))
 
 						# Did someone use colons instead of dots for SE identifiers? e.g. se:name:vessel:ship
 						matches = regex.findall(r"\bse:[a-z]+:(?:[a-z]+:?)*", file_contents)
