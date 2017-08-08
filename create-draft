@@ -229,7 +229,7 @@ def main():
 			colophon_xhtml = colophon_xhtml.replace("PGLINK", args.pg_url)
 
 			if pg_publication_year:
-				colophon_xhtml = colophon_xhtml.replace("YEAR", pg_publication_year)
+				colophon_xhtml = colophon_xhtml.replace("PG_YEAR", pg_publication_year)
 
 			if pg_producers:
 				producers_xhtml = ""
