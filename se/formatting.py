@@ -24,6 +24,11 @@ def titlecase(text):
 	# Lowercase "and", even if preceded by punctuation
 	text = regex.sub(r"([^a-zA-Z]) (And|Or)", lambda result: result.group(1) + " " + result.group(2).lower(), text)
 
+	# pip_titlecase capitalizes *all* prepositions preceded by parenthesis; we only want to capitalize ones that *aren't the first word of a subtitle*
+	# OK: From Sergeant Bulmer (of the Detective Police) to Mr. Pendril
+	# OK: Three Men in a Boat (To Say Nothing of the Dog)
+	text = regex.sub(r"\((For|Of|To)(.*?)\)(.+?)", lambda result: "(" + result.group(1).lower() + result.group(2) + ")" + result.group(3), text)
+
 	# Lowercase "and", if followed by a word-joiner
 	regex_string = r"\bAnd{}".format(se.WORD_JOINER)
 	text = regex.sub(regex_string, "and{}".format(se.WORD_JOINER), text)

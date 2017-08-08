@@ -334,14 +334,14 @@ class SeEpub:
 
 										title = se.formatting.remove_tags(title).strip()
 										if title != titlecased_title:
-											messages.append(LintMessage("Title \"{}\" not correctly titlecased. Expected: {}".format(title, titlecased_title), se.MESSAGE_TYPE_ERROR, filename))
+											messages.append(LintMessage("Title \"{}\" not correctly titlecased. Expected: {}".format(title, titlecased_title), se.MESSAGE_TYPE_WARNING, filename))
 
 								# No subtitle? Much more straightforward
 								else:
 									title = se.formatting.remove_tags(title)
 									titlecased_title = se.formatting.titlecase(title)
 									if title != titlecased_title:
-										messages.append(LintMessage("Title \"{}\" not correctly titlecased. Expected: {}".format(title, titlecased_title), se.MESSAGE_TYPE_ERROR, filename))
+										messages.append(LintMessage("Title \"{}\" not correctly titlecased. Expected: {}".format(title, titlecased_title), se.MESSAGE_TYPE_WARNING, filename))
 
 						# Check for <figure> tags without id attributes
 						if "<figure>" in file_contents:
