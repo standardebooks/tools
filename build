@@ -129,8 +129,11 @@ def main():
 		title = metadata_tree.xpath("//dc:title")[0].inner_html()
 		url_title = se.formatting.make_url_safe(title)
 
-		author = metadata_tree.xpath("//dc:creator")[0].inner_html()
-		url_author = se.formatting.make_url_safe(author)
+		url_author = ""
+		for author in metadata_tree.xpath("//dc:creator"):
+			url_author = url_author + se.formatting.make_url_safe(author.inner_html()) + "_"
+
+		url_author = url_author.rstrip("_")
 
 		epub_output_filename = "{}_{}{}.epub".format(url_author, url_title, ".proof" if args.proof else "")
 		epub3_output_filename = "{}_{}{}.epub3".format(url_author, url_title, ".proof" if args.proof else "")
