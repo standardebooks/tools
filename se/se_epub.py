@@ -179,6 +179,11 @@ class SeEpub:
 		else:
 			messages.append(LintMessage("No se:subject <meta> tag found.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
+		# Check for CDATA tags
+		if "<![CDATA[" in metadata_xhtml:
+			messages.append(LintMessage("<![CDATA[ detected. Run `clean` to canonicalize <![CDATA[ sections.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+
+		# Check for malformed URLs
 		for message in self.__get_malformed_urls(metadata_xhtml):
 			message.filename = "content.opf"
 			messages.append(message)
