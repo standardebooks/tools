@@ -363,6 +363,14 @@ class SeEpub:
 							if matches:
 								messages.append(LintMessage("Alt attribute doesn't appear to end with puncutation. Alt attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename))
 
+						# Check for punctuation after endnotes
+						regex_string = r"<a[^>]*?epub:type=\"noteref\"[^>]*?>[0-9]+</a>[^\s<–\]\)—{}]".format(se.WORD_JOINER)
+						matches = regex.findall(regex_string, file_contents)
+						if matches:
+							messages.append(LintMessage("Endnote links must be outside of punctuation, including quotation marks.", se.MESSAGE_TYPE_WARNING, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
 						# Check for nbsp in measurements, for example: 90 mm
 						matches = regex.findall(r"[0-9]+[\- ][mck][mgl]", file_contents)
 						if matches:
