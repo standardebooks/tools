@@ -8,7 +8,7 @@ A collection of tools Standard Ebooks uses to produce its ebooks, including basi
 
 ```shell
 # Install some pre-flight dependencies
-# python3-dev libxml2-dev libxslt1-dev zlib1g-dev are required for building lxml via pip curl git
+# python3-dev libxml2-dev libxslt1-dev zlib1g-dev are required for building lxml via pip
 sudo apt install -y python3-pip python3-dev libxml2-dev libxslt1-dev zlib1g-dev libxml2-utils librsvg2-bin libimage-exiftool-perl imagemagick epubcheck default-jre inkscape calibre curl git
 
 # Install required fonts
