@@ -277,6 +277,11 @@ class SeEpub:
 							message.filename = filename
 							messages.append(message)
 
+						# Check for two em dashes in a row
+						matches = regex.findall(r"—{}*—+".format(se.WORD_JOINER), file_contents)
+						if matches:
+							messages.append(LintMessage("Two or more em-dashes in a row detected. Elided words should use the two- or three-em-dash Unicode character, and dialog ending in em-dashes should only end in a single em-dash.", se.MESSAGE_TYPE_ERROR, filename))
+
 						# Check for <abbr class="name"> that does not contain spaces
 						matches = regex.findall(r"<abbr class=\"name\">[^<]*?[A-Z]\.[A-Z]\.[^<]*?</abbr>", file_contents)
 						if matches:
