@@ -277,6 +277,13 @@ class SeEpub:
 							message.filename = filename
 							messages.append(message)
 
+						# Check for money not separated by commas
+						matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
+						if matches:
+							messages.append(LintMessage("Numbers not grouped by commas. Separate numbers greater than 1,000 with commas at every three numerals.", se.MESSAGE_TYPE_WARNING, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+
 						# Check for two em dashes in a row
 						matches = regex.findall(r"—{}*—+".format(se.WORD_JOINER), file_contents)
 						if matches:
