@@ -277,6 +277,13 @@ class SeEpub:
 							message.filename = filename
 							messages.append(message)
 
+						# Check for <abbr class="name"> that does not contain spaces
+						matches = regex.findall(r"<abbr class=\"name\">[^<]*?[A-Z]\.[A-Z]\.[^<]*?</abbr>", file_contents)
+						if matches:
+							messages.append(LintMessage("Initials in <abbr class=\"name\"> not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
 						# Check for empty <h2> missing epub:type="title" attribute
 						if "<h2>" in file_contents:
 							messages.append(LintMessage("<h2> tag without epub:type=\"title\" attribute.", se.MESSAGE_TYPE_WARNING, filename))
