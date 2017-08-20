@@ -39,8 +39,8 @@ def titlecase(text):
 	# Lowercase "the" if preceded by "vs."
 	text = regex.sub(r"(?:vs\.) The\b", "vs. the", text)
 
-	# Lowercase "de" and "von", as in "Charles de Gaulle", "Werner von Braun"
-	text = regex.sub(r"\b(De|Von)\b", lambda result: result.group(1).lower(), text)
+	# Lowercase "de", "von", "le", as in "Charles de Gaulle", "Werner von Braun", and if not the first word
+	text = regex.sub(r"(?<!^)\b(De|Von|Le)\b", lambda result: result.group(1).lower(), text)
 
 	# Fix html entities
 	text = text.replace("&Amp;", "&amp;")
