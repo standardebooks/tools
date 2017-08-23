@@ -282,6 +282,14 @@ class SeEpub:
 		if regex.search(r"id\.loc\.gov/authorities/names/[^\.]+\.html", metadata_xhtml):
 			messages.append(LintMessage("id.loc.gov URL ending with illegal .html", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
+		# Does the manifest match the generated manifest?
+		for manifest in regex.findall(r"<manifest>.*?</manifest>", metadata_xhtml, regex.DOTALL):
+			manifest = regex.sub(r"[\n\t]", "", manifest)
+			expected_manifest = regex.sub(r"[\n\t]", "", self.generate_manifest())
+
+			if manifest != expected_manifest:
+				messages.append(LintMessage("<manifest> does not match expected structure.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+
 		# Make sure some static files are unchanged
 		try:
 			if not filecmp.cmp(license_file_path, os.path.join(self.directory, "LICENSE.md")):
