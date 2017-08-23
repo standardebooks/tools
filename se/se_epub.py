@@ -126,6 +126,97 @@ class SeEpub:
 
 		return unused_selectors
 
+	def generate_manifest(self):
+		manifest = []
+
+		# Add CSS
+		for _, _, filenames in os.walk(os.path.join(self.directory, "src", "epub", "css")):
+			for filename in filenames:
+				manifest.append("<item href=\"css/{}\" id=\"{}\" media-type=\"text/css\"/>".format(filename, filename))
+
+		# Add images
+		for _, _, filenames in os.walk(os.path.join(self.directory, "src", "epub", "images")):
+			for filename in filenames:
+				media_type = "image/jpeg"
+				properties = ""
+
+				if filename.endswith(".svg"):
+					media_type = "image/svg+xml"
+
+				if filename.endswith(".png"):
+					media_type = "image/png"
+
+				if filename == "cover.svg":
+					properties = " properties=\"cover-image\""
+
+				manifest.append("<item href=\"images/{}\" id=\"{}\" media-type=\"{}\"{}/>".format(filename, filename, media_type, properties))
+
+		# Add XHTML files
+		for _, _, filenames in os.walk(os.path.join(self.directory, "src", "epub", "text")):
+			for filename in filenames:
+				properties = ""
+
+				if filename == "titlepage.xhtml" or filename == "colophon.xhtml":
+					properties = " properties=\"svg\""
+
+				manifest.append("<item href=\"text/{}\" id=\"{}\" media-type=\"application/xhtml+xml\"{}/>".format(filename, filename, properties))
+
+		manifest = se.natural_sort(manifest)
+
+		manifest_xhtml = "<manifest>\n\t<item href=\"toc.xhtml\" id=\"toc.xhtml\" media-type=\"application/xhtml+xml\" properties=\"nav\"/>\n"
+
+		for line in manifest:
+			manifest_xhtml = manifest_xhtml + "\t" + line + "\n"
+
+		manifest_xhtml = manifest_xhtml + "</manifest>"
+
+		return manifest_xhtml
+
+	def generate_spine(self):
+		excluded_files = se.IGNORED_FILENAMES + ["dedication.xhtml", "introduction.xhtml", "foreword.xhtml", "preface.xhtml", "epigraph.xhtml", "endnotes.xhtml"]
+		spine = ["<itemref idref=\"titlepage.xhtml\"/>", "<itemref idref=\"imprint.xhtml\"/>"]
+
+		filenames = se.natural_sort(os.listdir(os.path.join(self.directory, "src", "epub", "text")))
+
+		if "dedication.xhtml" in filenames:
+			spine.append("<itemref idref=\"dedication.xhtml\"/>")
+
+		if "introduction.xhtml" in filenames:
+			spine.append("<itemref idref=\"introduction.xhtml\"/>")
+
+		if "foreword.xhtml" in filenames:
+			spine.append("<itemref idref=\"foreword.xhtml\"/>")
+
+		if "preface.xhtml" in filenames:
+			spine.append("<itemref idref=\"preface.xhtml\"/>")
+
+		if "epigraph.xhtml" in filenames:
+			spine.append("<itemref idref=\"epigraph.xhtml\"/>")
+
+		if "halftitle.xhtml" in filenames:
+			spine.append("<itemref idref=\"halftitle.xhtml\"/>")
+
+		for filename in filenames:
+			if filename not in excluded_files:
+				spine.append("<itemref idref=\"{}\"/>".format(filename))
+
+		if "endnotes.xhtml" in filenames:
+			spine.append("<itemref idref=\"endnotes.xhtml\"/>")
+
+		if "loi.xhtml" in filenames:
+			spine.append("<itemref idref=\"loi.xhtml\"/>")
+
+		spine.append("<itemref idref=\"colophon.xhtml\"/>")
+		spine.append("<itemref idref=\"uncopyright.xhtml\"/>")
+
+		spine_xhtml = "<spine>\n"
+		for line in spine:
+			spine_xhtml = spine_xhtml + "\t" + line + "\n"
+
+		spine_xhtml = spine_xhtml + "</spine>"
+
+		return spine_xhtml
+
 	def lint(self):
 		messages = []
 
