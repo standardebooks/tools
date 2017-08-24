@@ -75,7 +75,6 @@ class SeEpub:
 		try:
 			with open(os.path.join(self.directory, "src", "epub", "css", "local.css"), encoding="utf-8") as file:
 				css = file.read()
-
 		except Exception:
 			raise FileNotFoundError("Couldn't open {}".format(os.path.join(self.directory, "src", "epub", "css", "local.css")))
 
