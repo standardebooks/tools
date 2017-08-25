@@ -116,7 +116,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"([Nn])aïve", r"\1aive", xhtml)				# naïve -> naive
 	xhtml = regex.sub(r"([Nn])a[ïi]vet[ée]", r"\1aivete", xhtml)			# naïveté -> naivete
 	xhtml = regex.sub(r"&amp;c\.", r"etc.", xhtml)					# &c. -> etc.
-	xhtml = regex.sub(r"([Pp])rotege", r"\1rotégé", xhtml)				# protege -> protégé
+	xhtml = regex.sub(r"([Pp])rot[ée]g[ée]", r"\1rotégé", xhtml)				# protege -> protégé
 	xhtml = regex.sub(r"([Tt])ete-a-tete", r"\1ête-à-tête", xhtml)			# tete-a-tete -> tête-à-tête
 	xhtml = regex.sub(r"([Vv])is-a-vis", r"\1is-à-vis", xhtml)			# vis-a-vis _> vis-à-vis
 	xhtml = regex.sub(r"([Ff])acade", r"\1açade", xhtml)				# facade -> façade
