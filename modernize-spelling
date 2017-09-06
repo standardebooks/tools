@@ -176,6 +176,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Cc])onnexion", r"\1onnection", xhtml)			# connexion -> connection
 	xhtml = regex.sub(r"\b([Rr])eflexion", r"\1eflection", xhtml)			# reflexion -> reflection
 	xhtml = regex.sub(r"\b([Dd])ulness", r"\1ullness", xhtml)			# dulness -> dullness
+	xhtml = regex.sub(r"\b([Ff])iord", r"\1jord", xhtml)				# fiord -> fjord
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
