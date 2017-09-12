@@ -402,6 +402,10 @@ class SeEpub:
 						if "<p/>" in file_contents or "<p></p>" in file_contents:
 							messages.append(LintMessage("Empty <p/> tag.", se.MESSAGE_TYPE_ERROR, filename))
 
+						# Check for uppercase HTML tags
+						if regex.findall(r"<[A-Z]+", file_contents):
+							messages.append(LintMessage("One or more uppercase HTML tags.", se.MESSAGE_TYPE_ERROR, filename))
+
 						# Check for Roman numerals in <title> tag
 						if regex.findall(r"<title>[Cc]hapter [XxIiVv]+", file_contents):
 							messages.append(LintMessage("No Roman numerals allowed in <title> tag; use decimal numbers.", se.MESSAGE_TYPE_ERROR, filename))
