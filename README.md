@@ -59,6 +59,15 @@ pip3 install -r ./tools/requirements.txt
 python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
 ```
 
+# TODO
+
+Help and pull requests are welcomed!
+
+- Move some legacy scripts like `build-kobo` and `endnotes2kindle` into appropriate libraries/scripts.
+
+- Update scripts to use new library global variables like `XHTML_NAMESPACES`, instead of redefining them in each script.
+
+
 # Tool descriptions
 
 -	### `british2american`
