@@ -282,7 +282,7 @@ class SeEpub:
 			messages.append(LintMessage("id.loc.gov URL ending with illegal .html", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Does the manifest match the generated manifest?
-		for manifest in regex.findall(r"<manifest>.*?</manifest>", metadata_xhtml, regex.DOTALL):
+		for manifest in regex.findall(r"<manifest>.*?</manifest>", metadata_xhtml, flags=regex.DOTALL):
 			manifest = regex.sub(r"[\n\t]", "", manifest)
 			expected_manifest = regex.sub(r"[\n\t]", "", self.generate_manifest())
 
@@ -448,7 +448,7 @@ class SeEpub:
 								title = regex.sub(r"\s+", " ", title, flags=regex.DOTALL).strip()
 
 								# Do we have a subtitle? If so the first letter of that must be capitalized, so we pull that out
-								subtitle_matches = regex.findall(r"(.*?)<span epub:type=\"subtitle\">(.*?)</span>(.*?)", title, regex.DOTALL)
+								subtitle_matches = regex.findall(r"(.*?)<span epub:type=\"subtitle\">(.*?)</span>(.*?)", title, flags=regex.DOTALL)
 								if subtitle_matches:
 									for title_header, subtitle, title_footer in subtitle_matches:
 										title_header = se.formatting.remove_tags(title_header).strip()
@@ -496,6 +496,13 @@ class SeEpub:
 						matches = regex.findall(r"[0-9]+[\- ][mck][mgl]", file_contents)
 						if matches:
 							messages.append(LintMessage("Measurements must be separated by a no-break space, not a dash or regular space.", se.MESSAGE_TYPE_ERROR, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
+						# Check for line breaks after <br/> tags
+						matches = regex.findall(r"<br\s*?/>[^\n]", file_contents, flags=regex.DOTALL | regex.MULTILINE)
+						if matches:
+							messages.append(LintMessage("<br/> tags must be followed by a newline, and subsequent content must be indented to the same level.", se.MESSAGE_TYPE_ERROR, filename))
 							for match in matches:
 								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
