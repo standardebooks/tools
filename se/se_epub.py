@@ -252,6 +252,11 @@ class SeEpub:
 		if regex.search(r"<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", metadata_xhtml) is not None:
 			messages.append(LintMessage("Non-typogrified \", ', or -- detected in metadata dc:description.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
+		# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
+		matches = regex.findall(r"[a-zA-Z][”][,.]", metadata_xhtml)
+		if matches:
+			messages.append(LintMessage("Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, "content.opf"))
+
 		#Check for HTML entities in long-description
 		if regex.search(r"&amp;[a-z]+?;", metadata_xhtml):
 			messages.append(LintMessage("HTML entites detected in metadata. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, "content.opf"))
