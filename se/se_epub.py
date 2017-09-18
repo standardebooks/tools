@@ -478,6 +478,13 @@ class SeEpub:
 						if "<figure>" in file_contents:
 							messages.append(LintMessage("<figure> tag without ID attribute; <figure> tags should have the ID attribute, not their children <img> tags.", se.MESSAGE_TYPE_WARNING, filename))
 
+						# Check for closing dialog without comma
+						matches = regex.findall(r"[a-z]+?” [a-zA-Z]+? said", file_contents)
+						if matches:
+							messages.append(LintMessage("Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
 						# Check for non-typogrified img alt attributes
 						matches = regex.findall(r"alt=\"[^\"]*?('|--|&quot;)[^\"]*?\"", file_contents)
 						if matches:
