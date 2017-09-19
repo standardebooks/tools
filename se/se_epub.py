@@ -155,7 +155,7 @@ class SeEpub:
 			for filename in filenames:
 				properties = ""
 
-				if filename == "titlepage.xhtml" or filename == "colophon.xhtml":
+				if filename == "titlepage.xhtml" or filename == "colophon.xhtml" or filename == "imprint.xhtml":
 					properties = " properties=\"svg\""
 
 				manifest.append("<item href=\"text/{}\" id=\"{}\" media-type=\"application/xhtml+xml\"{}/>".format(filename, filename, properties))
