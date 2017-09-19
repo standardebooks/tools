@@ -155,6 +155,7 @@ def main():
 				processed_xhtml = regex.sub(r"\s*\.\s*\.\s*\.\s*", r"…", processed_xhtml, flags=regex.IGNORECASE)
 				processed_xhtml = regex.sub(r"[\s{}]?…[\s{}]?\.".format(NBSP, NBSP), r".{}…".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
 				processed_xhtml = regex.sub(r"[\s{}]?…[\s{}]?".format(NBSP, NBSP), r"{}… ".format(HAIR_SPACE), processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"<p([^>]*?)>{}…".format(HAIR_SPACE), r"<p\1>…", processed_xhtml, flags=regex.IGNORECASE)
 
 				#Remove spaces between opening tags and ellipses
 				processed_xhtml = regex.sub(r"(<[a-z0-9]+[^<]+?>)[\s{}]?…".format(NBSP), r"\1…", processed_xhtml, flags=regex.IGNORECASE)
