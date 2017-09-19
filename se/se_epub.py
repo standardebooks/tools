@@ -9,6 +9,7 @@ import se.formatting
 import roman
 import lxml.cssselect
 import lxml.etree as etree
+from bs4 import BeautifulSoup, NavigableString
 
 
 class LintMessage:
@@ -540,11 +541,36 @@ class SeEpub:
 
 						# Check for space before endnote backlinks
 						if filename == "endnotes.xhtml":
-							matches = regex.findall(r"(?<!</blockquote>\s*<p>\s*)(?:[^\s]|\s{2,})<a href=\"[^[\"]+?\" epub:type=\"se:referrer\">↩</a>", file_contents)
-							if matches:
-								messages.append(LintMessage("Endnote referrer link not preceded by exactly one space, or a <p> tag if preceded by a <blockquote> tag.", se.MESSAGE_TYPE_WARNING, filename))
-								for match in matches:
-									messages.append(LintMessage(match[1:], se.MESSAGE_TYPE_WARNING, filename, True))
+							endnotes_soup = BeautifulSoup(file_contents, "lxml")
+							endnote_referrers = endnotes_soup.select("li[data-se-note-number] a")
+
+							bad_referrers = []
+
+							for referrer in endnote_referrers:
+								if "epub:type" in referrer.attrs:
+									is_first_sib = True
+									for sib in referrer.previous_siblings:
+										if is_first_sib:
+											is_first_sib = False
+											if isinstance(sib, NavigableString):
+												if sib == "\n": # Referrer preceded by newline. Check if all previous sibs are tags.
+													continue
+												elif sib == " " or str(sib) == se.NO_BREAK_SPACE or regex.search(r"[^\s] $", str(sib)): # Referrer preceded by a single space; we're OK
+													break
+												else: # Referrer preceded by a string that is not a newline and does not end with a single space
+													bad_referrers.append(referrer)
+													break
+
+										else:
+											# We got here because the first sib was a newline, or not a string. So, check all previous sibs.
+											if isinstance(sib, NavigableString) and sib != "\n":
+												bad_referrers.append(referrer)
+												break
+
+							if bad_referrers:
+								messages.append(LintMessage("Endnote referrer link not preceded by exactly one space, or a newline if all previous siblings are elements.", se.MESSAGE_TYPE_WARNING, filename))
+								for referrer in bad_referrers:
+									messages.append(LintMessage(str(referrer), se.MESSAGE_TYPE_WARNING, filename, True))
 
 						# If we're in the imprint, are the sources represented correctly?
 						# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
