@@ -9,6 +9,8 @@ from se.se_epub import SeEpub
 
 def main():
 	parser = argparse.ArgumentParser(description="Print <manifest> and <spine> tags to standard output for the given Standard Ebooks source directory, for use in that directory's content.opf.")
+	parser.add_argument("-m", "--manifest", action="store_false", help="only print the manifest")
+	parser.add_argument("-s", "--spine", action="store_false", help="only print the spine")
 	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
@@ -18,8 +20,10 @@ def main():
 		se.print_error(ex)
 		exit(1)
 
-	print(se_epub.generate_manifest())
-	print(se_epub.generate_spine())
+	if args.spine:
+		print(se_epub.generate_manifest())
+	if args.manifest:
+		print(se_epub.generate_spine())
 
 if __name__ == "__main__":
 	main()
