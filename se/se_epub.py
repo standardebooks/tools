@@ -250,7 +250,7 @@ class SeEpub:
 		if matches:
 			messages.append(LintMessage("Double spacing detected in file. Sentences should be single-spaced.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
-		if regex.search(r"<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", metadata_xhtml) is not None:
+		if regex.search(r"<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</dc:description>", metadata_xhtml) is not None:
 			messages.append(LintMessage("Non-typogrified \", ', or -- detected in metadata dc:description.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
@@ -263,7 +263,7 @@ class SeEpub:
 			messages.append(LintMessage("HTML entites detected in metadata. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for illegal em-dashes in <dc:subject>
-		if regex.search(r"<dc:subject id=\"[^\"]+?\">[^<]+?—[^<]+?</meta>", metadata_xhtml) is not None:
+		if regex.search(r"<dc:subject id=\"[^\"]+?\">[^<]+?—[^<]+?</dc:subject>", metadata_xhtml) is not None:
 			messages.append(LintMessage("Illegal em-dash detected in dc:subject; use --", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for illegal se:subject tags
@@ -278,6 +278,20 @@ class SeEpub:
 		# Check for CDATA tags
 		if "<![CDATA[" in metadata_xhtml:
 			messages.append(LintMessage("<![CDATA[ detected. Run `clean` to canonicalize <![CDATA[ sections.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+
+		# Check if se:name.person.full-name matches their titlepage name
+		matches = regex.findall(r"<meta property=\"se:name\.person\.full-name\" refines=\"#([^\"]+?)\">([^<]*?)</meta>", metadata_xhtml)
+		duplicate_names = []
+		for match in matches:
+			name_matches = regex.findall(r"<([a-z:]+)[^<]+?id=\"{}\"[^<]*?>([^<]*?)</\1>".format(match[0]), metadata_xhtml)
+			for name_match in name_matches:
+				if name_match[1] == match[1]:
+					duplicate_names.append(name_match[1])
+
+		if duplicate_names:
+			messages.append(LintMessage("se:name.person.full-name property identical to regular name. If the two are identical the full name <meta> element must be removed.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+			for duplicate_name in duplicate_names:
+				messages.append(LintMessage(duplicate_name, se.MESSAGE_TYPE_ERROR, "", True))
 
 		# Check for malformed URLs
 		for message in self.__get_malformed_urls(metadata_xhtml):
