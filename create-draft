@@ -50,8 +50,8 @@ def main():
 	parser.add_argument("-r", "--translator", dest="translator", help="the translator of the ebook")
 	parser.add_argument("-p", "--gutenberg-ebook-url", dest="pg_url", help="the URL of the Project Gutenberg ebook to download")
 	parser.add_argument("-s", "--se", dest="init_se_repo", action="store_true", help="initialize a new repository on the Standard Ebook server")
-	parser.add_argument("-g", "--github", dest="init_github_repo", action="store_true", help="initialize a new repository on GitHub; can only be used when --se is specified")
-	parser.add_argument("-e", "--email", dest="email", help="use this email address as the main committer for the new Git repository")
+	parser.add_argument("-g", "--github", dest="init_github_repo", action="store_true", help="initialize a new repository at the Standard Ebooks GitHub account; can only be used when --se is specified")
+	parser.add_argument("-e", "--email", dest="email", help="use this email address as the main committer for the local Git repository")
 	args = parser.parse_args()
 
 	if args.init_github_repo and not args.init_se_repo:
