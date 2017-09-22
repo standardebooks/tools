@@ -2,7 +2,6 @@
 
 import argparse
 import os
-import regex
 import se
 from se.se_epub import SeEpub
 
@@ -22,6 +21,7 @@ def main():
 
 	if args.spine:
 		print(se_epub.generate_manifest())
+
 	if args.manifest:
 		print(se_epub.generate_spine())
 
