@@ -4,11 +4,14 @@ A collection of tools Standard Ebooks uses to produce its ebooks, including basi
 
 # Installation
 
-## Step 1a: Ubuntu 16.04 users
+## Ubuntu 16.04 users
 
 ```shell
+# Clone the tools repo
+git clone https://github.com/standardebooks/tools.git
+
 # Install some pre-flight dependencies
-# python3-dev libxml2-dev libxslt1-dev zlib1g-dev are required for building lxml via pip
+# lxml requires the following packages for its pip build process: python3-dev libxml2-dev libxslt1-dev zlib1g-dev
 sudo apt install -y python3-pip python3-dev libxml2-dev libxslt1-dev zlib1g-dev libxml2-utils librsvg2-bin libimage-exiftool-perl imagemagick epubcheck default-jre inkscape calibre curl git
 
 # Install required fonts
@@ -19,11 +22,17 @@ curl -s -o ~/.fonts/OFLGoudyStM-Italic.otf "https://raw.githubusercontent.com/th
 
 # Refresh the local font cache
 sudo fc-cache -fv
+
+# Install python dependencies
+pip3 install -r ./tools/requirements.txt
+
+# Install hyphenation dictionaries for the pyhyphen library
+python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
 ```
 
-## Step 1b: Mac OS users
+## Mac OS users
 
-These instructions were tested on Mac OS X 10.12. Your mileage may vary.
+These instructions were tested on Mac OS X 10.12. Your mileage may vary. Corrections and fixes to these steps are welcomed, as the SE maintainers don't have access to Macs.
 
 1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it's up to date:
 
@@ -34,6 +43,9 @@ These instructions were tested on Mac OS X 10.12. Your mileage may vary.
 2. Install dependencies:
 
 	```shell
+	# Clone the tools repo
+	git clone https://github.com/standardebooks/tools.git
+
 	# Install some pre-flight dependencies
 	brew install python3 epubcheck imagemagick librsvg exiftool
 
@@ -44,29 +56,20 @@ These instructions were tested on Mac OS X 10.12. Your mileage may vary.
 	curl -s -o ~/Library/Fonts/LeagueSpartan-Bold.otf "https://raw.githubusercontent.com/theleagueof/league-spartan/master/LeagueSpartan-Bold.otf"
 	curl -s -o ~/Library/Fonts/OFLGoudyStM.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM.otf"
 	curl -s -o ~/Library/Fonts/OFLGoudyStM-Italic.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM-Italic.otf"
+
+	# Install python dependencies
+	# *********IMPORTANT NOTE*********: PyHyphen currently fails to install on Mac OS when you run this command.
+	# Don't worry, you can safely ignore PyHyphen's failure, as long as all the other pip packages install correctly.
+	pip3 install -r ./tools/requirements.txt
 	```
-
-## Step 2: All platforms
-
-```shell
-# Clone the tools repo
-git clone https://github.com/standardebooks/tools.git
-
-# Install python dependencies
-pip3 install -r ./tools/requirements.txt
-
-# Install hyphenation dictionaries for the pyhyphen library
-python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
-```
 
 # TODO
 
 Help and pull requests are welcomed!
 
-- Move some legacy scripts like `build-kobo` and `endnotes2kindle` into appropriate libraries/scripts.
+- Move some legacy scripts like `build-kobo`, `endnotes2kindle`, and `hyphenate` into appropriate libraries/scripts.
 
 - Update scripts to use new library global variables like `XHTML_NAMESPACES`, instead of redefining them in each script.
-
 
 # Tool descriptions
 
