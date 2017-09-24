@@ -240,6 +240,10 @@ class SeEpub:
 
 			abbr_styles = regex.findall(r"abbr\.[a-z]+", css)
 
+		# Check for presence of ./dist/ folder
+		if os.path.exists(os.path.join(self.directory, "dist")):
+			messages.append(LintMessage("Illegal ./dist/ folder. Do not commit compiled versions of the source.", se.MESSAGE_TYPE_ERROR, "./dist/"))
+
 		# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
 		if regex.search(r"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", metadata_xhtml.replace("\"&gt;", "").replace("=\"", "")) is not None:
 			messages.append(LintMessage("Non-typogrified \", ', or -- detected in metadata long description", se.MESSAGE_TYPE_ERROR, "content.opf"))
