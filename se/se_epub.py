@@ -453,6 +453,14 @@ class SeEpub:
 						if "epub:type=\"subtitle\"" in file_contents and not local_css_has_subtitle_style:
 							messages.append(LintMessage("Subtitles detected, but no subtitle style detected in local.css.", se.MESSAGE_TYPE_ERROR, filename))
 
+						# Check for <li> elements that don't have a direct block child
+						if filename != "toc.xhtml":
+							matches = regex.findall(r"<li(?:\s[^>]*?>|>)\s*[^\s<]", file_contents)
+							if matches:
+								messages.append(LintMessage("<li> without direct block-level child.", se.MESSAGE_TYPE_WARNING, filename))
+								for match in matches:
+									messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
 						# Check to see if <h#> tags are correctly titlecased
 						matches = regex.finditer(r"<h([0-6])([^>]*?)>(.*?)</h\1>", file_contents, flags=regex.DOTALL)
 						for match in matches:
