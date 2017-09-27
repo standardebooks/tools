@@ -70,6 +70,9 @@ class SeEpub:
 		if ".gutenberg.org/files/" in xhtml:
 			messages.append(LintMessage("Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like https://www.gutenberg.org/ebooks/<BOOK-ID>"))
 
+		if "archive.org/stream" in xhtml:
+			messages.append(LintMessage("Non-canonical archive.org URL. Internet Archive URLs must look exactly like https://archive.org/details/<BOOK-ID>"))
+
 		return messages
 
 	def __get_unused_selectors(self):
