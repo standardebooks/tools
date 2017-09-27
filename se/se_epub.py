@@ -224,6 +224,7 @@ class SeEpub:
 		core_css_file_path = os.path.join(self.__tools_root_directory, "templates", "core.css")
 		logo_svg_file_path = os.path.join(self.__tools_root_directory, "templates", "logo.svg")
 		uncopyright_file_path = os.path.join(self.__tools_root_directory, "templates", "uncopyright.xhtml")
+		xhtml_css_classes = []
 
 		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
 			metadata_xhtml = file.read()
@@ -233,6 +234,7 @@ class SeEpub:
 
 		# Check local.css for various items, for later use
 		abbr_elements = []
+		css = ""
 		with open(os.path.join(self.directory, "src", "epub", "css", "local.css"), "r", encoding="utf-8") as file:
 			css = file.read()
 
@@ -398,6 +400,12 @@ class SeEpub:
 						for message in self.__get_malformed_urls(file_contents):
 							message.filename = filename
 							messages.append(message)
+
+						# Add new CSS classes to global list
+						if filename not in se.IGNORED_FILENAMES:
+							matches = regex.findall(r"(?:class=\")[^\"]+?(?:\")", file_contents)
+							for match in matches:
+								xhtml_css_classes = xhtml_css_classes + match.replace("class=", "").replace("\"", "").split()
 
 						# Check for money not separated by commas
 						matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
@@ -649,6 +657,13 @@ class SeEpub:
 
 					if filename in se.BACKMATTER_FILENAMES and "backmatter" not in file_contents:
 						messages.append(LintMessage("No backmatter semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
+
+
+		xhtml_css_classes = list(set(xhtml_css_classes))
+		for css_class in xhtml_css_classes:
+			if css_class != "name" and css_class != "temperature" and css_class != "era" and css_class != "compass" and css_class != "acronym" and css_class != "postal":
+				if "." + css_class not in css:
+					messages.append(LintMessage("class {} found in xhtml, but no style in local.css".format(css_class), se.MESSAGE_TYPE_ERROR, "local.css"))
 
 		for element in abbr_elements:
 			try:
