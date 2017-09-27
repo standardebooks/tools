@@ -664,7 +664,7 @@ class SeEpub:
 
 		xhtml_css_classes = list(set(xhtml_css_classes))
 		for css_class in xhtml_css_classes:
-			if css_class != "name" and css_class != "temperature" and css_class != "era" and css_class != "compass" and css_class != "acronym" and css_class != "postal":
+			if css_class != "name" and css_class != "temperature" and css_class != "era" and css_class != "compass" and css_class != "acronym" and css_class != "postal" and css_class != "eoc" and css_class != "initialism" and css_class != "degree" and css_class != "time":
 				if "." + css_class not in css:
 					messages.append(LintMessage("class {} found in xhtml, but no style in local.css".format(css_class), se.MESSAGE_TYPE_ERROR, "local.css"))
 
