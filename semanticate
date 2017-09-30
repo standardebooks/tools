@@ -55,7 +55,7 @@ def main():
 				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Mlles\.", r"<abbr>Mlles.</abbr>", processed_xhtml)
 				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Messrs\.", r"<abbr>Messrs.</abbr>", processed_xhtml)
 				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Messers\.", r"<abbr>Messers.</abbr>", processed_xhtml)
-				processed_xhtml = regex.sub(r"(?<!\<abbr\>)[Oo]p\.", r"<abbr>op.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(?<!\<abbr\>)(?![Oo]p\.\s[Cc]it\.)^[Oo]p\.", r"<abbr>op.</abbr>", processed_xhtml)
 				processed_xhtml = regex.sub(r"(?<!\<abbr\>)P\.S\.", r"<abbr>P.S.</abbr>", processed_xhtml)
 				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Co\.", r"<abbr>Co.</abbr>", processed_xhtml)
 				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Inc\.", r"<abbr>Inc.</abbr>", processed_xhtml)
