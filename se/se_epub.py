@@ -368,6 +368,20 @@ class SeEpub:
 					if "UTF-8" in file_contents:
 						messages.append(LintMessage("String \"UTF-8\" must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename))
 
+					if filename.endswith(".svg"):
+						if os.sep + "src" + os.sep not in root:
+							# Check that cover and titlepage images are in all caps
+							if filename == "cover.svg":
+								matches = regex.findall(r"<text[^>]+?>.*[a-z].*</text>", file_contents)
+								if matches:
+									messages.append(LintMessage("Lowercase letters in cover. Cover text must be all uppercase.", se.MESSAGE_TYPE_ERROR, filename))
+
+							if filename == "titlepage.svg":
+								matches = regex.findall(r"<text[^>]+?>(.*[a-z].*)</text>", file_contents)
+								if matches:
+									for match in matches:
+										if match != "translated by" and match != "illustrated by" and match != "and":
+											messages.append(LintMessage("Lowercase letters in titlepage. Titlepage text must be all uppercase except \"translated by\", \"illustrated by\", and \"and\" joining translators/illustrators.", se.MESSAGE_TYPE_ERROR, filename))
 					if filename.endswith(".css"):
 						# Check CSS style
 
@@ -671,7 +685,7 @@ class SeEpub:
 
 		xhtml_css_classes = list(set(xhtml_css_classes))
 		for css_class in xhtml_css_classes:
-			if css_class != "name" and css_class != "temperature" and css_class != "era" and css_class != "compass" and css_class != "acronym" and css_class != "postal" and css_class != "eoc" and css_class != "initialism" and css_class != "degree" and css_class != "time":
+			if css_class != "name" and css_class != "temperature" and css_class != "era" and css_class != "compass" and css_class != "acronym" and css_class != "postal" and css_class != "eoc" and css_class != "initialism" and css_class != "degree" and css_class != "time" and css_class != "compound" and css_class != "timezone":
 				if "." + css_class not in css:
 					messages.append(LintMessage("class {} found in xhtml, but no style in local.css".format(css_class), se.MESSAGE_TYPE_ERROR, "local.css"))
 
