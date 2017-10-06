@@ -442,6 +442,13 @@ class SeEpub:
 						if ",</i>”" in file_contents:
 							messages.append(LintMessage("Comma inside <i> tag before closing dialog. (Search for ,</i>”)", se.MESSAGE_TYPE_WARNING, filename))
 
+						# Check for period following Roman numeral, which is an old-timey style we must fix
+						matches = regex.findall(r"<span epub:type=\"z3998:roman\">[^<]+?</span>\.\s+[a-z]", file_contents)
+						if matches:
+							messages.append(LintMessage("Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+
 						# Check for two em dashes in a row
 						matches = regex.findall(r"—{}*—+".format(se.WORD_JOINER), file_contents)
 						if matches:
