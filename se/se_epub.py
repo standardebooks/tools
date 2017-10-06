@@ -438,6 +438,10 @@ class SeEpub:
 							for match in matches:
 								messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
 
+						# Check for trailing commas inside <i> tags at the close of dialog
+						if ",</i>”" in file_contents:
+							messages.append(LintMessage("Comma inside <i> tag before closing dialog. (Search for ,</i>”)", se.MESSAGE_TYPE_WARNING, filename))
+
 						# Check for two em dashes in a row
 						matches = regex.findall(r"—{}*—+".format(se.WORD_JOINER), file_contents)
 						if matches:
@@ -677,10 +681,10 @@ class SeEpub:
 
 					# Check for wrong semantics in frontmatter/backmatter
 					if filename in se.FRONTMATTER_FILENAMES and "frontmatter" not in file_contents:
-						messages.append(LintMessage("No frontmatter semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename))
+						messages.append(LintMessage("No frontmatter semantic inflection for what looks like a frontmatter file", se.MESSAGE_TYPE_WARNING, filename))
 
 					if filename in se.BACKMATTER_FILENAMES and "backmatter" not in file_contents:
-						messages.append(LintMessage("No backmatter semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
+						messages.append(LintMessage("No backmatter semantic inflection for what looks like a backmatter file", se.MESSAGE_TYPE_WARNING, filename))
 
 
 		xhtml_css_classes = list(set(xhtml_css_classes))
