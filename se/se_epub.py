@@ -459,7 +459,8 @@ class SeEpub:
 							messages.append(LintMessage("Comma inside <i> tag before closing dialog. (Search for ,</i>”)", se.MESSAGE_TYPE_WARNING, filename))
 
 						# Check for period following Roman numeral, which is an old-timey style we must fix
-						matches = regex.findall(r"<span epub:type=\"z3998:roman\">[^<]+?</span>\.\s+[a-z]", file_contents)
+						# But ignore the numeral if it's the first item in a <p> tag, as that suggests it might be a kind of list item.
+						matches = regex.findall(r"(?<!<p[^>]*?>)<span epub:type=\"z3998:roman\">[^<]+?</span>\.\s+[a-z]", file_contents)
 						if matches:
 							messages.append(LintMessage("Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename))
 							for match in matches:
