@@ -421,8 +421,6 @@ class SeEpub:
 								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
 					if filename.endswith(".xhtml"):
-						tree = etree.fromstring(str.encode(file_contents.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
-
 						for message in self.__get_malformed_urls(file_contents):
 							message.filename = filename
 							messages.append(message)
