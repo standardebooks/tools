@@ -57,6 +57,9 @@ h5 + p,
 h6 + p,
 header + p,
 hr + p,
+ol + p,
+ul + p,
+table + p,
 p:first-child{
 	text-indent: 0;
 }
