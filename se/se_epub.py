@@ -245,12 +245,6 @@ class SeEpub:
 
 			abbr_styles = regex.findall(r"abbr\.[a-z]+", css)
 
-		# Prepare some selectors for later use
-		ebook_has_ol = False
-		ebook_has_ul = False
-		ol_selector = lxml.cssselect.CSSSelector("ol > li > p:first-child", translator="html", namespaces=se.XHTML_NAMESPACES)
-		ul_selector = lxml.cssselect.CSSSelector("ul > li > p:first-child", translator="html", namespaces=se.XHTML_NAMESPACES)
-
 		# Check for presence of ./dist/ folder
 		if os.path.exists(os.path.join(self.directory, "dist")):
 			messages.append(LintMessage("Illegal ./dist/ folder. Do not commit compiled versions of the source.", se.MESSAGE_TYPE_ERROR, "./dist/"))
@@ -432,14 +426,6 @@ class SeEpub:
 						for message in self.__get_malformed_urls(file_contents):
 							message.filename = filename
 							messages.append(message)
-
-						# Check if ul/li is used in this file for later use
-						if filename != "tox.xhtml" and filename != "endnotes.xhtml":
-							if tree.xpath(ol_selector.path, namespaces=se.XHTML_NAMESPACES):
-								ebook_has_ol = True
-
-							if tree.xpath(ul_selector.path, namespaces=se.XHTML_NAMESPACES):
-								ebook_has_ul = True
 
 						# Add new CSS classes to global list
 						if filename not in se.IGNORED_FILENAMES:
@@ -723,16 +709,6 @@ class SeEpub:
 
 					if filename in se.BACKMATTER_FILENAMES and "backmatter" not in file_contents:
 						messages.append(LintMessage("No backmatter semantic inflection for what looks like a backmatter file", se.MESSAGE_TYPE_WARNING, filename))
-
-		if ebook_has_ol:
-			matches = regex.findall(r"^ol > li > p:first-child{\n\ttext-indent: 0;\n}", css, regex.MULTILINE)
-			if not matches:
-				messages.append(LintMessage("<ol> element found in XHTML, but no required style in local.css (See semantics manual for style)", se.MESSAGE_TYPE_ERROR, 'local.css'))
-
-		if ebook_has_ul:
-			matches = regex.findall(r"^ul > li > p:first-child{\n\ttext-indent: 0;\n}", css, regex.MULTILINE)
-			if not matches:
-				messages.append(LintMessage("<ul> element found in XHTML, but no required style in local.css (See semantics manual for style)", se.MESSAGE_TYPE_ERROR, 'local.css'))
 
 		xhtml_css_classes = list(set(xhtml_css_classes))
 		for css_class in xhtml_css_classes:
