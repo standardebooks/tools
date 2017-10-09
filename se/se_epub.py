@@ -467,8 +467,16 @@ class SeEpub:
 							messages.append(LintMessage("<h2> tag without epub:type=\"title\" attribute.", se.MESSAGE_TYPE_WARNING, filename))
 
 						# Check for empty <p> tags
-						if "<p/>" in file_contents or "<p></p>" in file_contents:
-							messages.append(LintMessage("Empty <p/> tag.", se.MESSAGE_TYPE_ERROR, filename))
+						matches = regex.findall(r"<p>\s*</p>", file_contents)
+						if "<p/>" in file_contents or matches:
+							messages.append(LintMessage("Empty <p> tag. Use <hr/> for scene breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename))
+
+						# Check for style attributes
+						matches = regex.findall(r"<.+?style=\"", file_contents)
+						if matches:
+							messages.append(LintMessage("Illegal style attribute. Do not use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
 						# Check for uppercase HTML tags
 						if regex.findall(r"<[A-Z]+", file_contents):
