@@ -140,6 +140,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Gg])ood\-evening", r"\1ood evening", xhtml)		# good-evening -> good evening
 	xhtml = regex.sub(r"\b([Gg])ood\-day", r"\1ood day", xhtml)			# good-day -> good day
 	xhtml = regex.sub(r"\b([Gg])ood\-afternoon", r"\1ood afternoon", xhtml)		# good-afternoon -> good afternoon
+	xhtml = regex.sub(r"\b([Aa])ll\-([Tt])ogether", r"\1ltogether", xhtml)		# all-together -> altogether
 	xhtml = regex.sub(r"\b([Bb])ete noir", r"\1ête noir", xhtml)			# bete noir -> bête noir
 	xhtml = regex.sub(r"\bEclat\b", r"Éclat", xhtml)				# eclat -> éclat
 	xhtml = regex.sub(r"\beclat\b", r"éclat", xhtml)				# eclat -> éclat
