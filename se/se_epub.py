@@ -431,6 +431,11 @@ class SeEpub:
 							for match in matches:
 								xhtml_css_classes = xhtml_css_classes + match.replace("class=", "").replace("\"", "").split()
 
+						# Check for nbsp before times
+						matches = regex.findall(r"[^> ]<abbr class=\"time", file_contents)
+						if matches:
+							messages.append(LintMessage("Required nbsp not found before <abbr class=\"time\">", se.MESSAGE_TYPE_WARNING, filename))
+
 						# Check for money not separated by commas
 						matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
 						if matches:
