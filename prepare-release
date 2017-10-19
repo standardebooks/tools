@@ -2,7 +2,6 @@
 
 import argparse
 import os
-import sys
 import subprocess
 import datetime
 import regex
@@ -27,7 +26,7 @@ def main():
 
 	# Construct the friendly timestamp
 	friendly_timestamp = "{0:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}".format(timestamp)
-	friendly_timestamp = regex.sub(r"\s+", " ", friendly_timestamp).replace("AM", "a.m.").replace("PM", "p.m.")
+	friendly_timestamp = regex.sub(r"\s+", " ", friendly_timestamp).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
 	for directory in args.directories:
 		directory = os.path.abspath(directory)
