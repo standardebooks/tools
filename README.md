@@ -197,9 +197,6 @@ Help and pull requests are welcomed!
 
 	Count the number of words in an HTML file and optionally categorize by length.
 
--	### `view-modified`
-
-	Check all author directories in the current or specified directory to see if there are changes that need to be committed.
 
 # What a Standard Ebooks source directory looks like
 
