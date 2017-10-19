@@ -530,7 +530,14 @@ class SeEpub:
 							if matches:
 								messages.append(LintMessage("<li> without direct block-level child.", se.MESSAGE_TYPE_WARNING, filename))
 								for match in matches:
-									messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+									messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+
+						# Check for IDs on <h#> tags
+						matches = regex.findall(r"<h[0-6][^>]*?id=[^>]*?>", file_contents, flags=regex.DOTALL)
+						if matches:
+							messages.append(LintMessage("<h#> tag with id attribute. <h#> tags should be wrapped in <section> tags, which should hold the id attribute.", se.MESSAGE_TYPE_WARNING, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
 
 						# Check to see if <h#> tags are correctly titlecased
 						matches = regex.finditer(r"<h([0-6])([^>]*?)>(.*?)</h\1>", file_contents, flags=regex.DOTALL)
@@ -581,7 +588,7 @@ class SeEpub:
 						if matches:
 							messages.append(LintMessage("Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename))
 							for match in matches:
-								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
 
 						# Check for non-typogrified img alt attributes
 						matches = regex.findall(r"alt=\"[^\"]*?('|--|&quot;)[^\"]*?\"", file_contents)
