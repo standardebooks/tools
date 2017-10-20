@@ -24,3 +24,12 @@ img[epub|type~="se:image.color-depth.black-on-transparent"][epub|type~="z3998:pu
 :root[__ibooks_internal_theme*="Night"] img[epub|type~="se:image.color-depth.black-on-transparent"]{
 	filter: invert(100%);
 }
+
+/* Help preserve poetry formatting after Kobo adds its special <span>s */
+[epub|type~="z3998:poem"] p span.koboSpan,
+[epub|type~="z3998:song"] p span.koboSpan,
+[epub|type~="z3998:verse"] p span.koboSpan{
+	display: inline !important;
+	text-indent: 0 !important;
+	padding-left: 0 !important;
+}
