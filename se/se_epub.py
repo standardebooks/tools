@@ -155,12 +155,14 @@ class SeEpub:
 				manifest.append("<item href=\"images/{}\" id=\"{}\" media-type=\"{}\"{}/>".format(filename, filename, media_type, properties))
 
 		# Add XHTML files
-		for _, _, filenames in os.walk(os.path.join(self.directory, "src", "epub", "text")):
+		for root, _, filenames in os.walk(os.path.join(self.directory, "src", "epub", "text")):
 			for filename in filenames:
 				properties = ""
 
-				if filename == "titlepage.xhtml" or filename == "colophon.xhtml" or filename == "imprint.xhtml":
-					properties = " properties=\"svg\""
+				with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
+					file_contents = file.read()
+					if ".svg" in file_contents:
+						properties = " properties=\"svg\""
 
 				manifest.append("<item href=\"text/{}\" id=\"{}\" media-type=\"application/xhtml+xml\"{}/>".format(filename, filename, properties))
 
