@@ -42,7 +42,7 @@ def main():
 				if message.is_submessage:
 					table_data.append([" ", "→", "{}".format(message.text)])
 				else:
-					alert = colored("Warning", "yellow")
+					alert = colored("Manual Review", "yellow")
 
 					if message.message_type == se.MESSAGE_TYPE_ERROR:
 						alert = colored("Error", "red")
