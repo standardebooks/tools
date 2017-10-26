@@ -433,8 +433,13 @@ class SeEpub:
 							for match in matches:
 								xhtml_css_classes = xhtml_css_classes + match.replace("class=", "").replace("\"", "").split()
 
+						# Check for numeric entities
+						matches = regex.findall(r"&#[0-9]+?;", file_contents)
+						if matches:
+							messages.append(LintMessage("Illegal numeric entity (like &#913;) in file.", se.MESSAGE_TYPE_ERROR, filename))
+
 						# Check for nbsp before times
-						matches = regex.findall(r"[^> ]<abbr class=\"time", file_contents)
+						matches = regex.findall(r"[0-9]+[^{}]<abbr class=\"time".format(se.NO_BREAK_SPACE), file_contents)
 						if matches:
 							messages.append(LintMessage("Required nbsp not found before <abbr class=\"time\">", se.MESSAGE_TYPE_WARNING, filename))
 
