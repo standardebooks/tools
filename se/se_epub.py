@@ -356,7 +356,7 @@ class SeEpub:
 				if ".git/" in os.path.join(root, filename) or filename.endswith(tuple(se.BINARY_EXTENSIONS)):
 					continue
 
-				if filename == ".DS_Store" or filename == ".gitignore" or filename.startswith("README"):
+				if filename.startswith(".") or filename.startswith("README"):
 					messages.append(LintMessage("Illegal {} file detected in {}".format(filename, root), se.MESSAGE_TYPE_ERROR))
 
 				with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
