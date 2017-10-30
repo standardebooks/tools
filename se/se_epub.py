@@ -436,6 +436,13 @@ class SeEpub:
 							for match in matches:
 								xhtml_css_classes = xhtml_css_classes + match.replace("class=", "").replace("\"", "").split()
 
+						# Check for direct z3998:roman spans that should have their semantic pulled into the parent element
+						matches = regex.findall(r"<([a-z0-9]+)[^>]*?>\s*(<span epub:type=\"z3998:roman\">[^<]+?</span>)\s*</\1>", file_contents, flags=regex.DOTALL)
+						if matches:
+							messages.append(LintMessage("If <span> exists only for the z3998:roman semantic, then z3998:roman should be pulled into parent tag instead.", se.MESSAGE_TYPE_WARNING, filename))
+							for match in matches:
+								messages.append(LintMessage(match[1], se.MESSAGE_TYPE_WARNING, filename, True))
+
 						# Check for numeric entities
 						matches = regex.findall(r"&#[0-9]+?;", file_contents)
 						if matches:
