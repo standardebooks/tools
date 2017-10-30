@@ -423,6 +423,19 @@ class SeEpub:
 							for match in matches:
 								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
+						# Blank space between selectors
+						matches = regex.findall(r"\}\n[^\s]+", file_contents)
+						if matches:
+							messages.append(LintMessage("CSS selectors must have exactly one blank line between them.", se.MESSAGE_TYPE_ERROR, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
+						matches = regex.findall(r"\}\n\s{2,}[^\s]+", file_contents)
+						if matches:
+							messages.append(LintMessage("CSS selectors must have exactly one blank line between them.", se.MESSAGE_TYPE_ERROR, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
 						# Properties indented with multiple tabs
 						matches = regex.findall(r"^\t{2,}.+:[^\{,]+?;$", file_contents, flags=regex.MULTILINE)
 						if matches:
