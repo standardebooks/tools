@@ -371,6 +371,9 @@ class SeEpub:
 						messages.append(LintMessage("String \"UTF-8\" must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename))
 
 					if filename.endswith(".svg"):
+						if "<title>" not in file_contents:
+							messages.append(LintMessage("SVG file missing <title> tag. Usually the SVG <title> matches the corresponding <img> tag's alt attribute.", se.MESSAGE_TYPE_ERROR, filename))
+
 						if os.sep + "src" + os.sep not in root:
 							# Check that cover and titlepage images are in all caps
 							if filename == "cover.svg":
