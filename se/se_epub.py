@@ -449,9 +449,10 @@ class SeEpub:
 							messages.append(message)
 
 						# Check if this is a frontmatter file
-						matches = regex.findall(r"epub:type=\"[^\"]*?frontmatter[^\"]*?\"", file_contents)
-						if matches:
-							has_frontmatter = True
+						if filename != "titlepage.xhtml" and filename != "imprint.xhtml" and filename != "toc.xhtml":
+							matches = regex.findall(r"epub:type=\"[^\"]*?frontmatter[^\"]*?\"", file_contents)
+							if matches:
+								has_frontmatter = True
 
 						# Add new CSS classes to global list
 						if filename not in se.IGNORED_FILENAMES:
