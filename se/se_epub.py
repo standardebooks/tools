@@ -229,6 +229,8 @@ class SeEpub:
 		core_css_file_path = os.path.join(self.__tools_root_directory, "templates", "core.css")
 		logo_svg_file_path = os.path.join(self.__tools_root_directory, "templates", "logo.svg")
 		uncopyright_file_path = os.path.join(self.__tools_root_directory, "templates", "uncopyright.xhtml")
+		has_halftitle = False
+		has_frontmatter = False
 		xhtml_css_classes = []
 
 		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
@@ -370,6 +372,9 @@ class SeEpub:
 					if "UTF-8" in file_contents:
 						messages.append(LintMessage("String \"UTF-8\" must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename))
 
+					if filename == "halftitle.xhtml":
+						has_halftitle = True
+
 					if filename.endswith(".svg"):
 						if "<title>" not in file_contents:
 							messages.append(LintMessage("SVG file missing <title> tag. Usually the SVG <title> matches the corresponding <img> tag's alt attribute.", se.MESSAGE_TYPE_ERROR, filename))
@@ -429,6 +434,11 @@ class SeEpub:
 						for message in self.__get_malformed_urls(file_contents):
 							message.filename = filename
 							messages.append(message)
+
+						# Check if this is a frontmatter file
+						matches = regex.findall(r"epub:type=\"[^\"]*?frontmatter[^\"]*?\"", file_contents)
+						if matches:
+							has_frontmatter = True
 
 						# Add new CSS classes to global list
 						if filename not in se.IGNORED_FILENAMES:
@@ -744,6 +754,9 @@ class SeEpub:
 
 					if filename in se.BACKMATTER_FILENAMES and "backmatter" not in file_contents:
 						messages.append(LintMessage("No backmatter semantic inflection for what looks like a backmatter file", se.MESSAGE_TYPE_WARNING, filename))
+
+		if has_frontmatter and not has_halftitle:
+			messages.append(LintMessage("Frontmatter found, but no halftitle. Halftitle is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		xhtml_css_classes = list(set(xhtml_css_classes))
 		for css_class in xhtml_css_classes:
