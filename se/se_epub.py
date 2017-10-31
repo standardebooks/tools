@@ -232,6 +232,7 @@ class SeEpub:
 		has_halftitle = False
 		has_frontmatter = False
 		xhtml_css_classes = []
+		headings = []
 
 		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
 			metadata_xhtml = file.read()
@@ -459,6 +460,22 @@ class SeEpub:
 							matches = regex.findall(r"(?:class=\")[^\"]+?(?:\")", file_contents)
 							for match in matches:
 								xhtml_css_classes = xhtml_css_classes + match.replace("class=", "").replace("\"", "").split()
+
+						# Read file contents into a DOM for querying
+						dom = BeautifulSoup(file_contents, "lxml")
+
+						# Store all headings to check for ToC references later
+						if filename != "toc.xhtml":
+							matches = dom.select('h1,h2,h3,h4,h5,h6')
+							for match in matches:
+
+								# Remove any links to the endnotes
+								endnote_ref = match.find('a')
+								if endnote_ref:
+									endnote_ref.extract()
+
+								normalised_text = ' '.join(match.get_text().split())
+								headings = headings + [(normalised_text, filename)]
 
 						# Check for direct z3998:roman spans that should have their semantic pulled into the parent element
 						matches = regex.findall(r"<([a-z0-9]+)[^>]*?>\s*(<span epub:type=\"z3998:roman\">[^<]+?</span>)\s*</\1>", file_contents, flags=regex.DOTALL)
@@ -777,6 +794,16 @@ class SeEpub:
 			if css_class != "name" and css_class != "temperature" and css_class != "era" and css_class != "compass" and css_class != "acronym" and css_class != "postal" and css_class != "eoc" and css_class != "initialism" and css_class != "degree" and css_class != "time" and css_class != "compound" and css_class != "timezone":
 				if "." + css_class not in css:
 					messages.append(LintMessage("class {} found in xhtml, but no style in local.css".format(css_class), se.MESSAGE_TYPE_ERROR, "local.css"))
+
+		headings = list(set(headings))
+		with open(os.path.join(self.directory, "src", "epub", "toc.xhtml"), "r", encoding="utf-8") as toc:
+			toc_entries = BeautifulSoup(toc.read(), "lxml").find_all('a')
+			# ToC headers have a ‘:’ after the chapter number that main headings don’t
+			for index, entry in enumerate(toc_entries):
+				toc_entries[index] = ' '.join(entry.get_text().replace(":", "").split())
+			for heading in headings:
+				if heading[0] not in toc_entries:
+					messages.append(LintMessage("Heading ‘{}’ found, but not present in the ToC".format(heading[0]), se.MESSAGE_TYPE_ERROR, heading[1]))
 
 		for element in abbr_elements:
 			try:
