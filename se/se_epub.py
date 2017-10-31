@@ -470,7 +470,7 @@ class SeEpub:
 							for match in matches:
 
 								# Remove any links to the endnotes
-								endnote_ref = match.find('a')
+								endnote_ref = match.find('a', attrs={"epub:type": regex.compile("^.*noteref.*$")})
 								if endnote_ref:
 									endnote_ref.extract()
 
