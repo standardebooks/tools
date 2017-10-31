@@ -474,6 +474,12 @@ class SeEpub:
 								if endnote_ref:
 									endnote_ref.extract()
 
+								# Remove any subtitles on halftitle pages
+								if match.find_parent(attrs={"epub:type": regex.compile("^.*halftitlepage.*$")}):
+									halftitle_subtitle = match.find(attrs={"epub:type": regex.compile("^.*subtitle.*$")})
+									if halftitle_subtitle:
+										halftitle_subtitle.extract()
+
 								normalised_text = ' '.join(match.get_text().split())
 								headings = headings + [(normalised_text, filename)]
 
