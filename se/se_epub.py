@@ -480,6 +480,15 @@ class SeEpub:
 									if halftitle_subtitle:
 										halftitle_subtitle.extract()
 
+								# Remove any subtitles from headings that don’t have a preceding roman number)
+								heading_first_child = match.find('span',recursive=False)
+								if heading_first_child:
+									epub_type = heading_first_child.get('epub:type')
+									if epub_type is None or len(regex.findall(r"z3998:roman", epub_type)) == 0:
+										unnumbered_subtitle = match.find(attrs={"epub:type": regex.compile("^.*subtitle.*$")})
+										if unnumbered_subtitle:
+											unnumbered_subtitle.extract()
+
 								normalised_text = ' '.join(match.get_text().split())
 								headings = headings + [(normalised_text, filename)]
 
