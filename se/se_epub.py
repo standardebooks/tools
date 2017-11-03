@@ -815,7 +815,8 @@ class SeEpub:
 			toc_entries = BeautifulSoup(toc.read(), "lxml").find_all('a')
 			# ToC headers have a ‘:’ after the chapter number that main headings don’t
 			for index, entry in enumerate(toc_entries):
-				toc_entries[index] = ' '.join(entry.get_text().replace(":", "").split())
+				entry_text = regex.sub(r"([IVXLCM].*?):", r"\1", entry.get_text())
+				toc_entries[index] = ' '.join(entry_text.split())
 			for heading in headings:
 				if heading[0] not in toc_entries:
 					messages.append(LintMessage("Heading ‘{}’ found, but not present in the ToC".format(heading[0]), se.MESSAGE_TYPE_ERROR, heading[1]))
