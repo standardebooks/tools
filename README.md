@@ -137,10 +137,6 @@ Help and pull requests are welcomed!
 
 	Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace "ash-tray" with "ashtray".
 
--	### `ordinal`
-
-	Print the ordinal for one or more integers.
-
 -	### `prepare-release`
 
 	Calculate work word count, insert release date if not yet set, and update modified date and revision number.

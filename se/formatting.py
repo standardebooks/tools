@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import math
 import unicodedata
 import regex
 import se
@@ -8,6 +9,10 @@ from titlecase import titlecase as pip_titlecase
 
 def remove_tags(text):
 	return regex.sub(r"</?([a-z]+)[^>]*?>", "", text, flags=regex.DOTALL)
+
+def ordinal(number):
+	number = int(number)
+	return "%d%s" % (number, "tsnrhtdd"[(math.floor(number / 10) % 10 != 1) * (number % 10 < 4) * number % 10::4])
 
 def titlecase(text):
 	text = pip_titlecase(text)

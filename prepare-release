@@ -6,6 +6,7 @@ import subprocess
 import datetime
 import regex
 import se
+import se.formatting
 
 
 def main():
@@ -20,7 +21,6 @@ def main():
 
 	word_count_path = os.path.join(os.path.dirname(script_path), "word-count")
 	reading_ease_path = os.path.join(os.path.dirname(script_path), "reading-ease")
-	ordinal_path = os.path.join(os.path.dirname(script_path), "ordinal")
 	timestamp = datetime.datetime.utcnow()
 	iso_timestamp = regex.sub(r"\.[0-9]+$", "", timestamp.isoformat()) + "Z"
 
@@ -80,7 +80,7 @@ def main():
 					if revision == 1:
 						colophon_xhtml = regex.sub(r"<span class=\"release-date\">.+?</span>", "<span class=\"release-date\">{}</span>".format(friendly_timestamp), colophon_xhtml)
 					else:
-						ordinal = subprocess.run([ordinal_path, str(revision)], stdout=subprocess.PIPE).stdout.decode().strip()
+						ordinal = se.formatting.ordinal(revision)
 						if "<p>This is the first edition of this ebook.<br/>" in colophon_xhtml:
 							colophon_xhtml = colophon_xhtml.replace("This edition was released on<br/>", "The first edition was released on<br/>")
 							colophon_xhtml = colophon_xhtml.replace("<p>This is the first edition of this ebook.<br/>", "<p>This is the <span class=\"revision-number\">{}</span> edition of this ebook.<br/>\n\t\t\tThis edition was released on<br/>\n\t\t\t<span class=\"revision-date\">{}</span><br/>".format(ordinal, friendly_timestamp))
