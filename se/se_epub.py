@@ -250,6 +250,10 @@ class SeEpub:
 
 			abbr_styles = regex.findall(r"abbr\.[a-z]+", css)
 
+			matches = regex.findall(r"^h[0-6]\s*,?{?", css, flags=regex.MULTILINE)
+			if matches:
+				messages.append(LintMessage("Do not directly select h[0-6] elements, as they are used in template files; use more specific selectors.", se.MESSAGE_TYPE_ERROR, "local.css"))
+
 		# Check for presence of ./dist/ folder
 		if os.path.exists(os.path.join(self.directory, "dist")):
 			messages.append(LintMessage("Illegal ./dist/ folder. Do not commit compiled versions of the source.", se.MESSAGE_TYPE_ERROR, "./dist/"))
