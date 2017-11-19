@@ -41,6 +41,9 @@ def titlecase(text):
 	# Lowercase "from", "with", as long as they're not the first word and not preceded by a parenthesis
 	text = regex.sub(r"(?<!^)(?<!\()\b(From|With)\b", lambda result: result.group(1).lower(), text)
 
+	# Capitalise the first word after an opening quote or italicisation that signifies a work
+	text = regex.sub(r"(‘|“|<i.*?epub:type=\".*?se:.*?\".*?>)([a-z])", lambda result: result.group(1) + result.group(2).upper(), text)
+
 	# Lowercase "the" if preceded by "vs."
 	text = regex.sub(r"(?:vs\.) The\b", "vs. the", text)
 
