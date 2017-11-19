@@ -638,11 +638,11 @@ class SeEpub:
 								subtitle_matches = regex.findall(r"(.*?)<span epub:type=\"subtitle\">(.*?)</span>(.*?)", title, flags=regex.DOTALL)
 								if subtitle_matches:
 									for title_header, subtitle, title_footer in subtitle_matches:
-										title_header = se.formatting.remove_tags(title_header).strip()
-										subtitle = se.formatting.remove_tags(subtitle).strip()
-										title_footer = se.formatting.remove_tags(title_footer).strip()
+										title_header = se.formatting.remove_tags(se.formatting.titlecase(title_header)).strip()
+										subtitle = se.formatting.remove_tags(se.formatting.titlecase(subtitle)).strip()
+										title_footer = se.formatting.remove_tags(se.formatting.titlecase(title_footer)).strip()
 
-										titlecased_title = se.formatting.titlecase(title_header) + " " + se.formatting.titlecase(subtitle) + " " + se.formatting.titlecase(title_footer)
+										titlecased_title = title_header + " " + subtitle + " " + title_footer
 										titlecased_title = titlecased_title.strip()
 
 										title = se.formatting.remove_tags(title).strip()
@@ -651,8 +651,8 @@ class SeEpub:
 
 								# No subtitle? Much more straightforward
 								else:
+									titlecased_title = se.formatting.remove_tags(se.formatting.titlecase(title))
 									title = se.formatting.remove_tags(title)
-									titlecased_title = se.formatting.titlecase(title)
 									if title != titlecased_title:
 										messages.append(LintMessage("Title \"{}\" not correctly titlecased. Expected: {}".format(title, titlecased_title), se.MESSAGE_TYPE_WARNING, filename))
 
