@@ -687,7 +687,7 @@ class SeEpub:
 								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
 						# Check for nbsp in measurements, for example: 90 mm
-						matches = regex.findall(r"[0-9]+[\- ][mck][mgl]", file_contents)
+						matches = regex.findall(r"[0-9]+[\- ][mck][mgl]\b", file_contents)
 						if matches:
 							messages.append(LintMessage("Measurements must be separated by a no-break space, not a dash or regular space.", se.MESSAGE_TYPE_ERROR, filename))
 							for match in matches:
