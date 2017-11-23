@@ -47,13 +47,13 @@ def main():
 
 					# First, convert entities.  Sometimes Gutenberg has entities instead of straight quotes.
 					processed_xhtml = html.unescape(processed_xhtml) # This converts html entites to unicode
-					processed_xhtml = regex.sub(r"(\s)&(\s)", r"\1&amp;\2", processed_xhtml) # Oops!  html.unescape also unescapes plain ampersands...
+					processed_xhtml = regex.sub(r"(\s)&([^#a-z])", r"\1&amp;\2", processed_xhtml) # Oops!  html.unescape also unescapes plain ampersands...
 
 					processed_xhtml = smartypants.smartypants(processed_xhtml) # Attr.u *should* output unicode characters instead of HTML entities, but it doesn't work
 
 					# Convert entities again
 					processed_xhtml = html.unescape(processed_xhtml) # This converts html entites to unicode
-					processed_xhtml = regex.sub(r"(\s)&(\s)", r"\1&amp;\2", processed_xhtml) # Oops!  html.unescape also unescapes plain ampersands...
+					processed_xhtml = regex.sub(r"(\s)&([^#a-z])", r"\1&amp;\2", processed_xhtml) # Oops!  html.unescape also unescapes plain ampersands...
 
 				# Replace sequential em dashes with the two or three em dash character
 				processed_xhtml = processed_xhtml.replace("———", "⸻")
