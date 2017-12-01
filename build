@@ -526,3 +526,6 @@ def main():
 
 if __name__ == "__main__":
 	main()
+
+# Sets Standard ebook tab settings for vim users:
+# vim: noexpandtab tabstop=8 shiftwidth=0 softtabstop=0
