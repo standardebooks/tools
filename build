@@ -47,14 +47,8 @@ def main():
 	args = parser.parse_args()
 
 	script_directory = os.path.dirname(os.path.realpath(__file__))
-	calibre_app_mac_path = "/Applications/calibre.app/Contents/MacOS/"
 	epubcheck_path = shutil.which("epubcheck")
 	ebook_convert_path = shutil.which("ebook-convert")
-	# look for default Mac calibre app path if none found in path
-	if ebook_convert_path is None and os.path.exists(calibre_app_mac_path):
-		ebook_convert_path = os.path.join(
-				calibre_app_mac_path,
-				'ebook-convert')
 	rsvg_convert_path = shutil.which("rsvg-convert")
 	convert_path = shutil.which("convert")
 	simplify_tags_path = os.path.join(script_directory, "simplify-tags")
