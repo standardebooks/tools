@@ -825,9 +825,9 @@ class SeEpub:
 		headings = list(set(headings))
 		with open(os.path.join(self.directory, "src", "epub", "toc.xhtml"), "r", encoding="utf-8") as toc:
 			toc_entries = BeautifulSoup(toc.read(), "lxml").find_all('a')
-			# ToC headers have a ‘:’ after the chapter number that main headings don’t
+			# Unlike main headings, ToC entries have a ‘:’ before the subheading
 			for index, entry in enumerate(toc_entries):
-				entry_text = ' '.join(regex.sub(r"([IVXLCM].*?):", r"\1", entry.get_text()).split())
+				entry_text = ' '.join(regex.sub(r"^(.*?):", r"\1", entry.get_text()).split())
 				entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get('href'))
 				toc_entries[index] = (entry_text, entry_file)
 			for heading in headings:
