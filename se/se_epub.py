@@ -486,8 +486,8 @@ class SeEpub:
 								heading_subtitle = match.find(attrs={"epub:type": regex.compile("^.*subtitle.*$")})
 
 								if heading_subtitle:
-									closest_section_epub_type = match.find_parents('section')[0].get('epub:type')
-									heading_first_child_epub_type = match.find('span',recursive=False).get('epub:type')
+									closest_section_epub_type = match.find_parents('section')[0].get('epub:type') or ''
+									heading_first_child_epub_type = match.find('span',recursive=False).get('epub:type') or ''
 
 									if len(regex.findall(r"^.*(part|division).*$", closest_section_epub_type)) > 0:
 										remove_subtitle = False
