@@ -43,7 +43,7 @@ def main():
 		css = "\t\t\t".join(css.splitlines(True))
 
 	output_xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" epub:prefix=\"z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0\" xml:lang=\"en-GB\"><head><meta charset=\"utf-8\"/><title>" + title + "</title><style type=\"text/css\">\n\t\t\t" + css + "\t\t</style></head><body></body></html>"
-	output_soup = BeautifulSoup(output_xhtml, "xml")
+	output_soup = BeautifulSoup(output_xhtml, "lxml")
 
 	# Iterate over spine items in order and recompose them into our output
 	for element in metadata_soup.select("spine itemref"):
@@ -53,7 +53,7 @@ def main():
 			xhtml_soup = BeautifulSoup(file.read(), "lxml")
 
 			for child in xhtml_soup.select("body > *"):
-				RecomposeXhtml(child, output_soup.body)
+				RecomposeXhtml(child, output_soup)
 
 	# Add the ToC after the titlepage
 	with open(os.path.join(source_directory, "src", "epub", "toc.xhtml"), "r", encoding="utf-8") as file:
@@ -91,23 +91,34 @@ def MergeAttributes(attrs, output):
 
 	return output
 
+def NewBs4Tag(section, output_soup):
+	tag = output_soup.new_tag(section.name)
+	for name, value in section.attrs.items():
+		tag.attrs[name] = value
+
+	return tag
+
 def RecomposeXhtml(section, output_soup):
-	# Do we already have a matching ID in our output?
-	# If so, append this element's contents to the existing section
-	# Otherwise, append the section to the body
+	# Try to find our parent tag in the output, by ID.
+	# If it's not in the output, then append it to the tag's closest parent by ID (or <body>), then iterate over its children and do the same.
 
 	existing_section = output_soup.select("#" + section["id"])
-	if existing_section:
-		for child in section.children:
-			if not isinstance(child, str):
-				existing_section[0].append(child)
-	else:
-		output_soup.append(section)
+	if not existing_section:
+		if(section.parent.name.lower() == "body"):
+			output_soup.body.append(NewBs4Tag(section, output_soup))
+		else:
+			output_soup.select("#" + section.parent["id"])[0].append(NewBs4Tag(section, output_soup))
+
+		existing_section = output_soup.select("#" + section["id"])
 
 	for child in section.children:
 		if not isinstance(child, str):
-			if child.name.lower() == "section" or child.name.lower() == "article":
+			tag_name = child.name.lower()
+			if tag_name == "section" or tag_name == "article":
 				RecomposeXhtml(child, output_soup)
+			else:
+				existing_section[0].append(child)
+
 
 
 
