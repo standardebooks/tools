@@ -479,7 +479,7 @@ class SeEpub:
 									endnote_ref.extract()
 
 								# Decide whether to remove subheadings based on the following logic:
-								# If the closest parent <section> is a part ordivision, then keep subtitle
+								# If the closest parent <section> is a part or division, then keep subtitle
 								# Else, if the closest parent <section> is a halftitlepage, then discard subtitle
 								# Else, if the first child of the heading is not z3998:roman, then also discard subtitle
 								# Else, keep the subtitle.
@@ -487,13 +487,13 @@ class SeEpub:
 
 								if heading_subtitle:
 									closest_section_epub_type = match.find_parents('section')[0].get('epub:type') or ''
-									heading_first_child_epub_type = match.find('span',recursive=False).get('epub:type') or ''
+									heading_first_child_epub_type = match.find('span', recursive=False).get('epub:type') or ''
 
-									if len(regex.findall(r"^.*(part|division).*$", closest_section_epub_type)) > 0:
+									if regex.findall(r"^.*(part|division).*$", closest_section_epub_type):
 										remove_subtitle = False
-									elif len(regex.findall(r"^.*halftitlepage.*$", closest_section_epub_type)) > 0:
+									elif regex.findall(r"^.*halftitlepage.*$", closest_section_epub_type):
 										remove_subtitle = True
-									elif len(regex.findall(r"^.*z3998:roman.*$", heading_first_child_epub_type)) == 0:
+									elif not regex.findall(r"^.*z3998:roman.*$", heading_first_child_epub_type):
 										remove_subtitle = True
 									else:
 										remove_subtitle = False
