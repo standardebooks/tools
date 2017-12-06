@@ -365,6 +365,7 @@ class SeEpub:
 
 				if filename.startswith(".") or filename.startswith("README"):
 					messages.append(LintMessage("Illegal {} file detected in {}".format(filename, root), se.MESSAGE_TYPE_ERROR))
+					continue
 
 				with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
 					try:
