@@ -479,20 +479,28 @@ class SeEpub:
 								if endnote_ref:
 									endnote_ref.extract()
 
-								# Remove any subtitles on halftitle pages
-								if match.find_parent(attrs={"epub:type": regex.compile("^.*halftitlepage.*$")}):
-									halftitle_subtitle = match.find(attrs={"epub:type": regex.compile("^.*subtitle.*$")})
-									if halftitle_subtitle:
-										halftitle_subtitle.extract()
+								# Decide whether to remove subheadings based on the following logic:
+								# If the closest parent <section> is a part or division, then keep subtitle
+								# Else, if the closest parent <section> is a halftitlepage, then discard subtitle
+								# Else, if the first child of the heading is not z3998:roman, then also discard subtitle
+								# Else, keep the subtitle.
+								heading_subtitle = match.find(attrs={"epub:type": regex.compile("^.*subtitle.*$")})
 
-								# Remove any subtitles from headings that don’t have a preceding roman number)
-								heading_first_child = match.find('span',recursive=False)
-								if heading_first_child:
-									epub_type = heading_first_child.get('epub:type')
-									if epub_type is None or len(regex.findall(r"z3998:roman", epub_type)) == 0:
-										unnumbered_subtitle = match.find(attrs={"epub:type": regex.compile("^.*subtitle.*$")})
-										if unnumbered_subtitle:
-											unnumbered_subtitle.extract()
+								if heading_subtitle:
+									closest_section_epub_type = match.find_parents('section')[0].get('epub:type') or ''
+									heading_first_child_epub_type = match.find('span', recursive=False).get('epub:type') or ''
+
+									if regex.findall(r"^.*(part|division).*$", closest_section_epub_type):
+										remove_subtitle = False
+									elif regex.findall(r"^.*halftitlepage.*$", closest_section_epub_type):
+										remove_subtitle = True
+									elif not regex.findall(r"^.*z3998:roman.*$", heading_first_child_epub_type):
+										remove_subtitle = True
+									else:
+										remove_subtitle = False
+
+									if remove_subtitle:
+										heading_subtitle.extract()
 
 								normalised_text = ' '.join(match.get_text().split())
 								headings = headings + [(normalised_text, filename)]
@@ -818,9 +826,9 @@ class SeEpub:
 		headings = list(set(headings))
 		with open(os.path.join(self.directory, "src", "epub", "toc.xhtml"), "r", encoding="utf-8") as toc:
 			toc_entries = BeautifulSoup(toc.read(), "lxml").find_all('a')
-			# ToC headers have a ‘:’ after the chapter number that main headings don’t
+			# Unlike main headings, ToC entries have a ‘:’ before the subheading
 			for index, entry in enumerate(toc_entries):
-				entry_text = ' '.join(regex.sub(r"([IVXLCM].*?):", r"\1", entry.get_text()).split())
+				entry_text = ' '.join(regex.sub(r"^(.*?):", r"\1", entry.get_text()).split())
 				entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get('href'))
 				toc_entries[index] = (entry_text, entry_file)
 			for heading in headings:
