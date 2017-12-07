@@ -23,6 +23,10 @@ SE_GENRES = ["Adventure", "Autobiography", "Biography", "Childrens", "Comedy", "
 MESSAGE_TYPE_WARNING = 1
 MESSAGE_TYPE_ERROR = 2
 
+
+class SeError(Exception):
+	pass
+
 def natural_sort(list_to_sort):
 	convert = lambda text: int(text) if text.isdigit() else text.lower()
 	alphanum_key = lambda key: [convert(c) for c in regex.split('([0-9]+)', key)]

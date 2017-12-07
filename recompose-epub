@@ -2,152 +2,21 @@
 
 import argparse
 import os
-import tempfile
-import subprocess
-import html
-import regex
 import se
-from bs4 import BeautifulSoup
+from se.se_epub import SeEpub
 
 
 def main():
-	parser = argparse.ArgumentParser(description="Recompose two or more XHTML files in an epub based on the epub's spine ordering.")
-	parser.add_argument("source_directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
+	parser = argparse.ArgumentParser(description="Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output.")
+	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
-	script_directory = os.path.dirname(os.path.realpath(__file__))
-	clean_path = os.path.join(script_directory, "clean")
-
-	# Confirm source directory exists and is an SE source directory
-	if not os.path.exists(args.source_directory) or not os.path.isdir(args.source_directory):
-		se.print_error("Not a directory: {}".format(args.source_directory))
+	try:
+		se_epub = SeEpub(args.directory, os.path.dirname(os.path.realpath(__file__)))
+		print(se_epub.recompose())
+	except (OSError, se.SeError) as ex:
+		se.print_error(ex)
 		exit(1)
-
-	source_directory = os.path.abspath(args.source_directory)
-
-	if not os.path.isdir(os.path.join(source_directory, "src")):
-		se.print_error("Doesn't look like a Standard Ebooks source directory: {}".format(source_directory))
-		exit(1)
-
-	# Get the ordered list of spine items
-	with open(os.path.join(source_directory, "src", "epub", "content.opf"), "r", encoding="utf-8") as file:
-		metadata_soup = BeautifulSoup(file.read(), "lxml")
-
-	# Get some header data: title, core and local css
-	title = html.escape(metadata_soup.find("dc:title").contents[0])
-	css = ""
-	with open(os.path.join(source_directory, "src", "epub", "css", "core.css"), "r", encoding="utf-8") as file:
-		css = regex.sub(r"@.+?;", "", file.read()).strip()
-
-	with open(os.path.join(source_directory, "src", "epub", "css", "local.css"), "r", encoding="utf-8") as file:
-		css = css + "\n\n\n/* local.css */" + regex.sub(r"@.+?;", "", file.read())
-		css = "\t\t\t".join(css.splitlines(True))
-
-	output_xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" epub:prefix=\"z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0\" xml:lang=\"en-GB\"><head><meta charset=\"utf-8\"/><title>" + title + "</title><style/></head><body></body></html>"
-	output_soup = BeautifulSoup(output_xhtml, "lxml")
-
-	# Iterate over spine items in order and recompose them into our output
-	for element in metadata_soup.select("spine itemref"):
-		filename = metadata_soup.select("item#" + element["idref"])[0]["href"]
-
-		with open(os.path.join(source_directory, "src", "epub", filename), "r", encoding="utf-8") as file:
-			xhtml_soup = BeautifulSoup(file.read(), "lxml")
-
-			for child in xhtml_soup.select("body > *"):
-				RecomposeXhtml(child, output_soup)
-
-	# Add the ToC after the titlepage
-	with open(os.path.join(source_directory, "src", "epub", "toc.xhtml"), "r", encoding="utf-8") as file:
-		toc_soup = BeautifulSoup(file.read(), "lxml")
-		output_soup.select("#titlepage")[0].insert_after(toc_soup.find("nav"))
-
-	# Get the output XHTML as a string
-	output_xhtml = str(output_soup)
-	output_xhtml = regex.sub(r"\"(\.\./)?text/(.+?)\.xhtml\"", "\"#\\2\"", output_xhtml)
-	output_xhtml = regex.sub(r"\"(\.\./)?text/.+?\.xhtml#(.+?)\"", "\"#\\2\"", output_xhtml)
-
-	# Replace SVG images hrefs with inline SVG
-	for match in regex.findall("src=\"../images/(.+?)\.svg\"", output_xhtml):
-		with open(os.path.join(source_directory, "src", "epub", "images", match + ".svg")) as file:
-			svg = file.read()
-
-			# Remove XML declaration
-			svg = regex.sub("<\?xml.+?\?>", "", svg)
-
-			output_xhtml = regex.sub("<img.+?src=\"../images/{}\\.svg\".*?>".format(match), svg, output_xhtml)
-
-	with tempfile.NamedTemporaryFile(mode='w+', delete=False) as file:
-		file.write(output_xhtml)
-		file_name = file.name
-		file_name_xhtml = file_name + ".xhtml"
-
-	os.rename(file_name, file_name_xhtml)
-
-	# All done, clean the output
-	subprocess.run([clean_path, file_name_xhtml])
-
-	with open(file_name_xhtml) as file:
-		xhtml = file.read()
-
-		# Remove xml declaration and re-add the doctype
-		xhtml = regex.sub(r"<\?xml.+?\?>", "<!doctype html>", xhtml)
-		xhtml = regex.sub(r" epub:prefix=\".+?\"", "", xhtml)
-
-		# Insert our CSS. We do this after `clean` because `clean` will escape > in the CSS
-		xhtml = regex.sub(r"<style/>", "<style>\n\t\t\t" + css + "\t\t</style>", xhtml)
-
-		# Make some replacements for HTML5 compatibility
-		xhtml = xhtml.replace("epub:type", "data-epub-type")
-		xhtml = xhtml.replace("epub|type", "data-epub-type")
-		xhtml = xhtml.replace("xml:lang", "lang")
-		xhtml = regex.sub(" xmlns.+?=\".+?\"", "", xhtml)
-
-		print(xhtml)
-
-	os.remove(file_name_xhtml)
-
-# attrs: A string representing an XHTML attribute (like epub:type)
-# output: A list of existing attributes to merge into
-def MergeAttributes(attrs, output):
-	for attr in attrs.split():
-		if attr not in output:
-			output.append(attr)
-
-	return output
-
-def NewBs4Tag(section, output_soup):
-	tag = output_soup.new_tag(section.name)
-	for name, value in section.attrs.items():
-		tag.attrs[name] = value
-
-	return tag
-
-def RecomposeXhtml(section, output_soup):
-	# Quick sanity check before we begin
-	if not section["id"] or (section.parent.name.lower() != "body" and not section.parent["id"]):
-		se.print_error("Section without ID attribute")
-		return
-
-	# Try to find our parent tag in the output, by ID.
-	# If it's not in the output, then append it to the tag's closest parent by ID (or <body>), then iterate over its children and do the same.
-	existing_section = output_soup.select("#" + section["id"])
-	if not existing_section:
-		if(section.parent.name.lower() == "body"):
-			output_soup.body.append(NewBs4Tag(section, output_soup))
-		else:
-			output_soup.select("#" + section.parent["id"])[0].append(NewBs4Tag(section, output_soup))
-
-		existing_section = output_soup.select("#" + section["id"])
-
-	for child in section.children:
-		if not isinstance(child, str):
-			tag_name = child.name.lower()
-			if tag_name == "section" or tag_name == "article":
-				RecomposeXhtml(child, output_soup)
-			else:
-				existing_section[0].append(child)
-
-
 
 
 if __name__ == "__main__":
