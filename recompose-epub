@@ -35,14 +35,15 @@ def main():
 
 	# Get some header data: title, core and local css
 	title = html.escape(metadata_soup.find("dc:title").contents[0])
+	css = ""
 	with open(os.path.join(source_directory, "src", "epub", "css", "core.css"), "r", encoding="utf-8") as file:
-		css = "" + file.read()
+		css = regex.sub(r"@.+?;", "", file.read()).strip()
 
 	with open(os.path.join(source_directory, "src", "epub", "css", "local.css"), "r", encoding="utf-8") as file:
-		css = css + "\n\n/* local.css */" + regex.sub(r"@.+?;", "", file.read())
+		css = css + "\n\n\n/* local.css */" + regex.sub(r"@.+?;", "", file.read())
 		css = "\t\t\t".join(css.splitlines(True))
 
-	output_xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" epub:prefix=\"z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0\" xml:lang=\"en-GB\"><head><meta charset=\"utf-8\"/><title>" + title + "</title><style type=\"text/css\">\n\t\t\t" + css + "\t\t</style></head><body></body></html>"
+	output_xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" epub:prefix=\"z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0\" xml:lang=\"en-GB\"><head><meta charset=\"utf-8\"/><title>" + title + "</title><style/></head><body></body></html>"
 	output_soup = BeautifulSoup(output_xhtml, "lxml")
 
 	# Iterate over spine items in order and recompose them into our output
@@ -60,10 +61,22 @@ def main():
 		toc_soup = BeautifulSoup(file.read(), "lxml")
 		output_soup.select("#titlepage")[0].insert_after(toc_soup.find("nav"))
 
+	# Get the output XHTML as a string
+	output_xhtml = str(output_soup)
+	output_xhtml = regex.sub(r"\"(\.\./)?text/(.+?)\.xhtml\"", "\"#\\2\"", output_xhtml)
+	output_xhtml = regex.sub(r"\"(\.\./)?text/.+?\.xhtml#(.+?)\"", "\"#\\2\"", output_xhtml)
+
+	# Replace SVG images hrefs with inline SVG
+	for match in regex.findall("src=\"../images/(.+?)\.svg\"", output_xhtml):
+		with open(os.path.join(source_directory, "src", "epub", "images", match + ".svg")) as file:
+			svg = file.read()
+
+			# Remove XML declaration
+			svg = regex.sub("<\?xml.+?\?>", "", svg)
+
+			output_xhtml = regex.sub("<img.+?src=\"../images/{}\\.svg\".*?>".format(match), svg, output_xhtml)
+
 	with tempfile.NamedTemporaryFile(mode='w+', delete=False) as file:
-		output_xhtml = str(output_soup)
-		output_xhtml = regex.sub(r"\"(\.\./)?text/(.+?)\.xhtml\"", "\"#\\2\"", output_xhtml)
-		output_xhtml = regex.sub(r"\"(\.\./)?text/.+?\.xhtml#(.+?)\"", "\"#\\2\"", output_xhtml)
 		file.write(output_xhtml)
 		file_name = file.name
 		file_name_xhtml = file_name + ".xhtml"
@@ -76,8 +89,19 @@ def main():
 	with open(file_name_xhtml) as file:
 		xhtml = file.read()
 
-		# Re-add the doctype
-		xhtml = regex.sub(r"\?>", "?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">", xhtml)
+		# Remove xml declaration and re-add the doctype
+		xhtml = regex.sub(r"<\?xml.+?\?>", "<!doctype html>", xhtml)
+		xhtml = regex.sub(r" epub:prefix=\".+?\"", "", xhtml)
+
+		# Insert our CSS. We do this after `clean` because `clean` will escape > in the CSS
+		xhtml = regex.sub(r"<style/>", "<style>\n\t\t\t" + css + "\t\t</style>", xhtml)
+
+		# Make some replacements for HTML5 compatibility
+		xhtml = xhtml.replace("epub:type", "data-epub-type")
+		xhtml = xhtml.replace("epub|type", "data-epub-type")
+		xhtml = xhtml.replace("xml:lang", "lang")
+		xhtml = regex.sub(" xmlns.+?=\".+?\"", "", xhtml)
+
 		print(xhtml)
 
 	os.remove(file_name_xhtml)
@@ -99,9 +123,13 @@ def NewBs4Tag(section, output_soup):
 	return tag
 
 def RecomposeXhtml(section, output_soup):
+	# Quick sanity check before we begin
+	if not section["id"] or (section.parent.name.lower() != "body" and not section.parent["id"]):
+		se.print_error("Section without ID attribute")
+		return
+
 	# Try to find our parent tag in the output, by ID.
 	# If it's not in the output, then append it to the tag's closest parent by ID (or <body>), then iterate over its children and do the same.
-
 	existing_section = output_soup.select("#" + section["id"])
 	if not existing_section:
 		if(section.parent.name.lower() == "body"):
