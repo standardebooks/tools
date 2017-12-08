@@ -627,6 +627,10 @@ class SeEpub:
 							for match in matches:
 								messages.append(LintMessage(match[1], se.MESSAGE_TYPE_WARNING, filename, True))
 
+						# Check for "HathiTrust" instead of "Hathi Trust"
+						if "Hathi Trust" in file_contents:
+							messages.append(LintMessage("\"Hathi Trust\" should be \"HathiTrust\"", se.MESSAGE_TYPE_ERROR, filename))
+
 						# Check for numeric entities
 						matches = regex.findall(r"&#[0-9]+?;", file_contents)
 						if matches:
