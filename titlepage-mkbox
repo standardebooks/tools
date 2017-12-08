@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Parse a Standard Ebooks titlepage.svg and adjust the viewbox size
-according to lines of title and authors.
+according to enclosed text.
 """
 
 # This script assumes ALL-CAPS text is the only thing at the bottom of a
