@@ -141,5 +141,3 @@ if __name__ == "__main__":
 		status = 130
 
 	sys.exit(status)
-
-# vim: shiftwidth=4 softtabstop=0 noexpandtab tabstop=4
