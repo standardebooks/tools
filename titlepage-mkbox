@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Parse a Standard Ebooks titlepage and adjust the viewbox size
+"""Parse a Standard Ebooks titlepage.svg and adjust the viewbox size
 according to lines of title and authors.
 """
 
