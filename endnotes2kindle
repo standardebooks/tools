@@ -28,7 +28,7 @@ def main():
 
 			for note in notes:
 				note_id = note.get("id")
-				note_number = note.get("data-se-note-number")
+				note_number = note_id.replace("note-", "")
 
 				# First, fixup the reference link for this endnote
 				try:

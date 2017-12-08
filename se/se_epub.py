@@ -851,7 +851,7 @@ class SeEpub:
 						# Check for space before endnote backlinks
 						if filename == "endnotes.xhtml":
 							endnotes_soup = BeautifulSoup(file_contents, "lxml")
-							endnote_referrers = endnotes_soup.select("li[data-se-note-number] a")
+							endnote_referrers = endnotes_soup.select("li[id^=note-] a")
 
 							bad_referrers = []
 

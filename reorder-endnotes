@@ -42,7 +42,7 @@ def main():
 			xhtml = file.read()
 			soup = BeautifulSoup(xhtml, "lxml")
 
-			endnote_count = len(soup.select("li[data-se-note-number]"))
+			endnote_count = len(soup.select("li[id^=note-]"))
 
 			if args.increment:
 				note_range = range(endnote_count, target_endnote_number - 1, -1)
@@ -51,7 +51,6 @@ def main():
 
 			for endnote_number in note_range:
 				xhtml = xhtml.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + step))
-				xhtml = xhtml.replace("data-se-note-number=\"{}\"".format(endnote_number), "data-se-note-number=\"{}\"".format(endnote_number + step))
 				xhtml = xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + step))
 
 			file.seek(0)
