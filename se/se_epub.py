@@ -68,7 +68,7 @@ class SeEpub:
 			messages.append(LintMessage("Non-canonical Google Books URL. Google Books URLs must look exactly like https://books.google.com/books?id=<BOOK-ID>"))
 
 		if "babel.hathitrust.org" in xhtml:
-			messages.append(LintMessage("Non-canonical Hathi Trust URL. Hathi Trust URLs must look exactly like https://catalog.hathitrust.org/Record/<BOOK-ID>"))
+			messages.append(LintMessage("Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like https://catalog.hathitrust.org/Record/<BOOK-ID>"))
 
 		if ".gutenberg.org/files/" in xhtml:
 			messages.append(LintMessage("Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like https://www.gutenberg.org/ebooks/<BOOK-ID>"))
@@ -627,7 +627,7 @@ class SeEpub:
 							for match in matches:
 								messages.append(LintMessage(match[1], se.MESSAGE_TYPE_WARNING, filename, True))
 
-						# Check for "HathiTrust" instead of "Hathi Trust"
+						# Check for "Hathi Trust" instead of "HathiTrust"
 						if "Hathi Trust" in file_contents:
 							messages.append(LintMessage("\"Hathi Trust\" should be \"HathiTrust\"", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -890,8 +890,8 @@ class SeEpub:
 									if "gutenberg.org" in link and "<a href=\"{}\">Project Gutenberg</a>".format(link) not in file_contents:
 										messages.append(LintMessage("Source not represented in imprint.xhtml. It should read: <a href=\"{}\">Project Gutenberg</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
 
-									if "hathitrust.org" in link and "the <a href=\"{}\">Hathi Trust Digital Library</a>".format(link) not in file_contents:
-										messages.append(LintMessage("Source not represented in imprint.xhtml. It should read: the <a href=\"{}\">Hathi Trust Digital Library</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
+									if "hathitrust.org" in link and "the <a href=\"{}\">HathiTrust Digital Library</a>".format(link) not in file_contents:
+										messages.append(LintMessage("Source not represented in imprint.xhtml. It should read: the <a href=\"{}\">HathiTrust Digital Library</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
 
 									if "archive.org" in link and "the <a href=\"{}\">Internet Archive</a>".format(link) not in file_contents:
 										messages.append(LintMessage("Source not represented in imprint.xhtml. It should read: the <a href=\"{}\">Internet Archive</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
