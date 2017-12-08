@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+"""Parse a Standard Ebooks titlepage and adjust the viewbox size
+according to lines of title and authors.
+"""
+
+# This script assumes ALL-CAPS text is the only thing at the bottom of a
+#	title page.
+# If this is not the case it will not work properly
+
+import sys
+import argparse
+import regex
+import shlex
+import tempfile
+
+
+# spacing in pixels between bottom of text and viewBox edge
+VIEWBOX_TEXT_SPACE = 50
+
+
+def process_command_line(argv):
+	"""Process command line invocation arguments and switches.
+
+	Args:
+		argv: list of arguments, or `None` from ``sys.argv[1:]``.
+
+	Returns:
+		args: Namespace with named attributes of arguments and switches
+	"""
+	#script_name = argv[0]
+	argv = argv[1:]
+
+	# initialize the parser object:
+	parser = argparse.ArgumentParser(
+			description="Adjusts viewbox of Standard Ebooks titlepage.svg " \
+					"to fit text.")
+
+	# specifying nargs= puts outputs of parser in list (even if nargs=1)
+
+	# required arguments
+	parser.add_argument('titlesvg', help="project ./images/titlepage.svg file.")
+
+	# switches/options:
+	parser.add_argument('-o', '--output', action='store',
+			help='optional output filename. (Default is to overwrite input file.)'
+			)
+
+	args = parser.parse_args(argv)
+
+	return args
+
+def main(argv=None):
+	# get command-line arguments and parse
+	args = process_command_line(argv)
+
+	if args.output:
+		outfilename = args.output
+	else:
+		outfilename = args.titlesvg
+
+	# read in file to find lowest part of text
+	y_max = 0
+
+	try:
+		with open(args.titlesvg, 'r') as titlesvg_fh:
+			for line in titlesvg_fh:
+				# get if text tag
+				txt_attr = regex.search(r'<text\s+([^>]+)>', line)
+				if txt_attr:
+					attr_str = txt_attr.group(1).strip()
+
+					# split on spaces unless they're quoted
+					# remove quotes
+					attr_list = shlex.split(attr_str)
+
+					for attr in attr_list:
+						# y-coordinate of text item is its bottom point
+						#	(higher y is lower in page)
+						y_re = regex.search(r"y=(\d+)", attr)
+						if y_re:
+							y_coord = int(y_re.group(1))
+
+					# maximum y coordinate is lowest part of text because
+					#	Title, Author, Contributor all are captials and have
+					#	no descenders.
+					#	Also, lowest text item will be Title, Author, or
+					#	Contributor.
+					y_max = max(y_coord, y_max)
+	except FileNotFoundError:
+		print("Can't find file %s"%args.titlesvg)
+		return
+	except PermissionError:
+		print("Can't read file %s"%args.titlesvg)
+		return
+		
+	viewbox_size = y_max + VIEWBOX_TEXT_SPACE
+	#print('<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1400 %d">'%viewbox_size)
+
+	# copy input svg file to temp file and replace viewBox with correct size
+	temp_fh = tempfile.TemporaryFile('w+')
+
+	try:
+		with open(args.titlesvg, 'r') as titlesvg_fh:
+			for line in titlesvg_fh:
+				line = regex.sub(
+						r'viewBox="(\d+) (\d+) (\d+) \d+"',
+						r'viewBox="\1 \2 \3 {}"'.format(viewbox_size),
+						line
+						)
+				print(line, end="", file=temp_fh)
+	except FileNotFoundError:
+		print("Can't find file %s"%args.titlesvg)
+		return
+	except OSError:
+		print("Can't read file %s"%args.titlesvg)
+		return
+
+	# rewind tempfile back to start
+	temp_fh.seek(0)
+
+	# copy temp file to output svg file
+	try:
+		with open(outfilename, 'w') as titlesvg_new_fh:
+			for line in temp_fh:
+				print(line, end="", file=titlesvg_new_fh)
+	except OSError:
+		print("Can't write to file %s"%outfilename)
+		return
+	
+	temp_fh.close()
+
+	return 0
+
+
+if __name__ == "__main__":
+	try:
+		status = main(sys.argv)
+	except KeyboardInterrupt:
+		print("Stopped by Keyboard Interrupt", file=sys.stderr)
+		# exit error code for Ctrl-C
+		status = 130
+
+	sys.exit(status)
+
+# vim: shiftwidth=4 softtabstop=0 noexpandtab tabstop=4
