@@ -12,19 +12,12 @@ import glob
 import subprocess
 import platform
 import regex
+from bs4 import BeautifulSoup
+import se
 import se.formatting
 import se.easy_xml
 import se.epub
 
-
-IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
-XHTML_NAMESPACES = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "https://standardebooks.org/vocab/1.0", "dc": "http://purl.org/dc/elements/1.1/"}
-
-# Some convenience aliases
-WORD_JOINER = "\u2060"
-HAIR_SPACE = "\u200a"
-ZERO_WIDTH_SPACE = "\ufeff"
-SHY_HYPHEN = "\u00ad"
 
 COVER_SVG_WIDTH = 1400
 COVER_SVG_HEIGHT = 2100
@@ -50,7 +43,7 @@ def main():
 	calibre_app_mac_path = "/Applications/calibre.app/Contents/MacOS/"
 	epubcheck_path = shutil.which("epubcheck")
 	ebook_convert_path = shutil.which("ebook-convert")
-	# look for default Mac calibre app path if none found in path
+	# Look for default Mac calibre app path if none found in path
 	if ebook_convert_path is None and os.path.exists(calibre_app_mac_path):
 		ebook_convert_path = os.path.join(
 				calibre_app_mac_path,
@@ -60,7 +53,6 @@ def main():
 	simplify_tags_path = os.path.join(script_directory, "simplify-tags")
 	clean_path = os.path.join(script_directory, "clean")
 	hyphenate_path = os.path.join(script_directory, "hyphenate")
-	toc2kindle_path = os.path.join(script_directory, "toc2kindle")
 	endnotes2kindle_path = os.path.join(script_directory, "endnotes2kindle")
 	update_asin_path = os.path.join(script_directory, "update-asin")
 	build_kobo_path = os.path.join(script_directory, "build-kobo")
@@ -304,8 +296,8 @@ def main():
 						processed_xhtml = regex.sub(r"xml:lang\=\"([^\"]+?)\"", "lang=\"\\1\" xml:lang=\"\\1\"", processed_xhtml)
 
 						# Typography: replace double and triple em dash characters with extra em dashes.
-						processed_xhtml = processed_xhtml.replace("⸺", "—{}—".format(WORD_JOINER))
-						processed_xhtml = processed_xhtml.replace("⸻", "—{}—{}—".format(WORD_JOINER, WORD_JOINER))
+						processed_xhtml = processed_xhtml.replace("⸺", "—{}—".format(se.WORD_JOINER))
+						processed_xhtml = processed_xhtml.replace("⸻", "—{}—{}—".format(se.WORD_JOINER, se.WORD_JOINER))
 
 						# Typography: replace some other less common characters.
 						processed_xhtml = processed_xhtml.replace("⅒", "1/10")
@@ -314,7 +306,7 @@ def main():
 						# Many e-readers don't support the word joiner character (U+2060).
 						# They DO, however, support the now-deprecated zero-width non-breaking space (U+FEFF)
 						# For epubs, do this replacement.  Kindle now seems to handle everything fortunately.
-						processed_xhtml = processed_xhtml.replace(WORD_JOINER, ZERO_WIDTH_SPACE)
+						processed_xhtml = processed_xhtml.replace(se.WORD_JOINER, se.ZERO_WIDTH_SPACE)
 
 						if processed_xhtml != xhtml:
 							file.seek(0)
@@ -441,7 +433,29 @@ def main():
 
 
 			# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
-			subprocess.run([toc2kindle_path, os.path.join(work_epub_root_directory, "epub", toc_filename)])
+			with open(os.path.join(work_epub_root_directory, "epub", toc_filename), "r+", encoding="utf-8") as file:
+				xhtml = file.read()
+
+				soup = BeautifulSoup(xhtml, "lxml")
+
+				for match in soup.select('ol > li > ol > li > ol'):
+					match.unwrap()
+
+				xhtml = str(soup)
+
+				pattern = regex.compile(r"(<li>\s*<a href=\"[^\"]+?\">.+?</a>\s*)<li>", regex.MULTILINE)
+				matches = 1
+				while matches > 0:
+					xhtml, matches = pattern.subn(r"\1</li><li>", xhtml)
+
+				pattern = regex.compile(r"</li>\s*</li>", regex.MULTILINE)
+				matches = 1
+				while matches > 0:
+					xhtml, matches = pattern.subn("</li>", xhtml)
+
+				file.seek(0)
+				file.write(xhtml)
+				file.truncate()
 
 			# Rebuild the NCX
 			toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, xsl_filename)
@@ -458,7 +472,7 @@ def main():
 					xhtml = file.read()
 					processed_xhtml = xhtml
 
-					processed_xhtml = processed_xhtml.replace(SHY_HYPHEN, "")
+					processed_xhtml = processed_xhtml.replace(se.SHY_HYPHEN, "")
 
 					if processed_xhtml != xhtml:
 						file.seek(0)
@@ -475,7 +489,7 @@ def main():
 
 							# Kindle doesn't recognize most zero-width spaces or word joiners, so just remove them.
 							# It does recognize the word joiner character, but only in the old mobi7 format.  The new format renders them as spaces.
-							processed_xhtml = processed_xhtml.replace(ZERO_WIDTH_SPACE, "")
+							processed_xhtml = processed_xhtml.replace(se.ZERO_WIDTH_SPACE, "")
 
 							# Remove the epub:type attribute, as Calibre turns it into just "type"
 							processed_xhtml = regex.sub(r"epub:type=\"[^\"]*?\"", "", processed_xhtml)

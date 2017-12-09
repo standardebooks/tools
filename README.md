@@ -173,10 +173,6 @@ Help and pull requests are welcomed!
 
 	Convert a string to titlecase.
 
--	### `toc2kindle`
-
-	Flatten ToC to be at most 2 levels deep for Kindle compatibility.  Generally only used by the `build` script and not called independently.
-
 -	### `typogrify`
 
 	Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory.
