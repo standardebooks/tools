@@ -100,5 +100,6 @@ def main():
 				file.write(processed_xhtml)
 				file.truncate()
 
+
 if __name__ == "__main__":
 	main()

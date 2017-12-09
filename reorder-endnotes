@@ -15,7 +15,6 @@ def is_positive_integer(value):
 
 	return int_value
 
-
 def main():
 	parser = argparse.ArgumentParser(description="Increment the specified endnote and all following endnotes by 1.")
 	group = parser.add_mutually_exclusive_group(required=True)

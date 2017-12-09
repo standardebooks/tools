@@ -8,6 +8,7 @@ import regex
 from hyphen import Hyphenator, dict_info
 from bs4 import BeautifulSoup
 
+
 def main():
 	parser = argparse.ArgumentParser(description="Insert soft hyphens at syllable breaks in XHTML files.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
@@ -138,6 +139,7 @@ def main():
 
 		if args.verbose:
 			print(" OK")
+
 
 if __name__ == "__main__":
 	main()

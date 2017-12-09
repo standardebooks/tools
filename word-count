@@ -7,7 +7,6 @@ import regex
 import se
 from bs4 import BeautifulSoup
 
-EXCLUDED_FILES = ["colophon.xhtml", "endnotes.xhtml", "halftitle.xhtml", "imprint.xhtml", "loi.xhtml", "titlepage.xhtml", "toc.xhtml", "uncopyright.xhtml"]
 
 def main():
 	parser = argparse.ArgumentParser(description="Count the number of words in an XHTML file and optionally categorize by length.  If multiple files are specified, show the total word count for all.")
@@ -30,7 +29,7 @@ def main():
 			target_filenames.add(target)
 
 		for filename in target_filenames:
-			if args.exclude_se_files and filename.endswith(tuple(EXCLUDED_FILES)): # str.endswith() only accepts tuples, not lists
+			if args.exclude_se_files and filename.endswith(tuple(se.IGNORED_FILENAMES + ["endnotes.xhtml"])): # str.endswith() only accepts tuples, not lists
 				continue
 
 			try:
@@ -67,6 +66,7 @@ def main():
 				print("{}\t{}\t{}".format(filename, word_count, category))
 
 	print(word_count_sum)
+
 
 if __name__ == "__main__":
 	main()

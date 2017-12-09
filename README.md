@@ -67,9 +67,7 @@ These instructions were tested on Mac OS X 10.12. Your mileage may vary. Correct
 
 Help and pull requests are welcomed!
 
-- Move some legacy scripts like `build-kobo`, and `hyphenate` into appropriate libraries/scripts.
-
-- Update scripts to use new library global variables like `XHTML_NAMESPACES`, instead of redefining them in each script.
+- Move some legacy scripts like `build-kobo` and `hyphenate` into appropriate libraries/scripts.
 
 # Tool descriptions
 

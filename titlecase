@@ -26,5 +26,6 @@ def main():
 		else:
 			print(se.formatting.titlecase(line), end="")
 
+
 if __name__ == "__main__":
 	main()

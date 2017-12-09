@@ -6,6 +6,7 @@ import fnmatch
 import unicodedata
 import regex
 
+
 def main():
 	parser = argparse.ArgumentParser(description="Find words with mismatched diacritics in XHTML files.  For example, \"cafe\" in one file and \"café\" in another.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
@@ -67,6 +68,7 @@ def main():
 		else:
 			if args.verbose:
 				print(" OK")
+
 
 if __name__ == "__main__":
 	main()

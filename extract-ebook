@@ -9,6 +9,7 @@ import magic
 from se.kindleunpack import kindleunpack # GPLv3: https://www.mobileread.com/forums/showthread.php?t=61986
 import se
 
+
 def main():
 	parser = argparse.ArgumentParser(description="Extract an EPUB, MOBI, or AZW3 ebook into ./FILENAME.extracted/ or a target directory.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
@@ -54,6 +55,7 @@ def main():
 
 		if args.verbose:
 			print(" OK")
+
 
 if __name__ == "__main__":
 	main()

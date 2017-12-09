@@ -6,6 +6,7 @@ import fnmatch
 import regex
 from bs4 import BeautifulSoup
 
+
 def main():
 	parser = argparse.ArgumentParser(description="Automatically add semantics to Standard Ebooks source directories.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
@@ -101,6 +102,7 @@ def main():
 
 		if args.verbose:
 			print(" OK")
+
 
 if __name__ == "__main__":
 	main()

@@ -10,6 +10,7 @@ import subprocess
 import regex
 import se
 
+
 def clean_inkscape_svg(filename, clean_path):
 	with open(filename, "r+") as file:
 		svg = file.read()
@@ -147,6 +148,7 @@ def main():
 		else:
 			if args.verbose:
 				print("\t./images/titlepage.svg not found, skipping ...")
+
 
 if __name__ == "__main__":
 	main()

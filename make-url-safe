@@ -4,6 +4,7 @@ import argparse
 import sys
 import se.formatting
 
+
 def main():
 	parser = argparse.ArgumentParser(description="Make a string URL-safe.")
 	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="don't end output with a newline")
@@ -24,6 +25,7 @@ def main():
 			print(se.formatting.make_url_safe(line))
 		else:
 			print(se.formatting.make_url_safe(line), end="")
+
 
 if __name__ == "__main__":
 	main()

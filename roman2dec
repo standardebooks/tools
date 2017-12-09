@@ -32,5 +32,6 @@ def main():
 			se.print_error("Not a Roman numeral: {}".format(line))
 			exit(1)
 
+
 if __name__ == "__main__":
 	main()

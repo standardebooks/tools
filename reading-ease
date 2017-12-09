@@ -10,7 +10,6 @@ from bs4 import BeautifulSoup
 import se
 
 
-IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitle.xhtml", "toc.xhtml", "loi.xhtml"]
 INCLUDED_CHARACTERS = list(string.whitespace) + list(string.digits) + [":", ";", ".", "?", "!"]
 
 
@@ -149,7 +148,7 @@ def main():
 
 		for root, _, filenames in os.walk(directory):
 			for filename in fnmatch.filter(filenames, "*.xhtml"):
-				if filename not in IGNORED_FILENAMES:
+				if filename not in se.IGNORED_FILENAMES:
 					with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
 						text += BeautifulSoup(file.read(), "lxml").body.get_text() + " "
 
@@ -191,6 +190,7 @@ def main():
 			print("\t" + str(flesch_reading_ease))
 		else:
 			print(flesch_reading_ease)
+
 
 if __name__ == "__main__":
 	main()
