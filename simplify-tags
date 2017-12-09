@@ -9,9 +9,6 @@ import lxml.etree as etree
 import se
 
 
-XHTML_NAMESPACES = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "https://standardebooks.org/vocab/1.0"}
-
-
 def namespace_to_class(selector):
 	# First, remove periods from epub:type.  We can't remove periods in the entire selector because there might be class selectors involved
 	epub_type = regex.search(r"\"[^\"]+?\"", selector).group()
@@ -117,14 +114,14 @@ def main():
 					# Now iterate over each CSS selector and see if it's used in any of the files we found
 					for selector in selectors:
 						try:
-							sel = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces=XHTML_NAMESPACES)
+							sel = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces=se.XHTML_NAMESPACES)
 						except lxml.cssselect.ExpressionError:
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
 							continue
 
 						# Add a "first-child" class to elements that match any :first-child selectors
 						if ":first-child" in selector:
-							for element in tree.xpath(sel.path, namespaces=XHTML_NAMESPACES):
+							for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
 								current_class = element.get("class")
 								if current_class is not None and "first-child" not in current_class:
 									current_class = current_class + " first-child"
@@ -136,9 +133,9 @@ def main():
 						# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
 						if "[epub|type" in selector:
 							for namespace_selector in regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", selector):
-								sel = lxml.cssselect.CSSSelector(namespace_selector, translator="xhtml", namespaces=XHTML_NAMESPACES)
+								sel = lxml.cssselect.CSSSelector(namespace_selector, translator="xhtml", namespaces=se.XHTML_NAMESPACES)
 
-								for element in tree.xpath(sel.path, namespaces=XHTML_NAMESPACES):
+								for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
 									new_class = regex.sub(r"^\.", "", namespace_to_class(namespace_selector))
 									current_class = element.get("class", "")
 
@@ -154,14 +151,14 @@ def main():
 
 					for selector in selectors:
 						try:
-							sel = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces=XHTML_NAMESPACES)
+							sel = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces=se.XHTML_NAMESPACES)
 						except lxml.cssselect.ExpressionError:
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
 							continue
 
 						# Convert <abbr> to <span>
 						if "abbr" in selector:
-							for element in tree.xpath(sel.path, namespaces=XHTML_NAMESPACES):
+							for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
 								# Why would you want the tail to output by default?!?
 								raw_string = etree.tostring(element, encoding=str, with_tail=False)
 
