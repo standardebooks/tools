@@ -544,6 +544,13 @@ class SeEpub:
 							for match in matches:
 								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
+						# Don't specify border color
+						matches = regex.findall(r"(?:border|color).+?(?:#[a-f0-9]{0,6}|black|white|red)", file_contents, flags=regex.IGNORECASE)
+						if matches:
+							messages.append(LintMessage("Don't specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+
 						# Blank space between selectors
 						matches = regex.findall(r"\}\n[^\s]+", file_contents)
 						if matches:
