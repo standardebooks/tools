@@ -67,7 +67,7 @@ These instructions were tested on Mac OS X 10.12. Your mileage may vary. Correct
 
 Help and pull requests are welcomed!
 
-- Move some legacy scripts like `build-kobo`, `endnotes2kindle`, and `hyphenate` into appropriate libraries/scripts.
+- Move some legacy scripts like `build-kobo`, and `hyphenate` into appropriate libraries/scripts.
 
 - Update scripts to use new library global variables like `XHTML_NAMESPACES`, instead of redefining them in each script.
 
@@ -104,10 +104,6 @@ Help and pull requests are welcomed!
 -	### `dec2roman`
 
 	Convert a decimal number to a Roman numeral.
-
--	### `endnotes2kindle`
-
-	Convert epub-friendly endnotes to Kindle-friendly popup endnotes.
 
 -	### `extract-ebook`
 

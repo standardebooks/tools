@@ -12,6 +12,8 @@ import glob
 import subprocess
 import platform
 import regex
+import lxml.cssselect
+import lxml.etree as etree
 from bs4 import BeautifulSoup
 import se
 import se.formatting
@@ -53,7 +55,6 @@ def main():
 	simplify_tags_path = os.path.join(script_directory, "simplify-tags")
 	clean_path = os.path.join(script_directory, "clean")
 	hyphenate_path = os.path.join(script_directory, "hyphenate")
-	endnotes2kindle_path = os.path.join(script_directory, "endnotes2kindle")
 	update_asin_path = os.path.join(script_directory, "update-asin")
 	build_kobo_path = os.path.join(script_directory, "build-kobo")
 	xsl_filename = os.path.join(script_directory, "data", "navdoc2ncx.xsl")
@@ -465,7 +466,59 @@ def main():
 
 			# Convert endnotes to Kindle popup compatible notes
 			if os.path.isfile(os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml")):
-				subprocess.run([endnotes2kindle_path, os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml")])
+				with open(os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml"), "r+", encoding="utf-8") as file:
+					xhtml = file.read()
+
+					# We have to remove the default namespace declaration from our document, otherwise
+					# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
+					tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
+
+					notes = tree.xpath("//li[@epub:type=\"rearnote\" or @epub:type=\"footnote\"]", namespaces=se.XHTML_NAMESPACES)
+
+					processed_endnotes = ""
+
+					for note in notes:
+						note_id = note.get("id")
+						note_number = note_id.replace("note-", "")
+
+						# First, fixup the reference link for this endnote
+						try:
+							ref_link = etree.tostring(note.xpath("p[last()]/a[last()]")[0], encoding="unicode", pretty_print=True, with_tail=False).replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "").strip()
+						except Exception:
+							se.print_error("Can't find ref link for #{}".format(note_id))
+							exit(1)
+
+						new_ref_link = regex.sub(r">.*?</a>", ">" + note_number + "</a>.", ref_link)
+
+						# Now remove the wrapping li node from the note
+						note_text = regex.sub(r"^<li[^>]*?>(.*)</li>$", r"\1", etree.tostring(note, encoding="unicode", pretty_print=True, with_tail=False), flags=regex.IGNORECASE | regex.DOTALL)
+
+						# Insert our new ref link
+						result = regex.subn(r"^\s*<p([^>]*?)>", "<p\\1 id=\"" + note_id + "\">" + new_ref_link + " ", note_text)
+
+						# Sometimes there is no leading <p> tag (for example, if the endnote starts with a blockquote
+						# If that's the case, just insert one in front.
+						note_text = result[0]
+						if result[1] == 0:
+							note_text = "<p id=\"" + note_id + "\">" + new_ref_link + "</p>" + note_text
+
+						# Now remove the old ref_link
+						note_text = note_text.replace(ref_link, "")
+
+						# Trim trailing spaces left over after removing the ref link
+						note_text = regex.sub(r"\s+</p>", "</p>", note_text).strip()
+
+						# Sometimes ref links are in their own p tag--remove that too
+						note_text = regex.sub(r"<p>\s*</p>", "", note_text)
+
+						processed_endnotes += note_text + "\n"
+
+					# All done with endnotes, so drop them back in
+					xhtml = regex.sub(r"<ol>.*</ol>", processed_endnotes, xhtml, flags=regex.IGNORECASE | regex.DOTALL)
+
+					file.seek(0)
+					file.write(xhtml)
+					file.truncate()
 
 				# While Kindle now supports soft hyphens, popup endnotes break words but don't insert the hyphen characters.  So for now, remove soft hyphens from the endnotes file.
 				with open(os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml"), "r+", encoding="utf-8") as file:
