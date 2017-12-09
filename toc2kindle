@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# IMPORTANT NOTE: This script is a legacy script.
+# It is called by `build`, but should be absorbed into `build` instead
+# of being a standalone script. Help wanted!
+
 import argparse
 import sys
 import regex
