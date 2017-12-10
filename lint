@@ -36,7 +36,7 @@ def main():
 		if args.verbose or (messages and len(args.directories) > 1):
 			print(colored(se_epub.directory, "white", attrs=["reverse"]))
 
-		#Print the table
+		# Print the table
 		if messages:
 			for message in messages:
 				if message.is_submessage:

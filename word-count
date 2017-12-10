@@ -39,19 +39,19 @@ def main():
 				se.print_error("Couldn't open file: {}".format(filename))
 				exit(1)
 
-			#This removes HTML tags
+			# This removes HTML tags
 			text = soup.body.get_text()
 
-			#Replace some formatting characters
+			# Replace some formatting characters
 			text = regex.sub(r"[…–—― ‘’“”\{\}\(\)]", " ", text, flags=regex.IGNORECASE | regex.DOTALL)
 
-			#Remove word-connecting dashes, apostrophes, commas, and slashes (and/or), they count as a word boundry but they shouldn't
+			# Remove word-connecting dashes, apostrophes, commas, and slashes (and/or), they count as a word boundry but they shouldn't
 			text = regex.sub(r"[a-z0-9][\-\'\,\.\/][a-z0-9]", "aa", text, flags=regex.IGNORECASE | regex.DOTALL)
 
-			#Replace sequential spaces with one space
+			# Replace sequential spaces with one space
 			text = regex.sub(r"\s+", " ", text, flags=regex.IGNORECASE | regex.DOTALL)
 
-			#Get the word count
+			# Get the word count
 			word_count = len(regex.findall(r"\b\w+\b", text, flags=regex.IGNORECASE | regex.DOTALL))
 
 			word_count_sum += word_count

@@ -20,7 +20,7 @@ def main():
 	chapter_number = 1
 	chapter_xhtml = ""
 
-	#Remove leading split tags
+	# Remove leading split tags
 	xhtml = regex.sub(r"^\s*<\!--se:split-->", "", xhtml)
 
 	for line in xhtml.splitlines():

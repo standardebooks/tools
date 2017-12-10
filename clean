@@ -16,14 +16,14 @@ def main():
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML or SVG file, or a directory containing XHTML or SVG files")
 	args = parser.parse_args()
 
-	#Check for required utilities
+	# Check for required utilities
 	xmllint_path = shutil.which("xmllint")
 
 	if xmllint_path is None:
 		se.print_error("Couldn't locate xmllint. Is it installed?")
 		exit(1)
 
-	#Tell xmllint to indent with tabs using an environmental variable
+	# Tell xmllint to indent with tabs using an environmental variable
 	env = os.environ.copy()
 	env["XMLLINT_INDENT"] = "\t"
 
@@ -44,7 +44,7 @@ def main():
 				target_filenames.add(target)
 
 		for filename in target_filenames:
-			#If we're cleaning a directory and setting single lines, skip the colophon, which has special spacing
+			# If we're cleaning a directory and setting single lines, skip the colophon, which has special spacing
 			if args.single_lines and filename.endswith("colophon.xhtml") and os.path.isdir(target):
 				continue
 
@@ -56,15 +56,15 @@ def main():
 					processed_xhtml = processed_xhtml.replace("\n", " ")
 					processed_xhtml = regex.sub(r"\s+", " ", processed_xhtml)
 
-				#Epub3 doesn't allow named entities, so convert them to their unicode equivalents
-				#But, don't unescape the content.opf long-description accidentally
+				# Epub3 doesn't allow named entities, so convert them to their unicode equivalents
+				# But, don't unescape the content.opf long-description accidentally
 				if not filename.endswith("content.opf"):
 					processed_xhtml = html.unescape(processed_xhtml).replace("&", "&amp;")
 
-				#Remove unnecessary doctypes which can cause xmllint to hang
+				# Remove unnecessary doctypes which can cause xmllint to hang
 				processed_xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", processed_xhtml, flags=regex.MULTILINE | regex.DOTALL)
 
-				#First, canonicalize XHTML
+				# First, canonicalize XHTML
 				result = subprocess.run([xmllint_path, "--c14n", "-"], input=processed_xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 				processed_xhtml = result.stdout.decode()
 				error = result.stderr.decode().strip()
@@ -73,10 +73,10 @@ def main():
 					se.print_error("Couldn't parse {}; files must be in XHTML format, which is not the same as HTML\n{}".format(filename, error.replace("-:", "Line ")))
 					exit(1)
 
-				#Next, add the XML header that xmllint stripped during c14n
+				# Next, add the XML header that xmllint stripped during c14n
 				processed_xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + processed_xhtml
 
-				#Next, pretty-print XML
+				# Next, pretty-print XML
 				processed_xhtml = subprocess.run([xmllint_path, "--format", "-"], input=processed_xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env).stdout.decode()
 
 				if processed_xhtml != xhtml:

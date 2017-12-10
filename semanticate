@@ -33,7 +33,7 @@ def main():
 				xhtml = file.read()
 				processed_xhtml = xhtml
 
-				#Some common abbreviations
+				# Some common abbreviations
 				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Mr\.", r"<abbr>Mr.</abbr>", processed_xhtml)
 				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Mrs\.", r"<abbr>Mrs.</abbr>", processed_xhtml)
 				processed_xhtml = regex.sub(r"(?<!\<abbr\>)Ms\.", r"<abbr>Ms.</abbr>", processed_xhtml)
@@ -77,21 +77,21 @@ def main():
 				processed_xhtml = regex.sub(r"""(?<!\<abbr class="era"\>)B\.?C""", r"""<abbr class="era">BC</abbr>""", processed_xhtml)
 				processed_xhtml = regex.sub(r"""(?<!\<abbr class="time"\>)([ap])\.\s?m\.""", r"""<abbr class="time">\1.m.</abbr>""", processed_xhtml)
 
-				#Guess at adding eoc class
+				# Guess at adding eoc class
 				processed_xhtml = regex.sub(r"""<abbr>([a-zA-Z\.]+?\.)</abbr></p>""", r"""<abbr class="eoc">\1</abbr></p>""", processed_xhtml)
 				processed_xhtml = regex.sub(r"""<abbr>etc\.</abbr>(\s+[A-Z])""", r"""<abbr class="eoc">etc.</abbr>\1""", processed_xhtml)
 
-				#Clean up nesting errors
+				# Clean up nesting errors
 				processed_xhtml = regex.sub(r"""<abbr class="eoc"><abbr>([^<]+)</abbr></abbr>""", r"""<abbr class="eoc">\1</abbr>""", processed_xhtml)
 
-				#Get Roman numerals >= 2 characters
-				#We only wrap these if they're standalone (i.e. not already wrapped in a tag) to prevent recursion in multiple runs
+				# Get Roman numerals >= 2 characters
+				# We only wrap these if they're standalone (i.e. not already wrapped in a tag) to prevent recursion in multiple runs
 				processed_xhtml = regex.sub(r"([^a-zA-Z>])([ixvIXV]{2,})(\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""", processed_xhtml)
 
-				#Get Roman numerals that are X or V and single characters.  We can't do I for obvious reasons.
+				# Get Roman numerals that are X or V and single characters.  We can't do I for obvious reasons.
 				processed_xhtml = regex.sub(r"""([^a-zA-Z>\"])([vxVX])(\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", processed_xhtml)
 
-				#We may have added HTML tags within title tags.  Remove those here
+				# We may have added HTML tags within title tags.  Remove those here
 				soup = BeautifulSoup(processed_xhtml, "lxml")
 				processed_xhtml = regex.sub(r"<title>.+?</title>", "<title>" +  soup.title.text + "</title>", processed_xhtml)
 

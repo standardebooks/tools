@@ -7,64 +7,6 @@ import regex
 import se
 
 
-DICTIONARY_FILE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data", "words")
-
-
-def main():
-	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace \"ash-tray\" with \"ashtray\".")
-	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("-n", "--no-hyphens", dest="modernize_hyphenation", action="store_false", help="don't modernize hyphenation")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
-	args = parser.parse_args()
-
-	try:
-		dictionary = set(line.strip().lower() for line in open(DICTIONARY_FILE_PATH))
-	except Exception:
-		se.print_error("Couldn't open words file at {}".format(DICTIONARY_FILE_PATH))
-		exit(1)
-
-	for target in args.targets:
-		target = os.path.abspath(target)
-
-		if args.verbose:
-			print("Processing {} ...".format(target), end="", flush=True)
-
-		target_filenames = set()
-		if os.path.isdir(target):
-			for root, _, filenames in os.walk(target):
-				for filename in fnmatch.filter(filenames, "*.xhtml"):
-					target_filenames.add(os.path.join(root, filename))
-		else:
-			target_filenames.add(target)
-
-
-		for filename in target_filenames:
-			with open(filename, "r+", encoding="utf-8") as file:
-				xhtml = file.read()
-				new_xhtml = xhtml
-
-				# What language are we using?
-				language = regex.search(r"<html[^>]+?xml:lang=\"([^\"]+)\"", xhtml)
-				if language is None or (language.group(1) != "en-US" and language.group(1) != "en-GB"):
-					if args.verbose:
-						print("\n\t", end="", flush=True)
-					se.print_error("No valid xml:lang attribute in <html> root.  Only en-US and en-GB are supported. File: {}".format(filename))
-					exit(1)
-
-				new_xhtml = modernize_spelling(new_xhtml, language.group(1))
-
-				if args.modernize_hyphenation:
-					new_xhtml = modernize_hyphenation(new_xhtml, dictionary)
-
-				if new_xhtml != xhtml:
-					file.seek(0)
-					file.write(new_xhtml)
-					file.truncate()
-
-		if args.verbose:
-			print(" OK")
-
-
 def modernize_hyphenation(xhtml, dictionary):
 	# Easy fix for a common case
 	xhtml = regex.sub(r"\b([Nn])ow-a-days\b", r"\1owadays", xhtml)			# now-a-days -> nowadays
@@ -86,12 +28,11 @@ def modernize_hyphenation(xhtml, dictionary):
 
 	return xhtml
 
-
 def modernize_spelling(xhtml, language):
 	# ADDING NEW WORDS TO THIS LIST:
 	# A good way to check if a word is "archaic" is to do a Google N-Gram search: https://books.google.com/ngrams/graph?case_insensitive=on&year_start=1800&year_end=2000&smoothing=3
 	# Remember that en-US and en-GB differ significantly, and just because a word might seem strange to you, doesn't mean it's not the common case in the other variant.
-	# If Google N-Gram shows that a word has declined significantly in usage in BOTH en-US and en-GB (or the SE editor makes an exception) then it may be a good candidate to add to this list.
+	# If Google N-Gram shows that a word has declined significantly in usage in BOTH en-US and en-GB (or the SE editor-in-chief makes an exception) then it may be a good candidate to add to this list.
 
 	xhtml = regex.sub(r"\b([Dd])evelope\b", r"\1evelop", xhtml)			# develope -> develop
 	xhtml = regex.sub(r"\b([Oo])ker\b", r"\1cher", xhtml)				# oker -> ocher
@@ -199,6 +140,62 @@ def modernize_spelling(xhtml, language):
 		xhtml = regex.sub(r"\b([Mm])anœuvre", r"\1anoeuvre", xhtml)
 
 	return xhtml
+
+def main():
+	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace \"ash-tray\" with \"ashtray\".")
+	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("-n", "--no-hyphens", dest="modernize_hyphenation", action="store_false", help="don't modernize hyphenation")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
+	args = parser.parse_args()
+
+	dictionary_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data", "words")
+
+	try:
+		dictionary = set(line.strip().lower() for line in open(dictionary_file_path))
+	except Exception:
+		se.print_error("Couldn't open words file at {}".format(dictionary_file_path))
+		exit(1)
+
+	for target in args.targets:
+		target = os.path.abspath(target)
+
+		if args.verbose:
+			print("Processing {} ...".format(target), end="", flush=True)
+
+		target_filenames = set()
+		if os.path.isdir(target):
+			for root, _, filenames in os.walk(target):
+				for filename in fnmatch.filter(filenames, "*.xhtml"):
+					target_filenames.add(os.path.join(root, filename))
+		else:
+			target_filenames.add(target)
+
+
+		for filename in target_filenames:
+			with open(filename, "r+", encoding="utf-8") as file:
+				xhtml = file.read()
+				new_xhtml = xhtml
+
+				# What language are we using?
+				language = regex.search(r"<html[^>]+?xml:lang=\"([^\"]+)\"", xhtml)
+				if language is None or (language.group(1) != "en-US" and language.group(1) != "en-GB"):
+					if args.verbose:
+						print("\n\t", end="", flush=True)
+					se.print_error("No valid xml:lang attribute in <html> root.  Only en-US and en-GB are supported. File: {}".format(filename))
+					exit(1)
+
+				new_xhtml = modernize_spelling(new_xhtml, language.group(1))
+
+				if args.modernize_hyphenation:
+					new_xhtml = modernize_hyphenation(new_xhtml, dictionary)
+
+				if new_xhtml != xhtml:
+					file.seek(0)
+					file.write(new_xhtml)
+					file.truncate()
+
+		if args.verbose:
+			print(" OK")
 
 
 if __name__ == "__main__":
