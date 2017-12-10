@@ -67,7 +67,7 @@ These instructions were tested on Mac OS X 10.12. Your mileage may vary. Correct
 
 Help and pull requests are welcomed!
 
-- Move some legacy scripts like `build-kobo` and `hyphenate` into appropriate libraries/scripts.
+- Move some legacy scripts like `hyphenate` into appropriate libraries/scripts.
 
 # Tool descriptions
 
@@ -86,10 +86,6 @@ Help and pull requests are welcomed!
 -	### `build-cover`
 
 	Build an ebook cover a Standard Ebook source directory and place the output in DIRECTORY/src/epub/images/.
-
--	### `build-kobo`
-
-	Convert files in a Standard Ebooks source directory to be Kobo-compatible.
 
 -	### `clean`
 
