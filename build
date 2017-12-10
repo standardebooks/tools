@@ -118,6 +118,46 @@ def add_kobo_spans_to_node(node):
 		node.tail = None
 	return node
 
+# For simplifying tags
+def namespace_to_class(selector):
+	# First, remove periods from epub:type.  We can't remove periods in the entire selector because there might be class selectors involved
+	epub_type = regex.search(r"\"[^\"]+?\"", selector).group()
+	if epub_type:
+		selector = selector.replace(epub_type, epub_type.replace(".", "-"))
+
+	# Now clean things up
+	return selector.replace(":", "-").replace("|", "-").replace("~=", "-").replace("[", ".").replace("]", "").replace("\"", "")
+
+# For simplifying tags
+def simplify_css(css):
+	# First we replace :first-child selectors with a first-child class, since ADE doesn't handle them
+	# Currently this replacement isn't perfect, because occasionally lxml generates an xpath expression
+	# from the css selector that lxml itself can't evaluate, even though the `xpath` binary can!
+	# We don't *replace* the selector, we *add* it, because lxml has problems selecting first-child sometimes
+	css = regex.sub(r"((.+)\:first\-child(.*))", "\\2.first-child\\3,\n\\1", css)
+	css = css.replace("{,", ",")
+	css = css.replace(",,", ",")
+
+	# Now replace abbr styles with spans, because ADE screws up with unrecognized elements
+	css = css.replace("abbr", "span")
+
+	# Replace shorthand CSS with longhand properties, another ADE screwup
+	css = regex.sub(r"margin:\s*([^\s]+?)\s*;", "margin-top: \\1;\n\tmargin-right: \\1;\n\tmargin-bottom: \\1;\n\tmargin-left: \\1;", css)
+	css = regex.sub(r"margin:\s*([^\s]+?)\s+([^\s]+?)\s*;", "margin-top: \\1;\n\tmargin-right: \\2;\n\tmargin-bottom: \\1;\n\tmargin-left: \\2;", css)
+	css = regex.sub(r"margin:\s*([^\s]+?)\s+([^\s]+?)\s+([^\s]+?)\s*;", "margin-top: \\1;\n\tmargin-right: \\2;\n\tmargin-bottom: \\3;\n\tmargin-left: \\2;", css)
+	css = regex.sub(r"margin:\s*([^\s]+?)\s+([^\s]+?)\s+([^\s]+?)\s+([^\s]+?)\s*;", "margin-top: \\1;\n\tmargin-right: \\2;\n\tmargin-bottom: \\3;\n\tmargin-left: \\4;", css)
+
+	# Replace some more poorly-supported CSS attributes
+	css = css.replace("all-small-caps;", "small-caps;\n\ttext-transform: lowercase;")
+
+	# Replace CSS namespace selectors with classes
+	# For example, p[epub|type~="z3998:salutation"] becomes p.epub-type-z3998-salutation
+	for line in regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", css):
+		fixed_line = namespace_to_class(line)
+		css = css.replace(line, fixed_line)
+
+	return css
+
 def main():
 	parser = argparse.ArgumentParser(description="Build compatible .epub and pure .epub3 ebooks from a Standard Ebook source directory.  Output is placed in the current directory, or the target directory with --output-dir.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
@@ -141,7 +181,6 @@ def main():
 				'ebook-convert')
 	rsvg_convert_path = shutil.which("rsvg-convert")
 	convert_path = shutil.which("convert")
-	simplify_tags_path = os.path.join(script_directory, "simplify-tags")
 	clean_path = os.path.join(script_directory, "clean")
 	hyphenate_path = os.path.join(script_directory, "hyphenate")
 	update_asin_path = os.path.join(script_directory, "update-asin")
@@ -266,11 +305,134 @@ def main():
 			with open(os.path.join(script_directory, "templates", "compatibility.css"), "r", encoding="utf-8") as compatibility_css_file:
 				core_css_file.write(compatibility_css_file.read())
 
-		# Simplify tags
-		output = subprocess.run([simplify_tags_path, work_epub_root_directory], stdout=subprocess.PIPE).stdout.decode().strip()
-		if output:
-			print("{}Error: simplify-tags failed with: {}".format("\t" if args.verbose else "", output), file=sys.stderr)
-			exit(1)
+		# Simplify CSS and tags
+		total_css = ""
+
+		# Simplify the CSS first.  Later we'll update the document to match our simplified selectors.
+		# While we're doing this, we store the original css into a single variable so we can extract the original selectors later.
+		for root, _, filenames in os.walk(work_epub_root_directory):
+			for filename in fnmatch.filter(filenames, "*.css"):
+				with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+					css = file.read()
+
+					# Before we do anything, we process a special case in core.css
+					if "core.css" in filename:
+						css = regex.sub(r"abbr{.+?}", "", css, flags=regex.MULTILINE | regex.DOTALL)
+
+					total_css = total_css + css + "\n"
+					file.seek(0)
+					file.write(simplify_css(css))
+					file.truncate()
+
+		# Now get a list of original selectors
+		# Remove CSS rules
+		total_css = regex.sub(r"{[^}]+}", "", total_css, flags=regex.MULTILINE)
+
+		# Remove trailing commas
+		total_css = regex.sub(r",", "", total_css)
+
+		# Remove comments
+		total_css = regex.sub(r"/\*.+?\*/", "", total_css, flags=regex.DOTALL)
+
+		# Remove @ defines
+		total_css = regex.sub(r"^@.+", "", total_css, flags=regex.MULTILINE)
+
+		# Construct a dictionary of the original selectors
+		selectors = set([line for line in total_css.splitlines() if line != ""])
+
+		# Get a list of .xhtml files to simplify
+		for root, _, filenames in os.walk(work_epub_root_directory):
+			for filename in fnmatch.filter(filenames, "*.xhtml"):
+				# Don't mess with the ToC, since if we have ol/li > first-child selectors we could screw it up
+				if filename == "toc.xhtml":
+					continue
+
+				with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+					# We have to remove the default namespace declaration from our document, otherwise
+					# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
+					xhtml = file.read().replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
+					processed_xhtml = xhtml
+					tree = etree.fromstring(str.encode(xhtml))
+
+					# Now iterate over each CSS selector and see if it's used in any of the files we found
+					for selector in selectors:
+						try:
+							sel = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces=se.XHTML_NAMESPACES)
+						except lxml.cssselect.ExpressionError:
+							# This gets thrown if we use pseudo-elements, which lxml doesn't support
+							continue
+
+						# Add a "first-child" class to elements that match any :first-child selectors
+						if ":first-child" in selector:
+							for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
+								current_class = element.get("class")
+								if current_class is not None and "first-child" not in current_class:
+									current_class = current_class + " first-child"
+								else:
+									current_class = "first-child"
+
+								element.set("class", current_class)
+
+						# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
+						if "[epub|type" in selector:
+							for namespace_selector in regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", selector):
+								sel = lxml.cssselect.CSSSelector(namespace_selector, translator="xhtml", namespaces=se.XHTML_NAMESPACES)
+
+								for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
+									new_class = regex.sub(r"^\.", "", namespace_to_class(namespace_selector))
+									current_class = element.get("class", "")
+
+									if new_class not in current_class:
+										current_class = "{} {}".format(current_class, new_class).strip()
+										element.set("class", current_class)
+
+					processed_xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print=True)
+
+					# We do this round in a second pass because if we modify the tree like this, it screws up how lxml does processing later.
+					# If it's all done in one pass, we wind up in a race condition where some elements are fixed and some not
+					tree = etree.fromstring(str.encode(processed_xhtml))
+
+					for selector in selectors:
+						try:
+							sel = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces=se.XHTML_NAMESPACES)
+						except lxml.cssselect.ExpressionError:
+							# This gets thrown if we use pseudo-elements, which lxml doesn't support
+							continue
+
+						# Convert <abbr> to <span>
+						if "abbr" in selector:
+							for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
+								# Why would you want the tail to output by default?!?
+								raw_string = etree.tostring(element, encoding=str, with_tail=False)
+
+								# lxml--crap as usual--includes a bunch of namespace information in every element we print.
+								# Remove it heregex.
+								raw_string = raw_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
+								raw_string = raw_string.replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "")
+
+								# Now lxml doesn't let us modify the tree, so we just do a straight up regex replace to turn this into a span
+								processed_string = raw_string.replace("<abbr", "<span")
+								processed_string = processed_string.replace("</abbr", "</span")
+
+								# Now we have a nice, fixed string.  But, since lxml can't replace elements, we write it ourselves.
+								processed_xhtml = processed_xhtml.replace(raw_string, processed_string)
+
+								tree = etree.fromstring(str.encode(processed_xhtml))
+
+					# Now we just remove all stray abbr tags that were not styled by CSS
+					processed_xhtml = regex.sub(r"</?abbr[^>]*?>", "", processed_xhtml)
+
+					# Remove datetime="" attribute in <time> tags, which is not always understood by epubcheck
+					processed_xhtml = regex.sub(r" datetime=\"[^\"]+?\"", "", processed_xhtml)
+
+					tree = etree.fromstring(str.encode(processed_xhtml))
+
+					if processed_xhtml != xhtml:
+						file.seek(0)
+						file.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print=True).replace("<html", "<html xmlns=\"http://www.w3.org/1999/xhtml\""))
+						file.truncate()
+
+		# Done simplifying CSS and tags!
 
 		# Extract cover and cover thumbnail
 		# `convert` reports the svg as the wrong size, so we have to force the size.
