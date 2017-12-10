@@ -41,6 +41,7 @@ class SeEpub:
 		self.directory = os.path.abspath(directory)
 		self.__tools_root_directory = os.path.abspath(tools_root_directory)
 
+	# Used in lint()
 	def __get_malformed_urls(self, xhtml):
 		messages = []
 
@@ -78,6 +79,7 @@ class SeEpub:
 
 		return messages
 
+	# Used in lint(); merge directly into lint()?
 	def __get_unused_selectors(self):
 		try:
 			with open(os.path.join(self.directory, "src", "epub", "css", "local.css"), encoding="utf-8") as file:
@@ -131,6 +133,39 @@ class SeEpub:
 						break
 
 		return unused_selectors
+
+	# Used in recompose()
+	def __new_bs4_tag(self, section, output_soup):
+		tag = output_soup.new_tag(section.name)
+		for name, value in section.attrs.items():
+			tag.attrs[name] = value
+
+		return tag
+
+	# Used in recompose()
+	def __recompose_xhtml(self, section, output_soup):
+		# Quick sanity check before we begin
+		if "id" not in section.attrs or (section.parent.name.lower() != "body" and "id" not in section.parent.attrs):
+			raise se.SeError("Section without ID attribute")
+
+		# Try to find our parent tag in the output, by ID.
+		# If it's not in the output, then append it to the tag's closest parent by ID (or <body>), then iterate over its children and do the same.
+		existing_section = output_soup.select("#" + section["id"])
+		if not existing_section:
+			if(section.parent.name.lower() == "body"):
+				output_soup.body.append(self.__new_bs4_tag(section, output_soup))
+			else:
+				output_soup.select("#" + section.parent["id"])[0].append(self.__new_bs4_tag(section, output_soup))
+
+			existing_section = output_soup.select("#" + section["id"])
+
+		for child in section.children:
+			if not isinstance(child, str):
+				tag_name = child.name.lower()
+				if tag_name == "section" or tag_name == "article":
+					self.__recompose_xhtml(child, output_soup)
+				else:
+					existing_section[0].append(child)
 
 	def recompose(self):
 		clean_path = os.path.join(self.__tools_root_directory, "clean")
@@ -212,37 +247,6 @@ class SeEpub:
 		os.remove(file_name_xhtml)
 
 		return xhtml
-
-	def __new_bs4_tag(self, section, output_soup):
-		tag = output_soup.new_tag(section.name)
-		for name, value in section.attrs.items():
-			tag.attrs[name] = value
-
-		return tag
-
-	def __recompose_xhtml(self, section, output_soup):
-		# Quick sanity check before we begin
-		if "id" not in section.attrs or (section.parent.name.lower() != "body" and "id" not in section.parent.attrs):
-			raise se.SeError("Section without ID attribute")
-
-		# Try to find our parent tag in the output, by ID.
-		# If it's not in the output, then append it to the tag's closest parent by ID (or <body>), then iterate over its children and do the same.
-		existing_section = output_soup.select("#" + section["id"])
-		if not existing_section:
-			if(section.parent.name.lower() == "body"):
-				output_soup.body.append(self.__new_bs4_tag(section, output_soup))
-			else:
-				output_soup.select("#" + section.parent["id"])[0].append(self.__new_bs4_tag(section, output_soup))
-
-			existing_section = output_soup.select("#" + section["id"])
-
-		for child in section.children:
-			if not isinstance(child, str):
-				tag_name = child.name.lower()
-				if tag_name == "section" or tag_name == "article":
-					self.__recompose_xhtml(child, output_soup)
-				else:
-					existing_section[0].append(child)
 
 	def generate_manifest(self):
 		manifest = []

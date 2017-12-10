@@ -12,23 +12,23 @@ import os
 import fnmatch
 from copy import deepcopy
 import lxml.etree as etree
+import se
 
 paragraph_counter = 1
 segment_counter = 1
-XHTML_NAMESPACES = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "z3998": "http://www.daisy.org/z3998/2012/vocab/structure/", "se": "https://standardebooks.org/vocab/1.0"}
 
 def append_kobo_spans_from_text(node, text):
 	global paragraph_counter
 	global segment_counter
 
 	if text is not None:
-		# if text is only whitespace, don't add spans
+		# If text is only whitespace, don't add spans
 		if regex.match(r"^\s+$", text, flags=regex.MULTILINE):
 			return False
 		else:
-			# split text in sentences
+			# Split text in sentences
 			groups = regex.split(r'(.*?[\.\!\?\:][\'"\u201d\u2019]?\s*)', text, flags=regex.MULTILINE)
-			# remove empty strings resulting from split()
+			# Remove empty strings resulting from split()
 			groups = [g for g in groups if g != ""]
 
 			# To match Kobo KePubs, the trailing whitespace needs to be
@@ -47,7 +47,7 @@ def add_kobo_spans_to_node(node):
 	global paragraph_counter
 	global segment_counter
 
-	# process node only if it is not a comment or a processing instruction
+	# Process node only if it is not a comment or a processing instruction
 	if not (node is None or isinstance(node, etree._Comment) or isinstance(node, etree._ProcessingInstruction)):
 		# Special case: <img> tags
 		special_tag_match = regex.search(r'^(?:\{[^\}]+\})?(\w+)$', node.tag)
@@ -56,38 +56,38 @@ def add_kobo_spans_to_node(node):
 			span.append(node)
 			return span
 
-		# save node content for later
+		# Save node content for later
 		nodetext = node.text
 		nodechildren = deepcopy(node.getchildren())
 		nodeattrs = {}
 		for key in node.keys():
 			nodeattrs[key] = node.get(key)
 
-		# reset current node, to start from scratch
+		# Reset current node, to start from scratch
 		node.clear()
 
-		# restore node attributes
+		# Restore node attributes
 		for key in nodeattrs.keys():
 			node.set(key, nodeattrs[key])
 
-		# the node text is converted to spans
+		# The node text is converted to spans
 		if nodetext is not None:
 			if not append_kobo_spans_from_text(node, nodetext):
 				# didn't add spans, restore text
 				node.text = nodetext
 
-		# re-add the node children
+		# Re-add the node children
 		for child in nodechildren:
-			# save child tail for later
+			# Save child tail for later
 			childtail = child.tail
 			child.tail = None
 			node.append(add_kobo_spans_to_node(child))
-			# the child tail is converted to spans
+			# The child tail is converted to spans
 			if childtail is not None:
 				paragraph_counter += 1
 				segment_counter = 1
 				if not append_kobo_spans_from_text(node, childtail):
-					# didn't add spans, restore tail on last child
+					# Didn't add spans, restore tail on last child
 					paragraph_counter -= 1
 					node[-1].tail = childtail
 
@@ -122,21 +122,21 @@ def main():
 				paragraph_counter = 1
 				segment_counter = 1
 
-				#Don't add spans to the ToC
+				# Don't add spans to the ToC
 				if filename == "toc.xhtml":
 					continue
 
 				with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
 					xhtml = file.read()
-					#Kobos don't have fonts that support the ↩ character in endnotes, so replace it with «
+					# Kobos don't have fonts that support the ↩ character in endnotes, so replace it with «
 					if filename == "endnotes.xhtml":
 						xhtml = regex.sub(r"epub:type=\"se:referrer\">↩</a>", "epub:type=\"se:referrer\">«</a>", xhtml)
 
-					#We have to remove the default namespace declaration from our document, otherwise
-					#xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
+					# We have to remove the default namespace declaration from our document, otherwise
+					# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 					tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 
-					add_kobo_spans_to_node(tree.xpath("./body", namespaces=XHTML_NAMESPACES)[0])
+					add_kobo_spans_to_node(tree.xpath("./body", namespaces=se.XHTML_NAMESPACES)[0])
 
 					xhtml = etree.tostring(tree, encoding="unicode", pretty_print=True, with_tail=False)
 					xhtml = regex.sub(r"<html:span", "<span", xhtml)
