@@ -167,10 +167,6 @@ Help and pull requests are welcomed!
 
 	Display Unicode code points, descriptions, and links to more details for each character in a string.  Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.
 
--	### `update-asin`
-
-	Change the ASIN of a mobi/azw3 file.
-
 -	### `word-count`
 
 	Count the number of words in an HTML file and optionally categorize by length.
