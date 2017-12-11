@@ -276,6 +276,9 @@ class SeEpub:
 		# Add XHTML files
 		for root, _, filenames in os.walk(os.path.join(self.directory, "src", "epub", "text")):
 			for filename in filenames:
+				if filename.startswith("."):
+					continue
+
 				properties = ""
 
 				with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
