@@ -3,10 +3,10 @@
 import os
 import filecmp
 import glob
-import regex
 import html
 import tempfile
 import subprocess
+import regex
 import se
 import se.formatting
 import roman
@@ -41,8 +41,11 @@ class SeEpub:
 		self.directory = os.path.abspath(directory)
 		self.__tools_root_directory = os.path.abspath(tools_root_directory)
 
-	# Used in lint()
 	def __get_malformed_urls(self, xhtml):
+		"""
+		Used in lint()
+		"""
+
 		messages = []
 
 		# Check for non-https URLs
@@ -79,8 +82,11 @@ class SeEpub:
 
 		return messages
 
-	# Used in lint(); merge directly into lint()?
 	def __get_unused_selectors(self):
+		"""
+		Used in lint(); merge directly into lint()?
+		"""
+
 		try:
 			with open(os.path.join(self.directory, "src", "epub", "css", "local.css"), encoding="utf-8") as file:
 				css = file.read()
@@ -134,16 +140,22 @@ class SeEpub:
 
 		return unused_selectors
 
-	# Used in recompose()
 	def __new_bs4_tag(self, section, output_soup):
+		"""
+		Used in recompose()
+		"""
+
 		tag = output_soup.new_tag(section.name)
 		for name, value in section.attrs.items():
 			tag.attrs[name] = value
 
 		return tag
 
-	# Used in recompose()
 	def __recompose_xhtml(self, section, output_soup):
+		"""
+		Used in recompose()
+		"""
+
 		# Quick sanity check before we begin
 		if "id" not in section.attrs or (section.parent.name.lower() != "body" and "id" not in section.parent.attrs):
 			raise se.SeError("Section without ID attribute")
@@ -152,7 +164,7 @@ class SeEpub:
 		# If it's not in the output, then append it to the tag's closest parent by ID (or <body>), then iterate over its children and do the same.
 		existing_section = output_soup.select("#" + section["id"])
 		if not existing_section:
-			if(section.parent.name.lower() == "body"):
+			if section.parent.name.lower() == "body":
 				output_soup.body.append(self.__new_bs4_tag(section, output_soup))
 			else:
 				output_soup.select("#" + section.parent["id"])[0].append(self.__new_bs4_tag(section, output_soup))
@@ -168,6 +180,12 @@ class SeEpub:
 					existing_section[0].append(child)
 
 	def recompose(self):
+		"""
+		Iterate over the XHTML files in this epub and
+		"recompose" them into a single HTML5 string representing
+		this ebook.
+		"""
+
 		clean_path = os.path.join(self.__tools_root_directory, "clean")
 
 		# Get the ordered list of spine items
@@ -208,14 +226,14 @@ class SeEpub:
 		output_xhtml = regex.sub(r"\"(\.\./)?text/.+?\.xhtml#(.+?)\"", "\"#\\2\"", output_xhtml)
 
 		# Replace SVG images hrefs with inline SVG
-		for match in regex.findall("src=\"../images/(.+?)\.svg\"", output_xhtml):
+		for match in regex.findall(r"src=\"../images/(.+?)\.svg\"", output_xhtml):
 			with open(os.path.join(self.directory, "src", "epub", "images", match + ".svg")) as file:
 				svg = file.read()
 
 				# Remove XML declaration
-				svg = regex.sub("<\?xml.+?\?>", "", svg)
+				svg = regex.sub(r"<\?xml.+?\?>", "", svg)
 
-				output_xhtml = regex.sub("<img.+?src=\"../images/{}\\.svg\".*?>".format(match), svg, output_xhtml)
+				output_xhtml = regex.sub(r"<img.+?src=\"../images/{}\\.svg\".*?>".format(match), svg, output_xhtml)
 
 		with tempfile.NamedTemporaryFile(mode='w+', delete=False) as file:
 			file.write(output_xhtml)
@@ -249,6 +267,10 @@ class SeEpub:
 		return xhtml
 
 	def generate_manifest(self):
+		"""
+		Return the <manifest> element for this ebook.
+		"""
+
 		manifest = []
 
 		# Add CSS
@@ -301,6 +323,12 @@ class SeEpub:
 		return manifest_xhtml
 
 	def generate_spine(self):
+		"""
+		Return the <spine> element of this ebook, with
+		a best guess as to the correct order.
+		Manual review is required.
+		"""
+
 		excluded_files = se.IGNORED_FILENAMES + ["dedication.xhtml", "introduction.xhtml", "foreword.xhtml", "preface.xhtml", "epigraph.xhtml", "endnotes.xhtml"]
 		spine = ["<itemref idref=\"titlepage.xhtml\"/>", "<itemref idref=\"imprint.xhtml\"/>"]
 
@@ -346,6 +374,10 @@ class SeEpub:
 		return spine_xhtml
 
 	def lint(self):
+		"""
+		Check this ebook for some common SE style errors.
+		"""
+
 		messages = []
 
 		license_file_path = os.path.join(self.__tools_root_directory, "templates", "LICENSE.md")
