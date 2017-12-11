@@ -276,6 +276,7 @@ class SeEpub:
 		# Add XHTML files
 		for root, _, filenames in os.walk(os.path.join(self.directory, "src", "epub", "text")):
 			for filename in filenames:
+				# Skip dotfiles, because .DS_Store might be binary and then we'd crash when we try to read it below
 				if filename.startswith("."):
 					continue
 
