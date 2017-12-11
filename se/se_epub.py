@@ -349,6 +349,7 @@ class SeEpub:
 		messages = []
 
 		license_file_path = os.path.join(self.__tools_root_directory, "templates", "LICENSE.md")
+		gitignore_file_path = os.path.join(self.__tools_root_directory, "templates", "gitignore")
 		core_css_file_path = os.path.join(self.__tools_root_directory, "templates", "core.css")
 		logo_svg_file_path = os.path.join(self.__tools_root_directory, "templates", "logo.svg")
 		uncopyright_file_path = os.path.join(self.__tools_root_directory, "templates", "uncopyright.xhtml")
@@ -473,6 +474,7 @@ class SeEpub:
 		if not filecmp.cmp(uncopyright_file_path, os.path.join(self.directory, "src", "epub", "text", "uncopyright.xhtml")):
 			messages.append(LintMessage("uncopyright.xhtml does not match {}".format(uncopyright_file_path), se.MESSAGE_TYPE_ERROR, "uncopyright.xhtml"))
 
+
 		# Check for unused selectors
 		unused_selectors = self.__get_unused_selectors()
 		if unused_selectors:
@@ -487,8 +489,15 @@ class SeEpub:
 					continue
 
 				if filename.startswith(".") or filename.startswith("README"):
-					messages.append(LintMessage("Illegal {} file detected in {}".format(filename, root), se.MESSAGE_TYPE_ERROR))
-					continue
+					if filename == ".gitignore":
+						# .gitignore is optional, because our standard gitignore ignores itself.
+						# So if it's present, it must match our template.
+						if not filecmp.cmp(gitignore_file_path, os.path.join(self.directory, ".gitignore")):
+							messages.append(LintMessage(".gitignore does not match {}".format(gitignore_file_path), se.MESSAGE_TYPE_ERROR, ".gitignore"))
+							continue
+					else:
+						messages.append(LintMessage("Illegal {} file detected in {}".format(filename, root), se.MESSAGE_TYPE_ERROR))
+						continue
 
 				with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
 					try:
