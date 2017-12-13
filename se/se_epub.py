@@ -387,6 +387,7 @@ class SeEpub:
 		uncopyright_file_path = os.path.join(self.__tools_root_directory, "templates", "uncopyright.xhtml")
 		has_halftitle = False
 		has_frontmatter = False
+		has_cover_source = False
 		xhtml_css_classes = []
 		headings = []
 
@@ -506,7 +507,6 @@ class SeEpub:
 		if not filecmp.cmp(uncopyright_file_path, os.path.join(self.directory, "src", "epub", "text", "uncopyright.xhtml")):
 			messages.append(LintMessage("uncopyright.xhtml does not match {}".format(uncopyright_file_path), se.MESSAGE_TYPE_ERROR, "uncopyright.xhtml"))
 
-
 		# Check for unused selectors
 		unused_selectors = self.__get_unused_selectors()
 		if unused_selectors:
@@ -517,6 +517,9 @@ class SeEpub:
 		# Now iterate over individual files for some checks
 		for root, _, filenames in os.walk(self.directory):
 			for filename in sorted(filenames, key=se.natural_sort_key):
+				if filename.startswith("cover.source."):
+					has_cover_source = True
+
 				if ".git/" in os.path.join(root, filename) or filename.endswith(tuple(se.BINARY_EXTENSIONS)):
 					continue
 
@@ -991,6 +994,9 @@ class SeEpub:
 
 		if has_frontmatter and not has_halftitle:
 			messages.append(LintMessage("Frontmatter found, but no halftitle. Halftitle is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+
+		if not has_cover_source:
+			messages.append(LintMessage("./images/cover.source.jpg not found", se.MESSAGE_TYPE_ERROR, "cover.source.jpg"))
 
 		xhtml_css_classes = list(set(xhtml_css_classes))
 		for css_class in xhtml_css_classes:
