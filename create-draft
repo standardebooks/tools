@@ -48,13 +48,13 @@ def main():
 	parser.add_argument("-i", "--illustrator", dest="illustrator", help="the illustrator of the ebook")
 	parser.add_argument("-r", "--translator", dest="translator", help="the translator of the ebook")
 	parser.add_argument("-p", "--gutenberg-ebook-url", dest="pg_url", help="the URL of the Project Gutenberg ebook to download")
-	parser.add_argument("-s", "--se", dest="init_se_repo", action="store_true", help="initialize a new repository on the Standard Ebook server")
-	parser.add_argument("-g", "--github", dest="init_github_repo", action="store_true", help="initialize a new repository at the Standard Ebooks GitHub account; can only be used when --se is specified")
+	parser.add_argument("-s", "--create-se-repo", dest="create_se_repo", action="store_true", help="initialize a new repository on the Standard Ebook server; Standard Ebooks admin powers required")
+	parser.add_argument("-g", "--create-github-repo", dest="create_github_repo", action="store_true", help="initialize a new repository at the Standard Ebooks GitHub account; Standard Ebooks admin powers required; can only be used when --create-se-repo is specified")
 	parser.add_argument("-e", "--email", dest="email", help="use this email address as the main committer for the local Git repository")
 	args = parser.parse_args()
 
-	if args.init_github_repo and not args.init_se_repo:
-		se.print_error("--github option specified, but --se option not specified.")
+	if args.create_github_repo and not args.create_se_repo:
+		se.print_error("--create-github-repo option specified, but --create-se-repo option not specified.")
 		exit(1)
 
 	if args.pg_url and not regex.match("^https?://www.gutenberg.org/ebooks/[0-9]+$", args.pg_url):
@@ -331,7 +331,7 @@ def main():
 			config.set_value("user", "email", args.email)
 
 	# Set up remote git repos
-	if args.init_se_repo:
+	if args.create_se_repo:
 		git_command = git.cmd.Git(repo_name)
 		git_command.remote("add", "origin", "standardebooks.org:/standardebooks.org/ebooks/{}.git".format(repo_name))
 
@@ -340,7 +340,7 @@ def main():
 		git_command.config("branch.master.merge", "refs/heads/master")
 
 		github_option = ""
-		if args.init_github_repo:
+		if args.create_github_repo:
 			github_option = "--github"
 
 		return_code = call(["ssh", "standardebooks.org", "/standardebooks.org/scripts/init-se-repo --repo-name={} --title-string=\"{}\" {}".format(repo_name, title_string, github_option)])
