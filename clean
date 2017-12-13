@@ -67,7 +67,11 @@ def main():
 				# First, canonicalize XHTML
 				result = subprocess.run([xmllint_path, "--c14n", "-"], input=processed_xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 				processed_xhtml = result.stdout.decode()
-				error = result.stderr.decode().strip()
+				try:
+					error = result.stderr.decode().strip()
+				except Exception:
+					se.print_error("Invalid encoding in file {}; UTF-8 expected".format(filename))
+					exit(1)
 
 				if error:
 					se.print_error("Couldn't parse {}; files must be in XHTML format, which is not the same as HTML\n{}".format(filename, error.replace("-:", "Line ")))
