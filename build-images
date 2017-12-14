@@ -21,13 +21,8 @@ def clean_inkscape_svg(filename, clean_path):
 		svg = regex.sub(r"<defs[^>]*?/>", "", svg, flags=regex.MULTILINE | regex.DOTALL)
 		svg = regex.sub(r"xmlns:(dc|cc|rdf)=\"[^\"]*?\"", "", svg, flags=regex.MULTILINE | regex.DOTALL)
 
-		# Inkscape includes font and letter-spacing info even though we've removed font information
-		svg = regex.sub(r"font-.+?:.+?([;\"])", "\\1", svg)
-		svg = regex.sub(r"text-anchor:.+?([;\"])", "\\1", svg)
-		svg = regex.sub(r"letter-spacing:.+?([;\"])", "\\1", svg)
-		svg = regex.sub(r";+", ";", svg)
-		svg = regex.sub(r" style=\";", " style=\"", svg)
-		svg = regex.sub(r" style=\"\"", "", svg)
+		# Inkscape includes CSS even though we've removed font information
+		svg = regex.sub(r" style=\".*?\"", "", svg)
 
 		file.seek(0)
 		file.write(svg)
@@ -113,15 +108,22 @@ def main():
 
 				# Embed cover.jpg
 				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
-					svg = file.read()
-
-					svg = regex.sub(r"xlink:href=\".*?cover\.jpg", "xlink:href=\"data:image/jpeg;base64," + source_cover_jpg_base64, svg, flags=regex.MULTILINE | regex.DOTALL)
+					svg = regex.sub(r"xlink:href=\".*?cover\.jpg", "xlink:href=\"data:image/jpeg;base64," + source_cover_jpg_base64, file.read(), flags=regex.MULTILINE | regex.DOTALL)
 
 					file.seek(0)
 					file.write(svg)
 					file.truncate()
 
 				clean_inkscape_svg(dest_cover_svg_filename, clean_path)
+
+				# For the cover we want to keep the path.title-box style, and add an additional
+				# style to color our new paths white
+				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
+					svg = regex.sub(r"<style.+?</style>", "<style type=\"text/css\">\n\t\tpath{\n\t\t\tfill: #fff;\n\t\t}\n\n\t\t.title-box{\n\t\t\tfill: #000;\n\t\t\tfill-opacity: .75;\n\t\t}\n\t</style>", file.read(), flags=regex.DOTALL)
+
+					file.seek(0)
+					file.write(svg)
+					file.truncate()
 
 				if args.verbose:
 					print(" OK")
@@ -142,6 +144,14 @@ def main():
 			subprocess.run([inkscape_path, source_titlepage_svg_filename, "--without-gui", "--export-text-to-path", "--export-plain-svg", dest_titlepage_svg_filename])
 
 			clean_inkscape_svg(dest_titlepage_svg_filename, clean_path)
+
+			# For the titlepage we want to remove all styles, since they are not used anymore
+			with open(dest_titlepage_svg_filename, "r+", encoding="utf-8") as file:
+				svg = regex.sub(r"<style.+?</style>[\n\t]+", "", file.read(), flags=regex.DOTALL)
+
+				file.seek(0)
+				file.write(svg)
+				file.truncate()
 
 			if args.verbose:
 				print(" OK")

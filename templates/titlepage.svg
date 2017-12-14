@@ -1,8 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1400 HEIGHT">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1400 590">
 	<title>The titlepage for the Standard Ebooks edition of TITLESTRING</title>
-	<text style="font-family:League Spartan;font-size:93.56725311px;letter-spacing:5px" text-anchor="middle" x="700" y="">TITLE LINE</text>
-	<text style="font-family:League Spartan;font-size:70.17543793px;letter-spacing:5px" text-anchor="middle" x="700" y="">AUTHOR LINE</text>
-	<text style="font-family:OFL Sorts Mill Goudy;font-size:42.5079689px;font-style:italic" text-anchor="middle" x="700" y="">CONTRIBUTOR DESCRIPTOR</text>
-	<text style="font-family:League Spartan;font-size:46.78362656px;letter-spacing:5px" text-anchor="middle" x="700" y="">CONTRIBUTOR LINE</text>
+	<style type="text/css">
+		text{
+			font-family: League Spartan;
+			letter-spacing: 5px;
+			text-anchor: middle;
+		}
+
+		.title{
+			font-size: 93.56725311px;
+		}
+
+		.author{
+			font-size: 70.17543793px;
+		}
+
+		.contributor-descriptor{
+			font-family: OFL Sorts Mill Goudy;
+			font-size: 42.5079689px;
+			font-style: italic;
+			letter-spacing: 0;
+		}
+
+		.contributor{
+			font-size: 46.78362656px;
+		}
+	</style>
+	<text class="title" x="700" y="130">TITLE LINE</text>
+	<text class="author" x="700" y="290">AUTHOR LINE</text>
+	<text class="contributor-descriptor" x="700" y="480">contributor descriptor</text>
+	<text class="contributor" x="700" y="540">CONTRIBUTOR LINE</text>
 </svg>

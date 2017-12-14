@@ -7,40 +7,47 @@ from subprocess import call
 import requests
 import git
 import regex
+import unicodedata
 import se
 import se.formatting
 import se.epub
 from bs4 import BeautifulSoup, UnicodeDammit
 
-def calculate_titlepage_lines(str, ratio):
-	canvas_width = se.TITLEPAGE_WIDTH - (se.TITLEPAGE_HORIZONTAL_PADDING * 2)
-	output_words = []
+
+def get_word_widths(str, target_height):
+	words = []
 	for word in reversed(str.split()):
 		width = 0
 
 		for char in word:
-			width += (se.LEAGUE_SPARTAN_80_WIDTHS[char] / ratio) + se.TITLEPAGE_KERNING + se.TITLEPAGE_AVERAGE_SPACING
+			# Convert accented characters to unaccented characters
+			char = regex.sub(r"\p{M}", "", unicodedata.normalize("NFKD", char))
+			width += (se.LEAGUE_SPARTAN_100_WIDTHS[char] * target_height / 100) + se.LEAGUE_SPARTAN_KERNING + se.LEAGUE_SPARTAN_AVERAGE_SPACING
 
-		width = width - se.TITLEPAGE_KERNING - se.TITLEPAGE_AVERAGE_SPACING
+		width = width - se.LEAGUE_SPARTAN_KERNING - se.LEAGUE_SPARTAN_AVERAGE_SPACING
 
-		output_words.append({"word": word, "width": width})
+		words.append({"word": word, "width": width})
 
+	return words
+
+def calculate_titlepage_lines(str, target_height, canvas_width):
+	words = get_word_widths(str, target_height)
 	lines = []
 	current_line = ""
 	current_width = 0
-	canvas_width = se.TITLEPAGE_WIDTH - (se.TITLEPAGE_HORIZONTAL_PADDING * 2)
-	for word in output_words:
+
+	for word in words:
 		if current_width == 0:
-			current_width = current_width + word["width"]
+			current_width = word["width"]
 		else:
-			current_width = current_width + (se.LEAGUE_SPARTAN_80_WIDTHS[" "] / ratio) + word["width"]
+			current_width = current_width + (se.LEAGUE_SPARTAN_100_WIDTHS[" "] * target_height / 100) + word["width"]
 
 		if current_width < canvas_width:
 			current_line = word["word"] + " " + current_line
 		else:
 			lines.append(current_line.strip())
 			current_line = word["word"]
-			current_width = 0
+			current_width = word["width"]
 
 	lines.append(current_line.strip())
 
@@ -60,6 +67,7 @@ def generate_titlepage_svg(title, authors, contributors, title_string, templates
 	"""
 
 	svg = ""
+	canvas_width = se.TITLEPAGE_WIDTH - (se.TITLEPAGE_HORIZONTAL_PADDING * 2)
 
 	if not isinstance(authors, list):
 		authors = [authors]
@@ -68,27 +76,21 @@ def generate_titlepage_svg(title, authors, contributors, title_string, templates
 	with open(os.path.join(templates_path, "titlepage.svg" ), "r", encoding="utf-8") as file:
 		svg = file.read()
 
-	# Store the template <text> elements for later use
-	title_line_html = regex.search(r"<text.+?>TITLE LINE", svg)[0].replace("TITLE LINE", "")
-	author_line_html = regex.search(r"<text.+?>AUTHOR LINE", svg)[0].replace("AUTHOR LINE", "")
-	contributor_descriptor_html = regex.search(r"<text.+?>CONTRIBUTOR DESCRIPTOR", svg)[0].replace("CONTRIBUTOR DESCRIPTOR", "")
-	contributor_line_html = regex.search(r"<text.+?>CONTRIBUTOR LINE", svg)[0].replace("CONTRIBUTOR LINE", "")
-
 	# Remove the template text elements from the SVG source, we'll write out to it later
 	svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
 
 	# Calculate the title lines
-	title_lines = calculate_titlepage_lines(title.upper(), 1)
+	title_lines = calculate_titlepage_lines(title.upper(), se.TITLEPAGE_TITLE_HEIGHT, canvas_width)
 
 	# Calculate the author lines
 	authors_lines = []
 	for author in authors:
-		authors_lines.append(calculate_titlepage_lines(author.upper(), se.TITLEPAGE_LEAGUE_SPARTAN_60_RATIO))
+		authors_lines.append(calculate_titlepage_lines(author.upper(), se.TITLEPAGE_AUTHOR_HEIGHT, canvas_width))
 
 	# Calculate the contributor lines
 	contributor_lines = []
 	for descriptor, contributor in contributors.items():
-		contributor_lines.append([descriptor, calculate_titlepage_lines(contributor.upper(), se.TITLEPAGE_LEAGUE_SPARTAN_40_RATIO)])
+		contributor_lines.append([descriptor, calculate_titlepage_lines(contributor.upper(), se.TITLEPAGE_CONTRIBUTOR_HEIGHT, canvas_width)])
 
 	# Construct the output
 	text_elements = ""
@@ -97,7 +99,7 @@ def generate_titlepage_svg(title, authors, contributors, title_string, templates
 	# Add the title
 	for line in title_lines:
 		y += se.TITLEPAGE_TITLE_HEIGHT
-		text_elements += "\t" + title_line_html.replace("y=\"\"", "y=\"{}\"".format(y))  + line + "</text>\n"
+		text_elements += "\t<text class=\"title\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(y, line)
 		y += se.TITLEPAGE_TITLE_MARGIN
 
 	y -= se.TITLEPAGE_TITLE_MARGIN
@@ -108,7 +110,7 @@ def generate_titlepage_svg(title, authors, contributors, title_string, templates
 	for author_lines in authors_lines:
 		for line in author_lines:
 			y += se.TITLEPAGE_AUTHOR_HEIGHT
-			text_elements += "\t" + author_line_html.replace("y=\"\"", "y=\"{}\"".format(y)) + line + "</text>\n"
+			text_elements += "\t<text class=\"author\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(y, line)
 			y += se.TITLEPAGE_AUTHOR_MARGIN
 
 	y -= se.TITLEPAGE_AUTHOR_MARGIN
@@ -118,26 +120,107 @@ def generate_titlepage_svg(title, authors, contributors, title_string, templates
 		y += se.TITLEPAGE_CONTRIBUTORS_SPACING
 		for contributor in contributor_lines:
 			y += se.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT
-			text_elements += "\t" + contributor_descriptor_html.replace("y=\"\"", "y=\"{}\"".format(y)) + contributor[0] + "</text>\n"
+			text_elements += "\t<text class=\"contributor-descriptor\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(y, contributor[0])
 			y += se.TITLEPAGE_CONTRIBUTOR_MARGIN
 
 			for person in contributor[1]:
 				y += se.TITLEPAGE_CONTRIBUTOR_HEIGHT
-				text_elements += "\t" + contributor_line_html.replace("y=\"\"", "y=\"{}\"".format(y)) + person + "</text>\n"
+				text_elements += "\t<text class=\"contributor\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(y, person)
 				y += se.TITLEPAGE_CONTRIBUTOR_MARGIN
 
 			y -= se.TITLEPAGE_CONTRIBUTOR_MARGIN
 
 			y += se.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
 
-		y -= se.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN + se.TITLEPAGE_CONTRIBUTOR_MARGIN
+		y -= se.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
+	else:
+		# Remove unused CSS
+		svg = regex.sub(r"\n\t\t\.contributor-descriptor{.+?}\n", "", svg, flags=regex.DOTALL)
+		svg = regex.sub(r"\n\t\t\.contributor{.+?}\n", "", svg, flags=regex.DOTALL)
 
 	y += se.TITLEPAGE_VERTICAL_PADDING
 
-	svg = svg.replace("</title>", "</title>\n" + text_elements).replace("HEIGHT\"", "{}\"".format(y)).replace("TITLESTRING", title_string)
+	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>").replace("TITLESTRING", title_string)
+	svg = regex.sub(r"viewBox=\".+?\"", "viewBox=\"0 0 1400 {:.0f}\"".format(y), svg)
 
 	return svg
 
+def generate_cover_svg(title, authors, title_string, templates_path):
+	svg = ""
+	canvas_width = se.COVER_TITLE_BOX_WIDTH - (se.COVER_TITLE_BOX_PADDING * 2)
+
+	if not isinstance(authors, list):
+		authors = [authors]
+
+	# Read our template SVG to get some values before we begin
+	with open(os.path.join(templates_path, "cover.svg" ), "r", encoding="utf-8") as file:
+		svg = file.read()
+
+	# Remove the template text elements from the SVG source, we'll write out to it later
+	svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
+
+	# Calculate the title lines
+	title_height = se.COVER_TITLE_HEIGHT
+	title_class = "title"
+	title_lines = calculate_titlepage_lines(title.upper(), title_height, canvas_width)
+
+	if len(title_lines) > 2:
+		title_height = se.COVER_TITLE_SMALL_HEIGHT
+		title_class = "title-small"
+		title_lines = calculate_titlepage_lines(title.upper(), title_height, canvas_width)
+
+	if len(title_lines) > 2:
+		title_height = se.COVER_TITLE_XSMALL_HEIGHT
+		title_class = "title-xsmall"
+		title_lines = calculate_titlepage_lines(title.upper(), title_height, canvas_width)
+
+	# Calculate the author lines
+	authors_lines = []
+	for author in authors:
+		authors_lines.append(calculate_titlepage_lines(author.upper(), se.COVER_AUTHOR_HEIGHT, canvas_width))
+
+	# Construct the output
+	text_elements = ""
+	y = se.COVER_TITLE_BOX_Y + \
+		+ ((se.COVER_TITLE_BOX_HEIGHT \
+			- ( (len(title_lines) * title_height) \
+				+ ( (len(title_lines) - 1) * se.COVER_TITLE_MARGIN ) \
+				+ se.COVER_AUTHOR_SPACING \
+				+ (len(authors_lines) * se.COVER_AUTHOR_HEIGHT) \
+		)) / 2)
+
+	# Add the title
+	for line in title_lines:
+		y += title_height
+		text_elements += "\t<text class=\"{}\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(title_class, y, line)
+		y += se.COVER_TITLE_MARGIN
+
+	y -= se.COVER_TITLE_MARGIN
+
+	# Add the author(s)
+	y += se.COVER_AUTHOR_SPACING
+
+	for author_lines in authors_lines:
+		for line in author_lines:
+			y += se.COVER_AUTHOR_HEIGHT
+			text_elements += "\t<text class=\"author\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(y, line)
+			y += se.COVER_AUTHOR_MARGIN
+
+	y -= se.COVER_AUTHOR_MARGIN
+
+	# Remove unused CSS
+	if title_class != "title":
+		svg = regex.sub(r"\n\n\t\t\.title\{.+?\}", "", svg, flags=regex.DOTALL)
+
+	if title_class != "title-small":
+		svg = regex.sub(r"\n\n\t\t\.title-small\{.+?\}", "", svg, flags=regex.DOTALL)
+
+	if title_class != "title-xsmall":
+		svg = regex.sub(r"\n\n\t\t\.title-xsmall\{.+?\}", "", svg, flags=regex.DOTALL)
+
+	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>").replace("TITLESTRING", title_string)
+
+	return svg
 
 def get_wikipedia_url(string, get_nacoaf_url=False):
 	# We try to get the Wikipedia URL by the subject by taking advantage of the fact that Wikipedia's special search will redirect you immediately
@@ -318,13 +401,7 @@ def main():
 	shutil.copy(os.path.normpath(templates_path + "/titlepage.xhtml"), os.path.normpath(repo_name + "/src/epub/text/"))
 	shutil.copy(os.path.normpath(templates_path + "/uncopyright.xhtml"), os.path.normpath(repo_name + "/src/epub/text/"))
 	shutil.copy(os.path.normpath(templates_path + "/titlepage.svg"), os.path.normpath(repo_name + "/images/"))
-
-	if len(args.title) < 15:
-		shutil.copy(os.path.normpath(templates_path + "/cover-short.svg"), os.path.normpath(repo_name + "/images/cover.svg"))
-	elif len(args.title) >= 30:
-		shutil.copy(os.path.normpath(templates_path + "/cover-long.svg"), os.path.normpath(repo_name + "/images/cover.svg"))
-	else:
-		shutil.copy(os.path.normpath(templates_path + "/cover.svg"), os.path.normpath(repo_name + "/images/cover.svg"))
+	shutil.copy(os.path.normpath(templates_path + "/cover.svg"), os.path.normpath(repo_name + "/images/cover.svg"))
 
 	# Try to find Wikipedia links if possible
 	author_wiki_url, author_nacoaf_url = get_wikipedia_url(args.author, True)
@@ -348,6 +425,11 @@ def main():
 
 	with open(os.path.join(repo_name, "images", "titlepage.svg"), "w") as file:
 		file.write(generate_titlepage_svg(args.title, args.author, contributors, title_string, templates_path))
+
+	# Create the cover SVG
+	with open(os.path.join(repo_name, "images", "cover.svg"), "w") as file:
+		authors = ["Rudolph Eric Raspe", "Willam Cervantes"]
+		file.write(generate_cover_svg(args.title, authors, title_string, templates_path))
 
 	if args.pg_url:
 		se.replace_in_file(os.path.normpath(repo_name + "/src/epub/text/imprint.xhtml"), "PGLINK", args.pg_url)
@@ -389,7 +471,6 @@ def main():
 		file.seek(0)
 		file.write(colophon_xhtml)
 		file.truncate()
-
 
 	with open(os.path.join(repo_name, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
 		metadata_xhtml = file.read()

@@ -22,8 +22,17 @@ BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", 
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Childrens", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Romance", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
 MESSAGE_TYPE_WARNING = 1
 MESSAGE_TYPE_ERROR = 2
-TITLEPAGE_KERNING = 5
-TITLEPAGE_AVERAGE_SPACING = 7 # Guess at average default spacing between letters
+COVER_TITLE_BOX_Y = 1620 # In px; note that in SVG, Y starts from the TOP of the image
+COVER_TITLE_BOX_HEIGHT = 430
+COVER_TITLE_BOX_WIDTH = 1300
+COVER_TITLE_BOX_PADDING = 100
+COVER_TITLE_MARGIN = 20
+COVER_TITLE_HEIGHT = 80
+COVER_TITLE_SMALL_HEIGHT = 60
+COVER_TITLE_XSMALL_HEIGHT = 50
+COVER_AUTHOR_SPACING = 60
+COVER_AUTHOR_HEIGHT = 40
+COVER_AUTHOR_MARGIN = 20
 TITLEPAGE_WIDTH = 1400
 TITLEPAGE_VERTICAL_PADDING = 50
 TITLEPAGE_HORIZONTAL_PADDING = 100
@@ -37,9 +46,9 @@ TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT = 40 # Height of each contributor descri
 TITLEPAGE_CONTRIBUTOR_HEIGHT = 40 # Height of each contributor line
 TITLEPAGE_CONTRIBUTOR_MARGIN = 20 # Space between contributor descriptor and contributor line, and between sequential contributor lines
 TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN = 80 # Space between last contributor line and next contributor descriptor (if more than one contributor descriptor)
-LEAGUE_SPARTAN_80_WIDTHS = {" ": 40, "A": 78.596, "B": 54.550, "C": 67.181, "D": 61.287, "E": 44.164, "F": 44.632, "G": 73.263, "H": 60.070, "I": 17.591, "J": 42.105, "K": 70.269, "L": 44.164, "M": 85.520, "N": 66.058, "O": 77.754, "P": 54.550, "Q": 79.064, "R": 63.532, "S": 58.105, "T": 54.269, "U": 60.257, "V": 78.596, "W": 107.696, "X": 81.029, "Y": 74.480, "Z": 68.959, ".": 21.427, ",": 21.427, "/": 52.865, "\\": 52.865, "-": 30.129, ":": 21.427, ";": 21.427, "’": 19.462, "!": 21.427, "?": 51.462, "&": 81.497, "0": 62.784, "1": 30.316, "2": 60.164, "3": 57.637, "4": 63.439, "5": 56.140, "6": 59.415, "7": 61.567, "8": 57.731, "9": 59.415}
-TITLEPAGE_LEAGUE_SPARTAN_60_RATIO = 1.333333
-TITLEPAGE_LEAGUE_SPARTAN_40_RATIO = 2
+LEAGUE_SPARTAN_KERNING = 5 # In px
+LEAGUE_SPARTAN_AVERAGE_SPACING = 7 # Guess at average default spacing between letters, in px
+LEAGUE_SPARTAN_100_WIDTHS = {" ": 40.0, "A": 98.245, "B": 68.1875, "C": 83.97625, "D": 76.60875, "E": 55.205, "F": 55.79, "G": 91.57875, "H": 75.0875, "I": 21.98875, "J": 52.631254, "K": 87.83625, "L": 55.205, "M": 106.9, "N": 82.5725, "O": 97.1925, "P": 68.1875, "Q": 98.83, "R": 79.41599, "S": 72.63125, "T": 67.83625, "U": 75.32125, "V": 98.245, "W": 134.62, "X": 101.28625, "Y": 93.1, "Z": 86.19875, ".": 26.78375, ",": 26.78375, "/": 66.08125, "\\": 66.08125, "-": 37.66125, ":": 26.78375, ";": 26.78375, "’": 24.3275, "!": 26.78375, "?": 64.3275, "&": 101.87125, "0": 78.48, "1": 37.895, "2": 75.205, "3": 72.04625, "4": 79.29875, "5": 70.175, "6": 74.26875, "7": 76.95875, "8": 72.16375, "9": 74.26875}
 
 class SeError(Exception):
 	pass
