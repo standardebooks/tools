@@ -30,7 +30,7 @@ def get_word_widths(str, target_height):
 
 	return words
 
-def calculate_titlepage_lines(str, target_height, canvas_width):
+def calculate_image_lines(str, target_height, canvas_width):
 	words = get_word_widths(str, target_height)
 	lines = []
 	current_line = ""
@@ -80,17 +80,17 @@ def generate_titlepage_svg(title, authors, contributors, title_string, templates
 	svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
 
 	# Calculate the title lines
-	title_lines = calculate_titlepage_lines(title.upper(), se.TITLEPAGE_TITLE_HEIGHT, canvas_width)
+	title_lines = calculate_image_lines(title.upper(), se.TITLEPAGE_TITLE_HEIGHT, canvas_width)
 
 	# Calculate the author lines
 	authors_lines = []
 	for author in authors:
-		authors_lines.append(calculate_titlepage_lines(author.upper(), se.TITLEPAGE_AUTHOR_HEIGHT, canvas_width))
+		authors_lines.append(calculate_image_lines(author.upper(), se.TITLEPAGE_AUTHOR_HEIGHT, canvas_width))
 
 	# Calculate the contributor lines
 	contributor_lines = []
 	for descriptor, contributor in contributors.items():
-		contributor_lines.append([descriptor, calculate_titlepage_lines(contributor.upper(), se.TITLEPAGE_CONTRIBUTOR_HEIGHT, canvas_width)])
+		contributor_lines.append([descriptor, calculate_image_lines(contributor.upper(), se.TITLEPAGE_CONTRIBUTOR_HEIGHT, canvas_width)])
 
 	# Construct the output
 	text_elements = ""
@@ -162,22 +162,22 @@ def generate_cover_svg(title, authors, title_string, templates_path):
 	# Calculate the title lines
 	title_height = se.COVER_TITLE_HEIGHT
 	title_class = "title"
-	title_lines = calculate_titlepage_lines(title.upper(), title_height, canvas_width)
+	title_lines = calculate_image_lines(title.upper(), title_height, canvas_width)
 
 	if len(title_lines) > 2:
 		title_height = se.COVER_TITLE_SMALL_HEIGHT
 		title_class = "title-small"
-		title_lines = calculate_titlepage_lines(title.upper(), title_height, canvas_width)
+		title_lines = calculate_image_lines(title.upper(), title_height, canvas_width)
 
 	if len(title_lines) > 2:
 		title_height = se.COVER_TITLE_XSMALL_HEIGHT
 		title_class = "title-xsmall"
-		title_lines = calculate_titlepage_lines(title.upper(), title_height, canvas_width)
+		title_lines = calculate_image_lines(title.upper(), title_height, canvas_width)
 
 	# Calculate the author lines
 	authors_lines = []
 	for author in authors:
-		authors_lines.append(calculate_titlepage_lines(author.upper(), se.COVER_AUTHOR_HEIGHT, canvas_width))
+		authors_lines.append(calculate_image_lines(author.upper(), se.COVER_AUTHOR_HEIGHT, canvas_width))
 
 	# Construct the output
 	text_elements = ""
