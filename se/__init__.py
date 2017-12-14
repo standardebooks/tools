@@ -22,7 +22,24 @@ BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", 
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Childrens", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Romance", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
 MESSAGE_TYPE_WARNING = 1
 MESSAGE_TYPE_ERROR = 2
-
+TITLEPAGE_KERNING = 5
+TITLEPAGE_AVERAGE_SPACING = 7 # Guess at average default spacing between letters
+TITLEPAGE_WIDTH = 1400
+TITLEPAGE_VERTICAL_PADDING = 50
+TITLEPAGE_HORIZONTAL_PADDING = 100
+TITLEPAGE_TITLE_HEIGHT = 80 # Height of each title line
+TITLEPAGE_TITLE_MARGIN = 20 # Space between consecutive title lines
+TITLEPAGE_AUTHOR_SPACING = 100 # Space between last title line and first author line
+TITLEPAGE_AUTHOR_HEIGHT = 60 # Height of each author line
+TITLEPAGE_AUTHOR_MARGIN = 20 # Space between consecutive author lines
+TITLEPAGE_CONTRIBUTORS_SPACING = 150 # Space between last author line and first contributor descriptor
+TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT = 40 # Height of each contributor descriptor line
+TITLEPAGE_CONTRIBUTOR_HEIGHT = 40 # Height of each contributor line
+TITLEPAGE_CONTRIBUTOR_MARGIN = 20 # Space between contributor descriptor and contributor line, and between sequential contributor lines
+TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN = 80 # Space between last contributor line and next contributor descriptor (if more than one contributor descriptor)
+LEAGUE_SPARTAN_80_WIDTHS = {" ": 40, "A": 78.596, "B": 54.550, "C": 67.181, "D": 61.287, "E": 44.164, "F": 44.632, "G": 73.263, "H": 60.070, "I": 17.591, "J": 42.105, "K": 70.269, "L": 44.164, "M": 85.520, "N": 66.058, "O": 77.754, "P": 54.550, "Q": 79.064, "R": 63.532, "S": 58.105, "T": 54.269, "U": 60.257, "V": 78.596, "W": 107.696, "X": 81.029, "Y": 74.480, "Z": 68.959, ".": 21.427, ",": 21.427, "/": 52.865, "\\": 52.865, "-": 30.129, ":": 21.427, ";": 21.427, "’": 19.462, "!": 21.427, "?": 51.462, "&": 81.497, "0": 62.784, "1": 30.316, "2": 60.164, "3": 57.637, "4": 63.439, "5": 56.140, "6": 59.415, "7": 61.567, "8": 57.731, "9": 59.415}
+TITLEPAGE_LEAGUE_SPARTAN_60_RATIO = 1.333333
+TITLEPAGE_LEAGUE_SPARTAN_40_RATIO = 2
 
 class SeError(Exception):
 	pass
