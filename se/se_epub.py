@@ -610,6 +610,13 @@ class SeEpub:
 							for match in matches:
 								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
+						# Blank space between properties and values
+						matches = regex.findall(r"\s+[a-z\-]+:[^ ]+?;", file_contents)
+						if matches:
+							messages.append(LintMessage("Exactly one space required between CSS properties and their values.", se.MESSAGE_TYPE_ERROR, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
 						matches = regex.findall(r"\}\n\s{2,}[^\s]+", file_contents)
 						if matches:
 							messages.append(LintMessage("CSS selectors must have exactly one blank line between them.", se.MESSAGE_TYPE_ERROR, filename))
