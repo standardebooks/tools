@@ -428,8 +428,7 @@ def main():
 
 	# Create the cover SVG
 	with open(os.path.join(repo_name, "images", "cover.svg"), "w") as file:
-		authors = ["Rudolph Eric Raspe", "Willam Cervantes"]
-		file.write(generate_cover_svg(args.title, authors, title_string, templates_path))
+		file.write(generate_cover_svg(args.title, args.author, title_string, templates_path))
 
 	if args.pg_url:
 		se.replace_in_file(os.path.normpath(repo_name + "/src/epub/text/imprint.xhtml"), "PGLINK", args.pg_url)
