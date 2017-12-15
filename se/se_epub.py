@@ -668,7 +668,13 @@ class SeEpub:
 								heading_subtitle = match.find(attrs={"epub:type": regex.compile("^.*subtitle.*$")})
 
 								if heading_subtitle:
-									closest_section_epub_type = match.find_parents('section')[0].get('epub:type') or ''
+									parent_section = match.find_parents('section')
+
+									# Sometimes we might not have a parent <section>, like in Keats' Poetry
+									if not parent_section:
+										parent_section = match.find_parents('body')
+
+									closest_section_epub_type = parent_section[0].get('epub:type') or ''
 									heading_first_child_epub_type = match.find('span', recursive=False).get('epub:type') or ''
 
 									if regex.findall(r"^.*(part|division).*$", closest_section_epub_type):
