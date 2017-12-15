@@ -564,7 +564,7 @@ class SeEpub:
 								if matches:
 									for match in matches:
 										if match != "translated by" and match != "illustrated by" and match != "and":
-											messages.append(LintMessage("Lowercase letters in titlepage. Titlepage text must be all uppercase except \"translated by\", \"illustrated by\", and \"and\" joining translators/illustrators.", se.MESSAGE_TYPE_ERROR, filename))
+											messages.append(LintMessage("Lowercase letters in titlepage. Titlepage text must be all uppercase except \"translated by\" and \"illustrated by\".", se.MESSAGE_TYPE_ERROR, filename))
 					if filename.endswith(".css"):
 						# Check CSS style
 
