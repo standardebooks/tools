@@ -24,7 +24,7 @@ curl -s -o ~/.fonts/OFLGoudyStM-Italic.otf "https://raw.githubusercontent.com/th
 sudo fc-cache -fv
 
 # Install python dependencies
-pip3 install -r ./tools/requirements.txt
+pip3 install -r ~/tools/requirements.txt
 
 # Install hyphenation dictionaries for the pyhyphen library
 python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
