@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+	#!/usr/bin/env python3
 
 import os
 import filecmp
@@ -543,7 +543,7 @@ class SeEpub:
 						continue
 
 					if "http://standardebooks.org" in file_contents:
-						message.append(LintMessage("Non-HTTPS Standard Ebooks URL detected.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("Non-HTTPS Standard Ebooks URL detected.", se.MESSAGE_TYPE_ERROR, filename))
 
 					if "UTF-8" in file_contents:
 						messages.append(LintMessage("String \"UTF-8\" must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename))
