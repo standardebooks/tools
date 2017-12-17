@@ -10,6 +10,7 @@ from se.se_epub import SeEpub
 def main():
 	parser = argparse.ArgumentParser(description="Check for various Standard Ebooks style errors.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("-p", "--plain", action="store_true", help="print plain output")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
@@ -34,27 +35,46 @@ def main():
 
 		# Print the table header
 		if args.verbose or (messages and len(args.directories) > 1):
-			print(colored(se_epub.directory, "white", attrs=["reverse"]))
+			if args.plain:
+				print(se_epub.directory)
+			else:
+				print(colored(se_epub.directory, "white", attrs=["reverse"]))
 
 		# Print the table
 		if messages:
-			for message in messages:
-				if message.is_submessage:
-					table_data.append([" ", "→", "{}".format(message.text)])
-				else:
-					alert = colored("Manual Review", "yellow")
+			if args.plain:
+				for message in messages:
+					if message.is_submessage:
+						print("\t" + message.text)
+					else:
+						label = "Manual Review:"
 
-					if message.message_type == se.MESSAGE_TYPE_ERROR:
-						alert = colored("Error", "red")
+						if message.message_type == se.MESSAGE_TYPE_ERROR:
+							label = "Error:"
 
-					table_data.append([alert, message.filename, message.text])
+						print(label, message.filename, message.text)
 
-			se.print_table(table_data, 2)
+			else:
+				for message in messages:
+					if message.is_submessage:
+						table_data.append([" ", "→", "{}".format(message.text)])
+					else:
+						alert = colored("Manual Review", "yellow")
+
+						if message.message_type == se.MESSAGE_TYPE_ERROR:
+							alert = colored("Error", "red")
+
+						table_data.append([alert, message.filename, message.text])
+
+				se.print_table(table_data, 2)
 
 		if args.verbose and not messages:
-			table_data.append([colored("OK", "green", attrs=["reverse"])])
+			if args.plain:
+				print("OK")
+			else:
+				table_data.append([colored("OK", "green", attrs=["reverse"])])
 
-			se.print_table(table_data)
+				se.print_table(table_data)
 
 
 if __name__ == "__main__":
