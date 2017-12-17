@@ -7,12 +7,12 @@ A collection of tools Standard Ebooks uses to produce its ebooks, including basi
 ## Ubuntu 16.04 users
 
 ```shell
-# Clone the tools repo
-git clone https://github.com/standardebooks/tools.git
-
 # Install some pre-flight dependencies
 # lxml requires the following packages for its pip build process: python3-dev libxml2-dev libxslt1-dev zlib1g-dev
 sudo apt install -y python3-pip python3-dev libxml2-dev libxslt1-dev zlib1g-dev libxml2-utils librsvg2-bin libimage-exiftool-perl imagemagick epubcheck default-jre inkscape calibre curl git
+
+# Clone the tools repo
+git clone https://github.com/standardebooks/tools.git
 
 # Install required fonts
 mkdir -p ~/.fonts/
@@ -43,11 +43,11 @@ These instructions were tested on Mac OS X 10.12. Your mileage may vary. Correct
 2. Install dependencies:
 
 	```shell
+	# Install some pre-flight dependencies
+	brew install python3 epubcheck imagemagick librsvg exiftool git
+
 	# Clone the tools repo
 	git clone https://github.com/standardebooks/tools.git
-
-	# Install some pre-flight dependencies
-	brew install python3 epubcheck imagemagick librsvg exiftool
 
 	# Install required applications
 	brew cask install java calibre xquartz inkscape
