@@ -542,6 +542,9 @@ class SeEpub:
 						messages.append(LintMessage("Problem decoding file as utf-8", se.MESSAGE_TYPE_ERROR, filename))
 						continue
 
+					if "http://standardebooks.org" in file_contents:
+						message.append(LintMessage("Non-HTTPS Standard Ebooks URL detected.", se.MESSAGE_TYPE_ERROR, filename))
+
 					if "UTF-8" in file_contents:
 						messages.append(LintMessage("String \"UTF-8\" must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename))
 
