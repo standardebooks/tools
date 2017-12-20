@@ -30,8 +30,8 @@ hr{
 	width: 25%;
 }
 
-q:before,
-q:after{
+q::before,
+q::after{
 	content: '';
 }
 
@@ -134,7 +134,7 @@ a.raw-url{
 	-epub-hyphens: none;
 }
 
-section[epub|type~="colophon"] p + p:before{
+section[epub|type~="colophon"] p + p::before{
 	border-top: 1px solid;
 	content: "";
 	display: block;
