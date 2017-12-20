@@ -233,7 +233,7 @@ class SeEpub:
 				# Remove XML declaration
 				svg = regex.sub(r"<\?xml.+?\?>", "", svg)
 
-				output_xhtml = regex.sub(r"<img.+?src=\"../images/{}\\.svg\".*?>".format(match), svg, output_xhtml)
+				output_xhtml = regex.sub(r"<img.+?src=\"\.\./images/{}\.svg\".*?/>".format(match), svg, output_xhtml)
 
 		with tempfile.NamedTemporaryFile(mode='w+', delete=False) as file:
 			file.write(output_xhtml)
