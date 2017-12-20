@@ -925,6 +925,11 @@ class SeEpub:
 
 						# Check for space before endnote backlinks
 						if filename == "endnotes.xhtml":
+							# Do we have to replace Ibid.?
+							matches = regex.findall(r"\bibid\b", file_contents, flags=regex.IGNORECASE)
+							if matches:
+								messages.append(LintMessage("Illegal \"Ibid\" in endnotes. \"Ibid\" means \"The previous reference\" which is meaningless with popup endnotes, and must be replaced by the actual thing \"Ibid\" refers to.", se.MESSAGE_TYPE_ERROR, filename))
+
 							endnotes_soup = BeautifulSoup(file_contents, "lxml")
 							endnote_referrers = endnotes_soup.select("li[id^=note-] a")
 
