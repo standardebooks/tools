@@ -69,6 +69,8 @@ Help and pull requests are welcomed!
 
 - Move some legacy scripts like `hyphenate` into appropriate libraries/scripts.
 
+- Some tool functionality should be moved into the SeEpub class. Suggestions on how to better organize SE code into packages/classes are welcome.
+
 # Tool descriptions
 
 -	### `british2american`
@@ -138,6 +140,10 @@ Help and pull requests are welcomed!
 -	### `reading-ease`
 
 	Calculate the Flesch reading ease for a Standard Ebooks source directory.
+
+-	### `recompose-epub`
+
+	Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output.
 
 -	### `reorder-endnotes`
 
