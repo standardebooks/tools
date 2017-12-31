@@ -72,6 +72,8 @@ def main():
 				processed_xhtml = regex.sub(r"(\b)(?<!\<abbr\>)([Oo])z\.", r"\1<abbr>\2z.</abbr>", processed_xhtml)
 				processed_xhtml = regex.sub(r"(?<!\<abbr\>)(Jan\.|Feb\.|Mar\.|Apr\.|Jun\.|Jul\.|Aug\.|Sep\.|Sept\.|Oct\.|Nov\.|Dec\.)", r"<abbr>\1</abbr>", processed_xhtml)
 				processed_xhtml = regex.sub(r"(?<!\<abbr\>)No\.(\s+[0-9]+)", r"<abbr>No.</abbr>\1", processed_xhtml)
+				processed_xhtml = regex.sub(r"(\b)(?<!\<abbr\>)([Ff])ig\.", r"\1<abbr>\2ig.</abbr>", processed_xhtml)
+				processed_xhtml = regex.sub(r"(\b)(?<!\<abbr\>)([Ff])igs\.", r"\1<abbr>\2igs.</abbr>", processed_xhtml)
 				processed_xhtml = regex.sub(r"""(?<!\<abbr class="degree"\>)PhD""", r"""<abbr class="degree">PhD</abbr>""", processed_xhtml)
 				processed_xhtml = regex.sub(r"""(?<!\<abbr class="initialism"\>)IOU""", r"""<abbr class="initialism">IOU</abbr>""", processed_xhtml)
 				processed_xhtml = regex.sub(r"""(?<!\<abbr class="era"\>)A\.?D""", r"""<abbr class="era">AD</abbr>""", processed_xhtml)
