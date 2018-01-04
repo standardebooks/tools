@@ -433,7 +433,11 @@ class SeEpub:
 		if matches:
 			messages.append(LintMessage("Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, "content.opf"))
 
-		#Check for HTML entities in long-description
+		# Make sure long-description is escaped HTML
+		if "<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">\n\t\t\t&lt;p&gt;" not in metadata_xhtml:
+			messages.append(LintMessage("Long description must be escaped HTML.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+
+		# Check for HTML entities in long-description
 		if regex.search(r"&amp;[a-z]+?;", metadata_xhtml):
 			messages.append(LintMessage("HTML entites detected in metadata. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
