@@ -575,6 +575,13 @@ class SeEpub:
 					if filename.endswith(".css"):
 						# Check CSS style
 
+						# No empty CSS selectors
+						matches = regex.findall(r"^.+\{\s*\}", file_contents, flags=regex.MULTILINE)
+						if matches:
+							messages.append(LintMessage("Empty selector.", se.MESSAGE_TYPE_ERROR, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
 						# No space before CSS opening braces
 						matches = regex.findall(r".+\s\{", file_contents)
 						if matches:
