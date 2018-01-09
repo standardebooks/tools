@@ -85,9 +85,9 @@ Help and pull requests are welcomed!
 
 	Build an ebook from a Standard Ebook source directory.
 
--	### `build-cover`
+-	### `build-images`
 
-	Build an ebook cover a Standard Ebook source directory and place the output in DIRECTORY/src/epub/images/.
+	Build ebook cover and titlepage images in a Standard Ebook source directory and place the output in DIRECTORY/src/epub/images/.
 
 -	### `clean`
 
