@@ -136,13 +136,18 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"Michael Angelo", r"Michaelangelo", xhtml)			# Michael Angelo -> Michaelangelo
 	xhtml = regex.sub(r"\bVergil", r"Virgil", xhtml)				# Vergil -> Virgil
 
+	# Remove archaic diphthongs
+	xhtml = regex.sub(r"\b([Mm])ediæval", r"\1edieval", xhtml)
+	xhtml = xhtml.replace("Cæsar", "Caesar")
+	xhtml = xhtml.replace("Crœsus", "Croesus")
+
 	if language == "en-US":
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)
-		xhtml = regex.sub(r"\b([Mm])anœuvre", r"\1aneuver", xhtml)
+		xhtml = regex.sub(r"\b([Mm])anœuve?r", r"\1aneuver", xhtml) # Omit last letter to catch both maneuverS and maneuverING
 
 	if language == "en-GB":
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1osy", xhtml)
-		xhtml = regex.sub(r"\b([Mm])anœuvre", r"\1anoeuvre", xhtml)
+		xhtml = regex.sub(r"\b([Mm])anœuve?r", r"\1anoeuvr", xhtml) # Omit last letter to catch both maneuverS and maneuverING
 
 	return xhtml
 
