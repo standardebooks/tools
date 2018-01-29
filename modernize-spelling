@@ -16,11 +16,11 @@ def modernize_hyphenation(xhtml, dictionary):
 	for word in set(result): # set() removes duplicates
 		new_word = word.replace("-", "").lower()
 		if new_word in dictionary:
-			# To preserve capitalization, we get the left-hand side of the compound, then the right-hand side,
-			# then we replace the word that way.
+			# To preserve capitalization of the first word, we get the individual parts
+			# then replace the original match with them joined together and titlecased.
 			lhs = regex.sub(r"\-.+$", r"", word)
 			rhs = regex.sub(r"^.+?\-", r"", word)
-			xhtml = regex.sub(r"" + lhs + "-" + rhs, lhs + rhs, xhtml)
+			xhtml = regex.sub(r"" + lhs + "-" + rhs, lhs + rhs.lower(), xhtml)
 
 	# Quick fix for a common case
 	xhtml = xhtml.replace("z3998:nonfiction", "z3998:non-fiction")
