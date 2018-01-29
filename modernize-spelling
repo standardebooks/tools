@@ -140,6 +140,8 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
 	xhtml = xhtml.replace("Cæsar", "Caesar")
 	xhtml = xhtml.replace("Crœsus", "Croesus")
+	xhtml = xhtml.replace("Œdip", "Oedip") # Oedipus, Oedipal
+	xhtml = regex.sub(r"\b([Pp])æan", r"\1aean", xhtml)
 
 	if language == "en-US":
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)
