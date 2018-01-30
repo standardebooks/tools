@@ -24,7 +24,6 @@ def modernize_hyphenation(xhtml, dictionary):
 
 	# Quick fix for a common case
 	xhtml = xhtml.replace("z3998:nonfiction", "z3998:non-fiction")
-	xhtml = regex.sub(r"\b([Uu])nChristian\b", r"\1nchristian", xhtml)
 
 	return xhtml
 
