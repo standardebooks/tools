@@ -134,6 +134,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"Raffaelle", r"Raphael", xhtml)				# Raffaelle -> Raphael
 	xhtml = regex.sub(r"Michael Angelo", r"Michaelangelo", xhtml)			# Michael Angelo -> Michaelangelo
 	xhtml = regex.sub(r"\bVergil", r"Virgil", xhtml)				# Vergil -> Virgil
+	xhtml = regex.sub(r"\bVishnoo", r"Vishnu", xhtml)		# vishnoo -> vishnu
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
