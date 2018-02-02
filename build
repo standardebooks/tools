@@ -523,6 +523,15 @@ def main():
 						xhtml = file.read()
 						processed_xhtml = xhtml
 
+						# Add ARIA roles, which are just mostly duplicate attributes to epub:type (with the exception of rearnotes -> endnotes, and adding the `backlink` role which is not yet in epub 3.0)
+						processed_xhtml = regex.sub(r"(epub:type=\"[^\"]*?rearnote(s?)[^\"]*?\")", "\\1 role=\"doc-endnote\\2\"", processed_xhtml)
+
+						if filename == "endnotes.xhtml":
+							processed_xhtml = processed_xhtml.replace(" epub:type=\"se:referrer\"", " role=\"doc-backlink\" epub:type=\"se:referrer\"")
+
+						for role in se.ARIA_ROLES:
+							processed_xhtml = regex.sub(r"(epub:type=\"[^\"]*?{}[^\"]*?\")".format(role), "\\1 role=\"doc-{}\"".format(role), processed_xhtml)
+
 						# Since we convert SVGs to raster, here we add the color-depth semantic for night mode
 						processed_xhtml = processed_xhtml.replace("z3998:publisher-logo", "z3998:publisher-logo se:image.color-depth.black-on-transparent")
 						processed_xhtml = regex.sub(r"class=\"([^\"]*?)epub-type-z3998-publisher-logo([^\"]*?)\"", "class=\"\\1epub-type-z3998-publisher-logo epub-type-se-image-color-depth-black-on-transparent\\2\"", processed_xhtml)
@@ -667,6 +676,9 @@ def main():
 			element_xhtml = regex.sub(r"type=\"\s*\"", "", element_xhtml)
 			element_xhtml = element_xhtml.replace("<a", "<reference")
 			element_xhtml = regex.sub(r">(.+)</a>", " title=\"\\1\" />", element_xhtml)
+
+			# Replace instances of the `role` attribute since it's illegal in content.opf
+			element_xhtml = regex.sub(r" role=\".*?\"", "", element_xhtml)
 
 			guide_xhtml = guide_xhtml + element_xhtml
 
