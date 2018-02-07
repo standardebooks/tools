@@ -83,6 +83,10 @@ def main():
 				# Next, pretty-print XML
 				processed_xhtml = subprocess.run([xmllint_path, "--format", "-"], input=processed_xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env).stdout.decode()
 
+				# Remove white space between some tags
+				processed_xhtml = regex.sub(r"<p([^>]*?)>\s+([^<\s])", "<p\\1>\\2", processed_xhtml, flags=regex.MULTILINE | regex.DOTALL)
+				processed_xhtml = regex.sub(r"([^>\s])\s+</p>", "\\1</p>", processed_xhtml, flags=regex.MULTILINE | regex.DOTALL)
+
 				if processed_xhtml != xhtml:
 					file.seek(0)
 					file.write(processed_xhtml)
