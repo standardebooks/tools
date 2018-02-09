@@ -815,6 +815,13 @@ class SeEpub:
 						if "epub:type=\"subtitle\"" in file_contents and not local_css_has_subtitle_style:
 							messages.append(LintMessage("Subtitles detected, but no subtitle style detected in local.css.", se.MESSAGE_TYPE_ERROR, filename))
 
+						# Check for whitespace before noteref
+						matches = regex.findall(r"\s+<a href=\"endnotes\.xhtml#note-[0-9]+?\" id=\"noteref-[0-9]+?\" epub:type=\"noteref\">[0-9]+?</a>", file_contents)
+						if matches:
+							messages.append(LintMessage("Illegal white space before noteref.", se.MESSAGE_TYPE_ERROR, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+
 						# Check for <li> elements that don't have a direct block child
 						if filename != "toc.xhtml":
 							matches = regex.findall(r"<li(?:\s[^>]*?>|>)\s*[^\s<]", file_contents)
