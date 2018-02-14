@@ -53,21 +53,21 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\bPhantas(y|ie)", r"Fantasy", xhtml)			# phantasie -> fantasy
 	xhtml = regex.sub(r"\bphantas(y|ie)", r"fantasy", xhtml)			# phantasie -> fantasy
 	xhtml = regex.sub(r"\bPhantastic", r"Fantastic", xhtml)				# phantastic -> fantastic
-	xhtml = regex.sub(r"\bphantastic", r"fantastic", xhtml)			# phantastic -> fantastic
+	xhtml = regex.sub(r"\bphantastic", r"fantastic", xhtml)				# phantastic -> fantastic
 	xhtml = regex.sub(r"\b([Mm])enage\b", r"\1énage", xhtml)			# menage -> ménage
 	xhtml = regex.sub(r"([Hh])ypothenuse", r"\1ypotenuse", xhtml)			# hypothenuse -> hypotenuse
 	xhtml = regex.sub(r"[‘’]([Bb])us\b", r"\1us", xhtml)				# ’bus -> bus
 	xhtml = regex.sub(r"([Nn])aïve", r"\1aive", xhtml)				# naïve -> naive
 	xhtml = regex.sub(r"([Nn])a[ïi]vet[ée]", r"\1aivete", xhtml)			# naïveté -> naivete
 	xhtml = regex.sub(r"&amp;c\.", r"etc.", xhtml)					# &c. -> etc.
-	xhtml = regex.sub(r"([Pp])rot[ée]g[ée]", r"\1rotégé", xhtml)				# protege -> protégé
+	xhtml = regex.sub(r"([Pp])rot[ée]g[ée]", r"\1rotégé", xhtml)			# protege -> protégé
 	xhtml = regex.sub(r"([Tt])ete-a-tete", r"\1ête-à-tête", xhtml)			# tete-a-tete -> tête-à-tête
 	xhtml = regex.sub(r"([Vv])is-a-vis", r"\1is-à-vis", xhtml)			# vis-a-vis _> vis-à-vis
 	xhtml = regex.sub(r"([Ff])acade", r"\1açade", xhtml)				# facade -> façade
 	xhtml = regex.sub(r"([Cc])h?ateau(s?\b)", r"\1hâteau\2", xhtml)			# chateau -> château
 	xhtml = regex.sub(r"([Hh])abitue", r"\1abitué", xhtml)				# habitue -> habitué
 	xhtml = regex.sub(r"\b([Bb])lase\b", r"\1lasé", xhtml)				# blase -> blasé
-	xhtml = regex.sub(r"\b([Bb])bee[’']s-wax\b", r"\1eeswax", xhtml)				# bee’s-wax -> beeswax
+	xhtml = regex.sub(r"\b([Bb])bee[’']s[ \-]wax\b", r"\1eeswax", xhtml)		# bee’s-wax -> beeswax
 	xhtml = regex.sub(r"\b([Cc])afe\b", r"\1afé", xhtml)				# cafe -> café
 	xhtml = regex.sub(r"\b([Cc])afes\b", r"\1afés", xhtml)				# cafes -> cafés; We break up cafe so that we don't catch 'cafeteria'
 	xhtml = regex.sub(r"([Mm])êlée", r"\1elee", xhtml)				# mêlée -> melee
@@ -119,8 +119,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Bb])ric-à-brac", r"\1ric-a-brac", xhtml)		# bric-à-brac -> bric-a-brac
 	xhtml = regex.sub(r"\b([Kk])iosque", r"\1iosk", xhtml)				# kiosque -> kiosk
 	xhtml = regex.sub(r"\b([Dd])epôt", r"\1epot", xhtml)				# depôt -> depot
-	xhtml = regex.sub(r"\b([Cc])onnexion", r"\1onnection", xhtml)			# connexion -> connection
-	xhtml = regex.sub(r"\b([Rr])eflexion", r"\1eflection", xhtml)			# reflexion -> reflection
+	xhtml = regex.sub(r"(?<!compl)exion", r"ection", xhtml)				# -extion -> -exction (connexion, reflexion, etc., but "complexion")
 	xhtml = regex.sub(r"\b([Dd])ulness", r"\1ullness", xhtml)			# dulness -> dullness
 	xhtml = regex.sub(r"\b([Ff])iord", r"\1jord", xhtml)				# fiord -> fjord
 	xhtml = regex.sub(r"\b([Ff])ulness\b", r"\1ullness", xhtml)			# fulness -> fullness (but not for ex. thoughtfulness)
@@ -136,7 +135,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"Raffaelle", r"Raphael", xhtml)				# Raffaelle -> Raphael
 	xhtml = regex.sub(r"Michael Angelo", r"Michaelangelo", xhtml)			# Michael Angelo -> Michaelangelo
 	xhtml = regex.sub(r"\bVergil", r"Virgil", xhtml)				# Vergil -> Virgil
-	xhtml = regex.sub(r"\bVishnoo", r"Vishnu", xhtml)		# vishnoo -> vishnu
+	xhtml = regex.sub(r"\bVishnoo", r"Vishnu", xhtml)				# vishnoo -> vishnu
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
