@@ -26,6 +26,7 @@ def modernize_hyphenation(xhtml, dictionary):
 	xhtml = xhtml.replace("z3998:nonfiction", "z3998:non-fiction")
 	xhtml = regex.sub(r"\b([Dd])og’seared", r"\1og’s-eared", xhtml)
 	xhtml = regex.sub(r"\b([Mm])anat-arms", r"\1an-at-arms", xhtml)
+	xhtml = regex.sub(r"\b([Tt])abled’hôte", r"\1able-d’hôte", xhtml)
 
 	return xhtml
 
