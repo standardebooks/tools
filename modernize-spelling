@@ -22,8 +22,10 @@ def modernize_hyphenation(xhtml, dictionary):
 			rhs = regex.sub(r"^.+?\-", r"", word)
 			xhtml = regex.sub(r"" + lhs + "-" + rhs, lhs + rhs.lower(), xhtml)
 
-	# Quick fix for a common case
+	# Quick fix for a common error cases
 	xhtml = xhtml.replace("z3998:nonfiction", "z3998:non-fiction")
+	xhtml = regex.sub(r"\b([Dd])og’seared", r"\1og’s-eared", xhtml)
+	xhtml = regex.sub(r"\b([Mm])anat-arms", r"\1an-at-arms", xhtml)
 
 	return xhtml
 
