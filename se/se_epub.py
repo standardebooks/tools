@@ -727,6 +727,13 @@ class SeEpub:
 						if matches:
 							messages.append(LintMessage("Required nbsp not found before <abbr class=\"time\">", se.MESSAGE_TYPE_WARNING, filename))
 
+						# Check that times have colons and not periods
+						matches = regex.findall(r"[0-9]\.[0-9]+\s<abbr", file_contents)
+						if matches:
+							messages.append(LintMessage("Times must be separated by colons (:) not periods (.)", se.MESSAGE_TYPE_ERROR, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
 						# Check for money not separated by commas
 						matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
 						if matches:
