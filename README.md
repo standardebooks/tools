@@ -30,9 +30,9 @@ pip3 install -r ./tools/requirements.txt
 python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
 ```
 
-## Mac OS users
+## macOS users
 
-These instructions were tested on Mac OS X 10.12. Your mileage may vary. Corrections and fixes to these steps are welcomed, as the SE maintainers don't have access to Macs.
+These instructions were tested on macOS 10.12 and 10.13. Your mileage may vary. Corrections and fixes to these steps are welcomed, as the SE maintainers don't have access to Macs.
 
 1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it's up to date:
 
@@ -44,7 +44,7 @@ These instructions were tested on Mac OS X 10.12. Your mileage may vary. Correct
 
 	```shell
 	# Install some pre-flight dependencies
-	brew install python3 epubcheck imagemagick librsvg exiftool git
+	brew install python epubcheck imagemagick librsvg exiftool git
 
 	# Clone the tools repo
 	git clone https://github.com/standardebooks/tools.git
@@ -60,7 +60,7 @@ These instructions were tested on Mac OS X 10.12. Your mileage may vary. Correct
 	# Install python dependencies
 	# *********IMPORTANT NOTE*********: PyHyphen currently fails to install on Mac OS when you run this command.
 	# Don't worry, you can safely ignore PyHyphen's failure, as long as all the other pip packages install correctly.
-	pip3 install -r ./tools/requirements.txt
+	pip install -r ./tools/requirements.txt
 	```
 
 # TODO
