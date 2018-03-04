@@ -140,7 +140,7 @@ def generate_titlepage_svg(title, authors, contributors, title_string, templates
 
 	y += se.TITLEPAGE_VERTICAL_PADDING
 
-	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>").replace("TITLESTRING", title_string)
+	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLESTRING", title_string)
 	svg = regex.sub(r"viewBox=\".+?\"", "viewBox=\"0 0 1400 {:.0f}\"".format(y), svg)
 
 	return svg
@@ -218,7 +218,7 @@ def generate_cover_svg(title, authors, title_string, templates_path):
 	if title_class != "title-xsmall":
 		svg = regex.sub(r"\n\n\t\t\.title-xsmall\{.+?\}", "", svg, flags=regex.DOTALL)
 
-	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>").replace("TITLESTRING", title_string)
+	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLESTRING", title_string)
 
 	return svg
 
