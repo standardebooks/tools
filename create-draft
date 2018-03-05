@@ -329,6 +329,7 @@ def main():
 		# Get the actual ebook URL
 		try:
 			response = requests.get(pg_ebook_url)
+			response.encoding = 'utf-8'
 			pg_ebook_html = response.text
 		except Exception as ex:
 			se.print_error("Couldn't download Project Gutenberg ebook HTML. Error: {}".format(ex))
