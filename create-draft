@@ -8,10 +8,11 @@ import requests
 import git
 import regex
 import unicodedata
+from ftfy import fix_text
 import se
 import se.formatting
 import se.epub
-from bs4 import BeautifulSoup, UnicodeDammit
+from bs4 import BeautifulSoup
 
 
 def get_word_widths(str, target_height):
@@ -329,15 +330,14 @@ def main():
 		# Get the actual ebook URL
 		try:
 			response = requests.get(pg_ebook_url)
-			response.encoding = 'utf-8'
 			pg_ebook_html = response.text
 		except Exception as ex:
 			se.print_error("Couldn't download Project Gutenberg ebook HTML. Error: {}".format(ex))
 			exit(1)
 
 		try:
-			dammit = UnicodeDammit(pg_ebook_html)
-			pg_ebook_html = se.epub.strip_bom(dammit.unicode_markup)
+			fixed_pg_ebook_html = fix_text(pg_ebook_html)
+			pg_ebook_html = se.epub.strip_bom(fixed_pg_ebook_html)
 		except Exception as ex:
 			se.print_error("Couldn't determine text encoding of Project Gutenberg HTML file. Error: {}".format(ex))
 			exit(1)
