@@ -534,6 +534,11 @@ def main():
 						if filename == "endnotes.xhtml":
 							processed_xhtml = processed_xhtml.replace(" epub:type=\"se:referrer\"", " role=\"doc-backlink\" epub:type=\"se:referrer\"")
 
+							# iOS renders the left-arrow-hook character as an emoji; this fixes it and forces it to renderr as text.
+							# See https://github.com/standardebooks/tools/issues/73
+							# See http://mts.io/2015/04/21/unicode-symbol-render-text-emoji/
+							processed_xhtml = processed_xhtml.replace("\u21a9", "\u21a9\ufe0e")
+
 						for role in se.ARIA_ROLES:
 							processed_xhtml = regex.sub(r"(epub:type=\"[^\"]*?{}[^\"]*?\")".format(role), "\\1 role=\"doc-{}\"".format(role), processed_xhtml)
 
