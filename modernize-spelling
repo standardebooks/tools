@@ -145,6 +145,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
 	xhtml = xhtml.replace("Cæsar", "Caesar")
 	xhtml = xhtml.replace("Crœsus", "Croesus")
+	xhtml = xhtml.replace("Æschylus", "Aeschylus")
 	xhtml = xhtml.replace("æsthet", "aesthet") # aesthetic, aesthete, etc.
 	xhtml = xhtml.replace("Æsthet", "Aesthet") # aesthetic, aesthete, etc.
 	xhtml = xhtml.replace("Œdip", "Oedip") # Oedipus, Oedipal
