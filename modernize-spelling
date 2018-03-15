@@ -132,6 +132,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Bb])iass", r"\1ias", xhtml)				# biass -> bias
 	xhtml = regex.sub(r"\b([Cc])huse", r"\1hoose", xhtml)				# chuse -> choose
 	xhtml = regex.sub(r"\b([Cc])husing", r"\1hoosing", xhtml)				# chusing -> choosing
+	xhtml = regex.sub(r"\b([Ss])urpriz(e|ing)", r"\1urpriz\2", xhtml)				# surprize->surprise, surprizing->surprising
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
