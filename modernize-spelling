@@ -136,6 +136,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Dd])oat\b", r"\1ote", xhtml)				# doat -> dote
 	xhtml = regex.sub(r"\b([Dd])oat(ed|ing)", r"\1ot\2", xhtml)				# doating -> doting
 	xhtml = regex.sub(r"\b([Ss])topt", r"\1topped", xhtml)				# stopt -> stopped
+	xhtml = regex.sub(r"\b([Ss])tept", r"\1tepped", xhtml)				# stept -> stepped
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
