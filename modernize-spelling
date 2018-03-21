@@ -57,6 +57,8 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\bphantas(y|ie)", r"fantasy", xhtml)			# phantasie -> fantasy
 	xhtml = regex.sub(r"\bPhantastic", r"Fantastic", xhtml)				# phantastic -> fantastic
 	xhtml = regex.sub(r"\bphantastic", r"fantastic", xhtml)				# phantastic -> fantastic
+	xhtml = regex.sub(r"\bPhrensy", r"Frenzy", xhtml)				# Phrensy -> Frenzy
+	xhtml = regex.sub(r"\bphrensy", r"frenzy", xhtml)				# phrensy -> frenzy
 	xhtml = regex.sub(r"\b([Mm])enage\b", r"\1énage", xhtml)			# menage -> ménage
 	xhtml = regex.sub(r"([Hh])ypothenuse", r"\1ypotenuse", xhtml)			# hypothenuse -> hypotenuse
 	xhtml = regex.sub(r"[‘’]([Bb])us\b", r"\1us", xhtml)				# ’bus -> bus
