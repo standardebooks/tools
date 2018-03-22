@@ -142,7 +142,8 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Ss])ecresy", r"\1ecrecy", xhtml)			# secresy -> secrecy
 	xhtml = regex.sub(r"\b([Mm])esalliance", r"\1ésalliance", xhtml)		# mesalliance -> mésalliance
 	xhtml = regex.sub(r"\b([Ss])ate", r"\1at", xhtml)				# sate -> sat
-	xhtlm = regex.sub(r"\b([Aa])ttache\b", r"\1ttaché", xhtml)			# attache -> attaché
+	xhtml = regex.sub(r"\b([Aa])ttache\b", r"\1ttaché", xhtml)			# attache -> attaché
+	xhtml = regex.sub(r"\b([Pp])orte[\- ]coch[eè]re\b", r"\1orte-cochère", xhtml)	# porte-cochere -> porte-cochère
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
