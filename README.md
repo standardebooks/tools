@@ -60,7 +60,7 @@ These instructions were tested on macOS 10.12 and 10.13. Your mileage may vary. 
 	# Install python dependencies
 	# *********IMPORTANT NOTE*********: PyHyphen currently fails to install on Mac OS when you run this command.
 	# Don't worry, you can safely ignore PyHyphen's failure, as long as all the other pip packages install correctly.
-	pip install -r ./tools/requirements.txt
+	pip3 install -r ./tools/requirements.txt
 	```
 
 # TODO
