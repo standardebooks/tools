@@ -402,6 +402,7 @@ def main():
 	shutil.copy(os.path.normpath(templates_path + "/titlepage.xhtml"), os.path.normpath(repo_name + "/src/epub/text/"))
 	shutil.copy(os.path.normpath(templates_path + "/uncopyright.xhtml"), os.path.normpath(repo_name + "/src/epub/text/"))
 	shutil.copy(os.path.normpath(templates_path + "/titlepage.svg"), os.path.normpath(repo_name + "/images/"))
+	shutil.copy(os.path.normpath(templates_path + "/cover.jpg"), os.path.normpath(repo_name + "/images/cover.jpg"))
 	shutil.copy(os.path.normpath(templates_path + "/cover.svg"), os.path.normpath(repo_name + "/images/cover.svg"))
 
 	# Try to find Wikipedia links if possible
