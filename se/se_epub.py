@@ -527,6 +527,9 @@ class SeEpub:
 				if ".git/" in os.path.join(root, filename) or filename.endswith(tuple(se.BINARY_EXTENSIONS)):
 					continue
 
+				if "-0" in filename:
+					messages.append(LintMessage("Illegal leading 0 in filename", se.MESSAGE_TYPE_ERROR, filename))
+
 				if filename.startswith(".") or filename.startswith("README"):
 					if filename == ".gitignore":
 						# .gitignore is optional, because our standard gitignore ignores itself.
