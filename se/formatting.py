@@ -38,6 +38,9 @@ def titlecase(text):
 	regex_string = r"\bAnd{}".format(se.WORD_JOINER)
 	text = regex.sub(regex_string, "and{}".format(se.WORD_JOINER), text)
 
+	# Lowercase "in", if followed by a semicolon
+	text = regex.sub(r"\b; In", "; in", text)
+
 	# Lowercase "from", "with", as long as they're not the first word and not preceded by a parenthesis
 	text = regex.sub(r"(?<!^)(?<!\()\b(From|With)\b", lambda result: result.group(1).lower(), text)
 
