@@ -593,6 +593,9 @@ def main():
 						# Remember to get our custom style selectors too.
 						processed_css = processed_css.replace("rearnote", "footnote")
 
+						# Add new break-* aliases for compatibilty with newer readers.
+						processed_css = regex.sub(r"(\s+)page-break-(.+?:\s.+?;)", "\\1page-break-\\2\t\\1break-\\2", processed_css)
+
 						if processed_css != css:
 							file.seek(0)
 							file.write(processed_css)
