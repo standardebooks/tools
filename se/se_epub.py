@@ -452,6 +452,10 @@ class SeEpub:
 				if not match.startswith("https://github.com/standardebooks/"):
 					messages.append(LintMessage("Illegal se:url.vcs.github. VCS URLs must begin with https://github.com/standardebooks/: {}".format(match), se.MESSAGE_TYPE_ERROR, "content.opf"))
 
+		# Check for HathiTrust scan URLs instead of actual record URLs
+		if "babel.hathitrust.org" in metadata_xhtml or "hdl.handle.net" in metadata_xhtml:
+			messages.append(LintMessage("Use HathiTrust record URLs, not page scan URLs, in metadata, imprint, and colophon. Record URLs look like: https://catalog.hathitrust.org/Record/<RECORD-ID>", se.MESSAGE_TYPE_ERROR, "content.opf"))
+
 		# Check for illegal se:subject tags
 		matches = regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", metadata_xhtml)
 		if matches:
