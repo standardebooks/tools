@@ -6,6 +6,7 @@ import glob
 import html
 import tempfile
 import subprocess
+import unicodedata
 import regex
 import se
 import se.formatting
@@ -723,6 +724,20 @@ class SeEpub:
 						# Check for "Hathi Trust" instead of "HathiTrust"
 						if "Hathi Trust" in file_contents:
 							messages.append(LintMessage("\"Hathi Trust\" should be \"HathiTrust\"", se.MESSAGE_TYPE_ERROR, filename))
+
+						# Check for uppercase letters in IDs or classes
+						matches = dom.select("[id],[class]")
+						for match in matches:
+							if match.has_attr("id"):
+								uppercase_matches = regex.findall(r"[A-Z]", unicodedata.normalize("NFKD", match["id"]))
+								for uppercase_match in uppercase_matches:
+									messages.append(LintMessage("Uppercase ID attribute: {}. Attribute values must be all lowercase.".format(match["id"]), se.MESSAGE_TYPE_ERROR, filename))
+
+							if match.has_attr("class"):
+								for css_class in match["class"]:
+									uppercase_matches = regex.findall(r"[A-Z]", unicodedata.normalize("NFKD", css_class))
+									for uppercase_match in uppercase_matches:
+										messages.append(LintMessage("Uppercase class attribute: {}. Attribute values must be all lowercase.".format(css_class), se.MESSAGE_TYPE_ERROR, filename))
 
 						# Check for numeric entities
 						matches = regex.findall(r"&#[0-9]+?;", file_contents)
