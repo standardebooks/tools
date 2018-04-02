@@ -125,7 +125,7 @@ def main():
 				processed_xhtml = regex.sub(r"\b‘([Aa])ven\b", r"’\1ven", processed_xhtml) #  'aven't
 
 				# nth (as in nth degree)
-				processed_xhtml = regex.sub(r"\bn\-?th\b", r"<i>n</i>th", processed_xhtml)
+				processed_xhtml = regex.sub(r"\bn\-?th\b", r"<var>n</var>th", processed_xhtml)
 
 				# Remove double spaces that use se.NO_BREAK_SPACE for spacing
 				processed_xhtml = regex.sub(r"{}[{} ]+".format(se.NO_BREAK_SPACE, se.NO_BREAK_SPACE), r" ", processed_xhtml)
