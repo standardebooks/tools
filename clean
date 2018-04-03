@@ -44,8 +44,8 @@ def main():
 				target_filenames.add(target)
 
 		for filename in target_filenames:
-			# If we're cleaning a directory and setting single lines, skip the colophon, which has special spacing
-			if args.single_lines and filename.endswith("colophon.xhtml") and os.path.isdir(target):
+			# If we're cleaning a directory and setting single lines, skip the colophon and cover/titlepage svgs, as they have special spacing
+			if args.single_lines and os.path.isdir(target) and (filename.endswith("colophon.xhtml") or filename.endswith("cover.svg") or filename.endswith("titlepage.svg")):
 				continue
 
 			with open(filename, "r+", encoding="utf-8") as file:
