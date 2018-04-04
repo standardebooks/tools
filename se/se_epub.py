@@ -729,9 +729,14 @@ class SeEpub:
 						matches = dom.select("[id],[class]")
 						for match in matches:
 							if match.has_attr("id"):
-								uppercase_matches = regex.findall(r"[A-Z]", unicodedata.normalize("NFKD", match["id"]))
+								normalized_id = unicodedata.normalize("NFKD", match["id"])
+								uppercase_matches = regex.findall(r"[A-Z]", normalized_id)
 								for uppercase_match in uppercase_matches:
 									messages.append(LintMessage("Uppercase ID attribute: {}. Attribute values must be all lowercase.".format(match["id"]), se.MESSAGE_TYPE_ERROR, filename))
+
+								number_matches = regex.findall(r"^[0-9]", normalized_id)
+								for number_match in number_matches:
+									messages.append(LintMessage("ID starting with a number is illegal XHTML: {}".format(match["id"]), se.MESSAGE_TYPE_ERROR, filename))
 
 							if match.has_attr("class"):
 								for css_class in match["class"]:
