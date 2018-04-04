@@ -711,8 +711,8 @@ class SeEpub:
 									if remove_subtitle:
 										heading_subtitle.extract()
 
-								normalised_text = ' '.join(match.get_text().split())
-								headings = headings + [(normalised_text, filename)]
+								normalized_text = ' '.join(match.get_text().split())
+								headings = headings + [(normalized_text, filename)]
 
 						# Check for direct z3998:roman spans that should have their semantic pulled into the parent element
 						matches = regex.findall(r"<([a-z0-9]+)[^>]*?>\s*(<span epub:type=\"z3998:roman\">[^<]+?</span>)\s*</\1>", file_contents, flags=regex.DOTALL)
