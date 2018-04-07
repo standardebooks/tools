@@ -1079,7 +1079,11 @@ class SeEpub:
 
 		headings = list(set(headings))
 		with open(os.path.join(self.directory, "src", "epub", "toc.xhtml"), "r", encoding="utf-8") as toc:
-			toc_entries = BeautifulSoup(toc.read(), "lxml").find_all('a')
+			# Depth first search using recursiveChildGenerator to get the headings in order
+			toc_entries = []
+			for child in BeautifulSoup(toc.read(), "lxml").recursiveChildGenerator():
+				if getattr(child, "name") == "a":
+					toc_entries.append(child)
 			# Unlike main headings, ToC entries have a ‘:’ before the subheading
 			for index, entry in enumerate(toc_entries):
 				entry_text = ' '.join(regex.sub(r"^(.*?):", r"\1", entry.get_text()).split())
@@ -1088,6 +1092,14 @@ class SeEpub:
 			for heading in headings:
 				if heading not in toc_entries:
 					messages.append(LintMessage("Heading ‘{}’ found, but not present for that file in the ToC".format(heading[0]), se.MESSAGE_TYPE_ERROR, heading[1]))
+
+			# Check our ordered ToC entries against the spine
+			with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r", encoding="utf-8") as content_opf:
+				spine = BeautifulSoup(content_opf.read(), "lxml").find('spine')
+				for index, entry in enumerate(spine.find_all('itemref')):
+					if toc_entries[index][1] != entry.attrs['idref']:
+						messages.append(LintMessage("Spine does not match the order of the table of contents", se.MESSAGE_TYPE_ERROR, "content.opf"))
+						break
 
 		for element in abbr_elements:
 			try:
