@@ -77,7 +77,7 @@ def main():
 				processed_xhtml = regex.sub(r"""(?<!\<abbr class="initialism"\>)IOU""", r"""<abbr class="initialism">IOU</abbr>""", processed_xhtml)
 				processed_xhtml = regex.sub(r"""(?<!\<abbr class="era"\>)A\.?D""", r"""<abbr class="era">AD</abbr>""", processed_xhtml)
 				processed_xhtml = regex.sub(r"""(?<!\<abbr class="era"\>)B\.?C""", r"""<abbr class="era">BC</abbr>""", processed_xhtml)
-				processed_xhtml = regex.sub(r"""(?<!\<abbr class="time"\>)([ap])\.\s?m\.""", r"""<abbr class="time">\1.m.</abbr>""", processed_xhtml)
+				processed_xhtml = regex.sub(r"""(?<!\<abbr class="time( eoc)?"\>)([ap])\.\s?m\.""", r"""<abbr class="time">\2.m.</abbr>""", processed_xhtml)
 
 				# Guess at adding eoc class
 				processed_xhtml = regex.sub(r"""<abbr>([a-zA-Z\.]+?\.)</abbr></p>""", r"""<abbr class="eoc">\1</abbr></p>""", processed_xhtml)
