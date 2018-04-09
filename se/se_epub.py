@@ -1079,27 +1079,38 @@ class SeEpub:
 
 		headings = list(set(headings))
 		with open(os.path.join(self.directory, "src", "epub", "toc.xhtml"), "r", encoding="utf-8") as toc:
+			toc = BeautifulSoup(toc.read(), "lxml").find('nav', attrs={"epub:type": "toc"})
+
 			# Depth first search using recursiveChildGenerator to get the headings in order
 			toc_entries = []
-			for child in BeautifulSoup(toc.read(), "lxml").recursiveChildGenerator():
+			for child in toc.recursiveChildGenerator():
 				if getattr(child, "name") == "a":
 					toc_entries.append(child)
+
+			# Match ToC headings against text headings
 			# Unlike main headings, ToC entries have a ‘:’ before the subheading
+			toc_headings = []
 			for index, entry in enumerate(toc_entries):
 				entry_text = ' '.join(regex.sub(r"^(.*?):", r"\1", entry.get_text()).split())
 				entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get('href'))
-				toc_entries[index] = (entry_text, entry_file)
+				toc_headings.append((entry_text, entry_file))
 			for heading in headings:
-				if heading not in toc_entries:
+				if heading not in toc_headings:
 					messages.append(LintMessage("Heading ‘{}’ found, but not present for that file in the ToC".format(heading[0]), se.MESSAGE_TYPE_ERROR, heading[1]))
 
 			# Check our ordered ToC entries against the spine
 			with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r", encoding="utf-8") as content_opf:
-				spine = BeautifulSoup(content_opf.read(), "lxml").find('spine')
-				for index, entry in enumerate(spine.find_all('itemref')):
-					if toc_entries[index][1] != entry.attrs['idref']:
-						messages.append(LintMessage("Spine does not match the order of the table of contents", se.MESSAGE_TYPE_ERROR, "content.opf"))
-						break
+				toc_files = []
+				for index, entry in enumerate(toc_entries):
+					entry_file = regex.sub(r"^text\/(.*)$", r"\1", entry.get('href'))
+					if "#" not in entry_file:
+						toc_files.append(entry_file)
+				spine_entries = BeautifulSoup(content_opf.read(), "lxml").find('spine').find_all('itemref')
+				for index, entry in enumerate(spine_entries):
+					if ".xhtml#" not in toc_files[index][1]:
+						if toc_files[index] != entry.attrs['idref']:
+							messages.append(LintMessage("Spine does not match the order of the table of contents", se.MESSAGE_TYPE_ERROR, "content.opf"))
+							break
 
 		for element in abbr_elements:
 			try:
