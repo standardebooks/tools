@@ -1079,7 +1079,9 @@ class SeEpub:
 
 		headings = list(set(headings))
 		with open(os.path.join(self.directory, "src", "epub", "toc.xhtml"), "r", encoding="utf-8") as toc:
-			toc = BeautifulSoup(toc.read(), "lxml").find('nav', attrs={"epub:type": "toc"})
+			toc = BeautifulSoup(toc.read(), "lxml")
+			landmarks = toc.find('nav', attrs={"epub:type": "landmarks"})
+			toc = toc.find('nav', attrs={"epub:type": "toc"})
 
 			# Depth first search using recursiveChildGenerator to get the headings in order
 			toc_entries = []
@@ -1099,8 +1101,12 @@ class SeEpub:
 					messages.append(LintMessage("Heading ‘{}’ found, but not present for that file in the ToC".format(heading[0]), se.MESSAGE_TYPE_ERROR, heading[1]))
 
 			# Check our ordered ToC entries against the spine
+			# To cover all possibilities, we combine the toc and the landmarks to get the full set of entries
 			with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r", encoding="utf-8") as content_opf:
 				toc_files = []
+				for index, entry in enumerate(landmarks.find_all('a', attrs={"epub:type": regex.compile("^.*(frontmatter|bodymatter).*$")})):
+					entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get('href'))
+					toc_files.append(entry_file)
 				for index, entry in enumerate(toc_entries):
 					entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get('href'))
 					toc_files.append(entry_file)
