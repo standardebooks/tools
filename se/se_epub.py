@@ -1102,15 +1102,14 @@ class SeEpub:
 			with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r", encoding="utf-8") as content_opf:
 				toc_files = []
 				for index, entry in enumerate(toc_entries):
-					entry_file = regex.sub(r"^text\/(.*)$", r"\1", entry.get('href'))
-					if "#" not in entry_file:
-						toc_files.append(entry_file)
+					entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get('href'))
+					toc_files.append(entry_file)
+				toc_files = list(dict.fromkeys(toc_files))
 				spine_entries = BeautifulSoup(content_opf.read(), "lxml").find('spine').find_all('itemref')
 				for index, entry in enumerate(spine_entries):
-					if ".xhtml#" not in toc_files[index][1]:
-						if toc_files[index] != entry.attrs['idref']:
-							messages.append(LintMessage("Spine does not match the order of the table of contents", se.MESSAGE_TYPE_ERROR, "content.opf"))
-							break
+					if toc_files[index] != entry.attrs['idref']:
+						messages.append(LintMessage("Spine does not match the order of the table of contents", se.MESSAGE_TYPE_ERROR, "content.opf"))
+						break
 
 		for element in abbr_elements:
 			try:
