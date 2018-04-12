@@ -134,6 +134,8 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Bb])iass", r"\1ias", xhtml)				# biass -> bias
 	xhtml = regex.sub(r"\b([Cc])huse", r"\1hoose", xhtml)				# chuse -> choose
 	xhtml = regex.sub(r"\b([Cc])husing", r"\1hoosing", xhtml)			# chusing -> choosing
+	xhtml = regex.sub(r"\b([Cc])ontroul(s{0,1})\b", r"\1ontrol\2", xhtml)	# controul -> control
+	xhtml = regex.sub(r"\b([Cc])ontroul(ing|ed)", r"\1ontroll\2", xhtml)	# controuling/ed -> controlling/ed
 	xhtml = regex.sub(r"\b([Ss])urpriz(e|ing)", r"\1urpris\2", xhtml)		# surprize->surprise, surprizing->surprising
 	xhtml = regex.sub(r"\b([Dd])oat\b", r"\1ote", xhtml)				# doat -> dote
 	xhtml = regex.sub(r"\b([Dd])oat(ed|ing)", r"\1ot\2", xhtml)			# doating -> doting
