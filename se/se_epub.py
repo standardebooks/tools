@@ -1116,7 +1116,7 @@ class SeEpub:
 				spine_entries = BeautifulSoup(content_opf.read(), "lxml").find('spine').find_all('itemref')
 				for index, entry in enumerate(spine_entries):
 					if toc_files[index] != entry.attrs['idref']:
-						messages.append(LintMessage("Spine does not match the order of the table of contents", se.MESSAGE_TYPE_ERROR, "content.opf"))
+						messages.append(LintMessage("The spine order does not match the order of the ToC and landmarks", se.MESSAGE_TYPE_ERROR, "content.opf"))
 						break
 
 		for element in abbr_elements:
