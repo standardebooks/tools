@@ -1110,7 +1110,9 @@ class SeEpub:
 				for index, entry in enumerate(toc_entries):
 					entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get('href'))
 					toc_files.append(entry_file)
-				toc_files = list(dict.fromkeys(toc_files))
+				unique_toc_files = []
+				[unique_toc_files.append(i) for i in toc_files if not unique_toc_files.count(i)]
+				toc_files = unique_toc_files
 				spine_entries = BeautifulSoup(content_opf.read(), "lxml").find('spine').find_all('itemref')
 				for index, entry in enumerate(spine_entries):
 					if toc_files[index] != entry.attrs['idref']:
