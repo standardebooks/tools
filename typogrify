@@ -201,6 +201,9 @@ def main():
 				# Use the Unicode Minus glyph (U+2212) for negative numbers
 				processed_xhtml = regex.sub(r"([\s>])\-([0-9,]+)", r"\1−\2", processed_xhtml)
 
+				# Convert L to £ if next to a number
+				processed_xhtml = regex.sub(r"L([0-9]+)", r"£\1", processed_xhtml)
+
 				if processed_xhtml != xhtml:
 					file.seek(0)
 					file.write(processed_xhtml)
