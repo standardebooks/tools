@@ -1042,6 +1042,30 @@ class SeEpub:
 							if language != file_language:
 								messages.append(LintMessage("File language is {}, but content.opf language is {}".format(file_language, language), se.MESSAGE_TYPE_ERROR, filename))
 
+						# Check alternative text for illustrations
+						# 1. Make a note of the alt text in <figure>
+						# 2. Check that against the illustration <title>.
+						# 3. Warn if alt text doesn’t match the LoI, but don’t error
+						if filename == "loi.xhtml":
+							illustrations = dom.select('li > a')
+							for illustration in illustrations:
+								alt_text = ''
+								title_text = ''
+								loi_text = illustration.get_text()
+								image_ref = illustration["href"].split('#')[1]
+								chapter_ref = regex.findall(r".*\/(.*?)#.*", illustration["href"])[0]
+
+								with open(os.path.join(self.directory, "src", "epub", "images", image_ref + ".svg"), "r", encoding="utf-8") as image:
+									title_text = BeautifulSoup(image, "lxml").title.get_text()
+								with open(os.path.join(self.directory, "src", "epub", "text", chapter_ref), "r", encoding="utf-8") as chapter:
+									alt_text = BeautifulSoup(chapter, "lxml").select("#"+image_ref)[0].img["alt"]
+
+								if alt_text != '' and title_text != '':
+									if title_text != alt_text:
+										messages.append(LintMessage("The title of {}.svg doesn’t match the alt text in {}".format(image_ref, chapter_ref), se.MESSAGE_TYPE_ERROR, chapter_ref))
+									if title_text != loi_text:
+										messages.append(LintMessage("The title of {}.svg doesn’t match the text in its LoI entry".format(image_ref), se.MESSAGE_TYPE_WARNING, filename))
+
 					# Check for missing MARC relators
 					if filename == "introduction.xhtml" and ">aui<" not in metadata_xhtml and ">win<" not in metadata_xhtml:
 						messages.append(LintMessage("introduction.xhtml found, but no MARC relator 'aui' (Author of introduction, but not the chief author) or 'win' (Writer of introduction)", se.MESSAGE_TYPE_WARNING, filename))
