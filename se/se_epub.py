@@ -564,9 +564,6 @@ class SeEpub:
 						has_halftitle = True
 
 					if filename.endswith(".svg"):
-						if "<title>" not in file_contents:
-							messages.append(LintMessage("SVG file missing <title> tag. Usually the SVG <title> matches the corresponding <img> tag's alt attribute.", se.MESSAGE_TYPE_ERROR, filename))
-
 						if os.sep + "src" + os.sep not in root:
 							# Check that cover and titlepage images are in all caps
 							if filename == "cover.svg":
@@ -1062,7 +1059,10 @@ class SeEpub:
 									alt_text = figure_image["alt"]
 								if image_ref.endswith(".svg"):
 									with open(os.path.join(self.directory, "src", "epub", "images", image_ref), "r", encoding="utf-8") as image:
-										title_text = BeautifulSoup(image, "lxml").title.get_text()
+										try:
+											title_text = BeautifulSoup(image, "lxml").title.get_text()
+										except Exception:
+											messages.append(LintMessage("{} missing <title> tag.".format(image_ref), se.MESSAGE_TYPE_ERROR, image_ref))
 
 								if alt_text != '' and title_text != '':
 									if title_text != alt_text:
