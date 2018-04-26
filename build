@@ -573,6 +573,7 @@ def main():
 						processed_xhtml = processed_xhtml.replace("⅒", "1/10")
 						processed_xhtml = processed_xhtml.replace("℅", "c/o")
 						processed_xhtml = processed_xhtml.replace("✗", "×")
+						processed_xhtml = processed_xhtml.replace(" ", "{}{}".format(se.NO_BREAK_SPACE, se.NO_BREAK_SPACE)) # em-space to two nbsps
 
 						# Many e-readers don't support the word joiner character (U+2060).
 						# They DO, however, support the now-deprecated zero-width non-breaking space (U+FEFF)
