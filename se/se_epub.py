@@ -1050,12 +1050,15 @@ class SeEpub:
 								chapter_ref = regex.findall(r".*\/(.*?)#.*", illustration["href"])[0]
 								alt_text = ''
 								title_text = ''
+								figcaption_text = ''
 								loi_text = illustration.get_text()
 
 								with open(os.path.join(self.directory, "src", "epub", "text", chapter_ref), "r", encoding="utf-8") as chapter:
-									figure_image = BeautifulSoup(chapter, "lxml").select("#"+figure_ref)[0].img
-									image_ref = figure_image["src"].split("/").pop()
-									alt_text = figure_image["alt"]
+									figure = BeautifulSoup(chapter, "lxml").select("#"+figure_ref)[0]
+									image_ref = figure.img["src"].split("/").pop()
+									alt_text = figure.img["alt"]
+									if figure.figcaption:
+										figcaption_text = figure.figcaption.get_text()
 								if image_ref.endswith(".svg"):
 									with open(os.path.join(self.directory, "src", "epub", "images", image_ref), "r", encoding="utf-8") as image:
 										try:
@@ -1063,11 +1066,10 @@ class SeEpub:
 										except Exception:
 											messages.append(LintMessage("{} missing <title> tag.".format(image_ref), se.MESSAGE_TYPE_ERROR, image_ref))
 
-								if alt_text != '' and title_text != '':
-									if title_text != alt_text:
-										messages.append(LintMessage("The title of {} doesn’t match the alt text in {}".format(image_ref, chapter_ref), se.MESSAGE_TYPE_ERROR, chapter_ref))
-									if title_text != loi_text:
-										messages.append(LintMessage("The title of {} doesn’t match the text in its LoI entry".format(image_ref), se.MESSAGE_TYPE_WARNING, filename))
+								if alt_text != '' and title_text != '' and title_text != alt_text:
+									messages.append(LintMessage("The title of {} doesn’t match the alt text in {}".format(image_ref, chapter_ref), se.MESSAGE_TYPE_ERROR, chapter_ref))
+								if figcaption_text != '' and loi_text != '' and figcaption_text != loi_text:
+									messages.append(LintMessage("The figcaption of {} doesn’t match the text in its LoI entry".format(figure_ref), se.MESSAGE_TYPE_WARNING, chapter_ref))
 
 					# Check for missing MARC relators
 					if filename == "introduction.xhtml" and ">aui<" not in metadata_xhtml and ">win<" not in metadata_xhtml:
