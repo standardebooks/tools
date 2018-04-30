@@ -1067,9 +1067,9 @@ class SeEpub:
 											messages.append(LintMessage("{} missing <title> tag.".format(image_ref), se.MESSAGE_TYPE_ERROR, image_ref))
 
 								if alt_text != '' and title_text != '' and title_text != alt_text:
-									messages.append(LintMessage("The title of {} doesn’t match the alt text in {}".format(image_ref, chapter_ref), se.MESSAGE_TYPE_ERROR, chapter_ref))
+									messages.append(LintMessage("The <title> tag of {} doesn’t match the alt text in {}".format(image_ref, chapter_ref), se.MESSAGE_TYPE_ERROR, chapter_ref))
 								if figcaption_text != '' and loi_text != '' and figcaption_text != loi_text:
-									messages.append(LintMessage("The figcaption of {} doesn’t match the text in its LoI entry".format(figure_ref), se.MESSAGE_TYPE_WARNING, chapter_ref))
+									messages.append(LintMessage("The <figcaption> tag of {} doesn’t match the text in its LoI entry".format(figure_ref), se.MESSAGE_TYPE_WARNING, chapter_ref))
 
 					# Check for missing MARC relators
 					if filename == "introduction.xhtml" and ">aui<" not in metadata_xhtml and ">win<" not in metadata_xhtml:
