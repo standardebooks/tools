@@ -979,13 +979,12 @@ class SeEpub:
 							if matches:
 								messages.append(LintMessage("Illegal \"Ibid\" in endnotes. \"Ibid\" means \"The previous reference\" which is meaningless with popup endnotes, and must be replaced by the actual thing \"Ibid\" refers to.", se.MESSAGE_TYPE_ERROR, filename))
 
-							endnotes_soup = BeautifulSoup(file_contents, "lxml")
-							endnote_referrers = endnotes_soup.select("li[id^=note-] a")
-
+							endnote_referrers = dom.select("li[id^=note-] a")
 							bad_referrers = []
 
 							for referrer in endnote_referrers:
-								if "epub:type" in referrer.attrs:
+								# We check against the attr value here because I couldn't figure out how to select an XML-namespaced attribute using BS4
+								if "epub:type" in referrer.attrs and referrer.attrs["epub:type"] == "se:referrer":
 									is_first_sib = True
 									for sib in referrer.previous_siblings:
 										if is_first_sib:
