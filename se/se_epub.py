@@ -928,7 +928,7 @@ class SeEpub:
 						if filename not in se.IGNORED_FILENAMES:
 							matches = regex.findall(r"alt=\"[^\"]*?[a-zA-Z]\"", file_contents)
 							if matches:
-								messages.append(LintMessage("Alt attribute doesn't appear to end with puncutation. Alt attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename))
+								messages.append(LintMessage("Alt attribute doesn't appear to end with punctuation. Alt attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename))
 
 						# Check for punctuation after endnotes
 						regex_string = r"<a[^>]*?epub:type=\"noteref\"[^>]*?>[0-9]+</a>[^\s<–\]\)—{}]".format(se.WORD_JOINER)
