@@ -81,17 +81,17 @@ def generate_titlepage_svg(title, authors, contributors, title_string, templates
 	svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
 
 	# Calculate the title lines
-	title_lines = calculate_image_lines(title.upper(), se.TITLEPAGE_TITLE_HEIGHT, canvas_width)
+	title_lines = calculate_image_lines(title.upper().replace("'", "’"), se.TITLEPAGE_TITLE_HEIGHT, canvas_width)
 
 	# Calculate the author lines
 	authors_lines = []
 	for author in authors:
-		authors_lines.append(calculate_image_lines(author.upper(), se.TITLEPAGE_AUTHOR_HEIGHT, canvas_width))
+		authors_lines.append(calculate_image_lines(author.upper().replace("'", "’"), se.TITLEPAGE_AUTHOR_HEIGHT, canvas_width))
 
 	# Calculate the contributor lines
 	contributor_lines = []
 	for descriptor, contributor in contributors.items():
-		contributor_lines.append([descriptor, calculate_image_lines(contributor.upper(), se.TITLEPAGE_CONTRIBUTOR_HEIGHT, canvas_width)])
+		contributor_lines.append([descriptor, calculate_image_lines(contributor.upper().replace("'", "’"), se.TITLEPAGE_CONTRIBUTOR_HEIGHT, canvas_width)])
 
 	# Construct the output
 	text_elements = ""
@@ -149,6 +149,10 @@ def generate_titlepage_svg(title, authors, contributors, title_string, templates
 def generate_cover_svg(title, authors, title_string, templates_path):
 	svg = ""
 	canvas_width = se.COVER_TITLE_BOX_WIDTH - (se.COVER_TITLE_BOX_PADDING * 2)
+
+	title = title.replace("'", "’")
+	authors = authors.replace("'", "’")
+	title_string = title_string.replace("'", "’")
 
 	if not isinstance(authors, list):
 		authors = [authors]
