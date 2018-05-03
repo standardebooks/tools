@@ -151,6 +151,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Ff])ocuss", r"\1ocus", xhtml)				# focuss -> focus
 	xhtml = regex.sub(r"\b([Mm])ise[ \-]en[ \-]sc[eè]ne", r"\1ise-en-scène", xhtml)	# mise en scene -> mise-en-scène
 	xhtml = regex.sub(r"\b(Nn])ee\b", r"\1ée", xhtml)				# nee -> née
+	xhtml = regex.sub(r"\b(Ee])au de Cologne\b", r"\1au de cologne", xhtml)		# eau de Cologne -> eau de cologne
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
