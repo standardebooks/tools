@@ -389,6 +389,8 @@ class SeEpub:
 		has_halftitle = False
 		has_frontmatter = False
 		has_cover_source = False
+		cover_svg_title = ""
+		titlepage_svg_title = ""
 		xhtml_css_classes = []
 		headings = []
 
@@ -571,12 +573,22 @@ class SeEpub:
 								if matches:
 									messages.append(LintMessage("Lowercase letters in cover. Cover text must be all uppercase.", se.MESSAGE_TYPE_ERROR, filename))
 
+								# Save for later comparison with titlepage
+								matches = regex.findall(r"<title>(.*?)</title>", file_contents)
+								for match in matches:
+									cover_svg_title = match.replace("The cover for ", "")
+
 							if filename == "titlepage.svg":
 								matches = regex.findall(r"<text[^>]+?>(.*[a-z].*)</text>", file_contents)
-								if matches:
-									for match in matches:
-										if match != "translated by" and match != "illustrated by" and match != "and":
-											messages.append(LintMessage("Lowercase letters in titlepage. Titlepage text must be all uppercase except \"translated by\" and \"illustrated by\".", se.MESSAGE_TYPE_ERROR, filename))
+								for match in matches:
+									if match != "translated by" and match != "illustrated by" and match != "and":
+										messages.append(LintMessage("Lowercase letters in titlepage. Titlepage text must be all uppercase except \"translated by\" and \"illustrated by\".", se.MESSAGE_TYPE_ERROR, filename))
+
+								# For later comparison with cover
+								matches = regex.findall(r"<title>(.*?)</title>", file_contents)
+								for match in matches:
+									titlepage_svg_title = match.replace("The titlepage for ", "")
+
 					if filename.endswith(".css"):
 						# Check CSS style
 
@@ -1090,6 +1102,9 @@ class SeEpub:
 
 					if filename in se.BACKMATTER_FILENAMES and "backmatter" not in file_contents:
 						messages.append(LintMessage("No backmatter semantic inflection for what looks like a backmatter file", se.MESSAGE_TYPE_WARNING, filename))
+
+		if cover_svg_title != titlepage_svg_title:
+			messages.append(LintMessage("cover.svg and titlepage.svg <title> tags don't match", se.MESSAGE_TYPE_ERROR))
 
 		if has_frontmatter and not has_halftitle:
 			messages.append(LintMessage("Frontmatter found, but no halftitle. Halftitle is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR, "content.opf"))
