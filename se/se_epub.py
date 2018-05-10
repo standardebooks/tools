@@ -579,7 +579,7 @@ class SeEpub:
 									cover_svg_title = match.replace("The cover for ", "")
 
 							if filename == "titlepage.svg":
-								matches = regex.findall(r"<text[^>]+?>(.*[a-z].*)</text>", file_contents)
+								matches = regex.findall(r"<text[^>]+?>(.*[a-z].*)</text>", html.unescape(file_contents))
 								for match in matches:
 									if match != "translated by" and match != "illustrated by" and match != "and":
 										messages.append(LintMessage("Lowercase letters in titlepage. Titlepage text must be all uppercase except \"translated by\" and \"illustrated by\".", se.MESSAGE_TYPE_ERROR, filename))
