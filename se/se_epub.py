@@ -763,6 +763,13 @@ class SeEpub:
 						if matches:
 							messages.append(LintMessage("Required nbsp not found before <abbr class=\"time\">", se.MESSAGE_TYPE_WARNING, filename))
 
+						# Check for low-hanging misquoted fruit
+						matches = regex.findall(r"[A-Za-z]+[“‘]", file_contents)
+						if matches:
+							messages.append(LintMessage("Possible mis-curled quotation mark.", se.MESSAGE_TYPE_WARNING, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+
 						# Check that times have colons and not periods
 						matches = regex.findall(r"[0-9]\.[0-9]+\s<abbr", file_contents) + regex.findall(r"at [0-9]\.[0-9]+", file_contents)
 						if matches:
