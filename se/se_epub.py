@@ -450,8 +450,8 @@ class SeEpub:
 		if "<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">\n\t\t\t&lt;p&gt;" not in metadata_xhtml:
 			messages.append(LintMessage("Long description must be escaped HTML.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
-		# Check for HTML entities in long-description
-		if regex.search(r"&amp;[a-z]+?;", metadata_xhtml):
+		# Check for HTML entities in long-description, but allow &amp;amp;
+		if regex.search(r"&amp;[a-z]+?;", metadata_xhtml.replace("&amp;amp;", "")):
 			messages.append(LintMessage("HTML entites detected in metadata. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for illegal em-dashes in <dc:subject>
