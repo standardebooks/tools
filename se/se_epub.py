@@ -7,6 +7,7 @@ import html
 import tempfile
 import subprocess
 import unicodedata
+import io
 import regex
 import se
 import se.formatting
@@ -421,6 +422,15 @@ class SeEpub:
 		# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
 		if regex.search(r"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", metadata_xhtml.replace("\"&gt;", "").replace("=\"", "")) is not None:
 			messages.append(LintMessage("Non-typogrified \", ', or -- detected in metadata long description", se.MESSAGE_TYPE_ERROR, "content.opf"))
+
+		# Check for malformed long description HTML
+		long_description = regex.findall(r"<meta id=\"long-description\".+?>(.+?)</meta>", metadata_xhtml, flags=regex.DOTALL)
+		if long_description:
+			long_description = "<?xml version=\"1.0\"?><html xmlns=\"http://www.w3.org/1999/xhtml\">" + html.unescape(long_description[0]) + "</html>"
+			try:
+				etree.parse(io.StringIO(long_description))
+			except lxml.etree.XMLSyntaxError as ex:
+				messages.append(LintMessage("Metadata long description is not valid HTML. LXML says: " + str(ex), se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for double spacing
 		regex_string = r"[{}{} ]{{2,}}".format(se.NO_BREAK_SPACE, se.HAIR_SPACE)
