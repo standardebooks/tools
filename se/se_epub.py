@@ -781,7 +781,7 @@ class SeEpub:
 								messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
 
 						# Check that times have colons and not periods
-						matches = regex.findall(r"[0-9]\.[0-9]+\s<abbr", file_contents) + regex.findall(r"at [0-9]\.[0-9]+", file_contents)
+						matches = regex.findall(r"[0-9]\.[0-9]+\s<abbr class=\"time", file_contents) + regex.findall(r"at [0-9]\.[0-9]+", file_contents)
 						if matches:
 							messages.append(LintMessage("Times must be separated by colons (:) not periods (.)", se.MESSAGE_TYPE_ERROR, filename))
 							for match in matches:
