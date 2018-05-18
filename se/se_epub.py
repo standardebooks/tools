@@ -547,11 +547,11 @@ class SeEpub:
 				if filename != "LICENSE.md" and regex.findall(r"[A-Z]", filename):
 					messages.append(LintMessage("Illegal uppercase letter in filename", se.MESSAGE_TYPE_ERROR, filename))
 
-				if filename.endswith(tuple(se.BINARY_EXTENSIONS)):
-					continue
-
 				if "-0" in filename:
 					messages.append(LintMessage("Illegal leading 0 in filename", se.MESSAGE_TYPE_ERROR, filename))
+
+				if filename.endswith(tuple(se.BINARY_EXTENSIONS)):
+					continue
 
 				if filename.startswith(".") or filename.startswith("README"):
 					if filename == ".gitignore":
