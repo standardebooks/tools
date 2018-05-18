@@ -153,6 +153,7 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Nn])ee\b", r"\1ée", xhtml)				# nee -> née
 	xhtml = regex.sub(r"\b([Ee])au de Cologne\b", r"\1au de cologne", xhtml)	# eau de Cologne -> eau de cologne
 	xhtml = regex.sub(r"\b([Ss])enor", r"\1eñor", xhtml)				# senor -> señor (senores, senorita/s, etc.)
+	xhtml = regex.sub(r"\b([Gg])ramme?(s)?\b", r"\1ram\2", xhtml)			# gramm/grammes -> gram/grams
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
