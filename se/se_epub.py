@@ -538,10 +538,16 @@ class SeEpub:
 		# Now iterate over individual files for some checks
 		for root, _, filenames in os.walk(self.directory):
 			for filename in sorted(filenames, key=se.natural_sort_key):
+				if ".git/" in os.path.join(root, filename):
+					continue
+
 				if filename.startswith("cover.source."):
 					has_cover_source = True
 
-				if ".git/" in os.path.join(root, filename) or filename.endswith(tuple(se.BINARY_EXTENSIONS)):
+				if filename != "LICENSE.md" and regex.findall(r"[A-Z]", filename):
+					messages.append(LintMessage("Illegal uppercase letter in filename", se.MESSAGE_TYPE_ERROR, filename))
+
+				if filename.endswith(tuple(se.BINARY_EXTENSIONS)):
 					continue
 
 				if "-0" in filename:
@@ -784,6 +790,13 @@ class SeEpub:
 						matches = regex.findall(r"[0-9]\.[0-9]+\s<abbr class=\"time", file_contents) + regex.findall(r"at [0-9]\.[0-9]+", file_contents)
 						if matches:
 							messages.append(LintMessage("Times must be separated by colons (:) not periods (.)", se.MESSAGE_TYPE_ERROR, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
+						# Check for leading 0 in IDs
+						matches = regex.findall(r"id=\".+?\-0[0-9]+.*?\"", file_contents)
+						if matches:
+							messages.append(LintMessage("Illegal leading 0 in ID attribute", se.MESSAGE_TYPE_ERROR, filename))
 							for match in matches:
 								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
