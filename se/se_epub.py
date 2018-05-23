@@ -840,6 +840,14 @@ class SeEpub:
 						if "<p/>" in file_contents or matches:
 							messages.append(LintMessage("Empty <p> tag. Use <hr/> for scene breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename))
 
+						# Check for single words that are in italics, but that have closing punctuation outside italics
+						# Outer wrapping match is so that .findall returns the entire match and not the subgroup
+						matches = regex.findall(r"(“<(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])", file_contents) + regex.findall(r"([\.\!\?] <(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])", file_contents)
+						if matches:
+							messages.append(LintMessage("When a complete clause is italicized, ending punctuation EXCEPT commas must be within containing italics.", se.MESSAGE_TYPE_ERROR, filename))
+							for match in matches:
+								messages.append(LintMessage(match[0], se.MESSAGE_TYPE_WARNING, filename, True))
+
 						# Check for style attributes
 						matches = regex.findall(r"<.+?style=\"", file_contents)
 						if matches:
