@@ -36,13 +36,62 @@ def main():
 
 				convert = True
 				if args.force is False:
-					detected_style = _detect_quote_type(xhtml)
+					# Attempt to guess the quote type used in the `xhtml`.
+
+					# Want to discover the first quote type after a <p> tag. Doesn't have to be
+					# directly after.
+
+					# Count pattern matches for each quote style (disregard matches where the
+					# capturing group contains opposite quote style).
+
+					# Quote style percentage above the threshold is returned.
+
+					threshold = 80
+
+					ldq_pattern = regex.compile(r"\t*<p>(.*?)“", regex.MULTILINE)
+					lsq_pattern = regex.compile(r"\t*<p>(.*?)‘", regex.MULTILINE)
+
+					lsq_count = len([m for m in lsq_pattern.findall(xhtml) if m.count("“") == 0])
+					ldq_count = len([m for m in ldq_pattern.findall(xhtml) if m.count("‘") == 0])
+
+					detected_style = "unsure"
+					american_percentage = 0
+
+					try:
+						american_percentage = (ldq_count / (ldq_count + lsq_count) * 100)
+					except ZeroDivisionError:
+						pass
+
+					if american_percentage >= threshold:
+						detected_style = "american"
+					elif 100 - american_percentage >= threshold:
+						detected_style = "british"
+
 					if detected_style == "american":
 						convert = False
 						print("{}File appears to already use American quote style, ignoring. Use --force to convert anyway. File: {}".format("\t" if args.verbose else "", filename))
 
 				if convert:
-					new_xhtml = british_to_american(new_xhtml)
+					# Do the conversion!
+
+					new_xhtml = xhtml
+					new_xhtml = regex.sub(r"“", r"<ldq>", new_xhtml)
+					new_xhtml = regex.sub(r"”", r"<rdq>", new_xhtml)
+					new_xhtml = regex.sub(r"‘", r"<lsq>", new_xhtml)
+					new_xhtml = regex.sub(r"<rdq>⁠ ’(\s+)", r"<rdq> <rsq>\1", new_xhtml)
+					new_xhtml = regex.sub(r"<rdq>⁠ ’</", r"<rdq> <rsq></", new_xhtml)
+					new_xhtml = regex.sub(r"([\.\,\!\?\…\:\;])’", r"\1<rsq>", new_xhtml)
+					new_xhtml = regex.sub(r"—’(\s+)", r"—<rsq>\1", new_xhtml)
+					new_xhtml = regex.sub(r"—’</", r"—<rsq></", new_xhtml)
+					new_xhtml = regex.sub(r"([a-z])’([a-z])", r"\1<ap>\2", new_xhtml)
+					new_xhtml = regex.sub(r"(\s+)’([a-z])", r"\1<ap>\2", new_xhtml)
+					new_xhtml = regex.sub(r"<ldq>", r"‘", new_xhtml)
+					new_xhtml = regex.sub(r"<rdq>", r"’", new_xhtml)
+					new_xhtml = regex.sub(r"<lsq>", r"“", new_xhtml)
+					new_xhtml = regex.sub(r"<rsq>", r"”", new_xhtml)
+					new_xhtml = regex.sub(r"<ap>", r"’", new_xhtml)
+					new_xhtml = regex.sub(r"’ ’", r"’ ”", new_xhtml)				# Correct a common error
+					new_xhtml = regex.sub(r"“([^‘”]+?[^s])’([!\?:;\)\s])", r"“\1”\2", new_xhtml)	# Correct a common error
 
 					if new_xhtml != xhtml:
 						file.seek(0)
@@ -51,66 +100,6 @@ def main():
 
 		if args.verbose:
 			print(" OK")
-
-
-def _detect_quote_type(xhtml):
-	'''
-	Attempt to guess the quote type used in the `xhtml`.
-
-	Want to discover the first quote type after a <p> tag. Doesn't have to be
-	directly after.
-
-	Count pattern matches for each quote style (disregard matches where the
-	capturing group contains opposite quote style).
-
-	Quote style percentage above the threshold is returned.
-
-	Returns:
-	`british`: single-quotes
-	`american`: double-quotes
-	`unsure`: unable to determine from text
-	'''
-	threshold = 80
-
-	ldq_pattern = regex.compile(r"\t*<p>(.*?)“", regex.MULTILINE)
-	lsq_pattern = regex.compile(r"\t*<p>(.*?)‘", regex.MULTILINE)
-
-	lsq_count = len([m for m in lsq_pattern.findall(xhtml) if m.count("“") == 0])
-	ldq_count = len([m for m in ldq_pattern.findall(xhtml) if m.count("‘") == 0])
-
-	try:
-		american_percentage = (ldq_count / (ldq_count + lsq_count) * 100)
-	except ZeroDivisionError:
-		return "unsure"
-
-	if american_percentage >= threshold:
-		return "american"
-	elif 100 - american_percentage >= threshold:
-		return "british"
-
-	return "unsure"
-
-
-def british_to_american(xhtml):
-	xhtml = regex.sub(r"“", r"<ldq>", xhtml)
-	xhtml = regex.sub(r"”", r"<rdq>", xhtml)
-	xhtml = regex.sub(r"‘", r"<lsq>", xhtml)
-	xhtml = regex.sub(r"<rdq>⁠ ’(\s+)", r"<rdq> <rsq>\1", xhtml)
-	xhtml = regex.sub(r"<rdq>⁠ ’</", r"<rdq> <rsq></", xhtml)
-	xhtml = regex.sub(r"([\.\,\!\?\…\:\;])’", r"\1<rsq>", xhtml)
-	xhtml = regex.sub(r"—’(\s+)", r"—<rsq>\1", xhtml)
-	xhtml = regex.sub(r"—’</", r"—<rsq></", xhtml)
-	xhtml = regex.sub(r"([a-z])’([a-z])", r"\1<ap>\2", xhtml)
-	xhtml = regex.sub(r"(\s+)’([a-z])", r"\1<ap>\2", xhtml)
-	xhtml = regex.sub(r"<ldq>", r"‘", xhtml)
-	xhtml = regex.sub(r"<rdq>", r"’", xhtml)
-	xhtml = regex.sub(r"<lsq>", r"“", xhtml)
-	xhtml = regex.sub(r"<rsq>", r"”", xhtml)
-	xhtml = regex.sub(r"<ap>", r"’", xhtml)
-	xhtml = regex.sub(r"’ ’", r"’ ”", xhtml)				# Correct a common error
-	xhtml = regex.sub(r"“([^‘”]+?[^s])’([!\?:;\)\s])", r"“\1”\2", xhtml)	# Correct a common error
-
-	return xhtml
 
 
 if __name__ == "__main__":
