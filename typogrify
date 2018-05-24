@@ -168,6 +168,12 @@ def main():
 				# Remove spaces between ellipses and endnotes directly after
 				processed_xhtml = regex.sub(r"…[\s{}]?(<a[^>]+?id=\"note-[0-9]+\"[^>]*?>)".format(se.NO_BREAK_SPACE), r"…\1", processed_xhtml, flags=regex.IGNORECASE)
 
+				# Don't use . ... if within a clause
+				processed_xhtml = regex.sub(r"\.(\s…\s[a-z])", r"\1", processed_xhtml)
+
+				# Remove period from . .. if after punctuation
+				processed_xhtml = regex.sub(r"([\!\?\,\;\:]\s*)\.(\s…)", r"\1\2", processed_xhtml)
+
 				# Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
 				processed_xhtml = regex.sub(r"([0-9])\s+([a-z]{1,3}\.)", r"\1{}\2".format(se.NO_BREAK_SPACE), processed_xhtml, flags=regex.IGNORECASE)
 
