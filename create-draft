@@ -4,10 +4,11 @@ import argparse
 import os
 import shutil
 from subprocess import call
+import unicodedata
+from typing import Union
 import requests
 import git
 import regex
-import unicodedata
 from ftfy import fix_text
 import se
 import se.formatting
@@ -15,9 +16,21 @@ import se.epub
 from bs4 import BeautifulSoup
 
 
-def get_word_widths(str, target_height):
+def get_word_widths(string: str, target_height: int) -> list:
+	"""
+	Helper function.
+	Given a string and a target letter height, return an array of words with their corresponding widths.
+
+	INPUTS
+	string: The string to inspect
+	target_height: The target letter height, in pixels.
+
+	OUTPUTS
+	An array of objects. Each object represents a word and its corresponding width in pixels.
+	"""
+
 	words = []
-	for word in reversed(str.split()):
+	for word in reversed(string.split()):
 		width = 0
 
 		for char in word:
@@ -31,8 +44,22 @@ def get_word_widths(str, target_height):
 
 	return words
 
-def calculate_image_lines(str, target_height, canvas_width):
-	words = get_word_widths(str, target_height)
+def calculate_image_lines(string: str, target_height: int, canvas_width: int) -> list:
+	"""
+	Helper function.
+	Given a string, a target letter height, and the canvas width, return an array representing the string
+	broken down into enough lines to fill the canvas without overflowing. Lines are ordered with the widest at the bottom.
+
+	INPUTS
+	string: The string to inspect
+	target_height: The target letter height, in pixels
+	canvas_width: The width of the canvas, in pixels
+
+	OUTPUTS
+	An array of strings. Each string represents one line of text in the final image. The lines are ordered with the widest at the bottom.
+	"""
+
+	words = get_word_widths(string, target_height)
 	lines = []
 	current_line = ""
 	current_width = 0
@@ -56,15 +83,21 @@ def calculate_image_lines(str, target_height, canvas_width):
 
 	return lines
 
-def generate_titlepage_svg(title, authors, contributors, title_string, templates_path):
+def generate_titlepage_svg(title: str, authors: Union[str, list], contributors: dict, title_string: str, templates_path: str) -> str:
 	"""
 	Generate a draft of the titlepage SVG.
 	The function tries to build the title with the widest line at the bottom, moving up.
 	We approximate a few values, like the width of a space, which are variable in the font.
 
+	INPUTS
 	title: The title
 	authors: an author, or an array of authors
 	contributors: a dict in the form of: {"contributor descriptor": "contributor name(s)" ... }
+	title_string: The SE titlestring (e.g. "The Rubáiyát of Omar Khayyám. Translated by Edward Fitzgerald. Illustrated by Edmund Dulac")
+	templates_path: The full path to the SE templates folder
+
+	OUTPUTS
+	A string representing the complete SVG source code of the titlepage.
 	"""
 
 	svg = ""
@@ -74,7 +107,7 @@ def generate_titlepage_svg(title, authors, contributors, title_string, templates
 		authors = [authors]
 
 	# Read our template SVG to get some values before we begin
-	with open(os.path.join(templates_path, "titlepage.svg" ), "r", encoding="utf-8") as file:
+	with open(os.path.join(templates_path, "titlepage.svg"), "r", encoding="utf-8") as file:
 		svg = file.read()
 
 	# Remove the template text elements from the SVG source, we'll write out to it later
@@ -95,58 +128,73 @@ def generate_titlepage_svg(title, authors, contributors, title_string, templates
 
 	# Construct the output
 	text_elements = ""
-	y = se.TITLEPAGE_VERTICAL_PADDING
+	element_y = se.TITLEPAGE_VERTICAL_PADDING
 
 	# Add the title
 	for line in title_lines:
-		y += se.TITLEPAGE_TITLE_HEIGHT
-		text_elements += "\t<text class=\"title\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(y, line)
-		y += se.TITLEPAGE_TITLE_MARGIN
+		element_y += se.TITLEPAGE_TITLE_HEIGHT
+		text_elements += "\t<text class=\"title\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(element_y, line)
+		element_y += se.TITLEPAGE_TITLE_MARGIN
 
-	y -= se.TITLEPAGE_TITLE_MARGIN
+	element_y -= se.TITLEPAGE_TITLE_MARGIN
 
 	# Add the author(s)
-	y += se.TITLEPAGE_AUTHOR_SPACING
+	element_y += se.TITLEPAGE_AUTHOR_SPACING
 
 	for author_lines in authors_lines:
 		for line in author_lines:
-			y += se.TITLEPAGE_AUTHOR_HEIGHT
-			text_elements += "\t<text class=\"author\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(y, line)
-			y += se.TITLEPAGE_AUTHOR_MARGIN
+			element_y += se.TITLEPAGE_AUTHOR_HEIGHT
+			text_elements += "\t<text class=\"author\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(element_y, line)
+			element_y += se.TITLEPAGE_AUTHOR_MARGIN
 
-	y -= se.TITLEPAGE_AUTHOR_MARGIN
+	element_y -= se.TITLEPAGE_AUTHOR_MARGIN
 
 	# Add the contributor(s)
 	if contributor_lines:
-		y += se.TITLEPAGE_CONTRIBUTORS_SPACING
+		element_y += se.TITLEPAGE_CONTRIBUTORS_SPACING
 		for contributor in contributor_lines:
-			y += se.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT
-			text_elements += "\t<text class=\"contributor-descriptor\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(y, contributor[0])
-			y += se.TITLEPAGE_CONTRIBUTOR_MARGIN
+			element_y += se.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT
+			text_elements += "\t<text class=\"contributor-descriptor\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(element_y, contributor[0])
+			element_y += se.TITLEPAGE_CONTRIBUTOR_MARGIN
 
 			for person in contributor[1]:
-				y += se.TITLEPAGE_CONTRIBUTOR_HEIGHT
-				text_elements += "\t<text class=\"contributor\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(y, person)
-				y += se.TITLEPAGE_CONTRIBUTOR_MARGIN
+				element_y += se.TITLEPAGE_CONTRIBUTOR_HEIGHT
+				text_elements += "\t<text class=\"contributor\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(element_y, person)
+				element_y += se.TITLEPAGE_CONTRIBUTOR_MARGIN
 
-			y -= se.TITLEPAGE_CONTRIBUTOR_MARGIN
+			element_y -= se.TITLEPAGE_CONTRIBUTOR_MARGIN
 
-			y += se.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
+			element_y += se.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
 
-		y -= se.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
+		element_y -= se.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
 	else:
 		# Remove unused CSS
 		svg = regex.sub(r"\n\t\t\.contributor-descriptor{.+?}\n", "", svg, flags=regex.DOTALL)
 		svg = regex.sub(r"\n\t\t\.contributor{.+?}\n", "", svg, flags=regex.DOTALL)
 
-	y += se.TITLEPAGE_VERTICAL_PADDING
+	element_y += se.TITLEPAGE_VERTICAL_PADDING
 
 	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLESTRING", title_string)
-	svg = regex.sub(r"viewBox=\".+?\"", "viewBox=\"0 0 1400 {:.0f}\"".format(y), svg)
+	svg = regex.sub(r"viewBox=\".+?\"", "viewBox=\"0 0 1400 {:.0f}\"".format(element_y), svg)
 
 	return svg
 
-def generate_cover_svg(title, authors, title_string, templates_path):
+def generate_cover_svg(title: str, authors: Union[str, list], title_string: str, templates_path: str) -> str:
+	"""
+	Generate a draft of the cover SVG.
+	The function tries to build the title box with the widest line at the bottom, moving up.
+	We approximate a few values, like the width of a space, which are variable in the font.
+
+	INPUTS
+	title: The title
+	authors: an author, or an array of authors
+	title_string: The SE titlestring (e.g. "The Rubáiyát of Omar Khayyám. Translated by Edward Fitzgerald. Illustrated by Edmund Dulac")
+	templates_path: The full path to the SE templates folder
+
+	OUTPUTS
+	A string representing the complete SVG source code of the cover page.
+	"""
+
 	svg = ""
 	canvas_width = se.COVER_TITLE_BOX_WIDTH - (se.COVER_TITLE_BOX_PADDING * 2)
 
@@ -158,7 +206,7 @@ def generate_cover_svg(title, authors, title_string, templates_path):
 		authors = [authors]
 
 	# Read our template SVG to get some values before we begin
-	with open(os.path.join(templates_path, "cover.svg" ), "r", encoding="utf-8") as file:
+	with open(os.path.join(templates_path, "cover.svg"), "r", encoding="utf-8") as file:
 		svg = file.read()
 
 	# Remove the template text elements from the SVG source, we'll write out to it later
@@ -186,32 +234,32 @@ def generate_cover_svg(title, authors, title_string, templates_path):
 
 	# Construct the output
 	text_elements = ""
-	y = se.COVER_TITLE_BOX_Y + \
+	element_y = se.COVER_TITLE_BOX_Y + \
 		+ ((se.COVER_TITLE_BOX_HEIGHT \
-			- ( (len(title_lines) * title_height) \
-				+ ( (len(title_lines) - 1) * se.COVER_TITLE_MARGIN ) \
+			- ((len(title_lines) * title_height) \
+				+ ((len(title_lines) - 1) * se.COVER_TITLE_MARGIN) \
 				+ se.COVER_AUTHOR_SPACING \
 				+ (len(authors_lines) * se.COVER_AUTHOR_HEIGHT) \
 		)) / 2)
 
 	# Add the title
 	for line in title_lines:
-		y += title_height
-		text_elements += "\t<text class=\"{}\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(title_class, y, line)
-		y += se.COVER_TITLE_MARGIN
+		element_y += title_height
+		text_elements += "\t<text class=\"{}\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(title_class, element_y, line)
+		element_y += se.COVER_TITLE_MARGIN
 
-	y -= se.COVER_TITLE_MARGIN
+	element_y -= se.COVER_TITLE_MARGIN
 
 	# Add the author(s)
-	y += se.COVER_AUTHOR_SPACING
+	element_y += se.COVER_AUTHOR_SPACING
 
 	for author_lines in authors_lines:
 		for line in author_lines:
-			y += se.COVER_AUTHOR_HEIGHT
-			text_elements += "\t<text class=\"author\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(y, line)
-			y += se.COVER_AUTHOR_MARGIN
+			element_y += se.COVER_AUTHOR_HEIGHT
+			text_elements += "\t<text class=\"author\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(element_y, line)
+			element_y += se.COVER_AUTHOR_MARGIN
 
-	y -= se.COVER_AUTHOR_MARGIN
+	element_y -= se.COVER_AUTHOR_MARGIN
 
 	# Remove unused CSS
 	if title_class != "title":
@@ -227,7 +275,19 @@ def generate_cover_svg(title, authors, title_string, templates_path):
 
 	return svg
 
-def get_wikipedia_url(string, get_nacoaf_url=False):
+def get_wikipedia_url(string: str, get_nacoaf_url: bool) -> (str, str):
+	"""
+	Helper function.
+	Given a string, try to see if there's a Wikipedia page entry for that string.
+
+	INPUTS
+	string: The string to find on Wikipedia
+	get_nacoaf_url: Include NACOAF URL in resulting tuple, if found?
+
+	OUTPUTS
+	A tuple of two strings. The first string is the Wikipedia URL, the second is the NACOAF URL.
+	"""
+
 	# We try to get the Wikipedia URL by the subject by taking advantage of the fact that Wikipedia's special search will redirect you immediately
 	# if there's an article match.  So if the search page tries to redirect us, we use that redirect link as the Wiki URL.  If the search page
 	# returns HTTP 200, then we didn't find a direct match and return nothing.
@@ -411,7 +471,7 @@ def main():
 
 	# Try to find Wikipedia links if possible
 	author_wiki_url, author_nacoaf_url = get_wikipedia_url(args.author, True)
-	ebook_wiki_url, _ = get_wikipedia_url(args.title)
+	ebook_wiki_url, _ = get_wikipedia_url(args.title, False)
 	translator_wiki_url = None
 	if args.translator:
 		translator_wiki_url, translator_nacoaf_url = get_wikipedia_url(args.translator, True)
