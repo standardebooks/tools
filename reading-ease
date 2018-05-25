@@ -13,10 +13,18 @@ import se
 INCLUDED_CHARACTERS = list(string.whitespace) + list(string.digits) + [":", ";", ".", "?", "!"]
 
 
-def get_word_count(text):
+def get_word_count(text: str) -> int:
+	"""
+	Helper function to get word count of string.
+	"""
+
 	return len(text.split())
 
-def get_syllable_count(word):
+def get_syllable_count(word: str) -> int:
+	"""
+	Helper function to get the syllable count of a word.
+	"""
+
 	# See http://eayd.in/?p=232
 	exception_add = ["serious", "crucial"]
 	exception_del = ["fortunately", "unfortunately"]

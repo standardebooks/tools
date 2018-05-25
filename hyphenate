@@ -116,7 +116,7 @@ def main():
 								if len(word) < 100:
 									syllables = hyphenators[language].syllables(word)
 
-									if len(syllables) > 0:
+									if syllables:
 										new_word = "\u00AD".join(syllables)
 
 								result = result[:pos - len(word) - 1] + new_word + char + result[pos:]

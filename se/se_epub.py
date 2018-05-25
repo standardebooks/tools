@@ -14,38 +14,57 @@ import se.formatting
 import roman
 import lxml.cssselect
 import lxml.etree as etree
-from bs4 import BeautifulSoup, NavigableString
+from bs4 import Tag, BeautifulSoup, NavigableString
 
 
 class LintMessage:
+	"""
+	An object representing an output message for the lint function.
+
+	Contains information like message text, severity, and the epub filename that generated the message.
+	"""
+
 	text = ""
 	filename = ""
 	message_type = se.MESSAGE_TYPE_WARNING
 	is_submessage = False
 
-	def __init__(self, text, message_type=se.MESSAGE_TYPE_WARNING, filename="", is_submessage=False):
+	def __init__(self, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: str = "", is_submessage: bool = False):
 		self.text = text.strip()
 		self.filename = filename
 		self.message_type = message_type
 		self.is_submessage = is_submessage
 
 class SeEpub:
+	"""
+	An object representing an SE epub file.
+
+	An SE epub can have various operations performed on it, including recomposing and linting.
+	"""
+
 	directory = ""
 	__tools_root_directory = ""
 
-	def __init__(self, directory, tools_root_directory):
-		if not os.path.isdir(directory):
-			raise NotADirectoryError("Not a directory: {}".format(directory))
+	def __init__(self, epub_root_directory: str, tools_root_directory: str):
+		if not os.path.isdir(epub_root_directory):
+			raise NotADirectoryError("Not a directory: {}".format(epub_root_directory))
 
-		if not os.path.isfile(os.path.join(directory, "src", "epub", "content.opf")):
-			raise NotADirectoryError("Not a Standard Ebooks source directory: {}".format(directory))
+		if not os.path.isfile(os.path.join(epub_root_directory, "src", "epub", "content.opf")):
+			raise NotADirectoryError("Not a Standard Ebooks source directory: {}".format(epub_root_directory))
 
-		self.directory = os.path.abspath(directory)
+		self.directory = os.path.abspath(epub_root_directory)
 		self.__tools_root_directory = os.path.abspath(tools_root_directory)
 
-	def __get_malformed_urls(self, xhtml):
+	def __get_malformed_urls(self, xhtml: str) -> list:
 		"""
-		Used in lint()
+		Helper function used in self.lint()
+		Get a list of URLs in the epub that do not match SE standards.
+
+		INPUTS
+		xhtml: A string of XHTML to check
+
+		OUTPUTS
+		A list of strings representing any malformed URLs in the XHTML string
 		"""
 
 		messages = []
@@ -84,9 +103,16 @@ class SeEpub:
 
 		return messages
 
-	def __get_unused_selectors(self):
+	def __get_unused_selectors(self) -> set:
 		"""
-		Used in lint(); merge directly into lint()?
+		Helper function used in self.lint(); merge directly into lint()?
+		Get a list of CSS selectors that do not actually select HTML in the epub.
+
+		INPUTS
+		None
+
+		OUTPUTS
+		A list of strings representing CSS selectors that do not actually select HTML in the epub.
 		"""
 
 		try:
@@ -142,9 +168,18 @@ class SeEpub:
 
 		return unused_selectors
 
-	def __new_bs4_tag(self, section, output_soup):
+	@staticmethod
+	def __new_bs4_tag(section: Tag, output_soup: BeautifulSoup) -> Tag:
 		"""
-		Used in recompose()
+		Helper function used in self.recompose()
+		Create a new BS4 tag given the current section.
+
+		INPUTS
+		section: A BS4 tag
+		output_soup: A BS4 object representing the entire soup
+
+		OUTPUTS
+		A new BS4 tag.
 		"""
 
 		tag = output_soup.new_tag(section.name)
@@ -153,9 +188,17 @@ class SeEpub:
 
 		return tag
 
-	def __recompose_xhtml(self, section, output_soup):
+	def __recompose_xhtml(self, section: Tag, output_soup: BeautifulSoup) -> None:
 		"""
-		Used in recompose()
+		Helper function used in self.recompose()
+		Recursive function for recomposing a series of XHTML files into a single XHTML file.
+
+		INPUTS
+		section: A BS4 tag to inspect
+		output_soup: A BS4 object representing the entire soup
+
+		OUTPUTS
+		None
 		"""
 
 		# Quick sanity check before we begin
@@ -181,11 +224,15 @@ class SeEpub:
 				else:
 					existing_section[0].append(child)
 
-	def recompose(self):
+	def recompose(self) -> str:
 		"""
-		Iterate over the XHTML files in this epub and
-		"recompose" them into a single HTML5 string representing
-		this ebook.
+		Iterate over the XHTML files in this epub and "recompose" them into a single HTML5 string representing this ebook.
+
+		INPUTS
+		None
+
+		OUTPUTS
+		A string of HTML5 representing the entire recomposed ebook.
 		"""
 
 		clean_path = os.path.join(self.__tools_root_directory, "clean")
@@ -268,9 +315,15 @@ class SeEpub:
 
 		return xhtml
 
-	def generate_manifest(self):
+	def generate_manifest(self) -> str:
 		"""
-		Return the <manifest> element for this ebook.
+		Return the <manifest> element for this ebook as an XML string.
+
+		INPUTS
+		None
+
+		OUTPUTS
+		An XML fragment string representing the manifest.
 		"""
 
 		manifest = []
@@ -324,11 +377,15 @@ class SeEpub:
 
 		return manifest_xhtml
 
-	def generate_spine(self):
+	def generate_spine(self) -> str:
 		"""
-		Return the <spine> element of this ebook, with
-		a best guess as to the correct order.
-		Manual review is required.
+		Return the <spine> element of this ebook as an XML string, with a best guess as to the correct order. Manual review is required.
+
+		INPUTS
+		None
+
+		OUTPUTS
+		An XML fragment string representing the spine.
 		"""
 
 		excluded_files = se.IGNORED_FILENAMES + ["dedication.xhtml", "introduction.xhtml", "foreword.xhtml", "preface.xhtml", "epigraph.xhtml", "endnotes.xhtml"]
@@ -375,9 +432,15 @@ class SeEpub:
 
 		return spine_xhtml
 
-	def lint(self):
+	def lint(self) -> list:
 		"""
 		Check this ebook for some common SE style errors.
+
+		INPUTS
+		None
+
+		OUTPUTS
+		A list of LintMessage objects.
 		"""
 
 		messages = []
@@ -756,17 +819,17 @@ class SeEpub:
 							if match.has_attr("id"):
 								normalized_id = unicodedata.normalize("NFKD", match["id"])
 								uppercase_matches = regex.findall(r"[A-Z]", normalized_id)
-								for uppercase_match in uppercase_matches:
+								for _ in uppercase_matches:
 									messages.append(LintMessage("Uppercase ID attribute: {}. Attribute values must be all lowercase.".format(match["id"]), se.MESSAGE_TYPE_ERROR, filename))
 
 								number_matches = regex.findall(r"^[0-9]", normalized_id)
-								for number_match in number_matches:
+								for _ in number_matches:
 									messages.append(LintMessage("ID starting with a number is illegal XHTML: {}".format(match["id"]), se.MESSAGE_TYPE_ERROR, filename))
 
 							if match.has_attr("class"):
 								for css_class in match["class"]:
 									uppercase_matches = regex.findall(r"[A-Z]", unicodedata.normalize("NFKD", css_class))
-									for uppercase_match in uppercase_matches:
+									for _ in uppercase_matches:
 										messages.append(LintMessage("Uppercase class attribute: {}. Attribute values must be all lowercase.".format(css_class), se.MESSAGE_TYPE_ERROR, filename))
 
 						# Check for numeric entities

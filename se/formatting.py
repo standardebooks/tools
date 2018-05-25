@@ -7,14 +7,44 @@ import se
 from titlecase import titlecase as pip_titlecase
 
 
-def remove_tags(text):
+def remove_tags(text: str) -> str:
+	"""
+	Remove all HTML tags from a string.
+
+	INPUTS
+	text: Text that may have HTML tags
+
+	OUTPUTS
+	A string with all HTML tags removed
+	"""
+
 	return regex.sub(r"</?([a-z]+)[^>]*?>", "", text, flags=regex.DOTALL)
 
-def ordinal(number):
+def ordinal(number: str) -> str:
+	"""
+	Given an string representing an integer, return a string of the integer followed by its ordinal, like "nd" or "rd".
+
+	INPUTS
+	number: A string representing an integer like "1" or "2"
+
+	OUTPUTS
+	A string of the integer followed by its ordinal, like "1st" or "2nd"
+	"""
+
 	number = int(number)
 	return "%d%s" % (number, "tsnrhtdd"[(math.floor(number / 10) % 10 != 1) * (number % 10 < 4) * number % 10::4])
 
-def titlecase(text):
+def titlecase(text: str) -> str:
+	"""
+	Titlecase a string according to SE house style.
+
+	INPUTS
+	text: The string to titlecase
+
+	OUTPUTS
+	A titlecased version of the input string
+	"""
+
 	text = pip_titlecase(text)
 
 	# We make some additional adjustments here
@@ -64,7 +94,17 @@ def titlecase(text):
 
 	return text
 
-def make_url_safe(text):
+def make_url_safe(text: str) -> str:
+	"""
+	Return a URL-safe version of the input. For example, the string "Mother's Day" becomes "mothers-day".
+
+	INPUTS
+	text: A string to make URL-safe
+
+	OUTPUTS
+	A URL-safe version of the input string
+	"""
+
 	#1. Convert accented characters to unaccented characters
 	text = regex.sub(r"\p{M}", "", unicodedata.normalize("NFKD", text))
 

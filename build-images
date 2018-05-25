@@ -11,7 +11,7 @@ import regex
 import se
 
 
-def clean_inkscape_svg(filename, clean_path):
+def clean_inkscape_svg(filename: str, clean_path: str):
 	with open(filename, "r+") as file:
 		svg = file.read()
 
@@ -30,7 +30,7 @@ def clean_inkscape_svg(filename, clean_path):
 
 	subprocess.run([clean_path, filename])
 
-def remove_metadata(filename, exiftool_path):
+def remove_metadata(filename: str, exiftool_path: str):
 	# After lots of research there just isn't a good way to reliably edit exif metadata in pure Python.
 	# So unfortunately we're stuck with this dependency on `exiftool`.
 	subprocess.run([exiftool_path, "-overwrite_original", "-all=", filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

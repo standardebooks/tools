@@ -5,6 +5,14 @@ import os
 import regex
 import se.epub
 
+def output(chapter_number: int, header_xhtml: str, chapter_xhtml: str) -> None:
+	"""
+	Helper function to write a file given the chapter number, header XHTML, and chapter body XHTML.
+	"""
+
+	with open("chapter-" + str(chapter_number) + ".xhtml", "w", encoding="utf-8") as file:
+		file.write(header_xhtml.replace("NUMBER", str(chapter_number)) + "\n" + chapter_xhtml + "\n</section></body></html>")
+		file.truncate()
 
 def main():
 	parser = argparse.ArgumentParser(description="Split an XHTML file into many files at all instances of <!--se:split-->, and include a header template for each file.")
@@ -37,11 +45,6 @@ def main():
 
 	if chapter_xhtml and not chapter_xhtml.isspace():
 		output(chapter_number, header_xhtml, chapter_xhtml)
-
-def output(chapter_number, header_xhtml, chapter_xhtml):
-	with open("chapter-" + str(chapter_number) + ".xhtml", "w", encoding="utf-8") as file:
-		file.write(header_xhtml.replace("NUMBER", str(chapter_number)) + "\n" + chapter_xhtml + "\n</section></body></html>")
-		file.truncate()
 
 
 if __name__ == "__main__":

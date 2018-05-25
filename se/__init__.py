@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+from typing import Union
 from textwrap import wrap
 from termcolor import colored
 import terminaltables
@@ -52,39 +53,77 @@ LEAGUE_SPARTAN_AVERAGE_SPACING = 7 # Guess at average default spacing between le
 LEAGUE_SPARTAN_100_WIDTHS = {" ": 40.0, "A": 98.245, "B": 68.1875, "C": 83.97625, "D": 76.60875, "E": 55.205, "F": 55.79, "G": 91.57875, "H": 75.0875, "I": 21.98875, "J": 52.631254, "K": 87.83625, "L": 55.205, "M": 106.9, "N": 82.5725, "O": 97.1925, "P": 68.1875, "Q": 98.83, "R": 79.41599, "S": 72.63125, "T": 67.83625, "U": 75.32125, "V": 98.245, "W": 134.62, "X": 101.28625, "Y": 93.1, "Z": 86.19875, ".": 26.78375, ",": 26.78375, "/": 66.08125, "\\": 66.08125, "-": 37.66125, ":": 26.78375, ";": 26.78375, "’": 24.3275, "!": 26.78375, "?": 64.3275, "&": 101.87125, "0": 78.48, "1": 37.895, "2": 75.205, "3": 72.04625, "4": 79.29875, "5": 70.175, "6": 74.26875, "7": 76.95875, "8": 72.16375, "9": 74.26875}
 
 class SeError(Exception):
+	"""
+	Wrapper class for SE exceptions
+	"""
+
 	pass
 
-def natural_sort(list_to_sort):
+def natural_sort(list_to_sort: list) -> list:
+	"""
+	Natural sort a list.
+	"""
+
 	convert = lambda text: int(text) if text.isdigit() else text.lower()
 	alphanum_key = lambda key: [convert(c) for c in regex.split('([0-9]+)', key)]
+
 	return sorted(list_to_sort, key=alphanum_key)
 
-def natural_sort_key(text, _nsre=regex.compile('([0-9]+)')):
+def natural_sort_key(text: str, _nsre=regex.compile('([0-9]+)')):
+	"""
+	Helper function for sorted() to sort by key.
+	"""
+
 	return [int(text) if text.isdigit() else text.lower() for text in regex.split(_nsre, text)]
 
-def replace_in_file(filename, search, replace):
-	with open(filename, "r+", encoding="utf-8") as file:
+def replace_in_file(absolute_path: str, search: Union[str, list], replace: Union[str, list]) -> None:
+	"""
+	Helper function to replace in a file.
+	"""
+
+	with open(absolute_path, "r+", encoding="utf-8") as file:
 		data = file.read()
-		file.seek(0)
+		processed_data = data
 
 		if isinstance(search, list):
 			for index, val in enumerate(search):
 				if replace[index] is not None:
-					data = data.replace(val, replace[index])
-			file.write(data)
+					processed_data = processed_data.replace(val, replace[index])
 		else:
-			file.write(data.replace(search, replace))
+			processed_data.replace(search, replace)
 
-		file.truncate()
+		if processed_data != data:
+			file.seek(0)
+			file.write(processed_data)
+			file.truncate()
 
-def print_error(message, verbose=False):
+def print_error(message: str, verbose: bool = False) -> None:
+	"""
+	Helper function to print a colored error message to the console.
+	"""
+
 	print("{}{} {}".format(MESSAGE_INDENT if verbose else "", colored("Error:", "red", attrs=["reverse"]), message), file=sys.stderr)
 
-def print_warning(message, verbose=False):
+def print_warning(message: str, verbose: bool = False) -> None:
+	"""
+	Helper function to print a colored warning message to the console.
+	"""
+
 	print("{}{} {}".format(MESSAGE_INDENT if verbose else "", colored("Warning:", "yellow", attrs=["reverse"]), message))
 
-# wrap_column is the 0-indexed column to wrap
-def print_table(table_data, wrap_column=None):
+def print_table(table_data: list, wrap_column: bool = None) -> None:
+
+	"""
+	Helper function to print a table to the console.
+
+	INPUTS
+	table_data: A list where each entry is a list representing the columns in a table
+	wrap_column: The 0-indexed column to wrap
+
+	OUTPUTS
+	None
+	"""
+
 	table = terminaltables.SingleTable(table_data)
 	table.inner_heading_row_border = False
 	table.inner_row_border = True

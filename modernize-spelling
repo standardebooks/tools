@@ -7,7 +7,18 @@ import regex
 import se
 
 
-def modernize_hyphenation(xhtml, dictionary):
+def modernize_hyphenation(xhtml: str, dictionary: list) -> str:
+	"""
+	Convert old-timey hyphenated compounds into single words based on the passed dictionary.
+
+	INPUTS
+	xhtml: A string of XHTML to modernize
+	dictionary: A list of all valid English words to check against
+
+	OUTPUTS:
+	A string representing the XHTML with its hyphenation modernized
+	"""
+
 	# Easy fix for a common case
 	xhtml = regex.sub(r"\b([Nn])ow-a-days\b", r"\1owadays", xhtml)			# now-a-days -> nowadays
 
@@ -30,7 +41,18 @@ def modernize_hyphenation(xhtml, dictionary):
 
 	return xhtml
 
-def modernize_spelling(xhtml, language):
+def modernize_spelling(xhtml: str, language: str) -> str:
+	"""
+	Convert old-timey spelling on a case-by-case basis.
+
+	INPUTS
+	xhtml: A string of XHTML to modernize
+	language: The IETF language tag of the XHTML, like "en-US" or "en-GB"
+
+	OUTPUTS:
+	A string representing the XHTML with its spelling modernized
+	"""
+
 	# ADDING NEW WORDS TO THIS LIST:
 	# A good way to check if a word is "archaic" is to do a Google N-Gram search: https://books.google.com/ngrams/graph?case_insensitive=on&year_start=1800&year_end=2000&smoothing=3
 	# Remember that en-US and en-GB differ significantly, and just because a word might seem strange to you, doesn't mean it's not the common case in the other variant.
@@ -41,8 +63,8 @@ def modernize_spelling(xhtml, language):
 	xhtml = regex.sub(r"\b([Ww])ellnigh\b", r"\1ell-nigh", xhtml)			# wellnigh -> well-nigh
 	xhtml = regex.sub(r"\b([Tt]he|[Aa]nd|[Oo]r) what not(?! to)\b", r"\1 whatnot", xhtml)	# what not -> whatnot
 	xhtml = regex.sub(r"\b([Gg])ood\-bye?\b", r"\1oodbye", xhtml)			# good-by -> goodbye
-	xhtml = regex.sub(r"\b([Hh])indoo", r"\1indu", xhtml)				# hindoo -> hindu
 	xhtml = regex.sub(r"\b([Hh])ind(u|oo)stanee", r"\1industani", xhtml)		# hindoostanee -> hindustani
+	xhtml = regex.sub(r"\b([Hh])indoo", r"\1indu", xhtml)				# hindoo -> hindu
 	xhtml = regex.sub(r"\b([Ee])xpence", r"\1xpense", xhtml)			# expence -> expense
 	xhtml = regex.sub(r"\b([Ll])otos", r"\1otus", xhtml)				# lotos -> lotus
 	xhtml = regex.sub(r"\b([Ss])collop", r"\1callop", xhtml)			# scollop -> scallop

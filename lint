@@ -3,8 +3,8 @@
 import argparse
 import os
 import se
-from termcolor import colored
 from se.se_epub import SeEpub
+from termcolor import colored
 
 
 def main():

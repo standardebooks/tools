@@ -8,7 +8,12 @@ from bs4 import BeautifulSoup
 import se
 
 
-def is_positive_integer(value):
+def is_positive_integer(value: str) -> int:
+	"""
+	Helper function for argparse.
+	Raise an exception if value is not a positive integer.
+	"""
+
 	int_value = int(value)
 	if int_value <= 0:
 		raise argparse.ArgumentTypeError("{} is not a positive integer".format(value))
@@ -71,7 +76,7 @@ def main():
 				processed_xhtml = xhtml
 
 				for endnote_number in note_range:
-					processed_xhtml = regex.sub(r"(<a[^>]*?>){}</a>".format(endnote_number), "\g<1>{}</a>".format(endnote_number + step), processed_xhtml, flags=regex.MULTILINE | regex.DOTALL)
+					processed_xhtml = regex.sub(r"(<a[^>]*?>){}</a>".format(endnote_number), r"\g<1>{}</a>".format(endnote_number + step), processed_xhtml, flags=regex.MULTILINE | regex.DOTALL)
 					processed_xhtml = processed_xhtml.replace("id=\"noteref-{}\"".format(endnote_number), "id=\"noteref-{}\"".format(endnote_number + step))
 					processed_xhtml = processed_xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + step))
 

@@ -36,8 +36,6 @@ SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
 paragraph_counter = 1
 segment_counter = 1
 
-
-# For Kobo
 def append_kobo_spans_from_text(node, text):
 	global paragraph_counter
 	global segment_counter
@@ -64,7 +62,6 @@ def append_kobo_spans_from_text(node, text):
 			return True
 	return True
 
-# For Kobo
 def add_kobo_spans_to_node(node):
 	global paragraph_counter
 	global segment_counter
@@ -118,9 +115,20 @@ def add_kobo_spans_to_node(node):
 	else:
 		node.tail = None
 	return node
+# End Kobo compatibility functions
 
-# For simplifying tags
-def namespace_to_class(selector):
+
+def namespace_to_class(selector: str)-> str:
+	"""
+	Helper function to remove namespace selectors from a single selector, and replace them with class names.
+
+	INPUTS
+	selector: A single CSS selector
+
+	OUTPUTS
+	A string representing the selector with namespaces replaced by classes
+	"""
+
 	# First, remove periods from epub:type.  We can't remove periods in the entire selector because there might be class selectors involved
 	epub_type = regex.search(r"\"[^\"]+?\"", selector).group()
 	if epub_type:
@@ -129,8 +137,17 @@ def namespace_to_class(selector):
 	# Now clean things up
 	return selector.replace(":", "-").replace("|", "-").replace("~=", "-").replace("[", ".").replace("]", "").replace("\"", "")
 
-# For simplifying tags
-def simplify_css(css):
+def simplify_css(css: str) ->  str:
+	"""
+	Helper function to simplify a block of CSS for improved cross-ereader compatibility.
+
+	INPUTS
+	css: A string containing any number of CSS selectors and rules
+
+	OUTPUTS
+	A string representing the simplified CSS
+	"""
+
 	# First we replace :first-child selectors with a first-child class, since ADE doesn't handle them
 	# Currently this replacement isn't perfect, because occasionally lxml generates an xpath expression
 	# from the css selector that lxml itself can't evaluate, even though the `xpath` binary can!
@@ -177,9 +194,7 @@ def main():
 	ebook_convert_path = shutil.which("ebook-convert")
 	# Look for default Mac calibre app path if none found in path
 	if ebook_convert_path is None and os.path.exists(calibre_app_mac_path):
-		ebook_convert_path = os.path.join(
-				calibre_app_mac_path,
-				'ebook-convert')
+		ebook_convert_path = os.path.join(calibre_app_mac_path, 'ebook-convert')
 	rsvg_convert_path = shutil.which("rsvg-convert")
 	convert_path = shutil.which("convert")
 	clean_path = os.path.join(script_directory, "clean")
@@ -286,7 +301,7 @@ def main():
 		if args.verbose:
 			print("\tBuilding {} ...".format(epub3_output_filename), end="", flush=True)
 
-		se.epub.write_epub(os.path.join(output_directory, epub3_output_filename), work_epub_root_directory)
+		se.epub.write_epub(work_epub_root_directory, os.path.join(output_directory, epub3_output_filename))
 
 		if args.verbose:
 			print(" OK")
@@ -653,7 +668,7 @@ def main():
 							file.write(xhtml)
 							file.truncate()
 
-				se.epub.write_epub(os.path.join(output_directory, kobo_output_filename), kobo_work_directory)
+				se.epub.write_epub(kobo_work_directory, os.path.join(output_directory, kobo_output_filename))
 
 			if args.verbose:
 				print(" OK")
@@ -728,7 +743,7 @@ def main():
 		subprocess.run([clean_path, work_epub_root_directory])
 
 		# Write the compatible epub
-		se.epub.write_epub(os.path.join(output_directory, epub_output_filename), work_epub_root_directory)
+		se.epub.write_epub(work_epub_root_directory, os.path.join(output_directory, epub_output_filename))
 
 		if args.verbose:
 			print(" OK")
@@ -887,7 +902,7 @@ def main():
 				subprocess.run([hyphenate_path, "--ignore-h-tags", work_epub_root_directory])
 
 			# Build an epub file we can send to Calibre
-			se.epub.write_epub(os.path.join(work_directory, epub_output_filename), work_epub_root_directory)
+			se.epub.write_epub(work_epub_root_directory, os.path.join(work_directory, epub_output_filename))
 
 			# Generate the kindle file
 			# We place it in the work directory because later we have to update the asin, and the se.mobi.update_asin() function will write to the final output directory
