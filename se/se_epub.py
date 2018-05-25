@@ -907,9 +907,16 @@ class SeEpub:
 						# Outer wrapping match is so that .findall returns the entire match and not the subgroup
 						matches = regex.findall(r"(“<(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])", file_contents) + regex.findall(r"([\.\!\?] <(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])", file_contents)
 						if matches:
-							messages.append(LintMessage("When a complete clause is italicized, ending punctuation EXCEPT commas must be within containing italics.", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage("When a complete clause is italicized, ending punctuation EXCEPT commas must be within containing italics.", se.MESSAGE_TYPE_WARNING, filename))
 							for match in matches:
 								messages.append(LintMessage(match[0], se.MESSAGE_TYPE_WARNING, filename, True))
+
+						# Check for foreign phrases with italics going *outside* quotes
+						matches = regex.findall(r"<i[^>]*?>“.+?\b", file_contents) + regex.findall(r"”</i>", file_contents)
+						if matches:
+							messages.append(LintMessage("When italicizing language in dialog, italics go INSIDE quotation marks.", se.MESSAGE_TYPE_WARNING, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
 
 						# Check for style attributes
 						matches = regex.findall(r"<.+?style=\"", file_contents)
