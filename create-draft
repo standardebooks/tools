@@ -400,7 +400,7 @@ def main():
 			exit(1)
 
 		try:
-			fixed_pg_ebook_html = fix_text(pg_ebook_html)
+			fixed_pg_ebook_html = fix_text(pg_ebook_html, uncurl_quotes=False)
 			pg_ebook_html = se.epub.strip_bom(fixed_pg_ebook_html)
 		except Exception as ex:
 			se.print_error("Couldn't determine text encoding of Project Gutenberg HTML file. Error: {}".format(ex))
