@@ -283,13 +283,13 @@ def main():
 
 		# Clean up old output files if any
 		for kindle_thumbnail in glob.glob(os.path.join(output_directory, "thumbnail_*_EBOK_portrait.jpg")):
-			se.epub.quiet_remove(kindle_thumbnail)
-		se.epub.quiet_remove(os.path.join(output_directory, "cover.jpg"))
-		se.epub.quiet_remove(os.path.join(output_directory, "cover-thumbnail.jpg"))
-		se.epub.quiet_remove(os.path.join(output_directory, epub_output_filename))
-		se.epub.quiet_remove(os.path.join(output_directory, epub3_output_filename))
-		se.epub.quiet_remove(os.path.join(output_directory, kobo_output_filename))
-		se.epub.quiet_remove(os.path.join(output_directory, kindle_output_filename))
+			se.quiet_remove(kindle_thumbnail)
+		se.quiet_remove(os.path.join(output_directory, "cover.jpg"))
+		se.quiet_remove(os.path.join(output_directory, "cover-thumbnail.jpg"))
+		se.quiet_remove(os.path.join(output_directory, epub_output_filename))
+		se.quiet_remove(os.path.join(output_directory, epub3_output_filename))
+		se.quiet_remove(os.path.join(output_directory, kobo_output_filename))
+		se.quiet_remove(os.path.join(output_directory, kindle_output_filename))
 
 		# Are we including proofreading CSS?
 		if args.proof:

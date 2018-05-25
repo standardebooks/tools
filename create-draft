@@ -12,7 +12,6 @@ import regex
 from ftfy import fix_text
 import se
 import se.formatting
-import se.epub
 from bs4 import BeautifulSoup
 
 
@@ -401,7 +400,7 @@ def main():
 
 		try:
 			fixed_pg_ebook_html = fix_text(pg_ebook_html, uncurl_quotes=False)
-			pg_ebook_html = se.epub.strip_bom(fixed_pg_ebook_html)
+			pg_ebook_html = se.strip_bom(fixed_pg_ebook_html)
 		except Exception as ex:
 			se.print_error("Couldn't determine text encoding of Project Gutenberg HTML file. Error: {}".format(ex))
 			exit(1)

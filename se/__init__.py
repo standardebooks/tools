@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import os
 from typing import Union
 from textwrap import wrap
 from termcolor import colored
@@ -96,6 +97,32 @@ def replace_in_file(absolute_path: str, search: Union[str, list], replace: Union
 			file.seek(0)
 			file.write(processed_data)
 			file.truncate()
+
+def strip_bom(string: str) -> str:
+	"""
+	Remove the Unicode Byte Order Mark from a string.
+
+	INPUTS
+	string: A Unicode string
+
+	OUTPUTS
+	The input string with the Byte Order Mark removed
+	"""
+
+	if string.startswith(UNICODE_BOM):
+		string = string[1:]
+
+	return string
+
+def quiet_remove(absolute_path: str) -> None:
+	"""
+	Helper function to delete a file without throwing an exception if the file doesn't exist.
+	"""
+
+	try:
+		os.remove(absolute_path)
+	except Exception:
+		pass
 
 def print_error(message: str, verbose: bool = False) -> None:
 	"""
