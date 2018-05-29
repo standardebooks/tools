@@ -4,7 +4,7 @@ A collection of tools Standard Ebooks uses to produce its ebooks, including basi
 
 # Installation
 
-## Ubuntu 16.04 users
+## Ubuntu 18.04 users
 
 ```shell
 # Install some pre-flight dependencies
