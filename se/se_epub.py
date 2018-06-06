@@ -1239,14 +1239,17 @@ class SeEpub:
 					toc_entries.append(child)
 
 			# Match ToC headings against text headings
-			# Unlike main headings, ToC entries have a ‘:’ before the subheading
+			# Unlike main headings, ToC entries have a ‘:’ before the subheading so we need to strip these for comparison
 			toc_headings = []
 			for index, entry in enumerate(toc_entries):
-				entry_text = ' '.join(regex.sub(r"^(.*?):", r"\1", entry.get_text()).split())
+				entry_text = ' '.join(entry.get_text().replace(":", "").split())
 				entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get('href'))
 				toc_headings.append((entry_text, entry_file))
 			for heading in headings:
-				if heading not in toc_headings:
+				# Occasionally we find a heading with a colon, but as we’ve stripped our
+				# ToC-only colons above we also need to do that here for the comparison.
+				heading_without_colons = (heading[0].replace(":", ""), heading[1])
+				if heading_without_colons not in toc_headings:
 					messages.append(LintMessage("Heading ‘{}’ found, but not present for that file in the ToC".format(heading[0]), se.MESSAGE_TYPE_ERROR, heading[1]))
 
 			# Check our ordered ToC entries against the spine
