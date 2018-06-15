@@ -91,7 +91,7 @@ def replace_in_file(absolute_path: str, search: Union[str, list], replace: Union
 				if replace[index] is not None:
 					processed_data = processed_data.replace(val, replace[index])
 		else:
-			processed_data.replace(search, replace)
+			processed_data = processed_data.replace(search, replace)
 
 		if processed_data != data:
 			file.seek(0)
