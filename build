@@ -895,11 +895,7 @@ def main():
 					core_css_file.write(compatibility_css_file.read())
 
 			# Add soft hyphens
-			# pyhyphen is currently broken on Mac, so skip this on Macs
-			if platform.system() == "Darwin":
-				print("{}Warning: pyhyphen is currently unstable on Macs, so hyphenation has been disabled.  The resulting Kindle file will not have soft hyphenation.".format("\t" if args.verbose else ""))
-			else:
-				subprocess.run([hyphenate_path, "--ignore-h-tags", work_epub_root_directory])
+			subprocess.run([hyphenate_path, "--ignore-h-tags", work_epub_root_directory])
 
 			# Build an epub file we can send to Calibre
 			se.epub.write_epub(work_epub_root_directory, os.path.join(work_directory, epub_output_filename))
