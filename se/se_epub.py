@@ -857,7 +857,7 @@ class SeEpub:
 								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
 						# Check for leading 0 in IDs
-						matches = regex.findall(r"id=\".+?\-0[0-9]+.*?\"", file_contents)
+						matches = regex.findall(r"id=\"[^\"]+?\-0[0-9]+[^\"]*?\"", file_contents)
 						if matches:
 							messages.append(LintMessage("Illegal leading 0 in ID attribute", se.MESSAGE_TYPE_ERROR, filename))
 							for match in matches:
