@@ -27,9 +27,6 @@ sudo fc-cache -fv
 
 # Install python dependencies
 pip3 install -r ./tools/requirements.txt
-
-# Install hyphenation dictionaries for the pyhyphen library
-python3 -c "exec(\"from hyphen import dictools\\ndictools.install('en_GB')\\ndictools.install('en_US')\")"
 ```
 
 ## macOS users
@@ -60,8 +57,6 @@ These instructions were tested on macOS 10.12 and 10.13. Your mileage may vary. 
 	curl -s -o ~/Library/Fonts/OFLGoudyStM-Italic.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM-Italic.otf"
 
 	# Install python dependencies
-	# *********IMPORTANT NOTE*********: PyHyphen currently fails to install on Mac OS when you run this command.
-	# Don't worry, you can safely ignore PyHyphen's failure, as long as all the other pip packages install correctly.
 	pip3 install -r ./tools/requirements.txt
 	```
 
