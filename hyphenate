@@ -5,7 +5,8 @@ import sys
 import os
 import fnmatch
 import regex
-from hyphen import Hyphenator, dict_info
+from hyphen import Hyphenator
+from hyphen.dictools import list_installed
 from bs4 import BeautifulSoup
 
 
@@ -58,7 +59,7 @@ def main():
 							hyphenators[language] = Hyphenator(language)
 					except Exception:
 						print("Error: Hyphenator for language \"{}\" not available.".format(language), file=sys.stderr)
-						print("Installed hyphenators: {}".format(str(list(dict_info.keys()))), file=sys.stderr)
+						print("Installed hyphenators: {}".format(list_installed()), file=sys.stderr)
 						exit(1)
 
 					text = str(soup.body)
