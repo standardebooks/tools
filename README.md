@@ -4,9 +4,7 @@ A collection of tools Standard Ebooks uses to produce its ebooks, including basi
 
 # Installation
 
-## Ubuntu 16.04 (Xenial) users
-
-*Note: For Ubuntu 18.04 (Bionic) users, the `build` tool does not yet appear to be compatible with 18.04. Help is wanted to troubleshoot compatibility!*
+## Ubuntu 18.04 (Bionic) users
 
 ```shell
 # Install some pre-flight dependencies
