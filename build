@@ -716,13 +716,13 @@ def main():
 
 		metadata_xhtml = metadata_xhtml.replace("</package>", "") + guide_xhtml + "</package>"
 
-		# Guide is done, now write content.opf and clean it
-		# Output the modified content.opf so that we can build the kobo book before making more epub2 compatibility hacks
+		# Guide is done, now write content.opf and clean it.
+		# Output the modified content.opf so that we can build the kobo book before making more epub2 compatibility hacks.
 		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "w", encoding="utf-8") as file:
 			file.write(metadata_xhtml)
 			file.truncate()
 
-		# Recurse over css files to make some compatibility replacements
+		# Recurse over css files to make some compatibility replacements.
 		for root, _, filenames in os.walk(work_epub_root_directory):
 			for filename in filenames:
 				if filename.lower().endswith(".css"):
@@ -753,6 +753,11 @@ def main():
 				print("\tRunning epubcheck on {} ...".format(epub_output_filename), end="", flush=True)
 
 			output = subprocess.run([epubcheck_path, "--quiet", os.path.join(output_directory, epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
+
+			# epubcheck on Ubuntu 18.04 outputs some seemingly harmless warnings; flush them here.
+			if output:
+				output = regex.sub(r"\s*Warning at char 3 in xsl:param/@select on line.+", "", output)
+				output = regex.sub(r"\s*SXWN9000: The parent axis starting at a document node will never select anything", "", output)
 
 			if output:
 				if args.verbose:
