@@ -837,6 +837,11 @@ class SeEpub:
 						if matches:
 							messages.append(LintMessage("Illegal numeric entity (like &#913;) in file.", se.MESSAGE_TYPE_ERROR, filename))
 
+						# Check for double greater-than at the end of a tag
+						matches = regex.findall(r"(>>|>&gt;)", file_contents)
+						if matches:
+							messages.append(LintMessage("Tags should end with a single >.", se.MESSAGE_TYPE_WARNING, filename))
+
 						# Check for nbsp before times
 						matches = regex.findall(r"[0-9]+[^{}]<abbr class=\"time".format(se.NO_BREAK_SPACE), file_contents)
 						if matches:
