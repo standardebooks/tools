@@ -1,3 +1,15 @@
+/* For legacy reading systems */
+article,
+aside,
+figure,
+figcaption,
+footer,
+header,
+main,
+nav,
+section{
+	display: block;
+}
 
 /* Epub2 compatibility CSS */
 img[epub|type~="z3998:publisher-logo"]{
