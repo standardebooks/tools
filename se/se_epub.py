@@ -1111,6 +1111,11 @@ class SeEpub:
 						if matches:
 							messages.append(LintMessage("Illegal colon (:) detected in SE identifier. SE identifiers are separated by dots (.) not colons (:). Identifier: {}".format(matches), se.MESSAGE_TYPE_ERROR, filename))
 
+						# Check for leftover asterisms
+						matches = regex.findall(r"\*\s*(\*\s*)+", file_contents)
+						if matches:
+							messages.append(LintMessage("Illegal asterism (***) detected. Section/scene breaks must be defined by an <hr/> tag.".format(matches), se.MESSAGE_TYPE_ERROR, filename))
+
 						# Check for space before endnote backlinks
 						if filename == "endnotes.xhtml":
 							# Do we have to replace Ibid.?
