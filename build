@@ -340,6 +340,9 @@ def main():
 					file.truncate()
 
 		# Now get a list of original selectors
+		# Remove @supports(){}
+		total_css = regex.sub(r"@supports.+?{(.+?)}\s*}", "\\1}", total_css, flags=regex.MULTILINE | regex.DOTALL)
+
 		# Remove CSS rules
 		total_css = regex.sub(r"{[^}]+}", "", total_css, flags=regex.MULTILINE)
 
