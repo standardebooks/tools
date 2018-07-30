@@ -181,7 +181,8 @@ def modernize_spelling(xhtml: str, language: str) -> str:
 	xhtml = regex.sub(r"\b([Dd])istingue\b", r"\1istingué", xhtml)			# distingue -> distingué
 	xhtml = regex.sub(r"\b[EÉ]cart[eé]\b", r"Écarté", xhtml)			# ecarte -> écarté
 	xhtml = regex.sub(r"\b[eé]cart[eé]\b", r"écarté", xhtml)			# ecarte -> écarté
-	xhtml = regex.sub(r"\b[Pp]ere\b", r"\1ère", xhtml)				# pere -> père (e.g. père la chaise)
+	xhtml = regex.sub(r"\b([Pp])ere\b", r"\1ère", xhtml)				# pere -> père (e.g. père la chaise)
+	xhtml = regex.sub(r"\b([Tt])able(s?) d’hote\b", r"\1able\2 d’hôte", xhtml)	# table d'hote -> table d'hôte
 
 
 	# Normalize some names
