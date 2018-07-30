@@ -72,6 +72,10 @@ def main():
 				# Some older texts use the ,— construct; remove that archaichism
 				processed_xhtml = processed_xhtml.replace(",—", "—")
 
+				# Fix some common em-dash transcription errors
+				processed_xhtml = regex.sub(r"([:;])-([a-z])", r"\1—\2", processed_xhtml, flags=regex.IGNORECASE)
+				processed_xhtml = regex.sub(r"([a-z])-“", r"\1—“", processed_xhtml, flags=regex.IGNORECASE)
+
 				# Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
 				processed_xhtml = regex.sub(r"([^\s{}{}{}])([—⸻])".format(se.WORD_JOINER, se.NO_BREAK_SPACE, se.HAIR_SPACE), r"\1{}\2".format(se.WORD_JOINER), processed_xhtml, flags=regex.IGNORECASE)
 
