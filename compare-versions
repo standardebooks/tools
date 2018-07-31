@@ -11,7 +11,9 @@ import se
 
 
 def main():
-	parser = argparse.ArgumentParser(description="Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository's dirty state with its clean state.")
+	parser = argparse.ArgumentParser(description="Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository's dirty state with its clean state. If a file renders differently, copy screenshots of the new, original, and diff (if available) renderings into the current working directory. Diff renderings may not be available if the two renderings differ in dimensions. WARNING: DO NOT START FIREFOX WHILE THIS PROGRAM IS RUNNING!")
+	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("-n", "--no-images", dest="copy_images", action="store_false", help="don't copy diff images to the current working directory in case of difference")
 	parser.add_argument("-i", "--include-common", dest="include_common_files", action="store_true", help="include commonly-excluded files like imprint, titlepage, and colophon")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="a directory containing XHTML files")
 	args = parser.parse_args()
@@ -42,8 +44,6 @@ def main():
 	for target in args.targets:
 		target = os.path.abspath(target)
 
-		print("Processing {} ...\n".format(target), end="", flush=True)
-
 		target_filenames = set()
 		if os.path.isdir(target):
 			for root, _, filenames in os.walk(target):
@@ -51,14 +51,16 @@ def main():
 					if args.include_common_files or filename not in se.IGNORED_FILENAMES:
 						target_filenames.add(os.path.join(root, filename))
 		else:
-			se.print_error("Target must be a directory.")
-			exit(1)
+			se.print_error("Target must be a directory: {}".format(target))
+			continue
 
+		if args.verbose:
+			print("Processing {} ...\n".format(target), end="", flush=True)
 
 		git_command = git.cmd.Git(target)
 
 		if "nothing to commit" in git_command.status():
-			se.print_error("Repo is clean. This script must be run on a dirty repo.", True)
+			se.print_error("Repo is clean. This script must be run on a dirty repo.", args.verbose)
 			continue
 
 		# Put Git's changes into the stash
@@ -67,20 +69,32 @@ def main():
 		with tempfile.TemporaryDirectory() as temp_directory_path:
 			# Generate screenshots of the pre-change repo
 			for filename in target_filenames:
-				subprocess.run([firefox_path, "-screenshot", "{}/{}.orig.png".format(temp_directory_path, os.path.basename(filename)), filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+				subprocess.run([firefox_path, "-screenshot", "{}/{}-original.png".format(temp_directory_path, os.path.basename(filename)), filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 			# Pop the stash
 			git_command.stash("pop")
 
 			# Generate screenshots of the post-change repo, and compare them to the old screenshots
 			for filename in target_filenames:
-				subprocess.run([firefox_path, "-screenshot", "{}/{}.new.png".format(temp_directory_path, os.path.basename(filename)), filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+				filename_basename = os.path.basename(filename)
+				subprocess.run([firefox_path, "-screenshot", "{}/{}-new.png".format(temp_directory_path, filename_basename), filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-				output = subprocess.run([compare_path, "-metric", "ae", "{}/{}.orig.png".format(temp_directory_path, os.path.basename(filename)), "{}/{}.new.png".format(temp_directory_path, os.path.basename(filename)), "{}/temp.png".format(temp_directory_path)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
+				output = subprocess.run([compare_path, "-metric", "ae", "{}/{}-original.png".format(temp_directory_path, filename_basename), "{}/{}-new.png".format(temp_directory_path, filename_basename), "{}/{}-diff.png".format(temp_directory_path, filename_basename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
 
 				if output != "0":
-					print("\tDifference in {}\n".format(filename), end="", flush=True)
+					print("{}Difference in {}\n".format("\t" if args.verbose else "", filename), end="", flush=True)
 
+					if args.copy_images:
+						try:
+							output_directory = "./" + os.path.basename(os.path.normpath(target)) + "_diff-output/"
+							if not os.path.exists(output_directory):
+								os.makedirs(output_directory)
+
+							shutil.copy("{}/{}-new.png".format(temp_directory_path, filename_basename), output_directory)
+							shutil.copy("{}/{}-original.png".format(temp_directory_path, filename_basename), output_directory)
+							shutil.copy("{}/{}-diff.png".format(temp_directory_path, filename_basename), output_directory)
+						except Exception:
+							pass
 
 if __name__ == "__main__":
 	main()
