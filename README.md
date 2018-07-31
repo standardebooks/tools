@@ -88,6 +88,10 @@ Help and pull requests are welcomed!
 
 	Prettify and canonicalize individual XHTML or SVG files, or all XHTML and SVG files in a source directory.  Note that this only prettifies the source code; it doesn't perform typography changes.
 
+-	### `compare-versions`
+
+	Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository's dirty state with its clean state.
+
 -	### `create-draft`
 
 	Create a skeleton of a new Standard Ebook.
