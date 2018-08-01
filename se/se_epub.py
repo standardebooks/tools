@@ -613,7 +613,7 @@ class SeEpub:
 				if "-0" in filename:
 					messages.append(LintMessage("Illegal leading 0 in filename", se.MESSAGE_TYPE_ERROR, filename))
 
-				if filename.endswith(tuple(se.BINARY_EXTENSIONS)):
+				if filename.endswith(tuple(se.BINARY_EXTENSIONS)) or filename.endswith("core.css"):
 					continue
 
 				if filename.startswith(".") or filename.startswith("README"):
