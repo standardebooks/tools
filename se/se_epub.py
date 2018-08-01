@@ -122,7 +122,7 @@ class SeEpub:
 			raise FileNotFoundError("Couldn't open {}".format(os.path.join(self.directory, "src", "epub", "css", "local.css")))
 
 		# Remove @supports directives, as the parser can't handle them
-		css = regex.sub(r"^@supports\(.+?\){(.+?)}\s*}", "\\1", css, flags=regex.MULTILINE | regex.DOTALL)
+		css = regex.sub(r"^@supports\(.+?\){(.+?)}\s*}", "\\1}", css, flags=regex.MULTILINE | regex.DOTALL)
 
 		# Remove actual content of css selectors
 		css = regex.sub(r"{[^}]+}", "", css, flags=regex.MULTILINE)
@@ -680,8 +680,8 @@ class SeEpub:
 							processed_match = regex.sub(r"^@supports\(.+?\){\s*(.+?)\s*}\s*}", "\\1", match.replace("\n\t", "\n") + "\n}", flags=regex.MULTILINE | regex.DOTALL)
 							file_contents = file_contents.replace(match, processed_match)
 
-						# Remove comments
-						file_contents = regex.sub(r"/\*.+?\*/\n", "", file_contents, flags=regex.MULTILINE | regex.DOTALL)
+						# Remove comments that are on their own line
+						file_contents = regex.sub(r"^/\*.+?\*/\n", "", file_contents, flags=regex.MULTILINE | regex.DOTALL)
 
 						# No empty CSS selectors
 						matches = regex.findall(r"^.+\{\s*\}", file_contents, flags=regex.MULTILINE)
