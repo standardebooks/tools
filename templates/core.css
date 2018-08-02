@@ -6,17 +6,6 @@ body{
 	-epub-hyphens: auto;
 }
 
-section[epub|type~="titlepage"]{
-	margin: 0;
-	padding: 0;
-	text-align: center;
-}
-
-section[epub|type~="titlepage"] img{
-	width: 100%;
-	margin-top: 10%;
-}
-
 p{
 	margin: 0;
 	text-indent: 1em;
@@ -83,9 +72,25 @@ blockquote cite i{
 	font-style: normal;
 }
 
+b,
 strong{
+	font-variant: small-caps;
 	font-weight: normal;
-	font-variant: all-small-caps;
+}
+
+header{
+	text-align: center;
+}
+
+article > header + *,
+section > header + *{
+	margin-top: 3em;
+}
+
+section[epub|type~="titlepage"] img{
+	display: block;
+	width: 100%;
+	margin: 3em auto auto auto;
 }
 
 a[epub|type~="noteref"]{
@@ -104,8 +109,8 @@ section[epub|type~="imprint"]{
 
 section[epub|type~="colophon"] header,
 section[epub|type~="imprint"] header{
-	font-size: 0;
-	margin: 5% auto;
+	line-height: 0;
+	margin-top: 3em;
 }
 
 section[epub|type~="colophon"] h2,
@@ -119,7 +124,7 @@ img[epub|type~="z3998:publisher-logo"]{
 
 section[epub|type~="colophon"] p,
 section[epub|type~="imprint"] p{
-	margin: 1em auto;
+	margin: 1em auto 0 auto;
 	text-indent: 0;
 }
 
@@ -168,4 +173,24 @@ section[epub|type~="copyright-page"] blockquote p span{
 
 section[epub|type~="copyright-page"] blockquote br{
 	display: none;
+}
+
+@supports(display: flex){
+	section[epub|type~="imprint"]{
+		align-content: center;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		min-height: calc(98vh - 3em);
+		padding-top: 3em;
+	}
+
+	section[epub|type~="imprint"] header{
+		margin-bottom: 2em;
+		margin-top: 0;
+	}
+
+	img[epub|type~="z3998:publisher-logo"]{
+		max-width: 25vw;
+	}
 }
