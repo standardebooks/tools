@@ -924,7 +924,7 @@ class SeEpub:
 						# Outer wrapping match is so that .findall returns the entire match and not the subgroup
 						matches = regex.findall(r"(“<(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])", file_contents) + regex.findall(r"([\.\!\?] <(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])", file_contents)
 						# But, if we've matched a name of something, don't include that as an error. For example, `He said, “<i epub:type="se:name.publication.book">The Decameron</i>.”`
-						matches = [x for x in matches if "epub:type=\"se:name." not in x[0]]
+						matches = [x for x in matches if "epub:type=\"se:name." not in x[0] and "epub:type=\"z3998:taxonomy" not in x[0]]
 						if matches:
 							messages.append(LintMessage("When a complete clause is italicized, ending punctuation EXCEPT commas must be within containing italics.", se.MESSAGE_TYPE_WARNING, filename))
 							for match in matches:
