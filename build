@@ -11,7 +11,6 @@ from hashlib import sha1
 import glob
 import subprocess
 import fnmatch
-import platform
 from copy import deepcopy
 import regex
 import lxml.cssselect
@@ -332,7 +331,7 @@ def main():
 
 					# Before we do anything, we process a special case in core.css
 					if "core.css" in filename:
-						css = regex.sub(r"abbr{.+?}", "", css, flags=regex.MULTILINE | regex.DOTALL)
+						css = regex.sub(r"abbr{.+?}", "", css, flags=regex.DOTALL)
 
 					total_css = total_css + css + "\n"
 					file.seek(0)
@@ -341,10 +340,10 @@ def main():
 
 		# Now get a list of original selectors
 		# Remove @supports(){}
-		total_css = regex.sub(r"@supports.+?{(.+?)}\s*}", "\\1}", total_css, flags=regex.MULTILINE | regex.DOTALL)
+		total_css = regex.sub(r"@supports.+?{(.+?)}\s*}", "\\1}", total_css, flags=regex.DOTALL)
 
 		# Remove CSS rules
-		total_css = regex.sub(r"{[^}]+}", "", total_css, flags=regex.MULTILINE)
+		total_css = regex.sub(r"{[^}]+}", "", total_css)
 
 		# Remove trailing commas
 		total_css = regex.sub(r",", "", total_css)
@@ -789,12 +788,12 @@ def main():
 
 				xhtml = str(soup)
 
-				pattern = regex.compile(r"(<li>\s*<a href=\"[^\"]+?\">.+?</a>\s*)<li>", regex.MULTILINE)
+				pattern = regex.compile(r"(<li>\s*<a href=\"[^\"]+?\">.+?</a>\s*)<li>")
 				matches = 1
 				while matches > 0:
 					xhtml, matches = pattern.subn(r"\1</li><li>", xhtml)
 
-				pattern = regex.compile(r"</li>\s*</li>", regex.MULTILINE)
+				pattern = regex.compile(r"</li>\s*</li>")
 				matches = 1
 				while matches > 0:
 					xhtml, matches = pattern.subn("</li>", xhtml)

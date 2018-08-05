@@ -126,7 +126,7 @@ def main():
 
 						pos = pos + 1
 
-					processed_xhtml = regex.sub(r"<body.+<\/body>", "", xhtml, flags=regex.MULTILINE | regex.DOTALL)
+					processed_xhtml = regex.sub(r"<body.+<\/body>", "", xhtml, flags=regex.DOTALL)
 					processed_xhtml = processed_xhtml.replace("</head>", "</head>\n\t" + result)
 
 					if processed_xhtml != xhtml:

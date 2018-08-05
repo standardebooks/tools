@@ -48,8 +48,8 @@ def main():
 
 					threshold = 80
 
-					ldq_pattern = regex.compile(r"\t*<p>(.*?)“", regex.MULTILINE)
-					lsq_pattern = regex.compile(r"\t*<p>(.*?)‘", regex.MULTILINE)
+					ldq_pattern = regex.compile(r"\t*<p>(.*?)“")
+					lsq_pattern = regex.compile(r"\t*<p>(.*?)‘")
 
 					lsq_count = len([m for m in lsq_pattern.findall(xhtml) if m.count("“") == 0])
 					ldq_count = len([m for m in ldq_pattern.findall(xhtml) if m.count("‘") == 0])

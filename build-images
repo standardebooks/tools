@@ -17,9 +17,9 @@ def clean_inkscape_svg(filename: str, clean_path: str):
 
 		# Time to clean up Inkscape's mess
 		svg = regex.sub(r"id=\"[^\"]+?\"", "", svg)
-		svg = regex.sub(r"<metadata[^>]*?>.*?</metadata>", "", svg, flags=regex.MULTILINE | regex.DOTALL)
-		svg = regex.sub(r"<defs[^>]*?/>", "", svg, flags=regex.MULTILINE | regex.DOTALL)
-		svg = regex.sub(r"xmlns:(dc|cc|rdf)=\"[^\"]*?\"", "", svg, flags=regex.MULTILINE | regex.DOTALL)
+		svg = regex.sub(r"<metadata[^>]*?>.*?</metadata>", "", svg, flags=regex.DOTALL)
+		svg = regex.sub(r"<defs[^>]*?/>", "", svg)
+		svg = regex.sub(r"xmlns:(dc|cc|rdf)=\"[^\"]*?\"", "", svg)
 
 		# Inkscape includes CSS even though we've removed font information
 		svg = regex.sub(r" style=\".*?\"", "", svg)
@@ -108,7 +108,7 @@ def main():
 
 				# Embed cover.jpg
 				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
-					svg = regex.sub(r"xlink:href=\".*?cover\.jpg", "xlink:href=\"data:image/jpeg;base64," + source_cover_jpg_base64, file.read(), flags=regex.MULTILINE | regex.DOTALL)
+					svg = regex.sub(r"xlink:href=\".*?cover\.jpg", "xlink:href=\"data:image/jpeg;base64," + source_cover_jpg_base64, file.read(), flags=regex.DOTALL)
 
 					file.seek(0)
 					file.write(svg)

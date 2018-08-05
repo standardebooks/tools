@@ -125,7 +125,7 @@ class SeEpub:
 		css = regex.sub(r"^@supports\(.+?\){(.+?)}\s*}", "\\1}", css, flags=regex.MULTILINE | regex.DOTALL)
 
 		# Remove actual content of css selectors
-		css = regex.sub(r"{[^}]+}", "", css, flags=regex.MULTILINE)
+		css = regex.sub(r"{[^}]+}", "", css)
 
 		# Remove trailing commas
 		css = regex.sub(r",", "", css)
@@ -1099,7 +1099,7 @@ class SeEpub:
 								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
 						# Check for line breaks after <br/> tags
-						matches = regex.findall(r"<br\s*?/>[^\n]", file_contents, flags=regex.DOTALL | regex.MULTILINE)
+						matches = regex.findall(r"<br\s*?/>[^\n]", file_contents)
 						if matches:
 							messages.append(LintMessage("<br/> tags must be followed by a newline, and subsequent content must be indented to the same level.", se.MESSAGE_TYPE_ERROR, filename))
 							for match in matches:
