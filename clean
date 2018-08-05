@@ -97,7 +97,7 @@ def main():
 					processed_xhtml = replace_inessential_references(processed_xhtml)
 
 				# Remove unnecessary doctypes which can cause xmllint to hang
-				processed_xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", processed_xhtml, flags=regex.MULTILINE | regex.DOTALL)
+				processed_xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", processed_xhtml, flags=regex.DOTALL)
 
 				# First, canonicalize XHTML
 				result = subprocess.run([xmllint_path, "--c14n", "-"], input=processed_xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -119,8 +119,21 @@ def main():
 				processed_xhtml = subprocess.run([xmllint_path, "--format", "-"], input=processed_xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env).stdout.decode()
 
 				# Remove white space between some tags
-				processed_xhtml = regex.sub(r"<p([^>]*?)>\s+([^<\s])", "<p\\1>\\2", processed_xhtml, flags=regex.MULTILINE | regex.DOTALL)
-				processed_xhtml = regex.sub(r"([^>\s])\s+</p>", "\\1</p>", processed_xhtml, flags=regex.MULTILINE | regex.DOTALL)
+				processed_xhtml = regex.sub(r"<p([^>]*?)>\s+([^<\s])", "<p\\1>\\2", processed_xhtml, flags=regex.DOTALL)
+				processed_xhtml = regex.sub(r"([^>\s])\s+</p>", "\\1</p>", processed_xhtml, flags=regex.DOTALL)
+
+				# xmllint has problems with removing spacing between some inline HTML5 elements. Try to fix those problems here.
+				processed_xhtml = regex.sub(r"</(abbr|cite|i|span)><(abbr|cite|i|span)", "</\\1> <\\2", processed_xhtml)
+
+				# Try to fix inline elements directly followed by an <a> tag, unless that <a> tag is a noteref.
+				processed_xhtml = regex.sub(r"</(abbr|cite|i|span)><(a(?! href=\"[^\"]+?\" id=\"noteref\-))", "</\\1> <\\2", processed_xhtml)
+
+				# Two sequential inline elements, when they are the only children of a block, are indented. But this messes up spacing if the 2nd element is a noteref.
+				processed_xhtml = regex.sub(r"</(abbr|cite|i|span)>\s+<(a href=\"[^\"]+?\" id=\"noteref\-)", "</\\1><\\2", processed_xhtml, flags=regex.DOTALL)
+
+				# Try to fix <cite> tags running next to referrer <a> tags.
+				if filename.endswith("endnotes.xhtml"):
+					processed_xhtml = regex.sub(r"</cite>(<a href=\"[^\"]+?\" epub:type=\"se:referrer\")", "</cite> \\1", processed_xhtml)
 
 				if processed_xhtml != xhtml:
 					file.seek(0)
