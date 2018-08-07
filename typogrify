@@ -34,6 +34,9 @@ def main():
 			target_filenames.add(target)
 
 		for filename in target_filenames:
+			if filename.endswith("titlepage.xhtml"):
+				continue
+
 			with open(filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 				processed_xhtml = xhtml
