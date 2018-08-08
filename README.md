@@ -41,7 +41,7 @@ These instructions were tested on macOS 10.12 and 10.13. Your mileage may vary. 
 
 	```shell
 	# Install some pre-flight dependencies
-	brew install python epubcheck imagemagick librsvg exiftool git
+	brew install python epubcheck imagemagick libmagic librsvg exiftool git
 
 	# Clone the tools repo
 	git clone https://github.com/standardebooks/tools.git
