@@ -8,7 +8,7 @@ import se
 
 def main():
 	parser = argparse.ArgumentParser(description="Convert a decimal number to a Roman numeral.")
-	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="don't end output with a newline")
+	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="don’t end output with a newline")
 	parser.add_argument("numbers", metavar="INTEGER", nargs="*", help="an integer")
 	args = parser.parse_args()
 

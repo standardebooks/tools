@@ -62,7 +62,7 @@ def main():
 			file.truncate()
 
 	except Exception:
-		se.print_error("Couldn't open endnotes file: {}".format(endnotes_filename))
+		se.print_error("Couldn’t open endnotes file: {}".format(endnotes_filename))
 		exit(1)
 
 	for root, _, filenames in os.walk(source_directory):

@@ -47,11 +47,11 @@ def main():
 	exiftool_path = shutil.which("exiftool")
 
 	if inkscape_path is None:
-		se.print_error("Couldn't locate Inkscape. Is it installed?")
+		se.print_error("Couldn’t locate Inkscape. Is it installed?")
 		exit(1)
 
 	if exiftool_path is None:
-		se.print_error("Couldn't locate exiftool. Is it installed?")
+		se.print_error("Couldn’t locate exiftool. Is it installed?")
 		exit(1)
 
 	for directory in args.directories:
@@ -82,7 +82,7 @@ def main():
 				if args.verbose:
 					print("\t", end="", flush=True)
 
-				se.print_error("Couldn't create directory: {}".format(dest_images_directory))
+				se.print_error("Couldn’t create directory: {}".format(dest_images_directory))
 				exit(1)
 
 		# Remove useless metadata from jpg files

@@ -7,7 +7,7 @@ import se.formatting
 
 def main():
 	parser = argparse.ArgumentParser(description="Make a string URL-safe.")
-	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="don't end output with a newline")
+	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="don’t end output with a newline")
 	parser.add_argument("strings", metavar="STRING", nargs="*", help="a string")
 	args = parser.parse_args()
 

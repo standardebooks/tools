@@ -8,8 +8,8 @@ import se
 
 def main():
 	parser = argparse.ArgumentParser(description="Convert a Roman numeral to a decimal number.")
-	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="don't end output with a newline")
-	parser.add_argument("numbers", metavar="NUMERAL", nargs='+', help="a Roman numeral")
+	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="don’t end output with a newline")
+	parser.add_argument("numbers", metavar="NUMERAL", nargs="+", help="a Roman numeral")
 	args = parser.parse_args()
 
 	lines = []

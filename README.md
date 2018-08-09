@@ -29,9 +29,9 @@ pip3 install -r ./tools/requirements.txt
 
 ## macOS users
 
-These instructions were tested on macOS 10.12 and 10.13. Your mileage may vary. Corrections and fixes to these steps are welcomed, as the SE maintainers don't have access to Macs.
+These instructions were tested on macOS 10.12 and 10.13. Your mileage may vary. Corrections and fixes to these steps are welcomed, as the SE maintainers don’t have access to Macs.
 
-1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it's up to date:
+1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it’s up to date:
 
     ```shell
     brew update
@@ -72,9 +72,9 @@ Help and pull requests are welcomed!
 
 	Try to convert British quote style to American quote style in DIRECTORY/src/epub/text/.
 
-	Quotes must already be "typogrified"--i.e. curly.
+	Quotes must already be typogrified using the ```typogrify``` tool.
 
-	This script isn't perfect; proofreading is required, especially near closing quotes near to em-dashes.
+	This script isn’t perfect; proofreading is required, especially near closing quotes near to em-dashes.
 
 -	### `build`
 
@@ -86,11 +86,11 @@ Help and pull requests are welcomed!
 
 -	### `clean`
 
-	Prettify and canonicalize individual XHTML or SVG files, or all XHTML and SVG files in a source directory.  Note that this only prettifies the source code; it doesn't perform typography changes.
+	Prettify and canonicalize individual XHTML or SVG files, or all XHTML and SVG files in a source directory.  Note that this only prettifies the source code; it doesn’t perform typography changes.
 
 -	### `compare-versions`
 
-	Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository's dirty state with its clean state.
+	Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state.
 
 -	### `create-draft`
 
@@ -106,7 +106,7 @@ Help and pull requests are welcomed!
 
 -	### `find-mismatched-diacritics`
 
-	Find words with mismatched diacritics in Standard Ebook source directories.  For example, 'cafe' in one file and 'café' in another.
+	Find words with mismatched diacritics in Standard Ebook source directories.  For example, ```cafe``` in one file and ```café``` in another.
 
 -	### `hyphenate`
 
@@ -126,7 +126,7 @@ Help and pull requests are welcomed!
 
 -	### `modernize-spelling`
 
-	Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace "ash-tray" with "ashtray".
+	Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace ```ash-tray``` with ```ashtray```.
 
 -	### `prepare-release`
 

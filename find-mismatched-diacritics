@@ -8,7 +8,7 @@ import regex
 
 
 def main():
-	parser = argparse.ArgumentParser(description="Find words with mismatched diacritics in XHTML files.  For example, \"cafe\" in one file and \"café\" in another.")
+	parser = argparse.ArgumentParser(description="Find words with mismatched diacritics in XHTML files.  For example, `cafe` in one file and `café` in another.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()

@@ -11,10 +11,10 @@ import se
 
 
 def main():
-	parser = argparse.ArgumentParser(description="Extract an EPUB, MOBI, or AZW3 ebook into ./FILENAME.extracted/ or a target directory.")
+	parser = argparse.ArgumentParser(description="Extract an epub, mobi, or azw3 ebook into ./FILENAME.extracted/ or a target directory.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("-d", "--destination", type=str, help="a target directory to extract into")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an EPUB, MOBI, or AZW3 file")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an epub, mobi, or azw3 file")
 	args = parser.parse_args()
 
 	for target in args.targets:
@@ -50,7 +50,7 @@ def main():
 				file.extractall(extracted_path)
 
 		else:
-			se.print_error("Couldn't understand file type: {}".format(mime_type))
+			se.print_error("Couldn’t understand file type: {}".format(mime_type))
 			exit(1)
 
 		if args.verbose:

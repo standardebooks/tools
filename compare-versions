@@ -11,9 +11,9 @@ import se
 
 
 def main():
-	parser = argparse.ArgumentParser(description="Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository's dirty state with its clean state. If a file renders differently, copy screenshots of the new, original, and diff (if available) renderings into the current working directory. Diff renderings may not be available if the two renderings differ in dimensions. WARNING: DO NOT START FIREFOX WHILE THIS PROGRAM IS RUNNING!")
+	parser = argparse.ArgumentParser(description="Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, copy screenshots of the new, original, and diff (if available) renderings into the current working directory. Diff renderings may not be available if the two renderings differ in dimensions. WARNING: DO NOT START FIREFOX WHILE THIS PROGRAM IS RUNNING!")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("-n", "--no-images", dest="copy_images", action="store_false", help="don't copy diff images to the current working directory in case of difference")
+	parser.add_argument("-n", "--no-images", dest="copy_images", action="store_false", help="don’t copy diff images to the current working directory in case of difference")
 	parser.add_argument("-i", "--include-common", dest="include_common_files", action="store_true", help="include commonly-excluded files like imprint, titlepage, and colophon")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="a directory containing XHTML files")
 	args = parser.parse_args()
@@ -23,11 +23,11 @@ def main():
 
 	# Check for some required tools.
 	if firefox_path is None:
-		se.print_error("Couldn't locate firefox. Is it installed?")
+		se.print_error("Couldn’t locate firefox. Is it installed?")
 		exit(1)
 
 	if compare_path is None:
-		se.print_error("Couldn't locate compare. Is imagemagick installed?")
+		se.print_error("Couldn’t locate compare. Is imagemagick installed?")
 		exit(1)
 
 	# Firefox won't start in headless mode if there is another Firefox process running; check that here.

@@ -178,8 +178,8 @@ def simplify_css(css: str) ->  str:
 def main():
 	parser = argparse.ArgumentParser(description="Build compatible .epub and pure .epub3 ebooks from a Standard Ebook source directory.  Output is placed in the current directory, or the target directory with --output-dir.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("-o", "--output-dir", dest="output_directory", metavar="DIRECTORY", type=str, help="a directory to place output files in; will be created if it doesn't exist")
-	parser.add_argument("-c", "--check", action="store_true", help="use epubcheck to validate the compatible .epub file; if --kindle is also specified and epubcheck fails, don't create a Kindle file")
+	parser.add_argument("-o", "--output-dir", dest="output_directory", metavar="DIRECTORY", type=str, help="a directory to place output files in; will be created if it doesn’t exist")
+	parser.add_argument("-c", "--check", action="store_true", help="use epubcheck to validate the compatible .epub file; if --kindle is also specified and epubcheck fails, don’t create a Kindle file")
 	parser.add_argument("-k", "--kindle", dest="build_kindle", action="store_true", help="also build an .azw3 file for Kindle")
 	parser.add_argument("-b", "--kobo", dest="build_kobo", action="store_true", help="also build a .kepub.epub file for Kobo")
 	parser.add_argument("-t", "--covers", dest="build_covers", action="store_true", help="output the cover and a cover thumbnail")
@@ -193,7 +193,7 @@ def main():
 	ebook_convert_path = shutil.which("ebook-convert")
 	# Look for default Mac calibre app path if none found in path
 	if ebook_convert_path is None and os.path.exists(calibre_app_mac_path):
-		ebook_convert_path = os.path.join(calibre_app_mac_path, 'ebook-convert')
+		ebook_convert_path = os.path.join(calibre_app_mac_path, "ebook-convert")
 	rsvg_convert_path = shutil.which("rsvg-convert")
 	convert_path = shutil.which("convert")
 	clean_path = os.path.join(script_directory, "clean")
@@ -202,19 +202,19 @@ def main():
 
 	# Check for some required tools
 	if args.check and epubcheck_path is None:
-		se.print_error("Couldn't locate epubcheck. Is it installed?")
+		se.print_error("Couldn’t locate epubcheck. Is it installed?")
 		exit(1)
 
 	if rsvg_convert_path is None:
-		se.print_error("Couldn't locate rsvg-convert. Is librsvg2-bin installed?")
+		se.print_error("Couldn’t locate rsvg-convert. Is librsvg2-bin installed?")
 		exit(1)
 
 	if args.build_kindle and ebook_convert_path is None:
-		se.print_error("Couldn't locate ebook-convert. Is Calibre installed?")
+		se.print_error("Couldn’t locate ebook-convert. Is Calibre installed?")
 		exit(1)
 
 	if args.build_kindle and convert_path is None:
-		se.print_error("Couldn't locate convert. Is Imagemagick installed?")
+		se.print_error("Couldn’t locate convert. Is Imagemagick installed?")
 		exit(1)
 
 	# Check the output directory and create it if it doesn't exist
@@ -235,7 +235,7 @@ def main():
 			os.makedirs(output_directory)
 		except OSError as exception:
 			if exception.errno != errno.EEXIST:
-				se.print_error("Couldn't create output directory")
+				se.print_error("Couldn’t create output directory")
 				exit(1)
 
 	# Confirm source directory exists and is an SE source directory
@@ -246,7 +246,7 @@ def main():
 	source_directory = os.path.abspath(args.source_directory)
 
 	if not os.path.isdir(os.path.join(source_directory, "src")):
-		se.print_error("Doesn't look like a Standard Ebooks source directory: {}".format(source_directory))
+		se.print_error("Doesn’t look like a Standard Ebooks source directory: {}".format(source_directory))
 		exit(1)
 
 	# All clear to start building!
@@ -783,7 +783,7 @@ def main():
 
 				soup = BeautifulSoup(xhtml, "lxml")
 
-				for match in soup.select('ol > li > ol > li > ol'):
+				for match in soup.select("ol > li > ol > li > ol"):
 					match.unwrap()
 
 				xhtml = str(soup)
@@ -829,7 +829,7 @@ def main():
 						try:
 							ref_link = etree.tostring(note.xpath("p[last()]/a[last()]")[0], encoding="unicode", pretty_print=True, with_tail=False).replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "").strip()
 						except Exception:
-							se.print_error("Can't find ref link for #{}".format(note_id))
+							se.print_error("Can’t find ref link for #{}".format(note_id))
 							exit(1)
 
 						new_ref_link = regex.sub(r">.*?</a>", ">" + note_number + "</a>.", ref_link)

@@ -36,7 +36,7 @@ def main():
 				with open(filename, "r", encoding="utf-8") as file:
 					soup = BeautifulSoup(file.read(), "lxml")
 			except Exception:
-				se.print_error("Couldn't open file: {}".format(filename))
+				se.print_error("Couldn’t open file: {}".format(filename))
 				exit(1)
 
 			# This removes HTML tags

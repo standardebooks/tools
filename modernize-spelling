@@ -220,9 +220,9 @@ def modernize_spelling(xhtml: str, language: str) -> str:
 	return xhtml
 
 def main():
-	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace \"ash-tray\" with \"ashtray\".")
+	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace `ash-tray` with `ashtray`.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("-n", "--no-hyphens", dest="modernize_hyphenation", action="store_false", help="don't modernize hyphenation")
+	parser.add_argument("-n", "--no-hyphens", dest="modernize_hyphenation", action="store_false", help="don’t modernize hyphenation")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
@@ -231,7 +231,7 @@ def main():
 	try:
 		dictionary = set(line.strip().lower() for line in open(dictionary_file_path))
 	except Exception:
-		se.print_error("Couldn't open words file at {}".format(dictionary_file_path))
+		se.print_error("Couldn’t open words file at {}".format(dictionary_file_path))
 		exit(1)
 
 	for target in args.targets:

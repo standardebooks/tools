@@ -294,7 +294,7 @@ def get_wikipedia_url(string: str, get_nacoaf_url: bool) -> (str, str):
 	try:
 		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go"}, allow_redirects=False)
 	except Exception as ex:
-		se.print_error("Couldn't contact Wikipedia. Error: {}".format(ex))
+		se.print_error("Couldn’t contact Wikipedia. Error: {}".format(ex))
 
 	if response.status_code == 302:
 		nacoaf_url = None
@@ -304,7 +304,7 @@ def get_wikipedia_url(string: str, get_nacoaf_url: bool) -> (str, str):
 			try:
 				response = requests.get(wiki_url)
 			except Exception as ex:
-				se.print_error("Couldn't contact Wikipedia. Error: {}".format(ex))
+				se.print_error("Couldn’t contact Wikipedia. Error: {}".format(ex))
 
 			for match in regex.findall(r"http://id\.loc\.gov/authorities/names/n[0-9]+", response.text):
 				nacoaf_url = match
@@ -364,7 +364,7 @@ def main():
 			response = requests.get(args.pg_url)
 			pg_metadata_html = response.text
 		except Exception as ex:
-			se.print_error("Couldn't download Project Gutenberg ebook metadata page. Error: {}".format(ex))
+			se.print_error("Couldn’t download Project Gutenberg ebook metadata page. Error: {}".format(ex))
 			exit(1)
 
 		soup = BeautifulSoup(pg_metadata_html, "lxml")
@@ -375,7 +375,7 @@ def main():
 			pg_ebook_url = regex.sub("^//", "https://", element["href"])
 
 		if not pg_ebook_url:
-			se.print_error("Could download ebook metadata, but couldn't find URL for the ebook HTML.")
+			se.print_error("Could download ebook metadata, but couldn’t find URL for the ebook HTML.")
 			exit(1)
 
 		# Get the ebook LCSH categories
@@ -395,14 +395,14 @@ def main():
 			response = requests.get(pg_ebook_url)
 			pg_ebook_html = response.text
 		except Exception as ex:
-			se.print_error("Couldn't download Project Gutenberg ebook HTML. Error: {}".format(ex))
+			se.print_error("Couldn’t download Project Gutenberg ebook HTML. Error: {}".format(ex))
 			exit(1)
 
 		try:
 			fixed_pg_ebook_html = fix_text(pg_ebook_html, uncurl_quotes=False)
 			pg_ebook_html = se.strip_bom(fixed_pg_ebook_html)
 		except Exception as ex:
-			se.print_error("Couldn't determine text encoding of Project Gutenberg HTML file. Error: {}".format(ex))
+			se.print_error("Couldn’t determine text encoding of Project Gutenberg HTML file. Error: {}".format(ex))
 			exit(1)
 
 		# Try to guess the ebook language
