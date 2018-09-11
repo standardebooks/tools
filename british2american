@@ -90,8 +90,11 @@ def main():
 					new_xhtml = regex.sub(r"<lsq>", r"“", new_xhtml)
 					new_xhtml = regex.sub(r"<rsq>", r"”", new_xhtml)
 					new_xhtml = regex.sub(r"<ap>", r"’", new_xhtml)
-					new_xhtml = regex.sub(r"’ ’", r"’ ”", new_xhtml)				# Correct a common error
-					new_xhtml = regex.sub(r"“([^‘”]+?[^s])’([!\?:;\)\s])", r"“\1”\2", new_xhtml)	# Correct a common error
+
+					# Correct some common errors
+					new_xhtml = regex.sub(r"’ ’", r"’ ”", new_xhtml)
+					new_xhtml = regex.sub(r"“([^‘”]+?[^s])’([!\?:;\)\s])", r"“\1”\2", new_xhtml)
+					new_xhtml = regex.sub(r"“([^‘”]+?)’([!\?:;\)])", r"“\1”\2", new_xhtml)
 
 					if new_xhtml != xhtml:
 						file.seek(0)
