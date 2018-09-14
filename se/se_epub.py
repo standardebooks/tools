@@ -648,6 +648,11 @@ class SeEpub:
 						has_halftitle = True
 
 					if filename.endswith(".svg"):
+						# Check for fill: #000 which should simply be removed
+						matches = regex.findall(r"fill=\"\s*#000", file_contents) + regex.findall(r"style=\"[^\"]*?fill:\s*#000", file_contents)
+						if matches:
+							messages.append(LintMessage("Found illegal style=\"fill: #000\" or fill=\"#000\".", se.MESSAGE_TYPE_ERROR, filename))
+
 						if os.sep + "src" + os.sep not in root:
 							# Check that cover and titlepage images are in all caps
 							if filename == "cover.svg":
