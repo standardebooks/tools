@@ -34,6 +34,7 @@ h6{
 	hyphens: none;
 	-epub-hyphens: none;
 	page-break-after: avoid;
+	page-break-inside: avoid;
 	text-align: center;
 	margin: 3em 0;
 }
@@ -79,6 +80,7 @@ strong{
 }
 
 header{
+	page-break-inside: avoid;
 	text-align: center;
 }
 
