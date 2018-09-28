@@ -54,8 +54,8 @@ def main():
 				note_range = range(target_endnote_number, endnote_count + 1, 1)
 
 			for endnote_number in note_range:
-				xhtml = xhtml.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + step))
-				xhtml = xhtml.replace("#noteref-{}\"".format(endnote_number), "#noteref-{}\"".format(endnote_number + step))
+				xhtml = xhtml.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + step), 1)
+				xhtml = xhtml.replace("#noteref-{}\"".format(endnote_number), "#noteref-{}\"".format(endnote_number + step), 1)
 
 			file.seek(0)
 			file.write(xhtml)
@@ -77,8 +77,8 @@ def main():
 
 				for endnote_number in note_range:
 					processed_xhtml = regex.sub(r"(<a[^>]*?>){}</a>".format(endnote_number), r"\g<1>{}</a>".format(endnote_number + step), processed_xhtml, flags=regex.DOTALL)
-					processed_xhtml = processed_xhtml.replace("id=\"noteref-{}\"".format(endnote_number), "id=\"noteref-{}\"".format(endnote_number + step))
-					processed_xhtml = processed_xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + step))
+					processed_xhtml = processed_xhtml.replace("id=\"noteref-{}\"".format(endnote_number), "id=\"noteref-{}\"".format(endnote_number + step), 1)
+					processed_xhtml = processed_xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + step), 1)
 
 				if processed_xhtml != xhtml:
 					file.seek(0)
