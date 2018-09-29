@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import concurrent.futures
 import argparse
 import os
 import fnmatch
@@ -65,26 +66,29 @@ def main():
 		se.print_error("Couldn’t open endnotes file: {}".format(endnotes_filename))
 		exit(1)
 
-	for root, _, filenames in os.walk(source_directory):
-		for filename in fnmatch.filter(filenames, "*.xhtml"):
-			# Skip endnotes.xhtml since we already processed it
-			if filename == "endnotes.xhtml":
-				continue
+	with concurrent.futures.ProcessPoolExecutor() as executor:
+		for root, _, filenames in os.walk(source_directory):
+			for filename in fnmatch.filter(filenames, "*.xhtml"):
+				# Skip endnotes.xhtml since we already processed it
+				if filename == "endnotes.xhtml":
+					continue
 
-			with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
-				xhtml = file.read()
-				processed_xhtml = xhtml
+				executor.submit(process_endnotes_in_file, filename, root, note_range, step)
 
-				for endnote_number in note_range:
-					processed_xhtml = regex.sub(r"(<a[^>]*?>){}</a>".format(endnote_number), r"\g<1>{}</a>".format(endnote_number + step), processed_xhtml, flags=regex.DOTALL)
-					processed_xhtml = processed_xhtml.replace("id=\"noteref-{}\"".format(endnote_number), "id=\"noteref-{}\"".format(endnote_number + step), 1)
-					processed_xhtml = processed_xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + step), 1)
+def process_endnotes_in_file(filename: str, root: str, note_range: range, step: int):
+	with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+		xhtml = file.read()
+		processed_xhtml = xhtml
 
-				if processed_xhtml != xhtml:
-					file.seek(0)
-					file.write(processed_xhtml)
-					file.truncate()
+		for endnote_number in note_range:
+			processed_xhtml = regex.sub(r"(<a[^>]*?>){}</a>".format(endnote_number), r"\g<1>{}</a>".format(endnote_number + step), processed_xhtml, flags=regex.DOTALL)
+			processed_xhtml = processed_xhtml.replace("id=\"noteref-{}\"".format(endnote_number), "id=\"noteref-{}\"".format(endnote_number + step), 1)
+			processed_xhtml = processed_xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + step), 1)
 
+		if processed_xhtml != xhtml:
+			file.seek(0)
+			file.write(processed_xhtml)
+			file.truncate()
 
 if __name__ == "__main__":
 	main()
