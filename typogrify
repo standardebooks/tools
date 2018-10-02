@@ -217,6 +217,12 @@ def main():
 				# Convert L to £ if next to a number
 				processed_xhtml = regex.sub(r"L([0-9]+)", r"£\1", processed_xhtml)
 
+				# Make sure there are periods after old-style shilling/pence denominations
+				processed_xhtml = regex.sub(r"\b([0-9]+)s\.? ([0-9]+)d\.?", r"\1s. \2d.", processed_xhtml)
+
+				# Remove periods after pounds if followed by shillings
+				processed_xhtml = regex.sub(r"£([0-9]+)\.? ([0-9]+)s\.?", r"£\1 \2s.", processed_xhtml)
+
 				if processed_xhtml != xhtml:
 					file.seek(0)
 					file.write(processed_xhtml)
