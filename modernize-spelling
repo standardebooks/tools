@@ -184,6 +184,8 @@ def modernize_spelling(xhtml: str, language: str) -> str:
 	xhtml = regex.sub(r"\b([Pp])ere\b", r"\1ère", xhtml)				# pere -> père (e.g. père la chaise)
 	xhtml = regex.sub(r"\b([Tt])able(s?) d’hote\b", r"\1able\2 d’hôte", xhtml)	# table d'hote -> table d'hôte
 	xhtml = regex.sub(r"\b([Ee])au(x?)[ \-]de[ \-]vie\b", r"\1au\2-de-vie", xhtml)	# eau de vie -> eau-de-vie
+	xhtml = regex.sub(r"\b3d\b", r"3rd", xhtml)						# 3d -> 3rd (warning: check that we don't convert 3d in the "3 pence" sense!)
+	xhtml = regex.sub(r"\b2d\b", r"2nd", xhtml)						# 2d -> 2nd (warning: check that we don't convert 2d in the "2 pence" sense!)
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
