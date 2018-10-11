@@ -58,6 +58,16 @@ def main():
 				xhtml = xhtml.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + step), 1)
 				xhtml = xhtml.replace("#noteref-{}\"".format(endnote_number), "#noteref-{}\"".format(endnote_number + step), 1)
 
+			# There may be some links within the notes that refer to other endnotes.
+			# These potentially need incrementing / decrementing too. This code assumes
+			# a link that looks something like <a href="#note-1">note 1</a>.
+			endnote_links = regex.findall(r"href=\"#note-(\d+)\"(.*?) (\d+)</a>", xhtml)
+			for link in endnote_links:
+				link_number = int(link[0])
+				if (link_number < target_endnote_number and args.increment) or (link_number > target_endnote_number and not args.increment):
+					continue
+				xhtml = xhtml.replace("href=\"#note-{0}\"{1} {0}</a>".format(link[0], link[1]), "href=\"#note-{0}\"{1} {0}</a>".format(link_number + step, link[1]))
+
 			file.seek(0)
 			file.write(xhtml)
 			file.truncate()
