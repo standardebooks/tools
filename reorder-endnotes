@@ -85,9 +85,9 @@ def process_endnotes_in_file(filename: str, root: str, note_range: range, step: 
 			# If we’ve already changed some notes and can’t find the next then we don’t need to continue searching
 			if not "id=\"noteref-{}\"".format(endnote_number) in processed_xhtml and processed_xhtml_is_modified:
 				break
-			processed_xhtml = regex.sub(r"(<a[^>]*?>){}</a>".format(endnote_number), r"\g<1>{}</a>".format(endnote_number + step), processed_xhtml, flags=regex.DOTALL)
 			processed_xhtml = processed_xhtml.replace("id=\"noteref-{}\"".format(endnote_number), "id=\"noteref-{}\"".format(endnote_number + step), 1)
 			processed_xhtml = processed_xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + step), 1)
+			processed_xhtml = processed_xhtml.replace(">{}</a>".format(endnote_number), ">{}</a>".format(endnote_number + step), 1)
 			processed_xhtml_is_modified = processed_xhtml_is_modified or (processed_xhtml != xhtml)
 
 		if processed_xhtml_is_modified:
