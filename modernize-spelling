@@ -186,6 +186,7 @@ def modernize_spelling(xhtml: str, language: str) -> str:
 	xhtml = regex.sub(r"\b([Ee])au(x?)[ \-]de[ \-]vie\b", r"\1au\2-de-vie", xhtml)	# eau de vie -> eau-de-vie
 	xhtml = regex.sub(r"\b3d\b", r"3rd", xhtml)						# 3d -> 3rd (warning: check that we don't convert 3d in the "3 pence" sense!)
 	xhtml = regex.sub(r"\b2d\b", r"2nd", xhtml)						# 2d -> 2nd (warning: check that we don't convert 2d in the "2 pence" sense!)
+	xhtml = regex.sub(r"\b([Mm])ia[uo]w", r"\1eow", xhtml)				# miauw, miaow -> meow
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
