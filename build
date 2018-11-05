@@ -117,7 +117,7 @@ def add_kobo_spans_to_node(node):
 # End Kobo compatibility functions
 
 
-def namespace_to_class(selector: str)-> str:
+def namespace_to_class(selector: str) -> str:
 	"""
 	Helper function to remove namespace selectors from a single selector, and replace them with class names.
 
@@ -136,7 +136,7 @@ def namespace_to_class(selector: str)-> str:
 	# Now clean things up
 	return selector.replace(":", "-").replace("|", "-").replace("~=", "-").replace("[", ".").replace("]", "").replace("\"", "")
 
-def simplify_css(css: str) ->  str:
+def simplify_css(css: str) -> str:
 	"""
 	Helper function to simplify a block of CSS for improved cross-ereader compatibility.
 
@@ -455,14 +455,19 @@ def main():
 		# Done simplifying CSS and tags!
 
 		# Extract cover and cover thumbnail
-		# `convert` reports the svg as the wrong size, so we have to force the size.
-		# Note that we can't use percentages to resize, since `convert` auto-detects the wrong svg size to begin with.
-		subprocess.run([convert_path, "-resize", "{}x{}".format(COVER_SVG_WIDTH, COVER_SVG_HEIGHT), "-format", "jpg", os.path.join(work_epub_root_directory, "epub", "images", "cover.svg"), os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg")])
+		# We used to be able to use `convert` to convert svg -> jpg in one step, but at some point a bug
+		# was introduced to `convert` that caused it to crash in this situation. Now, we first use rsvg-convert
+		# to convert to svg -> png, then `convert` to convert png -> jpg.
+		subprocess.run([rsvg_convert_path, "--keep-aspect-ratio", "--format", "png", "--output", os.path.join(work_directory, 'cover.png'), os.path.join(work_epub_root_directory, "epub", "images", "cover.svg")])
+		subprocess.run([convert_path, "-format", "jpg", os.path.join(work_directory, 'cover.png'), os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg")])
+		os.remove(os.path.join(work_directory, 'cover.png'))
 
 		if args.build_covers:
 			shutil.copy2(os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg"), os.path.join(output_directory, "cover.jpg"))
 			shutil.copy2(os.path.join(work_epub_root_directory, "epub", "images", "cover.svg"), os.path.join(output_directory, "cover-thumbnail.svg"))
-			subprocess.run([convert_path, "-resize", "{}x{}".format(COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT), "-quality", "100", "-format", "jpg", os.path.join(output_directory, "cover-thumbnail.svg"), os.path.join(output_directory, "cover-thumbnail.jpg")])
+			subprocess.run([rsvg_convert_path, "--keep-aspect-ratio", "--format", "png", "--output", os.path.join(work_directory, 'cover-thumbnail.png'), os.path.join(output_directory, "cover-thumbnail.svg")])
+			subprocess.run([convert_path, "-resize", "{}x{}".format(COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT), "-quality", "100", "-format", "jpg", os.path.join(work_directory, 'cover-thumbnail.png'), os.path.join(output_directory, "cover-thumbnail.jpg")])
+			os.remove(os.path.join(work_directory, 'cover-thumbnail.png'))
 			os.remove(os.path.join(output_directory, "cover-thumbnail.svg"))
 
 		os.remove(os.path.join(work_epub_root_directory, "epub", "images", "cover.svg"))
