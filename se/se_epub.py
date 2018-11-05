@@ -1262,7 +1262,8 @@ class SeEpub:
 				if "." + css_class not in css:
 					messages.append(LintMessage("class “{}” found in xhtml, but no style in local.css".format(css_class), se.MESSAGE_TYPE_ERROR, "local.css"))
 
-			if xhtml_css_classes[css_class] == 1 and css_class not in se.IGNORED_CLASSES:
+			if xhtml_css_classes[css_class] == 1 and css_class not in se.IGNORED_CLASSES and not regex.match(r'^i[0-9]$', css_class):
+				# Don't count ignored classes OR i[0-9] which are used for poetry styling
 				single_use_css_classes.append(css_class)
 
 		if single_use_css_classes:
