@@ -5,7 +5,6 @@ import os
 import fnmatch
 import regex
 import se
-from bs4 import BeautifulSoup
 
 
 def main():
@@ -34,13 +33,14 @@ def main():
 
 			try:
 				with open(filename, "r", encoding="utf-8") as file:
-					soup = BeautifulSoup(file.read(), "lxml")
+					html = file.read()
 			except Exception:
 				se.print_error("Couldn’t open file: {}".format(filename))
 				exit(1)
 
-			# This removes HTML tags
-			text = soup.body.get_text()
+			# Remove HTML tags
+			text = regex.sub(r"<title>.+?</title>", " ", html)
+			text = regex.sub(r"<.+?>", "", text, flags=regex.DOTALL)
 
 			# Replace some formatting characters
 			text = regex.sub(r"[…–—― ‘’“”\{\}\(\)]", " ", text, flags=regex.IGNORECASE | regex.DOTALL)
