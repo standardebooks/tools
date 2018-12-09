@@ -57,7 +57,7 @@ def titlecase(text: str) -> str:
 	text = regex.sub(r"\bD’([A-Z]+?)", "d’\\1", text)
 
 	# Lowercase "and", even if preceded by punctuation
-	text = regex.sub(r"([^a-zA-Z]) (And|Or)", lambda result: result.group(1) + " " + result.group(2).lower(), text)
+	text = regex.sub(r"([^a-zA-Z]) (And|Or)\b", lambda result: result.group(1) + " " + result.group(2).lower(), text)
 
 	# pip_titlecase capitalizes *all* prepositions preceded by parenthesis; we only want to capitalize ones that *aren't the first word of a subtitle*
 	# OK: From Sergeant Bulmer (of the Detective Police) to Mr. Pendril
@@ -68,8 +68,8 @@ def titlecase(text: str) -> str:
 	regex_string = r"\bAnd{}".format(se.WORD_JOINER)
 	text = regex.sub(regex_string, "and{}".format(se.WORD_JOINER), text)
 
-	# Lowercase "in", if followed by a semicolon
-	text = regex.sub(r"\b; In", "; in", text)
+	# Lowercase "in", if followed by a semicolon (but not words like "inheritance")
+	text = regex.sub(r"\b; In\b", "; in", text)
 
 	# Lowercase "from", "with", as long as they're not the first word and not preceded by a parenthesis
 	text = regex.sub(r"(?<!^)(?<!\()\b(From|With)\b", lambda result: result.group(1).lower(), text)
