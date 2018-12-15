@@ -419,7 +419,7 @@ def main():
 
 	# Write PG data if we have it
 	if args.pg_url and pg_ebook_html:
-		soup = BeautifulSoup(pg_ebook_html, "lxml")
+		soup = BeautifulSoup(pg_ebook_html, "html.parser")
 
 		# Try to get the PG producers.  We only try this if there's a <pre> block with the header info (which is not always the case)
 		for element in soup(text=regex.compile(r"\*\*\*\s*Produced by.+$", flags=regex.DOTALL)):
