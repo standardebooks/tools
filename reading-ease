@@ -94,7 +94,7 @@ def get_syllable_count(word: str) -> int:
 
 	# 10) if ends with "-ian", should be counted as two syllables, except for "-tian" and "-cian"
 	if word[-3:] == "ian":
-	#and (word[-4:] != "cian" or word[-4:] != "tian"):
+	# and (word[-4:] != "cian" or word[-4:] != "tian"):
 		if word[-4:] == "cian" or word[-4:] == "tian":
 			pass
 		else:

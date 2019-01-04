@@ -41,7 +41,7 @@ def main():
 					xhtml = file.read()
 					soup = BeautifulSoup(xhtml, "lxml")
 
-					#What language are we looking at?
+					# What language are we looking at?
 					language = args.language
 					if language is None:
 						try:
@@ -73,10 +73,10 @@ def main():
 					h_opening_tag_pattern = regex.compile("^h[1-6]$")
 					h_closing_tag_pattern = regex.compile("^/h[1-6]$")
 
-					#The general idea here is to read the whole contents of the <body> tag character by character.
-					#If we hit a <, we ignore the contents until we hit the next >.
-					#Otherwise, we consider a word to be an unbroken sequence of alphanumeric characters.
-					#We can't just split at whitespace because HTML tags can contain whitespace (attributes for example)
+					# The general idea here is to read the whole contents of the <body> tag character by character.
+					# If we hit a <, we ignore the contents until we hit the next >.
+					# Otherwise, we consider a word to be an unbroken sequence of alphanumeric characters.
+					# We can't just split at whitespace because HTML tags can contain whitespace (attributes for example)
 					for char in text:
 						process = False
 
@@ -98,7 +98,7 @@ def main():
 						elif not in_tag:
 							process = True
 
-						#Do we ignore <h1-6> tags?
+						# Do we ignore <h1-6> tags?
 						if not reading_tag_name and h_opening_tag_pattern.match(tag_name):
 							in_h_tag = True
 
@@ -112,8 +112,8 @@ def main():
 							if word != "":
 								new_word = word
 
-								#100 is the hard coded max word length in the hyphenator module
-								#Check here to avoid an error
+								# 100 is the hard coded max word length in the hyphenator module
+								# Check here to avoid an error
 								if len(word) < 100:
 									syllables = hyphenators[language].syllables(word)
 
