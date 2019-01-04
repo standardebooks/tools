@@ -926,6 +926,10 @@ class SeEpub:
 						if "<h2>" in file_contents:
 							messages.append(LintMessage("<h2> tag without epub:type=\"title\" attribute.", se.MESSAGE_TYPE_WARNING, filename))
 
+						# Check for a common typo
+						if "z3998:nonfiction" in file_contents:
+							messages.append(LintMessage("Typo: z3998:nonfiction should be z3998:non-fiction", se.MESSAGE_TYPE_ERROR, filename))
+
 						# Check for empty <p> tags
 						matches = regex.findall(r"<p>\s*</p>", file_contents)
 						if "<p/>" in file_contents or matches:
