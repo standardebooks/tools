@@ -1,0 +1,31 @@
+#!/bin/bash
+usage(){
+	fmt <<EOF
+DESCRIPTION
+	Convert a fragment of MathML into a transparent PNG. Output is saved in the current working directory in incremental PNG files, for example 1.png, 2.png, etc.
+
+USAGE
+	mathml2png FRAGMENT [FRAGMENT...]
+		FRAGMENT is a fragment of MathML. For example: <math><mn>2</mn></math>
+
+EOF
+	exit
+}
+require(){ command -v "$1" > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
+if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
+# End boilerplate
+
+require "convert" "Try: apt-get install imagemagick"
+
+i=1
+
+for fragment in "$@"
+do
+	echo "<!doctype html><html><head><title>MathML fragment</title></head><body>${fragment}</body></html>" > /tmp/mathml-fragment.html
+
+	firefox -screenshot /tmp/mathml.png file:///tmp/mathml-fragment.html &> /dev/null
+
+	convert /tmp/mathml.png -fuzz 10% -transparent white -trim "${i}".png
+
+	i=$((i+1))
+done
