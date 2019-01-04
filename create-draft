@@ -72,7 +72,8 @@ def calculate_image_lines(string: str, target_height: int, canvas_width: int) ->
 		if current_width < canvas_width:
 			current_line = word["word"] + " " + current_line
 		else:
-			lines.append(current_line.strip())
+			if current_line.strip() != "":
+				lines.append(current_line.strip())
 			current_line = word["word"]
 			current_width = word["width"]
 
