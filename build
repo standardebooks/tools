@@ -198,7 +198,8 @@ def main():
 	convert_path = shutil.which("convert")
 	clean_path = os.path.join(script_directory, "clean")
 	hyphenate_path = os.path.join(script_directory, "hyphenate")
-	xsl_filename = os.path.join(script_directory, "data", "navdoc2ncx.xsl")
+	toc2ncx_xsl_filename = os.path.join(script_directory, "data", "navdoc2ncx.xsl")
+	mathml_xsl_filename = os.path.join(script_directory, "data", "mathmlcontent2presentation.xsl")
 
 	# Check for some required tools
 	if args.check and epubcheck_path is None:
@@ -553,6 +554,27 @@ def main():
 						xhtml = file.read()
 						processed_xhtml = xhtml
 
+						# Check if there's any MathML to convert.
+						# We expect MathML to be the "content" type (versus the "presentational" type).
+						# We use an XSL transform to convert from "content" to "presentational" MathML.
+						# If we start with presentational, then nothing will be changed.
+						# Kobo supports presentational MathML. After we build kobo, we convert the presentational MathML to PNG for the rest of the builds.
+						mathml_transform = None
+						for line in regex.findall(r"<math[^>]*?>(.+?)</math>", processed_xhtml, flags=regex.DOTALL):
+							mathml_content_tree = se.easy_xml.EasyXmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?><math xmlns=\"http://www.w3.org/1998/Math/MathML\">{}</math>".format(line))
+
+							# Initialize the transform object, if we haven't yet
+							if not mathml_transform:
+								mathml_transform = etree.XSLT(etree.parse(mathml_xsl_filename))
+
+							# Transform the mathml and get a string representation
+							# XSLT comes from https://github.com/fred-wang/webextension-content-mathml-polyfill
+							mathml_presentation_tree = mathml_transform(mathml_content_tree.etree)
+							mathml_presentation_xhtml = etree.tostring(mathml_presentation_tree, encoding="unicode", pretty_print=True, with_tail=False).strip()
+
+							# Plop our string back in to the XHTML we're processing
+							processed_xhtml = regex.sub(r"<math[^>]*?>\{}\</math>".format(line), "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">" + mathml_presentation_xhtml + "</math>", processed_xhtml, flags=regex.MULTILINE)
+
 						# Add ARIA roles, which are just mostly duplicate attributes to epub:type (with the exception of rearnotes -> endnotes, and adding the `backlink` role which is not yet in epub 3.0)
 						processed_xhtml = regex.sub(r"(epub:type=\"[^\"]*?rearnote(s?)[^\"]*?\")", "\\1 role=\"doc-endnote\\2\"", processed_xhtml)
 
@@ -700,7 +722,7 @@ def main():
 		metadata_xhtml = metadata_xhtml.replace("<manifest>", "<manifest><item href=\"toc.ncx\" id=\"ncx\" media-type=\"application/x-dtbncx+xml\" />")
 
 		# Now use an XSLT transform to generate the NCX
-		toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, xsl_filename)
+		toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, toc2ncx_xsl_filename)
 
 		# Convert the <nav> landmarks element to the <guide> element in content.opf
 		guide_xhtml = "<guide>"
@@ -811,7 +833,7 @@ def main():
 				file.truncate()
 
 			# Rebuild the NCX
-			toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, xsl_filename)
+			toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, toc2ncx_xsl_filename)
 
 			# Clean just the ToC and NCX
 			subprocess.run([clean_path, os.path.join(work_epub_root_directory, "epub", "toc.ncx"), os.path.join(work_epub_root_directory, "epub", toc_filename)])
