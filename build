@@ -573,7 +573,7 @@ def main():
 							mathml_presentation_xhtml = etree.tostring(mathml_presentation_tree, encoding="unicode", pretty_print=True, with_tail=False).strip()
 
 							# Plop our string back in to the XHTML we're processing
-							processed_xhtml = regex.sub(r"<math[^>]*?>\{}\</math>".format(line), "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">" + mathml_presentation_xhtml + "</math>", processed_xhtml, flags=regex.MULTILINE)
+							processed_xhtml = regex.sub(r"<math[^>]*?>\{}\</math>".format(line), mathml_presentation_xhtml, processed_xhtml, flags=regex.MULTILINE)
 
 						# Add ARIA roles, which are just mostly duplicate attributes to epub:type (with the exception of rearnotes -> endnotes, and adding the `backlink` role which is not yet in epub 3.0)
 						processed_xhtml = regex.sub(r"(epub:type=\"[^\"]*?rearnote(s?)[^\"]*?\")", "\\1 role=\"doc-endnote\\2\"", processed_xhtml)
