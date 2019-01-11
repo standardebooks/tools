@@ -115,7 +115,7 @@ def make_url_safe(text: str) -> str:
 	text = text.lower()
 
 	# 4. Remove apostrophes
-	text = text.replace("'", "")
+	text = regex.sub(r"['‘’]", "", text)
 
 	# 5. Convert any non-digit, non-letter character to a space
 	text = regex.sub(r"[^0-9a-z]", " ", text, flags=regex.IGNORECASE)
