@@ -963,6 +963,13 @@ class SeEpub:
 						if regex.findall(r"<[A-Z]+", file_contents):
 							messages.append(LintMessage("One or more uppercase HTML tags.", se.MESSAGE_TYPE_ERROR, filename))
 
+						# Check for nbsp within <abbr class="name">, which is redundant
+						matches = regex.findall(r"<abbr[^>]+?class=\"name\"[^>]*?>[^<]*?{}[^<]*?</abbr>".format(se.NO_BREAK_SPACE), file_contents)
+						if matches:
+							messages.append(LintMessage("No-break space detected in <abbr class=\"name\">. This is redundant.", se.MESSAGE_TYPE_ERROR, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
 						# Check for Roman numerals in <title> tag
 						if regex.findall(r"<title>[Cc]hapter [XxIiVv]+", file_contents):
 							messages.append(LintMessage("No Roman numerals allowed in <title> tag; use decimal numbers.", se.MESSAGE_TYPE_ERROR, filename))
