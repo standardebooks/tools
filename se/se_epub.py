@@ -787,6 +787,13 @@ class SeEpub:
 						# Remove comments that are on their own line
 						file_contents = regex.sub(r"^/\*.+?\*/\n", "", file_contents, flags=regex.MULTILINE | regex.DOTALL)
 
+						# Check for unneeded white-space nowrap in abbr selectors
+						matches = regex.findall(r"abbr.+?{[^}]*?white-space:\s*nowrap;[^}]*?}", css)
+						if matches:
+							messages.append(LintMessage("abbr selector does not need white-space: nowrap; as it inherits it from core.css.", se.MESSAGE_TYPE_ERROR, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
 						# No empty CSS selectors
 						matches = regex.findall(r"^.+\{\s*\}", file_contents, flags=regex.MULTILINE)
 						if matches:
