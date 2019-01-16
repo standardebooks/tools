@@ -64,6 +64,12 @@ class EasyXmlElement:
 
 		return regex.sub(r" xmlns(:[a-z]+?)?=\"[^\"]+?\"", "", etree.tostring(self.__lxml_element, encoding=str, with_tail=False))
 
+	def attribute(self, attribute: str) -> str:
+		"""
+		Return the value of an attribute on this element.
+		"""
+		return self.__lxml_element.get(attribute)
+
 	def inner_html(self) -> str:
 		"""
 		Return a string representing the inner HTML of this element.

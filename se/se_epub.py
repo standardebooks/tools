@@ -11,6 +11,7 @@ import io
 import regex
 import se
 import se.formatting
+import se.easy_xml
 import roman
 import lxml.cssselect
 import lxml.etree as etree
@@ -44,6 +45,20 @@ class SeEpub:
 
 	directory = ""
 	__tools_root_directory = ""
+	__metadata_xhtml = None
+	__metadata_tree = None
+	__generated_identifier = None
+
+	@property
+	def generated_identifier(self) -> str:
+		if not self.__generated_identifier:
+			self.__generated_identifier = self.generate_identifier()
+
+		return self.__generated_identifier
+
+	@generated_identifier.setter
+	def generated_identifier(self, value):
+		self.__generated_identifier = value
 
 	def __init__(self, epub_root_directory: str, tools_root_directory: str):
 		if not os.path.isdir(epub_root_directory):
@@ -51,6 +66,9 @@ class SeEpub:
 
 		if not os.path.isfile(os.path.join(epub_root_directory, "src", "epub", "content.opf")):
 			raise NotADirectoryError("Not a Standard Ebooks source directory: {}".format(epub_root_directory))
+
+		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
+			self.__metadata_xhtml = file.read()
 
 		self.directory = os.path.abspath(epub_root_directory)
 		self.__tools_root_directory = os.path.abspath(tools_root_directory)
@@ -226,6 +244,57 @@ class SeEpub:
 					self.__recompose_xhtml(child, output_soup)
 				else:
 					existing_section[0].append(child)
+
+	def generate_identifier(self) -> str:
+		"""
+		Generate an SE identifer based on the metadata in content.opf
+
+		INPUTS
+		None
+
+		OUTPUTS
+		A string representing the SE identifier.
+		"""
+		if self.__metadata_tree is None:
+			self.__metadata_tree = se.easy_xml.EasyXmlTree(self.__metadata_xhtml)
+
+		# Add authors
+		identifier = "url:https://standardebooks.org/ebooks/"
+		authors = []
+		for author in self.__metadata_tree.xpath("//dc:creator"):
+			authors.append(author.inner_html())
+			identifier += se.formatting.make_url_safe(author.inner_html()) + "_"
+
+		identifier = identifier.strip("_") + "/"
+
+		# Add title
+		for title in self.__metadata_tree.xpath("//dc:title[@id=\"title\"]"):
+			identifier += se.formatting.make_url_safe(title.inner_html()) + "/"
+
+		# Add translators
+		has_translators = False
+		for role in self.__metadata_tree.xpath("//opf:meta[@property=\"role\"]"):
+			if role.inner_html() == "trl":
+				has_translators = True
+				contributor = self.__metadata_tree.xpath("//dc:contributor[@id=\"" + role.attribute("refines").lstrip("#") + "\"]")[0]
+				identifier += se.formatting.make_url_safe(contributor.inner_html()) + "_"
+
+		if has_translators:
+			identifier = identifier.strip("_") + "/"
+
+		# Add illustrators
+		for role in self.__metadata_tree.xpath("//opf:meta[@property=\"role\"]"):
+			if role.inner_html() == "ill":
+				# Don't add the author as an illustrator, only check other contributors
+				try:
+					contributor = self.__metadata_tree.xpath("//dc:contributor[@id=\"" + role.attribute("refines").lstrip("#") + "\"]")[0]
+					identifier += se.formatting.make_url_safe(contributor.inner_html()) + "_"
+				except Exception:
+					continue
+
+		identifier = identifier.strip("_/")
+
+		return identifier
 
 	def recompose(self) -> str:
 		"""
@@ -461,11 +530,8 @@ class SeEpub:
 		xhtml_css_classes = {}
 		headings = []
 
-		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
-			metadata_xhtml = file.read()
-
 		# Get the ebook language, for later use
-		language = regex.search(r"<dc:language>([^>]+?)</dc:language>", metadata_xhtml).group(1)
+		language = regex.search(r"<dc:language>([^>]+?)</dc:language>", self.__metadata_xhtml).group(1)
 
 		# Check local.css for various items, for later use
 		abbr_elements = []
@@ -486,11 +552,11 @@ class SeEpub:
 			messages.append(LintMessage("Illegal ./dist/ folder. Do not commit compiled versions of the source.", se.MESSAGE_TYPE_ERROR, "./dist/"))
 
 		# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
-		if regex.search(r"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", metadata_xhtml.replace("\"&gt;", "").replace("=\"", "")) is not None:
+		if regex.search(r"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", self.__metadata_xhtml.replace("\"&gt;", "").replace("=\"", "")) is not None:
 			messages.append(LintMessage("Non-typogrified \", ', or -- detected in metadata long description", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for malformed long description HTML
-		long_description = regex.findall(r"<meta id=\"long-description\".+?>(.+?)</meta>", metadata_xhtml, flags=regex.DOTALL)
+		long_description = regex.findall(r"<meta id=\"long-description\".+?>(.+?)</meta>", self.__metadata_xhtml, flags=regex.DOTALL)
 		if long_description:
 			long_description = "<?xml version=\"1.0\"?><html xmlns=\"http://www.w3.org/1999/xhtml\">" + html.unescape(long_description[0]) + "</html>"
 			try:
@@ -500,43 +566,43 @@ class SeEpub:
 
 		# Check for double spacing
 		regex_string = r"[{}{} ]{{2,}}".format(se.NO_BREAK_SPACE, se.HAIR_SPACE)
-		matches = regex.findall(regex_string, metadata_xhtml)
+		matches = regex.findall(regex_string, self.__metadata_xhtml)
 		if matches:
 			messages.append(LintMessage("Double spacing detected in file. Sentences should be single-spaced.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
-		if regex.search(r"<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</dc:description>", metadata_xhtml) is not None:
+		if regex.search(r"<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</dc:description>", self.__metadata_xhtml) is not None:
 			messages.append(LintMessage("Non-typogrified \", ', or -- detected in metadata dc:description.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
-		matches = regex.findall(r"[a-zA-Z][”][,.]", metadata_xhtml)
+		matches = regex.findall(r"[a-zA-Z][”][,.]", self.__metadata_xhtml)
 		if matches:
 			messages.append(LintMessage("Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, "content.opf"))
 
 		# Make sure long-description is escaped HTML
-		if "<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">\n\t\t\t&lt;p&gt;" not in metadata_xhtml:
+		if "<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">\n\t\t\t&lt;p&gt;" not in self.__metadata_xhtml:
 			messages.append(LintMessage("Long description must be escaped HTML.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for HTML entities in long-description, but allow &amp;amp;
-		if regex.search(r"&amp;[a-z]+?;", metadata_xhtml.replace("&amp;amp;", "")):
+		if regex.search(r"&amp;[a-z]+?;", self.__metadata_xhtml.replace("&amp;amp;", "")):
 			messages.append(LintMessage("HTML entites detected in metadata. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for illegal em-dashes in <dc:subject>
-		if regex.search(r"<dc:subject id=\"[^\"]+?\">[^<]+?—[^<]+?</dc:subject>", metadata_xhtml) is not None:
+		if regex.search(r"<dc:subject id=\"[^\"]+?\">[^<]+?—[^<]+?</dc:subject>", self.__metadata_xhtml) is not None:
 			messages.append(LintMessage("Illegal em-dash detected in dc:subject; use --", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for illegal VCS URLs
-		matches = regex.findall(r"<meta property=\"se:url\.vcs\.github\">([^<]+?)</meta>", metadata_xhtml)
+		matches = regex.findall(r"<meta property=\"se:url\.vcs\.github\">([^<]+?)</meta>", self.__metadata_xhtml)
 		if matches:
 			for match in matches:
 				if not match.startswith("https://github.com/standardebooks/"):
 					messages.append(LintMessage("Illegal se:url.vcs.github. VCS URLs must begin with https://github.com/standardebooks/: {}".format(match), se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for HathiTrust scan URLs instead of actual record URLs
-		if "babel.hathitrust.org" in metadata_xhtml or "hdl.handle.net" in metadata_xhtml:
+		if "babel.hathitrust.org" in self.__metadata_xhtml or "hdl.handle.net" in self.__metadata_xhtml:
 			messages.append(LintMessage("Use HathiTrust record URLs, not page scan URLs, in metadata, imprint, and colophon. Record URLs look like: https://catalog.hathitrust.org/Record/<RECORD-ID>", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for illegal se:subject tags
-		matches = regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", metadata_xhtml)
+		matches = regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", self.__metadata_xhtml)
 		if matches:
 			for match in matches:
 				if match not in se.SE_GENRES:
@@ -545,14 +611,19 @@ class SeEpub:
 			messages.append(LintMessage("No se:subject <meta> tag found.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for CDATA tags
-		if "<![CDATA[" in metadata_xhtml:
+		if "<![CDATA[" in self.__metadata_xhtml:
 			messages.append(LintMessage("<![CDATA[ detected. Run `clean` to canonicalize <![CDATA[ sections.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
+		# Check that our provided identifier matches the generated identifier
+		identifier = regex.sub(r"<.+?>", "", regex.findall(r"<dc:identifier id=\"uid\">.+?</dc:identifier>", self.__metadata_xhtml)[0])
+		if identifier != self.generated_identifier:
+			messages.append(LintMessage("<dc:identifier> does not match expected: {}".format(self.generated_identifier), se.MESSAGE_TYPE_ERROR, "content.opf"))
+
 		# Check if se:name.person.full-name matches their titlepage name
-		matches = regex.findall(r"<meta property=\"se:name\.person\.full-name\" refines=\"#([^\"]+?)\">([^<]*?)</meta>", metadata_xhtml)
+		matches = regex.findall(r"<meta property=\"se:name\.person\.full-name\" refines=\"#([^\"]+?)\">([^<]*?)</meta>", self.__metadata_xhtml)
 		duplicate_names = []
 		for match in matches:
-			name_matches = regex.findall(r"<([a-z:]+)[^<]+?id=\"{}\"[^<]*?>([^<]*?)</\1>".format(match[0]), metadata_xhtml)
+			name_matches = regex.findall(r"<([a-z:]+)[^<]+?id=\"{}\"[^<]*?>([^<]*?)</\1>".format(match[0]), self.__metadata_xhtml)
 			for name_match in name_matches:
 				if name_match[1] == match[1]:
 					duplicate_names.append(name_match[1])
@@ -563,15 +634,15 @@ class SeEpub:
 				messages.append(LintMessage(duplicate_name, se.MESSAGE_TYPE_ERROR, "", True))
 
 		# Check for malformed URLs
-		for message in self.__get_malformed_urls(metadata_xhtml):
+		for message in self.__get_malformed_urls(self.__metadata_xhtml):
 			message.filename = "content.opf"
 			messages.append(message)
 
-		if regex.search(r"id\.loc\.gov/authorities/names/[^\.]+\.html", metadata_xhtml):
+		if regex.search(r"id\.loc\.gov/authorities/names/[^\.]+\.html", self.__metadata_xhtml):
 			messages.append(LintMessage("id.loc.gov URL ending with illegal .html", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Does the manifest match the generated manifest?
-		for manifest in regex.findall(r"<manifest>.*?</manifest>", metadata_xhtml, flags=regex.DOTALL):
+		for manifest in regex.findall(r"<manifest>.*?</manifest>", self.__metadata_xhtml, flags=regex.DOTALL):
 			manifest = regex.sub(r"[\n\t]", "", manifest)
 			expected_manifest = regex.sub(r"[\n\t]", "", self.generate_manifest())
 
@@ -1192,7 +1263,7 @@ class SeEpub:
 						# If we're in the imprint, are the sources represented correctly?
 						# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
 						if filename == "imprint.xhtml":
-							matches = regex.findall(r"<dc:source>([^<]+?)</dc:source>", metadata_xhtml)
+							matches = regex.findall(r"<dc:source>([^<]+?)</dc:source>", self.__metadata_xhtml)
 							if len(matches) <= 2:
 								for link in matches:
 									if "gutenberg.org" in link and "<a href=\"{}\">Project Gutenberg</a>".format(link) not in file_contents:
@@ -1235,20 +1306,23 @@ class SeEpub:
 									messages.append(LintMessage("The <figcaption> tag of {} doesn’t match the text in its LoI entry".format(figure_ref), se.MESSAGE_TYPE_WARNING, chapter_ref))
 
 					# Check for missing MARC relators
-					if filename == "introduction.xhtml" and ">aui<" not in metadata_xhtml and ">win<" not in metadata_xhtml:
+					if filename == "introduction.xhtml" and ">aui<" not in self.__metadata_xhtml and ">win<" not in self.__metadata_xhtml:
 						messages.append(LintMessage("introduction.xhtml found, but no MARC relator 'aui' (Author of introduction, but not the chief author) or 'win' (Writer of introduction)", se.MESSAGE_TYPE_WARNING, filename))
 
-					if filename == "preface.xhtml" and ">wpr<" not in metadata_xhtml:
+					if filename == "preface.xhtml" and ">wpr<" not in self.__metadata_xhtml:
 						messages.append(LintMessage("preface.xhtml found, but no MARC relator 'wpr' (Writer of preface)", se.MESSAGE_TYPE_WARNING, filename))
 
-					if filename == "afterword.xhtml" and ">aft<" not in metadata_xhtml:
+					if filename == "afterword.xhtml" and ">aft<" not in self.__metadata_xhtml:
 						messages.append(LintMessage("afterword.xhtml found, but no MARC relator 'aft' (Author of colophon, afterword, etc.)", se.MESSAGE_TYPE_WARNING, filename))
 
-					if filename == "endnotes.xhtml" and ">ann<" not in metadata_xhtml:
+					if filename == "endnotes.xhtml" and ">ann<" not in self.__metadata_xhtml:
 						messages.append(LintMessage("endnotes.xhtml found, but no MARC relator 'ann' (Annotator)", se.MESSAGE_TYPE_WARNING, filename))
 
-					if filename == "loi.xhtml" and ">ill<" not in metadata_xhtml:
+					if filename == "loi.xhtml" and ">ill<" not in self.__metadata_xhtml:
 						messages.append(LintMessage("loi.xhtml found, but no MARC relator 'ill' (Illustrator)", se.MESSAGE_TYPE_WARNING, filename))
+
+					if filename == "colophon.xhtml" and "<a class=\"raw-url\" href=\"{}\">{}</a>".format(self.generated_identifier.replace("url:", ""), self.generated_identifier.replace("url:https://", "")) not in file_contents:
+						messages.append(LintMessage("Unexpected SE identifier in colophon. Expected: {}".format(self.generated_identifier), se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for wrong semantics in frontmatter/backmatter
 					if filename in se.FRONTMATTER_FILENAMES and "frontmatter" not in file_contents:
