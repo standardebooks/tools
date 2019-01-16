@@ -590,6 +590,10 @@ class SeEpub:
 		if regex.search(r"<dc:subject id=\"[^\"]+?\">[^<]+?—[^<]+?</dc:subject>", self.__metadata_xhtml) is not None:
 			messages.append(LintMessage("Illegal em-dash detected in dc:subject; use --", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
+		# Check for empty production notes
+		if "<meta property=\"se:production-notes\">Any special notes about the production of this ebook for future editors/producers? Remove this element if not.</meta>" in self.__metadata_xhtml:
+			messages.append(LintMessage("Empty production-notes element in metadata.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+
 		# Check for illegal VCS URLs
 		matches = regex.findall(r"<meta property=\"se:url\.vcs\.github\">([^<]+?)</meta>", self.__metadata_xhtml)
 		if matches:
