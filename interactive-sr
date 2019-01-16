@@ -15,11 +15,12 @@ USAGE
 EOF
 	exit
 }
+die(){ printf "Error: %s\n" "${1}" 1>&2; exit 1; }
 require(){ command -v "$1" > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
-if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
+if [ $# -eq 1 ]; then if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then usage; fi fi
 # End boilerplate
 
-require "vim" "Try: apt-get install vim"
+require "vim" "Try: apt install vim"
 
 # Store the regex
 regex="$1"
