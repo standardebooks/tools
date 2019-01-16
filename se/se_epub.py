@@ -48,17 +48,21 @@ class SeEpub:
 	__metadata_xhtml = None
 	__metadata_tree = None
 	__generated_identifier = None
+	__generated_github_repo_url = None
 
 	@property
 	def generated_identifier(self) -> str:
 		if not self.__generated_identifier:
-			self.__generated_identifier = self.generate_identifier()
+			self.__generated_identifier = self.__generate_identifier()
 
 		return self.__generated_identifier
 
-	@generated_identifier.setter
-	def generated_identifier(self, value):
-		self.__generated_identifier = value
+	@property
+	def generated_github_repo_url(self) -> str:
+		if not self.__generated_github_repo_url:
+			self.__generated_github_repo_url = self.__generate_github_repo_url()
+
+		return self.__generated_github_repo_url
 
 	def __init__(self, epub_root_directory: str, tools_root_directory: str):
 		if not os.path.isdir(epub_root_directory):
@@ -67,11 +71,11 @@ class SeEpub:
 		if not os.path.isfile(os.path.join(epub_root_directory, "src", "epub", "content.opf")):
 			raise NotADirectoryError("Not a Standard Ebooks source directory: {}".format(epub_root_directory))
 
-		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
-			self.__metadata_xhtml = file.read()
-
 		self.directory = os.path.abspath(epub_root_directory)
 		self.__tools_root_directory = os.path.abspath(tools_root_directory)
+
+		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
+			self.__metadata_xhtml = file.read()
 
 	def __get_malformed_urls(self, xhtml: str) -> list:
 		"""
@@ -245,9 +249,25 @@ class SeEpub:
 				else:
 					existing_section[0].append(child)
 
-	def generate_identifier(self) -> str:
+	def __generate_github_repo_url(self) -> str:
+		"""
+		Generate a GitHub repository URL based on the *generated* SE identifier,
+		*not* the SE identifier in the metadata file.
+
+		INPUTS
+		None
+
+		OUTPUTS
+		A string representing the GitHub repository URL.
+		"""
+
+		return "https://github.com/standardebooks/" + self.generated_identifier.replace("url:https://standardebooks.org/ebooks/", "").replace("/", "_")
+
+	def __generate_identifier(self) -> str:
 		"""
 		Generate an SE identifer based on the metadata in content.opf
+
+		To access this value, use the property self.generated_identifier.
 
 		INPUTS
 		None
@@ -622,6 +642,10 @@ class SeEpub:
 		identifier = regex.sub(r"<.+?>", "", regex.findall(r"<dc:identifier id=\"uid\">.+?</dc:identifier>", self.__metadata_xhtml)[0])
 		if identifier != self.generated_identifier:
 			messages.append(LintMessage("<dc:identifier> does not match expected: {}".format(self.generated_identifier), se.MESSAGE_TYPE_ERROR, "content.opf"))
+
+		# Check that the GitHub repo URL is as expected
+		if self.generated_github_repo_url not in self.__metadata_xhtml:
+			messages.append(LintMessage("GitHub repo URL does not match expected: {}".format(self.generated_github_repo_url), se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check if se:name.person.full-name matches their titlepage name
 		matches = regex.findall(r"<meta property=\"se:name\.person\.full-name\" refines=\"#([^\"]+?)\">([^<]*?)</meta>", self.__metadata_xhtml)
