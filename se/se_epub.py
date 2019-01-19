@@ -376,7 +376,7 @@ class SeEpub:
 
 				output_xhtml = regex.sub(r"<img.+?src=\"\.\./images/{}\.svg\".*?/>".format(match), svg, output_xhtml)
 
-		with tempfile.NamedTemporaryFile(mode='w+', delete=False) as file:
+		with tempfile.NamedTemporaryFile(mode="w+", delete=False) as file:
 			file.write(output_xhtml)
 			file_name = file.name
 			file_name_xhtml = file_name + ".xhtml"
@@ -891,11 +891,11 @@ class SeEpub:
 
 						# Store all headings to check for ToC references later
 						if filename != "toc.xhtml":
-							matches = dom.select('h1,h2,h3,h4,h5,h6')
+							matches = dom.select("h1,h2,h3,h4,h5,h6")
 							for match in matches:
 
 								# Remove any links to the endnotes
-								endnote_ref = match.find('a', attrs={"epub:type": regex.compile("^.*noteref.*$")})
+								endnote_ref = match.find("a", attrs={"epub:type": regex.compile("^.*noteref.*$")})
 								if endnote_ref:
 									endnote_ref.extract()
 
@@ -907,14 +907,14 @@ class SeEpub:
 								heading_subtitle = match.find(attrs={"epub:type": regex.compile("^.*subtitle.*$")})
 
 								if heading_subtitle:
-									parent_section = match.find_parents('section')
+									parent_section = match.find_parents("section")
 
 									# Sometimes we might not have a parent <section>, like in Keats' Poetry
 									if not parent_section:
-										parent_section = match.find_parents('body')
+										parent_section = match.find_parents("body")
 
-									closest_section_epub_type = parent_section[0].get('epub:type') or ''
-									heading_first_child_epub_type = match.find('span', recursive=False).get('epub:type') or ''
+									closest_section_epub_type = parent_section[0].get("epub:type") or ""
+									heading_first_child_epub_type = match.find("span", recursive=False).get("epub:type") or ""
 
 									if regex.findall(r"^.*(part|division).*$", closest_section_epub_type):
 										remove_subtitle = False
@@ -928,7 +928,7 @@ class SeEpub:
 									if remove_subtitle:
 										heading_subtitle.extract()
 
-								normalized_text = ' '.join(match.get_text().split())
+								normalized_text = " ".join(match.get_text().split())
 								headings = headings + [(normalized_text, filename)]
 
 						# Check for direct z3998:roman spans that should have their semantic pulled into the parent element
@@ -1326,18 +1326,18 @@ class SeEpub:
 
 						# Check LoI descriptions to see if they match associated figcaptions
 						if filename == "loi.xhtml":
-							illustrations = dom.select('li > a')
+							illustrations = dom.select("li > a")
 							for illustration in illustrations:
 								figure_ref = illustration["href"].split("#")[1]
 								chapter_ref = regex.findall(r".*\/(.*?)#.*", illustration["href"])[0]
-								figcaption_text = ''
+								figcaption_text = ""
 								loi_text = illustration.get_text()
 
 								with open(os.path.join(self.directory, "src", "epub", "text", chapter_ref), "r", encoding="utf-8") as chapter:
 									figure = BeautifulSoup(chapter, "lxml").select("#"+figure_ref)[0]
 									if figure.figcaption:
 										figcaption_text = figure.figcaption.get_text()
-								if figcaption_text != '' and loi_text != '' and figcaption_text != loi_text:
+								if figcaption_text != "" and loi_text != "" and figcaption_text != loi_text:
 									messages.append(LintMessage("The <figcaption> tag of {} doesn’t match the text in its LoI entry".format(figure_ref), se.MESSAGE_TYPE_WARNING, chapter_ref))
 
 					# Check for missing MARC relators
@@ -1382,20 +1382,20 @@ class SeEpub:
 				if "." + css_class not in css:
 					messages.append(LintMessage("class “{}” found in xhtml, but no style in local.css".format(css_class), se.MESSAGE_TYPE_ERROR, "local.css"))
 
-			if xhtml_css_classes[css_class] == 1 and css_class not in se.IGNORED_CLASSES and not regex.match(r'^i[0-9]$', css_class):
+			if xhtml_css_classes[css_class] == 1 and css_class not in se.IGNORED_CLASSES and not regex.match(r"^i[0-9]$", css_class):
 				# Don't count ignored classes OR i[0-9] which are used for poetry styling
 				single_use_css_classes.append(css_class)
 
 		if single_use_css_classes:
-			messages.append(LintMessage("CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks.", se.MESSAGE_TYPE_WARNING, 'local.css'))
+			messages.append(LintMessage("CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks.", se.MESSAGE_TYPE_WARNING, "local.css"))
 			for css_class in single_use_css_classes:
-				messages.append(LintMessage(css_class, se.MESSAGE_TYPE_WARNING, 'local.css', True))
+				messages.append(LintMessage(css_class, se.MESSAGE_TYPE_WARNING, "local.css", True))
 
 		headings = list(set(headings))
 		with open(os.path.join(self.directory, "src", "epub", "toc.xhtml"), "r", encoding="utf-8") as toc:
 			toc = BeautifulSoup(toc.read(), "lxml")
-			landmarks = toc.find('nav', attrs={"epub:type": "landmarks"})
-			toc = toc.find('nav', attrs={"epub:type": "toc"})
+			landmarks = toc.find("nav", attrs={"epub:type": "landmarks"})
+			toc = toc.find("nav", attrs={"epub:type": "toc"})
 
 			# Depth first search using recursiveChildGenerator to get the headings in order
 			toc_entries = []
@@ -1407,8 +1407,8 @@ class SeEpub:
 			# Unlike main headings, ToC entries have a ‘:’ before the subheading so we need to strip these for comparison
 			toc_headings = []
 			for index, entry in enumerate(toc_entries):
-				entry_text = ' '.join(entry.get_text().replace(":", "").split())
-				entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get('href'))
+				entry_text = " ".join(entry.get_text().replace(":", "").split())
+				entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get("href"))
 				toc_headings.append((entry_text, entry_file))
 			for heading in headings:
 				# Occasionally we find a heading with a colon, but as we’ve stripped our
@@ -1421,18 +1421,18 @@ class SeEpub:
 			# To cover all possibilities, we combine the toc and the landmarks to get the full set of entries
 			with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r", encoding="utf-8") as content_opf:
 				toc_files = []
-				for index, entry in enumerate(landmarks.find_all('a', attrs={"epub:type": regex.compile("^.*(frontmatter|bodymatter).*$")})):
-					entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get('href'))
+				for index, entry in enumerate(landmarks.find_all("a", attrs={"epub:type": regex.compile("^.*(frontmatter|bodymatter).*$")})):
+					entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get("href"))
 					toc_files.append(entry_file)
 				for index, entry in enumerate(toc_entries):
-					entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get('href'))
+					entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get("href"))
 					toc_files.append(entry_file)
 				unique_toc_files = []
 				[unique_toc_files.append(i) for i in toc_files if not unique_toc_files.count(i)]
 				toc_files = unique_toc_files
-				spine_entries = BeautifulSoup(content_opf.read(), "lxml").find('spine').find_all('itemref')
+				spine_entries = BeautifulSoup(content_opf.read(), "lxml").find("spine").find_all("itemref")
 				for index, entry in enumerate(spine_entries):
-					if toc_files[index] != entry.attrs['idref']:
+					if toc_files[index] != entry.attrs["idref"]:
 						messages.append(LintMessage("The spine order does not match the order of the ToC and landmarks", se.MESSAGE_TYPE_ERROR, "content.opf"))
 						break
 
