@@ -1329,7 +1329,7 @@ class SeEpub:
 							illustrations = dom.select("li > a")
 							for illustration in illustrations:
 								figure_ref = illustration["href"].split("#")[1]
-								chapter_ref = regex.findall(r".*\/(.*?)#.*", illustration["href"])[0]
+								chapter_ref = regex.findall(r"(.*?)#.*", illustration["href"])[0]
 								figcaption_text = ""
 								loi_text = illustration.get_text()
 
