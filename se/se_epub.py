@@ -1153,6 +1153,10 @@ class SeEpub:
 								# Normalize whitespace
 								title = regex.sub(r"\s+", " ", title, flags=regex.DOTALL).strip()
 
+								# Remove nested <span>s in subtitles, which might trip up the next regex block
+								title = regex.sub(r"(<span epub:type=\"subtitle\">[^<]*?)<span[^>]*?>([^<]*?</span>)", r"\1\2", title, flags=regex.DOTALL)
+								title = regex.sub(r"(<span epub:type=\"subtitle\">[^<]*?)</span>([^<]*?</span>)", r"\1\2", title, flags=regex.DOTALL)
+
 								# Do we have a subtitle? If so the first letter of that must be capitalized, so we pull that out
 								subtitle_matches = regex.findall(r"(.*?)<span epub:type=\"subtitle\">(.*?)</span>(.*?)", title, flags=regex.DOTALL)
 								if subtitle_matches:
