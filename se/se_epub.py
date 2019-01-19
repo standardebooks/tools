@@ -1167,9 +1167,9 @@ class SeEpub:
 								subtitle_matches = regex.findall(r"(.*?)<span epub:type=\"subtitle\">(.*?)</span>(.*?)", title, flags=regex.DOTALL)
 								if subtitle_matches:
 									for title_header, subtitle, title_footer in subtitle_matches:
-										title_header = se.formatting.remove_tags(se.formatting.titlecase(title_header)).strip()
-										subtitle = se.formatting.remove_tags(se.formatting.titlecase(subtitle)).strip()
-										title_footer = se.formatting.remove_tags(se.formatting.titlecase(title_footer)).strip()
+										title_header = se.formatting.titlecase(se.formatting.remove_tags(title_header).strip())
+										subtitle = se.formatting.titlecase(se.formatting.remove_tags(subtitle).strip())
+										title_footer = se.formatting.titlecase(se.formatting.remove_tags(title_footer).strip())
 
 										titlecased_title = title_header + " " + subtitle + " " + title_footer
 										titlecased_title = titlecased_title.strip()
