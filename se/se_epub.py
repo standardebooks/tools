@@ -291,26 +291,50 @@ class SeEpub:
 		for title in self.__metadata_tree.xpath("//dc:title[@id=\"title\"]"):
 			identifier += se.formatting.make_url_safe(title.inner_html()) + "/"
 
-		# Add translators
-		has_translators = False
+		# For contributors, we add both translators and illustrators.
+		# However, we may not include specific translators or illustrators in certain cases, namely
+		# if *some* contributors have a `display-seq` property, and others do not.
+		# According to the epub spec, if that is the case, we should only add those that *do* have the attribute.
+		# By SE convention, any contributor with `display-seq == 0` will be excluded from the identifier string.
+		translators = []
+		illustrators = []
+		translators_have_display_seq = False
+		illustrators_have_display_seq = False
 		for role in self.__metadata_tree.xpath("//opf:meta[@property=\"role\"]"):
-			if role.inner_html() == "trl":
-				has_translators = True
-				contributor = self.__metadata_tree.xpath("//dc:contributor[@id=\"" + role.attribute("refines").lstrip("#") + "\"]")[0]
-				identifier += se.formatting.make_url_safe(contributor.inner_html()) + "_"
+			contributor_id = role.attribute("refines").lstrip("#")
+			contributor_element = self.__metadata_tree.xpath("//dc:contributor[@id=\"" + contributor_id + "\"]")
+			if contributor_element:
+				contributor = {"name": contributor_element[0].inner_html(), "include": True, "display_seq": None}
+				display_seq = self.__metadata_tree.xpath("//opf:meta[@property=\"display-seq\"][@refines=\"#" + contributor_id + "\"]")
 
-		if has_translators:
+				if display_seq and int(display_seq[0].inner_html()) == 0:
+					contributor["include"] = False
+					display_seq = None
+
+				if role.inner_html() == "trl":
+					if display_seq:
+						contributor["display_seq"] = display_seq[0]
+						translators_have_display_seq = True
+
+					translators.append(contributor)
+
+				if role.inner_html() == "ill":
+					if display_seq:
+						contributor["display_seq"] = display_seq[0]
+						illustrators_have_display_seq = True
+
+					illustrators.append(contributor)
+
+		for translator in translators:
+			if (not translators_have_display_seq and translator["include"]) or translator["display_seq"]:
+				identifier += se.formatting.make_url_safe(translator["name"]) + "_"
+
+		if translators:
 			identifier = identifier.strip("_") + "/"
 
-		# Add illustrators
-		for role in self.__metadata_tree.xpath("//opf:meta[@property=\"role\"]"):
-			if role.inner_html() == "ill":
-				# Don't add the author as an illustrator, only check other contributors
-				try:
-					contributor = self.__metadata_tree.xpath("//dc:contributor[@id=\"" + role.attribute("refines").lstrip("#") + "\"]")[0]
-					identifier += se.formatting.make_url_safe(contributor.inner_html()) + "_"
-				except Exception:
-					continue
+		for illustrator in illustrators:
+			if (not illustrators_have_display_seq and illustrator["include"]) or illustrator["display_seq"]:
+				identifier += se.formatting.make_url_safe(illustrator["name"]) + "_"
 
 		identifier = identifier.strip("_/")
 
