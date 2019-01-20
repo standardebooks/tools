@@ -961,6 +961,10 @@ class SeEpub:
 									for _ in uppercase_matches:
 										messages.append(LintMessage("Uppercase class attribute: {}. Attribute values must be all lowercase.".format(css_class), se.MESSAGE_TYPE_ERROR, filename))
 
+						matches = [x for x in dom.select("section") if not x.has_attr("id")]
+						if matches:
+							messages.append(LintMessage("<section> element without id attribute.", se.MESSAGE_TYPE_ERROR, filename))
+
 						# Check for numeric entities
 						matches = regex.findall(r"&#[0-9]+?;", file_contents)
 						if matches:
