@@ -473,12 +473,19 @@ class SeEpub:
 				if filename.startswith("."):
 					continue
 
-				properties = ""
+				properties = "properties=\""
 
 				with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
 					file_contents = file.read()
+					if "http://www.w3.org/1998/Math/MathML" in file_contents:
+						properties += "mathml "
 					if ".svg" in file_contents:
-						properties = " properties=\"svg\""
+						properties += "svg "
+
+				properties = " " + properties.strip() + "\""
+
+				if properties == " properties=\"\"":
+					properties = ""
 
 				manifest.append("<item href=\"text/{}\" id=\"{}\" media-type=\"application/xhtml+xml\"{}/>".format(filename, filename, properties))
 
