@@ -1221,8 +1221,11 @@ class SeEpub:
 										messages.append(LintMessage("Title \"{}\" not correctly titlecased. Expected: {}".format(title, titlecased_title), se.MESSAGE_TYPE_WARNING, filename))
 
 						# Check for <figure> tags without id attributes
-						if "<figure>" in file_contents:
-							messages.append(LintMessage("<figure> tag without ID attribute; <figure> tags should have the ID attribute, not their children <img> tags.", se.MESSAGE_TYPE_WARNING, filename))
+						matches = regex.findall(r"<img[^>]*?id=\"[^>]+?>", file_contents)
+						if matches:
+							messages.append(LintMessage("<img> tag with ID attribute. ID attributes go on parent <figure> tags.", se.MESSAGE_TYPE_ERROR, filename))
+							for match in matches:
+								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
 						# Check for closing dialog without comma
 						matches = regex.findall(r"[a-z]+?” [a-zA-Z]+? said", file_contents)
