@@ -13,6 +13,7 @@ import subprocess
 import fnmatch
 from copy import deepcopy
 import regex
+import psutil
 import lxml.cssselect
 import lxml.etree as etree
 from bs4 import BeautifulSoup
@@ -200,6 +201,7 @@ def main():
 	hyphenate_path = os.path.join(script_directory, "hyphenate")
 	toc2ncx_xsl_filename = os.path.join(script_directory, "data", "navdoc2ncx.xsl")
 	mathml_xsl_filename = os.path.join(script_directory, "data", "mathmlcontent2presentation.xsl")
+	mathml2png_path = os.path.join(script_directory, "mathml2png")
 
 	# Check for some required tools
 	if args.check and epubcheck_path is None:
@@ -478,7 +480,7 @@ def main():
 		metadata_xhtml = metadata_xhtml.replace(".svg", ".png")
 		metadata_xhtml = metadata_xhtml.replace("id=\"cover.jpg\" media-type=\"image/svg+xml\"", "id=\"cover.jpg\" media-type=\"image/jpeg\"")
 		metadata_xhtml = metadata_xhtml.replace("image/svg+xml", "image/png")
-		metadata_xhtml = metadata_xhtml.replace("properties=\"svg\"", "")
+		metadata_xhtml = regex.sub(r"properties=\"([^\"]*?)svg([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xhtml) # We may also have the `mathml` property
 
 		# NOTE: even though the a11y namespace is reserved by the epub spec, we must declare it because epubcheck doesn't know that yet.
 		# Once epubcheck understands the a11y namespace is reserved, we can remove it from the namespace declarations.
@@ -560,8 +562,8 @@ def main():
 						# If we start with presentational, then nothing will be changed.
 						# Kobo supports presentational MathML. After we build kobo, we convert the presentational MathML to PNG for the rest of the builds.
 						mathml_transform = None
-						for line in regex.findall(r"<math[^>]*?>(.+?)</math>", processed_xhtml, flags=regex.DOTALL):
-							mathml_content_tree = se.easy_xml.EasyXmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?><math xmlns=\"http://www.w3.org/1998/Math/MathML\">{}</math>".format(line))
+						for line in regex.findall(r"<(?:m:)?math[^>]*?>(.+?)</(?:m:)?math>", processed_xhtml, flags=regex.DOTALL):
+							mathml_content_tree = se.easy_xml.EasyXmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?><math xmlns=\"http://www.w3.org/1998/Math/MathML\">{}</math>".format(regex.sub(r"<(/?)m:", "<\\1", line)))
 
 							# Initialize the transform object, if we haven't yet
 							if not mathml_transform:
@@ -573,7 +575,7 @@ def main():
 							mathml_presentation_xhtml = etree.tostring(mathml_presentation_tree, encoding="unicode", pretty_print=True, with_tail=False).strip()
 
 							# Plop our string back in to the XHTML we're processing
-							processed_xhtml = regex.sub(r"<math[^>]*?>\{}\</math>".format(line), mathml_presentation_xhtml, processed_xhtml, flags=regex.MULTILINE)
+							processed_xhtml = regex.sub(r"<math[^>]*?>\{}\</math>".format(regex.escape(line)), mathml_presentation_xhtml, processed_xhtml, flags=regex.MULTILINE)
 
 						# Add ARIA roles, which are just mostly duplicate attributes to epub:type (with the exception of rearnotes -> endnotes, and adding the `backlink` role which is not yet in epub 3.0)
 						processed_xhtml = regex.sub(r"(epub:type=\"[^\"]*?rearnote(s?)[^\"]*?\")", "\\1 role=\"doc-endnote\\2\"", processed_xhtml)
@@ -708,12 +710,104 @@ def main():
 
 		# Now work on more epub2 compatibility
 
+		# Recurse over css files to make some compatibility replacements.
+		for root, _, filenames in os.walk(work_epub_root_directory):
+			for filename in filenames:
+				if filename.lower().endswith(".css"):
+					with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+						css = file.read()
+						processed_css = css
+
+						processed_css = regex.sub(r"(page\-break\-(before|after|inside)\s*:\s*(.+))", "\\1\n\t-webkit-column-break-\\2: \\3 /* For Readium */", processed_css)
+						processed_css = regex.sub(r"^\s*hyphens\s*:\s*(.+)", "\thyphens: \\1\n\tadobe-hyphenate: \\1\n\t-webkit-hyphens: \\1\n\t-epub-hyphens: \\1\n\t-moz-hyphens: \\1", processed_css, flags=regex.MULTILINE)
+						processed_css = regex.sub(r"^\s*hyphens\s*:\s*none;", "\thyphens: none;\n\tadobe-text-layout: optimizeSpeed; /* For Nook */", processed_css, flags=regex.MULTILINE)
+
+						if processed_css != css:
+							file.seek(0)
+							file.write(processed_css)
+							file.truncate()
+
+		# Sort out MathML compatibility
+		has_mathml = "mathml" in metadata_xhtml
+		if has_mathml:
+			firefox_path = shutil.which("firefox")
+			if firefox_path is None:
+				se.print_error("firefox is required to process MathML, but firefox cound't be located. Is it installed?")
+				exit(1)
+
+			mathml_count = 1
+			for root, _, filenames in os.walk(work_epub_root_directory):
+				for filename in filenames:
+					if filename.lower().endswith(".xhtml"):
+						with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+							xhtml = file.read()
+							processed_xhtml = xhtml
+							replaced_mathml = []
+
+							# Check if there's MathML we want to convert
+							# We take a naive approach and use some regexes to try to simplify simple MathML expressions.
+							# For each MathML expression, if our round of regexes finishes and there is still MathML in the processed result, we abandon the attempt and render to PNG using Firefox.
+							for line in regex.findall(r"<(?:m:)math[^>]*?>(?:.+?)</(?:m:)math>", processed_xhtml, flags=regex.DOTALL):
+								if line not in replaced_mathml:
+									replaced_mathml.append(line) # Store converted lines to save time in case we have multiple instances of the same MathML
+									mathml_tree = se.easy_xml.EasyXmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?>{}".format(regex.sub(r"<(/?)m:", "<\\1", line)))
+									processed_line = line
+
+									# If the mfenced element has more than one child, they are separated by commas when rendered.
+									# This is too complex for our naive regexes to work around. So, if there is an mfenced element with more than one child, abandon the attempt.
+									if not mathml_tree.css_select("mfenced > * + *"):
+										processed_line = regex.sub(r"</?(?:m:)math[^>]*?>", "", processed_line)
+										processed_line = regex.sub(r"<!--.+?-->", "", processed_line)
+										processed_line = regex.sub(R"<(?:m:)mfenced/>", "()", processed_line)
+										processed_line = regex.sub(r"<(?:m:)mo>{}</(?:m:)mo>".format(se.FUNCTION_APPLICATION), "", processed_line, flags=regex.IGNORECASE) # The ignore case flag is required to match here, it's unclear why
+										processed_line = regex.sub(r"<(?:m:)mfenced><((?:m:)(mo|mi|mn|mrow))>(.+?)</\1></(?:m:)mfenced>", "(<\\1>\\3</\\1>)", processed_line)
+										processed_line = regex.sub(r"<(?:m:)mrow>([^>].+?)</(?:m:)mrow>", "\\1", processed_line)
+										processed_line = regex.sub(r"<(?:m:)mi>([^<]+?)</(?:m:)mi>", "<i>\\1</i>", processed_line)
+										processed_line = regex.sub(r"<(?:m:)mi mathvariant=\"normal\">([^<]+?)</(?:m:)mi>", "\\1", processed_line)
+										processed_line = regex.sub(r"<(?:m:)mo>([+\-−=×])</(?:m:)mo>", " \\1 ", processed_line)
+										processed_line = regex.sub(r"<(?:m:)m([no])>(.+?)</(?:m:)m\1>", "\\2", processed_line)
+										processed_line = regex.sub(r"</?(?:m:)mrow>", "", processed_line)
+										processed_line = regex.sub(r"^\s+", "", processed_line)
+										processed_line = regex.sub(r"</i><i>", "", processed_line, flags=regex.DOTALL)
+
+									# Did we succeed? Is there any more MathML in our string?
+									if regex.findall("</?(?:m:)m", processed_line):
+										# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
+										if "firefox" in (p.name() for p in psutil.process_iter()):
+											se.print_error("firefox is required to process MathML, but firefox is currently running. Close all instances of firefox and try again.")
+											exit(1)
+
+										subprocess.run([mathml2png_path, "-o", os.path.join(work_epub_root_directory, "epub", "images", "mathml-{}.png".format(mathml_count)), regex.sub(r"<(/?)m:", "<\\1", line)])
+										processed_xhtml = processed_xhtml.replace(line, "<img class=\"mathml\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{}.png\" />".format(mathml_count))
+										mathml_count = mathml_count + 1
+									else:
+										# Success! Replace the MathML with our new string.
+										processed_xhtml = processed_xhtml.replace(line, processed_line)
+
+							if processed_xhtml != xhtml:
+								file.seek(0)
+								file.write(processed_xhtml)
+								file.truncate()
+
 		# Include epub2 cover metadata
 		cover_id = metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@id")[0].replace(".svg", ".jpg")
 		metadata_xhtml = regex.sub(r"(<metadata[^>]+?>)", "\\1\n\t\t<meta content=\"{}\" name=\"cover\" />".format(cover_id), metadata_xhtml)
 
 		# Add metadata to content.opf indicating this file is a Standard Ebooks compatibility build
 		metadata_xhtml = metadata_xhtml.replace("<dc:publisher", "<meta property=\"se:transform\">compatibility</meta>\n\t\t<dc:publisher")
+
+		# Add any new MathML images we generated to the manifest
+		if has_mathml:
+			for root, _, filenames in os.walk(os.path.join(work_epub_root_directory, "epub", "images")):
+				filenames = se.natural_sort(filenames)
+				filenames.reverse()
+				for filename in filenames:
+					if filename.lower().startswith("mathml-"):
+						metadata_xhtml = metadata_xhtml.replace("<manifest>", "<manifest><item href=\"images/{}\" id=\"{}\" media-type=\"image/png\"/>".format(filename, filename))
+
+			metadata_xhtml = regex.sub(r"properties=\"([^\"]*?)mathml([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xhtml)
+
+		metadata_xhtml = regex.sub(r"properties=\"\s*\"", "", metadata_xhtml)
 
 		# Generate our NCX file for epub2 compatibility.
 		# First find the ToC file.
@@ -749,27 +843,10 @@ def main():
 		metadata_xhtml = metadata_xhtml.replace("</package>", "") + guide_xhtml + "</package>"
 
 		# Guide is done, now write content.opf and clean it.
-		# Output the modified content.opf so that we can build the kobo book before making more epub2 compatibility hacks.
+		# Output the modified content.opf before making more epub2 compatibility hacks.
 		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "w", encoding="utf-8") as file:
 			file.write(metadata_xhtml)
 			file.truncate()
-
-		# Recurse over css files to make some compatibility replacements.
-		for root, _, filenames in os.walk(work_epub_root_directory):
-			for filename in filenames:
-				if filename.lower().endswith(".css"):
-					with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
-						css = file.read()
-						processed_css = css
-
-						processed_css = regex.sub(r"(page\-break\-(before|after|inside)\s*:\s*(.+))", "\\1\n\t-webkit-column-break-\\2: \\3 /* For Readium */", processed_css)
-						processed_css = regex.sub(r"^\s*hyphens\s*:\s*(.+)", "\thyphens: \\1\n\tadobe-hyphenate: \\1\n\t-webkit-hyphens: \\1\n\t-epub-hyphens: \\1\n\t-moz-hyphens: \\1", processed_css, flags=regex.MULTILINE)
-						processed_css = regex.sub(r"^\s*hyphens\s*:\s*none;", "\thyphens: none;\n\tadobe-text-layout: optimizeSpeed; /* For Nook */", processed_css, flags=regex.MULTILINE)
-
-						if processed_css != css:
-							file.seek(0)
-							file.write(processed_css)
-							file.truncate()
 
 		# All done, clean the output
 		subprocess.run([clean_path, work_epub_root_directory])

@@ -45,3 +45,8 @@ img[epub|type~="se:image.color-depth.black-on-transparent"][epub|type~="z3998:pu
 	text-indent: 0 !important;
 	padding-left: 0 !important;
 }
+
+/* Vertical align any MathML images we might have */
+img.mathml{
+	vertical-align: middle;
+}

@@ -2,10 +2,10 @@
 usage(){
 	fmt <<EOF
 DESCRIPTION
-	Convert a fragment of MathML into a transparent PNG. Output is saved in the current working directory in incremental PNG files, for example 1.png, 2.png, etc.
+	Convert a fragment of MathML into a transparent PNG. Output is saved to the specified filename.
 
 USAGE
-	mathml2png FRAGMENT [FRAGMENT...]
+	mathml2png -o OUTPUT-FILENAME FRAGMENT
 		FRAGMENT is a fragment of MathML. For example: <math><mn>2</mn></math>
 
 EOF
@@ -18,15 +18,12 @@ if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
 require "convert" "Try: apt install imagemagick"
 require "firefox" "Try: apt install firefox"
 
-i=1
+if [ $# -ne 3 ]; then
+	usage
+fi
 
-for fragment in "$@"
-do
-	echo "<!doctype html><html><head><title>MathML fragment</title></head><body>${fragment}</body></html>" > /tmp/mathml-fragment.html
+echo "<!doctype html><html><head><meta charset=\"utf-8\"><title>MathML fragment</title></head><body>${3}</body></html>" > /tmp/mathml-fragment.html
 
-	firefox -screenshot /tmp/mathml.png file:///tmp/mathml-fragment.html &> /dev/null
+firefox -screenshot /tmp/mathml.png file:///tmp/mathml-fragment.html &> /dev/null
 
-	convert /tmp/mathml.png -fuzz 10% -transparent white -trim "${i}".png
-
-	i=$((i+1))
-done
+convert /tmp/mathml.png -fuzz 10% -transparent white -trim "${2}"

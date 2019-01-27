@@ -126,7 +126,7 @@ Help and pull requests are welcomed!
 
 -	### `mathml2png`
 
-	Convert a fragment of MathML into a transparent PNG. Output is saved in the current working directory in incremental PNG files, for example 1.png, 2.png, etc.
+	Convert a fragment of MathML into a transparent PNG. Output is saved to the specified filename.
 
 -	### `modernize-spelling`
 
