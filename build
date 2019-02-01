@@ -772,7 +772,7 @@ def main():
 										processed_line = regex.sub(r"<(?:m:)?mo>([+\-−=×])</(?:m:)?mo>", " \\1 ", processed_line)
 										processed_line = regex.sub(r"<((?:m:)?m[no])>(.+?)</\1>", "\\2", processed_line)
 										processed_line = regex.sub(r"</?(?:m:)?mrow>", "", processed_line)
-										processed_line = regex.sub(r"^\s+", "", processed_line)
+										processed_line = processed_line.strip()
 										processed_line = regex.sub(r"</i><i>", "", processed_line, flags=regex.DOTALL)
 
 									# Did we succeed? Is there any more MathML in our string?
