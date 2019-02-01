@@ -756,22 +756,28 @@ def main():
 									# If the mfenced element has more than one child, they are separated by commas when rendered.
 									# This is too complex for our naive regexes to work around. So, if there is an mfenced element with more than one child, abandon the attempt.
 									if not mathml_tree.css_select("mfenced > * + *"):
-										processed_line = regex.sub(r"</?(?:m:)math[^>]*?>", "", processed_line)
+										processed_line = regex.sub(r"</?(?:m:)?math[^>]*?>", "", processed_line)
 										processed_line = regex.sub(r"<!--.+?-->", "", processed_line)
-										processed_line = regex.sub(R"<(?:m:)mfenced/>", "()", processed_line)
-										processed_line = regex.sub(r"<(?:m:)mo>{}</(?:m:)mo>".format(se.FUNCTION_APPLICATION), "", processed_line, flags=regex.IGNORECASE) # The ignore case flag is required to match here, it's unclear why
-										processed_line = regex.sub(r"<(?:m:)mfenced><((?:m:)(mo|mi|mn|mrow))>(.+?)</\1></(?:m:)mfenced>", "(<\\1>\\3</\\1>)", processed_line)
-										processed_line = regex.sub(r"<(?:m:)mrow>([^>].+?)</(?:m:)mrow>", "\\1", processed_line)
-										processed_line = regex.sub(r"<(?:m:)mi>([^<]+?)</(?:m:)mi>", "<i>\\1</i>", processed_line)
-										processed_line = regex.sub(r"<(?:m:)mi mathvariant=\"normal\">([^<]+?)</(?:m:)mi>", "\\1", processed_line)
-										processed_line = regex.sub(r"<(?:m:)mo>([+\-−=×])</(?:m:)mo>", " \\1 ", processed_line)
-										processed_line = regex.sub(r"<(?:m:)m([no])>(.+?)</(?:m:)m\1>", "\\2", processed_line)
-										processed_line = regex.sub(r"</?(?:m:)mrow>", "", processed_line)
+										processed_line = regex.sub(r"<(?:m:)?mfenced/>", "()", processed_line)
+										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi)>(.+?)</\3><((?:m:)?mi)>(.+?)</\5></\1>", "<i>\\4</i><\\2><i>\\6</i></\\2>", processed_line)
+										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi)>(.+?)</\3><((?:m:)?mn)>(.+?)</\5></\1>", "<i>\\4</i><\\2>\\6</\\2>", processed_line)
+										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mn)>(.+?)</\3><((?:m:)?mn)>(.+?)</\5></\1>", "\\4<\\2>\\6</\\2>", processed_line)
+										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mn)>(.+?)</\3><((?:m:)?mi)>(.+?)</\5></\1>", "\\4<\\2><i>\\6</i></\\2>", processed_line)
+										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi) mathvariant=\"normal\">(.+?)</\3><((?:m:)?mi)>(.+?)</\5></\1>", "\\4<\\2><i>\\6</i></\\2>", processed_line)
+										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi) mathvariant=\"normal\">(.+?)</\3><((?:m:)?mn)>(.+?)</\5></\1>", "\\4<\\2>\\6</\\2>", processed_line)
+										processed_line = regex.sub(r"<(?:m:)?mo>{}</(?:m:)?mo>".format(se.FUNCTION_APPLICATION), "", processed_line, flags=regex.IGNORECASE) # The ignore case flag is required to match here with the special FUNCTION_APPLICATION character, it's unclear why
+										processed_line = regex.sub(r"<(?:m:)?mfenced><((?:m:)(?:mo|mi|mn|mrow))>(.+?)</\1></(?:m:)?mfenced>", "(<\\1>\\2</\\1>)", processed_line)
+										processed_line = regex.sub(r"<(?:m:)?mrow>([^>].+?)</(?:m:)?mrow>", "\\1", processed_line)
+										processed_line = regex.sub(r"<(?:m:)?mi>([^<]+?)</(?:m:)?mi>", "<i>\\1</i>", processed_line)
+										processed_line = regex.sub(r"<(?:m:)?mi mathvariant=\"normal\">([^<]+?)</(?:m:)?mi>", "\\1", processed_line)
+										processed_line = regex.sub(r"<(?:m:)?mo>([+\-−=×])</(?:m:)?mo>", " \\1 ", processed_line)
+										processed_line = regex.sub(r"<((?:m:)?m[no])>(.+?)</\1>", "\\2", processed_line)
+										processed_line = regex.sub(r"</?(?:m:)?mrow>", "", processed_line)
 										processed_line = regex.sub(r"^\s+", "", processed_line)
 										processed_line = regex.sub(r"</i><i>", "", processed_line, flags=regex.DOTALL)
 
 									# Did we succeed? Is there any more MathML in our string?
-									if regex.findall("</?(?:m:)m", processed_line):
+									if regex.findall("</?(?:m:)?m", processed_line):
 										# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
 										if "firefox" in (p.name() for p in psutil.process_iter()):
 											se.print_error("firefox is required to process MathML, but firefox is currently running. Close all instances of firefox and try again.")
