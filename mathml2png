@@ -11,8 +11,9 @@ USAGE
 EOF
 	exit
 }
+die(){ printf "Error: %s\n" "${1}" 1>&2; exit 1; }
 require(){ command -v "$1" > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
-if [ $# -eq 1 ]; then if [ "$1" = "--help" -o "$1" = "-h" ]; then usage; fi fi
+if [ $# -eq 1 ]; then if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then usage; fi fi
 # End boilerplate
 
 require "convert" "Try: apt install imagemagick"
@@ -20,6 +21,10 @@ require "firefox" "Try: apt install firefox"
 
 if [ $# -ne 3 ]; then
 	usage
+fi
+
+if pgrep "firefox" &> /dev/null; then
+	die "firefox is required to process MathML, but firefox is currently running. Close all instances of firefox and try again."
 fi
 
 echo "<!doctype html><html><head><meta charset=\"utf-8\"><title>MathML fragment</title></head><body>${3}</body></html>" > /tmp/mathml-fragment.html

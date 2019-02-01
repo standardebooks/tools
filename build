@@ -13,7 +13,6 @@ import subprocess
 import fnmatch
 from copy import deepcopy
 import regex
-import psutil
 import lxml.cssselect
 import lxml.etree as etree
 from bs4 import BeautifulSoup
@@ -779,11 +778,11 @@ def main():
 									# Did we succeed? Is there any more MathML in our string?
 									if regex.findall("</?(?:m:)?m", processed_line):
 										# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
-										if "firefox" in (p.name() for p in psutil.process_iter()):
+										retval = subprocess.run([mathml2png_path, "-o", os.path.join(work_epub_root_directory, "epub", "images", "mathml-{}.png".format(mathml_count)), regex.sub(r"<(/?)m:", "<\\1", line)], stderr=subprocess.PIPE)
+										if retval.returncode != 0:
 											se.print_error("firefox is required to process MathML, but firefox is currently running. Close all instances of firefox and try again.")
 											exit(1)
 
-										subprocess.run([mathml2png_path, "-o", os.path.join(work_epub_root_directory, "epub", "images", "mathml-{}.png".format(mathml_count)), regex.sub(r"<(/?)m:", "<\\1", line)])
 										processed_xhtml = processed_xhtml.replace(line, "<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{}.png\" />".format(mathml_count))
 										mathml_count = mathml_count + 1
 									else:
