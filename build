@@ -147,11 +147,13 @@ def simplify_css(css: str) -> str:
 	A string representing the simplified CSS
 	"""
 
-	# First we replace :first-child selectors with a first-child class, since ADE doesn't handle them
+	# First we replace some more "complex" selectors (like :first-child) with an equivalent class (like .first-child), since ADE doesn't handle them
 	# Currently this replacement isn't perfect, because occasionally lxml generates an xpath expression
 	# from the css selector that lxml itself can't evaluate, even though the `xpath` binary can!
 	# We don't *replace* the selector, we *add* it, because lxml has problems selecting first-child sometimes
-	css = regex.sub(r"((.+)\:first\-child(.*))", "\\2.first-child\\3,\n\\1", css)
+	for selector_to_simplify in se.SELECTORS_TO_SIMPLIFY:
+		css = regex.sub(r"((.+)\{}(.*))".format(regex.escape(selector_to_simplify)), "\\2.{}\\3,\n\\1".format(selector_to_simplify.replace(":", "")), css)
+
 	css = css.replace("{,", ",")
 	css = css.replace(",,", ",")
 
@@ -379,16 +381,18 @@ def main():
 						try:
 							sel = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces=se.XHTML_NAMESPACES)
 
-							# Add a "first-child" class to elements that match any :first-child selectors
-							if ":first-child" in selector:
-								for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
-									current_class = element.get("class")
-									if current_class is not None and "first-child" not in current_class:
-										current_class = current_class + " first-child"
-									else:
-										current_class = "first-child"
+							# Add classes to elements that match any of our selectors to simplify. For example, if we select :first-child, add a "first-child" class to all elements that match that.
+							for selector_to_simplify in se.SELECTORS_TO_SIMPLIFY:
+								if selector_to_simplify in selector:
+									selector_to_simplify = selector_to_simplify.replace(":", "")
+									for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
+										current_class = element.get("class")
+										if current_class is not None and selector_to_simplify not in current_class:
+											current_class = current_class + " " + selector_to_simplify
+										else:
+											current_class = selector_to_simplify
 
-									element.set("class", current_class)
+										element.set("class", current_class)
 
 						except lxml.cssselect.ExpressionError:
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
