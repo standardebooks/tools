@@ -1,34 +1,42 @@
-#!/bin/bash
-usage(){
-	fmt <<EOF
-DESCRIPTION
-	Convert a fragment of MathML into a transparent PNG. Output is saved to the specified filename.
+#!/usr/bin/env python3
 
-USAGE
-	mathml2png -o OUTPUT-FILENAME FRAGMENT
-		FRAGMENT is a fragment of MathML. For example: <math><mn>2</mn></math>
+import argparse
+import shutil
+import subprocess
+import tempfile
+import psutil
+import se
 
-EOF
-	exit
-}
-die(){ printf "Error: %s\n" "${1}" 1>&2; exit 1; }
-require(){ command -v "$1" > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
-if [ $# -eq 1 ]; then if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then usage; fi fi
-# End boilerplate
+def main():
+	parser = argparse.ArgumentParser(description="Convert a fragment of MathML into a transparent PNG. Output is saved to the specified filename.")
+	parser.add_argument("-o", "--output-filename", dest="output_filename", metavar="FILENAME", required=True, type=str, help="the filename to save PNG output to.")
+	parser.add_argument("mathml_fragment", metavar="FRAGMENT", help="a fragment of MathML; for example: <math><mn>2</mn></math>")
+	args = parser.parse_args()
 
-require "convert" "Try: apt install imagemagick"
-require "firefox" "Try: apt install firefox"
+	# Check for required utilities
+	firefox_path = shutil.which("firefox")
+	convert_path = shutil.which("convert")
 
-if [ $# -ne 3 ]; then
-	usage
-fi
+	if firefox_path is None:
+		se.print_error("Couldn’t locate firefox. Is it installed?")
+		exit(1)
 
-if pgrep "firefox" &> /dev/null; then
-	die "firefox is required to process MathML, but firefox is currently running. Close all instances of firefox and try again."
-fi
+	if convert_path is None:
+		se.print_error("Couldn’t locate imagemagick. Is it installed?")
+		exit(1)
 
-echo "<!doctype html><html><head><meta charset=\"utf-8\"><title>MathML fragment</title></head><body>${3}</body></html>" > /tmp/mathml-fragment.html
+	if "firefox" in (p.name() for p in psutil.process_iter()):
+		se.print_error("firefox is required to process MathML, but firefox is currently running. Close all instances of firefox and try again.")
+		exit(1)
 
-firefox -screenshot /tmp/mathml.png file:///tmp/mathml-fragment.html &> /dev/null
+	with tempfile.NamedTemporaryFile(mode="w+") as mathml_temp_file:
+		with tempfile.NamedTemporaryFile(mode="w+", suffix=".png") as png_temp_file:
+			mathml_temp_file.write("<!doctype html><html><head><meta charset=\"utf-8\"><title>MathML fragment</title></head><body>{}</body></html>".format(args.mathml_fragment))
+			mathml_temp_file.seek(0)
 
-convert /tmp/mathml.png -fuzz 10% -transparent white -trim "${2}"
+			subprocess.call([firefox_path, "-screenshot", png_temp_file.name, "file://{}".format(mathml_temp_file.name)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+			subprocess.call([convert_path, png_temp_file.name, "-fuzz", "10%", "-transparent", "white", "-trim", args.output_filename])
+
+if __name__ == "__main__":
+	main()
