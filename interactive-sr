@@ -5,10 +5,11 @@ import shutil
 from subprocess import call
 import se
 
+
 def main():
 	parser = argparse.ArgumentParser(description="Use Vim to perform an interactive search and replace on a list of files. Use y/n/a to confirm (y) or reject (n) a replacement, or to replace (a)ll.")
-	parser.add_argument("regex", metavar="REGEX", help="a Vim-flavored regex in the form of `/FIND/REPLACE/`; do not include flags; if using () backreferences, parentheses must be escaped.")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="a file on which to perform the search and replace.")
+	parser.add_argument("regex", metavar="REGEX", help="a Vim-flavored regex in the form of `/FIND/REPLACE/`; do not include flags; if using () backreferences, parentheses must be escaped")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="a file on which to perform the search and replace")
 	args = parser.parse_args()
 
 	# Check for required utilities

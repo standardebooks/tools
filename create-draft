@@ -10,9 +10,9 @@ import requests
 import git
 import regex
 from ftfy import fix_text
+from bs4 import BeautifulSoup
 import se
 import se.formatting
-from bs4 import BeautifulSoup
 
 
 def get_word_widths(string: str, target_height: int) -> list:
