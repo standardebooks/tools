@@ -1,34 +1,29 @@
-#!/bin/sh
-usage(){
-	fmt <<EOF
-DESCRIPTION
-	Use Vim to perform an interactive search and replace on a list of files.
+#!/usr/bin/env python3
 
-USAGE
-	interactive-sr REGEX FILE [FILE...]
-		REGEX is in the form of "/FIND/REPLACE/".
-		If using () backreferences, parentheses must be escaped.
-		REGEX is vim-flavored.
-		Do not pass any flags to REGEX.
-		Use y/n/a to confirm (y) or reject (n) a replacement, or to replace (a)ll.
+import argparse
+import shutil
+from subprocess import call
+import se
 
-EOF
-	exit
-}
-die(){ printf "Error: %s\n" "${1}" 1>&2; exit 1; }
-require(){ command -v "$1" > /dev/null 2>&1 || { suggestion=""; if [ ! -z "$2" ]; then suggestion=" $2"; fi; die "$1 is not installed.${suggestion}"; } }
-if [ $# -eq 1 ]; then if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then usage; fi fi
-# End boilerplate
+def main():
+	parser = argparse.ArgumentParser(description="Use Vim to perform an interactive search and replace on a list of files. Use y/n/a to confirm (y) or reject (n) a replacement, or to replace (a)ll.")
+	parser.add_argument("regex", metavar="REGEX", help="a Vim-flavored regex in the form of `/FIND/REPLACE/`; do not include flags; if using () backreferences, parentheses must be escaped.")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="a file on which to perform the search and replace.")
+	args = parser.parse_args()
 
-require "vim" "Try: apt install vim"
+	# Check for required utilities
+	vim_path = shutil.which("vim")
 
-# Store the regex
-regex="$1"
+	if vim_path is None:
+		se.print_error("Couldn’t locate vim. Is it installed?")
+		exit(1)
 
-# Remove the regex from the list of arguments
-shift
+	# 'set title' shows the filename in the terminal title
+	# 'set eventignore-=Syntax' enables syntax highlighting in all files
+	# 'wqa writes and quits all buffers
+	# Full command: vim "+silent set title" "+silent bufdo set eventignore-=Syntax | %s${regex}gce | silent update" "+silent qa" "$@"
 
-# 'set title' shows the filename in the terminal title
-# 'set eventignore-=Syntax' enables syntax highlighting in all files
-# 'wqa writes and quits all buffers
-vim "+silent set title" "+silent bufdo set eventignore-=Syntax | %s${regex}gce | silent update" "+silent qa" "$@"
+	call([vim_path, "+silent set title", "+silent bufdo set eventignore-=Syntax | %s{}gce | silent update".format(args.regex), "+silent qa"] + args.targets)
+
+if __name__ == "__main__":
+	main()
