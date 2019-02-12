@@ -3,46 +3,40 @@
 import argparse
 import os
 import html
-import re
 import shutil
 import subprocess
 import regex
 import se
 
 
-def replace_inessential_references(xml_text):
+def replace_inessential_references(match_object):
 	"""Replace most XML character references with literal characters.
 
 	This function excludes &, >, and < (&amp;, &lt;, and &gt;), since
 	un-escaping them would create an invalid document.
 	"""
-	def helper(match_object):
-		entity = match_object.group(0).lower()
-		# Explicitly whitelist the three (nine) essential character references
-		if entity in ["&gt;", "&lt;",   "&amp;",
-					"&#62;",  "&#60;",  "&#38;",
-					"&#x3e;", "&#x3c;", "&#x26;"]:
-			return entity
+
+	entity = match_object.group(0).lower()
+
+	retval = entity
+
+	# Explicitly whitelist the three (nine) essential character references
+	try:
+		if entity in ["&gt;", "&lt;", "&amp;", "&#62;", "&#60;", "&#38;", "&#x3e;", "&#x3c;", "&#x26;"]:
+			retval = entity
 		# Convert base 16 references
 		elif entity.startswith("&#x"):
-			try:
-				return chr(int(entity[3:-1], 16))
-			except ValueError:
-				return entity
+			retval = chr(int(entity[3:-1], 16))
 		# Convert base 10 references
 		elif entity.startswith("&#"):
-			try:
-				return chr(int(entity[2:-1]))
-			except ValueError:
-				return entity
+			retval = chr(int(entity[2:-1]))
 		# Convert named references
 		else:
-			try:
-				return html.entities.html5[entity[1:]]
-			except KeyError:
-				return entity
-	return re.sub("&#?\w+;", helper, xml_text)
+			retval = html.entities.html5[entity[1:]]
+	except (ValueError, KeyError):
+		pass
 
+	return retval
 
 def main():
 	parser = argparse.ArgumentParser(description="Prettify and canonicalize individual XHTML or SVG files, or all XHTML and SVG files in a source directory.  Note that this only prettifies the source code; it doesn’t perform typography changes.")
@@ -94,7 +88,7 @@ def main():
 				# Epub3 doesn't allow named entities, so convert them to their unicode equivalents
 				# But, don't unescape the content.opf long-description accidentally
 				if not filename.endswith("content.opf"):
-					processed_xhtml = replace_inessential_references(processed_xhtml)
+					processed_xhtml = regex.sub(r"&#?\w+;", replace_inessential_references, processed_xhtml)
 
 				# Remove unnecessary doctypes which can cause xmllint to hang
 				processed_xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", processed_xhtml, flags=regex.DOTALL)
