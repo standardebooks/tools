@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-import argparse
 import sys
+import argparse
 import roman
 import se
 
 
-def main():
+def main() -> int:
 	parser = argparse.ArgumentParser(description="Convert a Roman numeral to a decimal number.")
 	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="don’t end output with a newline")
 	parser.add_argument("numbers", metavar="NUMERAL", nargs="+", help="a Roman numeral")
@@ -27,11 +27,12 @@ def main():
 				print(roman.fromRoman(line.upper()))
 			else:
 				print(roman.fromRoman(line.upper()), end="")
-
 		except roman.InvalidRomanNumeralError:
 			se.print_error("Not a Roman numeral: {}".format(line))
-			exit(1)
+			return se.InvalidInputException.code
+
+	return 0
 
 
 if __name__ == "__main__":
-	main()
+	sys.exit(main())

@@ -1,142 +1,37 @@
 #!/usr/bin/env python3
 
+import sys
 import argparse
-import os
-import html
-import shutil
-import subprocess
-import regex
 import se
+import se.formatting
 
 
-def replace_inessential_references(match_object):
-	"""Replace most XML character references with literal characters.
-
-	This function excludes &, >, and < (&amp;, &lt;, and &gt;), since
-	un-escaping them would create an invalid document.
-	"""
-
-	entity = match_object.group(0).lower()
-
-	retval = entity
-
-	# Explicitly whitelist the three (nine) essential character references
-	try:
-		if entity in ["&gt;", "&lt;", "&amp;", "&#62;", "&#60;", "&#38;", "&#x3e;", "&#x3c;", "&#x26;"]:
-			retval = entity
-		# Convert base 16 references
-		elif entity.startswith("&#x"):
-			retval = chr(int(entity[3:-1], 16))
-		# Convert base 10 references
-		elif entity.startswith("&#"):
-			retval = chr(int(entity[2:-1]))
-		# Convert named references
-		else:
-			retval = html.entities.html5[entity[1:]]
-	except (ValueError, KeyError):
-		pass
-
-	return retval
-
-def main():
+def main() -> int:
 	parser = argparse.ArgumentParser(description="Prettify and canonicalize individual XHTML or SVG files, or all XHTML and SVG files in a source directory.  Note that this only prettifies the source code; it doesn’t perform typography changes.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("-s", "--single-lines", action="store_true", help="remove hard line wrapping")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML or SVG file, or a directory containing XHTML or SVG files")
 	args = parser.parse_args()
 
-	# Check for required utilities
-	xmllint_path = shutil.which("xmllint")
-
-	if xmllint_path is None:
-		se.print_error("Couldn’t locate xmllint. Is it installed?")
-		exit(1)
-
-	# Tell xmllint to indent with tabs using an environmental variable
-	env = os.environ.copy()
-	env["XMLLINT_INDENT"] = "\t"
-
-	for target in args.targets:
-		target = os.path.abspath(target)
+	for filename in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx")):
+		# If we're setting single lines, skip the colophon and cover/titlepage svgs, as they have special spacing
+		if args.single_lines and (filename.endswith("colophon.xhtml") or filename.endswith("cover.svg") or filename.endswith("titlepage.svg")):
+			continue
 
 		if args.verbose:
-			print("Processing {} ...".format(target), end="", flush=True)
+			print("Processing {} ...".format(filename), end="", flush=True)
 
-		target_filenames = set()
-		if os.path.isdir(target):
-			for root, _, filenames in os.walk(target):
-				for filename in filenames:
-					if filename.lower().endswith((".xhtml", ".svg", ".opf", ".ncx")):
-						target_filenames.add(os.path.join(root, filename))
-		else:
-			if target.lower().endswith((".xhtml", ".svg", ".opf", ".ncx")):
-				target_filenames.add(target)
-
-		for filename in target_filenames:
-			# If we're cleaning a directory and setting single lines, skip the colophon and cover/titlepage svgs, as they have special spacing
-			if args.single_lines and os.path.isdir(target) and (filename.endswith("colophon.xhtml") or filename.endswith("cover.svg") or filename.endswith("titlepage.svg")):
-				continue
-
-			with open(filename, "r+", encoding="utf-8") as file:
-				xhtml = file.read()
-				processed_xhtml = xhtml
-
-				if args.single_lines:
-					processed_xhtml = processed_xhtml.replace("\n", " ")
-					processed_xhtml = regex.sub(r"\s+", " ", processed_xhtml)
-
-				# Epub3 doesn't allow named entities, so convert them to their unicode equivalents
-				# But, don't unescape the content.opf long-description accidentally
-				if not filename.endswith("content.opf"):
-					processed_xhtml = regex.sub(r"&#?\w+;", replace_inessential_references, processed_xhtml)
-
-				# Remove unnecessary doctypes which can cause xmllint to hang
-				processed_xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", processed_xhtml, flags=regex.DOTALL)
-
-				# First, canonicalize XHTML
-				result = subprocess.run([xmllint_path, "--c14n", "-"], input=processed_xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-				processed_xhtml = result.stdout.decode()
-				try:
-					error = result.stderr.decode().strip()
-				except Exception:
-					se.print_error("Invalid encoding in file {}; UTF-8 expected".format(filename))
-					exit(1)
-
-				if error:
-					se.print_error("Couldn't parse {}; files must be in XHTML format, which is not the same as HTML\n{}".format(filename, error.replace("-:", "Line ")))
-					exit(1)
-
-				# Next, add the XML header that xmllint stripped during c14n
-				processed_xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + processed_xhtml
-
-				# Next, pretty-print XML
-				processed_xhtml = subprocess.run([xmllint_path, "--format", "-"], input=processed_xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env).stdout.decode()
-
-				# Remove white space between some tags
-				processed_xhtml = regex.sub(r"<p([^>]*?)>\s+([^<\s])", "<p\\1>\\2", processed_xhtml, flags=regex.DOTALL)
-				processed_xhtml = regex.sub(r"([^>\s])\s+</p>", "\\1</p>", processed_xhtml, flags=regex.DOTALL)
-
-				# xmllint has problems with removing spacing between some inline HTML5 elements. Try to fix those problems here.
-				processed_xhtml = regex.sub(r"</(abbr|cite|i|span)><(abbr|cite|i|span)", "</\\1> <\\2", processed_xhtml)
-
-				# Try to fix inline elements directly followed by an <a> tag, unless that <a> tag is a noteref.
-				processed_xhtml = regex.sub(r"</(abbr|cite|i|span)><(a(?! href=\"[^\"]+?\" id=\"noteref\-))", "</\\1> <\\2", processed_xhtml)
-
-				# Two sequential inline elements, when they are the only children of a block, are indented. But this messes up spacing if the 2nd element is a noteref.
-				processed_xhtml = regex.sub(r"</(abbr|cite|i|span)>\s+<(a href=\"[^\"]+?\" id=\"noteref\-)", "</\\1><\\2", processed_xhtml, flags=regex.DOTALL)
-
-				# Try to fix <cite> tags running next to referrer <a> tags.
-				if filename.endswith("endnotes.xhtml"):
-					processed_xhtml = regex.sub(r"</cite>(<a href=\"[^\"]+?\" epub:type=\"se:referrer\")", "</cite> \\1", processed_xhtml)
-
-				if processed_xhtml != xhtml:
-					file.seek(0)
-					file.write(processed_xhtml)
-					file.truncate()
+		try:
+			se.formatting.format_xhtml_file(filename, args.single_lines, filename.endswith("content.opf"), filename.endswith("endnotes.xhtml"))
+		except se.SeException as ex:
+			se.print_error(ex, args.verbose)
+			return ex.code
 
 		if args.verbose:
 			print(" OK")
 
+	return 0
+
 
 if __name__ == "__main__":
-	main()
+	sys.exit(main())

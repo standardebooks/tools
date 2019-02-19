@@ -1,72 +1,38 @@
 #!/usr/bin/env python3
 
+import sys
 import argparse
-import os
-import fnmatch
-import regex
 import se
+import se.formatting
 
 
-def main():
+def main() -> int:
 	parser = argparse.ArgumentParser(description="Count the number of words in an XHTML file and optionally categorize by length.  If multiple files are specified, show the total word count for all.")
-	parser.add_argument("-v", "--verbose", action="store_true", help="include filename, word count, and length categorization in output")
+	parser.add_argument("-c", "--categorize", action="store_true", help="include length categorization in output")
 	parser.add_argument("-x", "--exclude-se-files", action="store_true", help="exclude some non-bodymatter files common to Standard Ebooks ebooks, like the ToC and colophon")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
-	word_count_sum = 0
+	word_count = 0
 
-	for target in args.targets:
-		target = os.path.abspath(target)
+	for filename in se.get_target_filenames(args.targets, (".xhtml"), args.exclude_se_files):
+		if args.exclude_se_files and filename.endswith("endnotes.xhtml"):
+			continue
 
-		target_filenames = set()
-		if os.path.isdir(target):
-			for root, _, filenames in os.walk(target):
-				for filename in fnmatch.filter(filenames, "*.xhtml"):
-					target_filenames.add(os.path.join(root, filename))
-		else:
-			target_filenames.add(target)
+		with open(filename, "r", encoding="utf-8") as file:
+			word_count += se.formatting.get_word_count(file.read())
 
-		for filename in target_filenames:
-			if args.exclude_se_files and filename.endswith(tuple(se.IGNORED_FILENAMES + ["endnotes.xhtml"])): # str.endswith() only accepts tuples, not lists
-				continue
+	if args.categorize:
+		category = "se:short-story"
+		if word_count > se.NOVELLA_MIN_WORD_COUNT and word_count < se.NOVEL_MIN_WORD_COUNT:
+			category = "se:novella"
+		elif word_count > se.NOVEL_MIN_WORD_COUNT:
+			category = "se:novel"
 
-			try:
-				with open(filename, "r", encoding="utf-8") as file:
-					html = file.read()
-			except Exception:
-				se.print_error("Couldn’t open file: {}".format(filename))
-				exit(1)
+	print("{}{}".format(word_count, "\t" + category if args.categorize else ""))
 
-			# Remove HTML tags
-			text = regex.sub(r"<title>.+?</title>", " ", html)
-			text = regex.sub(r"<.+?>", "", text, flags=regex.DOTALL)
-
-			# Replace some formatting characters
-			text = regex.sub(r"[…–—― ‘’“”\{\}\(\)]", " ", text, flags=regex.IGNORECASE | regex.DOTALL)
-
-			# Remove word-connecting dashes, apostrophes, commas, and slashes (and/or), they count as a word boundry but they shouldn't
-			text = regex.sub(r"[a-z0-9][\-\'\,\.\/][a-z0-9]", "aa", text, flags=regex.IGNORECASE | regex.DOTALL)
-
-			# Replace sequential spaces with one space
-			text = regex.sub(r"\s+", " ", text, flags=regex.IGNORECASE | regex.DOTALL)
-
-			# Get the word count
-			word_count = len(regex.findall(r"\b\w+\b", text, flags=regex.IGNORECASE | regex.DOTALL))
-
-			word_count_sum += word_count
-
-			if args.verbose:
-				category = "se:short-story"
-				if word_count > 17500 and word_count < 40000:
-					category = "se:novella"
-				elif word_count > 40000:
-					category = "se:novel"
-
-				print("{}\t{}\t{}".format(filename, word_count, category))
-
-	print(word_count_sum)
+	return 0
 
 
 if __name__ == "__main__":
-	main()
+	sys.exit(main())

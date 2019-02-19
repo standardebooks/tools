@@ -1,109 +1,47 @@
 #!/usr/bin/env python3
 
+import sys
 import argparse
-import os
-import fnmatch
-import regex
 import se
+import se.typography
 
 
-def main():
+def main() -> int:
 	parser = argparse.ArgumentParser(description="Try to convert British quote style to American quote style. Quotes must already be typogrified using the `typogrify` tool. This script isn’t perfect; proofreading is required, especially near closing quotes near to em-dashes.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("-f", "--force", action="store_true", help="force conversion of quote style")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
-	for target in args.targets:
-		target = os.path.abspath(target)
-
+	for filename in se.get_target_filenames(args.targets, (".xhtml")):
 		if args.verbose:
-			print("Processing {} ...".format(target), end="", flush=True)
+			print("Processing {} ...".format(filename), end="", flush=True)
 
-		target_filenames = set()
-		if os.path.isdir(target):
-			for root, _, filenames in os.walk(target):
-				for filename in fnmatch.filter(filenames, "*.xhtml"):
-					if filename not in se.IGNORED_FILENAMES:
-						target_filenames.add(os.path.join(root, filename))
-		else:
-			target_filenames.add(target)
+		with open(filename, "r+", encoding="utf-8") as file:
+			xhtml = file.read()
+			new_xhtml = xhtml
 
-		for filename in target_filenames:
-			with open(filename, "r+", encoding="utf-8") as file:
-				xhtml = file.read()
-				new_xhtml = xhtml
+			convert = True
+			if not args.force:
+				if se.typography.guess_quoting_style(xhtml) == "american":
+					convert = False
+					if args.verbose:
+					 	print("")
+					se.print_warning("File appears to already use American quote style, ignoring. Use --force to convert anyway.{}".format(" File: " + filename if not args.verbose else ""), args.verbose)
 
-				convert = True
-				if args.force is False:
-					# Attempt to guess the quote type used in the `xhtml`.
+			if convert:
+				new_xhtml = se.typography.convert_british_to_american(xhtml)
 
-					# Want to discover the first quote type after a <p> tag. Doesn't have to be
-					# directly after.
+				if new_xhtml != xhtml:
+					file.seek(0)
+					file.write(new_xhtml)
+					file.truncate()
 
-					# Count pattern matches for each quote style (disregard matches where the
-					# capturing group contains opposite quote style).
-
-					# Quote style percentage above the threshold is returned.
-
-					threshold = 80
-
-					ldq_pattern = regex.compile(r"\t*<p>(.*?)“")
-					lsq_pattern = regex.compile(r"\t*<p>(.*?)‘")
-
-					lsq_count = len([m for m in lsq_pattern.findall(xhtml) if m.count("“") == 0])
-					ldq_count = len([m for m in ldq_pattern.findall(xhtml) if m.count("‘") == 0])
-
-					detected_style = "unsure"
-					american_percentage = 0
-
-					try:
-						american_percentage = (ldq_count / (ldq_count + lsq_count) * 100)
-					except ZeroDivisionError:
-						pass
-
-					if american_percentage >= threshold:
-						detected_style = "american"
-					elif 100 - american_percentage >= threshold:
-						detected_style = "british"
-
-					if detected_style == "american":
-						convert = False
-						print("{}File appears to already use American quote style, ignoring. Use --force to convert anyway. File: {}".format("\t" if args.verbose else "", filename))
-
-				if convert:
-					# Do the conversion!
-
-					new_xhtml = xhtml
-					new_xhtml = regex.sub(r"“", r"<ldq>", new_xhtml)
-					new_xhtml = regex.sub(r"”", r"<rdq>", new_xhtml)
-					new_xhtml = regex.sub(r"‘", r"<lsq>", new_xhtml)
-					new_xhtml = regex.sub(r"<rdq>⁠ ’(\s+)", r"<rdq> <rsq>\1", new_xhtml)
-					new_xhtml = regex.sub(r"<rdq>⁠ ’</", r"<rdq> <rsq></", new_xhtml)
-					new_xhtml = regex.sub(r"([\.\,\!\?\…\:\;])’", r"\1<rsq>", new_xhtml)
-					new_xhtml = regex.sub(r"—’(\s+)", r"—<rsq>\1", new_xhtml)
-					new_xhtml = regex.sub(r"—’</", r"—<rsq></", new_xhtml)
-					new_xhtml = regex.sub(r"([a-z])’([a-z])", r"\1<ap>\2", new_xhtml)
-					new_xhtml = regex.sub(r"(\s+)’([a-z])", r"\1<ap>\2", new_xhtml)
-					new_xhtml = regex.sub(r"<ldq>", r"‘", new_xhtml)
-					new_xhtml = regex.sub(r"<rdq>", r"’", new_xhtml)
-					new_xhtml = regex.sub(r"<lsq>", r"“", new_xhtml)
-					new_xhtml = regex.sub(r"<rsq>", r"”", new_xhtml)
-					new_xhtml = regex.sub(r"<ap>", r"’", new_xhtml)
-
-					# Correct some common errors
-					new_xhtml = regex.sub(r"’ ’", r"’ ”", new_xhtml)
-					new_xhtml = regex.sub(r"“([^‘”]+?[^s])’([!\?:;\)\s])", r"“\1”\2", new_xhtml)
-					new_xhtml = regex.sub(r"“([^‘”]+?)’([!\?:;\)])", r"“\1”\2", new_xhtml)
-
-					if new_xhtml != xhtml:
-						file.seek(0)
-						file.write(new_xhtml)
-						file.truncate()
-
-		if args.verbose:
+		if convert and args.verbose:
 			print(" OK")
+
+	return 0
 
 
 if __name__ == "__main__":
-	main()
+	sys.exit(main())

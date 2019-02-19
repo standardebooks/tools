@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import argparse
 import sys
+import argparse
 import unicodedata
 
 
-def main():
+def main() -> int:
 	parser = argparse.ArgumentParser(description="Display Unicode code points, descriptions, and links to more details for each character in a string.  Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.")
 	parser.add_argument("strings", metavar="STRING", nargs="*", help="a Unicode string")
 	args = parser.parse_args()
@@ -23,6 +23,8 @@ def main():
 		for character in line:
 			print(character + "\tU+{:04X}".format(ord(character)) + "\t" + unicodedata.name(character) + "\t" + "http://unicode.org/cldr/utility/character.jsp?a={:04X}".format(ord(character)))
 
+	return 0
+
 
 if __name__ == "__main__":
-	main()
+	sys.exit(main())

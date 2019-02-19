@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
+import sys
 import argparse
 import os
 import regex
 import se
 
-def output(chapter_number: int, header_xhtml: str, chapter_xhtml: str) -> None:
+
+def _output_file(chapter_number: int, header_xhtml: str, chapter_xhtml: str) -> None:
 	"""
 	Helper function to write a file given the chapter number, header XHTML, and chapter body XHTML.
 	"""
@@ -14,7 +16,7 @@ def output(chapter_number: int, header_xhtml: str, chapter_xhtml: str) -> None:
 		file.write(header_xhtml.replace("NUMBER", str(chapter_number)) + "\n" + chapter_xhtml + "\n</section></body></html>")
 		file.truncate()
 
-def main():
+def main() -> int:
 	parser = argparse.ArgumentParser(description="Split an XHTML file into many files at all instances of <!--se:split-->, and include a header template for each file.")
 	parser.add_argument("filename", metavar="FILE", help="an XHTML file")
 	args = parser.parse_args()
@@ -35,7 +37,7 @@ def main():
 		if "<!--se:split-->" in line:
 			prefix, suffix = line.split("<!--se:split-->")
 			chapter_xhtml = chapter_xhtml + prefix
-			output(chapter_number, header_xhtml, chapter_xhtml)
+			_output_file(chapter_number, header_xhtml, chapter_xhtml)
 
 			chapter_number = chapter_number + 1
 			chapter_xhtml = suffix
@@ -44,8 +46,10 @@ def main():
 			chapter_xhtml = chapter_xhtml + "\n" + line
 
 	if chapter_xhtml and not chapter_xhtml.isspace():
-		output(chapter_number, header_xhtml, chapter_xhtml)
+		_output_file(chapter_number, header_xhtml, chapter_xhtml)
+
+	return 0
 
 
 if __name__ == "__main__":
-	main()
+	sys.exit(main())

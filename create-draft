@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sys
 import argparse
 import os
 import shutil
@@ -9,13 +10,14 @@ from typing import Union
 import requests
 import git
 import regex
+from pkg_resources import resource_filename
 from ftfy import fix_text
 from bs4 import BeautifulSoup
 import se
 import se.formatting
 
 
-def get_word_widths(string: str, target_height: int) -> list:
+def _get_word_widths(string: str, target_height: int) -> list:
 	"""
 	Helper function.
 	Given a string and a target letter height, return an array of words with their corresponding widths.
@@ -43,7 +45,7 @@ def get_word_widths(string: str, target_height: int) -> list:
 
 	return words
 
-def calculate_image_lines(string: str, target_height: int, canvas_width: int) -> list:
+def _calculate_image_lines(string: str, target_height: int, canvas_width: int) -> list:
 	"""
 	Helper function.
 	Given a string, a target letter height, and the canvas width, return an array representing the string
@@ -58,7 +60,7 @@ def calculate_image_lines(string: str, target_height: int, canvas_width: int) ->
 	An array of strings. Each string represents one line of text in the final image. The lines are ordered with the widest at the bottom.
 	"""
 
-	words = get_word_widths(string, target_height)
+	words = _get_word_widths(string, target_height)
 	lines = []
 	current_line = ""
 	current_width = 0
@@ -83,7 +85,7 @@ def calculate_image_lines(string: str, target_height: int, canvas_width: int) ->
 
 	return lines
 
-def generate_titlepage_svg(title: str, authors: Union[str, list], contributors: dict, title_string: str, templates_path: str) -> str:
+def _generate_titlepage_svg(title: str, authors: Union[str, list], contributors: dict, title_string: str) -> str:
 	"""
 	Generate a draft of the titlepage SVG.
 	The function tries to build the title with the widest line at the bottom, moving up.
@@ -94,7 +96,6 @@ def generate_titlepage_svg(title: str, authors: Union[str, list], contributors: 
 	authors: an author, or an array of authors
 	contributors: a dict in the form of: {"contributor descriptor": "contributor name(s)" ... }
 	title_string: The SE titlestring (e.g. "The Rubáiyát of Omar Khayyám. Translated by Edward Fitzgerald. Illustrated by Edmund Dulac")
-	templates_path: The full path to the SE templates folder
 
 	OUTPUTS
 	A string representing the complete SVG source code of the titlepage.
@@ -107,24 +108,24 @@ def generate_titlepage_svg(title: str, authors: Union[str, list], contributors: 
 		authors = [authors]
 
 	# Read our template SVG to get some values before we begin
-	with open(os.path.join(templates_path, "titlepage.svg"), "r", encoding="utf-8") as file:
+	with open(resource_filename("se", os.path.join("data", "templates", "titlepage.svg")), "r", encoding="utf-8") as file:
 		svg = file.read()
 
 	# Remove the template text elements from the SVG source, we'll write out to it later
 	svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
 
 	# Calculate the title lines
-	title_lines = calculate_image_lines(title.upper().replace("'", "’"), se.TITLEPAGE_TITLE_HEIGHT, canvas_width)
+	title_lines = _calculate_image_lines(title.upper().replace("'", "’"), se.TITLEPAGE_TITLE_HEIGHT, canvas_width)
 
 	# Calculate the author lines
 	authors_lines = []
 	for author in authors:
-		authors_lines.append(calculate_image_lines(author.upper().replace("'", "’"), se.TITLEPAGE_AUTHOR_HEIGHT, canvas_width))
+		authors_lines.append(_calculate_image_lines(author.upper().replace("'", "’"), se.TITLEPAGE_AUTHOR_HEIGHT, canvas_width))
 
 	# Calculate the contributor lines
 	contributor_lines = []
 	for descriptor, contributor in contributors.items():
-		contributor_lines.append([descriptor, calculate_image_lines(contributor.upper().replace("'", "’"), se.TITLEPAGE_CONTRIBUTOR_HEIGHT, canvas_width)])
+		contributor_lines.append([descriptor, _calculate_image_lines(contributor.upper().replace("'", "’"), se.TITLEPAGE_CONTRIBUTOR_HEIGHT, canvas_width)])
 
 	# Construct the output
 	text_elements = ""
@@ -179,7 +180,7 @@ def generate_titlepage_svg(title: str, authors: Union[str, list], contributors: 
 
 	return svg
 
-def generate_cover_svg(title: str, authors: Union[str, list], title_string: str, templates_path: str) -> str:
+def _generate_cover_svg(title: str, authors: Union[str, list], title_string: str) -> str:
 	"""
 	Generate a draft of the cover SVG.
 	The function tries to build the title box with the widest line at the bottom, moving up.
@@ -189,7 +190,6 @@ def generate_cover_svg(title: str, authors: Union[str, list], title_string: str,
 	title: The title
 	authors: an author, or an array of authors
 	title_string: The SE titlestring (e.g. "The Rubáiyát of Omar Khayyám. Translated by Edward Fitzgerald. Illustrated by Edmund Dulac")
-	templates_path: The full path to the SE templates folder
 
 	OUTPUTS
 	A string representing the complete SVG source code of the cover page.
@@ -206,7 +206,7 @@ def generate_cover_svg(title: str, authors: Union[str, list], title_string: str,
 		authors = [authors]
 
 	# Read our template SVG to get some values before we begin
-	with open(os.path.join(templates_path, "cover.svg"), "r", encoding="utf-8") as file:
+	with open(resource_filename("se", os.path.join("data", "templates", "cover.svg")), "r", encoding="utf-8") as file:
 		svg = file.read()
 
 	# Remove the template text elements from the SVG source, we'll write out to it later
@@ -215,22 +215,22 @@ def generate_cover_svg(title: str, authors: Union[str, list], title_string: str,
 	# Calculate the title lines
 	title_height = se.COVER_TITLE_HEIGHT
 	title_class = "title"
-	title_lines = calculate_image_lines(title.upper(), title_height, canvas_width)
+	title_lines = _calculate_image_lines(title.upper(), title_height, canvas_width)
 
 	if len(title_lines) > 2:
 		title_height = se.COVER_TITLE_SMALL_HEIGHT
 		title_class = "title-small"
-		title_lines = calculate_image_lines(title.upper(), title_height, canvas_width)
+		title_lines = _calculate_image_lines(title.upper(), title_height, canvas_width)
 
 	if len(title_lines) > 2:
 		title_height = se.COVER_TITLE_XSMALL_HEIGHT
 		title_class = "title-xsmall"
-		title_lines = calculate_image_lines(title.upper(), title_height, canvas_width)
+		title_lines = _calculate_image_lines(title.upper(), title_height, canvas_width)
 
 	# Calculate the author lines
 	authors_lines = []
 	for author in authors:
-		authors_lines.append(calculate_image_lines(author.upper(), se.COVER_AUTHOR_HEIGHT, canvas_width))
+		authors_lines.append(_calculate_image_lines(author.upper(), se.COVER_AUTHOR_HEIGHT, canvas_width))
 
 	# Construct the output
 	text_elements = ""
@@ -275,7 +275,7 @@ def generate_cover_svg(title: str, authors: Union[str, list], title_string: str,
 
 	return svg
 
-def get_wikipedia_url(string: str, get_nacoaf_url: bool) -> (str, str):
+def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> (str, str):
 	"""
 	Helper function.
 	Given a string, try to see if there's a Wikipedia page entry for that string.
@@ -314,8 +314,7 @@ def get_wikipedia_url(string: str, get_nacoaf_url: bool) -> (str, str):
 
 	return None, None
 
-
-def main():
+def main() -> int:
 	parser = argparse.ArgumentParser(description="Create a skeleton of a new Standard Ebook in the current directory.")
 	parser.add_argument("-a", "--author", dest="author", required=True, help="the author of the ebook")
 	parser.add_argument("-t", "--title", dest="title", required=True, help="the title of the ebook")
@@ -329,14 +328,13 @@ def main():
 
 	if args.create_github_repo and not args.create_se_repo:
 		se.print_error("--create-github-repo option specified, but --create-se-repo option not specified.")
-		exit(1)
+		return se.InvalidInputException.code
 
 	if args.pg_url and not regex.match("^https?://www.gutenberg.org/ebooks/[0-9]+$", args.pg_url):
 		se.print_error("Project Gutenberg URL must look like: https://www.gutenberg.org/ebooks/<EBOOK-ID>")
-		exit(1)
+		return se.InvalidInputException.code
 
 	# Put together some variables for later use
-	templates_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "templates")
 	identifier = se.formatting.make_url_safe(args.author) + "/" + se.formatting.make_url_safe(args.title)
 	title_string = args.title.replace("'", "’") + ", by " + args.author.replace("'", "’")
 	sorted_title = regex.sub(r"^(A|An|The) (.+)$", "\\2, \\1", args.title)
@@ -354,7 +352,7 @@ def main():
 
 	if os.path.isdir(repo_name):
 		se.print_error("./{}/ already exists.".format(repo_name))
-		exit(1)
+		return se.InvalidInputException.code
 
 	# Download PG HTML and do some fixups
 	if args.pg_url:
@@ -366,7 +364,7 @@ def main():
 			pg_metadata_html = response.text
 		except Exception as ex:
 			se.print_error("Couldn’t download Project Gutenberg ebook metadata page. Error: {}".format(ex))
-			exit(1)
+			return se.RemoteCommandErrorException.code
 
 		soup = BeautifulSoup(pg_metadata_html, "lxml")
 
@@ -377,7 +375,7 @@ def main():
 
 		if not pg_ebook_url:
 			se.print_error("Could download ebook metadata, but couldn’t find URL for the ebook HTML.")
-			exit(1)
+			return se.RemoteCommandErrorException.code
 
 		# Get the ebook LCSH categories
 		pg_subjects = []
@@ -397,14 +395,14 @@ def main():
 			pg_ebook_html = response.text
 		except Exception as ex:
 			se.print_error("Couldn’t download Project Gutenberg ebook HTML. Error: {}".format(ex))
-			exit(1)
+			return se.RemoteCommandErrorException.code
 
 		try:
 			fixed_pg_ebook_html = fix_text(pg_ebook_html, uncurl_quotes=False)
 			pg_ebook_html = se.strip_bom(fixed_pg_ebook_html)
 		except Exception as ex:
 			se.print_error("Couldn’t determine text encoding of Project Gutenberg HTML file. Error: {}".format(ex))
-			exit(1)
+			return se.InvalidEncodingException.code
 
 		# Try to guess the ebook language
 		pg_language = "en-US"
@@ -451,30 +449,30 @@ def main():
 			file.write(str(soup))
 
 	# Copy over templates
-	shutil.copy(os.path.normpath(templates_path + "/gitignore"), os.path.normpath(repo_name + "/.gitignore"))
-	shutil.copy(os.path.normpath(templates_path + "/LICENSE.md"), os.path.normpath(repo_name + "/"))
-	shutil.copy(os.path.normpath(templates_path + "/META-INF/container.xml"), os.path.normpath(repo_name + "/src/META-INF/"))
-	shutil.copy(os.path.normpath(templates_path + "/mimetype"), os.path.normpath(repo_name + "/src/"))
-	shutil.copy(os.path.normpath(templates_path + "/content.opf"), os.path.normpath(repo_name + "/src/epub/"))
-	shutil.copy(os.path.normpath(templates_path + "/onix.xml"), os.path.normpath(repo_name + "/src/epub/"))
-	shutil.copy(os.path.normpath(templates_path + "/toc.xhtml"), os.path.normpath(repo_name + "/src/epub/"))
-	shutil.copy(os.path.normpath(templates_path + "/core.css"), os.path.normpath(repo_name + "/src/epub/css/"))
-	shutil.copy(os.path.normpath(templates_path + "/local.css"), os.path.normpath(repo_name + "/src/epub/css/"))
-	shutil.copy(os.path.normpath(templates_path + "/logo.svg"), os.path.normpath(repo_name + "/src/epub/images/"))
-	shutil.copy(os.path.normpath(templates_path + "/colophon.xhtml"), os.path.normpath(repo_name + "/src/epub/text/"))
-	shutil.copy(os.path.normpath(templates_path + "/imprint.xhtml"), os.path.normpath(repo_name + "/src/epub/text/"))
-	shutil.copy(os.path.normpath(templates_path + "/titlepage.xhtml"), os.path.normpath(repo_name + "/src/epub/text/"))
-	shutil.copy(os.path.normpath(templates_path + "/uncopyright.xhtml"), os.path.normpath(repo_name + "/src/epub/text/"))
-	shutil.copy(os.path.normpath(templates_path + "/titlepage.svg"), os.path.normpath(repo_name + "/images/"))
-	shutil.copy(os.path.normpath(templates_path + "/cover.jpg"), os.path.normpath(repo_name + "/images/cover.jpg"))
-	shutil.copy(os.path.normpath(templates_path + "/cover.svg"), os.path.normpath(repo_name + "/images/cover.svg"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "gitignore")), os.path.normpath(repo_name + "/.gitignore"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "LICENSE.md")), os.path.normpath(repo_name + "/"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "META-INF", "container.xml")), os.path.normpath(repo_name + "/src/META-INF/"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "mimetype")), os.path.normpath(repo_name + "/src/"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "content.opf")), os.path.normpath(repo_name + "/src/epub/"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "onix.xml")), os.path.normpath(repo_name + "/src/epub/"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "toc.xhtml")), os.path.normpath(repo_name + "/src/epub/"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "core.css")), os.path.normpath(repo_name + "/src/epub/css/"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "local.css")), os.path.normpath(repo_name + "/src/epub/css/"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "logo.svg")), os.path.normpath(repo_name + "/src/epub/images/"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "colophon.xhtml")), os.path.normpath(repo_name + "/src/epub/text/"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "imprint.xhtml")), os.path.normpath(repo_name + "/src/epub/text/"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "titlepage.xhtml")), os.path.normpath(repo_name + "/src/epub/text/"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "uncopyright.xhtml")), os.path.normpath(repo_name + "/src/epub/text/"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "titlepage.svg")), os.path.normpath(repo_name + "/images/"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "cover.jpg")), os.path.normpath(repo_name + "/images/cover.jpg"))
+	shutil.copy(resource_filename("se", os.path.join("data", "templates", "cover.svg")), os.path.normpath(repo_name + "/images/cover.svg"))
 
 	# Try to find Wikipedia links if possible
-	author_wiki_url, author_nacoaf_url = get_wikipedia_url(args.author, True)
-	ebook_wiki_url, _ = get_wikipedia_url(args.title, False)
+	author_wiki_url, author_nacoaf_url = _get_wikipedia_url(args.author, True)
+	ebook_wiki_url, _ = _get_wikipedia_url(args.title, False)
 	translator_wiki_url = None
 	if args.translator:
-		translator_wiki_url, translator_nacoaf_url = get_wikipedia_url(args.translator, True)
+		translator_wiki_url, translator_nacoaf_url = _get_wikipedia_url(args.translator, True)
 
 	# Pre-fill a few templates
 	se.replace_in_file(os.path.normpath(repo_name + "/src/epub/text/titlepage.xhtml"), "TITLESTRING", title_string)
@@ -490,11 +488,11 @@ def main():
 		contributors["illustrated by"] = args.illustrator
 
 	with open(os.path.join(repo_name, "images", "titlepage.svg"), "w") as file:
-		file.write(generate_titlepage_svg(args.title, args.author, contributors, title_string, templates_path))
+		file.write(_generate_titlepage_svg(args.title, args.author, contributors, title_string))
 
 	# Create the cover SVG
 	with open(os.path.join(repo_name, "images", "cover.svg"), "w") as file:
-		file.write(generate_cover_svg(args.title, args.author, title_string, templates_path))
+		file.write(_generate_cover_svg(args.title, args.author, title_string))
 
 	if args.pg_url:
 		se.replace_in_file(os.path.normpath(repo_name + "/src/epub/text/imprint.xhtml"), "PGLINK", args.pg_url)
@@ -629,8 +627,8 @@ def main():
 		return_code = call(["ssh", "standardebooks.org", "/standardebooks.org/scripts/init-se-repo --repo-name={} --title-string=\"{}\" {}".format(repo_name, title_string, github_option)])
 		if return_code != 0:
 			se.print_error("Failed to create repository on Standard Ebooks server: ssh returned code {}.".format(return_code))
-			exit(1)
+			return se.RemoteCommandErrorException.code
 
 
 if __name__ == "__main__":
-	main()
+	sys.exit(main())

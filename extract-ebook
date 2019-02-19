@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 
+import sys
 import argparse
 import os
-import sys
 import zipfile
 from io import TextIOWrapper, BytesIO
 import magic
-from se.kindleunpack import kindleunpack # GPLv3: https://www.mobileread.com/forums/showthread.php?t=61986
+from se.vendor.kindleunpack import kindleunpack # GPLv3: https://www.mobileread.com/forums/showthread.php?t=61986
 import se
 
 
-def main():
+def main() -> int:
 	parser = argparse.ArgumentParser(description="Extract an epub, mobi, or azw3 ebook into ./FILENAME.extracted/ or a target directory.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("-d", "--destination", type=str, help="a target directory to extract into")
@@ -30,7 +30,7 @@ def main():
 
 		if os.path.exists(extracted_path):
 			se.print_error("Directory already exists: {}".format(extracted_path))
-			exit(1)
+			return se.FileExistsException.code
 
 		mime_type = magic.from_file(target)
 
@@ -44,18 +44,18 @@ def main():
 			# Restore stdout
 			sys.stdout.close()
 			sys.stdout = old_stdout
-
 		elif "EPUB document" in mime_type:
 			with zipfile.ZipFile(target, "r") as file:
 				file.extractall(extracted_path)
-
 		else:
 			se.print_error("Couldn’t understand file type: {}".format(mime_type))
-			exit(1)
+			return se.InvalidFileException.code
 
 		if args.verbose:
 			print(" OK")
 
+	return 0
+
 
 if __name__ == "__main__":
-	main()
+	sys.exit(main())
