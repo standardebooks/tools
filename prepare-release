@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 
+import sys
 import argparse
 import os
-import subprocess
-import datetime
-import regex
 import se
-import se.formatting
+from se.se_epub import SeEpub
 
 
-def main():
+def main() -> int:
 	parser = argparse.ArgumentParser(description="Calculate work word count, insert release date if not yet set, and update modified date and revision number.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("-w", "--no-word-count", dest="word_count", action="store_false", help="don’t calculate word count")
@@ -17,41 +15,21 @@ def main():
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
-	script_path = os.path.realpath(__file__)
-
-	word_count_path = os.path.join(os.path.dirname(script_path), "word-count")
-	reading_ease_path = os.path.join(os.path.dirname(script_path), "reading-ease")
-	timestamp = datetime.datetime.utcnow()
-	iso_timestamp = regex.sub(r"\.[0-9]+$", "", timestamp.isoformat()) + "Z"
-
-	# Construct the friendly timestamp
-	friendly_timestamp = "{0:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}".format(timestamp)
-	friendly_timestamp = regex.sub(r"\s+", " ", friendly_timestamp).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
-
 	for directory in args.directories:
 		directory = os.path.abspath(directory)
-
-		if not os.path.isdir(directory):
-			se.print_error("Not a directory: {}".format(directory))
-			exit(1)
 
 		if args.verbose:
 			print("Processing {} ...".format(directory))
 
-		with open(os.path.join(directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
-			xhtml = file.read()
-			processed_xhtml = xhtml
+		try:
+			se_epub = SeEpub(directory)
 
 			if args.word_count:
 				if args.verbose:
 					print("\tUpdating word count and reading ease ...", end="", flush=True)
 
-				word_count = subprocess.run([word_count_path, "-x", directory], stdout=subprocess.PIPE).stdout.decode().strip()
-
-				reading_ease = subprocess.run([reading_ease_path, directory], stdout=subprocess.PIPE).stdout.decode().strip()
-
-				processed_xhtml = regex.sub(r"<meta property=\"se:word-count\">[^<]*</meta>", "<meta property=\"se:word-count\">{}</meta>".format(word_count), processed_xhtml)
-				processed_xhtml = regex.sub(r"<meta property=\"se:reading-ease\.flesch\">[^<]*</meta>", "<meta property=\"se:reading-ease.flesch\">{}</meta>".format(reading_ease), processed_xhtml)
+				se_epub.update_word_count()
+				se_epub.update_flesch_reading_ease()
 
 				if args.verbose:
 					print(" OK")
@@ -60,46 +38,16 @@ def main():
 				if args.verbose:
 					print("\tUpdating revision number ...", end="", flush=True)
 
-				# Calculate the new revision number
-				revision = int(regex.search(r"<meta property=\"se:revision-number\">([0-9]+)</meta>", processed_xhtml).group(1))
-				revision = revision + 1
-
-				# If this is an initial release, set the release date in content.opf
-				if revision == 1:
-					processed_xhtml = regex.sub(r"<dc:date>[^<]+?</dc:date>", "<dc:date>{}</dc:date>".format(iso_timestamp), processed_xhtml)
-
-				# Set modified date and revision number in content.opf
-				processed_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">{}</meta>".format(iso_timestamp), processed_xhtml)
-				processed_xhtml = regex.sub(r"<meta property=\"se:revision-number\">[^<]+?</meta>", "<meta property=\"se:revision-number\">{}</meta>".format(revision), processed_xhtml)
-
-				# Update the colophon with release info
-				with open(os.path.join(directory, "src", "epub", "text", "colophon.xhtml"), "r+", encoding="utf-8") as colophon:
-					colophon_xhtml = colophon.read()
-
-					# Are we moving from the first edition to the nth edition?
-					if revision == 1:
-						colophon_xhtml = regex.sub(r"<span class=\"release-date\">.+?</span>", "<span class=\"release-date\">{}</span>".format(friendly_timestamp), colophon_xhtml)
-					else:
-						ordinal = se.formatting.ordinal(revision)
-						if "<p>This is the first edition of this ebook.<br/>" in colophon_xhtml:
-							colophon_xhtml = colophon_xhtml.replace("This edition was released on<br/>", "The first edition was released on<br/>")
-							colophon_xhtml = colophon_xhtml.replace("<p>This is the first edition of this ebook.<br/>", "<p>This is the <span class=\"revision-number\">{}</span> edition of this ebook.<br/>\n\t\t\tThis edition was released on<br/>\n\t\t\t<span class=\"revision-date\">{}</span><br/>".format(ordinal, friendly_timestamp))
-						else:
-							colophon_xhtml = regex.sub(r"<span class=\"revision-date\">.+?</span>", "<span class=\"revision-date\">{}</span>".format(friendly_timestamp), colophon_xhtml)
-							colophon_xhtml = regex.sub(r"<span class=\"revision-number\">[^<]+?</span>", "<span class=\"revision-number\">{}</span>".format(ordinal), colophon_xhtml)
-
-					colophon.seek(0)
-					colophon.write(colophon_xhtml)
-					colophon.truncate()
+				se_epub.update_revision()
 
 				if args.verbose:
 					print(" OK")
+		except se.SeException as ex:
+			se.print_error(ex)
+			return ex.code
 
-			if processed_xhtml != xhtml:
-				file.seek(0)
-				file.write(processed_xhtml)
-				file.truncate()
+	return 0
 
 
 if __name__ == "__main__":
-	main()
+	sys.exit(main())

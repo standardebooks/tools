@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
+"""
+Defines helper functions for working with mobi files.
 
-# Extracted from KindleUnpack code and modified
+Extracted from KindleUnpack code and modified.
+
+https://www.mobileread.com/forums/showpost.php?p=3165291
+"""
+
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, version 3.
 # Copyright (C) 2013 P. Durrant, K. Hendricks, S. Siebert, fandrieu, DiapDealer, nickredding.
-
-# FROM: https://www.mobileread.com/forums/showpost.php?p=3165291
 from __future__ import unicode_literals, division, absolute_import, print_function
 
 import sys

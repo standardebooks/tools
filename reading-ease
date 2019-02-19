@@ -1,204 +1,26 @@
 #!/usr/bin/env python3
 
+import sys
 import argparse
-import string
-import os
-import fnmatch
-import unicodedata
-import regex
-from bs4 import BeautifulSoup
 import se
+import se.formatting
 
 
-INCLUDED_CHARACTERS = list(string.whitespace) + list(string.digits) + [":", ";", ".", "?", "!"]
-
-
-def get_word_count(text: str) -> int:
-	"""
-	Helper function to get word count of string.
-	"""
-
-	return len(text.split())
-
-def get_syllable_count(word: str) -> int:
-	"""
-	Helper function to get the syllable count of a word.
-	"""
-
-	# See http://eayd.in/?p=232
-	exception_add = ["serious", "crucial"]
-	exception_del = ["fortunately", "unfortunately"]
-
-	co_one = ["cool", "coach", "coat", "coal", "count", "coin", "coarse", "coup", "coif", "cook", "coign", "coiffe", "coof", "court"]
-	co_two = ["coapt", "coed", "coinci"]
-
-	pre_one = ["preach"]
-
-	syls = 0 # Added syllable number
-	disc = 0 # Discarded syllable number
-
-	# 1) if letters < 3: return 1
-	if len(word) <= 3:
-		syls = 1
-		return syls
-
-	# 2) if doesn't end with "ted" or "tes" or "ses" or "ied" or "ies", discard "es" and "ed" at the end.
-	# if it has only 1 vowel or 1 set of consecutive vowels, discard. (like "speed", "fled" etc.)
-	if word[-2:] == "es" or word[-2:] == "ed":
-		double_and_triple_1 = len(regex.findall(r"[eaoui][eaoui]", word))
-		if double_and_triple_1 > 1 or len(regex.findall(r"[eaoui][^eaoui]", word)) > 1:
-			if word[-3:] == "ted" or word[-3:] == "tes" or word[-3:] == "ses" or word[-3:] == "ied" or word[-3:] == "ies":
-				pass
-			else:
-				disc += 1
-
-	# 3) discard trailing "e", except where ending is "le"
-	le_except = ["whole", "mobile", "pole", "male", "female", "hale", "pale", "tale", "sale", "aisle", "whale", "while"]
-
-	if word[-1:] == "e":
-		if word[-2:] == "le" and word not in le_except:
-			pass
-
-		else:
-			disc += 1
-
-	# 4) check if consecutive vowels exists, triplets or pairs, count them as one.
-	double_and_triple = len(regex.findall(r"[eaoui][eaoui]", word))
-	tripple = len(regex.findall(r"[eaoui][eaoui][eaoui]", word))
-	disc += double_and_triple + tripple
-
-	# 5) count remaining vowels in word.
-	num_vowels = len(regex.findall(r"[eaoui]", word))
-
-	# 6) add one if starts with "mc"
-	if word[:2] == "mc":
-		syls += 1
-
-	# 7) add one if ends with "y" but is not surrouned by vowel
-	if word[-1:] == "y" and word[-2] not in "aeoui":
-		syls += 1
-
-	# 8) add one if "y" is surrounded by non-vowels and is not in the last word.
-	for i, j in enumerate(word):
-		if j == "y":
-			if (i != 0) and (i != len(word) - 1):
-				if word[i - 1] not in "aeoui" and word[i + 1] not in "aeoui":
-					syls += 1
-
-	# 9) if starts with "tri-" or "bi-" and is followed by a vowel, add one.
-	if word[:3] == "tri" and word[3] in "aeoui":
-		syls += 1
-
-	if word[:2] == "bi" and word[2] in "aeoui":
-		syls += 1
-
-	# 10) if ends with "-ian", should be counted as two syllables, except for "-tian" and "-cian"
-	if word[-3:] == "ian":
-	# and (word[-4:] != "cian" or word[-4:] != "tian"):
-		if word[-4:] == "cian" or word[-4:] == "tian":
-			pass
-		else:
-			syls += 1
-
-	# 11) if starts with "co-" and is followed by a vowel, check if exists in the double syllable dictionary, if not, check if in single dictionary and act accordingly.
-	if word[:2] == "co" and word[2] in "eaoui":
-
-		if word[:4] in co_two or word[:5] in co_two or word[:6] in co_two:
-			syls += 1
-		elif word[:4] in co_one or word[:5] in co_one or word[:6] in co_one:
-			pass
-		else:
-			syls += 1
-
-	# 12) if starts with "pre-" and is followed by a vowel, check if exists in the double syllable dictionary, if not, check if in single dictionary and act accordingly.
-	if word[:3] == "pre" and word[3] in "eaoui":
-		if word[:6] in pre_one:
-			pass
-		else:
-			syls += 1
-
-	# 13) check for "-n't" and cross match with dictionary to add syllable.
-	negative = ["doesn't", "isn't", "shouldn't", "couldn't", "wouldn't"]
-
-	if word[-3:] == "n't":
-		if word in negative:
-			syls += 1
-		else:
-			pass
-
-	# 14) Handling the exceptional words.
-	if word in exception_del:
-		disc += 1
-
-	if word in exception_add:
-		syls += 1
-
-	# Calculate the output
-	return num_vowels - disc + syls
-
-def main():
-	parser = argparse.ArgumentParser(description="Calculate the Flesch reading ease for a Standard Ebooks source directory.")
-	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+def main() -> int:
+	parser = argparse.ArgumentParser(description="Calculate the Flesch reading ease of a text composed of one or more XHTML files.")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
-	for directory in args.directories:
-		directory = os.path.abspath(directory)
+	xhtml = ""
 
-		if not os.path.isdir(directory):
-			se.print_error("Not a directory: {}".format(directory))
-			exit(1)
+	for filename in se.get_target_filenames(args.targets, (".xhtml")):
+		with open(filename, "r", encoding="utf-8") as file:
+			xhtml += " " + file.read()
 
-		if args.verbose:
-			print("Processing {} ...".format(directory), end="", flush=True)
+	print(se.formatting.get_flesch_reading_ease(xhtml))
 
-		text = ""
-
-		for root, _, filenames in os.walk(directory):
-			for filename in fnmatch.filter(filenames, "*.xhtml"):
-				if filename not in se.IGNORED_FILENAMES:
-					with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
-						text += BeautifulSoup(file.read(), "lxml").body.get_text() + " "
-
-		# Remove non-sentence-ending punctuation from source text
-		processed_text = regex.sub(r"[—–\n]", " ", text.lower())
-		processed_text = "".join(c for c in processed_text if c.isalpha() or c in INCLUDED_CHARACTERS).strip()
-
-		# Remove accents
-		processed_text = "".join(c for c in unicodedata.normalize("NFD", processed_text) if unicodedata.category(c) != "Mn")
-
-		# Get word count
-		word_count = get_word_count(processed_text)
-		if word_count <= 0:
-			word_count = 1
-
-		# Get average sentence length
-		ignore_count = 0
-		sentences = regex.split(r" *[\.\?!]['\"\)\]]* *", processed_text)
-		for sentence in sentences:
-			if get_word_count(sentence) <= 2:
-				ignore_count = ignore_count + 1
-		sentence_count = len(sentences) - ignore_count
-
-		if sentence_count <= 0:
-			sentence_count = 1
-
-		average_sentence_length = round(float(word_count) / float(sentence_count), 1)
-
-		# Get average syllables per word
-		syllable_count = 0
-		for word in processed_text.split():
-			syllable_count += get_syllable_count(word)
-
-		average_syllables_per_word = round(float(syllable_count) / float(word_count), 1)
-
-		flesch_reading_ease = round(206.835 - float(1.015 * average_sentence_length) - float(84.6 * average_syllables_per_word), 2)
-
-		if args.verbose:
-			print("\t" + str(flesch_reading_ease))
-		else:
-			print(flesch_reading_ease)
+	return 0
 
 
 if __name__ == "__main__":
-	main()
+	sys.exit(main())

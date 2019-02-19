@@ -1,22 +1,59 @@
 #!/usr/bin/env python3
+"""
+Defines the SeEpub class, the master class for representing and operating on
+Standard Ebooks epub3 files.
+"""
 
 import os
 import filecmp
 import glob
 import html
 import tempfile
-import subprocess
+import datetime
+import errno
+import shutil
+import fnmatch
+import concurrent.futures
+import base64
 import unicodedata
+import subprocess
 import io
 import regex
-import se
-import se.formatting
-import se.easy_xml
 import roman
+from pkg_resources import resource_filename
 import lxml.cssselect
 import lxml.etree as etree
 from bs4 import Tag, BeautifulSoup, NavigableString
+import se
+import se.formatting
+import se.easy_xml
+import se.images
 
+def _process_endnotes_in_file(filename: str, root: str, note_range: range, step: int) -> None:
+	"""
+	Helper function for reordering endnotes.
+
+	This has to be outside of the class to be able to be called by `executor`.
+	"""
+
+	with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+		xhtml = file.read()
+		processed_xhtml = xhtml
+		processed_xhtml_is_modified = False
+
+		for endnote_number in note_range:
+			# If we’ve already changed some notes and can’t find the next then we don’t need to continue searching
+			if not "id=\"noteref-{}\"".format(endnote_number) in processed_xhtml and processed_xhtml_is_modified:
+				break
+			processed_xhtml = processed_xhtml.replace("id=\"noteref-{}\"".format(endnote_number), "id=\"noteref-{}\"".format(endnote_number + step), 1)
+			processed_xhtml = processed_xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + step), 1)
+			processed_xhtml = processed_xhtml.replace(">{}</a>".format(endnote_number), ">{}</a>".format(endnote_number + step), 1)
+			processed_xhtml_is_modified = processed_xhtml_is_modified or (processed_xhtml != xhtml)
+
+		if processed_xhtml_is_modified:
+			file.seek(0)
+			file.write(processed_xhtml)
+			file.truncate()
 
 class LintMessage:
 	"""
@@ -44,40 +81,47 @@ class SeEpub:
 	"""
 
 	directory = ""
-	__tools_root_directory = ""
-	__metadata_xhtml = None
-	__metadata_tree = None
-	__generated_identifier = None
-	__generated_github_repo_url = None
+	_metadata_xhtml = None
+	_metadata_tree = None
+	_generated_identifier = None
+	_generated_github_repo_url = None
 
 	@property
 	def generated_identifier(self) -> str:
-		if not self.__generated_identifier:
-			self.__generated_identifier = self.__generate_identifier()
+		"""
+		Accessor
+		"""
 
-		return self.__generated_identifier
+		if not self._generated_identifier:
+			self._generated_identifier = self._generate_identifier()
+
+		return self._generated_identifier
 
 	@property
 	def generated_github_repo_url(self) -> str:
-		if not self.__generated_github_repo_url:
-			self.__generated_github_repo_url = self.__generate_github_repo_url()
+		"""
+		Accessor
+		"""
 
-		return self.__generated_github_repo_url
+		if not self._generated_github_repo_url:
+			self._generated_github_repo_url = self._generate_github_repo_url()
 
-	def __init__(self, epub_root_directory: str, tools_root_directory: str):
+		return self._generated_github_repo_url
+
+	def __init__(self, epub_root_directory: str):
 		if not os.path.isdir(epub_root_directory):
-			raise NotADirectoryError("Not a directory: {}".format(epub_root_directory))
+			raise se.InvalidSeEbookException("Not a directory: {}".format(epub_root_directory))
 
 		if not os.path.isfile(os.path.join(epub_root_directory, "src", "epub", "content.opf")):
-			raise NotADirectoryError("Not a Standard Ebooks source directory: {}".format(epub_root_directory))
+			raise se.InvalidSeEbookException("Not a Standard Ebooks source directory: {}".format(epub_root_directory))
 
 		self.directory = os.path.abspath(epub_root_directory)
-		self.__tools_root_directory = os.path.abspath(tools_root_directory)
 
 		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
-			self.__metadata_xhtml = file.read()
+			self._metadata_xhtml = file.read()
 
-	def __get_malformed_urls(self, xhtml: str) -> list:
+	@staticmethod
+	def _get_malformed_urls(xhtml: str) -> list:
 		"""
 		Helper function used in self.lint()
 		Get a list of URLs in the epub that do not match SE standards.
@@ -125,7 +169,7 @@ class SeEpub:
 
 		return messages
 
-	def __get_unused_selectors(self) -> set:
+	def _get_unused_selectors(self) -> set:
 		"""
 		Helper function used in self.lint(); merge directly into lint()?
 		Get a list of CSS selectors that do not actually select HTML in the epub.
@@ -194,7 +238,7 @@ class SeEpub:
 		return unused_selectors
 
 	@staticmethod
-	def __new_bs4_tag(section: Tag, output_soup: BeautifulSoup) -> Tag:
+	def _new_bs4_tag(section: Tag, output_soup: BeautifulSoup) -> Tag:
 		"""
 		Helper function used in self.recompose()
 		Create a new BS4 tag given the current section.
@@ -213,7 +257,7 @@ class SeEpub:
 
 		return tag
 
-	def __recompose_xhtml(self, section: Tag, output_soup: BeautifulSoup) -> None:
+	def _recompose_xhtml(self, section: Tag, output_soup: BeautifulSoup) -> None:
 		"""
 		Helper function used in self.recompose()
 		Recursive function for recomposing a series of XHTML files into a single XHTML file.
@@ -228,16 +272,16 @@ class SeEpub:
 
 		# Quick sanity check before we begin
 		if "id" not in section.attrs or (section.parent.name.lower() != "body" and "id" not in section.parent.attrs):
-			raise se.SeError("Section without ID attribute")
+			raise se.InvalidXhtmlException("Section without ID attribute")
 
 		# Try to find our parent tag in the output, by ID.
 		# If it's not in the output, then append it to the tag's closest parent by ID (or <body>), then iterate over its children and do the same.
 		existing_section = output_soup.select("#" + section["id"])
 		if not existing_section:
 			if section.parent.name.lower() == "body":
-				output_soup.body.append(self.__new_bs4_tag(section, output_soup))
+				output_soup.body.append(self._new_bs4_tag(section, output_soup))
 			else:
-				output_soup.select("#" + section.parent["id"])[0].append(self.__new_bs4_tag(section, output_soup))
+				output_soup.select("#" + section.parent["id"])[0].append(self._new_bs4_tag(section, output_soup))
 
 			existing_section = output_soup.select("#" + section["id"])
 
@@ -245,11 +289,11 @@ class SeEpub:
 			if not isinstance(child, str):
 				tag_name = child.name.lower()
 				if tag_name == "section" or tag_name == "article":
-					self.__recompose_xhtml(child, output_soup)
+					self._recompose_xhtml(child, output_soup)
 				else:
 					existing_section[0].append(child)
 
-	def __generate_github_repo_url(self) -> str:
+	def _generate_github_repo_url(self) -> str:
 		"""
 		Generate a GitHub repository URL based on the *generated* SE identifier,
 		*not* the SE identifier in the metadata file.
@@ -263,7 +307,7 @@ class SeEpub:
 
 		return "https://github.com/standardebooks/" + self.generated_identifier.replace("url:https://standardebooks.org/ebooks/", "").replace("/", "_")
 
-	def __generate_identifier(self) -> str:
+	def _generate_identifier(self) -> str:
 		"""
 		Generate an SE identifer based on the metadata in content.opf
 
@@ -275,20 +319,20 @@ class SeEpub:
 		OUTPUTS
 		A string representing the SE identifier.
 		"""
-		if self.__metadata_tree is None:
-			self.__metadata_tree = se.easy_xml.EasyXmlTree(self.__metadata_xhtml)
+		if self._metadata_tree is None:
+			self._metadata_tree = se.easy_xml.EasyXmlTree(self._metadata_xhtml)
 
 		# Add authors
 		identifier = "url:https://standardebooks.org/ebooks/"
 		authors = []
-		for author in self.__metadata_tree.xpath("//dc:creator"):
+		for author in self._metadata_tree.xpath("//dc:creator"):
 			authors.append(author.inner_html())
 			identifier += se.formatting.make_url_safe(author.inner_html()) + "_"
 
 		identifier = identifier.strip("_") + "/"
 
 		# Add title
-		for title in self.__metadata_tree.xpath("//dc:title[@id=\"title\"]"):
+		for title in self._metadata_tree.xpath("//dc:title[@id=\"title\"]"):
 			identifier += se.formatting.make_url_safe(title.inner_html()) + "/"
 
 		# For contributors, we add both translators and illustrators.
@@ -300,12 +344,12 @@ class SeEpub:
 		illustrators = []
 		translators_have_display_seq = False
 		illustrators_have_display_seq = False
-		for role in self.__metadata_tree.xpath("//opf:meta[@property=\"role\"]"):
+		for role in self._metadata_tree.xpath("//opf:meta[@property=\"role\"]"):
 			contributor_id = role.attribute("refines").lstrip("#")
-			contributor_element = self.__metadata_tree.xpath("//dc:contributor[@id=\"" + contributor_id + "\"]")
+			contributor_element = self._metadata_tree.xpath("//dc:contributor[@id=\"" + contributor_id + "\"]")
 			if contributor_element:
 				contributor = {"name": contributor_element[0].inner_html(), "include": True, "display_seq": None}
-				display_seq = self.__metadata_tree.xpath("//opf:meta[@property=\"display-seq\"][@refines=\"#" + contributor_id + "\"]")
+				display_seq = self._metadata_tree.xpath("//opf:meta[@property=\"display-seq\"][@refines=\"#" + contributor_id + "\"]")
 
 				if display_seq and int(display_seq[0].inner_html()) == 0:
 					contributor["include"] = False
@@ -351,8 +395,6 @@ class SeEpub:
 		A string of HTML5 representing the entire recomposed ebook.
 		"""
 
-		clean_path = os.path.join(self.__tools_root_directory, "clean")
-
 		# Get the ordered list of spine items
 		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r", encoding="utf-8") as file:
 			metadata_soup = BeautifulSoup(file.read(), "lxml")
@@ -378,7 +420,7 @@ class SeEpub:
 				xhtml_soup = BeautifulSoup(file.read(), "lxml")
 
 				for child in xhtml_soup.select("body > *"):
-					self.__recompose_xhtml(child, output_soup)
+					self._recompose_xhtml(child, output_soup)
 
 		# Add the ToC after the titlepage
 		with open(os.path.join(self.directory, "src", "epub", "toc.xhtml"), "r", encoding="utf-8") as file:
@@ -408,7 +450,7 @@ class SeEpub:
 		os.rename(file_name, file_name_xhtml)
 
 		# All done, clean the output
-		subprocess.run([clean_path, file_name_xhtml])
+		se.formatting.format_xhtml_file(file_name_xhtml, False, file_name_xhtml.endswith("content.opf"), file_name_xhtml.endswith("endnotes.xhtml"))
 
 		with open(file_name_xhtml) as file:
 			xhtml = file.read()
@@ -430,6 +472,272 @@ class SeEpub:
 		os.remove(file_name_xhtml)
 
 		return xhtml
+
+	def generate_titlepage_svg(self) -> None:
+		"""
+		Generate a distributable titlepage SVG in ./src/epub/images/ based on the titlepage file in ./images/
+
+		INPUTS
+		None
+
+		OUTPUTS
+		None.
+		"""
+
+		inkscape_path = shutil.which("inkscape")
+
+		if inkscape_path is None:
+			raise se.MissingDependencyException("Couldn’t locate Inkscape. Is it installed?")
+
+		source_images_directory = os.path.join(self.directory, "images")
+		source_titlepage_svg_filename = os.path.join(source_images_directory, "titlepage.svg")
+		dest_images_directory = os.path.join(self.directory, "src", "epub", "images")
+		dest_titlepage_svg_filename = os.path.join(dest_images_directory, "titlepage.svg")
+
+		if os.path.isfile(source_titlepage_svg_filename):
+			# Convert text to paths
+			# inkscape adds a ton of crap to the SVG and we clean that crap a little later
+			subprocess.run([inkscape_path, source_titlepage_svg_filename, "--without-gui", "--export-text-to-path", "--export-plain-svg", dest_titlepage_svg_filename])
+
+			se.images.format_inkscape_svg(dest_titlepage_svg_filename)
+
+			# For the titlepage we want to remove all styles, since they are not used anymore
+			with open(dest_titlepage_svg_filename, "r+", encoding="utf-8") as file:
+				svg = regex.sub(r"<style.+?</style>[\n\t]+", "", file.read(), flags=regex.DOTALL)
+
+				file.seek(0)
+				file.write(svg)
+				file.truncate()
+
+	def generate_cover_svg(self) -> None:
+		"""
+		Generate a distributable cover SVG in ./src/epub/images/ based on the cover file in ./images/
+
+		INPUTS
+		None
+
+		OUTPUTS
+		None.
+		"""
+
+		inkscape_path = shutil.which("inkscape")
+
+		if inkscape_path is None:
+			raise se.MissingDependencyException("Couldn’t locate Inkscape. Is it installed?")
+
+		source_images_directory = os.path.join(self.directory, "images")
+		source_cover_jpg_filename = os.path.join(source_images_directory, "cover.jpg")
+		source_cover_svg_filename = os.path.join(source_images_directory, "cover.svg")
+		dest_images_directory = os.path.join(self.directory, "src", "epub", "images")
+		dest_cover_svg_filename = os.path.join(dest_images_directory, "cover.svg")
+
+		# Create output directory if it doesn't exist
+		try:
+			os.makedirs(dest_images_directory)
+		except OSError as ex:
+			if ex.errno != errno.EEXIST:
+				raise ex
+
+		# Remove useless metadata from cover source files
+		for root, _, filenames in os.walk(source_images_directory):
+			for filename in fnmatch.filter(filenames, "cover.source.*"):
+				se.images.remove_image_metadata(os.path.join(root, filename))
+
+		if os.path.isfile(source_cover_jpg_filename):
+			se.images.remove_image_metadata(source_cover_jpg_filename)
+
+			if os.path.isfile(source_cover_svg_filename):
+				# base64 encode cover.jpg
+				with open(source_cover_jpg_filename, "rb") as file:
+					source_cover_jpg_base64 = base64.b64encode(file.read()).decode()
+
+				# Convert text to paths
+				# Inkscape adds a ton of crap to the SVG and we clean that crap a little later
+				subprocess.run([inkscape_path, source_cover_svg_filename, "--without-gui", "--export-text-to-path", "--export-plain-svg", dest_cover_svg_filename])
+
+				# Embed cover.jpg
+				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
+					svg = regex.sub(r"xlink:href=\".*?cover\.jpg", "xlink:href=\"data:image/jpeg;base64," + source_cover_jpg_base64, file.read(), flags=regex.DOTALL)
+
+					file.seek(0)
+					file.write(svg)
+					file.truncate()
+
+				se.images.format_inkscape_svg(dest_cover_svg_filename)
+
+				# For the cover we want to keep the path.title-box style, and add an additional
+				# style to color our new paths white
+				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
+					svg = regex.sub(r"<style.+?</style>", "<style type=\"text/css\">\n\t\tpath{\n\t\t\tfill: #fff;\n\t\t}\n\n\t\t.title-box{\n\t\t\tfill: #000;\n\t\t\tfill-opacity: .75;\n\t\t}\n\t</style>", file.read(), flags=regex.DOTALL)
+
+					file.seek(0)
+					file.write(svg)
+					file.truncate()
+
+	def reorder_endnotes(self, target_endnote_number: int, step: int = 1) -> None:
+		"""
+		Reorder endnotes starting at target_endnote_number.
+
+		INPUTS:
+		target_endnote_number: The endnote to start reordering at
+		step: 1 to increment or -1 to decrement
+
+		OUTPUTS:
+		None.
+		"""
+
+		increment = step == 1
+		endnote_count = 0
+		source_directory = os.path.join(self.directory, "src")
+
+		try:
+			endnotes_filename = os.path.join(source_directory, "epub", "text", "endnotes.xhtml")
+			with open(endnotes_filename, "r+", encoding="utf-8") as file:
+				xhtml = file.read()
+				soup = BeautifulSoup(xhtml, "lxml")
+
+				endnote_count = len(soup.select("li[id^=note-]"))
+
+				if increment:
+					note_range = range(endnote_count, target_endnote_number - 1, -1)
+				else:
+					note_range = range(target_endnote_number, endnote_count + 1, 1)
+
+				for endnote_number in note_range:
+					xhtml = xhtml.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + step), 1)
+					xhtml = xhtml.replace("#noteref-{}\"".format(endnote_number), "#noteref-{}\"".format(endnote_number + step), 1)
+
+				# There may be some links within the notes that refer to other endnotes.
+				# These potentially need incrementing / decrementing too. This code assumes
+				# a link that looks something like <a href="#note-1">note 1</a>.
+				endnote_links = regex.findall(r"href=\"#note-(\d+)\"(.*?) (\d+)</a>", xhtml)
+				for link in endnote_links:
+					link_number = int(link[0])
+					if (link_number < target_endnote_number and increment) or (link_number > target_endnote_number and not increment):
+						continue
+					xhtml = xhtml.replace("href=\"#note-{0}\"{1} {0}</a>".format(link[0], link[1]), "href=\"#note-{0}\"{1} {0}</a>".format(link_number + step, link[1]))
+
+				file.seek(0)
+				file.write(xhtml)
+				file.truncate()
+
+		except Exception:
+			raise se.InvalidSeEbookException("Couldn’t open endnotes file: {}".format(endnotes_filename))
+
+		with concurrent.futures.ProcessPoolExecutor() as executor:
+			for root, _, filenames in os.walk(source_directory):
+				for filename in fnmatch.filter(filenames, "*.xhtml"):
+					# Skip endnotes.xhtml since we already processed it
+					if filename == "endnotes.xhtml":
+						continue
+
+					executor.submit(_process_endnotes_in_file, filename, root, note_range, step)
+
+	def update_revision(self) -> None:
+		"""
+		Update the revision number and updated date in the metadata and colophon.
+
+		INPUTS
+		None
+
+		OUTPUTS
+		None.
+		"""
+
+		timestamp = datetime.datetime.utcnow()
+		iso_timestamp = regex.sub(r"\.[0-9]+$", "", timestamp.isoformat()) + "Z"
+
+		# Construct the friendly timestamp
+		friendly_timestamp = "{0:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}".format(timestamp)
+		friendly_timestamp = regex.sub(r"\s+", " ", friendly_timestamp).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
+
+		# Calculate the new revision number
+		revision = int(regex.search(r"<meta property=\"se:revision-number\">([0-9]+)</meta>", self._metadata_xhtml).group(1))
+		revision = revision + 1
+
+		# If this is an initial release, set the release date in content.opf
+		if revision == 1:
+			self._metadata_xhtml = regex.sub(r"<dc:date>[^<]+?</dc:date>", "<dc:date>{}</dc:date>".format(iso_timestamp), self._metadata_xhtml)
+
+		# Set modified date and revision number in content.opf
+		self._metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">{}</meta>".format(iso_timestamp), self._metadata_xhtml)
+		self._metadata_xhtml = regex.sub(r"<meta property=\"se:revision-number\">[^<]+?</meta>", "<meta property=\"se:revision-number\">{}</meta>".format(revision), self._metadata_xhtml)
+
+		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "w", encoding="utf-8") as file:
+			file.seek(0)
+			file.write(self._metadata_xhtml)
+			file.truncate()
+
+		# Update the colophon with release info
+		with open(os.path.join(self.directory, "src", "epub", "text", "colophon.xhtml"), "r+", encoding="utf-8") as file:
+			xhtml = file.read()
+
+			# Are we moving from the first edition to the nth edition?
+			if revision == 1:
+				xhtml = regex.sub(r"<span class=\"release-date\">.+?</span>", "<span class=\"release-date\">{}</span>".format(friendly_timestamp), xhtml)
+			else:
+				ordinal = se.formatting.get_ordinal(revision)
+				if "<p>This is the first edition of this ebook.<br/>" in xhtml:
+					xhtml = xhtml.replace("This edition was released on<br/>", "The first edition was released on<br/>")
+					xhtml = xhtml.replace("<p>This is the first edition of this ebook.<br/>", "<p>This is the <span class=\"revision-number\">{}</span> edition of this ebook.<br/>\n\t\t\tThis edition was released on<br/>\n\t\t\t<span class=\"revision-date\">{}</span><br/>".format(ordinal, friendly_timestamp))
+				else:
+					xhtml = regex.sub(r"<span class=\"revision-date\">.+?</span>", "<span class=\"revision-date\">{}</span>".format(friendly_timestamp), xhtml)
+					xhtml = regex.sub(r"<span class=\"revision-number\">[^<]+?</span>", "<span class=\"revision-number\">{}</span>".format(ordinal), xhtml)
+
+			file.seek(0)
+			file.write(xhtml)
+			file.truncate()
+
+	def update_flesch_reading_ease(self) -> None:
+		"""
+		Calculate a new reading ease for this ebook and update the metadata file.
+		Ignores SE boilerplate files like the imprint.
+
+		INPUTS
+		None
+
+		OUTPUTS
+		None.
+		"""
+		text = ""
+
+		for filename in se.get_target_filenames([self.directory], (".xhtml"), True):
+			with open(filename, "r", encoding="utf-8") as file:
+				text += " " + file.read()
+
+		self._metadata_xhtml = regex.sub(r"<meta property=\"se:reading-ease\.flesch\">[^<]*</meta>", "<meta property=\"se:reading-ease.flesch\">{}</meta>".format(se.formatting.get_flesch_reading_ease(text)), self._metadata_xhtml)
+
+		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "w", encoding="utf-8") as file:
+			file.seek(0)
+			file.write(self._metadata_xhtml)
+			file.truncate()
+
+	def update_word_count(self) -> None:
+		"""
+		Calculate a new word count for this ebook and update the metadata file.
+		Ignores SE boilerplate files like the imprint, as well as any endnotes.
+
+		INPUTS
+		None
+
+		OUTPUTS
+		None.
+		"""
+		word_count = 0
+
+		for filename in se.get_target_filenames([self.directory], (".xhtml"), True):
+			if filename.endswith("endnotes.xhtml"):
+				continue
+
+			with open(filename, "r", encoding="utf-8") as file:
+				word_count += se.formatting.get_word_count(file.read())
+
+		self._metadata_xhtml = regex.sub(r"<meta property=\"se:word-count\">[^<]*</meta>", "<meta property=\"se:word-count\">{}</meta>".format(word_count), self._metadata_xhtml)
+
+		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
+			file.seek(0)
+			file.write(self._metadata_xhtml)
+			file.truncate()
 
 	def generate_manifest(self) -> str:
 		"""
@@ -567,12 +875,11 @@ class SeEpub:
 		"""
 
 		messages = []
-
-		license_file_path = os.path.join(self.__tools_root_directory, "templates", "LICENSE.md")
-		gitignore_file_path = os.path.join(self.__tools_root_directory, "templates", "gitignore")
-		core_css_file_path = os.path.join(self.__tools_root_directory, "templates", "core.css")
-		logo_svg_file_path = os.path.join(self.__tools_root_directory, "templates", "logo.svg")
-		uncopyright_file_path = os.path.join(self.__tools_root_directory, "templates", "uncopyright.xhtml")
+		license_file_path = resource_filename("se", os.path.join("data", "templates", "LICENSE.md"))
+		gitignore_file_path = resource_filename("se", os.path.join("data", "templates", "gitignore"))
+		core_css_file_path = resource_filename("se", os.path.join("data", "templates", "core.css"))
+		logo_svg_file_path = resource_filename("se", os.path.join("data", "templates", "logo.svg"))
+		uncopyright_file_path = resource_filename("se", os.path.join("data", "templates", "uncopyright.xhtml"))
 		has_halftitle = False
 		has_frontmatter = False
 		has_cover_source = False
@@ -582,7 +889,7 @@ class SeEpub:
 		headings = []
 
 		# Get the ebook language, for later use
-		language = regex.search(r"<dc:language>([^>]+?)</dc:language>", self.__metadata_xhtml).group(1)
+		language = regex.search(r"<dc:language>([^>]+?)</dc:language>", self._metadata_xhtml).group(1)
 
 		# Check local.css for various items, for later use
 		abbr_elements = []
@@ -603,11 +910,11 @@ class SeEpub:
 			messages.append(LintMessage("Illegal ./dist/ folder. Do not commit compiled versions of the source.", se.MESSAGE_TYPE_ERROR, "./dist/"))
 
 		# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
-		if regex.search(r"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", self.__metadata_xhtml.replace("\"&gt;", "").replace("=\"", "")) is not None:
+		if regex.search(r"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", self._metadata_xhtml.replace("\"&gt;", "").replace("=\"", "")) is not None:
 			messages.append(LintMessage("Non-typogrified \", ', or -- detected in metadata long description", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for malformed long description HTML
-		long_description = regex.findall(r"<meta id=\"long-description\".+?>(.+?)</meta>", self.__metadata_xhtml, flags=regex.DOTALL)
+		long_description = regex.findall(r"<meta id=\"long-description\".+?>(.+?)</meta>", self._metadata_xhtml, flags=regex.DOTALL)
 		if long_description:
 			long_description = "<?xml version=\"1.0\"?><html xmlns=\"http://www.w3.org/1999/xhtml\">" + html.unescape(long_description[0]) + "</html>"
 			try:
@@ -617,47 +924,47 @@ class SeEpub:
 
 		# Check for double spacing
 		regex_string = r"[{}{} ]{{2,}}".format(se.NO_BREAK_SPACE, se.HAIR_SPACE)
-		matches = regex.findall(regex_string, self.__metadata_xhtml)
+		matches = regex.findall(regex_string, self._metadata_xhtml)
 		if matches:
 			messages.append(LintMessage("Double spacing detected in file. Sentences should be single-spaced.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
-		if regex.search(r"<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</dc:description>", self.__metadata_xhtml) is not None:
+		if regex.search(r"<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</dc:description>", self._metadata_xhtml) is not None:
 			messages.append(LintMessage("Non-typogrified \", ', or -- detected in metadata dc:description.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
-		matches = regex.findall(r"[a-zA-Z][”][,.]", self.__metadata_xhtml)
+		matches = regex.findall(r"[a-zA-Z][”][,.]", self._metadata_xhtml)
 		if matches:
 			messages.append(LintMessage("Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, "content.opf"))
 
 		# Make sure long-description is escaped HTML
-		if "<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">\n\t\t\t&lt;p&gt;" not in self.__metadata_xhtml:
+		if "<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">\n\t\t\t&lt;p&gt;" not in self._metadata_xhtml:
 			messages.append(LintMessage("Long description must be escaped HTML.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for HTML entities in long-description, but allow &amp;amp;
-		if regex.search(r"&amp;[a-z]+?;", self.__metadata_xhtml.replace("&amp;amp;", "")):
+		if regex.search(r"&amp;[a-z]+?;", self._metadata_xhtml.replace("&amp;amp;", "")):
 			messages.append(LintMessage("HTML entites detected in metadata. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for illegal em-dashes in <dc:subject>
-		if regex.search(r"<dc:subject id=\"[^\"]+?\">[^<]+?—[^<]+?</dc:subject>", self.__metadata_xhtml) is not None:
+		if regex.search(r"<dc:subject id=\"[^\"]+?\">[^<]+?—[^<]+?</dc:subject>", self._metadata_xhtml) is not None:
 			messages.append(LintMessage("Illegal em-dash detected in dc:subject; use --", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for empty production notes
-		if "<meta property=\"se:production-notes\">Any special notes about the production of this ebook for future editors/producers? Remove this element if not.</meta>" in self.__metadata_xhtml:
+		if "<meta property=\"se:production-notes\">Any special notes about the production of this ebook for future editors/producers? Remove this element if not.</meta>" in self._metadata_xhtml:
 			messages.append(LintMessage("Empty production-notes element in metadata.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for illegal VCS URLs
-		matches = regex.findall(r"<meta property=\"se:url\.vcs\.github\">([^<]+?)</meta>", self.__metadata_xhtml)
+		matches = regex.findall(r"<meta property=\"se:url\.vcs\.github\">([^<]+?)</meta>", self._metadata_xhtml)
 		if matches:
 			for match in matches:
 				if not match.startswith("https://github.com/standardebooks/"):
 					messages.append(LintMessage("Illegal se:url.vcs.github. VCS URLs must begin with https://github.com/standardebooks/: {}".format(match), se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for HathiTrust scan URLs instead of actual record URLs
-		if "babel.hathitrust.org" in self.__metadata_xhtml or "hdl.handle.net" in self.__metadata_xhtml:
+		if "babel.hathitrust.org" in self._metadata_xhtml or "hdl.handle.net" in self._metadata_xhtml:
 			messages.append(LintMessage("Use HathiTrust record URLs, not page scan URLs, in metadata, imprint, and colophon. Record URLs look like: https://catalog.hathitrust.org/Record/<RECORD-ID>", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for illegal se:subject tags
-		matches = regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", self.__metadata_xhtml)
+		matches = regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", self._metadata_xhtml)
 		if matches:
 			for match in matches:
 				if match not in se.SE_GENRES:
@@ -666,23 +973,23 @@ class SeEpub:
 			messages.append(LintMessage("No se:subject <meta> tag found.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check for CDATA tags
-		if "<![CDATA[" in self.__metadata_xhtml:
+		if "<![CDATA[" in self._metadata_xhtml:
 			messages.append(LintMessage("<![CDATA[ detected. Run `clean` to canonicalize <![CDATA[ sections.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check that our provided identifier matches the generated identifier
-		identifier = regex.sub(r"<.+?>", "", regex.findall(r"<dc:identifier id=\"uid\">.+?</dc:identifier>", self.__metadata_xhtml)[0])
+		identifier = regex.sub(r"<.+?>", "", regex.findall(r"<dc:identifier id=\"uid\">.+?</dc:identifier>", self._metadata_xhtml)[0])
 		if identifier != self.generated_identifier:
 			messages.append(LintMessage("<dc:identifier> does not match expected: {}".format(self.generated_identifier), se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check that the GitHub repo URL is as expected
-		if self.generated_github_repo_url not in self.__metadata_xhtml:
+		if self.generated_github_repo_url not in self._metadata_xhtml:
 			messages.append(LintMessage("GitHub repo URL does not match expected: {}".format(self.generated_github_repo_url), se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Check if se:name.person.full-name matches their titlepage name
-		matches = regex.findall(r"<meta property=\"se:name\.person\.full-name\" refines=\"#([^\"]+?)\">([^<]*?)</meta>", self.__metadata_xhtml)
+		matches = regex.findall(r"<meta property=\"se:name\.person\.full-name\" refines=\"#([^\"]+?)\">([^<]*?)</meta>", self._metadata_xhtml)
 		duplicate_names = []
 		for match in matches:
-			name_matches = regex.findall(r"<([a-z:]+)[^<]+?id=\"{}\"[^<]*?>([^<]*?)</\1>".format(match[0]), self.__metadata_xhtml)
+			name_matches = regex.findall(r"<([a-z:]+)[^<]+?id=\"{}\"[^<]*?>([^<]*?)</\1>".format(match[0]), self._metadata_xhtml)
 			for name_match in name_matches:
 				if name_match[1] == match[1]:
 					duplicate_names.append(name_match[1])
@@ -693,15 +1000,15 @@ class SeEpub:
 				messages.append(LintMessage(duplicate_name, se.MESSAGE_TYPE_ERROR, "", True))
 
 		# Check for malformed URLs
-		for message in self.__get_malformed_urls(self.__metadata_xhtml):
+		for message in self._get_malformed_urls(self._metadata_xhtml):
 			message.filename = "content.opf"
 			messages.append(message)
 
-		if regex.search(r"id\.loc\.gov/authorities/names/[^\.]+\.html", self.__metadata_xhtml):
+		if regex.search(r"id\.loc\.gov/authorities/names/[^\.]+\.html", self._metadata_xhtml):
 			messages.append(LintMessage("id.loc.gov URL ending with illegal .html", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 		# Does the manifest match the generated manifest?
-		for manifest in regex.findall(r"<manifest>.*?</manifest>", self.__metadata_xhtml, flags=regex.DOTALL):
+		for manifest in regex.findall(r"<manifest>.*?</manifest>", self._metadata_xhtml, flags=regex.DOTALL):
 			manifest = regex.sub(r"[\n\t]", "", manifest)
 			expected_manifest = regex.sub(r"[\n\t]", "", self.generate_manifest())
 
@@ -725,7 +1032,7 @@ class SeEpub:
 			messages.append(LintMessage("uncopyright.xhtml does not match {}".format(uncopyright_file_path), se.MESSAGE_TYPE_ERROR, "uncopyright.xhtml"))
 
 		# Check for unused selectors
-		unused_selectors = self.__get_unused_selectors()
+		unused_selectors = self._get_unused_selectors()
 		if unused_selectors:
 			messages.append(LintMessage("Unused CSS selectors:", se.MESSAGE_TYPE_ERROR, "local.css"))
 			for selector in unused_selectors:
@@ -895,7 +1202,7 @@ class SeEpub:
 								messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
 					if filename.endswith(".xhtml"):
-						for message in self.__get_malformed_urls(file_contents):
+						for message in self._get_malformed_urls(file_contents):
 							message.filename = filename
 							messages.append(message)
 
@@ -1304,7 +1611,7 @@ class SeEpub:
 						# Check for leftover asterisms
 						matches = regex.findall(r"\*\s*(\*\s*)+", file_contents)
 						if matches:
-							messages.append(LintMessage("Illegal asterism (***) detected. Section/scene breaks must be defined by an <hr/> tag.".format(matches), se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage("Illegal asterism (***) detected. Section/scene breaks must be defined by an <hr/> tag.", se.MESSAGE_TYPE_ERROR, filename))
 
 						# Check for space before endnote backlinks
 						if filename == "endnotes.xhtml":
@@ -1346,7 +1653,7 @@ class SeEpub:
 						# If we're in the imprint, are the sources represented correctly?
 						# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
 						if filename == "imprint.xhtml":
-							matches = regex.findall(r"<dc:source>([^<]+?)</dc:source>", self.__metadata_xhtml)
+							matches = regex.findall(r"<dc:source>([^<]+?)</dc:source>", self._metadata_xhtml)
 							if len(matches) <= 2:
 								for link in matches:
 									if "gutenberg.org" in link and "<a href=\"{}\">Project Gutenberg</a>".format(link) not in file_contents:
@@ -1389,19 +1696,19 @@ class SeEpub:
 									messages.append(LintMessage("The <figcaption> tag of {} doesn’t match the text in its LoI entry".format(figure_ref), se.MESSAGE_TYPE_WARNING, chapter_ref))
 
 					# Check for missing MARC relators
-					if filename == "introduction.xhtml" and ">aui<" not in self.__metadata_xhtml and ">win<" not in self.__metadata_xhtml:
+					if filename == "introduction.xhtml" and ">aui<" not in self._metadata_xhtml and ">win<" not in self._metadata_xhtml:
 						messages.append(LintMessage("introduction.xhtml found, but no MARC relator 'aui' (Author of introduction, but not the chief author) or 'win' (Writer of introduction)", se.MESSAGE_TYPE_WARNING, filename))
 
-					if filename == "preface.xhtml" and ">wpr<" not in self.__metadata_xhtml:
+					if filename == "preface.xhtml" and ">wpr<" not in self._metadata_xhtml:
 						messages.append(LintMessage("preface.xhtml found, but no MARC relator 'wpr' (Writer of preface)", se.MESSAGE_TYPE_WARNING, filename))
 
-					if filename == "afterword.xhtml" and ">aft<" not in self.__metadata_xhtml:
+					if filename == "afterword.xhtml" and ">aft<" not in self._metadata_xhtml:
 						messages.append(LintMessage("afterword.xhtml found, but no MARC relator 'aft' (Author of colophon, afterword, etc.)", se.MESSAGE_TYPE_WARNING, filename))
 
-					if filename == "endnotes.xhtml" and ">ann<" not in self.__metadata_xhtml:
+					if filename == "endnotes.xhtml" and ">ann<" not in self._metadata_xhtml:
 						messages.append(LintMessage("endnotes.xhtml found, but no MARC relator 'ann' (Annotator)", se.MESSAGE_TYPE_WARNING, filename))
 
-					if filename == "loi.xhtml" and ">ill<" not in self.__metadata_xhtml:
+					if filename == "loi.xhtml" and ">ill<" not in self._metadata_xhtml:
 						messages.append(LintMessage("loi.xhtml found, but no MARC relator 'ill' (Illustrator)", se.MESSAGE_TYPE_WARNING, filename))
 
 					if filename == "colophon.xhtml" and "<a class=\"raw-url\" href=\"{}\">{}</a>".format(self.generated_identifier.replace("url:", ""), self.generated_identifier.replace("url:https://", "")) not in file_contents:

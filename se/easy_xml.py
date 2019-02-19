@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
+"""
+Defines the EasyXmlTree class, which is a convenience wrapper around etree.
+The class exposes some helpful functions like css_select() and xpath().
+"""
 
-import se
-from lxml import etree, cssselect
 import regex
+from lxml import etree, cssselect
+import se
 
 
 class EasyXmlTree:
@@ -11,15 +15,15 @@ class EasyXmlTree:
 	Represents an entire lxml tree.
 	"""
 
-	__xhtml_string = ""
+	_xhtml_string = ""
 	etree = None
 
 	def __init__(self, xhtml_string: str):
 		# We have to remove the default namespace declaration from our document, otherwise
 		# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 
-		self.__xhtml_string = xhtml_string#.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
-		self.etree = etree.fromstring(str.encode(self.__xhtml_string))
+		self._xhtml_string = xhtml_string#.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
+		self.etree = etree.fromstring(str.encode(self._xhtml_string))
 
 	def css_select(self, selector: str) -> list:
 		"""

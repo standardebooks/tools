@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
 
+import sys
 import argparse
-import os
 import se
 from se.se_epub import SeEpub
 
 
-def main():
+def main() -> int:
 	parser = argparse.ArgumentParser(description="Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output.")
 	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
 	try:
-		se_epub = SeEpub(args.directory, os.path.dirname(os.path.realpath(__file__)))
+		se_epub = SeEpub(args.directory)
 		print(se_epub.recompose())
-	except (OSError, se.SeError) as ex:
+	except se.SeException as ex:
 		se.print_error(ex)
-		exit(1)
+		return ex.code
+
+	return 0
 
 
 if __name__ == "__main__":
-	main()
+	sys.exit(main())

@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
+"""
+Defines various package-level constants and helper functions.
+"""
 
 import sys
 import os
+import argparse
 from typing import Union
 from textwrap import wrap
 from termcolor import colored
@@ -55,13 +59,45 @@ TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN = 80 # Space between last contributor li
 LEAGUE_SPARTAN_KERNING = 5 # In px
 LEAGUE_SPARTAN_AVERAGE_SPACING = 7 # Guess at average default spacing between letters, in px
 LEAGUE_SPARTAN_100_WIDTHS = {" ": 40.0, "A": 98.245, "B": 68.1875, "C": 83.97625, "D": 76.60875, "E": 55.205, "F": 55.79, "G": 91.57875, "H": 75.0875, "I": 21.98875, "J": 52.631254, "K": 87.83625, "L": 55.205, "M": 106.9, "N": 82.5725, "O": 97.1925, "P": 68.1875, "Q": 98.83, "R": 79.41599, "S": 72.63125, "T": 67.83625, "U": 75.32125, "V": 98.245, "W": 134.62, "X": 101.28625, "Y": 93.1, "Z": 86.19875, ".": 26.78375, ",": 26.78375, "/": 66.08125, "\\": 66.08125, "-": 37.66125, ":": 26.78375, ";": 26.78375, "’": 24.3275, "!": 26.78375, "?": 64.3275, "&": 101.87125, "0": 78.48, "1": 37.895, "2": 75.205, "3": 72.04625, "4": 79.29875, "5": 70.175, "6": 74.26875, "7": 76.95875, "8": 72.16375, "9": 74.26875}
+NOVELLA_MIN_WORD_COUNT = 17500
+NOVEL_MIN_WORD_COUNT = 40000
 
-class SeError(Exception):
+class SeException(Exception):
 	"""
 	Wrapper class for SE exceptions
 	"""
 
-	pass
+	code = 0
+
+class InvalidXhtmlException(SeException):
+	code = 1
+
+class InvalidEncodingException(SeException):
+	code = 2
+
+class MissingDependencyException(SeException):
+	code = 3
+
+class InvalidInputException(SeException):
+	code = 4
+
+class FileExistsException(SeException):
+	code = 5
+
+class InvalidFileException(SeException):
+	code = 6
+
+class InvalidLanguageException(SeException):
+	code = 7
+
+class InvalidSeEbookException(SeException):
+	code = 8
+
+class FirefoxRunningException(SeException):
+	code = 9
+
+class RemoteCommandErrorException(SeException):
+	code = 10
 
 def natural_sort(list_to_sort: list) -> list:
 	"""
@@ -142,7 +178,6 @@ def print_warning(message: str, verbose: bool = False) -> None:
 	print("{}{} {}".format(MESSAGE_INDENT if verbose else "", colored("Warning:", "yellow", attrs=["reverse"]), message))
 
 def print_table(table_data: list, wrap_column: bool = None) -> None:
-
 	"""
 	Helper function to print a table to the console.
 
@@ -166,3 +201,54 @@ def print_table(table_data: list, wrap_column: bool = None) -> None:
 			row[wrap_column] = '\n'.join(wrap(row[wrap_column], max_width))
 
 	print(table.table)
+
+def is_positive_integer(value: str) -> int:
+	"""
+	Helper function for argparse.
+	Raise an exception if value is not a positive integer.
+	"""
+
+	int_value = int(value)
+	if int_value <= 0:
+		raise argparse.ArgumentTypeError("{} is not a positive integer".format(value))
+
+	return int_value
+
+def get_target_filenames(targets: list, allowed_extensions: tuple, ignore_se_files: bool = True) -> set:
+	"""
+	Helper function to convert a list of filenames or directories into a list of filenames based on some parameters.
+
+	INPUTS
+	targets: A list of filenames or directories
+	allowed_extensions: A tuple containing a series of allowed filename extensions; extensions must begin with "."
+	ignore_se_files: If True, do not return filenames that are in the se.IGNORED_FILENAMES constant
+
+	OUTPUTS
+	None
+	"""
+
+	target_xhtml_filenames = set()
+
+	for target in targets:
+		target = os.path.abspath(target)
+
+		if os.path.isdir(target):
+			for root, _, filenames in os.walk(target):
+				for filename in filenames:
+					if allowed_extensions:
+						if filename.endswith(allowed_extensions):
+							if ignore_se_files:
+								if filename not in IGNORED_FILENAMES:
+									target_xhtml_filenames.add(os.path.join(root, filename))
+							else:
+								target_xhtml_filenames.add(os.path.join(root, filename))
+					else:
+						if ignore_se_files:
+							if filename not in IGNORED_FILENAMES:
+								target_xhtml_filenames.add(os.path.join(root, filename))
+						else:
+							target_xhtml_filenames.add(os.path.join(root, filename))
+		else:
+			target_xhtml_filenames.add(target)
+
+	return target_xhtml_filenames

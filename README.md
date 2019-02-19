@@ -124,10 +124,6 @@ Help and pull requests are welcomed!
 
 	Make a string URL-safe.
 
--	### `mathml2png`
-
-	Convert a fragment of MathML into a transparent PNG. Output is saved to the specified filename.
-
 -	### `modernize-spelling`
 
 	Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace ```ash-tray``` with ```ashtray```.

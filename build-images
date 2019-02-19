@@ -1,164 +1,48 @@
 #!/usr/bin/env python3
 
+import sys
 import argparse
 import os
-import errno
-import base64
-import fnmatch
-import shutil
-import subprocess
-import regex
 import se
+from se.se_epub import SeEpub
 
 
-def clean_inkscape_svg(filename: str, clean_path: str):
-	with open(filename, "r+") as file:
-		svg = file.read()
-
-		# Time to clean up Inkscape's mess
-		svg = regex.sub(r"id=\"[^\"]+?\"", "", svg)
-		svg = regex.sub(r"<metadata[^>]*?>.*?</metadata>", "", svg, flags=regex.DOTALL)
-		svg = regex.sub(r"<defs[^>]*?/>", "", svg)
-		svg = regex.sub(r"xmlns:(dc|cc|rdf)=\"[^\"]*?\"", "", svg)
-
-		# Inkscape includes CSS even though we've removed font information
-		svg = regex.sub(r" style=\".*?\"", "", svg)
-
-		file.seek(0)
-		file.write(svg)
-		file.truncate()
-
-	subprocess.run([clean_path, filename])
-
-def remove_metadata(filename: str, exiftool_path: str):
-	# After lots of research there just isn't a good way to reliably edit exif metadata in pure Python.
-	# So unfortunately we're stuck with this dependency on `exiftool`.
-	subprocess.run([exiftool_path, "-overwrite_original", "-all=", filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-def main():
+def main() -> int:
 	parser = argparse.ArgumentParser(description="Build ebook covers and titlepages for a Standard Ebook source directory, and place the output in DIRECTORY/src/epub/images/.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
-	# Check for required utilities
-	clean_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "clean")
-	inkscape_path = shutil.which("inkscape")
-	exiftool_path = shutil.which("exiftool")
-
-	if inkscape_path is None:
-		se.print_error("Couldn’t locate Inkscape. Is it installed?")
-		exit(1)
-
-	if exiftool_path is None:
-		se.print_error("Couldn’t locate exiftool. Is it installed?")
-		exit(1)
-
 	for directory in args.directories:
-		directory = os.path.abspath(directory)
-
 		if args.verbose:
 			print("Processing {} ...".format(directory))
 
-		if not os.path.isdir(directory):
-			if args.verbose:
-				print("\t", end="", flush=True)
+		directory = os.path.abspath(directory)
 
-			se.print_error("Not a directory: {}".format(directory))
-			exit(1)
-
-		source_images_directory = os.path.join(directory, "images")
-		source_cover_jpg_filename = os.path.join(source_images_directory, "cover.jpg")
-		source_cover_svg_filename = os.path.join(source_images_directory, "cover.svg")
-		source_titlepage_svg_filename = os.path.join(source_images_directory, "titlepage.svg")
-		dest_images_directory = os.path.join(directory, "src", "epub", "images")
-		dest_cover_svg_filename = os.path.join(dest_images_directory, "cover.svg")
-		dest_titlepage_svg_filename = os.path.join(dest_images_directory, "titlepage.svg")
+		se_epub = SeEpub(directory)
 
 		try:
-			os.makedirs(dest_images_directory)
-		except OSError as exception:
-			if exception.errno != errno.EEXIST:
-				if args.verbose:
-					print("\t", end="", flush=True)
-
-				se.print_error("Couldn’t create directory: {}".format(dest_images_directory))
-				exit(1)
-
-		# Remove useless metadata from jpg files
-		for root, _, filenames in os.walk(source_images_directory):
-			for filename in fnmatch.filter(filenames, "cover.source.*"):
-				remove_metadata(os.path.join(root, filename), exiftool_path)
-
-		# Build cover.svg
-		if os.path.isfile(source_cover_jpg_filename):
-			remove_metadata(source_cover_jpg_filename, exiftool_path)
-
-			if os.path.isfile(source_cover_svg_filename):
-				if args.verbose:
-					print("\tBuilding cover.svg ...", end="", flush=True)
-
-				# base64 encode cover.jpg
-				with open(source_cover_jpg_filename, "rb") as file:
-					source_cover_jpg_base64 = base64.b64encode(file.read()).decode()
-
-				# Convert text to paths
-				# Inkscape adds a ton of crap to the SVG and we clean that crap a little later
-				subprocess.run([inkscape_path, source_cover_svg_filename, "--without-gui", "--export-text-to-path", "--export-plain-svg", dest_cover_svg_filename])
-
-				# Embed cover.jpg
-				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
-					svg = regex.sub(r"xlink:href=\".*?cover\.jpg", "xlink:href=\"data:image/jpeg;base64," + source_cover_jpg_base64, file.read(), flags=regex.DOTALL)
-
-					file.seek(0)
-					file.write(svg)
-					file.truncate()
-
-				clean_inkscape_svg(dest_cover_svg_filename, clean_path)
-
-				# For the cover we want to keep the path.title-box style, and add an additional
-				# style to color our new paths white
-				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
-					svg = regex.sub(r"<style.+?</style>", "<style type=\"text/css\">\n\t\tpath{\n\t\t\tfill: #fff;\n\t\t}\n\n\t\t.title-box{\n\t\t\tfill: #000;\n\t\t\tfill-opacity: .75;\n\t\t}\n\t</style>", file.read(), flags=regex.DOTALL)
-
-					file.seek(0)
-					file.write(svg)
-					file.truncate()
-
-				if args.verbose:
-					print(" OK")
-			else:
-				if args.verbose:
-					print("\t./images/cover.svg not found, skipping ...")
-		else:
 			if args.verbose:
-				print("\t./images/cover.jpg not found, skipping ...")
+				print("\tBuilding cover.svg ...", end="", flush=True)
 
-		# Build titlepage.svg
-		if os.path.isfile(source_titlepage_svg_filename):
-			if args.verbose:
-				print("\tBuilding titlepage.svg ...", end="", flush=True)
-
-			# Convert text to paths
-			# inkscape adds a ton of crap to the SVG and we clean that crap a little later
-			subprocess.run([inkscape_path, source_titlepage_svg_filename, "--without-gui", "--export-text-to-path", "--export-plain-svg", dest_titlepage_svg_filename])
-
-			clean_inkscape_svg(dest_titlepage_svg_filename, clean_path)
-
-			# For the titlepage we want to remove all styles, since they are not used anymore
-			with open(dest_titlepage_svg_filename, "r+", encoding="utf-8") as file:
-				svg = regex.sub(r"<style.+?</style>[\n\t]+", "", file.read(), flags=regex.DOTALL)
-
-				file.seek(0)
-				file.write(svg)
-				file.truncate()
+			se_epub.generate_cover_svg()
 
 			if args.verbose:
 				print(" OK")
-		else:
+
 			if args.verbose:
-				print("\t./images/titlepage.svg not found, skipping ...")
+				print("\tBuilding titlepage.svg ...", end="", flush=True)
+
+			se_epub.generate_titlepage_svg()
+
+			if args.verbose:
+				print(" OK")
+		except se.SeException as ex:
+			se.print_error(ex)
+			return ex.code
+
+	return 0
 
 
 if __name__ == "__main__":
-	main()
+	sys.exit(main())
