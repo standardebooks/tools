@@ -2,29 +2,37 @@
 
 A collection of tools Standard Ebooks uses to produce its ebooks, including basic setup of ebooks, text processing, and build tools.
 
+Installing this toolset using `pip` makes the `se` command line executable available. Its various commands are described below, or you can use `se help` to list them.
+
 # Installation
 
 ## Ubuntu 18.04 (Bionic) users
 
 ```shell
-# Install some pre-flight dependencies
-# lxml requires the following packages for its pip build process: python3-dev libxml2-dev libxslt1-dev zlib1g-dev
-sudo apt install -y python3-pip python3-dev libxml2-dev libxslt1-dev zlib1g-dev libxml2-utils librsvg2-bin libssl-dev libimage-exiftool-perl imagemagick epubcheck default-jre inkscape calibre curl git
+# Install some pre-flight dependencies.
+sudo apt install -y python3-pip libxml2-utils librsvg2-bin libimage-exiftool-perl imagemagick epubcheck default-jre inkscape calibre curl git
 
-# Clone the tools repo
-git clone https://github.com/standardebooks/tools.git
-
-# Install required fonts
+# Install required fonts.
 mkdir -p ~/.local/share/fonts/
 curl -s -o ~/.local/share/fonts/LeagueSpartan-Bold.otf "https://raw.githubusercontent.com/theleagueof/league-spartan/master/LeagueSpartan-Bold.otf"
 curl -s -o ~/.local/share/fonts/OFLGoudyStM.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM.otf"
 curl -s -o ~/.local/share/fonts/OFLGoudyStM-Italic.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM-Italic.otf"
 
-# Refresh the local font cache
+# Refresh the local font cache.
 sudo fc-cache -fv
 
-# Install python dependencies
-pip3 install -r ./tools/requirements.txt
+# Install the toolset.
+pip3 install standardebooks
+
+# Either link the `se` executable to a place that's in your path...
+sudo ln -s $HOME/.local/bin/se /usr/local/bin/se
+
+# ...or, add pip's binary location (~/.local/bin) to your $PATH to be able to access the `se` command.
+# To make this permanent, add ~/.local/bin to your $PATH in ~/.bashrc or ~/.zshrc
+export PATH=$PATH:~/.local/bin
+
+# Optional: ZSH users can install tab completion.
+sudo ln -s $HOME/.local/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf
 ```
 
 ## macOS users
@@ -33,146 +41,154 @@ These instructions were tested on macOS 10.12 and 10.13. Your mileage may vary. 
 
 1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it’s up to date:
 
-    ```shell
-    brew update
-    ```
+	```shell
+	brew update
+	```
 
 2. Install dependencies:
 
 	```shell
-	# Install some pre-flight dependencies
+	# Install some pre-flight dependencies.
 	brew install python epubcheck imagemagick libmagic librsvg exiftool git
+	pip3 install pyopenssl
 
-	# Clone the tools repo
-	git clone https://github.com/standardebooks/tools.git
-
-	# Install required applications
+	# Install required applications.
 	brew cask install java calibre xquartz inkscape
 
-	# Install required fonts
+	# Install required fonts.
 	curl -s -o ~/Library/Fonts/LeagueSpartan-Bold.otf "https://raw.githubusercontent.com/theleagueof/league-spartan/master/LeagueSpartan-Bold.otf"
 	curl -s -o ~/Library/Fonts/OFLGoudyStM.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM.otf"
 	curl -s -o ~/Library/Fonts/OFLGoudyStM-Italic.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM-Italic.otf"
 
-	# Install python dependencies
-	pip3 install -r ./tools/requirements.txt
+	# Install the toolset.
+	pip3 install standardebooks
 	```
 
-# TODO
+# Help wanted
 
-Help and pull requests are welcomed!
+We need volunteers to take the lead on the following goals:
 
-- Move some legacy scripts like `hyphenate` into appropriate libraries/scripts.
+- Creating bash completions for the toolset. ZSH completions are done and can be used as a starting point.
 
-- Some tool functionality should be moved into the SeEpub class. Suggestions on how to better organize SE code into packages/classes are welcome.
+- Writing installation instructions for ZSH completions for MacOS.
+
+- Possibly adding virtualenv to the installation instructions.
 
 # Tool descriptions
 
--	### `british2american`
+-	### `se british2american`
 
 	Try to convert British quote style to American quote style in DIRECTORY/src/epub/text/.
 
-	Quotes must already be typogrified using the ```typogrify``` tool.
+	Quotes must already be typogrified using the `se typogrify` tool.
 
 	This script isn’t perfect; proofreading is required, especially near closing quotes near to em-dashes.
 
--	### `build`
+-	### `se build`
 
 	Build an ebook from a Standard Ebook source directory.
 
--	### `build-images`
+-	### `se build-images`
 
 	Build ebook cover and titlepage images in a Standard Ebook source directory and place the output in DIRECTORY/src/epub/images/.
 
--	### `clean`
+-	### `se clean`
 
 	Prettify and canonicalize individual XHTML or SVG files, or all XHTML and SVG files in a source directory.  Note that this only prettifies the source code; it doesn’t perform typography changes.
 
--	### `compare-versions`
+-	### `se compare-versions`
 
 	Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state.
 
--	### `create-draft`
+-	### `se create-draft`
 
 	Create a skeleton of a new Standard Ebook.
 
--	### `dec2roman`
+-	### `se dec2roman`
 
 	Convert a decimal number to a Roman numeral.
 
--	### `extract-ebook`
+-	### `se extract-ebook`
 
 	Extract an EPUB, MOBI, or AZW3 ebook into ./FILENAME.extracted/ or a target directory.
 
--	### `find-mismatched-diacritics`
+-	### `se find-mismatched-diacritics`
 
-	Find words with mismatched diacritics in Standard Ebook source directories.  For example, ```cafe``` in one file and ```café``` in another.
+	Find words with mismatched diacritics in Standard Ebook source directories.  For example, `cafe` in one file and `café` in another.
 
--	### `hyphenate`
+-	### `se help`
+
+	List available SE commands.
+
+-	### `se hyphenate`
 
 	Insert soft hyphens at syllable breaks in an XHTML file.
 
--	### `interactive-sr`
+-	### `se interactive-sr`
 
-	A macro for calling Vim to interactively search and replace a regex on a list of files.
+	Use Vim to perform an interactive search and replace on a list of files. Use y/n/a to confirm (y) or reject (n) a replacement, or to replace (a)ll.
 
--	### `lint`
+-	### `se lint`
 
 	Check for various Standard Ebooks style errors.
 
--	### `make-url-safe`
+-	### `se make-url-safe`
 
 	Make a string URL-safe.
 
--	### `modernize-spelling`
+-	### `se modernize-spelling`
 
-	Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace ```ash-tray``` with ```ashtray```.
+	Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace `ash-tray` with `ashtray`.
 
--	### `prepare-release`
+-	### `se prepare-release`
 
 	Calculate work word count, insert release date if not yet set, and update modified date and revision number.
 
--	### `print-manifest-and-spine`
+-	### `se print-manifest-and-spine`
 
-	Create a ```<manifest>``` and ```<spine>``` tag for content.opf based on the passed Standard Ebooks source directory and print to standard output.
+	Print `<manifest>` and `<spine>` tags to standard output for the given Standard Ebooks source directory, for use in that directory’s content.opf..
 
--	### `reading-ease`
+-	### `se reading-ease`
 
 	Calculate the Flesch reading ease for a Standard Ebooks source directory.
 
--	### `recompose-epub`
+-	### `se recompose-epub`
 
 	Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output.
 
--	### `reorder-endnotes`
+-	### `se reorder-endnotes`
 
 	Increment the specified endnote and all following endnotes by 1.
 
--	### `roman2dec`
+-	### `se roman2dec`
 
 	Convert a Roman numeral to a decimal number.
 
--	### `semanticate`
+-	### `se semanticate`
 
 	Apply some scriptable semantics rules from the Standard Ebooks semantics manual to a Standard Ebook source directory.
 
--	### `split-file`
+-	### `se split-file`
 
 	Split an XHTML file into many files at all instances of `<!--se:split-->`, and include a header template for each file.
 
--	### `titlecase`
+-	### `se titlecase`
 
 	Convert a string to titlecase.
 
--	### `typogrify`
+-	### `se typogrify`
 
 	Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory.
 
--	### `unicode-names`
+-	### `se unicode-names`
 
 	Display Unicode code points, descriptions, and links to more details for each character in a string.  Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.
 
--	### `word-count`
+-	### `se version`
+
+	Print the version number and exit.
+
+-	### `se word-count`
 
 	Count the number of words in an HTML file and optionally categorize by length.
 

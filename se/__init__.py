@@ -13,6 +13,7 @@ import terminaltables
 import regex
 
 
+VERSION = "1.0.0"
 MESSAGE_INDENT = "    "
 UNICODE_BOM = "\ufeff"
 NO_BREAK_SPACE = "\u00a0"
@@ -69,35 +70,38 @@ class SeException(Exception):
 
 	code = 0
 
+# Note that we skip error codes 1 and 2 as they have special meanings:
+# http://www.tldp.org/LDP/abs/html/exitcodes.html
+
 class InvalidXhtmlException(SeException):
-	code = 1
-
-class InvalidEncodingException(SeException):
-	code = 2
-
-class MissingDependencyException(SeException):
 	code = 3
 
-class InvalidInputException(SeException):
+class InvalidEncodingException(SeException):
 	code = 4
 
-class FileExistsException(SeException):
+class MissingDependencyException(SeException):
 	code = 5
 
-class InvalidFileException(SeException):
+class InvalidInputException(SeException):
 	code = 6
 
-class InvalidLanguageException(SeException):
+class FileExistsException(SeException):
 	code = 7
 
-class InvalidSeEbookException(SeException):
+class InvalidFileException(SeException):
 	code = 8
 
-class FirefoxRunningException(SeException):
+class InvalidLanguageException(SeException):
 	code = 9
 
-class RemoteCommandErrorException(SeException):
+class InvalidSeEbookException(SeException):
 	code = 10
+
+class FirefoxRunningException(SeException):
+	code = 11
+
+class RemoteCommandErrorException(SeException):
+	code = 12
 
 def natural_sort(list_to_sort: list) -> list:
 	"""

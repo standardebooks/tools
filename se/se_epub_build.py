@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
+"""
+This module contains the build function.
+
+It *could* be inlined in executables.py, but it's broken out into its own file for readability
+and maintainability.
+"""
 
 import sys
-import argparse
 import os
 import errno
 import shutil
@@ -33,17 +38,10 @@ COVER_THUMBNAIL_HEIGHT = COVER_SVG_HEIGHT / 4
 SVG_OUTER_STROKE_WIDTH = 2
 SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
 
-def main() -> int:
-	parser = argparse.ArgumentParser(description="Build compatible .epub and pure .epub3 ebooks from a Standard Ebook source directory.  Output is placed in the current directory, or the target directory with --output-dir.")
-	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("-o", "--output-dir", dest="output_directory", metavar="DIRECTORY", type=str, help="a directory to place output files in; will be created if it doesn’t exist")
-	parser.add_argument("-c", "--check", action="store_true", help="use epubcheck to validate the compatible .epub file; if --kindle is also specified and epubcheck fails, don’t create a Kindle file")
-	parser.add_argument("-k", "--kindle", dest="build_kindle", action="store_true", help="also build an .azw3 file for Kindle")
-	parser.add_argument("-b", "--kobo", dest="build_kobo", action="store_true", help="also build a .kepub.epub file for Kobo")
-	parser.add_argument("-t", "--covers", dest="build_covers", action="store_true", help="output the cover and a cover thumbnail")
-	parser.add_argument("-p", "--proof", action="store_true", help="insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof")
-	parser.add_argument("source_directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
-	args = parser.parse_args()
+def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers, verbose):
+	"""
+	Entry point for `se build`
+	"""
 
 	calibre_app_mac_path = "/Applications/calibre.app/Contents/MacOS/"
 	epubcheck_path = shutil.which("epubcheck")
@@ -57,70 +55,53 @@ def main() -> int:
 	mathml_xsl_filename = resource_filename("se", os.path.join("data", "mathmlcontent2presentation.xsl"))
 
 	# Check for some required tools
-	if args.check and epubcheck_path is None:
-		se.print_error("Couldn’t locate epubcheck. Is it installed?")
-		return se.MissingDependencyException.code
+	if run_epubcheck and epubcheck_path is None:
+		raise se.MissingDependencyException("Couldn’t locate epubcheck. Is it installed?")
 
 	if rsvg_convert_path is None:
-		se.print_error("Couldn’t locate rsvg-convert. Is librsvg2-bin installed?")
-		return se.MissingDependencyException.code
+		raise se.MissingDependencyException("Couldn’t locate rsvg-convert. Is librsvg2-bin installed?")
 
-	if args.build_kindle and ebook_convert_path is None:
-		se.print_error("Couldn’t locate ebook-convert. Is Calibre installed?")
-		return se.MissingDependencyException.code
+	if build_kindle and ebook_convert_path is None:
+		raise se.MissingDependencyException("Couldn’t locate ebook-convert. Is Calibre installed?")
 
-	if args.build_kindle and convert_path is None:
-		se.print_error("Couldn’t locate convert. Is Imagemagick installed?")
-		return se.MissingDependencyException.code
+	if build_kindle and convert_path is None:
+		raise se.MissingDependencyException("Couldn’t locate convert. Is Imagemagick installed?")
 
 	# Check the output directory and create it if it doesn't exist
-	if args.output_directory is None:
+	if output_directory is None:
 		output_directory = os.getcwd()
 	else:
-		output_directory = args.output_directory
+		output_directory = output_directory
 
 	output_directory = os.path.abspath(output_directory)
 
 	if os.path.exists(output_directory):
 		if not os.path.isdir(output_directory):
-			se.print_error("Not a directory: {}".format(output_directory))
-			return se.InvalidInputException.code
+			raise se.InvalidInputException("Not a directory: {}".format(output_directory))
 	else:
 		# Doesn't exist, try to create it
 		try:
 			os.makedirs(output_directory)
 		except OSError as exception:
 			if exception.errno != errno.EEXIST:
-				se.print_error("Couldn’t create output directory")
-				return se.FileExistsException.code
-
-	# Confirm source directory exists and is an SE source directory
-	if not os.path.exists(args.source_directory) or not os.path.isdir(args.source_directory):
-		se.print_error("Not a directory: {}".format(args.source_directory))
-		return se.InvalidInputException.code
-
-	source_directory = os.path.abspath(args.source_directory)
-
-	if not os.path.isdir(os.path.join(source_directory, "src")):
-		se.print_error("Doesn’t look like a Standard Ebooks source directory: {}".format(source_directory))
-		return se.InvalidSeEbookException.code
+				raise se.FileExistsException("Couldn’t create output directory")
 
 	# All clear to start building!
-	if args.verbose:
-		print("Building {} ...".format(source_directory))
+	if verbose:
+		print("Building {} ...".format(self.directory))
 
 	with tempfile.TemporaryDirectory() as work_directory:
 		work_epub_root_directory = os.path.join(work_directory, "src")
 
-		copy_tree(source_directory, work_directory)
+		copy_tree(self.directory, work_directory)
 		try:
 			shutil.rmtree(os.path.join(work_directory, ".git"))
 		except Exception:
 			pass
 
-		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "r", encoding="utf-8") as file:
-			metadata_xhtml = file.read()
-			metadata_tree = se.easy_xml.EasyXmlTree(metadata_xhtml)
+		# By convention the ASIN is set to the SHA-1 sum of the book's identifying URL
+		identifier = metadata_tree.xpath("//dc:identifier")[0].inner_html().replace("url:", "")
+		asin = sha1(identifier.encode("utf-8")).hexdigest()
 
 		title = metadata_tree.xpath("//dc:title")[0].inner_html()
 		url_title = se.formatting.make_url_safe(title)
@@ -131,13 +112,13 @@ def main() -> int:
 
 		url_author = url_author.rstrip("_")
 
-		epub_output_filename = "{}_{}{}.epub".format(url_author, url_title, ".proof" if args.proof else "")
-		epub3_output_filename = "{}_{}{}.epub3".format(url_author, url_title, ".proof" if args.proof else "")
-		kobo_output_filename = "{}_{}{}.kepub.epub".format(url_author, url_title, ".proof" if args.proof else "")
-		kindle_output_filename = "{}_{}{}.azw3".format(url_author, url_title, ".proof" if args.proof else "")
+		epub_output_filename = "{}_{}{}.epub".format(url_author, url_title, ".proof" if proof else "")
+		epub3_output_filename = "{}_{}{}.epub3".format(url_author, url_title, ".proof" if proof else "")
+		kobo_output_filename = "{}_{}{}.kepub.epub".format(url_author, url_title, ".proof" if proof else "")
+		kindle_output_filename = "{}_{}{}.azw3".format(url_author, url_title, ".proof" if proof else "")
 
 		# Clean up old output files if any
-		for kindle_thumbnail in glob.glob(os.path.join(output_directory, "thumbnail_*_EBOK_portrait.jpg")):
+		for kindle_thumbnail in glob.glob(os.path.join(output_directory, "thumbnail_{}_EBOK_portrait.jpg".format(asin))):
 			se.quiet_remove(kindle_thumbnail)
 		se.quiet_remove(os.path.join(output_directory, "cover.jpg"))
 		se.quiet_remove(os.path.join(output_directory, "cover-thumbnail.jpg"))
@@ -147,25 +128,25 @@ def main() -> int:
 		se.quiet_remove(os.path.join(output_directory, kindle_output_filename))
 
 		# Are we including proofreading CSS?
-		if args.proof:
+		if proof:
 			with open(os.path.join(work_epub_root_directory, "epub", "css", "local.css"), "a", encoding="utf-8") as local_css_file:
 				with open(resource_filename("se", os.path.join("data", "templates", "proofreading.css")), "r", encoding="utf-8") as proofreading_css_file:
 					local_css_file.write(proofreading_css_file.read())
 
 		# Output the pure epub3 file
-		if args.verbose:
+		if verbose:
 			print("\tBuilding {} ...".format(epub3_output_filename), end="", flush=True)
 
 		se.epub.write_epub(work_epub_root_directory, os.path.join(output_directory, epub3_output_filename))
 
-		if args.verbose:
+		if verbose:
 			print(" OK")
 
-		if args.build_kobo:
-			if args.verbose:
+		if build_kobo:
+			if verbose:
 				print("\tBuilding {} ...".format(kobo_output_filename), end="", flush=True)
 		else:
-			if args.verbose:
+			if verbose:
 				print("\tBuilding {} ...".format(epub_output_filename), end="", flush=True)
 
 		# Now add epub2 compatibility.
@@ -228,8 +209,7 @@ def main() -> int:
 					try:
 						tree = etree.fromstring(str.encode(xhtml))
 					except Exception as ex:
-						se.print_error("Error parsing XHTML file: {}\n{}".format(filename, ex), args.verbose)
-						return se.InvalidXhtmlException.code
+						raise se.InvalidXhtmlException("Error parsing XHTML file: {}\n{}".format(filename, ex))
 
 					# Now iterate over each CSS selector and see if it's used in any of the files we found
 					force_convert = False
@@ -324,7 +304,7 @@ def main() -> int:
 		subprocess.run([convert_path, "-format", "jpg", os.path.join(work_directory, 'cover.png'), os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg")])
 		os.remove(os.path.join(work_directory, 'cover.png'))
 
-		if args.build_covers:
+		if build_covers:
 			shutil.copy2(os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg"), os.path.join(output_directory, "cover.jpg"))
 			shutil.copy2(os.path.join(work_epub_root_directory, "epub", "images", "cover.svg"), os.path.join(output_directory, "cover-thumbnail.svg"))
 			subprocess.run([rsvg_convert_path, "--keep-aspect-ratio", "--format", "png", "--output", os.path.join(work_directory, 'cover-thumbnail.png'), os.path.join(output_directory, "cover-thumbnail.svg")])
@@ -510,7 +490,7 @@ def main() -> int:
 							file.write(processed_css)
 							file.truncate()
 
-		if args.build_kobo:
+		if build_kobo:
 			with tempfile.TemporaryDirectory() as kobo_work_directory:
 				copy_tree(work_epub_root_directory, kobo_work_directory)
 
@@ -548,8 +528,7 @@ def main() -> int:
 							try:
 								tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 							except Exception as ex:
-								se.print_error("Error parsing XHTML file: {}\n{}".format(filename, ex), args.verbose)
-								return se.InvalidXhtmlException.code
+								raise se.InvalidXhtmlException("Error parsing XHTML file: {}\n{}".format(filename, ex), verbose)
 
 							se.kobo.add_kobo_spans_to_node(tree.xpath("./body", namespaces=se.XHTML_NAMESPACES)[0])
 
@@ -565,7 +544,7 @@ def main() -> int:
 
 				se.epub.write_epub(kobo_work_directory, os.path.join(output_directory, kobo_output_filename))
 
-			if args.verbose:
+			if verbose:
 				print(" OK")
 				print("\tBuilding {} ...".format(epub_output_filename), end="", flush=True)
 
@@ -593,8 +572,7 @@ def main() -> int:
 		if has_mathml:
 			firefox_path = shutil.which("firefox")
 			if firefox_path is None:
-				se.print_error("firefox is required to process MathML, but firefox cound't be located. Is it installed?")
-				return se.MissingDependencyException.code
+				raise se.MissingDependencyException("firefox is required to process MathML, but firefox couldn't be located. Is it installed?")
 
 			mathml_count = 1
 			for root, _, filenames in os.walk(work_epub_root_directory):
@@ -640,11 +618,7 @@ def main() -> int:
 									# Did we succeed? Is there any more MathML in our string?
 									if regex.findall("</?(?:m:)?m", processed_line):
 										# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
-										try:
-											se.images.render_mathml_to_png(regex.sub(r"<(/?)m:", "<\\1", line), os.path.join(work_epub_root_directory, "epub", "images", "mathml-{}.png".format(mathml_count)))
-										except se.SeException as ex:
-											se.print_error(ex)
-											return ex.code
+										se.images.render_mathml_to_png(regex.sub(r"<(/?)m:", "<\\1", line), os.path.join(work_epub_root_directory, "epub", "images", "mathml-{}.png".format(mathml_count)))
 
 										processed_xhtml = processed_xhtml.replace(line, "<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{}.png\" />".format(mathml_count))
 										mathml_count = mathml_count + 1
@@ -718,20 +692,16 @@ def main() -> int:
 
 		# All done, clean the output
 		for filename in se.get_target_filenames([work_epub_root_directory], (".xhtml", ".svg", ".opf", ".ncx")):
-			try:
-				se.formatting.format_xhtml_file(filename, False, filename.endswith("content.opf"), filename.endswith("endnotes.xhtml"))
-			except se.SeException as ex:
-				se.print_error(ex, args.verbose)
-				return ex.code
+			se.formatting.format_xhtml_file(filename, False, filename.endswith("content.opf"), filename.endswith("endnotes.xhtml"))
 
 		# Write the compatible epub
 		se.epub.write_epub(work_epub_root_directory, os.path.join(output_directory, epub_output_filename))
 
-		if args.verbose:
+		if verbose:
 			print(" OK")
 
-		if args.check:
-			if args.verbose:
+		if run_epubcheck:
+			if verbose:
 				print("\tRunning epubcheck on {} ...".format(epub_output_filename), end="", flush=True)
 
 			output = subprocess.run([epubcheck_path, "--quiet", os.path.join(output_directory, epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
@@ -742,20 +712,19 @@ def main() -> int:
 				output = regex.sub(r"\s*SXWN9000: The parent axis starting at a document node will never select anything", "", output)
 
 			if output:
-				if args.verbose:
+				if verbose:
 					print("\n\t\t" + "\t\t".join(output.splitlines(True)), file=sys.stderr)
 				else:
 					print(output, file=sys.stderr)
-				return se.InvalidSeEbookException.code
+				return
 
-			if args.verbose:
+			if verbose:
 				print(" OK")
 
 
-		if args.build_kindle:
-			if args.verbose:
+		if build_kindle:
+			if verbose:
 				print("\tBuilding {} ...".format(kindle_output_filename), end="", flush=True)
-
 
 			# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
 			with open(os.path.join(work_epub_root_directory, "epub", toc_filename), "r+", encoding="utf-8") as file:
@@ -787,11 +756,7 @@ def main() -> int:
 
 			# Clean just the ToC and NCX
 			for filename in [os.path.join(work_epub_root_directory, "epub", "toc.ncx"), os.path.join(work_epub_root_directory, "epub", toc_filename)]:
-				try:
-					se.formatting.format_xhtml_file(filename, False)
-				except se.SeException as ex:
-					se.print_error(ex, args.verbose)
-					return ex.code
+				se.formatting.format_xhtml_file(filename, False)
 
 			# Convert endnotes to Kindle popup compatible notes
 			if os.path.isfile(os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml")):
@@ -803,8 +768,7 @@ def main() -> int:
 					try:
 						tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 					except Exception as ex:
-						se.print_error("Error parsing XHTML file: endnotes.xhtml\n{}".format(ex), args.verbose)
-						return se.InvalidXhtmlException.code
+						raise se.InvalidXhtmlException("Error parsing XHTML file: endnotes.xhtml\n{}".format(ex))
 
 					notes = tree.xpath("//li[@epub:type=\"rearnote\" or @epub:type=\"footnote\"]", namespaces=se.XHTML_NAMESPACES)
 
@@ -818,8 +782,7 @@ def main() -> int:
 						try:
 							ref_link = etree.tostring(note.xpath("p[last()]/a[last()]")[0], encoding="unicode", pretty_print=True, with_tail=False).replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "").strip()
 						except Exception:
-							se.print_error("Can’t find ref link for #{}".format(note_id))
-							return se.InvalidXhtmlException.code
+							raise se.InvalidXhtmlException("Can’t find ref link for #{}".format(note_id))
 
 						new_ref_link = regex.sub(r">.*?</a>", ">" + note_number + "</a>.", ref_link)
 
@@ -892,28 +855,20 @@ def main() -> int:
 
 			# Add soft hyphens
 			for filename in se.get_target_filenames([work_epub_root_directory], (".xhtml")):
-				try:
-					se.typography.hyphenate_file(filename, None, True)
-				except se.SeException as ex:
-					se.print_error(ex, args.verbose)
-					return ex.code
+				se.typography.hyphenate_file(filename, None, True)
 
 			# Build an epub file we can send to Calibre
 			se.epub.write_epub(work_epub_root_directory, os.path.join(work_directory, epub_output_filename))
 
-			# Generate the kindle file
+			# Generate the Kindle file
 			# We place it in the work directory because later we have to update the asin, and the se.mobi.update_asin() function will write to the final output directory
 			cover_path = os.path.join(work_epub_root_directory, "epub", metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@href")[0].replace(".svg", ".jpg"))
 			return_code = subprocess.run([ebook_convert_path, os.path.join(work_directory, epub_output_filename), os.path.join(work_directory, kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", "--cover={}".format(cover_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
 
 			if return_code:
-				print("{}Error: ebook-convert failed".format("\t" if args.verbose else ""), file=sys.stderr)
-				return se.InvalidSeEbookException.code
+				raise se.InvalidSeEbookException("ebook-convert failed")
 			else:
 				# Success, extract the Kindle cover thumbnail
-				# By convention the ASIN is set to the SHA-1 sum of the book's identifying URL
-				identifier = metadata_tree.xpath("//dc:identifier")[0].inner_html().replace("url:", "")
-				asin = sha1(identifier.encode("utf-8")).hexdigest()
 
 				# Update the ASIN in the generated file
 				se.mobi.update_asin(asin, os.path.join(work_directory, kindle_output_filename), os.path.join(output_directory, kindle_output_filename))
@@ -921,11 +876,5 @@ def main() -> int:
 				# Extract the thumbnail
 				subprocess.run([convert_path, os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg"), "-resize", "432x660", os.path.join(output_directory, "thumbnail_{}_EBOK_portrait.jpg".format(asin))], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-			if args.verbose:
+			if verbose:
 				print(" OK")
-
-	return 0
-
-
-if __name__ == "__main__":
-	sys.exit(main())

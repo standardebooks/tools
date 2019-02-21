@@ -1,0 +1,205 @@
+#compdef se
+
+local state line
+
+_arguments -C -A "-v" -A "--version" \
+	'(- 1 *)'{-v,--version}'[print version number and exit]' \
+	'1: :->cmds' \
+	'*:: :->args'
+
+case $state in
+	cmds)
+		_values "se command" \
+			"british2american[Try to convert British quote style to American quote style]" \
+			"build[Build an ebook from a Standard Ebook source directory]" \
+			"build-images[Build ebook cover and titlepage images in a Standard Ebook source directory]" \
+			"clean[Prettify and canonicalize individual XHTML or SVG files]" \
+			"compare-versions[Render and compare XHTML files in an ebook repository]" \
+			"create-draft[Create a skeleton of a new Standard Ebook]" \
+			"dec2roman[Convert a decimal number to a Roman numeral]" \
+			"extract-ebook[Extract an EPUB, MOBI, or AZW3 ebook]" \
+			"find-mismatched-diacritics[Find words with mismatched diacritics in Standard Ebook source directories]" \
+			"help[List available SE commands]" \
+			"hyphenate[Insert soft hyphens at syllable breaks in an XHTML file]" \
+			"interactive-sr[Use Vim to perform an interactive search and replace on a list of files]" \
+			"lint[Check for various Standard Ebooks style errors]" \
+			"make-url-safe[Make a string URL-safe]" \
+			"modernize-spelling[Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling]" \
+			"prepare-release[Calculate work word count, insert release date if not yet set, and update modified date and revision number]" \
+			"print-manifest-and-spine[Print <manifest> and <spine> tags to standard output for the given Standard Ebooks source directory]" \
+			"reading-ease[Calculate the Flesch reading ease for a Standard Ebooks source directory]" \
+			"recompose-epub[Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output]" \
+			"reorder-endnotes[Increment the specified endnote and all following endnotes by 1]" \
+			"roman2dec[Convert a Roman numeral to a decimal number]" \
+			"semanticate[Apply some scriptable semantics rules from the Standard Ebooks semantics manual]" \
+			"split-file[Split an XHTML file into many files]" \
+			"titlecase[Convert a string to titlecase]" \
+			"typogrify[Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory]" \
+			"unicode-names[Display Unicode code points, descriptions, and links to more details for each character in a string]" \
+			"version[Print the version number and exit]" \
+			"word-count[Count the number of words in an HTML file and optionally categorize by length]"
+		;;
+	args)
+		case $line[1] in
+			british2american)
+				_arguments -s \
+					{-f,--force}'[force conversion of quote style]' \
+					{-v,--verbose}'[increase output verbosity]' \
+					'*: :_files -g \*.xhtml'
+				;;
+			build)
+				_arguments -s \
+					{-b,--kobo}'[also build a .kepub.epub file for Kobo]' \
+					{-c,--check}'[use epubcheck to validate the compatible .epub file; if --kindle is also specified and epubcheck fails, don’t create a Kindle file]' \
+					{-k,--kindle}'[also build an .azw3 file for Kindle]' \
+					{-o,--output-dir}'=[a directory to place output files in; will be created if it doesn’t exist]: :_directories' \
+					{-p,--proof}'[insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof]' \
+					{-t,--covers}'[output the cover and a cover thumbnail]' \
+					{-v,--verbose}'[increase output verbosity]' \
+					'*: :_directories'
+				;;
+			build-images)
+				_arguments -s \
+					{-v,--verbose}'[increase output verbosity]' \
+					'*: :_directories'
+				;;
+			clean)
+				_arguments -s \
+					{-s,--single-lines}'[remove hard line wrapping]' \
+					{-v,--verbose}'[increase output verbosity]' \
+					'*: :_files -g \*.\(svg\|xhtml\)'
+				;;
+			compare-versions)
+				_arguments -s \
+					{-i,--include-common}'[include commonly-excluded SE files like imprint, titlepage, and colophon]' \
+					{-n,--no-images}'[don’t copy diff images to the current working directory in case of difference]' \
+					{-v,--verbose}'[increase output verbosity]' \
+					'*: :_directories'
+				;;
+			create-draft)
+				_arguments -s \
+					{-a,--author}'[the author of the ebook]' \
+					{-e,--email}'[use this email address as the main committer for the local Git repository]' \
+					{-g,--create-github-repo}'[initialize a new repository at the Standard Ebooks GitHub account; Standard Ebooks admin powers required; can only be used when --create-se-repo is specified]' \
+					{-i,--illustrator}'[the illustrator of the ebook]' \
+					{-p,--gutenberg-ebook-url}'[the URL of the Project Gutenberg ebook to download]' \
+					{-r,--translator}'[the translator of the ebook]' \
+					{-s,--create-se-repo}'[initialize a new repository on the Standard Ebook server; Standard Ebooks admin powers required]' \
+					{-t,--title}'[the title of the ebook]'
+				;;
+			dec2roman)
+				_arguments -s \
+					{-n,--no-newline}'[don’t end output with a newline]'
+				;;
+			extract-ebook)
+				_arguments -s \
+					{-o,--output-dir}'=[a directory to place output files in; will be created if it doesn’t exist]: :_directories' \
+					{-v,--verbose}'[increase output verbosity]' \
+					'*: :_files -g \*.\(mobi\|azw3\|epub\|epub3\)'
+				;;
+			find-mismatched-diacritics)
+				_arguments -s \
+					'*: :_files -g \*.xhtml'
+				;;
+			help)
+				;;
+			hyphenate)
+				_arguments -s \
+					{-i,--ignore-h-tags}'[don’t add soft hyphens to text in <h1-6> tags]' \
+					{-l,--language}'specify the language for the XHTML files; if unspecified, defaults to the `xml:lang` or `lang` attribute of the root <html> element' \
+					{-v,--verbose}'[increase output verbosity]' \
+					'*: :_files -g \*.xhtml'
+				;;
+			interactive-sr)
+				_arguments -s \
+					'*: :_files'
+				;;
+			lint)
+				_arguments -s \
+					{-p,--plain}'[print plain output]' \
+					{-v,--verbose}'[increase output verbosity]' \
+					'*: :_directories'
+				;;
+			make-url-safe)
+				_arguments -s \
+					{-n,--no-newline}'[don’t end output with a newline]'
+				;;
+			modernize-spelling)
+				_arguments -s \
+					{-n,--no-hyphens}'[don’t modernize hyphenation]' \
+					{-v,--verbose}'[increase output verbosity]' \
+					'*: :_files -g \*.xhtml'
+				;;
+			prepare-release)
+				_arguments -s \
+					{-n,--no-word-count}'[don’t calculate word count]' \
+					{-r,--no-revision}'[don’t increment the revision number]' \
+					{-v,--verbose}'[increase output verbosity]' \
+					'*: :_directories'
+				;;
+			print-manifest-and-spine)
+				_arguments -s \
+					{-m,--manifest}'[only print the manifest]' \
+					{-s,--spine}'[only print the spine]' \
+					'*: :_directories'
+				;;
+			reading-ease)
+				_arguments -s \
+					'*: :_files -g \*.xhtml'
+				;;
+			recompose-epub)
+				_arguments -s \
+					'*: :_files -g \*.xhtml'
+				;;
+			reorder-endnotes)
+				_arguments -s \
+					{-d,--decrement}'[decrement the target endnote number and all following endnotes]' \
+					{-i,--increment}'[increment the target endnote number and all following endnotes]' \
+					'*: :_directories'
+				;;
+			roman2dec)
+				_arguments -s \
+					{-n,--no-newline}'[don’t end output with a newline]'
+				;;
+			semanticate)
+				_arguments -s \
+					{-v,--verbose}'[increase output verbosity]' \
+					'*: :_files -g \*.xhtml'
+				;;
+			split-file)
+				_arguments -s \
+					'*: :_files -g \*.xhtml'
+				;;
+			split-file)
+				_arguments -s \
+					'*: :_files -g \*.\(htm\|html\|xhtml\)'
+				;;
+			split-file)
+				_arguments -s \
+					'*: :_files -g \*.\(htm\|html\|xhtml\)'
+				;;
+			titlecase)
+				_arguments -s \
+					{-n,--no-newline}'[don’t end output with a newline]'
+				;;
+			typogrify)
+				_arguments -s \
+					{-n,--no-quotes}'[don’t convert to smart quotes before doing other adjustments]' \
+					{-v,--verbose}'[increase output verbosity]' \
+					'*: :_files -g \*.xhtml'
+				;;
+			unicode-names)
+				;;
+			version)
+				;;
+			word-count)
+				_arguments -s \
+					{-c,--categorize}'[include length categorization in output]' \
+					{-x,--exclude-se-files}'[exclude some non-bodymatter files common to SE ebooks, like the ToC and colophon]' \
+					'*: :_files -g \*.xhtml'
+				;;
+		esac
+		;;
+esac
+
+return 0
