@@ -27,7 +27,6 @@ case $state in
 			"modernize-spelling[Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling]" \
 			"prepare-release[Calculate work word count, insert release date if not yet set, and update modified date and revision number]" \
 			"print-manifest-and-spine[Print <manifest> and <spine> tags to standard output for the given Standard Ebooks source directory]" \
-			"reading-ease[Calculate the Flesch reading ease for a Standard Ebooks source directory]" \
 			"recompose-epub[Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output]" \
 			"reorder-endnotes[Increment the specified endnote and all following endnotes by 1]" \
 			"roman2dec[Convert a Roman numeral to a decimal number]" \
@@ -142,10 +141,6 @@ case $state in
 					{-m,--manifest}'[only print the manifest]' \
 					{-s,--spine}'[only print the spine]' \
 					'*: :_directories'
-				;;
-			reading-ease)
-				_arguments -s \
-					'*: :_files -g \*.xhtml'
 				;;
 			recompose-epub)
 				_arguments -s \

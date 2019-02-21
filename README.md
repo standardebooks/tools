@@ -146,11 +146,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se print-manifest-and-spine`
 
-	Print `<manifest>` and `<spine>` tags to standard output for the given Standard Ebooks source directory, for use in that directory’s content.opf..
-
--	### `se reading-ease`
-
-	Calculate the Flesch reading ease for a Standard Ebooks source directory.
+	Print `<manifest>` and `<spine>` tags to standard output for the given Standard Ebooks source directory, for use in that directory’s content.opf.
 
 -	### `se recompose-epub`
 

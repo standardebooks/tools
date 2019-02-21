@@ -742,25 +742,6 @@ def print_manifest_and_spine() -> int:
 
 	return 0
 
-def reading_ease() -> int:
-	"""
-	Entry point for `se reading-ease`
-	"""
-
-	parser = argparse.ArgumentParser(description="Calculate the Flesch reading ease of a text composed of one or more XHTML files.")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
-	args = parser.parse_args()
-
-	xhtml = ""
-
-	for filename in se.get_target_filenames(args.targets, (".xhtml")):
-		with open(filename, "r", encoding="utf-8") as file:
-			xhtml += " " + file.read()
-
-	print(se.formatting.get_flesch_reading_ease(xhtml))
-
-	return 0
-
 def recompose_epub() -> int:
 	"""
 	Entry point for `se recompose-epub`
