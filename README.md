@@ -32,7 +32,7 @@ sudo ln -s $HOME/.local/bin/se /usr/local/bin/se
 export PATH=$PATH:~/.local/bin
 
 # Optional: ZSH users can install tab completion.
-sudo ln -s $HOME/.local/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf
+sudo ln -s $HOME/.local/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
 ```
 
 ## macOS users
