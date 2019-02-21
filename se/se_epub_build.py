@@ -2,8 +2,8 @@
 """
 This module contains the build function.
 
-It *could* be inlined in executables.py, but it's broken out into its own file for readability
-and maintainability.
+Strictly speaking, the build() function should be a class member of SeEpub. But
+the function is very big and it makes editing easier to put in a separate file.
 """
 
 import sys
