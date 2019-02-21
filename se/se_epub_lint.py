@@ -384,7 +384,18 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for fill: #000 which should simply be removed
 					matches = regex.findall(r"fill=\"\s*#000", file_contents) + regex.findall(r"style=\"[^\"]*?fill:\s*#000", file_contents)
 					if matches:
-						messages.append(LintMessage("Found illegal style=\"fill: #000\" or fill=\"#000\".", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("Illegal style=\"fill: #000\" or fill=\"#000\".", se.MESSAGE_TYPE_ERROR, filename))
+
+					# Check for illegal height or width on root <svg> element
+					if filename != "logo.svg": # Do as I say, not as I do...
+						matches = regex.findall(r"<svg[^>]*?(height|width)=[^>]*?>", file_contents)
+						if matches:
+							messages.append(LintMessage("Illegal height or width on root <svg> element. Size SVGs using the viewbox attribute only.", se.MESSAGE_TYPE_ERROR, filename))
+
+					# Check for illegal transform attribute
+					matches = regex.findall(r"<[a-z]+[^>]*?transform=[^>]*?>", file_contents)
+					if matches:
+						messages.append(LintMessage("Illegal transform attribute. SVGs should be optimized to remove use of transform. Try using Inkscape to save as an \"optimized SVG\".", se.MESSAGE_TYPE_ERROR, filename))
 
 					if os.sep + "src" + os.sep not in root:
 						# Check that cover and titlepage images are in all caps
