@@ -58,6 +58,9 @@ def _get_malformed_urls(xhtml: str) -> list:
 	messages = []
 
 	# Check for non-https URLs
+	if "http://gutenberg.org" in xhtml or "https://gutenberg.org" in xhtml:
+		messages.append(LintMessage("gutenberg.org URL missing leading www.", se.MESSAGE_TYPE_ERROR))
+
 	if "http://www.gutenberg.org" in xhtml:
 		messages.append(LintMessage("Non-https gutenberg.org URL.", se.MESSAGE_TYPE_ERROR))
 
