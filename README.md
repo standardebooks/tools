@@ -6,6 +6,8 @@ Installing this toolset using `pip` makes the `se` command line executable avail
 
 # Installation
 
+The toolset requires Python >= 3.5.
+
 ## Ubuntu 18.04 (Bionic) users
 
 ```shell

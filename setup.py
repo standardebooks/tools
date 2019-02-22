@@ -39,11 +39,11 @@ setup(
         "Topic :: Software Development :: Build Tools",
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6"
+        "Programming Language :: Python :: 3.5"
     ],
     keywords="ebooks epub",
     packages=find_packages(),
-    python_requires=">=3.6.7",
+    python_requires=">=3.5", # The latest version installed by default on Ubuntu 16.04 is 3.5.2
     install_requires=[
         "beautifulsoup4==4.6.0",
         "cssselect==1.0.1",
