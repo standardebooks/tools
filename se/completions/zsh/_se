@@ -163,14 +163,6 @@ case $state in
 				;;
 			split-file)
 				_arguments -s \
-					'*: :_files -g \*.xhtml'
-				;;
-			split-file)
-				_arguments -s \
-					'*: :_files -g \*.\(htm\|html\|xhtml\)'
-				;;
-			split-file)
-				_arguments -s \
 					'*: :_files -g \*.\(htm\|html\|xhtml\)'
 				;;
 			titlecase)
