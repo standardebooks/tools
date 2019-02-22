@@ -145,7 +145,7 @@ class SeEpub:
 
 		# Quick sanity check before we begin
 		if "id" not in section.attrs or (section.parent.name.lower() != "body" and "id" not in section.parent.attrs):
-			raise se.InvalidXhtmlException("Section without ID attribute")
+			raise se.InvalidXhtmlException("Section without ID attribute.")
 
 		# Try to find our parent tag in the output, by ID.
 		# If it's not in the output, then append it to the tag's closest parent by ID (or <body>), then iterate over its children and do the same.

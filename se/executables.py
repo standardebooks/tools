@@ -207,7 +207,7 @@ def clean() -> int:
 		try:
 			se.formatting.format_xhtml_file(filename, args.single_lines, filename.endswith("content.opf"), filename.endswith("endnotes.xhtml"))
 		except se.SeException as ex:
-			se.print_error(ex, args.verbose)
+			se.print_error(str(ex) + " File: {}".format(filename), args.verbose)
 			return ex.code
 
 		if args.verbose:

@@ -84,7 +84,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 			os.makedirs(output_directory)
 		except OSError as exception:
 			if exception.errno != errno.EEXIST:
-				raise se.FileExistsException("Couldn’t create output directory")
+				raise se.FileExistsException("Couldn’t create output directory.")
 
 	# All clear to start building!
 	if verbose:
@@ -782,7 +782,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 						try:
 							ref_link = etree.tostring(note.xpath("p[last()]/a[last()]")[0], encoding="unicode", pretty_print=True, with_tail=False).replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "").strip()
 						except Exception:
-							raise se.InvalidXhtmlException("Can’t find ref link for #{}".format(note_id))
+							raise se.InvalidXhtmlException("Can’t find ref link for #{}.".format(note_id))
 
 						new_ref_link = regex.sub(r">.*?</a>", ">" + note_number + "</a>.", ref_link)
 
@@ -866,7 +866,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 			return_code = subprocess.run([ebook_convert_path, os.path.join(work_directory, epub_output_filename), os.path.join(work_directory, kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", "--cover={}".format(cover_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
 
 			if return_code:
-				raise se.InvalidSeEbookException("ebook-convert failed")
+				raise se.InvalidSeEbookException("ebook-convert failed.")
 			else:
 				# Success, extract the Kindle cover thumbnail
 
