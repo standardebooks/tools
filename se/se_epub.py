@@ -64,13 +64,16 @@ class SeEpub:
 		if not os.path.isdir(epub_root_directory):
 			raise se.InvalidSeEbookException("Not a directory: {}".format(epub_root_directory))
 
-		if not os.path.isfile(os.path.join(epub_root_directory, "src", "epub", "content.opf")):
-			raise se.InvalidSeEbookException("Not a Standard Ebooks source directory: {}".format(epub_root_directory))
-
 		self.directory = os.path.abspath(epub_root_directory)
 
-		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
-			self._metadata_xhtml = file.read()
+		try:
+			with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
+				self._metadata_xhtml = file.read()
+
+			if "<dc:identifier id=\"uid\">url:https://standardebooks.org/ebooks/" not in self._metadata_xhtml:
+				raise se.InvalidSeEbookException
+		except:
+			raise se.InvalidSeEbookException("Not a Standard Ebooks source directory: {}".format(self.directory))
 
 	@property
 	def generated_identifier(self) -> str:
