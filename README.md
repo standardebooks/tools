@@ -35,6 +35,9 @@ export PATH=$PATH:~/.local/bin
 
 # Optional: ZSH users can install tab completion.
 sudo ln -s $HOME/.local/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
+
+# Optional: Bash users can install tab completion.
+sudo ln -s $HOME/.local/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completions/completions/se
 ```
 
 ## macOS users
@@ -70,9 +73,7 @@ These instructions were tested on macOS 10.12 and 10.13. Your mileage may vary. 
 
 We need volunteers to take the lead on the following goals:
 
-- Creating bash completions for the toolset. ZSH completions are done and can be used as a starting point.
-
-- Writing installation instructions for ZSH completions for MacOS.
+- Writing installation instructions for Bash and ZSH completions for MacOS.
 
 - Possibly adding virtualenv to the installation instructions.
 
