@@ -27,13 +27,14 @@ img[epub|type~="se:image.color-depth.black-on-transparent"][epub|type~="z3998:pu
 	background: transparent !important;
 }
 
-/* And except in iBooks, where we can target night mode specifically */
+/* And except in Apple Books, where we can target night mode specifically */
 :root[__ibooks_internal_theme] img[epub|type~="se:image.color-depth.black-on-transparent"]{
 	background: transparent !important;
 }
 
-/* Enable night mode in iBooks */
-:root[__ibooks_internal_theme*="Night"] img[epub|type~="se:image.color-depth.black-on-transparent"]{
+/* Enable night mode in Apple Books */
+:root[__ibooks_internal_theme*="Night"] img[epub|type~="se:image.color-depth.black-on-transparent"],
+:root[__ibooks_internal_theme*="Gray"] img[epub|type~="se:image.color-depth.black-on-transparent"]{
 	filter: invert(100%);
 }
 
