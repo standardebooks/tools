@@ -5,10 +5,10 @@ The setup script used to package the se library and executables.
 To build the project, enter the project's root directory and do:
 python3 setup.py bdist_wheel
 
-To install the project locally, build it and do:
+After the project has been built, you can install it locally:
 pip3 install dist/standardebooks-*.whl
 
-To upload to pypi, twine is required:
+To upload the build to pypi, twine is required:
 pip3 install twine
 """
 
