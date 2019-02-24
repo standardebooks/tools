@@ -175,10 +175,10 @@ class SeEpub:
 		None
 
 		OUTPUTS
-		A string representing the GitHub repository URL.
+		A string representing the GitHub repository URL (capped at maximum 100 characters).
 		"""
 
-		return "https://github.com/standardebooks/" + self.generated_identifier.replace("url:https://standardebooks.org/ebooks/", "").replace("/", "_")
+		return "https://github.com/standardebooks/" + self.generated_identifier.replace("url:https://standardebooks.org/ebooks/", "").replace("/", "_")[0:100]
 
 	def _generate_identifier(self) -> str:
 		"""
