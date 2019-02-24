@@ -183,7 +183,7 @@ case $state in
 				_arguments -s \
 					{-c,--categorize}'[include length categorization in output]' \
 					{-x,--exclude-se-files}'[exclude some non-bodymatter files common to SE ebooks, like the ToC and colophon]' \
-					'*: :_files -g \*.xhtml'
+					'*: :_files -g \*.\(htm\|html\|xhtml\)'
 				;;
 		esac
 		;;

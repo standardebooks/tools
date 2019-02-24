@@ -115,10 +115,10 @@ _se(){
 			version)
 				;;
 			word-count)
-				;;
-			typogrify)
 				COMPREPLY+=($(compgen -W "-c --categorize -x --exclude-se-files" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				COMPREPLY+=($(compgen -f -X "!*.htm" -- "${cur}"))
+				COMPREPLY+=($(compgen -f -X "!*.html" -- "${cur}"))
 				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
 				;;
 		esac
