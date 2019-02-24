@@ -17,7 +17,7 @@ from setuptools import setup, find_packages
 import se
 
 # Get the long description from the README file
-def get_file_contents(filename):
+def _get_file_contents(filename):
     """
     Helper function to get README contents
     """
@@ -29,7 +29,7 @@ setup(
     name="standardebooks",
     version=se.VERSION,
     description="The toolset used to produce Standard Ebooks epub ebooks.",
-    long_description=get_file_contents(path.join(path.abspath(path.dirname(__file__)), "README.md")),
+    long_description=_get_file_contents(path.join(path.abspath(path.dirname(__file__)), "README.md")),
     long_description_content_type="text/markdown",
     url="https://standardebooks.org",
     author="Standard Ebooks",
