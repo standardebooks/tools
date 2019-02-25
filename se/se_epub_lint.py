@@ -649,6 +649,13 @@ def lint(self, metadata_xhtml) -> list:
 						for match in matches:
 							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
+					# Check for stage direction that ends in ?! but also has a trailing period
+					matches = regex.findall(r"<i epub:type=\"z3998:stage-direction\">(?:(?!<i).)*?\.</i>[,:;!?]", file_contents)
+					if matches:
+						messages.append(LintMessage("Stage direction ending in period next to other punctuation. Remove trailing periods in stage direction.", se.MESSAGE_TYPE_WARNING, filename))
+						for match in matches:
+							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+
 					# Check for money not separated by commas
 					matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
 					if matches:
