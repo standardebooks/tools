@@ -387,10 +387,10 @@ def extract_ebook() -> int:
 		if args.verbose:
 			print("Processing {} ...".format(target), end="", flush=True)
 
-		if args.destination is None:
+		if args.output_dir is None:
 			extracted_path = os.path.basename(target) + ".extracted"
 		else:
-			extracted_path = args.destination
+			extracted_path = args.output_dir
 
 		if os.path.exists(extracted_path):
 			se.print_error("Directory already exists: {}".format(extracted_path))

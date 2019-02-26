@@ -381,6 +381,7 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 
 	# Canonicalize XHTML
 	result = subprocess.run([xmllint_path, "--c14n", "-"], input=xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
 	xhtml = result.stdout.decode()
 	try:
 		error = result.stderr.decode().strip()

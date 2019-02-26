@@ -13,7 +13,7 @@ import terminaltables
 import regex
 
 
-VERSION = "1.0.4"
+VERSION = "1.0.5"
 MESSAGE_INDENT = "    "
 UNICODE_BOM = "\ufeff"
 NO_BREAK_SPACE = "\u00a0"
