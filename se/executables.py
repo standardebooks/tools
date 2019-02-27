@@ -545,6 +545,7 @@ def lint() -> int:
 	args = parser.parse_args()
 
 	first_output = True
+	return_code = 0
 
 	for directory in args.directories:
 		try:
@@ -572,6 +573,8 @@ def lint() -> int:
 
 		# Print the table
 		if messages:
+			return_code = se.LintFailedException.code
+
 			if args.plain:
 				for message in messages:
 					if message.is_submessage:
@@ -606,7 +609,7 @@ def lint() -> int:
 
 				se.print_table(table_data)
 
-	return 0
+	return return_code
 
 def make_url_safe() -> int:
 	"""

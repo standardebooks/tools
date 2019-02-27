@@ -103,6 +103,9 @@ class FirefoxRunningException(SeException):
 class RemoteCommandErrorException(SeException):
 	code = 12
 
+class LintFailedException(SeException):
+	code = 13
+
 def natural_sort(list_to_sort: list) -> list:
 	"""
 	Natural sort a list.
