@@ -1011,7 +1011,11 @@ def word_count() -> int:
 			continue
 
 		with open(filename, "r", encoding="utf-8") as file:
-			total_word_count += se.formatting.get_word_count(file.read())
+			try:
+				total_word_count += se.formatting.get_word_count(file.read())
+			except UnicodeDecodeError:
+				se.print_error("File is not UTF-8: {}".format(filename))
+				return se.InvalidEncodingException.code
 
 	if args.categorize:
 		category = "se:short-story"
