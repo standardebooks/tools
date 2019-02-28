@@ -21,7 +21,7 @@ curl -s -o ~/.local/share/fonts/OFLGoudyStM.otf "https://raw.githubusercontent.c
 curl -s -o ~/.local/share/fonts/OFLGoudyStM-Italic.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM-Italic.otf"
 
 # Refresh the local font cache.
-sudo fc-cache -fv
+sudo fc-cache -f
 
 # Install the toolset.
 pip3 install standardebooks
