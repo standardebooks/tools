@@ -189,7 +189,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])enor", r"\1eñor", xhtml)				# senor -> señor (senores, senorita/s, etc.)
 	xhtml = regex.sub(r"\b([Gg])ramme?(s)?\b", r"\1ram\2", xhtml)			# gramm/grammes -> gram/grams
 	xhtml = regex.sub(r"\b([Aa])larum\b", r"\1larm", xhtml)				# alarum -> alarm
-	xhtml = regex.sub(r"\b([Bb])owlder\b", r"\1oulder", xhtml)				# bowlder -> boulder
+	xhtml = regex.sub(r"\b([Bb])owlder(s?)\b", r"\1oulder\2", xhtml)		# bowlder/bowlders -> boulder/boulders
 	xhtml = regex.sub(r"\b([Dd])istingue\b", r"\1istingué", xhtml)			# distingue -> distingué
 	xhtml = regex.sub(r"\b[EÉ]cart[eé]\b", r"Écarté", xhtml)			# ecarte -> écarté
 	xhtml = regex.sub(r"\b[eé]cart[eé]\b", r"écarté", xhtml)			# ecarte -> écarté
