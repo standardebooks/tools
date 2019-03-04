@@ -656,12 +656,12 @@ def lint(self, metadata_xhtml) -> list:
 						for match in matches:
 							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
 
-					# Check for punctuation inside italics
-					matches = regex.findall(r"<[ib] epub:type=\"se:[^\"]+?\">[^<]+?[\.,]", file_contents)
+					# Check for ending punctuation inside italics
+					matches = regex.findall(r"(<([ib]) epub:type=\"se:[^\"]+?\">[^<]+?[\.,\!\?]</\2>)", file_contents)
 					if matches:
-						messages.append(LintMessage("Punctuation inside italics.", se.MESSAGE_TYPE_WARNING, filename))
+						messages.append(LintMessage("Ending punctuation inside italics.", se.MESSAGE_TYPE_WARNING, filename))
 						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+							messages.append(LintMessage(match[0], se.MESSAGE_TYPE_WARNING, filename, True))
 
 					# Check for money not separated by commas
 					matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
