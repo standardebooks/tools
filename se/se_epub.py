@@ -257,7 +257,7 @@ class SeEpub:
 
 		return identifier
 
-	def recompose(self) -> str:
+	def recompose(self, include_toc: bool = True) -> str:
 		"""
 		Iterate over the XHTML files in this epub and "recompose" them into a single HTML5 string representing this ebook.
 
@@ -295,10 +295,11 @@ class SeEpub:
 				for child in xhtml_soup.select("body > *"):
 					self._recompose_xhtml(child, output_soup)
 
-		# Add the ToC after the titlepage
-		with open(os.path.join(self.directory, "src", "epub", "toc.xhtml"), "r", encoding="utf-8") as file:
-			toc_soup = BeautifulSoup(file.read(), "lxml")
-			output_soup.select("#titlepage")[0].insert_after(toc_soup.find("nav"))
+		if include_toc:
+			# Add the ToC after the titlepage
+			with open(os.path.join(self.directory, "src", "epub", "toc.xhtml"), "r", encoding="utf-8") as file:
+				toc_soup = BeautifulSoup(file.read(), "lxml")
+				output_soup.select("#titlepage")[0].insert_after(toc_soup.find("nav"))
 
 		# Get the output XHTML as a string
 		output_xhtml = str(output_soup)
