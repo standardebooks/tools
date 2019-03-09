@@ -308,7 +308,7 @@ class SeEpub:
 
 		# Replace SVG images hrefs with inline SVG
 		for match in regex.findall(r"src=\"../images/(.+?)\.svg\"", output_xhtml):
-			with open(os.path.join(self.directory, "src", "epub", "images", match + ".svg")) as file:
+			with open(os.path.join(self.directory, "src", "epub", "images", match + ".svg"), "r", encoding="utf-8") as file:
 				svg = file.read()
 
 				# Remove XML declaration
@@ -326,7 +326,7 @@ class SeEpub:
 		# All done, clean the output
 		se.formatting.format_xhtml_file(file_name_xhtml, False, file_name_xhtml.endswith("content.opf"), file_name_xhtml.endswith("endnotes.xhtml"))
 
-		with open(file_name_xhtml) as file:
+		with open(file_name_xhtml, "r", encoding="utf-8") as file:
 			xhtml = file.read()
 
 			# Remove xml declaration and re-add the doctype

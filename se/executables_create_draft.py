@@ -442,7 +442,7 @@ def create_draft(args: list) -> int:
 
 			element.parent.decompose()
 
-		with open(os.path.join(repo_name, "src", "epub", "text", "body.xhtml"), "w") as file:
+		with open(os.path.join(repo_name, "src", "epub", "text", "body.xhtml"), "w", encoding="utf-8") as file:
 			file.write(str(soup))
 
 	# Copy over templates
@@ -484,11 +484,11 @@ def create_draft(args: list) -> int:
 	if args.illustrator:
 		contributors["illustrated by"] = args.illustrator
 
-	with open(os.path.join(repo_name, "images", "titlepage.svg"), "w") as file:
+	with open(os.path.join(repo_name, "images", "titlepage.svg"), "w", encoding="utf-8") as file:
 		file.write(_generate_titlepage_svg(args.title, args.author, contributors, title_string))
 
 	# Create the cover SVG
-	with open(os.path.join(repo_name, "images", "cover.svg"), "w") as file:
+	with open(os.path.join(repo_name, "images", "cover.svg"), "w", encoding="utf-8") as file:
 		file.write(_generate_cover_svg(args.title, args.author, title_string))
 
 	if args.pg_url:

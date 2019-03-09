@@ -56,7 +56,7 @@ def format_inkscape_svg(filename: str):
 	None.
 	"""
 
-	with open(filename, "r+") as file:
+	with open(filename, "r+", encoding="utf-8") as file:
 		svg = file.read()
 
 		# Time to clean up Inkscape's mess

@@ -147,7 +147,7 @@ def _get_unused_selectors(self) -> set:
 			if not filename.endswith("titlepage.xhtml") and not filename.endswith("imprint.xhtml") and not filename.endswith("uncopyright.xhtml"):
 				# We have to remove the default namespace declaration from our document, otherwise
 				# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
-				with open(filename, "r") as file:
+				with open(filename, "r", encoding="utf-8") as file:
 					xhtml = file.read().replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
 
 				try:

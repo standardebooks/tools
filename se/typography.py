@@ -221,7 +221,7 @@ def hyphenate_file(filename: str, language: str, ignore_h_tags: bool = False) ->
 	None.
 	"""
 
-	with open(filename, "r+") as file:
+	with open(filename, "r+", encoding="utf-8") as file:
 		xhtml = file.read()
 
 		processed_xhtml = se.typography.hyphenate(xhtml, language, ignore_h_tags)
