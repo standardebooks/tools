@@ -55,7 +55,7 @@ class SeEpub:
 	"""
 
 	directory = ""
-	_metadata_xhtml = None
+	metadata_xhtml = None
 	_metadata_tree = None
 	_generated_identifier = None
 	_generated_github_repo_url = None
@@ -68,9 +68,9 @@ class SeEpub:
 
 		try:
 			with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
-				self._metadata_xhtml = file.read()
+				self.metadata_xhtml = file.read()
 
-			if "<dc:identifier id=\"uid\">url:https://standardebooks.org/ebooks/" not in self._metadata_xhtml:
+			if "<dc:identifier id=\"uid\">url:https://standardebooks.org/ebooks/" not in self.metadata_xhtml:
 				raise se.InvalidSeEbookException
 		except:
 			raise se.InvalidSeEbookException("Not a Standard Ebooks source directory: {}".format(self.directory))
@@ -124,7 +124,7 @@ class SeEpub:
 
 		if self._metadata_tree is None:
 			try:
-				self._metadata_tree = se.easy_xml.EasyXmlTree(self._metadata_xhtml)
+				self._metadata_tree = se.easy_xml.EasyXmlTree(self.metadata_xhtml)
 			except Exception as ex:
 				raise se.InvalidSeEbookException("Couldn’t parse content.opf: {}".format(ex))
 
@@ -526,20 +526,20 @@ class SeEpub:
 		friendly_timestamp = regex.sub(r"\s+", " ", friendly_timestamp).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
 		# Calculate the new revision number
-		revision = int(regex.search(r"<meta property=\"se:revision-number\">([0-9]+)</meta>", self._metadata_xhtml).group(1))
+		revision = int(regex.search(r"<meta property=\"se:revision-number\">([0-9]+)</meta>", self.metadata_xhtml).group(1))
 		revision = revision + 1
 
 		# If this is an initial release, set the release date in content.opf
 		if revision == 1:
-			self._metadata_xhtml = regex.sub(r"<dc:date>[^<]+?</dc:date>", "<dc:date>{}</dc:date>".format(iso_timestamp), self._metadata_xhtml)
+			self.metadata_xhtml = regex.sub(r"<dc:date>[^<]+?</dc:date>", "<dc:date>{}</dc:date>".format(iso_timestamp), self.metadata_xhtml)
 
 		# Set modified date and revision number in content.opf
-		self._metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">{}</meta>".format(iso_timestamp), self._metadata_xhtml)
-		self._metadata_xhtml = regex.sub(r"<meta property=\"se:revision-number\">[^<]+?</meta>", "<meta property=\"se:revision-number\">{}</meta>".format(revision), self._metadata_xhtml)
+		self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">{}</meta>".format(iso_timestamp), self.metadata_xhtml)
+		self.metadata_xhtml = regex.sub(r"<meta property=\"se:revision-number\">[^<]+?</meta>", "<meta property=\"se:revision-number\">{}</meta>".format(revision), self.metadata_xhtml)
 
 		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "w", encoding="utf-8") as file:
 			file.seek(0)
-			file.write(self._metadata_xhtml)
+			file.write(self.metadata_xhtml)
 			file.truncate()
 
 		# Update the colophon with release info
@@ -579,11 +579,11 @@ class SeEpub:
 			with open(filename, "r", encoding="utf-8") as file:
 				text += " " + file.read()
 
-		self._metadata_xhtml = regex.sub(r"<meta property=\"se:reading-ease\.flesch\">[^<]*</meta>", "<meta property=\"se:reading-ease.flesch\">{}</meta>".format(se.formatting.get_flesch_reading_ease(text)), self._metadata_xhtml)
+		self.metadata_xhtml = regex.sub(r"<meta property=\"se:reading-ease\.flesch\">[^<]*</meta>", "<meta property=\"se:reading-ease.flesch\">{}</meta>".format(se.formatting.get_flesch_reading_ease(text)), self.metadata_xhtml)
 
 		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "w", encoding="utf-8") as file:
 			file.seek(0)
-			file.write(self._metadata_xhtml)
+			file.write(self.metadata_xhtml)
 			file.truncate()
 
 	def update_word_count(self) -> None:
@@ -606,11 +606,11 @@ class SeEpub:
 			with open(filename, "r", encoding="utf-8") as file:
 				word_count += se.formatting.get_word_count(file.read())
 
-		self._metadata_xhtml = regex.sub(r"<meta property=\"se:word-count\">[^<]*</meta>", "<meta property=\"se:word-count\">{}</meta>".format(word_count), self._metadata_xhtml)
+		self.metadata_xhtml = regex.sub(r"<meta property=\"se:word-count\">[^<]*</meta>", "<meta property=\"se:word-count\">{}</meta>".format(word_count), self.metadata_xhtml)
 
 		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
 			file.seek(0)
-			file.write(self._metadata_xhtml)
+			file.write(self.metadata_xhtml)
 			file.truncate()
 
 	def generate_manifest(self) -> str:
@@ -746,7 +746,7 @@ class SeEpub:
 
 		from se.se_epub_lint import lint
 
-		return lint(self, self._metadata_xhtml)
+		return lint(self, self.metadata_xhtml)
 
 	def build(self, run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers, verbose):
 		"""
@@ -757,4 +757,4 @@ class SeEpub:
 
 		from se.se_epub_build import build
 
-		build(self, self._metadata_xhtml, self._get_metadata_tree(), run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers, verbose)
+		build(self, self.metadata_xhtml, self._get_metadata_tree(), run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers, verbose)

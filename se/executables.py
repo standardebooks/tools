@@ -728,6 +728,7 @@ def print_manifest_and_spine() -> int:
 	parser = argparse.ArgumentParser(description="Print <manifest> and <spine> tags to standard output for the given Standard Ebooks source directory, for use in that directory’s content.opf.")
 	parser.add_argument("-m", "--manifest", action="store_false", help="only print the manifest")
 	parser.add_argument("-s", "--spine", action="store_false", help="only print the spine")
+	parser.add_argument("-i", "--in-place", action="store_true", help="overwrite the <manifest> or <spine> tags in content.opf instead of printing to stdout")
 	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
@@ -737,11 +738,22 @@ def print_manifest_and_spine() -> int:
 		se.print_error(ex)
 		return ex.code
 
-	if args.spine:
-		print(se_epub.generate_manifest())
+	if args.in_place:
+		if args.spine:
+			se_epub.metadata_xhtml = regex.sub(r"\s*<spine>.+?</spine>", "\n\t" + "\n\t".join(se_epub.generate_spine().splitlines()), se_epub.metadata_xhtml, flags=regex.DOTALL)
 
-	if args.manifest:
-		print(se_epub.generate_spine())
+		if args.manifest:
+			se_epub.metadata_xhtml = regex.sub(r"\s*<manifest>.+?</manifest>", "\n\t" + "\n\t".join(se_epub.generate_manifest().splitlines()), se_epub.metadata_xhtml, flags=regex.DOTALL)
+
+		with open(os.path.join(se_epub.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
+			file.write(se_epub.metadata_xhtml)
+			file.truncate()
+	else:
+		if args.spine:
+			print(se_epub.generate_manifest())
+
+		if args.manifest:
+			print(se_epub.generate_spine())
 
 	return 0
 
