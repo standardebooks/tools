@@ -14,7 +14,6 @@ pip3 install twine
 
 from os import path
 from setuptools import setup, find_packages
-import se
 
 # Get the long description from the README file
 def _get_file_contents(filename):
@@ -26,8 +25,8 @@ def _get_file_contents(filename):
         return file.read()
 
 setup(
+    version="1.0.6",
     name="standardebooks",
-    version=se.VERSION,
     description="The toolset used to produce Standard Ebooks epub ebooks.",
     long_description=_get_file_contents(path.join(path.abspath(path.dirname(__file__)), "README.md")),
     long_description_content_type="text/markdown",
