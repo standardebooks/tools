@@ -11,9 +11,15 @@ from textwrap import wrap
 from termcolor import colored
 import terminaltables
 import regex
+import pkg_resources
 
 
-VERSION = "1.0.6"
+try:
+    VERSION = pkg_resources.get_distribution('standardebooks').version
+except:
+    # we get in this branch when the package hasn't been installed via pip or
+    # the setup script.
+    VERSION = 'unknown'
 MESSAGE_INDENT = "    "
 UNICODE_BOM = "\ufeff"
 NO_BREAK_SPACE = "\u00a0"
