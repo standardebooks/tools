@@ -144,13 +144,13 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 			# Set modified date in content.opf
 			self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">{}</meta>".format(last_updated_iso), self.metadata_xhtml)
 
-			with open(os.path.join(self.directory, "src", "epub", "content.opf"), "w", encoding="utf-8") as file:
+			with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "w", encoding="utf-8") as file:
 				file.seek(0)
 				file.write(self.metadata_xhtml)
 				file.truncate()
 
 			# Update the colophon with release info
-			with open(os.path.join(self.directory, "src", "epub", "text", "colophon.xhtml"), "r+", encoding="utf-8") as file:
+			with open(os.path.join(work_epub_root_directory, "epub", "text", "colophon.xhtml"), "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 
 				xhtml = xhtml.replace("<p>The first edition of this ebook was released on<br/>", "<p>This edition was released on<br/>\n\t\t\t<b>{}</b><br/>\n\t\t\tand is based on<br/>\n\t\t\t<b>revision {}</b>.<br/>\n\t\t\tThe first edition of this ebook was released on<br/>".format(last_updated_friendly, self.last_commit.short_sha))
