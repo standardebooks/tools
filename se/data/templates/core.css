@@ -149,10 +149,7 @@ section[epub|type~="colophon"] p + p::before{
 	width: 25%;
 }
 
-section[epub|type~="colophon"] a,
-section[epub|type~="colophon"] .name,
-section[epub|type~="colophon"] .release-date,
-section[epub|type~="colophon"] .revision-date{
+section[epub|type~="colophon"] a{
 	font-variant: small-caps;
 }
 

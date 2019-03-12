@@ -7,14 +7,15 @@ Standard Ebooks epub3 files.
 import os
 import html
 import tempfile
-import datetime
 import errno
 import shutil
 import fnmatch
+import datetime
 import concurrent.futures
 import base64
 import subprocess
 import regex
+import git
 from bs4 import Tag, BeautifulSoup
 import se
 import se.formatting
@@ -47,6 +48,18 @@ def _process_endnotes_in_file(filename: str, root: str, note_range: range, step:
 			file.write(processed_xhtml)
 			file.truncate()
 
+class GitCommit:
+	"""
+	Object used to represent the last Git commit.
+	"""
+
+	short_sha = ""
+	timestamp = None
+
+	def __init__(self, short_sha: str, timestamp: datetime.datetime):
+		self.short_sha = short_sha
+		self.timestamp = timestamp
+
 class SeEpub:
 	"""
 	An object representing an SE epub file.
@@ -59,6 +72,7 @@ class SeEpub:
 	_metadata_tree = None
 	_generated_identifier = None
 	_generated_github_repo_url = None
+	_last_commit = None # GitCommit object
 
 	def __init__(self, epub_root_directory: str):
 		if not os.path.isdir(epub_root_directory):
@@ -74,6 +88,21 @@ class SeEpub:
 				raise se.InvalidSeEbookException
 		except:
 			raise se.InvalidSeEbookException("Not a Standard Ebooks source directory: {}".format(self.directory))
+
+	@property
+	def last_commit(self) -> GitCommit:
+		"""
+		Accessor
+		"""
+
+		# We use git command instead of using gitpython's commit object because we want the short hash
+		try:
+			git_command = git.cmd.Git(self.directory)
+			output = git_command.show("-s", "--format=%h %ct", "HEAD").split()
+
+			return GitCommit(output[0], datetime.datetime.fromtimestamp(int(output[1]), datetime.timezone.utc))
+		except Exception:
+			return None
 
 	@property
 	def generated_identifier(self) -> str:
@@ -506,60 +535,34 @@ class SeEpub:
 
 					executor.submit(_process_endnotes_in_file, filename, root, note_range, step)
 
-	def update_revision(self) -> None:
+	def set_release_timestamp(self) -> None:
 		"""
-		Update the revision number and updated date in the metadata and colophon.
-
-		INPUTS
-		None
-
-		OUTPUTS
-		None.
+		If this ebook has not yet been released, set the first release timestamp in content.opf.
 		"""
 
-		timestamp = datetime.datetime.utcnow()
-		iso_timestamp = regex.sub(r"\.[0-9]+$", "", timestamp.isoformat()) + "Z"
+		if "<dc:date>1900-01-01T00:00:00Z</dc:date>" in self.metadata_xhtml:
+			now = datetime.datetime.utcnow()
+			now_iso = regex.sub(r"\.[0-9]+$", "", now.isoformat()) + "Z"
+			now_friendly = "{0:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}".format(now)
+			now_friendly = regex.sub(r"\s+", " ", now_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
-		# Construct the friendly timestamp
-		friendly_timestamp = "{0:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}".format(timestamp)
-		friendly_timestamp = regex.sub(r"\s+", " ", friendly_timestamp).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
+			self.metadata_xhtml = regex.sub(r"<dc:date>[^<]+?</dc:date>", "<dc:date>{}</dc:date>".format(now_iso), self.metadata_xhtml)
+			self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">>{}</meta>".format(now_iso), self.metadata_xhtml)
 
-		# Calculate the new revision number
-		revision = int(regex.search(r"<meta property=\"se:revision-number\">([0-9]+)</meta>", self.metadata_xhtml).group(1))
-		revision = revision + 1
+			with open(os.path.join(self.directory, "src", "epub", "content.opf"), "w", encoding="utf-8") as file:
+				file.seek(0)
+				file.write(self.metadata_xhtml)
+				file.truncate()
 
-		# If this is an initial release, set the release date in content.opf
-		if revision == 1:
-			self.metadata_xhtml = regex.sub(r"<dc:date>[^<]+?</dc:date>", "<dc:date>{}</dc:date>".format(iso_timestamp), self.metadata_xhtml)
+			self._metadata_tree = None
 
-		# Set modified date and revision number in content.opf
-		self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">{}</meta>".format(iso_timestamp), self.metadata_xhtml)
-		self.metadata_xhtml = regex.sub(r"<meta property=\"se:revision-number\">[^<]+?</meta>", "<meta property=\"se:revision-number\">{}</meta>".format(revision), self.metadata_xhtml)
+			with open(os.path.join(self.directory, "src", "epub", "text", "colophon.xhtml"), "r+", encoding="utf-8") as file:
+				xhtml = file.read()
+				xhtml = xhtml.replace("<b>January 1, 1900, 12:00 <abbr class=\"time eoc\">a.m.</abbr></b>", "<b>{}</b>".format(now_friendly))
 
-		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "w", encoding="utf-8") as file:
-			file.seek(0)
-			file.write(self.metadata_xhtml)
-			file.truncate()
-
-		# Update the colophon with release info
-		with open(os.path.join(self.directory, "src", "epub", "text", "colophon.xhtml"), "r+", encoding="utf-8") as file:
-			xhtml = file.read()
-
-			# Are we moving from the first edition to the nth edition?
-			if revision == 1:
-				xhtml = regex.sub(r"<span class=\"release-date\">.+?</span>", "<span class=\"release-date\">{}</span>".format(friendly_timestamp), xhtml)
-			else:
-				ordinal = se.formatting.get_ordinal(revision)
-				if "<p>This is the first edition of this ebook.<br/>" in xhtml:
-					xhtml = xhtml.replace("This edition was released on<br/>", "The first edition was released on<br/>")
-					xhtml = xhtml.replace("<p>This is the first edition of this ebook.<br/>", "<p>This is the <span class=\"revision-number\">{}</span> edition of this ebook.<br/>\n\t\t\tThis edition was released on<br/>\n\t\t\t<span class=\"revision-date\">{}</span><br/>".format(ordinal, friendly_timestamp))
-				else:
-					xhtml = regex.sub(r"<span class=\"revision-date\">.+?</span>", "<span class=\"revision-date\">{}</span>".format(friendly_timestamp), xhtml)
-					xhtml = regex.sub(r"<span class=\"revision-number\">[^<]+?</span>", "<span class=\"revision-number\">{}</span>".format(ordinal), xhtml)
-
-			file.seek(0)
-			file.write(xhtml)
-			file.truncate()
+				file.seek(0)
+				file.write(xhtml)
+				file.truncate()
 
 	def update_flesch_reading_ease(self) -> None:
 		"""

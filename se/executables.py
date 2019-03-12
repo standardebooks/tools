@@ -710,7 +710,7 @@ def prepare_release() -> int:
 				if args.verbose:
 					print("\tUpdating revision number ...", end="", flush=True)
 
-				se_epub.update_revision()
+				se_epub.set_release_timestamp()
 
 				if args.verbose:
 					print(" OK")

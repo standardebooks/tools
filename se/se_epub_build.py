@@ -12,6 +12,7 @@ import errno
 import shutil
 from distutils.dir_util import copy_tree
 import tempfile
+import datetime
 from hashlib import sha1
 import glob
 import subprocess
@@ -132,6 +133,30 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 			with open(os.path.join(work_epub_root_directory, "epub", "css", "local.css"), "a", encoding="utf-8") as local_css_file:
 				with open(resource_filename("se", os.path.join("data", "templates", "proofreading.css")), "r", encoding="utf-8") as proofreading_css_file:
 					local_css_file.write(proofreading_css_file.read())
+
+		# Update the release date in the metadata and colophon
+		if self.last_commit:
+			last_updated_iso = regex.sub(r"\.[0-9]+$", "", self.last_commit.timestamp.isoformat()) + "Z"
+			last_updated_friendly = "{0:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}".format(self.last_commit.timestamp)
+			last_updated_friendly = regex.sub(r"\s+", " ", last_updated_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
+
+			# Set modified date in content.opf
+			self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">{}</meta>".format(last_updated_iso), self.metadata_xhtml)
+
+			with open(os.path.join(self.directory, "src", "epub", "content.opf"), "w", encoding="utf-8") as file:
+				file.seek(0)
+				file.write(self.metadata_xhtml)
+				file.truncate()
+
+			# Update the colophon with release info
+			with open(os.path.join(self.directory, "src", "epub", "text", "colophon.xhtml"), "r+", encoding="utf-8") as file:
+				xhtml = file.read()
+
+				xhtml = xhtml.replace("<p>The first edition of this ebook was released on<br/>", "<p>This edition was released on<br/>\n\t\t\t<b>{}</b><br/>\n\t\t\tand is based on<br/>\n\t\t\t<b>revision {}</b>.<br/>\n\t\t\tThe first edition of this ebook was released on<br/>".format(last_updated_friendly, self.last_commit.short_sha))
+
+				file.seek(0)
+				file.write(xhtml)
+				file.truncate()
 
 		# Output the pure epub3 file
 		if verbose:
