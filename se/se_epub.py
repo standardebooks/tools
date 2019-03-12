@@ -543,6 +543,7 @@ class SeEpub:
 		if "<dc:date>1900-01-01T00:00:00Z</dc:date>" in self.metadata_xhtml:
 			now = datetime.datetime.utcnow()
 			now_iso = regex.sub(r"\.[0-9]+$", "", now.isoformat()) + "Z"
+			now_iso = regex.sub(r"\+.+?Z$", "Z", now_iso)
 			now_friendly = "{0:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}".format(now)
 			now_friendly = regex.sub(r"\s+", " ", now_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 

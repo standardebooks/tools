@@ -137,6 +137,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 		# Update the release date in the metadata and colophon
 		if self.last_commit:
 			last_updated_iso = regex.sub(r"\.[0-9]+$", "", self.last_commit.timestamp.isoformat()) + "Z"
+			last_updated_iso = regex.sub(r"\+.+?Z$", "Z", last_updated_iso)
 			last_updated_friendly = "{0:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}".format(self.last_commit.timestamp)
 			last_updated_friendly = regex.sub(r"\s+", " ", last_updated_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
