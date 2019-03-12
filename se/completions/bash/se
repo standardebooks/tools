@@ -82,7 +82,7 @@ _se(){
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			print-manifest-and-spine)
-				COMPREPLY+=($(compgen -W "-m --manifest -s --spine" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-m --manifest -s --spine -i --in-place" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			recompose-epub)

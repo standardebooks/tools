@@ -140,6 +140,7 @@ case $state in
 				_arguments -s \
 					{-m,--manifest}'[only print the manifest]' \
 					{-s,--spine}'[only print the spine]' \
+					{-i,--in-place}'[overwrite the <manifest> or <spine> tags in content.opf instead of printing to stdout]' \
 					'*: :_directories'
 				;;
 			recompose-epub)
