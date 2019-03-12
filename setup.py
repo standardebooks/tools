@@ -25,7 +25,7 @@ def _get_file_contents(filename):
         return file.read()
 
 setup(
-    version="1.0.6",
+    version="1.0.7",
     name="standardebooks",
     description="The toolset used to produce Standard Ebooks epub ebooks.",
     long_description=_get_file_contents(path.join(path.abspath(path.dirname(__file__)), "README.md")),
