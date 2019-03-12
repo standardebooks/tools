@@ -69,6 +69,16 @@ These instructions were tested on macOS 10.12 and 10.13. Your mileage may vary. 
 	pip3 install standardebooks
 	```
 
+## Installing from Git
+
+To install the latest version from Git instead of the version from Pip, follow the instructions above to install dependencies, but instead of running `pip3 install` run the following:
+
+```shell
+cd /PATH/TO/TOOLS/REPO
+python3 setup.py bdist_wheel
+pip3 install dist/*.whl
+```
+
 # Help wanted
 
 We need volunteers to take the lead on the following goals:
