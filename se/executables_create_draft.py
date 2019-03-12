@@ -516,7 +516,7 @@ def create_draft(args: list) -> int:
 					if "Distributed Proofreading" in producer:
 						producers_xhtml = producers_xhtml + "<a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a>"
 					else:
-						producers_xhtml = producers_xhtml + "<span class=\"name\">{}</span>".format(producer)
+						producers_xhtml = producers_xhtml + "<b class=\"name\">{}</b>".format(producer)
 
 					if i < len(pg_producers) - 1:
 						producers_xhtml = producers_xhtml + ", "
@@ -526,7 +526,7 @@ def create_draft(args: list) -> int:
 
 				producers_xhtml = producers_xhtml + "<br/>"
 
-				colophon_xhtml = colophon_xhtml.replace("<span class=\"name\">TRANSCRIBER_1</span>, <span class=\"name\">TRANSCRIBER_2</span>, and <a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a><br/>", producers_xhtml)
+				colophon_xhtml = colophon_xhtml.replace("<b class=\"name\">TRANSCRIBER_1</b>, <b class=\"name\">TRANSCRIBER_2</b>, and <a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a><br/>", producers_xhtml)
 
 		file.seek(0)
 		file.write(colophon_xhtml)

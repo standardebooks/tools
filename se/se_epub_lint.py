@@ -1035,7 +1035,7 @@ def lint(self, metadata_xhtml) -> list:
 				if filename == "loi.xhtml" and ">ill<" not in metadata_xhtml:
 					messages.append(LintMessage("loi.xhtml found, but no MARC relator 'ill' (Illustrator)", se.MESSAGE_TYPE_WARNING, filename))
 
-				if filename == "colophon.xhtml" and "<a class=\"raw-url\" href=\"{}\">{}</a>".format(self.generated_identifier.replace("url:", ""), self.generated_identifier.replace("url:https://", "")) not in file_contents:
+				if filename == "colophon.xhtml" and "<a href=\"{}\">{}</a>".format(self.generated_identifier.replace("url:", ""), self.generated_identifier.replace("url:https://", "")) not in file_contents:
 					messages.append(LintMessage("Unexpected SE identifier in colophon. Expected: {}".format(self.generated_identifier), se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for wrong semantics in frontmatter/backmatter
