@@ -492,20 +492,20 @@ def create_draft(args: list) -> int:
 		file.write(_generate_cover_svg(args.title, args.author, title_string))
 
 	if args.pg_url:
-		se.replace_in_file(os.path.normpath(repo_name + "/src/epub/text/imprint.xhtml"), "PGLINK", args.pg_url)
+		se.replace_in_file(os.path.normpath(repo_name + "/src/epub/text/imprint.xhtml"), "PG_URL", args.pg_url)
 
 	with open(os.path.join(repo_name, "src", "epub", "text", "colophon.xhtml"), "r+", encoding="utf-8") as file:
 		colophon_xhtml = file.read()
 
-		colophon_xhtml = colophon_xhtml.replace("SEIDENTIFIER", identifier)
+		colophon_xhtml = colophon_xhtml.replace("SE_IDENTIFIER", identifier)
 		colophon_xhtml = colophon_xhtml.replace(">AUTHOR<", ">{}<".format(args.author))
 		colophon_xhtml = colophon_xhtml.replace("TITLE", args.title)
 
 		if author_wiki_url:
-			colophon_xhtml = colophon_xhtml.replace("AUTHORWIKILINK", author_wiki_url)
+			colophon_xhtml = colophon_xhtml.replace("AUTHOR_WIKI_URL", author_wiki_url)
 
 		if args.pg_url:
-			colophon_xhtml = colophon_xhtml.replace("PGLINK", args.pg_url)
+			colophon_xhtml = colophon_xhtml.replace("PG_URL", args.pg_url)
 
 			if pg_publication_year:
 				colophon_xhtml = colophon_xhtml.replace("PG_YEAR", pg_publication_year)
@@ -526,7 +526,7 @@ def create_draft(args: list) -> int:
 
 				producers_xhtml = producers_xhtml + "<br/>"
 
-				colophon_xhtml = colophon_xhtml.replace("<span class=\"name\">TRANSCRIBER1</span>, <span class=\"name\">TRANSCRIBER2</span>, and <a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a><br/>", producers_xhtml)
+				colophon_xhtml = colophon_xhtml.replace("<span class=\"name\">TRANSCRIBER_1</span>, <span class=\"name\">TRANSCRIBER_2</span>, and <a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a><br/>", producers_xhtml)
 
 		file.seek(0)
 		file.write(colophon_xhtml)
@@ -535,11 +535,11 @@ def create_draft(args: list) -> int:
 	with open(os.path.join(repo_name, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
 		metadata_xhtml = file.read()
 
-		metadata_xhtml = metadata_xhtml.replace("SEIDENTIFIER", identifier)
+		metadata_xhtml = metadata_xhtml.replace("SE_IDENTIFIER", identifier)
 		metadata_xhtml = metadata_xhtml.replace(">AUTHOR<", ">{}<".format(args.author))
-		metadata_xhtml = metadata_xhtml.replace(">TITLESORT<", ">{}<".format(sorted_title))
+		metadata_xhtml = metadata_xhtml.replace(">TITLE_SORT<", ">{}<".format(sorted_title))
 		metadata_xhtml = metadata_xhtml.replace(">TITLE<", ">{}<".format(args.title))
-		metadata_xhtml = metadata_xhtml.replace("VCSIDENTIFIER", repo_name)
+		metadata_xhtml = metadata_xhtml.replace("VCS_IDENTIFIER", repo_name)
 
 		if pg_producers:
 			producers_xhtml = ""
@@ -550,31 +550,31 @@ def create_draft(args: list) -> int:
 				if "Distributed Proofreading" in producer:
 					producers_xhtml = producers_xhtml + "\t\t<meta property=\"file-as\" refines=\"#transcriber-{}\">Online Distributed Proofreading Team, The</meta>\n\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{}\">https://pgdp.net</meta>\n".format(i, i)
 				else:
-					producers_xhtml = producers_xhtml + "\t\t<meta property=\"file-as\" refines=\"#transcriber-{}\">TRANSCRIBERSORT</meta>\n".format(i)
+					producers_xhtml = producers_xhtml + "\t\t<meta property=\"file-as\" refines=\"#transcriber-{}\">TRANSCRIBER_SORT</meta>\n".format(i)
 
 				producers_xhtml = producers_xhtml + "\t\t<meta property=\"role\" refines=\"#transcriber-{}\" scheme=\"marc:relators\">trc</meta>\n".format(i)
 
 				i = i + 1
 
-			metadata_xhtml = regex.sub(r"\t\t<dc:contributor id=\"transcriber-1\">TRANSCRIBER</dc:contributor>\s*<meta property=\"file-as\" refines=\"#transcriber-1\">TRANSCRIBERSORT</meta>\s*<meta property=\"se:url.homepage\" refines=\"#transcriber-1\">LINK</meta>\s*<meta property=\"role\" refines=\"#transcriber-1\" scheme=\"marc:relators\">trc</meta>", "\t\t" + producers_xhtml.strip(), metadata_xhtml, flags=regex.DOTALL)
+			metadata_xhtml = regex.sub(r"\t\t<dc:contributor id=\"transcriber-1\">TRANSCRIBER</dc:contributor>\s*<meta property=\"file-as\" refines=\"#transcriber-1\">TRANSCRIBER_SORT</meta>\s*<meta property=\"se:url.homepage\" refines=\"#transcriber-1\">TRANSCRIBER_URL</meta>\s*<meta property=\"role\" refines=\"#transcriber-1\" scheme=\"marc:relators\">trc</meta>", "\t\t" + producers_xhtml.strip(), metadata_xhtml, flags=regex.DOTALL)
 
 		if author_wiki_url:
-			metadata_xhtml = metadata_xhtml.replace(">AUTHORWIKILINK<", ">{}<".format(author_wiki_url))
+			metadata_xhtml = metadata_xhtml.replace(">AUTHOR_WIKI_URL<", ">{}<".format(author_wiki_url))
 
 		if author_nacoaf_url:
-			metadata_xhtml = metadata_xhtml.replace(">AUTHORNACOAFLINK<", ">{}<".format(author_nacoaf_url))
+			metadata_xhtml = metadata_xhtml.replace(">AUTHOR_NACOAF_URL<", ">{}<".format(author_nacoaf_url))
 
 		if ebook_wiki_url:
-			metadata_xhtml = metadata_xhtml.replace(">EBOOKWIKILINK<", ">{}<".format(ebook_wiki_url))
+			metadata_xhtml = metadata_xhtml.replace(">EBOOK_WIKI_URL<", ">{}<".format(ebook_wiki_url))
 
 		if args.translator:
 			metadata_xhtml = metadata_xhtml.replace(">TRANSLATOR<", ">{}<".format(args.translator))
 
 			if translator_wiki_url:
-				metadata_xhtml = metadata_xhtml.replace(">TRANSLATORWIKILINK<", ">{}<".format(translator_wiki_url))
+				metadata_xhtml = metadata_xhtml.replace(">TRANSLATOR_WIKI_URL<", ">{}<".format(translator_wiki_url))
 
 			if translator_nacoaf_url:
-				metadata_xhtml = metadata_xhtml.replace(">TRANSLATORNACOAFLINK<", ">{}<".format(translator_nacoaf_url))
+				metadata_xhtml = metadata_xhtml.replace(">TRANSLATOR_NACOAF_URL<", ">{}<".format(translator_nacoaf_url))
 		else:
 			metadata_xhtml = regex.sub(r"<dc:contributor id=\"translator\">.+?<dc:contributor id=\"artist\">", "<dc:contributor id=\"artist\">", metadata_xhtml, flags=regex.DOTALL)
 
@@ -592,10 +592,10 @@ def create_draft(args: list) -> int:
 					subject_xhtml = subject_xhtml + "\t\t<meta property=\"meta-auth\" refines=\"#subject-{}\">{}</meta>\n".format(i, args.pg_url)
 					i = i + 1
 
-				metadata_xhtml = regex.sub(r"\t\t<dc:subject id=\"subject-1\">SUBJECT1</dc:subject>\s*<dc:subject id=\"subject-2\">SUBJECT2</dc:subject>\s*<meta property=\"meta-auth\" refines=\"#subject-1\">LOCLINK1</meta>\s*<meta property=\"meta-auth\" refines=\"#subject-2\">LOCLINK2</meta>", "\t\t" + subject_xhtml.strip(), metadata_xhtml)
+				metadata_xhtml = regex.sub(r"\t\t<dc:subject id=\"subject-1\">SUBJECT_1</dc:subject>\s*<dc:subject id=\"subject-2\">SUBJECT_2</dc:subject>\s*<meta property=\"meta-auth\" refines=\"#subject-1\">LOC_URL_1</meta>\s*<meta property=\"meta-auth\" refines=\"#subject-2\">LOC_URL_2</meta>", "\t\t" + subject_xhtml.strip(), metadata_xhtml)
 
 			metadata_xhtml = metadata_xhtml.replace("<dc:language>LANG</dc:language>", "<dc:language>{}</dc:language>".format(pg_language))
-			metadata_xhtml = metadata_xhtml.replace("<dc:source>LINK</dc:source>", "<dc:source>{}</dc:source>".format(args.pg_url))
+			metadata_xhtml = metadata_xhtml.replace("<dc:source>PG_URL</dc:source>", "<dc:source>{}</dc:source>".format(args.pg_url))
 
 		file.seek(0)
 		file.write(metadata_xhtml)

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" dir="ltr" prefix="se: https://standardebooks.org/vocab/1.0" unique-identifier="uid" version="3.0" xml:lang="en-US">
 	<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
-		<dc:identifier id="uid">url:https://standardebooks.org/ebooks/SEIDENTIFIER</dc:identifier>
+		<dc:identifier id="uid">url:https://standardebooks.org/ebooks/SE_IDENTIFIER</dc:identifier>
 		<dc:date>1900-01-01T00:00:00Z</dc:date>
 		<meta property="dcterms:modified">1900-01-01T00:00:00Z</meta>
 		<dc:rights>The source text and artwork in this ebook edition are believed to be in the U.S. public domain. This ebook edition is released under the terms in the CC0 1.0 Universal Public Domain Dedication, available at https://creativecommons.org/publicdomain/zero/1.0/. For full license information see the Uncopyright file included at the end of this ebook.</dc:rights>
@@ -28,49 +28,49 @@
 		<meta property="schema:accessibilitySummary">This publication conforms to WCAG 2.0 Level AA.</meta>
 		<link href="onix.xml" rel="onix-record"/>
 		<dc:title id="title">TITLE</dc:title>
-		<meta property="file-as" refines="#title">TITLESORT</meta>
-		<dc:subject id="subject-1">SUBJECT1</dc:subject>
-		<dc:subject id="subject-2">SUBJECT2</dc:subject>
-		<meta property="meta-auth" refines="#subject-1">LOCLINK1</meta>
-		<meta property="meta-auth" refines="#subject-2">LOCLINK2</meta>
+		<meta property="file-as" refines="#title">TITLE_SORT</meta>
+		<dc:subject id="subject-1">SUBJECT_1</dc:subject>
+		<dc:subject id="subject-2">SUBJECT_2</dc:subject>
+		<meta property="meta-auth" refines="#subject-1">LOC_URL_1</meta>
+		<meta property="meta-auth" refines="#subject-2">LOC_URL_2</meta>
 		<meta property="se:subject">TAG</meta>
 		<dc:description id="description">DESCRIPTION</dc:description>
 		<meta property="meta-auth" refines="#description">https://standardebooks.org</meta>
 		<meta id="long-description" property="se:long-description" refines="#description"><![CDATA[
-			LONGDESCRIPTION
+			LONG_DESCRIPTION
 		]]></meta>
 		<meta property="meta-auth" refines="#long-description">https://standardebooks.org</meta>
 		<dc:language>LANG</dc:language>
-		<dc:source>LINK</dc:source>
+		<dc:source>PG_URL</dc:source>
 		<meta property="se:production-notes">Any special notes about the production of this ebook for future editors/producers? Remove this element if not.</meta>
 		<meta property="se:word-count">WORDCOUNT</meta>
-		<meta property="se:reading-ease.flesch">READINGEASE</meta>
-		<meta property="se:url.encyclopedia.wikipedia">EBOOKWIKILINK</meta>
-		<meta property="se:url.vcs.github">https://github.com/standardebooks/VCSIDENTIFIER</meta>
+		<meta property="se:reading-ease.flesch">READING_EASE</meta>
+		<meta property="se:url.encyclopedia.wikipedia">EBOOK_WIKI_URL</meta>
+		<meta property="se:url.vcs.github">https://github.com/standardebooks/VCS_IDENTIFIER</meta>
 		<dc:creator id="author">AUTHOR</dc:creator>
-		<meta property="file-as" refines="#author">AUTHORSORT</meta>
-		<meta property="se:name.person.full-name" refines="#author">AUTHORFULLNAME</meta>
-		<meta property="se:url.encyclopedia.wikipedia" refines="#author">AUTHORWIKILINK</meta>
-		<meta property="se:url.authority.nacoaf" refines="#author">AUTHORNACOAFLINK</meta>
+		<meta property="file-as" refines="#author">AUTHOR_SORT</meta>
+		<meta property="se:name.person.full-name" refines="#author">AUTHOR_FULL_NAME</meta>
+		<meta property="se:url.encyclopedia.wikipedia" refines="#author">AUTHOR_WIKI_URL</meta>
+		<meta property="se:url.authority.nacoaf" refines="#author">AUTHOR_NACOAF_URL</meta>
 		<meta property="role" refines="#author" scheme="marc:relators">aut</meta>
 		<dc:contributor id="translator">TRANSLATOR</dc:contributor>
-		<meta property="file-as" refines="#translator">TRANSLATORSORT</meta>
-		<meta property="se:url.encyclopedia.wikipedia" refines="#translator">TRANSLATORWIKILINK</meta>
-		<meta property="se:url.authority.nacoaf" refines="#translator">TRANSLATORNACOAFLINK</meta>
+		<meta property="file-as" refines="#translator">TRANSLATOR_SORT</meta>
+		<meta property="se:url.encyclopedia.wikipedia" refines="#translator">TRANSLATOR_WIKI_URL</meta>
+		<meta property="se:url.authority.nacoaf" refines="#translator">TRANSLATOR_NACOAF_URL</meta>
 		<meta property="display-seq" refines="#translator">1</meta>
 		<meta property="role" refines="#translator" scheme="marc:relators">trl</meta>
-		<dc:contributor id="artist">COVERARTIST</dc:contributor>
-		<meta property="file-as" refines="#artist">COVERARTISTSORT</meta>
-		<meta property="se:url.encyclopedia.wikipedia" refines="#artist">COVERARTISTWIKILINK</meta>
-		<meta property="se:url.authority.nacoaf" refines="#artist">COVERARTISTNACOAFLINK</meta>
+		<dc:contributor id="artist">COVER_ARTIST</dc:contributor>
+		<meta property="file-as" refines="#artist">COVER_ARTIST_SORT</meta>
+		<meta property="se:url.encyclopedia.wikipedia" refines="#artist">COVER_ARTIST_WIKI_URL</meta>
+		<meta property="se:url.authority.nacoaf" refines="#artist">COVER_ARTIST_NACOAF_URL</meta>
 		<meta property="role" refines="#artist" scheme="marc:relators">art</meta>
 		<dc:contributor id="transcriber-1">TRANSCRIBER</dc:contributor>
-		<meta property="file-as" refines="#transcriber-1">TRANSCRIBERSORT</meta>
-		<meta property="se:url.homepage" refines="#transcriber-1">LINK</meta>
+		<meta property="file-as" refines="#transcriber-1">TRANSCRIBER_SORT</meta>
+		<meta property="se:url.homepage" refines="#transcriber-1">TRANSCRIBER_URL</meta>
 		<meta property="role" refines="#transcriber-1" scheme="marc:relators">trc</meta>
 		<dc:contributor id="producer-1">PRODUCER</dc:contributor>
-		<meta property="file-as" refines="#producer-1">PRODUCERSORT</meta>
-		<meta property="se:url.homepage" refines="#producer-1">LINK</meta>
+		<meta property="file-as" refines="#producer-1">PRODUCER_SORT</meta>
+		<meta property="se:url.homepage" refines="#producer-1">PRODUCER_URL</meta>
 		<meta property="role" refines="#producer-1" scheme="marc:relators">bkp</meta>
 		<meta property="role" refines="#producer-1" scheme="marc:relators">blw</meta>
 		<meta property="role" refines="#producer-1" scheme="marc:relators">cov</meta>
