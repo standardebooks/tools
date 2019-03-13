@@ -12,7 +12,6 @@ import errno
 import shutil
 from distutils.dir_util import copy_tree
 import tempfile
-import datetime
 from hashlib import sha1
 import glob
 import subprocess

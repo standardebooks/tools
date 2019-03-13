@@ -95,14 +95,23 @@ class SeEpub:
 		Accessor
 		"""
 
-		# We use git command instead of using gitpython's commit object because we want the short hash
-		try:
-			git_command = git.cmd.Git(self.directory)
-			output = git_command.show("-s", "--format=%h %ct", "HEAD").split()
+		if not self._last_commit:
+			# We use git command instead of using gitpython's commit object because we want the short hash
+			try:
+				# We have to clear this environmental variable or else GitPython will think the repo is "." instead
+				# of the dir we actually pass, if we're called from a git hook (like post-receive).
+				# See https://stackoverflow.com/questions/42328426/gitpython-not-working-from-git-hook
+				if 'GIT_DIR' in os.environ:
+				    del os.environ['GIT_DIR']
 
-			return GitCommit(output[0], datetime.datetime.fromtimestamp(int(output[1]), datetime.timezone.utc))
-		except Exception:
-			return None
+				git_command = git.cmd.Git(self.directory)
+				output = git_command.show("-s", "--format=%h %ct", "HEAD").split()
+
+				self._last_commit = GitCommit(output[0], datetime.datetime.fromtimestamp(int(output[1]), datetime.timezone.utc))
+			except Exception:
+				self._last_commit = None
+
+		return self._last_commit
 
 	@property
 	def generated_identifier(self) -> str:
