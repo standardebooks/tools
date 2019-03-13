@@ -404,7 +404,7 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 	xhtml = regex.sub(r"([^>\s])\s+</p>", "\\1</p>", xhtml, flags=regex.DOTALL)
 
 	# xmllint has problems with removing spacing between some inline HTML5 elements. Try to fix those problems here.
-	xhtml = regex.sub(r"</(abbr|cite|i|span)><(abbr|cite|i|span)", "</\\1> <\\2", xhtml)
+	xhtml = regex.sub(r"</(abbr|cite|i|span|em)><(abbr|cite|i|span|em)", "</\\1> <\\2", xhtml)
 
 	# Try to fix inline elements directly followed by an <a> tag, unless that <a> tag is a noteref.
 	xhtml = regex.sub(r"</(abbr|cite|i|span)><(a(?! href=\"[^\"]+?\" id=\"noteref\-))", "</\\1> <\\2", xhtml)
