@@ -557,7 +557,7 @@ class SeEpub:
 			now_friendly = regex.sub(r"\s+", " ", now_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
 			self.metadata_xhtml = regex.sub(r"<dc:date>[^<]+?</dc:date>", "<dc:date>{}</dc:date>".format(now_iso), self.metadata_xhtml)
-			self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">>{}</meta>".format(now_iso), self.metadata_xhtml)
+			self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">{}</meta>".format(now_iso), self.metadata_xhtml)
 
 			with open(os.path.join(self.directory, "src", "epub", "content.opf"), "w", encoding="utf-8") as file:
 				file.seek(0)
