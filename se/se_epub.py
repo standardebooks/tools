@@ -102,7 +102,7 @@ class SeEpub:
 				# of the dir we actually pass, if we're called from a git hook (like post-receive).
 				# See https://stackoverflow.com/questions/42328426/gitpython-not-working-from-git-hook
 				if 'GIT_DIR' in os.environ:
-				    del os.environ['GIT_DIR']
+					del os.environ['GIT_DIR']
 
 				git_command = git.cmd.Git(self.directory)
 				output = git_command.show("-s", "--format=%h %ct", "HEAD").split()
