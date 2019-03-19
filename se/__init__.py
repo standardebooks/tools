@@ -16,7 +16,7 @@ import pkg_resources
 
 try:
     VERSION = pkg_resources.get_distribution('standardebooks').version
-except:
+except Exception:
     # we get in this branch when the package hasn't been installed via pip or
     # the setup script.
     VERSION = 'unknown'
@@ -70,9 +70,7 @@ NOVELLA_MIN_WORD_COUNT = 17500
 NOVEL_MIN_WORD_COUNT = 40000
 
 class SeException(Exception):
-	"""
-	Wrapper class for SE exceptions
-	"""
+	""" Wrapper class for SE exceptions """
 
 	code = 0
 
@@ -80,36 +78,47 @@ class SeException(Exception):
 # http://www.tldp.org/LDP/abs/html/exitcodes.html
 
 class InvalidXhtmlException(SeException):
+	""" Invalid XHTML """
 	code = 3
 
 class InvalidEncodingException(SeException):
+	""" Invalid encoding """
 	code = 4
 
 class MissingDependencyException(SeException):
+	""" Missing dependency """
 	code = 5
 
 class InvalidInputException(SeException):
+	""" Invalid input """
 	code = 6
 
 class FileExistsException(SeException):
+	""" File exists """
 	code = 7
 
 class InvalidFileException(SeException):
+	""" Invalid file """
 	code = 8
 
 class InvalidLanguageException(SeException):
+	""" Invalid language """
 	code = 9
 
 class InvalidSeEbookException(SeException):
+	""" Invalid SE ebook """
 	code = 10
 
 class FirefoxRunningException(SeException):
+	""" Firefox already running """
 	code = 11
 
 class RemoteCommandErrorException(SeException):
+	""" Error in remote command """
 	code = 12
 
 class LintFailedException(SeException):
+	""" Lint failed """
 	code = 13
 
 def natural_sort(list_to_sort: list) -> list:
