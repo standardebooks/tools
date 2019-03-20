@@ -611,6 +611,26 @@ def lint() -> int:
 
 	return return_code
 
+
+def make_toc() -> int:
+	"""
+	Entry point for `se make-toc`
+
+	The meat of this function is broken out into the make_toc.py module for readability
+	and maintainability.
+	"""
+	parser = argparse.ArgumentParser(description="Attempts to build a table of contents for an SE project")
+	parser.add_argument("-o", "--output", dest="output", required=False, help="path and filename of output file if existing ToC is to be left alone")
+	parser.add_argument("-v", "--verbose", required=False, action="store_true", help="increase output verbosity")
+	parser.add_argument("-n", "--nonfiction", required=False, action="store_true", help="work type is non-fiction")
+	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
+	args = parser.parse_args()
+
+	from se.executables_make_toc import make_toc
+
+	return make_toc(args)
+
+
 def make_url_safe() -> int:
 	"""
 	Entry point for `se make-url-safe`
