@@ -31,11 +31,11 @@ class TocItem:
 
 		if title_is_entirely_roman(self.title):
 			if self.subtitle == '':  # no subtitle
-				outstring += tabs(1) + '<a href="text/' + self.filelink + '" epub:type="z3998:roman">' + self.roman + '</a>' + '\n'
+				outstring += '<a href="text/' + self.filelink + '" epub:type="z3998:roman">' + self.roman + '</a>' + '\n'
 			else:
-				outstring += tabs(1) + '<a href="text/' + self.filelink + '">' + self.title + ': ' + self.subtitle + '</a>' + '\n'
+				outstring += '<a href="text/' + self.filelink + '">' + self.title + ': ' + self.subtitle + '</a>' + '\n'
 		else:
-			outstring += tabs(1) + '<a href="text/' + self.filelink + '">' + self.title + '</a>' + '\n'
+			outstring += '<a href="text/' + self.filelink + '">' + self.title + '</a>' + '\n'
 
 		return outstring
 
@@ -65,35 +65,15 @@ class LandmarkItem:
 		"""
 		outstring = ''
 		if self.place == Position.FRONT:
-			outstring = tabs(4) + '<li>' + '\n' + tabs(5) + '<a href="text/' + self.filelink \
-						+ '" epub:type="frontmatter ' + self.epubtype + '">' + self.title + '</a>' + '\n' + tabs(4) + '</li>' + '\n'
+			outstring = '<li>' + '\n' + '<a href="text/' + self.filelink \
+						+ '" epub:type="frontmatter ' + self.epubtype + '">' + self.title + '</a>' + '\n' + '</li>' + '\n'
 		if self.place == Position.BODY:
-			outstring = tabs(4) + '<li>' + '\n' + tabs(5) + '<a href="text/' + self.filelink \
-						+ '" epub:type="bodymatter z3998:' + worktype + '">' + worktitle + '</a>' + '\n' + tabs(4) + '</li>' + '\n'
+			outstring = '<li>' + '\n' + '<a href="text/' + self.filelink \
+						+ '" epub:type="bodymatter z3998:' + worktype + '">' + worktitle + '</a>' + '\n' + '</li>' + '\n'
 		if self.place == Position.BACK:
-			outstring = tabs(4) + '<li>' + '\n' + tabs(5) + '<a href="text/' + self.filelink \
-						+ '" epub:type="backmatter ' + self.epubtype + '">' + self.title + '</a>' + '\n' + tabs(4) + '</li>' + '\n'
+			outstring = '<li>' + '\n' + '<a href="text/' + self.filelink \
+						+ '" epub:type="backmatter ' + self.epubtype + '">' + self.title + '</a>' + '\n' + '</li>' + '\n'
 		return outstring
-
-
-def tabs(num_tabs: int) -> str:
-	"""
-	convenience function to return given number of tabs as a string.
-	"""
-	if num_tabs > 0:
-		return '\t' * num_tabs
-	return ''
-
-
-def indent(level: int, offset: int = 0) -> str:
-	"""
-	convenience function to return appropriate number of tabs
-	for a tocitem at a certain level as a string with optional offset
-	"""
-	num_tabs = (level * 2 + 2) + offset  # offset may be negative
-	if num_tabs > 0:
-		return '\t' * num_tabs
-	return ''
 
 
 def get_content_files(opf: BeautifulSoup) -> list:
@@ -215,28 +195,26 @@ def process_items(item_list: list) -> str:
 
 		# check to see if next item is at same, lower or higher level than us
 		if nextitem.level == thisitem.level:  # SIMPLE
-			outstring += indent(thisitem.level) + '<li>' + '\n'
-			outstring += indent(thisitem.level) + thisitem.output()
-			outstring += indent(thisitem.level) + '</li>' + '\n'
+			outstring += '<li>' + '\n'
+			outstring += thisitem.output()
+			outstring += '</li>' + '\n'
 
 		if nextitem.level > thisitem.level:  # PARENT
-			outstring += indent(thisitem.level) + '<li>' + '\n'
-			outstring += indent(thisitem.level) + thisitem.output()
-			outstring += indent(thisitem.level) + tabs(1) + '<ol>' + '\n'
+			outstring += '<li>' + '\n'
+			outstring += thisitem.output()
+			outstring += '<ol>' + '\n'
 			unclosed_ol += 1
 
 		if nextitem.level < thisitem.level:  # LAST CHILD
-			outstring += indent(thisitem.level) + '<li>' + '\n'
-			outstring += indent(thisitem.level) + thisitem.output()
-			outstring += indent(thisitem.level) + '</li>' + '\n'  # end of this item
+			outstring += '<li>' + '\n'
+			outstring += thisitem.output()
+			outstring += '</li>' + '\n'  # end of this item
 			torepeat = thisitem.level - nextitem.level
-			current_level = thisitem.level
 			if torepeat > 0 and unclosed_ol > 0:
 				for _ in range(0, torepeat):  # need to repeat a few times as may be jumping back from eg h5 to h2
-					outstring += indent(current_level, -1) + '</ol>' + '\n'  # end of embedded list
+					outstring += '</ol>' + '\n'  # end of embedded list
 					unclosed_ol -= 1
-					outstring += indent(current_level, -2) + '</li>' + '\n'  # end of parent item
-					current_level -= 1
+					outstring += '</li>' + '\n'  # end of parent item
 	return outstring
 
 
