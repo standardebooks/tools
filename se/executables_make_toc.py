@@ -4,7 +4,6 @@ routine which tries to create a valid table of contents file for SE projects
 """
 import argparse
 import os
-from typing import TextIO
 from enum import Enum
 import regex
 
@@ -37,11 +36,11 @@ class TocItem:
 
 		if title_is_entirely_roman(self.title):
 			if self.subtitle == '':  # no subtitle
-				outstring += tabs(1) + '<a href="text/' + self.filelink + '" epub:type="z3998:roman">' + self.roman + '</a>\n'
+				outstring += tabs(1) + '<a href="text/' + self.filelink + '" epub:type="z3998:roman">' + self.roman + '</a>' + '\n'
 			else:
-				outstring += tabs(1) + '<a href="text/' + self.filelink + '">' + self.title + ': ' + self.subtitle + '</a>\n'
+				outstring += tabs(1) + '<a href="text/' + self.filelink + '">' + self.title + ': ' + self.subtitle + '</a>' + '\n'
 		else:
-			outstring += tabs(1) + '<a href="text/' + self.filelink + '">' + self.title + '</a>\n'
+			outstring += tabs(1) + '<a href="text/' + self.filelink + '">' + self.title + '</a>' + '\n'
 
 		return outstring
 
@@ -71,21 +70,20 @@ class LandmarkItem:
 		"""
 		outstring = ''
 		if self.place == Position.FRONT:
-			outstring = tabs(4) + '<li>\n' + tabs(5) + '<a href="text/' + self.filelink \
-						+ '" epub:type="frontmatter ' + self.epubtype + '">' + self.title + '</a>\n' + tabs(4) + '</li>\n'
+			outstring = tabs(4) + '<li>' + '\n' + tabs(5) + '<a href="text/' + self.filelink \
+						+ '" epub:type="frontmatter ' + self.epubtype + '">' + self.title + '</a>' + '\n' + tabs(4) + '</li>' + '\n'
 		if self.place == Position.BODY:
-			outstring = tabs(4) + '<li>\n' + tabs(5) + '<a href="text/' + self.filelink \
-						+ '" epub:type="bodymatter z3998:' + worktype + '">' + worktitle + '</a>\n' + tabs(4) + '</li>\n'
+			outstring = tabs(4) + '<li>' + '\n' + tabs(5) + '<a href="text/' + self.filelink \
+						+ '" epub:type="bodymatter z3998:' + worktype + '">' + worktitle + '</a>' + '\n' + tabs(4) + '</li>' + '\n'
 		if self.place == Position.BACK:
-			outstring = tabs(4) + '<li>\n' + tabs(5) + '<a href="text/' + self.filelink \
-						+ '" epub:type="backmatter ' + self.epubtype + '">' + self.title + '</a>\n' + tabs(4) + '</li>\n'
+			outstring = tabs(4) + '<li>' + '\n' + tabs(5) + '<a href="text/' + self.filelink \
+						+ '" epub:type="backmatter ' + self.epubtype + '">' + self.title + '</a>' + '\n' + tabs(4) + '</li>' + '\n'
 		return outstring
 
 
 def tabs(num_tabs: int) -> str:
 	"""
 	convenience function to return given number of tabs as a string.
-	offset is optional
 	"""
 	if num_tabs > 0:
 		return '\t' * num_tabs
@@ -94,8 +92,8 @@ def tabs(num_tabs: int) -> str:
 
 def indent(level: int, offset: int = 0) -> str:
 	"""
-	convenience function to return given number of tabs as a string.
-	offset is optional
+	convenience function to return appropriate number of tabs
+	for a tocitem at a certain level as a string with optional offset
 	"""
 	num_tabs = (level * 2 + 2) + offset  # offset may be negative
 	if num_tabs > 0:
@@ -190,7 +188,7 @@ def add_landmark(soup: BeautifulSoup, textf: str, landmarks: list):
 		landmarks.append(landmark)
 
 
-def process_landmarks(landmarks_list: list, tocfile: TextIO, worktype: str, worktitle: str):
+def process_landmarks(landmarks_list: list, worktype: str, worktitle: str):
 	"""
 	goes through all found landmark items and writes them to the toc file
 	"""
@@ -198,122 +196,111 @@ def process_landmarks(landmarks_list: list, tocfile: TextIO, worktype: str, work
 	bodyitems = [item for item in landmarks_list if item.place == Position.BODY]
 	backitems = [item for item in landmarks_list if item.place == Position.BACK]
 
+	outstring = ''
 	for item in frontitems:
-		tocfile.write(item.output())
-
+		outstring += item.output()
 	if bodyitems:
-		tocfile.write(bodyitems[0].output(worktype, worktitle))  # just the first item
-
+		outstring += bodyitems[0].output(worktype, worktitle) # just the first item
 	for item in backitems:
-		tocfile.write(item.output())
+		outstring += item.output()
+	return outstring
 
 
-def process_items(item_list: list, tocfile: TextIO):
+def process_items(item_list: list) -> str:
 	"""
-	goes through all found toc items and writes them to the toc file
+	goes through all found toc items and returns them as a string
 	"""
 	unclosed_ol = 0   # keep track of how many ordered lists we open
+	outstring = ''
 
 	# process all but last item so we can look ahead
 	for index in range(0, len(item_list) - 1):  # ignore very last item, which is a dummy
 		thisitem = item_list[index]
 		nextitem = item_list[index + 1]
 
-		toprint = ''
-
 		# check to see if next item is at same, lower or higher level than us
 		if nextitem.level == thisitem.level:  # SIMPLE
-			toprint += indent(thisitem.level) + '<li>\n'
-			toprint += indent(thisitem.level) + thisitem.output()
-			toprint += indent(thisitem.level) + '</li>\n'
+			outstring += indent(thisitem.level) + '<li>' + '\n'
+			outstring += indent(thisitem.level) + thisitem.output()
+			outstring += indent(thisitem.level) + '</li>' + '\n'
 
 		if nextitem.level > thisitem.level:  # PARENT
-			toprint += indent(thisitem.level) + '<li>\n'
-			toprint += indent(thisitem.level) + thisitem.output()
-			toprint += indent(thisitem.level) + tabs(1) + '<ol>\n'
+			outstring += indent(thisitem.level) + '<li>' + '\n'
+			outstring += indent(thisitem.level) + thisitem.output()
+			outstring += indent(thisitem.level) + tabs(1) + '<ol>' + '\n'
 			unclosed_ol += 1
+			if verbose:
+				print(thisitem.filelink + ' unclosed ol = ' + str(unclosed_ol))
 
 		if nextitem.level < thisitem.level:  # LAST CHILD
-			toprint += indent(thisitem.level) + '<li>\n'
-			toprint += indent(thisitem.level) + thisitem.output()
-			toprint += indent(thisitem.level) + '</li>\n'  # end of this item
+			outstring += indent(thisitem.level) + '<li>' + '\n'
+			outstring += indent(thisitem.level) + thisitem.output()
+			outstring += indent(thisitem.level) + '</li>' + '\n'  # end of this item
 			torepeat = thisitem.level - nextitem.level
 			current_level = thisitem.level
 			if torepeat > 0 and unclosed_ol > 0:
 				for _ in range(0, torepeat):  # need to repeat a few times as may be jumping back from eg h5 to h2
-					toprint += indent(current_level, -1) + '</ol>\n'  # end of embedded list
+					outstring += indent(current_level, -1) + '</ol>' + '\n'  # end of embedded list
 					unclosed_ol -= 1
-					toprint += indent(current_level, -2) + '</li>\n'  # end of parent item
+					if verbose:
+						print(thisitem.filelink + ' unclosed ol = ' + str(unclosed_ol))
+					outstring += indent(current_level, -2) + '</li>' + '\n'  # end of parent item
 					current_level -= 1
-
-		tocfile.write(toprint)
-
-	while unclosed_ol > 0:
-		# shouldn't ever get here, but just to be safe...
-		tocfile.write(tabs(3) + '</ol>\n')
-		unclosed_ol -= 1
-		tocfile.write(tabs(2) + '</li>\n')
+	return outstring
 
 
-def output_toc(item_list: list, landmark_list, outtocpath: str, worktype: str, worktitle: str):
+def get_opf(opfpath) -> BeautifulSoup:
+	temptext = gethtml(opfpath)
+	return BeautifulSoup(temptext, 'html.parser')
+
+
+def get_existing_toc(tocpath: str) -> BeautifulSoup:
+	temptext = gethtml(tocpath)
+	return BeautifulSoup(temptext, 'html.parser')
+
+
+def output_toc(item_list: list, landmark_list, tocpath: str, outtocpath: str, worktype: str, worktitle: str):
 	"""
 	outputs the contructed ToC based on the lists of items  and landmarks found, to the specified output file
 	"""
 	if len(item_list) < 2:
 		print('Too few ToC items found')
 		return
+
+	existing_toc: BeautifulSoup = get_existing_toc(tocpath)
+	if existing_toc is None:
+		print("Existing ToC not found")
+		return
+
+	# there should be exactly two nav sections
+	navs = existing_toc.find_all('nav')
+
+	if len(navs) < 2:
+		print("Existing ToC has too few nav sections")
+		return
+
+	item_ol = navs[0].find('ol')
+	item_ol.clear()
+	landmark_ol = navs[1].find('ol')
+	landmark_ol.clear()
+	item_html = process_items(item_list)
+	new_items = BeautifulSoup(item_html, 'html.parser')
+	item_ol.append(new_items)
+	landmarks_html = process_landmarks(landmark_list, worktype, worktitle)
+	new_landmarks = BeautifulSoup(landmarks_html, 'html.parser')
+	landmark_ol.append(new_landmarks)
+	writestring = existing_toc.prettify()
+
 	try:
 		if os.path.exists(outtocpath):
 			os.remove(outtocpath)  # get rid of file if it already exists
-		tocfile = open(outtocpath, 'a', encoding='utf-8')
+		tocfile = open(outtocpath, 'w', encoding='utf-8')
 	except IOError:
 		print('Unable to open output file! ' + outtocpath)
 		return
-	write_toc_start(tocfile)
-	process_items(item_list, tocfile)
-	write_toc_middle(tocfile)
-	process_landmarks(landmark_list, tocfile, worktype, worktitle)
-	write_toc_end(tocfile)
 
+	tocfile.write(writestring)
 	tocfile.close()
-
-
-def write_toc_start(tocfile):
-	"""
-	write opening part of ToC
-	"""
-	tocfile.write('<?xml version="1.0" encoding="utf-8"?>\n')
-	tocfile.write('<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" ')
-	tocfile.write('epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, ')
-	tocfile.write('se: https://standardebooks.org/vocab/1.0" xml:lang="en-US">\n')
-	tocfile.write(tabs(1) + '<head>\n')
-	tocfile.write(tabs(2) + '<title>Table of Contents</title>\n')
-	tocfile.write(tabs(1) + '</head>\n')
-	tocfile.write(tabs(1) + '<body epub:type="frontmatter">\n')
-	tocfile.write(tabs(2) + '<nav epub:type="toc">\n')
-	tocfile.write(tabs(3) + '<h2 epub:type="title">Table of Contents</h2>\n')
-	tocfile.write(tabs(3) + '<ol>\n')
-
-
-def write_toc_middle(tocfile):
-	"""
-	write middle part of ToC and start of Landmarks
-	"""
-	tocfile.write(tabs(3) + '</ol>\n')
-	tocfile.write(tabs(2) + '</nav>\n')
-	tocfile.write(tabs(2) + '<nav epub:type="landmarks">\n')
-	tocfile.write(tabs(3) + '<h2 epub:type="title">Landmarks</h2>\n')
-	tocfile.write(tabs(3) + '<ol>\n')
-
-
-def write_toc_end(tocfile):
-	"""
-	write closing part of ToC
-	"""
-	tocfile.write(tabs(3) + '</ol>\n')
-	tocfile.write(tabs(2) + '</nav>\n')
-	tocfile.write(tabs(1) + '</body>\n')
-	tocfile.write('</html>')
 
 
 def get_parent_id(hchild: Tag) -> str:
@@ -335,7 +322,7 @@ def extract_strings(atag: Tag) -> str:
 	"""
 	retstring = ''
 	for child in atag.contents:
-		if child != '\n':
+		if child != '' + '\n':
 			if isinstance(child, Tag):
 				try:
 					epubtype = child['epub:type']
@@ -429,7 +416,7 @@ def process_heading_contents(heading, tocitem):
 	"""
 	accumulator = ''  # we'll use this to build up the title
 	for child in heading.contents:  # was children
-		if child != '\n':
+		if child != '' + '\n':
 			if isinstance(child, Tag):
 				try:
 					epubtype = child['epub:type']
@@ -493,8 +480,7 @@ def make_toc(args):
 	textpath = os.path.join(rootpath, 'src', 'epub', 'text')
 	opfpath = os.path.join(rootpath, 'src', 'epub', 'content.opf')
 
-	temptext = gethtml(opfpath)
-	opf = BeautifulSoup(temptext, 'html.parser')
+	opf = get_opf(opfpath)
 	filelist = get_content_files(opf)
 	worktitle = get_worktitle(opf)
 
@@ -508,7 +494,7 @@ def make_toc(args):
 		worktype = 'fiction'
 
 	global verbose
-	verbose = args.verbose
+	verbose = bool(args.verbose is not None)
 
 	landmarks, toclist = process_all_content(filelist, textpath)
 
@@ -516,7 +502,7 @@ def make_toc(args):
 	if args.output is not None:
 		outpath = args.output
 
-	output_toc(toclist, landmarks, outpath, worktype, worktitle)
+	output_toc(toclist, landmarks, tocpath, outpath, worktype, worktitle)
 
 	if verbose:
 		print(" OK")
