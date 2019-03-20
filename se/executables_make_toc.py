@@ -2,16 +2,11 @@
 """
 routine which tries to create a valid table of contents file for SE projects
 """
-import argparse
 import os
 from enum import Enum
 import regex
-
 from bs4 import BeautifulSoup, Tag
-
-
-# global variable (not a constant)
-verbose = False
+from se.formatting import format_xhtml
 
 
 class TocItem:
@@ -229,8 +224,6 @@ def process_items(item_list: list) -> str:
 			outstring += indent(thisitem.level) + thisitem.output()
 			outstring += indent(thisitem.level) + tabs(1) + '<ol>' + '\n'
 			unclosed_ol += 1
-			if verbose:
-				print(thisitem.filelink + ' unclosed ol = ' + str(unclosed_ol))
 
 		if nextitem.level < thisitem.level:  # LAST CHILD
 			outstring += indent(thisitem.level) + '<li>' + '\n'
@@ -242,8 +235,6 @@ def process_items(item_list: list) -> str:
 				for _ in range(0, torepeat):  # need to repeat a few times as may be jumping back from eg h5 to h2
 					outstring += indent(current_level, -1) + '</ol>' + '\n'  # end of embedded list
 					unclosed_ol -= 1
-					if verbose:
-						print(thisitem.filelink + ' unclosed ol = ' + str(unclosed_ol))
 					outstring += indent(current_level, -2) + '</li>' + '\n'  # end of parent item
 					current_level -= 1
 	return outstring
@@ -289,7 +280,7 @@ def output_toc(item_list: list, landmark_list, tocpath: str, outtocpath: str, wo
 	landmarks_html = process_landmarks(landmark_list, worktype, worktitle)
 	new_landmarks = BeautifulSoup(landmarks_html, 'html.parser')
 	landmark_ol.append(new_landmarks)
-	writestring = existing_toc.prettify()
+	writestring = format_xhtml(str(existing_toc))
 
 	try:
 		if os.path.exists(outtocpath):
@@ -396,8 +387,6 @@ def process_heading(heading, is_toplevel, textf) -> TocItem:
 	try:
 		attribs = heading['epub:type']
 	except KeyError:
-		if verbose:
-			print(textf + ': warning: heading with no epub:type')
 		attribs = ''
 	if 'z3998:roman' in attribs:
 		tocitem.roman = extract_strings(heading)
@@ -452,8 +441,6 @@ def process_all_content(filelist, textpath) -> (list, list):
 	landmarks = []
 	nest_under_halftitle = False
 	for textf in filelist:
-		if verbose:
-			print('Processing: ' + textf)
 		html_text = gethtml(os.path.join(textpath, textf))
 		soup = BeautifulSoup(html_text, 'html.parser')
 		place = get_place(soup)
@@ -493,9 +480,6 @@ def make_toc(args):
 	else:
 		worktype = 'fiction'
 
-	global verbose
-	verbose = bool(args.verbose is not None)
-
 	landmarks, toclist = process_all_content(filelist, textpath)
 
 	outpath = tocpath
@@ -504,7 +488,8 @@ def make_toc(args):
 
 	output_toc(toclist, landmarks, tocpath, outpath, worktype, worktitle)
 
-	if verbose:
+	if args.verbose:
+		print("Built Table of Contents with " + str(len(toclist)) + " entries.")
 		print(" OK")
 
 	return 0
