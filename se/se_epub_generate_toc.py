@@ -284,6 +284,9 @@ def extract_strings(tag: Tag) -> str:
 			if isinstance(child, Tag):
 				try:
 					epub_type = child["epub:type"]
+					if "se:" in epub_type and child.name == "i":
+						# Likely a semantically tagged item, just want the content.
+						out_string += child.string
 					if "z3998:roman" in epub_type:
 						out_string += str(child)  # We want the whole span.
 					if "noteref" in epub_type:
@@ -367,7 +370,7 @@ def process_heading_contents(heading, toc_item):
 					epub_type = child["epub:type"]
 				except KeyError:
 					epub_type = "blank"
-					if child.name == "abbr":
+					if child.name == "abbr" or child.name == 'i':
 						accumulator += extract_strings(child)
 						continue  # Skip following and go to next child.
 
