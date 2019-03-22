@@ -620,7 +620,7 @@ def print_toc() -> int:
 	and maintainability.
 	"""
 	parser = argparse.ArgumentParser(description="Build a table of contents for an SE source directory and print to stdout.")
-	parser.add_argument("-i", "--in-place", action="store_true", help="overwrite the existing toc.xhtml instead of printing to stdout")
+	parser.add_argument("-i", "--in-place", action="store_true", help="overwrite the existing toc.xhtml file instead of printing to stdout")
 	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
