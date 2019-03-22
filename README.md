@@ -161,6 +161,10 @@ We need volunteers to take the lead on the following goals:
 
 	Print `<manifest>` and `<spine>` tags to standard output for the given Standard Ebooks source directory, for use in that directory’s content.opf.
 
+-	### `se print-toc`
+
+	Build a table of contents for an SE source directory and print to stdout.
+
 -	### `se recompose-epub`
 
 	Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output.
