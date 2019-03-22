@@ -35,7 +35,7 @@ class TocItem:
 		outstring = ''
 
 		if title_is_entirely_roman(self.title):
-			if self.subtitle == '':  # no subtitle
+			if self.subtitle == '':
 				outstring += '<a href="text/' + self.file_link + '" epub:type="z3998:roman">' + self.roman + '</a>' + '\n'
 			else:
 				outstring += '<a href="text/' + self.file_link + '">' + self.title + ': ' + self.subtitle + '</a>' + '\n'
@@ -98,7 +98,7 @@ def get_work_title_and_type(opf: BeautifulSoup) -> (str, str):
 	pulls out the title and determines if the type is fiction or nonfiction.
 	Returns this information as a tuple.
 	"""
-	# first, set up the defaults if we can't find the info
+	# First, set up the defaults if we can't find the info.
 	work_type = 'fiction'
 	work_title = 'WORKTITLE'
 	dctitle = opf.find('dc:title')
@@ -130,12 +130,12 @@ def get_epub_type(soup: BeautifulSoup) -> str:
 	"""
 	Retrieve the epub_type of this file to see if it's a landmark item.
 	"""
-	# try for a heading
+	# Try for a heading.
 	first_head = soup.find(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
 	if first_head is not None:
 		parent = first_head.find_parent(['section', 'article'])
-	else:  # no heading so go hunting for some other content
-		para = soup.find(['p', 'header', 'img'])  # we find the first <p> or <header>
+	else:  # No heading found so go hunting for some other content.
+		para = soup.find(['p', 'header', 'img'])  # We look for the first such item.
 		parent = para.find_parent(['section', 'article'])
 	try:
 		return parent['epub:type']
@@ -190,7 +190,7 @@ def process_landmarks(landmarks_list: list, work_type: str, work_title: str):
 	for item in frontitems:
 		outstring += item.output()
 	if bodyitems:
-		outstring += bodyitems[0].output(work_type, work_title) # just the first item
+		outstring += bodyitems[0].output(work_type, work_title)  # Just the first bodymatter item.
 	for item in backitems:
 		outstring += item.output()
 	return outstring
@@ -200,15 +200,15 @@ def process_items(item_list: list) -> str:
 	"""
 	Runs through all found toc items and returns them as a string.
 	"""
-	unclosed_ol = 0   # keep track of how many ordered lists we open
+	unclosed_ol = 0  # Keep track of how many ordered lists we open.
 	outstring = ''
 
-	# process all but last item so we can look ahead
-	for index in range(0, len(item_list) - 1):  # ignore very last item, which is a dummy
+	# Process all but last item so we can look ahead.
+	for index in range(0, len(item_list) - 1):  # Ignore very last item, which is a dummy.
 		thisitem = item_list[index]
 		nextitem = item_list[index + 1]
 
-		# check to see if next item is at same, lower or higher level than us
+		# Check to see if next item is at same, lower or higher level than us.
 		if nextitem.level == thisitem.level:  # SIMPLE
 			outstring += '<li>' + '\n'
 			outstring += thisitem.output()
@@ -223,13 +223,13 @@ def process_items(item_list: list) -> str:
 		if nextitem.level < thisitem.level:  # LAST CHILD
 			outstring += '<li>' + '\n'
 			outstring += thisitem.output()
-			outstring += '</li>' + '\n'  # end of this item
+			outstring += '</li>' + '\n'  # Close off this item.
 			torepeat = thisitem.level - nextitem.level
 			if torepeat > 0 and unclosed_ol > 0:
-				for _ in range(0, torepeat):  # need to repeat a few times as may be jumping back from eg h5 to h2
-					outstring += '</ol>' + '\n'  # end of embedded list
+				for _ in range(0, torepeat):  # We need to repeat a few times as may be jumping back from eg h5 to h2
+					outstring += '</ol>' + '\n'  # End of embedded list.
 					unclosed_ol -= 1
-					outstring += '</li>' + '\n'  # end of parent item
+					outstring += '</li>' + '\n'  # End of parent item.
 	return outstring
 
 
@@ -263,7 +263,7 @@ def output_toc(item_list: list, landmark_list, tocpath: str, overwrite: bool, wo
 		print("Existing ToC not found")
 		return
 
-	# there should be exactly two nav sections
+	# There should be exactly two nav sections.
 	navs = existing_toc.find_all('nav')
 
 	if len(navs) < 2:
@@ -285,14 +285,14 @@ def output_toc(item_list: list, landmark_list, tocpath: str, overwrite: bool, wo
 	if overwrite:
 		try:
 			if os.path.exists(tocpath):
-				os.remove(tocpath)  # get rid of file if it already exists
+				os.remove(tocpath)  # Get rid of existing file.
 			tocfile = open(tocpath, 'w', encoding='utf-8')
 		except IOError:
 			print('Unable to overwrite ToC file!')
 			return
 		tocfile.write(writestring)
 		tocfile.close()
-	else:  # output to stdout
+	else:  # Output to stdout.
 		print(writestring)
 
 
@@ -320,13 +320,13 @@ def extract_strings(atag: Tag) -> str:
 				try:
 					epub_type = child['epub:type']
 					if 'z3998:roman' in epub_type:
-						retstring += str(child)  # want the whole span
+						retstring += str(child)  # We want the whole span.
 					if 'noteref' in epub_type:
 						continue
-				except KeyError:  # tag has no epub_type, probably <abbr>
+				except KeyError:  # The tag has no epub_type, probably <abbr>.
 					retstring += child.string
 			else:
-				retstring += child  # must be NavigableString
+				retstring += child  # Must be NavigableString.
 	return retstring
 
 
@@ -338,11 +338,11 @@ def process_headings(soup: BeautifulSoup, textf: str, toclist: list, nest_under_
 	# find all the h1, h2 etc headings
 	heads = soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
 
-	if not heads:  # may be a dedication or an epigraph, with no heading tag
+	if not heads:  # May be a dedication or an epigraph, with no heading tag.
 		special_item = TocItem()
-		sections = soup.find_all('section')  # count the sections within this file
+		sections = soup.find_all('section')  # Count the sections within this file.
 		special_item.level = len(sections)
-		title_tag = soup.find('title')  # use page title as the ToC entry title
+		title_tag = soup.find('title')  # Use the page title as the ToC entry title.
 		special_item.title = title_tag.string
 		special_item.file_link = textf
 		toclist.append(special_item)
@@ -374,7 +374,7 @@ def process_heading(heading, is_toplevel, textf) -> TocItem:
 	tocitem = TocItem()
 	parent_sections = heading.find_parents(['section', 'article'])
 	tocitem.level = len(parent_sections)
-	# this stops the first heading in a file getting an anchor id, which is what we want
+	# This stops the first heading in a file getting an anchor id, we don't want that.
 	if is_toplevel:
 		tocitem.id = ''
 		tocitem.file_link = textf
@@ -384,8 +384,8 @@ def process_heading(heading, is_toplevel, textf) -> TocItem:
 			tocitem.file_link = textf
 		else:
 			tocitem.file_link = textf + '#' + tocitem.id
-	# a heading may include z3998:roman directly,
-	# eg <h5 epub:type="title z3998:roman">II</h5>
+	# A heading may include z3998:roman directly,
+	# eg <h5 epub:type="title z3998:roman">II</h5>.
 	try:
 		attribs = heading['epub:type']
 	except KeyError:
@@ -404,8 +404,8 @@ def process_heading_contents(heading, tocitem):
 	Run through each item in the heading contents
 	and try to pull out the toc item data.
 	"""
-	accumulator = ''  # we'll use this to build up the title
-	for child in heading.contents:  # was children
+	accumulator = ''  # We'll use this to build up the title.
+	for child in heading.contents:
 		if child != '' + '\n':
 			if isinstance(child, Tag):
 				try:
@@ -414,7 +414,7 @@ def process_heading_contents(heading, tocitem):
 					epub_type = 'blank'
 					if child.name == 'abbr':
 						accumulator += extract_strings(child)
-						continue  # skip following and go to next child
+						continue  # Skip following and go to next child.
 
 				if 'z3998:roman' in epub_type:
 					tocitem.roman = extract_strings(child)
@@ -424,10 +424,10 @@ def process_heading_contents(heading, tocitem):
 				elif 'title' in epub_type:
 					tocitem.title = extract_strings(child)
 				elif 'noteref' in epub_type:
-					pass  # do nowt
+					pass  # Don't process it.
 				else:
 					tocitem.title = extract_strings(child)
-			else:  # should be a simple NavigableString
+			else:  # This should be a simple NavigableString.
 				accumulator += str(child)
 	if tocitem.title == '':
 		tocitem.title = accumulator
@@ -451,7 +451,7 @@ def process_all_content(filelist, textpath) -> (list, list):
 		if textf == 'halftitle.xhtml':
 			nest_under_halftitle = True
 		add_landmark(soup, textf, landmarks)
-	# we add this dummy item because outputtoc always needs to look ahead to the next item
+	# We add this dummy item because outputtoc always needs to look ahead to the next item.
 	lasttoc = TocItem()
 	lasttoc.level = 1
 	lasttoc.title = "dummy"
