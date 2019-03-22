@@ -612,25 +612,31 @@ def lint() -> int:
 	return return_code
 
 
-def make_toc() -> int:
+def print_toc() -> int:
 	"""
-	Entry point for `se make-toc`
+	Entry point for `se print-toc`
 
-	The meat of this function is broken out into the make_toc.py module for readability
+	The meat of this function is broken out into the generate_toc.py module for readability
 	and maintainability.
 	"""
-	parser = argparse.ArgumentParser(description="Builds a table of contents for an SE project")
-	parser.add_argument("-i", "--in_place", action="store_true", help="overwrite the existing toc.xhtml instead of printing to stdout")
-	parser.add_argument("-v", "--verbose", required=False, action="store_true", help="increase output verbosity")
+	parser = argparse.ArgumentParser(description="Build a table of contents for an SE source directory and print to stdout.")
+	parser.add_argument("-i", "--in-place", action="store_true", help="overwrite the existing toc.xhtml instead of printing to stdout")
 	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
 	try:
 		se_epub = SeEpub(args.directory)
-		se_epub.make_toc(args.in_place, args.verbose)
 	except se.SeException as ex:
-		se.print_error(ex, args.verbose)
+		se.print_error(ex)
 		return ex.code
+
+	if args.in_place:
+
+		with open(os.path.join(se_epub.directory, "src", "epub", "toc.xhtml"), "r+", encoding="utf-8") as file:
+			file.write(se_epub.generate_toc())
+			file.truncate()
+	else:
+		print(se_epub.generate_toc())
 
 	return 0
 
