@@ -68,7 +68,7 @@ class LandmarkItem:
 	epub_type = ""
 	place: Position = Position.FRONT
 
-	def output(self, work_type: str = "fiction", work_title: str = "WORKTITLE"):
+	def output(self, work_type: str = "fiction", work_title: str = "WORK_TITLE"):
 		"""
 		Returns the linking string to be included in landmarks section.
 		"""
@@ -104,7 +104,7 @@ def get_work_title_and_type(opf: BeautifulSoup) -> (str, str):
 
 	# First, set up the defaults if we can"t find the info.
 	work_type = "fiction"
-	work_title = "WORKTITLE"
+	work_title = "WORK_TITLE"
 	dc_title = opf.find("dc:title")
 	if dc_title is not None:
 		work_title = dc_title.string
