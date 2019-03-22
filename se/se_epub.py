@@ -770,3 +770,14 @@ class SeEpub:
 		from se.se_epub_build import build
 
 		build(self, self.metadata_xhtml, self._get_metadata_tree(), run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers, verbose)
+
+	def make_toc(self, in_place, verbose):
+		"""
+		The make_toc() function is very big so for readability and maintainability
+		it's broken out to a separate file. Strictly speaking that file can be inlined
+		into this class.
+		"""
+
+		from se.se_epub_make_toc import make_toc
+
+		make_toc(self, in_place, verbose)

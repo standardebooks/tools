@@ -619,16 +619,20 @@ def make_toc() -> int:
 	The meat of this function is broken out into the make_toc.py module for readability
 	and maintainability.
 	"""
-	parser = argparse.ArgumentParser(description="Attempts to build a table of contents for an SE project")
-	parser.add_argument("-o", "--output", dest="output", required=False, help="path and filename of output file if existing ToC is to be left alone")
+	parser = argparse.ArgumentParser(description="Builds a table of contents for an SE project")
+	parser.add_argument("-i", "--in_place", action="store_true", help="overwrite the existing toc.xhtml instead of printing to stdout")
 	parser.add_argument("-v", "--verbose", required=False, action="store_true", help="increase output verbosity")
-	parser.add_argument("-n", "--nonfiction", required=False, action="store_true", help="work type is non-fiction")
 	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
-	from se.executables_make_toc import make_toc
+	try:
+		se_epub = SeEpub(args.directory)
+		se_epub.make_toc(args.in_place, args.verbose)
+	except se.SeException as ex:
+		se.print_error(ex, args.verbose)
+		return ex.code
 
-	return make_toc(args)
+	return 0
 
 
 def make_url_safe() -> int:
