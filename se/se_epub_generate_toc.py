@@ -284,14 +284,14 @@ def extract_strings(tag: Tag) -> str:
 			if isinstance(child, Tag):
 				try:
 					epub_type = child["epub:type"]
-					if "se:" in epub_type and child.name == "i":
-						# Likely a semantically tagged item, just want the content.
+					if child.name == "i":
+						# Likely a semantically tagged item, we just want the content.
 						out_string += child.string
 					if "z3998:roman" in epub_type:
-						out_string += str(child)  # We want the whole span.
+						out_string += str(child)  # We want the whole span and content.
 					if "noteref" in epub_type:
-						continue
-				except KeyError:  # The tag has no epub_type, probably <abbr>.
+						continue  # Ignore the whole tag and its content.
+				except KeyError:  # The tag has no epub_type, probably <abbr> or similar.
 					out_string += child.string
 			else:
 				out_string += child  # Must be NavigableString.
@@ -369,10 +369,8 @@ def process_heading_contents(heading, toc_item):
 				try:
 					epub_type = child["epub:type"]
 				except KeyError:
-					epub_type = "blank"
-					if child.name == "abbr" or child.name == 'i':
-						accumulator += extract_strings(child)
-						continue  # Skip following and go to next child.
+					accumulator += extract_strings(child)
+					continue  # Skip following and go to next child.
 
 				if "z3998:roman" in epub_type:
 					toc_item.roman = extract_strings(child)
