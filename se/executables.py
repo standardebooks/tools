@@ -754,8 +754,8 @@ def print_manifest_and_spine() -> int:
 	"""
 
 	parser = argparse.ArgumentParser(description="Print <manifest> and <spine> tags to standard output for the given Standard Ebooks source directory, for use in that directory’s content.opf.")
-	parser.add_argument("-m", "--manifest", action="store_false", help="only print the manifest")
-	parser.add_argument("-s", "--spine", action="store_false", help="only print the spine")
+	parser.add_argument("-m", "--manifest", action="store_true", help="only print the manifest")
+	parser.add_argument("-s", "--spine", action="store_true", help="only print the spine")
 	parser.add_argument("-i", "--in-place", action="store_true", help="overwrite the <manifest> or <spine> tags in content.opf instead of printing to stdout")
 	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
@@ -765,6 +765,10 @@ def print_manifest_and_spine() -> int:
 	except se.SeException as ex:
 		se.print_error(ex)
 		return ex.code
+
+	if not args.spine and not args.manifest:
+		args.spine = True
+		args.manifest = True
 
 	if args.in_place:
 		if args.spine:
@@ -777,10 +781,10 @@ def print_manifest_and_spine() -> int:
 			file.write(se_epub.metadata_xhtml)
 			file.truncate()
 	else:
-		if args.spine:
+		if args.manifest:
 			print(se_epub.generate_manifest())
 
-		if args.manifest:
+		if args.spine:
 			print(se_epub.generate_spine())
 
 	return 0
