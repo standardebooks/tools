@@ -179,7 +179,7 @@ def _generate_titlepage_svg(title: str, authors: Union[str, list], contributors:
 
 	element_y += se.TITLEPAGE_VERTICAL_PADDING
 
-	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLESTRING", title_string)
+	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLE_STRING", title_string)
 	svg = regex.sub(r"viewBox=\".+?\"", "viewBox=\"0 0 1400 {:.0f}\"".format(element_y), svg)
 
 	return svg
@@ -275,7 +275,7 @@ def _generate_cover_svg(title: str, authors: Union[str, list], title_string: str
 	if title_class != "title-xsmall":
 		svg = regex.sub(r"\n\n\t\t\.title-xsmall\{.+?\}", "", svg, flags=regex.DOTALL)
 
-	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLESTRING", title_string)
+	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLE_STRING", title_string)
 
 	return svg
 
@@ -472,9 +472,9 @@ def create_draft(args: list) -> int:
 		translator_wiki_url, translator_nacoaf_url = _get_wikipedia_url(args.translator, True)
 
 	# Pre-fill a few templates
-	se.replace_in_file(os.path.normpath(repo_name + "/src/epub/text/titlepage.xhtml"), "TITLESTRING", title_string)
-	se.replace_in_file(os.path.normpath(repo_name + "/images/titlepage.svg"), "TITLESTRING", title_string)
-	se.replace_in_file(os.path.normpath(repo_name + "/images/cover.svg"), "TITLESTRING", title_string)
+	se.replace_in_file(os.path.normpath(repo_name + "/src/epub/text/titlepage.xhtml"), "TITLE_STRING", title_string)
+	se.replace_in_file(os.path.normpath(repo_name + "/images/titlepage.svg"), "TITLE_STRING", title_string)
+	se.replace_in_file(os.path.normpath(repo_name + "/images/cover.svg"), "TITLE_STRING", title_string)
 
 	# Create the titlepage SVG
 	contributors = {}
