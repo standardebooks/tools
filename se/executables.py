@@ -611,7 +611,6 @@ def lint() -> int:
 
 	return return_code
 
-
 def print_toc() -> int:
 	"""
 	Entry point for `se print-toc`
@@ -619,6 +618,7 @@ def print_toc() -> int:
 	The meat of this function is broken out into the generate_toc.py module for readability
 	and maintainability.
 	"""
+
 	parser = argparse.ArgumentParser(description="Build a table of contents for an SE source directory and print to stdout.")
 	parser.add_argument("-i", "--in-place", action="store_true", help="overwrite the existing toc.xhtml file instead of printing to stdout")
 	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
@@ -631,7 +631,6 @@ def print_toc() -> int:
 		return ex.code
 
 	if args.in_place:
-
 		with open(os.path.join(se_epub.directory, "src", "epub", "toc.xhtml"), "r+", encoding="utf-8") as file:
 			file.write(se_epub.generate_toc())
 			file.truncate()
@@ -639,7 +638,6 @@ def print_toc() -> int:
 		print(se_epub.generate_toc())
 
 	return 0
-
 
 def make_url_safe() -> int:
 	"""
