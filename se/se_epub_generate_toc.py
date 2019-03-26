@@ -37,7 +37,7 @@ class Toc_item:
 
 		out_string = ""
 		if self.title is None:
-			print("Missing title in file " + self.file_link)
+			se.print_warning("Missing title in file " + self.file_link)
 			return ""
 
 		# If the title is entirely Roman
@@ -133,10 +133,11 @@ def get_epub_type(soup: BeautifulSoup) -> str:
 		if paragraph is not None:
 			parent = paragraph.find_parent(["section", "article", "body"])
 		else:
-			print("Unable to find parent of content object.")
+			se.print_warning("Unable to find any content objects.")
 			return ""
+
 	if parent is None:
-		print("Couldn't find any section grouping.")
+		se.print_warning("Couldn't find any section grouping.")
 		return ""
 	else:
 		try:
@@ -186,7 +187,7 @@ def add_landmark(soup: BeautifulSoup, textf: str, landmarks: list):
 			landmark.title = landmark.epub_type.capitalize
 		landmarks.append(landmark)
 	else:
-		print("Failed to get epub:type from file: " + textf)
+		se.print_warning("Failed to get epub:type from file: " + textf)
 
 
 def process_landmarks(landmarks_list: list, work_type: str, work_title: str):
