@@ -627,15 +627,19 @@ def print_toc() -> int:
 	try:
 		se_epub = SeEpub(args.directory)
 	except se.SeException as ex:
-		se.print_error(ex)
+		se.print_error(str(ex))
 		return ex.code
 
-	if args.in_place:
-		with open(os.path.join(se_epub.directory, "src", "epub", "toc.xhtml"), "r+", encoding="utf-8") as file:
-			file.write(se_epub.generate_toc())
-			file.truncate()
-	else:
-		print(se_epub.generate_toc())
+	try:
+		if args.in_place:
+			with open(os.path.join(se_epub.directory, "src", "epub", "toc.xhtml"), "r+", encoding="utf-8") as file:
+				file.write(se_epub.generate_toc())
+				file.truncate()
+		else:
+			print(se_epub.generate_toc())
+	except se.SeException as ex:
+		se.print_error(str(ex))
+		return ex.code
 
 	return 0
 
