@@ -613,6 +613,10 @@ def lint(self, metadata_xhtml) -> list:
 					if matches:
 						messages.append(LintMessage("<section> element without id attribute.", se.MESSAGE_TYPE_ERROR, filename))
 
+					# Check for empty title tags
+					if "<title/>" in file_contents or "<title></title>" in file_contents:
+						messages.append(LintMessage("Empty <title> tag.", se.MESSAGE_TYPE_ERROR, filename))
+
 					# Check for numeric entities
 					matches = regex.findall(r"&#[0-9]+?;", file_contents)
 					if matches:
