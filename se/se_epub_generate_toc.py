@@ -36,6 +36,9 @@ class Toc_item:
 		"""
 
 		out_string = ""
+		if self.title is None:
+			print("Missing title in file " + self.file_link)
+			return ""
 
 		# If the title is entirely Roman
 		if regex.search(r"^<span epub:type=\"z3998:roman\">[IVXLC]{1,10}<\/span>$", self.title):
@@ -124,14 +127,22 @@ def get_epub_type(soup: BeautifulSoup) -> str:
 	# Try for a heading.
 	first_head = soup.find(["h1", "h2", "h3", "h4", "h5", "h6"])
 	if first_head is not None:
-		parent = first_head.find_parent(["section", "article"])
+		parent = first_head.find_parent(["section", "article", "body"])
 	else:  # No heading found so go hunting for some other content.
 		paragraph = soup.find(["p", "header", "img"])  # We look for the first such item.
-		parent = paragraph.find_parent(["section", "article"])
-	try:
-		return parent["epub:type"]
-	except KeyError:
+		if paragraph is not None:
+			parent = paragraph.find_parent(["section", "article", "body"])
+		else:
+			print("Unable to find parent of content object.")
+			return ""
+	if parent is None:
+		print("Couldn't find any section grouping.")
 		return ""
+	else:
+		try:
+			return parent["epub:type"]
+		except KeyError:
+			return ""
 
 def get_place(soup: BeautifulSoup) -> Position:
 	"""
@@ -161,12 +172,22 @@ def add_landmark(soup: BeautifulSoup, textf: str, landmarks: list):
 
 	epub_type = get_epub_type(soup)
 	landmark = LandmarkItem()
-	landmark.title = soup.find("title").string
 	if epub_type != "":
 		landmark.epub_type = epub_type
 		landmark.file_link = textf
 		landmark.place = get_place(soup)
+		title_tag = soup.find("title")
+		if title_tag is not None:
+			landmark.title = title_tag.string
+			if landmark.title is None:
+				# This is a bit desperate, use this only if there's no proper <title> tag in file.
+				landmark.title = landmark.epub_type.capitalize
+		else:
+			landmark.title = landmark.epub_type.capitalize
 		landmarks.append(landmark)
+	else:
+		print("Failed to get epub:type from file: " + textf)
+
 
 def process_landmarks(landmarks_list: list, work_type: str, work_title: str):
 	"""
@@ -288,10 +309,10 @@ def extract_strings(tag: Tag) -> str:
 						# Likely a semantically tagged item, we just want the content.
 						out_string += child.string
 					if "z3998:roman" in epub_type:
-						out_string += str(child)  # We want the whole span and content.
+						out_string += str(child)  # We want the whole span.
 					if "noteref" in epub_type:
-						continue  # Ignore the whole tag and its content.
-				except KeyError:  # The tag has no epub_type, probably <abbr> or similar.
+						continue  # Ignore the whole tag and its contents.
+				except KeyError:  # The tag has no epub_type, probably <abbr>.
 					out_string += child.string
 			else:
 				out_string += child  # Must be NavigableString.
@@ -311,7 +332,12 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 		sections = soup.find_all("section")  # Count the sections within this file.
 		special_item.level = len(sections)
 		title_tag = soup.find("title")  # Use the page title as the ToC entry title.
-		special_item.title = title_tag.string
+		if title_tag is not None:
+			special_item.title = title_tag.string
+			if special_item.title is None:
+				special_item.title = "NO TITLE"
+		else:  # no <title> tag or content
+			special_item.title = "NO TITLE"
 		special_item.file_link = textf
 		toc_list.append(special_item)
 		return
@@ -331,7 +357,11 @@ def process_heading(heading, is_toplevel, textf) -> Toc_item:
 
 	toc_item = Toc_item()
 	parent_sections = heading.find_parents(["section", "article"])
-	toc_item.level = len(parent_sections)
+	if parent_sections:
+		toc_item.level = len(parent_sections)
+	else:
+		toc_item.level = 1
+
 	# This stops the first heading in a file getting an anchor id, we don't want that.
 	if is_toplevel:
 		toc_item.id = ""
@@ -382,7 +412,7 @@ def process_heading_contents(heading, toc_item):
 				elif "noteref" in epub_type:
 					pass  # Don't process it.
 				else:
-					toc_item.title = extract_strings(child)
+					accumulator += extract_strings(child)
 			else:  # This should be a simple NavigableString.
 				accumulator += str(child)
 	if toc_item.title == "":
