@@ -97,19 +97,15 @@ def get_content_files(opf: BeautifulSoup) -> list:
 
 	return ret_list
 
-def get_se_subjects(xhtml: str) -> list:
-	matches = regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", xhtml)
-	subjects = []
-	if matches:
-		for match in matches:
-			subjects.append(match)
-	return subjects
-
 def get_work_type(xhtml) -> str:
-	subject_list = get_se_subjects(xhtml)
-	for subject in subject_list:
-		if "Nonfiction" in subject:
+	"""
+	Returns either "fiction" or "non-fiction"
+	"""
+
+	for match in regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", xhtml):
+		if "Nonfiction" in match:
 			return "non-fiction"
+
 	return "fiction"
 
 def get_work_title(opf: BeautifulSoup) -> str:
@@ -121,8 +117,8 @@ def get_work_title(opf: BeautifulSoup) -> str:
 	dc_title = opf.find("dc:title")
 	if dc_title is not None:
 		return dc_title.string
-	else:
-		return "WORK_TITLE"
+
+	return "WORK_TITLE"
 
 def get_epub_type(soup: BeautifulSoup) -> str:
 	"""
