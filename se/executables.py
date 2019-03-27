@@ -627,7 +627,7 @@ def print_toc() -> int:
 	try:
 		se_epub = SeEpub(args.directory)
 	except se.SeException as ex:
-		se.print_error(str(ex))
+		se.print_error(ex)
 		return ex.code
 
 	try:
@@ -638,7 +638,7 @@ def print_toc() -> int:
 		else:
 			print(se_epub.generate_toc())
 	except se.SeException as ex:
-		se.print_error(str(ex))
+		se.print_error(ex)
 		return ex.code
 
 	return 0
