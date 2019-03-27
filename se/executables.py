@@ -196,7 +196,10 @@ def clean() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML or SVG file, or a directory containing XHTML or SVG files")
 	args = parser.parse_args()
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx")):
+	ignored_filenames = se.IGNORED_FILENAMES
+	ignored_filenames.remove("toc.xhtml")
+
+	for filename in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx"), ignored_filenames):
 		# If we're setting single lines, skip the colophon and cover/titlepage svgs, as they have special spacing
 		if args.single_lines and (filename.endswith("colophon.xhtml") or filename.endswith("cover.svg") or filename.endswith("titlepage.svg")):
 			continue
@@ -999,7 +1002,10 @@ def typogrify() -> int:
 	if args.verbose and not args.quotes:
 		print("Skipping smart quotes.")
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml")):
+	ignored_filenames = se.IGNORED_FILENAMES
+	ignored_filenames.remove("toc.xhtml")
+
+	for filename in se.get_target_filenames(args.targets, (".xhtml"), ignored_filenames):
 		if filename.endswith("titlepage.xhtml"):
 			continue
 
@@ -1067,7 +1073,11 @@ def word_count() -> int:
 
 	total_word_count = 0
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml"), args.exclude_se_files):
+	excluded_filenames = []
+	if args.exclude_se_files:
+		excluded_filenames = se.IGNORED_FILENAMES
+
+	for filename in se.get_target_filenames(args.targets, (".xhtml"), excluded_filenames):
 		if args.exclude_se_files and filename.endswith("endnotes.xhtml"):
 			continue
 

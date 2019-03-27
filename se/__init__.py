@@ -236,18 +236,22 @@ def is_positive_integer(value: str) -> int:
 
 	return int_value
 
-def get_target_filenames(targets: list, allowed_extensions: tuple, ignore_se_files: bool = True) -> set:
+def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filenames: list = None) -> set:
 	"""
 	Helper function to convert a list of filenames or directories into a list of filenames based on some parameters.
 
 	INPUTS
 	targets: A list of filenames or directories
 	allowed_extensions: A tuple containing a series of allowed filename extensions; extensions must begin with "."
-	ignore_se_files: If True, do not return filenames that are in the se.IGNORED_FILENAMES constant
+	ignored_filenames: If None, ignore files in the se.IGNORED_FILENAMES constant. If a list, ignore that list of filenames.
+				Pass an empty list to ignore no files.
 
 	OUTPUTS
-	None
+	A set of file paths and filenames contained in the target list.
 	"""
+
+	if ignored_filenames is None:
+		ignored_filenames = IGNORED_FILENAMES
 
 	target_xhtml_filenames = set()
 
@@ -259,16 +263,10 @@ def get_target_filenames(targets: list, allowed_extensions: tuple, ignore_se_fil
 				for filename in filenames:
 					if allowed_extensions:
 						if filename.endswith(allowed_extensions):
-							if ignore_se_files:
-								if filename not in IGNORED_FILENAMES:
-									target_xhtml_filenames.add(os.path.join(root, filename))
-							else:
+							if filename not in ignored_filenames:
 								target_xhtml_filenames.add(os.path.join(root, filename))
 					else:
-						if ignore_se_files:
-							if filename not in IGNORED_FILENAMES:
-								target_xhtml_filenames.add(os.path.join(root, filename))
-						else:
+						if filename not in ignored_filenames:
 							target_xhtml_filenames.add(os.path.join(root, filename))
 		else:
 			target_xhtml_filenames.add(target)

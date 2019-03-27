@@ -587,7 +587,7 @@ class SeEpub:
 		"""
 		text = ""
 
-		for filename in se.get_target_filenames([self.directory], (".xhtml"), True):
+		for filename in se.get_target_filenames([self.directory], (".xhtml")):
 			with open(filename, "r", encoding="utf-8") as file:
 				text += " " + file.read()
 
@@ -611,7 +611,7 @@ class SeEpub:
 		"""
 		word_count = 0
 
-		for filename in se.get_target_filenames([self.directory], (".xhtml"), True):
+		for filename in se.get_target_filenames([self.directory], (".xhtml")):
 			if filename.endswith("endnotes.xhtml"):
 				continue
 
