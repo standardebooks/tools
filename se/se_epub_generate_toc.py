@@ -185,9 +185,6 @@ def add_landmark(soup: BeautifulSoup, textf: str, landmarks: list):
 		else:
 			landmark.title = landmark.epub_type.capitalize
 		landmarks.append(landmark)
-	else:
-		raise se.InvalidInputException("Failed to get epub:type from file: " + textf)
-
 
 def process_landmarks(landmarks_list: list, work_type: str, work_title: str):
 	"""
