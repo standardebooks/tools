@@ -621,25 +621,30 @@ def print_toc() -> int:
 
 	parser = argparse.ArgumentParser(description="Build a table of contents for an SE source directory and print to stdout.")
 	parser.add_argument("-i", "--in-place", action="store_true", help="overwrite the existing toc.xhtml file instead of printing to stdout")
-	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
-	try:
-		se_epub = SeEpub(args.directory)
-	except se.SeException as ex:
-		se.print_error(ex)
-		return ex.code
+	if not args.in_place and len(args.directories) > 1:
+		se.print_error("Multiple directories are only allowed with the --in-place option.")
+		return se.InvalidInputException.code
 
-	try:
-		if args.in_place:
-			with open(os.path.join(se_epub.directory, "src", "epub", "toc.xhtml"), "r+", encoding="utf-8") as file:
-				file.write(se_epub.generate_toc())
-				file.truncate()
-		else:
-			print(se_epub.generate_toc())
-	except se.SeException as ex:
-		se.print_error(ex)
-		return ex.code
+	for directory in args.directories:
+		try:
+			se_epub = SeEpub(directory)
+		except se.SeException as ex:
+			se.print_error(ex)
+			return ex.code
+
+		try:
+			if args.in_place:
+				with open(os.path.join(se_epub.directory, "src", "epub", "toc.xhtml"), "r+", encoding="utf-8") as file:
+					file.write(se_epub.generate_toc())
+					file.truncate()
+			else:
+				print(se_epub.generate_toc())
+		except se.SeException as ex:
+			se.print_error(ex)
+			return ex.code
 
 	return 0
 
@@ -761,35 +766,40 @@ def print_manifest_and_spine() -> int:
 	parser.add_argument("-m", "--manifest", action="store_true", help="only print the manifest")
 	parser.add_argument("-s", "--spine", action="store_true", help="only print the spine")
 	parser.add_argument("-i", "--in-place", action="store_true", help="overwrite the <manifest> or <spine> tags in content.opf instead of printing to stdout")
-	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
-	try:
-		se_epub = SeEpub(args.directory)
-	except se.SeException as ex:
-		se.print_error(ex)
-		return ex.code
+	if not args.in_place and len(args.directories) > 1:
+		se.print_error("Multiple directories are only allowed with the --in-place option.")
+		return se.InvalidInputException.code
 
-	if not args.spine and not args.manifest:
-		args.spine = True
-		args.manifest = True
+	for directory in args.directories:
+		try:
+			se_epub = SeEpub(directory)
+		except se.SeException as ex:
+			se.print_error(ex)
+			return ex.code
 
-	if args.in_place:
-		if args.spine:
-			se_epub.metadata_xhtml = regex.sub(r"\s*<spine>.+?</spine>", "\n\t" + "\n\t".join(se_epub.generate_spine().splitlines()), se_epub.metadata_xhtml, flags=regex.DOTALL)
+		if not args.spine and not args.manifest:
+			args.spine = True
+			args.manifest = True
 
-		if args.manifest:
-			se_epub.metadata_xhtml = regex.sub(r"\s*<manifest>.+?</manifest>", "\n\t" + "\n\t".join(se_epub.generate_manifest().splitlines()), se_epub.metadata_xhtml, flags=regex.DOTALL)
+		if args.in_place:
+			if args.spine:
+				se_epub.metadata_xhtml = regex.sub(r"\s*<spine>.+?</spine>", "\n\t" + "\n\t".join(se_epub.generate_spine().splitlines()), se_epub.metadata_xhtml, flags=regex.DOTALL)
 
-		with open(os.path.join(se_epub.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
-			file.write(se_epub.metadata_xhtml)
-			file.truncate()
-	else:
-		if args.manifest:
-			print(se_epub.generate_manifest())
+			if args.manifest:
+				se_epub.metadata_xhtml = regex.sub(r"\s*<manifest>.+?</manifest>", "\n\t" + "\n\t".join(se_epub.generate_manifest().splitlines()), se_epub.metadata_xhtml, flags=regex.DOTALL)
 
-		if args.spine:
-			print(se_epub.generate_spine())
+			with open(os.path.join(se_epub.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
+				file.write(se_epub.metadata_xhtml)
+				file.truncate()
+		else:
+			if args.manifest:
+				print(se_epub.generate_manifest())
+
+			if args.spine:
+				print(se_epub.generate_spine())
 
 	return 0
 
