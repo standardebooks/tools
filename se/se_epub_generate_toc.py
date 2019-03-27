@@ -462,7 +462,9 @@ def generate_toc(self) -> str:
 
 	soup = BeautifulSoup(self.metadata_xhtml, "html.parser")
 	file_list = get_content_files(soup)
-	work_title, work_type = get_work_title_and_type(soup)
+
+	work_title = get_work_title(soup)
+	work_type = get_work_type(self.metadata_xhtml)
 
 	landmarks, toc_list = process_all_content(file_list, os.path.join(self.directory, "src", "epub", "text"))
 
