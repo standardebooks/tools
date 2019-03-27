@@ -97,26 +97,32 @@ def get_content_files(opf: BeautifulSoup) -> list:
 
 	return ret_list
 
-def get_work_title_and_type(opf: BeautifulSoup) -> (str, str):
+def get_se_subjects(xhtml: str) -> list:
+	matches = regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", xhtml)
+	subjects = []
+	if matches:
+		for match in matches:
+			subjects.append(match)
+	return subjects
+
+def get_work_type(xhtml) -> str:
+	subject_list = get_se_subjects(xhtml)
+	for subject in subject_list:
+		if "Nonfiction" in subject:
+			return "non-fiction"
+	return "fiction"
+
+def get_work_title(opf: BeautifulSoup) -> str:
 	"""
 	From content.opf, which we assume has been correctly completed,
-	pulls out the title and determines if the type is fiction or nonfiction.
-	Returns this information as a tuple.
+	pulls out the title.
 	"""
 
-	# First, set up the defaults if we can"t find the info.
-	work_type = "fiction"
-	work_title = "WORK_TITLE"
 	dc_title = opf.find("dc:title")
 	if dc_title is not None:
-		work_title = dc_title.string
-	subjects = opf.find_all("se:subject")
-	for subject in subjects:
-		if "Nonfiction" in subject:
-			work_type = "non-fiction"
-			break
-
-	return work_title, work_type
+		return dc_title.string
+	else:
+		return "WORK_TITLE"
 
 def get_epub_type(soup: BeautifulSoup) -> str:
 	"""
