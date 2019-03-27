@@ -103,7 +103,7 @@ def get_work_type(xhtml) -> str:
 	"""
 
 	for match in regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", xhtml):
-		if "Nonfiction" in match:
+		if "Nonfiction" in match or "Philosophy" in match:
 			return "non-fiction"
 
 	return "fiction"
