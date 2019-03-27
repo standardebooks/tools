@@ -329,6 +329,10 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 		special_item = Toc_item()
 		sections = soup.find_all("section")  # Count the sections within this file.
 		special_item.level = len(sections)
+		if special_item.level == 0:
+			special_item.level = 1
+		if nest_under_halftitle:
+			special_item.level += 1
 		title_tag = soup.find("title")  # Use the page title as the ToC entry title.
 		if title_tag is not None:
 			special_item.title = title_tag.string
