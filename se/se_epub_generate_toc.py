@@ -324,10 +324,14 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 
 	if not heads:  # May be a dedication or an epigraph, with no heading tag.
 		special_item = Toc_item()
-		sections = soup.find_all("section")  # Count the sections within this file.
-		special_item.level = len(sections)
-		if special_item.level == 0:
-			special_item.level = 1
+		# Need to determine level depth.
+		# We don't have a heading, so get the first content item.
+		content_item = soup.find(["p", "header", "img"])
+		if content_item is not None:
+			parents = content_item.find_parents(["section", "article"])
+			special_item.level = len(parents)
+			if special_item.level == 0:
+				special_item.level = 1
 		if nest_under_halftitle:
 			special_item.level += 1
 		title_tag = soup.find("title")  # Use the page title as the ToC entry title.
