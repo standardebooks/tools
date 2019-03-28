@@ -293,25 +293,14 @@ def get_parent_id(hchild: Tag) -> str:
 
 def extract_strings(tag: Tag) -> str:
 	"""
-	Returns only the string content of a tag, ignoring noteref and its content.
+	Returns string representation of tag, ignoring linefeeds
 	"""
 
 	out_string = ""
 	for child in tag.contents:
 		if child != "\n":
-			if isinstance(child, Tag):
-				try:
-					epub_type = child["epub:type"]
-					if "noteref" in epub_type:
-						continue  # Ignore the whole tag and its contents.
-					else:
-						# Likely a roman numeral or semantically tagged item, we want the tags and content.
-						out_string += str(child)
-				except KeyError:  # The tag has no epub_type, probably <abbr>.
-					out_string += str(child)  # this includes the surrounding tags eg <abbr>Mr.</abbr>
-			else:
-				out_string += child  # Must be simply a NavigableString.
-	return strip_notes(out_string)
+			out_string += str(child)
+	return out_string
 
 def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under_halftitle: bool):
 	"""
@@ -393,13 +382,8 @@ def strip_notes(text: str) -> str:
 	"""
 	Returns html text stripped of noterefs.
 	"""
-	pattern = regex.compile(r'<a.*?epub:type="noteref".*?>\d+<\/a>')
-	match = regex.search(pattern, text)
-	if match:
-		result = regex.sub(pattern, "", text)
-		return result
-	else:
-		return text
+	return regex.sub(r'<a.*?epub:type="noteref".*?>\d+<\/a>', "", text)
+
 
 def process_heading_contents(heading, toc_item):
 	"""
@@ -420,15 +404,13 @@ def process_heading_contents(heading, toc_item):
 
 				if "z3998:roman" in epub_type:
 					toc_item.roman = extract_strings(child)
-					accumulator += strip_notes(str(child))
+					accumulator += str(child)
 				elif "subtitle" in epub_type:
 					toc_item.subtitle = extract_strings(child)
 				elif "title" in epub_type:
 					toc_item.title = extract_strings(child)
 				elif "se:" in epub_type:  # Likely to be a semantically tagged italic.
-					accumulator += strip_notes(str(child))  # Include the whole thing, tags and all.
-				elif "noteref" in epub_type:
-					pass  # Don't process it at all.
+					accumulator += str(child)  # Include the whole thing, tags and all.
 				else:
 					accumulator += extract_strings(child)
 			else:  # This should be a simple NavigableString.
@@ -448,7 +430,7 @@ def process_all_content(file_list, text_path) -> (list, list):
 	for textf in file_list:
 		with open(os.path.join(text_path, textf), "r", encoding="utf-8") as file:
 			html_text = file.read()
-		soup = BeautifulSoup(html_text, "html.parser")
+		soup = BeautifulSoup(strip_notes(html_text), "html.parser")
 		place = get_place(soup)
 		if place == Position.BACK:
 			nest_under_halftitle = False
