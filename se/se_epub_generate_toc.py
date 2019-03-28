@@ -302,18 +302,13 @@ def extract_strings(tag: Tag) -> str:
 			if isinstance(child, Tag):
 				try:
 					epub_type = child["epub:type"]
-					if child.name == "i":
-						# Likely a semantically tagged item, we want the tags and content.
-						out_string += str(child)
-					if "z3998:roman" in epub_type:
-						out_string += str(child)  # We want the whole span.
 					if "noteref" in epub_type:
 						continue  # Ignore the whole tag and its contents.
-				except KeyError:  # The tag has no epub_type, probably <abbr>.
-					if child.name in ["abbr", "i"]:
-						out_string += str(child)  # this includes the surrounding tags eg <abbr>Mr.</abbr>
 					else:
-						out_string += child.string  # just the contents without tags
+						# Likely a roman numeral or semantically tagged item, we want the tags and content.
+						out_string += str(child)
+				except KeyError:  # The tag has no epub_type, probably <abbr>.
+					out_string += str(child)  # this includes the surrounding tags eg <abbr>Mr.</abbr>
 			else:
 				out_string += child  # Must be simply a NavigableString.
 	return out_string
@@ -403,10 +398,8 @@ def process_heading_contents(heading, toc_item):
 				try:
 					epub_type = child["epub:type"]
 				except KeyError:
-					if child.name in ["abbr", "i"]:
-						accumulator += str(child)
-					else:
-						accumulator += extract_strings(child)
+					# It's a tag without epub:type, such as <abbr>.
+					accumulator += extract_strings(child)
 					continue  # Skip following and go to next child.
 
 				if "z3998:roman" in epub_type:
@@ -416,7 +409,7 @@ def process_heading_contents(heading, toc_item):
 					toc_item.subtitle = extract_strings(child)
 				elif "title" in epub_type:
 					toc_item.title = extract_strings(child)
-				elif "se:" in epub_type and child.name == "i":  # Semantically tagged italic.
+				elif "se:" in epub_type:  # Likely to be a semantically tagged italic.
 					accumulator += str(child)  # Include the whole thing, tags and all.
 				elif "noteref" in epub_type:
 					pass  # Don't process it at all.
