@@ -311,7 +311,7 @@ def extract_strings(tag: Tag) -> str:
 					out_string += str(child)  # this includes the surrounding tags eg <abbr>Mr.</abbr>
 			else:
 				out_string += child  # Must be simply a NavigableString.
-	return out_string
+	return strip_notes(out_string)
 
 def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under_halftitle: bool):
 	"""
@@ -325,7 +325,7 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 	if not heads:  # May be a dedication or an epigraph, with no heading tag.
 		special_item = Toc_item()
 		# Need to determine level depth.
-		# We don't have a heading, so get the first content item.
+		# We don't have a heading, so get first content item
 		content_item = soup.find(["p", "header", "img"])
 		if content_item is not None:
 			parents = content_item.find_parents(["section", "article"])
@@ -389,6 +389,18 @@ def process_heading(heading, is_toplevel, textf) -> Toc_item:
 	process_heading_contents(heading, toc_item)
 	return toc_item
 
+def strip_notes(text: str) -> str:
+	"""
+	Returns html text stripped of noterefs.
+	"""
+	pattern = regex.compile(r'<a.*?epub:type="noteref".*?>\d+<\/a>')
+	match = regex.search(pattern, text)
+	if match:
+		result = regex.sub(pattern, "", text)
+		return result
+	else:
+		return text
+
 def process_heading_contents(heading, toc_item):
 	"""
 	Run through each item in the heading contents
@@ -408,13 +420,13 @@ def process_heading_contents(heading, toc_item):
 
 				if "z3998:roman" in epub_type:
 					toc_item.roman = extract_strings(child)
-					accumulator += str(child)
+					accumulator += strip_notes(str(child))
 				elif "subtitle" in epub_type:
 					toc_item.subtitle = extract_strings(child)
 				elif "title" in epub_type:
 					toc_item.title = extract_strings(child)
 				elif "se:" in epub_type:  # Likely to be a semantically tagged italic.
-					accumulator += str(child)  # Include the whole thing, tags and all.
+					accumulator += strip_notes(str(child))  # Include the whole thing, tags and all.
 				elif "noteref" in epub_type:
 					pass  # Don't process it at all.
 				else:
@@ -436,7 +448,6 @@ def process_all_content(file_list, text_path) -> (list, list):
 	for textf in file_list:
 		with open(os.path.join(text_path, textf), "r", encoding="utf-8") as file:
 			html_text = file.read()
-
 		soup = BeautifulSoup(html_text, "html.parser")
 		place = get_place(soup)
 		if place == Position.BACK:
