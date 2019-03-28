@@ -398,8 +398,8 @@ def process_heading_contents(heading, toc_item):
 				try:
 					epub_type = child["epub:type"]
 				except KeyError:
-					# It's a tag without epub:type, such as <abbr>.
-					accumulator += extract_strings(child)
+					# It's a tag without epub:type, such as <abbr>, take whole thing, tags and all.
+					accumulator += str(child)
 					continue  # Skip following and go to next child.
 
 				if "z3998:roman" in epub_type:
