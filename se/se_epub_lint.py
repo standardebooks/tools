@@ -1098,7 +1098,7 @@ def lint(self, metadata_xhtml) -> list:
 			# ToC-only colons above we also need to do that here for the comparison.
 			heading_without_colons = (heading[0].replace(":", ""), heading[1])
 			if heading_without_colons not in toc_headings:
-				messages.append(LintMessage("Heading ‘{}’ found, but not present for that file in the ToC".format(heading[0]), se.MESSAGE_TYPE_ERROR, heading[1]))
+				messages.append(LintMessage("Heading “{}” found, but not present for that file in the ToC.".format(heading[0]), se.MESSAGE_TYPE_ERROR, heading[1]))
 
 		# Check our ordered ToC entries against the spine
 		# To cover all possibilities, we combine the toc and the landmarks to get the full set of entries
@@ -1116,7 +1116,7 @@ def lint(self, metadata_xhtml) -> list:
 			spine_entries = BeautifulSoup(content_opf.read(), "lxml").find("spine").find_all("itemref")
 			for index, entry in enumerate(spine_entries):
 				if toc_files[index] != entry.attrs["idref"]:
-					messages.append(LintMessage("The spine order does not match the order of the ToC and landmarks. Expected " + entry.attrs["idref"] + ", found " + toc_files[index], se.MESSAGE_TYPE_ERROR, "content.opf"))
+					messages.append(LintMessage("The spine order does not match the order of the ToC and landmarks. Expected {}, found {}.".format(entry.attrs["idref"], toc_files[index]), se.MESSAGE_TYPE_ERROR, "content.opf"))
 					break
 
 	for element in abbr_elements:
