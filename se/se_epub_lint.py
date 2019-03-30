@@ -539,8 +539,7 @@ def lint(self, metadata_xhtml) -> list:
 
 					# Store all headings to check for ToC references later
 					if filename != "toc.xhtml":
-						matches = dom.select("h1,h2,h3,h4,h5,h6")
-						for match in matches:
+						for match in dom.select("h1,h2,h3,h4,h5,h6"):
 
 							# Remove any links to the endnotes
 							endnote_ref = match.find("a", attrs={"epub:type": regex.compile("^.*noteref.*$")})
@@ -555,6 +554,13 @@ def lint(self, metadata_xhtml) -> list:
 							heading_subtitle = match.find(attrs={"epub:type": regex.compile("^.*subtitle.*$")})
 
 							if heading_subtitle:
+								# If an <h#> tag has a subtitle, the non-subtitle text must also be wrapped in a <span>.
+								# This invocation of match.find() returns all text nodes. We don't want any text nodes, so if it returns anything then we know we're
+								# missing a <span> somewhere.
+								if match.find(text=True, recursive=False).strip():
+									messages.append(LintMessage("<{}> tag has subtitle <span>, but first line is not wrapped in a <span>. See semantics manual for structure of headers with subtitles.".format(match.name), se.MESSAGE_TYPE_ERROR, filename))
+
+								# OK, move on with processing headers.
 								parent_section = match.find_parents("section")
 
 								# Sometimes we might not have a parent <section>, like in Keats' Poetry
