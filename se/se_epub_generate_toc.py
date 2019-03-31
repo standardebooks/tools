@@ -68,7 +68,7 @@ class LandmarkItem:
 	title = ""
 	file_link = ""
 	epub_type = ""
-	place = Position.FRONT
+	place: Position = Position.FRONT
 
 	def output(self, work_type: str = "fiction", work_title: str = "WORK_TITLE"):
 		"""
