@@ -293,7 +293,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 								raw_string = etree.tostring(element, encoding=str, with_tail=False)
 
 								# lxml--crap as usual--includes a bunch of namespace information in every element we print.
-								# Remove it heregex.
+								# Remove it here.
 								raw_string = raw_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
 								raw_string = raw_string.replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "")
 
