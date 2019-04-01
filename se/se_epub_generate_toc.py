@@ -119,13 +119,17 @@ def get_work_type(xhtml) -> str:
 	Returns either "fiction" or "non-fiction"
 	"""
 
+	worktype = "fiction"
 	for match in regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", xhtml):
-		# The se:subjects MUST include Nonfiction for the work to be deemed non-fiction.
-		# Otherwise it's impossible to be sure. Some works of fantasy are tagged "Philosophy" for example.
+		# Unfortunately, some works are tagged "Philosophy" but are nevertheless fiction.
 		if "Nonfiction" in match:
 			return "non-fiction"
+		if match in ["Adventure", "Autobiography", "Memoir", "Philosophy", "Spirituality", "Travel"]:
+			worktype = "non-fiction"  # This may change below!
+		if match in ["Fantasy", "Fiction", "Horror", "Mystery", "Science Fiction"]:
+			worktype = "fiction"
 
-	return "fiction"
+	return worktype
 
 def get_work_title(opf: BeautifulSoup) -> str:
 	"""
