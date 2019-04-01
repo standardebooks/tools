@@ -374,7 +374,8 @@ def process_heading(heading, is_toplevel, textf) -> Toc_item:
 	toc_item.division = get_book_division(heading)
 
 	# This stops the first heading in a file getting an anchor id, we don't want that.
-	if is_toplevel:
+	# The exceptions are things like poems within single-file volume, usually tagged as articles.
+	if is_toplevel and toc_item.division != BookDivision.ARTICLE:
 		toc_item.id = ""
 		toc_item.file_link = textf
 	else:
