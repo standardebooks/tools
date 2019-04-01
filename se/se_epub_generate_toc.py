@@ -15,6 +15,19 @@ import se
 from se.formatting import format_xhtml
 
 
+class BookDivision(Enum):
+	"""
+	Enum to indicate the division of a particular ToC item.
+	"""
+
+	NONE = 0
+	ARTICLE = 1
+	SUBCHAPTER = 2
+	CHAPTER = 3
+	DIVISION = 4
+	PART = 5
+	VOLUME = 6
+
 class Toc_item:
 	"""
 	Small class to hold data on each table of contents item
@@ -28,6 +41,7 @@ class Toc_item:
 	subtitle = ""
 	id = ""
 	epub_type = ""
+	division = BookDivision.NONE
 
 	def output(self) -> str:
 		"""
@@ -39,14 +53,17 @@ class Toc_item:
 		if self.title is None:
 			return ""
 
-		# If the title is entirely Roman numeral.
+		# If the title is entirely Roman numeral, put epub:type within <a>.
 		if regex.search(r"^<span epub:type=\"z3998:roman\">[IVXLC]{1,10}<\/span>$", self.title):
 			if self.subtitle == "":
 				out_string += "<a href=\"text/{}\" epub:type=\"z3998:roman\">{}</a>\n".format(self.file_link, self.roman)
 			else:
 				out_string += "<a href=\"text/{}\">{}: {}</a>\n".format(self.file_link, self.title, self.subtitle)
-		else:
-			out_string += "<a href=\"text/{}\">{}</a>\n".format(self.file_link, self.title)
+		else:  # Use the subtitle only if we're a Part or Division
+			if self.subtitle != "" and ((self.division == BookDivision.PART) or (self.division == BookDivision.DIVISION)):
+				out_string += "<a href=\"text/{}\">{}: {}</a>\n".format(self.file_link, self.title, self.subtitle)
+			else:
+				out_string += "<a href=\"text/{}\">{}</a>\n".format(self.file_link, self.title)
 
 		return out_string
 
@@ -103,7 +120,9 @@ def get_work_type(xhtml) -> str:
 	"""
 
 	for match in regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", xhtml):
-		if "Nonfiction" in match or "Philosophy" in match:
+		# The se:subjects MUST include Nonfiction for the work to be deemed non-fiction.
+		# Otherwise it's impossible to be sure. Some works of fantasy are tagged "Philosophy" for example.
+		if "Nonfiction" in match:
 			return "non-fiction"
 
 	return "fiction"
@@ -128,11 +147,11 @@ def get_epub_type(soup: BeautifulSoup) -> str:
 	# Try for a heading.
 	first_head = soup.find(["h1", "h2", "h3", "h4", "h5", "h6"])
 	if first_head is not None:
-		parent = first_head.find_parent(["section", "article", "body"])
+		parent = first_head.find_parent(["section", "article"])
 	else:  # No heading found so go hunting for some other content.
 		paragraph = soup.find(["p", "header", "img"])  # We look for the first such item.
 		if paragraph is not None:
-			parent = paragraph.find_parent(["section", "article", "body"])
+			parent = paragraph.find_parent(["section", "article"])
 		else:
 			return ""
 
@@ -352,6 +371,7 @@ def process_heading(heading, is_toplevel, textf) -> Toc_item:
 		toc_item.level = len(parent_sections)
 	else:
 		toc_item.level = 1
+	toc_item.division = get_book_division(heading)
 
 	# This stops the first heading in a file getting an anchor id, we don't want that.
 	if is_toplevel:
@@ -374,7 +394,31 @@ def process_heading(heading, is_toplevel, textf) -> Toc_item:
 		return toc_item
 
 	process_heading_contents(heading, toc_item)
+
 	return toc_item
+
+
+def get_book_division(tag: BeautifulSoup) -> BookDivision:
+	parent_section = tag.find_parents("section")
+	# Sometimes we might not have a parent <section>, like in Keats' Poetry
+	if not parent_section:
+		parent_section = tag.find_parents("body")
+	section_epub_type = parent_section[0].get("epub:type") or ""
+	if "part" in section_epub_type:
+		return BookDivision.PART
+	elif "division" in section_epub_type:
+		return BookDivision.DIVISION
+	elif "volume" in section_epub_type:
+		return BookDivision.VOLUME
+	elif "subchapter" in section_epub_type:
+		return BookDivision.SUBCHAPTER
+	elif "chapter" in section_epub_type:
+		return BookDivision.CHAPTER
+	elif "article" in section_epub_type:
+		return BookDivision.ARTICLE
+	else:
+		return BookDivision.NONE
+
 
 def strip_notes(text: str) -> str:
 	"""
@@ -443,6 +487,7 @@ def process_all_content(file_list, text_path) -> (list, list):
 	last_toc.level = 1
 	last_toc.title = "dummy"
 	toc_list.append(last_toc)
+
 	return landmarks, toc_list
 
 def generate_toc(self) -> str:
