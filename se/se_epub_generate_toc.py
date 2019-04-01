@@ -39,7 +39,7 @@ class Toc_item:
 		if self.title is None:
 			return ""
 
-		# If the title is entirely Roman
+		# If the title is entirely Roman numeral.
 		if regex.search(r"^<span epub:type=\"z3998:roman\">[IVXLC]{1,10}<\/span>$", self.title):
 			if self.subtitle == "":
 				out_string += "<a href=\"text/{}\" epub:type=\"z3998:roman\">{}</a>\n".format(self.file_link, self.roman)
@@ -137,21 +137,23 @@ def get_epub_type(soup: BeautifulSoup) -> str:
 			return ""
 
 	if parent is None:
-		raise se.InvalidInputException("Couldn't find any section grouping.")
-	else:
-		try:
-			return parent["epub:type"]
-		except KeyError:
-			return ""
+		parent = soup.find("body")
+
+	try:
+		return parent["epub:type"]
+	except KeyError:
+		# Immediate parent has no epub:type, try for higher up.
+		body = soup.find("body")
+		return body.get("epub:type") or ""
+
 
 def get_place(soup: BeautifulSoup) -> Position:
 	"""
 	Returns place of file in ebook, eg frontmatter, backmatter, etc.
 	"""
 
-	try:
-		epub_type = soup.body["epub:type"]
-	except KeyError:
+	epub_type = soup.body.get("epub:type") or ""
+	if epub_type == "":
 		return Position.NONE
 
 	if "backmatter" in epub_type:
@@ -286,10 +288,7 @@ def get_parent_id(hchild: Tag) -> str:
 	parent = hchild.find_parent(["section", "article"])
 	if parent is None:
 		return ""
-	try:
-		return parent["id"]
-	except KeyError:
-		return ""
+	return parent.get("id") or ""
 
 def extract_strings(tag: Tag) -> str:
 	"""
@@ -298,9 +297,9 @@ def extract_strings(tag: Tag) -> str:
 
 	out_string = ""
 	for child in tag.contents:
-		if child != "\n":
-			out_string += str(child)
-	return out_string
+		out_string += str(child)
+	#  Now strip out any linefeeds or tabs we may have encountered.
+	return regex.sub(r"(\n|\t)", "", out_string)
 
 def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under_halftitle: bool):
 	"""
@@ -366,10 +365,9 @@ def process_heading(heading, is_toplevel, textf) -> Toc_item:
 			toc_item.file_link = textf + "#" + toc_item.id
 	# A heading may include z3998:roman directly,
 	# eg <h5 epub:type="title z3998:roman">II</h5>.
-	try:
-		attribs = heading["epub:type"]
-	except KeyError:
-		attribs = ""
+
+	attribs = heading.get("epub:type") or ""
+
 	if "z3998:roman" in attribs:
 		toc_item.roman = extract_strings(heading)
 		toc_item.title = "<span epub:type=\"z3998:roman\">" + toc_item.roman + "</span>"
@@ -393,30 +391,31 @@ def process_heading_contents(heading, toc_item):
 
 	accumulator = ""  # We'll use this to build up the title.
 	for child in heading.contents:
-		if child != "\n":
-			if isinstance(child, Tag):
-				try:
-					epub_type = child["epub:type"]
-				except KeyError:
-					# It's a tag without epub:type, such as <abbr>, take whole thing, tags and all.
-					accumulator += str(child)
-					continue  # Skip following and go to next child.
-
-				if "z3998:roman" in epub_type:
-					toc_item.roman = extract_strings(child)
-					accumulator += str(child)
-				elif "subtitle" in epub_type:
-					toc_item.subtitle = extract_strings(child)
-				elif "title" in epub_type:
-					toc_item.title = extract_strings(child)
-				elif "se:" in epub_type:  # Likely to be a semantically tagged italic.
-					accumulator += str(child)  # Include the whole thing, tags and all.
-				else:
+		if isinstance(child, Tag):
+			epub_type = child.get("epub:type") or ""
+			if epub_type == "":
+				if child.name == "span":  # If it's an otherwise empty <span>, just take contents.
 					accumulator += extract_strings(child)
-			else:  # This should be a simple NavigableString.
+				else:  # If it's a tag without epub:type, such as <abbr>, take whole thing, tags and all.
+					accumulator += str(child)
+				continue  # Skip following and go to next child.
+
+			if "z3998:roman" in epub_type:
+				toc_item.roman = extract_strings(child)
 				accumulator += str(child)
+			elif "subtitle" in epub_type:
+				toc_item.subtitle = extract_strings(child)
+			elif "title" in epub_type:
+				toc_item.title = extract_strings(child)
+			elif "se:" in epub_type:  # Likely to be a semantically tagged italic.
+				accumulator += str(child)  # Include the whole thing, tags and all.
+			else:
+				accumulator += extract_strings(child)
+		else:  # This should be a simple NavigableString.
+			accumulator += str(child)
 	if toc_item.title == "":
-		toc_item.title = accumulator
+		#  Now strip out any linefeeds or tabs we may have encountered.
+		toc_item.title = regex.sub(r"(\n|\t)", "", accumulator)
 
 def process_all_content(file_list, text_path) -> (list, list):
 	"""
