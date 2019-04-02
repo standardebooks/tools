@@ -26,7 +26,6 @@ class BookDivision(Enum):
 	CHAPTER = 3
 	DIVISION = 4
 	PART = 5
-	VOLUME = 6
 
 class Toc_item:
 	"""
@@ -387,10 +386,14 @@ def process_heading(heading, is_toplevel, textf) -> Toc_item:
 		if toc_item.id == "":
 			toc_item.file_link = textf
 		else:
-			toc_item.file_link = textf + "#" + toc_item.id
+			# Quick test to see if the filename matches the id, in which case we don't use the id.
+			if toc_item.id + ".xhtml" != textf:
+				toc_item.file_link = textf + "#" + toc_item.id
+			else:
+				toc_item.file_link = textf
+
 	# A heading may include z3998:roman directly,
 	# eg <h5 epub:type="title z3998:roman">II</h5>.
-
 	attribs = heading.get("epub:type") or ""
 
 	if "z3998:roman" in attribs:
@@ -404,8 +407,7 @@ def process_heading(heading, is_toplevel, textf) -> Toc_item:
 
 
 def get_book_division(tag: BeautifulSoup) -> BookDivision:
-	parent_section = tag.find_parents("section")
-	# Sometimes we might not have a parent <section>, like in Keats' Poetry
+	parent_section = tag.find_parents(["section", "article"])
 	if not parent_section:
 		parent_section = tag.find_parents("body")
 	section_epub_type = parent_section[0].get("epub:type") or ""
@@ -413,13 +415,11 @@ def get_book_division(tag: BeautifulSoup) -> BookDivision:
 		return BookDivision.PART
 	elif "division" in section_epub_type:
 		return BookDivision.DIVISION
-	elif "volume" in section_epub_type:
-		return BookDivision.VOLUME
 	elif "subchapter" in section_epub_type:
 		return BookDivision.SUBCHAPTER
 	elif "chapter" in section_epub_type:
 		return BookDivision.CHAPTER
-	elif "article" in section_epub_type:
+	elif "article" in parent_section[0].name:
 		return BookDivision.ARTICLE
 	else:
 		return BookDivision.NONE
