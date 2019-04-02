@@ -382,6 +382,12 @@ def lint(self, metadata_xhtml) -> list:
 
 				if filename == "halftitle.xhtml":
 					has_halftitle = True
+					if "<title>Half Title</title>" not in file_contents:
+						messages.append(LintMessage("Half title <title> tag must contain exactly: \"Half Title\".", se.MESSAGE_TYPE_ERROR, filename))
+
+				if filename == "titlepage.xhtml":
+					if "<title>Titlepage</title>" not in file_contents:
+						messages.append(LintMessage("Titlepage <title> tag must contain exactly: \"Titlepage\".", se.MESSAGE_TYPE_ERROR, filename))
 
 				if filename.endswith(".svg"):
 					# Check for fill: #000 which should simply be removed
