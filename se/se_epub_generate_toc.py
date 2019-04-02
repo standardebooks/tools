@@ -119,13 +119,17 @@ def get_work_type(xhtml) -> str:
 	"""
 
 	worktype = "fiction"
-	for match in regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", xhtml):
-		# Unfortunately, some works are tagged "Philosophy" but are nevertheless fiction.
-		if "Nonfiction" in match:
-			return "non-fiction"
-		if match in ["Adventure", "Autobiography", "Memoir", "Philosophy", "Spirituality", "Travel"]:
-			worktype = "non-fiction"  # This may change below!
-		if match in ["Fantasy", "Fiction", "Horror", "Mystery", "Science Fiction"]:
+	subjects = regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", xhtml)
+	# Unfortunately, some works are tagged "Philosophy" but are nevertheless fiction.
+	if "Nonfiction" in subjects:
+		return "non-fiction"
+	nonfiction_types = ["Adventure", "Autobiography", "Memoir", "Philosophy", "Spirituality", "Travel"]
+	for nonfiction_type in nonfiction_types:
+		if nonfiction_type in subjects:
+			worktype = "non-fiction"
+	fiction_types = ["Fantasy", "Fiction", "Horror", "Mystery", "Science Fiction"]
+	for fiction_type in fiction_types:
+		if fiction_type in subjects:
 			worktype = "fiction"
 
 	return worktype
@@ -323,7 +327,7 @@ def extract_strings(tag: Tag) -> str:
 	#  Now strip out any linefeeds or tabs we may have encountered.
 	return regex.sub(r"(\n|\t)", "", out_string)
 
-def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under_halftitle: bool):
+def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under_halftitle: bool, single_file: bool):
 	"""
 	Find headings in current file and extract title data
 	into items added to toc_list.
@@ -333,6 +337,10 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 	heads = soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
 
 	if not heads:  # May be a dedication or an epigraph, with no heading tag.
+		if single_file and nest_under_halftitle:
+			# There's a halftitle, but only this one content file with no subsections,
+			# so leave out of ToC.
+			return
 		special_item = Toc_item()
 		# Need to determine level depth.
 		# We don't have a heading, so get first content item
@@ -355,15 +363,23 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 		toc_list.append(special_item)
 		return
 
+	place = get_place(soup)
 	is_toplevel = True
 	for heading in heads:
-		toc_item = process_heading(heading, is_toplevel, textf)
+		if place == Position.BODY and single_file:
+			toc_item = process_heading(heading, textf, is_toplevel, True)
+		else:
+			toc_item = process_heading(heading, textf, is_toplevel, False)
+		# Tricky check to see if we want to include the item because there's a halftitle
+		# but only a single content file with no subsidiary sections.
+		if is_toplevel and single_file and nest_under_halftitle and len(heads) == 1:
+			continue
 		if nest_under_halftitle:
 			toc_item.level += 1
 		is_toplevel = False
 		toc_list.append(toc_item)
 
-def process_heading(heading, is_toplevel, textf) -> Toc_item:
+def process_heading(heading, textf, is_toplevel, single_file: bool) -> Toc_item:
 	"""
 	Generate and return a Toc_item from this heading.
 	"""
@@ -376,9 +392,9 @@ def process_heading(heading, is_toplevel, textf) -> Toc_item:
 		toc_item.level = 1
 	toc_item.division = get_book_division(heading)
 
-	# This stops the first heading in a file getting an anchor id, we don't want that.
+	# This stops the first heading in a file getting an anchor id, we don't generally want that.
 	# The exceptions are things like poems within single-file volume, usually tagged as articles.
-	if is_toplevel and toc_item.division != BookDivision.ARTICLE:
+	if is_toplevel and not single_file:
 		toc_item.id = ""
 		toc_item.file_link = textf
 	else:
@@ -474,6 +490,20 @@ def process_all_content(file_list, text_path) -> (list, list):
 
 	toc_list = []
 	landmarks = []
+
+	# We make two passes through the work, because we need to know
+	# how many bodymatter items there are. So we do landmarks first.
+	for textf in file_list:
+		with open(os.path.join(text_path, textf), "r", encoding="utf-8") as file:
+			html_text = file.read()
+		soup = BeautifulSoup(html_text, "html.parser")
+		add_landmark(soup, textf, landmarks)
+
+	# Now we test to see if there is only one body item
+	body_items = [item for item in landmarks if item.place == Position.BODY]
+	body_count = len(body_items)
+	single_file = (len(body_items) == 1)
+
 	nest_under_halftitle = False
 	for textf in file_list:
 		with open(os.path.join(text_path, textf), "r", encoding="utf-8") as file:
@@ -482,10 +512,9 @@ def process_all_content(file_list, text_path) -> (list, list):
 		place = get_place(soup)
 		if place == Position.BACK:
 			nest_under_halftitle = False
-		process_headings(soup, textf, toc_list, nest_under_halftitle)
+		process_headings(soup, textf, toc_list, nest_under_halftitle, single_file)
 		if textf == "halftitle.xhtml":
 			nest_under_halftitle = True
-		add_landmark(soup, textf, landmarks)
 
 	# We add this dummy item because outputtoc always needs to look ahead to the next item.
 	last_toc = Toc_item()
