@@ -445,7 +445,7 @@ def strip_notes(text: str) -> str:
 	"""
 	Returns html text stripped of noterefs.
 	"""
-	return regex.sub(r'<a.*?epub:type="noteref".*?>\d+<\/a>', "", text)
+	return regex.sub(r'<a .*?epub:type="noteref".*?>\d+<\/a>', "", text)
 
 
 def process_heading_contents(heading, toc_item):
