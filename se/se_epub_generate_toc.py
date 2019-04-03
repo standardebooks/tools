@@ -27,7 +27,17 @@ class BookDivision(Enum):
 	DIVISION = 4
 	PART = 5
 
-class Toc_item:
+class Position(Enum):
+	"""
+	Enum to indicate whether a landmark is frontmatter, bodymatter or backmatter.
+	"""
+
+	NONE = 0
+	FRONT = 1
+	BODY = 2
+	BACK = 3
+
+class TocItem:
 	"""
 	Small class to hold data on each table of contents item
 	found in the project.
@@ -41,8 +51,9 @@ class Toc_item:
 	id = ""
 	epub_type = ""
 	division = BookDivision.NONE
+	place: Position = Position.FRONT
 
-	def output(self) -> str:
+	def toc_link(self) -> str:
 		"""
 		The output method just outputs the linking tag line
 		eg <a href=... depending on the data found.
@@ -66,27 +77,7 @@ class Toc_item:
 
 		return out_string
 
-class Position(Enum):
-	"""
-	Enum to indicate whether a landmark is frontmatter, bodymatter or backmatter.
-	"""
-
-	NONE = 0
-	FRONT = 1
-	BODY = 2
-	BACK = 3
-
-class LandmarkItem:
-	"""
-	Small class to hold data on landmark items found in the project.
-	"""
-
-	title = ""
-	file_link = ""
-	epub_type = ""
-	place: Position = Position.FRONT
-
-	def output(self, work_type: str = "fiction", work_title: str = "WORK_TITLE"):
+	def landmark_link(self, work_type: str = "fiction", work_title: str = "WORK_TITLE"):
 		"""
 		Returns the linking string to be included in landmarks section.
 		"""
@@ -199,7 +190,7 @@ def add_landmark(soup: BeautifulSoup, textf: str, landmarks: list):
 	"""
 
 	epub_type = get_epub_type(soup)
-	landmark = LandmarkItem()
+	landmark = TocItem()
 	if epub_type != "":
 		landmark.epub_type = epub_type
 		landmark.file_link = textf
@@ -225,11 +216,11 @@ def process_landmarks(landmarks_list: list, work_type: str, work_title: str):
 
 	out_string = ""
 	for item in front_items:
-		out_string += item.output()
+		out_string += item.landmark_link()
 	if body_items:
-		out_string += body_items[0].output(work_type, work_title)  # Just the first bodymatter item.
+		out_string += body_items[0].landmark_link(work_type, work_title)  # Just the first bodymatter item.
 	for item in back_items:
-		out_string += item.output()
+		out_string += item.landmark_link()
 	return out_string
 
 def process_items(item_list: list) -> str:
@@ -248,18 +239,18 @@ def process_items(item_list: list) -> str:
 		# Check to see if next item is at same, lower or higher level than us.
 		if next_item.level == this_item.level:  # SIMPLE
 			out_string += "<li>\n"
-			out_string += this_item.output()
+			out_string += this_item.toc_link()
 			out_string += "</li>\n"
 
 		if next_item.level > this_item.level:  # PARENT
 			out_string += "<li>\n"
-			out_string += this_item.output()
+			out_string += this_item.toc_link()
 			out_string += "<ol>\n"
 			unclosed_ol += 1
 
 		if next_item.level < this_item.level:  # LAST CHILD
 			out_string += "<li>\n"
-			out_string += this_item.output()
+			out_string += this_item.toc_link()
 			out_string += "</li>\n"  # Close off this item.
 			torepeat = this_item.level - next_item.level
 			if torepeat > 0 and unclosed_ol > 0:
@@ -341,7 +332,7 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 			# There's a halftitle, but only this one content file with no subsections,
 			# so leave out of ToC.
 			return
-		special_item = Toc_item()
+		special_item = TocItem()
 		# Need to determine level depth.
 		# We don't have a heading, so get first content item
 		content_item = soup.find(["p", "header", "img"])
@@ -379,12 +370,12 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 		is_toplevel = False
 		toc_list.append(toc_item)
 
-def process_heading(heading, textf, is_toplevel, single_file: bool) -> Toc_item:
+def process_heading(heading, textf, is_toplevel, single_file: bool) -> TocItem:
 	"""
-	Generate and return a Toc_item from this heading.
+	Generate and return a TocItem from this heading.
 	"""
 
-	toc_item = Toc_item()
+	toc_item = TocItem()
 	parent_sections = heading.find_parents(["section", "article"])
 	if parent_sections:
 		toc_item.level = len(parent_sections)
@@ -518,7 +509,7 @@ def process_all_content(file_list, text_path) -> (list, list):
 			nest_under_halftitle = True
 
 	# We add this dummy item because outputtoc always needs to look ahead to the next item.
-	last_toc = Toc_item()
+	last_toc = TocItem()
 	last_toc.level = 1
 	last_toc.title = "dummy"
 	toc_list.append(last_toc)
