@@ -393,20 +393,17 @@ def process_heading(heading, textf, is_toplevel, single_file: bool) -> Toc_item:
 	toc_item.division = get_book_division(heading)
 
 	# This stops the first heading in a file getting an anchor id, we don't generally want that.
-	# The exceptions are things like poems within single-file volume, usually tagged as articles.
-	if is_toplevel and not single_file:
-		toc_item.id = ""
+	# The exceptions are things like poems within a single-file volume.
+	toc_item.id = get_parent_id(heading)
+	if toc_item.id == "":
 		toc_item.file_link = textf
 	else:
-		toc_item.id = get_parent_id(heading)
-		if toc_item.id == "":
-			toc_item.file_link = textf
+		if not is_toplevel:
+			toc_item.file_link = textf + "#" + toc_item.id
+		elif single_file:  # It IS the first heading in the file, but there's only a single content file?
+			toc_item.file_link = textf + "#" + toc_item.id
 		else:
-			# Quick test to see if the filename matches the id, in which case we don't use the id.
-			if toc_item.id + ".xhtml" != textf:
-				toc_item.file_link = textf + "#" + toc_item.id
-			else:
-				toc_item.file_link = textf
+			toc_item.file_link = textf
 
 	# A heading may include z3998:roman directly,
 	# eg <h5 epub:type="title z3998:roman">II</h5>.
@@ -423,6 +420,10 @@ def process_heading(heading, textf, is_toplevel, single_file: bool) -> Toc_item:
 
 
 def get_book_division(tag: BeautifulSoup) -> BookDivision:
+	"""
+	Determine the kind of book division. At present only Part and Division
+	are important; but others stored for possible future logic.
+	"""
 	parent_section = tag.find_parents(["section", "article"])
 	if not parent_section:
 		parent_section = tag.find_parents("body")
