@@ -218,6 +218,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bCracow", r"Krakow", xhtml)				# Cracow -> Krakow
 	xhtml = regex.sub(r"\bKief", r"Kiev", xhtml)					# Kief -> Kiev
 	xhtml = regex.sub(r"\bRoumanian", r"Romanian", xhtml)				# Roumanian -> Romanian
+	xhtml = regex.sub(r"\b([Rr])enascence", r"\1enaissance", xhtml)			# renascence -> renaissance
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
