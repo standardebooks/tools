@@ -576,7 +576,7 @@ def lint(self, metadata_xhtml) -> list:
 								closest_section_epub_type = parent_section[0].get("epub:type") or ""
 								heading_first_child_epub_type = match.find("span", recursive=False).get("epub:type") or ""
 
-								if regex.findall(r"^.*(part|division).*$", closest_section_epub_type):
+								if regex.findall(r"^.*(part|division|volume).*$", closest_section_epub_type):
 									remove_subtitle = False
 								elif regex.findall(r"^.*halftitlepage.*$", closest_section_epub_type):
 									remove_subtitle = True
@@ -768,10 +768,10 @@ def lint(self, metadata_xhtml) -> list:
 					if regex.findall(r"<title>[Cc]hapter [XxIiVv]+", file_contents):
 						messages.append(LintMessage("No Roman numerals allowed in <title> tag; use decimal numbers.", se.MESSAGE_TYPE_ERROR, filename))
 
-					# If the chapter has a number and no subtitle, check the <title> tag
+					# If the chapter has a number and no subtitle, check the <title> tag...
 					matches = regex.findall(r"<h([0-6]) epub:type=\"title z3998:roman\">([^<]+)</h\1>", file_contents, flags=regex.DOTALL)
 
-					# But only make the correction if there's one <h#> tag.  If there's more than one, then the xhtml file probably requires an overarching title
+					# ...But only make the correction if there's one <h#> tag.  If there's more than one, then the xhtml file probably requires an overarching title
 					if matches and len(regex.findall(r"<h(?:[0-6])", file_contents)) == 1:
 						try:
 							chapter_number = roman.fromRoman(matches[0][1].upper())
@@ -782,10 +782,10 @@ def lint(self, metadata_xhtml) -> list:
 						except Exception:
 							messages.append(LintMessage("<h#> tag is marked with z3998:roman, but is not a Roman numeral", se.MESSAGE_TYPE_ERROR, filename))
 
-					# If the chapter has a number and subtitle, check the <title> tag
+					# If the chapter has a number and subtitle, check the <title> tag...
 					matches = regex.findall(r"<h([0-6]) epub:type=\"title\">\s*<span epub:type=\"z3998:roman\">([^<]+)</span>\s*<span epub:type=\"subtitle\">(.+?)</span>\s*</h\1>", file_contents, flags=regex.DOTALL)
 
-					# But only make the correction if there's one <h#> tag.  If there's more than one, then the xhtml file probably requires an overarching title
+					# ...But only make the correction if there's one <h#> tag.  If there's more than one, then the xhtml file probably requires an overarching title
 					if matches and len(regex.findall(r"<h(?:[0-6])", file_contents)) == 1:
 						chapter_number = roman.fromRoman(matches[0][1].upper())
 
