@@ -26,6 +26,7 @@ class BookDivision(Enum):
 	CHAPTER = 3
 	DIVISION = 4
 	PART = 5
+	VOLUME = 6
 
 class Position(Enum):
 	"""
@@ -69,8 +70,8 @@ class TocItem:
 				out_string += "<a href=\"text/{}\" epub:type=\"z3998:roman\">{}</a>\n".format(self.file_link, self.roman)
 			else:
 				out_string += "<a href=\"text/{}\">{}: {}</a>\n".format(self.file_link, self.title, self.subtitle)
-		else:  # Use the subtitle only if we're a Part or Division
-			if self.subtitle != "" and ((self.division == BookDivision.PART) or (self.division == BookDivision.DIVISION)):
+		else:  # Use the subtitle only if we're a Part or Division or Volume
+			if self.subtitle != "" and (self.division in [BookDivision.PART, BookDivision.DIVISION, BookDivision.VOLUME]):
 				out_string += "<a href=\"text/{}\">{}: {}</a>\n".format(self.file_link, self.title, self.subtitle)
 			else:
 				out_string += "<a href=\"text/{}\">{}</a>\n".format(self.file_link, self.title)
@@ -423,6 +424,8 @@ def get_book_division(tag: BeautifulSoup) -> BookDivision:
 		return BookDivision.PART
 	elif "division" in section_epub_type:
 		return BookDivision.DIVISION
+	elif ("volume" in section_epub_type) and (not "se:short-story" in section_epub_type):
+		return BookDivision.VOLUME
 	elif "subchapter" in section_epub_type:
 		return BookDivision.SUBCHAPTER
 	elif "chapter" in section_epub_type:
