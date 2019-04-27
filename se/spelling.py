@@ -234,6 +234,9 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Pp])æan", r"\1aean", xhtml)
 	xhtml = regex.sub(r"\b([Vv])ertebræ", r"\1ertebrae", xhtml)
 
+	# Remove spaces before contractions like n’t eg "is n’t" -> "isn’t"
+	xhtml = regex.sub(r" n’t", "n’t")
+
 	if language == "en-US":
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)
 		xhtml = regex.sub(r"\b([Mm])anœuve?r", r"\1aneuver", xhtml) # Omit last letter to catch both maneuverS and maneuverING
