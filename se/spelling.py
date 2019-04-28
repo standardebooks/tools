@@ -203,6 +203,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])ha’n’t", r"\1han’t", xhtml)				# sha'n't -> shan't (see https://english.stackexchange.com/questions/71414/apostrophes-in-contractions-shant-shant-or-shant)
 	xhtml = regex.sub(r"\b([Ss])[uû]ret[eé]", r"\1ûreté", xhtml)			# Surete -> Sûreté
 	xhtml = regex.sub(r"\b([Ss])eance", r"\1éance", xhtml)				# seance -> séance
+	xhtml = regex.sub(r"\bEmpale", r"Impale", xhtml)				# empale -> impale
+	xhtml = regex.sub(r"\bempale", r"impale", xhtml)				# empale -> impale
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
