@@ -238,7 +238,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Vv])ertebræ", r"\1ertebrae", xhtml)
 
 	# Remove spaces before contractions like n’t eg "is n’t" -> "isn’t"
-	xhtml = regex.sub(r" n’t\b", "n’t")
+	xhtml = regex.sub(r" n’t\b", "n’t", xhtml)
 
 	if language == "en-US":
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)
