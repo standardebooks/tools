@@ -346,10 +346,6 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 		metadata_xhtml = metadata_xhtml.replace("image/svg+xml", "image/png")
 		metadata_xhtml = regex.sub(r"properties=\"([^\"]*?)svg([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xhtml) # We may also have the `mathml` property
 
-		# NOTE: even though the a11y namespace is reserved by the epub spec, we must declare it because epubcheck doesn't know that yet.
-		# Once epubcheck understands the a11y namespace is reserved, we can remove it from the namespace declarations.
-		metadata_xhtml = metadata_xhtml.replace(" prefix=\"se: https://standardebooks.org/vocab/1.0\"", " prefix=\"se: https://standardebooks.org/vocab/1.0, a11y: https://www.idpf.org/epub/vocab/package/a11y/\"")
-
 		# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
 		metadata_xhtml = metadata_xhtml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
 		metadata_xhtml = metadata_xhtml.replace("https://www.idpf.org/epub/vocab/package/a11y/", "http://www.idpf.org/epub/vocab/package/a11y/")
