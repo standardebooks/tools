@@ -348,7 +348,6 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 
 		# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
 		metadata_xhtml = metadata_xhtml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
-		metadata_xhtml = metadata_xhtml.replace("https://www.idpf.org/epub/vocab/package/a11y/", "http://www.idpf.org/epub/vocab/package/a11y/")
 
 		# Output the modified content.opf so that we can build the kobo book before making more epub2 compatibility hacks
 		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "w", encoding="utf-8") as file:
