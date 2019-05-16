@@ -15,11 +15,11 @@ import pkg_resources
 
 
 try:
-    VERSION = pkg_resources.get_distribution('standardebooks').version
+    VERSION = pkg_resources.get_distribution("standardebooks").version
 except Exception:
     # we get in this branch when the package hasn't been installed via pip or
     # the setup script.
-    VERSION = 'unknown'
+    VERSION = "unknown"
 MESSAGE_INDENT = "    "
 UNICODE_BOM = "\ufeff"
 NO_BREAK_SPACE = "\u00a0"
@@ -34,7 +34,7 @@ FRONTMATTER_FILENAMES = ["dedication.xhtml", "introduction.xhtml", "preface.xhtm
 BACKMATTER_FILENAMES = ["endnotes.xhtml", "loi.xhtml", "afterword.xhtml", "appendix.xhtml", "colophon.xhtml", "uncopyright.xhtml"]
 BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", ".epub3", ".xcf"]
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Childrens", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Romance", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
-ARIA_ROLES = ["afterword", "appendix", "biblioentry", "bibliography", "chapter", "colophon", "conclusion", "dedication", "epigraph", "epilogue", "foreword", "introduction", "noteref", "part", "preface", "prologue", "subtitle", "toc"]
+ARIA_ROLES = ["afterword", "appendix", "biblioentry", "bibliography", "chapter", "colophon", "conclusion", "dedication", "epilogue", "foreword", "introduction", "noteref", "part", "preface", "prologue", "subtitle", "toc"]
 IGNORED_CLASSES = ["name", "temperature", "state", "era", "compass", "acronym", "postal", "eoc", "initialism", "degree", "time", "compound", "timezone", "signature", "full-page"]
 SELECTORS_TO_SIMPLIFY = [":first-child", ":only-child", ":last-child"]
 MESSAGE_TYPE_WARNING = 1

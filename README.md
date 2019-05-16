@@ -12,7 +12,7 @@ The toolset requires Python >= 3.5.
 
 ```shell
 # Install some pre-flight dependencies.
-sudo apt install -y python3-pip libxml2-utils librsvg2-bin libimage-exiftool-perl imagemagick epubcheck default-jre inkscape calibre curl git
+sudo apt install -y python3-pip libxml2-utils librsvg2-bin libimage-exiftool-perl imagemagick jarwrapper default-jre inkscape calibre curl git
 
 # Install required fonts.
 mkdir -p ~/.local/share/fonts/
@@ -22,6 +22,12 @@ curl -s -o ~/.local/share/fonts/OFLGoudyStM-Italic.otf "https://raw.githubuserco
 
 # Refresh the local font cache.
 sudo fc-cache -f
+
+# Download and install the required version of epubcheck.
+wget --quiet -O /tmp/epubcheck.zip $(wget --quiet -O - https://api.github.com/repos/w3c/epubcheck/releases/latest | grep -E --only-matching "\"browser_download_url\":\s*\"(.*?)\"" | sed "s/\"browser_download_url\":\s*//g" | sed "s/\"//g")
+unzip -d $HOME/.local/share/ /tmp/epubcheck.zip
+sudo chmod +x $HOME/.local/share/epubcheck-*/epubcheck.jar
+sudo ln -s $HOME/.local/share/epubcheck-*/epubcheck.jar /usr/local/bin/epubcheck
 
 # Install the toolset.
 pip3 install standardebooks

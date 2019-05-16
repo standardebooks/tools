@@ -416,7 +416,7 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 
 	# Try to fix <cite> tags running next to referrer <a> tags.
 	if is_endnotes_file:
-		xhtml = regex.sub(r"</cite>(<a href=\"[^\"]+?\" epub:type=\"se:referrer\")", "</cite> \\1", xhtml)
+		xhtml = regex.sub(r"</cite>(<a href=\"[^\"]+?\" epub:type=\"backlink\")", "</cite> \\1", xhtml)
 
 	return xhtml
 

@@ -346,13 +346,8 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 		metadata_xhtml = metadata_xhtml.replace("image/svg+xml", "image/png")
 		metadata_xhtml = regex.sub(r"properties=\"([^\"]*?)svg([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xhtml) # We may also have the `mathml` property
 
-		# NOTE: even though the a11y namespace is reserved by the epub spec, we must declare it because epubcheck doesn't know that yet.
-		# Once epubcheck understands the a11y namespace is reserved, we can remove it from the namespace declarations.
-		metadata_xhtml = metadata_xhtml.replace(" prefix=\"se: https://standardebooks.org/vocab/1.0\"", " prefix=\"se: https://standardebooks.org/vocab/1.0, a11y: https://www.idpf.org/epub/vocab/package/a11y/\"")
-
 		# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
 		metadata_xhtml = metadata_xhtml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
-		metadata_xhtml = metadata_xhtml.replace("https://www.idpf.org/epub/vocab/package/a11y/", "http://www.idpf.org/epub/vocab/package/a11y/")
 
 		# Output the modified content.opf so that we can build the kobo book before making more epub2 compatibility hacks
 		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "w", encoding="utf-8") as file:
@@ -441,19 +436,29 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 							# Plop our string back in to the XHTML we're processing
 							processed_xhtml = regex.sub(r"<math[^>]*?>\{}\</math>".format(regex.escape(line)), mathml_presentation_xhtml, processed_xhtml, flags=regex.MULTILINE)
 
-						# Add ARIA roles, which are just mostly duplicate attributes to epub:type (with the exception of rearnotes -> endnotes, and adding the `backlink` role which is not yet in epub 3.0)
-						processed_xhtml = regex.sub(r"(epub:type=\"[^\"]*?rearnote(s?)[^\"]*?\")", "\\1 role=\"doc-endnote\\2\"", processed_xhtml)
-
 						if filename == "endnotes.xhtml":
-							processed_xhtml = processed_xhtml.replace(" epub:type=\"se:referrer\"", " role=\"doc-backlink\" epub:type=\"se:referrer\"")
-
-							# iOS renders the left-arrow-hook character as an emoji; this fixes it and forces it to renderr as text.
+							# iOS renders the left-arrow-hook character as an emoji; this fixes it and forces it to render as text.
 							# See https://github.com/standardebooks/tools/issues/73
 							# See http://mts.io/2015/04/21/unicode-symbol-render-text-emoji/
 							processed_xhtml = processed_xhtml.replace("\u21a9", "\u21a9\ufe0e")
 
+						# Add ARIA roles, which are just mostly duplicate attributes to epub:type
 						for role in se.ARIA_ROLES:
 							processed_xhtml = regex.sub(r"(epub:type=\"[^\"]*?{}[^\"]*?\")".format(role), "\\1 role=\"doc-{}\"".format(role), processed_xhtml)
+
+						# Some ARIA roles can't apply to some elements.
+						# For example, epilogue can't apply to <article>
+						processed_xhtml = regex.sub(r"<article ([^>]*?)role=\"doc-epilogue\"", "<article \\1", processed_xhtml)
+
+						if filename == "toc.xhtml":
+							landmarks_xhtml = regex.findall(r"<nav epub:type=\"landmarks\">.*?</nav>", processed_xhtml, flags=regex.DOTALL)
+							landmarks_xhtml = regex.sub(r" role=\"doc-.*?\"", "", landmarks_xhtml[0])
+							processed_xhtml = regex.sub(r"<nav epub:type=\"landmarks\">.*?</nav>", landmarks_xhtml, processed_xhtml, flags=regex.DOTALL)
+
+						# But, remove ARIA roles we added to h# tags, because tyically those roles are for sectioning content.
+						# For example, we might have an h2 that is both a title and dedication. But ARIA can't handle it being a dedication.
+						# See The Man Who Was Thursday by G K Chesterton
+						processed_xhtml = regex.sub(r"(<h[1-6] [^>]*) role=\".*?\">", "\\1>", processed_xhtml)
 
 						# Since we convert SVGs to raster, here we add the color-depth semantic for night mode
 						processed_xhtml = processed_xhtml.replace("z3998:publisher-logo", "z3998:publisher-logo se:image.color-depth.black-on-transparent")
@@ -470,10 +475,10 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 						processed_xhtml = processed_xhtml.replace("cover.svg", "cover.jpg")
 						processed_xhtml = processed_xhtml.replace(".svg", ".png")
 
-						# To get popup footnotes in iBooks, we have to change epub:rearnote to epub:footnote.
+						# To get popup footnotes in iBooks, we have to change epub:endnote to epub:footnote.
 						# Remember to get our custom style selectors too.
-						processed_xhtml = regex.sub(r"epub:type=\"([^\"]*?)rearnote([^\"]*?)\"", "epub:type=\"\\1footnote\\2\"", processed_xhtml)
-						processed_xhtml = regex.sub(r"class=\"([^\"]*?)epub-type-rearnote([^\"]*?)\"", "class=\"\\1epub-type-footnote\\2\"", processed_xhtml)
+						processed_xhtml = regex.sub(r"epub:type=\"([^\"]*?)endnote([^\"]*?)\"", "epub:type=\"\\1footnote\\2\"", processed_xhtml)
+						processed_xhtml = regex.sub(r"class=\"([^\"]*?)epub-type-endnote([^\"]*?)\"", "class=\"\\1epub-type-footnote\\2\"", processed_xhtml)
 
 						# Include extra lang tag for accessibility compatibility.
 						processed_xhtml = regex.sub(r"xml:lang\=\"([^\"]+?)\"", "lang=\"\\1\" xml:lang=\"\\1\"", processed_xhtml)
@@ -493,6 +498,9 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 						# For epubs, do this replacement.  Kindle now seems to handle everything fortunately.
 						processed_xhtml = processed_xhtml.replace(se.WORD_JOINER, se.ZERO_WIDTH_SPACE)
 
+						# Some minor code style cleanup
+						processed_xhtml = processed_xhtml.replace(" >", ">")
+
 						if processed_xhtml != xhtml:
 							file.seek(0)
 							file.write(processed_xhtml)
@@ -503,9 +511,9 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 						css = file.read()
 						processed_css = css
 
-						# To get popup footnotes in iBooks, we have to change epub:rearnote to epub:footnote.
+						# To get popup footnotes in iBooks, we have to change epub:endnote to epub:footnote.
 						# Remember to get our custom style selectors too.
-						processed_css = processed_css.replace("rearnote", "footnote")
+						processed_css = processed_css.replace("endnote", "footnote")
 
 						# Add new break-* aliases for compatibilty with newer readers.
 						processed_css = regex.sub(r"(\s+)page-break-(.+?:\s.+?;)", "\\1page-break-\\2\t\\1break-\\2", processed_css)
@@ -546,7 +554,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 							# Kobos don't have fonts that support the ↩ character in endnotes, so replace it with «
 							if filename == "endnotes.xhtml":
 								# Note that we replaced ↩ with \u21a9\ufe0e in an earlier iOS compatibility fix
-								xhtml = regex.sub(r"epub:type=\"se:referrer\">\u21a9\ufe0e</a>", "epub:type=\"se:referrer\">«</a>", xhtml)
+								xhtml = regex.sub(r"epub:type=\"backlink\">\u21a9\ufe0e</a>", "epub:type=\"backlink\">«</a>", xhtml)
 
 							# We have to remove the default namespace declaration from our document, otherwise
 							# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
@@ -795,7 +803,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 					except Exception as ex:
 						raise se.InvalidXhtmlException("Error parsing XHTML file: endnotes.xhtml\n{}".format(ex))
 
-					notes = tree.xpath("//li[@epub:type=\"rearnote\" or @epub:type=\"footnote\"]", namespaces=se.XHTML_NAMESPACES)
+					notes = tree.xpath("//li[@epub:type=\"endnote\" or @epub:type=\"footnote\"]", namespaces=se.XHTML_NAMESPACES)
 
 					processed_endnotes = ""
 

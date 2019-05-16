@@ -965,7 +965,7 @@ def lint(self, metadata_xhtml) -> list:
 
 						for referrer in endnote_referrers:
 							# We check against the attr value here because I couldn't figure out how to select an XML-namespaced attribute using BS4
-							if "epub:type" in referrer.attrs and referrer.attrs["epub:type"] == "se:referrer":
+							if "epub:type" in referrer.attrs and referrer.attrs["epub:type"] == "backlink":
 								is_first_sib = True
 								for sib in referrer.previous_siblings:
 									if is_first_sib:

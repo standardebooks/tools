@@ -100,7 +100,7 @@ a[epub|type~="noteref"]{
 	vertical-align: super;
 }
 
-section[epub|type~="rearnotes"] > ol > li{
+section[epub|type~="endnotes"] > ol > li{
 	margin: 1em 0;
 }
 

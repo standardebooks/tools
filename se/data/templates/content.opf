@@ -26,20 +26,20 @@
 		<meta property="schema:accessibilityFeature">tableOfContents</meta>
 		<meta property="schema:accessibilityHazard">none</meta>
 		<meta property="schema:accessibilitySummary">This publication conforms to WCAG 2.0 Level AA.</meta>
-		<link href="onix.xml" rel="onix-record"/>
+		<link href="onix.xml" media-type="application/xml" properties="onix" rel="record"/>
 		<dc:title id="title">TITLE</dc:title>
 		<meta property="file-as" refines="#title">TITLE_SORT</meta>
 		<dc:subject id="subject-1">SUBJECT_1</dc:subject>
 		<dc:subject id="subject-2">SUBJECT_2</dc:subject>
-		<meta property="meta-auth" refines="#subject-1">LOC_URL_1</meta>
-		<meta property="meta-auth" refines="#subject-2">LOC_URL_2</meta>
+		<meta property="authority" refines="#subject-1">LCSH</meta>
+		<meta property="term" refines="#subject-1">LCSH_ID_1</meta>
+		<meta property="authority" refines="#subject-2">LCSH</meta>
+		<meta property="term" refines="#subject-2">LCSH_ID_2</meta>
 		<meta property="se:subject">TAG</meta>
 		<dc:description id="description">DESCRIPTION</dc:description>
-		<meta property="meta-auth" refines="#description">https://standardebooks.org</meta>
 		<meta id="long-description" property="se:long-description" refines="#description"><![CDATA[
 			LONG_DESCRIPTION
 		]]></meta>
-		<meta property="meta-auth" refines="#long-description">https://standardebooks.org</meta>
 		<dc:language>LANG</dc:language>
 		<dc:source>PG_URL</dc:source>
 		<meta property="se:production-notes">Any special notes about the production of this ebook for future editors/producers? Remove this element if not.</meta>

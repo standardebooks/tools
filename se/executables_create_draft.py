@@ -10,6 +10,7 @@ import os
 import shutil
 from subprocess import call
 import unicodedata
+import urllib
 from typing import Union
 import requests
 import git
@@ -589,10 +590,28 @@ def create_draft(args: list) -> int:
 
 				i = 1
 				for subject in pg_subjects:
-					subject_xhtml = subject_xhtml + "\t\t<meta property=\"meta-auth\" refines=\"#subject-{}\">{}</meta>\n".format(i, args.pg_url)
+					subject_xhtml = subject_xhtml + "\t\t<meta property=\"authority\" refines=\"#subject-{}\">LCSH</meta>\n".format(i)
+
+					# Now, get the LCSH ID by querying LCSH directly.
+					try:
+						response = requests.get("http://id.loc.gov/search/?q=%22{}%22".format(urllib.parse.quote(subject)))
+						result = regex.search(r"<a title=\"Click to view record\" href=\"/authorities/subjects/([^\"]+?)\">{}</a>".format(regex.escape(subject.replace(" -- ", "--"))), response.text)
+
+						loc_id = "Unknown"
+						try:
+							loc_id = result.group(1)
+						except Exception as ex:
+							pass
+
+						subject_xhtml = subject_xhtml + "\t\t<meta property=\"term\" refines=\"#subject-{}\">{}</meta>\n".format(i, loc_id)
+
+					except Exception as ex:
+						se.print_error("Couldn’t connect to id.loc.gov. Error: {}".format(ex))
+						return se.RemoteCommandErrorException.code
+
 					i = i + 1
 
-				metadata_xhtml = regex.sub(r"\t\t<dc:subject id=\"subject-1\">SUBJECT_1</dc:subject>\s*<dc:subject id=\"subject-2\">SUBJECT_2</dc:subject>\s*<meta property=\"meta-auth\" refines=\"#subject-1\">LOC_URL_1</meta>\s*<meta property=\"meta-auth\" refines=\"#subject-2\">LOC_URL_2</meta>", "\t\t" + subject_xhtml.strip(), metadata_xhtml)
+				metadata_xhtml = regex.sub(r"\t\t<dc:subject id=\"subject-1\">SUBJECT_1</dc:subject>\s*<dc:subject id=\"subject-2\">SUBJECT_2</dc:subject>\s*<meta property=\"authority\" refines=\"#subject-1\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-1\">LCSH_ID_1</meta>\s*<meta property=\"authority\" refines=\"#subject-2\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-2\">LCSH_ID_2</meta>", "\t\t" + subject_xhtml.strip(), metadata_xhtml)
 
 			metadata_xhtml = metadata_xhtml.replace("<dc:language>LANG</dc:language>", "<dc:language>{}</dc:language>".format(pg_language))
 			metadata_xhtml = metadata_xhtml.replace("<dc:source>PG_URL</dc:source>", "<dc:source>{}</dc:source>".format(args.pg_url))
