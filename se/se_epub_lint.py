@@ -898,13 +898,16 @@ def lint(self, metadata_xhtml) -> list:
 						alt_text = image["alt"]
 						title_text = ""
 						image_ref = image["src"].split("/").pop()
-						with open(os.path.join(self.directory, "src", "epub", "images", image_ref), "r", encoding="utf-8") as image_source:
-							try:
-								title_text = BeautifulSoup(image_source, "lxml").title.get_text()
-							except Exception:
-								messages.append(LintMessage("{} missing <title> element.".format(image_ref), se.MESSAGE_TYPE_ERROR, image_ref))
-						if title_text != "" and alt_text != "" and title_text != alt_text:
-							messages.append(LintMessage("The <title> of {} doesn’t match the alt text in {}".format(image_ref, filename), se.MESSAGE_TYPE_ERROR, filename))
+						try:
+							with open(os.path.join(self.directory, "src", "epub", "images", image_ref), "r", encoding="utf-8") as image_source:
+								try:
+									title_text = BeautifulSoup(image_source, "lxml").title.get_text()
+								except Exception:
+									messages.append(LintMessage("{} missing <title> element.".format(image_ref), se.MESSAGE_TYPE_ERROR, image_ref))
+							if title_text != "" and alt_text != "" and title_text != alt_text:
+								messages.append(LintMessage("The <title> of {} doesn’t match the alt text in {}".format(image_ref, filename), se.MESSAGE_TYPE_ERROR, filename))
+						except FileNotFoundError:
+							messages.append(LintMessage("The image {} doesn’t exist".format(image_ref), se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for punctuation after endnotes
 					regex_string = r"<a[^>]*?epub:type=\"noteref\"[^>]*?>[0-9]+</a>[^\s<–\]\)—{}]".format(se.WORD_JOINER)
