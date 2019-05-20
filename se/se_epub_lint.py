@@ -1135,7 +1135,7 @@ def lint(self, metadata_xhtml) -> list:
 						messages.append(LintMessage("The spine order does not match the order of the ToC and landmarks. Expected {}, found {}.".format(entry.attrs["idref"], toc_files[index]), se.MESSAGE_TYPE_ERROR, "content.opf"))
 						break
 			else:
-				messages.append(LintMessage("Number of elements in spine does not match the number of elements of the ToC and landmarks.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+				messages.append(LintMessage("The number of elements in the spine does not match the number of elements in the ToC and landmarks.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	for element in abbr_elements:
 		try:
