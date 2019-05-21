@@ -46,6 +46,33 @@ sudo ln -s $HOME/.local/lib/python3.*/site-packages/se/completions/zsh/_se /usr/
 sudo ln -s $HOME/.local/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completions/completions/se
 ```
 
+## Fedora users
+
+```shell
+# Install dependencies
+sudo dnf install firefox ImageMagick calibre librsvg2-tools vim inkscape libxml2 perl-Image-ExifTool java-1.8.0-openjdk
+
+# Download and install the required version of epubcheck.
+wget --quiet -O /tmp/epubcheck.zip $(wget --quiet -O - https://api.github.com/repos/w3c/epubcheck/releases/latest | grep -E --only-matching "\"browser_download_url\":\s*\"(.*?)\"" | sed "s/\"browser_download_url\":\s*//g" | sed "s/\"//g")
+unzip -d $HOME/.local/share/ /tmp/epubcheck.zip
+sudo chmod +x $HOME/.local/share/epubcheck-*/epubcheck.jar
+
+# Ubuntu uses binfmt to let you execute a java jar file directly on the command-line. Fedora does not have this capability without extra configuration. A wrapper script is more portable and easier to set up.
+
+sudoedit /usr/local/bin/epubcheck
+
+---
+#! /usr/bin/env bash
+# Wrapper script to call epubcheck
+
+# Replace "4.2.1" with your epubcheck version number
+/usr/bin/java -jar "$HOME"/.local/share/epubcheck-4.2.1/epubcheck.jar "$@"
+---
+
+# Make executable
+sudo chmod +x /usr/local/bin/epubcheck
+```
+
 ## macOS users
 
 These instructions were tested on macOS 10.12 and 10.13. Your mileage may vary. Corrections and fixes to these steps are welcomed, as the SE maintainers don’t have access to Macs.
