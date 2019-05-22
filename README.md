@@ -26,8 +26,9 @@ sudo fc-cache -f
 # Download and install the required version of epubcheck.
 wget --quiet -O /tmp/epubcheck.zip $(wget --quiet -O - https://api.github.com/repos/w3c/epubcheck/releases/latest | grep -E --only-matching "\"browser_download_url\":\s*\"(.*?)\"" | sed "s/\"browser_download_url\":\s*//g" | sed "s/\"//g")
 unzip -d $HOME/.local/share/ /tmp/epubcheck.zip
-sudo chmod +x $HOME/.local/share/epubcheck-*/epubcheck.jar
-sudo ln -s $HOME/.local/share/epubcheck-*/epubcheck.jar /usr/local/bin/epubcheck
+mv $HOME/.local/share/epubcheck-* $HOME/.local/share/epubcheck
+sudo chmod +x $HOME/.local/share/epubcheck/epubcheck.jar
+sudo ln -s $HOME/.local/share/epubcheck/epubcheck.jar /usr/local/bin/epubcheck
 
 # Install the toolset.
 pip3 install standardebooks
