@@ -46,31 +46,52 @@ sudo ln -s $HOME/.local/lib/python3.*/site-packages/se/completions/zsh/_se /usr/
 sudo ln -s $HOME/.local/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completions/completions/se
 ```
 
-## Fedora users
+# Fedora users
 
+1. Install dependencies
 ```shell
-# Install dependencies
 sudo dnf install firefox ImageMagick calibre librsvg2-tools vim inkscape libxml2 perl-Image-ExifTool java-1.8.0-openjdk
 
-# Download and install the required version of epubcheck.
+# Install required fonts.
+mkdir -p ~/.local/share/fonts/
+curl -s -o ~/.local/share/fonts/LeagueSpartan-Bold.otf "https://raw.githubusercontent.com/theleagueof/league-spartan/master/LeagueSpartan-Bold.otf"
+curl -s -o ~/.local/share/fonts/OFLGoudyStM.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM.otf"
+curl -s -o ~/.local/share/fonts/OFLGoudyStM-Italic.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM-Italic.otf"
+
+# Refresh the local font cache.
+sudo fc-cache -f
+```
+
+2. Download and install the required version of epubcheck.
+```shell
 wget --quiet -O /tmp/epubcheck.zip $(wget --quiet -O - https://api.github.com/repos/w3c/epubcheck/releases/latest | grep -E --only-matching "\"browser_download_url\":\s*\"(.*?)\"" | sed "s/\"browser_download_url\":\s*//g" | sed "s/\"//g")
 unzip -d $HOME/.local/share/ /tmp/epubcheck.zip
-sudo chmod +x $HOME/.local/share/epubcheck-*/epubcheck.jar
+mv $HOME/.local/share/epubcheck-* $HOME/.local/share/epubcheck
+sudo chmod +x $HOME/.local/share/epubcheck/epubcheck.jar
 
-# Ubuntu uses binfmt to let you execute a java jar file directly on the command-line. Fedora does not have this capability without extra configuration. A wrapper script is more portable and easier to set up.
+```
 
-sudoedit /usr/local/bin/epubcheck
+3. Setup wrapper script to call the jar. 
 
----
+(Ubuntu uses `binfmt` to let you execute a java jar file directly on the command-line. Fedora does not have this capability without extra configuration. A wrapper script is more portable and easier to set up.)
+
+```shell
+cat << EOF > /tmp/epcheck
 #! /usr/bin/env bash
 # Wrapper script to call epubcheck
 
-# Replace "4.2.1" with your epubcheck version number
-/usr/bin/java -jar "$HOME"/.local/share/epubcheck-4.2.1/epubcheck.jar "$@"
----
+/usr/bin/java -jar "$HOME"/.local/share/epubcheck/epubcheck.jar "\$@"
+EOF
+```
 
-# Make executable
-sudo chmod +x /usr/local/bin/epubcheck
+4. Make the script executable
+```shell
+chmod +x /tmp/epcheck
+```
+
+5. Move to script to a bin directory
+```shell
+sudo mv /tmp/epcheck /usr/local/bin/epubcheck
 ```
 
 ## macOS users
