@@ -47,10 +47,10 @@ sudo ln -s $HOME/.local/lib/python3.*/site-packages/se/completions/zsh/_se /usr/
 sudo ln -s $HOME/.local/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completions/completions/se
 ```
 
-# Fedora users
+## Fedora users
 
-1. Install dependencies
 ```shell
+# Install some pre-flight dependencies.
 sudo dnf install firefox ImageMagick calibre librsvg2-tools vim inkscape libxml2 perl-Image-ExifTool java-1.8.0-openjdk
 
 # Install required fonts.
@@ -61,38 +61,17 @@ curl -s -o ~/.local/share/fonts/OFLGoudyStM-Italic.otf "https://raw.githubuserco
 
 # Refresh the local font cache.
 sudo fc-cache -f
-```
 
-2. Download and install the required version of epubcheck.
-```shell
+# Download and install the required version of epubcheck.
 wget --quiet -O /tmp/epubcheck.zip $(wget --quiet -O - https://api.github.com/repos/w3c/epubcheck/releases/latest | grep -E --only-matching "\"browser_download_url\":\s*\"(.*?)\"" | sed "s/\"browser_download_url\":\s*//g" | sed "s/\"//g")
 unzip -d $HOME/.local/share/ /tmp/epubcheck.zip
 mv $HOME/.local/share/epubcheck-* $HOME/.local/share/epubcheck
 sudo chmod +x $HOME/.local/share/epubcheck/epubcheck.jar
 
-```
-
-3. Setup wrapper script to call the jar. 
-
-(Ubuntu uses `binfmt` to let you execute a java jar file directly on the command-line. Fedora does not have this capability without extra configuration. A wrapper script is more portable and easier to set up.)
-
-```shell
-cat << EOF > /tmp/epcheck
-#! /usr/bin/env bash
-# Wrapper script to call epubcheck
-
-/usr/bin/java -jar "$HOME"/.local/share/epubcheck/epubcheck.jar "\$@"
-EOF
-```
-
-4. Make the script executable
-```shell
-chmod +x /tmp/epcheck
-```
-
-5. Move to script to a bin directory
-```shell
-sudo mv /tmp/epcheck /usr/local/bin/epubcheck
+# Set up a wrapper script to call the epubcheck jar file.
+# Ubuntu uses `jarwrapper` to let you execute a jar file directly on the command line. Fedora does not have this capability without extra configuration.
+echo -e "#\!/usr/bin/env bash\n/usr/bin/java -jar \"\$HOME/.local/share/epubcheck/epubcheck.jar\" \"\$@\"" | sudo tee /usr/local/bin/epubcheck
+sudo chmod +x /usr/local/bin/epubcheck
 ```
 
 ## macOS users
