@@ -340,7 +340,7 @@ def lint(self, metadata_xhtml) -> list:
 	# Now iterate over individual files for some checks
 	for root, _, filenames in os.walk(self.directory):
 		for filename in sorted(filenames, key=se.natural_sort_key):
-			if ".git/" in os.path.join(root, filename):
+			if ".git/" in os.path.join(root, filename) or ".git\\" in os.path.join(root, filename):
 				continue
 
 			if filename.startswith("cover.source."):
