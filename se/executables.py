@@ -794,7 +794,7 @@ def print_manifest_and_spine() -> int:
 			if args.manifest:
 				se_epub.metadata_xhtml = regex.sub(r"\s*<manifest>.+?</manifest>", "\n\t" + "\n\t".join(se_epub.generate_manifest().splitlines()), se_epub.metadata_xhtml, flags=regex.DOTALL)
 
-			with open(os.path.join(se_epub.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
+			with open(se_epub.metadata_file_path, "r+", encoding="utf-8") as file:
 				file.write(se_epub.metadata_xhtml)
 				file.truncate()
 		else:

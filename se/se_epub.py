@@ -68,6 +68,7 @@ class SeEpub:
 	"""
 
 	directory = ""
+	metadata_file_path = None
 	metadata_xhtml = None
 	_metadata_tree = None
 	_generated_identifier = None
@@ -81,7 +82,11 @@ class SeEpub:
 		self.directory = os.path.abspath(epub_root_directory)
 
 		try:
-			with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
+			with open(os.path.join(self.directory, "src", "META-INF", "container.xml"), "r", encoding="utf-8") as file:
+				container_tree = se.easy_xml.EasyXmlTree(file.read())
+				self.metadata_file_path = os.path.join(self.directory, "src", container_tree.xpath("//container:container/container:rootfiles/container:rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0])
+
+			with open(self.metadata_file_path, "r", encoding="utf-8") as file:
 				self.metadata_xhtml = file.read()
 
 			if "<dc:identifier id=\"uid\">url:https://standardebooks.org/ebooks/" not in self.metadata_xhtml:
@@ -307,7 +312,7 @@ class SeEpub:
 		"""
 
 		# Get the ordered list of spine items
-		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r", encoding="utf-8") as file:
+		with open(self.metadata_file_path, "r", encoding="utf-8") as file:
 			metadata_soup = BeautifulSoup(file.read(), "lxml")
 
 		# Get some header data: title, core and local css
@@ -559,7 +564,7 @@ class SeEpub:
 			self.metadata_xhtml = regex.sub(r"<dc:date>[^<]+?</dc:date>", "<dc:date>{}</dc:date>".format(now_iso), self.metadata_xhtml)
 			self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">{}</meta>".format(now_iso), self.metadata_xhtml)
 
-			with open(os.path.join(self.directory, "src", "epub", "content.opf"), "w", encoding="utf-8") as file:
+			with open(self.metadata_file_path, "w", encoding="utf-8") as file:
 				file.seek(0)
 				file.write(self.metadata_xhtml)
 				file.truncate()
@@ -593,7 +598,7 @@ class SeEpub:
 
 		self.metadata_xhtml = regex.sub(r"<meta property=\"se:reading-ease\.flesch\">[^<]*</meta>", "<meta property=\"se:reading-ease.flesch\">{}</meta>".format(se.formatting.get_flesch_reading_ease(text)), self.metadata_xhtml)
 
-		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "w", encoding="utf-8") as file:
+		with open(self.metadata_file_path, "w", encoding="utf-8") as file:
 			file.seek(0)
 			file.write(self.metadata_xhtml)
 			file.truncate()
@@ -620,7 +625,7 @@ class SeEpub:
 
 		self.metadata_xhtml = regex.sub(r"<meta property=\"se:word-count\">[^<]*</meta>", "<meta property=\"se:word-count\">{}</meta>".format(word_count), self.metadata_xhtml)
 
-		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
+		with open(self.metadata_file_path, "r+", encoding="utf-8") as file:
 			file.seek(0)
 			file.write(self.metadata_xhtml)
 			file.truncate()
