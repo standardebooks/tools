@@ -410,7 +410,6 @@ def process_heading(heading, textf, is_toplevel, single_file: bool) -> TocItem:
 
 	return toc_item
 
-
 def get_book_division(tag: BeautifulSoup) -> BookDivision:
 	"""
 	Determine the kind of book division. At present only Part and Division
@@ -432,16 +431,14 @@ def get_book_division(tag: BeautifulSoup) -> BookDivision:
 		return BookDivision.CHAPTER
 	elif "article" in parent_section[0].name:
 		return BookDivision.ARTICLE
-	else:
-		return BookDivision.NONE
 
+	return BookDivision.NONE
 
 def strip_notes(text: str) -> str:
 	"""
 	Returns html text stripped of noterefs.
 	"""
 	return regex.sub(r'<a .*?epub:type="noteref".*?>\d+<\/a>', "", text)
-
 
 def process_heading_contents(heading, toc_item):
 	"""
@@ -496,7 +493,6 @@ def process_all_content(file_list, text_path) -> (list, list):
 
 	# Now we test to see if there is only one body item
 	body_items = [item for item in landmarks if item.place == Position.BODY]
-	body_count = len(body_items)
 	single_file = (len(body_items) == 1)
 
 	nest_under_halftitle = False
