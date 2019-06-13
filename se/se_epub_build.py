@@ -137,7 +137,9 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		if self.last_commit:
 			last_updated_iso = regex.sub(r"\.[0-9]+$", "", self.last_commit.timestamp.isoformat()) + "Z"
 			last_updated_iso = regex.sub(r"\+.+?Z$", "Z", last_updated_iso)
-			last_updated_friendly = "{0:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}".format(self.last_commit.timestamp)
+			# In the line below, we can't use %l (unpadded 12 hour clock hour) because it isn't portable to Windows.
+			# Instead we use %I (padded 12 hour clock hour) and then do a string replace to remove leading zeros.
+			last_updated_friendly = "{0:%B %e, %Y, %I:%M <abbr class=\"time eoc\">%p</abbr>}".format(self.last_commit.timestamp).replace(" 0", " ")
 			last_updated_friendly = regex.sub(r"\s+", " ", last_updated_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
 			# Set modified date in content.opf
