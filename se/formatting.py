@@ -8,6 +8,7 @@ import math
 import unicodedata
 import html
 import os
+from pathlib import Path
 import subprocess
 import shutil
 import string
@@ -321,7 +322,7 @@ def _replace_character_references(match_object) -> str:
 
 	return retval
 
-def format_xhtml_file(filename: str, single_lines: bool = False, is_metadata_file: bool = False, is_endnotes_file: bool = False) -> None:
+def format_xhtml_file(filename: Path, single_lines: bool = False, is_metadata_file: bool = False, is_endnotes_file: bool = False) -> None:
 	"""
 	Pretty-print well-formed XHTML and save to file.
 

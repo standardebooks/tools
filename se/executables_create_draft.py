@@ -8,6 +8,7 @@ and maintainability.
 
 import os
 import shutil
+from pathlib import Path
 from subprocess import call
 import unicodedata
 import urllib
@@ -113,7 +114,7 @@ def _generate_titlepage_svg(title: str, authors: Union[str, list], contributors:
 		authors = [authors]
 
 	# Read our template SVG to get some values before we begin
-	with open(resource_filename("se", os.path.join("data", "templates", "titlepage.svg")), "r", encoding="utf-8") as file:
+	with open(resource_filename("se", str(Path("data") / "templates" / "titlepage.svg")), "r", encoding="utf-8") as file:
 		svg = file.read()
 
 	# Remove the template text elements from the SVG source, we'll write out to it later
@@ -211,7 +212,7 @@ def _generate_cover_svg(title: str, authors: Union[str, list], title_string: str
 		authors = [authors]
 
 	# Read our template SVG to get some values before we begin
-	with open(resource_filename("se", os.path.join("data", "templates", "cover.svg")), "r", encoding="utf-8") as file:
+	with open(resource_filename("se", str(Path("data") / "templates" / "cover.svg")), "r", encoding="utf-8") as file:
 		svg = file.read()
 
 	# Remove the template text elements from the SVG source, we'll write out to it later
@@ -346,9 +347,9 @@ def create_draft(args: list) -> int:
 		identifier = identifier + "/" + se.formatting.make_url_safe(args.illustrator)
 		title_string = title_string + ". Illustrated by " + args.illustrator
 
-	repo_name = identifier.replace("/", "_")
+	repo_name = Path(identifier.replace("/", "_"))
 
-	if os.path.isdir(repo_name):
+	if repo_name.is_dir():
 		se.print_error("./{}/ already exists.".format(repo_name))
 		return se.InvalidInputException.code
 
@@ -408,11 +409,11 @@ def create_draft(args: list) -> int:
 			pg_language = "en-GB"
 
 	# Create necessary directories
-	os.makedirs(os.path.join(repo_name, "images"))
-	os.makedirs(os.path.join(repo_name, "src", "epub", "css"))
-	os.makedirs(os.path.join(repo_name, "src", "epub", "images"))
-	os.makedirs(os.path.join(repo_name, "src", "epub", "text"))
-	os.makedirs(os.path.join(repo_name, "src", "META-INF"))
+	(repo_name / "images").mkdir(parents=True)
+	(repo_name / "src" / "epub" / "css").mkdir(parents=True)
+	(repo_name / "src" / "epub" / "images").mkdir(parents=True)
+	(repo_name / "src" / "epub" / "text").mkdir(parents=True)
+	(repo_name / "src" / "META-INF").mkdir(parents=True)
 
 	# Write PG data if we have it
 	if args.pg_url and pg_ebook_html:
@@ -443,27 +444,27 @@ def create_draft(args: list) -> int:
 
 			element.parent.decompose()
 
-		with open(os.path.join(repo_name, "src", "epub", "text", "body.xhtml"), "w", encoding="utf-8") as file:
+		with open(repo_name / "src" / "epub" / "text" / "body.xhtml", "w", encoding="utf-8") as file:
 			file.write(str(soup))
 
 	# Copy over templates
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "gitignore")), os.path.normpath(repo_name + "/.gitignore"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "LICENSE.md")), os.path.normpath(repo_name + "/"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "META-INF", "container.xml")), os.path.normpath(repo_name + "/src/META-INF/"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "mimetype")), os.path.normpath(repo_name + "/src/"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "content.opf")), os.path.normpath(repo_name + "/src/epub/"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "onix.xml")), os.path.normpath(repo_name + "/src/epub/"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "toc.xhtml")), os.path.normpath(repo_name + "/src/epub/"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "core.css")), os.path.normpath(repo_name + "/src/epub/css/"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "local.css")), os.path.normpath(repo_name + "/src/epub/css/"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "logo.svg")), os.path.normpath(repo_name + "/src/epub/images/"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "colophon.xhtml")), os.path.normpath(repo_name + "/src/epub/text/"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "imprint.xhtml")), os.path.normpath(repo_name + "/src/epub/text/"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "titlepage.xhtml")), os.path.normpath(repo_name + "/src/epub/text/"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "uncopyright.xhtml")), os.path.normpath(repo_name + "/src/epub/text/"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "titlepage.svg")), os.path.normpath(repo_name + "/images/"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "cover.jpg")), os.path.normpath(repo_name + "/images/cover.jpg"))
-	shutil.copy(resource_filename("se", os.path.join("data", "templates", "cover.svg")), os.path.normpath(repo_name + "/images/cover.svg"))
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "gitignore")), repo_name / ".gitignore")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "LICENSE.md")), repo_name)
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "META-INF" / "container.xml")), repo_name / "src" / "META-INF")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "mimetype")), repo_name / "src")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "content.opf")), repo_name / "src" / "epub")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "onix.xml")), repo_name / "src" / "epub")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "toc.xhtml")), repo_name / "src" / "epub")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "core.css")), repo_name / "src" / "epub" / "css")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "local.css")), repo_name / "src" / "epub" / "css")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "logo.svg")), repo_name / "src" / "epub" / "images")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "colophon.xhtml")), repo_name / "src" / "epub" / "text")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "imprint.xhtml")), repo_name / "src" / "epub" / "text")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "titlepage.xhtml")), repo_name / "src" / "epub" / "text")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "uncopyright.xhtml")), repo_name / "src" / "epub" / "text")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "titlepage.svg")), repo_name / "images")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "cover.jpg")), repo_name / "images" / "cover.jpg")
+	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "cover.svg")), repo_name / "images" / "cover.svg")
 
 	# Try to find Wikipedia links if possible
 	author_wiki_url, author_nacoaf_url = _get_wikipedia_url(args.author, True)
@@ -473,9 +474,9 @@ def create_draft(args: list) -> int:
 		translator_wiki_url, translator_nacoaf_url = _get_wikipedia_url(args.translator, True)
 
 	# Pre-fill a few templates
-	se.replace_in_file(os.path.normpath(repo_name + "/src/epub/text/titlepage.xhtml"), "TITLE_STRING", title_string)
-	se.replace_in_file(os.path.normpath(repo_name + "/images/titlepage.svg"), "TITLE_STRING", title_string)
-	se.replace_in_file(os.path.normpath(repo_name + "/images/cover.svg"), "TITLE_STRING", title_string)
+	se.replace_in_file(repo_name / "src" / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", title_string)
+	se.replace_in_file(repo_name / "images" / "titlepage.svg", "TITLE_STRING", title_string)
+	se.replace_in_file(repo_name / "images" / "cover.svg", "TITLE_STRING", title_string)
 
 	# Create the titlepage SVG
 	contributors = {}
@@ -485,17 +486,17 @@ def create_draft(args: list) -> int:
 	if args.illustrator:
 		contributors["illustrated by"] = args.illustrator
 
-	with open(os.path.join(repo_name, "images", "titlepage.svg"), "w", encoding="utf-8") as file:
+	with open(repo_name / "images" / "titlepage.svg", "w", encoding="utf-8") as file:
 		file.write(_generate_titlepage_svg(args.title, args.author, contributors, title_string))
 
 	# Create the cover SVG
-	with open(os.path.join(repo_name, "images", "cover.svg"), "w", encoding="utf-8") as file:
+	with open(repo_name / "images" / "cover.svg", "w", encoding="utf-8") as file:
 		file.write(_generate_cover_svg(args.title, args.author, title_string))
 
 	if args.pg_url:
-		se.replace_in_file(os.path.normpath(repo_name + "/src/epub/text/imprint.xhtml"), "PG_URL", args.pg_url)
+		se.replace_in_file(repo_name / "src" / "epub" / "text" / "imprint.xhtml", "PG_URL", args.pg_url)
 
-	with open(os.path.join(repo_name, "src", "epub", "text", "colophon.xhtml"), "r+", encoding="utf-8") as file:
+	with open(repo_name / "src" / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
 		colophon_xhtml = file.read()
 
 		colophon_xhtml = colophon_xhtml.replace("SE_IDENTIFIER", identifier)
@@ -533,14 +534,14 @@ def create_draft(args: list) -> int:
 		file.write(colophon_xhtml)
 		file.truncate()
 
-	with open(os.path.join(repo_name, "src", "epub", "content.opf"), "r+", encoding="utf-8") as file:
+	with open(repo_name / "src" / "epub" / "content.opf", "r+", encoding="utf-8") as file:
 		metadata_xhtml = file.read()
 
 		metadata_xhtml = metadata_xhtml.replace("SE_IDENTIFIER", identifier)
 		metadata_xhtml = metadata_xhtml.replace(">AUTHOR<", ">{}<".format(args.author))
 		metadata_xhtml = metadata_xhtml.replace(">TITLE_SORT<", ">{}<".format(sorted_title))
 		metadata_xhtml = metadata_xhtml.replace(">TITLE<", ">{}<".format(args.title))
-		metadata_xhtml = metadata_xhtml.replace("VCS_IDENTIFIER", repo_name)
+		metadata_xhtml = metadata_xhtml.replace("VCS_IDENTIFIER", str(repo_name))
 
 		if pg_producers:
 			producers_xhtml = ""

@@ -12,23 +12,23 @@ To upload the build to pypi, twine is required:
 pip3 install twine
 """
 
-from os import path
+from pathlib import Path
 from setuptools import setup, find_packages
 
 # Get the long description from the README file
-def _get_file_contents(filename):
+def _get_file_contents(file_path: Path) -> str:
     """
     Helper function to get README contents
     """
 
-    with open(filename, encoding="utf-8") as file:
+    with open(file_path, encoding="utf-8") as file:
         return file.read()
 
 setup(
     version="1.0.13",
     name="standardebooks",
     description="The toolset used to produce Standard Ebooks epub ebooks.",
-    long_description=_get_file_contents(path.join(path.abspath(path.dirname(__file__)), "README.md")),
+    long_description=_get_file_contents(Path(__file__).resolve().parent / "README.md"),
     long_description_content_type="text/markdown",
     url="https://standardebooks.org",
     author="Standard Ebooks",

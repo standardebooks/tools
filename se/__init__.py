@@ -6,6 +6,7 @@ Defines various package-level constants and helper functions.
 import sys
 import os
 import argparse
+from pathlib import Path
 from typing import Union
 from textwrap import wrap
 from termcolor import colored
@@ -138,12 +139,12 @@ def natural_sort_key(text: str, _nsre=regex.compile('([0-9]+)')):
 
 	return [int(text) if text.isdigit() else text.lower() for text in regex.split(_nsre, text)]
 
-def replace_in_file(absolute_path: str, search: Union[str, list], replace: Union[str, list]) -> None:
+def replace_in_file(file_path: Path, search: Union[str, list], replace: Union[str, list]) -> None:
 	"""
 	Helper function to replace in a file.
 	"""
 
-	with open(absolute_path, "r+", encoding="utf-8") as file:
+	with open(file_path, "r+", encoding="utf-8") as file:
 		data = file.read()
 		processed_data = data
 
@@ -175,13 +176,13 @@ def strip_bom(string: str) -> str:
 
 	return string
 
-def quiet_remove(absolute_path: str) -> None:
+def quiet_remove(file: Path) -> None:
 	"""
 	Helper function to delete a file without throwing an exception if the file doesn't exist.
 	"""
 
 	try:
-		os.remove(absolute_path)
+		file.unlink()
 	except Exception:
 		pass
 
@@ -256,18 +257,18 @@ def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filen
 	target_xhtml_filenames = set()
 
 	for target in targets:
-		target = os.path.abspath(target)
+		target = Path(target).resolve()
 
-		if os.path.isdir(target):
+		if target.is_dir():
 			for root, _, filenames in os.walk(target):
 				for filename in filenames:
 					if allowed_extensions:
 						if filename.endswith(allowed_extensions):
 							if filename not in ignored_filenames:
-								target_xhtml_filenames.add(os.path.join(root, filename))
+								target_xhtml_filenames.add(Path(root) / filename)
 					else:
 						if filename not in ignored_filenames:
-							target_xhtml_filenames.add(os.path.join(root, filename))
+							target_xhtml_filenames.add(Path(root) / filename)
 		else:
 			target_xhtml_filenames.add(target)
 

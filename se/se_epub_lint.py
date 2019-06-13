@@ -12,6 +12,7 @@ import glob
 import filecmp
 import html
 import unicodedata
+from pathlib import Path
 import io
 import regex
 import roman
@@ -107,10 +108,10 @@ def _get_unused_selectors(self) -> set:
 	"""
 
 	try:
-		with open(os.path.join(self.directory, "src", "epub", "css", "local.css"), encoding="utf-8") as file:
+		with open(self.path / "src" / "epub" / "css" / "local.css", encoding="utf-8") as file:
 			css = file.read()
 	except Exception:
-		raise FileNotFoundError("Couldn't open {}".format(os.path.join(self.directory, "src", "epub", "css", "local.css")))
+		raise FileNotFoundError("Couldn't open {}".format(self.path / "src" / "epub" / "css" / "local.css"))
 
 	# Remove @supports directives, as the parser can't handle them
 	css = regex.sub(r"^@supports\(.+?\){(.+?)}\s*}", "\\1}", css, flags=regex.MULTILINE | regex.DOTALL)
@@ -132,7 +133,7 @@ def _get_unused_selectors(self) -> set:
 	unused_selectors = set(selectors)
 
 	# Get a list of .xhtml files to search
-	filenames = glob.glob(os.path.join(self.directory, "src", "epub", "text") + os.sep + "*.xhtml")
+	filenames = glob.glob(str(self.path / "src" / "epub" / "text" / "*.xhtml"))
 
 	# Now iterate over each CSS selector and see if it's used in any of the files we found
 	for selector in selectors:
@@ -174,11 +175,11 @@ def lint(self, metadata_xhtml) -> list:
 	"""
 
 	messages = []
-	license_file_path = resource_filename("se", os.path.join("data", "templates", "LICENSE.md"))
-	gitignore_file_path = resource_filename("se", os.path.join("data", "templates", "gitignore"))
-	core_css_file_path = resource_filename("se", os.path.join("data", "templates", "core.css"))
-	logo_svg_file_path = resource_filename("se", os.path.join("data", "templates", "logo.svg"))
-	uncopyright_file_path = resource_filename("se", os.path.join("data", "templates", "uncopyright.xhtml"))
+	license_file_path = resource_filename("se", str(Path("data") / "templates" / "LICENSE.md"))
+	gitignore_file_path = resource_filename("se", str(Path("data") / "templates" / "gitignore"))
+	core_css_file_path = resource_filename("se", str(Path("data") / "templates" / "core.css"))
+	logo_svg_file_path = resource_filename("se", str(Path("data") / "templates" / "logo.svg"))
+	uncopyright_file_path = resource_filename("se", str(Path("data") / "templates" / "uncopyright.xhtml"))
 	has_halftitle = False
 	has_frontmatter = False
 	has_cover_source = False
@@ -193,7 +194,7 @@ def lint(self, metadata_xhtml) -> list:
 	# Check local.css for various items, for later use
 	abbr_elements = []
 	css = ""
-	with open(os.path.join(self.directory, "src", "epub", "css", "local.css"), "r", encoding="utf-8") as file:
+	with open(self.path / "src" / "epub" / "css" / "local.css", "r", encoding="utf-8") as file:
 		css = file.read()
 
 		local_css_has_subtitle_style = "span[epub|type~=\"subtitle\"]" in css
@@ -205,7 +206,7 @@ def lint(self, metadata_xhtml) -> list:
 			messages.append(LintMessage("Do not directly select h[0-6] elements, as they are used in template files; use more specific selectors.", se.MESSAGE_TYPE_ERROR, "local.css"))
 
 	# Check for presence of ./dist/ folder
-	if os.path.exists(os.path.join(self.directory, "dist")):
+	if (self.path / "dist").exists():
 		messages.append(LintMessage("Illegal ./dist/ folder. Do not commit compiled versions of the source.", se.MESSAGE_TYPE_ERROR, "./dist/"))
 
 	# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
@@ -316,18 +317,18 @@ def lint(self, metadata_xhtml) -> list:
 
 	# Make sure some static files are unchanged
 	try:
-		if not filecmp.cmp(license_file_path, os.path.join(self.directory, "LICENSE.md")):
+		if not filecmp.cmp(license_file_path, self.path / "LICENSE.md"):
 			messages.append(LintMessage("LICENSE.md does not match {}".format(license_file_path), se.MESSAGE_TYPE_ERROR, "LICENSE.md"))
 	except Exception:
 		messages.append(LintMessage("Missing ./LICENSE.md", se.MESSAGE_TYPE_ERROR, "LICENSE.md"))
 
-	if not filecmp.cmp(core_css_file_path, os.path.join(self.directory, "src", "epub", "css", "core.css")):
+	if not filecmp.cmp(core_css_file_path, self.path / "src" / "epub" / "css" / "core.css"):
 		messages.append(LintMessage("core.css does not match {}".format(core_css_file_path), se.MESSAGE_TYPE_ERROR, "core.css"))
 
-	if not filecmp.cmp(logo_svg_file_path, os.path.join(self.directory, "src", "epub", "images", "logo.svg")):
+	if not filecmp.cmp(logo_svg_file_path, self.path / "src" / "epub" / "images" / "logo.svg"):
 		messages.append(LintMessage("logo.svg does not match {}".format(logo_svg_file_path), se.MESSAGE_TYPE_ERROR, "logo.svg"))
 
-	if not filecmp.cmp(uncopyright_file_path, os.path.join(self.directory, "src", "epub", "text", "uncopyright.xhtml")):
+	if not filecmp.cmp(uncopyright_file_path, self.path / "src" / "epub" / "text" / "uncopyright.xhtml"):
 		messages.append(LintMessage("uncopyright.xhtml does not match {}".format(uncopyright_file_path), se.MESSAGE_TYPE_ERROR, "uncopyright.xhtml"))
 
 	# Check for unused selectors
@@ -338,9 +339,9 @@ def lint(self, metadata_xhtml) -> list:
 			messages.append(LintMessage(selector, se.MESSAGE_TYPE_ERROR, "", True))
 
 	# Now iterate over individual files for some checks
-	for root, _, filenames in os.walk(self.directory):
+	for root, _, filenames in os.walk(self.path):
 		for filename in sorted(filenames, key=se.natural_sort_key):
-			if ".git/" in os.path.join(root, filename) or ".git\\" in os.path.join(root, filename):
+			if ".git" in str(Path(root) / filename):
 				continue
 
 			if filename.startswith("cover.source."):
@@ -359,14 +360,14 @@ def lint(self, metadata_xhtml) -> list:
 				if filename == ".gitignore":
 					# .gitignore is optional, because our standard gitignore ignores itself.
 					# So if it's present, it must match our template.
-					if not filecmp.cmp(gitignore_file_path, os.path.join(self.directory, ".gitignore")):
+					if not filecmp.cmp(gitignore_file_path, str(self.path / ".gitignore")):
 						messages.append(LintMessage(".gitignore does not match {}".format(gitignore_file_path), se.MESSAGE_TYPE_ERROR, ".gitignore"))
 						continue
 				else:
 					messages.append(LintMessage("Illegal {} file detected in {}".format(filename, root), se.MESSAGE_TYPE_ERROR))
 					continue
 
-			with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
+			with open(Path(root) / filename, "r", encoding="utf-8") as file:
 				try:
 					file_contents = file.read()
 				except UnicodeDecodeError:
@@ -899,7 +900,7 @@ def lint(self, metadata_xhtml) -> list:
 						title_text = ""
 						image_ref = image["src"].split("/").pop()
 						try:
-							with open(os.path.join(self.directory, "src", "epub", "images", image_ref), "r", encoding="utf-8") as image_source:
+							with open(self.path / "src" / "epub" / "images" / image_ref, "r", encoding="utf-8") as image_source:
 								try:
 									title_text = BeautifulSoup(image_source, "lxml").title.get_text()
 								except Exception:
@@ -1031,7 +1032,7 @@ def lint(self, metadata_xhtml) -> list:
 							figcaption_text = ""
 							loi_text = illustration.get_text()
 
-							with open(os.path.join(self.directory, "src", "epub", "text", chapter_ref), "r", encoding="utf-8") as chapter:
+							with open(self.path / "src" / "epub" / "text" / chapter_ref, "r", encoding="utf-8") as chapter:
 								figure = BeautifulSoup(chapter, "lxml").select("#"+figure_ref)[0]
 								if figure.figcaption:
 									figcaption_text = figure.figcaption.get_text()
@@ -1090,7 +1091,7 @@ def lint(self, metadata_xhtml) -> list:
 			messages.append(LintMessage(css_class, se.MESSAGE_TYPE_WARNING, "local.css", True))
 
 	headings = list(set(headings))
-	with open(os.path.join(self.directory, "src", "epub", "toc.xhtml"), "r", encoding="utf-8") as toc:
+	with open(self.path / "src" / "epub" / "toc.xhtml", "r", encoding="utf-8") as toc:
 		toc = BeautifulSoup(toc.read(), "lxml")
 		landmarks = toc.find("nav", attrs={"epub:type": "landmarks"})
 		toc = toc.find("nav", attrs={"epub:type": "toc"})
@@ -1117,7 +1118,7 @@ def lint(self, metadata_xhtml) -> list:
 
 		# Check our ordered ToC entries against the spine
 		# To cover all possibilities, we combine the toc and the landmarks to get the full set of entries
-		with open(os.path.join(self.directory, "src", "epub", "content.opf"), "r", encoding="utf-8") as content_opf:
+		with open(self.path / "src" / "epub" / "content.opf", "r", encoding="utf-8") as content_opf:
 			toc_files = []
 			for index, entry in enumerate(landmarks.find_all("a", attrs={"epub:type": regex.compile("^.*(frontmatter|bodymatter).*$")})):
 				entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get("href"))

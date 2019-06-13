@@ -7,7 +7,7 @@ Strictly speaking, the generate_toc() function should be a class member of SeEpu
 the function is very big and it makes editing easier to put in a separate file.
 """
 
-import os
+from pathlib import Path
 from enum import Enum
 import regex
 from bs4 import BeautifulSoup, Tag
@@ -486,7 +486,7 @@ def process_all_content(file_list, text_path) -> (list, list):
 	# We make two passes through the work, because we need to know
 	# how many bodymatter items there are. So we do landmarks first.
 	for textf in file_list:
-		with open(os.path.join(text_path, textf), "r", encoding="utf-8") as file:
+		with open(Path(text_path) / textf, "r", encoding="utf-8") as file:
 			html_text = file.read()
 		soup = BeautifulSoup(html_text, "html.parser")
 		add_landmark(soup, textf, landmarks)
@@ -497,7 +497,7 @@ def process_all_content(file_list, text_path) -> (list, list):
 
 	nest_under_halftitle = False
 	for textf in file_list:
-		with open(os.path.join(text_path, textf), "r", encoding="utf-8") as file:
+		with open(Path(text_path) / textf, "r", encoding="utf-8") as file:
 			html_text = file.read()
 		soup = BeautifulSoup(strip_notes(html_text), "html.parser")
 		place = get_place(soup)
@@ -526,6 +526,6 @@ def generate_toc(self) -> str:
 	work_title = get_work_title(soup)
 	work_type = get_work_type(self.metadata_xhtml)
 
-	landmarks, toc_list = process_all_content(file_list, os.path.join(self.directory, "src", "epub", "text"))
+	landmarks, toc_list = process_all_content(file_list, self.path / "src" / "epub" / "text")
 
-	return output_toc(toc_list, landmarks, os.path.join(self.directory, "src", "epub", "toc.xhtml"), work_type, work_title)
+	return output_toc(toc_list, landmarks, self.path / "src" / "epub" / "toc.xhtml", work_type, work_title)

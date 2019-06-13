@@ -15,6 +15,7 @@ import os
 import types
 import subprocess
 from subprocess import call
+from pathlib import Path
 import tempfile
 import shutil
 from pkg_resources import resource_filename
@@ -137,7 +138,7 @@ def build() -> int:
 	for directory in args.directories:
 		try:
 			se_epub = SeEpub(directory)
-			se_epub.build(args.check, args.build_kobo, args.build_kindle, args.output_directory, args.proof, args.build_covers, args.verbose)
+			se_epub.build(args.check, args.build_kobo, args.build_kindle, Path(args.output_directory), args.proof, args.build_covers, args.verbose)
 		except se.SeException as ex:
 			se.print_error(ex, args.verbose)
 			return ex.code
@@ -156,10 +157,12 @@ def build_images() -> int:
 	args = parser.parse_args()
 
 	for directory in args.directories:
+		directory = Path(directory)
+
 		if args.verbose:
 			print("Processing {} ...".format(directory))
 
-		directory = os.path.abspath(directory)
+		directory = directory.resolve()
 
 		se_epub = SeEpub(directory)
 
@@ -201,14 +204,14 @@ def clean() -> int:
 
 	for filename in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx"), ignored_filenames):
 		# If we're setting single lines, skip the colophon and cover/titlepage svgs, as they have special spacing
-		if args.single_lines and (filename.endswith("colophon.xhtml") or filename.endswith("cover.svg") or filename.endswith("titlepage.svg")):
+		if args.single_lines and (filename.name == "colophon.xhtml" or filename.name == "cover.svg" or filename.name == "titlepage.svg"):
 			continue
 
 		if args.verbose:
 			print("Processing {} ...".format(filename), end="", flush=True)
 
 		try:
-			se.formatting.format_xhtml_file(filename, args.single_lines, filename.endswith("content.opf"), filename.endswith("endnotes.xhtml"))
+			se.formatting.format_xhtml_file(filename, args.single_lines, filename.name == "content.opf", filename.name == "endnotes.xhtml")
 		except se.SeException as ex:
 			se.print_error(str(ex) + " File: {}".format(filename), args.verbose)
 			return ex.code
@@ -252,14 +255,14 @@ def compare_versions() -> int:
 		return se.FirefoxRunningException.code
 
 	for target in args.targets:
-		target = os.path.abspath(target)
+		target = Path(target).resolve()
 
 		target_filenames = set()
-		if os.path.isdir(target):
+		if target.is_dir():
 			for root, _, filenames in os.walk(target):
 				for filename in fnmatch.filter(filenames, "*.xhtml"):
 					if args.include_common_files or filename not in se.IGNORED_FILENAMES:
-						target_filenames.add(os.path.join(root, filename))
+						target_filenames.add(Path(root) / filename)
 		else:
 			se.print_error("Target must be a directory: {}".format(target))
 			continue
@@ -279,30 +282,34 @@ def compare_versions() -> int:
 		with tempfile.TemporaryDirectory() as temp_directory_path:
 			# Generate screenshots of the pre-change repo
 			for filename in target_filenames:
-				subprocess.run([firefox_path, "-screenshot", "{}/{}-original.png".format(temp_directory_path, os.path.basename(filename)), filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+				filename = Path(filename)
+				subprocess.run([firefox_path, "-screenshot", "{}/{}-original.png".format(temp_directory_path, filename.name), filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 			# Pop the stash
 			git_command.stash("pop")
 
 			# Generate screenshots of the post-change repo, and compare them to the old screenshots
 			for filename in target_filenames:
-				filename_basename = os.path.basename(filename)
-				subprocess.run([firefox_path, "-screenshot", "{}/{}-new.png".format(temp_directory_path, filename_basename), filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+				file_path = Path(filename)
+				file_new_screenshot_path = Path(temp_directory_path / file_path.name + "-new.png")
+				file_original_screenshot_path = Path(temp_directory_path / file_path.name + "-original.png")
+				file_diff_screenshot_path = Path(temp_directory_path / file_path.name + "-diff.png")
 
-				output = subprocess.run([compare_path, "-metric", "ae", "{}/{}-original.png".format(temp_directory_path, filename_basename), "{}/{}-new.png".format(temp_directory_path, filename_basename), "{}/{}-diff.png".format(temp_directory_path, filename_basename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
+				subprocess.run([firefox_path, "-screenshot", file_new_screenshot_path, filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+				output = subprocess.run([compare_path, "-metric", "ae", file_original_screenshot_path, file_new_screenshot_path, file_diff_screenshot_path], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
 
 				if output != "0":
 					print("{}Difference in {}\n".format("\t" if args.verbose else "", filename), end="", flush=True)
 
 					if args.copy_images:
 						try:
-							output_directory = "./" + os.path.basename(os.path.normpath(target)) + "_diff-output/"
-							if not os.path.exists(output_directory):
-								os.makedirs(output_directory)
+							output_directory = Path("./" + target.name + "_diff-output/")
+							output_directory.mkdir(parents=True, exist_ok=True)
 
-							shutil.copy("{}/{}-new.png".format(temp_directory_path, filename_basename), output_directory)
-							shutil.copy("{}/{}-original.png".format(temp_directory_path, filename_basename), output_directory)
-							shutil.copy("{}/{}-diff.png".format(temp_directory_path, filename_basename), output_directory)
+							shutil.copy(file_new_screenshot_path, output_directory)
+							shutil.copy(file_original_screenshot_path, output_directory)
+							shutil.copy(file_diff_screenshot_path, output_directory)
 						except Exception:
 							pass
 	return 0
@@ -385,21 +392,21 @@ def extract_ebook() -> int:
 	args = parser.parse_args()
 
 	for target in args.targets:
-		target = os.path.abspath(target)
+		target = Path(target).resolve()
 
 		if args.verbose:
 			print("Processing {} ...".format(target), end="", flush=True)
 
 		if args.output_dir is None:
-			extracted_path = os.path.basename(target) + ".extracted"
+			extracted_path = Path(target.name + ".extracted")
 		else:
-			extracted_path = args.output_dir
+			extracted_path = Path(args.output_dir)
 
-		if os.path.exists(extracted_path):
+		if extracted_path.exists():
 			se.print_error("Directory already exists: {}".format(extracted_path))
 			return se.FileExistsException.code
 
-		mime_type = magic.from_file(target)
+		mime_type = magic.from_file(str(target))
 
 		if "Mobipocket E-book" in mime_type:
 			# kindleunpack uses print() so just capture that output here
@@ -570,9 +577,9 @@ def lint() -> int:
 		# Print the table header
 		if args.verbose or (messages and len(args.directories) > 1):
 			if args.plain:
-				print(se_epub.directory)
+				print(se_epub.path)
 			else:
-				print(colored(se_epub.directory, "white", attrs=["reverse"]))
+				print(colored(se_epub.path, "white", attrs=["reverse"]))
 
 		# Print the table
 		if messages:
@@ -640,7 +647,7 @@ def print_toc() -> int:
 
 		try:
 			if args.in_place:
-				with open(os.path.join(se_epub.directory, "src", "epub", "toc.xhtml"), "r+", encoding="utf-8") as file:
+				with open(se_epub.path / "src" / "epub" / "toc.xhtml", "r+", encoding="utf-8") as file:
 					file.write(se_epub.generate_toc())
 					file.truncate()
 			else:
@@ -728,7 +735,7 @@ def prepare_release() -> int:
 	args = parser.parse_args()
 
 	for directory in args.directories:
-		directory = os.path.abspath(directory)
+		directory = Path(directory).resolve()
 
 		if args.verbose:
 			print("Processing {} ...".format(directory))
@@ -935,7 +942,7 @@ def split_file() -> int:
 	with open(args.filename, "r", encoding="utf-8") as file:
 		xhtml = se.strip_bom(file.read())
 
-	with open(resource_filename("se", os.path.join("data", "templates", "header.xhtml")), "r", encoding="utf-8") as file:
+	with open(resource_filename("se", str(Path("data") / "templates" / "header.xhtml")), "r", encoding="utf-8") as file:
 		header_xhtml = file.read()
 
 	chapter_number = 1
@@ -1006,7 +1013,7 @@ def typogrify() -> int:
 	ignored_filenames.remove("toc.xhtml")
 
 	for filename in se.get_target_filenames(args.targets, (".xhtml"), ignored_filenames):
-		if filename.endswith("titlepage.xhtml"):
+		if filename.name == "titlepage.xhtml":
 			continue
 
 		if args.verbose:
@@ -1078,7 +1085,7 @@ def word_count() -> int:
 		excluded_filenames = se.IGNORED_FILENAMES
 
 	for filename in se.get_target_filenames(args.targets, (".xhtml"), excluded_filenames):
-		if args.exclude_se_files and filename.endswith("endnotes.xhtml"):
+		if args.exclude_se_files and filename.name == "endnotes.xhtml":
 			continue
 
 		with open(filename, "r", encoding="utf-8") as file:

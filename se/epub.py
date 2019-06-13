@@ -4,6 +4,7 @@ Defines several functions that are useful for interacting with epub files.
 """
 
 import os
+from pathlib import Path
 import zipfile
 import itertools
 import regex
@@ -12,7 +13,7 @@ import se
 import se.easy_xml
 
 
-def convert_toc_to_ncx(epub_root_absolute_path: str, toc_filename: str, xsl_filename: str) -> se.easy_xml.EasyXmlTree:
+def convert_toc_to_ncx(epub_root_absolute_path: Path, toc_filename: str, xsl_filename: str) -> se.easy_xml.EasyXmlTree:
 	"""
 	Take an epub3 HTML5 ToC file and convert it to an epub2 NCX file. NCX output is written to the same directory as the ToC file, in a file named "toc.ncx".
 
@@ -28,13 +29,13 @@ def convert_toc_to_ncx(epub_root_absolute_path: str, toc_filename: str, xsl_file
 	"""
 
 	# Use an XSLT transform to generate the NCX
-	with open(os.path.join(epub_root_absolute_path, "epub", toc_filename), "r", encoding="utf-8") as file:
+	with open(epub_root_absolute_path / "epub" / toc_filename, "r", encoding="utf-8") as file:
 		toc_tree = se.easy_xml.EasyXmlTree(file.read())
 
 	transform = etree.XSLT(etree.parse(xsl_filename))
 	ncx_tree = transform(toc_tree.etree, cwd="'{}{}'".format(epub_root_absolute_path, os.path.sep))
 
-	with open(os.path.join(epub_root_absolute_path, "epub", "toc.ncx"), "w", encoding="utf-8") as file:
+	with open(epub_root_absolute_path / "epub" / "toc.ncx", "w", encoding="utf-8") as file:
 		ncx_xhtml = etree.tostring(ncx_tree, encoding="unicode", pretty_print=True, with_tail=False)
 		ncx_xhtml = regex.sub(r" xml:lang=\"\?\?\"", "", ncx_xhtml)
 
@@ -50,7 +51,7 @@ def convert_toc_to_ncx(epub_root_absolute_path: str, toc_filename: str, xsl_file
 
 	return toc_tree
 
-def write_epub(epub_root_absolute_path: str, output_absolute_path: str) -> None:
+def write_epub(epub_root_absolute_path: Path, output_absolute_path: str) -> None:
 	"""
 	Given a root directory, compress it into a final epub file.
 
@@ -64,10 +65,10 @@ def write_epub(epub_root_absolute_path: str, output_absolute_path: str) -> None:
 
 	# We can't enable global compression here because according to the spec, the `mimetype` file must be uncompressed.  The rest of the files, however, can be compressed.
 	with zipfile.ZipFile(output_absolute_path, mode="w") as epub:
-		epub.write(os.path.join(epub_root_absolute_path, "mimetype"), "mimetype")
-		epub.write(os.path.join(epub_root_absolute_path, "META-INF", "container.xml"), "META-INF/container.xml", compress_type=zipfile.ZIP_DEFLATED)
+		epub.write(epub_root_absolute_path / "mimetype", "mimetype")
+		epub.write(epub_root_absolute_path / "META-INF" / "container.xml", "META-INF/container.xml", compress_type=zipfile.ZIP_DEFLATED)
 
 		for root, _, files in os.walk(epub_root_absolute_path):
 			for file in files:
 				if file != "mimetype" and file != "container.xml":
-					epub.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), epub_root_absolute_path), compress_type=zipfile.ZIP_DEFLATED)
+					epub.write(Path(root) / file, (Path(root) / file).relative_to(epub_root_absolute_path), compress_type=zipfile.ZIP_DEFLATED)

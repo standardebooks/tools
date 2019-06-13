@@ -10,10 +10,10 @@ import sys
 import os
 import errno
 import shutil
+from pathlib import Path
 from distutils.dir_util import copy_tree
 import tempfile
 from hashlib import sha1
-import glob
 import subprocess
 import fnmatch
 import regex
@@ -38,25 +38,28 @@ COVER_THUMBNAIL_HEIGHT = COVER_SVG_HEIGHT / 4
 SVG_OUTER_STROKE_WIDTH = 2
 SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
 
-def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers, verbose):
+def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool, verbose: bool) -> None:
 	"""
 	Entry point for `se build`
 	"""
 
-	calibre_app_mac_path = "/Applications/calibre.app/Contents/MacOS/"
-	epubcheck_path = shutil.which("epubcheck")
-	ebook_convert_path = shutil.which("ebook-convert")
+	calibre_app_mac_path = Path("/Applications/calibre.app/Contents/MacOS/")
+
+	ebook_convert_path = Path(shutil.which("ebook-convert"))
 	# Look for default Mac calibre app path if none found in path
-	if ebook_convert_path is None and os.path.exists(calibre_app_mac_path):
-		ebook_convert_path = os.path.join(calibre_app_mac_path, "ebook-convert")
-	rsvg_convert_path = shutil.which("rsvg-convert")
-	convert_path = shutil.which("convert")
-	navdoc2ncx_xsl_filename = resource_filename("se", os.path.join("data", "navdoc2ncx.xsl"))
-	mathml_xsl_filename = resource_filename("se", os.path.join("data", "mathmlcontent2presentation.xsl"))
+	if ebook_convert_path is None and calibre_app_mac_path.exists():
+		ebook_convert_path = calibre_app_mac_path / "ebook-convert"
+	rsvg_convert_path = Path(shutil.which("rsvg-convert"))
+	convert_path = Path(shutil.which("convert"))
+	navdoc2ncx_xsl_filename = resource_filename("se", str(Path("data") / "navdoc2ncx.xsl"))
+	mathml_xsl_filename = resource_filename("se", str(Path("data") / "mathmlcontent2presentation.xsl"))
 
 	# Check for some required tools
-	if run_epubcheck and epubcheck_path is None:
-		raise se.MissingDependencyException("Couldn’t locate epubcheck. Is it installed?")
+	if run_epubcheck:
+		try:
+			epubcheck_path = Path(shutil.which("epubcheck"))
+		except:
+			raise se.MissingDependencyException("Couldn’t locate epubcheck. Is it installed?")
 
 	if rsvg_convert_path is None:
 		raise se.MissingDependencyException("Couldn’t locate rsvg-convert. Is librsvg2-bin installed?")
@@ -68,34 +71,32 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 		raise se.MissingDependencyException("Couldn’t locate convert. Is Imagemagick installed?")
 
 	# Check the output directory and create it if it doesn't exist
-	if output_directory is None:
-		output_directory = os.getcwd()
-	else:
-		output_directory = output_directory
+	try:
+		output_directory = output_directory.resolve()
 
-	output_directory = os.path.abspath(output_directory)
-
-	if os.path.exists(output_directory):
-		if not os.path.isdir(output_directory):
-			raise se.InvalidInputException("Not a directory: {}".format(output_directory))
-	else:
-		# Doesn't exist, try to create it
-		try:
-			os.makedirs(output_directory)
-		except OSError as exception:
-			if exception.errno != errno.EEXIST:
+		if output_directory.exists():
+			if not output_directory.is_dir():
+				raise se.InvalidInputException("Not a directory: {}".format(output_directory))
+		else:
+			# Doesn't exist, try to create it
+			try:
+				output_directory.mkdir(parents=True, exist_ok=True)
+			except Exception:
 				raise se.FileExistsException("Couldn’t create output directory.")
+	except:
+		raise se.FileExistsException("Couldn’t create output directory.")
 
 	# All clear to start building!
 	if verbose:
-		print("Building {} ...".format(self.directory))
+		print("Building {} ...".format(self.path))
 
 	with tempfile.TemporaryDirectory() as work_directory:
-		work_epub_root_directory = os.path.join(work_directory, "src")
+		work_directory = Path(work_directory)
+		work_epub_root_directory = work_directory / "src"
 
-		copy_tree(self.directory, work_directory)
+		copy_tree(self.path, str(work_directory))
 		try:
-			shutil.rmtree(os.path.join(work_directory, ".git"))
+			shutil.rmtree(work_directory / ".git")
 		except Exception:
 			pass
 
@@ -118,19 +119,18 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 		kindle_output_filename = "{}_{}{}.azw3".format(url_author, url_title, ".proof" if proof else "")
 
 		# Clean up old output files if any
-		for kindle_thumbnail in glob.glob(os.path.join(output_directory, "thumbnail_{}_EBOK_portrait.jpg".format(asin))):
-			se.quiet_remove(kindle_thumbnail)
-		se.quiet_remove(os.path.join(output_directory, "cover.jpg"))
-		se.quiet_remove(os.path.join(output_directory, "cover-thumbnail.jpg"))
-		se.quiet_remove(os.path.join(output_directory, epub_output_filename))
-		se.quiet_remove(os.path.join(output_directory, epub3_output_filename))
-		se.quiet_remove(os.path.join(output_directory, kobo_output_filename))
-		se.quiet_remove(os.path.join(output_directory, kindle_output_filename))
+		se.quiet_remove(output_directory / "thumbnail_{}_EBOK_portrait.jpg".format(asin))
+		se.quiet_remove(output_directory / "cover.jpg")
+		se.quiet_remove(output_directory / "cover-thumbnail.jpg")
+		se.quiet_remove(output_directory / epub_output_filename)
+		se.quiet_remove(output_directory / epub3_output_filename)
+		se.quiet_remove(output_directory / kobo_output_filename)
+		se.quiet_remove(output_directory / kindle_output_filename)
 
 		# Are we including proofreading CSS?
 		if proof:
-			with open(os.path.join(work_epub_root_directory, "epub", "css", "local.css"), "a", encoding="utf-8") as local_css_file:
-				with open(resource_filename("se", os.path.join("data", "templates", "proofreading.css")), "r", encoding="utf-8") as proofreading_css_file:
+			with open(work_epub_root_directory / "epub" / "css" / "local.css", "a", encoding="utf-8") as local_css_file:
+				with open(resource_filename("se", str(Path("data") / "templates" / "proofreading.css")), "r", encoding="utf-8") as proofreading_css_file:
 					local_css_file.write(proofreading_css_file.read())
 
 		# Update the release date in the metadata and colophon
@@ -143,13 +143,13 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 			# Set modified date in content.opf
 			self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">{}</meta>".format(last_updated_iso), self.metadata_xhtml)
 
-			with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "w", encoding="utf-8") as file:
+			with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
 				file.seek(0)
 				file.write(self.metadata_xhtml)
 				file.truncate()
 
 			# Update the colophon with release info
-			with open(os.path.join(work_epub_root_directory, "epub", "text", "colophon.xhtml"), "r+", encoding="utf-8") as file:
+			with open(work_epub_root_directory / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 
 				xhtml = xhtml.replace("<p>The first edition of this ebook was released on<br/>", "<p>This edition was released on<br/>\n\t\t\t<b>{}</b><br/>\n\t\t\tand is based on<br/>\n\t\t\t<b>revision {}</b>.<br/>\n\t\t\tThe first edition of this ebook was released on<br/>".format(last_updated_friendly, self.last_commit.short_sha))
@@ -162,7 +162,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 		if verbose:
 			print("\tBuilding {} ...".format(epub3_output_filename), end="", flush=True)
 
-		se.epub.write_epub(work_epub_root_directory, os.path.join(output_directory, epub3_output_filename))
+		se.epub.write_epub(work_epub_root_directory, output_directory / epub3_output_filename)
 
 		if verbose:
 			print(" OK")
@@ -177,8 +177,8 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 		# Now add epub2 compatibility.
 
 		# Include compatibility CSS
-		with open(os.path.join(work_epub_root_directory, "epub", "css", "core.css"), "a", encoding="utf-8") as core_css_file:
-			with open(resource_filename("se", os.path.join("data", "templates", "compatibility.css")), "r", encoding="utf-8") as compatibility_css_file:
+		with open(work_epub_root_directory / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:
+			with open(resource_filename("se", str(Path("data") / "templates" / "compatibility.css")), "r", encoding="utf-8") as compatibility_css_file:
 				core_css_file.write(compatibility_css_file.read())
 
 		# Simplify CSS and tags
@@ -188,7 +188,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 		# While we're doing this, we store the original css into a single variable so we can extract the original selectors later.
 		for root, _, filenames in os.walk(work_epub_root_directory):
 			for filename in fnmatch.filter(filenames, "*.css"):
-				with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+				with open(Path(root) / filename, "r+", encoding="utf-8") as file:
 					css = file.read()
 
 					# Before we do anything, we process a special case in core.css
@@ -226,7 +226,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 				if filename == "toc.xhtml":
 					continue
 
-				with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+				with open(Path(root) / filename, "r+", encoding="utf-8") as file:
 					# We have to remove the default namespace declaration from our document, otherwise
 					# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 					xhtml = file.read().replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
@@ -325,19 +325,19 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 		# We used to be able to use `convert` to convert svg -> jpg in one step, but at some point a bug
 		# was introduced to `convert` that caused it to crash in this situation. Now, we first use rsvg-convert
 		# to convert to svg -> png, then `convert` to convert png -> jpg.
-		subprocess.run([rsvg_convert_path, "--keep-aspect-ratio", "--format", "png", "--output", os.path.join(work_directory, 'cover.png'), os.path.join(work_epub_root_directory, "epub", "images", "cover.svg")])
-		subprocess.run([convert_path, "-format", "jpg", os.path.join(work_directory, 'cover.png'), os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg")])
-		os.remove(os.path.join(work_directory, 'cover.png'))
+		subprocess.run([rsvg_convert_path, "--keep-aspect-ratio", "--format", "png", "--output", work_directory / "cover.png", work_epub_root_directory / "epub" / "images" / "cover.svg"])
+		subprocess.run([convert_path, "-format", "jpg", work_directory / 'cover.png', work_epub_root_directory / "epub" / "images" / "cover.jpg"])
+		(work_directory / "cover.png").unlink()
 
 		if build_covers:
-			shutil.copy2(os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg"), os.path.join(output_directory, "cover.jpg"))
-			shutil.copy2(os.path.join(work_epub_root_directory, "epub", "images", "cover.svg"), os.path.join(output_directory, "cover-thumbnail.svg"))
-			subprocess.run([rsvg_convert_path, "--keep-aspect-ratio", "--format", "png", "--output", os.path.join(work_directory, 'cover-thumbnail.png'), os.path.join(output_directory, "cover-thumbnail.svg")])
-			subprocess.run([convert_path, "-resize", "{}x{}".format(COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT), "-quality", "100", "-format", "jpg", os.path.join(work_directory, 'cover-thumbnail.png'), os.path.join(output_directory, "cover-thumbnail.jpg")])
-			os.remove(os.path.join(work_directory, 'cover-thumbnail.png'))
-			os.remove(os.path.join(output_directory, "cover-thumbnail.svg"))
+			shutil.copy2(work_epub_root_directory / "epub" / "images" / "cover.jpg", output_directory / "cover.jpg")
+			shutil.copy2(work_epub_root_directory / "epub" / "images" / "cover.svg", output_directory / "cover-thumbnail.svg")
+			subprocess.run([rsvg_convert_path, "--keep-aspect-ratio", "--format", "png", "--output", work_directory / "cover-thumbnail.png", output_directory / "cover-thumbnail.svg"])
+			subprocess.run([convert_path, "-resize", "{}x{}".format(COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT), "-quality", "100", "-format", "jpg", work_directory / "cover-thumbnail.png", output_directory / "cover-thumbnail.jpg"])
+			(work_directory / "cover-thumbnail.png").unlink()
+			(output_directory / "cover-thumbnail.svg").unlink()
 
-		os.remove(os.path.join(work_epub_root_directory, "epub", "images", "cover.svg"))
+		(work_epub_root_directory / "epub" / "images" / "cover.svg").unlink()
 
 		# Massage image references in content.opf
 		metadata_xhtml = metadata_xhtml.replace("cover.svg", "cover.jpg")
@@ -350,7 +350,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 		metadata_xhtml = metadata_xhtml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
 
 		# Output the modified content.opf so that we can build the kobo book before making more epub2 compatibility hacks
-		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "w", encoding="utf-8") as file:
+		with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
 			file.write(metadata_xhtml)
 			file.truncate()
 
@@ -360,7 +360,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 				if filename.lower().endswith(".svg"):
 					# For night mode compatibility, give the titlepage a 1px white stroke attribute
 					if filename.lower() == "titlepage.svg" or filename.lower() == "logo.svg":
-						with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+						with open(Path(root) / filename, "r+", encoding="utf-8") as file:
 							svg = file.read()
 							paths = svg
 
@@ -407,11 +407,11 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 
 					# Convert SVGs to PNGs at 2x resolution
 					# We use `rsvg-convert` instead of `inkscape` or `convert` because it gives us an easy way of zooming in at 2x
-					subprocess.run([rsvg_convert_path, "--zoom", "2", "--keep-aspect-ratio", "--format", "png", "--output", regex.sub(r"\.svg$", ".png", os.path.join(root, filename)), os.path.join(root, filename)])
-					os.remove(os.path.join(root, filename))
+					subprocess.run([rsvg_convert_path, "--zoom", "2", "--keep-aspect-ratio", "--format", "png", "--output", regex.sub(r"\.svg$", ".png", str(Path(root) / filename)), str(Path(root) / filename)])
+					(Path(root) / filename).unlink()
 
 				if filename.lower().endswith(".xhtml"):
-					with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+					with open(Path(root) / filename, "r+", encoding="utf-8") as file:
 						xhtml = file.read()
 						processed_xhtml = xhtml
 
@@ -507,7 +507,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 							file.truncate()
 
 				if filename.lower().endswith(".css"):
-					with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+					with open(Path(root) / filename, "r+", encoding="utf-8") as file:
 						css = file.read()
 						processed_css = css
 
@@ -525,12 +525,13 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 
 		if build_kobo:
 			with tempfile.TemporaryDirectory() as kobo_work_directory:
-				copy_tree(work_epub_root_directory, kobo_work_directory)
+				kobo_work_directory = Path(kobo_work_directory)
+				copy_tree(str(work_epub_root_directory), str(kobo_work_directory))
 
 				for root, _, filenames in os.walk(kobo_work_directory):
 					# Add a note to content.opf indicating this is a transform build
 					for filename in fnmatch.filter(filenames, "content.opf"):
-						with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+						with open(Path(root) / filename, "r+", encoding="utf-8") as file:
 							xhtml = file.read()
 
 							xhtml = regex.sub(r"<dc:publisher", "<meta property=\"se:transform\">kobo</meta>\n\t\t<dc:publisher", xhtml)
@@ -549,7 +550,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 						if filename == "toc.xhtml":
 							continue
 
-						with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+						with open(Path(root) / filename, "r+", encoding="utf-8") as file:
 							xhtml = file.read()
 							# Kobos don't have fonts that support the ↩ character in endnotes, so replace it with «
 							if filename == "endnotes.xhtml":
@@ -575,7 +576,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 							file.write(xhtml)
 							file.truncate()
 
-				se.epub.write_epub(kobo_work_directory, os.path.join(output_directory, kobo_output_filename))
+				se.epub.write_epub(kobo_work_directory, output_directory / kobo_output_filename)
 
 			if verbose:
 				print(" OK")
@@ -587,7 +588,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 		for root, _, filenames in os.walk(work_epub_root_directory):
 			for filename in filenames:
 				if filename.lower().endswith(".css"):
-					with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+					with open(Path(root) / filename, "r+", encoding="utf-8") as file:
 						css = file.read()
 						processed_css = css
 
@@ -611,7 +612,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 			for root, _, filenames in os.walk(work_epub_root_directory):
 				for filename in filenames:
 					if filename.lower().endswith(".xhtml"):
-						with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+						with open(Path(root) / filename, "r+", encoding="utf-8") as file:
 							xhtml = file.read()
 							processed_xhtml = xhtml
 							replaced_mathml = []
@@ -651,7 +652,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 									# Did we succeed? Is there any more MathML in our string?
 									if regex.findall("</?(?:m:)?m", processed_line):
 										# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
-										se.images.render_mathml_to_png(regex.sub(r"<(/?)m:", "<\\1", line), os.path.join(work_epub_root_directory, "epub", "images", "mathml-{}.png".format(mathml_count)))
+										se.images.render_mathml_to_png(regex.sub(r"<(/?)m:", "<\\1", line), work_epub_root_directory / "epub" / "images" / "mathml-{}.png".format(mathml_count))
 
 										processed_xhtml = processed_xhtml.replace(line, "<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{}.png\" />".format(mathml_count))
 										mathml_count = mathml_count + 1
@@ -673,7 +674,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 
 		# Add any new MathML images we generated to the manifest
 		if has_mathml:
-			for root, _, filenames in os.walk(os.path.join(work_epub_root_directory, "epub", "images")):
+			for root, _, filenames in os.walk(work_epub_root_directory / "epub" / "images"):
 				filenames = se.natural_sort(filenames)
 				filenames.reverse()
 				for filename in filenames:
@@ -719,16 +720,16 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 
 		# Guide is done, now write content.opf and clean it.
 		# Output the modified content.opf before making more epub2 compatibility hacks.
-		with open(os.path.join(work_epub_root_directory, "epub", "content.opf"), "w", encoding="utf-8") as file:
+		with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
 			file.write(metadata_xhtml)
 			file.truncate()
 
 		# All done, clean the output
 		for filename in se.get_target_filenames([work_epub_root_directory], (".xhtml", ".svg", ".opf", ".ncx")):
-			se.formatting.format_xhtml_file(filename, False, filename.endswith("content.opf"), filename.endswith("endnotes.xhtml"))
+			se.formatting.format_xhtml_file(filename, False, filename.name == "content.opf", filename.name == "endnotes.xhtml")
 
 		# Write the compatible epub
-		se.epub.write_epub(work_epub_root_directory, os.path.join(output_directory, epub_output_filename))
+		se.epub.write_epub(work_epub_root_directory, output_directory / epub_output_filename)
 
 		if verbose:
 			print(" OK")
@@ -737,7 +738,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 			if verbose:
 				print("\tRunning epubcheck on {} ...".format(epub_output_filename), end="", flush=True)
 
-			output = subprocess.run([epubcheck_path, "--quiet", os.path.join(output_directory, epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
+			output = subprocess.run([epubcheck_path, "--quiet", output_directory / epub_output_filename], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
 
 			# epubcheck on Ubuntu 18.04 outputs some seemingly harmless warnings; flush them here.
 			if output:
@@ -760,7 +761,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 				print("\tBuilding {} ...".format(kindle_output_filename), end="", flush=True)
 
 			# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
-			with open(os.path.join(work_epub_root_directory, "epub", toc_filename), "r+", encoding="utf-8") as file:
+			with open(work_epub_root_directory / "epub" / toc_filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 
 				soup = BeautifulSoup(xhtml, "lxml")
@@ -788,12 +789,12 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 			toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, navdoc2ncx_xsl_filename)
 
 			# Clean just the ToC and NCX
-			for filename in [os.path.join(work_epub_root_directory, "epub", "toc.ncx"), os.path.join(work_epub_root_directory, "epub", toc_filename)]:
+			for filename in [work_epub_root_directory / "epub" / "toc.ncx", work_epub_root_directory / "epub" / toc_filename]:
 				se.formatting.format_xhtml_file(filename, False)
 
 			# Convert endnotes to Kindle popup compatible notes
-			if os.path.isfile(os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml")):
-				with open(os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml"), "r+", encoding="utf-8") as file:
+			if (work_epub_root_directory / "epub" / "text" / "endnotes.xhtml").is_file():
+				with open(work_epub_root_directory / "epub" / "text" / "endnotes.xhtml", "r+", encoding="utf-8") as file:
 					xhtml = file.read()
 
 					# We have to remove the default namespace declaration from our document, otherwise
@@ -850,7 +851,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 					file.truncate()
 
 				# While Kindle now supports soft hyphens, popup endnotes break words but don't insert the hyphen characters.  So for now, remove soft hyphens from the endnotes file.
-				with open(os.path.join(work_epub_root_directory, "epub", "text", "endnotes.xhtml"), "r+", encoding="utf-8") as file:
+				with open(work_epub_root_directory / "epub" / "text" / "endnotes.xhtml", "r+", encoding="utf-8") as file:
 					xhtml = file.read()
 					processed_xhtml = xhtml
 
@@ -865,7 +866,7 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 			for root, _, filenames in os.walk(work_epub_root_directory):
 				for filename in filenames:
 					if filename.lower().endswith(".xhtml"):
-						with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+						with open(Path(root) / filename, "r+", encoding="utf-8") as file:
 							xhtml = file.read()
 							processed_xhtml = xhtml
 
@@ -882,8 +883,8 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 								file.truncate()
 
 			# Include compatibility CSS
-			with open(os.path.join(work_epub_root_directory, "epub", "css", "core.css"), "a", encoding="utf-8") as core_css_file:
-				with open(resource_filename("se", os.path.join("data", "templates", "kindle.css")), "r", encoding="utf-8") as compatibility_css_file:
+			with open(work_epub_root_directory / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:
+				with open(resource_filename("se", str(Path("data") / "templates" / "kindle.css")), "r", encoding="utf-8") as compatibility_css_file:
 					core_css_file.write(compatibility_css_file.read())
 
 			# Add soft hyphens
@@ -891,12 +892,12 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 				se.typography.hyphenate_file(filename, None, True)
 
 			# Build an epub file we can send to Calibre
-			se.epub.write_epub(work_epub_root_directory, os.path.join(work_directory, epub_output_filename))
+			se.epub.write_epub(work_epub_root_directory, work_directory / epub_output_filename)
 
 			# Generate the Kindle file
 			# We place it in the work directory because later we have to update the asin, and the se.mobi.update_asin() function will write to the final output directory
-			cover_path = os.path.join(work_epub_root_directory, "epub", metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@href")[0].replace(".svg", ".jpg"))
-			return_code = subprocess.run([ebook_convert_path, os.path.join(work_directory, epub_output_filename), os.path.join(work_directory, kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", "--cover={}".format(cover_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
+			cover_path = work_epub_root_directory / "epub" / metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@href")[0].replace(".svg", ".jpg")
+			return_code = subprocess.run([ebook_convert_path, work_directory / epub_output_filename, work_directory / kindle_output_filename, "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", "--cover={}".format(cover_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
 
 			if return_code:
 				raise se.InvalidSeEbookException("ebook-convert failed.")
@@ -904,10 +905,10 @@ def build(self, metadata_xhtml, metadata_tree, run_epubcheck, build_kobo, build_
 				# Success, extract the Kindle cover thumbnail
 
 				# Update the ASIN in the generated file
-				se.mobi.update_asin(asin, os.path.join(work_directory, kindle_output_filename), os.path.join(output_directory, kindle_output_filename))
+				se.mobi.update_asin(asin, work_directory / kindle_output_filename, output_directory / kindle_output_filename)
 
 				# Extract the thumbnail
-				subprocess.run([convert_path, os.path.join(work_epub_root_directory, "epub", "images", "cover.jpg"), "-resize", "432x660", os.path.join(output_directory, "thumbnail_{}_EBOK_portrait.jpg".format(asin))], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+				subprocess.run([convert_path, work_epub_root_directory / "epub" / "images" / "cover.jpg", "-resize", "432x660", output_directory / "thumbnail_{}_EBOK_portrait.jpg".format(asin)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 			if verbose:
 				print(" OK")

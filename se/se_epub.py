@@ -11,6 +11,7 @@ import errno
 import shutil
 import fnmatch
 import datetime
+from pathlib import Path
 import concurrent.futures
 import base64
 import subprocess
@@ -22,14 +23,14 @@ import se.formatting
 import se.easy_xml
 import se.images
 
-def _process_endnotes_in_file(filename: str, root: str, note_range: range, step: int) -> None:
+def _process_endnotes_in_file(filename: str, root: Path, note_range: range, step: int) -> None:
 	"""
 	Helper function for reordering endnotes.
 
 	This has to be outside of the class to be able to be called by `executor`.
 	"""
 
-	with open(os.path.join(root, filename), "r+", encoding="utf-8") as file:
+	with open(root / filename, "r+", encoding="utf-8") as file:
 		xhtml = file.read()
 		processed_xhtml = xhtml
 		processed_xhtml_is_modified = False
@@ -67,7 +68,7 @@ class SeEpub:
 	An SE epub can have various operations performed on it, including recomposing and linting.
 	"""
 
-	directory = ""
+	path = ""
 	metadata_file_path = None
 	metadata_xhtml = None
 	_metadata_tree = None
@@ -76,15 +77,15 @@ class SeEpub:
 	_last_commit = None # GitCommit object
 
 	def __init__(self, epub_root_directory: str):
-		if not os.path.isdir(epub_root_directory):
-			raise se.InvalidSeEbookException("Not a directory: {}".format(epub_root_directory))
-
-		self.directory = os.path.abspath(epub_root_directory)
-
 		try:
-			with open(os.path.join(self.directory, "src", "META-INF", "container.xml"), "r", encoding="utf-8") as file:
+			self.path = Path(epub_root_directory).resolve()
+
+			if not self.path.is_dir():
+				raise se.InvalidSeEbookException("Not a directory: {}".format(self.path))
+
+			with open(self.path / "src" / "META-INF" / "container.xml", "r", encoding="utf-8") as file:
 				container_tree = se.easy_xml.EasyXmlTree(file.read())
-				self.metadata_file_path = os.path.join(self.directory, "src", container_tree.xpath("//container:container/container:rootfiles/container:rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0])
+				self.metadata_file_path = self.path / "src" / container_tree.xpath("//container:container/container:rootfiles/container:rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
 
 			with open(self.metadata_file_path, "r", encoding="utf-8") as file:
 				self.metadata_xhtml = file.read()
@@ -92,7 +93,7 @@ class SeEpub:
 			if "<dc:identifier id=\"uid\">url:https://standardebooks.org/ebooks/" not in self.metadata_xhtml:
 				raise se.InvalidSeEbookException
 		except:
-			raise se.InvalidSeEbookException("Not a Standard Ebooks source directory: {}".format(self.directory))
+			raise se.InvalidSeEbookException("Not a Standard Ebooks source directory: {}".format(self.path))
 
 	@property
 	def last_commit(self) -> GitCommit:
@@ -109,7 +110,7 @@ class SeEpub:
 				if 'GIT_DIR' in os.environ:
 					del os.environ['GIT_DIR']
 
-				git_command = git.cmd.Git(self.directory)
+				git_command = git.cmd.Git(self.path)
 				output = git_command.show("-s", "--format=%h %ct", "HEAD").split()
 
 				self._last_commit = GitCommit(output[0], datetime.datetime.fromtimestamp(int(output[1]), datetime.timezone.utc))
@@ -169,7 +170,7 @@ class SeEpub:
 			try:
 				self._metadata_tree = se.easy_xml.EasyXmlTree(self.metadata_xhtml)
 			except Exception as ex:
-				raise se.InvalidSeEbookException("Couldn’t parse content.opf: {}".format(ex))
+				raise se.InvalidSeEbookException("Couldn’t parse {}: {}".format(self.metadata_file_path, ex))
 
 		return self._metadata_tree
 
@@ -225,7 +226,7 @@ class SeEpub:
 
 	def _generate_identifier(self) -> str:
 		"""
-		Generate an SE identifer based on the metadata in content.opf
+		Generate an SE identifer based on the metadata in the metadata file.
 
 		To access this value, use the property self.generated_identifier.
 
@@ -318,10 +319,10 @@ class SeEpub:
 		# Get some header data: title, core and local css
 		title = html.escape(metadata_soup.find("dc:title").contents[0])
 		css = ""
-		with open(os.path.join(self.directory, "src", "epub", "css", "core.css"), "r", encoding="utf-8") as file:
+		with open(self.path / "src" / "epub" / "css" / "core.css", "r", encoding="utf-8") as file:
 			css = regex.sub(r"@.+?;", "", file.read()).strip()
 
-		with open(os.path.join(self.directory, "src", "epub", "css", "local.css"), "r", encoding="utf-8") as file:
+		with open(self.path / "src" / "epub" / "css" / "local.css", "r", encoding="utf-8") as file:
 			css = css + "\n\n\n/* local.css */" + regex.sub(r"@.+?;", "", file.read())
 			css = "\t\t\t".join(css.splitlines(True))
 
@@ -332,14 +333,14 @@ class SeEpub:
 		for element in metadata_soup.select("spine itemref"):
 			filename = metadata_soup.select("item#" + element["idref"])[0]["href"]
 
-			with open(os.path.join(self.directory, "src", "epub", filename), "r", encoding="utf-8") as file:
+			with open(self.path / "src" / "epub" / filename, "r", encoding="utf-8") as file:
 				xhtml_soup = BeautifulSoup(file.read(), "lxml")
 
 				for child in xhtml_soup.select("body > *"):
 					self._recompose_xhtml(child, output_soup)
 
 		# Add the ToC after the titlepage
-		with open(os.path.join(self.directory, "src", "epub", "toc.xhtml"), "r", encoding="utf-8") as file:
+		with open(self.path / "src" / "epub" / "toc.xhtml", "r", encoding="utf-8") as file:
 			toc_soup = BeautifulSoup(file.read(), "lxml")
 			output_soup.select("#titlepage")[0].insert_after(toc_soup.find("nav"))
 
@@ -350,7 +351,7 @@ class SeEpub:
 
 		# Replace SVG images hrefs with inline SVG
 		for match in regex.findall(r"src=\"../images/(.+?)\.svg\"", output_xhtml):
-			with open(os.path.join(self.directory, "src", "epub", "images", match + ".svg"), "r", encoding="utf-8") as file:
+			with open(self.path / "src" / "epub" / "images" / (match + ".svg"), "r", encoding="utf-8") as file:
 				svg = file.read()
 
 				# Remove XML declaration
@@ -360,13 +361,13 @@ class SeEpub:
 
 		with tempfile.NamedTemporaryFile(mode="w+", delete=False) as file:
 			file.write(output_xhtml)
-			file_name = file.name
-			file_name_xhtml = file_name + ".xhtml"
+			file_name = Path(file.name)
+			file_name_xhtml = Path(str(file_name) + ".xhtml")
 
-		os.rename(file_name, file_name_xhtml)
+		file_name.rename(file_name_xhtml)
 
 		# All done, clean the output
-		se.formatting.format_xhtml_file(file_name_xhtml, False, file_name_xhtml.endswith("content.opf"), file_name_xhtml.endswith("endnotes.xhtml"))
+		se.formatting.format_xhtml_file(file_name_xhtml, False, False, file_name_xhtml.name == "endnotes.xhtml")
 
 		with open(file_name_xhtml, "r", encoding="utf-8") as file:
 			xhtml = file.read()
@@ -385,7 +386,7 @@ class SeEpub:
 			xhtml = xhtml.replace("<html", "<html lang=\"{}\"".format(metadata_soup.find("dc:language").string))
 			xhtml = regex.sub(" xmlns.+?=\".+?\"", "", xhtml)
 
-		os.remove(file_name_xhtml)
+		file_name_xhtml.unlink()
 
 		return xhtml
 
@@ -405,12 +406,12 @@ class SeEpub:
 		if inkscape_path is None:
 			raise se.MissingDependencyException("Couldn’t locate Inkscape. Is it installed?")
 
-		source_images_directory = os.path.join(self.directory, "images")
-		source_titlepage_svg_filename = os.path.join(source_images_directory, "titlepage.svg")
-		dest_images_directory = os.path.join(self.directory, "src", "epub", "images")
-		dest_titlepage_svg_filename = os.path.join(dest_images_directory, "titlepage.svg")
+		source_images_directory = self.path / "images"
+		source_titlepage_svg_filename = source_images_directory / "titlepage.svg"
+		dest_images_directory = self.path / "src" / "epub" / "images"
+		dest_titlepage_svg_filename = dest_images_directory / "titlepage.svg"
 
-		if os.path.isfile(source_titlepage_svg_filename):
+		if source_titlepage_svg_filename.is_file():
 			# Convert text to paths
 			# inkscape adds a ton of crap to the SVG and we clean that crap a little later
 			subprocess.run([inkscape_path, source_titlepage_svg_filename, "--without-gui", "--export-text-to-path", "--export-plain-svg", dest_titlepage_svg_filename])
@@ -441,28 +442,24 @@ class SeEpub:
 		if inkscape_path is None:
 			raise se.MissingDependencyException("Couldn’t locate Inkscape. Is it installed?")
 
-		source_images_directory = os.path.join(self.directory, "images")
-		source_cover_jpg_filename = os.path.join(source_images_directory, "cover.jpg")
-		source_cover_svg_filename = os.path.join(source_images_directory, "cover.svg")
-		dest_images_directory = os.path.join(self.directory, "src", "epub", "images")
-		dest_cover_svg_filename = os.path.join(dest_images_directory, "cover.svg")
+		source_images_directory = self.path / "images"
+		source_cover_jpg_filename = source_images_directory / "cover.jpg"
+		source_cover_svg_filename = source_images_directory / "cover.svg"
+		dest_images_directory = self.path / "src" / "epub" / "images"
+		dest_cover_svg_filename = dest_images_directory / "cover.svg"
 
 		# Create output directory if it doesn't exist
-		try:
-			os.makedirs(dest_images_directory)
-		except OSError as ex:
-			if ex.errno != errno.EEXIST:
-				raise ex
+		dest_images_directory.mkdir(parents=True, exist_ok=True)
 
 		# Remove useless metadata from cover source files
 		for root, _, filenames in os.walk(source_images_directory):
 			for filename in fnmatch.filter(filenames, "cover.source.*"):
-				se.images.remove_image_metadata(os.path.join(root, filename))
+				se.images.remove_image_metadata(Path(root) / filename)
 
-		if os.path.isfile(source_cover_jpg_filename):
+		if source_cover_jpg_filename.is_file():
 			se.images.remove_image_metadata(source_cover_jpg_filename)
 
-			if os.path.isfile(source_cover_svg_filename):
+			if source_cover_svg_filename.is_file():
 				# base64 encode cover.jpg
 				with open(source_cover_jpg_filename, "rb") as file:
 					source_cover_jpg_base64 = base64.b64encode(file.read()).decode()
@@ -504,10 +501,10 @@ class SeEpub:
 
 		increment = step == 1
 		endnote_count = 0
-		source_directory = os.path.join(self.directory, "src")
+		source_directory = self.path / "src"
 
 		try:
-			endnotes_filename = os.path.join(source_directory, "epub", "text", "endnotes.xhtml")
+			endnotes_filename = source_directory / "epub" / "text" / "endnotes.xhtml"
 			with open(endnotes_filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 				soup = BeautifulSoup(xhtml, "lxml")
@@ -547,11 +544,11 @@ class SeEpub:
 					if filename == "endnotes.xhtml":
 						continue
 
-					executor.submit(_process_endnotes_in_file, filename, root, note_range, step)
+					executor.submit(_process_endnotes_in_file, filename, Path(root), note_range, step)
 
 	def set_release_timestamp(self) -> None:
 		"""
-		If this ebook has not yet been released, set the first release timestamp in content.opf.
+		If this ebook has not yet been released, set the first release timestamp in the metadata file.
 		"""
 
 		if "<dc:date>1900-01-01T00:00:00Z</dc:date>" in self.metadata_xhtml:
@@ -571,7 +568,7 @@ class SeEpub:
 
 			self._metadata_tree = None
 
-			with open(os.path.join(self.directory, "src", "epub", "text", "colophon.xhtml"), "r+", encoding="utf-8") as file:
+			with open(self.path / "src" / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 				xhtml = xhtml.replace("<b>January 1, 1900, 12:00 <abbr class=\"time eoc\">a.m.</abbr></b>", "<b>{}</b>".format(now_friendly))
 
@@ -592,7 +589,7 @@ class SeEpub:
 		"""
 		text = ""
 
-		for filename in se.get_target_filenames([self.directory], (".xhtml")):
+		for filename in se.get_target_filenames([self.path], (".xhtml")):
 			with open(filename, "r", encoding="utf-8") as file:
 				text += " " + file.read()
 
@@ -616,8 +613,8 @@ class SeEpub:
 		"""
 		word_count = 0
 
-		for filename in se.get_target_filenames([self.directory], (".xhtml")):
-			if filename.endswith("endnotes.xhtml"):
+		for filename in se.get_target_filenames([self.path], (".xhtml")):
+			if filename.name == "endnotes.xhtml":
 				continue
 
 			with open(filename, "r", encoding="utf-8") as file:
@@ -644,12 +641,12 @@ class SeEpub:
 		manifest = []
 
 		# Add CSS
-		for _, _, filenames in os.walk(os.path.join(self.directory, "src", "epub", "css")):
+		for _, _, filenames in os.walk(self.path / "src" / "epub" / "css"):
 			for filename in filenames:
 				manifest.append("<item href=\"css/{}\" id=\"{}\" media-type=\"text/css\"/>".format(filename, filename))
 
 		# Add images
-		for _, _, filenames in os.walk(os.path.join(self.directory, "src", "epub", "images")):
+		for _, _, filenames in os.walk(self.path / "src" / "epub" /  "images"):
 			for filename in filenames:
 				media_type = "image/jpeg"
 				properties = ""
@@ -666,7 +663,7 @@ class SeEpub:
 				manifest.append("<item href=\"images/{}\" id=\"{}\" media-type=\"{}\"{}/>".format(filename, filename, media_type, properties))
 
 		# Add XHTML files
-		for root, _, filenames in os.walk(os.path.join(self.directory, "src", "epub", "text")):
+		for root, _, filenames in os.walk(self.path / "src" / "epub" / "text"):
 			for filename in filenames:
 				# Skip dotfiles, because .DS_Store might be binary and then we'd crash when we try to read it below
 				if filename.startswith("."):
@@ -674,7 +671,7 @@ class SeEpub:
 
 				properties = "properties=\""
 
-				with open(os.path.join(root, filename), "r", encoding="utf-8") as file:
+				with open(Path(root) / filename, "r", encoding="utf-8") as file:
 					file_contents = file.read()
 					if "http://www.w3.org/1998/Math/MathML" in file_contents:
 						properties += "mathml "
@@ -713,7 +710,7 @@ class SeEpub:
 		excluded_files = se.IGNORED_FILENAMES + ["dedication.xhtml", "introduction.xhtml", "foreword.xhtml", "preface.xhtml", "epigraph.xhtml", "endnotes.xhtml"]
 		spine = ["<itemref idref=\"titlepage.xhtml\"/>", "<itemref idref=\"imprint.xhtml\"/>"]
 
-		filenames = se.natural_sort(os.listdir(os.path.join(self.directory, "src", "epub", "text")))
+		filenames = se.natural_sort(os.listdir(self.path / "src" / "epub" / "text"))
 
 		if "dedication.xhtml" in filenames:
 			spine.append("<itemref idref=\"dedication.xhtml\"/>")
@@ -765,7 +762,7 @@ class SeEpub:
 
 		return lint(self, self.metadata_xhtml)
 
-	def build(self, run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers, verbose):
+	def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool, verbose: bool):
 		"""
 		The build() function is very big so for readability and maintainability
 		it's broken out to a separate file. Strictly speaking that file can be inlined
