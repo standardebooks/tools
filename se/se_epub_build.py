@@ -43,32 +43,34 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 	Entry point for `se build`
 	"""
 
-	calibre_app_mac_path = Path("/Applications/calibre.app/Contents/MacOS/")
-
-	ebook_convert_path = Path(shutil.which("ebook-convert"))
-	# Look for default Mac calibre app path if none found in path
-	if ebook_convert_path is None and calibre_app_mac_path.exists():
-		ebook_convert_path = calibre_app_mac_path / "ebook-convert"
-	rsvg_convert_path = Path(shutil.which("rsvg-convert"))
-	convert_path = Path(shutil.which("convert"))
-	navdoc2ncx_xsl_filename = resource_filename("se", str(Path("data") / "navdoc2ncx.xsl"))
-	mathml_xsl_filename = resource_filename("se", str(Path("data") / "mathmlcontent2presentation.xsl"))
-
 	# Check for some required tools
+	try:
+		rsvg_convert_path = Path(shutil.which("rsvg-convert"))
+	except Exception:
+		raise se.MissingDependencyException("Couldn’t locate rsvg-convert. Is librsvg2-bin installed?")
+
+	if build_kindle:
+		try:
+			ebook_convert_path = Path(shutil.which("ebook-convert"))
+		except Exception:
+			# Look for default Mac calibre app path if none found in path
+			ebook_convert_path = Path("/Applications/calibre.app/Contents/MacOS/ebook-convert")
+			if not ebook_convert_path.exists():
+				raise se.MissingDependencyException("Couldn’t locate epubcheck. Is it installed?")
+
+		try:
+			convert_path = Path(shutil.which("convert"))
+		except Exception:
+			raise se.MissingDependencyException("Couldn’t locate convert. Is Imagemagick installed?")
+
 	if run_epubcheck:
 		try:
 			epubcheck_path = Path(shutil.which("epubcheck"))
 		except:
 			raise se.MissingDependencyException("Couldn’t locate epubcheck. Is it installed?")
 
-	if rsvg_convert_path is None:
-		raise se.MissingDependencyException("Couldn’t locate rsvg-convert. Is librsvg2-bin installed?")
-
-	if build_kindle and ebook_convert_path is None:
-		raise se.MissingDependencyException("Couldn’t locate ebook-convert. Is Calibre installed?")
-
-	if build_kindle and convert_path is None:
-		raise se.MissingDependencyException("Couldn’t locate convert. Is Imagemagick installed?")
+	navdoc2ncx_xsl_filename = resource_filename("se", str(Path("data") / "navdoc2ncx.xsl"))
+	mathml_xsl_filename = resource_filename("se", str(Path("data") / "mathmlcontent2presentation.xsl"))
 
 	# Check the output directory and create it if it doesn't exist
 	try:
