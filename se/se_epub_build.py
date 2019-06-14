@@ -49,6 +49,11 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 	except Exception:
 		raise se.MissingDependencyException("Couldn’t locate rsvg-convert. Is librsvg2-bin installed?")
 
+	try:
+		convert_path = Path(shutil.which("convert"))
+	except Exception:
+		raise se.MissingDependencyException("Couldn’t locate convert. Is Imagemagick installed?")
+
 	if build_kindle:
 		try:
 			ebook_convert_path = Path(shutil.which("ebook-convert"))
@@ -58,15 +63,10 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			if not ebook_convert_path.exists():
 				raise se.MissingDependencyException("Couldn’t locate epubcheck. Is it installed?")
 
-		try:
-			convert_path = Path(shutil.which("convert"))
-		except Exception:
-			raise se.MissingDependencyException("Couldn’t locate convert. Is Imagemagick installed?")
-
 	if run_epubcheck:
 		try:
 			epubcheck_path = Path(shutil.which("epubcheck"))
-		except:
+		except Exception:
 			raise se.MissingDependencyException("Couldn’t locate epubcheck. Is it installed?")
 
 	navdoc2ncx_xsl_filename = resource_filename("se", str(Path("data") / "navdoc2ncx.xsl"))
@@ -75,18 +75,9 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 	# Check the output directory and create it if it doesn't exist
 	try:
 		output_directory = output_directory.resolve()
-
-		if output_directory.exists():
-			if not output_directory.is_dir():
-				raise se.InvalidInputException("Not a directory: {}".format(output_directory))
-		else:
-			# Doesn't exist, try to create it
-			try:
-				output_directory.mkdir(parents=True, exist_ok=True)
-			except Exception:
-				raise se.FileExistsException("Couldn’t create output directory.")
-	except:
-		raise se.FileExistsException("Couldn’t create output directory.")
+		output_directory.mkdir(parents=True, exist_ok=True)
+	except Exception:
+		raise se.FileExistsException("Couldn’t create output directory: {}".format(output_directory))
 
 	# All clear to start building!
 	if verbose:
