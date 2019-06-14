@@ -359,9 +359,9 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 	A string of pretty-printed XHTML.
 	"""
 
-	xmllint_path = shutil.which("xmllint")
-
-	if xmllint_path is None:
+	try:
+		xmllint_path = Path(shutil.which("xmllint"))
+	except Exception:
 		se.print_error("Couldn’t locate xmllint. Is it installed?")
 		return se.MissingDependencyException.code
 
@@ -381,7 +381,8 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 	xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", xhtml, flags=regex.DOTALL)
 
 	# Canonicalize XHTML
-	result = subprocess.run([xmllint_path, "--c14n", "-"], input=xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	# Path arguments must be cast to string for Windows compatibility.
+	result = subprocess.run([str(xmllint_path), "--c14n", "-"], input=xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 	xhtml = result.stdout.decode()
 	try:
@@ -400,7 +401,8 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 	xhtml = unicodedata.normalize("NFC", xhtml)
 
 	# Pretty-print XML
-	xhtml = subprocess.run([xmllint_path, "--format", "-"], input=xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env).stdout.decode()
+	# Path arguments must be cast to string for Windows compatibility.
+	xhtml = subprocess.run([str(xmllint_path), "--format", "-"], input=xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env).stdout.decode()
 
 	# Remove white space between some tags
 	xhtml = regex.sub(r"<p([^>]*?)>\s+([^<\s])", "<p\\1>\\2", xhtml, flags=regex.DOTALL)

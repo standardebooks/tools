@@ -401,9 +401,9 @@ class SeEpub:
 		None.
 		"""
 
-		inkscape_path = shutil.which("inkscape")
-
-		if inkscape_path is None:
+		try:
+			inkscape_path = Path(shutil.which("inkscape"))
+		except Exception:
 			raise se.MissingDependencyException("Couldn’t locate Inkscape. Is it installed?")
 
 		source_images_directory = self.path / "images"
@@ -413,8 +413,9 @@ class SeEpub:
 
 		if source_titlepage_svg_filename.is_file():
 			# Convert text to paths
-			# inkscape adds a ton of crap to the SVG and we clean that crap a little later
-			subprocess.run([inkscape_path, source_titlepage_svg_filename, "--without-gui", "--export-text-to-path", "--export-plain-svg", dest_titlepage_svg_filename])
+			# inkscape adds a ton of crap to the SVG and we clean that crap a little later.
+			# Path arguments must be cast to string for Windows compatibility.
+			subprocess.run([str(inkscape_path), str(source_titlepage_svg_filename), "--without-gui", "--export-text-to-path", "--export-plain-svg", str(dest_titlepage_svg_filename)])
 
 			se.images.format_inkscape_svg(dest_titlepage_svg_filename)
 
@@ -466,7 +467,7 @@ class SeEpub:
 
 				# Convert text to paths
 				# Inkscape adds a ton of crap to the SVG and we clean that crap a little later
-				subprocess.run([inkscape_path, source_cover_svg_filename, "--without-gui", "--export-text-to-path", "--export-plain-svg", dest_cover_svg_filename])
+				subprocess.run([str(inkscape_path), str(source_cover_svg_filename), "--without-gui", "--export-text-to-path", "--export-plain-svg", str(dest_cover_svg_filename)])
 
 				# Embed cover.jpg
 				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:

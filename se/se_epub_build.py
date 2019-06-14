@@ -329,15 +329,17 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		# We used to be able to use `convert` to convert svg -> jpg in one step, but at some point a bug
 		# was introduced to `convert` that caused it to crash in this situation. Now, we first use rsvg-convert
 		# to convert to svg -> png, then `convert` to convert png -> jpg.
-		subprocess.run([rsvg_convert_path, "--keep-aspect-ratio", "--format", "png", "--output", work_directory / "cover.png", work_epub_root_directory / "epub" / "images" / "cover.svg"])
-		subprocess.run([convert_path, "-format", "jpg", work_directory / 'cover.png', work_epub_root_directory / "epub" / "images" / "cover.jpg"])
+		# Path arguments must be cast to string for Windows compatibility.
+		subprocess.run([str(rsvg_convert_path), "--keep-aspect-ratio", "--format", "png", "--output", str(work_directory / "cover.png"), str(work_epub_root_directory / "epub" / "images" / "cover.svg")])
+		subprocess.run([str(convert_path), "-format", "jpg", str(work_directory / "cover.png"), str(work_epub_root_directory / "epub" / "images" / "cover.jpg")])
 		(work_directory / "cover.png").unlink()
 
 		if build_covers:
 			shutil.copy2(work_epub_root_directory / "epub" / "images" / "cover.jpg", output_directory / "cover.jpg")
 			shutil.copy2(work_epub_root_directory / "epub" / "images" / "cover.svg", output_directory / "cover-thumbnail.svg")
-			subprocess.run([rsvg_convert_path, "--keep-aspect-ratio", "--format", "png", "--output", work_directory / "cover-thumbnail.png", output_directory / "cover-thumbnail.svg"])
-			subprocess.run([convert_path, "-resize", "{}x{}".format(COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT), "-quality", "100", "-format", "jpg", work_directory / "cover-thumbnail.png", output_directory / "cover-thumbnail.jpg"])
+			# Path arguments must be cast to string for Windows compatibility.
+			subprocess.run([str(rsvg_convert_path), "--keep-aspect-ratio", "--format", "png", "--output", str(work_directory / "cover-thumbnail.png"), str(output_directory / "cover-thumbnail.svg")])
+			subprocess.run([str(convert_path), "-resize", "{}x{}".format(COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT), "-quality", "100", "-format", "jpg", str(work_directory / "cover-thumbnail.png"), str(output_directory / "cover-thumbnail.jpg")])
 			(work_directory / "cover-thumbnail.png").unlink()
 			(output_directory / "cover-thumbnail.svg").unlink()
 
@@ -411,7 +413,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 					# Convert SVGs to PNGs at 2x resolution
 					# We use `rsvg-convert` instead of `inkscape` or `convert` because it gives us an easy way of zooming in at 2x
-					subprocess.run([rsvg_convert_path, "--zoom", "2", "--keep-aspect-ratio", "--format", "png", "--output", regex.sub(r"\.svg$", ".png", str(Path(root) / filename)), str(Path(root) / filename)])
+					# Path arguments must be cast to string for Windows compatibility.
+					subprocess.run([str(rsvg_convert_path), "--zoom", "2", "--keep-aspect-ratio", "--format", "png", "--output", regex.sub(r"\.svg$", ".png", str(Path(root) / filename)), str(Path(root) / filename)])
 					(Path(root) / filename).unlink()
 
 				if filename.lower().endswith(".xhtml"):
@@ -742,7 +745,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			if verbose:
 				print("\tRunning epubcheck on {} ...".format(epub_output_filename), end="", flush=True)
 
-			output = subprocess.run([epubcheck_path, "--quiet", output_directory / epub_output_filename], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
+			# Path arguments must be cast to string for Windows compatibility.
+			output = subprocess.run([str(epubcheck_path), "--quiet", str(output_directory / epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
 
 			# epubcheck on Ubuntu 18.04 outputs some seemingly harmless warnings; flush them here.
 			if output:
@@ -901,7 +905,9 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			# Generate the Kindle file
 			# We place it in the work directory because later we have to update the asin, and the se.mobi.update_asin() function will write to the final output directory
 			cover_path = work_epub_root_directory / "epub" / metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@href")[0].replace(".svg", ".jpg")
-			return_code = subprocess.run([ebook_convert_path, work_directory / epub_output_filename, work_directory / kindle_output_filename, "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", "--cover={}".format(cover_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
+
+			# Path arguments must be cast to string for Windows compatibility.
+			return_code = subprocess.run([str(ebook_convert_path), str(work_directory / epub_output_filename), str(work_directory / kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", "--cover={}".format(cover_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
 
 			if return_code:
 				raise se.InvalidSeEbookException("ebook-convert failed.")
@@ -912,7 +918,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 				se.mobi.update_asin(asin, work_directory / kindle_output_filename, output_directory / kindle_output_filename)
 
 				# Extract the thumbnail
-				subprocess.run([convert_path, work_epub_root_directory / "epub" / "images" / "cover.jpg", "-resize", "432x660", output_directory / "thumbnail_{}_EBOK_portrait.jpg".format(asin)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+				# Path arguments must be cast to string for Windows compatibility.
+				subprocess.run([str(convert_path), str(work_epub_root_directory / "epub" / "images" / "cover.jpg"), "-resize", "432x660", str(output_directory / "thumbnail_{}_EBOK_portrait.jpg".format(asin))], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 			if verbose:
 				print(" OK")

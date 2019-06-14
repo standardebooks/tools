@@ -237,15 +237,16 @@ def compare_versions() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="a directory containing XHTML files")
 	args = parser.parse_args()
 
-	firefox_path = shutil.which("firefox")
-	compare_path = shutil.which("compare")
-
 	# Check for some required tools.
-	if firefox_path is None:
+	try:
+		firefox_path = Path(shutil.which("firefox"))
+	except Exception:
 		se.print_error("Couldn’t locate firefox. Is it installed?")
 		return se.MissingDependencyException.code
 
-	if compare_path is None:
+	try:
+		compare_path = Path(shutil.which("compare"))
+	except Exception:
 		se.print_error("Couldn’t locate compare. Is imagemagick installed?")
 		return se.MissingDependencyException.code
 
@@ -283,7 +284,9 @@ def compare_versions() -> int:
 			# Generate screenshots of the pre-change repo
 			for filename in target_filenames:
 				filename = Path(filename)
-				subprocess.run([firefox_path, "-screenshot", "{}/{}-original.png".format(temp_directory_path, filename.name), filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+				# Path arguments must be cast to string for Windows compatibility.
+				subprocess.run([str(firefox_path), "-screenshot", "{}/{}-original.png".format(temp_directory_path, filename.name), str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 			# Pop the stash
 			git_command.stash("pop")
@@ -295,9 +298,11 @@ def compare_versions() -> int:
 				file_original_screenshot_path = Path(temp_directory_path / file_path.name + "-original.png")
 				file_diff_screenshot_path = Path(temp_directory_path / file_path.name + "-diff.png")
 
-				subprocess.run([firefox_path, "-screenshot", file_new_screenshot_path, filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+				# Path arguments must be cast to string for Windows compatibility.
+				subprocess.run([str(firefox_path), "-screenshot", str(file_new_screenshot_path), str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-				output = subprocess.run([compare_path, "-metric", "ae", file_original_screenshot_path, file_new_screenshot_path, file_diff_screenshot_path], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
+				# Path arguments must be cast to string for Windows compatibility.
+				output = subprocess.run([str(compare_path), "-metric", "ae", str(file_original_screenshot_path), str(file_new_screenshot_path), str(file_diff_screenshot_path)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
 
 				if output != "0":
 					print("{}Difference in {}\n".format("\t" if args.verbose else "", filename), end="", flush=True)

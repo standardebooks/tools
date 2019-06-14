@@ -4,6 +4,7 @@ Defines various functions useful for image processing tasks common to epubs.
 """
 
 import subprocess
+from pathlib import Path
 import shutil
 import tempfile
 import regex
@@ -74,7 +75,7 @@ def format_inkscape_svg(filename: str):
 		file.write(svg)
 		file.truncate()
 
-def remove_image_metadata(filename: str) -> None:
+def remove_image_metadata(filename: Path) -> None:
 	"""
 	Remove exif metadata from an image.
 
@@ -85,9 +86,10 @@ def remove_image_metadata(filename: str) -> None:
 	None.
 	"""
 
-	exiftool_path = shutil.which("exiftool")
-
-	if exiftool_path is None:
+	try:
+		exiftool_path = Path(shutil.which("exiftool"))
+	except Exception:
 		raise se.MissingDependencyException("Couldn’t locate exiftool. Is it installed?")
 
-	subprocess.run([exiftool_path, "-overwrite_original", "-all=", filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+	# Path arguments must be cast to string for Windows compatibility.
+	subprocess.run([str(exiftool_path), "-overwrite_original", "-all=", str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
