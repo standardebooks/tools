@@ -72,8 +72,8 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<!\<abbr\>)No\.(\s+[0-9]+)", r"<abbr>No.</abbr>\1", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="degree"\>)PhD""", r"""<abbr class="degree">PhD</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="initialism"\>)IOU""", r"""<abbr class="initialism">IOU</abbr>""", xhtml)
-	xhtml = regex.sub(r"""(?<!\<abbr class="era"\>)A\.?D""", r"""<abbr class="era">AD</abbr>""", xhtml)
-	xhtml = regex.sub(r"""(?<!\<abbr class="era"\>)B\.?C""", r"""<abbr class="era">BC</abbr>""", xhtml)
+	xhtml = regex.sub(r"""\b(?<!\<abbr class="era"\>)A\.?D""", r"""<abbr class="era">AD</abbr>""", xhtml)
+	xhtml = regex.sub(r"""\b(?<!\<abbr class="era"\>)B\.?C""", r"""<abbr class="era">BC</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="time( eoc)?"\>)([ap])\.\s?m\.""", r"""<abbr class="time">\2.m.</abbr>""", xhtml)
 
 	# Guess at adding eoc class
