@@ -25,7 +25,7 @@ from .unipath import pathof
 
 _guide_types = [b'cover',b'title-page',b'toc',b'index',b'glossary',b'acknowledgements',
                 b'bibliography',b'colophon',b'copyright-page',b'dedication',
-                b'epigraph',b'foreward',b'loi',b'lot',b'notes',b'preface',b'text']
+                b'epigraph',b'foreword',b'loi',b'lot',b'notes',b'preface',b'text']
 
 # locate beginning and ending positions of tag with specific aid attribute
 def locate_beg_end_of_tag(ml, aid):
