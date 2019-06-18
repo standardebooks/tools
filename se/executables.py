@@ -711,7 +711,7 @@ def modernize_spelling() -> int:
 			try:
 				new_xhtml = se.spelling.modernize_spelling(xhtml)
 			except se.InvalidLanguageException as ex:
-				se.print_error("No valid xml:lang attribute in <html> root. Only en-US and en-GB are supported.{}".format(" File: " + filename if not args.verbose else ""))
+				se.print_error("No valid xml:lang attribute in <html> root. Only en-US and en-GB are supported.{}".format((" File: " + str(filename)) if not args.verbose else ""))
 				return ex.code
 
 			if args.modernize_hyphenation:
