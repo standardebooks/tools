@@ -54,16 +54,21 @@ def modernize_spelling(xhtml: str) -> str:
 
 	INPUTS
 	xhtml: A string of XHTML to modernize
-	language: The IETF language tag of the XHTML, like "en-US" or "en-GB"
 
 	OUTPUTS:
 	A string representing the XHTML with its spelling modernized
 	"""
 
 	# What language are we using?
-	language = regex.search(r"<html[^>]+?xml:lang=\"([^\"]+)\"", xhtml)
-	if language is None or (language.group(1) != "en-US" and language.group(1) != "en-GB"):
-		raise se.InvalidLanguageException("No valid xml:lang attribute in <html> root. Only en-US and en-GB are supported.")
+	supported = ["en-US", "en-GB", "en-AU", "en-CA"]
+	match = regex.search(r"<html[^>]+?xml:lang=\"([^\"]+)\"", xhtml)
+	if match:
+		language = match.group(1)
+	else:
+		language = None
+	if not language in supported:
+		language_list = ", ".join(supported[:-1]) + ", and " + supported[-1]
+		raise se.InvalidLanguageException("No valid xml:lang attribute in <html> root. Only {} are supported.".format(language_list))
 
 	# ADDING NEW WORDS TO THIS LIST:
 	# A good way to check if a word is "archaic" is to do a Google N-Gram search: https://books.google.com/ngrams/graph?case_insensitive=on&year_start=1800&year_end=2000&smoothing=3
@@ -191,7 +196,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Aa])larum\b", r"\1larm", xhtml)				# alarum -> alarm
 	xhtml = regex.sub(r"\b([Bb])owlder(s?)\b", r"\1oulder\2", xhtml)		# bowlder/bowlders -> boulder/boulders
 	xhtml = regex.sub(r"\b([Dd])istingue\b", r"\1istingué", xhtml)			# distingue -> distingué
-	xhtml = regex.sub(r"\b[EÉ]cart[eé]\b", r"Écarté", xhtml)			# ecarte -> écarté
+	xhtml = regex.sub(r"\b[EÉ]cart[eé]\b", r"Écarté", xhtml)			# Ecarte -> Écarté
 	xhtml = regex.sub(r"\b[eé]cart[eé]\b", r"écarté", xhtml)			# ecarte -> écarté
 	xhtml = regex.sub(r"\b([Pp])ere\b", r"\1ère", xhtml)				# pere -> père (e.g. père la chaise)
 	xhtml = regex.sub(r"\b([Tt])able(s?) d’hote\b", r"\1able\2 d’hôte", xhtml)	# table d'hote -> table d'hôte
@@ -240,12 +245,18 @@ def modernize_spelling(xhtml: str) -> str:
 	# Remove spaces before contractions like n’t eg "is n’t" -> "isn’t"
 	xhtml = regex.sub(r" n’t\b", "n’t", xhtml)
 
-	if language == "en-US":
+	# Canadian spelling follows US
+	if language in ["en-US", "en-CA"]:
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)
-		xhtml = regex.sub(r"\b([Mm])anœuve?r", r"\1aneuver", xhtml) # Omit last letter to catch both maneuverS and maneuverING
 
-	if language == "en-GB":
+	# Australian spelling follows GB
+	if language in ["en-GB", "en-AU"]:
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1osy", xhtml)
-		xhtml = regex.sub(r"\b([Mm])anœuve?r", r"\1anoeuvr", xhtml) # Omit last letter to catch both maneuverS and maneuverING
+
+	# US spelling is unique
+	if language == "en-US":
+		xhtml = regex.sub(r"\b([Mm])anœuve?r", r"\1aneuver", xhtml) # Omit last letter to catch both maneuverS and maneuverING
+	else:
+		xhtml = regex.sub(r"\b([Mm])anœuve?r", r"\1anoeuvr", xhtml) # Omit last letter to catch both manoeuvreS and manoeuvrING
 
 	return xhtml
