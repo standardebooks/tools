@@ -602,9 +602,13 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		# Sort out MathML compatibility
 		has_mathml = "mathml" in metadata_xhtml
 		if has_mathml:
-			firefox_path = shutil.which("firefox")
-			if firefox_path is None:
-				raise se.MissingDependencyException("firefox is required to process MathML, but firefox couldn't be located. Is it installed?")
+			try:
+				firefox_path = Path(shutil.which("firefox"))
+			except Exception:
+				# Look for default mac Firefox.app path if none found in path
+				firefox_path = Path("/Applications/Firefox.app/Contents/MacOS/firefox")
+				if not firefox_path.exists():
+					raise se.MissingDependencyException("firefox is required to process MathML, but firefox couldn't be located. Is it installed?")
 
 			mathml_count = 1
 			for root, _, filenames in os.walk(work_epub_root_directory):

@@ -28,8 +28,13 @@ def render_mathml_to_png(mathml: str, output_filename: str) -> None:
 	firefox_path = shutil.which("firefox")
 	convert_path = shutil.which("convert")
 
-	if firefox_path is None:
-		raise se.MissingDependencyException("Couldn’t locate firefox. Is it installed?")
+	try:
+		firefox_path = Path(shutil.which("firefox"))
+	except Exception:
+		# Look for default mac Firefox.app path if none found in path
+		firefox_path = Path("/Applications/Firefox.app/Contents/MacOS/firefox")
+		if not firefox_path.exists():
+			raise se.MissingDependencyException("Couldn’t locate firefox. Is it installed?")
 
 	if convert_path is None:
 		raise se.MissingDependencyException("Couldn’t locate imagemagick. Is it installed?")
