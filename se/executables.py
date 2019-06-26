@@ -241,8 +241,11 @@ def compare_versions() -> int:
 	try:
 		firefox_path = Path(shutil.which("firefox"))
 	except Exception:
-		se.print_error("Couldn’t locate firefox. Is it installed?")
-		return se.MissingDependencyException.code
+		# Look for default mac Firefox.app path if none found in path
+		firefox_path = Path("/Applications/Firefox.app/Contents/MacOS/firefox")
+		if not firefox_path.exists():
+			se.print_error("Couldn’t locate firefox. Is it installed?")
+			return se.MissingDependencyException.code
 
 	try:
 		compare_path = Path(shutil.which("compare"))
