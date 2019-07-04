@@ -291,6 +291,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 								# Remove it here.
 								raw_string = raw_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
 								raw_string = raw_string.replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "")
+								raw_string = raw_string.replace(" xmlns:m=\"http://www.w3.org/1998/Math/MathML\"", "")
 
 								# Now lxml doesn't let us modify the tree, so we just do a straight up regex replace to turn this into a span
 								processed_string = raw_string.replace("<abbr", "<span")
