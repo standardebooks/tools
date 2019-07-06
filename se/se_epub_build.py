@@ -321,20 +321,24 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		# was introduced to `convert` that caused it to crash in this situation. Now, we first use rsvg-convert
 		# to convert to svg -> png, then `convert` to convert png -> jpg.
 		# Path arguments must be cast to string for Windows compatibility.
-		subprocess.run([str(rsvg_convert_path), "--keep-aspect-ratio", "--format", "png", "--output", str(work_directory / "cover.png"), str(work_epub_root_directory / "epub" / "images" / "cover.svg")])
+		cover_svg_file = work_epub_root_directory / "epub" / "images" / "cover.svg"
+		if not os.path.isfile(cover_svg_file):
+			raise se.MissingDependencyException("Cover image is missing. Did you run build-images?")
+
+		subprocess.run([str(rsvg_convert_path), "--keep-aspect-ratio", "--format", "png", "--output", str(work_directory / "cover.png"), str(cover_svg_file)])
 		subprocess.run([str(convert_path), "-format", "jpg", str(work_directory / "cover.png"), str(work_epub_root_directory / "epub" / "images" / "cover.jpg")])
 		(work_directory / "cover.png").unlink()
 
 		if build_covers:
 			shutil.copy2(work_epub_root_directory / "epub" / "images" / "cover.jpg", output_directory / "cover.jpg")
-			shutil.copy2(work_epub_root_directory / "epub" / "images" / "cover.svg", output_directory / "cover-thumbnail.svg")
+			shutil.copy2(cover_svg_file, output_directory / "cover-thumbnail.svg")
 			# Path arguments must be cast to string for Windows compatibility.
 			subprocess.run([str(rsvg_convert_path), "--keep-aspect-ratio", "--format", "png", "--output", str(work_directory / "cover-thumbnail.png"), str(output_directory / "cover-thumbnail.svg")])
 			subprocess.run([str(convert_path), "-resize", "{}x{}".format(COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT), "-quality", "100", "-format", "jpg", str(work_directory / "cover-thumbnail.png"), str(output_directory / "cover-thumbnail.jpg")])
 			(work_directory / "cover-thumbnail.png").unlink()
 			(output_directory / "cover-thumbnail.svg").unlink()
 
-		(work_epub_root_directory / "epub" / "images" / "cover.svg").unlink()
+		cover_svg_file.unlink()
 
 		# Massage image references in content.opf
 		metadata_xhtml = metadata_xhtml.replace("cover.svg", "cover.jpg")
