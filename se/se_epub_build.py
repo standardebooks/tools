@@ -3,7 +3,7 @@
 This module contains the build function.
 
 Strictly speaking, the build() function should be a class member of SeEpub. But
-the function is very big and it makes editing easier to put in a separate file.
+the function is very big and it makes editing easier to put it in a separate file.
 """
 
 import sys
