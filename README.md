@@ -141,7 +141,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se clean`
 
-	Prettify and canonicalize individual XHTML or SVG files, or all XHTML and SVG files in a source directory.  Note that this only prettifies the source code; it doesn’t perform typography changes.
+	Prettify and canonicalize individual XHTML or SVG files, or all XHTML and SVG files in a source directory. Note that this only prettifies the source code; it doesn’t perform typography changes.
 
 -	### `se compare-versions`
 
@@ -161,7 +161,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se find-mismatched-diacritics`
 
-	Find words with mismatched diacritics in Standard Ebook source directories.  For example, `cafe` in one file and `café` in another.
+	Find words with mismatched diacritics in Standard Ebook source directories. For example, `cafe` in one file and `café` in another.
 
 -	### `se help`
 
@@ -185,7 +185,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se modernize-spelling`
 
-	Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace `ash-tray` with `ashtray`.
+	Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling. For example, replace `ash-tray` with `ashtray`.
 
 -	### `se prepare-release`
 
@@ -229,7 +229,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se unicode-names`
 
-	Display Unicode code points, descriptions, and links to more details for each character in a string.  Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.
+	Display Unicode code points, descriptions, and links to more details for each character in a string. Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.
 
 -	### `se version`
 
@@ -242,7 +242,7 @@ We need volunteers to take the lead on the following goals:
 
 # What a Standard Ebooks source directory looks like
 
-Many of these tools act on Standard Ebooks source directories.  Such directories have a consistent minimal structure:
+Many of these tools act on Standard Ebooks source directories. Such directories have a consistent minimal structure:
 
 	.
 	|-images/
@@ -271,6 +271,6 @@ Many of these tools act on Standard Ebooks source directories.  Such directories
 	|--mimetype
 	|-LICENSE.md
 
-`./images/` contains source images for the cover and titlepages, as well as ebook-specific source images.  Source images should be in their maximum available resolution, then compressed and placed in `./src/epub/images/` for distribution.
+`./images/` contains source images for the cover and titlepages, as well as ebook-specific source images. Source images should be in their maximum available resolution, then compressed and placed in `./src/epub/images/` for distribution.
 
 `./src/epub/` contains the actual epub files.

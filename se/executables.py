@@ -120,7 +120,7 @@ def build() -> int:
 	Entry point for `se build`
 	"""
 
-	parser = argparse.ArgumentParser(description="Build compatible .epub and pure .epub3 ebooks from a Standard Ebook source directory.  Output is placed in the current directory, or the target directory with --output-dir.")
+	parser = argparse.ArgumentParser(description="Build compatible .epub and pure .epub3 ebooks from a Standard Ebook source directory. Output is placed in the current directory, or the target directory with --output-dir.")
 	parser.add_argument("-b", "--kobo", dest="build_kobo", action="store_true", help="also build a .kepub.epub file for Kobo")
 	parser.add_argument("-c", "--check", action="store_true", help="use epubcheck to validate the compatible .epub file; if --kindle is also specified and epubcheck fails, don’t create a Kindle file")
 	parser.add_argument("-k", "--kindle", dest="build_kindle", action="store_true", help="also build an .azw3 file for Kindle")
@@ -193,7 +193,7 @@ def clean() -> int:
 	Entry point for `se clean`
 	"""
 
-	parser = argparse.ArgumentParser(description="Prettify and canonicalize individual XHTML or SVG files, or all XHTML and SVG files in a source directory.  Note that this only prettifies the source code; it doesn’t perform typography changes.")
+	parser = argparse.ArgumentParser(description="Prettify and canonicalize individual XHTML or SVG files, or all XHTML and SVG files in a source directory. Note that this only prettifies the source code; it doesn’t perform typography changes.")
 	parser.add_argument("-s", "--single-lines", action="store_true", help="remove hard line wrapping")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML or SVG file, or a directory containing XHTML or SVG files")
@@ -445,7 +445,7 @@ def find_mismatched_diacritics() -> int:
 
 	import unicodedata
 
-	parser = argparse.ArgumentParser(description="Find words with mismatched diacritics in a set of XHTML files.  For example, `cafe` in one file and `café` in another.")
+	parser = argparse.ArgumentParser(description="Find words with mismatched diacritics in a set of XHTML files. For example, `cafe` in one file and `café` in another.")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
@@ -698,7 +698,7 @@ def modernize_spelling() -> int:
 	Entry point for `se modernize-spelling`
 	"""
 
-	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.  For example, replace `ash-tray` with `ashtray`.")
+	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling. For example, replace `ash-tray` with `ashtray`.")
 	parser.add_argument("-n", "--no-hyphens", dest="modernize_hyphenation", action="store_false", help="don’t modernize hyphenation")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
@@ -1048,7 +1048,7 @@ def unicode_names() -> int:
 
 	import unicodedata
 
-	parser = argparse.ArgumentParser(description="Display Unicode code points, descriptions, and links to more details for each character in a string.  Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.")
+	parser = argparse.ArgumentParser(description="Display Unicode code points, descriptions, and links to more details for each character in a string. Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.")
 	parser.add_argument("strings", metavar="STRING", nargs="*", help="a Unicode string")
 	args = parser.parse_args()
 
@@ -1080,7 +1080,7 @@ def word_count() -> int:
 	Entry point for `se word-count`
 	"""
 
-	parser = argparse.ArgumentParser(description="Count the number of words in an XHTML file and optionally categorize by length.  If multiple files are specified, show the total word count for all.")
+	parser = argparse.ArgumentParser(description="Count the number of words in an XHTML file and optionally categorize by length. If multiple files are specified, show the total word count for all.")
 	parser.add_argument("-c", "--categorize", action="store_true", help="include length categorization in output")
 	parser.add_argument("-x", "--exclude-se-files", action="store_true", help="exclude some non-bodymatter files common to SE ebooks, like the ToC and colophon")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")

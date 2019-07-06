@@ -16,11 +16,11 @@ import pkg_resources
 
 
 try:
-    VERSION = pkg_resources.get_distribution("standardebooks").version
+	VERSION = pkg_resources.get_distribution("standardebooks").version
 except Exception:
-    # we get in this branch when the package hasn't been installed via pip or
-    # the setup script.
-    VERSION = "unknown"
+	# we get in this branch when the package hasn't been installed via pip or
+	# the setup script.
+	VERSION = "unknown"
 MESSAGE_INDENT = "    "
 UNICODE_BOM = "\ufeff"
 NO_BREAK_SPACE = "\u00a0"
