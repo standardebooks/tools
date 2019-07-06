@@ -8,7 +8,6 @@ the function is very big and it makes editing easier to put in a separate file.
 
 import sys
 import os
-import errno
 import shutil
 from pathlib import Path
 from distutils.dir_util import copy_tree
