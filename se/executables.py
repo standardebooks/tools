@@ -124,7 +124,7 @@ def build() -> int:
 	parser.add_argument("-b", "--kobo", dest="build_kobo", action="store_true", help="also build a .kepub.epub file for Kobo")
 	parser.add_argument("-c", "--check", action="store_true", help="use epubcheck to validate the compatible .epub file; if --kindle is also specified and epubcheck fails, don’t create a Kindle file")
 	parser.add_argument("-k", "--kindle", dest="build_kindle", action="store_true", help="also build an .azw3 file for Kindle")
-	parser.add_argument("-o", "--output-dir", dest="output_directory", metavar="DIRECTORY", type=str, help="a directory to place output files in; will be created if it doesn’t exist")
+	parser.add_argument("-o", "--output-dir", dest="output_directory", metavar="DIRECTORY", type=str, default="", help="a directory to place output files in; will be created if it doesn’t exist")
 	parser.add_argument("-p", "--proof", action="store_true", help="insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof")
 	parser.add_argument("-t", "--covers", dest="build_covers", action="store_true", help="output the cover and a cover thumbnail; can only be used when there is a single build target")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
