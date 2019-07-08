@@ -6,7 +6,6 @@ It *could* be inlined in executables.py, but it's broken out into its own file f
 and maintainability.
 """
 
-import os
 import shutil
 from pathlib import Path
 from subprocess import call
