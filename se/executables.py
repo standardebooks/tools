@@ -100,7 +100,7 @@ def british2american() -> int:
 					convert = False
 					if args.verbose:
 					 	print("")
-					se.print_warning("File appears to already use American quote style, ignoring. Use --force to convert anyway.{}".format(" File: " + filename if not args.verbose else ""), args.verbose)
+					se.print_warning("File appears to already use American quote style, ignoring. Use --force to convert anyway.{}".format(" File: " + str(filename) if not args.verbose else ""), args.verbose)
 
 			if convert:
 				new_xhtml = se.typography.convert_british_to_american(xhtml)
