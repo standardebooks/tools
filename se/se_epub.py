@@ -7,7 +7,6 @@ Standard Ebooks epub3 files.
 import os
 import html
 import tempfile
-import errno
 import shutil
 import fnmatch
 import datetime

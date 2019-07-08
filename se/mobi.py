@@ -14,12 +14,7 @@ https://www.mobileread.com/forums/showpost.php?p=3165291
 from __future__ import unicode_literals, division, absolute_import, print_function
 
 import sys
-import os
-import getopt
 import struct
-import locale
-import codecs
-import traceback
 
 text_type = str
 binary_type = bytes
