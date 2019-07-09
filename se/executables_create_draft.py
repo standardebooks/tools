@@ -298,13 +298,17 @@ def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> (str, str):
 	# returns HTTP 200, then we didn't find a direct match and return nothing.
 
 	try:
-		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go"}, allow_redirects=False)
+		response = requests.get("https://en.wikipedia.org/wiki/Special:Search",
+								params={"search": string, "go": "Go", "ns0": 1}, allow_redirects=False)
 	except Exception as ex:
 		se.print_error("Couldn’t contact Wikipedia. Error: {}".format(ex))
 
 	if response.status_code == 302:
 		nacoaf_url = None
 		wiki_url = response.headers["Location"]
+		if urllib.parse.urlparse(wiki_url).path == "/wiki/Special:Search":
+			# Redirected back to search URL, no match
+			return None, None
 
 		if get_nacoaf_url:
 			try:
