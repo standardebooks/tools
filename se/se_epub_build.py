@@ -234,18 +234,22 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 					force_convert = False
 					for selector in selectors:
 						try:
-							sel = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces=se.XHTML_NAMESPACES)
-
 							# Add classes to elements that match any of our selectors to simplify. For example, if we select :first-child, add a "first-child" class to all elements that match that.
 							for selector_to_simplify in se.SELECTORS_TO_SIMPLIFY:
-								if selector_to_simplify in selector:
-									selector_to_simplify = selector_to_simplify.replace(":", "")
+								while selector_to_simplify in selector:
+									# Potentially the pseudoclass we’ll simplify isn’t at the end of the selector,
+									# so we need to temporarily remove the trailing part to target the right elements.
+									target_element_selector = ''.join(part for part in selector.partition(selector_to_simplify)[0:2])
+
+									replacement_class = selector_to_simplify.replace(":", "")
+									selector = selector.replace(selector_to_simplify, "." + replacement_class, 1)
+									sel = lxml.cssselect.CSSSelector(target_element_selector, translator="xhtml", namespaces=se.XHTML_NAMESPACES)
 									for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
 										current_class = element.get("class")
-										if current_class is not None and selector_to_simplify not in current_class:
-											current_class = current_class + " " + selector_to_simplify
+										if current_class is not None and replacement_class not in current_class:
+											current_class = current_class + " " + replacement_class
 										else:
-											current_class = selector_to_simplify
+											current_class = replacement_class
 
 										element.set("class", current_class)
 
