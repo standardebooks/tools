@@ -239,7 +239,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 								while selector_to_simplify in selector:
 									# Potentially the pseudoclass we’ll simplify isn’t at the end of the selector,
 									# so we need to temporarily remove the trailing part to target the right elements.
-									target_element_selector = ''.join(part for part in selector.partition(selector_to_simplify)[0:2])
+									target_element_selector = ''.join(selector.partition(selector_to_simplify)[0:2])
 
 									replacement_class = selector_to_simplify.replace(":", "")
 									selector = selector.replace(selector_to_simplify, "." + replacement_class, 1)
