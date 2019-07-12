@@ -204,7 +204,7 @@ class SeEpub:
 		for child in section.children:
 			if not isinstance(child, str):
 				tag_name = child.name.lower()
-				if tag_name == "section" or tag_name == "article":
+				if tag_name in ("section", "article"):
 					self._recompose_xhtml(child, output_soup)
 				else:
 					existing_section[0].append(child)
@@ -643,7 +643,7 @@ class SeEpub:
 		# Add CSS
 		for _, _, filenames in os.walk(self.path / "src" / "epub" / "css"):
 			for filename in filenames:
-				manifest.append("<item href=\"css/{}\" id=\"{}\" media-type=\"text/css\"/>".format(filename, filename))
+				manifest.append("<item href=\"css/{0}\" id=\"{0}\" media-type=\"text/css\"/>".format(filename))
 
 		# Add images
 		for _, _, filenames in os.walk(self.path / "src" / "epub" /  "images"):
@@ -660,7 +660,7 @@ class SeEpub:
 				if filename == "cover.svg":
 					properties = " properties=\"cover-image\""
 
-				manifest.append("<item href=\"images/{}\" id=\"{}\" media-type=\"{}\"{}/>".format(filename, filename, media_type, properties))
+				manifest.append("<item href=\"images/{0}\" id=\"{0}\" media-type=\"{1}\"{2}/>".format(filename, media_type, properties))
 
 		# Add XHTML files
 		for root, _, filenames in os.walk(self.path / "src" / "epub" / "text"):
@@ -683,7 +683,7 @@ class SeEpub:
 				if properties == " properties=\"\"":
 					properties = ""
 
-				manifest.append("<item href=\"text/{}\" id=\"{}\" media-type=\"application/xhtml+xml\"{}/>".format(filename, filename, properties))
+				manifest.append("<item href=\"text/{0}\" id=\"{0}\" media-type=\"application/xhtml+xml\"{1}/>".format(filename, properties))
 
 		manifest = se.natural_sort(manifest)
 

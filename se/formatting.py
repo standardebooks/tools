@@ -93,7 +93,7 @@ def semanticate(xhtml: str) -> str:
 	# We may have added HTML tags within title tags.  Remove those here
 	matches = regex.findall(r"<title>.+?</title>", xhtml)
 	if matches:
-		xhtml = regex.sub(r"<title>.+?</title>", "<title>" +  se.formatting.remove_tags(matches[0]) + "</title>", xhtml)
+		xhtml = regex.sub(r"<title>.+?</title>", "<title>" + se.formatting.remove_tags(matches[0]) + "</title>", xhtml)
 
 	return xhtml
 
@@ -208,7 +208,7 @@ def _get_syllable_count(word: str) -> int:
 	# 8) add one if "y" is surrounded by non-vowels and is not in the last word.
 	for i, j in enumerate(word):
 		if j == "y":
-			if (i != 0) and (i != len(word) - 1):
+			if i not in (0, len(word) - 1):
 				if word[i - 1] not in "aeoui" and word[i + 1] not in "aeoui":
 					syls += 1
 

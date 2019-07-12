@@ -129,7 +129,7 @@ def _get_unused_selectors(self) -> set:
 	css = regex.sub(r"^@.+", "", css, flags=regex.MULTILINE)
 
 	# Construct a dictionary of selectors
-	selectors = set([line for line in css.splitlines() if line != ""])
+	selectors = {line for line in css.splitlines() if line != ""}
 	unused_selectors = set(selectors)
 
 	# Get a list of .xhtml files to search
@@ -422,7 +422,7 @@ def lint(self, metadata_xhtml) -> list:
 						if filename == "titlepage.svg":
 							matches = regex.findall(r"<text[^>]+?>(.*[a-z].*)</text>", html.unescape(file_contents))
 							for match in matches:
-								if match != "translated by" and match != "illustrated by" and match != "and":
+								if match not in ("translated by", "illustrated by", "and"):
 									messages.append(LintMessage("Lowercase letters in titlepage. Titlepage text must be all uppercase except \"translated by\" and \"illustrated by\".", se.MESSAGE_TYPE_ERROR, filename))
 
 							# For later comparison with cover
@@ -531,7 +531,7 @@ def lint(self, metadata_xhtml) -> list:
 						messages.append(message)
 
 					# Check if this is a frontmatter file
-					if filename != "titlepage.xhtml" and filename != "imprint.xhtml" and filename != "toc.xhtml":
+					if filename not in ("titlepage.xhtml", "imprint.xhtml", "toc.xhtml"):
 						matches = regex.findall(r"epub:type=\"[^\"]*?frontmatter[^\"]*?\"", file_contents)
 						if matches:
 							has_frontmatter = True
@@ -1040,7 +1040,7 @@ def lint(self, metadata_xhtml) -> list:
 							loi_text = illustration.get_text()
 
 							with open(self.path / "src" / "epub" / "text" / chapter_ref, "r", encoding="utf-8") as chapter:
-								figure = BeautifulSoup(chapter, "lxml").select("#"+figure_ref)[0]
+								figure = BeautifulSoup(chapter, "lxml").select("#" + figure_ref)[0]
 								if figure.figcaption:
 									figcaption_text = figure.figcaption.get_text()
 							if figcaption_text != "" and loi_text != "" and figcaption_text != loi_text:
@@ -1134,7 +1134,9 @@ def lint(self, metadata_xhtml) -> list:
 				entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get("href"))
 				toc_files.append(entry_file)
 			unique_toc_files = []
-			[unique_toc_files.append(i) for i in toc_files if not unique_toc_files.count(i)]
+			for file in toc_files:
+				if file not in unique_toc_files:
+					unique_toc_files.append(file)
 			toc_files = unique_toc_files
 			spine_entries = BeautifulSoup(content_opf.read(), "lxml").find("spine").find_all("itemref")
 			if len(toc_files) == len(spine_entries):
@@ -1150,7 +1152,7 @@ def lint(self, metadata_xhtml) -> list:
 			css_class = regex.search(r"class=\"([^\"]+?)\"", element).group(1)
 		except Exception:
 			continue
-		if css_class and (css_class == "temperature" or css_class == "era" or css_class == "acronym") and "abbr." + css_class not in abbr_styles:
+		if css_class and css_class in ("temperature", "era", "acronym") and "abbr." + css_class not in abbr_styles:
 			messages.append(LintMessage("abbr.{} element found, but no required style in local.css (See typgoraphy manual for style)".format(css_class), se.MESSAGE_TYPE_ERROR, "local.css"))
 
 	return messages

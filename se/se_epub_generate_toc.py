@@ -421,15 +421,15 @@ def get_book_division(tag: BeautifulSoup) -> BookDivision:
 	section_epub_type = parent_section[0].get("epub:type") or ""
 	if "part" in section_epub_type:
 		return BookDivision.PART
-	elif "division" in section_epub_type:
+	if "division" in section_epub_type:
 		return BookDivision.DIVISION
-	elif ("volume" in section_epub_type) and (not "se:short-story" in section_epub_type):
+	if ("volume" in section_epub_type) and (not "se:short-story" in section_epub_type):
 		return BookDivision.VOLUME
-	elif "subchapter" in section_epub_type:
+	if "subchapter" in section_epub_type:
 		return BookDivision.SUBCHAPTER
-	elif "chapter" in section_epub_type:
+	if "chapter" in section_epub_type:
 		return BookDivision.CHAPTER
-	elif "article" in parent_section[0].name:
+	if "article" in parent_section[0].name:
 		return BookDivision.ARTICLE
 
 	return BookDivision.NONE
