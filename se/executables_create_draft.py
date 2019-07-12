@@ -298,8 +298,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> (str, str):
 	# returns HTTP 200, then we didn't find a direct match and return nothing.
 
 	try:
-		response = requests.get("https://en.wikipedia.org/wiki/Special:Search",
-								params={"search": string, "go": "Go", "ns0": 1}, allow_redirects=False)
+		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": 1}, allow_redirects=False)
 	except Exception as ex:
 		se.print_error("Couldn’t contact Wikipedia. Error: {}".format(ex))
 
@@ -517,7 +516,7 @@ def create_draft(args: list) -> int:
 
 			if pg_producers:
 				producers_xhtml = ""
-				for i, producer  in enumerate(pg_producers):
+				for i, producer in enumerate(pg_producers):
 					if "Distributed Proofreading" in producer:
 						producers_xhtml = producers_xhtml + "<a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a>"
 					else:
@@ -553,7 +552,7 @@ def create_draft(args: list) -> int:
 				producers_xhtml = producers_xhtml + "\t\t<dc:contributor id=\"transcriber-{}\">{}</dc:contributor>\n".format(i, producer)
 
 				if "Distributed Proofreading" in producer:
-					producers_xhtml = producers_xhtml + "\t\t<meta property=\"file-as\" refines=\"#transcriber-{}\">Online Distributed Proofreading Team, The</meta>\n\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{}\">https://pgdp.net</meta>\n".format(i, i)
+					producers_xhtml = producers_xhtml + "\t\t<meta property=\"file-as\" refines=\"#transcriber-{0}\">Online Distributed Proofreading Team, The</meta>\n\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{0}\">https://pgdp.net</meta>\n".format(i)
 				else:
 					producers_xhtml = producers_xhtml + "\t\t<meta property=\"file-as\" refines=\"#transcriber-{}\">TRANSCRIBER_SORT</meta>\n".format(i)
 

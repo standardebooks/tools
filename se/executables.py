@@ -99,7 +99,7 @@ def british2american() -> int:
 				if se.typography.guess_quoting_style(xhtml) == "american":
 					convert = False
 					if args.verbose:
-					 	print("")
+						print("")
 					se.print_warning("File appears to already use American quote style, ignoring. Use --force to convert anyway.{}".format(" File: " + str(filename) if not args.verbose else ""), args.verbose)
 
 			if convert:
@@ -144,7 +144,6 @@ def build() -> int:
 			return ex.code
 
 	return 0
-
 
 def build_images() -> int:
 	"""
@@ -476,7 +475,7 @@ def find_mismatched_diacritics() -> int:
 					plain_word = regex.sub(r"\p{M}", "", unicodedata.normalize("NFKD", accented_word))
 
 					pattern = regex.compile(r"\b" + plain_word + r"\b", regex.IGNORECASE)
-					if pattern.search(xhtml) != None:
+					if pattern.search(xhtml) is not None:
 						mismatches[accented_word] = plain_word
 
 	if mismatches:
@@ -1105,9 +1104,9 @@ def word_count() -> int:
 
 	if args.categorize:
 		category = "se:short-story"
-		if total_word_count > se.NOVELLA_MIN_WORD_COUNT and total_word_count < se.NOVEL_MIN_WORD_COUNT:
+		if se.NOVELLA_MIN_WORD_COUNT <= total_word_count < se.NOVEL_MIN_WORD_COUNT:
 			category = "se:novella"
-		elif total_word_count > se.NOVEL_MIN_WORD_COUNT:
+		elif total_word_count >= se.NOVEL_MIN_WORD_COUNT:
 			category = "se:novel"
 
 	print("{}{}".format(total_word_count, "\t" + category if args.categorize else ""))

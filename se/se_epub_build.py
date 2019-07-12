@@ -211,7 +211,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		total_css = regex.sub(r"^@.+", "", total_css, flags=regex.MULTILINE)
 
 		# Construct a dictionary of the original selectors
-		selectors = set([line for line in total_css.splitlines() if line != ""])
+		selectors = {line for line in total_css.splitlines() if line != ""}
 
 		# Get a list of .xhtml files to simplify
 		for root, _, filenames in os.walk(work_epub_root_directory):
@@ -689,7 +689,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 				filenames.reverse()
 				for filename in filenames:
 					if filename.lower().startswith("mathml-"):
-						metadata_xhtml = metadata_xhtml.replace("<manifest>", "<manifest><item href=\"images/{}\" id=\"{}\" media-type=\"image/png\"/>".format(filename, filename))
+						metadata_xhtml = metadata_xhtml.replace("<manifest>", "<manifest><item href=\"images/{0}\" id=\"{0}\" media-type=\"image/png\"/>".format(filename))
 
 			metadata_xhtml = regex.sub(r"properties=\"([^\"]*?)mathml([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xhtml)
 
@@ -765,7 +765,6 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 			if verbose:
 				print(" OK")
-
 
 		if build_kindle:
 			if verbose:
@@ -914,15 +913,15 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 			if return_code:
 				raise se.InvalidSeEbookException("ebook-convert failed.")
-			else:
-				# Success, extract the Kindle cover thumbnail
 
-				# Update the ASIN in the generated file
-				se.mobi.update_asin(asin, work_directory / kindle_output_filename, output_directory / kindle_output_filename)
+			# Success, extract the Kindle cover thumbnail
 
-				# Extract the thumbnail
-				# Path arguments must be cast to string for Windows compatibility.
-				subprocess.run([str(convert_path), str(work_epub_root_directory / "epub" / "images" / "cover.jpg"), "-resize", "432x660", str(output_directory / "thumbnail_{}_EBOK_portrait.jpg".format(asin))], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+			# Update the ASIN in the generated file
+			se.mobi.update_asin(asin, work_directory / kindle_output_filename, output_directory / kindle_output_filename)
+
+			# Extract the thumbnail
+			# Path arguments must be cast to string for Windows compatibility.
+			subprocess.run([str(convert_path), str(work_epub_root_directory / "epub" / "images" / "cover.jpg"), "-resize", "432x660", str(output_directory / "thumbnail_{}_EBOK_portrait.jpg".format(asin))], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 			if verbose:
 				print(" OK")

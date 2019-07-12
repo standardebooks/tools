@@ -70,5 +70,5 @@ def write_epub(epub_root_absolute_path: Path, output_absolute_path: str) -> None
 
 		for root, _, files in os.walk(epub_root_absolute_path):
 			for file in files:
-				if file != "mimetype" and file != "container.xml":
+				if file not in ("mimetype", "container.xml"):
 					epub.write(Path(root) / file, (Path(root) / file).relative_to(epub_root_absolute_path), compress_type=zipfile.ZIP_DEFLATED)
