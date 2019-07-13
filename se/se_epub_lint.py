@@ -484,13 +484,6 @@ def lint(self, metadata_xhtml) -> list:
 						for match in matches:
 							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
-					# Check for illegal properties. nth-* properties are poorly supported by both ereaders and lxml.
-					matches = regex.findall(r"nth-", file_contents, flags=regex.MULTILINE)
-					if matches:
-						messages.append(LintMessage("Illegal CSS property.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
-
 					# Don't specify border color
 					matches = regex.findall(r"(?:border|color).+?(?:#[a-f0-9]{0,6}|black|white|red)", file_contents, flags=regex.IGNORECASE)
 					if matches:
