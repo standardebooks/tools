@@ -579,7 +579,7 @@ def simplify_css(css: str) -> str:
 	# from the css selector that lxml itself can't evaluate, even though the `xpath` binary can!
 	# We don't *replace* the selector, we *add* it, because lxml has problems selecting first-child sometimes
 	for selector_to_simplify in se.SELECTORS_TO_SIMPLIFY:
-		css = regex.sub(r"((.+)\{}(.*))".format(regex.escape(selector_to_simplify)), "\\2.{}\\3,\n\\1".format(selector_to_simplify.replace(":", "")), css)
+		css = regex.sub(r"((.+)\{}(\(.*?\))?(.*))".format(regex.escape(selector_to_simplify)), "\\2.{}\\3,\n\\1".format(selector_to_simplify.replace(":", "")), css)
 
 	css = css.replace("{,", ",")
 	css = css.replace(",,", ",")
