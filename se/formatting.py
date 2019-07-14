@@ -578,8 +578,20 @@ def simplify_css(css: str) -> str:
 	# Currently this replacement isn't perfect, because occasionally lxml generates an xpath expression
 	# from the css selector that lxml itself can't evaluate, even though the `xpath` binary can!
 	# We don't *replace* the selector, we *add* it, because lxml has problems selecting first-child sometimes
-	for selector_to_simplify in se.SELECTORS_TO_SIMPLIFY:
-		css = regex.sub(r"((.+)\{}(\(.*?\))?(.*))".format(regex.escape(selector_to_simplify)), "\\2.{}\\3,\n\\1".format(selector_to_simplify.replace(":", "")), css)
+	lines = css.splitlines()
+	simplified_lines = []
+	for line in lines:
+		simplified_line = line + ""
+		for selector_to_simplify in se.SELECTORS_TO_SIMPLIFY:
+			while selector_to_simplify in simplified_line:
+				split_selector = regex.split(f"({selector_to_simplify}(\(.*\))?)", line, 1)
+				target_element_selector = ''.join(split_selector[0:2])
+				replacement_class = split_selector[1].replace(":", ".").replace("(", "-").replace("n-", "n-minus-").replace("n+", "n-plus-").replace(")", "")
+				simplified_line = simplified_line.replace(split_selector[1], replacement_class)
+		if simplified_line != line:
+			line = simplified_line + ",\n" + line
+		simplified_lines.append(line)
+	css = "\n".join(simplified_lines)
 
 	css = css.replace("{,", ",")
 	css = css.replace(",,", ",")
