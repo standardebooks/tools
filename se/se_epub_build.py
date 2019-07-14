@@ -239,7 +239,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 								while selector_to_simplify in selector:
 									# Potentially the pseudoclass we’ll simplify isn’t at the end of the selector,
 									# so we need to temporarily remove the trailing part to target the right elements.
-									split_selector = regex.split(f"({selector_to_simplify}(\(.*\))?)", selector, 1)
+									split_selector = regex.split(r"({}(\(.*\))?)".format(selector_to_simplify), selector, 1)
 									target_element_selector = ''.join(split_selector[0:2])
 
 									replacement_class = split_selector[1].replace(":", "").replace("(", "-").replace("n-", "n-minus-").replace("n+", "n-plus-").replace(")", "")
