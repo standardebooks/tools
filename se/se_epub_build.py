@@ -242,7 +242,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 									split_selector = regex.split(f"({selector_to_simplify}(\(.*\))?)", selector, 1)
 									target_element_selector = ''.join(split_selector[0:2])
 
-									replacement_class = split_selector[1].replace(":", "")
+									replacement_class = split_selector[1].replace(":", "").replace("(", "-").replace("n-", "n-minus-").replace("n+", "n-plus-").replace(")", "")
 									selector = selector.replace(split_selector[1], "." + replacement_class, 1)
 									sel = lxml.cssselect.CSSSelector(target_element_selector, translator="xhtml", namespaces=se.XHTML_NAMESPACES)
 									for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
