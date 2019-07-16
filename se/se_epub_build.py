@@ -231,7 +231,6 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 						raise se.InvalidXhtmlException("Error parsing XHTML file: {}\n{}".format(filename, ex))
 
 					# Now iterate over each CSS selector and see if it's used in any of the files we found
-					force_convert = False
 					for selector in selectors:
 						try:
 							# Add classes to elements that match any of our selectors to simplify. For example, if we select :first-child, add a "first-child" class to all elements that match that.
@@ -256,11 +255,10 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 						except lxml.cssselect.ExpressionError:
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
-							# We force a check if we get thrown this because we might miss some important ::before elements
-							force_convert = True
+							pass
 
 						# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
-						if force_convert or "[epub|type" in selector:
+						if "[epub|type" in selector:
 							for namespace_selector in regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", selector):
 								sel = lxml.cssselect.CSSSelector(namespace_selector, translator="xhtml", namespaces=se.XHTML_NAMESPACES)
 
