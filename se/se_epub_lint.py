@@ -456,6 +456,13 @@ def lint(self, metadata_xhtml) -> list:
 						for match in matches:
 							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
+					# Spaces around combining selectors. However constructs like epub:type~="" do not have spaces.
+					matches = regex.findall(r"[^\s]+[\+\~\>][^=\s]+", file_contents)
+					if matches:
+						messages.append(LintMessage("Combining selectors must have a space on either side.", se.MESSAGE_TYPE_ERROR, filename))
+						for match in matches:
+							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
 					# No space before CSS opening braces
 					matches = regex.findall(r".+\s\{", file_contents)
 					if matches:
