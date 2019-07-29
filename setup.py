@@ -45,8 +45,8 @@ setup(
     python_requires=">=3.5", # The latest version installed by default on Ubuntu 16.04 is 3.5.2
     install_requires=[
         "beautifulsoup4==4.6.0",
-        "cssselect==1.0.1",
-        "ftfy==5.3.0",
+        "cssselect==1.0.3",
+        "ftfy==5.5.1",
         "gitpython==2.1.5",
         "lxml==4.4.0",
         "psutil==5.5.0",
@@ -55,8 +55,8 @@ setup(
         "python-magic==0.4.13",
         "regex==2017.7.26",
         "requests>=2.20.0",
-        "roman==2.0.0",
-        "smartypants==2.0.0",
+        "roman==3.2.0",
+        "smartypants==2.0.1",
         "titlecase==0.11.0",
         "termcolor==1.1.0",
         "terminaltables==3.1.0"
