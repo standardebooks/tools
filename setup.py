@@ -44,7 +44,7 @@ setup(
     packages=find_packages(),
     python_requires=">=3.5", # The latest version installed by default on Ubuntu 16.04 is 3.5.2
     install_requires=[
-        "beautifulsoup4==4.6.0",
+        "beautifulsoup4==4.8.0",
         "cssselect==1.0.3",
         "ftfy==5.5.1",
         "gitpython==2.1.5",
