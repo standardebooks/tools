@@ -48,7 +48,7 @@ setup(
         "cssselect==1.0.1",
         "ftfy==5.3.0",
         "gitpython==2.1.5",
-        "lxml==4.2.3",
+        "lxml==4.4.0",
         "psutil==5.5.0",
         "pyhyphen==3.0.1",
         # "pyopenssl>=19.0.0",  # Required to allows the `requests` package to use https on Mac OSX, but segfaults when installed on Ubuntu
