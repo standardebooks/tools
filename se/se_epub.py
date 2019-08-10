@@ -330,7 +330,7 @@ class SeEpub:
 
 		# Iterate over spine items in order and recompose them into our output
 		for element in metadata_soup.select("spine itemref"):
-			filename = metadata_soup.select("item#" + element["idref"])[0]["href"]
+			filename = metadata_soup.select("item[id=\"{}\"]".format(element["idref"]))[0]["href"]
 
 			with open(self.path / "src" / "epub" / filename, "r", encoding="utf-8") as file:
 				xhtml_soup = BeautifulSoup(file.read(), "lxml")
