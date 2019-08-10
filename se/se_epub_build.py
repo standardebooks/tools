@@ -60,7 +60,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			# Look for default Mac calibre app path if none found in path
 			ebook_convert_path = Path("/Applications/calibre.app/Contents/MacOS/ebook-convert")
 			if not ebook_convert_path.exists():
-				raise se.MissingDependencyException("Couldn’t locate epubcheck. Is it installed?")
+				raise se.MissingDependencyException("Couldn’t locate ebook-convert. Is Calibre installed?")
 
 	if run_epubcheck:
 		try:
