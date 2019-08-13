@@ -25,7 +25,7 @@ def _get_file_contents(file_path: Path) -> str:
         return file.read()
 
 setup(
-    version="1.0.18",
+    version="1.0.19",
     name="standardebooks",
     description="The toolset used to produce Standard Ebooks epub ebooks.",
     long_description=_get_file_contents(Path(__file__).resolve().parent / "README.md"),
