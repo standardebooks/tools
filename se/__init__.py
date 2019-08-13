@@ -273,3 +273,16 @@ def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filen
 			target_xhtml_filenames.add(target)
 
 	return target_xhtml_filenames
+
+def dist_is_editable(dist):
+	"""
+	Is distribution an editable install?
+	Copied from a pip utility function which is not publicly accessible. See https://stackoverflow.com/questions/42582801/check-whether-a-python-package-has-been-installed-in-editable-egg-link-mode
+	"""
+
+	for path_item in sys.path:
+		egg_link = os.path.join(path_item, dist.project_name + '.egg-link')
+		if os.path.isfile(egg_link):
+			return True
+
+	return False
