@@ -208,7 +208,7 @@ def _get_syllable_count(word: str) -> int:
 	# 8) add one if "y" is surrounded by non-vowels and is not in the last word.
 	for i, j in enumerate(word):
 		if j == "y":
-			if (i != 0) and (i != len(word) - 1):
+			if (i != 0) and (i != len(word) - 1): # pylint: disable=consider-using-in
 				if word[i - 1] not in "aeoui" and word[i + 1] not in "aeoui":
 					syls += 1
 

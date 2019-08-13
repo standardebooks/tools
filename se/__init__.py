@@ -5,6 +5,7 @@ Defines various package-level constants and helper functions.
 
 import sys
 import os
+import shutil
 import argparse
 from pathlib import Path
 from typing import Union
@@ -286,3 +287,18 @@ def dist_is_editable(dist):
 			return True
 
 	return False
+
+def get_firefox_path() -> str:
+	"""
+	Get the path to the local Firefox binary
+	"""
+
+	try:
+		firefox_path = Path(shutil.which("firefox"))
+	except Exception:
+		# Look for default mac Firefox.app path if none found in path
+		firefox_path = Path("/Applications/Firefox.app/Contents/MacOS/firefox")
+		if not firefox_path.exists():
+			raise MissingDependencyException("Couldn’t locate firefox. Is it installed?")
+
+	return firefox_path

@@ -327,14 +327,6 @@ def create_draft(args: list) -> int:
 	Entry point for `se create-draft`
 	"""
 
-	if args.create_github_repo and not args.create_se_repo:
-		se.print_error("--create-github-repo option specified, but --create-se-repo option not specified.")
-		return se.InvalidInputException.code
-
-	if args.pg_url and not regex.match("^https?://www.gutenberg.org/ebooks/[0-9]+$", args.pg_url):
-		se.print_error("Project Gutenberg URL must look like: https://www.gutenberg.org/ebooks/<EBOOK-ID>")
-		return se.InvalidInputException.code
-
 	# Put together some variables for later use
 	identifier = se.formatting.make_url_safe(args.author) + "/" + se.formatting.make_url_safe(args.title)
 	title_string = args.title.replace("'", "’") + ", by " + args.author.replace("'", "’")

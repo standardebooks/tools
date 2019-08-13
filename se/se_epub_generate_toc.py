@@ -44,6 +44,8 @@ class TocItem:
 	found in the project.
 	"""
 
+	# pylint: disable=too-many-instance-attributes
+
 	file_link = ""
 	level = 0
 	roman = ""
@@ -386,7 +388,7 @@ def process_heading(heading, textf, is_toplevel, single_file: bool) -> TocItem:
 
 	# This stops the first heading in a file getting an anchor id, we don't generally want that.
 	# The exceptions are things like poems within a single-file volume.
-	toc_item.id = get_parent_id(heading)
+	toc_item.id = get_parent_id(heading) # pylint: disable=invalid-name
 	if toc_item.id == "":
 		toc_item.file_link = textf
 	else:
@@ -416,23 +418,28 @@ def get_book_division(tag: BeautifulSoup) -> BookDivision:
 	are important; but others stored for possible future logic.
 	"""
 	parent_section = tag.find_parents(["section", "article"])
+
 	if not parent_section:
 		parent_section = tag.find_parents("body")
-	section_epub_type = parent_section[0].get("epub:type") or ""
-	if "part" in section_epub_type:
-		return BookDivision.PART
-	if "division" in section_epub_type:
-		return BookDivision.DIVISION
-	if ("volume" in section_epub_type) and (not "se:short-story" in section_epub_type):
-		return BookDivision.VOLUME
-	if "subchapter" in section_epub_type:
-		return BookDivision.SUBCHAPTER
-	if "chapter" in section_epub_type:
-		return BookDivision.CHAPTER
-	if "article" in parent_section[0].name:
-		return BookDivision.ARTICLE
 
-	return BookDivision.NONE
+	section_epub_type = parent_section[0].get("epub:type") or ""
+
+	retval = BookDivision.NONE
+
+	if "part" in section_epub_type:
+		retval = BookDivision.PART
+	if "division" in section_epub_type:
+		retval = BookDivision.DIVISION
+	if ("volume" in section_epub_type) and (not "se:short-story" in section_epub_type):
+		retval = BookDivision.VOLUME
+	if "subchapter" in section_epub_type:
+		retval = BookDivision.SUBCHAPTER
+	if "chapter" in section_epub_type:
+		retval = BookDivision.CHAPTER
+	if "article" in parent_section[0].name:
+		retval = BookDivision.ARTICLE
+
+	return retval
 
 def strip_notes(text: str) -> str:
 	"""
