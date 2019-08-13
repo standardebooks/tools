@@ -1106,7 +1106,7 @@ def version() -> int:
 
 	import pkg_resources
 
-	distributions = {v.key: v for v in pkg_resources.working_set}
+	distributions = {v.key: v for v in iter(pkg_resources.working_set)}
 	distribution = distributions['standardebooks']
 
 	print("{}{}".format(se.VERSION, " (developer installation)" if se.dist_is_editable(distribution) else ""))
