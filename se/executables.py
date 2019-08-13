@@ -90,28 +90,32 @@ def british2american() -> int:
 		if args.verbose:
 			print("Processing {} ...".format(filename), end="", flush=True)
 
-		with open(filename, "r+", encoding="utf-8") as file:
-			xhtml = file.read()
-			new_xhtml = xhtml
+		try:
+			with open(filename, "r+", encoding="utf-8") as file:
+				xhtml = file.read()
+				new_xhtml = xhtml
 
-			convert = True
-			if not args.force:
-				if se.typography.guess_quoting_style(xhtml) == "american":
-					convert = False
-					if args.verbose:
-						print("")
-					se.print_warning("File appears to already use American quote style, ignoring. Use --force to convert anyway.{}".format(" File: " + str(filename) if not args.verbose else ""), args.verbose)
+				convert = True
+				if not args.force:
+					if se.typography.guess_quoting_style(xhtml) == "american":
+						convert = False
+						if args.verbose:
+							print("")
+						se.print_warning("File appears to already use American quote style, ignoring. Use --force to convert anyway.{}".format(" File: " + str(filename) if not args.verbose else ""), args.verbose)
 
-			if convert:
-				new_xhtml = se.typography.convert_british_to_american(xhtml)
+				if convert:
+					new_xhtml = se.typography.convert_british_to_american(xhtml)
 
-				if new_xhtml != xhtml:
-					file.seek(0)
-					file.write(new_xhtml)
-					file.truncate()
+					if new_xhtml != xhtml:
+						file.seek(0)
+						file.write(new_xhtml)
+						file.truncate()
 
-		if convert and args.verbose:
-			print(" OK")
+			if convert and args.verbose:
+				print(" OK")
+
+		except FileNotFoundError:
+			se.print_error("Not a file: {}".format(filename))
 
 	return 0
 
@@ -456,30 +460,38 @@ def find_mismatched_diacritics() -> int:
 	target_filenames = se.get_target_filenames(args.targets, (".xhtml"))
 
 	for filename in target_filenames:
-		with open(filename, "r", encoding="utf-8") as file:
-			xhtml = file.read()
+		try:
+			with open(filename, "r", encoding="utf-8") as file:
+				xhtml = file.read()
 
-			decomposed_xhtml = unicodedata.normalize("NFKD", xhtml)
+				decomposed_xhtml = unicodedata.normalize("NFKD", xhtml)
 
-			pattern = regex.compile(r"\b\w*\p{M}\w*\b")
-			for decomposed_word in pattern.findall(decomposed_xhtml):
-				word = unicodedata.normalize("NFKC", decomposed_word)
+				pattern = regex.compile(r"\b\w*\p{M}\w*\b")
+				for decomposed_word in pattern.findall(decomposed_xhtml):
+					word = unicodedata.normalize("NFKC", decomposed_word)
 
-				if len(word) > 2:
-					accented_words.add(word.lower())
+					if len(word) > 2:
+						accented_words.add(word.lower())
+
+		except FileNotFoundError:
+			se.print_error("Not a file: {}".format(filename))
 
 	# Now iterate over the list and search files for unaccented versions of the words
 	if accented_words:
 		for filename in target_filenames:
-			with open(filename, "r", encoding="utf-8") as file:
-				xhtml = file.read()
+			try:
+				with open(filename, "r", encoding="utf-8") as file:
+					xhtml = file.read()
 
-				for accented_word in accented_words:
-					plain_word = regex.sub(r"\p{M}", "", unicodedata.normalize("NFKD", accented_word))
+					for accented_word in accented_words:
+						plain_word = regex.sub(r"\p{M}", "", unicodedata.normalize("NFKD", accented_word))
 
-					pattern = regex.compile(r"\b" + plain_word + r"\b", regex.IGNORECASE)
-					if pattern.search(xhtml) is not None:
-						mismatches[accented_word] = plain_word
+						pattern = regex.compile(r"\b" + plain_word + r"\b", regex.IGNORECASE)
+						if pattern.search(xhtml) is not None:
+							mismatches[accented_word] = plain_word
+
+			except FileNotFoundError:
+				se.print_error("Not a file: {}".format(filename))
 
 	if mismatches:
 		for accented_word, plain_word in sorted(mismatches.items()):
@@ -665,6 +677,9 @@ def print_toc() -> int:
 		except se.SeException as ex:
 			se.print_error(ex)
 			return ex.code
+		except FileNotFoundError:
+			se.print_error("Couldn’t find toc.xhtml file.")
+			return se.InvalidSeEbookException
 
 	return 0
 
@@ -710,22 +725,25 @@ def modernize_spelling() -> int:
 		if args.verbose:
 			print("Processing {} ...".format(filename), end="", flush=True)
 
-		with open(filename, "r+", encoding="utf-8") as file:
-			xhtml = file.read()
+		try:
+			with open(filename, "r+", encoding="utf-8") as file:
+				xhtml = file.read()
 
-			try:
-				new_xhtml = se.spelling.modernize_spelling(xhtml)
-			except se.InvalidLanguageException as ex:
-				se.print_error("{}{}".format(ex, (" File: " + str(filename)) if not args.verbose else ""))
-				return ex.code
+				try:
+					new_xhtml = se.spelling.modernize_spelling(xhtml)
+				except se.InvalidLanguageException as ex:
+					se.print_error("{}{}".format(ex, (" File: " + str(filename)) if not args.verbose else ""))
+					return ex.code
 
-			if args.modernize_hyphenation:
-				new_xhtml = se.spelling.modernize_hyphenation(new_xhtml)
+				if args.modernize_hyphenation:
+					new_xhtml = se.spelling.modernize_hyphenation(new_xhtml)
 
-			if new_xhtml != xhtml:
-				file.seek(0)
-				file.write(new_xhtml)
-				file.truncate()
+				if new_xhtml != xhtml:
+					file.seek(0)
+					file.write(new_xhtml)
+					file.truncate()
+		except FileNotFoundError:
+			se.print_error("Not a file: {}".format(filename))
 
 		if args.verbose:
 			print(" OK")
@@ -916,14 +934,17 @@ def semanticate() -> int:
 		if args.verbose:
 			print("Processing {} ...".format(filename), end="", flush=True)
 
-		with open(filename, "r+", encoding="utf-8") as file:
-			xhtml = file.read()
-			processed_xhtml = se.formatting.semanticate(xhtml)
+		try:
+			with open(filename, "r+", encoding="utf-8") as file:
+				xhtml = file.read()
+				processed_xhtml = se.formatting.semanticate(xhtml)
 
-			if processed_xhtml != xhtml:
-				file.seek(0)
-				file.write(processed_xhtml)
-				file.truncate()
+				if processed_xhtml != xhtml:
+					file.seek(0)
+					file.write(processed_xhtml)
+					file.truncate()
+		except FileNotFoundError:
+			se.print_error("Not a file: {}".format(filename))
 
 		if args.verbose:
 			print(" OK")
@@ -949,8 +970,12 @@ def split_file() -> int:
 	parser.add_argument("filename", metavar="FILE", help="an HTML/XHTML file")
 	args = parser.parse_args()
 
-	with open(args.filename, "r", encoding="utf-8") as file:
-		xhtml = se.strip_bom(file.read())
+	try:
+		with open(args.filename, "r", encoding="utf-8") as file:
+			xhtml = se.strip_bom(file.read())
+
+	except FileNotFoundError:
+		se.print_error("Not a file: {}".format(args.filename))
 
 	with open(resource_filename("se", str(Path("data") / "templates" / "header.xhtml")), "r", encoding="utf-8") as file:
 		header_xhtml = file.read()
@@ -1029,17 +1054,22 @@ def typogrify() -> int:
 		if args.verbose:
 			print("Processing {} ...".format(filename), end="", flush=True)
 
-		with open(filename, "r+", encoding="utf-8") as file:
-			xhtml = file.read()
-			processed_xhtml = se.typography.typogrify(xhtml, args.quotes)
+		try:
+			with open(filename, "r+", encoding="utf-8") as file:
+				xhtml = file.read()
+				processed_xhtml = se.typography.typogrify(xhtml, args.quotes)
 
-			if processed_xhtml != xhtml:
-				file.seek(0)
-				file.write(processed_xhtml)
-				file.truncate()
+				if processed_xhtml != xhtml:
+					file.seek(0)
+					file.write(processed_xhtml)
+					file.truncate()
 
-		if args.verbose:
-			print(" OK")
+			if args.verbose:
+				print(" OK")
+
+		except FileNotFoundError:
+			se.print_error("Not a file: {}".format(filename))
+			return se.InvalidFileException.code
 
 	return 0
 
@@ -1103,12 +1133,16 @@ def word_count() -> int:
 		if args.exclude_se_files and filename.name == "endnotes.xhtml":
 			continue
 
-		with open(filename, "r", encoding="utf-8") as file:
-			try:
-				total_word_count += se.formatting.get_word_count(file.read())
-			except UnicodeDecodeError:
-				se.print_error("File is not UTF-8: {}".format(filename))
-				return se.InvalidEncodingException.code
+		try:
+			with open(filename, "r", encoding="utf-8") as file:
+				try:
+					total_word_count += se.formatting.get_word_count(file.read())
+				except UnicodeDecodeError:
+					se.print_error("File is not UTF-8: {}".format(filename))
+					return se.InvalidEncodingException.code
+
+		except FileNotFoundError:
+			se.print_error("Not a file: {}".format(filename))
 
 	if args.categorize:
 		category = "se:short-story"
