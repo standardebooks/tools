@@ -322,7 +322,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> (str, str):
 
 	return None, None
 
-def create_draft(args: list) -> int:
+def create_draft(args: list):
 	"""
 	Entry point for `se create-draft`
 	"""
@@ -344,8 +344,7 @@ def create_draft(args: list) -> int:
 	repo_name = Path(identifier.replace("/", "_"))
 
 	if repo_name.is_dir():
-		se.print_error("./{}/ already exists.".format(repo_name))
-		return se.InvalidInputException.code
+		raise se.InvalidInputException("./{}/ already exists.".format(repo_name))
 
 	# Download PG HTML and do some fixups
 	if args.pg_url:
@@ -356,8 +355,7 @@ def create_draft(args: list) -> int:
 			response = requests.get(args.pg_url)
 			pg_metadata_html = response.text
 		except Exception as ex:
-			se.print_error("Couldn’t download Project Gutenberg ebook metadata page. Error: {}".format(ex))
-			return se.RemoteCommandErrorException.code
+			raise se.RemoteCommandErrorException("Couldn’t download Project Gutenberg ebook metadata page. Error: {}".format(ex))
 
 		soup = BeautifulSoup(pg_metadata_html, "lxml")
 
@@ -367,8 +365,7 @@ def create_draft(args: list) -> int:
 			pg_ebook_url = regex.sub("^//", "https://", element["href"])
 
 		if not pg_ebook_url:
-			se.print_error("Could download ebook metadata, but couldn’t find URL for the ebook HTML.")
-			return se.RemoteCommandErrorException.code
+			raise se.RemoteCommandErrorException("Could download ebook metadata, but couldn’t find URL for the ebook HTML.")
 
 		# Get the ebook LCSH categories
 		pg_subjects = []
@@ -387,15 +384,13 @@ def create_draft(args: list) -> int:
 			response = requests.get(pg_ebook_url)
 			pg_ebook_html = response.text
 		except Exception as ex:
-			se.print_error("Couldn’t download Project Gutenberg ebook HTML. Error: {}".format(ex))
-			return se.RemoteCommandErrorException.code
+			raise se.RemoteCommandErrorException("Couldn’t download Project Gutenberg ebook HTML. Error: {}".format(ex))
 
 		try:
 			fixed_pg_ebook_html = fix_text(pg_ebook_html, uncurl_quotes=False)
 			pg_ebook_html = se.strip_bom(fixed_pg_ebook_html)
 		except Exception as ex:
-			se.print_error("Couldn’t determine text encoding of Project Gutenberg HTML file. Error: {}".format(ex))
-			return se.InvalidEncodingException.code
+			raise se.InvalidEncodingException("Couldn’t determine text encoding of Project Gutenberg HTML file. Error: {}".format(ex))
 
 		# Try to guess the ebook language
 		pg_language = "en-US"
@@ -601,8 +596,7 @@ def create_draft(args: list) -> int:
 						subject_xhtml = subject_xhtml + "\t\t<meta property=\"term\" refines=\"#subject-{}\">{}</meta>\n".format(i, loc_id)
 
 					except Exception as ex:
-						se.print_error("Couldn’t connect to id.loc.gov. Error: {}".format(ex))
-						return se.RemoteCommandErrorException.code
+						raise se.RemoteCommandErrorException("Couldn’t connect to id.loc.gov. Error: {}".format(ex))
 
 					i = i + 1
 
@@ -637,7 +631,4 @@ def create_draft(args: list) -> int:
 
 		return_code = call(["ssh", "standardebooks.org", "/standardebooks.org/scripts/init-se-repo --repo-name={} --title-string=\"{}\" {}".format(repo_name, title_string, github_option)])
 		if return_code != 0:
-			se.print_error("Failed to create repository on Standard Ebooks server: ssh returned code {}.".format(return_code))
-			return se.RemoteCommandErrorException.code
-
-	return 0
+			raise se.RemoteCommandErrorException("Failed to create repository on Standard Ebooks server: ssh returned code {}.".format(return_code))

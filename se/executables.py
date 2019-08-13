@@ -348,7 +348,13 @@ def create_draft() -> int:
 		se.print_error("Project Gutenberg URL must look like: https://www.gutenberg.org/ebooks/<EBOOK-ID>")
 		return se.InvalidInputException.code
 
-	return se_create_draft(args)
+	try:
+		se_create_draft(args)
+	except se.SeException as ex:
+		se.print_error(ex)
+		return ex.code
+
+	return 0
 
 def dec2roman() -> int:
 	"""
