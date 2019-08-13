@@ -1,0 +1,9 @@
+[MASTER]
+# Third-party code that we don't want to lint
+ignore=vendor
+
+# lxml is a C extension and pylint outputs lots of useless "errors" about it
+extension-pkg-whitelist=lxml
+
+[MESSAGES CONTROL]
+disable=mixed-indentation,line-too-long,too-many-nested-blocks,too-many-branches,too-many-statements,too-many-boolean-expressions,too-many-lines,too-many-locals,broad-except,too-few-public-methods,too-many-arguments
