@@ -44,6 +44,7 @@ case $state in
 			british2american)
 				_arguments -s \
 					{-f,--force}'[force conversion of quote style]' \
+					{-h,--help}'[show a help message and exit]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_files -g \*.xhtml'
 				;;
@@ -51,6 +52,7 @@ case $state in
 				_arguments -s \
 					{-b,--kobo}'[also build a .kepub.epub file for Kobo]' \
 					{-c,--check}'[use epubcheck to validate the compatible .epub file; if --kindle is also specified and epubcheck fails, don’t create a Kindle file]' \
+					{-h,--help}'[show a help message and exit]' \
 					{-k,--kindle}'[also build an .azw3 file for Kindle]' \
 					{-o,--output-dir}'=[a directory to place output files in; will be created if it doesn’t exist]: :_directories' \
 					{-p,--proof}'[insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof]' \
@@ -60,17 +62,20 @@ case $state in
 				;;
 			build-images)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_directories'
 				;;
 			clean)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-s,--single-lines}'[remove hard line wrapping]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_files -g \*.\(svg\|xhtml\)'
 				;;
 			compare-versions)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-i,--include-common}'[include commonly-excluded SE files like imprint, titlepage, and colophon]' \
 					{-n,--no-images}'[don’t copy diff images to the current working directory in case of difference]' \
 					{-v,--verbose}'[increase output verbosity]' \
@@ -81,6 +86,7 @@ case $state in
 					{-a,--author}'[the author of the ebook]' \
 					{-e,--email}'[use this email address as the main committer for the local Git repository]' \
 					{-g,--create-github-repo}'[initialize a new repository at the Standard Ebooks GitHub account; Standard Ebooks admin powers required; can only be used when --create-se-repo is specified]' \
+					{-h,--help}'[show a help message and exit]' \
 					{-i,--illustrator}'[the illustrator of the ebook]' \
 					{-p,--gutenberg-ebook-url}'[the URL of the Project Gutenberg ebook to download]' \
 					{-r,--translator}'[the translator of the ebook]' \
@@ -89,22 +95,26 @@ case $state in
 				;;
 			dec2roman)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-n,--no-newline}'[don’t end output with a newline]'
 				;;
 			extract-ebook)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-o,--output-dir}'=[a directory to place output files in; will be created if it doesn’t exist]: :_directories' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_files -g \*.\(mobi\|azw3\|epub\|epub3\)'
 				;;
 			find-mismatched-diacritics)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					'*: :_files -g \*.xhtml'
 				;;
 			help)
 				;;
 			hyphenate)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-i,--ignore-h-tags}'[don’t add soft hyphens to text in <h1-6> tags]' \
 					{-l,--language}'specify the language for the XHTML files; if unspecified, defaults to the `xml:lang` or `lang` attribute of the root <html> element' \
 					{-v,--verbose}'[increase output verbosity]' \
@@ -112,26 +122,31 @@ case $state in
 				;;
 			interactive-sr)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					'*: :_files'
 				;;
 			lint)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-p,--plain}'[print plain output]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_directories'
 				;;
 			make-url-safe)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-n,--no-newline}'[don’t end output with a newline]'
 				;;
 			modernize-spelling)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-n,--no-hyphens}'[don’t modernize hyphenation]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_files -g \*.xhtml'
 				;;
 			prepare-release)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-n,--no-word-count}'[don’t calculate word count]' \
 					{-r,--no-revision}'[don’t increment the revision number]' \
 					{-v,--verbose}'[increase output verbosity]' \
@@ -139,6 +154,7 @@ case $state in
 				;;
 			print-manifest-and-spine)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-m,--manifest}'[only print the manifest]' \
 					{-s,--spine}'[only print the spine]' \
 					{-i,--in-place}'[overwrite the <manifest> or <spine> tags in content.opf instead of printing to stdout]' \
@@ -146,49 +162,60 @@ case $state in
 				;;
 			print-toc)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-i,--in-place}'[overwrite the existing toc.xhtml file instead of printing to stdout]' \
 					'*: :_directories'
 				;;
 			recompose-epub)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					'*: :_files -g \*.xhtml'
 				;;
 			reorder-endnotes)
 				_arguments -s \
 					{-d,--decrement}'[decrement the target endnote number and all following endnotes]' \
+					{-h,--help}'[show a help message and exit]' \
 					{-i,--increment}'[increment the target endnote number and all following endnotes]' \
 					'*: :_directories'
 				;;
 			roman2dec)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-n,--no-newline}'[don’t end output with a newline]'
 				;;
 			semanticate)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_files -g \*.xhtml'
 				;;
 			split-file)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					'*: :_files -g \*.\(htm\|html\|xhtml\)'
 				;;
 			titlecase)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-n,--no-newline}'[don’t end output with a newline]'
 				;;
 			typogrify)
 				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
 					{-n,--no-quotes}'[don’t convert to smart quotes before doing other adjustments]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_files -g \*.xhtml'
 				;;
 			unicode-names)
+				_arguments -s \
+					{-h,--help}'[show a help message and exit]'
 				;;
 			version)
 				;;
 			word-count)
 				_arguments -s \
 					{-c,--categorize}'[include length categorization in output]' \
+					{-h,--help}'[show a help message and exit]' \
 					{-x,--exclude-se-files}'[exclude some non-bodymatter files common to SE ebooks, like the ToC and colophon]' \
 					'*: :_files -g \*.\(htm\|html\|xhtml\)'
 				;;
