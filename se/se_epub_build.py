@@ -24,10 +24,10 @@ import se
 import se.formatting
 import se.easy_xml
 import se.epub
-import se.mobi
+from se.vendor.mobi import mobi
 import se.typography
 import se.images
-import se.kobo
+from se.vendor.kobo import kobo
 
 
 COVER_SVG_WIDTH = 1400
@@ -548,8 +548,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 					# Kobo .kepub files need each clause wrapped in a special <span> tag to enable highlighting.
 					# Do this here. Hopefully Kobo will get their act together soon and drop this requirement.
 					for filename in fnmatch.filter(filenames, "*.xhtml"):
-						se.kobo.paragraph_counter = 1
-						se.kobo.segment_counter = 1
+						kobo.paragraph_counter = 1
+						kobo.segment_counter = 1
 
 						# Don't add spans to the ToC
 						if filename == "toc.xhtml":
@@ -569,7 +569,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							except Exception as ex:
 								raise se.InvalidXhtmlException("Error parsing XHTML file: {}\n{}".format(filename, ex), verbose)
 
-							se.kobo.add_kobo_spans_to_node(tree.xpath("./body", namespaces=se.XHTML_NAMESPACES)[0])
+							kobo.add_kobo_spans_to_node(tree.xpath("./body", namespaces=se.XHTML_NAMESPACES)[0])
 
 							xhtml = etree.tostring(tree, encoding="unicode", pretty_print=True, with_tail=False)
 							xhtml = regex.sub(r"<html:span", "<span", xhtml)
@@ -904,7 +904,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			se.epub.write_epub(work_epub_root_directory, work_directory / epub_output_filename)
 
 			# Generate the Kindle file
-			# We place it in the work directory because later we have to update the asin, and the se.mobi.update_asin() function will write to the final output directory
+			# We place it in the work directory because later we have to update the asin, and the mobi.update_asin() function will write to the final output directory
 			cover_path = work_epub_root_directory / "epub" / metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@href")[0].replace(".svg", ".jpg")
 
 			# Path arguments must be cast to string for Windows compatibility.
@@ -916,7 +916,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			# Success, extract the Kindle cover thumbnail
 
 			# Update the ASIN in the generated file
-			se.mobi.update_asin(asin, work_directory / kindle_output_filename, output_directory / kindle_output_filename)
+			mobi.update_asin(asin, work_directory / kindle_output_filename, output_directory / kindle_output_filename)
 
 			# Extract the thumbnail
 			# Path arguments must be cast to string for Windows compatibility.
