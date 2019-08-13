@@ -27,7 +27,7 @@ import se.epub
 from se.vendor.mobi import mobi
 import se.typography
 import se.images
-from se.vendor.kobo import kobo
+from se.vendor.kobo_touch_extended import kobo
 
 
 COVER_SVG_WIDTH = 1400

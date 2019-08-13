@@ -7,6 +7,11 @@ Kobo functions based on code from the Calibre Kobo Touch Extended Driver
 https://www.mobileread.com/forums/showthread.php?t=211135
 """
 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+# Copyright (C) 2013, Joel Goguen <jgoguen@jgoguen.ca>
+
 from copy import deepcopy
 import regex
 import lxml.etree as etree
