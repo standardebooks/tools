@@ -386,6 +386,13 @@ def lint(self, metadata_xhtml) -> list:
 					if "<title>Half Title</title>" not in file_contents:
 						messages.append(LintMessage("Half title <title> tag must contain exactly: \"Half Title\".", se.MESSAGE_TYPE_ERROR, filename))
 
+				if filename == "colophon.xhtml":
+					if "<a href=\"{}\">{}</a>".format(self.generated_identifier.replace("url:", ""), self.generated_identifier.replace("url:https://", "")) not in file_contents:
+						messages.append(LintMessage("Unexpected SE identifier in colophon. Expected: {}".format(self.generated_identifier), se.MESSAGE_TYPE_ERROR, filename))
+
+					if ">trl<" in metadata_xhtml and "translated from" not in file_contents:
+						messages.append(LintMessage("Translator detected in metadata, but no 'translated from LANG' block in colophon", se.MESSAGE_TYPE_ERROR, filename))
+
 				if filename == "titlepage.xhtml":
 					if "<title>Titlepage</title>" not in file_contents:
 						messages.append(LintMessage("Titlepage <title> tag must contain exactly: \"Titlepage\".", se.MESSAGE_TYPE_ERROR, filename))
@@ -1061,12 +1068,6 @@ def lint(self, metadata_xhtml) -> list:
 
 				if filename == "loi.xhtml" and ">ill<" not in metadata_xhtml:
 					messages.append(LintMessage("loi.xhtml found, but no MARC relator 'ill' (Illustrator)", se.MESSAGE_TYPE_WARNING, filename))
-
-				if filename == "colophon.xhtml" and "<a href=\"{}\">{}</a>".format(self.generated_identifier.replace("url:", ""), self.generated_identifier.replace("url:https://", "")) not in file_contents:
-					messages.append(LintMessage("Unexpected SE identifier in colophon. Expected: {}".format(self.generated_identifier), se.MESSAGE_TYPE_ERROR, filename))
-
-				if filename == "colophon.xhtml" and ">trl<" in metadata_xhtml and "translated from" not in file_contents:
-					messages.append(LintMessage("Translator detected in metadata, but no 'translated from LANG' block in colophon", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for wrong semantics in frontmatter/backmatter
 				if filename in se.FRONTMATTER_FILENAMES and "frontmatter" not in file_contents:
