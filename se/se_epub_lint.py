@@ -1048,9 +1048,12 @@ def lint(self, metadata_xhtml) -> list:
 
 							with open(self.path / "src" / "epub" / "text" / chapter_ref, "r", encoding="utf-8") as chapter:
 								figure = BeautifulSoup(chapter, "lxml").select("#" + figure_ref)[0]
+								if figure.img:
+									figure_img_alt = figure.img.get('alt')
+
 								if figure.figcaption:
 									figcaption_text = figure.figcaption.get_text()
-							if figcaption_text != "" and loi_text != "" and figcaption_text != loi_text:
+							if (figcaption_text != "" and loi_text != "" and figcaption_text != loi_text) and (figure_img_alt != "" and loi_text != "" and figure_img_alt != loi_text):
 								messages.append(LintMessage("The <figcaption> tag of {} doesn’t match the text in its LoI entry".format(figure_ref), se.MESSAGE_TYPE_WARNING, chapter_ref))
 
 				# Check for missing MARC relators
