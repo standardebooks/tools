@@ -1047,7 +1047,12 @@ def lint(self, metadata_xhtml) -> list:
 							loi_text = illustration.get_text()
 
 							with open(self.path / "src" / "epub" / "text" / chapter_ref, "r", encoding="utf-8") as chapter:
-								figure = BeautifulSoup(chapter, "lxml").select("#" + figure_ref)[0]
+								try:
+									figure = BeautifulSoup(chapter, "lxml").select("#" + figure_ref)[0]
+								except Exception:
+									messages.append(LintMessage("#{} not found in file {}".format(figure_ref, chapter_ref), se.MESSAGE_TYPE_ERROR, 'loi.xhtml'))
+									continue
+
 								if figure.img:
 									figure_img_alt = figure.img.get('alt')
 
