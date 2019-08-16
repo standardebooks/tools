@@ -218,7 +218,10 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
 	xhtml = regex.sub(r"Tolstoi", r"Tolstoy", xhtml)				# Tolstoi -> Tolstoy
 	xhtml = regex.sub(r"Buonaparte", r"Bonaparte", xhtml)				# Buonaparte -> Bonaparte
-	xhtml = regex.sub(r"Shake?spear([^ie])", r"Shakespeare\1", xhtml)		# Shakespear/Shakspear -> Shakespeare
+	xhtml = regex.sub(r"Shake?spea?r([^ie])", r"Shakespeare\1", xhtml)		# Shakespear/Shakspeare -> Shakespeare
+	xhtml = regex.sub(r"Shake?spea?re", r"Shakespeare", xhtml)			# Shakespear/Shakspeare -> Shakespeare
+	xhtml = regex.sub(r"Shakspea?rean", r"Shakespearean", xhtml)			# Shaksperean -> Shakespearean
+	xhtml = regex.sub(r"Shakspea?re?’s", r"Shakespeare’s", xhtml)			# Shakspere’s -> Shakespeare’s
 	xhtml = regex.sub(r"Raffaelle", r"Raphael", xhtml)				# Raffaelle -> Raphael
 	xhtml = regex.sub(r"Michael Angelo", r"Michaelangelo", xhtml)			# Michael Angelo -> Michaelangelo
 	xhtml = regex.sub(r"\bVergil", r"Virgil", xhtml)				# Vergil -> Virgil
