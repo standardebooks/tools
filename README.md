@@ -104,7 +104,7 @@ These instructions were tested on macOS 10.12 and 10.13. Your mileage may vary. 
 	pip3 install pyopenssl
 
 	# Install pipx.
-	python3 -m pip install --user pipx
+	python3 -m pip install pipx
 	python3 -m pipx ensurepath
 
 	# Install required applications.
