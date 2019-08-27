@@ -138,13 +138,15 @@ sudo ln -s $(readlink -f .)/tools/se/completions/bash/se /usr/share/bash-complet
 
 Now the `se` binary is in your path, and any edits you make to source files in the `tools/` directory are immediately reflected when executing the binary.
 
-You may also want to run `pylint` on the source code. To do that with `pipx`, you have to inject `pylint` into the venv `pipx` created for the `standardebooks` package:
+### Linting with `pylint`
+
+Before we can use `pylint` on the toolset source, we have to inject `pylint` into the venv `pipx` created for the `standardebooks` package:
 
 ```shell
 pipx inject standardebooks pylint
 ```
 
-Then make sure you call the `pylint` binary that `pipx` installed in the `standardebooks` venv:
+Then make sure to call the `pylint` binary that `pipx` installed in the `standardebooks` venv, *not* any other globally-installed `pylint` binary:
 
 ```shell
 cd /path/to/tools/repo
