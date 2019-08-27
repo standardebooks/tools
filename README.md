@@ -14,7 +14,7 @@ To install the toolset locally for development and debugging, see [Installation 
 
 ```shell
 # Install some pre-flight dependencies.
-sudo apt install -y python3-pip libxml2-utils librsvg2-bin libimage-exiftool-perl imagemagick jarwrapper default-jre inkscape calibre curl git
+sudo apt install -y python3-pip libxml2-utils librsvg2-bin libimage-exiftool-perl imagemagick default-jre inkscape calibre curl git
 
 # Install pipx.
 python3 -m pip install --user pipx
@@ -28,13 +28,6 @@ curl -s -o ~/.local/share/fonts/OFLGoudyStM-Italic.otf "https://raw.githubuserco
 
 # Refresh the local font cache.
 sudo fc-cache -f
-
-# Download and install the required version of epubcheck.
-wget --quiet -O /tmp/epubcheck.zip $(wget --quiet -O - https://api.github.com/repos/w3c/epubcheck/releases/latest | grep -E --only-matching "\"browser_download_url\":\s*\"(.*?)\"" | sed "s/\"browser_download_url\":\s*//g" | sed "s/\"//g")
-unzip -d $HOME/.local/share/ /tmp/epubcheck.zip
-mv $HOME/.local/share/epubcheck-* $HOME/.local/share/epubcheck
-sudo chmod +x $HOME/.local/share/epubcheck/epubcheck.jar
-sudo ln -s $HOME/.local/share/epubcheck/epubcheck.jar /usr/local/bin/epubcheck
 
 # Install the toolset.
 pipx install standardebooks
@@ -65,17 +58,6 @@ curl -s -o ~/.local/share/fonts/OFLGoudyStM-Italic.otf "https://raw.githubuserco
 # Refresh the local font cache.
 sudo fc-cache -f
 
-# Download and install the required version of epubcheck.
-wget --quiet -O /tmp/epubcheck.zip $(wget --quiet -O - https://api.github.com/repos/w3c/epubcheck/releases/latest | grep -E --only-matching "\"browser_download_url\":\s*\"(.*?)\"" | sed "s/\"browser_download_url\":\s*//g" | sed "s/\"//g")
-unzip -d $HOME/.local/share/ /tmp/epubcheck.zip
-mv $HOME/.local/share/epubcheck-* $HOME/.local/share/epubcheck
-sudo chmod +x $HOME/.local/share/epubcheck/epubcheck.jar
-
-# Set up a wrapper script to call the epubcheck jar file.
-# Ubuntu uses `jarwrapper` to let you execute a jar file directly on the command line. Fedora does not have this capability without extra configuration.
-echo -e "#\!/usr/bin/env bash\n/usr/bin/java -jar \"\$HOME/.local/share/epubcheck/epubcheck.jar\" \"\$@\"" | sudo tee /usr/local/bin/epubcheck
-sudo chmod +x /usr/local/bin/epubcheck
-
 # Install the toolset.
 pipx install standardebooks
 
@@ -100,7 +82,7 @@ These instructions were tested on macOS 10.12 and 10.13. Your mileage may vary. 
 
 	```shell
 	# Install some pre-flight dependencies.
-	brew install python epubcheck imagemagick libmagic librsvg exiftool git
+	brew install python imagemagick libmagic librsvg exiftool git
 	pip3 install pyopenssl
 
 	# Install pipx.

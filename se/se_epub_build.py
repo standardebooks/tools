@@ -64,9 +64,9 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 	if run_epubcheck:
 		try:
-			epubcheck_path = Path(shutil.which("epubcheck"))
+			Path(shutil.which("java"))
 		except Exception:
-			raise se.MissingDependencyException("Couldn’t locate epubcheck. Is it installed?")
+			raise se.MissingDependencyException("Couldn’t locate java. Is it installed?")
 
 	navdoc2ncx_xsl_filename = resource_filename("se", str(Path("data") / "navdoc2ncx.xsl"))
 	mathml_xsl_filename = resource_filename("se", str(Path("data") / "mathmlcontent2presentation.xsl"))
@@ -740,18 +740,20 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 				print("\tRunning epubcheck on {} ...".format(epub_output_filename), end="", flush=True)
 
 			# Path arguments must be cast to string for Windows compatibility.
-			output = subprocess.run([str(epubcheck_path), "--quiet", str(output_directory / epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
-
-			# epubcheck on Ubuntu 18.04 outputs some seemingly harmless warnings; flush them here.
-			if output:
-				output = regex.sub(r"\s*Warning at char 3 in xsl:param/@select on line.+", "", output)
-				output = regex.sub(r"\s*SXWN9000: The parent axis starting at a document node will never select anything", "", output)
+			output = subprocess.run(["java", "-jar", resource_filename("se", str(Path("data") / "epubcheck" / "epubcheck.jar")), "--quiet", str(output_directory / epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
 
 			if output:
+				# Get the epubcheck version to print to the console
+				version_output = subprocess.run(["java", "-jar", resource_filename("se", str(Path("data") / "epubcheck" / "epubcheck.jar")), "--version"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
+				version = regex.search(r"[0-9]+\.([0-9]+\.?)*", version_output, flags=regex.MULTILINE).group(0)
+
+				# Remove trailing lines from epubcheck output
+				output = output.replace("\n\nCheck finished with errors", "")
+
 				if verbose:
-					print("\n\t\t" + "\t\t".join(output.splitlines(True)), file=sys.stderr)
+					print("\n\t\tepubcheck v{} failed with:\n\t\t".format(version) + "\t\t".join(output.splitlines(True)), file=sys.stderr)
 				else:
-					print(output, file=sys.stderr)
+					print("epubcheck v{} failed with:\n{}".format(version, output), file=sys.stderr)
 				return
 
 			if verbose:
