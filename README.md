@@ -14,23 +14,21 @@ To install the toolset locally for development and debugging, see [Installation 
 
 ```shell
 # Install some pre-flight dependencies.
-sudo apt install -y python3-pip libxml2-utils librsvg2-bin libimage-exiftool-perl imagemagick default-jre inkscape calibre curl git
+sudo apt install -y python3-pip libxml2-utils librsvg2-bin libimage-exiftool-perl imagemagick default-jre inkscape calibre git
 
 # Install pipx.
 python3 -m pip install --user pipx
 python3 -m pipx ensurepath
 
+# Install the toolset.
+pipx install standardebooks
+
 # Install required fonts.
-mkdir -p ~/.local/share/fonts/
-curl -s -o ~/.local/share/fonts/LeagueSpartan-Bold.otf "https://raw.githubusercontent.com/theleagueof/league-spartan/master/LeagueSpartan-Bold.otf"
-curl -s -o ~/.local/share/fonts/OFLGoudyStM.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM.otf"
-curl -s -o ~/.local/share/fonts/OFLGoudyStM-Italic.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM-Italic.otf"
+mkdir -p $HOME/.local/share/fonts/
+cp $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/data/fonts/*/*.otf $HOME/.local/share/fonts/
 
 # Refresh the local font cache.
 sudo fc-cache -f
-
-# Install the toolset.
-pipx install standardebooks
 
 # Optional: ZSH users can install tab completion.
 sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
@@ -49,17 +47,12 @@ sudo dnf install firefox ImageMagick calibre librsvg2-tools vim inkscape libxml2
 python3 -m pip install --user pipx
 python3 -m pipx ensurepath
 
-# Install required fonts.
-mkdir -p ~/.local/share/fonts/
-curl -s -o ~/.local/share/fonts/LeagueSpartan-Bold.otf "https://raw.githubusercontent.com/theleagueof/league-spartan/master/LeagueSpartan-Bold.otf"
-curl -s -o ~/.local/share/fonts/OFLGoudyStM.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM.otf"
-curl -s -o ~/.local/share/fonts/OFLGoudyStM-Italic.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM-Italic.otf"
-
-# Refresh the local font cache.
-sudo fc-cache -f
-
 # Install the toolset.
 pipx install standardebooks
+
+# Install required fonts.
+mkdir -p $HOME/.local/share/fonts/
+cp $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/data/fonts/*/*.otf $HOME/.local/share/fonts/
 
 # Optional: ZSH users can install tab completion.
 sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
@@ -92,13 +85,12 @@ These instructions were tested on macOS 10.12 and 10.13. Your mileage may vary. 
 	# Install required applications.
 	brew cask install java calibre xquartz inkscape
 
-	# Install required fonts.
-	curl -s -o ~/Library/Fonts/LeagueSpartan-Bold.otf "https://raw.githubusercontent.com/theleagueof/league-spartan/master/LeagueSpartan-Bold.otf"
-	curl -s -o ~/Library/Fonts/OFLGoudyStM.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM.otf"
-	curl -s -o ~/Library/Fonts/OFLGoudyStM-Italic.otf "https://raw.githubusercontent.com/theleagueof/sorts-mill-goudy/master/OFLGoudyStM-Italic.otf"
-
 	# Install the toolset.
 	pipx install standardebooks
+
+	# Install required fonts.
+	mkdir -p $HOME/.local/share/fonts/
+	cp $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/data/fonts/*/*.otf ~/Library/Fonts/
 	```
 
 ## Installation for developers
