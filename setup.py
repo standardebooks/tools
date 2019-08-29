@@ -25,13 +25,14 @@ def _get_file_contents(file_path: Path) -> str:
         return file.read()
 
 setup(
-    version="1.0.20",
+    version="1.0.21",
     name="standardebooks",
     description="The toolset used to produce Standard Ebooks epub ebooks.",
     long_description=_get_file_contents(Path(__file__).resolve().parent / "README.md"),
     long_description_content_type="text/markdown",
     url="https://standardebooks.org",
     author="Standard Ebooks",
+    author_email="admin@standardebooks.org",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -61,9 +62,6 @@ setup(
         "termcolor==1.1.0",
         "terminaltables==3.1.0"
     ],
-    package_data={
-        "se": ["data/*", "data/templates/*", "data/templates/META-INF/*", "completions/*", "completions/*/*"]
-    },
     entry_points={
         "console_scripts": [
             "se = se.executables:main",
