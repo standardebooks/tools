@@ -62,6 +62,7 @@ setup(
         "termcolor==1.1.0",
         "terminaltables==3.1.0"
     ],
+    include_package_data=True,
     entry_points={
         "console_scripts": [
             "se = se.executables:main",
