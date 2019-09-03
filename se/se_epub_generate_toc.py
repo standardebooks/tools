@@ -271,9 +271,9 @@ def get_existing_toc(toc_path: str) -> BeautifulSoup:
 	with open(toc_path, "r", encoding="utf-8") as file:
 		return BeautifulSoup(file.read(), "html.parser")
 
-def output_toc(item_list: list, landmark_list, toc_path: str, work_type: str, work_title: str) -> str:
+def output_toc(item_list: list, page_list: list, landmark_list, toc_path: str, work_type: str, work_title: str) -> str:
 	"""
-	Outputs the contructed ToC based on the lists of items and landmarks found,
+	Outputs the constructed ToC based on the lists of items, pages and landmarks found,
 	either to stdout or overwriting the existing ToC file
 	"""
 
@@ -284,20 +284,35 @@ def output_toc(item_list: list, landmark_list, toc_path: str, work_type: str, wo
 	if existing_toc is None:
 		raise se.InvalidInputException("Existing ToC not found.")
 
-	# There should be exactly two nav sections.
+	# There should be two or three nav sections.
 	navs = existing_toc.find_all("nav")
 
 	if len(navs) < 2:
 		raise se.InvalidInputException("Existing ToC has too few nav sections.")
 
-	item_ol = navs[0].find("ol")
-	item_ol.clear()
-	landmark_ol = navs[1].find("ol")
-	landmark_ol.clear()
-	new_items = BeautifulSoup(process_items(item_list), "html.parser")
-	item_ol.append(new_items)
-	new_landmarks = BeautifulSoup(process_landmarks(landmark_list, work_type, work_title), "html.parser")
-	landmark_ol.append(new_landmarks)
+	# if we have pagebreak entries but only two nav sections we need to add one
+	if len(page_list) > 0 and len(navs) < 3:
+		page_list_nav = BeautifulSoup("<nav epub:type='page-list' hidden=''><ol></ol></nav>", "html.parser")
+		navs[-1].insert_after(page_list_nav)
+		navs = existing_toc.find_all("nav")
+	# else if there are no pagebreak entries and we have three nav sections we need to remove one
+	elif len(page_list) == 0 and len(navs) > 2:
+		existing_toc.find("nav", attrs={"epub:type": "page-list"}).decompose()
+		del navs[-1]
+
+	for nav in navs:
+		ol = nav.find("ol")
+		ol.clear()
+		new_items = []
+		if nav.has_attr("epub:type"):
+			if nav["epub:type"] == "toc":
+				new_items = BeautifulSoup(process_items(item_list), "html.parser")
+			elif nav["epub:type"] == "landmarks":
+				new_items = BeautifulSoup(process_landmarks(landmark_list, work_type, work_title), "html.parser")
+			elif nav["epub:type"] == "page-list":
+				new_items = BeautifulSoup(process_items(page_list), "html.parser")
+		ol.append(new_items)
+
 	return format_xhtml(str(existing_toc))
 
 def get_parent_id(hchild: Tag) -> str:
@@ -412,6 +427,42 @@ def process_heading(heading, textf, is_toplevel, single_file: bool) -> TocItem:
 
 	return toc_item
 
+def is_pagebreak_element(tag):
+	"""
+	Filters for <span epub:type="pagebreak" ... elements
+	"""
+	return tag.name == "span" and tag.has_attr("epub:type") and tag["epub:type"] == "pagebreak"
+
+def process_pagebreaks(soup: BeautifulSoup, textf: str, page_list: list):
+	"""
+	Find page break markers in current file and extract page data
+	into items added to page_list.
+	"""
+
+	# Find all epub:type="pagebreak" spans
+	breaks = soup.find_all(is_pagebreak_element)
+
+	for pagebreak in breaks:
+		toc_item = process_pagebreak(pagebreak, textf)
+		page_list.append(toc_item)
+
+def process_pagebreak(pagebreak, textf) -> TocItem:
+	"""
+	Generate and return a TocItem from this pagebreak.
+	"""
+
+	toc_item = TocItem()
+	toc_item.epub_type = "pagebreak"
+	toc_item.title = pagebreak["title"] if pagebreak.has_attr("title") else ""
+	toc_item.id = pagebreak["id"] if pagebreak.has_attr("id") else ""
+
+	if toc_item.id == "":
+		toc_item.file_link = textf
+	else:
+		toc_item.file_link = textf + "#" + toc_item.id
+
+	return toc_item
+
 def get_book_division(tag: BeautifulSoup) -> BookDivision:
 	"""
 	Determine the kind of book division. At present only Part and Division
@@ -481,13 +532,14 @@ def process_heading_contents(heading, toc_item):
 		#  Now strip out any linefeeds or tabs we may have encountered.
 		toc_item.title = regex.sub(r"(\n|\t)", "", accumulator)
 
-def process_all_content(file_list, text_path) -> (list, list):
+def process_all_content(file_list, text_path) -> (list, list, list):
 	"""
 	Analyze the whole content of the project, build and return lists
 	if toc_items and landmarks.
 	"""
 
 	toc_list = []
+	page_list = []
 	landmarks = []
 
 	# We make two passes through the work, because we need to know
@@ -511,6 +563,7 @@ def process_all_content(file_list, text_path) -> (list, list):
 		if place == Position.BACK:
 			nest_under_halftitle = False
 		process_headings(soup, textf, toc_list, nest_under_halftitle, single_file)
+		process_pagebreaks(soup, textf, page_list)
 		if textf == "halftitle.xhtml":
 			nest_under_halftitle = True
 
@@ -520,7 +573,7 @@ def process_all_content(file_list, text_path) -> (list, list):
 	last_toc.title = "dummy"
 	toc_list.append(last_toc)
 
-	return landmarks, toc_list
+	return landmarks, toc_list, page_list
 
 def generate_toc(self) -> str:
 	"""
@@ -533,6 +586,6 @@ def generate_toc(self) -> str:
 	work_title = get_work_title(soup)
 	work_type = get_work_type(self.metadata_xhtml)
 
-	landmarks, toc_list = process_all_content(file_list, self.path / "src" / "epub" / "text")
+	landmarks, toc_list, page_list = process_all_content(file_list, self.path / "src" / "epub" / "text")
 
-	return output_toc(toc_list, landmarks, self.path / "src" / "epub" / "toc.xhtml", work_type, work_title)
+	return output_toc(toc_list, page_list, landmarks, self.path / "src" / "epub" / "toc.xhtml", work_type, work_title)

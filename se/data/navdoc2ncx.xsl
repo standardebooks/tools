@@ -25,6 +25,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 	xmlns:opf="http://www.idpf.org/2007/opf"
 	xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:re="http://exslt.org/regular-expressions"
 	xmlns:c="urn:oasis:names:tc:opendocument:xmlns:container"
 	version="2.0">
 
@@ -190,7 +191,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 					    </xsl:when>
 					    <xsl:otherwise>
 					        <xsl:choose>
-					            <xsl:when test="matches($pageNumber,'[0-9]+')">
+					            <xsl:when test="re:match($pageNumber,'[0-9]+')">
 					                <!-- can't distinguish body from back in the nav doc -->
 					                <xsl:text>normal</xsl:text>
 					            </xsl:when>
