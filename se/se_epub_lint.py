@@ -533,9 +533,9 @@ def lint(self, metadata_xhtml) -> list:
 							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
 					# If we select on the xml namespace, make sure we define the namespace in the CSS, otherwise the selector won't work
-					matches = regex.findall(r"\[\s*xml\s*|", file_contents)
+					matches = regex.findall(r"\[\s*xml\s*\|", file_contents)
 					if matches and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in file_contents:
-						messages.append(LintMessage("[xml|attr] selector in CSS, but no XML namespace declared (@namespace xml \"http://www.w3.org/XML/1998/namespace\";).", se.MESSAGE_TYPE_ERROR, filename, True))
+						messages.append(LintMessage("[xml|attr] selector in CSS, but no XML namespace declared (@namespace xml \"http://www.w3.org/XML/1998/namespace\";).", se.MESSAGE_TYPE_ERROR, filename))
 
 
 				if filename.endswith(".xhtml"):
