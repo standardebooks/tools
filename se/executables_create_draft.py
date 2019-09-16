@@ -362,7 +362,8 @@ def create_draft(args: list):
 		# Get the ebook HTML URL from the metadata
 		pg_ebook_url = None
 		for element in soup.select("a[type^=\"text/html\"]"):
-			pg_ebook_url = regex.sub("^//", "https://", element["href"])
+			pg_ebook_url = regex.sub(r"^//", "https://", element["href"])
+			pg_ebook_url = regex.sub(r"^/", "https://www.gutenberg.org/", pg_ebook_url)
 
 		if not pg_ebook_url:
 			raise se.RemoteCommandErrorException("Could download ebook metadata, but couldn’t find URL for the ebook HTML.")
