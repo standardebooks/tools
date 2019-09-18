@@ -430,7 +430,7 @@ def extract_ebook() -> int:
 			old_stdout = sys.stdout
 			sys.stdout = TextIOWrapper(BytesIO(), sys.stdout.encoding)
 
-			kindleunpack.unpackBook(target, extracted_path)
+			kindleunpack.unpackBook(str(target), str(extracted_path))
 
 			# Restore stdout
 			sys.stdout.close()
