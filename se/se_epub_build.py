@@ -763,6 +763,25 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			if verbose:
 				print("\tBuilding {} ...".format(kindle_output_filename), end="", flush=True)
 
+			# There's a bug in Calibre <= 3.48.0 where authors who have more than one MARC relator role
+			# display as "unknown author" in the Kindle interface.
+			# See: https://bugs.launchpad.net/calibre/+bug/1844578
+			# Until the bug is fixed, we simply remove any other MARC relator on the dc:creator element.
+			# Once the bug is fixed, we can remove this block.
+			with open(work_epub_root_directory / "epub" / "content.opf", "r+", encoding="utf-8") as file:
+				xhtml = file.read()
+
+				processed_xhtml = xhtml
+
+				for match in regex.findall(r"<meta property=\"role\" refines=\"#author\" scheme=\"marc:relators\">.*?</meta>", xhtml):
+					if ">aut<" not in match:
+						processed_xhtml = processed_xhtml.replace(match, "")
+
+				if processed_xhtml != xhtml:
+					file.seek(0)
+					file.write(processed_xhtml)
+					file.truncate()
+
 			# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
 			with open(work_epub_root_directory / "epub" / toc_filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
