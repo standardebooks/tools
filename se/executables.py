@@ -73,7 +73,10 @@ def main() -> int:
 		args.command = "se_help"
 
 	# Now execute the command
-	return globals()[args.command.replace("-", "_")]()
+	try:
+	        return globals()[args.command.replace("-", "_")]()
+	except KeyboardInterrupt:
+		return 130 # Exit code for ctrl + c; seee http://www.tldp.org/LDP/abs/html/exitcodes.html
 
 def british2american() -> int:
 	"""
