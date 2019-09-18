@@ -350,6 +350,9 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		metadata_xhtml = metadata_xhtml.replace("image/svg+xml", "image/png")
 		metadata_xhtml = regex.sub(r"properties=\"([^\"]*?)svg([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xhtml) # We may also have the `mathml` property
 
+		# Add an element noting the version of the se tools that built this ebook
+		metadata_xhtml = regex.sub(r"<dc:publisher", "<meta property=\"se:built-with\">{}</meta>\n\t\t<dc:publisher".format(se.VERSION), metadata_xhtml)
+
 		# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
 		metadata_xhtml = metadata_xhtml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
 
