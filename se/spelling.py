@@ -18,7 +18,7 @@ def modernize_hyphenation(xhtml: str) -> str:
 	INPUTS
 	xhtml: A string of XHTML to modernize
 
-	OUTPUTS:
+	OUTPUTS
 	A string representing the XHTML with its hyphenation modernized
 	"""
 
@@ -48,6 +48,31 @@ def modernize_hyphenation(xhtml: str) -> str:
 
 	return xhtml
 
+def detect_problem_spellings(xhtml: str) -> list:
+	"""
+	Return a list of potential problem spellings, that cannot be scripted due to a
+	word having various meanings.
+
+	For example, "staid" can be an archaic spelling of "stayed",
+	or as an adjective it could mean "marked by settled sedateness
+	and often prim self-restraint".
+
+	INPUTS
+	xhtml: A string of XHTML to inspect
+
+	OUTPUTS
+	A list of strings representing potential words to manually inspect
+	"""
+
+	# Uncomment if we eventually need the document language
+	# language = se.get_xhtml_language(xhtml)
+	output = []
+
+	if regex.search(r"\bstaid\b", xhtml):
+		output.append("“staid” detected: should be modernized if it is the past tense of “stay,” but not if used as an adjective meaning “sedate or prim.”")
+
+	return output
+
 def modernize_spelling(xhtml: str) -> str:
 	"""
 	Convert old-timey spelling on a case-by-case basis.
@@ -55,20 +80,11 @@ def modernize_spelling(xhtml: str) -> str:
 	INPUTS
 	xhtml: A string of XHTML to modernize
 
-	OUTPUTS:
+	OUTPUTS
 	A string representing the XHTML with its spelling modernized
 	"""
 
-	# What language are we using?
-	supported = ["en-US", "en-GB", "en-AU", "en-CA"]
-	match = regex.search(r"<html[^>]+?xml:lang=\"([^\"]+)\"", xhtml)
-	if match:
-		language = match.group(1)
-	else:
-		language = None
-	if not language in supported:
-		language_list = ", ".join(supported[:-1]) + ", and " + supported[-1]
-		raise se.InvalidLanguageException("No valid xml:lang attribute in <html> root. Only {} are supported.".format(language_list))
+	language = se.get_xhtml_language(xhtml)
 
 	# ADDING NEW WORDS TO THIS LIST:
 	# A good way to check if a word is "archaic" is to do a Google N-Gram search: https://books.google.com/ngrams/graph?case_insensitive=on&year_start=1800&year_end=2000&smoothing=3

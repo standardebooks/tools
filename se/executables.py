@@ -734,6 +734,11 @@ def modernize_spelling() -> int:
 
 				try:
 					new_xhtml = se.spelling.modernize_spelling(xhtml)
+					problem_spellings = se.spelling.detect_problem_spellings(xhtml)
+
+					for problem_spelling in problem_spellings:
+						print("{}{}".format((filename.name) + ": " if not args.verbose else "", problem_spelling))
+
 				except se.InvalidLanguageException as ex:
 					se.print_error("{}{}".format(ex, (" File: " + str(filename)) if not args.verbose else ""))
 					return ex.code
