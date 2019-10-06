@@ -686,6 +686,40 @@ def print_toc() -> int:
 
 	return 0
 
+
+def renumber_endnotes() -> int:
+	"""
+	Entry point for `se renumber-endnotes`
+
+	The meat of this function is broken out into the se_epub_generate_endnotes.py module for readability
+	and maintainability.
+	"""
+
+	parser = argparse.ArgumentParser(description="Renumber endnotes from beginning and generate new endnotes file.")
+	parser.add_argument("-v", "--verbose", action="store_true", help="generate detailed report of changes")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	args = parser.parse_args()
+
+	for directory in args.directories:
+		try:
+			se_epub = SeEpub(directory)
+		except se.SeException as ex:
+			se.print_error(ex)
+			return ex.code
+
+		try:
+			print(se_epub.generate_endnotes())  # gives report on actions taken
+		except se.SeException as ex:
+			se.print_error(ex)
+			return ex.code
+		except FileNotFoundError:
+			se.print_error("Couldn’t find endnotes.xhtml file.")
+			return se.InvalidSeEbookException
+
+	return 0
+
+
+
 def make_url_safe() -> int:
 	"""
 	Entry point for `se make-url-safe`
