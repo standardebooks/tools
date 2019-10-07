@@ -783,14 +783,3 @@ class SeEpub:
 		from se.se_epub_generate_toc import generate_toc
 
 		return generate_toc(self)
-
-	def generate_endnotes(self) -> str:
-		"""
-		The generate_endnotes() function is very big so for readability and maintainability
-		it's broken out to a separate file. Strictly speaking that file can be inlined
-		into this class.
-		"""
-
-		from se.se_epub_generate_endnotes import generate_endnotes
-
-		return generate_endnotes(self)
