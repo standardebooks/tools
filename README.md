@@ -129,7 +129,7 @@ These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 rele
 	cp $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/data/fonts/*/*.otf $HOME/.local/share/fonts/
 
 	# Refresh the local font cache.
-	sudo fc-cache -f
+	doas fc-cache -f
 	```
 	
 ## Installation for developers
