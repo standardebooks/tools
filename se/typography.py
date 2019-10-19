@@ -38,6 +38,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 		xhtml = html.unescape(xhtml) # This converts html entites to unicode
 		xhtml = regex.sub(r"&([^#a-z])", r"&amp;\1", xhtml) # Oops!  html.unescape also unescapes plain ampersands...
 
+	# Replace no-break hyphen with regular hyphen
+	xhtml = xhtml.replace(se.NO_BREAK_HYPHEN, "-")
+
 	# Replace sequential em dashes with the two or three em dash character
 	xhtml = xhtml.replace("———", "⸻")
 	xhtml = xhtml.replace("——", "⸺")
