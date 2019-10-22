@@ -124,6 +124,10 @@ class LintFailedException(SeException):
 	""" Lint failed """
 	code = 13
 
+class InvalidCssException(SeException):
+	""" Invalid CSS """
+	code = 14
+
 def natural_sort(list_to_sort: list) -> list:
 	"""
 	Natural sort a list.

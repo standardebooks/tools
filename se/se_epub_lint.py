@@ -143,6 +143,8 @@ def _get_unused_selectors(self) -> set:
 			# This gets thrown if we use pseudo-elements, which lxml doesn't support
 			unused_selectors.remove(selector)
 			continue
+		except lxml.cssselect.SelectorSyntaxError as ex:
+			raise se.InvalidCssException("Couldn't parse CSS in or near this line: {}\n{}".format(selector, ex))
 
 		for filename in filenames:
 			if not filename.endswith("titlepage.xhtml") and not filename.endswith("imprint.xhtml") and not filename.endswith("uncopyright.xhtml"):

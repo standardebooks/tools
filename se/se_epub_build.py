@@ -256,6 +256,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 						except lxml.cssselect.ExpressionError:
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
 							pass
+						except lxml.cssselect.SelectorSyntaxError as ex:
+							raise se.InvalidCssException("Couldn't parse CSS in or near this line: {}\n{}".format(selector, ex))
 
 						# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
 						if "[epub|type" in selector:
@@ -282,6 +284,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 						except lxml.cssselect.ExpressionError:
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
 							continue
+						except lxml.cssselect.SelectorSyntaxError as ex:
+							raise se.InvalidCssException("Couldn't parse CSS in or near this line: {}\n{}".format(selector, ex))
 
 						# Convert <abbr> to <span>
 						if "abbr" in selector:
