@@ -154,8 +154,7 @@ def _get_unused_selectors(self) -> set:
 				try:
 					tree = etree.fromstring(str.encode(xhtml))
 				except Exception:
-					se.print_error("Couldn't parse XHTML in file: {}".format(filename))
-					exit(1)
+					raise se.InvalidXhtmlException("Couldn't parse XHTML in file: {}".format(filename))
 
 				if tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
 					unused_selectors.remove(selector)

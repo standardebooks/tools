@@ -585,11 +585,10 @@ def lint() -> int:
 	for directory in args.directories:
 		try:
 			se_epub = SeEpub(directory)
+			messages = se_epub.lint()
 		except se.SeException as ex:
 			se.print_error(ex)
 			return ex.code
-
-		messages = se_epub.lint()
 
 		table_data = []
 
