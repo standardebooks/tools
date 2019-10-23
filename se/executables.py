@@ -337,13 +337,13 @@ def create_draft() -> int:
 	from se.executables_create_draft import create_draft as se_create_draft
 
 	parser = argparse.ArgumentParser(description="Create a skeleton of a new Standard Ebook in the current directory.")
-	parser.add_argument("-a", "--author", dest="author", required=True, help="the author of the ebook")
-	parser.add_argument("-e", "--email", dest="email", help="use this email address as the main committer for the local Git repository")
-	parser.add_argument("-g", "--create-github-repo", dest="create_github_repo", action="store_true", help="initialize a new repository at the Standard Ebooks GitHub account; Standard Ebooks admin powers required; can only be used when --create-se-repo is specified")
 	parser.add_argument("-i", "--illustrator", dest="illustrator", help="the illustrator of the ebook")
-	parser.add_argument("-p", "--gutenberg-ebook-url", dest="pg_url", help="the URL of the Project Gutenberg ebook to download")
 	parser.add_argument("-r", "--translator", dest="translator", help="the translator of the ebook")
+	parser.add_argument("-p", "--gutenberg-ebook-url", dest="pg_url", help="the URL of the Project Gutenberg ebook to download")
+	parser.add_argument("-e", "--email", dest="email", help="use this email address as the main committer for the local Git repository")
 	parser.add_argument("-s", "--create-se-repo", dest="create_se_repo", action="store_true", help="initialize a new repository on the Standard Ebook server; Standard Ebooks admin powers required")
+	parser.add_argument("-g", "--create-github-repo", dest="create_github_repo", action="store_true", help="initialize a new repository at the Standard Ebooks GitHub account; Standard Ebooks admin powers required; can only be used when --create-se-repo is specified")
+	parser.add_argument("-a", "--author", dest="author", required=True, help="the author of the ebook")
 	parser.add_argument("-t", "--title", dest="title", required=True, help="the title of the ebook")
 	args = parser.parse_args()
 
