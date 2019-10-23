@@ -70,7 +70,7 @@ class SeEpub:
 	path = ""
 	metadata_file_path = None
 	metadata_xhtml = None
-	_metadata_tree = None
+	__metadata_tree = None
 	_generated_identifier = None
 	_generated_github_repo_url = None
 	_last_commit = None # GitCommit object
@@ -122,10 +122,72 @@ class SeEpub:
 	def generated_identifier(self) -> str:
 		"""
 		Accessor
+
+		Generate an SE identifer based on the metadata in the metadata file.
 		"""
 
 		if not self._generated_identifier:
-			self._generated_identifier = self._generate_identifier()
+			# Add authors
+			identifier = "url:https://standardebooks.org/ebooks/"
+			authors = []
+			for author in self._metadata_tree.xpath("//dc:creator"):
+				authors.append(author.inner_html())
+				identifier += se.formatting.make_url_safe(author.inner_html()) + "_"
+
+			identifier = identifier.strip("_") + "/"
+
+			# Add title
+			for title in self._metadata_tree.xpath("//dc:title[@id=\"title\"]"):
+				identifier += se.formatting.make_url_safe(title.inner_html()) + "/"
+
+			# For contributors, we add both translators and illustrators.
+			# However, we may not include specific translators or illustrators in certain cases, namely
+			# if *some* contributors have a `display-seq` property, and others do not.
+			# According to the epub spec, if that is the case, we should only add those that *do* have the attribute.
+			# By SE convention, any contributor with `display-seq == 0` will be excluded from the identifier string.
+			translators = []
+			illustrators = []
+			translators_have_display_seq = False
+			illustrators_have_display_seq = False
+			for role in self._metadata_tree.xpath("//opf:meta[@property=\"role\"]"):
+				contributor_id = role.attribute("refines").lstrip("#")
+				contributor_element = self._metadata_tree.xpath("//dc:contributor[@id=\"" + contributor_id + "\"]")
+				if contributor_element:
+					contributor = {"name": contributor_element[0].inner_html(), "include": True, "display_seq": None}
+					display_seq = self._metadata_tree.xpath("//opf:meta[@property=\"display-seq\"][@refines=\"#" + contributor_id + "\"]")
+
+					if display_seq and int(display_seq[0].inner_html()) == 0:
+						contributor["include"] = False
+						display_seq = None
+
+					if role.inner_html() == "trl":
+						if display_seq:
+							contributor["display_seq"] = display_seq[0]
+							translators_have_display_seq = True
+
+						translators.append(contributor)
+
+					if role.inner_html() == "ill":
+						if display_seq:
+							contributor["display_seq"] = display_seq[0]
+							illustrators_have_display_seq = True
+
+						illustrators.append(contributor)
+
+			for translator in translators:
+				if (not translators_have_display_seq and translator["include"]) or translator["display_seq"]:
+					identifier += se.formatting.make_url_safe(translator["name"]) + "_"
+
+			if translators:
+				identifier = identifier.strip("_") + "/"
+
+			for illustrator in illustrators:
+				if (not illustrators_have_display_seq and illustrator["include"]) or illustrator["display_seq"]:
+					identifier += se.formatting.make_url_safe(illustrator["name"]) + "_"
+
+			identifier = identifier.strip("_/")
+
+			self._generated_identifier = identifier
 
 		return self._generated_identifier
 
@@ -133,17 +195,40 @@ class SeEpub:
 	def generated_github_repo_url(self) -> str:
 		"""
 		Accessor
+
+		Generate a GitHub repository URL based on the *generated* SE identifier,
+		*not* the SE identifier in the metadata file.
+
+		INPUTS
+		None
+
+		OUTPUTS
+		A string representing the GitHub repository URL (capped at maximum 100 characters).
 		"""
 
 		if not self._generated_github_repo_url:
-			self._generated_github_repo_url = self._generate_github_repo_url()
+			self._generated_github_repo_url = "https://github.com/standardebooks/" + self.generated_identifier.replace("url:https://standardebooks.org/ebooks/", "").replace("/", "_")[0:100]
 
 		return self._generated_github_repo_url
+
+	@property
+	def _metadata_tree(self) -> se.easy_xml.EasyXmlTree:
+		"""
+		Accessor
+		"""
+
+		if self.__metadata_tree is None:
+			try:
+				self.__metadata_tree = se.easy_xml.EasyXmlTree(self.metadata_xhtml)
+			except Exception as ex:
+				raise se.InvalidSeEbookException("Couldn’t parse {}: {}".format(self.metadata_file_path, ex))
+
+		return self.__metadata_tree
 
 	@staticmethod
 	def _new_bs4_tag(section: Tag, output_soup: BeautifulSoup) -> Tag:
 		"""
-		Helper function used in self.recompose()
+		Helper function used in self._recompose_xhtml()
 		Create a new BS4 tag given the current section.
 
 		INPUTS
@@ -159,19 +244,6 @@ class SeEpub:
 			tag.attrs[name] = value
 
 		return tag
-
-	def _get_metadata_tree(self) -> se.easy_xml.EasyXmlTree:
-		"""
-		Accessor
-		"""
-
-		if self._metadata_tree is None:
-			try:
-				self._metadata_tree = se.easy_xml.EasyXmlTree(self.metadata_xhtml)
-			except Exception as ex:
-				raise se.InvalidSeEbookException("Couldn’t parse {}: {}".format(self.metadata_file_path, ex))
-
-		return self._metadata_tree
 
 	def _recompose_xhtml(self, section: Tag, output_soup: BeautifulSoup) -> None:
 		"""
@@ -208,97 +280,6 @@ class SeEpub:
 					self._recompose_xhtml(child, output_soup)
 				else:
 					existing_section[0].append(child)
-
-	def _generate_github_repo_url(self) -> str:
-		"""
-		Generate a GitHub repository URL based on the *generated* SE identifier,
-		*not* the SE identifier in the metadata file.
-
-		INPUTS
-		None
-
-		OUTPUTS
-		A string representing the GitHub repository URL (capped at maximum 100 characters).
-		"""
-
-		return "https://github.com/standardebooks/" + self.generated_identifier.replace("url:https://standardebooks.org/ebooks/", "").replace("/", "_")[0:100]
-
-	def _generate_identifier(self) -> str:
-		"""
-		Generate an SE identifer based on the metadata in the metadata file.
-
-		To access this value, use the property self.generated_identifier.
-
-		INPUTS
-		None
-
-		OUTPUTS
-		A string representing the SE identifier.
-		"""
-
-		metadata_tree = self._get_metadata_tree()
-
-		# Add authors
-		identifier = "url:https://standardebooks.org/ebooks/"
-		authors = []
-		for author in metadata_tree.xpath("//dc:creator"):
-			authors.append(author.inner_html())
-			identifier += se.formatting.make_url_safe(author.inner_html()) + "_"
-
-		identifier = identifier.strip("_") + "/"
-
-		# Add title
-		for title in metadata_tree.xpath("//dc:title[@id=\"title\"]"):
-			identifier += se.formatting.make_url_safe(title.inner_html()) + "/"
-
-		# For contributors, we add both translators and illustrators.
-		# However, we may not include specific translators or illustrators in certain cases, namely
-		# if *some* contributors have a `display-seq` property, and others do not.
-		# According to the epub spec, if that is the case, we should only add those that *do* have the attribute.
-		# By SE convention, any contributor with `display-seq == 0` will be excluded from the identifier string.
-		translators = []
-		illustrators = []
-		translators_have_display_seq = False
-		illustrators_have_display_seq = False
-		for role in metadata_tree.xpath("//opf:meta[@property=\"role\"]"):
-			contributor_id = role.attribute("refines").lstrip("#")
-			contributor_element = metadata_tree.xpath("//dc:contributor[@id=\"" + contributor_id + "\"]")
-			if contributor_element:
-				contributor = {"name": contributor_element[0].inner_html(), "include": True, "display_seq": None}
-				display_seq = metadata_tree.xpath("//opf:meta[@property=\"display-seq\"][@refines=\"#" + contributor_id + "\"]")
-
-				if display_seq and int(display_seq[0].inner_html()) == 0:
-					contributor["include"] = False
-					display_seq = None
-
-				if role.inner_html() == "trl":
-					if display_seq:
-						contributor["display_seq"] = display_seq[0]
-						translators_have_display_seq = True
-
-					translators.append(contributor)
-
-				if role.inner_html() == "ill":
-					if display_seq:
-						contributor["display_seq"] = display_seq[0]
-						illustrators_have_display_seq = True
-
-					illustrators.append(contributor)
-
-		for translator in translators:
-			if (not translators_have_display_seq and translator["include"]) or translator["display_seq"]:
-				identifier += se.formatting.make_url_safe(translator["name"]) + "_"
-
-		if translators:
-			identifier = identifier.strip("_") + "/"
-
-		for illustrator in illustrators:
-			if (not illustrators_have_display_seq and illustrator["include"]) or illustrator["display_seq"]:
-				identifier += se.formatting.make_url_safe(illustrator["name"]) + "_"
-
-		identifier = identifier.strip("_/")
-
-		return identifier
 
 	def recompose(self) -> str:
 		"""
@@ -771,7 +752,7 @@ class SeEpub:
 
 		from se.se_epub_build import build
 
-		build(self, self.metadata_xhtml, self._get_metadata_tree(), run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers, verbose)
+		build(self, self.metadata_xhtml, self._metadata_tree, run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers, verbose)
 
 	def generate_toc(self) -> str:
 		"""
