@@ -58,8 +58,13 @@ class TocItem:
 
 	def toc_link(self) -> str:
 		"""
-		The output method just outputs the linking tag line
-		eg <a href=... depending on the data found.
+		Generates the hyperlink for the ToC item.
+
+		INPUTS:
+		None
+
+		OUTPUTS:
+		the linking tag line eg <a href=... depending on the data found.
 		"""
 
 		out_string = ""
@@ -82,7 +87,14 @@ class TocItem:
 
 	def landmark_link(self, work_type: str = "fiction", work_title: str = "WORK_TITLE"):
 		"""
-		Returns the linking string to be included in landmarks section.
+		Generates the landmark item (including list item tags) for the ToC item
+
+		INPUTS:
+		work_type: ("fiction" or "non-fiction")
+		work_title: the title of the book, eg "Don Quixote"
+
+		OUTPUTS:
+		the linking string to be included in landmarks section.
 		"""
 
 		out_string = ""
@@ -95,54 +107,15 @@ class TocItem:
 
 		return out_string
 
-def get_content_files(opf: BeautifulSoup) -> list:
-	"""
-	Reads the spine from content.opf to obtain a list of content files, in the order wanted for the ToC.
-	"""
-
-	itemrefs = opf.find_all("itemref")
-	ret_list = []
-	for itemref in itemrefs:
-		ret_list.append(itemref["idref"])
-
-	return ret_list
-
-def get_work_type(xhtml) -> str:
-	"""
-	Returns either "fiction" or "non-fiction"
-	"""
-
-	worktype = "fiction"
-	subjects = regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", xhtml)
-	# Unfortunately, some works are tagged "Philosophy" but are nevertheless fiction.
-	if "Nonfiction" in subjects:
-		return "non-fiction"
-	nonfiction_types = ["Adventure", "Autobiography", "Memoir", "Philosophy", "Spirituality", "Travel"]
-	for nonfiction_type in nonfiction_types:
-		if nonfiction_type in subjects:
-			worktype = "non-fiction"
-	fiction_types = ["Fantasy", "Fiction", "Horror", "Mystery", "Science Fiction"]
-	for fiction_type in fiction_types:
-		if fiction_type in subjects:
-			worktype = "fiction"
-
-	return worktype
-
-def get_work_title(opf: BeautifulSoup) -> str:
-	"""
-	From content.opf, which we assume has been correctly completed,
-	pulls out the title.
-	"""
-
-	dc_title = opf.find("dc:title")
-	if dc_title is not None:
-		return dc_title.string
-
-	return "WORK_TITLE"
-
 def get_epub_type(soup: BeautifulSoup) -> str:
 	"""
-	Retrieve the epub_type of this file to see if it"s a landmark item.
+	Retrieve the epub_type of this file to see if it's a landmark item.
+
+	INPUTS:
+	soup: BeautifulSoup representation of the file
+
+	OUTPUTS:
+	the epub_type, eg: "dedication", "epigraph", etc.
 	"""
 
 	# Try for a heading.
@@ -170,6 +143,12 @@ def get_epub_type(soup: BeautifulSoup) -> str:
 def get_place(soup: BeautifulSoup) -> Position:
 	"""
 	Returns place of file in ebook, eg frontmatter, backmatter, etc.
+
+	INPUTS:
+	soup: BeautifulSoup representation of the file
+
+	OUTPUTS:
+	a Position enum value indicating the place in the book
 	"""
 
 	epub_type = soup.body.get("epub:type") or ""
@@ -190,6 +169,14 @@ def get_place(soup: BeautifulSoup) -> Position:
 def add_landmark(soup: BeautifulSoup, textf: str, landmarks: list):
 	"""
 	Adds an item to landmark list with appropriate details.
+
+	INPUTS:
+	soup: BeautifulSoup representation of the file we are indexing in ToC
+	textf: path to the file
+	landmarks: the list of landmark items we are building
+
+	OUTPUTS:
+	None
 	"""
 
 	epub_type = get_epub_type(soup)
@@ -211,6 +198,14 @@ def add_landmark(soup: BeautifulSoup, textf: str, landmarks: list):
 def process_landmarks(landmarks_list: list, work_type: str, work_title: str):
 	"""
 	Runs through all found landmark items and writes them to the toc file.
+
+	INPUTS:
+	landmarks_list: the completed list of landmark items
+	work_type: "fiction" or "non-fiction"
+	work_title: the title of the book
+
+	OUTPUTS:
+	None
 	"""
 
 	front_items = [item for item in landmarks_list if item.place == Position.FRONT]
@@ -229,6 +224,12 @@ def process_landmarks(landmarks_list: list, work_type: str, work_title: str):
 def process_items(item_list: list) -> str:
 	"""
 	Runs through all found toc items and returns them as a string.
+
+	INPUTS:
+	item_list: list of ToC items
+
+	OUTPUTS:
+	A string representing (possibly nested) html lists of the structure of the ToC
 	"""
 
 	unclosed_ol = 0  # Keep track of how many ordered lists we open.
@@ -266,6 +267,12 @@ def process_items(item_list: list) -> str:
 def get_existing_toc(toc_path: str) -> BeautifulSoup:
 	"""
 	Returns a BeautifulSoup object representing the existing ToC file.
+
+	INPUTS:
+	toc_path: the path to the existing ToC file
+
+	OUTPUTS:
+	A BeautifulSoup object representing the current ToC file
 	"""
 
 	with open(toc_path, "r", encoding="utf-8") as file:
@@ -275,6 +282,15 @@ def output_toc(item_list: list, landmark_list, toc_path: str, work_type: str, wo
 	"""
 	Outputs the contructed ToC based on the lists of items and landmarks found,
 	either to stdout or overwriting the existing ToC file
+
+	INPUTS:
+	item_list: list of ToC items (the first part of the ToC)
+	landmark_list: list of landmark items (the second part of the ToC)
+	work_type: "fiction" or "non-fiction"
+	work_title: the title of the book
+
+	OUTPUTS:
+	a html string representing the new ToC
 	"""
 
 	if len(item_list) < 2:
@@ -303,6 +319,12 @@ def output_toc(item_list: list, landmark_list, toc_path: str, work_type: str, wo
 def get_parent_id(hchild: Tag) -> str:
 	"""
 	Climbs up the document tree looking for parent id in a <section> tag.
+
+	INPUTS:
+	hchild: a heading tag for which we want to find the parent id
+
+	OUTPUTS:
+	the id of the parent section
 	"""
 
 	parent = hchild.find_parent(["section", "article"])
@@ -312,7 +334,13 @@ def get_parent_id(hchild: Tag) -> str:
 
 def extract_strings(tag: Tag) -> str:
 	"""
-	Returns string representation of tag, ignoring linefeeds
+	Returns string representation of a tag, ignoring linefeeds
+
+	INPUTS:
+	tag: a BeautifulSoup tag
+
+	OUTPUTS:
+	just the string contents of the tag
 	"""
 
 	out_string = ""
@@ -325,6 +353,16 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 	"""
 	Find headings in current file and extract title data
 	into items added to toc_list.
+
+	INPUTS:
+	soup: a BeautifulSoup representation of the current file
+	textf: the path to the file
+	toc_list: the list of ToC items we are building
+	nest_under_halftitle: does this item need to be nested?
+	single_file: is there only a single content item in the production?
+
+	OUTPUTS:
+	None
 	"""
 
 	# Find all the h1, h2 etc headings.
@@ -373,9 +411,18 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 		is_toplevel = False
 		toc_list.append(toc_item)
 
-def process_heading(heading, textf, is_toplevel, single_file: bool) -> TocItem:
+def process_heading(heading: BeautifulSoup, textf: str, is_toplevel: bool, single_file: bool) -> TocItem:
 	"""
 	Generate and return a TocItem from this heading.
+
+	INPUTS:
+	heading: a BeautifuSoup tag representing a heading tag
+	text: the path to the file
+	is_toplevel: is this heading at the top-most level in the file?
+	single_file: is there only one content file in the production (like some Poetry volumes)?
+
+	OUTPUTS:
+	a qualified ToCItem object
 	"""
 
 	toc_item = TocItem()
@@ -416,7 +463,14 @@ def get_book_division(tag: BeautifulSoup) -> BookDivision:
 	"""
 	Determine the kind of book division. At present only Part and Division
 	are important; but others stored for possible future logic.
+
+	INPUTS:
+	tag: a BeautifulSoup tag object
+
+	OUTPUTS:
+	a BookDivision enum value representing the kind of division
 	"""
+
 	parent_section = tag.find_parents(["section", "article"])
 
 	if not parent_section:
@@ -430,7 +484,7 @@ def get_book_division(tag: BeautifulSoup) -> BookDivision:
 		retval = BookDivision.PART
 	if "division" in section_epub_type:
 		retval = BookDivision.DIVISION
-	if ("volume" in section_epub_type) and (not "se:short-story" in section_epub_type):
+	if ("volume" in section_epub_type) and ("se:short-story" not in section_epub_type):
 		retval = BookDivision.VOLUME
 	if "subchapter" in section_epub_type:
 		retval = BookDivision.SUBCHAPTER
@@ -444,13 +498,27 @@ def get_book_division(tag: BeautifulSoup) -> BookDivision:
 def strip_notes(text: str) -> str:
 	"""
 	Returns html text stripped of noterefs.
+
+	INPUTS:
+	text: html which may include noterefs
+
+	OUTPUTS:
+	cleaned html string
 	"""
+
 	return regex.sub(r'<a .*?epub:type="noteref".*?>.*?<\/a>', "", text)
 
-def process_heading_contents(heading, toc_item):
+def process_heading_contents(heading: BeautifulSoup, toc_item: TocItem):
 	"""
 	Run through each item in the heading contents
 	and try to pull out the toc item data.
+
+	INPUTS:
+	heading: a BeautifulSoup object representing a heading tag and its contents
+	toc_item: a ToC item object to be qualified
+
+	OUTPUTS:
+	None
 	"""
 
 	accumulator = ""  # We'll use this to build up the title.
@@ -481,10 +549,17 @@ def process_heading_contents(heading, toc_item):
 		#  Now strip out any linefeeds or tabs we may have encountered.
 		toc_item.title = regex.sub(r"(\n|\t)", "", accumulator)
 
-def process_all_content(file_list, text_path) -> (list, list):
+def process_all_content(file_list: list, text_path: str) -> (list, list):
 	"""
 	Analyze the whole content of the project, build and return lists
 	if toc_items and landmarks.
+
+	INPUTS:
+	file_list: a list of all content files
+	text_path: the path to the contents folder (src/epub/text)
+
+	OUTPUTS:
+	a tuple containing the list of Toc items and the list of landmark items
 	"""
 
 	toc_list = []
@@ -527,11 +602,9 @@ def generate_toc(self) -> str:
 	Entry point for `SeEpub.generate_toc()`.
 	"""
 
-	soup = BeautifulSoup(self.metadata_xhtml, "html.parser")
-	file_list = get_content_files(soup)
-
-	work_title = get_work_title(soup)
-	work_type = get_work_type(self.metadata_xhtml)
+	file_list = self.get_content_files()
+	work_title = self.get_work_title()
+	work_type = self.get_work_type()
 
 	landmarks, toc_list = process_all_content(file_list, self.path / "src" / "epub" / "text")
 
