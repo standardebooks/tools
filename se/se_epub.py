@@ -732,6 +732,69 @@ class SeEpub:
 
 		return spine_xhtml
 
+	def get_content_files(self) -> list:
+		"""
+		Reads the spine from content.opf to obtain a list of content files, in the order wanted for the ToC.
+		It assumes this has already been manually ordered by the producer.
+
+		INPUTS:
+		None
+
+		OUTPUTS:
+		list of content files in the order given in the spine in content.opf
+		"""
+
+		return regex.findall(r"<itemref idref=\"(.*?)\"/>", self.metadata_xhtml)
+
+
+	def get_work_type(self) -> str:
+		"""
+		Returns either "fiction" or "non-fiction", based on analysis of se:subjects in content.opf
+
+		INPUTS:
+		None
+
+		OUTPUTS:
+		The fiction or non-fiction type
+		"""
+
+		worktype = "fiction"  # default
+		subjects = regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", self.metadata_xhtml)
+		if not subjects:
+			return worktype
+
+		# Unfortunately, some works are tagged "Philosophy" but are nevertheless fiction, so we have to double-check
+		if "Nonfiction" in subjects:
+			return "non-fiction"
+		nonfiction_types = ["Adventure", "Autobiography", "Memoir", "Philosophy", "Spirituality", "Travel"]
+		for nonfiction_type in nonfiction_types:
+			if nonfiction_type in subjects:
+				worktype = "non-fiction"
+		fiction_types = ["Fantasy", "Fiction", "Horror", "Mystery", "Science Fiction"]
+		for fiction_type in fiction_types:
+			if fiction_type in subjects:
+				worktype = "fiction"
+
+		return worktype
+
+	def get_work_title(self) -> str:
+		"""
+		Returns the title of the book from content.opf, which we assume has already been correctly completed.
+
+		INPUTS:
+		None
+
+		OUTPUTS:
+		Either the title of the book or the default WORKING_TITLE
+		"""
+
+		match = regex.search(r"<dc:title(?:.*?)>(.*?)</dc:title>", self.metadata_xhtml)
+		if match:
+			dc_title = match.group(1)
+		else:
+			dc_title = "WORK_TITLE"  # default
+		return dc_title
+
 	def lint(self) -> list:
 		"""
 		The lint() function is very big so for readability and maintainability
@@ -764,3 +827,14 @@ class SeEpub:
 		from se.se_epub_generate_toc import generate_toc
 
 		return generate_toc(self)
+
+	def generate_endnotes(self) -> str:
+		"""
+		The generate_endnotes() function is very big so for readability and maintainability
+		it's broken out to a separate file. Strictly speaking that file can be inlined
+		into this class.
+		"""
+
+		from se.se_epub_generate_endnotes import generate_endnotes
+
+		return generate_endnotes(self)
