@@ -547,7 +547,7 @@ class SeEpub:
 				file.write(self.metadata_xhtml)
 				file.truncate()
 
-			self._metadata_tree = None
+			self.__metadata_tree = None
 
 			with open(self.path / "src" / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
 				xhtml = file.read()
