@@ -218,6 +218,10 @@ We need volunteers to take the lead on the following goals:
 
 	Increment the specified endnote and all following endnotes by 1.
 
+-	### `se renumber-endnotes`
+
+	Renumber all endnotes and noterefs sequentially from the beginning.
+
 -	### `se roman2dec`
 
 	Convert a Roman numeral to a decimal number.
