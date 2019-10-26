@@ -214,13 +214,13 @@ We need volunteers to take the lead on the following goals:
 
 	Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output.
 
--	### `se reorder-endnotes`
-
-	Increment the specified endnote and all following endnotes by 1.
-
 -	### `se renumber-endnotes`
 
 	Renumber all endnotes and noterefs sequentially from the beginning.
+
+-	### `se reorder-endnotes`
+
+	Increment the specified endnote and all following endnotes by 1.
 
 -	### `se roman2dec`
 
