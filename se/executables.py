@@ -694,7 +694,7 @@ def renumber_endnotes() -> int:
 	and maintainability.
 	"""
 
-	parser = argparse.ArgumentParser(description="Renumber endnotes from beginning and generate new endnotes file.")
+	parser = argparse.ArgumentParser(description="Renumber all endnotes and noterefs sequentially from the beginning.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()

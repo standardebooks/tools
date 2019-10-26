@@ -60,6 +60,18 @@ class GitCommit:
 		self.short_sha = short_sha
 		self.timestamp = timestamp
 
+class Endnote:
+	"""
+	Class to hold information on endnotes
+	"""
+
+	number = 0
+	anchor = ""
+	contents = []  # The strings and tags inside an <li> element
+	back_link = ""
+	source_file = ""
+	matched = False
+
 class SeEpub:
 	"""
 	An object representing an SE epub file.
@@ -74,6 +86,8 @@ class SeEpub:
 	_generated_identifier = None
 	_generated_github_repo_url = None
 	_last_commit = None # GitCommit object
+	__endnotes_soup = None # bs4 soup object of the endnotes.xhtml file
+	_endnotes = None # List of Endnote objects
 
 	def __init__(self, epub_root_directory: str):
 		try:
@@ -210,6 +224,68 @@ class SeEpub:
 			self._generated_github_repo_url = "https://github.com/standardebooks/" + self.generated_identifier.replace("url:https://standardebooks.org/ebooks/", "").replace("/", "_")[0:100]
 
 		return self._generated_github_repo_url
+
+	@property
+	def _endnotes_soup(self) -> BeautifulSoup:
+		"""
+		Accessor
+
+		Return a BeautifulSoup object representing the endnotes.xhtml file for this ebook.
+
+		INPUTS
+		None
+
+		OUTPUTS
+		A BeautifulSoup object representing the endnotes.xhtml file for this ebook.
+		"""
+
+		if not self.__endnotes_soup:
+			try:
+				with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml") as file:
+					self.__endnotes_soup = BeautifulSoup(file.read(), "html.parser")
+			except:
+				raise se.InvalidFileException("Could't open file: {}".format(str(self.path / "src" / "epub" / "text" / "endnotes.xhtml")))
+
+		return self.__endnotes_soup
+
+	@property
+	def endnotes(self) -> list:
+		"""
+		Accessor
+
+		Return a list of Endnote objects representing the endnotes.xhtml file for this ebook.
+
+		INPUTS
+		None
+
+		OUTPUTS
+		A list of Endnote objects representing the endnotes.xhtml file for this ebook.
+		"""
+
+		if not self._endnotes:
+			self._endnotes = []
+
+			ol_tag: BeautifulSoup = self._endnotes_soup.find("ol")
+			items = ol_tag.find_all("li")
+
+			for item in items:
+				note = Endnote()
+				note.contents = []
+				for content in item.contents:
+					note.contents.append(content)
+					if isinstance(content, Tag):
+						links = content.find_all("a")
+						for link in links:
+							epub_type = link.get("epub:type") or ""
+							if epub_type == "se:referrer":
+								href = link.get("href") or ""
+								if href:
+									note.back_link = href
+				note.anchor = item.get("id") or ""
+
+				self._endnotes.append(note)
+
+		return self._endnotes
 
 	@property
 	def _metadata_tree(self) -> se.easy_xml.EasyXmlTree:
@@ -835,6 +911,98 @@ class SeEpub:
 		into this class.
 		"""
 
-		from se.se_epub_generate_endnotes import generate_endnotes
+		processed = 0
+		report = ""
+		current_note_number = 1
+		notes_changed = 0
+		change_list = []
 
-		return generate_endnotes(self)
+		for file_name in self.get_content_files():
+			if file_name in  ["titlepage.xhtml", "colophon.xhtml", "uncopyright.xhtml", "imprint.xhtml", "halftitle.xhtml", "endnotes.xhtml"]:
+				continue
+
+			processed += 1
+
+			file_path = self.path / "src" / "epub" / "text" / file_name
+			try:
+				with open(file_path) as file:
+					soup = BeautifulSoup(file.read(), "lxml")
+			except:
+				raise se.InvalidFileException("Could't open file: {}".format(str(file_path)))
+
+			links = soup.find_all("a")
+			needs_rewrite = False
+			for link in links:
+				epub_type = link.get("epub:type") or ""
+				if epub_type == "noteref":
+					old_anchor = ""
+					href = link.get("href") or ""
+					if href:
+						# Extract just the anchor from a URL (ie, what follows a hash symbol)
+						old_anchor = ""
+
+						hash_position = href.find("#") + 1  # we want the characters AFTER the hash
+						if hash_position > 0:
+							old_anchor = href[hash_position:]
+
+					new_anchor = "note-{:d}".format(current_note_number)
+					if new_anchor != old_anchor:
+						change_list.append("Changed " + old_anchor + " to " + new_anchor + " in " + file_name)
+						notes_changed += 1
+						# Update the link in the soup object
+						link["href"] = 'endnotes.xhtml#' + new_anchor
+						link["id"] = 'noteref-{:d}'.format(current_note_number)
+						link.string = str(current_note_number)
+						needs_rewrite = True
+					# Now try to find this in endnotes
+					matches = list(filter(lambda x, old=old_anchor: x.anchor == old, self.endnotes))
+					if not matches:
+						raise se.InvalidInputException("Couldn't find endnote with anchor " + old_anchor)
+					if len(matches) > 1:
+						raise se.InvalidInputException("Duplicate anchors in endnotes file for anchor " + old_anchor)
+					# Found a single match, which is what we want
+					endnote = matches[0]
+					endnote.number = current_note_number
+					endnote.matched = True
+					# We don't change the anchor or the back ref just yet
+					endnote.source_file = file_name
+					current_note_number += 1
+
+			# If we need to write back the body text file
+			if needs_rewrite:
+				new_file = open(file_path, "w")
+				new_file.write(se.formatting.format_xhtml(str(soup)))
+				new_file.close()
+
+		if processed == 0:
+			report += "No files processed. Did you update the manifest and order the spine?" + "\n"
+		else:
+			report += "Found {:d} endnotes.".format(current_note_number - 1) + "\n"
+			if notes_changed > 0:
+				# Now we need to recreate the endnotes file
+				ol_tag = self._endnotes_soup.ol
+				ol_tag.clear()
+				for endnote in self.endnotes:
+					if endnote.matched:
+						li_tag = self._endnotes_soup.new_tag("li")
+						li_tag["id"] = "note-" + str(endnote.number)
+						li_tag["epub:type"] = "endnote"
+						for content in endnote.contents:
+							if isinstance(content, Tag):
+								links = content.find_all("a")
+								for link in links:
+									epub_type = link.get("epub:type") or ""
+									if epub_type == "se:referrer":
+										href = link.get("href") or ""
+										if href:
+											link["href"] = endnote.source_file + "#noteref-" + str(endnote.number)
+							li_tag.append(content)
+						ol_tag.append(li_tag)
+
+				with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml", "w") as file:
+					file.write(se.formatting.format_xhtml(str(self._endnotes_soup), is_endnotes_file=True))
+
+				report += "Changed {:d} endnote{}.".format(notes_changed, "s" if notes_changed != 1 else "")
+			else:
+				report += "No changes made."
+		return report
