@@ -167,6 +167,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Remove period from . .. if after punctuation
 	xhtml = regex.sub(r"([\!\?\,\;\:]\s*)\.(\s…)", r"\1\2", xhtml)
 
+	# Remove a point from four-point ellipses from beginning of paragraph
+	xhtml = regex.sub(r"<p>\. …", "<p>…", xhtml)
+
 	# Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
 	xhtml = regex.sub(r"([0-9])\s+([a-z]{1,3}\.)", r"\1{}\2".format(se.NO_BREAK_SPACE), xhtml, flags=regex.IGNORECASE)
 
