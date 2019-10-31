@@ -405,6 +405,8 @@ def create_draft(args: list):
 	(repo_name / "src" / "epub" / "text").mkdir(parents=True)
 	(repo_name / "src" / "META-INF").mkdir(parents=True)
 
+	is_pg_html_parsed = True
+
 	# Write PG data if we have it
 	if args.pg_url and pg_ebook_html:
 		try:
@@ -440,7 +442,10 @@ def create_draft(args: list):
 		except IOError as ex:
 			raise se.InvalidFileException("Couldn’t write to ebook directory. Error: {}".format(ex))
 		except:
-			raise se.InvalidInputException("Couldn’t parse Project Gutenberg ebook source. This is usually due to invalid HTML in the ebook.")
+			# Save this error for later, because it's still useful to complete the create-draft process
+			# even if we've failed to parse PG's HTML source.
+			is_pg_html_parsed = False
+			se.quiet_remove(repo_name / "src" / "epub" / "text" / "body.xhtml")
 
 	# Copy over templates
 	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "gitignore")), repo_name / ".gitignore")
@@ -638,3 +643,6 @@ def create_draft(args: list):
 		return_code = call(["ssh", "standardebooks.org", "/standardebooks.org/scripts/init-se-repo --repo-name={} --title-string=\"{}\" {}".format(repo_name, title_string, github_option)])
 		if return_code != 0:
 			raise se.RemoteCommandErrorException("Failed to create repository on Standard Ebooks server: ssh returned code {}.".format(return_code))
+
+	if args.pg_url and pg_ebook_html and not is_pg_html_parsed:
+		raise se.InvalidXhtmlException("Couldn’t parse Project Gutenberg ebook source. This is usually due to invalid HTML in the ebook.")
