@@ -91,7 +91,47 @@ These instructions were tested on macOS 10.12 and 10.13. Your mileage may vary. 
 	# Install required fonts.
 	cp $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/data/fonts/*/*.otf ~/Library/Fonts/
 	```
+## OpenBSD 6.6 Users
 
+These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 release as well.
+
+1. Create a text file to feed into ```pkg_add``` called "~/standard-ebooks-packages". It should contain the following:
+
+	```shell
+	py3-pip--
+	py3-virtualenv--
+	libxml--
+	librsvg--
+	p5-Image-ExifTool--
+	ImageMagick--
+	jdk--%11
+	inkscape--
+	calibre--
+	git--
+	```
+
+2. Install dependencies using ```doas pkg_add -ivl ~/standard-ebooks-packages```. Follow linking instructions provided by ```pkg_add``` to save keystrokes, unless you want to have multiple python versions and pip versions. In my case, I ran ```doas ln -sf /usr/local/bin/pip3.7 /usr/local/bin/pip```.
+
+3. Add ```~/.local/bin``` to your path.
+
+4. Run ```pip install --user pipx```
+
+5. If you're using ```ksh``` from base and have already added ```~/.local/bin```, you can skip ```pipx ensurepath``` because this step is for ```bash``` users.
+
+6. The rest of the process is similar to that used on other platforms:
+
+	```shell
+	# Install the toolset.
+	pipx install standardebooks
+
+	# Install required fonts.
+	mkdir -p $HOME/.local/share/fonts/
+	cp $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/data/fonts/*/*.otf $HOME/.local/share/fonts/
+
+	# Refresh the local font cache.
+	doas fc-cache -f
+	```
+	
 ## Installation for developers
 
 If you want to work on the toolset source, it’s helpful to tell `pipx` to install the package in “editable” mode. This will allow you to edit the source of the package live and see changes immediately, without having to uninstall and re-install the package.
