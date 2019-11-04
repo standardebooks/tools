@@ -598,7 +598,7 @@ def lint(self, metadata_xhtml) -> list:
 								closest_section_epub_type = parent_section[0].get("epub:type") or ""
 								heading_first_child_epub_type = match.find("span", recursive=False).get("epub:type") or ""
 
-								if regex.findall(r"^.*(part|division|volume).*$", closest_section_epub_type):
+								if regex.findall(r"^.*(part|division|volume).*$", closest_section_epub_type) and not regex.findall(r"^.*se:short-story.*$", closest_section_epub_type):
 									remove_subtitle = False
 								elif regex.findall(r"^.*halftitlepage.*$", closest_section_epub_type):
 									remove_subtitle = True
