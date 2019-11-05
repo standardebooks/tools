@@ -398,6 +398,8 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 	# Add the XML header that xmllint stripped during c14n
 	xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + xhtml
 
+	xhtml = xhtml.replace("encoding=\"UTF-8\"", "encoding=\"utf-8\"")
+
 	xhtml = unicodedata.normalize("NFC", xhtml)
 
 	# Pretty-print XML
