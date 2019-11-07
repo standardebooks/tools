@@ -402,11 +402,11 @@ def lint(self, metadata_xhtml) -> list:
 							if "gutenberg.org" in link and "<a href=\"{}\">Project Gutenberg</a>".format(link) not in file_contents:
 								messages.append(LintMessage("Source not represented in colophon.xhtml. It should read: <a href=\"{}\">Project Gutenberg</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
 
-							if "hathitrust.org" in link and "<a href=\"{}\">HathiTrust Digital Library</a>".format(link) not in file_contents:
-								messages.append(LintMessage("Source not represented in colophon.xhtml. It should read: <a href=\"{}\">HathiTrust Digital Library</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
+							if "hathitrust.org" in link and "the<br/>\n\t\t\t<a href=\"{}\">HathiTrust Digital Library</a>".format(link) not in file_contents:
+								messages.append(LintMessage("Source not represented in colophon.xhtml. It should read: the<br/> <a href=\"{}\">HathiTrust Digital Library</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
 
-							if "archive.org" in link and "<a href=\"{}\">Internet Archive</a>".format(link) not in file_contents:
-								messages.append(LintMessage("Source not represented in colophon.xhtml. It should read: <a href=\"{}\">Internet Archive</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
+							if "archive.org" in link and "the<br/>\n\t\t\t<a href=\"{}\">Internet Archive</a>".format(link) not in file_contents:
+								messages.append(LintMessage("Source not represented in colophon.xhtml. It should read: the<br/> <a href=\"{}\">Internet Archive</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
 
 							if "books.google.com" in link and "<a href=\"{}\">Google Books</a>".format(link) not in file_contents:
 								messages.append(LintMessage("Source not represented in colophon.xhtml. It should read: <a href=\"{}\">Google Books</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
