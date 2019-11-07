@@ -661,6 +661,16 @@ def lint(self, metadata_xhtml) -> list:
 					if matches:
 						messages.append(LintMessage("Tags should end with a single >.", se.MESSAGE_TYPE_WARNING, filename))
 
+					# Check for nbsp before ampersand (&amp)
+					matches = regex.findall(r"[^{}]\&amp;".format(se.NO_BREAK_SPACE), file_contents)
+					if matches:
+						messages.append(LintMessage("Required nbsp not found before &amp;", se.MESSAGE_TYPE_WARNING, filename))
+
+					# Check for nbsp after ampersand (&amp)
+					matches = regex.findall(r"\&amp;[^{}]".format(se.NO_BREAK_SPACE), file_contents)
+					if matches:
+						messages.append(LintMessage("Required nbsp not found after &amp;", se.MESSAGE_TYPE_WARNING, filename))
+
 					# Check for nbsp before times
 					matches = regex.findall(r"[0-9]+[^{}]<abbr class=\"time".format(se.NO_BREAK_SPACE), file_contents)
 					if matches:
