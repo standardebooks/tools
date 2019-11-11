@@ -218,6 +218,9 @@ def clean() -> int:
 
 		try:
 			se.formatting.format_xhtml_file(filename, args.single_lines, filename.name == "content.opf", filename.name == "endnotes.xhtml")
+		except se.MissingDependencyException as ex:
+			se.print_error(str(ex))
+			return ex.code
 		except se.SeException as ex:
 			se.print_error(str(ex) + " File: {}".format(filename), args.verbose)
 			return ex.code

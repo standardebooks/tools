@@ -363,8 +363,7 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 	try:
 		xmllint_path = Path(shutil.which("xmllint"))
 	except Exception:
-		se.print_error("Couldn’t locate xmllint. Is it installed?")
-		return se.MissingDependencyException.code
+		raise se.MissingDependencyException("Couldn’t locate xmllint. Is it installed?")
 
 	env = os.environ.copy()
 	env["XMLLINT_INDENT"] = "\t"
