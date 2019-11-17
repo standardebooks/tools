@@ -370,7 +370,7 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 
 	if single_lines:
 		xhtml = xhtml.replace("\n", " ")
-		xhtml = regex.sub(r"\s+", " ", xhtml)
+		xhtml = regex.sub(r"\s{2,}", " ", xhtml) # Use this instead of \s+, because \s+ will replace special white space (like hair space or nbsp) with a regular space.
 
 	# Epub3 doesn't allow named entities, so convert them to their unicode equivalents
 	# But, don't unescape the content.opf long-description accidentally
