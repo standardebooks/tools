@@ -209,8 +209,8 @@ def clean() -> int:
 	ignored_filenames.remove("toc.xhtml")
 
 	for filename in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx", ".xml"), ignored_filenames):
-		# If we're setting single lines, skip the colophon and cover/titlepage svgs, as they have special spacing
-		if args.single_lines and (filename.name == "colophon.xhtml" or filename.name == "cover.svg" or filename.name == "titlepage.svg"):
+		# If we're setting single lines, skip the colophon, as it has special spacing.
+		if args.single_lines and (filename.name == "colophon.xhtml"):
 			continue
 
 		if args.verbose:
