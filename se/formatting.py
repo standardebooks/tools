@@ -323,7 +323,7 @@ def _replace_character_references(match_object) -> str:
 
 	return retval
 
-def format_xhtml_file(filename: Path, single_lines: bool = False, is_metadata_file: bool = False, is_endnotes_file: bool = False) -> None:
+def format_xhtml_file(filename: Path, single_lines: bool = False, is_metadata_file: bool = False, is_endnotes_file: bool = False, is_colophon_file: bool = False) -> None:
 	"""
 	Pretty-print well-formed XHTML and save to file.
 
@@ -339,14 +339,14 @@ def format_xhtml_file(filename: Path, single_lines: bool = False, is_metadata_fi
 	with open(filename, "r+", encoding="utf-8") as file:
 		xhtml = file.read()
 
-		processed_xhtml = se.formatting.format_xhtml(xhtml, single_lines, is_metadata_file, is_endnotes_file)
+		processed_xhtml = se.formatting.format_xhtml(xhtml, single_lines, is_metadata_file, is_endnotes_file, is_colophon_file)
 
 		if processed_xhtml != xhtml:
 			file.seek(0)
 			file.write(processed_xhtml)
 			file.truncate()
 
-def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool = False, is_endnotes_file: bool = False) -> str:
+def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool = False, is_endnotes_file: bool = False, is_colophon_file: bool = False) -> str:
 	"""
 	Pretty-print well-formed XHTML.
 
@@ -379,6 +379,11 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 
 	# Remove unnecessary doctypes which can cause xmllint to hang
 	xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", xhtml, flags=regex.DOTALL)
+
+	# Remove spaces and newlines before <br/>. We do his before using xmllint, because
+	# in some cases (like poetry) we want the <br/>s on separate lines; but in other cases (like
+	# line breaks in a flow-level element) we don't.
+	xhtml = regex.sub(r"\s*<br/?>(\s*<br/>)?", "<br/>", xhtml, flags=regex.DOTALL)
 
 	# Canonicalize XHTML
 	# Path arguments must be cast to string for Windows compatibility.
@@ -422,6 +427,14 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 	# Try to fix <cite> tags running next to referrer <a> tags.
 	if is_endnotes_file:
 		xhtml = regex.sub(r"</cite>(<a href=\"[^\"]+?\" epub:type=\"backlink\")", "</cite> \\1", xhtml)
+
+	if is_colophon_file:
+		xhtml = regex.sub(r"\s*<br/>\s*", "<br/>\n\t\t\t", xhtml, flags=regex.DOTALL)
+
+		section_xhtml = regex.findall(r"</header>(.+?)</section>", xhtml, flags=regex.DOTALL)
+		if section_xhtml:
+			section_xhtml = regex.sub(r"^\s*", "\t\t\t", section_xhtml[0], flags=regex.MULTILINE).strip()
+			xhtml = regex.sub(r"</header>(.+?)</section>", "</header>\n\t\t\t{}\n\t\t</section>".format(section_xhtml), xhtml, flags=regex.DOTALL)
 
 	if single_lines:
 		# Attempt to pretty-print CSS, if we have any (like in cover.svg or titlepage.svg).

@@ -423,7 +423,7 @@ class SeEpub:
 		file_name.rename(file_name_xhtml)
 
 		# All done, clean the output
-		se.formatting.format_xhtml_file(file_name_xhtml, False, False, file_name_xhtml.name == "endnotes.xhtml")
+		se.formatting.format_xhtml_file(file_name_xhtml, False, False, file_name_xhtml.name == "endnotes.xhtml", file_name_xhtml.name == "colophon.xhtml")
 
 		with open(file_name_xhtml, "r", encoding="utf-8") as file:
 			xhtml = file.read()

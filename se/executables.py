@@ -205,19 +205,16 @@ def clean() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML or SVG file, or a directory containing XHTML or SVG files")
 	args = parser.parse_args()
 
-	ignored_filenames = se.IGNORED_FILENAMES
-	ignored_filenames.remove("toc.xhtml")
-
-	for filename in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx", ".xml"), ignored_filenames):
+	for filename in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx", ".xml"), []):
 		# If we're setting single lines, skip the colophon, as it has special spacing.
-		if args.single_lines and (filename.name == "colophon.xhtml"):
+		if args.single_lines and filename.name == "colophon.xhtml":
 			continue
 
 		if args.verbose:
 			print("Processing {} ...".format(filename), end="", flush=True)
 
 		try:
-			se.formatting.format_xhtml_file(filename, args.single_lines, filename.name == "content.opf", filename.name == "endnotes.xhtml")
+			se.formatting.format_xhtml_file(filename, args.single_lines, filename.name == "content.opf", filename.name == "endnotes.xhtml", filename.name == "colophon.xhtml")
 		except se.MissingDependencyException as ex:
 			se.print_error(str(ex))
 			return ex.code

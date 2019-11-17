@@ -734,7 +734,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 		# All done, clean the output
 		for filename in se.get_target_filenames([work_epub_root_directory], (".xhtml", ".svg", ".opf", ".ncx")):
-			se.formatting.format_xhtml_file(filename, False, filename.name == "content.opf", filename.name == "endnotes.xhtml")
+			se.formatting.format_xhtml_file(filename, False, filename.name == "content.opf", filename.name == "endnotes.xhtml", file_name_xhtml.name == "colophon.xhtml")
 
 		# Write the compatible epub
 		se.epub.write_epub(work_epub_root_directory, output_directory / epub_output_filename)
