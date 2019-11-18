@@ -110,6 +110,7 @@ These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 rele
 	inkscape--
 	calibre--
 	git--
+	vim--gtk3
 	```
 
 2. Install dependencies using ```doas pkg_add -ivl ~/standard-ebooks-packages```. Follow linking instructions provided by ```pkg_add``` to save keystrokes, unless you want to have multiple python versions and pip versions. In my case, I ran ```doas ln -sf /usr/local/bin/pip3.7 /usr/local/bin/pip```.
