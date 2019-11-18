@@ -61,9 +61,11 @@ sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se
 sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completion/completions/se
 ```
 
-## macOS users
+## macOS users (up to macOS 10.14)
 
-These instructions were tested on macOS 10.12 to 10.14. **Warning:** The Standard Ebooks tooling currently will *not* build cover images on macOS 10.15 Catalina due to Inkscape compatibility problems. The older version of Inkscape that works with this project is 32-bit only and no longer runs on 10.15, and the new version [doesn’t yet have a command line interface](https://gitlab.com/inkscape/inkscape/issues/457). For the time being, your best option is to run Ubuntu or Fedora (see above) in a virtual machine, for example with [VirtualBox](https://www.virtualbox.org/).
+These instructions were tested on macOS 10.12 to 10.14.
+
+**Warning:** The Standard Ebooks toolset currently will *not* build cover images on macOS 10.15 Catalina due to Inkscape compatibility problems. The older version of Inkscape that works with this project is 32-bit only and no longer runs on 10.15, and the new version [doesn’t yet have a command line interface](https://gitlab.com/inkscape/inkscape/issues/457). For the time being, your best option is to run Ubuntu or Fedora (see above) in a virtual machine, for example with [VirtualBox](https://www.virtualbox.org/).
 
 1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it’s up to date:
 
@@ -131,7 +133,7 @@ These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 rele
 	# Refresh the local font cache.
 	doas fc-cache -f
 	```
-	
+
 ## Installation for developers
 
 If you want to work on the toolset source, it’s helpful to tell `pipx` to install the package in “editable” mode. This will allow you to edit the source of the package live and see changes immediately, without having to uninstall and re-install the package.
