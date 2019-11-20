@@ -385,6 +385,10 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 	# line breaks in a flow-level element) we don't.
 	xhtml = regex.sub(r"\s*<br/?>(\s*<br/>)?", "<br/>", xhtml, flags=regex.DOTALL)
 
+	# Clean up newlines before <span>s, and white space inside <span>s
+	xhtml = regex.sub(r"<span([^>]*)>\s*", "<span\\1>", xhtml, flags=regex.DOTALL)
+	xhtml = regex.sub(r"\s*</span>", "</span>", xhtml, flags=regex.DOTALL)
+
 	# Canonicalize XHTML
 	# Path arguments must be cast to string for Windows compatibility.
 	result = subprocess.run([str(xmllint_path), "--c14n", "-"], input=xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -416,13 +420,16 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 	xhtml = regex.sub(r"([^>\s])\s+</p>", "\\1</p>", xhtml, flags=regex.DOTALL)
 
 	# xmllint has problems with removing spacing between some inline HTML5 elements. Try to fix those problems here.
-	xhtml = regex.sub(r"</(abbr|cite|i|span|em)><(abbr|cite|i|span|em)", "</\\1> <\\2", xhtml)
+	xhtml = regex.sub(r"</(abbr|cite|i|span|time|em)><(abbr|cite|i|span|time|em)", "</\\1> <\\2", xhtml)
 
 	# Try to fix inline elements directly followed by an <a> tag, unless that <a> tag is a noteref.
-	xhtml = regex.sub(r"</(abbr|cite|i|span)><(a(?! href=\"[^\"]+?\" id=\"noteref\-))", "</\\1> <\\2", xhtml)
+	xhtml = regex.sub(r"</(abbr|cite|i|span|time|em)><(a(?! href=\"[^\"]+?\" id=\"noteref\-))", "</\\1> <\\2", xhtml)
 
 	# Two sequential inline elements, when they are the only children of a block, are indented. But this messes up spacing if the 2nd element is a noteref.
-	xhtml = regex.sub(r"</(abbr|cite|i|span)>\s+<(a href=\"[^\"]+?\" id=\"noteref\-)", "</\\1><\\2", xhtml, flags=regex.DOTALL)
+	xhtml = regex.sub(r"</(abbr|cite|i|span|time|em)>\s+<(a href=\"[^\"]+?\" id=\"noteref\-)", "</\\1><\\2", xhtml, flags=regex.DOTALL)
+
+	# Try to work around an xmllint bug where <br/>\n\s+<span> becomes <br/><span>. Try to put it back on the right indent level here.
+	xhtml = regex.sub(r"^(\t+)(.+?)<br/>([^\s\n])", "\\1\\2<br/>\n\\1\\3", xhtml, flags=regex.MULTILINE)
 
 	# Try to fix <cite> tags running next to referrer <a> tags.
 	if is_endnotes_file:
