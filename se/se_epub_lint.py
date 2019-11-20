@@ -1185,13 +1185,12 @@ def lint(self, metadata_xhtml) -> list:
 					unique_toc_files.append(file)
 			toc_files = unique_toc_files
 			spine_entries = BeautifulSoup(content_opf.read(), "lxml").find("spine").find_all("itemref")
-			if len(toc_files) == len(spine_entries):
-				for index, entry in enumerate(spine_entries):
-					if toc_files[index] != entry.attrs["idref"]:
-						messages.append(LintMessage("The spine order does not match the order of the ToC and landmarks. Expected {}, found {}.".format(entry.attrs["idref"], toc_files[index]), se.MESSAGE_TYPE_ERROR, "content.opf"))
-						break
-			else:
-				messages.append(LintMessage("The number of elements in the spine does not match the number of elements in the ToC and landmarks.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+			if len(toc_files) != len(spine_entries):
+				messages.append(LintMessage("The number of elements in the spine ({}) does not match the number of elements in the ToC and landmarks ({}).".format(len(toc_files), len(spine_entries)), se.MESSAGE_TYPE_ERROR, "content.opf"))
+			for index, entry in enumerate(spine_entries):
+				if toc_files[index] != entry.attrs["idref"]:
+					messages.append(LintMessage("The spine order does not match the order of the ToC and landmarks. Expected {}, found {}.".format(entry.attrs["idref"], toc_files[index]), se.MESSAGE_TYPE_ERROR, "content.opf"))
+					break
 
 	for element in abbr_elements:
 		try:
