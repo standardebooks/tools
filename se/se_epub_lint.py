@@ -772,6 +772,11 @@ def lint(self, metadata_xhtml) -> list:
 					if "<p/>" in file_contents or matches:
 						messages.append(LintMessage("Empty <p> tag. Use <hr/> for scene breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename))
 
+					# Check for <p> tags that end with <br/>
+					matches = regex.findall(r"(\s*<br/?>\s*)+</p>", file_contents)
+					if matches:
+						messages.append(LintMessage("<br/> tag found before closing </p> tag.", se.MESSAGE_TYPE_ERROR, filename))
+
 					# Check for single words that are in italics, but that have closing punctuation outside italics
 					# Outer wrapping match is so that .findall returns the entire match and not the subgroup
 					# The first regex also matches the first few characters before the first double quote; we use those for more sophisticated
