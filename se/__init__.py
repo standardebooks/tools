@@ -276,7 +276,8 @@ def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filen
 						if filename not in ignored_filenames:
 							target_xhtml_filenames.add(Path(root) / filename)
 		else:
-			target_xhtml_filenames.add(target)
+			if target.name.endswith(allowed_extensions):
+				target_xhtml_filenames.add(target)
 
 	return target_xhtml_filenames
 

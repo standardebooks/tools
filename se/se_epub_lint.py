@@ -474,81 +474,12 @@ def lint(self, metadata_xhtml) -> list:
 						for match in matches:
 							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
-					# No empty CSS selectors
-					matches = regex.findall(r"^.+\{\s*\}", file_contents, flags=regex.MULTILINE)
-					if matches:
-						messages.append(LintMessage("Empty selector.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
-
-					# Spaces around combining selectors. However constructs like epub:type~="" do not have spaces.
-					matches = regex.findall(r"[^\s]+[\+\~\>][^=\s]+", file_contents)
-					if matches:
-						messages.append(LintMessage("Combining selectors must have a space on either side.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
-
-					# No space before CSS opening braces
-					matches = regex.findall(r".+\s\{", file_contents)
-					if matches:
-						messages.append(LintMessage("CSS opening braces must not be preceded by space.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
-
-					# CSS closing braces on their own line
-					matches = regex.findall(r"^\s*[^\s+]\s*.+\}", file_contents, flags=regex.MULTILINE)
-					if matches:
-						messages.append(LintMessage("CSS closing braces must be on their own line.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
-
-					# White space before CSS closing braces
-					matches = regex.findall(r"^\s+\}", file_contents, flags=regex.MULTILINE)
-					if matches:
-						messages.append(LintMessage("No white space before CSS closing braces.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
-
-					# Properties not indented with tabs
-					matches = regex.findall(r"^[^\t@/].+:[^\{,]+?;$", file_contents, flags=regex.MULTILINE)
-					if matches:
-						messages.append(LintMessage("CSS properties must be indented with exactly one tab.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
-
 					# Don't specify border color
 					matches = regex.findall(r"(?:border|color).+?(?:#[a-f0-9]{0,6}|black|white|red)", file_contents, flags=regex.IGNORECASE)
 					if matches:
 						messages.append(LintMessage("Don't specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, filename))
 						for match in matches:
 							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
-
-					# Blank space between selectors
-					matches = regex.findall(r"\}\n[^\s]+", file_contents)
-					if matches:
-						messages.append(LintMessage("CSS selectors must have exactly one blank line between them.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
-
-					# Blank space between properties and values
-					matches = regex.findall(r"\s+[a-z\-]+:[^ ]+?;", file_contents)
-					if matches:
-						messages.append(LintMessage("Exactly one space required between CSS properties and their values.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
-
-					matches = regex.findall(r"\}\n\s{2,}[^\s]+", file_contents)
-					if matches:
-						messages.append(LintMessage("CSS selectors must have exactly one blank line between them.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
-
-					# Properties indented with multiple tabs
-					matches = regex.findall(r"^\t{2,}.+:[^\{,]+?;$", file_contents, flags=regex.MULTILINE)
-					if matches:
-						messages.append(LintMessage("CSS properties must be indented with exactly one tab.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
 					# If we select on the xml namespace, make sure we define the namespace in the CSS, otherwise the selector won't work
 					matches = regex.findall(r"\[\s*xml\s*\|", file_contents)

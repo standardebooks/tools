@@ -199,10 +199,10 @@ def clean() -> int:
 	Entry point for `se clean`
 	"""
 
-	parser = argparse.ArgumentParser(description="Prettify and canonicalize individual XHTML or SVG files, or all XHTML and SVG files in a source directory. Note that this only prettifies the source code; it doesn’t perform typography changes.")
+	parser = argparse.ArgumentParser(description="Prettify and canonicalize individual XHTML, SVG, or CSS files, or all XHTML, SVG, or CSS files in a source directory. Note that this only prettifies the source code; it doesn’t perform typography changes.")
 	parser.add_argument("-s", "--single-lines", action="store_true", help="remove hard line wrapping")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML or SVG file, or a directory containing XHTML or SVG files")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML, SVG, or CSS file, or a directory containing XHTML, SVG, or CSS files")
 	args = parser.parse_args()
 
 	for filename in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx", ".xml"), []):
@@ -221,6 +221,31 @@ def clean() -> int:
 		except se.SeException as ex:
 			se.print_error(str(ex) + " File: {}".format(filename), args.verbose)
 			return ex.code
+
+		if args.verbose:
+			print(" OK")
+
+	for filename in se.get_target_filenames(args.targets, (".css"), []):
+		# Skip core.css as this must be copied in from the template
+		if filename.name == "core.css":
+			continue
+
+		if args.verbose:
+			print("Processing {} ...".format(filename), end="", flush=True)
+
+		with open(filename, "r+", encoding="utf-8") as file:
+			css = file.read()
+
+			try:
+				processed_css = se.formatting.format_css(css)
+
+				if processed_css != css:
+					file.seek(0)
+					file.write(processed_css)
+					file.truncate()
+			except se.SeException as ex:
+				se.print_error(str(ex) + " File: {}".format(filename), args.verbose)
+				return ex.code
 
 		if args.verbose:
 			print(" OK")
