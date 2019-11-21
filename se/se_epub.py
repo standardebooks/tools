@@ -277,7 +277,7 @@ class SeEpub:
 						links = content.find_all("a")
 						for link in links:
 							epub_type = link.get("epub:type") or ""
-							if epub_type == "se:referrer":
+							if epub_type == "backlink":
 								href = link.get("href") or ""
 								if href:
 									note.back_link = href
@@ -906,9 +906,8 @@ class SeEpub:
 
 	def generate_endnotes(self) -> str:
 		"""
-		The generate_endnotes() function is very big so for readability and maintainability
-		it's broken out to a separate file. Strictly speaking that file can be inlined
-		into this class.
+		Read the epub spine to regenerate all endnotes in order of appearance, starting from 1.
+		Changes are written to disk.
 		"""
 
 		processed = 0
@@ -918,7 +917,7 @@ class SeEpub:
 		change_list = []
 
 		for file_name in self.get_content_files():
-			if file_name in  ["titlepage.xhtml", "colophon.xhtml", "uncopyright.xhtml", "imprint.xhtml", "halftitle.xhtml", "endnotes.xhtml"]:
+			if file_name in ["titlepage.xhtml", "colophon.xhtml", "uncopyright.xhtml", "imprint.xhtml", "halftitle.xhtml", "endnotes.xhtml"]:
 				continue
 
 			processed += 1
@@ -992,7 +991,7 @@ class SeEpub:
 								links = content.find_all("a")
 								for link in links:
 									epub_type = link.get("epub:type") or ""
-									if epub_type == "se:referrer":
+									if epub_type == "backlink":
 										href = link.get("href") or ""
 										if href:
 											link["href"] = endnote.source_file + "#noteref-" + str(endnote.number)
@@ -1005,4 +1004,5 @@ class SeEpub:
 				report += "Changed {:d} endnote{}.".format(notes_changed, "s" if notes_changed != 1 else "")
 			else:
 				report += "No changes made."
+
 		return report

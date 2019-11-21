@@ -710,13 +710,9 @@ def print_toc() -> int:
 
 	return 0
 
-
 def renumber_endnotes() -> int:
 	"""
 	Entry point for `se renumber-endnotes`
-
-	The meat of this function is broken out into the se_epub_generate_endnotes.py module for readability
-	and maintainability.
 	"""
 
 	parser = argparse.ArgumentParser(description="Renumber all endnotes and noterefs sequentially from the beginning.")
@@ -743,8 +739,6 @@ def renumber_endnotes() -> int:
 			return se.InvalidSeEbookException
 
 	return 0
-
-
 
 def make_url_safe() -> int:
 	"""
