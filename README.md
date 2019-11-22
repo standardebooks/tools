@@ -196,7 +196,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se clean`
 
-	Prettify and canonicalize individual XHTML or SVG files, or all XHTML and SVG files in a source directory. Note that this only prettifies the source code; it doesn’t perform typography changes.
+	Prettify and canonicalize individual XHTML, SVG, or CSS files, or all XHTML, SVG, or CSS files in a source directory. Note that this only prettifies the source code; it doesn’t perform typography changes.
 
 -	### `se compare-versions`
 
