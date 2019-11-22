@@ -1,0 +1,31 @@
+name: Standard Ebooks toolset tests
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.6
+    - name: Install Ubuntu packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install libxml2-utils librsvg2-bin libimage-exiftool-perl default-jre inkscape calibre
+    - name: Install pip dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install .
+    - name: Check code with pylint
+      run: |
+        pip install pylint==2.3.1
+        pylint se
+    - name: Test with pytest
+      run: |
+        pip install pytest
+        pytest
