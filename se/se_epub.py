@@ -981,6 +981,9 @@ class SeEpub:
 				# Now we need to recreate the endnotes file
 				ol_tag = self._endnotes_soup.ol
 				ol_tag.clear()
+
+				self.endnotes.sort(key=lambda endnote: endnote.number)
+
 				for endnote in self.endnotes:
 					if endnote.matched:
 						li_tag = self._endnotes_soup.new_tag("li")
