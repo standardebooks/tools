@@ -24,7 +24,6 @@ jobs:
     - name: Check code with pylint
       run: |
         pip install pylint==2.3.1
-        pylint tests
         pylint se
     - name: Test with pytest
       run: |
