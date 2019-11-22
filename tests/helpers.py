@@ -1,3 +1,7 @@
+"""
+Common helper functions for tests.
+"""
+
 import subprocess
 import shlex
 import pytest

@@ -1,8 +1,15 @@
+"""
+Tests for "se build" command.
+"""
+
 import shutil
 from pathlib import Path
 from helpers import must_run
 
 def assemble_book(book_dir: Path, work_dir: Path, data_dir: Path) -> Path:
+	"""Merge contents of draft book skeleton with test-specific files for
+	the book contents.
+	"""
 	build_dir = work_dir / "book-to-build"
 	# Copy skeleton from book_dir
 	shutil.copytree(book_dir, build_dir)
@@ -20,7 +27,7 @@ def test_build_clean(book_dir: Path, work_dir: Path, data_dir: Path, book_name: 
 	"""
 	build_dir = assemble_book(book_dir, work_dir, data_dir)
 	must_run("se build --kindle --kobo --check {}".format(build_dir))
-	
+
 	for suffix in ["epub", "epub3", "azw3", "kepub.epub"]:
 		file = work_dir / (book_name + "." + suffix)
 		assert file.is_file()
