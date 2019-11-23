@@ -14,7 +14,6 @@ import argparse
 import os
 import types
 import subprocess
-from subprocess import call
 from pathlib import Path
 import tempfile
 import shutil
@@ -587,7 +586,7 @@ def interactive_sr() -> int:
 	# 'set eventignore-=Syntax' enables syntax highlighting in all files
 	# 'wqa writes and quits all buffers
 	# Full command: vim "+silent set title" "+silent bufdo set eventignore-=Syntax | %s${regex}gce | silent update" "+silent qa" "$@"
-	call([vim_path, "+silent set title", "+silent bufdo set eventignore-=Syntax | %s{}gce | silent update".format(args.regex), "+silent qa"] + args.targets)
+	subprocess.call([vim_path, "+silent set title", "+silent bufdo set eventignore-=Syntax | %s{}gce | silent update".format(args.regex), "+silent qa"] + args.targets)
 
 	return 0
 
