@@ -21,7 +21,7 @@ hr{
 
 q::before,
 q::after{
-	content: '';
+	content: "";
 }
 
 h1,
