@@ -1198,7 +1198,7 @@ def word_count() -> int:
 	if args.exclude_se_files:
 		excluded_filenames = se.IGNORED_FILENAMES
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml"), excluded_filenames):
+	for filename in se.get_target_filenames(args.targets, (".xhtml", ".html", ".htm"), excluded_filenames):
 		if args.exclude_se_files and filename.name == "endnotes.xhtml":
 			continue
 
