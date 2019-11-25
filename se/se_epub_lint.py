@@ -394,7 +394,12 @@ def lint(self, metadata_xhtml) -> list:
 					if ">trl<" in metadata_xhtml and "translated from" not in file_contents:
 						messages.append(LintMessage("Translator detected in metadata, but no 'translated from LANG' block in colophon", se.MESSAGE_TYPE_ERROR, filename))
 
-					# are the sources represented correctly?
+					# Check if we forgot to fill any variable slots
+					matches = regex.findall(r"[A-Z_]{3,}", file_contents)
+					for match in matches:
+						messages.append(LintMessage("Missing data in colophon: {}".format(match), se.MESSAGE_TYPE_ERROR, filename))
+
+					# Are the sources represented correctly?
 					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
 					matches = regex.findall(r"<dc:source>([^<]+?)</dc:source>", metadata_xhtml)
 					if len(matches) <= 2:
