@@ -10,4 +10,28 @@
 (0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
 (0x(B [31mError[0m (0x(B chapter-1.xhtml (0x(B File language is en-GB, but content.opf language (0x(B
 (0x(B       (0x(B                 (0x(B is LANG                                          (0x(B
+(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
+(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: YEAR                   (0x(B
+(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
+(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: PRODUCER_URL           (0x(B
+(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
+(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: PRODUCER               (0x(B
+(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
+(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: PG_YEAR                (0x(B
+(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
+(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: TRANSCRIBER_           (0x(B
+(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
+(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: TRANSCRIBER_           (0x(B
+(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
+(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: PG_URL                 (0x(B
+(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
+(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: IA_URL                 (0x(B
+(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
+(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: PAINTING               (0x(B
+(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
+(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: YEAR                   (0x(B
+(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
+(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: ARTIST_WIKI_URL        (0x(B
+(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
+(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: ARTIST                 (0x(B
 (0mqqqqqqqvqqqqqqqqqqqqqqqqqvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj(B
