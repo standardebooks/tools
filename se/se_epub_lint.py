@@ -609,6 +609,11 @@ def lint(self, metadata_xhtml) -> list:
 					if matches:
 						messages.append(LintMessage("Illegal numeric entity (like &#913;) in file.", se.MESSAGE_TYPE_ERROR, filename))
 
+					# Check for <hr> tags before the end of a section, which is a common PG artifact
+					matches = regex.findall(r"<hr[^>]*?/?>\s*</section>", file_contents, flags=regex.DOTALL)
+					if matches:
+						messages.append(LintMessage("Illegal <hr/> before the end of a section.", se.MESSAGE_TYPE_ERROR, filename))
+
 					# Check for double greater-than at the end of a tag
 					matches = regex.findall(r"(>>|>&gt;)", file_contents)
 					if matches:
