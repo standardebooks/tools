@@ -14,7 +14,7 @@ To install the toolset locally for development and debugging, see [Installation 
 
 ```shell
 # Install some pre-flight dependencies.
-sudo apt install -y python3-pip python3-venv libxml2-utils librsvg2-bin libimage-exiftool-perl imagemagick default-jre inkscape calibre git
+sudo apt install -y python3-pip python3-dev python3-venv libxml2-utils librsvg2-bin libimage-exiftool-perl imagemagick default-jre inkscape calibre git
 
 # Install pipx.
 python3 -m pip install --user pipx
