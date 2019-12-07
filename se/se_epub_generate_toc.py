@@ -476,6 +476,9 @@ def get_book_division(tag: BeautifulSoup) -> BookDivision:
 	if not parent_section:
 		parent_section = tag.find_parents("body")
 
+	if not parent_section:  # couldn't find a parent, so throw an error
+		raise se.InvalidInputException
+
 	section_epub_type = parent_section[0].get("epub:type") or ""
 
 	retval = BookDivision.NONE
