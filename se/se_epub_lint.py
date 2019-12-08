@@ -214,6 +214,11 @@ def lint(self, metadata_xhtml) -> list:
 	if regex.search(r"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", metadata_xhtml.replace("\"&gt;", "").replace("=\"", "")) is not None:
 		messages.append(LintMessage("Non-typogrified \", ', or -- detected in metadata long description", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
+	# Check if there are non-typogrified quotes or em-dashes in the title.
+	# The open-ended start and end of the regex also catches title-sort
+	if regex.search(r"title\">[^<]+?(['\"]|\-\-)[^<]+?<", metadata_xhtml) is not None:
+		messages.append(LintMessage("Non-typogrified \", ', or -- detected in metadata title", se.MESSAGE_TYPE_ERROR, "content.opf"))
+
 	# Check for malformed long description HTML
 	long_description = regex.findall(r"<meta id=\"long-description\".+?>(.+?)</meta>", metadata_xhtml, flags=regex.DOTALL)
 	if long_description:
