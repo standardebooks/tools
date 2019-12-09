@@ -399,8 +399,8 @@ def lint(self, metadata_xhtml) -> list:
 					if ">trl<" in metadata_xhtml and "translated from" not in file_contents:
 						messages.append(LintMessage("Translator detected in metadata, but no 'translated from LANG' block in colophon", se.MESSAGE_TYPE_ERROR, filename))
 
-					# Check if we forgot to fill any variable slots; but not if the all-caps string is in a URL, like a Google Books URL
-					matches = regex.findall(r"(?<!https://[^>]+)[A-Z_]{3,}", file_contents)
+					# Check if we forgot to fill any variable slots
+					matches = regex.findall(r"(TITLE|YEAR|AUTHOR|PRODUCER|PG_[A-Z]+|TRANSCRIBER_[0-9]+|[A-Z]+_URL|PAINTING|ARTIST|SE_[A-Z]+)", file_contents)
 					for match in matches:
 						messages.append(LintMessage("Missing data in colophon: {}".format(match), se.MESSAGE_TYPE_ERROR, filename))
 
