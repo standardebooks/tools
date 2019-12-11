@@ -234,7 +234,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bempale", r"impale", xhtml)				# empale -> impale
 	xhtml = regex.sub(r"\b([Tt])abu(s?)\b", r"\1aboo\2", xhtml)			# tabu -> taboo
 	xhtml = regex.sub(r"\b([Kk])idnaping\b", r"\1idnapping", xhtml)			# kidnaping -> kidnapping
-
+	xhtml = regex.sub(r"\bQuixotic\b", r"quixotic", xhtml)				# Quixotic -> quixotic
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
