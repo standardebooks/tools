@@ -189,7 +189,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"['’]([Pp])hone", r"\1hone", xhtml)				# ’phone -> phone; note that we can't use \b on the left because it won't match for some reason
 	xhtml = regex.sub(r"\b([Ss])hew", r"\1how", xhtml)				# shew -> show
 	xhtml = regex.sub(r"\b([Tt])rowsers", r"\1rousers", xhtml)			# trowsers -> trousers
-	xhtml = regex.sub(r"\b([Bb])iass", r"\1ias", xhtml)				# biass -> bias
+	xhtml = regex.sub(r"([Bb])iass", r"\1ias", xhtml)				# (un)biass(ed) -> (un)bias(ed)
 	xhtml = regex.sub(r"\b([Cc])huse", r"\1hoose", xhtml)				# chuse -> choose
 	xhtml = regex.sub(r"\b([Cc])husing", r"\1hoosing", xhtml)			# chusing -> choosing
 	xhtml = regex.sub(r"\b([Cc])ontroul(s?)\b", r"\1ontrol\2", xhtml)	# controul -> control
