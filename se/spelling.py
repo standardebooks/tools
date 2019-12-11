@@ -71,8 +71,11 @@ def detect_problem_spellings(xhtml: str) -> list:
 	if regex.search(r"\bstaid\b", xhtml):
 		output.append("“staid” detected: should be modernized if it is the past tense of “stay,” but not if used as an adjective meaning “sedate or prim.”")
 
-	if regex.search(r"\cozen\b", xhtml):
+	if regex.search(r"\bcozen\b", xhtml):
 		output.append("“cozen” detected: should be modernized if it means “cousin,” but not if used to mean “to deceive or win over.”")
+
+	if regex.search(r"\bgrown-?up\b", xhtml):
+		output.append("“grownup” or “grown-up” detected: Confirm that “grownup” is strictly a noun, and “grown-up” is strictly an adjective.")
 
 	return output
 
