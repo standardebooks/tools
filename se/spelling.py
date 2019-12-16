@@ -207,7 +207,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])ate\b", r"\1at", xhtml)				# sate -> sat
 	xhtml = regex.sub(r"\b([Aa])ttache\b", r"\1ttaché", xhtml)			# attache -> attaché
 	xhtml = regex.sub(r"\b([Pp])orte[\- ]coch[eè]re\b", r"\1orte-cochère", xhtml)	# porte-cochere -> porte-cochère
-	xhtml = regex.sub(r"\b([Nn])égligée?(s?)\b", r"\1egligee\2", xhtml)		# négligée -> negligee
+	xhtml = regex.sub(r"\b([Nn])[eé]glig[eé]e?(s?)\b", r"\1egligee\2", xhtml)		# négligée -> negligee
 	xhtml = regex.sub(r"\b([Ss])hort cut(s?)\b", r"\1hortcut\2", xhtml)		# short cut -> shortcut
 	xhtml = regex.sub(r"\b([Ff])ocuss", r"\1ocus", xhtml)				# focuss -> focus
 	xhtml = regex.sub(r"\b([Mm])ise[ \-]en[ \-]sc[eè]ne", r"\1ise-en-scène", xhtml)	# mise en scene -> mise-en-scène
