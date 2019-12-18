@@ -155,14 +155,8 @@ def _get_unused_selectors(self) -> set:
 
 				try:
 					tree = etree.fromstring(str.encode(xhtml))
-				except UnicodeError as ex:
-					raise se.InvalidXhtmlException("Error encoding file: {}, source: {}".format(filename, ex.object[ex.start:ex.end]))
 				except etree.XMLSyntaxError as ex:
-					log = ex.error_log.filter_from_level(etree.ErrorLevels.FATAL)
-					if len(log) > 0:
-						raise se.InvalidXhtmlException("Couldn't parse XHTML in file: {}, error: {}".format(filename, log[0]))
-					else
-						raise se.InvalidXhtmlException("Couldn't parse XHTML in file: {}".format(filename))
+					raise se.InvalidXhtmlException("Couldn't parse XHTML in file: {}, error: {}".format(filename, str(ex)))
 				except Exception:
 					raise se.InvalidXhtmlException("Couldn't parse XHTML in file: {}".format(filename))
 
