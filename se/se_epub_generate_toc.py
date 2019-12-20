@@ -431,7 +431,11 @@ def process_heading(heading: BeautifulSoup, textf: str, is_toplevel: bool, singl
 		toc_item.level = len(parent_sections)
 	else:
 		toc_item.level = 1
-	toc_item.division = get_book_division(heading)
+
+	try:
+		toc_item.division = get_book_division(heading)
+	except se.InvalidInputException:
+		raise se.InvalidInputException("Could not identify parent section, filename: {}".format(textf))
 
 	# This stops the first heading in a file getting an anchor id, we don't generally want that.
 	# The exceptions are things like poems within a single-file volume.
