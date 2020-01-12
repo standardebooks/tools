@@ -144,7 +144,7 @@ To do that, follow the general installation instructions above; but instead of d
 
 ```shell
 git clone https://github.com/standardebooks/tools.git
-pipx install --editable --spec tools standardebooks
+pipx install --editable tools
 
 # Optional: ZSH users can install tab completion.
 sudo ln -s $(readlink -f .)/tools/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
