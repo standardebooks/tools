@@ -87,10 +87,10 @@ def semanticate(xhtml: str) -> str:
 
 	# Get Roman numerals >= 2 characters
 	# We only wrap these if they're standalone (i.e. not already wrapped in a tag) to prevent recursion in multiple runs
-	xhtml = regex.sub(r"([^a-zA-Z>])([ixvIXV]{2,})(\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
+	xhtml = regex.sub(r"([^a-zA-Z>])([ixvIXV]{2,})(\b|st\b|nd\b|rd\b|th\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
 
 	# Get Roman numerals that are X or V and single characters.  We can't do I for obvious reasons.
-	xhtml = regex.sub(r"""([^a-zA-Z>\"])([vxVX])(\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
+	xhtml = regex.sub(r"""([^a-zA-Z>\"])([vxVX])(\b|st\b|nd\b|rd\b|th\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
 
 	# We may have added HTML tags within title tags.  Remove those here
 	matches = regex.findall(r"<title>.+?</title>", xhtml)
