@@ -34,7 +34,7 @@ _se(){
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			create-draft)
-				COMPREPLY+=($(compgen -W "-a --author -e --email -g --create-github-repo -h --help -i --illustrator -p --gutenberg-ebook-url -r --translator -s --create-se-repo -t --title" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-a --author -e --email -g --create-github-repo -h --help -i --illustrator -p --pg-url -r --translator -s --create-se-repo -t --title" -- "${cur}"))
 				;;
 			dec2roman)
 				COMPREPLY+=($(compgen -W "-h --help -n --no-newline" -- "${cur}"))
