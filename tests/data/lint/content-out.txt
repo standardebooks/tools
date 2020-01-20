@@ -19,9 +19,9 @@
 (0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
 (0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: PG_YEAR                (0x(B
 (0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: TRANSCRIBER_           (0x(B
+(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: TRANSCRIBER_1          (0x(B
 (0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: TRANSCRIBER_           (0x(B
+(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: TRANSCRIBER_2          (0x(B
 (0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
 (0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: PG_URL                 (0x(B
 (0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
