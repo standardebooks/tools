@@ -316,7 +316,7 @@ def compare_versions() -> int:
 				filename = Path(filename)
 
 				# Path arguments must be cast to string for Windows compatibility.
-				subprocess.run([str(firefox_path), "-screenshot", "{}/{}-original.png".format(temp_directory_path, filename.name), str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+				subprocess.run([str(firefox_path), "-screenshot", "{}/{}-original.png".format(temp_directory_path, filename.name), str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
 
 			# Pop the stash
 			git_command.stash("pop")
@@ -329,10 +329,10 @@ def compare_versions() -> int:
 				file_diff_screenshot_path = Path(temp_directory_path / file_path.name + "-diff.png")
 
 				# Path arguments must be cast to string for Windows compatibility.
-				subprocess.run([str(firefox_path), "-screenshot", str(file_new_screenshot_path), str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+				subprocess.run([str(firefox_path), "-screenshot", str(file_new_screenshot_path), str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
 
 				# Path arguments must be cast to string for Windows compatibility.
-				output = subprocess.run([str(compare_path), "-metric", "ae", str(file_original_screenshot_path), str(file_new_screenshot_path), str(file_diff_screenshot_path)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode().strip()
+				output = subprocess.run([str(compare_path), "-metric", "ae", str(file_original_screenshot_path), str(file_new_screenshot_path), str(file_diff_screenshot_path)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False).stdout.decode().strip()
 
 				if output != "0":
 					print("{}Difference in {}\n".format("\t" if args.verbose else "", filename), end="", flush=True)

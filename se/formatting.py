@@ -392,7 +392,7 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 
 	# Canonicalize XHTML
 	# Path arguments must be cast to string for Windows compatibility.
-	result = subprocess.run([str(xmllint_path), "--c14n", "-"], input=xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	result = subprocess.run([str(xmllint_path), "--c14n", "-"], input=xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
 
 	xhtml = result.stdout.decode()
 	try:
@@ -414,7 +414,7 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 
 	# Pretty-print XML
 	# Path arguments must be cast to string for Windows compatibility.
-	xhtml = subprocess.run([str(xmllint_path), "--format", "-"], input=xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env).stdout.decode()
+	xhtml = subprocess.run([str(xmllint_path), "--format", "-"], input=xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, check=False).stdout.decode()
 
 	# Remove white space between some tags
 	xhtml = regex.sub(r"<p([^>]*?)>\s+([^<\s])", "<p\\1>\\2", xhtml, flags=regex.DOTALL)
