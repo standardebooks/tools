@@ -2,11 +2,13 @@
 Common helper functions for tests.
 """
 
-import subprocess
+import filecmp
 import shlex
 import shutil
+import subprocess
 from pathlib import Path
 import pytest
+
 
 def run(cmd: str) -> subprocess.CompletedProcess:
 	"""Run the provided shell string as a command in a subprocess. Returns a
@@ -46,3 +48,34 @@ def assemble_book(draft__dir: Path, work_dir: Path, text_dir: Path) -> Path:
 	must_run("se print-manifest-and-spine --in-place {}".format(book_dir))
 	must_run("se print-toc --in-place {}".format(book_dir))
 	return book_dir
+
+def files_are_golden(in_dir: Path, text_dir: Path, golden_dir: Path, update_golden: bool) -> bool:
+	"""Check that the files in the list have identical contents in both
+	directories."""
+	# Get the list of files to check
+	files = [file.name for file in list(in_dir.glob("*.xhtml"))]
+	assert files
+
+	# If we want to replace the golden files, copy them before checking.
+	# The checking should always succeed after copying.
+	if update_golden:
+		for file in files:
+			shutil.copy(text_dir / file, golden_dir)
+
+	# Check all files
+	_, mismatches, errors = filecmp.cmpfiles(str(golden_dir), str(text_dir), files)
+	# If there are mismatches, do an assert on the text of the files
+	# so that we get a nice context diff from pytest.
+	for mismatch in mismatches:
+		with open(golden_dir / mismatch) as file:
+			golden_text = file.read()
+		with open(text_dir / mismatch) as file:
+			test_text = file.read()
+		assert golden_text == test_text
+
+	# Do a redundant check in case there is no text diff for some reason
+	assert mismatches == []
+	# Fail on any other errors
+	assert errors == []
+
+	return True
