@@ -470,8 +470,12 @@ class SeEpub:
 		if source_titlepage_svg_filename.is_file():
 			# Convert text to paths
 			# inkscape adds a ton of crap to the SVG and we clean that crap a little later.
+			# 1.0 needs an --export-file flag that 0.92 doesn’t, so we need to normalise that first.
+			output_file_flag = str(dest_titlepage_svg_filename)
+			if "--export-file=" in subprocess.run([str(inkscape_path), "--help"], stdout=subprocess.PIPE).stdout.decode("utf8"):
+				output_file_flag = "--export-file=" + output_file_flag
 			# Path arguments must be cast to string for Windows compatibility.
-			subprocess.run([str(inkscape_path), str(source_titlepage_svg_filename), "--without-gui", "--export-text-to-path", "--export-plain-svg", str(dest_titlepage_svg_filename)], check=False)
+			subprocess.run([str(inkscape_path), str(source_titlepage_svg_filename), "--without-gui", "--export-text-to-path", "--export-plain-svg", output_file_flag], check=False)
 
 			se.images.format_inkscape_svg(dest_titlepage_svg_filename)
 
@@ -522,8 +526,12 @@ class SeEpub:
 					source_cover_jpg_base64 = base64.b64encode(file.read()).decode()
 
 				# Convert text to paths
+				# Inkscape 1.0 needs an --export-file flag that 0.92 doesn’t, so we need to normalise that first.
+				output_file_flag = str(dest_cover_svg_filename)
+				if "--export-file=" in subprocess.run([str(inkscape_path), "--help"], stdout=subprocess.PIPE).stdout.decode("utf8"):
+					output_file_flag = "--export-file=" + output_file_flag
 				# Inkscape adds a ton of crap to the SVG and we clean that crap a little later
-				subprocess.run([str(inkscape_path), str(source_cover_svg_filename), "--without-gui", "--export-text-to-path", "--export-plain-svg", str(dest_cover_svg_filename)], check=False)
+				subprocess.run([str(inkscape_path), str(source_cover_svg_filename), "--without-gui", "--export-text-to-path", "--export-plain-svg", output_file_flag], check=False)
 
 				# Embed cover.jpg
 				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
