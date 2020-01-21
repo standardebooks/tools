@@ -89,4 +89,4 @@ def remove_image_metadata(filename: Path) -> None:
 		raise se.MissingDependencyException("Couldn’t locate exiftool. Is it installed?")
 
 	# Path arguments must be cast to string for Windows compatibility.
-	subprocess.run([str(exiftool_path), "-overwrite_original", "-all=", str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+	subprocess.run([str(exiftool_path), "-overwrite_original", "-all=", str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)

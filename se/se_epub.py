@@ -471,7 +471,7 @@ class SeEpub:
 			# Convert text to paths
 			# inkscape adds a ton of crap to the SVG and we clean that crap a little later.
 			# Path arguments must be cast to string for Windows compatibility.
-			subprocess.run([str(inkscape_path), str(source_titlepage_svg_filename), "--without-gui", "--export-text-to-path", "--export-plain-svg", str(dest_titlepage_svg_filename)])
+			subprocess.run([str(inkscape_path), str(source_titlepage_svg_filename), "--without-gui", "--export-text-to-path", "--export-plain-svg", str(dest_titlepage_svg_filename)], check=False)
 
 			se.images.format_inkscape_svg(dest_titlepage_svg_filename)
 
@@ -523,7 +523,7 @@ class SeEpub:
 
 				# Convert text to paths
 				# Inkscape adds a ton of crap to the SVG and we clean that crap a little later
-				subprocess.run([str(inkscape_path), str(source_cover_svg_filename), "--without-gui", "--export-text-to-path", "--export-plain-svg", str(dest_cover_svg_filename)])
+				subprocess.run([str(inkscape_path), str(source_cover_svg_filename), "--without-gui", "--export-text-to-path", "--export-plain-svg", str(dest_cover_svg_filename)], check=False)
 
 				# Embed cover.jpg
 				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
