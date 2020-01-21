@@ -978,12 +978,11 @@ def lint(self, metadata_xhtml) -> list:
 										if isinstance(sib, NavigableString):
 											if sib == "\n": # Referrer preceded by newline. Check if all previous sibs are tags.
 												continue
-											elif sib == " " or str(sib) == se.NO_BREAK_SPACE or regex.search(r"[^\s] $", str(sib)): # Referrer preceded by a single space; we're OK
+											if sib == " " or str(sib) == se.NO_BREAK_SPACE or regex.search(r"[^\s] $", str(sib)): # Referrer preceded by a single space; we're OK
 												break
-											else: # Referrer preceded by a string that is not a newline and does not end with a single space
-												bad_referrers.append(referrer)
-												break
-
+											# Referrer preceded by a string that is not a newline and does not end with a single space
+											bad_referrers.append(referrer)
+											break
 									else:
 										# We got here because the first sib was a newline, or not a string. So, check all previous sibs.
 										if isinstance(sib, NavigableString) and sib != "\n":
