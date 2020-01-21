@@ -61,11 +61,9 @@ sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se
 sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completion/completions/se
 ```
 
-## macOS users (up to macOS 10.14)
+## macOS users (up to macOS 10.15)
 
-These instructions were tested on macOS 10.12 to 10.14.
-
-**Warning:** The Standard Ebooks toolset currently will *not* build cover images on macOS 10.15 Catalina due to Inkscape compatibility problems. The older version of Inkscape that works with this project is 32-bit only and no longer runs on 10.15, and the new version [doesn’t yet have a command line interface](https://gitlab.com/inkscape/inkscape/issues/457). For the time being, your best option is to run Ubuntu or Fedora (see above) in a virtual machine, for example with [VirtualBox](https://www.virtualbox.org/).
+These instructions were tested on macOS 10.12 to 10.15.
 
 1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it’s up to date:
 
