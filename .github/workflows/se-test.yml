@@ -17,12 +17,16 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libxml2-utils librsvg2-bin libimage-exiftool-perl default-jre inkscape calibre
-    - name: Install pip dependencies
+    - name: Install pipx
       run: |
         python -m pip install --upgrade pip
-        pip install pylint pytest
-        pip install .
+        python -m pip install --user pipx
+        echo "::add-path::$HOME/.local/bin"
+    - name: Install pip packages
+      run: |
+        pipx install .
+        pipx inject standardebooks pylint pytest
     - name: Check code with pylint
-      run: pylint tests/*.py se
+      run: $HOME/.local/pipx/venvs/standardebooks/bin/pylint tests/*.py se
     - name: Test with pytest
-      run: pytest
+      run: $HOME/.local/pipx/venvs/standardebooks/bin/pytest
