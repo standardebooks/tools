@@ -59,8 +59,8 @@ def files_are_golden(in_dir: Path, text_dir: Path, golden_dir: Path, update_gold
 	# If we want to replace the golden files, copy them before checking.
 	# The checking should always succeed after copying.
 	if update_golden:
-		for file in files:
-			shutil.copy(text_dir / file, golden_dir)
+		for file_to_update in files:
+			shutil.copy(text_dir / file_to_update, golden_dir)
 
 	# Check all files
 	_, mismatches, errors = filecmp.cmpfiles(str(golden_dir), str(text_dir), files)
