@@ -310,13 +310,13 @@ def compare_versions() -> int:
 		# Put Git's changes into the stash
 		git_command.stash()
 
-		with tempfile.TemporaryDirectory() as temp_directory_path:
+		with tempfile.TemporaryDirectory() as temp_directory_name:
 			# Generate screenshots of the pre-change repo
 			for filename in target_filenames:
 				filename = Path(filename)
 
 				# Path arguments must be cast to string for Windows compatibility.
-				subprocess.run([str(firefox_path), "-screenshot", "{}/{}-original.png".format(temp_directory_path, filename.name), str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+				subprocess.run([str(firefox_path), "-screenshot", "{}/{}-original.png".format(temp_directory_name, filename.name), str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
 
 			# Pop the stash
 			git_command.stash("pop")
@@ -324,9 +324,9 @@ def compare_versions() -> int:
 			# Generate screenshots of the post-change repo, and compare them to the old screenshots
 			for filename in target_filenames:
 				file_path = Path(filename)
-				file_new_screenshot_path = Path(temp_directory_path / file_path.name + "-new.png")
-				file_original_screenshot_path = Path(temp_directory_path / file_path.name + "-original.png")
-				file_diff_screenshot_path = Path(temp_directory_path / file_path.name + "-diff.png")
+				file_new_screenshot_path = Path(temp_directory_name) / (file_path.name + "-new.png")
+				file_original_screenshot_path = Path(temp_directory_name) / (file_path.name + "-original.png")
+				file_diff_screenshot_path = Path(temp_directory_name) / (file_path.name + "-diff.png")
 
 				# Path arguments must be cast to string for Windows compatibility.
 				subprocess.run([str(firefox_path), "-screenshot", str(file_new_screenshot_path), str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
