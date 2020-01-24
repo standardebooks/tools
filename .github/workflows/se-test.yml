@@ -25,7 +25,9 @@ jobs:
     - name: Install pip packages
       run: |
         pipx install .
-        pipx inject standardebooks pylint pytest
+        pipx inject standardebooks pylint pytest mypy
+    - name: Check type annotations with mypy
+      run: $HOME/.local/pipx/venvs/standardebooks/bin/mypy
     - name: Check code with pylint
       run: $HOME/.local/pipx/venvs/standardebooks/bin/pylint tests/*.py se
     - name: Test with pytest

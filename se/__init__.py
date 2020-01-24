@@ -159,7 +159,7 @@ def replace_in_file(file_path: Path, search: Union[str, list], replace: Union[st
 				if replace[index] is not None:
 					processed_data = processed_data.replace(val, replace[index])
 		else:
-			processed_data = processed_data.replace(search, replace)
+			processed_data = processed_data.replace(search, str(replace))
 
 		if processed_data != data:
 			file.seek(0)
@@ -300,14 +300,15 @@ def get_xhtml_language(xhtml: str) -> str:
 
 	return language
 
-def get_firefox_path() -> str:
+def get_firefox_path() -> Path:
 	"""
 	Get the path to the local Firefox binary
 	"""
 
-	try:
-		firefox_path = Path(shutil.which("firefox"))
-	except Exception:
+	which_firefox = shutil.which("firefox")
+	if which_firefox:
+		firefox_path = Path(which_firefox)
+	else:
 		# Look for default mac Firefox.app path if none found in path
 		firefox_path = Path("/Applications/Firefox.app/Contents/MacOS/firefox")
 		if not firefox_path.exists():

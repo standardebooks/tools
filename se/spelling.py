@@ -4,12 +4,12 @@ Defines various spelling-related helper functions.
 """
 
 from pathlib import Path
-from pkg_resources import resource_filename
+from typing import Set
 import regex
+from pkg_resources import resource_filename
 import se
 
-
-DICTIONARY = []	# Store our hyphenation dictionary so we don't re-read the file on every pass
+DICTIONARY: Set[str] = set()	# Store our hyphenation dictionary so we don't re-read the file on every pass
 
 def modernize_hyphenation(xhtml: str) -> str:
 	"""

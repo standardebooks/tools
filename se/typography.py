@@ -4,11 +4,12 @@ Defines various typography-related functions
 """
 
 import html
+from typing import Dict
 import regex
 import smartypants
+from bs4 import BeautifulSoup
 from hyphen import Hyphenator
 from hyphen.dictools import list_installed
-from bs4 import BeautifulSoup
 import se
 
 
@@ -250,7 +251,7 @@ def hyphenate(xhtml: str, language: str, ignore_h_tags: bool = False) -> str:
 	A string of XHTML with soft hyphens inserted in words. The output is not guaranteed to be pretty-printed.
 	"""
 
-	hyphenators = {}
+	hyphenators: Dict[str, Hyphenator] = {}
 	soup = BeautifulSoup(xhtml, "lxml")
 
 	if language is None:
@@ -368,7 +369,7 @@ def guess_quoting_style(xhtml: str) -> str:
 	american_percentage = 0
 
 	try:
-		american_percentage = (ldq_count / (ldq_count + lsq_count) * 100)
+		american_percentage = int(ldq_count / (ldq_count + lsq_count) * 100)
 	except ZeroDivisionError:
 		pass
 
