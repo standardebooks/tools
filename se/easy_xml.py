@@ -4,8 +4,9 @@ Defines the EasyXmlTree class, which is a convenience wrapper around etree.
 The class exposes some helpful functions like css_select() and xpath().
 """
 
+from typing import List, Union
 import regex
-from lxml import etree, cssselect
+from lxml import cssselect, etree
 import se
 
 
@@ -14,9 +15,6 @@ class EasyXmlTree:
 	A helper class to make some lxml operations a little less painful.
 	Represents an entire lxml tree.
 	"""
-
-	_xhtml_string = ""
-	etree = None
 
 	def __init__(self, xhtml_string: str):
 		# We have to remove the default namespace declaration from our document, otherwise
@@ -40,7 +38,7 @@ class EasyXmlTree:
 		For example, in content.opf we can't do xpath("//metadata").  We have to use a bogus namespace: xpath("//opf:metadata")
 		"""
 
-		result = []
+		result: List[Union[str, EasyXmlElement]] = []
 
 		for element in self.etree.xpath(selector, namespaces=se.XHTML_NAMESPACES):
 			if isinstance(element, str):
@@ -56,7 +54,6 @@ class EasyXmlElement:
 	"""
 	Represents an lxml element.
 	"""
-	__lxml_element = None
 
 	def __init__(self, lxml_element):
 		self.__lxml_element = lxml_element

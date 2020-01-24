@@ -6,7 +6,7 @@ several text-level statistics like reading ease, and for adding semantics.
 
 import math
 import unicodedata
-import html
+import html.entities
 import os
 from pathlib import Path
 import subprocess
@@ -361,9 +361,10 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 	A string of pretty-printed XHTML.
 	"""
 
-	try:
-		xmllint_path = Path(shutil.which("xmllint"))
-	except Exception:
+	which_xmllint = shutil.which("xmllint")
+	if which_xmllint:
+		xmllint_path = Path(which_xmllint)
+	else:
 		raise se.MissingDependencyException("Couldn’t locate xmllint. Is it installed?")
 
 	env = os.environ.copy()
@@ -716,8 +717,8 @@ def get_ordinal(number: str) -> str:
 	A string of the integer followed by its ordinal, like "1st" or "2nd"
 	"""
 
-	number = int(number)
-	return "%d%s" % (number, "tsnrhtdd"[(math.floor(number / 10) % 10 != 1) * (number % 10 < 4) * number % 10::4])
+	value = int(number)
+	return "%d%s" % (value, "tsnrhtdd"[(math.floor(value / 10) % 10 != 1) * (value % 10 < 4) * value % 10::4])
 
 def titlecase(text: str) -> str:
 	"""
