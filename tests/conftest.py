@@ -30,7 +30,7 @@ def draft_dir(tmp_path_factory, data_dir: Path, book_name: str, update_draft: bo
 		os.chdir(base_dir)
 		try:
 			must_run("se create-draft -a 'Jane Austen' -t 'Unknown Novel'")
-			must_run("se build-images {}".format(src_dir))
+			must_run(f"se build-images {src_dir}")
 		finally:
 			os.chdir(old_wd)
 	dest_dir = tmp_path_factory.getbasetemp() / "draft-book"

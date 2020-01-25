@@ -22,7 +22,7 @@ SIMPLE_CMDS = [
 @pytest.mark.parametrize("cmd_name, cmd_args, cmd_out", SIMPLE_CMDS)
 def test_simple_cmds(cmd_name: str, cmd_args: str, cmd_out: str, capfd):
 	"""Execute command and check output"""
-	must_run("se {} {}".format(cmd_name, cmd_args))
+	must_run(f"se {cmd_name} {cmd_args}")
 	out, _ = capfd.readouterr()
 	assert cmd_out == out.rstrip()
 

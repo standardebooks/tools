@@ -27,7 +27,7 @@ def must_run(cmd: str) -> None:
 			return
 		pytest.fail("stderr was not empty after command '{}'\n{}".format(cmd, result.stderr.decode()))
 	else:
-		fail_msg = "error code {} from command '{}'".format(result.returncode, cmd)
+		fail_msg = f"error code {result.returncode} from command '{cmd}'"
 		if result.stderr:
 			fail_msg += "\n" + result.stderr.decode()
 		pytest.fail(fail_msg)
@@ -45,8 +45,8 @@ def assemble_book(draft__dir: Path, work_dir: Path, text_dir: Path) -> Path:
 	for file in text_dir.glob("*.xhtml"):
 		shutil.copy(file, book_dir / "src" / "epub" / "text")
 	# Rebuild file metadata
-	must_run("se print-manifest-and-spine --in-place {}".format(book_dir))
-	must_run("se print-toc --in-place {}".format(book_dir))
+	must_run(f"se print-manifest-and-spine --in-place {book_dir}")
+	must_run(f"se print-toc --in-place {book_dir}")
 	return book_dir
 
 def files_are_golden(in_dir: Path, text_dir: Path, golden_dir: Path, update_golden: bool) -> bool:

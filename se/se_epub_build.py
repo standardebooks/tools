@@ -76,11 +76,11 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		output_directory = output_directory.resolve()
 		output_directory.mkdir(parents=True, exist_ok=True)
 	except Exception:
-		raise se.FileExistsException("Couldn’t create output directory: {}".format(output_directory))
+		raise se.FileExistsException(f"Couldn’t create output directory: {output_directory}")
 
 	# All clear to start building!
 	if verbose:
-		print("Building {} ...".format(self.path))
+		print(f"Building {self.path} ...")
 
 	with tempfile.TemporaryDirectory() as work_directory:
 		work_directory = Path(work_directory)
@@ -111,7 +111,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		kindle_output_filename = "{}_{}{}.azw3".format(url_author, url_title, ".proof" if proof else "")
 
 		# Clean up old output files if any
-		se.quiet_remove(output_directory / "thumbnail_{}_EBOK_portrait.jpg".format(asin))
+		se.quiet_remove(output_directory / f"thumbnail_{asin}_EBOK_portrait.jpg")
 		se.quiet_remove(output_directory / "cover.jpg")
 		se.quiet_remove(output_directory / "cover-thumbnail.jpg")
 		se.quiet_remove(output_directory / epub_output_filename)
@@ -131,11 +131,11 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			last_updated_iso = regex.sub(r"\+.+?Z$", "Z", last_updated_iso)
 			# In the line below, we can't use %l (unpadded 12 hour clock hour) because it isn't portable to Windows.
 			# Instead we use %I (padded 12 hour clock hour) and then do a string replace to remove leading zeros.
-			last_updated_friendly = "{0:%B %e, %Y, %I:%M <abbr class=\"time eoc\">%p</abbr>}".format(self.last_commit.timestamp).replace(" 0", " ")
+			last_updated_friendly = f"{self.last_commit.timestamp:%B %e, %Y, %I:%M <abbr class=\"time eoc\">%p</abbr>}".replace(" 0", " ")
 			last_updated_friendly = regex.sub(r"\s+", " ", last_updated_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
 			# Set modified date in content.opf
-			self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">{}</meta>".format(last_updated_iso), self.metadata_xhtml)
+			self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", f"<meta property=\"dcterms:modified\">{last_updated_iso}</meta>", self.metadata_xhtml)
 
 			with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
 				file.seek(0)
@@ -146,7 +146,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			with open(work_epub_root_directory / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 
-				xhtml = xhtml.replace("<p>The first edition of this ebook was released on<br/>", "<p>This edition was released on<br/>\n\t\t\t<b>{}</b><br/>\n\t\t\tand is based on<br/>\n\t\t\t<b>revision {}</b>.<br/>\n\t\t\tThe first edition of this ebook was released on<br/>".format(last_updated_friendly, self.last_commit.short_sha))
+				xhtml = xhtml.replace("<p>The first edition of this ebook was released on<br/>", f"<p>This edition was released on<br/>\n\t\t\t<b>{last_updated_friendly}</b><br/>\n\t\t\tand is based on<br/>\n\t\t\t<b>revision {self.last_commit.short_sha}</b>.<br/>\n\t\t\tThe first edition of this ebook was released on<br/>")
 
 				file.seek(0)
 				file.write(xhtml)
@@ -154,7 +154,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 		# Output the pure epub3 file
 		if verbose:
-			print("\tBuilding {} ...".format(epub3_output_filename), end="", flush=True)
+			print(f"\tBuilding {epub3_output_filename} ...", end="", flush=True)
 
 		se.epub.write_epub(work_epub_root_directory, output_directory / epub3_output_filename)
 
@@ -163,10 +163,10 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 		if build_kobo:
 			if verbose:
-				print("\tBuilding {} ...".format(kobo_output_filename), end="", flush=True)
+				print(f"\tBuilding {kobo_output_filename} ...", end="", flush=True)
 		else:
 			if verbose:
-				print("\tBuilding {} ...".format(epub_output_filename), end="", flush=True)
+				print(f"\tBuilding {epub_output_filename} ...", end="", flush=True)
 
 		# Now add epub2 compatibility.
 
@@ -228,7 +228,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 					try:
 						tree = etree.fromstring(str.encode(xhtml))
 					except Exception as ex:
-						raise se.InvalidXhtmlException("Error parsing XHTML file: {}\n{}".format(filename, ex))
+						raise se.InvalidXhtmlException(f"Error parsing XHTML file: {filename}\n{ex}")
 
 					# Now iterate over each CSS selector and see if it's used in any of the files we found
 					for selector in selectors:
@@ -238,7 +238,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 								while selector_to_simplify in selector:
 									# Potentially the pseudoclass we’ll simplify isn’t at the end of the selector,
 									# so we need to temporarily remove the trailing part to target the right elements.
-									split_selector = regex.split(r"({}(\(.*\))?)".format(selector_to_simplify), selector, 1)
+									split_selector = regex.split(fr"({selector_to_simplify}(\(.*\))?)", selector, 1)
 									target_element_selector = ''.join(split_selector[0:2])
 
 									replacement_class = split_selector[1].replace(":", "").replace("(", "-").replace("n-", "n-minus-").replace("n+", "n-plus-").replace(")", "")
@@ -257,7 +257,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
 							pass
 						except lxml.cssselect.SelectorSyntaxError as ex:
-							raise se.InvalidCssException("Couldn't parse CSS in or near this line: {}\n{}".format(selector, ex))
+							raise se.InvalidCssException(f"Couldn't parse CSS in or near this line: {selector}\n{ex}")
 
 						# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
 						if "[epub|type" in selector:
@@ -269,7 +269,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 									current_class = element.get("class", "")
 
 									if new_class not in current_class:
-										current_class = "{} {}".format(current_class, new_class).strip()
+										current_class = f"{current_class} {new_class}".strip()
 										element.set("class", current_class)
 
 					processed_xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print=True)
@@ -285,7 +285,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
 							continue
 						except lxml.cssselect.SelectorSyntaxError as ex:
-							raise se.InvalidCssException("Couldn't parse CSS in or near this line: {}\n{}".format(selector, ex))
+							raise se.InvalidCssException(f"Couldn't parse CSS in or near this line: {selector}\n{ex}")
 
 						# Convert <abbr> to <span>
 						if "abbr" in selector:
@@ -341,7 +341,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			shutil.copy2(cover_svg_file, output_directory / "cover-thumbnail.svg")
 			# Path arguments must be cast to string for Windows compatibility.
 			subprocess.run([str(rsvg_convert_path), "--keep-aspect-ratio", "--format", "png", "--output", str(work_directory / "cover-thumbnail.png"), str(output_directory / "cover-thumbnail.svg")], check=False)
-			subprocess.run([str(convert_path), "-resize", "{}x{}".format(COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT), "-quality", "100", "-format", "jpg", str(work_directory / "cover-thumbnail.png"), str(output_directory / "cover-thumbnail.jpg")], check=False)
+			subprocess.run([str(convert_path), "-resize", f"{COVER_THUMBNAIL_WIDTH}x{COVER_THUMBNAIL_HEIGHT}", "-quality", "100", "-format", "jpg", str(work_directory / "cover-thumbnail.png"), str(output_directory / "cover-thumbnail.jpg")], check=False)
 			(work_directory / "cover-thumbnail.png").unlink()
 			(output_directory / "cover-thumbnail.svg").unlink()
 
@@ -355,7 +355,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		metadata_xhtml = regex.sub(r"properties=\"([^\"]*?)svg([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xhtml) # We may also have the `mathml` property
 
 		# Add an element noting the version of the se tools that built this ebook
-		metadata_xhtml = regex.sub(r"<dc:publisher", "<meta property=\"se:built-with\">{}</meta>\n\t\t<dc:publisher".format(se.VERSION), metadata_xhtml)
+		metadata_xhtml = regex.sub(r"<dc:publisher", f"<meta property=\"se:built-with\">{se.VERSION}</meta>\n\t\t<dc:publisher", metadata_xhtml)
 
 		# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
 		metadata_xhtml = metadata_xhtml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
@@ -392,18 +392,18 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							paths = regex.sub(r"<desc>[^<]+?</desc>", "", paths)
 
 							# `paths` is now our "duplicate".  Add a 2px stroke.
-							paths = paths.replace("<path", "<path style=\"stroke: #ffffff; stroke-width: {}px;\"".format(stroke_width))
+							paths = paths.replace("<path", f"<path style=\"stroke: #ffffff; stroke-width: {stroke_width}px;\"")
 
 							# Inject the duplicate under the old SVG paths.  We do this by only replacing the first regex match for <g> or <path>
-							svg = regex.sub(r"(<g|<path)", "{}\\1".format(paths), svg, 1)
+							svg = regex.sub(r"(<g|<path)", f"{paths}\\1", svg, 1)
 
 							# If this SVG specifies height/width, then increase height and width by 2 pixels and translate everything by 1px
 							try:
 								height = int(regex.search(r"<svg[^>]+?height=\"([0-9]+)\"", svg).group(1)) + stroke_width
-								svg = regex.sub(r"<svg([^<]*?)height=\"[0-9]+\"", "<svg\\1height=\"{}\"".format(height), svg)
+								svg = regex.sub(r"<svg([^<]*?)height=\"[0-9]+\"", f"<svg\\1height=\"{height}\"", svg)
 
 								width = int(regex.search(r"<svg[^>]+?width=\"([0-9]+)\"", svg).group(1)) + stroke_width
-								svg = regex.sub(r"<svg([^<]*?)width=\"[0-9]+\"", "<svg\\1width=\"{}\"".format(width), svg)
+								svg = regex.sub(r"<svg([^<]*?)width=\"[0-9]+\"", f"<svg\\1width=\"{width}\"", svg)
 
 								# Add a grouping element to translate everything over 1px
 								svg = regex.sub(r"(<g|<path)", "<g transform=\"translate({amount}, {amount})\">\n\\1".format(amount=(stroke_width / 2)), svg, 1)
@@ -456,7 +456,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 						# Add ARIA roles, which are just mostly duplicate attributes to epub:type
 						for role in se.ARIA_ROLES:
-							processed_xhtml = regex.sub(r"(epub:type=\"[^\"]*?{}[^\"]*?\")".format(role), "\\1 role=\"doc-{}\"".format(role), processed_xhtml)
+							processed_xhtml = regex.sub(fr"(epub:type=\"[^\"]*?{role}[^\"]*?\")", f"\\1 role=\"doc-{role}\"", processed_xhtml)
 
 						# Some ARIA roles can't apply to some elements.
 						# For example, epilogue can't apply to <article>
@@ -496,14 +496,14 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 						processed_xhtml = regex.sub(r"xml:lang\=\"([^\"]+?)\"", "lang=\"\\1\" xml:lang=\"\\1\"", processed_xhtml)
 
 						# Typography: replace double and triple em dash characters with extra em dashes.
-						processed_xhtml = processed_xhtml.replace("⸺", "—{}—".format(se.WORD_JOINER))
-						processed_xhtml = processed_xhtml.replace("⸻", "—{}—{}—".format(se.WORD_JOINER, se.WORD_JOINER))
+						processed_xhtml = processed_xhtml.replace("⸺", f"—{se.WORD_JOINER}—")
+						processed_xhtml = processed_xhtml.replace("⸻", f"—{se.WORD_JOINER}—{se.WORD_JOINER}—")
 
 						# Typography: replace some other less common characters.
 						processed_xhtml = processed_xhtml.replace("⅒", "1/10")
 						processed_xhtml = processed_xhtml.replace("℅", "c/o")
 						processed_xhtml = processed_xhtml.replace("✗", "×")
-						processed_xhtml = processed_xhtml.replace(" ", "{}{}".format(se.NO_BREAK_SPACE, se.NO_BREAK_SPACE)) # em-space to two nbsps
+						processed_xhtml = processed_xhtml.replace(" ", f"{se.NO_BREAK_SPACE}{se.NO_BREAK_SPACE}") # em-space to two nbsps
 
 						# Many e-readers don't support the word joiner character (U+2060).
 						# They DO, however, support the now-deprecated zero-width non-breaking space (U+FEFF)
@@ -574,7 +574,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							try:
 								tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 							except Exception as ex:
-								raise se.InvalidXhtmlException("Error parsing XHTML file: {}\n{}".format(filename, ex), verbose)
+								raise se.InvalidXhtmlException(f"Error parsing XHTML file: {filename}\n{ex}", verbose)
 
 							kobo.add_kobo_spans_to_node(tree.xpath("./body", namespaces=se.XHTML_NAMESPACES)[0])
 
@@ -592,7 +592,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 			if verbose:
 				print(" OK")
-				print("\tBuilding {} ...".format(epub_output_filename), end="", flush=True)
+				print(f"\tBuilding {epub_output_filename} ...", end="", flush=True)
 
 		# Now work on more epub2 compatibility
 
@@ -646,7 +646,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mn)>(.+?)</\3><((?:m:)?mi)>(.+?)</\5></\1>", "\\4<\\2><i>\\6</i></\\2>", processed_line)
 										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi) mathvariant=\"normal\">(.+?)</\3><((?:m:)?mi)>(.+?)</\5></\1>", "\\4<\\2><i>\\6</i></\\2>", processed_line)
 										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi) mathvariant=\"normal\">(.+?)</\3><((?:m:)?mn)>(.+?)</\5></\1>", "\\4<\\2>\\6</\\2>", processed_line)
-										processed_line = regex.sub(r"<(?:m:)?mo>{}</(?:m:)?mo>".format(se.FUNCTION_APPLICATION), "", processed_line, flags=regex.IGNORECASE) # The ignore case flag is required to match here with the special FUNCTION_APPLICATION character, it's unclear why
+										processed_line = regex.sub(fr"<(?:m:)?mo>{se.FUNCTION_APPLICATION}</(?:m:)?mo>", "", processed_line, flags=regex.IGNORECASE) # The ignore case flag is required to match here with the special FUNCTION_APPLICATION character, it's unclear why
 										processed_line = regex.sub(r"<(?:m:)?mfenced><((?:m:)(?:mo|mi|mn|mrow))>(.+?)</\1></(?:m:)?mfenced>", "(<\\1>\\2</\\1>)", processed_line)
 										processed_line = regex.sub(r"<(?:m:)?mrow>([^>].+?)</(?:m:)?mrow>", "\\1", processed_line)
 										processed_line = regex.sub(r"<(?:m:)?mi>([^<]+?)</(?:m:)?mi>", "<i>\\1</i>", processed_line)
@@ -660,9 +660,9 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 									# Did we succeed? Is there any more MathML in our string?
 									if regex.findall("</?(?:m:)?m", processed_line):
 										# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
-										se.images.render_mathml_to_png(regex.sub(r"<(/?)m:", "<\\1", line), work_epub_root_directory / "epub" / "images" / "mathml-{}.png".format(mathml_count))
+										se.images.render_mathml_to_png(regex.sub(r"<(/?)m:", "<\\1", line), work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png")
 
-										processed_xhtml = processed_xhtml.replace(line, "<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{}.png\" />".format(mathml_count))
+										processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}.png\" />")
 										mathml_count = mathml_count + 1
 									else:
 										# Success! Replace the MathML with our new string.
@@ -675,7 +675,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 		# Include epub2 cover metadata
 		cover_id = metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@id")[0].replace(".svg", ".jpg")
-		metadata_xhtml = regex.sub(r"(<metadata[^>]+?>)", "\\1\n\t\t<meta content=\"{}\" name=\"cover\" />".format(cover_id), metadata_xhtml)
+		metadata_xhtml = regex.sub(r"(<metadata[^>]+?>)", f"\\1\n\t\t<meta content=\"{cover_id}\" name=\"cover\" />", metadata_xhtml)
 
 		# Add metadata to content.opf indicating this file is a Standard Ebooks compatibility build
 		metadata_xhtml = metadata_xhtml.replace("<dc:publisher", "<meta property=\"se:transform\">compatibility</meta>\n\t\t<dc:publisher")
@@ -744,7 +744,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 		if run_epubcheck:
 			if verbose:
-				print("\tRunning epubcheck on {} ...".format(epub_output_filename), end="", flush=True)
+				print(f"\tRunning epubcheck on {epub_output_filename} ...", end="", flush=True)
 
 			# Path arguments must be cast to string for Windows compatibility.
 			output = subprocess.run(["java", "-jar", resource_filename("se", str(Path("data") / "epubcheck" / "epubcheck.jar")), "--quiet", str(output_directory / epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False).stdout.decode().strip()
@@ -758,9 +758,9 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 				output = output.replace("\n\nCheck finished with errors", "")
 
 				if verbose:
-					print("\n\t\tepubcheck v{} failed with:\n\t\t".format(version) + "\t\t".join(output.splitlines(True)), file=sys.stderr)
+					print(f"\n\t\tepubcheck v{version} failed with:\n\t\t" + "\t\t".join(output.splitlines(True)), file=sys.stderr)
 				else:
-					print("epubcheck v{} failed with:\n{}".format(version, output), file=sys.stderr)
+					print(f"epubcheck v{version} failed with:\n{output}", file=sys.stderr)
 				return
 
 			if verbose:
@@ -768,7 +768,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 		if build_kindle:
 			if verbose:
-				print("\tBuilding {} ...".format(kindle_output_filename), end="", flush=True)
+				print(f"\tBuilding {kindle_output_filename} ...", end="", flush=True)
 
 			# There's a bug in Calibre <= 3.48.0 where authors who have more than one MARC relator role
 			# display as "unknown author" in the Kindle interface.
@@ -831,7 +831,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 					try:
 						tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 					except Exception as ex:
-						raise se.InvalidXhtmlException("Error parsing XHTML file: endnotes.xhtml\n{}".format(ex))
+						raise se.InvalidXhtmlException(f"Error parsing XHTML file: endnotes.xhtml\n{ex}")
 
 					notes = tree.xpath("//li[@epub:type=\"endnote\" or @epub:type=\"footnote\"]", namespaces=se.XHTML_NAMESPACES)
 
@@ -845,7 +845,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 						try:
 							ref_link = etree.tostring(note.xpath("p[last()]/a[last()]")[0], encoding="unicode", pretty_print=True, with_tail=False).replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "").strip()
 						except Exception:
-							raise se.InvalidXhtmlException("Can’t find ref link for #{}.".format(note_id))
+							raise se.InvalidXhtmlException(f"Can’t find ref link for #{note_id}.")
 
 						new_ref_link = regex.sub(r">.*?</a>", ">" + note_number + "</a>.", ref_link)
 
@@ -928,7 +928,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			cover_path = work_epub_root_directory / "epub" / metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@href")[0].replace(".svg", ".jpg")
 
 			# Path arguments must be cast to string for Windows compatibility.
-			return_code = subprocess.run([str(ebook_convert_path), str(work_directory / epub_output_filename), str(work_directory / kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", "--cover={}".format(cover_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False).returncode
+			return_code = subprocess.run([str(ebook_convert_path), str(work_directory / epub_output_filename), str(work_directory / kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", f"--cover={cover_path}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False).returncode
 
 			if return_code:
 				raise se.InvalidSeEbookException("ebook-convert failed.")
@@ -940,7 +940,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 			# Extract the thumbnail
 			# Path arguments must be cast to string for Windows compatibility.
-			subprocess.run([str(convert_path), str(work_epub_root_directory / "epub" / "images" / "cover.jpg"), "-resize", "432x660", str(output_directory / "thumbnail_{}_EBOK_portrait.jpg".format(asin))], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+			subprocess.run([str(convert_path), str(work_epub_root_directory / "epub" / "images" / "cover.jpg"), "-resize", "432x660", str(output_directory / f"thumbnail_{asin}_EBOK_portrait.jpg")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
 
 			if verbose:
 				print(" OK")

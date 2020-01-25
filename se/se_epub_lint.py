@@ -144,7 +144,7 @@ def _get_unused_selectors(self) -> set:
 			unused_selectors.remove(selector)
 			continue
 		except lxml.cssselect.SelectorSyntaxError as ex:
-			raise se.InvalidCssException("Couldn't parse CSS in or near this line: {}\n{}".format(selector, ex))
+			raise se.InvalidCssException(f"Couldn't parse CSS in or near this line: {selector}\n{ex}")
 
 		for filename in filenames:
 			if not filename.endswith("titlepage.xhtml") and not filename.endswith("imprint.xhtml") and not filename.endswith("uncopyright.xhtml"):
@@ -158,7 +158,7 @@ def _get_unused_selectors(self) -> set:
 				except etree.XMLSyntaxError as ex:
 					raise se.InvalidXhtmlException("Couldn't parse XHTML in file: {}, error: {}".format(filename, str(ex)))
 				except Exception:
-					raise se.InvalidXhtmlException("Couldn't parse XHTML in file: {}".format(filename))
+					raise se.InvalidXhtmlException(f"Couldn't parse XHTML in file: {filename}")
 
 				if tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
 					unused_selectors.remove(selector)
@@ -231,7 +231,7 @@ def lint(self, metadata_xhtml) -> list:
 			messages.append(LintMessage("Metadata long description is not valid HTML. LXML says: " + str(ex), se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check for double spacing
-	regex_string = r"[{}{} ]{{2,}}".format(se.NO_BREAK_SPACE, se.HAIR_SPACE)
+	regex_string = fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}"
 	matches = regex.findall(regex_string, metadata_xhtml)
 	if matches:
 		messages.append(LintMessage("Double spacing detected in file. Sentences should be single-spaced.", se.MESSAGE_TYPE_ERROR, "content.opf"))
@@ -265,7 +265,7 @@ def lint(self, metadata_xhtml) -> list:
 	if matches:
 		for match in matches:
 			if not match.startswith("https://github.com/standardebooks/"):
-				messages.append(LintMessage("Illegal se:url.vcs.github. VCS URLs must begin with https://github.com/standardebooks/: {}".format(match), se.MESSAGE_TYPE_ERROR, "content.opf"))
+				messages.append(LintMessage(f"Illegal se:url.vcs.github. VCS URLs must begin with https://github.com/standardebooks/: {match}", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check for HathiTrust scan URLs instead of actual record URLs
 	if "babel.hathitrust.org" in metadata_xhtml or "hdl.handle.net" in metadata_xhtml:
@@ -276,7 +276,7 @@ def lint(self, metadata_xhtml) -> list:
 	if matches:
 		for match in matches:
 			if match not in se.SE_GENRES:
-				messages.append(LintMessage("Illegal se:subject: {}".format(match), se.MESSAGE_TYPE_ERROR, "content.opf"))
+				messages.append(LintMessage(f"Illegal se:subject: {match}", se.MESSAGE_TYPE_ERROR, "content.opf"))
 	else:
 		messages.append(LintMessage("No se:subject <meta> tag found.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
@@ -287,11 +287,11 @@ def lint(self, metadata_xhtml) -> list:
 	# Check that our provided identifier matches the generated identifier
 	identifier = regex.sub(r"<.+?>", "", regex.findall(r"<dc:identifier id=\"uid\">.+?</dc:identifier>", metadata_xhtml)[0])
 	if identifier != self.generated_identifier:
-		messages.append(LintMessage("<dc:identifier> does not match expected: {}".format(self.generated_identifier), se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage(f"<dc:identifier> does not match expected: {self.generated_identifier}", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check that the GitHub repo URL is as expected
 	if ("<meta property=\"se:url.vcs.github\">" + self.generated_github_repo_url + "</meta>") not in metadata_xhtml:
-		messages.append(LintMessage("GitHub repo URL does not match expected: {}".format(self.generated_github_repo_url), se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage(f"GitHub repo URL does not match expected: {self.generated_github_repo_url}", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check if se:name.person.full-name matches their titlepage name
 	matches = regex.findall(r"<meta property=\"se:name\.person\.full-name\" refines=\"#([^\"]+?)\">([^<]*?)</meta>", metadata_xhtml)
@@ -326,18 +326,18 @@ def lint(self, metadata_xhtml) -> list:
 	# Make sure some static files are unchanged
 	try:
 		if not filecmp.cmp(license_file_path, self.path / "LICENSE.md"):
-			messages.append(LintMessage("LICENSE.md does not match {}".format(license_file_path), se.MESSAGE_TYPE_ERROR, "LICENSE.md"))
+			messages.append(LintMessage(f"LICENSE.md does not match {license_file_path}", se.MESSAGE_TYPE_ERROR, "LICENSE.md"))
 	except Exception:
 		messages.append(LintMessage("Missing ./LICENSE.md", se.MESSAGE_TYPE_ERROR, "LICENSE.md"))
 
 	if not filecmp.cmp(core_css_file_path, self.path / "src" / "epub" / "css" / "core.css"):
-		messages.append(LintMessage("core.css does not match {}".format(core_css_file_path), se.MESSAGE_TYPE_ERROR, "core.css"))
+		messages.append(LintMessage(f"core.css does not match {core_css_file_path}", se.MESSAGE_TYPE_ERROR, "core.css"))
 
 	if not filecmp.cmp(logo_svg_file_path, self.path / "src" / "epub" / "images" / "logo.svg"):
-		messages.append(LintMessage("logo.svg does not match {}".format(logo_svg_file_path), se.MESSAGE_TYPE_ERROR, "logo.svg"))
+		messages.append(LintMessage(f"logo.svg does not match {logo_svg_file_path}", se.MESSAGE_TYPE_ERROR, "logo.svg"))
 
 	if not filecmp.cmp(uncopyright_file_path, self.path / "src" / "epub" / "text" / "uncopyright.xhtml"):
-		messages.append(LintMessage("uncopyright.xhtml does not match {}".format(uncopyright_file_path), se.MESSAGE_TYPE_ERROR, "uncopyright.xhtml"))
+		messages.append(LintMessage(f"uncopyright.xhtml does not match {uncopyright_file_path}", se.MESSAGE_TYPE_ERROR, "uncopyright.xhtml"))
 
 	# Check for unused selectors
 	unused_selectors = _get_unused_selectors(self)
@@ -369,10 +369,10 @@ def lint(self, metadata_xhtml) -> list:
 					# .gitignore is optional, because our standard gitignore ignores itself.
 					# So if it's present, it must match our template.
 					if not filecmp.cmp(gitignore_file_path, str(self.path / ".gitignore")):
-						messages.append(LintMessage(".gitignore does not match {}".format(gitignore_file_path), se.MESSAGE_TYPE_ERROR, ".gitignore"))
+						messages.append(LintMessage(f".gitignore does not match {gitignore_file_path}", se.MESSAGE_TYPE_ERROR, ".gitignore"))
 						continue
 				else:
-					messages.append(LintMessage("Illegal {} file detected in {}".format(filename, root), se.MESSAGE_TYPE_ERROR))
+					messages.append(LintMessage(f"Illegal {filename} file detected in {root}", se.MESSAGE_TYPE_ERROR))
 					continue
 
 			with open(Path(root) / filename, "r", encoding="utf-8") as file:
@@ -396,7 +396,7 @@ def lint(self, metadata_xhtml) -> list:
 
 				if filename == "colophon.xhtml":
 					if "<a href=\"{}\">{}</a>".format(self.generated_identifier.replace("url:", ""), self.generated_identifier.replace("url:https://", "")) not in file_contents:
-						messages.append(LintMessage("Unexpected SE identifier in colophon. Expected: {}".format(self.generated_identifier), se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage(f"Unexpected SE identifier in colophon. Expected: {self.generated_identifier}", se.MESSAGE_TYPE_ERROR, filename))
 
 					if ">trl<" in metadata_xhtml and "translated from" not in file_contents:
 						messages.append(LintMessage("Translator detected in metadata, but no 'translated from LANG' block in colophon", se.MESSAGE_TYPE_ERROR, filename))
@@ -411,17 +411,17 @@ def lint(self, metadata_xhtml) -> list:
 					matches = regex.findall(r"<dc:source>([^<]+?)</dc:source>", metadata_xhtml)
 					if len(matches) <= 2:
 						for link in matches:
-							if "gutenberg.org" in link and "<a href=\"{}\">Project Gutenberg</a>".format(link) not in file_contents:
-								messages.append(LintMessage("Source not represented in colophon.xhtml. It should read: <a href=\"{}\">Project Gutenberg</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
+							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
+								messages.append(LintMessage(f"Source not represented in colophon.xhtml. It should read: <a href=\"{link}\">Project Gutenberg</a>", se.MESSAGE_TYPE_WARNING, filename))
 
-							if "hathitrust.org" in link and "the<br/>\n\t\t\t<a href=\"{}\">HathiTrust Digital Library</a>".format(link) not in file_contents:
-								messages.append(LintMessage("Source not represented in colophon.xhtml. It should read: the<br/> <a href=\"{}\">HathiTrust Digital Library</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
+							if "hathitrust.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
+								messages.append(LintMessage(f"Source not represented in colophon.xhtml. It should read: the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>", se.MESSAGE_TYPE_WARNING, filename))
 
-							if "archive.org" in link and "the<br/>\n\t\t\t<a href=\"{}\">Internet Archive</a>".format(link) not in file_contents:
-								messages.append(LintMessage("Source not represented in colophon.xhtml. It should read: the<br/> <a href=\"{}\">Internet Archive</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
+							if "archive.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">Internet Archive</a>" not in file_contents:
+								messages.append(LintMessage(f"Source not represented in colophon.xhtml. It should read: the<br/> <a href=\"{link}\">Internet Archive</a>", se.MESSAGE_TYPE_WARNING, filename))
 
-							if "books.google.com" in link and "<a href=\"{}\">Google Books</a>".format(link) not in file_contents:
-								messages.append(LintMessage("Source not represented in colophon.xhtml. It should read: <a href=\"{}\">Google Books</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
+							if "books.google.com" in link and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
+								messages.append(LintMessage(f"Source not represented in colophon.xhtml. It should read: <a href=\"{link}\">Google Books</a>", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "titlepage.xhtml":
 					if "<title>Titlepage</title>" not in file_contents:
@@ -546,7 +546,7 @@ def lint(self, metadata_xhtml) -> list:
 								# This invocation of match.find() returns all text nodes. We don't want any text nodes, so if it returns anything then we know we're
 								# missing a <span> somewhere.
 								if match.find(text=True, recursive=False).strip():
-									messages.append(LintMessage("<{}> tag has subtitle <span>, but first line is not wrapped in a <span>. See semantics manual for structure of headers with subtitles.".format(match.name), se.MESSAGE_TYPE_ERROR, filename))
+									messages.append(LintMessage(f"<{match.name}> tag has subtitle <span>, but first line is not wrapped in a <span>. See semantics manual for structure of headers with subtitles.", se.MESSAGE_TYPE_ERROR, filename))
 
 								# OK, move on with processing headers.
 								parent_section = match.find_parents("section")
@@ -601,7 +601,7 @@ def lint(self, metadata_xhtml) -> list:
 							for css_class in match["class"]:
 								uppercase_matches = regex.findall(r"[A-Z]", unicodedata.normalize("NFKD", css_class))
 								for _ in uppercase_matches:
-									messages.append(LintMessage("Uppercase class attribute: {}. Attribute values must be all lowercase.".format(css_class), se.MESSAGE_TYPE_ERROR, filename))
+									messages.append(LintMessage(f"Uppercase class attribute: {css_class}. Attribute values must be all lowercase.", se.MESSAGE_TYPE_ERROR, filename))
 
 					matches = [x for x in dom.select("section") if not x.has_attr("id")]
 					if matches:
@@ -627,17 +627,17 @@ def lint(self, metadata_xhtml) -> list:
 						messages.append(LintMessage("Tags should end with a single >.", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for nbsp before ampersand (&amp)
-					matches = regex.findall(r"[^{}]\&amp;".format(se.NO_BREAK_SPACE), file_contents)
+					matches = regex.findall(fr"[^{se.NO_BREAK_SPACE}]\&amp;", file_contents)
 					if matches:
 						messages.append(LintMessage("Required nbsp not found before &amp;", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for nbsp after ampersand (&amp)
-					matches = regex.findall(r"\&amp;[^{}]".format(se.NO_BREAK_SPACE), file_contents)
+					matches = regex.findall(fr"\&amp;[^{se.NO_BREAK_SPACE}]", file_contents)
 					if matches:
 						messages.append(LintMessage("Required nbsp not found after &amp;", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for nbsp before times
-					matches = regex.findall(r"[0-9]+[^{}]<abbr class=\"time".format(se.NO_BREAK_SPACE), file_contents)
+					matches = regex.findall(fr"[0-9]+[^{se.NO_BREAK_SPACE}]<abbr class=\"time", file_contents)
 					if matches:
 						messages.append(LintMessage("Required nbsp not found before <abbr class=\"time\">", se.MESSAGE_TYPE_WARNING, filename))
 
@@ -696,7 +696,7 @@ def lint(self, metadata_xhtml) -> list:
 							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
 
 					# Check for two em dashes in a row
-					matches = regex.findall(r"—{}*—+".format(se.WORD_JOINER), file_contents)
+					matches = regex.findall(fr"—{se.WORD_JOINER}*—+", file_contents)
 					if matches:
 						messages.append(LintMessage("Two or more em-dashes in a row detected. Elided words should use the two- or three-em-dash Unicode character, and dialog ending in em-dashes should only end in a single em-dash.", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -760,7 +760,7 @@ def lint(self, metadata_xhtml) -> list:
 						messages.append(LintMessage("One or more uppercase HTML tags.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for nbsp within <abbr class="name">, which is redundant
-					matches = regex.findall(r"<abbr[^>]+?class=\"name\"[^>]*?>[^<]*?{}[^<]*?</abbr>".format(se.NO_BREAK_SPACE), file_contents)
+					matches = regex.findall(fr"<abbr[^>]+?class=\"name\"[^>]*?>[^<]*?{se.NO_BREAK_SPACE}[^<]*?</abbr>", file_contents)
 					if matches:
 						messages.append(LintMessage("No-break space detected in <abbr class=\"name\">. This is redundant.", se.MESSAGE_TYPE_ERROR, filename))
 						for match in matches:
@@ -778,9 +778,9 @@ def lint(self, metadata_xhtml) -> list:
 						try:
 							chapter_number = roman.fromRoman(matches[0][1].upper())
 
-							regex_string = r"<title>(Chapter|Section|Part) {}".format(chapter_number)
+							regex_string = fr"<title>(Chapter|Section|Part) {chapter_number}"
 							if not regex.findall(regex_string, file_contents):
-								messages.append(LintMessage("<title> tag doesn't match expected value; should be \"Chapter {}\". (Beware hidden Unicode characters!)".format(chapter_number), se.MESSAGE_TYPE_ERROR, filename))
+								messages.append(LintMessage(f"<title> tag doesn't match expected value; should be \"Chapter {chapter_number}\". (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
 						except Exception:
 							messages.append(LintMessage("<h#> tag is marked with z3998:roman, but is not a Roman numeral", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -797,7 +797,7 @@ def lint(self, metadata_xhtml) -> list:
 
 						regex_string = r"<title>(Chapter|Section|Part) {}: {}".format(chapter_number, regex.escape(chapter_title))
 						if not regex.findall(regex_string, file_contents):
-							messages.append(LintMessage("<title> tag doesn't match expected value; should be \"Chapter {}: {}\". (Beware hidden Unicode characters!)".format(chapter_number, chapter_title), se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage(f"<title> tag doesn't match expected value; should be \"Chapter {chapter_number}: {chapter_title}\". (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for missing subtitle styling
 					if "epub:type=\"subtitle\"" in file_contents and not local_css_has_subtitle_style:
@@ -860,14 +860,14 @@ def lint(self, metadata_xhtml) -> list:
 
 									title = se.formatting.remove_tags(title).strip()
 									if title != titlecased_title:
-										messages.append(LintMessage("Title \"{}\" not correctly titlecased. Expected: {}".format(title, titlecased_title), se.MESSAGE_TYPE_WARNING, filename))
+										messages.append(LintMessage(f"Title \"{title}\" not correctly titlecased. Expected: {titlecased_title}", se.MESSAGE_TYPE_WARNING, filename))
 
 							# No subtitle? Much more straightforward
 							else:
 								titlecased_title = se.formatting.remove_tags(se.formatting.titlecase(title))
 								title = se.formatting.remove_tags(title)
 								if title != titlecased_title:
-									messages.append(LintMessage("Title \"{}\" not correctly titlecased. Expected: {}".format(title, titlecased_title), se.MESSAGE_TYPE_WARNING, filename))
+									messages.append(LintMessage(f"Title \"{title}\" not correctly titlecased. Expected: {titlecased_title}", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for <figure> tags without id attributes
 					matches = regex.findall(r"<img[^>]*?id=\"[^>]+?>", file_contents)
@@ -905,14 +905,14 @@ def lint(self, metadata_xhtml) -> list:
 								try:
 									title_text = BeautifulSoup(image_source, "lxml").title.get_text()
 								except Exception:
-									messages.append(LintMessage("{} missing <title> element.".format(image_ref), se.MESSAGE_TYPE_ERROR, image_ref))
+									messages.append(LintMessage(f"{image_ref} missing <title> element.", se.MESSAGE_TYPE_ERROR, image_ref))
 							if title_text != "" and alt_text != "" and title_text != alt_text:
-								messages.append(LintMessage("The <title> of {} doesn’t match the alt text in {}".format(image_ref, filename), se.MESSAGE_TYPE_ERROR, filename))
+								messages.append(LintMessage(f"The <title> of {image_ref} doesn’t match the alt text in {filename}", se.MESSAGE_TYPE_ERROR, filename))
 						except FileNotFoundError:
-							messages.append(LintMessage("The image {} doesn’t exist".format(image_ref), se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage(f"The image {image_ref} doesn’t exist", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for punctuation after endnotes
-					regex_string = r"<a[^>]*?epub:type=\"noteref\"[^>]*?>[0-9]+</a>[^\s<–\]\)—{}]".format(se.WORD_JOINER)
+					regex_string = fr"<a[^>]*?epub:type=\"noteref\"[^>]*?>[0-9]+</a>[^\s<–\]\)—{se.WORD_JOINER}]"
 					matches = regex.findall(regex_string, file_contents)
 					if matches:
 						messages.append(LintMessage("Endnote links must be outside of punctuation, including quotation marks.", se.MESSAGE_TYPE_WARNING, filename))
@@ -938,7 +938,7 @@ def lint(self, metadata_xhtml) -> list:
 						messages.append(LintMessage("Illegal <pre> tag.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for double spacing
-					regex_string = r"[{}{} ]{{2,}}".format(se.NO_BREAK_SPACE, se.HAIR_SPACE)
+					regex_string = fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}"
 					matches = regex.findall(regex_string, file_contents)
 					if matches:
 						messages.append(LintMessage("Double spacing detected in file. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)", se.MESSAGE_TYPE_ERROR, filename))
@@ -951,7 +951,7 @@ def lint(self, metadata_xhtml) -> list:
 					# Did someone use colons instead of dots for SE identifiers? e.g. se:name:vessel:ship
 					matches = regex.findall(r"\bse:[a-z]+:(?:[a-z]+:?)*", file_contents)
 					if matches:
-						messages.append(LintMessage("Illegal colon (:) detected in SE identifier. SE identifiers are separated by dots (.) not colons (:). Identifier: {}".format(matches), se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage(f"Illegal colon (:) detected in SE identifier. SE identifiers are separated by dots (.) not colons (:). Identifier: {matches}", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for leftover asterisms
 					matches = regex.findall(r"\*\s*(\*\s*)+", file_contents)
@@ -1000,17 +1000,17 @@ def lint(self, metadata_xhtml) -> list:
 						matches = regex.findall(r"<dc:source>([^<]+?)</dc:source>", metadata_xhtml)
 						if len(matches) <= 2:
 							for link in matches:
-								if "gutenberg.org" in link and "<a href=\"{}\">Project Gutenberg</a>".format(link) not in file_contents:
-									messages.append(LintMessage("Source not represented in imprint.xhtml. It should read: <a href=\"{}\">Project Gutenberg</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
+								if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
+									messages.append(LintMessage(f"Source not represented in imprint.xhtml. It should read: <a href=\"{link}\">Project Gutenberg</a>", se.MESSAGE_TYPE_WARNING, filename))
 
-								if "hathitrust.org" in link and "the <a href=\"{}\">HathiTrust Digital Library</a>".format(link) not in file_contents:
-									messages.append(LintMessage("Source not represented in imprint.xhtml. It should read: the <a href=\"{}\">HathiTrust Digital Library</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
+								if "hathitrust.org" in link and f"the <a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
+									messages.append(LintMessage(f"Source not represented in imprint.xhtml. It should read: the <a href=\"{link}\">HathiTrust Digital Library</a>", se.MESSAGE_TYPE_WARNING, filename))
 
-								if "archive.org" in link and "the <a href=\"{}\">Internet Archive</a>".format(link) not in file_contents:
-									messages.append(LintMessage("Source not represented in imprint.xhtml. It should read: the <a href=\"{}\">Internet Archive</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
+								if "archive.org" in link and f"the <a href=\"{link}\">Internet Archive</a>" not in file_contents:
+									messages.append(LintMessage(f"Source not represented in imprint.xhtml. It should read: the <a href=\"{link}\">Internet Archive</a>", se.MESSAGE_TYPE_WARNING, filename))
 
-								if "books.google.com" in link and "<a href=\"{}\">Google Books</a>".format(link) not in file_contents:
-									messages.append(LintMessage("Source not represented in imprint.xhtml. It should read: <a href=\"{}\">Google Books</a>".format(link), se.MESSAGE_TYPE_WARNING, filename))
+								if "books.google.com" in link and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
+									messages.append(LintMessage(f"Source not represented in imprint.xhtml. It should read: <a href=\"{link}\">Google Books</a>", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Collect abbr elements for later check
 					result = regex.findall("<abbr[^<]+?>", file_contents)
@@ -1021,7 +1021,7 @@ def lint(self, metadata_xhtml) -> list:
 					if filename not in se.IGNORED_FILENAMES:
 						file_language = regex.search(r"<html[^<]+xml\:lang=\"([^\"]+)\"", file_contents).group(1)
 						if language != file_language:
-							messages.append(LintMessage("File language is {}, but content.opf language is {}".format(file_language, language), se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage(f"File language is {file_language}, but content.opf language is {language}", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check LoI descriptions to see if they match associated figcaptions
 					if filename == "loi.xhtml":
@@ -1036,7 +1036,7 @@ def lint(self, metadata_xhtml) -> list:
 								try:
 									figure = BeautifulSoup(chapter, "lxml").select("#" + figure_ref)[0]
 								except Exception:
-									messages.append(LintMessage("#{} not found in file {}".format(figure_ref, chapter_ref), se.MESSAGE_TYPE_ERROR, 'loi.xhtml'))
+									messages.append(LintMessage(f"#{figure_ref} not found in file {chapter_ref}", se.MESSAGE_TYPE_ERROR, 'loi.xhtml'))
 									continue
 
 								if figure.img:
@@ -1045,7 +1045,7 @@ def lint(self, metadata_xhtml) -> list:
 								if figure.figcaption:
 									figcaption_text = figure.figcaption.get_text()
 							if (figcaption_text != "" and loi_text != "" and figcaption_text != loi_text) and (figure_img_alt != "" and loi_text != "" and figure_img_alt != loi_text):
-								messages.append(LintMessage("The <figcaption> tag of {} doesn’t match the text in its LoI entry".format(figure_ref), se.MESSAGE_TYPE_WARNING, chapter_ref))
+								messages.append(LintMessage(f"The <figcaption> tag of {figure_ref} doesn’t match the text in its LoI entry", se.MESSAGE_TYPE_WARNING, chapter_ref))
 
 				# Check for missing MARC relators
 				if filename == "introduction.xhtml" and ">aui<" not in metadata_xhtml and ">win<" not in metadata_xhtml:
@@ -1084,7 +1084,7 @@ def lint(self, metadata_xhtml) -> list:
 	for css_class in xhtml_css_classes:
 		if css_class not in se.IGNORED_CLASSES:
 			if "." + css_class not in css:
-				messages.append(LintMessage("class “{}” found in xhtml, but no style in local.css".format(css_class), se.MESSAGE_TYPE_ERROR, "local.css"))
+				messages.append(LintMessage(f"class “{css_class}” found in xhtml, but no style in local.css", se.MESSAGE_TYPE_ERROR, "local.css"))
 
 		if xhtml_css_classes[css_class] == 1 and css_class not in se.IGNORED_CLASSES and not regex.match(r"^i[0-9]$", css_class):
 			# Don't count ignored classes OR i[0-9] which are used for poetry styling
@@ -1150,6 +1150,6 @@ def lint(self, metadata_xhtml) -> list:
 		except Exception:
 			continue
 		if css_class and css_class in ("temperature", "era", "acronym") and "abbr." + css_class not in abbr_styles:
-			messages.append(LintMessage("abbr.{} element found, but no required style in local.css (See typgoraphy manual for style)".format(css_class), se.MESSAGE_TYPE_ERROR, "local.css"))
+			messages.append(LintMessage(f"abbr.{css_class} element found, but no required style in local.css (See typgoraphy manual for style)", se.MESSAGE_TYPE_ERROR, "local.css"))
 
 	return messages

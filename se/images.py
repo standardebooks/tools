@@ -36,10 +36,10 @@ def render_mathml_to_png(mathml: str, output_filename: str) -> None:
 
 	with tempfile.NamedTemporaryFile(mode="w+") as mathml_temp_file:
 		with tempfile.NamedTemporaryFile(mode="w+", suffix=".png") as png_temp_file:
-			mathml_temp_file.write("<!doctype html><html><head><meta charset=\"utf-8\"><title>MathML fragment</title></head><body>{}</body></html>".format(mathml))
+			mathml_temp_file.write(f"<!doctype html><html><head><meta charset=\"utf-8\"><title>MathML fragment</title></head><body>{mathml}</body></html>")
 			mathml_temp_file.seek(0)
 
-			subprocess.call([firefox_path, "-screenshot", png_temp_file.name, "file://{}".format(mathml_temp_file.name)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+			subprocess.call([firefox_path, "-screenshot", png_temp_file.name, f"file://{mathml_temp_file.name}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 			subprocess.call([convert_path, png_temp_file.name, "-fuzz", "10%", "-transparent", "white", "-trim", output_filename])
 

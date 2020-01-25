@@ -49,7 +49,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"—”([a-z])", r"—“\1", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"—’([a-z])", r"—‘\1", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"-“</p>", r"—”</p>", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"‘”</p>", r"’{}”</p>".format(se.HAIR_SPACE), xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"‘”</p>", fr"’{se.HAIR_SPACE}”</p>", xhtml, flags=regex.IGNORECASE)
 
 	# Remove spaces between en and em dashes
 	# Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
@@ -66,34 +66,34 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"([a-z])-“", r"\1—“", xhtml, flags=regex.IGNORECASE)
 
 	# Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
-	xhtml = regex.sub(r"([^\s{}{}{}])([—⸻])".format(se.WORD_JOINER, se.NO_BREAK_SPACE, se.HAIR_SPACE), r"\1{}\2".format(se.WORD_JOINER), xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"([^\s{se.WORD_JOINER}{se.NO_BREAK_SPACE}{se.HAIR_SPACE}])([—⸻])", fr"\1{se.WORD_JOINER}\2", xhtml, flags=regex.IGNORECASE)
 
 	# Add en dashes; don't replace match that is within an html tag, since ids and attrs often containg the pattern DIGIT-DIGIT
 	xhtml = regex.sub(r"(?<!<[^>]*)([0-9]+)\-([0-9]+)", r"\1–\2", xhtml)
 
 	# Add a word joiner on both sides of en dashes
-	xhtml = regex.sub(r"{}?–{}?".format(se.WORD_JOINER, se.WORD_JOINER), r"{}–{}".format(se.WORD_JOINER, se.WORD_JOINER), xhtml)
+	xhtml = regex.sub(fr"{se.WORD_JOINER}?–{se.WORD_JOINER}?", fr"{se.WORD_JOINER}–{se.WORD_JOINER}", xhtml)
 
 	# Add a word joiner if eliding a word with a two-em-dash
 	# Word joiner isn't necessary if punctuation follows
 	# Note the \p{{P}}.  We must double-curl {} because that's the escape sequence when using .format().  The actual regex should be \p{P} to match punctuation
-	xhtml = regex.sub(r"([^\s{}{}{}])⸺".format(se.WORD_JOINER, se.NO_BREAK_SPACE, se.HAIR_SPACE), r"\1{}⸺".format(se.WORD_JOINER), xhtml)
-	xhtml = regex.sub(r"⸺([^\s\p{{P}}{}])".format(se.WORD_JOINER), r"⸺{}\1".format(se.WORD_JOINER), xhtml)
+	xhtml = regex.sub(fr"([^\s{se.WORD_JOINER}{se.NO_BREAK_SPACE}{se.HAIR_SPACE}])⸺", fr"\1{se.WORD_JOINER}⸺", xhtml)
+	xhtml = regex.sub(fr"⸺([^\s\p{{P}}{se.WORD_JOINER}])", fr"⸺{se.WORD_JOINER}\1", xhtml)
 
 	# Remove word joiners from following opening tags--they're usually never correct
-	xhtml = regex.sub(r"<([a-z]+)([^>]*?)>{}".format(se.WORD_JOINER), r"<\1\2>", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"<([a-z]+)([^>]*?)>{se.WORD_JOINER}", r"<\1\2>", xhtml, flags=regex.IGNORECASE)
 
 	# Finally fix some other mistakes
 	xhtml = xhtml.replace("—-", "—")
 
 	# Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
-	xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.?\s+", r"\1.{}".format(se.NO_BREAK_SPACE), xhtml)
-	xhtml = regex.sub(r"<abbr>(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.</abbr>?\s+", r"<abbr>\1.</abbr>{}".format(se.NO_BREAK_SPACE), xhtml)
+	xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.?\s+", fr"\1.{se.NO_BREAK_SPACE}", xhtml)
+	xhtml = regex.sub(r"<abbr>(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.</abbr>?\s+", fr"<abbr>\1.</abbr>{se.NO_BREAK_SPACE}", xhtml)
 
-	xhtml = regex.sub(r"\bNo\.\s+([0-9]+)", r"No.{}\1".format(se.NO_BREAK_SPACE), xhtml)
-	xhtml = regex.sub(r"<abbr>No\.</abbr>\s+", r"<abbr>No.</abbr>{}".format(se.NO_BREAK_SPACE), xhtml)
+	xhtml = regex.sub(r"\bNo\.\s+([0-9]+)", fr"No.{se.NO_BREAK_SPACE}\1", xhtml)
+	xhtml = regex.sub(r"<abbr>No\.</abbr>\s+", fr"<abbr>No.</abbr>{se.NO_BREAK_SPACE}", xhtml)
 
-	xhtml = regex.sub(r"([0-9]+)\s<abbr", r"\1{}<abbr".format(se.NO_BREAK_SPACE), xhtml)
+	xhtml = regex.sub(r"([0-9]+)\s<abbr", fr"\1{se.NO_BREAK_SPACE}<abbr", xhtml)
 
 	# A note on spacing:
 	# 					ibooks	kindle (mobi7)
@@ -121,8 +121,8 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"\bn\-?th\b", r"<i>n</i>th", xhtml)
 
 	# Remove double spaces that use se.NO_BREAK_SPACE for spacing
-	xhtml = regex.sub(r"{}[{} ]+".format(se.NO_BREAK_SPACE, se.NO_BREAK_SPACE), r" ", xhtml)
-	xhtml = regex.sub(r" [{} ]+".format(se.NO_BREAK_SPACE), r" ", xhtml)
+	xhtml = regex.sub(fr"{se.NO_BREAK_SPACE}[{se.NO_BREAK_SPACE} ]+", r" ", xhtml)
+	xhtml = regex.sub(fr" [{se.NO_BREAK_SPACE} ]+", r" ", xhtml)
 
 	# House style: remove spacing from common Latinisms
 	xhtml = regex.sub(r"([Ii])\.\s+e\.", r"\1.e.", xhtml)
@@ -133,33 +133,33 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"B\.\s+C\.", r"BC", xhtml)
 
 	# Put spacing next to close quotes
-	xhtml = regex.sub(r"“[\s{}]*‘".format(se.NO_BREAK_SPACE), r"“{}‘".format(se.HAIR_SPACE), xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"’[\s{}]*”".format(se.NO_BREAK_SPACE), r"’{}”".format(se.HAIR_SPACE), xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"“[\s{}]*’".format(se.NO_BREAK_SPACE), r"“{}’".format(se.HAIR_SPACE), xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"‘[\s{}]*“".format(se.NO_BREAK_SPACE), r"‘{}“".format(se.HAIR_SPACE), xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"“[\s{se.NO_BREAK_SPACE}]*‘", fr"“{se.HAIR_SPACE}‘", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"’[\s{se.NO_BREAK_SPACE}]*”", fr"’{se.HAIR_SPACE}”", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"“[\s{se.NO_BREAK_SPACE}]*’", fr"“{se.HAIR_SPACE}’", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"‘[\s{se.NO_BREAK_SPACE}]*“", fr"‘{se.HAIR_SPACE}“", xhtml, flags=regex.IGNORECASE)
 
 	# We require a non-letter char at the end, otherwise we might match a contraction: “Hello,” ’e said.
-	xhtml = regex.sub(r"”[\s{}]*’([^a-zA-Z])".format(se.NO_BREAK_SPACE), r"”{}’\1".format(se.HAIR_SPACE), xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"”[\s{se.NO_BREAK_SPACE}]*’([^a-zA-Z])", fr"”{se.HAIR_SPACE}’\1", xhtml, flags=regex.IGNORECASE)
 
 	# Fix ellipses spacing
 	xhtml = regex.sub(r"\s*\.\s*\.\s*\.\s*", r"…", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"[\s{}]?…[\s{}]?\.".format(se.NO_BREAK_SPACE, se.NO_BREAK_SPACE), r".{}…".format(se.HAIR_SPACE), xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"[\s{}]?…[\s{}]?".format(se.NO_BREAK_SPACE, se.NO_BREAK_SPACE), r"{}… ".format(se.HAIR_SPACE), xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"<p([^>]*?)>{}…".format(se.HAIR_SPACE), r"<p\1>…", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"[\s{se.NO_BREAK_SPACE}]?…[\s{se.NO_BREAK_SPACE}]?\.", fr".{se.HAIR_SPACE}…", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"[\s{se.NO_BREAK_SPACE}]?…[\s{se.NO_BREAK_SPACE}]?", fr"{se.HAIR_SPACE}… ", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"<p([^>]*?)>{se.HAIR_SPACE}…", r"<p\1>…", xhtml, flags=regex.IGNORECASE)
 
 	# Remove spaces between opening tags and ellipses
-	xhtml = regex.sub(r"(<[a-z0-9]+[^<]+?>)[\s{}]+?…".format(se.NO_BREAK_SPACE), r"\1…", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"(<[a-z0-9]+[^<]+?>)[\s{se.NO_BREAK_SPACE}]+?…", r"\1…", xhtml, flags=regex.IGNORECASE)
 
 	# Remove spaces between closing tags and ellipses
-	xhtml = regex.sub(r"…[\s{}]?(</[a-z0-9]+>)".format(se.NO_BREAK_SPACE), r"…\1", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"…[\s{}]+([\)”’])".format(se.NO_BREAK_SPACE), r"…\1", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"([\(“‘])[\s{}]+…".format(se.NO_BREAK_SPACE), r"\1…", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"…[\s{}]?([\!\?\.\;\,])".format(se.NO_BREAK_SPACE), r"…{}\1".format(se.HAIR_SPACE), xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"([\!\?\.\;”’])[\s{}]?…".format(se.NO_BREAK_SPACE), r"\1{}…".format(se.HAIR_SPACE), xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"\,[\s{}]?…".format(se.NO_BREAK_SPACE), r",{}…".format(se.HAIR_SPACE), xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?(</[a-z0-9]+>)", r"…\1", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]+([\)”’])", r"…\1", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"([\(“‘])[\s{se.NO_BREAK_SPACE}]+…", r"\1…", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?([\!\?\.\;\,])", fr"…{se.HAIR_SPACE}\1", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"([\!\?\.\;”’])[\s{se.NO_BREAK_SPACE}]?…", fr"\1{se.HAIR_SPACE}…", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"\,[\s{se.NO_BREAK_SPACE}]?…", fr",{se.HAIR_SPACE}…", xhtml, flags=regex.IGNORECASE)
 
 	# Remove spaces between ellipses and endnotes directly after
-	xhtml = regex.sub(r"…[\s{}]?(<a[^>]+?id=\"noteref-[0-9]+\"[^>]*?>)".format(se.NO_BREAK_SPACE), r"…\1", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?(<a[^>]+?id=\"noteref-[0-9]+\"[^>]*?>)", r"…\1", xhtml, flags=regex.IGNORECASE)
 
 	# Don't use . ... if within a clause
 	xhtml = regex.sub(r"\.(\s…\s[a-z])", r"\1", xhtml)
@@ -171,11 +171,11 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"<p>\. …", "<p>…", xhtml)
 
 	# Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
-	xhtml = regex.sub(r"([0-9])\s+([a-z]{1,3}\.)", r"\1{}\2".format(se.NO_BREAK_SPACE), xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"([0-9])\s+([a-z]{1,3}\.)", fr"\1{se.NO_BREAK_SPACE}\2", xhtml, flags=regex.IGNORECASE)
 
 	# Add non-breaking spaces between Arabic numbers and AM/PM
-	xhtml = regex.sub(r"([0-9])\s+([ap])\.m\.", r"\1{}\2.m.".format(se.NO_BREAK_SPACE), xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"([0-9])\s+<abbr([^>]*?)>([ap])\.m\.", r"\1{}<abbr\2>\3.m.".format(se.NO_BREAK_SPACE), xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"([0-9])\s+([ap])\.m\.", fr"\1{se.NO_BREAK_SPACE}\2.m.", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"([0-9])\s+<abbr([^>]*?)>([ap])\.m\.", fr"\1{se.NO_BREAK_SPACE}<abbr\2>\3.m.", xhtml, flags=regex.IGNORECASE)
 
 	xhtml = xhtml.replace("Ph.D", "PhD")
 	xhtml = regex.sub(r"P\.\s*S\.", r"P.S.", xhtml)
