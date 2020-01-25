@@ -401,9 +401,9 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 		if error:
 			raise se.InvalidXhtmlException("Couldn't parse file; files must be in XHTML format, which is not the same as HTML. xmllint says:\n{}".format(error.replace("-:", "Line ")))
 	except UnicodeDecodeError as ex:
-		raise se.InvalidEncodingException("Invalid encoding; UTF-8 expected: {}".format(ex))
+		raise se.InvalidEncodingException(f"Invalid encoding; UTF-8 expected: {ex}")
 	except Exception as ex:
-		raise se.InvalidXhtmlException("Couldn't parse file; files must be in XHTML format, which is not the same as HTML: {}".format(ex))
+		raise se.InvalidXhtmlException(f"Couldn't parse file; files must be in XHTML format, which is not the same as HTML: {ex}")
 
 	# Add the XML header that xmllint stripped during c14n
 	xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + xhtml
@@ -442,7 +442,7 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 		section_xhtml = regex.findall(r"</header>(.+?)</section>", xhtml, flags=regex.DOTALL)
 		if section_xhtml:
 			section_xhtml = regex.sub(r"^\s*", "\t\t\t", section_xhtml[0], flags=regex.MULTILINE).strip()
-			xhtml = regex.sub(r"</header>(.+?)</section>", "</header>\n\t\t\t{}\n\t\t</section>".format(section_xhtml), xhtml, flags=regex.DOTALL)
+			xhtml = regex.sub(r"</header>(.+?)</section>", f"</header>\n\t\t\t{section_xhtml}\n\t\t</section>", xhtml, flags=regex.DOTALL)
 
 	if single_lines:
 		# Attempt to pretty-print CSS, if we have any (like in cover.svg or titlepage.svg).
@@ -463,7 +463,7 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 
 			css = "\t\t" + css.strip()
 
-			xhtml = regex.sub(r"<style type=\"text/css\">([^<]+?)</style>", "<style type=\"text/css\">\n{}\n\t</style>".format(css), xhtml, flags=regex.DOTALL)
+			xhtml = regex.sub(r"<style type=\"text/css\">([^<]+?)</style>", f"<style type=\"text/css\">\n{css}\n\t</style>", xhtml, flags=regex.DOTALL)
 
 		# Attempt to pretty-print the long description, which has special formatting
 		if "&lt;p&gt;" in xhtml:
@@ -750,8 +750,8 @@ def titlecase(text: str) -> str:
 	text = regex.sub(r"\((For|Of|To)(.*?)\)(.+?)", lambda result: "(" + result.group(1).lower() + result.group(2) + ")" + result.group(3), text)
 
 	# Lowercase "and", if followed by a word-joiner
-	regex_string = r"\bAnd{}".format(se.WORD_JOINER)
-	text = regex.sub(regex_string, "and{}".format(se.WORD_JOINER), text)
+	regex_string = fr"\bAnd{se.WORD_JOINER}"
+	text = regex.sub(regex_string, f"and{se.WORD_JOINER}", text)
 
 	# Lowercase "in", if followed by a semicolon (but not words like "inheritance")
 	text = regex.sub(r"\b; In\b", "; in", text)
@@ -853,7 +853,7 @@ def simplify_css(css: str) -> str:
 		simplified_line = line
 		for selector_to_simplify in se.SELECTORS_TO_SIMPLIFY:
 			while selector_to_simplify in simplified_line:
-				split_selector = regex.split(r"({}(\(.*\))?)".format(selector_to_simplify), line, 1)
+				split_selector = regex.split(fr"({selector_to_simplify}(\(.*\))?)", line, 1)
 				replacement_class = split_selector[1].replace(":", ".").replace("(", "-").replace("n-", "n-minus-").replace("n+", "n-plus-").replace(")", "")
 				simplified_line = simplified_line.replace(split_selector[1], replacement_class)
 		if simplified_line != line:

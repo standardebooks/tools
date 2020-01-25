@@ -239,7 +239,7 @@ def is_positive_integer(value: str) -> int:
 
 	int_value = int(value)
 	if int_value <= 0:
-		raise argparse.ArgumentTypeError("{} is not a positive integer".format(value))
+		raise argparse.ArgumentTypeError(f"{value} is not a positive integer")
 
 	return int_value
 

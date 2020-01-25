@@ -15,7 +15,7 @@ def test_lint(data_dir: Path, draft_dir: Path, work_dir: Path, capfd, test_name:
 	text_dir = data_dir / "lint" / test_name
 	book_dir = assemble_book(draft_dir, work_dir, text_dir)
 
-	result = run("se lint {}".format(book_dir))
+	result = run(f"se lint {book_dir}")
 
 	# All books with errors should return a non-zero return code
 	if test_name != "clean":
@@ -26,7 +26,7 @@ def test_lint(data_dir: Path, draft_dir: Path, work_dir: Path, capfd, test_name:
 	assert err == ""
 
 	# Update golden output files if flag is set
-	golden_file = data_dir / "lint" / "{}-out.txt".format(test_name)
+	golden_file = data_dir / "lint" / f"{test_name}-out.txt"
 	if update_golden:
 		with open(golden_file, "w") as file:
 			file.write(out)

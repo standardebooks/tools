@@ -139,7 +139,7 @@ def _generate_titlepage_svg(title: str, authors: Union[str, list], contributors:
 	# Add the title
 	for line in title_lines:
 		element_y += se.TITLEPAGE_TITLE_HEIGHT
-		text_elements += "\t<text class=\"title\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(element_y, line)
+		text_elements += f"\t<text class=\"title\" x=\"700\" y=\"{element_y:.0f}\">{line}</text>\n"
 		element_y += se.TITLEPAGE_TITLE_MARGIN
 
 	element_y -= se.TITLEPAGE_TITLE_MARGIN
@@ -150,7 +150,7 @@ def _generate_titlepage_svg(title: str, authors: Union[str, list], contributors:
 	for author_lines in authors_lines:
 		for line in author_lines:
 			element_y += se.TITLEPAGE_AUTHOR_HEIGHT
-			text_elements += "\t<text class=\"author\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(element_y, line)
+			text_elements += f"\t<text class=\"author\" x=\"700\" y=\"{element_y:.0f}\">{line}</text>\n"
 			element_y += se.TITLEPAGE_AUTHOR_MARGIN
 
 	element_y -= se.TITLEPAGE_AUTHOR_MARGIN
@@ -165,7 +165,7 @@ def _generate_titlepage_svg(title: str, authors: Union[str, list], contributors:
 
 			for person in contributor[1]:
 				element_y += se.TITLEPAGE_CONTRIBUTOR_HEIGHT
-				text_elements += "\t<text class=\"contributor\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(element_y, person)
+				text_elements += f"\t<text class=\"contributor\" x=\"700\" y=\"{element_y:.0f}\">{person}</text>\n"
 				element_y += se.TITLEPAGE_CONTRIBUTOR_MARGIN
 
 			element_y -= se.TITLEPAGE_CONTRIBUTOR_MARGIN
@@ -181,7 +181,7 @@ def _generate_titlepage_svg(title: str, authors: Union[str, list], contributors:
 	element_y += se.TITLEPAGE_VERTICAL_PADDING
 
 	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLE_STRING", title_string)
-	svg = regex.sub(r"viewBox=\".+?\"", "viewBox=\"0 0 1400 {:.0f}\"".format(element_y), svg)
+	svg = regex.sub(r"viewBox=\".+?\"", f"viewBox=\"0 0 1400 {element_y:.0f}\"", svg)
 
 	return svg
 
@@ -250,7 +250,7 @@ def _generate_cover_svg(title: str, authors: Union[str, list], title_string: str
 	# Add the title
 	for line in title_lines:
 		element_y += title_height
-		text_elements += "\t<text class=\"{}\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(title_class, element_y, line)
+		text_elements += f"\t<text class=\"{title_class}\" x=\"700\" y=\"{element_y:.0f}\">{line}</text>\n"
 		element_y += se.COVER_TITLE_MARGIN
 
 	element_y -= se.COVER_TITLE_MARGIN
@@ -261,7 +261,7 @@ def _generate_cover_svg(title: str, authors: Union[str, list], title_string: str
 	for author_lines in authors_lines:
 		for line in author_lines:
 			element_y += se.COVER_AUTHOR_HEIGHT
-			text_elements += "\t<text class=\"author\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(element_y, line)
+			text_elements += f"\t<text class=\"author\" x=\"700\" y=\"{element_y:.0f}\">{line}</text>\n"
 			element_y += se.COVER_AUTHOR_MARGIN
 
 	element_y -= se.COVER_AUTHOR_MARGIN
@@ -300,7 +300,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> (str, str):
 	try:
 		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": 1}, allow_redirects=False)
 	except Exception as ex:
-		se.print_error("Couldn’t contact Wikipedia. Error: {}".format(ex))
+		se.print_error(f"Couldn’t contact Wikipedia. Error: {ex}")
 
 	if response.status_code == 302:
 		nacoaf_url = None
@@ -313,7 +313,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> (str, str):
 			try:
 				response = requests.get(wiki_url)
 			except Exception as ex:
-				se.print_error("Couldn’t contact Wikipedia. Error: {}".format(ex))
+				se.print_error(f"Couldn’t contact Wikipedia. Error: {ex}")
 
 			for match in regex.findall(r"http://id\.loc\.gov/authorities/names/n[0-9]+", response.text):
 				nacoaf_url = match
@@ -344,7 +344,7 @@ def create_draft(args: list):
 	repo_name = Path(identifier.replace("/", "_"))
 
 	if repo_name.is_dir():
-		raise se.InvalidInputException("./{}/ already exists.".format(repo_name))
+		raise se.InvalidInputException(f"./{repo_name}/ already exists.")
 
 	# Download PG HTML and do some fixups
 	if args.pg_url:
@@ -355,7 +355,7 @@ def create_draft(args: list):
 			response = requests.get(args.pg_url)
 			pg_metadata_html = response.text
 		except Exception as ex:
-			raise se.RemoteCommandErrorException("Couldn’t download Project Gutenberg ebook metadata page. Error: {}".format(ex))
+			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page. Error: {ex}")
 
 		soup = BeautifulSoup(pg_metadata_html, "lxml")
 
@@ -385,13 +385,13 @@ def create_draft(args: list):
 			response = requests.get(pg_ebook_url)
 			pg_ebook_html = response.text
 		except Exception as ex:
-			raise se.RemoteCommandErrorException("Couldn’t download Project Gutenberg ebook HTML. Error: {}".format(ex))
+			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook HTML. Error: {ex}")
 
 		try:
 			fixed_pg_ebook_html = fix_text(pg_ebook_html, uncurl_quotes=False)
 			pg_ebook_html = se.strip_bom(fixed_pg_ebook_html)
 		except Exception as ex:
-			raise se.InvalidEncodingException("Couldn’t determine text encoding of Project Gutenberg HTML file. Error: {}".format(ex))
+			raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Project Gutenberg HTML file. Error: {ex}")
 
 		# Try to guess the ebook language
 		pg_language = "en-US"
@@ -439,8 +439,8 @@ def create_draft(args: list):
 
 			with open(repo_name / "src" / "epub" / "text" / "body.xhtml", "w", encoding="utf-8") as file:
 				file.write(str(soup))
-		except IOError as ex:
-			raise se.InvalidFileException("Couldn’t write to ebook directory. Error: {}".format(ex))
+		except OSError as ex:
+			raise se.InvalidFileException(f"Couldn’t write to ebook directory. Error: {ex}")
 		except:
 			# Save this error for later, because it's still useful to complete the create-draft process
 			# even if we've failed to parse PG's HTML source.
@@ -500,7 +500,7 @@ def create_draft(args: list):
 		colophon_xhtml = file.read()
 
 		colophon_xhtml = colophon_xhtml.replace("SE_IDENTIFIER", identifier)
-		colophon_xhtml = colophon_xhtml.replace(">AUTHOR<", ">{}<".format(args.author))
+		colophon_xhtml = colophon_xhtml.replace(">AUTHOR<", f">{args.author}<")
 		colophon_xhtml = colophon_xhtml.replace("TITLE", args.title)
 
 		if author_wiki_url:
@@ -518,7 +518,7 @@ def create_draft(args: list):
 					if "Distributed Proofreading" in producer:
 						producers_xhtml = producers_xhtml + "<a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a>"
 					else:
-						producers_xhtml = producers_xhtml + "<b class=\"name\">{}</b>".format(producer)
+						producers_xhtml = producers_xhtml + f"<b class=\"name\">{producer}</b>"
 
 					if i < len(pg_producers) - 1:
 						producers_xhtml = producers_xhtml + ", "
@@ -538,45 +538,45 @@ def create_draft(args: list):
 		metadata_xhtml = file.read()
 
 		metadata_xhtml = metadata_xhtml.replace("SE_IDENTIFIER", identifier)
-		metadata_xhtml = metadata_xhtml.replace(">AUTHOR<", ">{}<".format(args.author))
-		metadata_xhtml = metadata_xhtml.replace(">TITLE_SORT<", ">{}<".format(sorted_title))
-		metadata_xhtml = metadata_xhtml.replace(">TITLE<", ">{}<".format(args.title))
+		metadata_xhtml = metadata_xhtml.replace(">AUTHOR<", f">{args.author}<")
+		metadata_xhtml = metadata_xhtml.replace(">TITLE_SORT<", f">{sorted_title}<")
+		metadata_xhtml = metadata_xhtml.replace(">TITLE<", f">{args.title}<")
 		metadata_xhtml = metadata_xhtml.replace("VCS_IDENTIFIER", str(repo_name))
 
 		if pg_producers:
 			producers_xhtml = ""
 			i = 1
 			for producer in pg_producers:
-				producers_xhtml = producers_xhtml + "\t\t<dc:contributor id=\"transcriber-{}\">{}</dc:contributor>\n".format(i, producer)
+				producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">{producer}</dc:contributor>\n"
 
 				if "Distributed Proofreading" in producer:
 					producers_xhtml = producers_xhtml + "\t\t<meta property=\"file-as\" refines=\"#transcriber-{0}\">Online Distributed Proofreading Team, The</meta>\n\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{0}\">https://pgdp.net</meta>\n".format(i)
 				else:
-					producers_xhtml = producers_xhtml + "\t\t<meta property=\"file-as\" refines=\"#transcriber-{}\">TRANSCRIBER_SORT</meta>\n".format(i)
+					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">TRANSCRIBER_SORT</meta>\n"
 
-				producers_xhtml = producers_xhtml + "\t\t<meta property=\"role\" refines=\"#transcriber-{}\" scheme=\"marc:relators\">trc</meta>\n".format(i)
+				producers_xhtml = producers_xhtml + f"\t\t<meta property=\"role\" refines=\"#transcriber-{i}\" scheme=\"marc:relators\">trc</meta>\n"
 
 				i = i + 1
 
 			metadata_xhtml = regex.sub(r"\t\t<dc:contributor id=\"transcriber-1\">TRANSCRIBER</dc:contributor>\s*<meta property=\"file-as\" refines=\"#transcriber-1\">TRANSCRIBER_SORT</meta>\s*<meta property=\"se:url.homepage\" refines=\"#transcriber-1\">TRANSCRIBER_URL</meta>\s*<meta property=\"role\" refines=\"#transcriber-1\" scheme=\"marc:relators\">trc</meta>", "\t\t" + producers_xhtml.strip(), metadata_xhtml, flags=regex.DOTALL)
 
 		if author_wiki_url:
-			metadata_xhtml = metadata_xhtml.replace(">AUTHOR_WIKI_URL<", ">{}<".format(author_wiki_url))
+			metadata_xhtml = metadata_xhtml.replace(">AUTHOR_WIKI_URL<", f">{author_wiki_url}<")
 
 		if author_nacoaf_url:
-			metadata_xhtml = metadata_xhtml.replace(">AUTHOR_NACOAF_URL<", ">{}<".format(author_nacoaf_url))
+			metadata_xhtml = metadata_xhtml.replace(">AUTHOR_NACOAF_URL<", f">{author_nacoaf_url}<")
 
 		if ebook_wiki_url:
-			metadata_xhtml = metadata_xhtml.replace(">EBOOK_WIKI_URL<", ">{}<".format(ebook_wiki_url))
+			metadata_xhtml = metadata_xhtml.replace(">EBOOK_WIKI_URL<", f">{ebook_wiki_url}<")
 
 		if args.translator:
-			metadata_xhtml = metadata_xhtml.replace(">TRANSLATOR<", ">{}<".format(args.translator))
+			metadata_xhtml = metadata_xhtml.replace(">TRANSLATOR<", f">{args.translator}<")
 
 			if translator_wiki_url:
-				metadata_xhtml = metadata_xhtml.replace(">TRANSLATOR_WIKI_URL<", ">{}<".format(translator_wiki_url))
+				metadata_xhtml = metadata_xhtml.replace(">TRANSLATOR_WIKI_URL<", f">{translator_wiki_url}<")
 
 			if translator_nacoaf_url:
-				metadata_xhtml = metadata_xhtml.replace(">TRANSLATOR_NACOAF_URL<", ">{}<".format(translator_nacoaf_url))
+				metadata_xhtml = metadata_xhtml.replace(">TRANSLATOR_NACOAF_URL<", f">{translator_nacoaf_url}<")
 		else:
 			metadata_xhtml = regex.sub(r"<dc:contributor id=\"translator\">.+?<dc:contributor id=\"artist\">", "<dc:contributor id=\"artist\">", metadata_xhtml, flags=regex.DOTALL)
 
@@ -586,12 +586,12 @@ def create_draft(args: list):
 
 				i = 1
 				for subject in pg_subjects:
-					subject_xhtml = subject_xhtml + "\t\t<dc:subject id=\"subject-{}\">{}</dc:subject>\n".format(i, subject)
+					subject_xhtml = subject_xhtml + f"\t\t<dc:subject id=\"subject-{i}\">{subject}</dc:subject>\n"
 					i = i + 1
 
 				i = 1
 				for subject in pg_subjects:
-					subject_xhtml = subject_xhtml + "\t\t<meta property=\"authority\" refines=\"#subject-{}\">LCSH</meta>\n".format(i)
+					subject_xhtml = subject_xhtml + f"\t\t<meta property=\"authority\" refines=\"#subject-{i}\">LCSH</meta>\n"
 
 					# Now, get the LCSH ID by querying LCSH directly.
 					try:
@@ -604,17 +604,17 @@ def create_draft(args: list):
 						except Exception as ex:
 							pass
 
-						subject_xhtml = subject_xhtml + "\t\t<meta property=\"term\" refines=\"#subject-{}\">{}</meta>\n".format(i, loc_id)
+						subject_xhtml = subject_xhtml + f"\t\t<meta property=\"term\" refines=\"#subject-{i}\">{loc_id}</meta>\n"
 
 					except Exception as ex:
-						raise se.RemoteCommandErrorException("Couldn’t connect to id.loc.gov. Error: {}".format(ex))
+						raise se.RemoteCommandErrorException(f"Couldn’t connect to id.loc.gov. Error: {ex}")
 
 					i = i + 1
 
 				metadata_xhtml = regex.sub(r"\t\t<dc:subject id=\"subject-1\">SUBJECT_1</dc:subject>\s*<dc:subject id=\"subject-2\">SUBJECT_2</dc:subject>\s*<meta property=\"authority\" refines=\"#subject-1\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-1\">LCSH_ID_1</meta>\s*<meta property=\"authority\" refines=\"#subject-2\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-2\">LCSH_ID_2</meta>", "\t\t" + subject_xhtml.strip(), metadata_xhtml)
 
-			metadata_xhtml = metadata_xhtml.replace("<dc:language>LANG</dc:language>", "<dc:language>{}</dc:language>".format(pg_language))
-			metadata_xhtml = metadata_xhtml.replace("<dc:source>PG_URL</dc:source>", "<dc:source>{}</dc:source>".format(args.pg_url))
+			metadata_xhtml = metadata_xhtml.replace("<dc:language>LANG</dc:language>", f"<dc:language>{pg_language}</dc:language>")
+			metadata_xhtml = metadata_xhtml.replace("<dc:source>PG_URL</dc:source>", f"<dc:source>{args.pg_url}</dc:source>")
 
 		file.seek(0)
 		file.write(metadata_xhtml)
@@ -630,7 +630,7 @@ def create_draft(args: list):
 	# Set up remote git repos
 	if args.create_se_repo:
 		git_command = git.cmd.Git(repo_name)
-		git_command.remote("add", "origin", "standardebooks.org:/standardebooks.org/ebooks/{}.git".format(repo_name))
+		git_command.remote("add", "origin", f"standardebooks.org:/standardebooks.org/ebooks/{repo_name}.git")
 
 		# Set git to automatically push to SE
 		git_command.config("branch.master.remote", "origin")
@@ -640,9 +640,9 @@ def create_draft(args: list):
 		if args.create_github_repo:
 			github_option = "--github"
 
-		return_code = call(["ssh", "standardebooks.org", "/standardebooks.org/scripts/init-se-repo --repo-name={} --title-string=\"{}\" {}".format(repo_name, title_string, github_option)])
+		return_code = call(["ssh", "standardebooks.org", f"/standardebooks.org/scripts/init-se-repo --repo-name={repo_name} --title-string=\"{title_string}\" {github_option}"])
 		if return_code != 0:
-			raise se.RemoteCommandErrorException("Failed to create repository on Standard Ebooks server: ssh returned code {}.".format(return_code))
+			raise se.RemoteCommandErrorException(f"Failed to create repository on Standard Ebooks server: ssh returned code {return_code}.")
 
 	if args.pg_url and pg_ebook_html and not is_pg_html_parsed:
 		raise se.InvalidXhtmlException("Couldn’t parse Project Gutenberg ebook source. This is usually due to invalid HTML in the ebook.")

@@ -90,7 +90,7 @@ def british2american() -> int:
 
 	for filename in se.get_target_filenames(args.targets, (".xhtml")):
 		if args.verbose:
-			print("Processing {} ...".format(filename), end="", flush=True)
+			print(f"Processing {filename} ...", end="", flush=True)
 
 		try:
 			with open(filename, "r+", encoding="utf-8") as file:
@@ -117,7 +117,7 @@ def british2american() -> int:
 				print(" OK")
 
 		except FileNotFoundError:
-			se.print_error("Not a file: {}".format(filename))
+			se.print_error(f"Not a file: {filename}")
 
 	return 0
 
@@ -165,7 +165,7 @@ def build_images() -> int:
 		directory = Path(directory)
 
 		if args.verbose:
-			print("Processing {} ...".format(directory))
+			print(f"Processing {directory} ...")
 
 		directory = directory.resolve()
 
@@ -210,7 +210,7 @@ def clean() -> int:
 			continue
 
 		if args.verbose:
-			print("Processing {} ...".format(filename), end="", flush=True)
+			print(f"Processing {filename} ...", end="", flush=True)
 
 		try:
 			se.formatting.format_xhtml_file(filename, args.single_lines, filename.name == "content.opf", filename.name == "endnotes.xhtml", filename.name == "colophon.xhtml")
@@ -218,7 +218,7 @@ def clean() -> int:
 			se.print_error(str(ex))
 			return ex.code
 		except se.SeException as ex:
-			se.print_error(str(ex) + " File: {}".format(filename), args.verbose)
+			se.print_error(str(ex) + f" File: {filename}", args.verbose)
 			return ex.code
 
 		if args.verbose:
@@ -230,7 +230,7 @@ def clean() -> int:
 			continue
 
 		if args.verbose:
-			print("Processing {} ...".format(filename), end="", flush=True)
+			print(f"Processing {filename} ...", end="", flush=True)
 
 		with open(filename, "r+", encoding="utf-8") as file:
 			css = file.read()
@@ -243,7 +243,7 @@ def clean() -> int:
 					file.write(processed_css)
 					file.truncate()
 			except se.SeException as ex:
-				se.print_error(str(ex) + " File: {}".format(filename), args.verbose)
+				se.print_error(str(ex) + f" File: {filename}", args.verbose)
 				return ex.code
 
 		if args.verbose:
@@ -295,11 +295,11 @@ def compare_versions() -> int:
 					if args.include_common_files or filename not in se.IGNORED_FILENAMES:
 						target_filenames.add(Path(root) / filename)
 		else:
-			se.print_error("Target must be a directory: {}".format(target))
+			se.print_error(f"Target must be a directory: {target}")
 			continue
 
 		if args.verbose:
-			print("Processing {} ...\n".format(target), end="", flush=True)
+			print(f"Processing {target} ...\n", end="", flush=True)
 
 		git_command = git.cmd.Git(target)
 
@@ -316,7 +316,7 @@ def compare_versions() -> int:
 				filename = Path(filename)
 
 				# Path arguments must be cast to string for Windows compatibility.
-				subprocess.run([str(firefox_path), "-screenshot", "{}/{}-original.png".format(temp_directory_name, filename.name), str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+				subprocess.run([str(firefox_path), "-screenshot", f"{temp_directory_name}/{filename.name}-original.png", str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
 
 			# Pop the stash
 			git_command.stash("pop")
@@ -436,7 +436,7 @@ def extract_ebook() -> int:
 		target = Path(target).resolve()
 
 		if args.verbose:
-			print("Processing {} ...".format(target), end="", flush=True)
+			print(f"Processing {target} ...", end="", flush=True)
 
 		if args.output_dir is None:
 			extracted_path = Path(target.name + ".extracted")
@@ -444,7 +444,7 @@ def extract_ebook() -> int:
 			extracted_path = Path(args.output_dir)
 
 		if extracted_path.exists():
-			se.print_error("Directory already exists: {}".format(extracted_path))
+			se.print_error(f"Directory already exists: {extracted_path}")
 			return se.FileExistsException.code
 
 		mime_type = magic.from_file(str(target))
@@ -463,7 +463,7 @@ def extract_ebook() -> int:
 			with zipfile.ZipFile(target, "r") as file:
 				file.extractall(extracted_path)
 		else:
-			se.print_error("Couldn’t understand file type: {}".format(mime_type))
+			se.print_error(f"Couldn’t understand file type: {mime_type}")
 			return se.InvalidFileException.code
 
 		if args.verbose:
@@ -501,7 +501,7 @@ def find_mismatched_diacritics() -> int:
 						accented_words.add(word.lower())
 
 		except FileNotFoundError:
-			se.print_error("Not a file: {}".format(filename))
+			se.print_error(f"Not a file: {filename}")
 
 	# Now iterate over the list and search files for unaccented versions of the words
 	if accented_words:
@@ -518,11 +518,11 @@ def find_mismatched_diacritics() -> int:
 							mismatches[accented_word] = plain_word
 
 			except FileNotFoundError:
-				se.print_error("Not a file: {}".format(filename))
+				se.print_error(f"Not a file: {filename}")
 
 	if mismatches:
 		for accented_word, plain_word in sorted(mismatches.items()):
-			print("{}, {}".format(accented_word, plain_word))
+			print(f"{accented_word}, {plain_word}")
 
 	return 0
 
@@ -556,7 +556,7 @@ def hyphenate() -> int:
 
 	for filename in se.get_target_filenames(args.targets, (".xhtml")):
 		if args.verbose:
-			print("Processing {} ...".format(filename), end="", flush=True)
+			print(f"Processing {filename} ...", end="", flush=True)
 
 		se.typography.hyphenate_file(filename, args.language, args.ignore_h_tags)
 
@@ -586,7 +586,7 @@ def interactive_sr() -> int:
 	# 'set eventignore-=Syntax' enables syntax highlighting in all files
 	# 'wqa writes and quits all buffers
 	# Full command: vim "+silent set title" "+silent bufdo set eventignore-=Syntax | %s${regex}gce | silent update" "+silent qa" "$@"
-	subprocess.call([vim_path, "+silent set title", "+silent bufdo set eventignore-=Syntax | %s{}gce | silent update".format(args.regex), "+silent qa"] + args.targets)
+	subprocess.call([vim_path, "+silent set title", f"+silent bufdo set eventignore-=Syntax | %s{args.regex}gce | silent update", "+silent qa"] + args.targets)
 
 	return 0
 
@@ -648,7 +648,7 @@ def lint() -> int:
 			else:
 				for message in messages:
 					if message.is_submessage:
-						table_data.append([" ", "→", "{}".format(message.text)])
+						table_data.append([" ", "→", f"{message.text}"])
 					else:
 						alert = colored("Manual Review", "yellow")
 
@@ -779,7 +779,7 @@ def modernize_spelling() -> int:
 
 	for filename in se.get_target_filenames(args.targets, (".xhtml")):
 		if args.verbose:
-			print("Processing {} ...".format(filename), end="", flush=True)
+			print(f"Processing {filename} ...", end="", flush=True)
 
 		try:
 			with open(filename, "r+", encoding="utf-8") as file:
@@ -804,7 +804,7 @@ def modernize_spelling() -> int:
 					file.write(new_xhtml)
 					file.truncate()
 		except FileNotFoundError:
-			se.print_error("Not a file: {}".format(filename))
+			se.print_error(f"Not a file: {filename}")
 
 		if args.verbose:
 			print(" OK")
@@ -827,7 +827,7 @@ def prepare_release() -> int:
 		directory = Path(directory).resolve()
 
 		if args.verbose:
-			print("Processing {} ...".format(directory))
+			print(f"Processing {directory} ...")
 
 		try:
 			se_epub = SeEpub(directory)
@@ -976,7 +976,7 @@ def roman2dec() -> int:
 			else:
 				print(roman.fromRoman(line.upper()), end="")
 		except roman.InvalidRomanNumeralError:
-			se.print_error("Not a Roman numeral: {}".format(line))
+			se.print_error(f"Not a Roman numeral: {line}")
 			return se.InvalidInputException.code
 
 	return 0
@@ -993,7 +993,7 @@ def semanticate() -> int:
 
 	for filename in se.get_target_filenames(args.targets, (".xhtml")):
 		if args.verbose:
-			print("Processing {} ...".format(filename), end="", flush=True)
+			print(f"Processing {filename} ...", end="", flush=True)
 
 		try:
 			with open(filename, "r+", encoding="utf-8") as file:
@@ -1005,7 +1005,7 @@ def semanticate() -> int:
 					file.write(processed_xhtml)
 					file.truncate()
 		except FileNotFoundError:
-			se.print_error("Not a file: {}".format(filename))
+			se.print_error(f"Not a file: {filename}")
 
 		if args.verbose:
 			print(" OK")
@@ -1036,7 +1036,7 @@ def split_file() -> int:
 			xhtml = se.strip_bom(file.read())
 
 	except FileNotFoundError:
-		se.print_error("Not a file: {}".format(args.filename))
+		se.print_error(f"Not a file: {args.filename}")
 
 	with open(resource_filename("se", str(Path("data") / "templates" / "header.xhtml")), "r", encoding="utf-8") as file:
 		header_xhtml = file.read()
@@ -1113,7 +1113,7 @@ def typogrify() -> int:
 			continue
 
 		if args.verbose:
-			print("Processing {} ...".format(filename), end="", flush=True)
+			print(f"Processing {filename} ...", end="", flush=True)
 
 		try:
 			with open(filename, "r+", encoding="utf-8") as file:
@@ -1129,7 +1129,7 @@ def typogrify() -> int:
 				print(" OK")
 
 		except FileNotFoundError:
-			se.print_error("Not a file: {}".format(filename))
+			se.print_error(f"Not a file: {filename}")
 			return se.InvalidFileException.code
 
 	return 0
@@ -1207,11 +1207,11 @@ def word_count() -> int:
 				try:
 					total_word_count += se.formatting.get_word_count(file.read())
 				except UnicodeDecodeError:
-					se.print_error("File is not UTF-8: {}".format(filename))
+					se.print_error(f"File is not UTF-8: {filename}")
 					return se.InvalidEncodingException.code
 
 		except FileNotFoundError:
-			se.print_error("Not a file: {}".format(filename))
+			se.print_error(f"Not a file: {filename}")
 
 	if args.categorize:
 		category = "se:short-story"

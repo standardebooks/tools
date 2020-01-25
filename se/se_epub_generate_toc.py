@@ -74,14 +74,14 @@ class TocItem:
 		# If the title is entirely Roman numeral, put epub:type within <a>.
 		if regex.search(r"^<span epub:type=\"z3998:roman\">[IVXLC]{1,10}<\/span>$", self.title):
 			if self.subtitle == "":
-				out_string += "<a href=\"text/{}\" epub:type=\"z3998:roman\">{}</a>\n".format(self.file_link, self.roman)
+				out_string += f"<a href=\"text/{self.file_link}\" epub:type=\"z3998:roman\">{self.roman}</a>\n"
 			else:
-				out_string += "<a href=\"text/{}\">{}: {}</a>\n".format(self.file_link, self.title, self.subtitle)
+				out_string += f"<a href=\"text/{self.file_link}\">{self.title}: {self.subtitle}</a>\n"
 		else:  # Use the subtitle only if we're a Part or Division or Volume
 			if self.subtitle != "" and (self.division in [BookDivision.PART, BookDivision.DIVISION, BookDivision.VOLUME]):
-				out_string += "<a href=\"text/{}\">{}: {}</a>\n".format(self.file_link, self.title, self.subtitle)
+				out_string += f"<a href=\"text/{self.file_link}\">{self.title}: {self.subtitle}</a>\n"
 			else:
-				out_string += "<a href=\"text/{}\">{}</a>\n".format(self.file_link, self.title)
+				out_string += f"<a href=\"text/{self.file_link}\">{self.title}</a>\n"
 
 		return out_string
 
@@ -99,11 +99,11 @@ class TocItem:
 
 		out_string = ""
 		if self.place == Position.FRONT:
-			out_string = "<li>\n<a href=\"text/{}\" epub:type=\"frontmatter {}\">{}</a>\n</li>\n".format(self.file_link, self.epub_type, self.title)
+			out_string = f"<li>\n<a href=\"text/{self.file_link}\" epub:type=\"frontmatter {self.epub_type}\">{self.title}</a>\n</li>\n"
 		if self.place == Position.BODY:
-			out_string = "<li>\n<a href=\"text/{}\" epub:type=\"bodymatter z3998:{}\">{}</a>\n</li>\n".format(self.file_link, work_type, work_title)
+			out_string = f"<li>\n<a href=\"text/{self.file_link}\" epub:type=\"bodymatter z3998:{work_type}\">{work_title}</a>\n</li>\n"
 		if self.place == Position.BACK:
-			out_string = "<li>\n<a href=\"text/{}\" epub:type=\"backmatter {}\">{}</a>\n</li>\n".format(self.file_link, self.epub_type, self.title)
+			out_string = f"<li>\n<a href=\"text/{self.file_link}\" epub:type=\"backmatter {self.epub_type}\">{self.title}</a>\n</li>\n"
 
 		return out_string
 
@@ -435,7 +435,7 @@ def process_heading(heading: BeautifulSoup, textf: str, is_toplevel: bool, singl
 	try:
 		toc_item.division = get_book_division(heading)
 	except se.InvalidInputException:
-		raise se.InvalidInputException("Could not identify parent section, filename: {}".format(textf))
+		raise se.InvalidInputException(f"Could not identify parent section, filename: {textf}")
 
 	# This stops the first heading in a file getting an anchor id, we don't generally want that.
 	# The exceptions are things like poems within a single-file volume.

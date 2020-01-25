@@ -36,11 +36,11 @@ def _process_endnotes_in_file(filename: str, root: Path, note_range: range, step
 
 		for endnote_number in note_range:
 			# If we’ve already changed some notes and can’t find the next then we don’t need to continue searching
-			if not "id=\"noteref-{}\"".format(endnote_number) in processed_xhtml and processed_xhtml_is_modified:
+			if not f"id=\"noteref-{endnote_number}\"" in processed_xhtml and processed_xhtml_is_modified:
 				break
-			processed_xhtml = processed_xhtml.replace("id=\"noteref-{}\"".format(endnote_number), "id=\"noteref-{}\"".format(endnote_number + step), 1)
-			processed_xhtml = processed_xhtml.replace("#note-{}\"".format(endnote_number), "#note-{}\"".format(endnote_number + step), 1)
-			processed_xhtml = processed_xhtml.replace(">{}</a>".format(endnote_number), ">{}</a>".format(endnote_number + step), 1)
+			processed_xhtml = processed_xhtml.replace(f"id=\"noteref-{endnote_number}\"", "id=\"noteref-{}\"".format(endnote_number + step), 1)
+			processed_xhtml = processed_xhtml.replace(f"#note-{endnote_number}\"", "#note-{}\"".format(endnote_number + step), 1)
+			processed_xhtml = processed_xhtml.replace(f">{endnote_number}</a>", ">{}</a>".format(endnote_number + step), 1)
 			processed_xhtml_is_modified = processed_xhtml_is_modified or (processed_xhtml != xhtml)
 
 		if processed_xhtml_is_modified:
@@ -94,7 +94,7 @@ class SeEpub:
 			self.path = Path(epub_root_directory).resolve()
 
 			if not self.path.is_dir():
-				raise se.InvalidSeEbookException("Not a directory: {}".format(self.path))
+				raise se.InvalidSeEbookException(f"Not a directory: {self.path}")
 
 			with open(self.path / "src" / "META-INF" / "container.xml", "r", encoding="utf-8") as file:
 				container_tree = se.easy_xml.EasyXmlTree(file.read())
@@ -106,7 +106,7 @@ class SeEpub:
 			if "<dc:identifier id=\"uid\">url:https://standardebooks.org/ebooks/" not in self.metadata_xhtml:
 				raise se.InvalidSeEbookException
 		except:
-			raise se.InvalidSeEbookException("Not a Standard Ebooks source directory: {}".format(self.path))
+			raise se.InvalidSeEbookException(f"Not a Standard Ebooks source directory: {self.path}")
 
 	@property
 	def last_commit(self) -> GitCommit:
@@ -297,7 +297,7 @@ class SeEpub:
 			try:
 				self.__metadata_tree = se.easy_xml.EasyXmlTree(self.metadata_xhtml)
 			except Exception as ex:
-				raise se.InvalidSeEbookException("Couldn’t parse {}: {}".format(self.metadata_file_path, ex))
+				raise se.InvalidSeEbookException(f"Couldn’t parse {self.metadata_file_path}: {ex}")
 
 		return self.__metadata_tree
 
@@ -413,7 +413,7 @@ class SeEpub:
 				# Remove XML declaration
 				svg = regex.sub(r"<\?xml.+?\?>", "", svg)
 
-				output_xhtml = regex.sub(r"<img.+?src=\"\.\./images/{}\.svg\".*?/>".format(match), svg, output_xhtml)
+				output_xhtml = regex.sub(fr"<img.+?src=\"\.\./images/{match}\.svg\".*?/>", svg, output_xhtml)
 
 		with tempfile.NamedTemporaryFile(mode="w+", delete=False) as file:
 			file.write(output_xhtml)
@@ -582,8 +582,8 @@ class SeEpub:
 					note_range = range(target_endnote_number, endnote_count + 1, 1)
 
 				for endnote_number in note_range:
-					xhtml = xhtml.replace("id=\"note-{}\"".format(endnote_number), "id=\"note-{}\"".format(endnote_number + step), 1)
-					xhtml = xhtml.replace("#noteref-{}\"".format(endnote_number), "#noteref-{}\"".format(endnote_number + step), 1)
+					xhtml = xhtml.replace(f"id=\"note-{endnote_number}\"", "id=\"note-{}\"".format(endnote_number + step), 1)
+					xhtml = xhtml.replace(f"#noteref-{endnote_number}\"", "#noteref-{}\"".format(endnote_number + step), 1)
 
 				# There may be some links within the notes that refer to other endnotes.
 				# These potentially need incrementing / decrementing too. This code assumes
@@ -600,7 +600,7 @@ class SeEpub:
 				file.truncate()
 
 		except Exception:
-			raise se.InvalidSeEbookException("Couldn’t open endnotes file: {}".format(endnotes_filename))
+			raise se.InvalidSeEbookException(f"Couldn’t open endnotes file: {endnotes_filename}")
 
 		with concurrent.futures.ProcessPoolExecutor() as executor:
 			for root, _, filenames in os.walk(source_directory):
@@ -620,11 +620,11 @@ class SeEpub:
 			now = datetime.datetime.utcnow()
 			now_iso = regex.sub(r"\.[0-9]+$", "", now.isoformat()) + "Z"
 			now_iso = regex.sub(r"\+.+?Z$", "Z", now_iso)
-			now_friendly = "{0:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}".format(now)
+			now_friendly = f"{now:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}"
 			now_friendly = regex.sub(r"\s+", " ", now_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
-			self.metadata_xhtml = regex.sub(r"<dc:date>[^<]+?</dc:date>", "<dc:date>{}</dc:date>".format(now_iso), self.metadata_xhtml)
-			self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", "<meta property=\"dcterms:modified\">{}</meta>".format(now_iso), self.metadata_xhtml)
+			self.metadata_xhtml = regex.sub(r"<dc:date>[^<]+?</dc:date>", f"<dc:date>{now_iso}</dc:date>", self.metadata_xhtml)
+			self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", f"<meta property=\"dcterms:modified\">{now_iso}</meta>", self.metadata_xhtml)
 
 			with open(self.metadata_file_path, "w", encoding="utf-8") as file:
 				file.seek(0)
@@ -635,7 +635,7 @@ class SeEpub:
 
 			with open(self.path / "src" / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
 				xhtml = file.read()
-				xhtml = xhtml.replace("<b>January 1, 1900, 12:00 <abbr class=\"time eoc\">a.m.</abbr></b>", "<b>{}</b>".format(now_friendly))
+				xhtml = xhtml.replace("<b>January 1, 1900, 12:00 <abbr class=\"time eoc\">a.m.</abbr></b>", f"<b>{now_friendly}</b>")
 
 				file.seek(0)
 				file.write(xhtml)
@@ -685,7 +685,7 @@ class SeEpub:
 			with open(filename, "r", encoding="utf-8") as file:
 				word_count += se.formatting.get_word_count(file.read())
 
-		self.metadata_xhtml = regex.sub(r"<meta property=\"se:word-count\">[^<]*</meta>", "<meta property=\"se:word-count\">{}</meta>".format(word_count), self.metadata_xhtml)
+		self.metadata_xhtml = regex.sub(r"<meta property=\"se:word-count\">[^<]*</meta>", f"<meta property=\"se:word-count\">{word_count}</meta>", self.metadata_xhtml)
 
 		with open(self.metadata_file_path, "r+", encoding="utf-8") as file:
 			file.seek(0)
@@ -797,7 +797,7 @@ class SeEpub:
 
 		for filename in filenames:
 			if filename not in excluded_files:
-				spine.append("<itemref idref=\"{}\"/>".format(filename))
+				spine.append(f"<itemref idref=\"{filename}\"/>")
 
 		if "endnotes.xhtml" in filenames:
 			spine.append("<itemref idref=\"endnotes.xhtml\"/>")
@@ -952,13 +952,13 @@ class SeEpub:
 						if hash_position > 0:
 							old_anchor = href[hash_position:]
 
-					new_anchor = "note-{:d}".format(current_note_number)
+					new_anchor = f"note-{current_note_number:d}"
 					if new_anchor != old_anchor:
 						change_list.append("Changed " + old_anchor + " to " + new_anchor + " in " + file_name)
 						notes_changed += 1
 						# Update the link in the soup object
 						link["href"] = 'endnotes.xhtml#' + new_anchor
-						link["id"] = 'noteref-{:d}'.format(current_note_number)
+						link["id"] = f'noteref-{current_note_number:d}'
 						link.string = str(current_note_number)
 						needs_rewrite = True
 					# Now try to find this in endnotes
