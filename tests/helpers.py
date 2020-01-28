@@ -52,6 +52,8 @@ def assemble_book(draft__dir: Path, work_dir: Path, text_dir: Path) -> Path:
 def files_are_golden(in_dir: Path, text_dir: Path, golden_dir: Path, update_golden: bool) -> bool:
 	"""Check that the files in the list have identical contents in both
 	directories."""
+	__tracebackhide__ = True # pylint: disable=unused-variable
+
 	# Get the list of files to check
 	files = [file.name for file in list(in_dir.glob("*.xhtml"))]
 	assert files
@@ -78,14 +80,14 @@ def files_are_golden(in_dir: Path, text_dir: Path, golden_dir: Path, update_gold
 			golden_text = file.read()
 		with open(text_dir / mismatch) as file:
 			test_text = file.read()
-		assert golden_text == test_text
+		assert test_text == golden_text
 
 	if check_content_opf:
 		with open(golden_dir / "content.opf") as file:
 			golden_text = file.read()
 		with open(content_opf_out) as file:
 			test_text = file.read()
-		assert golden_text == test_text
+		assert test_text == golden_text
 
 	# Do a redundant check in case there is no text diff for some reason
 	assert mismatches == []
@@ -96,6 +98,8 @@ def files_are_golden(in_dir: Path, text_dir: Path, golden_dir: Path, update_gold
 
 def output_is_golden(out: str, golden_file: Path, update_golden: bool) ->bool:
 	"""Check that out string matches the contents of the golden file."""
+	__tracebackhide__ = True # pylint: disable=unused-variable
+
 	if update_golden:
 		with open(golden_file, "w") as file:
 			file.write(out)
