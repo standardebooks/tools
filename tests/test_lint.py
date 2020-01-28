@@ -4,7 +4,7 @@ Tests for lint command.
 
 from pathlib import Path
 import pytest
-from helpers import assemble_book, run
+from helpers import assemble_book, run, output_is_golden
 
 @pytest.mark.parametrize("test_name", ["clean", "content"])
 def test_lint(data_dir: Path, draft_dir: Path, work_dir: Path, capfd, test_name: str, update_golden: bool):
@@ -27,10 +27,4 @@ def test_lint(data_dir: Path, draft_dir: Path, work_dir: Path, capfd, test_name:
 
 	# Update golden output files if flag is set
 	golden_file = data_dir / "lint" / f"{test_name}-out.txt"
-	if update_golden:
-		with open(golden_file, "w") as file:
-			file.write(out)
-
-	# Output of stdout should match expected output
-	with open(golden_file) as file:
-		assert file.read() == out
+	assert output_is_golden(out, golden_file, update_golden)
