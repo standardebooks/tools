@@ -7,17 +7,18 @@ and maintainability.
 """
 
 import shutil
+import unicodedata
+import urllib.parse
+from argparse import Namespace
 from pathlib import Path
 from subprocess import call
-import unicodedata
-import urllib
-from typing import Union
-import requests
+from typing import Tuple, Union, Optional
 import git
 import regex
-from pkg_resources import resource_filename
-from ftfy import fix_text
+import requests
 from bs4 import BeautifulSoup
+from ftfy import fix_text
+from pkg_resources import resource_filename
 import se
 import se.formatting
 
@@ -42,7 +43,7 @@ def _get_word_widths(string: str, target_height: int) -> list:
 		for char in word:
 			# Convert accented characters to unaccented characters
 			char = regex.sub(r"\p{M}", "", unicodedata.normalize("NFKD", char))
-			width += (se.LEAGUE_SPARTAN_100_WIDTHS[char] * target_height / 100) + se.LEAGUE_SPARTAN_KERNING + se.LEAGUE_SPARTAN_AVERAGE_SPACING
+			width += int(se.LEAGUE_SPARTAN_100_WIDTHS[char] * target_height / 100) + se.LEAGUE_SPARTAN_KERNING + se.LEAGUE_SPARTAN_AVERAGE_SPACING
 
 		width = width - se.LEAGUE_SPARTAN_KERNING - se.LEAGUE_SPARTAN_AVERAGE_SPACING
 
@@ -203,12 +204,12 @@ def _generate_cover_svg(title: str, authors: Union[str, list], title_string: str
 	svg = ""
 	canvas_width = se.COVER_TITLE_BOX_WIDTH - (se.COVER_TITLE_BOX_PADDING * 2)
 
-	title = title.replace("'", "’")
-	authors = authors.replace("'", "’")
-	title_string = title_string.replace("'", "’")
-
 	if not isinstance(authors, list):
 		authors = [authors]
+
+	title = title.replace("'", "’")
+	authors = [author.replace("'", "’") for author in authors]
+	title_string = title_string.replace("'", "’")
 
 	# Read our template SVG to get some values before we begin
 	with open(resource_filename("se", str(Path("data") / "templates" / "cover.svg")), "r", encoding="utf-8") as file:
@@ -280,7 +281,7 @@ def _generate_cover_svg(title: str, authors: Union[str, list], title_string: str
 
 	return svg
 
-def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> (str, str):
+def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> Tuple[Optional[str], Optional[str]]:
 	"""
 	Helper function.
 	Given a string, try to see if there's a Wikipedia page entry for that string.
@@ -298,7 +299,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> (str, str):
 	# returns HTTP 200, then we didn't find a direct match and return nothing.
 
 	try:
-		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": 1}, allow_redirects=False)
+		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": "1"}, allow_redirects=False)
 	except Exception as ex:
 		se.print_error(f"Couldn’t contact Wikipedia. Error: {ex}")
 
@@ -322,7 +323,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> (str, str):
 
 	return None, None
 
-def create_draft(args: list):
+def create_draft(args: Namespace):
 	"""
 	Entry point for `se create-draft`
 	"""
@@ -415,13 +416,15 @@ def create_draft(args: list):
 			# Try to get the PG producers.  We only try this if there's a <pre> block with the header info (which is not always the case)
 			for element in soup(text=regex.compile(r"\*\*\*\s*Produced by.+$", flags=regex.DOTALL)):
 				if element.parent.name == "pre":
-					pg_producers = regex.sub(r".+?Produced by (.+?)\s*$", "\\1", element, flags=regex.DOTALL)
-					pg_producers = regex.sub(r"\(.+?\)", "", pg_producers, flags=regex.DOTALL)
-					pg_producers = regex.sub(r"(at )?https?://www\.pgdp\.net", "", pg_producers, flags=regex.DOTALL)
-					pg_producers = regex.sub(r"[\r\n]+", " ", pg_producers, flags=regex.DOTALL)
-					pg_producers = regex.sub(r",? and ", ", and ", pg_producers)
-					pg_producers = pg_producers.replace(" and the Online", " and The Online")
-					pg_producers = pg_producers.replace(", and ", ", ").strip().split(", ")
+					producers_text = regex.sub(r".+?Produced by (.+?)\s*$", "\\1", element, flags=regex.DOTALL)
+					producers_text = regex.sub(r"\(.+?\)", "", producers_text, flags=regex.DOTALL)
+					producers_text = regex.sub(r"(at )?https?://www\.pgdp\.net", "", producers_text, flags=regex.DOTALL)
+					producers_text = regex.sub(r"[\r\n]+", " ", producers_text, flags=regex.DOTALL)
+					producers_text = regex.sub(r",? and ", ", and ", producers_text)
+					producers_text = producers_text.replace(" and the Online", " and The Online")
+					producers_text = producers_text.replace(", and ", ", ").strip()
+
+					pg_producers = producers_text.split(", ")
 
 			# Try to strip out the PG header
 			for element in soup(text=regex.compile(r"\*\*\*\s*START OF THIS")):

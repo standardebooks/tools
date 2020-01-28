@@ -88,7 +88,7 @@ def british2american() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml")):
+	for filename in se.get_target_filenames(args.targets, (".xhtml",)):
 		if args.verbose:
 			print(f"Processing {filename} ...", end="", flush=True)
 
@@ -224,7 +224,7 @@ def clean() -> int:
 		if args.verbose:
 			print(" OK")
 
-	for filename in se.get_target_filenames(args.targets, (".css"), []):
+	for filename in se.get_target_filenames(args.targets, (".css",), []):
 		# Skip core.css as this must be copied in from the template
 		if filename.name == "core.css":
 			continue
@@ -274,9 +274,10 @@ def compare_versions() -> int:
 		se.print_error("Couldn’t locate firefox. Is it installed?")
 		return se.MissingDependencyException.code
 
-	try:
-		compare_path = Path(shutil.which("compare"))
-	except Exception:
+	which_compare = shutil.which("compare")
+	if which_compare:
+		compare_path = Path(which_compare)
+	else:
 		se.print_error("Couldn’t locate compare. Is imagemagick installed?")
 		return se.MissingDependencyException.code
 
@@ -484,7 +485,7 @@ def find_mismatched_diacritics() -> int:
 
 	accented_words = set()
 	mismatches = {}
-	target_filenames = se.get_target_filenames(args.targets, (".xhtml"))
+	target_filenames = se.get_target_filenames(args.targets, (".xhtml",))
 
 	for filename in target_filenames:
 		try:
@@ -554,7 +555,7 @@ def hyphenate() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml")):
+	for filename in se.get_target_filenames(args.targets, (".xhtml",)):
 		if args.verbose:
 			print(f"Processing {filename} ...", end="", flush=True)
 
@@ -627,7 +628,7 @@ def lint() -> int:
 			if args.plain:
 				print(se_epub.path)
 			else:
-				print(colored(se_epub.path, "white", attrs=["reverse"]))
+				print(colored(str(se_epub.path), "white", attrs=["reverse"]))
 
 		# Print the table
 		if messages:
@@ -705,7 +706,7 @@ def print_toc() -> int:
 			return ex.code
 		except FileNotFoundError:
 			se.print_error("Couldn’t find toc.xhtml file.")
-			return se.InvalidSeEbookException
+			return se.InvalidSeEbookException.code
 
 	return 0
 
@@ -735,7 +736,7 @@ def renumber_endnotes() -> int:
 			return ex.code
 		except FileNotFoundError:
 			se.print_error("Couldn’t find endnotes.xhtml file.")
-			return se.InvalidSeEbookException
+			return se.InvalidSeEbookException.code
 
 	return 0
 
@@ -777,7 +778,7 @@ def modernize_spelling() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml")):
+	for filename in se.get_target_filenames(args.targets, (".xhtml",)):
 		if args.verbose:
 			print(f"Processing {filename} ...", end="", flush=True)
 
@@ -991,7 +992,7 @@ def semanticate() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml")):
+	for filename in se.get_target_filenames(args.targets, (".xhtml",)):
 		if args.verbose:
 			print(f"Processing {filename} ...", end="", flush=True)
 
@@ -1108,7 +1109,7 @@ def typogrify() -> int:
 	ignored_filenames = se.IGNORED_FILENAMES
 	ignored_filenames.remove("toc.xhtml")
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml"), ignored_filenames):
+	for filename in se.get_target_filenames(args.targets, (".xhtml",), ignored_filenames):
 		if filename.name == "titlepage.xhtml":
 			continue
 
