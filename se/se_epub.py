@@ -79,9 +79,6 @@ class SeEpub:
 	An SE epub can have various operations performed on it, including recomposing and linting.
 	"""
 
-	path = ""
-	metadata_file_path = None
-	metadata_xhtml = None
 	__metadata_tree = None
 	_generated_identifier = None
 	_generated_github_repo_url = None

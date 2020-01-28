@@ -83,9 +83,10 @@ def remove_image_metadata(filename: Path) -> None:
 	None.
 	"""
 
-	try:
-		exiftool_path = Path(shutil.which("exiftool"))
-	except Exception:
+	which_exiftool = shutil.which("exiftool")
+	if which_exiftool:
+		exiftool_path = Path(which_exiftool)
+	else:
 		raise se.MissingDependencyException("Couldn’t locate exiftool. Is it installed?")
 
 	# Path arguments must be cast to string for Windows compatibility.

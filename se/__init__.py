@@ -192,7 +192,7 @@ def quiet_remove(file: Path) -> None:
 	except Exception:
 		pass
 
-def print_error(message: str, verbose: bool = False) -> None:
+def print_error(message: Union[SeException, str], verbose: bool = False) -> None:
 	"""
 	Helper function to print a colored error message to the console.
 	"""
@@ -206,7 +206,7 @@ def print_warning(message: str, verbose: bool = False) -> None:
 
 	print("{}{} {}".format(MESSAGE_INDENT if verbose else "", colored("Warning:", "yellow", attrs=["reverse"]), message))
 
-def print_table(table_data: list, wrap_column: bool = None) -> None:
+def print_table(table_data: list, wrap_column: int = None) -> None:
 	"""
 	Helper function to print a table to the console.
 

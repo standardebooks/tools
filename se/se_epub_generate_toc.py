@@ -7,8 +7,9 @@ Strictly speaking, the generate_toc() function should be a class member of SeEpu
 the function is very big and it makes editing easier to put in a separate file.
 """
 
-from pathlib import Path
 from enum import Enum
+from pathlib import Path
+from typing import Tuple, List
 import regex
 from bs4 import BeautifulSoup, Tag
 import se
@@ -54,7 +55,7 @@ class TocItem:
 	id = ""
 	epub_type = ""
 	division = BookDivision.NONE
-	place: Position = Position.FRONT
+	place = Position.FRONT
 
 	def toc_link(self) -> str:
 		"""
@@ -556,7 +557,7 @@ def process_heading_contents(heading: BeautifulSoup, toc_item: TocItem):
 		#  Now strip out any linefeeds or tabs we may have encountered.
 		toc_item.title = regex.sub(r"(\n|\t)", "", accumulator)
 
-def process_all_content(file_list: list, text_path: str) -> (list, list):
+def process_all_content(file_list: list, text_path: str) -> Tuple[list, list]:
 	"""
 	Analyze the whole content of the project, build and return lists
 	if toc_items and landmarks.
@@ -569,8 +570,8 @@ def process_all_content(file_list: list, text_path: str) -> (list, list):
 	a tuple containing the list of Toc items and the list of landmark items
 	"""
 
-	toc_list = []
-	landmarks = []
+	toc_list: List[TocItem] = []
+	landmarks: List[TocItem] = []
 
 	# We make two passes through the work, because we need to know
 	# how many bodymatter items there are. So we do landmarks first.
