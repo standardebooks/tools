@@ -1,37 +1,17 @@
-(0lqqqqqqqwqqqqqqqqqqqqqqqqqwqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk(B
-(0x(B [31mError[0m (0x(B content.opf     (0x(B Long description must be escaped HTML.           (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B content.opf     (0x(B Empty production-notes element in metadata.      (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B content.opf     (0x(B Illegal se:subject: TAG                          (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B content.opf     (0x(B <![CDATA[ detected. Run `clean` to canonicalize  (0x(B
-(0x(B       (0x(B                 (0x(B <![CDATA[ sections.                              (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B chapter-1.xhtml (0x(B File language is en-GB, but content.opf language (0x(B
-(0x(B       (0x(B                 (0x(B is LANG                                          (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: YEAR                   (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: PRODUCER_URL           (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: PRODUCER               (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: PG_YEAR                (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: TRANSCRIBER_1          (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: TRANSCRIBER_2          (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: PG_URL                 (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: IA_URL                 (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: PAINTING               (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: YEAR                   (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: ARTIST_WIKI_URL        (0x(B
-(0tqqqqqqqnqqqqqqqqqqqqqqqqqnqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu(B
-(0x(B [31mError[0m (0x(B colophon.xhtml  (0x(B Missing data in colophon: ARTIST                 (0x(B
-(0mqqqqqqqvqqqqqqqqqqqqqqqqqvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj(B
+Error: content.opf Long description must be escaped HTML.
+Error: content.opf Empty production-notes element in metadata.
+Error: content.opf Illegal se:subject: TAG
+Error: content.opf <![CDATA[ detected. Run `clean` to canonicalize <![CDATA[ sections.
+Error: chapter-1.xhtml File language is en-GB, but content.opf language is LANG
+Error: colophon.xhtml Missing data in colophon: YEAR
+Error: colophon.xhtml Missing data in colophon: PRODUCER_URL
+Error: colophon.xhtml Missing data in colophon: PRODUCER
+Error: colophon.xhtml Missing data in colophon: PG_YEAR
+Error: colophon.xhtml Missing data in colophon: TRANSCRIBER_1
+Error: colophon.xhtml Missing data in colophon: TRANSCRIBER_2
+Error: colophon.xhtml Missing data in colophon: PG_URL
+Error: colophon.xhtml Missing data in colophon: IA_URL
+Error: colophon.xhtml Missing data in colophon: PAINTING
+Error: colophon.xhtml Missing data in colophon: YEAR
+Error: colophon.xhtml Missing data in colophon: ARTIST_WIKI_URL
+Error: colophon.xhtml Missing data in colophon: ARTIST

@@ -6,8 +6,13 @@ import os
 import shutil
 from pathlib import Path
 from typing import Generator
+
 import pytest
-from helpers import must_run
+
+pytest.register_assert_rewrite("helpers")
+
+from helpers import must_run # pylint: disable=wrong-import-position
+
 
 def pytest_addoption(parser):
 	"""Additional pytest command-line options."""

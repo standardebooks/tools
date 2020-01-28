@@ -190,9 +190,9 @@ def add_landmark(soup: BeautifulSoup, textf: str, landmarks: list):
 			landmark.title = title_tag.string
 			if landmark.title is None:
 				# This is a bit desperate, use this only if there's no proper <title> tag in file.
-				landmark.title = landmark.epub_type.capitalize
+				landmark.title = landmark.epub_type.capitalize()
 		else:
-			landmark.title = landmark.epub_type.capitalize
+			landmark.title = landmark.epub_type.capitalize()
 		landmarks.append(landmark)
 
 def process_landmarks(landmarks_list: list, work_type: str, work_title: str):
