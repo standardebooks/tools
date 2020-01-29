@@ -4,7 +4,8 @@ Defines various typography-related functions
 """
 
 import html
-from typing import Dict
+from pathlib import Path
+from typing import Dict, Optional
 import regex
 import smartypants
 from bs4 import BeautifulSoup
@@ -215,7 +216,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 	return xhtml
 
-def hyphenate_file(filename: str, language: str, ignore_h_tags: bool = False) -> None:
+def hyphenate_file(filename: Path, language: Optional[str], ignore_h_tags: bool = False) -> None:
 	"""
 	Add soft hyphens to an XHTML file.
 
@@ -238,7 +239,7 @@ def hyphenate_file(filename: str, language: str, ignore_h_tags: bool = False) ->
 			file.write(processed_xhtml)
 			file.truncate()
 
-def hyphenate(xhtml: str, language: str, ignore_h_tags: bool = False) -> str:
+def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) -> str:
 	"""
 	Add soft hyphens to a string of XHTML.
 
@@ -256,10 +257,10 @@ def hyphenate(xhtml: str, language: str, ignore_h_tags: bool = False) -> str:
 
 	if language is None:
 		try:
-			language = soup.html["xml:lang"]
+			language = str(soup.html["xml:lang"])
 		except Exception:
 			try:
-				language = soup.html["lang"]
+				language = str(soup.html["lang"])
 			except Exception:
 				raise se.InvalidLanguageException("No `xml:lang` or `lang` attribute on root <html> element; couldn’t guess file language.")
 

@@ -6,29 +6,29 @@ Strictly speaking, the build() function should be a class member of SeEpub. But
 the function is very big and it makes editing easier to put it in a separate file.
 """
 
-import sys
+import fnmatch
 import os
 import shutil
-from pathlib import Path
-from distutils.dir_util import copy_tree
-import tempfile
-from hashlib import sha1
 import subprocess
-import fnmatch
-import regex
-from pkg_resources import resource_filename
+import sys
+import tempfile
+from distutils.dir_util import copy_tree
+from hashlib import sha1
+from pathlib import Path
+from typing import List
 import lxml.cssselect
 import lxml.etree as etree
+import regex
 from bs4 import BeautifulSoup
+from pkg_resources import resource_filename
 import se
-import se.formatting
 import se.easy_xml
 import se.epub
-from se.vendor.mobi import mobi
-import se.typography
+import se.formatting
 import se.images
+import se.typography
 from se.vendor.kobo_touch_extended import kobo
-
+from se.vendor.mobi import mobi
 
 COVER_SVG_WIDTH = 1400
 COVER_SVG_HEIGHT = 2100
@@ -43,29 +43,30 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 	"""
 
 	# Check for some required tools
-	try:
-		rsvg_convert_path = Path(shutil.which("rsvg-convert"))
-	except Exception:
+	which_rsvg_convert = shutil.which("rsvg-convert")
+	if which_rsvg_convert:
+		rsvg_convert_path = Path(which_rsvg_convert)
+	else:
 		raise se.MissingDependencyException("Couldn’t locate rsvg-convert. Is librsvg2-bin installed?")
 
-	try:
-		convert_path = Path(shutil.which("convert"))
-	except Exception:
+	which_convert = shutil.which("convert")
+	if which_convert:
+		convert_path = Path(which_convert)
+	else:
 		raise se.MissingDependencyException("Couldn’t locate convert. Is Imagemagick installed?")
 
 	if build_kindle:
-		try:
-			ebook_convert_path = Path(shutil.which("ebook-convert"))
-		except Exception:
+		which_ebook_convert = shutil.which("ebook-convert")
+		if which_ebook_convert:
+			ebook_convert_path = Path(which_ebook_convert)
+		else:
 			# Look for default Mac calibre app path if none found in path
 			ebook_convert_path = Path("/Applications/calibre.app/Contents/MacOS/ebook-convert")
 			if not ebook_convert_path.exists():
 				raise se.MissingDependencyException("Couldn’t locate ebook-convert. Is Calibre installed?")
 
 	if run_epubcheck:
-		try:
-			Path(shutil.which("java"))
-		except Exception:
+		if not shutil.which("java"):
 			raise se.MissingDependencyException("Couldn’t locate java. Is it installed?")
 
 	navdoc2ncx_xsl_filename = resource_filename("se", str(Path("data") / "navdoc2ncx.xsl"))
@@ -82,8 +83,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 	if verbose:
 		print(f"Building {self.path} ...")
 
-	with tempfile.TemporaryDirectory() as work_directory:
-		work_directory = Path(work_directory)
+	with tempfile.TemporaryDirectory() as temp_directory:
+		work_directory = Path(temp_directory)
 		work_epub_root_directory = work_directory / "src"
 
 		copy_tree(self.path, str(work_directory))
@@ -536,8 +537,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							file.truncate()
 
 		if build_kobo:
-			with tempfile.TemporaryDirectory() as kobo_work_directory:
-				kobo_work_directory = Path(kobo_work_directory)
+			with tempfile.TemporaryDirectory() as temp_directory:
+				kobo_work_directory = Path(temp_directory)
 				copy_tree(str(work_epub_root_directory), str(kobo_work_directory))
 
 				for root, _, filenames in os.walk(kobo_work_directory):
@@ -623,7 +624,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 						with open(Path(root) / filename, "r+", encoding="utf-8") as file:
 							xhtml = file.read()
 							processed_xhtml = xhtml
-							replaced_mathml = []
+							replaced_mathml: List[str] = []
 
 							# Check if there's MathML we want to convert
 							# We take a naive approach and use some regexes to try to simplify simple MathML expressions.
@@ -733,8 +734,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			file.truncate()
 
 		# All done, clean the output
-		for filename in se.get_target_filenames([work_epub_root_directory], (".xhtml", ".svg", ".opf", ".ncx")):
-			se.formatting.format_xhtml_file(filename, False, filename.name == "content.opf", filename.name == "endnotes.xhtml", filename.name == "colophon.xhtml")
+		for filepath in se.get_target_filenames([work_epub_root_directory], (".xhtml", ".svg", ".opf", ".ncx")):
+			se.formatting.format_xhtml_file(filepath, False, filepath.name == "content.opf", filepath.name == "endnotes.xhtml", filepath.name == "colophon.xhtml")
 
 		# Write the compatible epub
 		se.epub.write_epub(work_epub_root_directory, output_directory / epub_output_filename)
@@ -818,8 +819,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, navdoc2ncx_xsl_filename)
 
 			# Clean just the ToC and NCX
-			for filename in [work_epub_root_directory / "epub" / "toc.ncx", work_epub_root_directory / "epub" / toc_filename]:
-				se.formatting.format_xhtml_file(filename, False)
+			for filepath in [work_epub_root_directory / "epub" / "toc.ncx", work_epub_root_directory / "epub" / toc_filename]:
+				se.formatting.format_xhtml_file(filepath, False)
 
 			# Convert endnotes to Kindle popup compatible notes
 			if (work_epub_root_directory / "epub" / "text" / "endnotes.xhtml").is_file():
@@ -917,8 +918,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 					core_css_file.write(compatibility_css_file.read())
 
 			# Add soft hyphens
-			for filename in se.get_target_filenames([work_epub_root_directory], (".xhtml")):
-				se.typography.hyphenate_file(filename, None, True)
+			for filepath in se.get_target_filenames([work_epub_root_directory], (".xhtml",)):
+				se.typography.hyphenate_file(filepath, None, True)
 
 			# Build an epub file we can send to Calibre
 			se.epub.write_epub(work_epub_root_directory, work_directory / epub_output_filename)

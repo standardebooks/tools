@@ -4,23 +4,25 @@ Defines the SeEpub class, the master class for representing and operating on
 Standard Ebooks epub3 files.
 """
 
-import os
-import html
-import tempfile
-import shutil
-import fnmatch
-import datetime
-from pathlib import Path
-import concurrent.futures
 import base64
+import concurrent.futures
+import datetime
+import fnmatch
+import html
+import os
+import shutil
 import subprocess
-import regex
+import tempfile
+from pathlib import Path
+from typing import List, Optional
 import git
-from bs4 import Tag, BeautifulSoup
+import regex
+from bs4 import BeautifulSoup, Tag
 import se
-import se.formatting
 import se.easy_xml
+import se.formatting
 import se.images
+
 
 def _process_endnotes_in_file(filename: str, root: Path, note_range: range, step: int) -> None:
 	"""
@@ -65,12 +67,13 @@ class Endnote:
 	Class to hold information on endnotes
 	"""
 
-	number = 0
-	anchor = ""
-	contents = []  # The strings and tags inside an <li> element
-	back_link = ""
-	source_file = ""
-	matched = False
+	def __init__(self):
+		self.number = 0
+		self.anchor = ""
+		self.contents = []  # The strings and tags inside an <li> element
+		self.back_link = ""
+		self.source_file = ""
+		self.matched = False
 
 class SeEpub:
 	"""
@@ -87,7 +90,7 @@ class SeEpub:
 	_generated_github_repo_url = None
 	_last_commit = None # GitCommit object
 	__endnotes_soup = None # bs4 soup object of the endnotes.xhtml file
-	_endnotes = None # List of Endnote objects
+	_endnotes: Optional[List[Endnote]] = None # List of Endnote objects
 
 	def __init__(self, epub_root_directory: str):
 		try:
@@ -109,7 +112,7 @@ class SeEpub:
 			raise se.InvalidSeEbookException(f"Not a Standard Ebooks source directory: {self.path}")
 
 	@property
-	def last_commit(self) -> GitCommit:
+	def last_commit(self) -> Optional[GitCommit]:
 		"""
 		Accessor
 		"""
@@ -172,7 +175,7 @@ class SeEpub:
 
 					if display_seq and int(display_seq[0].inner_html()) == 0:
 						contributor["include"] = False
-						display_seq = None
+						display_seq = []
 
 					if role.inner_html() == "trl":
 						if display_seq:
@@ -415,9 +418,9 @@ class SeEpub:
 
 				output_xhtml = regex.sub(fr"<img.+?src=\"\.\./images/{match}\.svg\".*?/>", svg, output_xhtml)
 
-		with tempfile.NamedTemporaryFile(mode="w+", delete=False) as file:
-			file.write(output_xhtml)
-			file_name = Path(file.name)
+		with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_file:
+			temp_file.write(output_xhtml)
+			file_name = Path(temp_file.name)
 			file_name_xhtml = Path(str(file_name) + ".xhtml")
 
 		file_name.rename(file_name_xhtml)
@@ -457,9 +460,10 @@ class SeEpub:
 		None.
 		"""
 
-		try:
-			inkscape_path = Path(shutil.which("inkscape"))
-		except Exception:
+		which_inkscape = shutil.which("inkscape")
+		if which_inkscape:
+			inkscape_path = Path(which_inkscape)
+		else:
 			raise se.MissingDependencyException("Couldn’t locate Inkscape. Is it installed?")
 
 		source_images_directory = self.path / "images"
@@ -522,8 +526,8 @@ class SeEpub:
 
 			if source_cover_svg_filename.is_file():
 				# base64 encode cover.jpg
-				with open(source_cover_jpg_filename, "rb") as file:
-					source_cover_jpg_base64 = base64.b64encode(file.read()).decode()
+				with open(source_cover_jpg_filename, "rb") as binary_file:
+					source_cover_jpg_base64 = base64.b64encode(binary_file.read()).decode()
 
 				# Convert text to paths
 				# Inkscape 1.0 needs an --export-file flag that 0.92 doesn’t, so we need to normalise that first.
@@ -654,7 +658,7 @@ class SeEpub:
 		"""
 		text = ""
 
-		for filename in se.get_target_filenames([self.path], (".xhtml")):
+		for filename in se.get_target_filenames([self.path], (".xhtml",)):
 			with open(filename, "r", encoding="utf-8") as file:
 				text += " " + file.read()
 
@@ -678,7 +682,7 @@ class SeEpub:
 		"""
 		word_count = 0
 
-		for filename in se.get_target_filenames([self.path], (".xhtml")):
+		for filename in se.get_target_filenames([self.path], (".xhtml",)):
 			if filename.name == "endnotes.xhtml":
 				continue
 
@@ -962,7 +966,8 @@ class SeEpub:
 						link.string = str(current_note_number)
 						needs_rewrite = True
 					# Now try to find this in endnotes
-					matches = list(filter(lambda x, old=old_anchor: x.anchor == old, self.endnotes))
+					match_old = lambda x, old=old_anchor: x.anchor == old
+					matches = list(filter(match_old, self.endnotes))
 					if not matches:
 						raise se.InvalidInputException("Couldn't find endnote with anchor " + old_anchor)
 					if len(matches) > 1:

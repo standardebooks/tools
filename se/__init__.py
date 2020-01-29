@@ -3,17 +3,17 @@
 Defines various package-level constants and helper functions.
 """
 
-import sys
+import argparse
 import os
 import shutil
-import argparse
+import sys
 from pathlib import Path
-from typing import Union
 from textwrap import wrap
-from termcolor import colored
-import terminaltables
-import regex
+from typing import Set, Union
 import pkg_resources
+import regex
+import terminaltables
+from termcolor import colored
 
 
 try:
@@ -243,7 +243,7 @@ def is_positive_integer(value: str) -> int:
 
 	return int_value
 
-def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filenames: list = None) -> set:
+def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filenames: list = None) -> Set[Path]:
 	"""
 	Helper function to convert a list of filenames or directories into a list of filenames based on some parameters.
 

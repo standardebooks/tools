@@ -13,7 +13,7 @@ import se
 import se.formatting
 
 
-def render_mathml_to_png(mathml: str, output_filename: str) -> None:
+def render_mathml_to_png(mathml: str, output_filename: Path) -> None:
 	"""
 	Render a string of MathML into a transparent PNG file.
 
@@ -43,7 +43,7 @@ def render_mathml_to_png(mathml: str, output_filename: str) -> None:
 
 			subprocess.call([convert_path, png_temp_file.name, "-fuzz", "10%", "-transparent", "white", "-trim", output_filename])
 
-def format_inkscape_svg(filename: str):
+def format_inkscape_svg(filename: Path):
 	"""
 	Clean and format SVGs created by Inkscape, which have lots of useless metadata.
 
