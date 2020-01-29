@@ -374,9 +374,14 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 		xhtml = xhtml.replace("\n", " ")
 		xhtml = regex.sub(r"\s{2,}", " ", xhtml) # Use this instead of \s+, because \s+ will replace special white space (like hair space or nbsp) with a regular space.
 
-	# Epub3 doesn't allow named entities, so convert them to their unicode equivalents
-	# But, don't unescape the content.opf long-description accidentally
-	if not is_metadata_file:
+	if is_metadata_file:
+		# Replace html entities in the long description so we can clean it too.
+		# We re-establish them later.
+		xhtml = xhtml.replace("&lt;", "<")
+		xhtml = xhtml.replace("&gt;", ">")
+	else:
+		# Epub3 doesn't allow named entities, so convert them to their unicode equivalents
+		# But, don't unescape the content.opf long-description accidentally
 		xhtml = regex.sub(r"&#?\w+;", _replace_character_references, xhtml)
 
 	# Remove unnecessary doctypes which can cause xmllint to hang
@@ -470,6 +475,14 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 		if "&lt;p&gt;" in xhtml:
 			xhtml = xhtml.replace(" &lt;p&gt;", "\n\t\t\t&lt;p&gt;")
 			xhtml = xhtml.replace("&lt;/p&gt; </meta>", "&lt;/p&gt;\n\t\t</meta>")
+
+	# Clean the long description, if we can find it
+	if is_metadata_file:
+		long_description = regex.findall(r"<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">(.+?)</meta>", xhtml, flags=regex.DOTALL)
+		if long_description[0]:
+			escaped_long_description = long_description[0].replace("<", "&lt;")
+			escaped_long_description = escaped_long_description.replace(">", "&gt;")
+			xhtml = xhtml.replace(long_description[0], escaped_long_description)
 
 	return xhtml
 
