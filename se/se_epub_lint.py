@@ -7,22 +7,23 @@ Strictly speaking, the lint() function should be a class member of SeEpub. But
 the function is very big and it makes editing easier to put in a separate file.
 """
 
-import os
-import glob
 import filecmp
+import glob
 import html
+import io
+import os
 import unicodedata
 from pathlib import Path
-import io
-import regex
-import roman
-from pkg_resources import resource_filename
+from typing import Dict, List
 import lxml.cssselect
 import lxml.etree as etree
+import regex
+import roman
 from bs4 import BeautifulSoup, NavigableString
+from pkg_resources import resource_filename
 import se
-import se.formatting
 import se.easy_xml
+import se.formatting
 import se.images
 
 
@@ -188,14 +189,14 @@ def lint(self, metadata_xhtml) -> list:
 	has_cover_source = False
 	cover_svg_title = ""
 	titlepage_svg_title = ""
-	xhtml_css_classes = {}
-	headings = []
+	xhtml_css_classes: Dict[str, int] = {}
+	headings: List[tuple] = []
 
 	# Get the ebook language, for later use
 	language = regex.search(r"<dc:language>([^>]+?)</dc:language>", metadata_xhtml).group(1)
 
 	# Check local.css for various items, for later use
-	abbr_elements = []
+	abbr_elements: List[str] = []
 	css = ""
 	with open(self.path / "src" / "epub" / "css" / "local.css", "r", encoding="utf-8") as file:
 		css = file.read()
@@ -1096,8 +1097,8 @@ def lint(self, metadata_xhtml) -> list:
 			messages.append(LintMessage(css_class, se.MESSAGE_TYPE_WARNING, "local.css", True))
 
 	headings = list(set(headings))
-	with open(self.path / "src" / "epub" / "toc.xhtml", "r", encoding="utf-8") as toc:
-		toc = BeautifulSoup(toc.read(), "lxml")
+	with open(self.path / "src" / "epub" / "toc.xhtml", "r", encoding="utf-8") as file:
+		toc = BeautifulSoup(file.read(), "lxml")
 		landmarks = toc.find("nav", attrs={"epub:type": "landmarks"})
 		toc = toc.find("nav", attrs={"epub:type": "toc"})
 
@@ -1131,10 +1132,10 @@ def lint(self, metadata_xhtml) -> list:
 			for index, entry in enumerate(toc_entries):
 				entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get("href"))
 				toc_files.append(entry_file)
-			unique_toc_files = []
-			for file in toc_files:
-				if file not in unique_toc_files:
-					unique_toc_files.append(file)
+			unique_toc_files: List[str] = []
+			for toc_file in toc_files:
+				if toc_file not in unique_toc_files:
+					unique_toc_files.append(toc_file)
 			toc_files = unique_toc_files
 			spine_entries = BeautifulSoup(content_opf.read(), "lxml").find("spine").find_all("itemref")
 			if len(toc_files) != len(spine_entries):

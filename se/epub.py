@@ -51,7 +51,7 @@ def convert_toc_to_ncx(epub_root_absolute_path: Path, toc_filename: str, xsl_fil
 
 	return toc_tree
 
-def write_epub(epub_root_absolute_path: Path, output_absolute_path: str) -> None:
+def write_epub(epub_root_absolute_path: Path, output_absolute_path: Path) -> None:
 	"""
 	Given a root directory, compress it into a final epub file.
 
