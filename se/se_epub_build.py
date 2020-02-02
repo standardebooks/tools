@@ -10,17 +10,17 @@ import fnmatch
 import os
 import shutil
 import subprocess
-import sys
 import tempfile
+import sys
 from distutils.dir_util import copy_tree
 from hashlib import sha1
 from pathlib import Path
 from typing import List
+import importlib_resources
 import lxml.cssselect
 import lxml.etree as etree
 import regex
 from bs4 import BeautifulSoup
-from pkg_resources import resource_filename
 import se
 import se.easy_xml
 import se.epub
@@ -68,9 +68,6 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 	if run_epubcheck:
 		if not shutil.which("java"):
 			raise se.MissingDependencyException("Couldn’t locate java. Is it installed?")
-
-	navdoc2ncx_xsl_filename = resource_filename("se", str(Path("data") / "navdoc2ncx.xsl"))
-	mathml_xsl_filename = resource_filename("se", str(Path("data") / "mathmlcontent2presentation.xsl"))
 
 	# Check the output directory and create it if it doesn't exist
 	try:
@@ -123,7 +120,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		# Are we including proofreading CSS?
 		if proof:
 			with open(work_epub_root_directory / "epub" / "css" / "local.css", "a", encoding="utf-8") as local_css_file:
-				with open(resource_filename("se", str(Path("data") / "templates" / "proofreading.css")), "r", encoding="utf-8") as proofreading_css_file:
+				with importlib_resources.open_text("se.data.templates", "proofreading.css", encoding="utf-8") as proofreading_css_file:
 					local_css_file.write(proofreading_css_file.read())
 
 		# Update the release date in the metadata and colophon
@@ -173,7 +170,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 		# Include compatibility CSS
 		with open(work_epub_root_directory / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:
-			with open(resource_filename("se", str(Path("data") / "templates" / "compatibility.css")), "r", encoding="utf-8") as compatibility_css_file:
+			with importlib_resources.open_text("se.data.templates", "compatibility.css", encoding="utf-8") as compatibility_css_file:
 				core_css_file.write(compatibility_css_file.read())
 
 		# Simplify CSS and tags
@@ -439,7 +436,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 							# Initialize the transform object, if we haven't yet
 							if not mathml_transform:
-								mathml_transform = etree.XSLT(etree.parse(mathml_xsl_filename))
+								with importlib_resources.path("se.data", "mathmlcontent2presentation.xsl") as mathml_xsl_filename:
+									mathml_transform = etree.XSLT(etree.parse(mathml_xsl_filename))
 
 							# Transform the mathml and get a string representation
 							# XSLT comes from https://github.com/fred-wang/webextension-content-mathml-polyfill
@@ -701,7 +699,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		metadata_xhtml = metadata_xhtml.replace("<manifest>", "<manifest><item href=\"toc.ncx\" id=\"ncx\" media-type=\"application/x-dtbncx+xml\" />")
 
 		# Now use an XSLT transform to generate the NCX
-		toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, navdoc2ncx_xsl_filename)
+		with importlib_resources.path("se.data", "navdoc2ncx.xsl") as navdoc2ncx_xsl_filename:
+			toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, navdoc2ncx_xsl_filename)
 
 		# Convert the <nav> landmarks element to the <guide> element in content.opf
 		guide_xhtml = "<guide>"
@@ -748,21 +747,22 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 				print(f"\tRunning epubcheck on {epub_output_filename} ...", end="", flush=True)
 
 			# Path arguments must be cast to string for Windows compatibility.
-			output = subprocess.run(["java", "-jar", resource_filename("se", str(Path("data") / "epubcheck" / "epubcheck.jar")), "--quiet", str(output_directory / epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False).stdout.decode().strip()
+			with importlib_resources.path("se.data.epubcheck", "epubcheck.jar") as jar_path:
+				output = subprocess.run(["java", "-jar", str(jar_path), "--quiet", str(output_directory / epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False).stdout.decode().strip()
 
-			if output:
-				# Get the epubcheck version to print to the console
-				version_output = subprocess.run(["java", "-jar", resource_filename("se", str(Path("data") / "epubcheck" / "epubcheck.jar")), "--version"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False).stdout.decode().strip()
-				version = regex.search(r"[0-9]+\.([0-9]+\.?)*", version_output, flags=regex.MULTILINE).group(0)
+				if output:
+					# Get the epubcheck version to print to the console
+					version_output = subprocess.run(["java", "-jar", str(jar_path), "--version"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False).stdout.decode().strip()
+					version = regex.search(r"[0-9]+\.([0-9]+\.?)*", version_output, flags=regex.MULTILINE).group(0)
 
-				# Remove trailing lines from epubcheck output
-				output = output.replace("\n\nCheck finished with errors", "")
+					# Remove trailing lines from epubcheck output
+					output = output.replace("\n\nCheck finished with errors", "")
 
-				if verbose:
-					print(f"\n\t\tepubcheck v{version} failed with:\n\t\t" + "\t\t".join(output.splitlines(True)), file=sys.stderr)
-				else:
-					print(f"epubcheck v{version} failed with:\n{output}", file=sys.stderr)
-				return
+					if verbose:
+						print(f"\n\t\tepubcheck v{version} failed with:\n\t\t" + "\t\t".join(output.splitlines(True)), file=sys.stderr)
+					else:
+						print(f"epubcheck v{version} failed with:\n{output}", file=sys.stderr)
+					return
 
 			if verbose:
 				print(" OK")
@@ -816,7 +816,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 				file.truncate()
 
 			# Rebuild the NCX
-			toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, navdoc2ncx_xsl_filename)
+			with importlib_resources.path("se.data", "navdoc2ncx.xsl") as navdoc2ncx_xsl_filename:
+				toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, navdoc2ncx_xsl_filename)
 
 			# Clean just the ToC and NCX
 			for filepath in [work_epub_root_directory / "epub" / "toc.ncx", work_epub_root_directory / "epub" / toc_filename]:
@@ -914,7 +915,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 			# Include compatibility CSS
 			with open(work_epub_root_directory / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:
-				with open(resource_filename("se", str(Path("data") / "templates" / "kindle.css")), "r", encoding="utf-8") as compatibility_css_file:
+				with importlib_resources.open_text("se.data.templates", "kindle.css", encoding="utf-8") as compatibility_css_file:
 					core_css_file.write(compatibility_css_file.read())
 
 			# Add soft hyphens

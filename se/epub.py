@@ -13,7 +13,7 @@ import se
 import se.easy_xml
 
 
-def convert_toc_to_ncx(epub_root_absolute_path: Path, toc_filename: str, xsl_filename: str) -> se.easy_xml.EasyXmlTree:
+def convert_toc_to_ncx(epub_root_absolute_path: Path, toc_filename: str, xsl_filename: Path) -> se.easy_xml.EasyXmlTree:
 	"""
 	Take an epub3 HTML5 ToC file and convert it to an epub2 NCX file. NCX output is written to the same directory as the ToC file, in a file named "toc.ncx".
 
@@ -32,7 +32,7 @@ def convert_toc_to_ncx(epub_root_absolute_path: Path, toc_filename: str, xsl_fil
 	with open(epub_root_absolute_path / "epub" / toc_filename, "r", encoding="utf-8") as file:
 		toc_tree = se.easy_xml.EasyXmlTree(file.read())
 
-	transform = etree.XSLT(etree.parse(xsl_filename))
+	transform = etree.XSLT(etree.parse(str(xsl_filename)))
 	ncx_tree = transform(toc_tree.etree, cwd=f"'{epub_root_absolute_path}{os.path.sep}'")
 
 	with open(epub_root_absolute_path / "epub" / "toc.ncx", "w", encoding="utf-8") as file:

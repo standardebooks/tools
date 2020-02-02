@@ -15,12 +15,12 @@ import os
 import unicodedata
 from pathlib import Path
 from typing import Dict, List
+import importlib_resources
 import lxml.cssselect
 import lxml.etree as etree
 import regex
 import roman
 from bs4 import BeautifulSoup, NavigableString
-from pkg_resources import resource_filename
 import se
 import se.easy_xml
 import se.formatting
@@ -179,11 +179,6 @@ def lint(self, metadata_xhtml) -> list:
 	"""
 
 	messages = []
-	license_file_path = resource_filename("se", str(Path("data") / "templates" / "LICENSE.md"))
-	gitignore_file_path = resource_filename("se", str(Path("data") / "templates" / "gitignore"))
-	core_css_file_path = resource_filename("se", str(Path("data") / "templates" / "core.css"))
-	logo_svg_file_path = resource_filename("se", str(Path("data") / "templates" / "logo.svg"))
-	uncopyright_file_path = resource_filename("se", str(Path("data") / "templates" / "uncopyright.xhtml"))
 	has_halftitle = False
 	has_frontmatter = False
 	has_cover_source = False
@@ -326,19 +321,23 @@ def lint(self, metadata_xhtml) -> list:
 
 	# Make sure some static files are unchanged
 	try:
-		if not filecmp.cmp(license_file_path, self.path / "LICENSE.md"):
-			messages.append(LintMessage(f"LICENSE.md does not match {license_file_path}", se.MESSAGE_TYPE_ERROR, "LICENSE.md"))
+		with importlib_resources.path("se.data.templates", "LICENSE.md") as license_file_path:
+			if not filecmp.cmp(license_file_path, self.path / "LICENSE.md"):
+				messages.append(LintMessage(f"LICENSE.md does not match {license_file_path}", se.MESSAGE_TYPE_ERROR, "LICENSE.md"))
 	except Exception:
 		messages.append(LintMessage("Missing ./LICENSE.md", se.MESSAGE_TYPE_ERROR, "LICENSE.md"))
 
-	if not filecmp.cmp(core_css_file_path, self.path / "src" / "epub" / "css" / "core.css"):
-		messages.append(LintMessage(f"core.css does not match {core_css_file_path}", se.MESSAGE_TYPE_ERROR, "core.css"))
+	with importlib_resources.path("se.data.templates", "core.css") as core_css_file_path:
+		if not filecmp.cmp(core_css_file_path, self.path / "src" / "epub" / "css" / "core.css"):
+			messages.append(LintMessage(f"core.css does not match {core_css_file_path}", se.MESSAGE_TYPE_ERROR, "core.css"))
 
-	if not filecmp.cmp(logo_svg_file_path, self.path / "src" / "epub" / "images" / "logo.svg"):
-		messages.append(LintMessage(f"logo.svg does not match {logo_svg_file_path}", se.MESSAGE_TYPE_ERROR, "logo.svg"))
+	with importlib_resources.path("se.data.templates", "logo.svg") as logo_svg_file_path:
+		if not filecmp.cmp(logo_svg_file_path, self.path / "src" / "epub" / "images" / "logo.svg"):
+			messages.append(LintMessage(f"logo.svg does not match {logo_svg_file_path}", se.MESSAGE_TYPE_ERROR, "logo.svg"))
 
-	if not filecmp.cmp(uncopyright_file_path, self.path / "src" / "epub" / "text" / "uncopyright.xhtml"):
-		messages.append(LintMessage(f"uncopyright.xhtml does not match {uncopyright_file_path}", se.MESSAGE_TYPE_ERROR, "uncopyright.xhtml"))
+	with importlib_resources.path("se.data.templates", "uncopyright.xhtml") as uncopyright_file_path:
+		if not filecmp.cmp(uncopyright_file_path, self.path / "src" / "epub" / "text" / "uncopyright.xhtml"):
+			messages.append(LintMessage(f"uncopyright.xhtml does not match {uncopyright_file_path}", se.MESSAGE_TYPE_ERROR, "uncopyright.xhtml"))
 
 	# Check for unused selectors
 	unused_selectors = _get_unused_selectors(self)
@@ -369,9 +368,10 @@ def lint(self, metadata_xhtml) -> list:
 				if filename == ".gitignore":
 					# .gitignore is optional, because our standard gitignore ignores itself.
 					# So if it's present, it must match our template.
-					if not filecmp.cmp(gitignore_file_path, str(self.path / ".gitignore")):
-						messages.append(LintMessage(f".gitignore does not match {gitignore_file_path}", se.MESSAGE_TYPE_ERROR, ".gitignore"))
-						continue
+					with importlib_resources.path("se.data.templates", "gitignore") as gitignore_file_path:
+						if not filecmp.cmp(gitignore_file_path, str(self.path / ".gitignore")):
+							messages.append(LintMessage(f".gitignore does not match {gitignore_file_path}", se.MESSAGE_TYPE_ERROR, ".gitignore"))
+							continue
 				else:
 					messages.append(LintMessage(f"Illegal {filename} file detected in {root}", se.MESSAGE_TYPE_ERROR))
 					continue

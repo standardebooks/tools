@@ -12,13 +12,13 @@ import urllib.parse
 from argparse import Namespace
 from pathlib import Path
 from subprocess import call
-from typing import Tuple, Union, Optional
+from typing import Optional, Tuple, Union
 import git
+import importlib_resources
 import regex
 import requests
 from bs4 import BeautifulSoup
 from ftfy import fix_text
-from pkg_resources import resource_filename
 import se
 import se.formatting
 
@@ -114,7 +114,7 @@ def _generate_titlepage_svg(title: str, authors: Union[str, list], contributors:
 		authors = [authors]
 
 	# Read our template SVG to get some values before we begin
-	with open(resource_filename("se", str(Path("data") / "templates" / "titlepage.svg")), "r", encoding="utf-8") as file:
+	with importlib_resources.open_text("se.data.templates", "titlepage.svg", encoding="utf-8") as file:
 		svg = file.read()
 
 	# Remove the template text elements from the SVG source, we'll write out to it later
@@ -212,7 +212,7 @@ def _generate_cover_svg(title: str, authors: Union[str, list], title_string: str
 	title_string = title_string.replace("'", "’")
 
 	# Read our template SVG to get some values before we begin
-	with open(resource_filename("se", str(Path("data") / "templates" / "cover.svg")), "r", encoding="utf-8") as file:
+	with importlib_resources.open_text("se.data.templates", "cover.svg", encoding="utf-8") as file:
 		svg = file.read()
 
 	# Remove the template text elements from the SVG source, we'll write out to it later
@@ -322,6 +322,13 @@ def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> Tuple[Optional[str]
 		return wiki_url, nacoaf_url
 
 	return None, None
+
+def _copy_template_file(filename: str, dest_path: Path) -> None:
+	"""
+	Copy a template file to the given destination Path
+	"""
+	with importlib_resources.path("se.data.templates", filename) as src_path:
+		shutil.copy(src_path, dest_path)
 
 def create_draft(args: Namespace):
 	"""
@@ -451,23 +458,24 @@ def create_draft(args: Namespace):
 			se.quiet_remove(repo_name / "src" / "epub" / "text" / "body.xhtml")
 
 	# Copy over templates
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "gitignore")), repo_name / ".gitignore")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "LICENSE.md")), repo_name)
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "META-INF" / "container.xml")), repo_name / "src" / "META-INF")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "mimetype")), repo_name / "src")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "content.opf")), repo_name / "src" / "epub")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "onix.xml")), repo_name / "src" / "epub")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "toc.xhtml")), repo_name / "src" / "epub")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "core.css")), repo_name / "src" / "epub" / "css")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "local.css")), repo_name / "src" / "epub" / "css")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "logo.svg")), repo_name / "src" / "epub" / "images")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "colophon.xhtml")), repo_name / "src" / "epub" / "text")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "imprint.xhtml")), repo_name / "src" / "epub" / "text")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "titlepage.xhtml")), repo_name / "src" / "epub" / "text")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "uncopyright.xhtml")), repo_name / "src" / "epub" / "text")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "titlepage.svg")), repo_name / "images")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "cover.jpg")), repo_name / "images" / "cover.jpg")
-	shutil.copy(resource_filename("se", str(Path("data") / "templates" / "cover.svg")), repo_name / "images" / "cover.svg")
+
+	_copy_template_file("gitignore", repo_name / ".gitignore")
+	_copy_template_file("LICENSE.md", repo_name)
+	_copy_template_file("container.xml", repo_name / "src" / "META-INF")
+	_copy_template_file("mimetype", repo_name / "src")
+	_copy_template_file("content.opf", repo_name / "src" / "epub")
+	_copy_template_file("onix.xml", repo_name / "src" / "epub")
+	_copy_template_file("toc.xhtml", repo_name / "src" / "epub")
+	_copy_template_file("core.css", repo_name / "src" / "epub" / "css")
+	_copy_template_file("local.css", repo_name / "src" / "epub" / "css")
+	_copy_template_file("logo.svg", repo_name / "src" / "epub" / "images")
+	_copy_template_file("colophon.xhtml", repo_name / "src" / "epub" / "text")
+	_copy_template_file("imprint.xhtml", repo_name / "src" / "epub" / "text")
+	_copy_template_file("titlepage.xhtml", repo_name / "src" / "epub" / "text")
+	_copy_template_file("uncopyright.xhtml", repo_name / "src" / "epub" / "text")
+	_copy_template_file("titlepage.svg", repo_name / "images")
+	_copy_template_file("cover.jpg", repo_name / "images" / "cover.jpg")
+	_copy_template_file("cover.svg", repo_name / "images" / "cover.svg")
 
 	# Try to find Wikipedia links if possible
 	author_wiki_url, author_nacoaf_url = _get_wikipedia_url(args.author, True)

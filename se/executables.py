@@ -9,21 +9,22 @@ like `create-draft`, are broken out to external modules for readability
 and maintainability.
 """
 
-import sys
 import argparse
 import os
-import types
-import subprocess
-from pathlib import Path
-import tempfile
 import shutil
-from pkg_resources import resource_filename
+import subprocess
+import sys
+import tempfile
+import types
+from pathlib import Path
+import importlib_resources
 import regex
 import se
 import se.formatting
-import se.typography
 import se.spelling
+import se.typography
 from se.se_epub import SeEpub
+
 
 def _get_commands() -> list:
 	"""
@@ -1039,7 +1040,7 @@ def split_file() -> int:
 	except FileNotFoundError:
 		se.print_error(f"Not a file: {args.filename}")
 
-	with open(resource_filename("se", str(Path("data") / "templates" / "header.xhtml")), "r", encoding="utf-8") as file:
+	with importlib_resources.open_text("se.data.templates", "header.xhtml", encoding="utf-8") as file:
 		header_xhtml = file.read()
 
 	chapter_number = 1

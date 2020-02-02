@@ -10,18 +10,11 @@ import sys
 from pathlib import Path
 from textwrap import wrap
 from typing import Set, Union
-import pkg_resources
 import regex
 import terminaltables
 from termcolor import colored
 
-
-try:
-	VERSION = pkg_resources.get_distribution("standardebooks").version
-except Exception:
-	# we get in this branch when the package hasn't been installed via pip or
-	# the setup script.
-	VERSION = "unknown"
+VERSION = "1.0.28"
 MESSAGE_INDENT = "    "
 UNICODE_BOM = "\ufeff"
 NO_BREAK_SPACE = "\u00a0"

@@ -12,8 +12,10 @@ To upload the build to pypi, twine is required:
 pip3 install twine
 """
 
+import re
 from pathlib import Path
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
+
 
 # Get the long description from the README file
 def _get_file_contents(file_path: Path) -> str:
@@ -24,8 +26,20 @@ def _get_file_contents(file_path: Path) -> str:
     with open(file_path, encoding="utf-8") as file:
         return file.read()
 
+def _get_version() -> str:
+    """
+    Helper function to get VERSION from source code
+    """
+
+    source_path = Path("se/__init__.py")
+    contents = _get_file_contents(source_path)
+    match = re.search(r'^VERSION = "([^"]+)"$', contents, flags=re.MULTILINE)
+    if not match:
+        raise RuntimeError(f"VERSION not found in {source_path}")
+    return match.group(1)
+
 setup(
-    version="1.0.28",
+    version=_get_version(),
     name="standardebooks",
     description="The toolset used to produce Standard Ebooks epub ebooks.",
     long_description=_get_file_contents(Path(__file__).resolve().parent / "README.md"),
@@ -49,6 +63,7 @@ setup(
         "cssselect==1.0.3",
         "ftfy==5.5.1",
         "gitpython==2.1.5",
+        "importlib_resources==1.0.2",
         "lxml==4.4.0",
         "psutil==5.5.0",
         "pyhyphen==3.0.1",
