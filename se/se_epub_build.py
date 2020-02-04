@@ -27,6 +27,7 @@ import se.epub
 import se.formatting
 import se.images
 import se.typography
+import se.common
 from se.vendor.kobo_touch_extended import kobo
 from se.vendor.mobi import mobi
 
@@ -109,13 +110,13 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		kindle_output_filename = "{}_{}{}.azw3".format(url_author, url_title, ".proof" if proof else "")
 
 		# Clean up old output files if any
-		se.quiet_remove(output_directory / f"thumbnail_{asin}_EBOK_portrait.jpg")
-		se.quiet_remove(output_directory / "cover.jpg")
-		se.quiet_remove(output_directory / "cover-thumbnail.jpg")
-		se.quiet_remove(output_directory / epub_output_filename)
-		se.quiet_remove(output_directory / epub3_output_filename)
-		se.quiet_remove(output_directory / kobo_output_filename)
-		se.quiet_remove(output_directory / kindle_output_filename)
+		se.common.quiet_remove(output_directory / f"thumbnail_{asin}_EBOK_portrait.jpg")
+		se.common.quiet_remove(output_directory / "cover.jpg")
+		se.common.quiet_remove(output_directory / "cover-thumbnail.jpg")
+		se.common.quiet_remove(output_directory / epub_output_filename)
+		se.common.quiet_remove(output_directory / epub3_output_filename)
+		se.common.quiet_remove(output_directory / kobo_output_filename)
+		se.common.quiet_remove(output_directory / kindle_output_filename)
 
 		# Are we including proofreading CSS?
 		if proof:
@@ -353,7 +354,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		metadata_xhtml = regex.sub(r"properties=\"([^\"]*?)svg([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xhtml) # We may also have the `mathml` property
 
 		# Add an element noting the version of the se tools that built this ebook
-		metadata_xhtml = regex.sub(r"<dc:publisher", f"<meta property=\"se:built-with\">{se.VERSION}</meta>\n\t\t<dc:publisher", metadata_xhtml)
+		metadata_xhtml = regex.sub(r"<dc:publisher", f"<meta property=\"se:built-with\">{se.common.version()}</meta>\n\t\t<dc:publisher", metadata_xhtml)
 
 		# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
 		metadata_xhtml = metadata_xhtml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
@@ -682,7 +683,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		# Add any new MathML images we generated to the manifest
 		if has_mathml:
 			for root, _, filenames in os.walk(work_epub_root_directory / "epub" / "images"):
-				filenames = se.natural_sort(filenames)
+				filenames = se.common.natural_sort(filenames)
 				filenames.reverse()
 				for filename in filenames:
 					if filename.lower().startswith("mathml-"):
@@ -733,7 +734,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			file.truncate()
 
 		# All done, clean the output
-		for filepath in se.get_target_filenames([work_epub_root_directory], (".xhtml", ".svg", ".opf", ".ncx")):
+		for filepath in se.common.get_target_filenames([work_epub_root_directory], (".xhtml", ".svg", ".opf", ".ncx")):
 			se.formatting.format_xhtml_file(filepath, False, filepath.name == "content.opf", filepath.name == "endnotes.xhtml", filepath.name == "colophon.xhtml")
 
 		# Write the compatible epub
@@ -919,7 +920,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 					core_css_file.write(compatibility_css_file.read())
 
 			# Add soft hyphens
-			for filepath in se.get_target_filenames([work_epub_root_directory], (".xhtml",)):
+			for filepath in se.common.get_target_filenames([work_epub_root_directory], (".xhtml",)):
 				se.typography.hyphenate_file(filepath, None, True)
 
 			# Build an epub file we can send to Calibre

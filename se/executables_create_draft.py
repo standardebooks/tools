@@ -21,6 +21,7 @@ from bs4 import BeautifulSoup
 from ftfy import fix_text
 import se
 import se.formatting
+from se.common import print_error, strip_bom, quiet_remove, replace_in_file
 
 
 def _get_word_widths(string: str, target_height: int) -> list:
@@ -301,7 +302,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> Tuple[Optional[str]
 	try:
 		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": "1"}, allow_redirects=False)
 	except Exception as ex:
-		se.print_error(f"Couldn’t contact Wikipedia. Error: {ex}")
+		print_error(f"Couldn’t contact Wikipedia. Error: {ex}")
 
 	if response.status_code == 302:
 		nacoaf_url = None
@@ -314,7 +315,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> Tuple[Optional[str]
 			try:
 				response = requests.get(wiki_url)
 			except Exception as ex:
-				se.print_error(f"Couldn’t contact Wikipedia. Error: {ex}")
+				print_error(f"Couldn’t contact Wikipedia. Error: {ex}")
 
 			for match in regex.findall(r"http://id\.loc\.gov/authorities/names/n[0-9]+", response.text):
 				nacoaf_url = match
@@ -397,7 +398,7 @@ def create_draft(args: Namespace):
 
 		try:
 			fixed_pg_ebook_html = fix_text(pg_ebook_html, uncurl_quotes=False)
-			pg_ebook_html = se.strip_bom(fixed_pg_ebook_html)
+			pg_ebook_html = strip_bom(fixed_pg_ebook_html)
 		except Exception as ex:
 			raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Project Gutenberg HTML file. Error: {ex}")
 
@@ -455,7 +456,7 @@ def create_draft(args: Namespace):
 			# Save this error for later, because it's still useful to complete the create-draft process
 			# even if we've failed to parse PG's HTML source.
 			is_pg_html_parsed = False
-			se.quiet_remove(repo_name / "src" / "epub" / "text" / "body.xhtml")
+			quiet_remove(repo_name / "src" / "epub" / "text" / "body.xhtml")
 
 	# Copy over templates
 
@@ -485,9 +486,9 @@ def create_draft(args: Namespace):
 		translator_wiki_url, translator_nacoaf_url = _get_wikipedia_url(args.translator, True)
 
 	# Pre-fill a few templates
-	se.replace_in_file(repo_name / "src" / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", title_string)
-	se.replace_in_file(repo_name / "images" / "titlepage.svg", "TITLE_STRING", title_string)
-	se.replace_in_file(repo_name / "images" / "cover.svg", "TITLE_STRING", title_string)
+	replace_in_file(repo_name / "src" / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", title_string)
+	replace_in_file(repo_name / "images" / "titlepage.svg", "TITLE_STRING", title_string)
+	replace_in_file(repo_name / "images" / "cover.svg", "TITLE_STRING", title_string)
 
 	# Create the titlepage SVG
 	contributors = {}
@@ -505,7 +506,7 @@ def create_draft(args: Namespace):
 		file.write(_generate_cover_svg(args.title, args.author, title_string))
 
 	if args.pg_url:
-		se.replace_in_file(repo_name / "src" / "epub" / "text" / "imprint.xhtml", "PG_URL", args.pg_url)
+		replace_in_file(repo_name / "src" / "epub" / "text" / "imprint.xhtml", "PG_URL", args.pg_url)
 
 	with open(repo_name / "src" / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
 		colophon_xhtml = file.read()

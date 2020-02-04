@@ -11,6 +11,7 @@ import regex
 import psutil
 import se
 import se.formatting
+import se.common
 
 
 def render_mathml_to_png(mathml: str, output_filename: Path) -> None:
@@ -25,7 +26,7 @@ def render_mathml_to_png(mathml: str, output_filename: Path) -> None:
 	A string of XHTML with soft hyphens inserted in words. The output is not guaranteed to be pretty-printed.
 	"""
 
-	firefox_path = se.get_firefox_path()
+	firefox_path = se.common.get_firefox_path()
 	convert_path = shutil.which("convert")
 
 	if convert_path is None:

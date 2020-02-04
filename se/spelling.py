@@ -10,6 +10,25 @@ import se
 
 DICTIONARY: Set[str] = set()	# Store our hyphenation dictionary so we don't re-read the file on every pass
 
+def get_xhtml_language(xhtml: str) -> str:
+	"""
+	Try to get the IETF lang tag for a complete XHTML document
+	"""
+
+	supported_languages = ["en-US", "en-GB", "en-AU", "en-CA"]
+
+	match = regex.search(r"<html[^>]+?xml:lang=\"([^\"]+)\"", xhtml)
+
+	if match:
+		language = match.group(1)
+	else:
+		language = None
+
+	if language not in supported_languages:
+		raise se.InvalidLanguageException("No valid xml:lang attribute in <html> root. Only {} are supported.".format(", ".join(supported_languages[:-1]) + ", and " + supported_languages[-1]))
+
+	return language
+
 def modernize_hyphenation(xhtml: str) -> str:
 	"""
 	Convert old-timey hyphenated compounds into single words based on the passed DICTIONARY.
@@ -65,7 +84,7 @@ def detect_problem_spellings(xhtml: str) -> list:
 	"""
 
 	# Uncomment if we eventually need the document language
-	# language = se.get_xhtml_language(xhtml)
+	# language = get_xhtml_language(xhtml)
 	output = []
 
 	if regex.search(r"\bstaid\b", xhtml):
@@ -90,7 +109,7 @@ def modernize_spelling(xhtml: str) -> str:
 	A string representing the XHTML with its spelling modernized
 	"""
 
-	language = se.get_xhtml_language(xhtml)
+	language = get_xhtml_language(xhtml)
 
 	# ADDING NEW WORDS TO THIS LIST:
 	# A good way to check if a word is "archaic" is to do a Google N-Gram search: https://books.google.com/ngrams/graph?case_insensitive=on&year_start=1800&year_end=2000&smoothing=3

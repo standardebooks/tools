@@ -5,7 +5,7 @@ a book as input.
 
 import pytest
 
-import se
+import se.common
 from helpers import must_run
 
 SIMPLE_CMDS = [
@@ -37,7 +37,7 @@ def test_version(capfd):
 	"""Verify that the version command returns the version"""
 	must_run("se version")
 	out, _ = capfd.readouterr()
-	assert out.startswith(se.VERSION)
+	assert out.startswith(se.common.version())
 
 def test_help(capfd):
 	"""Verify that the help command returns without an error"""

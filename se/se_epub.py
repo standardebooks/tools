@@ -22,7 +22,7 @@ import se
 import se.easy_xml
 import se.formatting
 import se.images
-
+from se.common import get_target_filenames, natural_sort
 
 def _process_endnotes_in_file(filename: str, root: Path, note_range: range, step: int) -> None:
 	"""
@@ -658,7 +658,7 @@ class SeEpub:
 		"""
 		text = ""
 
-		for filename in se.get_target_filenames([self.path], (".xhtml",)):
+		for filename in get_target_filenames([self.path], (".xhtml",)):
 			with open(filename, "r", encoding="utf-8") as file:
 				text += " " + file.read()
 
@@ -682,7 +682,7 @@ class SeEpub:
 		"""
 		word_count = 0
 
-		for filename in se.get_target_filenames([self.path], (".xhtml",)):
+		for filename in get_target_filenames([self.path], (".xhtml",)):
 			if filename.name == "endnotes.xhtml":
 				continue
 
@@ -754,7 +754,7 @@ class SeEpub:
 
 				manifest.append("<item href=\"text/{0}\" id=\"{0}\" media-type=\"application/xhtml+xml\"{1}/>".format(filename, properties))
 
-		manifest = se.natural_sort(manifest)
+		manifest = natural_sort(manifest)
 
 		manifest_xhtml = "<manifest>\n\t<item href=\"toc.xhtml\" id=\"toc.xhtml\" media-type=\"application/xhtml+xml\" properties=\"nav\"/>\n"
 
@@ -779,7 +779,7 @@ class SeEpub:
 		excluded_files = se.IGNORED_FILENAMES + ["dedication.xhtml", "introduction.xhtml", "foreword.xhtml", "preface.xhtml", "epigraph.xhtml", "endnotes.xhtml"]
 		spine = ["<itemref idref=\"titlepage.xhtml\"/>", "<itemref idref=\"imprint.xhtml\"/>"]
 
-		filenames = se.natural_sort(os.listdir(self.path / "src" / "epub" / "text"))
+		filenames = natural_sort(os.listdir(self.path / "src" / "epub" / "text"))
 
 		if "dedication.xhtml" in filenames:
 			spine.append("<itemref idref=\"dedication.xhtml\"/>")
@@ -890,7 +890,7 @@ class SeEpub:
 		into this class.
 		"""
 
-		from se.se_epub_lint import lint
+		from se.se_epub_lint import lint # pylint: disable=import-outside-toplevel
 
 		return lint(self, self.metadata_xhtml)
 
@@ -901,7 +901,7 @@ class SeEpub:
 		into this class.
 		"""
 
-		from se.se_epub_build import build
+		from se.se_epub_build import build # pylint: disable=import-outside-toplevel
 
 		build(self, self.metadata_xhtml, self._metadata_tree, run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers, verbose)
 
@@ -912,7 +912,7 @@ class SeEpub:
 		into this class.
 		"""
 
-		from se.se_epub_generate_toc import generate_toc
+		from se.se_epub_generate_toc import generate_toc # pylint: disable=import-outside-toplevel
 
 		return generate_toc(self)
 

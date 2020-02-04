@@ -25,6 +25,7 @@ import se
 import se.easy_xml
 import se.formatting
 import se.images
+import se.common
 
 
 class LintMessage:
@@ -348,7 +349,7 @@ def lint(self, metadata_xhtml) -> list:
 
 	# Now iterate over individual files for some checks
 	for root, _, filenames in os.walk(self.path):
-		for filename in sorted(filenames, key=se.natural_sort_key):
+		for filename in sorted(filenames, key=se.common.natural_sort_key):
 			if ".git" in str(Path(root) / filename):
 				continue
 
