@@ -356,6 +356,8 @@ def create_draft(args: Namespace):
 
 	# Download PG HTML and do some fixups
 	if args.pg_url:
+		if args.offline:
+			raise se.RemoteCommandErrorException("Cannot download Project Gutenberg ebook when offline option is enabled.")
 		args.pg_url = args.pg_url.replace("http://", "https://")
 
 		# Get the ebook metadata
@@ -478,11 +480,18 @@ def create_draft(args: Namespace):
 	_copy_template_file("cover.svg", repo_name / "images" / "cover.svg")
 
 	# Try to find Wikipedia links if possible
-	author_wiki_url, author_nacoaf_url = _get_wikipedia_url(args.author, True)
-	ebook_wiki_url, _ = _get_wikipedia_url(args.title, False)
-	translator_wiki_url = None
-	if args.translator:
-		translator_wiki_url, translator_nacoaf_url = _get_wikipedia_url(args.translator, True)
+	if args.offline:
+		author_wiki_url = None
+		author_nacoaf_url = None
+		ebook_wiki_url = None
+		translator_wiki_url = None
+		translator_nacoaf_url = None
+	else:
+		author_wiki_url, author_nacoaf_url = _get_wikipedia_url(args.author, True)
+		ebook_wiki_url, _ = _get_wikipedia_url(args.title, False)
+		translator_wiki_url = None
+		if args.translator:
+			translator_wiki_url, translator_nacoaf_url = _get_wikipedia_url(args.translator, True)
 
 	# Pre-fill a few templates
 	se.replace_in_file(repo_name / "src" / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", title_string)

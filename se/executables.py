@@ -369,6 +369,7 @@ def create_draft() -> int:
 	parser.add_argument("-e", "--email", dest="email", help="use this email address as the main committer for the local Git repository")
 	parser.add_argument("-s", "--create-se-repo", dest="create_se_repo", action="store_true", help="initialize a new repository on the Standard Ebook server; Standard Ebooks admin powers required")
 	parser.add_argument("-g", "--create-github-repo", dest="create_github_repo", action="store_true", help="initialize a new repository at the Standard Ebooks GitHub account; Standard Ebooks admin powers required; can only be used when --create-se-repo is specified")
+	parser.add_argument("-o", "--offline", dest="offline", action="store_true", help="create draft without network access")
 	parser.add_argument("-a", "--author", dest="author", required=True, help="the author of the ebook")
 	parser.add_argument("-t", "--title", dest="title", required=True, help="the title of the ebook")
 	args = parser.parse_args()
