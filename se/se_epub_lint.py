@@ -955,7 +955,7 @@ def lint(self, metadata_xhtml) -> list:
 						messages.append(LintMessage(f"Illegal colon (:) detected in SE identifier. SE identifiers are separated by dots (.) not colons (:). Identifier: {matches}", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for leftover asterisms
-					matches = regex.findall(r"\*\s*(\*\s*)+", file_contents)
+					matches = regex.findall(r"<[a-z]+[^>]*?>\s*\*\s*(\*\s*)+", file_contents, flags=regex.DOTALL)
 					if matches:
 						messages.append(LintMessage("Illegal asterism (***) detected. Section/scene breaks must be defined by an <hr/> tag.", se.MESSAGE_TYPE_ERROR, filename))
 
