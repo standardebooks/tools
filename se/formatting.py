@@ -431,13 +431,16 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 	xhtml = regex.sub(r"([^>\s])\s+</p>", "\\1</p>", xhtml, flags=regex.DOTALL)
 
 	# xmllint has problems with removing spacing between some inline HTML5 elements. Try to fix those problems here.
-	xhtml = regex.sub(r"</(abbr|cite|i|span|time|em)><(abbr|cite|i|span|time|em)", "</\\1> <\\2", xhtml)
+	xhtml = regex.sub(r"</(abbr|cite|i|span|time|em|a)><(abbr|cite|i|span|time|em|a)", "</\\1> <\\2", xhtml)
 
 	# Try to fix inline elements directly followed by an <a> tag, unless that <a> tag is a noteref.
 	xhtml = regex.sub(r"</(abbr|cite|i|span|time|em)><(a(?! href=\"[^\"]+?\" id=\"noteref\-))", "</\\1> <\\2", xhtml)
 
 	# Two sequential inline elements, when they are the only children of a block, are indented. But this messes up spacing if the 2nd element is a noteref.
 	xhtml = regex.sub(r"</(abbr|cite|i|span|time|em)>\s+<(a href=\"[^\"]+?\" id=\"noteref\-)", "</\\1><\\2", xhtml, flags=regex.DOTALL)
+
+	# The above regex may have put a space before noterefs. Remove that here.
+	xhtml = regex.sub(r"</(abbr|cite|i|span|time|em|a)>\s*<a class=\"epub-type-noteref\"", "</\\1><a class=\"epub-type-noteref\"", xhtml)
 
 	# Try to work around an xmllint bug where <br/>\n\s+<span> becomes <br/><span>. Try to put it back on the right indent level here.
 	xhtml = regex.sub(r"^(\t+)(.+?)<br/>([^\s\n])", "\\1\\2<br/>\n\\1\\3", xhtml, flags=regex.MULTILINE)
