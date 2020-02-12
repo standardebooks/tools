@@ -797,22 +797,11 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 				soup = BeautifulSoup(xhtml, "lxml")
 
 				for match in soup.select("ol > li > ol > li > ol"):
+					match.parent.insert_after(match)
 					match.unwrap()
 
-				xhtml = str(soup)
-
-				pattern = regex.compile(r"(<li>\s*<a href=\"[^\"]+?\">.+?</a>\s*)<li>")
-				matches = 1
-				while matches > 0:
-					xhtml, matches = pattern.subn(r"\1</li><li>", xhtml)
-
-				pattern = regex.compile(r"</li>\s*</li>")
-				matches = 1
-				while matches > 0:
-					xhtml, matches = pattern.subn("</li>", xhtml)
-
 				file.seek(0)
-				file.write(xhtml)
+				file.write(str(soup))
 				file.truncate()
 
 			# Rebuild the NCX
