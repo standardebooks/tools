@@ -34,7 +34,7 @@ _se(){
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			create-draft)
-				COMPREPLY+=($(compgen -W "-a --author -e --email -g --create-github-repo -h --help -i --illustrator -p --pg-url -r --translator -s --create-se-repo -t --title" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-a --author -e --email -g --create-github-repo -h --help -i --illustrator -o --offline -p --pg-url -r --translator -s --create-se-repo -t --title" -- "${cur}"))
 				;;
 			dec2roman)
 				COMPREPLY+=($(compgen -W "-h --help -n --no-newline" -- "${cur}"))
@@ -90,7 +90,12 @@ _se(){
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			recompose-epub)
-				COMPREPLY+=($(compgen -W "-d --decrement -h --help -i --increment" -- "${cur}"))
+				# Complete directory names after -o= --output=
+				if [[ ${prev} == "-"* && ${cur} == "=" ]] ; then
+					COMPREPLY+=($(compgen -f -X ".*"))
+					return 0
+				fi
+				COMPREPLY+=($(compgen -W "-d --decrement -h --help -o= --output= -i --increment" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			renumber-endnotes)
