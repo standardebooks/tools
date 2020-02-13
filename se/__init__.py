@@ -127,11 +127,11 @@ def natural_sort(list_to_sort: list) -> list:
 	"""
 
 	convert = lambda text: int(text) if text.isdigit() else text.lower()
-	alphanum_key = lambda key: [convert(c) for c in regex.split('([0-9]+)', key)]
+	alphanum_key = lambda key: [convert(c) for c in regex.split("([0-9]+)", key)]
 
 	return sorted(list_to_sort, key=alphanum_key)
 
-def natural_sort_key(text: str, _nsre=regex.compile('([0-9]+)')):
+def natural_sort_key(text: str, _nsre=regex.compile("([0-9]+)")):
 	"""
 	Helper function for sorted() to sort by key.
 	"""
@@ -220,7 +220,7 @@ def print_table(table_data: list, wrap_column: int = None) -> None:
 	if wrap_column is not None:
 		max_width = table.column_max_width(wrap_column)
 		for row in table_data:
-			row[wrap_column] = '\n'.join(wrap(row[wrap_column], max_width))
+			row[wrap_column] = "\n".join(wrap(row[wrap_column], max_width))
 
 	print(table.table)
 
