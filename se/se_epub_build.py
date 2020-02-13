@@ -437,7 +437,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							# Initialize the transform object, if we haven't yet
 							if not mathml_transform:
 								with importlib_resources.path("se.data", "mathmlcontent2presentation.xsl") as mathml_xsl_filename:
-									mathml_transform = etree.XSLT(etree.parse(mathml_xsl_filename))
+									mathml_transform = etree.XSLT(etree.parse(str(mathml_xsl_filename)))
 
 							# Transform the mathml and get a string representation
 							# XSLT comes from https://github.com/fred-wang/webextension-content-mathml-polyfill
