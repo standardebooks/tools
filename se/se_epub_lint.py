@@ -34,16 +34,11 @@ class LintMessage:
 	Contains information like message text, severity, and the epub filename that generated the message.
 	"""
 
-	text = ""
-	filename = ""
-	message_type = se.MESSAGE_TYPE_WARNING
-	is_submessage = False
-
-	def __init__(self, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: str = "", is_submessage: bool = False):
+	def __init__(self, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: str = "", submessages: List[str] = None):
 		self.text = text.strip()
 		self.filename = filename
 		self.message_type = message_type
-		self.is_submessage = is_submessage
+		self.submessages = submessages
 
 def _get_malformed_urls(xhtml: str) -> list:
 	"""
@@ -96,7 +91,7 @@ def _get_malformed_urls(xhtml: str) -> list:
 
 	return messages
 
-def _get_unused_selectors(self) -> set:
+def _get_unused_selectors(self) -> List[str]:
 	"""
 	Helper function used in self.lint(); merge directly into lint()?
 	Get a list of CSS selectors that do not actually select HTML in the epub.
@@ -165,7 +160,7 @@ def _get_unused_selectors(self) -> set:
 					unused_selectors.remove(selector)
 					break
 
-	return unused_selectors
+	return list(unused_selectors)
 
 def lint(self, metadata_xhtml) -> list:
 	"""
@@ -299,9 +294,7 @@ def lint(self, metadata_xhtml) -> list:
 				duplicate_names.append(name_match[1])
 
 	if duplicate_names:
-		messages.append(LintMessage("se:name.person.full-name property identical to regular name. If the two are identical the full name <meta> element must be removed.", se.MESSAGE_TYPE_ERROR, "content.opf"))
-		for duplicate_name in duplicate_names:
-			messages.append(LintMessage(duplicate_name, se.MESSAGE_TYPE_ERROR, "", True))
+		messages.append(LintMessage("se:name.person.full-name property identical to regular name. If the two are identical the full name <meta> element must be removed.", se.MESSAGE_TYPE_ERROR, "content.opf", duplicate_names))
 
 	# Check for malformed URLs
 	for message in _get_malformed_urls(metadata_xhtml):
@@ -342,9 +335,7 @@ def lint(self, metadata_xhtml) -> list:
 	# Check for unused selectors
 	unused_selectors = _get_unused_selectors(self)
 	if unused_selectors:
-		messages.append(LintMessage("Unused CSS selectors:", se.MESSAGE_TYPE_ERROR, "local.css"))
-		for selector in unused_selectors:
-			messages.append(LintMessage(selector, se.MESSAGE_TYPE_ERROR, "", True))
+		messages.append(LintMessage("Unused CSS selectors:", se.MESSAGE_TYPE_ERROR, "local.css", unused_selectors))
 
 	# Now iterate over individual files for some checks
 	for root, _, filenames in os.walk(self.path):
@@ -481,18 +472,14 @@ def lint(self, metadata_xhtml) -> list:
 					file_contents = regex.sub(r"^/\*.+?\*/\n", "", file_contents, flags=regex.MULTILINE | regex.DOTALL)
 
 					# Check for unneeded white-space nowrap in abbr selectors
-					matches = regex.findall(r"abbr.+?{[^}]*?white-space:\s*nowrap;[^}]*?}", css)
+					matches = regex.findall(r"abbr.*?{[^}]*?white-space:\s*nowrap;[^}]*?}", css, regex.DOTALL)
 					if matches:
-						messages.append(LintMessage("abbr selector does not need white-space: nowrap; as it inherits it from core.css.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+						messages.append(LintMessage("abbr selector does not need white-space: nowrap; as it inherits it from core.css.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Don't specify border color
 					matches = regex.findall(r"(?:border|color).+?(?:#[a-f0-9]{0,6}|black|white|red)", file_contents, flags=regex.IGNORECASE)
 					if matches:
-						messages.append(LintMessage("Don't specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+						messages.append(LintMessage("Don't specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# If we select on the xml namespace, make sure we define the namespace in the CSS, otherwise the selector won't work
 					matches = regex.findall(r"\[\s*xml\s*\|", file_contents)
@@ -577,9 +564,7 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for direct z3998:roman spans that should have their semantic pulled into the parent element
 					matches = regex.findall(r"<([a-z0-9]+)[^>]*?>\s*(<span epub:type=\"z3998:roman\">[^<]+?</span>)\s*</\1>", file_contents, flags=regex.DOTALL)
 					if matches:
-						messages.append(LintMessage("If <span> exists only for the z3998:roman semantic, then z3998:roman should be pulled into parent tag instead.", se.MESSAGE_TYPE_WARNING, filename))
-						for match in matches:
-							messages.append(LintMessage(match[1], se.MESSAGE_TYPE_WARNING, filename, True))
+						messages.append(LintMessage("If <span> exists only for the z3998:roman semantic, then z3998:roman should be pulled into parent tag instead.", se.MESSAGE_TYPE_WARNING, filename, [match[1] for match in matches]))
 
 					# Check for "Hathi Trust" instead of "HathiTrust"
 					if "Hathi Trust" in file_contents:
@@ -590,19 +575,19 @@ def lint(self, metadata_xhtml) -> list:
 					for match in matches:
 						if match.has_attr("id"):
 							normalized_id = unicodedata.normalize("NFKD", match["id"])
-							uppercase_matches = regex.findall(r"[A-Z]", normalized_id)
-							for _ in uppercase_matches:
-								messages.append(LintMessage("Uppercase ID attribute: {}. Attribute values must be all lowercase.".format(match["id"]), se.MESSAGE_TYPE_ERROR, filename))
+							uppercase_matches = regex.findall(r"[A-Z]+", normalized_id)
+							if uppercase_matches:
+								messages.append(LintMessage("Uppercase ID attribute. Attribute values must be all lowercase.", se.MESSAGE_TYPE_ERROR, filename, uppercase_matches))
 
-							number_matches = regex.findall(r"^[0-9]", normalized_id)
-							for _ in number_matches:
-								messages.append(LintMessage("ID starting with a number is illegal XHTML: {}".format(match["id"]), se.MESSAGE_TYPE_ERROR, filename))
+							number_matches = regex.findall(r"^[0-9]+.+", normalized_id)
+							if number_matches:
+								messages.append(LintMessage("ID starting with a number is illegal XHTML.", se.MESSAGE_TYPE_ERROR, filename, number_matches))
 
 						if match.has_attr("class"):
 							for css_class in match["class"]:
-								uppercase_matches = regex.findall(r"[A-Z]", unicodedata.normalize("NFKD", css_class))
-								for _ in uppercase_matches:
-									messages.append(LintMessage(f"Uppercase class attribute: {css_class}. Attribute values must be all lowercase.", se.MESSAGE_TYPE_ERROR, filename))
+								uppercase_matches = regex.findall(r"[A-Z]+", unicodedata.normalize("NFKD", css_class))
+								if uppercase_matches:
+									messages.append(LintMessage("Uppercase class attribute. Attribute values must be all lowercase.", se.MESSAGE_TYPE_ERROR, filename, uppercase_matches))
 
 					matches = [x for x in dom.select("section") if not x.has_attr("id")]
 					if matches:
@@ -645,63 +630,48 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for low-hanging misquoted fruit
 					matches = regex.findall(r"[A-Za-z]+[“‘]", file_contents)
 					if matches:
-						messages.append(LintMessage("Possible mis-curled quotation mark.", se.MESSAGE_TYPE_WARNING, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+						messages.append(LintMessage("Possible mis-curled quotation mark.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check that times have colons and not periods
 					matches = regex.findall(r"[0-9]\.[0-9]+\s<abbr class=\"time", file_contents) + regex.findall(r"at [0-9]\.[0-9]+", file_contents)
 					if matches:
-						messages.append(LintMessage("Times must be separated by colons (:) not periods (.)", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+						messages.append(LintMessage("Times must be separated by colons (:) not periods (.)", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-					# Check for leading 0 in IDs
+					# Check for leading 0 in IDs (note: not the same as checking for IDs that start with an integer)
 					matches = regex.findall(r"id=\"[^\"]+?\-0[0-9]+[^\"]*?\"", file_contents)
 					if matches:
-						messages.append(LintMessage("Illegal leading 0 in ID attribute", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+						messages.append(LintMessage("Illegal leading 0 in ID attribute", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for stage direction that ends in ?! but also has a trailing period
 					matches = regex.findall(r"<i epub:type=\"z3998:stage-direction\">(?:(?!<i).)*?\.</i>[,:;!?]", file_contents)
 					if matches:
-						messages.append(LintMessage("Stage direction ending in period next to other punctuation. Remove trailing periods in stage direction.", se.MESSAGE_TYPE_WARNING, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+						messages.append(LintMessage("Stage direction ending in period next to other punctuation. Remove trailing periods in stage direction.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for ending punctuation inside italics
-					matches = regex.findall(r"(<([ib]) epub:type=\"se:[^\"]+?\">[^<]+?[\.,\!\?]</\2>)", file_contents)
+					matches = regex.findall(r"(<([ib]) epub:type=\"[^\"]+?\">[^<]+?[\.,\!\?]</\2>)", file_contents)
 					if matches:
-						messages.append(LintMessage("Ending punctuation inside italics.", se.MESSAGE_TYPE_WARNING, filename))
-						for match in matches:
-							messages.append(LintMessage(match[0], se.MESSAGE_TYPE_WARNING, filename, True))
+						messages.append(LintMessage("Ending punctuation inside italics.", se.MESSAGE_TYPE_WARNING, filename, [match[0] for match in matches]))
 
 					# Check for money not separated by commas
 					matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
 					if matches:
-						messages.append(LintMessage("Numbers not grouped by commas. Separate numbers greater than 1,000 with commas at every three numerals.", se.MESSAGE_TYPE_WARNING, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+						messages.append(LintMessage("Numbers not grouped by commas. Separate numbers greater than 1,000 with commas at every three numerals.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for deprecated MathML elements
-					matches = regex.findall(fr"<(?:m:)?mfenced[^>]*?>.+?</(?:m:)?mfenced>", file_contents)
+					matches = regex.findall(r"<(?:m:)?mfenced[^>]*?>.+?</(?:m:)?mfenced>", file_contents)
 					if matches:
-						messages.append(LintMessage("<m:mfenced> is deprecated in the MathML spec. Use <m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+						messages.append(LintMessage("<m:mfenced> is deprecated in the MathML spec. Use <m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for trailing commas inside <i> tags at the close of dialog
-					if ",</i>”" in file_contents:
-						messages.append(LintMessage("Comma inside <i> tag before closing dialog. (Search for ,</i>”)", se.MESSAGE_TYPE_WARNING, filename))
+					matches = regex.findall(r"\b[^\s]+?,</i>”", file_contents)
+					if matches:
+						messages.append(LintMessage("Comma inside <i> tag before closing dialog.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for period following Roman numeral, which is an old-timey style we must fix
 					# But ignore the numeral if it's the first item in a <p> tag, as that suggests it might be a kind of list item.
 					matches = regex.findall(r"(?<!<p[^>]*?>)<span epub:type=\"z3998:roman\">[^<]+?</span>\.\s+[a-z]", file_contents)
 					if matches:
-						messages.append(LintMessage("Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+						messages.append(LintMessage("Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for two em dashes in a row
 					matches = regex.findall(fr"—{se.WORD_JOINER}*—+", file_contents)
@@ -711,9 +681,7 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for <abbr class="name"> that does not contain spaces
 					matches = regex.findall(r"<abbr class=\"name\">[^<]*?[A-Z]\.[A-Z]\.[^<]*?</abbr>", file_contents)
 					if matches:
-						messages.append(LintMessage("Initials in <abbr class=\"name\"> not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+						messages.append(LintMessage("Initials in <abbr class=\"name\"> not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for empty <h2> missing epub:type="title" attribute
 					if "<h2>" in file_contents:
@@ -721,12 +689,12 @@ def lint(self, metadata_xhtml) -> list:
 
 					# Check for a common typo
 					if "z3998:nonfiction" in file_contents:
-						messages.append(LintMessage("Typo: z3998:nonfiction should be z3998:non-fiction", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("z3998:nonfiction should be z3998:non-fiction", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for empty <p> tags
-					matches = regex.findall(r"<p>\s*</p>", file_contents)
+					matches = regex.findall(r"<p[^>]*?>\s*</p>", file_contents)
 					if "<p/>" in file_contents or matches:
-						messages.append(LintMessage("Empty <p> tag. Use <hr/> for scene breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("Empty <p> tag. Use <hr/> for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for <p> tags that end with <br/>
 					matches = regex.findall(r"(\s*<br/?>\s*)+</p>", file_contents)
@@ -745,23 +713,17 @@ def lint(self, metadata_xhtml) -> list:
 					# 2. The double quote is directly preceded by a lowercase letter, a comma, and a space, and the first letter within the double quote is lowercase: In the original, “<i xml:lang="es">que era un Conde de Irlos</i>.”
 					matches = [x for x in matches if "epub:type=\"se:name." not in x[0] and "epub:type=\"z3998:taxonomy" not in x[0] and not regex.match(r"^[a-z’]+\s“", x[0]) and not regex.match(r"^[a-z’]+,\s“[a-z]", se.formatting.remove_tags(x[0]))]
 					if matches:
-						messages.append(LintMessage("When a complete clause is italicized, ending punctuation EXCEPT commas must be within containing italics.", se.MESSAGE_TYPE_WARNING, filename))
-						for match in matches:
-							messages.append(LintMessage(match[0], se.MESSAGE_TYPE_WARNING, filename, True))
+						messages.append(LintMessage("When a complete clause is italicized, ending punctuation EXCEPT commas must be within containing italics.", se.MESSAGE_TYPE_WARNING, filename, [match[0] for match in matches]))
 
 					# Check for foreign phrases with italics going *outside* quotes
 					matches = regex.findall(r"<i[^>]*?>“.+?\b", file_contents) + regex.findall(r"”</i>", file_contents)
 					if matches:
-						messages.append(LintMessage("When italicizing language in dialog, italics go INSIDE quotation marks.", se.MESSAGE_TYPE_WARNING, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+						messages.append(LintMessage("When italicizing language in dialog, italics go INSIDE quotation marks.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for style attributes
 					matches = regex.findall(r"<.+?style=\"", file_contents)
 					if matches:
-						messages.append(LintMessage("Illegal style attribute. Do not use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+						messages.append(LintMessage("Illegal style attribute. Do not use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for uppercase HTML tags
 					if regex.findall(r"<[A-Z]+", file_contents):
@@ -770,9 +732,7 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for nbsp within <abbr class="name">, which is redundant
 					matches = regex.findall(fr"<abbr[^>]+?class=\"name\"[^>]*?>[^<]*?{se.NO_BREAK_SPACE}[^<]*?</abbr>", file_contents)
 					if matches:
-						messages.append(LintMessage("No-break space detected in <abbr class=\"name\">. This is redundant.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+						messages.append(LintMessage("No-break space detected in <abbr class=\"name\">. This is redundant.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for Roman numerals in <title> tag
 					if regex.findall(r"<title>[Cc]hapter [XxIiVv]+", file_contents):
@@ -814,24 +774,18 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for whitespace before noteref
 					matches = regex.findall(r"\s+<a href=\"endnotes\.xhtml#note-[0-9]+?\" id=\"noteref-[0-9]+?\" epub:type=\"noteref\">[0-9]+?</a>", file_contents)
 					if matches:
-						messages.append(LintMessage("Illegal white space before noteref.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+						messages.append(LintMessage("Illegal white space before noteref.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for <li> elements that don't have a direct block child
 					if filename != "toc.xhtml":
 						matches = regex.findall(r"<li(?:\s[^>]*?>|>)\s*[^\s<]", file_contents)
 						if matches:
-							messages.append(LintMessage("<li> without direct block-level child.", se.MESSAGE_TYPE_WARNING, filename))
-							for match in matches:
-								messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+							messages.append(LintMessage("<li> without direct block-level child.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for IDs on <h#> tags
 					matches = regex.findall(r"<h[0-6][^>]*?id=[^>]*?>", file_contents, flags=regex.DOTALL)
 					if matches:
-						messages.append(LintMessage("<h#> tag with id attribute. <h#> tags should be wrapped in <section> tags, which should hold the id attribute.", se.MESSAGE_TYPE_WARNING, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+						messages.append(LintMessage("<h#> tag with id attribute. <h#> tags should be wrapped in <section> tags, which should hold the id attribute.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check to see if <h#> tags are correctly titlecased
 					matches = regex.finditer(r"<h([0-6])([^>]*?)>(.*?)</h\1>", file_contents, flags=regex.DOTALL)
@@ -880,27 +834,23 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for <figure> tags without id attributes
 					matches = regex.findall(r"<img[^>]*?id=\"[^>]+?>", file_contents)
 					if matches:
-						messages.append(LintMessage("<img> tag with ID attribute. ID attributes go on parent <figure> tags.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+						messages.append(LintMessage("<img> tag with ID attribute. ID attributes go on parent <figure> tags.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for closing dialog without comma
 					matches = regex.findall(r"[a-z]+?” [a-zA-Z]+? said", file_contents)
 					if matches:
-						messages.append(LintMessage("Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
+						messages.append(LintMessage("Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for non-typogrified img alt attributes
 					matches = regex.findall(r"alt=\"[^\"]*?('|--|&quot;)[^\"]*?\"", file_contents)
 					if matches:
-						messages.append(LintMessage("Non-typogrified ', \" (as &quot;), or -- in image alt attribute.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("Non-typogrified ', \" (as &quot;), or -- in image alt attribute.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check alt attributes not ending in punctuation
 					if filename not in se.IGNORED_FILENAMES:
 						matches = regex.findall(r"alt=\"[^\"]*?[a-zA-Z]\"", file_contents)
 						if matches:
-							messages.append(LintMessage("Alt attribute doesn't appear to end with punctuation. Alt attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage("Alt attribute doesn't appear to end with punctuation. Alt attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check alt attributes match image titles
 					images = dom.select("img[src$=svg]")
@@ -923,23 +873,17 @@ def lint(self, metadata_xhtml) -> list:
 					regex_string = fr"<a[^>]*?epub:type=\"noteref\"[^>]*?>[0-9]+</a>[^\s<–\]\)—{se.WORD_JOINER}]"
 					matches = regex.findall(regex_string, file_contents)
 					if matches:
-						messages.append(LintMessage("Endnote links must be outside of punctuation, including quotation marks.", se.MESSAGE_TYPE_WARNING, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+						messages.append(LintMessage("Endnote links must be outside of punctuation, including quotation marks.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for nbsp in measurements, for example: 90 mm
 					matches = regex.findall(r"[0-9]+[\- ][mck][mgl]\b", file_contents)
 					if matches:
-						messages.append(LintMessage("Measurements must be separated by a no-break space, not a dash or regular space.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+						messages.append(LintMessage("Measurements must be separated by a no-break space, not a dash or regular space.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for line breaks after <br/> tags
 					matches = regex.findall(r"<br\s*?/>[^\n]", file_contents)
 					if matches:
 						messages.append(LintMessage("<br/> tags must be followed by a newline, and subsequent content must be indented to the same level.", se.MESSAGE_TYPE_ERROR, filename))
-						for match in matches:
-							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
 
 					# Check for <pre> tags
 					if "<pre" in file_contents:
@@ -957,9 +901,14 @@ def lint(self, metadata_xhtml) -> list:
 						messages.append(LintMessage("Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Did someone use colons instead of dots for SE identifiers? e.g. se:name:vessel:ship
-					matches = regex.findall(r"\bse:[a-z]+:(?:[a-z]+:?)*", file_contents)
+					matches = regex.findall(r"(?<=\")[^\"]*?se:[a-z]+:(?:[a-z]+:?)*", file_contents)
 					if matches:
-						messages.append(LintMessage(f"Illegal colon (:) detected in SE identifier. SE identifiers are separated by dots (.) not colons (:). Identifier: {matches}", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage(f"Illegal colon (:) detected in SE identifier. SE identifiers are separated by dots (.) not colons (:).", se.MESSAGE_TYPE_ERROR, filename, matches))
+
+					# Did someone use periods instead of colons for SE identifiers? e.g. se.name.vessel.ship
+					matches = regex.findall(r"(?<=\")[^\"]*?se\.[a-z]+(?:\.[a-z]+)*", file_contents)
+					if matches:
+						messages.append(LintMessage(f"SE namespace must be followed by a colon, not a dot. E.g., `se:name.vessel`", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for leftover asterisms
 					matches = regex.findall(r"<[a-z]+[^>]*?>\s*\*\s*(\*\s*)+", file_contents, flags=regex.DOTALL)
@@ -998,9 +947,7 @@ def lint(self, metadata_xhtml) -> list:
 											break
 
 						if bad_referrers:
-							messages.append(LintMessage("Endnote referrer link not preceded by exactly one space, or a newline if all previous siblings are elements.", se.MESSAGE_TYPE_WARNING, filename))
-							for referrer in bad_referrers:
-								messages.append(LintMessage(str(referrer), se.MESSAGE_TYPE_WARNING, filename, True))
+							messages.append(LintMessage("Endnote referrer link not preceded by exactly one space, or a newline if all previous siblings are elements.", se.MESSAGE_TYPE_WARNING, filename, [str(referrer) for referrer in bad_referrers]))
 
 					# If we're in the imprint, are the sources represented correctly?
 					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
@@ -1099,9 +1046,7 @@ def lint(self, metadata_xhtml) -> list:
 			single_use_css_classes.append(css_class)
 
 	if single_use_css_classes:
-		messages.append(LintMessage("CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks.", se.MESSAGE_TYPE_WARNING, "local.css"))
-		for css_class in single_use_css_classes:
-			messages.append(LintMessage(css_class, se.MESSAGE_TYPE_WARNING, "local.css", True))
+		messages.append(LintMessage("CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks.", se.MESSAGE_TYPE_WARNING, "local.css", single_use_css_classes))
 
 	headings = list(set(headings))
 	with open(self.path / "src" / "epub" / "toc.xhtml", "r", encoding="utf-8") as file:

@@ -638,27 +638,28 @@ def lint() -> int:
 
 			if args.plain:
 				for message in messages:
-					if message.is_submessage:
-						print("\t" + message.text)
-					else:
-						label = "Manual Review:"
+					label = "Manual Review:"
 
-						if message.message_type == se.MESSAGE_TYPE_ERROR:
-							label = "Error:"
+					if message.message_type == se.MESSAGE_TYPE_ERROR:
+						label = "Error:"
 
-						print(label, message.filename, message.text)
+					print(f"{label} {message.filename} {message.text}")
 
+					if message.submessages:
+						for submessage in message.submessages:
+							print(f"\t{submessage}")
 			else:
 				for message in messages:
-					if message.is_submessage:
-						table_data.append([" ", "→", f"{message.text}"])
-					else:
-						alert = colored("Manual Review", "yellow")
+					alert = colored("Manual Review", "yellow")
 
-						if message.message_type == se.MESSAGE_TYPE_ERROR:
-							alert = colored("Error", "red")
+					if message.message_type == se.MESSAGE_TYPE_ERROR:
+						alert = colored("Error", "red")
 
-						table_data.append([alert, message.filename, message.text])
+					table_data.append([alert, message.filename, message.text])
+
+					if message.submessages:
+						for submessage in message.submessages:
+							table_data.append([" ", "→", f"{submessage}"])
 
 				se.print_table(table_data, 2)
 
