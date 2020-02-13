@@ -32,7 +32,7 @@ def render_mathml_to_png(mathml: str, output_filename: Path) -> None:
 		raise se.MissingDependencyException("Couldn’t locate imagemagick. Is it installed?")
 
 	if "firefox" in (p.name() for p in psutil.process_iter()):
-		raise se.FirefoxRunningException("Firefox is required, but it’s currently running. Stop all instances of Firefox and try again.")
+		raise se.FirefoxRunningException("Firefox is required to render MathML, but it’s currently running. Stop all instances of Firefox and try again.")
 
 	with tempfile.NamedTemporaryFile(mode="w+") as mathml_file:
 		with tempfile.NamedTemporaryFile(mode="w+", suffix=".png") as png_file:
