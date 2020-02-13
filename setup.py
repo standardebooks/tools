@@ -81,7 +81,7 @@ setup(
     include_package_data=True,
     entry_points={
         "console_scripts": [
-            "se = se.executables:main",
+            "se = se.main:main",
         ],
     },
     project_urls={
