@@ -684,6 +684,13 @@ def lint(self, metadata_xhtml) -> list:
 						for match in matches:
 							messages.append(LintMessage(match, se.MESSAGE_TYPE_WARNING, filename, True))
 
+					# Check for deprecated MathML elements
+					matches = regex.findall(fr"<(?:m:)?mfenced[^>]*?>.+?</(?:m:)?mfenced>", file_contents)
+					if matches:
+						messages.append(LintMessage("<m:mfenced> is deprecated in the MathML spec. Use <m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>.", se.MESSAGE_TYPE_ERROR, filename))
+						for match in matches:
+							messages.append(LintMessage(match, se.MESSAGE_TYPE_ERROR, filename, True))
+
 					# Check for trailing commas inside <i> tags at the close of dialog
 					if ",</i>”" in file_contents:
 						messages.append(LintMessage("Comma inside <i> tag before closing dialog. (Search for ,</i>”)", se.MESSAGE_TYPE_WARNING, filename))
