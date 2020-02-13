@@ -159,6 +159,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bper cent(s?)\b", r"percent\1", xhtml)			# per cent -> percent
 	xhtml = regex.sub(r"\bpercent\.(\s+[a-z])", r"percent\1", xhtml)		# percent. followed by lowercase -> percent
 	xhtml = regex.sub(r"\bpercent\.,\b", r"percent,", xhtml)			# per cent. -> percent
+	xhtml = regex.sub(r"\b([Ee])ntree(s?)\b", r"\1ntrée\2", xhtml)			# entree -> entrée
 	xhtml = regex.sub(r"\b([Ff])iance", r"\1iancé", xhtml)				# fiance -> fiancé
 	xhtml = regex.sub(r"\b([Oo])utre\b", r"\1utré", xhtml)				# outre -> outré
 	xhtml = regex.sub(r"\b([Ff])etich", r"\1etish", xhtml)				# fetich -> fetish
