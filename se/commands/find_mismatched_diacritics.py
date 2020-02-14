@@ -3,6 +3,7 @@ This module implements the `se find_mismatched_diacritics` command.
 """
 
 import argparse
+import unicodedata
 
 import regex
 
@@ -13,8 +14,6 @@ def find_mismatched_diacritics() -> int:
 	"""
 	Entry point for `se find-mismatched-diacritics`
 	"""
-
-	import unicodedata
 
 	parser = argparse.ArgumentParser(description="Find words with mismatched diacritics in a set of XHTML files. For example, `cafe` in one file and `café` in another.")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")

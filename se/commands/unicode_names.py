@@ -4,14 +4,13 @@ This module implements the `se unicode_names` command.
 
 import argparse
 import sys
+import unicodedata
 
 
 def unicode_names() -> int:
 	"""
 	Entry point for `se unicode-names`
 	"""
-
-	import unicodedata
 
 	parser = argparse.ArgumentParser(description="Display Unicode code points, descriptions, and links to more details for each character in a string. Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.")
 	parser.add_argument("strings", metavar="STRING", nargs="*", help="a Unicode string")

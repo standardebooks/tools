@@ -4,6 +4,8 @@ This module implements the `se lint` command.
 
 import argparse
 
+from termcolor import colored
+
 import se
 from se.se_epub import SeEpub
 
@@ -12,8 +14,6 @@ def lint() -> int:
 	"""
 	Entry point for `se lint`
 	"""
-
-	from termcolor import colored
 
 	parser = argparse.ArgumentParser(description="Check for various Standard Ebooks style errors.")
 	parser.add_argument("-p", "--plain", action="store_true", help="print plain output")

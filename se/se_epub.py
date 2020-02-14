@@ -890,7 +890,7 @@ class SeEpub:
 		into this class.
 		"""
 
-		from se.se_epub_lint import lint
+		from se.se_epub_lint import lint # pylint: disable=import-outside-toplevel
 
 		return lint(self, self.metadata_xhtml)
 
@@ -901,7 +901,7 @@ class SeEpub:
 		into this class.
 		"""
 
-		from se.se_epub_build import build
+		from se.se_epub_build import build # pylint: disable=import-outside-toplevel
 
 		build(self, self.metadata_xhtml, self._metadata_tree, run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers, verbose)
 
@@ -912,7 +912,7 @@ class SeEpub:
 		into this class.
 		"""
 
-		from se.se_epub_generate_toc import generate_toc
+		from se.se_epub_generate_toc import generate_toc  # pylint: disable=import-outside-toplevel
 
 		return generate_toc(self)
 

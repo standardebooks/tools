@@ -4,20 +4,20 @@ This module implements the `se extract_ebook` command.
 
 import argparse
 import sys
+import zipfile
+from io import BytesIO, TextIOWrapper
 from pathlib import Path
 
+import magic
+
 import se
+from se.vendor.kindleunpack import kindleunpack
 
 
 def extract_ebook() -> int:
 	"""
 	Entry point for `se extract-ebook`
 	"""
-
-	import zipfile
-	from io import TextIOWrapper, BytesIO
-	import magic
-	from se.vendor.kindleunpack import kindleunpack
 
 	parser = argparse.ArgumentParser(description="Extract an epub, mobi, or azw3 ebook into ./FILENAME.extracted/ or a target directory.")
 	parser.add_argument("-o", "--output-dir", type=str, help="a target directory to extract into")
