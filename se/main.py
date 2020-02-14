@@ -54,6 +54,5 @@ def main() -> None:
 
 	# Import command module and call command entrypoint
 	module = importlib.import_module(command_module)
-	ret_code = getattr(module, command_function)()
 
-	sys.exit(ret_code)
+	sys.exit(getattr(module, command_function)())
