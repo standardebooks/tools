@@ -77,6 +77,9 @@ def detect_problem_spellings(xhtml: str) -> list:
 	if regex.search(r"\bgrown-?up\b", xhtml):
 		output.append("“grownup” or “grown-up” detected. Confirm that “grownup” is strictly a noun, and “grown-up” is strictly an adjective.")
 
+	if regex.search(r"\bcommon[\-\s]?sense\b", xhtml):
+		output.append("“commonsense” or “common sense” or “common-sense” detected. Confirm that “common sense” and “common-sense” are strictly nouns, and that “commonsense” is strictly an adjective.")
+
 	return output
 
 def modernize_spelling(xhtml: str) -> str:
