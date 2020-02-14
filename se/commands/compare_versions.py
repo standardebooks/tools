@@ -3,11 +3,15 @@ This module implements the `se compare-versions` command.
 """
 
 import argparse
+import fnmatch
 import os
 import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+
+import git
+import psutil
 
 import se
 
@@ -16,10 +20,6 @@ def compare_versions() -> int:
 	"""
 	Entry point for `se compare-versions`
 	"""
-
-	import fnmatch
-	import psutil
-	import git
 
 	parser = argparse.ArgumentParser(description="Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, copy screenshots of the new, original, and diff (if available) renderings into the current working directory. Diff renderings may not be available if the two renderings differ in dimensions. WARNING: DO NOT START FIREFOX WHILE THIS PROGRAM IS RUNNING!")
 	parser.add_argument("-i", "--include-common", dest="include_common_files", action="store_true", help="include commonly-excluded SE files like imprint, titlepage, and colophon")

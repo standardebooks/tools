@@ -5,6 +5,8 @@ This module implements the `se roman2dec` command.
 import argparse
 import sys
 
+import roman
+
 import se
 
 
@@ -12,8 +14,6 @@ def roman2dec() -> int:
 	"""
 	Entry point for `se roman2dec`
 	"""
-
-	import roman
 
 	parser = argparse.ArgumentParser(description="Convert a Roman numeral to a decimal number.")
 	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="don’t end output with a newline")

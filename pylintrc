@@ -6,7 +6,7 @@ ignore=vendor
 extension-pkg-whitelist=lxml
 
 [MESSAGES CONTROL]
-disable=mixed-indentation,line-too-long,too-many-nested-blocks,too-many-branches,too-many-statements,too-many-boolean-expressions,too-many-lines,too-many-locals,broad-except,bare-except,too-few-public-methods,too-many-arguments,too-many-instance-attributes,import-outside-toplevel
+disable=mixed-indentation,line-too-long,too-many-nested-blocks,too-many-branches,too-many-statements,too-many-boolean-expressions,too-many-lines,too-many-locals,broad-except,bare-except,too-few-public-methods,too-many-arguments,too-many-instance-attributes
 
 [SIMILARITIES]
 min-similarity-lines=15
