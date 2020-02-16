@@ -107,7 +107,7 @@ def _get_unused_selectors(self) -> List[str]:
 		with open(self.path / "src" / "epub" / "css" / "local.css", encoding="utf-8") as file:
 			css = file.read()
 	except Exception:
-		raise FileNotFoundError("Couldn't open {}".format(self.path / "src" / "epub" / "css" / "local.css"))
+		raise FileNotFoundError("Couldn’t open {}".format(self.path / "src" / "epub" / "css" / "local.css"))
 
 	# Remove @supports directives, as the parser can't handle them
 	css = regex.sub(r"^@supports\(.+?\){(.+?)}\s*}", "\\1}", css, flags=regex.MULTILINE | regex.DOTALL)
@@ -140,7 +140,7 @@ def _get_unused_selectors(self) -> List[str]:
 			unused_selectors.remove(selector)
 			continue
 		except lxml.cssselect.SelectorSyntaxError as ex:
-			raise se.InvalidCssException(f"Couldn't parse CSS in or near this line: {selector}\n{ex}")
+			raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: {selector}\n{ex}")
 
 		for filename in filenames:
 			if not filename.endswith("titlepage.xhtml") and not filename.endswith("imprint.xhtml") and not filename.endswith("uncopyright.xhtml"):
@@ -152,9 +152,9 @@ def _get_unused_selectors(self) -> List[str]:
 				try:
 					tree = etree.fromstring(str.encode(xhtml))
 				except etree.XMLSyntaxError as ex:
-					raise se.InvalidXhtmlException("Couldn't parse XHTML in file: {}, error: {}".format(filename, str(ex)))
+					raise se.InvalidXhtmlException("Couldn’t parse XHTML in file: {}, error: {}".format(filename, str(ex)))
 				except Exception:
-					raise se.InvalidXhtmlException(f"Couldn't parse XHTML in file: {filename}")
+					raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in file: {filename}")
 
 				if tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
 					unused_selectors.remove(selector)
@@ -269,7 +269,7 @@ def lint(self, metadata_xhtml) -> list:
 			if match not in se.SE_GENRES:
 				messages.append(LintMessage(f"Illegal se:subject: {match}", se.MESSAGE_TYPE_ERROR, "content.opf"))
 	else:
-		messages.append(LintMessage("No se:subject <meta> tag found.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("No se:subject <meta> element found.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check for CDATA tags
 	if "<![CDATA[" in metadata_xhtml:
@@ -384,14 +384,14 @@ def lint(self, metadata_xhtml) -> list:
 				if filename == "halftitle.xhtml":
 					has_halftitle = True
 					if "<title>Half Title</title>" not in file_contents:
-						messages.append(LintMessage("Half title <title> tag must contain exactly: \"Half Title\".", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("Half title <title> elements must contain exactly: \"Half Title\".", se.MESSAGE_TYPE_ERROR, filename))
 
 				if filename == "colophon.xhtml":
 					if "<a href=\"{}\">{}</a>".format(self.generated_identifier.replace("url:", ""), self.generated_identifier.replace("url:https://", "")) not in file_contents:
 						messages.append(LintMessage(f"Unexpected SE identifier in colophon. Expected: {self.generated_identifier}", se.MESSAGE_TYPE_ERROR, filename))
 
 					if ">trl<" in metadata_xhtml and "translated from" not in file_contents:
-						messages.append(LintMessage("Translator detected in metadata, but no 'translated from LANG' block in colophon", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("Translator detected in metadata, but no “translated from LANG” block in colophon", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check if we forgot to fill any variable slots
 					matches = regex.findall(r"([ >\"][A-Z_]{3,}[0-9]*[ <\"])", file_contents)
@@ -417,7 +417,7 @@ def lint(self, metadata_xhtml) -> list:
 
 				if filename == "titlepage.xhtml":
 					if "<title>Titlepage</title>" not in file_contents:
-						messages.append(LintMessage("Titlepage <title> tag must contain exactly: \"Titlepage\".", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("Titlepage <title> elements must contain exactly: \"Titlepage\".", se.MESSAGE_TYPE_ERROR, filename))
 
 				if filename.endswith(".svg"):
 					# Check for fill: #000 which should simply be removed
@@ -479,7 +479,7 @@ def lint(self, metadata_xhtml) -> list:
 					# Don't specify border color
 					matches = regex.findall(r"(?:border|color).+?(?:#[a-f0-9]{0,6}|black|white|red)", file_contents, flags=regex.IGNORECASE)
 					if matches:
-						messages.append(LintMessage("Don't specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, filename, matches))
+						messages.append(LintMessage("Don’t specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# If we select on the xml namespace, make sure we define the namespace in the CSS, otherwise the selector won't work
 					matches = regex.findall(r"\[\s*xml\s*\|", file_contents)
@@ -534,7 +534,7 @@ def lint(self, metadata_xhtml) -> list:
 								# This invocation of match.find() returns all text nodes. We don't want any text nodes, so if it returns anything then we know we're
 								# missing a <span> somewhere.
 								if match.find(text=True, recursive=False).strip():
-									messages.append(LintMessage(f"<{match.name}> tag has subtitle <span>, but first line is not wrapped in a <span>. See semantics manual for structure of headers with subtitles.", se.MESSAGE_TYPE_ERROR, filename))
+									messages.append(LintMessage(f"<{match.name}> element has subtitle <span>, but first line is not wrapped in a <span>. See semantics manual for structure of headers with subtitles.", se.MESSAGE_TYPE_ERROR, filename))
 
 								# OK, move on with processing headers.
 								parent_section = match.find_parents("section")
@@ -564,11 +564,11 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for direct z3998:roman spans that should have their semantic pulled into the parent element
 					matches = regex.findall(r"<([a-z0-9]+)[^>]*?>\s*(<span epub:type=\"z3998:roman\">[^<]+?</span>)\s*</\1>", file_contents, flags=regex.DOTALL)
 					if matches:
-						messages.append(LintMessage("If <span> exists only for the z3998:roman semantic, then z3998:roman should be pulled into parent tag instead.", se.MESSAGE_TYPE_WARNING, filename, [match[1] for match in matches]))
+						messages.append(LintMessage("If <span> exists only for the z3998:roman semantic, then z3998:roman should be pulled into parent element instead.", se.MESSAGE_TYPE_WARNING, filename, [match[1] for match in matches]))
 
 					# Check for "Hathi Trust" instead of "HathiTrust"
 					if "Hathi Trust" in file_contents:
-						messages.append(LintMessage("\"Hathi Trust\" should be \"HathiTrust\"", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("“Hathi Trust” should be “HathiTrust”", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for uppercase letters in IDs or classes
 					matches = dom.select("[id],[class]")
@@ -595,7 +595,7 @@ def lint(self, metadata_xhtml) -> list:
 
 					# Check for empty title tags
 					if "<title/>" in file_contents or "<title></title>" in file_contents:
-						messages.append(LintMessage("Empty <title> tag.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("Empty <title> element.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for numeric entities
 					matches = regex.findall(r"&#[0-9]+?;", file_contents)
@@ -610,7 +610,7 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for double greater-than at the end of a tag
 					matches = regex.findall(r"(>>|>&gt;)", file_contents)
 					if matches:
-						messages.append(LintMessage("Tags should end with a single >.", se.MESSAGE_TYPE_WARNING, filename))
+						messages.append(LintMessage("Elements should end with a single >.", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for nbsp before ampersand (&amp)
 					matches = regex.findall(fr"[^{se.NO_BREAK_SPACE}]\&amp;", file_contents)
@@ -665,7 +665,7 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for trailing commas inside <i> tags at the close of dialog
 					matches = regex.findall(r"\b[^\s]+?,</i>”", file_contents)
 					if matches:
-						messages.append(LintMessage("Comma inside <i> tag before closing dialog.", se.MESSAGE_TYPE_WARNING, filename, matches))
+						messages.append(LintMessage("Comma inside <i> element before closing dialog.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for period following Roman numeral, which is an old-timey style we must fix
 					# But ignore the numeral if it's the first item in a <p> tag, as that suggests it might be a kind of list item.
@@ -685,7 +685,7 @@ def lint(self, metadata_xhtml) -> list:
 
 					# Check for empty <h2> missing epub:type="title" attribute
 					if "<h2>" in file_contents:
-						messages.append(LintMessage("<h2> tag without epub:type=\"title\" attribute.", se.MESSAGE_TYPE_WARNING, filename))
+						messages.append(LintMessage("<h2> element without epub:type=\"title\" attribute.", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for a common typo
 					if "z3998:nonfiction" in file_contents:
@@ -694,12 +694,12 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for empty <p> tags
 					matches = regex.findall(r"<p[^>]*?>\s*</p>", file_contents)
 					if "<p/>" in file_contents or matches:
-						messages.append(LintMessage("Empty <p> tag. Use <hr/> for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("Empty <p> element. Use <hr/> for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for <p> tags that end with <br/>
 					matches = regex.findall(r"(\s*<br/?>\s*)+</p>", file_contents)
 					if matches:
-						messages.append(LintMessage("<br/> tag found before closing </p> tag.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("<br/> element found before closing </p> tag.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for single words that are in italics, but that have closing punctuation outside italics
 					# Outer wrapping match is so that .findall returns the entire match and not the subgroup
@@ -736,7 +736,7 @@ def lint(self, metadata_xhtml) -> list:
 
 					# Check for Roman numerals in <title> tag
 					if regex.findall(r"<title>[Cc]hapter [XxIiVv]+", file_contents):
-						messages.append(LintMessage("No Roman numerals allowed in <title> tag; use decimal numbers.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("No Roman numerals allowed in <title> element; use decimal numbers.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# If the chapter has a number and no subtitle, check the <title> tag...
 					matches = regex.findall(r"<h([0-6]) epub:type=\"title z3998:roman\">([^<]+)</h\1>", file_contents, flags=regex.DOTALL)
@@ -748,9 +748,9 @@ def lint(self, metadata_xhtml) -> list:
 
 							regex_string = fr"<title>(Chapter|Section|Part) {chapter_number}"
 							if not regex.findall(regex_string, file_contents):
-								messages.append(LintMessage(f"<title> tag doesn't match expected value; should be \"Chapter {chapter_number}\". (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
+								messages.append(LintMessage(f"<title> element doesn’t match expected value; should be “Chapter {chapter_number}”. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
 						except Exception:
-							messages.append(LintMessage("<h#> tag is marked with z3998:roman, but is not a Roman numeral", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage("<h#> element is marked with z3998:roman, but is not a Roman numeral", se.MESSAGE_TYPE_ERROR, filename))
 
 					# If the chapter has a number and subtitle, check the <title> tag...
 					matches = regex.findall(r"<h([0-6]) epub:type=\"title\">\s*<span epub:type=\"z3998:roman\">([^<]+)</span>\s*<span epub:type=\"subtitle\">(.+?)</span>\s*</h\1>", file_contents, flags=regex.DOTALL)
@@ -765,7 +765,7 @@ def lint(self, metadata_xhtml) -> list:
 
 						regex_string = r"<title>(Chapter|Section|Part) {}: {}".format(chapter_number, regex.escape(chapter_title))
 						if not regex.findall(regex_string, file_contents):
-							messages.append(LintMessage(f"<title> tag doesn't match expected value; should be \"Chapter {chapter_number}: {chapter_title}\". (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage(f"<title> element doesn’t match expected value; should be “Chapter {chapter_number}: {chapter_title}”. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for missing subtitle styling
 					if "epub:type=\"subtitle\"" in file_contents and not local_css_has_subtitle_style:
@@ -785,7 +785,7 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for IDs on <h#> tags
 					matches = regex.findall(r"<h[0-6][^>]*?id=[^>]*?>", file_contents, flags=regex.DOTALL)
 					if matches:
-						messages.append(LintMessage("<h#> tag with id attribute. <h#> tags should be wrapped in <section> tags, which should hold the id attribute.", se.MESSAGE_TYPE_WARNING, filename, matches))
+						messages.append(LintMessage("<h#> element with id attribute. <h#> elements should be wrapped in <section> elements, which should hold the id attribute.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check to see if <h#> tags are correctly titlecased
 					matches = regex.finditer(r"<h([0-6])([^>]*?)>(.*?)</h\1>", file_contents, flags=regex.DOTALL)
@@ -822,19 +822,19 @@ def lint(self, metadata_xhtml) -> list:
 
 									title = se.formatting.remove_tags(title).strip()
 									if title != titlecased_title:
-										messages.append(LintMessage(f"Title \"{title}\" not correctly titlecased. Expected: {titlecased_title}", se.MESSAGE_TYPE_WARNING, filename))
+										messages.append(LintMessage(f"Title “{title}” not correctly titlecased. Expected: {titlecased_title}", se.MESSAGE_TYPE_WARNING, filename))
 
 							# No subtitle? Much more straightforward
 							else:
 								titlecased_title = se.formatting.remove_tags(se.formatting.titlecase(title))
 								title = se.formatting.remove_tags(title)
 								if title != titlecased_title:
-									messages.append(LintMessage(f"Title \"{title}\" not correctly titlecased. Expected: {titlecased_title}", se.MESSAGE_TYPE_WARNING, filename))
+									messages.append(LintMessage(f"Title “{title}” not correctly titlecased. Expected: {titlecased_title}", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for <figure> tags without id attributes
 					matches = regex.findall(r"<img[^>]*?id=\"[^>]+?>", file_contents)
 					if matches:
-						messages.append(LintMessage("<img> tag with ID attribute. ID attributes go on parent <figure> tags.", se.MESSAGE_TYPE_ERROR, filename, matches))
+						messages.append(LintMessage("<img> element with ID attribute. ID attributes go on parent <figure> elements.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for closing dialog without comma
 					matches = regex.findall(r"[a-z]+?” [a-zA-Z]+? said", file_contents)
@@ -850,7 +850,7 @@ def lint(self, metadata_xhtml) -> list:
 					if filename not in se.IGNORED_FILENAMES:
 						matches = regex.findall(r"alt=\"[^\"]*?[a-zA-Z]\"", file_contents)
 						if matches:
-							messages.append(LintMessage("Alt attribute doesn't appear to end with punctuation. Alt attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename, matches))
+							messages.append(LintMessage("Alt attribute doesn’t appear to end with punctuation. Alt attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check alt attributes match image titles
 					images = dom.select("img[src$=svg]")
@@ -883,11 +883,11 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for line breaks after <br/> tags
 					matches = regex.findall(r"<br\s*?/>[^\n]", file_contents)
 					if matches:
-						messages.append(LintMessage("<br/> tags must be followed by a newline, and subsequent content must be indented to the same level.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("<br/> element must be followed by a newline, and subsequent content must be indented to the same level.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for <pre> tags
 					if "<pre" in file_contents:
-						messages.append(LintMessage("Illegal <pre> tag.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("Illegal <pre> element.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for double spacing
 					regex_string = fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}"
@@ -913,14 +913,14 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for leftover asterisms
 					matches = regex.findall(r"<[a-z]+[^>]*?>\s*\*\s*(\*\s*)+", file_contents, flags=regex.DOTALL)
 					if matches:
-						messages.append(LintMessage("Illegal asterism (***) detected. Section/scene breaks must be defined by an <hr/> tag.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("Illegal asterism (***) detected. Section/scene breaks must be defined by an <hr/> element.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for space before endnote backlinks
 					if filename == "endnotes.xhtml":
 						# Do we have to replace Ibid.?
 						matches = regex.findall(r"\bibid\b", file_contents, flags=regex.IGNORECASE)
 						if matches:
-							messages.append(LintMessage("Illegal \"Ibid\" in endnotes. \"Ibid\" means \"The previous reference\" which is meaningless with popup endnotes, and must be replaced by the actual thing \"Ibid\" refers to.", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage("Illegal “Ibid” in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing “Ibid” refers to.", se.MESSAGE_TYPE_ERROR, filename))
 
 						endnote_referrers = dom.select("li[id^=note-] a")
 						bad_referrers = []
@@ -1000,23 +1000,23 @@ def lint(self, metadata_xhtml) -> list:
 								if figure.figcaption:
 									figcaption_text = figure.figcaption.get_text()
 							if (figcaption_text != "" and loi_text != "" and figcaption_text != loi_text) and (figure_img_alt != "" and loi_text != "" and figure_img_alt != loi_text):
-								messages.append(LintMessage(f"The <figcaption> tag of {figure_ref} doesn’t match the text in its LoI entry", se.MESSAGE_TYPE_WARNING, chapter_ref))
+								messages.append(LintMessage(f"The <figcaption> element of {figure_ref} doesn’t match the text in its LoI entry", se.MESSAGE_TYPE_WARNING, chapter_ref))
 
 				# Check for missing MARC relators
 				if filename == "introduction.xhtml" and ">aui<" not in metadata_xhtml and ">win<" not in metadata_xhtml:
-					messages.append(LintMessage("introduction.xhtml found, but no MARC relator 'aui' (Author of introduction, but not the chief author) or 'win' (Writer of introduction)", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("introduction.xhtml found, but no MARC relator “aui” (Author of introduction, but not the chief author) or “win” (Writer of introduction)", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "preface.xhtml" and ">wpr<" not in metadata_xhtml:
-					messages.append(LintMessage("preface.xhtml found, but no MARC relator 'wpr' (Writer of preface)", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("preface.xhtml found, but no MARC relator “wpr” (Writer of preface)", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "afterword.xhtml" and ">aft<" not in metadata_xhtml:
-					messages.append(LintMessage("afterword.xhtml found, but no MARC relator 'aft' (Author of colophon, afterword, etc.)", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("afterword.xhtml found, but no MARC relator “aft” (Author of colophon, afterword, etc.)", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "endnotes.xhtml" and ">ann<" not in metadata_xhtml:
-					messages.append(LintMessage("endnotes.xhtml found, but no MARC relator 'ann' (Annotator)", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("endnotes.xhtml found, but no MARC relator “ann” (Annotator)", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "loi.xhtml" and ">ill<" not in metadata_xhtml:
-					messages.append(LintMessage("loi.xhtml found, but no MARC relator 'ill' (Illustrator)", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("loi.xhtml found, but no MARC relator “ill” (Illustrator)", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check for wrong semantics in frontmatter/backmatter
 				if filename in se.FRONTMATTER_FILENAMES and "frontmatter" not in file_contents:
@@ -1026,7 +1026,7 @@ def lint(self, metadata_xhtml) -> list:
 					messages.append(LintMessage("No backmatter semantic inflection for what looks like a backmatter file", se.MESSAGE_TYPE_WARNING, filename))
 
 	if cover_svg_title != titlepage_svg_title:
-		messages.append(LintMessage("cover.svg and titlepage.svg <title> tags don't match", se.MESSAGE_TYPE_ERROR))
+		messages.append(LintMessage("cover.svg and titlepage.svg <title> elements don’t match", se.MESSAGE_TYPE_ERROR))
 
 	if has_frontmatter and not has_halftitle:
 		messages.append(LintMessage("Frontmatter found, but no halftitle. Halftitle is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR, "content.opf"))
