@@ -202,6 +202,10 @@ Another custom test flag `--save-new-draft` is also available. This flag is used
 
 We need volunteers to take the lead on the following goals:
 
+- Figure out if it's possible to install required fonts using setup.py, instead of a console incantation
+
+- Figure out if it's possible to install Bash/ZSH completions using setup.py, *without* root; this may not be possible?
+
 - Writing installation instructions for Bash and ZSH completions for MacOS.
 
 # Tool descriptions
