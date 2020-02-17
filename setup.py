@@ -62,7 +62,7 @@ setup(
         "beautifulsoup4==4.8.0",
         "cssselect==1.0.3",
         "ftfy==5.5.1",
-        "gitpython==2.1.5",
+        "gitpython==3.0.8",
         "importlib_resources==1.0.2",
         "lxml==4.4.0",
         "psutil==5.5.0",
