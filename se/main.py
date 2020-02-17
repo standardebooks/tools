@@ -31,6 +31,11 @@ def main() -> None:
 	This function delegates subcommands (like `se typogrify`) to individual submodules under `se.commands`.
 	"""
 
+	# If we're asked for the version, short circuit and exit
+	if len(sys.argv) == 2 and (sys.argv[1] == "-v" or sys.argv[1] == "--version"):
+		module = importlib.import_module("se.commands.version")
+		sys.exit(getattr(module, "version")())
+
 	commands = get_commands()
 
 	parser = argparse.ArgumentParser(description="The entry point for the Standard Ebooks toolset.")
