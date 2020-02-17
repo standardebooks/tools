@@ -94,7 +94,7 @@ These instructions were tested on macOS 10.12 to 10.15.
 
 These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 release as well.
 
-1. Create a text file to feed into ```pkg_add``` called "~/standard-ebooks-packages". It should contain the following:
+1. Create a text file to feed into ```pkg_add``` called `~/standard-ebooks-packages`. It should contain the following:
 
 	```shell
 	py3-pip--
@@ -117,7 +117,7 @@ Optionally, replace `vim--` with `vim--gtk3` to include gvim for its Unicode edi
 
 4. Run ```pip install --user pipx```
 
-5. If you're using ```ksh``` from base and have already added ```~/.local/bin```, you can skip ```pipx ensurepath``` because this step is for ```bash``` users.
+5. If you’re using ```ksh``` from base and have already added ```~/.local/bin```, you can skip ```pipx ensurepath``` because this step is for ```bash``` users.
 
 6. The rest of the process is similar to that used on other platforms:
 
@@ -184,7 +184,7 @@ $HOME/.local/pipx/venvs/standardebooks/bin/pytest
 
 ### Adding tests
 
-Tests are added under the `tests` directory. Most of the tests are based around the idea of having "golden" output files. Each command is run against a set of input files and then the resulting output files are compared against the resulting golden files. The test fails if the output files do not match the golden files. The data files can be found in the `tests/data` directory.
+Tests are added under the `tests` directory. Most of the tests are based around the idea of having “golden” output files. Each command is run against a set of input files and then the resulting output files are compared against the resulting golden files. The test fails if the output files do not match the golden files. The data files can be found in the `tests/data` directory.
 
 A custom test flag `--save-golden-files` has been added to automatically update the the golden files for the tests (in an `out` directory for the command).
 
@@ -201,9 +201,9 @@ Another custom test flag `--save-new-draft` is also available. This flag is used
 
 We need volunteers to take the lead on the following goals:
 
-- Figure out if it's possible to install required fonts using setup.py, instead of a console incantation
+- Figure out if it’s possible to install required fonts using setup.py, instead of a console incantation
 
-- Figure out if it's possible to install Bash/ZSH completions using setup.py, *without* root; this may not be possible?
+- Figure out if it’s possible to install Bash/ZSH completions using setup.py, *without* root; this may not be possible?
 
 - Writing installation instructions for Bash and ZSH completions for MacOS.
 
