@@ -76,7 +76,6 @@ These instructions were tested on macOS 10.12 to 10.15.
 	```shell
 	# Install some pre-flight dependencies.
 	brew install python imagemagick libmagic librsvg exiftool git
-	pip3 install pyopenssl
 
 	# Install pipx.
 	python3 -m pip install pipx

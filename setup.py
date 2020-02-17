@@ -70,7 +70,8 @@ setup(
         "tinycss2==1.0.2",
         "python-magic==0.4.13",
         "regex==2017.7.26",
-        "requests>=2.20.0",
+        "requests==2.22.0",
+        "pyopenssl==19.1.0",  # Required to allows the `requests` package to use https on Mac OSX
         "roman==3.2.0",
         "smartypants==2.0.1",
         "titlecase==0.11.0",
