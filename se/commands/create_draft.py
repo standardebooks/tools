@@ -8,7 +8,6 @@ import unicodedata
 import urllib.parse
 from argparse import Namespace
 from pathlib import Path
-from subprocess import call
 from typing import Optional, Tuple, Union
 
 import git
@@ -646,23 +645,6 @@ def _create_draft(args: Namespace):
 		with repo.config_writer() as config:
 			config.set_value("user", "email", args.email)
 
-	# Set up remote git repos
-	if args.create_se_repo:
-		git_command = git.cmd.Git(repo_name)
-		git_command.remote("add", "origin", f"standardebooks.org:/standardebooks.org/ebooks/{repo_name}.git")
-
-		# Set git to automatically push to SE
-		git_command.config("branch.master.remote", "origin")
-		git_command.config("branch.master.merge", "refs/heads/master")
-
-		github_option = ""
-		if args.create_github_repo:
-			github_option = "--github"
-
-		return_code = call(["ssh", "standardebooks.org", f"/standardebooks.org/scripts/init-se-repo --repo-name={repo_name} --title-string=\"{title_string}\" {github_option}"])
-		if return_code != 0:
-			raise se.RemoteCommandErrorException(f"Failed to create repository on Standard Ebooks server: ssh returned code {return_code}.")
-
 	if args.pg_url and pg_ebook_html and not is_pg_html_parsed:
 		raise se.InvalidXhtmlException("Couldn’t parse Project Gutenberg ebook source. This is usually due to invalid HTML in the ebook.")
 
@@ -676,16 +658,10 @@ def create_draft() -> int:
 	parser.add_argument("-r", "--translator", dest="translator", help="the translator of the ebook")
 	parser.add_argument("-p", "--pg-url", dest="pg_url", help="the URL of the Project Gutenberg ebook to download")
 	parser.add_argument("-e", "--email", dest="email", help="use this email address as the main committer for the local Git repository")
-	parser.add_argument("-s", "--create-se-repo", dest="create_se_repo", action="store_true", help="initialize a new repository on the Standard Ebook server; Standard Ebooks admin powers required")
-	parser.add_argument("-g", "--create-github-repo", dest="create_github_repo", action="store_true", help="initialize a new repository at the Standard Ebooks GitHub account; Standard Ebooks admin powers required; can only be used when --create-se-repo is specified")
 	parser.add_argument("-o", "--offline", dest="offline", action="store_true", help="create draft without network access")
 	parser.add_argument("-a", "--author", dest="author", required=True, help="the author of the ebook")
 	parser.add_argument("-t", "--title", dest="title", required=True, help="the title of the ebook")
 	args = parser.parse_args()
-
-	if args.create_github_repo and not args.create_se_repo:
-		se.print_error("--create-github-repo option specified, but --create-se-repo option not specified.")
-		return se.InvalidInputException.code
 
 	if args.pg_url and not regex.match("^https?://www.gutenberg.org/ebooks/[0-9]+$", args.pg_url):
 		se.print_error("Project Gutenberg URL must look like: https://www.gutenberg.org/ebooks/<EBOOK-ID>")

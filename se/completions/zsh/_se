@@ -86,13 +86,11 @@ case $state in
 				_arguments -s \
 					{-a,--author}'[the author of the ebook]' \
 					{-e,--email}'[use this email address as the main committer for the local Git repository]' \
-					{-g,--create-github-repo}'[initialize a new repository at the Standard Ebooks GitHub account; Standard Ebooks admin powers required; can only be used when --create-se-repo is specified]' \
 					{-h,--help}'[show a help message and exit]' \
 					{-i,--illustrator}'[the illustrator of the ebook]' \
 					{-o,--offline}'[create draft without network access]' \
 					{-p,--pg-url}'[the URL of the Project Gutenberg ebook to download]' \
 					{-r,--translator}'[the translator of the ebook]' \
-					{-s,--create-se-repo}'[initialize a new repository on the Standard Ebook server; Standard Ebooks admin powers required]' \
 					{-t,--title}'[the title of the ebook]'
 				;;
 			dec2roman)
