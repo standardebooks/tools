@@ -127,7 +127,7 @@ def format_inkscape_svg(filename: Path):
 	Clean and format SVGs created by Inkscape, which have lots of useless metadata.
 
 	INPUTS
-	filename: A filename of an Inkkscape SVG
+	filename: A filename of an Inkscape SVG
 
 	OUTPUTS
 	None.
@@ -162,11 +162,9 @@ def remove_image_metadata(filename: Path) -> None:
 	None.
 	"""
 
-	which_exiftool = shutil.which("exiftool")
-	if which_exiftool:
-		exiftool_path = Path(which_exiftool)
-	else:
-		raise se.MissingDependencyException("Couldn’t locate exiftool. Is it installed?")
+	image = Image.open(filename)
+	data = list(image.getdata())
 
-	# Path arguments must be cast to string for Windows compatibility.
-	subprocess.run([str(exiftool_path), "-overwrite_original", "-all=", str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+	image_without_exif = Image.new(image.mode, image.size)
+	image_without_exif.putdata(data)
+	image_without_exif.save(filename, subsampling="4:4:4")
