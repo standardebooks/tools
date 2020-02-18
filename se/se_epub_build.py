@@ -22,6 +22,7 @@ import lxml.etree as etree
 import regex
 from bs4 import BeautifulSoup
 from cairosvg import svg2png
+from PIL import Image
 import se
 import se.easy_xml
 import se.epub
@@ -33,8 +34,8 @@ from se.vendor.mobi import mobi
 
 COVER_SVG_WIDTH = 1400
 COVER_SVG_HEIGHT = 2100
-COVER_THUMBNAIL_WIDTH = COVER_SVG_WIDTH / 4
-COVER_THUMBNAIL_HEIGHT = COVER_SVG_HEIGHT / 4
+COVER_THUMBNAIL_WIDTH = int(COVER_SVG_WIDTH / 4) # Cast to int required for PIL
+COVER_THUMBNAIL_HEIGHT = int(COVER_SVG_HEIGHT / 4) # Cast to int required for PIL
 SVG_OUTER_STROKE_WIDTH = 2
 SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
 
@@ -44,12 +45,6 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 	"""
 
 	# Check for some required tools
-	which_convert = shutil.which("convert")
-	if which_convert:
-		convert_path = Path(which_convert)
-	else:
-		raise se.MissingDependencyException("Couldn’t locate convert. Is Imagemagick installed?")
-
 	if build_kindle:
 		which_ebook_convert = shutil.which("ebook-convert")
 		if which_ebook_convert:
@@ -317,17 +312,13 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		# Done simplifying CSS and tags!
 
 		# Extract cover and cover thumbnail
-		# We used to be able to use `convert` to convert svg -> jpg in one step, but at some point a bug
-		# was introduced to `convert` that caused it to crash in this situation. Now, we first use cairosvg
-		# to convert to svg -> png, then `convert` to convert png -> jpg.
-		# Path arguments must be cast to string for Windows compatibility.
 		cover_svg_file = work_epub_root_directory / "epub" / "images" / "cover.svg"
 		if not os.path.isfile(cover_svg_file):
 			raise se.MissingDependencyException("Cover image is missing. Did you run build-images?")
 
 		svg2png(url=str(cover_svg_file), write_to=str(work_directory / "cover.png"))
-
-		subprocess.run([str(convert_path), "-format", "jpg", str(work_directory / "cover.png"), str(work_epub_root_directory / "epub" / "images" / "cover.jpg")], check=False)
+		cover = Image.open(work_directory / "cover.png")
+		cover.save(work_epub_root_directory / "epub" / "images" / "cover.jpg")
 		(work_directory / "cover.png").unlink()
 
 		if build_covers:
@@ -335,7 +326,9 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			shutil.copy2(cover_svg_file, output_directory / "cover-thumbnail.svg")
 			# Path arguments must be cast to string
 			svg2png(url=str(output_directory / "cover-thumbnail.svg"), write_to=str(work_directory / "cover-thumbnail.png"))
-			subprocess.run([str(convert_path), "-resize", f"{COVER_THUMBNAIL_WIDTH}x{COVER_THUMBNAIL_HEIGHT}", "-quality", "100", "-format", "jpg", str(work_directory / "cover-thumbnail.png"), str(output_directory / "cover-thumbnail.jpg")], check=False)
+			cover = Image.open(work_directory / "cover-thumbnail.png")
+			cover = cover.resize((COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT))
+			cover.save(output_directory / "cover-thumbnail.jpg")
 			(work_directory / "cover-thumbnail.png").unlink()
 			(output_directory / "cover-thumbnail.svg").unlink()
 
@@ -925,8 +918,9 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			mobi.update_asin(asin, work_directory / kindle_output_filename, output_directory / kindle_output_filename)
 
 			# Extract the thumbnail
-			# Path arguments must be cast to string for Windows compatibility.
-			subprocess.run([str(convert_path), str(work_epub_root_directory / "epub" / "images" / "cover.jpg"), "-resize", "432x660", str(output_directory / f"thumbnail_{asin}_EBOK_portrait.jpg")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+			kindle_cover_thumbnail = Image.open(work_epub_root_directory / "epub" / "images" / "cover.jpg")
+			kindle_cover_thumbnail = kindle_cover_thumbnail.resize((432, 648))
+			kindle_cover_thumbnail.save(output_directory / f"thumbnail_{asin}_EBOK_portrait.jpg")
 
 			if verbose:
 				print(" OK")
