@@ -21,6 +21,7 @@ import lxml.cssselect
 import lxml.etree as etree
 import regex
 from bs4 import BeautifulSoup
+from cairosvg import svg2png
 import se
 import se.easy_xml
 import se.epub
@@ -43,12 +44,6 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 	"""
 
 	# Check for some required tools
-	which_rsvg_convert = shutil.which("rsvg-convert")
-	if which_rsvg_convert:
-		rsvg_convert_path = Path(which_rsvg_convert)
-	else:
-		raise se.MissingDependencyException("Couldn’t locate rsvg-convert. Is librsvg2-bin installed?")
-
 	which_convert = shutil.which("convert")
 	if which_convert:
 		convert_path = Path(which_convert)
@@ -323,22 +318,23 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 		# Extract cover and cover thumbnail
 		# We used to be able to use `convert` to convert svg -> jpg in one step, but at some point a bug
-		# was introduced to `convert` that caused it to crash in this situation. Now, we first use rsvg-convert
+		# was introduced to `convert` that caused it to crash in this situation. Now, we first use cairosvg
 		# to convert to svg -> png, then `convert` to convert png -> jpg.
 		# Path arguments must be cast to string for Windows compatibility.
 		cover_svg_file = work_epub_root_directory / "epub" / "images" / "cover.svg"
 		if not os.path.isfile(cover_svg_file):
 			raise se.MissingDependencyException("Cover image is missing. Did you run build-images?")
 
-		subprocess.run([str(rsvg_convert_path), "--keep-aspect-ratio", "--format", "png", "--output", str(work_directory / "cover.png"), str(cover_svg_file)], check=False)
+		svg2png(url=str(cover_svg_file), write_to=str(work_directory / "cover.png"))
+
 		subprocess.run([str(convert_path), "-format", "jpg", str(work_directory / "cover.png"), str(work_epub_root_directory / "epub" / "images" / "cover.jpg")], check=False)
 		(work_directory / "cover.png").unlink()
 
 		if build_covers:
 			shutil.copy2(work_epub_root_directory / "epub" / "images" / "cover.jpg", output_directory / "cover.jpg")
 			shutil.copy2(cover_svg_file, output_directory / "cover-thumbnail.svg")
-			# Path arguments must be cast to string for Windows compatibility.
-			subprocess.run([str(rsvg_convert_path), "--keep-aspect-ratio", "--format", "png", "--output", str(work_directory / "cover-thumbnail.png"), str(output_directory / "cover-thumbnail.svg")], check=False)
+			# Path arguments must be cast to string
+			svg2png(url=str(output_directory / "cover-thumbnail.svg"), write_to=str(work_directory / "cover-thumbnail.png"))
 			subprocess.run([str(convert_path), "-resize", f"{COVER_THUMBNAIL_WIDTH}x{COVER_THUMBNAIL_HEIGHT}", "-quality", "100", "-format", "jpg", str(work_directory / "cover-thumbnail.png"), str(output_directory / "cover-thumbnail.jpg")], check=False)
 			(work_directory / "cover-thumbnail.png").unlink()
 			(output_directory / "cover-thumbnail.svg").unlink()
@@ -415,9 +411,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							file.truncate()
 
 					# Convert SVGs to PNGs at 2x resolution
-					# We use `rsvg-convert` instead of `inkscape` or `convert` because it gives us an easy way of zooming in at 2x
-					# Path arguments must be cast to string for Windows compatibility.
-					subprocess.run([str(rsvg_convert_path), "--zoom", "2", "--keep-aspect-ratio", "--format", "png", "--output", regex.sub(r"\.svg$", ".png", str(Path(root) / filename)), str(Path(root) / filename)], check=False)
+					# Path arguments must be cast to string
+					svg2png(url=str(Path(root) / filename), write_to=regex.sub(r"\.svg$", ".png", str(Path(root) / filename)), scale=2)
 					(Path(root) / filename).unlink()
 
 				if filename.lower().endswith(".xhtml"):

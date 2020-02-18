@@ -60,6 +60,7 @@ setup(
     python_requires=">=3.6", # The latest version installed by default on Ubuntu 18.04 is 3.6.9
     install_requires=[
         "beautifulsoup4==4.8.0",
+        "cairosvg==2.4.2",
         "cssselect==1.0.3",
         "ftfy==5.5.1",
         "gitpython==3.0.8",
@@ -67,16 +68,16 @@ setup(
         "lxml==4.4.0",
         "psutil==5.5.0",
         "pyhyphen==3.0.1",
-        "tinycss2==1.0.2",
+        "pyopenssl==19.1.0",  # Required to allows the `requests` package to use https on Mac OSX
         "python-magic==0.4.13",
         "regex==2017.7.26",
         "requests==2.22.0",
-        "pyopenssl==19.1.0",  # Required to allows the `requests` package to use https on Mac OSX
         "roman==3.2.0",
         "smartypants==2.0.1",
-        "titlecase==0.11.0",
         "termcolor==1.1.0",
-        "terminaltables==3.1.0"
+        "terminaltables==3.1.0",
+        "tinycss2==1.0.2",
+        "titlecase==0.11.0"
     ],
     include_package_data=True,
     entry_points={
