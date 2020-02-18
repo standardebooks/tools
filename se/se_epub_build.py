@@ -39,6 +39,7 @@ COVER_THUMBNAIL_HEIGHT = int(COVER_SVG_HEIGHT / 4) # Cast to int required for PI
 SVG_OUTER_STROKE_WIDTH = 2
 SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
 
+
 def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool, verbose: bool) -> None:
 	"""
 	Entry point for `se build`

@@ -9,9 +9,90 @@ import shutil
 import tempfile
 import regex
 import psutil
+from PIL import Image, ImageMath
 import se
 import se.formatting
 
+
+def _color_to_alpha(image, color=None):
+	"""
+	Implements GIMP's color to alpha algorithm
+	See https://stackoverflow.com/a/1617909
+	GPLv3: http://bazaar.launchpad.net/~stani/phatch/trunk/annotate/head:/phatch/actions/color_to_alpha.py#L50
+	"""
+
+	image = image.convert("RGBA")
+
+	color = list(map(float, color))
+	img_bands = [band.convert("F") for band in image.split()]
+
+	# Find the maximum difference rate between source and color. I had to use two
+	# difference functions because ImageMath.eval only evaluates the expression
+	# once.
+	alpha = ImageMath.eval(
+		"""float(
+		    max(
+		        max(
+		            max(
+		                difference1(red_band, cred_band),
+		                difference1(green_band, cgreen_band)
+		            ),
+		            difference1(blue_band, cblue_band)
+		        ),
+		        max(
+		            max(
+		                difference2(red_band, cred_band),
+		                difference2(green_band, cgreen_band)
+		            ),
+		            difference2(blue_band, cblue_band)
+		        )
+		    )
+		)""",
+		difference1=lambda source, color: (source - color) / (255.0 - color),
+		difference2=lambda source, color: (color - source) / color,
+		red_band=img_bands[0],
+		green_band=img_bands[1],
+		blue_band=img_bands[2],
+		cred_band=color[0],
+		cgreen_band=color[1],
+		cblue_band=color[2]
+	)
+
+	# Calculate the new image colors after the removal of the selected color
+	new_bands = [
+		ImageMath.eval(
+			"convert((image - color) / alpha + color, 'L')",
+			image=img_bands[i],
+			color=color[i],
+			alpha=alpha
+		)
+		for i in range(3)
+	]
+
+	# Add the new alpha band
+	new_bands.append(ImageMath.eval(
+		"convert(alpha_band * alpha, 'L')",
+		alpha=alpha,
+		alpha_band=img_bands[3]
+	))
+
+	new_image = Image.merge("RGBA", new_bands)
+
+	background = Image.new("RGB", new_image.size, (0, 0, 0, 0))
+	background.paste(new_image.convert("RGB"), mask=new_image)
+
+	# SE addition: Lastly, convert transparent pixels to rgba(0, 0, 0, 0) so that Pillow's
+	# crop function can detect them.
+	# See https://stackoverflow.com/a/14211878
+	pixdata = new_image.load()
+
+	width, height = new_image.size
+	for image_y in range(height):
+		for image_x in range(width):
+			if pixdata[image_x, image_y] == (255, 255, 255, 0):
+				pixdata[image_x, image_y] = (0, 0, 0, 0)
+
+	return new_image
 
 def render_mathml_to_png(mathml: str, output_filename: Path) -> None:
 	"""
@@ -26,10 +107,6 @@ def render_mathml_to_png(mathml: str, output_filename: Path) -> None:
 	"""
 
 	firefox_path = se.get_firefox_path()
-	convert_path = shutil.which("convert")
-
-	if convert_path is None:
-		raise se.MissingDependencyException("Couldn’t locate imagemagick. Is it installed?")
 
 	if "firefox" in (p.name() for p in psutil.process_iter()):
 		raise se.FirefoxRunningException("Firefox is required to render MathML, but it’s currently running. Stop all instances of Firefox and try again.")
@@ -41,7 +118,9 @@ def render_mathml_to_png(mathml: str, output_filename: Path) -> None:
 
 			subprocess.call([firefox_path, "-screenshot", png_file.name, f"file://{mathml_file.name}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-			subprocess.call([convert_path, png_file.name, "-fuzz", "10%", "-transparent", "white", "-trim", output_filename])
+			image = Image.open(png_file.name)
+			image = _color_to_alpha(image, (255, 255, 255, 255))
+			image.crop(image.getbbox()).save(output_filename)
 
 def format_inkscape_svg(filename: Path):
 	"""

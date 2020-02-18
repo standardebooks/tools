@@ -14,7 +14,7 @@ To install the toolset locally for development and debugging, see [Installation 
 
 ```shell
 # Install some pre-flight dependencies.
-sudo apt install -y python3-pip python3-dev python3-venv libxml2-utils libimage-exiftool-perl imagemagick default-jre inkscape calibre git
+sudo apt install -y python3-pip python3-dev python3-venv libxml2-utils libimage-exiftool-perl default-jre inkscape calibre git
 
 # Install pipx.
 python3 -m pip install --user pipx
@@ -41,7 +41,7 @@ sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se
 
 ```shell
 # Install some pre-flight dependencies.
-sudo dnf install firefox ImageMagick calibre vim inkscape libxml2 perl-Image-ExifTool java-1.8.0-openjdk python3-devel
+sudo dnf install firefox calibre vim inkscape libxml2 perl-Image-ExifTool java-1.8.0-openjdk python3-devel
 
 # Install pipx.
 python3 -m pip install --user pipx
@@ -75,7 +75,7 @@ These instructions were tested on macOS 10.12 to 10.15.
 
 	```shell
 	# Install some pre-flight dependencies.
-	brew install python imagemagick libmagic exiftool git
+	brew install python libmagic exiftool git
 
 	# Install pipx.
 	python3 -m pip install pipx
@@ -101,7 +101,6 @@ These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 rele
 	py3-virtualenv--
 	libxml--
 	p5-Image-ExifTool--
-	ImageMagick--
 	jdk--%11
 	inkscape--
 	calibre--
