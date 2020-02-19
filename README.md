@@ -41,7 +41,7 @@ sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se
 
 ```shell
 # Install some pre-flight dependencies.
-sudo dnf install firefox calibre vim inkscape libxml2 java-1.8.0-openjdk python3-devel
+sudo dnf install git calibre vim inkscape libxml2 java-1.8.0-openjdk python3-devel
 
 # Install pipx.
 python3 -m pip install --user pipx
