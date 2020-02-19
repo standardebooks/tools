@@ -319,6 +319,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 		svg2png(url=str(cover_svg_file), write_to=str(work_directory / "cover.png"))
 		cover = Image.open(work_directory / "cover.png")
+		cover = cover.convert("RGB") # Remove alpha channel from PNG if necessary
 		cover.save(work_epub_root_directory / "epub" / "images" / "cover.jpg")
 		(work_directory / "cover.png").unlink()
 
@@ -329,6 +330,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			svg2png(url=str(output_directory / "cover-thumbnail.svg"), write_to=str(work_directory / "cover-thumbnail.png"))
 			cover = Image.open(work_directory / "cover-thumbnail.png")
 			cover = cover.resize((COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT))
+			cover = cover.convert("RGB") # Remove alpha channel from PNG if necessary
 			cover.save(output_directory / "cover-thumbnail.jpg")
 			(work_directory / "cover-thumbnail.png").unlink()
 			(output_directory / "cover-thumbnail.svg").unlink()
@@ -920,6 +922,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 			# Extract the thumbnail
 			kindle_cover_thumbnail = Image.open(work_epub_root_directory / "epub" / "images" / "cover.jpg")
+			kindle_cover_thumbnail = kindle_cover_thumbnail.convert("RGB") # Remove alpha channel from PNG if necessary
 			kindle_cover_thumbnail = kindle_cover_thumbnail.resize((432, 648))
 			kindle_cover_thumbnail.save(output_directory / f"thumbnail_{asin}_EBOK_portrait.jpg")
 
