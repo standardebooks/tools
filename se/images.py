@@ -115,7 +115,7 @@ def render_mathml_to_png(mathml: str, output_filename: Path) -> None:
 			mathml_file.write(f"<!doctype html><html><head><meta charset=\"utf-8\"><title>MathML fragment</title></head><body>{mathml}</body></html>")
 			mathml_file.seek(0)
 
-			subprocess.call([firefox_path, "-screenshot", png_file.name, f"file://{mathml_file.name}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+			subprocess.call([firefox_path, "--screenshot", png_file.name, f"file://{mathml_file.name}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 			image = Image.open(png_file.name)
 			image = _color_to_alpha(image, (255, 255, 255, 255))

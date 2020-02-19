@@ -11,14 +11,27 @@ import tempfile
 from pathlib import Path
 
 import git
+from PIL import Image, ImageChops
 import psutil
 
 import se
 
 
+def _resize_canvas(image: Image, new_width: int, new_height: int) -> Image:
+	"""
+	Expand an image's canvas with black, to the new height and width.
+	"""
+	temp_image = Image.new("RGBA", (new_width, new_height), (0, 0, 0, 255))
+	temp_image.paste(image, (0, new_height))
+
+	return temp_image
+
 def compare_versions() -> int:
 	"""
 	Entry point for `se compare-versions`
+
+	WARNING: Firefox hangs when taking a screenshot on FF 69+, so this command is effectively broken until FF fixes the bug.
+	See https://bugzilla.mozilla.org/show_bug.cgi?id=1589978
 	"""
 
 	parser = argparse.ArgumentParser(description="Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, copy screenshots of the new, original, and diff (if available) renderings into the current working directory. Diff renderings may not be available if the two renderings differ in dimensions. WARNING: DO NOT START FIREFOX WHILE THIS PROGRAM IS RUNNING!")
@@ -33,13 +46,6 @@ def compare_versions() -> int:
 		firefox_path = se.get_firefox_path()
 	except Exception:
 		se.print_error("Couldn’t locate firefox. Is it installed?")
-		return se.MissingDependencyException.code
-
-	which_compare = shutil.which("compare")
-	if which_compare:
-		compare_path = Path(which_compare)
-	else:
-		se.print_error("Couldn’t locate compare. Is imagemagick installed?")
 		return se.MissingDependencyException.code
 
 	# Firefox won't start in headless mode if there is another Firefox process running; check that here.
@@ -66,7 +72,7 @@ def compare_versions() -> int:
 		git_command = git.cmd.Git(target)
 
 		if "nothing to commit" in git_command.status():
-			se.print_error("Repo is clean. This script must be run on a dirty repo.", args.verbose)
+			se.print_error("Repo is clean. This command must be run on a dirty repo.", args.verbose)
 			continue
 
 		# Put Git's changes into the stash
@@ -78,7 +84,7 @@ def compare_versions() -> int:
 				filename = Path(filename)
 
 				# Path arguments must be cast to string for Windows compatibility.
-				subprocess.run([str(firefox_path), "-screenshot", f"{temp_directory_name}/{filename.name}-original.png", str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+				subprocess.run([str(firefox_path), "--screenshot", f"{temp_directory_name}/{filename.name}-original.png", str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
 
 			# Pop the stash
 			git_command.stash("pop")
@@ -91,12 +97,41 @@ def compare_versions() -> int:
 				file_diff_screenshot_path = Path(temp_directory_name) / (file_path.name + "-diff.png")
 
 				# Path arguments must be cast to string for Windows compatibility.
-				subprocess.run([str(firefox_path), "-screenshot", str(file_new_screenshot_path), str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+				subprocess.run([str(firefox_path), "--screenshot", str(file_new_screenshot_path), str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
 
-				# Path arguments must be cast to string for Windows compatibility.
-				output = subprocess.run([str(compare_path), "-metric", "ae", str(file_original_screenshot_path), str(file_new_screenshot_path), str(file_diff_screenshot_path)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False).stdout.decode().strip()
+				has_difference = False
+				original_image = Image.open(file_original_screenshot_path)
+				new_image = Image.open(file_new_screenshot_path)
 
-				if output != "0":
+				# Make sure the original and new images are the same size.
+				# If they're not, add pixels in either direction until they match.
+				original_height, original_width = original_image.size
+				new_height, new_width = new_image.size
+
+				if original_height > new_height:
+					new_image = _resize_canvas(new_image, new_width, original_height)
+
+				if original_width > new_width:
+					new_image = _resize_canvas(new_image, original_width, new_height)
+
+				if new_height > original_height:
+					original_image = _resize_canvas(original_image, original_width, new_height)
+
+				if new_width > original_width:
+					original_image = _resize_canvas(original_image, new_width, original_height)
+
+				# Now get the diff
+				diff = ImageChops.difference(original_image, new_image)
+
+				# Process every pixel to see if there's a difference, and then convert that difference to red
+				width, height = diff.size
+				for image_x in range(0, width - 1):
+					for image_y in range(0, height - 1):
+						if diff.getpixel((image_x, image_y)) != (0, 0, 0, 0):
+							has_difference = True
+							diff.putpixel((image_x, image_y), (255, 0, 0, 255)) # Change the mask color to red
+
+				if has_difference:
 					print("{}Difference in {}\n".format("\t" if args.verbose else "", filename), end="", flush=True)
 
 					if args.copy_images:
@@ -106,7 +141,11 @@ def compare_versions() -> int:
 
 							shutil.copy(file_new_screenshot_path, output_directory)
 							shutil.copy(file_original_screenshot_path, output_directory)
-							shutil.copy(file_diff_screenshot_path, output_directory)
+
+							original_image.paste(diff.convert("RGB"), mask=diff)
+							original_image.save(file_diff_screenshot_path / (file_path.name + "-diff.png"))
+
 						except Exception:
 							pass
+
 	return 0
