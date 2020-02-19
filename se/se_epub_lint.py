@@ -649,8 +649,13 @@ def lint(self, metadata_xhtml) -> list:
 
 					# Check for ending punctuation inside italics
 					matches = regex.findall(r"(<([ib]) epub:type=\"[^\"]+?\">[^<]+?[\.,\!\?]</\2>)", file_contents)
-					if matches:
-						messages.append(LintMessage("Ending punctuation inside italics.", se.MESSAGE_TYPE_WARNING, filename, [match[0] for match in matches]))
+					filtered_matches = []
+					for match in matches:
+						if "z3998:stage-direction" not in match[0]:
+							filtered_matches.append(match[0])
+
+					if filtered_matches:
+						messages.append(LintMessage("Ending punctuation inside italics.", se.MESSAGE_TYPE_WARNING, filename, filtered_matches))
 
 					# Check for money not separated by commas
 					matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
