@@ -5,7 +5,6 @@ Defines various functions useful for image processing tasks common to epubs.
 
 import subprocess
 from pathlib import Path
-import shutil
 import tempfile
 import regex
 import psutil
