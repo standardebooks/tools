@@ -60,4 +60,7 @@ def main() -> None:
 	# Import command module and call command entrypoint
 	module = importlib.import_module(command_module)
 
-	sys.exit(getattr(module, command_function)())
+	try:
+		sys.exit(getattr(module, command_function)())
+	except KeyboardInterrupt:
+		sys.exit(130) # See http://www.tldp.org/LDP/abs/html/exitcodes.html
