@@ -54,7 +54,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<!\<abbr\>)Mlles\.", r"<abbr>Mlles.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)Messrs\.", r"<abbr>Messrs.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)Messers\.", r"<abbr>Messers.</abbr>", xhtml)
-	xhtml = regex.sub(r"(?<!\<abbr\>)P\.S\.", r"<abbr>P.S.</abbr>", xhtml)
+	xhtml = regex.sub(r"(?<!\<abbr[^\>]*?\>)P\.S\.", r"<abbr>P.S.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)Co\.", r"<abbr>Co.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)Inc\.", r"<abbr>Inc.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)Ltd\.", r"<abbr>Ltd.</abbr>", xhtml)
