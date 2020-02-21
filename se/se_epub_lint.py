@@ -938,7 +938,7 @@ def lint(self, metadata_xhtml) -> list:
 						messages.append(LintMessage(f"Illegal colon (:) detected in SE identifier. SE identifiers are separated by dots (.) not colons (:).", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Did someone use periods instead of colons for SE identifiers? e.g. se.name.vessel.ship
-					matches = regex.findall(r"(?<=\")[^\"]*?se\.[a-z]+(?:\.[a-z]+)*", file_contents)
+					matches = regex.findall(r"(?<=epub:type=\")[^\"]*?se\.[a-z]+(?:\.[a-z]+)*", file_contents)
 					if matches:
 						messages.append(LintMessage(f"SE namespace must be followed by a colon, not a dot. E.g., `se:name.vessel`", se.MESSAGE_TYPE_ERROR, filename, matches))
 
