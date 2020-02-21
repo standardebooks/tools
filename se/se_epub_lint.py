@@ -765,6 +765,11 @@ def lint(self, metadata_xhtml) -> list:
 					if regex.findall(r"<title>[Cc]hapter [XxIiVv]+", file_contents):
 						messages.append(LintMessage("No Roman numerals allowed in <title> element; use decimal numbers.", se.MESSAGE_TYPE_ERROR, filename))
 
+					# Check for HTML tags in <title> tags
+					matches = regex.findall(r"<title>.*?[<].*?</title>", file_contents)
+					if matches:
+						messages.append(LintMessage("Element in <title> element", se.MESSAGE_TYPE_ERROR, filename, matches))
+
 					# If the chapter has a number and no subtitle, check the <title> tag...
 					matches = regex.findall(r"<h([0-6]) epub:type=\"title z3998:roman\">([^<]+)</h\1>", file_contents, flags=regex.DOTALL)
 
