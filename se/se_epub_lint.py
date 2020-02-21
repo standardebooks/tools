@@ -924,6 +924,11 @@ def lint(self, metadata_xhtml) -> list:
 					if "<pre" in file_contents:
 						messages.append(LintMessage("Illegal <pre> element.", se.MESSAGE_TYPE_ERROR, filename))
 
+					# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
+					matches = regex.findall(r"\b.+?”[,\.]", file_contents)
+					if matches:
+						messages.append(LintMessage("Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_ERROR, filename, matches))
+
 					# Check for double spacing
 					regex_string = fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}"
 					matches = regex.findall(regex_string, file_contents)
