@@ -4,6 +4,7 @@ This module implements the `se lint` command.
 
 import argparse
 
+import regex
 from termcolor import colored
 
 import se
@@ -16,7 +17,8 @@ def lint() -> int:
 	"""
 
 	parser = argparse.ArgumentParser(description="Check for various Standard Ebooks style errors.")
-	parser.add_argument("-p", "--plain", action="store_true", help="print plain output")
+	parser.add_argument("-p", "--plain", action="store_true", help="print plain text output, without tables or colors")
+	parser.add_argument("-n", "--no-colors", dest="colors", action="store_false", help="do not use colored output")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
@@ -65,12 +67,24 @@ def lint() -> int:
 							print(f"\t{submessage}")
 			else:
 				for message in messages:
-					alert = colored("Manual Review", "yellow")
+					alert = "Manual Review"
 
 					if message.message_type == se.MESSAGE_TYPE_ERROR:
-						alert = colored("Error", "red")
+						alert = "Error"
 
-					table_data.append([alert, message.filename, message.text])
+					message_text = message.text
+
+					if args.colors:
+						if message.message_type == se.MESSAGE_TYPE_ERROR:
+							alert = colored(alert, "red")
+						else:
+							alert = colored(alert, "yellow")
+
+						# By convention, any text within the message text that is surrounded in backticks
+						# is rendered in blue
+						message_text = regex.sub(r"`(.+?)`", colored(r"\1", "blue"), message_text)
+
+					table_data.append([alert, message.filename, message_text])
 
 					if message.submessages:
 						for submessage in message.submessages:

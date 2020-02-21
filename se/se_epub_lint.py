@@ -571,7 +571,7 @@ def lint(self, metadata_xhtml) -> list:
 
 					# Check for "Hathi Trust" instead of "HathiTrust"
 					if "Hathi Trust" in file_contents:
-						messages.append(LintMessage("“Hathi Trust” should be “HathiTrust”", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("`Hathi Trust` should be `HathiTrust`", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for uppercase letters in IDs or classes
 					matches = dom.select("[id],[class]")
@@ -783,7 +783,7 @@ def lint(self, metadata_xhtml) -> list:
 
 							regex_string = fr"<title>(Chapter|Section|Part) {chapter_number}"
 							if not regex.findall(regex_string, file_contents):
-								messages.append(LintMessage(f"<title> element doesn’t match expected value; should be “Chapter {chapter_number}”. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
+								messages.append(LintMessage(f"<title> element doesn’t match expected value; should be `Chapter {chapter_number}`. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
 						except Exception:
 							messages.append(LintMessage("<h#> element is marked with z3998:roman, but is not a Roman numeral", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -800,7 +800,7 @@ def lint(self, metadata_xhtml) -> list:
 
 						regex_string = r"<title>(Chapter|Section|Part) {}: {}".format(chapter_number, regex.escape(chapter_title))
 						if not regex.findall(regex_string, file_contents):
-							messages.append(LintMessage(f"<title> element doesn’t match expected value; should be “Chapter {chapter_number}: {chapter_title}”. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage(f"<title> element doesn’t match expected value; should be `Chapter {chapter_number}: {chapter_title}`. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for missing subtitle styling
 					if "epub:type=\"subtitle\"" in file_contents and not local_css_has_subtitle_style:
@@ -857,14 +857,14 @@ def lint(self, metadata_xhtml) -> list:
 
 									title = se.formatting.remove_tags(title).strip()
 									if title != titlecased_title:
-										messages.append(LintMessage(f"Title “{title}” not correctly titlecased. Expected: {titlecased_title}", se.MESSAGE_TYPE_WARNING, filename))
+										messages.append(LintMessage(f"Title `{title}` not correctly titlecased. Expected: `{titlecased_title}`", se.MESSAGE_TYPE_WARNING, filename))
 
 							# No subtitle? Much more straightforward
 							else:
 								titlecased_title = se.formatting.remove_tags(se.formatting.titlecase(title))
 								title = se.formatting.remove_tags(title)
 								if title != titlecased_title:
-									messages.append(LintMessage(f"Title “{title}” not correctly titlecased. Expected: {titlecased_title}", se.MESSAGE_TYPE_WARNING, filename))
+									messages.append(LintMessage(f"Title `{title}` not correctly titlecased. Expected: {titlecased_title}`", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for <figure> tags without id attributes
 					matches = regex.findall(r"<img[^>]*?id=\"[^>]+?>", file_contents)
@@ -927,7 +927,7 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 					matches = regex.findall(r"\b.+?”[,\.]", file_contents)
 					if matches:
-						messages.append(LintMessage("Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_ERROR, filename, matches))
+						messages.append(LintMessage("Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for double spacing
 					regex_string = fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}"
@@ -971,7 +971,7 @@ def lint(self, metadata_xhtml) -> list:
 						# Do we have to replace Ibid.?
 						matches = regex.findall(r"\bibid\b", file_contents, flags=regex.IGNORECASE)
 						if matches:
-							messages.append(LintMessage("Illegal “Ibid” in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing “Ibid” refers to.", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage("Illegal `Ibid` in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing `Ibid` refers to.", se.MESSAGE_TYPE_ERROR, filename))
 
 						endnote_referrers = dom.select("li[id^=note-] a")
 						bad_referrers = []
@@ -1055,19 +1055,19 @@ def lint(self, metadata_xhtml) -> list:
 
 				# Check for missing MARC relators
 				if filename == "introduction.xhtml" and ">aui<" not in metadata_xhtml and ">win<" not in metadata_xhtml:
-					messages.append(LintMessage("introduction.xhtml found, but no MARC relator “aui” (Author of introduction, but not the chief author) or “win” (Writer of introduction)", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("introduction.xhtml found, but no MARC relator `aui` (Author of introduction, but not the chief author) or `win` (Writer of introduction)", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "preface.xhtml" and ">wpr<" not in metadata_xhtml:
-					messages.append(LintMessage("preface.xhtml found, but no MARC relator “wpr” (Writer of preface)", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("preface.xhtml found, but no MARC relator `wpr` (Writer of preface)", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "afterword.xhtml" and ">aft<" not in metadata_xhtml:
-					messages.append(LintMessage("afterword.xhtml found, but no MARC relator “aft” (Author of colophon, afterword, etc.)", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("afterword.xhtml found, but no MARC relator `aft` (Author of colophon, afterword, etc.)", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "endnotes.xhtml" and ">ann<" not in metadata_xhtml:
-					messages.append(LintMessage("endnotes.xhtml found, but no MARC relator “ann” (Annotator)", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("endnotes.xhtml found, but no MARC relator `ann` (Annotator)", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "loi.xhtml" and ">ill<" not in metadata_xhtml:
-					messages.append(LintMessage("loi.xhtml found, but no MARC relator “ill” (Illustrator)", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("loi.xhtml found, but no MARC relator `ill` (Illustrator)", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check for wrong semantics in frontmatter/backmatter
 				if filename in se.FRONTMATTER_FILENAMES and "frontmatter" not in file_contents:
@@ -1090,7 +1090,7 @@ def lint(self, metadata_xhtml) -> list:
 	for css_class in xhtml_css_classes:
 		if css_class not in se.IGNORED_CLASSES:
 			if "." + css_class not in css:
-				messages.append(LintMessage(f"class “{css_class}” found in xhtml, but no style in local.css", se.MESSAGE_TYPE_ERROR, "local.css"))
+				messages.append(LintMessage(f"class `{css_class}` found in xhtml, but no style in local.css", se.MESSAGE_TYPE_ERROR, "local.css"))
 
 		if xhtml_css_classes[css_class] == 1 and css_class not in se.IGNORED_CLASSES and not regex.match(r"^i[0-9]$", css_class):
 			# Don't count ignored classes OR i[0-9] which are used for poetry styling
@@ -1123,7 +1123,7 @@ def lint(self, metadata_xhtml) -> list:
 			# ToC-only colons above we also need to do that here for the comparison.
 			heading_without_colons = (heading[0].replace(":", ""), heading[1])
 			if heading_without_colons not in toc_headings:
-				messages.append(LintMessage(f"Heading “{heading[0]}” found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, heading[1]))
+				messages.append(LintMessage(f"Heading `{heading[0]}` found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, heading[1]))
 
 		# Check our ordered ToC entries against the spine
 		# To cover all possibilities, we combine the toc and the landmarks to get the full set of entries
