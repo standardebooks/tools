@@ -27,6 +27,9 @@ import se.formatting
 import se.images
 
 
+COLOPHON_VARIABLES = ["TITLE", "YEAR", "AUTHOR_WIKI_URL", "AUTHOR", "PRODUCER_URL", "PRODUCER", "PG_YEAR", "TRANSCRIBER_1", "TRANSCRIBER_2", "PG_URL", "IA_URL", "PAINTING", "ARTIST_WIKI_URL", "ARTIST"]
+EPUB_SEMANTIC_VOCABULARY = ["cover", "frontmatter", "bodymatter", "backmatter", "volume", "part", "chapter", "division", "foreword", "preface", "prologue", "introduction", "preamble", "conclusion", "epilogue", "afterword", "epigraph", "toc", "landmarks", "loa", "loi", "lot", "lov", "appendix", "colophon", "index", "index-headnotes", "index-legend", "index-group", "index-entry-list", "index-entry", "index-term", "index-editor-note", "index-locator", "index-locator-list", "index-locator-range", "index-xref-preferred", "index-xref-related", "index-term-category", "index-term-categories", "glossary", "glossterm", "glossdef", "bibliography", "biblioentry", "titlepage", "halftitlepage", "copyright-page", "acknowledgments", "imprint", "imprimatur", "contributors", "other-credits", "errata", "dedication", "revision-history", "notice", "tip", "halftitle", "fulltitle", "covertitle", "title", "subtitle", "bridgehead", "learning-objective", "learning-resource", "assessment", "qna", "panel", "panel-group", "balloon", "text-area", "sound-area", "footnote", "endnote", "footnotes", "endnotes", "noteref", "keyword", "topic-sentence", "concluding-sentence", "pagebreak", "page-list", "table", "table-row", "table-cell", "list", "list-item", "figure", "aside"]
+
 class LintMessage:
 	"""
 	An object representing an output message for the lint function.
@@ -394,7 +397,7 @@ def lint(self, metadata_xhtml) -> list:
 						messages.append(LintMessage("Translator detected in metadata, but no “translated from LANG” block in colophon", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check if we forgot to fill any variable slots
-					for variable in se.COLOPHON_VARIABLES:
+					for variable in COLOPHON_VARIABLES:
 						if variable in file_contents:
 							messages.append(LintMessage(f"Missing data in colophon: {variable}", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -927,20 +930,31 @@ def lint(self, metadata_xhtml) -> list:
 					if matches:
 						messages.append(LintMessage("Double spacing detected in file. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)", se.MESSAGE_TYPE_ERROR, filename))
 
-					# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
-					matches = regex.findall(r"[a-zA-Z][”][,.]", file_contents)
-					if matches:
-						messages.append(LintMessage("Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename))
+					# Run some checks on epub:type values
+					incorrect_attrs = []
+					epub_type_attrs = regex.findall("epub:type=\"([^\"]+?)\"", file_contents)
+					for attrs in epub_type_attrs:
+						for attr in regex.split(r"\s", attrs):
+							# Did someone use colons instead of dots for SE identifiers? e.g. se:name:vessel:ship
+							matches = regex.findall(r"^se:[a-z]+:(?:[a-z]+:?)*", attr)
+							if matches:
+								messages.append(LintMessage(f"Illegal colon (:) detected in SE identifier. SE identifiers are separated by dots (.) not colons (:). E.g., `se:name.vessel.ship`", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-					# Did someone use colons instead of dots for SE identifiers? e.g. se:name:vessel:ship
-					matches = regex.findall(r"(?<=\")[^\"]*?se:[a-z]+:(?:[a-z]+:?)*", file_contents)
-					if matches:
-						messages.append(LintMessage(f"Illegal colon (:) detected in SE identifier. SE identifiers are separated by dots (.) not colons (:).", se.MESSAGE_TYPE_ERROR, filename, matches))
+							# Did someone use periods instead of colons for the SE namespace? e.g. se.name.vessel.ship
+							matches = regex.findall(r"^se\.[a-z]+(?:\.[a-z]+)*", attr)
+							if matches:
+								messages.append(LintMessage(f"SE namespace must be followed by a colon (:), not a dot (.). E.g., `se:name.vessel`", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-					# Did someone use periods instead of colons for SE identifiers? e.g. se.name.vessel.ship
-					matches = regex.findall(r"(?<=epub:type=\")[^\"]*?se\.[a-z]+(?:\.[a-z]+)*", file_contents)
-					if matches:
-						messages.append(LintMessage(f"SE namespace must be followed by a colon, not a dot. E.g., `se:name.vessel`", se.MESSAGE_TYPE_ERROR, filename, matches))
+							# Did we draw from the z3998 vocabulary when the item exists in the epub vocabulary?
+							if attr.startswith("z3998:"):
+								bare_attr = attr.replace("z3998:", "")
+								if bare_attr in EPUB_SEMANTIC_VOCABULARY:
+									incorrect_attrs.append((attr, bare_attr))
+
+					# Convert this into a unique set so we don't spam the console with repetitive messages
+					incorrect_attrs = set(incorrect_attrs)
+					for (attr, bare_attr) in incorrect_attrs:
+						messages.append(LintMessage(f"`{attr}` semantic used, but `{bare_attr}` is in the EPUB semantic inflection vocabulary.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for leftover asterisms
 					matches = regex.findall(r"<[a-z]+[^>]*?>\s*\*\s*(\*\s*)+", file_contents, flags=regex.DOTALL)
