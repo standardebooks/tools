@@ -472,7 +472,7 @@ def lint(self, metadata_xhtml) -> list:
 					file_contents = regex.sub(r"^/\*.+?\*/\n", "", file_contents, flags=regex.MULTILINE | regex.DOTALL)
 
 					# Check for unneeded white-space nowrap in abbr selectors
-					matches = regex.findall(r"abbr.*?{[^}]*?white-space:\s*nowrap;[^}]*?}", css, regex.DOTALL)
+					matches = regex.findall(r"abbr[^{]*?{[^}]*?white-space:\s*nowrap;[^}]*?}", css, regex.DOTALL)
 					if matches:
 						messages.append(LintMessage("abbr selector does not need white-space: nowrap; as it inherits it from core.css.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
