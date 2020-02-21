@@ -957,8 +957,8 @@ def lint(self, metadata_xhtml) -> list:
 									incorrect_attrs.append((attr, bare_attr))
 
 					# Convert this into a unique set so we don't spam the console with repetitive messages
-					incorrect_attrs = set(incorrect_attrs)
-					for (attr, bare_attr) in incorrect_attrs:
+					unique_incorrect_attrs = set(incorrect_attrs)
+					for (attr, bare_attr) in unique_incorrect_attrs:
 						messages.append(LintMessage(f"`{attr}` semantic used, but `{bare_attr}` is in the EPUB semantic inflection vocabulary.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for leftover asterisms
