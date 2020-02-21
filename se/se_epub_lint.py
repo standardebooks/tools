@@ -404,16 +404,16 @@ def lint(self, metadata_xhtml) -> list:
 					if len(matches) <= 2:
 						for link in matches:
 							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
-								messages.append(LintMessage(f"Source not represented in colophon.xhtml. It should read: <a href=\"{link}\">Project Gutenberg</a>", se.MESSAGE_TYPE_WARNING, filename))
+								messages.append(LintMessage(f"Source not represented in colophon.xhtml. Expected: <a href=\"{link}\">Project Gutenberg</a>", se.MESSAGE_TYPE_WARNING, filename))
 
 							if "hathitrust.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
-								messages.append(LintMessage(f"Source not represented in colophon.xhtml. It should read: the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>", se.MESSAGE_TYPE_WARNING, filename))
+								messages.append(LintMessage(f"Source not represented in colophon.xhtml. Expected: the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>", se.MESSAGE_TYPE_WARNING, filename))
 
 							if "archive.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">Internet Archive</a>" not in file_contents:
-								messages.append(LintMessage(f"Source not represented in colophon.xhtml. It should read: the<br/> <a href=\"{link}\">Internet Archive</a>", se.MESSAGE_TYPE_WARNING, filename))
+								messages.append(LintMessage(f"Source not represented in colophon.xhtml. Expected: the<br/> <a href=\"{link}\">Internet Archive</a>", se.MESSAGE_TYPE_WARNING, filename))
 
 							if "books.google.com" in link and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
-								messages.append(LintMessage(f"Source not represented in colophon.xhtml. It should read: <a href=\"{link}\">Google Books</a>", se.MESSAGE_TYPE_WARNING, filename))
+								messages.append(LintMessage(f"Source not represented in colophon.xhtml. Expected: <a href=\"{link}\">Google Books</a>", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "titlepage.xhtml":
 					if "<title>Titlepage</title>" not in file_contents:
@@ -961,16 +961,16 @@ def lint(self, metadata_xhtml) -> list:
 						if len(matches) <= 2:
 							for link in matches:
 								if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
-									messages.append(LintMessage(f"Source not represented in imprint.xhtml. It should read: <a href=\"{link}\">Project Gutenberg</a>", se.MESSAGE_TYPE_WARNING, filename))
+									messages.append(LintMessage(f"Source not represented in imprint.xhtml. Expected: <a href=\"{link}\">Project Gutenberg</a>", se.MESSAGE_TYPE_WARNING, filename))
 
 								if "hathitrust.org" in link and f"the <a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
-									messages.append(LintMessage(f"Source not represented in imprint.xhtml. It should read: the <a href=\"{link}\">HathiTrust Digital Library</a>", se.MESSAGE_TYPE_WARNING, filename))
+									messages.append(LintMessage(f"Source not represented in imprint.xhtml. Expected: the <a href=\"{link}\">HathiTrust Digital Library</a>", se.MESSAGE_TYPE_WARNING, filename))
 
 								if "archive.org" in link and f"the <a href=\"{link}\">Internet Archive</a>" not in file_contents:
-									messages.append(LintMessage(f"Source not represented in imprint.xhtml. It should read: the <a href=\"{link}\">Internet Archive</a>", se.MESSAGE_TYPE_WARNING, filename))
+									messages.append(LintMessage(f"Source not represented in imprint.xhtml. Expected: the <a href=\"{link}\">Internet Archive</a>", se.MESSAGE_TYPE_WARNING, filename))
 
 								if "books.google.com" in link and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
-									messages.append(LintMessage(f"Source not represented in imprint.xhtml. It should read: <a href=\"{link}\">Google Books</a>", se.MESSAGE_TYPE_WARNING, filename))
+									messages.append(LintMessage(f"Source not represented in imprint.xhtml. Expected: <a href=\"{link}\">Google Books</a>", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Collect abbr elements for later check
 					result = regex.findall("<abbr[^<]+?>", file_contents)
