@@ -12,6 +12,5 @@ Error: colophon.xhtml Missing data in colophon: TRANSCRIBER_2
 Error: colophon.xhtml Missing data in colophon: PG_URL
 Error: colophon.xhtml Missing data in colophon: IA_URL
 Error: colophon.xhtml Missing data in colophon: PAINTING
-Error: colophon.xhtml Missing data in colophon: YEAR
 Error: colophon.xhtml Missing data in colophon: ARTIST_WIKI_URL
 Error: colophon.xhtml Missing data in colophon: ARTIST
