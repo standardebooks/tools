@@ -617,15 +617,22 @@ def lint(self, metadata_xhtml) -> list:
 					if matches:
 						messages.append(LintMessage("Elements should end with a single >.", se.MESSAGE_TYPE_WARNING, filename))
 
-					# Check for nbsp before ampersand (&amp)
-					matches = regex.findall(fr"[^{se.NO_BREAK_SPACE}]\&amp;", file_contents)
-					if matches:
-						messages.append(LintMessage("Required nbsp not found before &amp;", se.MESSAGE_TYPE_WARNING, filename))
+					# Ignore the title page here, because we often have publishers with ampersands as
+					# translators, but in alt tags. Like "George Allen & Unwin".
+					if filename != "titlepage.xhtml":
+						# Before we process this, we remove the eoc class from <abbr class="name"> because negative lookbehind
+						# must be fixed-width. I.e. we can't do `class="name( eoc)?"`
+						temp_file_contents = file_contents.replace("\"name eoc\"", "\"name\"")
 
-					# Check for nbsp after ampersand (&amp)
-					matches = regex.findall(fr"\&amp;[^{se.NO_BREAK_SPACE}]", file_contents)
-					if matches:
-						messages.append(LintMessage("Required nbsp not found after &amp;", se.MESSAGE_TYPE_WARNING, filename))
+						# Check for nbsp before ampersand (&amp)
+						matches = regex.findall(fr"(?<!\<abbr class=\"name\")>[^>]*?[^{se.NO_BREAK_SPACE}]\&amp;", temp_file_contents)
+						if matches:
+							messages.append(LintMessage("Required nbsp not found before &amp;", se.MESSAGE_TYPE_WARNING, filename))
+
+						# Check for nbsp after ampersand (&amp)
+						matches = regex.findall(fr"(?<!\<abbr class=\"name\")>[^>]*?\&amp;[^{se.NO_BREAK_SPACE}]", temp_file_contents)
+						if matches:
+							messages.append(LintMessage("Required nbsp not found after &amp;", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for nbsp before times
 					matches = regex.findall(fr"[0-9]+[^{se.NO_BREAK_SPACE}]<abbr class=\"time", file_contents)
