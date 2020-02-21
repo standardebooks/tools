@@ -659,15 +659,25 @@ def lint(self, metadata_xhtml) -> list:
 					if matches:
 						messages.append(LintMessage("Stage direction ending in period next to other punctuation. Remove trailing periods in stage direction.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-					# Check for ending punctuation inside italics
-					matches = regex.findall(r"(<([ib]) epub:type=\"[^\"]+?\">[^<]+?[\.,\!\?]</\2>)", file_contents)
-					filtered_matches = []
-					for match in matches:
-						if "z3998:stage-direction" not in match[0]:
-							filtered_matches.append(match[0])
+					# Check for ending punctuation inside italics that have semantics.
+					# Ignore the colophon because paintings might have punctuation in their names
+					if filename != "colophon.xhtml":
+						matches = regex.findall(r"(<([ib]) epub:type=\"[^\"]*?se:name\.[^\"]*?\">[^<]+?[\.,\!\?]</\2>)", file_contents)
+						filtered_matches = []
+						for match in matches:
+							if "z3998:stage-direction" not in match[0]:
+								filtered_matches.append(match[0])
 
-					if filtered_matches:
-						messages.append(LintMessage("Ending punctuation inside italics.", se.MESSAGE_TYPE_WARNING, filename, filtered_matches))
+						# ...and also check for ending punctuation inside em tags, if it looks like a *part* of a clause
+						# instead of a whole clause. If the <em> is preceded by an em dash or quotes then it's
+						# presumed tdo be a whole clause.
+						matches = regex.findall(r"(?:[^—“‘])<em>(?:\w+?\s*){1,2}?[\.,\!\?]<\/em>", file_contents)
+						for match in matches:
+							if match[4].islower():
+								filtered_matches.append(match)
+
+						if filtered_matches:
+							messages.append(LintMessage("Ending punctuation inside italics.", se.MESSAGE_TYPE_WARNING, filename, filtered_matches))
 
 					# Check for money not separated by commas
 					matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
