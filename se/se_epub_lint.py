@@ -291,7 +291,7 @@ def lint(self, metadata_xhtml) -> list:
 	matches = regex.findall(r"<meta property=\"se:name\.person\.full-name\" refines=\"#([^\"]+?)\">([^<]*?)</meta>", metadata_xhtml)
 	duplicate_names = []
 	for match in matches:
-		name_matches = regex.findall(r"<([a-z:]+)[^<]+?id=\"{}\"[^<]*?>([^<]*?)</\1>".format(match[0]), metadata_xhtml)
+		name_matches = regex.findall(fr"<([a-z:]+)[^<]+?id=\"{match[0]}\"[^<]*?>([^<]*?)</\1>", metadata_xhtml)
 		for name_match in name_matches:
 			if name_match[1] == match[1]:
 				duplicate_names.append(name_match[1])
@@ -1123,7 +1123,7 @@ def lint(self, metadata_xhtml) -> list:
 			# ToC-only colons above we also need to do that here for the comparison.
 			heading_without_colons = (heading[0].replace(":", ""), heading[1])
 			if heading_without_colons not in toc_headings:
-				messages.append(LintMessage("Heading “{}” found, but not present for that file in the ToC.".format(heading[0]), se.MESSAGE_TYPE_ERROR, heading[1]))
+				messages.append(LintMessage(f"Heading “{heading[0]}” found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, heading[1]))
 
 		# Check our ordered ToC entries against the spine
 		# To cover all possibilities, we combine the toc and the landmarks to get the full set of entries
@@ -1145,7 +1145,7 @@ def lint(self, metadata_xhtml) -> list:
 				messages.append(LintMessage("The number of elements in the spine ({}) does not match the number of elements in the ToC and landmarks ({}).".format(len(toc_files), len(spine_entries)), se.MESSAGE_TYPE_ERROR, "content.opf"))
 			for index, entry in enumerate(spine_entries):
 				if toc_files[index] != entry.attrs["idref"]:
-					messages.append(LintMessage("The spine order does not match the order of the ToC and landmarks. Expected {}, found {}.".format(entry.attrs["idref"], toc_files[index]), se.MESSAGE_TYPE_ERROR, "content.opf"))
+					messages.append(LintMessage(f"The spine order does not match the order of the ToC and landmarks. Expected {entry.attrs['idref']}, found {toc_files[index]}.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 					break
 
 	for element in abbr_elements:
