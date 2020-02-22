@@ -673,7 +673,7 @@ def lint(self, metadata_xhtml) -> list:
 
 						# ...and also check for ending punctuation inside em tags, if it looks like a *part* of a clause
 						# instead of a whole clause. If the <em> is preceded by an em dash or quotes then it's
-						# presumed tdo be a whole clause.
+						# presumed to be a whole clause.
 						matches = regex.findall(r"(?:[^—“‘])<em>(?:\w+?\s*){1,2}?[\.,\!\?]<\/em>", file_contents)
 						for match in matches:
 							if match[4].islower():
