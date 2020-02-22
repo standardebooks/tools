@@ -715,7 +715,7 @@ def lint(self, metadata_xhtml) -> list:
 
 					# Check for empty <h2> missing epub:type="title" attribute
 					if "<h2>" in file_contents:
-						messages.append(LintMessage("<h2> element without epub:type=\"title\" attribute.", se.MESSAGE_TYPE_WARNING, filename))
+						messages.append(LintMessage("<h2> element without `epub:type=\"title\"` attribute.", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for a common typo
 					if "z3998:nonfiction" in file_contents:
@@ -864,7 +864,7 @@ def lint(self, metadata_xhtml) -> list:
 								titlecased_title = se.formatting.remove_tags(se.formatting.titlecase(title))
 								title = se.formatting.remove_tags(title)
 								if title != titlecased_title:
-									messages.append(LintMessage(f"Title `{title}` not correctly titlecased. Expected: {titlecased_title}`", se.MESSAGE_TYPE_WARNING, filename))
+									messages.append(LintMessage(f"Title `{title}` not correctly titlecased. Expected: `{titlecased_title}`", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for <figure> tags without id attributes
 					matches = regex.findall(r"<img[^>]*?id=\"[^>]+?>", file_contents)
