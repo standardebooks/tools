@@ -714,6 +714,11 @@ class SeEpub:
 			for filename in filenames:
 				manifest.append("<item href=\"css/{0}\" id=\"{0}\" media-type=\"text/css\"/>".format(filename))
 
+		# Add fonts
+		for _, _, filenames in os.walk(self.path / "src" / "epub" / "fonts"):
+			for filename in filenames:
+				manifest.append("<item href=\"fonts/{0}\" id=\"{0}\" media-type=\"application/vnd.ms-opentype\"/>".format(filename))
+
 		# Add images
 		for _, _, filenames in os.walk(self.path / "src" / "epub" /  "images"):
 			for filename in filenames:
