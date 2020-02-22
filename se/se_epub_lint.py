@@ -692,11 +692,6 @@ def lint(self, metadata_xhtml) -> list:
 					if matches:
 						messages.append(LintMessage("<m:mfenced> is deprecated in the MathML spec. Use <m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-					# Check for trailing commas inside <i> tags at the close of dialog
-					matches = regex.findall(r"\b[^\s]+?,</i>”", file_contents)
-					if matches:
-						messages.append(LintMessage("Comma inside <i> element before closing dialog.", se.MESSAGE_TYPE_WARNING, filename, matches))
-
 					# Check for period following Roman numeral, which is an old-timey style we must fix
 					# But ignore the numeral if it's the first item in a <p> tag, as that suggests it might be a kind of list item.
 					matches = regex.findall(r"(?<!<p[^>]*?>)<span epub:type=\"z3998:roman\">[^<]+?</span>\.\s+[a-z]", file_contents)
@@ -743,12 +738,30 @@ def lint(self, metadata_xhtml) -> list:
 					# 2. The double quote is directly preceded by a lowercase letter, a comma, and a space, and the first letter within the double quote is lowercase: In the original, “<i xml:lang="es">que era un Conde de Irlos</i>.”
 					matches = [x for x in matches if "epub:type=\"se:name." not in x[0] and "epub:type=\"z3998:taxonomy" not in x[0] and not regex.match(r"^[a-z’]+\s“", x[0]) and not regex.match(r"^[a-z’]+,\s“[a-z]", se.formatting.remove_tags(x[0]))]
 					if matches:
-						messages.append(LintMessage("When a complete clause is italicized, ending punctuation EXCEPT commas must be within containing italics.", se.MESSAGE_TYPE_WARNING, filename, [match[0] for match in matches]))
+						messages.append(LintMessage("When a complete clause is italicized, ending punctuation except commas must be within containing italics.", se.MESSAGE_TYPE_WARNING, filename, [match[0] for match in matches]))
 
-					# Check for foreign phrases with italics going *outside* quotes
-					matches = regex.findall(r"<i[^>]*?>“.+?\b", file_contents) + regex.findall(r"”</i>", file_contents)
-					if matches:
-						messages.append(LintMessage("When italicizing language in dialog, italics go INSIDE quotation marks.", se.MESSAGE_TYPE_WARNING, filename, matches))
+					# Run some checks on <i> elements
+					comma_matches = []
+					italicizing_matches = []
+					elements = dom.select("i")
+					for elem in elements:
+						next_sib = elem.nextSibling
+
+						# Check for trailing commas inside <i> tags at the close of dialog
+						# More sophisticated version of: \b[^\s]+?,</i>”
+						if isinstance(next_sib, NavigableString) and next_sib.startswith("”") and elem.text.endswith(","):
+							comma_matches.append(str(elem) + "”")
+
+						# Check for foreign phrases with italics going *outside* quotes
+						for attr in elem.attrs:
+							if attr == "xml:lang" and (elem.text.startswith("“") or elem.text.endswith("”")):
+								italicizing_matches.append(str(elem))
+
+					if comma_matches:
+						messages.append(LintMessage("Comma inside <i> element before closing dialog.", se.MESSAGE_TYPE_WARNING, filename, comma_matches))
+
+					if italicizing_matches:
+						messages.append(LintMessage("When italicizing language in dialog, italics go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, italicizing_matches))
 
 					# Check for style attributes
 					matches = regex.findall(r"<.+?style=\"", file_contents)
