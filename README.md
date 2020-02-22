@@ -75,11 +75,7 @@ These instructions were tested on macOS 10.12 to 10.15.
 
 	```shell
 	# Install some pre-flight dependencies.
-	brew install python libmagic git
-
-	# Install pipx.
-	python3 -m pip install pipx
-	python3 -m pipx ensurepath
+	brew install python pipx libmagic git
 
 	# Install required applications.
 	brew cask install java calibre xquartz inkscape
