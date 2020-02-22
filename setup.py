@@ -70,7 +70,6 @@ setup(
         "psutil==5.5.0",
         "pyhyphen==3.0.1",
         "pyopenssl==19.1.0",  # Required to allows the `requests` package to use https on Mac OSX
-        "python-magic==0.4.13",
         "regex==2017.7.26",
         "requests==2.22.0",
         "roman==3.2.0",

@@ -8,11 +8,41 @@ import zipfile
 from io import BytesIO, TextIOWrapper
 from pathlib import Path
 
-import magic
-
 import se
 from se.vendor.kindleunpack import kindleunpack
 
+
+def _is_epub(file_bytes: bytes) -> bool:
+	"""
+	Decide if a file is an epub file.
+	From https://github.com/h2non/filetype.py (MIT license)
+	"""
+
+	return (len(file_bytes) > 57 and
+		file_bytes[0] == 0x50 and file_bytes[1] == 0x4B and
+		file_bytes[2] == 0x3 and file_bytes[3] == 0x4 and
+		file_bytes[30] == 0x6D and file_bytes[31] == 0x69 and
+		file_bytes[32] == 0x6D and file_bytes[33] == 0x65 and
+		file_bytes[34] == 0x74 and file_bytes[35] == 0x79 and
+		file_bytes[36] == 0x70 and file_bytes[37] == 0x65 and
+		file_bytes[38] == 0x61 and file_bytes[39] == 0x70 and
+		file_bytes[40] == 0x70 and file_bytes[41] == 0x6C and
+		file_bytes[42] == 0x69 and file_bytes[43] == 0x63 and
+		file_bytes[44] == 0x61 and file_bytes[45] == 0x74 and
+		file_bytes[46] == 0x69 and file_bytes[47] == 0x6F and
+		file_bytes[48] == 0x6E and file_bytes[49] == 0x2F and
+		file_bytes[50] == 0x65 and file_bytes[51] == 0x70 and
+		file_bytes[52] == 0x75 and file_bytes[53] == 0x62 and
+		file_bytes[54] == 0x2B and file_bytes[55] == 0x7A and
+		file_bytes[56] == 0x69 and file_bytes[57] == 0x70)
+
+def _is_mobi(file_bytes: bytes) -> bool:
+	"""
+	Decide if a file is a MOBI/AZW3 file.
+	From ./se/vendor/kindleunpack/mobi_sectioner.py lines 49-53
+	"""
+
+	return file_bytes[:78][0x3C:0x3C+8] in (b"BOOKMOBI", b"TEXtREAd")
 
 def extract_ebook() -> int:
 	"""
@@ -40,9 +70,10 @@ def extract_ebook() -> int:
 			se.print_error(f"Directory already exists: {extracted_path}")
 			return se.FileExistsException.code
 
-		mime_type = magic.from_file(str(target))
+		with open(target, "rb") as binary_file:
+			file_bytes = binary_file.read()
 
-		if "Mobipocket E-book" in mime_type:
+		if _is_mobi(file_bytes):
 			# kindleunpack uses print() so just capture that output here
 			old_stdout = sys.stdout
 			sys.stdout = TextIOWrapper(BytesIO(), sys.stdout.encoding)
@@ -52,11 +83,11 @@ def extract_ebook() -> int:
 			# Restore stdout
 			sys.stdout.close()
 			sys.stdout = old_stdout
-		elif "EPUB document" in mime_type:
+		elif _is_epub(file_bytes):
 			with zipfile.ZipFile(target, "r") as file:
 				file.extractall(extracted_path)
 		else:
-			se.print_error(f"Couldn’t understand file type: {mime_type}")
+			se.print_error("File doesn’t look like an epub, mobi, or azw3 file.")
 			return se.InvalidFileException.code
 
 		if args.verbose:

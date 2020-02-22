@@ -75,7 +75,7 @@ These instructions were tested on macOS 10.12 to 10.15.
 
 	```shell
 	# Install some pre-flight dependencies.
-	brew install python pipx libmagic git
+	brew install python pipx git
 	pipx ensurepath
 
 	# Install required applications.
