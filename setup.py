@@ -69,7 +69,7 @@ setup(
         "pillow==7.0.0",
         "psutil==5.5.0",
         "pyhyphen==3.0.1",
-        "pyopenssl==19.1.0",  # Required to allows the `requests` package to use https on Mac OSX
+        "pyopenssl==19.1.0",  # Required to allow the `requests` package to use https on Mac OSX
         "regex==2017.7.26",
         "requests==2.22.0",
         "roman==3.2.0",
