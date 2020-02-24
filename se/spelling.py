@@ -191,7 +191,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Bb])ric-à-brac", r"\1ric-a-brac", xhtml)		# bric-à-brac -> bric-a-brac
 	xhtml = regex.sub(r"\b([Kk])iosque", r"\1iosk", xhtml)				# kiosque -> kiosk
 	xhtml = regex.sub(r"\b([Dd])epôt", r"\1epot", xhtml)				# depôt -> depot
-	xhtml = regex.sub(r"(?<![Cc]ompl)exion", r"ection", xhtml)				# -extion -> -exction (connexion, reflexion, etc., but "complexion")
+	xhtml = regex.sub(r"(?<![Cc]ompl)exion", r"ection", xhtml)			# -extion -> -exction (connexion, reflexion, etc., but "complexion")
 	xhtml = regex.sub(r"\b([Dd])ulness", r"\1ullness", xhtml)			# dulness -> dullness
 	xhtml = regex.sub(r"\b([Ff])iord", r"\1jord", xhtml)				# fiord -> fjord
 	xhtml = regex.sub(r"\b([Ff])ulness\b", r"\1ullness", xhtml)			# fulness -> fullness (but not for ex. thoughtfulness)
@@ -201,8 +201,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"([Bb])iass", r"\1ias", xhtml)				# (un)biass(ed) -> (un)bias(ed)
 	xhtml = regex.sub(r"\b([Cc])huse", r"\1hoose", xhtml)				# chuse -> choose
 	xhtml = regex.sub(r"\b([Cc])husing", r"\1hoosing", xhtml)			# chusing -> choosing
-	xhtml = regex.sub(r"\b([Cc])ontroul(s?)\b", r"\1ontrol\2", xhtml)	# controul -> control
-	xhtml = regex.sub(r"\b([Cc])ontroul(ing|ed)", r"\1ontroll\2", xhtml)	# controuling/ed -> controlling/ed
+	xhtml = regex.sub(r"\b([Cc])ontroul(s?)\b", r"\1ontrol\2", xhtml)		# controul -> control
+	xhtml = regex.sub(r"\b([Cc])ontroul(ing|ed)", r"\1ontroll\2", xhtml)		# controuling/ed -> controlling/ed
 	xhtml = regex.sub(r"\b([Ss])urpriz(e|ing)", r"\1urpris\2", xhtml)		# surprize->surprise, surprizing->surprising
 	xhtml = regex.sub(r"\b([Dd])oat\b", r"\1ote", xhtml)				# doat -> dote
 	xhtml = regex.sub(r"\b([Dd])oat(ed|ing)", r"\1ot\2", xhtml)			# doating -> doting
