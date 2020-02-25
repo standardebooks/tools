@@ -13,11 +13,18 @@ import se
 import se.formatting
 
 
-def _color_to_alpha(image, color=None):
+def _color_to_alpha(image: Image, color=None) -> Image:
 	"""
-	Implements GIMP's color to alpha algorithm
+	Implements GIMP's color to alpha algorithm.
 	See https://stackoverflow.com/a/1617909
 	GPLv3: http://bazaar.launchpad.net/~stani/phatch/trunk/annotate/head:/phatch/actions/color_to_alpha.py#L50
+
+	INPUTS
+	image: A PIL image to work on
+	color: A 4-tuple (R, G, B, A) value as the color to change to alpha
+
+	OUTPUTS
+	A string of XML representing the new SVG
 	"""
 
 	image = image.convert("RGBA")
@@ -102,7 +109,7 @@ def render_mathml_to_png(mathml: str, output_filename: Path) -> None:
 	output_filename: A filename to store PNG output to
 
 	OUTPUTS
-	A string of XHTML with soft hyphens inserted in words. The output is not guaranteed to be pretty-printed.
+	None.
 	"""
 
 	firefox_path = se.get_firefox_path()
