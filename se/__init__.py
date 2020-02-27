@@ -14,7 +14,7 @@ import regex
 import terminaltables
 from termcolor import colored
 
-VERSION = "1.2.2"
+VERSION = "1.2.3"
 MESSAGE_INDENT = "    "
 UNICODE_BOM = "\ufeff"
 NO_BREAK_SPACE = "\u00a0"
