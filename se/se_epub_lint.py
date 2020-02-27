@@ -830,6 +830,19 @@ def lint(self, metadata_xhtml) -> list:
 						if matches:
 							messages.append(LintMessage("<li> without direct block-level child.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
+					# Check for ldquo not correctly closed
+					# Ignore closing paragraphs, line breaks, and closing cells in case ldquo means "ditto mark"
+					matches = regex.findall(r"“[^‘”]+?“", file_contents)
+					matches = [x for x in matches if "</p" not in x and "<br/>" not in x and "</td>" not in x]
+					if matches:
+						messages.append(LintMessage("`“` missing matching `”`.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+					# Check for lsquo not correctly closed
+					matches = regex.findall(r"‘[^“’]+?‘", file_contents)
+					matches = [x for x in matches if "</p" not in x and "<br/>" not in x]
+					if matches:
+						messages.append(LintMessage("`‘` missing mathcing `’`.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
 					# Check for IDs on <h#> tags
 					matches = regex.findall(r"<h[0-6][^>]*?id=[^>]*?>", file_contents, flags=regex.DOTALL)
 					if matches:
