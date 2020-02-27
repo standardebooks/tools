@@ -10,6 +10,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+import importlib_resources
 import git
 from PIL import Image, ImageChops
 import psutil
@@ -34,9 +35,9 @@ def compare_versions() -> int:
 	See https://bugzilla.mozilla.org/show_bug.cgi?id=1589978
 	"""
 
-	parser = argparse.ArgumentParser(description="Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, copy screenshots of the new, original, and diff (if available) renderings into the current working directory. Diff renderings may not be available if the two renderings differ in dimensions. WARNING: DO NOT START FIREFOX WHILE THIS PROGRAM IS RUNNING!")
+	parser = argparse.ArgumentParser(description="Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, place screenshots of the new, original, and diff (if available) renderings in the current working directory. Diff renderings may not be available if the two renderings differ in dimensions. A file called diff.html is created to allow for side-by-side comparisons of original and new files. WARNING: DO NOT START FIREFOX WHILE THIS PROGRAM IS RUNNING!")
 	parser.add_argument("-i", "--include-common", dest="include_common_files", action="store_true", help="include commonly-excluded SE files like imprint, titlepage, and colophon")
-	parser.add_argument("-n", "--no-images", dest="copy_images", action="store_false", help="don’t copy diff images to the current working directory in case of difference")
+	parser.add_argument("-n", "--no-images", dest="copy_images", action="store_false", help="don’t create images of diffs")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="a directory containing XHTML files")
 	args = parser.parse_args()
@@ -83,18 +84,26 @@ def compare_versions() -> int:
 			for filename in target_filenames:
 				filename = Path(filename)
 
+				if args.verbose:
+					print(f"\tProcessing original {filename.name} ...\n", end="", flush=True)
+
 				# Path arguments must be cast to string for Windows compatibility.
 				subprocess.run([str(firefox_path), "--screenshot", f"{temp_directory_name}/{filename.name}-original.png", str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
 
 			# Pop the stash
 			git_command.stash("pop")
 
+			files_with_differences = set()
+
 			# Generate screenshots of the post-change repo, and compare them to the old screenshots
 			for filename in target_filenames:
-				file_path = Path(filename)
-				file_new_screenshot_path = Path(temp_directory_name) / (file_path.name + "-new.png")
-				file_original_screenshot_path = Path(temp_directory_name) / (file_path.name + "-original.png")
-				file_diff_screenshot_path = Path(temp_directory_name) / (file_path.name + "-diff.png")
+				filename = Path(filename)
+				file_new_screenshot_path = Path(temp_directory_name) / (filename.name + "-new.png")
+				file_original_screenshot_path = Path(temp_directory_name) / (filename.name + "-original.png")
+				file_diff_screenshot_path = Path(temp_directory_name) / (filename.name + "-diff.png")
+
+				if args.verbose:
+					print(f"\tProcessing new {filename.name} ...\n", end="", flush=True)
 
 				# Path arguments must be cast to string for Windows compatibility.
 				subprocess.run([str(firefox_path), "--screenshot", str(file_new_screenshot_path), str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
@@ -132,7 +141,7 @@ def compare_versions() -> int:
 							diff.putpixel((image_x, image_y), (255, 0, 0, 255)) # Change the mask color to red
 
 				if has_difference:
-					print("{}Difference in {}\n".format("\t" if args.verbose else "", filename), end="", flush=True)
+					files_with_differences.add(filename.name)
 
 					if args.copy_images:
 						try:
@@ -143,9 +152,26 @@ def compare_versions() -> int:
 							shutil.copy(file_original_screenshot_path, output_directory)
 
 							original_image.paste(diff.convert("RGB"), mask=diff)
-							original_image.save(file_diff_screenshot_path / (file_path.name + "-diff.png"))
+							original_image.save(file_diff_screenshot_path / (filename.name + "-diff.png"))
 
 						except Exception:
 							pass
+
+			for filename in se.natural_sort(list(files_with_differences)):
+				print("{}Difference in {}\n".format("\t" if args.verbose else "", filename), end="", flush=True)
+
+			if args.copy_imags:
+				# Generate an HTML file with diffs side by side
+				html = ""
+
+				for filename in se.natural_sort(list(files_with_differences)):
+					html += f"\t\t<section>\n\t\t\t<h1>{filename}</h1>\n\t\t\t<img src=\"{filename}-original.png\">\n\t\t\t<img src=\"{filename}-new.png\">\n\t\t</section>\n"
+
+				with importlib_resources.open_text("se.data.templates", "diff-template.html", encoding="utf-8") as file:
+					html = file.read().replace("<!--se:sections-->", html.strip())
+
+				with open(output_directory / "diff.html", "w") as file:
+					file.write(html)
+					file.truncate()
 
 	return 0
