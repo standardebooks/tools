@@ -292,19 +292,3 @@ def get_xhtml_language(xhtml: str) -> str:
 		raise InvalidLanguageException("No valid xml:lang attribute in <html> root. Only {} are supported.".format(", ".join(supported_languages[:-1]) + ", and " + supported_languages[-1]))
 
 	return language
-
-def get_firefox_path() -> Path:
-	"""
-	Get the path to the local Firefox binary
-	"""
-
-	which_firefox = shutil.which("firefox")
-	if which_firefox:
-		firefox_path = Path(which_firefox)
-	else:
-		# Look for default mac Firefox.app path if none found in path
-		firefox_path = Path("/Applications/Firefox.app/Contents/MacOS/firefox")
-		if not firefox_path.exists():
-			raise MissingDependencyException("Couldn’t locate firefox. Is it installed?")
-
-	return firefox_path

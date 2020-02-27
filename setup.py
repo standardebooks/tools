@@ -73,6 +73,7 @@ setup(
         "regex==2017.7.26",
         "requests==2.22.0",
         "roman==3.2.0",
+        "selenium==3.141.0",
         "smartypants==2.0.1",
         "termcolor==1.1.0",
         "terminaltables==3.1.0",

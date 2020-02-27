@@ -17,12 +17,14 @@ from hashlib import sha1
 from pathlib import Path
 from typing import List
 import importlib_resources
+
 import lxml.cssselect
 import lxml.etree as etree
 import regex
 from bs4 import BeautifulSoup
 from cairosvg import svg2png
 from PIL import Image
+
 import se
 import se.easy_xml
 import se.epub
@@ -31,6 +33,7 @@ import se.images
 import se.typography
 from se.vendor.kobo_touch_extended import kobo
 from se.vendor.mobi import mobi
+
 
 COVER_SVG_WIDTH = 1400
 COVER_SVG_HEIGHT = 2100
@@ -606,6 +609,11 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		# Sort out MathML compatibility
 		has_mathml = "mathml" in metadata_xhtml
 		if has_mathml:
+			# We import this late because we don't want to load selenium if we're not going to use it!
+			from se import browser # pylint: disable=import-outside-toplevel
+
+			driver = browser.initialize_selenium_firefox_webdriver()
+
 			mathml_count = 1
 			for root, _, filenames in os.walk(work_epub_root_directory):
 				for filename in filenames:
@@ -650,7 +658,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 									# Did we succeed? Is there any more MathML in our string?
 									if regex.findall("</?(?:m:)?m", processed_line):
 										# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
-										se.images.render_mathml_to_png(regex.sub(r"<(/?)m:", "<\\1", line), work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png")
+										se.images.render_mathml_to_png(driver, regex.sub(r"<(/?)m:", "<\\1", line), work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png")
 
 										processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}.png\" />")
 										mathml_count = mathml_count + 1

@@ -6,54 +6,44 @@ import argparse
 import fnmatch
 import os
 import shutil
-import subprocess
 import tempfile
 from pathlib import Path
 
 import importlib_resources
 import git
 from PIL import Image, ImageChops
-import psutil
 
 import se
-
+import se.browser
 
 def _resize_canvas(image: Image, new_width: int, new_height: int) -> Image:
 	"""
 	Expand an image's canvas with black, to the new height and width.
 	"""
 	temp_image = Image.new("RGBA", (new_width, new_height), (0, 0, 0, 255))
-	temp_image.paste(image, (0, new_height))
+	temp_image.paste(image, (0, 0))
 
 	return temp_image
 
 def compare_versions() -> int:
 	"""
 	Entry point for `se compare-versions`
-
-	WARNING: Firefox hangs when taking a screenshot on FF 69+, so this command is effectively broken until FF fixes the bug.
-	See https://bugzilla.mozilla.org/show_bug.cgi?id=1589978
 	"""
 
-	parser = argparse.ArgumentParser(description="Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, place screenshots of the new, original, and diff (if available) renderings in the current working directory. Diff renderings may not be available if the two renderings differ in dimensions. A file called diff.html is created to allow for side-by-side comparisons of original and new files. WARNING: DO NOT START FIREFOX WHILE THIS PROGRAM IS RUNNING!")
+	parser = argparse.ArgumentParser(description="Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, place screenshots of the new, original, and diff (if available) renderings in the current working directory. Diff renderings may not be available if the two renderings differ in dimensions. A file called diff.html is created to allow for side-by-side comparisons of original and new files.")
 	parser.add_argument("-i", "--include-common", dest="include_common_files", action="store_true", help="include commonly-excluded SE files like imprint, titlepage, and colophon")
 	parser.add_argument("-n", "--no-images", dest="copy_images", action="store_false", help="don’t create images of diffs")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="a directory containing XHTML files")
 	args = parser.parse_args()
 
-	# Check for some required tools.
 	try:
-		firefox_path = se.get_firefox_path()
-	except Exception:
-		se.print_error("Couldn’t locate firefox. Is it installed?")
-		return se.MissingDependencyException.code
+		driver = se.browser.initialize_selenium_firefox_webdriver()
+	except se.MissingDependencyException as ex:
+		se.print_error(ex)
+		return ex.code
 
-	# Firefox won't start in headless mode if there is another Firefox process running; check that here.
-	if "firefox" in (p.name() for p in psutil.process_iter()):
-		se.print_error("Firefox is required, but it’s currently running. Stop all instances of Firefox and try again.")
-		return se.FirefoxRunningException.code
-
+	# Ready to go!
 	for target in args.targets:
 		target = Path(target).resolve()
 
@@ -87,8 +77,9 @@ def compare_versions() -> int:
 				if args.verbose:
 					print(f"\tProcessing original {filename.name} ...\n", end="", flush=True)
 
-				# Path arguments must be cast to string for Windows compatibility.
-				subprocess.run([str(firefox_path), "--screenshot", f"{temp_directory_name}/{filename.name}-original.png", str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+				driver.get(f"file://{filename}")
+				# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
+				driver.find_element_by_tag_name("html").screenshot(f"{temp_directory_name}/{filename.name}-original.png")
 
 			# Pop the stash
 			git_command.stash("pop")
@@ -100,13 +91,13 @@ def compare_versions() -> int:
 				filename = Path(filename)
 				file_new_screenshot_path = Path(temp_directory_name) / (filename.name + "-new.png")
 				file_original_screenshot_path = Path(temp_directory_name) / (filename.name + "-original.png")
-				file_diff_screenshot_path = Path(temp_directory_name) / (filename.name + "-diff.png")
 
 				if args.verbose:
 					print(f"\tProcessing new {filename.name} ...\n", end="", flush=True)
 
-				# Path arguments must be cast to string for Windows compatibility.
-				subprocess.run([str(firefox_path), "--screenshot", str(file_new_screenshot_path), str(filename)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+				driver.get(f"file://{filename}")
+				# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
+				driver.find_element_by_tag_name("html").screenshot(str(file_new_screenshot_path))
 
 				has_difference = False
 				original_image = Image.open(file_original_screenshot_path)
@@ -114,20 +105,24 @@ def compare_versions() -> int:
 
 				# Make sure the original and new images are the same size.
 				# If they're not, add pixels in either direction until they match.
-				original_height, original_width = original_image.size
-				new_height, new_width = new_image.size
+				original_width, original_height = original_image.size
+				new_width, new_height = new_image.size
 
 				if original_height > new_height:
 					new_image = _resize_canvas(new_image, new_width, original_height)
+					new_image.save(file_new_screenshot_path)
 
 				if original_width > new_width:
 					new_image = _resize_canvas(new_image, original_width, new_height)
+					new_image.save(file_new_screenshot_path)
 
 				if new_height > original_height:
 					original_image = _resize_canvas(original_image, original_width, new_height)
+					original_image.save(file_original_screenshot_path)
 
 				if new_width > original_width:
 					original_image = _resize_canvas(original_image, new_width, original_height)
+					original_image.save(file_original_screenshot_path)
 
 				# Now get the diff
 				diff = ImageChops.difference(original_image, new_image)
@@ -152,7 +147,7 @@ def compare_versions() -> int:
 							shutil.copy(file_original_screenshot_path, output_directory)
 
 							original_image.paste(diff.convert("RGB"), mask=diff)
-							original_image.save(file_diff_screenshot_path / (filename.name + "-diff.png"))
+							original_image.save(output_directory / (filename.name + "-diff.png"))
 
 						except Exception:
 							pass
@@ -160,7 +155,7 @@ def compare_versions() -> int:
 			for filename in se.natural_sort(list(files_with_differences)):
 				print("{}Difference in {}\n".format("\t" if args.verbose else "", filename), end="", flush=True)
 
-			if args.copy_imags:
+			if args.copy_images:
 				# Generate an HTML file with diffs side by side
 				html = ""
 

@@ -3,12 +3,12 @@
 Defines various functions useful for image processing tasks common to epubs.
 """
 
-import subprocess
 from pathlib import Path
 import tempfile
+
 import regex
-import psutil
 from PIL import Image, ImageMath
+
 import se
 import se.formatting
 
@@ -100,11 +100,13 @@ def _color_to_alpha(image: Image, color=None) -> Image:
 
 	return new_image
 
-def render_mathml_to_png(mathml: str, output_filename: Path) -> None:
+# Note: We can't type hint driver, because we conditionally import selenium for performance reasons
+def render_mathml_to_png(driver, mathml: str, output_filename: Path) -> None:
 	"""
 	Render a string of MathML into a transparent PNG file.
 
 	INPUTS
+	driver: A Selenium webdriver, usually initialized from se.browser.initialize_selenium_firefox_webdriver
 	mathml: A string of MathML
 	output_filename: A filename to store PNG output to
 
@@ -112,17 +114,14 @@ def render_mathml_to_png(mathml: str, output_filename: Path) -> None:
 	None.
 	"""
 
-	firefox_path = se.get_firefox_path()
-
-	if "firefox" in (p.name() for p in psutil.process_iter()):
-		raise se.FirefoxRunningException("Firefox is required to render MathML, but it’s currently running. Stop all instances of Firefox and try again.")
-
 	with tempfile.NamedTemporaryFile(mode="w+") as mathml_file:
 		with tempfile.NamedTemporaryFile(mode="w+", suffix=".png") as png_file:
 			mathml_file.write(f"<!doctype html><html><head><meta charset=\"utf-8\"><title>MathML fragment</title></head><body>{mathml}</body></html>")
 			mathml_file.seek(0)
 
-			subprocess.call([firefox_path, "--screenshot", png_file.name, f"file://{mathml_file.name}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+			driver.get(f"file://{mathml_file.name}")
+			# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
+			driver.find_element_by_tag_name("html").screenshot(png_file.name)
 
 			image = Image.open(png_file.name)
 			image = _color_to_alpha(image, (255, 255, 255, 255))
