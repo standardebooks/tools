@@ -3,6 +3,7 @@ This module implements the `se extract_ebook` command.
 """
 
 import argparse
+from os import path
 import sys
 import zipfile
 from io import BytesIO, TextIOWrapper
@@ -60,6 +61,10 @@ def extract_ebook() -> int:
 
 		if args.verbose:
 			print(f"Processing {target} ...", end="", flush=True)
+
+		if not path.isfile(target):
+			se.print_error(f"Not a file: {target}")
+			return se.InvalidInputException.code
 
 		if args.output_dir is None:
 			extracted_path = Path(target.name + ".extracted")
