@@ -398,7 +398,7 @@ def lint(self, metadata_xhtml) -> list:
 
 					# Check if we forgot to fill any variable slots
 					for variable in COLOPHON_VARIABLES:
-						if variable in file_contents:
+						if regex.search(fr"\b{variable}\b", file_contents):
 							messages.append(LintMessage(f"Missing data in colophon: {variable}", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Are the sources represented correctly?
