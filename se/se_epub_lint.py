@@ -992,6 +992,11 @@ def lint(self, metadata_xhtml) -> list:
 					if matches:
 						messages.append(LintMessage("Illegal asterism (`***`) detected. Section/scene breaks must be defined by an `<hr/>` element.", se.MESSAGE_TYPE_ERROR, filename))
 
+					# Check for missing punctuation before closing quotes
+					matches = regex.findall(r"[a-z]+[”’]</p>", file_contents, flags=regex.IGNORECASE)
+					if matches:
+						messages.append(LintMessage("Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
 					# Check for space before endnote backlinks
 					if filename == "endnotes.xhtml":
 						# Do we have to replace Ibid.?
