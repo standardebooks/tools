@@ -990,7 +990,7 @@ def lint(self, metadata_xhtml) -> list:
 					# Check for leftover asterisms
 					matches = regex.findall(r"<[a-z]+[^>]*?>\s*\*\s*(\*\s*)+", file_contents, flags=regex.DOTALL)
 					if matches:
-						messages.append(LintMessage("Illegal asterism (***) detected. Section/scene breaks must be defined by an <hr/> element.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("Illegal asterism (`***`) detected. Section/scene breaks must be defined by an `<hr/>` element.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for space before endnote backlinks
 					if filename == "endnotes.xhtml":
