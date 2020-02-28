@@ -841,7 +841,7 @@ def lint(self, metadata_xhtml) -> list:
 					matches = regex.findall(r"‘[^“’]+?‘", file_contents)
 					matches = [x for x in matches if "</p" not in x and "<br/>" not in x]
 					if matches:
-						messages.append(LintMessage("`‘` missing mathcing `’`.", se.MESSAGE_TYPE_WARNING, filename, matches))
+						messages.append(LintMessage("`‘` missing matching `’`.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for IDs on <h#> tags
 					matches = regex.findall(r"<h[0-6][^>]*?id=[^>]*?>", file_contents, flags=regex.DOTALL)
