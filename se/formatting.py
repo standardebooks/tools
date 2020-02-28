@@ -341,6 +341,7 @@ def format_xhtml_file(filename: Path, single_lines: bool = False, is_metadata_fi
 	OUTPUTS
 	None.
 	"""
+
 	with open(filename, "r+", encoding="utf-8") as file:
 		xhtml = file.read()
 
@@ -493,7 +494,7 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 
 	return xhtml
 
-def _format_css_component_list(content: list, in_paren_block=False) -> str:
+def _format_css_component_list(content: list, in_selector=False, in_paren_block=False) -> str:
 	"""
 	Helper function for CSS formatting that formats a series of CSS components, like the individual parts of a selector.
 
@@ -503,6 +504,7 @@ def _format_css_component_list(content: list, in_paren_block=False) -> str:
 	OUTPUTS
 	A string of formatted CSS
 	"""
+
 	output = ""
 
 	for token in content:
@@ -515,8 +517,10 @@ def _format_css_component_list(content: list, in_paren_block=False) -> str:
 		if token.type == "literal":
 			if token.value == ":" and in_paren_block:
 				output += token.value + " "
-			elif token.value == ";" or token.value == ",":
+			elif token.value == ";":
 				output = output.rstrip() + token.value + (" " if in_paren_block else "\n")
+			elif token.value == ",":
+				output = output.rstrip() + token.value + (" " if in_paren_block or not in_selector else "\n")
 			elif token.value == "=":
 				# >= and <= should be surrounded by spaces, but they aren't recognized as separate tokens in tinycss2 yet. These are typically
 				# used in media queries.
@@ -548,7 +552,10 @@ def _format_css_component_list(content: list, in_paren_block=False) -> str:
 			output += token.representation
 
 		if token.type == "function":
-			output += token.name + "(" + _format_css_component_list(token.arguments, True) + ")"
+			output += token.name + "(" + _format_css_component_list(token.arguments, in_selector, True) + ")"
+
+		if token.type == "url":
+			output += "url(\"" + token.value + "\")"
 
 		if token.type == "percentage":
 			if token.representation == "0":
@@ -566,10 +573,10 @@ def _format_css_component_list(content: list, in_paren_block=False) -> str:
 			output += "\"" + token.value + "\""
 
 		if token.type == "() block":
-			output += "(" + _format_css_component_list(token.content, True) + ")"
+			output += "(" + _format_css_component_list(token.content, in_selector, True) + ")"
 
 		if token.type == "[] block":
-			output += "[" + _format_css_component_list(token.content, True) + "]"
+			output += "[" + _format_css_component_list(token.content, in_selector, True) + "]"
 
 	# Collapse multiple spaces, and spaces at the start of lines
 	output = regex.sub(r" +", " ", output)
@@ -595,6 +602,7 @@ def _format_css_rules(content: list, indent_level: int) -> str:
 	OUTPUTS
 	A string of formatted CSS
 	"""
+
 	output = ""
 
 	for token in tinycss2.parse_rule_list(content):
@@ -602,7 +610,7 @@ def _format_css_rules(content: list, indent_level: int) -> str:
 			raise se.InvalidCssException(token.message)
 
 		if token.type == "qualified-rule":
-			output += ("\t" * indent_level) + _format_css_component_list(token.prelude).replace("\n", "\n" + ("\t" * indent_level)) + "{\n" + _format_css_declarations(token.content, indent_level + 1) + "\n" + ("\t" * indent_level) + "}\n\n"
+			output += ("\t" * indent_level) + _format_css_component_list(token.prelude, True).replace("\n", "\n" + ("\t" * indent_level)) + "{\n" + _format_css_declarations(token.content, indent_level + 1) + "\n" + ("\t" * indent_level) + "}\n\n"
 
 		if token.type == "at-rule":
 			output += ("\t" * indent_level) + "@" + token.lower_at_keyword + " " + _format_css_component_list(token.prelude, True).replace("\n", " ") + "{\n" + _format_css_rules(token.content, indent_level + 1) + "\n" + ("\t" * indent_level) + "}\n\n"
@@ -629,6 +637,7 @@ def _format_css_declarations(content: list, indent_level: int) -> str:
 	OUTPUTS
 	A string of formatted CSS
 	"""
+
 	output = ""
 
 	for token in tinycss2.parse_declaration_list(content):
@@ -673,16 +682,19 @@ def format_css(css: str) -> str:
 			raise se.InvalidCssException(token.message)
 
 		if token.type == "at-rule":
-			# These two (should) occur at the head of the CSS.
+			# These three (should) occur at the head of the CSS.
 			if token.lower_at_keyword == "charset":
 				css_header += "@" + token.lower_at_keyword + " \"" + token.prelude[1].value.lower() + "\";\n"
 
 			if token.lower_at_keyword == "namespace":
 				css_header += "@" + token.lower_at_keyword + " " + token.prelude[1].value + " \"" + token.prelude[3].value + "\";\n"
 
-			# Unlike the previous two, these occur in the CSS body.
+			if token.lower_at_keyword == "font-face":
+				css_header += "\n@" + token.lower_at_keyword + "{\n" + _format_css_declarations(token.content, 1) + "\n}\n"
+
+			# Unlike the previous items, these occur in the CSS body.
 			if token.lower_at_keyword == "supports":
-				css_body += "@" + token.lower_at_keyword + _format_css_component_list(token.prelude, True) + "{\n" + _format_css_rules(token.content, 1) + "\n}\n\n"
+				css_body += "@" + token.lower_at_keyword + _format_css_component_list(token.prelude, False, True) + "{\n" + _format_css_rules(token.content, 1) + "\n}\n\n"
 
 			if token.lower_at_keyword == "media":
 				css_body += "@" + token.lower_at_keyword + " " + _format_css_component_list(token.prelude).replace("\n", " ", True) + "{\n" + _format_css_rules(token.content, 1) + "\n}\n\n"
@@ -691,7 +703,9 @@ def format_css(css: str) -> str:
 		# tinycss2 differentiates between selectors and their rules that are at the top level,
 		# and selectors and rules in nested blocks (like @supports).
 		if token.type == "qualified-rule":
-			css_body += _format_css_component_list(token.prelude) + "{\n" + _format_css_declarations(token.content, 1) + "\n}\n\n"
+			if _format_css_component_list(token.prelude) == ".blackletter":
+				print(token.content)
+			css_body += _format_css_component_list(token.prelude, True) + "{\n" + _format_css_declarations(token.content, 1) + "\n}\n\n"
 
 		if token.type == "comment":
 			# House style: If the comment starts with /* End, then attach it to the previous block
