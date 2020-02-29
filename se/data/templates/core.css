@@ -97,7 +97,7 @@ section[epub|type~="titlepage"] img{
 
 a[epub|type~="noteref"]{
 	font-size: .75em;
-	font-style: normal;
+	font-style: normal !important;
 	vertical-align: super;
 }
 
