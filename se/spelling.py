@@ -247,6 +247,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Kk])idnaping\b", r"\1idnapping", xhtml)			# kidnaping -> kidnapping
 	xhtml = regex.sub(r"\bQuixotic\b", r"quixotic", xhtml)				# Quixotic -> quixotic
 	xhtml = regex.sub(r"([^a-z]’[Tt])\s(is|were|was)\b", r"\1\2", xhtml)		# 't is, 't was, 't were -> 'tis, 'twas, 'twere
+	xhtml = regex.sub(r"\b([Uu])p stairs\b", r"\1pstairs", xhtml)			# up stairs -> upstairs
+	xhtml = regex.sub(r"\b([Dd])own stairs\b", r"\1ownstairs", xhtml)		# down stairs -> downstairs
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
