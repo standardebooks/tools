@@ -703,8 +703,6 @@ def format_css(css: str) -> str:
 		# tinycss2 differentiates between selectors and their rules that are at the top level,
 		# and selectors and rules in nested blocks (like @supports).
 		if token.type == "qualified-rule":
-			if _format_css_component_list(token.prelude) == ".blackletter":
-				print(token.content)
 			css_body += _format_css_component_list(token.prelude, True) + "{\n" + _format_css_declarations(token.content, 1) + "\n}\n\n"
 
 		if token.type == "comment":
