@@ -96,6 +96,7 @@ These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 rele
 	```shell
 	py3-pip--
 	py3-virtualenv--
+	py3-gitdb--
 	libxml--
 	jdk--%11
 	inkscape--
