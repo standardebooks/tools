@@ -86,6 +86,9 @@ These instructions were tested on macOS 10.12 to 10.15.
 
 	# Install required fonts.
 	cp $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/data/fonts/*/*.otf ~/Library/Fonts/
+
+	# Optional: Fish users can install tab completion.
+	ln -s "$HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se" "$HOME/.config/fish/completions/se.fish"
 	```
 ## OpenBSD 6.6 Users
 
