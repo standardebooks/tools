@@ -127,7 +127,7 @@ def natural_sort(list_to_sort: list) -> list:
 	"""
 
 	convert = lambda text: int(text) if text.isdigit() else text.lower()
-	alphanum_key = lambda key: [convert(c) for c in regex.split("([0-9]+)", key)]
+	alphanum_key = lambda key: [convert(c) for c in regex.split("([0-9]+)", str(key))]
 
 	return sorted(list_to_sort, key=alphanum_key)
 
@@ -272,7 +272,7 @@ def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filen
 			if target.name.endswith(allowed_extensions):
 				target_xhtml_filenames.add(target)
 
-	return target_xhtml_filenames
+	return natural_sort(target_xhtml_filenames)
 
 def get_xhtml_language(xhtml: str) -> str:
 	"""
