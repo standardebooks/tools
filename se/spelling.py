@@ -81,6 +81,9 @@ def detect_problem_spellings(xhtml: str) -> list:
 	if regex.search(r"\bcommon[\-\s]?sense\b", xhtml):
 		output.append("“commonsense” or “common sense” or “common-sense” detected. Confirm that “common sense” and “common-sense” are strictly nouns, and that “commonsense” is strictly an adjective.")
 
+	if regex.search(r"\bmann?ikin\b", xhtml):
+		output.append("“mannikin” or “manikin” detected. Confirm that “mannikin” is used in the sense of a small person, and “mannequin” is used in the sense of a dummy or figure.")
+
 	return output
 
 def modernize_spelling(xhtml: str) -> str:
