@@ -29,15 +29,19 @@ cp $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/data/fo
 
 # Refresh the local font cache.
 sudo fc-cache -f
+```
 
-# Optional: ZSH users can install tab completion.
+### Optional: Install shell completions
+
+```shell
+# Install ZSH completions.
 sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
 
-# Optional: Bash users can install tab completion.
+# Install Bash completions.
 sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completion/completions/se
 
-# Optional: Fish users can install tab completion.
-sudo ln -s "$HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se" "$HOME/.config/fish/completions/se.fish"
+# Install Fish completions.
+sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 ```
 
 ## Fedora users
@@ -56,12 +60,19 @@ pipx install standardebooks
 # Install required fonts.
 mkdir -p $HOME/.local/share/fonts/
 cp $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/data/fonts/*/*.otf $HOME/.local/share/fonts/
+```
 
-# Optional: ZSH users can install tab completion.
+### Optional: Install shell completions
+
+```shell
+# Install ZSH completions.
 sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
 
-# Optional: Bash users can install tab completion.
+# Install Bash completions.
 sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completion/completions/se
+
+# Install Fish completions.
+sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 ```
 
 ## macOS users (up to macOS 10.15)
@@ -91,7 +102,7 @@ These instructions were tested on macOS 10.12 to 10.15.
 	cp $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/data/fonts/*/*.otf ~/Library/Fonts/
 
 	# Optional: Fish users can install tab completion.
-	ln -s "$HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se" "$HOME/.config/fish/completions/se.fish"
+	ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 	```
 ## OpenBSD 6.6 Users
 
