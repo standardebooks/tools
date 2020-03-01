@@ -1,6 +1,6 @@
 function __fish_se_no_subcommand --description "Test if se has yet to be given the subcommand"
 	for i in (commandline -opc)
-		if contains -- $i british2american build build-images clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-sr lintmake-url-safe modernize-spelling prepare-release print-manifest-and-spine print-toc recompose-epub renumber-endnotes reorder-endnotes roman2dec semanticate split-file titlecase typogrify unicode-names version word-count
+		if contains -- $i british2american build build-images clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-sr lint make-url-safe modernize-spelling prepare-release print-manifest-and-spine print-toc recompose-epub renumber-endnotes reorder-endnotes roman2dec semanticate split-file titlecase typogrify unicode-names version word-count
 			return 1
 		end
 	end
