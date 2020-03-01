@@ -671,6 +671,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 								file.write(processed_xhtml)
 								file.truncate()
 
+			driver.quit()
+
 		# Include epub2 cover metadata
 		cover_id = metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@id")[0].replace(".svg", ".jpg")
 		metadata_xhtml = regex.sub(r"(<metadata[^>]+?>)", f"\\1\n\t\t<meta content=\"{cover_id}\" name=\"cover\" />", metadata_xhtml)

@@ -169,4 +169,6 @@ def compare_versions() -> int:
 					file.write(html)
 					file.truncate()
 
+	driver.quit()
+
 	return 0
