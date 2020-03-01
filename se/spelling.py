@@ -29,7 +29,9 @@ def modernize_hyphenation(xhtml: str) -> str:
 	# Easy fix for a common case
 	xhtml = regex.sub(r"\b([Nn])ow-a-days\b", r"\1owadays", xhtml)	# now-a-days -> nowadays
 
-	result = regex.findall(r"\b[^\W\d_]+\-[^\W\d_]+\b", xhtml)
+	# The non-capturing group at the beginning tries to prevent
+	# bad matches like stag's-horn -> stag'shorn or dog's-eared -> dog'seared
+	result = regex.findall(r"(?:[^’\'])\b[^\W\d_]+\-[^\W\d_]+\b", xhtml)
 
 	for word in set(result): # set() removes duplicates
 		new_word = word.replace("-", "").lower()
@@ -42,7 +44,6 @@ def modernize_hyphenation(xhtml: str) -> str:
 
 	# Quick fix for a common error cases
 	xhtml = xhtml.replace("z3998:nonfiction", "z3998:non-fiction")
-	xhtml = regex.sub(r"\b([Dd])og’seared", r"\1og’s-eared", xhtml)
 	xhtml = regex.sub(r"\b([Mm])anat-arms", r"\1an-at-arms", xhtml)
 	xhtml = regex.sub(r"\b([Tt])abled’hôte", r"\1able-d’hôte", xhtml)
 
