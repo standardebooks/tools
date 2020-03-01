@@ -236,7 +236,7 @@ def is_positive_integer(value: str) -> int:
 
 	return int_value
 
-def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filenames: list = None) -> Set[Path]:
+def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filenames: list = None) -> list:
 	"""
 	Helper function to convert a list of filenames or directories into a list of filenames based on some parameters.
 
@@ -272,7 +272,7 @@ def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filen
 			if target.name.endswith(allowed_extensions):
 				target_xhtml_filenames.add(target)
 
-	return natural_sort(target_xhtml_filenames)
+	return natural_sort(list(target_xhtml_filenames))
 
 def get_xhtml_language(xhtml: str) -> str:
 	"""
