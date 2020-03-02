@@ -214,6 +214,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Remove periods after pounds if followed by shillings
 	xhtml = regex.sub(r"£([0-9]+)\.? ([0-9]+)s\.?", r"£\1 \2s.", xhtml)
 
+	# Remove periods from O.K. (also, it is not an abbreviation)
+	xhtml = regex.sub(r"O\.K\.", r"OK", xhtml)
+
 	return xhtml
 
 def hyphenate_file(filename: Path, language: Optional[str], ignore_h_tags: bool = False) -> None:
