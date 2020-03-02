@@ -190,7 +190,7 @@ def compare_versions() -> int:
 		try:
 			driver.quit()
 		except Exception:
-			# We might get here if we ctrl + c befor selenium has finished initializing the driver
+			# We might get here if we ctrl + c before selenium has finished initializing the driver
 			pass
 
 	return 0

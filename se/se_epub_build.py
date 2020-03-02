@@ -681,7 +681,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 				try:
 					driver.quit()
 				except Exception:
-					# We might get here if we ctrl + c befor selenium has finished initializing the driver
+					# We might get here if we ctrl + c before selenium has finished initializing the driver
 					pass
 
 		# Include epub2 cover metadata
