@@ -32,9 +32,13 @@ def initialize_selenium_firefox_webdriver() -> webdriver:
 	options = webdriver.FirefoxOptions()
 	options.add_argument("--headless")
 
-	# Disable the history, because otherwise links to (for example to endnotes) may appear as "visited" in visits to other pages, and thus cause a fake diff
+	# Disable the history, because otherwise links to (for example to end notes) may appear as "visited" in visits to other pages, and thus cause a fake diff
 	profile = webdriver.FirefoxProfile()
 	profile.set_preference("places.history.enabled", False)
+	profile.set_preference("browser.cache.disk.enable", False)
+	profile.set_preference("browser.cache.memory.enable", False)
+	profile.set_preference("browser.cache.offline.enable", False)
+	profile.set_preference("browser.http.use-cache", False)
 
 	try:
 		driver = webdriver.Firefox(firefox_profile=profile, firefox_options=options, service_log_path=os.devnull)

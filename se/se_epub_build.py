@@ -612,66 +612,77 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			# We import this late because we don't want to load selenium if we're not going to use it!
 			from se import browser # pylint: disable=import-outside-toplevel
 
-			driver = browser.initialize_selenium_firefox_webdriver()
+			# We wrap this whole thing in a try block, because we need to call
+			# driver.quit() if execution is interrupted (like by ctrl + c, or by an unhandled exception). If we don't call driver.quit(),
+			# Firefox will stay around as a zombie process even if the Python script is dead.
+			try:
+				driver = browser.initialize_selenium_firefox_webdriver()
 
-			mathml_count = 1
-			for root, _, filenames in os.walk(work_epub_root_directory):
-				for filename in filenames:
-					if filename.lower().endswith(".xhtml"):
-						with open(Path(root) / filename, "r+", encoding="utf-8") as file:
-							xhtml = file.read()
-							processed_xhtml = xhtml
-							replaced_mathml: List[str] = []
+				mathml_count = 1
+				for root, _, filenames in os.walk(work_epub_root_directory):
+					for filename in filenames:
+						if filename.lower().endswith(".xhtml"):
+							with open(Path(root) / filename, "r+", encoding="utf-8") as file:
+								xhtml = file.read()
+								processed_xhtml = xhtml
+								replaced_mathml: List[str] = []
 
-							# Check if there's MathML we want to convert
-							# We take a naive approach and use some regexes to try to simplify simple MathML expressions.
-							# For each MathML expression, if our round of regexes finishes and there is still MathML in the processed result, we abandon the attempt and render to PNG using Firefox.
-							for line in regex.findall(r"<(?:m:)math[^>]*?>(?:.+?)</(?:m:)math>", processed_xhtml, flags=regex.DOTALL):
-								if line not in replaced_mathml:
-									replaced_mathml.append(line) # Store converted lines to save time in case we have multiple instances of the same MathML
-									mathml_tree = se.easy_xml.EasyXmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?>{}".format(regex.sub(r"<(/?)m:", "<\\1", line)))
-									processed_line = line
+								# Check if there's MathML we want to convert
+								# We take a naive approach and use some regexes to try to simplify simple MathML expressions.
+								# For each MathML expression, if our round of regexes finishes and there is still MathML in the processed result, we abandon the attempt and render to PNG using Firefox.
+								for line in regex.findall(r"<(?:m:)math[^>]*?>(?:.+?)</(?:m:)math>", processed_xhtml, flags=regex.DOTALL):
+									if line not in replaced_mathml:
+										replaced_mathml.append(line) # Store converted lines to save time in case we have multiple instances of the same MathML
+										mathml_tree = se.easy_xml.EasyXmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?>{}".format(regex.sub(r"<(/?)m:", "<\\1", line)))
+										processed_line = line
 
-									# If the mfenced element has more than one child, they are separated by commas when rendered.
-									# This is too complex for our naive regexes to work around. So, if there is an mfenced element with more than one child, abandon the attempt.
-									if not mathml_tree.css_select("mfenced > * + *"):
-										processed_line = regex.sub(r"</?(?:m:)?math[^>]*?>", "", processed_line)
-										processed_line = regex.sub(r"<!--.+?-->", "", processed_line)
-										processed_line = regex.sub(r"<(?:m:)?mfenced/>", "()", processed_line)
-										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi)>(.+?)</\3><((?:m:)?mi)>(.+?)</\5></\1>", "<i>\\4</i><\\2><i>\\6</i></\\2>", processed_line)
-										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi)>(.+?)</\3><((?:m:)?mn)>(.+?)</\5></\1>", "<i>\\4</i><\\2>\\6</\\2>", processed_line)
-										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mn)>(.+?)</\3><((?:m:)?mn)>(.+?)</\5></\1>", "\\4<\\2>\\6</\\2>", processed_line)
-										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mn)>(.+?)</\3><((?:m:)?mi)>(.+?)</\5></\1>", "\\4<\\2><i>\\6</i></\\2>", processed_line)
-										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi) mathvariant=\"normal\">(.+?)</\3><((?:m:)?mi)>(.+?)</\5></\1>", "\\4<\\2><i>\\6</i></\\2>", processed_line)
-										processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi) mathvariant=\"normal\">(.+?)</\3><((?:m:)?mn)>(.+?)</\5></\1>", "\\4<\\2>\\6</\\2>", processed_line)
-										processed_line = regex.sub(fr"<(?:m:)?mo>{se.FUNCTION_APPLICATION}</(?:m:)?mo>", "", processed_line, flags=regex.IGNORECASE) # The ignore case flag is required to match here with the special FUNCTION_APPLICATION character, it's unclear why
-										processed_line = regex.sub(r"<(?:m:)?mfenced><((?:m:)(?:mo|mi|mn|mrow))>(.+?)</\1></(?:m:)?mfenced>", "(<\\1>\\2</\\1>)", processed_line)
-										processed_line = regex.sub(r"<(?:m:)?mrow>([^>].+?)</(?:m:)?mrow>", "\\1", processed_line)
-										processed_line = regex.sub(r"<(?:m:)?mi>([^<]+?)</(?:m:)?mi>", "<i>\\1</i>", processed_line)
-										processed_line = regex.sub(r"<(?:m:)?mi mathvariant=\"normal\">([^<]+?)</(?:m:)?mi>", "\\1", processed_line)
-										processed_line = regex.sub(r"<(?:m:)?mo>([+\-−=×])</(?:m:)?mo>", " \\1 ", processed_line)
-										processed_line = regex.sub(r"<((?:m:)?m[no])>(.+?)</\1>", "\\2", processed_line)
-										processed_line = regex.sub(r"</?(?:m:)?mrow>", "", processed_line)
-										processed_line = processed_line.strip()
-										processed_line = regex.sub(r"</i><i>", "", processed_line, flags=regex.DOTALL)
+										# If the mfenced element has more than one child, they are separated by commas when rendered.
+										# This is too complex for our naive regexes to work around. So, if there is an mfenced element with more than one child, abandon the attempt.
+										if not mathml_tree.css_select("mfenced > * + *"):
+											processed_line = regex.sub(r"</?(?:m:)?math[^>]*?>", "", processed_line)
+											processed_line = regex.sub(r"<!--.+?-->", "", processed_line)
+											processed_line = regex.sub(r"<(?:m:)?mfenced/>", "()", processed_line)
+											processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi)>(.+?)</\3><((?:m:)?mi)>(.+?)</\5></\1>", "<i>\\4</i><\\2><i>\\6</i></\\2>", processed_line)
+											processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi)>(.+?)</\3><((?:m:)?mn)>(.+?)</\5></\1>", "<i>\\4</i><\\2>\\6</\\2>", processed_line)
+											processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mn)>(.+?)</\3><((?:m:)?mn)>(.+?)</\5></\1>", "\\4<\\2>\\6</\\2>", processed_line)
+											processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mn)>(.+?)</\3><((?:m:)?mi)>(.+?)</\5></\1>", "\\4<\\2><i>\\6</i></\\2>", processed_line)
+											processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi) mathvariant=\"normal\">(.+?)</\3><((?:m:)?mi)>(.+?)</\5></\1>", "\\4<\\2><i>\\6</i></\\2>", processed_line)
+											processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi) mathvariant=\"normal\">(.+?)</\3><((?:m:)?mn)>(.+?)</\5></\1>", "\\4<\\2>\\6</\\2>", processed_line)
+											processed_line = regex.sub(fr"<(?:m:)?mo>{se.FUNCTION_APPLICATION}</(?:m:)?mo>", "", processed_line, flags=regex.IGNORECASE) # The ignore case flag is required to match here with the special FUNCTION_APPLICATION character, it's unclear why
+											processed_line = regex.sub(r"<(?:m:)?mfenced><((?:m:)(?:mo|mi|mn|mrow))>(.+?)</\1></(?:m:)?mfenced>", "(<\\1>\\2</\\1>)", processed_line)
+											processed_line = regex.sub(r"<(?:m:)?mrow>([^>].+?)</(?:m:)?mrow>", "\\1", processed_line)
+											processed_line = regex.sub(r"<(?:m:)?mi>([^<]+?)</(?:m:)?mi>", "<i>\\1</i>", processed_line)
+											processed_line = regex.sub(r"<(?:m:)?mi mathvariant=\"normal\">([^<]+?)</(?:m:)?mi>", "\\1", processed_line)
+											processed_line = regex.sub(r"<(?:m:)?mo>([+\-−=×])</(?:m:)?mo>", " \\1 ", processed_line)
+											processed_line = regex.sub(r"<((?:m:)?m[no])>(.+?)</\1>", "\\2", processed_line)
+											processed_line = regex.sub(r"</?(?:m:)?mrow>", "", processed_line)
+											processed_line = processed_line.strip()
+											processed_line = regex.sub(r"</i><i>", "", processed_line, flags=regex.DOTALL)
 
-									# Did we succeed? Is there any more MathML in our string?
-									if regex.findall("</?(?:m:)?m", processed_line):
-										# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
-										se.images.render_mathml_to_png(driver, regex.sub(r"<(/?)m:", "<\\1", line), work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png")
+										# Did we succeed? Is there any more MathML in our string?
+										if regex.findall("</?(?:m:)?m", processed_line):
+											# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
+											se.images.render_mathml_to_png(driver, regex.sub(r"<(/?)m:", "<\\1", line), work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png")
 
-										processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}.png\" />")
-										mathml_count = mathml_count + 1
-									else:
-										# Success! Replace the MathML with our new string.
-										processed_xhtml = processed_xhtml.replace(line, processed_line)
+											processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}.png\" />")
+											mathml_count = mathml_count + 1
+										else:
+											# Success! Replace the MathML with our new string.
+											processed_xhtml = processed_xhtml.replace(line, processed_line)
 
-							if processed_xhtml != xhtml:
-								file.seek(0)
-								file.write(processed_xhtml)
-								file.truncate()
-
-			driver.quit()
+								if processed_xhtml != xhtml:
+									file.seek(0)
+									file.write(processed_xhtml)
+									file.truncate()
+			except KeyboardInterrupt as ex:
+				# Bubble the exception up, but proceed to `finally` so we quit the driver
+				raise ex
+			finally:
+				try:
+					driver.quit()
+				except Exception:
+					# We might get here if we ctrl + c befor selenium has finished initializing the driver
+					pass
 
 		# Include epub2 cover metadata
 		cover_id = metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@id")[0].replace(".svg", ".jpg")

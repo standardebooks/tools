@@ -3,6 +3,7 @@ This module implements the `se compare-versions` command.
 """
 
 import argparse
+from distutils.dir_util import copy_tree
 import fnmatch
 import os
 import shutil
@@ -15,6 +16,7 @@ from PIL import Image, ImageChops
 
 import se
 import se.browser
+
 
 def _resize_canvas(image: Image, new_width: int, new_height: int) -> Image:
 	"""
@@ -37,139 +39,158 @@ def compare_versions() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="a directory containing XHTML files")
 	args = parser.parse_args()
 
+	# We wrap this whole thing in a try block, because we need to call
+	# driver.quit() if execution is interrupted (like by ctrl + c, or by an unhandled exception). If we don't call driver.quit(),
+	# Firefox will stay around as a zombie process even if the Python script is dead.
 	try:
-		driver = se.browser.initialize_selenium_firefox_webdriver()
-	except se.MissingDependencyException as ex:
-		se.print_error(ex)
-		return ex.code
+		try:
+			driver = se.browser.initialize_selenium_firefox_webdriver()
+		except se.MissingDependencyException as ex:
+			se.print_error(ex)
+			return ex.code
 
-	# Ready to go!
-	for target in args.targets:
-		target = Path(target).resolve()
+		# Ready to go!
+		for target in args.targets:
+			target = Path(target).resolve()
 
-		target_filenames = set()
-		if target.is_dir():
-			for root, _, filenames in os.walk(target):
-				for filename in fnmatch.filter(filenames, "*.xhtml"):
-					if args.include_common_files or filename not in se.IGNORED_FILENAMES:
-						target_filenames.add(Path(root) / filename)
-		else:
-			se.print_error(f"Target must be a directory: {target}")
-			continue
+			if not target.is_dir():
+				se.print_error(f"Target must be a directory: {target}")
+				continue
 
-		if args.verbose:
-			print(f"Processing {target} ...\n", end="", flush=True)
+			if args.verbose:
+				print(f"Processing {target} ...\n", end="", flush=True)
 
-		git_command = git.cmd.Git(target)
+			with tempfile.TemporaryDirectory() as work_directory_name:
+				# Copy the Git repo to a temp folder, so we can stash and pop with impunity.
+				# If we work directly on the real repo, ctrl + c may leave it in a stashed state unexpectedly.
+				# We have to use this function instead of shutil.copytree because shutil.copytree
+				# raises an error if the directory exists, in Python 3.6. Python 3.8+ has an option to ignore that.
+				copy_tree(target, work_directory_name)
 
-		if "nothing to commit" in git_command.status():
-			se.print_error("Repo is clean. This command must be run on a dirty repo.", args.verbose)
-			continue
+				target_filenames = set()
 
-		output_directory = Path("./" + target.name + "_diff-output/")
+				for root, _, filenames in os.walk(work_directory_name):
+					for xhtml_filename in fnmatch.filter(filenames, "*.xhtml"):
+						if args.include_common_files or xhtml_filename not in se.IGNORED_FILENAMES:
+							target_filenames.add(Path(root) / xhtml_filename)
 
-		# Put Git's changes into the stash
-		git_command.stash()
+				git_command = git.cmd.Git(work_directory_name)
 
-		with tempfile.TemporaryDirectory() as temp_directory_name:
-			# Generate screenshots of the pre-change repo
-			for filename in target_filenames:
-				filename = Path(filename)
+				if "nothing to commit" in git_command.status():
+					se.print_error("Repo is clean. This command must be run on a dirty repo.", args.verbose)
+					continue
 
-				if args.verbose:
-					print(f"\tProcessing original {filename.name} ...\n", end="", flush=True)
+				output_directory = Path("./" + target.name + "_diff-output/")
 
-				driver.get(f"file://{filename}")
-				# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
-				driver.find_element_by_tag_name("html").screenshot(f"{temp_directory_name}/{filename.name}-original.png")
+				# Put Git's changes into the stash
+				git_command.stash()
 
-			# Pop the stash
-			git_command.stash("pop")
+				with tempfile.TemporaryDirectory() as temp_directory_name:
+					# Generate screenshots of the pre-change repo
+					for filename in target_filenames:
+						filename = Path(filename)
 
-			files_with_differences = set()
+						if args.verbose:
+							print(f"\tProcessing original {filename.name} ...\n", end="", flush=True)
 
-			# Generate screenshots of the post-change repo, and compare them to the old screenshots
-			for filename in target_filenames:
-				filename = Path(filename)
-				file_new_screenshot_path = Path(temp_directory_name) / (filename.name + "-new.png")
-				file_original_screenshot_path = Path(temp_directory_name) / (filename.name + "-original.png")
+						driver.get(f"file://{filename}")
+						# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
+						driver.find_element_by_tag_name("html").screenshot(f"{temp_directory_name}/{filename.name}-original.png")
 
-				if args.verbose:
-					print(f"\tProcessing new {filename.name} ...\n", end="", flush=True)
+					# Pop the stash
+					git_command.stash("pop")
 
-				driver.get(f"file://{filename}")
-				# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
-				driver.find_element_by_tag_name("html").screenshot(str(file_new_screenshot_path))
+					files_with_differences = set()
 
-				has_difference = False
-				original_image = Image.open(file_original_screenshot_path)
-				new_image = Image.open(file_new_screenshot_path)
+					# Generate screenshots of the post-change repo, and compare them to the old screenshots
+					for filename in target_filenames:
+						filename = Path(filename)
+						file_new_screenshot_path = Path(temp_directory_name) / (filename.name + "-new.png")
+						file_original_screenshot_path = Path(temp_directory_name) / (filename.name + "-original.png")
 
-				# Make sure the original and new images are the same size.
-				# If they're not, add pixels in either direction until they match.
-				original_width, original_height = original_image.size
-				new_width, new_height = new_image.size
+						if args.verbose:
+							print(f"\tProcessing new {filename.name} ...\n", end="", flush=True)
 
-				if original_height > new_height:
-					new_image = _resize_canvas(new_image, new_width, original_height)
-					new_image.save(file_new_screenshot_path)
+						driver.get(f"file://{filename}")
+						# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
+						driver.find_element_by_tag_name("html").screenshot(str(file_new_screenshot_path))
 
-				if original_width > new_width:
-					new_image = _resize_canvas(new_image, original_width, new_height)
-					new_image.save(file_new_screenshot_path)
+						has_difference = False
+						original_image = Image.open(file_original_screenshot_path)
+						new_image = Image.open(file_new_screenshot_path)
 
-				if new_height > original_height:
-					original_image = _resize_canvas(original_image, original_width, new_height)
-					original_image.save(file_original_screenshot_path)
+						# Make sure the original and new images are the same size.
+						# If they're not, add pixels in either direction until they match.
+						original_width, original_height = original_image.size
+						new_width, new_height = new_image.size
 
-				if new_width > original_width:
-					original_image = _resize_canvas(original_image, new_width, original_height)
-					original_image.save(file_original_screenshot_path)
+						if original_height > new_height:
+							new_image = _resize_canvas(new_image, new_width, original_height)
+							new_image.save(file_new_screenshot_path)
 
-				# Now get the diff
-				diff = ImageChops.difference(original_image, new_image)
+						if original_width > new_width:
+							new_image = _resize_canvas(new_image, original_width, new_height)
+							new_image.save(file_new_screenshot_path)
 
-				# Process every pixel to see if there's a difference, and then convert that difference to red
-				width, height = diff.size
-				for image_x in range(0, width - 1):
-					for image_y in range(0, height - 1):
-						if diff.getpixel((image_x, image_y)) != (0, 0, 0, 0):
-							has_difference = True
-							diff.putpixel((image_x, image_y), (255, 0, 0, 255)) # Change the mask color to red
+						if new_height > original_height:
+							original_image = _resize_canvas(original_image, original_width, new_height)
+							original_image.save(file_original_screenshot_path)
 
-				if has_difference:
-					files_with_differences.add(filename.name)
+						if new_width > original_width:
+							original_image = _resize_canvas(original_image, new_width, original_height)
+							original_image.save(file_original_screenshot_path)
 
-					if args.copy_images:
-						try:
-							output_directory.mkdir(parents=True, exist_ok=True)
+						# Now get the diff
+						diff = ImageChops.difference(original_image, new_image)
 
-							shutil.copy(file_new_screenshot_path, output_directory)
-							shutil.copy(file_original_screenshot_path, output_directory)
+						# Process every pixel to see if there's a difference, and then convert that difference to red
+						width, height = diff.size
+						for image_x in range(0, width - 1):
+							for image_y in range(0, height - 1):
+								if diff.getpixel((image_x, image_y)) != (0, 0, 0, 0):
+									has_difference = True
+									diff.putpixel((image_x, image_y), (255, 0, 0, 255)) # Change the mask color to red
 
-							original_image.paste(diff.convert("RGB"), mask=diff)
-							original_image.save(output_directory / (filename.name + "-diff.png"))
+						if has_difference:
+							files_with_differences.add(filename.name)
 
-						except Exception:
-							pass
+							if args.copy_images:
+								try:
+									output_directory.mkdir(parents=True, exist_ok=True)
 
-			for filename in se.natural_sort(list(files_with_differences)):
-				print("{}Difference in {}\n".format("\t" if args.verbose else "", filename), end="", flush=True)
+									shutil.copy(file_new_screenshot_path, output_directory)
+									shutil.copy(file_original_screenshot_path, output_directory)
 
-			if files_with_differences and args.copy_images:
-				# Generate an HTML file with diffs side by side
-				html = ""
+									original_image.paste(diff.convert("RGB"), mask=diff)
+									original_image.save(output_directory / (filename.name + "-diff.png"))
 
-				for filename in se.natural_sort(list(files_with_differences)):
-					html += f"\t\t<section>\n\t\t\t<h1>{filename}</h1>\n\t\t\t<img src=\"{filename}-original.png\">\n\t\t\t<img src=\"{filename}-new.png\">\n\t\t</section>\n"
+								except Exception:
+									pass
 
-				with importlib_resources.open_text("se.data.templates", "diff-template.html", encoding="utf-8") as file:
-					html = file.read().replace("<!--se:sections-->", html.strip())
+					for filename in se.natural_sort(list(files_with_differences)):
+						print("{}Difference in {}\n".format("\t" if args.verbose else "", filename), end="", flush=True)
 
-				with open(output_directory / "diff.html", "w") as file:
-					file.write(html)
-					file.truncate()
+					if files_with_differences and args.copy_images:
+						# Generate an HTML file with diffs side by side
+						html = ""
 
-	driver.quit()
+						for filename in se.natural_sort(list(files_with_differences)):
+							html += f"\t\t<section>\n\t\t\t<h1>{filename}</h1>\n\t\t\t<img src=\"{filename}-original.png\">\n\t\t\t<img src=\"{filename}-new.png\">\n\t\t</section>\n"
+
+						with importlib_resources.open_text("se.data.templates", "diff-template.html", encoding="utf-8") as file:
+							html = file.read().replace("<!--se:sections-->", html.strip())
+
+						with open(output_directory / "diff.html", "w") as file:
+							file.write(html)
+							file.truncate()
+	except KeyboardInterrupt as ex:
+		# Bubble the exception up, but proceed to `finally` so we quit the driver
+		raise ex
+	finally:
+		try:
+			driver.quit()
+		except Exception:
+			# We might get here if we ctrl + c befor selenium has finished initializing the driver
+			pass
 
 	return 0
