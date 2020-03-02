@@ -66,6 +66,8 @@ def compare_versions() -> int:
 			se.print_error("Repo is clean. This command must be run on a dirty repo.", args.verbose)
 			continue
 
+		output_directory = Path("./" + target.name + "_diff-output/")
+
 		# Put Git's changes into the stash
 		git_command.stash()
 
@@ -140,7 +142,6 @@ def compare_versions() -> int:
 
 					if args.copy_images:
 						try:
-							output_directory = Path("./" + target.name + "_diff-output/")
 							output_directory.mkdir(parents=True, exist_ok=True)
 
 							shutil.copy(file_new_screenshot_path, output_directory)
@@ -155,7 +156,7 @@ def compare_versions() -> int:
 			for filename in se.natural_sort(list(files_with_differences)):
 				print("{}Difference in {}\n".format("\t" if args.verbose else "", filename), end="", flush=True)
 
-			if args.copy_images:
+			if files_with_differences and args.copy_images:
 				# Generate an HTML file with diffs side by side
 				html = ""
 
