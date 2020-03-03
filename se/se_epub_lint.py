@@ -950,6 +950,11 @@ def lint(self, metadata_xhtml) -> list:
 					if "<pre" in file_contents:
 						messages.append(LintMessage("Illegal <pre> element.", se.MESSAGE_TYPE_ERROR, filename))
 
+					# Check for <pre> tags
+					matches = regex.findall(r"</(?:p|blockquote)>\s*<br/>", file_contents, flags=regex.DOTALL)
+					if matches:
+						messages.append(LintMessage("`<br/>` after block-level element.", se.MESSAGE_TYPE_ERROR, filename, matches))
+
 					# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 					matches = regex.findall(r"\b.+?”[,\.]", file_contents)
 					if matches:
