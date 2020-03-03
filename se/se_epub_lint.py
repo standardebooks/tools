@@ -432,7 +432,12 @@ def lint(self, metadata_xhtml) -> list:
 					if filename != "logo.svg": # Do as I say, not as I do...
 						matches = regex.findall(r"<svg[^>]*?(height|width)=[^>]*?>", file_contents)
 						if matches:
-							messages.append(LintMessage("Illegal height or width on root <svg> element. Size SVGs using the viewbox attribute only.", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage("Illegal height or width on root `<svg>` element. Size SVGs using the `viewBox` attribute only.", se.MESSAGE_TYPE_ERROR, filename))
+
+					matches = regex.findall(r"viewbox", file_contents, flags=regex.IGNORECASE)
+					for match in matches:
+						if match != "viewBox":
+							messages.append(LintMessage(f"`{match}` detected instead of `viewBox`. `viewBox` must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for illegal transform attribute
 					matches = regex.findall(r"<[a-z]+[^>]*?transform=[^>]*?>", file_contents)
