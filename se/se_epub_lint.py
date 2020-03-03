@@ -1002,6 +1002,11 @@ def lint(self, metadata_xhtml) -> list:
 					if matches:
 						messages.append(LintMessage("Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
+					# Check to see if we've marked something as poetry or verse, but didn't include a first <span>
+					matches = regex.findall(r"<blockquote [^>]*?epub:type=\"z3998:(poem|verse)\"[^>]*?>\s*<p>(?!\s*<span)", file_contents, flags=regex.DOTALL)
+					if matches:
+						messages.append(LintMessage("Poetry or verse included without `<span>` element.", se.MESSAGE_TYPE_ERROR, filename, matches))
+
 					# Check for space before endnote backlinks
 					if filename == "endnotes.xhtml":
 						# Do we have to replace Ibid.?
