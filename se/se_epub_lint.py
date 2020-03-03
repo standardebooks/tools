@@ -234,7 +234,7 @@ def lint(self, metadata_xhtml) -> list:
 		messages.append(LintMessage("Non-typogrified \", ', or -- detected in metadata dc:description.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
-	matches = regex.findall(r"[a-zA-Z][”][,.]", metadata_xhtml)
+	matches = regex.findall(r"[a-zA-Z][”][,\.]", metadata_xhtml)
 	if matches:
 		messages.append(LintMessage("Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, "content.opf"))
 
@@ -956,7 +956,7 @@ def lint(self, metadata_xhtml) -> list:
 						messages.append(LintMessage("`<br/>` after block-level element.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
-					matches = regex.findall(r"\b.+?”[,\.]", file_contents)
+					matches = regex.findall(r"\b.+?”[,\.](?! …)", file_contents)
 					if matches:
 						messages.append(LintMessage("Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
