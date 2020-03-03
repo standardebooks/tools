@@ -217,6 +217,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Remove periods after pounds if followed by shillings
 	xhtml = regex.sub(r"£([0-9]+)\.? ([0-9]+)s\.?", r"£\1 \2s.", xhtml)
 
+	# Remove word joiners if the em dash is preceded by a space
+	xhtml = regex.sub(fr"(\s+){se.WORD_JOINER}—", r"\1—", xhtml)
+
 	# Remove periods from O.K. (also, it is not an abbreviation)
 	xhtml = regex.sub(r"O\.K\.", r"OK", xhtml)
 	xhtml = regex.sub(r"OK([”’])", r"OK.\1", xhtml)
