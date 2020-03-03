@@ -90,7 +90,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 	# Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
 	xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.?\s+", fr"\1.{se.NO_BREAK_SPACE}", xhtml)
-	xhtml = regex.sub(r"<abbr>(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.</abbr>?\s+", fr"<abbr>\1.</abbr>{se.NO_BREAK_SPACE}", xhtml)
+	xhtml = regex.sub(r"<abbr>(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.?</abbr>?\s+", fr"<abbr>\1.</abbr>{se.NO_BREAK_SPACE}", xhtml)
 
 	xhtml = regex.sub(r"\bNo\.\s+([0-9]+)", fr"No.{se.NO_BREAK_SPACE}\1", xhtml)
 	xhtml = regex.sub(r"<abbr>No\.</abbr>\s+", fr"<abbr>No.</abbr>{se.NO_BREAK_SPACE}", xhtml)
