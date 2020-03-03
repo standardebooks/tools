@@ -82,6 +82,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(fr"([^\s{se.WORD_JOINER}{se.NO_BREAK_SPACE}{se.HAIR_SPACE}])⸺", fr"\1{se.WORD_JOINER}⸺", xhtml)
 	xhtml = regex.sub(fr"⸺([^\s\p{{P}}{se.WORD_JOINER}])", fr"⸺{se.WORD_JOINER}\1", xhtml)
 
+	# Add a space between text and —th, which is usually an obscured number. I.e. "The —th battalion"
+	xhtml = regex.sub(fr"([a-z]){se.WORD_JOINER}—th\b", r"\1 —th", xhtml)
+
 	# Remove word joiners from following opening tags--they're usually never correct
 	xhtml = regex.sub(fr"<([a-z]+)([^>]*?)>{se.WORD_JOINER}", r"<\1\2>", xhtml, flags=regex.IGNORECASE)
 
