@@ -154,12 +154,6 @@ To do that, follow the general installation instructions above; but instead of d
 ```shell
 git clone https://github.com/standardebooks/tools.git
 pipx install --editable tools
-
-# Optional: ZSH users can install tab completion.
-sudo ln -s $(readlink -f .)/tools/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
-
-# Optional: Bash users can install tab completion.
-sudo ln -s $(readlink -f .)/tools/se/completions/bash/se /usr/share/bash-completion/completions/se
 ```
 
 Now the `se` binary is in your path, and any edits you make to source files in the `tools/` directory are immediately reflected when executing the binary.
