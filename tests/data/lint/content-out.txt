@@ -1,16 +1,17 @@
 Error: content.opf Long description must be escaped HTML.
-Error: content.opf Empty production-notes element in metadata.
-Error: content.opf Illegal se:subject: TAG
-Error: content.opf <![CDATA[ detected. Run `clean` to canonicalize <![CDATA[ sections.
-Error: chapter-1.xhtml File language is en-GB, but content.opf language is LANG
-Error: colophon.xhtml Missing data in colophon: YEAR
-Error: colophon.xhtml Missing data in colophon: PRODUCER_URL
-Error: colophon.xhtml Missing data in colophon: PRODUCER
-Error: colophon.xhtml Missing data in colophon: PG_YEAR
-Error: colophon.xhtml Missing data in colophon: TRANSCRIBER_1
-Error: colophon.xhtml Missing data in colophon: TRANSCRIBER_2
-Error: colophon.xhtml Missing data in colophon: PG_URL
-Error: colophon.xhtml Missing data in colophon: IA_URL
-Error: colophon.xhtml Missing data in colophon: PAINTING
-Error: colophon.xhtml Missing data in colophon: ARTIST_WIKI_URL
-Error: colophon.xhtml Missing data in colophon: ARTIST
+Error: content.opf Empty `<meta property="se:production-notes">` element in metadata.
+Error: content.opf Illegal `se:subject`.
+	TAG
+Error: content.opf `<![CDATA[` detected. Run `se clean` to canonicalize `<![CDATA[` sections.
+Manual Review: chapter-1.xhtml File language is `en-GB`, but `content.opf` language is `LANG`.
+Error: colophon.xhtml Missing data in colophon: `YEAR`.
+Error: colophon.xhtml Missing data in colophon: `PRODUCER_URL`.
+Error: colophon.xhtml Missing data in colophon: `PRODUCER`.
+Error: colophon.xhtml Missing data in colophon: `PG_YEAR`.
+Error: colophon.xhtml Missing data in colophon: `TRANSCRIBER_1`.
+Error: colophon.xhtml Missing data in colophon: `TRANSCRIBER_2`.
+Error: colophon.xhtml Missing data in colophon: `PG_URL`.
+Error: colophon.xhtml Missing data in colophon: `IA_URL`.
+Error: colophon.xhtml Missing data in colophon: `PAINTING`.
+Error: colophon.xhtml Missing data in colophon: `ARTIST_WIKI_URL`.
+Error: colophon.xhtml Missing data in colophon: `ARTIST`.
