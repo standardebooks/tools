@@ -792,6 +792,9 @@ def titlecase(text: str) -> str:
 	# Lowercase th', sometimes used poetically
 	text = regex.sub(r"\b Th’ \b", " th’ ", text)
 
+	# Uppercase words that begin compound words, like "to-night" (which might appear in poetry)
+	text = regex.sub(r" ([a-z])([a-z]+\-)", lambda result: " " + result.group(1).upper() + result.group(2), text)
+
 	# Lowercase "from", "with", as long as they're not the first word and not preceded by a parenthesis
 	text = regex.sub(r"(?<!^)(?<!\()\b(From|With)\b", lambda result: result.group(1).lower(), text)
 
