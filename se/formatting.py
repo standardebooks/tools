@@ -789,6 +789,9 @@ def titlecase(text: str) -> str:
 	# Lowercase "in", if followed by a semicolon (but not words like "inheritance")
 	text = regex.sub(r"\b; In\b", "; in", text)
 
+	# Lowercase th', sometimes used poetically
+	text = regex.sub(r"\b Th’ \b", " th’ ", text)
+
 	# Lowercase "from", "with", as long as they're not the first word and not preceded by a parenthesis
 	text = regex.sub(r"(?<!^)(?<!\()\b(From|With)\b", lambda result: result.group(1).lower(), text)
 
