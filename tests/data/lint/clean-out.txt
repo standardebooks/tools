@@ -1,4 +1,1 @@
-f-001 Error: test-book Illegal file or directory.
 f-002 Error: .git Missing expected file or directory.
-f-002 Error: images Missing expected file or directory.
-f-002 Error: src Missing expected file or directory.

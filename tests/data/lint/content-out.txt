@@ -1,4 +1,3 @@
-f-001 Error: test-book Illegal file or directory.
 m-016 Error: content.opf Long description must be escaped HTML.
 m-022 Error: content.opf Empty `<meta property="se:production-notes">` element.
 m-020 Error: content.opf Illegal value for `<meta property="se:subject">` element.
@@ -18,5 +17,3 @@ m-036 Error: colophon.xhtml Missing data in colophon.
 	ARTIST_WIKI_URL
 	ARTIST
 f-002 Error: .git Missing expected file or directory.
-f-002 Error: images Missing expected file or directory.
-f-002 Error: src Missing expected file or directory.
