@@ -1,11 +1,11 @@
 f-001 Error: test-book Illegal file or directory.
-m-021 Error: content.opf Long description must be escaped HTML.
-m-027 Error: content.opf Empty `<meta property="se:production-notes">` element in metadata.
-m-025 Error: content.opf Illegal `se:subject`.
+m-016 Error: content.opf Long description must be escaped HTML.
+m-022 Error: content.opf Empty `<meta property="se:production-notes">` element.
+m-020 Error: content.opf Illegal value for `<meta property="se:subject">` element.
 	TAG
-m-022 Error: content.opf `<![CDATA[` found. Run `se clean` to canonicalize `<![CDATA[` sections.
+m-017 Error: content.opf `<![CDATA[` found. Run `se clean` to canonicalize `<![CDATA[` sections.
 s-033 Manual Review: chapter-1.xhtml File language is `en-GB`, but `content.opf` language is `LANG`.
-m-040 Error: colophon.xhtml Missing data in colophon.
+m-036 Error: colophon.xhtml Missing data in colophon.
 	YEAR
 	PRODUCER_URL
 	PRODUCER

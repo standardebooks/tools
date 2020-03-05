@@ -119,7 +119,7 @@ def lint() -> int:
 						for submessage in message.submessages:
 							table_data.append([" ", " ", "→", f"{submessage}"])
 
-				_print_table(table_data, 2)
+				_print_table(table_data, 3)
 
 		if args.verbose and not messages:
 			if args.plain:

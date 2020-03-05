@@ -32,6 +32,7 @@ EPUB_SEMANTIC_VOCABULARY = ["cover", "frontmatter", "bodymatter", "backmatter", 
 
 """
 LIST OF ALL SE LINT MESSAGES
+
 CSS
 "c-001", "Do not directly select `<h#>` elements, as they are used in template files; use more specific selectors."
 "c-002", "Unused CSS selectors."
@@ -40,7 +41,7 @@ CSS
 "c-005", "`abbr` selector does not need `white-space: nowrap;` as it inherits it from `core.css`."
 "c-006", "Subtitles found, but no subtitle style found in `local.css`."
 "c-007", f"`<abbr class=\"{css_class}\">` element found, but no required style in `local.css`. See the typography manual for required styls."
-"c-080", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks."
+"c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -57,54 +58,49 @@ FILESYSTEM
 METADATA
 "m-001", "gutenberg.org URL missing leading `www.`."
 "m-002", "archive.org URL should not have leading `www.`."
-"m-003", "Non-https gutenberg.org URL."
-"m-004", "Non-https pgdp.net URL."
-"m-005", "Non-https hathitrust.org URL."
-"m-006", "Non-https archive.org URL."
-"m-007", "Non-https en.wikipedia.org URL."
-"m-008", "Non-canonical Google Books URL. Google Books URLs must look exactly like `https://books.google.com/books?id=<BOOK-ID>`."
-"m-009", "Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like `https://catalog.hathitrust.org/Record/<BOOK-ID>`."
-"m-010", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like `https://www.gutenberg.org/ebooks/<BOOK-ID>`."
-"m-011", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like `https://archive.org/details/<BOOK-ID>`."
-"m-012", "Non-HTTPS Standard Ebooks URL."
-"m-013", "id.loc.gov URL ending with illegal `.html`."
-"m-014", f"GitHub repo URL does not match expected: `{self.generated_github_repo_url}`."
-"m-015", "Illegal `se:url.vcs.github`. VCS URLs must begin with `https://github.com/standardebooks/`."
-"m-016", "Use HathiTrust record URLs, not page scan URLs, in metadata, imprint, and colophon. Record URLs look like: `https://catalog.hathitrust.org/Record/<RECORD-ID>`."
-"m-017", "Non-typogrified `\"`, `'`, or `--` in metadata title."
-"m-018", "Non-typogrified `\"`, `'`, or `--` in metadata `dc:description`."
-"m-019", "Non-typogrified `\"`, `'`, or `--` in metadata long description."
-"m-020", "Metadata long description is not valid HTML. LXML says: " + str(ex)
-"m-021", "Long description must be escaped HTML."
-"m-022", "`<![CDATA[` found. Run `se clean` to canonicalize `<![CDATA[` sections."
-"m-023", "HTML entites in metadata. Use Unicode equivalents instead."
-"m-024", "Illegal em-dash in `dc:subject`; use `--`."
-"m-025", "Illegal `se:subject`."
-"m-026", "No `<meta property=\"se:subject\">` element found."
-"m-027", "Empty `<meta property=\"se:production-notes\">` element in metadata."
-"m-027", f"`<dc:identifier>` does not match expected: `{self.generated_identifier}`."
-"m-028", "`se:name.person.full-name` property identical to regular name. If the two are identical the full name `<meta>` element must be removed."
-"m-029", "Translator found in metadata, but no `translated from LANG` block in colophon."
-"m-030", f"Project Gutenberg source not present. Expected: `<a href=\"{link}\">Project Gutenberg</a>`."
-"m-031", f"HathiTrust source not present. Expected: the `<a href=\"{link}\">HathiTrust Digital Library</a>`."
-"m-032", f"Internet Archive source not present. Expected: the `<a href=\"{link}\">Internet Archive</a>`."
-"m-033", f"Google Books source not present. Expected: `<a href=\"{link}\">Google Books</a>`."
-"m-034", "`introduction.xhtml` found, but no MARC relator `aui` (Author of introduction, but not the chief author) or `win` (Writer of introduction)."
-"m-035", "`preface.xhtml` found, but no MARC relator `wpr` (Writer of preface)."
-"m-036", "`afterword.xhtml` found, but no MARC relator `aft` (Author of colophon, afterword, etc.)."
-"m-037", "`endnotes.xhtml` found, but no MARC relator `ann` (Annotator)."
-"m-038", "`loi.xhtml` found, but no MARC relator `ill` (Illustrator)."
-"m-039", f"Unexpected SE identifier in colophon. Expected: `{self.generated_identifier}`."
-"m-040", "Missing data in colophon."
-"m-041", f"Source not represented in colophon.xhtml. Expected: `<a href=\"{link}\">Project Gutenberg</a>`."
-"m-042", f"Source not represented in colophon.xhtml. Expected: `the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>`."
-"m-043", f"Source not represented in colophon.xhtml. Expected: `the<br/> <a href=\"{link}\">Internet Archive</a>`."
-"m-044", f"Source not represented in colophon.xhtml. Expected: `<a href=\"{link}\">Google Books</a>`."
-"m-045", "`Hathi Trust` should be `HathiTrust`."
-"m-046", "`<manifest>` does not match expected structure."
-"m-047", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)})."
-"m-048", f"The spine order does not match the order of the ToC and landmarks. Expected `{entry.attrs['idref']}`, found `{toc_files[index]}`."
-"m-049", f"Heading `{heading[0]}` found, but not present for that file in the ToC."
+"m-003", "Non-https URL."
+"m-004", "Non-canonical Google Books URL. Google Books URLs must look exactly like `https://books.google.com/books?id=<BOOK-ID>`."
+"m-005", "Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like `https://catalog.hathitrust.org/Record/<BOOK-ID>`."
+"m-006", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like `https://www.gutenberg.org/ebooks/<BOOK-ID>`."
+"m-007", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like `https://archive.org/details/<BOOK-ID>`."
+"m-008", "id.loc.gov URL ending with illegal `.html`."
+"m-009", f"GitHub repo URL does not match expected: `{self.generated_github_repo_url}`."
+"m-010", "Illegal `se:url.vcs.github`. VCS URLs must begin with `https://github.com/standardebooks/`."
+"m-011", "Use HathiTrust record URLs, not page scan URLs, in metadata, imprint, and colophon. Record URLs look like: `https://catalog.hathitrust.org/Record/<RECORD-ID>`."
+"m-012", "Non-typogrified `\"`, `'`, or `--` in `<dc:title>` element."
+"m-013", "Non-typogrified `\"`, `'`, or `--` in `<dc:description>` element."
+"m-014", "Non-typogrified `\"`, `'`, or `--` in  long description."
+"m-015", "Metadata long description is not valid HTML. LXML says: " + str(ex)
+"m-016", "Long description must be escaped HTML."
+"m-017", "`<![CDATA[` found. Run `se clean` to canonicalize `<![CDATA[` sections."
+"m-018", "HTML entities found. Use Unicode equivalents instead."
+"m-019", "Illegal em-dash in `dc:subject`; use `--`."
+"m-020", "Illegal value for `<meta property="se:subject">` element."
+"m-021", "No `<meta property=\"se:subject\">` element found."
+"m-022", "Empty `<meta property=\"se:production-notes\">` element."
+"m-023", f"`<dc:identifier>` does not match expected: `{self.generated_identifier}`."
+"m-024", "`se:name.person.full-name` property identical to regular name. If the two are identical the full name `<meta>` element must be removed."
+"m-025", "Translator found in metadata, but no `translated from LANG` block in colophon."
+"m-026", f"Project Gutenberg source not present. Expected: `<a href=\"{link}\">Project Gutenberg</a>`."
+"m-027", f"HathiTrust source not present. Expected: the `<a href=\"{link}\">HathiTrust Digital Library</a>`."
+"m-028", f"Internet Archive source not present. Expected: the `<a href=\"{link}\">Internet Archive</a>`."
+"m-029", f"Google Books source not present. Expected: `<a href=\"{link}\">Google Books</a>`."
+"m-030", "`introduction.xhtml` found, but no MARC relator `aui` (Author of introduction, but not the chief author) or `win` (Writer of introduction)."
+"m-031", "`preface.xhtml` found, but no MARC relator `wpr` (Writer of preface)."
+"m-032", "`afterword.xhtml` found, but no MARC relator `aft` (Author of colophon, afterword, etc.)."
+"m-033", "`endnotes.xhtml` found, but no MARC relator `ann` (Annotator)."
+"m-034", "`loi.xhtml` found, but no MARC relator `ill` (Illustrator)."
+"m-035", f"Unexpected SE identifier in colophon. Expected: `{self.generated_identifier}`."
+"m-036", "Missing data in colophon."
+"m-037", f"Source not represented in colophon.xhtml. Expected: `<a href=\"{link}\">Project Gutenberg</a>`."
+"m-038", f"Source not represented in colophon.xhtml. Expected: `the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>`."
+"m-039", f"Source not represented in colophon.xhtml. Expected: `the<br/> <a href=\"{link}\">Internet Archive</a>`."
+"m-040", f"Source not represented in colophon.xhtml. Expected: `<a href=\"{link}\">Google Books</a>`."
+"m-041", "`Hathi Trust` should be `HathiTrust`."
+"m-042", "`<manifest>` does not match expected structure."
+"m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)})."
+"m-044", f"The spine order does not match the order of the ToC and landmarks. Expected `{entry.attrs['idref']}`, found `{toc_files[index]}`."
+"m-045", f"Heading `{heading[0]}` found, but not present for that file in the ToC."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like `&#913;`)."
@@ -210,7 +206,7 @@ class LintMessage:
 		self.message_type = message_type
 		self.submessages = submessages
 
-def _get_malformed_urls(xhtml: str) -> list:
+def _get_malformed_urls(xhtml: str, filename: str) -> list:
 	"""
 	Helper function used in self.lint()
 	Get a list of URLs in the epub that do not match SE standards.
@@ -219,45 +215,36 @@ def _get_malformed_urls(xhtml: str) -> list:
 	xhtml: A string of XHTML to check
 
 	OUTPUTS
-	A list of strings representing any malformed URLs in the XHTML string
+	A list of LintMessages representing any malformed URLs in the XHTML string
 	"""
 
 	messages = []
 
 	# Check for non-https URLs
-	if "http://gutenberg.org" in xhtml or "https://gutenberg.org" in xhtml:
-		messages.append(LintMessage("m-001", "gutenberg.org URL missing leading `www.`.", se.MESSAGE_TYPE_ERROR))
+	matches = regex.findall(r"(?<!www\.)gutenberg\.org[^\"<\s]*", xhtml)
+	if matches:
+		messages.append(LintMessage("m-001", "gutenberg.org URL missing leading `www.`.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-	if "www.archive.org" in xhtml:
-		messages.append(LintMessage("m-002", "archive.org URL should not have leading `www.`.", se.MESSAGE_TYPE_ERROR))
+	matches = regex.findall(r"www\.archive\.org[^\"<\s]*", xhtml)
+	if matches:
+		messages.append(LintMessage("m-002", "archive.org URL should not have leading `www.`.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-	if "http://www.gutenberg.org" in xhtml:
-		messages.append(LintMessage("m-003", "Non-https gutenberg.org URL.", se.MESSAGE_TYPE_ERROR))
-
-	if "http://www.pgdp.net" in xhtml:
-		messages.append(LintMessage("m-004", "Non-https pgdp.net URL.", se.MESSAGE_TYPE_ERROR))
-
-	if "http://catalog.hathitrust.org" in xhtml:
-		messages.append(LintMessage("m-005", "Non-https hathitrust.org URL.", se.MESSAGE_TYPE_ERROR))
-
-	if "http://archive.org" in xhtml:
-		messages.append(LintMessage("m-006", "Non-https archive.org URL.", se.MESSAGE_TYPE_ERROR))
-
-	if "http://en.wikipedia.org" in xhtml:
-		messages.append(LintMessage("m-007", "Non-https en.wikipedia.org URL.", se.MESSAGE_TYPE_ERROR))
+	matches = regex.findall(r"http://(?:gutenberg\.org|archive\.org|pgdp\.net|catalog\.hathitrust\.org|en\.wikipedia\.org)[^\"<\s]*", xhtml)
+	if matches:
+		messages.append(LintMessage("m-003", "Non-https URL.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 	# Check for malformed canonical URLs
 	if regex.search(r"books\.google\.com/books\?id=.+?[&#]", xhtml):
-		messages.append(LintMessage("m-008", "Non-canonical Google Books URL. Google Books URLs must look exactly like `https://books.google.com/books?id=<BOOK-ID>`."))
+		messages.append(LintMessage("m-004", "Non-canonical Google Books URL. Google Books URLs must look exactly like `https://books.google.com/books?id=<BOOK-ID>`.", filename))
 
 	if "babel.hathitrust.org" in xhtml:
-		messages.append(LintMessage("m-009", "Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like `https://catalog.hathitrust.org/Record/<BOOK-ID>`."))
+		messages.append(LintMessage("m-005", "Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like `https://catalog.hathitrust.org/Record/<BOOK-ID>`.", filename))
 
 	if ".gutenberg.org/files/" in xhtml:
-		messages.append(LintMessage("m-010", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like `https://www.gutenberg.org/ebooks/<BOOK-ID>`."))
+		messages.append(LintMessage("m-006", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like `https://www.gutenberg.org/ebooks/<BOOK-ID>`.", filename))
 
 	if "archive.org/stream" in xhtml:
-		messages.append(LintMessage("m-011", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like `https://archive.org/details/<BOOK-ID>`."))
+		messages.append(LintMessage("m-007", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like `https://archive.org/details/<BOOK-ID>`.", filename))
 
 	return messages
 
@@ -315,7 +302,7 @@ def _get_unused_selectors(self) -> List[str]:
 		for filename in filenames:
 			if not filename.endswith("titlepage.xhtml") and not filename.endswith("imprint.xhtml") and not filename.endswith("uncopyright.xhtml"):
 				# We have to remove the default namespace declaration from our document, otherwise
-				# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
+				# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 				with open(filename, "r", encoding="utf-8") as file:
 					xhtml = file.read().replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
 
@@ -380,15 +367,15 @@ def lint(self, metadata_xhtml) -> list:
 
 	# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
 	if regex.search(r"#description\">[^<]+?(['\"]|\-\-)[^<]+?</meta>", metadata_xhtml.replace("\"&gt;", "").replace("=\"", "")) is not None:
-		messages.append(LintMessage("m-019", "Non-typogrified `\"`, `'`, or `--` in metadata long description.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-014", "Non-typogrified `\"`, `'`, or `--` in long description.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check if there are non-typogrified quotes or em-dashes in the title.
 	# The open-ended start and end of the regex also catches title-sort
 	if regex.search(r"title\">[^<]+?(['\"]|\-\-)[^<]+?<", metadata_xhtml) is not None:
-		messages.append(LintMessage("m-017", "Non-typogrified `\"`, `'`, or `--` in metadata title.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-012", "Non-typogrified `\"`, `'`, or `--` in `<dc:title>` element.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	if regex.search(r"<dc:description id=\"description\">[^<]+?(['\"]|\-\-)[^<]+?</dc:description>", metadata_xhtml) is not None:
-		messages.append(LintMessage("m-018", "Non-typogrified `\"`, `'`, or `--` in metadata `dc:description`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-013", "Non-typogrified `\"`, `'`, or `--` in `<dc:description>` element.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check for malformed long description HTML
 	long_description = regex.findall(r"<meta id=\"long-description\".+?>(.+?)</meta>", metadata_xhtml, flags=regex.DOTALL)
@@ -397,7 +384,7 @@ def lint(self, metadata_xhtml) -> list:
 		try:
 			etree.parse(io.StringIO(long_description))
 		except lxml.etree.XMLSyntaxError as ex:
-			messages.append(LintMessage("m-020", "Metadata long description is not valid HTML. LXML says: " + str(ex), se.MESSAGE_TYPE_ERROR, "content.opf"))
+			messages.append(LintMessage("m-015", "Metadata long description is not valid HTML. LXML says: " + str(ex), se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check for double spacing
 	regex_string = fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}"
@@ -412,30 +399,30 @@ def lint(self, metadata_xhtml) -> list:
 
 	# Make sure long-description is escaped HTML
 	if "<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">\n\t\t\t&lt;p&gt;" not in metadata_xhtml:
-		messages.append(LintMessage("m-021", "Long description must be escaped HTML.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-016", "Long description must be escaped HTML.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check for HTML entities in long-description, but allow &amp;amp;
 	if regex.search(r"&amp;[a-z]+?;", metadata_xhtml.replace("&amp;amp;", "")):
-		messages.append(LintMessage("m-023", "HTML entites in metadata. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-018", "HTML entities found. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check for illegal em-dashes in <dc:subject>
 	if regex.search(r"<dc:subject id=\"[^\"]+?\">[^<]+?—[^<]+?</dc:subject>", metadata_xhtml) is not None:
-		messages.append(LintMessage("m-024", "Illegal em-dash in `dc:subject`; use `--`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-019", "Illegal em-dash in `dc:subject`; use `--`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check for empty production notes
 	if "<meta property=\"se:production-notes\">Any special notes about the production of this ebook for future editors/producers? Remove this element if not.</meta>" in metadata_xhtml:
-		messages.append(LintMessage("m-027", "Empty `<meta property=\"se:production-notes\">` element in metadata.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-022", "Empty `<meta property=\"se:production-notes\">` element.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check for illegal VCS URLs
 	matches = regex.findall(r"<meta property=\"se:url\.vcs\.github\">([^<]+?)</meta>", metadata_xhtml)
 	if matches:
 		for match in matches:
 			if not match.startswith("https://github.com/standardebooks/"):
-				messages.append(LintMessage("m-015", "Illegal `se:url.vcs.github`. VCS URLs must begin with `https://github.com/standardebooks/`.", se.MESSAGE_TYPE_ERROR, "content.opf", list(match)))
+				messages.append(LintMessage("m-010", "Illegal `se:url.vcs.github`. VCS URLs must begin with `https://github.com/standardebooks/`.", se.MESSAGE_TYPE_ERROR, "content.opf", list(match)))
 
 	# Check for HathiTrust scan URLs instead of actual record URLs
 	if "babel.hathitrust.org" in metadata_xhtml or "hdl.handle.net" in metadata_xhtml:
-		messages.append(LintMessage("m-016", "Use HathiTrust record URLs, not page scan URLs, in metadata, imprint, and colophon. Record URLs look like: `https://catalog.hathitrust.org/Record/<RECORD-ID>`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-011", "Use HathiTrust record URLs, not page scan URLs, in metadata, imprint, and colophon. Record URLs look like: `https://catalog.hathitrust.org/Record/<RECORD-ID>`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check for illegal se:subject tags
 	illegal_subjects = []
@@ -446,22 +433,22 @@ def lint(self, metadata_xhtml) -> list:
 				illegal_subjects.append(match)
 
 		if illegal_subjects:
-			messages.append(LintMessage("m-025", "Illegal `se:subject`.", se.MESSAGE_TYPE_ERROR, "content.opf", illegal_subjects))
+			messages.append(LintMessage("m-020", "Illegal value for `<meta property=\"se:subject\">` element.", se.MESSAGE_TYPE_ERROR, "content.opf", illegal_subjects))
 	else:
-		messages.append(LintMessage("m-026", "No `<meta property=\"se:subject\">` element found.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-021", "No `<meta property=\"se:subject\">` element found.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check for CDATA tags
 	if "<![CDATA[" in metadata_xhtml:
-		messages.append(LintMessage("m-022", "`<![CDATA[` found. Run `se clean` to canonicalize `<![CDATA[` sections.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-017", "`<![CDATA[` found. Run `se clean` to canonicalize `<![CDATA[` sections.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check that our provided identifier matches the generated identifier
 	identifier = regex.sub(r"<.+?>", "", regex.findall(r"<dc:identifier id=\"uid\">.+?</dc:identifier>", metadata_xhtml)[0])
 	if identifier != self.generated_identifier:
-		messages.append(LintMessage("m-027", f"`<dc:identifier>` does not match expected: `{self.generated_identifier}`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-023", f"`<dc:identifier>` does not match expected: `{self.generated_identifier}`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check that the GitHub repo URL is as expected
 	if ("<meta property=\"se:url.vcs.github\">" + self.generated_github_repo_url + "</meta>") not in metadata_xhtml:
-		messages.append(LintMessage("m-014", f"GitHub repo URL does not match expected: `{self.generated_github_repo_url}`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-009", f"GitHub repo URL does not match expected: `{self.generated_github_repo_url}`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check if se:name.person.full-name matches their titlepage name
 	matches = regex.findall(r"<meta property=\"se:name\.person\.full-name\" refines=\"#([^\"]+?)\">([^<]*?)</meta>", metadata_xhtml)
@@ -473,15 +460,13 @@ def lint(self, metadata_xhtml) -> list:
 				duplicate_names.append(name_match[1])
 
 	if duplicate_names:
-		messages.append(LintMessage("m-028", "`se:name.person.full-name` property identical to regular name. If the two are identical the full name `<meta>` element must be removed.", se.MESSAGE_TYPE_ERROR, "content.opf", duplicate_names))
+		messages.append(LintMessage("m-024", "`se:name.person.full-name` property identical to regular name. If the two are identical the full name `<meta>` element must be removed.", se.MESSAGE_TYPE_ERROR, "content.opf", duplicate_names))
 
 	# Check for malformed URLs
-	for message in _get_malformed_urls(metadata_xhtml):
-		message.filename = "content.opf"
-		messages.append(message)
+	messages = messages + _get_malformed_urls(metadata_xhtml, "content.opf")
 
 	if regex.search(r"id\.loc\.gov/authorities/names/[^\.]+\.html", metadata_xhtml):
-		messages.append(LintMessage("m-013", "id.loc.gov URL ending with illegal `.html`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-008", "id.loc.gov URL ending with illegal `.html`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Does the manifest match the generated manifest?
 	for manifest in regex.findall(r"<manifest>.*?</manifest>", metadata_xhtml, flags=regex.DOTALL):
@@ -489,7 +474,7 @@ def lint(self, metadata_xhtml) -> list:
 		expected_manifest = regex.sub(r"[\n\t]", "", self.generate_manifest())
 
 		if manifest != expected_manifest:
-			messages.append(LintMessage("m-046", "`<manifest>` does not match expected structure.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+			messages.append(LintMessage("m-042", "`<manifest>` element does not match expected structure.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Make sure some static files are unchanged
 	try:
@@ -559,8 +544,9 @@ def lint(self, metadata_xhtml) -> list:
 					messages.append(LintMessage("f-010", "Problem decoding file as utf-8.", se.MESSAGE_TYPE_ERROR, filename))
 					continue
 
-				if "http://standardebooks.org" in file_contents:
-					messages.append(LintMessage("m-012", "Non-HTTPS Standard Ebooks URL.", se.MESSAGE_TYPE_ERROR, filename))
+				matches = regex.findall(r"http://standardebooks\.org[^\"<\s]*", file_contents)
+				if matches:
+					messages.append(LintMessage("m-003", "Non-HTTPS URL.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 				if "UTF-8" in file_contents:
 					messages.append(LintMessage("x-001", "String `UTF-8` must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename))
@@ -572,15 +558,15 @@ def lint(self, metadata_xhtml) -> list:
 
 				if filename == "colophon.xhtml":
 					if "<a href=\"{}\">{}</a>".format(self.generated_identifier.replace("url:", ""), self.generated_identifier.replace("url:https://", "")) not in file_contents:
-						messages.append(LintMessage("m-039", f"Unexpected SE identifier in colophon. Expected: `{self.generated_identifier}`.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("m-035", f"Unexpected SE identifier in colophon. Expected: `{self.generated_identifier}`.", se.MESSAGE_TYPE_ERROR, filename))
 
 					if ">trl<" in metadata_xhtml and "translated from" not in file_contents:
-						messages.append(LintMessage("m-029", "Translator found in metadata, but no `translated from LANG` block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("m-025", "Translator found in metadata, but no `translated from LANG` block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check if we forgot to fill any variable slots
 					missing_colophon_vars = [x for x in COLOPHON_VARIABLES if regex.search(fr"\b{x}\b", file_contents)]
 					if missing_colophon_vars:
-						messages.append(LintMessage("m-040", "Missing data in colophon.", se.MESSAGE_TYPE_ERROR, filename, missing_colophon_vars))
+						messages.append(LintMessage("m-036", "Missing data in colophon.", se.MESSAGE_TYPE_ERROR, filename, missing_colophon_vars))
 
 					# Are the sources represented correctly?
 					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
@@ -588,16 +574,16 @@ def lint(self, metadata_xhtml) -> list:
 					if len(matches) <= 2:
 						for link in matches:
 							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
-								messages.append(LintMessage("m-041", f"Source not represented in colophon.xhtml. Expected: `<a href=\"{link}\">Project Gutenberg</a>`.", se.MESSAGE_TYPE_WARNING, filename))
+								messages.append(LintMessage("m-037", f"Source not represented in colophon.xhtml. Expected: `<a href=\"{link}\">Project Gutenberg</a>`.", se.MESSAGE_TYPE_WARNING, filename))
 
 							if "hathitrust.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
-								messages.append(LintMessage("m-042", f"Source not represented in colophon.xhtml. Expected: `the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>`.", se.MESSAGE_TYPE_WARNING, filename))
+								messages.append(LintMessage("m-038", f"Source not represented in colophon.xhtml. Expected: `the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>`.", se.MESSAGE_TYPE_WARNING, filename))
 
 							if "archive.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">Internet Archive</a>" not in file_contents:
-								messages.append(LintMessage("m-043", f"Source not represented in colophon.xhtml. Expected: `the<br/> <a href=\"{link}\">Internet Archive</a>`.", se.MESSAGE_TYPE_WARNING, filename))
+								messages.append(LintMessage("m-039", f"Source not represented in colophon.xhtml. Expected: `the<br/> <a href=\"{link}\">Internet Archive</a>`.", se.MESSAGE_TYPE_WARNING, filename))
 
 							if "books.google.com" in link and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
-								messages.append(LintMessage("m-044", f"Source not represented in colophon.xhtml. Expected: `<a href=\"{link}\">Google Books</a>`.", se.MESSAGE_TYPE_WARNING, filename))
+								messages.append(LintMessage("m-040", f"Source not represented in colophon.xhtml. Expected: `<a href=\"{link}\">Google Books</a>`.", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "titlepage.xhtml":
 					if "<title>Titlepage</title>" not in file_contents:
@@ -677,9 +663,7 @@ def lint(self, metadata_xhtml) -> list:
 
 
 				if filename.endswith(".xhtml"):
-					for message in _get_malformed_urls(file_contents):
-						message.filename = filename
-						messages.append(message)
+					messages = messages + _get_malformed_urls(file_contents, filename)
 
 					# Check if this is a frontmatter file
 					if filename not in ("titlepage.xhtml", "imprint.xhtml", "toc.xhtml"):
@@ -757,7 +741,7 @@ def lint(self, metadata_xhtml) -> list:
 
 					# Check for "Hathi Trust" instead of "HathiTrust"
 					if "Hathi Trust" in file_contents:
-						messages.append(LintMessage("m-045", "`Hathi Trust` should be `HathiTrust`.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("m-041", "`Hathi Trust` should be `HathiTrust`.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for uppercase letters in IDs or classes
 					uppercase_attr_values = []
@@ -979,7 +963,7 @@ def lint(self, metadata_xhtml) -> list:
 					# If the chapter has a number and no subtitle, check the <title> tag...
 					matches = regex.findall(r"<h([0-6]) epub:type=\"title z3998:roman\">([^<]+)</h\1>", file_contents, flags=regex.DOTALL)
 
-					# ...But only make the correction if there's one <h#> tag.  If there's more than one, then the xhtml file probably requires an overarching title
+					# ...But only make the correction if there's one <h#> tag. If there's more than one, then the xhtml file probably requires an overarching title
 					if matches and len(regex.findall(r"<h(?:[0-6])", file_contents)) == 1:
 						try:
 							chapter_number = roman.fromRoman(matches[0][1].upper())
@@ -993,7 +977,7 @@ def lint(self, metadata_xhtml) -> list:
 					# If the chapter has a number and subtitle, check the <title> tag...
 					matches = regex.findall(r"<h([0-6]) epub:type=\"title\">\s*<span epub:type=\"z3998:roman\">([^<]+)</span>\s*<span epub:type=\"subtitle\">(.+?)</span>\s*</h\1>", file_contents, flags=regex.DOTALL)
 
-					# ...But only make the correction if there's one <h#> tag.  If there's more than one, then the xhtml file probably requires an overarching title
+					# ...But only make the correction if there's one <h#> tag. If there's more than one, then the xhtml file probably requires an overarching title
 					if matches and len(regex.findall(r"<h(?:[0-6])", file_contents)) == 1:
 						chapter_number = roman.fromRoman(matches[0][1].upper())
 
@@ -1241,16 +1225,16 @@ def lint(self, metadata_xhtml) -> list:
 						if len(matches) <= 2:
 							for link in matches:
 								if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
-									messages.append(LintMessage("m-030", f"Project Gutenberg source not present. Expected: `<a href=\"{link}\">Project Gutenberg</a>`.", se.MESSAGE_TYPE_WARNING, filename))
+									messages.append(LintMessage("m-026", f"Project Gutenberg source not present. Expected: `<a href=\"{link}\">Project Gutenberg</a>`.", se.MESSAGE_TYPE_WARNING, filename))
 
 								if "hathitrust.org" in link and f"the <a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
-									messages.append(LintMessage("m-031", f"HathiTrust source not present. Expected: the `<a href=\"{link}\">HathiTrust Digital Library</a>`.", se.MESSAGE_TYPE_WARNING, filename))
+									messages.append(LintMessage("m-027", f"HathiTrust source not present. Expected: the `<a href=\"{link}\">HathiTrust Digital Library</a>`.", se.MESSAGE_TYPE_WARNING, filename))
 
 								if "archive.org" in link and f"the <a href=\"{link}\">Internet Archive</a>" not in file_contents:
-									messages.append(LintMessage("m-032", f"Internet Archive source not present. Expected: the `<a href=\"{link}\">Internet Archive</a>`.", se.MESSAGE_TYPE_WARNING, filename))
+									messages.append(LintMessage("m-028", f"Internet Archive source not present. Expected: the `<a href=\"{link}\">Internet Archive</a>`.", se.MESSAGE_TYPE_WARNING, filename))
 
 								if "books.google.com" in link and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
-									messages.append(LintMessage("m-033", f"Google Books source not present. Expected: `<a href=\"{link}\">Google Books</a>`.", se.MESSAGE_TYPE_WARNING, filename))
+									messages.append(LintMessage("m-029", f"Google Books source not present. Expected: `<a href=\"{link}\">Google Books</a>`.", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Collect abbr elements for later check
 					result = regex.findall("<abbr[^<]+?>", file_contents)
@@ -1289,19 +1273,19 @@ def lint(self, metadata_xhtml) -> list:
 
 				# Check for missing MARC relators
 				if filename == "introduction.xhtml" and ">aui<" not in metadata_xhtml and ">win<" not in metadata_xhtml:
-					messages.append(LintMessage("m-034", "`introduction.xhtml` found, but no MARC relator `aui` (Author of introduction, but not the chief author) or `win` (Writer of introduction).", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("m-030", "`introduction.xhtml` found, but no MARC relator `aui` (Author of introduction, but not the chief author) or `win` (Writer of introduction).", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "preface.xhtml" and ">wpr<" not in metadata_xhtml:
-					messages.append(LintMessage("m-035", "`preface.xhtml` found, but no MARC relator `wpr` (Writer of preface).", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("m-031", "`preface.xhtml` found, but no MARC relator `wpr` (Writer of preface).", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "afterword.xhtml" and ">aft<" not in metadata_xhtml:
-					messages.append(LintMessage("m-036", "`afterword.xhtml` found, but no MARC relator `aft` (Author of colophon, afterword, etc.).", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("m-032", "`afterword.xhtml` found, but no MARC relator `aft` (Author of colophon, afterword, etc.).", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "endnotes.xhtml" and ">ann<" not in metadata_xhtml:
-					messages.append(LintMessage("m-037", "`endnotes.xhtml` found, but no MARC relator `ann` (Annotator).", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("m-033", "`endnotes.xhtml` found, but no MARC relator `ann` (Annotator).", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename == "loi.xhtml" and ">ill<" not in metadata_xhtml:
-					messages.append(LintMessage("m-038", "`loi.xhtml` found, but no MARC relator `ill` (Illustrator).", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("m-034", "`loi.xhtml` found, but no MARC relator `ill` (Illustrator).", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check for wrong semantics in frontmatter/backmatter
 				if filename in se.FRONTMATTER_FILENAMES and "frontmatter" not in file_contents:
@@ -1335,7 +1319,7 @@ def lint(self, metadata_xhtml) -> list:
 		messages.append(LintMessage("x-013", "CSS class found in XHTML, but not in `local.css`.", se.MESSAGE_TYPE_ERROR, "local.css", missing_selectors))
 
 	if single_use_css_classes:
-		messages.append(LintMessage("c-080", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks.", se.MESSAGE_TYPE_WARNING, "local.css", single_use_css_classes))
+		messages.append(LintMessage("c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks.", se.MESSAGE_TYPE_WARNING, "local.css", single_use_css_classes))
 
 	headings = list(set(headings))
 	with open(self.path / "src" / "epub" / "toc.xhtml", "r", encoding="utf-8") as file:
@@ -1361,7 +1345,7 @@ def lint(self, metadata_xhtml) -> list:
 			# ToC-only colons above we also need to do that here for the comparison.
 			heading_without_colons = (heading[0].replace(":", ""), heading[1])
 			if heading_without_colons not in toc_headings:
-				messages.append(LintMessage("m-049", f"Heading `{heading[0]}` found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, heading[1]))
+				messages.append(LintMessage("m-045", f"Heading `{heading[0]}` found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, heading[1]))
 
 		# Check our ordered ToC entries against the spine
 		# To cover all possibilities, we combine the toc and the landmarks to get the full set of entries
@@ -1380,10 +1364,10 @@ def lint(self, metadata_xhtml) -> list:
 			toc_files = unique_toc_files
 			spine_entries = BeautifulSoup(content_opf.read(), "lxml").find("spine").find_all("itemref")
 			if len(toc_files) != len(spine_entries):
-				messages.append(LintMessage("m-047", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)}).", se.MESSAGE_TYPE_ERROR, "content.opf"))
+				messages.append(LintMessage("m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)}).", se.MESSAGE_TYPE_ERROR, "content.opf"))
 			for index, entry in enumerate(spine_entries):
 				if toc_files[index] != entry.attrs["idref"]:
-					messages.append(LintMessage("m-048", f"The spine order does not match the order of the ToC and landmarks. Expected `{entry.attrs['idref']}`, found `{toc_files[index]}`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+					messages.append(LintMessage("m-044", f"The spine order does not match the order of the ToC and landmarks. Expected `{entry.attrs['idref']}`, found `{toc_files[index]}`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 					break
 
 	for element in abbr_elements:
