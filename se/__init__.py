@@ -8,10 +8,8 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from textwrap import wrap
 from typing import Set, Union
 import regex
-import terminaltables
 from termcolor import colored
 
 VERSION = "1.2.3"
@@ -198,31 +196,6 @@ def print_warning(message: str, verbose: bool = False) -> None:
 	"""
 
 	print("{}{} {}".format(MESSAGE_INDENT if verbose else "", colored("Warning:", "yellow", attrs=["reverse"]), message))
-
-def print_table(table_data: list, wrap_column: int = None) -> None:
-	"""
-	Helper function to print a table to the console.
-
-	INPUTS
-	table_data: A list where each entry is a list representing the columns in a table
-	wrap_column: The 0-indexed column to wrap
-
-	OUTPUTS
-	None
-	"""
-
-	table = terminaltables.SingleTable(table_data)
-	table.inner_heading_row_border = False
-	table.inner_row_border = True
-	table.justify_columns[0] = "center"
-
-	# Calculate newlines
-	if wrap_column is not None:
-		max_width = table.column_max_width(wrap_column)
-		for row in table_data:
-			row[wrap_column] = "\n".join(wrap(row[wrap_column], max_width))
-
-	print(table.table)
 
 def is_positive_integer(value: str) -> int:
 	"""

@@ -3,13 +3,40 @@ This module implements the `se lint` command.
 """
 
 import argparse
+from textwrap import wrap
 
 import regex
 from termcolor import colored
+import terminaltables
 
 import se
 from se.se_epub import SeEpub
 
+
+def _print_table(table_data: list, wrap_column: int = None) -> None:
+	"""
+	Helper function to print a table to the console.
+
+	INPUTS
+	table_data: A list where each entry is a list representing the columns in a table
+	wrap_column: The 0-indexed column to wrap
+
+	OUTPUTS
+	None
+	"""
+
+	table = terminaltables.SingleTable(table_data)
+	table.inner_heading_row_border = False
+	table.inner_row_border = True
+	table.justify_columns[0] = "center"
+
+	# Calculate newlines
+	if wrap_column is not None:
+		max_width = table.column_max_width(wrap_column)
+		for row in table_data:
+			row[wrap_column] = "\n".join(wrap(row[wrap_column], max_width))
+
+	print(table.table)
 
 def lint() -> int:
 	"""
@@ -60,12 +87,14 @@ def lint() -> int:
 					if message.message_type == se.MESSAGE_TYPE_ERROR:
 						label = "Error:"
 
-					print(f"{label} {message.filename} {message.text}")
+					print(f"{message.code} {label} {message.filename} {message.text}")
 
 					if message.submessages:
 						for submessage in message.submessages:
 							print(f"\t{submessage}")
 			else:
+				table_data.append([colored("Code", attrs=["bold"]), colored("Severity", attrs=["bold"]), colored("File", attrs=["bold"]), colored("Message", attrs=["bold"])])
+
 				for message in messages:
 					alert = "Manual Review"
 
@@ -84,13 +113,13 @@ def lint() -> int:
 						# is rendered in blue
 						message_text = regex.sub(r"`(.+?)`", colored(r"\1", "blue"), message_text)
 
-					table_data.append([alert, message.filename, message_text])
+					table_data.append([message.code, alert, message.filename, message_text])
 
 					if message.submessages:
 						for submessage in message.submessages:
-							table_data.append([" ", "→", f"{submessage}"])
+							table_data.append([" ", " ", "→", f"{submessage}"])
 
-				se.print_table(table_data, 2)
+				_print_table(table_data, 2)
 
 		if args.verbose and not messages:
 			if args.plain:
@@ -98,6 +127,6 @@ def lint() -> int:
 			else:
 				table_data.append([colored("OK", "green", attrs=["reverse"])])
 
-				se.print_table(table_data)
+				_print_table(table_data)
 
 	return return_code
