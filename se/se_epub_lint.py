@@ -357,7 +357,7 @@ def lint(self, metadata_xhtml) -> list:
 		if matches:
 			messages.append(LintMessage("c-001", "Do not directly select `<h#>` elements, as they are used in template files; use more specific selectors.", se.MESSAGE_TYPE_ERROR, "local.css"))
 
-	root_files = os.listdir()
+	root_files = os.listdir(self.path)
 	expected_root_files = [".git", "images", "src", "LICENSE.md"]
 	illegal_files = [x for x in root_files if x not in expected_root_files and x != ".gitignore"] # .gitignore is optional
 	missing_files = [x for x in expected_root_files if x not in root_files and x != "LICENSE.md"] # We add more to this later on. LICENSE.md gets checked later on, so we don't want to add it twice
