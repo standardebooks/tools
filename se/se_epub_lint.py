@@ -696,8 +696,8 @@ def lint(self, metadata_xhtml) -> list:
 								endnote_ref.extract()
 
 							# Decide whether to remove subheadings based on the following logic:
-							# If the closest parent <section> is a part, division, or volume, then keep subtitle
-							# Else, if the closest parent <section> is a halftitlepage, then discard subtitle
+							# If the closest parent <section> or <article> is a part, division, or volume, then keep subtitle
+							# Else, if the closest parent <section> or <article> is a halftitlepage, then discard subtitle
 							# Else, if the first child of the heading is not z3998:roman, then also discard subtitle
 							# Else, keep the subtitle.
 							heading_subtitle = match.find(attrs={"epub:type": regex.compile("^.*subtitle.*$")})
