@@ -710,7 +710,7 @@ def lint(self, metadata_xhtml) -> list:
 									messages.append(LintMessage("s-015", f"`<{match.name}>` element has subtitle `<span>`, but first line is not wrapped in a `<span>`. See semantics manual for structure of headers with subtitles.", se.MESSAGE_TYPE_ERROR, filename))
 
 								# OK, move on with processing headers.
-								parent_section = match.find_parents("section")
+								parent_section = match.find_parents(["section", "article"])
 
 								# Sometimes we might not have a parent <section>, like in Keats' Poetry
 								if not parent_section:
