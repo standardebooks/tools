@@ -410,7 +410,7 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 		error = result.stderr.decode().strip()
 
 		if error:
-			raise se.InvalidXhtmlException("Couldn't parse file; files must be in XHTML format, which is not the same as HTML. xmllint says:\n{}".format(error.replace("-:", "Line ")))
+			raise se.InvalidXhtmlException("xmllint says:\n{}".format(error.replace("-:", "Line ")))
 	except UnicodeDecodeError as ex:
 		raise se.InvalidEncodingException(f"Invalid encoding; UTF-8 expected: {ex}")
 	except Exception as ex:

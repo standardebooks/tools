@@ -33,7 +33,7 @@ def clean() -> int:
 			se.print_error(str(ex))
 			return ex.code
 		except se.SeException as ex:
-			se.print_error(str(ex) + f" File: {filename}", args.verbose)
+			se.print_error(f"File: {filename}\n{str(ex)}", args.verbose)
 			return ex.code
 
 		if args.verbose:
@@ -58,7 +58,7 @@ def clean() -> int:
 					file.write(processed_css)
 					file.truncate()
 			except se.SeException as ex:
-				se.print_error(str(ex) + f" File: {filename}", args.verbose)
+				se.print_error(f"File: {filename}\n{str(ex)}", args.verbose)
 				return ex.code
 
 		if args.verbose:
