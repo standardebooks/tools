@@ -888,7 +888,7 @@ class SeEpub:
 			dc_title = "WORK_TITLE"  # default
 		return dc_title
 
-	def lint(self) -> list:
+	def lint(self, ignore_lint_ignore: bool) -> list:
 		"""
 		The lint() function is very big so for readability and maintainability
 		it's broken out to a separate file. Strictly speaking that file can be inlined
@@ -897,7 +897,7 @@ class SeEpub:
 
 		from se.se_epub_lint import lint # pylint: disable=import-outside-toplevel
 
-		return lint(self, self.metadata_xhtml)
+		return lint(self, self.metadata_xhtml, ignore_lint_ignore)
 
 	def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool, verbose: bool):
 		"""

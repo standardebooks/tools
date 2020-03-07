@@ -76,6 +76,7 @@ complete -c se -n "__fish_se_no_subcommand" -a lint -d "Check for various Standa
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s p -l plain -d "print plain text output, without tables or colors"
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s n -l no-colors -d "do not use colored output"
+complete -c se -A -n "__fish_seen_subcommand_from lint" -s s -l skip-lint-ignore -d "ignore rules in se-lint-ignore.xml file"
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s v -l verbose -d "increase output verbosity"
 
 complete -c se -n "__fish_se_no_subcommand" -a make-url-safe -d "Make a string URL-safe"

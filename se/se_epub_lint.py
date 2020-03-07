@@ -8,6 +8,7 @@ the function is very big and it makes editing easier to put in a separate file.
 """
 
 import filecmp
+from fnmatch import translate
 import glob
 import html
 import io
@@ -101,6 +102,10 @@ METADATA
 "m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)})."
 "m-044", f"The spine order does not match the order of the ToC and landmarks. Expected `{entry.attrs['idref']}`, found `{toc_files[index]}`."
 "m-045", f"Heading `{heading[0]}` found, but not present for that file in the ToC."
+"m-046", "Missing or empty `<reason>` element."
+"m-047", "Ignoring `*` is too general. Target specific files if possible."
+"m-048", "Unused se-lint-ignore.xml rule."
+"m-049", "No se-lint-ignore.xml rules. Delete the file if there are no rules."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like `&#913;`)."
@@ -319,7 +324,7 @@ def _get_unused_selectors(self) -> List[str]:
 
 	return list(unused_selectors)
 
-def lint(self, metadata_xhtml) -> list:
+def lint(self, metadata_xhtml: str, ignore_lint_ignore: bool) -> list:
 	"""
 	Check this ebook for some common SE style errors.
 
@@ -330,7 +335,7 @@ def lint(self, metadata_xhtml) -> list:
 	A list of LintMessage objects.
 	"""
 
-	messages = []
+	messages: List[LintMessage] = []
 	has_halftitle = False
 	has_frontmatter = False
 	has_cover_source = False
@@ -338,7 +343,79 @@ def lint(self, metadata_xhtml) -> list:
 	titlepage_svg_title = ""
 	xhtml_css_classes: Dict[str, int] = {}
 	headings: List[tuple] = []
-	double_spaced_files = []
+	double_spaced_files: List[str] = []
+
+	# This is a dict with where keys are the path and values are a list of code dicts.
+	# Each code dict has a key "code" which is the actual code, and a key "used" which is a
+	# bool indicating whether or not the code has actually been caught in the linting run.
+	ignored_codes: Dict[str, List[Dict]] = {}
+
+	# First, check if we have an se-lint-ignore.xml file in the ebook root. If so, parse it.
+	# This is an example se-lint-ignore.xml file. File paths support shell-style globbing. <reason> is required.
+	# <?xml version="1.0" encoding="utf-8"?>
+	# <se-lint-ignore>
+	# 	<file path="chapter-6.xhtml">
+	# 		<ignore>
+	# 			<code>t-007</code>
+	# 			<reason>The ampersand is part of prose in a letter written in the character's distinct style.</reason>
+	# 		</ignore>
+	# 		<ignore>
+	# 			<code>t-008</code>
+	# 			<reason>The ampersand is part of prose in a letter written in the character's distinct style.</reason>
+	# 		</ignore>
+	# 	</file>
+	# 	<file path="preface-*.xhtml">
+	# 		<ignore>
+	# 			<code>t-011</code>
+	# 			<reason>The quotes are in headlines that lack punctuation on purpose.</reason>
+	# 		</ignore>
+	# 	</file>
+	# </se-lint-ignore>
+	if not ignore_lint_ignore:
+		try:
+			with open(self.path / "se-lint-ignore.xml", "r", encoding="utf-8") as file:
+				lint_config = se.easy_xml.EasyXmlTree(file.read())
+
+			elements = lint_config.xpath("//se-lint-ignore/file")
+
+			if not elements:
+				messages.append(LintMessage("m-049", "No se-lint-ignore.xml rules. Delete the file if there are no rules.", se.MESSAGE_TYPE_ERROR, "se-lint-ignore.xml"))
+
+			has_illegal_path = False
+
+			for element in elements:
+				path = element.attribute("path").strip()
+
+				if path == "*":
+					has_illegal_path = True # Set a bool so that we set a lint error later, to prevent adding it multiple times
+
+				if path not in ignored_codes:
+					ignored_codes[path] = []
+
+				for ignore in element.lxml_element:
+					if ignore.tag == "ignore":
+						has_reason = False
+						for child in ignore:
+							if child.tag == "code":
+								ignored_codes[path].append({"code": child.text.strip(), "used": False})
+
+							if child.tag == "reason" and child.text.strip() != "":
+								has_reason = True
+
+						if not has_reason:
+							messages.append(LintMessage("m-046", "Missing or empty `<reason>` element.", se.MESSAGE_TYPE_ERROR, "se-lint-ignore.xml"))
+
+			if has_illegal_path:
+				messages.append(LintMessage("m-047", "Ignoring `*` is too general. Target specific files if possible.", se.MESSAGE_TYPE_WARNING, "se-lint-ignore.xml"))
+
+		except FileNotFoundError as ex:
+			pass
+		except se.InvalidXhtmlException as ex:
+			raise ex
+		except Exception as ex:
+			raise se.InvalidXhtmlException("Couldn’t parse se-lint-ignore.xml file.")
+
+	# Done parsing ignore list
 
 	# Get the ebook language, for later use
 	language = regex.search(r"<dc:language>([^>]+?)</dc:language>", metadata_xhtml).group(1)
@@ -359,7 +436,7 @@ def lint(self, metadata_xhtml) -> list:
 
 	root_files = os.listdir(self.path)
 	expected_root_files = [".git", "images", "src", "LICENSE.md"]
-	illegal_files = [x for x in root_files if x not in expected_root_files and x != ".gitignore"] # .gitignore is optional
+	illegal_files = [x for x in root_files if x not in expected_root_files and x != ".gitignore" and x != "se-lint-ignore.xml"] # .gitignore and se-lint-ignore.xml are optional
 	missing_files = [x for x in expected_root_files if x not in root_files and x != "LICENSE.md"] # We add more to this later on. LICENSE.md gets checked later on, so we don't want to add it twice
 
 	for illegal_file in illegal_files:
@@ -1384,5 +1461,37 @@ def lint(self, metadata_xhtml) -> list:
 
 	for missing_file in missing_files:
 		messages.append(LintMessage("f-002", "Missing expected file or directory.", se.MESSAGE_TYPE_ERROR, missing_file))
+
+	# Now that we have our lint messages, we filter out ones that we've ignored.
+	if ignored_codes:
+		# Iterate over a copy of messages, so that we can remove from them while iterating.
+		for message in messages[:]:
+			for path, codes in ignored_codes.items():
+				for code in codes:
+					try:
+						# fnmatch.translate() converts shell-style globs into a regex pattern
+						if regex.match(fr"{translate(path)}", message.filename) and message.code == code["code"]:
+							messages.remove(message)
+							code["used"] = True
+
+					except ValueError as ex:
+						# This gets raised if the message has already been removed by a previous rule.
+						# For example, chapter-*.xhtml gets t-001 removed, then subsequently *.xhtml gets t-001 removed.
+						pass
+					except Exception as ex:
+						raise se.InvalidInputException(f"Invalid path in se-lint-ignore.xml rule: {path}")
+
+		# Check for unused ignore rules
+		unused_codes: List[str] = []
+		for path, codes in ignored_codes.items():
+			for code in codes:
+				if not code["used"]:
+					unused_codes.append(f"{path}, {code['code']}")
+
+		if unused_codes:
+			messages.append(LintMessage("m-048", "Unused se-lint-ignore.xml rule.", se.MESSAGE_TYPE_ERROR, "se-lint-ignore.xml", unused_codes))
+
+	# Sort messages by code
+	messages = sorted(messages, key=lambda x: x.code)
 
 	return messages

@@ -128,7 +128,9 @@ case $state in
 			lint)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
+					{-n,--no-colors}'[do not use colored output]' \
 					{-p,--plain}'[print plain output]' \
+					{-s,--skip-lint-ignore}'[ignore rules in se-lint-ignore.xml file]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_directories'
 				;;

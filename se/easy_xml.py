@@ -56,24 +56,24 @@ class EasyXmlElement:
 	"""
 
 	def __init__(self, lxml_element):
-		self.__lxml_element = lxml_element
+		self.lxml_element = lxml_element
 
 	def tostring(self) -> str:
 		"""
 		Return a string representing this element.
 		"""
 
-		return regex.sub(r" xmlns(:[a-z]+?)?=\"[^\"]+?\"", "", etree.tostring(self.__lxml_element, encoding=str, with_tail=False))
+		return regex.sub(r" xmlns(:[a-z]+?)?=\"[^\"]+?\"", "", etree.tostring(self.lxml_element, encoding=str, with_tail=False))
 
 	def attribute(self, attribute: str) -> str:
 		"""
 		Return the value of an attribute on this element.
 		"""
-		return self.__lxml_element.get(attribute)
+		return self.lxml_element.get(attribute)
 
 	def inner_html(self) -> str:
 		"""
 		Return a string representing the inner HTML of this element.
 		"""
 
-		return self.__lxml_element.text
+		return self.lxml_element.text
