@@ -1493,6 +1493,6 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 			messages.append(LintMessage("m-048", "Unused se-lint-ignore.xml rule.", se.MESSAGE_TYPE_ERROR, "se-lint-ignore.xml", unused_codes))
 
 	# Sort messages by code
-	messages = sorted(messages, key=lambda x: x.code)
+	messages = sorted(messages, key=lambda x: (x.filename, x.code))
 
 	return messages

@@ -1,9 +1,5 @@
 f-002 Error: .git Missing expected file or directory.
-m-016 Error: content.opf Long description must be escaped HTML.
-m-017 Error: content.opf `<![CDATA[` found. Run `se clean` to canonicalize `<![CDATA[` sections.
-m-020 Error: content.opf Illegal value for `<meta property="se:subject">` element.
-	TAG
-m-022 Error: content.opf Empty `<meta property="se:production-notes">` element.
+s-033 Manual Review: chapter-1.xhtml File language is `en-GB`, but `content.opf` language is `LANG`.
 m-036 Error: colophon.xhtml Missing data in colophon.
 	YEAR
 	PRODUCER_URL
@@ -16,4 +12,8 @@ m-036 Error: colophon.xhtml Missing data in colophon.
 	PAINTING
 	ARTIST_WIKI_URL
 	ARTIST
-s-033 Manual Review: chapter-1.xhtml File language is `en-GB`, but `content.opf` language is `LANG`.
+m-016 Error: content.opf Long description must be escaped HTML.
+m-017 Error: content.opf `<![CDATA[` found. Run `se clean` to canonicalize `<![CDATA[` sections.
+m-020 Error: content.opf Illegal value for `<meta property="se:subject">` element.
+	TAG
+m-022 Error: content.opf Empty `<meta property="se:production-notes">` element.
