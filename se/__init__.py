@@ -103,9 +103,10 @@ class InvalidSeEbookException(SeException):
 	""" Invalid SE ebook """
 	code = 10
 
-class FirefoxRunningException(SeException):
-	""" Firefox already running """
-	code = 11
+# No longer used--code 11 can be replaced with another exception
+# class FirefoxRunningException(SeException):
+# 	""" Firefox already running """
+# 	code = 11
 
 class RemoteCommandErrorException(SeException):
 	""" Error in remote command """
