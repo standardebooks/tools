@@ -240,16 +240,16 @@ def _get_malformed_urls(xhtml: str, filename: str) -> list:
 
 	# Check for malformed canonical URLs
 	if regex.search(r"books\.google\.com/books\?id=.+?[&#]", xhtml):
-		messages.append(LintMessage("m-004", "Non-canonical Google Books URL. Google Books URLs must look exactly like `https://books.google.com/books?id=<BOOK-ID>`.", filename))
+		messages.append(LintMessage("m-004", "Non-canonical Google Books URL. Google Books URLs must look exactly like `https://books.google.com/books?id=<BOOK-ID>`.", se.MESSAGE_TYPE_ERROR, filename))
 
 	if "babel.hathitrust.org" in xhtml:
-		messages.append(LintMessage("m-005", "Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like `https://catalog.hathitrust.org/Record/<BOOK-ID>`.", filename))
+		messages.append(LintMessage("m-005", "Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like `https://catalog.hathitrust.org/Record/<BOOK-ID>`.", se.MESSAGE_TYPE_ERROR, filename))
 
 	if ".gutenberg.org/files/" in xhtml:
-		messages.append(LintMessage("m-006", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like `https://www.gutenberg.org/ebooks/<BOOK-ID>`.", filename))
+		messages.append(LintMessage("m-006", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like `https://www.gutenberg.org/ebooks/<BOOK-ID>`.", se.MESSAGE_TYPE_ERROR, filename))
 
 	if "archive.org/stream" in xhtml:
-		messages.append(LintMessage("m-007", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like `https://archive.org/details/<BOOK-ID>`.", filename))
+		messages.append(LintMessage("m-007", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like `https://archive.org/details/<BOOK-ID>`.", se.MESSAGE_TYPE_ERROR, filename))
 
 	return messages
 
