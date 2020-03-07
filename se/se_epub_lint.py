@@ -144,8 +144,8 @@ SEMANTICS & CONTENT
 "s-033", f"File language is `{file_language}`, but `content.opf` language is `{language}`."
 "s-034", f"`{attr}` semantic used, but `{bare_attr}` is in the EPUB semantic inflection vocabulary."
 "s-035", "`<h#>` element has the `z3998:roman` semantic, but is not a Roman numeral."
-"s-036", "No frontmatter semantic inflection for what looks like a frontmatter file."
-"s-037", "No backmatter semantic inflection for what looks like a backmatter file."
+"s-036", "No `frontmatter` semantic inflection for what looks like a frontmatter file."
+"s-037", "No `backmatter` semantic inflection for what looks like a backmatter file."
 "s-038", "Illegal asterism (`***`). Section/scene breaks must be defined by an `<hr/>` element."
 "s-039", "Illegal `Ibid` in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing `Ibid` refers to."
 "s-040", f"`#{figure_ref}` not found in file `{chapter_ref}`."
@@ -1367,10 +1367,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 				# Check for wrong semantics in frontmatter/backmatter
 				if filename in se.FRONTMATTER_FILENAMES and "frontmatter" not in file_contents:
-					messages.append(LintMessage("s-036", "No frontmatter semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("s-036", "No `frontmatter` semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
 				if filename in se.BACKMATTER_FILENAMES and "backmatter" not in file_contents:
-					messages.append(LintMessage("s-037", "No backmatter semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
+					messages.append(LintMessage("s-037", "No `backmatter` semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
 	if cover_svg_title != titlepage_svg_title:
 		messages.append(LintMessage("s-028", "`cover.svg` and `titlepage.svg` `<title>` elements do not match.", se.MESSAGE_TYPE_ERROR))
