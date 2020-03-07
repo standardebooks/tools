@@ -324,7 +324,7 @@ def _get_unused_selectors(self) -> List[str]:
 
 	return list(unused_selectors)
 
-def lint(self, metadata_xhtml: str, ignore_lint_ignore: bool) -> list:
+def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 	"""
 	Check this ebook for some common SE style errors.
 
@@ -371,7 +371,7 @@ def lint(self, metadata_xhtml: str, ignore_lint_ignore: bool) -> list:
 	# 		</ignore>
 	# 	</file>
 	# </se-lint-ignore>
-	if not ignore_lint_ignore:
+	if not skip_lint_ignore:
 		try:
 			with open(self.path / "se-lint-ignore.xml", "r", encoding="utf-8") as file:
 				lint_config = se.easy_xml.EasyXmlTree(file.read())

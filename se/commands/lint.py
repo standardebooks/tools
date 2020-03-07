@@ -57,7 +57,7 @@ def lint() -> int:
 	for directory in args.directories:
 		try:
 			se_epub = SeEpub(directory)
-			messages = se_epub.lint(args.ignore_lint_ignore)
+			messages = se_epub.lint(args.skip_lint_ignore)
 		except se.SeException as ex:
 			se.print_error(ex)
 			return ex.code
