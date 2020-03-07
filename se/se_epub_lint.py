@@ -1492,7 +1492,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 		if unused_codes:
 			messages.append(LintMessage("m-048", "Unused se-lint-ignore.xml rule.", se.MESSAGE_TYPE_ERROR, "se-lint-ignore.xml", unused_codes))
 
-	# Sort messages by code
-	messages = sorted(messages, key=lambda x: (x.filename, x.code))
+	# Sort messages by filename (using a natural sort), then by code
+	convert = lambda text: int(text) if text.isdigit() else text.lower()
+	alphanum_key = lambda key: [convert(c) for c in regex.split("([0-9]+)", str(key))]
+
+	messages = sorted(messages, key=lambda x: (alphanum_key(x.filename), x.code))
 
 	return messages
