@@ -657,6 +657,7 @@ class SeEpub:
 		OUTPUTS
 		None.
 		"""
+
 		text = ""
 
 		for filename in se.get_target_filenames([self.path], (".xhtml",)):
@@ -681,6 +682,7 @@ class SeEpub:
 		OUTPUTS
 		None.
 		"""
+
 		word_count = 0
 
 		for filename in se.get_target_filenames([self.path], (".xhtml",)):
