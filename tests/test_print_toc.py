@@ -13,7 +13,7 @@ def test_print_toc(data_dir: Path, draft_dir: Path, work_dir: Path, update_golde
 	text_dir = data_dir / "print-toc" / "in"
 	book_dir = assemble_book(draft_dir, work_dir, text_dir)
 
-	must_run("se print-toc {}".format(book_dir))
+	must_run(f"se print-toc {book_dir}")
 
 	out, err = capfd.readouterr()
 	assert err == ""

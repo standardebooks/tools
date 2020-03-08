@@ -249,7 +249,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
 							pass
 						except lxml.cssselect.SelectorSyntaxError as ex:
-							raise se.InvalidCssException(f"Couldn't parse CSS in or near this line: {selector}\n{ex}")
+							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: {selector}\n{ex}")
 
 						# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
 						if "[epub|type" in selector:
@@ -277,7 +277,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
 							continue
 						except lxml.cssselect.SelectorSyntaxError as ex:
-							raise se.InvalidCssException(f"Couldn't parse CSS in or near this line: {selector}\n{ex}")
+							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: {selector}\n{ex}")
 
 						# Convert <abbr> to <span>
 						if "abbr" in selector:
@@ -698,7 +698,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 				filenames.reverse()
 				for filename in filenames:
 					if filename.lower().startswith("mathml-"):
-						metadata_xhtml = metadata_xhtml.replace("<manifest>", "<manifest><item href=\"images/{0}\" id=\"{0}\" media-type=\"image/png\"/>".format(filename))
+						metadata_xhtml = metadata_xhtml.replace("<manifest>", f"<manifest><item href=\"images/{filename}\" id=\"{filename}\" media-type=\"image/png\"/>")
 
 			metadata_xhtml = regex.sub(r"properties=\"([^\"]*?)mathml([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xhtml)
 

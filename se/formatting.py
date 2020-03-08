@@ -410,11 +410,11 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 		error = result.stderr.decode().strip()
 
 		if error:
-			raise se.InvalidXhtmlException("xmllint says:\n{}".format(error.replace("-:", "Line ")))
+			raise se.InvalidXhtmlException(f"xmllint says:\n{error.replace('-:', 'Line  ')}")
 	except UnicodeDecodeError as ex:
 		raise se.InvalidEncodingException(f"Invalid encoding; UTF-8 expected: {ex}")
 	except Exception as ex:
-		raise se.InvalidXhtmlException(f"Couldn't parse file; files must be in XHTML format, which is not the same as HTML: {ex}")
+		raise se.InvalidXhtmlException(f"Couldn’t parse file; files must be in XHTML format, which is not the same as HTML: {ex}")
 
 	# Add the XML header that xmllint stripped during c14n
 	xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + xhtml

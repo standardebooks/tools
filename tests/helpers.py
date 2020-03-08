@@ -25,7 +25,7 @@ def must_run(cmd: str) -> None:
 	if result.returncode == 0:
 		if not result.stderr:
 			return
-		pytest.fail("stderr was not empty after command '{}'\n{}".format(cmd, result.stderr.decode()))
+		pytest.fail(f"stderr was not empty after command '{cmd}'\n{result.stderr.decode()}")
 	else:
 		fail_msg = f"error code {result.returncode} from command '{cmd}'"
 		if result.stderr:

@@ -40,9 +40,9 @@ def _process_endnotes_in_file(filename: str, root: Path, note_range: range, step
 			# If we’ve already changed some notes and can’t find the next then we don’t need to continue searching
 			if not f"id=\"noteref-{endnote_number}\"" in processed_xhtml and processed_xhtml_is_modified:
 				break
-			processed_xhtml = processed_xhtml.replace(f"id=\"noteref-{endnote_number}\"", "id=\"noteref-{}\"".format(endnote_number + step), 1)
-			processed_xhtml = processed_xhtml.replace(f"#note-{endnote_number}\"", "#note-{}\"".format(endnote_number + step), 1)
-			processed_xhtml = processed_xhtml.replace(f">{endnote_number}</a>", ">{}</a>".format(endnote_number + step), 1)
+			processed_xhtml = processed_xhtml.replace(f"id=\"noteref-{endnote_number}\"", f"id=\"noteref-{endnote_number + step}\"", 1)
+			processed_xhtml = processed_xhtml.replace(f"#note-{endnote_number}\"", f"#note-{endnote_number + step}\"", 1)
+			processed_xhtml = processed_xhtml.replace(f">{endnote_number}</a>", f">{endnote_number + step}</a>", 1)
 			processed_xhtml_is_modified = processed_xhtml_is_modified or (processed_xhtml != xhtml)
 
 		if processed_xhtml_is_modified:
@@ -248,7 +248,7 @@ class SeEpub:
 				with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml") as file:
 					self.__endnotes_soup = BeautifulSoup(file.read(), "html.parser")
 			except:
-				raise se.InvalidFileException("Could't open file: {}".format(str(self.path / "src" / "epub" / "text" / "endnotes.xhtml")))
+				raise se.InvalidFileException(f"Could't open file: {str(self.path / 'src' / 'epub' / 'text' / 'endnotes.xhtml')}")
 
 		return self.__endnotes_soup
 
@@ -391,7 +391,7 @@ class SeEpub:
 
 		# Iterate over spine items in order and recompose them into our output
 		for element in metadata_soup.select("spine itemref"):
-			filename = metadata_soup.select("item[id=\"{}\"]".format(element["idref"]))[0]["href"]
+			filename = metadata_soup.select(f"item[id=\"{element['idref']}\"]")[0]["href"]
 
 			with open(self.path / "src" / "epub" / filename, "r", encoding="utf-8") as file:
 				xhtml_soup = BeautifulSoup(file.read(), "lxml")
@@ -443,7 +443,7 @@ class SeEpub:
 			xhtml = xhtml.replace("epub:type", "data-epub-type")
 			xhtml = xhtml.replace("epub|type", "data-epub-type")
 			xhtml = xhtml.replace("xml:lang", "lang")
-			xhtml = xhtml.replace("<html", "<html lang=\"{}\"".format(metadata_soup.find("dc:language").string))
+			xhtml = xhtml.replace("<html", f"<html lang=\"{metadata_soup.find('dc:language').string}\"")
 			xhtml = regex.sub(" xmlns.+?=\".+?\"", "", xhtml)
 
 		file_name_xhtml.unlink()
@@ -587,8 +587,8 @@ class SeEpub:
 					note_range = range(target_endnote_number, endnote_count + 1, 1)
 
 				for endnote_number in note_range:
-					xhtml = xhtml.replace(f"id=\"note-{endnote_number}\"", "id=\"note-{}\"".format(endnote_number + step), 1)
-					xhtml = xhtml.replace(f"#noteref-{endnote_number}\"", "#noteref-{}\"".format(endnote_number + step), 1)
+					xhtml = xhtml.replace(f"id=\"note-{endnote_number}\"", f"id=\"note-{endnote_number + step}\"", 1)
+					xhtml = xhtml.replace(f"#noteref-{endnote_number}\"", f"#noteref-{endnote_number + step}\"", 1)
 
 				# There may be some links within the notes that refer to other endnotes.
 				# These potentially need incrementing / decrementing too. This code assumes
@@ -598,7 +598,7 @@ class SeEpub:
 					link_number = int(link[0])
 					if (link_number < target_endnote_number and increment) or (link_number > target_endnote_number and not increment):
 						continue
-					xhtml = xhtml.replace("href=\"#note-{0}\"{1} {0}</a>".format(link[0], link[1]), "href=\"#note-{0}\"{1} {0}</a>".format(link_number + step, link[1]))
+					xhtml = xhtml.replace(f"href=\"#note-{link[0]}\"{link[1]} {link[0]}</a>", "href=\"#note-{0}\"{1} {0}</a>".format(link_number + step, link[1]))
 
 				file.seek(0)
 				file.write(xhtml)
@@ -663,7 +663,7 @@ class SeEpub:
 			with open(filename, "r", encoding="utf-8") as file:
 				text += " " + file.read()
 
-		self.metadata_xhtml = regex.sub(r"<meta property=\"se:reading-ease\.flesch\">[^<]*</meta>", "<meta property=\"se:reading-ease.flesch\">{}</meta>".format(se.formatting.get_flesch_reading_ease(text)), self.metadata_xhtml)
+		self.metadata_xhtml = regex.sub(r"<meta property=\"se:reading-ease\.flesch\">[^<]*</meta>", f"<meta property=\"se:reading-ease.flesch\">{se.formatting.get_flesch_reading_ease(text)}</meta>", self.metadata_xhtml)
 
 		with open(self.metadata_file_path, "w", encoding="utf-8") as file:
 			file.seek(0)
@@ -713,12 +713,12 @@ class SeEpub:
 		# Add CSS
 		for _, _, filenames in os.walk(self.path / "src" / "epub" / "css"):
 			for filename in filenames:
-				manifest.append("<item href=\"css/{0}\" id=\"{0}\" media-type=\"text/css\"/>".format(filename))
+				manifest.append(f"<item href=\"css/{filename}\" id=\"{filename}\" media-type=\"text/css\"/>")
 
 		# Add fonts
 		for _, _, filenames in os.walk(self.path / "src" / "epub" / "fonts"):
 			for filename in filenames:
-				manifest.append("<item href=\"fonts/{0}\" id=\"{0}\" media-type=\"application/vnd.ms-opentype\"/>".format(filename))
+				manifest.append(f"<item href=\"fonts/{filename}\" id=\"{filename}\" media-type=\"application/vnd.ms-opentype\"/>")
 
 		# Add images
 		for _, _, filenames in os.walk(self.path / "src" / "epub" /  "images"):
@@ -735,7 +735,7 @@ class SeEpub:
 				if filename == "cover.svg":
 					properties = " properties=\"cover-image\""
 
-				manifest.append("<item href=\"images/{0}\" id=\"{0}\" media-type=\"{1}\"{2}/>".format(filename, media_type, properties))
+				manifest.append(f"<item href=\"images/{filename}\" id=\"{filename}\" media-type=\"{media_type}\"{properties}/>")
 
 		# Add XHTML files
 		for root, _, filenames in os.walk(self.path / "src" / "epub" / "text"):
@@ -758,7 +758,7 @@ class SeEpub:
 				if properties == " properties=\"\"":
 					properties = ""
 
-				manifest.append("<item href=\"text/{0}\" id=\"{0}\" media-type=\"application/xhtml+xml\"{1}/>".format(filename, properties))
+				manifest.append(f"<item href=\"text/{filename}\" id=\"{filename}\" media-type=\"application/xhtml+xml\"{properties}/>")
 
 		manifest = se.natural_sort(manifest)
 
@@ -945,7 +945,7 @@ class SeEpub:
 				with open(file_path) as file:
 					soup = BeautifulSoup(file.read(), "lxml")
 			except:
-				raise se.InvalidFileException("Could't open file: {}".format(str(file_path)))
+				raise se.InvalidFileException(f"Couldn’t open file: {str(file_path)}")
 
 			links = soup.find_all("a")
 			needs_rewrite = False
@@ -964,7 +964,7 @@ class SeEpub:
 
 					new_anchor = f"note-{current_note_number:d}"
 					if new_anchor != old_anchor:
-						change_list.append("Changed " + old_anchor + " to " + new_anchor + " in " + file_name)
+						change_list.append(f"Changed {old_anchor} to {new_anchor} in {file_name}")
 						notes_changed += 1
 						# Update the link in the soup object
 						link["href"] = 'endnotes.xhtml#' + new_anchor
@@ -975,9 +975,9 @@ class SeEpub:
 					match_old = lambda x, old=old_anchor: x.anchor == old
 					matches = list(filter(match_old, self.endnotes))
 					if not matches:
-						raise se.InvalidInputException("Couldn't find endnote with anchor " + old_anchor)
+						raise se.InvalidInputException(f"Couldn’t find endnote with anchor {old_anchor}")
 					if len(matches) > 1:
-						raise se.InvalidInputException("Duplicate anchors in endnotes file for anchor " + old_anchor)
+						raise se.InvalidInputException(f"Duplicate anchors in endnotes file for anchor {old_anchor}")
 					# Found a single match, which is what we want
 					endnote = matches[0]
 					endnote.number = current_note_number
@@ -993,9 +993,9 @@ class SeEpub:
 				new_file.close()
 
 		if processed == 0:
-			report += "No files processed. Did you update the manifest and order the spine?" + "\n"
+			report += "No files processed. Did you update the manifest and order the spine?\n"
 		else:
-			report += "Found {:d} endnotes.".format(current_note_number - 1) + "\n"
+			report += f"Found {current_note_number - 1} endnotes.\n"
 			if notes_changed > 0:
 				# Now we need to recreate the endnotes file
 				ol_tag = self._endnotes_soup.ol

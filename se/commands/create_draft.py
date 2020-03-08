@@ -159,7 +159,7 @@ def _generate_titlepage_svg(title: str, authors: Union[str, list], contributors:
 		element_y += se.TITLEPAGE_CONTRIBUTORS_SPACING
 		for contributor in contributor_lines:
 			element_y += se.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT
-			text_elements += "\t<text class=\"contributor-descriptor\" x=\"700\" y=\"{:.0f}\">{}</text>\n".format(element_y, contributor[0])
+			text_elements += f"\t<text class=\"contributor-descriptor\" x=\"700\" y=\"{element_y:.0f}\">{contributor[0]}</text>\n"
 			element_y += se.TITLEPAGE_CONTRIBUTOR_MARGIN
 
 			for person in contributor[1]:
@@ -568,7 +568,7 @@ def _create_draft(args: Namespace):
 				producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">{producer}</dc:contributor>\n"
 
 				if "Distributed Proofreading" in producer:
-					producers_xhtml = producers_xhtml + "\t\t<meta property=\"file-as\" refines=\"#transcriber-{0}\">Online Distributed Proofreading Team, The</meta>\n\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{0}\">https://pgdp.net</meta>\n".format(i)
+					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Online Distributed Proofreading Team, The</meta>\n\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{i}\">https://pgdp.net</meta>\n"
 				else:
 					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">TRANSCRIBER_SORT</meta>\n"
 
@@ -613,8 +613,8 @@ def _create_draft(args: Namespace):
 
 					# Now, get the LCSH ID by querying LCSH directly.
 					try:
-						response = requests.get("http://id.loc.gov/search/?q=%22{}%22".format(urllib.parse.quote(subject)))
-						result = regex.search(r"<a title=\"Click to view record\" href=\"/authorities/subjects/([^\"]+?)\">{}</a>".format(regex.escape(subject.replace(" -- ", "--"))), response.text)
+						response = requests.get(f"http://id.loc.gov/search/?q=%22{urllib.parse.quote(subject)}%22")
+						result = regex.search(fr"<a title=\"Click to view record\" href=\"/authorities/subjects/([^\"]+?)\">{regex.escape(subject.replace(' -- ', '--'))}</a>", response.text)
 
 						loc_id = "Unknown"
 						try:
