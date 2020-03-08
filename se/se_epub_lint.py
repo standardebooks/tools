@@ -128,7 +128,7 @@ SEMANTICS & CONTENT
 "s-018", "`<img>` element with `id` attribute. `id` attributes go on parent `<figure>` elements."
 "s-019", "`<h#>` element with `id` attribute. `<h#>` elements should be wrapped in `<section>` elements, which should hold the `id` attribute."
 "s-020", "Frontmatter found, but no halftitle. Halftitle is required when frontmatter is present."
-"s-021", f"`<title>` element does not match expected value; should be `{title}`. (Beware hidden Unicode characters!)"
+"s-021", f"Unexpected value for `<title>` element. Expected: `{title}`. (Beware hidden Unicode characters!)"
 "s-022", f"The `<title>` element of `{image_ref}` does not match the alt text in `{filename}`."
 "s-023", f"Title `{title}` not correctly titlecased. Expected: `{titlecased_title}`."
 "s-023", f"Title `{title}` not correctly titlecased. Expected: `{titlecased_title}`."
@@ -1046,8 +1046,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						try:
 							chapter_number = roman.fromRoman(matches[0][1].upper())
 
-							regex_string = fr"<title>(Chapter|Section|Part) {chapter_number}"
-							if not regex.findall(regex_string, file_contents):
+							if not regex.findall(fr"<title>(Chapter|Section|Part) {chapter_number}", file_contents):
 								unexpected_titles.append((f"Chapter {chapter_number}", filename))
 						except Exception:
 							messages.append(LintMessage("s-035", "`<h#>` element has the `z3998:roman` semantic, but is not a Roman numeral.", se.MESSAGE_TYPE_ERROR, filename))
@@ -1063,12 +1062,26 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						chapter_title = regex.sub(r"<a[^<]+?epub:type=\"noteref\"[^<]*?>[^<]+?</a>", "", matches[0][2]).strip()
 						chapter_title = regex.sub(r"<[^<]+?>", "", chapter_title)
 
-						regex_string = r"<title>(Chapter|Section|Part) {}: {}".format(chapter_number, regex.escape(chapter_title))
-						if not regex.findall(regex_string, file_contents):
+						if not regex.findall(fr"<title>(Chapter|Section|Part) {chapter_number}: {regex.escape(chapter_title)}</title>", file_contents):
 							unexpected_titles.append((f"Chapter {chapter_number}: {chapter_title}", filename))
 
+					# Now, we try to select the first <h#> element in a <section> or <article>.
+					# If it doesn't have children and its content is a text string, check to see
+					# if the <title> tag matches. This catches for example <h2 epub:type="title">Introduction</h2>
+					# However, skip this step if the file contains 3+ <article> tags at the top level. That makes it likely
+					# that the book is a collection (like a poetry collection) and so the <title> tag can't be inferred.
+					if len(dom.select("body > article")) <= 3:
+						elements = dom.select("body section:first-of-type h1,h2,h3,h4,h5,h6") + dom.select("body article:first-of-type h1,h2,h3,h4,h5,h6")
+						if elements:
+							# Make sure we don't process headers that contain <span> elements, we took care of those above.
+							if elements[0].get("epub:type") == "title" and (len(elements[0].contents) == 1 or (len(elements[0].contents) > 1 and not str(elements[0].contents[1]).startswith("<span"))) and isinstance(elements[0].contents[0], NavigableString):
+								# We want to remove all HTML tags, in case there are things like <abbr>Mr.</abbr> in there.
+								title = regex.sub(r"<[^>]+?>", "", str(elements[0]).strip())
+								if f"<title>{title}</title>" not in file_contents:
+									unexpected_titles.append((title, filename))
+
 					for title, title_filename in unexpected_titles:
-						messages.append(LintMessage("s-021", f"`<title>` element does not match expected value; should be `{title}`. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, title_filename))
+						messages.append(LintMessage("s-021", f"Unexpected value for `<title>` element. Expected: `{title}`. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, title_filename))
 
 					# Check for missing subtitle styling
 					if "epub:type=\"subtitle\"" in file_contents and not local_css_has_subtitle_style:
