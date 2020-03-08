@@ -251,9 +251,9 @@ def _get_syllable_count(word: str) -> int:
 			syls += 1
 
 	# 13) check for "-n't" and cross match with dictionary to add syllable.
-	negative = ["doesn't", "isn't", "shouldn't", "couldn't", "wouldn't"]
+	negative = ["doesn't", "isn't", "shouldn't", "couldn't", "wouldn't", "doesn’t", "isn’t", "shouldn’t", "couldn’t", "wouldn’t"]
 
-	if word[-3:] == "n't":
+	if word[-3:] == "n't" or word[-3:] == "n’t":
 		if word in negative:
 			syls += 1
 		else:
