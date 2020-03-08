@@ -85,6 +85,7 @@ class SeEpub:
 	path = Path()
 	metadata_file_path = Path()
 	metadata_xhtml = ""
+	local_css = ""
 	__metadata_tree = None
 	_generated_identifier = None
 	_generated_github_repo_url = None

@@ -265,14 +265,8 @@ def _get_unused_selectors(self) -> List[str]:
 	A list of strings representing CSS selectors that do not actually select HTML in the epub.
 	"""
 
-	try:
-		with open(self.path / "src" / "epub" / "css" / "local.css", encoding="utf-8") as file:
-			css = file.read()
-	except Exception:
-		raise FileNotFoundError("Couldn’t open {}".format(self.path / "src" / "epub" / "css" / "local.css"))
-
 	# Remove @supports directives, as the parser can't handle them
-	css = regex.sub(r"^@supports\(.+?\){(.+?)}\s*}", "\\1}", css, flags=regex.MULTILINE | regex.DOTALL)
+	css = regex.sub(r"^@supports\(.+?\){(.+?)}\s*}", "\\1}", self.local_css, flags=regex.MULTILINE | regex.DOTALL)
 
 	# Remove actual content of css selectors
 	css = regex.sub(r"{[^}]+}", "", css)
@@ -314,7 +308,7 @@ def _get_unused_selectors(self) -> List[str]:
 				try:
 					tree = etree.fromstring(str.encode(xhtml))
 				except etree.XMLSyntaxError as ex:
-					raise se.InvalidXhtmlException("Couldn’t parse XHTML in file: {}, error: {}".format(filename, str(ex)))
+					raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in file: {filename}, error: {str(ex)}")
 				except Exception:
 					raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in file: {filename}")
 
@@ -422,17 +416,19 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 	# Check local.css for various items, for later use
 	abbr_elements: List[str] = []
-	css = ""
-	with open(self.path / "src" / "epub" / "css" / "local.css", "r", encoding="utf-8") as file:
-		css = file.read()
+	try:
+		with open(self.path / "src" / "epub" / "css" / "local.css", "r", encoding="utf-8") as file:
+			self.local_css = file.read()
 
-		local_css_has_subtitle_style = "span[epub|type~=\"subtitle\"]" in css
+			local_css_has_subtitle_style = "span[epub|type~=\"subtitle\"]" in self.local_css
 
-		abbr_styles = regex.findall(r"abbr\.[a-z]+", css)
+			abbr_styles = regex.findall(r"abbr\.[a-z]+", self.local_css)
 
-		matches = regex.findall(r"^h[0-6]\s*,?{?", css, flags=regex.MULTILINE)
-		if matches:
-			messages.append(LintMessage("c-001", "Do not directly select `<h#>` elements, as they are used in template files; use more specific selectors.", se.MESSAGE_TYPE_ERROR, "local.css"))
+			matches = regex.findall(r"^h[0-6]\s*,?{?", self.local_css, flags=regex.MULTILINE)
+			if matches:
+				messages.append(LintMessage("c-001", "Do not directly select `<h#>` elements, as they are used in template files; use more specific selectors.", se.MESSAGE_TYPE_ERROR, "local.css"))
+	except Exception:
+		raise se.InvalidSeEbookException(f"Couldn’t open {self.path / 'src' / 'epub' / 'css' / 'local.css'}.")
 
 	root_files = os.listdir(self.path)
 	expected_root_files = [".git", "images", "src", "LICENSE.md"]
@@ -634,7 +630,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-024", "Half title `<title>` elements must contain exactly: \"Half Title\".", se.MESSAGE_TYPE_ERROR, filename))
 
 				if filename == "colophon.xhtml":
-					if "<a href=\"{}\">{}</a>".format(self.generated_identifier.replace("url:", ""), self.generated_identifier.replace("url:https://", "")) not in file_contents:
+					if f"<a href=\"{self.generated_identifier.replace('url:', '')}\">{self.generated_identifier.replace('url:https://', '')}</a>" not in file_contents:
 						messages.append(LintMessage("m-035", f"Unexpected SE identifier in colophon. Expected: `{self.generated_identifier}`.", se.MESSAGE_TYPE_ERROR, filename))
 
 					if ">trl<" in metadata_xhtml and "translated from" not in file_contents:
@@ -724,7 +720,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					file_contents = regex.sub(r"^/\*.+?\*/\n", "", file_contents, flags=regex.MULTILINE | regex.DOTALL)
 
 					# Check for unneeded white-space nowrap in abbr selectors
-					matches = regex.findall(r"abbr[^{]*?{[^}]*?white-space:\s*nowrap;[^}]*?}", css, regex.DOTALL)
+					matches = regex.findall(r"abbr[^{]*?{[^}]*?white-space:\s*nowrap;[^}]*?}", self.local_css, regex.DOTALL)
 					if matches:
 						messages.append(LintMessage("c-005", "`abbr` selector does not need `white-space: nowrap;` as it inherits it from `core.css`.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
@@ -1399,7 +1395,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 	for css_class in xhtml_css_classes:
 		if css_class not in se.IGNORED_CLASSES:
-			if "." + css_class not in css:
+			if "." + css_class not in self.local_css:
 				missing_selectors.append(css_class)
 
 		if xhtml_css_classes[css_class] == 1 and css_class not in se.IGNORED_CLASSES and not regex.match(r"^i[0-9]$", css_class):
