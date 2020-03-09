@@ -9,7 +9,6 @@ the function is very big and it makes editing easier to put in a separate file.
 
 import filecmp
 from fnmatch import translate
-import glob
 import html
 import io
 import os
@@ -253,71 +252,6 @@ def _get_malformed_urls(xhtml: str, filename: str) -> list:
 
 	return messages
 
-def _get_unused_selectors(self) -> List[str]:
-	"""
-	Helper function used in self.lint(); merge directly into lint()?
-	Get a list of CSS selectors that do not actually select HTML in the epub.
-
-	INPUTS
-	None
-
-	OUTPUTS
-	A list of strings representing CSS selectors that do not actually select HTML in the epub.
-	"""
-
-	# Remove @supports directives, as the parser can't handle them
-	css = regex.sub(r"^@supports\(.+?\){(.+?)}\s*}", "\\1}", self.local_css, flags=regex.MULTILINE | regex.DOTALL)
-
-	# Remove actual content of css selectors
-	css = regex.sub(r"{[^}]+}", "", css)
-
-	# Remove trailing commas
-	css = regex.sub(r",", "", css)
-
-	# Remove comments
-	css = regex.sub(r"/\*.+?\*/", "", css, flags=regex.DOTALL)
-
-	# Remove @ defines
-	css = regex.sub(r"^@.+", "", css, flags=regex.MULTILINE)
-
-	# Construct a dictionary of selectors
-	selectors = {line for line in css.splitlines() if line != ""}
-	unused_selectors = set(selectors)
-
-	# Get a list of .xhtml files to search
-	filenames = glob.glob(str(self.path / "src" / "epub" / "text" / "*.xhtml"))
-
-	# Now iterate over each CSS selector and see if it's used in any of the files we found
-	for selector in selectors:
-		try:
-			sel = lxml.cssselect.CSSSelector(selector, translator="html", namespaces=se.XHTML_NAMESPACES)
-		except lxml.cssselect.ExpressionError:
-			# This gets thrown if we use pseudo-elements, which lxml doesn't support
-			unused_selectors.remove(selector)
-			continue
-		except lxml.cssselect.SelectorSyntaxError as ex:
-			raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: {selector}\n{ex}")
-
-		for filename in filenames:
-			if not filename.endswith("titlepage.xhtml") and not filename.endswith("imprint.xhtml") and not filename.endswith("uncopyright.xhtml"):
-				# We have to remove the default namespace declaration from our document, otherwise
-				# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
-				with open(filename, "r", encoding="utf-8") as file:
-					xhtml = file.read().replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
-
-				try:
-					tree = etree.fromstring(str.encode(xhtml))
-				except etree.XMLSyntaxError as ex:
-					raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in file: {filename}, error: {str(ex)}")
-				except Exception:
-					raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in file: {filename}")
-
-				if tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
-					unused_selectors.remove(selector)
-					break
-
-	return list(unused_selectors)
-
 def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 	"""
 	Check this ebook for some common SE style errors.
@@ -338,6 +272,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 	xhtml_css_classes: Dict[str, int] = {}
 	headings: List[tuple] = []
 	double_spaced_files: List[str] = []
+	unused_selectors: List[str] = []
 
 	# This is a dict with where keys are the path and values are a list of code dicts.
 	# Each code dict has a key "code" which is the actual code, and a key "used" which is a
@@ -578,10 +513,32 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 	except Exception:
 		missing_files.append(str(Path("src/epub/text/uncopyright.xhtml")))
 
-	# Check for unused selectors
-	unused_selectors = _get_unused_selectors(self)
-	if unused_selectors:
-		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, "local.css", unused_selectors))
+	# Construct a set of CSS selectors in local.css
+	# We'll check against this set in each file to see if any of them are unused.
+
+	# Remove @supports directives, as the parser can't handle them
+	unused_selector_css = regex.sub(r"^@supports\(.+?\){(.+?)}\s*}", "\\1}", self.local_css, flags=regex.MULTILINE | regex.DOTALL)
+
+	# Remove actual content of css selectors
+	unused_selector_css = regex.sub(r"{[^}]+}", "", unused_selector_css)
+
+	# Remove trailing commas
+	unused_selector_css = regex.sub(r",", "", unused_selector_css)
+
+	# Remove pseudo-elements like ::before; we are interested in the *selectors* of pseudo elements, not the
+	# elements themselves
+	unused_selector_css = regex.sub(r"::[a-z\-]+", "", unused_selector_css)
+
+	# Remove comments
+	unused_selector_css = regex.sub(r"/\*.+?\*/", "", unused_selector_css, flags=regex.DOTALL)
+
+	# Remove @ defines
+	unused_selector_css = regex.sub(r"^@.+", "", unused_selector_css, flags=regex.MULTILINE)
+
+	# Construct a set of selectors
+	local_css_selectors = list({line for line in unused_selector_css.splitlines() if line != ""})
+	unused_selectors = local_css_selectors.copy()
+	# Done creating our list of selectors.
 
 	# Now iterate over individual files for some checks
 	for root, _, filenames in os.walk(self.path):
@@ -734,9 +691,40 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if matches and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in file_contents:
 						messages.append(LintMessage("c-003", "`[xml|attr]` selector in CSS, but no XML namespace declared (`@namespace xml \"http://www.w3.org/XML/1998/namespace\";`).", se.MESSAGE_TYPE_ERROR, filename))
 
-
 				if filename.endswith(".xhtml"):
+					# Read file contents into a DOM for querying
+					dom = BeautifulSoup(file_contents, "lxml")
+
 					messages = messages + _get_malformed_urls(file_contents, filename)
+
+					# Check for unused selectors
+					if not filename.endswith("titlepage.xhtml") and not filename.endswith("imprint.xhtml") and not filename.endswith("uncopyright.xhtml"):
+						for selector in local_css_selectors:
+							try:
+								sel = lxml.cssselect.CSSSelector(selector, translator="html", namespaces=se.XHTML_NAMESPACES)
+							except lxml.cssselect.ExpressionError as ex:
+								# This gets thrown on some selectors not yet implemented by lxml, like *:first-of-type
+								unused_selectors.remove(selector)
+								continue
+							except Exception as ex:
+								raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: {selector}\nlxml says: {ex}")
+
+							try:
+								# We have to remove the default namespace declaration from our document, otherwise
+								# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
+								tree = etree.fromstring(str.encode(file_contents.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
+							except etree.XMLSyntaxError as ex:
+								raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in {filename}\nlxml says: {str(ex)}")
+							except Exception:
+								raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in {filename}")
+
+							if tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
+								unused_selectors.remove(selector)
+
+					# Update our list of local.css selectors to check in the next file
+					local_css_selectors = list(unused_selectors)
+
+					# Done checking for unused selectors.
 
 					# Check if this is a frontmatter file
 					if filename not in ("titlepage.xhtml", "imprint.xhtml", "toc.xhtml"):
@@ -755,9 +743,6 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 									xhtml_css_classes[css_class] = 1
 
 								#xhtml_css_classes = xhtml_css_classes + match.replace("class=", "").replace("\"", "").split()
-
-					# Read file contents into a DOM for querying
-					dom = BeautifulSoup(file_contents, "lxml")
 
 					# Store all headings to check for ToC references later
 					if filename != "toc.xhtml":
@@ -1471,6 +1456,9 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 	for missing_file in missing_files:
 		messages.append(LintMessage("f-002", "Missing expected file or directory.", se.MESSAGE_TYPE_ERROR, missing_file))
+
+	if unused_selectors:
+		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, "local.css", unused_selectors))
 
 	# Now that we have our lint messages, we filter out ones that we've ignored.
 	if ignored_codes:
