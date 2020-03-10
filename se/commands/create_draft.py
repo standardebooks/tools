@@ -281,8 +281,7 @@ def _generate_cover_svg(title: str, authors: Union[str, list], title_string: str
 
 def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> Tuple[Optional[str], Optional[str]]:
 	"""
-	Helper function.
-	Given a string, try to see if there's a Wikipedia page entry for that string.
+	Given a string, try to see if there's a Wikipedia page entry, and an optional NACOAF entry, for that string.
 
 	INPUTS
 	string: The string to find on Wikipedia
@@ -486,7 +485,10 @@ def _create_draft(args: Namespace):
 		translator_nacoaf_url = None
 	else:
 		author_wiki_url, author_nacoaf_url = _get_wikipedia_url(args.author, True)
-		ebook_wiki_url, _ = _get_wikipedia_url(args.title, False)
+		ebook_wiki_url = None
+		if args.title != "Short Fiction":
+			# There's a "Short Fiction" Wikipedia article, so make an exception for that case
+			ebook_wiki_url, _ = _get_wikipedia_url(args.title, False)
 		translator_wiki_url = None
 		if args.translator:
 			translator_wiki_url, translator_nacoaf_url = _get_wikipedia_url(args.translator, True)
