@@ -257,6 +257,10 @@ We need volunteers to take the lead on the following goals:
 
 	Find words with mismatched diacritics in Standard Ebook source directories. For example, `cafe` in one file and `café` in another.
 
+-	### `se fix-mojibake`
+
+	Find and remove all [mojibake](https://en.wikipedia.org/wiki/Mojibake) from Standard Ebooks source directories.
+
 -	### `se help`
 
 	List available SE commands.
