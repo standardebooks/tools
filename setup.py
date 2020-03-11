@@ -62,7 +62,7 @@ setup(
         "beautifulsoup4==4.8.0",
         "cairosvg==2.4.2",
         "cssselect==1.0.3",
-        "ftfy==5.5.1",
+        "ftfy==5.7",
         "gitpython==3.0.8",
         "importlib_resources==1.0.2",
         "lxml==4.4.0",
