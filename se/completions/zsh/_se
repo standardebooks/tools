@@ -19,6 +19,7 @@ case $state in
 			"dec2roman[Convert a decimal number to a Roman numeral]" \
 			"extract-ebook[Extract an EPUB, MOBI, or AZW3 ebook]" \
 			"find-mismatched-diacritics[Find words with mismatched diacritics in Standard Ebook source directories]" \
+			"fix-mojibake[Automatically remove mojibake from Standard Ebooks source directories]" \
 			"help[List available SE commands]" \
 			"hyphenate[Insert soft hyphens at syllable breaks in an XHTML file]" \
 			"interactive-sr[Use Vim to perform an interactive search and replace on a list of files]" \
@@ -108,6 +109,12 @@ case $state in
 			find-mismatched-diacritics)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
+					'*: :_files -g \*.xhtml'
+				;;
+			fix-mojibake)
+				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
+					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_files -g \*.xhtml'
 				;;
 			help)

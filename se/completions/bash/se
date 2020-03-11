@@ -2,7 +2,7 @@ _se(){
 	COMPREPLY=()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local prev="${COMP_WORDS[COMP_CWORD-1]}"
-	local commands="--help --version british2american build build-images clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-sr lint make-url-safe modernize-spelling prepare-release print-manifest-and-spine print-toc recompose-epub renumber-endnotes reorder-endnotes roman2dec semanticate split-file split-file split-file titlecase typogrify unicode-names version word-count"
+	local commands="--help --version british2american build build-images clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics fix-mojibake help hyphenate interactive-sr lint make-url-safe modernize-spelling prepare-release print-manifest-and-spine print-toc recompose-epub renumber-endnotes reorder-endnotes roman2dec semanticate split-file split-file split-file titlecase typogrify unicode-names version word-count"
 	if [[ $COMP_CWORD -gt 1 ]]; then
 		case "${COMP_WORDS[1]}" in
 			british2american)
@@ -52,6 +52,11 @@ _se(){
 				COMPREPLY+=($(compgen -f -X "!*.epub3" -- "${cur}"))
 				;;
 			find-mismatched-diacritics)
+				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				;;
+			fix-mojibake)
+				COMPREPLY+=($(compgen -W "-h --help -v --verbose" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
 				;;
