@@ -14,6 +14,7 @@ import shutil
 import string
 import regex
 import tinycss2
+from ftfy import fix_text
 from titlecase import titlecase as pip_titlecase
 import se
 
@@ -922,3 +923,15 @@ def simplify_css(css: str) -> str:
 		css = css.replace(line, fixed_line)
 
 	return css
+
+def fix_mojibake(xhtml: str) -> str:
+	"""
+	Helper function to remove mojibake from a string of XHTML. Uses the ftfy library.
+
+	INPUTS
+	xhtml: A string of XHTML.
+
+	OUTPUTS
+	A string of XHTML with mojibake removed.
+	"""
+	return fix_text(xhtml, uncurl_quotes=False)

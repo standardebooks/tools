@@ -15,7 +15,6 @@ import importlib_resources
 import regex
 import requests
 from bs4 import BeautifulSoup
-from ftfy import fix_text
 
 import se
 import se.formatting
@@ -395,7 +394,7 @@ def _create_draft(args: Namespace):
 			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook HTML. Error: {ex}")
 
 		try:
-			fixed_pg_ebook_html = fix_text(pg_ebook_html, uncurl_quotes=False)
+			fixed_pg_ebook_html = se.formatting.fix_mojibake(pg_ebook_html)
 			pg_ebook_html = se.strip_bom(fixed_pg_ebook_html)
 		except Exception as ex:
 			raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Project Gutenberg HTML file. Error: {ex}")
