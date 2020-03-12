@@ -67,7 +67,7 @@ setup(
         "importlib_resources==1.0.2",
         "lxml==4.4.0",
         "pillow==7.0.0",
-        "psutil==5.5.0",
+        "psutil==5.6.6",
         "pyhyphen==3.0.1",
         "pyopenssl==19.1.0",  # Required to allow the `requests` package to use https on Mac OSX
         "regex==2017.7.26",
