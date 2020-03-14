@@ -784,7 +784,7 @@ class SeEpub:
 		An XML fragment string representing the spine.
 		"""
 
-		excluded_files = se.IGNORED_FILENAMES + ["dedication.xhtml", "introduction.xhtml", "foreword.xhtml", "preface.xhtml", "epigraph.xhtml", "endnotes.xhtml"]
+		excluded_files = se.IGNORED_FILENAMES + ["dedication.xhtml", "introduction.xhtml", "foreword.xhtml", "preface.xhtml", "epigraph.xhtml", "afterword.xhtml", "endnotes.xhtml"]
 		spine = ["<itemref idref=\"titlepage.xhtml\"/>", "<itemref idref=\"imprint.xhtml\"/>"]
 
 		filenames = se.natural_sort(os.listdir(self.path / "src" / "epub" / "text"))
@@ -810,6 +810,9 @@ class SeEpub:
 		for filename in filenames:
 			if filename not in excluded_files:
 				spine.append(f"<itemref idref=\"{filename}\"/>")
+
+		if "afterword.xhtml" in filenames:
+			spine.append("<itemref idref=\"afterword.xhtml\"/>")
 
 		if "endnotes.xhtml" in filenames:
 			spine.append("<itemref idref=\"endnotes.xhtml\"/>")
