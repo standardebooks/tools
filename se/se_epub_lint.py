@@ -536,7 +536,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 	unused_selector_css = regex.sub(r"^@.+", "", unused_selector_css, flags=regex.MULTILINE)
 
 	# Construct a set of selectors
-	local_css_selectors = list({line for line in unused_selector_css.splitlines() if line != ""})
+	local_css_selectors = list({line.strip() for line in unused_selector_css.splitlines() if line != ""})
 	unused_selectors = local_css_selectors.copy()
 	# Done creating our list of selectors.
 
