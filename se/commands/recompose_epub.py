@@ -31,7 +31,7 @@ def recompose_epub() -> int:
 		se.print_error(ex)
 		return ex.code
 	except Exception as ex:
-		se.print_error("Could not write to output file.")
+		se.print_error("Couldn’t write to output file.")
 		return se.InvalidFileException.code
 
 	return 0

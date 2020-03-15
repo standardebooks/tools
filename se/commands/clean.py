@@ -30,10 +30,10 @@ def clean() -> int:
 		try:
 			se.formatting.format_xhtml_file(filename, args.single_lines, filename.name == "content.opf", filename.name == "endnotes.xhtml", filename.name == "colophon.xhtml")
 		except se.MissingDependencyException as ex:
-			se.print_error(str(ex))
+			se.print_error(ex)
 			return ex.code
 		except se.SeException as ex:
-			se.print_error(f"File: {filename}\n{str(ex)}", args.verbose)
+			se.print_error(f"File: `{filename}`\n{str(ex)}", args.verbose)
 			return ex.code
 
 		if args.verbose:
@@ -58,7 +58,7 @@ def clean() -> int:
 					file.write(processed_css)
 					file.truncate()
 			except se.SeException as ex:
-				se.print_error(f"File: {filename}\n{str(ex)}", args.verbose)
+				se.print_error(f"File: `{filename}`\n{str(ex)}", args.verbose)
 				return ex.code
 
 		if args.verbose:

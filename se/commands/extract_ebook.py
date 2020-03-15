@@ -63,7 +63,7 @@ def extract_ebook() -> int:
 			print(f"Processing {target} ...", end="", flush=True)
 
 		if not path.isfile(target):
-			se.print_error(f"Not a file: {target}")
+			se.print_error(f"Not a file: `{target}`")
 			return se.InvalidInputException.code
 
 		if args.output_dir is None:
@@ -72,7 +72,7 @@ def extract_ebook() -> int:
 			extracted_path = Path(args.output_dir)
 
 		if extracted_path.exists():
-			se.print_error(f"Directory already exists: {extracted_path}")
+			se.print_error(f"Directory already exists: `{extracted_path}`")
 			return se.FileExistsException.code
 
 		with open(target, "rb") as binary_file:

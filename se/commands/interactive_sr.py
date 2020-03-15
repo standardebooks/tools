@@ -23,7 +23,7 @@ def interactive_sr() -> int:
 	vim_path = shutil.which("vim")
 
 	if vim_path is None:
-		se.print_error("Couldn’t locate vim. Is it installed?")
+		se.print_error("Couldn’t locate `vim`. Is it installed?")
 		return se.MissingDependencyException.code
 
 	# 'set title' shows the filename in the terminal title

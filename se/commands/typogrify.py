@@ -46,7 +46,7 @@ def typogrify() -> int:
 				print(" OK")
 
 		except FileNotFoundError:
-			se.print_error(f"Not a file: {filename}")
+			se.print_error(f"Couldn’t open file: `{filename}`")
 			return se.InvalidFileException.code
 
 	return 0

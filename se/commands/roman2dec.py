@@ -36,7 +36,7 @@ def roman2dec() -> int:
 			else:
 				print(roman.fromRoman(line.upper()), end="")
 		except roman.InvalidRomanNumeralError:
-			se.print_error(f"Not a Roman numeral: {line}")
+			se.print_error(f"Not a Roman numeral: `{line}`")
 			return se.InvalidInputException.code
 
 	return 0

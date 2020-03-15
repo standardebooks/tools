@@ -273,14 +273,14 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 			try:
 				language = str(soup.html["lang"])
 			except Exception:
-				raise se.InvalidLanguageException("No `xml:lang` or `lang` attribute on root <html> element; couldn’t guess file language.")
+				raise se.InvalidLanguageException("No `xml:lang` or `lang` attribute on `<html>` element; couldn’t guess file language.")
 
 	try:
 		language = language.replace("-", "_")
 		if language not in hyphenators:
 			hyphenators[language] = Hyphenator(language)
 	except Exception:
-		raise se.MissingDependencyException(f"Hyphenator for language \"{language}\" not available.\nInstalled hyphenators: {list_installed()}")
+		raise se.MissingDependencyException(f"Hyphenator for language `{language}` not available.\nInstalled hyphenators: {list_installed()}")
 
 	text = str(soup.body)
 	result = text

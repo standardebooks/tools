@@ -48,6 +48,6 @@ def british2american() -> int:
 				print(" OK")
 
 		except FileNotFoundError:
-			se.print_error(f"Not a file: {filename}")
+			se.print_error(f"Couldn’t open file: `{filename}`.")
 
 	return 0

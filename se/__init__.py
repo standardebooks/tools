@@ -9,8 +9,8 @@ import shutil
 import sys
 from pathlib import Path
 from typing import Set, Union
+from colored import stylize, fg, bg, attr
 import regex
-from termcolor import colored
 
 VERSION = "1.2.3"
 MESSAGE_INDENT = "    "
@@ -189,14 +189,21 @@ def print_error(message: Union[SeException, str], verbose: bool = False) -> None
 	Helper function to print a colored error message to the console.
 	"""
 
-	print("{}{} {}".format(MESSAGE_INDENT if verbose else "", colored("Error:", "red", attrs=["reverse"]), message), file=sys.stderr)
+	if isinstance(message, SeException):
+		message = str(message)
+
+	# By convention, any text within the message text that is surrounded in backticks
+	# is rendered in blue
+	message = regex.sub(r"`(.+?)`", stylize(r"\1", fg("light_blue")), message)
+
+	print("{}{} {}".format(MESSAGE_INDENT if verbose else "", stylize(" Error ", bg("red") + attr("bold")), message), file=sys.stderr)
 
 def print_warning(message: str, verbose: bool = False) -> None:
 	"""
 	Helper function to print a colored warning message to the console.
 	"""
 
-	print("{}{} {}".format(MESSAGE_INDENT if verbose else "", colored("Warning:", "yellow", attrs=["reverse"]), message))
+	print("{}{} {}".format(MESSAGE_INDENT if verbose else "", stylize(" Warning ", bg("yellow") + attr("bold")), message))
 
 def is_positive_integer(value: str) -> int:
 	"""

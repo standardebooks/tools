@@ -22,7 +22,7 @@ def print_toc() -> int:
 	args = parser.parse_args()
 
 	if not args.in_place and len(args.directories) > 1:
-		se.print_error("Multiple directories are only allowed with the --in-place option.")
+		se.print_error("Multiple directories are only allowed with the `--in-place` option.")
 		return se.InvalidInputException.code
 
 	for directory in args.directories:
@@ -43,7 +43,7 @@ def print_toc() -> int:
 			se.print_error(ex)
 			return ex.code
 		except FileNotFoundError as ex:
-			se.print_error(f"Couldn’t open file: {ex.filename}")
+			se.print_error(f"Couldn’t open file: `{ex.filename}`")
 			return se.InvalidSeEbookException.code
 
 	return 0

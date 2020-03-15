@@ -35,7 +35,7 @@ def modernize_spelling() -> int:
 						print("{}{}".format((filename.name) + ": " if not args.verbose else "", problem_spelling))
 
 				except se.InvalidLanguageException as ex:
-					se.print_error("{}{}".format(ex, (" File: " + str(filename)) if not args.verbose else ""))
+					se.print_error("{}{}".format(ex, f" File: `{filename}`" if not args.verbose else ""))
 					return ex.code
 
 				if args.modernize_hyphenation:
@@ -46,7 +46,7 @@ def modernize_spelling() -> int:
 					file.write(new_xhtml)
 					file.truncate()
 		except FileNotFoundError:
-			se.print_error(f"Not a file: {filename}")
+			se.print_error(f"Couldn’t open file: `{filename}`")
 
 		if args.verbose:
 			print(" OK")

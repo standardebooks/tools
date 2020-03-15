@@ -342,7 +342,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 		except se.InvalidXhtmlException as ex:
 			raise ex
 		except Exception as ex:
-			raise se.InvalidXhtmlException("Couldn’t parse se-lint-ignore.xml file.")
+			raise se.InvalidXhtmlException("Couldn’t parse `se-lint-ignore.xml` file.")
 
 	# Done parsing ignore list
 
@@ -363,7 +363,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 			if matches:
 				messages.append(LintMessage("c-001", "Do not directly select `<h#>` elements, as they are used in template files; use more specific selectors.", se.MESSAGE_TYPE_ERROR, "local.css"))
 	except Exception:
-		raise se.InvalidSeEbookException(f"Couldn’t open {self.path / 'src' / 'epub' / 'css' / 'local.css'}.")
+		raise se.InvalidSeEbookException(f"Couldn’t open `{self.path / 'src' / 'epub' / 'css' / 'local.css'}`.")
 
 	root_files = os.listdir(self.path)
 	expected_root_files = [".git", "images", "src", "LICENSE.md"]
@@ -707,16 +707,16 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 								unused_selectors.remove(selector)
 								continue
 							except Exception as ex:
-								raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: {selector}\nlxml says: {ex}")
+								raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: `{selector}`\n`lxml` says: {ex}")
 
 							try:
 								# We have to remove the default namespace declaration from our document, otherwise
 								# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 								tree = etree.fromstring(str.encode(file_contents.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 							except etree.XMLSyntaxError as ex:
-								raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in {filename}\nlxml says: {str(ex)}")
+								raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in `{filename}`\n`lxml` says: {str(ex)}")
 							except Exception:
-								raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in {filename}")
+								raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in `{filename}`")
 
 							if tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
 								unused_selectors.remove(selector)
@@ -1477,7 +1477,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						# For example, chapter-*.xhtml gets t-001 removed, then subsequently *.xhtml gets t-001 removed.
 						pass
 					except Exception as ex:
-						raise se.InvalidInputException(f"Invalid path in se-lint-ignore.xml rule: {path}")
+						raise se.InvalidInputException(f"Invalid path in `se-lint-ignore.xml` rule: `{path}`")
 
 		# Check for unused ignore rules
 		unused_codes: List[str] = []

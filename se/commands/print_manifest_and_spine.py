@@ -23,7 +23,7 @@ def print_manifest_and_spine() -> int:
 	args = parser.parse_args()
 
 	if not args.in_place and len(args.directories) > 1:
-		se.print_error("Multiple directories are only allowed with the --in-place option.")
+		se.print_error("Multiple directories are only allowed with the `--in-place` option.")
 		return se.InvalidInputException.code
 
 	for directory in args.directories:

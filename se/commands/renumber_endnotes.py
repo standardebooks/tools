@@ -33,7 +33,7 @@ def renumber_endnotes() -> int:
 			se.print_error(ex)
 			return ex.code
 		except FileNotFoundError:
-			se.print_error("Couldn’t find endnotes.xhtml file.")
+			se.print_error("Couldn’t find `endnotes.xhtml`.")
 			return se.InvalidSeEbookException.code
 
 	return 0

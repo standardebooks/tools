@@ -32,7 +32,7 @@ def semanticate() -> int:
 					file.write(processed_xhtml)
 					file.truncate()
 		except FileNotFoundError:
-			se.print_error(f"Not a file: {filename}")
+			se.print_error(f"Couldn’t open file: `{filename}`")
 
 		if args.verbose:
 			print(" OK")

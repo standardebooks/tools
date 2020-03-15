@@ -54,7 +54,7 @@ def compare_versions() -> int:
 			target = Path(target).resolve()
 
 			if not target.is_dir():
-				se.print_error(f"Target must be a directory: {target}")
+				se.print_error(f"Target must be a directory: `{target}`")
 				continue
 
 			if args.verbose:

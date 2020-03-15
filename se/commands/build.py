@@ -26,7 +26,7 @@ def build() -> int:
 	args = parser.parse_args()
 
 	if args.build_covers and len(args.directories) > 1:
-		se.print_error("--covers option specified, but more than one build target specified.")
+		se.print_error("`--covers` option specified, but more than one build target specified.")
 		return se.InvalidInputException.code
 
 	for directory in args.directories:

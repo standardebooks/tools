@@ -370,7 +370,7 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 	if which_xmllint:
 		xmllint_path = Path(which_xmllint)
 	else:
-		raise se.MissingDependencyException("Couldn’t locate xmllint. Is it installed?")
+		raise se.MissingDependencyException("Couldn’t locate `xmllint`. Is it installed?")
 
 	env = os.environ.copy()
 	env["XMLLINT_INDENT"] = "\t"
@@ -410,11 +410,11 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 		error = result.stderr.decode().strip()
 
 		if error:
-			raise se.InvalidXhtmlException(f"xmllint says:\n{error.replace('-:', 'Line  ')}")
+			raise se.InvalidXhtmlException(f"`xmllint` says:\n{error.replace('-:', 'Line  ')}")
 	except UnicodeDecodeError as ex:
-		raise se.InvalidEncodingException(f"Invalid encoding; UTF-8 expected: {ex}")
+		raise se.InvalidEncodingException(f"Invalid encoding; UTF-8 expected. Exception: {ex}")
 	except Exception as ex:
-		raise se.InvalidXhtmlException(f"Couldn’t parse file; files must be in XHTML format, which is not the same as HTML: {ex}")
+		raise se.InvalidXhtmlException(f"Couldn’t parse file. Files must be in XHTML format, which is not the same as HTML. Exception: {ex}")
 
 	# Add the XML header that xmllint stripped during c14n
 	xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + xhtml

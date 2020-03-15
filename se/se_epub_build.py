@@ -57,18 +57,18 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			# Look for default Mac calibre app path if none found in path
 			ebook_convert_path = Path("/Applications/calibre.app/Contents/MacOS/ebook-convert")
 			if not ebook_convert_path.exists():
-				raise se.MissingDependencyException("Couldn’t locate ebook-convert. Is Calibre installed?")
+				raise se.MissingDependencyException("Couldn’t locate `ebook-convert`. Is `calibre` installed?")
 
 	if run_epubcheck:
 		if not shutil.which("java"):
-			raise se.MissingDependencyException("Couldn’t locate java. Is it installed?")
+			raise se.MissingDependencyException("Couldn’t locate `java`. Is it installed?")
 
 	# Check the output directory and create it if it doesn't exist
 	try:
 		output_directory = output_directory.resolve()
 		output_directory.mkdir(parents=True, exist_ok=True)
 	except Exception:
-		raise se.FileExistsException(f"Couldn’t create output directory: {output_directory}")
+		raise se.FileExistsException(f"Couldn’t create output directory: `{output_directory}`")
 
 	# All clear to start building!
 	if verbose:
@@ -220,7 +220,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 					try:
 						tree = etree.fromstring(str.encode(xhtml))
 					except Exception as ex:
-						raise se.InvalidXhtmlException(f"Error parsing XHTML file: {filename}\n{ex}")
+						raise se.InvalidXhtmlException(f"Error parsing XHTML file: `{filename}`\n{ex}")
 
 					# Now iterate over each CSS selector and see if it's used in any of the files we found
 					for selector in selectors:
@@ -249,7 +249,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
 							pass
 						except lxml.cssselect.SelectorSyntaxError as ex:
-							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: {selector}\n{ex}")
+							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: `{selector}`\n{ex}")
 
 						# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
 						if "[epub|type" in selector:
@@ -277,7 +277,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
 							continue
 						except lxml.cssselect.SelectorSyntaxError as ex:
-							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: {selector}\n{ex}")
+							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: `{selector}`\n{ex}")
 
 						# Convert <abbr> to <span>
 						if "abbr" in selector:
@@ -318,7 +318,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		# Extract cover and cover thumbnail
 		cover_svg_file = work_epub_root_directory / "epub" / "images" / "cover.svg"
 		if not os.path.isfile(cover_svg_file):
-			raise se.MissingDependencyException("Cover image is missing. Did you run build-images?")
+			raise se.MissingDependencyException("Cover image is missing. Did you run `se build-images`?")
 
 		svg2png(url=str(cover_svg_file), write_to=str(work_directory / "cover.png"))
 		cover = Image.open(work_directory / "cover.png")
@@ -567,7 +567,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							try:
 								tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 							except Exception as ex:
-								raise se.InvalidXhtmlException(f"Error parsing XHTML file: {filename}\n{ex}", verbose)
+								raise se.InvalidXhtmlException(f"Error parsing XHTML file: `{filename}`\n{ex}", verbose)
 
 							kobo.add_kobo_spans_to_node(tree.xpath("./body", namespaces=se.XHTML_NAMESPACES)[0])
 
@@ -834,7 +834,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 					try:
 						tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 					except Exception as ex:
-						raise se.InvalidXhtmlException(f"Error parsing XHTML file: endnotes.xhtml\n{ex}")
+						raise se.InvalidXhtmlException(f"Error parsing XHTML file: `endnotes.xhtml`\n{ex}")
 
 					notes = tree.xpath("//li[@epub:type=\"endnote\" or @epub:type=\"footnote\"]", namespaces=se.XHTML_NAMESPACES)
 
@@ -848,7 +848,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 						try:
 							ref_link = etree.tostring(note.xpath("p[last()]/a[last()]")[0], encoding="unicode", pretty_print=True, with_tail=False).replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "").strip()
 						except Exception:
-							raise se.InvalidXhtmlException(f"Can’t find ref link for #{note_id}.")
+							raise se.InvalidXhtmlException(f"Can’t find ref link for `#{note_id}`.")
 
 						new_ref_link = regex.sub(r">.*?</a>", ">" + note_number + "</a>.", ref_link)
 
@@ -934,7 +934,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			return_code = subprocess.run([str(ebook_convert_path), str(work_directory / epub_output_filename), str(work_directory / kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", f"--cover={cover_path}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False).returncode
 
 			if return_code:
-				raise se.InvalidSeEbookException("ebook-convert failed.")
+				raise se.InvalidSeEbookException("`ebook-convert` failed.")
 
 			# Success, extract the Kindle cover thumbnail
 

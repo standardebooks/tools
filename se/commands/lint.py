@@ -5,8 +5,8 @@ This module implements the `se lint` command.
 import argparse
 from textwrap import wrap
 
+from colored import stylize, fg, bg, attr
 import regex
-from termcolor import colored
 import terminaltables
 
 import se
@@ -75,7 +75,7 @@ def lint() -> int:
 			if args.plain:
 				print(se_epub.path)
 			else:
-				print(colored(str(se_epub.path), "white", attrs=["reverse"]))
+				print(stylize(str(se_epub.path), attr("reverse")))
 
 		# Print the table
 		if messages:
@@ -94,7 +94,7 @@ def lint() -> int:
 						for submessage in message.submessages:
 							print(f"\t{submessage}")
 			else:
-				table_data.append([colored("Code", attrs=["bold"]), colored("Severity", attrs=["bold"]), colored("File", attrs=["bold"]), colored("Message", attrs=["bold"])])
+				table_data.append([stylize("Code", attr("bold")), stylize("Severity", attr("bold")), stylize("File", attr("bold")), stylize("Message", attr("bold"))])
 
 				for message in messages:
 					alert = "Manual Review"
@@ -106,13 +106,13 @@ def lint() -> int:
 
 					if args.colors:
 						if message.message_type == se.MESSAGE_TYPE_ERROR:
-							alert = colored(alert, "red")
+							alert = stylize(alert, fg("red"))
 						else:
-							alert = colored(alert, "yellow")
+							alert = stylize(alert, fg("yellow"))
 
 						# By convention, any text within the message text that is surrounded in backticks
 						# is rendered in blue
-						message_text = regex.sub(r"`(.+?)`", colored(r"\1", "blue"), message_text)
+						message_text = regex.sub(r"`(.+?)`", stylize(r"\1", fg("light_blue")), message_text)
 
 					table_data.append([message.code, alert, message.filename, message_text])
 
@@ -126,7 +126,7 @@ def lint() -> int:
 			if args.plain:
 				print("OK")
 			else:
-				table_data.append([colored("OK", "green", attrs=["reverse"])])
+				table_data.append([stylize(" OK ", bg("green") + fg("white") + attr("bold"))])
 
 				_print_table(table_data)
 

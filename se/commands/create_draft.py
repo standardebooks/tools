@@ -349,7 +349,7 @@ def _create_draft(args: Namespace):
 	repo_name = Path(identifier.replace("/", "_"))
 
 	if repo_name.is_dir():
-		raise se.InvalidInputException(f"./{repo_name}/ already exists.")
+		raise se.InvalidInputException(f"`./{repo_name}/` already exists.")
 
 	# Download PG HTML and do some fixups
 	if args.pg_url:
@@ -627,7 +627,7 @@ def _create_draft(args: Namespace):
 						subject_xhtml = subject_xhtml + f"\t\t<meta property=\"term\" refines=\"#subject-{i}\">{loc_id}</meta>\n"
 
 					except Exception as ex:
-						raise se.RemoteCommandErrorException(f"Couldn’t connect to id.loc.gov. Error: {ex}")
+						raise se.RemoteCommandErrorException(f"Couldn’t connect to `id.loc.gov`. Error: {ex}")
 
 					i = i + 1
 
@@ -666,7 +666,7 @@ def create_draft() -> int:
 	args = parser.parse_args()
 
 	if args.pg_url and not regex.match("^https?://www.gutenberg.org/ebooks/[0-9]+$", args.pg_url):
-		se.print_error("Project Gutenberg URL must look like: https://www.gutenberg.org/ebooks/<EBOOK-ID>")
+		se.print_error("Project Gutenberg URL must look like: `https://www.gutenberg.org/ebooks/<EBOOK-ID>`")
 		return se.InvalidInputException.code
 
 	try:

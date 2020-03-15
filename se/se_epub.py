@@ -98,7 +98,7 @@ class SeEpub:
 			self.path = Path(epub_root_directory).resolve()
 
 			if not self.path.is_dir():
-				raise se.InvalidSeEbookException(f"Not a directory: {self.path}")
+				raise se.InvalidSeEbookException(f"Not a directory: `{self.path}`")
 
 			with open(self.path / "src" / "META-INF" / "container.xml", "r", encoding="utf-8") as file:
 				container_tree = se.easy_xml.EasyXmlTree(file.read())
@@ -110,7 +110,7 @@ class SeEpub:
 			if "<dc:identifier id=\"uid\">url:https://standardebooks.org/ebooks/" not in self.metadata_xhtml:
 				raise se.InvalidSeEbookException
 		except:
-			raise se.InvalidSeEbookException(f"Not a Standard Ebooks source directory: {self.path}")
+			raise se.InvalidSeEbookException(f"Not a Standard Ebooks source directory: `{self.path}`")
 
 	@property
 	def last_commit(self) -> Optional[GitCommit]:
@@ -248,7 +248,7 @@ class SeEpub:
 				with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml") as file:
 					self.__endnotes_soup = BeautifulSoup(file.read(), "html.parser")
 			except:
-				raise se.InvalidFileException(f"Could't open file: {str(self.path / 'src' / 'epub' / 'text' / 'endnotes.xhtml')}")
+				raise se.InvalidFileException(f"Could't open file: `{str(self.path / 'src' / 'epub' / 'text' / 'endnotes.xhtml')}`")
 
 		return self.__endnotes_soup
 
@@ -301,7 +301,7 @@ class SeEpub:
 			try:
 				self.__metadata_tree = se.easy_xml.EasyXmlTree(self.metadata_xhtml)
 			except Exception as ex:
-				raise se.InvalidSeEbookException(f"Couldn’t parse {self.metadata_file_path}: {ex}")
+				raise se.InvalidSeEbookException(f"Couldn’t parse `{self.metadata_file_path}`: {ex}")
 
 		return self.__metadata_tree
 
@@ -340,7 +340,7 @@ class SeEpub:
 
 		# Quick sanity check before we begin
 		if "id" not in section.attrs or (section.parent.name.lower() != "body" and "id" not in section.parent.attrs):
-			raise se.InvalidXhtmlException("Section without ID attribute.")
+			raise se.InvalidXhtmlException("Section without `id` attribute.")
 
 		# Try to find our parent tag in the output, by ID.
 		# If it's not in the output, then append it to the tag's closest parent by ID (or <body>), then iterate over its children and do the same.
@@ -465,7 +465,7 @@ class SeEpub:
 		if which_inkscape:
 			inkscape_path = Path(which_inkscape)
 		else:
-			raise se.MissingDependencyException("Couldn’t locate Inkscape. Is it installed?")
+			raise se.MissingDependencyException("Couldn’t locate `inkscape`. Is it installed?")
 
 		source_images_directory = self.path / "images"
 		source_titlepage_svg_filename = source_images_directory / "titlepage.svg"
@@ -506,7 +506,7 @@ class SeEpub:
 		inkscape_path = shutil.which("inkscape")
 
 		if inkscape_path is None:
-			raise se.MissingDependencyException("Couldn’t locate Inkscape. Is it installed?")
+			raise se.MissingDependencyException("Couldn’t locate `inkscape`. Is it installed?")
 
 		source_images_directory = self.path / "images"
 		source_cover_jpg_filename = source_images_directory / "cover.jpg"
@@ -605,7 +605,7 @@ class SeEpub:
 				file.truncate()
 
 		except Exception:
-			raise se.InvalidSeEbookException(f"Couldn’t open endnotes file: {endnotes_filename}")
+			raise se.InvalidSeEbookException(f"Couldn’t open endnotes file: `{endnotes_filename}`")
 
 		with concurrent.futures.ProcessPoolExecutor() as executor:
 			for root, _, filenames in os.walk(source_directory):
@@ -950,7 +950,7 @@ class SeEpub:
 				with open(file_path) as file:
 					soup = BeautifulSoup(file.read(), "lxml")
 			except:
-				raise se.InvalidFileException(f"Couldn’t open file: {str(file_path)}")
+				raise se.InvalidFileException(f"Couldn’t open file: `{file_path}`")
 
 			links = soup.find_all("a")
 			needs_rewrite = False
@@ -980,9 +980,9 @@ class SeEpub:
 					match_old = lambda x, old=old_anchor: x.anchor == old
 					matches = list(filter(match_old, self.endnotes))
 					if not matches:
-						raise se.InvalidInputException(f"Couldn’t find endnote with anchor {old_anchor}")
+						raise se.InvalidInputException(f"Couldn’t find endnote with anchor `{old_anchor}`")
 					if len(matches) > 1:
-						raise se.InvalidInputException(f"Duplicate anchors in endnotes file for anchor {old_anchor}")
+						raise se.InvalidInputException(f"Duplicate anchors in endnotes file for anchor `{old_anchor}`")
 					# Found a single match, which is what we want
 					endnote = matches[0]
 					endnote.number = current_note_number

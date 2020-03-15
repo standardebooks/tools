@@ -38,7 +38,7 @@ def find_mismatched_diacritics() -> int:
 						accented_words.add(word.lower())
 
 		except FileNotFoundError:
-			se.print_error(f"Not a file: {filename}")
+			se.print_error(f"Couldn’t open file: `{filename}`")
 
 	# Now iterate over the list and search files for unaccented versions of the words
 	if accented_words:
@@ -55,7 +55,7 @@ def find_mismatched_diacritics() -> int:
 							mismatches[accented_word] = plain_word
 
 			except FileNotFoundError:
-				se.print_error(f"Not a file: {filename}")
+				se.print_error(f"Couldn’t open file: `{filename}`")
 
 	if mismatches:
 		for accented_word, plain_word in sorted(mismatches.items()):

@@ -61,6 +61,7 @@ setup(
     install_requires=[
         "beautifulsoup4==4.8.0",
         "cairosvg==2.4.2",
+        "colored==1.4.2",
         "cssselect==1.0.3",
         "ftfy==5.5.1",
         "gitpython==3.0.8",
@@ -75,7 +76,6 @@ setup(
         "roman==3.2.0",
         "selenium==3.141.0",
         "smartypants==2.0.1",
-        "termcolor==1.1.0",
         "terminaltables==3.1.0",
         "tinycss2==1.0.2",
         "titlecase==0.11.0"

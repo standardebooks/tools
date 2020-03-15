@@ -39,7 +39,7 @@ def split_file() -> int:
 		with open(args.filename, "r", encoding="utf-8") as file:
 			xhtml = se.strip_bom(file.read())
 	except FileNotFoundError:
-		se.print_error(f"Not a file: {args.filename}")
+		se.print_error(f"Couldn’t open file: `{args.filename}`")
 		return se.InvalidFileException.code
 
 	if args.template_file:
@@ -47,7 +47,7 @@ def split_file() -> int:
 			with open(args.template_file, "r", encoding="utf-8") as file:
 				template_xhtml = file.read()
 		except FileNotFoundError:
-			se.print_error(f"Not a file: {args.template_file}")
+			se.print_error(f"Couldn’t open file: `{args.template_file}`")
 			return se.InvalidFileException.code
 	else:
 		with importlib_resources.open_text("se.data.templates", "chapter-template.xhtml", encoding="utf-8") as file:
