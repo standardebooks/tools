@@ -42,8 +42,8 @@ def print_toc() -> int:
 		except se.SeException as ex:
 			se.print_error(ex)
 			return ex.code
-		except FileNotFoundError:
-			se.print_error("Couldn’t find toc.xhtml file.")
+		except FileNotFoundError as ex:
+			se.print_error(f"Couldn’t open file: {ex.filename}")
 			return se.InvalidSeEbookException.code
 
 	return 0
