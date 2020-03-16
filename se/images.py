@@ -10,8 +10,10 @@ import regex
 from PIL import Image, ImageMath
 
 import se
-import se.formatting
 
+from html import unescape
+import importlib_resources
+from lxml import etree
 
 def _color_to_alpha(image: Image, color=None) -> Image:
 	"""
@@ -127,35 +129,6 @@ def render_mathml_to_png(driver, mathml: str, output_filename: Path) -> None:
 			image = _color_to_alpha(image, (255, 255, 255, 255))
 			image.crop(image.getbbox()).save(output_filename)
 
-def format_inkscape_svg(filename: Path):
-	"""
-	Clean and format SVGs created by Inkscape, which have lots of useless metadata.
-
-	INPUTS
-	filename: A filename of an Inkscape SVG
-
-	OUTPUTS
-	None.
-	"""
-
-	with open(filename, "r+", encoding="utf-8") as file:
-		svg = file.read()
-
-		# Time to clean up Inkscape's mess
-		svg = regex.sub(r"id=\"[^\"]+?\"", "", svg)
-		svg = regex.sub(r"<metadata[^>]*?>.*?</metadata>", "", svg, flags=regex.DOTALL)
-		svg = regex.sub(r"<defs[^>]*?/>", "", svg)
-		svg = regex.sub(r"xmlns:(dc|cc|rdf)=\"[^\"]*?\"", "", svg)
-
-		# Inkscape includes CSS even though we've removed font information
-		svg = regex.sub(r" style=\".*?\"", "", svg)
-
-		svg = se.formatting.format_xhtml(svg)
-
-		file.seek(0)
-		file.write(svg)
-		file.truncate()
-
 def remove_image_metadata(filename: Path) -> None:
 	"""
 	Remove exif metadata from an image.
@@ -173,3 +146,365 @@ def remove_image_metadata(filename: Path) -> None:
 	image_without_exif = Image.new(image.mode, image.size)
 	image_without_exif.putdata(data)
 	image_without_exif.save(filename, subsampling="4:4:4")
+
+def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
+	"""
+	Convert SVG <text> elements into <path> elements, using SVG
+	document's <style> tag and external font files.
+	(These SVG font files are built-in to the SE tools).
+	Resulting SVG file will have no dependency on external fonts.
+
+	INPUTS
+	in_svg: Path for the SVG file to convert <text> elements.
+	out_svg: Path for where to write the result SVG file, with <path> elements.
+
+	OUTPUTS
+	None.
+	"""
+	font_paths = []
+	name_list = ['LeagueSpartan-Bold.svg', 'OFLGoudyStM-Italic.svg', 'OFLGoudyStM.svg']
+	for name in name_list:
+		with importlib_resources.path("se.data.fonts", name) as font_path:
+			font_paths.append(font_path)
+	fonts = []
+	for font_path in font_paths:
+		font = _parse_font(font_path)
+		fonts.append(font)
+	svg_in_raw = open(in_svg, 'rt').read()
+	xml = etree.fromstring(str.encode(svg_in_raw))
+
+	SVG_NS = '{http://www.w3.org/2000/svg}'
+
+	style = xml.find(SVG_NS+'style')
+
+	# Possibly remove style tag if caller wants that
+	def filter_predicate(elem):
+		if remove_style and elem.tag.endswith('style'):
+			return None # Remove <style> tag
+		return elem # Keep all other elements
+	if remove_style:
+		xml = _traverse_element(xml, filter_predicate)
+
+	for elem in xml.iter():
+		if elem.tag.endswith('text'):
+			properties = _apply_css(elem, style.text)
+			_get_properties_from_text_elem(properties, elem)
+			_add_font_to_properties(properties, fonts)
+			text = elem.text
+			elem.tag = "g"
+			# Replace <text> tag with <g> tag
+			for k in elem.attrib.keys():
+				if k != 'class': # Keep just class attribute
+					del(elem.attrib[k])
+			elem.attrib['aria-label'] = text
+			elem.tail = '\n'
+			elem.text = ''
+			_add_svg_paths_to_group(elem, properties)
+
+	xmlstr = etree.tostring(xml, pretty_print=True).decode('UTF-8')
+	result_all_text = xmlstr.replace('ns0:', '').replace(':ns0', '')
+	open(out_svg, 'wt').write(result_all_text)
+
+def _apply_css(elem: etree.Element, css_text: str) -> dict:
+	chunks = [[y.strip() for y in x.split('\n') if y.strip() != ''] for x in css_text.replace('\r','').split('}')]
+	result_css = {}
+	for chunk in chunks:
+		if len(chunk) < 2:
+				continue
+		selector = chunk[0].replace('{', '')
+		kvs = [x.replace(';', '') for x in chunk[1:]]
+		def apply_css():
+			for kv in kvs:
+				k, v = [x.strip() for x in kv.split(':')]
+				result_css[k] = v
+		if selector[0] == '.' and len(selector) >= 2:
+			if selector[1:] == elem.get('class'):
+				apply_css()
+		elif elem.tag.endswith(selector):
+			apply_css()
+	return result_css
+
+# Assumes return_elem is a new copy with no children
+# e.g.  xml = _traverse_element(xml, traverser)
+# This returns the original tree when traverser is lambda x: x
+def _traverse_children(return_elem: etree.Element, old_elem: etree.Element, traverser: callable) -> None:
+	for child in old_elem:
+		new_child = traverser(child)
+		if new_child is None:
+			continue
+		# Append child if non-None
+		final_child = etree.Element(new_child.tag, new_child.attrib) # empty copy
+		final_child.text = new_child.text
+		final_child.tail = new_child.tail
+		return_elem.append(final_child)
+
+def _traverse_element(elem: etree.Element, traverser: callable) -> etree.Element:
+	return_elem = traverser(elem)
+	if return_elem is None:
+		return None
+	# Make an empty copy of the returned element, if non-None
+	return_elem = etree.Element(elem.tag, attrib=elem.attrib)
+	return_elem.text = elem.text
+	return_elem.tail = elem.tail
+	_traverse_children(return_elem, elem, traverser)
+	return return_elem
+
+def _get_properties_from_text_elem(properties: dict, elem: etree.Element) -> None:
+	properties['text'] = elem.text
+	if elem.get('x'):
+		properties['x'] = elem.get('x')
+	if elem.get('y'):
+		properties['y'] = elem.get('y')
+
+def _add_font_to_properties(properties: dict, fonts: list) -> None:
+	# Wire up with actual font object
+	for font in fonts:
+		face = font['meta']['font-face']
+		if face['font-family'] != properties['font-family']:
+			continue
+		if 'font-style' in face and 'font-style' in properties: # Fine if either do not mention style, so defaults to regular or not italic
+			if face['font-style'] != properties['font-style']:
+				continue
+		properties['font'] = font
+		return # One chunk of text can only have one font/variant
+
+def _float_to_str(x):
+	return "{0:.2f}".format(round(x, 2))
+
+def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: dict) -> None:
+	# Required properties to make any progress
+	for key in 'x y font text font-size'.split():
+		if not key in text_properties:
+			raise se.InvalidCssException('svg_text_to_paths: Missing key', key, 'in text_properties for element', g_elem, 'for SVG tilepage or cover file')
+			return
+	# We know we have x, y, text, font-size, and font so we can render vectors.
+	# Now set up some defaults if not specified.
+	text_properties['font-size'] = float(text_properties['font-size'].replace('px', '')) # NOTE assumes pixels and ignores it
+	font = text_properties['font']
+	if not 'letter-spacing' in text_properties:
+		text_properties['letter-spacing'] = 0
+	text_properties['letter-spacing'] = float(text_properties['letter-spacing'].replace('px', ''))
+	if not 'text-anchor' in text_properties:
+		text_properties['text-anchor'] = 'left'
+	if not 'units-per-em' in text_properties:
+		text_properties['units-per-em'] = float(font['meta']['font-face']['units-per-em'])
+	if not 'horiz-adv-x' in text_properties:
+		text_properties['horiz-adv-x'] = float(font['meta']['horiz-adv-x'])
+	font = text_properties['font']
+	text_string = text_properties['text']
+
+	width = 0
+	if text_properties['text-anchor'] == "middle" or text_properties['text-anchor'] == "center" or \
+		text_properties['text-anchor'] == "right" or text_properties['text-anchor'] == "end":
+		width = _get_text_width(text_string, font, text_properties)
+	
+	last_xy = [0, 0]
+	last_xy[0] = float(text_properties['x'])
+	if text_properties['text-anchor'] == 'middle' or text_properties['text-anchor'] == 'center':
+		last_xy[0] -= width / 2.0;
+	elif text_properties['text-anchor'] == 'right' or text_properties['text-anchor'] == 'end':
+		last_xy[0] -= width
+	last_xy[1] = float(text_properties['y'])
+
+	path_ds = []
+	def walker(d, size, dx, dy):
+		# Render a glyph (text representaiton of a path outline) to a properly
+		# translated and scaled path outline.
+		d = _d_translate_and_scale(d, last_xy[0], last_xy[1], size, -size)
+		if d != '':
+			path_ds.append(d)
+		last_xy[0] += dx
+		last_xy[1] += dy
+	_walk_characters(text_string, font, text_properties, last_xy[0], last_xy[1], walker)
+	# Append each glyph outline as its own <path> tag, as Inkscape would do.
+	for d in path_ds:
+		path_elem = etree.Element("path", {'d': d} )
+		path_elem.tail = '\n'
+		g_elem.append(path_elem) # ?
+
+def _get_text_width(text_string, font, text_properties):
+	last_xy = [0, 0]
+	def callback(d, size, dx, dy):
+		last_xy[0] += dx
+		last_xy[1] += dy
+	_walk_characters(text_string, font, text_properties, last_xy[0], last_xy[1], callback)
+	return last_xy[0]
+
+def _walk_characters(text_string, font, text_properties, last_x, last_y, use_glyph_callback):
+	for ix in range(len(text_string)):
+		ch = text_string[ix];
+		ch1 = text_string[ix + 1] if ix < len(text_string) - 1 else ''
+		ch2 = text_string[ix + 2] if ix < len(text_string) - 2 else ''
+		combo = None
+		if (ch + ch1) in font['glyphs']:
+			combo = font['glyphs'][ch + ch1]
+		if text_properties['letter-spacing'] == 0 and ix < len(text_string) - 2 and combo:
+			# if ligature or 'wide' unicode character exists -- don't use ligature if letter-spacing set to something interesting :-)
+			# Found combined characters ch+ch1
+			_advance_by_glyph(font, text_properties, last_x, last_y, ch + ch1, ch2, use_glyph_callback)
+			ix += 1
+		if text_properties['letter-spacing'] == 0 and ix < len(text_string) and combo:
+			# If ligature or 'wide' unicode character exists -- don't use ligature if letter-spacing set to something interesting :-)
+			_advance_by_glyph(font, text_properties, last_x, last_y, ch + ch1, '', use_glyph_callback)
+		else:
+			_advance_by_glyph(font, text_properties, last_x, last_y, ch, ch1, use_glyph_callback)
+
+def _advance_by_glyph(font, text_properties, last_x, last_y, uni, uni_next, callback):
+	glyphs = font['glyphs']
+	glyph = None
+	if uni in glyphs:
+		glyph = glyphs[uni]
+	if not uni:
+		glyph = font['meta']['missing-glyph']
+	d = None
+	if 'd' in glyph:
+		d = glyph['d']
+	if not d:
+		# '' for Space character, not None
+		d = ''
+	size = text_properties['font-size'] / text_properties['units-per-em']
+	horiz_adv_x = float(glyph['horiz-adv-x']) if 'horiz-adv-x' in glyph else text_properties['horiz-adv-x']
+	hkern = 0
+	kern_key = uni + ',' + uni_next
+	if kern_key in font['hkern']:
+		advance_x = float(font['hkern'][kern_key])
+		hkern = advance_x
+	horiz_adv_x -= hkern
+	dx = horiz_adv_x * size + (text_properties['letter-spacing'] if uni_next != '' else 0)
+	callback(d, size, dx, 0) # --> result outline d. Input = ("d"), dx, dy
+
+def _d_translate_and_scale(d, tx, ty, sx, sy) -> str:
+	return _d_apply_matrix(d, [sx, 0, 0, sy, tx, ty])
+
+def _d_scale(d: str, x=1, y=1) -> str:
+	_d_apply_matrix(d, [x, 0, 0, y, 0, 0])
+
+# This is the main interesting part of SVG glyph rendering process.
+# The d attribute (path outline data, see https://www.w3.org/TR/SVG/paths.html#DProperty)
+# from a single glyph or ligature will have its coordinates translated and scaled by the
+# matrix transform passed in, and a return d attribute string will be created, showing the
+# glyph in the correct location and size.
+m_notz_z_regex = regex.compile('M[^zZ]*[zZ]')
+az_notaz_regex = regex.compile('[a-zA-Z]+[^a-zA-Z]*')
+notaz_regex = regex.compile('[^a-zA-Z]*')
+number_regex = regex.compile('\-?[0-9\.]+')
+comma_minus_regex = regex.compile(',\-')
+
+def _clean_comma_minus(x):
+	return comma_minus_regex.sub('-', x)
+
+def _d_apply_matrix_one_shape(d: str, matrix: list) -> str:
+	ret = []
+	for instruction in az_notaz_regex.findall(d):
+		i = notaz_regex.sub('', instruction)
+		coords = [float(x) for x in number_regex.findall(instruction)]
+		new_coords = []
+		while coords and len(coords) > 0:
+			[a, b, c, d, e, f] = matrix
+			if i == i.lower(): # Do not translate relative instructions (lowercase)
+				e = 0
+				f = 0
+			def push_point(x, y):
+				new_coords.append(a*x + c*y + e)
+				new_coords.append(b*x + d*y + f)
+			# Convert horizontal lineto to lineto (relative)
+			if i == 'h':
+				i = 'l'
+				push_point(coords.pop(0), 0)
+			# Convert vertical lineto to lineto (relative)
+			elif i == 'v':
+				i = 'l'
+				push_point(0, coords.pop(0))
+			# NOTE: We do not handle 'a,A' (elliptic arc curve) commands in the SVG font d="..." attribute definitions
+			# cf. http://www.w3.org/TR/SVG/paths.html#PathDataCurveCommands
+			# Every other command -- M m L l c C s S Q q T t -- come in multiples of two numbers (coordinate pair (x,y)):
+			else:
+				push_point(coords.pop(0), coords.pop(0))
+		new_instruction = i + _clean_comma_minus(','.join([_float_to_str(f) for f in new_coords]))
+		ret.append(new_instruction)
+	return ''.join(ret) + ' '
+
+def _d_apply_matrix(d: str, matrix: list) -> str:
+	matches = m_notz_z_regex.findall(d)
+	shapes = [_d_apply_matrix_one_shape(shape, matrix) for shape in matches if shape]
+	return ' '.join(shapes).strip()
+
+def _parse_font(font_path):
+	font_svg_raw = open(font_path, 'rt').read()
+	xml = etree.fromstring(str.encode(font_svg_raw))
+	font = { 'glyphs': {}, 'hkern': {}, 'meta': {} }
+	glyphs = font['glyphs']
+	hkern = font['hkern']
+	meta = font['meta']
+	g_name_to_unicode = {}
+	for elem in xml.iter():
+		tag = elem.tag.replace('{http://www.w3.org/2000/svg}', '')
+		if tag == 'font':
+			meta['id'] = elem.attrib['id']
+			meta['horiz-adv-x'] = float(elem.attrib['horiz-adv-x'])
+		elif tag == 'font-face':
+			meta['font-face'] = dict(elem.attrib)
+		elif tag == 'missing-glyph':
+			meta['missing-glyph'] = dict(elem.attrib)
+		elif tag == 'glyph' and elem.attrib:
+			# normalize keys for glyphs dictionary to be unicode strings and not
+			# glyph-name (which we presume are entity names, e.g. rdquo as in &rdquo;)
+			if 'unicode' in elem.attrib:
+				g_name = elem.attrib['glyph-name'] if 'glyph-name' in elem.attrib else None
+				uni = elem.attrib['unicode']
+				old_uni = uni
+				if uni.startswith('&#x') and uni.endswith(';'):
+					uni = uni.replace(';', '')
+					uni = chr(int(uni[2:], 16))
+				if g_name:
+					g_name_to_unicode[g_name] = uni
+				else:
+					g_name_to_unicode[uni] = uni
+				glyphs[uni] = { }
+				if 'horiz-adv-x' in elem.attrib:
+					glyphs[uni]['horiz-adv-x'] = elem.attrib['horiz-adv-x']
+				if 'd' in elem.attrib:
+					glyphs[uni]['d'] = elem.attrib['d']
+			elif 'glyph-name' in elem.attrib:
+				g_name = elem.attrib['glyph-name']
+				if g_name.find('.') >= 0:
+					g_name = g_name[:g_name.find('.')] # remove .1 .002 .sc   etc.
+				fake_entity = '&' + g_name + ';'
+				uni = unescape(fake_entity)
+				if not uni:
+					print('Unescape returned no unicode character for fake entity', fake_entity)
+				if fake_entity != uni and len(uni) <= 2:
+					g_name_to_unicode[g_name] = uni
+					glyphs[uni] = { }
+					if 'horiz-adv-x' in elem.attrib:
+						glyphs[uni]['horiz-adv-x'] = elem.attrib['horiz-adv-x']
+					if 'd' in elem.attrib:
+						glyphs[uni]['d'] = elem.attrib['d']
+	# Must parse hkern (horizontal kerning) elements after glyphs so we have g_name_to_unicode map available
+	for elem in xml.iter():
+		tag = elem.tag.replace('{http://www.w3.org/2000/svg}', '')
+		if tag == 'hkern':
+			if 'k' in elem.attrib:
+				kerning = elem.attrib['k']
+			else:
+				continue
+			if 'g1' in elem.attrib and 'g2' in elem.attrib:
+				g1 = elem.attrib['g1'].split(',')
+				g2 = elem.attrib['g2'].split(',')
+				kerning = elem.attrib['k']
+				for g in g1:
+					if not g in g_name_to_unicode:
+						continue
+					for h in g2:
+						if not h in g_name_to_unicode:
+							continue
+						pair = g_name_to_unicode[g] +',' + g_name_to_unicode[h]
+						hkern[pair] = kerning
+			if 'u1' in elem.attrib and 'u2' in elem.attrib:
+				u1 = elem.attrib['u1'].split(',')
+				u2 = elem.attrib['u2'].split(',')
+				for u in u1:
+					for v in u2:
+						pair = u + ',' + v
+						hkern[pair] = kerning
+	return font

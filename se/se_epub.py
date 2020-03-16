@@ -460,13 +460,6 @@ class SeEpub:
 		OUTPUTS
 		None.
 		"""
-
-		which_inkscape = shutil.which("inkscape")
-		if which_inkscape:
-			inkscape_path = Path(which_inkscape)
-		else:
-			raise se.MissingDependencyException("Couldn’t locate `inkscape`. Is it installed?")
-
 		source_images_directory = self.path / "images"
 		source_titlepage_svg_filename = source_images_directory / "titlepage.svg"
 		dest_images_directory = self.path / "src" / "epub" / "images"
@@ -474,23 +467,7 @@ class SeEpub:
 
 		if source_titlepage_svg_filename.is_file():
 			# Convert text to paths
-			# inkscape adds a ton of crap to the SVG and we clean that crap a little later.
-			# 1.0 needs an --export-file flag that 0.92 doesn’t, so we need to normalise that first.
-			output_file_flag = str(dest_titlepage_svg_filename)
-			if "--export-file=" in subprocess.run([str(inkscape_path), "--without-gui", "--help"], stdout=subprocess.PIPE, check=True).stdout.decode("utf8"):
-				output_file_flag = "--export-file=" + output_file_flag
-			# Path arguments must be cast to string for Windows compatibility.
-			subprocess.run([str(inkscape_path), str(source_titlepage_svg_filename), "--without-gui", "--export-text-to-path", "--export-plain-svg", output_file_flag], stderr=subprocess.DEVNULL, check=True)
-
-			se.images.format_inkscape_svg(dest_titlepage_svg_filename)
-
-			# For the titlepage we want to remove all styles, since they are not used anymore
-			with open(dest_titlepage_svg_filename, "r+", encoding="utf-8") as file:
-				svg = regex.sub(r"<style.+?</style>[\n\t]+", "", file.read(), flags=regex.DOTALL)
-
-				file.seek(0)
-				file.write(svg)
-				file.truncate()
+			se.images.svg_text_to_paths(source_titlepage_svg_filename, dest_titlepage_svg_filename)
 
 	def generate_cover_svg(self) -> None:
 		"""
@@ -502,11 +479,6 @@ class SeEpub:
 		OUTPUTS
 		None.
 		"""
-
-		inkscape_path = shutil.which("inkscape")
-
-		if inkscape_path is None:
-			raise se.MissingDependencyException("Couldn’t locate `inkscape`. Is it installed?")
 
 		source_images_directory = self.path / "images"
 		source_cover_jpg_filename = source_images_directory / "cover.jpg"
@@ -531,12 +503,8 @@ class SeEpub:
 					source_cover_jpg_base64 = base64.b64encode(binary_file.read()).decode()
 
 				# Convert text to paths
-				# Inkscape 1.0 needs an --export-file flag that 0.92 doesn’t, so we need to normalise that first.
-				output_file_flag = str(dest_cover_svg_filename)
-				if "--export-file=" in subprocess.run([str(inkscape_path), "--without-gui", "--help"], stdout=subprocess.PIPE, check=True).stdout.decode("utf8"):
-					output_file_flag = "--export-file=" + output_file_flag
-				# Inkscape adds a ton of crap to the SVG and we clean that crap a little later
-				subprocess.run([str(inkscape_path), str(source_cover_svg_filename), "--without-gui", "--export-text-to-path", "--export-plain-svg", output_file_flag], stderr=subprocess.DEVNULL, check=True)
+				if source_cover_svg_filename.is_file():
+					se.images.svg_text_to_paths(source_cover_svg_filename, dest_cover_svg_filename, remove_style=False)
 
 				# Embed cover.jpg
 				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
@@ -545,8 +513,6 @@ class SeEpub:
 					file.seek(0)
 					file.write(svg)
 					file.truncate()
-
-				se.images.format_inkscape_svg(dest_cover_svg_filename)
 
 				# For the cover we want to keep the path.title-box style, and add an additional
 				# style to color our new paths white
