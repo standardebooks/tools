@@ -6,14 +6,16 @@ Defines various functions useful for image processing tasks common to epubs.
 from pathlib import Path
 import tempfile
 
+from html import unescape
+from typing import List, Callable, Dict
 import regex
 from PIL import Image, ImageMath
 
-import se
-
-from html import unescape
 import importlib_resources
 from lxml import etree
+
+import se
+
 
 def _color_to_alpha(image: Image, color=None) -> Image:
 	"""
@@ -173,12 +175,12 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 	svg_in_raw = open(in_svg, 'rt').read()
 	xml = etree.fromstring(str.encode(svg_in_raw))
 
-	SVG_NS = '{http://www.w3.org/2000/svg}'
+	svg_ns = '{http://www.w3.org/2000/svg}'
 
-	style = xml.find(SVG_NS+'style')
+	style = xml.find(svg_ns + 'style')
 
 	# Possibly remove style tag if caller wants that
-	def filter_predicate(elem):
+	def filter_predicate(elem: etree.Element):
 		if remove_style and elem.tag.endswith('style'):
 			return None # Remove <style> tag
 		return elem # Keep all other elements
@@ -195,7 +197,7 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 			# Replace <text> tag with <g> tag
 			for k in elem.attrib.keys():
 				if k != 'class': # Keep just class attribute
-					del(elem.attrib[k])
+					del elem.attrib[k]
 			elem.attrib['aria-label'] = text
 			elem.tail = '\n'
 			elem.text = ''
@@ -206,28 +208,28 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 	open(out_svg, 'wt').write(result_all_text)
 
 def _apply_css(elem: etree.Element, css_text: str) -> dict:
-	chunks = [[y.strip() for y in x.split('\n') if y.strip() != ''] for x in css_text.replace('\r','').split('}')]
+	chunks = [[y.strip() for y in x.split('\n') if y.strip() != ''] for x in css_text.replace('\r', '').split('}')]
 	result_css = {}
+	def apply_css(kvs):
+		for pair in kvs:
+			k, css = [selector.strip() for selector in pair.split(':')]
+			result_css[k] = css
 	for chunk in chunks:
 		if len(chunk) < 2:
 				continue
 		selector = chunk[0].replace('{', '')
 		kvs = [x.replace(';', '') for x in chunk[1:]]
-		def apply_css():
-			for kv in kvs:
-				k, v = [x.strip() for x in kv.split(':')]
-				result_css[k] = v
 		if selector[0] == '.' and len(selector) >= 2:
 			if selector[1:] == elem.get('class'):
-				apply_css()
+				apply_css(kvs)
 		elif elem.tag.endswith(selector):
-			apply_css()
+			apply_css(kvs)
 	return result_css
 
 # Assumes return_elem is a new copy with no children
 # e.g.  xml = _traverse_element(xml, traverser)
 # This returns the original tree when traverser is lambda x: x
-def _traverse_children(return_elem: etree.Element, old_elem: etree.Element, traverser: callable) -> None:
+def _traverse_children(return_elem: etree.Element, old_elem: etree.Element, traverser: Callable) -> None:
 	for child in old_elem:
 		new_child = traverser(child)
 		if new_child is None:
@@ -238,7 +240,7 @@ def _traverse_children(return_elem: etree.Element, old_elem: etree.Element, trav
 		final_child.tail = new_child.tail
 		return_elem.append(final_child)
 
-def _traverse_element(elem: etree.Element, traverser: callable) -> etree.Element:
+def _traverse_element(elem: etree.Element, traverser: Callable) -> etree.Element:
 	return_elem = traverser(elem)
 	if return_elem is None:
 		return None
@@ -249,14 +251,14 @@ def _traverse_element(elem: etree.Element, traverser: callable) -> etree.Element
 	_traverse_children(return_elem, elem, traverser)
 	return return_elem
 
-def _get_properties_from_text_elem(properties: dict, elem: etree.Element) -> None:
+def _get_properties_from_text_elem(properties: Dict, elem: etree.Element) -> None:
 	properties['text'] = elem.text
 	if elem.get('x'):
 		properties['x'] = elem.get('x')
 	if elem.get('y'):
 		properties['y'] = elem.get('y')
 
-def _add_font_to_properties(properties: dict, fonts: list) -> None:
+def _add_font_to_properties(properties: Dict, fonts: List) -> None:
 	# Wire up with actual font object
 	for font in fonts:
 		face = font['meta']['font-face']
@@ -268,15 +270,14 @@ def _add_font_to_properties(properties: dict, fonts: list) -> None:
 		properties['font'] = font
 		return # One chunk of text can only have one font/variant
 
-def _float_to_str(x):
-	return "{0:.2f}".format(round(x, 2))
+def _float_to_str(float_value: float) -> str:
+	return "{0:.2f}".format(round(float_value, 2))
 
-def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: dict) -> None:
+def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: Dict) -> None:
 	# Required properties to make any progress
 	for key in 'x y font text font-size'.split():
 		if not key in text_properties:
 			raise se.InvalidCssException('svg_text_to_paths: Missing key', key, 'in text_properties for element', g_elem, 'for SVG tilepage or cover file')
-			return
 	# We know we have x, y, text, font-size, and font so we can render vectors.
 	# Now set up some defaults if not specified.
 	text_properties['font-size'] = float(text_properties['font-size'].replace('px', '')) # NOTE assumes pixels and ignores it
@@ -293,120 +294,127 @@ def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: dict) -> Non
 	font = text_properties['font']
 	text_string = text_properties['text']
 
-	width = 0
+	width = 0.0
 	if text_properties['text-anchor'] == "middle" or text_properties['text-anchor'] == "center" or \
 		text_properties['text-anchor'] == "right" or text_properties['text-anchor'] == "end":
 		width = _get_text_width(text_string, font, text_properties)
-	
-	last_xy = [0, 0]
+
+	last_xy = [0.0, 0.0]
 	last_xy[0] = float(text_properties['x'])
 	if text_properties['text-anchor'] == 'middle' or text_properties['text-anchor'] == 'center':
-		last_xy[0] -= width / 2.0;
+		last_xy[0] -= width / 2.0
 	elif text_properties['text-anchor'] == 'right' or text_properties['text-anchor'] == 'end':
 		last_xy[0] -= width
 	last_xy[1] = float(text_properties['y'])
 
 	path_ds = []
-	def walker(d, size, dx, dy):
+	def walker(d_attrib: str, size: float, delta_x: float, delta_y: float) -> None:
 		# Render a glyph (text representaiton of a path outline) to a properly
 		# translated and scaled path outline.
-		d = _d_translate_and_scale(d, last_xy[0], last_xy[1], size, -size)
-		if d != '':
-			path_ds.append(d)
-		last_xy[0] += dx
-		last_xy[1] += dy
+		d_attrib = _d_translate_and_scale(d_attrib, last_xy[0], last_xy[1], size, -size)
+		if d_attrib != '':
+			path_ds.append(d_attrib)
+		last_xy[0] += delta_x
+		last_xy[1] += delta_y
 	_walk_characters(text_string, font, text_properties, last_xy[0], last_xy[1], walker)
 	# Append each glyph outline as its own <path> tag, as Inkscape would do.
-	for d in path_ds:
-		path_elem = etree.Element("path", {'d': d} )
+	for d_attr in path_ds:
+		path_elem = etree.Element("path", {'d': d_attr})
 		path_elem.tail = '\n'
 		g_elem.append(path_elem) # ?
 
-def _get_text_width(text_string, font, text_properties):
+def _get_text_width(text_string: str, font: Dict, text_properties: Dict) -> float:
 	last_xy = [0, 0]
-	def callback(d, size, dx, dy):
-		last_xy[0] += dx
-		last_xy[1] += dy
+	def callback(_d, _size, delta_x, delta_y):
+		last_xy[0] += delta_x
+		last_xy[1] += delta_y
 	_walk_characters(text_string, font, text_properties, last_xy[0], last_xy[1], callback)
 	return last_xy[0]
 
-def _walk_characters(text_string, font, text_properties, last_x, last_y, use_glyph_callback):
-	for ix in range(len(text_string)):
-		ch = text_string[ix];
-		ch1 = text_string[ix + 1] if ix < len(text_string) - 1 else ''
-		ch2 = text_string[ix + 2] if ix < len(text_string) - 2 else ''
+def _walk_characters(text_string: str, font: Dict, text_properties: Dict, last_x: float, last_y: float, use_glyph_callback: Callable) -> None:
+	for index, ch0 in enumerate(text_string):
+		ch1 = text_string[index + 1] if index < len(text_string) - 1 else ''
+		ch2 = text_string[index + 2] if index < len(text_string) - 2 else ''
 		combo = None
-		if (ch + ch1) in font['glyphs']:
-			combo = font['glyphs'][ch + ch1]
-		if text_properties['letter-spacing'] == 0 and ix < len(text_string) - 2 and combo:
+		ch0_ch1 = ch0 + ch1
+		if ch0_ch1 in font['glyphs']:
+			combo = font['glyphs'][ch0_ch1]
+		if text_properties['letter-spacing'] == 0 and index < len(text_string) - 2 and combo:
 			# if ligature or 'wide' unicode character exists -- don't use ligature if letter-spacing set to something interesting :-)
 			# Found combined characters ch+ch1
-			_advance_by_glyph(font, text_properties, last_x, last_y, ch + ch1, ch2, use_glyph_callback)
-			ix += 1
-		if text_properties['letter-spacing'] == 0 and ix < len(text_string) and combo:
+			_advance_by_glyph(font, text_properties, last_x, last_y, ch0 + ch1, ch2, use_glyph_callback)
+			index += 1
+		if text_properties['letter-spacing'] == 0 and index < len(text_string) and combo:
 			# If ligature or 'wide' unicode character exists -- don't use ligature if letter-spacing set to something interesting :-)
-			_advance_by_glyph(font, text_properties, last_x, last_y, ch + ch1, '', use_glyph_callback)
+			_advance_by_glyph(font, text_properties, last_x, last_y, ch0 + ch1, '', use_glyph_callback)
 		else:
-			_advance_by_glyph(font, text_properties, last_x, last_y, ch, ch1, use_glyph_callback)
+			_advance_by_glyph(font, text_properties, last_x, last_y, ch0, ch1, use_glyph_callback)
 
-def _advance_by_glyph(font, text_properties, last_x, last_y, uni, uni_next, callback):
+def _advance_by_glyph(font: Dict, text_properties: Dict, _last_x, _last_y, uni: str, uni_next: str, callback: Callable) -> None:
 	glyphs = font['glyphs']
-	glyph = None
+	glyph = {} # Default, but not None, to appease type-checker
 	if uni in glyphs:
 		glyph = glyphs[uni]
 	if not uni:
 		glyph = font['meta']['missing-glyph']
-	d = None
+	d_attrib = None
 	if 'd' in glyph:
-		d = glyph['d']
-	if not d:
+		d_attrib = glyph['d']
+	if not d_attrib:
 		# '' for Space character, not None
-		d = ''
+		d_attrib = ''
 	size = text_properties['font-size'] / text_properties['units-per-em']
 	horiz_adv_x = float(glyph['horiz-adv-x']) if 'horiz-adv-x' in glyph else text_properties['horiz-adv-x']
-	hkern = 0
+	hkern = 0.0
 	kern_key = uni + ',' + uni_next
 	if kern_key in font['hkern']:
 		advance_x = float(font['hkern'][kern_key])
 		hkern = advance_x
 	horiz_adv_x -= hkern
-	dx = horiz_adv_x * size + (text_properties['letter-spacing'] if uni_next != '' else 0)
-	callback(d, size, dx, 0) # --> result outline d. Input = ("d"), dx, dy
+	delta_x = horiz_adv_x * size + (text_properties['letter-spacing'] if uni_next != '' else 0)
+	callback(d_attrib, size, delta_x, 0) # --> result outline d. Input = ("d"), delta_x, delta_y
 
-def _d_translate_and_scale(d, tx, ty, sx, sy) -> str:
-	return _d_apply_matrix(d, [sx, 0, 0, sy, tx, ty])
+def _d_translate_and_scale(d_attrib: str, translate_x: float, translate_y: float, scale_x: float, scale_y: float) -> str:
+	return _d_apply_matrix(d_attrib, [scale_x, 0, 0, scale_y, translate_x, translate_y])
 
-def _d_scale(d: str, x=1, y=1) -> str:
-	_d_apply_matrix(d, [x, 0, 0, y, 0, 0])
+def _d_scale(d_attrib: str, scale_x=1.0, scale_y=1.0) -> str:
+	return _d_apply_matrix(d_attrib, [scale_x, 0.0, 0.0, scale_y, 0.0, 0.0])
 
 # This is the main interesting part of SVG glyph rendering process.
 # The d attribute (path outline data, see https://www.w3.org/TR/SVG/paths.html#DProperty)
 # from a single glyph or ligature will have its coordinates translated and scaled by the
 # matrix transform passed in, and a return d attribute string will be created, showing the
 # glyph in the correct location and size.
-m_notz_z_regex = regex.compile('M[^zZ]*[zZ]')
-az_notaz_regex = regex.compile('[a-zA-Z]+[^a-zA-Z]*')
-notaz_regex = regex.compile('[^a-zA-Z]*')
-number_regex = regex.compile('\-?[0-9\.]+')
-comma_minus_regex = regex.compile(',\-')
+M_NOTZ_Z_REGEX = regex.compile('M[^zZ]*[zZ]')
+AZ_NOTAZ_REGEX = regex.compile('[a-zA-Z]+[^a-zA-Z]*')
+NOTAZ_REGEX = regex.compile('[^a-zA-Z]*')
+NUMBER_REGEX = regex.compile('-?[0-9.]+')
+COMMA_MINUS_REGEX = regex.compile(',-')
 
-def _clean_comma_minus(x):
-	return comma_minus_regex.sub('-', x)
+def _clean_comma_minus(d_attrib: str) -> str:
+	return COMMA_MINUS_REGEX.sub('-', d_attrib)
 
-def _d_apply_matrix_one_shape(d: str, matrix: list) -> str:
+def _d_apply_matrix_one_shape(d_attrib: str, matrix: List) -> str:
+	new_coords: List = []
+	matrix_a = 0
+	matrix_b = 0
+	matrix_c = 0
+	matrix_d = 0
+	matrix_e = 0
+	matrix_f = 0
 	ret = []
-	for instruction in az_notaz_regex.findall(d):
-		i = notaz_regex.sub('', instruction)
-		coords = [float(x) for x in number_regex.findall(instruction)]
+	for instruction in AZ_NOTAZ_REGEX.findall(d_attrib):
+		i = NOTAZ_REGEX.sub('', instruction)
+		coords = [float(x) for x in NUMBER_REGEX.findall(instruction)]
 		new_coords = []
 		while coords and len(coords) > 0:
-			[a, b, c, d, e, f] = matrix
+			[matrix_a, matrix_b, matrix_c, matrix_d, matrix_e, matrix_f] = matrix
 			if i == i.lower(): # Do not translate relative instructions (lowercase)
-				e = 0
-				f = 0
-			def push_point(x, y):
-				new_coords.append(a*x + c*y + e)
-				new_coords.append(b*x + d*y + f)
+				matrix_e = 0
+				matrix_f = 0
+			def push_point(point_x: float, point_y: float) -> None:
+				new_coords.append(matrix_a * point_x + matrix_c * point_y + matrix_e)
+				new_coords.append(matrix_b * point_x + matrix_d * point_y + matrix_f)
 			# Convert horizontal lineto to lineto (relative)
 			if i == 'h':
 				i = 'l'
@@ -420,19 +428,19 @@ def _d_apply_matrix_one_shape(d: str, matrix: list) -> str:
 			# Every other command -- M m L l c C s S Q q T t -- come in multiples of two numbers (coordinate pair (x,y)):
 			else:
 				push_point(coords.pop(0), coords.pop(0))
-		new_instruction = i + _clean_comma_minus(','.join([_float_to_str(f) for f in new_coords]))
+		new_instruction = i + _clean_comma_minus(','.join([_float_to_str(num) for num in new_coords]))
 		ret.append(new_instruction)
 	return ''.join(ret) + ' '
 
-def _d_apply_matrix(d: str, matrix: list) -> str:
-	matches = m_notz_z_regex.findall(d)
+def _d_apply_matrix(d_attrib: str, matrix: List) -> str:
+	matches = M_NOTZ_Z_REGEX.findall(d_attrib)
 	shapes = [_d_apply_matrix_one_shape(shape, matrix) for shape in matches if shape]
 	return ' '.join(shapes).strip()
 
-def _parse_font(font_path):
+def _parse_font(font_path: Path) -> dict:
 	font_svg_raw = open(font_path, 'rt').read()
 	xml = etree.fromstring(str.encode(font_svg_raw))
-	font = { 'glyphs': {}, 'hkern': {}, 'meta': {} }
+	font: Dict = {'glyphs': {}, 'hkern': {}, 'meta': {}}
 	glyphs = font['glyphs']
 	hkern = font['hkern']
 	meta = font['meta']
@@ -452,7 +460,6 @@ def _parse_font(font_path):
 			if 'unicode' in elem.attrib:
 				g_name = elem.attrib['glyph-name'] if 'glyph-name' in elem.attrib else None
 				uni = elem.attrib['unicode']
-				old_uni = uni
 				if uni.startswith('&#x') and uni.endswith(';'):
 					uni = uni.replace(';', '')
 					uni = chr(int(uni[2:], 16))
@@ -460,7 +467,7 @@ def _parse_font(font_path):
 					g_name_to_unicode[g_name] = uni
 				else:
 					g_name_to_unicode[uni] = uni
-				glyphs[uni] = { }
+				glyphs[uni] = {}
 				if 'horiz-adv-x' in elem.attrib:
 					glyphs[uni]['horiz-adv-x'] = elem.attrib['horiz-adv-x']
 				if 'd' in elem.attrib:
@@ -475,7 +482,7 @@ def _parse_font(font_path):
 					print('Unescape returned no unicode character for fake entity', fake_entity)
 				if fake_entity != uni and len(uni) <= 2:
 					g_name_to_unicode[g_name] = uni
-					glyphs[uni] = { }
+					glyphs[uni] = {}
 					if 'horiz-adv-x' in elem.attrib:
 						glyphs[uni]['horiz-adv-x'] = elem.attrib['horiz-adv-x']
 					if 'd' in elem.attrib:
@@ -489,22 +496,22 @@ def _parse_font(font_path):
 			else:
 				continue
 			if 'g1' in elem.attrib and 'g2' in elem.attrib:
-				g1 = elem.attrib['g1'].split(',')
-				g2 = elem.attrib['g2'].split(',')
+				glyphs1 = elem.attrib['g1'].split(',')
+				glyphs2 = elem.attrib['g2'].split(',')
 				kerning = elem.attrib['k']
-				for g in g1:
-					if not g in g_name_to_unicode:
+				for glyph1 in glyphs1:
+					if not glyph1 in g_name_to_unicode:
 						continue
-					for h in g2:
-						if not h in g_name_to_unicode:
+					for glyph2 in glyphs2:
+						if not glyph2 in g_name_to_unicode:
 							continue
-						pair = g_name_to_unicode[g] +',' + g_name_to_unicode[h]
+						pair = g_name_to_unicode[glyph1] +',' + g_name_to_unicode[glyph2]
 						hkern[pair] = kerning
 			if 'u1' in elem.attrib and 'u2' in elem.attrib:
-				u1 = elem.attrib['u1'].split(',')
-				u2 = elem.attrib['u2'].split(',')
-				for u in u1:
-					for v in u2:
-						pair = u + ',' + v
+				unicodes1 = elem.attrib['u1'].split(',')
+				unicodes2 = elem.attrib['u2'].split(',')
+				for uni1 in unicodes1:
+					for uni2 in unicodes2:
+						pair = uni1 + ',' + uni2
 						hkern[pair] = kerning
 	return font
