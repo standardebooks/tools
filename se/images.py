@@ -15,7 +15,7 @@ import importlib_resources
 from lxml import etree
 
 import se
-
+import se.formatting
 
 def _color_to_alpha(image: Image, color=None) -> Image:
 	"""
@@ -196,7 +196,9 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 			elem.tag = "g"
 			# Replace <text> tag with <g> tag
 			for k in elem.attrib.keys():
-				if k != 'class': # Keep just class attribute
+				if k != 'class':
+					del elem.attrib[k]
+				elif k == 'class' and elem.attrib['class'] != 'title-box': # Keep just class attribute if class="title-box"
 					del elem.attrib[k]
 			elem.attrib['aria-label'] = text
 			elem.tail = '\n'
@@ -205,6 +207,7 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 
 	xmlstr = etree.tostring(xml, pretty_print=True).decode('UTF-8')
 	result_all_text = xmlstr.replace('ns0:', '').replace(':ns0', '')
+	result_all_text = se.formatting.format_xhtml(result_all_text)
 	open(out_svg, 'wt').write(result_all_text)
 
 def _apply_css(elem: etree.Element, css_text: str) -> dict:
