@@ -54,6 +54,8 @@ FILESYSTEM
 "f-008", "Illegal uppercase letter in filename."
 "f-009", "Illegal leading `0` in filename."
 "f-010", "Problem decoding file as utf-8."
+"f-011", "JPEG files must end in `.jpg`."
+"f-012", "TIFF files must end in `.tif`."
 
 METADATA
 "m-001", "gutenberg.org URL missing leading `www.`."
@@ -545,6 +547,12 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 		for filename in sorted(filenames, key=se.natural_sort_key):
 			if ".git" in str(Path(root) / filename):
 				continue
+
+			if ".jpeg" in filename:
+				messages.append(LintMessage("f-011", "JPEG files must end in `.jpg`.", se.MESSAGE_TYPE_ERROR, filename))
+
+			if ".tiff" in filename:
+				messages.append(LintMessage("f-012", "TIFF files must end in `.tif`.", se.MESSAGE_TYPE_ERROR, filename))
 
 			if filename.startswith("cover.source."):
 				has_cover_source = True
