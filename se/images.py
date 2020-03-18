@@ -142,11 +142,11 @@ def remove_image_metadata(filename: Path) -> None:
 	None.
 	"""
 
-	if filename.suffix == ".xcf":
-		# Skip GIMP XCF files
+	if filename.suffix == ".xcf" or filename.suffix == ".svg":
+		# Skip GIMP XCF and SVG files
 		return
 
-	if filename.suffix == ".jpg" or filename.suffix == ".jpeg":
+	if filename.suffix == ".jpg":
 		# JPEG images are lossy, and PIL will recompress them on save.
 		# Instead of using PIL, read the byte stream and remove all metadata that way.
 		# Inspired by https://github.com/hMatoba/Piexif
