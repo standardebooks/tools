@@ -289,20 +289,25 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 def _apply_css(elem: etree.Element, css_text: str) -> dict:
 	chunks = [[y.strip() for y in x.split("\n") if y.strip() != ""] for x in css_text.replace("\r", "").split("}")]
 	result_css = {}
+
 	def apply_css(kvs):
 		for pair in kvs:
 			k, css = [selector.strip() for selector in pair.split(":")]
-			result_css[k] = css
+			result_css[k] = css.replace("\"", "") # Values may have quotes, like font-family: "League Spartan"
+
 	for chunk in chunks:
 		if len(chunk) < 2:
-				continue
+			continue
+
 		selector = chunk[0].replace("{", "")
 		kvs = [x.replace(";", "") for x in chunk[1:]]
+
 		if selector[0] == "." and len(selector) >= 2:
 			if selector[1:] == elem.get("class"):
 				apply_css(kvs)
 		elif elem.tag.endswith(selector):
 			apply_css(kvs)
+
 	return result_css
 
 # Assumes return_elem is a new copy with no children
