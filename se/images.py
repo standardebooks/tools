@@ -238,6 +238,7 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 	OUTPUTS
 	None.
 	"""
+
 	font_paths = []
 	name_list = {"league-spartan": ["league-spartan-bold.svg"], "sorts-mill-goudy": ["sorts-mill-goudy-italic.svg", "sorts-mill-goudy.svg"]}
 	for font_family, font_names in name_list.items():
@@ -269,6 +270,10 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 			_get_properties_from_text_elem(properties, elem)
 			_add_font_to_properties(properties, fonts)
 			text = elem.text
+
+			if not text:
+				raise se.InvalidFileException(f"SVG `<text>` element has no content. File: `{in_svg}`")
+
 			elem.tag = "g"
 			# Replace <text> tag with <g> tag
 			for k in elem.attrib.keys():
