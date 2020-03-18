@@ -14,7 +14,7 @@ To install the toolset locally for development and debugging, see [Installation 
 
 ```shell
 # Install some pre-flight dependencies.
-sudo apt install -y python3-pip python3-dev python3-venv libxml2-utils default-jre inkscape calibre git
+sudo apt install -y python3-pip python3-dev python3-venv libxml2-utils default-jre calibre git
 
 # Install pipx.
 python3 -m pip install --user pipx
@@ -22,13 +22,6 @@ python3 -m pipx ensurepath
 
 # Install the toolset.
 pipx install standardebooks
-
-# Install required fonts.
-mkdir -p $HOME/.local/share/fonts/
-cp $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/data/fonts/*/*.otf $HOME/.local/share/fonts/
-
-# Refresh the local font cache.
-sudo fc-cache -f
 ```
 
 ### Optional: Install shell completions
@@ -48,7 +41,7 @@ sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se
 
 ```shell
 # Install some pre-flight dependencies.
-sudo dnf install git calibre vim inkscape libxml2 java-1.8.0-openjdk python3-devel
+sudo dnf install git calibre vim libxml2 java-1.8.0-openjdk python3-devel
 
 # Install pipx.
 python3 -m pip install --user pipx
@@ -56,10 +49,6 @@ python3 -m pipx ensurepath
 
 # Install the toolset.
 pipx install standardebooks
-
-# Install required fonts.
-mkdir -p $HOME/.local/share/fonts/
-cp $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/data/fonts/*/*.otf $HOME/.local/share/fonts/
 ```
 
 ### Optional: Install shell completions
@@ -93,13 +82,10 @@ These instructions were tested on macOS 10.12 to 10.15.
 	pipx ensurepath
 
 	# Install required applications.
-	brew cask install java calibre xquartz inkscape
+	brew cask install java calibre xquartz
 
 	# Install the toolset.
 	pipx install standardebooks
-
-	# Install required fonts.
-	cp $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/data/fonts/*/*.otf ~/Library/Fonts/
 
 	# Optional: Fish users can install tab completion.
 	ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
@@ -116,7 +102,6 @@ These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 rele
 	py3-gitdb--
 	libxml--
 	jdk--%11
-	inkscape--
 	calibre--
 	git--
 	vim--
@@ -136,13 +121,6 @@ Optionally, replace `vim--` with `vim--gtk3` to include gvim for its Unicode edi
 	```shell
 	# Install the toolset.
 	pipx install standardebooks
-
-	# Install required fonts.
-	mkdir -p $HOME/.local/share/fonts/
-	cp $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/data/fonts/*/*.otf $HOME/.local/share/fonts/
-
-	# Refresh the local font cache.
-	doas fc-cache -f
 	```
 
 ## Installation for developers
