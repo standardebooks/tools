@@ -481,9 +481,7 @@ def _parse_font(font_path: Path) -> dict:
 					g_name = g_name[:g_name.find('.')] # remove .1 .002 .sc   etc.
 				fake_entity = '&' + g_name + ';'
 				uni = unescape(fake_entity)
-				if not uni:
-					print('Unescape returned no unicode character for fake entity', fake_entity)
-				if fake_entity != uni and len(uni) <= 2:
+				if uni and fake_entity != uni and len(uni) <= 2:
 					g_name_to_unicode[g_name] = uni
 					glyphs[uni] = {}
 					if 'horiz-adv-x' in elem.attrib:
