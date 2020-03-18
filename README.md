@@ -82,7 +82,7 @@ These instructions were tested on macOS 10.12 to 10.15.
 	pipx ensurepath
 
 	# Install required applications.
-	brew cask install java calibre xquartz
+	brew cask install java calibre
 
 	# Install the toolset.
 	pipx install standardebooks
