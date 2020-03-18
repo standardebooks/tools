@@ -12,7 +12,7 @@ from typing import Set, Union
 from colored import stylize, fg, bg, attr
 import regex
 
-VERSION = "1.2.3"
+VERSION = "1.2.4"
 MESSAGE_INDENT = "    "
 UNICODE_BOM = "\ufeff"
 NO_BREAK_SPACE = "\u00a0"
