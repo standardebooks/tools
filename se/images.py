@@ -5,12 +5,12 @@ Defines various functions useful for image processing tasks common to epubs.
 
 from pathlib import Path
 import tempfile
+import struct
 
 from html import unescape
 from typing import List, Callable, Dict
 import regex
-from PIL import Image, ImageMath
-
+from PIL import Image, ImageMath, PngImagePlugin
 import importlib_resources
 from lxml import etree
 
@@ -142,12 +142,87 @@ def remove_image_metadata(filename: Path) -> None:
 	None.
 	"""
 
-	image = Image.open(filename)
-	data = list(image.getdata())
+	if filename.suffix == ".xcf":
+		# Skip GIMP XCF files
+		return
 
-	image_without_exif = Image.new(image.mode, image.size)
-	image_without_exif.putdata(data)
-	image_without_exif.save(filename, subsampling="4:4:4")
+	if filename.suffix == ".jpg" or filename.suffix == ".jpeg":
+		# JPEG images are lossy, and PIL will recompress them on save.
+		# Instead of using PIL, read the byte stream and remove all metadata that way.
+		# Inspired by https://github.com/hMatoba/Piexif
+		with open(filename, 'rb+') as file:
+			jpeg_data = file.read()
+
+			if jpeg_data[0:2] != b"\xff\xd8":
+				raise se.InvalidFileException(f"Invalid JPEG file: `{filename}`")
+
+			exif_segments = []
+			head = 2
+
+			# Get a list of metadata segments from the jpg
+			while True:
+				if jpeg_data[head: head + 2] == b"\xff\xda":
+					break
+
+				length = struct.unpack(">H", jpeg_data[head + 2: head + 4])[0]
+				end_point = head + length + 2
+				seg = jpeg_data[head: end_point]
+				head = end_point
+
+				if head >= len(jpeg_data):
+					raise se.InvalidFileException(f"Invalid JPEG file: `{filename}`")
+
+				# See https://www.disktuna.com/list-of-jpeg-markers/
+				# and https://exiftool.org/TagNames/JPEG.html
+				# These are the 15 "app" segments, EXCEPT app 14, as well as the "comment" segment.
+				# This mirrors what exiftool does.
+				metadata_segments = [b"\xff\xe1", b"\xff\xe2", b"\xff\xe3", b"\xff\xe4", b"\xff\xe5",
+							b"\xff\xe6", b"\xff\xe7", b"\xff\xe8", b"\xff\xe9", b"\xff\xea",
+							b"\xff\xeb", b"\xff\xec", b"\xff\xed", b"\xff\xef",
+							b"\xff\xfe"]
+
+				if seg[0:2] in metadata_segments:
+					exif_segments.append(seg)
+
+			# Now replace those segments with nothing
+			for segment in exif_segments:
+				jpeg_data = jpeg_data.replace(segment, b"")
+
+			file.seek(0)
+			file.write(jpeg_data)
+			file.truncate()
+	else:
+		# PNG and other image types we expect are lossless so we can use PIL to remove metadata
+		image = Image.open(filename)
+		data = list(image.getdata())
+
+		image_without_exif = Image.new(image.mode, image.size)
+		image_without_exif.putdata(data)
+
+		if image.format == "PNG":
+			# Some metadata, like chromaticity and gamma, are useful to preserve in PNGs
+			new_exif = PngImagePlugin.PngInfo()
+			for key, value in image.info.items():
+				if key.lower() == "gamma":
+					new_exif.add(b"gAMA", struct.pack("!1I", int(value * 100000)))
+				elif key.lower() == "chromaticity":
+					new_exif.add(b"cHRM", struct.pack("!8I", \
+							int(value[0] * 100000), \
+							int(value[1] * 100000), \
+							int(value[2] * 100000), \
+							int(value[3] * 100000), \
+							int(value[4] * 100000), \
+							int(value[5] * 100000), \
+							int(value[6] * 100000), \
+							int(value[7] * 100000)))
+
+			image_without_exif.save(filename, optimize=True, pnginfo=new_exif)
+		elif image.format == "TIFF":
+			# For some reason, when saving as TIFF we have to cast filename to str() otherwise
+			# the save driver throws an exception
+			image_without_exif.save(str(filename), compression="tiff_adobe_deflate")
+		else:
+			image_without_exif.save(filename)
 
 def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 	"""
