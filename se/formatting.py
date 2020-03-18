@@ -492,6 +492,16 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 			escaped_long_description = escaped_long_description.replace(">", "&gt;")
 			xhtml = xhtml.replace(long_description[0], escaped_long_description)
 
+	# Almost done. Let's clean CSS in <style> elements, like we find in SVG files.
+	matches = regex.findall(r"^(\s*)(<style[^>]*?>)(.+?)(</style>)", xhtml, flags=regex.DOTALL | regex.MULTILINE)
+	for match in matches:
+		css = format_css(match[2])
+		# Indent the CSS one level deeper than the <style> element
+		css = ''.join(match[0] + "\t" + line + "\n" for line in css.splitlines())
+		css = css.strip("\n")
+		css = regex.sub(r"^\s+$", "", css, flags=regex.MULTILINE) # Remove indents from lines that are just white space
+		xhtml = xhtml.replace(f"{match[0]}{match[1]}{match[2]}{match[3]}", f"{match[0]}{match[1]}\n{css}\n{match[0]}{match[3]}")
+
 	return xhtml
 
 def _format_css_component_list(content: list, in_selector=False, in_paren_block=False) -> str:
