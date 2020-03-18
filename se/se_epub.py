@@ -487,39 +487,31 @@ class SeEpub:
 		# Create output directory if it doesn't exist
 		dest_images_directory.mkdir(parents=True, exist_ok=True)
 
-		# Remove useless metadata from cover source files
-		for root, _, filenames in os.walk(source_images_directory):
-			for filename in fnmatch.filter(filenames, "cover.source.*"):
-				se.images.remove_image_metadata(Path(root) / filename)
+		if source_cover_jpg_filename.is_file() and source_cover_svg_filename.is_file():
+			# base64 encode cover.jpg
+			with open(source_cover_jpg_filename, "rb") as binary_file:
+				source_cover_jpg_base64 = base64.b64encode(binary_file.read()).decode()
 
-		if source_cover_jpg_filename.is_file():
-			se.images.remove_image_metadata(source_cover_jpg_filename)
-
+			# Convert text to paths
 			if source_cover_svg_filename.is_file():
-				# base64 encode cover.jpg
-				with open(source_cover_jpg_filename, "rb") as binary_file:
-					source_cover_jpg_base64 = base64.b64encode(binary_file.read()).decode()
+				se.images.svg_text_to_paths(source_cover_svg_filename, dest_cover_svg_filename, remove_style=False)
 
-				# Convert text to paths
-				if source_cover_svg_filename.is_file():
-					se.images.svg_text_to_paths(source_cover_svg_filename, dest_cover_svg_filename, remove_style=False)
+			# Embed cover.jpg
+			with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
+				svg = regex.sub(r"xlink:href=\".*?cover\.jpg", "xlink:href=\"data:image/jpeg;base64," + source_cover_jpg_base64, file.read(), flags=regex.DOTALL)
 
-				# Embed cover.jpg
-				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
-					svg = regex.sub(r"xlink:href=\".*?cover\.jpg", "xlink:href=\"data:image/jpeg;base64," + source_cover_jpg_base64, file.read(), flags=regex.DOTALL)
+				file.seek(0)
+				file.write(svg)
+				file.truncate()
 
-					file.seek(0)
-					file.write(svg)
-					file.truncate()
+			# For the cover we want to keep the path.title-box style, and add an additional
+			# style to color our new paths white
+			with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
+				svg = regex.sub(r"<style.+?</style>", "<style type=\"text/css\">\n\t\tpath{\n\t\t\tfill: #fff;\n\t\t}\n\n\t\t.title-box{\n\t\t\tfill: #000;\n\t\t\tfill-opacity: .75;\n\t\t}\n\t</style>", file.read(), flags=regex.DOTALL)
 
-				# For the cover we want to keep the path.title-box style, and add an additional
-				# style to color our new paths white
-				with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
-					svg = regex.sub(r"<style.+?</style>", "<style type=\"text/css\">\n\t\tpath{\n\t\t\tfill: #fff;\n\t\t}\n\n\t\t.title-box{\n\t\t\tfill: #000;\n\t\t\tfill-opacity: .75;\n\t\t}\n\t</style>", file.read(), flags=regex.DOTALL)
-
-					file.seek(0)
-					file.write(svg)
-					file.truncate()
+				file.seek(0)
+				file.write(svg)
+				file.truncate()
 
 	def reorder_endnotes(self, target_endnote_number: int, step: int = 1) -> None:
 		"""

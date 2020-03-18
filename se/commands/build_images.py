@@ -3,7 +3,9 @@ This module implements the `se build-images` command.
 """
 
 import argparse
+import fnmatch
 from pathlib import Path
+import os
 
 import se
 from se.se_epub import SeEpub
@@ -31,14 +33,21 @@ def build_images() -> int:
 
 		try:
 			if args.verbose:
+				print("\tCleaning metadata ...", end="", flush=True)
+
+			# Remove useless metadata from cover source files
+			for root, _, filenames in os.walk(directory):
+				for filename in fnmatch.filter(filenames, "cover.*"):
+					se.images.remove_image_metadata(Path(root) / filename)
+
+			if args.verbose:
+				print(" OK")
 				print("\tBuilding cover.svg ...", end="", flush=True)
 
 			se_epub.generate_cover_svg()
 
 			if args.verbose:
 				print(" OK")
-
-			if args.verbose:
 				print("\tBuilding titlepage.svg ...", end="", flush=True)
 
 			se_epub.generate_titlepage_svg()
