@@ -42,20 +42,20 @@ def _color_to_alpha(image: Image, color=None) -> Image:
 	alpha = ImageMath.eval(
 		"""float(
 		    max(
-		        max(
-		            max(
-		                difference1(red_band, cred_band),
-		                difference1(green_band, cgreen_band)
-		            ),
-		            difference1(blue_band, cblue_band)
-		        ),
-		        max(
-		            max(
-		                difference2(red_band, cred_band),
-		                difference2(green_band, cgreen_band)
-		            ),
-		            difference2(blue_band, cblue_band)
-		        )
+			max(
+			    max(
+				difference1(red_band, cred_band),
+				difference1(green_band, cgreen_band)
+			    ),
+			    difference1(blue_band, cblue_band)
+			),
+			max(
+			    max(
+				difference2(red_band, cred_band),
+				difference2(green_band, cgreen_band)
+			    ),
+			    difference2(blue_band, cblue_band)
+			)
 		    )
 		)""",
 		difference1=lambda source, color: (source - color) / (255.0 - color),
@@ -165,9 +165,9 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 	"""
 	font_paths = []
 	name_list = {"league-spartan": ["league-spartan-bold.svg"], "sorts-mill-goudy": ["sorts-mill-goudy-italic.svg", "sorts-mill-goudy.svg"]}
-	for name, fonts in name_list.items():
-		for font in fonts:
-			with importlib_resources.path(f"se.data.fonts.{name}", font) as font_path:
+	for font_family, font_names in name_list.items():
+		for font_name in font_names:
+			with importlib_resources.path(f"se.data.fonts.{font_family}", font_name) as font_path:
 				font_paths.append(font_path)
 	fonts = []
 	for font_path in font_paths:
