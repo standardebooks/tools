@@ -361,7 +361,7 @@ def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: Dict) -> Non
 	# Required properties to make any progress
 	for key in "x y font text font-size".split():
 		if not key in text_properties:
-			raise se.InvalidCssException("svg_text_to_paths: Missing key", key, "in text_properties for element", g_elem, "for SVG tilepage or cover file")
+			raise se.InvalidCssException(f"svg_text_to_paths: Missing key `{key}` in `text_properties` for `<{g_elem.tag}>` element in `./images/titlepage.svg` or `./images/cover.svg`.")
 	# We know we have x, y, text, font-size, and font so we can render vectors.
 	# Now set up some defaults if not specified.
 	text_properties["font-size"] = float(text_properties["font-size"].replace("px", "")) # NOTE assumes pixels and ignores it
