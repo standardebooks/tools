@@ -1,5 +1,5 @@
 """
-This module implements the `se print_toc` command.
+This module implements the `se print-toc` command.
 """
 
 import argparse

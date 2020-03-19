@@ -1,5 +1,5 @@
 """
-This module implements the `se renumber_endnotes` command.
+This module implements the `se renumber-endnotes` command.
 """
 
 import argparse

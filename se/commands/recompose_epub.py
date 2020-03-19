@@ -1,5 +1,5 @@
 """
-This module implements the `se recompose_epub` command.
+This module implements the `se recompose-epub` command.
 """
 
 import argparse

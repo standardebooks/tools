@@ -1,5 +1,5 @@
 """
-This module implements the `se print_manifest_and_spine` command.
+This module implements the `se print-manifest-and-spine` command.
 """
 
 import argparse

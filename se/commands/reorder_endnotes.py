@@ -1,5 +1,5 @@
 """
-This module implements the `se reorder_endnotes` command.
+This module implements the `se reorder-endnotes` command.
 """
 
 import argparse

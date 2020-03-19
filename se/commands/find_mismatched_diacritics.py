@@ -1,5 +1,5 @@
 """
-This module implements the `se find_mismatched_diacritics` command.
+This module implements the `se find-mismatched-diacritics` command.
 """
 
 import argparse

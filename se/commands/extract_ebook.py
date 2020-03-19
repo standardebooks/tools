@@ -1,5 +1,5 @@
 """
-This module implements the `se extract_ebook` command.
+This module implements the `se extract-ebook` command.
 """
 
 import argparse

@@ -1,5 +1,5 @@
 """
-This module implements the `se prepare_release` command.
+This module implements the `se prepare-release` command.
 """
 
 import argparse

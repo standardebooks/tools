@@ -1,5 +1,5 @@
 """
-This module implements the `se modernize_spelling` command.
+This module implements the `se modernize-spelling` command.
 """
 
 import argparse

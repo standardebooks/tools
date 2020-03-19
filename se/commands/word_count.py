@@ -1,5 +1,5 @@
 """
-This module implements the `se word_count` command.
+This module implements the `se word-count` command.
 """
 
 import argparse

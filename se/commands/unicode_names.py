@@ -1,5 +1,5 @@
 """
-This module implements the `se unicode_names` command.
+This module implements the `se unicode-names` command.
 """
 
 import argparse

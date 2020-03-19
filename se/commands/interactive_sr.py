@@ -1,5 +1,5 @@
 """
-This module implements the `se interactive_sr` command.
+This module implements the `se interactive-sr` command.
 """
 
 import argparse

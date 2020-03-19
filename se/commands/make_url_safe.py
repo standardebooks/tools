@@ -1,5 +1,5 @@
 """
-This module implements the `se make_url_safe` command.
+This module implements the `se make-url-safe` command.
 """
 
 import argparse
