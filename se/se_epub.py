@@ -984,7 +984,7 @@ class SeEpub:
 				with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml", "w") as file:
 					file.write(se.formatting.format_xhtml(str(self._endnotes_soup), is_endnotes_file=True))
 
-				report += "Changed {:d} endnote{}.".format(notes_changed, "s" if notes_changed != 1 else "")
+				report += f"Changed {notes_changed:d} endnote{'s' if notes_changed != 1 else ''}."
 			else:
 				report += "No changes made."
 

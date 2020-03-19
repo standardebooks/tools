@@ -26,5 +26,5 @@ def version() -> int:
 		if os.path.isfile(egg_link):
 			dist_is_editable = True
 
-	print("{}{}".format(se.VERSION, " (developer installation)" if dist_is_editable else ""))
+	print(f"{se.VERSION}{' (developer installation)' if dist_is_editable else ''}")
 	return 0
