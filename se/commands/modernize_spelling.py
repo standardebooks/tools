@@ -32,10 +32,10 @@ def modernize_spelling() -> int:
 					problem_spellings = se.spelling.detect_problem_spellings(xhtml)
 
 					for problem_spelling in problem_spellings:
-						print("{}{}".format((filename.name) + ": " if not args.verbose else "", problem_spelling))
+						print(f"{(filename.name) + ': ' if not args.verbose else ''}{problem_spelling}")
 
 				except se.InvalidLanguageException as ex:
-					se.print_error("{}{}".format(ex, f" File: `{filename}`" if not args.verbose else ""))
+					se.print_error(f"{ex}{' File: `' + filename + '`' if not args else ''}")
 					return ex.code
 
 				if args.modernize_hyphenation:

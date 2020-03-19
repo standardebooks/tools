@@ -97,10 +97,10 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 		url_author = url_author.rstrip("_")
 
-		epub_output_filename = "{}_{}{}.epub".format(url_author, url_title, ".proof" if proof else "")
-		epub3_output_filename = "{}_{}{}.epub3".format(url_author, url_title, ".proof" if proof else "")
-		kobo_output_filename = "{}_{}{}.kepub.epub".format(url_author, url_title, ".proof" if proof else "")
-		kindle_output_filename = "{}_{}{}.azw3".format(url_author, url_title, ".proof" if proof else "")
+		epub_output_filename = f"{url_author}_{url_title}{'.proof' if proof else ''}.epub"
+		epub3_output_filename = f"{url_author}_{url_title}{'.proof' if proof else ''}.epub3"
+		kobo_output_filename = f"{url_author}_{url_title}{'.proof' if proof else ''}.kepub.epub"
+		kindle_output_filename = f"{url_author}_{url_title}{'.proof' if proof else ''}.azw3"
 
 		# Clean up old output files if any
 		se.quiet_remove(output_directory / f"thumbnail_{asin}_EBOK_portrait.jpg")

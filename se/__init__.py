@@ -196,14 +196,14 @@ def print_error(message: Union[SeException, str], verbose: bool = False) -> None
 	# is rendered in blue
 	message = regex.sub(r"`(.+?)`", stylize(r"\1", fg("light_blue")), message)
 
-	print("{}{} {}".format(MESSAGE_INDENT if verbose else "", stylize(" Error ", bg("red") + attr("bold")), message), file=sys.stderr)
+	print(f"{MESSAGE_INDENT if verbose else ''}{stylize(' Error ', bg('red') + attr('bold'))} {sys.stderr}")
 
 def print_warning(message: str, verbose: bool = False) -> None:
 	"""
 	Helper function to print a colored warning message to the console.
 	"""
 
-	print("{}{} {}".format(MESSAGE_INDENT if verbose else "", stylize(" Warning ", bg("yellow") + attr("bold")), message))
+	print(f"{MESSAGE_INDENT if verbose else ''} {stylize(' Warning ', bg('yellow') + attr('bold'))} {message}")
 
 def is_positive_integer(value: str) -> int:
 	"""
@@ -270,6 +270,6 @@ def get_xhtml_language(xhtml: str) -> str:
 		language = None
 
 	if language not in supported_languages:
-		raise InvalidLanguageException("No valid xml:lang attribute in <html> root. Only {} are supported.".format(", ".join(supported_languages[:-1]) + ", and " + supported_languages[-1]))
+		raise InvalidLanguageException(f"No valid xml:lang attribute in <html> root. Only {', '.join(supported_languages[:-1])}, and {supported_languages[-1]} are supported.")
 
 	return language

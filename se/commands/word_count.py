@@ -47,6 +47,6 @@ def word_count() -> int:
 		elif total_word_count >= se.NOVEL_MIN_WORD_COUNT:
 			category = "se:novel"
 
-	print("{}{}".format(total_word_count, "\t" + category if args.categorize else ""))
+	print(f"{total_word_count}\t{category if args.categorize else ''}")
 
 	return 0
