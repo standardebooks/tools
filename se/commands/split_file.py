@@ -1,5 +1,5 @@
 """
-This module implements the `se split_file` command.
+This module implements the `se split-file` command.
 """
 
 import argparse
@@ -16,10 +16,13 @@ def _split_file_output_file(filename_format_string: str, chapter_number: int, te
 	header XHTML, and chapter body XHTML.
 	"""
 
-	xhtml = template_xhtml.replace("NUMBER", str(chapter_number))
+	filename = filename_format_string.replace("%n", str(chapter_number))
+
+	xhtml = template_xhtml.replace("ID", regex.sub(r"\.xhtml$", "", filename))
+	xhtml = xhtml.replace("NUMBER", str(chapter_number))
 	xhtml = xhtml.replace("TEXT", chapter_xhtml)
 
-	with open(filename_format_string.replace("%n", str(chapter_number)), "w", encoding="utf-8") as file:
+	with open(filename, "w", encoding="utf-8") as file:
 		file.write(xhtml)
 		file.truncate()
 
