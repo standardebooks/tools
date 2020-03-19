@@ -2,7 +2,7 @@ _se(){
 	COMPREPLY=()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local prev="${COMP_WORDS[COMP_CWORD-1]}"
-	local commands="--help --version british2american build build-images clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-sr lint make-url-safe modernize-spelling prepare-release print-manifest-and-spine print-toc recompose-epub renumber-endnotes reorder-endnotes roman2dec semanticate split-file split-file split-file titlecase typogrify unicode-names version word-count"
+	local commands="--help --version british2american build build-images clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-sr lint make-url-safe modernize-spelling prepare-release print-manifest-and-spine print-title print-toc recompose-epub renumber-endnotes reorder-endnotes roman2dec semanticate split-file split-file split-file titlecase typogrify unicode-names version word-count"
 	if [[ $COMP_CWORD -gt 1 ]]; then
 		case "${COMP_WORDS[1]}" in
 			british2american)
@@ -84,6 +84,10 @@ _se(){
 			print-manifest-and-spine)
 				COMPREPLY+=($(compgen -W "-h --help -m --manifest -s --spine -i --in-place" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				;;
+			print-title)
+				COMPREPLY+=($(compgen -W "-h --help -i --in-place" -- "${cur}"))
+				COMPREPLY+=($(compgen -d -X "!*.xhtml" -- "${cur}"))
 				;;
 			print-toc)
 				COMPREPLY+=($(compgen -W "-h --help -i --in-place" -- "${cur}"))

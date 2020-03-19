@@ -12,7 +12,9 @@ from pathlib import Path
 import subprocess
 import shutil
 import string
+from bs4 import BeautifulSoup, NavigableString, Tag
 import regex
+import roman
 import tinycss2
 from titlecase import titlecase as pip_titlecase
 import se
@@ -932,3 +934,66 @@ def simplify_css(css: str) -> str:
 		css = css.replace(line, fixed_line)
 
 	return css
+
+
+def generate_title(xhtml: str) -> str:
+	"""
+	Generate the value for the <title> tag of a string of XHTML, based on the rules in the SE manual.
+
+	INPUTS
+	xhtml: A string of XHTML
+
+	OUTPUTS
+	A string representing the title for the document
+	"""
+
+	soup = BeautifulSoup(xhtml, "lxml")
+	title = ""
+
+	h_elements = soup.select("h1:first-of-type,h2:first-of-type,h3:first-of-type,h4:first-of-type,h5:first-of-type,h6:first-of-type")
+
+	if h_elements:
+		h_element = h_elements[0]
+
+		# se://5.3.2.2
+		# Header is just a Roman numeral
+		if h_element.has_attr("epub:type") and "z3998:roman" in h_element["epub:type"]:
+			title = f"Chapter {roman.fromRoman(h_element.text.upper())}"
+
+		# Otherwise, iterate over the h# children to determine how we should generate the title
+		for h_child in h_element.contents:
+			if isinstance(h_child, Tag) and h_child.name == "span":
+				if h_child.has_attr("epub:type"):
+					if "z3998:roman" in h_child["epub:type"]:
+						title = f"Chapter {roman.fromRoman(h_child.text.upper())}"
+
+					if "subtitle" in h_child["epub:type"]:
+						title += f": {h_child.text}"
+				else:
+					if len(h_child.contents) > 1:
+						for span_child in h_child.contents:
+							if isinstance(span_child, Tag) and span_child.name == "span":
+								if span_child.has_attr("epub:type") and "z3998:roman" in span_child["epub:type"]:
+									title += str(roman.fromRoman(span_child.text.upper()))
+								else:
+									title += span_child.text
+							elif isinstance(span_child, NavigableString) and not span_child.isspace():
+								title += span_child
+					else:
+						title = h_child.text
+			elif isinstance(h_child, Tag) and h_child.name == "abbr":
+				title += h_child.text
+			elif isinstance(h_child, NavigableString) and not h_child.isspace():
+				title += h_child
+	else:
+		# No <h#> elements found. Try to get the title from the epub:type of the top-level <section> or <article>
+		top_level_wrappers = soup.select("body > section, body > article")
+
+		if top_level_wrappers:
+			top_level_wrapper = top_level_wrappers[0]
+
+			# Only guess the title if there is a single value for epub:type
+			if top_level_wrapper.has_attr("epub:type") and " " not in top_level_wrapper["epub:type"]:
+				title = titlecase(top_level_wrapper["epub:type"])
+
+	return title.strip()

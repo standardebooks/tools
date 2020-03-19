@@ -100,6 +100,10 @@ complete -c se -A -n "__fish_seen_subcommand_from print-manifest-and-spine" -s m
 complete -c se -A -n "__fish_seen_subcommand_from print-manifest-and-spine" -s s -l spine -d "only print the spine"
 complete -c se -A -n "__fish_seen_subcommand_from print-manifest-and-spine" -s i -l in-place -d "overwrite the <manifest> or <spine> tags in content.opf instead of printing to stdout"
 
+complete -c se -n "__fish_se_no_subcommand" -a print-title -d "Print the expected value for an XHTML file’s <title> element."
+complete -c se -A -n "__fish_seen_subcommand_from print-toc" -s h -l help -x -d "show this help message and exit"
+complete -c se -A -n "__fish_seen_subcommand_from print-toc" -s i -l in-place -d "replace the file’s <title> element instead of printing to stdout"
+
 complete -c se -n "__fish_se_no_subcommand" -a print-toc -d "Build a table of contents for an SE source directory and print to stdout"
 complete -c se -A -n "__fish_seen_subcommand_from print-toc" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from print-toc" -s i -l in-place -d "overwrite the existing toc.xhtml file instead of printing to stdout"

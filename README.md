@@ -265,6 +265,10 @@ We need volunteers to take the lead on the following goals:
 
 	Calculate work word count, insert release date if not yet set, and update modified date and revision number.
 
+-	### `se print-title`
+
+	Print the expected value for an XHTML file’s `<title>` element.
+
 -	### `se print-manifest-and-spine`
 
 	Print `<manifest>` and `<spine>` tags to standard output for the given Standard Ebooks source directory, for use in that directory’s content.opf.

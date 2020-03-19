@@ -27,6 +27,7 @@ case $state in
 			"modernize-spelling[Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling]" \
 			"prepare-release[Calculate work word count, insert release date if not yet set, and update modified date and revision number]" \
 			"print-manifest-and-spine[Print <manifest> and <spine> tags to standard output for the given Standard Ebooks source directory]" \
+			"print-title[Print the expected value for an XHTML file’s <title> element.]" \
 			"print-toc[Build a table of contents for an SE source directory and print to stdout]" \
 			"recompose-epub[Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output]" \
 			"renumber-endnotes[Renumber all endnotes and noterefs sequentially from the beginning]" \
@@ -161,6 +162,12 @@ case $state in
 					{-s,--spine}'[only print the spine]' \
 					{-i,--in-place}'[overwrite the <manifest> or <spine> tags in content.opf instead of printing to stdout]' \
 					'*: :_directories'
+				;;
+			print-title)
+				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
+					{-i,--in-place}'[replace the file’s <title> element instead of printing to stdou]' \
+					'*: :_files -g \*.xhtml'
 				;;
 			print-toc)
 				_arguments -s \
