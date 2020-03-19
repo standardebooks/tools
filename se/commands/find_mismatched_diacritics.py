@@ -19,6 +19,7 @@ def find_mismatched_diacritics() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
+	return_code = 0
 	accented_words = set()
 	mismatches = {}
 	target_filenames = se.get_target_filenames(args.targets, (".xhtml",))
@@ -39,6 +40,7 @@ def find_mismatched_diacritics() -> int:
 
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: `{filename}`")
+			return_code = se.InvalidInputException.code
 
 	# Now iterate over the list and search files for unaccented versions of the words
 	if accented_words:
@@ -56,9 +58,10 @@ def find_mismatched_diacritics() -> int:
 
 			except FileNotFoundError:
 				se.print_error(f"Couldn’t open file: `{filename}`")
+				return_code = se.InvalidInputException.code
 
 	if mismatches:
 		for accented_word, plain_word in sorted(mismatches.items()):
 			print(f"{accented_word}, {plain_word}")
 
-	return 0
+	return return_code

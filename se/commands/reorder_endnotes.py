@@ -21,6 +21,8 @@ def reorder_endnotes() -> int:
 	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
+	return_code = 0
+
 	try:
 		if args.increment:
 			step = 1
@@ -32,6 +34,6 @@ def reorder_endnotes() -> int:
 
 	except se.SeException as ex:
 		se.print_error(ex)
-		return ex.code
+		return_code = ex.code
 
-	return 0
+	return return_code

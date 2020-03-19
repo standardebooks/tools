@@ -39,6 +39,7 @@ def word_count() -> int:
 
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: `{filename}`")
+			return se.InvalidInputException.code
 
 	if args.categorize:
 		category = "se:short-story"

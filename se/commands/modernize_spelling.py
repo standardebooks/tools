@@ -19,6 +19,8 @@ def modernize_spelling() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
+	return_code = 0
+
 	for filename in se.get_target_filenames(args.targets, (".xhtml",)):
 		if args.verbose:
 			print(f"Processing {filename} ...", end="", flush=True)
@@ -47,8 +49,9 @@ def modernize_spelling() -> int:
 					file.truncate()
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: `{filename}`")
+			return_code = se.InvalidInputException.code
 
 		if args.verbose:
 			print(" OK")
 
-	return 0
+	return return_code

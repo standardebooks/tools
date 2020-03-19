@@ -22,6 +22,7 @@ def typogrify() -> int:
 	if args.verbose and not args.quotes:
 		print("Skipping smart quotes.")
 
+	return_code = 0
 	ignored_filenames = se.IGNORED_FILENAMES
 	ignored_filenames.remove("toc.xhtml")
 
@@ -47,6 +48,6 @@ def typogrify() -> int:
 
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: `{filename}`")
-			return se.InvalidFileException.code
+			return_code = se.InvalidInputException.code
 
-	return 0
+	return return_code

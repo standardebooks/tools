@@ -18,12 +18,14 @@ def renumber_endnotes() -> int:
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
+	return_code = 0
+
 	for directory in args.directories:
 		try:
 			se_epub = SeEpub(directory)
 		except se.SeException as ex:
 			se.print_error(ex)
-			return ex.code
+			return_code = ex.code
 
 		try:
 			report = se_epub.generate_endnotes()  # returns a report on actions taken
@@ -31,9 +33,9 @@ def renumber_endnotes() -> int:
 				print(report)
 		except se.SeException as ex:
 			se.print_error(ex)
-			return ex.code
+			return_code = ex.code
 		except FileNotFoundError:
 			se.print_error("Couldn’t find `endnotes.xhtml`.")
-			return se.InvalidSeEbookException.code
+			return_code = se.InvalidSeEbookException.code
 
-	return 0
+	return return_code
