@@ -20,13 +20,13 @@ def print_title() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
+	if not args.in_place and len(args.targets) > 1:
+		se.print_error("Multiple targets are only allowed with the `--in-place` option.")
+		return se.InvalidInputException.code
+
 	return_code = 0
-	targets = se.get_target_filenames(args.targets, (".xhtml",))
 
-	for filename in targets:
-		if len(targets) > 1:
-			print(filename)
-
+	for filename in se.get_target_filenames(args.targets, (".xhtml",)):
 		try:
 			with open(filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
@@ -41,7 +41,7 @@ def print_title() -> int:
 						file.write(processed_xhtml)
 						file.truncate()
 				else:
-					print(f"{se.MESSAGE_INDENT if len(targets) > 1 else ''}{title}")
+					print(title)
 
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: `{filename}`")
