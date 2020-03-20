@@ -203,6 +203,10 @@ def print_warning(message: str, verbose: bool = False) -> None:
 	Helper function to print a colored warning message to the console.
 	"""
 
+	# By convention, any text within the message text that is surrounded in backticks
+	# is rendered in blue
+	message = regex.sub(r"`(.+?)`", stylize(r"\1", fg("light_blue")), message)
+
 	print(f"{MESSAGE_INDENT if verbose else ''}{stylize(' Warning ', bg('yellow') + attr('bold'))} {message}")
 
 def is_positive_integer(value: str) -> int:
@@ -270,6 +274,6 @@ def get_xhtml_language(xhtml: str) -> str:
 		language = None
 
 	if language not in supported_languages:
-		raise InvalidLanguageException(f"No valid xml:lang attribute in <html> root. Only {', '.join(supported_languages[:-1])}, and {supported_languages[-1]} are supported.")
+		raise InvalidLanguageException(f"No valid `xml:lang` attribute in `<html>` element. Only `{'`, `'.join(supported_languages[:-1])}`, and `{supported_languages[-1]}` are supported.")
 
 	return language
