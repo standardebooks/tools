@@ -196,7 +196,7 @@ def print_error(message: Union[SeException, str], verbose: bool = False) -> None
 	# is rendered in blue
 	message = regex.sub(r"`(.+?)`", stylize(r"\1", fg("light_blue")), message)
 
-	print(f"{MESSAGE_INDENT if verbose else ''}{stylize(' Error ', bg('red') + attr('bold'))} {sys.stderr}")
+	print(f"{MESSAGE_INDENT if verbose else ''}{stylize(' Error ', bg('red') + attr('bold'))} {message}", file=sys.stderr)
 
 def print_warning(message: str, verbose: bool = False) -> None:
 	"""
