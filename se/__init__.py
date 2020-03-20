@@ -203,7 +203,7 @@ def print_warning(message: str, verbose: bool = False) -> None:
 	Helper function to print a colored warning message to the console.
 	"""
 
-	print(f"{MESSAGE_INDENT if verbose else ''} {stylize(' Warning ', bg('yellow') + attr('bold'))} {message}")
+	print(f"{MESSAGE_INDENT if verbose else ''}{stylize(' Warning ', bg('yellow') + attr('bold'))} {message}")
 
 def is_positive_integer(value: str) -> int:
 	"""
