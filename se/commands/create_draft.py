@@ -20,6 +20,26 @@ from ftfy import fix_text
 import se
 import se.formatting
 
+def _replace_in_file(file_path: Path, search: Union[str, list], replace: Union[str, list]) -> None:
+	"""
+	Helper function to replace in a file.
+	"""
+
+	with open(file_path, "r+", encoding="utf-8") as file:
+		data = file.read()
+		processed_data = data
+
+		if isinstance(search, list):
+			for index, val in enumerate(search):
+				if replace[index] is not None:
+					processed_data = processed_data.replace(val, replace[index])
+		else:
+			processed_data = processed_data.replace(search, str(replace))
+
+		if processed_data != data:
+			file.seek(0)
+			file.write(processed_data)
+			file.truncate()
 
 def _get_word_widths(string: str, target_height: int) -> list:
 	"""
@@ -494,9 +514,9 @@ def _create_draft(args: Namespace):
 			translator_wiki_url, translator_nacoaf_url = _get_wikipedia_url(args.translator, True)
 
 	# Pre-fill a few templates
-	se.replace_in_file(repo_name / "src" / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", title_string)
-	se.replace_in_file(repo_name / "images" / "titlepage.svg", "TITLE_STRING", title_string)
-	se.replace_in_file(repo_name / "images" / "cover.svg", "TITLE_STRING", title_string)
+	_replace_in_file(repo_name / "src" / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", title_string)
+	_replace_in_file(repo_name / "images" / "titlepage.svg", "TITLE_STRING", title_string)
+	_replace_in_file(repo_name / "images" / "cover.svg", "TITLE_STRING", title_string)
 
 	# Create the titlepage SVG
 	contributors = {}
@@ -514,7 +534,7 @@ def _create_draft(args: Namespace):
 		file.write(_generate_cover_svg(args.title, args.author, title_string))
 
 	if args.pg_url:
-		se.replace_in_file(repo_name / "src" / "epub" / "text" / "imprint.xhtml", "PG_URL", args.pg_url)
+		_replace_in_file(repo_name / "src" / "epub" / "text" / "imprint.xhtml", "PG_URL", args.pg_url)
 
 	with open(repo_name / "src" / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
 		colophon_xhtml = file.read()
