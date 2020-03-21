@@ -769,8 +769,10 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 					version_output = subprocess.run(["java", "-jar", str(jar_path), "--version"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False).stdout.decode().strip()
 					version = regex.search(r"[0-9]+\.([0-9]+\.?)*", version_output, flags=regex.MULTILINE).group(0)
 
-					# Remove trailing lines from epubcheck output
-					output = output.replace("\n\nCheck finished with errors", "")
+					# The last two lines from epubcheck output are not necessary. Remove them here.
+					# Remove them as lines instead of as a matching regex to work with localized output strings.
+					split_output = output.split("\n")
+					output = "\n".join(split_output[:-2])
 
 					if verbose:
 						print(f"\n\t\tepubcheck v{version} failed with:\n\t\t" + "\t\t".join(output.splitlines(True)), file=sys.stderr)
