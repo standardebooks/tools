@@ -222,22 +222,3 @@ def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filen
 				target_xhtml_filenames.add(target)
 
 	return natsorted(list(target_xhtml_filenames))
-
-def get_xhtml_language(xhtml: str) -> str:
-	"""
-	Try to get the IETF lang tag for a complete XHTML document
-	"""
-
-	supported_languages = ["en-US", "en-GB", "en-AU", "en-CA"]
-
-	match = regex.search(r"<html[^>]+?xml:lang=\"([^\"]+)\"", xhtml)
-
-	if match:
-		language = match.group(1)
-	else:
-		language = None
-
-	if language not in supported_languages:
-		raise InvalidLanguageException(f"No valid `xml:lang` attribute in `<html>` element. Only `{'`, `'.join(supported_languages[:-1])}`, and `{supported_languages[-1]}` are supported.")
-
-	return language
