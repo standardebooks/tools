@@ -450,9 +450,9 @@ def process_heading(heading: BeautifulSoup, textf: str, is_toplevel: bool, singl
 		toc_item.file_link = textf
 	else:
 		if not is_toplevel:
-			toc_item.file_link = textf + "#" + toc_item.id
+			toc_item.file_link = f"{textf}#{toc_item.id}"
 		elif single_file:  # It IS the first heading in the file, but there's only a single content file?
-			toc_item.file_link = textf + "#" + toc_item.id
+			toc_item.file_link = f"{textf}#{toc_item.id}"
 		else:
 			toc_item.file_link = textf
 
@@ -464,7 +464,7 @@ def process_heading(heading: BeautifulSoup, textf: str, is_toplevel: bool, singl
 
 	if "z3998:roman" in attribs:
 		toc_item.roman = extract_strings(heading)
-		toc_item.title = "<span epub:type=\"z3998:roman\">" + toc_item.roman + "</span>"
+		toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
 		return toc_item
 
 	process_heading_contents(heading, toc_item)

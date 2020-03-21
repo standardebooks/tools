@@ -40,7 +40,7 @@ def modernize_hyphenation(xhtml: str) -> str:
 			# then replace the original match with them joined together and titlecased.
 			lhs = regex.sub(r"\-.+$", r"", word)
 			rhs = regex.sub(r"^.+?\-", r"", word)
-			xhtml = regex.sub(r"" + lhs + "-" + rhs, lhs + rhs.lower(), xhtml)
+			xhtml = regex.sub(fr"{lhs}-{rhs}", lhs + rhs.lower(), xhtml)
 
 	# Quick fix for a common error cases
 	xhtml = xhtml.replace("z3998:nonfiction", "z3998:non-fiction")

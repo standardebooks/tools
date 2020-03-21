@@ -72,7 +72,7 @@ METADATA
 "m-012", "Non-typogrified `\"`, `'`, or `--` in `<dc:title>` element."
 "m-013", "Non-typogrified `\"`, `'`, or `--` in `<dc:description>` element."
 "m-014", "Non-typogrified `\"`, `'`, or `--` in  long description."
-"m-015", "Metadata long description is not valid HTML. LXML says: " + str(ex)
+"m-015", "Metadata long description is not valid HTML. LXML says: "
 "m-016", "Long description must be escaped HTML."
 "m-017", "`<![CDATA[` found. Run `se clean` to canonicalize `<![CDATA[` sections."
 "m-018", "HTML entities found. Use Unicode equivalents instead."
@@ -390,11 +390,11 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 	# Check for malformed long description HTML
 	long_description = regex.findall(r"<meta id=\"long-description\".+?>(.+?)</meta>", metadata_xhtml, flags=regex.DOTALL)
 	if long_description:
-		long_description = "<?xml version=\"1.0\"?><html xmlns=\"http://www.w3.org/1999/xhtml\">" + html.unescape(long_description[0]) + "</html>"
+		long_description = f"<?xml version=\"1.0\"?><html xmlns=\"http://www.w3.org/1999/xhtml\">{html.unescape(long_description[0])}</html>"
 		try:
 			etree.parse(io.StringIO(long_description))
 		except lxml.etree.XMLSyntaxError as ex:
-			messages.append(LintMessage("m-015", "Metadata long description is not valid HTML. LXML says: " + str(ex), se.MESSAGE_TYPE_ERROR, "content.opf"))
+			messages.append(LintMessage("m-015", f"Metadata long description is not valid HTML. LXML says: {ex}", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check for double spacing
 	regex_string = fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}"
@@ -457,7 +457,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 		messages.append(LintMessage("m-023", f"`<dc:identifier>` does not match expected: `{self.generated_identifier}`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check that the GitHub repo URL is as expected
-	if ("<meta property=\"se:url.vcs.github\">" + self.generated_github_repo_url + "</meta>") not in metadata_xhtml:
+	if f"<meta property=\"se:url.vcs.github\">{self.generated_github_repo_url}</meta>" not in metadata_xhtml:
 		messages.append(LintMessage("m-009", f"GitHub repo URL does not match expected: `{self.generated_github_repo_url}`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
 	# Check if se:name.person.full-name matches their titlepage name
@@ -649,7 +649,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if matches:
 						messages.append(LintMessage("x-003", "Illegal `transform` attribute. SVGs should be optimized to remove use of `transform`. Try using Inkscape to save as an “optimized SVG”.", se.MESSAGE_TYPE_ERROR, filename))
 
-					if os.sep + "src" + os.sep not in root:
+					if f"{os.sep}src{os.sep}" not in root:
 						# Check that cover and titlepage images are in all caps
 						if filename == "cover.svg":
 							matches = regex.findall(r"<text[^>]+?>.*[a-z].*</text>", file_contents)
@@ -1135,7 +1135,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 									subtitle = se.formatting.titlecase(se.formatting.remove_tags(subtitle).strip())
 									title_footer = se.formatting.titlecase(se.formatting.remove_tags(title_footer).strip())
 
-									titlecased_title = title_header + " " + subtitle + " " + title_footer
+									titlecased_title = f"{title_header} {subtitle} {title_footer}"
 									titlecased_title = titlecased_title.strip()
 
 									title = se.formatting.remove_tags(title).strip()
@@ -1338,7 +1338,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 							with open(self.path / "src" / "epub" / "text" / chapter_ref, "r", encoding="utf-8") as chapter:
 								try:
-									figure = BeautifulSoup(chapter, "lxml").select("#" + figure_ref)[0]
+									figure = BeautifulSoup(chapter, "lxml").select(f"#{figure_ref}")[0]
 								except Exception:
 									messages.append(LintMessage("s-040", f"`#{figure_ref}` not found in file `{chapter_ref}`.", se.MESSAGE_TYPE_ERROR, "loi.xhtml"))
 									continue
@@ -1388,7 +1388,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 	for css_class in xhtml_css_classes:
 		if css_class not in se.IGNORED_CLASSES:
-			if "." + css_class not in self.local_css:
+			if f".{css_class}" not in self.local_css:
 				missing_selectors.append(css_class)
 
 		if xhtml_css_classes[css_class] == 1 and css_class not in se.IGNORED_CLASSES and not regex.match(r"^i[0-9]$", css_class):
@@ -1455,7 +1455,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 			css_class = regex.search(r"class=\"([^\"]+?)\"", element).group(1)
 		except Exception:
 			continue
-		if css_class and css_class in ("temperature", "era", "acronym") and "abbr." + css_class not in abbr_styles:
+		if css_class and css_class in ("temperature", "era", "acronym") and f"abbr.{css_class}" not in abbr_styles:
 			messages.append(LintMessage("c-007", f"`<abbr class=\"{css_class}\">` element found, but no required style in `local.css`. See the typography manual for required styls.", se.MESSAGE_TYPE_ERROR, "local.css"))
 
 	if double_spaced_files:

@@ -101,7 +101,7 @@ def semanticate(xhtml: str) -> str:
 	# We may have added HTML tags within title tags.  Remove those here
 	matches = regex.findall(r"<title>.+?</title>", xhtml)
 	if matches:
-		xhtml = regex.sub(r"<title>.+?</title>", "<title>" + se.formatting.remove_tags(matches[0]) + "</title>", xhtml)
+		xhtml = regex.sub(r"<title>.+?</title>", f"<title>{se.formatting.remove_tags(matches[0])}</title>", xhtml)
 
 	return xhtml
 
@@ -419,7 +419,7 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 		raise se.InvalidXhtmlException(f"Couldn’t parse file. Files must be in XHTML format, which is not the same as HTML. Exception: {ex}")
 
 	# Add the XML header that xmllint stripped during c14n
-	xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + xhtml
+	xhtml = f"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n{xhtml}"
 
 	xhtml = xhtml.replace("encoding=\"UTF-8\"", "encoding=\"utf-8\"")
 
@@ -477,7 +477,7 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 			css = regex.sub(r"^\s*}", "\t\t}\n", css, flags=regex.MULTILINE)
 			css = regex.sub(r"^([^{}]+?)$", "\t\t\t\\1", css, flags=regex.MULTILINE)
 
-			css = "\t\t" + css.strip()
+			css = f"\t\t{css.strip()}"
 
 			xhtml = regex.sub(r"<style type=\"text/css\">([^<]+?)</style>", f"<style type=\"text/css\">\n{css}\n\t</style>", xhtml, flags=regex.DOTALL)
 
@@ -567,7 +567,7 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 			output += token.name + "(" + _format_css_component_list(token.arguments, in_selector, True) + ")"
 
 		if token.type == "url":
-			output += "url(\"" + token.value + "\")"
+			output += f"url(\"{token.value}\")"
 
 		if token.type == "percentage":
 			if token.representation == "0":
@@ -579,16 +579,16 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 			output += " "
 
 		if token.type == "hash":
-			output += "#" + token.value
+			output += f"#{token.value}"
 
 		if token.type == "string":
-			output += "\"" + token.value + "\""
+			output += f"\"{token.value}\""
 
 		if token.type == "() block":
-			output += "(" + _format_css_component_list(token.content, in_selector, True) + ")"
+			output += f"({_format_css_component_list(token.content, in_selector, True)})"
 
 		if token.type == "[] block":
-			output += "[" + _format_css_component_list(token.content, in_selector, True) + "]"
+			output += f"[{_format_css_component_list(token.content, in_selector, True)}]"
 
 	# Collapse multiple spaces, and spaces at the start of lines
 	output = regex.sub(r" +", " ", output)

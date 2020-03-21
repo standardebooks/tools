@@ -71,7 +71,7 @@ def split_file() -> int:
 			chapter_xhtml = suffix
 
 		else:
-			chapter_xhtml = chapter_xhtml + "\n" + line
+			chapter_xhtml = f"{chapter_xhtml}\n{line}"
 
 	if chapter_xhtml and not chapter_xhtml.isspace():
 		_split_file_output_file(args.filename_format, args.start_at, template_xhtml, chapter_xhtml)

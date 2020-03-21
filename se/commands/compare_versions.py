@@ -80,7 +80,7 @@ def compare_versions() -> int:
 					se.print_error("Repo is clean. This command must be run on a dirty repo.", args.verbose)
 					continue
 
-				output_directory = Path("./" + target.name + "_diff-output/")
+				output_directory = Path(f"./{target.name}_diff-output/")
 
 				# Put Git's changes into the stash
 				git_command.stash()

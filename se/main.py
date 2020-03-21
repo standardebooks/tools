@@ -51,7 +51,7 @@ def main() -> None:
 	sys.argv[0] = args.command
 
 	command_name = args.command.replace("-", "_")
-	command_module = "se.commands." + command_name
+	command_module = f"se.commands.{command_name}"
 	if command_name == "help":
 		command_function = "se_help"  # avoid name conflict with built-in function
 	else:
