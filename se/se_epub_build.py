@@ -761,10 +761,10 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			# Path arguments must be cast to string for Windows compatibility.
 			with importlib_resources.path("se.data.epubcheck", "epubcheck.jar") as jar_path:
 				try:
-					result = subprocess.run(["java", "-jar", str(jar_path), "--quiet", str(output_directory / epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
-					result.check_returncode()
+					epubcheck_result = subprocess.run(["java", "-jar", str(jar_path), "--quiet", str(output_directory / epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+					epubcheck_result.check_returncode()
 				except subprocess.CalledProcessError:
-					output = result.stdout.decode().strip()
+					output = epubcheck_result.stdout.decode().strip()
 					# Get the epubcheck version to print to the console
 					version_output = subprocess.run(["java", "-jar", str(jar_path), "--version"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False).stdout.decode().strip()
 					version = regex.search(r"[0-9]+\.([0-9]+\.?)*", version_output, flags=regex.MULTILINE).group(0)
