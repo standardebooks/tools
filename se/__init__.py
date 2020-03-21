@@ -148,30 +148,20 @@ def quiet_remove(file: Path) -> None:
 	except Exception:
 		pass
 
-def print_error(message: Union[SeException, str], verbose: bool = False) -> None:
+def print_error(message: Union[SeException, str], verbose: bool = False, is_warning: bool = False) -> None:
 	"""
 	Helper function to print a colored error message to the console.
 	"""
 
-	if isinstance(message, SeException):
-		message = str(message)
+	label = "Error" if not is_warning else "Warning"
+	bg_color = 'red_3a' if not is_warning else 'yellow'
+	output_file = sys.stderr if not is_warning else sys.stdout
 
 	# By convention, any text within the message text that is surrounded in backticks
 	# is rendered in blue
 	message = regex.sub(r"`(.+?)`", stylize(r"\1", fg("light_blue")), message)
 
-	print(f"{MESSAGE_INDENT if verbose else ''}{stylize(' Error ', bg('red_3a') + fg('white') + attr('bold'))} {message}", file=sys.stderr)
-
-def print_warning(message: str, verbose: bool = False) -> None:
-	"""
-	Helper function to print a colored warning message to the console.
-	"""
-
-	# By convention, any text within the message text that is surrounded in backticks
-	# is rendered in blue
-	message = regex.sub(r"`(.+?)`", stylize(r"\1", fg("light_blue")), message)
-
-	print(f"{MESSAGE_INDENT if verbose else ''}{stylize(' Warning ', bg('yellow') + fg('white') + attr('bold'))} {message}")
+	print(f"{MESSAGE_INDENT if verbose else ''}{stylize(f' {label} ', bg(bg_color) + fg('white') + attr('bold'))} {message}", file=output_file)
 
 def is_positive_integer(value: str) -> int:
 	"""
