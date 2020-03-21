@@ -18,12 +18,13 @@ from pathlib import Path
 from typing import List
 import importlib_resources
 
+from bs4 import BeautifulSoup
+from cairosvg import svg2png
+from natsort import natsorted
+from PIL import Image
 import lxml.cssselect
 import lxml.etree as etree
 import regex
-from bs4 import BeautifulSoup
-from cairosvg import svg2png
-from PIL import Image
 
 import se
 import se.easy_xml
@@ -694,7 +695,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		# Add any new MathML images we generated to the manifest
 		if has_mathml:
 			for root, _, filenames in os.walk(work_epub_root_directory / "epub" / "images"):
-				filenames = se.natural_sort(filenames)
+				filenames = natsorted(filenames)
 				filenames.reverse()
 				for filename in filenames:
 					if filename.lower().startswith("mathml-"):

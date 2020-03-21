@@ -9,7 +9,9 @@ import shutil
 import sys
 from pathlib import Path
 from typing import Set, Union
+
 from colored import stylize, fg, bg, attr
+from natsort import natsorted
 import regex
 
 VERSION = "1.2.4"
@@ -119,23 +121,6 @@ class LintFailedException(SeException):
 class InvalidCssException(SeException):
 	""" Invalid CSS """
 	code = 14
-
-def natural_sort(list_to_sort: list) -> list:
-	"""
-	Natural sort a list.
-	"""
-
-	convert = lambda text: int(text) if text.isdigit() else text.lower()
-	alphanum_key = lambda key: [convert(c) for c in regex.split("([0-9]+)", str(key))]
-
-	return sorted(list_to_sort, key=alphanum_key)
-
-def natural_sort_key(text: str, _nsre=regex.compile("([0-9]+)")):
-	"""
-	Helper function for sorted() to sort by key.
-	"""
-
-	return [int(text) if text.isdigit() else text.lower() for text in regex.split(_nsre, text)]
 
 def replace_in_file(file_path: Path, search: Union[str, list], replace: Union[str, list]) -> None:
 	"""
@@ -257,7 +242,7 @@ def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filen
 			if target.name.endswith(allowed_extensions):
 				target_xhtml_filenames.add(target)
 
-	return natural_sort(list(target_xhtml_filenames))
+	return natsorted(list(target_xhtml_filenames))
 
 def get_xhtml_language(xhtml: str) -> str:
 	"""

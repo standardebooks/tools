@@ -21,6 +21,7 @@ import lxml.etree as etree
 import regex
 import roman
 from bs4 import BeautifulSoup, NavigableString
+from natsort import natsorted
 import se
 import se.easy_xml
 import se.formatting
@@ -544,7 +545,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 	# Now iterate over individual files for some checks
 	for root, _, filenames in os.walk(self.path):
-		for filename in sorted(filenames, key=se.natural_sort_key):
+		for filename in natsorted(filenames):
 			if ".git" in str(Path(root) / filename):
 				continue
 
@@ -1497,10 +1498,6 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 		if unused_codes:
 			messages.append(LintMessage("m-048", "Unused se-lint-ignore.xml rule.", se.MESSAGE_TYPE_ERROR, "se-lint-ignore.xml", unused_codes))
 
-	# Sort messages by filename (using a natural sort), then by code
-	convert = lambda text: int(text) if text.isdigit() else text.lower()
-	alphanum_key = lambda key: [convert(c) for c in regex.split("([0-9]+)", str(key))]
-
-	messages = sorted(messages, key=lambda x: (alphanum_key(x.filename), x.code))
+	messages = natsorted(messages, key=lambda x: (x.filename, x.code))
 
 	return messages

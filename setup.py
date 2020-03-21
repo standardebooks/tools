@@ -67,6 +67,7 @@ setup(
         "gitpython==3.0.8",
         "importlib_resources==1.0.2",
         "lxml==4.4.0",
+        "natsort==7.0.1",
         "pillow==7.0.0",
         "psutil==5.6.6",
         "pyhyphen==3.0.1",

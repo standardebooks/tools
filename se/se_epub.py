@@ -13,9 +13,12 @@ import os
 import tempfile
 from pathlib import Path
 from typing import List, Optional
-import git
-import regex
+
 from bs4 import BeautifulSoup, Tag
+import git
+from natsort import natsorted
+import regex
+
 import se
 import se.easy_xml
 import se.formatting
@@ -718,7 +721,7 @@ class SeEpub:
 
 				manifest.append(f"<item href=\"text/{filename}\" id=\"{filename}\" media-type=\"application/xhtml+xml\"{properties}/>")
 
-		manifest = se.natural_sort(manifest)
+		manifest = natsorted(manifest)
 
 		manifest_xhtml = "<manifest>\n\t<item href=\"toc.xhtml\" id=\"toc.xhtml\" media-type=\"application/xhtml+xml\" properties=\"nav\"/>\n"
 
@@ -743,7 +746,7 @@ class SeEpub:
 		excluded_files = se.IGNORED_FILENAMES + ["dedication.xhtml", "introduction.xhtml", "foreword.xhtml", "preface.xhtml", "epigraph.xhtml", "afterword.xhtml", "endnotes.xhtml"]
 		spine = ["<itemref idref=\"titlepage.xhtml\"/>", "<itemref idref=\"imprint.xhtml\"/>"]
 
-		filenames = se.natural_sort(os.listdir(self.path / "src" / "epub" / "text"))
+		filenames = natsorted(os.listdir(self.path / "src" / "epub" / "text"))
 
 		if "dedication.xhtml" in filenames:
 			spine.append("<itemref idref=\"dedication.xhtml\"/>")

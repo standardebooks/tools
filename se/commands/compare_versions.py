@@ -12,6 +12,7 @@ from pathlib import Path
 
 import importlib_resources
 import git
+from natsort import natsorted
 from PIL import Image, ImageChops
 
 import se
@@ -167,14 +168,14 @@ def compare_versions() -> int:
 								except Exception:
 									pass
 
-					for filename in se.natural_sort(list(files_with_differences)):
+					for filename in natsorted(list(files_with_differences)):
 						print("{}Difference in {}\n".format("\t" if args.verbose else "", filename), end="", flush=True)
 
 					if files_with_differences and args.copy_images:
 						# Generate an HTML file with diffs side by side
 						html = ""
 
-						for filename in se.natural_sort(list(files_with_differences)):
+						for filename in natsorted(list(files_with_differences)):
 							html += f"\t\t<section>\n\t\t\t<h1>{filename}</h1>\n\t\t\t<img src=\"{filename}-original.png\">\n\t\t\t<img src=\"{filename}-new.png\">\n\t\t</section>\n"
 
 						with importlib_resources.open_text("se.data.templates", "diff-template.html", encoding="utf-8") as file:
