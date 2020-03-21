@@ -187,8 +187,6 @@ We need volunteers to take the lead on the following goals:
 
 - Add more test cases to the test framework.
 
-- Figure out if it’s possible to install required fonts using setup.py, instead of a console incantation.
-
 - Figure out if it’s possible to install Bash/ZSH completions using setup.py, *without* root; this may not be possible?
 
 - Writing installation instructions for Bash and ZSH completions for MacOS.
