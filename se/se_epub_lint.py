@@ -152,6 +152,7 @@ SEMANTICS & CONTENT
 "s-039", "Illegal `Ibid` in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing `Ibid` refers to."
 "s-040", f"`#{figure_ref}` not found in file `{chapter_ref}`."
 "s-041", f"The `<figcaption>` element of `#{figure_ref}` does not match the text in its LoI entry."
+"s-042", "`<table>` element without `<tbody>` child."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -920,6 +921,16 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 						if filtered_matches:
 							messages.append(LintMessage("t-017", "Ending punctuation inside italics.", se.MESSAGE_TYPE_WARNING, filename, filtered_matches))
+
+					# Check for <table> tags without a <tbody> child
+					tables = dom.select("table")
+					for table in tables:
+						has_tbody = False
+						for element in table.contents:
+							if element.name == "tbody":
+								has_tbody = True
+						if not has_tbody:
+							messages.append(LintMessage("s-042", "`<table>` element without `<tbody>` child.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for money not separated by commas
 					matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
