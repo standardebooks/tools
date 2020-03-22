@@ -558,8 +558,10 @@ def _create_draft(args: Namespace):
 				for i, producer in enumerate(pg_producers):
 					if "Distributed Proofreading" in producer:
 						producers_xhtml = producers_xhtml + "<a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a>"
+					elif "anonymous" in producer.lower():
+						producers_xhtml = producers_xhtml + "<b class=\"name\">An Anonymous Volunteer</b>"
 					else:
-						producers_xhtml = producers_xhtml + f"<b class=\"name\">{producer}</b>"
+						producers_xhtml = producers_xhtml + f"<b class=\"name\">{producer.strip('.')}</b>"
 
 					if i < len(pg_producers) - 1:
 						producers_xhtml = producers_xhtml + ", "
@@ -588,12 +590,12 @@ def _create_draft(args: Namespace):
 			producers_xhtml = ""
 			i = 1
 			for producer in pg_producers:
-				producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">{producer}</dc:contributor>\n"
-
 				if "Distributed Proofreading" in producer:
-					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Online Distributed Proofreading Team, The</meta>\n\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{i}\">https://pgdp.net</meta>\n"
+					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">The Online Distributed Proofreading Team</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Online Distributed Proofreading Team, The</meta>\n\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{i}\">https://pgdp.net</meta>\n"
+				elif "anonymous" in producer.lower():
+					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">An Anonymous Volunteer</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Anonymous Volunteer, An</meta>\n"
 				else:
-					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">TRANSCRIBER_SORT</meta>\n"
+					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">{producer.strip('.')}</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">TRANSCRIBER_SORT</meta>\n"
 
 				producers_xhtml = producers_xhtml + f"\t\t<meta property=\"role\" refines=\"#transcriber-{i}\" scheme=\"marc:relators\">trc</meta>\n"
 
