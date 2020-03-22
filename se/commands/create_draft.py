@@ -375,6 +375,7 @@ def _create_draft(args: Namespace):
 	if args.pg_url:
 		if args.offline:
 			raise se.RemoteCommandErrorException("Cannot download Project Gutenberg ebook when offline option is enabled.")
+
 		args.pg_url = args.pg_url.replace("http://", "https://")
 
 		# Get the ebook metadata

@@ -10,7 +10,7 @@ import struct
 from html import unescape
 from typing import List, Callable, Dict
 import regex
-from PIL import Image, ImageMath, PngImagePlugin
+from PIL import Image, ImageMath, PngImagePlugin, UnidentifiedImageError
 import importlib_resources
 from lxml import etree
 
@@ -193,7 +193,11 @@ def remove_image_metadata(filename: Path) -> None:
 			file.truncate()
 	else:
 		# PNG and other image types we expect are lossless so we can use PIL to remove metadata
-		image = Image.open(filename)
+		try:
+			image = Image.open(filename)
+		except UnidentifiedImageError:
+			raise se.InvalidFileException(f"Couldn’t identify image type of `{filename}`.")
+
 		data = list(image.getdata())
 
 		image_without_exif = Image.new(image.mode, image.size)
