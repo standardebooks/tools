@@ -226,7 +226,7 @@ def remove_image_metadata(filename: Path) -> None:
 			# the save driver throws an exception
 			image_without_exif.save(str(filename), compression="tiff_adobe_deflate")
 		else:
-			image_without_exif.save(filename)
+			image_without_exif.save(str(filename))
 
 def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 	"""
