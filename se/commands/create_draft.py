@@ -333,7 +333,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> Tuple[Optional[str]
 			except Exception as ex:
 				se.print_error(f"Couldn’t contact Wikipedia. Error: {ex}")
 
-			for match in regex.findall(r"http://id\.loc\.gov/authorities/names/n[0-9]+", response.text):
+			for match in regex.findall(r"https?://id\.loc\.gov/authorities/names/n[0-9]+", response.text):
 				nacoaf_url = match
 
 		return wiki_url, nacoaf_url
