@@ -779,8 +779,11 @@ class SeEpub:
 		if "loi.xhtml" in filenames:
 			spine.append("<itemref idref=\"loi.xhtml\"/>")
 
-		spine.append("<itemref idref=\"colophon.xhtml\"/>")
-		spine.append("<itemref idref=\"uncopyright.xhtml\"/>")
+		if "colophon.xhtml" in filenames:
+			spine.append("<itemref idref=\"colophon.xhtml\"/>")
+
+		if "uncopyright.xhtml" in filenames:
+			spine.append("<itemref idref=\"uncopyright.xhtml\"/>")
 
 		spine_xhtml = "<spine>\n"
 		for line in spine:
