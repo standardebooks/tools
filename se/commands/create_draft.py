@@ -687,7 +687,7 @@ def create_draft() -> int:
 
 	if args.pg_url and not regex.match("^https?://www.gutenberg.org/ebooks/[0-9]+$", args.pg_url):
 		se.print_error("Project Gutenberg URL must look like: `https://www.gutenberg.org/ebooks/<EBOOK-ID>`")
-		return se.InvalidInputException.code
+		return se.InvalidArgumentsException.code
 
 	try:
 		_create_draft(args)

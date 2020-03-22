@@ -12,7 +12,8 @@ TEXT_CMDS = [
     ("modernize-spelling", ""),
     ("semanticate", ""),
     ("typogrify", ""),
-    ("print-manifest-and-spine", "--in-place"),
+    ("print-manifest", "--in-place"),
+    ("print-spine", "--in-place"),
 ]
 
 

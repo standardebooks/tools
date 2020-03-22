@@ -27,7 +27,7 @@ def build() -> int:
 
 	if args.build_covers and len(args.directories) > 1:
 		se.print_error("`--covers` option specified, but more than one build target specified.")
-		return se.InvalidInputException.code
+		return se.InvalidArgumentsException.code
 
 	for directory in args.directories:
 		try:

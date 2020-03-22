@@ -10,36 +10,37 @@ _arguments -C -A "-v" -A "--version" \
 case $state in
 	cmds)
 		_values "se command" \
-			"british2american[Try to convert British quote style to American quote style]" \
-			"build[Build an ebook from a Standard Ebook source directory]" \
-			"build-images[Build ebook cover and titlepage images in a Standard Ebook source directory]" \
-			"clean[Prettify and canonicalize individual XHTML or SVG files]" \
-			"compare-versions[Render and compare XHTML files in an ebook repository]" \
-			"create-draft[Create a skeleton of a new Standard Ebook]" \
-			"dec2roman[Convert a decimal number to a Roman numeral]" \
-			"extract-ebook[Extract an EPUB, MOBI, or AZW3 ebook]" \
-			"find-mismatched-diacritics[Find words with mismatched diacritics in Standard Ebook source directories]" \
-			"help[List available SE commands]" \
-			"hyphenate[Insert soft hyphens at syllable breaks in an XHTML file]" \
-			"interactive-sr[Use Vim to perform an interactive search and replace on a list of files]" \
-			"lint[Check for various Standard Ebooks style errors]" \
-			"make-url-safe[Make a string URL-safe]" \
-			"modernize-spelling[Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling]" \
-			"prepare-release[Calculate work word count, insert release date if not yet set, and update modified date and revision number]" \
-			"print-manifest-and-spine[Print <manifest> and <spine> tags to standard output for the given Standard Ebooks source directory]" \
+			"british2american[Try to convert British quote style to American quote style.]" \
+			"build[Build an ebook from a Standard Ebook source directory.]" \
+			"build-images[Build ebook cover and titlepage images in a Standard Ebook source directory.]" \
+			"clean[Prettify and canonicalize individual XHTML or SVG files.]" \
+			"compare-versions[Render and compare XHTML files in an ebook repository.]" \
+			"create-draft[Create a skeleton of a new Standard Ebook.]" \
+			"dec2roman[Convert a decimal number to a Roman numeral.]" \
+			"extract-ebook[Extract an EPUB, MOBI, or AZW3 ebook.]" \
+			"find-mismatched-diacritics[Find words with mismatched diacritics in Standard Ebook source directories.]" \
+			"help[List available SE commands.]" \
+			"hyphenate[Insert soft hyphens at syllable breaks in an XHTML file.]" \
+			"interactive-sr[Use Vim to perform an interactive search and replace on a list of files.]" \
+			"lint[Check for various Standard Ebooks style errors.]" \
+			"make-url-safe[Make a string URL-safe.]" \
+			"modernize-spelling[Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.]" \
+			"prepare-release[Calculate work word count, insert release date if not yet set, and update modified date and revision number.]" \
+			"print-manifest[Print the <manifest> element for the given Standard Ebooks source directory to standard output, for use in that directory’s content.opf.]" \
+			"print-spine[Print the <spine> element for the given Standard Ebooks source directory to standard output, for use in that directory’s content.opf.]" \
 			"print-title[Print the expected value for an XHTML file’s <title> element.]" \
-			"print-toc[Build a table of contents for an SE source directory and print to stdout]" \
-			"recompose-epub[Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output]" \
-			"renumber-endnotes[Renumber all endnotes and noterefs sequentially from the beginning]" \
-			"reorder-endnotes[Increment the specified endnote and all following endnotes by 1]" \
-			"roman2dec[Convert a Roman numeral to a decimal number]" \
-			"semanticate[Apply some scriptable semantics rules from the Standard Ebooks semantics manual]" \
-			"split-file[Split an XHTML file into many files]" \
-			"titlecase[Convert a string to titlecase]" \
-			"typogrify[Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory]" \
-			"unicode-names[Display Unicode code points, descriptions, and links to more details for each character in a string]" \
-			"version[Print the version number and exit]" \
-			"word-count[Count the number of words in an HTML file and optionally categorize by length]"
+			"print-toc[Build a table of contents for an SE source directory and print to stdout.]" \
+			"recompose-epub[Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output.]" \
+			"renumber-endnotes[Renumber all endnotes and noterefs sequentially from the beginning.]" \
+			"reorder-endnotes[Increment the specified endnote and all following endnotes by 1.]" \
+			"roman2dec[Convert a Roman numeral to a decimal number.]" \
+			"semanticate[Apply some scriptable semantics rules from the Standard Ebooks semantics manual.]" \
+			"split-file[Split an XHTML file into many files.]" \
+			"titlecase[Convert a string to titlecase.]" \
+			"typogrify[Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory.]" \
+			"unicode-names[Display Unicode code points, descriptions, and links to more details for each character in a string.]" \
+			"version[Print the version number and exit.]" \
+			"word-count[Count the number of words in an HTML file and optionally categorize by length.]"
 		;;
 	args)
 		case $line[1] in
@@ -155,12 +156,16 @@ case $state in
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_directories'
 				;;
-			print-manifest-and-spine)
+			print-manifest)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
-					{-m,--manifest}'[only print the manifest]' \
-					{-s,--spine}'[only print the spine]' \
-					{-i,--in-place}'[overwrite the <manifest> or <spine> tags in content.opf instead of printing to stdout]' \
+					{-i,--in-place}'[overwrite the <manifest> element in content.opf instead of printing to stdout]' \
+					'*: :_directories'
+				;;
+			print-spine)
+				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
+					{-i,--in-place}'[overwrite the <spine> element in content.opf instead of printing to stdout]' \
 					'*: :_directories'
 				;;
 			print-title)

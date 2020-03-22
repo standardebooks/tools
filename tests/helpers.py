@@ -45,7 +45,8 @@ def assemble_book(draft__dir: Path, work_dir: Path, text_dir: Path) -> Path:
 	for file in text_dir.glob("*.xhtml"):
 		shutil.copy(file, book_dir / "src" / "epub" / "text")
 	# Rebuild file metadata
-	must_run(f"se print-manifest-and-spine --in-place {book_dir}")
+	must_run(f"se print-manifest --in-place {book_dir}")
+	must_run(f"se print-spine --in-place {book_dir}")
 	must_run(f"se print-toc --in-place {book_dir}")
 	return book_dir
 

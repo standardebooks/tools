@@ -23,7 +23,7 @@ def print_toc() -> int:
 
 	if not args.in_place and len(args.directories) > 1:
 		se.print_error("Multiple directories are only allowed with the `--in-place` option.")
-		return se.InvalidInputException.code
+		return se.InvalidArgumentsException.code
 
 	for directory in args.directories:
 		try:

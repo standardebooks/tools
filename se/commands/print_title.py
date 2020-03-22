@@ -22,7 +22,7 @@ def print_title() -> int:
 
 	if not args.in_place and len(args.targets) > 1:
 		se.print_error("Multiple targets are only allowed with the `--in-place` option.")
-		return se.InvalidInputException.code
+		return se.InvalidArgumentsException.code
 
 	return_code = 0
 
