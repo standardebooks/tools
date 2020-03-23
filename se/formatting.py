@@ -629,12 +629,12 @@ def _format_css_rules(content: list, indent_level: int) -> str:
 
 		if token.type == "comment":
 			# House style: If the comment starts with /* End, then attach it to the previous block
-			if token.value.strip().startswith("End"):
+			if token.value.strip().lower().startswith("end"):
 				output = output.rstrip() + "\n"
 
 			output += ("\t" * indent_level) + "/* " + token.value.strip() + " */\n"
 
-			if token.value.strip().startswith("End"):
+			if token.value.strip().lower().startswith("end"):
 				output += "\n"
 
 	return output.rstrip()
@@ -719,12 +719,12 @@ def format_css(css: str) -> str:
 
 		if token.type == "comment":
 			# House style: If the comment starts with /* End, then attach it to the previous block
-			if token.value.strip().startswith("End"):
+			if token.value.strip().lower().startswith("end"):
 				css_body = css_body.rstrip() + "\n"
 
 			css_body += "/* " + token.value.strip() + " */\n"
 
-			if token.value.strip().startswith("End"):
+			if token.value.strip().lower().startswith("end"):
 				css_body += "\n"
 
 	output = (css_header + "\n" + css_body).strip() + "\n"
