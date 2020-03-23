@@ -556,7 +556,7 @@ def _create_draft(args: Namespace):
 			if pg_producers:
 				producers_xhtml = ""
 				for i, producer in enumerate(pg_producers):
-					if "Distributed Proofreading" in producer:
+					if "Distributed Proofread" in producer:
 						producers_xhtml = producers_xhtml + "<a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a>"
 					elif "anonymous" in producer.lower():
 						producers_xhtml = producers_xhtml + "<b class=\"name\">An Anonymous Volunteer</b>"
@@ -590,7 +590,7 @@ def _create_draft(args: Namespace):
 			producers_xhtml = ""
 			i = 1
 			for producer in pg_producers:
-				if "Distributed Proofreading" in producer:
+				if "Distributed Proofread" in producer:
 					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">The Online Distributed Proofreading Team</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Online Distributed Proofreading Team, The</meta>\n\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{i}\">https://pgdp.net</meta>\n"
 				elif "anonymous" in producer.lower():
 					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">An Anonymous Volunteer</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Anonymous Volunteer, An</meta>\n"
