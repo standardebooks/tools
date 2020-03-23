@@ -156,6 +156,7 @@ SEMANTICS & CONTENT
 "s-043", "Poem included without styling in `local.css`."
 "s-044", "Verse included without styling in `local.css`."
 "s-045", "Song included without styling in `local.css`."
+"s-046", "`noteref` as a direct child of poetry or verse. `noteref`s should be in their parent `<span>`."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -710,7 +711,11 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 				if filename.endswith(".xhtml"):
 					# Read file contents into a DOM for querying
-					dom = BeautifulSoup(file_contents, "lxml")
+					dom_soup = BeautifulSoup(file_contents, "lxml")
+
+					# We also create an EasyXmlTree object, because Beautiful Soup can't select on XML namespaces
+					# like [epub|type~="x"]
+					dom_lxml = se.easy_xml.EasyXmlTree(file_contents)
 
 					messages = messages + _get_malformed_urls(file_contents, filename)
 
@@ -763,7 +768,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 					# Store all headings to check for ToC references later
 					if filename != "toc.xhtml":
-						for match in dom.select("h1,h2,h3,h4,h5,h6"):
+						for match in dom_soup.select("h1,h2,h3,h4,h5,h6"):
 
 							# Remove any links to the endnotes
 							endnote_ref = match.find("a", attrs={"epub:type": regex.compile("^.*noteref.*$")})
@@ -820,7 +825,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 					# Check for uppercase letters in IDs or classes
 					uppercase_attr_values = []
-					matches = dom.select("[id],[class]")
+					matches = dom_soup.select("[id],[class]")
 					for match in matches:
 						if match.has_attr("id"):
 							normalized_id = unicodedata.normalize("NFKD", match["id"])
@@ -839,7 +844,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if uppercase_attr_values:
 						messages.append(LintMessage("x-002", "Uppercase in attribute value. Attribute values must be all lowercase.", se.MESSAGE_TYPE_ERROR, filename, uppercase_attr_values))
 
-					matches = [x for x in dom.select("section") if not x.has_attr("id")]
+					matches = [x for x in dom_soup.select("section") if not x.has_attr("id")]
 					if matches:
 						messages.append(LintMessage("s-011", "`<section>` element without `id` attribute.", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -930,7 +935,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 							messages.append(LintMessage("t-017", "Ending punctuation inside italics.", se.MESSAGE_TYPE_WARNING, filename, filtered_matches))
 
 					# Check for <table> tags without a <tbody> child
-					tables = dom.select("table")
+					tables = dom_soup.select("table")
 					for table in tables:
 						has_tbody = False
 						for element in table.contents:
@@ -1001,7 +1006,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					# Run some checks on <i> elements
 					comma_matches = []
 					italicizing_matches = []
-					elements = dom.select("i")
+					elements = dom_soup.select("i")
 					for elem in elements:
 						next_sib = elem.nextSibling
 
@@ -1078,8 +1083,8 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					# if the <title> tag matches. This catches for example <h2 epub:type="title">Introduction</h2>
 					# However, skip this step if the file contains 3+ <article> tags at the top level. That makes it likely
 					# that the book is a collection (like a poetry collection) and so the <title> tag can't be inferred.
-					if len(dom.select("body > article")) <= 3:
-						elements = dom.select("body section:first-of-type h1,h2,h3,h4,h5,h6") + dom.select("body article:first-of-type h1,h2,h3,h4,h5,h6")
+					if len(dom_soup.select("body > article")) <= 3:
+						elements = dom_soup.select("body section:first-of-type h1,h2,h3,h4,h5,h6") + dom_soup.select("body article:first-of-type h1,h2,h3,h4,h5,h6")
 						if elements:
 							# Make sure we don't process headers that contain <span> elements, we took care of those above.
 							if elements[0].get("epub:type") == "title" and (len(elements[0].contents) == 1 or (len(elements[0].contents) > 1 and not str(elements[0].contents[1]).startswith("<span"))) and isinstance(elements[0].contents[0], NavigableString):
@@ -1190,7 +1195,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 							messages.append(LintMessage("t-026", "`alt` attribute does not appear to end with punctuation. `alt` attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check alt attributes match image titles
-					images = dom.select("img[src$=svg]")
+					images = dom_soup.select("img[src$=svg]")
 					for image in images:
 						alt_text = image["alt"]
 						title_text = ""
@@ -1294,6 +1299,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						if "z3998:song" in file_contents and not local_css_has_song_style:
 							messages.append(LintMessage("s-045", "Song included without styling in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
 
+					nodes = dom_lxml.css_select("[epub|type~='z3998:verse'] span + a[epub|type~='noteref']") + dom_lxml.css_select("[epub|type~='z3998:poem'] span + a[epub|type~='noteref']")
+					if nodes:
+						messages.append(LintMessage("s-046", "`noteref` as a direct child of poetry or verse. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename))
+
 					# Check for space before endnote backlinks
 					if filename == "endnotes.xhtml":
 						# Do we have to replace Ibid.?
@@ -1301,7 +1310,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						if matches:
 							messages.append(LintMessage("s-039", "Illegal `Ibid` in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing `Ibid` refers to.", se.MESSAGE_TYPE_ERROR, filename))
 
-						endnote_referrers = dom.select("li[id^=note-] a")
+						endnote_referrers = dom_soup.select("li[id^=note-] a")
 						bad_referrers = []
 
 						for referrer in endnote_referrers:
@@ -1359,7 +1368,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 					# Check LoI descriptions to see if they match associated figcaptions
 					if filename == "loi.xhtml":
-						illustrations = dom.select("li > a")
+						illustrations = dom_soup.select("li > a")
 						for illustration in illustrations:
 							figure_ref = illustration["href"].split("#")[1]
 							chapter_ref = regex.findall(r"(.*?)#.*", illustration["href"])[0]
