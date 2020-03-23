@@ -153,6 +153,9 @@ SEMANTICS & CONTENT
 "s-040", f"`#{figure_ref}` not found in file `{chapter_ref}`."
 "s-041", f"The `<figcaption>` element of `#{figure_ref}` does not match the text in its LoI entry."
 "s-042", "`<table>` element without `<tbody>` child."
+"s-043", "Poem included without styling in `local.css`."
+"s-044", "Verse included without styling in `local.css`."
+"s-045", "Song included without styling in `local.css`."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -360,6 +363,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 			self.local_css = file.read()
 
 			local_css_has_subtitle_style = "span[epub|type~=\"subtitle\"]" in self.local_css
+
+			local_css_has_poem_style = "z3998:poem" in self.local_css
+			local_css_has_verse_style = "z3998:verse" in self.local_css
+			local_css_has_song_style = "z3998:song" in self.local_css
 
 			abbr_styles = regex.findall(r"abbr\.[a-z]+", self.local_css)
 
@@ -1274,7 +1281,18 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					# Check to see if we've marked something as poetry or verse, but didn't include a first <span>
 					matches = regex.findall(r"<blockquote [^>]*?epub:type=\"z3998:(poem|verse)\"[^>]*?>\s*<p>(?!\s*<span)", file_contents, flags=regex.DOTALL)
 					if matches:
-						messages.append(LintMessage("s-006", "Poetry or verse included without `<span>` element.", se.MESSAGE_TYPE_ERROR, filename, matches))
+						messages.append(LintMessage("s-006", "Poem or verse included without `<span>` element.", se.MESSAGE_TYPE_ERROR, filename, matches))
+
+					# Check to see if we included poetry or verse without the appropriate styling
+					if filename not in se.IGNORED_FILENAMES:
+						if "z3998:poem" in file_contents and not local_css_has_poem_style:
+							messages.append(LintMessage("s-043", "Poem included without styling in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+
+						if "z3998:verse" in file_contents and not local_css_has_verse_style:
+							messages.append(LintMessage("s-044", "Verse included without styling in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+
+						if "z3998:song" in file_contents and not local_css_has_song_style:
+							messages.append(LintMessage("s-045", "Song included without styling in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for space before endnote backlinks
 					if filename == "endnotes.xhtml":
