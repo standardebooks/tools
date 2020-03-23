@@ -717,7 +717,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 		# Convert the <nav> landmarks element to the <guide> element in content.opf
 		guide_xhtml = "<guide>"
-		for element in toc_tree.xpath("//xhtml:nav[@epub:type=\"landmarks\"]/xhtml:ol/xhtml:li/xhtml:a"):
+		for element in toc_tree.xpath("//nav[@epub:type=\"landmarks\"]/ol/li/a"):
 			element_xhtml = element.tostring()
 			element_xhtml = regex.sub(r"epub:type=\"([^\"]*)(\s*frontmatter\s*|\s*backmatter\s*)([^\"]*)\"", "type=\"\\1\\3\"", element_xhtml)
 			element_xhtml = regex.sub(r"epub:type=\"[^\"]*(acknowledgements|bibliography|colophon|copyright-page|cover|dedication|epigraph|foreword|glossary|index|loi|lot|notes|preface|bodymatter|titlepage|toc)[^\"]*\"", "type=\"\\1\"", element_xhtml)

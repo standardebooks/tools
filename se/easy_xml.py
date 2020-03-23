@@ -20,7 +20,7 @@ class EasyXmlTree:
 		# We have to remove the default namespace declaration from our document, otherwise
 		# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 
-		self._xhtml_string = xhtml_string#.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
+		self._xhtml_string = xhtml_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
 		self.etree = etree.fromstring(str.encode(self._xhtml_string))
 
 	def css_select(self, selector: str) -> list:
@@ -69,6 +69,7 @@ class EasyXmlElement:
 		"""
 		Return the value of an attribute on this element.
 		"""
+
 		return self.lxml_element.get(attribute)
 
 	def inner_html(self) -> str:
