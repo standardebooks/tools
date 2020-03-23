@@ -561,7 +561,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							# Kobos don't have fonts that support the ↩ character in endnotes, so replace it with «
 							if filename == "endnotes.xhtml":
 								# Note that we replaced ↩ with \u21a9\ufe0e in an earlier iOS compatibility fix
-								xhtml = regex.sub(r"epub:type=\"backlink\">\u21a9\ufe0e</a>", "epub:type=\"backlink\">«</a>", xhtml)
+								xhtml = regex.sub(r"epub:type=\"backlink\">\u21a9\ufe0e</a>", "epub:type=\"backlink\">←</a>", xhtml)
 
 							# We have to remove the default namespace declaration from our document, otherwise
 							# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
