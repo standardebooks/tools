@@ -156,7 +156,11 @@ SEMANTICS & CONTENT
 "s-043", "Poem included without styling in `local.css`."
 "s-044", "Verse included without styling in `local.css`."
 "s-045", "Song included without styling in `local.css`."
-"s-046", "`noteref` as a direct child of poetry or verse. `noteref`s should be in their parent `<span>`."
+"s-046", "Hymn included without styling in `local.css`."
+"s-047", "`noteref` as a direct child of element with `z3998:poem` semantic. `noteref`s should be in their parent `<span>`."
+"s-048", "`noteref` as a direct child of element with `z3998:verse` semantic. `noteref`s should be in their parent `<span>`."
+"s-049", "`noteref` as a direct child of element with `z3998:song` semantic. `noteref`s should be in their parent `<span>`."
+"s-050", "`noteref` as a direct child of element with `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1301,11 +1305,24 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 							messages.append(LintMessage("s-045", "Element with `z3998:song` semantic found without matching style in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
 
 						if "z3998:hymn" in file_contents and not local_css_has_hymn_style:
-							messages.append(LintMessage("s-045", "Element with `z3998:hymn` semantic found without matching style in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage("s-046", "Element with `z3998:hymn` semantic found without matching style in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
 
-					nodes = dom_lxml.css_select("[epub|type~='z3998:verse'] span + a[epub|type~='noteref']") + dom_lxml.css_select("[epub|type~='z3998:poem'] span + a[epub|type~='noteref']")
+					# For this series of selections, we select spans that are direct children of p, because sometimes a line of poetry may have a nested span.
+					nodes = dom_lxml.css_select("[epub|type~='z3998:poem'] p > span + a[epub|type~='noteref']")
 					if nodes:
-						messages.append(LintMessage("s-046", "`noteref` as a direct child of poetry or verse. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("s-047", "`noteref` as a direct child of element with `z3998:poem` semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename))
+
+					nodes = dom_lxml.css_select("[epub|type~='z3998:verse'] p > span + a[epub|type~='noteref']")
+					if nodes:
+						messages.append(LintMessage("s-048", "`noteref` as a direct child of element with `z3998:verse` semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename))
+
+					nodes = dom_lxml.css_select("[epub|type~='z3998:song'] p > span + a[epub|type~='noteref']")
+					if nodes:
+						messages.append(LintMessage("s-049", "`noteref` as a direct child of element with `z3998:song` semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename))
+
+					nodes = dom_lxml.css_select("[epub|type~='z3998:hymn'] p > span + a[epub|type~='noteref']")
+					if nodes:
+						messages.append(LintMessage("s-050", "`noteref` as a direct child of element with `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for space before endnote backlinks
 					if filename == "endnotes.xhtml":
