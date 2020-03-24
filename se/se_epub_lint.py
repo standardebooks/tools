@@ -1310,19 +1310,19 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					# For this series of selections, we select spans that are direct children of p, because sometimes a line of poetry may have a nested span.
 					nodes = dom_lxml.css_select("[epub|type~='z3998:poem'] p > span + a[epub|type~='noteref']")
 					if nodes:
-						messages.append(LintMessage("s-047", "`noteref` as a direct child of element with `z3998:poem` semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("s-047", "`noteref` as a direct child of element with `z3998:poem` semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 					nodes = dom_lxml.css_select("[epub|type~='z3998:verse'] p > span + a[epub|type~='noteref']")
 					if nodes:
-						messages.append(LintMessage("s-048", "`noteref` as a direct child of element with `z3998:verse` semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("s-048", "`noteref` as a direct child of element with `z3998:verse` semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 					nodes = dom_lxml.css_select("[epub|type~='z3998:song'] p > span + a[epub|type~='noteref']")
 					if nodes:
-						messages.append(LintMessage("s-049", "`noteref` as a direct child of element with `z3998:song` semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("s-049", "`noteref` as a direct child of element with `z3998:song` semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 					nodes = dom_lxml.css_select("[epub|type~='z3998:hymn'] p > span + a[epub|type~='noteref']")
 					if nodes:
-						messages.append(LintMessage("s-050", "`noteref` as a direct child of element with `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("s-050", "`noteref` as a direct child of element with `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 					# Check for space before endnote backlinks
 					if filename == "endnotes.xhtml":
