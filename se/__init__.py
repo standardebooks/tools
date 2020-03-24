@@ -14,7 +14,7 @@ from colored import stylize, fg, bg, attr
 from natsort import natsorted
 import regex
 
-VERSION = "1.2.4"
+VERSION = "1.3.0"
 MESSAGE_INDENT = "    "
 UNICODE_BOM = "\ufeff"
 NO_BREAK_SPACE = "\u00a0"
