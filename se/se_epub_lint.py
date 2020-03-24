@@ -368,6 +368,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 			local_css_has_poem_style = "z3998:poem" in self.local_css
 			local_css_has_verse_style = "z3998:verse" in self.local_css
 			local_css_has_song_style = "z3998:song" in self.local_css
+			local_css_has_hymn_style = "z3998:hymn" in self.local_css
 
 			abbr_styles = regex.findall(r"abbr\.[a-z]+", self.local_css)
 
@@ -1291,13 +1292,16 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					# Check to see if we included poetry or verse without the appropriate styling
 					if filename not in se.IGNORED_FILENAMES:
 						if "z3998:poem" in file_contents and not local_css_has_poem_style:
-							messages.append(LintMessage("s-043", "Poem included without styling in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage("s-043", "Element with `z3998:poem` semantic found without matching style in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
 
 						if "z3998:verse" in file_contents and not local_css_has_verse_style:
-							messages.append(LintMessage("s-044", "Verse included without styling in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage("s-044", "Element with `z3998:verse` semantic found without matching style in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
 
 						if "z3998:song" in file_contents and not local_css_has_song_style:
-							messages.append(LintMessage("s-045", "Song included without styling in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage("s-045", "Element with `z3998:song` semantic found without matching style in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+
+						if "z3998:hymn" in file_contents and not local_css_has_hymn_style:
+							messages.append(LintMessage("s-045", "Element with `z3998:hymn` semantic found without matching style in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
 
 					nodes = dom_lxml.css_select("[epub|type~='z3998:verse'] span + a[epub|type~='noteref']") + dom_lxml.css_select("[epub|type~='z3998:poem'] span + a[epub|type~='noteref']")
 					if nodes:
