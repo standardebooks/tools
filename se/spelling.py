@@ -50,7 +50,7 @@ def modernize_hyphenation(xhtml: str) -> str:
 
 	# The non-capturing group at the beginning tries to prevent
 	# bad matches like stag's-horn -> stag'shorn or dog's-eared -> dog'seared
-	result = regex.findall(r"(?:[^’\'])\b[^\W\d_]+\-[^\W\d_]+\b", xhtml)
+	result = regex.findall(r"(?<![’\'])\b[^\W\d_]+\-[^\W\d_]+\b", xhtml)
 
 	for word in set(result): # set() removes duplicates
 		new_word = word.replace("-", "").lower()
