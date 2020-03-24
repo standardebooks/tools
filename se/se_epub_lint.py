@@ -16,12 +16,15 @@ import unicodedata
 from pathlib import Path
 from typing import Dict, List
 import importlib_resources
+
+import cssutils
 import lxml.cssselect
 import lxml.etree as etree
 import regex
 import roman
 from bs4 import BeautifulSoup, NavigableString
 from natsort import natsorted
+
 import se
 import se.easy_xml
 import se.formatting
@@ -43,6 +46,7 @@ CSS
 "c-006", "Subtitles found, but no subtitle style found in `local.css`."
 "c-007", f"`<abbr class=\"{css_class}\">` element found, but no required style in `local.css`. See the typography manual for required styls."
 "c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks."
+"c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -367,20 +371,93 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 		with open(self.path / "src" / "epub" / "css" / "local.css", "r", encoding="utf-8") as file:
 			self.local_css = file.read()
 
-			local_css_has_subtitle_style = "span[epub|type~=\"subtitle\"]" in self.local_css
-
-			local_css_has_poem_style = "z3998:poem" in self.local_css
-			local_css_has_verse_style = "z3998:verse" in self.local_css
-			local_css_has_song_style = "z3998:song" in self.local_css
-			local_css_has_hymn_style = "z3998:hymn" in self.local_css
-
-			abbr_styles = regex.findall(r"abbr\.[a-z]+", self.local_css)
-
-			matches = regex.findall(r"^h[0-6]\s*,?{?", self.local_css, flags=regex.MULTILINE)
-			if matches:
-				messages.append(LintMessage("c-001", "Do not directly select `<h#>` elements, as they are used in template files; use more specific selectors.", se.MESSAGE_TYPE_ERROR, "local.css"))
 	except Exception:
 		raise se.InvalidSeEbookException(f"Couldn’t open `{self.path / 'src' / 'epub' / 'css' / 'local.css'}`.")
+
+	# cssutils prints warnings/errors to stdout by default, so shut it up here
+	cssutils.log.enabled = False
+
+	# Construct a set of CSS selectors and rules in local.css
+	# We'll check against this set in each file to see if any of them are unused.
+	local_css_rules: Dict[str, str] = {} # A dict where key = selector and value = rules
+	duplicate_selectors = []
+	single_selectors: List[str] = []
+	# cssutils doesn't understand @supports, but it *does* understand @media, so do a replacement here for the purposes of parsing
+	for rule in cssutils.parseString(self.local_css.replace("@supports", "@media"), validate=False):
+		# i.e. @supports
+		if isinstance(rule, cssutils.css.CSSMediaRule):
+			for supports_rule in rule.cssRules:
+				for selector in supports_rule.selectorList:
+					if selector.selectorText not in local_css_rules:
+						local_css_rules[selector.selectorText] = ""
+
+					local_css_rules[selector.selectorText] += supports_rule.style.cssText + ";"
+
+		# top-level rule
+		if isinstance(rule, cssutils.css.CSSStyleRule):
+			for selector in rule.selectorList:
+				# Check for duplicate selectors.
+				# We consider a selector a duplicate if it's a TOP LEVEL selector (i.e. we don't check within @supports)
+				# and ALSO if it is a SINGLE selector (i.e. not multiple selectors separated by ,)
+				# For example abbr{} abbr{} would be a duplicate, but not abbr{} abbr,p{}
+				if "," not in rule.selectorText:
+					if selector.selectorText in single_selectors:
+						duplicate_selectors.append(selector.selectorText)
+					else:
+						single_selectors.append(selector.selectorText)
+
+				local_css_rules[selector.selectorText] = rule.style.cssText + ";"
+
+	if duplicate_selectors:
+
+		messages.append(LintMessage("c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles.", se.MESSAGE_TYPE_WARNING, "local.css", list(set(duplicate_selectors))))
+
+	# Store a list of CSS selectors, and duplicate it into a list of unused selectors, for later checks
+	# We use a regex to remove pseudo-elements like ::before, because we want the *selectors* to see if they're unused.
+	local_css_selectors = [regex.sub(r"::[a-z\-]+", "", selector) for selector in local_css_rules]
+	unused_selectors = local_css_selectors.copy()
+
+	# Store some true/false values for later checks
+	local_css_has_subtitle_style = "span[epub|type~=\"subtitle\"]" in self.local_css
+	local_css_has_poem_style = "z3998:poem" in self.local_css
+	local_css_has_verse_style = "z3998:verse" in self.local_css
+	local_css_has_song_style = "z3998:song" in self.local_css
+	local_css_has_hymn_style = "z3998:hymn" in self.local_css
+
+	abbr_styles = regex.findall(r"abbr\.[a-z]+", self.local_css)
+
+	# Iterate over rules to do some other checks
+	selected_h = []
+	abbr_with_whitespace = []
+	for selector, rules in local_css_rules.items():
+		if regex.search(r"^h[0-6]", selector, flags=regex.IGNORECASE):
+			selected_h.append(selector)
+
+		if "abbr" in selector and "nowrap" in rules:
+			abbr_with_whitespace.append(selector)
+
+		if regex.search(r"\[\s*xml\s*\|", selector, flags=regex.IGNORECASE) and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
+			messages.append(LintMessage("c-003", "`[xml|attr]` selector in CSS, but no XML namespace declared (`@namespace xml \"http://www.w3.org/XML/1998/namespace\";`).", se.MESSAGE_TYPE_ERROR, "local.css"))
+
+	if selected_h:
+		messages.append(LintMessage("c-001", "Do not directly select `<h#>` elements, as they are used in template files; use more specific selectors.", se.MESSAGE_TYPE_ERROR, "local.css", selected_h))
+
+	if abbr_with_whitespace:
+		messages.append(LintMessage("c-005", "`abbr` selector does not need `white-space: nowrap;` as it inherits it from `core.css`.", se.MESSAGE_TYPE_ERROR, "local.css", abbr_with_whitespace))
+
+	# Don't specify border color
+	# Since we have match with a regex anyway, no point in putting it in the loop above
+	matches = regex.findall(r"(?:border|color).+?(?:#[a-f0-9]{0,6}|black|white|red)", self.local_css, flags=regex.IGNORECASE)
+	if matches:
+		messages.append(LintMessage("c-004", "Do not specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, "local.css", matches))
+
+	# If we select on the xml namespace, make sure we define the namespace in the CSS, otherwise the selector won't work
+	# We do this using a regex and not with cssutils, because cssutils will barf in this particular case and not even record the selector.
+	matches = regex.findall(r"\[\s*xml\s*\|", self.local_css)
+	if matches and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
+		messages.append(LintMessage("c-003", "`[xml|attr]` selector in CSS, but no XML namespace declared (`@namespace xml \"http://www.w3.org/XML/1998/namespace\";`).", se.MESSAGE_TYPE_ERROR, "local.css"))
+
+	# Done checking local.css
 
 	root_files = os.listdir(self.path)
 	expected_root_files = [".git", "images", "src", "LICENSE.md"]
@@ -530,33 +607,6 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 	except Exception:
 		missing_files.append(str(Path("src/epub/text/uncopyright.xhtml")))
 
-	# Construct a set of CSS selectors in local.css
-	# We'll check against this set in each file to see if any of them are unused.
-
-	# Remove @supports directives, as the parser can't handle them
-	unused_selector_css = regex.sub(r"^@supports\(.+?\){(.+?)}\s*}", "\\1}", self.local_css, flags=regex.MULTILINE | regex.DOTALL)
-
-	# Remove actual content of css selectors
-	unused_selector_css = regex.sub(r"{[^}]+}", "", unused_selector_css)
-
-	# Remove trailing commas
-	unused_selector_css = regex.sub(r",", "", unused_selector_css)
-
-	# Remove pseudo-elements like ::before; we are interested in the *selectors* of pseudo elements, not the
-	# elements themselves
-	unused_selector_css = regex.sub(r"::[a-z\-]+", "", unused_selector_css)
-
-	# Remove comments
-	unused_selector_css = regex.sub(r"/\*.+?\*/", "", unused_selector_css, flags=regex.DOTALL)
-
-	# Remove @ defines
-	unused_selector_css = regex.sub(r"^@.+", "", unused_selector_css, flags=regex.MULTILINE)
-
-	# Construct a set of selectors
-	local_css_selectors = list({line.strip() for line in unused_selector_css.splitlines() if line != ""})
-	unused_selectors = local_css_selectors.copy()
-	# Done creating our list of selectors.
-
 	# Now iterate over individual files for some checks
 	for root, _, filenames in os.walk(self.path):
 		for filename in natsorted(filenames):
@@ -686,33 +736,6 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 							matches = regex.findall(r"<title>(.*?)</title>", file_contents)
 							for match in matches:
 								titlepage_svg_title = match.replace("The titlepage for ", "")
-
-				if filename.endswith(".css"):
-					# Check CSS style
-
-					# First remove @supports selectors and normalize indentation within them
-					matches = regex.findall(r"^@supports\(.+?\){.+?}\s*}", file_contents, flags=regex.MULTILINE | regex.DOTALL)
-					for match in matches:
-						processed_match = regex.sub(r"^@supports\(.+?\){\s*(.+?)\s*}\s*}", "\\1", match.replace("\n\t", "\n") + "\n}", flags=regex.MULTILINE | regex.DOTALL)
-						file_contents = file_contents.replace(match, processed_match)
-
-					# Remove comments that are on their own line
-					file_contents = regex.sub(r"^/\*.+?\*/\n", "", file_contents, flags=regex.MULTILINE | regex.DOTALL)
-
-					# Check for unneeded white-space nowrap in abbr selectors
-					matches = regex.findall(r"abbr[^{]*?{[^}]*?white-space:\s*nowrap;[^}]*?}", self.local_css, regex.DOTALL)
-					if matches:
-						messages.append(LintMessage("c-005", "`abbr` selector does not need `white-space: nowrap;` as it inherits it from `core.css`.", se.MESSAGE_TYPE_ERROR, filename, matches))
-
-					# Don't specify border color
-					matches = regex.findall(r"(?:border|color).+?(?:#[a-f0-9]{0,6}|black|white|red)", file_contents, flags=regex.IGNORECASE)
-					if matches:
-						messages.append(LintMessage("c-004", "Do not specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, filename, matches))
-
-					# If we select on the xml namespace, make sure we define the namespace in the CSS, otherwise the selector won't work
-					matches = regex.findall(r"\[\s*xml\s*\|", file_contents)
-					if matches and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in file_contents:
-						messages.append(LintMessage("c-003", "`[xml|attr]` selector in CSS, but no XML namespace declared (`@namespace xml \"http://www.w3.org/XML/1998/namespace\";`).", se.MESSAGE_TYPE_ERROR, filename))
 
 				if filename.endswith(".xhtml"):
 					# Read file contents into a DOM for querying

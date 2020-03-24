@@ -63,6 +63,7 @@ setup(
         "cairosvg==2.4.2",
         "colored==1.4.2",
         "cssselect==1.0.3",
+        "cssutils==1.0.2",
         "ftfy==5.5.1",
         "gitpython==3.0.8",
         "importlib_resources==1.0.2",
