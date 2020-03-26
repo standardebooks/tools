@@ -201,7 +201,7 @@ XHTML
 "x-002", "Uppercase in attribute value. Attribute values must be all lowercase."
 "x-003", "Illegal `transform` attribute. SVGs should be optimized to remove use of `transform`. Try using Inkscape to save as an “optimized SVG”."
 "x-004", "Illegal `style=\"fill: #000\"` or `fill=\"#000\"`."
-"x-005", "Illegal height or width on root `<svg>` element. Size SVGs using the `viewBox` attribute only."
+"x-005", "Illegal `height` or `width` attribute on root `<svg>` element. Size SVGs using the `viewBox` attribute only."
 "x-006", f"`{match}` found instead of `viewBox`. `viewBox` must be correctly capitalized."
 "x-007", "`id` attributes starting with a number are illegal XHTML."
 "x-008", "Elements should end with a single `>`."
@@ -210,6 +210,7 @@ XHTML
 "x-011", "Uppercased HTML tag."
 "x-012", "Illegal `style` attribute. Do not use inline styles, any element can be targeted with a clever enough selector."
 "x-013", "CSS class found in XHTML, but not in `local.css`."
+"x-014", "Illegal `id` attribute."
 """
 
 class LintMessage:
@@ -702,7 +703,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if filename != "logo.svg": # Do as I say, not as I do...
 						matches = regex.findall(r"<svg[^>]*?(height|width)=[^>]*?>", file_contents)
 						if matches:
-							messages.append(LintMessage("x-005", "Illegal height or width on root `<svg>` element. Size SVGs using the `viewBox` attribute only.", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage("x-005", "Illegal `height` or `width` attribute on root `<svg>` element. Size SVGs using the `viewBox` attribute only.", se.MESSAGE_TYPE_ERROR, filename))
 
 					matches = regex.findall(r"viewbox", file_contents, flags=regex.IGNORECASE)
 					for match in matches:
@@ -710,9 +711,14 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 							messages.append(LintMessage("x-006", f"`{match}` found instead of `viewBox`. `viewBox` must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for illegal transform attribute
-					matches = regex.findall(r"<[a-z]+[^>]*?transform=[^>]*?>", file_contents)
+					matches = regex.findall(r"<[a-z]+[^>]*?(transform=\"[^\"]*?\")", file_contents)
 					if matches:
-						messages.append(LintMessage("x-003", "Illegal `transform` attribute. SVGs should be optimized to remove use of `transform`. Try using Inkscape to save as an “optimized SVG”.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("x-003", "Illegal `transform` attribute. SVGs should be optimized to remove use of `transform`. Try using Inkscape to save as an “optimized SVG”.", se.MESSAGE_TYPE_ERROR, filename, matches))
+
+					# Check for illegal id attribute
+					matches = regex.findall(r"<[a-z]+[^>]*?(id=\"[^\"]*?\")", file_contents)
+					if matches:
+						messages.append(LintMessage("x-014", "Illegal `id` attribute.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					if f"{os.sep}src{os.sep}" not in root:
 						# Check that cover and titlepage images are in all caps
