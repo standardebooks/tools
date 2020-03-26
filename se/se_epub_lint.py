@@ -56,7 +56,7 @@ FILESYSTEM
 "f-005", f"File does not match `{logo_svg_file_path}`."
 "f-006", f"File does not match `{uncopyright_file_path}`."
 "f-007", f"File does not match `{gitignore_file_path}`."
-"f-008", "Illegal uppercase letter in filename."
+"f-008", "Filename is not URL-safe. Expected: `{url_safe_filename}`."
 "f-009", "Illegal leading `0` in filename."
 "f-010", "Problem decoding file as utf-8."
 "f-011", "JPEG files must end in `.jpg`."
@@ -623,11 +623,13 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 			if filename.startswith("cover.source."):
 				has_cover_source = True
 
-			if filename != "LICENSE.md" and regex.findall(r"[A-Z]", filename):
-				messages.append(LintMessage("f-008", "Illegal uppercase letter in filename.", se.MESSAGE_TYPE_ERROR, filename))
-
 			if "-0" in filename:
 				messages.append(LintMessage("f-009", "Illegal leading `0` in filename.", se.MESSAGE_TYPE_ERROR, filename))
+
+			if Path(filename).stem not in ("LICENSE", "cover.source"):
+				url_safe_filename = se.formatting.make_url_safe(Path(filename).stem) + Path(filename).suffix
+				if filename != url_safe_filename:
+					messages.append(LintMessage("f-008", f"Filename is not URL-safe. Expected: `{url_safe_filename}`.", se.MESSAGE_TYPE_ERROR, filename))
 
 			if filename.endswith(tuple(se.BINARY_EXTENSIONS)) or filename.endswith("core.css"):
 				continue
