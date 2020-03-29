@@ -558,7 +558,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 						with open(Path(root) / filename, "r+", encoding="utf-8") as file:
 							xhtml = file.read()
-							# Kobos don't have fonts that support the ↩ character in endnotes, so replace it with «
+							# Kobos don't have fonts that support the ↩ character in endnotes, so replace it with ←
 							if filename == "endnotes.xhtml":
 								# Note that we replaced ↩ with \u21a9\ufe0e in an earlier iOS compatibility fix
 								xhtml = regex.sub(r"epub:type=\"backlink\">\u21a9\ufe0e</a>", "epub:type=\"backlink\">←</a>", xhtml)
