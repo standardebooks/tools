@@ -210,7 +210,7 @@ XHTML
 "x-012", "Illegal `style` attribute. Do not use inline styles, any element can be targeted with a clever enough selector."
 "x-013", "CSS class found in XHTML, but not in `local.css`."
 "x-014", "Illegal `id` attribute."
-"x-015", "Illegal `<style>` element. All CSS specific to this ebook goes in `./src/epub/css/local.css`."
+"x-015", f"Illegal element in `<head>`. Only `<title>` and `<link rel=\"stylesheet\">` are allowed."
 """
 
 class LintMessage:
@@ -1067,9 +1067,14 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if matches:
 						messages.append(LintMessage("x-012", "Illegal `style` attribute. Do not use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-					# Check for style elements
-					if "<style" in file_contents:
-						messages.append(LintMessage("x-015", "Illegal `<style>` element. All CSS specific to this ebook goes in `./src/epub/css/local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+					# Check for illegal elements in <head>
+					illegal_elements = []
+					for element in dom_soup.select("head > *"):
+						if (element.name != "title" and element.name != "link") or (element.name == "link" and element.has_attr("rel") and element["rel"][0] != "stylesheet"):
+							illegal_elements.append(f"<{element.name}>")
+
+					if illegal_elements:
+						messages.append(LintMessage("x-015", f"Illegal element in `<head>`. Only `<title>` and `<link rel=\"stylesheet\">` are allowed.", se.MESSAGE_TYPE_ERROR, filename, illegal_elements))
 
 					# Check for uppercase HTML tags
 					matches = regex.findall(r"<[a-zA-Z]*[A-Z]+[a-zA-Z]*", file_contents)
