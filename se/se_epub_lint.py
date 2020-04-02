@@ -626,9 +626,9 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 			if "-0" in filename:
 				messages.append(LintMessage("f-009", "Illegal leading `0` in filename.", se.MESSAGE_TYPE_ERROR, filename))
 
-			if Path(filename).stem not in ("LICENSE", "cover.source"):
+			if Path(filename).stem != "LICENSE":
 				url_safe_filename = se.formatting.make_url_safe(Path(filename).stem) + Path(filename).suffix
-				if filename != url_safe_filename:
+				if filename != url_safe_filename and not Path(filename).stem.endswith(".source"):
 					messages.append(LintMessage("f-008", f"Filename is not URL-safe. Expected: `{url_safe_filename}`.", se.MESSAGE_TYPE_ERROR, filename))
 
 			if filename.endswith(tuple(se.BINARY_EXTENSIONS)) or filename.endswith("core.css"):
