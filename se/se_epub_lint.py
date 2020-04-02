@@ -169,7 +169,6 @@ SEMANTICS & CONTENT
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
 "t-002", "Comma or period outside of double quote. Generally punctuation should go within single and double quotes."
-"t-002", "Comma or period outside of double quote. Generally punctuation should go within single and double quotes."
 "t-003", "`“` missing matching `”`."
 "t-004", "`‘` missing matching `’`."
 "t-005", "Dialog without ending comma."
@@ -211,6 +210,7 @@ XHTML
 "x-012", "Illegal `style` attribute. Do not use inline styles, any element can be targeted with a clever enough selector."
 "x-013", "CSS class found in XHTML, but not in `local.css`."
 "x-014", "Illegal `id` attribute."
+"x-015", "Illegal `<style>` element. All CSS specific to this ebook goes in `./src/epub/css/local.css`."
 """
 
 class LintMessage:
@@ -1066,6 +1066,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					matches = regex.findall(r"<.+?style=\"", file_contents)
 					if matches:
 						messages.append(LintMessage("x-012", "Illegal `style` attribute. Do not use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, matches))
+
+					# Check for style elements
+					if "<style" in file_contents:
+						messages.append(LintMessage("x-015", "Illegal `<style>` element. All CSS specific to this ebook goes in `./src/epub/css/local.css`.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for uppercase HTML tags
 					matches = regex.findall(r"<[a-zA-Z]*[A-Z]+[a-zA-Z]*", file_contents)
