@@ -79,6 +79,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"""\b(?<!\<abbr class="era"\>)A\.?D""", r"""<abbr class="era">AD</abbr>""", xhtml)
 	xhtml = regex.sub(r"""\b(?<!\<abbr class="era"\>)B\.?C""", r"""<abbr class="era">BC</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="time( eoc)?"\>)([ap])\.\s?m\.""", r"""<abbr class="time">\2.m.</abbr>""", xhtml)
+	xhtml = regex.sub(r"(?<!\<abbr\>)([Vv])s\.", r"<abbr>\1s.</abbr>", xhtml)
 
 	# Guess at adding eoc (End Of Clause) class
 	xhtml = regex.sub(r"""<abbr>([a-zA-Z\.]+?\.)</abbr></p>""", r"""<abbr class="eoc">\1</abbr></p>""", xhtml)
