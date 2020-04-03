@@ -941,7 +941,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-009", "Required no-break space not found before `<abbr class=\"time\">`.", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for low-hanging misquoted fruit
-					matches = regex.findall(r"[A-Za-z]+[“‘]", file_contents)
+					matches = regex.findall(r"[A-Za-z]+[“‘]", file_contents) + regex.findall(r"[^>]+</(?:em|i|b|span)>‘[a-z]+", file_contents)
 					if matches:
 						messages.append(LintMessage("t-028", "Possible mis-curled quotation mark.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
