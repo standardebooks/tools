@@ -194,6 +194,7 @@ TYPOGRAPHY
 "t-026", "`alt` attribute does not appear to end with punctuation. `alt` attributes must be composed of complete sentences ending in appropriate punctuation."
 "t-027", "Endnote referrer link not preceded by exactly one space, or a newline if all previous siblings are elements."
 "t-028", "Possible mis-curled quotation mark."
+"t-029", "Period followed by lowercase letter. Hint: Abbreviations require the `<abbr>` element."
 
 XHTML
 "x-001", "String `UTF-8` must always be lowercase."
@@ -907,6 +908,15 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					matches = regex.findall(r"(>>|>&gt;)", file_contents)
 					if matches:
 						messages.append(LintMessage("x-008", "Elements should end with a single `>`.", se.MESSAGE_TYPE_WARNING, filename))
+
+					# Check for periods followed by lowercase.
+					temp_xhtml = regex.sub(r"<title>.+?</title>", "", file_contents) # Remove <title> because it might contain something like <title>Chapter 2: The Antechamber of M. de Tréville</title>
+					temp_xhtml = regex.sub(r"<abbr[^>]*?>", "<abbr>", temp_xhtml) # Replace things like <abbr xml:lang="la">
+					matches = regex.findall(r"[^\s]+\.\s+[a-z](?!’[A-Z])[a-z]+", temp_xhtml)
+					# If <abbr> is in the match, remove it from the matches so we exclude things like <abbr>et. al.</abbr>
+					matches = [match for match in matches if "<abbr>" not in match]
+					if matches:
+						messages.append(LintMessage("t-029", "Period followed by lowercase letter. Hint: Abbreviations require the `<abbr>` element.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Ignore the title page here, because we often have publishers with ampersands as
 					# translators, but in alt tags. Like "George Allen & Unwin".
