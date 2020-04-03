@@ -1286,7 +1286,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if "<pre" in file_contents:
 						messages.append(LintMessage("s-013", "Illegal `<pre>` element.", se.MESSAGE_TYPE_ERROR, filename))
 
-					# Check for <pre> tags
+					# Check for <br/> after block-level elements
 					matches = regex.findall(r"</(?:p|blockquote|table|ol|ul|section|article)>\s*<br/>", file_contents, flags=regex.DOTALL)
 					if matches:
 						messages.append(LintMessage("s-014", "`<br/>` after block-level element.", se.MESSAGE_TYPE_ERROR, filename, matches))
