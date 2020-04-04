@@ -133,7 +133,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ee])xpence", r"\1xpense", xhtml)			# expence -> expense
 	xhtml = regex.sub(r"\b([Ll])otos", r"\1otus", xhtml)				# lotos -> lotus
 	xhtml = regex.sub(r"\b([Ss])collop", r"\1callop", xhtml)			# scollop -> scallop
-	xhtml = regex.sub(r"\b([Ss])ubtil(?!(ize|izing))", r"\1ubtle", xhtml)		# subtil -> subtle (but "subtilize" and "subtilizing")
+	xhtml = regex.sub(r"\b([Ss])ubtile?(?!(ize|izing))", r"\1ubtle", xhtml)		# subtil -> subtle (but "subtilize" and "subtilizing")
 	xhtml = regex.sub(r"\bQuoiff", r"Coif", xhtml)					# quoiff -> coif
 	xhtml = regex.sub(r"\bquoiff", r"coif", xhtml)					# quoiff -> coif
 	xhtml = regex.sub(r"\bIndorse", r"Endorse", xhtml)				# indorse -> endorse
