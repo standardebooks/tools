@@ -186,7 +186,7 @@ TYPOGRAPHY
 "t-018", "Stage direction ending in period next to other punctuation. Remove trailing periods in stage direction."
 "t-019", "When a complete clause is italicized, ending punctuation except commas must be within containing italics."
 "t-020", "Endnote links must be outside of punctuation, including quotation marks."
-"t-021", "Measurements must be separated by a no-break space, not a dash or regular space."
+"t-021", "Measurement not to standard. Numbers are followed by a no-break space and abbreviated units require an `<abbr>` element. See `semos://1.0.0/8.8.5`."
 "t-022", "No-break space found in `<abbr class=\"name\">`. This is redundant."
 "t-023", "Comma inside `<i>` element before closing dialog."
 "t-024", "When italicizing language in dialog, italics go inside quotation marks."
@@ -1272,10 +1272,14 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if matches:
 						messages.append(LintMessage("t-020", "Endnote links must be outside of punctuation, including quotation marks.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-					# Check for nbsp in measurements, for example: 90 mm
-					matches = regex.findall(r"[0-9]+[\- ][mck][mgl]\b", file_contents)
+					# Check for correct typography around measurements like 2 ft.
+					# But first remove href and id attrs because URLs and IDs may contain strings that look like measurements
+					# Note that while we check m,min (minutes) and h,hr (hours) we don't check s (seconds) because we get too many false positives on years, like `the 1540s`
+					matches = regex.findall(fr"\b[0-9]+[{se.NO_BREAK_SPACE}\-]?(?:[mck]?[mgl]|ft|in|min?|h|sec|hr)\.?\b", regex.sub(r"(href|id)=\"[^\"]*?\"", "", file_contents))
+					# Exclude number ordinals, they're not measurements
+					matches = [match for match in matches if not regex.search(r"(st|nd|rd|th)", match)]
 					if matches:
-						messages.append(LintMessage("t-021", "Measurements must be separated by a no-break space, not a dash or regular space.", se.MESSAGE_TYPE_ERROR, filename, matches))
+						messages.append(LintMessage("t-021", "Measurement not to standard. Numbers are followed by a no-break space and abbreviated units require an `<abbr>` element. See `semos://1.0.0/8.8.5`.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for line breaks after <br/> tags
 					matches = regex.findall(r"<br\s*?/>[^\n]", file_contents)
