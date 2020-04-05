@@ -558,6 +558,11 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 						with open(Path(root) / filename, "r+", encoding="utf-8") as file:
 							xhtml = file.read()
+
+							# Note: Kobo supports CSS hyphenation, but it can be improved with soft hyphens.
+							# However we can't insert them, because soft hyphens break the dictionary search when
+							# a word is highlighted.
+
 							# Kobos don't have fonts that support the ↩ character in endnotes, so replace it with ←
 							if filename == "endnotes.xhtml":
 								# Note that we replaced ↩ with \u21a9\ufe0e in an earlier iOS compatibility fix

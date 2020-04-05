@@ -964,7 +964,7 @@ def generate_title(xhtml: str) -> str:
 		for endnote_tag in h_element.select("[id^='noteref']"):
 			endnote_tag.decompose()
 
-		# se://5.3.2.2
+		# semos://1.0.0/5.3.2.2
 		# Header is just a Roman numeral
 		if h_element.has_attr("epub:type") and "z3998:roman" in h_element["epub:type"]:
 			title = f"Chapter {roman.fromRoman(h_element.text.upper())}"
