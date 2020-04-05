@@ -12,7 +12,7 @@ import html
 import os
 import tempfile
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from bs4 import BeautifulSoup, Tag
 import git
@@ -94,7 +94,7 @@ class SeEpub:
 	__endnotes_soup = None # bs4 soup object of the endnotes.xhtml file
 	_endnotes: Optional[List[Endnote]] = None # List of Endnote objects
 
-	def __init__(self, epub_root_directory: str):
+	def __init__(self, epub_root_directory: Union[str, Path]):
 		try:
 			self.path = Path(epub_root_directory).resolve()
 

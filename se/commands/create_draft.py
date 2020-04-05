@@ -19,6 +19,7 @@ from ftfy import fix_text
 
 import se
 import se.formatting
+from se.se_epub import SeEpub
 
 def _replace_in_file(file_path: Path, search: Union[str, list], replace: Union[str, list]) -> None:
 	"""
@@ -533,6 +534,11 @@ def _create_draft(args: Namespace):
 	# Create the cover SVG
 	with open(repo_name / "images" / "cover.svg", "w", encoding="utf-8") as file:
 		file.write(_generate_cover_svg(args.title, args.author, title_string))
+
+	# Build the cover/titlepage for distribution
+	epub = SeEpub(repo_name)
+	epub.generate_cover_svg()
+	epub.generate_titlepage_svg()
 
 	if args.pg_url:
 		_replace_in_file(repo_name / "src" / "epub" / "text" / "imprint.xhtml", "PG_URL", args.pg_url)
