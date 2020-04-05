@@ -3,6 +3,10 @@ This module implements the `se typogrify` command.
 """
 
 import argparse
+import html
+from pathlib import Path
+
+import regex
 
 import se
 import se.typography
@@ -26,17 +30,47 @@ def typogrify() -> int:
 	ignored_filenames = se.IGNORED_FILENAMES
 	ignored_filenames.remove("toc.xhtml")
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml",), ignored_filenames):
-		if filename.name == "titlepage.xhtml":
-			continue
-
+	for filename in se.get_target_filenames(args.targets, (".xhtml", ".opf"), ignored_filenames):
 		if args.verbose:
 			print(f"Processing {filename} ...", end="", flush=True)
 
 		try:
 			with open(filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
-				processed_xhtml = se.typography.typogrify(xhtml, args.quotes)
+
+				if Path(filename).name == "content.opf":
+					processed_xhtml = xhtml
+
+					# Extract the long description
+					matches = regex.search(r"""<meta(?:[^<]*?)property="se:long-description"(?:[^<]*?)>(.+?)</meta>""", xhtml, flags=regex.DOTALL)
+
+					if matches:
+						long_description = matches[1].strip()
+
+						processed_long_description = html.unescape(long_description)
+
+						processed_long_description = se.typography.typogrify(long_description)
+
+						# Tweak: Word joiners don't go in the long description
+						processed_long_description = processed_long_description.replace(se.WORD_JOINER, "")
+
+						processed_long_description = html.escape(processed_long_description)
+
+						processed_xhtml = xhtml.replace(long_description, processed_long_description)
+
+					# Extract the regular description
+					matches = regex.search(r"""<dc:description(?:[^<]*?)>(.+?)</dc:description>""", xhtml, flags=regex.DOTALL)
+
+					if matches:
+						description = matches[1].strip()
+						processed_description = se.typography.typogrify(description)
+
+						# Tweak: Word joiners don't go in the long description
+						processed_description = processed_description.replace(se.WORD_JOINER, "")
+
+						processed_xhtml = xhtml.replace(description, processed_description)
+				else:
+					processed_xhtml = se.typography.typogrify(xhtml, args.quotes)
 
 				if processed_xhtml != xhtml:
 					file.seek(0)
