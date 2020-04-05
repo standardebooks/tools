@@ -37,9 +37,9 @@
 		<meta property="term" refines="#subject-2">LCSH_ID_2</meta>
 		<meta property="se:subject">TAG</meta>
 		<dc:description id="description">DESCRIPTION</dc:description>
-		<meta id="long-description" property="se:long-description" refines="#description"><![CDATA[
+		<meta id="long-description" property="se:long-description" refines="#description">
 			LONG_DESCRIPTION
-		]]></meta>
+		</meta>
 		<dc:language>LANG</dc:language>
 		<dc:source>PG_URL</dc:source>
 		<meta property="se:production-notes">Any special notes about the production of this ebook for future editors/producers? Remove this element if not.</meta>
