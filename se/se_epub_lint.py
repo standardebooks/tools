@@ -20,6 +20,7 @@ import importlib_resources
 import cssutils
 import lxml.cssselect
 import lxml.etree as etree
+from PIL import Image, UnidentifiedImageError
 import regex
 import roman
 from bs4 import BeautifulSoup, NavigableString
@@ -165,6 +166,7 @@ SEMANTICS & CONTENT
 "s-048", "`noteref` as a direct child of element with `z3998:verse` semantic. `noteref`s should be in their parent `<span>`."
 "s-049", "`noteref` as a direct child of element with `z3998:song` semantic. `noteref`s should be in their parent `<span>`."
 "s-050", "`noteref` as a direct child of element with `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`."
+"s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -195,6 +197,7 @@ TYPOGRAPHY
 "t-027", "Endnote referrer link not preceded by exactly one space, or a newline if all previous siblings are elements."
 "t-028", "Possible mis-curled quotation mark."
 "t-029", "Period followed by lowercase letter. Hint: Abbreviations require an `<abbr>` element."
+"t-030", "`<abbr class=\"initialism\">` containing spaces."
 
 XHTML
 "x-001", "String `UTF-8` must always be lowercase."
@@ -291,6 +294,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 	headings: List[tuple] = []
 	double_spaced_files: List[str] = []
 	unused_selectors: List[str] = []
+	initialism_exceptions = ["U.S.", "P.S.", "P.P.S.", "P.S.S.", "MS.", "MSS."] # semos://1.0.0/8.10.5.1
 
 	# This is a dict with where keys are the path and values are a list of code dicts.
 	# Each code dict has a key "code" which is the actual code, and a key "used" which is a
@@ -631,6 +635,15 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 				url_safe_filename = se.formatting.make_url_safe(Path(filename).stem) + Path(filename).suffix
 				if filename != url_safe_filename and not Path(filename).stem.endswith(".source"):
 					messages.append(LintMessage("f-008", f"Filename is not URL-safe. Expected: `{url_safe_filename}`.", se.MESSAGE_TYPE_ERROR, filename))
+
+			if filename == "cover.jpg":
+				try:
+					image = Image.open(Path(root) / filename)
+					if image.size != (1400, 2100):
+						messages.append(LintMessage("s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100.", se.MESSAGE_TYPE_ERROR, filename))
+
+				except UnidentifiedImageError:
+					raise se.InvalidFileException(f"Couldn’t identify image type of `{filename}`.")
 
 			if filename.endswith(tuple(se.BINARY_EXTENSIONS)) or filename.endswith("core.css"):
 				continue
@@ -1029,6 +1042,16 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					matches = regex.findall(r"<p[^>]*?>\s*</p>", file_contents)
 					if "<p/>" in file_contents or matches:
 						messages.append(LintMessage("s-010", "Empty `<p>` element. Use `<hr/>` for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename))
+
+					# Check for initialisms with periods
+
+					matches = [str(element) for element in dom_soup.select("abbr.initialism") if "." in element.text and element.text not in initialism_exceptions]
+					if matches:
+						messages.append(LintMessage("t-030", "Initialism containing periods.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+					# matches = [str(element) for element in dom_soup.select("abbr.initialism") if regex.search(r"\s", element.text)]
+					# if matches:
+					# 	messages.append(LintMessage("t-030", "`<abbr class=\"initialism\">` containing spaces.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for <p> tags that end with <br/>
 					matches = regex.findall(r"(\s*<br/?>\s*)+</p>", file_contents)
