@@ -1102,13 +1102,9 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("x-012", "Illegal `style` attribute. Do not use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for illegal elements in <head>
-					illegal_elements = []
-					for element in dom_soup.select("head > *"):
-						if (element.name != "title" and element.name != "link") or (element.name == "link" and element.has_attr("rel") and element["rel"][0] != "stylesheet"):
-							illegal_elements.append(f"<{element.name}>")
-
-					if illegal_elements:
-						messages.append(LintMessage("x-015", f"Illegal element in `<head>`. Only `<title>` and `<link rel=\"stylesheet\">` are allowed.", se.MESSAGE_TYPE_ERROR, filename, illegal_elements))
+					nodes = dom_lxml.xpath("//head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
+					if nodes:
+						messages.append(LintMessage("x-015", f"Illegal element in `<head>`. Only `<title>` and `<link rel=\"stylesheet\">` are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.lxml_element.tag}>" for node in nodes]))
 
 					# Check for uppercase HTML tags
 					matches = regex.findall(r"<[a-zA-Z]*[A-Z]+[a-zA-Z]*", file_contents)
