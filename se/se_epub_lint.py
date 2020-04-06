@@ -1353,9 +1353,9 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-034", f"`{attr}` semantic used, but `{bare_attr}` is in the EPUB semantic inflection vocabulary.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for title attrs on abbr elements
-					elements = dom_soup.select("abbr[title]")
-					if elements:
-						messages.append(LintMessage("s-052", "`<attr>` element with illegal `title` attribute.", se.MESSAGE_TYPE_ERROR, filename, [str(element) for element in elements]))
+					nodes = dom_lxml.xpath("//abbr[@title]")
+					if nodes:
+						messages.append(LintMessage("s-052", "`<attr>` element with illegal `title` attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 					# Do we have xml:lang attrs on elements that are not <i>?
 					# We only have to do this check once, so skip it if we've already found an example
