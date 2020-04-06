@@ -169,6 +169,7 @@ SEMANTICS & CONTENT
 "s-050", "`noteref` as a direct child of element with `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`."
 "s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100."
 "s-052", "`<attr>` element with illegal `title` attribute."
+"s-053", "`<article>` element without `id` attribute."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -897,9 +898,11 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if uppercase_attr_values:
 						messages.append(LintMessage("x-002", "Uppercase in attribute value. Attribute values must be all lowercase.", se.MESSAGE_TYPE_ERROR, filename, uppercase_attr_values))
 
-					matches = [x for x in dom_soup.select("section") if not x.has_attr("id")]
-					if matches:
+					if dom_lxml.xpath("//section[not(@id)]"):
 						messages.append(LintMessage("s-011", "`<section>` element without `id` attribute.", se.MESSAGE_TYPE_ERROR, filename))
+
+					if dom_lxml.xpath("//article[not(@id)]"):
+						messages.append(LintMessage("s-053", "`<article>` element without `id` attribute.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for empty title tags
 					if "<title/>" in file_contents or "<title></title>" in file_contents:
