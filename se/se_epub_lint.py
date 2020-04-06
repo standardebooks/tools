@@ -1001,14 +1001,8 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 							messages.append(LintMessage("t-017", "Ending punctuation inside italics.", se.MESSAGE_TYPE_WARNING, filename, filtered_matches))
 
 					# Check for <table> tags without a <tbody> child
-					tables = dom_soup.select("table")
-					for table in tables:
-						has_tbody = False
-						for element in table.contents:
-							if element.name == "tbody":
-								has_tbody = True
-						if not has_tbody:
-							messages.append(LintMessage("s-042", "`<table>` element without `<tbody>` child.", se.MESSAGE_TYPE_ERROR, filename))
+					if dom_lxml.xpath("//table[not(tbody)]"):
+						messages.append(LintMessage("s-042", "`<table>` element without `<tbody>` child.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for money not separated by commas
 					matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
