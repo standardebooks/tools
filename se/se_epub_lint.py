@@ -168,6 +168,7 @@ SEMANTICS & CONTENT
 "s-049", "`noteref` as a direct child of element with `z3998:song` semantic. `noteref`s should be in their parent `<span>`."
 "s-050", "`noteref` as a direct child of element with `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`."
 "s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100."
+"s-052", "`<attr>` element with illegal `title` attribute."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1357,6 +1358,11 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					unique_incorrect_attrs = set(incorrect_attrs)
 					for (attr, bare_attr) in unique_incorrect_attrs:
 						messages.append(LintMessage("s-034", f"`{attr}` semantic used, but `{bare_attr}` is in the EPUB semantic inflection vocabulary.", se.MESSAGE_TYPE_ERROR, filename))
+
+					# Check for title attrs on abbr elements
+					elements = dom_soup.select("abbr[title]")
+					if elements:
+						messages.append(LintMessage("s-052", "`<attr>` element with illegal `title` attribute.", se.MESSAGE_TYPE_ERROR, filename, [str(element) for element in elements]))
 
 					# Do we have xml:lang attrs on elements that are not <i>?
 					# We only have to do this check once, so skip it if we've already found an example
