@@ -48,6 +48,7 @@ CSS
 "c-007", f"`<abbr class=\"{css_class}\">` element found, but no required style in `local.css`. See the typography manual for required styls."
 "c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks."
 "c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles."
+"c-010", "Non-`<i>` element with `xml:lang` attribute found, but no `body [xml|lang]{ font-style: italic; }` style in `local.css`."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -288,6 +289,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 	has_halftitle = False
 	has_frontmatter = False
 	has_cover_source = False
+	has_xml_lang = False
 	cover_svg_title = ""
 	titlepage_svg_title = ""
 	xhtml_css_classes: Dict[str, int] = {}
@@ -1356,6 +1358,12 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					for (attr, bare_attr) in unique_incorrect_attrs:
 						messages.append(LintMessage("s-034", f"`{attr}` semantic used, but `{bare_attr}` is in the EPUB semantic inflection vocabulary.", se.MESSAGE_TYPE_ERROR, filename))
 
+					# Do we have xml:lang attrs on elements that are not <i>?
+					# We only have to do this check once, so skip it if we've already found an example
+					if not has_xml_lang:
+						if dom_lxml.xpath("//body//*[@xml:lang][not(self::i)]"):
+							has_xml_lang = True
+
 					# Check for leftover asterisms
 					matches = regex.findall(r"<[a-z]+[^>]*?>\s*\*\s*(\*\s*)+", file_contents, flags=regex.DOTALL)
 					if matches:
@@ -1605,6 +1613,9 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 	if unused_selectors:
 		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, "local.css", unused_selectors))
+
+	if has_xml_lang and "body [xml|lang]" not in self.local_css:
+		messages.append(LintMessage("c-010", "Non-`<i>` element with `xml:lang` attribute found, but no `body [xml|lang]{ font-style: italic; }` style in `local.css`.", se.MESSAGE_TYPE_ERROR, "local.css"))
 
 	# Now that we have our lint messages, we filter out ones that we've ignored.
 	if ignored_codes:
