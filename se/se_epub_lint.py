@@ -119,15 +119,14 @@ SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like `&#913;`)."
 "s-002", "Lowercase letters in cover. Cover text must be all uppercase."
 "s-003", "Lowercase letters in titlepage. Titlepage text must be all uppercase except `translated by` and `illustrated by`."
-"s-004", "Empty `<title>` element."
 "s-005", "Nested `<blockquote>` element."
 "s-006", "Poetry or verse included without `<span>` element."
 "s-007", "`<li>` element without direct block-level child."
 "s-008", "`<br/>` element found before closing `</p>` tag."
 "s-009", "`<h2>` element without `epub:type=\"title\"` attribute."
-"s-010", "Empty `<p>` element. Use `<hr/>` for thematic breaks if appropriate."
+"s-010", "Empty element. Use `<hr/>` for thematic breaks if appropriate."
 "s-011", "`<section>` element without `id` attribute."
-"s-012", "Illegal `<hr/>` before the end of a section."
+"s-012", "Illegal `<hr/>` element as last child."
 "s-013", "Illegal `<pre>` element."
 "s-014", "`<br/>` after block-level element."
 "s-015", f"`<{match.name}>` element has subtitle `<span>`, but first line is not wrapped in a `<span>`. See semantics manual for structure of headers with subtitles."
@@ -170,6 +169,7 @@ SEMANTICS & CONTENT
 "s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100."
 "s-052", "`<attr>` element with illegal `title` attribute."
 "s-053", "`<article>` element without `id` attribute."
+"s-004", *******************UNUSED***********
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -291,7 +291,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 	has_halftitle = False
 	has_frontmatter = False
 	has_cover_source = False
-	has_xml_lang = False
+	has_xml_lang_css = False
 	cover_svg_title = ""
 	titlepage_svg_title = ""
 	xhtml_css_classes: Dict[str, int] = {}
@@ -419,7 +419,6 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 				local_css_rules[selector.selectorText] = rule.style.cssText + ";"
 
 	if duplicate_selectors:
-
 		messages.append(LintMessage("c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles.", se.MESSAGE_TYPE_WARNING, "local.css", list(set(duplicate_selectors))))
 
 	# Store a list of CSS selectors, and duplicate it into a list of unused selectors, for later checks
@@ -427,13 +426,12 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 	local_css_selectors = [regex.sub(r"::[a-z\-]+", "", selector) for selector in local_css_rules]
 	unused_selectors = local_css_selectors.copy()
 
-	# Store some true/false values for later checks
-	local_css_has_subtitle_style = "span[epub|type~=\"subtitle\"]" in self.local_css
-	local_css_has_poem_style = "z3998:poem" in self.local_css
-	local_css_has_verse_style = "z3998:verse" in self.local_css
-	local_css_has_song_style = "z3998:song" in self.local_css
-	local_css_has_hymn_style = "z3998:hymn" in self.local_css
-
+	local_css_has_subtitle_style = False
+	local_css_has_halftitle_subtitle_style = False
+	local_css_has_poem_style = False
+	local_css_has_verse_style = False
+	local_css_has_song_style = False
+	local_css_has_hymn_style = False
 	abbr_styles = regex.findall(r"abbr\.[a-z]+", self.local_css)
 
 	# Iterate over rules to do some other checks
@@ -443,8 +441,29 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 		if regex.search(r"^h[0-6]", selector, flags=regex.IGNORECASE):
 			selected_h.append(selector)
 
+		if not local_css_has_subtitle_style and selector == "span[epub|type~=\"subtitle\"]":
+			local_css_has_subtitle_style = True
+
+		if not local_css_has_halftitle_subtitle_style and selector == "section[epub|type~=\"halftitlepage\"] span[epub|type~=\"subtitle\"]":
+			local_css_has_halftitle_subtitle_style = True
+
+		if not local_css_has_poem_style and "z3998:poem" in selector:
+			local_css_has_poem_style = True
+
+		if not local_css_has_verse_style and "z3998:verse" in selector:
+			local_css_has_verse_style = True
+
+		if not local_css_has_song_style and "z3998:song" in selector:
+			local_css_has_song_style = True
+
+		if not local_css_has_hymn_style and "z3998:hymn" in selector:
+			local_css_has_hymn_style = True
+
 		if "abbr" in selector and "nowrap" in rules:
 			abbr_with_whitespace.append(selector)
+
+		if "[xml|lang]" in selector:
+			has_xml_lang_css = True
 
 		if regex.search(r"\[\s*xml\s*\|", selector, flags=regex.IGNORECASE) and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
 			messages.append(LintMessage("c-003", "`[xml|attr]` selector in CSS, but no XML namespace declared (`@namespace xml \"http://www.w3.org/XML/1998/namespace\";`).", se.MESSAGE_TYPE_ERROR, "local.css"))
@@ -904,10 +923,6 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if dom_lxml.xpath("//article[not(@id)]"):
 						messages.append(LintMessage("s-053", "`<article>` element without `id` attribute.", se.MESSAGE_TYPE_ERROR, filename))
 
-					# Check for empty title tags
-					if "<title/>" in file_contents or "<title></title>" in file_contents:
-						messages.append(LintMessage("s-004", "Empty `<title>` element.", se.MESSAGE_TYPE_ERROR, filename))
-
 					# Check for numeric entities
 					matches = regex.findall(r"&#[0-9]+?;", file_contents)
 					if matches:
@@ -919,9 +934,8 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-005", "Nested `<blockquote>` element.", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for <hr> tags before the end of a section, which is a common PG artifact
-					matches = regex.findall(r"<hr[^>]*?/?>\s*</section>", file_contents, flags=regex.DOTALL)
-					if matches:
-						messages.append(LintMessage("s-012", "Illegal `<hr/>` before the end of a section.", se.MESSAGE_TYPE_ERROR, filename))
+					if dom_lxml.css_select("hr:last-child"):
+						messages.append(LintMessage("s-012", "Illegal `<hr/>` as last child.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for double greater-than at the end of a tag
 					matches = regex.findall(r"(>>|>&gt;)", file_contents)
@@ -1012,7 +1026,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					# Check for deprecated MathML elements
 					matches = regex.findall(r"<(?:m:)?mfenced[^>]*?>.+?</(?:m:)?mfenced>", file_contents)
 					if matches:
-						messages.append(LintMessage("s-017", F"`<m:mfenced>` is deprecated in the MathML spec. Use `<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>`.", se.MESSAGE_TYPE_ERROR, filename, matches))
+						messages.append(LintMessage("s-017", f"`<m:mfenced>` is deprecated in the MathML spec. Use `<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>`.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for period following Roman numeral, which is an old-timey style we must fix
 					# But ignore the numeral if it's the first item in a <p> tag, as that suggests it might be a kind of list item.
@@ -1031,17 +1045,12 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-016", "Initials in `<abbr class=\"name\">` not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for empty <h2> missing epub:type="title" attribute
-					if "<h2>" in file_contents:
+					if dom_lxml.xpath("//h2[not(contains(@epub:type, 'title'))]"):
 						messages.append(LintMessage("s-009", "`<h2>` element without `epub:type=\"title\"` attribute.", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for a common typo
 					if "z3998:nonfiction" in file_contents:
 						messages.append(LintMessage("s-030", "`z3998:nonfiction` should be `z3998:non-fiction`.", se.MESSAGE_TYPE_ERROR, filename))
-
-					# Check for empty <p> tags
-					matches = regex.findall(r"<p[^>]*?>\s*</p>", file_contents)
-					if "<p/>" in file_contents or matches:
-						messages.append(LintMessage("s-010", "Empty `<p>` element. Use `<hr/>` for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for initialisms with periods
 
@@ -1116,6 +1125,12 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if matches:
 						messages.append(LintMessage("t-022", "No-break space found in `<abbr class=\"name\">`. This is redundant.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
+					# Check for empty elements. Elements are empty if they have not children no non-whitespace text
+					#empty_elements = [f"<{node.lxml_element.tag}/>" for node in dom_lxml.xpath("//*[not(*)][not(normalize-space())]") if node.lxml_element.tag not in ("br", "hr", "img", "td", "th", "link")]
+					empty_elements = [node.tostring() for node in dom_lxml.xpath("//*[not(self::br) and not(self::hr) and not(self::img) and not(self::td) and not(self::th) and not(self::link)][not(*)][not(normalize-space())]")]
+					if empty_elements:
+						messages.append(LintMessage("s-010", "Empty element. Use `<hr/>` for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename, empty_elements))
+
 					# Check for Roman numerals in <title> tag
 					if regex.findall(r"<title>[Cc]hapter [XxIiVv]+", file_contents):
 						messages.append(LintMessage("s-026", "Illegal Roman numeral in `<title>` element; use Arabic numbers.", se.MESSAGE_TYPE_ERROR, filename))
@@ -1172,8 +1187,13 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-021", f"Unexpected value for `<title>` element. Expected: `{title}`. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, title_filename))
 
 					# Check for missing subtitle styling
-					if "epub:type=\"subtitle\"" in file_contents and not local_css_has_subtitle_style:
-						messages.append(LintMessage("c-006", "Subtitles found, but no subtitle style found in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+					# Half titles have slightly different subtitle styles than regular subtitles
+					if filename == "halftitle.xhtml":
+						if "epub:type=\"subtitle\"" in file_contents and not local_css_has_halftitle_subtitle_style:
+							messages.append(LintMessage("c-006", "Subtitles found, but no subtitle style found in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+					else:
+						if "epub:type=\"subtitle\"" in file_contents and not local_css_has_subtitle_style:
+							messages.append(LintMessage("c-006", "Subtitles found, but no subtitle style found in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for whitespace before noteref
 					matches = regex.findall(r"\s+<a href=\"endnotes\.xhtml#note-[0-9]+?\" id=\"noteref-[0-9]+?\" epub:type=\"noteref\">[0-9]+?</a>", file_contents)
@@ -1307,7 +1327,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-016", "`<br/>` element must be followed by a newline, and subsequent content must be indented to the same level.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for <pre> tags
-					if "<pre" in file_contents:
+					if dom_lxml.xpath("//pre"):
 						messages.append(LintMessage("s-013", "Illegal `<pre>` element.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for <br/> after block-level elements
@@ -1357,11 +1377,12 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if nodes:
 						messages.append(LintMessage("s-052", "`<attr>` element with illegal `title` attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
-					# Do we have xml:lang attrs on elements that are not <i>?
+					# Do we have xml:lang attrs on elements that are not <i>? (Skip span, which doesn't need styling, and dfn, which is italic by default)
 					# We only have to do this check once, so skip it if we've already found an example
-					if not has_xml_lang:
-						if dom_lxml.xpath("//body//*[@xml:lang][not(self::i)]"):
-							has_xml_lang = True
+					if not has_xml_lang_css:
+						nodes = dom_lxml.xpath("//body//*[@xml:lang][not(self::i) and not(self::em) and not(self::span) and not(self::dfn)]")
+						if nodes:
+							messages.append(LintMessage("c-010", "Non-`<i>` element with `xml:lang` attribute found, but no `body [xml|lang]{ font-style: italic; }` style in `local.css`.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
 
 					# Check for leftover asterisms
 					matches = regex.findall(r"<[a-z]+[^>]*?>\s*\*\s*(\*\s*)+", file_contents, flags=regex.DOTALL)
@@ -1374,9 +1395,18 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check to see if we've marked something as poetry or verse, but didn't include a first <span>
-					matches = regex.findall(r"<blockquote [^>]*?epub:type=\"z3998:(poem|verse)\"[^>]*?>\s*<p>(?!\s*<span)", file_contents, flags=regex.DOTALL)
-					if matches:
-						messages.append(LintMessage("s-006", "Poem or verse included without `<span>` element.", se.MESSAGE_TYPE_ERROR, filename, matches))
+					nodes = dom_lxml.xpath("//*[contains(@epub:type, 'z3998:poem') or contains(@epub:type, 'z3998:verse') or contains(@epub:type, 'z3998:song') or contains(@epub:type, 'z3998:hymn')]/p/*[1][not(self::span)]")
+					if nodes:
+						matches = []
+						for node in nodes:
+							# Get the first line of the poem, if it's a text node, so that we can include it in the error messages.
+							# If it's not a text node then just ignore it and add the error anyway.
+							element = node.lxml_element.getparent()
+							first_line = element.xpath("text()[1]", namespaces=se.XHTML_NAMESPACES)[0].strip()
+							if first_line:
+								matches.append(first_line)
+
+						messages.append(LintMessage("s-006", "Poem or verse included without `<span>` element.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check to see if we included poetry or verse without the appropriate styling
 					if filename not in se.IGNORED_FILENAMES:
@@ -1612,9 +1642,6 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 	if unused_selectors:
 		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, "local.css", unused_selectors))
-
-	if has_xml_lang and "body [xml|lang]" not in self.local_css:
-		messages.append(LintMessage("c-010", "Non-`<i>` element with `xml:lang` attribute found, but no `body [xml|lang]{ font-style: italic; }` style in `local.css`.", se.MESSAGE_TYPE_ERROR, "local.css"))
 
 	# Now that we have our lint messages, we filter out ones that we've ignored.
 	if ignored_codes:

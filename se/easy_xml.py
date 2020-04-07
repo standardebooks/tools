@@ -58,6 +58,21 @@ class EasyXmlElement:
 	def __init__(self, lxml_element):
 		self.lxml_element = lxml_element
 
+	def totagstring(self) -> str:
+		"""
+		Return a string representing the opening tag of the element.
+		"""
+
+		attrs = ""
+
+		for name, value in self.lxml_element.items():
+			attrs += f" {name}=\"{value}\""
+
+		attrs = attrs.replace("{http://www.idpf.org/2007/ops}", "epub:")
+		attrs = attrs.replace("{http://www.w3.org/XML/1998/namespace}", "xml:")
+
+		return f"<{self.lxml_element.tag}{attrs}>"
+
 	def tostring(self) -> str:
 		"""
 		Return a string representing this element.
