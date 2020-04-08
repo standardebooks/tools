@@ -170,6 +170,7 @@ SEMANTICS & CONTENT
 "s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100."
 "s-052", "`<attr>` element with illegal `title` attribute."
 "s-053", "`<article>` element without `id` attribute."
+"s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1018,6 +1019,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					matches = regex.findall(fr"—{se.WORD_JOINER}*—+", file_contents)
 					if matches:
 						messages.append(LintMessage("t-014", "Two or more em-dashes in a row found. Elided words should use the two- or three-em-dash Unicode character, and dialog ending in em-dashes should only end in a single em-dash.", se.MESSAGE_TYPE_ERROR, filename))
+
+					nodes = dom_lxml.xpath("//blockquote/p/cite")
+					if nodes:
+						messages.append(LintMessage("s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 					# Check for <abbr class="name"> that does not contain spaces
 					matches = regex.findall(r"<abbr class=\"name\">[^<]*?[A-Z]\.[A-Z]\.[^<]*?</abbr>", file_contents)
