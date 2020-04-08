@@ -119,6 +119,7 @@ SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like `&#913;`)."
 "s-002", "Lowercase letters in cover. Cover text must be all uppercase."
 "s-003", "Lowercase letters in titlepage. Titlepage text must be all uppercase except `translated by` and `illustrated by`."
+"s-004", "`img` element missing `alt` attribute."
 "s-005", "Nested `<blockquote>` element."
 "s-006", "Poetry or verse included without `<span>` element."
 "s-007", "`<li>` element without direct block-level child."
@@ -169,7 +170,6 @@ SEMANTICS & CONTENT
 "s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100."
 "s-052", "`<attr>` element with illegal `title` attribute."
 "s-053", "`<article>` element without `id` attribute."
-"s-004", *******************UNUSED***********
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -305,27 +305,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 	# bool indicating whether or not the code has actually been caught in the linting run.
 	ignored_codes: Dict[str, List[Dict]] = {}
 
-	# First, check if we have an se-lint-ignore.xml file in the ebook root. If so, parse it.
-	# This is an example se-lint-ignore.xml file. File paths support shell-style globbing. <reason> is required.
-	# <?xml version="1.0" encoding="utf-8"?>
-	# <se-lint-ignore>
-	# 	<file path="chapter-6.xhtml">
-	# 		<ignore>
-	# 			<code>t-007</code>
-	# 			<reason>The ampersand is part of prose in a letter written in the character's distinct style.</reason>
-	# 		</ignore>
-	# 		<ignore>
-	# 			<code>t-008</code>
-	# 			<reason>The ampersand is part of prose in a letter written in the character's distinct style.</reason>
-	# 		</ignore>
-	# 	</file>
-	# 	<file path="preface-*.xhtml">
-	# 		<ignore>
-	# 			<code>t-011</code>
-	# 			<reason>The quotes are in headlines that lack punctuation on purpose.</reason>
-	# 		</ignore>
-	# 	</file>
-	# </se-lint-ignore>
+	# First, check if we have an se-lint-ignore.xml file in the ebook root. If so, parse it. For an example se-lint-ignore file, see semos://1.0.0/2.3
 	if not skip_lint_ignore:
 		try:
 			with open(self.path / "se-lint-ignore.xml", "r", encoding="utf-8") as file:
@@ -642,10 +622,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 			if ".git" in str(Path(root) / filename):
 				continue
 
-			if ".jpeg" in filename:
+			if filename.endswith(".jpeg"):
 				messages.append(LintMessage("f-011", "JPEG files must end in `.jpg`.", se.MESSAGE_TYPE_ERROR, filename))
 
-			if ".tiff" in filename:
+			if filename.endswith(".tiff"):
 				messages.append(LintMessage("f-012", "TIFF files must end in `.tif`.", se.MESSAGE_TYPE_ERROR, filename))
 
 			if filename.startswith("cover.source."):
@@ -1220,9 +1200,9 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-004", "`‘` missing matching `’`.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for IDs on <h#> tags
-					matches = regex.findall(r"<h[0-6][^>]*?id=[^>]*?>", file_contents, flags=regex.DOTALL)
-					if matches:
-						messages.append(LintMessage("s-019", "`<h#>` element with `id` attribute. `<h#>` elements should be wrapped in `<section>` elements, which should hold the `id` attribute.", se.MESSAGE_TYPE_WARNING, filename, matches))
+					nodes = dom_lxml.xpath("//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
+					if nodes:
+						messages.append(LintMessage("s-019", "`<h#>` element with `id` attribute. `<h#>` elements should be wrapped in `<section>` elements, which should hold the `id` attribute.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
 
 					# Check to see if <h#> tags are correctly titlecased
 					matches = regex.finditer(r"<h([0-6])([^>]*?)>(.*?)</h\1>", file_contents, flags=regex.DOTALL)
@@ -1269,42 +1249,59 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 									messages.append(LintMessage("s-023", f"Title `{title}` not correctly titlecased. Expected: `{titlecased_title}`.", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for <figure> tags without id attributes
-					matches = regex.findall(r"<img[^>]*?id=\"[^>]+?>", file_contents)
-					if matches:
-						messages.append(LintMessage("s-018", "`<img>` element with `id` attribute. `id` attributes go on parent `<figure>` elements.", se.MESSAGE_TYPE_ERROR, filename, matches))
+					nodes = dom_lxml.xpath("//img[@id]")
+					if nodes:
+						messages.append(LintMessage("s-018", "`<img>` element with `id` attribute. `id` attributes go on parent `<figure>` elements.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
 					# Check for closing dialog without comma
 					matches = regex.findall(r"[a-z]+?” [a-zA-Z]+? said", file_contents)
 					if matches:
 						messages.append(LintMessage("t-005", "Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-					# Check for non-typogrified img alt attributes
-					matches = regex.findall(r"alt=\"[^\"]*?('|--|&quot;)[^\"]*?\"", file_contents)
-					if matches:
-						messages.append(LintMessage("t-025", "Non-typogrified `'`, `\"` (as `&quot;`), or `--` in image `alt` attribute.", se.MESSAGE_TYPE_ERROR, filename, matches))
+					# Check alt attributes on images
+					nodes = dom_lxml.xpath("//img")
+					img_no_alt = []
+					img_alt_not_typogrified = []
+					img_alt_lacking_punctuation = []
+					for node in nodes:
+						alt = node.lxml_element.get("alt")
 
-					# Check alt attributes not ending in punctuation
-					if filename not in se.IGNORED_FILENAMES:
-						matches = regex.findall(r"alt=\"[^\"]*?[a-zA-Z]\"", file_contents)
-						if matches:
-							messages.append(LintMessage("t-026", "`alt` attribute does not appear to end with punctuation. `alt` attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename, matches))
+						if alt:
+							# Check for non-typogrified img alt attributes
+							if regex.search(r"""('|"|--|\s-\s|&quot;)""", alt):
+								img_alt_not_typogrified.append(node.totagstring())
 
-					# Check alt attributes match image titles
-					images = dom_soup.select("img[src$=svg]")
-					for image in images:
-						alt_text = image["alt"]
-						title_text = ""
-						image_ref = image["src"].split("/").pop()
-						try:
-							with open(self.path / "src" / "epub" / "images" / image_ref, "r", encoding="utf-8") as image_source:
+							# Check alt attributes not ending in punctuation
+							if filename not in se.IGNORED_FILENAMES and not regex.search(r"""[\.\!\?]”?$""", alt):
+								img_alt_lacking_punctuation.append(node.totagstring())
+
+							# Check that alt attributes match SVG titles
+							img_src = node.lxml_element.get("src")
+							if img_src and img_src.endswith("svg"):
+								title_text = ""
+								image_ref = img_src.split("/").pop()
 								try:
-									title_text = BeautifulSoup(image_source, "lxml").title.get_text()
-								except Exception:
-									messages.append(LintMessage("s-027", f"{image_ref} missing `<title>` element.", se.MESSAGE_TYPE_ERROR, image_ref))
-							if title_text != "" and alt_text != "" and title_text != alt_text:
-								messages.append(LintMessage("s-022", f"The `<title>` element of `{image_ref}` does not match the alt text in `{filename}`.", se.MESSAGE_TYPE_ERROR, filename))
-						except FileNotFoundError:
-							missing_files.append(str(Path(f"src/epub/images/{image_ref}")))
+									with open(self.path / "src" / "epub" / "images" / image_ref, "r", encoding="utf-8") as image_source:
+										try:
+											title_text = BeautifulSoup(image_source, "lxml").title.get_text()
+										except Exception:
+											messages.append(LintMessage("s-027", f"{image_ref} missing `<title>` element.", se.MESSAGE_TYPE_ERROR, image_ref))
+									if title_text != "" and alt != "" and title_text != alt:
+										messages.append(LintMessage("s-022", f"The `<title>` element of `{image_ref}` does not match the alt text in `{filename}`.", se.MESSAGE_TYPE_ERROR, filename))
+								except FileNotFoundError:
+									missing_files.append(str(Path(f"src/epub/images/{image_ref}")))
+
+						else:
+							img_no_alt.append(node.totagstring())
+
+					if img_alt_not_typogrified:
+						messages.append(LintMessage("t-025", "Non-typogrified `'`, `\"` (as `&quot;`), or `--` in image `alt` attribute.", se.MESSAGE_TYPE_ERROR, filename, img_alt_not_typogrified))
+
+					if img_alt_lacking_punctuation:
+						messages.append(LintMessage("t-026", "`alt` attribute does not appear to end with punctuation. `alt` attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename, img_alt_lacking_punctuation))
+
+					if img_no_alt:
+						messages.append(LintMessage("s-004", "`img` element missing `alt` attribute.", se.MESSAGE_TYPE_ERROR, filename, img_no_alt))
 
 					# Check for punctuation after endnotes
 					regex_string = fr"<a[^>]*?epub:type=\"noteref\"[^>]*?>[0-9]+</a>[^\s<–\]\)—{se.WORD_JOINER}]"
@@ -1331,9 +1328,8 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-013", "Illegal `<pre>` element.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for <br/> after block-level elements
-					matches = regex.findall(r"</(?:p|blockquote|table|ol|ul|section|article)>\s*<br/>", file_contents, flags=regex.DOTALL)
-					if matches:
-						messages.append(LintMessage("s-014", "`<br/>` after block-level element.", se.MESSAGE_TYPE_ERROR, filename, matches))
+					if dom_lxml.xpath("//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article]/following-sibling::br"):
+						messages.append(LintMessage("s-014", "`<br/>` after block-level element.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 					matches = regex.findall(r"\b.+?”[,\.](?! …)", file_contents)
@@ -1375,7 +1371,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					# Check for title attrs on abbr elements
 					nodes = dom_lxml.xpath("//abbr[@title]")
 					if nodes:
-						messages.append(LintMessage("s-052", "`<attr>` element with illegal `title` attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+						messages.append(LintMessage("s-052", "`<attr>` element with illegal `title` attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
 					# Do we have xml:lang attrs on elements that are not <i>? (Skip span, which doesn't need styling, and dfn, which is italic by default)
 					# We only have to do this check once, so skip it if we've already found an example
