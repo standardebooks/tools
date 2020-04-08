@@ -121,7 +121,7 @@ SEMANTICS & CONTENT
 "s-003", "Lowercase letters in titlepage. Titlepage text must be all uppercase except `translated by` and `illustrated by`."
 "s-004", "`img` element missing `alt` attribute."
 "s-005", "Nested `<blockquote>` element."
-"s-006", "Poetry or verse included without `<span>` element."
+"s-006", "Poem or verse `<p>` (stanza) without `<span>` (line) element."
 "s-007", "`<li>` element without direct block-level child."
 "s-008", "`<br/>` element found before closing `</p>` tag."
 "s-009", "`<h2>` element without `epub:type=\"title\"` attribute."
@@ -1398,11 +1398,11 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 							# Get the first line of the poem, if it's a text node, so that we can include it in the error messages.
 							# If it's not a text node then just ignore it and add the error anyway.
 							element = node.lxml_element.getparent()
-							first_line = element.xpath("text()[1]", namespaces=se.XHTML_NAMESPACES)[0].strip()
+							first_line = element.xpath("text()[1]", namespaces=se.XHTML_NAMESPACES)
 							if first_line:
-								matches.append(first_line)
+								matches.append(first_line[0].strip())
 
-						messages.append(LintMessage("s-006", "Poem or verse included without `<span>` element.", se.MESSAGE_TYPE_WARNING, filename, matches))
+						messages.append(LintMessage("s-006", "Poem or verse `<p>` (stanza) without `<span>` (line) element.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check to see if we included poetry or verse without the appropriate styling
 					if filename not in se.IGNORED_FILENAMES:
