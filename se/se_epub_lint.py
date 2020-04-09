@@ -942,7 +942,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						temp_file_contents = file_contents.replace("\"name eoc\"", "\"name\"")
 
 						# Check for nbsp before ampersand (&amp)
-						matches = regex.findall(fr"(?<!\<abbr class=\"name\")>[^>]*? \&amp;", temp_file_contents)
+						matches = regex.findall(fr"(?<!\<abbr class=\"name\")[^>]*? \&amp;", temp_file_contents)
 						if matches:
 							messages.append(LintMessage("t-007", "Required no-break space not found before `&amp;`.", se.MESSAGE_TYPE_WARNING, filename))
 
