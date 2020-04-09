@@ -1392,14 +1392,14 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check to see if we've marked something as poetry or verse, but didn't include a first <span>
-					nodes = dom_lxml.xpath("//*[contains(@epub:type, 'z3998:poem') or contains(@epub:type, 'z3998:verse') or contains(@epub:type, 'z3998:song') or contains(@epub:type, 'z3998:hymn')]/p/*[1][not(self::span)]")
+					# This xpath selects the p elements, whose parents are poem/verse, and whose first child is not a span
+					nodes = dom_lxml.xpath("//*[contains(@epub:type, 'z3998:poem') or contains(@epub:type, 'z3998:verse') or contains(@epub:type, 'z3998:song') or contains(@epub:type, 'z3998:hymn')]/p[not(*[name()='span' and position()=1])]")
 					if nodes:
 						matches = []
 						for node in nodes:
 							# Get the first line of the poem, if it's a text node, so that we can include it in the error messages.
 							# If it's not a text node then just ignore it and add the error anyway.
-							element = node.lxml_element.getparent()
-							first_line = element.xpath("text()[1]", namespaces=se.XHTML_NAMESPACES)
+							first_line = node.lxml_element.xpath("text()[1]", namespaces=se.XHTML_NAMESPACES)
 							if first_line:
 								matches.append(first_line[0].strip())
 
