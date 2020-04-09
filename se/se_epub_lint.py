@@ -201,7 +201,7 @@ TYPOGRAPHY
 "t-027", "Endnote referrer link not preceded by exactly one space, or a newline if all previous siblings are elements."
 "t-028", "Possible mis-curled quotation mark."
 "t-029", "Period followed by lowercase letter. Hint: Abbreviations require an `<abbr>` element."
-"t-030", "`<abbr class=\"initialism\">` containing spaces."
+"t-030", "Initialism without periods."
 
 XHTML
 "x-001", "String `UTF-8` must always be lowercase."
@@ -299,7 +299,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 	headings: List[tuple] = []
 	double_spaced_files: List[str] = []
 	unused_selectors: List[str] = []
-	initialism_exceptions = ["U.S.", "P.S.", "P.P.S.", "P.S.S.", "MS.", "MSS."] # semos://1.0.0/8.10.5.1
+	initialism_exceptions = ["MS.", "MSS.", "κ.τ.λ.", "TV"] # semos://1.0.0/8.10.5.1; κ.τ.λ. is "etc." in Greek, and we don't match Greek chars.
 
 	# This is a dict with where keys are the path and values are a list of code dicts.
 	# Each code dict has a key "code" which is the actual code, and a key "used" which is a
@@ -927,6 +927,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					temp_xhtml = regex.sub(r"<title>.+?</title>", "", file_contents) # Remove <title> because it might contain something like <title>Chapter 2: The Antechamber of M. de Tréville</title>
 					temp_xhtml = regex.sub(r"<abbr[^>]*?>", "<abbr>", temp_xhtml) # Replace things like <abbr xml:lang="la">
 					temp_xhtml = regex.sub(r"<img[^>]*?>", "", temp_xhtml) # Remove <img alt> attributes
+					temp_xhtml = temp_xhtml.replace("A.B.C.", "X") # Remove A.B.C, which is not an abbreviations.
 					matches = regex.findall(r"[^\s]+\.\s+[a-z](?!’[A-Z])[a-z]+", temp_xhtml)
 					# If <abbr> is in the match, remove it from the matches so we exclude things like <abbr>et. al.</abbr>
 					matches = [match for match in matches if "<abbr>" not in match]
@@ -1037,15 +1038,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if "z3998:nonfiction" in file_contents:
 						messages.append(LintMessage("s-030", "`z3998:nonfiction` should be `z3998:non-fiction`.", se.MESSAGE_TYPE_ERROR, filename))
 
-					# Check for initialisms with periods
-
-					matches = [str(element) for element in dom_soup.select("abbr.initialism") if "." in element.text and element.text not in initialism_exceptions]
+					# Check for initialisms without periods
+					matches = {str(element) for element in dom_soup.select("abbr.initialism") if not regex.match(r"([a-zA-Z]\.)+", element.text) and element.text not in initialism_exceptions}
 					if matches:
-						messages.append(LintMessage("t-030", "Initialism containing periods.", se.MESSAGE_TYPE_WARNING, filename, matches))
-
-					# matches = [str(element) for element in dom_soup.select("abbr.initialism") if regex.search(r"\s", element.text)]
-					# if matches:
-					# 	messages.append(LintMessage("t-030", "`<abbr class=\"initialism\">` containing spaces.", se.MESSAGE_TYPE_WARNING, filename, matches))
+						messages.append(LintMessage("t-030", "Initialism without periods.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for <p> tags that end with <br/>
 					matches = regex.findall(r"(\s*<br/?>\s*)+</p>", file_contents)
