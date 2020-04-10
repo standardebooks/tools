@@ -142,7 +142,6 @@ SEMANTICS & CONTENT
 "s-023", f"Title `{title}` not correctly titlecased. Expected: `{titlecased_title}`."
 "s-024", "Half title `<title>` elements must contain exactly: \"Half Title\"."
 "s-025", "Titlepage `<title>` elements must contain exactly: `Titlepage`."
-"s-026", "Illegal Roman numeral in `<title>` element; use Arabic numbers."
 "s-027", f"{image_ref} missing `<title>` element."
 "s-028", "`cover.svg` and `titlepage.svg` `<title>` elements do not match."
 "s-029", "If a `<span>` exists only for the `z3998:roman` semantic, then `z3998:roman` should be pulled into parent element instead."
@@ -171,6 +170,8 @@ SEMANTICS & CONTENT
 "s-052", "`<attr>` element with illegal `title` attribute."
 "s-053", "`<article>` element without `id` attribute."
 "s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`."
+vvvvvvvvvUNUSEDvvvvvvv
+"s-026", "Illegal Roman numeral in `<title>` element; use Arabic numbers."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1113,14 +1114,9 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-022", "No-break space found in `<abbr class=\"name\">`. This is redundant.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for empty elements. Elements are empty if they have not children no non-whitespace text
-					#empty_elements = [f"<{node.lxml_element.tag}/>" for node in dom_lxml.xpath("//*[not(*)][not(normalize-space())]") if node.lxml_element.tag not in ("br", "hr", "img", "td", "th", "link")]
 					empty_elements = [node.tostring() for node in dom_lxml.xpath("//*[not(self::br) and not(self::hr) and not(self::img) and not(self::td) and not(self::th) and not(self::link)][not(*)][not(normalize-space())]")]
 					if empty_elements:
 						messages.append(LintMessage("s-010", "Empty element. Use `<hr/>` for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename, empty_elements))
-
-					# Check for Roman numerals in <title> tag
-					if regex.findall(r"<title>[Cc]hapter [XxIiVv]+", file_contents):
-						messages.append(LintMessage("s-026", "Illegal Roman numeral in `<title>` element; use Arabic numbers.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for HTML tags in <title> tags
 					matches = regex.findall(r"<title>.*?[<].*?</title>", file_contents)
