@@ -16,11 +16,13 @@ class EasyXmlTree:
 	Represents an entire lxml tree.
 	"""
 
-	def __init__(self, xhtml_string: str):
+	def __init__(self, xhtml_string: str, is_svg: bool = False):
 		# We have to remove the default namespace declaration from our document, otherwise
 		# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 
 		self._xhtml_string = xhtml_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
+		if is_svg:
+			self._xhtml_string = self._xhtml_string.replace(" xmlns=\"http://www.w3.org/2000/svg\"", "")
 		self.etree = etree.fromstring(str.encode(self._xhtml_string))
 
 	def css_select(self, selector: str) -> list:

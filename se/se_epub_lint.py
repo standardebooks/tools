@@ -716,15 +716,19 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-025", "Titlepage `<title>` elements must contain exactly: `Titlepage`.", se.MESSAGE_TYPE_ERROR, filename))
 
 				if filename.endswith(".svg"):
+					try:
+						dom_lxml = se.easy_xml.EasyXmlTree(file_contents, True)
+					except lxml.etree.XMLSyntaxError:
+						raise se.InvalidSvgException(f"Invalid XML in `{Path(root) / filename}`.")
+
 					# Check for fill: #000 which should simply be removed
-					matches = regex.findall(r"fill=\"\s*#000", file_contents) + regex.findall(r"style=\"[^\"]*?fill:\s*#000", file_contents)
-					if matches:
+					nodes = dom_lxml.xpath("//*[contains(@fill, '#000') or contains(translate(@style, ' ', ''), 'fill:#000')]")
+					if nodes:
 						messages.append(LintMessage("x-004", "Illegal `style=\"fill: #000\"` or `fill=\"#000\"`.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for illegal height or width on root <svg> element
 					if filename != "logo.svg": # Do as I say, not as I do...
-						matches = regex.findall(r"<svg[^>]*?(height|width)=[^>]*?>", file_contents)
-						if matches:
+						if dom_lxml.xpath("//svg[@height or @width]"):
 							messages.append(LintMessage("x-005", "Illegal `height` or `width` attribute on root `<svg>` element. Size SVGs using the `viewBox` attribute only.", se.MESSAGE_TYPE_ERROR, filename))
 
 					matches = regex.findall(r"viewbox", file_contents, flags=regex.IGNORECASE)
@@ -733,14 +737,14 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 							messages.append(LintMessage("x-006", f"`{match}` found instead of `viewBox`. `viewBox` must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for illegal transform attribute
-					matches = regex.findall(r"<[a-z]+[^>]*?(transform=\"[^\"]*?\")", file_contents)
-					if matches:
-						messages.append(LintMessage("x-003", "Illegal `transform` attribute. SVGs should be optimized to remove use of `transform`. Try using Inkscape to save as an “optimized SVG”.", se.MESSAGE_TYPE_ERROR, filename, matches))
+					nodes = dom_lxml.xpath("//*[@transform]")
+					if nodes:
+						messages.append(LintMessage("x-003", "Illegal `transform` attribute. SVGs should be optimized to remove use of `transform`. Try using Inkscape to save as an “optimized SVG”.", se.MESSAGE_TYPE_ERROR, filename, [f"transform=\"{node.lxml_element.get('transform')}\"" for node in nodes]))
 
 					# Check for illegal id attribute
-					matches = regex.findall(r"<[a-z]+[^>]*?(id=\"[^\"]*?\")", file_contents)
-					if matches:
-						messages.append(LintMessage("x-014", "Illegal `id` attribute.", se.MESSAGE_TYPE_ERROR, filename, matches))
+					nodes = dom_lxml.xpath("//*[@id]")
+					if nodes:
+						messages.append(LintMessage("x-014", "Illegal `id` attribute.", se.MESSAGE_TYPE_ERROR, filename, [f"id=\"{node.lxml_element.get('id')}\"" for node in nodes]))
 
 					if f"{os.sep}src{os.sep}" not in root:
 						# Check that cover and titlepage images are in all caps

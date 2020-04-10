@@ -121,6 +121,10 @@ class InvalidCssException(SeException):
 	""" Invalid CSS """
 	code = 14
 
+class InvalidSvgException(SeException):
+	""" Invalid SVG """
+	code = 15
+
 def strip_bom(string: str) -> str:
 	"""
 	Remove the Unicode Byte Order Mark from a string.
