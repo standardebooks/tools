@@ -204,6 +204,7 @@ TYPOGRAPHY
 "t-029", "Period followed by lowercase letter. Hint: Abbreviations require an `<abbr>` element."
 "t-030", "Initialism without periods."
 "t-031", "`A B C` must be set as `A.B.C.` It is not an abbreviation."
+"t-032", "Initialism or name followed by period. Hint: Periods go within `<abbr>`. `<abbr>`s containing periods that end a clause require the `eoc` class."
 
 XHTML
 "x-001", "String `UTF-8` must always be lowercase."
@@ -1125,6 +1126,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					#nodes = dom_lxml.xpath("//abbr[text() = 'v.' or text() = 'versus'][not(parent::i)]")
 					#if nodes:
 					#	messages.append(LintMessage("t-123", "Legal case without parent `<i>`.", se.MESSAGE_TYPE_WARNING, filename, {f"{node.tostring()}." for node in nodes}))
+
+					nodes = dom_lxml.xpath("//abbr[contains(@class, 'initialism') or contains(@class, 'name') or not(@class)][following-sibling::text()[1][starts-with(self::text(), '.')]]")
+					if nodes:
+						messages.append(LintMessage("t-032", "Initialism or name followed by period. Hint: Periods go within `<abbr>`. `<abbr>`s containing periods that end a clause require the `eoc` class.", se.MESSAGE_TYPE_WARNING, filename, {f"{node.tostring()}." for node in nodes}))
 
 					unexpected_titles = []
 					# If the chapter has a number and no subtitle, check the <title> tag...
