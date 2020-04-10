@@ -974,9 +974,9 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-010", "Times must be separated by colons (`:`) not periods (`.`).", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for leading 0 in IDs (note: not the same as checking for IDs that start with an integer)
-					matches = regex.findall(r"id=\"[^\"]+?\-0[0-9]+[^\"]*?\"", file_contents)
-					if matches:
-						messages.append(LintMessage("x-009", "Illegal leading 0 in `id` attribute.", se.MESSAGE_TYPE_ERROR, filename, matches))
+					nodes = dom_lxml.xpath("//*[contains(@id, '-0')]")
+					if nodes:
+						messages.append(LintMessage("x-009", "Illegal leading 0 in `id` attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
 					# Check for stage direction that ends in ?! but also has a trailing period
 					matches = regex.findall(r"<i epub:type=\"z3998:stage-direction\">(?:(?!<i).)*?\.</i>[,:;!?]", file_contents)
