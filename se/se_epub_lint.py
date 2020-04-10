@@ -914,9 +914,9 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if matches:
 						messages.append(LintMessage("s-001", "Illegal numeric entity (like `&#913;`).", se.MESSAGE_TYPE_ERROR, filename))
 
-					# Check nested <blockquote> elements
-					matches = regex.findall(r"<blockquote[^>]*?>\s*<blockquote", file_contents, flags=regex.DOTALL)
-					if matches:
+					# Check nested <blockquote> elements, but only if it's the first child of another <blockquote>
+					nodes = dom_lxml.xpath("//blockquote/*[1][name()='blockquote']")
+					if nodes:
 						messages.append(LintMessage("s-005", "Nested `<blockquote>` element.", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for <hr> tags before the end of a section, which is a common PG artifact
