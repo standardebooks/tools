@@ -123,7 +123,7 @@ SEMANTICS & CONTENT
 "s-005", "Nested `<blockquote>` element."
 "s-006", "Poem or verse `<p>` (stanza) without `<span>` (line) element."
 "s-007", "`<li>` element without direct block-level child."
-"s-008", "`<br/>` element found before closing `</p>` tag."
+"s-008", "`<br/>` element found before closing tag of block-level element."
 "s-009", "`<h2>` element without `epub:type=\"title\"` attribute."
 "s-010", "Empty element. Use `<hr/>` for thematic breaks if appropriate."
 "s-011", "`<section>` element without `id` attribute."
@@ -1051,9 +1051,9 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-030", "Initialism without periods.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for <p> tags that end with <br/>
-					matches = regex.findall(r"(\s*<br/?>\s*)+</p>", file_contents)
-					if matches:
-						messages.append(LintMessage("s-008", "`<br/>` element found before closing `</p>` tag.", se.MESSAGE_TYPE_ERROR, filename))
+					nodes = dom_lxml.xpath("//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article][br[last()][not(following-sibling::text()[normalize-space()])][not(following-sibling::*)]]")
+					if nodes:
+						messages.append(LintMessage("s-008", "`<br/>` element found before closing tag of block-level element.", se.MESSAGE_TYPE_ERROR, filename, {node.totagstring() for node in nodes}))
 
 					# Check for single words that are in italics, but that have closing punctuation outside italics
 					# Outer wrapping match is so that .findall returns the entire match and not the subgroup
