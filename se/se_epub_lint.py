@@ -1033,7 +1033,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 					# Check for <abbr class="name"> that does not contain spaces
-					matches = regex.findall(r"<abbr class=\"name\">[^<]*?[A-Z]\.[A-Z]\.[^<]*?</abbr>", file_contents)
+					matches = regex.findall(r"<abbr class=\"name(?: eoc)?\">[^<]*?[A-Z]\.[A-Z]\.[^<]*?</abbr>", file_contents)
 					if matches:
 						messages.append(LintMessage("t-016", "Initials in `<abbr class=\"name\">` not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
