@@ -427,7 +427,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 						# Kobo supports presentational MathML. After we build kobo, we convert the presentational MathML to PNG for the rest of the builds.
 						mathml_transform = None
 						for line in regex.findall(r"<(?:m:)?math[^>]*?>(.+?)</(?:m:)?math>", processed_xhtml, flags=regex.DOTALL):
-							mathml_content_tree = se.easy_xml.EasyXmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?><math xmlns=\"http://www.w3.org/1998/Math/MathML\">{}</math>".format(regex.sub(r"<(/?)m:", "<\\1", line)))
+							mathml_content_tree = se.easy_xml.EasyXhtmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?><math xmlns=\"http://www.w3.org/1998/Math/MathML\">{}</math>".format(regex.sub(r"<(/?)m:", "<\\1", line)))
 
 							# Initialize the transform object, if we haven't yet
 							if not mathml_transform:
@@ -639,7 +639,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 								for line in regex.findall(r"<(?:m:)math[^>]*?>(?:.+?)</(?:m:)math>", processed_xhtml, flags=regex.DOTALL):
 									if line not in replaced_mathml:
 										replaced_mathml.append(line) # Store converted lines to save time in case we have multiple instances of the same MathML
-										mathml_tree = se.easy_xml.EasyXmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?>{}".format(regex.sub(r"<(/?)m:", "<\\1", line)))
+										mathml_tree = se.easy_xml.EasyXhtmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?>{}".format(regex.sub(r"<(/?)m:", "<\\1", line)))
 										processed_line = line
 
 										# If the mfenced element has more than one child, they are separated by commas when rendered.

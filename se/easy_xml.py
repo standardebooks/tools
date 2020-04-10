@@ -16,13 +16,8 @@ class EasyXmlTree:
 	Represents an entire lxml tree.
 	"""
 
-	def __init__(self, xhtml_string: str, is_svg: bool = False):
-		# We have to remove the default namespace declaration from our document, otherwise
-		# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
-
-		self._xhtml_string = xhtml_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
-		if is_svg:
-			self._xhtml_string = self._xhtml_string.replace(" xmlns=\"http://www.w3.org/2000/svg\"", "")
+	def __init__(self, xhtml_string: str):
+		self._xhtml_string = xhtml_string
 		self.etree = etree.fromstring(str.encode(self._xhtml_string))
 
 	def css_select(self, selector: str) -> list:
@@ -50,7 +45,27 @@ class EasyXmlTree:
 
 		return result
 
+class EasyXhtmlTree(EasyXmlTree):
+	"""
+	Wrapper for the XHTML namespace.
+	"""
 
+	def __init__(self, xhtml_string: str):
+		# We have to remove the default namespace declaration from our document, otherwise
+		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
+
+		EasyXmlTree.__init__(self, xhtml_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", ""))
+
+class EasySvgTree(EasyXmlTree):
+	"""
+	Wrapper for the SVG namespace.
+	"""
+
+	def __init__(self, xhtml_string: str):
+		# We have to remove the default namespace declaration from our document, otherwise
+		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
+
+		EasyXmlTree.__init__(self, xhtml_string.replace(" xmlns=\"http://www.w3.org/2000/svg\"", ""))
 
 class EasyXmlElement:
 	"""

@@ -717,18 +717,18 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 				if filename.endswith(".svg"):
 					try:
-						dom_lxml = se.easy_xml.EasyXmlTree(file_contents, True)
+						svg_dom_lxml = se.easy_xml.EasySvgTree(file_contents)
 					except lxml.etree.XMLSyntaxError:
 						raise se.InvalidSvgException(f"Invalid XML in `{Path(root) / filename}`.")
 
 					# Check for fill: #000 which should simply be removed
-					nodes = dom_lxml.xpath("//*[contains(@fill, '#000') or contains(translate(@style, ' ', ''), 'fill:#000')]")
+					nodes = svg_dom_lxml.xpath("//*[contains(@fill, '#000') or contains(translate(@style, ' ', ''), 'fill:#000')]")
 					if nodes:
 						messages.append(LintMessage("x-004", "Illegal `style=\"fill: #000\"` or `fill=\"#000\"`.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for illegal height or width on root <svg> element
 					if filename != "logo.svg": # Do as I say, not as I do...
-						if dom_lxml.xpath("//svg[@height or @width]"):
+						if svg_dom_lxml.xpath("//svg[@height or @width]"):
 							messages.append(LintMessage("x-005", "Illegal `height` or `width` attribute on root `<svg>` element. Size SVGs using the `viewBox` attribute only.", se.MESSAGE_TYPE_ERROR, filename))
 
 					matches = regex.findall(r"viewbox", file_contents, flags=regex.IGNORECASE)
@@ -737,12 +737,12 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 							messages.append(LintMessage("x-006", f"`{match}` found instead of `viewBox`. `viewBox` must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for illegal transform attribute
-					nodes = dom_lxml.xpath("//*[@transform]")
+					nodes = svg_dom_lxml.xpath("//*[@transform]")
 					if nodes:
 						messages.append(LintMessage("x-003", "Illegal `transform` attribute. SVGs should be optimized to remove use of `transform`. Try using Inkscape to save as an “optimized SVG”.", se.MESSAGE_TYPE_ERROR, filename, [f"transform=\"{node.lxml_element.get('transform')}\"" for node in nodes]))
 
 					# Check for illegal id attribute
-					nodes = dom_lxml.xpath("//*[@id]")
+					nodes = svg_dom_lxml.xpath("//*[@id]")
 					if nodes:
 						messages.append(LintMessage("x-014", "Illegal `id` attribute.", se.MESSAGE_TYPE_ERROR, filename, [f"id=\"{node.lxml_element.get('id')}\"" for node in nodes]))
 
@@ -773,10 +773,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					# Read file contents into a DOM for querying
 					dom_soup = BeautifulSoup(file_contents, "lxml")
 
-					# We also create an EasyXmlTree object, because Beautiful Soup can't select on XML namespaces
+					# We also create an EasyXhtmlTree object, because Beautiful Soup can't select on XML namespaces
 					# like [epub|type~="x"]
 					try:
-						dom_lxml = se.easy_xml.EasyXmlTree(file_contents)
+						dom_lxml = se.easy_xml.EasyXhtmlTree(file_contents)
 					except lxml.etree.XMLSyntaxError:
 						raise se.InvalidXhtmlException(f"Invalid XHTML in `{Path(root) / filename}`.")
 
