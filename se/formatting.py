@@ -96,6 +96,7 @@ def semanticate(xhtml: str) -> str:
 
 	# Clean up nesting errors
 	xhtml = regex.sub(r"""<abbr class="eoc"><abbr>([^<]+)</abbr></abbr>""", r"""<abbr class="eoc">\1</abbr>""", xhtml)
+	xhtml = regex.sub(r"""class="eoc eoc""", r"""class="eoc""", xhtml)
 
 	# Get Roman numerals >= 2 characters
 	# We only wrap these if they're standalone (i.e. not already wrapped in a tag) to prevent recursion in multiple runs
