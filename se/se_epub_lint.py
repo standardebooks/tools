@@ -1094,9 +1094,9 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-024", "When italicizing language in dialog, italics go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, italicizing_matches))
 
 					# Check for style attributes
-					matches = regex.findall(r"<.+?style=\"", file_contents)
-					if matches:
-						messages.append(LintMessage("x-012", "Illegal `style` attribute. Do not use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, matches))
+					nodes = dom_lxml.xpath("//*[@style]")
+					if nodes:
+						messages.append(LintMessage("x-012", "Illegal `style` attribute. Do not use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, {node.totagstring() for node in nodes}))
 
 					# Check for illegal elements in <head>
 					nodes = dom_lxml.xpath("//head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
