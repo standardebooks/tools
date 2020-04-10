@@ -1013,9 +1013,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-015", "Numbers not grouped by commas. Separate numbers greater than 1,000 with commas at every three numerals.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for deprecated MathML elements
-					matches = regex.findall(r"<(?:m:)?mfenced[^>]*?>.+?</(?:m:)?mfenced>", file_contents)
-					if matches:
-						messages.append(LintMessage("s-017", f"`<m:mfenced>` is deprecated in the MathML spec. Use `<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>`.", se.MESSAGE_TYPE_ERROR, filename, matches))
+					# Note we dont select directly on element name, because we want to ignore any namespaces that may (or may not) be defined
+					nodes = dom_lxml.xpath("//*[name()='mfenced']")
+					if nodes:
+						messages.append(LintMessage("s-017", f"`<m:mfenced>` is deprecated in the MathML spec. Use `<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>`.", se.MESSAGE_TYPE_ERROR, filename, {node.totagstring() for node in nodes}))
 
 					# Check for period following Roman numeral, which is an old-timey style we must fix
 					# But ignore the numeral if it's the first item in a <p> tag, as that suggests it might be a kind of list item.
