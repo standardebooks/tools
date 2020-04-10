@@ -1120,6 +1120,12 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if matches:
 						messages.append(LintMessage("x-010", "Illegal element in `<title>` element.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
+					# Check for legal cases that aren't italicized
+					# We can't use this because v. appears as short for "volume", and we may also have sporting events without italics.
+					#nodes = dom_lxml.xpath("//abbr[text() = 'v.' or text() = 'versus'][not(parent::i)]")
+					#if nodes:
+					#	messages.append(LintMessage("t-123", "Legal case without parent `<i>`.", se.MESSAGE_TYPE_WARNING, filename, {f"{node.tostring()}." for node in nodes}))
+
 					unexpected_titles = []
 					# If the chapter has a number and no subtitle, check the <title> tag...
 					matches = regex.findall(r"<h([0-6]) epub:type=\"title z3998:roman\">([^<]+)</h\1>", file_contents, flags=regex.DOTALL)
