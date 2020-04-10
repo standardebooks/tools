@@ -202,6 +202,7 @@ TYPOGRAPHY
 "t-028", "Possible mis-curled quotation mark."
 "t-029", "Period followed by lowercase letter. Hint: Abbreviations require an `<abbr>` element."
 "t-030", "Initialism without periods."
+"t-031", "`A B C` must be set as `A.B.C.` It is not an abbreviation."
 
 XHTML
 "x-001", "String `UTF-8` must always be lowercase."
@@ -1182,6 +1183,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					matches = regex.findall(r"\s+<a href=\"endnotes\.xhtml#note-[0-9]+?\" id=\"noteref-[0-9]+?\" epub:type=\"noteref\">[0-9]+?</a>", file_contents)
 					if matches:
 						messages.append(LintMessage("t-012", "Illegal white space before noteref.", se.MESSAGE_TYPE_ERROR, filename, matches))
+
+					matches = regex.findall(r"\bA\s*B\s*C\s*\b", file_contents)
+					if matches:
+						messages.append(LintMessage("t-031", "`A B C` must be set as `A.B.C.` It is not an abbreviation.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for <li> elements that don't have a direct block child
 					if filename != "toc.xhtml":
