@@ -928,7 +928,9 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					temp_xhtml = regex.sub(r"<abbr[^>]*?>", "<abbr>", temp_xhtml) # Replace things like <abbr xml:lang="la">
 					temp_xhtml = regex.sub(r"<img[^>]*?>", "", temp_xhtml) # Remove <img alt> attributes
 					temp_xhtml = temp_xhtml.replace("A.B.C.", "X") # Remove A.B.C, which is not an abbreviations.
-					matches = regex.findall(r"[^\s]+\.\s+[a-z](?!’[A-Z])[a-z]+", temp_xhtml)
+					# Note the regex also excludes preceding numbers, so that we can have inline numbering like:
+					# "A number of questions: 1. regarding those who make heretics; 2. concerning those who were made heretics..."
+					matches = regex.findall(r"[^\s0-9]+\.\s+[a-z](?!’[A-Z])[a-z]+", temp_xhtml)
 					# If <abbr> is in the match, remove it from the matches so we exclude things like <abbr>et. al.</abbr>
 					matches = [match for match in matches if "<abbr>" not in match]
 					if matches:
