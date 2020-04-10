@@ -777,8 +777,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					# like [epub|type~="x"]
 					try:
 						dom_lxml = se.easy_xml.EasyXhtmlTree(file_contents)
-					except lxml.etree.XMLSyntaxError:
-						raise se.InvalidXhtmlException(f"Invalid XHTML in `{Path(root) / filename}`.")
+					except etree.XMLSyntaxError as ex:
+						raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in `{Path(root) / filename}`\n`lxml` says: {str(ex)}")
+					except Exception:
+						raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in `{Path(root) / filename}`")
 
 					messages = messages + _get_malformed_urls(file_contents, filename)
 
@@ -794,16 +796,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 							except Exception as ex:
 								raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: `{selector}`\n`lxml` says: {ex}")
 
-							try:
-								# We have to remove the default namespace declaration from our document, otherwise
-								# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
-								tree = etree.fromstring(str.encode(file_contents.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
-							except etree.XMLSyntaxError as ex:
-								raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in `{filename}`\n`lxml` says: {str(ex)}")
-							except Exception:
-								raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in `{filename}`")
-
-							if tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
+							if dom_lxml.xpath(sel.path):
 								unused_selectors.remove(selector)
 
 					# Update our list of local.css selectors to check in the next file
