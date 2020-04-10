@@ -14,7 +14,7 @@ import io
 import os
 import unicodedata
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Set, Union
 import importlib_resources
 
 import cssutils
@@ -230,7 +230,7 @@ class LintMessage:
 	Contains information like message text, severity, and the epub filename that generated the message.
 	"""
 
-	def __init__(self, code: str, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: str = "", submessages: List[str] = None):
+	def __init__(self, code: str, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: str = "", submessages: Union[List[str], Set[str]] = None):
 		self.code = code
 		self.text = text.strip()
 		self.filename = filename
