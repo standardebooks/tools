@@ -126,7 +126,7 @@ SEMANTICS & CONTENT
 "s-008", "`<br/>` element found before closing tag of block-level element."
 "s-009", "`<h2>` element without `epub:type=\"title\"` attribute."
 "s-010", "Empty element. Use `<hr/>` for thematic breaks if appropriate."
-"s-011", "`<section>` element without `id` attribute."
+"s-011", "Element without `id` attribute."
 "s-012", "Illegal `<hr/>` element as last child."
 "s-013", "Illegal `<pre>` element."
 "s-014", "`<br/>` after block-level element."
@@ -168,10 +168,10 @@ SEMANTICS & CONTENT
 "s-050", "`noteref` as a direct child of element with `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`."
 "s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100."
 "s-052", "`<attr>` element with illegal `title` attribute."
-"s-053", "`<article>` element without `id` attribute."
 "s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`."
-vvvvvvvvvUNUSEDvvvvvvv
+vvvvvvvvvUNUSEDvvvvvvvvv
 "s-026", "Illegal Roman numeral in `<title>` element; use Arabic numbers."
+"s-053", "`<article>` element without `id` attribute."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -903,11 +903,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if uppercase_attr_values:
 						messages.append(LintMessage("x-002", "Uppercase in attribute value. Attribute values must be all lowercase.", se.MESSAGE_TYPE_ERROR, filename, uppercase_attr_values))
 
-					if dom_lxml.xpath("//section[not(@id)]"):
-						messages.append(LintMessage("s-011", "`<section>` element without `id` attribute.", se.MESSAGE_TYPE_ERROR, filename))
-
-					if dom_lxml.xpath("//article[not(@id)]"):
-						messages.append(LintMessage("s-053", "`<article>` element without `id` attribute.", se.MESSAGE_TYPE_ERROR, filename))
+					# Check for <section> and <article> without ID attribute
+					nodes = dom_lxml.xpath("//*[self::section or self::article][not(@id)]")
+					if nodes:
+						messages.append(LintMessage("s-011", "Element without `id` attribute.", se.MESSAGE_TYPE_ERROR, filename, {node.totagstring() for node in nodes}))
 
 					# Check for numeric entities
 					matches = regex.findall(r"&#[0-9]+?;", file_contents)
