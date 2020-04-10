@@ -1336,8 +1336,9 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-013", "Illegal `<pre>` element.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for <br/> after block-level elements
-					if dom_lxml.xpath("//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article]/following-sibling::br"):
-						messages.append(LintMessage("s-014", "`<br/>` after block-level element.", se.MESSAGE_TYPE_ERROR, filename))
+					nodes = dom_lxml.xpath("//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article][following-sibling::br]")
+					if nodes:
+						messages.append(LintMessage("s-014", "`<br/>` after block-level element.", se.MESSAGE_TYPE_ERROR, filename, {node.totagstring() for node in nodes}))
 
 					# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 					matches = regex.findall(r"\b.+?”[,\.](?! …)", file_contents)
