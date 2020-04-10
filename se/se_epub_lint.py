@@ -1114,7 +1114,7 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if matches:
 						messages.append(LintMessage("t-022", "No-break space found in `<abbr class=\"name\">`. This is redundant.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-					# Check for empty elements. Elements are empty if they have not children no non-whitespace text
+					# Check for empty elements. Elements are empty if they have no children and no non-whitespace text
 					empty_elements = [node.tostring() for node in dom_lxml.xpath("//*[not(self::br) and not(self::hr) and not(self::img) and not(self::td) and not(self::th) and not(self::link)][not(*)][not(normalize-space())]")]
 					if empty_elements:
 						messages.append(LintMessage("s-010", "Empty element. Use `<hr/>` for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename, empty_elements))
