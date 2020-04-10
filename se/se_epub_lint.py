@@ -770,7 +770,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 
 					# We also create an EasyXmlTree object, because Beautiful Soup can't select on XML namespaces
 					# like [epub|type~="x"]
-					dom_lxml = se.easy_xml.EasyXmlTree(file_contents)
+					try:
+						dom_lxml = se.easy_xml.EasyXmlTree(file_contents)
+					except lxml.etree.XMLSyntaxError:
+						raise se.InvalidXhtmlException(f"Invalid XHTML in `{Path(root) / filename}`.")
 
 					messages = messages + _get_malformed_urls(file_contents, filename)
 
