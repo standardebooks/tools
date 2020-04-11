@@ -719,8 +719,10 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 				if filename.endswith(".svg"):
 					try:
 						svg_dom_lxml = se.easy_xml.EasySvgTree(file_contents)
-					except lxml.etree.XMLSyntaxError:
-						raise se.InvalidSvgException(f"Invalid XML in `{Path(root) / filename}`.")
+					except etree.XMLSyntaxError as ex:
+						raise se.InvalidXhtmlException(f"Couldn’t parse XML in `{Path(root) / filename}`\n`lxml` says: {str(ex)}")
+					except Exception:
+						raise se.InvalidXhtmlException(f"Couldn’t parse XML in `{Path(root) / filename}`")
 
 					# Check for fill: #000 which should simply be removed
 					nodes = svg_dom_lxml.xpath("//*[contains(@fill, '#000') or contains(translate(@style, ' ', ''), 'fill:#000')]")
