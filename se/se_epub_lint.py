@@ -739,15 +739,23 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						if match != "viewBox":
 							messages.append(LintMessage("x-006", f"`{match}` found instead of `viewBox`. `viewBox` must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename))
 
-					# Check for illegal transform attribute
-					nodes = svg_dom_lxml.xpath("//*[@transform]")
+					# Check for illegal transform or id attribute
+					nodes = svg_dom_lxml.xpath("//*[@transform or @id]")
 					if nodes:
-						messages.append(LintMessage("x-003", "Illegal `transform` attribute. SVGs should be optimized to remove use of `transform`. Try using Inkscape to save as an “optimized SVG”.", se.MESSAGE_TYPE_ERROR, filename, [f"transform=\"{node.lxml_element.get('transform')}\"" for node in nodes]))
+						invalid_transform_attributes = set()
+						invalid_id_attributes = []
+						for node in nodes:
+							if node.attribute("transform"):
+								invalid_transform_attributes.add(f"transform=\"{node.attribute('transform')}\"")
 
-					# Check for illegal id attribute
-					nodes = svg_dom_lxml.xpath("//*[@id]")
-					if nodes:
-						messages.append(LintMessage("x-014", "Illegal `id` attribute.", se.MESSAGE_TYPE_ERROR, filename, [f"id=\"{node.lxml_element.get('id')}\"" for node in nodes]))
+							if node.attribute("id"):
+								invalid_id_attributes.append(f"id=\"{node.attribute('id')}\"")
+
+						if invalid_transform_attributes:
+							messages.append(LintMessage("x-003", "Illegal `transform` attribute. SVGs should be optimized to remove use of `transform`. Try using Inkscape to save as an “optimized SVG”.", se.MESSAGE_TYPE_ERROR, filename, invalid_transform_attributes))
+
+						if invalid_id_attributes:
+							messages.append(LintMessage("x-014", "Illegal `id` attribute.", se.MESSAGE_TYPE_ERROR, filename, invalid_id_attributes))
 
 					if f"{os.sep}src{os.sep}" not in root:
 						# Check that cover and titlepage images are in all caps
