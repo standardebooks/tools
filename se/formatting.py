@@ -71,9 +71,6 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"""(?<!\<abbr class="initialism"\>)([Ii])\.e\.""", r"""<abbr class="initialism">\1.e.</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="initialism"\>)([Ee])\.g\.""", r"""<abbr class="initialism">\1.g.</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="initialism"\>)\bN\.?B\.\b""", r"""<abbr class="initialism">N.B.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(\b)(?<!\<abbr\>)([Ll])b\.", r"\1<abbr>\2b.</abbr>", xhtml)
-	xhtml = regex.sub(r"(\b)(?<!\<abbr\>)([Ll])bs\.", r"\1<abbr>\2bs.</abbr>", xhtml)
-	xhtml = regex.sub(r"(\b)(?<!\<abbr\>)([Oo])z\.", r"\1<abbr>\2z.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)(Jan\.|Feb\.|Mar\.|Apr\.|Jun\.|Jul\.|Aug\.|Sep\.|Sept\.|Oct\.|Nov\.|Dec\.)", r"<abbr>\1</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)No\.(\s+[0-9]+)", r"<abbr>No.</abbr>\1", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="degree"\>)PhD""", r"""<abbr class="degree">PhD</abbr>""", xhtml)
@@ -104,6 +101,16 @@ def semanticate(xhtml: str) -> str:
 
 	# Get Roman numerals that are X or V and single characters.  We can't do I for obvious reasons.
 	xhtml = regex.sub(r"""([^a-zA-Z>\"])([vxVX])(\b|st\b|nd\b|rd\b|th\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
+
+	# Add abbrevations around some SI measurements
+	xhtml = regex.sub(r"([0-9]+)\s*([cmk][mgl])\b", fr"\1{se.NO_BREAK_SPACE}<abbr>\2</abbr>", xhtml)
+
+	# Add abbrevations around Imperial measurements
+	xhtml = regex.sub(r"([0-9]+)\s*(ft|in|yd|mi|pt|qt|gal|oz|lbs)\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>\2.</abbr>", xhtml)
+
+	# Tweak some other Imperial measurements
+	xhtml = regex.sub(r"([0-9]+)\s*m\.?p\.?h\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>mph</abbr>", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"([0-9]+)\s*h\.?p\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>hp</abbr>", xhtml, flags=regex.IGNORECASE)
 
 	# We may have added HTML tags within title tags.  Remove those here
 	matches = regex.findall(r"<title>.+?</title>", xhtml)
