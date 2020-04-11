@@ -1040,11 +1040,6 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					if nodes:
 						messages.append(LintMessage("s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
-					# Check for <abbr class="name"> that does not contain spaces
-					matches = regex.findall(r"<abbr class=\"name(?: eoc)?\">[^<]*?[A-Z]\.[A-Z]\.[^<]*?</abbr>", file_contents)
-					if matches:
-						messages.append(LintMessage("t-016", "Initials in `<abbr class=\"name\">` not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename, matches))
-
 					# Check for empty <h2> missing epub:type="title" attribute
 					if dom_lxml.xpath("//h2[not(contains(@epub:type, 'title'))]"):
 						messages.append(LintMessage("s-009", "`<h2>` element without `epub:type=\"title\"` attribute.", se.MESSAGE_TYPE_WARNING, filename))
@@ -1054,11 +1049,24 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-030", "`z3998:nonfiction` should be `z3998:non-fiction`.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for initialisms without periods
-					matches = {str(element) for element in dom_soup.select("abbr.initialism") if not regex.match(r"([a-zA-Z]\.)+", element.text) and element.text not in initialism_exceptions}
-					if matches:
-						messages.append(LintMessage("t-030", "Initialism without periods.", se.MESSAGE_TYPE_WARNING, filename, matches))
+					nodes = [node.tostring() for node in dom_lxml.xpath("//abbr[contains(@class, 'initialism')]") if not regex.match(r"([a-zA-Z]\.)+", node.lxml_element.text) and node.lxml_element.text not in initialism_exceptions]
+					if nodes:
+						messages.append(LintMessage("t-030", "Initialism without periods.", se.MESSAGE_TYPE_WARNING, filename, set(nodes)))
 
-					# Check for <p> tags that end with <br/>
+					# Check for <abbr class="name"> that does not contain spaces
+					matches = regex.findall(r"<abbr class=\"name(?: eoc)?\">[^<]*?[A-Z]\.[A-Z]\.[^<]*?</abbr>", file_contents)
+					if matches:
+						messages.append(LintMessage("t-016", "Initials in `<abbr class=\"name\">` not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename, matches))
+
+					# Check for abbreviations followed by periods
+					nodes = dom_lxml.xpath("//abbr[(contains(@class, 'initialism') or contains(@class, 'name') or not(@class))][following-sibling::text()[1][starts-with(self::text(), '.')]]")
+
+					# But we exclude some SI units, which don't take periods, and some Imperial abbreviations that are multi-word
+					nodes = [f"{node.tostring()}." for node in nodes if not regex.match(r"[cmk][mgl]", node.lxml_element.text) and node.lxml_element.text not in ("mpg", "mph", "hp", "TV")]
+					if nodes:
+						messages.append(LintMessage("t-032", "Initialism or name followed by period. Hint: Periods go within `<abbr>`. `<abbr>`s containing periods that end a clause require the `eoc` class.", se.MESSAGE_TYPE_WARNING, filename, nodes))
+
+					# Check for block-level tags that end with <br/>
 					nodes = dom_lxml.xpath("//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article][br[last()][not(following-sibling::text()[normalize-space()])][not(following-sibling::*)]]")
 					if nodes:
 						messages.append(LintMessage("s-008", "`<br/>` element found before closing tag of block-level element.", se.MESSAGE_TYPE_ERROR, filename, {node.totagstring() for node in nodes}))
@@ -1136,10 +1144,6 @@ def lint(self, metadata_xhtml: str, skip_lint_ignore: bool) -> list:
 					#nodes = dom_lxml.xpath("//abbr[text() = 'v.' or text() = 'versus'][not(parent::i)]")
 					#if nodes:
 					#	messages.append(LintMessage("t-123", "Legal case without parent `<i>`.", se.MESSAGE_TYPE_WARNING, filename, {f"{node.tostring()}." for node in nodes}))
-
-					nodes = dom_lxml.xpath("//abbr[contains(@class, 'initialism') or contains(@class, 'name') or not(@class)][following-sibling::text()[1][starts-with(self::text(), '.')]]")
-					if nodes:
-						messages.append(LintMessage("t-032", "Initialism or name followed by period. Hint: Periods go within `<abbr>`. `<abbr>`s containing periods that end a clause require the `eoc` class.", se.MESSAGE_TYPE_WARNING, filename, {f"{node.tostring()}." for node in nodes}))
 
 					unexpected_titles = []
 					# If the chapter has a number and no subtitle, check the <title> tag...
