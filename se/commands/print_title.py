@@ -34,7 +34,7 @@ def print_title() -> int:
 				title = se.formatting.generate_title(xhtml)
 
 				if args.in_place:
-					processed_xhtml = regex.sub(r"<title>(.+?)</title>", f"<title>{title}</title>", xhtml)
+					processed_xhtml = regex.sub(r"<title>(.*?)</title>", f"<title>{title}</title>", xhtml)
 
 					if processed_xhtml != xhtml:
 						file.seek(0)
