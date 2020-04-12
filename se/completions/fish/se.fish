@@ -113,6 +113,7 @@ complete -c se -A -n "__fish_seen_subcommand_from print-toc" -s i -l in-place -d
 complete -c se -n "__fish_se_no_subcommand" -a recompose-epub -d "Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output"
 complete -c se -A -n "__fish_seen_subcommand_from recompose-epub" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from recompose-epub" -s o -l output -d "a file to write output to instead of printing to standard output"
+complete -c se -A -n "__fish_seen_subcommand_from recompose-epub" -s x -l xhtml -d "output XHTML instead of HTML5"
 
 complete -c se -n "__fish_se_no_subcommand" -a renumber-endnotes -d "Renumber all endnotes and noterefs sequentially from the beginning."
 complete -c se -A -n "__fish_seen_subcommand_from renumber-endnotes" -s h -l help -x -d "show this help message and exit"

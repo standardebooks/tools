@@ -362,12 +362,12 @@ class SeEpub:
 				else:
 					existing_section[0].append(child)
 
-	def recompose(self) -> str:
+	def recompose(self, output_xhtml5: bool) -> str:
 		"""
-		Iterate over the XHTML files in this epub and "recompose" them into a single HTML5 string representing this ebook.
+		Iterate over the XHTML files in this epub and "recompose" them into a single XHTML string representing this ebook.
 
 		INPUTS
-		None
+		output_xhtml5: true to output XHTML5 instead of HTML5
 
 		OUTPUTS
 		A string of HTML5 representing the entire recomposed ebook.
@@ -433,19 +433,23 @@ class SeEpub:
 		with open(file_name_xhtml, "r", encoding="utf-8") as file:
 			xhtml = file.read()
 
-			# Remove xml declaration and re-add the doctype
-			xhtml = regex.sub(r"<\?xml.+?\?>", "<!doctype html>", xhtml)
-			xhtml = regex.sub(r" epub:prefix=\".+?\"", "", xhtml)
+			if output_xhtml5:
+				xhtml = xhtml.replace("\t\t<meta charset=\"utf-8\"/>\n", "")
+				xhtml = xhtml.replace("\t\t<style/>\n", "")
+			else:
+				# Remove xml declaration and re-add the doctype
+				xhtml = regex.sub(r"<\?xml.+?\?>", "<!doctype html>", xhtml)
+				xhtml = regex.sub(r" epub:prefix=\".+?\"", "", xhtml)
 
-			# Insert our CSS. We do this after `clean` because `clean` will escape > in the CSS
-			xhtml = regex.sub(r"<style/>", "<style>\n\t\t\t" + css + "\t\t</style>", xhtml)
+				# Insert our CSS. We do this after `clean` because `clean` will escape > in the CSS
+				xhtml = regex.sub(r"<style/>", "<style>\n\t\t\t" + css + "\t\t</style>", xhtml)
 
-			# Make some replacements for HTML5 compatibility
-			xhtml = xhtml.replace("epub:type", "data-epub-type")
-			xhtml = xhtml.replace("epub|type", "data-epub-type")
-			xhtml = xhtml.replace("xml:lang", "lang")
-			xhtml = xhtml.replace("<html", f"<html lang=\"{metadata_soup.find('dc:language').string}\"")
-			xhtml = regex.sub(" xmlns.+?=\".+?\"", "", xhtml)
+				# Make some replacements for HTML5 compatibility
+				xhtml = xhtml.replace("epub:type", "data-epub-type")
+				xhtml = xhtml.replace("epub|type", "data-epub-type")
+				xhtml = xhtml.replace("xml:lang", "lang")
+				xhtml = xhtml.replace("<html", f"<html lang=\"{metadata_soup.find('dc:language').string}\"")
+				xhtml = regex.sub(" xmlns.+?=\".+?\"", "", xhtml)
 
 		file_name_xhtml.unlink()
 
