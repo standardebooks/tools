@@ -10,7 +10,6 @@ import datetime
 import fnmatch
 import html
 import os
-import tempfile
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -381,11 +380,22 @@ class SeEpub:
 		title = html.escape(metadata_soup.find("dc:title").contents[0])
 		css = ""
 		with open(self.path / "src" / "epub" / "css" / "core.css", "r", encoding="utf-8") as file:
-			css = regex.sub(r"@.+?;", "", file.read()).strip()
+			css = file.read()
 
 		with open(self.path / "src" / "epub" / "css" / "local.css", "r", encoding="utf-8") as file:
-			css = css + "\n\n\n/* local.css */" + regex.sub(r"@.+?;", "", file.read())
-			css = "\t\t\t".join(css.splitlines(True))
+			css = css + "\n\n\n/* local.css */" + file.read()
+
+		namespaces = set(regex.findall(r"@namespace.+?;", css))
+
+		css = regex.sub(r"@(charset|namespace).+?;", "", css).strip()
+
+		if namespaces:
+			css = "\n" + css
+
+		for namespace in namespaces:
+			css = namespace + "\n" + css
+
+		css = "\t\t\t".join(css.splitlines(True))
 
 		output_xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" epub:prefix=\"z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0\"><head><meta charset=\"utf-8\"/><title>" + title + "</title><style/></head><body></body></html>"
 		output_soup = BeautifulSoup(output_xhtml, "lxml")
@@ -420,40 +430,40 @@ class SeEpub:
 
 				output_xhtml = regex.sub(fr"<img.+?src=\"\.\./images/{match}\.svg\".*?/>", svg, output_xhtml)
 
-		with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_file:
-			temp_file.write(output_xhtml)
-			file_name = Path(temp_file.name)
-			file_name_xhtml = Path(str(file_name) + ".xhtml")
+		#with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_file:
+		#	temp_file.write(output_xhtml)
+		#	file_name = Path(temp_file.name)
+		#	file_name_xhtml = Path(str(file_name) + ".xhtml")
 
-		file_name.rename(file_name_xhtml)
+		#file_name.rename(file_name_xhtml)
 
 		# All done, clean the output
-		se.formatting.format_xhtml_file(file_name_xhtml, False, False, file_name_xhtml.name == "endnotes.xhtml", file_name_xhtml.name == "colophon.xhtml")
+		output_xhtml = se.formatting.format_xhtml(output_xhtml)
 
-		with open(file_name_xhtml, "r", encoding="utf-8") as file:
-			xhtml = file.read()
+		#with open(file_name_xhtml, "r", encoding="utf-8") as file:
+		#output_xhtml = file.read()
 
-			if output_xhtml5:
-				xhtml = xhtml.replace("\t\t<meta charset=\"utf-8\"/>\n", "")
-				xhtml = xhtml.replace("\t\t<style/>\n", "")
-			else:
-				# Remove xml declaration and re-add the doctype
-				xhtml = regex.sub(r"<\?xml.+?\?>", "<!doctype html>", xhtml)
-				xhtml = regex.sub(r" epub:prefix=\".+?\"", "", xhtml)
+		# Insert our CSS. We do this after `clean` because `clean` will escape > in the CSS
+		output_xhtml = regex.sub(r"<style/>", "<style>\n\t\t\t" + css + "\t\t</style>", output_xhtml)
 
-				# Insert our CSS. We do this after `clean` because `clean` will escape > in the CSS
-				xhtml = regex.sub(r"<style/>", "<style>\n\t\t\t" + css + "\t\t</style>", xhtml)
+		if output_xhtml5:
+			output_xhtml = output_xhtml.replace("\t\t<meta charset=\"utf-8\"/>\n", "")
+			output_xhtml = output_xhtml.replace("\t\t<style/>\n", "")
+		else:
+			# Remove xml declaration and re-add the doctype
+			output_xhtml = regex.sub(r"<\?xml.+?\?>", "<!doctype html>", output_xhtml)
+			output_xhtml = regex.sub(r" epub:prefix=\".+?\"", "", output_xhtml)
 
-				# Make some replacements for HTML5 compatibility
-				xhtml = xhtml.replace("epub:type", "data-epub-type")
-				xhtml = xhtml.replace("epub|type", "data-epub-type")
-				xhtml = xhtml.replace("xml:lang", "lang")
-				xhtml = xhtml.replace("<html", f"<html lang=\"{metadata_soup.find('dc:language').string}\"")
-				xhtml = regex.sub(" xmlns.+?=\".+?\"", "", xhtml)
+			# Make some replacements for HTML5 compatibility
+			output_xhtml = output_xhtml.replace("epub:type", "data-epub-type")
+			output_xhtml = output_xhtml.replace("epub|type", "data-epub-type")
+			output_xhtml = output_xhtml.replace("xml:lang", "lang")
+			output_xhtml = output_xhtml.replace("<html", f"<html lang=\"{metadata_soup.find('dc:language').string}\"")
+			output_xhtml = regex.sub(" xmlns.+?=\".+?\"", "", output_xhtml)
 
-		file_name_xhtml.unlink()
+	#file_name_xhtml.unlink()
 
-		return xhtml
+		return output_xhtml
 
 	def generate_titlepage_svg(self) -> None:
 		"""
