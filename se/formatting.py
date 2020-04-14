@@ -809,9 +809,8 @@ def titlecase(text: str) -> str:
 	# OK: Three Men in a Boat (To Say Nothing of the Dog)
 	text = regex.sub(r"\((For|Of|To)(.*?)\)(.+?)", lambda result: "(" + result.group(1).lower() + result.group(2) + ")" + result.group(3), text)
 
-	# Lowercase "and", if followed by a word-joiner
-	regex_string = fr"\bAnd{se.WORD_JOINER}"
-	text = regex.sub(regex_string, f"and{se.WORD_JOINER}", text)
+	# Lowercase "and", if it's not the very first word, and if not preceded by an em dash
+	text = regex.sub(r"^(.+?)([^—])\bAnd\b", r"\1\2and", text)
 
 	# Lowercase "in", if followed by a semicolon (but not words like "inheritance")
 	text = regex.sub(r"\b; In\b", "; in", text)
@@ -836,6 +835,9 @@ def titlecase(text: str) -> str:
 
 	# Uppercase word following "Or,", since it is probably a subtitle
 	text = regex.sub(r"\bOr, ([a-z])", lambda result: "Or, " + result.group(1).upper(), text)
+
+	# Uppercase word following ":", except "or, ", which indicates a kind of subtitle
+	text = regex.sub(r": ([a-z])(?!r, )", lambda result: ": " + result.group(1).upper(), text)
 
 	# Fix html entities
 	text = text.replace("&Amp;", "&amp;")
