@@ -87,6 +87,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"""<abbr>([a-zA-Z\.]+?\.)</abbr></p>""", r"""<abbr class="eoc">\1</abbr></p>""", xhtml)
 	xhtml = regex.sub(r"""<abbr class="(.+?)">([a-zA-Z\.]+?\.)</abbr></p>""", r"""<abbr class="\1 eoc">\2</abbr></p>""", xhtml)
 	xhtml = regex.sub(r"""<abbr>etc\.</abbr>(\s+[A-Z])""", r"""<abbr class="eoc">etc.</abbr>\1""", xhtml)
+	xhtml = regex.sub(r"""<abbr>etc\.</abbr>(”?)</p>""", r"""<abbr class="eoc">etc.</abbr>\1</p>""", xhtml)
 
 	# We may have added eoc classes twice, so remove duplicates here
 	xhtml = regex.sub(r"""<abbr class="(.*) eoc(\s+eoc)+">""", r"""<abbr class="\1 eoc">""", xhtml)
