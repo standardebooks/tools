@@ -68,7 +68,7 @@ def typogrify() -> int:
 						# Tweak: Word joiners don't go in the long description
 						processed_description = processed_description.replace(se.WORD_JOINER, "")
 
-						processed_xhtml = xhtml.replace(description, processed_description)
+						processed_xhtml = processed_xhtml.replace(description, processed_description)
 				else:
 					processed_xhtml = se.typography.typogrify(xhtml, args.quotes)
 
