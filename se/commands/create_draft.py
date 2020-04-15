@@ -584,13 +584,13 @@ def _create_draft(args: Namespace):
 		file.truncate()
 
 	with open(repo_name / "src" / "epub" / "content.opf", "r+", encoding="utf-8") as file:
-		metadata_xhtml = file.read()
+		metadata_xml = file.read()
 
-		metadata_xhtml = metadata_xhtml.replace("SE_IDENTIFIER", identifier)
-		metadata_xhtml = metadata_xhtml.replace(">AUTHOR<", f">{args.author}<")
-		metadata_xhtml = metadata_xhtml.replace(">TITLE_SORT<", f">{sorted_title}<")
-		metadata_xhtml = metadata_xhtml.replace(">TITLE<", f">{args.title}<")
-		metadata_xhtml = metadata_xhtml.replace("VCS_IDENTIFIER", str(repo_name))
+		metadata_xml = metadata_xml.replace("SE_IDENTIFIER", identifier)
+		metadata_xml = metadata_xml.replace(">AUTHOR<", f">{args.author}<")
+		metadata_xml = metadata_xml.replace(">TITLE_SORT<", f">{sorted_title}<")
+		metadata_xml = metadata_xml.replace(">TITLE<", f">{args.title}<")
+		metadata_xml = metadata_xml.replace("VCS_IDENTIFIER", str(repo_name))
 
 		if pg_producers:
 			producers_xhtml = ""
@@ -607,27 +607,27 @@ def _create_draft(args: Namespace):
 
 				i = i + 1
 
-			metadata_xhtml = regex.sub(r"\t\t<dc:contributor id=\"transcriber-1\">TRANSCRIBER</dc:contributor>\s*<meta property=\"file-as\" refines=\"#transcriber-1\">TRANSCRIBER_SORT</meta>\s*<meta property=\"se:url.homepage\" refines=\"#transcriber-1\">TRANSCRIBER_URL</meta>\s*<meta property=\"role\" refines=\"#transcriber-1\" scheme=\"marc:relators\">trc</meta>", "\t\t" + producers_xhtml.strip(), metadata_xhtml, flags=regex.DOTALL)
+			metadata_xml = regex.sub(r"\t\t<dc:contributor id=\"transcriber-1\">TRANSCRIBER</dc:contributor>\s*<meta property=\"file-as\" refines=\"#transcriber-1\">TRANSCRIBER_SORT</meta>\s*<meta property=\"se:url.homepage\" refines=\"#transcriber-1\">TRANSCRIBER_URL</meta>\s*<meta property=\"role\" refines=\"#transcriber-1\" scheme=\"marc:relators\">trc</meta>", "\t\t" + producers_xhtml.strip(), metadata_xml, flags=regex.DOTALL)
 
 		if author_wiki_url:
-			metadata_xhtml = metadata_xhtml.replace(">AUTHOR_WIKI_URL<", f">{author_wiki_url}<")
+			metadata_xml = metadata_xml.replace(">AUTHOR_WIKI_URL<", f">{author_wiki_url}<")
 
 		if author_nacoaf_url:
-			metadata_xhtml = metadata_xhtml.replace(">AUTHOR_NACOAF_URL<", f">{author_nacoaf_url}<")
+			metadata_xml = metadata_xml.replace(">AUTHOR_NACOAF_URL<", f">{author_nacoaf_url}<")
 
 		if ebook_wiki_url:
-			metadata_xhtml = metadata_xhtml.replace(">EBOOK_WIKI_URL<", f">{ebook_wiki_url}<")
+			metadata_xml = metadata_xml.replace(">EBOOK_WIKI_URL<", f">{ebook_wiki_url}<")
 
 		if args.translator:
-			metadata_xhtml = metadata_xhtml.replace(">TRANSLATOR<", f">{args.translator}<")
+			metadata_xml = metadata_xml.replace(">TRANSLATOR<", f">{args.translator}<")
 
 			if translator_wiki_url:
-				metadata_xhtml = metadata_xhtml.replace(">TRANSLATOR_WIKI_URL<", f">{translator_wiki_url}<")
+				metadata_xml = metadata_xml.replace(">TRANSLATOR_WIKI_URL<", f">{translator_wiki_url}<")
 
 			if translator_nacoaf_url:
-				metadata_xhtml = metadata_xhtml.replace(">TRANSLATOR_NACOAF_URL<", f">{translator_nacoaf_url}<")
+				metadata_xml = metadata_xml.replace(">TRANSLATOR_NACOAF_URL<", f">{translator_nacoaf_url}<")
 		else:
-			metadata_xhtml = regex.sub(r"<dc:contributor id=\"translator\">.+?<dc:contributor id=\"artist\">", "<dc:contributor id=\"artist\">", metadata_xhtml, flags=regex.DOTALL)
+			metadata_xml = regex.sub(r"<dc:contributor id=\"translator\">.+?<dc:contributor id=\"artist\">", "<dc:contributor id=\"artist\">", metadata_xml, flags=regex.DOTALL)
 
 		if args.pg_url:
 			if pg_subjects:
@@ -660,13 +660,13 @@ def _create_draft(args: Namespace):
 
 					i = i + 1
 
-				metadata_xhtml = regex.sub(r"\t\t<dc:subject id=\"subject-1\">SUBJECT_1</dc:subject>\s*<dc:subject id=\"subject-2\">SUBJECT_2</dc:subject>\s*<meta property=\"authority\" refines=\"#subject-1\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-1\">LCSH_ID_1</meta>\s*<meta property=\"authority\" refines=\"#subject-2\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-2\">LCSH_ID_2</meta>", "\t\t" + subject_xhtml.strip(), metadata_xhtml)
+				metadata_xml = regex.sub(r"\t\t<dc:subject id=\"subject-1\">SUBJECT_1</dc:subject>\s*<dc:subject id=\"subject-2\">SUBJECT_2</dc:subject>\s*<meta property=\"authority\" refines=\"#subject-1\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-1\">LCSH_ID_1</meta>\s*<meta property=\"authority\" refines=\"#subject-2\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-2\">LCSH_ID_2</meta>", "\t\t" + subject_xhtml.strip(), metadata_xml)
 
-			metadata_xhtml = metadata_xhtml.replace("<dc:language>LANG</dc:language>", f"<dc:language>{pg_language}</dc:language>")
-			metadata_xhtml = metadata_xhtml.replace("<dc:source>PG_URL</dc:source>", f"<dc:source>{args.pg_url}</dc:source>")
+			metadata_xml = metadata_xml.replace("<dc:language>LANG</dc:language>", f"<dc:language>{pg_language}</dc:language>")
+			metadata_xml = metadata_xml.replace("<dc:source>PG_URL</dc:source>", f"<dc:source>{args.pg_url}</dc:source>")
 
 		file.seek(0)
-		file.write(metadata_xhtml)
+		file.write(metadata_xml)
 		file.truncate()
 
 	# Set up local git repo

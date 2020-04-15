@@ -32,10 +32,10 @@ def print_spine() -> int:
 			return ex.code
 
 		if args.in_place:
-			se_epub.metadata_xhtml = regex.sub(r"\s*<spine>.+?</spine>", "\n\t" + "\n\t".join(se_epub.generate_spine().splitlines()), se_epub.metadata_xhtml, flags=regex.DOTALL)
+			se_epub.metadata_xml = regex.sub(r"\s*<spine>.+?</spine>", "\n\t" + "\n\t".join(se_epub.generate_spine().splitlines()), se_epub.metadata_xml, flags=regex.DOTALL)
 
 			with open(se_epub.metadata_file_path, "r+", encoding="utf-8") as file:
-				file.write(se_epub.metadata_xhtml)
+				file.write(se_epub.metadata_xml)
 				file.truncate()
 		else:
 			print(se_epub.generate_spine())

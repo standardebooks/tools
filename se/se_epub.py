@@ -84,9 +84,9 @@ class SeEpub:
 
 	path = Path()
 	metadata_file_path = Path()
-	metadata_xhtml = ""
+	metadata_xml = ""
 	local_css = ""
-	__metadata_tree = None
+	_metadata_dom = None
 	_generated_identifier = None
 	_generated_github_repo_url = None
 	_last_commit = None # GitCommit object
@@ -102,12 +102,12 @@ class SeEpub:
 
 			with open(self.path / "src" / "META-INF" / "container.xml", "r", encoding="utf-8") as file:
 				container_tree = se.easy_xml.EasyXmlTree(file.read())
-				self.metadata_file_path = self.path / "src" / container_tree.xpath("//container:container/container:rootfiles/container:rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
+				self.metadata_file_path = self.path / "src" / container_tree.xpath("/container:container/container:rootfiles/container:rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
 
 			with open(self.metadata_file_path, "r", encoding="utf-8") as file:
-				self.metadata_xhtml = file.read()
+				self.metadata_xml = file.read()
 
-			if "<dc:identifier id=\"uid\">url:https://standardebooks.org/ebooks/" not in self.metadata_xhtml:
+			if "<dc:identifier id=\"uid\">url:https://standardebooks.org/ebooks/" not in self.metadata_xml:
 				raise se.InvalidSeEbookException
 		except:
 			raise se.InvalidSeEbookException(f"Not a Standard Ebooks source directory: `{self.path}`")
@@ -148,15 +148,15 @@ class SeEpub:
 			# Add authors
 			identifier = "url:https://standardebooks.org/ebooks/"
 			authors = []
-			for author in self._metadata_tree.xpath("//dc:creator"):
-				authors.append(author.inner_html())
-				identifier += se.formatting.make_url_safe(author.inner_html()) + "_"
+			for author in self.metadata_dom.xpath("/package/metadata/dc:creator"):
+				authors.append(author.text)
+				identifier += se.formatting.make_url_safe(author.text) + "_"
 
 			identifier = identifier.strip("_") + "/"
 
 			# Add title
-			for title in self._metadata_tree.xpath("//dc:title[@id=\"title\"]"):
-				identifier += se.formatting.make_url_safe(title.inner_html()) + "/"
+			for title in self.metadata_dom.xpath("/package/metadata/dc:title[@id=\"title\"]"):
+				identifier += se.formatting.make_url_safe(title.text) + "/"
 
 			# For contributors, we add both translators and illustrators.
 			# However, we may not include specific translators or illustrators in certain cases, namely
@@ -167,25 +167,25 @@ class SeEpub:
 			illustrators = []
 			translators_have_display_seq = False
 			illustrators_have_display_seq = False
-			for role in self._metadata_tree.xpath("//opf:meta[@property=\"role\"]"):
+			for role in self.metadata_dom.xpath("/package/metadata/meta[@property=\"role\"]"):
 				contributor_id = role.attribute("refines").lstrip("#")
-				contributor_element = self._metadata_tree.xpath("//dc:contributor[@id=\"" + contributor_id + "\"]")
+				contributor_element = self.metadata_dom.xpath("/package/metadata/dc:contributor[@id=\"" + contributor_id + "\"]")
 				if contributor_element:
-					contributor = {"name": contributor_element[0].inner_html(), "include": True, "display_seq": None}
-					display_seq = self._metadata_tree.xpath("//opf:meta[@property=\"display-seq\"][@refines=\"#" + contributor_id + "\"]")
+					contributor = {"name": contributor_element[0].text, "include": True, "display_seq": None}
+					display_seq = self.metadata_dom.xpath("/package/metadata/meta[@property=\"display-seq\"][@refines=\"#" + contributor_id + "\"]")
 
-					if display_seq and int(display_seq[0].inner_html()) == 0:
+					if display_seq and int(display_seq[0].text) == 0:
 						contributor["include"] = False
 						display_seq = []
 
-					if role.inner_html() == "trl":
+					if role.text == "trl":
 						if display_seq:
 							contributor["display_seq"] = display_seq[0]
 							translators_have_display_seq = True
 
 						translators.append(contributor)
 
-					if role.inner_html() == "ill":
+					if role.text == "ill":
 						if display_seq:
 							contributor["display_seq"] = display_seq[0]
 							illustrators_have_display_seq = True
@@ -292,18 +292,18 @@ class SeEpub:
 		return self._endnotes
 
 	@property
-	def _metadata_tree(self) -> se.easy_xml.EasyXmlTree:
+	def metadata_dom(self) -> se.easy_xml.EasyXmlTree:
 		"""
 		Accessor
 		"""
 
-		if self.__metadata_tree is None:
+		if self._metadata_dom is None:
 			try:
-				self.__metadata_tree = se.easy_xml.EasyXmlTree(self.metadata_xhtml)
+				self._metadata_dom = se.easy_xml.EasyOpfTree(self.metadata_xml)
 			except Exception as ex:
-				raise se.InvalidSeEbookException(f"Couldn’t parse `{self.metadata_file_path}`: {ex}")
+				raise se.InvalidXmlException(f"Couldn’t parse `{self.metadata_file_path}`: {ex}")
 
-		return self.__metadata_tree
+		return self._metadata_dom
 
 	@staticmethod
 	def _new_bs4_tag(section: Tag, output_soup: BeautifulSoup) -> Tag:
@@ -594,22 +594,22 @@ class SeEpub:
 		If this ebook has not yet been released, set the first release timestamp in the metadata file.
 		"""
 
-		if "<dc:date>1900-01-01T00:00:00Z</dc:date>" in self.metadata_xhtml:
+		if "<dc:date>1900-01-01T00:00:00Z</dc:date>" in self.metadata_xml:
 			now = datetime.datetime.utcnow()
 			now_iso = regex.sub(r"\.[0-9]+$", "", now.isoformat()) + "Z"
 			now_iso = regex.sub(r"\+.+?Z$", "Z", now_iso)
 			now_friendly = f"{now:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}"
 			now_friendly = regex.sub(r"\s+", " ", now_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
-			self.metadata_xhtml = regex.sub(r"<dc:date>[^<]+?</dc:date>", f"<dc:date>{now_iso}</dc:date>", self.metadata_xhtml)
-			self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", f"<meta property=\"dcterms:modified\">{now_iso}</meta>", self.metadata_xhtml)
+			self.metadata_xml = regex.sub(r"<dc:date>[^<]+?</dc:date>", f"<dc:date>{now_iso}</dc:date>", self.metadata_xml)
+			self.metadata_xml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", f"<meta property=\"dcterms:modified\">{now_iso}</meta>", self.metadata_xml)
 
 			with open(self.metadata_file_path, "w", encoding="utf-8") as file:
 				file.seek(0)
-				file.write(self.metadata_xhtml)
+				file.write(self.metadata_xml)
 				file.truncate()
 
-			self.__metadata_tree = None
+			self._metadata_dom = None
 
 			with open(self.path / "src" / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
 				xhtml = file.read()
@@ -637,11 +637,11 @@ class SeEpub:
 			with open(filename, "r", encoding="utf-8") as file:
 				text += " " + file.read()
 
-		self.metadata_xhtml = regex.sub(r"<meta property=\"se:reading-ease\.flesch\">[^<]*</meta>", f"<meta property=\"se:reading-ease.flesch\">{se.formatting.get_flesch_reading_ease(text)}</meta>", self.metadata_xhtml)
+		self.metadata_xml = regex.sub(r"<meta property=\"se:reading-ease\.flesch\">[^<]*</meta>", f"<meta property=\"se:reading-ease.flesch\">{se.formatting.get_flesch_reading_ease(text)}</meta>", self.metadata_xml)
 
 		with open(self.metadata_file_path, "w", encoding="utf-8") as file:
 			file.seek(0)
-			file.write(self.metadata_xhtml)
+			file.write(self.metadata_xml)
 			file.truncate()
 
 	def update_word_count(self) -> None:
@@ -665,11 +665,11 @@ class SeEpub:
 			with open(filename, "r", encoding="utf-8") as file:
 				word_count += se.formatting.get_word_count(file.read())
 
-		self.metadata_xhtml = regex.sub(r"<meta property=\"se:word-count\">[^<]*</meta>", f"<meta property=\"se:word-count\">{word_count}</meta>", self.metadata_xhtml)
+		self.metadata_xml = regex.sub(r"<meta property=\"se:word-count\">[^<]*</meta>", f"<meta property=\"se:word-count\">{word_count}</meta>", self.metadata_xml)
 
 		with open(self.metadata_file_path, "r+", encoding="utf-8") as file:
 			file.seek(0)
-			file.write(self.metadata_xhtml)
+			file.write(self.metadata_xml)
 			file.truncate()
 
 	def generate_manifest(self) -> str:
@@ -819,7 +819,7 @@ class SeEpub:
 		list of content files in the order given in the spine in content.opf
 		"""
 
-		return regex.findall(r"<itemref idref=\"(.*?)\"/>", self.metadata_xhtml)
+		return regex.findall(r"<itemref idref=\"(.*?)\"/>", self.metadata_xml)
 
 
 	def get_work_type(self) -> str:
@@ -834,7 +834,7 @@ class SeEpub:
 		"""
 
 		worktype = "fiction"  # default
-		subjects = regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", self.metadata_xhtml)
+		subjects = regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", self.metadata_xml)
 		if not subjects:
 			return worktype
 
@@ -863,7 +863,7 @@ class SeEpub:
 		Either the title of the book or the default WORKING_TITLE
 		"""
 
-		match = regex.search(r"<dc:title(?:.*?)>(.*?)</dc:title>", self.metadata_xhtml)
+		match = regex.search(r"<dc:title(?:.*?)>(.*?)</dc:title>", self.metadata_xml)
 		if match:
 			dc_title = match.group(1)
 		else:
@@ -879,7 +879,7 @@ class SeEpub:
 
 		from se.se_epub_lint import lint # pylint: disable=import-outside-toplevel
 
-		return lint(self, self.metadata_xhtml, skip_lint_ignore)
+		return lint(self, skip_lint_ignore)
 
 	def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool, verbose: bool):
 		"""
@@ -890,7 +890,7 @@ class SeEpub:
 
 		from se.se_epub_build import build # pylint: disable=import-outside-toplevel
 
-		build(self, self.metadata_xhtml, self._metadata_tree, run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers, verbose)
+		build(self, run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers, verbose)
 
 	def generate_toc(self) -> str:
 		"""

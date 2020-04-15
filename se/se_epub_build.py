@@ -44,7 +44,7 @@ SVG_OUTER_STROKE_WIDTH = 2
 SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
 
 
-def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool, verbose: bool) -> None:
+def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool, verbose: bool) -> None:
 	"""
 	Entry point for `se build`
 	"""
@@ -75,6 +75,8 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 	if verbose:
 		print(f"Building {self.path} ...")
 
+	metadata_xml = self.metadata_xml
+
 	with tempfile.TemporaryDirectory() as temp_directory:
 		work_directory = Path(temp_directory)
 		work_epub_root_directory = work_directory / "src"
@@ -86,15 +88,15 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			pass
 
 		# By convention the ASIN is set to the SHA-1 sum of the book's identifying URL
-		identifier = metadata_tree.xpath("//dc:identifier")[0].inner_html().replace("url:", "")
+		identifier = self.metadata_dom.xpath("//dc:identifier")[0].inner_xml().replace("url:", "")
 		asin = sha1(identifier.encode("utf-8")).hexdigest()
 
-		title = metadata_tree.xpath("//dc:title")[0].inner_html()
+		title = self.metadata_dom.xpath("//dc:title")[0].inner_xml()
 		url_title = se.formatting.make_url_safe(title)
 
 		url_author = ""
-		for author in metadata_tree.xpath("//dc:creator"):
-			url_author = url_author + se.formatting.make_url_safe(author.inner_html()) + "_"
+		for author in self.metadata_dom.xpath("//dc:creator"):
+			url_author = url_author + se.formatting.make_url_safe(author.inner_xml()) + "_"
 
 		url_author = url_author.rstrip("_")
 
@@ -128,11 +130,11 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 			last_updated_friendly = regex.sub(r"\s+", " ", last_updated_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
 			# Set modified date in content.opf
-			self.metadata_xhtml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", f"<meta property=\"dcterms:modified\">{last_updated_iso}</meta>", self.metadata_xhtml)
+			self.metadata_xml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", f"<meta property=\"dcterms:modified\">{last_updated_iso}</meta>", self.metadata_xml)
 
 			with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
 				file.seek(0)
-				file.write(self.metadata_xhtml)
+				file.write(self.metadata_xml)
 				file.truncate()
 
 			# Update the colophon with release info
@@ -342,21 +344,21 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 		cover_svg_file.unlink()
 
 		# Massage image references in content.opf
-		metadata_xhtml = metadata_xhtml.replace("cover.svg", "cover.jpg")
-		metadata_xhtml = metadata_xhtml.replace(".svg", ".png")
-		metadata_xhtml = metadata_xhtml.replace("id=\"cover.jpg\" media-type=\"image/svg+xml\"", "id=\"cover.jpg\" media-type=\"image/jpeg\"")
-		metadata_xhtml = metadata_xhtml.replace("image/svg+xml", "image/png")
-		metadata_xhtml = regex.sub(r"properties=\"([^\"]*?)svg([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xhtml) # We may also have the `mathml` property
+		metadata_xml = metadata_xml.replace("cover.svg", "cover.jpg")
+		metadata_xml = metadata_xml.replace(".svg", ".png")
+		metadata_xml = metadata_xml.replace("id=\"cover.jpg\" media-type=\"image/svg+xml\"", "id=\"cover.jpg\" media-type=\"image/jpeg\"")
+		metadata_xml = metadata_xml.replace("image/svg+xml", "image/png")
+		metadata_xml = regex.sub(r"properties=\"([^\"]*?)svg([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xml) # We may also have the `mathml` property
 
 		# Add an element noting the version of the se tools that built this ebook
-		metadata_xhtml = regex.sub(r"<dc:publisher", f"<meta property=\"se:built-with\">{se.VERSION}</meta>\n\t\t<dc:publisher", metadata_xhtml)
+		metadata_xml = regex.sub(r"<dc:publisher", f"<meta property=\"se:built-with\">{se.VERSION}</meta>\n\t\t<dc:publisher", metadata_xml)
 
 		# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
-		metadata_xhtml = metadata_xhtml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
+		metadata_xml = metadata_xml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
 
 		# Output the modified content.opf so that we can build the kobo book before making more epub2 compatibility hacks
 		with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
-			file.write(metadata_xhtml)
+			file.write(metadata_xml)
 			file.truncate()
 
 		# Recurse over xhtml files to make some compatibility replacements
@@ -613,7 +615,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 							file.truncate()
 
 		# Sort out MathML compatibility
-		has_mathml = "mathml" in metadata_xhtml
+		has_mathml = "mathml" in metadata_xml
 		if has_mathml:
 			# We import this late because we don't want to load selenium if we're not going to use it!
 			from se import browser # pylint: disable=import-outside-toplevel
@@ -691,11 +693,11 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 					pass
 
 		# Include epub2 cover metadata
-		cover_id = metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@id")[0].replace(".svg", ".jpg")
-		metadata_xhtml = regex.sub(r"(<metadata[^>]+?>)", f"\\1\n\t\t<meta content=\"{cover_id}\" name=\"cover\" />", metadata_xhtml)
+		cover_id = self.metadata_dom.xpath("//item[@properties=\"cover-image\"]/@id")[0].replace(".svg", ".jpg")
+		metadata_xml = regex.sub(r"(<metadata[^>]+?>)", f"\\1\n\t\t<meta content=\"{cover_id}\" name=\"cover\" />", metadata_xml)
 
 		# Add metadata to content.opf indicating this file is a Standard Ebooks compatibility build
-		metadata_xhtml = metadata_xhtml.replace("<dc:publisher", "<meta property=\"se:transform\">compatibility</meta>\n\t\t<dc:publisher")
+		metadata_xml = metadata_xml.replace("<dc:publisher", "<meta property=\"se:transform\">compatibility</meta>\n\t\t<dc:publisher")
 
 		# Add any new MathML images we generated to the manifest
 		if has_mathml:
@@ -704,17 +706,17 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 				filenames.reverse()
 				for filename in filenames:
 					if filename.lower().startswith("mathml-"):
-						metadata_xhtml = metadata_xhtml.replace("<manifest>", f"<manifest><item href=\"images/{filename}\" id=\"{filename}\" media-type=\"image/png\"/>")
+						metadata_xml = metadata_xml.replace("<manifest>", f"<manifest><item href=\"images/{filename}\" id=\"{filename}\" media-type=\"image/png\"/>")
 
-			metadata_xhtml = regex.sub(r"properties=\"([^\"]*?)mathml([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xhtml)
+			metadata_xml = regex.sub(r"properties=\"([^\"]*?)mathml([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xml)
 
-		metadata_xhtml = regex.sub(r"properties=\"\s*\"", "", metadata_xhtml)
+		metadata_xml = regex.sub(r"properties=\"\s*\"", "", metadata_xml)
 
 		# Generate our NCX file for epub2 compatibility.
 		# First find the ToC file.
-		toc_filename = metadata_tree.xpath("//opf:item[@properties=\"nav\"]/@href")[0]
-		metadata_xhtml = metadata_xhtml.replace("<spine>", "<spine toc=\"ncx\">")
-		metadata_xhtml = metadata_xhtml.replace("<manifest>", "<manifest><item href=\"toc.ncx\" id=\"ncx\" media-type=\"application/x-dtbncx+xml\" />")
+		toc_filename = self.metadata_dom.xpath("//item[@properties=\"nav\"]/@href")[0]
+		metadata_xml = metadata_xml.replace("<spine>", "<spine toc=\"ncx\">")
+		metadata_xml = metadata_xml.replace("<manifest>", "<manifest><item href=\"toc.ncx\" id=\"ncx\" media-type=\"application/x-dtbncx+xml\" />")
 
 		# Now use an XSLT transform to generate the NCX
 		with importlib_resources.path("se.data", "navdoc2ncx.xsl") as navdoc2ncx_xsl_filename:
@@ -742,12 +744,12 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 		guide_xhtml = guide_xhtml + "</guide>"
 
-		metadata_xhtml = metadata_xhtml.replace("</package>", "") + guide_xhtml + "</package>"
+		metadata_xml = metadata_xml.replace("</package>", "") + guide_xhtml + "</package>"
 
 		# Guide is done, now write content.opf and clean it.
 		# Output the modified content.opf before making more epub2 compatibility hacks.
 		with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
-			file.write(metadata_xhtml)
+			file.write(metadata_xml)
 			file.truncate()
 
 		# All done, clean the output
@@ -938,7 +940,7 @@ def build(self, metadata_xhtml: str, metadata_tree: se.easy_xml.EasyXmlTree, run
 
 			# Generate the Kindle file
 			# We place it in the work directory because later we have to update the asin, and the mobi.update_asin() function will write to the final output directory
-			cover_path = work_epub_root_directory / "epub" / metadata_tree.xpath("//opf:item[@properties=\"cover-image\"]/@href")[0].replace(".svg", ".jpg")
+			cover_path = work_epub_root_directory / "epub" / self.metadata_dom.xpath("//item[@properties=\"cover-image\"]/@href")[0].replace(".svg", ".jpg")
 
 			# Path arguments must be cast to string for Windows compatibility.
 			return_code = subprocess.run([str(ebook_convert_path), str(work_directory / epub_output_filename), str(work_directory / kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", f"--cover={cover_path}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False).returncode

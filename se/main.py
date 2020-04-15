@@ -53,7 +53,7 @@ def main() -> None:
 	command_name = args.command.replace("-", "_")
 	command_module = f"se.commands.{command_name}"
 	if command_name == "help":
-		command_function = "se_help"  # avoid name conflict with built-in function
+		command_function = "se_help"  # Avoid name conflict with built-in function
 	else:
 		command_function = command_name
 

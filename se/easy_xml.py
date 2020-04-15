@@ -16,9 +16,8 @@ class EasyXmlTree:
 	Represents an entire lxml tree.
 	"""
 
-	def __init__(self, xhtml_string: str):
-		self._xhtml_string = xhtml_string
-		self.etree = etree.fromstring(str.encode(self._xhtml_string))
+	def __init__(self, xml_string: str):
+		self.etree = etree.fromstring(str.encode(xml_string))
 
 	def css_select(self, selector: str) -> list:
 		"""
@@ -50,22 +49,33 @@ class EasyXhtmlTree(EasyXmlTree):
 	Wrapper for the XHTML namespace.
 	"""
 
-	def __init__(self, xhtml_string: str):
+	def __init__(self, xml_string: str):
 		# We have to remove the default namespace declaration from our document, otherwise
 		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 
-		EasyXmlTree.__init__(self, xhtml_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", ""))
+		EasyXmlTree.__init__(self, xml_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", ""))
 
 class EasySvgTree(EasyXmlTree):
 	"""
 	Wrapper for the SVG namespace.
 	"""
 
-	def __init__(self, xhtml_string: str):
+	def __init__(self, xml_string: str):
 		# We have to remove the default namespace declaration from our document, otherwise
 		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 
-		EasyXmlTree.__init__(self, xhtml_string.replace(" xmlns=\"http://www.w3.org/2000/svg\"", ""))
+		EasyXmlTree.__init__(self, xml_string.replace(" xmlns=\"http://www.w3.org/2000/svg\"", ""))
+
+class EasyOpfTree(EasyXmlTree):
+	"""
+	Wrapper for the SVG namespace.
+	"""
+
+	def __init__(self, xml_string: str):
+		# We have to remove the default namespace declaration from our document, otherwise
+		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
+
+		EasyXmlTree.__init__(self, xml_string.replace(" xmlns=\"http://www.idpf.org/2007/opf\"", ""))
 
 class EasyXmlElement:
 	"""
@@ -104,9 +114,23 @@ class EasyXmlElement:
 
 		return self.lxml_element.get(attribute)
 
-	def inner_html(self) -> str:
+	def inner_xml(self) -> str:
 		"""
 		Return a string representing the inner HTML of this element.
+
+		Note: this is not *always* the same as lxml_element.text, which only returns
+		the text up to the first element node
+		"""
+
+		xml = self.tostring()
+		xml = regex.sub(r"^<[^>]+?>", "", xml)
+		xml = regex.sub(r"<[^>]+?>$", "", xml)
+		return xml
+
+	@property
+	def text(self) -> str:
+		"""
+		Return only returns the text up to the first element node
 		"""
 
 		return self.lxml_element.text
