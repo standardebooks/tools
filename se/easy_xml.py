@@ -88,6 +88,10 @@ class EasyXmlElement:
 	def totagstring(self) -> str:
 		"""
 		Return a string representing the opening tag of the element.
+
+		Example:
+		`<p class="test">Hello there!</p>` -> `<p class="test">`
+		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `<p>`
 		"""
 
 		attrs = ""
@@ -103,6 +107,10 @@ class EasyXmlElement:
 	def tostring(self) -> str:
 		"""
 		Return a string representing this element.
+
+		Example:
+		`<p class="test">Hello there!</p>` -> `<p class="test">Hello there!</p>`
+		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `<p>Hello there, <abbr>Mr.</abbr> Smith!</p>`
 		"""
 
 		return regex.sub(r" xmlns(:[a-z]+?)?=\"[^\"]+?\"", "", etree.tostring(self.lxml_element, encoding=str, with_tail=False))
@@ -116,10 +124,14 @@ class EasyXmlElement:
 
 	def inner_xml(self) -> str:
 		"""
-		Return a string representing the inner HTML of this element.
+		Return a string representing the inner XML of this element.
 
 		Note: this is not *always* the same as lxml_element.text, which only returns
-		the text up to the first element node
+		the text up to the first element node.
+
+		Example:
+		`<p class="test">Hello there!</p>` -> `Hello there!`
+		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `Hello there, <abbr>Mr.</abbr> Smith!`
 		"""
 
 		xml = self.tostring()
@@ -127,10 +139,25 @@ class EasyXmlElement:
 		xml = regex.sub(r"<[^>]+?>$", "", xml)
 		return xml
 
+	def inner_text(self) -> str:
+		"""
+		Return the text portion of the inner XML, without any tags.
+
+		Example:
+		`<p class="test">Hello there!</p>` -> `Hello there!`
+		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `Hello there, Mr. Smith!`
+		"""
+
+		return regex.sub(r"<[^>]+?>", "", self.inner_xml())
+
 	@property
 	def text(self) -> str:
 		"""
 		Return only returns the text up to the first element node
+
+		Example:
+		`<p class="test">Hello there!</p>` -> `Hello there!`
+		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `Hello there, `
 		"""
 
 		return self.lxml_element.text

@@ -138,7 +138,7 @@ SEMANTICS & CONTENT
 "s-019", "`<h#>` element with `id` attribute. `<h#>` elements should be wrapped in `<section>` elements, which should hold the `id` attribute."
 "s-020", "Frontmatter found, but no halftitle. Halftitle is required when frontmatter is present."
 "s-021", f"Unexpected value for `<title>` element. Expected: `{title}`. (Beware hidden Unicode characters!)"
-"s-022", f"The `<title>` element of `{image_ref}` does not match the alt text in `{filename}`."
+"s-022", f"The `<title>` element of `{image_ref}` does not match the `alt` attribute text in `{filename}`."
 "s-023", f"Title `{title}` not correctly titlecased. Expected: `{titlecased_title}`."
 "s-024", "Half title `<title>` elements must contain exactly: \"Half Title\"."
 "s-025", "Titlepage `<title>` elements must contain exactly: `Titlepage`."
@@ -199,7 +199,7 @@ TYPOGRAPHY
 "t-024", "When italicizing language in dialog, italics go inside quotation marks."
 "t-025", "Non-typogrified `'`, `\"` (as `&quot;`), or `--` in image `alt` attribute."
 "t-026", "`alt` attribute does not appear to end with punctuation. `alt` attributes must be composed of complete sentences ending in appropriate punctuation."
-"t-027", "Endnote referrer link not preceded by exactly one space, or a newline if all previous siblings are elements."
+"t-027", "Endnote referrer link not preceded by exactly one space."
 "t-028", "Possible mis-curled quotation mark."
 "t-029", "Period followed by lowercase letter. Hint: Abbreviations require an `<abbr>` element."
 "t-030", "Initialism without periods."
@@ -1117,28 +1117,16 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if matches:
 						messages.append(LintMessage("t-019", "When a complete clause is italicized, ending punctuation except commas must be within containing italics.", se.MESSAGE_TYPE_WARNING, filename, [match[0] for match in matches]))
 
-					# Run some checks on <i> elements
-					comma_matches = []
-					italicizing_matches = []
-					elements = dom_soup.select("i")
-					for elem in elements:
-						next_sib = elem.nextSibling
+					# Check for trailing commas inside <i> tags at the close of dialog
+					# More sophisticated version of: \b[^\s]+?,</i>”
+					nodes = dom_lxml.xpath("//i[re:match(., ',$')][(following-sibling::node()[1])[starts-with(., '”')]]")
+					if nodes:
+						messages.append(LintMessage("t-023", "Comma inside `<i>` element before closing dialog.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() + "”" for node in nodes]))
 
-						# Check for trailing commas inside <i> tags at the close of dialog
-						# More sophisticated version of: \b[^\s]+?,</i>”
-						if isinstance(next_sib, NavigableString) and next_sib.startswith("”") and elem.text.endswith(","):
-							comma_matches.append(str(elem) + "”")
-
-						# Check for foreign phrases with italics going *outside* quotes
-						for attr in elem.attrs:
-							if attr == "xml:lang" and (elem.text.startswith("“") or elem.text.endswith("”")):
-								italicizing_matches.append(str(elem))
-
-					if comma_matches:
-						messages.append(LintMessage("t-023", "Comma inside `<i>` element before closing dialog.", se.MESSAGE_TYPE_WARNING, filename, comma_matches))
-
-					if italicizing_matches:
-						messages.append(LintMessage("t-024", "When italicizing language in dialog, italics go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, italicizing_matches))
+					# Check for quotation marks in italicized dialog
+					nodes = dom_lxml.xpath("//i[@xml:lang][starts-with(., '“') or re:match(., '”$')]")
+					if nodes:
+						messages.append(LintMessage("t-024", "When italicizing language in dialog, italics go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 					# Check for style attributes
 					nodes = dom_lxml.xpath("//*[@style]")
@@ -1345,11 +1333,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 								try:
 									with open(self.path / "src" / "epub" / "images" / image_ref, "r", encoding="utf-8") as image_source:
 										try:
-											title_text = BeautifulSoup(image_source, "lxml").title.get_text()
+											file_dom_lxml = se.easy_xml.EasySvgTree(image_source.read())
+											title_text = file_dom_lxml.xpath("/svg/title")[0].text
 										except Exception:
 											messages.append(LintMessage("s-027", f"{image_ref} missing `<title>` element.", se.MESSAGE_TYPE_ERROR, image_ref))
 									if title_text != "" and alt != "" and title_text != alt:
-										messages.append(LintMessage("s-022", f"The `<title>` element of `{image_ref}` does not match the alt text in `{filename}`.", se.MESSAGE_TYPE_ERROR, filename))
+										messages.append(LintMessage("s-022", f"The `<title>` element of `{image_ref}` does not match the `alt` attribute text in `{filename}`.", se.MESSAGE_TYPE_ERROR, filename))
 								except FileNotFoundError:
 									missing_files.append(str(Path(f"src/epub/images/{image_ref}")))
 
@@ -1496,32 +1485,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						if matches:
 							messages.append(LintMessage("s-039", "Illegal `Ibid` in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing `Ibid` refers to.", se.MESSAGE_TYPE_ERROR, filename))
 
-						endnote_referrers = dom_soup.select("li[id^=note-] a")
-						bad_referrers = []
-
-						for referrer in endnote_referrers:
-							# We check against the attr value here because I couldn't figure out how to select an XML-namespaced attribute using BS4
-							if "epub:type" in referrer.attrs and referrer.attrs["epub:type"] == "backlink":
-								is_first_sib = True
-								for sib in referrer.previous_siblings:
-									if is_first_sib:
-										is_first_sib = False
-										if isinstance(sib, NavigableString):
-											if sib == "\n": # Referrer preceded by newline. Check if all previous sibs are tags.
-												continue
-											if sib == " " or str(sib) == se.NO_BREAK_SPACE or regex.search(r"[^\s] $", str(sib)): # Referrer preceded by a single space; we're OK
-												break
-											# Referrer preceded by a string that is not a newline and does not end with a single space
-											bad_referrers.append(referrer)
-											break
-									else:
-										# We got here because the first sib was a newline, or not a string. So, check all previous sibs.
-										if isinstance(sib, NavigableString) and sib != "\n":
-											bad_referrers.append(referrer)
-											break
-
-						if bad_referrers:
-							messages.append(LintMessage("t-027", "Endnote referrer link not preceded by exactly one space, or a newline if all previous siblings are elements.", se.MESSAGE_TYPE_WARNING, filename, [str(referrer) for referrer in bad_referrers]))
+						# Match backlink elements whose preceding node doesn't end with ' ', and is also not all whitespace
+						nodes = dom_lxml.xpath("//a[@epub:type='backlink'][(preceding-sibling::node()[1])[not(re:match(., ' $')) and not(normalize-space(.) = '')]]")
+						if nodes:
+							messages.append(LintMessage("t-027", "Endnote referrer link not preceded by exactly one space.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 					# If we're in the imprint, are the sources represented correctly?
 					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
@@ -1554,25 +1521,29 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 					# Check LoI descriptions to see if they match associated figcaptions
 					if filename == "loi.xhtml":
-						illustrations = dom_soup.select("li > a")
-						for illustration in illustrations:
-							figure_ref = illustration["href"].split("#")[1]
-							chapter_ref = regex.findall(r"(.*?)#.*", illustration["href"])[0]
+						nodes = dom_lxml.xpath("//li/a")
+						for node in nodes:
+							figure_ref = node.attribute("href").split("#")[1]
+							chapter_ref = regex.findall(r"(.*?)#.*", node.attribute("href"))[0]
 							figcaption_text = ""
-							loi_text = illustration.get_text()
+							loi_text = node.inner_text()
 
 							with open(self.path / "src" / "epub" / "text" / chapter_ref, "r", encoding="utf-8") as chapter:
 								try:
-									figure = BeautifulSoup(chapter, "lxml").select(f"#{figure_ref}")[0]
+									file_dom_lxml = se.easy_xml.EasyXhtmlTree(chapter.read())
+									figure = file_dom_lxml.xpath(f"//*[@id='{figure_ref}']")[0]
 								except Exception:
 									messages.append(LintMessage("s-040", f"`#{figure_ref}` not found in file `{chapter_ref}`.", se.MESSAGE_TYPE_ERROR, "loi.xhtml"))
 									continue
 
-								if figure.img:
-									figure_img_alt = figure.img.get("alt")
+								for child in figure.lxml_element:
+									if child.tag == "img":
+										figure_img_alt = child.get("alt")
 
-								if figure.figcaption:
-									figcaption_text = figure.figcaption.get_text()
+									if child.tag == "figcaption":
+										elem = se.easy_xml.EasyXmlElement(child)
+										figcaption_text = elem.inner_text()
+
 							if (figcaption_text != "" and loi_text != "" and figcaption_text != loi_text) and (figure_img_alt != "" and loi_text != "" and figure_img_alt != loi_text):
 								messages.append(LintMessage("s-041", f"The `<figcaption>` element of `#{figure_ref}` does not match the text in its LoI entry.", se.MESSAGE_TYPE_WARNING, chapter_ref))
 
@@ -1654,26 +1625,26 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 		# Check our ordered ToC entries against the spine
 		# To cover all possibilities, we combine the toc and the landmarks to get the full set of entries
-		with open(self.path / "src" / "epub" / "content.opf", "r", encoding="utf-8") as content_opf:
-			toc_files = []
-			for index, entry in enumerate(landmarks.find_all("a", attrs={"epub:type": regex.compile("^.*(frontmatter|bodymatter).*$")})):
-				entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get("href"))
-				toc_files.append(entry_file)
-			for index, entry in enumerate(toc_entries):
-				entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get("href"))
-				toc_files.append(entry_file)
-			unique_toc_files: List[str] = []
-			for toc_file in toc_files:
-				if toc_file not in unique_toc_files:
-					unique_toc_files.append(toc_file)
-			toc_files = unique_toc_files
-			spine_entries = BeautifulSoup(content_opf.read(), "lxml").find("spine").find_all("itemref")
-			if len(toc_files) != len(spine_entries):
-				messages.append(LintMessage("m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)}).", se.MESSAGE_TYPE_ERROR, "content.opf"))
-			for index, entry in enumerate(spine_entries):
-				if toc_files[index] != entry.attrs["idref"]:
-					messages.append(LintMessage("m-044", f"The spine order does not match the order of the ToC and landmarks. Expected `{entry.attrs['idref']}`, found `{toc_files[index]}`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
-					break
+		toc_files = []
+		for index, entry in enumerate(landmarks.find_all("a", attrs={"epub:type": regex.compile("^.*(frontmatter|bodymatter).*$")})):
+			entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get("href"))
+			toc_files.append(entry_file)
+		for index, entry in enumerate(toc_entries):
+			entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", entry.get("href"))
+			toc_files.append(entry_file)
+		unique_toc_files: List[str] = []
+		for toc_file in toc_files:
+			if toc_file not in unique_toc_files:
+				unique_toc_files.append(toc_file)
+		toc_files = unique_toc_files
+
+		spine_entries = self.metadata_dom.xpath("/package/spine/itemref")
+		if len(toc_files) != len(spine_entries):
+			messages.append(LintMessage("m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)}).", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		for index, entry in enumerate(spine_entries):
+			if toc_files[index] != entry.attribute("idref"):
+				messages.append(LintMessage("m-044", f"The spine order does not match the order of the ToC and landmarks. Expected `{entry.attribute('idref')}`, found `{toc_files[index]}`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+				break
 
 	for element in abbr_elements:
 		try:
