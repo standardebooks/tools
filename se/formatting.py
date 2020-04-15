@@ -4,19 +4,19 @@ Defines functions useful for formatting code or text according to SE standards, 
 several text-level statistics like reading ease, and for adding semantics.
 """
 
-import math
-import unicodedata
 import html.entities
-import os
-from pathlib import Path
-import subprocess
-import shutil
+import math
 import string
-from bs4 import BeautifulSoup, NavigableString, Tag
+import unicodedata
+from pathlib import Path
+
 import regex
 import roman
 import tinycss2
+from bs4 import BeautifulSoup, NavigableString, Tag
+from lxml import etree
 from titlecase import titlecase as pip_titlecase
+
 import se
 
 
@@ -345,13 +345,142 @@ def _replace_character_references(match_object) -> str:
 
 	return retval
 
-def format_xhtml_file(filename: Path, single_lines: bool = False, is_metadata_file: bool = False, is_endnotes_file: bool = False, is_colophon_file: bool = False) -> None:
+def indent(tree, space="\t"):
+	"""
+	Indent the an lxml tree using the given space characters.
+	"""
+
+	if len(tree) > 0:
+		level = 0
+		indentation = "\n" + level * space
+		_indent_children(tree, 1, space, [indentation, indentation + space])
+	else:
+		tree.text = "\n"
+
+# This list of phrasing tags is not intended to be exhaustive. The list is only used
+# to resolve the uncommon situation where there is no plain text in a paragraph. The
+# span and br tags are explicitly omitted because of how they are used in poetry formatting,
+# which differs from the normal formatting.
+
+PHRASING_TAGS = [
+	"{http://www.w3.org/1999/xhtml}a",
+	"{http://www.w3.org/1999/xhtml}abbr",
+	"{http://www.w3.org/1999/xhtml}b",
+	"{http://www.w3.org/1999/xhtml}cite",
+	"{http://www.w3.org/1999/xhtml}em",
+	"{http://www.w3.org/1999/xhtml}i",
+	"{http://www.w3.org/1999/xhtml}strong",
+]
+
+def _indent_children(elem, level, one_space, indentations, has_child_tails=False):
+	"""
+	Recursive helper function implementing indent levels for lxml tree.
+	"""
+
+	# Reuse indentation strings for speed.
+	if len(indentations) <= level:
+		indentations.append(indentations[-1] + one_space)
+
+	# Start a new indentation level for the first child.
+	child_indentation = indentations[level]
+
+	# Check if any children have tail content
+	if not has_child_tails:
+		if len(elem) > 0 and elem.text and not regex.match(r"^[\n\t ]+$", elem.text):
+			has_child_tails = True
+		else:
+			for child in elem:
+				if child.tail and not regex.match(r"^\n\s*$", child.tail):
+					has_child_tails = True
+					break
+
+	# If elem text is empty, start a new indentation level
+	if not elem.text or regex.match(r"^[\n\t ]+$", elem.text):
+		if has_child_tails:
+			elem.text = ""
+		else:
+			elem.text = child_indentation
+	else:
+		elem.text = _unwrap_content(elem.text, remove_trailing_space=False)
+
+	# Recursively indent all children.
+	for child in elem:
+		if len(child) > 0:
+			if has_child_tails:
+				next_level = level
+			else:
+				next_level = level + 1
+			_indent_children(child, next_level, one_space, indentations, has_child_tails)
+
+		next_child = child.getnext()
+
+		# Remove line wraps from child text (except meta tags)
+		if child.text and not regex.match(r"^[\n\t ]+$", child.text):
+			if child.tag is etree.Comment:
+				child.text = regex.sub(r" *\n\s*", child_indentation, child.text)
+			elif child.tag != "{http://www.idpf.org/2007/opf}meta":
+				child.text = _unwrap_content(child.text, remove_trailing_space=True)
+
+		# Handle different cases for indentation in child tail content
+		if not child.tail or regex.match(r"^\n\s*$", child.tail):
+			if next_child is None:
+				if has_child_tails:
+					child.tail = ""
+				else:
+					child_indentation = indentations[level - 1]
+					child.tail = child_indentation
+			elif child.tag == "{http://www.w3.org/1999/xhtml}br":
+				if has_child_tails:
+					child_indentation = indentations[level - 1]
+				child.tail = child_indentation
+			elif not has_child_tails and next_child.tag == "{http://www.w3.org/1999/xhtml}br":
+				child.tail = child_indentation
+			elif not has_child_tails and not child.tail and next_child.tag in PHRASING_TAGS:
+				child.tail = ""
+			elif has_child_tails:
+				child.tail = ""
+			else:
+				child.tail = child_indentation
+		else:
+			# Replace line wraps in child tail
+			if next_child is None:
+				child.tail = _unwrap_content(child.tail, remove_trailing_space=True)
+			else:
+				child.tail = _unwrap_content(child.tail, remove_trailing_space=False)
+			# Add special indentation for br tag with non-empty tail
+			if child.tag == "{http://www.w3.org/1999/xhtml}br":
+				child_indentation = indentations[level - 1]
+				child.tail = child_indentation + child.tail
+
+def _unwrap_content(content: str, remove_trailing_space: bool) -> str:
+	"""
+	Remove line wraps from element content.
+	"""
+	result = regex.sub(r"^\n\s*", "", content)
+	if remove_trailing_space:
+		result = regex.sub(r"\n\s*$", "", result)
+	result = regex.sub(r" *\n\s*", " ", result)
+
+	return result
+
+def pretty_print_xml(xml: str) -> str:
+	"""
+	Canonicalize and format XML text.
+	"""
+
+	tree = etree.fromstring(str.encode(xml))
+	canonical_bytes = etree.tostring(tree, method="c14n")
+	tree = etree.fromstring(canonical_bytes)
+	indent(tree, space="\t")
+	xml = etree.tostring(tree, encoding="unicode")
+	return '<?xml version="1.0" encoding="utf-8"?>\n' + xml + "\n"
+
+def format_xhtml_file(filename: Path, is_metadata_file: bool = False, is_endnotes_file: bool = False, is_colophon_file: bool = False) -> None:
 	"""
 	Pretty-print well-formed XHTML and save to file.
 
 	INPUTS
 	filename: A file containing well-formed XHTML
-	single_lines: True to collapse hard-wrapped line breaks, like those found at Project Gutenberg, to single lines
 	is_metadata_file: True if the passed XHTML is an SE content.opf metadata file
 	is_endnotes_file: True if the passed XHTML is an SE endnotes file
 
@@ -362,39 +491,24 @@ def format_xhtml_file(filename: Path, single_lines: bool = False, is_metadata_fi
 	with open(filename, "r+", encoding="utf-8") as file:
 		xhtml = file.read()
 
-		processed_xhtml = se.formatting.format_xhtml(xhtml, single_lines, is_metadata_file, is_endnotes_file, is_colophon_file)
-
+		processed_xhtml = se.formatting.format_xhtml(xhtml, is_metadata_file, is_endnotes_file, is_colophon_file)
 		if processed_xhtml != xhtml:
 			file.seek(0)
 			file.write(processed_xhtml)
 			file.truncate()
 
-def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool = False, is_endnotes_file: bool = False, is_colophon_file: bool = False) -> str:
+def format_xhtml(xhtml: str, is_metadata_file: bool = False, is_endnotes_file: bool = False, is_colophon_file: bool = False) -> str:  # pylint: disable=unused-argument
 	"""
 	Pretty-print well-formed XHTML.
 
 	INPUTS
 	xhtml: A string of well-formed XHTML
-	single_lines: True to collapse hard-wrapped line breaks, like those found at Project Gutenberg, to single lines
 	is_metadata_file: True if the passed XHTML is an SE content.opf metadata file
 	is_endnotes_file: True if the passed XHTML is an SE endnotes file
 
 	OUTPUTS
 	A string of pretty-printed XHTML.
 	"""
-
-	which_xmllint = shutil.which("xmllint")
-	if which_xmllint:
-		xmllint_path = Path(which_xmllint)
-	else:
-		raise se.MissingDependencyException("Couldn’t locate `xmllint`. Is it installed?")
-
-	env = os.environ.copy()
-	env["XMLLINT_INDENT"] = "\t"
-
-	if single_lines:
-		xhtml = xhtml.replace("\n", " ")
-		xhtml = regex.sub(r"\s{2,}", " ", xhtml) # Use this instead of \s+, because \s+ will replace special white space (like hair space or nbsp) with a regular space.
 
 	if is_metadata_file:
 		# Replace html entities in the long description so we can clean it too.
@@ -409,97 +523,39 @@ def format_xhtml(xhtml: str, single_lines: bool = False, is_metadata_file: bool 
 	# Remove unnecessary doctypes which can cause xmllint to hang
 	xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", xhtml, flags=regex.DOTALL)
 
-	# Remove spaces and newlines before <br/>. We do his before using xmllint, because
-	# in some cases (like poetry) we want the <br/>s on separate lines; but in other cases (like
-	# line breaks in a flow-level element) we don't.
-	xhtml = regex.sub(r"\s*<br/?>(\s*<br/>)?", "<br/>", xhtml, flags=regex.DOTALL)
-
-	# Clean up newlines before <span>s, and white space inside <span>s
-	xhtml = regex.sub(r"<span([^>]*)>\s*", "<span\\1>", xhtml, flags=regex.DOTALL)
-	xhtml = regex.sub(r"\s*</span>", "</span>", xhtml, flags=regex.DOTALL)
-
-	# Canonicalize XHTML
-	# Path arguments must be cast to string for Windows compatibility.
-	result = subprocess.run([str(xmllint_path), "--c14n", "-"], input=xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
-
-	xhtml = result.stdout.decode()
+	# Canonicalize and format XHTML
 	try:
-		error = result.stderr.decode().strip()
-
-		if error:
-			raise se.InvalidXhtmlException(f"`xmllint` says:\n{error.replace('-:', 'Line  ')}")
-	except UnicodeDecodeError as ex:
-		raise se.InvalidEncodingException(f"Invalid encoding; UTF-8 expected. Exception: {ex}")
+		xhtml = pretty_print_xml(xhtml)
 	except Exception as ex:
 		raise se.InvalidXhtmlException(f"Couldn’t parse file. Files must be in XHTML format, which is not the same as HTML. Exception: {ex}")
 
-	# Add the XML header that xmllint stripped during c14n
-	xhtml = f"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n{xhtml}"
-
-	xhtml = xhtml.replace("encoding=\"UTF-8\"", "encoding=\"utf-8\"")
-
+	# Normalize unicode characters
 	xhtml = unicodedata.normalize("NFC", xhtml)
 
-	# Pretty-print XML
-	# Path arguments must be cast to string for Windows compatibility.
-	xhtml = subprocess.run([str(xmllint_path), "--format", "-"], input=xhtml.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, check=False).stdout.decode()
+	# Attempt to pretty-print CSS, if we have any (like in cover.svg or titlepage.svg).
+	css = regex.findall(r"<style type=\"text/css\">([^<]+?)</style>", xhtml, flags=regex.DOTALL)
+	if css:
+		# Note that we can't (yet) use a generic format_css function, because we rely
+		# on the output to be structured in a particular way.
+		# This algorithm can't handle arbitrarily-formatted CSS.
+		css = css[0]
 
-	# Remove white space between some tags
-	xhtml = regex.sub(r"<p([^>]*?)>\s+([^<\s])", "<p\\1>\\2", xhtml, flags=regex.DOTALL)
-	xhtml = regex.sub(r"([^>\s])\s+</p>", "\\1</p>", xhtml, flags=regex.DOTALL)
+		css = css.replace("{ ", "{\n")
+		css = css.replace(" }", "\n}\n\n")
+		css = css.replace("; ", ";\n")
 
-	# xmllint has problems with removing spacing between some inline HTML5 elements. Try to fix those problems here.
-	xhtml = regex.sub(r"</(abbr|cite|i|span|time|em|a|b(?!r))><(abbr|cite|i|span|time|em|a|b(?!r))", "</\\1> <\\2", xhtml)
+		css = regex.sub(r"^\s*(.+?){", "\t\t\\1{", css, flags=regex.MULTILINE)
+		css = regex.sub(r"^\s*}", "\t\t}\n", css, flags=regex.MULTILINE)
+		css = regex.sub(r"^([^{}]+?)$", "\t\t\t\\1", css, flags=regex.MULTILINE)
 
-	# Try to fix inline elements directly followed by an <a> tag, unless that <a> tag is a noteref.
-	xhtml = regex.sub(r"</(abbr|cite|i|span|time|em|b)><(a(?! href=\"[^\"]+?\" id=\"noteref\-))", "</\\1> <\\2", xhtml)
+		css = f"\t\t{css.strip()}"
 
-	# Two sequential inline elements, when they are the only children of a block, are indented. But this messes up spacing if the 2nd element is a noteref.
-	xhtml = regex.sub(r"</(abbr|cite|i|span|time|em|b)>\s+<(a href=\"[^\"]+?\" id=\"noteref\-)", "</\\1><\\2", xhtml, flags=regex.DOTALL)
+		xhtml = regex.sub(r"<style type=\"text/css\">([^<]+?)</style>", f"<style type=\"text/css\">\n{css}\n\t</style>", xhtml, flags=regex.DOTALL)
 
-	# The above regex may have put a space before noterefs. Remove that here.
-	xhtml = regex.sub(r"</(abbr|cite|i|span|time|em|a|b)>\s*<a class=\"epub-type-noteref\"", "</\\1><a class=\"epub-type-noteref\"", xhtml)
-
-	# Try to work around an xmllint bug where <br/>\n\s+<span> becomes <br/><span>. Try to put it back on the right indent level here.
-	xhtml = regex.sub(r"^(\t+)(.+?)<br/>([^\s\n])", "\\1\\2<br/>\n\\1\\3", xhtml, flags=regex.MULTILINE)
-
-	# Try to fix <cite> tags running next to referrer <a> tags.
-	if is_endnotes_file:
-		xhtml = regex.sub(r"</cite>(<a href=\"[^\"]+?\" epub:type=\"backlink\")", "</cite> \\1", xhtml)
-
-	if is_colophon_file:
-		xhtml = regex.sub(r"\s*<br/>\s*", "<br/>\n\t\t\t", xhtml, flags=regex.DOTALL)
-
-		section_xhtml = regex.findall(r"</header>(.+?)</section>", xhtml, flags=regex.DOTALL)
-		if section_xhtml:
-			section_xhtml = regex.sub(r"^\s*", "\t\t\t", section_xhtml[0], flags=regex.MULTILINE).strip()
-			xhtml = regex.sub(r"</header>(.+?)</section>", f"</header>\n\t\t\t{section_xhtml}\n\t\t</section>", xhtml, flags=regex.DOTALL)
-
-	if single_lines:
-		# Attempt to pretty-print CSS, if we have any (like in cover.svg or titlepage.svg).
-		css = regex.findall(r"<style type=\"text/css\">([^<]+?)</style>", xhtml, flags=regex.DOTALL)
-		if css:
-			# Note that we can't (yet) use a generic format_css function, because we rely
-			# on the output of the single_lines flag to be structured in a particular way.
-			# This algorithm can't handle arbitrarily-formatted CSS.
-			css = css[0]
-
-			css = css.replace("{ ", "{\n")
-			css = css.replace(" }", "\n}\n\n")
-			css = css.replace("; ", ";\n")
-
-			css = regex.sub(r"^\s*(.+?){", "\t\t\\1{", css, flags=regex.MULTILINE)
-			css = regex.sub(r"^\s*}", "\t\t}\n", css, flags=regex.MULTILINE)
-			css = regex.sub(r"^([^{}]+?)$", "\t\t\t\\1", css, flags=regex.MULTILINE)
-
-			css = f"\t\t{css.strip()}"
-
-			xhtml = regex.sub(r"<style type=\"text/css\">([^<]+?)</style>", f"<style type=\"text/css\">\n{css}\n\t</style>", xhtml, flags=regex.DOTALL)
-
-		# Attempt to pretty-print the long description, which has special formatting
-		if "&lt;p&gt;" in xhtml:
-			xhtml = xhtml.replace(" &lt;p&gt;", "\n\t\t\t&lt;p&gt;")
-			xhtml = xhtml.replace("&lt;/p&gt; </meta>", "&lt;/p&gt;\n\t\t</meta>")
+	# Attempt to pretty-print the long description, which has special formatting
+	if "&lt;p&gt;" in xhtml:
+		xhtml = xhtml.replace(" &lt;p&gt;", "\n\t\t\t&lt;p&gt;")
+		xhtml = xhtml.replace("&lt;/p&gt; </meta>", "&lt;/p&gt;\n\t\t</meta>")
 
 	# Clean the long description, if we can find it
 	if is_metadata_file:

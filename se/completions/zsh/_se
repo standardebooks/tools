@@ -72,7 +72,6 @@ case $state in
 			clean)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
-					{-s,--single-lines}'[remove hard line wrapping]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_files -g \*.\(svg\|xhtml\)'
 				;;

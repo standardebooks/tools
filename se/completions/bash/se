@@ -24,7 +24,7 @@ _se(){
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			clean)
-				COMPREPLY+=($(compgen -W "-h --help -s --single-lines -v --verbose" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-h --help -v --verbose" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
 				COMPREPLY+=($(compgen -f -X "!*.svg" -- "${cur}"))

@@ -30,7 +30,6 @@ complete -c se -A -n "__fish_seen_subcommand_from build-images" -s v -l verbose 
 
 complete -c se -n "__fish_se_no_subcommand" -a clean -d "Prettify and canonicalize individual XHTML or SVG files."
 complete -c se -A -n "__fish_seen_subcommand_from clean" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from clean" -s s -l single-lines -d "remove hard line wrapping"
 complete -c se -A -n "__fish_seen_subcommand_from clean" -s v -l verbose -d "increase output verbosity"
 
 complete -c se -n "__fish_se_no_subcommand" -a compare-versions -d "Render and compare XHTML files in an ebook repository."

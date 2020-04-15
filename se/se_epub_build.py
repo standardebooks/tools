@@ -754,7 +754,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 		# All done, clean the output
 		for filepath in se.get_target_filenames([work_epub_root_directory], (".xhtml", ".svg", ".opf", ".ncx")):
-			se.formatting.format_xhtml_file(filepath, False, filepath.name == "content.opf", filepath.name == "endnotes.xhtml", filepath.name == "colophon.xhtml")
+			se.formatting.format_xhtml_file(filepath, filepath.name == "content.opf", filepath.name == "endnotes.xhtml", filepath.name == "colophon.xhtml")
 
 		# Write the compatible epub
 		se.epub.write_epub(work_epub_root_directory, output_directory / epub_output_filename)
