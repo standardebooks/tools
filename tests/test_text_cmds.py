@@ -8,7 +8,7 @@ from helpers import assemble_book, must_run, files_are_golden
 
 TEXT_CMDS = [
     ("british2american", ""),
-    ("clean", "--single-lines"),
+    ("clean", ""),
     ("modernize-spelling", ""),
     ("semanticate", ""),
     ("typogrify", ""),

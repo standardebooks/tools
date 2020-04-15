@@ -14,21 +14,16 @@ def clean() -> int:
 	"""
 
 	parser = argparse.ArgumentParser(description="Prettify and canonicalize individual XHTML, SVG, or CSS files, or all XHTML, SVG, or CSS files in a source directory. Note that this only prettifies the source code; it doesn’t perform typography changes.")
-	parser.add_argument("-s", "--single-lines", action="store_true", help="remove hard line wrapping")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML, SVG, or CSS file, or a directory containing XHTML, SVG, or CSS files")
 	args = parser.parse_args()
 
 	for filename in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx", ".xml"), []):
-		# If we're setting single lines, skip the colophon, as it has special spacing.
-		if args.single_lines and filename.name == "colophon.xhtml":
-			continue
-
 		if args.verbose:
 			print(f"Processing {filename} ...", end="", flush=True)
 
 		try:
-			se.formatting.format_xhtml_file(filename, args.single_lines, filename.name == "content.opf", filename.name == "endnotes.xhtml", filename.name == "colophon.xhtml")
+			se.formatting.format_xhtml_file(filename, filename.name == "content.opf", filename.name == "endnotes.xhtml", filename.name == "colophon.xhtml")
 		except se.MissingDependencyException as ex:
 			se.print_error(ex)
 			return ex.code
