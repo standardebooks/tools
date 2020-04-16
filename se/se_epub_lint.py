@@ -23,7 +23,7 @@ import lxml.etree as etree
 from PIL import Image, UnidentifiedImageError
 import regex
 import roman
-from bs4 import BeautifulSoup, NavigableString
+from bs4 import BeautifulSoup
 from natsort import natsorted
 
 import se
@@ -142,6 +142,7 @@ SEMANTICS & CONTENT
 "s-023", f"Title `{title}` not correctly titlecased. Expected: `{titlecased_title}`."
 "s-024", "Half title `<title>` elements must contain exactly: \"Half Title\"."
 "s-025", "Titlepage `<title>` elements must contain exactly: `Titlepage`."
+"s-026", "Invalid Roman numeral."
 "s-027", f"{image_ref} missing `<title>` element."
 "s-028", "`cover.svg` and `titlepage.svg` `<title>` elements do not match."
 "s-029", "If a `<span>` exists only for the `z3998:roman` semantic, then `z3998:roman` should be pulled into parent element instead."
@@ -170,7 +171,6 @@ SEMANTICS & CONTENT
 "s-052", "`<attr>` element with illegal `title` attribute."
 "s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`."
 vvvvvvvvvUNUSEDvvvvvvvvv
-"s-026", "Illegal Roman numeral in `<title>` element; use Arabic numbers."
 "s-053", "`<article>` element without `id` attribute."
 
 TYPOGRAPHY
@@ -913,9 +913,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							headings = headings + [(normalized_text, filename)]
 
 					# Check for direct z3998:roman spans that should have their semantic pulled into the parent element
-					matches = regex.findall(r"<([a-z0-9]+)[^>]*?>\s*(<span epub:type=\"z3998:roman\">[^<]+?</span>)\s*</\1>", file_contents, flags=regex.DOTALL)
-					if matches:
-						messages.append(LintMessage("s-029", "If a `<span>` exists only for the `z3998:roman` semantic, then `z3998:roman` should be pulled into parent element instead.", se.MESSAGE_TYPE_WARNING, filename, [match[1] for match in matches]))
+					nodes = dom_lxml.xpath("//span[contains(@epub:type, 'z3998:roman')][not(preceding-sibling::*)][not(following-sibling::*)][not(preceding-sibling::text()[normalize-space(.)])][not(following-sibling::text()[normalize-space(.)])]")
+					if nodes:
+						messages.append(LintMessage("s-029", "If a `<span>` exists only for the `z3998:roman` semantic, then `z3998:roman` should be pulled into parent element instead.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+
+					# Check for z3998:roman elements with invalid values
+					nodes = dom_lxml.xpath("//*[contains(@epub:type, 'z3998:roman')][re:match(text(), '[^ivxlcdmIVXLCDM]')]")
+					if nodes:
+						messages.append(LintMessage("s-026", "Invalid Roman numeral.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 					# Check for "Hathi Trust" instead of "HathiTrust"
 					if "Hathi Trust" in file_contents:
@@ -958,7 +963,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-005", "Nested `<blockquote>` element.", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Check for <hr> tags before the end of a section, which is a common PG artifact
-					if dom_lxml.css_select("hr:last-child"):
+					if dom_lxml.xpath("//hr[count(following-sibling::*) = 0]"):
 						messages.append(LintMessage("s-012", "Illegal `<hr/>` as last child.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for double greater-than at the end of a tag
@@ -1600,6 +1605,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	headings = list(set(headings))
 	with open(self.path / "src" / "epub" / "toc.xhtml", "r", encoding="utf-8") as file:
 		toc = BeautifulSoup(file.read(), "lxml")
+
 		landmarks = toc.find("nav", attrs={"epub:type": "landmarks"})
 		toc = toc.find("nav", attrs={"epub:type": "toc"})
 
