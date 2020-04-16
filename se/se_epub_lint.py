@@ -7,6 +7,7 @@ Strictly speaking, the lint() function should be a class member of SeEpub. But
 the function is very big and it makes editing easier to put in a separate file.
 """
 
+from copy import deepcopy
 import filecmp
 from fnmatch import translate
 import html
@@ -131,7 +132,7 @@ SEMANTICS & CONTENT
 "s-012", "Illegal `<hr/>` element as last child."
 "s-013", "Illegal `<pre>` element."
 "s-014", "`<br/>` after block-level element."
-"s-015", f"`<{match.name}>` element has subtitle `<span>`, but first line is not wrapped in a `<span>`. See semantics manual for structure of headers with subtitles."
+"s-015", f"`<{match.name}>` element has `<span epub:type=\"subtitle\">` child, but first child is not `<span>`. See semantics manual for structure of headers with subtitles."
 "s-016", "`<br/>` element must be followed by a newline, and subsequent content must be indented to the same level."
 "s-017", F"`<m:mfenced>` is deprecated in the MathML spec. Use `<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>`."
 "s-018", "`<img>` element with `id` attribute. `id` attributes go on parent `<figure>` elements."
@@ -150,7 +151,7 @@ SEMANTICS & CONTENT
 "s-031", "Illegal colon (`:`) in SE identifier. SE identifiers are separated by dots, not colons. E.g., `se:name.vessel.ship`."
 "s-032", "SE namespace must be followed by a colon (`:`), not a dot. E.g., `se:name.vessel`."
 "s-033", f"File language is `{file_language}`, but `content.opf` language is `{language}`."
-"s-034", f"`{attr}` semantic used, but `{bare_attr}` is in the EPUB semantic inflection vocabulary."
+"s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary."
 "s-035", "`<h#>` element has the `z3998:roman` semantic, but is not a Roman numeral."
 "s-036", "No `frontmatter` semantic inflection for what looks like a frontmatter file."
 "s-037", "No `backmatter` semantic inflection for what looks like a backmatter file."
@@ -777,10 +778,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				if filename.endswith(".xhtml"):
 					# Read file contents into a DOM for querying
-					dom_soup = BeautifulSoup(file_contents, "lxml")
-
-					# We also create an EasyXhtmlTree object, because Beautiful Soup can't select on XML namespaces
-					# like [epub|type~="x"]
 					try:
 						dom_lxml = se.easy_xml.EasyXhtmlTree(file_contents)
 					except etree.XMLSyntaxError as ex:
@@ -864,52 +861,46 @@ def lint(self, skip_lint_ignore: bool) -> list:
 								else:
 									xhtml_css_classes[css_class] = 1
 
-					# Store all headings to check for ToC references later
 					if filename != "toc.xhtml":
-						for match in dom_soup.select("h1,h2,h3,h4,h5,h6"):
+						# Make a deep copy because we remove noterefs from here, and we may want them to check later
+						dom_copy = deepcopy(dom_lxml)
 
-							# Remove any links to the endnotes
-							endnote_ref = match.find("a", attrs={"epub:type": regex.compile("^.*noteref.*$")})
-							if endnote_ref:
-								endnote_ref.extract()
+						# First remove any links to the endnotes
+						for noteref in dom_copy.xpath("//*[name()='h1' or name()='h2' or name()='h3' or name()='h4' or name()='h5' or name()='h6']//a[contains(@epub:type, 'noteref')]"):
+							noteref.remove()
 
+						for node in dom_copy.xpath("//*[name()='h1' or name()='h2' or name()='h3' or name()='h4' or name()='h5' or name()='h6']"):
 							# Decide whether to remove subheadings based on the following logic:
 							# If the closest parent <section> or <article> is a part, division, or volume, then keep subtitle
 							# Else, if the closest parent <section> or <article> is a halftitlepage, then discard subtitle
 							# Else, if the first child of the heading is not z3998:roman, then also discard subtitle
 							# Else, keep the subtitle.
-							heading_subtitle = match.find(attrs={"epub:type": regex.compile("^.*subtitle.*$")})
+							heading_subtitle = node.xpath(".//*[contains(@epub:type, 'subtitle')]")
 
 							if heading_subtitle:
 								# If an <h#> tag has a subtitle, the non-subtitle text must also be wrapped in a <span>.
-								# This invocation of match.find() returns all text nodes. We don't want any text nodes, so if it returns anything then we know we're
-								# missing a <span> somewhere.
-								if match.find(text=True, recursive=False).strip():
-									messages.append(LintMessage("s-015", f"`<{match.name}>` element has subtitle `<span>`, but first line is not wrapped in a `<span>`. See semantics manual for structure of headers with subtitles.", se.MESSAGE_TYPE_ERROR, filename))
+								# This xpath returns all text nodes that are not white space. We don't want any text nodes,
+								# so if it returns anything then we know we're missing a <span> somewhere.
+								if node.xpath("./text()[not(normalize-space(.) = '')]"):
+									messages.append(LintMessage("s-015", f"Element has `<span epub:type=\"subtitle\">` child, but first child is not `<span>`. See semantics manual for structure of headers with subtitles.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring()]))
 
 								# OK, move on with processing headers.
-								parent_section = match.find_parents(["section", "article"])
+								closest_section_epub_type = node.xpath(".//ancestor::*[name()='section' or name()='article' or name()='body'][1]/@epub:type", True) or ""
+								heading_first_child_epub_type = node.xpath("./span/@epub:type", True) or ""
 
-								# Sometimes we might not have a parent <section>, like in Keats' Poetry
-								if not parent_section:
-									parent_section = match.find_parents("body")
-
-								closest_section_epub_type = parent_section[0].get("epub:type") or ""
-								heading_first_child_epub_type = match.find("span", recursive=False).get("epub:type") or ""
-
-								if regex.findall(r"^.*(part|division|volume).*$", closest_section_epub_type) and not regex.findall(r"^.*se:short-story.*$", closest_section_epub_type):
+								if regex.search(r"(part|division|volume)", closest_section_epub_type) and "se:short-story" not in closest_section_epub_type:
 									remove_subtitle = False
-								elif regex.findall(r"^.*halftitlepage.*$", closest_section_epub_type):
+								elif "halftitlepage" in closest_section_epub_type:
 									remove_subtitle = True
-								elif not regex.findall(r"^.*z3998:roman.*$", heading_first_child_epub_type):
+								elif "z3998:roman" not in heading_first_child_epub_type:
 									remove_subtitle = True
 								else:
 									remove_subtitle = False
 
 								if remove_subtitle:
-									heading_subtitle.extract()
+									heading_subtitle[0].remove()
 
-							normalized_text = " ".join(match.get_text().split())
+							normalized_text = " ".join(node.inner_text().split())
 							headings = headings + [(normalized_text, filename)]
 
 					# Check for direct z3998:roman spans that should have their semantic pulled into the parent element
@@ -1226,10 +1217,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						if "epub:type=\"subtitle\"" in file_contents and not local_css_has_subtitle_style:
 							messages.append(LintMessage("c-006", "Subtitles found, but no subtitle style found in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
 
-					# Check for whitespace before noteref
-					matches = regex.findall(r"\s+<a href=\"endnotes\.xhtml#note-[0-9]+?\" id=\"noteref-[0-9]+?\" epub:type=\"noteref\">[0-9]+?</a>", file_contents)
-					if matches:
-						messages.append(LintMessage("t-012", "Illegal white space before noteref.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					matches = regex.findall(r"\bA\s*B\s*C\s*\b", file_contents)
 					if matches:
@@ -1338,8 +1325,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 								try:
 									with open(self.path / "src" / "epub" / "images" / image_ref, "r", encoding="utf-8") as image_source:
 										try:
-											file_dom_lxml = se.easy_xml.EasySvgTree(image_source.read())
-											title_text = file_dom_lxml.xpath("/svg/title")[0].text
+											svg_dom_lxml = se.easy_xml.EasySvgTree(image_source.read())
+											title_text = svg_dom_lxml.xpath("/svg/title")[0].text
 										except Exception:
 											messages.append(LintMessage("s-027", f"{image_ref} missing `<title>` element.", se.MESSAGE_TYPE_ERROR, image_ref))
 									if title_text != "" and alt != "" and title_text != alt:
@@ -1363,6 +1350,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					matches = regex.findall(fr"<a[^>]*?epub:type=\"noteref\"[^>]*?>[0-9]+</a>[^\s<–\]\)—{se.WORD_JOINER}]", file_contents)
 					if matches:
 						messages.append(LintMessage("t-020", "Endnote links must be outside of punctuation, including quotation marks.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+					# Check for whitespace before noteref
+					# Do this early because we remove noterefs from headers later
+					nodes = dom_lxml.xpath("//a[contains(@epub:type, 'noteref') and re:match(preceding-sibling::node()[1], '\\s+$')]")
+					if nodes:
+						messages.append(LintMessage("t-012", "Illegal white space before noteref.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 					# Check for correct typography around measurements like 2 ft.
 					# But first remove href and id attrs because URLs and IDs may contain strings that look like measurements
@@ -1393,14 +1386,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for double spacing
-					matches = regex.findall(fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}", file_contents)
+					matches = regex.search(fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}", file_contents)
 					if matches:
 						double_spaced_files.append(str(Path(filename)))
 
 					# Run some checks on epub:type values
-					incorrect_attrs = []
-					epub_type_attrs = regex.findall("epub:type=\"([^\"]+?)\"", file_contents)
-					for attrs in epub_type_attrs:
+					incorrect_attrs = set()
+					for attrs in dom_lxml.xpath("//*/@epub:type"):
 						for attr in regex.split(r"\s", attrs):
 							# Did someone use colons instead of dots for SE identifiers? e.g. se:name:vessel:ship
 							matches = regex.findall(r"^se:[a-z]+:(?:[a-z]+:?)*", attr)
@@ -1416,12 +1408,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							if attr.startswith("z3998:"):
 								bare_attr = attr.replace("z3998:", "")
 								if bare_attr in EPUB_SEMANTIC_VOCABULARY:
-									incorrect_attrs.append((attr, bare_attr))
+									incorrect_attrs.add((attr, bare_attr))
 
-					# Convert this into a unique set so we don't spam the console with repetitive messages
-					unique_incorrect_attrs = set(incorrect_attrs)
-					for (attr, bare_attr) in unique_incorrect_attrs:
-						messages.append(LintMessage("s-034", f"`{attr}` semantic used, but `{bare_attr}` is in the EPUB semantic inflection vocabulary.", se.MESSAGE_TYPE_ERROR, filename))
+					if incorrect_attrs:
+						messages.append(LintMessage("s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary.", se.MESSAGE_TYPE_ERROR, filename, [attr for (attr, bare_attr) in incorrect_attrs]))
 
 					# Check for title attrs on abbr elements
 					nodes = dom_lxml.xpath("//abbr[@title]")

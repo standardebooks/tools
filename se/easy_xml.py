@@ -19,14 +19,14 @@ class EasyXmlTree:
 	def __init__(self, xml_string: str):
 		self.etree = etree.fromstring(str.encode(xml_string))
 
-	def css_select(self, selector: str) -> list:
+	def css_select(self, selector: str) -> Union[str, list, None]:
 		"""
 		Shortcut to select elements based on CSS selector.
 		"""
 
 		return self.xpath(cssselect.CSSSelector(selector, translator="html", namespaces=se.XHTML_NAMESPACES).path)
 
-	def xpath(self, selector: str) -> list:
+	def xpath(self, selector: str, return_string: bool = False):
 		"""
 		Shortcut to select elements based on xpath selector.
 
@@ -41,6 +41,11 @@ class EasyXmlTree:
 				result.append(element)
 			else:
 				result.append(EasyXmlElement(element))
+
+		if return_string and result:
+			return str(result[0])
+		if return_string and not result:
+			return None
 
 		return result
 
@@ -122,6 +127,26 @@ class EasyXmlElement:
 
 		return self.lxml_element.get(attribute)
 
+	def xpath(self, selector: str, return_string: bool = False):
+		"""
+		Shortcut to select elements based on xpath selector.
+		"""
+
+		result: List[Union[str, EasyXmlElement]] = []
+
+		for element in self.lxml_element.xpath(selector, namespaces=se.XHTML_NAMESPACES):
+			if isinstance(element, str):
+				result.append(element)
+			else:
+				result.append(EasyXmlElement(element))
+
+		if return_string and result:
+			return str(result[0])
+		if return_string and not result:
+			return None
+
+		return result
+
 	def inner_xml(self) -> str:
 		"""
 		Return a string representing the inner XML of this element.
@@ -149,6 +174,25 @@ class EasyXmlElement:
 		"""
 
 		return regex.sub(r"<[^>]+?>", "", self.inner_xml())
+
+	def remove(self) -> None:
+		"""
+		Remove this element from its dom tree.
+		"""
+
+		# lxml_element.remove() removes both the element AND following elements.
+		# So, we have to have a custom remove() function here.
+		# See https://forums.wikitechy.com/question/how-to-remove-an-element-in-lxml/#70204
+		parent = self.lxml_element.getparent()
+		if self.lxml_element.tail:
+			prev = self.lxml_element.getprevious()
+			if prev is not None: # We can't do `if prev` because we get a FutureWarning from lxml
+				prev.tail = (prev.tail or '') + self.lxml_element.tail
+			else:
+				parent.text = (parent.text or '') + self.lxml_element.tail
+
+		parent.remove(self.lxml_element)
+
 
 	@property
 	def text(self) -> str:
