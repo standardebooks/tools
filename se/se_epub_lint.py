@@ -281,6 +281,30 @@ def _get_malformed_urls(xhtml: str, filename: str) -> list:
 
 	return messages
 
+# Cache dom objects so we don't have to create them multiple times
+_DOM_CACHE: Dict[str, Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtmlTree, se.easy_xml.EasySvgTree]] = {}
+def _dom(file_path: Path) -> Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtmlTree, se.easy_xml.EasySvgTree]:
+	file_path_str = str(file_path)
+	if file_path_str not in _DOM_CACHE:
+		with open(file_path, "r", encoding="utf-8") as file:
+			try:
+				if file_path.suffix == ".xml":
+					_DOM_CACHE[file_path_str] = se.easy_xml.EasyXmlTree(file.read())
+
+				if file_path.suffix == ".xhtml":
+					_DOM_CACHE[file_path_str] = se.easy_xml.EasyXhtmlTree(file.read())
+
+				if file_path.suffix == ".svg":
+					_DOM_CACHE[file_path_str] = se.easy_xml.EasySvgTree(file.read())
+
+			except etree.XMLSyntaxError as ex:
+				raise se.InvalidXhtmlException(f"Couldn’t parse XML in `{file_path}`\n`lxml` says: {str(ex)}")
+			except FileNotFoundError as ex:
+				raise ex
+			except Exception:
+				raise se.InvalidXhtmlException(f"Couldn’t parse XML in `{file_path}`")
+	return _DOM_CACHE[file_path_str]
+
 def lint(self, skip_lint_ignore: bool) -> list:
 	"""
 	Check this ebook for some common SE style errors.
@@ -311,49 +335,40 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	ignored_codes: Dict[str, List[Dict]] = {}
 
 	# First, check if we have an se-lint-ignore.xml file in the ebook root. If so, parse it. For an example se-lint-ignore file, see semos://1.0.0/2.3
-	if not skip_lint_ignore:
-		try:
-			with open(self.path / "se-lint-ignore.xml", "r", encoding="utf-8") as file:
-				lint_config = se.easy_xml.EasyXmlTree(file.read())
+	if not skip_lint_ignore and (self.path / "se-lint-ignore.xml").exists():
+		lint_config = _dom(self.path / "se-lint-ignore.xml")
 
-			elements = lint_config.xpath("/se-lint-ignore/file")
+		elements = lint_config.xpath("/se-lint-ignore/file")
 
-			if not elements:
-				messages.append(LintMessage("m-049", "No `se-lint-ignore.xml` rules. Delete the file if there are no rules.", se.MESSAGE_TYPE_ERROR, "se-lint-ignore.xml"))
+		if not elements:
+			messages.append(LintMessage("m-049", "No `se-lint-ignore.xml` rules. Delete the file if there are no rules.", se.MESSAGE_TYPE_ERROR, "se-lint-ignore.xml"))
 
-			has_illegal_path = False
+		has_illegal_path = False
 
-			for element in elements:
-				path = element.attribute("path").strip()
+		for element in elements:
+			path = element.attribute("path").strip()
 
-				if path == "*":
-					has_illegal_path = True # Set a bool so that we set a lint error later, to prevent adding it multiple times
+			if path == "*":
+				has_illegal_path = True # Set a bool so that we set a lint error later, to prevent adding it multiple times
 
-				if path not in ignored_codes:
-					ignored_codes[path] = []
+			if path not in ignored_codes:
+				ignored_codes[path] = []
 
-				for ignore in element.lxml_element:
-					if ignore.tag == "ignore":
-						has_reason = False
-						for child in ignore:
-							if child.tag == "code":
-								ignored_codes[path].append({"code": child.text.strip(), "used": False})
+			for ignore in element.lxml_element:
+				if ignore.tag == "ignore":
+					has_reason = False
+					for child in ignore:
+						if child.tag == "code":
+							ignored_codes[path].append({"code": child.text.strip(), "used": False})
 
-							if child.tag == "reason" and child.text.strip() != "":
-								has_reason = True
+						if child.tag == "reason" and child.text.strip() != "":
+							has_reason = True
 
-						if not has_reason:
-							messages.append(LintMessage("m-046", "Missing or empty `<reason>` element.", se.MESSAGE_TYPE_ERROR, "se-lint-ignore.xml"))
+					if not has_reason:
+						messages.append(LintMessage("m-046", "Missing or empty `<reason>` element.", se.MESSAGE_TYPE_ERROR, "se-lint-ignore.xml"))
 
-			if has_illegal_path:
-				messages.append(LintMessage("m-047", "Ignoring `*` is too general. Target specific files if possible.", se.MESSAGE_TYPE_WARNING, "se-lint-ignore.xml"))
-
-		except FileNotFoundError as ex:
-			pass
-		except se.InvalidXhtmlException as ex:
-			raise ex
-		except Exception as ex:
-			raise se.InvalidXhtmlException("Couldn’t parse `se-lint-ignore.xml` file.")
+		if has_illegal_path:
+			messages.append(LintMessage("m-047", "Ignoring `*` is too general. Target specific files if possible.", se.MESSAGE_TYPE_WARNING, "se-lint-ignore.xml"))
 
 	# Done parsing ignore list
 
@@ -713,12 +728,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("x-001", "String `UTF-8` must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename))
 
 				if filename.endswith(".svg"):
-					try:
-						svg_dom_lxml = se.easy_xml.EasySvgTree(file_contents)
-					except etree.XMLSyntaxError as ex:
-						raise se.InvalidXhtmlException(f"Couldn’t parse XML in `{Path(root) / filename}`\n`lxml` says: {str(ex)}")
-					except Exception:
-						raise se.InvalidXhtmlException(f"Couldn’t parse XML in `{Path(root) / filename}`")
+					svg_dom_lxml = _dom(Path(root) / filename)
 
 					# Check for fill: #000 which should simply be removed
 					nodes = svg_dom_lxml.xpath("//*[contains(@fill, '#000') or contains(translate(@style, ' ', ''), 'fill:#000')]")
@@ -778,12 +788,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				if filename.endswith(".xhtml"):
 					# Read file contents into a DOM for querying
-					try:
-						dom_lxml = se.easy_xml.EasyXhtmlTree(file_contents)
-					except etree.XMLSyntaxError as ex:
-						raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in `{Path(root) / filename}`\n`lxml` says: {str(ex)}")
-					except Exception:
-						raise se.InvalidXhtmlException(f"Couldn’t parse XHTML in `{Path(root) / filename}`")
+					dom_lxml = _dom(Path(root) / filename)
 
 					messages = messages + _get_malformed_urls(file_contents, filename)
 
@@ -1300,8 +1305,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if matches:
 						messages.append(LintMessage("t-005", "Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-					# Check alt attributes on images
-					nodes = dom_lxml.xpath("//img")
+					# Check alt attributes on images, except for the logo
+					nodes = dom_lxml.xpath("//img[not(re:match(@src, '/logo.svg$'))]")
 					img_no_alt = []
 					img_alt_not_typogrified = []
 					img_alt_lacking_punctuation = []
@@ -1323,14 +1328,15 @@ def lint(self, skip_lint_ignore: bool) -> list:
 								title_text = ""
 								image_ref = img_src.split("/").pop()
 								try:
-									with open(self.path / "src" / "epub" / "images" / image_ref, "r", encoding="utf-8") as image_source:
-										try:
-											svg_dom_lxml = se.easy_xml.EasySvgTree(image_source.read())
-											title_text = svg_dom_lxml.xpath("/svg/title")[0].text
-										except Exception:
-											messages.append(LintMessage("s-027", f"{image_ref} missing `<title>` element.", se.MESSAGE_TYPE_ERROR, image_ref))
+									svg_dom_lxml = _dom(self.path / "src" / "epub" / "images" / image_ref)
+									try:
+										title_text = svg_dom_lxml.xpath("/svg/title")[0].text
+									except Exception:
+										messages.append(LintMessage("s-027", f"{image_ref} missing `<title>` element.", se.MESSAGE_TYPE_ERROR, image_ref))
+
 									if title_text != "" and alt != "" and title_text != alt:
 										messages.append(LintMessage("s-022", f"The `<title>` element of `{image_ref}` does not match the `alt` attribute text in `{filename}`.", se.MESSAGE_TYPE_ERROR, filename))
+
 								except FileNotFoundError:
 									missing_files.append(str(Path(f"src/epub/images/{image_ref}")))
 
@@ -1522,22 +1528,20 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							chapter_ref = regex.findall(r"(.*?)#.*", node.attribute("href"))[0]
 							figcaption_text = ""
 							loi_text = node.inner_text()
+							file_dom_lxml = _dom(self.path / "src" / "epub" / "text" / chapter_ref)
 
-							with open(self.path / "src" / "epub" / "text" / chapter_ref, "r", encoding="utf-8") as chapter:
-								try:
-									file_dom_lxml = se.easy_xml.EasyXhtmlTree(chapter.read())
-									figure = file_dom_lxml.xpath(f"//*[@id='{figure_ref}']")[0]
-								except Exception:
-									messages.append(LintMessage("s-040", f"`#{figure_ref}` not found in file `{chapter_ref}`.", se.MESSAGE_TYPE_ERROR, "loi.xhtml"))
-									continue
+							try:
+								figure = file_dom_lxml.xpath(f"//*[@id='{figure_ref}']")[0]
+							except Exception:
+								messages.append(LintMessage("s-040", f"`#{figure_ref}` not found in file `{chapter_ref}`.", se.MESSAGE_TYPE_ERROR, "loi.xhtml"))
+								continue
 
-								for child in figure.lxml_element:
-									if child.tag == "img":
-										figure_img_alt = child.get("alt")
+							for child in figure.lxml_element:
+								if child.tag == "img":
+									figure_img_alt = child.get("alt")
 
-									if child.tag == "figcaption":
-										elem = se.easy_xml.EasyXmlElement(child)
-										figcaption_text = elem.inner_text()
+								if child.tag == "figcaption":
+									figcaption_text = se.easy_xml.EasyXmlElement(child).inner_text()
 
 							if (figcaption_text != "" and loi_text != "" and figcaption_text != loi_text) and (figure_img_alt != "" and loi_text != "" and figure_img_alt != loi_text):
 								messages.append(LintMessage("s-041", f"The `<figcaption>` element of `#{figure_ref}` does not match the text in its LoI entry.", se.MESSAGE_TYPE_WARNING, chapter_ref))
@@ -1593,6 +1597,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		messages.append(LintMessage("c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks.", se.MESSAGE_TYPE_WARNING, "local.css", single_use_css_classes))
 
 	headings = list(set(headings))
+
 	with open(self.path / "src" / "epub" / "toc.xhtml", "r", encoding="utf-8") as file:
 		toc = BeautifulSoup(file.read(), "lxml")
 
