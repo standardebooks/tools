@@ -201,6 +201,7 @@ TYPOGRAPHY
 "t-030", "Initialism with spaces or without periods."
 "t-031", "`A B C` must be set as `A.B.C.` It is not an abbreviation."
 "t-032", "Initialism or name followed by period. Hint: Periods go within `<abbr>`. `<abbr>`s containing periods that end a clause require the `eoc` class."
+"t-033", "Space after dash."
 
 XHTML
 "x-001", "String `UTF-8` must always be lowercase."
@@ -951,6 +952,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# Check for <hr> tags before the end of a section, which is a common PG artifact
 					if dom.xpath("//hr[count(following-sibling::*) = 0]"):
 						messages.append(LintMessage("s-012", "Illegal `<hr/>` as last child.", se.MESSAGE_TYPE_ERROR, filename))
+
+					# Check for space after dash
+					nodes = dom.xpath("//*[name() = 'p' or name() = 'span' or name = 'em' or name = 'i' or name = 'b' or name = 'strong'][not(self::comment())][re:test(., '[a-zA-Z]-\\s(?!(and|or|nor|to|und|…)\\b)')]")
+					if nodes:
+						messages.append(LintMessage("t-033", "Space after dash.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 					# Check for double greater-than at the end of a tag
 					matches = regex.findall(r"(>>|>&gt;)", file_contents)
