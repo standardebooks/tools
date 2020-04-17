@@ -1214,7 +1214,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						if "epub:type=\"subtitle\"" in file_contents and not local_css_has_subtitle_style:
 							messages.append(LintMessage("c-006", "Subtitles found, but no subtitle style found in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
 
-
 					matches = regex.findall(r"\bA\s*B\s*C\s*\b", file_contents)
 					if matches:
 						messages.append(LintMessage("t-031", "`A B C` must be set as `A.B.C.` It is not an abbreviation.", se.MESSAGE_TYPE_WARNING, filename, matches))
@@ -1423,9 +1422,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-038", "Illegal asterism (`***`). Section/scene breaks must be defined by an `<hr/>` element.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 					# Check for missing punctuation before closing quotes
-					matches = regex.findall(r"[a-z]+[”’]</p>(?!\s*</header>)", file_contents, flags=regex.IGNORECASE)
-					if matches:
-						messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
+					nodes = dom.xpath("//p[not(parent::header and position() = last())][re:test(., '[a-z]+[”’]$')]")
+					if nodes:
+						messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 					# Check to see if we've marked something as poetry or verse, but didn't include a first <span>
 					# This xpath selects the p elements, whose parents are poem/verse, and whose first child is not a span
