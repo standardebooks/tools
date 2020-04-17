@@ -1422,7 +1422,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-052", "`<attr>` element with illegal `title` attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
 					# Check for leftover asterisms
-					nodes = dom.xpath("//*[re:test(., '^\\s*\\*\\s*(\\*\\s*)+$')]")
+					nodes = dom.xpath("//*[self::p or self::div][re:test(., '^\\s*\\*\\s*(\\*\\s*)+$')]")
 					if nodes:
 						messages.append(LintMessage("s-038", "Illegal asterism (`***`). Section/scene breaks must be defined by an `<hr/>` element.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
