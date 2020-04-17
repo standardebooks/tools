@@ -60,7 +60,11 @@ def lint() -> int:
 			messages = se_epub.lint(args.skip_lint_ignore)
 		except se.SeException as ex:
 			se.print_error(ex)
-			return ex.code
+			if len(args.directories) > 1:
+				messages = []
+				return_code = se.LintFailedException.code
+			else:
+				return ex.code
 
 		table_data = []
 
