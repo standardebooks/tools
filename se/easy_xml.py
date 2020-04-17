@@ -30,6 +30,8 @@ class EasyXmlTree:
 		"""
 		Shortcut to select elements based on xpath selector.
 
+		If return_string is true, return a single string value instead of a list.
+
 		Warning: lxml has no support for an element without a namepace.  So, when using xpath or css_select, make sure to include a bogus namespace if necessary.
 		For example, in content.opf we can't do xpath("//metadata").  We have to use a bogus namespace: xpath("//opf:metadata")
 		"""
