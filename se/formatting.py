@@ -401,7 +401,7 @@ def _indent_children(elem, level, one_space, indentations, has_child_tails=False
 		else:
 			elem.text = child_indentation
 	else:
-		elem.text = _unwrap_content(elem.text, remove_trailing_space=False)
+		_unwrap_text(elem, remove_trailing_space=False)
 
 	# Recursively indent all children.
 	for child in elem:
@@ -419,7 +419,7 @@ def _indent_children(elem, level, one_space, indentations, has_child_tails=False
 			if child.tag is etree.Comment:
 				child.text = regex.sub(r" *\n\s*", child_indentation, child.text)
 			elif child.tag != "{http://www.idpf.org/2007/opf}meta":
-				child.text = _unwrap_content(child.text, remove_trailing_space=True)
+				_unwrap_text(child, remove_trailing_space=True)
 
 		# Handle different cases for indentation in child tail content
 		if not child.tail or regex.match(r"^\n\s*$", child.tail):
@@ -442,26 +442,33 @@ def _indent_children(elem, level, one_space, indentations, has_child_tails=False
 			else:
 				child.tail = child_indentation
 		else:
-			# Replace line wraps in child tail
-			if next_child is None:
-				child.tail = _unwrap_content(child.tail, remove_trailing_space=True)
-			else:
-				child.tail = _unwrap_content(child.tail, remove_trailing_space=False)
+			# Remove line wraps in child tail
+			_unwrap_tail(child, remove_trailing_space=next_child is None)
 			# Add special indentation for br tag with non-empty tail
 			if child.tag == "{http://www.w3.org/1999/xhtml}br":
 				child_indentation = indentations[level - 1]
 				child.tail = child_indentation + child.tail
 
-def _unwrap_content(content: str, remove_trailing_space: bool) -> str:
+def _unwrap_text(elem: etree.Element, remove_trailing_space: bool):
 	"""
-	Remove line wraps from element content.
+	Remove line wraps from text content of element.
 	"""
-	result = regex.sub(r"^\n\s*", "", content)
+	elem.text = regex.sub(r"^\n\s*", "", elem.text)
 	if remove_trailing_space:
-		result = regex.sub(r"\n\s*$", "", result)
-	result = regex.sub(r" *\n\s*", " ", result)
+		elem.text = regex.sub(r"\n\s*$", "", elem.text)
+	elem.text = regex.sub(r" *\n\s*", " ", elem.text)
 
-	return result
+def _unwrap_tail(elem: etree.Element, remove_trailing_space: bool):
+	"""
+	Remove line wraps from tail content of element.
+	"""
+	if elem.tag == "{http://www.w3.org/1999/xhtml}br":
+		elem.tail = regex.sub(r"^\n\s*", "", elem.tail)
+	else:
+		elem.tail = regex.sub(r"^\n\s*", " ", elem.tail)
+	if remove_trailing_space:
+		elem.tail = regex.sub(r"\n\s*$", "", elem.tail)
+	elem.tail = regex.sub(r" *\n\s*", " ", elem.tail)
 
 def pretty_print_xml(xml: str) -> str:
 	"""
