@@ -129,7 +129,6 @@ SEMANTICS & CONTENT
 "s-013", "Illegal `<pre>` element."
 "s-014", "`<br/>` after block-level element."
 "s-015", f"`<{match.name}>` element has `<span epub:type=\"subtitle\">` child, but first child is not `<span>`. See semantics manual for structure of headers with subtitles."
-"s-016", "`<br/>` element must be followed by a newline, and subsequent content must be indented to the same level."
 "s-017", F"`<m:mfenced>` is deprecated in the MathML spec. Use `<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>`."
 "s-018", "`<img>` element with `id` attribute. `id` attributes go on parent `<figure>` elements."
 "s-019", "`<h#>` element with `id` attribute. `<h#>` elements should be wrapped in `<section>` elements, which should hold the `id` attribute."
@@ -168,6 +167,8 @@ SEMANTICS & CONTENT
 "s-052", "`<attr>` element with illegal `title` attribute."
 "s-053", "Line not preceded by `<br/>`."
 "s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`."
+vvvvvvvvUNUSEDvvvvvvvvvv
+"s-016", "`<br/>` element must be followed by a newline, and subsequent content must be indented to the same level."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1362,11 +1363,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					matches = [match for match in matches if not regex.search(r"(st|nd|rd|th)", match)]
 					if matches:
 						messages.append(LintMessage("t-021", "Measurement not to standard. Numbers are followed by a no-break space and abbreviated units require an `<abbr>` element. See `semos://1.0.0/8.8.5`.", se.MESSAGE_TYPE_WARNING, filename, matches))
-
-					# Check for line breaks after <br/> tags
-					matches = regex.findall(r"<br\s*?/>[^\n]", file_contents)
-					if matches:
-						messages.append(LintMessage("s-016", "`<br/>` element must be followed by a newline, and subsequent content must be indented to the same level.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for <pre> tags
 					if dom.xpath("//pre"):
