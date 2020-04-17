@@ -166,9 +166,8 @@ SEMANTICS & CONTENT
 "s-050", "`noteref` as a direct child of element with `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`."
 "s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100."
 "s-052", "`<attr>` element with illegal `title` attribute."
+"s-053", "Line not preceded by `<br/>`."
 "s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`."
-vvvvvvvvvUNUSEDvvvvvvvvv
-"s-053", "`<article>` element without `id` attribute."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -808,6 +807,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						missing_colophon_vars = [x for x in COLOPHON_VARIABLES if regex.search(fr"\b{x}\b", file_contents)]
 						if missing_colophon_vars:
 							messages.append(LintMessage("m-036", "Missing data in colophon.", se.MESSAGE_TYPE_ERROR, filename, missing_colophon_vars))
+
+						# Check that we have <br/>s at the end of lines
+						# First, check for b or a elements that are preceded by a newline but not by a br
+						nodes = [node.tostring() for node in dom.xpath("/html/body/section/p/*[name() = 'b' or name() = 'a'][(preceding-sibling::node()[1])[contains(., '\n')]][not((preceding-sibling::node()[2])[self::br]) or (normalize-space(preceding-sibling::node()[1]) and re:test(preceding-sibling::node()[1], '\\n\\s*$')) ]")]
+						# Next, check for text nodes that contain newlines but are not preceded by brs
+						nodes = nodes + [node.strip() for node in dom.xpath("/html/body/section/p/text()[contains(., '\n') and normalize-space(.)][(preceding-sibling::node()[1])[not(self::br)]]")]
+						if nodes:
+							messages.append(LintMessage("s-053", "Line not preceded by `<br/>`.", se.MESSAGE_TYPE_ERROR, filename, nodes))
 
 						# Are the sources represented correctly?
 						# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
