@@ -204,6 +204,8 @@ TYPOGRAPHY
 "t-031", "`A B C` must be set as `A.B.C.` It is not an abbreviation."
 "t-032", "Initialism or name followed by period. Hint: Periods go within `<abbr>`. `<abbr>`s containing periods that end a clause require the `eoc` class."
 "t-033", "Space after dash."
+"t-034", "`<cite>` element preceded by em-dash. Hint: em-dashes go within `<cite>` elements."
+"t-035", "`<cite>` element not preceded by space."
 
 XHTML
 "x-001", "String `UTF-8` must always be lowercase."
@@ -1060,7 +1062,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if matches:
 						messages.append(LintMessage("t-014", "Two or more em-dashes in a row found. Elided words should use the two- or three-em-dash Unicode character, and dialog ending in em-dashes should only end in a single em-dash.", se.MESSAGE_TYPE_ERROR, filename))
 
-					nodes = dom.xpath("//blockquote/p/cite")
+					nodes = dom.xpath("//blockquote//p[parent::*[name() = 'footer'] or parent::*[name() = 'blockquote']]//cite") # Sometimes the <p> may be in a <footer>
 					if nodes:
 						messages.append(LintMessage("s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
@@ -1247,6 +1249,16 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					nodes = dom.xpath("//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
 					if nodes:
 						messages.append(LintMessage("s-019", "`<h#>` element with `id` attribute. `<h#>` elements should be wrapped in `<section>` elements, which should hold the `id` attribute.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
+
+					# Check for <cite> preceded by em dash
+					nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[re:match(., '—$')]]")
+					if nodes:
+						messages.append(LintMessage("t-034", "`<cite>` element preceded by em-dash. Hint: em-dashes go within `<cite>` elements.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+
+					# Check for <cite> without preceding space in text node. (preceding ( or [ are also OK)
+					nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[not(re:match(., '[\\[\\(\\s]$'))]]")
+					if nodes:
+						messages.append(LintMessage("t-035", "`<cite>` element not preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 					# Check to see if <h#> tags are correctly titlecased
 					nodes = dom.xpath("//*[re:test(name(), '^h[1-6]$')][not(contains(@epub:type, 'z3998:roman'))]")
