@@ -1608,7 +1608,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			if f".{css_class}" not in self.local_css:
 				missing_selectors.append(css_class)
 
-		if xhtml_css_classes[css_class] == 1 and css_class not in se.IGNORED_CLASSES and not regex.match(r"^i[0-9]$", css_class):
+		if xhtml_css_classes[css_class] == 1 and css_class not in se.IGNORED_CLASSES and not regex.match(r"^i[0-9]+$", css_class):
 			# Don't count ignored classes OR i[0-9] which are used for poetry styling
 			single_use_css_classes.append(css_class)
 
