@@ -7,6 +7,7 @@ Strictly speaking, the lint() function should be a class member of SeEpub. But
 the function is very big and it makes editing easier to put in a separate file.
 """
 
+from copy import deepcopy
 import filecmp
 from fnmatch import translate
 import io
@@ -877,18 +878,23 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							# Else, if the closest parent <section> or <article> is a halftitlepage, then discard subtitle
 							# Else, if the first child of the heading is not z3998:roman, then also discard subtitle
 							# Else, keep the subtitle.
-							heading_subtitle = node.xpath(".//*[contains(@epub:type, 'subtitle')]")
+							node_copy = deepcopy(node)
+
+							for noteref_node in node_copy.xpath(".//a[contains(@epub:type, 'noteref')]"):
+								noteref_node.remove()
+
+							heading_subtitle = node_copy.xpath(".//*[contains(@epub:type, 'subtitle')]")
 
 							if heading_subtitle:
 								# If an <h#> tag has a subtitle, the non-subtitle text must also be wrapped in a <span>.
 								# This xpath returns all text nodes that are not white space. We don't want any text nodes,
 								# so if it returns anything then we know we're missing a <span> somewhere.
-								if node.xpath("./text()[not(normalize-space(.) = '')]"):
+								if node_copy.xpath("./text()[not(normalize-space(.) = '')]"):
 									messages.append(LintMessage("s-015", f"Element has `<span epub:type=\"subtitle\">` child, but first child is not `<span>`. See semantics manual for structure of headers with subtitles.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring()]))
 
 								# OK, move on with processing headers.
 								closest_section_epub_type = node.xpath(".//ancestor::*[name()='section' or name()='article' or name()='body'][1]/@epub:type", True) or ""
-								heading_first_child_epub_type = node.xpath("./span/@epub:type", True) or ""
+								heading_first_child_epub_type = node_copy.xpath("./span/@epub:type", True) or ""
 
 								if regex.search(r"(part|division|volume)", closest_section_epub_type) and "se:short-story" not in closest_section_epub_type:
 									remove_subtitle = False
@@ -902,14 +908,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 								if remove_subtitle:
 									heading_subtitle[0].remove()
 
-							# We can't just use node.inner_text() because we want to remove noterefs *and their contents*, not just their tags.
-							# After that, remove all tags (but keep tag contents).
-							# We also can't remove them from the dom with dom.remove() because we may need to check them later.
-							inner_text = node.inner_xml()
-							inner_text = regex.sub(r"<a[^>]+?epub:type=\"noteref\"[^>]*?>[^<]+?</a>", "", inner_text)
-							inner_text = regex.sub(r"<[^>]+?>", "", inner_text)
-
-							normalized_text = " ".join(inner_text.split())
+							normalized_text = " ".join(node_copy.inner_text().split())
 							headings = headings + [(normalized_text, filename)]
 
 					# Check for direct z3998:roman spans that should have their semantic pulled into the parent element
@@ -1166,8 +1165,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							try:
 								chapter_number = roman.fromRoman(nodes[0].inner_text())
 
-								if not regex.search(fr"<title>(Chapter|Section|Part) {chapter_number}", file_contents):
+								if not dom.xpath(f"/html/head/title[re:match(., '(Chapter|Section|Part) {chapter_number}')]"):
 									unexpected_titles.append((f"Chapter {chapter_number}", filename))
+
 							except Exception:
 								messages.append(LintMessage("s-035", f"`{nodes[0].totagstring()}` element has the `z3998:roman` semantic, but is not a Roman numeral.", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -1176,13 +1176,16 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						if nodes:
 							chapter_number = roman.fromRoman(nodes[0].lxml_element[0].text)
 
-							subtitle_node = se.easy_xml.EasyXmlElement(nodes[0].lxml_element[1])
+							subtitle_node = se.easy_xml.EasyXmlElement(deepcopy(nodes[0].lxml_element[1]))
 
-							# First, remove endnotes in the subtitle, then remove all other tags (but not tag contents)
-							chapter_title = regex.sub(r"<a[^>]+?epub:type=\"noteref\"[^>]*?>[^<]+?</a>", "", subtitle_node.inner_xml()).strip()
-							chapter_title = regex.sub(r"<[^>]+?>", "", chapter_title)
+							# First, remove endnotes in the subtitle
+							for noteref_node in subtitle_node.xpath("./a[contains(@epub:type, 'noteref')]"):
+								noteref_node.remove()
 
-							if not regex.search(fr"<title>(Chapter|Section|Part) {chapter_number}: {regex.escape(chapter_title)}</title>", file_contents):
+							# Now remove all other tags (but not tag contents)
+							chapter_title = subtitle_node.inner_text()
+
+							if not dom.xpath(f"/html/head/title[re:match(., '(Chapter|Section|Part) {chapter_number}: {regex.escape(chapter_title)}')]"):
 								unexpected_titles.append((f"Chapter {chapter_number}: {chapter_title}", filename))
 
 					# Now, we try to select the first <h#> element in a <section> or <article>.
@@ -1193,12 +1196,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if len(dom.xpath("/html/body/article")) <= 3:
 						# The xpath count(preceding-sibling::section) = 0 emulates :first-child
 						# Select the first <h#> element with no <span> children that is the child of the first <section> or <article>
-						elements = dom.xpath("(/html/body//*[ (name()='section' and count(preceding-sibling::section) = 0) or (name()='article' and count(preceding-sibling::article) = 0)]//*[re:test(name(), '^h[1-6]$')])[1][contains(concat(' ', @epub:type, ' '), ' title ') and not(contains(concat(' ', @epub:type, ' '), ' z3998:roman '))][not(span)]")
-						if elements:
-							# First remove endnotes *and* their contents
-							title = regex.sub(r"<a[^>]+?>([^<]+?)</a>", "", elements[0].inner_xml())
-							# We want to remove all HTML tags, in case there are things like <abbr>Mr.</abbr> in there.
-							title = regex.sub(r"<[^>]+?>", "", title)
+						nodes = dom.xpath("(/html/body//*[ (name()='section' and count(preceding-sibling::section) = 0) or (name()='article' and count(preceding-sibling::article) = 0)]//*[re:test(name(), '^h[1-6]$')])[1][contains(concat(' ', @epub:type, ' '), ' title ') and not(contains(concat(' ', @epub:type, ' '), ' z3998:roman '))][not(span)]")
+						if nodes:
+							node_copy = deepcopy(nodes[0])
+
+							for noteref_node in node_copy.xpath(".//a[contains(@epub:type, 'noteref')]"):
+								noteref_node.remove()
+
+							title = node_copy.inner_text()
 							if not dom.xpath(f"/html/head/title[text()='{title}']"):
 								unexpected_titles.append((title, filename))
 
@@ -1246,21 +1251,28 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# Check to see if <h#> tags are correctly titlecased
 					nodes = dom.xpath("//*[re:test(name(), '^h[1-6]$')][not(contains(@epub:type, 'z3998:roman'))]")
 					for node in nodes:
-						title = node.inner_xml().strip()
+						node_copy = deepcopy(node)
 
-						# Remove leading roman numerals first
-						title = regex.sub(r"^<span epub:type=\"[^\"]*?z3998:roman[^\"]*?\">(.*?)</span>", "", title, flags=regex.DOTALL)
+						# Remove *leading* Roman spans
+						# This matches the first child node excluding white space nodes, if it contains the z3998:roman semantic.
+						for element in node_copy.xpath("./node()[normalize-space(.)][1][contains(@epub:type, 'z3998:roman')]"):
+							element.remove()
+
+						# Remove noterefs
+						for element in node_copy.xpath(".//a[contains(@epub:type, 'noteref')]"):
+							element.remove()
+
+						title = node_copy.inner_xml()
 
 						# Remove leading leftover spacing and punctuation
 						title = regex.sub(r"^[\s\.\,\!\?\:\;]*", "", title)
-
-						# Remove endnotes
-						title = regex.sub(r"<a[^>]*?epub:type=\"noteref\"[^>]*?>[0-9]+</a>", "", title)
 
 						# Normalize whitespace
 						title = regex.sub(r"\s+", " ", title, flags=regex.DOTALL).strip()
 
 						# Remove nested <span>s in subtitles, which might trip up the next regex block
+						# We can't do this with the lxml element because it has no unwrap() function. remove() is not the same thing--
+						# we want to keep the tag contents.
 						title = regex.sub(r"(<span epub:type=\"subtitle\">[^<]*?)<span[^>]*?>([^<]*?</span>)", r"\1\2", title, flags=regex.DOTALL)
 						title = regex.sub(r"(<span epub:type=\"subtitle\">[^<]*?)</span>([^<]*?</span>)", r"\1\2", title, flags=regex.DOTALL)
 

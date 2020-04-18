@@ -175,7 +175,7 @@ class EasyXmlElement:
 		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `Hello there, Mr. Smith!`
 		"""
 
-		return regex.sub(r"<[^>]+?>", "", self.inner_xml())
+		return regex.sub(r"<[^>]+?>", "", self.inner_xml().strip())
 
 	def remove(self) -> None:
 		"""
