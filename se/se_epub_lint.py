@@ -1424,7 +1424,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# Check for missing punctuation before closing quotes
 					nodes = dom.xpath("//p[not(parent::header and position() = last())][re:test(., '[a-z]+[”’]$')]")
 					if nodes:
-						messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+						messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring()[-30:] for node in nodes]))
 
 					# Check to see if we've marked something as poetry or verse, but didn't include a first <span>
 					# This xpath selects the p elements, whose parents are poem/verse, and whose first child is not a span

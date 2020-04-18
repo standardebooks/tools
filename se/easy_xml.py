@@ -195,7 +195,6 @@ class EasyXmlElement:
 
 		parent.remove(self.lxml_element)
 
-
 	@property
 	def text(self) -> str:
 		"""
