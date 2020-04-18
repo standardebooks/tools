@@ -851,6 +851,11 @@ def titlecase(text: str) -> str:
 	A titlecased version of the input string
 	"""
 
+	# For some reason, pip_titlecase() doesn't do anything if the string is mostly (but not all) uppercase.
+	# For example "STOPPING BY WOODS ON a SNOWY EVENING" would not be changed by pip_titlecase()
+	# So, convert to all uppercase first.
+	text = text.upper()
+
 	text = pip_titlecase(text)
 
 	# We make some additional adjustments here
