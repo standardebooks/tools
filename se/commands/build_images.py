@@ -22,16 +22,14 @@ def build_images() -> int:
 	args = parser.parse_args()
 
 	for directory in args.directories:
-		directory = Path(directory)
+		directory = Path(directory).resolve()
 
 		if args.verbose:
 			print(f"Processing {directory} ...")
 
-		directory = directory.resolve()
-
-		se_epub = SeEpub(directory)
-
 		try:
+			se_epub = SeEpub(directory)
+
 			if args.verbose:
 				print("\tCleaning metadata ...", end="", flush=True)
 
