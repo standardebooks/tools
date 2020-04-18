@@ -23,7 +23,7 @@ def clean() -> int:
 			print(f"Processing {filename} ...", end="", flush=True)
 
 		try:
-			se.formatting.format_xhtml_file(filename, filename.name == "content.opf", filename.name == "endnotes.xhtml", filename.name == "colophon.xhtml")
+			se.formatting.format_xhtml_file(filename, filename.name == "content.opf")
 		except se.MissingDependencyException as ex:
 			se.print_error(ex)
 			return ex.code

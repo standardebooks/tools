@@ -1002,7 +1002,7 @@ class SeEpub:
 						ol_tag.append(li_tag)
 
 				with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml", "w") as file:
-					file.write(se.formatting.format_xhtml(str(self._endnotes_soup), is_endnotes_file=True))
+					file.write(se.formatting.format_xhtml(str(self._endnotes_soup)))
 
 				report += f"Changed {notes_changed:d} endnote{'s' if notes_changed != 1 else ''}."
 			else:

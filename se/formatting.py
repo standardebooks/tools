@@ -482,14 +482,13 @@ def pretty_print_xml(xml: str) -> str:
 	xml = etree.tostring(tree, encoding="unicode")
 	return '<?xml version="1.0" encoding="utf-8"?>\n' + xml + "\n"
 
-def format_xhtml_file(filename: Path, is_metadata_file: bool = False, is_endnotes_file: bool = False, is_colophon_file: bool = False) -> None:
+def format_xhtml_file(filename: Path, is_metadata_file: bool = False) -> None:
 	"""
 	Pretty-print well-formed XHTML and save to file.
 
 	INPUTS
 	filename: A file containing well-formed XHTML
 	is_metadata_file: True if the passed XHTML is an SE content.opf metadata file
-	is_endnotes_file: True if the passed XHTML is an SE endnotes file
 
 	OUTPUTS
 	None.
@@ -498,20 +497,19 @@ def format_xhtml_file(filename: Path, is_metadata_file: bool = False, is_endnote
 	with open(filename, "r+", encoding="utf-8") as file:
 		xhtml = file.read()
 
-		processed_xhtml = se.formatting.format_xhtml(xhtml, is_metadata_file, is_endnotes_file, is_colophon_file)
+		processed_xhtml = se.formatting.format_xhtml(xhtml, is_metadata_file)
 		if processed_xhtml != xhtml:
 			file.seek(0)
 			file.write(processed_xhtml)
 			file.truncate()
 
-def format_xhtml(xhtml: str, is_metadata_file: bool = False, is_endnotes_file: bool = False, is_colophon_file: bool = False) -> str:  # pylint: disable=unused-argument
+def format_xhtml(xhtml: str, is_metadata_file: bool = False) -> str:
 	"""
 	Pretty-print well-formed XHTML.
 
 	INPUTS
 	xhtml: A string of well-formed XHTML
 	is_metadata_file: True if the passed XHTML is an SE content.opf metadata file
-	is_endnotes_file: True if the passed XHTML is an SE endnotes file
 
 	OUTPUTS
 	A string of pretty-printed XHTML.
