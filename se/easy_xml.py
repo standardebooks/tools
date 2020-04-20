@@ -127,6 +127,9 @@ class EasyXmlElement:
 		Return the value of an attribute on this element.
 		"""
 
+
+		attribute = attribute.replace("epub:", "{http://www.idpf.org/2007/ops}")
+
 		return self.lxml_element.get(attribute)
 
 	def xpath(self, selector: str, return_string: bool = False):

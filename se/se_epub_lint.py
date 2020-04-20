@@ -42,10 +42,11 @@ CSS
 "c-003", "`[xml|attr]` selector in CSS, but no XML namespace declared (`@namespace xml \"http://www.w3.org/XML/1998/namespace\";`)."
 "c-004", "Do not specify border colors, so that reading systems can adjust for night mode."
 "c-005", "`abbr` selector does not need `white-space: nowrap;` as it inherits it from `core.css`."
-"c-006", "Subtitles found, but no subtitle style found in `local.css`."
-"c-007", f"`<abbr class=\"{css_class}\">` element found, but no required style in `local.css`. See the typography manual for required styles."
+"c-006", "Semantic found, but missing corresponding style in `local.css`."
 "c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks."
 "c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles."
+vvvvvvvvUNUSEDvvvvvvvvvv
+"c-007", f"`<abbr class=\"{css_class}\">` element found, but no required style in `local.css`. See the typography manual for required styles."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -332,7 +333,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	double_spaced_files: List[str] = []
 	unused_selectors: List[str] = []
 	missing_metadata_elements = []
-	abbr_elements: Set[str] = set()
+	abbr_elements: List[se.easy_xml.EasyXmlElement] = []
 	initialism_exceptions = ["MS.", "MSS.", "κ.τ.λ.", "TV"] # semos://1.0.0/8.10.5.1; κ.τ.λ. is "etc." in Greek, and we don't match Greek chars.
 
 	# This is a dict with where keys are the path and values are a list of code dicts.
@@ -441,7 +442,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	local_css_has_verse_style = False
 	local_css_has_song_style = False
 	local_css_has_hymn_style = False
+	local_css_has_elision_style = False
 	abbr_styles = regex.findall(r"abbr\.[a-z]+", self.local_css)
+	missing_styles: List[str] = []
 
 	# Iterate over rules to do some other checks
 	selected_h = []
@@ -450,23 +453,26 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		if regex.search(r"^h[0-6]", selector, flags=regex.IGNORECASE):
 			selected_h.append(selector)
 
-		if not local_css_has_subtitle_style and selector == "span[epub|type~=\"subtitle\"]":
+		if selector == "span[epub|type~=\"subtitle\"]":
 			local_css_has_subtitle_style = True
 
-		if not local_css_has_halftitle_subtitle_style and selector == "section[epub|type~=\"halftitlepage\"] span[epub|type~=\"subtitle\"]":
+		if selector == "section[epub|type~=\"halftitlepage\"] span[epub|type~=\"subtitle\"]":
 			local_css_has_halftitle_subtitle_style = True
 
-		if not local_css_has_poem_style and "z3998:poem" in selector:
+		if "z3998:poem" in selector:
 			local_css_has_poem_style = True
 
-		if not local_css_has_verse_style and "z3998:verse" in selector:
+		if "z3998:verse" in selector:
 			local_css_has_verse_style = True
 
-		if not local_css_has_song_style and "z3998:song" in selector:
+		if "z3998:song" in selector:
 			local_css_has_song_style = True
 
-		if not local_css_has_hymn_style and "z3998:hymn" in selector:
+		if "z3998:hymn" in selector:
 			local_css_has_hymn_style = True
+
+		if "span.elision" in selector:
+			local_css_has_elision_style = True
 
 		if "abbr" in selector and "nowrap" in rules:
 			abbr_with_whitespace.append(selector)
@@ -1215,11 +1221,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# Check for missing subtitle styling
 					# Half titles have slightly different subtitle styles than regular subtitles
 					if filename == "halftitle.xhtml":
-						if "epub:type=\"subtitle\"" in file_contents and not local_css_has_halftitle_subtitle_style:
-							messages.append(LintMessage("c-006", "Subtitles found, but no subtitle style found in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+						if not local_css_has_halftitle_subtitle_style:
+							missing_styles += [node.totagstring() for node in dom.xpath("/html/body//*[contains(@epub:type, 'subtitle')]")]
 					else:
-						if "epub:type=\"subtitle\"" in file_contents and not local_css_has_subtitle_style:
-							messages.append(LintMessage("c-006", "Subtitles found, but no subtitle style found in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+						if not local_css_has_subtitle_style:
+							missing_styles += [node.totagstring() for node in dom.xpath("/html/body//*[contains(@epub:type, 'subtitle')]")]
+
+					if not local_css_has_elision_style:
+						missing_styles += [node.totagstring() for node in dom.xpath("/html/body//span[contains(@class, 'elision')]")]
 
 					matches = regex.findall(r"\bA\s*B\s*C\s*\b", file_contents)
 					if matches:
@@ -1470,17 +1479,19 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 					# Check to see if we included poetry or verse without the appropriate styling
 					if filename not in se.IGNORED_FILENAMES:
-						if "z3998:poem" in file_contents and not local_css_has_poem_style:
-							messages.append(LintMessage("s-043", "Element with `z3998:poem` semantic found without matching style in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+						nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:poem') or contains(@epub:type, 'z3998:verse') or contains(@epub:type, 'z3998:song') or contains(@epub:type, 'z3998:hymn')][./p/span]")
+						for node in nodes:
+							if "z3998:poem" in node.attribute("epub:type") and not local_css_has_poem_style:
+								missing_styles.append(node.totagstring())
 
-						if "z3998:verse" in file_contents and not local_css_has_verse_style:
-							messages.append(LintMessage("s-044", "Element with `z3998:verse` semantic found without matching style in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+							if "z3998:verse" in node.attribute("epub:type") and not local_css_has_verse_style:
+								missing_styles.append(node.totagstring())
 
-						if "z3998:song" in file_contents and not local_css_has_song_style:
-							messages.append(LintMessage("s-045", "Element with `z3998:song` semantic found without matching style in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+							if "z3998:song" in node.attribute("epub:type") and not local_css_has_song_style:
+								missing_styles.append(node.totagstring())
 
-						if "z3998:hymn" in file_contents and not local_css_has_hymn_style:
-							messages.append(LintMessage("s-046", "Element with `z3998:hymn` semantic found without matching style in `local.css`.", se.MESSAGE_TYPE_ERROR, filename))
+							if "z3998:hymn" in node.attribute("epub:type") and not local_css_has_hymn_style:
+								missing_styles.append(node.totagstring())
 
 					# For this series of selections, we select spans that are direct children of p, because sometimes a line of poetry may have a nested span.
 					nodes = dom.css_select("[epub|type~='z3998:poem'] p > span + a[epub|type~='noteref']")
@@ -1530,15 +1541,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 									messages.append(LintMessage("m-029", f"Google Books source not present. Expected: `<a href=\"{link}\">Google Books</a>`.", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Collect certain abbr elements for later check
-					if dom.xpath("//abbr[contains(@class, 'temperature')]"):
-						abbr_elements.add("temperature")
+					abbr_elements += dom.xpath("//abbr[contains(@class, 'temperature')]")
 
 					# note that 'temperature' contains 'era'...
-					if dom.xpath("//abbr[contains(concat(' ', @class, ' '), ' era ')]"):
-						abbr_elements.add("era")
+					abbr_elements += dom.xpath("//abbr[contains(concat(' ', @class, ' '), ' era ')]")
 
-					if dom.xpath("//abbr[contains(@class, 'acronym')]"):
-						abbr_elements.add("acronym")
+					abbr_elements += dom.xpath("//abbr[contains(@class, 'acronym')]")
 
 					# Check if language tags in individual files match the language in content.opf
 					if filename not in se.IGNORED_FILENAMES:
@@ -1666,8 +1674,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			break
 
 	for element in abbr_elements:
-		if f"abbr.{element}" not in abbr_styles:
-			messages.append(LintMessage("c-007", f"`<abbr class=\"{element}\">` element found, but no required style in `local.css`. See the typography manual for required styles.", se.MESSAGE_TYPE_ERROR, "local.css"))
+		if f"abbr.{element.attribute('class')}" not in abbr_styles:
+			missing_styles.append(element.totagstring())
+
+	if missing_styles:
+		messages.append(LintMessage("c-006", "Semantic found, but missing corresponding style in `local.css`.", se.MESSAGE_TYPE_ERROR, "local.css", set(missing_styles)))
 
 	if double_spaced_files:
 		for double_spaced_file in double_spaced_files:
