@@ -166,7 +166,7 @@ SEMANTICS & CONTENT
 "s-050", "`noteref` as a direct child of element with `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`."
 "s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100."
 "s-052", "`<attr>` element with illegal `title` attribute."
-"s-053", "Line not preceded by `<br/>`."
+"s-053", "Colophon line not preceded by `<br/>`."
 "s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`."
 vvvvvvvvUNUSEDvvvvvvvvvv
 "s-016", "`<br/>` element must be followed by a newline, and subsequent content must be indented to the same level."
@@ -819,7 +819,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						# Next, check for text nodes that contain newlines but are not preceded by brs
 						nodes = nodes + [node.strip() for node in dom.xpath("/html/body/section/p/text()[contains(., '\n') and normalize-space(.)][(preceding-sibling::node()[1])[not(self::br)]]")]
 						if nodes:
-							messages.append(LintMessage("s-053", "Line not preceded by `<br/>`.", se.MESSAGE_TYPE_ERROR, filename, nodes))
+							messages.append(LintMessage("s-053", "Colophon line not preceded by `<br/>`.", se.MESSAGE_TYPE_ERROR, filename, nodes))
 
 						# Are the sources represented correctly?
 						# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
