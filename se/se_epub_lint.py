@@ -1274,6 +1274,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						for element in node_copy.xpath(".//a[contains(@epub:type, 'noteref')]"):
 							element.remove()
 
+						# Remove hidden elements, for example in poetry identified by first line (keats)
+						for element in node_copy.xpath(".//*[@hidden]"):
+							element.remove()
+
 						title = node_copy.inner_xml()
 
 						# Remove leading leftover spacing and punctuation
@@ -1305,7 +1309,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 						# No subtitle? Much more straightforward
 						else:
-							titlecased_title = se.formatting.remove_tags(se.formatting.titlecase(title))
+							titlecased_title = se.formatting.titlecase(se.formatting.remove_tags(title))
 							title = se.formatting.remove_tags(title)
 							if title != titlecased_title:
 								messages.append(LintMessage("s-023", f"Title `{title}` not correctly titlecased. Expected: `{titlecased_title}`.", se.MESSAGE_TYPE_WARNING, filename))
