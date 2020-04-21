@@ -15,7 +15,8 @@ import roman
 import tinycss2
 from bs4 import BeautifulSoup, NavigableString, Tag
 from lxml import etree
-from titlecase import titlecase as pip_titlecase
+#from titlecase import titlecase as pip_titlecase
+from se.vendor.titlecase import titlecase as pip_titlecase
 
 import se
 
@@ -853,8 +854,8 @@ def titlecase(text: str) -> str:
 
 	# For some reason, pip_titlecase() doesn't do anything if the string is mostly (but not all) uppercase.
 	# For example "STOPPING BY WOODS ON a SNOWY EVENING" would not be changed by pip_titlecase()
-	# So, convert to all uppercase first.
-	text = text.upper()
+	# So, convert to all lowercase first.
+	text = text.lower()
 
 	text = pip_titlecase(text)
 
@@ -864,19 +865,25 @@ def titlecase(text: str) -> str:
 	# since they're typically lowercased anyway. (Except for things like `alt`, but we won't be titlecasing images!)
 	text = regex.sub(r"<(/?)([^>]+?)>", lambda result: "<" + result.group(1) + result.group(2).lower() + ">", text)
 
-	# Lowercase leading "d', as in "Marie d'Elle"
-	text = regex.sub(r"\bD’([A-Z]+?)", "d’\\1", text)
+	# Uppercase Roman numerals, but only if they are valid Roman numerals
+	try:
+		text = regex.sub(r"(\s)([ivxlcdm]+)(\s|$)", lambda result: result.group(1) + result.group(2).upper() + result.group(3) if roman.fromRoman(result.group(2).upper()) else result.group(2), text, flags=regex.IGNORECASE)
+	except roman.InvalidRomanNumeralError:
+		pass
 
-	# Lowercase "and", even if preceded by punctuation
-	text = regex.sub(r"([^a-zA-Z]) (And|Or)\b", lambda result: result.group(1) + " " + result.group(2).lower(), text)
+	# Lowercase "and" and "or", even if preceded by punctuation
+	text = regex.sub(r"([^\p{Letter}]) (And|Or)\b", lambda result: result.group(1) + " " + result.group(2).lower(), text)
 
 	# pip_titlecase capitalizes *all* prepositions preceded by parenthesis; we only want to capitalize ones that *aren't the first word of a subtitle*
 	# OK: From Sergeant Bulmer (of the Detective Police) to Mr. Pendril
 	# OK: Three Men in a Boat (To Say Nothing of the Dog)
 	text = regex.sub(r"\((For|Of|To)(.*?)\)(.+?)", lambda result: "(" + result.group(1).lower() + result.group(2) + ")" + result.group(3), text)
 
-	# Lowercase "and", if it's not the very first word, and if not preceded by an em dash
-	text = regex.sub(r"^(.+?)([^—])\bAnd\b", r"\1\2and", text)
+	# Uppercase words preceded by en or em dash
+	text = regex.sub(fr"([—–]{se.WORD_JOINER}?)([\p{{Lowercase_Letter}}])", lambda result: result.group(1) + result.group(2).upper(), text)
+
+	# Lowercase "and", if it's not the very first word, and not preceded by an em-dash
+	text = regex.sub(r"(?<!^)\bAnd\b", r"and", text)
 
 	# Lowercase "in", if followed by a semicolon (but not words like "inheritance")
 	text = regex.sub(r"\b; In\b", "; in", text)
@@ -885,13 +892,13 @@ def titlecase(text: str) -> str:
 	text = regex.sub(r"\b Th’ \b", " th’ ", text)
 
 	# Uppercase words that begin compound words, like "to-night" (which might appear in poetry)
-	text = regex.sub(r" ([a-z])([a-z]+\-)", lambda result: " " + result.group(1).upper() + result.group(2), text)
+	text = regex.sub(r" ([\p{Lowercase_Letter}])([\p{Lowercase_Letter}]+\-)", lambda result: " " + result.group(1).upper() + result.group(2), text)
 
 	# Lowercase "from", "with", as long as they're not the first word and not preceded by a parenthesis
 	text = regex.sub(r"(?<!^)(?<!\()\b(From|With)\b", lambda result: result.group(1).lower(), text)
 
 	# Capitalise the first word after an opening quote or italicisation that signifies a work
-	text = regex.sub(r"(‘|“|<i.*?epub:type=\".*?se:.*?\".*?>)([a-z])", lambda result: result.group(1) + result.group(2).upper(), text)
+	text = regex.sub(r"(‘|“|<i.*?epub:type=\".*?se:.*?\".*?>)([\p{Lowercase_Letter}])", lambda result: result.group(1) + result.group(2).upper(), text)
 
 	# Lowercase "the" if preceded by "vs."
 	text = regex.sub(r"(?:vs\.) The\b", "vs. the", text)
@@ -900,10 +907,42 @@ def titlecase(text: str) -> str:
 	text = regex.sub(r"(?<!^|“)\b(De|Von|Van|Le)\b", lambda result: result.group(1).lower(), text)
 
 	# Uppercase word following "Or,", since it is probably a subtitle
-	text = regex.sub(r"\bOr, ([a-z])", lambda result: "Or, " + result.group(1).upper(), text)
+	text = regex.sub(r"\bOr, ([\p{Lowercase_Letter}])", lambda result: "Or, " + result.group(1).upper(), text)
 
 	# Uppercase word following ":", except "or, ", which indicates a kind of subtitle
-	text = regex.sub(r": ([a-z])(?!r, )", lambda result: ": " + result.group(1).upper(), text)
+	text = regex.sub(r": ([\p{Lowercase_Letter}])(?!r, )", lambda result: ": " + result.group(1).upper(), text)
+
+	# Uppercase words after an initial contraction, like O'Keefe or L'Affaire. But only if there's at least 3 letters
+	# after, to prevent catching things like I'm or E're
+	text = regex.sub(r"\b([\p{Uppercase_Letter}]’)([\p{Lowercase_Letter}])([\p{Letter}]{2,})", lambda result: result.group(1) + result.group(2).upper() + result.group(3), text)
+
+	# Uppercase letter after Mc
+	text = regex.sub(r"\bMc([\p{Lowercase_Letter}])", lambda result: "Mc" + result.group(1).upper(), text)
+
+	# Uppercase first letter after beginning contraction
+	text = regex.sub(r"(\s|^)(’[\p{Lowercase_Letter}])", lambda result: result.group(1) + result.group(2).upper(), text)
+
+	# Uppercase first letter
+	text = regex.sub(r"^(\p{Lowercase_Letter}])", lambda result: result.group(1).upper(), text)
+
+	# Lowercase 'by'
+	text = regex.sub(r"(\s)By(\s|%)", lambda result: result.group(1) + "by" + result.group(2), text)
+
+	# Lowercase leading "d', as in "Marie d'Elle"
+	text = regex.sub(r"(?:\b|^)D’([\p{Letter}])", lambda result: "d’" + result.group(1).upper(), text)
+
+	# # Uppercase letter after leading "L', as in "L'Affaire"
+	# text = regex.sub(r"(?:\b|^)L’([\p{Letter}])", lambda result: "L’" + result.group(1).upper(), text)
+
+	# Uppercase some known initialisms
+	text = regex.sub(r"(\s|^)(sos|md)(?:\b|$)", lambda result: result.group(1) + result.group(2).upper(), text, flags=regex.IGNORECASE)
+	text = regex.sub(r"(\s)(bc|ad)(?:\b|$)", lambda result: result.group(1) + result.group(2).upper(), text, flags=regex.IGNORECASE)
+
+	# Lowercase À (as in À La Carte) unless it's the first word
+	text = regex.sub(r"(?<!^)\bÀ\b", "à", text)
+
+	# Uppercase initialisms
+	text = regex.sub(r"(\s)(([\p{Letter}]\.)+)", lambda result: result.group(1) + result.group(2).upper(), text)
 
 	# Fix html entities
 	text = text.replace("&Amp;", "&amp;")
