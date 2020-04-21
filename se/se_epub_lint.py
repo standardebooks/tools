@@ -1471,9 +1471,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						for node in nodes:
 							# Get the first line of the poem, if it's a text node, so that we can include it in the error messages.
 							# If it's not a text node then just ignore it and add the error anyway.
-							first_line = node.lxml_element.xpath("text()[1]", namespaces=se.XHTML_NAMESPACES)
+							first_line = node.lxml_element.xpath("descendant-or-self::text()[normalize-space(.)]", namespaces=se.XHTML_NAMESPACES)
 							if first_line:
-								matches.append(first_line[0].strip())
+								match = first_line[0].strip()
+								if match: # Make sure we don't append an empty string
+									matches.append(match)
 
 						messages.append(LintMessage("s-006", "Poem or verse `<p>` (stanza) without `<span>` (line) element.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
