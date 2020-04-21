@@ -157,10 +157,6 @@ SEMANTICS & CONTENT
 "s-040", f"`#{figure_ref}` not found in file `{chapter_ref}`."
 "s-041", f"The `<figcaption>` element of `#{figure_ref}` does not match the text in its LoI entry."
 "s-042", "`<table>` element without `<tbody>` child."
-"s-043", "Poem included without styling in `local.css`."
-"s-044", "Verse included without styling in `local.css`."
-"s-045", "Song included without styling in `local.css`."
-"s-046", "Hymn included without styling in `local.css`."
 "s-047", "`noteref` as a direct child of element with `z3998:poem` semantic. `noteref`s should be in their parent `<span>`."
 "s-048", "`noteref` as a direct child of element with `z3998:verse` semantic. `noteref`s should be in their parent `<span>`."
 "s-049", "`noteref` as a direct child of element with `z3998:song` semantic. `noteref`s should be in their parent `<span>`."
@@ -171,6 +167,10 @@ SEMANTICS & CONTENT
 "s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`."
 vvvvvvvvUNUSEDvvvvvvvvvv
 "s-016", "`<br/>` element must be followed by a newline, and subsequent content must be indented to the same level."
+"s-043", "Poem included without styling in `local.css`."
+"s-044", "Verse included without styling in `local.css`."
+"s-045", "Song included without styling in `local.css`."
+"s-046", "Hymn included without styling in `local.css`."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
