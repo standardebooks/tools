@@ -1676,7 +1676,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			break
 
 	for element in abbr_elements:
-		if f"abbr.{element.attribute('class')}" not in abbr_styles:
+		abbr_class = element.attribute("class").replace(" eoc", "").strip()
+		if f"abbr.{abbr_class}" not in abbr_styles:
 			missing_styles.append(element.totagstring())
 
 	if missing_styles:
