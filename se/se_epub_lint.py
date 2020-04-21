@@ -849,7 +849,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if not filename.endswith("titlepage.xhtml") and not filename.endswith("imprint.xhtml") and not filename.endswith("uncopyright.xhtml"):
 						for selector in local_css_selectors:
 							try:
-								sel = lxml.cssselect.CSSSelector(selector, translator="html", namespaces=se.XHTML_NAMESPACES)
+								sel = se.easy_xml.css_selector(selector)
 							except lxml.cssselect.ExpressionError as ex:
 								# This gets thrown on some selectors not yet implemented by lxml, like *:first-of-type
 								unused_selectors.remove(selector)

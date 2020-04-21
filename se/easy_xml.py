@@ -4,11 +4,25 @@ Defines the EasyXmlTree class, which is a convenience wrapper around etree.
 The class exposes some helpful functions like css_select() and xpath().
 """
 
-from typing import List, Union
+from typing import Dict, List, Union
 import regex
 from lxml import cssselect, etree
 import se
 
+
+CSS_SELECTOR_CACHE: Dict[str, cssselect.CSSSelector] = {}
+
+def css_selector(selector: str) -> cssselect.CSSSelector:
+	"""
+	Create a CSS selector for the given selector string. Return a cached CSS selector if
+	one already exists.
+	"""
+
+	sel = CSS_SELECTOR_CACHE.get(selector)
+	if not sel:
+		sel = cssselect.CSSSelector(selector, translator="xhtml", namespaces=se.XHTML_NAMESPACES)
+		CSS_SELECTOR_CACHE[selector] = sel
+	return sel
 
 class EasyXmlTree:
 	"""
@@ -24,7 +38,7 @@ class EasyXmlTree:
 		Shortcut to select elements based on CSS selector.
 		"""
 
-		return self.xpath(cssselect.CSSSelector(selector, translator="html", namespaces=se.XHTML_NAMESPACES).path)
+		return self.xpath(css_selector(selector).path)
 
 	def xpath(self, selector: str, return_string: bool = False):
 		"""

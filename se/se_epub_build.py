@@ -15,7 +15,7 @@ import sys
 from distutils.dir_util import copy_tree
 from hashlib import sha1
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 import importlib_resources
 
 from bs4 import BeautifulSoup
@@ -42,20 +42,6 @@ COVER_THUMBNAIL_WIDTH = int(COVER_SVG_WIDTH / 4) # Cast to int required for PIL
 COVER_THUMBNAIL_HEIGHT = int(COVER_SVG_HEIGHT / 4) # Cast to int required for PIL
 SVG_OUTER_STROKE_WIDTH = 2
 SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
-
-CSS_SELECTOR_CACHE: Dict[str, lxml.cssselect.CSSSelector] = dict()
-
-def _css_selector(selector: str) -> lxml.cssselect.CSSSelector:
-	"""
-	Create a CSS selector for the given selector string. Return a cached CSS selector if
-	one already exists.
-	"""
-
-	sel = CSS_SELECTOR_CACHE.get(selector)
-	if not sel:
-		sel = lxml.cssselect.CSSSelector(selector, translator="xhtml", namespaces=se.XHTML_NAMESPACES)
-		CSS_SELECTOR_CACHE[selector] = sel
-	return sel
 
 def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool, verbose: bool) -> None:
 	"""
@@ -251,7 +237,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 									replacement_class = split_selector[1].replace(":", "").replace("(", "-").replace("n-", "n-minus-").replace("n+", "n-plus-").replace(")", "")
 									selector = selector.replace(split_selector[1], "." + replacement_class, 1)
-									sel = _css_selector(target_element_selector)
+									sel = se.easy_xml.css_selector(target_element_selector)
 									for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
 										current_class = element.get("class")
 										if current_class is not None and replacement_class not in current_class:
@@ -270,7 +256,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
 						if "[epub|type" in selector:
 							for namespace_selector in regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", selector):
-								sel = _css_selector(namespace_selector)
+								sel = se.easy_xml.css_selector(namespace_selector)
 
 								for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
 									new_class = regex.sub(r"^\.", "", se.formatting.namespace_to_class(namespace_selector))
@@ -288,7 +274,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 					for selector in selectors:
 						try:
-							sel = _css_selector(selector)
+							sel = se.easy_xml.css_selector(selector)
 						except lxml.cssselect.ExpressionError:
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
 							continue
