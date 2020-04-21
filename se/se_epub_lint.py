@@ -299,8 +299,7 @@ def _dom(file_path: Path) -> Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtm
 					_DOM_CACHE[file_path_str] = se.easy_xml.EasySvgTree(file.read())
 
 				# Remove comments
-				nodes = _DOM_CACHE[file_path_str].xpath("//comment()")
-				for node in nodes:
+				for node in _DOM_CACHE[file_path_str].xpath("//comment()"):
 					node.remove()
 
 			except etree.XMLSyntaxError as ex:
@@ -309,6 +308,7 @@ def _dom(file_path: Path) -> Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtm
 				raise ex
 			except Exception:
 				raise se.InvalidXhtmlException(f"Couldn’t parse XML in `{file_path}`")
+
 	return _DOM_CACHE[file_path_str]
 
 def lint(self, skip_lint_ignore: bool) -> list:
