@@ -84,6 +84,7 @@ _se(){
 			print-manifest)
 				COMPREPLY+=($(compgen -W "-h --help -i --in-place" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				;;
 			print-spine)
 				COMPREPLY+=($(compgen -W "-h --help -i --in-place" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
