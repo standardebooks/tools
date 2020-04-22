@@ -566,7 +566,7 @@ def format_xhtml(xhtml: str, is_metadata_file: bool = False) -> str:
 	# Clean the long description, if we can find it
 	if is_metadata_file:
 		long_description = regex.findall(r"<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">(.+?)</meta>", xhtml, flags=regex.DOTALL)
-		if long_description[0]:
+		if long_description:
 			escaped_long_description = long_description[0].replace("<", "&lt;")
 			escaped_long_description = escaped_long_description.replace(">", "&gt;")
 			xhtml = xhtml.replace(long_description[0], escaped_long_description)
