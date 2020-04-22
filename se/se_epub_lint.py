@@ -433,7 +433,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	# Store a list of CSS selectors, and duplicate it into a list of unused selectors, for later checks
 	# We use a regex to remove pseudo-elements like ::before, because we want the *selectors* to see if they're unused.
-	local_css_selectors = [regex.sub(r"::[a-z\-]+", "", selector) for selector in local_css_rules]
+	local_css_selectors = [regex.sub(r"::[\p{Lowercase_Letter}\-]+", "", selector) for selector in local_css_rules]
 	unused_selectors = local_css_selectors.copy()
 
 	local_css_has_subtitle_style = False
@@ -443,7 +443,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	local_css_has_song_style = False
 	local_css_has_hymn_style = False
 	local_css_has_elision_style = False
-	abbr_styles = regex.findall(r"abbr\.[a-z]+", self.local_css)
+	abbr_styles = regex.findall(r"abbr\.[\p{Lowercase_Letter}]+", self.local_css)
 	missing_styles: List[str] = []
 
 	# Iterate over rules to do some other checks
@@ -550,7 +550,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		double_spaced_files.append("content.opf")
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
-	matches = regex.findall(r"[a-zA-Z][”][,\.]", self.metadata_xml)
+	matches = regex.findall(r"[\p{Letter}][”][,\.]", self.metadata_xml)
 	if matches:
 		messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, "content.opf"))
 
@@ -978,7 +978,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					temp_xhtml = temp_xhtml.replace("A.B.C.", "X") # Remove A.B.C, which is not an abbreviations.
 					# Note the regex also excludes preceding numbers, so that we can have inline numbering like:
 					# "A number of questions: 1. regarding those who make heretics; 2. concerning those who were made heretics..."
-					matches = regex.findall(r"[^\s0-9]+\.\s+[a-z](?!’[A-Z])[a-z]+", temp_xhtml)
+					matches = regex.findall(r"[^\s0-9]+\.\s+[\p{Lowercase_Letter}](?!’[\p{Uppercase_Letter}])[\p{Lowercase_Letter}]+", temp_xhtml)
 					# If <abbr> is in the match, remove it from the matches so we exclude things like <abbr>et. al.</abbr>
 					matches = [match for match in matches if "<abbr>" not in match]
 					if matches:
@@ -1007,7 +1007,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-009", "Required no-break space not found before `<abbr class=\"time\">`.", se.MESSAGE_TYPE_WARNING, filename, [node[-10:] + "<abbr" for node in nodes]))
 
 					# Check for low-hanging misquoted fruit
-					matches = regex.findall(r"[A-Za-z]+[“‘]", file_contents) + regex.findall(r"[^>]+</(?:em|i|b|span)>‘[a-z]+", file_contents)
+					matches = regex.findall(r"[\p{Letter}]+[“‘]", file_contents) + regex.findall(r"[^>]+</(?:em|i|b|span)>‘[\p{Lowercase_Letter}]+", file_contents)
 					if matches:
 						messages.append(LintMessage("t-028", "Possible mis-curled quotation mark.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
@@ -1113,7 +1113,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# 1. The double quote is directly preceded by a lowercase letter and a space: `with its downy red hairs and its “<i xml:lang="fr">doigts de faune</i>.”`
 					# 2. The double quote is directly preceded by a lowercase letter, a comma, and a space, and the first letter within the double quote is lowercase: In the original, “<i xml:lang="es">que era un Conde de Irlos</i>.”
 					# 3. The text is a single letter that is not "I" or "a" (because then it is likely a mathematical variable)
-					matches = [x for x in matches if "epub:type=\"se:name." not in x[0] and "epub:type=\"z3998:taxonomy" not in x[0] and not regex.match(r"^[a-z’]+\s“", x[0]) and not regex.match(r"^[a-z’]+,\s“[a-z]", se.formatting.remove_tags(x[0])) and not regex.match(r"^.*?<.+?>[^Ia]<.+?>", x[0])]
+					matches = [x for x in matches if "epub:type=\"se:name." not in x[0] and "epub:type=\"z3998:taxonomy" not in x[0] and not regex.match(r"^[\p{Lowercase_Letter}’]+\s“", x[0]) and not regex.match(r"^[\p{Lowercase_Letter}’]+,\s“[\p{Lowercase_Letter}]", se.formatting.remove_tags(x[0])) and not regex.match(r"^.*?<.+?>[^Ia]<.+?>", x[0])]
 					if matches:
 						messages.append(LintMessage("t-019", "When a complete clause is italicized, ending punctuation except commas must be within containing italics.", se.MESSAGE_TYPE_WARNING, filename, [match[0] for match in matches]))
 
@@ -1329,7 +1329,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-018", "`<img>` element with `id` attribute. `id` attributes go on parent `<figure>` elements.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
 					# Check for closing dialog without comma
-					matches = regex.findall(r"[a-z]+?” [a-zA-Z]+? said", file_contents)
+					matches = regex.findall(r"[\p{Lowercase_Letter}]+?” [\p{Letter}]+? said", file_contents)
 					if matches:
 						messages.append(LintMessage("t-005", "Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
@@ -1426,11 +1426,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					for attrs in dom.xpath("//*/@epub:type"):
 						for attr in attrs.split():
 							# Did someone use colons instead of dots for SE identifiers? e.g. se:name:vessel:ship
-							for match in regex.findall(r"^se:[a-z]+:(?:[a-z]+:?)*", attr):
+							for match in regex.findall(r"^se:[\p{Lowercase_Letter}]+:(?:[\p{Lowercase_Letter}]+:?)*", attr):
 								illegal_colons.add(match)
 
 							# Did someone use periods instead of colons for the SE namespace? e.g. se.name.vessel.ship
-							for match in regex.findall(r"^se\.[a-z]+(?:\.[a-z]+)*", attr):
+							for match in regex.findall(r"^se\.[\p{Lowercase_Letter}]+(?:\.[\p{Lowercase_Letter}]+)*", attr):
 								illegal_se_namespaces.add(match)
 
 							# Did we draw from the z3998 vocabulary when the item exists in the epub vocabulary?
