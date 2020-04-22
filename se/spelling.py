@@ -183,7 +183,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\ba la\b", r"à la", xhtml)					# a la -> à la
 	xhtml = regex.sub(r"\ba propos\b", r"apropos", xhtml)				# a propos -> apropos
 	xhtml = regex.sub(r"\bper cent(s?)\b", r"percent\1", xhtml)			# per cent -> percent
-	xhtml = regex.sub(r"\bpercent\.(\s+[a-z])", r"percent\1", xhtml)		# percent. followed by lowercase -> percent
+	xhtml = regex.sub(r"\bpercent\.(\s+[\p{Lowercase_Letter}])", r"percent\1", xhtml)		# percent. followed by lowercase -> percent
 	xhtml = regex.sub(r"\bpercent\.,\b", r"percent,", xhtml)			# per cent. -> percent
 	xhtml = regex.sub(r"\b([Ee])ntree(s?)\b", r"\1ntrée\2", xhtml)			# entree -> entrée
 	xhtml = regex.sub(r"\b([Ff])iance", r"\1iancé", xhtml)				# fiance -> fiancé
@@ -265,7 +265,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Tt])abu(s?)\b", r"\1aboo\2", xhtml)			# tabu -> taboo
 	xhtml = regex.sub(r"\b([Kk])idnaping\b", r"\1idnapping", xhtml)			# kidnaping -> kidnapping
 	xhtml = regex.sub(r"\bQuixotic\b", r"quixotic", xhtml)				# Quixotic -> quixotic
-	xhtml = regex.sub(r"([^a-z]’[Tt])\s(is|were|was)\b", r"\1\2", xhtml)		# 't is, 't was, 't were -> 'tis, 'twas, 'twere
+	xhtml = regex.sub(r"([^\p{Lowercase_Letter}]’[Tt])\s(is|were|was|isn’t)\b", r"\1\2", xhtml)		# 't is, 't was, 't were 't isn't -> 'tis, 'twas, 'twere, 't isn't
 	xhtml = regex.sub(r"\b([Uu])p stairs\b", r"\1pstairs", xhtml)			# up stairs -> upstairs
 	xhtml = regex.sub(r"(?<!up and )(?<!up or )\b([Dd])own stairs\b", r"\1ownstairs", xhtml)		# down stairs -> downstairs, but not "up (or|and) down stairs"
 	xhtml = regex.sub(r"([Pp])artizan", r"\1artisan", xhtml)			# partizan -> partisan

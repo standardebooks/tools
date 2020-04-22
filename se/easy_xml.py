@@ -134,7 +134,7 @@ class EasyXmlElement:
 		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `<p>Hello there, <abbr>Mr.</abbr> Smith!</p>`
 		"""
 
-		return regex.sub(r" xmlns(:[a-z]+?)?=\"[^\"]+?\"", "", etree.tostring(self.lxml_element, encoding=str, with_tail=False))
+		return regex.sub(r" xmlns(:[\p{Letter}]+?)?=\"[^\"]+?\"", "", etree.tostring(self.lxml_element, encoding=str, with_tail=False))
 
 	def attribute(self, attribute: str) -> str:
 		"""

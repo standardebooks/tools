@@ -32,13 +32,13 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 		# First, convert entities.  Sometimes Gutenberg has entities instead of straight quotes.
 		xhtml = html.unescape(xhtml) # This converts html entites to unicode
-		xhtml = regex.sub(r"&([^#a-z])", r"&amp;\1", xhtml) # Oops!  html.unescape also unescapes plain ampersands...
+		xhtml = regex.sub(r"&([^#\p{Lowercase_Letter}])", r"&amp;\1", xhtml) # Oops!  html.unescape also unescapes plain ampersands...
 
 		xhtml = smartypants.smartypants(xhtml) # Attr.u *should* output unicode characters instead of HTML entities, but it doesn't work
 
 		# Convert entities again
 		xhtml = html.unescape(xhtml) # This converts html entites to unicode
-		xhtml = regex.sub(r"&([^#a-z])", r"&amp;\1", xhtml) # Oops!  html.unescape also unescapes plain ampersands...
+		xhtml = regex.sub(r"&([^#\p{Lowercase_Letter}])", r"&amp;\1", xhtml) # Oops!  html.unescape also unescapes plain ampersands...
 
 	# Replace no-break hyphen with regular hyphen
 	xhtml = xhtml.replace(se.NO_BREAK_HYPHEN, "-")
@@ -48,8 +48,8 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = xhtml.replace("——", "⸺")
 
 	# Smartypants doesn't do well on em dashes followed by open quotes. Fix that here
-	xhtml = regex.sub(r"—”([a-z])", r"—“\1", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"—’([a-z])", r"—‘\1", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"—”([\p{Letter}])", r"—“\1", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"—’([\p{Letter}])", r"—‘\1", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"-“</p>", r"—”</p>", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"‘”</p>", fr"’{se.HAIR_SPACE}”</p>", xhtml, flags=regex.IGNORECASE)
 
@@ -64,8 +64,8 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = xhtml.replace(",—", "—")
 
 	# Fix some common em-dash transcription errors
-	xhtml = regex.sub(r"([:;])-([a-z])", r"\1—\2", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"([a-z])-“", r"\1—“", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"([:;])-([\p{Letter}])", r"\1—\2", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"([\p{Letter}])-“", r"\1—“", xhtml, flags=regex.IGNORECASE)
 
 	# Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
 	xhtml = regex.sub(fr"([^\s{se.WORD_JOINER}{se.NO_BREAK_SPACE}{se.HAIR_SPACE}])([—⸻])", fr"\1{se.WORD_JOINER}\2", xhtml, flags=regex.IGNORECASE)
@@ -83,10 +83,10 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(fr"⸺([^\s\p{{P}}{se.WORD_JOINER}])", fr"⸺{se.WORD_JOINER}\1", xhtml)
 
 	# Add a space between text and —th, which is usually an obscured number. I.e. "The —th battalion"
-	xhtml = regex.sub(fr"([a-z]){se.WORD_JOINER}—th\b", r"\1 —th", xhtml)
+	xhtml = regex.sub(fr"([\p{{Lowercase_Letter}}]){se.WORD_JOINER}—th\b", r"\1 —th", xhtml)
 
 	# Remove word joiners from following opening tags--they're usually never correct
-	xhtml = regex.sub(fr"<([a-z]+)([^>]*?)>{se.WORD_JOINER}", r"<\1\2>", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"<([\p{{Letter}}]+)([^>]*?)>{se.WORD_JOINER}", r"<\1\2>", xhtml, flags=regex.IGNORECASE)
 
 	# Finally fix some other mistakes
 	xhtml = xhtml.replace("—-", "—")
@@ -112,7 +112,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"(\s)‘a’(\s)", r"\1’a’\2", xhtml, flags=regex.IGNORECASE)
 
 	# Years
-	xhtml = regex.sub(r"‘([0-9]{2,}[^a-zA-Z0-9’])", r"’\1", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"‘([0-9]{2,}[^\p{Letter}0-9’])", r"’\1", xhtml, flags=regex.IGNORECASE)
 
 	xhtml = regex.sub(r"‘([Aa]ve|[Oo]me|[Ii]m|[Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Cc]os|[Tt]is|[Tt]isn’t|[Tt]was|[Tt]wixt|[Tt]were|[Tt]would|[Tt]wouldn|[Tt]ween|[Tt]will|[Rr]ound|[Pp]on|[Uu]ns?|[Uu]d|[Cc]ept|[Oo]w|[Aa]ppen|[Ee])\b", r"’\1", xhtml)
 
@@ -144,7 +144,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(fr"‘[\s{se.NO_BREAK_SPACE}]*“", fr"‘{se.HAIR_SPACE}“", xhtml, flags=regex.IGNORECASE)
 
 	# We require a non-letter char at the end, otherwise we might match a contraction: “Hello,” ’e said.
-	xhtml = regex.sub(fr"”[\s{se.NO_BREAK_SPACE}]*’([^a-zA-Z])", fr"”{se.HAIR_SPACE}’\1", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"”[\s{se.NO_BREAK_SPACE}]*’([^\p{{Letter}}])", fr"”{se.HAIR_SPACE}’\1", xhtml, flags=regex.IGNORECASE)
 
 	# Fix ellipses spacing
 	xhtml = regex.sub(r"\s*\.\s*\.\s*\.\s*", r"…", xhtml, flags=regex.IGNORECASE)
@@ -153,10 +153,10 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(fr"<p([^>]*?)>{se.HAIR_SPACE}…", r"<p\1>…", xhtml, flags=regex.IGNORECASE)
 
 	# Remove spaces between opening tags and ellipses
-	xhtml = regex.sub(fr"(<[a-z0-9]+[^<]+?>)[\s{se.NO_BREAK_SPACE}]+?…", r"\1…", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"(<[\p{{Letter}}0-9]+[^<]+?>)[\s{se.NO_BREAK_SPACE}]+?…", r"\1…", xhtml, flags=regex.IGNORECASE)
 
 	# Remove spaces between closing tags and ellipses
-	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?(</[a-z0-9]+>)", r"…\1", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?(</[\p{{Letter}}0-9]+>)", r"…\1", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]+([\)”’])", r"…\1", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(fr"([\(“‘])[\s{se.NO_BREAK_SPACE}]+…", r"\1…", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?([\!\?\.\;\,])", fr"…{se.HAIR_SPACE}\1", xhtml, flags=regex.IGNORECASE)
@@ -167,7 +167,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?(<a[^>]+?id=\"noteref-[0-9]+\"[^>]*?>)", r"…\1", xhtml, flags=regex.IGNORECASE)
 
 	# Don't use . ... if within a clause
-	xhtml = regex.sub(r"\.(\s…\s[a-z])", r"\1", xhtml)
+	xhtml = regex.sub(r"\.(\s…\s[\p{Lowercase_Letter}])", r"\1", xhtml)
 
 	# Remove period from . .. if after punctuation
 	xhtml = regex.sub(r"([\!\?\,\;\:]\s*)\.(\s…)", r"\1\2", xhtml)
@@ -176,7 +176,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"<p>\. …", "<p>…", xhtml)
 
 	# Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
-	xhtml = regex.sub(r"([0-9])\s+([a-z]{1,3}\.)", fr"\1{se.NO_BREAK_SPACE}\2", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"([0-9])\s+([\p{Letter}]{1,3}\.)", fr"\1{se.NO_BREAK_SPACE}\2", xhtml, flags=regex.IGNORECASE)
 
 	# Add non-breaking spaces between Arabic numbers and AM/PM
 	xhtml = regex.sub(r"([0-9])\s+([ap])\.m\.", fr"\1{se.NO_BREAK_SPACE}\2.m.", xhtml, flags=regex.IGNORECASE)
@@ -222,8 +222,11 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 	# Remove periods from O.K. (also, it is not an abbreviation)
 	xhtml = regex.sub(r"O\.K\.", r"OK", xhtml)
-	xhtml = regex.sub(r"OK([”’])", r"OK.\1", xhtml)
-	xhtml = regex.sub(r"(“[^”]+?)OK ([A-Z]\w+)", r"\1OK.” \2", xhtml)
+	xhtml = regex.sub(r"OK([”’]\s+[\p{Uppercase_Letter}])", r"OK.\1", xhtml)
+	xhtml = regex.sub(r"(“[^”]+?)OK ([\p{Uppercase_Letter}]\w+)", r"\1OK.” \2", xhtml)
+
+	# Remove spaces between ellipses and noterefs
+	xhtml = regex.sub(r""" … (<a[^>]+?epub:type="noteref">)""", r" …\1", xhtml)
 
 	return xhtml
 
@@ -410,8 +413,8 @@ def convert_british_to_american(xhtml: str) -> str:
 	xhtml = regex.sub(r"([\.\,\!\?\…\:\;])’", r"\1<rsq>", xhtml)
 	xhtml = regex.sub(r"—’(\s+)", r"—<rsq>\1", xhtml)
 	xhtml = regex.sub(r"—’</", r"—<rsq></", xhtml)
-	xhtml = regex.sub(r"([a-z])’([a-z])", r"\1<ap>\2", xhtml)
-	xhtml = regex.sub(r"(\s+)’([a-z])", r"\1<ap>\2", xhtml)
+	xhtml = regex.sub(r"([\p{Lowercase_Letter}])’([\p{Lowercase_Letter}])", r"\1<ap>\2", xhtml)
+	xhtml = regex.sub(r"(\s+)’([\p{Lowercase_Letter}])", r"\1<ap>\2", xhtml)
 	xhtml = regex.sub(r"<ldq>", r"‘", xhtml)
 	xhtml = regex.sub(r"<rdq>", r"’", xhtml)
 	xhtml = regex.sub(r"<lsq>", r"“", xhtml)

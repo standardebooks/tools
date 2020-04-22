@@ -85,9 +85,9 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"([0-9½¼⅙⅚⅛⅜⅝]+)([sd⅞]\.)", r"\1<abbr>\2</abbr>", xhtml)
 
 	# Guess at adding eoc (End Of Clause) class
-	xhtml = regex.sub(r"""<abbr>([a-zA-Z\.]+?\.)</abbr></p>""", r"""<abbr class="eoc">\1</abbr></p>""", xhtml)
-	xhtml = regex.sub(r"""<abbr class="(.+?)">([a-zA-Z\.]+?\.)</abbr></p>""", r"""<abbr class="\1 eoc">\2</abbr></p>""", xhtml)
-	xhtml = regex.sub(r"""<abbr>etc\.</abbr>(\s+[A-Z])""", r"""<abbr class="eoc">etc.</abbr>\1""", xhtml)
+	xhtml = regex.sub(r"""<abbr>([\p{Letter}\.]+?\.)</abbr></p>""", r"""<abbr class="eoc">\1</abbr></p>""", xhtml)
+	xhtml = regex.sub(r"""<abbr class="(.+?)">([\p{Letter}\.]+?\.)</abbr></p>""", r"""<abbr class="\1 eoc">\2</abbr></p>""", xhtml)
+	xhtml = regex.sub(r"""<abbr>etc\.</abbr>(\s+[\p{Uppercase_Letter}])""", r"""<abbr class="eoc">etc.</abbr>\1""", xhtml)
 	xhtml = regex.sub(r"""<abbr>etc\.</abbr>(”?)</p>""", r"""<abbr class="eoc">etc.</abbr>\1</p>""", xhtml)
 
 	# We may have added eoc classes twice, so remove duplicates here
@@ -99,10 +99,10 @@ def semanticate(xhtml: str) -> str:
 
 	# Get Roman numerals >= 2 characters
 	# We only wrap these if they're standalone (i.e. not already wrapped in a tag) to prevent recursion in multiple runs
-	xhtml = regex.sub(r"([^a-zA-Z>])([ixvIXV]{2,})(\b|st\b|nd\b|rd\b|th\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
+	xhtml = regex.sub(r"([^\p{Letter}>])([ixvIXV]{2,})(\b|st\b|nd\b|rd\b|th\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
 
 	# Get Roman numerals that are X or V and single characters.  We can't do I for obvious reasons.
-	xhtml = regex.sub(r"""([^a-zA-Z>\"])([vxVX])(\b|st\b|nd\b|rd\b|th\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
+	xhtml = regex.sub(r"""([^\p{Letter}>\"])([vxVX])(\b|st\b|nd\b|rd\b|th\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
 
 	# Add abbrevations around some SI measurements
 	xhtml = regex.sub(r"([0-9]+)\s*([cmk][mgl])\b", fr"\1{se.NO_BREAK_SPACE}<abbr>\2</abbr>", xhtml)
@@ -309,7 +309,7 @@ def get_word_count(xhtml: str) -> int:
 	xhtml = regex.sub(r"[…–—― ‘’“”\{\}\(\)]", " ", xhtml, flags=regex.IGNORECASE | regex.DOTALL)
 
 	# Remove word-connecting dashes, apostrophes, commas, and slashes (and/or), they count as a word boundry but they shouldn't
-	xhtml = regex.sub(r"[a-z0-9][\-\'\,\.\/][a-z0-9]", "aa", xhtml, flags=regex.IGNORECASE | regex.DOTALL)
+	xhtml = regex.sub(r"[\p{Letter}0-9][\-\'\,\.\/][\p{Letter}0-9]", "aa", xhtml, flags=regex.IGNORECASE | regex.DOTALL)
 
 	# Replace sequential spaces with one space
 	xhtml = regex.sub(r"\s+", " ", xhtml, flags=regex.IGNORECASE | regex.DOTALL)
@@ -807,7 +807,7 @@ def format_css(css: str) -> str:
 	output = (css_header + "\n" + css_body).strip() + "\n"
 
 	# Do a quick regex to move parens next to media rules
-	output = regex.sub(r"(@[a-z]+) \(", "\\1(", output)
+	output = regex.sub(r"(@[\p{Letter}]+) \(", "\\1(", output)
 
 	# Remove empty rules
 	output = regex.sub(r"^\t*[^\{\}]+?\{\s*\}\n", "", output, flags=regex.DOTALL|regex.MULTILINE)
@@ -825,7 +825,7 @@ def remove_tags(text: str) -> str:
 	A string with all HTML tags removed
 	"""
 
-	return regex.sub(r"</?([a-z]+)[^>]*?>", "", text, flags=regex.DOTALL)
+	return regex.sub(r"</?[\p{Letter}]+[^>]*?>", "", text, flags=regex.DOTALL)
 
 def get_ordinal(number: str) -> str:
 	"""
@@ -976,7 +976,7 @@ def make_url_safe(text: str) -> str:
 	text = regex.sub(r"['‘’]", "", text)
 
 	# 5. Convert any non-digit, non-letter character to a space
-	text = regex.sub(r"[^0-9a-z]", " ", text, flags=regex.IGNORECASE)
+	text = regex.sub(r"[^0-9\p{Letter}]", " ", text, flags=regex.IGNORECASE)
 
 	# 6. Convert any instance of one or more space to a dash
 	text = regex.sub(r"\s+", "-", text)

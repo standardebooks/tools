@@ -44,7 +44,7 @@ def convert_toc_to_ncx(epub_root_absolute_path: Path, toc_filename: str, xsl_fil
 		ncx_xhtml = regex.sub(r"<navMap id=\".*\">", "<navMap id=\"navmap\">", ncx_xhtml)
 
 		counter = itertools.count(1)
-		ncx_xhtml = regex.sub(r"<navPoint id=\"id[a-z0-9]+?\"", lambda x: "<navPoint id=\"navpoint-{count}\" playOrder=\"{count}\"".format(count=next(counter)), ncx_xhtml)
+		ncx_xhtml = regex.sub(r"<navPoint id=\"id[\p{Letter}0-9]+?\"", lambda x: "<navPoint id=\"navpoint-{count}\" playOrder=\"{count}\"".format(count=next(counter)), ncx_xhtml)
 
 		ncx_xhtml = f"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n{ncx_xhtml}"
 
