@@ -108,7 +108,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"([0-9]+)\s*([cmk][mgl])\b", fr"\1{se.NO_BREAK_SPACE}<abbr>\2</abbr>", xhtml)
 
 	# Add abbrevations around Imperial measurements
-	xhtml = regex.sub(r"([0-9]+)\s*(ft|in|yd|mi|pt|qt|gal|oz|lbs)\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>\2.</abbr>", xhtml)
+	xhtml = regex.sub(r"([0-9]+)\s*(ft|in|yd|mi|pt|qt|gal|oz|lbs)\.?\b", fr"\1{se.NO_BREAK_SPACE}<abbr>\2.</abbr>", xhtml)
 
 	# Tweak some other Imperial measurements
 	xhtml = regex.sub(r"([0-9]+)\s*m\.?p\.?h\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>mph</abbr>", xhtml, flags=regex.IGNORECASE)
