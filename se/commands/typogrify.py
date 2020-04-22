@@ -51,10 +51,11 @@ def typogrify() -> int:
 
 						processed_long_description = se.typography.typogrify(long_description)
 
-						# Tweak: Word joiners don't go in the long description
+						# Tweak: Word joiners and nbsp don't go in the long description
 						processed_long_description = processed_long_description.replace(se.WORD_JOINER, "")
+						processed_long_description = processed_long_description.replace(se.NO_BREAK_SPACE, " ")
 
-						processed_long_description = html.escape(processed_long_description)
+						processed_long_description = html.escape(processed_long_description, False)
 
 						processed_xhtml = xhtml.replace(long_description, processed_long_description)
 
@@ -65,8 +66,9 @@ def typogrify() -> int:
 						description = matches[1].strip()
 						processed_description = se.typography.typogrify(description)
 
-						# Tweak: Word joiners don't go in the long description
+						# Tweak: Word joiners and nbsp don't go in the description
 						processed_description = processed_description.replace(se.WORD_JOINER, "")
+						processed_description = processed_description.replace(se.NO_BREAK_SPACE, " ")
 
 						processed_xhtml = processed_xhtml.replace(description, processed_description)
 				else:
