@@ -808,7 +808,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 					if filename == "colophon.xhtml":
 						# Check for wrong grammar filled in from template
-						nodes = dom.xpath("//a[starts-with(@href, 'https://books.google.com/')][(preceding-sibling::text()[normalize-space(.)])[1][re:test(., '\\bthe$')]]")
+						nodes = dom.xpath("//a[starts-with(@href, 'https://books.google.com/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
 						if nodes:
 							messages.append(LintMessage("s-016", "Incorrect `the` before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the<br/>\n" + node.tostring() for node in nodes]))
 
