@@ -131,6 +131,7 @@ SEMANTICS & CONTENT
 "s-013", "Illegal `<pre>` element."
 "s-014", "`<br/>` after block-level element."
 "s-015", f"`<{match.name}>` element has `<span epub:type=\"subtitle\">` child, but first child is not `<span>`. See semantics manual for structure of headers with subtitles."
+"s-016", "Incorrect `the` before Google Books link."
 "s-017", F"`<m:mfenced>` is deprecated in the MathML spec. Use `<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>`."
 "s-018", "`<img>` element with `id` attribute. `id` attributes go on parent `<figure>` elements."
 "s-019", "`<h#>` element with `id` attribute. `<h#>` elements should be wrapped in `<section>` elements, which should hold the `id` attribute."
@@ -166,7 +167,6 @@ SEMANTICS & CONTENT
 "s-053", "Colophon line not preceded by `<br/>`."
 "s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`."
 vvvvvvvvUNUSEDvvvvvvvvvv
-"s-016", "`<br/>` element must be followed by a newline, and subsequent content must be indented to the same level."
 "s-043", "Poem included without styling in `local.css`."
 "s-044", "Verse included without styling in `local.css`."
 "s-045", "Song included without styling in `local.css`."
@@ -807,6 +807,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							messages.append(LintMessage("s-024", "Half title `<title>` elements must contain exactly: \"Half Title\".", se.MESSAGE_TYPE_ERROR, filename))
 
 					if filename == "colophon.xhtml":
+						# Check for wrong grammar filled in from template
+						nodes = dom.xpath("//a[starts-with(@href, 'https://books.google.com/')][(preceding-sibling::text()[normalize-space(.)])[1][re:test(., '\\bthe$')]]")
+						if nodes:
+							messages.append(LintMessage("s-016", "Incorrect `the` before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the<br/>\n" + node.tostring() for node in nodes]))
+
 						se_url = self.generated_identifier.replace('url:', '')
 						if not dom.xpath(f"//a[@href = '{se_url}' and text() = '{se_url.replace('https://', '')}']"):
 							messages.append(LintMessage("m-035", f"Unexpected SE identifier in colophon. Expected: `{se_url}`.", se.MESSAGE_TYPE_ERROR, filename))
@@ -1527,6 +1532,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# If we're in the imprint, are the sources represented correctly?
 					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
 					if filename == "imprint.xhtml":
+						# Check for wrong grammar filled in from template
+						nodes = dom.xpath("//a[starts-with(@href, 'https://books.google.com/')][preceding-sibling::node()[re:test(., 'the\\s+$')]]")
+						if nodes:
+							messages.append(LintMessage("s-016", "Incorrect `the` before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the " + node.tostring() for node in nodes]))
+
 						links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
 						if len(links) <= 2:
 							for link in links:
