@@ -1533,7 +1533,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
 					if filename == "imprint.xhtml":
 						# Check for wrong grammar filled in from template
-						nodes = dom.xpath("//a[starts-with(@href, 'https://books.google.com/')][preceding-sibling::node()[re:test(., 'the\\s+$')]]")
+						nodes = dom.xpath("//a[starts-with(@href, 'https://books.google.com/')][(preceding-sibling::node()[1])[re:test(., 'the\\s+$')]]")
 						if nodes:
 							messages.append(LintMessage("s-016", "Incorrect `the` before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the " + node.tostring() for node in nodes]))
 
