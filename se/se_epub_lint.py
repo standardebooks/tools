@@ -502,8 +502,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	root_files = os.listdir(self.path)
 	expected_root_files = [".git", "images", "src", "LICENSE.md"]
-	illegal_files = [x for x in root_files if x not in expected_root_files and x != ".gitignore" and x != "se-lint-ignore.xml"] # .gitignore and se-lint-ignore.xml are optional
-	missing_files = [x for x in expected_root_files if x not in root_files and x != "LICENSE.md"] # We add more to this later on. LICENSE.md gets checked later on, so we don't want to add it twice
+	illegal_files = [root_file for root_file in root_files if root_file not in expected_root_files and root_file != ".gitignore" and root_file != "se-lint-ignore.xml"] # .gitignore and se-lint-ignore.xml are optional
+	missing_files = [expected_root_file for expected_root_file in expected_root_files if expected_root_file not in root_files and expected_root_file != "LICENSE.md"] # We add more to this later on. LICENSE.md gets checked later on, so we don't want to add it twice
 
 	for illegal_file in illegal_files:
 		messages.append(LintMessage("f-001", "Illegal file or directory.", se.MESSAGE_TYPE_ERROR, illegal_file))
@@ -820,7 +820,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							messages.append(LintMessage("m-025", "Translator found in metadata, but no `translated from LANG` block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
 
 						# Check if we forgot to fill any variable slots
-						missing_colophon_vars = [x for x in COLOPHON_VARIABLES if regex.search(fr"\b{x}\b", file_contents)]
+						missing_colophon_vars = [var for var in COLOPHON_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
 						if missing_colophon_vars:
 							messages.append(LintMessage("m-036", "Missing data in colophon.", se.MESSAGE_TYPE_ERROR, filename, missing_colophon_vars))
 
@@ -1118,7 +1118,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# 1. The double quote is directly preceded by a lowercase letter and a space: `with its downy red hairs and its “<i xml:lang="fr">doigts de faune</i>.”`
 					# 2. The double quote is directly preceded by a lowercase letter, a comma, and a space, and the first letter within the double quote is lowercase: In the original, “<i xml:lang="es">que era un Conde de Irlos</i>.”
 					# 3. The text is a single letter that is not "I" or "a" (because then it is likely a mathematical variable)
-					matches = [x for x in matches if "epub:type=\"se:name." not in x[0] and "epub:type=\"z3998:taxonomy" not in x[0] and not regex.match(r"^[\p{Lowercase_Letter}’]+\s“", x[0]) and not regex.match(r"^[\p{Lowercase_Letter}’]+,\s“[\p{Lowercase_Letter}]", se.formatting.remove_tags(x[0])) and not regex.match(r"^.*?<.+?>[^Ia]<.+?>", x[0])]
+					matches = [match for match in matches if "epub:type=\"se:name." not in match[0] and "epub:type=\"z3998:taxonomy" not in match[0] and not regex.match(r"^[\p{Lowercase_Letter}’]+\s“", match[0]) and not regex.match(r"^[\p{Lowercase_Letter}’]+,\s“[\p{Lowercase_Letter}]", se.formatting.remove_tags(match[0])) and not regex.match(r"^.*?<.+?>[^Ia]<.+?>", match[0])]
 					if matches:
 						messages.append(LintMessage("t-019", "When a complete clause is italicized, ending punctuation except commas must be within containing italics.", se.MESSAGE_TYPE_WARNING, filename, [match[0] for match in matches]))
 
@@ -1249,13 +1249,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# Check for ldquo not correctly closed
 					# Ignore closing paragraphs, line breaks, and closing cells in case ldquo means "ditto mark"
 					matches = regex.findall(r"“[^‘”]+?“", file_contents)
-					matches = [x for x in matches if "</p" not in x and "<br/>" not in x and "</td>" not in x]
+					matches = [match for match in matches if "</p" not in match and "<br/>" not in match and "</td>" not in match]
 					if matches:
 						messages.append(LintMessage("t-003", "`“` missing matching `”`.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for lsquo not correctly closed
 					matches = regex.findall(r"‘[^“’]+?‘", file_contents)
-					matches = [x for x in matches if "</p" not in x and "<br/>" not in x]
+					matches = [match for match in matches if "</p" not in match and "<br/>" not in match]
 					if matches:
 						messages.append(LintMessage("t-004", "`‘` missing matching `’`.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
