@@ -208,6 +208,8 @@ TYPOGRAPHY
 "t-034", "`<cite>` element preceded by em-dash. Hint: em-dashes go within `<cite>` elements."
 "t-035", "`<cite>` element not preceded by space."
 "t-036", "`”` missing matching `“`."
+"t-037", "`”` preceded by space."
+"t-038", "`“` before closing `</p>`."
 
 XHTML
 "x-001", "String `UTF-8` must always be lowercase."
@@ -1259,6 +1261,16 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					matches = [match for match in matches if "</p" not in match and "<br/>" not in match]
 					if matches:
 						messages.append(LintMessage("t-004", "`‘` missing matching `’`.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+					# Check for rdquo preceded by space (but not a rsquo, which might indicate a nested quotation)
+					matches = regex.findall(r".{0,10}“</p>", file_contents)
+					if matches:
+						messages.append(LintMessage("t-038", "`“` before closing `</p>`.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+					# Check for rdquo preceded by space (but not a rsquo, which might indicate a nested quotation)
+					matches = regex.findall(r".{0,10}[^’]\s”", regex.sub(r"<td>.*?</td>", "", file_contents, regex.DOTALL))
+					if matches:
+						messages.append(LintMessage("t-037", "`”` preceded by space.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Remove tds in case ldquo means "ditto mark"
 					matches = regex.findall(r"”[^“‘]+?”", regex.sub(r"<td>[”\s]+?</td>", "", file_contents), flags=regex.DOTALL)
