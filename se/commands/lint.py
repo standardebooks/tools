@@ -3,6 +3,10 @@ This module implements the `se lint` command.
 """
 
 import argparse
+import collections
+import concurrent.futures
+import signal
+import sys
 from textwrap import wrap
 
 from colored import stylize, fg, bg, attr
@@ -38,14 +42,31 @@ def _print_table(table_data: list, wrap_column: int = None) -> None:
 
 	print(table.table)
 
+def _lint(directory, skip_lint_ignore):
+	se_epub = SeEpub(directory)
+	return (str(se_epub.path), se_epub.lint(skip_lint_ignore))
+
+def _keyboard_interrupt_handler(sigal_number, frame): # pylint: disable=unused-argument
+	"""
+	We need this function to "gracefully" catch keyboard interrupts in multiprocess mode.
+	For some reason we can't bubble a KeyboardInterrupt exception up to main(), we have to hard exit here.
+	Despite this handler, ctrl + c may still have to be pressed multiple times to register.
+	This function *must* have two arguments, so disable the pylint warning.
+	"""
+	sys.exit(130) # See http://www.tldp.org/LDP/abs/html/exitcodes.html
+
 def lint() -> int:
 	"""
 	Entry point for `se lint`
 	"""
 
+	signal.signal(signal.SIGTERM, _keyboard_interrupt_handler)
+	signal.signal(signal.SIGINT, _keyboard_interrupt_handler)
+
 	parser = argparse.ArgumentParser(description="Check for various Standard Ebooks style errors.")
-	parser.add_argument("-p", "--plain", action="store_true", help="print plain text output, without tables or colors")
+	parser.add_argument("-m", "--multiprocess", action="store_true", help="use multiprocessing to speed up execution when multiple ebooks are specified; ctrl + c doesn’t work nicely")
 	parser.add_argument("-n", "--no-colors", dest="colors", action="store_false", help="do not use colored output")
+	parser.add_argument("-p", "--plain", action="store_true", help="print plain text output, without tables or colors")
 	parser.add_argument("-s", "--skip-lint-ignore", action="store_true", help="ignore rules in se-lint-ignore.xml file")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
@@ -53,19 +74,42 @@ def lint() -> int:
 
 	first_output = True
 	return_code = 0
+	unsorted_messages = {}
 
-	for directory in args.directories:
-		try:
-			se_epub = SeEpub(directory)
-			messages = se_epub.lint(args.skip_lint_ignore)
-		except se.SeException as ex:
-			se.print_error(ex)
-			if len(args.directories) > 1:
-				messages = []
-				return_code = se.LintFailedException.code
-			else:
-				return ex.code
+	if args.multiprocess and len(args.directories) == 1:
+		args.multiprocess = False
 
+	if args.multiprocess:
+		futures = []
+		with concurrent.futures.ProcessPoolExecutor() as executor:
+			for directory in args.directories:
+				futures.append(executor.submit(_lint, directory, args.skip_lint_ignore))
+
+			for future in concurrent.futures.as_completed(futures):
+				try:
+					future_directory, future_messages = future.result()
+					unsorted_messages[future_directory] = future_messages
+				except se.SeException as ex:
+					se.print_error(ex)
+					first_output = False
+					if len(args.directories) > 1:
+						return_code = se.LintFailedException.code
+					else:
+						return_code = ex.code
+	else:
+		for directory in args.directories:
+			try:
+				se_epub = SeEpub(directory)
+				unsorted_messages[directory] = se_epub.lint(args.skip_lint_ignore)
+			except se.SeException as ex:
+				se.print_error(ex)
+				first_output = False
+				if len(args.directories) > 1:
+					return_code = se.LintFailedException.code
+				else:
+					return_code = ex.code
+
+	for directory, messages in collections.OrderedDict(sorted(unsorted_messages.items())).items():
 		table_data = []
 
 		# Print a separator newline if more than one table is printed
@@ -77,11 +121,11 @@ def lint() -> int:
 		# Print the table header
 		if args.verbose or (messages and len(args.directories) > 1):
 			if args.plain:
-				print(se_epub.path)
+				print(directory)
 			else:
-				print(stylize(str(se_epub.path), attr("reverse")))
+				print(stylize(directory, attr("reverse")))
 
-		# Print the table
+		# Print the tables
 		if messages:
 			return_code = se.LintFailedException.code
 
