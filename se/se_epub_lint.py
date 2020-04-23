@@ -207,6 +207,7 @@ TYPOGRAPHY
 "t-033", "Space after dash."
 "t-034", "`<cite>` element preceded by em-dash. Hint: em-dashes go within `<cite>` elements."
 "t-035", "`<cite>` element not preceded by space."
+"t-036", "`”` missing matching `“`."
 
 XHTML
 "x-001", "String `UTF-8` must always be lowercase."
@@ -1258,6 +1259,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					matches = [match for match in matches if "</p" not in match and "<br/>" not in match]
 					if matches:
 						messages.append(LintMessage("t-004", "`‘` missing matching `’`.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+					# Remove tds in case ldquo means "ditto mark"
+					matches = regex.findall(r"”[^“‘]+?”", regex.sub(r"<td>[”\s]+?</td>", "", file_contents), flags=regex.DOTALL)
+					# We create a filter to try to exclude nested quotations
+					# Remove tags in case they're enclosing punctuation we want to match against at the end of a sentence.
+					matches = [match for match in matches if not regex.search(r"([\.!\?;…—]|”\s)’\s", se.formatting.remove_tags(match))]
+					if matches:
+						messages.append(LintMessage("t-036", "`”` missing matching `“`.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check for IDs on <h#> tags
 					nodes = dom.xpath("//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
