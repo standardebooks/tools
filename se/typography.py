@@ -142,6 +142,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(fr"’[\s{se.NO_BREAK_SPACE}]*”", fr"’{se.HAIR_SPACE}”", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(fr"“[\s{se.NO_BREAK_SPACE}]*’", fr"“{se.HAIR_SPACE}’", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(fr"‘[\s{se.NO_BREAK_SPACE}]*“", fr"‘{se.HAIR_SPACE}“", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"‘[\s{se.NO_BREAK_SPACE}]*’", fr"‘{se.HAIR_SPACE}’", xhtml, flags=regex.IGNORECASE)
 
 	# We require a non-letter char at the end, otherwise we might match a contraction: “Hello,” ’e said.
 	xhtml = regex.sub(fr"”[\s{se.NO_BREAK_SPACE}]*’([^\p{{Letter}}])", fr"”{se.HAIR_SPACE}’\1", xhtml, flags=regex.IGNORECASE)
@@ -157,7 +158,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 	# Remove spaces between closing tags and ellipses
 	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?(</[\p{{Letter}}0-9]+>)", r"…\1", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]+([\)”’])", r"…\1", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]+([\)”’])(?![\p{{Letter}}])", r"…\1", xhtml, flags=regex.IGNORECASE) # If followed by a letter, the single quote is probably a leading elision
 	xhtml = regex.sub(fr"([\(“‘])[\s{se.NO_BREAK_SPACE}]+…", r"\1…", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?([\!\?\.\;\,])", fr"…{se.HAIR_SPACE}\1", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(fr"([\!\?\.\;”’])[\s{se.NO_BREAK_SPACE}]?…", fr"\1{se.HAIR_SPACE}…", xhtml, flags=regex.IGNORECASE)
