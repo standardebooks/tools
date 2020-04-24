@@ -5,9 +5,11 @@ This module implements the `se lint` command.
 import argparse
 import collections
 import concurrent.futures
+from pathlib import Path
 import signal
 import sys
 from textwrap import wrap
+from typing import List, Tuple
 
 from colored import stylize, fg, bg, attr
 import regex
@@ -15,7 +17,7 @@ import terminaltables
 
 import se
 from se.se_epub import SeEpub
-
+from se.se_epub_lint import LintMessage
 
 def _print_table(table_data: list, wrap_column: int = None) -> None:
 	"""
@@ -42,7 +44,7 @@ def _print_table(table_data: list, wrap_column: int = None) -> None:
 
 	print(table.table)
 
-def _lint(directory, skip_lint_ignore):
+def _lint(directory: Path, skip_lint_ignore: bool) -> Tuple[str, List[LintMessage]]:
 	se_epub = SeEpub(directory)
 	return (str(se_epub.path), se_epub.lint(skip_lint_ignore))
 
@@ -59,9 +61,6 @@ def lint() -> int:
 	"""
 	Entry point for `se lint`
 	"""
-
-	signal.signal(signal.SIGTERM, _keyboard_interrupt_handler)
-	signal.signal(signal.SIGINT, _keyboard_interrupt_handler)
 
 	parser = argparse.ArgumentParser(description="Check for various Standard Ebooks style errors.")
 	parser.add_argument("-m", "--multiprocess", action="store_true", help="use multiprocessing to speed up execution when multiple ebooks are specified; ctrl + c doesn’t work nicely")
@@ -80,6 +79,9 @@ def lint() -> int:
 		args.multiprocess = False
 
 	if args.multiprocess:
+		signal.signal(signal.SIGTERM, _keyboard_interrupt_handler)
+		signal.signal(signal.SIGINT, _keyboard_interrupt_handler)
+
 		futures = []
 		with concurrent.futures.ProcessPoolExecutor() as executor:
 			for directory in args.directories:
@@ -100,7 +102,7 @@ def lint() -> int:
 		for directory in args.directories:
 			try:
 				se_epub = SeEpub(directory)
-				unsorted_messages[directory] = se_epub.lint(args.skip_lint_ignore)
+				unsorted_messages[str(se_epub.path)] = se_epub.lint(args.skip_lint_ignore)
 			except se.SeException as ex:
 				se.print_error(ex)
 				first_output = False
