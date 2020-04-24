@@ -73,7 +73,6 @@ complete -c se -A -n "__fish_seen_subcommand_from interactive-sr" -s h -l help -
 
 complete -c se -n "__fish_se_no_subcommand" -a lint -d "Check for various Standard Ebooks style errors."
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from lint" -s m -l multiprocess -d "use multiprocessing to speed up execution when multiple ebooks are specified; ctrl + c doesn’t work nicely"
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s n -l no-colors -d "do not use colored output"
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s p -l plain -d "print plain text output, without tables or colors"
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s s -l skip-lint-ignore -d "ignore rules in se-lint-ignore.xml file"

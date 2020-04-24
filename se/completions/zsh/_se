@@ -129,7 +129,6 @@ case $state in
 			lint)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
-					{-m,--multiprocess}'[use multiprocessing to speed up execution when multiple ebooks are specified; ctrl + c doesn’t work nicely]' \
 					{-n,--no-colors}'[do not use colored output]' \
 					{-p,--plain}'[print plain output]' \
 					{-s,--skip-lint-ignore}'[ignore rules in se-lint-ignore.xml file]' \
