@@ -1,2 +1,1 @@
-/tmp/pytest-of-alex/pytest-0/test_lint_clean_0/test-book
 f-002 Error: .git Missing expected file or directory.

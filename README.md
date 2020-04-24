@@ -136,6 +136,18 @@ pipx install --editable tools
 
 Now the `se` binary is in your path, and any edits you make to source files in the `tools/` directory are immediately reflected when executing the binary.
 
+### Running commands on the entire corpus
+
+As a developer, it’s often useful to run an `se` command like `se lint` or `se build` on the entire corpus for testing purposes. This can be very time-consuming in a regular command invocation, so it’s suggested to use [GNU Parallel](https://www.gnu.org/software/parallel/) to speed up these commands significantly on machines with multiple cores. For example:
+
+```shell
+parallel -k se lint ::: /path/to/ebook/repos/*
+```
+
+The toolset tries to detect when it’s being invoked from `parallel`, and it adjusts its output to accomodate.
+
+`parallel` limits the output to 75 columns, even if your terminal emulator is wider. To override that (for example when invoking `se lint` when wider output is desirable), use the `parallel --tty` option; but note that doing so makes ctrl + c keyboard interrupts behave sloppily.
+
 ### Linting with `pylint`
 
 Before we can use `pylint` on the toolset source, we have to inject `pylint` into the venv `pipx` created for the `standardebooks` package:
@@ -166,7 +178,7 @@ cd /path/to/tools/repo
 $HOME/.local/pipx/venvs/standardebooks/bin/pytest
 ```
 
-### Adding tests
+#### Adding tests
 
 Tests are added under the `tests` directory. Most of the tests are based around the idea of having “golden” output files. Each command is run against a set of input files and then the resulting output files are compared against the resulting golden files. The test fails if the output files do not match the golden files. The data files can be found in the `tests/data` directory.
 

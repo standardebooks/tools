@@ -227,3 +227,21 @@ def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filen
 				target_xhtml_filenames.add(target)
 
 	return natsorted(list(target_xhtml_filenames))
+
+def is_called_from_parallel() -> bool:
+	"""
+	Decide if we're being called from GNU parallel.
+	This is good to know in case we want to tweak some output.
+	"""
+
+	import psutil # pylint: disable=import-outside-toplevel
+
+	try:
+		for line in psutil.Process(psutil.Process().ppid()).cmdline():
+			if regex.search(fr"{os.sep}parallel$", line):
+				return True
+	except:
+		# If we can't figure it out, don't worry about it
+		pass
+
+	return False

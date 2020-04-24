@@ -24,11 +24,12 @@ def build() -> int:
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
-	return_code = 0
 	last_output_was_exception = False
+	return_code = 0
 
 	if args.build_covers and len(args.directories) > 1:
 		se.print_error("`--covers` option specified, but more than one build target specified.")
+		return se.InvalidInputException.code
 
 	for directory in args.directories:
 		exception = None

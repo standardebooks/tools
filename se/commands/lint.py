@@ -50,6 +50,7 @@ def lint() -> int:
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
+	called_from_parallel = se.is_called_from_parallel()
 	first_output = True
 	return_code = 0
 
@@ -57,13 +58,13 @@ def lint() -> int:
 		messages = []
 		exception = None
 		table_data = []
+		has_output = False
 
 		try:
 			se_epub = SeEpub(directory)
 			messages = se_epub.lint(args.skip_lint_ignore)
 		except se.SeException as ex:
 			exception = ex
-			first_output = False
 			if len(args.directories) > 1:
 				return_code = se.LintFailedException.code
 			else:
@@ -76,17 +77,20 @@ def lint() -> int:
 			first_output = False
 
 		# Print the table header
-		if messages or exception or args.verbose:
+		if ((len(args.directories) > 1 or called_from_parallel) and (messages or exception)) or args.verbose:
+			has_output = True
 			if args.plain:
 				print(directory)
 			else:
 				print(stylize(directory, attr("reverse")))
 
 		if exception:
+			has_output = True
 			se.print_error(exception)
 
 		# Print the tables
 		if messages:
+			has_output = True
 			return_code = se.LintFailedException.code
 
 			if args.plain:
@@ -137,5 +141,10 @@ def lint() -> int:
 				table_data.append([stylize(" OK ", bg("green") + fg("white") + attr("bold"))])
 
 				_print_table(table_data)
+
+		# Print a newline if we're called from parallel and we just printed something, to
+		# better visually separate output blocks
+		if called_from_parallel and has_output:
+			print("")
 
 	return return_code
