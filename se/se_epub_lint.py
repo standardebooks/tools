@@ -158,6 +158,7 @@ SEMANTICS & CONTENT
 "s-040", f"`#{figure_ref}` not found in file `{chapter_ref}`."
 "s-041", f"The `<figcaption>` element of `#{figure_ref}` does not match the text in its LoI entry."
 "s-042", "`<table>` element without `<tbody>` child."
+"s-043", "`<blockquote>` element without block-level child."
 "s-047", "`noteref` as a direct child of element with `z3998:poem` semantic. `noteref`s should be in their parent `<span>`."
 "s-048", "`noteref` as a direct child of element with `z3998:verse` semantic. `noteref`s should be in their parent `<span>`."
 "s-049", "`noteref` as a direct child of element with `z3998:song` semantic. `noteref`s should be in their parent `<span>`."
@@ -167,7 +168,6 @@ SEMANTICS & CONTENT
 "s-053", "Colophon line not preceded by `<br/>`."
 "s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`."
 vvvvvvvvUNUSEDvvvvvvvvvv
-"s-043", "Poem included without styling in `local.css`."
 "s-044", "Verse included without styling in `local.css`."
 "s-045", "Song included without styling in `local.css`."
 "s-046", "Hymn included without styling in `local.css`."
@@ -960,6 +960,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					matches = regex.findall(r"&#[0-9]+?;", file_contents)
 					if matches:
 						messages.append(LintMessage("s-001", "Illegal numeric entity (like `&#913;`).", se.MESSAGE_TYPE_ERROR, filename))
+
+					nodes = dom.xpath("//blockquote/text()[normalize-space(.)]")
+					if nodes:
+						messages.append(LintMessage("s-043", "`<blockquote>` element without block-level child.", se.MESSAGE_TYPE_WARNING, filename, [node[:30] for node in nodes]))
 
 					# Check nested <blockquote> elements, but only if it's the first child of another <blockquote>
 					nodes = dom.xpath("//blockquote/*[1][name()='blockquote']")
