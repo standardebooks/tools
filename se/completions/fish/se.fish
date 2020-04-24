@@ -10,14 +10,14 @@ end
 complete -c se -n "__fish_se_no_subcommand" -s h -l help -x -d "Print usage"
 
 complete -c se -n "__fish_se_no_subcommand" -a british2american -d "Try to convert British quote style to American quote style."
-complete -c se -A -n "__fish_seen_subcommand_from british2american" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from british2american" -s f -l force -d "force conversion of quote style"
+complete -c se -A -n "__fish_seen_subcommand_from british2american" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from british2american" -s v -l verbose -d "increase output verbosity"
 
 complete -c se -n "__fish_se_no_subcommand" -a build -d "Build an ebook from a Standard Ebook source directory."
-complete -c se -A -n "__fish_seen_subcommand_from build" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s b -l kobo -d "also build a .kepub.epub file for Kobo"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s c -l check -d "use epubcheck to validate the compatible .epub file; if --kindle is also specified and epubcheck fails, don’t create a Kindle file"
+complete -c se -A -n "__fish_seen_subcommand_from build" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s k -l kindle -d "also build an .azw3 file for Kindle."
 complete -c se -A -n "__fish_seen_subcommand_from build" -s o -l output-dir -d "a directory to place output files in; will be created if it doesn’t exist"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s p -l proof -d "insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof"
@@ -39,13 +39,13 @@ complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s n -l no-i
 complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s v -l verbose -d "increase output verbosity"
 
 complete -c se -n "__fish_se_no_subcommand" -a create-draft -d "Create a skeleton of a new Standard Ebook."
+complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s a -l author -d "the author of the ebook"
+complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s e -l email -d "use this email address as the main committer for the local Git repository"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s i -l illustrator -d "the illustrator of the ebook"
-complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s r -l translator -d "the translator of the ebook"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s p -l pg-url -d "the URL of the Project Gutenberg ebook to download"
-complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s e -l email -d "use this email address as the main committer for the local Git repository"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s o -l offline -d "create draft without network access"
-complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s a -l author -d "the author of the ebook"
+complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s r -l translator -d "the translator of the ebook"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s t -l title -d "the title of the ebook"
 
 complete -c se -n "__fish_se_no_subcommand" -a dec2roman -d "Convert a decimal number to a Roman numeral."
@@ -77,6 +77,7 @@ complete -c se -A -n "__fish_seen_subcommand_from lint" -s n -l no-colors -d "do
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s p -l plain -d "print plain text output, without tables or colors"
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s s -l skip-lint-ignore -d "ignore rules in se-lint-ignore.xml file"
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s v -l verbose -d "increase output verbosity"
+complete -c se -A -n "__fish_seen_subcommand_from lint" -s w -l wrap -d "force lines to wrap at this number of columns instead of auto-wrapping"
 
 complete -c se -n "__fish_se_no_subcommand" -a make-url-safe -d "Make a string URL-safe."
 complete -c se -A -n "__fish_seen_subcommand_from make-url-safe" -s h -l help -x -d "show this help message and exit"
@@ -89,8 +90,8 @@ complete -c se -A -n "__fish_seen_subcommand_from modernize-spelling" -s v -l ve
 
 complete -c se -n "__fish_se_no_subcommand" -a prepare-release -d "Calculate work word count, insert release date if not yet set, and update modified date and revision number."
 complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s n -l no-word-count -d "don’t calculate word count"
 complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s r -l no-revision -d "don’t increment the revision number"
+complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s w -l no-word-count -d "don’t calculate word count"
 complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s v -l verbose -d "increase output verbosity"
 
 complete -c se -n "__fish_se_no_subcommand" -a print-spine -d "Print the <manifest> element for the given Standard Ebooks source directory to standard output, for use in that directory’s content.opf."
@@ -119,8 +120,8 @@ complete -c se -A -n "__fish_seen_subcommand_from renumber-endnotes" -s h -l hel
 complete -c se -A -n "__fish_seen_subcommand_from renumber-endnotes" -s v -l verbose -d "increase output verbosity"
 
 complete -c se -n "__fish_se_no_subcommand" -a reorder-endnotes -d "Increment the specified endnote and all following endnotes by 1."
-complete -c se -A -n "__fish_seen_subcommand_from reorder-endnotes" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from reorder-endnotes" -s d -l decrement -d "decrement the target endnote number and all following endnotes"
+complete -c se -A -n "__fish_seen_subcommand_from reorder-endnotes" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from reorder-endnotes" -s i -l increment -d "increment the target endnote number and all following endnotes"
 
 complete -c se -n "__fish_se_no_subcommand" -a roman2dec -d "Convert a Roman numeral to a decimal number."
@@ -132,10 +133,10 @@ complete -c se -A -n "__fish_seen_subcommand_from semanticate" -s h -l help -x -
 complete -c se -A -n "__fish_seen_subcommand_from semanticate" -s v -l verbose -d "increase output verbosity"
 
 complete -c se -n "__fish_se_no_subcommand" -a split-file -d "Split an XHTML file into many files."
+complete -c se -A -n "__fish_seen_subcommand_from split-file" -s f -l filename-format -d "a format string for the output files; `%n` is replaced with the current chapter number; defaults to `chapter-%n.xhtml`"
 complete -c se -A -n "__fish_seen_subcommand_from split-file" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from split-file" -s s -l start-at -d "start numbering chapters at this number, instead of at 1"
-complete -c se -A -n "__fish_seen_subcommand_from split-file" -s f -l filename-format -d "a format string for the output files; `%n` is replaced with the current chapter number; defaults to `chapter-%n.xhtml`"
-complete -c se -A -n "__fish_seen_subcommand_from split-file" -s t -l template-file -d "a file containing an XHTML template to use for each chapter; the string NUMBER is replaced by the chapter number, and the string TEXT is replaced by the chapter body"
+complete -c se -A -n "__fish_seen_subcommand_from split-file" -s t -l template-file -d "a file containing an XHTML template to use for each chapter; the string `NUMBER` is replaced by the chapter number, and the string `TEXT` is replaced by the chapter body"
 
 complete -c se -n "__fish_se_no_subcommand" -a titlecase -d "Convert a string to titlecase."
 complete -c se -A -n "__fish_seen_subcommand_from titlecase" -s h -l help -x -d "show this help message and exit"
@@ -152,7 +153,7 @@ complete -c se -A -n "__fish_seen_subcommand_from unicode-names" -s h -l help -x
 complete -c se -n "__fish_se_no_subcommand" -a version -d "Print the version number and exit."
 
 complete -c se -n "__fish_se_no_subcommand" -a word-count -d "Count the number of words in an HTML file and optionally categorize by length."
-complete -c se -A -n "__fish_seen_subcommand_from word-count" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s c -l categorize -d "include length categorization in output"
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s x -l exclude-se-files -d "exclude some non-bodymatter files common to SE ebooks, like the ToC and colophon"
+complete -c se -A -n "__fish_seen_subcommand_from word-count" -s h -l help -x -d "show this help message and exit"
 

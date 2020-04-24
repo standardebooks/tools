@@ -66,7 +66,7 @@ _se(){
 				COMPREPLY+=($(compgen -f -X ".*" -- "${cur}"))
 				;;
 			lint)
-				COMPREPLY+=($(compgen -W "-h --help -n --no-colors -p --plain -s --skip-lint-ignore -v --verbose" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-h --help -n --no-colors -p --plain -s --skip-lint-ignore -v --verbose -w --wrap=" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			make-url-safe)
@@ -78,7 +78,7 @@ _se(){
 				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
 				;;
 			prepare-release)
-				COMPREPLY+=($(compgen -W "-h --help -n --no-word-count -r --no-revision -v --verbose" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-h --help -r --no-revision -w --no-word-count -v --verbose" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			print-manifest)
@@ -119,6 +119,7 @@ _se(){
 				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
 				;;
 			split-file)
+				COMPREPLY+=($(compgen -W "-f --filename-format= -h --help -s --start-at= -t --template-file=" -- "${cur}"))
 				COMPREPLY+=($(compgen -f -X "!*.htm" -- "${cur}"))
 				COMPREPLY+=($(compgen -f -X "!*.html" -- "${cur}"))
 				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))

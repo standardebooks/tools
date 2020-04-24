@@ -133,6 +133,7 @@ case $state in
 					{-p,--plain}'[print plain output]' \
 					{-s,--skip-lint-ignore}'[ignore rules in se-lint-ignore.xml file]' \
 					{-v,--verbose}'[increase output verbosity]' \
+					{-w,--wrap}'[force lines to wrap at this number of columns instead of auto-wrapping]' \
 					'*: :_directories'
 				;;
 			make-url-safe)
@@ -150,8 +151,8 @@ case $state in
 			prepare-release)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
-					{-n,--no-word-count}'[don’t calculate word count]' \
 					{-r,--no-revision}'[don’t increment the revision number]' \
+					{-w,--no-word-count}'[don’t calculate word count]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_directories'
 				;;
@@ -212,7 +213,10 @@ case $state in
 				;;
 			split-file)
 				_arguments -s \
+					{-f,--filename-format}'[a format string for the output files; `%n` is replaced with the current chapter number; defaults to `chapter-%n.xhtml`]' \
 					{-h,--help}'[show a help message and exit]' \
+					{-s,--start-at}'[start numbering chapters at this number, instead of at 1]' \
+					{-t,--template-file}'[a file containing an XHTML template to use for each chapter; the string `NUMBER` is replaced by the chapter number, and the string `TEXT` is replaced by the chapter body]' \
 					'*: :_files -g \*.\(htm\|html\|xhtml\)'
 				;;
 			titlecase)
