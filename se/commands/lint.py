@@ -12,7 +12,7 @@ import terminaltables
 import se
 from se.se_epub import SeEpub
 
-def _print_table(table_data: list, wrap_column: int = None) -> None:
+def _print_table(table_data: list, wrap_column: int = None, max_width: int = None) -> None:
 	"""
 	Helper function to print a table to the console.
 
@@ -31,7 +31,8 @@ def _print_table(table_data: list, wrap_column: int = None) -> None:
 
 	# Calculate newlines
 	if wrap_column is not None:
-		max_width = table.column_max_width(wrap_column)
+		if not max_width:
+			max_width = table.column_max_width(wrap_column)
 		for row in table_data:
 			row[wrap_column] = "\n".join(wrap(row[wrap_column], max_width))
 
@@ -47,6 +48,7 @@ def lint() -> int:
 	parser.add_argument("-p", "--plain", action="store_true", help="print plain text output, without tables or colors")
 	parser.add_argument("-s", "--skip-lint-ignore", action="store_true", help="ignore rules in se-lint-ignore.xml file")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("-w", "--wrap", metavar="INTEGER", type=se.is_positive_integer, default=None, help="force lines to wrap at this number of columns instead of auto-wrapping")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
@@ -132,7 +134,7 @@ def lint() -> int:
 						for submessage in message.submessages:
 							table_data.append([" ", " ", "→", f"{submessage}"])
 
-				_print_table(table_data, 3)
+				_print_table(table_data, 3, args.wrap)
 
 		if args.verbose and not messages and not exception:
 			if args.plain:
@@ -140,7 +142,7 @@ def lint() -> int:
 			else:
 				table_data.append([stylize(" OK ", bg("green") + fg("white") + attr("bold"))])
 
-				_print_table(table_data)
+				_print_table(table_data, None, args.wrap)
 
 		# Print a newline if we're called from parallel and we just printed something, to
 		# better visually separate output blocks
