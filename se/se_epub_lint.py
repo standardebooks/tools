@@ -210,6 +210,7 @@ TYPOGRAPHY
 "t-036", "`”` missing matching `“`."
 "t-037", "`”` preceded by space."
 "t-038", "`“` before closing `</p>`."
+"t-039", "Initialism followed by `’s`. Hint: Plurals of initialisms are not followed by `’`."
 
 XHTML
 "x-001", "String `UTF-8` must always be lowercase."
@@ -1294,6 +1295,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[not(re:match(., '[\\[\\(\\s]$'))]]")
 					if nodes:
 						messages.append(LintMessage("t-035", "`<cite>` element not preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+
+					# Check for some known initialisms with incorrect possessive apostrophes
+					nodes = dom.xpath("/html/body//abbr[text()='I.O.U.'][(following-sibling::node()[1])[starts-with(., '’s')]]")
+					if nodes:
+						messages.append(LintMessage("t-039", "Initialism followed by `’s`. Hint: Plurals of initialisms are not followed by `’`.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() + "’s" for node in nodes]))
 
 					# Check to see if <h#> tags are correctly titlecased
 					nodes = dom.xpath("//*[re:test(name(), '^h[1-6]$')][not(contains(@epub:type, 'z3998:roman'))]")
