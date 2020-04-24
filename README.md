@@ -183,7 +183,7 @@ Another custom test flag `--save-new-draft` is also available. This flag is used
 
 ### Code style
 
-- In general we follow a relaxed version of [PEP 8<](https://www.python.org/dev/peps/pep-0008/). In particular, we use tabs instead of spaces, and there is no line length limit.
+- In general we follow a relaxed version of [PEP 8](https://www.python.org/dev/peps/pep-0008/). In particular, we use tabs instead of spaces, and there is no line length limit.
 
 - Always use the `regex` module instead of the `re` module.
 
