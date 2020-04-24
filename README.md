@@ -146,7 +146,7 @@ parallel -k se lint ::: /path/to/ebook/repos/*
 
 The toolset tries to detect when it’s being invoked from `parallel`, and it adjusts its output to accomodate.
 
-`parallel` limits the output to 75 columns, even if your terminal emulator is wider. To override that (for example when invoking `se lint` when wider output is desirable), use the `parallel --tty` option; but note that doing so makes ctrl + c keyboard interrupts behave sloppily.
+`parallel` limits the output to 75 columns, even if your terminal emulator is wider. `se lint` can override this by setting a fixed width with the `--wrap` option.
 
 ### Linting with `pylint`
 
