@@ -8,7 +8,6 @@ from pathlib import Path
 import se
 from se.se_epub import SeEpub
 
-
 def build() -> int:
 	"""
 	Entry point for `se build`
@@ -25,16 +24,36 @@ def build() -> int:
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
+	return_code = 0
+	last_output_was_exception = False
+
 	if args.build_covers and len(args.directories) > 1:
 		se.print_error("`--covers` option specified, but more than one build target specified.")
-		return se.InvalidArgumentsException.code
 
 	for directory in args.directories:
+		exception = None
+
 		try:
 			se_epub = SeEpub(directory)
-			se_epub.build(args.check, args.build_kobo, args.build_kindle, Path(args.output_dir), args.proof, args.build_covers, args.verbose)
+			se_epub.build(args.check, args.build_kobo, args.build_kindle, Path(args.output_dir), args.proof, args.build_covers)
 		except se.SeException as ex:
-			se.print_error(ex, args.verbose)
-			return ex.code
+			exception = ex
+			return_code = se.BuildFailedException.code
 
-	return 0
+		# Print a newline after we've printed an exception
+		if last_output_was_exception and (args.verbose or exception):
+			print("")
+			last_output_was_exception = False
+
+		if args.verbose or exception:
+			# Print the header
+			print(f"Building {directory} ... ", end="", flush=True)
+
+		if exception:
+			print("")
+			se.print_error(exception, True)
+			last_output_was_exception = True
+		elif args.verbose:
+			print("OK")
+
+	return return_code

@@ -881,7 +881,7 @@ class SeEpub:
 
 		return lint(self, skip_lint_ignore)
 
-	def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool, verbose: bool):
+	def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool) -> None:
 		"""
 		The build() function is very big so for readability and maintainability
 		it's broken out to a separate file. Strictly speaking that file can be inlined
@@ -890,7 +890,7 @@ class SeEpub:
 
 		from se.se_epub_build import build # pylint: disable=import-outside-toplevel
 
-		build(self, run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers, verbose)
+		build(self, run_epubcheck, build_kobo, build_kindle, output_directory, proof, build_covers)
 
 	def generate_toc(self) -> str:
 		"""

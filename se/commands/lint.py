@@ -70,7 +70,7 @@ def lint() -> int:
 				return_code = ex.code
 
 		# Print a separator newline if more than one table is printed
-		if not first_output and (args.verbose or messages):
+		if not first_output and (args.verbose or messages or exception):
 			print("")
 		elif first_output:
 			first_output = False

@@ -11,7 +11,6 @@ import os
 import shutil
 import subprocess
 import tempfile
-import sys
 from distutils.dir_util import copy_tree
 from hashlib import sha1
 from pathlib import Path
@@ -43,7 +42,7 @@ COVER_THUMBNAIL_HEIGHT = int(COVER_SVG_HEIGHT / 4) # Cast to int required for PI
 SVG_OUTER_STROKE_WIDTH = 2
 SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
 
-def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool, verbose: bool) -> None:
+def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool) -> None:
 	"""
 	Entry point for `se build`
 	"""
@@ -71,9 +70,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		raise se.FileExistsException(f"Couldn’t create output directory: `{output_directory}`")
 
 	# All clear to start building!
-	if verbose:
-		print(f"Building {self.path} ...")
-
 	metadata_xml = self.metadata_xml
 
 	with tempfile.TemporaryDirectory() as temp_directory:
@@ -147,20 +143,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				file.truncate()
 
 		# Output the pure epub3 file
-		if verbose:
-			print(f"\tBuilding {epub3_output_filename} ...", end="", flush=True)
-
 		se.epub.write_epub(work_epub_root_directory, output_directory / epub3_output_filename)
-
-		if verbose:
-			print(" OK")
-
-		if build_kobo:
-			if verbose:
-				print(f"\tBuilding {kobo_output_filename} ...", end="", flush=True)
-		else:
-			if verbose:
-				print(f"\tBuilding {epub_output_filename} ...", end="", flush=True)
 
 		# Now add epub2 compatibility.
 
@@ -574,7 +557,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							try:
 								tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 							except Exception as ex:
-								raise se.InvalidXhtmlException(f"Error parsing XHTML file: `{filename}`\n{ex}", verbose)
+								raise se.InvalidXhtmlException(f"Error parsing XHTML file: `{filename}`\n{ex}")
 
 							kobo.add_kobo_spans_to_node(tree.xpath("./body", namespaces=se.XHTML_NAMESPACES)[0])
 
@@ -589,10 +572,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							file.truncate()
 
 				se.epub.write_epub(kobo_work_directory, output_directory / kobo_output_filename)
-
-			if verbose:
-				print(" OK")
-				print(f"\tBuilding {epub_output_filename} ...", end="", flush=True)
 
 		# Now work on more epub2 compatibility
 
@@ -758,13 +737,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		# Write the compatible epub
 		se.epub.write_epub(work_epub_root_directory, output_directory / epub_output_filename)
 
-		if verbose:
-			print(" OK")
-
 		if run_epubcheck:
-			if verbose:
-				print(f"\tRunning epubcheck on {epub_output_filename} ...", end="", flush=True)
-
 			# Path arguments must be cast to string for Windows compatibility.
 			with importlib_resources.path("se.data.epubcheck", "epubcheck.jar") as jar_path:
 				try:
@@ -781,19 +754,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					split_output = output.split("\n")
 					output = "\n".join(split_output[:-2])
 
-					if verbose:
-						print(f"\n\t\tepubcheck v{version} failed with:\n\t\t" + "\t\t".join(output.splitlines(True)), file=sys.stderr)
-					else:
-						print(f"epubcheck v{version} failed with:\n{output}", file=sys.stderr)
-					return
-
-			if verbose:
-				print(" OK")
+					raise se.BuildFailedException(f"epubcheck v{version} failed with:\n{output}")
 
 		if build_kindle:
-			if verbose:
-				print(f"\tBuilding {kindle_output_filename} ...", end="", flush=True)
-
 			# There's a bug in Calibre <= 3.48.0 where authors who have more than one MARC relator role
 			# display as "unknown author" in the Kindle interface.
 			# See: https://bugs.launchpad.net/calibre/+bug/1844578
@@ -957,6 +920,3 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			kindle_cover_thumbnail = kindle_cover_thumbnail.convert("RGB") # Remove alpha channel from PNG if necessary
 			kindle_cover_thumbnail = kindle_cover_thumbnail.resize((432, 648))
 			kindle_cover_thumbnail.save(output_directory / f"thumbnail_{asin}_EBOK_portrait.jpg")
-
-			if verbose:
-				print(" OK")

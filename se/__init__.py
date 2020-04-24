@@ -130,6 +130,10 @@ class InvalidXmlException(SeException):
 	""" Invalid XHTML """
 	code = 16
 
+class BuildFailedException(SeException):
+	""" Build failed """
+	code = 17
+
 def strip_bom(string: str) -> str:
 	"""
 	Remove the Unicode Byte Order Mark from a string.
@@ -168,6 +172,9 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 	# By convention, any text within the message text that is surrounded in backticks
 	# is rendered in blue
 	message = regex.sub(r"`(.+?)`", stylize(r"\1", fg("light_blue")), str(message))
+
+	if verbose:
+		message = str(message).replace("\n", f"\n{MESSAGE_INDENT}")
 
 	print(f"{MESSAGE_INDENT if verbose else ''}{stylize(f' {label} ', bg(bg_color) + fg('white') + attr('bold'))} {message}", file=output_file)
 
