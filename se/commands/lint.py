@@ -31,7 +31,7 @@ def _print_table(table_data: list, wrap_column: int = None, max_width: int = Non
 
 	# Calculate newlines
 	if wrap_column is not None:
-		if not max_width:
+		if max_width is None:
 			max_width = table.column_max_width(wrap_column)
 		for row in table_data:
 			row[wrap_column] = "\n".join(wrap(row[wrap_column], max_width))
