@@ -159,6 +159,8 @@ SEMANTICS & CONTENT
 "s-041", f"The `<figcaption>` element of `#{figure_ref}` does not match the text in its LoI entry."
 "s-042", "`<table>` element without `<tbody>` child."
 "s-043", "`<blockquote>` element without block-level child."
+"s-044", "`z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` without direct child `<p>` (stanza) element."
+"s-045", "`<abbr>` element without semantic class like `name` or `initialism`"
 "s-047", "`noteref` as a direct child of element with `z3998:poem` semantic. `noteref`s should be in their parent `<span>`."
 "s-048", "`noteref` as a direct child of element with `z3998:verse` semantic. `noteref`s should be in their parent `<span>`."
 "s-049", "`noteref` as a direct child of element with `z3998:song` semantic. `noteref`s should be in their parent `<span>`."
@@ -167,9 +169,7 @@ SEMANTICS & CONTENT
 "s-052", "`<attr>` element with illegal `title` attribute."
 "s-053", "Colophon line not preceded by `<br/>`."
 "s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`."
-"s-044", "`z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` without direct child `<p>` (stanza) element."
 vvvvvvvvUNUSEDvvvvvvvvvv
-"s-045", "Song included without styling in `local.css`."
 "s-046", "Hymn included without styling in `local.css`."
 
 TYPOGRAPHY
@@ -1083,6 +1083,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					nodes = dom.xpath("//node()[name()='span' and contains(@epub:type, 'z3998:roman') and not(position() = 1)][(following-sibling::node()[1])[re:test(., '^\\.\\s*[a-z]')]]")
 					if nodes:
 						messages.append(LintMessage("t-013", "Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() + "." for node in nodes]))
+
+					# Check for <abbr> elements that have two or more letters/periods, that don't have a semantic class
+					nodes = dom.xpath("//abbr[not(@class)][text() != 'U.S.'][re:test(., '([A-Z]\\.){2,}')]")
+					if nodes:
+						messages.append(LintMessage("s-045", "`<abbr>` element without semantic class like `name` or `initialism`.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 					# Check for two em dashes in a row
 					matches = regex.findall(fr"—{se.WORD_JOINER}*—+", file_contents)
