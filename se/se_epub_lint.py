@@ -167,8 +167,8 @@ SEMANTICS & CONTENT
 "s-052", "`<attr>` element with illegal `title` attribute."
 "s-053", "Colophon line not preceded by `<br/>`."
 "s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`."
+"s-044", "`z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` without direct child `<p>` (stanza) element."
 vvvvvvvvUNUSEDvvvvvvvvvv
-"s-044", "Verse included without styling in `local.css`."
 "s-045", "Song included without styling in `local.css`."
 "s-046", "Hymn included without styling in `local.css`."
 
@@ -1064,6 +1064,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
 					if matches:
 						messages.append(LintMessage("t-015", "Numbers not grouped by commas. Separate numbers greater than 1,000 with commas at every three numerals.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+					# Check for poetry/verse without a descendent <p> element.
+					# Skip the ToC because the landmarks section may have the poem/verse semantic.
+					if filename != "toc.xhtml":
+						nodes = dom.xpath("//*[not(self::tr or self::td)][contains(@epub:type, 'z3998:poem') or contains(@epub:type, 'z3998:verse') or contains(@epub:type, 'z3998:song') or contains(@epub:type, 'z3998:hymn')][not(descendant::p)]")
+						if nodes:
+							messages.append(LintMessage("s-044", "`z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` without descendant `<p>` (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
 
 					# Check for deprecated MathML elements
 					# Note we dont select directly on element name, because we want to ignore any namespaces that may (or may not) be defined
