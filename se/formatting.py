@@ -346,9 +346,9 @@ def _replace_character_references(match_object) -> str:
 
 	return retval
 
-def indent(tree, space="\t"):
+def _indent(tree, space="\t"):
 	"""
-	Indent the an lxml tree using the given space characters.
+	Indent an lxml tree using the given space characters.
 	"""
 
 	if len(tree) > 0:
@@ -477,11 +477,32 @@ def pretty_print_xml(xml: str) -> str:
 	"""
 
 	tree = etree.fromstring(str.encode(xml))
+
+	# Make sure attribute names and tag names are lowercased, but only in XHTML files
+	if tree.xpath("/html", namespaces=se.XHTML_NAMESPACES):
+		# Lowercase attribute names
+		for node in tree.xpath("//*[attribute::*[re:test(local-name(), '[A-Z]')]]", namespaces=se.XHTML_NAMESPACES):
+			for key, value in node.items(): # Iterate over attributes
+				node.attrib.pop(key) # Remove the attribute
+				node.attrib[key.lower()] = value # Re-add the attribute, lowercased
+
+		# Lowercase tag names
+		for node in tree.xpath("//*[re:test(local-name(), '[A-Z]')]", namespaces=se.XHTML_NAMESPACES):
+			node.tag = node.tag.lower()
+
+	# Make sure viewBox is correctly-cased in SVGs
+	for node in tree.xpath("/svg:svg", namespaces={"svg": "http://www.w3.org/2000/svg"}):
+		for key, value in node.items(): # Iterate over attributes
+			if key.lower() == "viewbox":
+				node.attrib.pop(key) # Remove the attribute
+				node.attrib["viewBox"] = value # Re-add the attribute, correctly-cased
+				break
+
 	canonical_bytes = etree.tostring(tree, method="c14n")
 	tree = etree.fromstring(canonical_bytes)
-	indent(tree, space="\t")
+	_indent(tree, space="\t")
 	xml = etree.tostring(tree, encoding="unicode")
-	return '<?xml version="1.0" encoding="utf-8"?>\n' + xml + "\n"
+	return """<?xml version="1.0" encoding="utf-8"?>\n""" + xml + "\n"
 
 def format_xhtml_file(filename: Path, is_metadata_file: bool = False) -> None:
 	"""
@@ -528,6 +549,12 @@ def format_xhtml(xhtml: str, is_metadata_file: bool = False) -> str:
 
 	# Remove unnecessary doctypes which can cause xmllint to hang
 	xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", xhtml, flags=regex.DOTALL)
+
+	# Remove white space between opening.closing tag and text node
+	# We do this first so that we can still format line breaks after <br/>
+	# Exclude comments
+	xhtml = regex.sub(r"(<[^!/][^>]*?[^/]>)\s+([^\s<])", r"\1\2", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"([^\s>])\s+(</[^>]*?>)", r"\1\2", xhtml, flags=regex.IGNORECASE)
 
 	# Canonicalize and format XHTML
 	try:

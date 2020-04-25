@@ -223,11 +223,12 @@ XHTML
 "x-008", "Elements should end with a single `>`."
 "x-009", "Illegal leading 0 in `id` attribute."
 "x-010", "Illegal element in `<title>` element."
-"x-011", "Uppercased HTML tag."
 "x-012", "Illegal `style` attribute. Do not use inline styles, any element can be targeted with a clever enough selector."
 "x-013", "CSS class found in XHTML, but not in `local.css`."
 "x-014", "Illegal `id` attribute."
 "x-015", f"Illegal element in `<head>`. Only `<title>` and `<link rel=\"stylesheet\">` are allowed."
+vvvvvvvvUNUSEDvvvvvvvv
+"x-011", "Uppercased HTML tag."
 """
 
 class LintMessage:
@@ -1150,11 +1151,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					nodes = dom.xpath("/html/head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
 					if nodes:
 						messages.append(LintMessage("x-015", f"Illegal element in `<head>`. Only `<title>` and `<link rel=\"stylesheet\">` are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.lxml_element.tag}>" for node in nodes]))
-
-					# Check for uppercase HTML tags
-					nodes = dom.xpath("//*[re:test(name(), '[A-Z]')]")
-					for node in nodes:
-						messages.append(LintMessage("x-011", "Uppercased HTML tag.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
 					# Check for nbsp within <abbr class="name">, which is redundant
 					nodes = dom.xpath(f"//abbr[contains(@class, 'name')][contains(text(), '{se.NO_BREAK_SPACE}')]")
