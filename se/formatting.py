@@ -565,26 +565,6 @@ def format_xhtml(xhtml: str, is_metadata_file: bool = False) -> str:
 	# Normalize unicode characters
 	xhtml = unicodedata.normalize("NFC", xhtml)
 
-	# Attempt to pretty-print CSS, if we have any (like in cover.svg or titlepage.svg).
-	css = regex.findall(r"<style type=\"text/css\">([^<]+?)</style>", xhtml, flags=regex.DOTALL)
-	if css:
-		# Note that we can't (yet) use a generic format_css function, because we rely
-		# on the output to be structured in a particular way.
-		# This algorithm can't handle arbitrarily-formatted CSS.
-		css = css[0]
-
-		css = css.replace("{ ", "{\n")
-		css = css.replace(" }", "\n}\n\n")
-		css = css.replace("; ", ";\n")
-
-		css = regex.sub(r"^\s*(.+?){", "\t\t\\1{", css, flags=regex.MULTILINE)
-		css = regex.sub(r"^\s*}", "\t\t}\n", css, flags=regex.MULTILINE)
-		css = regex.sub(r"^([^{}]+?)$", "\t\t\t\\1", css, flags=regex.MULTILINE)
-
-		css = f"\t\t{css.strip()}"
-
-		xhtml = regex.sub(r"<style type=\"text/css\">([^<]+?)</style>", f"<style type=\"text/css\">\n{css}\n\t</style>", xhtml, flags=regex.DOTALL)
-
 	# Attempt to pretty-print the long description, which has special formatting
 	if "&lt;p&gt;" in xhtml:
 		xhtml = xhtml.replace(" &lt;p&gt;", "\n\t\t\t&lt;p&gt;")
