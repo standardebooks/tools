@@ -211,6 +211,7 @@ TYPOGRAPHY
 "t-037", "`”` preceded by space."
 "t-038", "`“` before closing `</p>`."
 "t-039", "Initialism followed by `’s`. Hint: Plurals of initialisms are not followed by `’`."
+"t-040", "Subtitle with illegal ending period."
 
 XHTML
 "x-001", "String `UTF-8` must always be lowercase."
@@ -1292,6 +1293,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					matches = [match for match in matches if not regex.search(r"([\.!\?;…—]|”\s)’\s", se.formatting.remove_tags(match))]
 					if matches:
 						messages.append(LintMessage("t-036", "`”` missing matching `“`.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+					# Check if a subtitle ends in a text node with a terminal period; or if it ends in an <i> node containing a terminal period.
+					nodes = dom.xpath("//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6]/*[contains(@epub:type, 'subtitle')][(./text())[last()][re:test(., '\\.$')] or (./i)[last()][re:test(., '\\.$')]]")
+					if nodes:
+						messages.append(LintMessage("t-040", "Subtitle with illegal ending period.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 					# Check for IDs on <h#> tags
 					nodes = dom.xpath("//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
