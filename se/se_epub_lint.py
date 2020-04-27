@@ -909,7 +909,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 								# This xpath returns all text nodes that are not white space. We don't want any text nodes,
 								# so if it returns anything then we know we're missing a <span> somewhere.
 								if node_copy.xpath("./text()[not(normalize-space(.) = '')]"):
-									messages.append(LintMessage("s-015", f"Element has `<span epub:type=\"subtitle\">` child, but first child is not `<span>`. See semantics manual for structure of headers with subtitles.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring()]))
+									messages.append(LintMessage("s-015", "Element has `<span epub:type=\"subtitle\">` child, but first child is not `<span>`. See semantics manual for structure of headers with subtitles.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring()]))
 
 								# OK, move on with processing headers.
 								closest_section_epub_type = node.xpath(".//ancestor::*[name()='section' or name()='article' or name()='body'][1]/@epub:type", True) or ""
@@ -1007,12 +1007,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						temp_file_contents = file_contents.replace("\"name eoc\"", "\"name\"")
 
 						# Check for nbsp before ampersand (&amp)
-						matches = regex.findall(fr"(?<!\<abbr class=\"name\")[^>]*? \&amp;", temp_file_contents)
+						matches = regex.findall(r"(?<!\<abbr class=\"name\")[^>]*? \&amp;", temp_file_contents)
 						if matches:
 							messages.append(LintMessage("t-007", "Required no-break space not found before `&amp;`.", se.MESSAGE_TYPE_WARNING, filename))
 
 						# Check for nbsp after ampersand (&amp)
-						matches = regex.findall(fr"(?<!\<abbr class=\"name\")>[^>]*?\&amp; ", temp_file_contents)
+						matches = regex.findall(r"(?<!\<abbr class=\"name\")>[^>]*?\&amp; ", temp_file_contents)
 						if matches:
 							messages.append(LintMessage("t-008", "Required no-break space not found after `&amp;`.", se.MESSAGE_TYPE_WARNING, filename))
 
@@ -1027,7 +1027,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-028", "Possible mis-curled quotation mark.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 					# Check that times have colons and not periods
-					nodes = dom.xpath(f"//text()[ (re:test(., '[0-9]\\.[0-9]+\\s$') and (following-sibling::abbr[1])[contains(@class, 'time')]) or re:test(., '(at|the) [0-9]\\.[0-9]+$')]")
+					nodes = dom.xpath("//text()[ (re:test(., '[0-9]\\.[0-9]+\\s$') and (following-sibling::abbr[1])[contains(@class, 'time')]) or re:test(., '(at|the) [0-9]\\.[0-9]+$')]")
 					if nodes:
 						messages.append(LintMessage("t-010", "Times must be separated by colons (`:`) not periods (`.`).", se.MESSAGE_TYPE_ERROR, filename, [node[-10:] + "<abbr" for node in nodes]))
 
@@ -1077,7 +1077,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# Note we dont select directly on element name, because we want to ignore any namespaces that may (or may not) be defined
 					nodes = dom.xpath("//*[name()='mfenced']")
 					if nodes:
-						messages.append(LintMessage("s-017", f"`<m:mfenced>` is deprecated in the MathML spec. Use `<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>`.", se.MESSAGE_TYPE_ERROR, filename, {node.totagstring() for node in nodes}))
+						messages.append(LintMessage("s-017", "`<m:mfenced>` is deprecated in the MathML spec. Use `<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>`.", se.MESSAGE_TYPE_ERROR, filename, {node.totagstring() for node in nodes}))
 
 					# Check for period following Roman numeral, which is an old-timey style we must fix
 					# But ignore the numeral if it's the first item in a <p> tag, as that suggests it might be a kind of list item.
@@ -1163,7 +1163,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# Check for illegal elements in <head>
 					nodes = dom.xpath("/html/head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
 					if nodes:
-						messages.append(LintMessage("x-015", f"Illegal element in `<head>`. Only `<title>` and `<link rel=\"stylesheet\">` are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.lxml_element.tag}>" for node in nodes]))
+						messages.append(LintMessage("x-015", "Illegal element in `<head>`. Only `<title>` and `<link rel=\"stylesheet\">` are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.lxml_element.tag}>" for node in nodes]))
 
 					# Check for nbsp within <abbr class="name">, which is redundant
 					nodes = dom.xpath(f"//abbr[contains(@class, 'name')][contains(text(), '{se.NO_BREAK_SPACE}')]")
