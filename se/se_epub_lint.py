@@ -153,7 +153,7 @@ SEMANTICS & CONTENT
 "s-035", "`<h#>` element has the `z3998:roman` semantic, but is not a Roman numeral."
 "s-036", "No `frontmatter` semantic inflection for what looks like a frontmatter file."
 "s-037", "No `backmatter` semantic inflection for what looks like a backmatter file."
-"s-038", "Illegal asterism (`***`). Section/scene breaks must be defined by an `<hr/>` element."
+"s-038", "Illegal asterism. Section/scene breaks must be defined by an `<hr/>` element."
 "s-039", "Illegal `Ibid` in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing `Ibid` refers to."
 "s-040", f"`#{figure_ref}` not found in file `{chapter_ref}`."
 "s-041", f"The `<figcaption>` element of `#{figure_ref}` does not match the text in its LoI entry."
@@ -1503,10 +1503,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if nodes:
 						messages.append(LintMessage("s-052", "`<attr>` element with illegal `title` attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
-					# Check for leftover asterisms
-					nodes = dom.xpath("//*[self::p or self::div][re:test(., '^\\s*\\*\\s*(\\*\\s*)+$')]")
+					# Check for leftover asterisms. Asterisms are sequences of any of these chars: * . • -⁠ —
+					nodes = dom.xpath("//*[self::p or self::div][re:test(., '^\\s*[\\*\\.•\\-⁠—]\\s*([\\*\\.•\\-⁠—]\\s*)+$')]")
 					if nodes:
-						messages.append(LintMessage("s-038", "Illegal asterism (`***`). Section/scene breaks must be defined by an `<hr/>` element.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+						messages.append(LintMessage("s-038", "Illegal asterism. Section/scene breaks must be defined by an `<hr/>` element.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 					# Check for missing punctuation before closing quotes
 					nodes = dom.xpath("//p[not(parent::header and position() = last())][re:test(., '[a-z]+[”’]$')]")
