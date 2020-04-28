@@ -80,7 +80,7 @@ setup(
         "smartypants==2.0.1",
         "terminaltables==3.1.0",
         "tinycss2==1.0.2",
-        "titlecase==0.12.0"
+        "titlecase==0.12.0" # Let's keep this for now, we'll revert to the pip library once the next release rolls around
     ],
     include_package_data=True,
     entry_points={
