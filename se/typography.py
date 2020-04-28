@@ -92,12 +92,11 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = xhtml.replace("—-", "—")
 
 	# Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
-	xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.?\s+", fr"\1.{se.NO_BREAK_SPACE}", xhtml)
-	xhtml = regex.sub(r"<abbr>(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.?</abbr>?\s+", fr"<abbr>\1.</abbr>{se.NO_BREAK_SPACE}", xhtml)
+	xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.?(</abbr>)?\s+", fr"\1.\2{se.NO_BREAK_SPACE}", xhtml)
 
 	# \P{} is the inverse of \p{}, so this regex matches any of the abbrs followed by any punctuation except a period. We also 'or' against a word joiner,
 	# in case Mr. is run up against an em dash.
-	xhtml = regex.sub(fr"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)([^\P{{Punctuation}}\.]|{se.WORD_JOINER})", r"\1.\2", xhtml)
+	xhtml = regex.sub(fr"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.?(</abbr>)?([^\P{{Punctuation}}\.]|{se.WORD_JOINER})", r"\1.\2\3", xhtml)
 
 	xhtml = regex.sub(r"\bNo\.\s+([0-9]+)", fr"No.{se.NO_BREAK_SPACE}\1", xhtml)
 	xhtml = regex.sub(r"<abbr>No\.</abbr>\s+", fr"<abbr>No.</abbr>{se.NO_BREAK_SPACE}", xhtml)
