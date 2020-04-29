@@ -114,6 +114,7 @@ METADATA
 "m-049", "No `se-lint-ignore.xml` rules. Delete the file if there are no rules."
 "m-050", "Non-typogrified character in `<meta property=\"file-as\" refines=\"#title\">` element."
 "m-051", "Missing expected element in metadata."
+"m-052", "`<dc:title>` element contains numbers, but no `<meta property=\"se:alternate-title\"> element in metadata."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like `&#913;`)."
@@ -531,6 +532,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		matches = regex.findall(r"(?:['\"]|\-\-|\s-\s)", title)
 		if matches:
 			messages.append(LintMessage("m-012", "Non-typogrified character in `<dc:title>` element.", se.MESSAGE_TYPE_ERROR, "content.opf", matches))
+
+		# Do we need an se:alternate-title meta element?
+		# Match spelled-out numbers with a word joiner, so for ex. we don't print "eight" if we matched "eighty"
+		matches = regex.findall(r"(?:[0-9]+|\bone\b|\btwo\b|\bthree\b|\bfour\b|\bfive\b|\bsix\b|\bseven\b|\beight\b|\bnine\b|\bten\b|\beleven\b|\btwelve\b|\bthirteen\b|\bfourteen\b|\bfifteen\b|\bsixteen\b|\bseventeen\b|\beighteen\b|\bnineteen\b|\btwenty\b|\bthirty\b|\bforty\b|\bfifty\b|\bsixty\b|\bseventy\b|\beighty|\bninety)", title, flags=regex.IGNORECASE)
+		if matches and not self.metadata_dom.xpath("/package/metadata/meta[@property = 'se:alternate-title']"):
+			messages.append(LintMessage("m-052", "`<dc:title>` element contains numbers, but no `<meta property=\"se:alternate-title\"> element in metadata.", se.MESSAGE_TYPE_ERROR, "content.opf", matches))
 	except:
 		missing_metadata_elements.append("<dc:title>")
 
