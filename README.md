@@ -147,15 +147,15 @@ The toolset tries to detect when it’s being invoked from `parallel`, and it ad
 
 `parallel` limits the output to 75 columns, even if your terminal emulator is wider. `se lint` can override this by setting a fixed width with the `--wrap` option.
 
-### Linting with `pylint`
+### Linting with `pylint` and `mypy`
 
-Before we can use `pylint` on the toolset source, we have to inject `pylint` into the venv `pipx` created for the `standardebooks` package:
+Before we can use `pylint` or `mypy` on the toolset source, we have to inject them into the venv `pipx` created for the `standardebooks` package:
 
 ```shell
-pipx inject standardebooks pylint
+pipx inject standardebooks pylint mypy
 ```
 
-Then make sure to call the `pylint` binary that `pipx` installed in the `standardebooks` venv, *not* any other globally-installed `pylint` binary:
+Then make sure to call the `pylint` and `mypy` binaries that `pipx` installed in the `standardebooks` venv, *not* any other globally-installed binaries:
 
 ```shell
 cd /path/to/tools/repo
