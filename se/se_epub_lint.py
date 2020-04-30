@@ -17,6 +17,7 @@ from typing import Dict, List, Set, Union
 import importlib_resources
 
 import cssutils
+from git import Repo
 import lxml.cssselect
 import lxml.etree as etree
 from PIL import Image, UnidentifiedImageError
@@ -508,9 +509,22 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	# Done checking local.css
 
 	root_files = os.listdir(self.path)
-	expected_root_files = [".git", "images", "src", "LICENSE.md"]
-	illegal_files = [root_file for root_file in root_files if root_file not in expected_root_files and root_file != ".gitignore" and root_file != "se-lint-ignore.xml"] # .gitignore and se-lint-ignore.xml are optional
+	expected_root_files = ["images", "src", "LICENSE.md"]
+	illegal_files = [root_file for root_file in root_files if root_file not in expected_root_files and root_file != "se-lint-ignore.xml"] # se-lint-ignore.xml is optional
 	missing_files = [expected_root_file for expected_root_file in expected_root_files if expected_root_file not in root_files and expected_root_file != "LICENSE.md"] # We add more to this later on. LICENSE.md gets checked later on, so we don't want to add it twice
+
+	# If we have illegal files, check if they are tracked in Git.
+	# If they are, then they're still illegal.
+	# If not, ignore them for linting purposes.
+	if illegal_files:
+		try:
+			repo = Repo(self.path)
+			illegal_files = repo.git.ls_files(illegal_files).split("\n")
+			if illegal_files and illegal_files[0] == "":
+				illegal_files = []
+		except:
+			# If we can't initialize Git, then just pass through the list of illegal files
+			pass
 
 	for illegal_file in illegal_files:
 		messages.append(LintMessage("f-001", "Illegal file or directory.", se.MESSAGE_TYPE_ERROR, illegal_file))
@@ -727,14 +741,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 			if filename.endswith(tuple(se.BINARY_EXTENSIONS)) or filename.endswith("core.css"):
 				continue
-
-			if filename == ".gitignore":
-				# .gitignore is optional, because our standard gitignore ignores itself.
-				# So if it's present, it must match our template.
-				with importlib_resources.path("se.data.templates", "gitignore") as gitignore_file_path:
-					if not filecmp.cmp(gitignore_file_path, str(self.path / ".gitignore")):
-						messages.append(LintMessage("f-007", f"File does not match `{gitignore_file_path}`.", se.MESSAGE_TYPE_ERROR, ".gitignore"))
-						continue
 
 			with open(Path(root) / filename, "r", encoding="utf-8") as file:
 				try:

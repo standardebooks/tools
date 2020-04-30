@@ -1,5 +1,4 @@
-.gitignore
-.DS_Store
-._*
-.editor_config
+# Ignore all dotfiles, which are probably config or cache files.
+# This includes .gitignore itself.
+.*
 Thumbs.db
