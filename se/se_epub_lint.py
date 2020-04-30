@@ -17,7 +17,6 @@ from typing import Dict, List, Set, Union
 import importlib_resources
 
 import cssutils
-from git import Repo
 import lxml.cssselect
 import lxml.etree as etree
 from PIL import Image, UnidentifiedImageError
@@ -453,6 +452,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	local_css_has_elision_style = False
 	abbr_styles = regex.findall(r"abbr\.[\p{Lowercase_Letter}]+", self.local_css)
 	missing_styles: List[str] = []
+	directories_not_url_safe = []
+	files_not_url_safe = []
 
 	# Iterate over rules to do some other checks
 	selected_h = []
@@ -518,8 +519,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	# If not, ignore them for linting purposes.
 	if illegal_files:
 		try:
-			repo = Repo(self.path)
-			illegal_files = repo.git.ls_files(illegal_files).split("\n")
+			illegal_files = self.repo.git.ls_files(illegal_files).split("\n")
 			if illegal_files and illegal_files[0] == "":
 				illegal_files = []
 		except:
@@ -708,11 +708,19 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		missing_files.append(str(Path("src/epub/text/uncopyright.xhtml")))
 
 	# Now iterate over individual files for some checks
-	for root, _, filenames in os.walk(self.path):
-		for filename in natsorted(filenames):
-			if ".git" in str(Path(root) / filename):
+	for root, directories, filenames in os.walk(self.path):
+		if ".git" in directories:
+			directories.remove(".git")
+
+		for directory in natsorted(directories):
+			if directory == "META-INF":
 				continue
 
+			url_safe_filename = se.formatting.make_url_safe(directory)
+			if directory != url_safe_filename:
+				directories_not_url_safe.append(Path(root) / directory)
+
+		for filename in natsorted(filenames):
 			if filename.endswith(".jpeg"):
 				messages.append(LintMessage("f-011", "JPEG files must end in `.jpg`.", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -728,7 +736,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			if Path(filename).stem != "LICENSE":
 				url_safe_filename = se.formatting.make_url_safe(Path(filename).stem) + Path(filename).suffix
 				if filename != url_safe_filename and not Path(filename).stem.endswith(".source"):
-					messages.append(LintMessage("f-008", f"Filename is not URL-safe. Expected: `{url_safe_filename}`.", se.MESSAGE_TYPE_ERROR, filename))
+					files_not_url_safe.append(Path(root) / filename)
 
 			if filename == "cover.jpg":
 				try:
@@ -1699,6 +1707,41 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	if single_use_css_classes:
 		messages.append(LintMessage("c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks.", se.MESSAGE_TYPE_WARNING, "local.css", single_use_css_classes))
+
+	if files_not_url_safe:
+		try:
+			files_not_url_safe = self.repo.git.ls_files(files_not_url_safe).split("\n")
+			if files_not_url_safe and files_not_url_safe[0] == "":
+				files_not_url_safe = []
+		except:
+			# If we can't initialize Git, then just pass through the list of illegal files
+			pass
+
+		for filepath in files_not_url_safe:
+			url_safe_filename = se.formatting.make_url_safe(Path(filepath).stem) + Path(filepath).suffix
+			messages.append(LintMessage("f-008", f"Filename is not URL-safe. Expected: `{url_safe_filename}`.", se.MESSAGE_TYPE_ERROR, Path(filepath).name))
+
+	if directories_not_url_safe:
+		try:
+			directories_not_url_safe = self.repo.git.ls_files(directories_not_url_safe).split("\n")
+
+			if directories_not_url_safe and directories_not_url_safe[0] == "":
+				directories_not_url_safe = []
+
+			# Git doesn't story directories, only files. So the above output will be a list of files within a badly-named dir.
+			# To get the dir name, get the parent of the file that Git outputs.
+			for index, filepath in enumerate(directories_not_url_safe):
+				directories_not_url_safe[index] = str(Path(filepath).parent.name)
+
+			# Remove duplicates
+			directories_not_url_safe = list(set(directories_not_url_safe))
+		except:
+			# If we can't initialize Git, then just pass through the list of illegal files
+			pass
+
+		for filepath in directories_not_url_safe:
+			url_safe_filename = se.formatting.make_url_safe(Path(filepath).stem)
+			messages.append(LintMessage("f-008", f"Filename is not URL-safe. Expected: `{url_safe_filename}`.", se.MESSAGE_TYPE_ERROR, Path(filepath).name))
 
 	# Check our headings against the ToC and landmarks
 	headings = list(set(headings))

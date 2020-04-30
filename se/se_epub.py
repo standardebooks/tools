@@ -89,6 +89,7 @@ class SeEpub:
 	_metadata_dom = None
 	_generated_identifier = None
 	_generated_github_repo_url = None
+	_repo = None # git.Repo object
 	_last_commit = None # GitCommit object
 	__endnotes_soup = None # bs4 soup object of the endnotes.xhtml file
 	_endnotes: Optional[List[Endnote]] = None # List of Endnote objects
@@ -111,6 +112,20 @@ class SeEpub:
 				raise se.InvalidSeEbookException
 		except:
 			raise se.InvalidSeEbookException(f"Not a Standard Ebooks source directory: `{self.path}`")
+
+	@property
+	def repo(self) -> git.Repo:
+		"""
+		Accessor
+		"""
+
+		if not self._repo:
+			try:
+				self._repo = git.Repo(self.path)
+			except:
+				raise se.InvalidSeEbookException("Couldn’t access this ebook’s Git repository.")
+
+		return self._repo
 
 	@property
 	def last_commit(self) -> Optional[GitCommit]:
