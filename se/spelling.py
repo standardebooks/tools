@@ -127,7 +127,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Oo])ker\b", r"\1cher", xhtml)				# oker -> ocher
 	xhtml = regex.sub(r"\b([Ww])ellnigh\b", r"\1ell-nigh", xhtml)			# wellnigh -> well-nigh
 	xhtml = regex.sub(r"\b([Tt]he|[Aa]nd|[Oo]r) what not(?! to)\b", r"\1 whatnot", xhtml)	# what not -> whatnot
-	xhtml = regex.sub(r"\b([Gg])ood[\-\s]bye?\b", r"\1oodbye", xhtml)			# good-by -> goodbye
+	xhtml = regex.sub(r"\b([Gg])ood[\-]bye?\b", r"\1oodbye", xhtml)			# good-by -> goodbye
+	xhtml = regex.sub(r"\b([Gg])ood\sbye\b", r"\1oodbye", xhtml)			# good bye -> goodbye (Note that we can't do `good by` -> `goodby` because one might do good by someone.
 	xhtml = regex.sub(r"\b([Hh])ind(u|oo)stanee", r"\1industani", xhtml)		# hindoostanee -> hindustani
 	xhtml = regex.sub(r"\b([Hh])indoo", r"\1indu", xhtml)				# hindoo -> hindu
 	xhtml = regex.sub(r"\b([Ee])xpence", r"\1xpense", xhtml)			# expence -> expense
