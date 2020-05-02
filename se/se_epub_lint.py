@@ -213,6 +213,7 @@ TYPOGRAPHY
 "t-038", "`“` before closing `</p>`."
 "t-039", "Initialism followed by `’s`. Hint: Plurals of initialisms are not followed by `’`."
 "t-040", "Subtitle with illegal ending period."
+"t-041", "Illegal space before punctuation."
 
 XHTML
 "x-001", "String `UTF-8` must always be lowercase."
@@ -1208,7 +1209,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# We can't use this because v. appears as short for "volume", and we may also have sporting events without italics.
 					#nodes = dom.xpath("//abbr[text() = 'v.' or text() = 'versus'][not(parent::i)]")
 					#if nodes:
-					#	messages.append(LintMessage("t-123", "Legal case without parent `<i>`.", se.MESSAGE_TYPE_WARNING, filename, {f"{node.tostring()}." for node in nodes}))
+					#	messages.append(LintMessage("t-xxx", "Legal case without parent `<i>`.", se.MESSAGE_TYPE_WARNING, filename, {f"{node.tostring()}." for node in nodes}))
 
 					unexpected_titles = []
 					# Only do this check if there's one <h#> tag. If there's more than one, then the xhtml file probably requires an overarching title
@@ -1531,6 +1532,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					nodes = dom.xpath("//*[self::p or self::div][re:test(., '^\\s*[\\*\\.•\\-⁠—]\\s*([\\*\\.•\\-⁠—]\\s*)+$')]")
 					if nodes:
 						messages.append(LintMessage("s-038", "Illegal asterism. Section/scene breaks must be defined by an `<hr/>` element.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+
+					matches = regex.findall(r"[^…]\s[!?;:,].{0,10}", file_contents) # If we don't include preceding chars, the regex is 6x faster
+					if matches:
+						messages.append(LintMessage("t-041", "Illegal space before punctuation.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 					# Check for missing punctuation before closing quotes
 					nodes = dom.xpath("//p[not(parent::header and position() = last())][re:test(., '[a-z]+[”’]$')]")
