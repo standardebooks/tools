@@ -758,6 +758,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("f-010", "Problem decoding file as utf-8.", se.MESSAGE_TYPE_ERROR, filename))
 					continue
 
+				# Remove comments before we do any further processing
+				file_contents = regex.sub(r"<!--.+?-->", "", file_contents, flags=regex.DOTALL)
+
 				matches = regex.findall(r"http://standardebooks\.org[^\"<\s]*", file_contents)
 				if matches:
 					messages.append(LintMessage("m-003", "Non-HTTPS URL.", se.MESSAGE_TYPE_ERROR, filename, matches))
