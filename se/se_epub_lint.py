@@ -1317,6 +1317,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# We create a filter to try to exclude nested quotations
 				# Remove tags in case they're enclosing punctuation we want to match against at the end of a sentence.
 				matches = [match for match in matches if not regex.search(r"([\.!\?;…—]|”\s)’\s", se.formatting.remove_tags(match))]
+
+				# Try some additional matches before adding the lint message
+				# Search for <p> tags that have an ending closing quote but no opening quote; but exclude <p>s that are preceded by a <blockquote>
+				# or that have a <blockquote> ancestor, because that may indicate that the opening quote is elsewhere in the quotation.
+				nodes = dom.xpath("//p[not(preceding-sibling::*[1][name() = 'blockquote']) and not(ancestor::blockquote) and re:test(., '^[^“]+?”$')]")
+				for node in nodes:
+					matches.append(node.tostring()[-20:])
+
 				if matches:
 					messages.append(LintMessage("t-036", "`”` missing matching `“`.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
