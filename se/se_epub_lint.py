@@ -215,6 +215,7 @@ TYPOGRAPHY
 "t-039", "Initialism followed by `’s`. Hint: Plurals of initialisms are not followed by `’`."
 "t-040", "Subtitle with illegal ending period."
 "t-041", "Illegal space before punctuation."
+"t-042", "Possible typo."
 
 XHTML
 "x-001", "String `UTF-8` must always be lowercase."
@@ -683,6 +684,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	if missing_metadata_elements:
 		messages.append(LintMessage("m-051", "Missing expected element in metadata.", se.MESSAGE_TYPE_ERROR, "content.opf", missing_metadata_elements))
+
+	# Check for common typos
+	matches = [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", self.metadata_xml, flags=regex.IGNORECASE)]
+	if matches:
+		messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_ERROR, "content.opf", matches))
 
 	# Make sure some static files are unchanged
 	try:
@@ -1195,6 +1201,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
 				if nodes:
 					messages.append(LintMessage("x-015", "Illegal element in `<head>`. Only `<title>` and `<link rel=\"stylesheet\">` are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.lxml_element.tag}>" for node in nodes]))
+
+				# Check for common typos
+				matches = [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", file_contents, flags=regex.IGNORECASE)]
+				if matches:
+					messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 				# Check for nbsp within <abbr class="name">, which is redundant
 				nodes = dom.xpath(f"//abbr[contains(@class, 'name')][contains(text(), '{se.NO_BREAK_SPACE}')]")
