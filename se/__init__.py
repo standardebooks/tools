@@ -167,7 +167,9 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 
 	label = "Error" if not is_warning else "Warning"
 	bg_color = 'red_3a' if not is_warning else 'yellow'
-	output_file = sys.stderr if not is_warning else sys.stdout
+
+	# We have to print to stdout in case we're called from GNU Parallel, otherwise weird newline issues occur
+	output_file = sys.stderr if not is_warning and not is_called_from_parallel() else sys.stdout
 
 	# By convention, any text within the message text that is surrounded in backticks
 	# is rendered in blue
