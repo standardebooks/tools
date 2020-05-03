@@ -115,6 +115,7 @@ METADATA
 "m-050", "Non-typogrified character in `<meta property=\"file-as\" refines=\"#title\">` element."
 "m-051", "Missing expected element in metadata."
 "m-052", "`<dc:title>` element contains numbers, but no `<meta property=\"se:alternate-title\"> element in metadata."
+"m-053", "`<meta property=\"se:subject\">` elements not in alphabetical order."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like `&#913;`)."
@@ -617,14 +618,18 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	# Check for illegal se:subject tags
 	illegal_subjects = []
-	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']")
+	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']/text()")
 	if nodes:
 		for node in nodes:
-			if node.text not in se.SE_GENRES:
-				illegal_subjects.append(node.text)
+			if node not in se.SE_GENRES:
+				illegal_subjects.append(node)
 
 		if illegal_subjects:
 			messages.append(LintMessage("m-020", "Illegal value for `<meta property=\"se:subject\">` element.", se.MESSAGE_TYPE_ERROR, "content.opf", illegal_subjects))
+
+		if sorted(nodes) != nodes:
+			messages.append(LintMessage("m-053", "`<meta property=\"se:subject\">` elements not in alphabetical order.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+
 	else:
 		messages.append(LintMessage("m-021", "No `<meta property=\"se:subject\">` element found.", se.MESSAGE_TYPE_ERROR, "content.opf"))
 
