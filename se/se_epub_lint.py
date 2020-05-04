@@ -1318,15 +1318,15 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if matches:
 					messages.append(LintMessage("t-004", "`‘` missing matching `’`.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-				# Check for rdquo preceded by space (but not a rsquo, which might indicate a nested quotation)
-				matches = regex.findall(r".{0,10}“</p>", file_contents)
+				# Check obviously miscurled quotation marks
+				matches = regex.findall(r".*“</p>", file_contents)
 				if matches:
-					messages.append(LintMessage("t-038", "`“` before closing `</p>`.", se.MESSAGE_TYPE_WARNING, filename, matches))
+					messages.append(LintMessage("t-038", "`“` before closing `</p>`.", se.MESSAGE_TYPE_WARNING, filename, [match[-20:] for match in matches]))
 
 				# Check for rdquo preceded by space (but not a rsquo, which might indicate a nested quotation)
-				matches = regex.findall(r".{0,10}[^’]\s”", regex.sub(r"<td>.*?</td>", "", file_contents, regex.DOTALL))
+				matches = regex.findall(r".*[^’]\s”", regex.sub(r"<td>.*?</td>", "", file_contents, regex.DOTALL))
 				if matches:
-					messages.append(LintMessage("t-037", "`”` preceded by space.", se.MESSAGE_TYPE_WARNING, filename, matches))
+					messages.append(LintMessage("t-037", "`”` preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [match[-20:] for match in matches]))
 
 				# Remove tds in case ldquo means "ditto mark"
 				matches = regex.findall(r"”[^“‘]+?”", regex.sub(r"<td>[”\s]+?</td>", "", file_contents), flags=regex.DOTALL)
