@@ -10,7 +10,8 @@ import sys
 from pathlib import Path
 from typing import Set, Union
 
-from colored import stylize, fg, bg, attr
+from rich.console import Console
+from rich.text import Text
 from natsort import natsorted
 import regex
 
@@ -166,19 +167,22 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 	"""
 
 	label = "Error" if not is_warning else "Warning"
-	bg_color = 'red_3a' if not is_warning else 'yellow'
+	bg_color = 'red' if not is_warning else 'yellow'
 
 	# We have to print to stdout in case we're called from GNU Parallel, otherwise weird newline issues occur
+	# This no longer works with rich because it can't (yet) output to stderr
 	output_file = sys.stderr if not is_warning and not is_called_from_parallel() else sys.stdout
 
 	# By convention, any text within the message text that is surrounded in backticks
 	# is rendered in blue
-	message = regex.sub(r"`(.+?)`", stylize(r"\1", fg("light_blue")), str(message))
+	message = regex.sub(r"`(.+?)`", r"[bright_blue]\1[/bright_blue]", str(message))
 
 	if verbose:
 		message = str(message).replace("\n", f"\n{MESSAGE_INDENT}")
 
-	print(f"{MESSAGE_INDENT if verbose else ''}{stylize(f' {label} ', bg(bg_color) + fg('white') + attr('bold'))} {message}", file=output_file)
+	# Syntax highlighting will do weird things when printing paths
+	console = Console(file=output_file, highlight=False)
+	console.print(f"{MESSAGE_INDENT if verbose else ''}[white on {bg_color} bold] {label} [/] {message}")
 
 def is_positive_integer(value: str) -> int:
 	"""

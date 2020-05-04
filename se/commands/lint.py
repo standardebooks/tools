@@ -3,40 +3,15 @@ This module implements the `se lint` command.
 """
 
 import argparse
-from textwrap import wrap
+from pathlib import Path
 
-from colored import stylize, fg, bg, attr
 import regex
-import terminaltables
+from rich import box
+from rich.console import Console
+from rich.table import Table
 
 import se
 from se.se_epub import SeEpub
-
-def _print_table(table_data: list, wrap_column: int = None, max_width: int = None) -> None:
-	"""
-	Helper function to print a table to the console.
-
-	INPUTS
-	table_data: A list where each entry is a list representing the columns in a table
-	wrap_column: The 0-indexed column to wrap
-
-	OUTPUTS
-	None
-	"""
-
-	table = terminaltables.SingleTable(table_data)
-	table.inner_heading_row_border = False
-	table.inner_row_border = True
-	table.justify_columns[0] = "center"
-
-	# Calculate newlines
-	if wrap_column is not None:
-		if max_width is None:
-			max_width = table.column_max_width(wrap_column)
-		for row in table_data:
-			row[wrap_column] = "\n".join(wrap(row[wrap_column], max_width))
-
-	print(table.table)
 
 def lint() -> int:
 	"""
@@ -55,8 +30,10 @@ def lint() -> int:
 	called_from_parallel = se.is_called_from_parallel()
 	first_output = True
 	return_code = 0
+	console = Console(highlight=False) # Syntax highlighting will do weird things when printing paths
 
 	for directory in args.directories:
+		directory = Path(directory).resolve()
 		messages = []
 		exception = None
 		table_data = []
@@ -84,7 +61,7 @@ def lint() -> int:
 			if args.plain:
 				print(directory)
 			else:
-				print(stylize(directory, attr("reverse")))
+				console.print(f"[reverse]{directory}[/reverse]")
 
 		if exception:
 			has_output = True
@@ -108,8 +85,6 @@ def lint() -> int:
 						for submessage in message.submessages:
 							print(f"\t{submessage}")
 			else:
-				table_data.append([stylize("Code", attr("bold")), stylize("Severity", attr("bold")), stylize("File", attr("bold")), stylize("Message", attr("bold"))])
-
 				for message in messages:
 					alert = "Manual Review"
 
@@ -120,13 +95,13 @@ def lint() -> int:
 
 					if args.colors:
 						if message.message_type == se.MESSAGE_TYPE_ERROR:
-							alert = stylize(alert, fg("red"))
+							alert = f"[bright_red]{alert}[/bright_red]"
 						else:
-							alert = stylize(alert, fg("yellow"))
+							alert = f"[bright_yellow]{alert}[/bright_yellow]"
 
 						# By convention, any text within the message text that is surrounded in backticks
 						# is rendered in blue
-						message_text = regex.sub(r"`(.+?)`", stylize(r"\1", fg("light_blue")), message_text)
+						message_text = regex.sub(r"`(.+?)`", r"[bright_blue]\1[/bright_blue]", message_text)
 
 					table_data.append([message.code, alert, message.filename, message_text])
 
@@ -134,15 +109,25 @@ def lint() -> int:
 						for submessage in message.submessages:
 							table_data.append([" ", " ", "→", f"{submessage}"])
 
-				_print_table(table_data, 3, args.wrap)
+				table = Table(show_header=True, header_style="bold", show_lines=True, width=args.wrap)
+				table.add_column("Code", style="dim" if args.colors else None, width=5, no_wrap=True)
+				table.add_column("Severity", no_wrap=True)
+				table.add_column("File", no_wrap=True)
+				table.add_column("Message")
+
+				for row in table_data:
+					table.add_row(row[0], row[1], row[2], row[3])
+
+				console.print(table)
 
 		if args.verbose and not messages and not exception:
 			if args.plain:
 				print("OK")
 			else:
-				table_data.append([stylize(" OK ", bg("green") + fg("white") + attr("bold"))])
-
-				_print_table(table_data, None, args.wrap)
+				table = Table(show_header=False, box=box.SQUARE)
+				table.add_column("", style="white on green4 bold" if args.colors else None)
+				table.add_row("OK")
+				console.print(table)
 
 		# Print a newline if we're called from parallel and we just printed something, to
 		# better visually separate output blocks

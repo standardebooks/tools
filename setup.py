@@ -61,7 +61,6 @@ setup(
     install_requires=[
         "beautifulsoup4==4.9.0",
         "cairosvg==2.4.2",
-        "colored==1.4.2",
         "cssselect==1.1.0",
         "cssutils==1.0.2",
         "ftfy==5.7",
@@ -75,10 +74,10 @@ setup(
         "pyopenssl==19.1.0",  # Required to allow the `requests` package to use https on Mac OSX
         "regex==2020.4.4",
         "requests==2.23.0",
+        "rich==1.0.0",
         "roman==3.2.0",
         "selenium==3.141.0",
         "smartypants==2.0.1",
-        "terminaltables==3.1.0",
         "tinycss2==1.0.2",
         "titlecase==0.12.0" # Let's keep this for now, we'll revert to the pip library once the next release rolls around
     ],
