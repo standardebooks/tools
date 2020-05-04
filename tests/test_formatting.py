@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from se.formatting import pretty_print_xml
+from se.formatting import format_xml
 
 
 TESTS = [
@@ -36,7 +36,7 @@ def assert_match(data_dir: Path, test_name: str):
 	with open(infile, "r") as file:
 		xml = file.read()
 
-	result = pretty_print_xml(xml)
+	result = format_xml(xml)
 	print(result)
 
 	with open(outfile, "r") as file:

@@ -9,6 +9,7 @@ import math
 import string
 import unicodedata
 from pathlib import Path
+from typing import Union
 
 import regex
 import roman
@@ -471,26 +472,167 @@ def _unwrap_tail(elem: etree.Element, remove_trailing_space: bool):
 		elem.tail = regex.sub(r"\n\s*$", "", elem.tail)
 	elem.tail = regex.sub(r" *\n\s*", " ", elem.tail)
 
-def pretty_print_xml(xml: str) -> str:
+def format_xml_file(filename: Path) -> None:
 	"""
-	Canonicalize and format XML text.
+	Pretty-print well-formed XML and save to file.
+	Detects if the filename is XHTML, SVG, OPF, or plain XML and adjusts formatting accordingly.
+
+	INPUTS
+	filename: A file containing well-formed XML
+
+	OUTPUTS
+	None.
 	"""
 
-	tree = etree.fromstring(str.encode(xml))
+	with open(filename, "r+", encoding="utf-8") as file:
+		xml = file.read()
 
-	# Make sure attribute names and tag names are lowercased, but only in XHTML files
-	if tree.xpath("/html", namespaces=se.XHTML_NAMESPACES):
-		# Lowercase attribute names
-		for node in tree.xpath("//*[attribute::*[re:test(local-name(), '[A-Z]')]]", namespaces=se.XHTML_NAMESPACES):
-			for key, value in node.items(): # Iterate over attributes
-				node.attrib.pop(key) # Remove the attribute
-				node.attrib[key.lower()] = value # Re-add the attribute, lowercased
+		if filename.suffix == ".xhtml":
+			processed_xml = se.formatting.format_xhtml(xml)
+		elif filename.suffix == ".svg":
+			processed_xml = se.formatting.format_svg(xml)
+		elif filename.suffix == ".opf":
+			processed_xml = se.formatting.format_opf(xml)
+		else:
+			processed_xml = se.formatting.format_xml(xml)
+		if processed_xml != xml:
+			file.seek(0)
+			file.write(processed_xml)
+			file.truncate()
 
-		# Lowercase tag names
-		for node in tree.xpath("//*[re:test(local-name(), '[A-Z]')]", namespaces=se.XHTML_NAMESPACES):
-			node.tag = node.tag.lower()
+def format_xml(xml: Union[str, etree.ElementTree]) -> str:
+	"""
+	Pretty-print well-formed XML.
 
-	# Make sure viewBox is correctly-cased in SVGs
+	INPUTS
+	xml: A string of well-formed XML; or an etree of an XML document.
+
+	OUTPUTS
+	A string of pretty-printed XML.
+	"""
+
+	# Canonicalize and format XML
+	try:
+		if isinstance(xml, str):
+			tree = etree.fromstring(str.encode(xml))
+		else:
+			tree = xml
+
+		canonical_bytes = etree.tostring(tree, method="c14n")
+		tree = etree.fromstring(canonical_bytes)
+		_indent(tree, space="\t")
+		xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + etree.tostring(tree, encoding="unicode") + "\n"
+
+	except Exception as ex:
+		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
+
+	# Normalize unicode characters
+	xml = unicodedata.normalize("NFC", xml)
+
+	# Almost done. Let's clean CSS in <style> elements, like we find in SVG files.
+	matches = regex.findall(r"^(\s*)(<style[^>]*?>)(.+?)(</style>)", xml, flags=regex.DOTALL | regex.MULTILINE)
+	for match in matches:
+		css = format_css(match[2])
+		# Indent the CSS one level deeper than the <style> element
+		css = ''.join(match[0] + "\t" + line + "\n" for line in css.splitlines())
+		css = css.strip("\n")
+		css = regex.sub(r"^\s+$", "", css, flags=regex.MULTILINE) # Remove indents from lines that are just white space
+		xml = xml.replace(f"{match[0]}{match[1]}{match[2]}{match[3]}", f"{match[0]}{match[1]}\n{css}\n{match[0]}{match[3]}")
+
+	return xml
+
+def format_xhtml(xhtml: str) -> str:
+	"""
+	Pretty-print well-formed XHTML.
+
+	INPUTS
+	xhtml: A string of well-formed XHTML
+
+	OUTPUTS
+	A string of pretty-printed XHTML.
+	"""
+
+	# Epub3 doesn't allow named entities, so convert them to their unicode equivalents
+	# But, don't unescape the content.opf long-description accidentally
+	xhtml = regex.sub(r"&#?\w+;", _replace_character_references, xhtml)
+
+	# Remove unnecessary doctypes which can cause xmllint to hang
+	xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", xhtml, flags=regex.DOTALL)
+
+	# Remove white space between opening/closing tag and text nodes
+	# We do this first so that we can still format line breaks after <br/>
+	# Exclude comments
+	xhtml = regex.sub(r"(<(?:[^!/][^>]*?[^/]|[a-z])>)\s+([^\s<])", r"\1\2", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"([^\s>])\s+(</[^>]+?>)", r"\1\2", xhtml, flags=regex.IGNORECASE)
+
+	tree = etree.fromstring(str.encode(xhtml))
+
+	# Lowercase attribute names
+	for node in tree.xpath("//*[attribute::*[re:test(local-name(), '[A-Z]')]]", namespaces=se.XHTML_NAMESPACES):
+		for key, value in node.items(): # Iterate over attributes
+			node.attrib.pop(key) # Remove the attribute
+			node.attrib[key.lower()] = value # Re-add the attribute, lowercased
+
+	# Lowercase tag names
+	for node in tree.xpath("//*[re:test(local-name(), '[A-Z]')]", namespaces=se.XHTML_NAMESPACES):
+		node.tag = node.tag.lower()
+
+	# Canonicalize and format XHTML
+	try:
+		xhtml = format_xml(tree)
+	except Exception as ex:
+		raise se.InvalidXhtmlException(f"Couldn’t parse file. Files must be in XHTML format, which is not the same as HTML. Exception: {ex}")
+
+	return xhtml
+
+def format_opf(xml: str) -> str:
+	"""
+	Pretty-print well-formed OPF XML.
+
+	INPUTS
+	xml: A string of well-formed OPF XML
+
+	OUTPUTS
+	A string of pretty-printed XML.
+	"""
+
+	# Replace html entities in the long description so we can clean it too.
+	# We re-establish them later.
+	xml = xml.replace("&lt;", "<")
+	xml = xml.replace("&gt;", ">")
+
+	# Canonicalize and format XML
+	try:
+		xml = format_xml(xml)
+	except Exception as ex:
+		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
+
+	# Clean the long description, if we can find it
+	xml = xml.replace(" &lt;p&gt;", "\n\t\t\t&lt;p&gt;")
+	xml = xml.replace("&lt;/p&gt; </meta>", "&lt;/p&gt;\n\t\t</meta>")
+
+	long_description = regex.findall(r"<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">(.+?)</meta>", xml, flags=regex.DOTALL)
+	if long_description:
+		escaped_long_description = long_description[0].replace("<", "&lt;")
+		escaped_long_description = escaped_long_description.replace(">", "&gt;")
+		xml = xml.replace(long_description[0], escaped_long_description)
+
+	return xml
+
+def format_svg(svg: str) -> str:
+	"""
+	Pretty-print well-formed SVG XML.
+
+	INPUTS
+	svg: A string of well-formed SVG XML.
+
+	OUTPUTS
+	A string of pretty-printed SVG XML.
+	"""
+
+	tree = etree.fromstring(str.encode(svg))
+
+	# Make sure viewBox is correctly-cased
 	for node in tree.xpath("/svg:svg", namespaces={"svg": "http://www.w3.org/2000/svg"}):
 		for key, value in node.items(): # Iterate over attributes
 			if key.lower() == "viewbox":
@@ -498,97 +640,13 @@ def pretty_print_xml(xml: str) -> str:
 				node.attrib["viewBox"] = value # Re-add the attribute, correctly-cased
 				break
 
-	canonical_bytes = etree.tostring(tree, method="c14n")
-	tree = etree.fromstring(canonical_bytes)
-	_indent(tree, space="\t")
-	xml = etree.tostring(tree, encoding="unicode")
-	return """<?xml version="1.0" encoding="utf-8"?>\n""" + xml + "\n"
-
-def format_xhtml_file(filename: Path, is_metadata_file: bool = False) -> None:
-	"""
-	Pretty-print well-formed XHTML and save to file.
-
-	INPUTS
-	filename: A file containing well-formed XHTML
-	is_metadata_file: True if the passed XHTML is an SE content.opf metadata file
-
-	OUTPUTS
-	None.
-	"""
-
-	with open(filename, "r+", encoding="utf-8") as file:
-		xhtml = file.read()
-
-		processed_xhtml = se.formatting.format_xhtml(xhtml, is_metadata_file)
-		if processed_xhtml != xhtml:
-			file.seek(0)
-			file.write(processed_xhtml)
-			file.truncate()
-
-def format_xhtml(xhtml: str, is_metadata_file: bool = False) -> str:
-	"""
-	Pretty-print well-formed XHTML.
-
-	INPUTS
-	xhtml: A string of well-formed XHTML
-	is_metadata_file: True if the passed XHTML is an SE content.opf metadata file
-
-	OUTPUTS
-	A string of pretty-printed XHTML.
-	"""
-
-	if is_metadata_file:
-		# Replace html entities in the long description so we can clean it too.
-		# We re-establish them later.
-		xhtml = xhtml.replace("&lt;", "<")
-		xhtml = xhtml.replace("&gt;", ">")
-	else:
-		# Epub3 doesn't allow named entities, so convert them to their unicode equivalents
-		# But, don't unescape the content.opf long-description accidentally
-		xhtml = regex.sub(r"&#?\w+;", _replace_character_references, xhtml)
-
-	# Remove unnecessary doctypes which can cause xmllint to hang
-	xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", xhtml, flags=regex.DOTALL)
-
-	# Remove white space between opening.closing tag and text node
-	# We do this first so that we can still format line breaks after <br/>
-	# Exclude comments
-	xhtml = regex.sub(r"(<[^!/][^>]*?[^/]>)\s+([^\s<])", r"\1\2", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"([^\s>])\s+(</[^>]*?>)", r"\1\2", xhtml, flags=regex.IGNORECASE)
-
 	# Canonicalize and format XHTML
 	try:
-		xhtml = pretty_print_xml(xhtml)
+		svg = format_xml(tree)
 	except Exception as ex:
-		raise se.InvalidXhtmlException(f"Couldn’t parse file. Files must be in XHTML format, which is not the same as HTML. Exception: {ex}")
+		raise se.InvalidXhtmlException(f"Couldn’t parse file. Exception: {ex}")
 
-	# Normalize unicode characters
-	xhtml = unicodedata.normalize("NFC", xhtml)
-
-	# Attempt to pretty-print the long description, which has special formatting
-	if "&lt;p&gt;" in xhtml:
-		xhtml = xhtml.replace(" &lt;p&gt;", "\n\t\t\t&lt;p&gt;")
-		xhtml = xhtml.replace("&lt;/p&gt; </meta>", "&lt;/p&gt;\n\t\t</meta>")
-
-	# Clean the long description, if we can find it
-	if is_metadata_file:
-		long_description = regex.findall(r"<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">(.+?)</meta>", xhtml, flags=regex.DOTALL)
-		if long_description:
-			escaped_long_description = long_description[0].replace("<", "&lt;")
-			escaped_long_description = escaped_long_description.replace(">", "&gt;")
-			xhtml = xhtml.replace(long_description[0], escaped_long_description)
-
-	# Almost done. Let's clean CSS in <style> elements, like we find in SVG files.
-	matches = regex.findall(r"^(\s*)(<style[^>]*?>)(.+?)(</style>)", xhtml, flags=regex.DOTALL | regex.MULTILINE)
-	for match in matches:
-		css = format_css(match[2])
-		# Indent the CSS one level deeper than the <style> element
-		css = ''.join(match[0] + "\t" + line + "\n" for line in css.splitlines())
-		css = css.strip("\n")
-		css = regex.sub(r"^\s+$", "", css, flags=regex.MULTILINE) # Remove indents from lines that are just white space
-		xhtml = xhtml.replace(f"{match[0]}{match[1]}{match[2]}{match[3]}", f"{match[0]}{match[1]}\n{css}\n{match[0]}{match[3]}")
-
-	return xhtml
+	return svg
 
 def _format_css_component_list(content: list, in_selector=False, in_paren_block=False) -> str:
 	"""

@@ -18,31 +18,31 @@ def clean() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML, SVG, or CSS file, or a directory containing XHTML, SVG, or CSS files")
 	args = parser.parse_args()
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx", ".xml"), []):
+	for filepath in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx", ".xml"), []):
 		if args.verbose:
-			print(f"Processing {filename} ...", end="", flush=True)
+			print(f"Processing {filepath} ...", end="", flush=True)
 
 		try:
-			se.formatting.format_xhtml_file(filename, filename.name == "content.opf")
+			se.formatting.format_xml_file(filepath)
 		except se.MissingDependencyException as ex:
 			se.print_error(ex)
 			return ex.code
 		except se.SeException as ex:
-			se.print_error(f"File: `{filename}`\n{str(ex)}", args.verbose)
+			se.print_error(f"File: `{filepath}`\n{str(ex)}", args.verbose)
 			return ex.code
 
 		if args.verbose:
 			print(" OK")
 
-	for filename in se.get_target_filenames(args.targets, (".css",), []):
+	for filepath in se.get_target_filenames(args.targets, (".css",), []):
 		# Skip core.css as this must be copied in from the template
-		if filename.name == "core.css":
+		if filepath.name == "core.css":
 			continue
 
 		if args.verbose:
-			print(f"Processing {filename} ...", end="", flush=True)
+			print(f"Processing {filepath} ...", end="", flush=True)
 
-		with open(filename, "r+", encoding="utf-8") as file:
+		with open(filepath, "r+", encoding="utf-8") as file:
 			css = file.read()
 
 			try:
@@ -53,7 +53,7 @@ def clean() -> int:
 					file.write(processed_css)
 					file.truncate()
 			except se.SeException as ex:
-				se.print_error(f"File: `{filename}`\n{str(ex)}", args.verbose)
+				se.print_error(f"File: `{filepath}`\n{str(ex)}", args.verbose)
 				return ex.code
 
 		if args.verbose:

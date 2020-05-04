@@ -445,18 +445,8 @@ class SeEpub:
 
 				output_xhtml = regex.sub(fr"<img.+?src=\"\.\./images/{match}\.svg\".*?/>", svg, output_xhtml)
 
-		#with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_file:
-		#	temp_file.write(output_xhtml)
-		#	file_name = Path(temp_file.name)
-		#	file_name_xhtml = Path(str(file_name) + ".xhtml")
-
-		#file_name.rename(file_name_xhtml)
-
 		# All done, clean the output
 		output_xhtml = se.formatting.format_xhtml(output_xhtml)
-
-		#with open(file_name_xhtml, "r", encoding="utf-8") as file:
-		#output_xhtml = file.read()
 
 		# Insert our CSS. We do this after `clean` because `clean` will escape > in the CSS
 		output_xhtml = regex.sub(r"<style/>", "<style>\n\t\t\t" + css + "\t\t</style>", output_xhtml)
@@ -475,8 +465,6 @@ class SeEpub:
 			output_xhtml = output_xhtml.replace("xml:lang", "lang")
 			output_xhtml = output_xhtml.replace("<html", f"<html lang=\"{metadata_soup.find('dc:language').string}\"")
 			output_xhtml = regex.sub(" xmlns.+?=\".+?\"", "", output_xhtml)
-
-	#file_name_xhtml.unlink()
 
 		return output_xhtml
 

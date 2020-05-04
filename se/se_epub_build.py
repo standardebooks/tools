@@ -732,7 +732,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 		# All done, clean the output
 		for filepath in se.get_target_filenames([work_epub_root_directory], (".xhtml", ".svg", ".opf", ".ncx")):
-			se.formatting.format_xhtml_file(filepath, filepath.name == "content.opf")
+			se.formatting.format_xml_file(filepath)
 
 		# Write the compatible epub
 		se.epub.write_epub(work_epub_root_directory, output_directory / epub_output_filename)
@@ -796,7 +796,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 			# Clean just the ToC and NCX
 			for filepath in [work_epub_root_directory / "epub" / "toc.ncx", work_epub_root_directory / "epub" / toc_filename]:
-				se.formatting.format_xhtml_file(filepath, False)
+				se.formatting.format_xml_file(filepath)
 
 			# Convert endnotes to Kindle popup compatible notes
 			if (work_epub_root_directory / "epub" / "text" / "endnotes.xhtml").is_file():

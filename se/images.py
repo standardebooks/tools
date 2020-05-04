@@ -292,7 +292,7 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 
 	xmlstr = etree.tostring(xml, pretty_print=True).decode("UTF-8")
 	result_all_text = xmlstr.replace("ns0:", "").replace(":ns0", "")
-	result_all_text = se.formatting.format_xhtml(result_all_text)
+	result_all_text = se.formatting.format_xml(result_all_text)
 	open(out_svg, "wt").write(result_all_text)
 
 def _apply_css(elem: etree.Element, css_text: str) -> dict:
