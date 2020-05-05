@@ -1203,9 +1203,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("x-015", "Illegal element in `<head>`. Only `<title>` and `<link rel=\"stylesheet\">` are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.lxml_element.tag}>" for node in nodes]))
 
 				# Check for common typos
-				matches = [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", file_contents, flags=regex.IGNORECASE)]
-				if matches:
-					messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_ERROR, filename, matches))
+				# Don't check the titlepage because it has a standard format and may raise false positives
+				if filename != "titlepage.xhtml":
+					matches = [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", file_contents, flags=regex.IGNORECASE)]
+					if matches:
+						messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 				# Check for nbsp within <abbr class="name">, which is redundant
 				nodes = dom.xpath(f"//abbr[contains(@class, 'name')][contains(text(), '{se.NO_BREAK_SPACE}')]")
