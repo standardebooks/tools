@@ -583,6 +583,9 @@ def format_xhtml(xhtml: str) -> str:
 	except Exception as ex:
 		raise se.InvalidXhtmlException(f"Couldn’t parse file. Files must be in XHTML format, which is not the same as HTML. Exception: {ex}")
 
+	# Remove white space between non-tags and <br/>
+	xhtml = regex.sub(r"([^>\s])\s+<br/>", r"\1<br/>", xhtml)
+
 	return xhtml
 
 def format_opf(xml: str) -> str:
