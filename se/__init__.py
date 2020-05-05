@@ -180,8 +180,7 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 	if verbose:
 		message = str(message).replace("\n", f"\n{MESSAGE_INDENT}")
 
-	# Syntax highlighting will do weird things when printing paths
-	console = Console(file=output_file, highlight=False)
+	console = Console(file=output_file, highlight=False, force_terminal=is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 	console.print(f"{MESSAGE_INDENT if verbose else ''}[white on {bg_color} bold] {label} [/] {message}")
 
 def is_positive_integer(value: str) -> int:

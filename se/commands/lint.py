@@ -23,14 +23,13 @@ def lint() -> int:
 	parser.add_argument("-p", "--plain", action="store_true", help="print plain text output, without tables or colors")
 	parser.add_argument("-s", "--skip-lint-ignore", action="store_true", help="ignore rules in se-lint-ignore.xml file")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("-w", "--wrap", metavar="INTEGER", type=se.is_positive_integer, default=None, help="force lines to wrap at this number of columns instead of auto-wrapping")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
 	called_from_parallel = se.is_called_from_parallel()
 	first_output = True
 	return_code = 0
-	console = Console(highlight=False) # Syntax highlighting will do weird things when printing paths
+	console = Console(highlight=False, force_terminal=called_from_parallel) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
 	for directory in args.directories:
 		directory = Path(directory).resolve()
@@ -109,7 +108,7 @@ def lint() -> int:
 						for submessage in message.submessages:
 							table_data.append([" ", " ", "→", f"{submessage}"])
 
-				table = Table(show_header=True, header_style="bold", show_lines=True, width=args.wrap)
+				table = Table(show_header=True, header_style="bold", show_lines=True)
 				table.add_column("Code", style="dim" if args.colors else None, width=5, no_wrap=True)
 				table.add_column("Severity", no_wrap=True)
 				table.add_column("File", no_wrap=True)
