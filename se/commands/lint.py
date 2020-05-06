@@ -98,6 +98,9 @@ def lint() -> int:
 						else:
 							alert = f"[bright_yellow]{alert}[/bright_yellow]"
 
+						# Escape brackets in the message, for example in CSS selectors, so that Rich doesn't interpret them as BBcode
+						message_text = regex.sub(r"([\[\]])", r"\1\1", message_text)
+
 						# By convention, any text within the message text that is surrounded in backticks
 						# is rendered in blue
 						message_text = regex.sub(r"`(.+?)`", r"[bright_blue]\1[/bright_blue]", message_text)
@@ -106,7 +109,11 @@ def lint() -> int:
 
 					if message.submessages:
 						for submessage in message.submessages:
-							table_data.append([" ", " ", "→", f"{submessage}"])
+							# Escape brackets in the message, for example in CSS selectors, so that Rich doesn't interpret them as BBcode
+							if args.colors:
+								submessage = regex.sub(r"([\[\]])", r"\1\1", submessage)
+
+							table_data.append([" ", " ", "→", submessage])
 
 				table = Table(show_header=True, header_style="bold", show_lines=True)
 				table.add_column("Code", style="dim" if args.colors else None, width=5, no_wrap=True)
