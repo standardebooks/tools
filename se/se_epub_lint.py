@@ -183,7 +183,7 @@ TYPOGRAPHY
 "t-007", "Required no-break space not found before `&amp;`."
 "t-008", "Required no-break space not found after `&amp;`."
 "t-009", "Required no-break space not found before `<abbr class=\"time\">`."
-"t-010", "Times must be separated by colons (`:`) not periods (`.`)."
+"t-010", "Time set with `.` instead of `:`."
 "t-011", "Missing punctuation before closing quotes."
 "t-012", "Illegal white space before noteref."
 "t-013", "Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period."
@@ -1063,10 +1063,24 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if matches:
 					messages.append(LintMessage("t-028", "Possible mis-curled quotation mark.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-				# Check that times have colons and not periods
-				nodes = dom.xpath("//text()[ (re:test(., '[0-9]\\.[0-9]+\\s$') and (following-sibling::abbr[1])[contains(@class, 'time')]) or re:test(., '(at|the) [0-9]\\.[0-9]+$')]")
-				if nodes:
-					messages.append(LintMessage("t-010", "Times must be separated by colons (`:`) not periods (`.`).", se.MESSAGE_TYPE_ERROR, filename, [node[-10:] + "<abbr" for node in nodes]))
+				# Check for times with periods instead of colons.
+				# Only check p, because things like tables/td are more likely to contain non-time numbers
+				# Exclude numbers preceded by equals, or succeeded by some measurements
+				# Also remove <a> first because they are likely to contain numbered section references
+				dom_copy = deepcopy(dom)
+				for node in dom_copy.xpath("//p/a"):
+					node.remove()
+
+				nodes = dom_copy.xpath("//p[re:test(., '[^=]\\s[0-9]{1,2}\\.[0-9]{2}(?![0-9′″°%]|\\.[0-9]|\\scubic|\\smetric|\\smeters|\\smiles|\\sfeet|\\sinches)')]")
+				matches = []
+				for node in nodes:
+					for time_match in regex.findall(r"(?<=[^=]\s)[0-9]{1,2}\.[0-9]{2}(?![0-9′″°%]|\.[0-9]|\scubic|\smetric|\smeters|\smiles|\sfeet|\sinches)", node.inner_text()):
+						time = time_match.split(".")
+						if not time[0].startswith("0") and int(time[0]) >= 1 and int(time[0]) <= 12 and int(time[1]) >= 0 and int(time[1]) <= 59:
+							matches.append(time_match)
+
+				if matches:
+					messages.append(LintMessage("t-010", "Time set with `.` instead of `:`.", se.MESSAGE_TYPE_WARNING, filename, set(matches)))
 
 				# Check for leading 0 in IDs (note: not the same as checking for IDs that start with an integer)
 				nodes = dom.xpath("//*[contains(@id, '-0')]")
