@@ -1311,6 +1311,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Ignore closing paragraphs, line breaks, and closing cells in case ldquo means "ditto mark"
 				matches = regex.findall(r"“[^‘”]+?“", file_contents)
 				matches = [match for match in matches if "</p" not in match and "<br/>" not in match and "</td>" not in match]
+				# xpath to check for opening quote in p, without a next child p that starts with an opening quote or an opening bracket (for editorial insertions within paragraphs of quotation); or that consists of only an ellipses (like an elided part of a longer quotation)
+				# Matching <p>s can't have a poem/verse ancestor as formatting is often special for those.
+				matches = matches + [regex.findall(r"“[^”]+</p>", node.tostring())[0] for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+$')][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn)')])][(following-sibling::*[1])[name()='p'][not(re:test(normalize-space(.), '^[“\\[]') or re:test(normalize-space(.), '^…$'))]]")]
 				if matches:
 					messages.append(LintMessage("t-003", "`“` missing matching `”`.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
