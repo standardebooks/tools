@@ -246,7 +246,25 @@ class LintMessage:
 		self.text = text.strip()
 		self.filename = filename
 		self.message_type = message_type
-		self.submessages = submessages
+		if submessages:
+			self.submessages: Union[List[str], Set[str], None] = []
+			smallest_indent = 1000
+			for submessage in submessages:
+				# Try to flatten leading indentation
+				for indent in regex.findall(r"^\t+(?=<)", submessage, flags=regex.MULTILINE):
+					if len(indent) < smallest_indent:
+						smallest_indent = len(indent)
+
+			if smallest_indent == 1000:
+				smallest_indent = 0
+
+			if smallest_indent:
+				for submessage in submessages:
+					self.submessages.append(regex.sub(fr"^\t{{{smallest_indent}}}", "", submessage, flags=regex.MULTILINE))
+			else:
+				self.submessages = submessages
+		else:
+			self.submessages = None
 
 def _get_malformed_urls(xhtml: str, filename: str) -> list:
 	"""
