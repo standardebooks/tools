@@ -163,6 +163,7 @@ SEMANTICS & CONTENT
 "s-043", "`<blockquote>` element without block-level child."
 "s-044", "`z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` without direct child `<p>` (stanza) element."
 "s-045", "`<abbr>` element without semantic class like `name` or `initialism`"
+"s-046", "`<p>` element containing only `<span>` and `<br>` elements, but its parent doesn’t have the `z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` semantic. Multi-line clauses that are not verse don’t require `<span>`s."
 "s-047", "`noteref` as a direct child of element with `z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`."
 "s-048", "`se:name` semantic on block element. `se:name` indicates the contents is the name of something."
 "s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100."
@@ -1393,6 +1394,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
 				if nodes:
 					messages.append(LintMessage("s-019", "`<h#>` element with `id` attribute. `<h#>` elements should be wrapped in `<section>` elements, which should hold the `id` attribute.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
+
+				# Check for <p> elems that only have <span> and <br> children, but the parent doesn't have poem/verse semantics.
+				# Ignore spans that have a class, but not if the class is an i# class (for poetry indentation)
+				nodes = dom.xpath("/html/body//p[not(./text()[normalize-space(.)])][not(ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')])][not(*[not(self::span) and not(self::br)])][not(span[@class]) or span[re:test(@class, '\\bi[0-9]\\b')]]")
+				if nodes:
+					messages.append(LintMessage("s-046", "`<p>` element containing only `<span>` and `<br>` elements, but its parent doesn’t have the `z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` semantic. Multi-line clauses that are not verse don’t require `<span>`s.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 				# Check for <cite> preceded by em dash
 				nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[re:match(., '—$')]]")
