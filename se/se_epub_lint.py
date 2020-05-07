@@ -164,14 +164,12 @@ SEMANTICS & CONTENT
 "s-044", "`z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` without direct child `<p>` (stanza) element."
 "s-045", "`<abbr>` element without semantic class like `name` or `initialism`"
 "s-047", "`noteref` as a direct child of element with `z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`."
+"s-048", "`se:name` semantic on block element. `se:name` indicates the contents is the name of something."
 "s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100."
 "s-052", "`<attr>` element with illegal `title` attribute."
 "s-053", "Colophon line not preceded by `<br/>`."
 "s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`."
 vvvvvvvvUNUSEDvvvvvvvvvv
-"s-046", "Hymn included without styling in `local.css`."
-"s-048", "`noteref` as a direct child of element with `z3998:verse` semantic. `noteref`s should be in their parent `<span>`."
-"s-049", "`noteref` as a direct child of element with `z3998:song` semantic. `noteref`s should be in their parent `<span>`."
 "s-050", "`noteref` as a direct child of element with `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`."
 
 TYPOGRAPHY
@@ -1367,6 +1365,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6]/*[contains(@epub:type, 'subtitle')][(./text())[last()][re:test(., '\\.$')] or (./i)[last()][re:test(., '\\.$')]]")
 				if nodes:
 					messages.append(LintMessage("t-040", "Subtitle with illegal ending period.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+
+				# Check for incorrectly applied se:name semantic
+				nodes = dom.xpath("/html/body//*[self::p or self::blockquote][contains(@epub:type, 'se:name.')]")
+				if nodes:
+					messages.append(LintMessage("s-048", "`se:name` semantic on block element. `se:name` indicates the contents is the name of something.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
 
 				# Check for IDs on <h#> tags
 				nodes = dom.xpath("//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
