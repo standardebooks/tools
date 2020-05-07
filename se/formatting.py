@@ -565,7 +565,10 @@ def format_xhtml(xhtml: str) -> str:
 	xhtml = regex.sub(r"(<(?:[^!/][^>]*?[^/]|[a-z])>)\s+([^\s<])", r"\1\2", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"([^\s>])\s+(</[^>]+?>)", r"\1\2", xhtml, flags=regex.IGNORECASE)
 
-	tree = etree.fromstring(str.encode(xhtml))
+	try:
+		tree = etree.fromstring(str.encode(xhtml))
+	except Exception as ex:
+		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
 
 	# Lowercase attribute names
 	for node in tree.xpath("//*[attribute::*[re:test(local-name(), '[A-Z]')]]", namespaces=se.XHTML_NAMESPACES):
@@ -633,7 +636,10 @@ def format_svg(svg: str) -> str:
 	A string of pretty-printed SVG XML.
 	"""
 
-	tree = etree.fromstring(str.encode(svg))
+	try:
+		tree = etree.fromstring(str.encode(svg))
+	except Exception as ex:
+		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
 
 	# Make sure viewBox is correctly-cased
 	for node in tree.xpath("/svg:svg", namespaces={"svg": "http://www.w3.org/2000/svg"}):
