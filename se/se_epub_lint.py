@@ -1318,10 +1318,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Half titles have slightly different subtitle styles than regular subtitles
 				if filename == "halftitle.xhtml":
 					if not local_css_has_halftitle_subtitle_style:
-						missing_styles += [node.totagstring() for node in dom.xpath("/html/body//*[contains(@epub:type, 'subtitle')]")]
+						missing_styles += [node.totagstring() for node in dom.xpath("/html/body//span[contains(@epub:type, 'subtitle')]")]
 				else:
 					if not local_css_has_subtitle_style:
-						missing_styles += [node.totagstring() for node in dom.xpath("/html/body//*[contains(@epub:type, 'subtitle')]")]
+						missing_styles += [node.totagstring() for node in dom.xpath("/html/body//span[contains(@epub:type, 'subtitle')]")]
 
 				if not local_css_has_elision_style:
 					missing_styles += [node.totagstring() for node in dom.xpath("/html/body//span[contains(@class, 'elision')]")]
