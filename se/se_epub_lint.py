@@ -166,6 +166,7 @@ SEMANTICS & CONTENT
 "s-046", "`<p>` element containing only `<span>` and `<br>` elements, but its parent doesn’t have the `z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` semantic. Multi-line clauses that are not verse don’t require `<span>`s."
 "s-047", "`noteref` as a direct child of element with `z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`."
 "s-048", "`se:name` semantic on block element. `se:name` indicates the contents is the name of something."
+"s-049", "`<header>` element with text not in a block element."
 "s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100."
 "s-052", "`<attr>` element with illegal `title` attribute."
 "s-053", "Colophon line not preceded by `<br/>`."
@@ -1415,6 +1416,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//abbr[text()='I.O.U.'][(following-sibling::node()[1])[starts-with(., '’s')]]")
 				if nodes:
 					messages.append(LintMessage("t-039", "Initialism followed by `’s`. Hint: Plurals of initialisms are not followed by `’`.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() + "’s" for node in nodes]))
+
+				# Check for <header> elements with direct children text nodes
+				nodes = dom.xpath("/html/body//header[normalize-space(./text())]")
+				if nodes:
+					messages.append(LintMessage("s-049", "`<header>` element with text not in a block element.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 				# Check to see if <h#> tags are correctly titlecased
 				nodes = dom.xpath("//*[re:test(name(), '^h[1-6]$')][not(contains(@epub:type, 'z3998:roman'))]")
