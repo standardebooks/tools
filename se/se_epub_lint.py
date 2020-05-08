@@ -171,8 +171,7 @@ SEMANTICS & CONTENT
 "s-052", "`<attr>` element with illegal `title` attribute."
 "s-053", "Colophon line not preceded by `<br/>`."
 "s-054", "`<cite>` as child of `<p>` in `<blockquote>`. `<cite>` should be the direct child of `<blockquote>`."
-vvvvvvvvUNUSEDvvvvvvvvvv
-"s-050", "`noteref` as a direct child of element with `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`."
+"s-050", "`<span>` element appears to exist only to apply `epub:type`. `epub:type` should go on the parent element instead, without a `<span>` element."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1244,7 +1243,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for nbsp within <abbr class="name">, which is redundant
 				nodes = dom.xpath(f"//abbr[contains(@class, 'name')][contains(text(), '{se.NO_BREAK_SPACE}')]")
 				if nodes:
-					messages.append(LintMessage("t-022", "No-break space found in `<abbr class=\"name\">`. This is redundant.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+					messages.append(LintMessage("t-022", "No-break space found in `<abbr class=\"name\">`. This is redundant.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+
+				# Check for <span>s that only exist to apply epub:type
+				nodes = dom.xpath("/html/body//*[span[@epub:type][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)]) = 0]]")
+				if nodes:
+					messages.append(LintMessage("s-050", "`<span>` element appears to exist only to apply `epub:type`. `epub:type` should go on the parent element instead, without a `<span>` element.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for empty elements. Elements are empty if they have no children and no non-whitespace text
 				empty_elements = [node.tostring() for node in dom.xpath("//*[not(self::br) and not(self::hr) and not(self::img) and not(self::td) and not(self::th) and not(self::link)][not(*)][not(normalize-space())]")]
