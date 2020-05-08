@@ -161,10 +161,10 @@ SEMANTICS & CONTENT
 "s-041", f"The `<figcaption>` element of `#{figure_ref}` does not match the text in its LoI entry."
 "s-042", "`<table>` element without `<tbody>` child."
 "s-043", "`<blockquote>` element without block-level child."
-"s-044", "`z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` without direct child `<p>` (stanza) element."
+"s-044", "Element with poem or verse semantic, without descendant `<p>` (stanza) element."
 "s-045", "`<abbr>` element without semantic class like `name` or `initialism`"
 "s-046", "`<p>` element containing only `<span>` and `<br>` elements, but its parent doesn’t have the `z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` semantic. Multi-line clauses that are not verse don’t require `<span>`s."
-"s-047", "`noteref` as a direct child of element with `z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`."
+"s-047", "`noteref` as a direct child of element with poem or verse semantic. `noteref`s should be in their parent `<span>`."
 "s-048", "`se:name` semantic on block element. `se:name` indicates the contents is the name of something."
 "s-049", "`<header>` element with text not in a block element."
 "s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100."
@@ -469,6 +469,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	local_css_has_verse_style = False
 	local_css_has_song_style = False
 	local_css_has_hymn_style = False
+	local_css_has_lyrics_style = False
 	local_css_has_elision_style = False
 	abbr_styles = regex.findall(r"abbr\.[\p{Lowercase_Letter}]+", self.local_css)
 	missing_styles: List[str] = []
@@ -499,6 +500,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 		if "z3998:hymn" in selector:
 			local_css_has_hymn_style = True
+
+		if "z3998:lyrics" in selector:
+			local_css_has_lyrics_style = True
 
 		if "span.elision" in selector:
 			local_css_has_elision_style = True
@@ -1137,9 +1141,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for poetry/verse without a descendent <p> element.
 				# Skip the ToC because the landmarks section may have the poem/verse semantic.
 				if filename != "toc.xhtml":
-					nodes = dom.xpath("/html/body//*[not(self::tr or self::td)][contains(@epub:type, 'z3998:poem') or contains(@epub:type, 'z3998:verse') or contains(@epub:type, 'z3998:song') or contains(@epub:type, 'z3998:hymn')][not(descendant::p)]")
+					nodes = dom.xpath("/html/body//*[not(self::tr or self::td)][re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][not(descendant::p)]")
 					if nodes:
-						messages.append(LintMessage("s-044", "`z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` without descendant `<p>` (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
+						messages.append(LintMessage("s-044", "Element with poem or verse semantic, without descendant `<p>` (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
 
 				# Check for deprecated MathML elements
 				# Note we dont select directly on element name, because we want to ignore any namespaces that may (or may not) be defined
@@ -1349,7 +1353,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				matches = [match for match in matches if "</p" not in match and "<br/>" not in match and "</td>" not in match]
 				# xpath to check for opening quote in p, without a next child p that starts with an opening quote or an opening bracket (for editorial insertions within paragraphs of quotation); or that consists of only an ellipses (like an elided part of a longer quotation)
 				# Matching <p>s can't have a poem/verse ancestor as formatting is often special for those.
-				matches = matches + [regex.findall(r"“[^”]+</p>", node.tostring())[0] for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+$')][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn)')])][(following-sibling::*[1])[name()='p'][not(re:test(normalize-space(.), '^[“\\[]') or re:test(normalize-space(.), '^…$'))]]")]
+				matches = matches + [regex.findall(r"“[^”]+</p>", node.tostring())[0] for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+$')][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')])][(following-sibling::*[1])[name()='p'][not(re:test(normalize-space(.), '^[“\\[]') or re:test(normalize-space(.), '^…$'))]]")]
 				if matches:
 					messages.append(LintMessage("t-003", "`“` missing matching `”`.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
@@ -1402,9 +1406,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for <p> elems that only have <span> and <br> children, but the parent doesn't have poem/verse semantics.
 				# Ignore spans that have a class, but not if the class is an i# class (for poetry indentation)
-				nodes = dom.xpath("/html/body//p[not(./text()[normalize-space(.)])][not(ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')])][not(*[not(self::span) and not(self::br)])][not(span[@class]) or span[re:test(@class, '\\bi[0-9]\\b')]]")
+				nodes = dom.xpath("/html/body//p[not(./text()[normalize-space(.)])][not(ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')])][not(*[not(self::span) and not(self::br)])][not(span[@class]) or span[re:test(@class, '\\bi[0-9]\\b')]]")
 				if nodes:
-					messages.append(LintMessage("s-046", "`<p>` element containing only `<span>` and `<br>` elements, but its parent doesn’t have the `z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` semantic. Multi-line clauses that are not verse don’t require `<span>`s.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+					messages.append(LintMessage("s-046", "`<p>` element containing only `<span>` and `<br>` elements, but its parent doesn’t have the `z3998:poem`, `z3998:verse`, `z3998:song`, `z3998:hymn`, or `z3998:lyrics` semantic. Multi-line clauses that are not verse don’t require `<span>`s.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 				# Check for <cite> preceded by em dash
 				nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[re:match(., '—$')]]")
@@ -1626,7 +1630,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check to see if we've marked something as poetry or verse, but didn't include a first <span>
 				# This xpath selects the p elements, whose parents are poem/verse, and whose first child is not a span
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:poem') or contains(@epub:type, 'z3998:verse') or contains(@epub:type, 'z3998:song') or contains(@epub:type, 'z3998:hymn')]/p[not(*[name()='span' and position()=1])]")
+				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')]/p[not(*[name()='span' and position()=1])]")
 				if nodes:
 					matches = []
 					for node in nodes:
@@ -1642,7 +1646,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check to see if we included poetry or verse without the appropriate styling
 				if filename not in se.IGNORED_FILENAMES:
-					nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:poem') or contains(@epub:type, 'z3998:verse') or contains(@epub:type, 'z3998:song') or contains(@epub:type, 'z3998:hymn')][./p/span]")
+					nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][./p/span]")
 					for node in nodes:
 						if "z3998:poem" in node.attribute("epub:type") and not local_css_has_poem_style:
 							missing_styles.append(node.totagstring())
@@ -1656,10 +1660,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						if "z3998:hymn" in node.attribute("epub:type") and not local_css_has_hymn_style:
 							missing_styles.append(node.totagstring())
 
+						if "z3998:lyrics" in node.attribute("epub:type") and not local_css_has_lyrics_style:
+							missing_styles.append(node.totagstring())
+
 				# For this series of selections, we select spans that are direct children of p, because sometimes a line of poetry may have a nested span.
-				nodes = dom.xpath("/html/body/*[contains(@epub:type, 'z3998:poem') or contains(@epub:type, 'z3998:verse') or contains(@epub:type, 'z3998:song') or contains(@epub:type, 'z3998:hymn')]/descendant-or-self::*/p/span/following-sibling::*[contains(@epub:type, 'noteref') and name() = 'a' and position() = 1]")
+				nodes = dom.xpath("/html/body/*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')]/descendant-or-self::*/p/span/following-sibling::*[contains(@epub:type, 'noteref') and name() = 'a' and position() = 1]")
 				if nodes:
-					messages.append(LintMessage("s-047", "`noteref` as a direct child of element with `z3998:poem`, `z3998:verse`, `z3998:song`, or `z3998:hymn` semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+					messages.append(LintMessage("s-047", "`noteref` as a direct child of element with poem or verse semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for space before endnote backlinks
 				if filename == "endnotes.xhtml":
