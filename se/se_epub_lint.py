@@ -1897,7 +1897,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				for code in codes:
 					try:
 						# fnmatch.translate() converts shell-style globs into a regex pattern
-						if regex.match(fr"{translate(path)}", message.filename) and message.code == code["code"]:
+						if regex.match(fr"{translate(path)}", str(message.filename)) and message.code == code["code"]:
 							messages.remove(message)
 							code["used"] = True
 
