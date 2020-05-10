@@ -245,7 +245,7 @@ class LintMessage:
 	def __init__(self, code: str, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: str = "", submessages: Union[List[str], Set[str]] = None):
 		self.code = code
 		self.text = text.strip()
-		self.filename = filename
+		self.filename = Path(filename)
 		self.message_type = message_type
 		if submessages:
 			self.submessages: Union[List[str], Set[str], None] = []

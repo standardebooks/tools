@@ -74,7 +74,7 @@ setup(
         "pyopenssl==19.1.0",  # Required to allow the `requests` package to use https on Mac OSX
         "regex==2020.4.4",
         "requests==2.23.0",
-        "rich==1.0.0",
+        "rich==1.1.0",
         "roman==3.2.0",
         "selenium==3.141.0",
         "smartypants==2.0.1",

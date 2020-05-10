@@ -13,13 +13,28 @@ from rich.table import Table
 import se
 from se.se_epub import SeEpub
 
+def _get_file_path(root: Path, filename: Path) -> Path:
+	if filename.suffix == ".opf" or filename.name == "toc.xhtml":
+		return root / 'src/epub/' / filename.name
+
+	if filename.suffix == ".css":
+		return root / 'src/epub/css/' / filename.name
+
+	if filename.suffix == ".otf":
+		return root / 'src/epub/fonts/' / filename.name
+
+	if filename.suffix == ".xhtml":
+		return root / 'src/epub/text/' / filename.name
+
+	return filename
+
 def lint() -> int:
 	"""
 	Entry point for `se lint`
 	"""
 
 	parser = argparse.ArgumentParser(description="Check for various Standard Ebooks style errors.")
-	parser.add_argument("-n", "--no-colors", dest="colors", action="store_false", help="do not use colored output")
+	parser.add_argument("-n", "--no-colors", dest="colors", action="store_false", help="don’t use color or hyperlinks in output")
 	parser.add_argument("-p", "--plain", action="store_true", help="print plain text output, without tables or colors")
 	parser.add_argument("-s", "--skip-lint-ignore", action="store_true", help="ignore rules in se-lint-ignore.xml file")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
@@ -101,11 +116,21 @@ def lint() -> int:
 						# Escape brackets in the message, for example in CSS selectors, so that Rich doesn't interpret them as BBcode
 						message_text = regex.sub(r"([\[\]])", r"\1\1", message_text)
 
-						# By convention, any text within the message text that is surrounded in backticks
-						# is rendered in blue
+						# By convention, any text within the message text that is surrounded in backticks is rendered in blue
 						message_text = regex.sub(r"`(.+?)`", r"[bright_blue]\1[/bright_blue]", message_text)
 
-					table_data.append([message.code, alert, message.filename, message_text])
+						# Add hyperlinks to filenames in the message text
+						for filename in regex.findall(r"\b[a-z\-]+?\.[a-z]+?\b", message_text):
+							file_path = _get_file_path(se_epub.path, Path(filename))
+							if file_path.is_file():
+								message_text = regex.sub(filename, f"[link=file://{file_path}]{file_path.name}[/link]", message_text)
+
+						# Add hyperlinks around message filenames
+						message_filename = f"[link=file://{_get_file_path(se_epub.path, message.filename)}]{message.filename.name}[/link]"
+					else:
+						message_filename = message.filename.name
+
+					table_data.append([message.code, alert, message_filename, message_text])
 
 					if message.submessages:
 						for submessage in message.submessages:
