@@ -118,16 +118,16 @@ def lint() -> int:
 						message_text = regex.sub(r"([\[\]])", r"\1\1", message_text)
 
 						# Add hyperlinks to filenames in the message text
-						for filename in regex.findall(r"`(.+?)`", message_text):
+						for filename in regex.findall(r"`([\p{Letter}\-\.]+?)`", message_text):
 							file_path = _get_file_path(se_epub.path, Path(filename))
 							if file_path.is_file() or file_path.is_dir():
-								message_text = regex.sub(f"`{filename}`", f"[bright_blue][link=file://{file_path.resolve()}]{filename}[/link][/bright_blue]", message_text)
+								message_text = message_text.replace(f"`{filename}`", f"[bright_blue][link=file://{file_path}]{filename}[/link][/bright_blue]")
 
 						# By convention, any text within the message text that is surrounded in backticks is rendered in blue
 						message_text = regex.sub(r"`(.+?)`", r"[bright_blue]\1[/bright_blue]", message_text)
 
 						# Add hyperlinks around message filenames
-						message_filename = f"[link=file://{_get_file_path(se_epub.path, message.filename)}]{message.filename.name}[/link]"
+						message_filename = f"[link=file://{message.filename.resolve()}]{message.filename.name}[/link]"
 					else:
 						message_filename = message.filename.name
 
@@ -139,7 +139,7 @@ def lint() -> int:
 							if args.colors:
 								submessage = regex.sub(r"([\[\]])", r"\1\1", submessage)
 
-							table_data.append([" ", " ", "→", Text(submessage, style="dim")])
+							table_data.append([" ", " ", Text("→", justify="right"), Text(submessage, style="dim")])
 
 				table = Table(show_header=True, header_style="bold", show_lines=True)
 				table.add_column("Code", width=5, no_wrap=True)

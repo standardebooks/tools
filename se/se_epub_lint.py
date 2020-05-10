@@ -139,7 +139,7 @@ SEMANTICS & CONTENT
 "s-019", "`<h#>` element with `id` attribute. `<h#>` elements should be wrapped in `<section>` elements, which should hold the `id` attribute."
 "s-020", "Frontmatter found, but no halftitle. Halftitle is required when frontmatter is present."
 "s-021", f"Unexpected value for `<title>` element. Expected: `{title}`. (Beware hidden Unicode characters!)"
-"s-022", f"The `<title>` element of `{image_ref}` does not match the `alt` attribute text in `{filename}`."
+"s-022", f"The `<title>` element of `{image_ref}` does not match the `alt` attribute text in `{filename.name}`."
 "s-023", f"Title `{title}` not correctly titlecased. Expected: `{titlecased_title}`."
 "s-024", "Half title `<title>` elements must contain exactly: \"Half Title\"."
 "s-025", "Titlepage `<title>` elements must contain exactly: `Titlepage`."
@@ -150,7 +150,7 @@ SEMANTICS & CONTENT
 "s-030", "`z3998:nonfiction` should be `z3998:non-fiction`."
 "s-031", "Illegal `:` in SE identifier. SE identifiers are separated by `.`, not `:`. E.g., `se:name.vessel.ship`."
 "s-032", "SE namespace must be followed by a `:`, not a `.`. E.g., `se:name.vessel`."
-"s-033", f"File language is `{file_language}`, but `content.opf` language is `{language}`."
+"s-033", f"File language is `{file_language}`, but `{self.metadata_file_path.name}` language is `{language}`."
 "s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary."
 "s-035", "`<h#>` element has the `z3998:roman` semantic, but is not a Roman numeral."
 "s-036", "No `frontmatter` semantic inflection for what looks like a frontmatter file."
@@ -242,11 +242,12 @@ class LintMessage:
 	Contains information like message text, severity, and the epub filename that generated the message.
 	"""
 
-	def __init__(self, code: str, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: str = "", submessages: Union[List[str], Set[str]] = None):
+	def __init__(self, code: str, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: Path = None, submessages: Union[List[str], Set[str]] = None):
 		self.code = code
 		self.text = text.strip()
-		self.filename = Path(filename)
+		self.filename = filename
 		self.message_type = message_type
+
 		if submessages:
 			self.submessages: Union[List[str], Set[str], None] = []
 			smallest_indent = 1000
@@ -267,7 +268,7 @@ class LintMessage:
 		else:
 			self.submessages = None
 
-def _get_malformed_urls(xhtml: str, filename: str) -> list:
+def _get_malformed_urls(xhtml: str, filename: Path) -> list:
 	"""
 	Helper function used in self.lint()
 	Get a list of URLs in the epub that do not match SE standards.
@@ -357,7 +358,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	titlepage_svg_title = ""
 	xhtml_css_classes: Dict[str, int] = {}
 	headings: List[tuple] = []
-	double_spaced_files: List[str] = []
+	double_spaced_files: List[Path] = []
 	unused_selectors: List[str] = []
 	missing_metadata_elements = []
 	abbr_elements: List[se.easy_xml.EasyXmlElement] = []
@@ -369,13 +370,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	ignored_codes: Dict[str, List[Dict]] = {}
 
 	# First, check if we have an se-lint-ignore.xml file in the ebook root. If so, parse it. For an example se-lint-ignore file, see semos://1.0.0/2.3
-	if not skip_lint_ignore and (self.path / "se-lint-ignore.xml").exists():
-		lint_config = _dom(self.path / "se-lint-ignore.xml")
+	lint_ignore_path = self.path / "se-lint-ignore.xml"
+	if not skip_lint_ignore and lint_ignore_path.exists():
+		lint_config = _dom(lint_ignore_path)
 
 		elements = lint_config.xpath("/se-lint-ignore/file")
 
 		if not elements:
-			messages.append(LintMessage("m-049", "No `se-lint-ignore.xml` rules. Delete the file if there are no rules.", se.MESSAGE_TYPE_ERROR, "se-lint-ignore.xml"))
+			messages.append(LintMessage("m-049", "No `se-lint-ignore.xml` rules. Delete the file if there are no rules.", se.MESSAGE_TYPE_ERROR, lint_ignore_path))
 
 		has_illegal_path = False
 
@@ -399,10 +401,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							has_reason = True
 
 					if not has_reason:
-						messages.append(LintMessage("m-046", "Missing or empty `<reason>` element.", se.MESSAGE_TYPE_ERROR, "se-lint-ignore.xml"))
+						messages.append(LintMessage("m-046", "Missing or empty `<reason>` element.", se.MESSAGE_TYPE_ERROR, lint_ignore_path))
 
 		if has_illegal_path:
-			messages.append(LintMessage("m-047", "Ignoring `*` is too general. Target specific files if possible.", se.MESSAGE_TYPE_WARNING, "se-lint-ignore.xml"))
+			messages.append(LintMessage("m-047", "Ignoring `*` is too general. Target specific files if possible.", se.MESSAGE_TYPE_WARNING, lint_ignore_path))
 
 	# Done parsing ignore list
 
@@ -412,14 +414,15 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	except se.InvalidXmlException as ex:
 		raise ex
 	except Exception:
-		raise se.InvalidSeEbookException("Missing `<dc:language>` element in `content.opf`.")
+		raise se.InvalidSeEbookException(f"Missing `<dc:language>` element in `{self.metadata_file_path.name}`.")
 
 	# Check local.css for various items, for later use
+	local_css_path = self.path / "src/epub/css/local.css"
 	try:
-		with open(self.path / "src" / "epub" / "css" / "local.css", "r", encoding="utf-8") as file:
+		with open(local_css_path, "r", encoding="utf-8") as file:
 			self.local_css = file.read()
 	except:
-		raise se.InvalidSeEbookException(f"Couldn’t open `{self.path / 'src' / 'epub' / 'css' / 'local.css'}`.")
+		raise se.InvalidSeEbookException(f"Couldn’t open `{local_css_path}`.")
 
 	# cssutils prints warnings/errors to stdout by default, so shut it up here
 	cssutils.log.enabled = False
@@ -456,7 +459,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				local_css_rules[selector.selectorText] = rule.style.cssText + ";"
 
 	if duplicate_selectors:
-		messages.append(LintMessage("c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles.", se.MESSAGE_TYPE_WARNING, "local.css", list(set(duplicate_selectors))))
+		messages.append(LintMessage("c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles.", se.MESSAGE_TYPE_WARNING, local_css_path, list(set(duplicate_selectors))))
 
 	# Store a list of CSS selectors, and duplicate it into a list of unused selectors, for later checks
 	# We use a regex to remove pseudo-elements like ::before, because we want the *selectors* to see if they're unused.
@@ -511,32 +514,32 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			abbr_with_whitespace.append(selector)
 
 		if regex.search(r"\[\s*xml\s*\|", selector, flags=regex.IGNORECASE) and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
-			messages.append(LintMessage("c-003", "`[xml|attr]` selector in CSS, but no XML namespace declared (`@namespace xml \"http://www.w3.org/XML/1998/namespace\";`).", se.MESSAGE_TYPE_ERROR, "local.css"))
+			messages.append(LintMessage("c-003", "`[xml|attr]` selector in CSS, but no XML namespace declared (`@namespace xml \"http://www.w3.org/XML/1998/namespace\";`).", se.MESSAGE_TYPE_ERROR, local_css_path))
 
 	if selected_h:
-		messages.append(LintMessage("c-001", "Do not directly select `<h#>` elements, as they are used in template files; use more specific selectors.", se.MESSAGE_TYPE_ERROR, "local.css", selected_h))
+		messages.append(LintMessage("c-001", "Do not directly select `<h#>` elements, as they are used in template files; use more specific selectors.", se.MESSAGE_TYPE_ERROR, local_css_path, selected_h))
 
 	if abbr_with_whitespace:
-		messages.append(LintMessage("c-005", "`abbr` selector does not need `white-space: nowrap;` as it inherits it from `core.css`.", se.MESSAGE_TYPE_ERROR, "local.css", abbr_with_whitespace))
+		messages.append(LintMessage("c-005", "`abbr` selector does not need `white-space: nowrap;` as it inherits it from `core.css`.", se.MESSAGE_TYPE_ERROR, local_css_path, abbr_with_whitespace))
 
 	# Don't specify border color
 	# Since we have match with a regex anyway, no point in putting it in the loop above
 	matches = regex.findall(r"(?:border|color).+?(?:#[a-f0-9]{0,6}|black|white|red)", self.local_css, flags=regex.IGNORECASE)
 	if matches:
-		messages.append(LintMessage("c-004", "Do not specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, "local.css", matches))
+		messages.append(LintMessage("c-004", "Do not specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, local_css_path, matches))
 
 	# If we select on the xml namespace, make sure we define the namespace in the CSS, otherwise the selector won't work
 	# We do this using a regex and not with cssutils, because cssutils will barf in this particular case and not even record the selector.
 	matches = regex.findall(r"\[\s*xml\s*\|", self.local_css)
 	if matches and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
-		messages.append(LintMessage("c-003", "`[xml|attr]` selector in CSS, but no XML namespace declared (`@namespace xml \"http://www.w3.org/XML/1998/namespace\";`).", se.MESSAGE_TYPE_ERROR, "local.css"))
+		messages.append(LintMessage("c-003", "`[xml|attr]` selector in CSS, but no XML namespace declared (`@namespace xml \"http://www.w3.org/XML/1998/namespace\";`).", se.MESSAGE_TYPE_ERROR, local_css_path))
 
 	# Done checking local.css
 
 	root_files = os.listdir(self.path)
 	expected_root_files = ["images", "src", "LICENSE.md"]
 	illegal_files = [root_file for root_file in root_files if root_file not in expected_root_files and root_file != "se-lint-ignore.xml"] # se-lint-ignore.xml is optional
-	missing_files = [expected_root_file for expected_root_file in expected_root_files if expected_root_file not in root_files and expected_root_file != "LICENSE.md"] # We add more to this later on. LICENSE.md gets checked later on, so we don't want to add it twice
+	missing_files = [Path(self.path / expected_root_file) for expected_root_file in expected_root_files if expected_root_file not in root_files and expected_root_file != "LICENSE.md"] # We add more to this later on. LICENSE.md gets checked later on, so we don't want to add it twice
 
 	# If we have illegal files, check if they are tracked in Git.
 	# If they are, then they're still illegal.
@@ -560,22 +563,22 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		long_description = self.metadata_dom.xpath("/package/metadata/meta[@property='se:long-description']")[0].text
 		matches = regex.findall(r"(?:['\"]|\-\-|\s-\s)", regex.sub(r"<[^<]+?>", "", long_description))
 		if matches:
-			messages.append(LintMessage("m-014", "Non-typogrified character in `<meta property=\"se:long-description\">` element.", se.MESSAGE_TYPE_ERROR, "content.opf", matches))
+			messages.append(LintMessage("m-014", "Non-typogrified character in `<meta property=\"se:long-description\">` element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 	except:
-		raise se.InvalidSeEbookException("No `<meta property=\"se:long-description\">` element in `content.opf`.")
+		raise se.InvalidSeEbookException(f"No `<meta property=\"se:long-description\">` element in `{self.metadata_file_path.name}`.")
 
 	# Check if there are non-typogrified quotes or em-dashes in the title.
 	try:
 		title = self.metadata_dom.xpath("/package/metadata/dc:title")[0].text
 		matches = regex.findall(r"(?:['\"]|\-\-|\s-\s)", title)
 		if matches:
-			messages.append(LintMessage("m-012", "Non-typogrified character in `<dc:title>` element.", se.MESSAGE_TYPE_ERROR, "content.opf", matches))
+			messages.append(LintMessage("m-012", "Non-typogrified character in `<dc:title>` element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
 		# Do we need an se:alternate-title meta element?
 		# Match spelled-out numbers with a word joiner, so for ex. we don't print "eight" if we matched "eighty"
 		matches = regex.findall(r"(?:[0-9]+|\bone\b|\btwo\b|\bthree\b|\bfour\b|\bfive\b|\bsix\b|\bseven\b|\beight\b|\bnine\b|\bten\b|\beleven\b|\btwelve\b|\bthirteen\b|\bfourteen\b|\bfifteen\b|\bsixteen\b|\bseventeen\b|\beighteen\b|\bnineteen\b|\btwenty\b|\bthirty\b|\bforty\b|\bfifty\b|\bsixty\b|\bseventy\b|\beighty|\bninety)", title, flags=regex.IGNORECASE)
 		if matches and not self.metadata_dom.xpath("/package/metadata/meta[@property = 'se:alternate-title']"):
-			messages.append(LintMessage("m-052", "`<dc:title>` element contains numbers, but no `<meta property=\"se:alternate-title\"> element in metadata.", se.MESSAGE_TYPE_ERROR, "content.opf", matches))
+			messages.append(LintMessage("m-052", "`<dc:title>` element contains numbers, but no `<meta property=\"se:alternate-title\"> element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 	except:
 		missing_metadata_elements.append("<dc:title>")
 
@@ -583,7 +586,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		file_as = self.metadata_dom.xpath("/package/metadata/meta[@property='file-as' and @refines='#title']")[0].text
 		matches = regex.findall(r".(?:['\"]|\-\-|\s-\s).", file_as)
 		if matches:
-			messages.append(LintMessage("m-050", "Non-typogrified character in `<meta property=\"file-as\" refines=\"#title\">` element.", se.MESSAGE_TYPE_ERROR, "content.opf", matches))
+			messages.append(LintMessage("m-050", "Non-typogrified character in `<meta property=\"file-as\" refines=\"#title\">` element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 	except:
 		missing_metadata_elements.append("<meta property=\"file-as\" refines=\"#title\">")
 
@@ -591,52 +594,52 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		description = self.metadata_dom.xpath("/package/metadata/dc:description")[0].text
 		matches = regex.findall(r"(?:['\"]|\-\-|\s-\s)", description)
 		if matches:
-			messages.append(LintMessage("m-013", "Non-typogrified character in `<dc:description>` element.", se.MESSAGE_TYPE_ERROR, "content.opf", matches))
+			messages.append(LintMessage("m-013", "Non-typogrified character in `<dc:description>` element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 	except:
 		missing_metadata_elements.append("<dc:description>")
 
 	# Check for double spacing
 	matches = regex.findall(fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}", self.metadata_xml)
 	if matches:
-		double_spaced_files.append("content.opf")
+		double_spaced_files.append(self.metadata_file_path)
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 	matches = regex.findall(r"[\p{Letter}][”][,\.]", self.metadata_xml)
 	if matches:
-		messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, "content.opf"))
+		messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 
 	# Make sure long-description is escaped HTML
 	if "<" not in long_description:
-		messages.append(LintMessage("m-016", "Long description must be escaped HTML.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-016", "Long description must be escaped HTML.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 	else:
 		# Check for malformed long description HTML
 		try:
 			etree.parse(io.StringIO(f"<?xml version=\"1.0\"?><html xmlns=\"http://www.w3.org/1999/xhtml\">{long_description}</html>"))
 		except lxml.etree.XMLSyntaxError as ex:
-			messages.append(LintMessage("m-015", f"Metadata long description is not valid XHTML. LXML says: {ex}", se.MESSAGE_TYPE_ERROR, "content.opf"))
+			messages.append(LintMessage("m-015", f"Metadata long description is not valid XHTML. LXML says: {ex}", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for HTML entities in long-description, but allow &amp;amp;
 	matches = regex.findall(r"&[a-z0-9]+?;", long_description.replace("&amp;", ""))
 	if matches:
-		messages.append(LintMessage("m-018", "HTML entities found. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, "content.opf", matches))
+		messages.append(LintMessage("m-018", "HTML entities found. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
 	# Check for illegal em-dashes in <dc:subject>
 	nodes = self.metadata_dom.xpath("/package/metadata/dc:subject[contains(text(), '—')]")
 	if nodes:
-		messages.append(LintMessage("m-019", "Illegal em-dash in `<dc:subject>` element; use `--`.", se.MESSAGE_TYPE_ERROR, "content.opf", [node.text for node in nodes]))
+		messages.append(LintMessage("m-019", "Illegal em-dash in `<dc:subject>` element; use `--`.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.text for node in nodes]))
 
 	# Check for empty production notes
 	if self.metadata_dom.xpath("/package/metadata/meta[@property='se:production-notes' and text()='Any special notes about the production of this ebook for future editors/producers? Remove this element if not.']"):
-		messages.append(LintMessage("m-022", "Empty `<meta property=\"se:production-notes\">` element.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-022", "Empty `<meta property=\"se:production-notes\">` element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for illegal VCS URLs
 	nodes = self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:url.vcs.github' and not(text() = '{self.generated_github_repo_url}')]")
 	if nodes:
-		messages.append(LintMessage("m-009", f"`<meta property=\"se:url.vcs.github\">` value does not match expected: `{self.generated_github_repo_url}`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-009", f"`<meta property=\"se:url.vcs.github\">` value does not match expected: `{self.generated_github_repo_url}`.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for HathiTrust scan URLs instead of actual record URLs
 	if "babel.hathitrust.org" in self.metadata_xml or "hdl.handle.net" in self.metadata_xml:
-		messages.append(LintMessage("m-011", "Use HathiTrust record URLs, not page scan URLs, in metadata, imprint, and colophon. Record URLs look like: `https://catalog.hathitrust.org/Record/<RECORD-ID>`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-011", "Use HathiTrust record URLs, not page scan URLs, in metadata, imprint, and colophon. Record URLs look like: `https://catalog.hathitrust.org/Record/<RECORD-ID>`.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for illegal se:subject tags
 	illegal_subjects = []
@@ -647,23 +650,23 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				illegal_subjects.append(node)
 
 		if illegal_subjects:
-			messages.append(LintMessage("m-020", "Illegal value for `<meta property=\"se:subject\">` element.", se.MESSAGE_TYPE_ERROR, "content.opf", illegal_subjects))
+			messages.append(LintMessage("m-020", "Illegal value for `<meta property=\"se:subject\">` element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, illegal_subjects))
 
 		if sorted(nodes) != nodes:
-			messages.append(LintMessage("m-053", "`<meta property=\"se:subject\">` elements not in alphabetical order.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+			messages.append(LintMessage("m-053", "`<meta property=\"se:subject\">` elements not in alphabetical order.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	else:
-		messages.append(LintMessage("m-021", "No `<meta property=\"se:subject\">` element found.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-021", "No `<meta property=\"se:subject\">` element found.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for CDATA tags
 	if "<![CDATA[" in self.metadata_xml:
-		messages.append(LintMessage("m-017", "`<![CDATA[` found. Run `se clean` to canonicalize `<![CDATA[` sections.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-017", "`<![CDATA[` found. Run `se clean` to canonicalize `<![CDATA[` sections.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check that our provided identifier matches the generated identifier
 	try:
 		identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier")[0].text
 		if identifier != self.generated_identifier:
-			messages.append(LintMessage("m-023", f"`<dc:identifier>` does not match expected: `{self.generated_identifier}`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+			messages.append(LintMessage("m-023", f"`<dc:identifier>` does not match expected: `{self.generated_identifier}`.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 	except:
 		missing_metadata_elements.append("<dc:identifier>")
 
@@ -684,61 +687,61 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			invalid_refines.append("<meta property=\"se:name.person.full-name\">")
 
 	if duplicate_names:
-		messages.append(LintMessage("m-024", "`<meta property=\"se:name.person.full-name\">` property identical to regular name. If the two are identical the full name `<meta>` element must be removed.", se.MESSAGE_TYPE_ERROR, "content.opf", duplicate_names))
+		messages.append(LintMessage("m-024", "`<meta property=\"se:name.person.full-name\">` property identical to regular name. If the two are identical the full name `<meta>` element must be removed.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_names))
 
 	if invalid_refines:
-		messages.append(LintMessage("m-010", "Invalid `refines` property.", se.MESSAGE_TYPE_ERROR, "content.opf", invalid_refines))
+		messages.append(LintMessage("m-010", "Invalid `refines` property.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, invalid_refines))
 
 	# Check for malformed URLs
-	messages = messages + _get_malformed_urls(self.metadata_xml, "content.opf")
+	messages = messages + _get_malformed_urls(self.metadata_xml, self.metadata_file_path)
 
 	if regex.search(r"id\.loc\.gov/authorities/names/[^\.]+\.html", self.metadata_xml):
-		messages.append(LintMessage("m-008", "id.loc.gov URL ending with illegal `.html`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-008", "id.loc.gov URL ending with illegal `.html`.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Does the manifest match the generated manifest?
 	try:
 		manifest = self.metadata_dom.xpath("/package/manifest")[0]
 		if manifest.tostring().replace("\t", "") != self.generate_manifest().replace("\t", ""):
-			messages.append(LintMessage("m-042", "`<manifest>` element does not match expected structure.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+			messages.append(LintMessage("m-042", "`<manifest>` element does not match expected structure.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 	except:
 		missing_metadata_elements.append("<manifest>")
 
 	if missing_metadata_elements:
-		messages.append(LintMessage("m-051", "Missing expected element in metadata.", se.MESSAGE_TYPE_ERROR, "content.opf", missing_metadata_elements))
+		messages.append(LintMessage("m-051", "Missing expected element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_metadata_elements))
 
 	# Check for common typos
 	matches = [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", self.metadata_xml, flags=regex.IGNORECASE)]
 	if matches:
-		messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_ERROR, "content.opf", matches))
+		messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
 	# Make sure some static files are unchanged
 	try:
 		with importlib_resources.path("se.data.templates", "LICENSE.md") as license_file_path:
 			if not filecmp.cmp(license_file_path, self.path / "LICENSE.md"):
-				messages.append(LintMessage("f-003", f"File does not match `{license_file_path}`.", se.MESSAGE_TYPE_ERROR, "LICENSE.md"))
+				messages.append(LintMessage("f-003", f"File does not match `{license_file_path}`.", se.MESSAGE_TYPE_ERROR, self.path / "LICENSE.md"))
 	except Exception:
-		missing_files.append("LICENSE.md")
+		missing_files.append(self.path / "LICENSE.md")
 
 	try:
 		with importlib_resources.path("se.data.templates", "core.css") as core_css_file_path:
-			if not filecmp.cmp(core_css_file_path, self.path / "src" / "epub" / "css" / "core.css"):
-				messages.append(LintMessage("f-004", f"File does not match `{core_css_file_path}`.", se.MESSAGE_TYPE_ERROR, "core.css"))
+			if not filecmp.cmp(core_css_file_path, self.path / "src/epub/css/core.css"):
+				messages.append(LintMessage("f-004", f"File does not match `{core_css_file_path}`.", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/css/core.css"))
 	except Exception:
-		missing_files.append(str(Path("src/epub/css/core.css")))
+		missing_files.append(self.path / "src/epub/css/core.css")
 
 	try:
 		with importlib_resources.path("se.data.templates", "logo.svg") as logo_svg_file_path:
-			if not filecmp.cmp(logo_svg_file_path, self.path / "src" / "epub" / "images" / "logo.svg"):
-				messages.append(LintMessage("f-005", f"File does not match `{logo_svg_file_path}`.", se.MESSAGE_TYPE_ERROR, "logo.svg"))
+			if not filecmp.cmp(logo_svg_file_path, self.path / "src/epub/images/logo.svg"):
+				messages.append(LintMessage("f-005", f"File does not match `{logo_svg_file_path}`.", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/images/logo.svg"))
 	except Exception:
-		missing_files.append(str(Path("src/epub/images/logo.svg")))
+		missing_files.append(self.path / "src/epub/images/logo.svg")
 
 	try:
 		with importlib_resources.path("se.data.templates", "uncopyright.xhtml") as uncopyright_file_path:
-			if not filecmp.cmp(uncopyright_file_path, self.path / "src" / "epub" / "text" / "uncopyright.xhtml"):
-				messages.append(LintMessage("f-006", f"File does not match `{uncopyright_file_path}`.", se.MESSAGE_TYPE_ERROR, "uncopyright.xhtml"))
+			if not filecmp.cmp(uncopyright_file_path, self.path / "src/epub/text/uncopyright.xhtml"):
+				messages.append(LintMessage("f-006", f"File does not match `{uncopyright_file_path}`.", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/text/uncopyright.xhtml"))
 	except Exception:
-		missing_files.append(str(Path("src/epub/text/uncopyright.xhtml")))
+		missing_files.append(self.path / "src/epub/text/uncopyright.xhtml")
 
 	# Now iterate over individual files for some checks
 	for root, directories, filenames in os.walk(self.path):
@@ -754,37 +757,39 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				directories_not_url_safe.append(Path(root) / directory)
 
 		for filename in natsorted(filenames):
-			if filename.endswith(".jpeg"):
+			filename = Path(root) / filename
+
+			if filename.suffix == ".jpeg":
 				messages.append(LintMessage("f-011", "JPEG files must end in `.jpg`.", se.MESSAGE_TYPE_ERROR, filename))
 
-			if filename.endswith(".tiff"):
+			if filename.suffix == ".tiff":
 				messages.append(LintMessage("f-012", "TIFF files must end in `.tif`.", se.MESSAGE_TYPE_ERROR, filename))
 
-			if filename.startswith("cover.source."):
+			if filename.stem == "cover.source":
 				has_cover_source = True
 
-			if "-0" in filename:
+			if "-0" in filename.name:
 				messages.append(LintMessage("f-009", "Illegal leading `0` in filename.", se.MESSAGE_TYPE_ERROR, filename))
 
-			if Path(filename).stem != "LICENSE":
-				url_safe_filename = se.formatting.make_url_safe(Path(filename).stem) + Path(filename).suffix
-				if filename != url_safe_filename and not Path(filename).stem.endswith(".source"):
-					files_not_url_safe.append(Path(root) / filename)
+			if filename.stem != "LICENSE":
+				url_safe_filename = se.formatting.make_url_safe(filename.stem) + filename.suffix
+				if filename.name != url_safe_filename and not filename.stem.endswith(".source"):
+					files_not_url_safe.append(filename)
 
-			if filename == "cover.jpg":
+			if filename.name == "cover.jpg":
 				try:
-					image = Image.open(Path(root) / filename)
+					image = Image.open(filename)
 					if image.size != (1400, 2100):
 						messages.append(LintMessage("s-051", "Wrong height or width. `cover.jpg` must be exactly 1400 × 2100.", se.MESSAGE_TYPE_ERROR, filename))
 
 				except UnidentifiedImageError:
 					raise se.InvalidFileException(f"Couldn’t identify image type of `{filename}`.")
 
-			if filename.endswith(tuple(se.BINARY_EXTENSIONS)) or filename.endswith("core.css"):
+			if filename.suffix in se.BINARY_EXTENSIONS or filename.name == "core.css":
 				continue
 
 			# Read the file and start doing some serious checks!
-			with open(Path(root) / filename, "r", encoding="utf-8") as file:
+			with open(filename, "r", encoding="utf-8") as file:
 				try:
 					file_contents = file.read()
 				except UnicodeDecodeError:
@@ -802,8 +807,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			if "UTF-8" in file_contents:
 				messages.append(LintMessage("x-001", "String `UTF-8` must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename))
 
-			if filename.endswith(".svg"):
-				svg_dom = _dom(Path(root) / filename)
+			if filename.suffix == ".svg":
+				svg_dom = _dom(filename)
 
 				# Check for fill: #000 which should simply be removed
 				nodes = svg_dom.xpath("//*[contains(@fill, '#000') or contains(translate(@style, ' ', ''), 'fill:#000')]")
@@ -811,7 +816,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("x-004", "Illegal `style=\"fill: #000\"` or `fill=\"#000\"`.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for illegal height or width on root <svg> element
-				if filename != "logo.svg": # Do as I say, not as I do...
+				if filename.name != "logo.svg": # Do as I say, not as I do...
 					if svg_dom.xpath("//svg[@height or @width]"):
 						messages.append(LintMessage("x-005", "Illegal `height` or `width` attribute on root `<svg>` element. Size SVGs using the `viewBox` attribute only.", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -839,7 +844,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				if f"{os.sep}src{os.sep}" not in root:
 					# Check that cover and titlepage images are in all caps
-					if filename == "cover.svg":
+					if filename.name == "cover.svg":
 						nodes = svg_dom.xpath("//text[re:test(., '[a-z]')]")
 						if nodes:
 							messages.append(LintMessage("s-002", "Lowercase letters in cover. Cover text must be all uppercase.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
@@ -847,7 +852,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						# For later comparison with titlepage
 						cover_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The cover for ", "") # <title> can appear on any element in SVG, but we only want to check the root one
 
-					if filename == "titlepage.svg":
+					if filename.name == "titlepage.svg":
 						nodes = svg_dom.xpath("//text[re:test(., '[a-z]') and not(text() = 'translated by' or text() = 'illustrated by' or text() = 'and')]")
 						if nodes:
 							messages.append(LintMessage("s-003", "Lowercase letters in titlepage. Titlepage text must be all uppercase except `translated by` and `illustrated by`.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
@@ -855,22 +860,22 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						# For later comparison with cover
 						titlepage_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The titlepage for ", "") # <title> can appear on any element in SVG, but we only want to check the root one
 
-			if filename.endswith(".xhtml"):
+			if filename.suffix == ".xhtml":
 				# Read file contents into a DOM for querying
-				dom = _dom(Path(root) / filename)
+				dom = _dom(filename)
 
 				messages = messages + _get_malformed_urls(file_contents, filename)
 
-				if filename == "titlepage.xhtml":
+				if filename.name == "titlepage.xhtml":
 					if not dom.xpath("/html/head/title[text() = 'Titlepage']"):
 						messages.append(LintMessage("s-025", "Titlepage `<title>` elements must contain exactly: `Titlepage`.", se.MESSAGE_TYPE_ERROR, filename))
 
-				if filename == "halftitle.xhtml":
+				if filename.name == "halftitle.xhtml":
 					has_halftitle = True
 					if not dom.xpath("/html/head/title[text() = 'Half Title']"):
 						messages.append(LintMessage("s-024", "Half title `<title>` elements must contain exactly: \"Half Title\".", se.MESSAGE_TYPE_ERROR, filename))
 
-				if filename == "colophon.xhtml":
+				if filename.name == "colophon.xhtml":
 					# Check for wrong grammar filled in from template
 					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
 					if nodes:
@@ -915,7 +920,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 								messages.append(LintMessage("m-040", f"Source not represented in colophon.xhtml. Expected: `<a href=\"{link}\">Google Books</a>`.", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check for unused selectors
-				if not filename.endswith("titlepage.xhtml") and not filename.endswith("imprint.xhtml") and not filename.endswith("uncopyright.xhtml"):
+				if filename.name not in ("titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml"):
 					for selector in local_css_selectors:
 						try:
 							sel = se.easy_xml.css_selector(selector)
@@ -935,12 +940,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Done checking for unused selectors.
 
 				# Check if this is a frontmatter file
-				if filename not in ("titlepage.xhtml", "imprint.xhtml", "toc.xhtml"):
+				if filename.name not in ("titlepage.xhtml", "imprint.xhtml", "toc.xhtml"):
 					if dom.xpath("//*[contains(@epub:type, 'frontmatter')]"):
 						has_frontmatter = True
 
 				# Add new CSS classes to global list
-				if filename not in se.IGNORED_FILENAMES:
+				if filename.name not in se.IGNORED_FILENAMES:
 					for node in dom.xpath("//*[@class]"):
 						for css_class in node.attribute("class").split():
 							if css_class in xhtml_css_classes:
@@ -948,7 +953,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							else:
 								xhtml_css_classes[css_class] = 1
 
-				if filename != "toc.xhtml":
+				if filename.name != "toc.xhtml":
 					for node in dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')]"):
 						# Decide whether to remove subheadings based on the following logic:
 						# If the closest parent <section> or <article> is a part, division, or volume, then keep subtitle
@@ -986,7 +991,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 								heading_subtitle[0].remove()
 
 						normalized_text = " ".join(node_copy.inner_text().split())
-						headings = headings + [(normalized_text, filename)]
+						headings.append((normalized_text, filename))
 
 				# Check for direct z3998:roman spans that should have their semantic pulled into the parent element
 				nodes = dom.xpath("/html/body//span[contains(@epub:type, 'z3998:roman')][not(preceding-sibling::*)][not(following-sibling::*)][not(preceding-sibling::text()[normalize-space(.)])][not(following-sibling::text()[normalize-space(.)])]")
@@ -1059,7 +1064,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Ignore the title page here, because we often have publishers with ampersands as
 				# translators, but in alt tags. Like "George Allen & Unwin".
-				if filename != "titlepage.xhtml":
+				if filename.name != "titlepage.xhtml":
 					# Before we process this, we remove the eoc class from <abbr class="name"> because negative lookbehind
 					# must be fixed-width. I.e. we can't do `class="name( eoc)?"`
 					temp_file_contents = file_contents.replace("\"name eoc\"", "\"name\"")
@@ -1115,7 +1120,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for ending punctuation inside italics that have semantics.
 				# Ignore the colophon because paintings might have punctuation in their names
-				if filename != "colophon.xhtml":
+				if filename.name != "colophon.xhtml":
 					# This xpath matches b or i elements with epub:type="se:name...", that are not stage direction, whose last text node ends in punctuation.
 					# Note that we check that the last node is a text node, because we may have <abbr> a sthe last node
 					matches = [node.tostring() for node in dom.xpath("(//b | //i)[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., '[\\.,!\\?]$')]]")]
@@ -1140,7 +1145,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for poetry/verse without a descendent <p> element.
 				# Skip the ToC because the landmarks section may have the poem/verse semantic.
-				if filename != "toc.xhtml":
+				if filename.name != "toc.xhtml":
 					nodes = dom.xpath("/html/body//*[not(self::tr or self::td)][re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][not(descendant::p)]")
 					if nodes:
 						messages.append(LintMessage("s-044", "Element with poem or verse semantic, without descendant `<p>` (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
@@ -1239,7 +1244,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for common typos
 				# Don't check the titlepage because it has a standard format and may raise false positives
-				if filename != "titlepage.xhtml":
+				if filename.name != "titlepage.xhtml":
 					matches = [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", file_contents, flags=regex.IGNORECASE)]
 					if matches:
 						messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_ERROR, filename, matches))
@@ -1326,7 +1331,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for missing subtitle styling
 				# Half titles have slightly different subtitle styles than regular subtitles
-				if filename == "halftitle.xhtml":
+				if filename.name == "halftitle.xhtml":
 					if not local_css_has_halftitle_subtitle_style:
 						missing_styles += [node.totagstring() for node in dom.xpath("/html/body//span[contains(@epub:type, 'subtitle')]")]
 				else:
@@ -1342,7 +1347,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for <li> elements that don't have a direct block child
 				# allow white space and comments before the first child
-				if filename not in ("toc.xhtml", "loi.xhtml"):
+				if filename.name not in ("toc.xhtml", "loi.xhtml"):
 					nodes = dom.xpath("/html/body//li[(node()[normalize-space(.) and not(self::comment())])[1][not(name()='p' or name()='blockquote' or name()='div' or name()='table' or name()='header' or name()='ul' or name()='ol')]]")
 					if nodes:
 						messages.append(LintMessage("s-007", "`<li>` element without direct block-level child.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
@@ -1508,7 +1513,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							img_alt_not_typogrified.append(node.totagstring())
 
 						# Check alt attributes not ending in punctuation
-						if filename not in se.IGNORED_FILENAMES and not regex.search(r"""[\.\!\?]”?$""", alt):
+						if filename.name not in se.IGNORED_FILENAMES and not regex.search(r"""[\.\!\?]”?$""", alt):
 							img_alt_lacking_punctuation.append(node.totagstring())
 
 						# Check that alt attributes match SVG titles
@@ -1524,10 +1529,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 									messages.append(LintMessage("s-027", f"{image_ref} missing `<title>` element.", se.MESSAGE_TYPE_ERROR, image_ref))
 
 								if title_text != "" and alt != "" and title_text != alt:
-									messages.append(LintMessage("s-022", f"The `<title>` element of `{image_ref}` does not match the `alt` attribute text in `{filename}`.", se.MESSAGE_TYPE_ERROR, filename))
+									messages.append(LintMessage("s-022", f"The `<title>` element of `{image_ref}` does not match the `alt` attribute text in `{filename.name}`.", se.MESSAGE_TYPE_ERROR, filename))
 
 							except FileNotFoundError:
-								missing_files.append(str(Path(f"src/epub/images/{image_ref}")))
+								missing_files.append(self.path / f"src/epub/images/{image_ref}")
 
 					else:
 						img_no_alt.append(node.totagstring())
@@ -1578,7 +1583,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for double spacing
 				matches = regex.search(fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}", file_contents)
 				if matches:
-					double_spaced_files.append(str(Path(filename)))
+					double_spaced_files.append(filename)
 
 				# Run some checks on epub:type values
 				incorrect_attrs = set()
@@ -1645,7 +1650,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-006", "Poem or verse `<p>` (stanza) without `<span>` (line) element.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check to see if we included poetry or verse without the appropriate styling
-				if filename not in se.IGNORED_FILENAMES:
+				if filename.name not in se.IGNORED_FILENAMES:
 					nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][./p/span]")
 					for node in nodes:
 						if "z3998:poem" in node.attribute("epub:type") and not local_css_has_poem_style:
@@ -1669,7 +1674,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-047", "`noteref` as a direct child of element with poem or verse semantic. `noteref`s should be in their parent `<span>`.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for space before endnote backlinks
-				if filename == "endnotes.xhtml":
+				if filename.name == "endnotes.xhtml":
 					# Do we have to replace Ibid.?
 					matches = regex.findall(r"\bibid\b", file_contents, flags=regex.IGNORECASE)
 					if matches:
@@ -1682,7 +1687,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# If we're in the imprint, are the sources represented correctly?
 				# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
-				if filename == "imprint.xhtml":
+				if filename.name == "imprint.xhtml":
 					# Check for wrong grammar filled in from template
 					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/')][(preceding-sibling::node()[1])[re:test(., 'the\\s+$')]]")
 					if nodes:
@@ -1712,25 +1717,25 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				abbr_elements += dom.xpath("/html/body//abbr[contains(@class, 'acronym')]")
 
 				# Check if language tags in individual files match the language in content.opf
-				if filename not in se.IGNORED_FILENAMES:
+				if filename.name not in se.IGNORED_FILENAMES:
 					file_language = dom.xpath("/html/@xml:lang", True)
 					if language != file_language:
-						messages.append(LintMessage("s-033", f"File language is `{file_language}`, but `content.opf` language is `{language}`.", se.MESSAGE_TYPE_WARNING, filename))
+						messages.append(LintMessage("s-033", f"File language is `{file_language}`, but `{self.metadata_file_path.name}` language is `{language}`.", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check LoI descriptions to see if they match associated figcaptions
-				if filename == "loi.xhtml":
+				if filename.name == "loi.xhtml":
 					nodes = dom.xpath("/html/body//li/a")
 					for node in nodes:
 						figure_ref = node.attribute("href").split("#")[1]
 						chapter_ref = regex.findall(r"(.*?)#.*", node.attribute("href"))[0]
 						figcaption_text = ""
 						loi_text = node.inner_text()
-						file_dom = _dom(self.path / "src" / "epub" / "text" / chapter_ref)
+						file_dom = _dom(self.path / "src/epub/text" / chapter_ref)
 
 						try:
 							figure = file_dom.xpath(f"//*[@id='{figure_ref}']")[0]
 						except Exception:
-							messages.append(LintMessage("s-040", f"`#{figure_ref}` not found in file `{chapter_ref}`.", se.MESSAGE_TYPE_ERROR, "loi.xhtml"))
+							messages.append(LintMessage("s-040", f"`#{figure_ref}` not found in file `{chapter_ref}`.", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/text/loi.xhtml"))
 							continue
 
 						for child in figure.lxml_element:
@@ -1741,39 +1746,39 @@ def lint(self, skip_lint_ignore: bool) -> list:
 								figcaption_text = se.easy_xml.EasyXmlElement(child).inner_text()
 
 						if (figcaption_text != "" and loi_text != "" and figcaption_text != loi_text) and (figure_img_alt != "" and loi_text != "" and figure_img_alt != loi_text):
-							messages.append(LintMessage("s-041", f"The `<figcaption>` element of `#{figure_ref}` does not match the text in its LoI entry.", se.MESSAGE_TYPE_WARNING, chapter_ref))
+							messages.append(LintMessage("s-041", f"The `<figcaption>` element of `#{figure_ref}` does not match the text in its LoI entry.", se.MESSAGE_TYPE_WARNING, self.path / "src/epub/text" / chapter_ref))
 
 			# Check for missing MARC relators
-			if filename == "introduction.xhtml" and ">aui<" not in self.metadata_xml and ">win<" not in self.metadata_xml:
-				messages.append(LintMessage("m-030", "`introduction.xhtml` found, but no MARC relator `aui` (Author of introduction, but not the chief author) or `win` (Writer of introduction).", se.MESSAGE_TYPE_WARNING, "content.opf"))
+			if filename.name == "introduction.xhtml" and ">aui<" not in self.metadata_xml and ">win<" not in self.metadata_xml:
+				messages.append(LintMessage("m-030", "`introduction.xhtml` found, but no MARC relator `aui` (Author of introduction, but not the chief author) or `win` (Writer of introduction).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 
-			if filename == "preface.xhtml" and ">wpr<" not in self.metadata_xml:
-				messages.append(LintMessage("m-031", "`preface.xhtml` found, but no MARC relator `wpr` (Writer of preface).", se.MESSAGE_TYPE_WARNING, "content.opf"))
+			if filename.name == "preface.xhtml" and ">wpr<" not in self.metadata_xml:
+				messages.append(LintMessage("m-031", "`preface.xhtml` found, but no MARC relator `wpr` (Writer of preface).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 
-			if filename == "afterword.xhtml" and ">aft<" not in self.metadata_xml:
-				messages.append(LintMessage("m-032", "`afterword.xhtml` found, but no MARC relator `aft` (Author of colophon, afterword, etc.).", se.MESSAGE_TYPE_WARNING, "content.opf"))
+			if filename.name == "afterword.xhtml" and ">aft<" not in self.metadata_xml:
+				messages.append(LintMessage("m-032", "`afterword.xhtml` found, but no MARC relator `aft` (Author of colophon, afterword, etc.).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 
-			if filename == "endnotes.xhtml" and ">ann<" not in self.metadata_xml:
-				messages.append(LintMessage("m-033", "`endnotes.xhtml` found, but no MARC relator `ann` (Annotator).", se.MESSAGE_TYPE_WARNING, "content.opf"))
+			if filename.name == "endnotes.xhtml" and ">ann<" not in self.metadata_xml:
+				messages.append(LintMessage("m-033", "`endnotes.xhtml` found, but no MARC relator `ann` (Annotator).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 
-			if filename == "loi.xhtml" and ">ill<" not in self.metadata_xml:
-				messages.append(LintMessage("m-034", "`loi.xhtml` found, but no MARC relator `ill` (Illustrator).", se.MESSAGE_TYPE_WARNING, "content.opf"))
+			if filename.name == "loi.xhtml" and ">ill<" not in self.metadata_xml:
+				messages.append(LintMessage("m-034", "`loi.xhtml` found, but no MARC relator `ill` (Illustrator).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 
 			# Check for wrong semantics in frontmatter/backmatter
-			if filename in se.FRONTMATTER_FILENAMES and "frontmatter" not in file_contents:
+			if filename.name in se.FRONTMATTER_FILENAMES and "frontmatter" not in file_contents:
 				messages.append(LintMessage("s-036", "No `frontmatter` semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
-			if filename in se.BACKMATTER_FILENAMES and "backmatter" not in file_contents:
+			if filename.name in se.BACKMATTER_FILENAMES and "backmatter" not in file_contents:
 				messages.append(LintMessage("s-037", "No `backmatter` semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
 	if cover_svg_title != titlepage_svg_title:
 		messages.append(LintMessage("s-028", "`cover.svg` and `titlepage.svg` `<title>` elements do not match.", se.MESSAGE_TYPE_ERROR))
 
 	if has_frontmatter and not has_halftitle:
-		messages.append(LintMessage("s-020", "Frontmatter found, but no halftitle. Halftitle is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("s-020", "Frontmatter found, but no halftitle. Halftitle is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR))
 
 	if not has_cover_source:
-		missing_files.append(str(Path("images/cover.source.jpg")))
+		missing_files.append(self.path / "images/cover.source.jpg")
 
 	missing_selectors = []
 	single_use_css_classes = []
@@ -1788,14 +1793,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			single_use_css_classes.append(css_class)
 
 	if missing_selectors:
-		messages.append(LintMessage("x-013", "CSS class found in XHTML, but not in `local.css`.", se.MESSAGE_TYPE_ERROR, "local.css", missing_selectors))
+		messages.append(LintMessage("x-013", "CSS class found in XHTML, but not in `local.css`.", se.MESSAGE_TYPE_ERROR, local_css_path, missing_selectors))
 
 	if single_use_css_classes:
-		messages.append(LintMessage("c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks.", se.MESSAGE_TYPE_WARNING, "local.css", single_use_css_classes))
+		messages.append(LintMessage("c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks.", se.MESSAGE_TYPE_WARNING, local_css_path, single_use_css_classes))
 
 	if files_not_url_safe:
 		try:
-			files_not_url_safe = self.repo.git.ls_files(files_not_url_safe).split("\n")
+			files_not_url_safe = self.repo.git.ls_files([str(f.relative_to(self.path)) for f in files_not_url_safe]).split("\n")
 			if files_not_url_safe and files_not_url_safe[0] == "":
 				files_not_url_safe = []
 		except:
@@ -1803,12 +1808,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			pass
 
 		for filepath in files_not_url_safe:
-			url_safe_filename = se.formatting.make_url_safe(Path(filepath).stem) + Path(filepath).suffix
-			messages.append(LintMessage("f-008", f"Filename is not URL-safe. Expected: `{url_safe_filename}`.", se.MESSAGE_TYPE_ERROR, Path(filepath).name))
+			filepath = Path(filepath)
+			url_safe_filename = se.formatting.make_url_safe(filepath.stem) + filepath.suffix
+			messages.append(LintMessage("f-008", f"Filename is not URL-safe. Expected: `{url_safe_filename}`.", se.MESSAGE_TYPE_ERROR, filepath))
 
 	if directories_not_url_safe:
 		try:
-			directories_not_url_safe = self.repo.git.ls_files(directories_not_url_safe).split("\n")
+			directories_not_url_safe = self.repo.git.ls_files([str(f.relative_to(self.path)) for f in directories_not_url_safe]).split("\n")
 
 			if directories_not_url_safe and directories_not_url_safe[0] == "":
 				directories_not_url_safe = []
@@ -1825,12 +1831,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			pass
 
 		for filepath in directories_not_url_safe:
-			url_safe_filename = se.formatting.make_url_safe(Path(filepath).stem)
-			messages.append(LintMessage("f-008", f"Filename is not URL-safe. Expected: `{url_safe_filename}`.", se.MESSAGE_TYPE_ERROR, Path(filepath).name))
+			filepath = Path(filepath)
+			url_safe_filename = se.formatting.make_url_safe(filepath.stem)
+			messages.append(LintMessage("f-008", f"Filename is not URL-safe. Expected: `{url_safe_filename}`.", se.MESSAGE_TYPE_ERROR, filepath))
 
 	# Check our headings against the ToC and landmarks
 	headings = list(set(headings))
-	toc_dom = _dom(self.path / "src" / "epub" / "toc.xhtml")
+	toc_dom = _dom(self.path / "src/epub/toc.xhtml")
 	toc_headings = []
 	toc_files = []
 	toc_entries = toc_dom.xpath("/html/body/nav[@epub:type='toc']//a")
@@ -1839,15 +1846,16 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	# Unlike main headings, ToC entries have a ‘:’ before the subheading so we need to strip these for comparison
 	for node in toc_entries:
 		entry_text = " ".join(node.inner_text().replace(":", "").split())
-		# This regex removes both the path portion of the filename, and and # anchors afterwards (for books like Aesop's fables)
-		entry_file = regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", node.attribute("href"))
-		toc_headings.append((entry_text, entry_file))
+		# Remove # anchors after filenames (for books like Aesop's fables)
+		entry_file = self.path / "src/epub" / regex.sub(r"#.+$", "", node.attribute("href"))
+		toc_headings.append((entry_text, str(entry_file)))
+
 	for heading in headings:
 		# Occasionally we find a heading with a colon, but as we’ve stripped our
 		# ToC-only colons above we also need to do that here for the comparison.
-		heading_without_colons = (heading[0].replace(":", ""), heading[1])
+		heading_without_colons = (heading[0].replace(":", ""), str(heading[1]))
 		if heading_without_colons not in toc_headings:
-			messages.append(LintMessage("m-045", f"Heading `{heading[0]}` found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, heading[1]))
+			messages.append(LintMessage("m-045", f"Heading `{heading[0]}` found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, Path(heading[1])))
 
 	# Check our ordered ToC entries against the spine
 	# To cover all possibilities, we combine the toc and the landmarks to get the full set of entries
@@ -1865,10 +1873,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	spine_entries = self.metadata_dom.xpath("/package/spine/itemref")
 	if len(toc_files) != len(spine_entries):
-		messages.append(LintMessage("m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)}).", se.MESSAGE_TYPE_ERROR, "content.opf"))
+		messages.append(LintMessage("m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)}).", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 	for index, node in enumerate(spine_entries):
 		if toc_files[index] != node.attribute("idref"):
-			messages.append(LintMessage("m-044", f"The spine order does not match the order of the ToC and landmarks. Expected `{node.attribute('idref')}`, found `{toc_files[index]}`.", se.MESSAGE_TYPE_ERROR, "content.opf"))
+			messages.append(LintMessage("m-044", f"The spine order does not match the order of the ToC and landmarks. Expected `{node.attribute('idref')}`, found `{toc_files[index]}`.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 			break
 
 	for element in abbr_elements:
@@ -1877,17 +1885,16 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			missing_styles.append(element.totagstring())
 
 	if missing_styles:
-		messages.append(LintMessage("c-006", "Semantic found, but missing corresponding style in `local.css`.", se.MESSAGE_TYPE_ERROR, "local.css", set(missing_styles)))
+		messages.append(LintMessage("c-006", "Semantic found, but missing corresponding style in `local.css`.", se.MESSAGE_TYPE_ERROR, local_css_path, set(missing_styles)))
 
-	if double_spaced_files:
-		for double_spaced_file in double_spaced_files:
-			messages.append(LintMessage("t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)", se.MESSAGE_TYPE_ERROR, double_spaced_file))
+	for double_spaced_file in double_spaced_files:
+		messages.append(LintMessage("t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)", se.MESSAGE_TYPE_ERROR, double_spaced_file))
 
 	for missing_file in missing_files:
 		messages.append(LintMessage("f-002", "Missing expected file or directory.", se.MESSAGE_TYPE_ERROR, missing_file))
 
 	if unused_selectors:
-		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, "local.css", unused_selectors))
+		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, local_css_path, unused_selectors))
 
 	# Now that we have our lint messages, we filter out ones that we've ignored.
 	if ignored_codes:
@@ -1897,7 +1904,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				for code in codes:
 					try:
 						# fnmatch.translate() converts shell-style globs into a regex pattern
-						if regex.match(fr"{translate(path)}", str(message.filename)) and message.code == code["code"]:
+						if regex.match(fr"{translate(path)}", str(message.filename.name) if message.filename else "") and message.code == code["code"]:
 							messages.remove(message)
 							code["used"] = True
 
@@ -1916,7 +1923,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					unused_codes.append(f"{path}, {code['code']}")
 
 		if unused_codes:
-			messages.append(LintMessage("m-048", "Unused `se-lint-ignore.xml` rule.", se.MESSAGE_TYPE_ERROR, "se-lint-ignore.xml", unused_codes))
+			messages.append(LintMessage("m-048", "Unused `se-lint-ignore.xml` rule.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, unused_codes))
 
 	messages = natsorted(messages, key=lambda x: (str(x.filename), x.code))
 
