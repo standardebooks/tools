@@ -287,7 +287,7 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 		if language not in hyphenators:
 			hyphenators[language] = Hyphenator(language)
 	except Exception:
-		raise se.MissingDependencyException(f"Hyphenator for language `{language}` not available.\nInstalled hyphenators: {list_installed()}")
+		raise se.MissingDependencyException(f"Hyphenator for language `{language}` not available.\nInstalled hyphenators: {list_installed()}.")
 
 	text = str(soup.body)
 	result = text

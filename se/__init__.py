@@ -173,9 +173,16 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 	# This no longer works with rich because it can't (yet) output to stderr
 	output_file = sys.stderr if not is_warning and not is_called_from_parallel() else sys.stdout
 
+	message = str(message)
+
+	for filename in regex.findall(r"`(.+?)`", message):
+		file_path = Path(filename)
+		if file_path.is_file():
+			message = regex.sub(f"`{filename}`", f"[bright_blue][link=file://{file_path}]{file_path}[/link][/bright_blue]", message)
+
 	# By convention, any text within the message text that is surrounded in backticks
 	# is rendered in blue
-	message = regex.sub(r"`(.+?)`", r"[bright_blue]\1[/bright_blue]", str(message))
+	message = regex.sub(r"`(.+?)`", r"[bright_blue]\1[/bright_blue]", message)
 
 	if verbose:
 		message = str(message).replace("\n", f"\n{MESSAGE_INDENT}")

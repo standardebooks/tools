@@ -330,11 +330,11 @@ def _dom(file_path: Path) -> Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtm
 					node.remove()
 
 			except etree.XMLSyntaxError as ex:
-				raise se.InvalidXhtmlException(f"Couldn’t parse XML in `{file_path}`\n`lxml` says: {str(ex)}")
+				raise se.InvalidXhtmlException(f"Couldn’t parse XML in `{file_path}`. Exception: {ex}")
 			except FileNotFoundError as ex:
 				raise ex
 			except Exception:
-				raise se.InvalidXhtmlException(f"Couldn’t parse XML in `{file_path}`")
+				raise se.InvalidXhtmlException(f"Couldn’t parse XML in `{file_path}`.")
 
 	return _DOM_CACHE[file_path_str]
 
@@ -924,7 +924,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							unused_selectors.remove(selector)
 							continue
 						except Exception as ex:
-							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: `{selector}`\n`lxml` says: {ex}")
+							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: `{selector}`. Exception: {ex}")
 
 						if dom.xpath(sel.path):
 							unused_selectors.remove(selector)
@@ -1906,7 +1906,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						# For example, chapter-*.xhtml gets t-001 removed, then subsequently *.xhtml gets t-001 removed.
 						pass
 					except Exception as ex:
-						raise se.InvalidInputException(f"Invalid path in `se-lint-ignore.xml` rule: `{path}`")
+						raise se.InvalidInputException(f"Invalid path in `se-lint-ignore.xml` rule: `{path}`.")
 
 		# Check for unused ignore rules
 		unused_codes: List[str] = []

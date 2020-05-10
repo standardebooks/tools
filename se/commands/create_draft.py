@@ -384,7 +384,7 @@ def _create_draft(args: Namespace):
 			response = requests.get(args.pg_url)
 			pg_metadata_html = response.text
 		except Exception as ex:
-			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page. Error: {ex}")
+			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page. Exception: {ex}")
 
 		soup = BeautifulSoup(pg_metadata_html, "lxml")
 
@@ -414,13 +414,13 @@ def _create_draft(args: Namespace):
 			response = requests.get(pg_ebook_url)
 			pg_ebook_html = response.text
 		except Exception as ex:
-			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook HTML. Error: {ex}")
+			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook HTML. Exception: {ex}")
 
 		try:
 			fixed_pg_ebook_html = fix_text(pg_ebook_html, uncurl_quotes=False)
 			pg_ebook_html = se.strip_bom(fixed_pg_ebook_html)
 		except Exception as ex:
-			raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Project Gutenberg HTML file. Error: {ex}")
+			raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Project Gutenberg HTML file. Exception: {ex}")
 
 		# Try to guess the ebook language
 		pg_language = "en-US"
@@ -471,7 +471,7 @@ def _create_draft(args: Namespace):
 			with open(repo_name / "src" / "epub" / "text" / "body.xhtml", "w", encoding="utf-8") as file:
 				file.write(str(soup))
 		except OSError as ex:
-			raise se.InvalidFileException(f"Couldn’t write to ebook directory. Error: {ex}")
+			raise se.InvalidFileException(f"Couldn’t write to ebook directory. Exception: {ex}")
 		except:
 			# Save this error for later, because it's still useful to complete the create-draft process
 			# even if we've failed to parse PG's HTML source.
@@ -656,7 +656,7 @@ def _create_draft(args: Namespace):
 						subject_xhtml = subject_xhtml + f"\t\t<meta property=\"term\" refines=\"#subject-{i}\">{loc_id}</meta>\n"
 
 					except Exception as ex:
-						raise se.RemoteCommandErrorException(f"Couldn’t connect to `id.loc.gov`. Error: {ex}")
+						raise se.RemoteCommandErrorException(f"Couldn’t connect to `id.loc.gov`. Exception: {ex}")
 
 					i = i + 1
 

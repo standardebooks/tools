@@ -154,7 +154,7 @@ def remove_image_metadata(filename: Path) -> None:
 			jpeg_data = file.read()
 
 			if jpeg_data[0:2] != b"\xff\xd8":
-				raise se.InvalidFileException(f"Invalid JPEG file: `{filename}`")
+				raise se.InvalidFileException(f"Invalid JPEG file: `{filename}`.")
 
 			exif_segments = []
 			head = 2
@@ -170,7 +170,7 @@ def remove_image_metadata(filename: Path) -> None:
 				head = end_point
 
 				if head >= len(jpeg_data):
-					raise se.InvalidFileException(f"Invalid JPEG file: `{filename}`")
+					raise se.InvalidFileException(f"Invalid JPEG file: `{filename}`.")
 
 				# See https://www.disktuna.com/list-of-jpeg-markers/
 				# and https://exiftool.org/TagNames/JPEG.html
@@ -276,7 +276,7 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 			text = elem.text
 
 			if not text:
-				raise se.InvalidFileException(f"SVG `<text>` element has no content. File: `{in_svg}`")
+				raise se.InvalidFileException(f"SVG `<text>` element has no content. File: `{in_svg}`.")
 
 			elem.tag = "g"
 			# Replace <text> tag with <g> tag

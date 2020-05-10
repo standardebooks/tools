@@ -530,14 +530,19 @@ def format_xml(xml: Union[str, etree.ElementTree]) -> str:
 	xml = unicodedata.normalize("NFC", xml)
 
 	# Almost done. Let's clean CSS in <style> elements, like we find in SVG files.
-	matches = regex.findall(r"^(\s*)(<style[^>]*?>)(.+?)(</style>)", xml, flags=regex.DOTALL | regex.MULTILINE)
-	for match in matches:
-		css = format_css(match[2])
-		# Indent the CSS one level deeper than the <style> element
-		css = ''.join(match[0] + "\t" + line + "\n" for line in css.splitlines())
-		css = css.strip("\n")
-		css = regex.sub(r"^\s+$", "", css, flags=regex.MULTILINE) # Remove indents from lines that are just white space
-		xml = xml.replace(f"{match[0]}{match[1]}{match[2]}{match[3]}", f"{match[0]}{match[1]}\n{css}\n{match[0]}{match[3]}")
+	try:
+		matches = regex.findall(r"^(\s*)(<style[^>]*?>)(.+?)(</style>)", xml, flags=regex.DOTALL | regex.MULTILINE)
+		for match in matches:
+			css = format_css(match[2])
+			# Indent the CSS one level deeper than the <style> element
+			css = ''.join(match[0] + "\t" + line + "\n" for line in css.splitlines())
+			css = css.strip("\n")
+			css = regex.sub(r"^\s+$", "", css, flags=regex.MULTILINE) # Remove indents from lines that are just white space
+			xml = xml.replace(f"{match[0]}{match[1]}{match[2]}{match[3]}", f"{match[0]}{match[1]}\n{css}\n{match[0]}{match[3]}")
+	except se.InvalidCssException as ex:
+		raise ex
+	except Exception as ex:
+		raise se.InvalidCssException(f"Couldn’t parse CSS. Exception: {ex}")
 
 	return xml
 
@@ -568,7 +573,7 @@ def format_xhtml(xhtml: str) -> str:
 	try:
 		tree = etree.fromstring(str.encode(xhtml))
 	except Exception as ex:
-		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
+		raise se.InvalidXhtmlException(f"Couldn’t parse XHTML file. Exception: {ex}")
 
 	# Lowercase attribute names
 	for node in tree.xpath("//*[attribute::*[re:test(local-name(), '[A-Z]')]]", namespaces=se.XHTML_NAMESPACES):
@@ -611,7 +616,7 @@ def format_opf(xml: str) -> str:
 	try:
 		xml = format_xml(xml)
 	except Exception as ex:
-		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
+		raise se.InvalidXmlException(f"Couldn’t parse OPF file. Exception: {ex}")
 
 	# Clean the long description, if we can find it
 	xml = xml.replace(" &lt;p&gt;", "\n\t\t\t&lt;p&gt;")
@@ -638,22 +643,19 @@ def format_svg(svg: str) -> str:
 
 	try:
 		tree = etree.fromstring(str.encode(svg))
-	except Exception as ex:
-		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
 
-	# Make sure viewBox is correctly-cased
-	for node in tree.xpath("/svg:svg", namespaces={"svg": "http://www.w3.org/2000/svg"}):
-		for key, value in node.items(): # Iterate over attributes
-			if key.lower() == "viewbox":
-				node.attrib.pop(key) # Remove the attribute
-				node.attrib["viewBox"] = value # Re-add the attribute, correctly-cased
-				break
+		# Make sure viewBox is correctly-cased
+		for node in tree.xpath("/svg:svg", namespaces={"svg": "http://www.w3.org/2000/svg"}):
+			for key, value in node.items(): # Iterate over attributes
+				if key.lower() == "viewbox":
+					node.attrib.pop(key) # Remove the attribute
+					node.attrib["viewBox"] = value # Re-add the attribute, correctly-cased
+					break
 
-	# Canonicalize and format XHTML
-	try:
 		svg = format_xml(tree)
+
 	except Exception as ex:
-		raise se.InvalidXhtmlException(f"Couldn’t parse file. Exception: {ex}")
+		raise se.InvalidXmlException(f"Couldn’t parse SVG file. Exception: {ex}")
 
 	return svg
 
@@ -770,7 +772,7 @@ def _format_css_rules(content: list, indent_level: int) -> str:
 
 	for token in tinycss2.parse_rule_list(content):
 		if token.type == "error":
-			raise se.InvalidCssException(token.message)
+			raise se.InvalidCssException("Couldn’t parse CSS. Exception: {token.message}")
 
 		if token.type == "qualified-rule":
 			output += ("\t" * indent_level) + _format_css_component_list(token.prelude, True).replace("\n", "\n" + ("\t" * indent_level)) + "{\n" + _format_css_declarations(token.content, indent_level + 1) + "\n" + ("\t" * indent_level) + "}\n\n"
@@ -805,7 +807,7 @@ def _format_css_declarations(content: list, indent_level: int) -> str:
 
 	for token in tinycss2.parse_declaration_list(content):
 		if token.type == "error":
-			raise se.InvalidCssException(token.message)
+			raise se.InvalidCssException("Couldn’t parse CSS. Exception: {token.message}")
 
 		if token.type == "declaration":
 			output += ("\t" * indent_level) + token.lower_name + ": "

@@ -67,7 +67,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		output_directory = output_directory.resolve()
 		output_directory.mkdir(parents=True, exist_ok=True)
 	except Exception:
-		raise se.FileExistsException(f"Couldn’t create output directory: `{output_directory}`")
+		raise se.FileExistsException(f"Couldn’t create output directory: `{output_directory}`.")
 
 	# All clear to start building!
 	metadata_xml = self.metadata_xml
@@ -808,7 +808,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					try:
 						tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 					except Exception as ex:
-						raise se.InvalidXhtmlException(f"Error parsing XHTML file: `endnotes.xhtml`\n{ex}")
+						raise se.InvalidXhtmlException(f"Error parsing XHTML `endnotes.xhtml`. Exception: {ex}")
 
 					notes = tree.xpath("//li[@epub:type=\"endnote\" or @epub:type=\"footnote\"]", namespaces=se.XHTML_NAMESPACES)
 
