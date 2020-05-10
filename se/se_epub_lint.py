@@ -1918,6 +1918,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		if unused_codes:
 			messages.append(LintMessage("m-048", "Unused `se-lint-ignore.xml` rule.", se.MESSAGE_TYPE_ERROR, "se-lint-ignore.xml", unused_codes))
 
-	messages = natsorted(messages, key=lambda x: (x.filename, x.code))
+	messages = natsorted(messages, key=lambda x: (str(x.filename), x.code))
 
 	return messages
