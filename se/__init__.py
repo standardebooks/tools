@@ -178,7 +178,7 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 	for filename in regex.findall(r"`(.+?)`", message):
 		file_path = Path(filename)
 		if file_path.is_file() or file_path.is_dir():
-			message = regex.sub(f"`{filename}`", f"[bright_blue][link=file://{file_path}]{file_path}[/link][/bright_blue]", message)
+			message = regex.sub(f"`{filename}`", f"[bright_blue][link=file://{file_path.resolve()}]{file_path}[/link][/bright_blue]", message)
 
 	# By convention, any text within the message text that is surrounded in backticks
 	# is rendered in blue

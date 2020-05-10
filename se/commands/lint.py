@@ -9,22 +9,23 @@ import regex
 from rich import box
 from rich.console import Console
 from rich.table import Table
+from rich.text import Text
 
 import se
 from se.se_epub import SeEpub
 
 def _get_file_path(root: Path, filename: Path) -> Path:
 	if filename.suffix == ".opf" or filename.name == "toc.xhtml":
-		return root / 'src/epub/' / filename.name
+		return (root / 'src/epub/' / filename.name).resolve()
 
 	if filename.suffix == ".css":
-		return root / 'src/epub/css/' / filename.name
+		return (root / 'src/epub/css/' / filename.name).resolve()
 
 	if filename.suffix == ".otf":
-		return root / 'src/epub/fonts/' / filename.name
+		return (root / 'src/epub/fonts/' / filename.name).resolve()
 
 	if filename.suffix == ".xhtml":
-		return root / 'src/epub/text/' / filename.name
+		return (root / 'src/epub/text/' / filename.name).resolve()
 
 	return filename
 
@@ -120,7 +121,7 @@ def lint() -> int:
 						for filename in regex.findall(r"`(.+?)`", message_text):
 							file_path = _get_file_path(se_epub.path, Path(filename))
 							if file_path.is_file() or file_path.is_dir():
-								message_text = regex.sub(f"`{filename}`", f"[bright_blue][link=file://{file_path}]{filename}[/link][/bright_blue]", message_text)
+								message_text = regex.sub(f"`{filename}`", f"[bright_blue][link=file://{file_path.resolve()}]{filename}[/link][/bright_blue]", message_text)
 
 						# By convention, any text within the message text that is surrounded in backticks is rendered in blue
 						message_text = regex.sub(r"`(.+?)`", r"[bright_blue]\1[/bright_blue]", message_text)
@@ -138,10 +139,10 @@ def lint() -> int:
 							if args.colors:
 								submessage = regex.sub(r"([\[\]])", r"\1\1", submessage)
 
-							table_data.append([" ", " ", "→", submessage])
+							table_data.append([" ", " ", "→", Text(submessage, style="dim")])
 
 				table = Table(show_header=True, header_style="bold", show_lines=True)
-				table.add_column("Code", style="dim" if args.colors else None, width=5, no_wrap=True)
+				table.add_column("Code", width=5, no_wrap=True)
 				table.add_column("Severity", no_wrap=True)
 				table.add_column("File", no_wrap=True)
 				table.add_column("Message")
