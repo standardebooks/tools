@@ -148,8 +148,8 @@ SEMANTICS & CONTENT
 "s-028", "`cover.svg` and `titlepage.svg` `<title>` elements do not match."
 "s-029", "If a `<span>` exists only for the `z3998:roman` semantic, then `z3998:roman` should be pulled into parent element instead."
 "s-030", "`z3998:nonfiction` should be `z3998:non-fiction`."
-"s-031", "Illegal colon (`:`) in SE identifier. SE identifiers are separated by dots, not colons. E.g., `se:name.vessel.ship`."
-"s-032", "SE namespace must be followed by a colon (`:`), not a dot. E.g., `se:name.vessel`."
+"s-031", "Illegal `:` in SE identifier. SE identifiers are separated by `.`, not `:`. E.g., `se:name.vessel.ship`."
+"s-032", "SE namespace must be followed by a `:`, not a `.`. E.g., `se:name.vessel`."
 "s-033", f"File language is `{file_language}`, but `content.opf` language is `{language}`."
 "s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary."
 "s-035", "`<h#>` element has the `z3998:roman` semantic, but is not a Roman numeral."
@@ -1601,10 +1601,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 								incorrect_attrs.add((attr, bare_attr))
 
 				if illegal_colons:
-					messages.append(LintMessage("s-031", "Illegal colon (`:`) in SE identifier. SE identifiers are separated by dots, not colons. E.g., `se:name.vessel.ship`.", se.MESSAGE_TYPE_ERROR, filename, illegal_colons))
+					messages.append(LintMessage("s-031", "Illegal `:` in SE identifier. SE identifiers are separated by `.`, not `:`. E.g., `se:name.vessel.ship`.", se.MESSAGE_TYPE_ERROR, filename, illegal_colons))
 
 				if illegal_se_namespaces:
-					messages.append(LintMessage("s-032", "SE namespace must be followed by a colon (`:`), not a dot. E.g., `se:name.vessel`.", se.MESSAGE_TYPE_ERROR, filename, illegal_se_namespaces))
+					messages.append(LintMessage("s-032", "SE namespace must be followed by a `:`, not a `.`. E.g., `se:name.vessel`.", se.MESSAGE_TYPE_ERROR, filename, illegal_se_namespaces))
 
 				if incorrect_attrs:
 					messages.append(LintMessage("s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary.", se.MESSAGE_TYPE_ERROR, filename, [attr for (attr, bare_attr) in incorrect_attrs]))
