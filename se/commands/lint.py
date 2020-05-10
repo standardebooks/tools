@@ -116,14 +116,14 @@ def lint() -> int:
 						# Escape brackets in the message, for example in CSS selectors, so that Rich doesn't interpret them as BBcode
 						message_text = regex.sub(r"([\[\]])", r"\1\1", message_text)
 
+						# Add hyperlinks to filenames in the message text
+						for filename in regex.findall(r"`(.+?)`", message_text):
+							file_path = _get_file_path(se_epub.path, Path(filename))
+							if file_path.is_file() or file_path.is_dir():
+								message_text = regex.sub(f"`{filename}`", f"[bright_blue][link=file://{file_path}]{filename}[/link][/bright_blue]", message_text)
+
 						# By convention, any text within the message text that is surrounded in backticks is rendered in blue
 						message_text = regex.sub(r"`(.+?)`", r"[bright_blue]\1[/bright_blue]", message_text)
-
-						# Add hyperlinks to filenames in the message text
-						for filename in regex.findall(r"\b[a-z\-]+?\.[a-z]+?\b", message_text):
-							file_path = _get_file_path(se_epub.path, Path(filename))
-							if file_path.is_file():
-								message_text = regex.sub(filename, f"[link=file://{file_path}]{file_path.name}[/link]", message_text)
 
 						# Add hyperlinks around message filenames
 						message_filename = f"[link=file://{_get_file_path(se_epub.path, message.filename)}]{message.filename.name}[/link]"
