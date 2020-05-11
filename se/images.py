@@ -154,7 +154,7 @@ def remove_image_metadata(filename: Path) -> None:
 			jpeg_data = file.read()
 
 			if jpeg_data[0:2] != b"\xff\xd8":
-				raise se.InvalidFileException(f"Invalid JPEG file: `{filename}`.")
+				raise se.InvalidFileException(f"Invalid JPEG file: [path][link=file://{filename.resolve()}]{filename}[/].")
 
 			exif_segments = []
 			head = 2
@@ -170,7 +170,7 @@ def remove_image_metadata(filename: Path) -> None:
 				head = end_point
 
 				if head >= len(jpeg_data):
-					raise se.InvalidFileException(f"Invalid JPEG file: `{filename}`.")
+					raise se.InvalidFileException(f"Invalid JPEG file: [path][link=file://{filename.resolve()}]{filename}[/].")
 
 				# See https://www.disktuna.com/list-of-jpeg-markers/
 				# and https://exiftool.org/TagNames/JPEG.html
@@ -196,7 +196,7 @@ def remove_image_metadata(filename: Path) -> None:
 		try:
 			image = Image.open(filename)
 		except UnidentifiedImageError:
-			raise se.InvalidFileException(f"Couldn’t identify image type of `{filename}`.")
+			raise se.InvalidFileException(f"Couldn’t identify image type of [path][link=file://{filename.resolve()}]{filename}[/].")
 
 		data = list(image.getdata())
 
@@ -276,7 +276,7 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 			text = elem.text
 
 			if not text:
-				raise se.InvalidFileException(f"SVG `<text>` element has no content. File: `{in_svg}`.")
+				raise se.InvalidFileException(f"SVG [xml]<text>[/] element has no content. File: [path][link=file://{in_svg.resolve()}]{in_svg}[/].")
 
 			elem.tag = "g"
 			# Replace <text> tag with <g> tag
@@ -370,7 +370,7 @@ def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: Dict) -> Non
 	# Required properties to make any progress
 	for key in "x y font text font-size".split():
 		if not key in text_properties:
-			raise se.InvalidCssException(f"svg_text_to_paths: Missing key `{key}` in `text_properties` for `<{g_elem.tag}>` element in `./images/titlepage.svg` or `./images/cover.svg`.")
+			raise se.InvalidCssException(f"svg_text_to_paths: Missing key [text]{key}[/] in [text]text_properties[/] for [xml]<{g_elem.tag}>[/] element in [path]./images/titlepage.svg[/] or [path]./images/cover.svg[/].")
 	# We know we have x, y, text, font-size, and font so we can render vectors.
 	# Now set up some defaults if not specified.
 	text_properties["font-size"] = float(text_properties["font-size"].replace("px", "")) # NOTE assumes pixels and ignores it

@@ -4,6 +4,8 @@ This module implements the `se semanticate` command.
 
 import argparse
 
+from rich.console import Console
+
 import se
 import se.formatting
 
@@ -18,11 +20,12 @@ def semanticate() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 	return_code = 0
 
 	for filename in se.get_target_filenames(args.targets, (".xhtml",)):
 		if args.verbose:
-			print(f"Processing {filename} ...", end="", flush=True)
+			console.print(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", end="")
 
 		try:
 			with open(filename, "r+", encoding="utf-8") as file:
@@ -34,10 +37,10 @@ def semanticate() -> int:
 					file.write(processed_xhtml)
 					file.truncate()
 		except FileNotFoundError:
-			se.print_error(f"Couldn’t open file: `{filename}`")
+			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
 			return_code = se.InvalidInputException.code
 
 		if args.verbose:
-			print(" OK")
+			console.print(" OK")
 
 	return return_code

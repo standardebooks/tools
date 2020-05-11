@@ -4,6 +4,8 @@ This module implements the `se british2american` command.
 
 import argparse
 
+from rich.console import Console
+
 import se
 import se.typography
 
@@ -20,10 +22,11 @@ def british2american() -> int:
 	args = parser.parse_args()
 
 	return_code = 0
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
 	for filename in se.get_target_filenames(args.targets, (".xhtml",)):
 		if args.verbose:
-			print(f"Processing {filename} ...", end="", flush=True)
+			console.print(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", end="")
 
 		try:
 			with open(filename, "r+", encoding="utf-8") as file:
@@ -35,8 +38,8 @@ def british2american() -> int:
 					if se.typography.guess_quoting_style(xhtml) == "american":
 						convert = False
 						if args.verbose:
-							print("")
-						se.print_error(f"File appears to already use American quote style, ignoring. Use `--force` to convert anyway.{f' File: `{filename}`' if not args.verbose else ''}", args.verbose, True)
+							console.print("")
+						se.print_error(f"File appears to already use American quote style, ignoring. Use [bash]--force[/] to convert anyway.{f' File: [path][link=file://{filename}]{filename}[/][/]' if not args.verbose else ''}", args.verbose, True)
 
 				if convert:
 					new_xhtml = se.typography.convert_british_to_american(xhtml)
@@ -46,11 +49,8 @@ def british2american() -> int:
 						file.write(new_xhtml)
 						file.truncate()
 
-			if convert and args.verbose:
-				print(" OK")
-
 		except FileNotFoundError:
-			se.print_error(f"Couldn’t open file: `{filename}`.")
+			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
 			return_code = se.InvalidInputException.code
 
 	return return_code

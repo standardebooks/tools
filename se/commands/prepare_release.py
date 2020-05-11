@@ -5,6 +5,8 @@ This module implements the `se prepare-release` command.
 import argparse
 from pathlib import Path
 
+from rich.console import Console
+
 import se
 from se.se_epub import SeEpub
 
@@ -21,33 +23,35 @@ def prepare_release() -> int:
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+
 	for directory in args.directories:
 		directory = Path(directory).resolve()
 
 		if args.verbose:
-			print(f"Processing {directory} ...")
+			console.print(f"Processing [path][link=file://{directory}]{directory}[/][/] ...")
 
 		try:
 			se_epub = SeEpub(directory)
 
 			if args.word_count:
 				if args.verbose:
-					print("\tUpdating word count and reading ease ...", end="", flush=True)
+					console.print("\tUpdating word count and reading ease ...", end="")
 
 				se_epub.update_word_count()
 				se_epub.update_flesch_reading_ease()
 
 				if args.verbose:
-					print(" OK")
+					console.print(" OK")
 
 			if args.revision:
 				if args.verbose:
-					print("\tUpdating revision number ...", end="", flush=True)
+					console.print("\tUpdating revision number ...", end="")
 
 				se_epub.set_release_timestamp()
 
 				if args.verbose:
-					print(" OK")
+					console.print(" OK")
 		except se.SeException as ex:
 			se.print_error(ex)
 			return ex.code

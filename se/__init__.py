@@ -12,6 +12,7 @@ from typing import Set, Union
 
 from rich.console import Console
 from rich.text import Text
+from rich.theme import Theme
 from natsort import natsorted
 import regex
 
@@ -66,6 +67,17 @@ LEAGUE_SPARTAN_AVERAGE_SPACING = 7 # Guess at average default spacing between le
 LEAGUE_SPARTAN_100_WIDTHS = {" ": 40.0, "A": 98.245, "B": 68.1875, "C": 83.97625, "D": 76.60875, "E": 55.205, "F": 55.79, "G": 91.57875, "H": 75.0875, "I": 21.98875, "J": 52.631254, "K": 87.83625, "L": 55.205, "M": 106.9, "N": 82.5725, "O": 97.1925, "P": 68.1875, "Q": 98.83, "R": 79.41599, "S": 72.63125, "T": 67.83625, "U": 75.32125, "V": 98.245, "W": 134.62, "X": 101.28625, "Y": 93.1, "Z": 86.19875, ".": 26.78375, ",": 26.78375, "/": 66.08125, "\\": 66.08125, "-": 37.66125, ":": 26.78375, ";": 26.78375, "’": 24.3275, "!": 26.78375, "?": 64.3275, "&": 101.87125, "0": 78.48, "1": 37.895, "2": 75.205, "3": 72.04625, "4": 79.29875, "5": 70.175, "6": 74.26875, "7": 76.95875, "8": 72.16375, "9": 74.26875}
 NOVELLA_MIN_WORD_COUNT = 17500
 NOVEL_MIN_WORD_COUNT = 40000
+RICH_THEME = Theme({
+	"xhtml": "bright_blue",
+	"xml": "bright_blue",
+	"val": "bright_blue",
+	"attr": "bright_blue",
+	"class": "bright_blue",
+	"path": "bright_blue",
+	"url": "bright_blue",
+	"text": "bright_blue",
+	"bash": "bright_blue"
+})
 
 class SeException(Exception):
 	""" Wrapper class for SE exceptions """
@@ -164,6 +176,18 @@ def quiet_remove(file: Path) -> None:
 def print_error(message: Union[SeException, str], verbose: bool = False, is_warning: bool = False) -> None:
 	"""
 	Helper function to print a colored error message to the console.
+
+	Allowed BBCode values:
+	[link=foo]bar[/] - Hyperlink
+	[xml] - XML, usually a tag
+	[xhtml] - XHTML, usually a tag
+	[attr] - A lone XHTML attribute
+	[val] - A lone XHTML attribute value (not a class)
+	[class] - A lone XHTML class value
+	[path] - Filesystem path or glob
+	[url] - A URL
+	[text] - Non-semantic text that requires color
+	[bash] - A command or flag of a command
 	"""
 
 	label = "Error" if not is_warning else "Warning"
@@ -175,19 +199,10 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 
 	message = str(message)
 
-	for filename in regex.findall(r"`(.+?)`", message):
-		file_path = Path(filename)
-		if file_path.is_file() or file_path.is_dir():
-			message = regex.sub(f"`{filename}`", f"[bright_blue][link=file://{file_path.resolve()}]{file_path}[/link][/bright_blue]", message)
-
-	# By convention, any text within the message text that is surrounded in backticks
-	# is rendered in blue
-	message = regex.sub(r"`(.+?)`", r"[bright_blue]\1[/bright_blue]", message)
-
 	if verbose:
 		message = str(message).replace("\n", f"\n{MESSAGE_INDENT}")
 
-	console = Console(file=output_file, highlight=False, force_terminal=is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 	console.print(f"{MESSAGE_INDENT if verbose else ''}[white on {bg_color} bold] {label} [/] {message}")
 
 def is_positive_integer(value: str) -> int:

@@ -22,7 +22,7 @@ def print_toc() -> int:
 	args = parser.parse_args()
 
 	if not args.in_place and len(args.directories) > 1:
-		se.print_error("Multiple directories are only allowed with the `--in-place` option.")
+		se.print_error("Multiple directories are only allowed with the [bash]--in-place[/] option.")
 		return se.InvalidArgumentsException.code
 
 	for directory in args.directories:
@@ -34,7 +34,8 @@ def print_toc() -> int:
 
 		try:
 			if args.in_place:
-				with open(se_epub.path / "src" / "epub" / "toc.xhtml", "r+", encoding="utf-8") as file:
+				toc_path = se_epub.path / "src/epub/toc.xhtml"
+				with open(toc_path, "r+", encoding="utf-8") as file:
 					file.write(se_epub.generate_toc())
 					file.truncate()
 			else:
@@ -43,7 +44,7 @@ def print_toc() -> int:
 			se.print_error(ex)
 			return ex.code
 		except FileNotFoundError as ex:
-			se.print_error(f"Couldn’t open file: `{ex.filename}`")
+			se.print_error(f"Couldn’t open file: [path][link=file://{toc_path}]{toc_path}[/][/].")
 			return se.InvalidSeEbookException.code
 
 	return 0

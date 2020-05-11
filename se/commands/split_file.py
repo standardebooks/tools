@@ -3,6 +3,7 @@ This module implements the `se split-file` command.
 """
 
 import argparse
+from pathlib import Path
 
 import importlib_resources
 import regex
@@ -39,18 +40,20 @@ def split_file() -> int:
 	args = parser.parse_args()
 
 	try:
-		with open(args.filename, "r", encoding="utf-8") as file:
+		filename = Path(args.filename).resolve()
+		with open(filename, "r", encoding="utf-8") as file:
 			xhtml = se.strip_bom(file.read())
 	except FileNotFoundError:
-		se.print_error(f"Couldn’t open file: `{args.filename}`")
+		se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
 		return se.InvalidFileException.code
 
 	if args.template_file:
 		try:
-			with open(args.template_file, "r", encoding="utf-8") as file:
+			filename = Path(args.template_file).resolve()
+			with open(filename, "r", encoding="utf-8") as file:
 				template_xhtml = file.read()
 		except FileNotFoundError:
-			se.print_error(f"Couldn’t open file: `{args.template_file}`")
+			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
 			return se.InvalidFileException.code
 	else:
 		with importlib_resources.open_text("se.data.templates", "chapter-template.xhtml", encoding="utf-8") as file:

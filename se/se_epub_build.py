@@ -56,18 +56,18 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			# Look for default Mac calibre app path if none found in path
 			ebook_convert_path = Path("/Applications/calibre.app/Contents/MacOS/ebook-convert")
 			if not ebook_convert_path.exists():
-				raise se.MissingDependencyException("Couldn’t locate `ebook-convert`. Is `calibre` installed?")
+				raise se.MissingDependencyException("Couldn’t locate [bash]ebook-convert[/]. Is [bash]calibre[/] installed?")
 
 	if run_epubcheck:
 		if not shutil.which("java"):
-			raise se.MissingDependencyException("Couldn’t locate `java`. Is it installed?")
+			raise se.MissingDependencyException("Couldn’t locate [bash]java[/]. Is it installed?")
 
 	# Check the output directory and create it if it doesn't exist
 	try:
 		output_directory = output_directory.resolve()
 		output_directory.mkdir(parents=True, exist_ok=True)
 	except Exception:
-		raise se.FileExistsException(f"Couldn’t create output directory: `{output_directory}`.")
+		raise se.FileExistsException(f"Couldn’t create output directory: [path][link=file://{output_directory}]{output_directory}[/][/].")
 
 	# All clear to start building!
 	metadata_xml = self.metadata_xml
@@ -83,11 +83,17 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			pass
 
 		# By convention the ASIN is set to the SHA-1 sum of the book's identifying URL
-		identifier = self.metadata_dom.xpath("//dc:identifier")[0].inner_xml().replace("url:", "")
-		asin = sha1(identifier.encode("utf-8")).hexdigest()
+		try:
+			identifier = self.metadata_dom.xpath("//dc:identifier")[0].inner_xml().replace("url:", "")
+			asin = sha1(identifier.encode("utf-8")).hexdigest()
+		except:
+			raise se.InvalidSeEbookException(f"Missing [xml]<dc:identifier>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/].")
 
-		title = self.metadata_dom.xpath("//dc:title")[0].inner_xml()
-		url_title = se.formatting.make_url_safe(title)
+		try:
+			title = self.metadata_dom.xpath("//dc:title")[0].inner_xml()
+			url_title = se.formatting.make_url_safe(title)
+		except:
+			raise se.InvalidSeEbookException(f"Missing [xml]<dc:title>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/].")
 
 		url_author = ""
 		for author in self.metadata_dom.xpath("//dc:creator"):
@@ -158,12 +164,13 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		# Simplify the CSS first.  Later we'll update the document to match our simplified selectors.
 		# While we're doing this, we store the original css into a single variable so we can extract the original selectors later.
 		for root, _, filenames in os.walk(work_epub_root_directory):
-			for filename in fnmatch.filter(filenames, "*.css"):
-				with open(Path(root) / filename, "r+", encoding="utf-8") as file:
+			for filename_string in fnmatch.filter(filenames, "*.css"):
+				filename = Path(root) / filename_string
+				with open(filename, "r+", encoding="utf-8") as file:
 					css = file.read()
 
 					# Before we do anything, we process a special case in core.css
-					if "core.css" in filename:
+					if filename.name == "core.css":
 						css = regex.sub(r"abbr{.+?}", "", css, flags=regex.DOTALL)
 
 					total_css = total_css + css + "\n"
@@ -192,12 +199,14 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 		# Get a list of .xhtml files to simplify
 		for root, _, filenames in os.walk(work_epub_root_directory):
-			for filename in fnmatch.filter(filenames, "*.xhtml"):
+			for filename_string in fnmatch.filter(filenames, "*.xhtml"):
+				filename = (Path(root) / filename_string).resolve()
+
 				# Don't mess with the ToC, since if we have ol/li > first-child selectors we could screw it up
-				if filename == "toc.xhtml":
+				if filename.name == "toc.xhtml":
 					continue
 
-				with open(Path(root) / filename, "r+", encoding="utf-8") as file:
+				with open(filename, "r+", encoding="utf-8") as file:
 					# We have to remove the default namespace declaration from our document, otherwise
 					# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 					xhtml = file.read().replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
@@ -205,7 +214,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					try:
 						tree = etree.fromstring(str.encode(xhtml))
 					except Exception as ex:
-						raise se.InvalidXhtmlException(f"Error parsing XHTML file: `{filename}`\n{ex}")
+						raise se.InvalidXhtmlException(f"Error parsing XHTML file: [path][link=file://{filename}]{filename}[/][/]. Exception: {ex}")
 
 					# Now iterate over each CSS selector and see if it's used in any of the files we found
 					for selector in selectors:
@@ -234,7 +243,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
 							pass
 						except lxml.cssselect.SelectorSyntaxError as ex:
-							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: `{selector}`\n{ex}")
+							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
 
 						# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
 						if "[epub|type" in selector:
@@ -262,7 +271,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
 							continue
 						except lxml.cssselect.SelectorSyntaxError as ex:
-							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: `{selector}`\n{ex}")
+							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
 
 						# Convert <abbr> to <span>
 						if "abbr" in selector:
@@ -303,7 +312,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		# Extract cover and cover thumbnail
 		cover_svg_file = work_epub_root_directory / "epub" / "images" / "cover.svg"
 		if not os.path.isfile(cover_svg_file):
-			raise se.MissingDependencyException("Cover image is missing. Did you run `se build-images`?")
+			raise se.MissingDependencyException("Cover image is missing. Did you run [bash]se build-images[/]?")
 
 		svg2png(url=str(cover_svg_file), write_to=str(work_directory / "cover.png"))
 		cover = Image.open(work_directory / "cover.png")
@@ -345,11 +354,13 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 		# Recurse over xhtml files to make some compatibility replacements
 		for root, _, filenames in os.walk(work_epub_root_directory):
-			for filename in filenames:
-				if filename.lower().endswith(".svg"):
+			for filename_string in filenames:
+				filename = Path(root) / filename_string
+
+				if filename.suffix == ".svg":
 					# For night mode compatibility, give the titlepage a 1px white stroke attribute
-					if filename.lower() == "titlepage.svg" or filename.lower() == "logo.svg":
-						with open(Path(root) / filename, "r+", encoding="utf-8") as file:
+					if filename.name in("titlepage.svg", "logo.svg"):
+						with open(filename, "r+", encoding="utf-8") as file:
 							svg = file.read()
 							paths = svg
 
@@ -358,7 +369,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							# so the 2px stroke becomes a 1px stroke that's *outside* of the path instead of being *centered* on the path border.
 							# This looks much nicer, but we also have to increase the image size by 2px in both directions, and re-center the whole thing.
 
-							if filename.lower() == "titlepage.svg":
+							if filename.name == "titlepage.svg":
 								stroke_width = SVG_TITLEPAGE_OUTER_STROKE_WIDTH
 							else:
 								stroke_width = SVG_OUTER_STROKE_WIDTH
@@ -396,11 +407,11 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 					# Convert SVGs to PNGs at 2x resolution
 					# Path arguments must be cast to string
-					svg2png(url=str(Path(root) / filename), write_to=regex.sub(r"\.svg$", ".png", str(Path(root) / filename)), scale=2)
-					(Path(root) / filename).unlink()
+					svg2png(url=str(filename), write_to=regex.sub(r"\.svg$", ".png", str(filename)), scale=2)
+					(filename).unlink()
 
-				if filename.lower().endswith(".xhtml"):
-					with open(Path(root) / filename, "r+", encoding="utf-8") as file:
+				if filename.suffix == ".xhtml":
+					with open(filename, "r+", encoding="utf-8") as file:
 						xhtml = file.read()
 						processed_xhtml = xhtml
 
@@ -426,7 +437,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							# Plop our string back in to the XHTML we're processing
 							processed_xhtml = regex.sub(r"<math[^>]*?>\{}\</math>".format(regex.escape(line)), mathml_presentation_xhtml, processed_xhtml, flags=regex.MULTILINE)
 
-						if filename == "endnotes.xhtml":
+						if filename.name == "endnotes.xhtml":
 							# iOS renders the left-arrow-hook character as an emoji; this fixes it and forces it to render as text.
 							# See https://github.com/standardebooks/tools/issues/73
 							# See http://mts.io/2015/04/21/unicode-symbol-render-text-emoji/
@@ -440,7 +451,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# For example, epilogue can't apply to <article>
 						processed_xhtml = regex.sub(r"<article ([^>]*?)role=\"doc-epilogue\"", "<article \\1", processed_xhtml)
 
-						if filename == "toc.xhtml":
+						if filename.name == "toc.xhtml":
 							landmarks_xhtml = regex.findall(r"<nav epub:type=\"landmarks\">.*?</nav>", processed_xhtml, flags=regex.DOTALL)
 							landmarks_xhtml = regex.sub(r" role=\"doc-.*?\"", "", landmarks_xhtml[0])
 							processed_xhtml = regex.sub(r"<nav epub:type=\"landmarks\">.*?</nav>", landmarks_xhtml, processed_xhtml, flags=regex.DOTALL)
@@ -455,7 +466,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						processed_xhtml = regex.sub(r"class=\"([^\"]*?)epub-type-z3998-publisher-logo([^\"]*?)\"", "class=\"\\1epub-type-z3998-publisher-logo epub-type-se-image-color-depth-black-on-transparent\\2\"", processed_xhtml)
 
 						# Special case for the titlepage
-						if filename == "titlepage.xhtml":
+						if filename.name == "titlepage.xhtml":
 							processed_xhtml = processed_xhtml.replace("<img", "<img class=\"epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\"")
 
 						# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
@@ -496,8 +507,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							file.write(processed_xhtml)
 							file.truncate()
 
-				if filename.lower().endswith(".css"):
-					with open(Path(root) / filename, "r+", encoding="utf-8") as file:
+				if filename.suffix == ".css":
+					with open(filename, "r+", encoding="utf-8") as file:
 						css = file.read()
 						processed_css = css
 
@@ -520,8 +531,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 				for root, _, filenames in os.walk(kobo_work_directory):
 					# Add a note to content.opf indicating this is a transform build
-					for filename in fnmatch.filter(filenames, "content.opf"):
-						with open(Path(root) / filename, "r+", encoding="utf-8") as file:
+					for filename_string in fnmatch.filter(filenames, "content.opf"):
+						with open(Path(root) / filename_string, "r+", encoding="utf-8") as file:
 							xhtml = file.read()
 
 							xhtml = regex.sub(r"<dc:publisher", "<meta property=\"se:transform\">kobo</meta>\n\t\t<dc:publisher", xhtml)
@@ -532,15 +543,17 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 					# Kobo .kepub files need each clause wrapped in a special <span> tag to enable highlighting.
 					# Do this here. Hopefully Kobo will get their act together soon and drop this requirement.
-					for filename in fnmatch.filter(filenames, "*.xhtml"):
+					for filename_string in fnmatch.filter(filenames, "*.xhtml"):
 						kobo.paragraph_counter = 1
 						kobo.segment_counter = 1
 
+						filename = (Path(root) / filename_string).resolve()
+
 						# Don't add spans to the ToC
-						if filename == "toc.xhtml":
+						if filename.name == "toc.xhtml":
 							continue
 
-						with open(Path(root) / filename, "r+", encoding="utf-8") as file:
+						with open(filename, "r+", encoding="utf-8") as file:
 							xhtml = file.read()
 
 							# Note: Kobo supports CSS hyphenation, but it can be improved with soft hyphens.
@@ -548,7 +561,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							# a word is highlighted.
 
 							# Kobos don't have fonts that support the ↩ character in endnotes, so replace it with ←
-							if filename == "endnotes.xhtml":
+							if filename.name == "endnotes.xhtml":
 								# Note that we replaced ↩ with \u21a9\ufe0e in an earlier iOS compatibility fix
 								xhtml = regex.sub(r"epub:type=\"backlink\">\u21a9\ufe0e</a>", "epub:type=\"backlink\">←</a>", xhtml)
 
@@ -557,7 +570,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							try:
 								tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 							except Exception as ex:
-								raise se.InvalidXhtmlException(f"Error parsing XHTML file: `{filename}`\n{ex}")
+								raise se.InvalidXhtmlException(f"Error parsing XHTML file: [path][link=file://{filename}]{filename}[/][/]. Exception: {ex}")
 
 							kobo.add_kobo_spans_to_node(tree.xpath("./body", namespaces=se.XHTML_NAMESPACES)[0])
 
@@ -577,9 +590,11 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 		# Recurse over css files to make some compatibility replacements.
 		for root, _, filenames in os.walk(work_epub_root_directory):
-			for filename in filenames:
-				if filename.lower().endswith(".css"):
-					with open(Path(root) / filename, "r+", encoding="utf-8") as file:
+			for filename_string in filenames:
+				filename = Path(root) / filename_string
+
+				if filename.suffix == ".css":
+					with open(filename, "r+", encoding="utf-8") as file:
 						css = file.read()
 						processed_css = css
 
@@ -606,9 +621,10 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 				mathml_count = 1
 				for root, _, filenames in os.walk(work_epub_root_directory):
-					for filename in filenames:
-						if filename.lower().endswith(".xhtml"):
-							with open(Path(root) / filename, "r+", encoding="utf-8") as file:
+					for filename_string in filenames:
+						filename = Path(root) / filename_string
+						if filename.suffix == ".xhtml":
+							with open(filename, "r+", encoding="utf-8") as file:
 								xhtml = file.read()
 								processed_xhtml = xhtml
 								replaced_mathml: List[str] = []
@@ -682,9 +698,10 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			for root, _, filenames in os.walk(work_epub_root_directory / "epub" / "images"):
 				filenames = natsorted(filenames)
 				filenames.reverse()
-				for filename in filenames:
-					if filename.lower().startswith("mathml-"):
-						metadata_xml = metadata_xml.replace("<manifest>", f"<manifest><item href=\"images/{filename}\" id=\"{filename}\" media-type=\"image/png\"/>")
+				for filename_string in filenames:
+					filename = Path(root) / filename_string
+					if filename.name.startswith("mathml-"):
+						metadata_xml = metadata_xml.replace("<manifest>", f"<manifest><item href=\"images/{filename.name}\" id=\"{filename.name}\" media-type=\"image/png\"/>")
 
 			metadata_xml = regex.sub(r"properties=\"([^\"]*?)mathml([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xml)
 
@@ -754,7 +771,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					split_output = output.split("\n")
 					output = "\n".join(split_output[:-2])
 
-					raise se.BuildFailedException(f"epubcheck v{version} failed with:\n{output}")
+					raise se.BuildFailedException(f"[bash]epubcheck[/] v{version} failed with:\n{output}")
 
 		if build_kindle:
 			# There's a bug in Calibre <= 3.48.0 where authors who have more than one MARC relator role
@@ -799,8 +816,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				se.formatting.format_xml_file(filepath)
 
 			# Convert endnotes to Kindle popup compatible notes
-			if (work_epub_root_directory / "epub" / "text" / "endnotes.xhtml").is_file():
-				with open(work_epub_root_directory / "epub" / "text" / "endnotes.xhtml", "r+", encoding="utf-8") as file:
+			if (work_epub_root_directory / "epub/text/endnotes.xhtml").is_file():
+				with open(work_epub_root_directory / "epub/text/endnotes.xhtml", "r+", encoding="utf-8") as file:
 					xhtml = file.read()
 
 					# We have to remove the default namespace declaration from our document, otherwise
@@ -808,7 +825,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					try:
 						tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
 					except Exception as ex:
-						raise se.InvalidXhtmlException(f"Error parsing XHTML `endnotes.xhtml`. Exception: {ex}")
+						raise se.InvalidXhtmlException(f"Error parsing XHTML [path][link=file://{(work_epub_root_directory / 'epub/text/endnotes.xhtml').resolve()}]endnotes.xhtml[/][/]. Exception: {ex}")
 
 					notes = tree.xpath("//li[@epub:type=\"endnote\" or @epub:type=\"footnote\"]", namespaces=se.XHTML_NAMESPACES)
 
@@ -822,7 +839,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						try:
 							ref_link = etree.tostring(note.xpath("p[last()]/a[last()]")[0], encoding="unicode", pretty_print=True, with_tail=False).replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "").strip()
 						except Exception:
-							raise se.InvalidXhtmlException(f"Can’t find ref link for `#{note_id}`.")
+							raise se.InvalidXhtmlException(f"Can’t find ref link for [url]#{note_id}[/].")
 
 						new_ref_link = regex.sub(r">.*?</a>", ">" + note_number + "</a>.", ref_link)
 
@@ -870,9 +887,10 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 			# Do some compatibility replacements
 			for root, _, filenames in os.walk(work_epub_root_directory):
-				for filename in filenames:
-					if filename.lower().endswith(".xhtml"):
-						with open(Path(root) / filename, "r+", encoding="utf-8") as file:
+				for filename_string in filenames:
+					filename = Path(root) / filename_string
+					if filename.suffix == ".xhtml":
+						with open(filename, "r+", encoding="utf-8") as file:
 							xhtml = file.read()
 							processed_xhtml = xhtml
 
@@ -908,7 +926,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			return_code = subprocess.run([str(ebook_convert_path), str(work_directory / epub_output_filename), str(work_directory / kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", f"--cover={cover_path}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False).returncode
 
 			if return_code:
-				raise se.InvalidSeEbookException("`ebook-convert` failed.")
+				raise se.InvalidSeEbookException("[bash]ebook-convert[/] failed.")
 
 			# Success, extract the Kindle cover thumbnail
 

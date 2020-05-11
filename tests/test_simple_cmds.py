@@ -26,13 +26,6 @@ def test_simple_cmds(cmd_name: str, cmd_args: str, cmd_out: str, capfd):
 	out, _ = capfd.readouterr()
 	assert cmd_out == out.rstrip()
 
-def test_unicode_names(capfd):
-	"""Verify that the unicode-names command has the expected output"""
-	must_run("se unicode-names foo")
-	out, _ = capfd.readouterr()
-	expected = "f\tU+0066\tLATIN SMALL LETTER F\thttp://unicode.org/cldr/utility/character.jsp?a=0066\no\tU+006F\tLATIN SMALL LETTER O\thttp://unicode.org/cldr/utility/character.jsp?a=006F\no\tU+006F\tLATIN SMALL LETTER O\thttp://unicode.org/cldr/utility/character.jsp?a=006F\n"
-	assert expected == out
-
 def test_version(capfd):
 	"""Verify that the version command returns the version"""
 	must_run("se version")

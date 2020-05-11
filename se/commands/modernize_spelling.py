@@ -4,6 +4,8 @@ This module implements the `se modernize-spelling` command.
 
 import argparse
 
+from rich.console import Console
+
 import se
 import se.spelling
 
@@ -20,10 +22,11 @@ def modernize_spelling() -> int:
 	args = parser.parse_args()
 
 	return_code = 0
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
 	for filename in se.get_target_filenames(args.targets, (".xhtml",)):
 		if args.verbose:
-			print(f"Processing {filename} ...", end="", flush=True)
+			console.print(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", end="")
 
 		try:
 			with open(filename, "r+", encoding="utf-8") as file:
@@ -34,10 +37,10 @@ def modernize_spelling() -> int:
 					problem_spellings = se.spelling.detect_problem_spellings(xhtml)
 
 					for problem_spelling in problem_spellings:
-						print(f"{(filename.name) + ': ' if not args.verbose else ''}{problem_spelling}")
+						console.print(f"{('[path][link=file://' + filename + ']' + filename.name + '[/][/]') + ': ' if not args.verbose else ''}{problem_spelling}")
 
 				except se.InvalidLanguageException as ex:
-					se.print_error(f"{ex}{' File: `' + filename + '`' if not args else ''}")
+					se.print_error(f"{ex}{' File: [path][link=file://' + filename + ']' + filename + '[/][/]' if not args else ''}")
 					return ex.code
 
 				if args.modernize_hyphenation:
@@ -48,10 +51,10 @@ def modernize_spelling() -> int:
 					file.write(new_xhtml)
 					file.truncate()
 		except FileNotFoundError:
-			se.print_error(f"Couldn’t open file: `{filename}`")
+			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
 			return_code = se.InvalidInputException.code
 
 		if args.verbose:
-			print(" OK")
+			console.print(" OK")
 
 	return return_code

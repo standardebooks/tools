@@ -21,7 +21,7 @@ def print_title() -> int:
 	args = parser.parse_args()
 
 	if not args.in_place and len(args.targets) > 1:
-		se.print_error("Multiple targets are only allowed with the `--in-place` option.")
+		se.print_error("Multiple targets are only allowed with the [bash]--in-place[/] option.")
 		return se.InvalidArgumentsException.code
 
 	return_code = 0
@@ -45,7 +45,7 @@ def print_title() -> int:
 					print(title)
 
 		except FileNotFoundError:
-			se.print_error(f"Couldn’t open file: `{filename}`")
+			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
 			return_code = se.InvalidInputException.code
 		except se.SeException as ex:
 			se.print_error(ex)

@@ -14,6 +14,7 @@ import importlib_resources
 import git
 from natsort import natsorted
 from PIL import Image, ImageChops
+from rich.console import Console
 
 import se
 import se.browser
@@ -40,6 +41,8 @@ def compare_versions() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="a directory containing XHTML files")
 	args = parser.parse_args()
 
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+
 	# We wrap this whole thing in a try block, because we need to call
 	# driver.quit() if execution is interrupted (like by ctrl + c, or by an unhandled exception). If we don't call driver.quit(),
 	# Firefox will stay around as a zombie process even if the Python script is dead.
@@ -55,11 +58,11 @@ def compare_versions() -> int:
 			target = Path(target).resolve()
 
 			if not target.is_dir():
-				se.print_error(f"Target must be a directory: `{target}`")
+				se.print_error(f"Target must be a directory: [path][link=file://{target}]{target}[/][/].")
 				continue
 
 			if args.verbose:
-				print(f"Processing {target} ...\n", end="", flush=True)
+				console.print(f"Processing [path][link=file://{target}]{target}[/][/] ...")
 
 			with tempfile.TemporaryDirectory() as work_directory_name:
 				# Copy the Git repo to a temp folder, so we can stash and pop with impunity.
@@ -89,10 +92,10 @@ def compare_versions() -> int:
 				with tempfile.TemporaryDirectory() as temp_directory_name:
 					# Generate screenshots of the pre-change repo
 					for filename in target_filenames:
-						filename = Path(filename)
+						filename = Path(filename).resolve()
 
 						if args.verbose:
-							print(f"\tProcessing original {filename.name} ...\n", end="", flush=True)
+							console.print(f"\tProcessing original [path][link=file://{filename}]{filename.name}[/][/] ...")
 
 						driver.get(f"file://{filename}")
 						# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
@@ -105,12 +108,12 @@ def compare_versions() -> int:
 
 					# Generate screenshots of the post-change repo, and compare them to the old screenshots
 					for filename in target_filenames:
-						filename = Path(filename)
+						filename = Path(filename).resolve()
 						file_new_screenshot_path = Path(temp_directory_name) / (filename.name + "-new.png")
 						file_original_screenshot_path = Path(temp_directory_name) / (filename.name + "-original.png")
 
 						if args.verbose:
-							print(f"\tProcessing new {filename.name} ...\n", end="", flush=True)
+							console.print(f"\tProcessing new [path][link=file://{filename}]{filename.name}[/][/] ...")
 
 						driver.get(f"file://{filename}")
 						# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
@@ -153,7 +156,7 @@ def compare_versions() -> int:
 									diff.putpixel((image_x, image_y), (255, 0, 0, 255)) # Change the mask color to red
 
 						if has_difference:
-							files_with_differences.add(filename.name)
+							files_with_differences.add(filename)
 
 							if args.copy_images:
 								try:
@@ -169,14 +172,14 @@ def compare_versions() -> int:
 									pass
 
 					for filename in natsorted(list(files_with_differences)):
-						print("{}Difference in {}\n".format("\t" if args.verbose else "", filename), end="", flush=True)
+						console.print("{}Difference in {}\n".format("\t" if args.verbose else "", f"[path][link=file://{filename}]{filename.name}[/][/]"))
 
 					if files_with_differences and args.copy_images:
 						# Generate an HTML file with diffs side by side
 						html = ""
 
 						for filename in natsorted(list(files_with_differences)):
-							html += f"\t\t<section>\n\t\t\t<h1>{filename}</h1>\n\t\t\t<img src=\"{filename}-original.png\">\n\t\t\t<img src=\"{filename}-new.png\">\n\t\t</section>\n"
+							html += f"\t\t<section>\n\t\t\t<h1>{filename.name}</h1>\n\t\t\t<img src=\"{filename.name}-original.png\">\n\t\t\t<img src=\"{filename.name}-new.png\">\n\t\t</section>\n"
 
 						with importlib_resources.open_text("se.data.templates", "diff-template.html", encoding="utf-8") as file:
 							html = file.read().replace("<!--se:sections-->", html.strip())

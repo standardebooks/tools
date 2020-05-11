@@ -1,18 +1,21 @@
-s-033 Manual Review: chapter-1.xhtml File language is `en-GB`, but `content.opf` language is `LANG`.
+s-033 Manual Review: chapter-1.xhtml File language is `en-GB`, but `content.opf`
+language is `LANG`.
 m-036 Error: colophon.xhtml Missing data in colophon.
-	YEAR
-	PRODUCER_URL
-	PRODUCER
-	PG_YEAR
-	TRANSCRIBER_1
-	TRANSCRIBER_2
-	PG_URL
-	IA_URL
-	PAINTING
-	ARTIST_WIKI_URL
-	ARTIST
+        YEAR
+        PRODUCER_URL
+        PRODUCER
+        PG_YEAR
+        TRANSCRIBER_1
+        TRANSCRIBER_2
+        PG_URL
+        IA_URL
+        PAINTING
+        ARTIST_WIKI_URL
+        ARTIST
 m-016 Error: content.opf Long description must be escaped HTML.
-m-017 Error: content.opf `<![CDATA[` found. Run `se clean` to canonicalize `<![CDATA[` sections.
-m-020 Error: content.opf Illegal value for `<meta property="se:subject">` element.
-	TAG
+m-017 Error: content.opf `<![CDATA[` found. Run `se clean` to canonicalize 
+`<![CDATA[` sections.
+m-020 Error: content.opf Illegal value for `<meta property="se:subject">` 
+element.
+        TAG
 m-022 Error: content.opf Empty `<meta property="se:production-notes">` element.

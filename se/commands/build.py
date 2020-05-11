@@ -5,6 +5,8 @@ This module implements the `se build` command.
 import argparse
 from pathlib import Path
 
+from rich.console import Console
+
 import se
 from se.se_epub import SeEpub
 
@@ -26,13 +28,20 @@ def build() -> int:
 
 	last_output_was_exception = False
 	return_code = 0
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
 	if args.build_covers and len(args.directories) > 1:
-		se.print_error("`--covers` option specified, but more than one build target specified.")
+		se.print_error("[bash]--covers[/] option specified, but more than one build target specified.")
 		return se.InvalidInputException.code
 
 	for directory in args.directories:
 		exception = None
+
+		directory = Path(directory).resolve()
+
+		if args.verbose or exception:
+			# Print the header
+			console.print(f"Building [path][link=file://{directory}]{directory}[/][/] ... ", end="")
 
 		try:
 			se_epub = SeEpub(directory)
@@ -43,18 +52,15 @@ def build() -> int:
 
 		# Print a newline after we've printed an exception
 		if last_output_was_exception and (args.verbose or exception):
-			print("")
+			console.print("")
 			last_output_was_exception = False
 
-		if args.verbose or exception:
-			# Print the header
-			print(f"Building {directory} ... ", end="", flush=True)
-
 		if exception:
-			print("")
-			se.print_error(exception, True)
+			if args.verbose:
+				console.print("")
+			se.print_error(exception, args.verbose)
 			last_output_was_exception = True
 		elif args.verbose:
-			print("OK")
+			console.print("OK")
 
 	return return_code

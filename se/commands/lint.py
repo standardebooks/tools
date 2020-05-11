@@ -14,21 +14,6 @@ from rich.text import Text
 import se
 from se.se_epub import SeEpub
 
-def _get_file_path(root: Path, filename: Path) -> Path:
-	if filename.suffix == ".opf" or filename.name == "toc.xhtml":
-		return (root / 'src/epub/' / filename.name).resolve()
-
-	if filename.suffix == ".css":
-		return (root / 'src/epub/css/' / filename.name).resolve()
-
-	if filename.suffix == ".otf":
-		return (root / 'src/epub/fonts/' / filename.name).resolve()
-
-	if filename.suffix == ".xhtml":
-		return (root / 'src/epub/text/' / filename.name).resolve()
-
-	return filename
-
 def lint() -> int:
 	"""
 	Entry point for `se lint`
@@ -45,7 +30,7 @@ def lint() -> int:
 	called_from_parallel = se.is_called_from_parallel()
 	first_output = True
 	return_code = 0
-	console = Console(highlight=False, force_terminal=called_from_parallel) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=called_from_parallel) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
 	for directory in args.directories:
 		directory = Path(directory).resolve()
@@ -66,7 +51,7 @@ def lint() -> int:
 
 		# Print a separator newline if more than one table is printed
 		if not first_output and (args.verbose or messages or exception):
-			print("")
+			console.print("")
 		elif first_output:
 			first_output = False
 
@@ -74,7 +59,7 @@ def lint() -> int:
 		if ((len(args.directories) > 1 or called_from_parallel) and (messages or exception)) or args.verbose:
 			has_output = True
 			if args.plain:
-				print(directory)
+				console.print(directory)
 			else:
 				console.print(f"[reverse]{directory}[/reverse]")
 
@@ -94,11 +79,16 @@ def lint() -> int:
 					if message.message_type == se.MESSAGE_TYPE_ERROR:
 						label = "Error:"
 
-					print(f"{message.code} {label} {message.filename} {message.text}")
+					# Replace color markup with `
+					message.text = regex.sub(r"\[(?:/|xhtml|xml|val|attr|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message.text)
+					message.text = regex.sub(r"`+", "`", message.text)
+
+					console.print(f"{message.code} {label} {message.filename.name} {message.text}")
 
 					if message.submessages:
 						for submessage in message.submessages:
-							print(f"\t{submessage}")
+							# Indent each line in case we have a multi-line submessage
+							console.print(regex.sub(r"^", "\t", submessage, flags=regex.MULTILINE))
 			else:
 				for message in messages:
 					alert = "Manual Review"
@@ -114,32 +104,25 @@ def lint() -> int:
 						else:
 							alert = f"[bright_yellow]{alert}[/bright_yellow]"
 
-						# Escape brackets in the message, for example in CSS selectors, so that Rich doesn't interpret them as BBcode
-						message_text = regex.sub(r"([\[\]])", r"\1\1", message_text)
-
-						# Add hyperlinks to filenames in the message text
-						for filename in regex.findall(r"`([\p{Letter}\-\.]+?)`", message_text):
-							file_path = _get_file_path(se_epub.path, Path(filename))
-							if file_path.is_file() or file_path.is_dir():
-								message_text = message_text.replace(f"`{filename}`", f"[bright_blue][link=file://{file_path}]{filename}[/link][/bright_blue]")
-
-						# By convention, any text within the message text that is surrounded in backticks is rendered in blue
-						message_text = regex.sub(r"`(.+?)`", r"[bright_blue]\1[/bright_blue]", message_text)
-
 						# Add hyperlinks around message filenames
 						message_filename = f"[link=file://{message.filename.resolve()}]{message.filename.name}[/link]"
 					else:
+						# Replace color markup with `
+						message_text = regex.sub(r"\[(?:/|xhtml|xml|val|attr|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message_text)
+						message_text = regex.sub(r"`+", "`", message_text)
 						message_filename = message.filename.name
 
 					table_data.append([message.code, alert, message_filename, message_text])
 
 					if message.submessages:
 						for submessage in message.submessages:
-							# Escape brackets in the message, for example in CSS selectors, so that Rich doesn't interpret them as BBcode
+							# Brackets don't need to be escaped in submessages if we instantiate them in Text()
 							if args.colors:
-								submessage = regex.sub(r"([\[\]])", r"\1\1", submessage)
+								submessage_object = Text(submessage, style="dim")
+							else:
+								submessage_object = Text(submessage)
 
-							table_data.append([" ", " ", Text("→", justify="right"), Text(submessage, style="dim")])
+							table_data.append([" ", " ", Text("→", justify="right"), submessage_object])
 
 				table = Table(show_header=True, header_style="bold", show_lines=True)
 				table.add_column("Code", width=5, no_wrap=True)
@@ -154,7 +137,7 @@ def lint() -> int:
 
 		if args.verbose and not messages and not exception:
 			if args.plain:
-				print("OK")
+				console.print("OK")
 			else:
 				table = Table(show_header=False, box=box.SQUARE)
 				table.add_column("", style="white on green4 bold" if args.colors else None)
@@ -164,6 +147,6 @@ def lint() -> int:
 		# Print a newline if we're called from parallel and we just printed something, to
 		# better visually separate output blocks
 		if called_from_parallel and has_output:
-			print("")
+			console.print("")
 
 	return return_code

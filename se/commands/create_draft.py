@@ -319,7 +319,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> Tuple[Optional[str]
 	try:
 		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": "1"}, allow_redirects=False)
 	except Exception as ex:
-		se.print_error(f"Couldn’t contact Wikipedia. Error: {ex}")
+		se.print_error(f"Couldn’t contact Wikipedia. Exception: {ex}")
 
 	if response.status_code == 302:
 		nacoaf_url = None
@@ -332,7 +332,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> Tuple[Optional[str]
 			try:
 				response = requests.get(wiki_url)
 			except Exception as ex:
-				se.print_error(f"Couldn’t contact Wikipedia. Error: {ex}")
+				se.print_error(f"Couldn’t contact Wikipedia. Exception: {ex}")
 
 			for match in regex.findall(r"https?://id\.loc\.gov/authorities/names/n[0-9]+", response.text):
 				nacoaf_url = match
@@ -367,10 +367,10 @@ def _create_draft(args: Namespace):
 		identifier = identifier + "/" + se.formatting.make_url_safe(args.illustrator)
 		title_string = title_string + ". Illustrated by " + args.illustrator
 
-	repo_name = Path(identifier.replace("/", "_"))
+	repo_name = Path(identifier.replace("/", "_")).resolve()
 
 	if repo_name.is_dir():
-		raise se.InvalidInputException(f"`./{repo_name}/` already exists.")
+		raise se.InvalidInputException(f"Directory already exists: [path][link=file://{repo_name}]{repo_name}[/][/].")
 
 	# Download PG HTML and do some fixups
 	if args.pg_url:
@@ -644,7 +644,7 @@ def _create_draft(args: Namespace):
 
 					# Now, get the LCSH ID by querying LCSH directly.
 					try:
-						response = requests.get(f"http://id.loc.gov/search/?q=%22{urllib.parse.quote(subject)}%22")
+						response = requests.get(f"https://id.loc.gov/search/?q=%22{urllib.parse.quote(subject)}%22")
 						result = regex.search(fr"<a title=\"Click to view record\" href=\"/authorities/subjects/([^\"]+?)\">{regex.escape(subject.replace(' -- ', '--'))}</a>", response.text)
 
 						loc_id = "Unknown"
@@ -656,7 +656,7 @@ def _create_draft(args: Namespace):
 						subject_xhtml = subject_xhtml + f"\t\t<meta property=\"term\" refines=\"#subject-{i}\">{loc_id}</meta>\n"
 
 					except Exception as ex:
-						raise se.RemoteCommandErrorException(f"Couldn’t connect to `id.loc.gov`. Exception: {ex}")
+						raise se.RemoteCommandErrorException(f"Couldn’t connect to [url][link=https://id.loc.gov]https://id.loc.gov[/][/]. Exception: {ex}")
 
 					i = i + 1
 
@@ -695,7 +695,7 @@ def create_draft() -> int:
 	args = parser.parse_args()
 
 	if args.pg_url and not regex.match("^https?://www.gutenberg.org/ebooks/[0-9]+$", args.pg_url):
-		se.print_error("Project Gutenberg URL must look like: `https://www.gutenberg.org/ebooks/<EBOOK-ID>`")
+		se.print_error("Project Gutenberg URL must look like: [url]https://www.gutenberg.org/ebooks/<EBOOK-ID>[url].")
 		return se.InvalidArgumentsException.code
 
 	try:

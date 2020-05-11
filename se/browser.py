@@ -24,7 +24,7 @@ def initialize_selenium_firefox_webdriver() -> webdriver:
 	"""
 
 	if not shutil.which("firefox") and not Path("/Applications/Firefox.app/Contents/MacOS/firefox").exists():
-		raise se.MissingDependencyException("Couldn’t locate `firefox`. Is it installed?")
+		raise se.MissingDependencyException("Couldn’t locate [bash]firefox[/]. Is it installed?")
 
 	# Initialize the selenium driver to take screenshots
 
@@ -43,6 +43,6 @@ def initialize_selenium_firefox_webdriver() -> webdriver:
 	try:
 		driver = webdriver.Firefox(firefox_profile=profile, firefox_options=options, service_log_path=os.devnull)
 	except WebDriverException:
-		raise se.MissingDependencyException("Selenium Firefox web driver is not installed. To install it, download the appropriate zip file from `https://github.com/mozilla/geckodriver/releases/latest` and place the `geckodriver` executable in your `$PATH` (for example, in `~/.local/bin/` or `/usr/local/bin/`).")
+		raise se.MissingDependencyException("Selenium Firefox web driver is not installed. To install it, download the appropriate zip file from [url][link=https://github.com/mozilla/geckodriver/releases/latest]https://github.com/mozilla/geckodriver/releases/latest[/][/] and place the [bash]geckodriver[/] executable in your [path]$PATH[/] (for example, in [path]~/.local/bin/[/] or [path]/usr/local/bin/[/]).")
 
 	return driver

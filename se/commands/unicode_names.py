@@ -6,6 +6,11 @@ import argparse
 import sys
 import unicodedata
 
+from rich import box
+from rich.console import Console
+from rich.table import Table
+
+import se
 
 def unicode_names() -> int:
 	"""
@@ -16,7 +21,14 @@ def unicode_names() -> int:
 	parser.add_argument("strings", metavar="STRING", nargs="*", help="a Unicode string")
 	args = parser.parse_args()
 
+	console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths
 	lines = []
+	table = Table(show_header=False, show_lines=True, box=box.HORIZONTALS)
+
+	table.add_column("Character", style="bold", width=1, no_wrap=True)
+	table.add_column("Code point", style="dim", no_wrap=True)
+	table.add_column("Description")
+	table.add_column("Link")
 
 	if not sys.stdin.isatty():
 		for line in sys.stdin:
@@ -27,6 +39,8 @@ def unicode_names() -> int:
 
 	for line in lines:
 		for character in line:
-			print(character + "\tU+{:04X}".format(ord(character)) + "\t" + unicodedata.name(character) + "\t" + "http://unicode.org/cldr/utility/character.jsp?a={:04X}".format(ord(character)))
+			table.add_row(f"{character}", "U+{:04X}".format(ord(character)), unicodedata.name(character), "[link=https://www.fileformat.info/info/unicode/char/{:04X}]Properties page[/]".format(ord(character)))
+
+	console.print(table)
 
 	return 0

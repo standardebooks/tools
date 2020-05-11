@@ -99,7 +99,7 @@ class SeEpub:
 			self.path = Path(epub_root_directory).resolve()
 
 			if not self.path.is_dir():
-				raise se.InvalidSeEbookException(f"Not a directory: `{self.path}`.")
+				raise se.InvalidSeEbookException(f"Not a directory: [path][link=file://{self.path}]{self.path}[/][/].")
 
 			with open(self.path / "src" / "META-INF" / "container.xml", "r", encoding="utf-8") as file:
 				container_tree = se.easy_xml.EasyXmlTree(file.read())
@@ -111,7 +111,7 @@ class SeEpub:
 			if "<dc:identifier id=\"uid\">url:https://standardebooks.org/ebooks/" not in self.metadata_xml:
 				raise se.InvalidSeEbookException
 		except:
-			raise se.InvalidSeEbookException(f"Not a Standard Ebooks source directory: `{self.path}`.")
+			raise se.InvalidSeEbookException(f"Not a Standard Ebooks source directory: [path][link=file://{self.path}]{self.path}[/][/].")
 
 	@property
 	def repo(self) -> git.Repo:
@@ -263,7 +263,7 @@ class SeEpub:
 				with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml") as file:
 					self.__endnotes_soup = BeautifulSoup(file.read(), "html.parser")
 			except:
-				raise se.InvalidFileException(f"Could't open file: `{str(self.path / 'src' / 'epub' / 'text' / 'endnotes.xhtml')}`.")
+				raise se.InvalidFileException(f"Could't open file: [path][link=file://{self.path / 'src' / 'epub' / 'text' / 'endnotes.xhtml'}]{self.path / 'src' / 'epub' / 'text' / 'endnotes.xhtml'}[/][/].")
 
 		return self.__endnotes_soup
 
@@ -316,7 +316,7 @@ class SeEpub:
 			try:
 				self._metadata_dom = se.easy_xml.EasyOpfTree(self.metadata_xml)
 			except Exception as ex:
-				raise se.InvalidXmlException(f"Couldn’t parse `{self.metadata_file_path}`. Exception: {ex}")
+				raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]. Exception: {ex}")
 
 		return self._metadata_dom
 
@@ -355,7 +355,7 @@ class SeEpub:
 
 		# Quick sanity check before we begin
 		if "id" not in section.attrs or (section.parent.name.lower() != "body" and "id" not in section.parent.attrs):
-			raise se.InvalidXhtmlException("Section without `id` attribute.")
+			raise se.InvalidXhtmlException("Section without [attr]id[/] attribute.")
 
 		# Try to find our parent tag in the output, by ID.
 		# If it's not in the output, then append it to the tag's closest parent by ID (or <body>), then iterate over its children and do the same.
@@ -480,7 +480,7 @@ class SeEpub:
 		"""
 		source_images_directory = self.path / "images"
 		source_titlepage_svg_filename = source_images_directory / "titlepage.svg"
-		dest_images_directory = self.path / "src" / "epub" / "images"
+		dest_images_directory = self.path / "src/epub/images"
 		dest_titlepage_svg_filename = dest_images_directory / "titlepage.svg"
 
 		if source_titlepage_svg_filename.is_file():
@@ -501,7 +501,7 @@ class SeEpub:
 		source_images_directory = self.path / "images"
 		source_cover_jpg_filename = source_images_directory / "cover.jpg"
 		source_cover_svg_filename = source_images_directory / "cover.svg"
-		dest_images_directory = self.path / "src" / "epub" / "images"
+		dest_images_directory = self.path / "src/epub/images"
 		dest_cover_svg_filename = dest_images_directory / "cover.svg"
 
 		# Create output directory if it doesn't exist
@@ -550,7 +550,7 @@ class SeEpub:
 		source_directory = self.path / "src"
 
 		try:
-			endnotes_filename = source_directory / "epub" / "text" / "endnotes.xhtml"
+			endnotes_filename = source_directory / "epub/text/endnotes.xhtml"
 			with open(endnotes_filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 				soup = BeautifulSoup(xhtml, "lxml")
@@ -581,7 +581,7 @@ class SeEpub:
 				file.truncate()
 
 		except Exception:
-			raise se.InvalidSeEbookException(f"Couldn’t open endnotes file: `{endnotes_filename}`.")
+			raise se.InvalidSeEbookException(f"Couldn’t open endnotes file: [path][link=file://{endnotes_filename}]{endnotes_filename}[/][/].")
 
 		with concurrent.futures.ProcessPoolExecutor() as executor:
 			for root, _, filenames in os.walk(source_directory):
@@ -924,12 +924,12 @@ class SeEpub:
 
 			processed += 1
 
-			file_path = self.path / "src" / "epub" / "text" / file_name
+			file_path = self.path / "src/epub/text" / file_name
 			try:
 				with open(file_path) as file:
 					soup = BeautifulSoup(file.read(), "lxml")
 			except:
-				raise se.InvalidFileException(f"Couldn’t open file: `{file_path}`.")
+				raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{file_path}]{file_path}[/][/].")
 
 			links = soup.find_all("a")
 			needs_rewrite = False
@@ -959,9 +959,9 @@ class SeEpub:
 					match_old = lambda x, old=old_anchor: x.anchor == old
 					matches = list(filter(match_old, self.endnotes))
 					if not matches:
-						raise se.InvalidInputException(f"Couldn’t find endnote with anchor `{old_anchor}`.")
+						raise se.InvalidInputException(f"Couldn’t find endnote with anchor [attr]{old_anchor}[/].")
 					if len(matches) > 1:
-						raise se.InvalidInputException(f"Duplicate anchors in endnotes file for anchor `{old_anchor}`.")
+						raise se.InvalidInputException(f"Duplicate anchors in endnotes file for anchor [attr]{old_anchor}[/].")
 					# Found a single match, which is what we want
 					endnote = matches[0]
 					endnote.number = current_note_number

@@ -9,6 +9,8 @@ import zipfile
 from io import BytesIO, TextIOWrapper
 from pathlib import Path
 
+from rich.console import Console
+
 import se
 from se.vendor.kindleunpack import kindleunpack
 
@@ -56,14 +58,16 @@ def extract_ebook() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an epub, mobi, or azw3 file")
 	args = parser.parse_args()
 
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+
 	for target in args.targets:
 		target = Path(target).resolve()
 
 		if args.verbose:
-			print(f"Processing {target} ...", end="", flush=True)
+			console.print(f"Processing [path][link=file://{target}]{target}[/][/] ...", end="")
 
 		if not path.isfile(target):
-			se.print_error(f"Not a file: `{target}`")
+			se.print_error(f"Not a file: [path][link=file://{target}]{target}[/][/].")
 			return se.InvalidInputException.code
 
 		if args.output_dir is None:
@@ -72,7 +76,7 @@ def extract_ebook() -> int:
 			extracted_path = Path(args.output_dir)
 
 		if extracted_path.exists():
-			se.print_error(f"Directory already exists: `{extracted_path}`")
+			se.print_error(f"Directory already exists: [path][link=file://{extracted_path}]{extracted_path}[/][/].")
 			return se.FileExistsException.code
 
 		with open(target, "rb") as binary_file:
@@ -96,6 +100,6 @@ def extract_ebook() -> int:
 			return se.InvalidFileException.code
 
 		if args.verbose:
-			print(" OK")
+			console.print(" OK")
 
 	return 0

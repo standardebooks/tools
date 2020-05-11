@@ -25,7 +25,7 @@ def get_xhtml_language(xhtml: str) -> str:
 		language = None
 
 	if language not in supported_languages:
-		raise se.InvalidLanguageException(f"No valid `xml:lang` attribute in `<html>` element. Only `{'`, `'.join(supported_languages[:-1])}`, and `{supported_languages[-1]}` are supported.")
+		raise se.InvalidLanguageException(f"No valid [attr]xml:lang[/] attribute in [xhtml]<html>[/] element. Only [text]{'[/], [text]'.join(supported_languages[:-1])}[/], and [text]{supported_languages[-1]}[/] are supported.")
 
 	return language
 

@@ -7,6 +7,7 @@ import html
 from pathlib import Path
 
 import regex
+from rich.console import Console
 
 import se
 import se.typography
@@ -23,16 +24,14 @@ def typogrify() -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
-	if args.verbose and not args.quotes:
-		print("Skipping smart quotes.")
-
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 	return_code = 0
 	ignored_filenames = se.IGNORED_FILENAMES
 	ignored_filenames.remove("toc.xhtml")
 
 	for filename in se.get_target_filenames(args.targets, (".xhtml", ".opf"), ignored_filenames):
 		if args.verbose:
-			print(f"Processing {filename} ...", end="", flush=True)
+			console.print(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", end="")
 
 		try:
 			with open(filename, "r+", encoding="utf-8") as file:
@@ -80,10 +79,10 @@ def typogrify() -> int:
 					file.truncate()
 
 			if args.verbose:
-				print(" OK")
+				console.print(" OK")
 
 		except FileNotFoundError:
-			se.print_error(f"Couldn’t open file: `{filename}`")
+			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
 			return_code = se.InvalidInputException.code
 
 	return return_code
