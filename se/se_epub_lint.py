@@ -218,6 +218,7 @@ TYPOGRAPHY
 "t-040", "Subtitle with illegal ending period."
 "t-041", "Illegal space before punctuation."
 "t-042", "Possible typo."
+"t-043", "Dialog tag missing punctuation."
 
 XHTML
 "x-001", "String `UTF-8[/] must always be lowercase."
@@ -1197,10 +1198,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("t-016", "Initials in [xhtml]<abbr class=\"name\">[/] not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
+				# Check for missing punctuation in continued quotations
+				nodes = dom.xpath("/html/body//p[re:test(., '”\\s(?:said|[A-Za-z]{2,}ed)\\s[A-Za-z]+?(?<!\\bthe)(?<!\\bto)(?<!\\bwith)(?<!\\bfrom)\\s“')]")
+				if nodes:
+					messages.append(LintMessage("t-043", "Dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+
 				# Check for abbreviations followed by periods
 				# But we exclude some SI units, which don't take periods, and some Imperial abbreviations that are multi-word
 				nodes = dom.xpath("/html/body//abbr[(contains(@class, 'initialism') or contains(@class, 'name') or not(@class))][not(re:test(., '[cmk][mgl]')) and not(text()='mpg' or text()='mph' or text()='hp' or text()='TV')][following-sibling::text()[1][starts-with(self::text(), '.')]]")
-
 				if nodes:
 					messages.append(LintMessage("t-032", "Initialism or name followed by period. Hint: Periods go within [xhtml]<abbr>[/]. [xhtml]<abbr>[/]s containing periods that end a clause require the [class]eoc[/] class.", se.MESSAGE_TYPE_WARNING, filename, [f"{node.tostring()}." for node in nodes]))
 
