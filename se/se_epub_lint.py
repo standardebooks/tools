@@ -179,8 +179,8 @@ SEMANTICS & CONTENT
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
 "t-002", "Comma or period outside of double quote. Generally punctuation should go within single and double quotes."
-"t-003", "`“[/] missing matching `”[/]."
-"t-004", "`‘[/] missing matching `’[/]."
+"t-003", "`“` missing matching `”`. Note: When dialog from the same speaker spans multiple `<p>` elements, it’s correct grammar to omit closing `”` until the last `<p>` of dialog."
+"t-004", "`‘` missing matching `’`."
 "t-005", "Dialog without ending comma."
 "t-007", "Required no-break space not found before `&amp;[/]."
 "t-008", "Required no-break space not found after `&amp;[/]."
@@ -1362,8 +1362,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# xpath to check for opening quote in p, without a next child p that starts with an opening quote or an opening bracket (for editorial insertions within paragraphs of quotation); or that consists of only an ellipses (like an elided part of a longer quotation)
 				# Matching <p>s can't have a poem/verse ancestor as formatting is often special for those.
 				matches = matches + [regex.findall(r"“[^”]+</p>", node.tostring())[0] for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+$')][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')])][(following-sibling::*[1])[name()='p'][not(re:test(normalize-space(.), '^[“\\[]') or re:test(normalize-space(.), '^…$'))]]")]
+
+				# Additionally, match short <p> tags (< 100 chars) that lack closing quote, and whose direct siblings do have closing quotes (to exclude runs of same-speaker dialog), and that is not within a blockquote, verse, or letter
+				matches = matches + [regex.findall(r"“[^”]+</p>", node.tostring())[0] for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+$') and not(re:test(., '[…:]$')) and string-length(normalize-space(.)) <= 100][(following-sibling::*[1])[not(re:test(., '“[^”]+$'))] and (preceding-sibling::*[1])[not(re:test(., '“[^”]+$'))]][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')]) and not(ancestor::blockquote) and not (ancestor::*[contains(@epub:type, 'z3998:letter')])][(following-sibling::*[1])[name()='p'][re:test(normalize-space(.), '^[“\\[]') and not(contains(., 'continued'))]]")]
 				if matches:
-					messages.append(LintMessage("t-003", "[text]“[/] missing matching [text]”[/].", se.MESSAGE_TYPE_WARNING, filename, matches))
+					messages.append(LintMessage("t-003", "[text]“[/] missing matching [text]”[/]. Note: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check for lsquo not correctly closed
 				matches = regex.findall(r"‘[^“’]+?‘", file_contents)
