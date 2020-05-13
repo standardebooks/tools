@@ -105,7 +105,9 @@ def lint() -> int:
 							alert = f"[bright_yellow]{alert}[/bright_yellow]"
 
 						# Add hyperlinks around message filenames
-						message_filename = f"[link=file://{message.filename.resolve()}]{message.filename.name}[/link]"
+						message_filename = ""
+						if message.filename:
+							message_filename = f"[link=file://{message.filename.resolve()}]{message.filename.name}[/link]"
 					else:
 						# Replace color markup with `
 						message_text = regex.sub(r"\[(?:/|xhtml|xml|val|attr|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message_text)
