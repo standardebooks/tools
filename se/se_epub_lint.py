@@ -235,8 +235,8 @@ XHTML
 "x-013", "CSS class found in XHTML, but not in `local.css[/]."
 "x-014", "Illegal `id[/] attribute."
 "x-015", f"Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed."
+"x-016", "[attr]xml:lang[/] attriute with value starting in uppercase letter."
 vvvvvvvvUNUSEDvvvvvvvv
-"x-011", "Uppercased HTML tag."
 """
 
 class LintMessage:
@@ -1250,6 +1250,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
 				if nodes:
 					messages.append(LintMessage("x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.lxml_element.tag}>" for node in nodes]))
+
+				nodes = dom.xpath("//*[re:test(@xml:lang, '^[A-Z]')]")
+				if nodes:
+					messages.append(LintMessage("x-016", "[attr]xml:lang[/] attriute with value starting in uppercase letter.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
 				# Check for common typos
 				# Don't check the titlepage because it has a standard format and may raise false positives
