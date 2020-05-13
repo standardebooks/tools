@@ -1778,7 +1778,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		messages.append(LintMessage("s-028", f"[path][link=file://{self.path / 'images/cover.svg'}]cover.svg[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match.", se.MESSAGE_TYPE_ERROR))
 
 	if has_frontmatter and not has_halftitle:
-		messages.append(LintMessage("s-020", "Frontmatter found, but no halftitle. Halftitle is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR))
+		messages.append(LintMessage("s-020", "Frontmatter found, but no halftitle. Halftitle is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	if not has_cover_source:
 		missing_files.append(self.path / "images/cover.source.jpg")
