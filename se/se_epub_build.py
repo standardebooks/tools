@@ -771,6 +771,13 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					split_output = output.split("\n")
 					output = "\n".join(split_output[:-2])
 
+					# Try to linkify files in output if we can find them
+					try:
+						output = regex.sub(r"(ERROR\(.+?\): )(.+?)(\([0-9]+,[0-9]+\))", lambda match: match.group(1) + "[path][link=file://" + str(self.path / "src" / regex.sub(fr"^\..+?\.epub{os.sep}", "", match.group(2))) + "]" + match.group(2) + "[/][/]" + match.group(3), output)
+					except:
+						# If something goes wrong, just pass through the usual output
+						pass
+
 					raise se.BuildFailedException(f"[bash]epubcheck[/] v{version} failed with:\n{output}")
 
 		if build_kindle:
