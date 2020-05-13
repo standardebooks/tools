@@ -70,7 +70,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
 	xhtml = regex.sub(fr"([^\s{se.WORD_JOINER}{se.NO_BREAK_SPACE}{se.HAIR_SPACE}])([—⸻])", fr"\1{se.WORD_JOINER}\2", xhtml, flags=regex.IGNORECASE)
 
-	# Add en dashes; don't replace match that is within an html tag, since ids and attrs often containg the pattern DIGIT-DIGIT
+	# Add en dashes; don't replace match that is within an html tag, since ids and attrs often contain the pattern DIGIT-DIGIT
 	xhtml = regex.sub(r"(?<!<[^>]*)([0-9]+)\-([0-9]+)", r"\1–\2", xhtml)
 
 	# Add a word joiner on both sides of en dashes
@@ -90,6 +90,13 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 	# Finally fix some other mistakes
 	xhtml = xhtml.replace("—-", "—")
+
+	# Replace two-em-dashes with an em-dash, but try to exclude ones being used for elision
+	xhtml = regex.sub(fr"([I\p{{Lowercase_Letter}}>\.]{se.WORD_JOINER})⸺”", r"\1—”", xhtml)
+	xhtml = regex.sub(fr"([^\s‘“—][a-z\.]{se.WORD_JOINER})⸺\s?", r"\1—", xhtml)
+
+	# Remove spaces after two-em-dashes that do not appear to be elision
+	xhtml = regex.sub(fr"(\p{{Letter}}{{2,}}{se.WORD_JOINER})⸺\s", r"\1—", xhtml)
 
 	# Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
 	xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.?(</abbr>)?\s+", fr"\1.\2{se.NO_BREAK_SPACE}", xhtml)
