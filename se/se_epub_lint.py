@@ -1199,7 +1199,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-016", "Initials in [xhtml]<abbr class=\"name\">[/] not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for missing punctuation in continued quotations
-				nodes = dom.xpath("/html/body//p[re:test(., '”\\s(?:said|[A-Za-z]{2,}ed)\\s[A-Za-z]+?(?<!\\bthe)(?<!\\bto)(?<!\\bwith)(?<!\\bfrom)\\s“')]")
+				# ” said Bob “
+				nodes = dom.xpath(r"/html/body//p[re:test(., '”\s(?:said|[A-Za-z]{2,}ed)\s[A-Za-z]+?(?<!\bthe)(?<!\bto)(?<!\bwith)(?<!\bfrom)(?<!\ba\b)(?<!\bis)\s“') or re:test(., '[^\.]”\s(\bhe\b|\bshe\b|I|[A-Z][a-z]+?)\s(?:said|[A-Za-z]{2,}ed)\s“')]")
 				if nodes:
 					messages.append(LintMessage("t-043", "Dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
