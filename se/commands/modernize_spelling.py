@@ -37,10 +37,10 @@ def modernize_spelling() -> int:
 					problem_spellings = se.spelling.detect_problem_spellings(xhtml)
 
 					for problem_spelling in problem_spellings:
-						console.print(f"{('[path][link=file://' + filename + ']' + filename.name + '[/][/]') + ': ' if not args.verbose else ''}{problem_spelling}")
+						console.print(f"{('[path][link=file://' + str(filename) + ']' + filename.name + '[/][/]') + ': ' if not args.verbose else ''}{problem_spelling}")
 
 				except se.InvalidLanguageException as ex:
-					se.print_error(f"{ex}{' File: [path][link=file://' + filename + ']' + filename + '[/][/]' if not args else ''}")
+					se.print_error(f"{ex}{' File: [path][link=file://' + str(filename) + ']' + str(filename) + '[/][/]' if not args else ''}")
 					return ex.code
 
 				if args.modernize_hyphenation:
