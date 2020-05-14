@@ -119,6 +119,7 @@ METADATA
 "m-051", "Missing expected element in metadata."
 "m-052", "[xhtml]<dc:title>[/] element contains numbers, but no [xhtml]<meta property=\"se:alternate-title\"> element in metadata."
 "m-053", "[/]<meta property=\"se:subject\">[/] elements not in alphabetical order."
+"m-054", "Standard Ebooks URL with illegal trailing slash."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like `&#913;`)."
@@ -300,17 +301,25 @@ def _get_malformed_urls(xhtml: str, filename: Path) -> list:
 		messages.append(LintMessage("m-003", "Non-https URL.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 	# Check for malformed canonical URLs
-	if regex.search(r"books\.google\.com/books\?id=.+?[&#]", xhtml):
-		messages.append(LintMessage("m-004", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://books.google.com/books?id=<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename))
+	matches = regex.findall(r"https?://books\.google\.com/books\?id=.+?[&#][^<\s\"]+", xhtml)
+	if matches:
+		messages.append(LintMessage("m-004", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://books.google.com/books?id=<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-	if "babel.hathitrust.org" in xhtml:
-		messages.append(LintMessage("m-005", "Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like [url]https://catalog.hathitrust.org/Record/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename))
+	matches = regex.findall(r"https?://babel\.hathitrust\.org[^<\s\"]+", xhtml)
+	if matches:
+		messages.append(LintMessage("m-005", "Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like [url]https://catalog.hathitrust.org/Record/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-	if ".gutenberg.org/files/" in xhtml:
-		messages.append(LintMessage("m-006", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like [url]https://www.gutenberg.org/ebooks/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename))
+	matches = regex.findall(r"https?://.+?gutenberg\.org/(?:files|cache)[^<\s\"]+", xhtml)
+	if matches:
+		messages.append(LintMessage("m-006", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like [url]https://www.gutenberg.org/ebooks/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-	if "archive.org/stream" in xhtml:
-		messages.append(LintMessage("m-007", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like [url]https://archive.org/details/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename))
+	matches = regex.findall(r"https?://.+?archive\.org/stream[^<\s\"]+", xhtml)
+	if matches:
+		messages.append(LintMessage("m-007", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like [url]https://archive.org/details/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
+
+	matches = regex.findall(r"https?://standardebooks.org/[^<\s\"]/(?![<\s\"])", xhtml)
+	if matches:
+		messages.append(LintMessage("m-054", "Standard Ebooks URL with illegal trailing slash.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 	return messages
 
