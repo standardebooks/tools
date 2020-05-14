@@ -103,6 +103,9 @@ def detect_problem_spellings(xhtml: str) -> list:
 	if regex.search(r"\bmann?ikin\b", xhtml):
 		output.append("“mannikin” or “manikin” detected. Confirm that “mannikin” is used in the sense of a small person, and “mannequin” is used in the sense of a dummy or figure.")
 
+	if regex.search(r"\bgripe", xhtml):
+		output.append("“gripe” or “griped” detected. Confirm that “gripe” is used in the sense of illness or complaint, not in the sense of “grip” or “gripped.”")
+
 	return output
 
 def modernize_spelling(xhtml: str) -> str:
