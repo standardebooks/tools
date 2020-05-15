@@ -108,6 +108,14 @@ def _calculate_image_lines(string: str, target_height: int, canvas_width: int) -
 
 	lines.reverse()
 
+	# If the first line is a single short word, move up the first word of the next line
+	if lines[0].lower() in ("the", "a", "of", "by", "on"):
+		first_word = regex.match(r"^[\p{Letter}]+(?=\s)", lines[1])
+
+		if first_word:
+			lines[0] = lines[0] + " " + first_word.group(0)
+			lines[1] = regex.sub(rf"^{regex.escape(first_word.group(0))}", "", lines[1])
+
 	return lines
 
 def _generate_titlepage_svg(title: str, authors: Union[str, list], contributors: dict, title_string: str) -> str:
