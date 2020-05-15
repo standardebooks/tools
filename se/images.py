@@ -254,7 +254,11 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 		font = _parse_font(font_path)
 		fonts.append(font)
 	svg_in_raw = open(in_svg, "rt").read()
-	xml = etree.fromstring(str.encode(svg_in_raw))
+
+	try:
+		xml = etree.fromstring(str.encode(svg_in_raw))
+	except:
+		raise se.InvalidXmlException(f"Couldn’t parse SVG file: [path][link={in_svg.resolve()}]{in_svg}[/][/]")
 
 	svg_ns = "{http://www.w3.org/2000/svg}"
 
