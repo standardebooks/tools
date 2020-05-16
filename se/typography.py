@@ -63,7 +63,8 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 	# Remove spaces between en and em dashes
 	# Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
-	xhtml = regex.sub(r"([^\.\s])\s*([–—])\s*", r"\1\2", xhtml)
+	# We do a negative lookbehind for <br/ to prevent newlines/indents after <br/>s from being included
+	xhtml = regex.sub(r"(?<!<br/)([^\.\s])\s*([–—])\s*", r"\1\2", xhtml, flags=regex.DOTALL)
 
 	# First, remove stray word joiners
 	xhtml = xhtml.replace(se.WORD_JOINER, "")
