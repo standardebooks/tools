@@ -34,6 +34,11 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 		xhtml = html.unescape(xhtml) # This converts html entites to unicode
 		xhtml = regex.sub(r"&([^#\p{Lowercase_Letter}])", r"&amp;\1", xhtml) # Oops!  html.unescape also unescapes plain ampersands...
 
+		# Replace rsquo character with an escape sequence. We can't use HTML comments
+		# because rsquo may appear inside alt attributes, and that would break smartypants.
+		# When we encounter an actual rsquo, it's 99% correct as-is.
+		xhtml = xhtml.replace("’", "!#se:rsquo#!")
+
 		xhtml = smartypants.smartypants(xhtml) # Attr.u *should* output unicode characters instead of HTML entities, but it doesn't work
 
 		# Convert entities again
@@ -52,6 +57,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"—’([\p{Letter}])", r"—‘\1", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"-“</p>", r"—”</p>", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"‘”</p>", fr"’{se.HAIR_SPACE}”</p>", xhtml, flags=regex.IGNORECASE)
+
+	# Now that we've fixed Smartypants' output, put our quotes back in
+	xhtml = xhtml.replace("!#se:rsquo#!", "’")
 
 	# Remove spaces between en and em dashes
 	# Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
