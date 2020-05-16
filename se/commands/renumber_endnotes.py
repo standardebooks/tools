@@ -28,9 +28,9 @@ def renumber_endnotes() -> int:
 			return_code = ex.code
 
 		try:
-			report = se_epub.generate_endnotes()  # returns a report on actions taken
+			found_endnote_count, changed_endnote_count = se_epub.generate_endnotes()
 			if args.verbose:
-				print(report)
+				print(f"Found {found_endnote_count} endnote{'s' if found_endnote_count != 1 else ''} and changed {changed_endnote_count} endnote{'s' if changed_endnote_count != 1 else ''}.")
 		except se.SeException as ex:
 			se.print_error(ex)
 			return_code = ex.code

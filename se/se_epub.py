@@ -11,7 +11,7 @@ import fnmatch
 import html
 import os
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 from bs4 import BeautifulSoup, Tag
 import git
@@ -906,14 +906,15 @@ class SeEpub:
 
 		return generate_toc(self)
 
-	def generate_endnotes(self) -> str:
+	def generate_endnotes(self) -> Tuple[int, int]:
 		"""
 		Read the epub spine to regenerate all endnotes in order of appearance, starting from 1.
 		Changes are written to disk.
+
+		Returns a tuple of (found_endnote_count, changed_endnote_count)
 		"""
 
 		processed = 0
-		report = ""
 		current_note_number = 1
 		notes_changed = 0
 		change_list = []
@@ -977,38 +978,33 @@ class SeEpub:
 				new_file.close()
 
 		if processed == 0:
-			report += "No files processed. Did you update the manifest and order the spine?\n"
-		else:
-			report += f"Found {current_note_number - 1} endnotes.\n"
-			if notes_changed > 0:
-				# Now we need to recreate the endnotes file
-				ol_tag = self._endnotes_soup.ol
-				ol_tag.clear()
+			raise se.InvalidInputException("No files processed. Did you update the manifest and order the spine?")
 
-				self.endnotes.sort(key=lambda endnote: endnote.number)
+		if notes_changed > 0:
+			# Now we need to recreate the endnotes file
+			ol_tag = self._endnotes_soup.ol
+			ol_tag.clear()
 
-				for endnote in self.endnotes:
-					if endnote.matched:
-						li_tag = self._endnotes_soup.new_tag("li")
-						li_tag["id"] = "note-" + str(endnote.number)
-						li_tag["epub:type"] = "endnote"
-						for content in endnote.contents:
-							if isinstance(content, Tag):
-								links = content.find_all("a")
-								for link in links:
-									epub_type = link.get("epub:type") or ""
-									if epub_type == "backlink":
-										href = link.get("href") or ""
-										if href:
-											link["href"] = endnote.source_file + "#noteref-" + str(endnote.number)
-							li_tag.append(content)
-						ol_tag.append(li_tag)
+			self.endnotes.sort(key=lambda endnote: endnote.number)
 
-				with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml", "w") as file:
-					file.write(se.formatting.format_xhtml(str(self._endnotes_soup)))
+			for endnote in self.endnotes:
+				if endnote.matched:
+					li_tag = self._endnotes_soup.new_tag("li")
+					li_tag["id"] = "note-" + str(endnote.number)
+					li_tag["epub:type"] = "endnote"
+					for content in endnote.contents:
+						if isinstance(content, Tag):
+							links = content.find_all("a")
+							for link in links:
+								epub_type = link.get("epub:type") or ""
+								if epub_type == "backlink":
+									href = link.get("href") or ""
+									if href:
+										link["href"] = endnote.source_file + "#noteref-" + str(endnote.number)
+						li_tag.append(content)
+					ol_tag.append(li_tag)
 
-				report += f"Changed {notes_changed:d} endnote{'s' if notes_changed != 1 else ''}."
-			else:
-				report += "No changes made."
+			with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml", "w") as file:
+				file.write(se.formatting.format_xhtml(str(self._endnotes_soup)))
 
-		return report
+		return (current_note_number - 1, notes_changed)
