@@ -375,10 +375,12 @@ def _create_draft(args: Namespace):
 		identifier = identifier + "/" + se.formatting.make_url_safe(args.illustrator)
 		title_string = title_string + ". Illustrated by " + args.illustrator
 
-	repo_name = Path(identifier.replace("/", "_")).resolve()
+	repo_name = identifier.replace("/", "_")
 
-	if repo_name.is_dir():
-		raise se.InvalidInputException(f"Directory already exists: [path][link=file://{repo_name}]{repo_name}[/][/].")
+	repo_path = Path(repo_name).resolve()
+
+	if repo_path.is_dir():
+		raise se.InvalidInputException(f"Directory already exists: [path][link=file://{repo_path}]{repo_path}[/][/].")
 
 	# Download PG HTML and do some fixups
 	if args.pg_url:
@@ -436,11 +438,11 @@ def _create_draft(args: Namespace):
 			pg_language = "en-GB"
 
 	# Create necessary directories
-	(repo_name / "images").mkdir(parents=True)
-	(repo_name / "src" / "epub" / "css").mkdir(parents=True)
-	(repo_name / "src" / "epub" / "images").mkdir(parents=True)
-	(repo_name / "src" / "epub" / "text").mkdir(parents=True)
-	(repo_name / "src" / "META-INF").mkdir(parents=True)
+	(repo_path / "images").mkdir(parents=True)
+	(repo_path / "src" / "epub" / "css").mkdir(parents=True)
+	(repo_path / "src" / "epub" / "images").mkdir(parents=True)
+	(repo_path / "src" / "epub" / "text").mkdir(parents=True)
+	(repo_path / "src" / "META-INF").mkdir(parents=True)
 
 	is_pg_html_parsed = True
 
@@ -476,7 +478,7 @@ def _create_draft(args: Namespace):
 
 				element.parent.decompose()
 
-			with open(repo_name / "src" / "epub" / "text" / "body.xhtml", "w", encoding="utf-8") as file:
+			with open(repo_path / "src" / "epub" / "text" / "body.xhtml", "w", encoding="utf-8") as file:
 				file.write(str(soup))
 		except OSError as ex:
 			raise se.InvalidFileException(f"Couldn’t write to ebook directory. Exception: {ex}")
@@ -484,27 +486,27 @@ def _create_draft(args: Namespace):
 			# Save this error for later, because it's still useful to complete the create-draft process
 			# even if we've failed to parse PG's HTML source.
 			is_pg_html_parsed = False
-			se.quiet_remove(repo_name / "src" / "epub" / "text" / "body.xhtml")
+			se.quiet_remove(repo_path / "src" / "epub" / "text" / "body.xhtml")
 
 	# Copy over templates
 
-	_copy_template_file("gitignore", repo_name / ".gitignore")
-	_copy_template_file("LICENSE.md", repo_name)
-	_copy_template_file("container.xml", repo_name / "src" / "META-INF")
-	_copy_template_file("mimetype", repo_name / "src")
-	_copy_template_file("content.opf", repo_name / "src" / "epub")
-	_copy_template_file("onix.xml", repo_name / "src" / "epub")
-	_copy_template_file("toc.xhtml", repo_name / "src" / "epub")
-	_copy_template_file("core.css", repo_name / "src" / "epub" / "css")
-	_copy_template_file("local.css", repo_name / "src" / "epub" / "css")
-	_copy_template_file("logo.svg", repo_name / "src" / "epub" / "images")
-	_copy_template_file("colophon.xhtml", repo_name / "src" / "epub" / "text")
-	_copy_template_file("imprint.xhtml", repo_name / "src" / "epub" / "text")
-	_copy_template_file("titlepage.xhtml", repo_name / "src" / "epub" / "text")
-	_copy_template_file("uncopyright.xhtml", repo_name / "src" / "epub" / "text")
-	_copy_template_file("titlepage.svg", repo_name / "images")
-	_copy_template_file("cover.jpg", repo_name / "images" / "cover.jpg")
-	_copy_template_file("cover.svg", repo_name / "images" / "cover.svg")
+	_copy_template_file("gitignore", repo_path / ".gitignore")
+	_copy_template_file("LICENSE.md", repo_path)
+	_copy_template_file("container.xml", repo_path / "src" / "META-INF")
+	_copy_template_file("mimetype", repo_path / "src")
+	_copy_template_file("content.opf", repo_path / "src" / "epub")
+	_copy_template_file("onix.xml", repo_path / "src" / "epub")
+	_copy_template_file("toc.xhtml", repo_path / "src" / "epub")
+	_copy_template_file("core.css", repo_path / "src" / "epub" / "css")
+	_copy_template_file("local.css", repo_path / "src" / "epub" / "css")
+	_copy_template_file("logo.svg", repo_path / "src" / "epub" / "images")
+	_copy_template_file("colophon.xhtml", repo_path / "src" / "epub" / "text")
+	_copy_template_file("imprint.xhtml", repo_path / "src" / "epub" / "text")
+	_copy_template_file("titlepage.xhtml", repo_path / "src" / "epub" / "text")
+	_copy_template_file("uncopyright.xhtml", repo_path / "src" / "epub" / "text")
+	_copy_template_file("titlepage.svg", repo_path / "images")
+	_copy_template_file("cover.jpg", repo_path / "images" / "cover.jpg")
+	_copy_template_file("cover.svg", repo_path / "images" / "cover.svg")
 
 	# Try to find Wikipedia links if possible
 	if args.offline:
@@ -524,9 +526,9 @@ def _create_draft(args: Namespace):
 			translator_wiki_url, translator_nacoaf_url = _get_wikipedia_url(args.translator, True)
 
 	# Pre-fill a few templates
-	_replace_in_file(repo_name / "src" / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", title_string)
-	_replace_in_file(repo_name / "images" / "titlepage.svg", "TITLE_STRING", title_string)
-	_replace_in_file(repo_name / "images" / "cover.svg", "TITLE_STRING", title_string)
+	_replace_in_file(repo_path / "src" / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", title_string)
+	_replace_in_file(repo_path / "images" / "titlepage.svg", "TITLE_STRING", title_string)
+	_replace_in_file(repo_path / "images" / "cover.svg", "TITLE_STRING", title_string)
 
 	# Create the titlepage SVG
 	contributors = {}
@@ -536,22 +538,22 @@ def _create_draft(args: Namespace):
 	if args.illustrator:
 		contributors["illustrated by"] = args.illustrator
 
-	with open(repo_name / "images" / "titlepage.svg", "w", encoding="utf-8") as file:
+	with open(repo_path / "images" / "titlepage.svg", "w", encoding="utf-8") as file:
 		file.write(_generate_titlepage_svg(args.title, args.author, contributors, title_string))
 
 	# Create the cover SVG
-	with open(repo_name / "images" / "cover.svg", "w", encoding="utf-8") as file:
+	with open(repo_path / "images" / "cover.svg", "w", encoding="utf-8") as file:
 		file.write(_generate_cover_svg(args.title, args.author, title_string))
 
 	# Build the cover/titlepage for distribution
-	epub = SeEpub(repo_name)
+	epub = SeEpub(repo_path)
 	epub.generate_cover_svg()
 	epub.generate_titlepage_svg()
 
 	if args.pg_url:
-		_replace_in_file(repo_name / "src" / "epub" / "text" / "imprint.xhtml", "PG_URL", args.pg_url)
+		_replace_in_file(repo_path / "src" / "epub" / "text" / "imprint.xhtml", "PG_URL", args.pg_url)
 
-	with open(repo_name / "src" / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
+	with open(repo_path / "src" / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
 		colophon_xhtml = file.read()
 
 		colophon_xhtml = colophon_xhtml.replace("SE_IDENTIFIER", identifier)
@@ -591,7 +593,7 @@ def _create_draft(args: Namespace):
 		file.write(colophon_xhtml)
 		file.truncate()
 
-	with open(repo_name / "src" / "epub" / "content.opf", "r+", encoding="utf-8") as file:
+	with open(repo_path / "src" / "epub" / "content.opf", "r+", encoding="utf-8") as file:
 		metadata_xml = file.read()
 
 		metadata_xml = metadata_xml.replace("SE_IDENTIFIER", identifier)
@@ -678,7 +680,7 @@ def _create_draft(args: Namespace):
 		file.truncate()
 
 	# Set up local git repo
-	repo = git.Repo.init(repo_name)
+	repo = git.Repo.init(repo_path)
 
 	if args.email:
 		with repo.config_writer() as config:
