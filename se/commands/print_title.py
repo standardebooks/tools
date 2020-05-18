@@ -6,6 +6,7 @@ import argparse
 
 import regex
 
+from roman import InvalidRomanNumeralError
 import se
 import se.formatting
 
@@ -46,6 +47,9 @@ def print_title() -> int:
 
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
+			return_code = se.InvalidInputException.code
+		except InvalidRomanNumeralError as ex:
+			se.print_error(regex.sub(r"^.+: (.+)$", fr"Invalid Roman numeral: [text]\1[/]. File: [path][link=file://{filename}]{filename}[/][/].", str(ex)))
 			return_code = se.InvalidInputException.code
 		except se.SeException as ex:
 			se.print_error(ex)
