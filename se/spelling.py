@@ -272,6 +272,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Uu])p stairs\b", r"\1pstairs", xhtml)			# up stairs -> upstairs
 	xhtml = regex.sub(r"(?<!up and )(?<!up or )\b([Dd])own stairs\b", r"\1ownstairs", xhtml)		# down stairs -> downstairs, but not "up (or|and) down stairs"
 	xhtml = regex.sub(r"([Pp])artizan", r"\1artisan", xhtml)			# partizan -> partisan
+	xhtml = regex.sub(r"([Nn])onplused", r"\1onplussed", xhtml)			# nonplused -> nonplussed
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
