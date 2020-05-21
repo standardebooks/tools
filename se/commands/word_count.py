@@ -49,9 +49,10 @@ def word_count() -> int:
 
 			# Try to remove PG header/footers
 			if args.ignore_pg_boilerplate:
-				xhtml = regex.sub(r"<pre>\s*The Project Gutenberg Ebook[^<]+?</pre>", "", xhtml, flags=regex.IGNORECASE)
-				xhtml = regex.sub(r"<pre>\s*End of Project Gutenberg[^<]+?</pre>", "", xhtml, flags=regex.IGNORECASE)
-				xhtml = regex.sub(r"<p>[^<]*The Project Gutenberg[^<]+?</p>", "", xhtml, flags=regex.IGNORECASE)
+				xhtml = regex.sub(r"<pre>\s*The Project Gutenberg Ebook[^<]+?</pre>", "", xhtml, flags=regex.IGNORECASE|regex.DOTALL)
+				xhtml = regex.sub(r"<pre>\s*End of Project Gutenberg[^<]+?</pre>", "", xhtml, flags=regex.IGNORECASE|regex.DOTALL)
+				xhtml = regex.sub(r"<p>[^<]*The Project Gutenberg[^<]+?</p>", "", xhtml, flags=regex.IGNORECASE|regex.DOTALL)
+				xhtml = regex.sub(r"<span class=\"pagenum\">.+?</span>", "", xhtml, flags=regex.IGNORECASE|regex.DOTALL)
 
 			total_word_count += se.formatting.get_word_count(xhtml)
 
