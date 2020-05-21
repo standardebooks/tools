@@ -29,7 +29,7 @@ import se.easy_xml
 import se.formatting
 import se.images
 
-
+METADATA_VARIABLES = ["TITLE", "TITLE_SORT", "SUBJECT_1", "SUBJECT_2", "LCSH_ID_1", "LCSH_ID_2", "TAG", "DESCRIPTION", "LONG_DESCRIPTION", "LANG", "PG_URL", "EBOOK_WIKI_URL", "VCS_IDENTIFIER", "AUTHOR", "AUTHOR_SORT", "AUTHOR_FULL_NAME", "AUTHOR_WIKI_URL", "AUTHOR_NACOAF_URL", "TRANSLATOR", "TRANSLATOR_SORT", "TRANSLATOR_WIKI_URL", "TRANSLATOR_NACOAF_URL", "COVER_ARTIST", "COVER_ARTIST_SORT", "COVER_ARTIST_WIKI_URL", "COVER_ARTIST_NACOAF_URL", "TRANSCRIBER", "TRANSCRIBER_SORT", "TRANSCRIBER_URL", "PRODUCER", "PRODUCER_SORT", "PRODUCER_URL"]
 COLOPHON_VARIABLES = ["TITLE", "YEAR", "AUTHOR_WIKI_URL", "AUTHOR", "PRODUCER_URL", "PRODUCER", "PG_YEAR", "TRANSCRIBER_1", "TRANSCRIBER_2", "PG_URL", "IA_URL", "PAINTING", "ARTIST_WIKI_URL", "ARTIST"]
 EPUB_SEMANTIC_VOCABULARY = ["cover", "frontmatter", "bodymatter", "backmatter", "volume", "part", "chapter", "division", "foreword", "preface", "prologue", "introduction", "preamble", "conclusion", "epilogue", "afterword", "epigraph", "toc", "landmarks", "loa", "loi", "lot", "lov", "appendix", "colophon", "index", "index-headnotes", "index-legend", "index-group", "index-entry-list", "index-entry", "index-term", "index-editor-note", "index-locator", "index-locator-list", "index-locator-range", "index-xref-preferred", "index-xref-related", "index-term-category", "index-term-categories", "glossary", "glossterm", "glossdef", "bibliography", "biblioentry", "titlepage", "halftitlepage", "copyright-page", "acknowledgments", "imprint", "imprimatur", "contributors", "other-credits", "errata", "dedication", "revision-history", "notice", "tip", "halftitle", "fulltitle", "covertitle", "title", "subtitle", "bridgehead", "learning-objective", "learning-resource", "assessment", "qna", "panel", "panel-group", "balloon", "text-area", "sound-area", "footnote", "endnote", "footnotes", "endnotes", "noteref", "keyword", "topic-sentence", "concluding-sentence", "pagebreak", "page-list", "table", "table-row", "table-cell", "list", "list-item", "figure", "aside"]
 
@@ -121,6 +121,7 @@ METADATA
 "m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"se:alternate-title\"> element in metadata."
 "m-053", "[xml]<meta property=\"se:subject\">[/] elements not in alphabetical order."
 "m-054", "Standard Ebooks URL with illegal trailing slash."
+"m-055", "Missing data in metadata."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -584,6 +585,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			messages.append(LintMessage("m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 	except:
 		raise se.InvalidSeEbookException(f"No [xml]<meta property=\"se:long-description\">[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/].")
+
+	missing_metadata_vars = [var for var in METADATA_VARIABLES if regex.search(fr"\b{var}\b", self.metadata_xml)]
+	if missing_metadata_vars:
+		messages.append(LintMessage("m-055", "Missing data in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_metadata_vars))
 
 	# Check if there are non-typogrified quotes or em-dashes in the title.
 	try:
