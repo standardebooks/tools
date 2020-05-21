@@ -137,7 +137,7 @@ _se(){
 			version)
 				;;
 			word-count)
-				COMPREPLY+=($(compgen -W "-c --categorize -h --help -x --exclude-se-files" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-c --categorize -h --help -p --ignore-pg-boilerplate -x --exclude-se-files" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				COMPREPLY+=($(compgen -f -X "!*.htm" -- "${cur}"))
 				COMPREPLY+=($(compgen -f -X "!*.html" -- "${cur}"))

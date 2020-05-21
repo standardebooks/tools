@@ -61,6 +61,7 @@ setup(
     install_requires=[
         "beautifulsoup4==4.9.0",
         "cairosvg==2.4.2",
+        "chardet==3.0.4",
         "cssselect==1.1.0",
         "cssutils==1.0.2",
         "ftfy==5.7",

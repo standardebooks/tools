@@ -154,6 +154,7 @@ complete -c se -n "__fish_se_no_subcommand" -a version -d "Print the version num
 
 complete -c se -n "__fish_se_no_subcommand" -a word-count -d "Count the number of words in an HTML file and optionally categorize by length."
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s c -l categorize -d "include length categorization in output"
+complete -c se -A -n "__fish_seen_subcommand_from word-count" -s p -l ignore-pg-boilerplate -d "attempt to ignore Project Gutenberg boilerplate headers and footers before counting"
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s x -l exclude-se-files -d "exclude some non-bodymatter files common to SE ebooks, like the ToC and colophon"
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s h -l help -x -d "show this help message and exit"
 

@@ -3,6 +3,9 @@ This module implements the `se word-count` command.
 """
 
 import argparse
+import chardet
+
+import regex
 
 import se
 import se.formatting
@@ -15,6 +18,7 @@ def word_count() -> int:
 
 	parser = argparse.ArgumentParser(description="Count the number of words in an XHTML file and optionally categorize by length. If multiple files are specified, show the total word count for all.")
 	parser.add_argument("-c", "--categorize", action="store_true", help="include length categorization in output")
+	parser.add_argument("-p", "--ignore-pg-boilerplate", action="store_true", help="attempt to ignore Project Gutenberg boilerplate headers and footers before counting")
 	parser.add_argument("-x", "--exclude-se-files", action="store_true", help="exclude some non-bodymatter files common to SE ebooks, like the ToC and colophon")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
@@ -32,10 +36,24 @@ def word_count() -> int:
 		try:
 			with open(filename, "r", encoding="utf-8") as file:
 				try:
-					total_word_count += se.formatting.get_word_count(file.read())
+					xhtml = file.read()
 				except UnicodeDecodeError:
-					se.print_error(f"File is not UTF-8: [path][link=file://{filename}]{filename}[/][/].")
-					return se.InvalidEncodingException.code
+					# The file we're passed isn't utf-8. Try to convert it here.
+					try:
+						with open(filename, "rb") as binary_file:
+							binary_xhtml = binary_file.read()
+							xhtml = binary_xhtml.decode(chardet.detect(binary_xhtml)["encoding"])
+					except UnicodeDecodeError:
+						se.print_error(f"File is not UTF-8: [path][link=file://{filename}]{filename}[/][/].")
+						return se.InvalidEncodingException.code
+
+			# Try to remove PG header/footers
+			if args.ignore_pg_boilerplate:
+				xhtml = regex.sub(r"<pre>\s*The Project Gutenberg Ebook[^<]+?</pre>", "", xhtml, flags=regex.IGNORECASE)
+				xhtml = regex.sub(r"<pre>\s*End of Project Gutenberg[^<]+?</pre>", "", xhtml, flags=regex.IGNORECASE)
+				xhtml = regex.sub(r"<p>[^<]*The Project Gutenberg[^<]+?</p>", "", xhtml, flags=regex.IGNORECASE)
+
+			total_word_count += se.formatting.get_word_count(xhtml)
 
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
