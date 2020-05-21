@@ -314,11 +314,11 @@ def _get_malformed_urls(xhtml: str, filename: Path) -> list:
 	if matches:
 		messages.append(LintMessage("m-005", "Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like [url]https://catalog.hathitrust.org/Record/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-	matches = regex.findall(r"https?://.+?gutenberg\.org/(?:files|cache)[^<\s\"]+", xhtml)
+	matches = regex.findall(r"https?://.*?gutenberg\.org/(?:files|cache)[^<\s\"]+", xhtml)
 	if matches:
 		messages.append(LintMessage("m-006", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like [url]https://www.gutenberg.org/ebooks/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-	matches = regex.findall(r"https?://.+?archive\.org/stream[^<\s\"]+", xhtml)
+	matches = regex.findall(r"https?://.*?archive\.org/stream[^<\s\"]+", xhtml)
 	if matches:
 		messages.append(LintMessage("m-007", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like [url]https://archive.org/details/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
 
