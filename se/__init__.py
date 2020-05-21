@@ -13,7 +13,7 @@ from typing import Set, Union
 from rich.console import Console
 from rich.text import Text
 from rich.theme import Theme
-from natsort import natsorted
+from natsort import natsorted, ns
 import regex
 
 VERSION = "1.4.0"
@@ -253,7 +253,7 @@ def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filen
 			if target.name.endswith(allowed_extensions):
 				target_xhtml_filenames.add(target)
 
-	return natsorted(list(target_xhtml_filenames))
+	return natsorted(list(target_xhtml_filenames), key=lambda x: str(x.name), alg=ns.PATH)
 
 def is_called_from_parallel() -> bool:
 	"""
