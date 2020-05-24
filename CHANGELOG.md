@@ -1,3 +1,106 @@
+v1.5.0
+======
+
+General
+*******
+
+- The Rich console library is now used for output. This allows us much more detailed and nicely-formatted table output in lint, as well as nicer colors, and hyperlinks in output. If your terminal supports it, all filenames (including filenames in error messages) are now hyperlinked, so that you can ctrl + click on them to open them directly instead of having to hunt for them in your editor or filesystem.
+
+se build-images
+***************
+
+- Catch exception when trying to parse SVGs
+
+se clean
+********
+
+- Remove space before <br/> and non-tag content
+
+- Add t-043, dialog tag missing punctuation
+
+- Add x-016, language tag starting in uppercase letter
+
+- Add m-054, SE URL with trailing slash
+
+- Improve check for malformed URLs
+
+se create-draft
+***************
+
+- When creating title/cover page images, if the first line is a single short word like "the", "of", "or", etc., then move the next word up to the first line
+
+se create-draft
+***************
+
+- Remove <!CDATA tag from long description in the content.opf template, now that se clean correctly escapes the long-description
+
+- Create a new draft with cover/titlepage images already built, so that drafts can be built with `se build` without errors from the get-go
+
+se lint
+*******
+
+- Add m-052, check if alternate-title is missing in metadata
+
+- Ignore all dotfiles in an ebook repo, and only issue f-001 if a dotfile is in the repo *and* tracked by Git
+
+- Don't throw f-008 for files not tracked by Git
+
+- Add t-041, illegal space before punctuation
+
+- Improve t-036, check for missing opening/closing double quotes
+
+- Add m-053, se:subject elements must be in alpha order
+
+- Add t-042, possible typo
+
+- Improve some slow regexes
+
+- Remove -w option, replaced with a better incantation of GNU Parallel in the README
+
+- Improve t-003, check for unclosed double quotes
+
+- Improve t-010, time set with . instead of :
+
+- Merge s-047, s-048, s-049, and s-50 into one message
+
+- Add s-048, se:name.* semantic used on block-level element
+
+- Add s-046, check for <p> elements that have poetry structure but no poetry semantic on parent
+
+- Add s-049, <header> with direct child text node
+
+- Improve s-026, invalid Roman numeral
+
+- Add s-050, <span> element exists only to apply epub:type
+
+- Add z:3998:lyrics to all verse-type checks
+
+- Add m-055, missing data in metadata
+
+se modernize-spelling
+*********************
+
+- Add various new modernizations
+
+se typogrify
+************
+
+- Improve replacement of two-em-dashes
+
+- Don't change existing rsquo chars. This will help prevent typogrify from ruining hand-made changes on subsequent runs.
+
+- Don't remove white space before an em dash, if the white space is preceded by <br/>
+
+se word-count
+*************
+
+- Added -p, --ignore-pg-boilerplate flag to attempt to ignore PG headers, footers, and page numbers when calculating word count
+
+se unicode-names
+****************
+
+- New tabular output format for easier reading
+
 v1.4.0
 ======
 
