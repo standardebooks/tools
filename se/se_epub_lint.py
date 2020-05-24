@@ -180,6 +180,7 @@ SEMANTICS & CONTENT
 "s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/]."
 "s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor."
 "s-056", "Last [xhtml]<p>[/] child of endnote missing backlink.",
+"s-057", "Backlink noteref fragment identifier doesn’t match endnote number.",
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1731,6 +1732,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')][./p[last()][not(a[contains(@epub:type, 'backlink')])]]")
 					if nodes:
 						messages.append(LintMessage("s-056", "Last [xhtml]<p>[/] child of endnote missing backlink.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
+
+					# Make sure the backlink points to the same note number as the parent endnote ID
+					nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]//a[contains(@epub:type, 'backlink')][not(re:match(@href, '\\-[0-9]+$') = re:match(ancestor::li/@id, '\\-[0-9]+$'))]")
+					if nodes:
+						messages.append(LintMessage("s-057", "Backlink noteref fragment identifier doesn’t match endnote number.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
 				# If we're in the imprint, are the sources represented correctly?
 				# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
