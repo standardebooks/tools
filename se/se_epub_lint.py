@@ -178,6 +178,7 @@ SEMANTICS & CONTENT
 "s-052", "[xhtml]<attr>[/] element with illegal [attr]title[/] attribute."
 "s-053", "Colophon line not preceded by [xhtml]<br/>[/]."
 "s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/]."
+"s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1157,9 +1158,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if matches:
 						messages.append(LintMessage("t-017", "Ending punctuation inside italics. Ending punctuation is only allowed within italics if the phrase is an independent clause.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-				# Check for <table> tags without a <tbody> child
+				# Check for <table> element without a <tbody> child
 				if dom.xpath("/html/body//table[not(tbody)]"):
 					messages.append(LintMessage("s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child.", se.MESSAGE_TYPE_ERROR, filename))
+
+				# Check for <th> element without a <thead> ancestor
+				if dom.xpath("/html/body//table//th[not(ancestor::thead)]"):
+					messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for money not separated by commas
 				matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
