@@ -179,6 +179,7 @@ SEMANTICS & CONTENT
 "s-053", "Colophon line not preceded by [xhtml]<br/>[/]."
 "s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/]."
 "s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor."
+"s-056", "Last [xhtml]<p>[/] child of endnote missing backlink.",
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1725,6 +1726,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					nodes = dom.xpath("/html/body//a[@epub:type='backlink'][(preceding-sibling::node()[1])[not(re:test(., ' $')) and not(normalize-space(.) = '')]]")
 					if nodes:
 						messages.append(LintMessage("t-027", "Endnote referrer link not preceded by exactly one space.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+
+					# Check that endnotes have their backlink in the last <p> element child of the <li>. This also highlights backlinks that are totally missing.
+					nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')][./p[last()][not(a[contains(@epub:type, 'backlink')])]]")
+					if nodes:
+						messages.append(LintMessage("s-056", "Last [xhtml]<p>[/] child of endnote missing backlink.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
 				# If we're in the imprint, are the sources represented correctly?
 				# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
