@@ -1565,11 +1565,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							title_text = ""
 							image_ref = img_src.split("/").pop()
 							try:
-								svg_dom = _dom(self.path / "src" / "epub" / "images" / image_ref)
+								svg_path = self.path / "src" / "epub" / "images" / image_ref
+								svg_dom = _dom(svg_path)
 								try:
 									title_text = svg_dom.xpath("/svg/title")[0].text
 								except Exception:
-									messages.append(LintMessage("s-027", f"{image_ref} missing [xhtml]<title>[/] element.", se.MESSAGE_TYPE_ERROR, image_ref))
+									messages.append(LintMessage("s-027", f"{image_ref} missing [xhtml]<title>[/] element.", se.MESSAGE_TYPE_ERROR, svg_path))
 
 								if title_text != "" and alt != "" and title_text != alt:
 									messages.append(LintMessage("s-022", f"The [xhtml]<title>[/] element of [path]{image_ref}[/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
