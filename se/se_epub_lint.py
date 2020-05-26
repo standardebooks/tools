@@ -96,11 +96,11 @@ METADATA
 "m-027", f"HathiTrust source not present. Expected: the [xhtml]<a href=\"{link}\">HathiTrust Digital Library</a>[/]."
 "m-028", f"Internet Archive source not present. Expected: the [xhtml]<a href=\"{link}\">Internet Archive</a>[/]."
 "m-029", f"Google Books source not present. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/]."
-"m-030", f"[path][link=file://{self.path / 'src/epub/text/introduction.xhtml'}]introduction.xhtml[/][/] found, but no MARC relator [val]aui[/] (Author of introduction, but not the chief author) or[val]win[/] (Writer of introduction)."
-"m-031", f"[path][link=file://{self.path / 'src/epub/text/preface.xhtml'}]preface.xhtml[/][/] found, but no MARC relator[val]wpr[/] (Writer of preface)."
-"m-032", f"[path][link=file://{self.path / 'src/epub/text/afterword.xhtml'}]afterword.xhtml[/][/] found, but no MARC relator[val]aft[/] (Author of colophon, afterword, etc.)."
-"m-033", f"[path][link=file://{self.path / 'src/epub/text/endnotes.xhtml'}]endnotes.xhtml[/][/] found, but no MARC relator[val]ann[/] (Annotator)."
-"m-034", f"[path][link=file://{self.path / 'src/epub/text/loi.xhtml'}]loi.xhtml[/][/] found, but no MARC relator[val]ill[/] (Illustrator)."
+"m-030", f"[path][link=file://{self.path / 'src/epub/text/introduction.xhtml'}]introduction.xhtml[/][/] found, but no MARC relator [val]aui[/] (Author of introduction, but not the chief author) or [val]win[/] (Writer of introduction)."
+"m-031", f"[path][link=file://{self.path / 'src/epub/text/preface.xhtml'}]preface.xhtml[/][/] found, but no MARC relator [val]wpr[/] (Writer of preface)."
+"m-032", f"[path][link=file://{self.path / 'src/epub/text/afterword.xhtml'}]afterword.xhtml[/][/] found, but no MARC relator [val]aft[/] (Author of colophon, afterword, etc.)."
+"m-033", f"[path][link=file://{self.path / 'src/epub/text/endnotes.xhtml'}]endnotes.xhtml[/][/] found, but no MARC relator [val]ann[/] (Annotator)."
+"m-034", f"[path][link=file://{self.path / 'src/epub/text/loi.xhtml'}]loi.xhtml[/][/] found, but no MARC relator [val]ill[/] (Illustrator)."
 "m-035", f"Unexpected SE identifier in colophon. Expected: [url]{se_url}[/]."
 "m-036", "Missing data in colophon."
 "m-037", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/]."
@@ -159,8 +159,8 @@ SEMANTICS & CONTENT
 "s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/]."
 "s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary."
 "s-035", f"[xhtml]{nodes[0].totagstring()}[/] element has the [val]z3998:roman[/] semantic, but is not a Roman numeral."
-"s-036", "No[val]frontmatter[/] semantic inflection for what looks like a frontmatter file."
-"s-037", "No[val]backmatter[/] semantic inflection for what looks like a backmatter file."
+"s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file."
+"s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file."
 "s-038", "Illegal asterism. Section/scene breaks must be defined by an [xhtml]<hr/>[/] element."
 "s-039", "Illegal [text]Ibid[/] in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing [text]Ibid[/] refers to."
 "s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/]."
@@ -1803,27 +1803,27 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							messages.append(LintMessage("s-041", f"The [xhtml]<figcaption>[/] element of [attr]#{figure_ref}[/] does not match the text in its LoI entry.", se.MESSAGE_TYPE_WARNING, self.path / "src/epub/text" / chapter_ref))
 
 			# Check for missing MARC relators
-			if filename.name == "introduction.xhtml" and ">aui<" not in self.metadata_xml and ">win<" not in self.metadata_xml:
-				messages.append(LintMessage("m-030", f"[path][link=file://{self.path / 'src/epub/text/introduction.xhtml'}]introduction.xhtml[/][/] found, but no MARC relator [val]aui[/] (Author of introduction, but not the chief author) or[val]win[/] (Writer of introduction).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
+			if filename.name == "introduction.xhtml" and not self.metadata_dom.xpath("/package/metadata/meta[@property='role' and (text() = 'aui' or text() = 'win')]"):
+				messages.append(LintMessage("m-030", f"[path][link=file://{self.path / 'src/epub/text/introduction.xhtml'}]introduction.xhtml[/][/] found, but no MARC relator [val]aui[/] (Author of introduction, but not the chief author) or [val]win[/] (Writer of introduction).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 
-			if filename.name == "preface.xhtml" and ">wpr<" not in self.metadata_xml:
-				messages.append(LintMessage("m-031", f"[path][link=file://{self.path / 'src/epub/text/preface.xhtml'}]preface.xhtml[/][/] found, but no MARC relator[val]wpr[/] (Writer of preface).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
+			if filename.name == "preface.xhtml" and not self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text() = 'wpr']"):
+				messages.append(LintMessage("m-031", f"[path][link=file://{self.path / 'src/epub/text/preface.xhtml'}]preface.xhtml[/][/] found, but no MARC relator [val]wpr[/] (Writer of preface).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 
-			if filename.name == "afterword.xhtml" and ">aft<" not in self.metadata_xml:
-				messages.append(LintMessage("m-032", f"[path][link=file://{self.path / 'src/epub/text/afterword.xhtml'}]afterword.xhtml[/][/] found, but no MARC relator[val]aft[/] (Author of colophon, afterword, etc.).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
+			if filename.name == "afterword.xhtml" and not self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text() = 'aft']"):
+				messages.append(LintMessage("m-032", f"[path][link=file://{self.path / 'src/epub/text/afterword.xhtml'}]afterword.xhtml[/][/] found, but no MARC relator [val]aft[/] (Author of colophon, afterword, etc.).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 
-			if filename.name == "endnotes.xhtml" and ">ann<" not in self.metadata_xml:
-				messages.append(LintMessage("m-033", f"[path][link=file://{self.path / 'src/epub/text/endnotes.xhtml'}]endnotes.xhtml[/][/] found, but no MARC relator[val]ann[/] (Annotator).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
+			if filename.name == "endnotes.xhtml" and not self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text() = 'ann']"):
+				messages.append(LintMessage("m-033", f"[path][link=file://{self.path / 'src/epub/text/endnotes.xhtml'}]endnotes.xhtml[/][/] found, but no MARC relator [val]ann[/] (Annotator).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 
-			if filename.name == "loi.xhtml" and ">ill<" not in self.metadata_xml:
-				messages.append(LintMessage("m-034", f"[path][link=file://{self.path / 'src/epub/text/loi.xhtml'}]loi.xhtml[/][/] found, but no MARC relator[val]ill[/] (Illustrator).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
+			if filename.name == "loi.xhtml" and not self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text() = 'ill']"):
+				messages.append(LintMessage("m-034", f"[path][link=file://{self.path / 'src/epub/text/loi.xhtml'}]loi.xhtml[/][/] found, but no MARC relator [val]ill[/] (Illustrator).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 
 			# Check for wrong semantics in frontmatter/backmatter
-			if filename.name in se.FRONTMATTER_FILENAMES and "frontmatter" not in file_contents:
-				messages.append(LintMessage("s-036", "No[val]frontmatter[/] semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename))
+			if filename.name in se.FRONTMATTER_FILENAMES and not dom.xpath("//*[contains(@epub:type, 'frontmatter')]"):
+				messages.append(LintMessage("s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
-			if filename.name in se.BACKMATTER_FILENAMES and "backmatter" not in file_contents:
-				messages.append(LintMessage("s-037", "No[val]backmatter[/] semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
+			if filename.name in se.BACKMATTER_FILENAMES and not dom.xpath("//*[contains(@epub:type, 'backmatter')]"):
+				messages.append(LintMessage("s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
 	if cover_svg_title != titlepage_svg_title:
 		messages.append(LintMessage("s-028", f"[path][link=file://{self.path / 'images/cover.svg'}]cover.svg[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match.", se.MESSAGE_TYPE_ERROR))
