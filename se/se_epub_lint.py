@@ -122,6 +122,7 @@ METADATA
 "m-053", "[xml]<meta property=\"se:subject\">[/] elements not in alphabetical order."
 "m-054", "Standard Ebooks URL with illegal trailing slash."
 "m-055", "Missing data in metadata."
+"m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their SE author page."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -578,14 +579,26 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	for illegal_file in illegal_files:
 		messages.append(LintMessage("f-001", "Illegal file or directory.", se.MESSAGE_TYPE_ERROR, illegal_file))
 
-	# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
+	# Check the long description for some errors
 	try:
+		# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
 		# lxml unescapes this for us
 		# Also, remove HTML elements like <a href> so that we don't catch quotation marks in attribute values
 		long_description = self.metadata_dom.xpath("/package/metadata/meta[@property='se:long-description']")[0].text
 		matches = regex.findall(r"(?:['\"]|\-\-|\s-\s)", regex.sub(r"<[^<]+?>", "", long_description))
 		if matches:
 			messages.append(LintMessage("m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+
+		# Is the first instance of the author's last name a hyperlink in the metadata?
+		authors = self.metadata_dom.xpath("/package/metadata/dc:creator")
+		for author in authors:
+			author_sort = self.metadata_dom.xpath(f"/package/metadata/meta[@property='file-as'][@refines='#{author.attribute('id')}']/text()")
+			if author_sort:
+				author_last_name = regex.sub(r",.+$", "", author_sort[0])
+				# We can't use xpath here because the long description is escaped; it has no dom to query against.
+				if author_last_name in long_description and not regex.search(fr"<a href=\"https://standardebooks\.org/ebooks/.+?\">.*?{author_last_name}.*?</a>", long_description):
+					messages.append(LintMessage("m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their SE author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
 	except:
 		raise se.InvalidSeEbookException(f"No [xml]<meta property=\"se:long-description\">[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/].")
 
