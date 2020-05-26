@@ -189,6 +189,7 @@ TYPOGRAPHY
 "t-003", "[text]“[/] missing matching [text]”[/]. Note: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog."
 "t-004", "[text]‘[/] missing matching [text]’[/]."
 "t-005", "Dialog without ending comma."
+"t-006", "Comma after producer name, but there are only two producers."
 "t-007", "Required no-break space not found before [xhtml]&amp;[/]."
 "t-008", "Required no-break space not found after [xhtml]&amp;[/]."
 "t-009", "Required no-break space not found before [xhtml]<abbr class=\"time\">[/]."
@@ -227,8 +228,6 @@ TYPOGRAPHY
 "t-042", "Possible typo."
 "t-042", "Possible typo."
 "t-043", "Dialog tag missing punctuation."
-vvvvvvvvUNUSEDvvvvvvvvvv
-"t-006", ""
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -939,6 +938,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					nodes = nodes + [node.strip() for node in dom.xpath("/html/body/section/p/text()[contains(., '\n') and normalize-space(.)][(preceding-sibling::node()[1])[not(self::br)]]")]
 					if nodes:
 						messages.append(LintMessage("s-053", "Colophon line not preceded by [xhtml]<br/>[/].", se.MESSAGE_TYPE_ERROR, filename, nodes))
+
+					# Is there a comma after a producer name, if there's only two producers?
+					nodes = dom.xpath("/html/body/section/p/*[name() = 'b' or name() = 'a'][(following-sibling::node()[1])[normalize-space(.) = ', and']][(preceding-sibling::*[1])[name() = 'br']]")
+					if nodes:
+						messages.append(LintMessage("t-006", "Comma after producer name, but there are only two producers.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 					# Are the sources represented correctly?
 					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
