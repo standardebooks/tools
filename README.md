@@ -145,7 +145,7 @@ parallel --ungroup --keep-order se lint ::: /path/to/ebook/repos/*
 
 The toolset tries to detect when it’s being invoked from `parallel`, and it adjusts its output to accomodate.
 
-We pass the `--ungroup` flag to Parallel to allow it to output lines as wide as the terminal; otherwise lines will be hard-wrapped to 80 chars. We pass teh `--keep-order` flag to output results in the order we passed them in, which is useful if comparing the results of multiple runs.
+We pass the `--ungroup` flag to Parallel to allow it to output lines as wide as the terminal; otherwise lines will be hard-wrapped to 80 chars. We pass the `--keep-order` flag to output results in the order we passed them in, which is useful if comparing the results of multiple runs.
 
 ### Linting with `pylint` and `mypy`
 
