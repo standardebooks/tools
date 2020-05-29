@@ -185,7 +185,7 @@ SEMANTICS & CONTENT
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
-"t-002", "Comma or period outside of double quote. Generally punctuation should go within single and double quotes."
+"t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes."
 "t-003", "[text]“[/] missing matching [text]”[/]. Note: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog."
 "t-004", "[text]‘[/] missing matching [text]’[/]."
 "t-005", "Dialog without ending comma."
@@ -642,9 +642,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		double_spaced_files.append(self.metadata_file_path)
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
-	matches = regex.findall(r"[\p{Letter}][”][,\.]", self.metadata_xml)
+	matches = regex.findall(r"[\p{Letter}]+”[,\.](?! …)", self.metadata_xml)
 	if matches:
-		messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
+		messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 
 	# Make sure long-description is escaped HTML
 	if "<" not in long_description:
@@ -1637,9 +1637,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-014", "[xhtml]<br/>[/] after block-level element.", se.MESSAGE_TYPE_ERROR, filename, {node.totagstring() for node in nodes}))
 
 				# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
-				matches = regex.findall(r"\b.+?”[,\.](?! …)", file_contents)
+				matches = regex.findall(r"[\p{Letter}]+”[,\.](?! …)", file_contents)
 				if matches:
-					messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation should go within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
+					messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check for double spacing
 				matches = regex.search(fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}", file_contents)
