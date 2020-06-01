@@ -109,7 +109,7 @@ def _calculate_image_lines(string: str, target_height: int, canvas_width: int) -
 	lines.reverse()
 
 	# If the first line is a single short word, move up the first word of the next line
-	if lines[0].lower() in ("the", "a", "of", "by", "on"):
+	if len(lines[0].lower()) <= 3 and lines[1]:
 		first_word = regex.match(r"^[\p{Letter}]+(?=\s)", lines[1])
 
 		if first_word:
