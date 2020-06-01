@@ -32,9 +32,14 @@ import se.images
 METADATA_VARIABLES = ["TITLE", "TITLE_SORT", "SUBJECT_1", "SUBJECT_2", "LCSH_ID_1", "LCSH_ID_2", "TAG", "DESCRIPTION", "LONG_DESCRIPTION", "LANG", "PG_URL", "EBOOK_WIKI_URL", "VCS_IDENTIFIER", "AUTHOR", "AUTHOR_SORT", "AUTHOR_FULL_NAME", "AUTHOR_WIKI_URL", "AUTHOR_NACOAF_URL", "TRANSLATOR", "TRANSLATOR_SORT", "TRANSLATOR_WIKI_URL", "TRANSLATOR_NACOAF_URL", "COVER_ARTIST", "COVER_ARTIST_SORT", "COVER_ARTIST_WIKI_URL", "COVER_ARTIST_NACOAF_URL", "TRANSCRIBER", "TRANSCRIBER_SORT", "TRANSCRIBER_URL", "PRODUCER", "PRODUCER_SORT", "PRODUCER_URL"]
 COLOPHON_VARIABLES = ["TITLE", "YEAR", "AUTHOR_WIKI_URL", "AUTHOR", "PRODUCER_URL", "PRODUCER", "PG_YEAR", "TRANSCRIBER_1", "TRANSCRIBER_2", "PG_URL", "IA_URL", "PAINTING", "ARTIST_WIKI_URL", "ARTIST"]
 EPUB_SEMANTIC_VOCABULARY = ["cover", "frontmatter", "bodymatter", "backmatter", "volume", "part", "chapter", "division", "foreword", "preface", "prologue", "introduction", "preamble", "conclusion", "epilogue", "afterword", "epigraph", "toc", "landmarks", "loa", "loi", "lot", "lov", "appendix", "colophon", "index", "index-headnotes", "index-legend", "index-group", "index-entry-list", "index-entry", "index-term", "index-editor-note", "index-locator", "index-locator-list", "index-locator-range", "index-xref-preferred", "index-xref-related", "index-term-category", "index-term-categories", "glossary", "glossterm", "glossdef", "bibliography", "biblioentry", "titlepage", "halftitlepage", "copyright-page", "acknowledgments", "imprint", "imprimatur", "contributors", "other-credits", "errata", "dedication", "revision-history", "notice", "tip", "halftitle", "fulltitle", "covertitle", "title", "subtitle", "bridgehead", "learning-objective", "learning-resource", "assessment", "qna", "panel", "panel-group", "balloon", "text-area", "sound-area", "footnote", "endnote", "footnotes", "endnotes", "noteref", "keyword", "topic-sentence", "concluding-sentence", "pagebreak", "page-list", "table", "table-row", "table-cell", "list", "list-item", "figure", "aside"]
+SE_GENRES = ["Adventure", "Autobiography", "Biography", "Childrens", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Romance", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
+IGNORED_CLASSES = ["elision", "name", "temperature", "state", "era", "compass", "acronym", "postal", "eoc", "initialism", "degree", "time", "compound", "timezone", "signature", "full-page"]
+BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", ".epub3", ".xcf", ".otf"]
+FRONTMATTER_FILENAMES = ["dedication.xhtml", "introduction.xhtml", "preface.xhtml", "foreword.xhtml", "preamble.xhtml", "titlepage.xhtml", "halftitlepage.xhtml", "imprint.xhtml"]
+BACKMATTER_FILENAMES = ["endnotes.xhtml", "loi.xhtml", "afterword.xhtml", "appendix.xhtml", "colophon.xhtml", "uncopyright.xhtml"]
 
 """
-POSSIBLE BBCODE VALUES
+POSSIBLE BBCODE TAGS
 See the se.print_error function for a comprehensive list of allowed codes.
 
 LIST OF ALL SE LINT MESSAGES
@@ -175,7 +180,7 @@ SEMANTICS & CONTENT
 "s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something."
 "s-049", "[xhtml]<header>[/] element with text not in a block element."
 "s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element."
-"s-051", f"Wrong height or width. [path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly 1400 × 2100."
+"s-051", f"Wrong height or width. [path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}."
 "s-052", "[xhtml]<attr>[/] element with illegal [attr]title[/] attribute."
 "s-053", "Colophon line not preceded by [xhtml]<br/>[/]."
 "s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/]."
@@ -684,7 +689,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']/text()")
 	if nodes:
 		for node in nodes:
-			if node not in se.SE_GENRES:
+			if node not in SE_GENRES:
 				illegal_subjects.append(node)
 
 		if illegal_subjects:
@@ -817,13 +822,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			if filename.name == "cover.jpg":
 				try:
 					image = Image.open(filename)
-					if image.size != (1400, 2100):
-						messages.append(LintMessage("s-051", f"Wrong height or width. [path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly 1400 × 2100.", se.MESSAGE_TYPE_ERROR, filename))
+					if image.size != (se.COVER_WIDTH, se.COVER_HEIGHT):
+						messages.append(LintMessage("s-051", f"Wrong height or width. [path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}.", se.MESSAGE_TYPE_ERROR, filename))
 
 				except UnidentifiedImageError:
 					raise se.InvalidFileException(f"Couldn’t identify image type of [path][link=file://{filename}]{filename.name}[/][/].")
 
-			if filename.suffix in se.BINARY_EXTENSIONS or filename.name == "core.css":
+			if filename.suffix in BINARY_EXTENSIONS or filename.name == "core.css":
 				continue
 
 			# Read the file and start doing some serious checks!
@@ -1836,10 +1841,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				messages.append(LintMessage("m-034", f"[path][link=file://{self.path / 'src/epub/text/loi.xhtml'}]loi.xhtml[/][/] found, but no MARC relator [val]ill[/] (Illustrator).", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 
 			# Check for wrong semantics in frontmatter/backmatter
-			if filename.name in se.FRONTMATTER_FILENAMES and not dom.xpath("//*[contains(@epub:type, 'frontmatter')]"):
+			if filename.name in FRONTMATTER_FILENAMES and not dom.xpath("//*[contains(@epub:type, 'frontmatter')]"):
 				messages.append(LintMessage("s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
-			if filename.name in se.BACKMATTER_FILENAMES and not dom.xpath("//*[contains(@epub:type, 'backmatter')]"):
+			if filename.name in BACKMATTER_FILENAMES and not dom.xpath("//*[contains(@epub:type, 'backmatter')]"):
 				messages.append(LintMessage("s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
 	if cover_svg_title != titlepage_svg_title:
@@ -1855,11 +1860,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	single_use_css_classes = []
 
 	for css_class in xhtml_css_classes:
-		if css_class not in se.IGNORED_CLASSES:
+		if css_class not in IGNORED_CLASSES:
 			if f".{css_class}" not in self.local_css:
 				missing_selectors.append(css_class)
 
-		if xhtml_css_classes[css_class] == 1 and css_class not in se.IGNORED_CLASSES and not regex.match(r"^i[0-9]+$", css_class):
+		if xhtml_css_classes[css_class] == 1 and css_class not in IGNORED_CLASSES and not regex.match(r"^i[0-9]+$", css_class):
 			# Don't count ignored classes OR i[0-9] which are used for poetry styling
 			single_use_css_classes.append(css_class)
 

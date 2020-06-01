@@ -35,12 +35,11 @@ from se.vendor.kobo_touch_extended import kobo
 from se.vendor.mobi import mobi
 
 
-COVER_SVG_WIDTH = 1400
-COVER_SVG_HEIGHT = 2100
-COVER_THUMBNAIL_WIDTH = int(COVER_SVG_WIDTH / 4) # Cast to int required for PIL
-COVER_THUMBNAIL_HEIGHT = int(COVER_SVG_HEIGHT / 4) # Cast to int required for PIL
+COVER_THUMBNAIL_WIDTH = int(se.COVER_WIDTH / 4) # Cast to int required for PIL
+COVER_THUMBNAIL_HEIGHT = int(se.COVER_HEIGHT / 4) # Cast to int required for PIL
 SVG_OUTER_STROKE_WIDTH = 2
 SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
+ARIA_ROLES = ["afterword", "appendix", "biblioentry", "bibliography", "chapter", "colophon", "conclusion", "dedication", "epilogue", "foreword", "introduction", "noteref", "part", "preface", "prologue", "subtitle", "toc"]
 
 def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool) -> None:
 	"""
@@ -444,7 +443,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							processed_xhtml = processed_xhtml.replace("\u21a9", "\u21a9\ufe0e")
 
 						# Add ARIA roles, which are just mostly duplicate attributes to epub:type
-						for role in se.ARIA_ROLES:
+						for role in ARIA_ROLES:
 							processed_xhtml = regex.sub(fr"(epub:type=\"[^\"]*?{role}[^\"]*?\")", f"\\1 role=\"doc-{role}\"", processed_xhtml)
 
 						# Some ARIA roles can't apply to some elements.

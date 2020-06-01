@@ -11,6 +11,9 @@ import se
 import se.formatting
 
 
+NOVELLA_MIN_WORD_COUNT = 17500
+NOVEL_MIN_WORD_COUNT = 40000
+
 def word_count() -> int:
 	"""
 	Entry point for `se word-count`
@@ -63,9 +66,9 @@ def word_count() -> int:
 
 	if args.categorize:
 		category = "se:short-story"
-		if se.NOVELLA_MIN_WORD_COUNT <= total_word_count < se.NOVEL_MIN_WORD_COUNT:
+		if NOVELLA_MIN_WORD_COUNT <= total_word_count < NOVEL_MIN_WORD_COUNT:
 			category = "se:novella"
-		elif total_word_count >= se.NOVEL_MIN_WORD_COUNT:
+		elif total_word_count >= NOVEL_MIN_WORD_COUNT:
 			category = "se:novel"
 
 	print(f"{total_word_count}\t{category if args.categorize else ''}")

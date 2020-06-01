@@ -21,6 +21,34 @@ import se
 import se.formatting
 from se.se_epub import SeEpub
 
+
+COVER_TITLE_BOX_Y = 1620 # In px; note that in SVG, Y starts from the TOP of the image
+COVER_TITLE_BOX_HEIGHT = 430
+COVER_TITLE_BOX_WIDTH = 1300
+COVER_TITLE_BOX_PADDING = 100
+COVER_TITLE_MARGIN = 20
+COVER_TITLE_HEIGHT = 80
+COVER_TITLE_SMALL_HEIGHT = 60
+COVER_TITLE_XSMALL_HEIGHT = 50
+COVER_AUTHOR_SPACING = 60
+COVER_AUTHOR_HEIGHT = 40
+COVER_AUTHOR_MARGIN = 20
+TITLEPAGE_VERTICAL_PADDING = 50
+TITLEPAGE_HORIZONTAL_PADDING = 100
+TITLEPAGE_TITLE_HEIGHT = 80 # Height of each title line
+TITLEPAGE_TITLE_MARGIN = 20 # Space between consecutive title lines
+TITLEPAGE_AUTHOR_SPACING = 100 # Space between last title line and first author line
+TITLEPAGE_AUTHOR_HEIGHT = 60 # Height of each author line
+TITLEPAGE_AUTHOR_MARGIN = 20 # Space between consecutive author lines
+TITLEPAGE_CONTRIBUTORS_SPACING = 150 # Space between last author line and first contributor descriptor
+TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT = 40 # Height of each contributor descriptor line
+TITLEPAGE_CONTRIBUTOR_HEIGHT = 40 # Height of each contributor line
+TITLEPAGE_CONTRIBUTOR_MARGIN = 20 # Space between contributor descriptor and contributor line, and between sequential contributor lines
+TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN = 80 # Space between last contributor line and next contributor descriptor (if more than one contributor descriptor)
+LEAGUE_SPARTAN_KERNING = 5 # In px
+LEAGUE_SPARTAN_AVERAGE_SPACING = 7 # Guess at average default spacing between letters, in px
+LEAGUE_SPARTAN_100_WIDTHS = {" ": 40.0, "A": 98.245, "B": 68.1875, "C": 83.97625, "D": 76.60875, "E": 55.205, "F": 55.79, "G": 91.57875, "H": 75.0875, "I": 21.98875, "J": 52.631254, "K": 87.83625, "L": 55.205, "M": 106.9, "N": 82.5725, "O": 97.1925, "P": 68.1875, "Q": 98.83, "R": 79.41599, "S": 72.63125, "T": 67.83625, "U": 75.32125, "V": 98.245, "W": 134.62, "X": 101.28625, "Y": 93.1, "Z": 86.19875, ".": 26.78375, ",": 26.78375, "/": 66.08125, "\\": 66.08125, "-": 37.66125, ":": 26.78375, ";": 26.78375, "’": 24.3275, "!": 26.78375, "?": 64.3275, "&": 101.87125, "0": 78.48, "1": 37.895, "2": 75.205, "3": 72.04625, "4": 79.29875, "5": 70.175, "6": 74.26875, "7": 76.95875, "8": 72.16375, "9": 74.26875}
+
 def _replace_in_file(file_path: Path, search: Union[str, list], replace: Union[str, list]) -> None:
 	"""
 	Helper function to replace in a file.
@@ -62,9 +90,9 @@ def _get_word_widths(string: str, target_height: int) -> list:
 		for char in word:
 			# Convert accented characters to unaccented characters
 			char = regex.sub(r"\p{M}", "", unicodedata.normalize("NFKD", char))
-			width += int(se.LEAGUE_SPARTAN_100_WIDTHS[char] * target_height / 100) + se.LEAGUE_SPARTAN_KERNING + se.LEAGUE_SPARTAN_AVERAGE_SPACING
+			width += int(LEAGUE_SPARTAN_100_WIDTHS[char] * target_height / 100) + LEAGUE_SPARTAN_KERNING + LEAGUE_SPARTAN_AVERAGE_SPACING
 
-		width = width - se.LEAGUE_SPARTAN_KERNING - se.LEAGUE_SPARTAN_AVERAGE_SPACING
+		width = width - LEAGUE_SPARTAN_KERNING - LEAGUE_SPARTAN_AVERAGE_SPACING
 
 		words.append({"word": word, "width": width})
 
@@ -94,7 +122,7 @@ def _calculate_image_lines(string: str, target_height: int, canvas_width: int) -
 		if current_width == 0:
 			current_width = word["width"]
 		else:
-			current_width = current_width + (se.LEAGUE_SPARTAN_100_WIDTHS[" "] * target_height / 100) + word["width"]
+			current_width = current_width + (LEAGUE_SPARTAN_100_WIDTHS[" "] * target_height / 100) + word["width"]
 
 		if current_width < canvas_width:
 			current_line = word["word"] + " " + current_line
@@ -135,7 +163,7 @@ def _generate_titlepage_svg(title: str, authors: Union[str, list], contributors:
 	"""
 
 	svg = ""
-	canvas_width = se.TITLEPAGE_WIDTH - (se.TITLEPAGE_HORIZONTAL_PADDING * 2)
+	canvas_width = se.TITLEPAGE_WIDTH - (TITLEPAGE_HORIZONTAL_PADDING * 2)
 
 	if not isinstance(authors, list):
 		authors = [authors]
@@ -148,68 +176,68 @@ def _generate_titlepage_svg(title: str, authors: Union[str, list], contributors:
 	svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
 
 	# Calculate the title lines
-	title_lines = _calculate_image_lines(title.upper().replace("'", "’"), se.TITLEPAGE_TITLE_HEIGHT, canvas_width)
+	title_lines = _calculate_image_lines(title.upper().replace("'", "’"), TITLEPAGE_TITLE_HEIGHT, canvas_width)
 
 	# Calculate the author lines
 	authors_lines = []
 	for author in authors:
-		authors_lines.append(_calculate_image_lines(author.upper().replace("'", "’"), se.TITLEPAGE_AUTHOR_HEIGHT, canvas_width))
+		authors_lines.append(_calculate_image_lines(author.upper().replace("'", "’"), TITLEPAGE_AUTHOR_HEIGHT, canvas_width))
 
 	# Calculate the contributor lines
 	contributor_lines = []
 	for descriptor, contributor in contributors.items():
-		contributor_lines.append([descriptor, _calculate_image_lines(contributor.upper().replace("'", "’"), se.TITLEPAGE_CONTRIBUTOR_HEIGHT, canvas_width)])
+		contributor_lines.append([descriptor, _calculate_image_lines(contributor.upper().replace("'", "’"), TITLEPAGE_CONTRIBUTOR_HEIGHT, canvas_width)])
 
 	# Construct the output
 	text_elements = ""
-	element_y = se.TITLEPAGE_VERTICAL_PADDING
+	element_y = TITLEPAGE_VERTICAL_PADDING
 
 	# Add the title
 	for line in title_lines:
-		element_y += se.TITLEPAGE_TITLE_HEIGHT
+		element_y += TITLEPAGE_TITLE_HEIGHT
 		text_elements += f"\t<text class=\"title\" x=\"700\" y=\"{element_y:.0f}\">{line}</text>\n"
-		element_y += se.TITLEPAGE_TITLE_MARGIN
+		element_y += TITLEPAGE_TITLE_MARGIN
 
-	element_y -= se.TITLEPAGE_TITLE_MARGIN
+	element_y -= TITLEPAGE_TITLE_MARGIN
 
 	# Add the author(s)
-	element_y += se.TITLEPAGE_AUTHOR_SPACING
+	element_y += TITLEPAGE_AUTHOR_SPACING
 
 	for author_lines in authors_lines:
 		for line in author_lines:
-			element_y += se.TITLEPAGE_AUTHOR_HEIGHT
+			element_y += TITLEPAGE_AUTHOR_HEIGHT
 			text_elements += f"\t<text class=\"author\" x=\"700\" y=\"{element_y:.0f}\">{line}</text>\n"
-			element_y += se.TITLEPAGE_AUTHOR_MARGIN
+			element_y += TITLEPAGE_AUTHOR_MARGIN
 
-	element_y -= se.TITLEPAGE_AUTHOR_MARGIN
+	element_y -= TITLEPAGE_AUTHOR_MARGIN
 
 	# Add the contributor(s)
 	if contributor_lines:
-		element_y += se.TITLEPAGE_CONTRIBUTORS_SPACING
+		element_y += TITLEPAGE_CONTRIBUTORS_SPACING
 		for contributor in contributor_lines:
-			element_y += se.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT
+			element_y += TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT
 			text_elements += f"\t<text class=\"contributor-descriptor\" x=\"700\" y=\"{element_y:.0f}\">{contributor[0]}</text>\n"
-			element_y += se.TITLEPAGE_CONTRIBUTOR_MARGIN
+			element_y += TITLEPAGE_CONTRIBUTOR_MARGIN
 
 			for person in contributor[1]:
-				element_y += se.TITLEPAGE_CONTRIBUTOR_HEIGHT
+				element_y += TITLEPAGE_CONTRIBUTOR_HEIGHT
 				text_elements += f"\t<text class=\"contributor\" x=\"700\" y=\"{element_y:.0f}\">{person}</text>\n"
-				element_y += se.TITLEPAGE_CONTRIBUTOR_MARGIN
+				element_y += TITLEPAGE_CONTRIBUTOR_MARGIN
 
-			element_y -= se.TITLEPAGE_CONTRIBUTOR_MARGIN
+			element_y -= TITLEPAGE_CONTRIBUTOR_MARGIN
 
-			element_y += se.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
+			element_y += TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
 
-		element_y -= se.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
+		element_y -= TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
 	else:
 		# Remove unused CSS
 		svg = regex.sub(r"\n\t\t\.contributor-descriptor{.+?}\n", "", svg, flags=regex.DOTALL)
 		svg = regex.sub(r"\n\t\t\.contributor{.+?}\n", "", svg, flags=regex.DOTALL)
 
-	element_y += se.TITLEPAGE_VERTICAL_PADDING
+	element_y += TITLEPAGE_VERTICAL_PADDING
 
 	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLE_STRING", title_string)
-	svg = regex.sub(r"viewBox=\".+?\"", f"viewBox=\"0 0 1400 {element_y:.0f}\"", svg)
+	svg = regex.sub(r"viewBox=\".+?\"", f"viewBox=\"0 0 {se.TITLEPAGE_WIDTH} {element_y:.0f}\"", svg)
 
 	return svg
 
@@ -229,7 +257,7 @@ def _generate_cover_svg(title: str, authors: Union[str, list], title_string: str
 	"""
 
 	svg = ""
-	canvas_width = se.COVER_TITLE_BOX_WIDTH - (se.COVER_TITLE_BOX_PADDING * 2)
+	canvas_width = COVER_TITLE_BOX_WIDTH - (COVER_TITLE_BOX_PADDING * 2)
 
 	if not isinstance(authors, list):
 		authors = [authors]
@@ -246,53 +274,53 @@ def _generate_cover_svg(title: str, authors: Union[str, list], title_string: str
 	svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
 
 	# Calculate the title lines
-	title_height = se.COVER_TITLE_HEIGHT
+	title_height = COVER_TITLE_HEIGHT
 	title_class = "title"
 	title_lines = _calculate_image_lines(title.upper(), title_height, canvas_width)
 
 	if len(title_lines) > 2:
-		title_height = se.COVER_TITLE_SMALL_HEIGHT
+		title_height = COVER_TITLE_SMALL_HEIGHT
 		title_class = "title-small"
 		title_lines = _calculate_image_lines(title.upper(), title_height, canvas_width)
 
 	if len(title_lines) > 2:
-		title_height = se.COVER_TITLE_XSMALL_HEIGHT
+		title_height = COVER_TITLE_XSMALL_HEIGHT
 		title_class = "title-xsmall"
 		title_lines = _calculate_image_lines(title.upper(), title_height, canvas_width)
 
 	# Calculate the author lines
 	authors_lines = []
 	for author in authors:
-		authors_lines.append(_calculate_image_lines(author.upper(), se.COVER_AUTHOR_HEIGHT, canvas_width))
+		authors_lines.append(_calculate_image_lines(author.upper(), COVER_AUTHOR_HEIGHT, canvas_width))
 
 	# Construct the output
 	text_elements = ""
-	element_y = se.COVER_TITLE_BOX_Y + \
-		+ ((se.COVER_TITLE_BOX_HEIGHT \
+	element_y = COVER_TITLE_BOX_Y + \
+		+ ((COVER_TITLE_BOX_HEIGHT \
 			- ((len(title_lines) * title_height) \
-				+ ((len(title_lines) - 1) * se.COVER_TITLE_MARGIN) \
-				+ se.COVER_AUTHOR_SPACING \
-				+ (len(authors_lines) * se.COVER_AUTHOR_HEIGHT) \
+				+ ((len(title_lines) - 1) * COVER_TITLE_MARGIN) \
+				+ COVER_AUTHOR_SPACING \
+				+ (len(authors_lines) * COVER_AUTHOR_HEIGHT) \
 		)) / 2)
 
 	# Add the title
 	for line in title_lines:
 		element_y += title_height
 		text_elements += f"\t<text class=\"{title_class}\" x=\"700\" y=\"{element_y:.0f}\">{line}</text>\n"
-		element_y += se.COVER_TITLE_MARGIN
+		element_y += COVER_TITLE_MARGIN
 
-	element_y -= se.COVER_TITLE_MARGIN
+	element_y -= COVER_TITLE_MARGIN
 
 	# Add the author(s)
-	element_y += se.COVER_AUTHOR_SPACING
+	element_y += COVER_AUTHOR_SPACING
 
 	for author_lines in authors_lines:
 		for line in author_lines:
-			element_y += se.COVER_AUTHOR_HEIGHT
+			element_y += COVER_AUTHOR_HEIGHT
 			text_elements += f"\t<text class=\"author\" x=\"700\" y=\"{element_y:.0f}\">{line}</text>\n"
-			element_y += se.COVER_AUTHOR_MARGIN
+			element_y += COVER_AUTHOR_MARGIN
 
-	element_y -= se.COVER_AUTHOR_MARGIN
+	element_y -= COVER_AUTHOR_MARGIN
 
 	# Remove unused CSS
 	if title_class != "title":
