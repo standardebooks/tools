@@ -21,6 +21,21 @@ from se.vendor.titlecase import titlecase as pip_titlecase
 import se
 
 
+# This list of phrasing tags is not intended to be exhaustive. The list is only used
+# to resolve the uncommon situation where there is no plain text in a paragraph. The
+# span and br tags are explicitly omitted because of how they are used in poetry formatting,
+# which differs from the normal formatting.
+
+PHRASING_TAGS = [
+	"{http://www.w3.org/1999/xhtml}a",
+	"{http://www.w3.org/1999/xhtml}abbr",
+	"{http://www.w3.org/1999/xhtml}b",
+	"{http://www.w3.org/1999/xhtml}cite",
+	"{http://www.w3.org/1999/xhtml}em",
+	"{http://www.w3.org/1999/xhtml}i",
+	"{http://www.w3.org/1999/xhtml}strong",
+]
+
 def semanticate(xhtml: str) -> str:
 	"""
 	Add semantics to well-formed XHTML
@@ -357,21 +372,6 @@ def _indent(tree, space="\t"):
 		_indent_children(tree, 1, space, [indentation, indentation + space])
 	else:
 		tree.text = "\n"
-
-# This list of phrasing tags is not intended to be exhaustive. The list is only used
-# to resolve the uncommon situation where there is no plain text in a paragraph. The
-# span and br tags are explicitly omitted because of how they are used in poetry formatting,
-# which differs from the normal formatting.
-
-PHRASING_TAGS = [
-	"{http://www.w3.org/1999/xhtml}a",
-	"{http://www.w3.org/1999/xhtml}abbr",
-	"{http://www.w3.org/1999/xhtml}b",
-	"{http://www.w3.org/1999/xhtml}cite",
-	"{http://www.w3.org/1999/xhtml}em",
-	"{http://www.w3.org/1999/xhtml}i",
-	"{http://www.w3.org/1999/xhtml}strong",
-]
 
 def _indent_children(elem, level, one_space, indentations, has_child_tails=False):
 	"""
