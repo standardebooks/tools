@@ -9,7 +9,6 @@ import math
 import string
 import unicodedata
 from pathlib import Path
-from typing import Union
 
 import regex
 import roman
@@ -500,12 +499,47 @@ def format_xml_file(filename: Path) -> None:
 			file.write(processed_xml)
 			file.truncate()
 
-def format_xml(xml: Union[str, etree.ElementTree]) -> str:
+def _format_style_elements(tree: etree.ElementTree):
+	try:
+		for node in tree.xpath("//svg:style", namespaces={"xhtml": "http://www.w3.org/1999/xhtml", "svg": "http://www.w3.org/2000/svg"}):
+			css = format_css(node.text)
+
+			# Get the <style> element's indentation
+			indent = node.xpath("preceding-sibling::text()[1]")[0].replace("\n", "")
+
+			# Indent the CSS one level deeper than the <style> element
+			css = ''.join(indent + "\t" + line + "\n" for line in css.splitlines())
+			css = css.strip("\n")
+			css = regex.sub(r"^\s+$", "", css, flags=regex.MULTILINE) # Remove indents from lines that are just white space
+
+			node.text = "\n" + css + "\n" + indent
+	except se.InvalidCssException as ex:
+		raise ex
+	except Exception as ex:
+		raise se.InvalidCssException(f"Couldn’t parse CSS. Exception: {ex}")
+
+def _format_xml_str(xml: str) -> etree.ElementTree:
+	tree = etree.fromstring(str.encode(xml))
+	canonical_bytes = etree.tostring(tree, method="c14n")
+	tree = etree.fromstring(canonical_bytes)
+	_indent(tree, space="\t")
+
+	return tree
+
+def _xml_tree_to_string(tree: etree.ElementTree) -> str:
+	xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + etree.tostring(tree, encoding="unicode") + "\n"
+
+	# Normalize unicode characters
+	xml = unicodedata.normalize("NFC", xml)
+
+	return xml
+
+def format_xml(xml: str) -> str:
 	"""
 	Pretty-print well-formed XML.
 
 	INPUTS
-	xml: A string of well-formed XML; or an etree of an XML document.
+	xml: A string of well-formed XML.
 
 	OUTPUTS
 	A string of pretty-printed XML.
@@ -513,38 +547,11 @@ def format_xml(xml: Union[str, etree.ElementTree]) -> str:
 
 	# Canonicalize and format XML
 	try:
-		if isinstance(xml, str):
-			tree = etree.fromstring(str.encode(xml))
-		else:
-			tree = xml
-
-		canonical_bytes = etree.tostring(tree, method="c14n")
-		tree = etree.fromstring(canonical_bytes)
-		_indent(tree, space="\t")
-		xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + etree.tostring(tree, encoding="unicode") + "\n"
-
+		tree = _format_xml_str(xml)
 	except Exception as ex:
 		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
 
-	# Normalize unicode characters
-	xml = unicodedata.normalize("NFC", xml)
-
-	# Almost done. Let's clean CSS in <style> elements, like we find in SVG files.
-	try:
-		matches = regex.findall(r"^(\s*)(<style[^>]*?>)(.+?)(</style>)", xml, flags=regex.DOTALL | regex.MULTILINE)
-		for match in matches:
-			css = format_css(match[2])
-			# Indent the CSS one level deeper than the <style> element
-			css = ''.join(match[0] + "\t" + line + "\n" for line in css.splitlines())
-			css = css.strip("\n")
-			css = regex.sub(r"^\s+$", "", css, flags=regex.MULTILINE) # Remove indents from lines that are just white space
-			xml = xml.replace(f"{match[0]}{match[1]}{match[2]}{match[3]}", f"{match[0]}{match[1]}\n{css}\n{match[0]}{match[3]}")
-	except se.InvalidCssException as ex:
-		raise ex
-	except Exception as ex:
-		raise se.InvalidCssException(f"Couldn’t parse CSS. Exception: {ex}")
-
-	return xml
+	return _xml_tree_to_string(tree)
 
 def format_xhtml(xhtml: str) -> str:
 	"""
@@ -571,7 +578,7 @@ def format_xhtml(xhtml: str) -> str:
 	xhtml = regex.sub(r"([^\s>])\s+(</[^>]+?>)", r"\1\2", xhtml, flags=regex.IGNORECASE)
 
 	try:
-		tree = etree.fromstring(str.encode(xhtml))
+		tree = _format_xml_str(xhtml)
 	except Exception as ex:
 		raise se.InvalidXhtmlException(f"Couldn’t parse XHTML file. Exception: {ex}")
 
@@ -585,14 +592,11 @@ def format_xhtml(xhtml: str) -> str:
 	for node in tree.xpath("//*[re:test(local-name(), '[A-Z]')]", namespaces=se.XHTML_NAMESPACES):
 		node.tag = node.tag.lower()
 
-	# Canonicalize and format XHTML
-	try:
-		xhtml = format_xml(tree)
-	except Exception as ex:
-		raise se.InvalidXhtmlException(f"Couldn’t parse file. Files must be in XHTML format, which is not the same as HTML. Exception: {ex}")
+	# Format <style> elements
+	_format_style_elements(tree)
 
 	# Remove white space between non-tags and <br/>
-	xhtml = regex.sub(r"([^>\s])\s+<br/>", r"\1<br/>", xhtml)
+	xhtml = regex.sub(r"([^>\s])\s+<br/>", r"\1<br/>", _xml_tree_to_string(tree))
 
 	return xhtml
 
@@ -608,27 +612,39 @@ def format_opf(xml: str) -> str:
 	"""
 
 	# Replace html entities in the long description so we can clean it too.
-	# We re-establish them later.
+	# We re-establish them later. Don't use html.unescape because that will unescape
+	# things like &amp; which would make an invalid XML document.
 	xml = xml.replace("&lt;", "<")
 	xml = xml.replace("&gt;", ">")
+	xml = xml.replace("&amp;amp;", "&amp;") # Unescape escaped ampersands, which appear in the long description only
 
 	# Canonicalize and format XML
 	try:
-		xml = format_xml(xml)
+		tree = _format_xml_str(xml)
 	except Exception as ex:
 		raise se.InvalidXmlException(f"Couldn’t parse OPF file. Exception: {ex}")
 
-	# Clean the long description, if we can find it
-	xml = xml.replace(" &lt;p&gt;", "\n\t\t\t&lt;p&gt;")
-	xml = xml.replace("&lt;/p&gt; </meta>", "&lt;/p&gt;\n\t\t</meta>")
+	# Format the long description, then escape it
+	for node in tree.xpath("/opf:package/opf:metadata/opf:meta[@property='se:long-description']", namespaces={"opf": "http://www.idpf.org/2007/opf"}):
+		# Convert the node contents to escaped text.
+		xhtml = node.text # This preserves the initial newline and indentation
 
-	long_description = regex.findall(r"<meta id=\"long-description\" property=\"se:long-description\" refines=\"#description\">(.+?)</meta>", xml, flags=regex.DOTALL)
-	if long_description:
-		escaped_long_description = long_description[0].replace("<", "&lt;")
-		escaped_long_description = escaped_long_description.replace(">", "&gt;")
-		xml = xml.replace(long_description[0], escaped_long_description)
+		if xhtml is None:
+			xhtml = ""
 
-	return xml
+		for child in node:
+			xhtml += etree.tostring(child, encoding="unicode")
+
+		# After composing the string, lxml adds namespaces to every tag. The only way to remove them is with regex.
+		xhtml = regex.sub(r"\sxmlns(:.+?)?=\"[^\"]+?\"", "", xhtml)
+
+		# Remove the children so that we can replace them with the escaped xhtml
+		for child in node:
+			node.remove(child)
+
+		node.text = xhtml
+
+	return _xml_tree_to_string(tree)
 
 def format_svg(svg: str) -> str:
 	"""
@@ -642,7 +658,7 @@ def format_svg(svg: str) -> str:
 	"""
 
 	try:
-		tree = etree.fromstring(str.encode(svg))
+		tree = _format_xml_str(svg)
 
 		# Make sure viewBox is correctly-cased
 		for node in tree.xpath("/svg:svg", namespaces={"svg": "http://www.w3.org/2000/svg"}):
@@ -652,12 +668,13 @@ def format_svg(svg: str) -> str:
 					node.attrib["viewBox"] = value # Re-add the attribute, correctly-cased
 					break
 
-		svg = format_xml(tree)
+		# Format <style> elements
+		_format_style_elements(tree)
 
 	except Exception as ex:
 		raise se.InvalidXmlException(f"Couldn’t parse SVG file. Exception: {ex}")
 
-	return svg
+	return _xml_tree_to_string(tree)
 
 def _format_css_component_list(content: list, in_selector=False, in_paren_block=False) -> str:
 	"""
