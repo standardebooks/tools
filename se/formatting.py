@@ -500,6 +500,17 @@ def format_xml_file(filename: Path) -> None:
 			file.truncate()
 
 def _format_style_elements(tree: etree.ElementTree):
+	"""
+	Find <style> elements in an XML etree, and pretty-print the CSS inside of them.
+	The passed tree is modified in-place.
+
+	INPUTS
+	tree: An XML etree.
+
+	OUTPUTS
+	None.
+	"""
+
 	try:
 		for node in tree.xpath("//svg:style", namespaces={"xhtml": "http://www.w3.org/1999/xhtml", "svg": "http://www.w3.org/2000/svg"}):
 			css = format_css(node.text)
@@ -519,6 +530,16 @@ def _format_style_elements(tree: etree.ElementTree):
 		raise se.InvalidCssException(f"Couldn’t parse CSS. Exception: {ex}")
 
 def _format_xml_str(xml: str) -> etree.ElementTree:
+	"""
+	Given a string of well-formed XML, return a pretty-printed etree.
+
+	INPUTS
+	xml: A string of well-formed XML.
+
+	OUTPUTS
+	An etree representing the pretty-printed XML.
+	"""
+
 	tree = etree.fromstring(str.encode(xml))
 	canonical_bytes = etree.tostring(tree, method="c14n")
 	tree = etree.fromstring(canonical_bytes)
@@ -527,6 +548,16 @@ def _format_xml_str(xml: str) -> etree.ElementTree:
 	return tree
 
 def _xml_tree_to_string(tree: etree.ElementTree) -> str:
+	"""
+	Given an XML etree, return a string representing the etree's XML.
+
+	INPUTS
+	tree: An XML etree.
+
+	OUTPUTS
+	A string representing the etree's XML.
+	"""
+
 	xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + etree.tostring(tree, encoding="unicode") + "\n"
 
 	# Normalize unicode characters
@@ -545,7 +576,6 @@ def format_xml(xml: str) -> str:
 	A string of pretty-printed XML.
 	"""
 
-	# Canonicalize and format XML
 	try:
 		tree = _format_xml_str(xml)
 	except Exception as ex:
@@ -613,7 +643,8 @@ def format_opf(xml: str) -> str:
 
 	# Replace html entities in the long description so we can clean it too.
 	# We re-establish them later. Don't use html.unescape because that will unescape
-	# things like &amp; which would make an invalid XML document.
+	# things like &amp; which would make an invalid XML document. (&amp; may appear in translator info,
+	# or other parts of the metadata that are not the long description.
 	xml = xml.replace("&lt;", "<")
 	xml = xml.replace("&gt;", ">")
 	xml = xml.replace("&amp;amp;", "&amp;") # Unescape escaped ampersands, which appear in the long description only
@@ -659,20 +690,19 @@ def format_svg(svg: str) -> str:
 
 	try:
 		tree = _format_xml_str(svg)
-
-		# Make sure viewBox is correctly-cased
-		for node in tree.xpath("/svg:svg", namespaces={"svg": "http://www.w3.org/2000/svg"}):
-			for key, value in node.items(): # Iterate over attributes
-				if key.lower() == "viewbox":
-					node.attrib.pop(key) # Remove the attribute
-					node.attrib["viewBox"] = value # Re-add the attribute, correctly-cased
-					break
-
-		# Format <style> elements
-		_format_style_elements(tree)
-
 	except Exception as ex:
 		raise se.InvalidXmlException(f"Couldn’t parse SVG file. Exception: {ex}")
+
+	# Make sure viewBox is correctly-cased
+	for node in tree.xpath("/svg:svg", namespaces={"svg": "http://www.w3.org/2000/svg"}):
+		for key, value in node.items(): # Iterate over attributes
+			if key.lower() == "viewbox":
+				node.attrib.pop(key) # Remove the attribute
+				node.attrib["viewBox"] = value # Re-add the attribute, correctly-cased
+				break
+
+	# Format <style> elements
+	_format_style_elements(tree)
 
 	return _xml_tree_to_string(tree)
 
