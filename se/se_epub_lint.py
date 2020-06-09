@@ -185,8 +185,9 @@ SEMANTICS & CONTENT
 "s-053", "Colophon line not preceded by [xhtml]<br/>[/]."
 "s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/]."
 "s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor."
-"s-056", "Last [xhtml]<p>[/] child of endnote missing backlink.",
-"s-057", "Backlink noteref fragment identifier doesn’t match endnote number.",
+"s-056", "Last [xhtml]<p>[/] child of endnote missing backlink."
+"s-057", "Backlink noteref fragment identifier doesn’t match endnote number."
+"s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/] elements."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1246,6 +1247,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//abbr[contains(@class, 'name')][re:test(., '[A-Z]\\.[A-Z]\\.')]")
 				if nodes:
 					messages.append(LintMessage("t-016", "Initials in [xhtml]<abbr class=\"name\">[/] not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+
+				# Check for z3998:stage-direction on elements that are not <i>
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:stage-direction') and name() != 'i']")
+				if nodes:
+					messages.append(LintMessage("s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/] elements.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 				# Check for missing punctuation in continued quotations
 				# ” said Bob “
