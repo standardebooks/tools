@@ -188,6 +188,7 @@ SEMANTICS & CONTENT
 "s-056", "Last [xhtml]<p>[/] child of endnote missing backlink."
 "s-057", "Backlink noteref fragment identifier doesn’t match endnote number."
 "s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/] elements."
+"s-059", "Internal link beginning with [val]../text/[/]."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1003,6 +1004,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 								xhtml_css_classes[css_class] = 1
 
 				if filename.name != "toc.xhtml":
+					# Check that internal links don't begin with ../
+					nodes = dom.xpath("/html/body//a[re:test(@href, '^\\.\\./text/')]")
+					if nodes:
+						messages.append(LintMessage("s-059", "Internal link beginning with [val]../text/[/].", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
+
 					for node in dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')]"):
 						# Decide whether to remove subheadings based on the following logic:
 						# If the closest parent <section> or <article> is a part, division, or volume, then keep subtitle
