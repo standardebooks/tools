@@ -406,7 +406,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 					# Convert SVGs to PNGs at 2x resolution
 					# Path arguments must be cast to string
-					svg2png(url=str(filename), write_to=regex.sub(r"\.svg$", ".png", str(filename)), scale=2)
+					svg2png(url=str(filename), write_to=str(filename.parent / (str(filename.stem) + ".png")), scale=2)
 					(filename).unlink()
 
 				if filename.suffix == ".xhtml":
