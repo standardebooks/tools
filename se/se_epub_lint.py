@@ -602,6 +602,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			author_sort = self.metadata_dom.xpath(f"/package/metadata/meta[@property='file-as'][@refines='#{author.attribute('id')}']/text()")
 			if author_sort:
 				author_last_name = regex.sub(r",.+$", "", author_sort[0])
+				author_last_name = author_last_name.replace("'", "’") # Typogrify apostrophes so that we correctly match in the long description
 				# We can't use xpath here because the long description is escaped; it has no dom to query against.
 				if author_last_name in long_description and not regex.search(fr"<a href=\"https://standardebooks\.org/ebooks/.+?\">.*?{author_last_name}.*?</a>", long_description):
 					messages.append(LintMessage("m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their SE author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
