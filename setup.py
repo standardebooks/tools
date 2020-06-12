@@ -80,7 +80,7 @@ setup(
         "selenium==3.141.0",
         "smartypants==2.0.1",
         "tinycss2==1.0.2",
-        "titlecase==0.12.0" # Let's keep this for now, we'll revert to the pip library once the next release rolls around
+        "titlecase==0.13.0"
     ],
     include_package_data=True,
     entry_points={

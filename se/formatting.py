@@ -15,8 +15,8 @@ import roman
 import tinycss2
 from bs4 import BeautifulSoup, NavigableString, Tag
 from lxml import etree
-#from titlecase import titlecase as pip_titlecase
-from se.vendor.titlecase import titlecase as pip_titlecase
+from titlecase import titlecase as pip_titlecase
+#from se.vendor.titlecase import titlecase as pip_titlecase
 
 import se
 
