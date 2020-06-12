@@ -189,6 +189,7 @@ SEMANTICS & CONTENT
 "s-057", "Backlink noteref fragment identifier doesn’t match endnote number."
 "s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/] elements."
 "s-059", "Internal link beginning with [val]../text/[/]."
+"s-060", "Italics on name that requires quotes instead."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1511,6 +1512,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//header[normalize-space(./text())]")
 				if nodes:
 					messages.append(LintMessage("s-049", "[xhtml]<header>[/] element with text not in a block element.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+
+				# Check for italics on things that shouldn't be italics
+				nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.music.song') or contains(@epub:type, 'se:name.publication.short-story') or contains(@epub:type, 'se:name.publication.pamphlet') or contains(@epub:type, 'se:name.publication.essay')]")
+				if nodes:
+					messages.append(LintMessage("s-060", "Italics on name that requires quotes instead.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 				# Check to see if <h#> tags are correctly titlecased
 				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(contains(@epub:type, 'z3998:roman'))]")
