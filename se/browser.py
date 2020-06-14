@@ -43,6 +43,6 @@ def initialize_selenium_firefox_webdriver() -> webdriver:
 	try:
 		driver = webdriver.Firefox(firefox_profile=profile, firefox_options=options, service_log_path=os.devnull)
 	except WebDriverException:
-		raise se.MissingDependencyException("Selenium Firefox web driver is not installed. To install it, download the appropriate zip file from [url][link=https://github.com/mozilla/geckodriver/releases/latest]https://github.com/mozilla/geckodriver/releases/latest[/][/] and place the [bash]geckodriver[/] executable in your [path]$PATH[/] (for example, in [path]~/.local/bin/[/] or [path]/usr/local/bin/[/]).")
+		raise se.MissingDependencyException("Selenium Firefox web driver is not installed. To install it on Linux, download the appropriate zip file from [url][link=https://github.com/mozilla/geckodriver/releases/latest]https://github.com/mozilla/geckodriver/releases/latest[/][/] and place the [bash]geckodriver[/] executable in your [path]$PATH[/] (for example, in [path]~/.local/bin/[/] or [path]/usr/local/bin/[/]). To install it on macOS, run [bash]brew install geckodriver[/].")
 
 	return driver
