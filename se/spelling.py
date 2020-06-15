@@ -273,7 +273,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<!up and )(?<!up or )\b([Dd])own stairs\b", r"\1ownstairs", xhtml)		# down stairs -> downstairs, but not "up (or|and) down stairs"
 	xhtml = regex.sub(r"([Pp])artizan", r"\1artisan", xhtml)			# partizan -> partisan
 	xhtml = regex.sub(r"([Nn])onplused", r"\1onplussed", xhtml)			# nonplused -> nonplussed
-        xhtml = regex.sub(r"([Ää])rrangement", r"\1rrangement", xhtml)			# ärrangement -> arrangement (Note we don't use \b on either side in order to match reärrangements as well)
+        xhtml = regex.sub(r"ärrangement", r"arrangement", xhtml)			# ärrangement -> arrangement (Note we don't use \b on either side in order to match reärrangements as well)
+        xhtml = regex.sub(r"\bÄrrangement", r"Arrangement", xhtml)			# Ärrangement -> Arrangement (Note only use \b at start in order to match Ärrangements)
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
