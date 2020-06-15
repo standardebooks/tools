@@ -39,6 +39,7 @@ def initialize_selenium_firefox_webdriver() -> webdriver:
 	profile.set_preference("browser.cache.memory.enable", False)
 	profile.set_preference("browser.cache.offline.enable", False)
 	profile.set_preference("browser.http.use-cache", False)
+	profile.set_preference("layout.css.devPixelsPerPx", "2.0")
 
 	try:
 		driver = webdriver.Firefox(firefox_profile=profile, firefox_options=options, service_log_path=os.devnull)

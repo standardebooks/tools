@@ -105,7 +105,7 @@ def _color_to_alpha(image: Image, color=None) -> Image:
 	return new_image
 
 # Note: We can't type hint driver, because we conditionally import selenium for performance reasons
-def render_mathml_to_png(driver, mathml: str, output_filename: Path) -> None:
+def render_mathml_to_png(driver, mathml: str, output_filename: Path, output_filename_2x: Path) -> None:
 	"""
 	Render a string of MathML into a transparent PNG file.
 
@@ -113,6 +113,7 @@ def render_mathml_to_png(driver, mathml: str, output_filename: Path) -> None:
 	driver: A Selenium webdriver, usually initialized from se.browser.initialize_selenium_firefox_webdriver
 	mathml: A string of MathML
 	output_filename: A filename to store PNG output to
+	output_filename_2x: A filename to store hiDPI PNG output to
 
 	OUTPUTS
 	None.
@@ -127,9 +128,15 @@ def render_mathml_to_png(driver, mathml: str, output_filename: Path) -> None:
 			# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
 			driver.find_element_by_tag_name("html").screenshot(png_file.name)
 
+			# Save hiDPI 2x version
 			image = Image.open(png_file.name)
 			image = _color_to_alpha(image, (255, 255, 255, 255))
-			image.crop(image.getbbox()).save(output_filename)
+			image = image.crop(image.getbbox())
+			image.save(output_filename_2x)
+
+			# Save normal version
+			image = image.resize((image.width // 2, image.height // 2))
+			image.save(output_filename)
 
 def remove_image_metadata(filename: Path) -> None:
 	"""
