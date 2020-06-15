@@ -663,9 +663,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 										# Did we succeed? Is there any more MathML in our string?
 										if regex.findall("</?(?:m:)?m", processed_line):
 											# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
-											se.images.render_mathml_to_png(driver, regex.sub(r"<(/?)m:", "<\\1", line), work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png", work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}@2x.png")
+											se.images.render_mathml_to_png(driver, regex.sub(r"<(/?)m:", "<\\1", line), work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png", work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}-2x.png")
 
-											processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}.png\" srcset=\"../images/mathml-{mathml_count}@2x.png 2x, ../images/mathml-{mathml_count}.png 1x\" />")
+											processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}.png\" srcset=\"../images/mathml-{mathml_count}-2x.png 2x, ../images/mathml-{mathml_count}.png 1x\" />")
 											mathml_count = mathml_count + 1
 										else:
 											# Success! Replace the MathML with our new string.
