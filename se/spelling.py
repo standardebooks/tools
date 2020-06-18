@@ -140,13 +140,13 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])ubtile?(?!(ize|izing))", r"\1ubtle", xhtml)		# subtil -> subtle (but "subtilize" and "subtilizing")
 	xhtml = regex.sub(r"\bQuoiff", r"Coif", xhtml)					# quoiff -> coif
 	xhtml = regex.sub(r"\bquoiff", r"coif", xhtml)					# quoiff -> coif
-	xhtml = regex.sub(r"\bIndorse", r"Endorse", xhtml)				# indorse -> endorse
+	xhtml = regex.sub(r"\bIndorse", r"Endorse", xhtml)				# Indorse -> Endorse
 	xhtml = regex.sub(r"\bindorse", r"endorse", xhtml)				# indorse -> endorse
 	xhtml = regex.sub(r"\bIntrust", r"Entrust", xhtml)				# Intrust -> Entrust
 	xhtml = regex.sub(r"\bintrust", r"entrust", xhtml)				# intrust -> entrust
-	xhtml = regex.sub(r"\bPhantas(y|ie)", r"Fantasy", xhtml)			# phantasie -> fantasy
+	xhtml = regex.sub(r"\bPhantas(y|ie)", r"Fantasy", xhtml)			# Phantasie -> Fantasy
 	xhtml = regex.sub(r"\bphantas(y|ie)", r"fantasy", xhtml)			# phantasie -> fantasy
-	xhtml = regex.sub(r"\bPhantastic", r"Fantastic", xhtml)				# phantastic -> fantastic
+	xhtml = regex.sub(r"\bPhantastic", r"Fantastic", xhtml)				# Phantastic -> Fantastic
 	xhtml = regex.sub(r"\bphantastic", r"fantastic", xhtml)				# phantastic -> fantastic
 	xhtml = regex.sub(r"\bPhrensy", r"Frenzy", xhtml)				# Phrensy -> Frenzy
 	xhtml = regex.sub(r"\bphrensy", r"frenzy", xhtml)				# phrensy -> frenzy
@@ -181,7 +181,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Gg])ood\-day", r"\1ood day", xhtml)			# good-day -> good day
 	xhtml = regex.sub(r"\b([Gg])ood\-afternoon", r"\1ood afternoon", xhtml)		# good-afternoon -> good afternoon
 	xhtml = regex.sub(r"\b([Bb])ete noir", r"\1ête noir", xhtml)			# bete noir -> bête noir
-	xhtml = regex.sub(r"\bEclat\b", r"Éclat", xhtml)				# eclat -> éclat
+	xhtml = regex.sub(r"\bEclat\b", r"Éclat", xhtml)				# Eclat -> Éclat
 	xhtml = regex.sub(r"\beclat\b", r"éclat", xhtml)				# eclat -> éclat
 	xhtml = regex.sub(r"\ba la\b", r"à la", xhtml)					# a la -> à la
 	xhtml = regex.sub(r"\ba propos\b", r"apropos", xhtml)				# a propos -> apropos
@@ -206,9 +206,9 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Dd])isburthen", r"\1isburden", xhtml)			# disburthen -> disburthen
 	xhtml = regex.sub(r"\b[EÉ]lys[eé]e", r"Élysée", xhtml)				# Elysee -> Élysée
 	xhtml = regex.sub(r"\b([Ll])aw suit", r"\1awsuit", xhtml)			# law suit -> lawsuit
-	xhtml = regex.sub(r"\bIncase", r"Encase", xhtml)				# incase -> encase
+	xhtml = regex.sub(r"\bIncase", r"Encase", xhtml)				# Incase -> Encase
 	xhtml = regex.sub(r"\bincase", r"encase", xhtml)				# incase -> encase
-	xhtml = regex.sub(r"\bInclose", r"Enclose", xhtml)				# inclose -> enclose
+	xhtml = regex.sub(r"\bInclose", r"Enclose", xhtml)				# Inclose -> Enclose
 	xhtml = regex.sub(r"\binclose", r"enclose", xhtml)				# inclose -> enclose
 	xhtml = regex.sub(r"\b([Cc])ocoa-?nut", r"\1oconut", xhtml)			# cocoanut / cocoa-nut -> coconut
 	xhtml = regex.sub(r"\b([Ww])aggon", r"\1agon", xhtml)				# waggon -> wagon
@@ -263,7 +263,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])[uû]ret[eé]", r"\1ûreté", xhtml)			# Surete -> Sûreté
 	xhtml = regex.sub(r"\b([Ss])eance", r"\1éance", xhtml)				# seance -> séance
 	xhtml = regex.sub(r"\b([Ff])in[\- ]de[\- ]siecle", r"\1in de siècle", xhtml)		# fin de siecle -> fin de siècle
-	xhtml = regex.sub(r"\bEmpale", r"Impale", xhtml)				# empale -> impale
+	xhtml = regex.sub(r"\bEmpale", r"Impale", xhtml)				# Empale -> Impale
 	xhtml = regex.sub(r"\bempale", r"impale", xhtml)				# empale -> impale
 	xhtml = regex.sub(r"\b([Tt])abu(s?)\b", r"\1aboo\2", xhtml)			# tabu -> taboo
 	xhtml = regex.sub(r"\b([Kk])idnaping\b", r"\1idnapping", xhtml)			# kidnaping -> kidnapping
@@ -310,7 +310,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = xhtml.replace("\bÆon\b", "Aeon")
 	xhtml = xhtml.replace("Æschylus", "Aeschylus")
 	xhtml = xhtml.replace("æsthet", "aesthet") # aesthetic, aesthete, etc.
-	xhtml = xhtml.replace("Æsthet", "Aesthet") # aesthetic, aesthete, etc.
+	xhtml = xhtml.replace("Æsthet", "Aesthet") # Aesthetic, Aesthete, etc.
 	xhtml = regex.sub(r"\b([Hh])yæna", r"\1yena", xhtml)
 	xhtml = xhtml.replace("Œdip", "Oedip") # Oedipus, Oedipal
 	xhtml = regex.sub(r"\b([Pp])æan", r"\1aean", xhtml)
