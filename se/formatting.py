@@ -95,9 +95,9 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"""\b(?<!\<abbr class="era"\>)B\.?C""", r"""<abbr class="era">BC</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="time( eoc)?"\>)([ap])\.\s?m\.""", r"""<abbr class="time">\2.m.</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)([Vv])s\.", r"<abbr>\1s.</abbr>", xhtml)
-        xhtml = regex.sub(r"""(?<!\<abbr class="name"\>)Thos\.""", r"""<abbr class="name">Thos.</abbr>""", xhtml)
-        xhtml = regex.sub(r"""(?<!\<abbr class="name"\>)Jas\.""", r"""<abbr class="name">Jas.</abbr>""", xhtml)
-        xhtml = regex.sub(r"""(?<!\<abbr class="name"\>)Chas\.""", r"""<abbr class="name">Chas.</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr class="name"\>)Thos\.""", r"""<abbr class="name">Thos.</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr class="name"\>)Jas\.""", r"""<abbr class="name">Jas.</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr class="name"\>)Chas\.""", r"""<abbr class="name">Chas.</abbr>""", xhtml)
 
 	# Wrap £sd shorthand
 	xhtml = regex.sub(r"([0-9½¼⅙⅚⅛⅜⅝]+)([sd⅞]\.)", r"\1<abbr>\2</abbr>", xhtml)
