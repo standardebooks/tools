@@ -309,8 +309,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = xhtml.replace("\bæon\b", "aeon")
 	xhtml = xhtml.replace("\bÆon\b", "Aeon")
 	xhtml = xhtml.replace("Æschylus", "Aeschylus")
-	xhtml = xhtml.replace("æsthet", "aesthet") # æsthetic, aesthete, etc.
-	xhtml = xhtml.replace("Æsthet", "Aesthet") # Æesthetic, Aesthete, etc.
+	xhtml = xhtml.replace("æsthet", "aesthet") # aesthetic, aesthete, etc.
+	xhtml = xhtml.replace("Æsthet", "Aesthet") # Aesthetic, Aesthete, etc.
 	xhtml = regex.sub(r"\b([Hh])yæna", r"\1yena", xhtml)
 	xhtml = xhtml.replace("Œdip", "Oedip") # Oedipus, Oedipal
 	xhtml = regex.sub(r"\b([Pp])æan", r"\1aean", xhtml)
