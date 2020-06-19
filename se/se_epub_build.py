@@ -88,22 +88,20 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		except:
 			raise se.InvalidSeEbookException(f"Missing [xml]<dc:identifier>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/].")
 
-		try:
-			title = self.metadata_dom.xpath("//dc:title")[0].inner_xml()
-			url_title = se.formatting.make_url_safe(title)
-		except:
+		if not self.metadata_dom.xpath("//dc:title"):
 			raise se.InvalidSeEbookException(f"Missing [xml]<dc:title>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/].")
 
+		output_filename = identifier.replace("https://standardebooks.org/ebooks/", "").replace("/", "_")
 		url_author = ""
 		for author in self.metadata_dom.xpath("//dc:creator"):
 			url_author = url_author + se.formatting.make_url_safe(author.inner_xml()) + "_"
 
 		url_author = url_author.rstrip("_")
 
-		epub_output_filename = f"{url_author}_{url_title}{'.proof' if proof else ''}.epub"
-		epub3_output_filename = f"{url_author}_{url_title}{'.proof' if proof else ''}.epub3"
-		kobo_output_filename = f"{url_author}_{url_title}{'.proof' if proof else ''}.kepub.epub"
-		kindle_output_filename = f"{url_author}_{url_title}{'.proof' if proof else ''}.azw3"
+		epub_output_filename = f"{output_filename}{'.proof' if proof else ''}.epub"
+		epub3_output_filename = f"{output_filename}{'.proof' if proof else ''}.epub3"
+		kobo_output_filename = f"{output_filename}{'.proof' if proof else ''}.kepub.epub"
+		kindle_output_filename = f"{output_filename}{'.proof' if proof else ''}.azw3"
 
 		# Clean up old output files if any
 		se.quiet_remove(output_directory / f"thumbnail_{asin}_EBOK_portrait.jpg")
