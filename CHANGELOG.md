@@ -1,3 +1,55 @@
+v1.5.1
+======
+
+se build
+********
+
+- Use pathlib instead of regex when composing PNG output paths
+
+- Output hi-DPI MathML PNGs using <img srcset>. Thanks to Robin Whittleton
+
+- Include translator name in output filenames
+
+se create-draft
+***************
+
+- When creating the title/cover page images, check if the first line is a word of less than 3 letters, instead of checking against a set of short words.
+
+se lint
+*******
+
+- Add s-055, <th> element not in <thead> ancestor
+
+- Add s-056, last <p> child of endnote missing backlink
+
+- Add s-057, backlink notereef fragment identifier doesn't match endnote number
+
+- Add m-056, author name present in long description but first instance isn't hyperlinked
+
+- Add s-058, stage direction sematnics only allowed in <i> elements
+
+- Add s-059 internal link beginning with ../text/
+
+- Add s-060, italics on name that requires quotes
+
+- Add m-057, xml:lang illegal in long description. Thanks to Robin Whittleton
+
+- Improve s-046
+
+- Improve t-002
+
+- Fix bad filename in s-027
+
+se modernize-spelling
+*********************
+
+- Various additions.
+
+se word-count
+*************
+
+- Improve removal of PG headers/footers
+
 v1.5.0
 ======
 
