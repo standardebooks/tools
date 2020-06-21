@@ -837,14 +837,15 @@ class SeEpub:
 		"""
 
 		worktype = "fiction"  # default
-		subjects = regex.findall(r"<meta property=\"se:subject\">([^<]+?)</meta>", self.metadata_xml)
+
+		subjects = self.metadata_dom.xpath("/package/metadata/dc:subject/text()")
 		if not subjects:
 			return worktype
 
 		# Unfortunately, some works are tagged "Philosophy" but are nevertheless fiction, so we have to double-check
 		if "Nonfiction" in subjects:
 			return "non-fiction"
-		nonfiction_types = ["Adventure", "Autobiography", "Memoir", "Philosophy", "Spirituality", "Travel"]
+		nonfiction_types = ["Autobiography", "Memoir", "Philosophy", "Spirituality", "Travel"]
 		for nonfiction_type in nonfiction_types:
 			if nonfiction_type in subjects:
 				worktype = "non-fiction"
