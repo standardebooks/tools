@@ -822,8 +822,7 @@ class SeEpub:
 		list of content files in the order given in the spine in content.opf
 		"""
 
-		return regex.findall(r"<itemref idref=\"(.*?)\"/>", self.metadata_xml)
-
+		return self.metadata_dom.xpath("/package/spine/itemref/@idref")
 
 	def get_work_type(self) -> str:
 		"""
@@ -845,10 +844,12 @@ class SeEpub:
 		# Unfortunately, some works are tagged "Philosophy" but are nevertheless fiction, so we have to double-check
 		if "Nonfiction" in subjects:
 			return "non-fiction"
+
 		nonfiction_types = ["Autobiography", "Memoir", "Philosophy", "Spirituality", "Travel"]
 		for nonfiction_type in nonfiction_types:
 			if nonfiction_type in subjects:
 				worktype = "non-fiction"
+
 		fiction_types = ["Fantasy", "Fiction", "Horror", "Mystery", "Science Fiction"]
 		for fiction_type in fiction_types:
 			if fiction_type in subjects:
