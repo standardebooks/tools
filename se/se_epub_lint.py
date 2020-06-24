@@ -1088,9 +1088,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if matches:
 					messages.append(LintMessage("s-001", "Illegal numeric entity (like [xhtml]&#913;[/]).", se.MESSAGE_TYPE_ERROR, filename))
 
-				nodes = dom.xpath("/html/body//blockquote/text()[normalize-space(.)]")
+				nodes = dom.xpath("/html/body//blockquote[text()[normalize-space(.)]]") + dom.xpath("/html/body//blockquote/*[name()='i' or name()='b' or name()='strong' or name()='em' or name()='span']")
 				if nodes:
-					messages.append(LintMessage("s-043", "[xhtml]<blockquote>[/] element without block-level child.", se.MESSAGE_TYPE_WARNING, filename, [node[:30] for node in nodes]))
+					messages.append(LintMessage("s-043", "[xhtml]<blockquote>[/] element without block-level child.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 				# Check nested <blockquote> elements, but only if it's the first child of another <blockquote>
 				nodes = dom.xpath("/html/body//blockquote/*[1][name()='blockquote']")
