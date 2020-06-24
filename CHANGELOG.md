@@ -1,3 +1,23 @@
+v1.5.2
+======
+
+General
+*******
+
+- Remove 'adventure' from tags listed as non-fiction, when deciding on the fiction type for a work
+
+- Use xpath instead of regex to get spine items
+
+se build
+********
+
+- Fix several MathML related bugs
+
+se lint
+*******
+
+- Improve s-043 to select blockquotes with inline elements and not just text nodes
+
 v1.5.1
 ======
 
