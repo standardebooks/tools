@@ -432,7 +432,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							mathml_presentation_xhtml = etree.tostring(mathml_presentation_tree, encoding="unicode", pretty_print=True, with_tail=False).strip()
 
 							# Plop our string back in to the XHTML we're processing
-							processed_xhtml = regex.sub(r"<math[^>]*?>\{}\</math>".format(regex.escape(line)), mathml_presentation_xhtml, processed_xhtml, flags=regex.MULTILINE)
+							processed_xhtml = regex.sub(r"<(?:m:)?math[^>]*?>\{}\</(?:m:)?math>".format(regex.escape(line)), mathml_presentation_xhtml, processed_xhtml, flags=regex.MULTILINE)
 
 						if filename.name == "endnotes.xhtml":
 							# iOS renders the left-arrow-hook character as an emoji; this fixes it and forces it to render as text.
