@@ -581,6 +581,10 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							file.write(xhtml)
 							file.truncate()
 
+				# All done, clean the output
+				for filepath in se.get_target_filenames([kobo_work_directory], (".xhtml", ".svg", ".opf", ".ncx")):
+					se.formatting.format_xml_file(filepath)
+
 				se.epub.write_epub(kobo_work_directory, output_directory / kobo_output_filename)
 
 		# Now work on more epub2 compatibility
