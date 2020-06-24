@@ -336,7 +336,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		metadata_xml = metadata_xml.replace(".svg", ".png")
 		metadata_xml = metadata_xml.replace("id=\"cover.jpg\" media-type=\"image/svg+xml\"", "id=\"cover.jpg\" media-type=\"image/jpeg\"")
 		metadata_xml = metadata_xml.replace("image/svg+xml", "image/png")
-		metadata_xml = regex.sub(r"properties=\"([^\"]*?)svg([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xml) # We may also have the `mathml` property
+		metadata_xml = regex.sub(r" properties=\"([^\"]*?)svg([^\"]*?)\"", r''' properties="\1\2"''', metadata_xml) # We may also have the `mathml` property
+		metadata_xml = regex.sub(r" properties=\"([^\s]*?)\s\"", r''' properties="\1"''', metadata_xml) # Clean up trailing white space in property attributes introduced by the above line
+		metadata_xml = regex.sub(r" properties=\"\s*\"", "", metadata_xml) # Remove any now-empty property attributes
 
 		# Add an element noting the version of the se tools that built this ebook
 		metadata_xml = regex.sub(r"<dc:publisher", f"<meta property=\"se:built-with\">{se.VERSION}</meta>\n\t\t<dc:publisher", metadata_xml)
