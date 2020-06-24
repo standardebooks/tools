@@ -1,3 +1,18 @@
+v1.5.3
+======
+
+se build
+********
+
+- Add support for building titlepage/imprint/colophon files with color depth semantics on images
+
+- Format Kobo output before writing kepub files
+
+se create-draft
+***************
+
+- Add color depth semantics to titlepage/imprint/colophon templates
+
 v1.5.2
 ======
 
