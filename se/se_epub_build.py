@@ -442,6 +442,11 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							# See http://mts.io/2015/04/21/unicode-symbol-render-text-emoji/
 							processed_xhtml = processed_xhtml.replace("\u21a9", "\u21a9\ufe0e")
 
+						# Since we added an outlining stroke to the titlepage/publisher logo images, we
+						# want to remove the se:color-depth.black-on-transparent semantic
+						if filename.name in ("colophon.xhtml", "imprint.xhtml", "titlepage.xhtml"):
+							processed_xhtml = regex.sub(r"\s*se:color-depth\.black-on-transparent\s*", "", processed_xhtml)
+
 						# Add ARIA roles, which are just mostly duplicate attributes to epub:type
 						for role in ARIA_ROLES:
 							processed_xhtml = regex.sub(fr"(epub:type=\"[^\"]*?{role}[^\"]*?\")", f"\\1 role=\"doc-{role}\"", processed_xhtml)
@@ -459,14 +464,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# For example, we might have an h2 that is both a title and dedication. But ARIA can't handle it being a dedication.
 						# See The Man Who Was Thursday by G K Chesterton
 						processed_xhtml = regex.sub(r"(<h[1-6] [^>]*) role=\".*?\">", "\\1>", processed_xhtml)
-
-						# Since we convert SVGs to raster, here we add the color-depth semantic for night mode
-						processed_xhtml = processed_xhtml.replace("z3998:publisher-logo", "z3998:publisher-logo se:image.color-depth.black-on-transparent")
-						processed_xhtml = regex.sub(r"class=\"([^\"]*?)epub-type-z3998-publisher-logo([^\"]*?)\"", "class=\"\\1epub-type-z3998-publisher-logo epub-type-se-image-color-depth-black-on-transparent\\2\"", processed_xhtml)
-
-						# Special case for the titlepage
-						if filename.name == "titlepage.xhtml":
-							processed_xhtml = processed_xhtml.replace("<img", "<img class=\"epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\"")
 
 						# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
 						processed_xhtml = processed_xhtml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
@@ -500,6 +497,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 						# Some minor code style cleanup
 						processed_xhtml = processed_xhtml.replace(" >", ">")
+						processed_xhtml = regex.sub(r"""\s*epub:type=""\s*""", "", processed_xhtml)
 
 						if processed_xhtml != xhtml:
 							file.seek(0)
