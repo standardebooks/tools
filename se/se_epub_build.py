@@ -629,7 +629,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 								# Check if there's MathML we want to convert
 								# We take a naive approach and use some regexes to try to simplify simple MathML expressions.
 								# For each MathML expression, if our round of regexes finishes and there is still MathML in the processed result, we abandon the attempt and render to PNG using Firefox.
-								for line in regex.findall(r"<(?:m:)math[^>]*?>(?:.+?)</(?:m:)math>", processed_xhtml, flags=regex.DOTALL):
+								for line in regex.findall(r"<(?:m:)?math[^>]*?>(?:.+?)</(?:m:)?math>", processed_xhtml, flags=regex.DOTALL):
 									if line not in replaced_mathml:
 										replaced_mathml.append(line) # Store converted lines to save time in case we have multiple instances of the same MathML
 										mathml_tree = se.easy_xml.EasyXhtmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?>{}".format(regex.sub(r"<(/?)m:", "<\\1", line)))
