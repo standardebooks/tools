@@ -548,6 +548,14 @@ def _format_xml_str(xml: str) -> etree.ElementTree:
 	tree = etree.fromstring(canonical_bytes)
 	_indent(tree, space="\t")
 
+	# Remove white space around attribute values
+	for node in tree.xpath("//*[attribute::*[re:test(., '^\\s+') or re:test(., '\\s+$')]]", namespaces={"re": "http://exslt.org/regular-expressions"}):
+		for attribute in node.keys():
+			value = node.get(attribute)
+			value = regex.sub(r"^\s+", "", value)
+			value = regex.sub(r"\s+$", "", value)
+			node.set(attribute, value)
+
 	return tree
 
 def _xml_tree_to_string(tree: etree.ElementTree) -> str:
