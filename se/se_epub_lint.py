@@ -152,7 +152,7 @@ SEMANTICS & CONTENT
 "s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute."
 "s-020", "Frontmatter found, but no halftitle. Halftitle is required when frontmatter is present."
 "s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)"
-"s-022", f"The [xhtml]<title>[/] element of [path]{image_ref}[/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/]."
+"s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/]."
 "s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/]."
 "s-024", "Half title [xhtml]<title>[/] elements must contain exactly: \"Half Title\"."
 "s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/]."
@@ -1625,7 +1625,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 									messages.append(LintMessage("s-027", f"{image_ref} missing [xhtml]<title>[/] element.", se.MESSAGE_TYPE_ERROR, svg_path))
 
 								if title_text != "" and alt != "" and title_text != alt:
-									messages.append(LintMessage("s-022", f"The [xhtml]<title>[/] element of [path]{image_ref}[/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
+									messages.append(LintMessage("s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
 
 							except FileNotFoundError:
 								missing_files.append(self.path / f"src/epub/images/{image_ref}")
