@@ -783,6 +783,9 @@ class SeEpub:
 		if "halftitle.xhtml" in filenames:
 			spine.append("<itemref idref=\"halftitle.xhtml\"/>")
 
+		if "prologue.xhtml" in filenames:
+			spine.append("<itemref idref=\"prologue.xhtml\"/>")
+
 		for filename in filenames:
 			if filename not in excluded_files:
 				spine.append(f"<itemref idref=\"{filename}\"/>")
