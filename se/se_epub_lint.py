@@ -1363,13 +1363,19 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					nodes = dom.xpath("/html/body//*[contains(concat(' ', @epub:type, ' '), ' title ') and contains(@epub:type, 'z3998:roman')][re:test(name(), '^h[1-6]$')]")
 					if nodes:
 						try:
-							chapter_number = roman.fromRoman(nodes[0].inner_text())
+							# Remove noterefs from the heading before checking
+							node_copy = deepcopy(nodes[0])
+
+							for noteref_node in node_copy.xpath(".//a[contains(@epub:type, 'noteref')]"):
+								noteref_node.remove()
+
+							chapter_number = roman.fromRoman(node_copy.inner_text())
 
 							if not dom.xpath(f"/html/head/title[re:match(., '(Chapter|Section|Part) {chapter_number}')]"):
 								unexpected_titles.append((f"Chapter {chapter_number}", filename))
 
 						except Exception:
-							messages.append(LintMessage("s-035", f"[xhtml]{nodes[0].totagstring()}[/] element has the [val]z3998:roman[/] semantic, but is not a Roman numeral.", se.MESSAGE_TYPE_ERROR, filename))
+							messages.append(LintMessage("s-035", f"[xhtml]{node_copy.totagstring()}[/] element has the [val]z3998:roman[/] semantic, but is not a Roman numeral.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# If the chapter has a number and subtitle, check the <title> tag...
 					nodes = dom.xpath("/html/body//*[contains(concat(' ', @epub:type, ' '), ' title ')][re:test(name(), '^h[1-6]$')][(./span[1])[contains(@epub:type, 'z3998:roman')]][(./span[2])[contains(@epub:type, 'subtitle')]]")
