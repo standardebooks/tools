@@ -129,6 +129,7 @@ METADATA
 "m-055", "Missing data in metadata."
 "m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their SE author page."
 "m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/]."
+"m-058", "[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -674,6 +675,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	matches = regex.findall(r"&[a-z0-9]+?;", long_description.replace("&amp;", ""))
 	if matches:
 		messages.append(LintMessage("m-018", "HTML entities found. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+
+	# Check for tags that imply other tags
+	implied_tags = {"Fiction": ["Science Fiction", "Drama"]}
+	for implied_tag, tags in implied_tags.items():
+		if self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text()='{implied_tag}']"):
+			for tag in tags:
+				if self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text()='{tag}']"):
+					messages.append(LintMessage("m-058", f"[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
 	# Check for illegal em-dashes in <dc:subject>
 	nodes = self.metadata_dom.xpath("/package/metadata/dc:subject[contains(text(), '—')]")
