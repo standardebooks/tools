@@ -582,7 +582,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							file.truncate()
 
 				# All done, clean the output
-				for filepath in se.get_target_filenames([kobo_work_directory], (".xhtml", ".svg", ".opf", ".ncx")):
+				# Note that we don't clean .xhtml files, because the way kobo spans are added means that it will screw up spaces inbetween endnotes.
+				for filepath in se.get_target_filenames([kobo_work_directory], (".svg", ".opf", ".ncx")):
 					se.formatting.format_xml_file(filepath)
 
 				se.epub.write_epub(kobo_work_directory, output_directory / kobo_output_filename)
