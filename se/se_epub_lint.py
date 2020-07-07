@@ -677,7 +677,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		messages.append(LintMessage("m-018", "HTML entities found. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
 	# Check for tags that imply other tags
-	implied_tags = {"Fiction": ["Science Fiction", "Drama"]}
+	implied_tags = {"Fiction": ["Science Fiction", "Drama", "Fantasy"]}
 	for implied_tag, tags in implied_tags.items():
 		if self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text()='{implied_tag}']"):
 			for tag in tags:
