@@ -274,6 +274,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"([Pp])artizan", r"\1artisan", xhtml)			# partizan -> partisan
 	xhtml = regex.sub(r"([Nn])onplused", r"\1onplussed", xhtml)			# nonplused -> nonplussed
 	xhtml = regex.sub(r"\b([Rr])eärrangement", r"\1earrangement", xhtml)		# reärrangement -> rearrangement
+	xhtml = regex.sub(r"\b([Mm])untru(s?)\b", r"\1antra\2", xhtml)			# muntru -> mantra
+	xhtml = regex.sub(r"\b([Hh])uzz(y|ies)\b", r"\1uss\2", xhtml)			# huzzy -> hussy
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
