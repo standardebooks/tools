@@ -91,7 +91,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"""(?<!\<abbr class="initialism"\>)\bN\.?B\.\b""", r"""<abbr class="initialism">N.B.</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)(Jan\.|Feb\.|Mar\.|Apr\.|Jun\.|Jul\.|Aug\.|Sep\.|Sept\.|Oct\.|Nov\.|Dec\.)", r"<abbr>\1</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)No\.(\s+[0-9]+)", r"<abbr>No.</abbr>\1", xhtml)
-	xhtml = regex.sub(r"""(?<!\<abbr class="degree"\>)PhD""", r"""<abbr class="degree">PhD</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr class="degree"\>)Ph\.?\s*D\.?""", r"""<abbr class="degree">Ph. D.</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="initialism"\>)I\.?O\.?U\.?\b""", r"""<abbr class="initialism">I.O.U.</abbr>""", xhtml)
 	xhtml = regex.sub(r"""\b(?<!\<abbr class="era"\>)A\.?D""", r"""<abbr class="era">AD</abbr>""", xhtml)
 	xhtml = regex.sub(r"""\b(?<!\<abbr class="era"\>)B\.?C""", r"""<abbr class="era">BC</abbr>""", xhtml)
