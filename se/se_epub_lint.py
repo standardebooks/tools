@@ -1791,7 +1791,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-027", "Endnote referrer link not preceded by exactly one space.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 					# Check that endnotes have their backlink in the last <p> element child of the <li>. This also highlights backlinks that are totally missing.
-					nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')][./p[last()][not(a[contains(@epub:type, 'backlink')])]]")
+					nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')][./p[last()][not(a[contains(@epub:type, 'backlink')])] or not(./p[last()])]")
 					if nodes:
 						messages.append(LintMessage("s-056", "Last [xhtml]<p>[/] child of endnote missing backlink.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
