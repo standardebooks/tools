@@ -1,0 +1,5 @@
+s-061 Error: glossary.xhtml `<dd>` element without block-level child.
+        <dd>A rock made up of fragments of rock or pebbles, cemented together by
+some other material.</dd>
+s-062 Error: glossary.xhtml `<dt>` element without exactly one `<dfn>` child.
+        <dt>Aberrant</dt>

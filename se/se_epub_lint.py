@@ -192,6 +192,8 @@ SEMANTICS & CONTENT
 "s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/] elements."
 "s-059", "Internal link beginning with [val]../text/[/]."
 "s-060", "Italics on name that requires quotes instead."
+"s-061", "[xhtml]<dd>[/] element without block-level child."
+"s-062", "[xhtml]<dt>[/] element without exactly one [xhtml]<dfn>[/] child."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1348,6 +1350,16 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[span[@epub:type][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)]) = 0]]")
 				if nodes:
 					messages.append(LintMessage("s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+
+				# Check for <dd> elements without block-level children
+				nodes = dom.xpath("/html/body//dd[(node()[normalize-space(.) and not(self::comment())])[1][not(name()='p' or name()='blockquote' or name()='div' or name()='table' or name()='header' or name()='ul' or name()='ol')]]")
+				if nodes:
+					messages.append(LintMessage("s-061", "[xhtml]<dd>[/] element without block-level child.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+
+				# Check for <dt> elements without exactly one <dfn> child
+				nodes = dom.xpath("/html/body//dt[not(count(./dfn) = 1)]")
+				if nodes:
+					messages.append(LintMessage("s-062", "[xhtml]<dt>[/] element without exactly one [xhtml]<dfn>[/] child.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for empty elements. Elements are empty if they have no children and no non-whitespace text
 				empty_elements = [node.tostring() for node in dom.xpath("/html/body//*[not(self::br) and not(self::hr) and not(self::img) and not(self::td) and not(self::th) and not(self::link)][not(*)][not(normalize-space())]")]
