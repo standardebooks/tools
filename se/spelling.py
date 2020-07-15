@@ -277,6 +277,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Mm])untru(s?)\b", r"\1antra\2", xhtml)			# muntru -> mantra
 	xhtml = regex.sub(r"\b([Hh])uzz(y|ies)\b", r"\1uss\2", xhtml)			# huzzy -> hussy
 	xhtml = regex.sub(r"\b([Hh])iccough", r"\1iccup", xhtml)			# hiccough -> hiccup
+	xhtml = regex.sub(r"\b([Rr])oue(s?)\b", r"\1oué\2", xhtml)			# roue -> roué
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
