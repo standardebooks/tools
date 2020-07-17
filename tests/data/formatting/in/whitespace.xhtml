@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0" xml:lang="en-US">
+	<body>
+		<!-- Test cases for whitespace cleanup -->
+
+		<!-- 1) If elements are only separated by whitespace and there is no tail text, nest with newlines -->
+		<section> <h2>heading</h2>    <p>foo</p>	  </section>
+
+		<!-- 2) If elements are separated by multiple whitespace characters and there is tail text, just collapse whitespace -->
+		<section> <p>The 	<i>rain</i>   in <span>Spain</span></p>	  </section>
+	</body>
+</html>

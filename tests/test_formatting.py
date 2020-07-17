@@ -17,12 +17,14 @@ TESTS = [
 	"html_header",
 	"inline",
 	"meta",
+	"odps",
 	"paragraph",
 	"poem",
 	"song",
 	"titlepage",
 	"toc",
 	"uncopyright",
+	"whitespace",
 ]
 
 def assert_match(data_dir: Path, test_name: str):
@@ -30,8 +32,8 @@ def assert_match(data_dir: Path, test_name: str):
 	Match test input against test output.
 	"""
 
-	infile = f"{data_dir}/pretty-print/in/{test_name}.xhtml"
-	outfile = f"{data_dir}/pretty-print/out/{test_name}.xhtml"
+	infile = f"{data_dir}/formatting/in/{test_name}.xhtml"
+	outfile = f"{data_dir}/formatting/out/{test_name}.xhtml"
 
 	with open(infile, "r") as file:
 		xml = file.read()
@@ -44,9 +46,9 @@ def assert_match(data_dir: Path, test_name: str):
 
 
 @pytest.mark.parametrize("test_name", TESTS)
-def test_pretty_print(data_dir: Path, test_name: str):
+def test_format_xml(data_dir: Path, test_name: str):
 	"""
-	Test function for pretty-printing XML with different input files
+	Test function for formatting XML with different input files
 	"""
 
 	assert_match(data_dir, test_name)
