@@ -396,7 +396,7 @@ def _indent_children(elem, level, one_space, indentations, has_child_tails=False
 			has_child_tails = True
 		else:
 			for child in elem:
-				if child.tail and not regex.match(r"^\n\s*$", child.tail):
+				if (child.tail and not regex.match(r"^[\n\t ]+$", child.tail)):
 					has_child_tails = True
 					break
 
@@ -420,15 +420,16 @@ def _indent_children(elem, level, one_space, indentations, has_child_tails=False
 
 		next_child = child.getnext()
 
-		# Remove line wraps from child text (except meta tags)
+		# Remove line wraps and extra whitespace from child text (except meta tags)
 		if child.text and not regex.match(r"^[\n\t ]+$", child.text):
 			if child.tag is etree.Comment:
-				child.text = regex.sub(r" *\n\s*", child_indentation, child.text)
+				child.text = regex.sub(r" *\n[\n\t ]*", child_indentation, child.text)
 			elif child.tag != "{http://www.idpf.org/2007/opf}meta":
 				_unwrap_text(child, remove_trailing_space=True)
+				child.text = regex.sub(r"[\t ]+", " ", child.text)
 
 		# Handle different cases for indentation in child tail content
-		if not child.tail or regex.match(r"^\n\s*$", child.tail):
+		if not child.tail or regex.match(r"^[\n\t ]+$", child.tail):
 			if next_child is None:
 				if has_child_tails:
 					child.tail = ""
@@ -444,12 +445,16 @@ def _indent_children(elem, level, one_space, indentations, has_child_tails=False
 			elif not has_child_tails and not child.tail and next_child.tag in PHRASING_TAGS:
 				child.tail = ""
 			elif has_child_tails:
-				child.tail = ""
+				if not child.tail or next_child.tag == "{http://www.w3.org/1999/xhtml}br":
+					child.tail = ""
+				else:
+					child.tail = " "
 			else:
 				child.tail = child_indentation
 		else:
-			# Remove line wraps in child tail
+			# Remove line wraps and extra whitespace in child tail
 			_unwrap_tail(child, remove_trailing_space=next_child is None)
+			child.tail = regex.sub(r"[\t ]+", " ", child.tail)
 			# Add special indentation for br tag with non-empty tail
 			if child.tag == "{http://www.w3.org/1999/xhtml}br":
 				child_indentation = indentations[level - 1]
@@ -459,22 +464,22 @@ def _unwrap_text(elem: etree.Element, remove_trailing_space: bool):
 	"""
 	Remove line wraps from text content of element.
 	"""
-	elem.text = regex.sub(r"^\n\s*", "", elem.text)
+	elem.text = regex.sub(r"^\n[\n\t ]*", "", elem.text)
 	if remove_trailing_space:
-		elem.text = regex.sub(r"\n\s*$", "", elem.text)
-	elem.text = regex.sub(r" *\n\s*", " ", elem.text)
+		elem.text = regex.sub(r"\n[\n\t ]*$", "", elem.text)
+	elem.text = regex.sub(r" *\n[\n\t ]*", " ", elem.text)
 
 def _unwrap_tail(elem: etree.Element, remove_trailing_space: bool):
 	"""
 	Remove line wraps from tail content of element.
 	"""
 	if elem.tag == "{http://www.w3.org/1999/xhtml}br":
-		elem.tail = regex.sub(r"^\n\s*", "", elem.tail)
+		elem.tail = regex.sub(r"^\n[\n\t ]*", "", elem.tail)
 	else:
-		elem.tail = regex.sub(r"^\n\s*", " ", elem.tail)
+		elem.tail = regex.sub(r"^\n[\n\t ]*", " ", elem.tail)
 	if remove_trailing_space:
-		elem.tail = regex.sub(r"\n\s*$", "", elem.tail)
-	elem.tail = regex.sub(r" *\n\s*", " ", elem.tail)
+		elem.tail = regex.sub(r"\n[\n\t ]*$", "", elem.tail)
+	elem.tail = regex.sub(r" *\n[\n\t ]*", " ", elem.tail)
 
 def format_xml_file(filename: Path) -> None:
 	"""
