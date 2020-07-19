@@ -1244,7 +1244,7 @@ def generate_title(xhtml: str) -> str:
 									title += span_child
 						else:
 							title = h_child.text
-				elif isinstance(h_child, Tag) and h_child.name == "abbr":
+				elif isinstance(h_child, Tag) and (h_child.name == "abbr" or h_child.name == "i"):
 					title += h_child.text
 				elif isinstance(h_child, NavigableString) and not h_child.isspace():
 					title += h_child
