@@ -565,7 +565,7 @@ def _format_xml_str(xml: str) -> etree.ElementTree:
 
 	return tree
 
-def _xml_tree_to_string(tree: etree.ElementTree) -> str:
+def _xml_tree_to_string(tree: etree.ElementTree, doctype: str = None) -> str:
 	"""
 	Given an XML etree, return a string representing the etree's XML.
 
@@ -576,7 +576,7 @@ def _xml_tree_to_string(tree: etree.ElementTree) -> str:
 	A string representing the etree's XML.
 	"""
 
-	xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + etree.tostring(tree, encoding="unicode") + "\n"
+	xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + etree.tostring(tree, encoding="unicode", doctype=doctype) + "\n"
 
 	# Normalize unicode characters
 	xml = unicodedata.normalize("NFC", xml)
@@ -599,7 +599,11 @@ def format_xml(xml: str) -> str:
 	except Exception as ex:
 		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
 
-	return _xml_tree_to_string(tree)
+
+	# Pull out the doctype if there is one, as etree seems to eat it
+	doctypes = regex.search(r"<!doctype[^>]+?>", xml, flags=regex.IGNORECASE)
+
+	return _xml_tree_to_string(tree, doctypes.group(0) if doctypes else None)
 
 def format_xhtml(xhtml: str) -> str:
 	"""
