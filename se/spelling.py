@@ -280,6 +280,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Hh])iccough", r"\1iccup", xhtml)			# hiccough -> hiccup
 	xhtml = regex.sub(r"\b([Rr])oue(s?)\b", r"\1oué\2", xhtml)			# roue -> roué
 	xhtml = regex.sub(r"\b([Ii])dee fixe\b", r"\1dée fixe\2", xhtml)		# idee fixe -> idée fixe
+	xhtml = regex.sub(r"\b([Ll])ogarythm", r"\1ogarithm", xhtml)			# logarythm -> logarithm
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
