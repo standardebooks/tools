@@ -588,7 +588,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			pass
 
 	for illegal_file in illegal_files:
-		messages.append(LintMessage("f-001", "Illegal file or directory.", se.MESSAGE_TYPE_ERROR, illegal_file))
+		messages.append(LintMessage("f-001", "Illegal file or directory.", se.MESSAGE_TYPE_ERROR, Path(illegal_file)))
 
 	# Check the long description for some errors
 	try:
