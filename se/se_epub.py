@@ -840,7 +840,7 @@ class SeEpub:
 
 		worktype = "fiction"  # default
 
-		subjects = self.metadata_dom.xpath("/package/metadata/dc:subject/text()")
+		subjects = self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']/text()")
 		if not subjects:
 			return worktype
 
