@@ -4,7 +4,6 @@ This module implements the `se typogrify` command.
 
 import argparse
 import html
-from pathlib import Path
 
 import regex
 from rich.console import Console
@@ -37,7 +36,7 @@ def typogrify() -> int:
 			with open(filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 
-				if Path(filename).name == "content.opf":
+				if filename.name == "content.opf":
 					processed_xhtml = xhtml
 
 					# Extract the long description
@@ -65,13 +64,18 @@ def typogrify() -> int:
 						description = matches[1].strip()
 						processed_description = se.typography.typogrify(description)
 
-						# Tweak: Word joiners and nbsp don't go in the description
+						# Tweak: Word joiners and nbsp don't go in the regular description
 						processed_description = processed_description.replace(se.WORD_JOINER, "")
 						processed_description = processed_description.replace(se.NO_BREAK_SPACE, " ")
 
 						processed_xhtml = processed_xhtml.replace(description, processed_description)
 				else:
 					processed_xhtml = se.typography.typogrify(xhtml, args.quotes)
+
+					if filename.name == "toc.xhtml":
+						# Tweak: Word joiners and nbsp don't go in the ToC
+						processed_xhtml = processed_xhtml.replace(se.WORD_JOINER, "")
+						processed_xhtml = processed_xhtml.replace(se.NO_BREAK_SPACE, " ")
 
 				if processed_xhtml != xhtml:
 					file.seek(0)
