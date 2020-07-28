@@ -1,3 +1,76 @@
+v1.5.4
+======
+
+se build
+********
+
+- Don't pretty-print files when doing a Kobo build, as it will screw up whitespace when rendered
+
+se clean
+********
+
+- Remove leading and trailing whitespace from attribute values
+
+- Improve cleaning of inline whitespace. Thanks to Dave Halliday
+
+- Preserve doctype in XML files
+
+se create-draft
+***************
+
+- Fix crash when creating a draft of an ebook with a very short title
+
+se lint
+*******
+
+- Ignore noterefs when checking for s-035
+
+- Link filename in s-022 error message
+
+- Add m-058, se:subject implied by other se:subject
+
+- Fix s-056 to match endnotes that have the backlink in an element that is not the last p child of the endnote
+
+- Add s-061 and s-062, checks for glossary rules
+
+- Allow <abbr> in s-058
+
+- Fix crash in f-001 caused by not using PosixPath
+
+se modernize-spelling
+*********************
+
+- Several additions. Thanks to maticstric
+
+se print-spine
+**************
+
+- Place prologue in front of bodymatter
+
+se print-title
+**************
+
+- Ignore italics when generating title. Thanks to Robin Whittleton
+
+se print-toc
+************
+
+- Fix bug where dc:subject was used instead of se:subject when deciding if a work was fiction or nonfiction
+
+se semanticate
+**************
+
+- Add semantics for Gov., and Col. Thanks to maticstric
+
+- Add periods and hair space to PhD
+
+- Remove initialism class from MS. Thanks to Mike Bennett
+
+se typogrify
+************
+
+- Don't include nbsp or word joiners in the ToC
+
 v1.5.3
 ======
 
