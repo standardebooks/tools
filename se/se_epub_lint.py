@@ -193,7 +193,7 @@ SEMANTICS & CONTENT
 "s-059", "Internal link beginning with [val]../text/[/]."
 "s-060", "Italics on name that requires quotes instead."
 "s-061", "[xhtml]<dd>[/] element without block-level child."
-"s-062", "[xhtml]<dt>[/] element without exactly one [xhtml]<dfn>[/] child."
+"s-062", "[xhtml]<dt>[/] element in a glossary without exactly one [xhtml]<dfn>[/] child."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1356,10 +1356,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("s-061", "[xhtml]<dd>[/] element without block-level child.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
-				# Check for <dt> elements without exactly one <dfn> child
-				nodes = dom.xpath("/html/body//dt[not(count(./dfn) = 1)]")
+				# Check for <dt> elements without exactly one <dfn> child, but only in glossaries
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'glossary')]//dt[not(count(./dfn) = 1)]")
 				if nodes:
-					messages.append(LintMessage("s-062", "[xhtml]<dt>[/] element without exactly one [xhtml]<dfn>[/] child.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+					messages.append(LintMessage("s-062", "[xhtml]<dt>[/] element in a glossary without exactly one [xhtml]<dfn>[/] child.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for empty elements. Elements are empty if they have no children and no non-whitespace text
 				empty_elements = [node.tostring() for node in dom.xpath("/html/body//*[not(self::br) and not(self::hr) and not(self::img) and not(self::td) and not(self::th) and not(self::link)][not(*)][not(normalize-space())]")]
