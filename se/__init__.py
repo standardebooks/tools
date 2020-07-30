@@ -16,7 +16,7 @@ from rich.theme import Theme
 from natsort import natsorted, ns
 import regex
 
-VERSION = "1.5.4"
+VERSION = "1.5.5"
 MESSAGE_INDENT = "    "
 UNICODE_BOM = "\ufeff"
 NO_BREAK_SPACE = "\u00a0"

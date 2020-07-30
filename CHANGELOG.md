@@ -1,3 +1,30 @@
+v1.5.5
+======
+
+General
+*******
+
+- Restrict pytest version to work around new pytest bug. Thanks to Dave Halliday
+
+- Update core.css to use `break-*` properties instead of `page-break-*`, and to avoid page breaks inside and after <header> by default
+
+se build
+********
+
+- Convert `break-*` properties to `page-break-*` during build, not the other way around; and use correct value of `break-*: page` where appropriate
+
+se lint
+*******
+
+- Add c-007, `hyphens` CSS property without matching `-epub-hyphens` property
+
+- Merge s-007, s-053, and s-061 into one check, now s-007
+
+se semanticate
+**************
+
+- Improve checks for eoc classes when adding <abbr> elements. Thanks to Vince Rice
+
 v1.5.4
 ======
 
