@@ -80,7 +80,10 @@ strong{
 }
 
 header{
-	page-break-inside: avoid;
+	break-after: avoid;
+	break-inside: avoid;
+	hyphens: none;
+	-epub-hyphens: none;
 	text-align: center;
 }
 
