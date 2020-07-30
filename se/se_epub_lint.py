@@ -52,10 +52,9 @@ CSS
 "c-004", "Don’t specify border colors, so that reading systems can adjust for night mode."
 "c-005", f"[css]abbr[/] selector does not need [css]white-space: nowrap;[/] as it inherits it from [path][link=file://{self.path / 'src/epub/css/core.css'}]core.css[/][/]."
 "c-006", f"Semantic found, but missing corresponding style in [path][link=file://{local_css_path}]local.css[/][/]."
+"c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy."
 "c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks."
 "c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles."
-vvvvvvvvUNUSEDvvvvvvvvvv
-"c-007", f"[xhtml]<abbr class=\"{css_class}\">[/] element found, but no required style in `local.css`. See the typography manual for required styles."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -549,6 +548,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 		if regex.search(r"\[\s*xml\s*\|", selector, flags=regex.IGNORECASE) and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
 			messages.append(LintMessage("c-003", "[css][[xml|attr]][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/]).", se.MESSAGE_TYPE_ERROR, local_css_path))
+
+	if regex.search(r"\s+hyphens:.+?;(?!\s+-epub-hyphens)", self.local_css):
+		messages.append(LintMessage("c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
 	if selected_h:
 		messages.append(LintMessage("c-001", "Don’t directly select [xhtml]<h#>[/] elements, as they are used in template files; use more specific selectors.", se.MESSAGE_TYPE_ERROR, local_css_path, selected_h))
