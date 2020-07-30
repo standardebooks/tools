@@ -513,8 +513,11 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# Remember to get our custom style selectors too.
 						processed_css = processed_css.replace("endnote", "footnote")
 
-						# Add new break-* aliases for compatibilty with newer readers.
-						processed_css = regex.sub(r"(\s+)page-break-(.+?:\s.+?;)", "\\1page-break-\\2\t\\1break-\\2", processed_css)
+						# page-break-* is deprecated in favor of break-*. Add page-break-* aliases for compatibility in older ereaders.
+						processed_css = regex.sub(r"(\s+)break-(.+?:\s.+?;)", "\\1break-\\2\t\\1page-break-\\2", processed_css)
+
+						# `break-*: page;` should be come `page-break-*: always;`
+						processed_css = regex.sub(r"(\s+)page-break-(before|after):\s+page;", "\\1page-break-\\2: always;", processed_css)
 
 						if processed_css != css:
 							file.seek(0)
