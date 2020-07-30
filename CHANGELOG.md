@@ -1,3 +1,11 @@
+v1.5.7
+======
+
+se build
+********
+
+- D'oh, Page break regex was actually correct to begin with...
+
 v1.5.6
 ======
 
