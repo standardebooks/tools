@@ -517,7 +517,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						processed_css = regex.sub(r"(\s+)break-(.+?:\s.+?;)", "\\1break-\\2\t\\1page-break-\\2", processed_css)
 
 						# `break-*: page;` should be come `page-break-*: always;`
-						processed_css = regex.sub(r"(\s+)page-break-(before|after):\s+page;", "\\1page-break-\\2: always;", processed_css)
+						processed_css = regex.sub(r"(\s+)break-(before|after):\s+page;", "\\1page-break-\\2: always;", processed_css)
 
 						if processed_css != css:
 							file.seek(0)
