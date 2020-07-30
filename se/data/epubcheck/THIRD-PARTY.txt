@@ -7,7 +7,7 @@ Licenses of third-party dependencies
   error-prone annotations, 2.1.3
     Apache 2.0
 
-  Guava: Google Core Libraries for Java, 24.0-android
+  Guava: Google Core Libraries for Java, 24.1.1-android
     The Apache Software License, Version 2.0
 
   J2ObjC Annotations, 1.1
@@ -37,7 +37,7 @@ Licenses of third-party dependencies
   Saxon-HE, 9.8.0-8
     Mozilla Public License Version 2.0
 
-  Apache Commons Compress, 1.18
+  Apache Commons Compress, 1.20
     Apache License, Version 2.0
 
   Checker Qual, 2.0.0
