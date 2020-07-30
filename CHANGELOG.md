@@ -1,3 +1,11 @@
+v1.5.6
+======
+
+se build
+********
+
+- Fix incorrect page-break regex
+
 v1.5.5
 ======
 
