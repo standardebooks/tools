@@ -252,13 +252,12 @@ XHTML
 "x-008", "Elements should end with a single [text]>[/]."
 "x-009", "Illegal leading 0 in [attr]id[/] attribute."
 "x-010", "Illegal element in [xhtml]<title>[/] element."
+"x-011", "Illegal underscore in attribute. Use dashes instead of underscores."
 "x-012", "Illegal [attr]style[/] attribute. Don’t use inline styles, any element can be targeted with a clever enough selector."
 "x-013", f"CSS class found in XHTML, but not in [path][link=file://{local_css_path}]local.css[/][/]."
 "x-014", "Illegal [xml]id[/] attribute."
 "x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed."
 "x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter."
-vvvvvvvvUNUSEDvvvvvvvvvv
-"x-011", ""
 """
 
 class LintMessage:
@@ -1185,6 +1184,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("//*[re:test(@id, '-0[0-9]')]")
 				if nodes:
 					messages.append(LintMessage("x-009", "Illegal leading 0 in [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
+
+				# Check for underscores in attributes, but not if the attribute is href (links often have underscores)
+				nodes = dom.xpath("//@*[contains(., '_') and name() != 'href']/..")
+				if nodes:
+					messages.append(LintMessage("x-011", "Illegal underscore in attribute. Use dashes instead of underscores.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
 				# Check for stage direction that ends in ?! but also has a trailing period
 				nodes = dom.xpath("/html/body//i[contains(@epub:type, 'z3998:stage-direction')][re:test(., '\\.$')][(following-sibling::node()[1])[re:test(., '^[,:;!?]')]]")
