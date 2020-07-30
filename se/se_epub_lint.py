@@ -137,7 +137,7 @@ SEMANTICS & CONTENT
 "s-004", "[xhtml]img[/] element missing [attr]alt[/] attribute."
 "s-005", "Nested [xhtml]<blockquote>[/] element."
 "s-006", "Poem or verse [xhtml]<p>[/] (stanza) without [xhtml]<span>[/] (line) element."
-"s-007", "[xhtml]<li>[/] element without direct block-level child."
+"s-007", "Element requires at least one block-level child."
 "s-008", "[xhtml]<br/>[/] element found before closing tag of block-level element."
 "s-009", "[xhtml]<h2>[/] element without [attr]epub:type=\"title\"[/] attribute."
 "s-010", "Empty element. Use [xhtml]<hr/>[/] for thematic breaks if appropriate."
@@ -173,7 +173,6 @@ SEMANTICS & CONTENT
 "s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/]."
 "s-041", f"The [xhtml]<figcaption>[/] element of [attr]#{figure_ref}[/] does not match the text in its LoI entry."
 "s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child."
-"s-043", "[xhtml]<blockquote>[/] element without block-level child."
 "s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element."
 "s-045", "[xhtml]<abbr>[/] element without semantic class like [class]name[/] or [class]initialism[/]."
 "s-046", "[xhtml]<p>[/] element containing only [xhtml]<span>[/] and [xhtml]<br>[/] elements, but its parent doesn’t have the [val]z3998:poem[/], [val]z3998:verse[/], [val]z3998:song[/], [val]z3998:hymn[/], or [val]z3998:lyrics[/] semantic. Multi-line clauses that are not verse don’t require [xhtml]<span>[/]s."
@@ -191,8 +190,10 @@ SEMANTICS & CONTENT
 "s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/] and [xhtml]<abbr>[/] elements."
 "s-059", "Internal link beginning with [val]../text/[/]."
 "s-060", "Italics on name that requires quotes instead."
-"s-061", "[xhtml]<dd>[/] element without block-level child."
 "s-062", "[xhtml]<dt>[/] element in a glossary without exactly one [xhtml]<dfn>[/] child."
+UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+s-043
+s-061
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1101,10 +1102,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if matches:
 					messages.append(LintMessage("s-001", "Illegal numeric entity (like [xhtml]&#913;[/]).", se.MESSAGE_TYPE_ERROR, filename))
 
-				nodes = dom.xpath("/html/body//blockquote[text()[normalize-space(.)]]") + dom.xpath("/html/body//blockquote/*[name()='i' or name()='b' or name()='strong' or name()='em' or name()='span']")
-				if nodes:
-					messages.append(LintMessage("s-043", "[xhtml]<blockquote>[/] element without block-level child.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
-
 				# Check nested <blockquote> elements, but only if it's the first child of another <blockquote>
 				nodes = dom.xpath("/html/body//blockquote/*[1][name()='blockquote']")
 				if nodes:
@@ -1353,11 +1350,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
-				# Check for <dd> elements without block-level children
-				nodes = dom.xpath("/html/body//dd[(node()[normalize-space(.) and not(self::comment())])[1][not(name()='p' or name()='blockquote' or name()='div' or name()='table' or name()='header' or name()='ul' or name()='ol')]]")
-				if nodes:
-					messages.append(LintMessage("s-061", "[xhtml]<dd>[/] element without block-level child.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
-
 				# Check for <dt> elements without exactly one <dfn> child, but only in glossaries
 				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'glossary')]//dt[not(count(./dfn) = 1)]")
 				if nodes:
@@ -1455,12 +1447,15 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if matches:
 					messages.append(LintMessage("t-031", "[text]A B C[/] must be set as [text]A.B.C.[/] It is not an abbreviation.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-				# Check for <li> elements that don't have a direct block child
+				# Check for elements that don't have a direct block child
 				# allow white space and comments before the first child
-				if filename.name not in ("toc.xhtml", "loi.xhtml"):
-					nodes = dom.xpath("/html/body//li[(node()[normalize-space(.) and not(self::comment())])[1][not(name()='p' or name()='blockquote' or name()='div' or name()='table' or name()='header' or name()='ul' or name()='ol')]]")
-					if nodes:
-						messages.append(LintMessage("s-007", "[xhtml]<li>[/] element without direct block-level child.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+				nodes = dom.xpath("/html/body//*[(name()='blockquote' or name()='dd' or name()='header' or name()='li') and (node()[normalize-space(.) and not(self::comment())])[1][not(name()='p' or name()='blockquote' or name()='div' or name()='table' or name()='header' or name()='ul' or name()='ol' or re:test(name(), '^h[0-6]'))]]")
+
+				# Remove li nodes if we're in the ToC or LoI, as they don't require block-level children in those cases
+				nodes = [node for node in nodes if node.lxml_element.tag != "li" or (node.lxml_element.tag == "li" and filename.name not in ("toc.xhtml", "loi.xhtml"))]
+
+				if nodes:
+					messages.append(LintMessage("s-007", "Element requires at least one block-level child.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 				# Check for ldquo not correctly closed
 				# Ignore closing paragraphs, line breaks, and closing cells in case ldquo means "ditto mark"
