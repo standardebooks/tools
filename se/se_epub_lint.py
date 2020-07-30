@@ -1181,7 +1181,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-010", "Time set with [text].[/] instead of [text]:[/].", se.MESSAGE_TYPE_WARNING, filename, set(matches)))
 
 				# Check for leading 0 in IDs (note: not the same as checking for IDs that start with an integer)
-				nodes = dom.xpath("//*[contains(@id, '-0')]")
+				# We only check for *leading* 0s in numbers; this allows IDs like `wind-force-0` in the Worst Journey in the World glossary.
+				nodes = dom.xpath("//*[re:test(@id, '-0[0-9]')]")
 				if nodes:
 					messages.append(LintMessage("x-009", "Illegal leading 0 in [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
