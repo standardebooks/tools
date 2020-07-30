@@ -1,18 +1,7 @@
-v1.5.7
+v1.5.6 - v1.5.8
 ======
 
-se build
-********
-
-- D'oh, Page break regex was actually correct to begin with...
-
-v1.5.6
-======
-
-se build
-********
-
-- Fix incorrect page-break regex
+Released in error; no changes.
 
 v1.5.5
 ======
