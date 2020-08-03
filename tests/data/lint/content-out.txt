@@ -13,8 +13,6 @@ m-036 Error: colophon.xhtml Missing data in colophon.
         ARTIST_WIKI_URL
         ARTIST
 m-016 Error: content.opf Long description must be escaped HTML.
-m-017 Error: content.opf `<![CDATA[` found. Run `se clean` to canonicalize 
-`<![CDATA[` sections.
 m-020 Error: content.opf Illegal value for `<meta property="se:subject">` 
 element.
         TAG
@@ -32,7 +30,6 @@ m-055 Error: content.opf Missing data in metadata.
         EBOOK_WIKI_URL
         AUTHOR_SORT
         AUTHOR_FULL_NAME
-        AUTHOR_NACOAF_URL
         COVER_ARTIST
         COVER_ARTIST_SORT
         COVER_ARTIST_WIKI_URL
