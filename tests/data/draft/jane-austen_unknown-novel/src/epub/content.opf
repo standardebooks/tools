@@ -37,9 +37,9 @@
 		<meta property="term" refines="#subject-2">LCSH_ID_2</meta>
 		<meta property="se:subject">TAG</meta>
 		<dc:description id="description">DESCRIPTION</dc:description>
-		<meta id="long-description" property="se:long-description" refines="#description"><![CDATA[
+		<meta id="long-description" property="se:long-description" refines="#description">
 			LONG_DESCRIPTION
-		]]></meta>
+		</meta>
 		<dc:language>LANG</dc:language>
 		<dc:source>PG_URL</dc:source>
 		<meta property="se:production-notes">Any special notes about the production of this ebook for future editors/producers? Remove this element if not.</meta>
@@ -51,7 +51,7 @@
 		<meta property="file-as" refines="#author">AUTHOR_SORT</meta>
 		<meta property="se:name.person.full-name" refines="#author">AUTHOR_FULL_NAME</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#author">https://en.wikipedia.org/wiki/Jane_Austen</meta>
-		<meta property="se:url.authority.nacoaf" refines="#author">AUTHOR_NACOAF_URL</meta>
+		<meta property="se:url.authority.nacoaf" refines="#author">https://id.loc.gov/authorities/names/n79032879</meta>
 		<meta property="role" refines="#author" scheme="marc:relators">aut</meta>
 		<dc:contributor id="artist">COVER_ARTIST</dc:contributor>
 		<meta property="file-as" refines="#artist">COVER_ARTIST_SORT</meta>
