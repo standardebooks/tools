@@ -44,7 +44,8 @@ RICH_THEME = Theme({
 	"path": "bright_blue",
 	"url": "bright_blue",
 	"text": "bright_blue",
-	"bash": "bright_blue"
+	"bash": "bright_blue",
+	"css": "bright_blue"
 })
 
 class SeException(Exception):
