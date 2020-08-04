@@ -47,8 +47,7 @@ LIST OF ALL SE LINT MESSAGES
 CSS
 "c-001", "Don’t directly select [xhtml]<h#>[/] elements, as they are used in template files; use more specific selectors."
 "c-002", "Unused CSS selectors."
-"c-003", "[css][[xml|attr]][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/])."
-"c-003", "[css][[xml|attr]][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/])."
+"c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/])."
 "c-004", "Don’t specify border colors, so that reading systems can adjust for night mode."
 "c-005", f"[css]abbr[/] selector does not need [css]white-space: nowrap;[/] as it inherits it from [path][link=file://{self.path / 'src/epub/css/core.css'}]core.css[/][/]."
 "c-006", f"Semantic found, but missing corresponding style in [path][link=file://{local_css_path}]local.css[/][/]."
@@ -87,7 +86,7 @@ METADATA
 "m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element."
 "m-015", f"Metadata long description is not valid XHTML. LXML says: {ex}"
 "m-016", "Long description must be escaped HTML."
-"m-017", "[xml]<![CDATA[[/] found. Run [bash]se clean[/] to canonicalize [xml]<![CDATA[[/] sections."
+"m-017", "[xml]<!\\[CDATA\\[[/] found. Run [bash]se clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] sections."
 "m-018", "HTML entities found. Use Unicode equivalents instead."
 "m-019", "Illegal em-dash in [xml]<dc:subject>[/] element; use [text]--[/]."
 "m-020", "Illegal value for [xml]<meta property=\"se:subject\">[/] element."
@@ -547,7 +546,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			abbr_with_whitespace.append(selector)
 
 		if regex.search(r"\[\s*xml\s*\|", selector, flags=regex.IGNORECASE) and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
-			messages.append(LintMessage("c-003", "[css][[xml|attr]][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/]).", se.MESSAGE_TYPE_ERROR, local_css_path))
+			messages.append(LintMessage("c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/]).", se.MESSAGE_TYPE_ERROR, local_css_path))
 
 	if regex.search(r"\s+hyphens:.+?;(?!\s+-epub-hyphens)", self.local_css):
 		messages.append(LintMessage("c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy.", se.MESSAGE_TYPE_ERROR, local_css_path))
@@ -568,7 +567,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	# We do this using a regex and not with cssutils, because cssutils will barf in this particular case and not even record the selector.
 	matches = regex.findall(r"\[\s*xml\s*\|", self.local_css)
 	if matches and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
-		messages.append(LintMessage("c-003", "[css][[xml|attr]][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/]).", se.MESSAGE_TYPE_ERROR, local_css_path))
+		messages.append(LintMessage("c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/]).", se.MESSAGE_TYPE_ERROR, local_css_path))
 
 	# Done checking local.css
 
@@ -725,7 +724,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	# Check for CDATA tags
 	if "<![CDATA[" in self.metadata_xml:
-		messages.append(LintMessage("m-017", "[xml]<![CDATA[[/] found. Run [bash]se clean[/] to canonicalize [xml]<![CDATA[[/] sections.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+		messages.append(LintMessage("m-017", "[xml]<!\\[CDATA\\[[/] found. Run [bash]se clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] sections.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check that our provided identifier matches the generated identifier
 	try:
