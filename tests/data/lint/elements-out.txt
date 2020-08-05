@@ -1,0 +1,22 @@
+s-007 Manual Review: chapter-1.xhtml Element requires at least one block-level 
+child.
+        <blockquote>Error 1</blockquote>
+        <blockquote>
+                <i>Error 2</i>
+        </blockquote>
+        <blockquote>
+                
+                Error 3
+        </blockquote>
+        <dd>Error 4</dd>
+        <dd>
+                        <i>Error 5</i>
+                </dd>
+        <li>Error 6</li>
+        <li>
+                        <i>Error 6</i>
+                </li>
+        <li>
+                        
+                        Error 7
+                </li>
