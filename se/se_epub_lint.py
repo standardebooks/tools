@@ -1978,7 +1978,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	for heading in headings:
 		# Occasionally we find a heading with a colon, but as we’ve stripped our
 		# ToC-only colons above we also need to do that here for the comparison.
-		heading_without_colons = (heading[0].replace(":", ""), str(heading[1]))
+		heading_without_colons = (heading[0].replace(":", "").replace(se.NO_BREAK_SPACE, " ").replace(se.WORD_JOINER, ""), str(heading[1]))
 		if heading_without_colons not in toc_headings:
 			messages.append(LintMessage("m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, Path(heading[1])))
 
