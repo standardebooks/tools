@@ -202,7 +202,6 @@ TYPOGRAPHY
 "t-005", "Dialog without ending comma."
 "t-006", "Comma after producer name, but there are only two producers."
 "t-007", "Required no-break space not found before [xhtml]&amp;[/]."
-"t-008", "Required no-break space not found after [xhtml]&amp;[/]."
 "t-009", "Required no-break space not found before [xhtml]<abbr class=\"time\">[/]."
 "t-010", "Time set with [text].[/] instead of [text]:[/]."
 "t-011", "Missing punctuation before closing quotes."
@@ -239,6 +238,9 @@ TYPOGRAPHY
 "t-042", "Possible typo."
 "t-042", "Possible typo."
 "t-043", "Dialog tag missing punctuation."
+UNUSED
+vvvvvvvvvvvvvvvvvvvvvvvv
+t-008
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1143,11 +1145,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					matches = regex.findall(r"(?<!\<abbr class=\"name\")[^>]*? \&amp;", temp_file_contents)
 					if matches:
 						messages.append(LintMessage("t-007", "Required no-break space not found before [xhtml]&amp;[/].", se.MESSAGE_TYPE_WARNING, filename))
-
-					# Check for nbsp after ampersand (&amp)
-					matches = regex.findall(r"(?<!\<abbr class=\"name\")>[^>]*?\&amp; ", temp_file_contents)
-					if matches:
-						messages.append(LintMessage("t-008", "Required no-break space not found after [xhtml]&amp;[/].", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check for nbsp before times
 				nodes = dom.xpath(f"/html/body//text()[re:test(., '[0-9][^{se.NO_BREAK_SPACE}]?$')][(following-sibling::abbr[1])[contains(@class, 'time')]]")
