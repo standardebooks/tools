@@ -248,6 +248,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Remove spaces between ellipses and noterefs
 	xhtml = regex.sub(r""" … (<a[^>]+?epub:type="noteref">)""", r" …\1", xhtml)
 
+	# Add an &amp; before &amp;
+	xhtml = regex.sub(r" &amp;", f"{se.NO_BREAK_SPACE}&amp;", xhtml)
+
 	return xhtml
 
 def hyphenate_file(filename: Path, language: Optional[str], ignore_h_tags: bool = False) -> None:
