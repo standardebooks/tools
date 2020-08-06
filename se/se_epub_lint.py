@@ -1450,7 +1450,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for elements that don't have a direct block child
 				# allow white space and comments before the first child
-				nodes = dom.xpath("/html/body//*[(name()='blockquote' or name()='dd' or name()='header' or name()='li') and (node()[normalize-space(.) and not(self::comment())])[1][not(name()='p' or name()='blockquote' or name()='div' or name()='table' or name()='header' or name()='ul' or name()='ol' or re:test(name(), '^h[0-6]'))]]")
+				nodes = dom.xpath("/html/body//*[(name()='blockquote' or name()='dd' or name()='header' or name()='li' or name()='footer') and (node()[normalize-space(.) and not(self::comment())])[1][not(name()='p' or name()='blockquote' or name()='div' or name()='table' or name()='header' or name()='ul' or name()='ol' or name()='footer' or re:test(name(), '^h[0-6]'))]]")
 
 				# Remove li nodes if we're in the ToC or LoI, as they don't require block-level children in those cases
 				nodes = [node for node in nodes if node.lxml_element.tag != "li" or (node.lxml_element.tag == "li" and filename.name not in ("toc.xhtml", "loi.xhtml"))]
