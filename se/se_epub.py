@@ -918,7 +918,13 @@ class SeEpub:
 
 		from se.se_epub_generate_toc import generate_toc  # pylint: disable=import-outside-toplevel
 
-		return generate_toc(self)
+		toc_xhtml = generate_toc(self)
+
+		# Word joiners and nbsp don't go in the ToC
+		toc_xhtml = toc_xhtml.replace(se.WORD_JOINER, "")
+		toc_xhtml = toc_xhtml.replace(se.NO_BREAK_SPACE, " ")
+
+		return toc_xhtml
 
 	def generate_endnotes(self) -> Tuple[int, int]:
 		"""
