@@ -251,6 +251,10 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Add an &nbsp; before &amp;
 	xhtml = regex.sub(r" &amp;", f"{se.NO_BREAK_SPACE}&amp;", xhtml)
 
+	# Remove word joiners and nbsp from img alt attributes
+	for match in regex.findall(fr"alt=\"[^\"]*?[{se.NO_BREAK_SPACE}{se.WORD_JOINER}][^\"]*?\"", xhtml):
+		xhtml = xhtml.replace(match, match.replace(se.NO_BREAK_SPACE, " ").replace(se.WORD_JOINER, ""))
+
 	return xhtml
 
 def hyphenate_file(filename: Path, language: Optional[str], ignore_h_tags: bool = False) -> None:
