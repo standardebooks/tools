@@ -30,7 +30,7 @@ def append_kobo_spans_from_text(node, text):
 			return False
 		else:
 			# Split text in sentences
-			groups = regex.split(r'(.*?[\.\!\?\:][\'"\u201d\u2019]?\s*)', text, flags=regex.MULTILINE)
+			groups = regex.split(r'(.*?[\.\!\?\:](?:\u200a…)?[\'"\u201d\u2019]?\s*)', text, flags=regex.MULTILINE)
 			# Remove empty strings resulting from split()
 			groups = [g for g in groups if g != ""]
 
