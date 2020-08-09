@@ -83,7 +83,11 @@ def lint() -> int:
 					message.text = regex.sub(r"\[(?:/|xhtml|xml|val|attr|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message.text)
 					message.text = regex.sub(r"`+", "`", message.text)
 
-					console.print(f"{message.code} {label} {message.filename.name} {message.text}")
+					message_filename = ""
+					if message.filename:
+						message_filename = message.filename.name
+
+					console.print(f"{message.code} {label} {message_filename} {message.text}")
 
 					if message.submessages:
 						for submessage in message.submessages:
@@ -112,7 +116,9 @@ def lint() -> int:
 						# Replace color markup with `
 						message_text = regex.sub(r"\[(?:/|xhtml|xml|val|attr|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message_text)
 						message_text = regex.sub(r"`+", "`", message_text)
-						message_filename = message.filename.name
+						message_filename = ""
+						if message.filename:
+							message_filename = message.filename.name
 
 					table_data.append([message.code, alert, message_filename, message_text])
 
