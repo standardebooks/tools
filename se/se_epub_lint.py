@@ -180,7 +180,7 @@ SEMANTICS & CONTENT
 "s-049", "[xhtml]<header>[/] element with text not in a block element."
 "s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element."
 "s-051", f"Wrong height or width. [path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}."
-"s-052", "[xhtml]<attr>[/] element with illegal [attr]title[/] attribute."
+"s-052", "[xhtml]<abbr>[/] element with illegal [attr]title[/] attribute."
 "s-053", "Colophon line not preceded by [xhtml]<br/>[/]."
 "s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/]."
 "s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor."
@@ -1720,7 +1720,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for title attrs on abbr elements
 				nodes = dom.xpath("/html/body//abbr[@title]")
 				if nodes:
-					messages.append(LintMessage("s-052", "[xhtml]<attr>[/] element with illegal [attr]title[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
+					messages.append(LintMessage("s-052", "[xhtml]<abbr>[/] element with illegal [attr]title[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
 				# Check for leftover asterisms. Asterisms are sequences of any of these chars: * . • -⁠ —
 				nodes = dom.xpath("/html/body//*[self::p or self::div][re:test(., '^\\s*[\\*\\.•\\-⁠—]\\s*([\\*\\.•\\-⁠—]\\s*)+$')]")
