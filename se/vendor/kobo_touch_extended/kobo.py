@@ -18,7 +18,7 @@ import lxml.etree as etree
 
 import se
 
-# Don't capitalize these, they're not contants
+# Don't capitalize these, they're not constants
 paragraph_counter = 1
 segment_counter = 1
 
