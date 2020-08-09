@@ -119,9 +119,10 @@ def render_mathml_to_png(driver, mathml: str, output_filename: Path, output_file
 	None.
 	"""
 
-	with tempfile.NamedTemporaryFile(mode="w+") as mathml_file:
+	# For some reason, we must use an .xhtml suffix. Without that, some mathml expressions don't render.
+	with tempfile.NamedTemporaryFile(mode="w+", suffix=".xhtml") as mathml_file:
 		with tempfile.NamedTemporaryFile(mode="w+", suffix=".png") as png_file:
-			mathml_file.write(f"<!doctype html><html><head><meta charset=\"utf-8\"><title>MathML fragment</title></head><body>{mathml}</body></html>")
+			mathml_file.write(f"<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title>MathML</title></head><body>{mathml}</body></html>")
 			mathml_file.seek(0)
 
 			driver.get(f"file://{mathml_file.name}")
