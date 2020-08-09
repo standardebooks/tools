@@ -16,6 +16,8 @@ from copy import deepcopy
 import regex
 import lxml.etree as etree
 
+import se
+
 # Don't capitalize these, they're not contants
 paragraph_counter = 1
 segment_counter = 1
@@ -30,7 +32,7 @@ def append_kobo_spans_from_text(node, text):
 			return False
 		else:
 			# Split text in sentences
-			groups = regex.split(r'(.*?[\.\!\?\:](?:\u200a…)?[\'"\u201d\u2019]?\s*)', text, flags=regex.MULTILINE)
+			groups = regex.split(fr'(.*?[\.\!\?\:](?:{se.HAIR_SPACE}…)?[\'"\u201d\u2019]?\s*)', text, flags=regex.MULTILINE)
 			# Remove empty strings resulting from split()
 			groups = [g for g in groups if g != ""]
 
