@@ -613,7 +613,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							file.truncate()
 
 		# Sort out MathML compatibility
-		has_mathml = "mathml" in metadata_xml
+		has_mathml = len(self.metadata_dom.xpath("/package/manifest/*[contains(@properties, 'mathml')]")) > 0
 		if has_mathml:
 			# We import this late because we don't want to load selenium if we're not going to use it!
 			from se import browser # pylint: disable=import-outside-toplevel
