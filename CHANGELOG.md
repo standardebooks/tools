@@ -1,45 +1,36 @@
-v1.5.6 - v1.5.8
-======
+# v1.5.6 - v1.5.8
 
 Released in error; no changes.
 
-v1.5.5
-======
+# v1.5.5
 
-General
-*******
+## General
 
 - Restrict pytest version to work around new pytest bug. Thanks to Dave Halliday
 
-- Update core.css to use `break-*` properties instead of `page-break-*`, and to avoid page breaks inside and after <header> by default
+- Update core.css to use `break-*` properties instead of `page-break-*`, and to avoid page breaks inside and after `<header>` by default
 
-se build
-********
+## se build
 
 - Convert `break-*` properties to `page-break-*` during build, not the other way around; and use correct value of `break-*: page` where appropriate
 
-se lint
-*******
+## se lint
 
 - Add c-007, `hyphens` CSS property without matching `-epub-hyphens` property
 
 - Merge s-007, s-053, and s-061 into one check, now s-007
 
-se semanticate
-**************
+## se semanticate
 
-- Improve checks for eoc classes when adding <abbr> elements. Thanks to Vince Rice
+- Improve checks for eoc classes when adding `<abbr>` elements. Thanks to Vince Rice
 
-v1.5.4
-======
+# v1.5.4
 
-se build
-********
+## se build
 
 - Don't pretty-print files when doing a Kobo build, as it will screw up whitespace when rendered
 
-se clean
-********
+## se clean
 
 - Remove leading and trailing whitespace from attribute values
 
@@ -47,13 +38,11 @@ se clean
 
 - Preserve doctype in XML files
 
-se create-draft
-***************
+## se create-draft
 
 - Fix crash when creating a draft of an ebook with a very short title
 
-se lint
-*******
+## se lint
 
 - Ignore noterefs when checking for s-035
 
@@ -65,32 +54,27 @@ se lint
 
 - Add s-061 and s-062, checks for glossary rules
 
-- Allow <abbr> in s-058
+- Allow `<abbr>` in s-058
 
 - Fix crash in f-001 caused by not using PosixPath
 
-se modernize-spelling
-*********************
+## se modernize-spelling
 
 - Several additions. Thanks to maticstric
 
-se print-spine
-**************
+## se print-spine
 
 - Place prologue in front of bodymatter
 
-se print-title
-**************
+## se print-title
 
 - Ignore italics when generating title. Thanks to Robin Whittleton
 
-se print-toc
-************
+## se print-toc
 
 - Fix bug where dc:subject was used instead of se:subject when deciding if a work was fiction or nonfiction
 
-se semanticate
-**************
+## se semanticate
 
 - Add semantics for Gov., and Col. Thanks to maticstric
 
@@ -98,75 +82,63 @@ se semanticate
 
 - Remove initialism class from MS. Thanks to Mike Bennett
 
-se typogrify
-************
+## se typogrify
 
 - Don't include nbsp or word joiners in the ToC
 
-v1.5.3
-======
+# v1.5.3
 
-se build
-********
+## se build
 
 - Add support for building titlepage/imprint/colophon files with color depth semantics on images
 
 - Format Kobo output before writing kepub files
 
-se create-draft
-***************
+## se create-draft
 
 - Add color depth semantics to titlepage/imprint/colophon templates
 
-v1.5.2
-======
+# v1.5.2
 
-General
-*******
+## General
 
 - Remove 'adventure' from tags listed as non-fiction, when deciding on the fiction type for a work
 
 - Use xpath instead of regex to get spine items
 
-se build
-********
+## se build
 
 - Fix several MathML related bugs
 
-se lint
-*******
+## se lint
 
 - Improve s-043 to select blockquotes with inline elements and not just text nodes
 
-v1.5.1
-======
+# v1.5.1
 
-se build
-********
+## se build
 
 - Use pathlib instead of regex when composing PNG output paths
 
-- Output hi-DPI MathML PNGs using <img srcset>. Thanks to Robin Whittleton
+- Output hi-DPI MathML PNGs using `<img srcset>`. Thanks to Robin Whittleton
 
 - Include translator name in output filenames
 
-se create-draft
-***************
+## se create-draft
 
 - When creating the title/cover page images, check if the first line is a word of less than 3 letters, instead of checking against a set of short words.
 
-se lint
-*******
+## se lint
 
-- Add s-055, <th> element not in <thead> ancestor
+- Add s-055, `<th>` element not in `<thead>` ancestor
 
-- Add s-056, last <p> child of endnote missing backlink
+- Add s-056, last `<p>` child of endnote missing backlink
 
 - Add s-057, backlink notereef fragment identifier doesn't match endnote number
 
 - Add m-056, author name present in long description but first instance isn't hyperlinked
 
-- Add s-058, stage direction sematnics only allowed in <i> elements
+- Add s-058, stage direction sematnics only allowed in `<i>` elements
 
 - Add s-059 internal link beginning with ../text/
 
@@ -180,33 +152,27 @@ se lint
 
 - Fix bad filename in s-027
 
-se modernize-spelling
-*********************
+## se modernize-spelling
 
 - Various additions.
 
-se word-count
-*************
+## se word-count
 
 - Improve removal of PG headers/footers
 
-v1.5.0
-======
+# v1.5.0
 
-General
-*******
+## General
 
 - The Rich console library is now used for output. This allows us much more detailed and nicely-formatted table output in lint, as well as nicer colors, and hyperlinks in output. If your terminal supports it, all filenames (including filenames in error messages) are now hyperlinked, so that you can ctrl + click on them to open them directly instead of having to hunt for them in your editor or filesystem.
 
-se build-images
-***************
+## se build-images
 
 - Catch exception when trying to parse SVGs
 
-se clean
-********
+## se clean
 
-- Remove space before <br/> and non-tag content
+- Remove space before `<br/>` and non-tag content
 
 - Add t-043, dialog tag missing punctuation
 
@@ -216,20 +182,17 @@ se clean
 
 - Improve check for malformed URLs
 
-se create-draft
-***************
+## se create-draft
 
 - When creating title/cover page images, if the first line is a single short word like "the", "of", "or", etc., then move the next word up to the first line
 
-se create-draft
-***************
+## se create-draft
 
-- Remove <!CDATA tag from long description in the content.opf template, now that se clean correctly escapes the long-description
+- Remove `<!CDATA` tag from long description in the content.opf template, now that se clean correctly escapes the long-description
 
 - Create a new draft with cover/titlepage images already built, so that drafts can be built with `se build` without errors from the get-go
 
-se lint
-*******
+## se lint
 
 - Add m-052, check if alternate-title is missing in metadata
 
@@ -259,45 +222,39 @@ se lint
 
 - Add s-046, check for <p> elements that have poetry structure but no poetry semantic on parent
 
-- Add s-049, <header> with direct child text node
+- Add s-049, `<header>` with direct child text node
 
 - Improve s-026, invalid Roman numeral
 
-- Add s-050, <span> element exists only to apply epub:type
+- Add s-050, `<span>` element exists only to apply epub:type
 
 - Add z:3998:lyrics to all verse-type checks
 
 - Add m-055, missing data in metadata
 
-se modernize-spelling
-*********************
+## se modernize-spelling
 
 - Add various new modernizations
 
-se typogrify
-************
+## se typogrify
 
 - Improve replacement of two-em-dashes
 
 - Don't change existing rsquo chars. This will help prevent typogrify from ruining hand-made changes on subsequent runs.
 
-- Don't remove white space before an em dash, if the white space is preceded by <br/>
+- Don't remove white space before an em dash, if the white space is preceded by `<br/>`
 
-se word-count
-*************
+## se word-count
 
 - Added -p, --ignore-pg-boilerplate flag to attempt to ignore PG headers, footers, and page numbers when calculating word count
 
-se unicode-names
-****************
+## se unicode-names
 
 - New tabular output format for easier reading
 
-v1.4.0
-======
+# v1.4.0
 
-General
-*******
+## General
 
 - Fix various errors in shell completions. Thanks to Dave Halliday
 
@@ -307,20 +264,17 @@ General
 
 - Update required package versions
 
-se build
-********
+## se build
 
 - Internally, cache CSSSelector instances to improve performance. Thanks to Dave Halliday
 
 - Internally, throw exceptions instead of printing to the console
 
-se build-images
-***************
+## se build-images
 
 - Catch exception for invalid source directory. Thanks to Dave Halliday
 
-se clean
-********
+## se clean
 
 - Remove external call to xmllint, instead use lxml to pretty-print with Python for a huge performance improvement. Thanks to Dave Halliday
 
@@ -330,15 +284,13 @@ se clean
 
 - Lowercase tag and attributes names in XHTML
 
-se create-draft
-***************
+## se create-draft
 
-- Remove <!CDATA tag from long description in the content.opf template, now that se clean correctly escapes the long-description
+- Remove `<!CDATA` tag from long description in the content.opf template, now that se clean correctly escapes the long-description
 
 - Create a new draft with cover/titlepage images already built, so that drafts can be built with `se build` without errors from the get-go
 
-se lint
-*******
+## se lint
 
 - All checks have been converted to xpath expressions, from regular expressions
 
@@ -354,7 +306,7 @@ se lint
 
 - Check for illegal `<style>` elements
 
-- Replace x-015 with a more general check for illegal elements in <head>
+- Replace x-015 with a more general check for illegal elements in `<head>`
 
 - Improve check for incorrect filenames
 
@@ -440,8 +392,7 @@ se lint
 
 - Improve s-038 check for asterisms to also check for other kinds of section breaks that should be `<hr/>`
 
-se modernize-spelling
-*********************
+## se modernize-spelling
 
 - Various additions to automated spelling replacements
 
@@ -456,8 +407,7 @@ se modernize-spelling
 - Internally, remove some duplicate checks and merge some othes
 
 
-se print-title
-**************
+## se print-title
 
 - Remove endnotes from generated titles. Thanks to Robin Whittleton
 
@@ -465,20 +415,17 @@ se print-title
 
 - Fix for correct titles for books with parts. Thanks to Robin Whittleton
 
-se prepare-release
-**************
+## se prepare-release
 
 - change -n option to -w for consistency with other options
 
-se recompose-epub
-*****************
+## se recompose-epub
 
 - Add -x,--xhtml option to output XHTML5 instead of HTML5
 
-se semanticate
-**************
+## se semanticate
 
-- Add <abbr> around `vs.`, `Bros.`, and £sd shorthand
+- Add `<abbr>` around `vs.`, `Bros.`, and £sd shorthand
 
 - Improved handling of P.S.
 
@@ -486,8 +433,7 @@ se semanticate
 
 - Fix for `eoc` class being added twice
 
-se titlecase
-************
+## se titlecase
 
 - Titlecase now correctly titlecases non-ASCII letters. This fix was also pushed upstream to the pypi titlecase package
 
@@ -495,8 +441,7 @@ se titlecase
 
 - Titles consisting of *almost* all caps should now be correctly titlecased
 
-se typogrify
-************
+## se typogrify
 
 - Curl quotation marks before `'uns`, `'ud`, `'cept`
 
