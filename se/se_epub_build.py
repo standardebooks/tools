@@ -7,6 +7,7 @@ the function is very big and it makes editing easier to put it in a separate fil
 """
 
 import fnmatch
+import filecmp
 import os
 import shutil
 import subprocess
@@ -355,8 +356,20 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				filename = Path(root) / filename_string
 
 				if filename.suffix == ".svg":
+					add_stroke = False
+
+					if filename.name == "logo.svg":
+						# If we're adding stroke to the logo, make sure it's our premade logo and not a 3rd party logo file.
+						# 3rd party logos will get mangled by our naive regexes.
+						with importlib_resources.path("se.data.templates", "logo.svg") as logo_file_path:
+							if filecmp.cmp(logo_file_path, filename):
+								add_stroke = True
+
+					if filename.name == "titlepage.svg":
+						add_stroke = True
+
 					# For night mode compatibility, give the titlepage a 1px white stroke attribute
-					if filename.name in("titlepage.svg", "logo.svg"):
+					if add_stroke:
 						with open(filename, "r+", encoding="utf-8") as file:
 							svg = file.read()
 							paths = svg
