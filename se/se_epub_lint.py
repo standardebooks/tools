@@ -1251,7 +1251,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-030", "[val]z3998:nonfiction[/] should be [val]z3998:non-fiction[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for initialisms without periods
-				nodes = [node.tostring() for node in dom.xpath("/html/body//abbr[contains(@class, 'initialism') and not(re:test(., '^([a-zA-Z]\\.)+$'))]") if node.text not in initialism_exceptions]
+				nodes = [node.tostring() for node in dom.xpath("/html/body//abbr[contains(@class, 'initialism') and not(re:test(., '^[0-9]*([a-zA-Z]\\.)+[0-9]*$'))]") if node.text not in initialism_exceptions]
 				if nodes:
 					messages.append(LintMessage("t-030", "Initialism with spaces or without periods.", se.MESSAGE_TYPE_WARNING, filename, set(nodes)))
 
