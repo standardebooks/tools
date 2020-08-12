@@ -73,21 +73,34 @@ class TocItem:
 		if self.title is None:
 			return ""
 
-		lang_attr = ""
-		if self.lang:
-			lang_attr = f" xml:lang=\"{self.lang}\""
-
 		# If the title is entirely Roman numeral, put epub:type within <a>.
-		if regex.search(r"^<span epub:type=\"z3998:roman\">[IVXLC]{1,10}<\/span>$", self.title):
+		if regex.search(r"^<span epub:type=\"z3998:roman\">[IVXLC]+<\/span>$", self.title):
+			# title is a pure roman number
 			if self.subtitle == "":
-				out_string += f"<a href=\"text/{self.file_link}\" epub:type=\"z3998:roman\"{lang_attr}>{self.roman}</a>\n"
+				out_string += f"<a href=\"text/{self.file_link}\" epub:type=\"z3998:roman\">{self.roman}</a>\n"
 			else:
-				out_string += f"<a href=\"text/{self.file_link}\"{lang_attr}>{self.title}: {self.subtitle}</a>\n"
-		else:  # Use the subtitle only if we're a Part or Division or Volume
+				# test for an italicised foreign language subtitle, and adjust accordingly
+				match = regex.search(r"^<i xml:lang=\"([a-z\-]+)\">(.*?)<\/i>$", self.subtitle)
+				if match:
+					out_string += f"<a href=\"text/{self.file_link}\"><span epub:type=\"z3998:roman\">{self.roman}</span>: "
+					out_string += f"<span xml:lang=\"{match.group(1)}\">{match.group(2)}</span></a>\n"
+				else:
+					out_string += f"<a href=\"text/{self.file_link}\"><span epub:type=\"z3998:roman\">{self.roman}</span>: {self.subtitle}</a>\n"
+		else:
+			# title has text other than a roman numeral
 			if self.subtitle != "" and (self.division in [BookDivision.PART, BookDivision.DIVISION, BookDivision.VOLUME]):
-				out_string += f"<a href=\"text/{self.file_link}\"{lang_attr}>{self.title}: {self.subtitle}</a>\n"
+				# Use the subtitle only if we're a Part or Division or Volume
+				out_string += f"<a href=\"text/{self.file_link}\">{self.title}: {self.subtitle}</a>\n"
 			else:
-				out_string += f"<a href=\"text/{self.file_link}\"{lang_attr}>{self.title}</a>\n"
+				# test for an italicised foreign language title, and adjust accordingly
+				match = regex.search(r"^<i xml:lang=\"([a-z\-]+)\">(.*?)<\/i>$", self.title)
+				if match:
+					out_string = f"<a href=\"text/{self.file_link}\" xml:lang=\"{match.group(1)}\">{match.group(2)}</a>\n"
+				else:
+					if self.lang:  # title wasn't italicised but is still all foreign
+						out_string = f"<a href=\"text/{self.file_link}\" xml:lang=\"{self.lang}\">{self.title}</a>\n"
+					else:  # finally, a simple text title!
+						out_string += f"<a href=\"text/{self.file_link}\">{self.title}</a>\n"
 
 		return out_string
 
@@ -113,7 +126,7 @@ class TocItem:
 
 		return out_string
 
-def get_epub_type(soup: BeautifulSoup) -> str:
+def get_file_epub_type(soup: BeautifulSoup) -> str:
 	"""
 	Retrieve the epub_type of this file to see if it's a landmark item.
 
@@ -185,7 +198,7 @@ def add_landmark(soup: BeautifulSoup, textf: str, landmarks: list):
 	None
 	"""
 
-	epub_type = get_epub_type(soup)
+	epub_type = get_file_epub_type(soup)
 	landmark = TocItem()
 	if epub_type != "":
 		landmark.epub_type = epub_type
@@ -371,10 +384,29 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 	None
 	"""
 
+	place = get_place(soup)
+	is_toplevel = True
+	hgroups_processed = False
+
+	# first, find any hgroups and treat separately
+	hgroups = soup.find_all("hgroup")
+	if hgroups:
+		for group in hgroups:
+			toc_item = process_a_heading(group, textf, is_toplevel, single_file)
+			if nest_under_halftitle:
+				toc_item.level += 1
+			is_toplevel = False
+			toc_list.append(toc_item)
+			# we need to clear the hgroup tag, otherwise the headings inside it will be picked up (and duplicated)
+			# by the next section
+			group.clear()
+			hgroups_processed = True
+
 	# Find all the h1, h2 etc headings.
 	heads = soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
 
-	if not heads:  # May be a dedication or an epigraph, with no heading tag.
+	# special treatment where we can't find any header tag after trying for hgroups
+	if not heads and not hgroups_processed:  # May be a dedication or an epigraph, with no heading tag.
 		if single_file and nest_under_halftitle:
 			# There's a halftitle, but only this one content file with no subsections,
 			# so leave out of ToC.
@@ -401,13 +433,13 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 		toc_list.append(special_item)
 		return
 
-	place = get_place(soup)
-	is_toplevel = True
 	for heading in heads:
 		if place == Position.BODY and single_file:
-			toc_item = process_heading(heading, textf, is_toplevel, True)
+			toc_item = process_a_heading(heading, textf, is_toplevel, True)
 		else:
-			toc_item = process_heading(heading, textf, is_toplevel, False)
+			# if it's not a bodymatter item we don't care about whether it's single_file
+			toc_item = process_a_heading(heading, textf, is_toplevel, False)
+
 		# Tricky check to see if we want to include the item because there's a halftitle
 		# but only a single content file with no subsidiary sections.
 		if is_toplevel and single_file and nest_under_halftitle and len(heads) == 1:
@@ -417,12 +449,12 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 		is_toplevel = False
 		toc_list.append(toc_item)
 
-def process_heading(heading: BeautifulSoup, textf: str, is_toplevel: bool, single_file: bool) -> TocItem:
+def process_a_heading(soup: BeautifulSoup, textf: str, is_toplevel: bool, single_file: bool) -> TocItem:
 	"""
-	Generate and return a TocItem from this heading.
+	Generate and return a single TocItem from this heading.
 
 	INPUTS:
-	heading: a BeautifulSoup tag representing a heading tag
+	soup: a BeautifulSoup tag representing a heading
 	text: the path to the file
 	is_toplevel: is this heading at the top-most level in the file?
 	single_file: is there only one content file in the production (like some Poetry volumes)?
@@ -432,20 +464,20 @@ def process_heading(heading: BeautifulSoup, textf: str, is_toplevel: bool, singl
 	"""
 
 	toc_item = TocItem()
-	parent_sections = heading.find_parents(["section", "article"])
+	parent_sections = soup.find_parents(["section", "article"])
 	if parent_sections:
 		toc_item.level = len(parent_sections)
 	else:
 		toc_item.level = 1
 
 	try:
-		toc_item.division = get_book_division(heading)
-	except se.InvalidInputException as ex:
-		raise se.InvalidInputException(f"Couldn’t identify parent section in file: [path][link=file://{textf}]{textf}[/][/].") from ex
+		toc_item.division = get_book_division(soup)
+	except se.InvalidInputException:
+		raise se.InvalidInputException(f"Couldn’t identify parent section in file: [path][link=file://{textf}]{textf}[/][/].")
 
 	# This stops the first heading in a file getting an anchor id, we don't generally want that.
 	# The exceptions are things like poems within a single-file volume.
-	toc_item.id = get_parent_id(heading) # pylint: disable=invalid-name
+	toc_item.id = get_parent_id(soup) # pylint: disable=invalid-name
 	if toc_item.id == "":
 		toc_item.file_link = textf
 	else:
@@ -456,19 +488,66 @@ def process_heading(heading: BeautifulSoup, textf: str, is_toplevel: bool, singl
 		else:
 			toc_item.file_link = textf
 
-	toc_item.lang = heading.get("xml:lang") or ""
+	toc_item.lang = soup.get("xml:lang") or ""
 
 	# A heading may include z3998:roman directly,
 	# eg <h5 epub:type="title z3998:roman">II</h5>.
-	attribs = heading.get("epub:type") or ""
+	epub_type = soup.get("epub:type") or ""
 
-	if "z3998:roman" in attribs:
-		toc_item.roman = extract_strings(heading)
+	if "z3998:roman" in epub_type:
+		toc_item.roman = extract_strings(soup)
 		toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
 		return toc_item
+	# or it may be a straightforward one-level title eg: <h2 epub:type="title">Imprint</h2>
+	if "title" in epub_type:
+		toc_item.title = extract_strings(soup)
+		return toc_item
 
-	process_heading_contents(heading, toc_item)
+	# otherwise, burrow down into its structure to get the info
+	evaluate_descendants(soup, toc_item)
 
+	return toc_item
+
+def evaluate_descendants(soup, toc_item):
+	"""
+	Burrow down into a hgroup structure to qualify the ToC item
+
+	INPUTS:
+	soup: a Beautiful Soup object representing a hgroup
+
+	OUTPUTS:
+	toc_item: qualified ToC item
+	"""
+	for child in soup.children:  # we expect these to be h2, h3, h4 etc
+		if isinstance(child, Tag):
+			if not toc_item.lang:
+				toc_item.lang = child.get("xml:lang") or ""
+			epub_type = child.get("epub:type") or ""
+			if not epub_type and child.name in ["h2", "h3", "h4", "h5", "h6"]:
+				# should be a label/ordinal grouping
+				stuff = extract_strings(child)
+				if "label" in stuff and "ordinal" in stuff:  # quick test
+					# strip label
+					stuff = regex.sub(r"<span epub:type=\"label\">(.*?)</span>", " \\1 ", stuff)
+					# adjust roman
+					stuff = regex.sub(r"ordinal z3998:roman", "z3998:roman", stuff)
+					stuff = regex.sub(r"z3998:roman ordinal", "z3998:roman", stuff)
+					# remove ordinal
+					stuff = regex.sub(r"<span epub:type=\"ordinal\">(.*?)</span>", " \\1 ", stuff)
+					stuff = regex.sub(r"[ ]{2,}", " ", stuff)
+					toc_item.title = stuff.strip()
+				continue  # skip the following
+			if "z3998:roman" in epub_type:
+				toc_item.roman = extract_strings(child)
+				if not toc_item.title:
+					toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
+			if epub_type == "title":
+				if toc_item.title or toc_item.roman:  # if title or roman already filled, must be a subtitle
+					toc_item.subtitle = extract_strings(child)
+				else:
+					toc_item.title = extract_strings(child)
+			if epub_type == "subtitle":
+				toc_item.subtitle = extract_strings(child)
 	return toc_item
 
 def get_book_division(tag: BeautifulSoup) -> BookDivision:
@@ -522,54 +601,6 @@ def strip_notes(text: str) -> str:
 	"""
 
 	return regex.sub(r'<a .*?epub:type="noteref".*?>.*?<\/a>', "", text)
-
-def process_heading_contents(heading: BeautifulSoup, toc_item: TocItem):
-	"""
-	Run through each item in the heading contents
-	and try to pull out the toc item data.
-
-	INPUTS:
-	heading: a BeautifulSoup object representing a heading tag and its contents
-	toc_item: a ToC item object to be qualified
-
-	OUTPUTS:
-	None
-	"""
-
-	accumulator = ""  # We'll use this to build up the title.
-	for child in heading.contents:
-		if isinstance(child, Tag):
-			epub_type = child.get("epub:type") or ""
-			if epub_type == "":
-				if child.name == "span":  # If it's an otherwise empty <span>, just take contents.
-					toc_item.lang = child.get("xml:lang") or ""
-					accumulator += extract_strings(child)
-				else:  # If it's a tag without epub:type, such as <abbr>, take whole thing, tags and all.
-					accumulator += str(child)
-				continue  # Skip following and go to next child.
-
-			if "z3998:roman" in epub_type:
-				toc_item.roman = extract_strings(child)
-				accumulator += str(child)
-			elif "subtitle" in epub_type:
-				lang = child.get("xml:lang")
-				if lang:
-					toc_item.subtitle = f"<span xml:lang=\"{lang}\">{extract_strings(child)}</span>"
-				else:
-					toc_item.subtitle = extract_strings(child)
-			elif "title" in epub_type:
-				toc_item.lang = child.get("xml:lang") or ""
-				toc_item.title = extract_strings(child)
-			elif "se:" in epub_type:  # Likely to be a semantically tagged italic.
-				accumulator += str(child)  # Include the whole thing, tags and all.
-			else:
-				accumulator += extract_strings(child)
-		else:  # This should be a simple NavigableString.
-			accumulator += str(child)
-
-	if toc_item.title == "":
-		#  Now strip out any linefeeds or tabs we may have encountered.
-		toc_item.title = regex.sub(r"(\n|\t)", "", accumulator)
 
 def process_all_content(file_list: list, text_path: str) -> Tuple[list, list]:
 	"""
