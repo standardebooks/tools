@@ -190,10 +190,8 @@ SEMANTICS & CONTENT
 "s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/] and [xhtml]<abbr>[/] elements."
 "s-059", "Internal link beginning with [val]../text/[/]."
 "s-060", "Italics on name that requires quotes instead."
+"s-061", "Title and following header content not in a [xhtml]<header>[/] element."
 "s-062", "[xhtml]<dt>[/] element in a glossary without exactly one [xhtml]<dfn>[/] child."
-UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-
-s-061
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1543,6 +1541,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//header[normalize-space(./text())]")
 				if nodes:
 					messages.append(LintMessage("s-049", "[xhtml]<header>[/] element with text not in a block element.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+
+				# Check for h# tags followed by header content, that are not children of <header>
+				nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][following-sibling::*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'bridgehead')]][not(parent::header)]")
+				if nodes:
+					messages.append(LintMessage("s-061", "Title and following header content not in a [xhtml]<header>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for italics on things that shouldn't be italics
 				nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.music.song') or contains(@epub:type, 'se:name.publication.short-story') or contains(@epub:type, 'se:name.publication.pamphlet') or contains(@epub:type, 'se:name.publication.essay')]")
