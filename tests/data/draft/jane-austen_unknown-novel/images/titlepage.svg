@@ -4,6 +4,7 @@
 	<style type="text/css">
 		text{
 			font-family: "League Spartan";
+			font-weight: bold;
 			letter-spacing: 5px;
 			text-anchor: middle;
 		}
