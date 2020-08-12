@@ -89,9 +89,9 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<!\<abbr\>)(Jan\.|Feb\.|Mar\.|Apr\.|Jun\.|Jul\.|Aug\.|Sep\.|Sept\.|Oct\.|Nov\.|Dec\.)", r"<abbr>\1</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)No\.(\s+[0-9]+)", r"<abbr>No.</abbr>\1", xhtml)
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)([Vv])s\.", r"<abbr>\1s.</abbr>", xhtml)
-    # python allows a variable lookbehind with the ( eoc)?; HOWEVER, it counts it as the
-    #   first capture group, so if there are one or more capture groups in the regex itself,
-    #   be sure to start at 2 when specifying the group(s) in the replacement spec.
+	# python allows a variable lookbehind with the ( eoc)?; HOWEVER, it counts it as the
+	#	first capture group, so if there are one or more capture groups in the regex itself,
+	#	be sure to start at 2 when specifying the group(s) in the replacement spec.
 	xhtml = regex.sub(r"""(?<!\<abbr class="initialism( eoc)?"\>)([Ii])\.e\.""", r"""<abbr class="initialism">\2.e.</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="initialism( eoc)?"\>)([Ee])\.g\.""", r"""<abbr class="initialism">\2.g.</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="initialism( eoc)?"\>)\bN\.?B\.\b""", r"""<abbr class="initialism">N.B.</abbr>""", xhtml)
@@ -1146,7 +1146,7 @@ def namespace_to_class(selector: str) -> str:
 	A string representing the selector with namespaces replaced by classes
 	"""
 
-	# First, remove periods from epub:type.  We can't remove periods in the entire selector because there might be class selectors involved
+	# First, remove periods from epub:type.	 We can't remove periods in the entire selector because there might be class selectors involved
 	epub_type = regex.search(r"\"[^\"]+?\"", selector).group()
 	if epub_type:
 		selector = selector.replace(epub_type, epub_type.replace(".", "-"))
