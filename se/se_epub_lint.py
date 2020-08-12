@@ -401,6 +401,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	initialism_exceptions = ["G", # as in `G-Force`
 				"1D", "2D", "3D", "4D", # as in `n-dimensional`
 				"MS.", "MSS.", # Manuscript(s)
+				"MM.",  # Messiuers
 				"κ.τ.λ.", # "etc." in Greek, and we don't match Greek chars.
 				"TV"]
 
@@ -1234,9 +1235,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-013", "Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() + "." for node in nodes]))
 
 				# Check for <abbr> elements that have two or more letters/periods, that don't have a semantic class
-				nodes = dom.xpath("/html/body//abbr[not(@class)][text() != 'U.S.'][re:test(., '([A-Z]\\.?){2,}')]")
+				nodes = [node.tostring() for node in dom.xpath("/html/body//abbr[not(@class)][text() != 'U.S.'][re:test(., '([A-Z]\\.?){2,}')]") if node.text not in initialism_exceptions]
 				if nodes:
-					messages.append(LintMessage("s-045", "[xhtml]<abbr>[/] element without semantic class like [class]name[/] or [class]initialism[/].", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+					messages.append(LintMessage("s-045", "[xhtml]<abbr>[/] element without semantic class like [class]name[/] or [class]initialism[/].", se.MESSAGE_TYPE_WARNING, filename, nodes))
 
 				# Check for two em dashes in a row
 				matches = regex.findall(fr"—{se.WORD_JOINER}*—+", file_contents)
