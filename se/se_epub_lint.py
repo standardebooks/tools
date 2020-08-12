@@ -397,7 +397,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	unused_selectors: List[str] = []
 	missing_metadata_elements = []
 	abbr_elements: List[se.easy_xml.EasyXmlElement] = []
-	initialism_exceptions = ["1D", "2D", "3D", "4D", "MS.", "MSS.", "κ.τ.λ.", "TV"] # semos://1.0.0/8.10.5.1; κ.τ.λ. is "etc." in Greek, and we don't match Greek chars.
+
+	# These are partly defined in semos://1.0.0/8.10.9.2
+	initialism_exceptions = ["G", # as in `G-Force`
+				"1D", "2D", "3D", "4D", # as in `n-dimensional`
+				"MS.", "MSS.", # Manuscript(s)
+				"κ.τ.λ.", # "etc." in Greek, and we don't match Greek chars.
+				"TV"]
 
 	# This is a dict with where keys are the path and values are a list of code dicts.
 	# Each code dict has a key "code" which is the actual code, and a key "used" which is a
