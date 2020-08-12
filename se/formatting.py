@@ -86,20 +86,24 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)([Cc])f\.", r"<abbr>\1f.</abbr>", xhtml)
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)p\.([\s0-9])", r"<abbr>p.</abbr>\1", xhtml)
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)ed\.", r"<abbr>ed.</abbr>", xhtml)
-	xhtml = regex.sub(r"""(?<!\<abbr class="initialism( eoc)?"\>)([Ii])\.e\.""", r"""<abbr class="initialism">\1.e.</abbr>""", xhtml)
-	xhtml = regex.sub(r"""(?<!\<abbr class="initialism( eoc)?"\>)([Ee])\.g\.""", r"""<abbr class="initialism">\1.g.</abbr>""", xhtml)
-	xhtml = regex.sub(r"""(?<!\<abbr class="initialism( eoc)?"\>)\bN\.?B\.\b""", r"""<abbr class="initialism">N.B.</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)(Jan\.|Feb\.|Mar\.|Apr\.|Jun\.|Jul\.|Aug\.|Sep\.|Sept\.|Oct\.|Nov\.|Dec\.)", r"<abbr>\1</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)No\.(\s+[0-9]+)", r"<abbr>No.</abbr>\1", xhtml)
+	xhtml = regex.sub(r"\b(?<!\<abbr\>)([Vv])s\.", r"<abbr>\1s.</abbr>", xhtml)
+    # python allows a variable lookbehind with the ( eoc)?; HOWEVER, it counts it as the
+    #   first capture group, so if there are one or more capture groups in the regex itself,
+    #   be sure to start at 2 when specifying the group(s) in the replacement spec.
+	xhtml = regex.sub(r"""(?<!\<abbr class="initialism( eoc)?"\>)([Ii])\.e\.""", r"""<abbr class="initialism">\2.e.</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr class="initialism( eoc)?"\>)([Ee])\.g\.""", r"""<abbr class="initialism">\2.g.</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr class="initialism( eoc)?"\>)\bN\.?B\.\b""", r"""<abbr class="initialism">N.B.</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="degree( eoc)?"\>)Ph\.?\s*D\.?""", r"""<abbr class="degree">Ph. D.</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="initialism( eoc)?"\>)I\.?O\.?U\.?\b""", r"""<abbr class="initialism">I.O.U.</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(\s)(?<!\<abbr class="era( eoc)?"\>)A\.?D""", r"""\1<abbr class="era">AD</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(\s)(?<!\<abbr class="era( eoc)?"\>)B\.?C""", r"""\1<abbr class="era">BC</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="time( eoc)?"\>)([ap])\.\s?m\.""", r"""<abbr class="time">\2.m.</abbr>""", xhtml)
-	xhtml = regex.sub(r"\b(?<!\<abbr\>)([Vv])s\.", r"<abbr>\1s.</abbr>", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="name( eoc)?"\>)Thos\.""", r"""<abbr class="name">Thos.</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="name( eoc)?"\>)Jas\.""", r"""<abbr class="name">Jas.</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="name (eoc)?"\>)Chas\.""", r"""<abbr class="name">Chas.</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr class="initialism( eoc)?"\>)\b([2-4]D)\b""", r"""<abbr class="initialism">\2</abbr>""", xhtml)
 
 	# Wrap £sd shorthand
 	xhtml = regex.sub(r"([0-9½¼⅙⅚⅛⅜⅝]+)([sd⅞]\.)", r"\1<abbr>\2</abbr>", xhtml)
