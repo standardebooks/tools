@@ -1508,7 +1508,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
 
 				# Check that short stories are on an <article> element
-				nodes = dom.xpath("/html/body/section[contains(@epub:type, 'se:short-story')]")
+				nodes = dom.xpath("/html/body/section[contains(@epub:type, 'se:short-story') or contains(@epub:type, 'se:novella')]")
 				if nodes:
 					messages.append(LintMessage("s-043", "[val]se:short-story[/] semantic on element that is not [xhtml]<article>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
