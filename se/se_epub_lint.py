@@ -172,6 +172,7 @@ SEMANTICS & CONTENT
 "s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/]."
 "s-041", f"The [xhtml]<figcaption>[/] element of [attr]#{figure_ref}[/] does not match the text in its LoI entry."
 "s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child."
+"s-043", "[val]se:short-story[/] semantic on element that is not [xhtml]<article>[/]."
 "s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element."
 "s-045", "[xhtml]<abbr>[/] element without semantic class like [class]name[/] or [class]initialism[/]."
 "s-046", "[xhtml]<p>[/] element containing only [xhtml]<span>[/] and [xhtml]<br>[/] elements, but its parent doesn’t have the [val]z3998:poem[/], [val]z3998:verse[/], [val]z3998:song[/], [val]z3998:hymn[/], or [val]z3998:lyrics[/] semantic. Multi-line clauses that are not verse don’t require [xhtml]<span>[/]s."
@@ -191,7 +192,7 @@ SEMANTICS & CONTENT
 "s-060", "Italics on name that requires quotes instead."
 "s-062", "[xhtml]<dt>[/] element in a glossary without exactly one [xhtml]<dfn>[/] child."
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-s-043
+
 s-061
 
 TYPOGRAPHY
@@ -1506,6 +1507,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[self::p or self::blockquote][contains(@epub:type, 'se:name.')]")
 				if nodes:
 					messages.append(LintMessage("s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
+
+				# Check that short stories are on an <article> element
+				nodes = dom.xpath("/html/body/section[contains(@epub:type, 'se:short-story')]")
+				if nodes:
+					messages.append(LintMessage("s-043", "[val]se:short-story[/] semantic on element that is not [xhtml]<article>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
 				# Check for IDs on <h#> tags
 				nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
