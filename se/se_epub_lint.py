@@ -187,7 +187,7 @@ SEMANTICS & CONTENT
 "s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor."
 "s-056", "Last [xhtml]<p>[/] child of endnote missing backlink."
 "s-057", "Backlink noteref fragment identifier doesn’t match endnote number."
-"s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/] and [xhtml]<abbr>[/] elements."
+"s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/], [xhtml]<abbr>[/], and [xhtml]<p>[/] elements."
 "s-059", "Internal link beginning with [val]../text/[/]."
 "s-060", "Italics on name that requires quotes instead."
 "s-061", "Title and following header content not in a [xhtml]<header>[/] element."
@@ -1267,9 +1267,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-016", "Initials in [xhtml]<abbr class=\"name\">[/] not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for z3998:stage-direction on elements that are not <i>
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:stage-direction') and name() != 'i' and name() != 'abbr']")
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:stage-direction') and name() != 'i' and name() != 'abbr' and name() != 'p']")
 				if nodes:
-					messages.append(LintMessage("s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/] and [xhtml]<abbr>[/] elements.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+					messages.append(LintMessage("s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/], [xhtml]<abbr>[/], and [xhtml]<p>[/] elements.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 				# Check for missing punctuation in continued quotations
 				# ” said Bob “
