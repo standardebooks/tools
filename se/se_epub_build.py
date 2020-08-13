@@ -177,8 +177,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					file.truncate()
 
 		# Now get a list of original selectors
-		# Remove @supports(){}
-		total_css = regex.sub(r"@supports.+?{(.+?)}\s*}", "\\1}", total_css, flags=regex.DOTALL)
+		# Remove @supports and @media queries
+		total_css = regex.sub(r"@\s*(?:supports|media).+?{(.+?)}\s*}", r"\1}", total_css, flags=regex.DOTALL)
 
 		# Remove CSS rules
 		total_css = regex.sub(r"{[^}]+}", "", total_css)
