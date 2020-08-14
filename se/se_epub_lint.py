@@ -403,7 +403,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				"MS.", "MSS.", # Manuscript(s)
 				"MM.",  # Messiuers
 				"κ.τ.λ.", # "etc." in Greek, and we don't match Greek chars.
-				"TV"]
+				"TV",
+				"AC", "DC" # electrical current
+	]
 
 	# This is a dict with where keys are the path and values are a list of code dicts.
 	# Each code dict has a key "code" which is the actual code, and a key "used" which is a
