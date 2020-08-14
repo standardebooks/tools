@@ -200,6 +200,7 @@ TYPOGRAPHY
 "t-004", "[text]‘[/] missing matching [text]’[/]."
 "t-005", "Dialog without ending comma."
 "t-006", "Comma after producer name, but there are only two producers."
+"t-007", "Possessive [text]’s[/] within name italics. If the name in italics is doing the possessing, [text]’s[/] goes outside italics."
 "t-009", "Required no-break space not found before [xhtml]<abbr class=\"time\">[/]."
 "t-010", "Time set with [text].[/] instead of [text]:[/]."
 "t-011", "Missing punctuation before closing quotes."
@@ -238,7 +239,6 @@ TYPOGRAPHY
 "t-043", "Dialog tag missing punctuation."
 UNUSED
 vvvvvvvvvvvvvvvvvvvvvvvv
-t-007
 t-008
 
 XHTML
@@ -1516,6 +1516,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
 				if nodes:
 					messages.append(LintMessage("s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
+
+				# Check for possessive 's within name italics, but not in ignored files like the colophon which we know have no possessives
+				if filename.name not in se.IGNORED_FILENAMES:
+					nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.') and re:match(., '’s$')]")
+					if nodes:
+						messages.append(LintMessage("t-007", "Possessive [text]’s[/] within name italics. If the name in italics is doing the possessing, [text]’s[/] goes outside italics.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 				# Check for <p> elems that has some element children, which are only <span> and <br> children, but the parent doesn't have poem/verse semantics.
 				# Ignore spans that have a class, but not if the class is an i# class (for poetry indentation)
