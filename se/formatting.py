@@ -128,6 +128,9 @@ def semanticate(xhtml: str) -> str:
 	# Get Roman numerals that are X or V and single characters.  We can't do I for obvious reasons.
 	xhtml = regex.sub(r"""([^\p{Letter}>\"])([vxVX])(\b|st\b|nd\b|rd\b|th\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
 
+	# Fix x-ray
+	xhtml = regex.sub(r"""<span epub:type="z3998:roman">([Xx])</span>-ray""", r"""\1-ray""", xhtml)
+
 	# Add abbrevations around some SI measurements
 	xhtml = regex.sub(r"([0-9]+)\s*([cmk][mgl])\b", fr"\1{se.NO_BREAK_SPACE}<abbr>\2</abbr>", xhtml)
 
