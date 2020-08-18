@@ -142,7 +142,7 @@ def _calculate_image_lines(string: str, target_height: int, canvas_width: int) -
 
 		if first_word:
 			lines[0] = lines[0] + " " + first_word.group(0)
-			lines[1] = regex.sub(rf"^{regex.escape(first_word.group(0))}", "", lines[1])
+			lines[1] = regex.sub(rf"^{regex.escape(first_word.group(0))}\s+", "", lines[1])
 
 	return lines
 
