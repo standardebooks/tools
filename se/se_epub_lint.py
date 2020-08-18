@@ -1551,8 +1551,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("s-049", "[xhtml]<header>[/] element with text not in a block element.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
-				# Check for h# tags followed by header content, that are not children of <header>
-				nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][following-sibling::*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'bridgehead')]][not(parent::header)]")
+				# Check for h# tags followed by header content, that are not children of <header>.
+				# Only match if there is a following <p>, because we could have the case where there's an epigraph after a division title.
+				nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][following-sibling::*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'bridgehead')]][following-sibling::p][not(parent::header)]")
 				if nodes:
 					messages.append(LintMessage("s-061", "Title and following header content not in a [xhtml]<header>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
