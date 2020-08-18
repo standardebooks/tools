@@ -1177,8 +1177,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("x-009", "Illegal leading 0 in [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
-				# Check for underscores in attributes, but not if the attribute is href (links often have underscores)
-				nodes = dom.xpath("//@*[contains(., '_') and name() != 'href']/..")
+				# Check for underscores in attributes, but not if the attribute is href (links often have underscores) or MathMl alttext, which can have underscores as part of math notation
+				nodes = dom.xpath("//@*[contains(., '_') and name() != 'href' and name() != 'alttext']/..")
 				if nodes:
 					messages.append(LintMessage("x-011", "Illegal underscore in attribute. Use dashes instead of underscores.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
