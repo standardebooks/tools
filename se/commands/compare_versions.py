@@ -172,7 +172,7 @@ def compare_versions() -> int:
 									pass
 
 					for filename in natsorted(list(files_with_differences)):
-						console.print("{}Difference in {}\n".format("\t" if args.verbose else "", f"[path][link=file://{filename}]{filename.name}[/][/]"))
+						console.print("{}Difference in {}".format("\t" if args.verbose else "", f"[path][link=file://{filename}]{filename.name}[/][/]"))
 
 					if files_with_differences and args.copy_images:
 						# Generate an HTML file with diffs side by side
