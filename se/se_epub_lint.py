@@ -1564,7 +1564,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for italics on things that shouldn't be italics
-				nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.music.song') or contains(@epub:type, 'se:name.publication.short-story') or contains(@epub:type, 'se:name.publication.essay') or contains(@epub:type, 'se:name.publication.essay')]")
+				nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.music.song') or contains(@epub:type, 'se:name.publication.short-story') or contains(@epub:type, 'se:name.publication.essay')]")
 				if nodes:
 					messages.append(LintMessage("s-060", "Italics on name that requires quotes instead.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
