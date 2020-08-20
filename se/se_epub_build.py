@@ -418,10 +418,14 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					# Convert SVGs to PNGs at 2x resolution
 					# Path arguments must be cast to string
 					svg2png(url=str(filename), write_to=str(filename.parent / (str(filename.stem) + ".png")))
-					svg2png(url=str(filename), write_to=str(filename.parent / (str(filename.stem) + "-2x.png")), scale=2)
+
+					# iBooks srcset bug: once srcset works in iBooks, we can uncomment this line
+					# svg2png(url=str(filename), write_to=str(filename.parent / (str(filename.stem) + "-2x.png")), scale=2)
 
 					# Add the new PNGs to the manifest
-					metadata_xml = metadata_xml.replace("<manifest>", f"""<manifest><item href="images/{filename.stem}.png" id="{filename.stem}.png" media-type="image/png"/><item href="images/{filename.stem}-2x.png" id="{filename.stem}-2x.png" media-type="image/png"/>""")
+					# iBooks srcset bug: once srcset works in iBooks, we can use this line instead of the one below it
+					# metadata_xml = metadata_xml.replace("<manifest>", f"""<manifest><item href="images/{filename.stem}.png" id="{filename.stem}.png" media-type="image/png"/><item href="images/{filename.stem}-2x.png" id="{filename.stem}-2x.png" media-type="image/png"/>""")
+					metadata_xml = metadata_xml.replace("<manifest>", f"""<manifest><item href="images/{filename.stem}.png" id="{filename.stem}.png" media-type="image/png"/>""")
 
 					# Remove the SVG from the manifest
 					metadata_xml = regex.sub(fr"""<item href="images/{filename.name}" id="[^"]+?" media-type="image/svg\+xml"/>""", "", metadata_xml)
@@ -490,7 +494,10 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 						# We converted svgs to pngs, so replace references
 						processed_xhtml = processed_xhtml.replace("cover.svg", "cover.jpg")
-						processed_xhtml = regex.sub(r"src=\"([^\"]+?)\.svg\"", "src=\"\\1.png\" srcset=\"\\1-2x.png 2x, \\1.png 1x\"", processed_xhtml)
+
+						# iBooks srcset bug: once srcset works in iBooks, we can use this line instead of the one below it
+						# processed_xhtml = regex.sub(r"src=\"([^\"]+?)\.svg\"", "src=\"\\1.png\" srcset=\"\\1-2x.png 2x, \\1.png 1x\"", processed_xhtml)
+						processed_xhtml = regex.sub(r"src=\"([^\"]+?)\.svg\"", "src=\"\\1.png\"", processed_xhtml)
 
 						# To get popup footnotes in iBooks, we have to change epub:endnote to epub:footnote.
 						# Remember to get our custom style selectors too.
@@ -690,7 +697,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 											# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
 											se.images.render_mathml_to_png(driver, regex.sub(r"<(/?)m:", "<\\1", line), work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png", work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}-2x.png")
 
-											processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}.png\" srcset=\"../images/mathml-{mathml_count}-2x.png 2x, ../images/mathml-{mathml_count}.png 1x\" />")
+											# iBooks srcset bug: once srcset works in iBooks, we can use this line instead of the one below it
+											# processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}.png\" srcset=\"../images/mathml-{mathml_count}-2x.png 2x, ../images/mathml-{mathml_count}.png 1x\"/>")
+											processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}.png\"/>")
 											mathml_count = mathml_count + 1
 										else:
 											# Success! Replace the MathML with our new string.

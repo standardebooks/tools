@@ -105,7 +105,8 @@ def _color_to_alpha(image: Image, color=None) -> Image:
 	return new_image
 
 # Note: We can't type hint driver, because we conditionally import selenium for performance reasons
-def render_mathml_to_png(driver, mathml: str, output_filename: Path, output_filename_2x: Path) -> None:
+# iBooks srcset bug: Temporarily ignore this line in pylint
+def render_mathml_to_png(driver, mathml: str, output_filename: Path, output_filename_2x: Path) -> None: # pylint: disable=unused-argument
 	"""
 	Render a string of MathML into a transparent PNG file.
 
@@ -133,7 +134,9 @@ def render_mathml_to_png(driver, mathml: str, output_filename: Path, output_file
 			image = Image.open(png_file.name)
 			image = _color_to_alpha(image, (255, 255, 255, 255))
 			image = image.crop(image.getbbox())
-			image.save(output_filename_2x)
+
+			# iBooks srcset bug: once srcset works in iBooks, uncomment this line
+			# image.save(output_filename_2x)
 
 			# Save normal version
 			image = image.resize((image.width // 2, image.height // 2))
