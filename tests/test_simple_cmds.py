@@ -5,8 +5,8 @@ a book as input.
 
 import pytest
 
-import se
 from helpers import must_run
+import se
 
 SIMPLE_CMDS = [
     ("dec2roman", "1 4 7 45 900", "I\nIV\nVII\nXLV\nCM"),
