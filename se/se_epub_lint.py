@@ -193,6 +193,7 @@ SEMANTICS & CONTENT
 "s-061", "Title and following header content not in a [xhtml]<header>[/] element."
 "s-062", "[xhtml]<dt>[/] element in a glossary without exactly one [xhtml]<dfn>[/] child."
 "s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/]."
+"s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1451,7 +1452,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Remove li nodes if we're in the ToC or LoI, as they don't require block-level children in those cases
 				nodes = [node for node in nodes if node.lxml_element.tag != "li" or (node.lxml_element.tag == "li" and filename.name not in ("toc.xhtml", "loi.xhtml"))]
-
 				if nodes:
 					messages.append(LintMessage("s-007", "Element requires at least one block-level child.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
@@ -1809,6 +1809,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for space before endnote backlinks
 				if filename.name == "endnotes.xhtml":
+					# Check that citations at the end of endnotes are in a <cite> element. If not typogrify will run the last space together with the em dash.
+					# This tries to catch that, but limits the match to 20 chars so that we don't accidentally match a whole sentence that happens to be at the end of an endnote.
+					nodes = dom.xpath(f"/html/body//li[contains(@epub:type, 'endnote')]/p[last()][re:test(., '\\.”?{se.WORD_JOINER}?—[A-Z].{{0,20}}\\s*↩$')]")
+					if nodes:
+						messages.append(LintMessage("s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+
 					# Do we have to replace Ibid.?
 					matches = regex.findall(r"\bibid\b", file_contents, flags=regex.IGNORECASE)
 					if matches:
