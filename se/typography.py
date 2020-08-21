@@ -48,6 +48,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Replace no-break hyphen with regular hyphen
 	xhtml = xhtml.replace(se.NO_BREAK_HYPHEN, "-")
 
+	# Replace horizontal bar with em dash
+	xhtml = xhtml.replace("―", "—")
+
 	# Replace sequential em dashes with the two or three em dash character
 	xhtml = xhtml.replace("———", "⸻")
 	xhtml = xhtml.replace("——", "⸺")
