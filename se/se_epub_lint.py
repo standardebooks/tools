@@ -369,8 +369,8 @@ def _dom(file_path: Path) -> Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtm
 				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]. Exception: {ex}")
 			except FileNotFoundError as ex:
 				raise ex
-			except Exception:
-				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/].")
+			except Exception as ex:
+				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/].") from ex
 
 	return _DOM_CACHE[file_path_str]
 
@@ -458,15 +458,15 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		language = self.metadata_dom.xpath("/package/metadata/dc:language")[0].text
 	except se.InvalidXmlException as ex:
 		raise ex
-	except Exception:
-		raise se.InvalidSeEbookException(f"Missing [xml]<dc:language>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/].")
+	except Exception as ex:
+		raise se.InvalidSeEbookException(f"Missing [xml]<dc:language>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/].") from ex
 
 	# Check local.css for various items, for later use
 	try:
 		with open(local_css_path, "r", encoding="utf-8") as file:
 			self.local_css = file.read()
-	except:
-		raise se.InvalidSeEbookException(f"Couldn’t open [path]{local_css_path}[/].")
+	except Exception as ex:
+		raise se.InvalidSeEbookException(f"Couldn’t open [path]{local_css_path}[/].") from ex
 
 	# cssutils prints warnings/errors to stdout by default, so shut it up here
 	cssutils.log.enabled = False
@@ -628,8 +628,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		if "xml:lang" in long_description:
 			messages.append(LintMessage("m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-	except:
-		raise se.InvalidSeEbookException(f"No [xml]<meta property=\"se:long-description\">[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/].")
+	except Exception as ex:
+		raise se.InvalidSeEbookException(f"No [xml]<meta property=\"se:long-description\">[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/].") from ex
 
 	missing_metadata_vars = [var for var in METADATA_VARIABLES if regex.search(fr"\b{var}\b", self.metadata_xml)]
 	if missing_metadata_vars:
@@ -858,8 +858,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if image.size != (se.COVER_WIDTH, se.COVER_HEIGHT):
 						messages.append(LintMessage("s-051", f"Wrong height or width. [path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}.", se.MESSAGE_TYPE_ERROR, filename))
 
-				except UnidentifiedImageError:
-					raise se.InvalidFileException(f"Couldn’t identify image type of [path][link=file://{filename}]{filename.name}[/][/].")
+				except UnidentifiedImageError as ex:
+					raise se.InvalidFileException(f"Couldn’t identify image type of [path][link=file://{filename}]{filename.name}[/][/].") from ex
 
 			if filename.suffix in BINARY_EXTENSIONS or filename.name == "core.css":
 				continue
@@ -898,7 +898,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				match = regex.search(r"viewbox", file_contents, flags=regex.IGNORECASE)
 				if match and match[0] != "viewBox":
-						messages.append(LintMessage("x-006", f"[xml]{match}[/] found instead of [xml]viewBox[/]. [xml]viewBox[/] must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename))
+					messages.append(LintMessage("x-006", f"[xml]{match}[/] found instead of [xml]viewBox[/]. [xml]viewBox[/] must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for illegal transform or id attribute
 				nodes = svg_dom.xpath("//*[@transform or @id]")

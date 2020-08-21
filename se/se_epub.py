@@ -110,8 +110,8 @@ class SeEpub:
 
 			if "<dc:identifier id=\"uid\">url:https://standardebooks.org/ebooks/" not in self.metadata_xml:
 				raise se.InvalidSeEbookException
-		except:
-			raise se.InvalidSeEbookException(f"Not a Standard Ebooks source directory: [path][link=file://{self.path}]{self.path}[/][/].")
+		except Exception as ex:
+			raise se.InvalidSeEbookException(f"Not a Standard Ebooks source directory: [path][link=file://{self.path}]{self.path}[/][/].") from ex
 
 	@property
 	def repo(self) -> git.Repo:
@@ -122,8 +122,8 @@ class SeEpub:
 		if not self._repo:
 			try:
 				self._repo = git.Repo(self.path)
-			except:
-				raise se.InvalidSeEbookException("Couldn’t access this ebook’s Git repository.")
+			except Exception as ex:
+				raise se.InvalidSeEbookException("Couldn’t access this ebook’s Git repository.") from ex
 
 		return self._repo
 
@@ -262,8 +262,8 @@ class SeEpub:
 			try:
 				with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml") as file:
 					self.__endnotes_soup = BeautifulSoup(file.read(), "html.parser")
-			except:
-				raise se.InvalidFileException(f"Could't open file: [path][link=file://{self.path / 'src' / 'epub' / 'text' / 'endnotes.xhtml'}]{self.path / 'src' / 'epub' / 'text' / 'endnotes.xhtml'}[/][/].")
+			except Exception as ex:
+				raise se.InvalidFileException(f"Could't open file: [path][link=file://{self.path / 'src' / 'epub' / 'text' / 'endnotes.xhtml'}]{self.path / 'src' / 'epub' / 'text' / 'endnotes.xhtml'}[/][/].") from ex
 
 		return self.__endnotes_soup
 
@@ -580,8 +580,8 @@ class SeEpub:
 				file.write(xhtml)
 				file.truncate()
 
-		except Exception:
-			raise se.InvalidSeEbookException(f"Couldn’t open endnotes file: [path][link=file://{endnotes_filename}]{endnotes_filename}[/][/].")
+		except Exception as ex:
+			raise se.InvalidSeEbookException(f"Couldn’t open endnotes file: [path][link=file://{endnotes_filename}]{endnotes_filename}[/][/].") from ex
 
 		with concurrent.futures.ProcessPoolExecutor() as executor:
 			for root, _, filenames in os.walk(source_directory):
@@ -949,8 +949,8 @@ class SeEpub:
 			try:
 				with open(file_path) as file:
 					soup = BeautifulSoup(file.read(), "lxml")
-			except:
-				raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{file_path}]{file_path}[/][/].")
+			except Exception as ex:
+				raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{file_path}]{file_path}[/][/].") from ex
 
 			links = soup.find_all("a")
 			needs_rewrite = False

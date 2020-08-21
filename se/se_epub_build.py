@@ -66,8 +66,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 	try:
 		output_directory = output_directory.resolve()
 		output_directory.mkdir(parents=True, exist_ok=True)
-	except Exception:
-		raise se.FileExistsException(f"Couldn’t create output directory: [path][link=file://{output_directory}]{output_directory}[/][/].")
+	except Exception as ex:
+		raise se.FileExistsException(f"Couldn’t create output directory: [path][link=file://{output_directory}]{output_directory}[/][/].") from ex
 
 	# All clear to start building!
 	metadata_xml = self.metadata_xml
@@ -86,8 +86,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		try:
 			identifier = self.metadata_dom.xpath("//dc:identifier")[0].inner_xml().replace("url:", "")
 			asin = sha1(identifier.encode("utf-8")).hexdigest()
-		except:
-			raise se.InvalidSeEbookException(f"Missing [xml]<dc:identifier>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/].")
+		except Exception as ex:
+			raise se.InvalidSeEbookException(f"Missing [xml]<dc:identifier>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/].") from ex
 
 		if not self.metadata_dom.xpath("//dc:title"):
 			raise se.InvalidSeEbookException(f"Missing [xml]<dc:title>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/].")
@@ -793,7 +793,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				try:
 					epubcheck_result = subprocess.run(["java", "-jar", str(jar_path), "--quiet", str(output_directory / epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
 					epubcheck_result.check_returncode()
-				except subprocess.CalledProcessError:
+				except subprocess.CalledProcessError as ex:
 					output = epubcheck_result.stdout.decode().strip()
 					# Get the epubcheck version to print to the console
 					version_output = subprocess.run(["java", "-jar", str(jar_path), "--version"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False).stdout.decode().strip()
@@ -811,7 +811,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# If something goes wrong, just pass through the usual output
 						pass
 
-					raise se.BuildFailedException(f"[bash]epubcheck[/] v{version} failed with:\n{output}")
+					raise se.BuildFailedException(f"[bash]epubcheck[/] v{version} failed with:\n{output}") from ex
 
 		if build_kindle:
 			# There's a bug in Calibre <= 3.48.0 where authors who have more than one MARC relator role
@@ -878,8 +878,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# First, fixup the reference link for this endnote
 						try:
 							ref_link = etree.tostring(note.xpath("p[last()]/a[last()]")[0], encoding="unicode", pretty_print=True, with_tail=False).replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "").strip()
-						except Exception:
-							raise se.InvalidXhtmlException(f"Can’t find ref link for [url]#{note_id}[/].")
+						except Exception as ex:
+							raise se.InvalidXhtmlException(f"Can’t find ref link for [url]#{note_id}[/].") from ex
 
 						new_ref_link = regex.sub(r">.*?</a>", ">" + note_number + "</a>.", ref_link)
 

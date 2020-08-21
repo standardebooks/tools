@@ -206,8 +206,8 @@ def remove_image_metadata(filename: Path) -> None:
 		# PNG and other image types we expect are lossless so we can use PIL to remove metadata
 		try:
 			image = Image.open(filename)
-		except UnidentifiedImageError:
-			raise se.InvalidFileException(f"Couldn’t identify image type of [path][link=file://{filename.resolve()}]{filename}[/].")
+		except UnidentifiedImageError as ex:
+			raise se.InvalidFileException(f"Couldn’t identify image type of [path][link=file://{filename.resolve()}]{filename}[/].") from ex
 
 		data = list(image.getdata())
 
@@ -268,8 +268,8 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 
 	try:
 		xml = etree.fromstring(str.encode(svg_in_raw))
-	except:
-		raise se.InvalidXmlException(f"Couldn’t parse SVG file: [path][link={in_svg.resolve()}]{in_svg}[/][/]")
+	except Exception as ex:
+		raise se.InvalidXmlException(f"Couldn’t parse SVG file: [path][link={in_svg.resolve()}]{in_svg}[/][/]") from ex
 
 	svg_ns = "{http://www.w3.org/2000/svg}"
 
