@@ -369,12 +369,16 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 				new_word = word
 
 				# 100 is the hard coded max word length in the hyphenator module
-				# Check here to avoid an error
-				if len(word) < 100:
+				# But, we can't use len(word) because Unicode chars may be longer than len() expects.
+				# So, we simply catch the exception and continue if that ends up happening
+				try:
 					syllables = hyphenators[language].syllables(word)
 
 					if syllables:
 						new_word = "\u00AD".join(syllables)
+
+				except ValueError:
+					pass
 
 				result = result[:pos - len(word) - 1] + new_word + char + result[pos:]
 				pos = pos + len(new_word) - len(word)
