@@ -22,7 +22,7 @@
 
 - Don't add -epub-hyphens since it is now required in the base CSS
 
-- Instead of checking for word length when checking if a word is too long for the hyphenator library, catch the exception instead, as some Unicode strings report as shorter than they really are when checked with len()
+- Instead of checking for word length when checking if a word is too long for the hyphenator library, catch the exception instead, as some Unicode strings report as shorter than they really are when checked with `len()`
 
 ## se compare-versions
 
@@ -34,13 +34,13 @@
 
 ## se lint
 
-- Fix x-009 to check for only leading 0s, not -0 anywhere in the value
+- Fix x-009 to check for only leading `0`s, not `-0` anywhere in the value
 
 - Add x-011, illegal underscore in id attribute
 
 - Remove t-007 and t-008 as they are now handled by typogrify
 
-- Add <footer> to allowed block level children in s-007
+- Add `<footer>` to allowed block level children in s-007
 
 - Improve m-045 check
 
@@ -60,19 +60,19 @@
 
 - Add some self-closing MathML tags to list of allowed empty elements
 
-- Add s-043, se:short-story/se:novella semantic on element that is not <article>
+- Add s-043, se:short-story/se:novella semantic on element that is not `<article>`
 
-- Add s-061, title and following header content not in <header>
+- Add s-061, title and following header content not in `<header>`
 
-- Allow <p> in s-058
+- Allow `<p>` in s-058
 
 - Add t-007, possessive s inside italics that are for a name
 
 - Don't check MathML attributes for underscores
 
-- Add s-063, z3998:persona semantic on an element that's not a <b> or <td>
+- Add s-063, z3998:persona semantic on an element that's not a `<b>` or `<td>`
 
-- Add s-064, check that endnote citations are wrapped in <cite>
+- Add s-064, check that endnote citations are wrapped in `<cite>`
 
 ## se modernize-spelling
 
@@ -88,7 +88,7 @@
 
 ## se semanticate
 
-- Add 2D/3D/4D as recognized abbreviations. Thanks to Vince Rice
+- Add `2D`/`3D`/`4D` as recognized abbreviations. Thanks to Vince Rice
 
 - Don't add z3998:roman semantic to `x-ray`
 
@@ -98,7 +98,7 @@
 
 - Remove word joiners and nbsps from alt attributs
 
-- Don't add an nbsp before `St.` if it is within an <abbr class="name"> element
+- Don't add an nbsp before `St.` if it is within an `<abbr class="name">` element
 
 - Convert horizontal bar to em dash
 
