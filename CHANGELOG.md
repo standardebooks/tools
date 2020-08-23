@@ -1,3 +1,107 @@
+# v1.5.9
+
+## General
+
+- Bump to epubcheck 4.2.4
+
+- Pin versions of testing framework libraries so that tests don't fail unexpectedly when new library versions are released. Thanks to Dave Halliday
+
+- Various testing framework updates. Thanks to Dave Halliday
+
+## se build
+
+- Fix extra spaces before 4-dot ellipses and nested quotations in Kobo. Thanks to Robin Whittleton
+
+- Temporarily disable 2x MathML PNG generation due to iBooks srcset bug
+
+- Only add white stroke outline to logo SVG if the logo matches the SE logo
+
+- Don't fail when CSS media queries are present
+
+- Remove Readium compatibility CSS as the Readium reader is no longer maintained
+
+- Don't add -epub-hyphens since it is now required in the base CSS
+
+- Instead of checking for word length when checking if a word is too long for the hyphenator library, catch the exception instead, as some Unicode strings report as shorter than they really are when checked with len()
+
+## se compare-versions
+
+- Don't print double newlines in output
+
+## se create-draft
+
+- Remove leading white space from title lines when generating the title/cover SVG
+
+## se lint
+
+- Fix x-009 to check for only leading 0s, not -0 anywhere in the value
+
+- Add x-011, illegal underscore in id attribute
+
+- Remove t-007 and t-008 as they are now handled by typogrify
+
+- Add <footer> to allowed block level children in s-007
+
+- Improve m-045 check
+
+- Fix unhandled exception when filename not present in lint output. Thanks to Michael Glanznig
+
+- Improve t-017
+
+- Fix typo in s-052 message
+
+- Fix incorrect MathML rendering in some cases
+
+- Catch abbr classes with no periods in s-045. Thanks to Vince Rice
+
+- Allow initialisms with numbers in t-030. Thanks to Vince Rice
+
+- Add several initialism exceptions. Thanks to Vince Rice and Robin Whittleton
+
+- Add some self-closing MathML tags to list of allowed empty elements
+
+- Add s-043, se:short-story/se:novella semantic on element that is not <article>
+
+- Add s-061, title and following header content not in <header>
+
+- Allow <p> in s-058
+
+- Add t-007, possessive s inside italics that are for a name
+
+- Don't check MathML attributes for underscores
+
+- Add s-063, z3998:persona semantic on an element that's not a <b> or <td>
+
+- Add s-064, check that endnote citations are wrapped in <cite>
+
+## se modernize-spelling
+
+- Various additions. Thanks to matistric
+
+## se print-manifest
+
+- Add support for epub dictionaries and glossaries
+
+## se print-toc
+
+- Remove word joiners and nbsp from generated ToC
+
+## se semanticate
+
+- Add 2D/3D/4D as recognized abbreviations. Thanks to Vince Rice
+
+- Don't add z3998:roman semantic to `x-ray`
+
+## se typogrify
+
+- Add a no break space before ampersands
+
+- Remove word joiners and nbsps from alt attributs
+
+- Don't add an nbsp before `St.` if it is within an <abbr class="name"> element
+
+- Convert horizontal bar to em dash
+
 # v1.5.6 - v1.5.8
 
 Released in error; no changes.
