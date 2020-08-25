@@ -130,7 +130,7 @@ To do that, follow the general installation instructions above; but instead of d
 
 ```shell
 git clone https://github.com/standardebooks/tools.git
-pipx install --editable tools
+pipx install --editable ./tools
 ```
 
 Now the `se` binary is in your path, and any edits you make to source files in the `tools/` directory are immediately reflected when executing the binary.
