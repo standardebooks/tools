@@ -178,7 +178,7 @@ SEMANTICS & CONTENT
 "s-046", "[xhtml]<p>[/] element containing only [xhtml]<span>[/] and [xhtml]<br>[/] elements, but its parent doesn’t have the [val]z3998:poem[/], [val]z3998:verse[/], [val]z3998:song[/], [val]z3998:hymn[/], or [val]z3998:lyrics[/] semantic. Multi-line clauses that are not verse don’t require [xhtml]<span>[/]s."
 "s-047", "[val]noteref[/] as a direct child of element with poem or verse semantic. [val]noteref[/]s should be in their parent [xhtml]<span>[/]."
 "s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something."
-"s-049", "[xhtml]<header>[/] element with text not in a block element."
+"s-049", "[xhtml]<header>[/] element whose only child is an [xhtml]<h#>[/] element."
 "s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element."
 "s-051", f"Wrong height or width. [path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}."
 "s-052", "[xhtml]<abbr>[/] element with illegal [attr]title[/] attribute."
@@ -1547,10 +1547,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("t-039", "Initialism followed by [text]’s[/]. Hint: Plurals of initialisms are not followed by [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() + "’s" for node in nodes]))
 
-				# Check for <header> elements with direct children text nodes
-				nodes = dom.xpath("/html/body//header[normalize-space(./text())]")
+				# Check for <header> elements with only h# child nodes
+				nodes = dom.xpath("/html/body//header[./*[re:test(name(), 'h[1-6]') and (count(preceding-sibling::*) + count(following-sibling::*) = 0)]]")
 				if nodes:
-					messages.append(LintMessage("s-049", "[xhtml]<header>[/] element with text not in a block element.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+					messages.append(LintMessage("s-049", "[xhtml]<header>[/] element whose only child is an [xhtml]<h#>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for h# tags followed by header content, that are not children of <header>.
 				# Only match if there is a following <p>, because we could have the case where there's an epigraph after a division title.
