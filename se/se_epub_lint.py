@@ -194,6 +194,7 @@ SEMANTICS & CONTENT
 "s-062", "[xhtml]<dt>[/] element in a glossary without exactly one [xhtml]<dfn>[/] child."
 "s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/]."
 "s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space."
+"s-065", "[val]fulltitle[/] semantic on element that is not [xhtml]<h1>[/]."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1358,6 +1359,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[not(self::br) and not(self::hr) and not(self::img) and not(self::td) and not(self::th) and not(self::m:none) and not(self::m:mspace) and not(self::link)][not(*)][not(normalize-space())]")
 				if nodes:
 					messages.append(LintMessage("s-010", "Empty element. Use [xhtml]<hr/>[/] for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+
+				# Check for fulltitle semantic on non-h1
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'fulltitle') and name() != 'h1']")
+				if nodes:
+					messages.append(LintMessage("s-065", "[val]fulltitle[/] semantic on element that is not [xhtml]<h1>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for HTML tags in <title> tags
 				nodes = dom.xpath("/html/head/title/*")
