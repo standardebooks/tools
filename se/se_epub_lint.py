@@ -204,6 +204,7 @@ TYPOGRAPHY
 "t-005", "Dialog without ending comma."
 "t-006", "Comma after producer name, but there are only two producers."
 "t-007", "Possessive [text]’s[/] within name italics. If the name in italics is doing the possessing, [text]’s[/] goes outside italics."
+"t-008", "Repeated punctuation."
 "t-009", "Required no-break space not found before [xhtml]<abbr class=\"time\">[/]."
 "t-010", "Time set with [text].[/] instead of [text]:[/]."
 "t-011", "Missing punctuation before closing quotes."
@@ -240,9 +241,6 @@ TYPOGRAPHY
 "t-042", "Possible typo."
 "t-042", "Possible typo."
 "t-043", "Dialog tag missing punctuation."
-UNUSED
-vvvvvvvvvvvvvvvvvvvvvvvv
-t-008
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -628,6 +626,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		# xml:lang is correct for the rest of the publication, but should be lang in the long desc
 		if "xml:lang" in long_description:
 			messages.append(LintMessage("m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+		# Check for repeated punctuation
+		# First replace html entities so we don't catch `&gt;,`
+		matches = regex.findall(r"[,;]{2,}.{0,20}", regex.sub(r"&[a-z0-9]+?;", "", self.metadata_xml))
+		if matches:
+			messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
 
 	except Exception as ex:
 		raise se.InvalidSeEbookException(f"No [xml]<meta property=\"se:long-description\">[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/].") from ex
@@ -1479,6 +1483,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				matches = [match for match in matches if "</p" not in match and "<br/>" not in match]
 				if matches:
 					messages.append(LintMessage("t-004", "[text]‘[/] missing matching [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+				# Check for repeated punctuation
+				matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents)
+				if matches:
+					messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check obviously miscurled quotation marks
 				matches = regex.findall(r".*“</p>", file_contents)
