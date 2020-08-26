@@ -1484,8 +1484,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if matches:
 					messages.append(LintMessage("t-004", "[text]‘[/] missing matching [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-				# Check for repeated punctuation
-				matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents)
+				# Check for repeated punctuation, but first remove `&amp;` so we don't match `&amp;,`
+				matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents.replace("&amp;", ""))
 				if matches:
 					messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
