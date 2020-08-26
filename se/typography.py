@@ -32,7 +32,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 		# First, convert entities.  Sometimes Gutenberg has entities instead of straight quotes.
 		xhtml = html.unescape(xhtml) # This converts html entites to unicode
-		xhtml = regex.sub(r"&([^#\p{Lowercase_Letter}])", r"&amp;\1", xhtml) # Oops!  html.unescape also unescapes plain ampersands...
+		xhtml = regex.sub(r"&(?![#\p{Lowercase_Letter}]+;)", "&amp;", xhtml) # Oops!  html.unescape also unescapes plain ampersands...
 
 		# Replace rsquo character with an escape sequence. We can't use HTML comments
 		# because rsquo may appear inside alt attributes, and that would break smartypants.
@@ -43,7 +43,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 		# Convert entities again
 		xhtml = html.unescape(xhtml) # This converts html entites to unicode
-		xhtml = regex.sub(r"&([^#\p{Lowercase_Letter}])", r"&amp;\1", xhtml) # Oops!  html.unescape also unescapes plain ampersands...
+		xhtml = regex.sub(r"&(?![#\p{Lowercase_Letter}]+;)", "&amp;", xhtml) # Oops!  html.unescape also unescapes plain ampersands...
 
 	# Replace no-break hyphen with regular hyphen
 	xhtml = xhtml.replace(se.NO_BREAK_HYPHEN, "-")
