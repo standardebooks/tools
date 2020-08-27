@@ -1205,7 +1205,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# instead of a whole clause. If the <em> is preceded by an em dash or quotes, or if there's punctuation
 					# and a space bofore it, then it's presumed to be a whole clause.
 					# We can't use xpath for this one because xpath's regex engine doesn't seem to work with {1,2}
-					matches = matches + [match.strip() for match in regex.findall(r"(?<!.[—“‘]|[!\.\?…;]\s)<em>(?:\w+?\s*){1,2}?[\.,\!\?;]</em>", file_contents) if match.islower()]
+					matches = matches + [match.strip() for match in regex.findall(r"(?<!.[—“‘>]|[!\.\?…;]\s)<em>(?:\w+?\s*)+[\.,\!\?;]</em>", file_contents) if match.islower()]
 
 					if matches:
 						messages.append(LintMessage("t-017", "Ending punctuation inside italics. Ending punctuation is only allowed within italics if the phrase is an independent clause.", se.MESSAGE_TYPE_WARNING, filename, matches))
