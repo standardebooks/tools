@@ -726,15 +726,15 @@ class SeEpub:
 
 				with open(Path(root) / filename, "r", encoding="utf-8") as file:
 					file_contents = file.read()
+
+					if regex.search(r"epub:type=\"[^\"]*?glossary[^\"]*?\"", file_contents):
+						properties += "glossary "
+
 					if "http://www.w3.org/1998/Math/MathML" in file_contents:
 						properties += "mathml "
+
 					if ".svg" in file_contents:
 						properties += "svg "
-
-					# This is should be legal according to the glossary spec, but it's
-					# currently broken in epubcheck. We can uncomment this once epubcheck is fixed.
-					#if regex.search(r"epub:type=\"[^\"]*?glossary[^\"]*?\"", file_contents):
-					#	properties += "glossary "
 
 				properties = " " + properties.strip() + "\""
 
@@ -745,7 +745,7 @@ class SeEpub:
 
 		# Do we have a glossary search key map?
 		if Path(self.path / "src" / "epub" / "glossary-search-key-map.xml").is_file():
-			manifest.append("<item href=\"glossary-search-key-map.xml\" id=\"glossary-search-key-map.xml\" media-type=\"application/vnd.epub.search-key-map+xml\" properties=\"search-key-map\"/>")
+			manifest.append("<item href=\"glossary-search-key-map.xml\" id=\"glossary-search-key-map.xml\" media-type=\"application/vnd.epub.search-key-map+xml\" properties=\"glossary search-key-map\"/>")
 
 		manifest = natsorted(manifest)
 
