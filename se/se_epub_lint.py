@@ -68,6 +68,7 @@ FILESYSTEM
 "f-010", "Problem decoding file as utf-8."
 "f-011", "JPEG files must end in [path].jpg[/]."
 "f-012", "TIFF files must end in [path].tif[/]."
+"f-013", "Glossary search key map must be named [path]glossary-search-key-map.xml[/]."
 
 METADATA
 "m-001", "gutenberg.org URL missing leading [text]www.[/]."
@@ -940,6 +941,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 						# For later comparison with cover
 						titlepage_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The titlepage for ", "") # <title> can appear on any element in SVG, but we only want to check the root one
+
+			if filename.suffix == ".xml":
+				xml_dom = _dom(filename)
+
+				# / selects the root element, so we have to test against the name instead of doing /search-key-map
+				if xml_dom.xpath("/*[name() = 'search-key-map']") and filename.name != "glossary-search-key-map.xml":
+					messages.append(LintMessage("f-013", "Glossary search key map must be named [path]glossary-search-key-map.xml[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 			if filename.suffix == ".xhtml":
 				# Read file contents into a DOM for querying
