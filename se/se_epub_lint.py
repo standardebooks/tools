@@ -1620,8 +1620,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# Remove nested <span>s in subtitles, which might trip up the next regex block
 					# We can't do this with the lxml element because it has no unwrap() function. remove() is not the same thing--
 					# we want to keep the tag contents.
-					title = regex.sub(r"(<span epub:type=\"subtitle\">[^<]*?)<span[^>]*?>([^<]*?</span>)", r"\1\2", title, flags=regex.DOTALL)
-					title = regex.sub(r"(<span epub:type=\"subtitle\">[^<]*?)</span>([^<]*?</span>)", r"\1\2", title, flags=regex.DOTALL)
+					subtitle_temp = regex.sub(r"(.*?)<span epub:type=\"subtitle\">(.*?)</span>$", r"\2", title, flags=regex.DOTALL) # Get subtitle
+					subtitle_temp = regex.sub(r"<\/?span[^>]*>", r"", subtitle_temp, flags=regex.DOTALL) # Remove opening and closing span tags within subtitle
+
+					# Just put "subtitle_temp" inside the subtitle span
+					title = regex.sub("(<span epub:type=\"subtitle\">)(.*?)(</span>)$", r"\1" + subtitle_temp + r"\3", title, flags=regex.DOTALL)
+
 
 					# Do we have a subtitle? If so the first letter of that must be capitalized, so we pull that out
 					subtitle_matches = regex.findall(r"(.*?)<span epub:type=\"subtitle\">(.*?)</span>(.*?)", title, flags=regex.DOTALL)
