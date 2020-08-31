@@ -89,7 +89,7 @@ class EasySvgTree(EasyXmlTree):
 
 class EasyOpfTree(EasyXmlTree):
 	"""
-	Wrapper for the SVG namespace.
+	Wrapper for the OPF namespace.
 	"""
 
 	def __init__(self, xml_string: str):
@@ -211,6 +211,42 @@ class EasyXmlElement:
 				parent.text = (parent.text or '') + self.lxml_element.tail
 
 		parent.remove(self.lxml_element)
+
+	def unwrap(self) -> None:
+		"""
+		Remove the element's wrapping tag and replace it with the element's contents.
+		"""
+
+		# In lxml, there are no "text nodes" like in a classic DOM. There are only element nodes.
+		# An element has a `.text` property which is the child text UP TO THE FIRST CHILD ELEMENT.
+		# An element's `.tail` property contains text *after* the element, up to its first element sibling.
+
+		parent = self.lxml_element.getparent()
+
+		children = self.lxml_element.getchildren()
+
+		children.reverse()
+
+		# This will *move* each child element node to *after* the current element.
+		# Since any following text is stored in the child element's .tail, this will *also*
+		# move that text.
+		for child in children:
+			self.lxml_element.addnext(child)
+
+		# Now we've moved all child elements and the text following them. But what if there's
+		# text *before* any child elements? That is stored in the .text property.
+		if self.lxml_element.text:
+			prev = self.lxml_element.getprevious()
+			if prev is None:
+				if parent.text:
+					parent.text = parent.text + self.lxml_element.text
+				else:
+					parent.text = self.lxml_element.text
+			else:
+				prev.tail = prev.tail + self.lxml_element.text
+
+		# This calls the EasyXmlTree.remove() function, not an lxml function
+		self.remove()
 
 	@property
 	def text(self) -> str:

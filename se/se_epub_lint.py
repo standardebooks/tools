@@ -1609,6 +1609,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					for element in node_copy.xpath(".//*[@hidden]"):
 						element.remove()
 
+					# Unwrap (not remove) any subelements in subtitles, as they may trip up further regexes
+					for element in node_copy.xpath(".//*[contains(@epub:type, 'subtitle')]/*"):
+						element.unwrap()
+
 					title = node_copy.inner_xml()
 
 					# Remove leading leftover spacing and punctuation
@@ -1616,12 +1620,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 					# Normalize whitespace
 					title = regex.sub(r"\s+", " ", title, flags=regex.DOTALL).strip()
-
-					# Remove nested <span>s in subtitles, which might trip up the next regex block
-					# We can't do this with the lxml element because it has no unwrap() function. remove() is not the same thing--
-					# we want to keep the tag contents.
-					title = regex.sub(r"(<span epub:type=\"subtitle\">[^<]*?)<span[^>]*?>([^<]*?</span>)", r"\1\2", title, flags=regex.DOTALL)
-					title = regex.sub(r"(<span epub:type=\"subtitle\">[^<]*?)</span>([^<]*?</span>)", r"\1\2", title, flags=regex.DOTALL)
 
 					# Do we have a subtitle? If so the first letter of that must be capitalized, so we pull that out
 					subtitle_matches = regex.findall(r"(.*?)<span epub:type=\"subtitle\">(.*?)</span>(.*?)", title, flags=regex.DOTALL)
