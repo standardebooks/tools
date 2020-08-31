@@ -243,7 +243,10 @@ class EasyXmlElement:
 				else:
 					parent.text = self.lxml_element.text
 			else:
-				prev.tail = prev.tail + self.lxml_element.text
+				if prev.tail:
+					prev.tail = prev.tail + self.lxml_element.text
+				else:
+					prev.tail = self.lxml_element.text
 
 		# This calls the EasyXmlTree.remove() function, not an lxml function
 		self.remove()
