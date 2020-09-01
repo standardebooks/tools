@@ -1610,7 +1610,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						element.remove()
 
 					# Unwrap (not remove) any subelements in subtitles, as they may trip up further regexes
-					for element in node_copy.xpath(".//*[contains(@epub:type, 'subtitle')]/*"):
+					for element in node_copy.xpath(".//*[contains(@epub:type, 'subtitle')]//*"):
 						element.unwrap()
 
 					title = node_copy.inner_xml()
