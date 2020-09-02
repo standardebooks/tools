@@ -1239,21 +1239,24 @@ def generate_title(xhtml: str) -> str:
 			raise se.InvalidSeEbookException("No [xhtml]<section>[/] or [xhtml]<article>[/] element for [xhtml]<hgroup>[/]")
 
 		# If the closest parent <section> or <article> is a part, division, or volume, then keep all <hgroup> children
-		if closest_parent_section.attribute("epub:type") and ("part" in closest_parent_section.attribute("epub:type") or "division" in closest_parent_section.attribute("epub:type") or "volume" in closest_parent_section.attribute("epub:type")):
-
+		if closest_parent_section.attribute("epub:type") and ("part" not in closest_parent_section.attribute("epub:type") and "division" not in closest_parent_section.attribute("epub:type") and "volume" not in closest_parent_section.attribute("epub:type")):
 			# Else, if the closest parent <section> or <article> is a halftitlepage, then discard <hgroup> subtitles
 			if closest_parent_section.attribute("epub:type") and "halftitlepage" in closest_parent_section.attribute("epub:type"):
 				for node in hgroup_element.xpath("./*[contains(@epub:type. 'subtitle')]"):
 					node.remove()
 
 			# Else, if the first child of the <hgroup> is a title, then also discard <hgroup> subtitles
+			# Note the concat() so that matching for `title` doesn't match `subtitle`
 			elif hgroup_element.xpath("./*[1][contains(concat(' ', @epub:type, ' '), ' title ')]"):
 				for node in hgroup_element.xpath("./*[contains(@epub:type, 'subtitle')]"):
 					node.remove()
 
 		# Then after processing <hgroup>, the title becomes the 1st <hgroup> child;
 		# if there is a 2nd <hgroup> child after processing, add a colon and space, then the text of the 2nd <hgroup> child.
-		title = regex.sub(r"\s+", " ", hgroup_element.xpath("./*[1]")[0].inner_text().strip())
+		try:
+			title = regex.sub(r"\s+", " ", hgroup_element.xpath("./*[1]")[0].inner_text().strip())
+		except Exception as ex:
+			raise se.InvalidSeEbookException("Couldn't find title in [xhml]<hgroup>[/]") from ex
 
 		subtitle = hgroup_element.xpath("./*[2]")
 		if subtitle:
