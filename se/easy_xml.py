@@ -251,6 +251,14 @@ class EasyXmlElement:
 		# This calls the EasyXmlTree.remove() function, not an lxml function
 		self.remove()
 
+	def replace_with(self, node) -> None:
+		"""
+		Remove this node and replace it with the passed node
+		"""
+
+		self.lxml_element.addnext(node.lxml_element)
+		self.remove()
+
 	@property
 	def text(self) -> str:
 		"""
