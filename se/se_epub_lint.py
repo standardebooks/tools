@@ -139,13 +139,11 @@ SEMANTICS & CONTENT
 "s-006", "Poem or verse [xhtml]<p>[/] (stanza) without [xhtml]<span>[/] (line) element."
 "s-007", "Element requires at least one block-level child."
 "s-008", "[xhtml]<br/>[/] element found before closing tag of block-level element."
-"s-009", "[xhtml]<h2>[/] element without [attr]epub:type=\"title\"[/] attribute."
 "s-010", "Empty element. Use [xhtml]<hr/>[/] for thematic breaks if appropriate."
 "s-011", "Element without [attr]id[/] attribute."
 "s-012", "Illegal [xhtml]<hr/>[/] as last child."
 "s-013", "Illegal [xhtml]<pre>[/] element."
 "s-014", "[xhtml]<br/>[/] after block-level element."
-"s-015", "Element has [xhtml]<span epub:type=\"subtitle\">[/] child, but first child is not [xhtml]<span>[/]. See semantics manual for structure of headers with subtitles."
 "s-016", "Incorrect [text]the[/] before Google Books link."
 "s-017", "[xhtml]<m:mfenced>[/] is deprecated in the MathML spec. Use [xhtml]<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>[/]."
 "s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements."
@@ -154,7 +152,6 @@ SEMANTICS & CONTENT
 "s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)"
 "s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/]."
 "s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/]."
-"s-024", "Half title [xhtml]<title>[/] elements must contain exactly: \"Half Title\"."
 "s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/]."
 "s-026", "Invalid Roman numeral."
 "s-027", f"{image_ref} missing [xhtml]<title>[/] element."
@@ -196,6 +193,12 @@ SEMANTICS & CONTENT
 "s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/]."
 "s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space."
 "s-065", "[val]fulltitle[/] semantic on element that is not [xhtml]<h1>[/]."
+
+UNUSED
+vvvvvvvvvvvvvvvvvvvvvv
+"s-009", "[xhtml]<h2>[/] element without [attr]epub:type=\"title\"[/] attribute."
+"s-015", "Element has [xhtml]<span epub:type=\"subtitle\">[/] child, but first child is not [xhtml]<span>[/]. See semantics manual for structure of headers with subtitles."
+"s-024", "Half title [xhtml]<title>[/] elements must contain exactly: \"Half Title\"."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -510,7 +513,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	local_css_selectors = [regex.sub(r"::[\p{Lowercase_Letter}\-]+", "", selector) for selector in local_css_rules]
 	unused_selectors = local_css_selectors.copy()
 
-	local_css_has_subtitle_style = False
 	local_css_has_halftitle_subtitle_style = False
 	local_css_has_poem_style = False
 	local_css_has_verse_style = False
@@ -529,9 +531,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	for selector, rules in local_css_rules.items():
 		if regex.search(r"^h[0-6]", selector, flags=regex.IGNORECASE):
 			selected_h.append(selector)
-
-		if selector == "span[epub|type~=\"subtitle\"]":
-			local_css_has_subtitle_style = True
 
 		if selector == "section[epub|type~=\"halftitlepage\"] span[epub|type~=\"subtitle\"]":
 			local_css_has_halftitle_subtitle_style = True
@@ -959,11 +958,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if not dom.xpath("/html/head/title[text() = 'Titlepage']"):
 						messages.append(LintMessage("s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/].", se.MESSAGE_TYPE_ERROR, filename))
 
-				if filename.name == "halftitle.xhtml":
-					has_halftitle = True
-					if not dom.xpath("/html/head/title[text() = 'Half Title']"):
-						messages.append(LintMessage("s-024", "Half title [xhtml]<title>[/] elements must contain exactly: \"Half Title\".", se.MESSAGE_TYPE_ERROR, filename))
-
 				if filename.name == "colophon.xhtml":
 					# Check for wrong grammar filled in from template
 					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
@@ -1047,50 +1041,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							else:
 								xhtml_css_classes[css_class] = 1
 
+				# Check that internal links don't begin with ../
+				nodes = dom.xpath("/html/body//a[re:test(@href, '^\\.\\./text/')]")
+				if nodes:
+					messages.append(LintMessage("s-059", "Internal link beginning with [val]../text/[/].", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
+
+				# Get the title of this file to compare against the ToC later
 				if filename.name != "toc.xhtml":
-					# Check that internal links don't begin with ../
-					nodes = dom.xpath("/html/body//a[re:test(@href, '^\\.\\./text/')]")
-					if nodes:
-						messages.append(LintMessage("s-059", "Internal link beginning with [val]../text/[/].", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
-
-					for node in dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')]"):
-						# Decide whether to remove subheadings based on the following logic:
-						# If the closest parent <section> or <article> is a part, division, or volume, then keep subtitle
-						# Else, if the closest parent <section> or <article> is a halftitlepage, then discard subtitle
-						# Else, if the first child of the heading is not z3998:roman, then also discard subtitle
-						# Else, keep the subtitle.
-						node_copy = deepcopy(node)
-
-						for noteref_node in node_copy.xpath(".//a[contains(@epub:type, 'noteref')]"):
-							noteref_node.remove()
-
-						heading_subtitle = node_copy.xpath(".//*[contains(@epub:type, 'subtitle')]")
-
-						if heading_subtitle:
-							# If an <h#> tag has a subtitle, the non-subtitle text must also be wrapped in a <span>.
-							# This xpath returns all text nodes that are not white space. We don't want any text nodes,
-							# so if it returns anything then we know we're missing a <span> somewhere.
-							if node_copy.xpath("./text()[not(normalize-space(.) = '')]"):
-								messages.append(LintMessage("s-015", "Element has [xhtml]<span epub:type=\"subtitle\">[/] child, but first child is not [xhtml]<span>[/]. See semantics manual for structure of headers with subtitles.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring()]))
-
-							# OK, move on with processing headers.
-							closest_section_epub_type = node.xpath(".//ancestor::*[name()='section' or name()='article' or name()='body'][1]/@epub:type", True) or ""
-							heading_first_child_epub_type = node_copy.xpath("./span/@epub:type", True) or ""
-
-							if regex.search(r"(part|division|volume)", closest_section_epub_type) and "se:short-story" not in closest_section_epub_type:
-								remove_subtitle = False
-							elif "halftitlepage" in closest_section_epub_type:
-								remove_subtitle = True
-							elif "z3998:roman" not in heading_first_child_epub_type:
-								remove_subtitle = True
-							else:
-								remove_subtitle = False
-
-							if remove_subtitle:
-								heading_subtitle[0].remove()
-
-						normalized_text = " ".join(node_copy.inner_text().split())
-						headings.append((normalized_text, filename))
+					headings.append((se.formatting.generate_title(file_contents), str(filename)))
 
 				# Check for direct z3998:roman spans that should have their semantic pulled into the parent element
 				nodes = dom.xpath("/html/body//span[contains(@epub:type, 'z3998:roman')][not(preceding-sibling::*)][not(following-sibling::*)][not(preceding-sibling::text()[normalize-space(.)])][not(following-sibling::text()[normalize-space(.)])]")
@@ -1264,10 +1222,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//blockquote//p[parent::*[name() = 'footer'] or parent::*[name() = 'blockquote']]//cite") # Sometimes the <p> may be in a <footer>
 				if nodes:
 					messages.append(LintMessage("s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
-
-				# Check for <h2> missing epub:type="title" attribute
-				if dom.xpath("/html/body//h2[not(contains(@epub:type, 'title'))]"):
-					messages.append(LintMessage("s-009", "[xhtml]<h2>[/] element without [attr]epub:type=\"title\"[/] attribute.", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check for a common typo
 				if "z3998:nonfiction" in file_contents:
@@ -1451,10 +1405,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for missing subtitle styling
 				# Half titles have slightly different subtitle styles than regular subtitles
 				if filename.name == "halftitle.xhtml":
+					has_halftitle = True
+
 					if not local_css_has_halftitle_subtitle_style:
-						missing_styles += [node.totagstring() for node in dom.xpath("/html/body//span[contains(@epub:type, 'subtitle')]")]
-				else:
-					if not local_css_has_subtitle_style:
 						missing_styles += [node.totagstring() for node in dom.xpath("/html/body//span[contains(@epub:type, 'subtitle')]")]
 
 				if not local_css_has_elision_style:
@@ -1466,7 +1419,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for elements that don't have a direct block child
 				# allow white space and comments before the first child
-				nodes = dom.xpath("/html/body//*[(name()='blockquote' or name()='dd' or name()='header' or name()='li' or name()='footer') and (node()[normalize-space(.) and not(self::comment())])[1][not(name()='p' or name()='blockquote' or name()='div' or name()='table' or name()='header' or name()='ul' or name()='ol' or name()='footer' or re:test(name(), '^h[0-6]'))]]")
+				nodes = dom.xpath("/html/body//*[(name() = 'blockquote' or name() = 'dd' or name() = 'header' or name() = 'li' or name() = 'footer') and (node()[normalize-space(.) and not(self::comment())])[1][not(name() = 'p' or name() = 'blockquote' or name() = 'div' or name() = 'table' or name() = 'header' or name() = 'ul' or name() = 'ol' or name() = 'footer' or name() = 'hgroup' or re:test(name(), '^h[0-6]'))]]")
 
 				# Remove li nodes if we're in the ToC or LoI, as they don't require block-level children in those cases
 				nodes = [node for node in nodes if node.lxml_element.tag != "li" or (node.lxml_element.tag == "li" and filename.name not in ("toc.xhtml", "loi.xhtml"))]
@@ -2014,18 +1967,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	toc_entries = toc_dom.xpath("/html/body/nav[@epub:type='toc']//a")
 
 	# Match ToC headings against text headings
-	# Unlike main headings, ToC entries have a ‘:’ before the subheading so we need to strip these for comparison
 	for node in toc_entries:
-		entry_text = " ".join(node.inner_text().replace(":", "").split())
 		# Remove # anchors after filenames (for books like Aesop's fables)
 		entry_file = self.path / "src/epub" / regex.sub(r"#.+$", "", node.attribute("href"))
-		toc_headings.append((entry_text, str(entry_file)))
+		toc_headings.append((node.inner_text(), str(entry_file)))
 
 	for heading in headings:
-		# Occasionally we find a heading with a colon, but as we’ve stripped our
-		# ToC-only colons above we also need to do that here for the comparison.
-		heading_without_colons = (heading[0].replace(":", "").replace(se.NO_BREAK_SPACE, " ").replace(se.WORD_JOINER, ""), str(heading[1]))
-		if heading_without_colons not in toc_headings:
+		if heading not in toc_headings:
 			messages.append(LintMessage("m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, Path(heading[1])))
 
 	# Check our ordered ToC entries against the spine
