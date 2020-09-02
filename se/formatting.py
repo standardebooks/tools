@@ -10,6 +10,7 @@ import string
 import unicodedata
 from pathlib import Path
 
+from typing import Union
 import regex
 import roman
 import tinycss2
@@ -1209,7 +1210,7 @@ def simplify_css(css: str) -> str:
 	return css
 
 
-def generate_title(xhtml: str) -> str:
+def generate_title(xhtml: Union[str, EasyXhtmlTree]) -> str:
 	"""
 	Generate the value for the <title> tag of a string of XHTML, based on the rules in the SE manual.
 
@@ -1220,10 +1221,14 @@ def generate_title(xhtml: str) -> str:
 	A string representing the title for the document
 	"""
 
-	dom = EasyXhtmlTree(xhtml)
+	if isinstance(xhtml, str):
+		dom = EasyXhtmlTree(xhtml)
+	else:
+		dom = xhtml
 
 	# Do we have an hgroup element to process?
-	hgroup_elements = dom.xpath("//hgroup")
+	# Only match hgroups that do not have a ancestor containing an h# element.
+	hgroup_elements = dom.xpath("//hgroup[not(ancestor::*[./*[re:test(name(), '^h[1-6]$')]])]")
 	if hgroup_elements:
 		hgroup_element = hgroup_elements[0]
 
@@ -1242,7 +1247,7 @@ def generate_title(xhtml: str) -> str:
 		if closest_parent_section.attribute("epub:type") and ("part" not in closest_parent_section.attribute("epub:type") and "division" not in closest_parent_section.attribute("epub:type") and "volume" not in closest_parent_section.attribute("epub:type")):
 			# Else, if the closest parent <section> or <article> is a halftitlepage, then discard <hgroup> subtitles
 			if closest_parent_section.attribute("epub:type") and "halftitlepage" in closest_parent_section.attribute("epub:type"):
-				for node in hgroup_element.xpath("./*[contains(@epub:type. 'subtitle')]"):
+				for node in hgroup_element.xpath("./*[contains(@epub:type, 'subtitle')]"):
 					node.remove()
 
 			# Else, if the first child of the <hgroup> is a title, then also discard <hgroup> subtitles
@@ -1260,7 +1265,7 @@ def generate_title(xhtml: str) -> str:
 
 		subtitle = hgroup_element.xpath("./*[2]")
 		if subtitle:
-			subtitle_text = regex.sub(r"\s+", " ", subtitle[0].inner_text().strip())
+			subtitle_text = subtitle[0].inner_text().strip()
 			title += f": {subtitle_text}"
 
 	else:
@@ -1274,7 +1279,7 @@ def generate_title(xhtml: str) -> str:
 			for node in h_element.xpath("//*[contains(@epub:type, 'noteref')]"):
 				node.remove()
 
-			title = regex.sub(r"\s+", " ", h_element.inner_text().strip())
+			title = h_element.inner_text().strip()
 
 		else:
 			# No <h#> elements found. Try to get the title from the epub:type of the top-level <section> or <article>
@@ -1290,5 +1295,8 @@ def generate_title(xhtml: str) -> str:
 	# Remove odd spaces and word joiners
 	title = regex.sub(fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE}]", " ", title)
 	title = regex.sub(fr"[{se.WORD_JOINER}{se.ZERO_WIDTH_SPACE}]", "", title)
+
+	# Collapse spaces possibly introduced by white-space nodes
+	title = regex.sub(r"\s+", " ", title)
 
 	return title
