@@ -1284,4 +1284,8 @@ def generate_title(xhtml: str) -> str:
 				if top_level_wrapper.attribute("epub:type") and " " not in top_level_wrapper.attribute("epub:type"):
 					title = titlecase(top_level_wrapper.attribute("epub:type"))
 
+	# Remove odd spaces and word joiners
+	title = regex.sub(fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE}]", " ", title)
+	title = regex.sub(fr"[{se.WORD_JOINER}{se.ZERO_WIDTH_SPACE}]", "", title)
+
 	return title
