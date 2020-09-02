@@ -13,10 +13,9 @@ from pathlib import Path
 import regex
 import roman
 import tinycss2
-from bs4 import BeautifulSoup, NavigableString, Tag
 from lxml import etree
 from titlecase import titlecase as pip_titlecase
-#from se.vendor.titlecase import titlecase as pip_titlecase
+from se.easy_xml import EasyXhtmlTree
 
 import se
 
@@ -1221,59 +1220,68 @@ def generate_title(xhtml: str) -> str:
 	A string representing the title for the document
 	"""
 
-	soup = BeautifulSoup(xhtml, "lxml")
-	title = ""
+	dom = EasyXhtmlTree(xhtml)
 
-	h_elements = soup.select("h1:first-of-type,h2:first-of-type,h3:first-of-type,h4:first-of-type,h5:first-of-type,h6:first-of-type")
-
-	if h_elements:
-		h_element = h_elements[0]
+	# Do we have an hgroup element to process?
+	hgroup_elements = dom.xpath("//hgroup")
+	if hgroup_elements:
+		hgroup_element = hgroup_elements[0]
 
 		# Strip any endnote references first
-		for endnote_tag in h_element.select("[id^='noteref']"):
-			endnote_tag.decompose()
+		for node in hgroup_element.xpath("//*[contains(@epub:type, 'noteref')]"):
+			node.remove()
 
-		# semos://1.0.0/5.3.2.2
-		# Header is just a Roman numeral
-		if h_element.has_attr("epub:type") and "z3998:roman" in h_element["epub:type"]:
-			title = f"Chapter {roman.fromRoman(h_element.text.upper())}"
+		closest_parent_sections = hgroup_element.xpath("./ancestor::*[name() = 'section' or name() = 'article'][1]")
 
-		# Otherwise, iterate over the h# children to determine how we should generate the title
+		if closest_parent_sections:
+			closest_parent_section = closest_parent_sections[0]
 		else:
-			for h_child in h_element.contents:
-				if isinstance(h_child, Tag) and h_child.name == "span":
-					if h_child.has_attr("epub:type"):
-						if "z3998:roman" in h_child["epub:type"]:
-							title = f"Chapter {roman.fromRoman(h_child.text.upper())}"
+			raise se.InvalidSeEbookException("No [xhtml]<section>[/] or [xhtml]<article>[/] element for [xhtml]<hgroup>[/]")
 
-						if "subtitle" in h_child["epub:type"]:
-							title += f": {h_child.text}"
-					else:
-						if len(h_child.contents) > 1:
-							for span_child in h_child.contents:
-								if isinstance(span_child, Tag) and span_child.name == "span":
-									if span_child.has_attr("epub:type") and "z3998:roman" in span_child["epub:type"]:
-										title += str(roman.fromRoman(span_child.text.upper()))
-									else:
-										title += span_child.text
-								elif isinstance(span_child, NavigableString) and not span_child.isspace():
-									title += span_child
-						else:
-							title = h_child.text
-				elif isinstance(h_child, Tag) and (h_child.name == "abbr" or h_child.name == "i"):
-					title += h_child.text
-				elif isinstance(h_child, NavigableString) and not h_child.isspace():
-					title += h_child
+		# If the closest parent <section> or <article> is a part, division, or volume, then keep all <hgroup> children
+		if closest_parent_section.attribute("epub:type") and ("part" in closest_parent_section.attribute("epub:type") or "division" in closest_parent_section.attribute("epub:type") or "volume" in closest_parent_section.attribute("epub:type")):
+
+			# Else, if the closest parent <section> or <article> is a halftitlepage, then discard <hgroup> subtitles
+			if closest_parent_section.attribute("epub:type") and "halftitlepage" in closest_parent_section.attribute("epub:type"):
+				for node in hgroup_element.xpath("./*[contains(@epub:type. 'subtitle')]"):
+					node.remove()
+
+			# Else, if the first child of the <hgroup> is a title, then also discard <hgroup> subtitles
+			elif hgroup_element.xpath("./*[1][contains(concat(' ', @epub:type, ' '), ' title ')]"):
+				for node in hgroup_element.xpath("./*[contains(@epub:type, 'subtitle')]"):
+					node.remove()
+
+		# Then after processing <hgroup>, the title becomes the 1st <hgroup> child;
+		# if there is a 2nd <hgroup> child after processing, add a colon and space, then the text of the 2nd <hgroup> child.
+		title = regex.sub(r"\s+", " ", hgroup_element.xpath("./*[1]")[0].inner_text().strip())
+
+		subtitle = hgroup_element.xpath("./*[2]")
+		if subtitle:
+			subtitle_text = regex.sub(r"\s+", " ", subtitle[0].inner_text().strip())
+			title += f": {subtitle_text}"
 
 	else:
-		# No <h#> elements found. Try to get the title from the epub:type of the top-level <section> or <article>
-		top_level_wrappers = soup.select("body > section, body > article")
+		# No hgroups, so try to find the first h# element. The title becomes that element's inner text.
+		h_elements = dom.xpath("//*[re:test(name(), '^h[1-6]')][1]")
 
-		if top_level_wrappers:
-			top_level_wrapper = top_level_wrappers[0]
+		if h_elements:
+			h_element = h_elements[0]
 
-			# Only guess the title if there is a single value for epub:type
-			if top_level_wrapper.has_attr("epub:type") and " " not in top_level_wrapper["epub:type"]:
-				title = titlecase(top_level_wrapper["epub:type"])
+			# Strip any endnote references first
+			for node in h_element.xpath("//*[contains(@epub:type, 'noteref')]"):
+				node.remove()
 
-	return title.strip()
+			title = regex.sub(r"\s+", " ", h_element.inner_text().strip())
+
+		else:
+			# No <h#> elements found. Try to get the title from the epub:type of the top-level <section> or <article>
+			top_level_wrappers = dom.xpath("/html/body/*[name() = 'section' or name() = 'article'][1]")
+
+			if top_level_wrappers:
+				top_level_wrapper = top_level_wrappers[0]
+
+				# Only guess the title if there is a single value for epub:type
+				if top_level_wrapper.attribute("epub:type") and " " not in top_level_wrapper.attribute("epub:type"):
+					title = titlecase(top_level_wrapper.attribute("epub:type"))
+
+	return title
