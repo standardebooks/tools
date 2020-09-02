@@ -4,13 +4,13 @@ Defines functions useful for formatting code or text according to SE standards, 
 several text-level statistics like reading ease, and for adding semantics.
 """
 
+from copy import deepcopy
 import html.entities
 import math
 import string
 import unicodedata
 from pathlib import Path
 
-from typing import Union
 import regex
 import roman
 import tinycss2
@@ -1210,7 +1210,7 @@ def simplify_css(css: str) -> str:
 	return css
 
 
-def generate_title(xhtml: Union[str, EasyXhtmlTree]) -> str:
+def generate_title(xhtml) -> str:
 	"""
 	Generate the value for the <title> tag of a string of XHTML, based on the rules in the SE manual.
 
@@ -1224,7 +1224,7 @@ def generate_title(xhtml: Union[str, EasyXhtmlTree]) -> str:
 	if isinstance(xhtml, str):
 		dom = EasyXhtmlTree(xhtml)
 	else:
-		dom = xhtml
+		dom = deepcopy(xhtml)
 
 	# Do we have an hgroup element to process?
 	# Only match hgroups that do not have a ancestor containing an h# element.

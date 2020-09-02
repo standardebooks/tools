@@ -21,7 +21,6 @@ import lxml.cssselect
 import lxml.etree as etree
 from PIL import Image, UnidentifiedImageError
 import regex
-import roman
 from natsort import natsorted, ns
 
 import se
@@ -139,11 +138,13 @@ SEMANTICS & CONTENT
 "s-006", "Poem or verse [xhtml]<p>[/] (stanza) without [xhtml]<span>[/] (line) element."
 "s-007", "Element requires at least one block-level child."
 "s-008", "[xhtml]<br/>[/] element found before closing tag of block-level element."
+"s-009", "[xhtml]<hgroup>[/] element with only one child."
 "s-010", "Empty element. Use [xhtml]<hr/>[/] for thematic breaks if appropriate."
 "s-011", "Element without [attr]id[/] attribute."
 "s-012", "Illegal [xhtml]<hr/>[/] as last child."
 "s-013", "Illegal [xhtml]<pre>[/] element."
 "s-014", "[xhtml]<br/>[/] after block-level element."
+"s-015", "Element has [val]subtitle[/] semantic, but without a sibling having a [val]title[/] semantic."
 "s-016", "Incorrect [text]the[/] before Google Books link."
 "s-017", "[xhtml]<m:mfenced>[/] is deprecated in the MathML spec. Use [xhtml]<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>[/]."
 "s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements."
@@ -192,12 +193,10 @@ SEMANTICS & CONTENT
 "s-062", "[xhtml]<dt>[/] element in a glossary without exactly one [xhtml]<dfn>[/] child."
 "s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/]."
 "s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space."
-"s-065", "[val]fulltitle[/] semantic on element that is not [xhtml]<h1>[/]."
+"s-065", "[val]fulltitle[/] semantic on element that is not [xhtml]<h1>[/] or [xhtml]<hgroup>[/]."
 
 UNUSED
 vvvvvvvvvvvvvvvvvvvvvv
-"s-009", "[xhtml]<h2>[/] element without [attr]epub:type=\"title\"[/] attribute."
-"s-015", "Element has [xhtml]<span epub:type=\"subtitle\">[/] child, but first child is not [xhtml]<span>[/]. See semantics manual for structure of headers with subtitles."
 "s-024", "Half title [xhtml]<title>[/] elements must contain exactly: \"Half Title\"."
 
 TYPOGRAPHY
@@ -1041,6 +1040,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							else:
 								xhtml_css_classes[css_class] = 1
 
+				# Check for whitespace before noteref
+				# Do this early because we remove noterefs from headers later
+				nodes = dom.xpath("/html/body//a[contains(@epub:type, 'noteref') and re:test(preceding-sibling::node()[1], '\\s+$')]")
+				if nodes:
+					messages.append(LintMessage("t-012", "Illegal white space before noteref.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+
 				# Check that internal links don't begin with ../
 				nodes = dom.xpath("/html/body//a[re:test(@href, '^\\.\\./text/')]")
 				if nodes:
@@ -1290,6 +1295,16 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("x-012", "Illegal [attr]style[/] attribute. Don’t use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, {node.totagstring() for node in nodes}))
 
+				# Check for hgroup elements with only one child
+				nodes = dom.xpath("/html/body//hgroup[count(*)=1]")
+				if nodes:
+					messages.append(LintMessage("s-009", "[xhtml]<hgroup>[/] element with only one child.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+
+				# Check for hgroup elements with a subtitle but no title
+				nodes = dom.xpath("/html/body//hgroup[./*[contains(@epub:type, 'subtitle')] and not(./*[contains(concat(' ', @epub:type, ' '), ' title ')])]")
+				if nodes:
+					messages.append(LintMessage("s-015", "Element has [val]subtitle[/] semantic, but without a sibling having a [val]title[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+
 				# Check for illegal elements in <head>
 				nodes = dom.xpath("/html/head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
 				if nodes:
@@ -1327,7 +1342,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-010", "Empty element. Use [xhtml]<hr/>[/] for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for fulltitle semantic on non-h1
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'fulltitle') and name() != 'h1']")
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'fulltitle') and name() != 'h1' and name() != 'hgroup']")
 				if nodes:
 					messages.append(LintMessage("s-065", "[val]fulltitle[/] semantic on element that is not [xhtml]<h1>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
@@ -1342,65 +1357,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				#if nodes:
 				#	messages.append(LintMessage("t-xxx", "Legal case without parent [xhtml]<i>[/].", se.MESSAGE_TYPE_WARNING, filename, {f"{node.tostring()}." for node in nodes}))
 
-				unexpected_titles = []
-				# Only do this check if there's one <h#> tag. If there's more than one, then the xhtml file probably requires an overarching title
-				if len(dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')]")) == 1:
-					# If the chapter has a number and no subtitle, check the <title> tag...
-					nodes = dom.xpath("/html/body//*[contains(concat(' ', @epub:type, ' '), ' title ') and contains(@epub:type, 'z3998:roman')][re:test(name(), '^h[1-6]$')]")
-					if nodes:
-						try:
-							# Remove noterefs from the heading before checking
-							node_copy = deepcopy(nodes[0])
+				# Only do this check if there's one <h#> or one <hgroup> tag. If there's more than one, then the xhtml file probably requires an overarching title
+				if len(dom.xpath("/html/body/*[name() = 'section' or name() = 'article']/*[re:test(name(), '^h[1-6]$') or name() = 'hgroup']")) == 1:
+					title = se.formatting.generate_title(dom)
 
-							for noteref_node in node_copy.xpath(".//a[contains(@epub:type, 'noteref')]"):
-								noteref_node.remove()
-
-							chapter_number = roman.fromRoman(node_copy.inner_text())
-
-							if not dom.xpath(f"/html/head/title[re:match(., '(Chapter|Section|Part) {chapter_number}')]"):
-								unexpected_titles.append((f"Chapter {chapter_number}", filename))
-
-						except Exception:
-							messages.append(LintMessage("s-035", f"[xhtml]{node_copy.totagstring()}[/] element has the [val]z3998:roman[/] semantic, but is not a Roman numeral.", se.MESSAGE_TYPE_ERROR, filename))
-
-					# If the chapter has a number and subtitle, check the <title> tag...
-					nodes = dom.xpath("/html/body//*[contains(concat(' ', @epub:type, ' '), ' title ')][re:test(name(), '^h[1-6]$')][(./span[1])[contains(@epub:type, 'z3998:roman')]][(./span[2])[contains(@epub:type, 'subtitle')]]")
-					if nodes:
-						chapter_number = roman.fromRoman(nodes[0].lxml_element[0].text)
-
-						subtitle_node = se.easy_xml.EasyXmlElement(deepcopy(nodes[0].lxml_element[1]))
-
-						# First, remove endnotes in the subtitle
-						for noteref_node in subtitle_node.xpath("./a[contains(@epub:type, 'noteref')]"):
-							noteref_node.remove()
-
-						# Now remove all other tags (but not tag contents)
-						chapter_title = subtitle_node.inner_text()
-
-						if not dom.xpath(f"/html/head/title[re:match(., '(Chapter|Section|Part) {chapter_number}: {regex.escape(chapter_title)}')]"):
-							unexpected_titles.append((f"Chapter {chapter_number}: {chapter_title}", filename))
-
-				# Now, we try to select the first <h#> element in a <section> or <article>.
-				# If it doesn't have children and its content is a text string, check to see
-				# if the <title> tag matches. This catches for example <h2 epub:type="title">Introduction</h2>
-				# However, skip this step if the file contains 3+ <article> tags at the top level. That makes it likely
-				# that the book is a collection (like a poetry collection) and so the <title> tag can't be inferred.
-				if len(dom.xpath("/html/body/article")) <= 3:
-					# The xpath count(preceding-sibling::section) = 0 emulates :first-child
-					# Select the first <h#> element with no <span> children that is the child of the first <section> or <article>
-					nodes = dom.xpath("(/html/body//*[ (name()='section' and count(preceding-sibling::section) = 0) or (name()='article' and count(preceding-sibling::article) = 0)]//*[re:test(name(), '^h[1-6]$')])[1][contains(concat(' ', @epub:type, ' '), ' title ') and not(contains(concat(' ', @epub:type, ' '), ' z3998:roman '))][not(span)]")
-					if nodes:
-						node_copy = deepcopy(nodes[0])
-
-						for noteref_node in node_copy.xpath(".//a[contains(@epub:type, 'noteref')]"):
-							noteref_node.remove()
-
-						title = node_copy.inner_text()
-						if not dom.xpath(f"/html/head/title[text()='{title}']"):
-							unexpected_titles.append((title, filename))
-
-				for title, title_filename in unexpected_titles:
-					messages.append(LintMessage("s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, title_filename))
+					if not dom.xpath(f"/html/head/title[text() = '{title}']"):
+						messages.append(LintMessage("s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for missing subtitle styling
 				# Half titles have slightly different subtitle styles than regular subtitles
@@ -1658,12 +1620,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath(f"/html/body//a[contains(@epub:type, 'noteref')][(following-sibling::node()[1])[re:test(., '^[^\\s<–\\]\\)—{se.WORD_JOINER}]')]]")
 				if nodes:
 					messages.append(LintMessage("t-020", "Endnote links must be outside of punctuation, including quotation marks.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
-
-				# Check for whitespace before noteref
-				# Do this early because we remove noterefs from headers later
-				nodes = dom.xpath("/html/body//a[contains(@epub:type, 'noteref') and re:test(preceding-sibling::node()[1], '\\s+$')]")
-				if nodes:
-					messages.append(LintMessage("t-012", "Illegal white space before noteref.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for correct typography around measurements like 2 ft.
 				# But first remove href and id attrs because URLs and IDs may contain strings that look like measurements
