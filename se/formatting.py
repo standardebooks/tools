@@ -1229,8 +1229,8 @@ def generate_title(xhtml) -> str:
 	title = ""
 
 	# Do we have an hgroup element to process?
-	# Only match hgroups that do not have a ancestor containing an h# element.
-	hgroup_elements = dom.xpath("//hgroup[not(ancestor::*[./*[re:test(name(), '^h[1-6]$')]])]")
+	# Only match hgroups that do not have a ancestor containing an h# or header (which presumably contains an h# element).
+	hgroup_elements = dom.xpath("//hgroup[not(ancestor::*[./*[re:test(name(), '^h[1-6]$') or name() = 'header']])]")
 	if hgroup_elements:
 		hgroup_element = hgroup_elements[0]
 
