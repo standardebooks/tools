@@ -1290,7 +1290,7 @@ def generate_title(xhtml) -> str:
 
 				# Only guess the title if there is a single value for epub:type
 				if top_level_wrapper.attribute("epub:type") and " " not in top_level_wrapper.attribute("epub:type"):
-					title = titlecase(top_level_wrapper.attribute("epub:type"))
+					title = titlecase(top_level_wrapper.attribute("epub:type").replace("z3998:", "").replace("-", " "))
 
 	# Remove odd spaces and word joiners
 	title = regex.sub(fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE}]", " ", title)
