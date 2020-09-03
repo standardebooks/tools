@@ -153,6 +153,7 @@ SEMANTICS & CONTENT
 "s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)"
 "s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/]."
 "s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/]."
+"s-024", "Header elements that are entirely non-English should not be set in italics."
 "s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/]."
 "s-026", "Invalid Roman numeral."
 "s-027", f"{image_ref} missing [xhtml]<title>[/] element."
@@ -194,10 +195,6 @@ SEMANTICS & CONTENT
 "s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/]."
 "s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space."
 "s-065", "[val]fulltitle[/] semantic on element that is not [xhtml]<h1>[/] or [xhtml]<hgroup>[/]."
-
-UNUSED
-vvvvvvvvvvvvvvvvvvvvvv
-"s-024", "Half title [xhtml]<title>[/] elements must contain exactly: \"Half Title\"."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1201,6 +1198,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					nodes = dom.xpath("/html/body//*[not(self::tr or self::td)][re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][not(descendant::p)]")
 					if nodes:
 						messages.append(LintMessage("s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
+
+				# Check for header elements that are entirely non-English
+				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::*) + count(following-sibling::*) = 0]]")
+				if nodes:
+					messages.append(LintMessage("s-024", "Header elements that are entirely non-English should not be set in italics.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for deprecated MathML elements
 				# Note we dont select directly on element name, because we want to ignore any namespaces that may (or may not) be defined
