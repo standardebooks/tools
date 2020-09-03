@@ -195,6 +195,8 @@ SEMANTICS & CONTENT
 "s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/]."
 "s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space."
 "s-065", "[val]fulltitle[/] semantic on element that is not [xhtml]<h1>[/] or [xhtml]<hgroup>[/]."
+"s-066", "Header element missing [val]label[/] semantic."
+"s-067", "Header element with a [val]label[/] semantic child, but without an [val]ordinal[/] semantic child."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1203,6 +1205,16 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::*) + count(following-sibling::*) = 0]]")
 				if nodes:
 					messages.append(LintMessage("s-024", "Header elements that are entirely non-English should not be set in italics.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+
+				# Check for header elements that have a label, but are missing the label semantic
+				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./text()[re:test(., '(Part|Book|Volume|Section)')]]")
+				if nodes:
+					messages.append(LintMessage("s-066", "Header element missing [val]label[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+
+				# Check for header elements that have a label semantic, but are missing an ordinal sibling
+				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./span[contains(@epub:type, 'label')]][not(./span[contains(@epub:type, 'ordinal')])]")
+				if nodes:
+					messages.append(LintMessage("s-067", "Header element with a [val]label[/] semantic child, but without an [val]ordinal[/] semantic child.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 				# Check for deprecated MathML elements
 				# Note we dont select directly on element name, because we want to ignore any namespaces that may (or may not) be defined
