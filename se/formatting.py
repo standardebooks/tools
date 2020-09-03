@@ -1226,6 +1226,8 @@ def generate_title(xhtml) -> str:
 	else:
 		dom = deepcopy(xhtml)
 
+	title = ""
+
 	# Do we have an hgroup element to process?
 	# Only match hgroups that do not have a ancestor containing an h# element.
 	hgroup_elements = dom.xpath("//hgroup[not(ancestor::*[./*[re:test(name(), '^h[1-6]$')]])]")
