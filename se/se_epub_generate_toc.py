@@ -52,12 +52,14 @@ class TocItem:
 	roman = ""
 	title = ""
 	subtitle = ""
+	title_is_ordinal = False
 	lang = ""
 	id = ""
 	epub_type = ""
 	division = BookDivision.NONE
 	place = Position.FRONT
 
+	@property
 	def toc_link(self) -> str:
 		"""
 		Generates the hyperlink for the ToC item.
@@ -76,7 +78,7 @@ class TocItem:
 		# If the title is entirely Roman numeral, put epub:type within <a>.
 		if regex.search(r"^<span epub:type=\"z3998:roman\">[IVXLC]+<\/span>$", self.title):
 			# title is a pure roman number
-			if self.subtitle == "":
+			if self.subtitle == "":  # put the roman flag inside the <a> tag
 				out_string += f"<a href=\"text/{self.file_link}\" epub:type=\"z3998:roman\">{self.roman}</a>\n"
 			else:
 				# test for an italicised foreign language subtitle, and adjust accordingly
@@ -88,8 +90,8 @@ class TocItem:
 					out_string += f"<a href=\"text/{self.file_link}\"><span epub:type=\"z3998:roman\">{self.roman}</span>: {self.subtitle}</a>\n"
 		else:
 			# title has text other than a roman numeral
-			if self.subtitle != "" and (self.division in [BookDivision.PART, BookDivision.DIVISION, BookDivision.VOLUME]):
-				# Use the subtitle only if we're a Part or Division or Volume
+			if self.subtitle != "" and (self.title_is_ordinal or (self.division in [BookDivision.PART, BookDivision.DIVISION, BookDivision.VOLUME])):
+				# Use the subtitle only if we're a Part or Division or Volume or if title was an ordinal
 				out_string += f"<a href=\"text/{self.file_link}\">{self.title}: {self.subtitle}</a>\n"
 			else:
 				# test for an italicised foreign language title, and adjust accordingly
@@ -204,14 +206,17 @@ def add_landmark(soup: BeautifulSoup, textf: str, landmarks: list):
 		landmark.epub_type = epub_type
 		landmark.file_link = textf
 		landmark.place = get_place(soup)
-		title_tag = soup.find("title")
-		if title_tag is not None:
-			landmark.title = title_tag.string
-			if landmark.title is None:
-				# This is a bit desperate, use this only if there's no proper <title> tag in file.
-				landmark.title = landmark.epub_type.capitalize()
+		if epub_type == "halftitlepage":
+			landmark.title = "Half Title"
 		else:
-			landmark.title = landmark.epub_type.capitalize()
+			title_tag = soup.find("title")
+			if title_tag is not None:
+				landmark.title = title_tag.string
+				if landmark.title is None:
+					# This is a bit desperate, use this only if there's no proper <title> tag in file.
+					landmark.title = landmark.epub_type.capitalize()
+			else:
+				landmark.title = landmark.epub_type.capitalize()
 		landmarks.append(landmark)
 
 def process_landmarks(landmarks_list: list, work_type: str, work_title: str):
@@ -262,18 +267,18 @@ def process_items(item_list: list) -> str:
 		# Check to see if next item is at same, lower or higher level than us.
 		if next_item.level == this_item.level:  # SIMPLE
 			out_string += "<li>\n"
-			out_string += this_item.toc_link()
+			out_string += this_item.toc_link
 			out_string += "</li>\n"
 
 		if next_item.level > this_item.level:  # PARENT
 			out_string += "<li>\n"
-			out_string += this_item.toc_link()
+			out_string += this_item.toc_link
 			out_string += "<ol>\n"
 			unclosed_ol += 1
 
 		if next_item.level < this_item.level:  # LAST CHILD
 			out_string += "<li>\n"
-			out_string += this_item.toc_link()
+			out_string += this_item.toc_link
 			out_string += "</li>\n"  # Close off this item.
 			torepeat = this_item.level - next_item.level
 			if torepeat > 0 and unclosed_ol > 0:
@@ -490,13 +495,25 @@ def process_a_heading(soup: BeautifulSoup, textf: str, is_toplevel: bool, single
 
 	toc_item.lang = soup.get("xml:lang") or ""
 
-	# A heading may include z3998:roman directly,
-	# eg <h5 epub:type="title z3998:roman">II</h5>.
 	epub_type = soup.get("epub:type") or ""
 
+	# it may be an empty header tag eg <h3>, so we pass its parent rather than itself to evaluate the parent's descendants
+	if not epub_type and soup.name in ["h2", "h3", "h4", "h5", "h6"]:
+		parent = soup.parent
+		if parent:
+			evaluate_descendants(parent, toc_item)
+		else:  # shouldn't ever happen, but... just in case, raise an error
+			raise se.InvalidInputException(f"Header without parent in file: [path][link=file://{textf}]{textf}[/][/].")
+		return toc_item
+	# A heading may include z3998:roman directly,
+	# eg <h5 epub:type="title z3998:roman">II</h5>.
 	if "z3998:roman" in epub_type:
 		toc_item.roman = extract_strings(soup)
 		toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
+		return toc_item
+	# may be the halftitle page with a subtitle, so we need to burrow down
+	if ("fulltitle" in epub_type) and (soup.name == "hgroup"):
+		evaluate_descendants(soup, toc_item)
 		return toc_item
 	# or it may be a straightforward one-level title eg: <h2 epub:type="title">Imprint</h2>
 	if "title" in epub_type:
@@ -525,29 +542,32 @@ def evaluate_descendants(soup, toc_item):
 			epub_type = child.get("epub:type") or ""
 			if not epub_type and child.name in ["h2", "h3", "h4", "h5", "h6"]:
 				# should be a label/ordinal grouping
-				stuff = extract_strings(child)
-				if "label" in stuff and "ordinal" in stuff:  # quick test
+				child_strings = extract_strings(child)
+				if "label" in child_strings and "ordinal" in child_strings:  # quick test
+					toc_item.title_is_ordinal = True
 					# strip label
-					stuff = regex.sub(r"<span epub:type=\"label\">(.*?)</span>", " \\1 ", stuff)
+					child_strings = regex.sub(r"<span epub:type=\"label\">(.*?)</span>", " \\1 ", child_strings)
 					# adjust roman
-					stuff = regex.sub(r"ordinal z3998:roman", "z3998:roman", stuff)
-					stuff = regex.sub(r"z3998:roman ordinal", "z3998:roman", stuff)
+					child_strings = regex.sub(r"ordinal z3998:roman", "z3998:roman", child_strings)
+					child_strings = regex.sub(r"z3998:roman ordinal", "z3998:roman", child_strings)
 					# remove ordinal
-					stuff = regex.sub(r"<span epub:type=\"ordinal\">(.*?)</span>", " \\1 ", stuff)
-					stuff = regex.sub(r"[ ]{2,}", " ", stuff)
-					toc_item.title = stuff.strip()
+					child_strings = regex.sub(r"<span epub:type=\"ordinal\">(.*?)</span>", " \\1 ", child_strings)
+					# remove extra spaces
+					child_strings = regex.sub(r"[ ]{2,}", " ", child_strings)
+					toc_item.title = child_strings.strip()
 				continue  # skip the following
 			if "z3998:roman" in epub_type:
 				toc_item.roman = extract_strings(child)
 				if not toc_item.title:
 					toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
-			if epub_type == "title":
-				if toc_item.title or toc_item.roman:  # if title or roman already filled, must be a subtitle
-					toc_item.subtitle = extract_strings(child)
-				else:
-					toc_item.title = extract_strings(child)
-			if epub_type == "subtitle":
+			if "subtitle" in epub_type:
 				toc_item.subtitle = extract_strings(child)
+			else:
+				if "title" in epub_type:  # this allows for 'fulltitle' to work here, too
+					if toc_item.title or toc_item.roman or toc_item.title_is_ordinal:  # if title already filled, must be a subtitle
+						toc_item.subtitle = extract_strings(child)
+					else:
+						toc_item.title = extract_strings(child)
 	return toc_item
 
 def get_book_division(tag: BeautifulSoup) -> BookDivision:
