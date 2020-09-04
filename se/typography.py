@@ -8,10 +8,10 @@ from pathlib import Path
 from typing import Dict, Optional
 import regex
 import smartypants
-from bs4 import BeautifulSoup
 from hyphen import Hyphenator
 from hyphen.dictools import list_installed
 import se
+from se.formatting import EasyXhtmlTree
 
 
 def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
@@ -300,16 +300,13 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 	"""
 
 	hyphenators: Dict[str, Hyphenator] = {}
-	soup = BeautifulSoup(xhtml, "lxml")
+	dom = EasyXhtmlTree(xhtml)
 
 	if language is None:
 		try:
-			language = str(soup.html["xml:lang"])
-		except Exception:
-			try:
-				language = str(soup.html["lang"])
-			except Exception as ex:
-				raise se.InvalidLanguageException("No [attr]xml:lang[/] or [attr]lang[/] attribute on [xhtml]<html>[/] element; couldn’t guess file language.") from ex
+			language = dom.xpath("/html/@xml:lang | /html/@lang")[0]
+		except Exception as ex:
+			raise se.InvalidLanguageException("No [attr]xml:lang[/] or [attr]lang[/] attribute on [xhtml]<html>[/] element; couldn’t guess file language.") from ex
 
 	try:
 		language = language.replace("-", "_")
@@ -318,7 +315,7 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 	except Exception as ex:
 		raise se.MissingDependencyException(f"Hyphenator for language [text]{language}[/] not available.\nInstalled hyphenators: {list_installed()}.") from ex
 
-	text = str(soup.body)
+	text = dom.xpath("/html/body")[0].inner_xml()
 	result = text
 	word = ""
 	in_tag = False
@@ -386,8 +383,7 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 
 		pos = pos + 1
 
-	xhtml = regex.sub(r"<body.+<\/body>", "", xhtml, flags=regex.DOTALL)
-	xhtml = xhtml.replace("</head>", f"</head>\n\t{result}")
+	xhtml = regex.sub(r"(<body[^>]+?>).+?<\/body>", fr"\1{result}</body>", xhtml, flags=regex.DOTALL)
 
 	return xhtml
 
