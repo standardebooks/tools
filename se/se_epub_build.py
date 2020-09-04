@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import List
 import importlib_resources
 
-from bs4 import BeautifulSoup
 from cairosvg import svg2png
 from natsort import natsorted
 from PIL import Image
@@ -837,14 +836,14 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			with open(work_epub_root_directory / "epub" / toc_filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 
-				soup = BeautifulSoup(xhtml, "lxml")
+				dom = se.formatting.EasyXhtmlTree(xhtml)
 
-				for match in soup.select("ol > li > ol > li > ol"):
-					match.parent.insert_after(match)
-					match.unwrap()
+				for node in dom.xpath("//ol/li/ol/li/ol"):
+					node.lxml_element.getparent().addnext(node.lxml_element)
+					node.unwrap()
 
 				file.seek(0)
-				file.write(str(soup))
+				file.write(dom.tostring())
 				file.truncate()
 
 			# Rebuild the NCX

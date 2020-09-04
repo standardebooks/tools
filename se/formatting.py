@@ -606,7 +606,6 @@ def format_xml(xml: str) -> str:
 	except Exception as ex:
 		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
 
-
 	# Pull out the doctype if there is one, as etree seems to eat it
 	doctypes = regex.search(r"<!doctype[^>]+?>", xml, flags=regex.IGNORECASE)
 

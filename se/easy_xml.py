@@ -5,6 +5,8 @@ The class exposes some helpful functions like css_select() and xpath().
 """
 
 from typing import Dict, List, Union
+import unicodedata
+
 import regex
 from lxml import cssselect, etree
 import se
@@ -65,6 +67,18 @@ class EasyXmlTree:
 
 		return result
 
+	def tostring(self) -> str:
+		"""
+		Serialize the tree to a string.
+		"""
+
+		xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + etree.tostring(self.etree, encoding="unicode") + "\n"
+
+		# Normalize unicode characters
+		xml = unicodedata.normalize("NFC", xml)
+
+		return xml
+
 class EasyXhtmlTree(EasyXmlTree):
 	"""
 	Wrapper for the XHTML namespace.
@@ -75,6 +89,17 @@ class EasyXhtmlTree(EasyXmlTree):
 		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 
 		EasyXmlTree.__init__(self, xml_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", ""))
+
+	def tostring(self) -> str:
+		"""
+		Serialize the tree to a string.
+		"""
+
+		xml = EasyXmlTree.tostring(self)
+
+		xml = xml.replace("<html", "<html xmlns=\"http://www.w3.org/1999/xhtml\"")
+
+		return xml
 
 class EasySvgTree(EasyXmlTree):
 	"""
@@ -87,6 +112,17 @@ class EasySvgTree(EasyXmlTree):
 
 		EasyXmlTree.__init__(self, xml_string.replace(" xmlns=\"http://www.w3.org/2000/svg\"", ""))
 
+	def tostring(self) -> str:
+		"""
+		Serialize the tree to a string.
+		"""
+
+		xml = EasyXmlTree.tostring(self)
+
+		xml = xml.replace("<svg", "<svg xmlns=\"http://www.w3.org/2000/svg\"")
+
+		return xml
+
 class EasyOpfTree(EasyXmlTree):
 	"""
 	Wrapper for the OPF namespace.
@@ -97,6 +133,17 @@ class EasyOpfTree(EasyXmlTree):
 		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 
 		EasyXmlTree.__init__(self, xml_string.replace(" xmlns=\"http://www.idpf.org/2007/opf\"", ""))
+
+	def tostring(self) -> str:
+		"""
+		Serialize the tree to a string.
+		"""
+
+		xml = EasyXmlTree.tostring(self)
+
+		xml = xml.replace("<package", "<package xmlns=\"http://www.idpf.org/2007/opf\"")
+
+		return xml
 
 class EasyXmlElement:
 	"""
