@@ -283,6 +283,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])treet[\s\-]arab\b", r"\1treet Arab", xhtml)		# street-arab -> street Arab
 	xhtml = regex.sub(r"\b[EÉ]migr[eé](?!e)", r"Émigré", xhtml)			# Emigre -> Émigré (but not emigrée, which is French)
 	xhtml = regex.sub(r"\b[eé]migr[eé](?!e)", r"émigré", xhtml)			# emigre -> émigré (but not emigrée, which is French)
+	xhtml = regex.sub(r"\b([Cc])ourtezan", r"\1ourtesan", xhtml)			# courtezan -> courtesan
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
