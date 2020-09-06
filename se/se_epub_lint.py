@@ -1204,7 +1204,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
 
 				# Check for header elements that are entirely non-English
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::*) + count(following-sibling::*) = 0]]")
+				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)]) = 0]]")
 				if nodes:
 					messages.append(LintMessage("s-024", "Header elements that are entirely non-English should not be set in italics.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
