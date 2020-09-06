@@ -244,6 +244,7 @@ TYPOGRAPHY
 "t-042", "Possible typo."
 "t-042", "Possible typo."
 "t-043", "Dialog tag missing punctuation."
+"t-044", "Comma required after leading [text]Or[/] in subtitles."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1309,6 +1310,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//i[@xml:lang][starts-with(., '“') or re:test(., '”$')]")
 				if nodes:
 					messages.append(LintMessage("t-024", "When italicizing language in dialog, italics go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+
+				# Check for comma after leading Or in subtitles
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'subtitle') and re:test(text(), '^Or\\s')]")
+				if nodes:
+					messages.append(LintMessage("t-044", "Comma required after leading [text]Or[/] in subtitles.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 				# Check for style attributes
 				nodes = dom.xpath("/html/body//*[@style]")
