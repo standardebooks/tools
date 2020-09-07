@@ -198,6 +198,7 @@ SEMANTICS & CONTENT
 "s-066", "Header element missing [val]label[/] semantic."
 "s-067", "Header element with a [val]label[/] semantic child, but without an [val]ordinal[/] semantic child."
 "s-068", "Header element missing [val]ordinal[/] semantic."
+"s-069", "[xhtml]<body>[/] element missing direct child [xhtml]<section>[/] or [xhtml]<article>[/] element."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1202,6 +1203,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					nodes = dom.xpath("/html/body//*[not(self::tr or self::td)][re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][not(descendant::p)]")
 					if nodes:
 						messages.append(LintMessage("s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
+
+					# Also check for body element without child section or article
+					nodes = dom.xpath("/html/body[not(./*[name() = 'section' or name() = 'article'])]")
+					if nodes:
+						messages.append(LintMessage("s-069", "[xhtml]<body>[/] element missing direct child [xhtml]<section>[/] or [xhtml]<article>[/] element.", se.MESSAGE_TYPE_ERROR, filename))
+
 
 				# Check for header elements that are entirely non-English
 				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)]) = 0]]")
