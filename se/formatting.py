@@ -1287,8 +1287,10 @@ def generate_title(xhtml) -> str:
 			title = h_element.inner_text().strip()
 
 		else:
-			# No <h#> elements found. Try to get the title from the epub:type of the top-level <section> or <article>
-			top_level_wrappers = dom.xpath("/html/body/*[name() = 'section' or name() = 'article'][1]")
+			# No <h#> elements found. Try to get the title from the epub:type of the deepest <section> or <article> that has no <section> or <article> siblings. (Note the parenthesis
+			# to match against `last()`).
+			# This is to catch cases of <section>s nested for recomposability, so that we don't get "Part 1" instead of "Epigraph" (of part 1)
+			top_level_wrappers = dom.xpath("(/html/body//*[name() = 'section' or name() = 'article' and count(preceding-sibling::*) + count(following-sibling::*) = 0])[last()]")
 
 			if top_level_wrappers:
 				top_level_wrapper = top_level_wrappers[0]
@@ -1298,10 +1300,12 @@ def generate_title(xhtml) -> str:
 					title = titlecase(top_level_wrapper.attribute("epub:type").replace("z3998:", "").replace("-", " "))
 
 	# Remove odd spaces and word joiners
-	title = regex.sub(fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE}]", " ", title)
+	title = regex.sub(fr"[{se.NO_BREAK_SPACE}]", " ", title)
 	title = regex.sub(fr"[{se.WORD_JOINER}{se.ZERO_WIDTH_SPACE}]", "", title)
 
 	# Collapse spaces possibly introduced by white-space nodes
-	title = regex.sub(r"\s+", " ", title)
+	# This matches all white space EXCEPT hair space; note the double negation with uppercase \S
+	# See https://stackoverflow.com/questions/3548949/how-can-i-exclude-some-characters-from-a-class
+	title = regex.sub(fr"[^\S{se.HAIR_SPACE}]+", " ", title)
 
 	return title
