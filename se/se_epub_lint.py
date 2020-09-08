@@ -1656,7 +1656,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-004", "[xhtml]img[/] element missing [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, img_no_alt))
 
 				# Check for punctuation after endnotes
-				nodes = dom.xpath(f"/html/body//a[contains(@epub:type, 'noteref')][(following-sibling::node()[1])[re:test(., '^[^\\s<–\\]\\)—{se.WORD_JOINER}]')]]")
+				nodes = dom.xpath(f"/html/body//a[contains(@epub:type, 'noteref')][(following-sibling::node()[1])[re:test(., '^[^\\s<–\\]\\)—{se.WORD_JOINER}a-zA-Z0-9]')]]")
 				if nodes:
 					messages.append(LintMessage("t-020", "Endnote links must be outside of punctuation, including quotation marks.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
 
