@@ -1056,7 +1056,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Get the title of this file to compare against the ToC later
 				if filename.name != "toc.xhtml":
-					headings.append((se.formatting.generate_title(file_contents), str(filename)))
+					heading = se.formatting.generate_title(file_contents)
+					if heading != "":
+						headings.append((heading, str(filename)))
 
 				# Check for direct z3998:roman spans that should have their semantic pulled into the parent element
 				nodes = dom.xpath("/html/body//span[contains(@epub:type, 'z3998:roman')][not(preceding-sibling::*)][not(following-sibling::*)][not(preceding-sibling::text()[normalize-space(.)])][not(following-sibling::text()[normalize-space(.)])]")
