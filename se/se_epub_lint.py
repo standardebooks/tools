@@ -153,7 +153,7 @@ SEMANTICS & CONTENT
 "s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)"
 "s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/]."
 "s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/]."
-"s-024", "Header elements that are entirely non-English should not be set in italics."
+"s-024", "Header elements that are entirely non-English should not be set in italics. Instead, the [xhtml]<h#>[/] element has the [attr]xml:lang[/] attribute."
 "s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/]."
 "s-026", "Invalid Roman numeral."
 "s-027", f"{image_ref} missing [xhtml]<title>[/] element."
@@ -1219,7 +1219,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for header elements that are entirely non-English
 				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)]) = 0]]")
 				if nodes:
-					messages.append(LintMessage("s-024", "Header elements that are entirely non-English should not be set in italics.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
+					messages.append(LintMessage("s-024", "Header elements that are entirely non-English should not be set in italics. Instead, the [xhtml]<h#>[/] element has the [attr]xml:lang[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for header elements that have a label, but are missing the label semantic
 				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./text()[re:test(., '^(Part|Book|Volume|Section)\\b')] or (./span[contains(@epub:type, 'ordinal')] and not(./span[contains(@epub:type, 'label')]))]")
