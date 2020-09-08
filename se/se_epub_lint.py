@@ -199,6 +199,7 @@ SEMANTICS & CONTENT
 "s-067", "Header element with a [val]label[/] semantic child, but without an [val]ordinal[/] semantic child."
 "s-068", "Header element missing [val]ordinal[/] semantic."
 "s-069", "[xhtml]<body>[/] element missing direct child [xhtml]<section>[/] or [xhtml]<article>[/] element."
+"s-070", "[xhtml]<h#>[/] element without [xhtml]<hgroup>[/] parent and without semantic inflection."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1166,6 +1167,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//i[contains(@epub:type, 'z3998:stage-direction')][re:test(., '\\.$')][(following-sibling::node()[1])[re:test(., '^[,:;!?]')]]")
 				if nodes:
 					messages.append(LintMessage("t-018", "Stage direction ending in period next to other punctuation. Remove trailing periods in stage direction.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
+
+				# Check for h# without semantics. h# that are children of hgroup are OK, as are any h# that have child elements (which likely have the correct semantics)
+				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(@epub:type)][not(./*[not(name() = 'a' and contains(@epub:type, 'noteref'))])][ancestor::*[1][name() != 'hgroup']]")
+				if nodes:
+					messages.append(LintMessage("s-070", "[xhtml]<h#>[/] element without [xhtml]<hgroup>[/] parent and without semantic inflection.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
 				# Check for ending punctuation inside italics that have semantics.
 				# Ignore the colophon because paintings might have punctuation in their names
