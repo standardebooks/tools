@@ -1082,7 +1082,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Get the title of this file to compare against the ToC later.
 				# We ignore the ToC file itself.
-				if not dom.xpath("/html/body/nav[contains(@epub:type, 'toc')]"):
+				# Also ignore files that have more than 3 top-level sections or articles, as these are probably compilation works that will have unique titles.
+				if not dom.xpath("/html/body/nav[contains(@epub:type, 'toc')]") and not dom.xpath("/html/body[count(./section) + count(./article) > 3]"):
 					try:
 						header_text = dom.xpath("/html/head/title/text()")[0]
 					except:
