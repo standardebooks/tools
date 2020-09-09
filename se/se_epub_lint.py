@@ -1056,7 +1056,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Get the title of this file to compare against the ToC later
 				if filename.name != "toc.xhtml":
-					header_text = se.formatting.generate_title(file_contents)
+					try:
+						header_text = dom.xpath("/html/head/title/text()")[0]
+					except:
+						header_text = ""
+
 					if header_text != "":
 						headings.append((header_text, str(filename)))
 
