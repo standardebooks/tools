@@ -957,11 +957,18 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				messages = messages + _get_malformed_urls(file_contents, filename)
 
-				if filename.name == "titlepage.xhtml":
+				# concat() to not match `halftitlepage`
+				if dom.xpath("/html/body/section[contains(concat(' ', @epub:type, ' '), ' titlepage ')]"):
 					if not dom.xpath("/html/head/title[text() = 'Titlepage']"):
 						messages.append(LintMessage("s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/].", se.MESSAGE_TYPE_ERROR, filename))
+				else:
+					# Check for common typos
+					# Don't check the titlepage because it has a standard format and may raise false positives
+					matches = [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", file_contents, flags=regex.IGNORECASE)]
+					if matches:
+						messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-				if filename.name == "colophon.xhtml":
+				if dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"):
 					# Check for wrong grammar filled in from template
 					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
 					if nodes:
@@ -1009,6 +1016,23 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 							if "books.google.com" in link and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
 								messages.append(LintMessage("m-040", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
+				else:
+					# This file is not the colophon.
+					# Check for ending punctuation inside italics that have semantics.
+					# Ignore the colophon because paintings might have punctuation in their names
+
+					# This xpath matches b or i elements with epub:type="se:name...", that are not stage direction, whose last text node ends in punctuation.
+					# Note that we check that the last node is a text node, because we may have <abbr> a sthe last node
+					matches = [node.tostring() for node in dom.xpath("(//b | //i)[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., '[\\.,!\\?]$')]]")]
+
+					# ...and also check for ending punctuation inside em tags, if it looks like a *part* of a clause
+					# instead of a whole clause. If the <em> is preceded by an em dash or quotes, or if there's punctuation
+					# and a space bofore it, then it's presumed to be a whole clause.
+					# We can't use xpath for this one because xpath's regex engine doesn't seem to work with {1,2}
+					matches = matches + [match.strip() for match in regex.findall(r"(?<!.[—“‘>]|[!\.\?…;]\s)<em>(?:\w+?\s*)+[\.,\!\?;]</em>", file_contents) if match.islower()]
+
+					if matches:
+						messages.append(LintMessage("t-017", "Ending punctuation inside italics. Ending punctuation is only allowed within italics if the phrase is an independent clause.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check for unused selectors
 				if filename.name not in ("titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml"):
@@ -1056,7 +1080,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-059", "Internal link beginning with [val]../text/[/].", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
 				# Get the title of this file to compare against the ToC later
-				if filename.name != "toc.xhtml":
+				if not dom.xpath("/html/body/nav[contains(@epub:type, 'toc')]"):
 					try:
 						header_text = dom.xpath("/html/head/title/text()")[0]
 					except:
@@ -1180,22 +1204,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("s-070", "[xhtml]<h#>[/] element without [xhtml]<hgroup>[/] parent and without semantic inflection.", se.MESSAGE_TYPE_WARNING, filename, [node.tostring() for node in nodes]))
 
-				# Check for ending punctuation inside italics that have semantics.
-				# Ignore the colophon because paintings might have punctuation in their names
-				if filename.name != "colophon.xhtml":
-					# This xpath matches b or i elements with epub:type="se:name...", that are not stage direction, whose last text node ends in punctuation.
-					# Note that we check that the last node is a text node, because we may have <abbr> a sthe last node
-					matches = [node.tostring() for node in dom.xpath("(//b | //i)[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., '[\\.,!\\?]$')]]")]
-
-					# ...and also check for ending punctuation inside em tags, if it looks like a *part* of a clause
-					# instead of a whole clause. If the <em> is preceded by an em dash or quotes, or if there's punctuation
-					# and a space bofore it, then it's presumed to be a whole clause.
-					# We can't use xpath for this one because xpath's regex engine doesn't seem to work with {1,2}
-					matches = matches + [match.strip() for match in regex.findall(r"(?<!.[—“‘>]|[!\.\?…;]\s)<em>(?:\w+?\s*)+[\.,\!\?;]</em>", file_contents) if match.islower()]
-
-					if matches:
-						messages.append(LintMessage("t-017", "Ending punctuation inside italics. Ending punctuation is only allowed within italics if the phrase is an independent clause.", se.MESSAGE_TYPE_WARNING, filename, matches))
-
 				# Check for <table> element without a <tbody> child
 				if dom.xpath("/html/body//table[not(tbody)]"):
 					messages.append(LintMessage("s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child.", se.MESSAGE_TYPE_ERROR, filename))
@@ -1211,17 +1219,15 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-015", "Numbers not grouped by commas. Separate numbers greater than 1,000 with commas at every three numerals.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check for poetry/verse without a descendent <p> element.
-				# Skip the ToC because the landmarks section may have the poem/verse semantic.
-				if filename.name != "toc.xhtml":
-					nodes = dom.xpath("/html/body//*[not(self::tr or self::td)][re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][not(descendant::p)]")
-					if nodes:
-						messages.append(LintMessage("s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
+				# Skip the ToC landmarks because it may have poem/verse semantic children.
+				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][not(descendant::p)][not(ancestor::nav[contains(@epub:type, 'landmarks')])]")
+				if nodes:
+					messages.append(LintMessage("s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
 
-					# Also check for body element without child section or article
-					nodes = dom.xpath("/html/body[not(./*[name() = 'section' or name() = 'article'])]")
-					if nodes:
-						messages.append(LintMessage("s-069", "[xhtml]<body>[/] element missing direct child [xhtml]<section>[/] or [xhtml]<article>[/] element.", se.MESSAGE_TYPE_ERROR, filename))
-
+				# Check for body element without child section or article. Ignore the ToC because it has a unique structure
+				nodes = dom.xpath("/html/body[not(./*[name() = 'section' or name() = 'article' or (name() = 'nav' and contains(@epub:type, 'toc'))])]")
+				if nodes:
+					messages.append(LintMessage("s-069", "[xhtml]<body>[/] element missing direct child [xhtml]<section>[/] or [xhtml]<article>[/] element.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for header elements that are entirely non-English
 				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)]) = 0]]")
@@ -1364,13 +1370,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("//*[re:test(@xml:lang, '^[A-Z]')]")
 				if nodes:
 					messages.append(LintMessage("x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
-
-				# Check for common typos
-				# Don't check the titlepage because it has a standard format and may raise false positives
-				if filename.name != "titlepage.xhtml":
-					matches = [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", file_contents, flags=regex.IGNORECASE)]
-					if matches:
-						messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 				# Check for nbsp within <abbr class="name">, which is redundant
 				nodes = dom.xpath(f"/html/body//abbr[contains(@class, 'name')][contains(text(), '{se.NO_BREAK_SPACE}')]")
@@ -1789,7 +1788,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-047", "[val]noteref[/] as a direct child of element with poem or verse semantic. [val]noteref[/]s should be in their parent [xhtml]<span>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.tostring() for node in nodes]))
 
 				# Check for space before endnote backlinks
-				if filename.name == "endnotes.xhtml":
+				if dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]"):
 					# Check that citations at the end of endnotes are in a <cite> element. If not typogrify will run the last space together with the em dash.
 					# This tries to catch that, but limits the match to 20 chars so that we don't accidentally match a whole sentence that happens to be at the end of an endnote.
 					nodes = dom.xpath(f"/html/body//li[contains(@epub:type, 'endnote')]/p[last()][re:test(., '\\.”?{se.WORD_JOINER}?—[A-Z].{{0,20}}\\s*↩$')]")
@@ -1818,7 +1817,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# If we're in the imprint, are the sources represented correctly?
 				# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
-				if filename.name == "imprint.xhtml":
+				if dom.xpath("/html/body/section[contains(@epub:type, 'imprint')]"):
 					# Check for wrong grammar filled in from template
 					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/')][(preceding-sibling::node()[1])[re:test(., 'the\\s+$')]]")
 					if nodes:
@@ -1854,7 +1853,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/].", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check LoI descriptions to see if they match associated figcaptions
-				if filename.name == "loi.xhtml":
+				if dom.xpath("/html/body/section[contains(@epub:type, 'loi')]"):
 					nodes = dom.xpath("/html/body//li/a")
 					for node in nodes:
 						figure_ref = node.attribute("href").split("#")[1]
