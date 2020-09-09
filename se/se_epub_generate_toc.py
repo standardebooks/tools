@@ -73,7 +73,11 @@ class TocItem:
 
 		out_string = ""
 		if self.title is None:
-			return ""
+			raise se.InvalidInputException(f"Couldn't find title in': [path][link=file://{self.file_link}[/][/].")
+
+		if self.subtitle and self.lang:
+			# test for a foreign language subtitle, and adjust accordingly
+			self.subtitle = f"<span xml:lang=\"{self.lang}\">{self.subtitle}</span>"
 
 		# If the title is entirely Roman numeral, put epub:type within <a>.
 		if regex.search(r"^<span epub:type=\"z3998:roman\">[IVXLC]+<\/span>$", self.title):
@@ -81,28 +85,18 @@ class TocItem:
 			if self.subtitle == "":  # put the roman flag inside the <a> tag
 				out_string += f"<a href=\"text/{self.file_link}\" epub:type=\"z3998:roman\">{self.roman}</a>\n"
 			else:
-				# test for an italicised foreign language subtitle, and adjust accordingly
-				match = regex.search(r"^<i xml:lang=\"([a-z\-]+)\">(.*?)<\/i>$", self.subtitle)
-				if match:
-					out_string += f"<a href=\"text/{self.file_link}\"><span epub:type=\"z3998:roman\">{self.roman}</span>: "
-					out_string += f"<span xml:lang=\"{match.group(1)}\">{match.group(2)}</span></a>\n"
-				else:
-					out_string += f"<a href=\"text/{self.file_link}\"><span epub:type=\"z3998:roman\">{self.roman}</span>: {self.subtitle}</a>\n"
+				out_string += f"<a href=\"text/{self.file_link}\"><span epub:type=\"z3998:roman\">{self.roman}</span>: {self.subtitle}</a>\n"
 		else:
 			# title has text other than a roman numeral
 			if self.subtitle != "" and (self.title_is_ordinal or (self.division in [BookDivision.PART, BookDivision.DIVISION, BookDivision.VOLUME])):
 				# Use the subtitle only if we're a Part or Division or Volume or if title was an ordinal
 				out_string += f"<a href=\"text/{self.file_link}\">{self.title}: {self.subtitle}</a>\n"
 			else:
-				# test for an italicised foreign language title, and adjust accordingly
-				match = regex.search(r"^<i xml:lang=\"([a-z\-]+)\">(.*?)<\/i>$", self.title)
-				if match:
-					out_string = f"<a href=\"text/{self.file_link}\" xml:lang=\"{match.group(1)}\">{match.group(2)}</a>\n"
+				# test for a foreign language title, and adjust accordingly
+				if self.lang:
+					out_string += f"<a href=\"text/{self.file_link}\" xml:lang=\"{self.lang}\">{self.title}</a>\n"
 				else:
-					if self.lang:  # title wasn't italicised but is still all foreign
-						out_string = f"<a href=\"text/{self.file_link}\" xml:lang=\"{self.lang}\">{self.title}</a>\n"
-					else:  # finally, a simple text title!
-						out_string += f"<a href=\"text/{self.file_link}\">{self.title}</a>\n"
+					out_string += f"<a href=\"text/{self.file_link}\">{self.title}</a>\n"
 
 		return out_string
 
@@ -391,27 +385,12 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 
 	place = get_place(soup)
 	is_toplevel = True
-	hgroups_processed = False
 
-	# first, find any hgroups and treat separately
-	hgroups = soup.find_all("hgroup")
-	if hgroups:
-		for group in hgroups:
-			toc_item = process_a_heading(group, textf, is_toplevel, single_file)
-			if nest_under_halftitle:
-				toc_item.level += 1
-			is_toplevel = False
-			toc_list.append(toc_item)
-			# we need to clear the hgroup tag, otherwise the headings inside it will be picked up (and duplicated)
-			# by the next section
-			group.clear()
-			hgroups_processed = True
+	# Find all the hgroups and h1, h2 etc headings.
+	heads = soup.find_all(["hgroup", "h1", "h2", "h3", "h4", "h5", "h6"])
 
-	# Find all the h1, h2 etc headings.
-	heads = soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
-
-	# special treatment where we can't find any header tag after trying for hgroups
-	if not heads and not hgroups_processed:  # May be a dedication or an epigraph, with no heading tag.
+	# special treatment where we can't find any header or hgroups
+	if not heads:  # May be a dedication or an epigraph, with no heading tag.
 		if single_file and nest_under_halftitle:
 			# There's a halftitle, but only this one content file with no subsections,
 			# so leave out of ToC.
@@ -439,6 +418,9 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 		return
 
 	for heading in heads:
+		# don't process a heading separately if it's within a hgroup
+		if heading.parent.name == "hgroup":
+			continue  # skip it
 		if place == Position.BODY and single_file:
 			toc_item = process_a_heading(heading, textf, is_toplevel, True)
 		else:
@@ -482,7 +464,7 @@ def process_a_heading(soup: BeautifulSoup, textf: str, is_toplevel: bool, single
 
 	# This stops the first heading in a file getting an anchor id, we don't generally want that.
 	# The exceptions are things like poems within a single-file volume.
-	toc_item.id = get_parent_id(soup) # pylint: disable=invalid-name
+	toc_item.id = get_parent_id(soup)  # pylint: disable=invalid-name
 	if toc_item.id == "":
 		toc_item.file_link = textf
 	else:
