@@ -527,6 +527,7 @@ def _create_draft(args: Namespace):
 	_copy_template_file("toc.xhtml", repo_path / "src" / "epub")
 	_copy_template_file("core.css", repo_path / "src" / "epub" / "css")
 	_copy_template_file("local.css", repo_path / "src" / "epub" / "css")
+	_copy_template_file("se.css", repo_path / "src" / "epub" / "css")
 	_copy_template_file("logo.svg", repo_path / "src" / "epub" / "images")
 	_copy_template_file("colophon.xhtml", repo_path / "src" / "epub" / "text")
 	_copy_template_file("imprint.xhtml", repo_path / "src" / "epub" / "text")
