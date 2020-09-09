@@ -35,7 +35,9 @@ def print_title() -> int:
 				title = se.formatting.generate_title(xhtml)
 
 				if args.in_place:
-					if title != "":
+					if title == "":
+						se.print_error(f"Couldn’t deduce title for file: [path][link=file://{filename}]{filename}[/][/].", False, True)
+					else:
 						processed_xhtml = regex.sub(r"<title>(.*?)</title>", f"<title>{title}</title>", xhtml)
 						processed_xhtml = regex.sub(r"<title/>", f"<title>{title}</title>", processed_xhtml)
 
