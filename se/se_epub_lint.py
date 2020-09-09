@@ -1987,7 +1987,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		toc_headings.append((node.inner_text(), str(entry_file)))
 
 	for heading in headings:
-		if heading not in toc_headings:
+		# Some compliations, like Songs of a Sourdough, have their title in the half title, so check against that before adding an error
+		if heading not in toc_headings and (heading[0], str(self.path / "src/epub/text/halftitle.xhtml")) not in toc_headings:
 			messages.append(LintMessage("m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, Path(heading[1])))
 
 	# Check our ordered ToC entries against the spine
