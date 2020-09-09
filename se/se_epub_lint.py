@@ -1080,7 +1080,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("s-059", "Internal link beginning with [val]../text/[/].", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
-				# Get the title of this file to compare against the ToC later
+				# Get the title of this file to compare against the ToC later.
+				# We ignore the ToC file itself.
 				if not dom.xpath("/html/body/nav[contains(@epub:type, 'toc')]"):
 					try:
 						header_text = dom.xpath("/html/head/title/text()")[0]
@@ -1248,7 +1249,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for sectioning elements with more than one heading element
 				nodes = dom.xpath("/html/body//*[name() = 'article' or name() = 'section'][count(./*[name() = 'header' or name() = 'hgroup' or re:test(name(), '^h[1-6]$')]) > 1]")
 				if nodes:
-					messages.append(LintMessage("s-071", "Sectioning element with more than one heading element.", se.MESSAGE_TYPE_WARNING, filename, [node.totagstring() for node in nodes]))
+					messages.append(LintMessage("s-071", "Sectioning element with more than one heading element.", se.MESSAGE_TYPE_ERROR, filename, [node.totagstring() for node in nodes]))
 
 				# Check for some elements that only have a <span> child (including text inline to the parent).
 				# But, exclude such elements that are <p> elements that have poetry-type parents.
