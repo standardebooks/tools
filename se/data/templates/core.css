@@ -29,7 +29,8 @@ h2,
 h3,
 h4,
 h5,
-h6{
+h6,
+hgroup{
 	font-variant: small-caps;
 	hyphens: none;
 	-epub-hyphens: none;
@@ -37,6 +38,15 @@ h6{
 	page-break-inside: avoid;
 	text-align: center;
 	margin: 3em 0;
+}
+
+hgroup > *{
+	font-weight: normal;
+	margin: 0;
+}
+
+hgroup > *:first-child{
+	font-weight: bold;
 }
 
 blockquote + p,
@@ -50,6 +60,7 @@ hr + p,
 ol + p,
 ul + p,
 table + p,
+hgroup + p,
 p:first-child{
 	text-indent: 0;
 }
