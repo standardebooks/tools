@@ -1,3 +1,111 @@
+# v1.6.0
+
+## General
+
+- Support for new <hgroup> header scheme in tools and templates
+
+- CSS for SE boilerplate files like titlepages, colophons, and the Uncopyright page are now in a new CSS file named `se.css`, and those files no longer include `local.css`.
+
+- Corpus-wide switch to using `epub:type="z3998:signature"` instead of `class="signature"`.
+
+- `core.css` now defaults to lowercase numbers and hanging punctuation.
+
+- Fix to pipx install documentation. Thanks to Robin Whittleton
+
+- Add various functions to the EasyXmlTree and EasyXmlNode classes
+
+- `<title>` elements now have the same value as their ToC entries
+
+## se build
+
+- Remove BS4 dependency
+
+- The raw, non-compatible epub file is now named `*_advanced.epub`, instead of having an `.epub3` file extension
+
+- Add workaround for glossary bug in epubcheck 4.2.4
+
+## se create-draft
+
+- Add support for new `se.css` file and update various template files
+
+## se hyphenate
+
+- Remove BS4 dependency
+
+## se modernize-spelling
+
+- Various additions
+
+## se print-manifest
+
+- Add support for the epub glossary spec
+
+## se lint
+
+- Change s-049 to match `<header>` elements with only `<h#>` children
+
+- Add s-065, `fulltitle` semantic on element that is not an `<h1>`
+
+- Add t-008, repeated punctuation
+
+- Improve t-017
+
+- Add f-013, glossary search key map must have exact filename
+
+- Add s-024, header elements that are entirely non-English should not have italics
+
+- Add s-066 and s-067, header elements with incorrect label semantics
+
+- Add s-068, header missing ordinal semantic
+
+- Improve s-066
+
+- Add t-044, comma required after leading `Or` in subtitle
+
+- Add s-069, `<body>` without direct child `<section>` or `<article>`
+
+- Add s-070, heading element without semantic inflection
+
+- Improve t-020
+
+- Update m-045 to use the output of the `generate_title()` function
+
+- Add s-071, sectioning element with more than one heading element
+
+- Replace various filename-based checks with semantics-based checks
+
+- Add s-072, element with a single `<span>` child
+
+- Remove various now-obsolete checks
+
+- Check for CSS required for `z3998:signature` semantic
+
+## se print-title
+
+- Compatibility with new `<hgroup>` standards
+
+- Remove word joiners and no-break spaces from titles
+
+- Emit a warning if we can't guess the title based on the file contents
+
+## se print-toc
+
+- Compatibility with new `<hgroup>` standards. Thanks to David Grigg
+
+- After adding the bodymatter item in the landmarks, don't output any more frontmatter-like landmark entries
+
+## se semanticate
+
+- Wrap lowercase Roman numerals in semantics
+
+## se typogrify
+
+- Improve rehydration of `&amp;`
+
+- Don't collapse spaces between ellipses and em-dash
+
+- Typogrify the half title if present
+
 # v1.5.9
 
 ## General
