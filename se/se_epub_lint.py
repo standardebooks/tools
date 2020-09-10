@@ -44,7 +44,6 @@ See the se.print_error function for a comprehensive list of allowed codes.
 LIST OF ALL SE LINT MESSAGES
 
 CSS
-"c-001", "Don’t directly select [xhtml]<h#>[/] elements, as they are used in template files; use more specific selectors."
 "c-002", "Unused CSS selectors."
 "c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/])."
 "c-004", "Don’t specify border colors, so that reading systems can adjust for night mode."
@@ -53,6 +52,9 @@ CSS
 "c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy."
 "c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks."
 "c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles."
+UNUSED
+vvvvvvvvvvvvvvvvvvvvvvv
+"c-001", "Don’t directly select [xhtml]<h#>[/] elements, as they are used in template files; use more specific selectors."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -530,12 +532,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	files_not_url_safe = []
 
 	# Iterate over rules to do some other checks
-	selected_h = []
 	abbr_with_whitespace = []
 	for selector, rules in local_css_rules.items():
-		if regex.search(r"^h[0-6]", selector, flags=regex.IGNORECASE):
-			selected_h.append(selector)
-
 		if selector == "section[epub|type~=\"halftitlepage\"] span[epub|type~=\"subtitle\"]":
 			local_css_has_halftitle_subtitle_style = True
 
@@ -565,9 +563,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	if regex.search(r"\s+hyphens:.+?;(?!\s+-epub-hyphens)", self.local_css):
 		messages.append(LintMessage("c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy.", se.MESSAGE_TYPE_ERROR, local_css_path))
-
-	if selected_h:
-		messages.append(LintMessage("c-001", "Don’t directly select [xhtml]<h#>[/] elements, as they are used in template files; use more specific selectors.", se.MESSAGE_TYPE_ERROR, local_css_path, selected_h))
 
 	if abbr_with_whitespace:
 		messages.append(LintMessage("c-005", f"[css]abbr[/] selector does not need [css]white-space: nowrap;[/] as it inherits it from [path][link=file://{self.path / 'src/epub/css/core.css'}]core.css[/][/].", se.MESSAGE_TYPE_ERROR, local_css_path, abbr_with_whitespace))
