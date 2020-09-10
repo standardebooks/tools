@@ -2,6 +2,7 @@
 @namespace epub "http://www.idpf.org/2007/ops";
 
 body{
+	font-variant-numeric: oldstyle-nums;
 	hyphens: auto;
 	-epub-hyphens: auto;
 }
@@ -62,6 +63,7 @@ ul + p,
 table + p,
 hgroup + p,
 p:first-child{
+	hanging-punctuation: first last;
 	text-indent: 0;
 }
 
