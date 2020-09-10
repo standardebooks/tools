@@ -90,7 +90,13 @@ class TocItem:
 			# title has text other than a roman numeral
 			if self.subtitle != "" and (self.title_is_ordinal or (self.division in [BookDivision.PART, BookDivision.DIVISION, BookDivision.VOLUME])):
 				# Use the subtitle only if we're a Part or Division or Volume or if title was an ordinal
-				out_string += f"<a href=\"text/{self.file_link}\">{self.title}: {self.subtitle}</a>\n"
+				out_string += f"<a href=\"text/{self.file_link}\">{self.title}"
+
+				# Don't append a colon if the ordinal already ends in punctuation, for example  `1.` or `(a)`
+				if not regex.search(r"\p{Punctuation}$", self.title):
+					out_string += ":"
+
+				out_string += f" {self.subtitle}</a>\n"
 			else:
 				# test for a foreign language title, and adjust accordingly
 				if self.lang:
