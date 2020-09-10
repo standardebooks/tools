@@ -105,12 +105,6 @@ section > header + *{
 	margin-top: 3em;
 }
 
-section[epub|type~="titlepage"] img{
-	display: block;
-	width: 100%;
-	margin: 3em auto auto auto;
-}
-
 a[epub|type~="noteref"]{
 	font-size: .75em;
 	font-style: normal !important;

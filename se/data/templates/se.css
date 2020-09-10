@@ -1,6 +1,12 @@
 @charset "utf-8";
 @namespace epub "http://www.idpf.org/2007/ops";
 
+section[epub|type~="titlepage"] img{
+	display: block;
+	width: 100%;
+	margin: 3em auto auto auto;
+}
+
 section[epub|type~="colophon"],
 section[epub|type~="imprint"]{
 	text-align: center;
