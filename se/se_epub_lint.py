@@ -1181,6 +1181,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if matches:
 					messages.append(LintMessage("t-010", "Time set with [text].[/] instead of [text]:[/].", se.MESSAGE_TYPE_WARNING, filename, set(matches)))
 
+				# Do we have a half title?
+				if dom.xpath("/html/body/section[contains(@epub:type, 'halftitlepage')]"):
+					has_halftitle = True
+
 				# Check for leading 0 in IDs (note: not the same as checking for IDs that start with an integer)
 				# We only check for *leading* 0s in numbers; this allows IDs like `wind-force-0` in the Worst Journey in the World glossary.
 				nodes = dom.xpath("//*[re:test(@id, '-0[0-9]')]")
@@ -1779,7 +1783,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							missing_styles.append(node.totagstring())
 
 				if not local_css_has_signature_style:
-					print('x')
 					nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:signature')]")
 					for node in nodes:
 						missing_styles.append(node.totagstring())
