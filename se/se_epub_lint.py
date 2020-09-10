@@ -269,6 +269,7 @@ XHTML
 "x-014", "Illegal [xml]id[/] attribute."
 "x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed."
 "x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter."
+"x-017", "Duplicate value for [attr]id[/] attribute. [attr]id[/] attribute values must be unique across the entire ebook on all non-sectioning elements."
 """
 
 class LintMessage:
@@ -530,6 +531,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	missing_styles: List[str] = []
 	directories_not_url_safe = []
 	files_not_url_safe = []
+	id_values = {}
+	duplicate_id_values = []
 
 	# Iterate over rules to do some other checks
 	abbr_with_whitespace = []
@@ -1114,6 +1117,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[self::section or self::article][not(@id)]")
 				if nodes:
 					messages.append(LintMessage("s-011", "Element without [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, {node.totagstring() for node in nodes}))
+
+				for node in dom.xpath("/html/body//*[name() != 'section' and name() != 'article']/@id"):
+					if node in id_values:
+						duplicate_id_values.append(node)
+					else:
+						id_values[node] = True
 
 				# Check for numeric entities
 				matches = regex.findall(r"&#[0-9]+?;", file_contents)
@@ -1994,6 +2003,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		toc_files.append(regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", node.attribute("href")))
 	for node in toc_entries:
 		toc_files.append(regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", node.attribute("href")))
+
+	if duplicate_id_values:
+		messages.append(LintMessage("x-017", "Duplicate value for [attr]id[/] attribute. [attr]id[/] attribute values must be unique across the entire ebook on all non-sectioning elements.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_id_values))
 
 	# We can't convert to set() to get unique items because set() is unordered
 	unique_toc_files: List[str] = []
