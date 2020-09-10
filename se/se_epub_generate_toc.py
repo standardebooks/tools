@@ -72,7 +72,7 @@ class TocItem:
 		"""
 
 		out_string = ""
-		if self.title is None:
+		if not self.title:
 			raise se.InvalidInputException(f"Couldn't find title in': [path][link=file://{self.file_link}[/][/].")
 
 		if self.subtitle and self.lang:
@@ -225,6 +225,14 @@ def process_landmarks(landmarks_list: list, work_type: str, work_title: str):
 	OUTPUTS:
 	None
 	"""
+
+	# we don't want frontmatter items to be included once we've started the body items
+	started_body = False
+	for item in landmarks_list:
+		if item.place == Position.BODY:
+			started_body = True
+		if started_body and item.place == Position.FRONT:
+			item.place = Position.NONE
 
 	front_items = [item for item in landmarks_list if item.place == Position.FRONT]
 	body_items = [item for item in landmarks_list if item.place == Position.BODY]
@@ -493,6 +501,10 @@ def process_a_heading(soup: BeautifulSoup, textf: str, is_toplevel: bool, single
 		toc_item.roman = extract_strings(soup)
 		toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
 		return toc_item
+	elif "ordinal" in epub_type:  # but not a roman numeral (eg in Nietzche's Beyond Good and Evil)
+		toc_item.title = extract_strings(soup)
+		toc_item.title_is_ordinal = True
+		return toc_item
 	# may be the halftitle page with a subtitle, so we need to burrow down
 	if ("fulltitle" in epub_type) and (soup.name == "hgroup"):
 		evaluate_descendants(soup, toc_item)
@@ -542,6 +554,10 @@ def evaluate_descendants(soup, toc_item):
 				toc_item.roman = extract_strings(child)
 				if not toc_item.title:
 					toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
+			elif "ordinal" in epub_type:  # but not a roman numeral or a labelled item, cases caught caught above
+				if not toc_item.title:
+					toc_item.title = extract_strings(child)
+					toc_item.title_is_ordinal = True
 			if "subtitle" in epub_type:
 				toc_item.subtitle = extract_strings(child)
 			else:
