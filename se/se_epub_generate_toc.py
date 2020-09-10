@@ -501,7 +501,7 @@ def process_a_heading(soup: BeautifulSoup, textf: str, is_toplevel: bool, single
 		toc_item.roman = extract_strings(soup)
 		toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
 		return toc_item
-	elif "ordinal" in epub_type:  # but not a roman numeral (eg in Nietzche's Beyond Good and Evil)
+	if "ordinal" in epub_type:  # but not a roman numeral (eg in Nietzche's Beyond Good and Evil)
 		toc_item.title = extract_strings(soup)
 		toc_item.title_is_ordinal = True
 		return toc_item
