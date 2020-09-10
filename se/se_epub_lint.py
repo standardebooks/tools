@@ -519,7 +519,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	local_css_selectors = [regex.sub(r"::[\p{Lowercase_Letter}\-]+", "", selector) for selector in local_css_rules]
 	unused_selectors = local_css_selectors.copy()
 
-	local_css_has_halftitle_subtitle_style = False
 	local_css_has_poem_style = False
 	local_css_has_verse_style = False
 	local_css_has_song_style = False
@@ -534,9 +533,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	# Iterate over rules to do some other checks
 	abbr_with_whitespace = []
 	for selector, rules in local_css_rules.items():
-		if selector == "section[epub|type~=\"halftitlepage\"] span[epub|type~=\"subtitle\"]":
-			local_css_has_halftitle_subtitle_style = True
-
 		if "z3998:poem" in selector:
 			local_css_has_poem_style = True
 
@@ -1417,14 +1413,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 					if not dom.xpath(f"/html/head/title[text() = '{title}']"):
 						messages.append(LintMessage("s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for missing subtitle styling
-				# Half titles have slightly different subtitle styles than regular subtitles
-				if filename.name == "halftitle.xhtml":
-					has_halftitle = True
-
-					if not local_css_has_halftitle_subtitle_style:
-						missing_styles += [node.totagstring() for node in dom.xpath("/html/body//span[contains(@epub:type, 'subtitle')]")]
 
 				if not local_css_has_elision_style:
 					missing_styles += [node.totagstring() for node in dom.xpath("/html/body//span[contains(@class, 'elision')]")]
