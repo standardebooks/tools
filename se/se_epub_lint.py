@@ -525,6 +525,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	local_css_has_hymn_style = False
 	local_css_has_lyrics_style = False
 	local_css_has_elision_style = False
+	local_css_has_signature_style = False
 	abbr_styles = regex.findall(r"abbr\.[\p{Lowercase_Letter}]+", self.local_css)
 	missing_styles: List[str] = []
 	directories_not_url_safe = []
@@ -550,6 +551,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 		if "span.elision" in selector:
 			local_css_has_elision_style = True
+
+		if "z3998:signature" in selector:
+			local_css_has_signature_style = True
 
 		if "abbr" in selector and "nowrap" in rules:
 			abbr_with_whitespace.append(selector)
@@ -1773,6 +1777,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 						if "z3998:lyrics" in node.attribute("epub:type") and not local_css_has_lyrics_style:
 							missing_styles.append(node.totagstring())
+
+				if not local_css_has_signature_style:
+					print('x')
+					nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:signature')]")
+					for node in nodes:
+						missing_styles.append(node.totagstring())
 
 				# For this series of selections, we select spans that are direct children of p, because sometimes a line of poetry may have a nested span.
 				nodes = dom.xpath("/html/body/*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')]/descendant-or-self::*/p/span/following-sibling::*[contains(@epub:type, 'noteref') and name() = 'a' and position() = 1]")
