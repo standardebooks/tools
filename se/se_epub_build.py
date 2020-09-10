@@ -98,8 +98,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 		url_author = url_author.rstrip("_")
 
-		epub_output_filename = f"{output_filename}{'.proof' if proof else ''}.epub"
-		epub3_output_filename = f"{output_filename}{'.proof' if proof else ''}.epub3"
+		compatible_epub_output_filename = f"{output_filename}{'.proof' if proof else ''}.epub"
+		epub_output_filename = f"{output_filename}{'.proof' if proof else ''}_advanced.epub"
 		kobo_output_filename = f"{output_filename}{'.proof' if proof else ''}.kepub.epub"
 		kindle_output_filename = f"{output_filename}{'.proof' if proof else ''}.azw3"
 
@@ -107,8 +107,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		se.quiet_remove(output_directory / f"thumbnail_{asin}_EBOK_portrait.jpg")
 		se.quiet_remove(output_directory / "cover.jpg")
 		se.quiet_remove(output_directory / "cover-thumbnail.jpg")
+		se.quiet_remove(output_directory / compatible_epub_output_filename)
 		se.quiet_remove(output_directory / epub_output_filename)
-		se.quiet_remove(output_directory / epub3_output_filename)
 		se.quiet_remove(output_directory / kobo_output_filename)
 		se.quiet_remove(output_directory / kindle_output_filename)
 
@@ -146,7 +146,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				file.truncate()
 
 		# Output the pure epub3 file
-		se.epub.write_epub(work_epub_root_directory, output_directory / epub3_output_filename)
+		se.epub.write_epub(work_epub_root_directory, output_directory / epub_output_filename)
 
 		# Now add epub2 compatibility.
 
@@ -784,13 +784,13 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			se.formatting.format_xml_file(filepath)
 
 		# Write the compatible epub
-		se.epub.write_epub(work_epub_root_directory, output_directory / epub_output_filename)
+		se.epub.write_epub(work_epub_root_directory, output_directory / compatible_epub_output_filename)
 
 		if run_epubcheck:
 			# Path arguments must be cast to string for Windows compatibility.
 			with importlib_resources.path("se.data.epubcheck", "epubcheck.jar") as jar_path:
 				try:
-					epubcheck_result = subprocess.run(["java", "-jar", str(jar_path), "--quiet", str(output_directory / epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+					epubcheck_result = subprocess.run(["java", "-jar", str(jar_path), "--quiet", str(output_directory / compatible_epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
 					epubcheck_result.check_returncode()
 				except subprocess.CalledProcessError as ex:
 					output = epubcheck_result.stdout.decode().strip()
@@ -962,14 +962,14 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				se.typography.hyphenate_file(filepath, None, True)
 
 			# Build an epub file we can send to Calibre
-			se.epub.write_epub(work_epub_root_directory, work_directory / epub_output_filename)
+			se.epub.write_epub(work_epub_root_directory, work_directory / compatible_epub_output_filename)
 
 			# Generate the Kindle file
 			# We place it in the work directory because later we have to update the asin, and the mobi.update_asin() function will write to the final output directory
 			cover_path = work_epub_root_directory / "epub" / self.metadata_dom.xpath("//item[@properties=\"cover-image\"]/@href")[0].replace(".svg", ".jpg")
 
 			# Path arguments must be cast to string for Windows compatibility.
-			return_code = subprocess.run([str(ebook_convert_path), str(work_directory / epub_output_filename), str(work_directory / kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", f"--cover={cover_path}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False).returncode
+			return_code = subprocess.run([str(ebook_convert_path), str(work_directory / compatible_epub_output_filename), str(work_directory / kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", f"--cover={cover_path}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False).returncode
 
 			if return_code:
 				raise se.InvalidSeEbookException("[bash]ebook-convert[/] failed.")

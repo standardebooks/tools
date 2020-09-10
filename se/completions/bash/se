@@ -49,7 +49,6 @@ _se(){
 				COMPREPLY+=($(compgen -f -X "!*.mobi" -- "${cur}"))
 				COMPREPLY+=($(compgen -f -X "!*.azw3" -- "${cur}"))
 				COMPREPLY+=($(compgen -f -X "!*.epub" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.epub3" -- "${cur}"))
 				;;
 			find-mismatched-diacritics)
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))

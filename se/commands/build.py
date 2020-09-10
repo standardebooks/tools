@@ -15,7 +15,7 @@ def build() -> int:
 	Entry point for `se build`
 	"""
 
-	parser = argparse.ArgumentParser(description="Build compatible .epub and pure .epub3 ebooks from a Standard Ebook source directory. Output is placed in the current directory, or the target directory with --output-dir.")
+	parser = argparse.ArgumentParser(description="Build compatible .epub and advanced .epub ebooks from a Standard Ebook source directory. Output is placed in the current directory, or the target directory with --output-dir.")
 	parser.add_argument("-b", "--kobo", dest="build_kobo", action="store_true", help="also build a .kepub.epub file for Kobo")
 	parser.add_argument("-c", "--check", action="store_true", help="use epubcheck to validate the compatible .epub file; if --kindle is also specified and epubcheck fails, don’t create a Kindle file")
 	parser.add_argument("-k", "--kindle", dest="build_kindle", action="store_true", help="also build an .azw3 file for Kindle")
