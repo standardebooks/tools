@@ -2,6 +2,7 @@
 @namespace epub "http://www.idpf.org/2007/ops";
 
 body{
+	font-variant-numeric: oldstyle-nums;
 	hyphens: auto;
 	-epub-hyphens: auto;
 }
@@ -29,7 +30,8 @@ h2,
 h3,
 h4,
 h5,
-h6{
+h6,
+hgroup{
 	font-variant: small-caps;
 	hyphens: none;
 	-epub-hyphens: none;
@@ -37,6 +39,15 @@ h6{
 	page-break-inside: avoid;
 	text-align: center;
 	margin: 3em 0;
+}
+
+hgroup > *{
+	font-weight: normal;
+	margin: 0;
+}
+
+hgroup > *:first-child{
+	font-weight: bold;
 }
 
 blockquote + p,
@@ -50,7 +61,9 @@ hr + p,
 ol + p,
 ul + p,
 table + p,
+hgroup + p,
 p:first-child{
+	hanging-punctuation: first last;
 	text-indent: 0;
 }
 
@@ -92,12 +105,6 @@ section > header + *{
 	margin-top: 3em;
 }
 
-section[epub|type~="titlepage"] img{
-	display: block;
-	width: 100%;
-	margin: 3em auto auto auto;
-}
-
 a[epub|type~="noteref"]{
 	font-size: .75em;
 	font-style: normal !important;
@@ -106,95 +113,4 @@ a[epub|type~="noteref"]{
 
 section[epub|type~="endnotes"] > ol > li{
 	margin: 1em 0;
-}
-
-section[epub|type~="colophon"],
-section[epub|type~="imprint"]{
-	text-align: center;
-}
-
-section[epub|type~="colophon"] header,
-section[epub|type~="imprint"] header{
-	line-height: 0;
-	margin-top: 3em;
-}
-
-section[epub|type~="colophon"] h2,
-section[epub|type~="imprint"] h2{
-	display: none;
-}
-
-img[epub|type~="z3998:publisher-logo"]{
-	max-width: 25%;
-}
-
-section[epub|type~="colophon"] p,
-section[epub|type~="imprint"] p{
-	margin: 1em auto 0 auto;
-	text-indent: 0;
-}
-
-section[epub|type~="imprint"] p{
-	font-size: .75em;
-	text-align: justify;
-	width: 75%;
-}
-
-section[epub|type~="colophon"] p + p::before{
-	border-top: 1px solid;
-	content: "";
-	display: block;
-	margin: auto auto 1em auto;
-	width: 25%;
-}
-
-section[epub|type~="colophon"] a{
-	font-variant: small-caps;
-}
-
-section[epub|type~="imprint"] a,
-section[epub|type~="colophon"] a{
-	hyphens: none;
-	-epub-hyphens: none;
-}
-
-section[epub|type~="copyright-page"] p{
-	margin: 1em auto;
-	text-indent: 0;
-}
-
-section[epub|type~="copyright-page"] blockquote p{
-	font-style: italic;
-	text-align: left;
-	text-indent: 0;
-}
-
-section[epub|type~="copyright-page"] blockquote p span{
-	display: block;
-	padding-left: 1em;
-	text-indent: -1em;
-}
-
-section[epub|type~="copyright-page"] blockquote br{
-	display: none;
-}
-
-@supports(display: flex){
-	section[epub|type~="imprint"]{
-		align-content: center;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		min-height: calc(98vh - 3em);
-		padding-top: 3em;
-	}
-
-	section[epub|type~="imprint"] header{
-		margin-bottom: 2em;
-		margin-top: 0;
-	}
-
-	img[epub|type~="z3998:publisher-logo"]{
-		max-width: 25vw;
-	}
 }
