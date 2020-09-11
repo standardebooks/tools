@@ -3,6 +3,7 @@ This module implements the `se create_draft` command.
 """
 
 import argparse
+from io import StringIO
 import shutil
 import unicodedata
 import urllib.parse
@@ -14,8 +15,8 @@ import git
 import importlib_resources
 import regex
 import requests
-from bs4 import BeautifulSoup
 from ftfy import fix_text
+from lxml import etree
 
 import se
 import se.formatting
@@ -424,12 +425,13 @@ def _create_draft(args: Namespace):
 		except Exception as ex:
 			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page. Exception: {ex}")
 
-		soup = BeautifulSoup(pg_metadata_html, "lxml")
+		parser = etree.HTMLParser()
+		dom = etree.parse(StringIO(pg_metadata_html), parser)
 
 		# Get the ebook HTML URL from the metadata
 		pg_ebook_url = None
-		for element in soup.select("a[type^=\"text/html\"]"):
-			pg_ebook_url = regex.sub(r"^//", "https://", element["href"])
+		for node in dom.xpath("/html/body//a[contains(@type, 'text/html')]"):
+			pg_ebook_url = regex.sub(r"^//", "https://", node.get("href"))
 			pg_ebook_url = regex.sub(r"^/", "https://www.gutenberg.org/", pg_ebook_url)
 
 		if not pg_ebook_url:
@@ -437,15 +439,15 @@ def _create_draft(args: Namespace):
 
 		# Get the ebook LCSH categories
 		pg_subjects = []
-		for element in soup.select("td[property=\"dcterms:subject\"]"):
-			if element["datatype"] == "dcterms:LCSH":
-				for subject_link in element.find("a"):
-					pg_subjects.append(subject_link.strip())
+		for node in dom.xpath("/html/body//td[contains(@property, 'dcterms:subject')]"):
+			if node.get("datatype") == "dcterms:LCSH":
+				for subject_link in node.xpath("./a"):
+					pg_subjects.append(subject_link.text.strip())
 
 		# Get the PG publication date
 		pg_publication_year = None
-		for element in soup.select("td[itemprop=\"datePublished\"]"):
-			pg_publication_year = regex.sub(r".+?([0-9]{4})", "\\1", element.text)
+		for node in dom.xpath("//td[@itemprop='datePublished']"):
+			pg_publication_year = regex.sub(r".+?([0-9]{4})", "\\1", node.text)
 
 		# Get the actual ebook URL
 		try:
@@ -477,40 +479,55 @@ def _create_draft(args: Namespace):
 	# Write PG data if we have it
 	if args.pg_url and pg_ebook_html:
 		try:
-			soup = BeautifulSoup(pg_ebook_html, "html.parser")
+			dom = etree.parse(StringIO(regex.sub(r"encoding=\".+?\"", "", pg_ebook_html)), parser)
 
-			# Try to get the PG producers.  We only try this if there's a <pre> block with the header info (which is not always the case)
-			for element in soup(text=regex.compile(r"\*\*\*\s*Produced by.+$", flags=regex.DOTALL)):
-				if element.parent.name == "pre":
-					producers_text = regex.sub(r".+?Produced by (.+?)\s*$", "\\1", element, flags=regex.DOTALL)
-					producers_text = regex.sub(r"\(.+?\)", "", producers_text, flags=regex.DOTALL)
-					producers_text = regex.sub(r"(at )?https?://www\.pgdp\.net", "", producers_text, flags=regex.DOTALL)
-					producers_text = regex.sub(r"[\r\n]+", " ", producers_text, flags=regex.DOTALL)
-					producers_text = regex.sub(r",? and ", ", and ", producers_text)
-					producers_text = producers_text.replace(" and the Online", " and The Online")
-					producers_text = producers_text.replace(", and ", ", ").strip()
+			for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*Produced by.+')]", namespaces=se.XHTML_NAMESPACES):
+				producers_text = regex.sub(r"^<[^>]+?>", "", etree.tostring(node, encoding=str, with_tail=False))
+				producers_text = regex.sub(r"<[^>]+?>$", "", producers_text)
 
-					pg_producers = producers_text.split(", ")
+				producers_text = regex.sub(r".+?Produced by (.+?)\s*$", "\\1", producers_text, flags=regex.DOTALL)
+				producers_text = regex.sub(r"\(.+?\)", "", producers_text, flags=regex.DOTALL)
+				producers_text = regex.sub(r"(at )?https?://www\.pgdp\.net", "", producers_text, flags=regex.DOTALL)
+				producers_text = regex.sub(r"[\r\n]+", " ", producers_text, flags=regex.DOTALL)
+				producers_text = regex.sub(r",? and ", ", and ", producers_text)
+				producers_text = producers_text.replace(" and the Online", " and The Online")
+				producers_text = producers_text.replace(", and ", ", ").strip()
+
+				pg_producers = regex.split(',|;', producers_text)
 
 			# Try to strip out the PG header
-			for element in soup(text=regex.compile(r"\*\*\*\s*START OF THIS")):
-				for sibling in element.parent.find_previous_siblings():
-					sibling.decompose()
+			for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*START OF THIS')]", namespaces=se.XHTML_NAMESPACES):
+				for sibling_node in node.xpath("./preceding-sibling::*"):
+					easy_node = se.easy_xml.EasyXmlElement(sibling_node)
+					easy_node.remove()
 
-				element.parent.decompose()
+				easy_node = se.easy_xml.EasyXmlElement(node)
+				easy_node.remove()
 
 			# Try to strip out the PG license footer
-			for element in soup(text=regex.compile(r"End of (the )?Project Gutenberg")):
-				for sibling in element.parent.find_next_siblings():
-					sibling.decompose()
+			for node in dom.xpath("//*[re:test(text(), 'End of (the )?Project Gutenberg')]", namespaces=se.XHTML_NAMESPACES):
+				for sibling_node in node.xpath("./following-sibling::*"):
+					easy_node = se.easy_xml.EasyXmlElement(sibling_node)
+					easy_node.remove()
 
-				element.parent.decompose()
+				easy_node = se.easy_xml.EasyXmlElement(node)
+				easy_node.remove()
+
+			# lxml will but the xml declaration in a weird place, remove it first
+			output = regex.sub(r"<\?xml.+?\?>", "", etree.tostring(dom, encoding="unicode"))
+
+			# Now re-add it
+			output = """<?xml version="1.0" encoding="utf-8"?>\n""" + output
+
+			# lxml can also output duplicate default namespace declarations so remove the first one only
+			output = regex.sub(r"(xmlns=\".+?\")(\sxmlns=\".+?\")+", r"\1", output)
 
 			with open(repo_path / "src" / "epub" / "text" / "body.xhtml", "w", encoding="utf-8") as file:
-				file.write(str(soup))
+				file.write(output)
+
 		except OSError as ex:
 			raise se.InvalidFileException(f"Couldn’t write to ebook directory. Exception: {ex}")
-		except:
+		except Exception as ex:
 			# Save this error for later, because it's still useful to complete the create-draft process
 			# even if we've failed to parse PG's HTML source.
 			is_pg_html_parsed = False
