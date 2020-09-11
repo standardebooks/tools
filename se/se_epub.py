@@ -8,7 +8,6 @@ import base64
 import concurrent.futures
 import datetime
 import fnmatch
-import html
 import os
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
@@ -531,9 +530,10 @@ class SeEpub:
 			endnotes_filename = source_directory / "epub/text/endnotes.xhtml"
 			with open(endnotes_filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
-				soup = BeautifulSoup(xhtml, "lxml")
 
-				endnote_count = len(soup.select("li[id^=note-]"))
+				dom = se.easy_xml.EasyXhtmlTree(xhtml)
+
+				endnote_count = len(dom.xpath("//li[starts-with(@id, 'note-')]"))
 
 				if increment:
 					note_range = range(endnote_count, target_endnote_number - 1, -1)
