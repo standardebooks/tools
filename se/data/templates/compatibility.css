@@ -51,3 +51,26 @@ img[epub|type~="se:image.color-depth.black-on-transparent"][epub|type~="z3998:pu
 img.mathml{
 	vertical-align: middle;
 }
+
+/* As of 2020-09 hanging punctuation only works on iBooks. However, when it hangs over the page margin, it's
+   not rendered. So here we simply remove it for iBooks, unless it's on an element that already has a margin
+   like <blockquote> */
+:root[__ibooks_internal_theme] blockquote + p,
+:root[__ibooks_internal_theme] h2 + p,
+:root[__ibooks_internal_theme] h3 + p,
+:root[__ibooks_internal_theme] h4 + p,
+:root[__ibooks_internal_theme] h5 + p,
+:root[__ibooks_internal_theme] h6 + p,
+:root[__ibooks_internal_theme] header + p,
+:root[__ibooks_internal_theme] hr + p,
+:root[__ibooks_internal_theme] ol + p,
+:root[__ibooks_internal_theme] ul + p,
+:root[__ibooks_internal_theme] table + p,
+:root[__ibooks_internal_theme] hgroup + p,
+:root[__ibooks_internal_theme] p:first-child{
+	hanging-punctuation: none !important;
+}
+
+:root[__ibooks_internal_theme] blockquote p:first-child{
+	hanging-punctuation: first last !important;
+}
