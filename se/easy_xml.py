@@ -9,7 +9,6 @@ import unicodedata
 
 import regex
 from lxml import cssselect, etree
-from lxml.etree import Element
 import se
 
 
@@ -68,7 +67,7 @@ class EasyXmlTree:
 
 		return result
 
-	def tostring(self) -> str:
+	def to_string(self) -> str:
 		"""
 		Serialize the tree to a string.
 		"""
@@ -91,12 +90,12 @@ class EasyXhtmlTree(EasyXmlTree):
 
 		EasyXmlTree.__init__(self, xml_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", ""))
 
-	def tostring(self) -> str:
+	def to_string(self) -> str:
 		"""
 		Serialize the tree to a string.
 		"""
 
-		xml = EasyXmlTree.tostring(self)
+		xml = EasyXmlTree.to_string(self)
 
 		xml = xml.replace("<html", "<html xmlns=\"http://www.w3.org/1999/xhtml\"")
 
@@ -113,12 +112,12 @@ class EasySvgTree(EasyXmlTree):
 
 		EasyXmlTree.__init__(self, xml_string.replace(" xmlns=\"http://www.w3.org/2000/svg\"", ""))
 
-	def tostring(self) -> str:
+	def to_string(self) -> str:
 		"""
 		Serialize the tree to a string.
 		"""
 
-		xml = EasyXmlTree.tostring(self)
+		xml = EasyXmlTree.to_string(self)
 
 		xml = xml.replace("<svg", "<svg xmlns=\"http://www.w3.org/2000/svg\"")
 
@@ -135,12 +134,12 @@ class EasyOpfTree(EasyXmlTree):
 
 		EasyXmlTree.__init__(self, xml_string.replace(" xmlns=\"http://www.idpf.org/2007/opf\"", ""))
 
-	def tostring(self) -> str:
+	def to_string(self) -> str:
 		"""
 		Serialize the tree to a string.
 		"""
 
-		xml = EasyXmlTree.tostring(self)
+		xml = EasyXmlTree.to_string(self)
 
 		xml = xml.replace("<package", "<package xmlns=\"http://www.idpf.org/2007/opf\"")
 
@@ -154,7 +153,7 @@ class EasyXmlElement:
 	def __init__(self, lxml_element):
 		self.lxml_element = lxml_element
 
-	def totagstring(self) -> str:
+	def to_tag_string(self) -> str:
 		"""
 		Return a string representing the opening tag of the element.
 
@@ -173,7 +172,7 @@ class EasyXmlElement:
 
 		return f"<{self.lxml_element.tag}{attrs}>"
 
-	def tostring(self) -> str:
+	def to_string(self) -> str:
 		"""
 		Return a string representing this element.
 
@@ -184,7 +183,7 @@ class EasyXmlElement:
 
 		return regex.sub(r" xmlns(:[\p{Letter}]+?)?=\"[^\"]+?\"", "", etree.tostring(self.lxml_element, encoding=str, with_tail=False))
 
-	def attribute(self, attribute: str) -> str:
+	def get_attr(self, attribute: str) -> str:
 		"""
 		Return the value of an attribute on this element.
 		"""
@@ -234,7 +233,7 @@ class EasyXmlElement:
 		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `Hello there, <abbr>Mr.</abbr> Smith!`
 		"""
 
-		xml = self.tostring()
+		xml = self.to_string()
 		xml = regex.sub(r"^<[^>]+?>", "", xml)
 		xml = regex.sub(r"<[^>]+?>$", "", xml)
 		return xml

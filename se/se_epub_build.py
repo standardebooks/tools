@@ -752,7 +752,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		# Convert the <nav> landmarks element to the <guide> element in content.opf
 		guide_xhtml = "<guide>"
 		for element in toc_tree.xpath("//nav[@epub:type=\"landmarks\"]/ol/li/a"):
-			element_xhtml = element.tostring()
+			element_xhtml = element.to_string()
 			element_xhtml = regex.sub(r"epub:type=\"([^\"]*)(\s*frontmatter\s*|\s*backmatter\s*)([^\"]*)\"", "type=\"\\1\\3\"", element_xhtml)
 			element_xhtml = regex.sub(r"epub:type=\"[^\"]*(acknowledgements|bibliography|colophon|copyright-page|cover|dedication|epigraph|foreword|glossary|index|loi|lot|notes|preface|bodymatter|titlepage|toc)[^\"]*\"", "type=\"\\1\"", element_xhtml)
 			element_xhtml = element_xhtml.replace("type=\"copyright-page", "type=\"copyright page")
@@ -850,7 +850,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					node.unwrap()
 
 				file.seek(0)
-				file.write(dom.tostring())
+				file.write(dom.to_string())
 				file.truncate()
 
 			# Rebuild the NCX

@@ -182,7 +182,7 @@ class SeEpub:
 			translators_have_display_seq = False
 			illustrators_have_display_seq = False
 			for role in self.metadata_dom.xpath("/package/metadata/meta[@property=\"role\"]"):
-				contributor_id = role.attribute("refines").lstrip("#")
+				contributor_id = role.get_attr("refines").lstrip("#")
 				contributor_element = self.metadata_dom.xpath("/package/metadata/dc:contributor[@id=\"" + contributor_id + "\"]")
 				if contributor_element:
 					contributor = {"name": contributor_element[0].text, "include": True, "display_seq": None}
@@ -286,9 +286,9 @@ class SeEpub:
 			for node in self._endnotes_dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol/li[contains(@epub:type, 'endnote')]"):
 				note = Endnote()
 				note.node = node
-				note.number = int(node.attribute("id").replace("note-", ""))
+				note.number = int(node.get_attr("id").replace("note-", ""))
 				note.contents = node.xpath("./*")
-				note.anchor = node.attribute("id") or ""
+				note.anchor = node.get_attr("id") or ""
 
 				for back_link in node.xpath("//a[contains(@epub:type, 'backlink')]/@href"):
 					note.back_link = back_link
@@ -325,19 +325,19 @@ class SeEpub:
 		"""
 
 		# Quick sanity check before we begin
-		if not section.attribute("id") or (section.parent.lxml_element.tag != "body" and not section.parent.attribute("id")):
+		if not section.get_attr("id") or (section.parent.lxml_element.tag != "body" and not section.parent.get_attr("id")):
 			raise se.InvalidXhtmlException("Section without [attr]id[/] attribute.")
 
 		# Try to find our parent tag in the output, by ID.
 		# If it's not in the output, then append it to the tag's closest parent by ID (or <body>), then iterate over its children and do the same.
-		existing_section = output_dom.xpath(f"//*[@id='{section.attribute('id')}']")
+		existing_section = output_dom.xpath(f"//*[@id='{section.get_attr('id')}']")
 		if not existing_section:
 			if section.parent.tag.lower() == "body":
 				output_dom.xpath("/html/body")[0].append(section)
 			else:
-				output_dom.xpath(f"//*[@id='{section.parent.attribute('id')}']")[0].append(section)
+				output_dom.xpath(f"//*[@id='{section.parent.get_attr('id')}']")[0].append(section)
 
-			existing_section = output_dom.xpath(f"//*[@id='{section.attribute('id')}']")
+			existing_section = output_dom.xpath(f"//*[@id='{section.get_attr('id')}']")
 
 		for child in section.lxml_element:
 			tag_name = child.tag
@@ -400,7 +400,7 @@ class SeEpub:
 				titlepage_node.lxml_element.addnext(node.lxml_element)
 
 		# Get the output XHTML as a string
-		output_xhtml = output_dom.tostring()
+		output_xhtml = output_dom.to_string()
 		output_xhtml = regex.sub(r"\"(\.\./)?text/(.+?)\.xhtml\"", "\"#\\2\"", output_xhtml)
 		output_xhtml = regex.sub(r"\"(\.\./)?text/.+?\.xhtml#(.+?)\"", "\"#\\2\"", output_xhtml)
 
@@ -925,7 +925,7 @@ class SeEpub:
 			needs_rewrite = False
 			for link in dom.xpath("/html/body//a[contains(@epub:type, 'noteref')]"):
 				old_anchor = ""
-				href = link.attribute("href") or ""
+				href = link.get_attr("href") or ""
 				if href:
 					# Extract just the anchor from a URL (ie, what follows a hash symbol)
 					hash_position = href.find("#") + 1  # we want the characters AFTER the hash
@@ -960,7 +960,7 @@ class SeEpub:
 			# If we need to write back the body text file
 			if needs_rewrite:
 				new_file = open(file_path, "w")
-				new_file.write(se.formatting.format_xhtml(dom.tostring()))
+				new_file.write(se.formatting.format_xhtml(dom.to_string()))
 				new_file.close()
 
 		if processed == 0:
@@ -984,6 +984,6 @@ class SeEpub:
 						ol_tag.append(endnote.node)
 
 			with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml", "w") as file:
-				file.write(se.formatting.format_xhtml(self._endnotes_dom.tostring()))
+				file.write(se.formatting.format_xhtml(self._endnotes_dom.to_string()))
 
 		return (current_note_number - 1, notes_changed)

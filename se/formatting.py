@@ -1249,9 +1249,9 @@ def generate_title(xhtml) -> str:
 			raise se.InvalidSeEbookException("No [xhtml]<section>[/] or [xhtml]<article>[/] element for [xhtml]<hgroup>[/]")
 
 		# If the closest parent <section> or <article> is a part, division, or volume, then keep all <hgroup> children
-		if closest_parent_section.attribute("epub:type") and ("part" not in closest_parent_section.attribute("epub:type") and "division" not in closest_parent_section.attribute("epub:type") and "volume" not in closest_parent_section.attribute("epub:type")):
+		if closest_parent_section.get_attr("epub:type") and ("part" not in closest_parent_section.get_attr("epub:type") and "division" not in closest_parent_section.get_attr("epub:type") and "volume" not in closest_parent_section.get_attr("epub:type")):
 			# Else, if the closest parent <section> or <article> is a halftitlepage, then discard <hgroup> subtitles
-			if closest_parent_section.attribute("epub:type") and "halftitlepage" in closest_parent_section.attribute("epub:type"):
+			if closest_parent_section.get_attr("epub:type") and "halftitlepage" in closest_parent_section.get_attr("epub:type"):
 				for node in hgroup_element.xpath("./*[contains(@epub:type, 'subtitle')]"):
 					node.remove()
 
@@ -1296,9 +1296,9 @@ def generate_title(xhtml) -> str:
 				top_level_wrapper = top_level_wrappers[0]
 
 				# Only guess the title if there is a single value for epub:type
-				if top_level_wrapper.attribute("epub:type"):
+				if top_level_wrapper.get_attr("epub:type"):
 					# Get the first non-namespaced value as the title
-					for value in top_level_wrapper.attribute("epub:type").split(" "):
+					for value in top_level_wrapper.get_attr("epub:type").split(" "):
 						if ":" not in value:
 							title = titlecase(value.replace("-", " "))
 							break
