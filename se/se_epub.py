@@ -12,7 +12,6 @@ import os
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
-from bs4 import BeautifulSoup, Tag
 import git
 from natsort import natsorted
 import regex
@@ -67,6 +66,7 @@ class Endnote:
 	"""
 
 	def __init__(self):
+		self.node = None
 		self.number = 0
 		self.anchor = ""
 		self.contents = []  # The strings and tags inside an <li> element
@@ -90,7 +90,7 @@ class SeEpub:
 	_generated_github_repo_url = None
 	_repo = None # git.Repo object
 	_last_commit = None # GitCommit object
-	__endnotes_soup = None # bs4 soup object of the endnotes.xhtml file
+	__endnotes_dom = None # EasyXhtmlTree object of the endnotes.xhtml file
 	_endnotes: Optional[List[Endnote]] = None # List of Endnote objects
 
 	def __init__(self, epub_root_directory: Union[str, Path]):
@@ -244,27 +244,27 @@ class SeEpub:
 		return self._generated_github_repo_url
 
 	@property
-	def _endnotes_soup(self) -> BeautifulSoup:
+	def _endnotes_dom(self) -> se.easy_xml.EasyXhtmlTree:
 		"""
 		Accessor
 
-		Return a BeautifulSoup object representing the endnotes.xhtml file for this ebook.
+		Return an EasyXmlTree object representing the endnotes.xhtml file for this ebook.
 
 		INPUTS
 		None
 
 		OUTPUTS
-		A BeautifulSoup object representing the endnotes.xhtml file for this ebook.
+		A EasyXmlTree object representing the endnotes.xhtml file for this ebook.
 		"""
 
-		if not self.__endnotes_soup:
+		if not self.__endnotes_dom:
 			try:
 				with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml") as file:
-					self.__endnotes_soup = BeautifulSoup(file.read(), "html.parser")
+					self.__endnotes_dom = se.formatting.EasyXhtmlTree(file.read())
 			except Exception as ex:
 				raise se.InvalidFileException(f"Could't open file: [path][link=file://{self.path / 'src' / 'epub' / 'text' / 'endnotes.xhtml'}]{self.path / 'src' / 'epub' / 'text' / 'endnotes.xhtml'}[/][/].") from ex
 
-		return self.__endnotes_soup
+		return self.__endnotes_dom
 
 	@property
 	def endnotes(self) -> list:
@@ -283,23 +283,15 @@ class SeEpub:
 		if not self._endnotes:
 			self._endnotes = []
 
-			ol_tag: BeautifulSoup = self._endnotes_soup.find("ol")
-			items = ol_tag.find_all("li")
-
-			for item in items:
+			for node in self._endnotes_dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol/li[contains(@epub:type, 'endnote')]"):
 				note = Endnote()
-				note.contents = []
-				for content in item.contents:
-					note.contents.append(content)
-					if isinstance(content, Tag):
-						links = content.find_all("a")
-						for link in links:
-							epub_type = link.get("epub:type") or ""
-							if epub_type == "backlink":
-								href = link.get("href") or ""
-								if href:
-									note.back_link = href
-				note.anchor = item.get("id") or ""
+				note.node = node
+				note.number = int(node.attribute("id").replace("note-", ""))
+				note.contents = node.xpath("./*")
+				note.anchor = node.attribute("id") or ""
+
+				for back_link in node.xpath("//a[contains(@epub:type, 'backlink')]/@href"):
+					note.back_link = back_link
 
 				self._endnotes.append(note)
 
@@ -926,53 +918,49 @@ class SeEpub:
 			file_path = self.path / "src/epub/text" / file_name
 			try:
 				with open(file_path) as file:
-					soup = BeautifulSoup(file.read(), "lxml")
+					dom = se.easy_xml.EasyXhtmlTree(file.read())
 			except Exception as ex:
 				raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{file_path}]{file_path}[/][/].") from ex
 
-			links = soup.find_all("a")
 			needs_rewrite = False
-			for link in links:
-				epub_type = link.get("epub:type") or ""
-				if epub_type == "noteref":
-					old_anchor = ""
-					href = link.get("href") or ""
-					if href:
-						# Extract just the anchor from a URL (ie, what follows a hash symbol)
-						old_anchor = ""
+			for link in dom.xpath("/html/body//a[contains(@epub:type, 'noteref')]"):
+				old_anchor = ""
+				href = link.attribute("href") or ""
+				if href:
+					# Extract just the anchor from a URL (ie, what follows a hash symbol)
+					hash_position = href.find("#") + 1  # we want the characters AFTER the hash
+					if hash_position > 0:
+						old_anchor = href[hash_position:]
 
-						hash_position = href.find("#") + 1  # we want the characters AFTER the hash
-						if hash_position > 0:
-							old_anchor = href[hash_position:]
+				new_anchor = f"note-{current_note_number:d}"
+				if new_anchor != old_anchor:
+					change_list.append(f"Changed {old_anchor} to {new_anchor} in {file_name}")
+					notes_changed += 1
+					# Update the link in the dom
+					link.set_attr("href", f"endnotes.xhtml#{new_anchor}")
+					link.set_attr("id", f"noteref-{current_note_number:d}")
+					link.lxml_element.text = str(current_note_number)
+					needs_rewrite = True
 
-					new_anchor = f"note-{current_note_number:d}"
-					if new_anchor != old_anchor:
-						change_list.append(f"Changed {old_anchor} to {new_anchor} in {file_name}")
-						notes_changed += 1
-						# Update the link in the soup object
-						link["href"] = 'endnotes.xhtml#' + new_anchor
-						link["id"] = f'noteref-{current_note_number:d}'
-						link.string = str(current_note_number)
-						needs_rewrite = True
-					# Now try to find this in endnotes
-					match_old = lambda x, old=old_anchor: x.anchor == old
-					matches = list(filter(match_old, self.endnotes))
-					if not matches:
-						raise se.InvalidInputException(f"Couldn’t find endnote with anchor [attr]{old_anchor}[/].")
-					if len(matches) > 1:
-						raise se.InvalidInputException(f"Duplicate anchors in endnotes file for anchor [attr]{old_anchor}[/].")
-					# Found a single match, which is what we want
-					endnote = matches[0]
-					endnote.number = current_note_number
-					endnote.matched = True
-					# We don't change the anchor or the back ref just yet
-					endnote.source_file = file_name
-					current_note_number += 1
+				# Now try to find this in endnotes
+				match_old = lambda x, old=old_anchor: x.anchor == old
+				matches = list(filter(match_old, self.endnotes))
+				if not matches:
+					raise se.InvalidInputException(f"Couldn’t find endnote with anchor [attr]{old_anchor}[/].")
+				if len(matches) > 1:
+					raise se.InvalidInputException(f"Duplicate anchors in endnotes file for anchor [attr]{old_anchor}[/].")
+				# Found a single match, which is what we want
+				endnote = matches[0]
+				endnote.number = current_note_number
+				endnote.matched = True
+				# We don't change the anchor or the back ref just yet
+				endnote.source_file = file_name
+				current_note_number += 1
 
 			# If we need to write back the body text file
 			if needs_rewrite:
 				new_file = open(file_path, "w")
-				new_file.write(se.formatting.format_xhtml(str(soup)))
+				new_file.write(se.formatting.format_xhtml(dom.tostring()))
 				new_file.close()
 
 		if processed == 0:
@@ -980,29 +968,22 @@ class SeEpub:
 
 		if notes_changed > 0:
 			# Now we need to recreate the endnotes file
-			ol_tag = self._endnotes_soup.ol
-			ol_tag.clear()
+			for ol_tag in self._endnotes_dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol[1]"):
+				for node in ol_tag.xpath("./li[contains(@epub:type, 'endnote')]"):
+					node.remove()
 
-			self.endnotes.sort(key=lambda endnote: endnote.number)
+				self.endnotes.sort(key=lambda endnote: endnote.number)
 
-			for endnote in self.endnotes:
-				if endnote.matched:
-					li_tag = self._endnotes_soup.new_tag("li")
-					li_tag["id"] = "note-" + str(endnote.number)
-					li_tag["epub:type"] = "endnote"
-					for content in endnote.contents:
-						if isinstance(content, Tag):
-							links = content.find_all("a")
-							for link in links:
-								epub_type = link.get("epub:type") or ""
-								if epub_type == "backlink":
-									href = link.get("href") or ""
-									if href:
-										link["href"] = endnote.source_file + "#noteref-" + str(endnote.number)
-						li_tag.append(content)
-					ol_tag.append(li_tag)
+				for endnote in self.endnotes:
+					if endnote.matched:
+						endnote.node.set_attr("id", f"note-{endnote.number}")
+
+						for node in endnote.node.xpath(".//a[contains(@epub:type, 'backlink')]"):
+							node.set_attr("href", f"{endnote.source_file}#noteref-{endnote.number}")
+
+						ol_tag.append(endnote.node)
 
 			with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml", "w") as file:
-				file.write(se.formatting.format_xhtml(str(self._endnotes_soup)))
+				file.write(se.formatting.format_xhtml(self._endnotes_dom.tostring()))
 
 		return (current_note_number - 1, notes_changed)

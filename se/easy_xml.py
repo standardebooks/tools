@@ -9,6 +9,7 @@ import unicodedata
 
 import regex
 from lxml import cssselect, etree
+from lxml.etree import Element
 import se
 
 
@@ -192,6 +193,15 @@ class EasyXmlElement:
 
 		return self.lxml_element.get(attribute)
 
+	def set_attr(self, attribute: str, value: str) -> str:
+		"""
+		Set the value of an attribute on this element.
+		"""
+
+		attribute = attribute.replace("epub:", "{http://www.idpf.org/2007/ops}")
+
+		return self.lxml_element.set(attribute, value)
+
 	def xpath(self, selector: str, return_string: bool = False):
 		"""
 		Shortcut to select elements based on xpath selector.
@@ -310,7 +320,11 @@ class EasyXmlElement:
 		Place node as the last child of this node.
 		"""
 
-		self.lxml_element.append(node.lxml_element)
+		if isinstance(node, EasyXmlElement):
+			self.lxml_element.append(node.lxml_element)
+
+		else:
+			self.lxml_element.append(node)
 
 	@property
 	def tag(self) -> str:
