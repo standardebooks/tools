@@ -2005,6 +2005,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		toc_files.append(regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", node.attribute("href")))
 
 	if duplicate_id_values:
+		duplicate_id_values = natsorted(list(set(duplicate_id_values)))
 		messages.append(LintMessage("x-017", "Duplicate value for [attr]id[/] attribute. [attr]id[/] attribute values must be unique across the entire ebook on all non-sectioning elements.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_id_values))
 
 	# We can't convert to set() to get unique items because set() is unordered
