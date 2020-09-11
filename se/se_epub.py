@@ -320,61 +320,40 @@ class SeEpub:
 
 		return self._metadata_dom
 
-	@staticmethod
-	def _new_bs4_tag(section: Tag, output_soup: BeautifulSoup) -> Tag:
-		"""
-		Helper function used in self._recompose_xhtml()
-		Create a new BS4 tag given the current section.
-
-		INPUTS
-		section: A BS4 tag
-		output_soup: A BS4 object representing the entire soup
-
-		OUTPUTS
-		A new BS4 tag.
-		"""
-
-		tag = output_soup.new_tag(section.name)
-		for name, value in section.attrs.items():
-			tag.attrs[name] = value
-
-		return tag
-
-	def _recompose_xhtml(self, section: Tag, output_soup: BeautifulSoup) -> None:
+	def _recompose_xhtml(self, section: se.easy_xml.EasyXmlElement, output_dom: se.easy_xml.EasyXmlTree) -> None:
 		"""
 		Helper function used in self.recompose()
 		Recursive function for recomposing a series of XHTML files into a single XHTML file.
 
 		INPUTS
-		section: A BS4 tag to inspect
-		output_soup: A BS4 object representing the entire soup
+		section: An EasyXmlElement to inspect
+		output_dom: A EasyXmlTree representing the entire output dom
 
 		OUTPUTS
 		None
 		"""
 
 		# Quick sanity check before we begin
-		if "id" not in section.attrs or (section.parent.name.lower() != "body" and "id" not in section.parent.attrs):
+		if not section.attribute("id") or (section.parent.lxml_element.tag != "body" and not section.parent.attribute("id")):
 			raise se.InvalidXhtmlException("Section without [attr]id[/] attribute.")
 
 		# Try to find our parent tag in the output, by ID.
 		# If it's not in the output, then append it to the tag's closest parent by ID (or <body>), then iterate over its children and do the same.
-		existing_section = output_soup.select("#" + section["id"])
+		existing_section = output_dom.xpath(f"//*[@id='{section.attribute('id')}']")
 		if not existing_section:
-			if section.parent.name.lower() == "body":
-				output_soup.body.append(self._new_bs4_tag(section, output_soup))
+			if section.parent.tag.lower() == "body":
+				output_dom.xpath("/html/body")[0].append(section)
 			else:
-				output_soup.select("#" + section.parent["id"])[0].append(self._new_bs4_tag(section, output_soup))
+				output_dom.xpath(f"//*[@id='{section.parent.attribute('id')}']")[0].append(section)
 
-			existing_section = output_soup.select("#" + section["id"])
+			existing_section = output_dom.xpath(f"//*[@id='{section.attribute('id')}']")
 
-		for child in section.children:
-			if not isinstance(child, str):
-				tag_name = child.name.lower()
-				if tag_name in ("section", "article"):
-					self._recompose_xhtml(child, output_soup)
-				else:
-					existing_section[0].append(child)
+		for child in section.lxml_element:
+			tag_name = child.tag
+			if tag_name in ("section", "article"):
+				self._recompose_xhtml(se.easy_xml.EasyXmlElement(child), output_dom)
+			else:
+				existing_section.append(se.easy_xml.EasyXmlElement(child))
 
 	def recompose(self, output_xhtml5: bool) -> str:
 		"""
@@ -387,12 +366,8 @@ class SeEpub:
 		A string of HTML5 representing the entire recomposed ebook.
 		"""
 
-		# Get the ordered list of spine items
-		with open(self.metadata_file_path, "r", encoding="utf-8") as file:
-			metadata_soup = BeautifulSoup(file.read(), "lxml")
-
 		# Get some header data: title, core and local css
-		title = html.escape(metadata_soup.find("dc:title").contents[0])
+		title = self.metadata_dom.xpath("//dc:title/text()")[0]
 		css = ""
 		with open(self.path / "src" / "epub" / "css" / "core.css", "r", encoding="utf-8") as file:
 			css = file.read()
@@ -413,25 +388,28 @@ class SeEpub:
 		css = "\t\t\t".join(css.splitlines(True))
 
 		output_xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" epub:prefix=\"z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0\"><head><meta charset=\"utf-8\"/><title>" + title + "</title><style/></head><body></body></html>"
-		output_soup = BeautifulSoup(output_xhtml, "lxml")
+		output_dom = se.formatting.EasyXhtmlTree(output_xhtml)
 
 		# Iterate over spine items in order and recompose them into our output
-		for element in metadata_soup.select("spine itemref"):
-			filename = metadata_soup.select(f"item[id=\"{element['idref']}\"]")[0]["href"]
+		for ref in self.metadata_dom.xpath("/package/spine/itemref/@idref"):
+			filename = self.metadata_dom.xpath(f"/package/manifest/item[@id='{ref}']/@href")[0]
 
 			with open(self.path / "src" / "epub" / filename, "r", encoding="utf-8") as file:
-				xhtml_soup = BeautifulSoup(file.read(), "lxml")
+				dom = se.formatting.EasyXhtmlTree(file.read())
 
-				for child in xhtml_soup.select("body > *"):
-					self._recompose_xhtml(child, output_soup)
+				for node in dom.xpath("/html/body/*"):
+					self._recompose_xhtml(node, output_dom)
 
 		# Add the ToC after the titlepage
 		with open(self.path / "src" / "epub" / "toc.xhtml", "r", encoding="utf-8") as file:
-			toc_soup = BeautifulSoup(file.read(), "lxml")
-			output_soup.select("#titlepage")[0].insert_after(toc_soup.find("nav"))
+			toc_dom = se.formatting.EasyXhtmlTree(file.read())
+			titlepage_node = output_dom.xpath("//*[contains(concat(' ', @epub:type, ' '), ' titlepage ')]")[0]
+
+			for node in toc_dom.xpath("//nav[1]"):
+				titlepage_node.lxml_element.addnext(node.lxml_element)
 
 		# Get the output XHTML as a string
-		output_xhtml = str(output_soup)
+		output_xhtml = output_dom.tostring()
 		output_xhtml = regex.sub(r"\"(\.\./)?text/(.+?)\.xhtml\"", "\"#\\2\"", output_xhtml)
 		output_xhtml = regex.sub(r"\"(\.\./)?text/.+?\.xhtml#(.+?)\"", "\"#\\2\"", output_xhtml)
 
@@ -463,7 +441,7 @@ class SeEpub:
 			output_xhtml = output_xhtml.replace("epub:type", "data-epub-type")
 			output_xhtml = output_xhtml.replace("epub|type", "data-epub-type")
 			output_xhtml = output_xhtml.replace("xml:lang", "lang")
-			output_xhtml = output_xhtml.replace("<html", f"<html lang=\"{metadata_soup.find('dc:language').string}\"")
+			output_xhtml = output_xhtml.replace("<html", f"<html lang=\"{self.metadata_dom.xpath('/package/metadata/dc:language/text()')[0]}\"")
 			output_xhtml = regex.sub(" xmlns.+?=\".+?\"", "", output_xhtml)
 
 		return output_xhtml

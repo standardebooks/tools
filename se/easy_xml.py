@@ -305,6 +305,29 @@ class EasyXmlElement:
 		self.lxml_element.addnext(node.lxml_element)
 		self.remove()
 
+	def append(self, node) -> None:
+		"""
+		Place node as the last child of this node.
+		"""
+
+		self.lxml_element.append(node.lxml_element)
+
+	@property
+	def tag(self) -> str:
+		"""
+		Return a string representing this node's tag name, like `body` or `section`
+		"""
+
+		return self.lxml_element.tag
+
+	@property
+	def parent(self): # This returns an EasyXmlElement but we can't type hint this until Python 3.10
+		"""
+		Return an EasyXmlElement representing this node's parent node
+		"""
+
+		return EasyXmlElement(self.lxml_element.getparent())
+
 	@property
 	def text(self) -> str:
 		"""
