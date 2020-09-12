@@ -73,7 +73,7 @@ class TocItem:
 
 		out_string = ""
 		if not self.title:
-			raise se.InvalidInputException(f"Couldn't find title in': [path][link=file://{self.file_link}[/][/].")
+			raise se.InvalidInputException(f"Couldn't find title in': [path][link=file://{self.file_link}]{self.file_link}[/][/].")
 
 		if self.subtitle and self.lang:
 			# test for a foreign language subtitle, and adjust accordingly
