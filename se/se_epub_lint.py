@@ -170,7 +170,7 @@ SEMANTICS & CONTENT
 "s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file."
 "s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file."
 "s-038", "Illegal asterism. Section/scene breaks must be defined by an [xhtml]<hr/>[/] element."
-"s-039", "Illegal [text]Ibid[/] in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing [text]Ibid[/] refers to."
+"s-039", "[text]Ibid[/] in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes"
 "s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/]."
 "s-041", f"The [xhtml]<figcaption>[/] element of [attr]#{figure_ref}[/] does not match the text in its LoI entry."
 "s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child."
@@ -1812,7 +1812,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# Do we have to replace Ibid.?
 					matches = regex.findall(r"\bibid\b", file_contents, flags=regex.IGNORECASE)
 					if matches:
-						messages.append(LintMessage("s-039", "Illegal [text]Ibid[/] in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing [text]Ibid[/] refers to.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("s-039", "[text]Ibid[/] in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing [text]Ibid[/] refers to, unless it refers to text within the same endnote.", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Match backlink elements whose preceding node doesn't end with ' ', and is also not all whitespace
 					nodes = dom.xpath("/html/body//a[@epub:type='backlink'][(preceding-sibling::node()[1])[not(re:test(., ' $')) and not(normalize-space(.) = '')]]")
