@@ -11,6 +11,10 @@ section{
 	display: block;
 }
 
+.quote-align{
+	margin-left: -.15em;
+}
+
 /* Epub2 compatibility CSS */
 img[epub|type~="z3998:publisher-logo"]{
 	width: 222px; /* This gets scaled up by 2px when adding the white outside path during the build process */
