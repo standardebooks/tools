@@ -1439,11 +1439,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-031", "[text]A B C[/] must be set as [text]A.B.C.[/] It is not an abbreviation.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check for elements that don't have a direct block child
-				# allow white space and comments before the first child
-				nodes = dom.xpath("/html/body//*[(name() = 'blockquote' or name() = 'dd' or name() = 'header' or name() = 'li' or name() = 'footer') and (node()[normalize-space(.) and not(self::comment())])[1][not(name() = 'p' or name() = 'blockquote' or name() = 'div' or name() = 'table' or name() = 'header' or name() = 'ul' or name() = 'ol' or name() = 'footer' or name() = 'hgroup' or re:test(name(), '^h[0-6]'))]]")
-
-				# Remove li nodes if we're in the ToC or LoI, as they don't require block-level children in those cases
-				nodes = [node for node in nodes if node.lxml_element.tag != "li" or (node.lxml_element.tag == "li" and filename.name not in ("toc.xhtml", "loi.xhtml"))]
+				# Allow white space and comments before the first child
+				# Ignore children of the ToC and landmarks as they do not require p children
+				nodes = dom.xpath("/html/body//*[(name() = 'blockquote' or name() = 'dd' or name() = 'header' or name() = 'li' or name() = 'footer') and not(./ancestor::*[contains(@epub:type, 'toc') or contains(@epub:type, 'landmarks')]) and (node()[normalize-space(.) and not(self::comment())])[1][not(name() = 'p' or name() = 'blockquote' or name() = 'div' or name() = 'table' or name() = 'header' or name() = 'ul' or name() = 'ol' or name() = 'footer' or name() = 'hgroup' or re:test(name(), '^h[0-6]'))]]")
 				if nodes:
 					messages.append(LintMessage("s-007", "Element requires at least one block-level child.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
@@ -1867,30 +1865,28 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/].", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check LoI descriptions to see if they match associated figcaptions
-				if dom.xpath("/html/body/section[contains(@epub:type, 'loi')]"):
-					nodes = dom.xpath("/html/body//li/a")
-					for node in nodes:
-						figure_ref = node.get_attr("href").split("#")[1]
-						chapter_ref = regex.findall(r"(.*?)#.*", node.get_attr("href"))[0]
-						figcaption_text = ""
-						loi_text = node.inner_text()
-						file_dom = _dom(self.path / "src/epub/text" / chapter_ref)
+				for node in dom.xpath("/html/body/section[contains(@epub:type, 'loi')]//li//a"):
+					figure_ref = node.get_attr("href").split("#")[1]
+					chapter_ref = regex.findall(r"(.*?)#.*", node.get_attr("href"))[0]
+					figcaption_text = ""
+					loi_text = node.inner_text()
+					file_dom = _dom(self.path / "src/epub/text" / chapter_ref)
 
-						try:
-							figure = file_dom.xpath(f"//*[@id='{figure_ref}']")[0]
-						except Exception:
-							messages.append(LintMessage("s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/text/loi.xhtml"))
-							continue
+					try:
+						figure = file_dom.xpath(f"//*[@id='{figure_ref}']")[0]
+					except Exception:
+						messages.append(LintMessage("s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
+						continue
 
-						for child in figure.lxml_element:
-							if child.tag == "img":
-								figure_img_alt = child.get("alt")
+					for child in figure.lxml_element:
+						if child.tag == "img":
+							figure_img_alt = child.get("alt")
 
-							if child.tag == "figcaption":
-								figcaption_text = se.easy_xml.EasyXmlElement(child).inner_text()
+						if child.tag == "figcaption":
+							figcaption_text = se.easy_xml.EasyXmlElement(child).inner_text()
 
-						if (figcaption_text != "" and loi_text != "" and figcaption_text != loi_text) and (figure_img_alt != "" and loi_text != "" and figure_img_alt != loi_text):
-							messages.append(LintMessage("s-041", f"The [xhtml]<figcaption>[/] element of [attr]#{figure_ref}[/] does not match the text in its LoI entry.", se.MESSAGE_TYPE_WARNING, self.path / "src/epub/text" / chapter_ref))
+					if (figcaption_text != "" and loi_text != "" and figcaption_text != loi_text) and (figure_img_alt != "" and loi_text != "" and figure_img_alt != loi_text):
+						messages.append(LintMessage("s-041", f"The [xhtml]<figcaption>[/] element of [attr]#{figure_ref}[/] does not match the text in its LoI entry.", se.MESSAGE_TYPE_WARNING, self.path / "src/epub/text" / chapter_ref))
 
 			# Check for missing MARC relators
 			if filename.name == "introduction.xhtml" and not self.metadata_dom.xpath("/package/metadata/meta[@property='role' and (text() = 'aui' or text() = 'win')]"):
