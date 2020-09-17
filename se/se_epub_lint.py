@@ -70,6 +70,7 @@ FILESYSTEM
 "f-011", "JPEG files must end in [path].jpg[/]."
 "f-012", "TIFF files must end in [path].tif[/]."
 "f-013", "Glossary search key map must be named [path]glossary-search-key-map.xml[/]."
+"f-014", f"File does not match [path][link=file://{self.path / 'src/epub/css/se.css'}]{core_css_file_path}[/][/]."
 
 METADATA
 "m-001", "gutenberg.org URL missing leading [text]www.[/]."
@@ -825,6 +826,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				messages.append(LintMessage("f-006", f"File does not match [path][link=file://{self.path / 'src/epub/text/uncopyright.xhtml'}]{uncopyright_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/text/uncopyright.xhtml"))
 	except Exception:
 		missing_files.append(self.path / "src/epub/text/uncopyright.xhtml")
+
+	try:
+		with importlib_resources.path("se.data.templates", "se.css") as core_css_file_path:
+			if not filecmp.cmp(core_css_file_path, self.path / "src/epub/css/se.css"):
+				messages.append(LintMessage("f-014", f"File does not match [path][link=file://{self.path / 'src/epub/css/se.css'}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/css/se.css"))
+	except Exception:
+		missing_files.append(self.path / "src/epub/css/se.css")
 
 	# Now iterate over individual files for some checks
 	for root, directories, filenames in os.walk(self.path):
