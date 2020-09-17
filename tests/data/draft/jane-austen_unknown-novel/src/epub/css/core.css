@@ -92,6 +92,12 @@ strong{
 	font-weight: normal;
 }
 
+i > i,
+em > i,
+i > em{
+	font-style: normal;
+}
+
 header{
 	break-after: avoid;
 	break-inside: avoid;

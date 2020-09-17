@@ -1,6 +1,11 @@
 @charset "utf-8";
 @namespace epub "http://www.idpf.org/2007/ops";
 
+/* This may appear in the colophon */
+abbr.era{
+	font-variant: all-small-caps;
+}
+
 section[epub|type~="titlepage"] img{
 	display: block;
 	width: 100%;
