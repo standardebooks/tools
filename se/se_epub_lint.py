@@ -1034,7 +1034,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("t-017", "Ending punctuation inside italics. Ending punctuation is only allowed within italics if the phrase is an independent clause.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check for unused selectors
-				if filename.name not in ("titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml"):
+				if dom.xpath("/html/head/link[contains(@href, 'local.css')]"):
 					for selector in local_css_selectors:
 						try:
 							sel = se.easy_xml.css_selector(selector)
@@ -1850,13 +1850,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							if "books.google.com" in link and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
 								messages.append(LintMessage("m-029", f"Google Books source not present. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
 
-				# Collect certain abbr elements for later check
-				abbr_elements += dom.xpath("/html/body//abbr[contains(@class, 'temperature')]")
+				# Collect certain abbr elements for later check, but not in the colophon
+				if not dom.xpath("/html/body/*[contains(@epub:type, 'colophon')]"):
+					abbr_elements += dom.xpath("/html/body//abbr[contains(@class, 'temperature')]")
 
-				# note that 'temperature' contains 'era'...
-				abbr_elements += dom.xpath("/html/body//abbr[contains(concat(' ', @class, ' '), ' era ')]")
+					# note that 'temperature' contains 'era'...
+					abbr_elements += dom.xpath("/html/body//abbr[contains(concat(' ', @class, ' '), ' era ')]")
 
-				abbr_elements += dom.xpath("/html/body//abbr[contains(@class, 'acronym')]")
+					abbr_elements += dom.xpath("/html/body//abbr[contains(@class, 'acronym')]")
 
 				# Check if language tags in individual files match the language in content.opf
 				if filename.name not in se.IGNORED_FILENAMES:
