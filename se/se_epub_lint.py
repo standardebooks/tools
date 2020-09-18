@@ -205,6 +205,7 @@ SEMANTICS & CONTENT
 "s-070", "[xhtml]<h#>[/] element without [xhtml]<hgroup>[/] parent and without semantic inflection."
 "s-071", "Sectioning element with more than one heading element."
 "s-072", "Element with single [xhtml]<span>[/] child. [xhtml]<span>[/] should be removed and its attributes promoted to the parent element."
+"s-073", "Header element that requires [val]label[/] and [val]ordinal[/] semantic children."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1257,6 +1258,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./text()[re:test(., '^(Part|Book|Volume|Section|Act|Scene)\\b')] or (./span[contains(@epub:type, 'ordinal')] and not(./span[contains(@epub:type, 'label')]))]")
 				if nodes:
 					messages.append(LintMessage("s-066", "Header element missing [val]label[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for header elements that are missing both label and ordinal semantics
+				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(./*) and re:match(normalize-space(.), '^(Part|Book|Volume|Section|Act|Scene)\\s+[ixvIXVmcd]+$')]")
+				if nodes:
+					messages.append(LintMessage("s-073", "Header element that requires [val]label[/] and [val]ordinal[/] semantic children.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for header elements that have a label semantic, but are missing an ordinal sibling
 				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./span[contains(@epub:type, 'label')]][not(./span[contains(@epub:type, 'ordinal')])]")
