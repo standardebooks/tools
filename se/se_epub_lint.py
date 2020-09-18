@@ -1255,7 +1255,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-024", "Header elements that are entirely non-English should not be set in italics. Instead, the [xhtml]<h#>[/] element has the [attr]xml:lang[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for header elements that have a label, but are missing the label semantic
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./text()[re:test(., '^(Part|Book|Volume|Section|Act|Scene)\\b')] or (./span[contains(@epub:type, 'ordinal')] and not(./span[contains(@epub:type, 'label')]))]")
+				# Find h# nodes whose first child is a text node matching a label type, and where that text node's next sibling is a semantic roman numeral
+				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./node()[1][self::text() and not(./*) and re:test(normalize-space(.), '^(Part|Book|Volume|Section|Act|Scene)$') and following-sibling::*[1][contains(@epub:type, 'z3998:roman')]]]")
 				if nodes:
 					messages.append(LintMessage("s-066", "Header element missing [val]label[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
