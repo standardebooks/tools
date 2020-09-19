@@ -2032,7 +2032,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	spine_entries = self.metadata_dom.xpath("/package/spine/itemref")
 	if len(toc_files) != len(spine_entries):
-		messages.append(LintMessage("m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)}).", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+		messages.append(LintMessage("m-043", f"The number of elements in the spine ({len(spine_entries)}) does not match the number of elements in the ToC and landmarks ({len(toc_files)}).", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 	for index, node in enumerate(spine_entries):
 		if toc_files[index] != node.get_attr("idref"):
 			messages.append(LintMessage("m-044", f"The spine order does not match the order of the ToC and landmarks. Expected [text]{node.get_attr('idref')}[/], found [text]{toc_files[index]}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
