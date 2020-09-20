@@ -131,6 +131,7 @@ METADATA
 "m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their SE author page."
 "m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/]."
 "m-058", "[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/]."
+"m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -1024,6 +1025,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 							if "books.google.com" in link and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
 								messages.append(LintMessage("m-040", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
+
+
+					# Is there a page scan link in the colophon, but missing in the metadata?
+					for node in dom.xpath("/html/body//a[re:test(@href, '(gutenberg\\.org/ebooks/[0-9]+|hathitrust\\.org|archive\\.org|books\\.google\\.com)')]"):
+						if not self.metadata_dom.xpath(f"/package/metadata/dc:source[contains(text(), '{node.get_attr('href')}')]"):
+							messages.append(LintMessage("m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
 				else:
 					# This file is not the colophon.
 					# Check for ending punctuation inside italics that have semantics.
