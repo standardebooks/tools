@@ -254,6 +254,7 @@ TYPOGRAPHY
 "t-042", "Possible typo."
 "t-043", "Dialog tag missing punctuation."
 "t-044", "Comma required after leading [text]Or[/] in subtitles."
+"t-045", "[xhtml]<p>[/] preceded by [xhtml]<blockquote>[/] and starting in a lowercase letter, but without [val]continued[/] class."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1435,6 +1436,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'fulltitle') and name() != 'h1' and name() != 'hgroup']")
 				if nodes:
 					messages.append(LintMessage("s-065", "[val]fulltitle[/] semantic on element that is not [xhtml]<h1>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				# Check for p tags preceded by blockquote that don't have the `continued` class. Exclude matches whose first child is <cite>, so we don't match things like <p><cite>—Editor</cite>
+				nodes = dom.xpath("/html/body//p[(preceding-sibling::*[1])[self::blockquote]][not(contains(@class, 'continued')) and re:test(., '^([a-z]|—|…)') and not(./*[1][self::cite])]")
+				if nodes:
+					messages.append(LintMessage("t-045", "[xhtml]<p>[/] preceded by [xhtml]<blockquote>[/] and starting in a lowercase letter, but without [val]continued[/] class.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for HTML tags in <title> tags
 				nodes = dom.xpath("/html/head/title/*")
