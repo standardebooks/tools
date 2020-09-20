@@ -1,3 +1,9 @@
+# v1.6.2
+
+## se build
+
+- Fix issue where adding quote spans interrupts alt attributes and title tags
+
 # v1.6.1
 
 ## General
