@@ -50,7 +50,7 @@ hgroup > *:first-child{
 	font-weight: bold;
 }
 
-blockquote + p,
+p.continued,
 h2 + p,
 h3 + p,
 h4 + p,
