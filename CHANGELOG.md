@@ -1,3 +1,65 @@
+# v1.6.1
+
+## General
+
+- Remove almost all BS4 dependencies
+
+- Change default indentation of `<p>` following `<blockquote>` to be 1em instead of 0; add `continued` class to `core.css` for such `<p>`s that are semantic continuations of the `<blockquote>`'s preceding `<p>`
+
+- Rename some EasyXml functions
+
+## se build
+
+- In the compatible build, add `<span>`s around punctuation followed by quotation marks to move them closer together typographically
+
+- Add compatibility CSS to remove hanging indents from iOS in compatible epub build
+
+- Add `continued` class to `core.css` and make `blockquote + p` indented by default
+
+## se create-draft
+
+- Include IA URL as a `<dc:source>` element in the generated template `content.opf`. Thanks to maticstric
+
+## se generate-toc
+
+- Fix exception message. Thanks to Vince Rice
+
+## se modernize-spelling
+
+- Various additions. Thanks to Robin Whittleton
+
+## se lint
+
+- Add x-017, duplicate ID value on non-sectioning element
+
+- Downgrade s-039 to a warning and tweak message
+
+- Require block-level child in LoI `<li>` elements
+
+- Perform most checks using the file's semantics and not the filename
+
+- Add f-014, se.css doesn't match template
+
+- Only check top-level elements in m-030-35
+
+- Update s-066 to include Act and Scene and improve check to reduce false positives
+
+- Add s-073, header element requires both label and ordinal semantic children
+
+- Add some mathml to exceptions in s-010
+
+- Fix m-043 message. Thanks to Vince Rice
+
+- Add `continued` class to checks
+
+- Add m-059, source in colophon but missing in metadata
+
+- Add t-045, p preceded by blockquote and starting in lowercase letter but missing `continued` class
+
+## se semanticate
+
+- Fix Roman semantics added to lowercase `i`
+
 # v1.6.0
 
 ## General
