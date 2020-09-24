@@ -1096,7 +1096,7 @@ def titlecase(text: str) -> str:
 	text = regex.sub(r"(?<!^)\bÀ\b", "à", text)
 
 	# Uppercase initialisms
-	text = regex.sub(r"(\s)(([\p{Letter}]\.)+)", lambda result: result.group(1) + result.group(2).upper(), text)
+	text = regex.sub(r"\b(([\p{Letter}]\.)+)", lambda result: result.group(1).upper(), text)
 
 	# Fix html entities
 	text = text.replace("&Amp;", "&amp;")
