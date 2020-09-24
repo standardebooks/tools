@@ -1347,8 +1347,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-043", "Dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for abbreviations followed by periods
-				# But we exclude some SI units, which don't take periods, abbreviations like `r^o` (recto) that contain <sup>, and some Imperial abbreviations that are multi-word
-				nodes = dom.xpath("/html/body//abbr[(contains(@class, 'initialism') or contains(@class, 'name') or not(@class))][not(re:test(., '[cmk][mgl]')) and not(./sup) and not(text()='mpg' or text()='mph' or text()='hp' or text()='TV')][following-sibling::text()[1][starts-with(self::text(), '.')]]")
+				# But we exclude some SI units, which don't take periods; abbreviations ending in numbers for example in stage directions; abbreviations like `r^o` (recto) that contain <sup>; and some Imperial abbreviations that are multi-word
+				nodes = dom.xpath("/html/body//abbr[(contains(@class, 'initialism') or contains(@class, 'name') or not(@class))][not(re:test(., '[cmk][mgl]')) and not(re:test(., '[0-9]$')) and not(./sup) and not(text()='mpg' or text()='mph' or text()='hp' or text()='TV')][following-sibling::text()[1][starts-with(self::text(), '.')]]")
 				if nodes:
 					messages.append(LintMessage("t-032", "Initialism or name followed by period. Hint: Periods go within [xhtml]<abbr>[/]. [xhtml]<abbr>[/]s containing periods that end a clause require the [class]eoc[/] class.", se.MESSAGE_TYPE_WARNING, filename, [f"{node.to_string()}." for node in nodes]))
 
