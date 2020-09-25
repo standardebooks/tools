@@ -980,7 +980,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				if dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"):
 					# Check for wrong grammar filled in from template
-					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
+					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
 					if nodes:
 						messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the<br/>\n" + node.to_string() for node in nodes]))
 
@@ -1024,12 +1024,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							if "archive.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">Internet Archive</a>" not in file_contents:
 								messages.append(LintMessage("m-039", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">Internet Archive</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
 
-							if "books.google.com" in link and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
+							if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
 								messages.append(LintMessage("m-040", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
 
 
 					# Is there a page scan link in the colophon, but missing in the metadata?
-					for node in dom.xpath("/html/body//a[re:test(@href, '(gutenberg\\.org/ebooks/[0-9]+|hathitrust\\.org|archive\\.org|books\\.google\\.com)')]"):
+					for node in dom.xpath("/html/body//a[re:test(@href, '(gutenberg\\.org/ebooks/[0-9]+|hathitrust\\.org|archive\\.org|books\\.google\\.com|www\\.google\\.com/books/)')]"):
 						if not self.metadata_dom.xpath(f"/package/metadata/dc:source[contains(text(), '{node.get_attr('href')}')]"):
 							messages.append(LintMessage("m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
@@ -1860,7 +1860,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
 				if dom.xpath("/html/body/section[contains(@epub:type, 'imprint')]"):
 					# Check for wrong grammar filled in from template
-					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/')][(preceding-sibling::node()[1])[re:test(., 'the\\s+$')]]")
+					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::node()[1])[re:test(., 'the\\s+$')]]")
 					if nodes:
 						messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the " + node.to_string() for node in nodes]))
 
@@ -1876,7 +1876,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							if "archive.org" in link and f"the <a href=\"{link}\">Internet Archive</a>" not in file_contents:
 								messages.append(LintMessage("m-028", f"Internet Archive source not present. Expected: the [xhtml]<a href=\"{link}\">Internet Archive</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
 
-							if "books.google.com" in link and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
+							if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
 								messages.append(LintMessage("m-029", f"Google Books source not present. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Collect certain abbr elements for later check, but not in the colophon
