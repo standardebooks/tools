@@ -132,6 +132,7 @@ METADATA
 "m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/]."
 "m-058", "[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/]."
 "m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata."
+"m-060", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -340,6 +341,10 @@ def _get_malformed_urls(xhtml: str, filename: Path) -> list:
 	matches = regex.findall(r"https?://books\.google\.com/books\?id=.+?[&#][^<\s\"]+", xhtml)
 	if matches:
 		messages.append(LintMessage("m-004", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://books.google.com/books?id=<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
+
+	matches = regex.findall(r"https?://www\.google\.com/books/edition/[^/]+?/[^/?#]+/?[&#?][^<\s\"]+", xhtml)
+	if matches:
+		messages.append(LintMessage("m-060", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 	matches = regex.findall(r"https?://babel\.hathitrust\.org[^<\s\"]+", xhtml)
 	if matches:
