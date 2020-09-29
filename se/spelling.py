@@ -329,6 +329,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = xhtml.replace("Œdip", "Oedip") # Oedipus, Oedipal
 	xhtml = regex.sub(r"\b([Pp])æan", r"\1aean", xhtml)
 	xhtml = regex.sub(r"\b([Vv])ertebræ", r"\1ertebrae", xhtml)
+	xhtml = regex.sub(r"\bcælo\b", r"caelo", xhtml) # Latin phrase 'toto caelo'
 
 	# Remove spaces before contractions like n’t eg "is n’t" -> "isn’t"
 	xhtml = regex.sub(r" n’t\b", "n’t", xhtml)
