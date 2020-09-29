@@ -252,7 +252,6 @@ TYPOGRAPHY
 "t-040", "Subtitle with illegal ending period."
 "t-041", "Illegal space before punctuation."
 "t-042", "Possible typo."
-"t-042", "Possible typo."
 "t-043", "Dialog tag missing punctuation."
 "t-044", "Comma required after leading [text]Or[/] in subtitles."
 "t-045", "[xhtml]<p>[/] preceded by [xhtml]<blockquote>[/] and starting in a lowercase letter, but without [val]continued[/] class."
@@ -1257,6 +1256,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][not(descendant::p)][not(ancestor::nav[contains(@epub:type, 'landmarks')])]")
 				if nodes:
 					messages.append(LintMessage("s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+
+				# Check for dialog starting with a lowercase letter. Only check the first child text node of <p>, because other first children might be valid lowercase, like <m:math> or <b>;
+				# exclude <p> inside or preceded by <blockquote>; and exclude <p> inside endnotes, as definitions may start with lowercase letters.
+				nodes = dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::li[contains(@epub:type, 'endnote')]) and not(preceding-sibling::*[1][name() = 'blockquote'])][re:test(./node()[1], '^“[a-z]')]")
+				if nodes:
+					messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for body element without child section or article. Ignore the ToC because it has a unique structure
 				nodes = dom.xpath("/html/body[not(./*[name() = 'section' or name() = 'article' or (name() = 'nav' and contains(@epub:type, 'toc'))])]")
