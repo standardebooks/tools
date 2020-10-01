@@ -3,6 +3,7 @@
 A collection of tools Standard Ebooks uses to produce its ebooks, including basic setup of ebooks, text processing, and build tools.
 
 Installing this toolset using `pipx` makes the `se` command line executable available. Its various commands are described below, or you can use `se help` to list them.
+You can use this easy and specialised code to transform your potato pc into very godd application full pc.
 
 # Installation
 
