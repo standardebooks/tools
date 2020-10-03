@@ -1223,10 +1223,13 @@ def generate_title(xhtml) -> str:
 	A string representing the title for the document
 	"""
 
-	if isinstance(xhtml, str):
-		dom = EasyXhtmlTree(xhtml)
-	else:
-		dom = deepcopy(xhtml)
+	try:
+		if isinstance(xhtml, str):
+			dom = EasyXhtmlTree(xhtml)
+		else:
+			dom = deepcopy(xhtml)
+	except Exception as ex:
+		raise se.InvalidXhtmlException(f"Couldn’t parse XHTML file. Exception: {ex}")
 
 	title = ""
 

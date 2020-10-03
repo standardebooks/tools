@@ -55,7 +55,7 @@ def print_title() -> int:
 			se.print_error(regex.sub(r"^.+: (.+)$", fr"Invalid Roman numeral: [text]\1[/]. File: [path][link=file://{filename}]{filename}[/][/].", str(ex)))
 			return_code = se.InvalidInputException.code
 		except se.SeException as ex:
-			se.print_error(ex)
+			se.print_error(f"File: [path][link=file://{filename}]{filename}[/][/]. {ex}")
 			return_code = ex.code
 
 	return return_code
