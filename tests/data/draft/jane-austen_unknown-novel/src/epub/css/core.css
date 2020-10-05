@@ -58,9 +58,6 @@ h5 + p,
 h6 + p,
 header + p,
 hr + p,
-ol + p,
-ul + p,
-table + p,
 hgroup + p,
 p:first-child{
 	hanging-punctuation: first last;
