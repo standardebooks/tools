@@ -208,6 +208,7 @@ SEMANTICS & CONTENT
 "s-071", "Sectioning element with more than one heading element."
 "s-072", "Element with single [xhtml]<span>[/] child. [xhtml]<span>[/] should be removed and its attributes promoted to the parent element."
 "s-073", "Header element that requires [val]label[/] and [val]ordinal[/] semantic children."
+"s-074", "[xhtml]<hgroup>[/] element containing sequential [xhtml]<h#>[/] elements at the same heading level."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1553,6 +1554,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
 				if nodes:
 					messages.append(LintMessage("s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+
+				nodes = dom.xpath("/html/body//hgroup[./*[following-sibling::*[1][name() != 'h6' and name() = name(preceding-sibling::*[1])]]]")
+				if nodes:
+					messages.append(LintMessage("s-074", "[xhtml]<hgroup>[/] element containing sequential [xhtml]<h#>[/] elements at the same heading level.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for possessive 's within name italics, but not in ignored files like the colophon which we know have no possessives
 				if filename.name not in se.IGNORED_FILENAMES:
