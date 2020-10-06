@@ -711,10 +711,14 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 										if regex.findall("</?(?:m:)?m", processed_line):
 											# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
 											se.images.render_mathml_to_png(driver, regex.sub(r"<(/?)m:", "<\\1", line), work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png", work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}-2x.png")
+											# calculate the "normal" height/width from the 2x image
+											image = Image.open(work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}-2x.png")
+											img_width = image.size[0] // 2
+											img_height = image.size[1] // 2
 
 											# iBooks srcset bug: once srcset works in iBooks, we can use this line instead of the one below it
 											# processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}.png\" srcset=\"../images/mathml-{mathml_count}-2x.png 2x, ../images/mathml-{mathml_count}.png 1x\"/>")
-											processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}.png\"/>")
+											processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}-2x.png\" height=\"{img_height}\" width=\"{img_width}\"/>")
 											mathml_count = mathml_count + 1
 										else:
 											# Success! Replace the MathML with our new string.

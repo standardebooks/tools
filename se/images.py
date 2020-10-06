@@ -135,12 +135,12 @@ def render_mathml_to_png(driver, mathml: str, output_filename: Path, output_file
 			image = _color_to_alpha(image, (255, 255, 255, 255))
 			image = image.crop(image.getbbox())
 
-			# iBooks srcset bug: once srcset works in iBooks, uncomment this line
-			# image.save(output_filename_2x)
+			image.save(output_filename_2x)
 
 			# Save normal version
-			image = image.resize((image.width // 2, image.height // 2))
-			image.save(output_filename)
+			# iBooks srcset bug: once srcset works in iBooks, uncomment these lines
+			# image = image.resize((image.width // 2, image.height // 2))
+			# image.save(output_filename)
 
 def remove_image_metadata(filename: Path) -> None:
 	"""
