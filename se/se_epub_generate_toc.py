@@ -572,6 +572,8 @@ def evaluate_descendants(soup, toc_item):
 						toc_item.subtitle = extract_strings(child)
 					else:
 						toc_item.title = extract_strings(child)
+			if toc_item.title and toc_item.subtitle:  # then we're done
+				return toc_item
 	return toc_item
 
 def get_book_division(tag: BeautifulSoup) -> BookDivision:
