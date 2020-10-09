@@ -20,7 +20,7 @@ import importlib_resources
 
 from cairosvg import svg2png
 from natsort import natsorted
-from PIL import Image, ImageOps 
+from PIL import Image, ImageOps
 import lxml.cssselect
 import lxml.etree as etree
 import regex
