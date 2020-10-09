@@ -20,7 +20,7 @@ import importlib_resources
 
 from cairosvg import svg2png
 from natsort import natsorted
-from PIL import Image
+from PIL import Image, ImageOps 
 import lxml.cssselect
 import lxml.etree as etree
 import regex
@@ -711,10 +711,23 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 										if regex.findall("</?(?:m:)?m", processed_line):
 											# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
 											se.images.render_mathml_to_png(driver, regex.sub(r"<(/?)m:", "<\\1", line), work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png", work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}-2x.png")
+											# iBooks srcset bug: once srcset works in iBooks, this block can go away
 											# calculate the "normal" height/width from the 2x image
-											image = Image.open(work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}-2x.png")
-											img_width = image.size[0] // 2
-											img_height = image.size[1] // 2
+											ifile = work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}-2x.png"
+											image = Image.open(ifile)
+											img_width = image.size[0]
+											img_height = image.size[1]
+											# if either dimension is odd, add a pixel
+											right = img_width % 2
+											bottom = img_height % 2
+											# if either dimension was odd, expand the canvas
+											if (right != 0 or bottom != 0):
+												border = (0, 0, right, bottom)
+												image = ImageOps.expand(image, border)
+												image.save(ifile)
+											# get the "display" dimensions
+											img_width = img_width // 2
+											img_height = img_height // 2
 
 											# iBooks srcset bug: once srcset works in iBooks, we can use this line instead of the one below it
 											# processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}.png\" srcset=\"../images/mathml-{mathml_count}-2x.png 2x, ../images/mathml-{mathml_count}.png 1x\"/>")
