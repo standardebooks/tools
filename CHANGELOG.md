@@ -1,3 +1,57 @@
+# v1.6.3
+
+## General
+
+- In core.css, Indent `<p>` elements following `<ul>`, `<ol>`, and `<table>` by default
+
+## se build
+
+- Generate and use 2x MathML images. Thanks to Vince Rice
+
+- Expand canvas if either generated MathML dimensions are odd. Thanks to Vince Rice
+
+## se lint
+
+- t-032: Ignore abbrevations that contain `<sup>`, like `r<sup>o</sup>`
+
+- t-032: Ignore abbrevations ending in numbers, like stage direction
+
+- Add new Google Books URL structure to checks
+
+- Add m-060, alternate style for new Google Books URLs
+
+- t-042: check for dialog starting in lowercase letters
+
+- Add s-074, `<hgroup>` element containing sequential `<h#>` children at the same heading level
+
+## se modernize-spelling
+
+- Various additions and modifications
+
+## se print-title
+
+- Catch and pretty print invalid XHTML exceptions
+
+## se print-toc
+
+- Correctly print first child of title when there are multiple hgroup children. Thanks to David Grigg
+
+## se recompose-epub
+
+- Include all images as inline data
+
+- Bug fixes and improvements
+
+## se semanticate
+
+- Reduce false positives when adding semantics to measurements
+
+## se titlecase
+
+- Use word boundaries instead of spaces when uppercasing initialisms
+
+- Add `Des` and `De La` to lowercased exceptions
+
 # v1.6.2
 
 ## se build
