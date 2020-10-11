@@ -339,6 +339,23 @@ class SeEpub:
 
 			existing_section = output_dom.xpath(f"//*[@id='{section.get_attr('id')}']")
 
+		# Convert all <img> references to inline base64
+		# We even convert SVGs instead of inlining them, because CSS won't allow us to style inlined SVGs
+		# (for example if we want to apply max-width or filter: invert())
+		for img in section.xpath("//img[starts-with(@src, '../images/')]"):
+			src = img.get_attr("src").replace("../", "")
+			with open(self.path / "src" / "epub" / src, "rb") as binary_file:
+				image_contents_base64 = base64.b64encode(binary_file.read()).decode()
+
+			if src.endswith(".svg"):
+				img.set_attr("src", f"data:image/svg+xml;base64, {image_contents_base64}")
+
+			if src.endswith(".jpg"):
+				img.set_attr("src", f"data:image/jpg;base64, {image_contents_base64}")
+
+			if src.endswith(".png"):
+				img.set_attr("src", f"data:image/png;base64, {image_contents_base64}")
+
 		for child in section.lxml_element:
 			tag_name = child.tag
 			if tag_name in ("section", "article"):
@@ -359,16 +376,19 @@ class SeEpub:
 
 		# Get some header data: title, core and local css
 		title = self.metadata_dom.xpath("//dc:title/text()")[0]
+		language = self.metadata_dom.xpath("//dc:language/text()")[0]
 		css = ""
-		with open(self.path / "src" / "epub" / "css" / "core.css", "r", encoding="utf-8") as file:
-			css = file.read()
+		for filename in os.scandir(self.path / "src" / "epub" / "css"):
+			filepath = Path(filename)
+			if filepath.suffix == ".css":
+				with open(filepath, "r", encoding="utf-8") as file:
+					css = css + f"\n\n\n/* {filepath.name} */" + file.read()
 
-		with open(self.path / "src" / "epub" / "css" / "local.css", "r", encoding="utf-8") as file:
-			css = css + "\n\n\n/* local.css */" + file.read()
+		css = css.strip()
 
 		namespaces = set(regex.findall(r"@namespace.+?;", css))
 
-		css = regex.sub(r"@(charset|namespace).+?;", "", css).strip()
+		css = regex.sub(r"\s*@(charset|namespace).+?;\s*", "\n", css).strip()
 
 		if namespaces:
 			css = "\n" + css
@@ -378,7 +398,14 @@ class SeEpub:
 
 		css = "\t\t\t".join(css.splitlines(True))
 
-		output_xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" epub:prefix=\"z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0\"><head><meta charset=\"utf-8\"/><title>" + title + "</title><style/></head><body></body></html>"
+		# Remove min-height from CSS since it doesn't really apply to the single page format.
+		# It occurs at least in se.css
+		css = regex.sub(r"\s*min-height: [^;]+?;", "", css)
+
+		# Remove -epub-* CSS as it's invalid in a browser context
+		css = regex.sub(r"\s*\-epub\-[^;]+?;", "", css)
+
+		output_xhtml = f"<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" epub:prefix=\"z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0\" xml:lang=\"{language}\"><head><meta charset=\"utf-8\"/><title>{title}</title><style/></head><body></body></html>"
 		output_dom = se.formatting.EasyXhtmlTree(output_xhtml)
 
 		# Iterate over spine items in order and recompose them into our output
@@ -399,20 +426,21 @@ class SeEpub:
 			for node in toc_dom.xpath("//nav[1]"):
 				titlepage_node.lxml_element.addnext(node.lxml_element)
 
+		# Replace all <a href> links with internal links
+		for link in output_dom.xpath("//a[contains(@href, '#')]"):
+			link.set_attr("href", regex.sub(r".+(#.+)$", r"\1", link.get_attr("href")))
+
+		# Replace all <a href> links to entire files
+		for link in output_dom.xpath("//a[not(contains(@href, '#'))]"):
+			href = link.get_attr("href")
+			href = regex.sub(r".+/([^/]+)$", r"#\1", href)
+			href = regex.sub(r"\.xhtml$", "", href)
+			link.set_attr("href", href)
+
 		# Get the output XHTML as a string
 		output_xhtml = output_dom.to_string()
 		output_xhtml = regex.sub(r"\"(\.\./)?text/(.+?)\.xhtml\"", "\"#\\2\"", output_xhtml)
 		output_xhtml = regex.sub(r"\"(\.\./)?text/.+?\.xhtml#(.+?)\"", "\"#\\2\"", output_xhtml)
-
-		# Replace SVG images hrefs with inline SVG
-		for match in regex.findall(r"src=\"../images/(.+?)\.svg\"", output_xhtml):
-			with open(self.path / "src" / "epub" / "images" / (match + ".svg"), "r", encoding="utf-8") as file:
-				svg = file.read()
-
-				# Remove XML declaration
-				svg = regex.sub(r"<\?xml.+?\?>", "", svg)
-
-				output_xhtml = regex.sub(fr"<img.+?src=\"\.\./images/{match}\.svg\".*?/>", svg, output_xhtml)
 
 		# All done, clean the output
 		output_xhtml = se.formatting.format_xhtml(output_xhtml)
@@ -423,6 +451,11 @@ class SeEpub:
 		if output_xhtml5:
 			output_xhtml = output_xhtml.replace("\t\t<meta charset=\"utf-8\"/>\n", "")
 			output_xhtml = output_xhtml.replace("\t\t<style/>\n", "")
+
+			output_xhtml = regex.sub(r'xml:lang="([^"]+?)"', r'xml:lang="\1" lang="\1"', output_xhtml)
+
+			# Re-add a doctype
+			output_xhtml = output_xhtml.replace("<?xml version=\"1.0\" encoding=\"utf-8\"?>", "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE html>")
 		else:
 			# Remove xml declaration and re-add the doctype
 			output_xhtml = regex.sub(r"<\?xml.+?\?>", "<!doctype html>", output_xhtml)
@@ -431,9 +464,9 @@ class SeEpub:
 			# Make some replacements for HTML5 compatibility
 			output_xhtml = output_xhtml.replace("epub:type", "data-epub-type")
 			output_xhtml = output_xhtml.replace("epub|type", "data-epub-type")
-			output_xhtml = output_xhtml.replace("xml:lang", "lang")
 			output_xhtml = output_xhtml.replace("<html", f"<html lang=\"{self.metadata_dom.xpath('/package/metadata/dc:language/text()')[0]}\"")
 			output_xhtml = regex.sub(" xmlns.+?=\".+?\"", "", output_xhtml)
+			output_xhtml = output_xhtml.replace("xml:lang", "lang")
 
 		return output_xhtml
 
