@@ -378,25 +378,31 @@ class SeEpub:
 		title = self.metadata_dom.xpath("//dc:title/text()")[0]
 		language = self.metadata_dom.xpath("//dc:language/text()")[0]
 		css = ""
+		namespaces = []
+
 		for filename in os.scandir(self.path / "src" / "epub" / "css"):
 			filepath = Path(filename)
 			if filepath.suffix == ".css":
 				with open(filepath, "r", encoding="utf-8") as file:
-					css = css + f"\n\n\n/* {filepath.name} */" + file.read()
+					file_css = file.read()
+
+					namespaces = namespaces + regex.findall(r"@namespace.+?;", file_css)
+
+					file_css = regex.sub(r"\s*@(charset|namespace).+?;\s*", "\n", file_css).strip()
+
+					css = css + f"\n\n\n/* {filepath.name} */\n" + file_css
 
 		css = css.strip()
 
-		namespaces = set(regex.findall(r"@namespace.+?;", css))
-
-		css = regex.sub(r"\s*@(charset|namespace).+?;\s*", "\n", css).strip()
+		namespaces = set(namespaces)
 
 		if namespaces:
 			css = "\n" + css
 
-		for namespace in namespaces:
-			css = namespace + "\n" + css
+			for namespace in namespaces:
+				css = namespace + "\n" + css
 
-		css = "\t\t\t".join(css.splitlines(True))
+		css = "\t\t\t".join(css.splitlines(True)) + "\n"
 
 		# Remove min-height from CSS since it doesn't really apply to the single page format.
 		# It occurs at least in se.css
@@ -446,7 +452,7 @@ class SeEpub:
 		output_xhtml = se.formatting.format_xhtml(output_xhtml)
 
 		# Insert our CSS. We do this after `clean` because `clean` will escape > in the CSS
-		output_xhtml = regex.sub(r"<style/>", "<style>\n\t\t\t" + css + "\t\t</style>", output_xhtml)
+		output_xhtml = regex.sub(r"<style/>", "<style><![CDATA[\n\t\t\t" + css + "\t\t]]></style>", output_xhtml)
 
 		if output_xhtml5:
 			output_xhtml = output_xhtml.replace("\t\t<meta charset=\"utf-8\"/>\n", "")
