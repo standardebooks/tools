@@ -185,7 +185,8 @@ case $state in
 					{-h,--help}'[show a help message and exit]' \
 					{-o,--output}'=[a file to write output to instead of printing to standard output]: :_files' \
 					'*: :_files -g \*.xhtml' \
-					{-x,--xhtml}'[output XHTML instead of HTML5]'
+					{-x,--xhtml}'[output XHTML instead of HTML5]' \
+					{-e,--extra-css-file}'=[the path to an additional CSS file to include after any CSS files in the epub]: :_files'
 				;;
 			renumber-endnotes)
 				_arguments -s \

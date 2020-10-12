@@ -16,12 +16,13 @@ def recompose_epub() -> int:
 	parser = argparse.ArgumentParser(description="Recompose a Standard Ebooks source directory into a single (X?)HTML5 file, and print to standard output.")
 	parser.add_argument("-o", "--output", metavar="FILE", type=str, default="", help="a file to write output to instead of printing to standard output")
 	parser.add_argument("-x", "--xhtml", action="store_true", help="output XHTML instead of HTML5")
+	parser.add_argument("-e", "--extra-css-file", metavar="FILE", type=str, default=None, help="the path to an additional CSS file to include after any CSS files in the epub")
 	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
 	try:
 		se_epub = SeEpub(args.directory)
-		recomposed_epub = se_epub.recompose(args.xhtml)
+		recomposed_epub = se_epub.recompose(args.xhtml, args.extra_css_file)
 
 		if args.output:
 			with open(args.output, "w", encoding="utf-8") as file:
@@ -33,7 +34,7 @@ def recompose_epub() -> int:
 		se.print_error(ex)
 		return ex.code
 	except Exception as ex:
-		se.print_error("Couldn’t write to output file.")
+		se.print_error("Couldn’t recompose epub.")
 		return se.InvalidFileException.code
 
 	return 0

@@ -363,7 +363,7 @@ class SeEpub:
 			else:
 				existing_section.append(se.easy_xml.EasyXmlElement(child))
 
-	def recompose(self, output_xhtml5: bool) -> str:
+	def recompose(self, output_xhtml5: bool, extra_css_file: Path = None) -> str:
 		"""
 		Iterate over the XHTML files in this epub and "recompose" them into a single XHTML string representing this ebook.
 
@@ -380,17 +380,21 @@ class SeEpub:
 		css = ""
 		namespaces = []
 
-		for filename in os.scandir(self.path / "src" / "epub" / "css"):
-			filepath = Path(filename)
-			if filepath.suffix == ".css":
-				with open(filepath, "r", encoding="utf-8") as file:
-					file_css = file.read()
+		css_filenames = ["core.css", "se.css", "local.css"]
 
-					namespaces = namespaces + regex.findall(r"@namespace.+?;", file_css)
+		if extra_css_file:
+			css_filenames.append(extra_css_file)
 
-					file_css = regex.sub(r"\s*@(charset|namespace).+?;\s*", "\n", file_css).strip()
+		for filename in css_filenames:
+			filepath = self.path / "src" / "epub" / "css" / filename
+			with open(filepath, "r", encoding="utf-8") as file:
+				file_css = file.read()
 
-					css = css + f"\n\n\n/* {filepath.name} */\n" + file_css
+				namespaces = namespaces + regex.findall(r"@namespace.+?;", file_css)
+
+				file_css = regex.sub(r"\s*@(charset|namespace).+?;\s*", "\n", file_css).strip()
+
+				css = css + f"\n\n\n/* {filepath.name} */\n" + file_css
 
 		css = css.strip()
 

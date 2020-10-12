@@ -102,7 +102,7 @@ _se(){
 					COMPREPLY+=($(compgen -f -X ".*"))
 					return 0
 				fi
-				COMPREPLY+=($(compgen -W "-h --help -o= --output= -x --xhtml" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-h --help -o= --output= -x --xhtml -e --extra-css-file" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			renumber-endnotes)
