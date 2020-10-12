@@ -378,12 +378,12 @@ class SeEpub:
 		title = self.metadata_dom.xpath("//dc:title/text()")[0]
 		language = self.metadata_dom.xpath("//dc:language/text()")[0]
 		css = ""
-		namespaces = []
+		namespaces: List[str] = []
 
 		css_filenames = ["core.css", "se.css", "local.css"]
 
 		if extra_css_file:
-			css_filenames.append(extra_css_file)
+			css_filenames.append(str(extra_css_file))
 
 		for filename in css_filenames:
 			filepath = self.path / "src" / "epub" / "css" / filename
@@ -398,7 +398,7 @@ class SeEpub:
 
 		css = css.strip()
 
-		namespaces = set(namespaces)
+		namespaces = list(set(namespaces))
 
 		if namespaces:
 			css = "\n" + css

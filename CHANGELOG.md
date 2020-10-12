@@ -1,3 +1,13 @@
+# v1.7.0
+
+## se recompose-epub
+
+- Add --extra-css-file option to include additional CSS when recomposing
+
+- Don't destroy external links when recomposing
+
+- Improve formatting of CSS in `<style>` elements, and escape with CDATA
+
 # v1.6.3
 
 ## General
