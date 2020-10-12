@@ -325,8 +325,11 @@ class SeEpub:
 		"""
 
 		# Quick sanity check before we begin
-		if not section.get_attr("id") or (section.parent.lxml_element.tag != "body" and not section.parent.get_attr("id")):
+		if not section.get_attr("id") or (section.parent.tag.lower() != "body" and not section.parent.get_attr("id")):
 			raise se.InvalidXhtmlException("Section without [attr]id[/] attribute.")
+
+		if section.parent.tag.lower() == "body":
+			section.set_attr("epub:type", f"{section.get_attr('epub:type')} {section.parent.get_attr('epub:type')}".strip())
 
 		# Try to find our parent tag in the output, by ID.
 		# If it's not in the output, then append it to the tag's closest parent by ID (or <body>), then iterate over its children and do the same.
