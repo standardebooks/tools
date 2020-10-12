@@ -433,11 +433,11 @@ class SeEpub:
 				titlepage_node.lxml_element.addnext(node.lxml_element)
 
 		# Replace all <a href> links with internal links
-		for link in output_dom.xpath("//a[contains(@href, '#')]"):
+		for link in output_dom.xpath("//a[not(re:test(@href, '^https?://')) and contains(@href, '#')]"):
 			link.set_attr("href", regex.sub(r".+(#.+)$", r"\1", link.get_attr("href")))
 
 		# Replace all <a href> links to entire files
-		for link in output_dom.xpath("//a[not(contains(@href, '#'))]"):
+		for link in output_dom.xpath("//a[not(re:test(@href, '^https?://')) and not(contains(@href, '#'))]"):
 			href = link.get_attr("href")
 			href = regex.sub(r".+/([^/]+)$", r"#\1", href)
 			href = regex.sub(r"\.xhtml$", "", href)
