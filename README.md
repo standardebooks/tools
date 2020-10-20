@@ -358,6 +358,7 @@ Many of these tools act on Standard Ebooks source directories. Such directories 
 	|---css/
 	|----core.css
 	|----local.css
+	|----se.css
 	|---images/
 	|----cover.svg
 	|----titlepage.svg
