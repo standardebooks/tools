@@ -137,15 +137,19 @@ Now the `se` binary is in your path, and any edits you make to source files in t
 
 ### Running commands on the entire corpus
 
-As a developer, it’s often useful to run an `se` command like `se lint` or `se build` on the entire corpus for testing purposes. This can be very time-consuming in a regular command invocation, so it’s suggested to use [GNU Parallel](https://www.gnu.org/software/parallel/) to speed up these commands significantly on machines with multiple cores. For example:
+As a developer, it’s often useful to run an `se` command like `se lint` or `se build` on the entire corpus for testing purposes. This can be very time-consuming in a regular invocation (like `se lint /path/to/ebook/repos/*`), because each argument is processed sequentially. Instead of waiting for a single invocation to process all of its arguments sequentially, use [GNU Parallel](https://www.gnu.org/software/parallel/) to start multiple invocations in parallel, with each one processing a single argument. For example:
 
 ```shell
+# Slow, each argument is processed in sequence
+se lint /path/to/ebook/repos/*
+
+# Fast, multiple invocations each process a single argument in parallel
 parallel --ungroup --keep-order se lint ::: /path/to/ebook/repos/*
 ```
 
 The toolset tries to detect when it’s being invoked from `parallel`, and it adjusts its output to accomodate.
 
-We pass the `--ungroup` flag to Parallel to allow it to output lines as wide as the terminal; otherwise lines will be hard-wrapped to 80 chars. We pass the `--keep-order` flag to output results in the order we passed them in, which is useful if comparing the results of multiple runs.
+We pass the `--ungroup` flag to `parallel` to allow it to output lines as wide as the terminal; otherwise lines will be hard-wrapped to 80 chars. We pass the `--keep-order` flag to output results in the order we passed them in, which is useful if comparing the results of multiple runs.
 
 ### Linting with `pylint` and `mypy`
 
