@@ -113,7 +113,7 @@ METADATA
 "m-038", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>[/]."
 "m-039", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">Internet Archive</a>[/]."
 "m-040", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/]."
-"m-041", "[text]Hathi Trust[/] should be [text]HathiTrust[/]."
+"m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
 "m-042", "[xml]<manifest>[/] element does not match expected structure."
 "m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)})."
 "m-044", f"The spine order does not match the order of the ToC and landmarks. Expected [text]{node.get_attr('idref')}[/], found [text]{toc_files[index]}[/]."
@@ -1124,8 +1124,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-026", "Invalid Roman numeral.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for "Hathi Trust" instead of "HathiTrust"
-				if "Hathi Trust" in file_contents:
-					messages.append(LintMessage("m-041", "[text]Hathi Trust[/] should be [text]HathiTrust[/].", se.MESSAGE_TYPE_ERROR, filename))
+				nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust.org') and re:test(text(), '[Hh]athi') and not(text() = 'HathiTrust Digital Library')]")
+				if nodes:
+					messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for uppercase letters in IDs or classes
 				nodes = dom.xpath("//*[re:test(@id, '[A-Z]') or re:test(@class, '[A-Z]') or re:test(@epub:type, '[A-Z]')]")
