@@ -133,6 +133,7 @@ METADATA
 "m-058", "[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/]."
 "m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata."
 "m-060", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/]."
+"m-061", "Link must be preceded by [text]the[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -1127,6 +1128,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust.org') and re:test(text(), '[Hh]athi') and not(text() = 'HathiTrust Digital Library')]")
 				if nodes:
 					messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				# Check that `Internet Archive` and `HathiTrust` are preceded by `the`. They might have an immediate preceding text node that ends in `the`, or they
+				# might be preceded by a white space node, then a <br/>, then a text node ending in `the`.
+				nodes = dom.xpath("/html/body//a[(re:test(text(), '[Hh]athi') and re:test(@href, '^https://[^\"]*?hathitrust.org')) or (re:test(text(), 'Internet Archive') and re:test(@href, 'https://[^\"]*?archive.org'))][(preceding-sibling::node()[2][not(self::br)] and preceding-sibling::node()[1][not(re:test(., '\\sthe $'))]) or (preceding-sibling::node()[2][self::br] and preceding-sibling::node()[3][not(re:test(., '\\sthe$'))]) ]")
+				if nodes:
+					messages.append(LintMessage("m-061", "Link must be preceded by [text]the[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for uppercase letters in IDs or classes
 				nodes = dom.xpath("//*[re:test(@id, '[A-Z]') or re:test(@class, '[A-Z]') or re:test(@epub:type, '[A-Z]')]")
