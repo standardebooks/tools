@@ -257,6 +257,7 @@ TYPOGRAPHY
 "t-043", "Dialog tag missing punctuation."
 "t-044", "Comma required after leading [text]Or[/] in subtitles."
 "t-045", "[xhtml]<p>[/] preceded by [xhtml]<blockquote>[/] and starting in a lowercase letter, but without [val]continued[/] class."
+"t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1511,6 +1512,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				matches = [match for match in matches if "</p" not in match and "<br/>" not in match]
 				if matches:
 					messages.append(LintMessage("t-004", "[text]‘[/] missing matching [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+				if "῾" in file_contents:
+					messages.append(LintMessage("t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for repeated punctuation, but first remove `&amp;` so we don't match `&amp;,`
 				matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents.replace("&amp;", ""))
