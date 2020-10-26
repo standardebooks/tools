@@ -1005,17 +1005,16 @@ class SeEpub:
 
 			# If we need to write back the body text file
 			if needs_rewrite:
-				new_file = open(file_path, "w")
-				new_file.write(se.formatting.format_xhtml(dom.to_string()))
-				new_file.close()
+				with open(file_path, "w") as file:
+					file.write(se.formatting.format_xhtml(dom.to_string()))
 
 		if processed == 0:
 			raise se.InvalidInputException("No files processed. Did you update the manifest and order the spine?")
 
 		if notes_changed > 0:
 			# Now we need to recreate the endnotes file
-			for ol_tag in self._endnotes_dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol[1]"):
-				for node in ol_tag.xpath("./li[contains(@epub:type, 'endnote')]"):
+			for ol_node in self._endnotes_dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol[1]"):
+				for node in ol_node.xpath("./li[contains(@epub:type, 'endnote')]"):
 					node.remove()
 
 				self.endnotes.sort(key=lambda endnote: endnote.number)
@@ -1027,7 +1026,7 @@ class SeEpub:
 						for node in endnote.node.xpath(".//a[contains(@epub:type, 'backlink')]"):
 							node.set_attr("href", f"{endnote.source_file}#noteref-{endnote.number}")
 
-						ol_tag.append(endnote.node)
+						ol_node.append(endnote.node)
 
 			with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml", "w") as file:
 				file.write(se.formatting.format_xhtml(self._endnotes_dom.to_string()))
