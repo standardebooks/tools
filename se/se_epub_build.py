@@ -528,7 +528,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						processed_xhtml = regex.sub(r"""\s*epub:type=""\s*""", "", processed_xhtml)
 
 						# Move quotation marks over periods and commas
-						processed_xhtml = regex.sub(r"([\\.,])([’”])", r"""\1<span class="quote-align">\2</span>""", processed_xhtml)
+						processed_xhtml = regex.sub(fr"([\\.…,])([’”{se.HAIR_SPACE}]+)", r"""\1<span class="quote-align">\2</span>""", processed_xhtml)
 
 						# The above replacement may replace text within <img alt> attributes. Remove those now until no replacements remain, since we may have
 						# many matches in the same line
