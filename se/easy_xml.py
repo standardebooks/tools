@@ -97,7 +97,7 @@ class EasyXhtmlTree(EasyXmlTree):
 
 		xml = EasyXmlTree.to_string(self)
 
-		xml = xml.replace("<html", "<html xmlns=\"http://www.w3.org/1999/xhtml\"")
+		xml = regex.sub(r"<html(?!:)", "<html xmlns=\"http://www.w3.org/1999/xhtml\"", xml)
 
 		return xml
 

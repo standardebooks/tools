@@ -607,20 +607,19 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 								# Note that we replaced ↩ with \u21a9\ufe0e in an earlier iOS compatibility fix
 								xhtml = regex.sub(r"epub:type=\"backlink\">\u21a9\ufe0e</a>", "epub:type=\"backlink\">←</a>", xhtml)
 
-							# We have to remove the default namespace declaration from our document, otherwise
-							# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
-							try:
-								tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
-							except Exception as ex:
-								raise se.InvalidXhtmlException(f"Error parsing XHTML file: [path][link=file://{filename}]{filename}[/][/]. Exception: {ex}")
+							dom = se.easy_xml.EasyXhtmlTree(xhtml)
 
-							kobo.add_kobo_spans_to_node(tree.xpath("./body", namespaces=se.XHTML_NAMESPACES)[0])
+							# Remove quote-align spans we inserted above, since Kobo has weird spacing problems with them
+							for node in dom.xpath("/html/body//span[contains(@class, 'quote-align')]"):
+								node.unwrap()
 
-							xhtml = etree.tostring(tree, encoding="unicode", pretty_print=True, with_tail=False)
-							xhtml = regex.sub(r"<html:span", "<span", xhtml)
+							# Now add the kobo spans
+							kobo.add_kobo_spans_to_node(dom.xpath("/html/body")[0].lxml_element)
+
+							# Clean up output
+							xhtml = dom.to_string()
+							xhtml = regex.sub(r"<html:span xmlns:html=\"http://www\.w3\.org/1999/xhtml\"", "<span", xhtml)
 							xhtml = regex.sub(r"html:span>", "span>", xhtml)
-							xhtml = regex.sub(r"<span xmlns:html=\"http://www.w3.org/1999/xhtml\"", "<span", xhtml)
-							xhtml = regex.sub(r"<html", "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\"", xhtml)
 
 							file.seek(0)
 							file.write(xhtml)
