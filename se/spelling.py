@@ -289,6 +289,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Cc])ourtezan", r"\1ourtesan", xhtml)			# courtezan -> courtesan
 	xhtml = regex.sub(r"\b([Cc])ompleat", r"\1omplete", xhtml)			# compleat -> complete
 	xhtml = regex.sub(r"\b([Dd])umfound", r"\1umbfound", xhtml)			# dumfound -> dumbfound
+	xhtml = regex.sub(r"\b’([Cc])ello(s?)\b", r"\1ello\2", xhtml)			# 'cello -> cello
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
