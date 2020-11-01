@@ -189,6 +189,7 @@ class EasyXmlElement:
 		"""
 
 		attribute = attribute.replace("epub:", "{http://www.idpf.org/2007/ops}")
+		attribute = attribute.replace("xml:", "{http://www.w3.org/XML/1998/namespace}")
 
 		return self.lxml_element.get(attribute)
 

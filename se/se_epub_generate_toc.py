@@ -11,8 +11,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Tuple, List
 import regex
-from bs4 import BeautifulSoup, Tag
+from lxml import etree
 import se
+import se.easy_xml
+from se.easy_xml import EasyXmlTree, EasyXmlElement
 from se.formatting import format_xhtml
 
 
@@ -128,7 +130,32 @@ class TocItem:
 
 		return out_string
 
-def get_file_epub_type(soup: BeautifulSoup) -> str:
+
+def get_first(node: EasyXmlTree, wanted: str):
+	"""
+	get the first matching node which occurs in the file
+	:param node: an EasyXmlTree node
+	:param wanted: xpath pattern to find
+	:return: an EasyXmlTree node with the first heading encountered
+	"""
+	nodes = node.xpath(wanted)
+	if len(nodes) > 0:
+		return nodes[0]
+	return None
+
+
+def get_outer_sections(node: EasyXmlElement, wanted_tags: list):
+	sections = []
+	pa = node.parent
+	while (pa is not None) and (pa.tag not in ["body", "html"]):
+		if pa.tag in wanted_tags:
+			sections.append(pa)
+		if pa.parent is not None:
+			pa = pa.parent
+	return sections
+
+
+def get_file_epub_type(dom: EasyXmlTree) -> str:
 	"""
 	Retrieve the epub_type of this file to see if it's a landmark item.
 
@@ -140,28 +167,32 @@ def get_file_epub_type(soup: BeautifulSoup) -> str:
 	"""
 
 	# Try for a heading.
-	first_head = soup.find(["h1", "h2", "h3", "h4", "h5", "h6"])
+	first_head = get_first(dom, "//h1 | //h2 | //h3 | //h4 | //h5 | //h6")
+
 	if first_head is not None:
-		parent = first_head.find_parent(["section", "article"])
+		parent = get_outer_sections(first_head, ["section", "article"])
 	else:  # No heading found so go hunting for some other content.
-		paragraph = soup.find(["p", "header", "img"])  # We look for the first such item.
+		paragraph = get_first(dom, "//p | //header | //img")  # We look for the first such item.
 		if paragraph is not None:
-			parent = paragraph.find_parent(["section", "article"])
+			parent = get_outer_sections(paragraph, ["section", "article"])
 		else:
 			return ""
 
 	if parent is None:
-		parent = soup.find("body")
+		parent = dom.xpath("//body")
 
-	try:
-		return parent["epub:type"]
-	except KeyError:
+	epub_type = parent.get_attr("epub:type")
+	if not epub_type:
 		# Immediate parent has no epub:type, try for higher up.
-		body = soup.find("body")
-		return body.get("epub:type") or ""
+		body = dom.xpath("//body")
+		if body:
+			return body[0].get_attr("epub:type")
+		else:
+			raise se.InvalidInputException("Couldn't locate body node")
+	return epub_type
 
 
-def get_place(soup: BeautifulSoup) -> Position:
+def get_place(node: EasyXmlElement) -> Position:
 	"""
 	Returns place of file in ebook, eg frontmatter, backmatter, etc.
 
@@ -172,8 +203,8 @@ def get_place(soup: BeautifulSoup) -> Position:
 	a Position enum value indicating the place in the book
 	"""
 
-	epub_type = soup.body.get("epub:type") or ""
-	if epub_type == "":
+	epub_type = node.get_attr("epub:type")
+	if not epub_type:
 		return Position.NONE
 
 	if "backmatter" in epub_type:
@@ -187,12 +218,12 @@ def get_place(soup: BeautifulSoup) -> Position:
 
 	return retval
 
-def add_landmark(soup: BeautifulSoup, textf: str, landmarks: list):
+def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list):
 	"""
 	Adds an item to landmark list with appropriate details.
 
 	INPUTS:
-	soup: BeautifulSoup representation of the file we are indexing in ToC
+	dom: EasyXmlTree representation of the file we are indexing in ToC
 	textf: path to the file
 	landmarks: the list of landmark items we are building
 
@@ -200,18 +231,24 @@ def add_landmark(soup: BeautifulSoup, textf: str, landmarks: list):
 	None
 	"""
 
-	epub_type = get_file_epub_type(soup)
+	epub_type = ""
+	sections = dom.xpath("//body/section")
+	if sections:
+		epub_type = sections[0].get_attr("epub:type")
+	else:
+		raise se.InvalidInputException("Couldn't locate body node")
+
 	landmark = TocItem()
-	if epub_type != "":
+	if epub_type:
 		landmark.epub_type = epub_type
 		landmark.file_link = textf
-		landmark.place = get_place(soup)
+		landmark.place = get_place(sections[0].parent)  # this should be the body node
 		if epub_type == "halftitlepage":
 			landmark.title = "Half Title"
 		else:
-			title_tag = soup.find("title")
-			if title_tag is not None:
-				landmark.title = title_tag.string
+			title_tag = dom.xpath("//head/title")
+			if title_tag:
+				landmark.title = title_tag[0].text
 				if landmark.title is None:
 					# This is a bit desperate, use this only if there's no proper <title> tag in file.
 					landmark.title = landmark.epub_type.capitalize()
@@ -252,6 +289,7 @@ def process_landmarks(landmarks_list: list, work_type: str, work_title: str):
 	for item in back_items:
 		out_string += item.landmark_link()
 	return out_string
+
 
 def process_items(item_list: list) -> str:
 	"""
@@ -296,19 +334,7 @@ def process_items(item_list: list) -> str:
 					out_string += "</li>\n"  # End of parent item.
 	return out_string
 
-def get_existing_toc(toc_path: str) -> BeautifulSoup:
-	"""
-	Returns a BeautifulSoup object representing the existing ToC file.
 
-	INPUTS:
-	toc_path: the path to the existing ToC file
-
-	OUTPUTS:
-	A BeautifulSoup object representing the current ToC file
-	"""
-
-	with open(toc_path, "r", encoding="utf-8") as file:
-		return BeautifulSoup(file.read(), "html.parser")
 
 def output_toc(item_list: list, landmark_list, toc_path: str, work_type: str, work_title: str) -> str:
 	"""
@@ -328,27 +354,38 @@ def output_toc(item_list: list, landmark_list, toc_path: str, work_type: str, wo
 	if len(item_list) < 2:
 		raise se.InvalidInputException("Too few ToC items found.")
 
-	existing_toc: BeautifulSoup = get_existing_toc(toc_path)
-	if existing_toc is None:
+	try:
+		with open(toc_path) as file:
+			toc_dom = se.easy_xml.EasyXhtmlTree(file.read())
+	except Exception as ex:
 		raise se.InvalidInputException("Existing ToC not found.")
 
 	# There should be exactly two nav sections.
-	navs = existing_toc.find_all("nav")
+	navs = toc_dom.xpath("//nav")
 
 	if len(navs) < 2:
 		raise se.InvalidInputException("Existing ToC has too few nav sections.")
 
-	item_ol = navs[0].find("ol")
-	item_ol.clear()
-	landmark_ol = navs[1].find("ol")
-	landmark_ol.clear()
-	new_items = BeautifulSoup(process_items(item_list), "html.parser")
-	item_ol.append(new_items)
-	new_landmarks = BeautifulSoup(process_landmarks(landmark_list, work_type, work_title), "html.parser")
-	landmark_ol.append(new_landmarks)
-	return format_xhtml(str(existing_toc))
+	# now remove and then re-add the ol sections to clear them
+	for nav in navs:
+		ols = nav.xpath("ol")  # just want the immediate ol children
+		if ols:
+			for ol in ols:
+				ol.remove()
+	# this is ugly and stupid, but I can't figure out an easier way to do it
+	item_ol = EasyXmlElement(etree.Element("ol"))
+	item_ol.lxml_element.text = "TOC_ITEMS"
+	navs[0].append(item_ol)
+	landmark_ol = EasyXmlElement(etree.Element("ol"))
+	landmark_ol.lxml_element.text = "LANDMARK_ITEMS"
+	navs[1].append(landmark_ol)
+	xhtml = toc_dom.to_string()
+	xhtml = xhtml.replace("TOC_ITEMS", process_items(item_list))
+	xhtml = xhtml.replace("LANDMARK_ITEMS", process_landmarks(landmark_list, work_type, work_title))
 
-def get_parent_id(hchild: Tag) -> str:
+	return se.formatting.format_xhtml(xhtml)
+
+def get_parent_id(hchild: EasyXmlElement) -> str:
 	"""
 	Climbs up the document tree looking for parent id in a <section> tag.
 
@@ -359,35 +396,36 @@ def get_parent_id(hchild: Tag) -> str:
 	the id of the parent section
 	"""
 
-	parent = hchild.find_parent(["section", "article"])
-	if parent is None:
+	parents = get_outer_sections(hchild, ["section", "article"])
+	if parents is None:
 		return ""
-	return parent.get("id") or ""
+	ids = parents[0].xpath("@id")
+	if ids:
+		return ids[0]
+	return ""
 
-def extract_strings(tag: Tag) -> str:
+def extract_strings(node: EasyXmlElement) -> str:
 	"""
 	Returns string representation of a tag, ignoring linefeeds
 
 	INPUTS:
-	tag: a BeautifulSoup tag
+	node: a tag as xpath node
 
 	OUTPUTS:
 	just the string contents of the tag
 	"""
 
-	out_string = ""
-	for child in tag.contents:
-		out_string += str(child)
-	#  Now strip out any linefeeds or tabs we may have encountered.
-	return regex.sub(r"(\n|\t)", "", out_string)
+	out_string = node.inner_xml()
+	out_string = strip_notes(out_string)
+	return regex.sub(r"[\n\t]", "", out_string)
 
-def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under_halftitle: bool, single_file: bool):
+def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, nest_under_halftitle: bool, single_file: bool):
 	"""
 	Find headings in current file and extract title data
 	into items added to toc_list.
 
 	INPUTS:
-	soup: a BeautifulSoup representation of the current file
+	dom: an EasyXmlTree representation of the current file
 	textf: the path to the file
 	toc_list: the list of ToC items we are building
 	nest_under_halftitle: does this item need to be nested?
@@ -397,11 +435,17 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 	None
 	"""
 
-	place = get_place(soup)
+	body = dom.xpath("//body")
+	place = Position.NONE
+	if body:
+		place = get_place(body[0])
+	else:
+		raise se.InvalidInputException("Couldn't locate body node")
+
 	is_toplevel = True
 
 	# Find all the hgroups and h1, h2 etc headings.
-	heads = soup.find_all(["hgroup", "h1", "h2", "h3", "h4", "h5", "h6"])
+	heads = dom.xpath("//hgroup | //h1 | //h2 | //h3 | //h4 | //h5 | //h6")
 
 	# special treatment where we can't find any header or hgroups
 	if not heads:  # May be a dedication or an epigraph, with no heading tag.
@@ -412,17 +456,17 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 		special_item = TocItem()
 		# Need to determine level depth.
 		# We don't have a heading, so get first content item
-		content_item = soup.find(["p", "header", "img"])
+		content_item = dom.xpath("//p | //header | //img")
 		if content_item is not None:
-			parents = content_item.find_parents(["section", "article"])
+			parents = get_outer_sections(content_item[0], ["section", "article"])
 			special_item.level = len(parents)
 			if special_item.level == 0:
 				special_item.level = 1
 		if nest_under_halftitle:
 			special_item.level += 1
-		title_tag = soup.find("title")  # Use the page title as the ToC entry title.
+		title_tag = dom.xpath("//head/title")  # Use the page title as the ToC entry title.
 		if title_tag is not None:
-			special_item.title = title_tag.string
+			special_item.title = title_tag[0].text
 			if special_item.title is None:
 				special_item.title = "NO TITLE"
 		else:  # no <title> tag or content
@@ -433,7 +477,7 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 
 	for heading in heads:
 		# don't process a heading separately if it's within a hgroup
-		if heading.parent.name == "hgroup":
+		if heading.parent.tag == "hgroup":
 			continue  # skip it
 		if place == Position.BODY and single_file:
 			toc_item = process_a_heading(heading, textf, is_toplevel, True)
@@ -450,12 +494,12 @@ def process_headings(soup: BeautifulSoup, textf: str, toc_list: list, nest_under
 		is_toplevel = False
 		toc_list.append(toc_item)
 
-def process_a_heading(soup: BeautifulSoup, textf: str, is_toplevel: bool, single_file: bool) -> TocItem:
+def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, single_file: bool) -> TocItem:
 	"""
 	Generate and return a single TocItem from this heading.
 
 	INPUTS:
-	soup: a BeautifulSoup tag representing a heading
+	node: an EasyXml node representing a heading
 	text: the path to the file
 	is_toplevel: is this heading at the top-most level in the file?
 	single_file: is there only one content file in the production (like some Poetry volumes)?
@@ -465,20 +509,17 @@ def process_a_heading(soup: BeautifulSoup, textf: str, is_toplevel: bool, single
 	"""
 
 	toc_item = TocItem()
-	parent_sections = soup.find_parents(["section", "article"])
+	parent_sections = get_outer_sections(node, ["section", "article"])
 	if parent_sections:
 		toc_item.level = len(parent_sections)
 	else:
 		toc_item.level = 1
 
-	try:
-		toc_item.division = get_book_division(soup)
-	except se.InvalidInputException as ex:
-		raise se.InvalidInputException(f"Couldn’t identify parent section in file: [path][link=file://{textf}]{textf}[/][/].") from ex
+	toc_item.division = get_book_division(node)
 
 	# This stops the first heading in a file getting an anchor id, we don't generally want that.
 	# The exceptions are things like poems within a single-file volume.
-	toc_item.id = get_parent_id(soup)  # pylint: disable=invalid-name
+	toc_item.id = get_parent_id(node)  # pylint: disable=invalid-name
 	if toc_item.id == "":
 		toc_item.file_link = textf
 	else:
@@ -489,43 +530,53 @@ def process_a_heading(soup: BeautifulSoup, textf: str, is_toplevel: bool, single
 		else:
 			toc_item.file_link = textf
 
-	toc_item.lang = soup.get("xml:lang") or ""
+	toc_item.lang = node.get_attr("xml:lang")
 
-	epub_type = soup.get("epub:type") or ""
+	epub_type = node.get_attr("epub:type")
 
 	# it may be an empty header tag eg <h3>, so we pass its parent rather than itself to evaluate the parent's descendants
-	if not epub_type and soup.name in ["h2", "h3", "h4", "h5", "h6"]:
-		parent = soup.parent
+	if not epub_type and node.tag in ["h2", "h3", "h4", "h5", "h6"]:
+		parent = node.parent
 		if parent:
 			evaluate_descendants(parent, toc_item)
 		else:  # shouldn't ever happen, but... just in case, raise an error
 			raise se.InvalidInputException(f"Header without parent in file: [path][link=file://{textf}]{textf}[/][/].")
 		return toc_item
-	# A heading may include z3998:roman directly,
-	# eg <h5 epub:type="title z3998:roman">II</h5>.
-	if "z3998:roman" in epub_type:
-		toc_item.roman = extract_strings(soup)
-		toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
-		return toc_item
-	if "ordinal" in epub_type:  # but not a roman numeral (eg in Nietzche's Beyond Good and Evil)
-		toc_item.title = extract_strings(soup)
-		toc_item.title_is_ordinal = True
-		return toc_item
-	# may be the halftitle page with a subtitle, so we need to burrow down
-	if ("fulltitle" in epub_type) and (soup.name == "hgroup"):
-		evaluate_descendants(soup, toc_item)
-		return toc_item
-	# or it may be a straightforward one-level title eg: <h2 epub:type="title">Imprint</h2>
-	if "title" in epub_type:
-		toc_item.title = extract_strings(soup)
-		return toc_item
+	if epub_type:
+		# A heading may include z3998:roman directly,
+		# eg <h5 epub:type="title z3998:roman">II</h5>.
+		if "z3998:roman" in epub_type:
+			toc_item.roman = extract_strings(node)
+			toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
+			return toc_item
+		if "ordinal" in epub_type:  # but not a roman numeral (eg in Nietzche's Beyond Good and Evil)
+			toc_item.title = extract_strings(node)
+			toc_item.title_is_ordinal = True
+			return toc_item
+		# may be the halftitle page with a subtitle, so we need to burrow down
+		if ("fulltitle" in epub_type) and (node.tag == "hgroup"):
+			evaluate_descendants(node, toc_item)
+			return toc_item
+		# or it may be a straightforward one-level title eg: <h2 epub:type="title">Imprint</h2>
+		if "title" in epub_type:
+			toc_item.title = extract_strings(node)
+			return toc_item
 
 	# otherwise, burrow down into its structure to get the info
-	evaluate_descendants(soup, toc_item)
+	evaluate_descendants(node, toc_item)
 
 	return toc_item
 
-def evaluate_descendants(soup, toc_item):
+
+def get_child_strings(node: EasyXmlElement) -> str:
+	children = node.xpath("*")
+	child_strs = ""
+	for child in children:
+		child_strs += child.to_string() + "\n"
+	return child_strs
+
+
+def evaluate_descendants(node: EasyXmlElement, toc_item):
 	"""
 	Burrow down into a hgroup structure to qualify the ToC item
 
@@ -535,70 +586,71 @@ def evaluate_descendants(soup, toc_item):
 	OUTPUTS:
 	toc_item: qualified ToC item
 	"""
-	for child in soup.children:  # we expect these to be h2, h3, h4 etc
-		if isinstance(child, Tag):
-			if not toc_item.lang:
-				toc_item.lang = child.get("xml:lang") or ""
-			epub_type = child.get("epub:type") or ""
-			if not epub_type and child.name in ["h2", "h3", "h4", "h5", "h6"]:
-				# should be a label/ordinal grouping
-				child_strings = extract_strings(child)
-				if "label" in child_strings and "ordinal" in child_strings:  # quick test
-					toc_item.title_is_ordinal = True
-					# strip label
-					child_strings = regex.sub(r"<span epub:type=\"label\">(.*?)</span>", " \\1 ", child_strings)
-					# adjust roman
-					child_strings = regex.sub(r"ordinal z3998:roman", "z3998:roman", child_strings)
-					child_strings = regex.sub(r"z3998:roman ordinal", "z3998:roman", child_strings)
-					# remove ordinal
-					child_strings = regex.sub(r"<span epub:type=\"ordinal\">(.*?)</span>", " \\1 ", child_strings)
-					# remove extra spaces
-					child_strings = regex.sub(r"[ ]{2,}", " ", child_strings)
-					toc_item.title = child_strings.strip()
-				continue  # skip the following
-			if "z3998:roman" in epub_type:
-				toc_item.roman = extract_strings(child)
-				if not toc_item.title:
-					toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
-			elif "ordinal" in epub_type:  # but not a roman numeral or a labelled item, cases caught caught above
-				if not toc_item.title:
+	children = node.xpath("*")
+	for child in children:  # we expect these to be h2, h3, h4 etc
+		if not toc_item.lang:
+			toc_item.lang = child.get_attr("xml:lang")
+		epub_type = child.get_attr("epub:type")
+		if not epub_type and child.tag in ["h2", "h3", "h4", "h5", "h6"]:
+			# should be a label/ordinal grouping
+			child_strings = get_child_strings(child)
+			if "label" in child_strings and "ordinal" in child_strings:  # quick test
+				toc_item.title_is_ordinal = True
+				# strip label
+				child_strings = regex.sub(r"<span epub:type=\"label\">(.*?)</span>", " \\1 ", child_strings)
+				# adjust roman
+				child_strings = regex.sub(r"ordinal z3998:roman", "z3998:roman", child_strings)
+				child_strings = regex.sub(r"z3998:roman ordinal", "z3998:roman", child_strings)
+				# remove ordinal
+				child_strings = regex.sub(r"<span epub:type=\"ordinal\">(.*?)</span>", " \\1 ", child_strings)
+				# remove extra spaces
+				child_strings = regex.sub(r"[ ]{2,}", " ", child_strings)
+				toc_item.title = child_strings.strip()
+			continue  # skip the following
+		if "z3998:roman" in epub_type:
+			toc_item.roman = extract_strings(child)
+			if not toc_item.title:
+				toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
+		elif "ordinal" in epub_type:  # but not a roman numeral or a labelled item, cases caught caught above
+			if not toc_item.title:
+				toc_item.title = extract_strings(child)
+				toc_item.title_is_ordinal = True
+		if "subtitle" in epub_type:
+			toc_item.subtitle = extract_strings(child)
+		else:
+			if "title" in epub_type:  # this allows for 'fulltitle' to work here, too
+				if toc_item.title or toc_item.roman or toc_item.title_is_ordinal:  # if title already filled, must be a subtitle
+					toc_item.subtitle = extract_strings(child)
+				else:
 					toc_item.title = extract_strings(child)
-					toc_item.title_is_ordinal = True
-			if "subtitle" in epub_type:
-				toc_item.subtitle = extract_strings(child)
-			else:
-				if "title" in epub_type:  # this allows for 'fulltitle' to work here, too
-					if toc_item.title or toc_item.roman or toc_item.title_is_ordinal:  # if title already filled, must be a subtitle
-						toc_item.subtitle = extract_strings(child)
-					else:
-						toc_item.title = extract_strings(child)
-			if toc_item.title and toc_item.subtitle:  # then we're done
-				return toc_item
+		if toc_item.title and toc_item.subtitle:  # then we're done
+			return toc_item
 	return toc_item
 
-def get_book_division(tag: BeautifulSoup) -> BookDivision:
+def get_book_division(node: EasyXmlElement) -> BookDivision:
 	"""
 	Determine the kind of book division. At present only Part and Division
 	are important; but others stored for possible future logic.
 
 	INPUTS:
-	tag: a BeautifulSoup tag object
+	tag: an EasyXml node representing a tag
 
 	OUTPUTS:
 	a BookDivision enum value representing the kind of division
 	"""
 
-	parent_section = tag.find_parents(["section", "article"])
+	parent_sections = get_outer_sections(node, ["section", "article"])
 
-	if not parent_section:
-		parent_section = tag.find_parents("body")
+	if not parent_sections:
+		parent_sections = get_outer_sections(node, ["body"])
 
-	if not parent_section:  # couldn't find a parent, so throw an error
-		raise se.InvalidInputException
+	if not parent_sections:  # couldn't find a parent, so throw an error
+		raise se.InvalidInputException("Couldn't find a parent section")
 
-	section_epub_type = parent_section[0].get("epub:type") or ""
-
+	section_epub_type = parent_sections[0].get_attr("epub:type")
 	retval = BookDivision.NONE
+	if not section_epub_type:
+		return retval
 
 	if "part" in section_epub_type:
 		retval = BookDivision.PART
@@ -610,7 +662,7 @@ def get_book_division(tag: BeautifulSoup) -> BookDivision:
 		retval = BookDivision.SUBCHAPTER
 	if "chapter" in section_epub_type:
 		retval = BookDivision.CHAPTER
-	if "article" in parent_section[0].name:
+	if "article" in parent_sections[0].tag:
 		retval = BookDivision.ARTICLE
 
 	return retval
@@ -647,24 +699,32 @@ def process_all_content(file_list: list, text_path: str) -> Tuple[list, list]:
 	# We make two passes through the work, because we need to know
 	# how many bodymatter items there are. So we do landmarks first.
 	for textf in file_list:
-		with open(Path(text_path) / textf, "r", encoding="utf-8") as file:
-			html_text = file.read()
-		soup = BeautifulSoup(html_text, "html.parser")
-		add_landmark(soup, textf, landmarks)
+		file_path = Path(text_path) / textf
+		try:
+			with open(file_path) as file:
+				dom = se.easy_xml.EasyXhtmlTree(file.read())
+		except Exception as ex:
+			raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{file_path}]{file_path}[/][/].") from ex
+
+		add_landmark(dom, textf, landmarks)
 
 	# Now we test to see if there is only one body item
 	body_items = [item for item in landmarks if item.place == Position.BODY]
 	single_file = (len(body_items) == 1)
 
 	nest_under_halftitle = False
+	place = Position.NONE
 	for textf in file_list:
 		with open(Path(text_path) / textf, "r", encoding="utf-8") as file:
-			html_text = file.read()
-		soup = BeautifulSoup(strip_notes(html_text), "html.parser")
-		place = get_place(soup)
+			dom = se.easy_xml.EasyXhtmlTree(file.read())
+		body = dom.xpath("//body")
+		if body:
+			place = get_place(body[0])
+		else:
+			raise se.InvalidInputException("Couldn't locate html node")
 		if place == Position.BACK:
 			nest_under_halftitle = False
-		process_headings(soup, textf, toc_list, nest_under_halftitle, single_file)
+		process_headings(dom, textf, toc_list, nest_under_halftitle, single_file)
 		if textf == "halftitle.xhtml":
 			nest_under_halftitle = True
 
