@@ -586,7 +586,7 @@ def evaluate_descendants(node: EasyXmlElement, toc_item):
 	OUTPUTS:
 	toc_item: qualified ToC item
 	"""
-	children = node.xpath("*")
+	children = node.xpath("./h2 | ./h3 | ./h4 | ./h5 | ./h6")
 	for child in children:  # we expect these to be h2, h3, h4 etc
 		if not toc_item.lang:
 			toc_item.lang = child.get_attr("xml:lang")
