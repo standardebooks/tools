@@ -1,3 +1,35 @@
+# v1.7.1
+
+## General
+
+- Ensure Python 3.9 compatibility with latest Pillow. Thanks to Robin Whittleton
+
+## se build
+
+- Align quotation marks over ellipses, and align nested quotations
+
+- Don't align quotes in Kobo builds, as it messes up spacing
+
+## se lint
+
+- Add t-046, incorrect rough breathing mark
+
+- Update m-041 to check all variations of HathiTrust
+
+- Add m-061, HT/IA metadata link must be preceded by `the`
+
+## se modernize-spelling
+
+- Various additions
+
+## se recompose-epub
+
+- Apply `epub:type` of `<body>` to all direct children
+
+## se renumber-endnotes
+
+- Use with/open file open pattern
+
 # v1.7.0
 
 ## se recompose-epub
