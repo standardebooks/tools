@@ -228,13 +228,11 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 									selector = selector.replace(split_selector[1], "." + replacement_class, 1)
 									sel = se.easy_xml.css_selector(target_element_selector)
 									for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
-										current_class = element.get("class")
-										if current_class is not None and replacement_class not in current_class:
-											current_class = current_class + " " + replacement_class
-										else:
-											current_class = replacement_class
+										current_class = element.get("class", "")
 
-										element.set("class", current_class)
+										if replacement_class not in current_class:
+											current_class = f"{current_class} {replacement_class}".strip()
+											element.set("class", current_class)
 
 						except lxml.cssselect.ExpressionError:
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
