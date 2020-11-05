@@ -21,7 +21,7 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip
         python3 -m pip install --user pipx
-        echo "::add-path::$HOME/.local/bin"
+        echo $PIPX_BIN_DIR >> $GITHUB_PATH
     - name: Install pipx packages
       run: |
         pipx install .
