@@ -84,7 +84,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)([Vv])iz\.", r"<abbr>\1iz.</abbr>", xhtml)
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)etc\.", r"<abbr>etc.</abbr>", xhtml)
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)([Cc])f\.", r"<abbr>\1f.</abbr>", xhtml)
-	xhtml = regex.sub(r"\b(?<!\<abbr\>)p\.([\s0-9])", r"<abbr>p.</abbr>\1", xhtml)
+	xhtml = regex.sub(r"\b(?<!\<abbr\>)p(p?)\.([\s0-9])", r"<abbr>p\1.</abbr>\2", xhtml)
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)ed\.", r"<abbr>ed.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)(Jan\.|Feb\.|Mar\.|Apr\.|Jun\.|Jul\.|Aug\.|Sep\.|Sept\.|Oct\.|Nov\.|Dec\.)", r"<abbr>\1</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)No\.(\s+[0-9]+)", r"<abbr>No.</abbr>\1", xhtml)
