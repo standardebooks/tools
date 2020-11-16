@@ -258,6 +258,7 @@ TYPOGRAPHY
 "t-044", "Comma required after leading [text]Or[/] in subtitles."
 "t-045", "[xhtml]<p>[/] preceded by [xhtml]<blockquote>[/] and starting in a lowercase letter, but without [val]continued[/] class."
 "t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead."
+"t-047", "[text]US[/] should be [text]U.S.[/]"
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -646,6 +647,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		if matches:
 			messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
 
+		# US -> U.S.
+		matches = regex.findall(r"\bUS\b", long_description)
+		if matches:
+			messages.append(LintMessage("t-047", "[text]US[/] should be [text]U.S.[/]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+
 	except Exception as ex:
 		raise se.InvalidSeEbookException(f"No [xml]<meta property=\"se:long-description\">[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/].") from ex
 
@@ -712,9 +718,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	# Check for tags that imply other tags
 	implied_tags = {"Fiction": ["Science Fiction", "Drama", "Fantasy"]}
 	for implied_tag, tags in implied_tags.items():
-		if self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text()='{implied_tag}']"):
+		if self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text() = {se.easy_xml.escape_xpath(implied_tag)}]"):
 			for tag in tags:
-				if self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text()='{tag}']"):
+				if self.metadata_dom.xpath(f"/package/metadata/meta[@property = 'se:subject' and text() = {se.easy_xml.escape_xpath(tag)}]"):
 					messages.append(LintMessage("m-058", f"[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
 	# Check for illegal em-dashes in <dc:subject>
@@ -772,7 +778,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		try:
 			refines = node.get_attr("refines").replace("#", "")
 			try:
-				name = self.metadata_dom.xpath(f"/package/metadata/*[@id = '{refines}']")[0].text
+				name = self.metadata_dom.xpath(f"/package/metadata/*[@id = {se.easy_xml.escape_xpath(refines)}]")[0].text
 				if name == node.text:
 					duplicate_names.append(name)
 			except:
@@ -1477,7 +1483,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if len(dom.xpath("/html/body/*[name() = 'section' or name() = 'article']/*[re:test(name(), '^h[1-6]$') or name() = 'hgroup']")) == 1:
 					title = se.formatting.generate_title(dom)
 
-					if not dom.xpath(f"/html/head/title[text() = '{title}']"):
+					if not dom.xpath(f"/html/head/title[text() = {se.easy_xml.escape_xpath(title)}]"):
 						messages.append(LintMessage("s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
 
 				if not local_css_has_elision_style:

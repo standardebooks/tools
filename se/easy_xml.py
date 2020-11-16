@@ -26,6 +26,25 @@ def css_selector(selector: str) -> cssselect.CSSSelector:
 		CSS_SELECTOR_CACHE[selector] = sel
 	return sel
 
+def escape_xpath(string: str) -> str:
+	"""
+	Xpath string literals don't have escape sequences for ' and "
+	So to escape them, we have to use the xpath concat() function.
+	See https://stackoverflow.com/a/6938681
+
+	This function returns the *enclosing quotes*, so it must be used without them. For example:
+	dom.xpath(f"//title[text() = {se.easy_xml.escape_xpath(title)}]")
+	"""
+
+	if "'" not in string:
+		return f"'{string}'"
+
+	if '"' not in string:
+		return f'"{string}"'
+
+	# Can't use f-strings here because f-strings can't contain \ escapes
+	return "concat('%s')" % string.replace("'", "',\"'\",'")
+
 class EasyXmlTree:
 	"""
 	A helper class to make some lxml operations a little less painful.
