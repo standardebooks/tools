@@ -78,11 +78,12 @@ These instructions were tested on macOS 10.12 to 10.15.
 
 	```shell
 	# Install some pre-flight dependencies.
-	brew install cairo git pipx python
+	brew install cairo git openjdk pipx python
 	pipx ensurepath
+	sudo ln -sfn /usr/local/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
 
 	# Install required applications.
-	brew cask install java calibre
+	brew cask install calibre
 
 	# Install the toolset.
 	pipx install standardebooks
