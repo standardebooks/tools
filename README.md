@@ -10,7 +10,7 @@ The toolset requires Python >= 3.6.
 
 To install the toolset locally for development and debugging, see [Installation for Developers](#installation-for-developers).
 
-## Ubuntu 18.04 (Bionic) users
+## Ubuntu 20.04 (Trusty) users
 
 ```shell
 # Install some pre-flight dependencies.
