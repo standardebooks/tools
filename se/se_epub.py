@@ -956,8 +956,8 @@ class SeEpub:
 		change_list = []
 
 		for file_name in self.get_content_files():
-			if file_name in ["titlepage.xhtml", "colophon.xhtml", "uncopyright.xhtml", "imprint.xhtml", "halftitle.xhtml", "endnotes.xhtml"]:
-				continue
+			if file_name in ["titlepage.xhtml", "colophon.xhtml", "uncopyright.xhtml", "imprint.xhtml", "halftitle.xhtml"]:
+				continue  # note that we DO process endnotes.xhtml itself with this
 
 			processed += 1
 
@@ -1005,9 +1005,14 @@ class SeEpub:
 
 			# If we need to write back the body text file
 			if needs_rewrite:
-				new_file = open(file_path, "w")
-				new_file.write(se.formatting.format_xhtml(dom.to_string()))
-				new_file.close()
+				if "endnotes.xhtml" not in file_path:  # no point in re-writing endnotes.xhtml here, it will get overwritten later.
+					new_file = open(file_path, "w")
+					new_file.write(se.formatting.format_xhtml(dom.to_string()))
+					new_file.close()
+				else:  # Instead...
+					for content in endnote.contents:
+						print(content)
+
 
 		if processed == 0:
 			raise se.InvalidInputException("No files processed. Did you update the manifest and order the spine?")

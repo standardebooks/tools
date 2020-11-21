@@ -143,55 +143,6 @@ def get_first(node: EasyXmlTree, wanted: str):
 		return nodes[0]
 	return None
 
-
-def get_outer_sections(node: EasyXmlElement, wanted_tags: list):
-	sections = []
-	pa = node.parent
-	while (pa is not None) and (pa.tag not in ["body", "html"]):
-		if pa.tag in wanted_tags:
-			sections.append(pa)
-		if pa.parent is not None:
-			pa = pa.parent
-	return sections
-
-
-def get_file_epub_type(dom: EasyXmlTree) -> str:
-	"""
-	Retrieve the epub_type of this file to see if it's a landmark item.
-
-	INPUTS:
-	soup: BeautifulSoup representation of the file
-
-	OUTPUTS:
-	the epub_type, eg: "dedication", "epigraph", etc.
-	"""
-
-	# Try for a heading.
-	first_head = get_first(dom, "//h1 | //h2 | //h3 | //h4 | //h5 | //h6")
-
-	if first_head is not None:
-		parent = get_outer_sections(first_head, ["section", "article"])
-	else:  # No heading found so go hunting for some other content.
-		paragraph = get_first(dom, "//p | //header | //img")  # We look for the first such item.
-		if paragraph is not None:
-			parent = get_outer_sections(paragraph, ["section", "article"])
-		else:
-			return ""
-
-	if parent is None:
-		parent = dom.xpath("//body")
-
-	epub_type = parent.get_attr("epub:type")
-	if not epub_type:
-		# Immediate parent has no epub:type, try for higher up.
-		body = dom.xpath("//body")
-		if body:
-			return body[0].get_attr("epub:type")
-		else:
-			raise se.InvalidInputException("Couldn't locate body node")
-	return epub_type
-
-
 def get_place(node: EasyXmlElement) -> Position:
 	"""
 	Returns place of file in ebook, eg frontmatter, backmatter, etc.
@@ -232,11 +183,11 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list):
 	"""
 
 	epub_type = ""
-	sections = dom.xpath("//body/section")
+	sections = dom.xpath("//body/*[name() = 'section' or name() = 'article']")
 	if sections:
 		epub_type = sections[0].get_attr("epub:type")
 	else:
-		raise se.InvalidInputException("Couldn't locate body node")
+		raise se.InvalidInputException("Couldn't locate first section")
 
 	landmark = TocItem()
 	if epub_type:
@@ -246,13 +197,9 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list):
 		if epub_type == "halftitlepage":
 			landmark.title = "Half Title"
 		else:
-			title_tag = dom.xpath("//head/title")
-			if title_tag:
-				landmark.title = title_tag[0].text
-				if landmark.title is None:
-					# This is a bit desperate, use this only if there's no proper <title> tag in file.
-					landmark.title = landmark.epub_type.capitalize()
-			else:
+			landmark.title = dom.xpath("//head/title/text()", True)  # Use the page title as the landmark entry title.
+			if landmark.title is None:
+				# This is a bit desperate, use this only if there's no proper <title> tag in file.
 				landmark.title = landmark.epub_type.capitalize()
 		landmarks.append(landmark)
 
@@ -358,7 +305,7 @@ def output_toc(item_list: list, landmark_list, toc_path: str, work_type: str, wo
 		with open(toc_path) as file:
 			toc_dom = se.easy_xml.EasyXhtmlTree(file.read())
 	except Exception as ex:
-		raise se.InvalidInputException("Existing ToC not found.")
+		raise se.InvalidInputException(f"Existing ToC not found. Exception: {ex}")
 
 	# There should be exactly two nav sections.
 	navs = toc_dom.xpath("//nav")
@@ -368,10 +315,9 @@ def output_toc(item_list: list, landmark_list, toc_path: str, work_type: str, wo
 
 	# now remove and then re-add the ol sections to clear them
 	for nav in navs:
-		ols = nav.xpath("ol")  # just want the immediate ol children
-		if ols:
-			for ol in ols:
-				ol.remove()
+		ols = nav.xpath("./ol")  # just want the immediate ol children
+		for ol in ols:
+			ol.remove()
 	# this is ugly and stupid, but I can't figure out an easier way to do it
 	item_ol = EasyXmlElement(etree.Element("ol"))
 	item_ol.lxml_element.text = "TOC_ITEMS"
@@ -396,12 +342,10 @@ def get_parent_id(hchild: EasyXmlElement) -> str:
 	the id of the parent section
 	"""
 
-	parents = get_outer_sections(hchild, ["section", "article"])
-	if parents is None:
-		return ""
-	ids = parents[0].xpath("@id")
-	if ids:
-		return ids[0]
+	parents = hchild.xpath("./ancestor::*[name() = 'section' or name() = 'article']")
+	# this appears to return all matching ancestors, with the most remote one FIRST. We need the nearest!
+	if parents:
+		return parents[-1].xpath("@id")[0]
 	return ""
 
 def extract_strings(node: EasyXmlElement) -> str:
@@ -458,19 +402,15 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, nest_under_ha
 		# We don't have a heading, so get first content item
 		content_item = dom.xpath("//p | //header | //img")
 		if content_item is not None:
-			parents = get_outer_sections(content_item[0], ["section", "article"])
+			parents = content_item[0].xpath("./ancestor::*[name() = 'section' or name() = 'article']")
 			special_item.level = len(parents)
 			if special_item.level == 0:
 				special_item.level = 1
 		if nest_under_halftitle:
 			special_item.level += 1
-		title_tag = dom.xpath("//head/title")  # Use the page title as the ToC entry title.
-		if title_tag is not None:
-			special_item.title = title_tag[0].text
-			if special_item.title is None:
+		special_item.title = dom.xpath("//head/title/text()", True)  # Use the page title as the ToC entry title.
+		if special_item.title is None:
 				special_item.title = "NO TITLE"
-		else:  # no <title> tag or content
-			special_item.title = "NO TITLE"
 		special_item.file_link = textf
 		toc_list.append(special_item)
 		return
@@ -509,7 +449,7 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 	"""
 
 	toc_item = TocItem()
-	parent_sections = get_outer_sections(node, ["section", "article"])
+	parent_sections = node.xpath(f"./ancestor::*[name() = 'section' or name() = 'article']")
 	if parent_sections:
 		toc_item.level = len(parent_sections)
 	else:
@@ -517,7 +457,7 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 
 	toc_item.division = get_book_division(node)
 
-	# This stops the first heading in a file getting an anchor id, we don't generally want that.
+	# is_top_level stops the first heading in a file getting an anchor id, we don't generally want that.
 	# The exceptions are things like poems within a single-file volume.
 	toc_item.id = get_parent_id(node)  # pylint: disable=invalid-name
 	if toc_item.id == "":
@@ -591,7 +531,7 @@ def evaluate_descendants(node: EasyXmlElement, toc_item):
 		if not toc_item.lang:
 			toc_item.lang = child.get_attr("xml:lang")
 		epub_type = child.get_attr("epub:type")
-		if not epub_type and child.tag in ["h2", "h3", "h4", "h5", "h6"]:
+		if not epub_type:
 			# should be a label/ordinal grouping
 			child_strings = get_child_strings(child)
 			if "label" in child_strings and "ordinal" in child_strings:  # quick test
@@ -639,15 +579,15 @@ def get_book_division(node: EasyXmlElement) -> BookDivision:
 	a BookDivision enum value representing the kind of division
 	"""
 
-	parent_sections = get_outer_sections(node, ["section", "article"])
+	parent_sections = node.xpath("./ancestor::*[name() = 'section' or name() = 'article']")
 
 	if not parent_sections:
-		parent_sections = get_outer_sections(node, ["body"])
+		parent_sections = node.xpath("./ancestor::*[name() = 'body']")
 
 	if not parent_sections:  # couldn't find a parent, so throw an error
-		raise se.InvalidInputException("Couldn't find a parent section")
+		raise se.InvalidInputException
 
-	section_epub_type = parent_sections[0].get_attr("epub:type")
+	section_epub_type = parent_sections[-1].get_attr("epub:type")
 	retval = BookDivision.NONE
 	if not section_epub_type:
 		return retval
@@ -721,7 +661,7 @@ def process_all_content(file_list: list, text_path: str) -> Tuple[list, list]:
 		if body:
 			place = get_place(body[0])
 		else:
-			raise se.InvalidInputException("Couldn't locate html node")
+			raise se.InvalidInputException("Couldn't locate body node")
 		if place == Position.BACK:
 			nest_under_halftitle = False
 		process_headings(dom, textf, toc_list, nest_under_halftitle, single_file)
