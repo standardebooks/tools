@@ -538,11 +538,10 @@ def evaluate_descendants(node: EasyXmlElement, toc_item):
 				toc_item.title_is_ordinal = True
 				# strip label
 				child_strings = regex.sub(r"<span epub:type=\"label\">(.*?)</span>", " \\1 ", child_strings)
-				# adjust roman
-				child_strings = regex.sub(r"ordinal z3998:roman", "z3998:roman", child_strings)
-				child_strings = regex.sub(r"z3998:roman ordinal", "z3998:roman", child_strings)
-				# remove ordinal
+				# remove ordinal if it's by itself in a span
 				child_strings = regex.sub(r"<span epub:type=\"ordinal\">(.*?)</span>", " \\1 ", child_strings)
+				# remove ordinal if it's joined with a roman (which we want to keep)
+				child_strings = regex.sub(r"\bordinal\b", "", child_strings)
 				# remove extra spaces
 				child_strings = regex.sub(r"[ ]{2,}", " ", child_strings)
 				toc_item.title = child_strings.strip()
@@ -602,7 +601,7 @@ def get_book_division(node: EasyXmlElement) -> BookDivision:
 		retval = BookDivision.SUBCHAPTER
 	if "chapter" in section_epub_type:
 		retval = BookDivision.CHAPTER
-	if "article" in parent_sections[0].tag:
+	if "article" in parent_sections[-1].tag:
 		retval = BookDivision.ARTICLE
 
 	return retval
