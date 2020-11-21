@@ -130,19 +130,6 @@ class TocItem:
 
 		return out_string
 
-
-def get_first(node: EasyXmlTree, wanted: str):
-	"""
-	get the first matching node which occurs in the file
-	:param node: an EasyXmlTree node
-	:param wanted: xpath pattern to find
-	:return: an EasyXmlTree node with the first heading encountered
-	"""
-	nodes = node.xpath(wanted)
-	if len(nodes) > 0:
-		return nodes[0]
-	return None
-
 def get_place(node: EasyXmlElement) -> Position:
 	"""
 	Returns place of file in ebook, eg frontmatter, backmatter, etc.
