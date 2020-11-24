@@ -261,6 +261,10 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	for match in regex.findall(fr"alt=\"[^\"]*?[{se.NO_BREAK_SPACE}{se.WORD_JOINER}][^\"]*?\"", xhtml):
 		xhtml = xhtml.replace(match, match.replace(se.NO_BREAK_SPACE, " ").replace(se.WORD_JOINER, ""))
 
+	# Remove word joiners and nbsp from <title> elements
+	for match in regex.findall(fr"<title>[^<]*?[{se.NO_BREAK_SPACE}{se.WORD_JOINER}][^<]*?</title>", xhtml):
+		xhtml = xhtml.replace(match, match.replace(se.NO_BREAK_SPACE, " ").replace(se.WORD_JOINER, ""))
+
 	return xhtml
 
 def hyphenate_file(filename: Path, language: Optional[str], ignore_h_tags: bool = False) -> None:
