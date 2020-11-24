@@ -210,6 +210,7 @@ SEMANTICS & CONTENT
 "s-072", "Element with single [xhtml]<span>[/] child. [xhtml]<span>[/] should be removed and its attributes promoted to the parent element."
 "s-073", "Header element that requires [val]label[/] and [val]ordinal[/] semantic children."
 "s-074", "[xhtml]<hgroup>[/] element containing sequential [xhtml]<h#>[/] elements at the same heading level."
+"s-075", "[xhtml]<body>[/] element with direct children that are not [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/]."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1403,6 +1404,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//i[re:test(., ',$')][(following-sibling::node()[1])[starts-with(., '”')]]")
 				if nodes:
 					messages.append(LintMessage("t-023", "Comma inside [xhtml]<i>[/] element before closing dialog.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "”" for node in nodes]))
+
+				# Check for incorrect children of <body>
+				nodes = dom.xpath("/html/body/*[name() != 'section' and name() != 'article' and name() != 'nav']")
+				if nodes:
+					messages.append(LintMessage("s-075", "[xhtml]<body>[/] element with direct child that is not [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for quotation marks in italicized dialog
 				nodes = dom.xpath("/html/body//i[@xml:lang][starts-with(., '“') or re:test(., '”$')]")
