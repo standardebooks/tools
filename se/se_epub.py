@@ -429,7 +429,10 @@ class SeEpub:
 				dom = se.formatting.EasyXhtmlTree(file.read())
 
 				for node in dom.xpath("/html/body/*"):
-					self._recompose_xhtml(node, output_dom)
+					try:
+						self._recompose_xhtml(node, output_dom)
+					except se.SeException as ex:
+						raise se.SeException(f"[path][link=file://{self.path / 'src/epub/' / filename}]{filename}[/][/]: {ex}") from ex
 
 		# Add the ToC after the titlepage
 		with open(self.path / "src" / "epub" / "toc.xhtml", "r", encoding="utf-8") as file:
