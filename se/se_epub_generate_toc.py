@@ -171,16 +171,24 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list):
 
 	epub_type = ""
 	sections = dom.xpath("//body/*[name() = 'section' or name() = 'article']")
-	if sections:
-		epub_type = sections[0].get_attr("epub:type")
-	else:
+	if not sections:
 		raise se.InvalidInputException("Couldn't locate first section")
+	epub_type = sections[0].get_attr("epub:type")
+	bodys = dom.xpath("//body")
+	if not bodys:
+		raise se.InvalidInputException("Couldn't locate body")
+
+	if not epub_type:  # some productions don't have an epub:type in outermost section, so get it from body tag
+		epub_type = bodys[0].get_attr("epub:type")
+
+	if epub_type in ["frontmatter", "bodymatter", "backmatter"]:
+		return  # if epub_type is ONLY frontmatter, bodymatter, backmatter, we don't want this as a landmark
 
 	landmark = TocItem()
 	if epub_type:
 		landmark.epub_type = epub_type
 		landmark.file_link = textf
-		landmark.place = get_place(sections[0].parent)  # this should be the body node
+		landmark.place = get_place(bodys[0])
 		if epub_type == "halftitlepage":
 			landmark.title = "Half Title"
 		else:
@@ -250,22 +258,23 @@ def process_items(item_list: list) -> str:
 			out_string += this_item.toc_link
 			out_string += "</li>\n"
 
-		if next_item.level > this_item.level:  # PARENT
+		if next_item.level > this_item.level:  # PARENT, start a new ol list
 			out_string += "<li>\n"
 			out_string += this_item.toc_link
 			out_string += "<ol>\n"
 			unclosed_ol += 1
 
-		if next_item.level < this_item.level:  # LAST CHILD
+		if next_item.level < this_item.level:  # LAST CHILD, close off the list
 			out_string += "<li>\n"
 			out_string += this_item.toc_link
 			out_string += "</li>\n"  # Close off this item.
 			torepeat = this_item.level - next_item.level
-			if torepeat > 0 and unclosed_ol > 0:
-				for _ in range(0, torepeat):  # We need to repeat a few times as may be jumping back from eg h5 to h2
-					out_string += "</ol>\n"  # End of embedded list.
-					unclosed_ol -= 1
-					out_string += "</li>\n"  # End of parent item.
+			while torepeat and unclosed_ol:  # neither can go below zero
+				# We need to repeat a few times as may be jumping back from eg h5 to h2
+				out_string += "</ol>\n"  # End of embedded list.
+				out_string += "</li>\n"  # End of parent item.
+				unclosed_ol -= 1
+				torepeat -= 1
 	return out_string
 
 
@@ -382,7 +391,7 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, nest_under_ha
 	if not heads:  # May be a dedication or an epigraph, with no heading tag.
 		if single_file and nest_under_halftitle:
 			# There's a halftitle, but only this one content file with no subsections,
-			# so leave out of ToC.
+			# so leave out of ToC because the Toc will link to the halftitle.
 			return
 		special_item = TocItem()
 		# Need to determine level depth.
@@ -406,8 +415,9 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, nest_under_ha
 		# don't process a heading separately if it's within a hgroup
 		if heading.parent.tag == "hgroup":
 			continue  # skip it
-		if place == Position.BODY and single_file:
-			toc_item = process_a_heading(heading, textf, is_toplevel, True)
+
+		if place == Position.BODY:
+			toc_item = process_a_heading(heading, textf, is_toplevel, single_file)
 		else:
 			# if it's not a bodymatter item we don't care about whether it's single_file
 			toc_item = process_a_heading(heading, textf, is_toplevel, False)
@@ -462,7 +472,7 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 	epub_type = node.get_attr("epub:type")
 
 	# it may be an empty header tag eg <h3>, so we pass its parent rather than itself to evaluate the parent's descendants
-	if not epub_type and node.tag in ["h2", "h3", "h4", "h5", "h6"]:
+	if not epub_type and node.tag in ["h1", "h2", "h3", "h4", "h5", "h6"]:
 		parent = node.parent
 		if parent:
 			evaluate_descendants(parent, toc_item)
@@ -513,8 +523,8 @@ def evaluate_descendants(node: EasyXmlElement, toc_item):
 	OUTPUTS:
 	toc_item: qualified ToC item
 	"""
-	children = node.xpath("./h2 | ./h3 | ./h4 | ./h5 | ./h6")
-	for child in children:  # we expect these to be h2, h3, h4 etc
+	children = node.xpath("./h1 | ./h2 | ./h3 | ./h4 | ./h5 | ./h6")
+	for child in children:  # we expect these to be h1, h2, h3, h4 etc
 		if not toc_item.lang:
 			toc_item.lang = child.get_attr("xml:lang")
 		epub_type = child.get_attr("epub:type")
