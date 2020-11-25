@@ -5,11 +5,10 @@ Defines various typography-related functions
 
 import html
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
+import pyphen
 import regex
 import smartypants
-from hyphen import Hyphenator
-from hyphen.dictools import list_installed
 import se
 from se.formatting import EasyXhtmlTree
 
@@ -303,7 +302,6 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 	A string of XHTML with soft hyphens inserted in words. The output is not guaranteed to be pretty-printed.
 	"""
 
-	hyphenators: Dict[str, Hyphenator] = {}
 	dom = EasyXhtmlTree(xhtml)
 
 	if language is None:
@@ -312,12 +310,12 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 		except Exception as ex:
 			raise se.InvalidLanguageException("No [attr]xml:lang[/] or [attr]lang[/] attribute on [xhtml]<html>[/] element; couldn’t guess file language.") from ex
 
-	try:
-		language = language.replace("-", "_")
-		if language not in hyphenators:
-			hyphenators[language] = Hyphenator(language)
-	except Exception as ex:
-		raise se.MissingDependencyException(f"Hyphenator for language [text]{language}[/] not available.\nInstalled hyphenators: {list_installed()}.") from ex
+	language = language.replace("-", "_")
+
+	if language not in pyphen.LANGUAGES:
+		raise se.MissingDependencyException(f"Hyphenator for language [text]{language}[/] not available.\nInstalled hyphenators: {pyphen.LANGUAGES}.")
+
+	hyphenator = pyphen.Pyphen(lang=language)
 
 	text = dom.xpath("/html/body")[0].inner_xml()
 	result = text
@@ -367,20 +365,7 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 
 		if process:
 			if word != "":
-				new_word = word
-
-				# 100 is the hard coded max word length in the hyphenator module
-				# But, we can't use len(word) because Unicode chars may be longer than len() expects.
-				# So, we simply catch the exception and continue if that ends up happening
-				try:
-					syllables = hyphenators[language].syllables(word)
-
-					if syllables:
-						new_word = "\u00AD".join(syllables)
-
-				except ValueError:
-					pass
-
+				new_word = hyphenator.inserted(word, hyphen="\u00AD")
 				result = result[:pos - len(word) - 1] + new_word + char + result[pos:]
 				pos = pos + len(new_word) - len(word)
 			word = ""
