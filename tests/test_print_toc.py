@@ -3,9 +3,9 @@ Test the print-toc command and related functions
 """
 
 from pathlib import Path
-from bs4 import BeautifulSoup
 from helpers import assemble_book, must_run, output_is_golden
 from se.se_epub_generate_toc import add_landmark
+import se.easy_xml
 
 
 def test_print_toc(data_dir: Path, draft_dir: Path, work_dir: Path, update_golden: bool, capfd):
@@ -23,24 +23,24 @@ def test_print_toc(data_dir: Path, draft_dir: Path, work_dir: Path, update_golde
 
 def test_add_landmark_no_title():
 	"""Verify we can find a landmark title when no title element is present"""
-	soup = BeautifulSoup('<html><body><section epub:type="foo"><h1></h1></section></body></html>', features="lxml")
+	dom = se.easy_xml.EasyXhtmlTree('<?xml version="1.0" encoding="utf-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0" xml:lang="en-US"><body><section epub:type="foo"><h1></h1></section></body></html>')
 	landmarks = []
-	add_landmark(soup, "file", landmarks)
+	add_landmark(dom, "file", landmarks)
 
 	assert landmarks[0].title == "Foo"
 
 def test_add_landmark_with_title():
 	"""Verify we can find a landmark title when title element is present"""
-	soup = BeautifulSoup('<html><head><title>Bar</title><body><section epub:type="foo"><h1></h1></section></body></html>', features="lxml")
+	dom = se.easy_xml.EasyXhtmlTree('<?xml version="1.0" encoding="utf-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0" xml:lang="en-US"><head><title>Bar</title></head><body><section epub:type="foo"><h1></h1></section></body></html>')
 	landmarks = []
-	add_landmark(soup, "file", landmarks)
+	add_landmark(dom, "file", landmarks)
 
 	assert landmarks[0].title == "Bar"
 
 def test_add_landmark_empty_title():
 	"""Verify we can find a landmark title when title element is empty"""
-	soup = BeautifulSoup('<html><head><title></title><body><section epub:type="foo"><h1></h1></section></body></html>', features="lxml")
+	dom = se.easy_xml.EasyXhtmlTree('<?xml version="1.0" encoding="utf-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0" xml:lang="en-US"><head><title></title></head><body><section epub:type="foo"><h1></h1></section></body></html>')
 	landmarks = []
-	add_landmark(soup, "file", landmarks)
+	add_landmark(dom, "file", landmarks)
 
 	assert landmarks[0].title == "Foo"

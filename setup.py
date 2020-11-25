@@ -59,7 +59,6 @@ setup(
     packages=find_packages(),
     python_requires=">=3.6", # The latest version installed by default on Ubuntu 18.04 is 3.6.9
     install_requires=[
-        "beautifulsoup4==4.9.0",
         "cairosvg==2.4.2",
         "chardet==3.0.4",
         "cssselect==1.1.0",
