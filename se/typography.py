@@ -6,7 +6,7 @@ Defines various typography-related functions
 import html
 from pathlib import Path
 from typing import Optional
-import pyphen # type: ignore
+import pyphen
 import regex
 import smartypants
 import se
@@ -369,7 +369,7 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 
 		if process:
 			if word != "":
-				new_word = hyphenator.inserted(word, hyphen="\u00AD")
+				new_word = hyphenator.inserted(word, hyphen=se.SHY_HYPHEN)
 				result = result[:pos - len(word) - 1] + new_word + char + result[pos:]
 				pos = pos + len(new_word) - len(word)
 			word = ""
