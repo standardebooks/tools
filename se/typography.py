@@ -312,6 +312,10 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 
 	language = language.replace("-", "_")
 
+	# Cope with known missing languages
+	if language in ["en_AU", "en_CA"] :
+		language = "en_GB"
+
 	if language not in pyphen.LANGUAGES:
 		raise se.MissingDependencyException(f"Hyphenator for language [text]{language}[/] not available.\nInstalled hyphenators: {pyphen.LANGUAGES}.")
 
