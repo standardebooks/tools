@@ -6,7 +6,7 @@ Defines various typography-related functions
 import html
 from pathlib import Path
 from typing import Optional
-import pyphen
+import pyphen # type: ignore
 import regex
 import smartypants
 import se
