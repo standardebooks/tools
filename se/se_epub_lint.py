@@ -134,6 +134,7 @@ METADATA
 "m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata."
 "m-060", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/]."
 "m-061", "Link must be preceded by [text]the[/]."
+"m-062", "Missing data in imprint."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -1902,6 +1903,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::node()[1])[re:test(., 'the\\s+$')]]")
 					if nodes:
 						messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the " + node.to_string() for node in nodes]))
+
+					# Check if we forgot to fill any variable slots
+					missing_imprint_vars = [var for var in COLOPHON_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
+					if missing_imprint_vars:
+						messages.append(LintMessage("m-062", "Missing data in imprint.", se.MESSAGE_TYPE_ERROR, filename, missing_imprint_vars))
 
 					links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
 					if len(links) <= 2:
