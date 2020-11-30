@@ -40,3 +40,6 @@ m-055 Error: content.opf Missing data in metadata.
         PRODUCER
         PRODUCER_SORT
         PRODUCER_URL
+m-062 Error: imprint.xhtml Missing data in imprint.
+        PG_URL
+        IA_URL
