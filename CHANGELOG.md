@@ -1,3 +1,57 @@
+# v1.8.0
+
+## General
+
+- Fix broken GitHub test/build framework. Thanks to Dave Halliday
+
+## se build
+
+- Fix missing generated epub-type-x classes. Thanks to Robin Whittleton
+
+## se create-draft
+
+- Accept multiple authors, translators, and illustrators
+
+- Remove unused metadata blocks
+
+- Try to guess at contributor sorting
+
+## se hyphenate
+
+- Switch from unmaintained PyHyphen to pyphen. Thanks to Robin Whittleton
+
+## se lint
+
+- Improve checks for missing metadata leftover from `se create-draft`
+
+- Add m-062, missing data in imprint
+
+- Add s-075, `<body>` with illegal direct child
+
+## se modernize-spelling
+
+- Various additions
+
+## se print-toc
+
+- Remove BeautifulSoup dependency, using lxml and xpath instead. Thanks to David Grigg
+
+## se recompose-epub
+
+- Add filenames to error messages
+
+## se semanticate
+
+- Add `pp.` as an abbreviation. Thanks to Robin Whittleton
+
+## se typogrify
+
+- Don't insert nbsp or word joiners in `<title>` elements
+
+## se unicode-names
+
+- Use unicode.org for hyperlinks for more details
+
 # v1.7.1
 
 ## General
