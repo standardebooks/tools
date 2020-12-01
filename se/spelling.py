@@ -319,6 +319,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bSoudan", "Sudan", xhtml)					# Soudan -> Sudan
 	xhtml = regex.sub(r"\bJack-in-the-box", "jack-in-the-box", xhtml)		# Jack-in-the-box -> jack-in-the-box
 	xhtml = regex.sub(r"\bServian(s?)\b", r"Serbian\1", xhtml)			# Servian -> Serbian
+	xhtml = regex.sub(r"\bEsquimaux?\b", r"Eskimo", xhtml)				# Esquimau -> Eskimo
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
