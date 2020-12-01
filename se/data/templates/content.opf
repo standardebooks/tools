@@ -65,6 +65,11 @@
 		<meta property="se:url.encyclopedia.wikipedia" refines="#artist">COVER_ARTIST_WIKI_URL</meta>
 		<meta property="se:url.authority.nacoaf" refines="#artist">COVER_ARTIST_NACOAF_URL</meta>
 		<meta property="role" refines="#artist" scheme="marc:relators">art</meta>
+		<dc:contributor id="illustrator">ILLUSTRATOR</dc:contributor>
+		<meta property="file-as" refines="#illustrator">ILLUSTRATOR_SORT</meta>
+		<meta property="se:url.encyclopedia.wikipedia" refines="#illustrator">ILLUSTRATOR_WIKI_URL</meta>
+		<meta property="se:url.authority.nacoaf" refines="#artist">ILLUSTRATOR_NACOAF_URL</meta>
+		<meta property="role" refines="#illustrator" scheme="marc:relators">ill</meta>
 		<dc:contributor id="transcriber-1">TRANSCRIBER</dc:contributor>
 		<meta property="file-as" refines="#transcriber-1">TRANSCRIBER_SORT</meta>
 		<meta property="se:url.homepage" refines="#transcriber-1">TRANSCRIBER_URL</meta>
