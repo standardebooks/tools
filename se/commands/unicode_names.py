@@ -4,6 +4,7 @@ This module implements the `se unicode-names` command.
 
 import argparse
 import sys
+import urllib
 import unicodedata
 
 from rich import box
@@ -39,7 +40,7 @@ def unicode_names() -> int:
 
 	for line in lines:
 		for character in line:
-			table.add_row(f"{character}", "U+{:04X}".format(ord(character)), unicodedata.name(character), "[link=https://www.fileformat.info/info/unicode/char/{:04X}]Properties page[/]".format(ord(character)))
+			table.add_row(f"{character}", "U+{:04X}".format(ord(character)), unicodedata.name(character), f"[link=https://util.unicode.org/UnicodeJsps/character.jsp?a={urllib.parse.quote_plus(character)}]Properties page[/]".format(ord(character)))
 
 	console.print(table)
 
