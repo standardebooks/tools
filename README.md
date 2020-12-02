@@ -213,6 +213,8 @@ We need volunteers to take the lead on the following goals:
 
 - Writing installation instructions for Bash and ZSH completions for MacOS.
 
+- Currently we install the whole Calibre package, which is very big, but it’s only used to convert epub to azw3. Can we inline Calibre’s azw3 conversion code in the `./vendor/` directory, to avoid having to install the entire package as a big dependency?
+
 # Tool descriptions
 
 -	### `se british2american`
