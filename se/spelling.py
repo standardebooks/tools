@@ -291,6 +291,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Dd])umfound", r"\1umbfound", xhtml)			# dumfound -> dumbfound
 	xhtml = regex.sub(r"\b’([Cc])ello(s?)\b", r"\1ello\2", xhtml)			# 'cello -> cello
 	xhtml = regex.sub(r"\bwelsh (rarebit|rabbit)\b", r"Welsh \1", xhtml)		# welsh rarebit/rabbit -> Welsh rarebit/rabbit
+	xhtml = regex.sub(r"\b([Yy])our self\b(?!-)", r"\1ourself", xhtml)		# your self -> your self, but ignore constructs like `your self-determination` or `your selfish sister`.
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
