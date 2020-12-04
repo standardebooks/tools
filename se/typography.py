@@ -25,6 +25,8 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	A string of typogrified XHTML.
 	"""
 
+	# For information on Unicode line breaks, see https://www.unicode.org/reports/tr14/tr14-37.html
+
 	if smart_quotes:
 		# Some Gutenberg works have a weird single quote style: `this is a quote'.  Clean that up here before running Smartypants.
 		xhtml = xhtml.replace("`", "'")
@@ -255,6 +257,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 	# Add an &nbsp; before &amp;
 	xhtml = regex.sub(r" &amp;", f"{se.NO_BREAK_SPACE}&amp;", xhtml)
+
+	# Add word joines to ellipses
+	xhtml = regex.sub(r" …", f"{se.WORD_JOINER} {se.WORD_JOINER}…", xhtml)
 
 	# Remove word joiners and nbsp from img alt attributes
 	for match in regex.findall(fr"alt=\"[^\"]*?[{se.NO_BREAK_SPACE}{se.WORD_JOINER}][^\"]*?\"", xhtml):
