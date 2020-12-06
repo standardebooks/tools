@@ -769,7 +769,13 @@ def _create_draft(args: Namespace):
 
 		colophon_xhtml = colophon_xhtml.replace("SE_IDENTIFIER", identifier)
 		colophon_xhtml = colophon_xhtml.replace("TITLE", title)
-		colophon_xhtml = colophon_xhtml.replace("<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", _generate_contributor_string(authors, True))
+
+		contributor_string =  _generate_contributor_string(authors, True)
+
+		if contributor_string == "":
+			colophon_xhtml = colophon_xhtml.replace(" by<br/>\n\t\t\t<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", contributor_string)
+		else:
+			colophon_xhtml = colophon_xhtml.replace("<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", contributor_string)
 
 		if translators:
 			translator_block = f"It was translated from ORIGINAL_LANGUAGE in TRANSLATION_YEAR by<br/>\n\t\t\t{_generate_contributor_string(translators, True)}.</p>"
