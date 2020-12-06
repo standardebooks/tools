@@ -1,3 +1,4 @@
+m-063 Error: cover.svg Cover image has not been built.
 s-007 Manual Review: glossary.xhtml Element requires at least one block-level 
 child.
         <dd>A rock made up of fragments of rock or pebbles, cemented together by

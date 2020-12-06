@@ -1,3 +1,4 @@
+m-063 Error: cover.svg Cover image has not been built.
 s-056 Error: endnotes.xhtml Last `<p>` child of endnote missing backlink.
         <li id="note-2" epub:type="endnote">
         <li id="note-3" epub:type="endnote">

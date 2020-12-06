@@ -20,6 +20,7 @@ child.
                         
                         Fail 7
                 </li>
+m-063 Error: cover.svg Cover image has not been built.
 s-064 Manual Review: endnotes.xhtml Endnote citation not wrapped in `<cite>`. Em
 dashes go within `<cite>` and it is preceded by one space.
         <p>The Strong and Beautiful, or, more accurately, the Beautiful in 
