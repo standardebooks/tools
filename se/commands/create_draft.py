@@ -773,7 +773,7 @@ def _create_draft(args: Namespace):
 
 		if translators:
 			translator_block = f"It was translated from ORIGINAL_LANGUAGE in TRANSLATION_YEAR by<br/>\n\t\t\t{_generate_contributor_string(translators, True)}.</p>"
-			colophon_xhtml = colophon_xhtml.replace("<p>This ebook was produced for the<br/>", f"{translator_block}\n\t\t\t<p>This ebook was produced for the<br/>")
+			colophon_xhtml = colophon_xhtml.replace("</p>\n\t\t\t<p>This ebook was produced for the<br/>", f"<br/>\n\t\t\t{translator_block}\n\t\t\t<p>This ebook was produced for the<br/>")
 
 		if args.pg_url:
 			colophon_xhtml = colophon_xhtml.replace("PG_URL", args.pg_url)
