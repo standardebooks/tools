@@ -163,7 +163,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"([Tt])ete-a-tete", r"\1ête-à-tête", xhtml)			# tete-a-tete -> tête-à-tête
 	xhtml = regex.sub(r"([Vv])is-a-vis", r"\1is-à-vis", xhtml)			# vis-a-vis _> vis-à-vis
 	xhtml = regex.sub(r"([Ff])acade", r"\1açade", xhtml)				# facade -> façade
-	xhtml = regex.sub(r"([Cc])h?ateau(s?\b)", r"\1hâteau\2", xhtml)			# chateau -> château
+	xhtml = regex.sub(r"([Cc])h?ateau([sx]?\b)", r"\1hâteau\2", xhtml)		# chateau -> château
 	xhtml = regex.sub(r"([Hh])abitue", r"\1abitué", xhtml)				# habitue -> habitué
 	xhtml = regex.sub(r"\b([Bb])lase\b", r"\1lasé", xhtml)				# blase -> blasé
 	xhtml = regex.sub(r"\b([Bb])bee[’']s[ \-]wax\b", r"\1eeswax", xhtml)		# bee’s-wax -> beeswax
