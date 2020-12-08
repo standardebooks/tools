@@ -136,6 +136,7 @@ METADATA
 "m-061", "Link must be preceded by [text]the[/]."
 "m-062", "Missing data in imprint."
 "m-063", "Cover image has not been built."
+"m-064", "SE ebook hyperlinked in long description but not italicized."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -639,6 +640,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# We can't use xpath here because the long description is escaped; it has no dom to query against.
 				if author_last_name in long_description and not regex.search(fr"<a href=\"https://standardebooks\.org/ebooks/.+?\">.*?{author_last_name}.*?</a>", long_description):
 					messages.append(LintMessage("m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their SE author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+		# Did we mention an SE book in the long description, but without italics?
+		if regex.search(r"""(?<!<i>)<a href="https://standardebooks\.org/ebooks/[^"]+?/[^"]+?">(?!<i>)""", long_description):
+			messages.append(LintMessage("m-064", "SE ebook hyperlinked in long description but not italicized.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 		# xml:lang is correct for the rest of the publication, but should be lang in the long desc
 		if "xml:lang" in long_description:
