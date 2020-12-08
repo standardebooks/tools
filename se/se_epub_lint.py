@@ -926,8 +926,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				svg_dom = _dom(filename)
 
 				# If we're looking at the cover image, ensure that the producer has built it.
-				# The default cover image is a white background which when encoded to base64 has a long run of `A`
-				if filename.name == "cover.svg" and svg_dom.xpath("//image[re:test(@xlink:href, 'A{20,}')]"):
+				# The default cover image is a white background which when encoded to base64 begins with 299 characters and then has a long string of `A`s
+				if filename.name == "cover.svg" and svg_dom.xpath("//image[re:test(@xlink:href, '^.{299}A{50,}')]"):
 					messages.append(LintMessage("m-063", "Cover image has not been built.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for fill: #000 which should simply be removed
