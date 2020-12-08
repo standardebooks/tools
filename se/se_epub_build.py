@@ -292,9 +292,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					# Now we just remove all stray abbr tags that were not styled by CSS
 					processed_xhtml = regex.sub(r"</?abbr[^>]*?>", "", processed_xhtml)
 
-					# Remove datetime="" attribute in <time> tags, which is not always understood by epubcheck
-					processed_xhtml = regex.sub(r" datetime=\"[^\"]+?\"", "", processed_xhtml)
-
 					tree = etree.fromstring(str.encode(processed_xhtml))
 
 					if processed_xhtml != xhtml:
