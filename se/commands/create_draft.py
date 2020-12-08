@@ -668,7 +668,7 @@ def _create_draft(args: Namespace):
 				producers_text = producers_text.replace(" and the Online", " and The Online")
 				producers_text = producers_text.replace(", and ", ", ").strip()
 
-				pg_producers = regex.split(',|;', producers_text)
+				pg_producers = [producer.strip() for producer in regex.split(',|;', producers_text)]
 
 			# Try to strip out the PG header
 			for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*START OF THIS')]", namespaces=se.XHTML_NAMESPACES):
