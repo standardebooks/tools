@@ -1,3 +1,41 @@
+# v1.8.1
+
+## se build
+
+- Fix incorrect application of `<span class="quote-align">` to `&hellip;`
+
+- Don't remove `datetime` attributes from `<time>`
+
+## se create-draft
+
+- Fix broken HTML in colophon if translator is specified
+
+- Fix colophon author formula if author is anonymous
+
+- Remove white space from transcriber names when fetching from PG
+
+## se lint
+
+- Improve t-042 by checking for consecutive periods
+
+- Improve t-042 by checking for `,.`
+
+- Improve t-042 by checking for miscurled `&lsquo;`
+
+- Add m-063, cover image has not been built
+
+- Add m-064, ebook linked in long description but not italicized
+
+## se modernize-spelling
+
+- Various additions
+
+## se typogrify
+
+- Add word joiners before and after hair spaces preceding `&hellip;`
+
+- Auto-fix commonly miscurled quotation marks around `'n'`
+
 # v1.8.0
 
 ## General
