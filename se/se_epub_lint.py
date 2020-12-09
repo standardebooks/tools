@@ -992,6 +992,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				dom = _dom(filename)
 
 				messages = messages + _get_malformed_urls(file_contents, filename)
+				typos: List[str] = []
 
 				# concat() to not match `halftitlepage`
 				if dom.xpath("/html/body/section[contains(concat(' ', @epub:type, ' '), ' titlepage ')]"):
@@ -1000,9 +1001,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				else:
 					# Check for common typos
 					# Don't check the titlepage because it has a standard format and may raise false positives
-					matches = [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", file_contents, flags=regex.IGNORECASE)]
-					if matches:
-						messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_ERROR, filename, matches))
+					typos = typos + [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", file_contents, flags=regex.IGNORECASE)]
 
 				if dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"):
 					# Check for wrong grammar filled in from template
@@ -1288,18 +1287,19 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for dialog starting with a lowercase letter. Only check the first child text node of <p>, because other first children might be valid lowercase, like <m:math> or <b>;
 				# exclude <p> inside or preceded by <blockquote>; and exclude <p> inside endnotes, as definitions may start with lowercase letters.
-				nodes = dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::li[contains(@epub:type, 'endnote')]) and not(preceding-sibling::*[1][name()='blockquote'])][re:test(./node()[1], '^“[a-z]')]")
-				if nodes:
-					messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+				typos = typos + [node.to_string() for node in dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::li[contains(@epub:type, 'endnote')]) and not(preceding-sibling::*[1][name()='blockquote'])][re:test(./node()[1], '^“[a-z]')]")]
 
-				matches = regex.findall(r",\.", file_contents)
-				if matches:
-					messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_WARNING, filename, matches))
+				# Check for mis-curled &lsquo; or &lsquo; without matching &rsquo;
+				typos = typos + [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[A-Za-z][^“’]+?”')]")]
 
 				# Check for two periods in a row, almost always a typo for one period or a hellip
-				nodes = dom.xpath("/html/body//p[re:test(., '\\.\\.[^\\.]')]")
-				if nodes:
-					messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+				typos = typos + [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\.\\.[^\\.]')]")]
+
+				# Check for ,.
+				typos = typos + regex.findall(r",\.", file_contents)
+
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for body element without child section or article. Ignore the ToC because it has a unique structure
 				nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and contains(@epub:type, 'toc'))])]")
