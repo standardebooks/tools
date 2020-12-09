@@ -1292,6 +1292,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
+				matches = regex.findall(r",\.", file_contents)
+				if matches:
+					messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
 				# Check for two periods in a row, almost always a typo for one period or a hellip
 				nodes = dom.xpath("/html/body//p[re:test(., '\\.\\.[^\\.]')]")
 				if nodes:
