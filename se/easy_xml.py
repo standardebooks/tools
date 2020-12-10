@@ -14,7 +14,7 @@ import se
 
 CSS_SELECTOR_CACHE: Dict[str, cssselect.CSSSelector] = {}
 
-def css_selector(selector: str) -> cssselect.CSSSelector:
+def _css_selector(selector: str) -> cssselect.CSSSelector:
 	"""
 	Create a CSS selector for the given selector string. Return a cached CSS selector if
 	one already exists.
@@ -59,7 +59,7 @@ class EasyXmlTree:
 		Shortcut to select elements based on CSS selector.
 		"""
 
-		return self.xpath(css_selector(selector).path)
+		return self.xpath(_css_selector(selector).path)
 
 	def xpath(self, selector: str, return_string: bool = False):
 		"""

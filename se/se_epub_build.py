@@ -209,7 +209,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					xhtml = file.read().replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
 					processed_xhtml = xhtml
 					try:
-						tree = etree.fromstring(str.encode(xhtml))
+						file_dom = se.easy_xml.EasyXhtmlTree(xhtml)
 					except Exception as ex:
 						raise se.InvalidXhtmlException(f"Error parsing XHTML file: [path][link=file://{filename}]{filename}[/][/]. Exception: {ex}")
 
@@ -226,13 +226,12 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 									replacement_class = split_selector[1].replace(":", "").replace("(", "-").replace("n-", "n-minus-").replace("n+", "n-plus-").replace(")", "")
 									selector = selector.replace(split_selector[1], "." + replacement_class, 1)
-									sel = se.easy_xml.css_selector(target_element_selector)
-									for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
-										current_class = element.get("class", "")
+									for element in file_dom.css_select(target_element_selector):
+										current_class = element.get_attr("class") or ""
 
 										if replacement_class not in current_class:
 											current_class = f"{current_class} {replacement_class}".strip()
-											element.set("class", current_class)
+											element.set_attr("class", current_class)
 
 						except lxml.cssselect.ExpressionError:
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
@@ -243,60 +242,58 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
 						if "[epub|type" in selector:
 							for namespace_selector in regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", selector):
-								sel = se.easy_xml.css_selector(namespace_selector)
 
-								for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
+								for element in file_dom.css_select(namespace_selector):
 									new_class = regex.sub(r"^\.", "", se.formatting.namespace_to_class(namespace_selector))
-									current_class = element.get("class", "")
+									current_class = element.get_attr("class") or ""
 
 									if new_class not in current_class:
 										current_class = f"{current_class} {new_class}".strip()
-										element.set("class", current_class)
+										element.set_attr("class", current_class)
 
-					processed_xhtml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print=True)
+					processed_xhtml = file_dom.to_string()
 
 					# We do this round in a second pass because if we modify the tree like this, it screws up how lxml does processing later.
 					# If it's all done in one pass, we wind up in a race condition where some elements are fixed and some not
-					tree = etree.fromstring(str.encode(processed_xhtml))
+					file_dom = se.easy_xml.EasyXhtmlTree(processed_xhtml)
 
 					for selector in selectors:
-						try:
-							sel = se.easy_xml.css_selector(selector)
-						except lxml.cssselect.ExpressionError:
-							# This gets thrown if we use pseudo-elements, which lxml doesn't support
-							continue
-						except lxml.cssselect.SelectorSyntaxError as ex:
-							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
-
-						# Convert <abbr> to <span>
 						if "abbr" in selector:
-							for element in tree.xpath(sel.path, namespaces=se.XHTML_NAMESPACES):
-								# Why would you want the tail to output by default?!?
-								raw_string = etree.tostring(element, encoding=str, with_tail=False)
+							try:
+								# Convert <abbr> to <span>
+								for element in file_dom.css_select(selector):
+									# Why would you want the tail to output by default?!?
+									raw_string = etree.tostring(element.lxml_element, encoding=str, with_tail=False)
 
-								# lxml--crap as usual--includes a bunch of namespace information in every element we print.
-								# Remove it here.
-								raw_string = raw_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
-								raw_string = raw_string.replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "")
-								raw_string = raw_string.replace(" xmlns:m=\"http://www.w3.org/1998/Math/MathML\"", "")
+									# lxml--crap as usual--includes a bunch of namespace information in every element we print.
+									# Remove it here.
+									raw_string = raw_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
+									raw_string = raw_string.replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "")
+									raw_string = raw_string.replace(" xmlns:m=\"http://www.w3.org/1998/Math/MathML\"", "")
 
-								# Now lxml doesn't let us modify the tree, so we just do a straight up regex replace to turn this into a span
-								processed_string = raw_string.replace("<abbr", "<span")
-								processed_string = processed_string.replace("</abbr", "</span")
+									# Now lxml doesn't let us modify the tree, so we just do a straight up regex replace to turn this into a span
+									processed_string = raw_string.replace("<abbr", "<span")
+									processed_string = processed_string.replace("</abbr", "</span")
 
-								# Now we have a nice, fixed string.  But, since lxml can't replace elements, we write it ourselves.
-								processed_xhtml = processed_xhtml.replace(raw_string, processed_string)
+									# Now we have a nice, fixed string.  But, since lxml can't replace elements, we write it ourselves.
+									processed_xhtml = processed_xhtml.replace(raw_string, processed_string)
 
-								tree = etree.fromstring(str.encode(processed_xhtml))
+									file_dom = se.easy_xml.EasyXhtmlTree(processed_xhtml)
+
+							except lxml.cssselect.ExpressionError:
+								# This gets thrown if we use pseudo-elements, which lxml doesn't support
+								continue
+							except lxml.cssselect.SelectorSyntaxError as ex:
+								raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
 
 					# Now we just remove all stray abbr tags that were not styled by CSS
 					processed_xhtml = regex.sub(r"</?abbr[^>]*?>", "", processed_xhtml)
 
-					tree = etree.fromstring(str.encode(processed_xhtml))
+					file_dom = se.easy_xml.EasyXhtmlTree(processed_xhtml)
 
 					if processed_xhtml != xhtml:
 						file.seek(0)
-						file.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + etree.tostring(tree, encoding=str, pretty_print=True).replace("<html", "<html xmlns=\"http://www.w3.org/1999/xhtml\""))
+						file.write(file_dom.to_string())
 						file.truncate()
 
 		# Done simplifying CSS and tags!

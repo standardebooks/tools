@@ -1080,16 +1080,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if dom.xpath("/html/head/link[contains(@href, 'local.css')]"):
 					for selector in local_css_selectors:
 						try:
-							sel = se.easy_xml.css_selector(selector)
+							if dom.css_select(selector):
+								unused_selectors.remove(selector)
 						except lxml.cssselect.ExpressionError as ex:
 							# This gets thrown on some selectors not yet implemented by lxml, like *:first-of-type
 							unused_selectors.remove(selector)
 							continue
 						except Exception as ex:
 							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
-
-						if dom.xpath(sel.path):
-							unused_selectors.remove(selector)
 
 				# Update our list of local.css selectors to check in the next file
 				local_css_selectors = list(unused_selectors)
