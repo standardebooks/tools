@@ -1851,9 +1851,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					for node in nodes:
 						# Get the first line of the poem, if it's a text node, so that we can include it in the error messages.
 						# If it's not a text node then just ignore it and add the error anyway.
-						first_line = node.lxml_element.xpath("descendant-or-self::text()[normalize-space(.)]", namespaces=se.XHTML_NAMESPACES)
+						first_line = node.xpath("descendant-or-self::text()[normalize-space(.)]", True)
 						if first_line:
-							match = first_line[0].strip()
+							match = first_line.strip()
 							if match: # Make sure we don't append an empty string
 								matches.append(match)
 
