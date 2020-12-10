@@ -1787,7 +1787,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-014", "[xhtml]<br/>[/] after block-level element.", se.MESSAGE_TYPE_ERROR, filename, {node.to_tag_string() for node in nodes}))
 
 				# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
-				matches = regex.findall(r"[\p{Letter}]+”[,\.](?! …)", file_contents)
+				matches = regex.findall(fr"[\p{{Letter}}]+”[,\.](?!{se.WORD_JOINER} {se.WORD_JOINER}…)", file_contents)
 				if matches:
 					messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
