@@ -340,8 +340,11 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Pp])æan", r"\1aean", xhtml)
 	xhtml = regex.sub(r"\b([Vv])ertebræ", r"\1ertebrae", xhtml)
 
-	# Remove spaces before contractions like n’t eg "is n’t" -> "isn’t"
+	# Remove spaces before contractions like `n’t` e.g. `is n’t` -> `isn’t`
 	xhtml = regex.sub(r" n’t\b", "n’t", xhtml)
+
+	# Remove spaces before contractions like `it 'll`
+	xhtml = regex.sub(r"([\p{Letter}])\s[‘’]ll\b", r"\1’ll", xhtml)
 
 	# Remove roman ordinals
 	xhtml = regex.sub(r"<span epub:type=\"z3998:roman\">(.*?)</span>(st|nd|rd|th)\b", r'<span epub:type="z3998:roman">\1</span>', xhtml)
