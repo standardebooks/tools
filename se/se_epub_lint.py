@@ -1508,7 +1508,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				#	messages.append(LintMessage("t-xxx", "Legal case without parent [xhtml]<i>[/].", se.MESSAGE_TYPE_WARNING, filename, {f"{node.to_string()}." for node in nodes}))
 
 				# Only do this check if there's one <h#> or one <hgroup> tag. If there's more than one, then the xhtml file probably requires an overarching title
-				if len(dom.xpath("/html/body/*[name()='section' or name()='article']/*[re:test(name(), '^h[1-6]$') or name()='hgroup']"))==1:
+				# We merge two xpaths here because <h#>/<hgroup> can be either a direct child of <section>, or it could be nested in <header>
+				if len(dom.xpath("/html/body/*[name()='section' or name()='article']/*[re:test(name(), '^h[1-6]$') or name()='hgroup'] | /html/body/*[name()='section' or name()='article']/header/*[re:test(name(), '^h[1-6]$') or name()='hgroup']"))==1:
 					title = se.formatting.generate_title(dom)
 
 					if not dom.xpath(f"/html/head/title[text()={se.easy_xml.escape_xpath(title.replace('&amp;', '&'))}]"):
