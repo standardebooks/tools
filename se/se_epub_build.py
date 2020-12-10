@@ -891,31 +891,28 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				with open(work_epub_root_directory / "epub/text/endnotes.xhtml", "r+", encoding="utf-8") as file:
 					xhtml = file.read()
 
-					# We have to remove the default namespace declaration from our document, otherwise
-					# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 					try:
-						tree = etree.fromstring(str.encode(xhtml.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")))
+						file_dom = se.easy_xml.EasyXhtmlTree(xhtml)
 					except Exception as ex:
 						raise se.InvalidXhtmlException(f"Error parsing XHTML [path][link=file://{(work_epub_root_directory / 'epub/text/endnotes.xhtml').resolve()}]endnotes.xhtml[/][/]. Exception: {ex}")
 
-					notes = tree.xpath("//li[@epub:type=\"endnote\" or @epub:type=\"footnote\"]", namespaces=se.XHTML_NAMESPACES)
-
 					processed_endnotes = ""
 
-					for note in notes:
-						note_id = note.get("id")
+					# Loop over each endnote and move the ending backlink to the front of the endnote for Kindles
+					for note in file_dom.xpath("//li[@epub:type='endnote' or @epub:type='footnote']"):
+						note_id = note.get_attr("id")
 						note_number = note_id.replace("note-", "")
 
 						# First, fixup the reference link for this endnote
 						try:
-							ref_link = etree.tostring(note.xpath("p[last()]/a[last()]")[0], encoding="unicode", pretty_print=True, with_tail=False).replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "").strip()
+							ref_link = note.xpath("p[last()]/a[last()]")[0].to_string()
 						except Exception as ex:
 							raise se.InvalidXhtmlException(f"Can’t find ref link for [url]#{note_id}[/].") from ex
 
 						new_ref_link = regex.sub(r">.*?</a>", ">" + note_number + "</a>.", ref_link)
 
 						# Now remove the wrapping li node from the note
-						note_text = regex.sub(r"^<li[^>]*?>(.*)</li>$", r"\1", etree.tostring(note, encoding="unicode", pretty_print=True, with_tail=False), flags=regex.IGNORECASE | regex.DOTALL)
+						note_text = regex.sub(r"^<li[^>]*?>(.*)</li>$", r"\1", note.to_string(), flags=regex.IGNORECASE | regex.DOTALL)
 
 						# Insert our new ref link
 						result = regex.subn(r"^\s*<p([^>]*?)>", "<p\\1 id=\"" + note_id + "\">" + new_ref_link + " ", note_text)
