@@ -649,6 +649,19 @@ def format_xhtml(xhtml: str) -> str:
 			node.attrib.pop(key) # Remove the attribute
 			node.attrib[key.lower()] = value # Re-add the attribute, lowercased
 
+	# Sort classes alphabetically, except the "eoc" class always comes last
+	for node in tree.xpath("//*[re:test(@class, '\\s')]", namespaces=se.XHTML_NAMESPACES):
+		# Sort class elements
+		classes = regex.split(r"\s+", node.get("class"))
+		classes = sorted(classes, key=str.lower)
+
+		# Move eoc to the end, if it exists
+		if "eoc" in classes:
+			classes += [classes.pop(classes.index("eoc"))]
+
+		# Set the new class value
+		node.set("class", " ".join(classes))
+
 	# Lowercase tag names
 	for node in tree.xpath("//*[re:test(local-name(), '[A-Z]')]", namespaces=se.XHTML_NAMESPACES):
 		node.tag = node.tag.lower()
