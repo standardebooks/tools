@@ -1511,7 +1511,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if len(dom.xpath("/html/body/*[name()='section' or name()='article']/*[re:test(name(), '^h[1-6]$') or name()='hgroup']"))==1:
 					title = se.formatting.generate_title(dom)
 
-					if not dom.xpath(f"/html/head/title[text()={se.easy_xml.escape_xpath(title)}]"):
+					if not dom.xpath(f"/html/head/title[text()={se.easy_xml.escape_xpath(title.replace('&amp;', '&'))}]"):
 						messages.append(LintMessage("s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
 
 				if not local_css_has_elision_style:
