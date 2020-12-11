@@ -1973,12 +1973,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
 						continue
 
-					for child in figure.lxml_element:
+					for child in figure.xpath("./*"):
 						if child.tag == "img":
-							figure_img_alt = child.get("alt")
+							figure_img_alt = child.get_attr("alt")
 
 						if child.tag == "figcaption":
-							figcaption_text = se.easy_xml.EasyXmlElement(child).inner_text()
+							figcaption_text = child.inner_text()
 
 					if (figcaption_text != "" and loi_text != "" and figcaption_text != loi_text) and (figure_img_alt != "" and loi_text != "" and figure_img_alt != loi_text):
 						messages.append(LintMessage("s-041", f"The [xhtml]<figcaption>[/] element of [attr]#{figure_ref}[/] does not match the text in its LoI entry.", se.MESSAGE_TYPE_WARNING, self.path / "src/epub/text" / chapter_ref))

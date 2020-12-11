@@ -625,6 +625,8 @@ def format_xhtml(xhtml: str) -> str:
 	A string of pretty-printed XHTML.
 	"""
 
+	namespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "re": "http://exslt.org/regular-expressions"} # re enables regular expressions in xpath
+
 	# Epub3 doesn't allow named entities, so convert them to their unicode equivalents
 	# But, don't unescape the content.opf long-description accidentally
 	xhtml = regex.sub(r"&#?\w+;", _replace_character_references, xhtml)
@@ -644,13 +646,13 @@ def format_xhtml(xhtml: str) -> str:
 		raise se.InvalidXhtmlException(f"Couldn’t parse XHTML file. Exception: {ex}")
 
 	# Lowercase attribute names
-	for node in tree.xpath("//*[attribute::*[re:test(local-name(), '[A-Z]')]]", namespaces=se.XHTML_NAMESPACES):
+	for node in tree.xpath("//*[attribute::*[re:test(local-name(), '[A-Z]')]]", namespaces=namespaces):
 		for key, value in node.items(): # Iterate over attributes
 			node.attrib.pop(key) # Remove the attribute
 			node.attrib[key.lower()] = value # Re-add the attribute, lowercased
 
 	# Sort classes alphabetically, except the "eoc" class always comes last
-	for node in tree.xpath("//*[re:test(@class, '\\s')]", namespaces=se.XHTML_NAMESPACES):
+	for node in tree.xpath("//*[re:test(@class, '\\s')]", namespaces=namespaces):
 		# Sort class elements
 		classes = regex.split(r"\s+", node.get("class"))
 		classes = sorted(classes, key=str.lower)
@@ -663,7 +665,7 @@ def format_xhtml(xhtml: str) -> str:
 		node.set("class", " ".join(classes))
 
 	# Lowercase tag names
-	for node in tree.xpath("//*[re:test(local-name(), '[A-Z]')]", namespaces=se.XHTML_NAMESPACES):
+	for node in tree.xpath("//*[re:test(local-name(), '[A-Z]')]", namespaces=namespaces):
 		node.tag = node.tag.lower()
 
 	# Format <style> elements

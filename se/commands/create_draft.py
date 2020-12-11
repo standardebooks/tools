@@ -655,8 +655,9 @@ def _create_draft(args: Namespace):
 	if args.pg_url and pg_ebook_html:
 		try:
 			dom = etree.parse(StringIO(regex.sub(r"encoding=\".+?\"", "", pg_ebook_html)), parser)
+			namespaces = {"re": "http://exslt.org/regular-expressions"}
 
-			for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*Produced by.+')]", namespaces=se.XHTML_NAMESPACES):
+			for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*Produced by.+')]", namespaces=namespaces):
 				producers_text = regex.sub(r"^<[^>]+?>", "", etree.tostring(node, encoding=str, with_tail=False))
 				producers_text = regex.sub(r"<[^>]+?>$", "", producers_text)
 
@@ -671,7 +672,7 @@ def _create_draft(args: Namespace):
 				pg_producers = [producer.strip() for producer in regex.split(',|;', producers_text)]
 
 			# Try to strip out the PG header
-			for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*START OF THIS')]", namespaces=se.XHTML_NAMESPACES):
+			for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*START OF THIS')]", namespaces=namespaces):
 				for sibling_node in node.xpath("./preceding-sibling::*"):
 					easy_node = se.easy_xml.EasyXmlElement(sibling_node)
 					easy_node.remove()
@@ -680,7 +681,7 @@ def _create_draft(args: Namespace):
 				easy_node.remove()
 
 			# Try to strip out the PG license footer
-			for node in dom.xpath("//*[re:test(text(), 'End of (the )?Project Gutenberg')]", namespaces=se.XHTML_NAMESPACES):
+			for node in dom.xpath("//*[re:test(text(), 'End of (the )?Project Gutenberg')]", namespaces=namespaces):
 				for sibling_node in node.xpath("./following-sibling::*"):
 					easy_node = se.easy_xml.EasyXmlElement(sibling_node)
 					easy_node.remove()

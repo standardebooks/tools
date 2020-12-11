@@ -101,8 +101,8 @@ class SeEpub:
 				raise se.InvalidSeEbookException(f"Not a directory: [path][link=file://{self.path}]{self.path}[/][/].")
 
 			with open(self.path / "src" / "META-INF" / "container.xml", "r", encoding="utf-8") as file:
-				container_tree = se.easy_xml.EasyXmlTree(file.read())
-				self.metadata_file_path = self.path / "src" / container_tree.xpath("/container:container/container:rootfiles/container:rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
+				container_tree = se.easy_xml.EasyContainerTree(file.read())
+				self.metadata_file_path = self.path / "src" / container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
 
 			with open(self.metadata_file_path, "r", encoding="utf-8") as file:
 				self.metadata_xml = file.read()
@@ -359,12 +359,11 @@ class SeEpub:
 			if src.endswith(".png"):
 				img.set_attr("src", f"data:image/png;base64, {image_contents_base64}")
 
-		for child in section.lxml_element:
-			tag_name = child.tag
-			if tag_name in ("section", "article"):
-				self._recompose_xhtml(se.easy_xml.EasyXmlElement(child), output_dom)
+		for child in section.xpath("./*"):
+			if child.tag in ("section", "article"):
+				self._recompose_xhtml(child, output_dom)
 			else:
-				existing_section.append(se.easy_xml.EasyXmlElement(child))
+				existing_section.append(child)
 
 	def recompose(self, output_xhtml5: bool, extra_css_file: Path = None) -> str:
 		"""

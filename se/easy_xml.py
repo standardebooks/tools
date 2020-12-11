@@ -9,7 +9,6 @@ import unicodedata
 
 import regex
 from lxml import cssselect, etree
-import se
 
 
 CSS_SELECTOR_CACHE: Dict[str, cssselect.CSSSelector] = {}
@@ -22,7 +21,7 @@ def _css_selector(selector: str) -> cssselect.CSSSelector:
 
 	sel = CSS_SELECTOR_CACHE.get(selector)
 	if not sel:
-		sel = cssselect.CSSSelector(selector, translator="xhtml", namespaces=se.XHTML_NAMESPACES)
+		sel = cssselect.CSSSelector(selector, translator="xhtml", namespaces={"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops"})
 		CSS_SELECTOR_CACHE[selector] = sel
 	return sel
 
@@ -52,6 +51,7 @@ class EasyXmlTree:
 	"""
 
 	def __init__(self, xml_string: str):
+		self.namespaces = {"re": "http://exslt.org/regular-expressions"} # Enable regular expressions in xpath
 		self.etree = etree.fromstring(str.encode(xml_string))
 
 	def css_select(self, selector: str) -> Union[str, list, None]:
@@ -73,11 +73,11 @@ class EasyXmlTree:
 
 		result: List[Union[str, EasyXmlElement]] = []
 
-		for element in self.etree.xpath(selector, namespaces=se.XHTML_NAMESPACES):
+		for element in self.etree.xpath(selector, namespaces=self.namespaces):
 			if isinstance(element, str):
 				result.append(element)
 			else:
-				result.append(EasyXmlElement(element))
+				result.append(EasyXmlElement(element, self.namespaces))
 
 		if return_string and result:
 			return str(result[0])
@@ -98,6 +98,28 @@ class EasyXmlTree:
 
 		return xml
 
+class EasyContainerTree(EasyXmlTree):
+	"""
+	Wrapper for the container namespace.
+	"""
+
+	def __init__(self, xml_string: str):
+		# We have to remove the default namespace declaration from our document, otherwise
+		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
+
+		super().__init__(xml_string.replace(" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\"", ""))
+
+	def to_string(self) -> str:
+		"""
+		Serialize the tree to a string.
+		"""
+
+		xml = EasyXmlTree.to_string(self)
+
+		xml = regex.sub(r"<container(?!:)", "<container xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\"", xml)
+
+		return xml
+
 class EasyXhtmlTree(EasyXmlTree):
 	"""
 	Wrapper for the XHTML namespace.
@@ -107,7 +129,9 @@ class EasyXhtmlTree(EasyXmlTree):
 		# We have to remove the default namespace declaration from our document, otherwise
 		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 
-		EasyXmlTree.__init__(self, xml_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", ""))
+		super().__init__(xml_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", ""))
+
+		self.namespaces = {**self.namespaces, **{"epub": "http://www.idpf.org/2007/ops", "m": "http://www.w3.org/1998/Math/MathML"}}
 
 	def to_string(self) -> str:
 		"""
@@ -129,7 +153,9 @@ class EasySvgTree(EasyXmlTree):
 		# We have to remove the default namespace declaration from our document, otherwise
 		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 
-		EasyXmlTree.__init__(self, xml_string.replace(" xmlns=\"http://www.w3.org/2000/svg\"", ""))
+		super().__init__(xml_string.replace(" xmlns=\"http://www.w3.org/2000/svg\"", ""))
+
+		self.namespaces = {**self.namespaces, **{"xlink": "http://www.w3.org/1999/xlink"}}
 
 	def to_string(self) -> str:
 		"""
@@ -151,7 +177,9 @@ class EasyOpfTree(EasyXmlTree):
 		# We have to remove the default namespace declaration from our document, otherwise
 		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
 
-		EasyXmlTree.__init__(self, xml_string.replace(" xmlns=\"http://www.idpf.org/2007/opf\"", ""))
+		super().__init__(xml_string.replace(" xmlns=\"http://www.idpf.org/2007/opf\"", ""))
+
+		self.namespaces = {**self.namespaces, **{"dc": "http://purl.org/dc/elements/1.1/"}}
 
 	def to_string(self) -> str:
 		"""
@@ -169,7 +197,8 @@ class EasyXmlElement:
 	Represents an lxml element.
 	"""
 
-	def __init__(self, lxml_element):
+	def __init__(self, lxml_element, namespaces=None):
+		self.namespaces = namespaces
 		self.lxml_element = lxml_element
 
 	def to_tag_string(self) -> str:
@@ -228,11 +257,11 @@ class EasyXmlElement:
 
 		result: List[Union[str, EasyXmlElement]] = []
 
-		for element in self.lxml_element.xpath(selector, namespaces=se.XHTML_NAMESPACES):
+		for element in self.lxml_element.xpath(selector, namespaces=self.namespaces):
 			if isinstance(element, str):
 				result.append(element)
 			else:
-				result.append(EasyXmlElement(element))
+				result.append(EasyXmlElement(element, self.namespaces))
 
 		if return_string and result:
 			return str(result[0])
@@ -359,7 +388,7 @@ class EasyXmlElement:
 		Return an EasyXmlElement representing this node's parent node
 		"""
 
-		return EasyXmlElement(self.lxml_element.getparent())
+		return EasyXmlElement(self.lxml_element.getparent(), self.namespaces)
 
 	@property
 	def text(self) -> str:

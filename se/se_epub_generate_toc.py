@@ -316,10 +316,10 @@ def output_toc(item_list: list, landmark_list, toc_path: str, work_type: str, wo
 			ol_item.remove()
 
 	# this is ugly and stupid, but I can't figure out an easier way to do it
-	item_ol = EasyXmlElement(etree.Element("ol"))
+	item_ol = EasyXmlElement(etree.Element("ol"), toc_dom.namespaces)
 	item_ol.lxml_element.text = "TOC_ITEMS"
 	navs[0].append(item_ol)
-	landmark_ol = EasyXmlElement(etree.Element("ol"))
+	landmark_ol = EasyXmlElement(etree.Element("ol"), toc_dom.namespaces)
 	landmark_ol.lxml_element.text = "LANDMARK_ITEMS"
 	navs[1].append(landmark_ol)
 	xhtml = toc_dom.to_string()
