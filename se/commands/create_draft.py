@@ -587,15 +587,20 @@ def _create_draft(args: Namespace):
 			illustrator["wiki_url"], illustrator["nacoaf_url"] = _get_wikipedia_url(illustrator["name"], True)
 
 	# Download PG HTML and do some fixups
-	if args.pg_url:
+	if args.pg_bookid:
+		pg_url = "https://www.gutenberg.org/ebooks/" + args.pg_bookid
+	elif args.pg_url:
+		pg_url = args.pg_url.replace("http://", "https://")
+	else:
+		pg_url = ""
+
+	if pg_url:
 		if args.offline:
 			raise se.RemoteCommandErrorException("Cannot download Project Gutenberg ebook when offline option is enabled.")
 
-		args.pg_url = args.pg_url.replace("http://", "https://")
-
 		# Get the ebook metadata
 		try:
-			response = requests.get(args.pg_url)
+			response = requests.get(pg_url)
 			pg_metadata_html = response.text
 		except Exception as ex:
 			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page. Exception: {ex}")
@@ -652,7 +657,7 @@ def _create_draft(args: Namespace):
 	is_pg_html_parsed = True
 
 	# Write PG data if we have it
-	if args.pg_url and pg_ebook_html:
+	if pg_url and pg_ebook_html:
 		try:
 			dom = etree.parse(StringIO(regex.sub(r"encoding=\".+?\"", "", pg_ebook_html)), parser)
 			namespaces = {"re": "http://exslt.org/regular-expressions"}
@@ -761,8 +766,8 @@ def _create_draft(args: Namespace):
 	epub.generate_cover_svg()
 	epub.generate_titlepage_svg()
 
-	if args.pg_url:
-		_replace_in_file(repo_path / "src" / "epub" / "text" / "imprint.xhtml", "PG_URL", args.pg_url)
+	if pg_url:
+		_replace_in_file(repo_path / "src" / "epub" / "text" / "imprint.xhtml", "PG_URL", pg_url)
 
 	# Fill out the colophon
 	with open(repo_path / "src" / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
@@ -782,8 +787,8 @@ def _create_draft(args: Namespace):
 			translator_block = f"It was translated from ORIGINAL_LANGUAGE in TRANSLATION_YEAR by<br/>\n\t\t\t{_generate_contributor_string(translators, True)}.</p>"
 			colophon_xhtml = colophon_xhtml.replace("</p>\n\t\t\t<p>This ebook was produced for the<br/>", f"<br/>\n\t\t\t{translator_block}\n\t\t\t<p>This ebook was produced for the<br/>")
 
-		if args.pg_url:
-			colophon_xhtml = colophon_xhtml.replace("PG_URL", args.pg_url)
+		if pg_url:
+			colophon_xhtml = colophon_xhtml.replace("PG_URL", pg_url)
 
 			if pg_publication_year:
 				colophon_xhtml = colophon_xhtml.replace("PG_YEAR", pg_publication_year)
@@ -857,7 +862,7 @@ def _create_draft(args: Namespace):
 		else:
 			metadata_xml = regex.sub(r"<dc:contributor id=\"illustrator\">.+?scheme=\"marc:relators\">ill</meta>\n\t\t", "", metadata_xml, flags=regex.DOTALL)
 
-		if args.pg_url:
+		if pg_url:
 			if pg_subjects:
 				subject_xhtml = ""
 
@@ -891,7 +896,7 @@ def _create_draft(args: Namespace):
 				metadata_xml = regex.sub(r"\t\t<dc:subject id=\"subject-1\">SUBJECT_1</dc:subject>\s*<dc:subject id=\"subject-2\">SUBJECT_2</dc:subject>\s*<meta property=\"authority\" refines=\"#subject-1\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-1\">LCSH_ID_1</meta>\s*<meta property=\"authority\" refines=\"#subject-2\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-2\">LCSH_ID_2</meta>", "\t\t" + subject_xhtml.strip(), metadata_xml)
 
 			metadata_xml = metadata_xml.replace("<dc:language>LANG</dc:language>", f"<dc:language>{pg_language}</dc:language>")
-			metadata_xml = metadata_xml.replace("<dc:source>PG_URL</dc:source>", f"<dc:source>{args.pg_url}</dc:source>")
+			metadata_xml = metadata_xml.replace("<dc:source>PG_URL</dc:source>", f"<dc:source>{pg_url}</dc:source>")
 
 		file.seek(0)
 		file.write(metadata_xml)
@@ -904,7 +909,7 @@ def _create_draft(args: Namespace):
 		with repo.config_writer() as config:
 			config.set_value("user", "email", args.email)
 
-	if args.pg_url and pg_ebook_html and not is_pg_html_parsed:
+	if pg_url and pg_ebook_html and not is_pg_html_parsed:
 		raise se.InvalidXhtmlException("Couldn’t parse Project Gutenberg ebook source. This is usually due to invalid HTML in the ebook.")
 
 def create_draft() -> int:
@@ -915,11 +920,13 @@ def create_draft() -> int:
 	parser = argparse.ArgumentParser(description="Create a skeleton of a new Standard Ebook in the current directory.")
 	parser.add_argument("-i", "--illustrator", dest="illustrator", nargs="+", help="an illustrator of the ebook")
 	parser.add_argument("-r", "--translator", dest="translator", nargs="+", help="a translator of the ebook")
-	parser.add_argument("-p", "--pg-url", dest="pg_url", help="the URL of the Project Gutenberg ebook to download")
 	parser.add_argument("-e", "--email", dest="email", help="use this email address as the main committer for the local Git repository")
 	parser.add_argument("-o", "--offline", dest="offline", action="store_true", help="create draft without network access")
 	parser.add_argument("-a", "--author", dest="author", required=True, nargs="+", help="an author of the ebook")
 	parser.add_argument("-t", "--title", dest="title", required=True, help="the title of the ebook")
+	group = parser.add_mutually_exclusive_group()
+	group.add_argument("-p", "--pg-url", dest="pg_url", help="the URL of the Project Gutenberg ebook to download")
+	group.add_argument("-b", "--pg-bookid", dest="pg_bookid", help="the book id of the Project Gutenberg ebook to download")
 	args = parser.parse_args()
 
 	if args.pg_url and not regex.match("^https?://www.gutenberg.org/ebooks/[0-9]+$", args.pg_url):
