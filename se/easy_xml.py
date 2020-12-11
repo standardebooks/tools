@@ -54,7 +54,7 @@ class EasyXmlTree:
 		self.namespaces = {"re": "http://exslt.org/regular-expressions"} # Enable regular expressions in xpath
 		self.etree = etree.fromstring(str.encode(xml_string))
 
-	def css_select(self, selector: str) -> Union[str, list, None]:
+	def css_select(self, selector: str):
 		"""
 		Shortcut to select elements based on CSS selector.
 		"""

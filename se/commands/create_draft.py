@@ -849,13 +849,13 @@ def _create_draft(args: Namespace):
 			translators_xml = _generate_metadata_contributor_xml(translators, "translator")
 			metadata_xml = regex.sub(r"<dc:contributor id=\"translator\">.+?scheme=\"marc:relators\">trl</meta>", translators_xml, metadata_xml, flags=regex.DOTALL)
 		else:
-			metadata_xml = regex.sub(r"<dc:contributor id=\"translator\">.+?scheme=\"marc:relators\">trl</meta>", "", metadata_xml, flags=regex.DOTALL)
+			metadata_xml = regex.sub(r"<dc:contributor id=\"translator\">.+?scheme=\"marc:relators\">trl</meta>\n\t\t", "", metadata_xml, flags=regex.DOTALL)
 
 		if illustrators:
 			illustrators_xml = _generate_metadata_contributor_xml(illustrators, "illustrator")
 			metadata_xml = regex.sub(r"<dc:contributor id=\"illustrator\">.+?scheme=\"marc:relators\">ill</meta>", illustrators_xml, metadata_xml, flags=regex.DOTALL)
 		else:
-			metadata_xml = regex.sub(r"<dc:contributor id=\"illustrator\">.+?scheme=\"marc:relators\">ill</meta>", "", metadata_xml, flags=regex.DOTALL)
+			metadata_xml = regex.sub(r"<dc:contributor id=\"illustrator\">.+?scheme=\"marc:relators\">ill</meta>\n\t\t", "", metadata_xml, flags=regex.DOTALL)
 
 		if args.pg_url:
 			if pg_subjects:
