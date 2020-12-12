@@ -117,3 +117,9 @@ a[epub|type~="noteref"]{
 section[epub|type~="endnotes"] > ol > li{
 	margin: 1em 0;
 }
+
+@media (prefers-color-scheme: dark){
+	img[epub|type~="se:image.color-depth.black-on-transparent"]{
+		filter: invert(100%);
+	}
+}
