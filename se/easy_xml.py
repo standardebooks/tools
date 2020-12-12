@@ -9,7 +9,10 @@ import unicodedata
 
 import regex
 from lxml import cssselect, etree
+from cssselect import parser
 
+import se
+import se.css
 
 CSS_SELECTOR_CACHE: Dict[str, cssselect.CSSSelector] = {}
 
@@ -59,7 +62,10 @@ class EasyXmlTree:
 		Shortcut to select elements based on CSS selector.
 		"""
 
-		return self.xpath(_css_selector(selector).path)
+		try:
+			return self.xpath(_css_selector(selector).path)
+		except parser.SelectorSyntaxError as ex:
+			raise se.InvalidCssException(f"Invalid selector: [css]{selector}[/]") from ex
 
 	def xpath(self, selector: str, return_string: bool = False):
 		"""
@@ -133,10 +139,58 @@ class EasyXhtmlTree(EasyXmlTree):
 
 		self.namespaces = {**self.namespaces, **{"epub": "http://www.idpf.org/2007/ops", "m": "http://www.w3.org/1998/Math/MathML"}}
 
+		self.is_css_applied = False
+
+	@staticmethod
+	def _apply_css_declaration_to_node(node, declaration):
+		if declaration.applies_to == "all" or (declaration.applies_to == "block" and node.tag in se.css.CSS_BLOCK_ELEMENTS):
+			node.set_attr(f"data-css-{declaration.name}", declaration.value)
+
+	def apply_css(self, css: str):
+		"""
+		Apply a CSS stylesheet to an XHTML tree.
+		The application is naive and should not be expected to be browser-grade.
+		CSS properties on specific elements can be returned using EasyXmlElement.get_css_property()
+
+		Currently this does not support rules/declarations in @ blocks like @supports.
+
+		For example,
+
+		for node in dom.xpath("//em")"
+			print(node.get_css_property("font-style"))
+		"""
+		self.is_css_applied = True
+
+		rules = se.css.parse_rules(css)
+
+		# We've parsed the CSS, now apply it to the DOM tree
+		for rule in rules:
+			try:
+				for node in self.css_select(rule.selector):
+					for declaration in rule.declarations:
+						self._apply_css_declaration_to_node(node, declaration)
+
+						# If the property is inherited, apply it to its descendants
+						if declaration.inherited:
+							for child in node.xpath(".//*"):
+								self._apply_css_declaration_to_node(child, declaration)
+
+			except cssselect.ExpressionError:
+				# This gets thrown on some selectors not yet implemented by lxml, like *:first-of-type
+				pass
+
 	def to_string(self) -> str:
 		"""
 		Serialize the tree to a string.
 		"""
+
+		# If we applied a CSS file to this tree, remove the special attributes we
+		# added before printing it out.
+		if self.is_css_applied:
+			for node in self.xpath("//@*[starts-with(name(), 'data-css-')]/parent::*"):
+				for attr in node.lxml_element.attrib:
+					if attr.startswith("data-css-"):
+						node.remove_attr(attr)
 
 		xml = EasyXmlTree.to_string(self)
 
@@ -213,7 +267,9 @@ class EasyXmlElement:
 		attrs = ""
 
 		for name, value in self.lxml_element.items():
-			attrs += f" {name}=\"{value}\""
+			# Exclude applied CSS
+			if not name.startswith("data-css-"):
+				attrs += f" {name}=\"{value}\""
 
 		attrs = attrs.replace("{http://www.idpf.org/2007/ops}", "epub:")
 		attrs = attrs.replace("{http://www.w3.org/XML/1998/namespace}", "xml:")
@@ -229,7 +285,33 @@ class EasyXmlElement:
 		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `<p>Hello there, <abbr>Mr.</abbr> Smith!</p>`
 		"""
 
-		return regex.sub(r" xmlns(:[\p{Letter}]+?)?=\"[^\"]+?\"", "", etree.tostring(self.lxml_element, encoding=str, with_tail=False))
+		value = etree.tostring(self.lxml_element, encoding=str, with_tail=False)
+
+		# Remove namespaces
+		value = regex.sub(r" xmlns(:[\p{Letter}]+?)?=\"[^\"]+?\"", "", value)
+
+		# Remove applied CSS
+		value = regex.sub(r" data-css-[a-z\-]+?=\"[^\"]*?\"", "", value)
+
+		return value
+
+	def get_css_property(self, property_name: str):
+		"""
+		Return the applied CSS value for the given property name, like `border-color`,
+		or None if it does not exist.
+		"""
+
+		if f"data-css-{property_name}" in self.lxml_element.attrib:
+			return self.lxml_element.attrib[f"data-css-{property_name}"]
+
+		return None
+
+	def remove_attr(self, attribute: str):
+		"""
+		Remove an attribute from this node.
+		"""
+
+		etree.strip_attributes(self.lxml_element, attribute)
 
 	def get_attr(self, attribute: str) -> str:
 		"""

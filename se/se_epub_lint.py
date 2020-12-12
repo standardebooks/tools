@@ -44,6 +44,7 @@ See the se.print_error function for a comprehensive list of allowed codes.
 LIST OF ALL SE LINT MESSAGES
 
 CSS
+"c-001", "Don’t use [css]*:first-of-type[/], [css]*:last-of-type[/], [css]*:nth-of-type[/] [css]*:nth-last-of-type[/], or [css]*:only-of-type[/] on [css]*[/]. Instead, specify an element to apply it to."
 "c-002", "Unused CSS selectors."
 "c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/])."
 "c-004", "Don’t specify border colors, so that reading systems can adjust for night mode."
@@ -52,9 +53,6 @@ CSS
 "c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy."
 "c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks."
 "c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles."
-UNUSED
-vvvvvvvvvvvvvvvvvvvvvvv
-"c-001", "Don’t directly select [xhtml]<h#>[/] elements, as they are used in template files; use more specific selectors."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -400,6 +398,15 @@ def _dom(file_path: Path) -> Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtm
 
 	return _DOM_CACHE[file_path_str]
 
+_CSS_CACHE: Dict[str, str] = {}
+def _get_css(file_path: Union[Path, str]) -> str:
+	file_path_str = str(file_path)
+	if file_path_str not in _CSS_CACHE:
+		with open(file_path, "r", encoding="utf-8") as file:
+			_CSS_CACHE[file_path_str] = file.read()
+
+	return _CSS_CACHE[file_path_str]
+
 def lint(self, skip_lint_ignore: bool) -> list:
 	"""
 	Check this ebook for some common SE style errors.
@@ -439,6 +446,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	# Each code dict has a key "code" which is the actual code, and a key "used" which is a
 	# bool indicating whether or not the code has actually been caught in the linting run.
 	ignored_codes: Dict[str, List[Dict]] = {}
+
+	# Cache the browser default stylesheet for later use
+	with importlib_resources.open_text("se.data", "browser.css", encoding="utf-8") as css:
+		_CSS_CACHE["default"] = css.read()
 
 	# First, check if we have an se-lint-ignore.xml file in the ebook root. If so, parse it. For an example se-lint-ignore file, see semos://1.0.0/2.3
 	lint_ignore_path = self.path / "se-lint-ignore.xml"
@@ -580,17 +591,18 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		if regex.search(r"\[\s*xml\s*\|", selector, flags=regex.IGNORECASE) and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
 			messages.append(LintMessage("c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/]).", se.MESSAGE_TYPE_ERROR, local_css_path))
 
+	# lxml has not implemented the following in cssselect: *:first-of-type, *:last-of-type, *:nth-of-type, *:nth-last-of-type, *:only-of-type
+	# BUT ONLY WHEN USED ON *. This includes for example: `section [epub|type~="test"]:first-of-type` (note the `*` is implicit)
+	# Therefore we can't simplify them in build or test against them.
+	matches = regex.findall(r"(?:^| )[^a-z\s][^\s]+?:(?:first-of-type|last-of-type|nth-of-type|nth-last-of-type|only-of-type)", self.local_css, flags=regex.MULTILINE)
+	if matches:
+		messages.append(LintMessage("c-001", "Don’t use [css]*:first-of-type[/], [css]*:last-of-type[/], [css]*:nth-of-type[/] [css]*:nth-last-of-type[/], or [css]*:only-of-type[/] on [css]*[/]. Instead, specify an element to apply it to.", se.MESSAGE_TYPE_ERROR, local_css_path, matches))
+
 	if regex.search(r"\s+hyphens:.+?;(?!\s+-epub-hyphens)", self.local_css):
 		messages.append(LintMessage("c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
 	if abbr_with_whitespace:
 		messages.append(LintMessage("c-005", f"[css]abbr[/] selector does not need [css]white-space: nowrap;[/] as it inherits it from [path][link=file://{self.path / 'src/epub/css/core.css'}]core.css[/][/].", se.MESSAGE_TYPE_ERROR, local_css_path, abbr_with_whitespace))
-
-	# Don't specify border color
-	# Since we have match with a regex anyway, no point in putting it in the loop above
-	matches = regex.findall(r"(?:border|color).+?(?:#[a-f0-9]{0,6}|black|white|red)", self.local_css, flags=regex.IGNORECASE)
-	if matches:
-		messages.append(LintMessage("c-004", "Don’t specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, local_css_path, matches))
 
 	# If we select on the xml namespace, make sure we define the namespace in the CSS, otherwise the selector won't work
 	# We do this using a regex and not with cssutils, because cssutils will barf in this particular case and not even record the selector.
@@ -991,6 +1003,15 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Read file contents into a DOM for querying
 				dom = _dom(filename)
 
+				# Apply stylesheets.
+				# First apply the browser default stylesheet
+				dom.apply_css(_get_css("default"))
+
+				# Apply any CSS files in the DOM
+				for node in dom.xpath("/html/head/link[@rel='stylesheet']"):
+					css_filename = (filename.parent / node.get_attr("href")).resolve()
+					dom.apply_css(_get_css(css_filename))
+
 				messages = messages + _get_malformed_urls(file_contents, filename)
 				typos: List[str] = []
 
@@ -1277,6 +1298,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
 				if matches:
 					messages.append(LintMessage("t-015", "Numbers not grouped by commas. Separate numbers greater than 1,000 with commas at every three numerals.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+				# Do we have any elements that have specified border color?
+				# `transparent` and `none` are allowed values for border-color
+				if dom.xpath("/html/body//*[attribute::*[re:test(local-name(), 'data-css-border.+?-color') and text() != 'transparent' and text != 'none']]"):
+					messages.append(LintMessage("c-004", "Don’t specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, local_css_path, matches))
 
 				# Check for poetry/verse without a descendent <p> element.
 				# Skip the ToC landmarks because it may have poem/verse semantic children.

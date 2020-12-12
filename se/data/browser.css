@@ -1,0 +1,291 @@
+/* Attempts to emulate the default stylesheet for the average browser. */
+
+address,
+article,
+aside,
+blockquote,
+body,
+details,
+div,
+dd,
+dl,
+dt,
+figcaption,
+figure,
+footer,
+form,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+header,
+hgroup,
+html,
+main,
+nav,
+p,
+section,
+summary{
+	display: block;
+}
+
+body{
+	margin: .5em;
+}
+
+p,
+dl{
+	margin: 1em;
+}
+
+dd{
+	margin: 2.5rem;
+}
+
+blockquote,
+figure{
+	margin: 1em 2.5rem;
+}
+
+address{
+	font-style: italic;
+}
+
+h1{
+	font-size: 2em;
+	font-weight: bold;
+	margin-top: .67em;
+	margin-bottom: .67em;
+}
+
+h2{
+	font-size: 1.5em;
+	font-weight: bold;
+	margin-top: .83em;
+	margin-bottom: .83em;
+}
+
+h3{
+	font-size: 1.17em;
+	font-weight: bold;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+
+h4{
+	font-size: 1em;
+	font-weight: bold;
+	margin-top: 1.33em;
+	margin-bottom: 1.33em;
+}
+
+h5{
+ 	font-size: 0.83em;
+	font-weight: bold;
+	margin-top: 1.67em;
+	margin-bottom: 1.67em;
+}
+
+h6{
+ 	font-size: 0.67em;
+	font-weight: bold;
+	margin-top: 2.33em;
+	margin-bottom: 2.33em;
+}
+
+table{
+	display: table;
+	border-spacing: 2px;
+	border-collapse: separate;
+	box-sizing: border-box;
+	text-indent: 0;
+}
+
+table > * > tr > td,
+table > * > tr > th,
+table > * > td,
+table > * > th,
+table > td,
+table > th{
+	border-width: thin;
+	border-style: inset;
+}
+
+caption{
+	display: table-caption;
+	text-align: center;
+}
+
+tr{
+	display: table-row;
+	vertical-align: inherit;
+}
+
+col{
+	display: table-column;
+}
+
+colgroup{
+	display: table-column-group;
+}
+
+tbody{
+	display: table-row-group;
+	vertical-align: middle;
+}
+
+thead{
+	display: table-header-group;
+	vertical-align: middle;
+}
+
+tfoot{
+	display: table-footer-group;
+	vertical-align: middle;
+}
+
+table > tr{
+	vertical-align: middle;
+}
+
+td{
+	display: table-cell;
+	vertical-align: inherit;
+	text-align: unset;
+	padding: 1px;
+}
+
+th{
+	display: table-cell;
+	vertical-align: inherit;
+	font-weight: bold;
+	padding: 1px;
+}
+
+b,
+strong{
+	font-weight: bolder;
+}
+
+i,
+cite,
+em,
+var,
+dfn{
+	font-style: italic;
+}
+
+u,
+ins{
+	text-decoration: underline;
+}
+
+s,
+strike,
+del{
+	text-decoration: line-through;
+}
+
+big{
+	font-size: larger;
+}
+
+small{
+	font-size: smaller;
+}
+
+sub{
+	vertical-align: sub;
+	font-size: smaller;
+}
+
+sup{
+	vertical-align: super;
+	font-size: smaller;
+}
+
+mark{
+	background: yellow;
+	color: black;
+}
+
+abbr[title],
+acronym[title]{
+	text-decoration: dotted underline;
+}
+
+ul,
+menu,
+dir{
+	display: block;
+	list-style-type: disc;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	padding-left: 2.5rem;
+}
+
+ul,
+ol,
+menu{
+	counter-reset: list-item;
+}
+
+ol{
+	display: block;
+	list-style-type: decimal;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	padding-left: 2.5rem;
+}
+
+li{
+	display: list-item;
+	text-align: match-parent;
+}
+
+ul ul,
+ul ol,
+ul dl,
+ol ul,
+ol ol,
+ol dl,
+dl ul,
+dl ol,
+dl dl{
+	margin-left: 0;
+	margin-right: 0;
+}
+
+ul ul,
+ol ul{
+	list-style-type: circle;
+}
+
+ul ol ul,
+ul ul ul,
+ol ul ul,
+ol ol ul{
+	list-style-type: square;
+}
+
+hr{
+	display: block;
+	border: 1px inset;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	margin-left: auto;
+	margin-right: auto;
+	color: gray;
+	box-sizing: content-box;
+}
+
+head,
+link,
+meta,
+script,
+style,
+title{
+	 display: none;
+}
