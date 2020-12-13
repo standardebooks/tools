@@ -16,18 +16,6 @@ import se.css
 
 CSS_SELECTOR_CACHE: Dict[str, cssselect.CSSSelector] = {}
 
-def _css_selector(selector: str) -> cssselect.CSSSelector:
-	"""
-	Create a CSS selector for the given selector string. Return a cached CSS selector if
-	one already exists.
-	"""
-
-	sel = CSS_SELECTOR_CACHE.get(selector)
-	if not sel:
-		sel = cssselect.CSSSelector(selector, translator="xhtml", namespaces={"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops"})
-		CSS_SELECTOR_CACHE[selector] = sel
-	return sel
-
 def escape_xpath(string: str) -> str:
 	"""
 	Xpath string literals don't have escape sequences for ' and "
@@ -63,7 +51,12 @@ class EasyXmlTree:
 		"""
 
 		try:
-			return self.xpath(_css_selector(selector).path)
+			sel = CSS_SELECTOR_CACHE.get(selector)
+			if not sel:
+				sel = cssselect.CSSSelector(selector, translator="xhtml", namespaces={"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops"})
+				CSS_SELECTOR_CACHE[selector] = sel
+
+			return self.xpath(sel.path)
 		except parser.SelectorSyntaxError as ex:
 			raise se.InvalidCssException(f"Invalid selector: [css]{selector}[/]") from ex
 
