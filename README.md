@@ -66,7 +66,7 @@ sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se
 
 ## macOS users (up to macOS 10.15)
 
-These instructions were tested on macOS 10.12 to 10.15.
+These instructions were tested on macOS 10.12 to 10.16, on Intel macs.
 
 1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it’s up to date:
 
@@ -78,12 +78,9 @@ These instructions were tested on macOS 10.12 to 10.15.
 
 	```shell
 	# Install some pre-flight dependencies.
-	brew install cairo git openjdk pipx python
+	brew install cairo calibre git openjdk pipx python
 	pipx ensurepath
 	sudo ln -sfn /usr/local/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
-
-	# Install required applications.
-	brew cask install calibre
 
 	# Install the toolset.
 	pipx install standardebooks
