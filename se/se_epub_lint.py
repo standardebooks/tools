@@ -261,6 +261,7 @@ TYPOGRAPHY
 "t-045", "[xhtml]<p>[/] preceded by [xhtml]<blockquote>[/] and starting in a lowercase letter, but without [val]continued[/] class."
 "t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead."
 "t-047", "[text]US[/] should be [text]U.S.[/]"
+"t-048", "Chapter opening text in all-caps."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1303,6 +1304,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# `transparent` and `none` are allowed values for border-color
 				if dom.xpath("/html/body//*[attribute::*[re:test(local-name(), 'data-css-border.+?-color') and text() != 'transparent' and text != 'none']]"):
 					messages.append(LintMessage("c-004", "Don’t specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, local_css_path, matches))
+
+				# Check for all-caps first paragraphs in sections/articles
+				# Note that we don't check for small-caps CSS, because there are lots of legitimate cases for that,
+				# and it would generate too many false positives.
+				# If we did want to do that, this xpath after the last re:test would help: or ./*[not(preceding-sibling::node()[normalize-space(.)]) and @data-css-font-variant='small-caps' and following-sibling::node()[1][self::text()]]
+				nodes = dom.xpath("/html/body//*[(name() = 'section' or name() = 'article') and not(contains(@epub:type, 'dedication') or contains(@epub:type, 'z3998:letter'))]/p[1][re:test(normalize-space(.), '^[“’]?(?:[A-Z’]+\\s){2,}')]")
+				if nodes:
+					messages.append(LintMessage("t-048", "Chapter opening text in all-caps.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for poetry/verse without a descendent <p> element.
 				# Skip the ToC landmarks because it may have poem/verse semantic children.
