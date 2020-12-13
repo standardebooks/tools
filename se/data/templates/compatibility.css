@@ -31,20 +31,7 @@ img[epub|type~="se:image.color-depth.black-on-transparent"][epub|type~="z3998:pu
 	background: transparent !important;
 }
 
-/* And except in Apple Books, where we can target dark mode specifically.
-	Books on iOS 13+ / macOS 10.14+ should support prefers-color-scheme, so the
-	theme hack can be dropped when they’re the baseline. */
-:root[__ibooks_internal_theme] img[epub|type~="se:image.color-depth.black-on-transparent"]{
-	background: transparent !important;
-}
-
-:root[__ibooks_internal_theme*="Night"] img[epub|type~="se:image.color-depth.black-on-transparent"],
-:root[__ibooks_internal_theme*="Gray"] img[epub|type~="se:image.color-depth.black-on-transparent"]{
-	filter: invert(100%);
-}
-
-/* If the device supports prefers-color-scheme we can unset the background color.
-	We’ll invert the image in core.css. */
+/* Or if the device supports prefers-color-scheme. We’ll invert the image in core.css. */
 @media (prefers-color-scheme){
 	img[epub|type~="se:image.color-depth.black-on-transparent"]{
 		background: transparent !important;
