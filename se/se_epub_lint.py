@@ -54,6 +54,7 @@ CSS
 "c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks."
 "c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles."
 "c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/css]. [css]text-align[/] is usually set to [css]right[/]."
+"c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/]."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -1326,6 +1327,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][not(descendant::p)][not(ancestor::nav[contains(@epub:type, 'landmarks')])]")
 				if nodes:
 					messages.append(LintMessage("s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+
+				# Check for elements that have `text-align: center` but also `text-indent: 1em`
+				nodes = dom.xpath("/html/body//*[@data-css-text-align='center' and @data-css-text-indent='1em']")
+				if nodes:
+					messages.append(LintMessage("c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for dialog starting with a lowercase letter. Only check the first child text node of <p>, because other first children might be valid lowercase, like <m:math> or <b>;
 				# exclude <p> inside or preceded by <blockquote>; and exclude <p> inside endnotes, as definitions may start with lowercase letters.
