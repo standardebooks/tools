@@ -55,6 +55,7 @@ CSS
 "c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles."
 "c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/css]. [css]text-align[/] is usually set to [css]right[/]."
 "c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/]."
+"c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/]."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -1695,6 +1696,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[contains(concat(' ', @epub:type, ' '), ' z3998:persona ') and not(self::b or self::td)]")
 				if nodes:
 					messages.append(LintMessage("s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				# Check for sections that don't have header elements, and that do not have margin-top: 8em.
+				# This tries to find the first <section> or <article> whose first child is <p>, and that doesn't
+				# have any ancestor <section>s or <articles>s with heading content, and that doesn't have the correct top margin.
+				# Ignore the titlepage, loi, and dedications as they typically have unique styling.
+				nodes = dom.xpath("/html/body//*[name()='section' or name()='article'][1][./p[1][not(preceding-sibling::*)] and not(re:test(@epub:type, '(titlepage|loi|dedication)')) and not(ancestor::*/*[re:test(name(), '^(h[1-6]|header|hgroup)$')]) and not(@data-css-margin-top='20vh')]")
+				if nodes:
+					messages.append(LintMessage("c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 				# Check for italics on things that shouldn't be italics
 				nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.music.song') or contains(@epub:type, 'se:name.publication.short-story') or contains(@epub:type, 'se:name.publication.essay')]")
