@@ -132,9 +132,10 @@ class EasyXmlTree:
 						self._apply_css_declaration_to_node(node, declaration, rule.specificity_number)
 
 						# If the property is inherited, apply it to its descendants
+						# However inherited properties get 0 specificity, because they can be overriden
 						if declaration.inherited:
 							for child in node.xpath(".//*"):
-								self._apply_css_declaration_to_node(child, declaration, rule.specificity_number)
+								self._apply_css_declaration_to_node(child, declaration, 0)
 
 			except cssselect.ExpressionError:
 				# This gets thrown on some selectors not yet implemented by lxml, like *:first-of-type
