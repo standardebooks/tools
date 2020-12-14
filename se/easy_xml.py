@@ -15,6 +15,7 @@ import se
 import se.css
 
 CSS_SELECTOR_CACHE: Dict[str, cssselect.CSSSelector] = {}
+CSS_RULES_CACHE: Dict[str, List[se.css.CssRule]] = {}
 
 def escape_xpath(string: str) -> str:
 	"""
@@ -87,15 +88,25 @@ class EasyXmlTree:
 		return result
 
 	@staticmethod
-	def _apply_css_declaration_to_node(node, declaration):
+	def _apply_css_declaration_to_node(node, declaration: se.css.CssDeclaration, specificity_number: int):
 		if declaration.applies_to == "all" or (declaration.applies_to == "block" and node.tag in se.css.CSS_BLOCK_ELEMENTS):
-			node.set_attr(f"data-css-{declaration.name}", declaration.value)
+			existing_specificity = node.get_attr(f"data-css-{declaration.name}-specificity") or 0
 
-	def apply_css(self, css: str):
+			if declaration.important:
+				specificity_number = specificity_number + 1000
+
+			if int(existing_specificity) <= specificity_number:
+				node.set_attr(f"data-css-{declaration.name}", declaration.value)
+				node.set_attr(f"data-css-{declaration.name}-specificity", str(specificity_number))
+
+	def apply_css(self, css: str, filename: str=None):
 		"""
 		Apply a CSS stylesheet to an XHTML tree.
 		The application is naive and should not be expected to be browser-grade.
 		CSS properties on specific elements can be returned using EasyXmlElement.get_css_property()
+
+		With filename, save the resulting rules in a cache to prevent having to re-parse
+		the same stylesheet over and over.
 
 		Currently this does not support rules/declarations in @ blocks like @supports.
 
@@ -106,19 +117,24 @@ class EasyXmlTree:
 		"""
 		self.is_css_applied = True
 
-		rules = se.css.parse_rules(css)
+		if filename and filename in CSS_RULES_CACHE:
+			rules = CSS_RULES_CACHE[filename]
+		else:
+			rules = se.css.parse_rules(css)
+			if filename:
+				CSS_RULES_CACHE[filename] = rules
 
 		# We've parsed the CSS, now apply it to the DOM tree
 		for rule in rules:
 			try:
 				for node in self.css_select(rule.selector):
 					for declaration in rule.declarations:
-						self._apply_css_declaration_to_node(node, declaration)
+						self._apply_css_declaration_to_node(node, declaration, rule.specificity_number)
 
 						# If the property is inherited, apply it to its descendants
 						if declaration.inherited:
 							for child in node.xpath(".//*"):
-								self._apply_css_declaration_to_node(child, declaration)
+								self._apply_css_declaration_to_node(child, declaration, rule.specificity_number)
 
 			except cssselect.ExpressionError:
 				# This gets thrown on some selectors not yet implemented by lxml, like *:first-of-type
@@ -128,6 +144,14 @@ class EasyXmlTree:
 		"""
 		Serialize the tree to a string.
 		"""
+
+		# If we applied a CSS file to this tree, remove the special attributes we
+		# added before printing it out.
+		if self.is_css_applied:
+			for node in self.xpath("//@*[starts-with(name(), 'data-css-')]/parent::*"):
+				for attr in node.lxml_element.attrib:
+					if attr.startswith("data-css-"):
+						node.remove_attr(attr)
 
 		xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + etree.tostring(self.etree, encoding="unicode") + "\n"
 
@@ -175,14 +199,6 @@ class EasyXhtmlTree(EasyXmlTree):
 		"""
 		Serialize the tree to a string.
 		"""
-
-		# If we applied a CSS file to this tree, remove the special attributes we
-		# added before printing it out.
-		if self.is_css_applied:
-			for node in self.xpath("//@*[starts-with(name(), 'data-css-')]/parent::*"):
-				for attr in node.lxml_element.attrib:
-					if attr.startswith("data-css-"):
-						node.remove_attr(attr)
 
 		xml = EasyXmlTree.to_string(self)
 
