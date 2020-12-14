@@ -1008,12 +1008,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Apply stylesheets.
 				# First apply the browser default stylesheet
-				dom.apply_css(_get_css("default"))
+				dom.apply_css(_get_css("default"), "default")
 
 				# Apply any CSS files in the DOM
 				for node in dom.xpath("/html/head/link[@rel='stylesheet']"):
 					css_filename = (filename.parent / node.get_attr("href")).resolve()
-					dom.apply_css(_get_css(css_filename))
+					dom.apply_css(_get_css(css_filename), str(css_filename))
 
 				messages = messages + _get_malformed_urls(file_contents, filename)
 				typos: List[str] = []
