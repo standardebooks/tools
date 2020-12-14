@@ -288,6 +288,18 @@ class EasyXmlElement:
 
 		return value
 
+	def get_css(self) -> Dict:
+		"""
+		Return a dict of CSS properties applied to this node.
+		"""
+
+		output = {}
+		for attr, value in self.lxml_element.attrib.items():
+			if attr.startswith("data-css-"):
+				output[attr.replace("data-css-", "")] = value
+
+		return output
+
 	def get_css_property(self, property_name: str):
 		"""
 		Return the applied CSS value for the given property name, like `border-color`,
