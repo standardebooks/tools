@@ -53,6 +53,7 @@ CSS
 "c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy."
 "c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks."
 "c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles."
+"c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/css]. [css]text-align[/] is usually set to [css]right[/]."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -1312,6 +1313,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[(name() = 'section' or name() = 'article') and not(contains(@epub:type, 'dedication') or contains(@epub:type, 'z3998:letter'))]/p[1][re:test(normalize-space(.), '^[“’]?(?:[A-Z’]+\\s){2,}')]")
 				if nodes:
 					messages.append(LintMessage("t-048", "Chapter opening text in all-caps.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				# Check that footers have the expected styling
+				# Footers may sometimes be aligned with text-align: center as well as text-align: right
+				# We also ignore text-align on any footers whose only child is a postscript, which is typically left-aligned
+				nodes = dom.xpath("/html/body//footer[not(@data-css-margin-top='1em') or (not(@data-css-text-align) and not(./*[contains(@epub:type, 'z3998:postscript') and not(following-sibling::*) and not(preceding-sibling::*) ]))]")
+				if nodes:
+					messages.append(LintMessage("c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/css]. [css]text-align[/] is usually set to [css]right[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for poetry/verse without a descendent <p> element.
 				# Skip the ToC landmarks because it may have poem/verse semantic children.
