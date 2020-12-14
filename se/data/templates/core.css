@@ -103,6 +103,10 @@ header{
 	text-align: center;
 }
 
+header > * + p{
+	text-indent: 0;
+}
+
 article > header + *,
 section > header + *{
 	margin-top: 3em;
