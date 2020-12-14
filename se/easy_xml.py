@@ -44,6 +44,7 @@ class EasyXmlTree:
 	def __init__(self, xml_string: str):
 		self.namespaces = {"re": "http://exslt.org/regular-expressions"} # Enable regular expressions in xpath
 		self.etree = etree.fromstring(str.encode(xml_string))
+		self.is_css_applied = False
 
 	def css_select(self, selector: str):
 		"""
@@ -84,6 +85,44 @@ class EasyXmlTree:
 			return None
 
 		return result
+
+	@staticmethod
+	def _apply_css_declaration_to_node(node, declaration):
+		if declaration.applies_to == "all" or (declaration.applies_to == "block" and node.tag in se.css.CSS_BLOCK_ELEMENTS):
+			node.set_attr(f"data-css-{declaration.name}", declaration.value)
+
+	def apply_css(self, css: str):
+		"""
+		Apply a CSS stylesheet to an XHTML tree.
+		The application is naive and should not be expected to be browser-grade.
+		CSS properties on specific elements can be returned using EasyXmlElement.get_css_property()
+
+		Currently this does not support rules/declarations in @ blocks like @supports.
+
+		For example,
+
+		for node in dom.xpath("//em")"
+			print(node.get_css_property("font-style"))
+		"""
+		self.is_css_applied = True
+
+		rules = se.css.parse_rules(css)
+
+		# We've parsed the CSS, now apply it to the DOM tree
+		for rule in rules:
+			try:
+				for node in self.css_select(rule.selector):
+					for declaration in rule.declarations:
+						self._apply_css_declaration_to_node(node, declaration)
+
+						# If the property is inherited, apply it to its descendants
+						if declaration.inherited:
+							for child in node.xpath(".//*"):
+								self._apply_css_declaration_to_node(child, declaration)
+
+			except cssselect.ExpressionError:
+				# This gets thrown on some selectors not yet implemented by lxml, like *:first-of-type
+				pass
 
 	def to_string(self) -> str:
 		"""
@@ -131,46 +170,6 @@ class EasyXhtmlTree(EasyXmlTree):
 		super().__init__(xml_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", ""))
 
 		self.namespaces = {**self.namespaces, **{"epub": "http://www.idpf.org/2007/ops", "m": "http://www.w3.org/1998/Math/MathML"}}
-
-		self.is_css_applied = False
-
-	@staticmethod
-	def _apply_css_declaration_to_node(node, declaration):
-		if declaration.applies_to == "all" or (declaration.applies_to == "block" and node.tag in se.css.CSS_BLOCK_ELEMENTS):
-			node.set_attr(f"data-css-{declaration.name}", declaration.value)
-
-	def apply_css(self, css: str):
-		"""
-		Apply a CSS stylesheet to an XHTML tree.
-		The application is naive and should not be expected to be browser-grade.
-		CSS properties on specific elements can be returned using EasyXmlElement.get_css_property()
-
-		Currently this does not support rules/declarations in @ blocks like @supports.
-
-		For example,
-
-		for node in dom.xpath("//em")"
-			print(node.get_css_property("font-style"))
-		"""
-		self.is_css_applied = True
-
-		rules = se.css.parse_rules(css)
-
-		# We've parsed the CSS, now apply it to the DOM tree
-		for rule in rules:
-			try:
-				for node in self.css_select(rule.selector):
-					for declaration in rule.declarations:
-						self._apply_css_declaration_to_node(node, declaration)
-
-						# If the property is inherited, apply it to its descendants
-						if declaration.inherited:
-							for child in node.xpath(".//*"):
-								self._apply_css_declaration_to_node(child, declaration)
-
-			except cssselect.ExpressionError:
-				# This gets thrown on some selectors not yet implemented by lxml, like *:first-of-type
-				pass
 
 	def to_string(self) -> str:
 		"""

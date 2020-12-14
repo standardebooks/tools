@@ -6,6 +6,8 @@ The class exposes some helpful functions like css_select() and xpath().
 
 from copy import deepcopy
 
+from typing import List
+
 import regex
 import tinycss2
 import tinycss2.color3
@@ -205,7 +207,7 @@ class CssRule():
 
 	def __init__(self, selector: str):
 		self.selector = selector
-		self.declarations = []
+		self.declarations: List[str] = []
 
 def parse_rules(css: str):
 	"""
