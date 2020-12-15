@@ -222,10 +222,15 @@ def get_target_filenames(targets: list, allowed_extensions: tuple, ignored_filen
 
 	return natsorted(list(target_xhtml_filenames), key=lambda x: str(x.name), alg=ns.PATH)
 
-def is_called_from_parallel() -> bool:
+def is_called_from_parallel(return_none=True) -> Union[bool,None]:
 	"""
 	Decide if we're being called from GNU parallel.
 	This is good to know in case we want to tweak some output.
+
+	This is almost always passed directly to the force_terminal option of rich.console(),
+	meaning that `None` means "guess terminal status" and `False` means "no colors at all".
+	We typically want to guess, so this returns None by default if not called from Parallel.
+	To return false in that case, pass return_none=False
 	"""
 
 	import psutil # pylint: disable=import-outside-toplevel
@@ -238,4 +243,4 @@ def is_called_from_parallel() -> bool:
 		# If we can't figure it out, don't worry about it
 		pass
 
-	return False
+	return None if return_none else False

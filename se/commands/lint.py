@@ -27,10 +27,11 @@ def lint() -> int:
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
-	called_from_parallel = se.is_called_from_parallel()
+	called_from_parallel = se.is_called_from_parallel(False)
+	force_terminal = True if called_from_parallel else None # True will force colors, None will guess whether colors are enabled, False will disable colors
 	first_output = True
 	return_code = 0
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=called_from_parallel) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=force_terminal) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
 	for directory in args.directories:
 		directory = Path(directory).resolve()
