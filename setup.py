@@ -74,7 +74,7 @@ setup(
         "pyphen==0.10.0",
         "regex==2020.4.4",
         "requests==2.23.0",
-        "rich==5.0.0",
+        "rich==9.4.0",
         "roman==3.2.0",
         "selenium==3.141.0",
         "smartypants==2.0.1",
