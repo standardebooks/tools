@@ -53,7 +53,7 @@ CSS
 "c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy."
 "c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks."
 "c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles."
-"c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/css]. [css]text-align[/] is usually set to [css]right[/]."
+"c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [css]text-align[/] is usually set to [css]right[/]."
 "c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/]."
 "c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/]."
 
@@ -1321,7 +1321,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# We also ignore text-align on any footers whose only child is a postscript, which is typically left-aligned
 				nodes = dom.xpath("/html/body//footer[not(@data-css-margin-top='1em') or (not(@data-css-text-align) and not(./*[contains(@epub:type, 'z3998:postscript') and not(following-sibling::*) and not(preceding-sibling::*) ]))]")
 				if nodes:
-					messages.append(LintMessage("c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/css]. [css]text-align[/] is usually set to [css]right[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+					messages.append(LintMessage("c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [css]text-align[/] is usually set to [css]right[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for poetry/verse without a descendent <p> element.
 				# Skip the ToC landmarks because it may have poem/verse semantic children.
