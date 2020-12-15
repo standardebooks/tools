@@ -80,7 +80,7 @@ def lint() -> int:
 						label = "Error:"
 
 					# Replace color markup with `
-					message.text = regex.sub(r"\[(?:/|xhtml|xml|val|attr|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message.text)
+					message.text = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message.text)
 					message.text = regex.sub(r"`+", "`", message.text)
 
 					message_filename = ""
@@ -114,7 +114,7 @@ def lint() -> int:
 							message_filename = f"[link=file://{message.filename.resolve()}]{message.filename.name}[/link]"
 					else:
 						# Replace color markup with `
-						message_text = regex.sub(r"\[(?:/|xhtml|xml|val|attr|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message_text)
+						message_text = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message_text)
 						message_text = regex.sub(r"`+", "`", message_text)
 						message_filename = ""
 						if message.filename:
