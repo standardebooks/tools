@@ -56,6 +56,7 @@ CSS
 "c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [css]text-align[/] is usually set to [css]right[/]."
 "c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/]."
 "c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/]."
+"c-013", "Element with margin or padding not in increments of [css].5em[/]."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -1426,6 +1427,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = [node.to_string() for node in dom.xpath("/html/body//abbr[contains(@class, 'initialism') and not(re:test(., '^[0-9]*([a-zA-Z]\\.)+[0-9]*$'))]") if node.text not in initialism_exceptions]
 				if nodes:
 					messages.append(LintMessage("t-030", "Initialism with spaces or without periods.", se.MESSAGE_TYPE_WARNING, filename, set(nodes)))
+
+				# Check for padding and margin not in .5 increments, except for table headers/cells which usually need .25em increments
+				nodes = dom.xpath("/html/body//*[not(re:test(name(), '^(h[1-6]|td|th)$'))][attribute::*[re:test(local-name(), 'data-css-(margin|padding)')][re:test(., '^[0-9]*\\.[^5]')]]")
+				if nodes:
+					messages.append(LintMessage("c-013", "Element with margin or padding not in increments of [css].5em[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for <abbr class="name"> that does not contain spaces
 				nodes = dom.xpath("/html/body//abbr[contains(@class, 'name')][re:test(., '[A-Z]\\.[A-Z]\\.')]")
