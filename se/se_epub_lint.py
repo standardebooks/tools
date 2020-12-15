@@ -266,6 +266,7 @@ TYPOGRAPHY
 "t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead."
 "t-047", "[text]US[/] should be [text]U.S.[/]"
 "t-048", "Chapter opening text in all-caps."
+"t-049", "Two-em-dash used for eliding an entire word. Use a three-em-dash instead."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1524,6 +1525,16 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath(f"/html/body//abbr[contains(@class, 'name')][contains(text(), '{se.NO_BREAK_SPACE}')]")
 				if nodes:
 					messages.append(LintMessage("t-022", "No-break space found in [xhtml]<abbr class=\"name\">[/]. This is redundant.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for two-em-dashes used for elision instead of three-em-dashes
+				matches = regex.findall(fr"[^{se.WORD_JOINER}\p{{Letter}}”]⸺[^“{se.WORD_JOINER}\p{{Letter}}].*(?:<)", file_contents)
+				if matches:
+					messages.append(LintMessage("t-049", "Two-em-dash used for eliding an entire word. Use a three-em-dash instead.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+				# Check for <span>s that only exist to apply epub:type
+				nodes = dom.xpath("/html/body//*[span[@epub:type][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
+				if nodes:
+					messages.append(LintMessage("s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for <span>s that only exist to apply epub:type
 				nodes = dom.xpath("/html/body//*[span[@epub:type][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
