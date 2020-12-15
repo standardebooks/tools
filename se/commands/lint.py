@@ -31,7 +31,8 @@ def lint() -> int:
 	force_terminal = True if called_from_parallel else None # True will force colors, None will guess whether colors are enabled, False will disable colors
 	first_output = True
 	return_code = 0
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=force_terminal) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	# We force a very wide terminal if called from Parallel, otherwise Rich will hard-wrap to 80 chars
+	console = Console(width=10**9 if called_from_parallel else None, highlight=False, theme=se.RICH_THEME, force_terminal=force_terminal) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
 	for directory in args.directories:
 		directory = Path(directory).resolve()
