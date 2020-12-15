@@ -142,12 +142,12 @@ As a developer, it’s often useful to run an `se` command like `se lint` or `se
 se lint /path/to/ebook/repos/*
 
 # Fast, multiple invocations each process a single argument in parallel
-parallel --keep-order se lint ::: /path/to/ebook/repos/*
+export COLUMNS; parallel --keep-order se lint ::: /path/to/ebook/repos/*
 ```
 
 The toolset tries to detect when it’s being invoked from `parallel`, and it adjusts its output to accomodate.
 
-We pass the `--keep-order` flag to output results in the order we passed them in, which is useful if comparing the results of multiple runs.
+We export `COLUMNS` because `se lint` needs to know the width of the terminal so that it can format its tabular output correctly. We pass the `--keep-order` flag to output results in the order we passed them in, which is useful if comparing the results of multiple runs.
 
 ### Linting with `pylint` and `mypy`
 
