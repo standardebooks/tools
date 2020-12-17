@@ -350,7 +350,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"<span epub:type=\"z3998:roman\">(.*?)</span>(st|nd|rd|th)\b", r'<span epub:type="z3998:roman">\1</span>', xhtml)
 
 	# X-ray is always capitalized. Match a preceding space so that we don't catch it in an ID attribute.
-	xhtml = regex.sub(r"(\s)x-ray", r"\1X-ray", xhtml)
+	xhtml = regex.sub(r"([\p{Punctuation}\s])x-ray", r"\1X-ray", xhtml)
 
 	# Canadian spelling follows US
 	if language in ["en-US", "en-CA"]:
