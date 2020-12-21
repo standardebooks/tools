@@ -129,7 +129,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"""([^\p{Letter}>\"])([vxVX])(\b|st\b|nd\b|rd\b|th\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
 
 	# We can assume a lowercase i is always a Roman numeral
-	xhtml = regex.sub(r"""([^\p{Letter}<>/\"])(i)(\b|st\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
+	xhtml = regex.sub(r"""([^\p{Letter}<>/\"])i\b""", r"""\1<span epub:type="z3998:roman">i</span>""", xhtml)
 
 	# Fix X-ray
 	xhtml = regex.sub(r"""<span epub:type="z3998:roman">([Xx])</span>-ray""", r"""\1-ray""", xhtml)
