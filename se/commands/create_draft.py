@@ -15,6 +15,7 @@ import git
 import importlib_resources
 import regex
 import requests
+from rich.console import Console
 from ftfy import fix_text
 from lxml import etree
 
@@ -927,6 +928,13 @@ def create_draft() -> int:
 		return se.InvalidArgumentsException.code
 
 	try:
+		# Before we continue, confirm that there isn't a subtitle passed in with the title
+		if ":" in args.title:
+			console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+			console.print("Titles should not include a subtitle, as subtitles are separate metadata elements in [path]content.opf[/]. Are you sure you want to continue? \\[y/N]")
+			if input().lower() not in {"yes", "y"}:
+				return se.InvalidInputException.code
+
 		_create_draft(args)
 	except se.SeException as ex:
 		se.print_error(ex)
