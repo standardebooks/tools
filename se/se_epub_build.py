@@ -336,11 +336,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
 		metadata_xml = metadata_xml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
 
-		# Output the modified content.opf so that we can build the kobo book before making more epub2 compatibility hacks
-		with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
-			file.write(metadata_xml)
-			file.truncate()
-
 		# Recurse over xhtml files to make some compatibility replacements
 		for root, _, filenames in os.walk(work_epub_root_directory):
 			for filename_string in filenames:
@@ -558,6 +553,11 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							file.seek(0)
 							file.write(processed_css)
 							file.truncate()
+
+		# Output the modified content.opf so that we can build the kobo book before making more epub2 compatibility hacks
+		with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
+			file.write(metadata_xml)
+			file.truncate()
 
 		if build_kobo:
 			with tempfile.TemporaryDirectory() as temp_directory:
