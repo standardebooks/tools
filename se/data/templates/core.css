@@ -122,7 +122,8 @@ section[epub|type~="endnotes"] > ol > li{
 	margin: 1em 0;
 }
 
-@media (prefers-color-scheme: dark){
+/* Invert images in dark mode. RMSDK requires a target media as well as a state. */
+@media all and (prefers-color-scheme: dark){
 	img[epub|type~="se:image.color-depth.black-on-transparent"]{
 		filter: invert(100%);
 	}
