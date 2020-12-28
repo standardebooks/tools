@@ -287,7 +287,7 @@ XHTML
 "x-014", "Illegal [xml]id[/] attribute."
 "x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed."
 "x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter."
-"x-017", "Duplicate value for [attr]id[/] attribute. [attr]id[/] attribute values must be unique across the entire ebook on all non-sectioning elements."
+"x-017", "Duplicate value for [attr]id[/] attribute. [attr]id[/] attribute values must be unique across the entire ebook on all elements that do not have [attr]epub:type[/] of [val]volume[/], [val]division[/], or [val]part[/]."
 """
 
 class LintMessage:
@@ -1196,7 +1196,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("s-011", "Element without [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, {node.to_tag_string() for node in nodes}))
 
-				for node in dom.xpath("/html/body//*[name() !='section' and name() !='article']/@id"):
+				for node in dom.xpath("/html/body//*[@id and not(re:test(@epub:type, '(division|part|volume)'))]/@id"):
 					if node in id_values:
 						duplicate_id_values.append(node)
 					else:
@@ -2188,7 +2188,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	if duplicate_id_values:
 		duplicate_id_values = natsorted(list(set(duplicate_id_values)))
-		messages.append(LintMessage("x-017", "Duplicate value for [attr]id[/] attribute. [attr]id[/] attribute values must be unique across the entire ebook on all non-sectioning elements.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_id_values))
+		messages.append(LintMessage("x-017", "Duplicate value for [attr]id[/] attribute. [attr]id[/] attribute values must be unique across the entire ebook on all elements that do not have [attr]epub:type[/] of [val]volume[/], [val]division[/], or [val]part[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_id_values))
 
 	# We can't convert to set() to get unique items because set() is unordered
 	unique_toc_files: List[str] = []
