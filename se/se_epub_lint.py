@@ -58,14 +58,15 @@ CSS
 "c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/]."
 "c-013", "Element with margin or padding not in increments of [css].5em[/]."
 "c-014", "[xhtml]<table>[/] element without explicit margins. Most tables need [css]margin: 1em;[/] or [css]margin: 1em auto 1em auto;[/]."
+"c-015", "Element after or containing [val]z3998:salutation[/] does not have [css]text-indent: 0;[/]."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
 "f-002", "Missing expected file or directory."
-"f-003", f"File does not match [path][link=file://{self.path / 'LICENSE.md'}]{license_file_path}[/][/]."
-"f-004", f"File does not match [path][link=file://{self.path / 'src/epub/css/core.css'}]{core_css_file_path}[/][/]."
-"f-005", f"File does not match [path][link=file://{self.path / 'src/epub/images/logo.svg'}]{logo_svg_file_path}[/][/]."
-"f-006", f"File does not match [path][link=file://{self.path / 'src/epub/text/uncopyright.xhtml'}]{uncopyright_file_path}[/][/]."
+"f-003", f"File does not match [path][link=file://{license_file_path}]{license_file_path}[/][/]."
+"f-004", f"File does not match [path][link=file://{core_css_file_path}]{core_css_file_path}[/][/]."
+"f-005", f"File does not match [path][link=file://{logo_svg_file_path}]{logo_svg_file_path}[/][/]."
+"f-006", f"File does not match [path][link=file://{uncopyright_file_path}]{uncopyright_file_path}[/][/]."
 "f-008", f"Filename is not URL-safe. Expected: [path]{url_safe_filename}[/]."
 "f-008", f"Filename is not URL-safe. Expected: [path]{url_safe_filename}[/]."
 "f-009", "Illegal leading [text]0[/] in filename."
@@ -846,28 +847,28 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	try:
 		with importlib_resources.path("se.data.templates", "LICENSE.md") as license_file_path:
 			if not filecmp.cmp(license_file_path, self.path / "LICENSE.md"):
-				messages.append(LintMessage("f-003", f"File does not match [path][link=file://{self.path / 'LICENSE.md'}]{license_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "LICENSE.md"))
+				messages.append(LintMessage("f-003", f"File does not match [path][link=file://{license_file_path}]{license_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "LICENSE.md"))
 	except Exception:
 		missing_files.append(self.path / "LICENSE.md")
 
 	try:
 		with importlib_resources.path("se.data.templates", "core.css") as core_css_file_path:
 			if not filecmp.cmp(core_css_file_path, self.path / "src/epub/css/core.css"):
-				messages.append(LintMessage("f-004", f"File does not match [path][link=file://{self.path / 'src/epub/css/core.css'}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/css/core.css"))
+				messages.append(LintMessage("f-004", f"File does not match [path][link=file://{core_css_file_path}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/css/core.css"))
 	except Exception:
 		missing_files.append(self.path / "src/epub/css/core.css")
 
 	try:
 		with importlib_resources.path("se.data.templates", "logo.svg") as logo_svg_file_path:
 			if not filecmp.cmp(logo_svg_file_path, self.path / "src/epub/images/logo.svg"):
-				messages.append(LintMessage("f-005", f"File does not match [path][link=file://{self.path / 'src/epub/images/logo.svg'}]{logo_svg_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/images/logo.svg"))
+				messages.append(LintMessage("f-005", f"File does not match [path][link=file://{logo_svg_file_path}]{logo_svg_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/images/logo.svg"))
 	except Exception:
 		missing_files.append(self.path / "src/epub/images/logo.svg")
 
 	try:
 		with importlib_resources.path("se.data.templates", "uncopyright.xhtml") as uncopyright_file_path:
 			if not filecmp.cmp(uncopyright_file_path, self.path / "src/epub/text/uncopyright.xhtml"):
-				messages.append(LintMessage("f-006", f"File does not match [path][link=file://{self.path / 'src/epub/text/uncopyright.xhtml'}]{uncopyright_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/text/uncopyright.xhtml"))
+				messages.append(LintMessage("f-006", f"File does not match [path][link=file://{uncopyright_file_path}]{uncopyright_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/text/uncopyright.xhtml"))
 	except Exception:
 		missing_files.append(self.path / "src/epub/text/uncopyright.xhtml")
 
