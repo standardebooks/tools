@@ -138,11 +138,11 @@ def lint() -> int:
 
 							table_data.append([" ", " ", Text("→", justify="right"), submessage_object])
 
-				table = Table(show_header=True, header_style="bold", show_lines=True)
+				table = Table(show_header=True, header_style="bold", show_lines=True, expand=True)
 				table.add_column("Code", width=5, no_wrap=True)
 				table.add_column("Severity", no_wrap=True)
 				table.add_column("File", no_wrap=True)
-				table.add_column("Message")
+				table.add_column("Message", ratio=10)
 
 				for row in table_data:
 					table.add_row(row[0], row[1], row[2], row[3])
