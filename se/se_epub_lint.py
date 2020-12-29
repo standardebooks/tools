@@ -59,6 +59,7 @@ CSS
 "c-013", "Element with margin or padding not in increments of [css].5em[/]."
 "c-014", "[xhtml]<table>[/] element without explicit margins. Most tables need [css]margin: 1em;[/] or [css]margin: 1em auto 1em auto;[/]."
 "c-015", "Element after or containing [val]z3998:salutation[/] does not have [css]text-indent: 0;[/]."
+"c-016", "[css]text-align: left;[/] found. Use [css]text-align: initial;[/] instead."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -620,6 +621,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	matches = regex.findall(r"\[\s*xml\s*\|", self.local_css)
 	if matches and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
 		messages.append(LintMessage("c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/]).", se.MESSAGE_TYPE_ERROR, local_css_path))
+
+	matches = regex.findall(r"text-align:\s*left\s*;", self.local_css)
+	if matches:
+		messages.append(LintMessage("c-016", "[css]text-align: left;[/] found. Use [css]text-align: initial;[/] instead.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
 	# Done checking local.css
 
