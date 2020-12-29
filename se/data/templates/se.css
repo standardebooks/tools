@@ -69,7 +69,7 @@ section[epub|type~="copyright-page"] p{
 
 section[epub|type~="copyright-page"] blockquote p{
 	font-style: italic;
-	text-align: left;
+	text-align: initial;
 	text-indent: 0;
 }
 
