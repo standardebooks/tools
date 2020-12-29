@@ -1358,6 +1358,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for two periods in a row, almost always a typo for one period or a hellip
 				typos = typos + [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\.\\.[^\\.]')]")]
 
+				# Check for ldquo followed by space
+				typos = typos + [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '“\\s+[^‘’]')]")]
+
+				# Check for lsquo followed by space
+				typos = typos + [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘\\s+[^“’]')]")]
+
 				# Check for ,.
 				typos = typos + regex.findall(r",\.", file_contents)
 
