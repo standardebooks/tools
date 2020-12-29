@@ -1702,6 +1702,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("t-034", "[xhtml]<cite>[/] element preceded by em-dash. Hint: em-dashes go within [xhtml]<cite>[/] elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
+				# Check for elements that follow salutations, but that don't have text-indent: 0;
+				# We have to check both <p> elems that are salutations, and also <p> elems that have a first-child inline element that is a salutation, and that does not have following siblings that are senders/valedictions, as that might indicate a letter in a prose context
+				nodes = dom.xpath("/html/body//*[(contains(@epub:type, 'z3998:salutation') or ./preceding-sibling::*[1][contains(@epub:type, 'z3998:salutation')] or ./*[1][contains(@epub:type, 'z3998:salutation') and not(./following-sibling::*[re:test(@epub:type, 'z3998:(sender|valediction)')])]) and @data-css-text-indent != '0']")
+				if nodes:
+					messages.append(LintMessage("c-015", "Element after or containing [val]z3998:salutation[/] does not have [css]text-indent: 0;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
 				# Check for <cite> without preceding space in text node. (preceding ( or [ are also OK)
 				nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[not(re:match(., '[\\[\\(\\s]$'))]]")
 				if nodes:
