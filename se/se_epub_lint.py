@@ -60,6 +60,7 @@ CSS
 "c-014", "[xhtml]<table>[/] element without explicit margins. Most tables need [css]margin: 1em;[/] or [css]margin: 1em auto 1em auto;[/]."
 "c-015", "Element after or containing [val]z3998:salutation[/] does not have [css]text-indent: 0;[/]."
 "c-016", "[css]text-align: left;[/] found. Use [css]text-align: initial;[/] instead."
+"c-017", "Element with [val]z3998:postscript[/] semantic, but without [css]margin-top: 1em;[/]."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -1718,6 +1719,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[re:match(., '—$')]]")
 				if nodes:
 					messages.append(LintMessage("t-034", "[xhtml]<cite>[/] element preceded by em-dash. Hint: em-dashes go within [xhtml]<cite>[/] elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for block-level postscripts that don't have margin-top: 1em. Exclude postscripts that are the first child of blockquote or footer, since blockquotes/footers gives the desired margin.
+				nodes = dom.xpath("/html/body//*[(name() = 'div' or name() = 'p') and contains(@epub:type, 'z3998:postscript') and not((./parent::blockquote or ./parent::footer) and count(./preceding-sibling::*) = 0) and @data-css-margin-top != '1em']")
+				if nodes:
+					messages.append(LintMessage("c-017", "Element with [val]z3998:postscript[/] semantic, but without [css]margin-top: 1em;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for elements that follow salutations, but that don't have text-indent: 0;
 				# We have to check both <p> elems that are salutations, and also <p> elems that have a first-child inline element that is a salutation, and that does not have following siblings that are senders/valedictions, as that might indicate a letter in a prose context
