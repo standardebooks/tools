@@ -514,20 +514,21 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						processed_xhtml = processed_xhtml.replace(" >", ">")
 						processed_xhtml = regex.sub(r"""\s*epub:type=""\s*""", "", processed_xhtml)
 
-						# Move quotation marks over periods and commas
-						# The negative lookahead is to prevent matching `.&hairsp;…`
-						processed_xhtml = regex.sub(fr"([\\.…,])([’”{se.HAIR_SPACE}]+)(?!…)", r"""\1<span class="quote-align">\2</span>""", processed_xhtml)
+						# We've disabled quote-align for now, because it causes more problems than expected.
+						# # Move quotation marks over periods and commas
+						# # The negative lookahead is to prevent matching `.&hairsp;…`
+						# processed_xhtml = regex.sub(fr"([\\.…,])([’”{se.HAIR_SPACE}]+)(?!…)", r"""\1<span class="quote-align">\2</span>""", processed_xhtml)
 
-						# The above replacement may replace text within <img alt> attributes. Remove those now until no replacements remain, since we may have
-						# many matches in the same line
-						replacements = 1
-						while replacements > 0:
-							processed_xhtml, replacements = regex.subn(r"alt=\"([^<>\"]+?)<span class=\"quote-align\">([^<>\"]+?)</span>", r"""alt="\1\2""", processed_xhtml)
+						# # The above replacement may replace text within <img alt> attributes. Remove those now until no replacements remain, since we may have
+						# # many matches in the same line
+						# replacements = 1
+						# while replacements > 0:
+						# 	processed_xhtml, replacements = regex.subn(r"alt=\"([^<>\"]+?)<span class=\"quote-align\">([^<>\"]+?)</span>", r"""alt="\1\2""", processed_xhtml)
 
-						# Do the same for <title> elements
-						replacements = 1
-						while replacements > 0:
-							processed_xhtml, replacements = regex.subn(r"<title>([^<>]+?)<span class=\"quote-align\">([^<>]+?)</span>", r"""<title>\1\2""", processed_xhtml)
+						# # Do the same for <title> elements
+						# replacements = 1
+						# while replacements > 0:
+						# 	processed_xhtml, replacements = regex.subn(r"<title>([^<>]+?)<span class=\"quote-align\">([^<>]+?)</span>", r"""<title>\1\2""", processed_xhtml)
 
 						if processed_xhtml != xhtml:
 							file.seek(0)
@@ -602,9 +603,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 							dom = se.easy_xml.EasyXhtmlTree(xhtml)
 
-							# Remove quote-align spans we inserted above, since Kobo has weird spacing problems with them
-							for node in dom.xpath("/html/body//span[contains(@class, 'quote-align')]"):
-								node.unwrap()
+							# # Remove quote-align spans we inserted above, since Kobo has weird spacing problems with them
+							# for node in dom.xpath("/html/body//span[contains(@class, 'quote-align')]"):
+							# 	node.unwrap()
 
 							# Now add the kobo spans
 							kobo.add_kobo_spans_to_node(dom.xpath("/html/body")[0].lxml_element)
