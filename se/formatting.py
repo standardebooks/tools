@@ -1217,6 +1217,7 @@ def simplify_css(css: str) -> str:
 
 	# Replace some more poorly-supported CSS attributes
 	css = css.replace("all-small-caps;", "small-caps;\n\ttext-transform: lowercase;")
+	css = regex.sub(r"text-align:\s*initial\s*;", "text-align: left;", css)
 
 	# Replace CSS namespace selectors with classes
 	# For example, p[epub|type~="z3998:salutation"] becomes p.epub-type-z3998-salutation
