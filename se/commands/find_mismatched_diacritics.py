@@ -58,8 +58,7 @@ def find_mismatched_diacritics() -> int:
 				se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
 				return_code = se.InvalidInputException.code
 
-	if mismatches:
-		for accented_word, plain_word in sorted(mismatches.items()):
-			print(f"{accented_word}, {plain_word}")
+	for accented_word, plain_word in sorted(mismatches.items()):
+		print(f"{accented_word}\t{plain_word}")
 
 	return return_code
