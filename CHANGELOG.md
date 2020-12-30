@@ -1,3 +1,111 @@
+# v1.8.2
+
+## General
+
+- Add the ability to apply a stylesheet to an EasyXml DOM tree. Applied styles can be accessed on an EaxyXmlElement by getting the `data-css-<attr>` property.
+
+- Use EasyXhtmlTree instead of raw lxml for various operations across the codebase
+
+- Remove se.XHTML_NAMESPACES constant in favor of more targeted namespace applications in the EasyXmlTree classes
+
+- Update core.css to remove text indent from centered `<p>` elements in `<header>`
+
+- Update core.css to add media to @media rules for RMSDK compatibility. Thanks to Robin Whittleton
+
+- Update se.css to use `text-align: initial;`
+
+## se build
+
+- Fix dark mode in iOS13+ iBooks and drop dark mode hack for older Apple Books. Thanks to Robin Whittleton
+
+- Move prefers-color-scheme image inversion to `core.css`. Thanks to Robin Whittleton
+
+- Convert `vh` units to `em` for compatible epub build
+
+- Output correct manifest when writing Kobo files
+
+- Disable quote-align insertion code
+
+- Simplify `text-align: initial;` to `text-align: left;`
+
+## se clean
+
+- Alphabetize classes, except 'eoc' always goes last
+
+## se create-draft
+
+- Fix extra whitespace in content.opf when translator/illustrators not present
+
+- Prompt the user if the title appears to contain a subtitle
+
+## se lint
+
+- Fix m-045 not working with ampersands
+
+- Fix s-021 not working with ampersands
+
+- Fix t-002 not working with word joiners
+
+- Make sure s-021 reaches headers within `<header>` elements
+
+- Add c-001, don't use some pseudoclasses on `*`
+
+- Add t-048, chapter opening text in all caps
+
+- Add c-010, `<footer>` without correct style
+
+- Add c-011, centered element that still has text-indent applied
+
+- Cache CSS rules for performance
+
+- Add c-012, element without header and without correct `margin-top`
+
+- Correctly remove color from CSS output if requested via option
+
+- add c-013, element with `margin` or `padding` not in increments of `.5em`
+
+- Add t-049, two em dash used for whole word elision
+
+- Add s-076, `lang` attr used instead of `xml:lang`
+
+- Improve t-049 check
+
+- Add c-014, `<table>` without explicit margins
+
+- Make sure CLI output expands to fill available space
+
+- Improve x-017
+
+- Fix links in error messages for f-003, f-004, f-005, and f-006
+
+- Add c-015, element after or containing salutation does not have `text-indent: 0`
+
+- Add s-077, `<header>` with preceding sibling
+
+- Add s-078, `<footer>` with following sibling
+
+- Add c-016, `text-align: left;` found instead of `text-align: initial;`
+
+- Add c-017, element with postscript semantic but missing `margin-top: 1em;`
+
+- Add c-018, element with postscript semantic but missing `text-indent: 0;`
+
+- Improve t-042, possible typo
+
+## se modernize-spelling
+
+- Remove space before `'ll`
+
+- Various additions
+
+## se semanticate
+
+- Improve lowercase i check
+
+## se titlecase
+
+- Lowercase `du`
+
 # v1.8.1
 
 ## se build
