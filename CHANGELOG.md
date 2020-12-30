@@ -1,3 +1,11 @@
+# v1.8.3
+
+## se build
+
+- Remove multiple ARIA roles added during build, as epub doesn't support them
+
+- Include filename in exception
+
 # v1.8.2
 
 ## General
