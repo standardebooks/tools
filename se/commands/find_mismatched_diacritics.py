@@ -31,8 +31,7 @@ def find_mismatched_diacritics() -> int:
 
 				decomposed_xhtml = unicodedata.normalize("NFKD", xhtml)
 
-				pattern = regex.compile(r"\b\w*\p{M}\w*\b")
-				for decomposed_word in pattern.findall(decomposed_xhtml):
+				for decomposed_word in regex.findall(r"\b\w*\p{M}\w*\b", decomposed_xhtml):
 					word = unicodedata.normalize("NFKC", decomposed_word)
 
 					if len(word) > 2:
@@ -52,8 +51,7 @@ def find_mismatched_diacritics() -> int:
 					for accented_word in accented_words:
 						plain_word = regex.sub(r"\p{M}", "", unicodedata.normalize("NFKD", accented_word))
 
-						pattern = regex.compile(r"\b" + plain_word + r"\b", regex.IGNORECASE)
-						if pattern.search(xhtml) is not None:
+						if regex.search(fr"\b{plain_word}\b", xhtml, regex.IGNORECASE) is not None:
 							mismatches[accented_word] = plain_word
 
 			except FileNotFoundError:
