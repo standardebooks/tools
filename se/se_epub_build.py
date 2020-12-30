@@ -478,8 +478,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# See The Man Who Was Thursday by G K Chesterton
 						processed_xhtml = regex.sub(r"(<h[1-6] [^>]*) role=\".*?\">", "\\1>", processed_xhtml)
 
-
-
 						# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
 						processed_xhtml = processed_xhtml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
 
@@ -814,7 +812,10 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 		# All done, clean the output
 		for filepath in se.get_target_filenames([work_epub_root_directory], (".xhtml", ".svg", ".opf", ".ncx")):
-			se.formatting.format_xml_file(filepath)
+			try:
+				se.formatting.format_xml_file(filepath)
+			except se.SeException as ex:
+				raise se.InvalidXhtmlException(f"{ex}. File: [path][link={filepath}]{filepath}[/][/]") from ex
 
 		# Write the compatible epub
 		se.epub.write_epub(work_epub_root_directory, output_directory / compatible_epub_output_filename)
