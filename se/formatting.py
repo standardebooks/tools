@@ -1219,6 +1219,9 @@ def simplify_css(css: str) -> str:
 	css = css.replace("all-small-caps;", "small-caps;\n\ttext-transform: lowercase;")
 	css = regex.sub(r"text-align:\s*initial\s*;", "text-align: left;", css)
 
+	# Include `all and` in @media queries, otherwise RMSDK will dump the entire stylesheet
+	css = regex.sub(r"@media\s*\(", "@media all and (", css)
+
 	# Replace CSS namespace selectors with classes
 	# For example, p[epub|type~="z3998:salutation"] becomes p.epub-type-z3998-salutation
 	for line in regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", css):
