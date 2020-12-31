@@ -1034,9 +1034,9 @@ def titlecase(text: str) -> str:
 	# since they're typically lowercased anyway. (Except for things like `alt`, but we won't be titlecasing images!)
 	text = regex.sub(r"<(/?)([^>]+?)>", lambda result: "<" + result.group(1) + result.group(2).lower() + ">", text)
 
-	# Uppercase Roman numerals, but only if they are valid Roman numerals
+	# Uppercase Roman numerals, but only if they are valid Roman numerals and they are not "MIX" (which is much more likely to be an English word than a Roman numeral
 	try:
-		text = regex.sub(r"(\s)([ivxlcdm]+)(\s|$)", lambda result: result.group(1) + result.group(2).upper() + result.group(3) if roman.fromRoman(result.group(2).upper()) else result.group(2), text, flags=regex.IGNORECASE)
+		text = regex.sub(r"(\s)([ivxlcdm]+)(\b)", lambda result: result.group(1) + result.group(2).upper() + result.group(3) if result.group(2).upper() != "MIX" and roman.fromRoman(result.group(2).upper()) else result.group(1) + result.group(2), text, flags=regex.IGNORECASE)
 	except roman.InvalidRomanNumeralError:
 		pass
 
