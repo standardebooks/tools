@@ -62,6 +62,7 @@ CSS
 "c-016", "[css]text-align: left;[/] found. Use [css]text-align: initial;[/] instead."
 "c-017", "Element with [val]z3998:postscript[/] semantic, but without [css]margin-top: 1em;[/]."
 "c-018", "Element with [val]z3998:postscript[/] semantic, but without [css]text-indent: 0;[/]."
+"c-019", "Element with [val]z3998:signature[/] semantic, but without [css]font-variant: small-caps;[/] or [css]font-style: italic;[/]."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -567,7 +568,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	local_css_has_hymn_style = False
 	local_css_has_lyrics_style = False
 	local_css_has_elision_style = False
-	local_css_has_signature_style = False
 	abbr_styles = regex.findall(r"abbr\.[\p{Lowercase_Letter}]+", self.local_css)
 	missing_styles: List[str] = []
 	directories_not_url_safe = []
@@ -595,9 +595,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 		if "span.elision" in selector:
 			local_css_has_elision_style = True
-
-		if "z3998:signature" in selector:
-			local_css_has_signature_style = True
 
 		if "abbr" in selector and "nowrap" in rules:
 			abbr_with_whitespace.append(selector)
@@ -1546,9 +1543,15 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.lxml_element.tag}>" for node in nodes]))
 
+				# Check for xml:lang attribute starting in uppercase
 				nodes = dom.xpath("//*[re:test(@xml:lang, '^[A-Z]')]")
 				if nodes:
 					messages.append(LintMessage("x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+				# Check for signature semantic without small caps
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:signature') and not(@data-css-font-variant = 'small-caps') and not(@data-css-font-style = 'italic')]")
+				if nodes:
+					messages.append(LintMessage("c-019", "Element with [val]z3998:signature[/] semantic, but without [css]font-variant: small-caps;[/] or [css]font-style: italic;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for nbsp within <abbr class="name">, which is redundant
 				nodes = dom.xpath(f"/html/body//abbr[contains(@class, 'name')][contains(text(), '{se.NO_BREAK_SPACE}')]")
@@ -2007,11 +2010,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 						if "z3998:lyrics" in node.get_attr("epub:type") and not local_css_has_lyrics_style:
 							missing_styles.append(node.to_tag_string())
-
-				if not local_css_has_signature_style:
-					nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:signature')]")
-					for node in nodes:
-						missing_styles.append(node.to_tag_string())
 
 				# For this series of selections, we select spans that are direct children of p, because sometimes a line of poetry may have a nested span.
 				nodes = dom.xpath("/html/body/*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')]/descendant-or-self::*/p/span/following-sibling::*[contains(@epub:type, 'noteref') and name()='a' and position()=1]")
