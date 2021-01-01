@@ -1549,7 +1549,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 				# Check for signature semantic without small caps
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:signature') and not(@data-css-font-variant = 'small-caps') and not(@data-css-font-style = 'italic')]")
+				# Ignore signatures that are only capital letters
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:signature') and not(@data-css-font-variant = 'small-caps') and not(@data-css-font-style = 'italic') and not(re:test(., '^[A-Z\\.\\s]+$'))]")
 				if nodes:
 					messages.append(LintMessage("c-019", "Element with [val]z3998:signature[/] semantic, but without [css]font-variant: small-caps;[/] or [css]font-style: italic;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
