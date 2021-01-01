@@ -296,6 +296,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Aa])ny body\b", r"\1nybody", xhtml)			# any body -> anybody
 	xhtml = regex.sub(r"\b([Ee])very body\b", r"\1verybody", xhtml)			# every body -> everybody
 	xhtml = regex.sub(r"\bfrench window\b", r"French window", xhtml)		# french window -> French window
+	xhtml = regex.sub(r"\b([Aa])n European", r"\1 European", xhtml)			# an European -> a European
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
