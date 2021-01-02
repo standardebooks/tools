@@ -148,7 +148,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		# Output the pure epub3 file
 		se.epub.write_epub(work_epub_root_directory, output_directory / epub_output_filename)
 
-		# Now add epub2 compatibility.
+		# Now add compatibility fixes for older ereaders.
 
 		# Include compatibility CSS
 		with open(work_epub_root_directory / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:
@@ -556,7 +556,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							file.write(processed_css)
 							file.truncate()
 
-		# Output the modified content.opf so that we can build the kobo book before making more epub2 compatibility hacks
+		# Output the modified content.opf so that we can build the kobo book before making more compatibility hacks that aren’t needed on that platform.
 		with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
 			file.write(metadata_xml)
 			file.truncate()
@@ -627,7 +627,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 				se.epub.write_epub(kobo_work_directory, output_directory / kobo_output_filename)
 
-		# Now work on more epub2 compatibility
+		# Now work on more compatibility fixes
 
 		# Recurse over css files to make some compatibility replacements.
 		for root, _, filenames in os.walk(work_epub_root_directory):
@@ -749,7 +749,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					# We might get here if we ctrl + c before selenium has finished initializing the driver
 					pass
 
-		# Include epub2 cover metadata
+		# Include cover metadata for older ereaders
 		cover_id = self.metadata_dom.xpath("//item[@properties=\"cover-image\"]/@id")[0].replace(".svg", ".jpg")
 		metadata_xml = regex.sub(r"(<metadata[^>]+?>)", f"\\1\n\t\t<meta content=\"{cover_id}\" name=\"cover\" />", metadata_xml)
 
@@ -770,7 +770,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 		metadata_xml = regex.sub(r"properties=\"\s*\"", "", metadata_xml)
 
-		# Generate our NCX file for epub2 compatibility.
+		# Generate our NCX file for compatibility with older ereaders.
 		# First find the ToC file.
 		toc_filename = self.metadata_dom.xpath("//item[@properties=\"nav\"]/@href")[0]
 		metadata_xml = metadata_xml.replace("<spine>", "<spine toc=\"ncx\">")
@@ -805,7 +805,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		metadata_xml = metadata_xml.replace("</package>", "") + guide_xhtml + "</package>"
 
 		# Guide is done, now write content.opf and clean it.
-		# Output the modified content.opf before making more epub2 compatibility hacks.
+		# Output the modified content.opf before making more compatibility hacks.
 		with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
 			file.write(metadata_xml)
 			file.truncate()

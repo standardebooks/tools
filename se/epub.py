@@ -15,7 +15,7 @@ import se.easy_xml
 
 def convert_toc_to_ncx(epub_root_absolute_path: Path, toc_filename: str, xsl_filename: Path) -> se.easy_xml.EasyXhtmlTree:
 	"""
-	Take an epub3 HTML5 ToC file and convert it to an epub2 NCX file. NCX output is written to the same directory as the ToC file, in a file named "toc.ncx".
+	Take an HTML5 ToC file and convert it to an NCX file for compatibility with older ereaders. NCX output is written to the same directory as the ToC file, in a file named "toc.ncx".
 
 	epub structure must be in the SE format.
 
