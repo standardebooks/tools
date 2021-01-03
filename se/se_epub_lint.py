@@ -225,6 +225,7 @@ SEMANTICS & CONTENT
 "s-076", "[attr]lang[/] attribute used instead of [attr]xml:lang[/]."
 "s-077", "[xhtml]<header>[/] element preceded by non-sectioning element."
 "s-078", "[xhtml]<footer>[/] element followed by non-sectioning element."
+"s-079", "Element containing only white space."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1532,6 +1533,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//hgroup[count(*)=1]")
 				if nodes:
 					messages.append(LintMessage("s-009", "[xhtml]<hgroup>[/] element with only one child.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				# Check for elements with no children and only white space contents
+				nodes = dom.xpath("/html/body//*[not(./*) and re:test(., '^\\s+$')]")
+				if nodes:
+					messages.append(LintMessage("s-079", "Element containing only white space.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for hgroup elements with a subtitle but no title
 				nodes = dom.xpath("/html/body//hgroup[./*[contains(@epub:type, 'subtitle')] and not(./*[contains(concat(' ', @epub:type, ' '), ' title ')])]")
