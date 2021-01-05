@@ -548,6 +548,8 @@ def evaluate_descendants(node: EasyXmlElement, toc_item):
 				child_strings = regex.sub(r"\bordinal\b", "", child_strings)
 				# remove extra spaces
 				child_strings = regex.sub(r"[ ]{2,}", " ", child_strings)
+				# get rid of any endnotes
+				child_strings = strip_notes(child_strings)
 				toc_item.title = child_strings.strip()
 			continue  # skip the following
 		if "z3998:roman" in epub_type:
