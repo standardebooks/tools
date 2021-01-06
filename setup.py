@@ -59,7 +59,7 @@ setup(
 	packages=find_packages(),
 	python_requires=">=3.6", # The latest version installed by default on Ubuntu 18.04 is 3.6.9
 	install_requires=[
-		"cairosvg==2.4.2",
+		"cairosvg==2.5.1",
 		"chardet==3.0.4",
 		"cssselect==1.1.0",
 		"cssutils==1.0.2",
