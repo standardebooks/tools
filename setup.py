@@ -66,7 +66,7 @@ setup(
 		"ftfy==5.8",
 		"gitpython==3.1.11",
 		"importlib_resources==1.0.2",
-		"lxml==4.6.1",
+		"lxml==4.6.2",
 		"natsort==7.1.0",
 		"pillow==8.0.1",
 		"psutil==5.7.3",
