@@ -476,6 +476,10 @@ class SeEpub:
 			output_xhtml = regex.sub(r"<\?xml.+?\?>", "<!doctype html>", output_xhtml)
 			output_xhtml = regex.sub(r" epub:prefix=\".+?\"", "", output_xhtml)
 
+			# Remove CDATA
+			output_xhtml = output_xhtml.replace("<![CDATA[", "")
+			output_xhtml = output_xhtml.replace("]]>", "")
+
 			# Make some replacements for HTML5 compatibility
 			output_xhtml = output_xhtml.replace("epub:type", "data-epub-type")
 			output_xhtml = output_xhtml.replace("epub|type", "data-epub-type")
