@@ -395,6 +395,16 @@ def _copy_template_file(filename: str, dest_path: Path) -> None:
 	with importlib_resources.path("se.data.templates", filename) as src_path:
 		shutil.copy(src_path, dest_path)
 
+def _add_name_abbr(contributor: str) -> str:
+	"""
+	Add <abbr class="name"> around contributor names
+	"""
+
+	contributor = regex.sub(r"([\p{Uppercase_Letter}]\.(?:\s*[\p{Uppercase_Letter}]\.)*)", r"""<abbr class="name">\1</abbr>""", contributor)
+
+	return contributor
+
+
 def _generate_contributor_string(contributors: List[Dict], include_xhtml: bool) -> str:
 	"""
 	Given a list of contributors, generate a contributor string like `Bob Smith, Jane Doe, and Sam Johnson`.
@@ -777,7 +787,7 @@ def _create_draft(args: Namespace):
 		if contributor_string == "":
 			colophon_xhtml = colophon_xhtml.replace(" by<br/>\n\t\t\t<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", contributor_string)
 		else:
-			colophon_xhtml = colophon_xhtml.replace("<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", contributor_string)
+			colophon_xhtml = colophon_xhtml.replace("<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", _add_name_abbr(contributor_string))
 
 		if translators:
 			translator_block = f"It was translated from ORIGINAL_LANGUAGE in TRANSLATION_YEAR by<br/>\n\t\t\t{_generate_contributor_string(translators, True)}.</p>"
@@ -797,7 +807,7 @@ def _create_draft(args: Namespace):
 					elif "anonymous" in producer.lower():
 						producers_xhtml = producers_xhtml + "<b class=\"name\">An Anonymous Volunteer</b>"
 					else:
-						producers_xhtml = producers_xhtml + f"<b class=\"name\">{producer.strip('.')}</b>"
+						producers_xhtml = producers_xhtml + f"<b class=\"name\">{_add_name_abbr(producer).strip('.')}</b>"
 
 					if i < len(pg_producers) - 1:
 						producers_xhtml = producers_xhtml + ", "
