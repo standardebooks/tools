@@ -791,7 +791,7 @@ class SeEpub:
 		An XML fragment string representing the spine.
 		"""
 
-		excluded_files = se.IGNORED_FILENAMES + ["dedication.xhtml", "introduction.xhtml", "foreword.xhtml", "preface.xhtml", "epigraph.xhtml", "afterword.xhtml", "endnotes.xhtml"]
+		excluded_files = se.IGNORED_FILENAMES + ["dedication.xhtml", "introduction.xhtml", "foreword.xhtml", "preface.xhtml", "epigraph.xhtml", "prologue.xhtml", "afterword.xhtml", "endnotes.xhtml"]
 		spine = ["<itemref idref=\"titlepage.xhtml\"/>", "<itemref idref=\"imprint.xhtml\"/>"]
 
 		filenames = natsorted(os.listdir(self.path / "src" / "epub" / "text"))
