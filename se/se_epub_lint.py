@@ -63,6 +63,7 @@ CSS
 "c-017", "Element with [val]z3998:postscript[/] semantic, but without [css]margin-top: 1em;[/]."
 "c-018", "Element with [val]z3998:postscript[/] semantic, but without [css]text-indent: 0;[/]."
 "c-019", "Element with [val]z3998:signature[/] semantic, but without [css]font-variant: small-caps;[/] or [css]font-style: italic;[/]."
+"c-020", "Multiple [xhtml]<article>[/]s or [xhtml]<section>[/]s in file, but missing [css]break-after: page;[/]."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -1427,6 +1428,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = [node.to_string() for node in dom.xpath("/html/body//abbr[not(@class)][text() !='U.S.'][re:test(., '([A-Z]\\.?){2,}')]") if node.text not in initialism_exceptions]
 				if nodes:
 					messages.append(LintMessage("s-045", "[xhtml]<abbr>[/] element without semantic class like [class]name[/] or [class]initialism[/].", se.MESSAGE_TYPE_WARNING, filename, nodes))
+
+				# Check for <article>s or <section>s that occur more than once in a file, without page break CSS
+				nodes = dom.xpath("/html/body[count(./article) > 1 or count(./section) > 1]/*[(name() = 'article' or name() = 'section') and (not(@data-css-break-after) or @data-css-break-after != 'page')]")
+				if nodes:
+					messages.append(LintMessage("c-020", "Multiple [xhtml]<article>[/]s or [xhtml]<section>[/]s in file, but missing [css]break-after: page;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
 
 				# Check for two em dashes in a row
 				matches = regex.findall(fr"—{se.WORD_JOINER}*—+", file_contents)
