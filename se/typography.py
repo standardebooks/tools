@@ -212,7 +212,6 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"([0-9])\s+([ap])\.m\.", fr"\1{se.NO_BREAK_SPACE}\2.m.", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"([0-9])\s+<abbr([^>]*?)>([ap])\.m\.", fr"\1{se.NO_BREAK_SPACE}<abbr\2>\3.m.", xhtml, flags=regex.IGNORECASE)
 
-	xhtml = xhtml.replace("Ph.D", "PhD")
 	xhtml = regex.sub(r"P\.?\s*S\.", r"P.S.", xhtml)
 
 	# Fractions
