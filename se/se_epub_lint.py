@@ -64,6 +64,7 @@ CSS
 "c-018", "Element with [val]z3998:postscript[/] semantic, but without [css]text-indent: 0;[/]."
 "c-019", "Element with [val]z3998:signature[/] semantic, but without [css]font-variant: small-caps;[/] or [css]font-style: italic;[/]."
 "c-020", "Multiple [xhtml]<article>[/]s or [xhtml]<section>[/]s in file, but missing [css]break-after: page;[/]."
+"c-021", "Element with [css]font-style: italic;[/], but child [xhtml]<i>[/] or [xhtml]<em>[/] does not have [css]font-style: normal;[/]. Hint: Italics within italics are typically set in Roman for contrast; if that’s not the case here, can [xhtml]<i>[/] be removed while still preserving italics and semantic inflection?"
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -1535,6 +1536,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[@style]")
 				if nodes:
 					messages.append(LintMessage("x-012", "Illegal [attr]style[/] attribute. Don’t use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, {node.to_tag_string() for node in nodes}))
+
+				# Check for elements that are set in italics, and whose italic children don't have font-style: normal.
+				nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and ./*[(name()='i' or name()='em') and @data-css-font-style='italic']]")
+				if nodes:
+					messages.append(LintMessage("c-021", "Element with [css]font-style: italic;[/], but child [xhtml]<i>[/] or [xhtml]<em>[/] does not have [css]font-style: normal;[/]. Hint: Italics within italics are typically set in Roman for contrast; if that’s not the case here, can [xhtml]<i>[/] be removed while still preserving italics and semantic inflection?", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for hgroup elements with only one child
 				nodes = dom.xpath("/html/body//hgroup[count(*)=1]")
