@@ -483,8 +483,7 @@ class SeEpub:
 			# Make some replacements for HTML5 compatibility
 			output_xhtml = output_xhtml.replace("epub:type", "data-epub-type")
 			output_xhtml = output_xhtml.replace("epub|type", "data-epub-type")
-			output_xhtml = output_xhtml.replace("<html", f"<html lang=\"{self.metadata_dom.xpath('/package/metadata/dc:language/text()')[0]}\"")
-			output_xhtml = regex.sub(" xmlns.+?=\".+?\"", "", output_xhtml)
+			output_xhtml = regex.sub(r" xmlns.+?=\".+?\"", "", output_xhtml)
 			output_xhtml = output_xhtml.replace("xml:lang", "lang")
 
 		return output_xhtml
