@@ -111,6 +111,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Remove spaces after two-em-dashes that do not appear to be elision
 	xhtml = regex.sub(fr"(\p{{Letter}}{{2,}}{se.WORD_JOINER})⸺\s", r"\1—", xhtml)
 
+	# Dash before closing double quote in clauses with more than two words is almost always a typo
+	xhtml = regex.sub(r"(“[^<]+?\s[^<]+?)-”", fr"\1{se.WORD_JOINER}—”", xhtml)
+
 	# Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
 	xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?|Hon|Mdlle)\.?(</abbr>)?\s+", fr"\1.\2{se.NO_BREAK_SPACE}", xhtml)
 
