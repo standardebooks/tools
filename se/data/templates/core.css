@@ -35,8 +35,8 @@ hgroup{
 	font-variant: small-caps;
 	hyphens: none;
 	-epub-hyphens: none;
-	page-break-after: avoid;
-	page-break-inside: avoid;
+	break-after: avoid;
+	break-inside: avoid;
 	text-align: center;
 	margin: 3em 0;
 }
