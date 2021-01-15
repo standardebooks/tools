@@ -426,25 +426,25 @@ def _generate_contributor_string(contributors: List[Dict], include_xhtml: bool) 
 	if len(contributors) == 1:
 		if include_xhtml:
 			if contributors[0]["wiki_url"]:
-				output += f"<a href=\"{contributors[0]['wiki_url']}\">{contributors[0]['name']}</a>"
+				output += f"<a href=\"{contributors[0]['wiki_url']}\">{_add_name_abbr(contributors[0]['name'])}</a>"
 			else:
-				output += f"<b class=\"name\">{contributors[0]['name']}</b>"
+				output += f"<b class=\"name\">{_add_name_abbr(contributors[0]['name'])}</b>"
 		else:
 			output += contributors[0]["name"]
 
 	elif len(contributors) == 2:
 		if include_xhtml:
 			if contributors[0]["wiki_url"]:
-				output += f"<a href=\"{contributors[0]['wiki_url']}\">{contributors[0]['name']}</a>"
+				output += f"<a href=\"{contributors[0]['wiki_url']}\">{_add_name_abbr(contributors[0]['name'])}</a>"
 			else:
-				output += f"<b class=\"name\">{contributors[0]['name']}</b>"
+				output += f"<b class=\"name\">{_add_name_abbr(contributors[0]['name'])}</b>"
 
 			output += " and "
 
 			if contributors[1]["wiki_url"]:
-				output += f"<a href=\"{contributors[1]['wiki_url']}\">{contributors[1]['name']}</a>"
+				output += f"<a href=\"{contributors[1]['wiki_url']}\">{_add_name_abbr(contributors[1]['name'])}</a>"
 			else:
-				output += f"<b class=\"name\">{contributors[1]['name']}</b>"
+				output += f"<b class=\"name\">{_add_name_abbr(contributors[1]['name'])}</b>"
 		else:
 			output += contributors[0]["name"] + " and " + contributors[1]["name"]
 
@@ -458,9 +458,9 @@ def _generate_contributor_string(contributors: List[Dict], include_xhtml: bool) 
 
 			if include_xhtml:
 				if contributor["wiki_url"]:
-					output += f"<a href=\"{contributor['wiki_url']}\">{contributor['name']}</a>"
+					output += f"<a href=\"{contributor['wiki_url']}\">{_add_name_abbr(contributor['name'])}</a>"
 				else:
-					output += f"<b class=\"name\">{contributor['name']}</b>"
+					output += f"<b class=\"name\">{_add_name_abbr(contributor['name'])}</b>"
 			else:
 				output += contributor["name"]
 
@@ -787,7 +787,7 @@ def _create_draft(args: Namespace):
 		if contributor_string == "":
 			colophon_xhtml = colophon_xhtml.replace(" by<br/>\n\t\t\t<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", contributor_string)
 		else:
-			colophon_xhtml = colophon_xhtml.replace("<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", _add_name_abbr(contributor_string))
+			colophon_xhtml = colophon_xhtml.replace("<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", contributor_string)
 
 		if translators:
 			translator_block = f"It was translated from ORIGINAL_LANGUAGE in TRANSLATION_YEAR by<br/>\n\t\t\t{_generate_contributor_string(translators, True)}.</p>"
