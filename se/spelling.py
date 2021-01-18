@@ -327,6 +327,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bJack-in-the-box", "jack-in-the-box", xhtml)		# Jack-in-the-box -> jack-in-the-box
 	xhtml = regex.sub(r"\bServia", r"Serbia", xhtml)				# Servia(n) -> Serbia(n)
 	xhtml = regex.sub(r"\bEsquimaux?\b", r"Eskimo", xhtml)				# Esquimau -> Eskimo
+	xhtml = regex.sub(r"\bLaocoon", r"Laocoön", xhtml)				# Lacoon -> Laocoön
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
