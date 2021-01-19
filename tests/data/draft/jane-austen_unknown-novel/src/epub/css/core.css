@@ -25,6 +25,10 @@ q::after{
 	content: "";
 }
 
+blockquote{
+	margin: 1em 2.5em;
+}
+
 h1,
 h2,
 h3,
