@@ -229,6 +229,7 @@ SEMANTICS & CONTENT
 "s-078", "[xhtml]<footer>[/] element followed by non-sectioning element."
 "s-079", "Element containing only white space."
 "s-080", "[xhtml]<td>[/] in drama containing both inline text and a block-level element. All children should either be only text, or only block-level elements."
+"s-081", "[xhtml]<p>[/] preceded by [xhtml]<figure>[/], [xhtml]<blockquote>[/xhtml], or [xhtml]<table>[/], but without [val]continued[/] class."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -861,12 +862,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	except Exception:
 		missing_files.append(self.path / "LICENSE.md")
 
-	try:
-		with importlib_resources.path("se.data.templates", "core.css") as core_css_file_path:
-			if not filecmp.cmp(core_css_file_path, self.path / "src/epub/css/core.css"):
-				messages.append(LintMessage("f-004", f"File does not match [path][link=file://{core_css_file_path}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/css/core.css"))
-	except Exception:
-		missing_files.append(self.path / "src/epub/css/core.css")
+	# try:
+	# 	with importlib_resources.path("se.data.templates", "core.css") as core_css_file_path:
+	# 		if not filecmp.cmp(core_css_file_path, self.path / "src/epub/css/core.css"):
+	# 			messages.append(LintMessage("f-004", f"File does not match [path][link=file://{core_css_file_path}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/css/core.css"))
+	# except Exception:
+	# 	missing_files.append(self.path / "src/epub/css/core.css")
 
 	try:
 		with importlib_resources.path("se.data.templates", "logo.svg") as logo_svg_file_path:
@@ -1516,6 +1517,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//i[re:test(., ',$')][(following-sibling::node()[1])[starts-with(., '”')]]")
 				if nodes:
 					messages.append(LintMessage("t-023", "Comma inside [xhtml]<i>[/] element before closing dialog.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "”" for node in nodes]))
+
+				# Check for <p> tags that follow figure, blockquote, or table, and start with a lowercase letter, but that don't have the `continued` class
+				nodes = dom.xpath("/html/body//p[preceding-sibling::*[1][name() = 'figure' or name() = 'blockquote' or name() = 'table'] and re:test(., '^[a-z]') and not(contains(@class, 'continued'))]")
+				if nodes:
+					messages.append(LintMessage("s-081", "[xhtml]<p>[/] preceded by [xhtml]<figure>[/], [xhtml]<blockquote>[/xhtml], or [xhtml]<table>[/], but without [val]continued[/] class.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for incorrect children of <body>
 				nodes = dom.xpath("/html/body/*[name() != 'section' and name() != 'article' and name() != 'nav']")
