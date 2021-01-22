@@ -862,12 +862,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	except Exception:
 		missing_files.append(self.path / "LICENSE.md")
 
-	# try:
-	# 	with importlib_resources.path("se.data.templates", "core.css") as core_css_file_path:
-	# 		if not filecmp.cmp(core_css_file_path, self.path / "src/epub/css/core.css"):
-	# 			messages.append(LintMessage("f-004", f"File does not match [path][link=file://{core_css_file_path}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/css/core.css"))
-	# except Exception:
-	# 	missing_files.append(self.path / "src/epub/css/core.css")
+	try:
+		with importlib_resources.path("se.data.templates", "core.css") as core_css_file_path:
+			if not filecmp.cmp(core_css_file_path, self.path / "src/epub/css/core.css"):
+				messages.append(LintMessage("f-004", f"File does not match [path][link=file://{core_css_file_path}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/css/core.css"))
+	except Exception:
+		missing_files.append(self.path / "src/epub/css/core.css")
 
 	try:
 		with importlib_resources.path("se.data.templates", "logo.svg") as logo_svg_file_path:
