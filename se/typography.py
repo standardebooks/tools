@@ -104,6 +104,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Finally fix some other mistakes
 	xhtml = xhtml.replace("—-", "—")
 
+	# Possessives after inline elements need to be corrected after Smartypants
+	xhtml = regex.sub(r"</(i|em|b|strong|q|span)>‘(s|d)", r"</\1>’\2", xhtml)
+
 	# Replace two-em-dashes with an em-dash, but try to exclude ones being used for elision
 	xhtml = regex.sub(fr"([I\p{{Lowercase_Letter}}>\.]{se.WORD_JOINER})⸺”", r"\1—”", xhtml)
 	xhtml = regex.sub(fr"([^\s‘“—][a-z\.]{se.WORD_JOINER})⸺\s?", r"\1—", xhtml)
