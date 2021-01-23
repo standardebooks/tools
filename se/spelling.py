@@ -301,6 +301,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Rr])aison ([Dd])’etre", r"\1aison \2’être", xhtml)	# raison d'etre -> raison d'être
 	xhtml = regex.sub(r"\b([Gg])arcon", r"\1arçon", xhtml)				# garcon -> garçon
 	xhtml = regex.sub(r"\b([Cc])uracao", r"\1uraçao", xhtml)			# curacao -> curaçao
+	xhtml = regex.sub(r"\b([Ss])oupcon", r"\1oupçon", xhtml)			# soupcon -> soupçon
 	xhtml = regex.sub(r"\b([Tt])ouzle", r"\1ousle", xhtml)				# touzle(d) -> tousle(d)
 
 	# Normalize some names
