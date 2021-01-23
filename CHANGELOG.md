@@ -1,3 +1,83 @@
+# 1.8.4
+
+## General
+
+- Update core.css to use `break-*` instead of `page-break-*`
+
+- Add fixed margins to blockquotes in core.css
+
+## se find-mismatched-diacritics
+
+- Remove regex compilation as it's built in to the regex library now
+
+- In output, differentiate words with tab and not comma
+
+- Add some exceptions for common edge cases
+
+## se semanticate
+
+- Don't add Roman semantics around `i`
+
+## se build
+
+- Add `and all` to CSS media queries during build to placate RMSDK
+
+- Force unicode encoding when converting MathML to PNG
+
+## se create-draft
+
+- Add `<abbr class="name">` around abbreviated names in colophon
+
+## se lint
+
+- Add c-019, signature semantics without small caps; this replaces c-006
+
+- Improve m-007 by checking for bad archive.org links
+
+- Add s-079, element with no children and only white space
+
+- Improve c-015
+
+- Add s-080, <td> in drama containing both inline text and a block-level element
+
+- Add c-020, multiple `<article>` or `<section>` in file but without `break-*` CSS
+
+- Add c-021, nested italics without `font-style: normal;`
+
+- s-081, `<figure>`, `<table>`, or `<blockquote>` followed by `<p>` that does not have `continued` class
+
+## se modernize-spelling
+
+- Various additions
+
+## se print-spine
+
+- Fix prologue being added to spine twice. Thanks to Vince Rice
+
+## se print-toc
+
+- Fix endnotes being included in the ToC. Thanks to David Grigg
+
+## se titlecase
+
+- Improve check for Roman numerals in titles
+
+## se typogrify
+
+- Add `nbsp` after some titles
+
+- Remove unused regexes
+
+- Convert hyphen before closing double quote to em dash
+
+- Fix incorrectly curled quote following inline closing tag
+
+## se recompose-epub
+
+- Strip CDATA from HTML5 output
+
+- Don't print duplicate lang attributes on `<html>` when outputting HTML5
+
 # v1.8.3
 
 ## se build
