@@ -20,6 +20,8 @@ child.
                         
                         Fail 7
                 </li>
+x-018 Error: content.opf Unused `id` attribute.
+        note-3
 m-063 Error: cover.svg Cover image has not been built.
 s-064 Manual Review: endnotes.xhtml Endnote citation not wrapped in `<cite>`. Em
 dashes go within `<cite>` and it is preceded by one space.
