@@ -602,6 +602,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 								# Note that we replaced ↩ with \u21a9\ufe0e in an earlier iOS compatibility fix
 								xhtml = regex.sub(r"epub:type=\"backlink\">\u21a9\ufe0e</a>", "epub:type=\"backlink\">←</a>", xhtml)
 
+							# Kobos replace no-break hyphens with a weird high hyphen character, so replace that here
+							xhtml = xhtml.replace("‑", f"{se.WORD_JOINER}-{se.WORD_JOINER}")
+
 							dom = se.easy_xml.EasyXhtmlTree(xhtml)
 
 							# # Remove quote-align spans we inserted above, since Kobo has weird spacing problems with them
