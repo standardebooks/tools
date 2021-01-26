@@ -300,6 +300,7 @@ XHTML
 "x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed."
 "x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter."
 "x-017", "Duplicate value for [attr]id[/] attribute. [attr]id[/] attribute values must be unique across the entire ebook on all elements that do not have [attr]epub:type[/] of [val]volume[/], [val]division[/], or [val]part[/]."
+"x-018", "Unused [xhtml]id[/] attribute."
 """
 
 class LintMessage:
@@ -389,43 +390,49 @@ def _get_malformed_urls(xhtml: str, filename: Path) -> list:
 
 	return messages
 
+# Cache file contents so we don't hit the disk repeatedly
+_FILE_CACHE: Dict[str, str] = {}
+def _file(file_path: Path) -> str:
+	file_path_str = str(file_path)
+
+	if file_path_str not in _FILE_CACHE:
+		with open(file_path, "r", encoding="utf-8") as file:
+			file_contents = file.read()
+
+		_FILE_CACHE[file_path_str] = file_contents
+
+	return _FILE_CACHE[file_path_str]
+
 # Cache dom objects so we don't have to create them multiple times
 _DOM_CACHE: Dict[str, Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtmlTree, se.easy_xml.EasySvgTree]] = {}
 def _dom(file_path: Path) -> Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtmlTree, se.easy_xml.EasySvgTree]:
 	file_path_str = str(file_path)
+
 	if file_path_str not in _DOM_CACHE:
-		with open(file_path, "r", encoding="utf-8") as file:
-			try:
-				if file_path.suffix == ".xml":
-					_DOM_CACHE[file_path_str] = se.easy_xml.EasyXmlTree(file.read())
+		file_contents =  _file(file_path)
 
-				if file_path.suffix == ".xhtml":
-					_DOM_CACHE[file_path_str] = se.easy_xml.EasyXhtmlTree(file.read())
+		try:
+			if file_path.suffix == ".xml":
+				_DOM_CACHE[file_path_str] = se.easy_xml.EasyXmlTree(file_contents)
 
-				if file_path.suffix == ".svg":
-					_DOM_CACHE[file_path_str] = se.easy_xml.EasySvgTree(file.read())
+			if file_path.suffix == ".xhtml":
+				_DOM_CACHE[file_path_str] = se.easy_xml.EasyXhtmlTree(file_contents)
 
-				# Remove comments
-				for node in _DOM_CACHE[file_path_str].xpath("//comment()"):
-					node.remove()
+			if file_path.suffix == ".svg":
+				_DOM_CACHE[file_path_str] = se.easy_xml.EasySvgTree(file_contents)
 
-			except etree.XMLSyntaxError as ex:
-				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]. Exception: {ex}")
-			except FileNotFoundError as ex:
-				raise ex
-			except Exception as ex:
-				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/].") from ex
+			# Remove comments
+			for node in _DOM_CACHE[file_path_str].xpath("//comment()"):
+				node.remove()
+
+		except etree.XMLSyntaxError as ex:
+			raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]. Exception: {ex}")
+		except FileNotFoundError as ex:
+			raise ex
+		except Exception as ex:
+			raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/].") from ex
 
 	return _DOM_CACHE[file_path_str]
-
-_CSS_CACHE: Dict[str, str] = {}
-def _get_css(file_path: Union[Path, str]) -> str:
-	file_path_str = str(file_path)
-	if file_path_str not in _CSS_CACHE:
-		with open(file_path, "r", encoding="utf-8") as file:
-			_CSS_CACHE[file_path_str] = file.read()
-
-	return _CSS_CACHE[file_path_str]
 
 def lint(self, skip_lint_ignore: bool) -> list:
 	"""
@@ -449,6 +456,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	headings: List[tuple] = []
 	double_spaced_files: List[Path] = []
 	unused_selectors: List[str] = []
+	id_attrs: List[str] = []
 	missing_metadata_elements = []
 	abbr_elements: List[se.easy_xml.EasyXmlElement] = []
 
@@ -469,7 +477,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	# Cache the browser default stylesheet for later use
 	with importlib_resources.open_text("se.data", "browser.css", encoding="utf-8") as css:
-		_CSS_CACHE["default"] = css.read()
+		_FILE_CACHE["default"] = css.read()
 
 	# First, check if we have an se-lint-ignore.xml file in the ebook root. If so, parse it. For an example se-lint-ignore file, see semos://1.0.0/2.3
 	lint_ignore_path = self.path / "se-lint-ignore.xml"
@@ -520,8 +528,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	# Check local.css for various items, for later use
 	try:
-		with open(local_css_path, "r", encoding="utf-8") as file:
-			self.local_css = file.read()
+		self.local_css = _file(local_css_path)
 	except Exception as ex:
 		raise se.InvalidSeEbookException(f"Couldn’t open [path]{local_css_path}[/].") from ex
 
@@ -936,13 +943,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				continue
 
 			# Read the file and start doing some serious checks!
-			with open(filename, "r", encoding="utf-8") as file:
-				try:
-					file_contents = file.read()
-				except UnicodeDecodeError:
-					# This is more to help developers find weird files that might choke 'lint', hopefully unnecessary for end users
-					messages.append(LintMessage("f-010", "Problem decoding file as utf-8.", se.MESSAGE_TYPE_ERROR, filename))
-					continue
+			try:
+				file_contents = _file(filename)
+			except UnicodeDecodeError:
+				# This is more to help developers find weird files that might choke 'lint', hopefully unnecessary for end users
+				messages.append(LintMessage("f-010", "Problem decoding file as utf-8.", se.MESSAGE_TYPE_ERROR, filename))
+				continue
 
 			# Remove comments before we do any further processing
 			file_contents = regex.sub(r"<!--.+?-->", "", file_contents, flags=regex.DOTALL)
@@ -1025,15 +1031,18 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Apply stylesheets.
 				# First apply the browser default stylesheet
-				dom.apply_css(_get_css("default"), "default")
+				dom.apply_css(_file(Path("default")), "default")
 
 				# Apply any CSS files in the DOM
 				for node in dom.xpath("/html/head/link[@rel='stylesheet']"):
 					css_filename = (filename.parent / node.get_attr("href")).resolve()
-					dom.apply_css(_get_css(css_filename), str(css_filename))
+					dom.apply_css(_file(css_filename), str(css_filename))
 
 				messages = messages + _get_malformed_urls(file_contents, filename)
 				typos: List[str] = []
+
+				# Extract ID attributes for later checks
+				id_attrs = id_attrs + dom.xpath("//*[name() != 'section' and name() != 'article' and name() != 'figure']/@id")
 
 				# concat() to not match `halftitlepage`
 				if dom.xpath("/html/body/section[contains(concat(' ', @epub:type, ' '), ' titlepage ')]"):
@@ -2195,6 +2204,35 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	if single_use_css_classes:
 		messages.append(LintMessage("c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks.", se.MESSAGE_TYPE_WARNING, local_css_path, single_use_css_classes))
+
+	# We have a list of ID attributes in the ebook. Now iterate over all XHTML files again to ensure each one has been used
+	# Only run this check if we actually have ID attributes to inspect
+	if id_attrs:
+		id_attrs = list(set(id_attrs))
+		unused_id_attrs = deepcopy(id_attrs)
+
+		for root, _, filenames in os.walk(Path(self.path) / "src" / "epub"):
+			for filename in filenames:
+				filename = (Path(root) / filename).resolve()
+
+				if filename.suffix == ".xhtml" or filename.name == "glossary-search-key-map.xml":
+					xhtml = _file(filename)
+
+					for attr in id_attrs:
+						# We use a simple `in` check instead of xpath because it's an order of magnitude faster on
+						# really big ebooks with lots of IDs like Pepys.
+						if f"#{attr}" in xhtml:
+							try:
+								unused_id_attrs.remove(attr)
+							except ValueError:
+								# We get here if we try to remove a value that has already been removed
+								pass
+
+					# Reduce the list of ID attrs to check in the next pass
+					id_attrs = deepcopy(unused_id_attrs)
+
+		if unused_id_attrs:
+			messages.append(LintMessage("x-018", "Unused [xhtml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, natsorted(unused_id_attrs)))
 
 	if files_not_url_safe:
 		try:
