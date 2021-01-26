@@ -40,7 +40,8 @@ case $state in
 			"typogrify[Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory.]" \
 			"unicode-names[Display Unicode code points, descriptions, and links to more details for each character in a string.]" \
 			"version[Print the version number and exit.]" \
-			"word-count[Count the number of words in an HTML file and optionally categorize by length.]"
+			"word-count[Count the number of words in an HTML file and optionally categorize by length.]" \
+			"xpath[Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed.]"
 		;;
 	args)
 		case $line[1] in
@@ -246,6 +247,12 @@ case $state in
 					{-x,--exclude-se-files}'[exclude some non-bodymatter files common to SE ebooks, like the ToC and colophon]' \
 					'*: :_files -g \*.\(htm\|html\|xhtml\)'
 				;;
+			xpath)
+				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
+					'*: :_files -g \*.xhtml'
+				;;
+			unicode-names)
 		esac
 		;;
 esac

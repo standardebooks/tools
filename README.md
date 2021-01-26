@@ -342,6 +342,9 @@ We need volunteers to take the lead on the following goals:
 
 	Count the number of words in an HTML file and optionally categorize by length.
 
+-	### `se xpath`
+
+	Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed.
 
 # What a Standard Ebooks source directory looks like
 

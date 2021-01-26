@@ -44,7 +44,11 @@ class EasyXmlTree:
 
 	def __init__(self, xml_string: str):
 		self.namespaces = {"re": "http://exslt.org/regular-expressions"} # Enable regular expressions in xpath
-		self.etree = etree.fromstring(str.encode(xml_string))
+		try:
+			self.etree = etree.fromstring(str.encode(xml_string))
+		except etree.XMLSyntaxError as ex:
+			raise se.InvalidXmlException(f"Couldn’t parse XML. Exception: {ex}") from ex
+
 		self.is_css_applied = False
 
 	def css_select(self, selector: str):

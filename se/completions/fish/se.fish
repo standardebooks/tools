@@ -1,6 +1,6 @@
 function __fish_se_no_subcommand --description "Test if se has yet to be given the subcommand"
 	for i in (commandline -opc)
-		if contains -- $i british2american build build-images clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-sr lint make-url-safe modernize-spelling prepare-release print-manifest print-spine print-toc recompose-epub renumber-endnotes reorder-endnotes roman2dec semanticate split-file titlecase typogrify unicode-names version word-count
+		if contains -- $i british2american build build-images clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-sr lint make-url-safe modernize-spelling prepare-release print-manifest print-spine print-toc recompose-epub renumber-endnotes reorder-endnotes roman2dec semanticate split-file titlecase typogrify unicode-names version word-count xpath
 			return 1
 		end
 	end
@@ -159,3 +159,5 @@ complete -c se -A -n "__fish_seen_subcommand_from word-count" -s p -l ignore-pg-
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s x -l exclude-se-files -d "exclude some non-bodymatter files common to SE ebooks, like the ToC and colophon"
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s h -l help -x -d "show this help message and exit"
 
+complete -c se -n "__fish_se_no_subcommand" -a xpath -d "Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed."
+complete -c se -A -n "__fish_seen_subcommand_from xpath" -s h -l help -x -d "show this help message and exit"
