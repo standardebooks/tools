@@ -2210,26 +2210,34 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	if id_attrs:
 		id_attrs = list(set(id_attrs))
 		unused_id_attrs = deepcopy(id_attrs)
+		sorted_filenames = []
 
+		# Href links are mostly found in endnotes, so if there's an endnotes file process it first
+		# to try to speed things up a little
 		for root, _, filenames in os.walk(Path(self.path) / "src" / "epub"):
 			for filename in filenames:
 				filename = (Path(root) / filename).resolve()
 
-				if filename.suffix == ".xhtml" or filename.name == "glossary-search-key-map.xml":
-					xhtml = _file(filename)
+				if filename.name == "endnotes.xhtml" or filename.name == "glossary-search-key-map.xml" or filename.name == "glossary.xhtml":
+					sorted_filenames.insert(0, filename)
+				elif filename.suffix == ".xhtml":
+					sorted_filenames.append(filename)
 
-					for attr in id_attrs:
-						# We use a simple `in` check instead of xpath because it's an order of magnitude faster on
-						# really big ebooks with lots of IDs like Pepys.
-						if f"#{attr}" in xhtml:
-							try:
-								unused_id_attrs.remove(attr)
-							except ValueError:
-								# We get here if we try to remove a value that has already been removed
-								pass
+		for filename in sorted_filenames:
+			xhtml = _file(filename)
 
-					# Reduce the list of ID attrs to check in the next pass
-					id_attrs = deepcopy(unused_id_attrs)
+			for attr in id_attrs:
+				# We use a simple `in` check instead of xpath because it's an order of magnitude faster on
+				# really big ebooks with lots of IDs like Pepys.
+				if f"#{attr}" in xhtml:
+					try:
+						unused_id_attrs.remove(attr)
+					except ValueError:
+						# We get here if we try to remove a value that has already been removed
+						pass
+
+			# Reduce the list of ID attrs to check in the next pass, again a time saver for big ebooks
+			id_attrs = deepcopy(unused_id_attrs)
 
 		if unused_id_attrs:
 			messages.append(LintMessage("x-018", "Unused [xhtml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, natsorted(unused_id_attrs)))
