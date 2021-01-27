@@ -2210,7 +2210,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	if id_attrs:
 		id_attrs = list(set(id_attrs))
 		unused_id_attrs = deepcopy(id_attrs)
-		sorted_filenames = []
+		sorted_filenames: List[str] = []
 
 		# Href links are mostly found in endnotes, so if there's an endnotes file process it first
 		# to try to speed things up a little
