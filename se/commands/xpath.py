@@ -4,6 +4,7 @@ This module implements the `se xpath` command.
 
 import argparse
 
+from lxml import etree
 from rich.console import Console
 import se
 import se.easy_xml
@@ -33,6 +34,10 @@ def xpath() -> int:
 				for node in nodes:
 					mystring = "".join([f"\t{line}\n" for line in node.to_string().splitlines()])
 					console.print(mystring)
+
+		except etree.XPathEvalError as ex:
+			se.print_error("Invalid xpath expression.")
+			return se.InvalidInputException.code
 
 		except se.SeException as ex:
 			se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]. Exception: {ex}")
