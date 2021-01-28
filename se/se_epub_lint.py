@@ -281,6 +281,7 @@ TYPOGRAPHY
 "t-047", "[text]US[/] should be [text]U.S.[/]"
 "t-048", "Chapter opening text in all-caps."
 "t-049", "Two-em-dash used for eliding an entire word. Use a three-em-dash instead."
+"t-050", "Possessive [text]’s[/] or [text]’[/] outside of element with [val]z3998:persona[/] semantic."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1733,6 +1734,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[self::p or self::blockquote][contains(@epub:type, 'se:name.')]")
 				if nodes:
 					messages.append(LintMessage("s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+
+				# Check that possessives appear within persona blocks
+				nodes = dom.xpath("/html/body//b[contains(@epub:type, 'z3998:persona') and ./following-sibling::node()[1][re:test(., '^’s?')]]")
+				if nodes:
+					messages.append(LintMessage("t-050", "Possessive [text]’s[/] or [text]’[/] outside of element with [val]z3998:persona[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check that short stories are on an <article> element
 				nodes = dom.xpath("/html/body/section[contains(@epub:type, 'se:short-story') or contains(@epub:type, 'se:novella')]")
