@@ -171,7 +171,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Cc])afes\b", r"\1afés", xhtml)				# cafes -> cafés; We break up cafe so that we don't catch 'cafeteria'
 	xhtml = regex.sub(r"([Mm])êlée", r"\1elee", xhtml)				# mêlée -> melee
 	xhtml = regex.sub(r"\b([Ff])ete([sd])?\b", r"\1ête\2", xhtml)			# fete -> fête
-	xhtml = regex.sub(r"\b([Rr])ôle\b", r"\1ole", xhtml)				# rôle -> role
+	xhtml = regex.sub(r"\b([Rr])ôle(s?)\b", r"\1ole\2", xhtml)			# rôle -> role
 	xhtml = regex.sub(r"\b([Cc])oö", r"\1oo", xhtml)				# coö -> coo (as in coöperate)
 	xhtml = regex.sub(r"\b([Rr])eë", r"\1ee", xhtml)				# reë -> ree (as in reëvaluate)
 	xhtml = regex.sub(r"\b([Dd])aïs\b", r"\1ais", xhtml)				# daïs -> dais
