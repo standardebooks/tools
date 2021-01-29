@@ -282,6 +282,7 @@ TYPOGRAPHY
 "t-048", "Chapter opening text in all-caps."
 "t-049", "Two-em-dash used for eliding an entire word. Use a three-em-dash instead."
 "t-050", "Possessive [text]’s[/] or [text]’[/] outside of element with [val]z3998:persona[/] semantic."
+"t-051", "Dialog in [xhtml]<p>[/] that continues to the next [xhtml]<p>[/], but the next [xhtml]<p>[/] does not begin with [text]“[/]."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1567,6 +1568,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[not(./*) and re:test(., '^\\s+$')]")
 				if nodes:
 					messages.append(LintMessage("s-079", "Element containing only white space.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				# Check for quotations that carry to the next paragraph, but the next paragraph has no opening quotation mark
+				# Exclude p in blockquote because often that has different formatting
+				nodes = dom.xpath("/html/body//p[re:test(., '^“[^”]+$') and not(./ancestor::blockquote) and ./following-sibling::*[1][name() = 'p' and re:test(normalize-space(), '^[^“]')]]")
+				if nodes:
+					messages.append(LintMessage("t-051", "Dialog in [xhtml]<p>[/] that continues to the next [xhtml]<p>[/], but the next [xhtml]<p>[/] does not begin with [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for hgroup elements with a subtitle but no title
 				nodes = dom.xpath("/html/body//hgroup[./*[contains(@epub:type, 'subtitle')] and not(./*[contains(concat(' ', @epub:type, ' '), ' title ')])]")
