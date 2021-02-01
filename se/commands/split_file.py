@@ -7,6 +7,7 @@ from pathlib import Path
 
 import importlib_resources
 import regex
+import roman
 
 import se
 
@@ -20,7 +21,7 @@ def _split_file_output_file(filename_format_string: str, chapter_number: int, te
 	filename = filename_format_string.replace("%n", str(chapter_number))
 
 	xhtml = template_xhtml.replace("ID", regex.sub(r"\.xhtml$", "", filename))
-	xhtml = xhtml.replace("NUMBER", str(chapter_number))
+	xhtml = xhtml.replace("NUMERAL", str(roman.toRoman(chapter_number)))
 	xhtml = xhtml.replace("TEXT", chapter_xhtml)
 
 	with open(filename, "w", encoding="utf-8") as file:
@@ -35,7 +36,7 @@ def split_file() -> int:
 	parser = argparse.ArgumentParser(description="Split an XHTML file into many files at all instances of <!--se:split-->, and include a header template for each file.")
 	parser.add_argument("-f", "--filename-format", metavar="STRING", type=str, default="chapter-%n.xhtml", help="a format string for the output files; `%%n` is replaced with the current chapter number; defaults to `chapter-%%n.xhtml`")
 	parser.add_argument("-s", "--start-at", metavar="INTEGER", type=se.is_positive_integer, default="1", help="start numbering chapters at this number, instead of at 1")
-	parser.add_argument("-t", "--template-file", metavar="FILE", type=str, default="", help="a file containing an XHTML template to use for each chapter; the string `NUMBER` is replaced by the chapter number, and the string `TEXT` is replaced by the chapter body")
+	parser.add_argument("-t", "--template-file", metavar="FILE", type=str, default="", help="a file containing an XHTML template to use for each chapter; the string `NUMERAL` is replaced by the chapter numeral, and the string `TEXT` is replaced by the chapter body")
 	parser.add_argument("filename", metavar="FILE", help="an HTML/XHTML file")
 	args = parser.parse_args()
 

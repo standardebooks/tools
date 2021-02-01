@@ -218,7 +218,7 @@ case $state in
 					{-f,--filename-format}'[a format string for the output files; `%n` is replaced with the current chapter number; defaults to `chapter-%n.xhtml`]' \
 					{-h,--help}'[show a help message and exit]' \
 					{-s,--start-at}'[start numbering chapters at this number, instead of at 1]' \
-					{-t,--template-file}'[a file containing an XHTML template to use for each chapter; the string `NUMBER` is replaced by the chapter number, and the string `TEXT` is replaced by the chapter body]' \
+					{-t,--template-file}'[a file containing an XHTML template to use for each chapter; the string `NUMERAL` is replaced by the chapter numeral, and the string `TEXT` is replaced by the chapter body]' \
 					'*: :_files -g \*.\(htm\|html\|xhtml\)'
 				;;
 			titlecase)

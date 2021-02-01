@@ -137,7 +137,7 @@ complete -c se -n "__fish_se_no_subcommand" -a split-file -d "Split an XHTML fil
 complete -c se -A -n "__fish_seen_subcommand_from split-file" -s f -l filename-format -d "a format string for the output files; `%n` is replaced with the current chapter number; defaults to `chapter-%n.xhtml`"
 complete -c se -A -n "__fish_seen_subcommand_from split-file" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from split-file" -s s -l start-at -d "start numbering chapters at this number, instead of at 1"
-complete -c se -A -n "__fish_seen_subcommand_from split-file" -s t -l template-file -d "a file containing an XHTML template to use for each chapter; the string `NUMBER` is replaced by the chapter number, and the string `TEXT` is replaced by the chapter body"
+complete -c se -A -n "__fish_seen_subcommand_from split-file" -s t -l template-file -d "a file containing an XHTML template to use for each chapter; the string `NUMERAL` is replaced by the chapter numeral, and the string `TEXT` is replaced by the chapter body"
 
 complete -c se -n "__fish_se_no_subcommand" -a titlecase -d "Convert a string to titlecase."
 complete -c se -A -n "__fish_seen_subcommand_from titlecase" -s h -l help -x -d "show this help message and exit"
