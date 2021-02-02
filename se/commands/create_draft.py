@@ -883,7 +883,7 @@ def _create_draft(args: Namespace):
 
 					# Now, get the LCSH ID by querying LCSH directly.
 					try:
-						response = requests.get(f"https://id.loc.gov/search/?q=%22{urllib.parse.quote(subject)}%22")
+						response = requests.get(f"https://id.loc.gov/search/?q=cs:http://id.loc.gov/authorities/subjects&q=%22{urllib.parse.quote(subject)}%22")
 						result = regex.search(fr"<a title=\"Click to view record\" href=\"/authorities/subjects/([^\"]+?)\">{regex.escape(subject.replace(' -- ', '--'))}</a>", response.text)
 
 						loc_id = "Unknown"
