@@ -283,6 +283,7 @@ TYPOGRAPHY
 "t-049", "Two-em-dash used for eliding an entire word. Use a three-em-dash instead."
 "t-050", "Possessive [text]’s[/] or [text]’[/] outside of element with [val]z3998:persona[/] semantic."
 "t-051", "Dialog in [xhtml]<p>[/] that continues to the next [xhtml]<p>[/], but the next [xhtml]<p>[/] does not begin with [text]“[/]."
+"t-052", "Stage direction without ending punctuation. Note that ending punctuation is optional in stage direction that is an interjection in a parent clause, and such interjections should begin with a lowercase letter."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1710,6 +1711,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				matches = regex.findall(r".*“</p>", file_contents)
 				if matches:
 					messages.append(LintMessage("t-038", "[text]“[/] before closing [xhtml]</p>[/].", se.MESSAGE_TYPE_WARNING, filename, [match[-20:] for match in matches]))
+
+				# Check for stage direction without ending punctuation. We only want to consider stage direction that is not an interjection in a parent clause.
+				# We match if the stage direction ends in lowercase, and if there's no following node, or if there's a following node that doesn't begin in lowercase or an em dash or semicolon (which suggests an interjection).
+				nodes = dom.xpath(f"/html/body//i[@epub:type='z3998:stage-direction' and re:test(., '[a-z]$') and re:test(., '^[A-Z]') and (not(./following-sibling::node()[normalize-space(.)]) or ./following-sibling::node()[1][re:test(normalize-space(.), '^[^{se.WORD_JOINER}—;a-z]')])]")
+				if nodes:
+					messages.append(LintMessage("t-052", "Stage direction without ending punctuation. Note that ending punctuation is optional in stage direction that is an interjection in a parent clause, and such interjections should begin with a lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for rdquo preceded by space (but not a rsquo, which might indicate a nested quotation)
 				matches = regex.findall(r".*[^’]\s”", regex.sub(r"<td>.*?</td>", "", file_contents, regex.DOTALL))
