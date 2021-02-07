@@ -1379,6 +1379,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for lsquo followed by space
 				typos = typos + [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘\\s+[^“’]')]")]
 
+				# Check for closing rdquo without opening ldquo. We ignore blockquotes because they usually have unique quote formatting.
+				typos = typos + [node.to_string() for node in dom.xpath("//p[re:test(., '^[^“]+”') and not(./preceding-sibling::*[1][name() = 'blockquote']) and not(./ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]) and not(./ancestor::blockquote)]")]
+
 				# Check for ,.
 				typos = typos + regex.findall(r",\.", file_contents)
 
