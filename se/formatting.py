@@ -1057,8 +1057,11 @@ def titlecase(text: str) -> str:
 	# Lowercase "in", if followed by a semicolon (but not words like "inheritance")
 	text = regex.sub(r"\b; In\b", "; in", text)
 
-	# Lowercase th', sometimes used poetically
+	# Lowercase th’, sometimes used poetically
 	text = regex.sub(r"\b Th’ \b", " th’ ", text)
+
+	# Lowercase o’
+	text = regex.sub(r"\b O’ \b", " o’ ", text)
 
 	# Uppercase words that begin compound words, like "to-night" (which might appear in poetry)
 	text = regex.sub(r" ([\p{Lowercase_Letter}])([\p{Lowercase_Letter}]+\-)", lambda result: " " + result.group(1).upper() + result.group(2), text)
