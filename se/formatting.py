@@ -134,6 +134,9 @@ def semanticate(xhtml: str) -> str:
 	# Fix X-ray
 	xhtml = regex.sub(r"""<span epub:type="z3998:roman">([Xx])</span>-ray""", r"""\1-ray""", xhtml)
 
+	# Fix obscured names starting with V or X
+	xhtml = regex.sub(fr"""<span epub:type="z3998:roman">([VX])</span>{se.WORD_JOINER}⸺""", fr"""\1{se.WORD_JOINER}⸺""", xhtml)
+
 	# Add abbrevations around some SI measurements
 	xhtml = regex.sub(r"([0-9]+)\s*([cmk][mgl])\b", fr"\1{se.NO_BREAK_SPACE}<abbr>\2</abbr>", xhtml)
 
