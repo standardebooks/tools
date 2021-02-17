@@ -394,6 +394,50 @@ def _get_malformed_urls(xhtml: str, filename: Path) -> list:
 
 	return messages
 
+def _get_selectors_and_rules (self) -> tuple:
+	"""
+	Helper function used in self.lint()
+	Construct a set of CSS selectors and rules in local.css
+
+	INPUTS
+	None
+
+	OUTPUTS
+	3-tuple (local_css_rules, duplicate_selectors, single_selectors)
+	"""
+
+	local_css_rules: Dict[str, str] = {} # A dict where key = selector and value = rules
+	duplicate_selectors = []
+	single_selectors: List[str] = []
+
+	# cssutils doesn't understand @supports, but it *does* understand @media, so do a replacement here for the purposes of parsing
+	for rule in cssutils.parseString(self.local_css.replace("@supports", "@media"), validate=False):
+		# i.e. @supports
+		if isinstance(rule, cssutils.css.CSSMediaRule):
+			for supports_rule in rule.cssRules:
+				for selector in supports_rule.selectorList:
+					if selector.selectorText not in local_css_rules:
+						local_css_rules[selector.selectorText] = ""
+
+					local_css_rules[selector.selectorText] += supports_rule.style.cssText + ";"
+
+		# top-level rule
+		if isinstance(rule, cssutils.css.CSSStyleRule):
+			for selector in rule.selectorList:
+				# Check for duplicate selectors.
+				# We consider a selector a duplicate if it's a TOP LEVEL selector (i.e. we don't check within @supports)
+				# and ALSO if it is a SINGLE selector (i.e. not multiple selectors separated by ,)
+				# For example abbr{} abbr{} would be a duplicate, but not abbr{} abbr,p{}
+				if "," not in rule.selectorText:
+					if selector.selectorText in single_selectors:
+						duplicate_selectors.append(selector.selectorText)
+					else:
+						single_selectors.append(selector.selectorText)
+
+				local_css_rules[selector.selectorText] = rule.style.cssText + ";"
+
+	return (local_css_rules, duplicate_selectors, single_selectors)
+
 # Cache file contents so we don't hit the disk repeatedly
 _FILE_CACHE: Dict[str, str] = {}
 def _file(file_path: Path) -> str:
@@ -539,36 +583,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	# cssutils prints warnings/errors to stdout by default, so shut it up here
 	cssutils.log.enabled = False
 
-	# Construct a set of CSS selectors and rules in local.css
-	# We'll check against this set in each file to see if any of them are unused.
-	local_css_rules: Dict[str, str] = {} # A dict where key = selector and value = rules
-	duplicate_selectors = []
-	single_selectors: List[str] = []
-	# cssutils doesn't understand @supports, but it *does* understand @media, so do a replacement here for the purposes of parsing
-	for rule in cssutils.parseString(self.local_css.replace("@supports", "@media"), validate=False):
-		# i.e. @supports
-		if isinstance(rule, cssutils.css.CSSMediaRule):
-			for supports_rule in rule.cssRules:
-				for selector in supports_rule.selectorList:
-					if selector.selectorText not in local_css_rules:
-						local_css_rules[selector.selectorText] = ""
-
-					local_css_rules[selector.selectorText] += supports_rule.style.cssText + ";"
-
-		# top-level rule
-		if isinstance(rule, cssutils.css.CSSStyleRule):
-			for selector in rule.selectorList:
-				# Check for duplicate selectors.
-				# We consider a selector a duplicate if it's a TOP LEVEL selector (i.e. we don't check within @supports)
-				# and ALSO if it is a SINGLE selector (i.e. not multiple selectors separated by ,)
-				# For example abbr{} abbr{} would be a duplicate, but not abbr{} abbr,p{}
-				if "," not in rule.selectorText:
-					if selector.selectorText in single_selectors:
-						duplicate_selectors.append(selector.selectorText)
-					else:
-						single_selectors.append(selector.selectorText)
-
-				local_css_rules[selector.selectorText] = rule.style.cssText + ";"
+	# Get the css rules and selectors from helper function
+	local_css_rules, duplicate_selectors, single_selectors = _get_selectors_and_rules(self)
 
 	if duplicate_selectors:
 		messages.append(LintMessage("c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles.", se.MESSAGE_TYPE_WARNING, local_css_path, list(set(duplicate_selectors))))
