@@ -285,6 +285,7 @@ TYPOGRAPHY
 "t-051", "Dialog in [xhtml]<p>[/] that continues to the next [xhtml]<p>[/], but the next [xhtml]<p>[/] does not begin with [text]“[/]."
 "t-052", "Stage direction without ending punctuation. Note that ending punctuation is optional in stage direction that is an interjection in a parent clause, and such interjections should begin with a lowercase letter."
 "t-053", "Stage direction starting in lowercase letter."
+"t-054", "Epigraphs that are entirely non-English should be set in italics, not Roman."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1789,6 +1790,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//p[not(./text()[normalize-space(.)])][*][not(ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')])][not(*[not(self::span) and not(self::br)])][ (not(span[@epub:type]) and not(span[@class]) ) or span[re:test(@class, '\\bi[0-9]\\b')]]")
 				if nodes:
 					messages.append(LintMessage("s-046", "[xhtml]<p>[/] element containing only [xhtml]<span>[/] and [xhtml]<br>[/] elements, but its parent doesn’t have the [val]z3998:poem[/], [val]z3998:verse[/], [val]z3998:song[/], [val]z3998:hymn[/], or [val]z3998:lyrics[/] semantic. Multi-line clauses that are not verse don’t require [xhtml]<span>[/]s.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Epigraphs that are entirely non-English should still be in italics, not Roman
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'bridgehead')]//p[./i[@xml:lang and @data-css-font-style='normal' and ( (./preceding-sibling::node()='“' and ./following-sibling::node()='”') or not(./preceding-sibling::node()[normalize-space(.)] or ./following-sibling::node()[normalize-space(.)]) ) ]]")
+				if nodes:
+					messages.append(LintMessage("t-054", "Epigraphs that are entirely non-English should be set in italics, not Roman.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for a play <td> that contains both inline text and block-level elements.
 				# Note that we check any child of <html> because often <body> has the drama semantic.
