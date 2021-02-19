@@ -457,7 +457,7 @@ def _get_selectors_and_rules (self) -> tuple:
 		return (local_css_rules, duplicate_selectors)
 
 	local_css_rules: Dict[str, str] = {} # A dict where key = selector and value = rules
-	duplicate_selectors = []
+	duplicate_selectors: List[str] = []
 	single_selectors: List[str] = []
 
 	# cssutils doesn't understand @supports, but it *does* understand @media, so do a replacement here for the purposes of parsing
