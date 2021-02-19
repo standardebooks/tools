@@ -450,10 +450,7 @@ def _get_selectors_and_rules (self) -> tuple:
 					if selector.selectorText not in local_css_rules:
 						local_css_rules[selector.selectorText] = ""
 
-					if top_level:
-						local_css_rules[selector.selectorText] = rule.style.cssText + ";"
-					else:
-						local_css_rules[selector.selectorText] += rule.style.cssText + ";"
+					local_css_rules[selector.selectorText] += rule.style.cssText + ";"
 
 		return (local_css_rules, duplicate_selectors)
 
