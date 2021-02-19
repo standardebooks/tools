@@ -417,7 +417,7 @@ def _get_selectors_and_rules (self) -> tuple:
 		rules: A CSSStyleSheet with the rules
 		local_css_rules: A dictionary where key = selector and value = rules
 		duplicate_selectors: Selectors which are counted as duplicates and will be warned about
-		single_selectors: Selectors which aren't duplicates
+		single_selectors: Not multiple selectors separated by comma
 		top_level: Boolean set to True on first level of recursion and False thereafter
 
 		OUTPUTS
@@ -467,7 +467,7 @@ def _get_selectors_and_rules (self) -> tuple:
 	# Initial recursive call
 	_recursive_helper(all_rules, local_css_rules, duplicate_selectors, single_selectors, True)
 
-	return (local_css_rules, duplicate_selectors, single_selectors)
+	return (local_css_rules, duplicate_selectors)
 
 # Cache file contents so we don't hit the disk repeatedly
 _FILE_CACHE: Dict[str, str] = {}
@@ -615,11 +615,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	cssutils.log.enabled = False
 
 	# Get the css rules and selectors from helper function
-	local_css_rules, duplicate_selectors, single_selectors = _get_selectors_and_rules(self)
-
-	print(local_css_rules)
-	print(duplicate_selectors)
-	print(single_selectors)
+	local_css_rules, duplicate_selectors = _get_selectors_and_rules(self)
 
 	if duplicate_selectors:
 		messages.append(LintMessage("c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles.", se.MESSAGE_TYPE_WARNING, local_css_path, list(set(duplicate_selectors))))
