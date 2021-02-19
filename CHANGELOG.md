@@ -1,3 +1,56 @@
+# 1.8.5
+
+## General
+
+- New command: `se xpath` to run an XHTML-namespaced xpath selector on a directory or individual files
+
+## se build
+
+- Replace no-break hyphens in Kobo builds
+
+## se create-draft
+
+- Update chapter template and split-file command to use roman numerals instead of arabic numerals. Thanks to maticstric
+
+- Improve LCSH subject heading fetching to find results more often. Thanks to maticstric
+
+
+## se lint
+
+- Add x-018, unused ID attribute
+
+- Replace internal CSS cache with general file cache
+
+- Add t-050, possessive `'s` outside of persona element
+
+- Add t-051, dialog in `<p>` without closing double quote, but next `<p>` doesn't have opening double qoute
+
+- Add t-052, stage direction without ending punctuation
+
+- Add t-053, stage direction starting in lowercase
+
+- Improve t-042
+
+- Add t-054, epigraphs entirely in non-English but set in Roman and not italics
+
+- Add m-065, incorrect word count in metadata
+
+- Allow nested at-rules when checking CSS. Thanks to maticstric
+
+## se modernize-spelling
+
+- Various additions
+
+## se semanticate
+
+- Don't add Roman semantics to obscured names starting with I, V, or X. Thanks to Weijia Cheng
+
+- Improve check for Imperial measurements
+
+## se titlecase
+
+- Lowercase `o’`
+
 # 1.8.4
 
 ## General
