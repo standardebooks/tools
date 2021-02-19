@@ -403,7 +403,7 @@ def _get_selectors_and_rules (self) -> tuple:
 	None
 
 	OUTPUTS
-	3-tuple (local_css_rules, duplicate_selectors, single_selectors) to be used by the lint function
+	2-tuple (local_css_rules, duplicate_selectors) to be used by the lint function
 	"""
 
 	def _recursive_helper(rules: cssutils.css.cssstylesheet.CSSStyleSheet, local_css_rules: dict, duplicate_selectors: list, single_selectors: list, top_level: bool):
@@ -421,7 +421,7 @@ def _get_selectors_and_rules (self) -> tuple:
 		top_level: Boolean set to True on first level of recursion and False thereafter
 
 		OUTPUTS
-		3-tuple (local_css_rules, duplicate_selectors, single_selectors) to be used by the lint function
+		2-tuple (local_css_rules, duplicate_selectors) to be used by the lint function
 		"""
 		for rule in rules:
 			# i.e. @supports or @media
@@ -429,7 +429,7 @@ def _get_selectors_and_rules (self) -> tuple:
 				# Recurisive call to rules within CSSMediaRule.
 				new_rules = _recursive_helper(rule.cssRules, local_css_rules, duplicate_selectors, single_selectors, False)
 
-				# Then update local_css_rules. The duplicate and single selector lists aren't updated 
+				# Then update local_css_rules. The duplicate and single selector lists aren't updated
 				# because anything within CSSMediaRules isn't counted as a duplicate
 				local_css_rules.update(new_rules[0])
 
@@ -455,7 +455,7 @@ def _get_selectors_and_rules (self) -> tuple:
 					else:
 						local_css_rules[selector.selectorText] += rule.style.cssText + ";"
 
-		return (local_css_rules, duplicate_selectors, single_selectors)
+		return (local_css_rules, duplicate_selectors)
 
 	local_css_rules: Dict[str, str] = {} # A dict where key = selector and value = rules
 	duplicate_selectors = []
@@ -616,6 +616,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	# Get the css rules and selectors from helper function
 	local_css_rules, duplicate_selectors, single_selectors = _get_selectors_and_rules(self)
+
+	print(local_css_rules)
+	print(duplicate_selectors)
+	print(single_selectors)
 
 	if duplicate_selectors:
 		messages.append(LintMessage("c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles.", se.MESSAGE_TYPE_WARNING, local_css_path, list(set(duplicate_selectors))))
