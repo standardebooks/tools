@@ -668,6 +668,28 @@ class SeEpub:
 			file.write(self.metadata_xml)
 			file.truncate()
 
+	def get_word_count(self) -> int:
+		"""
+		Calculate the word count of this ebook.
+		Ignores SE boilerplate files like the imprint, as well as any endnotes.
+
+		INPUTS
+		None
+
+		OUTPUTS
+		The number of words in the ebook.
+		"""
+		word_count = 0
+
+		for filename in se.get_target_filenames([self.path], (".xhtml",)):
+			if filename.name == "endnotes.xhtml":
+				continue
+
+			with open(filename, "r", encoding="utf-8") as file:
+				word_count += se.formatting.get_word_count(file.read())
+
+		return word_count
+
 	def update_word_count(self) -> None:
 		"""
 		Calculate a new word count for this ebook and update the metadata file.
@@ -680,16 +702,7 @@ class SeEpub:
 		None.
 		"""
 
-		word_count = 0
-
-		for filename in se.get_target_filenames([self.path], (".xhtml",)):
-			if filename.name == "endnotes.xhtml":
-				continue
-
-			with open(filename, "r", encoding="utf-8") as file:
-				word_count += se.formatting.get_word_count(file.read())
-
-		self.metadata_xml = regex.sub(r"<meta property=\"se:word-count\">[^<]*</meta>", f"<meta property=\"se:word-count\">{word_count}</meta>", self.metadata_xml)
+		self.metadata_xml = regex.sub(r"<meta property=\"se:word-count\">[^<]*</meta>", f"<meta property=\"se:word-count\">{self.get_word_count()}</meta>", self.metadata_xml)
 
 		with open(self.metadata_file_path, "r+", encoding="utf-8") as file:
 			file.seek(0)

@@ -147,6 +147,7 @@ METADATA
 "m-062", "Missing data in imprint."
 "m-063", "Cover image has not been built."
 "m-064", "SE ebook hyperlinked in long description but not italicized."
+"m-065", "Word count in metadata doesn’t match actual word count."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -766,6 +767,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	matches = regex.findall(r"&[a-z0-9]+?;", long_description.replace("&amp;", ""))
 	if matches:
 		messages.append(LintMessage("m-018", "HTML entities found. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+
+	# Check that the word count is correct, if it's currently set
+	word_count = self.metadata_dom.xpath("/package/metadata/meta[@property='se:word-count']/text()", True)
+	if word_count != "WORD_COUNT" and int(word_count) != self.get_word_count():
+		messages.append(LintMessage("m-065", "Word count in metadata doesn’t match actual word count.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for tags that imply other tags
 	implied_tags = {"Fiction": ["Science Fiction", "Drama", "Fantasy"]}
