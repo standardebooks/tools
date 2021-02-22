@@ -2099,7 +2099,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-041", "Illegal space before punctuation.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 				# Check for missing punctuation before closing quotes
-				nodes = dom.xpath("/html/body//p[not(parent::header and position()=last())][re:test(., '[a-z]+[”’]$')]")
+				# Exclude signatures in footers as those are commonly quoted without ending punctuation
+				nodes = dom.xpath("/html/body//p[not( (parent::header or (parent::footer and contains(@epub:type, 'z3998:signature'))) and position()=last())][re:test(., '[a-z]+[”’]$')]")
 				if nodes:
 					messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string()[-30:] for node in nodes]))
 
