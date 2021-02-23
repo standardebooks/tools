@@ -1122,6 +1122,9 @@ def titlecase(text: str) -> str:
 	# Uppercase initialisms
 	text = regex.sub(r"\b(([\p{Letter}]\.)+)", lambda result: result.group(1).upper(), text)
 
+	# Lowercase `mm` (millimeters, as in `50 mm gun`) unless it's followed by a period in which case it's likely `Mm.` (Monsieurs)
+	text = regex.sub(r"(\s)MM(\s|$)", r"\1mm\2", text)
+
 	# Fix html entities
 	text = text.replace("&Amp;", "&amp;")
 
