@@ -65,6 +65,7 @@ CSS
 "c-019", "Element with [val]z3998:signature[/] semantic, but without [css]font-variant: small-caps;[/] or [css]font-style: italic;[/]."
 "c-020", "Multiple [xhtml]<article>[/]s or [xhtml]<section>[/]s in file, but missing [css]break-after: page;[/]."
 "c-021", "Element with [css]font-style: italic;[/], but child [xhtml]<i>[/] or [xhtml]<em>[/] does not have [css]font-style: normal;[/]. Hint: Italics within italics are typically set in Roman for contrast; if that’s not the case here, can [xhtml]<i>[/] be removed while still preserving italics and semantic inflection?"
+"c-022", "Illegal [css]rem[/] unit. Use [css]em[/] instead."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -686,6 +687,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	matches = regex.findall(r"text-align:\s*left\s*;", self.local_css)
 	if matches:
 		messages.append(LintMessage("c-016", "[css]text-align: left;[/] found. Use [css]text-align: initial;[/] instead.", se.MESSAGE_TYPE_ERROR, local_css_path))
+
+	matches = regex.findall(r"[0-9\.]\s?rem;", self.local_css)
+	if matches:
+		messages.append(LintMessage("c-022", "Illegal [css]rem[/] unit. Use [css]em[/] instead.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
 	# Done checking local.css
 
