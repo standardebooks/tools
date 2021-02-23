@@ -508,6 +508,9 @@ def _dom(file_path: Path) -> Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtm
 			raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]. Exception: {ex}")
 		except FileNotFoundError as ex:
 			raise ex
+		except se.InvalidXmlException as ex:
+			# The exception includes details about what specific XML failed to be parsed, so we want to send it up to the user
+			raise ex
 		except Exception as ex:
 			raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/].") from ex
 
