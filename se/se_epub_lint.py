@@ -469,52 +469,6 @@ def _get_selectors_and_rules (self) -> tuple:
 
 	return (local_css_rules, duplicate_selectors)
 
-# Cache file contents so we don't hit the disk repeatedly
-_FILE_CACHE: Dict[str, str] = {}
-def _file(file_path: Path) -> str:
-	file_path_str = str(file_path)
-
-	if file_path_str not in _FILE_CACHE:
-		with open(file_path, "r", encoding="utf-8") as file:
-			file_contents = file.read()
-
-		_FILE_CACHE[file_path_str] = file_contents
-
-	return _FILE_CACHE[file_path_str]
-
-# Cache dom objects so we don't have to create them multiple times
-_DOM_CACHE: Dict[str, Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtmlTree, se.easy_xml.EasySvgTree]] = {}
-def _dom(file_path: Path) -> Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtmlTree, se.easy_xml.EasySvgTree]:
-	file_path_str = str(file_path)
-
-	if file_path_str not in _DOM_CACHE:
-		file_contents =  _file(file_path)
-
-		try:
-			if file_path.suffix == ".xml":
-				_DOM_CACHE[file_path_str] = se.easy_xml.EasyXmlTree(file_contents)
-
-			if file_path.suffix == ".xhtml":
-				_DOM_CACHE[file_path_str] = se.easy_xml.EasyXhtmlTree(file_contents)
-
-			if file_path.suffix == ".svg":
-				_DOM_CACHE[file_path_str] = se.easy_xml.EasySvgTree(file_contents)
-
-			# Remove comments
-			for node in _DOM_CACHE[file_path_str].xpath("//comment()"):
-				node.remove()
-
-		except etree.XMLSyntaxError as ex:
-			raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]. Exception: {ex}")
-		except FileNotFoundError as ex:
-			raise ex
-		except se.InvalidXmlException as ex:
-			raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]. Exception: {ex.__cause__}") from ex
-		except Exception as ex:
-			raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/].") from ex
-
-	return _DOM_CACHE[file_path_str]
-
 def lint(self, skip_lint_ignore: bool) -> list:
 	"""
 	Check this ebook for some common SE style errors.
@@ -558,12 +512,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	# Cache the browser default stylesheet for later use
 	with importlib_resources.open_text("se.data", "browser.css", encoding="utf-8") as css:
-		_FILE_CACHE["default"] = css.read()
+		self._file_cache["default"] = css.read() # pylint: disable=protected-access
 
 	# First, check if we have an se-lint-ignore.xml file in the ebook root. If so, parse it. For an example se-lint-ignore file, see semos://1.0.0/2.3
 	lint_ignore_path = self.path / "se-lint-ignore.xml"
 	if not skip_lint_ignore and lint_ignore_path.exists():
-		lint_config = _dom(lint_ignore_path)
+		lint_config = self.get_dom(lint_ignore_path)
 
 		elements = lint_config.xpath("/se-lint-ignore/file")
 
@@ -609,7 +563,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	# Check local.css for various items, for later use
 	try:
-		self.local_css = _file(local_css_path)
+		self.local_css = self.get_file(local_css_path)
 	except Exception as ex:
 		raise se.InvalidSeEbookException(f"Couldn’t open [path]{local_css_path}[/].") from ex
 
@@ -1006,7 +960,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 			# Read the file and start doing some serious checks!
 			try:
-				file_contents = _file(filename)
+				file_contents = self.get_file(filename)
 			except UnicodeDecodeError:
 				# This is more to help developers find weird files that might choke 'lint', hopefully unnecessary for end users
 				messages.append(LintMessage("f-010", "Problem decoding file as utf-8.", se.MESSAGE_TYPE_ERROR, filename))
@@ -1023,7 +977,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				messages.append(LintMessage("x-001", "String [text]UTF-8[/] must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename))
 
 			if filename.suffix == ".svg":
-				svg_dom = _dom(filename)
+				svg_dom = self.get_dom(filename)
 
 				# If we're looking at the cover image, ensure that the producer has built it.
 				# The default cover image is a white background which when encoded to base64 begins with 299 characters and then has a long string of `A`s
@@ -1081,7 +1035,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						titlepage_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The titlepage for ", "") # <title> can appear on any element in SVG, but we only want to check the root one
 
 			if filename.suffix == ".xml":
-				xml_dom = _dom(filename)
+				xml_dom = self.get_dom(filename)
 
 				# / selects the root element, so we have to test against the name instead of doing /search-key-map
 				if xml_dom.xpath("/*[name()='search-key-map']") and filename.name !="glossary-search-key-map.xml":
@@ -1089,16 +1043,16 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 			if filename.suffix == ".xhtml":
 				# Read file contents into a DOM for querying
-				dom = _dom(filename)
+				dom = self.get_dom(filename)
 
 				# Apply stylesheets.
 				# First apply the browser default stylesheet
-				dom.apply_css(_file(Path("default")), "default")
+				dom.apply_css(self.get_file(Path("default")), "default")
 
 				# Apply any CSS files in the DOM
 				for node in dom.xpath("/html/head/link[@rel='stylesheet']"):
 					css_filename = (filename.parent / node.get_attr("href")).resolve()
-					dom.apply_css(_file(css_filename), str(css_filename))
+					dom.apply_css(self.get_file(css_filename), str(css_filename))
 
 				messages = messages + _get_malformed_urls(file_contents, filename)
 				typos: List[str] = []
@@ -2005,7 +1959,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							image_ref = img_src.split("/").pop()
 							try:
 								svg_path = self.path / "src" / "epub" / "images" / image_ref
-								svg_dom = _dom(svg_path)
+								svg_dom = self.get_dom(svg_path)
 								try:
 									title_text = svg_dom.xpath("/svg/title")[0].text
 								except Exception:
@@ -2228,7 +2182,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					chapter_ref = regex.findall(r"(.*?)#.*", node.get_attr("href"))[0]
 					figcaption_text = ""
 					loi_text = node.inner_text()
-					file_dom = _dom(self.path / "src/epub/text" / chapter_ref)
+					file_dom = self.get_dom(self.path / "src/epub/text" / chapter_ref)
 
 					try:
 						figure = file_dom.xpath(f"//*[@id={se.easy_xml.escape_xpath(figure_ref)}]")[0]
@@ -2318,7 +2272,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					sorted_filenames.append(filename)
 
 		for filename in sorted_filenames:
-			xhtml = _file(filename)
+			xhtml = self.get_file(filename)
 
 			for attr in id_attrs:
 				# We use a simple `in` check instead of xpath because it's an order of magnitude faster on
@@ -2375,7 +2329,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	# Check our headings against the ToC and landmarks
 	headings = list(set(headings))
-	toc_dom = _dom(self.path / "src/epub/toc.xhtml")
+	toc_dom = self.get_dom(self.path / "src/epub/toc.xhtml")
 	toc_headings = []
 	toc_files = []
 	toc_entries = toc_dom.xpath("/html/body/nav[@epub:type='toc']//a")

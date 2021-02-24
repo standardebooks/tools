@@ -10,9 +10,10 @@ import datetime
 import fnmatch
 import os
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import git
+import lxml.etree as etree
 from natsort import natsorted
 import regex
 
@@ -85,12 +86,13 @@ class SeEpub:
 	metadata_file_path = Path()
 	metadata_xml = ""
 	local_css = ""
+	_file_cache: Dict[str, str] = {}
+	_dom_cache: Dict[str, Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtmlTree, se.easy_xml.EasySvgTree]] = {}
 	_metadata_dom = None
 	_generated_identifier = None
 	_generated_github_repo_url = None
 	_repo = None # git.Repo object
 	_last_commit = None # GitCommit object
-	__endnotes_dom = None # EasyXhtmlTree object of the endnotes.xhtml file
 	_endnotes: Optional[List[Endnote]] = None # List of Endnote objects
 
 	def __init__(self, epub_root_directory: Union[str, Path]):
@@ -100,15 +102,16 @@ class SeEpub:
 			if not self.path.is_dir():
 				raise se.InvalidSeEbookException(f"Not a directory: [path][link=file://{self.path}]{self.path}[/][/].")
 
-			with open(self.path / "src" / "META-INF" / "container.xml", "r", encoding="utf-8") as file:
-				container_tree = se.easy_xml.EasyContainerTree(file.read())
-				self.metadata_file_path = self.path / "src" / container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
+			container_tree = self.get_dom(self.path / "src" / "META-INF" / "container.xml")
+
+			self.metadata_file_path = self.path / "src" / container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
 
 			with open(self.metadata_file_path, "r", encoding="utf-8") as file:
 				self.metadata_xml = file.read()
 
 			if "<dc:identifier id=\"uid\">url:https://standardebooks.org/ebooks/" not in self.metadata_xml:
 				raise se.InvalidSeEbookException
+
 		except Exception as ex:
 			raise se.InvalidSeEbookException(f"Not a Standard Ebooks source directory: [path][link=file://{self.path}]{self.path}[/][/].") from ex
 
@@ -244,29 +247,6 @@ class SeEpub:
 		return self._generated_github_repo_url
 
 	@property
-	def _endnotes_dom(self) -> se.easy_xml.EasyXhtmlTree:
-		"""
-		Accessor
-
-		Return an EasyXmlTree object representing the endnotes.xhtml file for this ebook.
-
-		INPUTS
-		None
-
-		OUTPUTS
-		A EasyXmlTree object representing the endnotes.xhtml file for this ebook.
-		"""
-
-		if not self.__endnotes_dom:
-			try:
-				with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml") as file:
-					self.__endnotes_dom = se.formatting.EasyXhtmlTree(file.read())
-			except Exception as ex:
-				raise se.InvalidFileException(f"Could't open file: [path][link=file://{self.path / 'src' / 'epub' / 'text' / 'endnotes.xhtml'}]{self.path / 'src' / 'epub' / 'text' / 'endnotes.xhtml'}[/][/].") from ex
-
-		return self.__endnotes_dom
-
-	@property
 	def endnotes(self) -> list:
 		"""
 		Accessor
@@ -283,7 +263,7 @@ class SeEpub:
 		if not self._endnotes:
 			self._endnotes = []
 
-			for node in self._endnotes_dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol/li[contains(@epub:type, 'endnote')]"):
+			for node in self.get_dom(self.path / "src" / "epub" / "text" / "endnotes.xhtml").xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol/li[contains(@epub:type, 'endnote')]"):
 				note = Endnote()
 				note.node = node
 				note.number = int(node.get_attr("id").replace("note-", ""))
@@ -310,6 +290,73 @@ class SeEpub:
 				raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]. Exception: {ex}")
 
 		return self._metadata_dom
+
+	def get_file(self, file_path: Path) -> str:
+		"""
+		Get raw file contents of a file in the epub.
+		Contents are cached so that we don't hit the disk repeatedly
+
+		INPUTS
+		file_path: A Path pointing to the file
+
+		OUTPUTS
+		A string representing the file contents
+		"""
+
+		file_path_str = str(file_path)
+
+		if file_path_str not in self._file_cache:
+			with open(file_path, "r", encoding="utf-8") as file:
+				file_contents = file.read()
+
+			self._file_cache[file_path_str] = file_contents
+
+		return self._file_cache[file_path_str]
+
+	# Cache dom objects so we don't have to create them multiple times
+	def get_dom(self, file_path: Path) -> Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtmlTree, se.easy_xml.EasySvgTree]:
+		"""
+		Get an EasyXmlTree DOM object for a given file.
+		Contents are cached so that we don't hit the disk or re-parse DOMs repeatedly
+
+		INPUTS
+		file_path: A Path pointing to the file
+
+		OUTPUTS
+		A string representing the file contents
+		"""
+		file_path_str = str(file_path)
+
+		if file_path_str not in self._dom_cache:
+			file_contents = self.get_file(file_path)
+
+			try:
+				if file_path.suffix == ".xml":
+					if file_path.name == "container.xml":
+						self._dom_cache[file_path_str] = se.easy_xml.EasyContainerTree(file_contents)
+					else:
+						self._dom_cache[file_path_str] = se.easy_xml.EasyXmlTree(file_contents)
+
+				if file_path.suffix == ".xhtml":
+					self._dom_cache[file_path_str] = se.easy_xml.EasyXhtmlTree(file_contents)
+
+				if file_path.suffix == ".svg":
+					self._dom_cache[file_path_str] = se.easy_xml.EasySvgTree(file_contents)
+
+				# Remove comments
+				for node in self._dom_cache[file_path_str].xpath("//comment()"):
+					node.remove()
+
+			except etree.XMLSyntaxError as ex:
+				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]. Exception: {ex}")
+			except FileNotFoundError as ex:
+				raise ex
+			except se.InvalidXmlException as ex:
+				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]. Exception: {ex.__cause__}") from ex
+			except Exception as ex:
+				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/].") from ex
+
+		return self._dom_cache[file_path_str]
 
 	def _recompose_xhtml(self, section: se.easy_xml.EasyXmlElement, output_dom: se.easy_xml.EasyXmlTree) -> None:
 		"""
@@ -389,14 +436,13 @@ class SeEpub:
 
 		for filename in css_filenames:
 			filepath = self.path / "src" / "epub" / "css" / filename
-			with open(filepath, "r", encoding="utf-8") as file:
-				file_css = file.read()
+			file_css = self.get_file(filepath)
 
-				namespaces = namespaces + regex.findall(r"@namespace.+?;", file_css)
+			namespaces = namespaces + regex.findall(r"@namespace.+?;", file_css)
 
-				file_css = regex.sub(r"\s*@(charset|namespace).+?;\s*", "\n", file_css).strip()
+			file_css = regex.sub(r"\s*@(charset|namespace).+?;\s*", "\n", file_css).strip()
 
-				css = css + f"\n\n\n/* {filepath.name} */\n" + file_css
+			css = css + f"\n\n\n/* {filepath.name} */\n" + file_css
 
 		css = css.strip()
 
@@ -424,22 +470,20 @@ class SeEpub:
 		for ref in self.metadata_dom.xpath("/package/spine/itemref/@idref"):
 			filename = self.metadata_dom.xpath(f"/package/manifest/item[@id='{ref}']/@href")[0]
 
-			with open(self.path / "src" / "epub" / filename, "r", encoding="utf-8") as file:
-				dom = se.formatting.EasyXhtmlTree(file.read())
+			dom = self.get_dom(self.path / "src" / "epub" / filename)
 
-				for node in dom.xpath("/html/body/*"):
-					try:
-						self._recompose_xhtml(node, output_dom)
-					except se.SeException as ex:
-						raise se.SeException(f"[path][link=file://{self.path / 'src/epub/' / filename}]{filename}[/][/]: {ex}") from ex
+			for node in dom.xpath("/html/body/*"):
+				try:
+					self._recompose_xhtml(node, output_dom)
+				except se.SeException as ex:
+					raise se.SeException(f"[path][link=file://{self.path / 'src/epub/' / filename}]{filename}[/][/]: {ex}") from ex
 
 		# Add the ToC after the titlepage
-		with open(self.path / "src" / "epub" / "toc.xhtml", "r", encoding="utf-8") as file:
-			toc_dom = se.formatting.EasyXhtmlTree(file.read())
-			titlepage_node = output_dom.xpath("//*[contains(concat(' ', @epub:type, ' '), ' titlepage ')]")[0]
+		toc_dom = self.get_dom(self.path / "src" / "epub" / "toc.xhtml")
+		titlepage_node = output_dom.xpath("//*[contains(concat(' ', @epub:type, ' '), ' titlepage ')]")[0]
 
-			for node in toc_dom.xpath("//nav[1]"):
-				titlepage_node.lxml_element.addnext(node.lxml_element)
+		for node in toc_dom.xpath("//nav[1]"):
+			titlepage_node.lxml_element.addnext(node.lxml_element)
 
 		# Replace all <a href> links with internal links
 		for link in output_dom.xpath("//a[not(re:test(@href, '^https?://')) and contains(@href, '#')]"):
@@ -658,8 +702,7 @@ class SeEpub:
 		text = ""
 
 		for filename in se.get_target_filenames([self.path], (".xhtml",)):
-			with open(filename, "r", encoding="utf-8") as file:
-				text += " " + file.read()
+			text += self.get_file(filename)
 
 		self.metadata_xml = regex.sub(r"<meta property=\"se:reading-ease\.flesch\">[^<]*</meta>", f"<meta property=\"se:reading-ease.flesch\">{se.formatting.get_flesch_reading_ease(text)}</meta>", self.metadata_xml)
 
@@ -685,8 +728,7 @@ class SeEpub:
 			if filename.name == "endnotes.xhtml":
 				continue
 
-			with open(filename, "r", encoding="utf-8") as file:
-				word_count += se.formatting.get_word_count(file.read())
+			word_count += se.formatting.get_word_count(self.get_file(filename))
 
 		return word_count
 
@@ -758,17 +800,16 @@ class SeEpub:
 
 				properties = "properties=\""
 
-				with open(Path(root) / filename, "r", encoding="utf-8") as file:
-					file_contents = file.read()
+				file_contents = self.get_file(Path(root) / filename)
 
-					if regex.search(r"epub:type=\"[^\"]*?glossary[^\"]*?\"", file_contents):
-						properties += "glossary "
+				if regex.search(r"epub:type=\"[^\"]*?glossary[^\"]*?\"", file_contents):
+					properties += "glossary "
 
-					if "http://www.w3.org/1998/Math/MathML" in file_contents:
-						properties += "mathml "
+				if "http://www.w3.org/1998/Math/MathML" in file_contents:
+					properties += "mathml "
 
-					if ".svg" in file_contents:
-						properties += "svg "
+				if ".svg" in file_contents:
+					properties += "svg "
 
 				properties = " " + properties.strip() + "\""
 
@@ -981,8 +1022,7 @@ class SeEpub:
 
 			file_path = self.path / "src/epub/text" / file_name
 			try:
-				with open(file_path) as file:
-					dom = se.easy_xml.EasyXhtmlTree(file.read())
+				dom = self.get_dom(file_path)
 			except Exception as ex:
 				raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{file_path}]{file_path}[/][/].") from ex
 
@@ -1031,7 +1071,8 @@ class SeEpub:
 
 		if notes_changed > 0:
 			# Now we need to recreate the endnotes file
-			for ol_node in self._endnotes_dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol[1]"):
+			endnotes_dom = self.get_dom(self.path / "src" / "epub" / "text" / "endnotes.xhtml")
+			for ol_node in endnotes_dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol[1]"):
 				for node in ol_node.xpath("./li[contains(@epub:type, 'endnote')]"):
 					node.remove()
 
@@ -1047,6 +1088,6 @@ class SeEpub:
 						ol_node.append(endnote.node)
 
 			with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml", "w") as file:
-				file.write(se.formatting.format_xhtml(self._endnotes_dom.to_string()))
+				file.write(se.formatting.format_xhtml(endnotes_dom.to_string()))
 
 		return (current_note_number - 1, notes_changed)
