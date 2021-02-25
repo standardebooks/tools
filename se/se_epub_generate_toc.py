@@ -649,7 +649,7 @@ def process_all_content(file_list: list, text_path: str) -> Tuple[list, list]:
 			with open(file_path) as file:
 				dom = se.easy_xml.EasyXhtmlTree(file.read())
 		except Exception as ex:
-			raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{file_path}]{file_path}[/][/]. {ex}") from ex
+			raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{file_path}]{file_path}[/][/]. Exception: {ex}") from ex
 
 		add_landmark(dom, textf, landmarks)
 
