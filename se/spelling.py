@@ -335,6 +335,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bLaocoon", r"Laocoön", xhtml)				# Lacoon -> Laocoön
 	xhtml = regex.sub(r"Porto Rico", "Puerto Rico", xhtml)				# Porto Rico -> Puerto Rico
 	xhtml = regex.sub(r"Mahomet", "Muhammad", xhtml)				# Mahomet -> Muhammad
+	xhtml = regex.sub(r"Esthonian", "Estonian", xhtml)				# Esthonian -> Estonian
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
