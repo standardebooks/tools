@@ -747,10 +747,8 @@ def _create_draft(args: Namespace):
 		# There's a "Short Fiction" Wikipedia article, so make an exception for that case
 		ebook_wiki_url, _ = _get_wikipedia_url(title, False)
 
-	# Pre-fill a few templates
+	# Pre-fill titlepage.xhtml
 	_replace_in_file(repo_path / "src" / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", title_string)
-	_replace_in_file(repo_path / "images" / "titlepage.svg", "TITLE_STRING", title_string)
-	_replace_in_file(repo_path / "images" / "cover.svg", "TITLE_STRING", title_string)
 
 	# Create the titlepage SVG
 	contributors = {}
