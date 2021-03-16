@@ -289,6 +289,7 @@ TYPOGRAPHY
 "t-052", "Stage direction without ending punctuation. Note that ending punctuation is optional in stage direction that is an interjection in a parent clause, and such interjections should begin with a lowercase letter."
 "t-053", "Stage direction starting in lowercase letter."
 "t-054", "Epigraphs that are entirely non-English should be set in italics, not Roman."
+"t-055", "Lone acute accent ([val]´[/]). A more accurate Unicode character like prime for coordinates or measurements, or combining accent or breathing mark for Greek text, is required."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1263,6 +1264,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				matches = regex.findall(r"(>>|>&gt;)", file_contents)
 				if matches:
 					messages.append(LintMessage("x-008", "Elements should end with a single [text]>[/].", se.MESSAGE_TYPE_WARNING, filename))
+
+				# Check for lone acute accents, which should always be combined or swapped for a more accurate Unicode char
+				if "´" in file_contents:
+					messages.append(LintMessage("t-055", "Lone acute accent ([val]´[/]). A more accurate Unicode character like prime for coordinates or measurements, or combining accent or breathing mark for Greek text, is required.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for periods followed by lowercase.
 				temp_xhtml = regex.sub(r"<title>.+?</title>", "", file_contents) # Remove <title> because it might contain something like <title>Chapter 2: The Antechamber of M. de Tréville</title>
