@@ -290,6 +290,7 @@ TYPOGRAPHY
 "t-053", "Stage direction starting in lowercase letter."
 "t-054", "Epigraphs that are entirely non-English should be set in italics, not Roman."
 "t-055", "Lone acute accent ([val]´[/]). A more accurate Unicode character like prime for coordinates or measurements, or combining accent or breathing mark for Greek text, is required."
+"t-056", "Masculine ordinal indicator ([val]º[/]) used instead of degree symbol ([val]°[/]). Note that the masculine ordinal indicator may be appropriate for ordinal numbers read as Latin, i.e. [val]12º[/] reading [val]duodecimo[/]."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1781,6 +1782,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[self::p or self::blockquote][contains(@epub:type, 'se:name.')]")
 				if nodes:
 					messages.append(LintMessage("s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+
+				# Check for degree confusable
+				matches = regex.findall(r"[0-9]+º", file_contents)
+				if matches:
+					messages.append(LintMessage("t-056", "Masculine ordinal indicator ([val]º[/]) used instead of degree symbol ([val]°[/]). Note that the masculine ordinal indicator may be appropriate for ordinal numbers read as Latin, i.e. [val]12º[/] reading [val]duodecimo[/].", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check that possessives appear within persona blocks
 				nodes = dom.xpath("/html/body//b[contains(@epub:type, 'z3998:persona') and ./following-sibling::node()[1][re:test(., '^’s?')]]")
