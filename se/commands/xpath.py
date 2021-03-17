@@ -24,7 +24,7 @@ def xpath() -> int:
 
 	for filepath in se.get_target_filenames(args.targets, ".xhtml", []):
 		try:
-			with open(filepath, 'r') as file:
+			with open(filepath, "r", encoding="utf-8") as file:
 				dom = se.easy_xml.EasyXhtmlTree(file.read())
 
 			nodes = dom.xpath(args.xpath)
