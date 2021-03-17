@@ -298,7 +298,7 @@ def output_toc(item_list: list, landmark_list, toc_path: str, work_type: str, wo
 		raise se.InvalidInputException("Too few ToC items found.")
 
 	try:
-		with open(toc_path) as file:
+		with open(toc_path, encoding="utf8") as file:
 			toc_dom = se.easy_xml.EasyXhtmlTree(file.read())
 	except Exception as ex:
 		raise se.InvalidInputException(f"Existing ToC not found. Exception: {ex}")
@@ -646,7 +646,7 @@ def process_all_content(file_list: list, text_path: str) -> Tuple[list, list]:
 	for textf in file_list:
 		file_path = Path(text_path) / textf
 		try:
-			with open(file_path) as file:
+			with open(file_path, encoding="utf8") as file:
 				dom = se.easy_xml.EasyXhtmlTree(file.read())
 		except Exception as ex:
 			raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{file_path}]{file_path}[/][/]. Exception: {ex}") from ex
