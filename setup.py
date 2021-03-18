@@ -68,7 +68,7 @@ setup(
 		"importlib_resources==1.0.2",
 		"lxml==4.6.2",
 		"natsort==7.1.0",
-		"pillow==8.0.1",
+		"pillow==8.1.1",
 		"psutil==5.7.3",
 		"pyopenssl==20.0.0",  # Required to allow the `requests` package to use https on Mac OSX
 		"pyphen==0.10.0",
