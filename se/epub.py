@@ -34,8 +34,7 @@ def convert_toc_to_ncx(epub_root_absolute_path: Path, toc_filename: str, xsl_fil
 
 	toc_tree = se.easy_xml.EasyXhtmlTree(xhtml)
 	transform = etree.XSLT(etree.parse(str(xsl_filename)))
-	posix_path = Path(epub_root_absolute_path ).as_posix() 
-	ncx_tree = transform(etree.fromstring(str.encode(xhtml)), cwd=f"'{posix_path}/'")
+	ncx_tree = transform(etree.fromstring(str.encode(xhtml)), cwd=f"'{epub_root_absolute_path.as_posix()}/'")
 
 	with open(epub_root_absolute_path / "epub" / "toc.ncx", "w", encoding="utf-8") as file:
 		ncx_xhtml = etree.tostring(ncx_tree, encoding="unicode", pretty_print=True, with_tail=False)
