@@ -121,7 +121,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?|Hon|Mdlle)\.?(</abbr>)?\s+", fr"\1.\2{se.NO_BREAK_SPACE}", xhtml)
 
 	# Include a non-breaking space after Mon. We can't include it in the above regex because `Mon` may appear as running French language (i.e. `Mon Dieu`)
-	xhtml = regex.sub(r"\bMon\.(</abbr>)?\s+", fr"Mon.\2{se.NO_BREAK_SPACE}", xhtml)
+	xhtml = regex.sub(r"\bMon\.(</abbr>)?\s+", fr"Mon.\1{se.NO_BREAK_SPACE}", xhtml)
 
 	# \P{} is the inverse of \p{}, so this regex matches any of the abbrs followed by any punctuation except a period. We also 'or' against a word joiner,
 	# in case Mr. is run up against an em dash.
