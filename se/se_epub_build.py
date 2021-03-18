@@ -506,6 +506,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						processed_xhtml = processed_xhtml.replace("✗", "×")
 						processed_xhtml = processed_xhtml.replace(" ", f"{se.NO_BREAK_SPACE}{se.NO_BREAK_SPACE}") # em-space to two nbsps
 
+						# Replace combining vertical line above, used to indicate stressed syllables, with combining acute accent
+						processed_xhtml = processed_xhtml.replace(fr"{se.COMBINING_VERTICAL_LINE_ABOVE}", fr"{se.COMBINING_ACUTE_ACCENT}")
+
 						# Many e-readers don't support the word joiner character (U+2060).
 						# They DO, however, support the now-deprecated zero-width non-breaking space (U+FEFF)
 						# For epubs, do this replacement.  Kindle now seems to handle everything fortunately.
