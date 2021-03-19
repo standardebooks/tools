@@ -279,7 +279,6 @@ TYPOGRAPHY
 "t-042", "Possible typo."
 "t-043", "Dialog tag missing punctuation."
 "t-044", "Comma required after leading [text]Or[/] in subtitles."
-"t-045", "[xhtml]<p>[/] preceded by [xhtml]<blockquote>[/] and starting in a lowercase letter, but without [val]continued[/] class."
 "t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead."
 "t-047", "[text]US[/] should be [text]U.S.[/]"
 "t-048", "Chapter opening text in all-caps."
@@ -291,6 +290,8 @@ TYPOGRAPHY
 "t-054", "Epigraphs that are entirely non-English should be set in italics, not Roman."
 "t-055", "Lone acute accent ([val]´[/]). A more accurate Unicode character like prime for coordinates or measurements, or combining accent or breathing mark for Greek text, is required."
 "t-056", "Masculine ordinal indicator ([val]º[/]) used instead of degree symbol ([val]°[/]). Note that the masculine ordinal indicator may be appropriate for ordinal numbers read as Latin, i.e. [val]12º[/] reading [val]duodecimo[/]."
+UNUSED
+"t-045", "[xhtml]<p>[/] preceded by [xhtml]<blockquote>[/] and starting in a lowercase letter, but without [val]continued[/] class."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1553,8 +1554,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("t-023", "Comma inside [xhtml]<i>[/] element before closing dialog.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "”" for node in nodes]))
 
-				# Check for <p> tags that follow figure, blockquote, or table, and start with a lowercase letter, but that don't have the `continued` class
-				nodes = dom.xpath("/html/body//p[preceding-sibling::*[1][name() = 'figure' or name() = 'blockquote' or name() = 'table'] and re:test(., '^[a-z]') and not(contains(@class, 'continued'))]")
+				# Check for <p> tags that follow figure, blockquote, or table, and start with a lowercase letter, but that don't have the `continued` class. Exclude matches whose first child is <cite>, so we don't match things like <p><cite>—Editor</cite>
+				nodes = dom.xpath("/html/body//p[preceding-sibling::*[1][name() = 'figure' or name() = 'blockquote' or name() = 'table'] and re:test(., '^([a-z]|—|…)') and not(contains(@class, 'continued')) and not(./*[1][self::cite])]")
 				if nodes:
 					messages.append(LintMessage("s-081", "[xhtml]<p>[/] preceded by [xhtml]<figure>[/], [xhtml]<blockquote>[/xhtml], or [xhtml]<table>[/], but without [val]continued[/] class.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
@@ -1669,11 +1670,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'fulltitle') and name() !='h1' and name() !='hgroup']")
 				if nodes:
 					messages.append(LintMessage("s-065", "[val]fulltitle[/] semantic on element that is not [xhtml]<h1>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for p tags preceded by blockquote that don't have the `continued` class. Exclude matches whose first child is <cite>, so we don't match things like <p><cite>—Editor</cite>
-				nodes = dom.xpath("/html/body//p[(preceding-sibling::*[1])[self::blockquote] and not(contains(@class, 'continued')) and re:test(., '^([a-z]|—|…)') and not(./*[1][self::cite])]")
-				if nodes:
-					messages.append(LintMessage("t-045", "[xhtml]<p>[/] preceded by [xhtml]<blockquote>[/] and starting in a lowercase letter, but without [val]continued[/] class.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for HTML tags in <title> tags
 				nodes = dom.xpath("/html/head/title/*")
