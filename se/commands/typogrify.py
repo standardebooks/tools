@@ -5,11 +5,11 @@ This module implements the `se typogrify` command.
 import argparse
 import html
 
-import regex
 from rich.console import Console
 
 import se
 import se.typography
+import se.easy_xml
 
 
 def typogrify() -> int:
@@ -40,38 +40,30 @@ def typogrify() -> int:
 				xhtml = file.read()
 
 				if filename.name == "content.opf":
-					processed_xhtml = xhtml
+					dom = se.easy_xml.EasyOpfTree(xhtml)
 
-					# Extract the long description
-					matches = regex.search(r"""<meta(?:[^<]*?)property="se:long-description"(?:[^<]*?)>(.+?)</meta>""", xhtml, flags=regex.DOTALL)
+					# Typogrify metadata except for URLs, dates, and LoC subjects
+					for node in dom.xpath("/package/metadata/dc:*[local-name() != 'subject' and local-name() != 'source' and local-name() != 'date']") + dom.xpath("/package/metadata/meta[not(contains(@property, 'se:url') or @property = 'dcterms:modified' or @property = 'se:production-notes')]"):
+						contents = node.lxml_element.text
 
-					if matches:
-						long_description = matches[1].strip()
+						if contents:
+							contents = html.unescape(contents)
 
-						processed_long_description = html.unescape(long_description)
+							contents = se.typography.typogrify(contents)
 
-						processed_long_description = se.typography.typogrify(long_description)
+							# Tweak: Word joiners and nbsp don't go in metadata
+							contents = contents.replace(se.WORD_JOINER, "")
+							contents = contents.replace(se.NO_BREAK_SPACE, " ")
 
-						# Tweak: Word joiners and nbsp don't go in the long description
-						processed_long_description = processed_long_description.replace(se.WORD_JOINER, "")
-						processed_long_description = processed_long_description.replace(se.NO_BREAK_SPACE, " ")
+							# Typogrify escapes ampersands, and then lxml will also escape them again, so we unescape them
+							# before passing to lxml.
+							if node.get_attr("property") != "se:long-description":
+								contents = contents.replace("&amp;", "&").strip()
 
-						processed_long_description = html.escape(processed_long_description, False)
+							node.lxml_element.text = contents
 
-						processed_xhtml = xhtml.replace(long_description, processed_long_description)
+					processed_xhtml = dom.to_string()
 
-					# Extract the regular description
-					matches = regex.search(r"""<dc:description(?:[^<]*?)>(.+?)</dc:description>""", xhtml, flags=regex.DOTALL)
-
-					if matches:
-						description = matches[1].strip()
-						processed_description = se.typography.typogrify(description)
-
-						# Tweak: Word joiners and nbsp don't go in the regular description
-						processed_description = processed_description.replace(se.WORD_JOINER, "")
-						processed_description = processed_description.replace(se.NO_BREAK_SPACE, " ")
-
-						processed_xhtml = processed_xhtml.replace(description, processed_description)
 				else:
 					processed_xhtml = se.typography.typogrify(xhtml, args.quotes)
 
