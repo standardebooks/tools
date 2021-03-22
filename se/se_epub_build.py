@@ -478,9 +478,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# See The Man Who Was Thursday by G K Chesterton
 						processed_xhtml = regex.sub(r"(<h[1-6] [^>]*) role=\".*?\">", "\\1>", processed_xhtml)
 
-						# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
-						processed_xhtml = processed_xhtml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
-
 						# We converted svgs to pngs, so replace references
 						processed_xhtml = processed_xhtml.replace("cover.svg", "cover.jpg")
 
