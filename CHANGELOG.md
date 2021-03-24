@@ -1,3 +1,79 @@
+# 1.9.1
+
+## General
+
+- Update the toolset to use `halftitlepage.xhtml` instead of `halftitle.xhtml` throughout
+
+- Add support for new `se:role` metadata property
+
+## se build
+
+- Use posix path for XSLT transform. Thanks to ConcaveTrillion
+
+- Convert combining vertical line above to acute accent during build
+
+- Remove outdated Calibre workaround for Kindle
+
+- Remove outdated Play Books compatibility tweak
+
+- Update `epubcheck` to 4.2.5
+
+- Remove outdated `epubcheck` workaround
+
+## se create-draft
+
+-  Remove unnecessary prefilling of cover and titlepage. Thanks to Robin Whittleton
+
+## se modernize-spelling
+
+- Various additions
+
+## se print-toc
+
+- Add exception msg on file open/parse error. Thanks to Vince Rice
+
+- Fix Unicode file open issues. Thanks to ConcaveTrillion
+
+## se lint
+
+- Update t-011 to exlude quotations in letter signatures
+
+- Add c-022, illegal rem unit
+
+- Add more detail to lint error message for invalid XML
+
+- Add filename to lint error message for invalid XML
+
+- Add s-082, non-Latin-script language tag missing script suffix
+
+- Add t-055, lone acute accent
+
+- Add t-056, ordinal character used instead of degree character
+
+- Merge t-045 and s-081 in favor of s-081
+
+- Add f-015, filename doesn't match id attribute
+
+- Add t-045, element with z3998:persona semantic that is set in italics
+
+- Add s-083, persona <td> with child <p> element
+
+## se recompose-epub
+
+- Don't pretty-print output if the size of the string would crash lxml
+
+## se titlecase
+
+- Lowercase `mm` if used as a measurement
+
+## se typogrify
+
+- Don't ignore colophon, loi, or half title
+
+- Fix broken regex
+
+- Typogrify all metadata, not just the descriptions
+
 # 1.8.5
 
 ## General
