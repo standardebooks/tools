@@ -280,6 +280,7 @@ TYPOGRAPHY
 "t-042", "Possible typo."
 "t-043", "Dialog tag missing punctuation."
 "t-044", "Comma required after leading [text]Or[/] in subtitles."
+"t-045", "Element has [val]z3998:persona[/] semantic and is also set in italics."
 "t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead."
 "t-047", "[text]US[/] should be [text]U.S.[/]"
 "t-048", "Chapter opening text in all-caps."
@@ -291,8 +292,6 @@ TYPOGRAPHY
 "t-054", "Epigraphs that are entirely non-English should be set in italics, not Roman."
 "t-055", "Lone acute accent ([val]´[/]). A more accurate Unicode character like prime for coordinates or measurements, or combining accent or breathing mark for Greek text, is required."
 "t-056", "Masculine ordinal indicator ([val]º[/]) used instead of degree symbol ([val]°[/]). Note that the masculine ordinal indicator may be appropriate for ordinal numbers read as Latin, i.e. [val]12º[/] reading [val]duodecimo[/]."
-UNUSED
-"t-045", "[xhtml]<p>[/] preceded by [xhtml]<blockquote>[/] and starting in a lowercase letter, but without [val]continued[/] class."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1620,6 +1619,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("//*[re:test(@xml:lang, '^[A-Z]')]")
 				if nodes:
 					messages.append(LintMessage("x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+				# Check for personas that are italicized. Use re:test instead of contains to avoid catching z3998:personal-name
+				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:persona\\b') and @data-css-font-style = 'italic']")
+				if nodes:
+					messages.append(LintMessage("t-045", "Element has [val]z3998:persona[/] semantic and is also set in italics.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for signature semantic without small caps
 				# Ignore signatures that are only capital letters
