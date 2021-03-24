@@ -234,6 +234,7 @@ SEMANTICS & CONTENT
 "s-080", "[xhtml]<td>[/] in drama containing both inline text and a block-level element. All children should either be only text, or only block-level elements."
 "s-081", "[xhtml]<p>[/] preceded by [xhtml]<figure>[/], [xhtml]<blockquote>[/xhtml], or [xhtml]<table>[/], but without [val]continued[/] class."
 "s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/]."
+"s-083", "[xhtml]<td epub:type=\"z3998:persona\">[/] element with child [xhtml]<p>[/] element."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1840,6 +1841,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[(name() = 'div' or name() = 'p') and contains(@epub:type, 'z3998:postscript') and not((./parent::blockquote or ./parent::footer) and count(./preceding-sibling::*) = 0) and @data-css-margin-top != '1em']")
 				if nodes:
 					messages.append(LintMessage("c-017", "Element with [val]z3998:postscript[/] semantic, but without [css]margin-top: 1em;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for persona <td>s that have child <p> elements
+				nodes = dom.xpath("/html/body//td[contains(@epub:type, 'z3998:persona') and ./p]")
+				if nodes:
+					messages.append(LintMessage("s-083", "[xhtml]<td epub:type=\"z3998:persona\">[/] element with child [xhtml]<p>[/] element.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for <p> postscripts that don't have text-indent: 0.
 				nodes = dom.xpath("/html/body//p[contains(@epub:type, 'z3998:postscript') and (not(@data-css-text-align) or @data-css-text-align = 'initial' or @data-css-text-align = 'left') and @data-css-text-indent != '0']")
