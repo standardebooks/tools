@@ -840,21 +840,14 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					split_output = output.split("\n")
 					output = "\n".join(split_output[:-2])
 
-					# epubcheck 4.2.4 has a bug where the glossary attribute is not allowed in content.opf.
-					# If that's the only error we have, continue as if we passed.
-					# This check can be removed once epubcheck fixes their bug.
-					split_output = output.split("\n")
-					bugged_epubcheck = len(split_output) == 1 and "OPF-015" in split_output[0] and "glossary" in split_output[0]
+					# Try to linkify files in output if we can find them
+					try:
+						output = regex.sub(r"(ERROR\(.+?\): )(.+?)(\([0-9]+,[0-9]+\))", lambda match: match.group(1) + "[path][link=file://" + str(self.path / "src" / regex.sub(fr"^\..+?\.epub{os.sep}", "", match.group(2))) + "]" + match.group(2) + "[/][/]" + match.group(3), output)
+					except:
+						# If something goes wrong, just pass through the usual output
+						pass
 
-					if not bugged_epubcheck:
-						# Try to linkify files in output if we can find them
-						try:
-							output = regex.sub(r"(ERROR\(.+?\): )(.+?)(\([0-9]+,[0-9]+\))", lambda match: match.group(1) + "[path][link=file://" + str(self.path / "src" / regex.sub(fr"^\..+?\.epub{os.sep}", "", match.group(2))) + "]" + match.group(2) + "[/][/]" + match.group(3), output)
-						except:
-							# If something goes wrong, just pass through the usual output
-							pass
-
-						raise se.BuildFailedException(f"[bash]epubcheck[/] v{version} failed with:\n{output}") from ex
+					raise se.BuildFailedException(f"[bash]epubcheck[/] v{version} failed with:\n{output}") from ex
 
 		if build_kindle:
 			# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
