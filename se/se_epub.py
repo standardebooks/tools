@@ -185,7 +185,7 @@ class SeEpub:
 			illustrators = []
 			translators_have_display_seq = False
 			illustrators_have_display_seq = False
-			for role in self.metadata_dom.xpath("/package/metadata/meta[@property=\"role\"]"):
+			for role in self.metadata_dom.xpath("/package/metadata/meta[@property='role' or @property='se:role']"):
 				contributor_id = role.get_attr("refines").lstrip("#")
 				contributor_element = self.metadata_dom.xpath("/package/metadata/dc:contributor[@id=\"" + contributor_id + "\"]")
 				if contributor_element:

@@ -461,7 +461,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						for role in ARIA_ROLES:
 							processed_xhtml = regex.sub(fr"(epub:type=\"[^\"]*?{role}[^\"]*?\")", f"\\1 role=\"doc-{role}\"", processed_xhtml)
 
-						# We may have added multiple `role` attributes. epub doesn't allow more than one, so drop any others.
+						# We may have added multiple `role` attributes. xml doesn't allow more than one, so drop any others.
 						processed_xhtml = regex.sub(r"role=\"([^\"]+?)\"( role=\"([^\"]+?)\")+", "role=\"\\1\"", processed_xhtml)
 
 						# Some ARIA roles can't apply to some elements.
