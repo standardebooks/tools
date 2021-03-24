@@ -670,7 +670,7 @@ def process_all_content(file_list: list, text_path: str) -> Tuple[list, list]:
 		if place == Position.BACK:
 			nest_under_halftitle = False
 		process_headings(dom, textf, toc_list, nest_under_halftitle, single_file)
-		if textf == "halftitle.xhtml":
+		if textf == "halftitlepage.xhtml":
 			nest_under_halftitle = True
 
 	# We add this dummy item because outputtoc always needs to look ahead to the next item.

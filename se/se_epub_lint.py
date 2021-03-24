@@ -171,7 +171,7 @@ SEMANTICS & CONTENT
 "s-017", "[xhtml]<m:mfenced>[/] is deprecated in the MathML spec. Use [xhtml]<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>[/]."
 "s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements."
 "s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute."
-"s-020", "Frontmatter found, but no halftitle. Halftitle is required when frontmatter is present."
+"s-020", "Frontmatter found, but no half title page. Half title page is required when frontmatter is present."
 "s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)"
 "s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/]."
 "s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/]."
@@ -1856,11 +1856,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for ID attrs that don't match the filename.
 				# We simply check if there are *any* ids that match, because we can have multiple IDs--for example, works that are part of a volume or subchapters with IDs
 				# Ignore <body>s with more than 2 <article>s as those are probably short story collections
-				if filename.name not in ("halftitle.xhtml", "toc.xhtml"):
-					nodes = dom.xpath("/html/body[count(./article) < 2]//*[(name() = 'section' or name() = 'article') and @id]")
+				nodes = dom.xpath("/html/body[count(./article) < 2]//*[(name() = 'section' or name() = 'article') and @id]")
 
-					if nodes and filename.stem not in [node.get_attr("id") for node in nodes]:
-						messages.append(LintMessage("f-015", "Filename doesn’t match [attr]id[/] attribute of primary [xhtml]<section>[/] or [xhtml]<article>[/]. Hint: [attr]id[/] attributes don’t include the file extension.", se.MESSAGE_TYPE_ERROR, filename))
+				if nodes and filename.stem not in [node.get_attr("id") for node in nodes]:
+					messages.append(LintMessage("f-015", "Filename doesn’t match [attr]id[/] attribute of primary [xhtml]<section>[/] or [xhtml]<article>[/]. Hint: [attr]id[/] attributes don’t include the file extension.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for some known initialisms with incorrect possessive apostrophes
 				nodes = dom.xpath("/html/body//abbr[text()='I.O.U.'][(following-sibling::node()[1])[starts-with(., '’s')]]")
@@ -2253,7 +2252,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		messages.append(LintMessage("s-028", f"[path][link=file://{self.path / 'images/cover.svg'}]cover.svg[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match.", se.MESSAGE_TYPE_ERROR, self.path / "images/cover.svg"))
 
 	if has_frontmatter and not has_halftitle:
-		messages.append(LintMessage("s-020", "Frontmatter found, but no halftitle. Halftitle is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+		messages.append(LintMessage("s-020", "Frontmatter found, but no half title page. Half title page is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	if not has_cover_source:
 		missing_files.append(self.path / "images/cover.source.jpg")
@@ -2365,7 +2364,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	for heading in headings:
 		# Some compilations, like Songs of a Sourdough, have their title in the half title, so check against that before adding an error
-		if heading not in toc_headings and (heading[0], str(self.path / "src/epub/text/halftitle.xhtml")) not in toc_headings:
+		if heading not in toc_headings and (heading[0], str(self.path / "src/epub/text/halftitlepage.xhtml")) not in toc_headings:
 			messages.append(LintMessage("m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, Path(heading[1])))
 
 	# Check our ordered ToC entries against the spine

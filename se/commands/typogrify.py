@@ -27,7 +27,7 @@ def typogrify() -> int:
 	return_code = 0
 	ignored_filenames = se.IGNORED_FILENAMES
 	ignored_filenames.remove("toc.xhtml")
-	ignored_filenames.remove("halftitle.xhtml")
+	ignored_filenames.remove("halftitlepage.xhtml")
 	ignored_filenames.remove("loi.xhtml")
 	ignored_filenames.remove("colophon.xhtml")
 

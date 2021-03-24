@@ -870,8 +870,8 @@ class SeEpub:
 		if "epigraph.xhtml" in filenames:
 			spine.append("<itemref idref=\"epigraph.xhtml\"/>")
 
-		if "halftitle.xhtml" in filenames:
-			spine.append("<itemref idref=\"halftitle.xhtml\"/>")
+		if "halftitlepage.xhtml" in filenames:
+			spine.append("<itemref idref=\"halftitlepage.xhtml\"/>")
 
 		if "prologue.xhtml" in filenames:
 			spine.append("<itemref idref=\"prologue.xhtml\"/>")
@@ -1021,7 +1021,7 @@ class SeEpub:
 		change_list = []
 
 		for file_name in self.get_content_files():
-			if file_name in ["titlepage.xhtml", "colophon.xhtml", "uncopyright.xhtml", "imprint.xhtml", "halftitle.xhtml", "endnotes.xhtml"]:
+			if file_name in ["titlepage.xhtml", "colophon.xhtml", "uncopyright.xhtml", "imprint.xhtml", "halftitlepage.xhtml", "endnotes.xhtml"]:
 				continue
 
 			processed += 1
