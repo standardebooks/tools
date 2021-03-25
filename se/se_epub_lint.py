@@ -1571,7 +1571,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-024", "When italicizing language in dialog, italics go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for language tags transliterated into Latin script but missing `-Latn` suffix
-				nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '^(ru|el|zh|bn|hi)$') and re:test(., '[a-zA-Z]')]")
+				nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '^(ru|el|zh|bn|hi|sa)$') and re:test(., '[a-zA-Z]')]")
 				if nodes:
 					messages.append(LintMessage("s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
