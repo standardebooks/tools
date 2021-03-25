@@ -305,6 +305,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])oupcon", r"\1oupçon", xhtml)			# soupcon -> soupçon
 	xhtml = regex.sub(r"\b([Tt])ouzle", r"\1ousle", xhtml)				# touzle(d) -> tousle(d)
 	xhtml = regex.sub(r"\b([Cc])lientèle", r"\1lientele", xhtml)			# clientèle -> clientele
+	xhtml = regex.sub(r"\b([Cc])ardamum", r"\1ardamom", xhtml)			# cardamum -> cardamom
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
