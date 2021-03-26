@@ -32,8 +32,13 @@ def xpath() -> int:
 			if nodes:
 				console.print(f"[path][link=file://{filepath}]{filepath}[/][/]", highlight=False)
 				for node in nodes:
-					mystring = "".join([f"\t{line}\n" for line in node.to_string().splitlines()])
-					console.print(mystring)
+					if isinstance(node, se.easy_xml.EasyXmlElement):
+						output = node.to_string()
+					else:
+						# We may select text() nodes as a result
+						output = str(node)
+
+					console.print("".join([f"\t{line}\n" for line in output.splitlines()]))
 
 		except etree.XPathEvalError as ex:
 			se.print_error("Invalid xpath expression.")
