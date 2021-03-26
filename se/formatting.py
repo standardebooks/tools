@@ -103,6 +103,8 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"""(?<!\<abbr class="name( eoc)?"\>)Thos\.""", r"""<abbr class="name">Thos.</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="name( eoc)?"\>)Jas\.""", r"""<abbr class="name">Jas.</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="name (eoc)?"\>)Chas\.""", r"""<abbr class="name">Chas.</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr class="initialism (eoc)?"\>)T\.?V\.?\b""", r"""<abbr class="initialism">TV</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr class="initialism (eoc)?"\>)S\.?O\.?S\.?\b""", r"""<abbr class="initialism">SOS</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr class="initialism( eoc)?"\>)\b([1-4]D)\b""", r"""<abbr class="initialism">\2</abbr>""", xhtml)
 
 	# Wrap £sd shorthand
