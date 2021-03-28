@@ -151,6 +151,7 @@ METADATA
 "m-064", "SE ebook hyperlinked in long description but not italicized."
 "m-065", "Word count in metadata doesn’t match actual word count."
 "m-066", "[url]id.loc.gov[/] URL starting with illegal https."
+"m-067", "Non-SE link in long description."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -700,6 +701,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		# Did we mention an SE book in the long description, but without italics?
 		if regex.search(r"""(?<!<i>)<a href="https://standardebooks\.org/ebooks/[^"]+?/[^"]+?">(?!<i>)""", long_description):
 			messages.append(LintMessage("m-064", "SE ebook hyperlinked in long description but not italicized.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+		if regex.search(r"""<a href="https?://(?!standardebooks\.org)""", long_description):
+			messages.append(LintMessage("m-067", "Non-SE link in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 		# xml:lang is correct for the rest of the publication, but should be lang in the long desc
 		if "xml:lang" in long_description:
