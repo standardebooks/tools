@@ -150,6 +150,7 @@ METADATA
 "m-063", "Cover image has not been built."
 "m-064", "SE ebook hyperlinked in long description but not italicized."
 "m-065", "Word count in metadata doesn’t match actual word count."
+"m-066", "[url]id.loc.gov[/] URL starting with illegal https."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -862,6 +863,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	# Check for malformed URLs
 	messages = messages + _get_malformed_urls(self.metadata_xml, self.metadata_file_path)
+
+	if regex.search(r"https:\/\/id\.loc\.gov/", self.metadata_xml):
+		messages.append(LintMessage("m-066", "[url]id.loc.gov[/] URL starting with illegal https.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	if regex.search(r"id\.loc\.gov/authorities/names/[^\.]+\.html", self.metadata_xml):
 		messages.append(LintMessage("m-008", "[url]id.loc.gov[/] URL ending with illegal [path].html[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
