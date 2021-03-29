@@ -80,7 +80,7 @@ setup(
 		"smartypants==2.0.1",
 		"tinycss2==1.1.0",
 		"titlecase==0.13.0",
-		"Unidecode==1.2.0"
+		"unidecode==1.2.0"
 	],
 	include_package_data=True,
 	entry_points={
