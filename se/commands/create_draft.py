@@ -5,7 +5,6 @@ This module implements the `se create_draft` command.
 import argparse
 from io import StringIO
 import shutil
-import unicodedata
 import urllib.parse
 from argparse import Namespace
 from pathlib import Path
