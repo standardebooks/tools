@@ -1472,7 +1472,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-013", "Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "." for node in nodes]))
 
 				# Check for <abbr> elements that have two or more letters/periods, that don't have a semantic class
-				nodes = [node.to_string() for node in dom.xpath("/html/body//abbr[not(@class)][text() !='U.S.'][re:test(., '([A-Z]\\.?){2,}')]") if node.text not in initialism_exceptions]
+				# SS. is the French abbreviation for "Saints"
+				nodes = [node.to_string() for node in dom.xpath("/html/body//abbr[not(@class)][text() != 'U.S.' and text() != 'SS.'][re:test(., '([A-Z]\\.?){2,}')]") if node.text not in initialism_exceptions]
 				if nodes:
 					messages.append(LintMessage("s-045", "[xhtml]<abbr>[/] element without semantic class like [class]name[/] or [class]initialism[/].", se.MESSAGE_TYPE_WARNING, filename, nodes))
 
