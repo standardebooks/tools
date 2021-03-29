@@ -16,9 +16,10 @@ import roman
 import tinycss2
 from lxml import etree
 from titlecase import titlecase as pip_titlecase
-from se.easy_xml import EasyXhtmlTree
+from unidecode import unidecode
 
 import se
+from se.easy_xml import EasyXhtmlTree
 
 
 # This list of phrasing tags is not intended to be exhaustive. The list is only used
@@ -1147,7 +1148,7 @@ def make_url_safe(text: str) -> str:
 	"""
 
 	# 1. Convert accented characters to unaccented characters
-	text = regex.sub(r"\p{M}", "", unicodedata.normalize("NFKD", text))
+	text = unidecode(text)
 
 	# 2. Trim
 	text = text.strip()

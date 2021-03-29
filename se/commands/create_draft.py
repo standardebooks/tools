@@ -18,6 +18,7 @@ import requests
 from rich.console import Console
 from ftfy import fix_text
 from lxml import etree
+from unidecode import unidecode
 
 import se
 import se.formatting
@@ -98,7 +99,7 @@ def _get_word_widths(string: str, target_height: int) -> list:
 
 		for char in word:
 			# Convert accented characters to unaccented characters
-			char = regex.sub(r"\p{M}", "", unicodedata.normalize("NFKD", char))
+			char = unidecode(char)
 			width += int(LEAGUE_SPARTAN_100_WIDTHS[char] * target_height / 100) + LEAGUE_SPARTAN_KERNING + LEAGUE_SPARTAN_AVERAGE_SPACING
 
 		width = width - LEAGUE_SPARTAN_KERNING - LEAGUE_SPARTAN_AVERAGE_SPACING
