@@ -55,7 +55,7 @@ CONTRIBUTOR_BLOCK_TEMPLATE = """<dc:contributor id="CONTRIBUTOR_ID">CONTRIBUTOR_
 		<meta property="file-as" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_SORT</meta>
 		<meta property="se:name.person.full-name" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_FULL_NAME</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_WIKI_URL</meta>
-		<meta property="se:url.authority.nacoaf" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_NACOAF_URL</meta>
+		<meta property="se:url.authority.nacoaf" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_NACOAF_URI</meta>
 		<meta property="role" refines="#CONTRIBUTOR_ID" scheme="marc:relators">CONTRIBUTOR_MARC</meta>"""
 
 def _replace_in_file(file_path: Path, search: Union[str, list], replace: Union[str, list]) -> None:
@@ -347,16 +347,16 @@ def _generate_cover_svg(title: str, authors: List[str], title_string: str) -> st
 
 	return svg
 
-def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> Tuple[Optional[str], Optional[str]]:
+def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> Tuple[Optional[str], Optional[str]]:
 	"""
 	Given a string, try to see if there's a Wikipedia page entry, and an optional NACOAF entry, for that string.
 
 	INPUTS
 	string: The string to find on Wikipedia
-	get_nacoaf_url: Include NACOAF URL in resulting tuple, if found?
+	get_nacoaf_uri: Include NACOAF URI in resulting tuple, if found?
 
 	OUTPUTS
-	A tuple of two strings. The first string is the Wikipedia URL, the second is the NACOAF URL.
+	A tuple of two strings. The first string is the Wikipedia URL, the second is the NACOAF URI.
 	"""
 
 	# We try to get the Wikipedia URL by the subject by taking advantage of the fact that Wikipedia's special search will redirect you immediately
@@ -369,22 +369,22 @@ def _get_wikipedia_url(string: str, get_nacoaf_url: bool) -> Tuple[Optional[str]
 		se.print_error(f"Couldn’t contact Wikipedia. Exception: {ex}")
 
 	if response.status_code == 302:
-		nacoaf_url = None
+		nacoaf_uri = None
 		wiki_url = response.headers["Location"]
 		if urllib.parse.urlparse(wiki_url).path == "/wiki/Special:Search":
 			# Redirected back to search URL, no match
 			return None, None
 
-		if get_nacoaf_url:
+		if get_nacoaf_uri:
 			try:
 				response = requests.get(wiki_url)
 			except Exception as ex:
 				se.print_error(f"Couldn’t contact Wikipedia. Exception: {ex}")
 
 			for match in regex.findall(r"https?://id\.loc\.gov/authorities/names/n[0-9]+", response.text):
-				nacoaf_url = match
+				nacoaf_uri = match
 
-		return wiki_url, nacoaf_url
+		return wiki_url, nacoaf_uri
 
 	return None, None
 
@@ -486,8 +486,8 @@ def _generate_metadata_contributor_xml(contributors: List[Dict], contributor_typ
 		if contributor["wiki_url"]:
 			contributor_block = contributor_block.replace(">CONTRIBUTOR_WIKI_URL<", f">{contributor['wiki_url']}<")
 
-		if contributor["nacoaf_url"]:
-			contributor_block = contributor_block.replace(">CONTRIBUTOR_NACOAF_URL<", f">{contributor['nacoaf_url']}<")
+		if contributor["nacoaf_uri"]:
+			contributor_block = contributor_block.replace(">CONTRIBUTOR_NACOAF_URI<", f">{contributor['nacoaf_uri']}<")
 
 		# Make an attempt at figuring out the file-as name. We check for some common two-word last names.
 		matches = regex.findall(r"^(.+?)\s+((?:(?:Da|Das|De|Del|Della|Di|Du|El|La|Le|Van|Van Der|Von)\s+)?[^\s]+)$", contributor["name"])
@@ -498,7 +498,7 @@ def _generate_metadata_contributor_xml(contributors: List[Dict], contributor_typ
 			contributor_block = contributor_block.replace(">CONTRIBUTOR_SORT<", ">Anonymous<")
 			contributor_block = contributor_block.replace("""<meta property="se:name.person.full-name" refines="#ID">CONTRIBUTOR_FULL_NAME</meta>""", "")
 			contributor_block = contributor_block.replace("""<meta property="se:url.encyclopedia.wikipedia" refines="#ID">CONTRIBUTOR_WIKI_URL</meta>""", "")
-			contributor_block = contributor_block.replace("""<meta property="se:url.authority.nacoaf" refines="#ID">CONTRIBUTOR_NACOAF_URL</meta>""", "")
+			contributor_block = contributor_block.replace("""<meta property="se:url.authority.nacoaf" refines="#ID">CONTRIBUTOR_NACOAF_URI</meta>""", "")
 
 		contributor_block = contributor_block.replace(">CONTRIBUTOR_NAME<", f">{contributor['name']}<")
 		contributor_block = contributor_block.replace("id=\"CONTRIBUTOR_ID\"", f"id=\"{contributor_type}-{i + 1}\"")
@@ -533,15 +533,15 @@ def _create_draft(args: Namespace):
 	title = args.title.replace("'", "’")
 
 	for author in args.author:
-		authors.append({"name": author.replace("'", "’"), "wiki_url": None, "nacoaf_url": None})
+		authors.append({"name": author.replace("'", "’"), "wiki_url": None, "nacoaf_uri": None})
 
 	if args.translator:
 		for translator in args.translator:
-			translators.append({"name": translator.replace("'", "’"), "wiki_url": None, "nacoaf_url": None})
+			translators.append({"name": translator.replace("'", "’"), "wiki_url": None, "nacoaf_uri": None})
 
 	if args.illustrator:
 		for illustrator in args.illustrator:
-			illustrators.append({"name": illustrator.replace("'", "’"), "wiki_url": None, "nacoaf_url": None})
+			illustrators.append({"name": illustrator.replace("'", "’"), "wiki_url": None, "nacoaf_uri": None})
 
 	title_string = title
 	if authors and authors[0]["name"].lower() != "anonymous":
@@ -585,17 +585,17 @@ def _create_draft(args: Namespace):
 	# Get data on authors
 	for i, author in enumerate(authors):
 		if not args.offline and author["name"].lower() != "anonymous":
-			author["wiki_url"], author["nacoaf_url"] = _get_wikipedia_url(author["name"], True)
+			author["wiki_url"], author["nacoaf_uri"] = _get_wikipedia_url(author["name"], True)
 
 	# Get data on translators
 	for i, translator in enumerate(translators):
 		if not args.offline and translator["name"].lower() != "anonymous":
-			translator["wiki_url"], translator["nacoaf_url"] = _get_wikipedia_url(translator["name"], True)
+			translator["wiki_url"], translator["nacoaf_uri"] = _get_wikipedia_url(translator["name"], True)
 
 	# Get data on illlustrators
 	for i, illustrator in enumerate(illustrators):
 		if not args.offline and illustrator["name"].lower() != "anonymous":
-			illustrator["wiki_url"], illustrator["nacoaf_url"] = _get_wikipedia_url(illustrator["name"], True)
+			illustrator["wiki_url"], illustrator["nacoaf_uri"] = _get_wikipedia_url(illustrator["name"], True)
 
 	# Download PG HTML and do some fixups
 	if args.pg_url:
