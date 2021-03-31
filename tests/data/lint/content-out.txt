@@ -33,7 +33,7 @@ m-055 Error: content.opf Missing data in metadata.
         COVER_ARTIST
         COVER_ARTIST_SORT
         COVER_ARTIST_WIKI_URL
-        COVER_ARTIST_NACOAF_URL
+        COVER_ARTIST_NACOAF_URI
         TRANSCRIBER
         TRANSCRIBER_SORT
         TRANSCRIBER_URL
