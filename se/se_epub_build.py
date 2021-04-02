@@ -614,6 +614,26 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							# Now add the kobo spans
 							kobo.add_kobo_spans_to_node(dom.xpath("/html/body")[0].lxml_element)
 
+							# The above will often nest spans within spans, which can surprise CSS selectors present in local.css
+							# Try to remove those kinds of nested spans, which are the only children of other spans
+							# The xpath uses `local-name()` instead of directly selecting `span` because the `add_kobo_spans_to_node` function
+							# adds its spans with the html namespace (i.e. added spans are `html:span`), and EasyXml can't cope with new namespaces
+							# after the object has already been instantiated
+							for node in dom.xpath("/html/body//*[local-name() = 'span' and parent::span and contains(@class, 'koboSpan') and not(following-sibling::node()[normalize-space(.)] or preceding-sibling::node()[normalize-space(.)])]"):
+								if node.get_attr("id"):
+									node.parent.set_attr("id", node.get_attr("id"))
+
+								if node.get_attr("class"):
+									parent_class = node.parent.get_attr("class")
+									if parent_class:
+										parent_class = parent_class + " "
+									else:
+										parent_class = ""
+
+									node.parent.set_attr("class", parent_class + node.get_attr("class"))
+
+								node.unwrap()
+
 							# Clean up output
 							xhtml = dom.to_string()
 							xhtml = regex.sub(r"<html:span xmlns:html=\"http://www\.w3\.org/1999/xhtml\"", "<span", xhtml)
