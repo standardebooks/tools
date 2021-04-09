@@ -295,6 +295,7 @@ TYPOGRAPHY
 "t-054", "Epigraphs that are entirely non-English should be set in italics, not Roman."
 "t-055", "Lone acute accent ([val]´[/]). A more accurate Unicode character like prime for coordinates or measurements, or combining accent or breathing mark for Greek text, is required."
 "t-056", "Masculine ordinal indicator ([val]º[/]) used instead of degree symbol ([val]°[/]). Note that the masculine ordinal indicator may be appropriate for ordinal numbers read as Latin, i.e. [val]12º[/] reading [val]duodecimo[/]."
+"t-057", "[xhtml]<p>[/] starting with lowercase letter. Hint: [xhtml]<p>[/] that continues text after a [xhtml]<blockquote>[/] requires the [class]continued[/] class; and use [xhtml]<br/>[/] to split one clause over many lines."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1619,6 +1620,16 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//hgroup[./*[contains(@epub:type, 'subtitle')] and not(./*[contains(concat(' ', @epub:type, ' '), ' title ')])]")
 				if nodes:
 					messages.append(LintMessage("s-015", "Element has [val]subtitle[/] semantic, but without a sibling having a [val]title[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				# Check for <p> starting in lowercase
+				nodes = dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::figure or ancestor::ol[not(ancestor::section[contains(@epub:type, 'endnotes')])] or ancestor::ul or ancestor::table or preceding-sibling::*[1][name() = 'hr']) and not(contains(@class, 'continued') or contains(@epub:type, 'z3998:signature')) and not(./*[1][name() = 'math' or name() = 'var' or contains(@epub:type, 'z3998:grapheme')]) and re:test(., '^[^A-Za-z0-9]?[a-z]') and not(re:test(., '^\\([a-z]\\.?\\)\\.?'))]")
+
+				# We have to additionally filter using the regex library, because often a sentence may begin with an uppercase ACCENTED letter,
+				# and xpath's limited regex library doesn't support Unicode classes
+				nodes = [node for node in nodes if regex.match(r"^[^\p{Letter}0-9]?[\p{Lowercase_Letter}]", node.inner_text())]
+
+				if nodes:
+					messages.append(LintMessage("t-057", "[xhtml]<p>[/] starting with lowercase letter. Hint: [xhtml]<p>[/] that continues text after a [xhtml]<blockquote>[/] requires the [class]continued[/] class; and use [xhtml]<br/>[/] to split one clause over many lines.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for illegal elements in <head>
 				nodes = dom.xpath("/html/head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
