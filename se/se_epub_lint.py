@@ -1190,7 +1190,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for whitespace before noteref
 				# Do this early because we remove noterefs from headers later
-				nodes = dom.xpath("/html/body//a[contains(@epub:type, 'noteref') and re:test(preceding-sibling::node()[1], '\\s+$')]")
+				# Allow noterefs that do not have preceding text/elements (for example a "see note X" ref that is the only child in a <td>)
+				nodes = dom.xpath("/html/body//a[contains(@epub:type, 'noteref') and preceding-sibling::node()[normalize-space(.)] and re:test(preceding-sibling::node()[1], '\\s+$')]")
 				if nodes:
 					messages.append(LintMessage("t-012", "Illegal white space before noteref.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
