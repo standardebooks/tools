@@ -975,6 +975,17 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							# Remove the epub:type attribute, as Calibre turns it into just "type"
 							processed_xhtml = regex.sub(r"epub:type=\"[^\"]*?\"", "", processed_xhtml)
 
+							# Remove se:color-depth.black-on-transparent, as Calibre removes media queries so this will *always* be invisible
+							processed_xhtml = regex.sub(r"se:image\.color-depth\.black-on-transparent", "", processed_xhtml)
+							processed_xhtml = regex.sub(r"epub-type-se-image-color-depth-black-on-transparent", "", processed_xhtml)
+
+							# If the only element on the page is an absolutely positioned image, Kindle will ignore the file in the reading order.
+							# So, in that case we add a `<div>` with some text content to fool Kindle.
+							# However, Calibre will remove `font-size: 0` so we have to use `overflow` to hide the div.
+							dom = se.formatting.EasyXhtmlTree(processed_xhtml)
+							if dom.xpath("/html/body/*[name() = 'section' or name() = 'article']/*[(name() = 'figure' or name() = 'img') and not(preceding-sibling::node()[normalize-space(.)] or following-sibling::node()[normalize-space(.)])]"):
+								processed_xhtml = regex.sub(r"<body([^>]*?)>", r"""<body\1>\n<div style="height: 0; width: 0; overflow: hidden; line-height: 0; font-size: 0;">x</div>""", processed_xhtml)
+
 							if processed_xhtml != xhtml:
 								file.seek(0)
 								file.write(processed_xhtml)
