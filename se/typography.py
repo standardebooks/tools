@@ -101,6 +101,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Remove word joiners from following opening tags--they're usually never correct
 	xhtml = regex.sub(fr"<([\p{{Letter}}]+)([^>]*?)>{se.WORD_JOINER}", r"<\1\2>", xhtml, flags=regex.IGNORECASE)
 
+	# Add a word joiner after em dashes within <cite> elements
+	xhtml = regex.sub(r"<cite([^>]*?)>—", fr"<cite\1>—{se.WORD_JOINER}", xhtml)
+
 	# Finally fix some other mistakes
 	xhtml = xhtml.replace("—-", "—")
 
