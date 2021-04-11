@@ -68,6 +68,7 @@ CSS
 "c-022", "Illegal [css]rem[/] unit. Use [css]em[/] instead."
 "c-023", "Illegal unit used to set [css]font-size[/]. Hint: Use [css]em[/] units."
 "c-024", "Illegal unit used to set [css]line-height[/]. Hint: [css]line-height[/] is set without any units."
+"c-025", "Illegal percent unit used to set [css]height[/] or positioning property. Hint: [css]vh[/] to specify vertical-oriented properties like height or position."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -665,6 +666,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	matches = regex.findall(r"line-height\s*:\s*[0-9\.]+(?!;|[0-9\.]+)", self.local_css)
 	if matches:
 		messages.append(LintMessage("c-024", "Illegal unit used to set [css]line-height[/]. Hint: [css]line-height[/] is set without any units.", se.MESSAGE_TYPE_ERROR, local_css_path))
+
+	matches = regex.findall(r"(height|\stop|\sbottom)\s*:\s*[0-9\.]+%", self.local_css)
+	if matches:
+		messages.append(LintMessage("c-025", "Illegal percent unit used to set [css]height[/] or positioning property. Hint: [css]vh[/] to specify vertical-oriented properties like height or position.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
 	# Done checking local.css
 
