@@ -67,6 +67,7 @@ CSS
 "c-021", "Element with [css]font-style: italic;[/], but child [xhtml]<i>[/] or [xhtml]<em>[/] does not have [css]font-style: normal;[/]. Hint: Italics within italics are typically set in Roman for contrast; if that’s not the case here, can [xhtml]<i>[/] be removed while still preserving italics and semantic inflection?"
 "c-022", "Illegal [css]rem[/] unit. Use [css]em[/] instead."
 "c-023", "Illegal unit used to set [css]font-size[/]. Hint: Use [css]em[/] units."
+"c-024", "Illegal unit used to set [css]line-height[/]. Hint: [css]line-height[/] is set without any units."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -660,6 +661,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	matches = regex.findall(r"font-size\s*:\s*[0-9\.]+(?![0-9\.]|em)", self.local_css)
 	if matches:
 		messages.append(LintMessage("c-023", "Illegal unit used to set [css]font-size[/]. Hint: Use [css]em[/] units.", se.MESSAGE_TYPE_ERROR, local_css_path))
+
+	matches = regex.findall(r"line-height\s*:\s*[0-9\.]+(?!;|[0-9\.]+)", self.local_css)
+	if matches:
+		messages.append(LintMessage("c-024", "Illegal unit used to set [css]line-height[/]. Hint: [css]line-height[/] is set without any units.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
 	# Done checking local.css
 
