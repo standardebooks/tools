@@ -497,6 +497,18 @@ class SeEpub:
 			href = regex.sub(r"\.xhtml$", "", href)
 			link.set_attr("href", href)
 
+		# Apply the stylesheet to see if we have `position: absolute` on any items. If so, apply `position: relative` to its closest <section> ancestor
+		output_dom.apply_css(css)
+
+		# Select deepest sections or articles with id attributes that have figure or img children with position: absolute
+		for node in output_dom.xpath("/html/body//*[@id and (name() = 'section' or name = 'article') and not(.//*[(name() = 'section' or name() = 'article') and not(preceding-sibling::* or following-sibling::*)]) and (.//*[(name() = 'figure' or name() = 'img') and @data-css-position = 'absolute'])]"):
+			# Add CSS that gives sections position: relative
+			css = css + f"\n\t\t\t#{node.get_attr('id')}{{\n\t\t\t\tposition: relative;\n\t\t\t}}\n"
+
+			# We also have to give the children figure/img elements a height, because the section we selected earlier will now contain many children since it's been recomposed
+			for child in node.xpath(".//*[@id and (name() = 'figure' or name() = 'img')][1]"):
+				css = css + f"\n\t\t\t#{child.get_attr('id')}{{\n\t\t\t\theight: 100vh;\n\t\t\t}}\n"
+
 		# Get the output XHTML as a string
 		output_xhtml = output_dom.to_string()
 		output_xhtml = regex.sub(r"\"(\.\./)?text/(.+?)\.xhtml\"", "\"#\\2\"", output_xhtml)
