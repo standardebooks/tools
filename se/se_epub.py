@@ -640,12 +640,15 @@ class SeEpub:
 				# There may be some links within the notes that refer to other endnotes.
 				# These potentially need incrementing / decrementing too. This code assumes
 				# a link that looks something like <a href="#note-1">note 1</a>.
-				endnote_links = regex.findall(r"href=\"#note-(\d+)\"(.*?) (\d+)</a>", xhtml)
+				endnote_links = regex.findall(r"href=\"(endnotes\.xhtml)?#note-(\d+)\"(.*?)>(\d+)</a>", xhtml)
 				for link in endnote_links:
-					link_number = int(link[0])
+					link_number = int(link[1])
 					if (link_number < target_endnote_number and increment) or (link_number > target_endnote_number and not increment):
 						continue
-					xhtml = xhtml.replace(f"href=\"#note-{link[0]}\"{link[1]} {link[0]}</a>", "href=\"#note-{0}\"{1} {0}</a>".format(link_number + step, link[1]))
+
+					link_attrs = regex.sub(r" id=\"noteref-(.+?)\"", fr' id="noteref-{link_number + step}"', link[2])
+
+					xhtml = regex.sub(fr"href=\"(endnotes\.xhtml)?#note-{link[1]}\"{link[2]}>{link[1]}</a>", fr"""href="\1#note-{link_number + step}"{link_attrs}>{link_number + step}</a>""", xhtml)
 
 				file.seek(0)
 				file.write(xhtml)
