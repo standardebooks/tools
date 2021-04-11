@@ -1,3 +1,53 @@
+# 1.9.2
+
+## General
+
+-  Improve url-safe string generation when string contains accents. Thanks to Robin Whittleton
+
+## se build
+
+- Unwrap double-nested Kobo spans to prevent unexpected styling in local.css
+
+## se create-draft
+
+- Ensure NACOAF prefix is http. Thanks to Vince Rice
+
+- Add `unlocked` accesibility feature to `content.opf` template
+
+## se lint
+
+- Add `sa` and `he` to s-082
+
+- Add lint check for `id.loc.gov` URLs that start with https. Thanks to Robin Whittleton
+
+- Add m-067, non-SE link in long description
+
+- Improve s-045
+
+- Add t-057, <p> beginning with lowercase letter
+
+- Improve t-012
+
+## se modernize-spelling
+
+- Various additions
+
+## se print-spine
+
+- Add dramatis-personae and halftitlepage to exluded files. Thanks to Asher Smith
+
+## se reorder-endnotes
+
+-  reorder-endnotes: Improve reordering for endnotes within the endnotes file
+
+## se semanticate
+
+- Add SOS and TV
+
+## se xpath
+
+- Don't crash when printing string output
+
 # 1.9.1
 
 ## General
