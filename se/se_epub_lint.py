@@ -659,7 +659,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	if matches:
 		messages.append(LintMessage("c-022", "Illegal [css]rem[/] unit. Use [css]em[/] instead.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
-	matches = regex.findall(r"font-size\s*:\s*[0-9\.]+(?![0-9\.]|em)", self.local_css)
+	matches = regex.findall(r"font-size\s*:\s*[0-9\.]+(?![0-9\.]|em|ex)", self.local_css)
 	if matches:
 		messages.append(LintMessage("c-023", "Illegal unit used to set [css]font-size[/]. Hint: Use [css]em[/] units.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
