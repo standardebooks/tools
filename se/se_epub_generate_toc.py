@@ -402,8 +402,9 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, nest_under_ha
 		content_item = dom.xpath("//p | //header | //img")
 		if content_item is not None:
 			parents = content_item[0].xpath("./ancestor::*[name() = 'section' or name() = 'article']")
-			special_item.level = len(parents)
-			if special_item.level == 0:
+			if parents:
+				special_item.level = len(parents)
+			else:  # couldn't find a suitable parent, so just put it at top level
 				special_item.level = 1
 		if nest_under_halftitle:
 			special_item.level += 1
