@@ -1,3 +1,31 @@
+# 1.9.3
+
+## se build
+
+- Add compatibility code to allow Kindle to display pages whose only content is an aboslutely positioned image
+
+- Replace vh/vw units with percent for compatible epub
+
+## se lint
+
+- Add c-023, font size set without em units
+
+- Add c-024, line-height set with units
+
+- Add c-025, illegal percent unit on height property
+
+## se print-toc
+
+- Fixed a crash when ToC level could not be determined. Thanks to David Grigg
+
+## se recompose-epub
+
+-  recompose-epub: Add `position: relative;` to sections with child figures that have position: absolute, so that they will position correctly after recomposition
+
+## se typogrify
+
+- Add word joiners after em dashes within `<cite>` elements
+
 # 1.9.2
 
 ## General
