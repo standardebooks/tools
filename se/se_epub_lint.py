@@ -1937,7 +1937,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 				# Check for italics on things that shouldn't be italics
-				nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.music.song') or contains(@epub:type, 'se:name.publication.short-story') or contains(@epub:type, 'se:name.publication.essay')]")
+				nodes = dom.xpath("/html/body//i[not(@xml:lang)][contains(@epub:type, 'se:name.music.song') or contains(@epub:type, 'se:name.publication.short-story') or contains(@epub:type, 'se:name.publication.essay')]")
 				if nodes:
 					messages.append(LintMessage("s-060", "Italics on name that requires quotes instead.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
