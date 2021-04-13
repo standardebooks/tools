@@ -468,16 +468,37 @@ class SeEpub:
 		output_dom = se.formatting.EasyXhtmlTree(output_xhtml)
 
 		# Iterate over spine items in order and recompose them into our output
+		needs_wrapper_css = False
 		for ref in self.metadata_dom.xpath("/package/spine/itemref/@idref"):
 			filename = self.metadata_dom.xpath(f"/package/manifest/item[@id='{ref}']/@href")[0]
 
 			dom = self.get_dom(self.path / "src" / "epub" / filename)
 
+			# Apply the stylesheet to see if we have `position: absolute` on any items. If so, apply `position: relative` to its closest <section> ancestor
+			# See https://standardebooks.org/ebooks/jean-toomer/cane for an example of this in action
+			dom.apply_css(css)
+
+			# Select deepest sections or articles with id attributes that have ONLY figure or img children, and one of those children has position: absolute
+			for node in dom.xpath("/html/body//*[@id and (name() = 'section' or name = 'article') and not(.//*[(name() = 'section' or name() = 'article') and not(preceding-sibling::* or following-sibling::*)]) and count(./*[(name() = 'figure' or name() = 'img')]) = count(./*) and .//*[(name() = 'figure' or name() = 'img') and @data-css-position = 'absolute']]"):
+				needs_wrapper_css = True
+
+				# Wrap the sections in a div that we style later
+				wrapper_element = etree.SubElement(node.lxml_element, "div")
+				wrapper_element.set("class", "positioning-wrapper")
+				for child in node.xpath("./*[(name() = 'figure' or name() = 'img')]"):
+					wrapper_element.append(child.lxml_element) # .append() will *move* the element to the end of wrapper_element
+
+			# Now, recompose the children
 			for node in dom.xpath("/html/body/*"):
 				try:
 					self._recompose_xhtml(node, output_dom)
 				except se.SeException as ex:
 					raise se.SeException(f"[path][link=file://{self.path / 'src/epub/' / filename}]{filename}[/][/]: {ex}") from ex
+
+		# Did we add wrappers? If so add the CSS
+		# We also have to give the wrapper a height, because it may have siblings that were recomposed in from other files
+		if needs_wrapper_css:
+			css = css + "\n\t\t\t.positioning-wrapper{\n\t\t\t\tposition: relative; height: 100vh;\n\t\t\t}\n"
 
 		# Add the ToC after the titlepage
 		toc_dom = self.get_dom(self.path / "src" / "epub" / "toc.xhtml")
@@ -496,18 +517,6 @@ class SeEpub:
 			href = regex.sub(r".+/([^/]+)$", r"#\1", href)
 			href = regex.sub(r"\.xhtml$", "", href)
 			link.set_attr("href", href)
-
-		# Apply the stylesheet to see if we have `position: absolute` on any items. If so, apply `position: relative` to its closest <section> ancestor
-		output_dom.apply_css(css)
-
-		# Select deepest sections or articles with id attributes that have figure or img children with position: absolute
-		for node in output_dom.xpath("/html/body//*[@id and (name() = 'section' or name = 'article') and not(.//*[(name() = 'section' or name() = 'article') and not(preceding-sibling::* or following-sibling::*)]) and (.//*[(name() = 'figure' or name() = 'img') and @data-css-position = 'absolute'])]"):
-			# Add CSS that gives sections position: relative
-			css = css + f"\n\t\t\t#{node.get_attr('id')}{{\n\t\t\t\tposition: relative;\n\t\t\t}}\n"
-
-			# We also have to give the children figure/img elements a height, because the section we selected earlier will now contain many children since it's been recomposed
-			for child in node.xpath(".//*[@id and (name() = 'figure' or name() = 'img')][1]"):
-				css = css + f"\n\t\t\t#{child.get_attr('id')}{{\n\t\t\t\theight: 100vh;\n\t\t\t}}\n"
 
 		# Get the output XHTML as a string
 		output_xhtml = output_dom.to_string()
