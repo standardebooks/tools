@@ -834,13 +834,23 @@ def _create_draft(args: Namespace):
 			producers_xhtml = ""
 			i = 1
 			for producer in pg_producers:
+				# Name and File-As
 				if "Distributed Proofread" in producer:
-					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">The Online Distributed Proofreading Team</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Online Distributed Proofreading Team, The</meta>\n\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{i}\">https://pgdp.net</meta>\n"
+					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">The Online Distributed Proofreading Team</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Online Distributed Proofreading Team, The</meta>\n"
 				elif "anonymous" in producer.lower():
 					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">An Anonymous Volunteer</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Anonymous Volunteer, An</meta>\n"
 				else:
 					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">{producer.strip('.')}</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">TRANSCRIBER_SORT</meta>\n"
 
+				# Homepage
+				if "Distributed Proofread" in producer:
+					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{i}\">https://pgdp.net</meta>\n"
+
+				# LCCN
+				if "David Widger" in producer:
+					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"se:url.authority.nacoaf\" refines=\"#transcriber-{i}\">http://id.loc.gov/authorities/names/no2011017869</meta>\n"
+
+				# Role
 				producers_xhtml = producers_xhtml + f"\t\t<meta property=\"role\" refines=\"#transcriber-{i}\" scheme=\"marc:relators\">trc</meta>\n"
 
 				i = i + 1
