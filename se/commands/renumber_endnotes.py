@@ -26,6 +26,7 @@ def renumber_endnotes() -> int:
 		except se.SeException as ex:
 			se.print_error(ex)
 			return_code = ex.code
+			return return_code
 
 		try:
 			found_endnote_count, changed_endnote_count = se_epub.generate_endnotes()
