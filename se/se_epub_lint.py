@@ -299,6 +299,7 @@ TYPOGRAPHY
 "t-055", "Lone acute accent ([val]´[/]). A more accurate Unicode character like prime for coordinates or measurements, or combining accent or breathing mark for Greek text, is required."
 "t-056", "Masculine ordinal indicator ([val]º[/]) used instead of degree symbol ([val]°[/]). Note that the masculine ordinal indicator may be appropriate for ordinal numbers read as Latin, i.e. [val]12º[/] reading [val]duodecimo[/]."
 "t-057", "[xhtml]<p>[/] starting with lowercase letter. Hint: [xhtml]<p>[/] that continues text after a [xhtml]<blockquote>[/] requires the [class]continued[/] class; and use [xhtml]<br/>[/] to split one clause over many lines."
+"t-058", "Quotation mark used instead of ditto mark ([text]〃[/] or U+3003) in table."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1911,6 +1912,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//abbr[text()='I.O.U.'][(following-sibling::node()[1])[starts-with(., '’s')]]")
 				if nodes:
 					messages.append(LintMessage("t-039", "Initialism followed by [text]’s[/]. Hint: Plurals of initialisms are not followed by [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "’s" for node in nodes]))
+
+				# Check for ldquo or rdquo used instead of ditto mark in tables
+				nodes = dom.xpath("/html/body//table[not(ancestor-or-self::*[contains(@epub:type, 'z3998:drama')])]//td[re:test(normalize-space(.), '(^|\\s)[“”\"]+$')]")
+				if nodes:
+					messages.append(LintMessage("t-058", "Quotation mark used instead of ditto mark ([text]〃[/] or U+3003) in table.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for <header> elements with only h# child nodes
 				nodes = dom.xpath("/html/body//header[./*[re:test(name(), 'h[1-6]') and (count(preceding-sibling::*) + count(following-sibling::*)=0)]]")
