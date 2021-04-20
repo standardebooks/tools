@@ -16,6 +16,7 @@ def xpath() -> int:
 	"""
 
 	parser = argparse.ArgumentParser(description="Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed.")
+	parser.add_argument("-f", "--only-filenames", action="store_true", help="only output filenames of files that contain matches, not the matches themselves")
 	parser.add_argument("xpath", metavar="XPATH", help="an xpath expression")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
@@ -31,14 +32,15 @@ def xpath() -> int:
 
 			if nodes:
 				console.print(f"[path][link=file://{filepath}]{filepath}[/][/]", highlight=False)
-				for node in nodes:
-					if isinstance(node, se.easy_xml.EasyXmlElement):
-						output = node.to_string()
-					else:
-						# We may select text() nodes as a result
-						output = str(node)
+				if not args.only_filenames:
+					for node in nodes:
+						if isinstance(node, se.easy_xml.EasyXmlElement):
+							output = node.to_string()
+						else:
+							# We may select text() nodes as a result
+							output = str(node)
 
-					console.print("".join([f"\t{line}\n" for line in output.splitlines()]))
+						console.print("".join([f"\t{line}\n" for line in output.splitlines()]))
 
 		except etree.XPathEvalError as ex:
 			se.print_error("Invalid xpath expression.")
