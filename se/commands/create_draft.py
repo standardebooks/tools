@@ -99,6 +99,11 @@ def _get_word_widths(string: str, target_height: int) -> list:
 		for char in word:
 			# Convert accented characters to unaccented characters
 			char = unidecode(char)
+
+			# Oops! unidecode also converts `’` to `'`. Change it back here
+			if char == "'":
+				char = "’"
+
 			width += int(LEAGUE_SPARTAN_100_WIDTHS[char] * target_height / 100) + LEAGUE_SPARTAN_KERNING + LEAGUE_SPARTAN_AVERAGE_SPACING
 
 		width = width - LEAGUE_SPARTAN_KERNING - LEAGUE_SPARTAN_AVERAGE_SPACING
@@ -121,7 +126,6 @@ def _calculate_image_lines(string: str, target_height: int, canvas_width: int) -
 	OUTPUTS
 	An array of strings. Each string represents one line of text in the final image. The lines are ordered with the widest at the bottom.
 	"""
-
 	words = _get_word_widths(string, target_height)
 	lines = []
 	current_line = ""
@@ -752,10 +756,10 @@ def _create_draft(args: Namespace):
 
 	# Create the titlepage SVG
 	contributors = {}
-	if args.translator:
+	if translators:
 		contributors["translated by"] = _generate_contributor_string(translators, False)
 
-	if args.illustrator:
+	if illustrators:
 		contributors["illustrated by"] = _generate_contributor_string(illustrators, False)
 
 	with open(repo_path / "images" / "titlepage.svg", "w", encoding="utf-8") as file:
