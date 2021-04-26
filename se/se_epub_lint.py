@@ -300,6 +300,7 @@ TYPOGRAPHY
 "t-056", "Masculine ordinal indicator ([val]º[/]) used instead of degree symbol ([val]°[/]). Note that the masculine ordinal indicator may be appropriate for ordinal numbers read as Latin, i.e. [val]12º[/] reading [val]duodecimo[/]."
 "t-057", "[xhtml]<p>[/] starting with lowercase letter. Hint: [xhtml]<p>[/] that continues text after a [xhtml]<blockquote>[/] requires the [class]continued[/] class; and use [xhtml]<br/>[/] to split one clause over many lines."
 "t-058", "Quotation mark used instead of ditto mark ([text]〃[/] or U+3003) in table."
+"t-059", "Period at the end of [xhtml]<cite>[/] element before endnote backlink."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1606,6 +1607,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'subtitle') and re:test(text(), '^Or\\s')]")
 				if nodes:
 					messages.append(LintMessage("t-044", "Comma required after leading [text]Or[/] in subtitles.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for endnotes
+				nodes = dom.xpath("//*[contains(@epub:type, 'endnote')]//cite[not(./abbr[last()]) and ./following-sibling::*[1][contains(@epub:type, 'backlink')] and (re:test(., '\\.$') or ./following-sibling::node()[re:test(., '^\\.')])]")
+				if nodes:
+					messages.append(LintMessage("t-059", "Period at the end of [xhtml]<cite>[/] element before endnote backlink.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for style attributes
 				nodes = dom.xpath("/html/body//*[@style]")
