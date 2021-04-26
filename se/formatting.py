@@ -724,6 +724,10 @@ def format_opf(xml: str) -> str:
 		# After composing the string, lxml adds namespaces to every tag. The only way to remove them is with regex.
 		xhtml = regex.sub(r"\sxmlns(:.+?)?=\"[^\"]+?\"", "", xhtml)
 
+		# Make some easy fixes
+		xhtml = regex.sub(r"<p>\s+", "<p>", xhtml)
+		xhtml = regex.sub(r"\s+</p>", "</p>", xhtml)
+
 		# Remove the children so that we can replace them with the escaped xhtml
 		for child in node:
 			node.remove(child)
