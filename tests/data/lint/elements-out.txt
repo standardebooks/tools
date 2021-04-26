@@ -36,3 +36,6 @@ epub:type="backlink">↩</a></p>
 of by Herodotus (Herod. <span epub:type="z3998:roman">IX</span> 72) as being 
 remarkable for his beauty.—<abbr class="name eoc">L. H. H.</abbr> <a 
 href="chapter-1.xhtml#noteref-3" epub:type="backlink">↩</a></p>
+t-059 Manual Review: endnotes.xhtml Period at the end of `<cite>` element before
+endnote backlink.
+        <cite>—Editor.</cite>
