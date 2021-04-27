@@ -307,6 +307,14 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Cc])lientèle", r"\1lientele", xhtml)			# clientèle -> clientele
 	xhtml = regex.sub(r"\b([Cc])ardamum", r"\1ardamom", xhtml)			# cardamum -> cardamom
 	xhtml = regex.sub(r"\b([Ff])idgetted", r"\1idgeted", xhtml)			# fidgetted -> fidgeted
+	xhtml = regex.sub(r"\b([Pp])ublick", r"\1ublic", xhtml)				# publick -> public
+	xhtml = regex.sub(r"\b([Pp])rophane", r"\1rofane", xhtml)			# prophane -> profane
+	xhtml = regex.sub(r"\b([Nn])o where", r"\1owhere", xhtml)			# no where -> nowhere
+	xhtml = regex.sub(r"\b([Tt])yth", r"\1ith", xhtml)				# tythe -> tithe
+	xhtml = regex.sub(r"\b([Ss])lily", r"\1lyly", xhtml)				# slily -> slyly
+	xhtml = regex.sub(r"\b([Ff])oretel\b", r"\1oretell", xhtml)			# foretel -> foretell
+	xhtml = regex.sub(r"\b([Cc])ypher", r"\1cipher", xhtml)				# cypher -> cipher
+	xhtml = regex.sub(r"\b([Dd])ivers\b", r"\1iverse", xhtml)			# divers -> diverse
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
