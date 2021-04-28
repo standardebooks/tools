@@ -380,6 +380,11 @@ def modernize_spelling(xhtml: str) -> str:
 	# X-ray is always capitalized. Match a preceding space so that we don't catch it in an ID attribute.
 	xhtml = regex.sub(r"([\p{Punctuation}\s])x-ray", r"\1X-ray", xhtml)
 
+	# Replace 2d with 2nd and 3d with 3rd
+	# Check for a following abbr because `3<abbr>d.</abbr>` could mean `3 pence`
+	xhtml = regex.sub(r"\b([0-9]*2)d(?!</abbr>)", r"\1nd", xhtml)
+	xhtml = regex.sub(r"\b([0-9]*3)d(?!</abbr>)", r"\1rd", xhtml)
+
 	# Canadian spelling follows US
 	if language in ["en-US", "en-CA"]:
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)
