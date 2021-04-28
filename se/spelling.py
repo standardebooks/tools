@@ -315,6 +315,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ff])oretel\b", r"\1oretell", xhtml)			# foretel -> foretell
 	xhtml = regex.sub(r"\b([Cc])ypher", r"\1cipher", xhtml)				# cypher -> cipher
 	xhtml = regex.sub(r"\b([Dd])ivers\b", r"\1iverse", xhtml)			# divers -> diverse
+	xhtml = regex.sub(r"\b([Ll])anthorn", r"\1antern", xhtml)			# lanthorn -> lantern
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
