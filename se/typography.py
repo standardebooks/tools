@@ -73,8 +73,10 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# First, remove stray word joiners
 	xhtml = xhtml.replace(se.WORD_JOINER, "")
 
-	# Some older texts use the ,— construct; remove that archaichism
+	# Some older texts use the ,— construct; remove that archaism
 	xhtml = xhtml.replace(",—", "—")
+	xhtml = xhtml.replace(",”—", "”—")
+	xhtml = xhtml.replace(",’—", "’—")
 
 	# Fix some common em-dash transcription errors
 	xhtml = regex.sub(r"([:;])-([\p{Letter}])", r"\1—\2", xhtml, flags=regex.IGNORECASE)
