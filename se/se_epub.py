@@ -1071,43 +1071,22 @@ class SeEpub:
 
 			needs_rewrite = False
 			for link in dom.xpath("/html/body//a[contains(@epub:type, 'noteref')]"):
-				old_anchor = ""
-				href = link.get_attr("href") or ""
-				if href:
-					# Extract just the anchor from a URL (ie, what follows a hash symbol)
-					hash_position = href.find("#") + 1  # we want the characters AFTER the hash
-					if hash_position > 0:
-						old_anchor = href[hash_position:]
-
-				new_anchor = f"note-{current_note_number:d}"
-				if new_anchor != old_anchor:
-					change_list.append(f"Changed {old_anchor} to {new_anchor} in {file_name}")
-					notes_changed += 1
-					# Update the link in the dom
-					link.set_attr("href", f"endnotes.xhtml#{new_anchor}")
-					link.set_attr("id", f"noteref-{current_note_number:d}")
-					link.lxml_element.text = str(current_note_number)
-					needs_rewrite = True
-
-				# Now try to find this in endnotes
-				match_old = lambda x, old=old_anchor: x.anchor == old
-				matches = list(filter(match_old, self.endnotes))
-				if not matches:
-					raise se.InvalidInputException(f"Couldn’t find endnote with anchor [attr]{old_anchor}[/].")
-				if len(matches) > 1:
-					raise se.InvalidInputException(f"Duplicate anchors in endnotes file for anchor [attr]{old_anchor}[/].")
-				# Found a single match, which is what we want
-				endnote = matches[0]
-				endnote.number = current_note_number
-				endnote.matched = True
-				# We don't change the anchor or the back ref just yet
-				endnote.source_file = file_name
+				needs_rewrite, notes_changed = self.process_link(change_list, current_note_number, file_name, link, needs_rewrite, notes_changed)
 				current_note_number += 1
 
 			# If we need to write back the body text file
 			if needs_rewrite:
 				with open(file_path, "w") as file:
 					file.write(se.formatting.format_xhtml(dom.to_string()))
+
+		# now process any endnotes WITHIN the endnotes
+		print("Processing endnotes within endnotes")
+		for source_note in self.endnotes:
+			node = source_note.node
+			needs_rewrite = False
+			for link in node.xpath(".//a[contains(@epub:type, 'noteref')]"):
+				needs_rewrite, notes_changed = self.process_link(change_list, current_note_number, "endnotes.xhtml", link, needs_rewrite, notes_changed)
+				current_note_number += 1
 
 		if processed == 0:
 			raise se.InvalidInputException("No files processed. Did you update the manifest and order the spine?")
@@ -1133,4 +1112,41 @@ class SeEpub:
 			with open(self.content_path / "text" / "endnotes.xhtml", "w") as file:
 				file.write(se.formatting.format_xhtml(endnotes_dom.to_string()))
 
-		return (current_note_number - 1, notes_changed)
+		return current_note_number - 1, notes_changed
+
+	def process_link(self, change_list, current_note_number, file_name, link, needs_rewrite, notes_changed):
+		"""
+		checks each endnote link to see if the existing anchor needs to be updated with a new number
+
+		returns a tuple of (current_note_number, needs_rewrite, and the number of notes_changed)
+		"""
+		old_anchor = ""
+		href = link.get_attr("href") or ""
+		if href:
+			# Extract just the anchor from a URL (ie, what follows a hash symbol)
+			hash_position = href.find("#") + 1  # we want the characters AFTER the hash
+			if hash_position > 0:
+				old_anchor = href[hash_position:]
+		new_anchor = f"note-{current_note_number:d}"
+		if new_anchor != old_anchor:
+			change_list.append(f"Changed {old_anchor} to {new_anchor} in {file_name}")
+			notes_changed += 1
+			# Update the link in the dom
+			link.set_attr("href", f"endnotes.xhtml#{new_anchor}")
+			link.set_attr("id", f"noteref-{current_note_number:d}")
+			link.lxml_element.text = str(current_note_number)
+			needs_rewrite = True
+		# Now try to find this in endnotes
+		match_old = lambda x, old=old_anchor: x.anchor == old
+		matches = list(filter(match_old, self.endnotes))
+		if not matches:
+			raise se.InvalidInputException(f"Couldn’t find endnote with anchor [attr]{old_anchor}[/].")
+		if len(matches) > 1:
+			raise se.InvalidInputException(f"Duplicate anchors in endnotes file for anchor [attr]{old_anchor}[/].")
+		# Found a single match, which is what we want
+		endnote = matches[0]
+		endnote.number = current_note_number
+		endnote.matched = True
+		# We don't change the anchor or the back ref just yet
+		endnote.source_file = file_name
+		return needs_rewrite, notes_changed
