@@ -336,7 +336,10 @@ class EasyXmlElement:
 		Remove an attribute from this node.
 		"""
 
-		etree.strip_attributes(self.lxml_element, attribute)
+		attribute = attribute.replace("epub:", "{http://www.idpf.org/2007/ops}")
+		attribute = attribute.replace("xml:", "{http://www.w3.org/XML/1998/namespace}")
+
+		self.lxml_element.attrib.pop(attribute)
 
 	def get_attr(self, attribute: str) -> str:
 		"""
@@ -480,6 +483,27 @@ class EasyXmlElement:
 
 		else:
 			self.lxml_element.append(node)
+
+	def prepend(self, node) -> None:
+		"""
+		Place node as the last child of this node.
+		"""
+
+		if isinstance(node, EasyXmlElement):
+			self.lxml_element.insert(0, node.lxml_element)
+
+		else:
+			self.lxml_element.insert(0, node)
+
+	def set_text(self, string: str) -> None:
+		"""
+		Replace all contents of this node, including text and any child nodes, with a text string.
+		"""
+
+		for child in list(self.lxml_element):
+			self.lxml_element.remove(child)
+
+		self.lxml_element.text = string
 
 	@property
 	def tag(self) -> str:

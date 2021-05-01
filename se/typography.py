@@ -395,7 +395,7 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 
 		pos = pos + 1
 
-	xhtml = regex.sub(r"(<body[^>]+?>).+?<\/body>", fr"\1{result}</body>", xhtml, flags=regex.DOTALL)
+	xhtml = regex.sub(r"(<body[^>]*?>).+?<\/body>", fr"\1{result}</body>", xhtml, flags=regex.DOTALL)
 
 	return xhtml
 

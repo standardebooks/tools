@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import tempfile
 from distutils.dir_util import copy_tree
+from copy import deepcopy
 from hashlib import sha1
 from pathlib import Path
 from typing import List
@@ -46,6 +47,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 	Entry point for `se build`
 	"""
 
+	ibooks_srcset_bug_exists = True
+
 	# Check for some required tools
 	if build_kindle:
 		which_ebook_convert = shutil.which("ebook-convert")
@@ -69,7 +72,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		raise se.FileExistsException(f"Couldn’t create output directory: [path][link=file://{output_directory}]{output_directory}[/][/].") from ex
 
 	# All clear to start building!
-	metadata_xml = self.metadata_xml
+
+	# Make a copy of the metadata dom because we'll be making changes
+	metadata_dom = deepcopy(self.metadata_dom)
 
 	with tempfile.TemporaryDirectory() as temp_directory:
 		work_directory = Path(temp_directory)
@@ -83,17 +88,17 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 		# By convention the ASIN is set to the SHA-1 sum of the book's identifying URL
 		try:
-			identifier = self.metadata_dom.xpath("//dc:identifier")[0].inner_xml().replace("url:", "")
+			identifier = metadata_dom.xpath("//dc:identifier")[0].inner_xml().replace("url:", "")
 			asin = sha1(identifier.encode("utf-8")).hexdigest()
 		except Exception as ex:
 			raise se.InvalidSeEbookException(f"Missing [xml]<dc:identifier>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/].") from ex
 
-		if not self.metadata_dom.xpath("//dc:title"):
+		if not metadata_dom.xpath("//dc:title"):
 			raise se.InvalidSeEbookException(f"Missing [xml]<dc:title>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/].")
 
 		output_filename = identifier.replace("https://standardebooks.org/ebooks/", "").replace("/", "_")
 		url_author = ""
-		for author in self.metadata_dom.xpath("//dc:creator"):
+		for author in metadata_dom.xpath("//dc:creator"):
 			url_author = url_author + se.formatting.make_url_safe(author.inner_xml()) + "_"
 
 		url_author = url_author.rstrip("_")
@@ -128,11 +133,12 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			last_updated_friendly = regex.sub(r"\s+", " ", last_updated_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
 			# Set modified date in content.opf
-			self.metadata_xml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", f"<meta property=\"dcterms:modified\">{last_updated_iso}</meta>", self.metadata_xml)
+			for node in metadata_dom.xpath("//meta[@property='dcterms:modified']"):
+				node.set_text(last_updated_iso)
 
 			with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
 				file.seek(0)
-				file.write(self.metadata_xml)
+				file.write(metadata_dom.to_string())
 				file.truncate()
 
 			# Update the colophon with release info
@@ -301,42 +307,76 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		# Done simplifying CSS and tags!
 
 		# Extract cover and cover thumbnail
-		cover_svg_file = work_epub_root_directory / "epub" / "images" / "cover.svg"
-		if not os.path.isfile(cover_svg_file):
-			raise se.MissingDependencyException("Cover image is missing. Did you run [bash]se build-images[/]?")
+		cover_local_path = metadata_dom.xpath("/package/manifest/item[@properties='cover-image'][1]/@href", True)
 
-		svg2png(url=str(cover_svg_file), write_to=str(work_directory / "cover.png"))
-		cover = Image.open(work_directory / "cover.png")
-		cover = cover.convert("RGB") # Remove alpha channel from PNG if necessary
-		cover.save(work_epub_root_directory / "epub" / "images" / "cover.jpg")
-		(work_directory / "cover.png").unlink()
+		# If we have a cover, convert it to JPG
+		if cover_local_path:
+			cover_work_path = work_epub_root_directory / "epub" / cover_local_path
 
-		if build_covers:
-			shutil.copy2(work_epub_root_directory / "epub" / "images" / "cover.jpg", output_directory / "cover.jpg")
-			shutil.copy2(cover_svg_file, output_directory / "cover-thumbnail.svg")
-			# Path arguments must be cast to string
-			svg2png(url=str(output_directory / "cover-thumbnail.svg"), write_to=str(work_directory / "cover-thumbnail.png"))
-			cover = Image.open(work_directory / "cover-thumbnail.png")
-			cover = cover.resize((COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT))
-			cover = cover.convert("RGB") # Remove alpha channel from PNG if necessary
-			cover.save(output_directory / "cover-thumbnail.jpg")
-			(work_directory / "cover-thumbnail.png").unlink()
-			(output_directory / "cover-thumbnail.svg").unlink()
+			if cover_work_path.suffix == ".svg" or cover_work_path.suffix == ".png":
+				# If the cover is SVG, conver to PNG first
+				if cover_work_path.suffix == ".svg":
+					svg2png(url=str(cover_work_path), write_to=str(work_directory / "cover.png"))
 
-		cover_svg_file.unlink()
+				# Now convert PNG to JPG
+				cover = Image.open(work_directory / "cover.png")
+				cover = cover.convert("RGB") # Remove alpha channel from PNG if necessary
+				cover.save(work_epub_root_directory / "epub" / "images" / "cover.jpg")
 
-		# Massage image references in content.opf
-		metadata_xml = metadata_xml.replace("cover.svg", "cover.jpg")
-		metadata_xml = metadata_xml.replace("id=\"cover.jpg\" media-type=\"image/svg+xml\"", "id=\"cover.jpg\" media-type=\"image/jpeg\"")
-		metadata_xml = regex.sub(r" properties=\"([^\"]*?)svg([^\"]*?)\"", r''' properties="\1\2"''', metadata_xml) # We may also have the `mathml` property
-		metadata_xml = regex.sub(r" properties=\"([^\s]*?)\s\"", r''' properties="\1"''', metadata_xml) # Clean up trailing white space in property attributes introduced by the above line
-		metadata_xml = regex.sub(r" properties=\"\s*\"", "", metadata_xml) # Remove any now-empty property attributes
+				# Save <output-dir>/cover-thumbnail.jpg while we're here
+				if build_covers:
+					cover = cover.resize((COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT))
+					cover.save(output_directory / "cover-thumbnail.jpg")
 
-		# Add an element noting the version of the se tools that built this ebook
-		metadata_xml = regex.sub(r"<dc:publisher", f"<meta property=\"se:built-with\">{se.VERSION}</meta>\n\t\t<dc:publisher", metadata_xml)
+				cover_work_path.unlink()
+
+				# Replace .svg/.png with .jpg in the metadata
+				for node in metadata_dom.xpath(f"/package/manifest//item[contains(@href, '{cover_local_path}')]"):
+					for name, value in node.lxml_element.items():
+						node.set_attr(name, regex.sub(r"\.(svg|png)$", ".jpg", value))
+
+					node.set_attr("media-type", "image/jpeg")
+
+			elif cover_work_path.suffix == ".jpg":
+				# If we start from JPG then it's much easier, just resize the thumbnail
+				if build_covers:
+					cover = Image.open(cover_work_path)
+					cover = cover.resize((COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT))
+					cover.save(output_directory / "cover-thumbnail.jpg")
+
+			if build_covers:
+				# Copy the final cover.jpg to the output dir
+				cover_work_path = Path(regex.sub(r"\.(svg|png)$", ".jpg", str(cover_work_path)))
+				shutil.copy2(cover_work_path, output_directory / cover_work_path.name)
+
+		# Remove SVG item properties in content.opf since we will convert all SVGs to PNGs further down
+		for node in metadata_dom.xpath("/package/manifest/item[contains(@properties, 'svg')]"):
+			if regex.match(r"^\s*svg\s*$", node.get_attr("properties")):
+				# If `svg` is the only property, remove the attribute entirely
+				node.remove_attr("properties")
+			else:
+				node.set_attr("properties", regex.sub(r"\s*svg\s*", "", node.get_attr("properties")))
+
+		# Add an element noting the version of the se tools that built this ebook, but only if the se vocab prefix is present
+		for node in metadata_dom.xpath("/package[contains(@prefix, 'se:')]/metadata"):
+			node.append(etree.fromstring(f"<meta property=\"se:built-with\">{se.VERSION}</meta>"))
 
 		# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
-		metadata_xml = metadata_xml.replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0")
+		for node in metadata_dom.xpath("/package[contains(@prefix, 'se:')]"):
+			node.set_attr('prefix', node.get_attr('prefix').replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0"))
+
+		# Add replace SVGs with PNGs in the manifest
+		# The actual conversion occurs later
+		for node in metadata_dom.xpath("/package/manifest/item[@media-type='image/svg+xml']"):
+			node.set_attr("media-type", "image/png")
+
+			for name, value in node.lxml_element.items():
+				node.set_attr(name, regex.sub(r"\.svg$", ".png", value))
+
+			# Once iBooks allows srcset we can remove this check
+			if not ibooks_srcset_bug_exists:
+				filename_2x = Path(regex.sub(r"\.png$", "-2x.png", node.get_attr("href")))
+				node.lxml_element.addnext(etree.fromstring(f"""<item href="{filename_2x}" id="{filename_2x.stem}-2x.png" media-type="image/png"/>"""))
 
 		# Recurse over xhtml files to make some compatibility replacements
 		for root, _, filenames in os.walk(work_epub_root_directory):
@@ -407,16 +447,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					# Path arguments must be cast to string
 					svg2png(url=str(filename), write_to=str(filename.parent / (str(filename.stem) + ".png")))
 
-					# iBooks srcset bug: once srcset works in iBooks, we can uncomment this line
-					# svg2png(url=str(filename), write_to=str(filename.parent / (str(filename.stem) + "-2x.png")), scale=2)
-
-					# Add the new PNGs to the manifest
-					# iBooks srcset bug: once srcset works in iBooks, we can use this line instead of the one below it
-					# metadata_xml = metadata_xml.replace("<manifest>", f"""<manifest><item href="images/{filename.stem}.png" id="{filename.stem}.png" media-type="image/png"/><item href="images/{filename.stem}-2x.png" id="{filename.stem}-2x.png" media-type="image/png"/>""")
-					metadata_xml = metadata_xml.replace("<manifest>", f"""<manifest><item href="images/{filename.stem}.png" id="{filename.stem}.png" media-type="image/png"/>""")
-
-					# Remove the SVG from the manifest
-					metadata_xml = regex.sub(fr"""<item href="images/{filename.name}" id="[^"]+?" media-type="image/svg\+xml"/>""", "", metadata_xml)
+					if not ibooks_srcset_bug_exists:
+						svg2png(url=str(filename), write_to=str(filename.parent / (str(filename.stem) + "-2x.png")), scale=2)
 
 					# Remove the SVG
 					(filename).unlink()
@@ -483,9 +515,10 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# We converted svgs to pngs, so replace references
 						processed_xhtml = processed_xhtml.replace("cover.svg", "cover.jpg")
 
-						# iBooks srcset bug: once srcset works in iBooks, we can use this line instead of the one below it
-						# processed_xhtml = regex.sub(r"src=\"([^\"]+?)\.svg\"", "src=\"\\1.png\" srcset=\"\\1-2x.png 2x, \\1.png 1x\"", processed_xhtml)
-						processed_xhtml = regex.sub(r"src=\"([^\"]+?)\.svg\"", "src=\"\\1.png\"", processed_xhtml)
+						if not ibooks_srcset_bug_exists:
+							processed_xhtml = regex.sub(r"src=\"([^\"]+?)\.svg\"", "src=\"\\1.png\" srcset=\"\\1-2x.png 2x, \\1.png 1x\"", processed_xhtml)
+						else:
+							processed_xhtml = regex.sub(r"src=\"([^\"]+?)\.svg\"", "src=\"\\1.png\"", processed_xhtml)
 
 						# To get popup footnotes in iBooks, we have to change epub:endnote to epub:footnote.
 						# Remember to get our custom style selectors too.
@@ -564,7 +597,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 		# Output the modified content.opf so that we can build the kobo book before making more compatibility hacks that aren’t needed on that platform.
 		with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
-			file.write(metadata_xml)
+			file.write(metadata_dom.to_string())
 			file.truncate()
 
 		if build_kobo:
@@ -576,12 +609,13 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					# Add a note to content.opf indicating this is a transform build
 					for filename_string in fnmatch.filter(filenames, "content.opf"):
 						with open(Path(root) / filename_string, "r+", encoding="utf-8") as file:
-							xhtml = file.read()
+							opf_dom = se.easy_xml.EasyOpfTree(file.read())
 
-							xhtml = regex.sub(r"<dc:publisher", "<meta property=\"se:transform\">kobo</meta>\n\t\t<dc:publisher", xhtml)
+							for node in opf_dom.xpath("/package[contains(@prefix, 'se:')]/metadata"):
+								node.append(etree.fromstring("""<meta property="se:transform">kobo</meta>"""))
 
 							file.seek(0)
-							file.write(xhtml)
+							file.write(opf_dom.to_string())
 							file.truncate()
 
 					# Kobo .kepub files need each clause wrapped in a special <span> tag to enable highlighting.
@@ -681,7 +715,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							file.truncate()
 
 		# Sort out MathML compatibility
-		has_mathml = len(self.metadata_dom.xpath("/package/manifest/*[contains(@properties, 'mathml')]")) > 0
+		has_mathml = len(metadata_dom.xpath("/package/manifest/*[contains(@properties, 'mathml')]")) > 0
 		if has_mathml:
 			# We import this late because we don't want to load selenium if we're not going to use it!
 			from se import browser # pylint: disable=import-outside-toplevel
@@ -779,31 +813,41 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					pass
 
 		# Include cover metadata for older ereaders
-		cover_id = self.metadata_dom.xpath("//item[@properties=\"cover-image\"]/@id")[0].replace(".svg", ".jpg")
-		metadata_xml = regex.sub(r"(<metadata[^>]+?>)", f"\\1\n\t\t<meta content=\"{cover_id}\" name=\"cover\" />", metadata_xml)
+		for cover_id in metadata_dom.xpath("//item[@properties=\"cover-image\"]/@id"):
+			for node in metadata_dom.xpath("/package/metadata"):
+				node.append(etree.fromstring(f"""<meta content="{cover_id}" name="cover"/>"""))
 
 		# Add metadata to content.opf indicating this file is a Standard Ebooks compatibility build
-		metadata_xml = metadata_xml.replace("<dc:publisher", "<meta property=\"se:transform\">compatibility</meta>\n\t\t<dc:publisher")
+		for node in metadata_dom.xpath("/package[contains(@prefix, 'se:')]/metadata"):
+			node.append(etree.fromstring("""<meta property="se:transform">compatibility</meta>"""))
 
-		# Add any new MathML images we generated to the manifest
 		if has_mathml:
+			# Add any new MathML images we generated to the manifest
 			for root, _, filenames in os.walk(work_epub_root_directory / "epub" / "images"):
 				filenames = natsorted(filenames)
 				filenames.reverse()
 				for filename_string in filenames:
 					filename = Path(root) / filename_string
 					if filename.name.startswith("mathml-"):
-						metadata_xml = metadata_xml.replace("<manifest>", f"<manifest><item href=\"images/{filename.name}\" id=\"{filename.name}\" media-type=\"image/png\"/>")
+						for node in metadata_dom.xpath("/package/manifest"):
+							node.append(etree.fromstring(f"""<item href="images/{filename.name}" id="{filename.name}" media-type="image/png"/>"""))
 
-			metadata_xml = regex.sub(r"properties=\"([^\"]*?)mathml([^\"]*?)\"", "properties=\"\\1\\2\"", metadata_xml)
-
-		metadata_xml = regex.sub(r"properties=\"\s*\"", "", metadata_xml)
+			# Remove mathml property from manifest items, since we converted all MathML to PNG
+			for node in metadata_dom.xpath("/package/manifest/item[contains(@properties, 'mathml')]"):
+				if regex.match(r"^\s*mathml\s*$", node.get_attr("properties")):
+					# If `mathml` is the only property, remove the attribute entirely
+					node.remove_attr("properties")
+				else:
+					node.set_attr("properties", regex.sub(r"\s*mathml\s*", "", node.get_attr("properties")))
 
 		# Generate our NCX file for compatibility with older ereaders.
 		# First find the ToC file.
-		toc_filename = self.metadata_dom.xpath("//item[@properties=\"nav\"]/@href")[0]
-		metadata_xml = metadata_xml.replace("<spine>", "<spine toc=\"ncx\">")
-		metadata_xml = metadata_xml.replace("<manifest>", "<manifest><item href=\"toc.ncx\" id=\"ncx\" media-type=\"application/x-dtbncx+xml\" />")
+		toc_filename = metadata_dom.xpath("//item[@properties=\"nav\"][1]/@href", True)
+		for node in metadata_dom.xpath("/package/spine"):
+			node.set_attr("toc", "ncx")
+
+		for node in metadata_dom.xpath("/package/manifest"):
+			node.append(etree.fromstring("""<item href="toc.ncx" id="ncx" media-type="application/x-dtbncx+xml"/>"""))
 
 		# Now use an XSLT transform to generate the NCX
 		with importlib_resources.path("se.data", "navdoc2ncx.xsl") as navdoc2ncx_xsl_filename:
@@ -831,12 +875,14 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 		guide_xhtml = guide_xhtml + "</guide>"
 
-		metadata_xml = metadata_xml.replace("</package>", "") + guide_xhtml + "</package>"
+		# Append the guide to the <package> element
+		for node in metadata_dom.xpath("/package"):
+			node.append(etree.fromstring(guide_xhtml))
 
 		# Guide is done, now write content.opf and clean it.
 		# Output the modified content.opf before making more compatibility hacks.
 		with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
-			file.write(metadata_xml)
+			file.write(metadata_dom.to_string())
 			file.truncate()
 
 		# All done, clean the output
@@ -972,30 +1018,35 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					if filename.suffix == ".xhtml":
 						with open(filename, "r+", encoding="utf-8") as file:
 							xhtml = file.read()
-							processed_xhtml = xhtml
 
 							# Kindle doesn't recognize most zero-width spaces or word joiners, so just remove them.
 							# It does recognize the word joiner character, but only in the old mobi7 format.  The new format renders them as spaces.
-							processed_xhtml = processed_xhtml.replace(se.ZERO_WIDTH_SPACE, "")
+							xhtml = xhtml.replace(se.ZERO_WIDTH_SPACE, "")
+
+							file_dom = se.easy_xml.EasyXhtmlTree(xhtml)
 
 							# Remove the epub:type attribute, as Calibre turns it into just "type"
-							processed_xhtml = regex.sub(r"epub:type=\"[^\"]*?\"", "", processed_xhtml)
+							for node in file_dom.xpath("//*[@epub:type]"):
+								node.remove_attr("epub:type")
 
 							# Remove se:color-depth.black-on-transparent, as Calibre removes media queries so this will *always* be invisible
-							processed_xhtml = regex.sub(r"se:image\.color-depth\.black-on-transparent", "", processed_xhtml)
-							processed_xhtml = regex.sub(r"epub-type-se-image-color-depth-black-on-transparent", "", processed_xhtml)
+							for node in file_dom.xpath("/html/body//img[contains(@class, 'epub-type-se-image-color-depth-black-on-transparent') or contains(@epub:type, 'se:image.color-depth.black-on-transparent')]"):
+								if node.get_attr("class"):
+									node.set_attr("class", node.get_attr("class").replace("epub-type-se-image-color-depth-black-on-transparent", ""))
+
+								if node.get_attr("epub:type"):
+									node.set_attr("epub:type", node.get_attr("epub:type").replace("se:image.color-depth.black-on-transparent", ""))
 
 							# If the only element on the page is an absolutely positioned image, Kindle will ignore the file in the reading order.
 							# So, in that case we add a `<div>` with some text content to fool Kindle.
 							# However, Calibre will remove `font-size: 0` so we have to use `overflow` to hide the div.
-							dom = se.formatting.EasyXhtmlTree(processed_xhtml)
-							if dom.xpath("/html/body/*[name() = 'section' or name() = 'article']/*[(name() = 'figure' or name() = 'img') and not(preceding-sibling::node()[normalize-space(.)] or following-sibling::node()[normalize-space(.)])]"):
-								processed_xhtml = regex.sub(r"<body([^>]*?)>", r"""<body\1>\n<div style="height: 0; width: 0; overflow: hidden; line-height: 0; font-size: 0;">x</div>""", processed_xhtml)
+							if file_dom.xpath("/html/body/*[(name() = 'section' or name() = 'article') and not(contains(@epub:type, 'titlepage'))]/*[(name() = 'figure' or name() = 'img') and not(preceding-sibling::node()[normalize-space(.)] or following-sibling::node()[normalize-space(.)])]"):
+								for node in file_dom.xpath("/html/body"):
+									node.prepend(etree.fromstring("""<div style="height: 0; width: 0; overflow: hidden; line-height: 0; font-size: 0;">x</div>"""))
 
-							if processed_xhtml != xhtml:
-								file.seek(0)
-								file.write(processed_xhtml)
-								file.truncate()
+							file.seek(0)
+							file.write(se.formatting.format_xhtml(file_dom.to_string()))
+							file.truncate()
 
 			# Include compatibility CSS
 			with open(work_epub_root_directory / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:
@@ -1003,7 +1054,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					core_css_file.write(compatibility_css_file.read())
 
 			# Add soft hyphens
-			for filepath in se.get_target_filenames([work_epub_root_directory], (".xhtml",)):
+			for filepath in se.get_target_filenames([work_epub_root_directory], ".xhtml"):
 				se.typography.hyphenate_file(filepath, None, True)
 
 			# Build an epub file we can send to Calibre
@@ -1011,13 +1062,23 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 			# Generate the Kindle file
 			# We place it in the work directory because later we have to update the asin, and the mobi.update_asin() function will write to the final output directory
-			cover_path = work_epub_root_directory / "epub" / self.metadata_dom.xpath("//item[@properties=\"cover-image\"]/@href")[0].replace(".svg", ".jpg")
+			cover_path = None
+			for href in metadata_dom.xpath("//item[@properties=\"cover-image\"]/@href"):
+				cover_path = work_epub_root_directory / "epub" / href
 
 			# Path arguments must be cast to string for Windows compatibility.
-			return_code = subprocess.run([str(ebook_convert_path), str(work_directory / compatible_epub_output_filename), str(work_directory / kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover", f"--cover={cover_path}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False).returncode
+			try:
+				calibre_args = [str(ebook_convert_path), str(work_directory / compatible_epub_output_filename), str(work_directory / kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover"]
 
-			if return_code:
-				raise se.InvalidSeEbookException("[bash]ebook-convert[/] failed.")
+				if cover_path:
+					calibre_args.append(f"--cover={cover_path}")
+
+				calibre_result = subprocess.run(calibre_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+				calibre_result.check_returncode()
+			except subprocess.CalledProcessError as ex:
+				output = calibre_result.stdout.decode().strip()
+
+				raise se.BuildFailedException(f"[bash]ebook-convert[/] failed with:\n{output}") from ex
 
 			# Success, extract the Kindle cover thumbnail
 
@@ -1025,7 +1086,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			mobi.update_asin(asin, work_directory / kindle_output_filename, output_directory / kindle_output_filename)
 
 			# Extract the thumbnail
-			kindle_cover_thumbnail = Image.open(work_epub_root_directory / "epub" / "images" / "cover.jpg")
-			kindle_cover_thumbnail = kindle_cover_thumbnail.convert("RGB") # Remove alpha channel from PNG if necessary
-			kindle_cover_thumbnail = kindle_cover_thumbnail.resize((432, 648))
-			kindle_cover_thumbnail.save(output_directory / f"thumbnail_{asin}_EBOK_portrait.jpg")
+			if os.path.isfile(work_epub_root_directory / "epub" / "images" / "cover.jpg"):
+				kindle_cover_thumbnail = Image.open(work_epub_root_directory / "epub" / "images" / "cover.jpg")
+				kindle_cover_thumbnail = kindle_cover_thumbnail.convert("RGB") # Remove alpha channel from PNG if necessary
+				kindle_cover_thumbnail = kindle_cover_thumbnail.resize((432, 648))
+				kindle_cover_thumbnail.save(output_directory / f"thumbnail_{asin}_EBOK_portrait.jpg")
