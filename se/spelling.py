@@ -107,6 +107,9 @@ def detect_problem_spellings(xhtml: str) -> list:
 	if regex.search(r"\bgripe", xhtml):
 		output.append("“gripe” or “griped” detected. Confirm that “gripe” is used in the sense of illness or complaint, not in the sense of “grip” or “gripped.”")
 
+	if regex.search(r"\bmay[\-\s]?day", xhtml):
+		output.append("“mayday” or “may day” or “may-day” detected. Confirm that “may day” and “may-day” refer to the day, and that “mayday” is used in the sense of a distress signal.")
+
 	return output
 
 def modernize_spelling(xhtml: str) -> str:
