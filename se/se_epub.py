@@ -1055,7 +1055,7 @@ class SeEpub:
 		processed = 0
 		current_note_number = 1
 		notes_changed = 0
-		change_list = []
+		change_list: List[str] = []
 
 		for file_name in self.get_content_files():
 			if file_name in ["titlepage.xhtml", "colophon.xhtml", "uncopyright.xhtml", "imprint.xhtml", "halftitlepage.xhtml", "endnotes.xhtml"]:
@@ -1071,7 +1071,7 @@ class SeEpub:
 
 			needs_rewrite = False
 			for link in dom.xpath("/html/body//a[contains(@epub:type, 'noteref')]"):
-				needs_rewrite, notes_changed = self.process_link(change_list, current_note_number, file_name, link, needs_rewrite, notes_changed)
+				needs_rewrite, notes_changed = self.__process_link(change_list, current_note_number, file_name, link, needs_rewrite, notes_changed)
 				current_note_number += 1
 
 			# If we need to write back the body text file
@@ -1080,12 +1080,11 @@ class SeEpub:
 					file.write(se.formatting.format_xhtml(dom.to_string()))
 
 		# now process any endnotes WITHIN the endnotes
-		print("Processing endnotes within endnotes")
 		for source_note in self.endnotes:
 			node = source_note.node
 			needs_rewrite = False
 			for link in node.xpath(".//a[contains(@epub:type, 'noteref')]"):
-				needs_rewrite, notes_changed = self.process_link(change_list, current_note_number, "endnotes.xhtml", link, needs_rewrite, notes_changed)
+				needs_rewrite, notes_changed = self.__process_link(change_list, current_note_number, "endnotes.xhtml", link, needs_rewrite, notes_changed)
 				current_note_number += 1
 
 		if processed == 0:
@@ -1114,11 +1113,11 @@ class SeEpub:
 
 		return current_note_number - 1, notes_changed
 
-	def process_link(self, change_list, current_note_number, file_name, link, needs_rewrite, notes_changed):
+	def __process_link(self, change_list, current_note_number, file_name, link, needs_rewrite, notes_changed) -> Tuple[bool, int]:
 		"""
 		checks each endnote link to see if the existing anchor needs to be updated with a new number
 
-		returns a tuple of (current_note_number, needs_rewrite, and the number of notes_changed)
+		returns a tuple of needs_write (whether object needs to be re-written), and the number of notes_changed
 		"""
 		old_anchor = ""
 		href = link.get_attr("href") or ""
