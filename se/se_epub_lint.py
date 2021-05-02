@@ -2038,7 +2038,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							title_text = ""
 							image_ref = img_src.split("/").pop()
 							try:
-								svg_path = self.path / "src" / "epub" / "images" / image_ref
+								svg_path = self.content_path / "images" / image_ref
 								svg_dom = self.get_dom(svg_path)
 								try:
 									title_text = svg_dom.xpath("/svg/title")[0].text

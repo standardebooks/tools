@@ -691,6 +691,6 @@ def generate_toc(self) -> str:
 	work_title = self.get_work_title()
 	work_type = self.get_work_type()
 
-	landmarks, toc_list = process_all_content(file_list, self.path / "src" / "epub" / "text")
+	landmarks, toc_list = process_all_content(file_list, self.content_path / "text")
 
-	return output_toc(toc_list, landmarks, self.path / "src" / "epub" / "toc.xhtml", work_type, work_title)
+	return output_toc(toc_list, landmarks, self.content_path / "toc.xhtml", work_type, work_title)

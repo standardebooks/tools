@@ -84,6 +84,7 @@ class SeEpub:
 	"""
 
 	path = Path()
+	content_path = Path()
 	metadata_file_path = Path()
 	metadata_xml = ""
 	local_css = ""
@@ -106,6 +107,8 @@ class SeEpub:
 			container_tree = self.get_dom(self.path / "src" / "META-INF" / "container.xml")
 
 			self.metadata_file_path = self.path / "src" / container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
+
+			self.content_path = self.metadata_file_path.parent
 
 			with open(self.metadata_file_path, "r", encoding="utf-8") as file:
 				self.metadata_xml = file.read()
@@ -264,7 +267,7 @@ class SeEpub:
 		if not self._endnotes:
 			self._endnotes = []
 
-			for node in self.get_dom(self.path / "src" / "epub" / "text" / "endnotes.xhtml").xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol/li[contains(@epub:type, 'endnote')]"):
+			for node in self.get_dom(self.content_path / "text" / "endnotes.xhtml").xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol/li[contains(@epub:type, 'endnote')]"):
 				note = Endnote()
 				note.node = node
 				note.number = int(node.get_attr("id").replace("note-", ""))
@@ -395,7 +398,7 @@ class SeEpub:
 		# (for example if we want to apply max-width or filter: invert())
 		for img in section.xpath("//img[starts-with(@src, '../images/')]"):
 			src = img.get_attr("src").replace("../", "")
-			with open(self.path / "src" / "epub" / src, "rb") as binary_file:
+			with open(self.content_path / src, "rb") as binary_file:
 				image_contents_base64 = base64.b64encode(binary_file.read()).decode()
 
 			if src.endswith(".svg"):
@@ -436,7 +439,7 @@ class SeEpub:
 			css_filenames.append(str(extra_css_file))
 
 		for filename in css_filenames:
-			filepath = self.path / "src" / "epub" / "css" / filename
+			filepath = self.content_path / "css" / filename
 			file_css = self.get_file(filepath)
 
 			namespaces = namespaces + regex.findall(r"@namespace.+?;", file_css)
@@ -472,7 +475,7 @@ class SeEpub:
 		for ref in self.metadata_dom.xpath("/package/spine/itemref/@idref"):
 			filename = self.metadata_dom.xpath(f"/package/manifest/item[@id='{ref}']/@href")[0]
 
-			dom = self.get_dom(self.path / "src" / "epub" / filename)
+			dom = self.get_dom(self.content_path / filename)
 
 			# Apply the stylesheet to see if we have `position: absolute` on any items. If so, apply `position: relative` to its closest <section> ancestor
 			# See https://standardebooks.org/ebooks/jean-toomer/cane for an example of this in action
@@ -501,7 +504,7 @@ class SeEpub:
 			css = css + "\n\t\t\t.positioning-wrapper{\n\t\t\t\tposition: relative; height: 100vh;\n\t\t\t}\n"
 
 		# Add the ToC after the titlepage
-		toc_dom = self.get_dom(self.path / "src" / "epub" / "toc.xhtml")
+		toc_dom = self.get_dom(self.content_path / "toc.xhtml")
 		titlepage_node = output_dom.xpath("//*[contains(concat(' ', @epub:type, ' '), ' titlepage ')]")[0]
 
 		for node in toc_dom.xpath("//nav[1]"):
@@ -709,7 +712,7 @@ class SeEpub:
 
 			self._metadata_dom = None
 
-			with open(self.path / "src" / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
+			with open(self.content_path / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 				xhtml = xhtml.replace("<b>January 1, 1900, 12:00 <abbr class=\"time eoc\">a.m.</abbr></b>", f"<b>{now_friendly}</b>")
 
@@ -795,17 +798,17 @@ class SeEpub:
 		manifest = []
 
 		# Add CSS
-		for _, _, filenames in os.walk(self.path / "src" / "epub" / "css"):
+		for _, _, filenames in os.walk(self.content_path / "css"):
 			for filename in filenames:
 				manifest.append(f"<item href=\"css/{filename}\" id=\"{filename}\" media-type=\"text/css\"/>")
 
 		# Add fonts
-		for _, _, filenames in os.walk(self.path / "src" / "epub" / "fonts"):
+		for _, _, filenames in os.walk(self.content_path / "fonts"):
 			for filename in filenames:
 				manifest.append(f"<item href=\"fonts/{filename}\" id=\"{filename}\" media-type=\"application/vnd.ms-opentype\"/>")
 
 		# Add images
-		for _, _, filenames in os.walk(self.path / "src" / "epub" /  "images"):
+		for _, _, filenames in os.walk(self.content_path /  "images"):
 			for filename in filenames:
 				media_type = "image/jpeg"
 				properties = ""
@@ -822,7 +825,7 @@ class SeEpub:
 				manifest.append(f"<item href=\"images/{filename}\" id=\"{filename}\" media-type=\"{media_type}\"{properties}/>")
 
 		# Add XHTML files
-		for root, _, filenames in os.walk(self.path / "src" / "epub" / "text"):
+		for root, _, filenames in os.walk(self.content_path / "text"):
 			for filename in filenames:
 				# Skip dotfiles, because .DS_Store might be binary and then we'd crash when we try to read it below
 				if filename.startswith("."):
@@ -849,7 +852,7 @@ class SeEpub:
 				manifest.append(f"<item href=\"text/{filename}\" id=\"{filename}\" media-type=\"application/xhtml+xml\"{properties}/>")
 
 		# Do we have a glossary search key map?
-		if Path(self.path / "src" / "epub" / "glossary-search-key-map.xml").is_file():
+		if Path(self.content_path / "glossary-search-key-map.xml").is_file():
 			manifest.append("<item href=\"glossary-search-key-map.xml\" id=\"glossary-search-key-map.xml\" media-type=\"application/vnd.epub.search-key-map+xml\" properties=\"glossary search-key-map\"/>")
 
 		manifest = natsorted(manifest)
@@ -877,7 +880,7 @@ class SeEpub:
 		excluded_files = se.IGNORED_FILENAMES + ["dedication.xhtml", "introduction.xhtml", "foreword.xhtml", "preface.xhtml", "epigraph.xhtml", "dramatis-personae.xhtml", "halftitlepage.xhtml", "prologue.xhtml", "afterword.xhtml", "endnotes.xhtml"]
 		spine = ["<itemref idref=\"titlepage.xhtml\"/>", "<itemref idref=\"imprint.xhtml\"/>"]
 
-		filenames = natsorted(os.listdir(self.path / "src" / "epub" / "text"))
+		filenames = natsorted(os.listdir(self.content_path / "text"))
 
 		if "dedication.xhtml" in filenames:
 			spine.append("<itemref idref=\"dedication.xhtml\"/>")
@@ -1104,7 +1107,7 @@ class SeEpub:
 
 		if notes_changed > 0:
 			# Now we need to recreate the endnotes file
-			endnotes_dom = self.get_dom(self.path / "src" / "epub" / "text" / "endnotes.xhtml")
+			endnotes_dom = self.get_dom(self.content_path / "text" / "endnotes.xhtml")
 			for ol_node in endnotes_dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol[1]"):
 				for node in ol_node.xpath("./li[contains(@epub:type, 'endnote')]"):
 					node.remove()
@@ -1120,7 +1123,7 @@ class SeEpub:
 
 						ol_node.append(endnote.node)
 
-			with open(self.path / "src" / "epub" / "text" / "endnotes.xhtml", "w") as file:
+			with open(self.content_path / "text" / "endnotes.xhtml", "w") as file:
 				file.write(se.formatting.format_xhtml(endnotes_dom.to_string()))
 
 		return (current_note_number - 1, notes_changed)
