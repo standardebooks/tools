@@ -797,67 +797,83 @@ class SeEpub:
 
 		manifest = []
 
-		# Add CSS
-		for _, _, filenames in os.walk(self.content_path / "css"):
+		for root, _, filenames in os.walk(self.content_path):
 			for filename in filenames:
-				manifest.append(f"<item href=\"css/{filename}\" id=\"{filename}\" media-type=\"text/css\"/>")
+				file_path = Path(root) / Path(filename)
 
-		# Add fonts
-		for _, _, filenames in os.walk(self.content_path / "fonts"):
-			for filename in filenames:
-				manifest.append(f"<item href=\"fonts/{filename}\" id=\"{filename}\" media-type=\"application/vnd.ms-opentype\"/>")
-
-		# Add images
-		for _, _, filenames in os.walk(self.content_path /  "images"):
-			for filename in filenames:
-				media_type = "image/jpeg"
-				properties = ""
-
-				if filename.endswith(".svg"):
-					media_type = "image/svg+xml"
-
-				if filename.endswith(".png"):
-					media_type = "image/png"
-
-				if filename == "cover.svg":
-					properties = " properties=\"cover-image\""
-
-				manifest.append(f"<item href=\"images/{filename}\" id=\"{filename}\" media-type=\"{media_type}\"{properties}/>")
-
-		# Add XHTML files
-		for root, _, filenames in os.walk(self.content_path / "text"):
-			for filename in filenames:
-				# Skip dotfiles, because .DS_Store might be binary and then we'd crash when we try to read it below
-				if filename.startswith("."):
+				if file_path.name == self.metadata_file_path.name:
+					# Don't add the metadata file to the manifest
 					continue
 
-				properties = "properties=\""
+				if file_path.stem.startswith("."):
+					# Skip dotfiles
+					continue
 
-				file_contents = self.get_file(Path(root) / filename)
+				mime_type = None
+				properties = []
 
-				if regex.search(r"epub:type=\"[^\"]*?glossary[^\"]*?\"", file_contents):
-					properties += "glossary "
+				if file_path.suffix == ".css":
+					mime_type="text/css"
 
-				if "http://www.w3.org/1998/Math/MathML" in file_contents:
-					properties += "mathml "
+				if file_path.suffix in (".ttf", ".otf", ".woff", ".woff2"):
+					mime_type="application/vnd.ms-opentype"
 
-				if ".svg" in file_contents:
-					properties += "svg "
+				if file_path.suffix == ".svg":
+					mime_type = "image/svg+xml"
 
-				properties = " " + properties.strip() + "\""
+				if file_path.suffix == ".png":
+					mime_type = "image/png"
 
-				if properties == " properties=\"\"":
-					properties = ""
+				if file_path.suffix == ".jpg":
+					mime_type = "image/jpeg"
 
-				manifest.append(f"<item href=\"text/{filename}\" id=\"{filename}\" media-type=\"application/xhtml+xml\"{properties}/>")
+				if file_path.stem == "cover":
+					properties.append("cover-image")
 
-		# Do we have a glossary search key map?
-		if Path(self.content_path / "glossary-search-key-map.xml").is_file():
-			manifest.append("<item href=\"glossary-search-key-map.xml\" id=\"glossary-search-key-map.xml\" media-type=\"application/vnd.epub.search-key-map+xml\" properties=\"glossary search-key-map\"/>")
+				if file_path.suffix == ".xhtml":
+					dom = self.get_dom(file_path)
+
+					mime_type = "application/xhtml+xml"
+
+					if dom.xpath("//*[contains(@epub:type, 'glossary')]"):
+						properties.append("glossary")
+
+					if dom.xpath("/html[namespace::m]"):
+						properties.append("mathml")
+
+					if dom.xpath("//img[re:test(@src, '\\.svg$')]"):
+						properties.append("svg")
+
+					if dom.xpath("//nav[contains(@epub:type, 'toc')]"):
+						properties.append("nav")
+
+				if file_path.suffix == ".xml":
+					dom = self.get_dom(file_path)
+
+					# Do we have a glossary search key map?
+					if dom.xpath("/search-key-map"):
+						mime_type = "application/vnd.epub.search-key-map+xml"
+						properties.append("glossary")
+						properties.append("search-key-map")
+
+				if mime_type:
+					# Put together any properties we have
+					properties_attr = ""
+					for prop in properties:
+						properties_attr += prop + " "
+
+					properties_attr = properties_attr.strip()
+
+					if properties_attr:
+						properties_attr = f" properties=\"{properties_attr}\""
+
+					# Add the manifest item
+					manifest.append(f"""<item href="{file_path.relative_to(self.content_path)}" id="{file_path.name}" media-type="{mime_type}"{properties_attr}/>""")
 
 		manifest = natsorted(manifest)
 
-		manifest_xhtml = "<manifest>\n\t<item href=\"toc.xhtml\" id=\"toc.xhtml\" media-type=\"application/xhtml+xml\" properties=\"nav\"/>\n"
+		# Assemble the manifest XML string
+		manifest_xhtml = "<manifest>\n"
 
 		for line in manifest:
 			manifest_xhtml = manifest_xhtml + "\t" + line + "\n"
