@@ -74,7 +74,7 @@ class EasyXmlTree:
 		try:
 			sel = CSS_SELECTOR_CACHE.get(selector)
 			if not sel:
-				sel = cssselect.CSSSelector(selector, translator="xhtml", namespaces={"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops"})
+				sel = cssselect.CSSSelector(selector, translator="xhtml", namespaces=self.namespaces)
 				CSS_SELECTOR_CACHE[selector] = sel
 
 			return self.xpath(sel.path)
@@ -201,6 +201,25 @@ class EasyXmlElement:
 		self.namespaces = namespaces
 		self.lxml_element = lxml_element
 
+	def _replace_shorthand_namespaces(self, value:str) -> str:
+		"""
+		Given a string starting with a shorthand namespace, return
+		the fully qualified namespace.
+
+		This is useful for passing to raw lxml operations as lxml doesn't understand
+		shorthand namespaces.
+
+		Example:
+		epub:type -> {http://www.idpf.org/2007/ops}:type
+		"""
+
+		output = value
+
+		for name, identifier in self.namespaces.items():
+			output = regex.sub(fr"^{name}:", f"{{{identifier}}}", output)
+
+		return output
+
 	def to_tag_string(self) -> str:
 		"""
 		Return a string representing the opening tag of the element.
@@ -215,10 +234,12 @@ class EasyXmlElement:
 		for name, value in self.lxml_element.items():
 			# Exclude applied CSS
 			if not name.startswith("data-css-"):
-				attrs += f" {name}=\"{value}\""
+				# Replace long namespaces from lxml with shorthand
+				short_name = name
+				for namespace, identifier in self.namespaces.items():
+					short_name = short_name.replace(f"{{{identifier}}}", f"{namespace}:")
 
-		attrs = attrs.replace("{http://www.idpf.org/2007/ops}", "epub:")
-		attrs = attrs.replace("{http://www.w3.org/XML/1998/namespace}", "xml:")
+				attrs += f" {short_name}=\"{value}\""
 
 		return f"<{self.lxml_element.tag}{attrs}>"
 
@@ -269,29 +290,21 @@ class EasyXmlElement:
 		Remove an attribute from this node.
 		"""
 
-		attribute = attribute.replace("epub:", "{http://www.idpf.org/2007/ops}")
-		attribute = attribute.replace("xml:", "{http://www.w3.org/XML/1998/namespace}")
-
-		self.lxml_element.attrib.pop(attribute)
+		self.lxml_element.attrib.pop(self._replace_shorthand_namespaces(attribute))
 
 	def get_attr(self, attribute: str) -> str:
 		"""
 		Return the value of an attribute on this element.
 		"""
 
-		attribute = attribute.replace("epub:", "{http://www.idpf.org/2007/ops}")
-		attribute = attribute.replace("xml:", "{http://www.w3.org/XML/1998/namespace}")
-
-		return self.lxml_element.get(attribute)
+		return self.lxml_element.get(self._replace_shorthand_namespaces(attribute))
 
 	def set_attr(self, attribute: str, value: str) -> str:
 		"""
 		Set the value of an attribute on this element.
 		"""
 
-		attribute = attribute.replace("epub:", "{http://www.idpf.org/2007/ops}")
-
-		return self.lxml_element.set(attribute, value)
+		return self.lxml_element.set(self._replace_shorthand_namespaces(attribute), value)
 
 	def xpath(self, selector: str, return_string: bool = False):
 		"""
