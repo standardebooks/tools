@@ -477,8 +477,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							mathml_presentation_tree = mathml_transform(mathml_content_tree)
 							mathml_presentation_xhtml = etree.tostring(mathml_presentation_tree, encoding="unicode", pretty_print=True, with_tail=False).strip()
 
-
-
 							# The output adds a new namespace definition to the root <math> element. Remove it and add the m: namespace instead
 							mathml_presentation_xhtml = regex.sub(r" xmlns=\"[^\"]+?\"", "", mathml_presentation_xhtml)
 							mathml_presentation_xhtml = regex.sub(r"<(/)?", r"<\1m:", mathml_presentation_xhtml)
@@ -949,7 +947,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 			# Rebuild the NCX
 			with importlib_resources.path("se.data", "navdoc2ncx.xsl") as navdoc2ncx_xsl_filename:
-				toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, navdoc2ncx_xsl_filename)
+				se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, navdoc2ncx_xsl_filename)
 
 			# Clean just the ToC and NCX
 			for filepath in [work_epub_root_directory / "epub" / "toc.ncx", work_epub_root_directory / "epub" / toc_filename]:

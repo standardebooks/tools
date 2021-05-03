@@ -191,7 +191,6 @@ SEMANTICS & CONTENT
 "s-032", "SE namespace must be followed by a [text]:[/], not a [text].[/]. E.g., [val]se:name.vessel[/]."
 "s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/]."
 "s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary."
-"s-035", f"[xhtml]{nodes[0].to_tag_string()}[/] element has the [val]z3998:roman[/] semantic, but is not a Roman numeral."
 "s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file."
 "s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file."
 "s-038", "Illegal asterism. Section/scene breaks must be defined by an [xhtml]<hr/>[/] element."
@@ -240,6 +239,9 @@ SEMANTICS & CONTENT
 "s-081", "[xhtml]<p>[/] preceded by [xhtml]<figure>[/], [xhtml]<blockquote>[/xhtml], or [xhtml]<table>[/], but without [val]continued[/] class."
 "s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/]."
 "s-083", "[xhtml]<td epub:type=\"z3998:persona\">[/] element with child [xhtml]<p>[/] element."
+
+UNUSEDvvvvvvvvvvvvvvvvvvvvvv
+"s-035", f"[xhtml]{nodes[0].to_tag_string()}[/] element has the [val]z3998:roman[/] semantic, but is not a Roman numeral."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"

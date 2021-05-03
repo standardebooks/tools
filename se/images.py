@@ -161,7 +161,7 @@ def remove_image_metadata(filename: Path) -> None:
 		# JPEG images are lossy, and PIL will recompress them on save.
 		# Instead of using PIL, read the byte stream and remove all metadata that way.
 		# Inspired by https://github.com/hMatoba/Piexif
-		with open(filename, 'rb+') as file:
+		with open(filename, "rb+") as file:
 			jpeg_data = file.read()
 
 			if jpeg_data[0:2] != b"\xff\xd8":
