@@ -825,7 +825,8 @@ class SeEpub:
 
 					mime_type = "application/xhtml+xml"
 
-					if dom.xpath("//*[contains(@epub:type, 'glossary')]"):
+					# the `glossary` semantic may also appear in the ToC landmarks, so specifically exclude that
+					if dom.xpath("//*[contains(@epub:type, 'glossary') and not(ancestor-or-self::nav)]"):
 						properties.append("glossary")
 
 					if dom.xpath("/html[namespace::m]"):
