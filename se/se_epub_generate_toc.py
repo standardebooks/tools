@@ -299,7 +299,7 @@ def output_toc(item_list: list, landmark_list, toc_path: str, work_type: str, wo
 
 	try:
 		with open(toc_path, encoding="utf8") as file:
-			toc_dom = se.easy_xml.EasyXhtmlTree(file.read())
+			toc_dom = se.easy_xml.EasyXmlTree(file.read())
 	except Exception as ex:
 		raise se.InvalidInputException(f"Existing ToC not found. Exception: {ex}")
 
@@ -648,7 +648,7 @@ def process_all_content(file_list: list, text_path: str) -> Tuple[list, list]:
 		file_path = Path(text_path) / textf
 		try:
 			with open(file_path, encoding="utf8") as file:
-				dom = se.easy_xml.EasyXhtmlTree(file.read())
+				dom = se.easy_xml.EasyXmlTree(file.read())
 		except Exception as ex:
 			raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{file_path}]{file_path}[/][/]. Exception: {ex}") from ex
 
@@ -662,7 +662,7 @@ def process_all_content(file_list: list, text_path: str) -> Tuple[list, list]:
 	place = Position.NONE
 	for textf in file_list:
 		with open(Path(text_path) / textf, "r", encoding="utf-8") as file:
-			dom = se.easy_xml.EasyXhtmlTree(file.read())
+			dom = se.easy_xml.EasyXmlTree(file.read())
 		body = dom.xpath("//body")
 		if body:
 			place = get_place(body[0])

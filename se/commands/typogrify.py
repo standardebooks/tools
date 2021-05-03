@@ -40,7 +40,7 @@ def typogrify() -> int:
 				xhtml = file.read()
 
 				if filename.name == "content.opf":
-					dom = se.easy_xml.EasyOpfTree(xhtml)
+					dom = se.easy_xml.EasyXmlTree(xhtml)
 
 					# Typogrify metadata except for URLs, dates, and LoC subjects
 					for node in dom.xpath("/package/metadata/dc:*[local-name() != 'subject' and local-name() != 'source' and local-name() != 'date']") + dom.xpath("/package/metadata/meta[not(contains(@property, 'se:url') or @property = 'dcterms:modified' or @property = 'se:production-notes')]"):

@@ -19,7 +19,7 @@ from titlecase import titlecase as pip_titlecase
 from unidecode import unidecode
 
 import se
-from se.easy_xml import EasyXhtmlTree
+from se.easy_xml import EasyXmlTree
 
 
 # This list of phrasing tags is not intended to be exhaustive. The list is only used
@@ -1263,7 +1263,7 @@ def generate_title(xhtml) -> str:
 
 	try:
 		if isinstance(xhtml, str):
-			dom = EasyXhtmlTree(xhtml)
+			dom = EasyXmlTree(xhtml)
 		else:
 			dom = deepcopy(xhtml)
 	except Exception as ex:

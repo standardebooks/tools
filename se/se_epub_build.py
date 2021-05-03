@@ -214,10 +214,10 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				with open(filename, "r+", encoding="utf-8") as file:
 					# We have to remove the default namespace declaration from our document, otherwise
 					# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
-					xhtml = file.read().replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
+					xhtml = file.read()
 					processed_xhtml = xhtml
 					try:
-						file_dom = se.easy_xml.EasyXhtmlTree(xhtml)
+						file_dom = se.easy_xml.EasyXmlTree(xhtml)
 					except Exception as ex:
 						raise se.InvalidXhtmlException(f"Error parsing XHTML file: [path][link=file://{filename}]{filename}[/][/]. Exception: {ex}")
 
@@ -263,7 +263,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 					# We do this round in a second pass because if we modify the tree like this, it screws up how lxml does processing later.
 					# If it's all done in one pass, we wind up in a race condition where some elements are fixed and some not
-					file_dom = se.easy_xml.EasyXhtmlTree(processed_xhtml)
+					file_dom = se.easy_xml.EasyXmlTree(processed_xhtml)
 
 					for selector in selectors:
 						if "abbr" in selector:
@@ -286,7 +286,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 									# Now we have a nice, fixed string.  But, since lxml can't replace elements, we write it ourselves.
 									processed_xhtml = processed_xhtml.replace(raw_string, processed_string)
 
-									file_dom = se.easy_xml.EasyXhtmlTree(processed_xhtml)
+									file_dom = se.easy_xml.EasyXmlTree(processed_xhtml)
 
 							except lxml.cssselect.ExpressionError:
 								# This gets thrown if we use pseudo-elements, which lxml doesn't support
@@ -297,7 +297,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					# Now we just remove all stray abbr tags that were not styled by CSS
 					processed_xhtml = regex.sub(r"</?abbr[^>]*?>", "", processed_xhtml)
 
-					file_dom = se.easy_xml.EasyXhtmlTree(processed_xhtml)
+					file_dom = se.easy_xml.EasyXmlTree(processed_xhtml)
 
 					if processed_xhtml != xhtml:
 						file.seek(0)
@@ -458,14 +458,14 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						xhtml = file.read()
 						processed_xhtml = xhtml
 
-						# Check if there's any MathML to convert.
+						# Check if there's any MathML to convert from "content" to "presentational" type
 						# We expect MathML to be the "content" type (versus the "presentational" type).
 						# We use an XSL transform to convert from "content" to "presentational" MathML.
 						# If we start with presentational, then nothing will be changed.
 						# Kobo supports presentational MathML. After we build kobo, we convert the presentational MathML to PNG for the rest of the builds.
 						mathml_transform = None
 						for line in regex.findall(r"<(?:m:)?math[^>]*?>(.+?)</(?:m:)?math>", processed_xhtml, flags=regex.DOTALL):
-							mathml_content_tree = se.easy_xml.EasyXhtmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?><math xmlns=\"http://www.w3.org/1998/Math/MathML\">{}</math>".format(regex.sub(r"<(/?)m:", "<\\1", line)))
+							mathml_content_tree = etree.fromstring(str.encode("<?xml version=\"1.0\" encoding=\"utf-8\"?><math xmlns=\"http://www.w3.org/1998/Math/MathML\">{}</math>".format(regex.sub(r"<(/?)m:", "<\\1", line))))
 
 							# Initialize the transform object, if we haven't yet
 							if not mathml_transform:
@@ -474,8 +474,14 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 							# Transform the mathml and get a string representation
 							# XSLT comes from https://github.com/fred-wang/webextension-content-mathml-polyfill
-							mathml_presentation_tree = mathml_transform(mathml_content_tree.etree)
+							mathml_presentation_tree = mathml_transform(mathml_content_tree)
 							mathml_presentation_xhtml = etree.tostring(mathml_presentation_tree, encoding="unicode", pretty_print=True, with_tail=False).strip()
+
+
+
+							# The output adds a new namespace definition to the root <math> element. Remove it and add the m: namespace instead
+							mathml_presentation_xhtml = regex.sub(r" xmlns=\"[^\"]+?\"", "", mathml_presentation_xhtml)
+							mathml_presentation_xhtml = regex.sub(r"<(/)?", r"<\1m:", mathml_presentation_xhtml)
 
 							# Plop our string back in to the XHTML we're processing
 							processed_xhtml = regex.sub(r"<(?:m:)?math[^>]*?>\{}\</(?:m:)?math>".format(regex.escape(line)), mathml_presentation_xhtml, processed_xhtml, flags=regex.MULTILINE)
@@ -609,7 +615,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					# Add a note to content.opf indicating this is a transform build
 					for filename_string in fnmatch.filter(filenames, "content.opf"):
 						with open(Path(root) / filename_string, "r+", encoding="utf-8") as file:
-							opf_dom = se.easy_xml.EasyOpfTree(file.read())
+							opf_dom = se.easy_xml.EasyXmlTree(file.read())
 
 							for node in opf_dom.xpath("/package[contains(@prefix, 'se:')]/metadata"):
 								node.append(etree.fromstring("""<meta property="se:transform">kobo</meta>"""))
@@ -645,7 +651,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							# Kobos replace no-break hyphens with a weird high hyphen character, so replace that here
 							xhtml = xhtml.replace("‑", f"{se.WORD_JOINER}-{se.WORD_JOINER}")
 
-							dom = se.easy_xml.EasyXhtmlTree(xhtml)
+							dom = se.easy_xml.EasyXmlTree(xhtml)
 
 							# # Remove quote-align spans we inserted above, since Kobo has weird spacing problems with them
 							# for node in dom.xpath("/html/body//span[contains(@class, 'quote-align')]"):
@@ -742,7 +748,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 								for line in regex.findall(r"<(?:m:)?math[^>]*?>(?:.+?)</(?:m:)?math>", processed_xhtml, flags=regex.DOTALL):
 									if line not in replaced_mathml:
 										replaced_mathml.append(line) # Store converted lines to save time in case we have multiple instances of the same MathML
-										mathml_tree = se.easy_xml.EasyXhtmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?>{}".format(regex.sub(r"<(/?)m:", "<\\1", line)))
+										mathml_tree = se.easy_xml.EasyXmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?>{}".format(regex.sub(r"<(/?)m:", "<\\1", line)))
 										processed_line = line
 
 										# If the mfenced element has more than one child, they are separated by commas when rendered.
@@ -771,7 +777,12 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 										# Did we succeed? Is there any more MathML in our string?
 										if regex.findall("</?(?:m:)?m", processed_line):
 											# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
-											se.images.render_mathml_to_png(driver, regex.sub(r"<(/?)m:", "<\\1", line), work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png", work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}-2x.png")
+											# First, remove the m: namespace shorthand and add the actual namespace to our fragment
+											namespaced_line = regex.sub(r"<(/?)m:", "<\\1", line)
+											namespaced_line = namespaced_line.replace("<math", "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"")
+
+											# Have Firefox render the fragment
+											se.images.render_mathml_to_png(driver, namespaced_line, work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png", work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}-2x.png")
 											# iBooks srcset bug: once srcset works in iBooks, this block can go away
 											# calculate the "normal" height/width from the 2x image
 											ifile = work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}-2x.png"
@@ -926,7 +937,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			with open(work_epub_root_directory / "epub" / toc_filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 
-				dom = se.formatting.EasyXhtmlTree(xhtml)
+				dom = se.formatting.EasyXmlTree(xhtml)
 
 				for node in dom.xpath("//ol/li/ol/li/ol"):
 					node.lxml_element.getparent().addnext(node.lxml_element)
@@ -950,7 +961,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					xhtml = file.read()
 
 					try:
-						file_dom = se.easy_xml.EasyXhtmlTree(xhtml)
+						file_dom = se.easy_xml.EasyXmlTree(xhtml)
 					except Exception as ex:
 						raise se.InvalidXhtmlException(f"Error parsing XHTML [path][link=file://{(work_epub_root_directory / 'epub/text/endnotes.xhtml').resolve()}]endnotes.xhtml[/][/]. Exception: {ex}")
 
@@ -1023,7 +1034,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							# It does recognize the word joiner character, but only in the old mobi7 format.  The new format renders them as spaces.
 							xhtml = xhtml.replace(se.ZERO_WIDTH_SPACE, "")
 
-							file_dom = se.easy_xml.EasyXhtmlTree(xhtml)
+							file_dom = se.easy_xml.EasyXmlTree(xhtml)
 
 							# Remove the epub:type attribute, as Calibre turns it into just "type"
 							for node in file_dom.xpath("//*[@epub:type]"):

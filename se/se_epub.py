@@ -89,7 +89,7 @@ class SeEpub:
 	metadata_xml = ""
 	local_css = ""
 	_file_cache: Dict[str, str] = {}
-	_dom_cache: Dict[str, Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtmlTree, se.easy_xml.EasySvgTree]] = {}
+	_dom_cache: Dict[str, se.easy_xml.EasyXmlTree] = {}
 	_metadata_dom = None
 	_generated_identifier = None
 	_generated_github_repo_url = None
@@ -289,7 +289,7 @@ class SeEpub:
 
 		if self._metadata_dom is None:
 			try:
-				self._metadata_dom = se.easy_xml.EasyOpfTree(self.metadata_xml)
+				self._metadata_dom = se.easy_xml.EasyXmlTree(self.metadata_xml)
 			except Exception as ex:
 				raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]. Exception: {ex}")
 
@@ -318,7 +318,7 @@ class SeEpub:
 		return self._file_cache[file_path_str]
 
 	# Cache dom objects so we don't have to create them multiple times
-	def get_dom(self, file_path: Path) -> Union[se.easy_xml.EasyXmlTree, se.easy_xml.EasyXhtmlTree, se.easy_xml.EasySvgTree]:
+	def get_dom(self, file_path: Path) -> se.easy_xml.EasyXmlTree:
 		"""
 		Get an EasyXmlTree DOM object for a given file.
 		Contents are cached so that we don't hit the disk or re-parse DOMs repeatedly
@@ -335,17 +335,7 @@ class SeEpub:
 			file_contents = self.get_file(file_path)
 
 			try:
-				if file_path.suffix == ".xml":
-					if file_path.name == "container.xml":
-						self._dom_cache[file_path_str] = se.easy_xml.EasyContainerTree(file_contents)
-					else:
-						self._dom_cache[file_path_str] = se.easy_xml.EasyXmlTree(file_contents)
-
-				if file_path.suffix == ".xhtml":
-					self._dom_cache[file_path_str] = se.easy_xml.EasyXhtmlTree(file_contents)
-
-				if file_path.suffix == ".svg":
-					self._dom_cache[file_path_str] = se.easy_xml.EasySvgTree(file_contents)
+				self._dom_cache[file_path_str] = se.easy_xml.EasyXmlTree(file_contents)
 
 				# Remove comments
 				for node in self._dom_cache[file_path_str].xpath("//comment()"):
@@ -468,7 +458,7 @@ class SeEpub:
 		css = regex.sub(r"\s*\-epub\-[^;]+?;", "", css)
 
 		output_xhtml = f"<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" epub:prefix=\"z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0\" xml:lang=\"{language}\"><head><meta charset=\"utf-8\"/><title>{title}</title><style/></head><body></body></html>"
-		output_dom = se.formatting.EasyXhtmlTree(output_xhtml)
+		output_dom = se.formatting.EasyXmlTree(output_xhtml)
 
 		# Iterate over spine items in order and recompose them into our output
 		needs_wrapper_css = False
@@ -648,7 +638,7 @@ class SeEpub:
 			with open(endnotes_filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 
-				dom = se.easy_xml.EasyXhtmlTree(xhtml)
+				dom = se.easy_xml.EasyXmlTree(xhtml)
 
 				endnote_count = len(dom.xpath("//li[starts-with(@id, 'note-')]"))
 

@@ -40,10 +40,25 @@ class EasyXmlTree:
 	"""
 	A helper class to make some lxml operations a little less painful.
 	Represents an entire lxml tree.
+
+	This is not a complete XML parser. It only works if namespaces are only declared on the root element.
 	"""
 
 	def __init__(self, xml_string: str):
-		self.namespaces = {"re": "http://exslt.org/regular-expressions"} # Enable regular expressions in xpath
+		self.namespaces = {"re": "http://exslt.org/regular-expressions", "xml": "http://www.w3.org/XML/1998/namespace"} # Enable regular expressions in xpath; xml is the default xml namespace
+		self.default_namespace = None
+
+		# Save the default namespace for later
+		for namespace in regex.findall(r" xmlns=\"([^\"]+?)\"", xml_string):
+			self.default_namespace = namespace
+
+		# Always remove the default namespaces, otherwise xpath with lxml is a huge pain
+		xml_string = regex.sub(r" xmlns=\"[^\"]+?\"", "", xml_string)
+
+		# Add additional namespaces we may have
+		for match in regex.findall(r" xmlns:(.+?)=\"([^\"]+?)\"", xml_string):
+			self.namespaces[match[0]] = match[1]
+
 		try:
 			self.etree = etree.fromstring(str.encode(xml_string))
 		except etree.XMLSyntaxError as ex:
@@ -78,11 +93,17 @@ class EasyXmlTree:
 
 		result: List[Union[str, EasyXmlElement]] = []
 
-		for element in self.etree.xpath(selector, namespaces=self.namespaces):
-			if isinstance(element, str):
-				result.append(element)
-			else:
-				result.append(EasyXmlElement(element, self.namespaces))
+		try:
+			for element in self.etree.xpath(selector, namespaces=self.namespaces):
+				if isinstance(element, str):
+					result.append(element)
+				else:
+					result.append(EasyXmlElement(element, self.namespaces))
+		except etree.XPathEvalError as ex:
+			# If we ask for an undefined namespace prefix, just return nothing
+			# instead of crashing
+			if str(ex) != "Undefined namespace prefix":
+				raise ex
 
 		if return_string and result:
 			return str(result[0])
@@ -158,104 +179,16 @@ class EasyXmlTree:
 					if attr.startswith("data-css-"):
 						node.remove_attr(attr)
 
-		xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + etree.tostring(self.etree, encoding="unicode") + "\n"
+		xml = etree.tostring(self.etree, encoding="unicode")
+
+		# Re-insert the default namespace if we removed it earlier
+		if self.default_namespace:
+			xml = regex.sub(r"^<([a-z0-9\-]+)\b", fr'<\1 xmlns="{self.default_namespace}"', xml)
+
+		xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + xml + "\n"
 
 		# Normalize unicode characters
 		xml = unicodedata.normalize("NFC", xml)
-
-		return xml
-
-class EasyContainerTree(EasyXmlTree):
-	"""
-	Wrapper for the container namespace.
-	"""
-
-	def __init__(self, xml_string: str):
-		# We have to remove the default namespace declaration from our document, otherwise
-		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
-
-		super().__init__(xml_string.replace(" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\"", ""))
-
-	def to_string(self) -> str:
-		"""
-		Serialize the tree to a string.
-		"""
-
-		xml = EasyXmlTree.to_string(self)
-
-		xml = regex.sub(r"<container(?!:)", "<container xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\"", xml)
-
-		return xml
-
-class EasyXhtmlTree(EasyXmlTree):
-	"""
-	Wrapper for the XHTML namespace.
-	"""
-
-	def __init__(self, xml_string: str):
-		# We have to remove the default namespace declaration from our document, otherwise
-		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
-
-		super().__init__(xml_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", ""))
-
-		self.namespaces = {**self.namespaces, **{"epub": "http://www.idpf.org/2007/ops", "m": "http://www.w3.org/1998/Math/MathML"}}
-
-	def to_string(self) -> str:
-		"""
-		Serialize the tree to a string.
-		"""
-
-		xml = EasyXmlTree.to_string(self)
-
-		xml = regex.sub(r"<html(?!:)", "<html xmlns=\"http://www.w3.org/1999/xhtml\"", xml)
-
-		return xml
-
-class EasySvgTree(EasyXmlTree):
-	"""
-	Wrapper for the SVG namespace.
-	"""
-
-	def __init__(self, xml_string: str):
-		# We have to remove the default namespace declaration from our document, otherwise
-		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
-
-		super().__init__(xml_string.replace(" xmlns=\"http://www.w3.org/2000/svg\"", ""))
-
-		self.namespaces = {**self.namespaces, **{"xlink": "http://www.w3.org/1999/xlink"}}
-
-	def to_string(self) -> str:
-		"""
-		Serialize the tree to a string.
-		"""
-
-		xml = EasyXmlTree.to_string(self)
-
-		xml = xml.replace("<svg", "<svg xmlns=\"http://www.w3.org/2000/svg\"")
-
-		return xml
-
-class EasyOpfTree(EasyXmlTree):
-	"""
-	Wrapper for the OPF namespace.
-	"""
-
-	def __init__(self, xml_string: str):
-		# We have to remove the default namespace declaration from our document, otherwise
-		# xpath won't find anything at all. See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
-
-		super().__init__(xml_string.replace(" xmlns=\"http://www.idpf.org/2007/opf\"", ""))
-
-		self.namespaces = {**self.namespaces, **{"dc": "http://purl.org/dc/elements/1.1/"}}
-
-	def to_string(self) -> str:
-		"""
-		Serialize the tree to a string.
-		"""
-
-		xml = EasyXmlTree.to_string(self)
-
-		xml = xml.replace("<package", "<package xmlns=\"http://www.idpf.org/2007/opf\"")
 
 		return xml
 

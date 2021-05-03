@@ -10,7 +10,7 @@ import pyphen
 import regex
 import smartypants
 import se
-from se.formatting import EasyXhtmlTree
+from se.formatting import EasyXmlTree
 
 
 def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
@@ -321,7 +321,7 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 	A string of XHTML with soft hyphens inserted in words. The output is not guaranteed to be pretty-printed.
 	"""
 
-	dom = EasyXhtmlTree(xhtml)
+	dom = EasyXmlTree(xhtml)
 
 	if language is None:
 		try:
