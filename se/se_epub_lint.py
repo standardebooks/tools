@@ -28,7 +28,6 @@ import se.easy_xml
 import se.formatting
 import se.images
 
-METADATA_VARIABLES = ["TITLE", "TITLE_SORT", "SUBJECT_1", "SUBJECT_2", "LCSH_ID_1", "LCSH_ID_2", "TAG", "DESCRIPTION", "LONG_DESCRIPTION", "LANG", "PG_URL", "IA_URL", "EBOOK_WIKI_URL", "VCS_IDENTIFIER", "AUTHOR", "AUTHOR_SORT", "AUTHOR_FULL_NAME", "AUTHOR_WIKI_URL", "AUTHOR_NACOAF_URI", "TRANSLATOR", "TRANSLATOR_SORT", "TRANSLATOR_WIKI_URL", "TRANSLATOR_NACOAF_URI", "COVER_ARTIST", "COVER_ARTIST_SORT", "COVER_ARTIST_WIKI_URL", "COVER_ARTIST_NACOAF_URI", "TRANSCRIBER", "TRANSCRIBER_SORT", "TRANSCRIBER_URL", "PRODUCER", "PRODUCER_SORT", "PRODUCER_URL", "ILLUSTRATOR", "ILLUSTRATOR_SORT", "ILLUSTRATOR_WIKI_URL", "ILLUSTRATOR_NACOAF_URI"]
 COLOPHON_VARIABLES = ["TITLE", "YEAR", "AUTHOR_WIKI_URL", "AUTHOR", "PRODUCER_URL", "PRODUCER", "PG_YEAR", "TRANSCRIBER_1", "TRANSCRIBER_2", "PG_URL", "IA_URL", "PAINTING", "ARTIST_WIKI_URL", "ARTIST", "ORIGINAL_LANGUAGE", "TRANSLATION_YEAR"]
 EPUB_SEMANTIC_VOCABULARY = ["cover", "frontmatter", "bodymatter", "backmatter", "volume", "part", "chapter", "division", "foreword", "preface", "prologue", "introduction", "preamble", "conclusion", "epilogue", "afterword", "epigraph", "toc", "landmarks", "loa", "loi", "lot", "lov", "appendix", "colophon", "index", "index-headnotes", "index-legend", "index-group", "index-entry-list", "index-entry", "index-term", "index-editor-note", "index-locator", "index-locator-list", "index-locator-range", "index-xref-preferred", "index-xref-related", "index-term-category", "index-term-categories", "glossary", "glossterm", "glossdef", "bibliography", "biblioentry", "titlepage", "halftitlepage", "copyright-page", "acknowledgments", "imprint", "imprimatur", "contributors", "other-credits", "errata", "dedication", "revision-history", "notice", "tip", "halftitle", "fulltitle", "covertitle", "title", "subtitle", "bridgehead", "learning-objective", "learning-resource", "assessment", "qna", "panel", "panel-group", "balloon", "text-area", "sound-area", "footnote", "endnote", "footnotes", "endnotes", "noteref", "keyword", "topic-sentence", "concluding-sentence", "pagebreak", "page-list", "table", "table-row", "table-cell", "list", "list-item", "figure", "aside"]
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Childrens", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Romance", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
@@ -509,6 +508,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	id_attrs: List[str] = []
 	missing_metadata_elements = []
 	abbr_elements: List[se.easy_xml.EasyXmlElement] = []
+	metadata_xml = self.metadata_dom.to_string()
 
 	# These are partly defined in semos://1.0.0/8.10.9.2
 	initialism_exceptions = ["G", # as in `G-Force`
@@ -731,9 +731,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 		# Check for repeated punctuation
 		# First replace html entities so we don't catch `&gt;,`
-		matches = regex.findall(r"[,;]{2,}.{0,20}", regex.sub(r"&[a-z0-9]+?;", "", self.metadata_xml))
-		if matches:
-			messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
+		for node in self.metadata_dom.xpath("/package/metadata/*"):
+			if node.text:
+				matches = regex.findall(r"[,;]{2,}.{0,20}", regex.sub(r"&[a-z0-9]+?;", "", node.text))
+				if matches:
+					messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
 
 		# US -> U.S.
 		matches = regex.findall(r"\bUS\b", long_description)
@@ -743,9 +745,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	except Exception as ex:
 		raise se.InvalidSeEbookException(f"No [xml]<meta property=\"se:long-description\">[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/].") from ex
 
-	missing_metadata_vars = [var for var in METADATA_VARIABLES if regex.search(fr"\b{var}\b", self.metadata_xml)]
-	if missing_metadata_vars:
-		messages.append(LintMessage("m-055", "Missing data in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_metadata_vars))
+	nodes = self.metadata_dom.xpath("//*[text() != 'LCSH' and text() != 'WORD_COUNT' and text() != 'READING_EASE' and re:test(., '^\\s*[A-Z_]+[0-9]*\\s*$')]")
+	if nodes:
+		messages.append(LintMessage("m-055", "Missing data in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.text.strip() for node in nodes]))
 
 	# Check if there are non-typogrified quotes or em-dashes in the title.
 	try:
@@ -779,14 +781,15 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		missing_metadata_elements.append("<dc:description>")
 
 	# Check for double spacing
-	matches = regex.findall(fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}", self.metadata_xml)
-	if matches:
+	if self.metadata_dom.xpath(f"/package/metadata/*[re:test(., '[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}')]"):
 		double_spaced_files.append(self.metadata_file_path)
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
-	matches = regex.findall(r"[\p{Letter}]+”[,\.](?! …)", self.metadata_xml)
-	if matches:
-		messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
+	# We can't use xpath's built-in regex because it doesn't support Unicode classes
+	for node in self.metadata_dom.xpath("/package/metadata/*"):
+		if node.text and regex.search(r"[\p{Letter}]+”[,\.](?! …)", node.text):
+			messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
+			break
 
 	# Make sure long-description is escaped HTML
 	if "<" not in long_description:
@@ -831,7 +834,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		messages.append(LintMessage("m-009", f"[xml]<meta property=\"se:url.vcs.github\">[/] value does not match expected: [url]{self.generated_github_repo_url}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for HathiTrust scan URLs instead of actual record URLs
-	if "babel.hathitrust.org" in self.metadata_xml or "hdl.handle.net" in self.metadata_xml:
+	if self.metadata_dom.xpath("/package/metadata/*[contains(., 'babel.hathitrust.org') or contains(., 'hdl.handle.net')]"):
 		messages.append(LintMessage("m-011", "Use HathiTrust record URLs, not page scan URLs, in metadata, imprint, and colophon. Record URLs look like: [url]https://catalog.hathitrust.org/Record/<RECORD-ID>[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for illegal se:subject tags
@@ -852,7 +855,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		messages.append(LintMessage("m-021", "No [xml]<meta property=\"se:subject\">[/] element found.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for CDATA tags
-	if "<![CDATA[" in self.metadata_xml:
+	if "<![CDATA[" in metadata_xml:
 		messages.append(LintMessage("m-017", "[xml]<!\\[CDATA\\[[/] found. Run [bash]se clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] sections.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check that our provided identifier matches the generated identifier
@@ -886,12 +889,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		messages.append(LintMessage("m-010", "Invalid [xml]refines[/] property.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, invalid_refines))
 
 	# Check for malformed URLs
-	messages = messages + _get_malformed_urls(self.metadata_xml, self.metadata_file_path)
+	messages = messages + _get_malformed_urls(metadata_xml, self.metadata_file_path)
 
-	if regex.search(r"https:\/\/id\.loc\.gov/", self.metadata_xml):
+	if self.metadata_dom.xpath("/package/metadata/*[contains(., 'https://id.loc.gov/')]"):
 		messages.append(LintMessage("m-066", "[url]id.loc.gov[/] URI starting with illegal https.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-	if regex.search(r"id\.loc\.gov/authorities/names/[^\.]+\.html", self.metadata_xml):
+	if self.metadata_dom.xpath("/package/metadata/*[re:test(., 'id\\.loc\\.gov/authorities/names/[^\\.]+\\.html')]"):
 		messages.append(LintMessage("m-008", "[url]id.loc.gov[/] URI ending with illegal [path].html[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Does the manifest match the generated manifest?
@@ -906,9 +909,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		messages.append(LintMessage("m-051", "Missing expected element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_metadata_elements))
 
 	# Check for common typos
-	matches = [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", self.metadata_xml, flags=regex.IGNORECASE)]
-	if matches:
-		messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+	for node in self.metadata_dom.xpath("/package/metadata/dc:description") + self.metadata_dom.xpath("/package/metadata/meta[@property='se:long-description']"):
+		matches = [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", node.text, flags=regex.IGNORECASE)]
+		if matches:
+			messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
 	# Make sure some static files are unchanged
 	try:
@@ -1112,7 +1116,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if not dom.xpath(f"/html/body//a[@href='{se_url}' and text()='{se_url.replace('https://', '')}']"):
 						messages.append(LintMessage("m-035", f"Unexpected SE identifier in colophon. Expected: [url]{se_url}[/].", se.MESSAGE_TYPE_ERROR, filename))
 
-					if ">trl<" in self.metadata_xml and "translated from" not in file_contents:
+					if self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text()='trl']") and "translated from" not in file_contents:
 						messages.append(LintMessage("m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check if we forgot to fill any variable slots

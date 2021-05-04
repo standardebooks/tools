@@ -4,9 +4,10 @@ This module implements the `se print-spine` command.
 
 import argparse
 
-import regex
-
+import lxml.etree as etree
 import se
+import se.easy_xml
+import se.formatting
 from se.se_epub import SeEpub
 
 
@@ -32,10 +33,12 @@ def print_spine() -> int:
 			return ex.code
 
 		if args.in_place:
-			se_epub.metadata_xml = regex.sub(r"\s*<spine>.+?</spine>", "\n\t" + "\n\t".join(se_epub.generate_spine().splitlines()), se_epub.metadata_xml, flags=regex.DOTALL)
+
+			for node in se_epub.metadata_dom.xpath("/package/spine"):
+				node.replace_with(se.easy_xml.EasyXmlElement(etree.fromstring(str.encode(se_epub.generate_spine()))))
 
 			with open(se_epub.metadata_file_path, "r+", encoding="utf-8") as file:
-				file.write(se_epub.metadata_xml)
+				file.write(se.formatting.format_xml(se_epub.metadata_dom.to_string()))
 				file.truncate()
 		else:
 			print(se_epub.generate_spine())

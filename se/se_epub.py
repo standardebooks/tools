@@ -86,11 +86,9 @@ class SeEpub:
 	path = Path()
 	content_path = Path()
 	metadata_file_path = Path()
-	metadata_xml = ""
 	local_css = ""
 	_file_cache: Dict[str, str] = {}
 	_dom_cache: Dict[str, se.easy_xml.EasyXmlTree] = {}
-	_metadata_dom = None
 	_generated_identifier = None
 	_generated_github_repo_url = None
 	_repo = None # git.Repo object
@@ -110,10 +108,13 @@ class SeEpub:
 
 			self.content_path = self.metadata_file_path.parent
 
-			with open(self.metadata_file_path, "r", encoding="utf-8") as file:
-				self.metadata_xml = file.read()
+			try:
+				with open(self.metadata_file_path, "r", encoding="utf-8") as file:
+					self.metadata_dom = se.easy_xml.EasyXmlTree(file.read())
+			except Exception as ex:
+				raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]. Exception: {ex}")
 
-			if "<dc:identifier id=\"uid\">url:https://standardebooks.org/ebooks/" not in self.metadata_xml:
+			if not self.metadata_dom.xpath("/package/metadata/dc:identifier[re:test(text(), '^url:https://standardebooks.org/ebooks/')]"):
 				raise se.InvalidSeEbookException
 
 		except Exception as ex:
@@ -281,20 +282,6 @@ class SeEpub:
 
 		return self._endnotes
 
-	@property
-	def metadata_dom(self) -> se.easy_xml.EasyXmlTree:
-		"""
-		Accessor
-		"""
-
-		if self._metadata_dom is None:
-			try:
-				self._metadata_dom = se.easy_xml.EasyXmlTree(self.metadata_xml)
-			except Exception as ex:
-				raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]. Exception: {ex}")
-
-		return self._metadata_dom
-
 	def get_file(self, file_path: Path) -> str:
 		"""
 		Get raw file contents of a file in the epub.
@@ -418,8 +405,8 @@ class SeEpub:
 		"""
 
 		# Get some header data: title, core and local css
-		title = self.metadata_dom.xpath("//dc:title/text()")[0]
-		language = self.metadata_dom.xpath("//dc:language/text()")[0]
+		title = self.metadata_dom.xpath("/package/metadata/dc:title/text()")[0]
+		language = self.metadata_dom.xpath("/package/metadata/dc:language/text()")[0]
 		css = ""
 		namespaces: List[str] = []
 
@@ -602,19 +589,19 @@ class SeEpub:
 
 			# Embed cover.jpg
 			with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
-				svg = regex.sub(r"xlink:href=\".*?cover\.jpg", "xlink:href=\"data:image/jpeg;base64," + source_cover_jpg_base64, file.read(), flags=regex.DOTALL)
+				file_dom = se.easy_xml.EasyXmlTree(file.read())
+
+				# Embed the file
+				for node in file_dom.xpath("//*[re:test(@xlink:href, 'cover\\.jpg$')]"):
+					node.set_attr("xlink:href", "data:image/jpeg;base64," + source_cover_jpg_base64)
+
+				# For the cover we want to keep the path.title-box style, and add an additional
+				# style to color our new paths white
+				for node in file_dom.xpath("/svg/style"):
+					node.set_text("\n\t\tpath{\n\t\t\tfill: #fff;\n\t\t}\n\n\t\t.title-box{\n\t\t\tfill: #000;\n\t\t\tfill-opacity: .75;\n\t\t}\n\t")
 
 				file.seek(0)
-				file.write(svg)
-				file.truncate()
-
-			# For the cover we want to keep the path.title-box style, and add an additional
-			# style to color our new paths white
-			with open(dest_cover_svg_filename, "r+", encoding="utf-8") as file:
-				svg = regex.sub(r"<style.+?</style>", "<style type=\"text/css\">\n\t\tpath{\n\t\t\tfill: #fff;\n\t\t}\n\n\t\t.title-box{\n\t\t\tfill: #000;\n\t\t\tfill-opacity: .75;\n\t\t}\n\t</style>", file.read(), flags=regex.DOTALL)
-
-				file.seek(0)
-				file.write(svg)
+				file.write(file_dom.to_string())
 				file.truncate()
 
 	def reorder_endnotes(self, target_endnote_number: int, step: int = 1) -> None:
@@ -685,29 +672,32 @@ class SeEpub:
 		If this ebook has not yet been released, set the first release timestamp in the metadata file.
 		"""
 
-		if "<dc:date>1900-01-01T00:00:00Z</dc:date>" in self.metadata_xml:
+		if self.metadata_dom.xpath("/package/metadata/dc:date[text() = '1900-01-01T00:00:00Z']"):
 			now = datetime.datetime.utcnow()
 			now_iso = regex.sub(r"\.[0-9]+$", "", now.isoformat()) + "Z"
 			now_iso = regex.sub(r"\+.+?Z$", "Z", now_iso)
 			now_friendly = f"{now:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}"
 			now_friendly = regex.sub(r"\s+", " ", now_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
-			self.metadata_xml = regex.sub(r"<dc:date>[^<]+?</dc:date>", f"<dc:date>{now_iso}</dc:date>", self.metadata_xml)
-			self.metadata_xml = regex.sub(r"<meta property=\"dcterms:modified\">[^<]+?</meta>", f"<meta property=\"dcterms:modified\">{now_iso}</meta>", self.metadata_xml)
+			for node in self.metadata_dom.xpath("/package/metadata/dc:date"):
+				node.set_text(now_iso)
+
+			for node in self.metadata_dom.xpath("/package/metadata/meta[@property='dcterms:modified']"):
+				node.set_text(now_iso)
 
 			with open(self.metadata_file_path, "w", encoding="utf-8") as file:
 				file.seek(0)
-				file.write(self.metadata_xml)
+				file.write(self.metadata_dom.to_string())
 				file.truncate()
 
-			self._metadata_dom = None
-
 			with open(self.content_path / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
-				xhtml = file.read()
-				xhtml = xhtml.replace("<b>January 1, 1900, 12:00 <abbr class=\"time eoc\">a.m.</abbr></b>", f"<b>{now_friendly}</b>")
+				file_dom = se.easy_xml.EasyXmlTree(file.read())
+
+				for node in file_dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]//b[contains(text(), 'January 1, 1900')]"):
+					node.replace_with(se.easy_xml.EasyXmlElement(etree.fromstring(str.encode("<b>" + now_friendly + "</b>"))))
 
 				file.seek(0)
-				file.write(xhtml)
+				file.write(file_dom.to_string())
 				file.truncate()
 
 	def update_flesch_reading_ease(self) -> None:
@@ -727,11 +717,12 @@ class SeEpub:
 		for filename in se.get_target_filenames([self.path], (".xhtml",)):
 			text += self.get_file(filename)
 
-		self.metadata_xml = regex.sub(r"<meta property=\"se:reading-ease\.flesch\">[^<]*</meta>", f"<meta property=\"se:reading-ease.flesch\">{se.formatting.get_flesch_reading_ease(text)}</meta>", self.metadata_xml)
+		for node in self.metadata_dom.xpath("/package/metadata/meta[@property='se:reading-ease.flesch']"):
+			node.set_text(str(se.formatting.get_flesch_reading_ease(text)))
 
 		with open(self.metadata_file_path, "w", encoding="utf-8") as file:
 			file.seek(0)
-			file.write(self.metadata_xml)
+			file.write(self.metadata_dom.to_string())
 			file.truncate()
 
 	def get_word_count(self) -> int:
@@ -767,11 +758,12 @@ class SeEpub:
 		None.
 		"""
 
-		self.metadata_xml = regex.sub(r"<meta property=\"se:word-count\">[^<]*</meta>", f"<meta property=\"se:word-count\">{self.get_word_count()}</meta>", self.metadata_xml)
+		for node in self.metadata_dom.xpath("/package/metadata/meta[@property='se:word-count']"):
+			node.set_text(str(self.get_word_count()))
 
 		with open(self.metadata_file_path, "r+", encoding="utf-8") as file:
 			file.seek(0)
-			file.write(self.metadata_xml)
+			file.write(self.metadata_dom.to_string())
 			file.truncate()
 
 	def generate_manifest(self) -> str:
@@ -998,12 +990,7 @@ class SeEpub:
 		Either the title of the book or the default WORKING_TITLE
 		"""
 
-		match = regex.search(r"<dc:title(?:.*?)>(.*?)</dc:title>", self.metadata_xml)
-		if match:
-			dc_title = match.group(1)
-		else:
-			dc_title = "WORK_TITLE"  # default
-		return dc_title
+		return self.metadata_dom.xpath("/package/metadata/dc:title/text()", True) or "WORK_TITLE"
 
 	def lint(self, skip_lint_ignore: bool) -> list:
 		"""
@@ -1063,7 +1050,7 @@ class SeEpub:
 
 			processed += 1
 
-			file_path = self.path / "src/epub/text" / file_name
+			file_path = self.content_path / "text" / file_name
 			try:
 				dom = self.get_dom(file_path)
 			except Exception as ex:
@@ -1115,9 +1102,9 @@ class SeEpub:
 
 	def __process_link(self, change_list, current_note_number, file_name, link, needs_rewrite, notes_changed) -> Tuple[bool, int]:
 		"""
-		checks each endnote link to see if the existing anchor needs to be updated with a new number
+		Checks each endnote link to see if the existing anchor needs to be updated with a new number
 
-		returns a tuple of needs_write (whether object needs to be re-written), and the number of notes_changed
+		Returns a tuple of needs_write (whether object needs to be re-written), and the number of notes_changed
 		"""
 		old_anchor = ""
 		href = link.get_attr("href") or ""
