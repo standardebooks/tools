@@ -33,7 +33,6 @@ def print_spine() -> int:
 			return ex.code
 
 		if args.in_place:
-
 			for node in se_epub.metadata_dom.xpath("/package/spine"):
 				node.replace_with(se.easy_xml.EasyXmlElement(etree.fromstring(str.encode(se_epub.generate_spine()))))
 

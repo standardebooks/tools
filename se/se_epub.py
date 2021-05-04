@@ -865,6 +865,31 @@ class SeEpub:
 
 		return manifest_xhtml
 
+	def __add_to_spine(self, spine: List[str], items: List[Path], semantic: str) -> Tuple[List[str], List[Path]]:
+		"""
+		Given a spine and a list of items, add the item to the spine if it contains the specified semantic.
+		If an item is added to the spine, remove it from the original list.
+
+		Returns an updated spine and item list.
+		"""
+
+		filtered_items = []
+		spine_additions = []
+
+		for file_path in items:
+			dom = self.get_dom(file_path)
+
+			# Match against \b because we might have `titlepage` and `halftitlepage`
+			if dom.xpath(f"/html/body//section[re:test(@epub:type, '\\b{semantic}\\b')]"):
+				spine_additions.append(file_path.name)
+			else:
+				filtered_items.append(file_path)
+
+		# Sort the additions, for example if we have more than one dedication or introduction
+		spine_additions = natsorted(spine_additions)
+
+		return (spine + spine_additions, filtered_items)
+
 	def generate_spine(self) -> str:
 		"""
 		Return the <spine> element of this ebook as an XML string, with a best guess as to the correct order. Manual review is required.
@@ -876,57 +901,65 @@ class SeEpub:
 		An XML fragment string representing the spine.
 		"""
 
-		excluded_files = se.IGNORED_FILENAMES + ["dedication.xhtml", "introduction.xhtml", "foreword.xhtml", "preface.xhtml", "epigraph.xhtml", "dramatis-personae.xhtml", "halftitlepage.xhtml", "prologue.xhtml", "afterword.xhtml", "endnotes.xhtml"]
-		spine = ["<itemref idref=\"titlepage.xhtml\"/>", "<itemref idref=\"imprint.xhtml\"/>"]
+		spine: List[str] = []
+		frontmatter = []
+		bodymatter = []
+		backmatter = []
 
-		filenames = natsorted(os.listdir(self.content_path / "text"))
+		for root, _, filenames in os.walk(self.content_path):
+			for filename in filenames:
+				file_path = Path(root) / Path(filename)
 
-		if "dedication.xhtml" in filenames:
-			spine.append("<itemref idref=\"dedication.xhtml\"/>")
+				if file_path.suffix == ".xhtml":
+					dom = self.get_dom(file_path)
 
-		if "introduction.xhtml" in filenames:
-			spine.append("<itemref idref=\"introduction.xhtml\"/>")
+					# Exclude the ToC from the spine
+					if dom.xpath("/html/body//nav[contains(@epub:type, 'toc')]"):
+						continue
 
-		if "foreword.xhtml" in filenames:
-			spine.append("<itemref idref=\"foreword.xhtml\"/>")
+					if dom.xpath("/html/*[contains(@epub:type, 'frontmatter')]"):
+						frontmatter.append(file_path)
+					elif dom.xpath("/html/*[contains(@epub:type, 'backmatter')]"):
+						backmatter.append(file_path)
+					else:
+						bodymatter.append(file_path)
 
-		if "preface.xhtml" in filenames:
-			spine.append("<itemref idref=\"preface.xhtml\"/>")
+		# Add frontmatter
+		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "titlepage")
+		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "imprint")
+		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "dedication")
+		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "preamble")
+		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "introduction")
+		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "foreword")
+		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "preface")
+		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "epigraph")
+		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "z3998:dramatis-personae")
+		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "halftitlepage")
 
-		if "epigraph.xhtml" in filenames:
-			spine.append("<itemref idref=\"epigraph.xhtml\"/>")
+		# Add any remaining frontmatter
+		spine = spine + natsorted([file_path.name for file_path in frontmatter])
 
-		if "dramatis-personae.xhtml" in filenames:
-			spine.append("<itemref idref=\"dramatis-personae.xhtml\"/>")
+		# Add bodymatter
+		spine, bodymatter = self.__add_to_spine(spine, bodymatter, "prologue")
 
-		if "halftitlepage.xhtml" in filenames:
-			spine.append("<itemref idref=\"halftitlepage.xhtml\"/>")
+		spine = spine + natsorted([file_path.name for file_path in bodymatter])
 
-		if "prologue.xhtml" in filenames:
-			spine.append("<itemref idref=\"prologue.xhtml\"/>")
+		# Add backmatter
+		spine, backmatter = self.__add_to_spine(spine, backmatter, "afterword")
+		spine, backmatter = self.__add_to_spine(spine, backmatter, "appendix")
+		spine, backmatter = self.__add_to_spine(spine, backmatter, "glossary")
+		spine, backmatter = self.__add_to_spine(spine, backmatter, "endnotes")
+		spine, backmatter = self.__add_to_spine(spine, backmatter, "loi")
+		spine, backmatter = self.__add_to_spine(spine, backmatter, "colophon")
+		spine, backmatter = self.__add_to_spine(spine, backmatter, "copyright-page")
 
-		for filename in filenames:
-			if filename not in excluded_files:
-				spine.append(f"<itemref idref=\"{filename}\"/>")
+		# Add any remaining backmatter
+		spine = spine + natsorted([file_path.name for file_path in backmatter])
 
-		if "afterword.xhtml" in filenames:
-			spine.append("<itemref idref=\"afterword.xhtml\"/>")
-
-		if "endnotes.xhtml" in filenames:
-			spine.append("<itemref idref=\"endnotes.xhtml\"/>")
-
-		if "loi.xhtml" in filenames:
-			spine.append("<itemref idref=\"loi.xhtml\"/>")
-
-		if "colophon.xhtml" in filenames:
-			spine.append("<itemref idref=\"colophon.xhtml\"/>")
-
-		if "uncopyright.xhtml" in filenames:
-			spine.append("<itemref idref=\"uncopyright.xhtml\"/>")
-
+		# Now build the spine output
 		spine_xhtml = "<spine>\n"
-		for line in spine:
-			spine_xhtml = spine_xhtml + "\t" + line + "\n"
+		for filename in spine:
+			spine_xhtml = spine_xhtml + f"""\t<itemref idref="{filename}"/>\n"""
 
 		spine_xhtml = spine_xhtml + "</spine>"
 
