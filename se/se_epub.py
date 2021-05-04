@@ -24,32 +24,6 @@ import se.formatting
 import se.images
 
 
-def _process_endnotes_in_file(filename: str, root: Path, note_range: range, step: int) -> None:
-	"""
-	Helper function for reordering endnotes.
-
-	This has to be outside of the class to be able to be called by `executor`.
-	"""
-
-	with open(root / filename, "r+", encoding="utf-8") as file:
-		xhtml = file.read()
-		processed_xhtml = xhtml
-		processed_xhtml_is_modified = False
-
-		for endnote_number in note_range:
-			# If we’ve already changed some notes and can’t find the next then we don’t need to continue searching
-			if not f"id=\"noteref-{endnote_number}\"" in processed_xhtml and processed_xhtml_is_modified:
-				break
-			processed_xhtml = processed_xhtml.replace(f"id=\"noteref-{endnote_number}\"", f"id=\"noteref-{endnote_number + step}\"", 1)
-			processed_xhtml = processed_xhtml.replace(f"#note-{endnote_number}\"", f"#note-{endnote_number + step}\"", 1)
-			processed_xhtml = processed_xhtml.replace(f">{endnote_number}</a>", f">{endnote_number + step}</a>", 1)
-			processed_xhtml_is_modified = processed_xhtml_is_modified or (processed_xhtml != xhtml)
-
-		if processed_xhtml_is_modified:
-			file.seek(0)
-			file.write(processed_xhtml)
-			file.truncate()
-
 class GitCommit:
 	"""
 	Object used to represent the last Git commit.
@@ -305,7 +279,7 @@ class SeEpub:
 		return self._file_cache[file_path_str]
 
 	# Cache dom objects so we don't have to create them multiple times
-	def get_dom(self, file_path: Path) -> se.easy_xml.EasyXmlTree:
+	def get_dom(self, file_path: Path, remove_comments=False) -> se.easy_xml.EasyXmlTree:
 		"""
 		Get an EasyXmlTree DOM object for a given file.
 		Contents are cached so that we don't hit the disk or re-parse DOMs repeatedly
@@ -325,8 +299,9 @@ class SeEpub:
 				self._dom_cache[file_path_str] = se.easy_xml.EasyXmlTree(file_contents)
 
 				# Remove comments
-				for node in self._dom_cache[file_path_str].xpath("//comment()"):
-					node.remove()
+				if remove_comments:
+					for node in self._dom_cache[file_path_str].xpath("//comment()"):
+						node.remove()
 
 			except etree.XMLSyntaxError as ex:
 				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]. Exception: {ex}")
@@ -618,54 +593,61 @@ class SeEpub:
 
 		increment = step == 1
 		endnote_count = 0
-		source_directory = self.path / "src"
+		endnotes_filename = self.content_path / "text" /"endnotes.xhtml"
 
+		dom = self.get_dom(endnotes_filename)
+
+		endnote_count = len(dom.xpath("//li[contains(@epub:type, 'endnote')]"))
+		if increment:
+			# Range is from COUNT -> target_endnote_number
+			note_range = range(endnote_count, target_endnote_number - 1, -1)
+		else:
+			# Range is from target_endnote_number -> COUNT
+			note_range = range(target_endnote_number, endnote_count + 1, 1)
+
+		for endnote_number in note_range:
+			new_endnote_number = endnote_number + step
+
+			# Update all the actual endnotes in the endnotes file
+			for node in dom.xpath(f"/html/body//li[contains(@epub:type, 'endnote') and @id='note-{endnote_number}']"):
+				node.set_attr("id", f"note-{new_endnote_number}")
+
+			# Update all backlinks in the endnotes file
+			for node in dom.xpath(f"/html/body//a[re:test(@href, '#noteref-{endnote_number}$')]"):
+				node.set_attr("href", node.get_attr("href").replace(f"#noteref-{endnote_number}", f"#noteref-{new_endnote_number}"))
+
+		# Write the endnotes file
 		try:
-			endnotes_filename = source_directory / "epub/text/endnotes.xhtml"
-			with open(endnotes_filename, "r+", encoding="utf-8") as file:
-				xhtml = file.read()
-
-				dom = se.easy_xml.EasyXmlTree(xhtml)
-
-				endnote_count = len(dom.xpath("//li[starts-with(@id, 'note-')]"))
-
-				if increment:
-					note_range = range(endnote_count, target_endnote_number - 1, -1)
-				else:
-					note_range = range(target_endnote_number, endnote_count + 1, 1)
-
-				for endnote_number in note_range:
-					xhtml = xhtml.replace(f"id=\"note-{endnote_number}\"", f"id=\"note-{endnote_number + step}\"", 1)
-					xhtml = xhtml.replace(f"#noteref-{endnote_number}\"", f"#noteref-{endnote_number + step}\"", 1)
-
-				# There may be some links within the notes that refer to other endnotes.
-				# These potentially need incrementing / decrementing too. This code assumes
-				# a link that looks something like <a href="#note-1">note 1</a>.
-				endnote_links = regex.findall(r"href=\"(endnotes\.xhtml)?#note-(\d+)\"(.*?)>(\d+)</a>", xhtml)
-				for link in endnote_links:
-					link_number = int(link[1])
-					if (link_number < target_endnote_number and increment) or (link_number > target_endnote_number and not increment):
-						continue
-
-					link_attrs = regex.sub(r" id=\"noteref-(.+?)\"", fr' id="noteref-{link_number + step}"', link[2])
-
-					xhtml = regex.sub(fr"href=\"(endnotes\.xhtml)?#note-{link[1]}\"{link[2]}>{link[1]}</a>", fr"""href="\1#note-{link_number + step}"{link_attrs}>{link_number + step}</a>""", xhtml)
-
-				file.seek(0)
-				file.write(xhtml)
+			with open(endnotes_filename, "w+", encoding="utf-8") as file:
+				file.write(dom.to_string())
 				file.truncate()
 
 		except Exception as ex:
 			raise se.InvalidSeEbookException(f"Couldn’t open endnotes file: [path][link=file://{endnotes_filename}]{endnotes_filename}[/][/].") from ex
 
-		with concurrent.futures.ProcessPoolExecutor() as executor:
-			for root, _, filenames in os.walk(source_directory):
-				for filename in fnmatch.filter(filenames, "*.xhtml"):
-					# Skip endnotes.xhtml since we already processed it
-					if filename == "endnotes.xhtml":
-						continue
+		# Now update endnotes in all other files. We also do a pass over endnotes.xhtml
+		# again just in case there are endnotes within endnotes.
+		for root, _, filenames in os.walk(self.content_path):
+			for filename in fnmatch.filter(filenames, "*.xhtml"):
+				file_path = Path(root) / filename
+				dom = self.get_dom(file_path)
 
-					executor.submit(_process_endnotes_in_file, filename, Path(root), note_range, step)
+				for endnote_number in note_range:
+					new_endnote_number = endnote_number + step
+
+					# We don't use an xpath matching epub:type="noteref" because we can have hrefs that are not noterefs pointing to endnotes (like "see here")
+					for node in dom.xpath(f"/html/body//a[re:test(@href, '(endnotes\\.xhtml)?#note-{endnote_number}$')]"):
+						# Update the `id` attribute of the link, if we have one (sometimes hrefs point to endnotes but they are not noterefs themselves)
+						if node.get_attr("id"):
+							# Use a regex instead of just replacing the entire ID so that we don't mess up IDs that do not fit this pattern
+							node.set_attr("id", regex.sub(r"noteref-\d+$", f"noteref-{new_endnote_number}", node.get_attr("id")))
+
+						node.set_attr("href", regex.sub(fr"#note-{endnote_number}$", f"#note-{new_endnote_number}", node.get_attr("href")))
+						node.set_text(regex.sub(fr"\b{endnote_number}\b", f"{new_endnote_number}", node.text))
+
+				with open(file_path, "w+", encoding="utf-8") as file:
+					file.write(dom.to_string())
+					file.truncate()
 
 	def set_release_timestamp(self) -> None:
 		"""
