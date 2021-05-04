@@ -44,9 +44,14 @@ class EasyXmlTree:
 	This is not a complete XML parser. It only works if namespaces are only declared on the root element.
 	"""
 
-	def __init__(self, xml_string: str):
+	def __init__(self, xml: Union[str, etree._ElementTree]):
 		self.namespaces = {"re": "http://exslt.org/regular-expressions", "xml": "http://www.w3.org/XML/1998/namespace"} # Enable regular expressions in xpath; xml is the default xml namespace
 		self.default_namespace = None
+
+		if isinstance(xml, etree._ElementTree):
+			xml_string = etree.tostring(xml, encoding="unicode", with_tail=False)
+		else:
+			xml_string = xml
 
 		# Save the default namespace for later
 		for namespace in regex.findall(r" xmlns=\"([^\"]+?)\"", xml_string):
@@ -290,7 +295,11 @@ class EasyXmlElement:
 		Remove an attribute from this node.
 		"""
 
-		self.lxml_element.attrib.pop(self._replace_shorthand_namespaces(attribute))
+		try:
+			self.lxml_element.attrib.pop(self._replace_shorthand_namespaces(attribute))
+		except KeyError:
+			# If the attribute doesn't exist, just continue
+			pass
 
 	def get_attr(self, attribute: str) -> str:
 		"""

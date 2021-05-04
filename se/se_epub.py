@@ -85,7 +85,7 @@ class SeEpub:
 				with open(self.metadata_file_path, "r", encoding="utf-8") as file:
 					self.metadata_dom = se.easy_xml.EasyXmlTree(file.read())
 			except Exception as ex:
-				raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]. Exception: {ex}")
+				raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]. Exception: {ex}") from ex
 
 			if not self.metadata_dom.xpath("/package/metadata/dc:identifier[re:test(text(), '^url:https://standardebooks.org/ebooks/')]"):
 				raise se.InvalidSeEbookException
@@ -303,7 +303,7 @@ class SeEpub:
 						node.remove()
 
 			except etree.XMLSyntaxError as ex:
-				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]. Exception: {ex}")
+				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]. Exception: {ex}") from ex
 			except FileNotFoundError as ex:
 				raise ex
 			except se.InvalidXmlException as ex:

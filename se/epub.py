@@ -6,8 +6,6 @@ Defines several functions that are useful for interacting with epub files.
 import os
 from pathlib import Path
 import zipfile
-import itertools
-import regex
 from lxml import etree
 import se
 import se.easy_xml
@@ -34,21 +32,25 @@ def convert_toc_to_ncx(epub_root_absolute_path: Path, toc_filename: str, xsl_fil
 
 	toc_tree = se.easy_xml.EasyXmlTree(xhtml)
 	transform = etree.XSLT(etree.parse(str(xsl_filename)))
-	ncx_tree = transform(etree.fromstring(str.encode(xhtml)), cwd=f"'{epub_root_absolute_path.as_posix()}/'")
+	ncx_dom = se.easy_xml.EasyXmlTree(transform(etree.fromstring(str.encode(xhtml)), cwd=f"'{epub_root_absolute_path.as_posix()}/'"))
+
+	# Remove empty lang tags
+	for node in ncx_dom.xpath("//*[@xml:lang and re:test(@xml:lang, '^\\s*$')]"):
+		node.remove_attr("xml:lang")
+
+	for node in ncx_dom.xpath("//navMap"):
+		node.set_attr("id", "navmap")
+
+	# Make nicely incrementing navpoint IDs and playOrders
+	count = 1
+	for node in ncx_dom.xpath("//navPoint"):
+		node.set_attr("id", f"navpoint-{count}")
+		node.set_attr("playOrder", f"{count}")
+		count = count + 1
 
 	with open(epub_root_absolute_path / "epub" / "toc.ncx", "w", encoding="utf-8") as file:
-		ncx_xhtml = etree.tostring(ncx_tree, encoding="unicode", pretty_print=True, with_tail=False)
-		ncx_xhtml = regex.sub(r" xml:lang=\"\?\?\"", "", ncx_xhtml)
-
-		# Make nicely incrementing navpoint IDs and playOrders
-		ncx_xhtml = regex.sub(r"<navMap id=\".*\">", "<navMap id=\"navmap\">", ncx_xhtml)
-
-		counter = itertools.count(1)
-		ncx_xhtml = regex.sub(r"<navPoint id=\"id[\p{Letter}0-9]+?\"", lambda x: "<navPoint id=\"navpoint-{count}\" playOrder=\"{count}\"".format(count=next(counter)), ncx_xhtml)
-
-		ncx_xhtml = f"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n{ncx_xhtml}"
-
-		file.write(ncx_xhtml)
+		file.write(ncx_dom.to_string())
+		file.truncate()
 
 	return toc_tree
 
