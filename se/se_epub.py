@@ -5,7 +5,6 @@ Standard Ebooks epub3 files.
 """
 
 import base64
-import concurrent.futures
 import datetime
 import fnmatch
 import os

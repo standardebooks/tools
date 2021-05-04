@@ -84,7 +84,7 @@ These instructions were tested on macOS 10.12 to 10.16, on Intel macs.
 
 	# Install the toolset.
 	pipx install standardebooks
-	
+
 	# Optional: Bash users who have set up bash-completion via brew can install tab completion.
 	ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $(brew --prefix)/etc/bash_completion.d/se
 
@@ -311,7 +311,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se reorder-endnotes`
 
-	Increment the specified endnote and all following endnotes by 1.
+	Increment or decrement the specified endnote and all following endnotes by 1 or a specified amount.
 
 -	### `se roman2dec`
 
