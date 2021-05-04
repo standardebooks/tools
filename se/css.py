@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Defines the EasyXmlTree class, which is a convenience wrapper around etree.
-The class exposes some helpful functions like css_select() and xpath().
+Defines various CSS classes and helper functions.
 """
 
 from copy import deepcopy
