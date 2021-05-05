@@ -473,7 +473,6 @@ class EasyXmlElement:
 
 		if isinstance(node, EasyXmlElement):
 			self.lxml_element.append(node.lxml_element)
-
 		else:
 			self.lxml_element.append(node)
 
@@ -482,11 +481,21 @@ class EasyXmlElement:
 		Place node as the first child of this node.
 		"""
 
+		# If the node we're inserting in to has text, lxml will insert the new
+		# node *after* the text. So, we have to make the node's lxml `.text`
+		# the new node's lxml `.tail`.
+		target = node
 		if isinstance(node, EasyXmlElement):
-			self.lxml_element.insert(0, node.lxml_element)
+			target = node.lxml_element
 
-		else:
-			self.lxml_element.insert(0, node)
+		if self.lxml_element.text:
+			if target.tail:
+				target.tail = target.tail + self.lxml_element.text
+			else:
+				target.tail = self.lxml_element.text
+
+		self.lxml_element.insert(0, target)
+		self.lxml_element.text = ""
 
 	def set_text(self, string: str) -> None:
 		"""
