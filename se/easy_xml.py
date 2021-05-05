@@ -202,9 +202,14 @@ class EasyXmlElement:
 	Represents an lxml element.
 	"""
 
-	def __init__(self, lxml_element, namespaces=None):
+	def __init__(self, lxml_element: Union[str, etree._ElementTree], namespaces=None):
 		self.namespaces = namespaces
-		self.lxml_element = lxml_element
+
+		if isinstance(lxml_element, str):
+			dom = se.easy_xml.EasyXmlTree(lxml_element)
+			self.lxml_element = dom.etree
+		else:
+			self.lxml_element = lxml_element
 
 	def _replace_shorthand_namespaces(self, value:str) -> str:
 		"""

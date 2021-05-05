@@ -206,105 +206,73 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			for filename_string in fnmatch.filter(filenames, "*.xhtml"):
 				filename = (Path(root) / filename_string).resolve()
 
+				dom = self.get_dom(filename)
+
 				# Don't mess with the ToC, since if we have ol/li > first-child selectors we could screw it up
-				if filename.name == "toc.xhtml":
+				if dom.xpath("/html/body//nav[contains(@epub:type, 'toc')]"):
 					continue
 
-				with open(filename, "r+", encoding="utf-8") as file:
-					# We have to remove the default namespace declaration from our document, otherwise
-					# xpath won't find anything at all.  See http://stackoverflow.com/questions/297239/why-doesnt-xpath-work-when-processing-an-xhtml-document-with-lxml-in-python
-					xhtml = file.read()
-					processed_xhtml = xhtml
+				# Now iterate over each CSS selector and see if it's used in any of the files we found
+				for selector in selectors:
 					try:
-						dom = se.easy_xml.EasyXmlTree(xhtml)
-					except Exception as ex:
-						raise se.InvalidXhtmlException(f"Error parsing XHTML file: [path][link=file://{filename}]{filename}[/][/]. Exception: {ex}")
+						# Add classes to elements that match any of our selectors to simplify. For example, if we select :first-child, add a "first-child" class to all elements that match that.
+						for selector_to_simplify in se.SELECTORS_TO_SIMPLIFY:
+							while selector_to_simplify in selector:
+								# Potentially the pseudoclass we’ll simplify isn’t at the end of the selector,
+								# so we need to temporarily remove the trailing part to target the right elements.
+								split_selector = regex.split(fr"({selector_to_simplify}(\(.*?\))?)", selector, 1)
+								target_element_selector = ''.join(split_selector[0:2])
 
-					# Now iterate over each CSS selector and see if it's used in any of the files we found
-					for selector in selectors:
+								replacement_class = split_selector[1].replace(":", "").replace("(", "-").replace("n-", "n-minus-").replace("n+", "n-plus-").replace(")", "")
+								selector = selector.replace(split_selector[1], "." + replacement_class, 1)
+								for element in dom.css_select(target_element_selector):
+									current_class = element.get_attr("class") or ""
+
+									if replacement_class not in current_class:
+										element.set_attr("class", f"{current_class} {replacement_class}".strip())
+
+					except lxml.cssselect.ExpressionError:
+						# This gets thrown if we use pseudo-elements, which lxml doesn't support
+						pass
+					except lxml.cssselect.SelectorSyntaxError as ex:
+						raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
+
+					# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
+					if "[epub|type" in selector:
+						for namespace_selector in regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", selector):
+
+							for element in dom.css_select(namespace_selector):
+								new_class = regex.sub(r"^\.", "", se.formatting.namespace_to_class(namespace_selector))
+								current_class = element.get_attr("class") or ""
+
+								if new_class not in current_class:
+									current_class = f"{current_class} {new_class}".strip()
+									element.set_attr("class", current_class)
+
+					if "abbr" in selector:
 						try:
-							# Add classes to elements that match any of our selectors to simplify. For example, if we select :first-child, add a "first-child" class to all elements that match that.
-							for selector_to_simplify in se.SELECTORS_TO_SIMPLIFY:
-								while selector_to_simplify in selector:
-									# Potentially the pseudoclass we’ll simplify isn’t at the end of the selector,
-									# so we need to temporarily remove the trailing part to target the right elements.
-									split_selector = regex.split(fr"({selector_to_simplify}(\(.*?\))?)", selector, 1)
-									target_element_selector = ''.join(split_selector[0:2])
+							# Convert <abbr> to <span>
+							for element in dom.css_select(selector):
+								# Create a new element and move this element's children in to it
+								span = se.easy_xml.EasyXmlElement("<span/>")
+								for child in element.children:
+									span.append(child)
 
-									replacement_class = split_selector[1].replace(":", "").replace("(", "-").replace("n-", "n-minus-").replace("n+", "n-plus-").replace(")", "")
-									selector = selector.replace(split_selector[1], "." + replacement_class, 1)
-									for element in dom.css_select(target_element_selector):
-										current_class = element.get_attr("class") or ""
-
-										if replacement_class not in current_class:
-											current_class = f"{current_class} {replacement_class}".strip()
-
-											# Alpha sort the class list so that builds are deterministic
-											current_class =  " ".join(sorted(current_class.split()))
-											element.set_attr("class", current_class)
+								element.replace_with(span)
 
 						except lxml.cssselect.ExpressionError:
 							# This gets thrown if we use pseudo-elements, which lxml doesn't support
-							pass
+							continue
 						except lxml.cssselect.SelectorSyntaxError as ex:
 							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
 
-						# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
-						if "[epub|type" in selector:
-							for namespace_selector in regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", selector):
+				# Now we just remove all remaining abbr tags that did not get converted to spans
+				for node in dom.xpath("/html/body//abbr"):
+					node.unwrap()
 
-								for element in dom.css_select(namespace_selector):
-									new_class = regex.sub(r"^\.", "", se.formatting.namespace_to_class(namespace_selector))
-									current_class = element.get_attr("class") or ""
-
-									if new_class not in current_class:
-										current_class = f"{current_class} {new_class}".strip()
-										element.set_attr("class", current_class)
-
-					processed_xhtml = dom.to_string()
-
-					# We do this round in a second pass because if we modify the tree like this, it screws up how lxml does processing later.
-					# If it's all done in one pass, we wind up in a race condition where some elements are fixed and some not
-					dom = se.easy_xml.EasyXmlTree(processed_xhtml)
-
-					for selector in selectors:
-						if "abbr" in selector:
-							try:
-								# Convert <abbr> to <span>
-								for element in dom.css_select(selector):
-									# Why would you want the tail to output by default?!?
-									raw_string = etree.tostring(element.lxml_element, encoding=str, with_tail=False)
-
-									# lxml--crap as usual--includes a bunch of namespace information in every element we print.
-									# Remove it here.
-									raw_string = raw_string.replace(" xmlns=\"http://www.w3.org/1999/xhtml\"", "")
-									raw_string = raw_string.replace(" xmlns:epub=\"http://www.idpf.org/2007/ops\"", "")
-									raw_string = raw_string.replace(" xmlns:m=\"http://www.w3.org/1998/Math/MathML\"", "")
-
-									# Now lxml doesn't let us modify the tree, so we just do a straight up regex replace to turn this into a span
-									processed_string = raw_string.replace("<abbr", "<span")
-									processed_string = processed_string.replace("</abbr", "</span")
-
-									# Now we have a nice, fixed string.  But, since lxml can't replace elements, we write it ourselves.
-									processed_xhtml = processed_xhtml.replace(raw_string, processed_string)
-
-									dom = se.easy_xml.EasyXmlTree(processed_xhtml)
-
-							except lxml.cssselect.ExpressionError:
-								# This gets thrown if we use pseudo-elements, which lxml doesn't support
-								continue
-							except lxml.cssselect.SelectorSyntaxError as ex:
-								raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
-
-					# Now we just remove all stray abbr tags that were not styled by CSS
-					processed_xhtml = regex.sub(r"</?abbr[^>]*?>", "", processed_xhtml)
-
-					dom = se.easy_xml.EasyXmlTree(processed_xhtml)
-
-					if processed_xhtml != xhtml:
-						file.seek(0)
-						file.write(dom.to_string())
-						file.truncate()
+				with open(filename, "r+", encoding="utf-8") as file:
+					file.write(dom.to_string())
+					file.truncate()
 
 		# Done simplifying CSS and tags!
 
@@ -383,12 +351,12 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 				if filename.suffix == ".svg":
 					# For night mode compatibility, give the logo/titlepage a 1px white stroke attribute
-					svg_dom = self.get_dom(filename)
+					dom = self.get_dom(filename)
 
 					# If we're adding stroke to the logo, make sure it's SE files only.
 					# 3rd party files will get mangled.
-					if svg_dom.xpath("/svg/title[contains(., 'Standard Ebooks')]"):
-						if svg_dom.xpath("/svg/title[contains(., 'titlepage')]"):
+					if dom.xpath("/svg/title[contains(., 'Standard Ebooks')]"):
+						if dom.xpath("/svg/title[contains(., 'titlepage')]"):
 							stroke_width = SVG_TITLEPAGE_OUTER_STROKE_WIDTH
 						else:
 							stroke_width = SVG_OUTER_STROKE_WIDTH
@@ -396,13 +364,13 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						new_elements = []
 
 						# First remove some useless elements
-						for node in svg_dom.xpath("/svg/*[name() != 'g' and name() != 'path']"):
+						for node in dom.xpath("/svg/*[name() != 'g' and name() != 'path']"):
 							node.remove()
 
 						# Get all path elements and add a white stroke to each one.
 						# We clone each node and add it to a list, which we will insert into
 						# the original SVG later
-						for node in svg_dom.xpath("//path"):
+						for node in dom.xpath("//path"):
 							style = node.get_attr("style") or ""
 							style = style + f" stroke: #ffffff; stroke-width: {stroke_width}px;"
 
@@ -413,32 +381,32 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 						# Now insert the elements we just cloned, before the first <g> or <path> so that
 						# they appear below the original paths
-						for node in svg_dom.xpath("(//*[name()='g' or name()='path'])[1]"):
+						for node in dom.xpath("(//*[name()='g' or name()='path'])[1]"):
 							for element in new_elements:
 								node.lxml_element.addprevious(element)
 
-						if svg_dom.xpath("/svg[@height or @width]"):
+						if dom.xpath("/svg[@height or @width]"):
 							# If this SVG specifies height/width, then increase height and width by 2 pixels
-							for node in svg_dom.xpath("/svg[@height]"):
+							for node in dom.xpath("/svg[@height]"):
 								new_value = int(node.get_attr("height")) + stroke_width
 								node.set_attr("height", str(new_value))
 
-							for node in svg_dom.xpath("/svg[@width]"):
+							for node in dom.xpath("/svg[@width]"):
 								new_value = int(node.get_attr("width")) + stroke_width
 								node.set_attr("width", str(new_value))
 
 							# Add a <g> element to translate everything by 1px
 							fragment = etree.fromstring(str.encode(f"""<g transform="translate({stroke_width / 2}, {stroke_width / 2})"></g>"""))
 
-							for element in reversed(svg_dom.xpath("/svg/*")):
+							for element in reversed(dom.xpath("/svg/*")):
 								fragment.insert(0, element.lxml_element)
 
-							for element in svg_dom.xpath("/svg"):
+							for element in dom.xpath("/svg"):
 								element.lxml_element.insert(0, fragment)
 
 						# All done, write the SVG so that we can convert to PNG
 						with open(filename, "w+", encoding="utf-8") as file:
-							file.write(svg_dom.to_string())
+							file.write(dom.to_string())
 							file.truncate()
 
 					# Convert SVGs to PNGs at 2x resolution
@@ -452,128 +420,127 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					(filename).unlink()
 
 				if filename.suffix == ".xhtml":
+					dom = self.get_dom(filename)
+
+					# Check if there's any MathML to convert from "content" to "presentational" type
+					# We expect MathML to be the "content" type (versus the "presentational" type).
+					# We use an XSL transform to convert from "content" to "presentational" MathML.
+					# If we start with presentational, then nothing will be changed.
+					# Kobo supports presentational MathML. After we build kobo, we convert the presentational MathML to PNG for the rest of the builds.
+					mathml_transform = None
+					for node in dom.xpath("/html/body//m:math"):
+						mathml_without_namespaces = regex.sub(r"<(/?)m:", r"<\1", node.to_string())
+						mathml_without_namespaces = regex.sub(r"<math", '<math xmlns="http://www.w3.org/1998/Math/MathML\"', mathml_without_namespaces)
+						mathml_content_tree = etree.fromstring(str.encode(f"""<?xml version="1.0" encoding="utf-8"?>{mathml_without_namespaces}"""))
+
+						# Initialize the transform object, if we haven't yet
+						if not mathml_transform:
+							with importlib_resources.path("se.data", "mathmlcontent2presentation.xsl") as mathml_xsl_filename:
+								mathml_transform = etree.XSLT(etree.parse(str(mathml_xsl_filename)))
+
+						# Transform the mathml and get a string representation
+						# XSLT comes from https://github.com/fred-wang/webextension-content-mathml-polyfill
+						mathml_presentation_tree = mathml_transform(mathml_content_tree)
+						mathml_presentation_xhtml = etree.tostring(mathml_presentation_tree, encoding="unicode", pretty_print=True, with_tail=False).strip()
+
+						# The output adds a new namespace definition to the root <math> element. Remove it and re-add the m: namespace instead
+						mathml_presentation_xhtml = regex.sub(r" xmlns=", " xmlns:m=", mathml_presentation_xhtml)
+						mathml_presentation_xhtml = regex.sub(r"<(/)?", r"<\1m:", mathml_presentation_xhtml)
+
+						# Plop our presentational mathml back in to the XHTML we're processing
+						node.replace_with(etree.fromstring(str.encode(mathml_presentation_xhtml)))
+
+					# Since we added an outlining stroke to the titlepage/publisher logo images, we
+					# want to remove the se:color-depth.black-on-transparent semantic
+					for node in dom.xpath("/html/body//img[ (contains(@epub:type, 'z3998:publisher-logo') or ancestor-or-self::*[re:test(@epub:type, '\\btitlepage\\b')]) and contains(@epub:type, 'se:color-depth.black-on-transparent')]"):
+						node.remove_attr_value("epub:type", "se:color-depth.black-on-transparent")
+
+					# Add ARIA roles, which are just mostly duplicate attributes to epub:type
+					for role in ARIA_ROLES:
+						if role == "toc":
+							for node in dom.xpath(f"/html/body//nav[re:test(@epub:type, '\\b{role}\\b')]"):
+								node.add_attr_value("role", f"doc-{role}")
+						elif role == "noteref":
+							for node in dom.xpath(f"/html/body//a[re:test(@epub:type, '\\b{role}\\b')]"):
+								node.add_attr_value("role", f"doc-{role}")
+						else:
+							for node in dom.xpath(f"/html/body//section[re:test(@epub:type, '\\b{role}\\b')]"):
+								node.add_attr_value("role", f"doc-{role}")
+
+					# We converted svgs to pngs, so replace references
+					for node in dom.xpath("/html/body//img[re:test(@src, '\\.svg$')]"):
+						src = node.get_attr("src")
+						if "cover.svg" in src:
+							node.set_attr("src", src.replace("cover.svg", "cover.jpg"))
+						else:
+							node.set_attr("src", src.replace(".svg", ".png"))
+
+							if not ibooks_srcset_bug_exists:
+								filename = regex.search(r"(?<=/)[^/]+(?=\.svg)", src)[0]
+								node.set_attr("srcset", f"{filename}-2x.png 2x, {filename}.png 1x")
+
+					# To get popup footnotes in iBooks, we have to add the `footnote` and `footnotes` semantic
+					# Still required as of 2021-05
+					# Matching `endnote` will also catch `endnotes`
+					for node in dom.xpath("/html/body//*[contains(@epub:type, 'endnote')]"):
+						plural = ""
+						if "endnotes" in node.get_attr("epub:type"):
+							plural = "s"
+
+						node.add_attr_value("epub:type", "footnote" + plural)
+
+						# Remember to get our custom style selectors that we added, too
+						if "epub-type-endnote" + plural in (node.get_attr("class") or ""):
+							node.add_attr_value("class", "epub-type-footnote" + plural)
+
+					# Include extra lang tag for accessibility compatibility
+					for node in dom.xpath("//*[@xml:lang]"):
+						node.set_attr("lang", node.get_attr("xml:lang"))
+
+					processed_xhtml = se.formatting.format_xhtml(dom.to_string())
+
+					if dom.xpath("/html/body//section[contains(@epub:type, 'endnotes')]"):
+						# iOS renders the left-arrow-hook character as an emoji; this fixes it and forces it to render as text.
+						# See https://github.com/standardebooks/tools/issues/73
+						# See http://mts.io/2015/04/21/unicode-symbol-render-text-emoji/
+						processed_xhtml = processed_xhtml.replace("\u21a9", "\u21a9\ufe0e")
+
+					# Typography: replace double and triple em dash characters with extra em dashes.
+					processed_xhtml = processed_xhtml.replace("⸺", f"—{se.WORD_JOINER}—")
+					processed_xhtml = processed_xhtml.replace("⸻", f"—{se.WORD_JOINER}—{se.WORD_JOINER}—")
+
+					# Typography: replace some other less common characters.
+					processed_xhtml = processed_xhtml.replace("⅒", "1/10")
+					processed_xhtml = processed_xhtml.replace("℅", "c/o")
+					processed_xhtml = processed_xhtml.replace("✗", "×")
+					processed_xhtml = processed_xhtml.replace("〃", "“")
+					processed_xhtml = processed_xhtml.replace(" ", f"{se.NO_BREAK_SPACE}{se.NO_BREAK_SPACE}") # em-space to two nbsps
+
+					# Replace combining vertical line above, used to indicate stressed syllables, with combining acute accent
+					processed_xhtml = processed_xhtml.replace(fr"{se.COMBINING_VERTICAL_LINE_ABOVE}", fr"{se.COMBINING_ACUTE_ACCENT}")
+
+					# Many e-readers don't support the word joiner character (U+2060).
+					# They DO, however, support the now-deprecated zero-width non-breaking space (U+FEFF)
+					# For epubs, do this replacement.  Kindle now seems to handle everything fortunately.
+					processed_xhtml = processed_xhtml.replace(se.WORD_JOINER, se.ZERO_WIDTH_SPACE)
+
+					# We've disabled quote-align for now, because it causes more problems than expected.
+					# # Move quotation marks over periods and commas
+					# # The negative lookahead is to prevent matching `.&hairsp;…`
+					# processed_xhtml = regex.sub(fr"([\\.…,])([’”{se.HAIR_SPACE}]+)(?!…)", r"""\1<span class="quote-align">\2</span>""", processed_xhtml)
+
+					# # The above replacement may replace text within <img alt> attributes. Remove those now until no replacements remain, since we may have
+					# # many matches in the same line
+					# replacements = 1
+					# while replacements > 0:
+					# 	processed_xhtml, replacements = regex.subn(r"alt=\"([^<>\"]+?)<span class=\"quote-align\">([^<>\"]+?)</span>", r"""alt="\1\2""", processed_xhtml)
+
+					# # Do the same for <title> elements
+					# replacements = 1
+					# while replacements > 0:
+					# 	processed_xhtml, replacements = regex.subn(r"<title>([^<>]+?)<span class=\"quote-align\">([^<>]+?)</span>", r"""<title>\1\2""", processed_xhtml)
+
 					with open(filename, "r+", encoding="utf-8") as file:
-						dom = se.easy_xml.EasyXmlTree(file.read())
-
-						# Check if there's any MathML to convert from "content" to "presentational" type
-						# We expect MathML to be the "content" type (versus the "presentational" type).
-						# We use an XSL transform to convert from "content" to "presentational" MathML.
-						# If we start with presentational, then nothing will be changed.
-						# Kobo supports presentational MathML. After we build kobo, we convert the presentational MathML to PNG for the rest of the builds.
-						mathml_transform = None
-						for node in dom.xpath("/html/body//m:math"):
-							mathml_without_namespaces = regex.sub(r"<(/?)m:", r"<\1", node.to_string())
-							mathml_without_namespaces = regex.sub(r"<math", '<math xmlns="http://www.w3.org/1998/Math/MathML\"', mathml_without_namespaces)
-							mathml_content_tree = etree.fromstring(str.encode(f"""<?xml version="1.0" encoding="utf-8"?>{mathml_without_namespaces}"""))
-
-							# Initialize the transform object, if we haven't yet
-							if not mathml_transform:
-								with importlib_resources.path("se.data", "mathmlcontent2presentation.xsl") as mathml_xsl_filename:
-									mathml_transform = etree.XSLT(etree.parse(str(mathml_xsl_filename)))
-
-							# Transform the mathml and get a string representation
-							# XSLT comes from https://github.com/fred-wang/webextension-content-mathml-polyfill
-							mathml_presentation_tree = mathml_transform(mathml_content_tree)
-							mathml_presentation_xhtml = etree.tostring(mathml_presentation_tree, encoding="unicode", pretty_print=True, with_tail=False).strip()
-
-							# The output adds a new namespace definition to the root <math> element. Remove it and re-add the m: namespace instead
-							mathml_presentation_xhtml = regex.sub(r" xmlns=", " xmlns:m=", mathml_presentation_xhtml)
-							mathml_presentation_xhtml = regex.sub(r"<(/)?", r"<\1m:", mathml_presentation_xhtml)
-
-							# Plop our presentational mathml back in to the XHTML we're processing
-							node.replace_with(etree.fromstring(str.encode(mathml_presentation_xhtml)))
-
-						# Since we added an outlining stroke to the titlepage/publisher logo images, we
-						# want to remove the se:color-depth.black-on-transparent semantic
-						for node in dom.xpath("/html/body//img[ (contains(@epub:type, 'z3998:publisher-logo') or ancestor-or-self::*[re:test(@epub:type, '\\btitlepage\\b')]) and contains(@epub:type, 'se:color-depth.black-on-transparent')]"):
-							node.remove_attr_value("epub:type", "se:color-depth.black-on-transparent")
-
-						# Add ARIA roles, which are just mostly duplicate attributes to epub:type
-						for role in ARIA_ROLES:
-							if role == "toc":
-								for node in dom.xpath(f"/html/body//nav[re:test(@epub:type, '\\b{role}\\b')]"):
-									node.add_attr_value("role", f"doc-{role}")
-							elif role == "noteref":
-								for node in dom.xpath(f"/html/body//a[re:test(@epub:type, '\\b{role}\\b')]"):
-									node.add_attr_value("role", f"doc-{role}")
-							else:
-								for node in dom.xpath(f"/html/body//section[re:test(@epub:type, '\\b{role}\\b')]"):
-									node.add_attr_value("role", f"doc-{role}")
-
-						# We converted svgs to pngs, so replace references
-						for node in dom.xpath("/html/body//img[re:test(@src, '\\.svg$')]"):
-							src = node.get_attr("src")
-							if "cover.svg" in src:
-								node.set_attr("src", src.replace("cover.svg", "cover.jpg"))
-							else:
-								node.set_attr("src", src.replace(".svg", ".png"))
-
-								if not ibooks_srcset_bug_exists:
-									filename = regex.search(r"(?<=/)[^/]+(?=\.svg)", src)[0]
-									node.set_attr("srcset", f"{filename}-2x.png 2x, {filename}.png 1x")
-
-						# To get popup footnotes in iBooks, we have to add the `footnote` and `footnotes` semantic
-						# Still required as of 2021-05
-						# Matching `endnote` will also catch `endnotes`
-						for node in dom.xpath("/html/body//*[contains(@epub:type, 'endnote')]"):
-							plural = ""
-							if "endnotes" in node.get_attr("epub:type"):
-								plural = "s"
-
-							node.add_attr_value("epub:type", "footnote" + plural)
-
-							# Remember to get our custom style selectors that we added, too
-							if "epub-type-endnote" + plural in (node.get_attr("class") or ""):
-								node.add_attr_value("class", "epub-type-footnote" + plural)
-
-						# Include extra lang tag for accessibility compatibility
-						for node in dom.xpath("//*[@xml:lang]"):
-							node.set_attr("lang", node.get_attr("xml:lang"))
-
-						processed_xhtml = se.formatting.format_xhtml(dom.to_string())
-
-						if dom.xpath("/html/body//section[contains(@epub:type, 'endnotes')]"):
-							# iOS renders the left-arrow-hook character as an emoji; this fixes it and forces it to render as text.
-							# See https://github.com/standardebooks/tools/issues/73
-							# See http://mts.io/2015/04/21/unicode-symbol-render-text-emoji/
-							processed_xhtml = processed_xhtml.replace("\u21a9", "\u21a9\ufe0e")
-
-						# Typography: replace double and triple em dash characters with extra em dashes.
-						processed_xhtml = processed_xhtml.replace("⸺", f"—{se.WORD_JOINER}—")
-						processed_xhtml = processed_xhtml.replace("⸻", f"—{se.WORD_JOINER}—{se.WORD_JOINER}—")
-
-						# Typography: replace some other less common characters.
-						processed_xhtml = processed_xhtml.replace("⅒", "1/10")
-						processed_xhtml = processed_xhtml.replace("℅", "c/o")
-						processed_xhtml = processed_xhtml.replace("✗", "×")
-						processed_xhtml = processed_xhtml.replace("〃", "“")
-						processed_xhtml = processed_xhtml.replace(" ", f"{se.NO_BREAK_SPACE}{se.NO_BREAK_SPACE}") # em-space to two nbsps
-
-						# Replace combining vertical line above, used to indicate stressed syllables, with combining acute accent
-						processed_xhtml = processed_xhtml.replace(fr"{se.COMBINING_VERTICAL_LINE_ABOVE}", fr"{se.COMBINING_ACUTE_ACCENT}")
-
-						# Many e-readers don't support the word joiner character (U+2060).
-						# They DO, however, support the now-deprecated zero-width non-breaking space (U+FEFF)
-						# For epubs, do this replacement.  Kindle now seems to handle everything fortunately.
-						processed_xhtml = processed_xhtml.replace(se.WORD_JOINER, se.ZERO_WIDTH_SPACE)
-
-						# We've disabled quote-align for now, because it causes more problems than expected.
-						# # Move quotation marks over periods and commas
-						# # The negative lookahead is to prevent matching `.&hairsp;…`
-						# processed_xhtml = regex.sub(fr"([\\.…,])([’”{se.HAIR_SPACE}]+)(?!…)", r"""\1<span class="quote-align">\2</span>""", processed_xhtml)
-
-						# # The above replacement may replace text within <img alt> attributes. Remove those now until no replacements remain, since we may have
-						# # many matches in the same line
-						# replacements = 1
-						# while replacements > 0:
-						# 	processed_xhtml, replacements = regex.subn(r"alt=\"([^<>\"]+?)<span class=\"quote-align\">([^<>\"]+?)</span>", r"""alt="\1\2""", processed_xhtml)
-
-						# # Do the same for <title> elements
-						# replacements = 1
-						# while replacements > 0:
-						# 	processed_xhtml, replacements = regex.subn(r"<title>([^<>]+?)<span class=\"quote-align\">([^<>]+?)</span>", r"""<title>\1\2""", processed_xhtml)
-
-						file.seek(0)
 						file.write(processed_xhtml)
 						file.truncate()
 
@@ -613,14 +580,14 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				for root, _, filenames in os.walk(kobo_work_directory):
 					# Add a note to content.opf indicating this is a transform build
 					for filename_string in fnmatch.filter(filenames, "content.opf"):
-						with open(Path(root) / filename_string, "r+", encoding="utf-8") as file:
-							opf_dom = se.easy_xml.EasyXmlTree(file.read())
+						filename = Path(root) / filename_string
+						dom = self.get_dom(filename)
 
-							for node in opf_dom.xpath("/package[contains(@prefix, 'se:')]/metadata"):
-								node.append(etree.fromstring("""<meta property="se:transform">kobo</meta>"""))
+						for node in dom.xpath("/package[contains(@prefix, 'se:')]/metadata"):
+							node.append(etree.fromstring("""<meta property="se:transform">kobo</meta>"""))
 
-							file.seek(0)
-							file.write(opf_dom.to_string())
+						with open(filename, "r+", encoding="utf-8") as file:
+							file.write(dom.to_string())
 							file.truncate()
 
 					# Kobo .kepub files need each clause wrapped in a special <span> tag to enable highlighting.
@@ -631,60 +598,58 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 						filename = (Path(root) / filename_string).resolve()
 
+						# Note: Kobo supports CSS hyphenation, but it can be improved with soft hyphens.
+						# However we can't insert them, because soft hyphens break the dictionary search when
+						# a word is highlighted.
+						dom = self.get_dom(filename)
+
 						# Don't add spans to the ToC
-						if filename.name == "toc.xhtml":
+						if dom.xpath("/html/body//nav[contains(@epub:type, 'toc')]"):
 							continue
 
+						# # Remove quote-align spans we inserted above, since Kobo has weird spacing problems with them
+						# for node in dom.xpath("/html/body//span[contains(@class, 'quote-align')]"):
+						# 	node.unwrap()
+
+						# Now add the kobo spans
+						kobo.add_kobo_spans_to_node(dom.xpath("/html/body")[0].lxml_element)
+
+						# The above will often nest spans within spans, which can surprise CSS selectors present in local.css
+						# Try to remove those kinds of nested spans, which are the only children of other spans
+						# The xpath uses `local-name()` instead of directly selecting `span` because the `add_kobo_spans_to_node` function
+						# adds its spans with the html namespace (i.e. added spans are `html:span`), and EasyXml can't cope with new namespaces
+						# after the object has already been instantiated
+						for node in dom.xpath("/html/body//*[local-name() = 'span' and parent::span and contains(@class, 'koboSpan') and not(following-sibling::node()[normalize-space(.)] or preceding-sibling::node()[normalize-space(.)])]"):
+							if node.get_attr("id"):
+								node.parent.set_attr("id", node.get_attr("id"))
+
+							if node.get_attr("class"):
+								parent_class = node.parent.get_attr("class")
+								if parent_class:
+									parent_class = parent_class + " "
+								else:
+									parent_class = ""
+
+								node.parent.set_attr("class", parent_class + node.get_attr("class"))
+
+							node.unwrap()
+
+						# Kobos don't have fonts that support the ↩ character in endnotes, so replace it with ←
+						if dom.xpath("/html/body//section[contains(@epub:type, 'endnotes')]"):
+							# We use xpath to select the kobo spans that we just inserted
+							for node in dom.xpath("/html/body//a[contains(@epub:type, 'backlink')]/*[local-name()='span']"):
+								node.set_text("←")
+
+						xhtml = dom.to_string()
+
+						# Kobos replace no-break hyphens with a weird high hyphen character, so replace that here
+						xhtml = xhtml.replace("‑", f"{se.WORD_JOINER}-{se.WORD_JOINER}")
+
+						# Remove namespaces from the output that were added by kobo.add_kobo_spans_to_node
+						xhtml = xhtml.replace(" xmlns:html=\"http://www.w3.org/1999/xhtml\"", "")
+						xhtml = regex.sub(r"<(/?)html:span", r"<\1span", xhtml)
+
 						with open(filename, "r+", encoding="utf-8") as file:
-							# Note: Kobo supports CSS hyphenation, but it can be improved with soft hyphens.
-							# However we can't insert them, because soft hyphens break the dictionary search when
-							# a word is highlighted.
-
-							dom = se.easy_xml.EasyXmlTree(file.read())
-
-							# # Remove quote-align spans we inserted above, since Kobo has weird spacing problems with them
-							# for node in dom.xpath("/html/body//span[contains(@class, 'quote-align')]"):
-							# 	node.unwrap()
-
-							# Now add the kobo spans
-							kobo.add_kobo_spans_to_node(dom.xpath("/html/body")[0].lxml_element)
-
-							# The above will often nest spans within spans, which can surprise CSS selectors present in local.css
-							# Try to remove those kinds of nested spans, which are the only children of other spans
-							# The xpath uses `local-name()` instead of directly selecting `span` because the `add_kobo_spans_to_node` function
-							# adds its spans with the html namespace (i.e. added spans are `html:span`), and EasyXml can't cope with new namespaces
-							# after the object has already been instantiated
-							for node in dom.xpath("/html/body//*[local-name() = 'span' and parent::span and contains(@class, 'koboSpan') and not(following-sibling::node()[normalize-space(.)] or preceding-sibling::node()[normalize-space(.)])]"):
-								if node.get_attr("id"):
-									node.parent.set_attr("id", node.get_attr("id"))
-
-								if node.get_attr("class"):
-									parent_class = node.parent.get_attr("class")
-									if parent_class:
-										parent_class = parent_class + " "
-									else:
-										parent_class = ""
-
-									node.parent.set_attr("class", parent_class + node.get_attr("class"))
-
-								node.unwrap()
-
-							# Kobos don't have fonts that support the ↩ character in endnotes, so replace it with ←
-							if dom.xpath("/html/body//section[contains(@epub:type, 'endnotes')]"):
-								# We use xpath to select the kobo spans that we just inserted
-								for node in dom.xpath("/html/body//a[contains(@epub:type, 'backlink')]/*[local-name()='span']"):
-									node.set_text("←")
-
-							xhtml = dom.to_string()
-
-							# Kobos replace no-break hyphens with a weird high hyphen character, so replace that here
-							xhtml = xhtml.replace("‑", f"{se.WORD_JOINER}-{se.WORD_JOINER}")
-
-							# Remove namespaces from the output that were added by kobo.add_kobo_spans_to_node
-							xhtml = xhtml.replace(" xmlns:html=\"http://www.w3.org/1999/xhtml\"", "")
-							xhtml = regex.sub(r"<(/?)html:span", r"<\1span", xhtml)
-
-							file.seek(0)
 							file.write(xhtml)
 							file.truncate()
 
@@ -860,11 +825,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, navdoc2ncx_xsl_filename)
 
 		# Convert the <nav> landmarks element to the <guide> element in content.opf
-		guide_dom = se.easy_xml.EasyXmlTree("<guide/>")
-		guide_root_node = se.easy_xml.EasyXmlElement(guide_dom.etree)
+		guide_root_node = se.easy_xml.EasyXmlElement("<guide/>")
 		for node in toc_tree.xpath("//nav[@epub:type=\"landmarks\"]/ol/li/a"):
-			ref_tree = se.easy_xml.EasyXmlTree("<reference/>")
-			ref_node = se.easy_xml.EasyXmlElement(ref_tree.etree)
+			ref_node = se.easy_xml.EasyXmlElement("<reference/>")
 
 			ref_node.set_attr("title", node.text)
 			ref_node.set_attr("href", node.get_attr("href"))
@@ -999,8 +962,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 									if first_p:
 										first_p = first_p[0]
 									else:
-										first_p_tree = se.easy_xml.EasyXmlTree("<p/>")
-										first_p = se.easy_xml.EasyXmlElement(first_p_tree.etree)
+										first_p = se.easy_xml.EasyXmlElement("<p/>")
 										endnote.prepend(first_p)
 
 									first_p.set_attr("id", endnote.get_attr("id"))
