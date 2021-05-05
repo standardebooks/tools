@@ -353,11 +353,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 		# Remove SVG item properties in content.opf since we will convert all SVGs to PNGs further down
 		for node in metadata_dom.xpath("/package/manifest/item[contains(@properties, 'svg')]"):
-			if regex.match(r"^\s*svg\s*$", node.get_attr("properties")):
-				# If `svg` is the only property, remove the attribute entirely
-				node.remove_attr("properties")
-			else:
-				node.set_attr("properties", regex.sub(r"\s*svg\s*", "", node.get_attr("properties")))
+			node.remove_attr_value("properties", "svg")
 
 		# Add an element noting the version of the se tools that built this ebook, but only if the se vocab prefix is present
 		for node in metadata_dom.xpath("/package[contains(@prefix, 'se:')]/metadata"):
@@ -457,8 +453,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 				if filename.suffix == ".xhtml":
 					with open(filename, "r+", encoding="utf-8") as file:
-						xhtml = file.read()
-						processed_xhtml = xhtml
+						dom = se.easy_xml.EasyXmlTree(file.read())
 
 						# Check if there's any MathML to convert from "content" to "presentational" type
 						# We expect MathML to be the "content" type (versus the "presentational" type).
@@ -466,8 +461,10 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# If we start with presentational, then nothing will be changed.
 						# Kobo supports presentational MathML. After we build kobo, we convert the presentational MathML to PNG for the rest of the builds.
 						mathml_transform = None
-						for line in regex.findall(r"<(?:m:)?math[^>]*?>(.+?)</(?:m:)?math>", processed_xhtml, flags=regex.DOTALL):
-							mathml_content_tree = etree.fromstring(str.encode("<?xml version=\"1.0\" encoding=\"utf-8\"?><math xmlns=\"http://www.w3.org/1998/Math/MathML\">{}</math>".format(regex.sub(r"<(/?)m:", "<\\1", line))))
+						for node in dom.xpath("/html/body//m:math"):
+							mathml_without_namespaces = regex.sub(r"<(/?)m:", r"<\1", node.to_string())
+							mathml_without_namespaces = regex.sub(r"<math", '<math xmlns="http://www.w3.org/1998/Math/MathML\"', mathml_without_namespaces)
+							mathml_content_tree = etree.fromstring(str.encode(f"""<?xml version="1.0" encoding="utf-8"?>{mathml_without_namespaces}"""))
 
 							# Initialize the transform object, if we haven't yet
 							if not mathml_transform:
@@ -479,60 +476,67 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							mathml_presentation_tree = mathml_transform(mathml_content_tree)
 							mathml_presentation_xhtml = etree.tostring(mathml_presentation_tree, encoding="unicode", pretty_print=True, with_tail=False).strip()
 
-							# The output adds a new namespace definition to the root <math> element. Remove it and add the m: namespace instead
-							mathml_presentation_xhtml = regex.sub(r" xmlns=\"[^\"]+?\"", "", mathml_presentation_xhtml)
+							# The output adds a new namespace definition to the root <math> element. Remove it and re-add the m: namespace instead
+							mathml_presentation_xhtml = regex.sub(r"xmlns=", "xmlns:m=", mathml_presentation_xhtml)
 							mathml_presentation_xhtml = regex.sub(r"<(/)?", r"<\1m:", mathml_presentation_xhtml)
 
-							# Plop our string back in to the XHTML we're processing
-							processed_xhtml = regex.sub(r"<(?:m:)?math[^>]*?>\{}\</(?:m:)?math>".format(regex.escape(line)), mathml_presentation_xhtml, processed_xhtml, flags=regex.MULTILINE)
+							# Plop our presentational mathml back in to the XHTML we're processing
+							node.replace_with(etree.fromstring(str.encode(mathml_presentation_xhtml)))
 
-						if filename.name == "endnotes.xhtml":
+						# Since we added an outlining stroke to the titlepage/publisher logo images, we
+						# want to remove the se:color-depth.black-on-transparent semantic
+						for node in dom.xpath("/html/body//img[ (contains(@epub:type, 'z3998:publisher-logo') or ancestor-or-self::*[re:test(@epub:type, '\\btitlepage\\b')]) and contains(@epub:type, 'se:color-depth.black-on-transparent')]"):
+							node.remove_attr_value("epub:type", "se:color-depth.black-on-transparent")
+
+						# Add ARIA roles, which are just mostly duplicate attributes to epub:type
+						for role in ARIA_ROLES:
+							if role == "toc":
+								for node in dom.xpath(f"/html/body//nav[re:test(@epub:type, '\\b{role}\\b')]"):
+									node.add_attr_value("role", f"doc-{role}")
+							elif role == "noteref":
+								for node in dom.xpath(f"/html/body//a[re:test(@epub:type, '\\b{role}\\b')]"):
+									node.add_attr_value("role", f"doc-{role}")
+							else:
+								for node in dom.xpath(f"/html/body//section[re:test(@epub:type, '\\b{role}\\b')]"):
+									node.add_attr_value("role", f"doc-{role}")
+
+						# We converted svgs to pngs, so replace references
+						for node in dom.xpath("/html/body//img[re:test(@src, '\\.svg$')]"):
+							src = node.get_attr("src")
+							if "cover.svg" in src:
+								node.set_attr("src", src.replace("cover.svg", "cover.jpg"))
+							else:
+								node.set_attr("src", src.replace(".svg", ".png"))
+
+								if not ibooks_srcset_bug_exists:
+									filename = regex.search(r"(?<=/)[^/]+(?=\.svg)", src)[0]
+									node.set_attr("srcset", f"{filename}-2x.png 2x, {filename}.png 1x")
+
+						# To get popup footnotes in iBooks, we have to add the `footnote` and `footnotes` semantic
+						# Still required as of 2021-05
+						# Matching `endnote` will also catch `endnotes`
+						for node in dom.xpath("/html/body//*[contains(@epub:type, 'endnote')]"):
+							plural = ""
+							if "endnotes" in node.get_attr("epub:type"):
+								plural = "s"
+
+							node.add_attr_value("epub:type", "footnote" + plural)
+
+							# Remember to get our custom style selectors that we added, too
+							if "epub-type-endnote" + plural in (node.get_attr("class") or ""):
+								node.add_attr_value("class", "epub-type-footnote" + plural)
+
+						# Include extra lang tag for accessibility compatibility
+						for node in dom.xpath("//*[@xml:lang]"):
+							node.set_attr("lang", node.get_attr("xml:lang"))
+
+						processed_xhtml = se.formatting.format_xhtml(dom.to_string())
+
+						if dom.xpath("/html/body//section[contains(@epub:type, 'endnotes')]"):
 							# iOS renders the left-arrow-hook character as an emoji; this fixes it and forces it to render as text.
 							# See https://github.com/standardebooks/tools/issues/73
 							# See http://mts.io/2015/04/21/unicode-symbol-render-text-emoji/
 							processed_xhtml = processed_xhtml.replace("\u21a9", "\u21a9\ufe0e")
-
-						# Since we added an outlining stroke to the titlepage/publisher logo images, we
-						# want to remove the se:color-depth.black-on-transparent semantic
-						if filename.name in ("colophon.xhtml", "imprint.xhtml", "titlepage.xhtml"):
-							processed_xhtml = regex.sub(r"\s*se:color-depth\.black-on-transparent\s*", "", processed_xhtml)
-
-						# Add ARIA roles, which are just mostly duplicate attributes to epub:type
-						for role in ARIA_ROLES:
-							processed_xhtml = regex.sub(fr"(epub:type=\"[^\"]*?{role}[^\"]*?\")", f"\\1 role=\"doc-{role}\"", processed_xhtml)
-
-						# We may have added multiple `role` attributes. xml doesn't allow more than one, so drop any others.
-						processed_xhtml = regex.sub(r"role=\"([^\"]+?)\"( role=\"([^\"]+?)\")+", "role=\"\\1\"", processed_xhtml)
-
-						# Some ARIA roles can't apply to some elements.
-						# For example, epilogue can't apply to <article>
-						processed_xhtml = regex.sub(r"<article ([^>]*?)role=\"doc-epilogue\"", "<article \\1", processed_xhtml)
-
-						if filename.name == "toc.xhtml":
-							landmarks_xhtml = regex.findall(r"<nav epub:type=\"landmarks\">.*?</nav>", processed_xhtml, flags=regex.DOTALL)
-							landmarks_xhtml = regex.sub(r" role=\"doc-.*?\"", "", landmarks_xhtml[0])
-							processed_xhtml = regex.sub(r"<nav epub:type=\"landmarks\">.*?</nav>", landmarks_xhtml, processed_xhtml, flags=regex.DOTALL)
-
-						# But, remove ARIA roles we added to h# tags, because typically those roles are for sectioning content.
-						# For example, we might have an h2 that is both a title and dedication. But ARIA can't handle it being a dedication.
-						# See The Man Who Was Thursday by G K Chesterton
-						processed_xhtml = regex.sub(r"(<h[1-6] [^>]*) role=\".*?\">", "\\1>", processed_xhtml)
-
-						# We converted svgs to pngs, so replace references
-						processed_xhtml = processed_xhtml.replace("cover.svg", "cover.jpg")
-
-						if not ibooks_srcset_bug_exists:
-							processed_xhtml = regex.sub(r"src=\"([^\"]+?)\.svg\"", "src=\"\\1.png\" srcset=\"\\1-2x.png 2x, \\1.png 1x\"", processed_xhtml)
-						else:
-							processed_xhtml = regex.sub(r"src=\"([^\"]+?)\.svg\"", "src=\"\\1.png\"", processed_xhtml)
-
-						# To get popup footnotes in iBooks, we have to change epub:endnote to epub:footnote.
-						# Remember to get our custom style selectors too.
-						processed_xhtml = regex.sub(r"epub:type=\"([^\"]*?)endnote([^\"]*?)\"", "epub:type=\"\\1footnote\\2\"", processed_xhtml)
-						processed_xhtml = regex.sub(r"class=\"([^\"]*?)epub-type-endnote([^\"]*?)\"", "class=\"\\1epub-type-footnote\\2\"", processed_xhtml)
-
-						# Include extra lang tag for accessibility compatibility.
-						processed_xhtml = regex.sub(r"xml:lang\=\"([^\"]+?)\"", "lang=\"\\1\" xml:lang=\"\\1\"", processed_xhtml)
 
 						# Typography: replace double and triple em dash characters with extra em dashes.
 						processed_xhtml = processed_xhtml.replace("⸺", f"—{se.WORD_JOINER}—")
@@ -553,10 +557,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# For epubs, do this replacement.  Kindle now seems to handle everything fortunately.
 						processed_xhtml = processed_xhtml.replace(se.WORD_JOINER, se.ZERO_WIDTH_SPACE)
 
-						# Some minor code style cleanup
-						processed_xhtml = processed_xhtml.replace(" >", ">")
-						processed_xhtml = regex.sub(r"""\s*epub:type=""\s*""", "", processed_xhtml)
-
 						# We've disabled quote-align for now, because it causes more problems than expected.
 						# # Move quotation marks over periods and commas
 						# # The negative lookahead is to prevent matching `.&hairsp;…`
@@ -573,10 +573,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# while replacements > 0:
 						# 	processed_xhtml, replacements = regex.subn(r"<title>([^<>]+?)<span class=\"quote-align\">([^<>]+?)</span>", r"""<title>\1\2""", processed_xhtml)
 
-						if processed_xhtml != xhtml:
-							file.seek(0)
-							file.write(processed_xhtml)
-							file.truncate()
+						file.seek(0)
+						file.write(processed_xhtml)
+						file.truncate()
 
 				if filename.suffix == ".css":
 					with open(filename, "r+", encoding="utf-8") as file:
@@ -845,11 +844,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 			# Remove mathml property from manifest items, since we converted all MathML to PNG
 			for node in metadata_dom.xpath("/package/manifest/item[contains(@properties, 'mathml')]"):
-				if regex.match(r"^\s*mathml\s*$", node.get_attr("properties")):
-					# If `mathml` is the only property, remove the attribute entirely
-					node.remove_attr("properties")
-				else:
-					node.set_attr("properties", regex.sub(r"\s*mathml\s*", "", node.get_attr("properties")))
+				node.remove_attr_value("properties", "mathml")
 
 		# Generate our NCX file for compatibility with older ereaders.
 		# First find the ToC file.
@@ -866,8 +861,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 		# Convert the <nav> landmarks element to the <guide> element in content.opf
 		guide_xhtml = "<guide>"
-		for element in toc_tree.xpath("//nav[@epub:type=\"landmarks\"]/ol/li/a"):
-			element_xhtml = element.to_string()
+		for node in toc_tree.xpath("//nav[@epub:type=\"landmarks\"]/ol/li/a"):
+			element_xhtml = node.to_string()
 			element_xhtml = regex.sub(r"epub:type=\"([^\"]*)(\s*frontmatter\s*|\s*backmatter\s*)([^\"]*)\"", "type=\"\\1\\3\"", element_xhtml)
 			element_xhtml = regex.sub(r"epub:type=\"[^\"]*(acknowledgements|bibliography|colophon|copyright-page|cover|dedication|epigraph|foreword|glossary|index|loi|lot|notes|preface|bodymatter|titlepage|toc)[^\"]*\"", "type=\"\\1\"", element_xhtml)
 			element_xhtml = element_xhtml.replace("type=\"copyright-page", "type=\"copyright page")

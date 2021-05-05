@@ -301,6 +301,39 @@ class EasyXmlElement:
 			# If the attribute doesn't exist, just continue
 			pass
 
+	def add_attr_value(self, attribute: str, value: str):
+		"""
+		Add a space-separated attribute value to the target attribute.
+		If the attribute doesn't exist, add it.
+
+		Mainly useful for HTML `class` attributes and epub `epub:type` attributes.
+
+		Example adding value `bar` to the `class` attribute:
+		<p class="foo"> -> <p class="foo bar">
+		"""
+
+		existing_value = self.get_attr(attribute) or ""
+
+		self.set_attr(attribute, (existing_value + " " + value).strip())
+
+	def remove_attr_value(self, attribute: str, value: str):
+		"""
+		Remove a space-separated attribute value from the target attribute.
+		If removing the value makes the attribute empty, remove the attribute.
+
+		Mainly useful for HTML `class` attributes and epub `epub:type` attributes.
+
+		Example removing value `bar` from the `class` attribute:
+		<p class="foo bar"> -> <p class="foo">
+		"""
+
+		if self.get_attr(attribute):
+			self.set_attr(attribute, regex.sub(fr"\s*\b{regex.escape(value)}\b\s*", "", self.get_attr(attribute)))
+
+			# If the attribute is now empty, remove it
+			if not self.get_attr(attribute):
+				self.remove_attr(attribute)
+
 	def get_attr(self, attribute: str) -> str:
 		"""
 		Return the value of an attribute on this element.
@@ -425,7 +458,11 @@ class EasyXmlElement:
 		Remove this node and replace it with the passed node
 		"""
 
-		self.lxml_element.addnext(node.lxml_element)
+		if isinstance(node, EasyXmlElement):
+			self.lxml_element.addnext(node.lxml_element)
+		else:
+			self.lxml_element.addnext(node)
+
 		self.remove()
 
 	def append(self, node) -> None:
@@ -459,6 +496,18 @@ class EasyXmlElement:
 			self.lxml_element.remove(child)
 
 		self.lxml_element.text = string
+
+	@property
+	def children(self) -> List:
+		"""
+		Return a list representing of this node's direct children
+		"""
+		children = []
+
+		for child in self.lxml_element:
+			children.append(EasyXmlElement(child))
+
+		return children
 
 	@property
 	def tag(self) -> str:
