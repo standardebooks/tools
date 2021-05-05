@@ -747,8 +747,7 @@ def _create_draft(args: Namespace):
 	# Try to find Wikipedia links if possible
 	ebook_wiki_url = None
 
-	if not args.offline and title != "Short Fiction":
-		# There's a "Short Fiction" Wikipedia article, so make an exception for that case
+	if not args.offline and title not in ("Short Fiction", "Poetry", "Essays", "Plays"):
 		ebook_wiki_url, _ = _get_wikipedia_url(title, False)
 
 	# Pre-fill titlepage.xhtml
