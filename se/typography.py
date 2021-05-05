@@ -348,8 +348,6 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 	reading_tag_name = False
 	in_h_tag = False
 	pos = 1
-	h_opening_tag_pattern = regex.compile("^h[1-6]$")
-	h_closing_tag_pattern = regex.compile("^/h[1-6]$")
 
 	# The general idea here is to read the whole contents of the <body> tag character by character.
 	# If we hit a <, we ignore the contents until we hit the next >.
@@ -377,10 +375,10 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 			process = True
 
 		# Do we ignore <h1-6> tags?
-		if not reading_tag_name and h_opening_tag_pattern.match(tag_name):
+		if not reading_tag_name and regex.match(r"^h[1-6]$", tag_name):
 			in_h_tag = True
 
-		if not reading_tag_name and h_closing_tag_pattern.match(tag_name):
+		if not reading_tag_name and regex.match(r"^/h[1-6]$", tag_name):
 			in_h_tag = False
 
 		if ignore_h_tags and in_h_tag:
@@ -419,11 +417,8 @@ def guess_quoting_style(xhtml: str) -> str:
 	# Quote style percentage above the threshold is returned.
 	threshold = 80
 
-	ldq_pattern = regex.compile(r"\t*<p>(.*?)“")
-	lsq_pattern = regex.compile(r"\t*<p>(.*?)‘")
-
-	lsq_count = len([m for m in lsq_pattern.findall(xhtml) if m.count("“") == 0])
-	ldq_count = len([m for m in ldq_pattern.findall(xhtml) if m.count("‘") == 0])
+	lsq_count = len([m for m in regex.findall(r"\t*<p>(.*?)‘", xhtml) if m.count("“") == 0])
+	ldq_count = len([m for m in regex.findall(r"\t*<p>(.*?)“", xhtml) if m.count("‘") == 0])
 
 	detected_style = "unsure"
 	american_percentage = 0
