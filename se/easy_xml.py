@@ -441,7 +441,7 @@ class EasyXmlElement:
 
 	def prepend(self, node) -> None:
 		"""
-		Place node as the last child of this node.
+		Place node as the first child of this node.
 		"""
 
 		if isinstance(node, EasyXmlElement):

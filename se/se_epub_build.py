@@ -7,7 +7,6 @@ the function is very big and it makes editing easier to put it in a separate fil
 """
 
 import fnmatch
-import filecmp
 import os
 import shutil
 import subprocess
@@ -384,63 +383,63 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				filename = Path(root) / filename_string
 
 				if filename.suffix == ".svg":
-					add_stroke = False
+					# For night mode compatibility, give the logo/titlepage a 1px white stroke attribute
+					svg_dom = self.get_dom(filename)
 
-					if filename.name == "logo.svg":
-						# If we're adding stroke to the logo, make sure it's our premade logo and not a 3rd party logo file.
-						# 3rd party logos will get mangled by our naive regexes.
-						with importlib_resources.path("se.data.templates", "logo.svg") as logo_file_path:
-							if filecmp.cmp(logo_file_path, filename):
-								add_stroke = True
+					# If we're adding stroke to the logo, make sure it's SE files only.
+					# 3rd party files will get mangled.
+					if svg_dom.xpath("/svg/title[contains(., 'Standard Ebooks')]"):
+						if svg_dom.xpath("/svg/title[contains(., 'titlepage')]"):
+							stroke_width = SVG_TITLEPAGE_OUTER_STROKE_WIDTH
+						else:
+							stroke_width = SVG_OUTER_STROKE_WIDTH
 
-					if filename.name == "titlepage.svg":
-						add_stroke = True
+						new_elements = []
 
-					# For night mode compatibility, give the titlepage a 1px white stroke attribute
-					if add_stroke:
-						with open(filename, "r+", encoding="utf-8") as file:
-							svg = file.read()
-							paths = svg
+						# First remove some useless elements
+						for node in svg_dom.xpath("/svg/*[name() != 'g' and name() != 'path']"):
+							node.remove()
 
-							# What we're doing here is faking the `stroke-align: outside` property, which is an unsupported draft spec right now.
-							# We do this by duplicating all the SVG paths, and giving the duplicates a 2px stroke.  The originals are directly on top,
-							# so the 2px stroke becomes a 1px stroke that's *outside* of the path instead of being *centered* on the path border.
-							# This looks much nicer, but we also have to increase the image size by 2px in both directions, and re-center the whole thing.
+						# Get all path elements and add a white stroke to each one.
+						# We clone each node and add it to a list, which we will insert into
+						# the original SVG later
+						for node in svg_dom.xpath("//path"):
+							style = node.get_attr("style") or ""
+							style = style + f" stroke: #ffffff; stroke-width: {stroke_width}px;"
 
-							if filename.name == "titlepage.svg":
-								stroke_width = SVG_TITLEPAGE_OUTER_STROKE_WIDTH
-							else:
-								stroke_width = SVG_OUTER_STROKE_WIDTH
+							node_clone = deepcopy(node)
+							node_clone.set_attr("style", style)
 
-							# First, strip out non-path, non-group elements
-							paths = regex.sub(r"<\?xml[^<]+?\?>", "", paths)
-							paths = regex.sub(r"</?svg[^<]*?>", "", paths)
-							paths = regex.sub(r"<title>[^<]+?</title>", "", paths)
-							paths = regex.sub(r"<desc>[^<]+?</desc>", "", paths)
+							new_elements.append(node_clone.lxml_element)
 
-							# `paths` is now our "duplicate".  Add a 2px stroke.
-							paths = paths.replace("<path", f"<path style=\"stroke: #ffffff; stroke-width: {stroke_width}px;\"")
+						# Now insert the elements we just cloned, before the first <g> or <path> so that
+						# they appear below the original paths
+						for node in svg_dom.xpath("(//*[name()='g' or name()='path'])[1]"):
+							for element in new_elements:
+								node.lxml_element.addprevious(element)
 
-							# Inject the duplicate under the old SVG paths.  We do this by only replacing the first regex match for <g> or <path>
-							svg = regex.sub(r"(<g|<path)", f"{paths}\\1", svg, 1)
+						if svg_dom.xpath("/svg[@height or @width]"):
+							# If this SVG specifies height/width, then increase height and width by 2 pixels
+							for node in svg_dom.xpath("/svg[@height]"):
+								new_value = int(node.get_attr("height")) + stroke_width
+								node.set_attr("height", str(new_value))
 
-							# If this SVG specifies height/width, then increase height and width by 2 pixels and translate everything by 1px
-							try:
-								height = int(regex.search(r"<svg[^>]+?height=\"([0-9]+)\"", svg).group(1)) + stroke_width
-								svg = regex.sub(r"<svg([^<]*?)height=\"[0-9]+\"", f"<svg\\1height=\"{height}\"", svg)
+							for node in svg_dom.xpath("/svg[@width]"):
+								new_value = int(node.get_attr("width")) + stroke_width
+								node.set_attr("width", str(new_value))
 
-								width = int(regex.search(r"<svg[^>]+?width=\"([0-9]+)\"", svg).group(1)) + stroke_width
-								svg = regex.sub(r"<svg([^<]*?)width=\"[0-9]+\"", f"<svg\\1width=\"{width}\"", svg)
+							# Add a <g> element to translate everything by 1px
+							fragment = etree.fromstring(str.encode(f"""<g transform="translate({stroke_width / 2}, {stroke_width / 2})"></g>"""))
 
-								# Add a grouping element to translate everything over 1px
-								svg = regex.sub(r"(<g|<path)", "<g transform=\"translate({amount}, {amount})\">\n\\1".format(amount=(stroke_width / 2)), svg, 1)
-								svg = svg.replace("</svg>", "</g>\n</svg>")
-							except AttributeError:
-								# Thrown when the regex doesn't match (i.e. SVG doesn't specify height/width)
-								pass
+							for element in reversed(svg_dom.xpath("/svg/*")):
+								fragment.insert(0, element.lxml_element)
 
-							file.seek(0)
-							file.write(svg)
+							for element in svg_dom.xpath("/svg"):
+								element.lxml_element.insert(0, fragment)
+
+						# All done, write the SVG so that we can convert to PNG
+						with open(filename, "w+", encoding="utf-8") as file:
+							file.write(svg_dom.to_string())
 							file.truncate()
 
 					# Convert SVGs to PNGs at 2x resolution
