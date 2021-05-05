@@ -238,6 +238,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 										if replacement_class not in current_class:
 											current_class = f"{current_class} {replacement_class}".strip()
+
+											# Alpha sort the class list so that builds are deterministic
+											current_class =  " ".join(sorted(current_class.split()))
 											element.set_attr("class", current_class)
 
 						except lxml.cssselect.ExpressionError:
