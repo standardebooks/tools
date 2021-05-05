@@ -472,10 +472,33 @@ class SeEpub:
 			href = regex.sub(r"\.xhtml$", "", href)
 			link.set_attr("href", href)
 
+		for node in output_dom.xpath("/html/body//a[re:test(@href, '^(\\.\\./)?text/(.+?)\\.xhtml$')]"):
+			node.set_attr("href", regex.sub(r"(\.\./)?text/(.+?)\.xhtml", r"#\2", node.get_attr("href")))
+
+		for node in output_dom.xpath("/html/body//a[re:test(@href, '^(\\.\\./)?text/.+?\\.xhtml#(.+?)$')]"):
+			node.set_attr("href", regex.sub(r"(\.\./)?text/.+?\.xhtml#(.+?)", r"#\2", node.get_attr("href")))
+
+		# make some compatibility adjustments
+		if output_xhtml5:
+			for node in output_dom.xpath("/html/head/meta[@charset]"):
+				node.remove()
+
+			for node in output_dom.xpath("//*[@xml:lang]"):
+				node.set_attr("lang", node.get_attr("xml:lang"))
+		else:
+			for node in output_dom.xpath("/html[@epub:prefix]"):
+				node.remove_attr("epub:prefix")
+
+			for node in output_dom.xpath("//*[@xml:lang]"):
+				node.set_attr("lang", node.get_attr("xml:lang"))
+				node.remove_attr("xml:lang")
+
+			for node in output_dom.xpath("//*[@epub:type]"):
+				node.set_attr("data-epub-type", node.get_attr("epub:type"))
+				node.remove_attr("epub:type")
+
 		# Get the output XHTML as a string
 		output_xhtml = output_dom.to_string()
-		output_xhtml = regex.sub(r"\"(\.\./)?text/(.+?)\.xhtml\"", "\"#\\2\"", output_xhtml)
-		output_xhtml = regex.sub(r"\"(\.\./)?text/.+?\.xhtml#(.+?)\"", "\"#\\2\"", output_xhtml)
 
 		# All done, clean the output
 		# Very large files like Ulysses S. Grant's memoirs or Through the Looking Glass will crash lxml due to their size.
@@ -489,27 +512,21 @@ class SeEpub:
 		output_xhtml = regex.sub(r"<style/>", "<style><![CDATA[\n\t\t\t" + css + "\t\t]]></style>", output_xhtml)
 
 		if output_xhtml5:
-			output_xhtml = output_xhtml.replace("\t\t<meta charset=\"utf-8\"/>\n", "")
 			output_xhtml = output_xhtml.replace("\t\t<style/>\n", "")
-
-			output_xhtml = regex.sub(r'xml:lang="([^"]+?)"', r'xml:lang="\1" lang="\1"', output_xhtml)
 
 			# Re-add a doctype
 			output_xhtml = output_xhtml.replace("<?xml version=\"1.0\" encoding=\"utf-8\"?>", "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE html>")
 		else:
 			# Remove xml declaration and re-add the doctype
 			output_xhtml = regex.sub(r"<\?xml.+?\?>", "<!doctype html>", output_xhtml)
-			output_xhtml = regex.sub(r" epub:prefix=\".+?\"", "", output_xhtml)
 
 			# Remove CDATA
 			output_xhtml = output_xhtml.replace("<![CDATA[", "")
 			output_xhtml = output_xhtml.replace("]]>", "")
 
 			# Make some replacements for HTML5 compatibility
-			output_xhtml = output_xhtml.replace("epub:type", "data-epub-type")
 			output_xhtml = output_xhtml.replace("epub|type", "data-epub-type")
 			output_xhtml = regex.sub(r" xmlns.+?=\".+?\"", "", output_xhtml)
-			output_xhtml = output_xhtml.replace("xml:lang", "lang")
 
 		return output_xhtml
 
