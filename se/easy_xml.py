@@ -220,8 +220,9 @@ class EasyXmlElement:
 
 		output = value
 
-		for name, identifier in self.namespaces.items():
-			output = regex.sub(fr"^{name}:", f"{{{identifier}}}", output)
+		if self.namespaces:
+			for name, identifier in self.namespaces.items():
+				output = regex.sub(fr"^{name}:", f"{{{identifier}}}", output)
 
 		return output
 

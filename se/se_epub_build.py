@@ -860,39 +860,46 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, navdoc2ncx_xsl_filename)
 
 		# Convert the <nav> landmarks element to the <guide> element in content.opf
-		guide_xhtml = "<guide>"
+		guide_dom = se.easy_xml.EasyXmlTree("<guide/>")
+		guide_root_node = se.easy_xml.EasyXmlElement(guide_dom.etree)
 		for node in toc_tree.xpath("//nav[@epub:type=\"landmarks\"]/ol/li/a"):
-			element_xhtml = node.to_string()
-			element_xhtml = regex.sub(r"epub:type=\"([^\"]*)(\s*frontmatter\s*|\s*backmatter\s*)([^\"]*)\"", "type=\"\\1\\3\"", element_xhtml)
-			element_xhtml = regex.sub(r"epub:type=\"[^\"]*(acknowledgements|bibliography|colophon|copyright-page|cover|dedication|epigraph|foreword|glossary|index|loi|lot|notes|preface|bodymatter|titlepage|toc)[^\"]*\"", "type=\"\\1\"", element_xhtml)
-			element_xhtml = element_xhtml.replace("type=\"copyright-page", "type=\"copyright page")
+			ref_tree = se.easy_xml.EasyXmlTree("<reference/>")
+			ref_node = se.easy_xml.EasyXmlElement(ref_tree.etree)
 
-			# We add the 'text' attribute to the titlepage to tell the reader to start there
-			element_xhtml = element_xhtml.replace("type=\"titlepage", "type=\"title-page text")
+			ref_node.set_attr("title", node.text)
+			ref_node.set_attr("href", node.get_attr("href"))
+			if node.get_attr("epub:type"):
+				ref_node.set_attr("type", node.get_attr("epub:type"))
+				ref_node.remove_attr_value("type", "frontmatter")
+				ref_node.remove_attr_value("type", "backmatter")
 
-			element_xhtml = regex.sub(r"type=\"\s*\"", "", element_xhtml)
-			element_xhtml = element_xhtml.replace("<a", "<reference")
-			element_xhtml = regex.sub(r">(.+)</a>", " title=\"\\1\" />", element_xhtml)
+			if ref_node.get_attr("type"):
+				# Remove epub:types that are not in the allow list
+				new_node_types = [node_type for node_type in ref_node.get_attr("type").split() if node_type in ("acknowledgements", "bibliography", "colophon", "copyright-page", "cover", "dedication", "epigraph", "foreword", "glossary", "index", "loi", "lot", "notes", "preface", "bodymatter", "titlepage", "toc")]
+				ref_node.set_attr("type", " ".join(new_node_types))
 
-			# Replace instances of the `role` attribute since it's illegal in content.opf
-			element_xhtml = regex.sub(r" role=\".*?\"", "", element_xhtml)
+			if ref_node.get_attr("type"):
+				if ref_node.get_attr("type") == "copyright-page":
+					ref_node.set_attr("type", "copyright page")
 
-			guide_xhtml = guide_xhtml + element_xhtml
+				# We add the 'text' attribute to the titlepage to tell the reader to start there
+				if ref_node.get_attr("type") == "titlepage":
+					ref_node.set_attr("type", "title-page text")
 
-		guide_xhtml = guide_xhtml + "</guide>"
+			guide_root_node.append(ref_node)
 
 		# Append the guide to the <package> element
 		for node in metadata_dom.xpath("/package"):
-			node.append(etree.fromstring(guide_xhtml))
+			node.append(guide_root_node)
 
 		# Guide is done, now write content.opf and clean it.
 		# Output the modified content.opf before making more compatibility hacks.
 		with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
-			file.write(metadata_dom.to_string())
+			file.write(se.formatting.format_opf(metadata_dom.to_string()))
 			file.truncate()
 
 		# All done, clean the output
-		for filepath in se.get_target_filenames([work_epub_root_directory], (".xhtml", ".svg", ".opf", ".ncx")):
+		for filepath in se.get_target_filenames([work_epub_root_directory], (".xhtml", ".svg", ".ncx")):
 			try:
 				se.formatting.format_xml_file(filepath)
 			except se.SeException as ex:
