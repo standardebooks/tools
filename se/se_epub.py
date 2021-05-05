@@ -289,7 +289,7 @@ class SeEpub:
 		OUTPUTS
 		A string representing the file contents
 		"""
-		file_path_str = str(file_path)
+		file_path_str = str(file_path) + "_" + str(remove_comments)
 
 		if file_path_str not in self._dom_cache:
 			file_contents = self.get_file(file_path)
