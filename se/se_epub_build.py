@@ -131,11 +131,11 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			last_updated_friendly = f"{self.last_commit.timestamp:%B %e, %Y, %I:%M <abbr class=\"time eoc\">%p</abbr>}".replace(" 0", " ")
 			last_updated_friendly = regex.sub(r"\s+", " ", last_updated_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
-			# Set modified date in content.opf
+			# Set modified date in the metadata file
 			for node in metadata_dom.xpath("//meta[@property='dcterms:modified']"):
 				node.set_text(last_updated_iso)
 
-			with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
+			with open(work_epub_root_directory / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
 				file.seek(0)
 				file.write(metadata_dom.to_string())
 				file.truncate()
@@ -319,7 +319,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				cover_work_path = Path(regex.sub(r"\.(svg|png)$", ".jpg", str(cover_work_path)))
 				shutil.copy2(cover_work_path, output_directory / cover_work_path.name)
 
-		# Remove SVG item properties in content.opf since we will convert all SVGs to PNGs further down
+		# Remove SVG item properties in the metadata file since we will convert all SVGs to PNGs further down
 		for node in metadata_dom.xpath("/package/manifest/item[contains(@properties, 'svg')]"):
 			node.remove_attr_value("properties", "svg")
 
@@ -567,8 +567,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							file.write(processed_css)
 							file.truncate()
 
-		# Output the modified content.opf so that we can build the kobo book before making more compatibility hacks that aren’t needed on that platform.
-		with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
+		# Output the modified the metadata file so that we can build the kobo book before making more compatibility hacks that aren’t needed on that platform.
+		with open(work_epub_root_directory / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
 			file.write(metadata_dom.to_string())
 			file.truncate()
 
@@ -578,8 +578,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				copy_tree(str(work_epub_root_directory), str(kobo_work_directory))
 
 				for root, _, filenames in os.walk(kobo_work_directory):
-					# Add a note to content.opf indicating this is a transform build
-					for filename_string in fnmatch.filter(filenames, "content.opf"):
+					# Add a note to the metadata file indicating this is a transform build
+					for filename_string in fnmatch.filter(filenames, self.metadata_file_path.name):
 						filename = Path(root) / filename_string
 						dom = self.get_dom(filename)
 
@@ -655,7 +655,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 				# All done, clean the output
 				# Note that we don't clean .xhtml files, because the way kobo spans are added means that it will screw up spaces inbetween endnotes.
-				for filepath in se.get_target_filenames([kobo_work_directory], (".svg", ".opf", ".ncx")):
+				for filepath in se.get_target_filenames([kobo_work_directory], (".opf")):
 					se.formatting.format_xml_file(filepath)
 
 				se.epub.write_epub(kobo_work_directory, output_directory / kobo_output_filename)
@@ -792,7 +792,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			for node in metadata_dom.xpath("/package/metadata"):
 				node.append(etree.fromstring(f"""<meta content="{cover_id}" name="cover"/>"""))
 
-		# Add metadata to content.opf indicating this file is a Standard Ebooks compatibility build
+		# Add metadata to the metadata file indicating this file is a Standard Ebooks compatibility build
 		for node in metadata_dom.xpath("/package[contains(@prefix, 'se:')]/metadata"):
 			node.append(etree.fromstring("""<meta property="se:transform">compatibility</meta>"""))
 
@@ -824,7 +824,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		with importlib_resources.path("se.data", "navdoc2ncx.xsl") as navdoc2ncx_xsl_filename:
 			toc_tree = se.epub.convert_toc_to_ncx(work_epub_root_directory, toc_filename, navdoc2ncx_xsl_filename)
 
-		# Convert the <nav> landmarks element to the <guide> element in content.opf
+		# Convert the <nav> landmarks element to the <guide> element in the metadata file
 		guide_root_node = se.easy_xml.EasyXmlElement("<guide/>")
 		for node in toc_tree.xpath("//nav[@epub:type=\"landmarks\"]/ol/li/a"):
 			ref_node = se.easy_xml.EasyXmlElement("<reference/>")
@@ -832,37 +832,42 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			ref_node.set_attr("title", node.text)
 			ref_node.set_attr("href", node.get_attr("href"))
 			if node.get_attr("epub:type"):
+				# Set the `type` attribute and remove any z3998 items, as well as front/body/backmatter
 				ref_node.set_attr("type", node.get_attr("epub:type"))
-				ref_node.remove_attr_value("type", "frontmatter")
-				ref_node.remove_attr_value("type", "backmatter")
+				ref_node.set_attr("type", regex.sub(r"\s*\b(front|body|back)matter\b\s*", "", ref_node.get_attr("type")))
+				ref_node.set_attr("type", regex.sub(r"\s*\bz3998:.+\b\s*", "", ref_node.get_attr("type")))
 
 			if ref_node.get_attr("type"):
-				# Remove epub:types that are not in the allow list
-				new_node_types = [node_type for node_type in ref_node.get_attr("type").split() if node_type in ("acknowledgements", "bibliography", "colophon", "copyright-page", "cover", "dedication", "epigraph", "foreword", "glossary", "index", "loi", "lot", "notes", "preface", "bodymatter", "titlepage", "toc")]
+				# Remove epub:types that are not in the allow list, see http://idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.6
+				new_node_types = []
+
+				for node_type in ref_node.get_attr("type").split():
+					if node_type in ("acknowledgements", "bibliography", "colophon", "copyright-page", "cover", "dedication", "epigraph", "foreword", "glossary", "index", "loi", "lot", "notes", "preface", "bodymatter", "titlepage", "toc"):
+						new_node_types.append(node_type)
+					else:
+						new_node_types.append(f"other.{node_type}")
+
 				ref_node.set_attr("type", " ".join(new_node_types))
-
-			if ref_node.get_attr("type"):
-				if ref_node.get_attr("type") == "copyright-page":
-					ref_node.set_attr("type", "copyright page")
 
 				# We add the 'text' attribute to the titlepage to tell the reader to start there
 				if ref_node.get_attr("type") == "titlepage":
 					ref_node.set_attr("type", "title-page text")
 
-			guide_root_node.append(ref_node)
+				guide_root_node.append(ref_node)
 
 		# Append the guide to the <package> element
-		for node in metadata_dom.xpath("/package"):
-			node.append(guide_root_node)
+		if guide_root_node.children:
+			for node in metadata_dom.xpath("/package"):
+				node.append(guide_root_node)
 
-		# Guide is done, now write content.opf and clean it.
-		# Output the modified content.opf before making more compatibility hacks.
-		with open(work_epub_root_directory / "epub" / "content.opf", "w", encoding="utf-8") as file:
+		# Guide is done, now write the metadata file and clean it.
+		# Output the modified metadata file before making more compatibility hacks.
+		with open(work_epub_root_directory / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
 			file.write(se.formatting.format_opf(metadata_dom.to_string()))
 			file.truncate()
 
 		# All done, clean the output
-		for filepath in se.get_target_filenames([work_epub_root_directory], (".xhtml", ".svg", ".ncx")):
+		for filepath in se.get_target_filenames([work_epub_root_directory], (".xhtml", ".ncx")):
 			try:
 				se.formatting.format_xml_file(filepath)
 			except se.SeException as ex:
@@ -902,7 +907,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			with open(work_epub_root_directory / "epub" / toc_filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 
-				dom = se.formatting.EasyXmlTree(xhtml)
+				dom = se.easy_xml.EasyXmlTree(xhtml)
 
 				for node in dom.xpath("//ol/li/ol/li/ol"):
 					node.lxml_element.getparent().addnext(node.lxml_element)
@@ -925,74 +930,73 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				for filename_string in filenames:
 					filename = Path(root) / filename_string
 					if filename.suffix == ".xhtml":
+						dom = self.get_dom(filename)
+						replace_shy_hyphens = False
+
+						# Remove se:color-depth.black-on-transparent, as Calibre removes media queries so this will *always* be invisible
+						for node in dom.xpath("/html/body//img[contains(@class, 'epub-type-se-image-color-depth-black-on-transparent') or contains(@epub:type, 'se:image.color-depth.black-on-transparent')]"):
+							if node.get_attr("class"):
+								node.set_attr("class", node.get_attr("class").replace("epub-type-se-image-color-depth-black-on-transparent", ""))
+
+							if node.get_attr("epub:type"):
+								node.set_attr("epub:type", node.get_attr("epub:type").replace("se:image.color-depth.black-on-transparent", ""))
+
+						# If the only element on the page is an absolutely positioned image, Kindle will ignore the file in the reading order.
+						# So, in that case we add a `<div>` with some text content to fool Kindle.
+						# However, Calibre will remove `font-size: 0` so we have to use `overflow` to hide the div.
+						if dom.xpath("/html/body/*[(name() = 'section' or name() = 'article') and not(contains(@epub:type, 'titlepage'))]/*[(name() = 'figure' or name() = 'img') and not(preceding-sibling::node()[normalize-space(.)] or following-sibling::node()[normalize-space(.)])]"):
+							for node in dom.xpath("/html/body"):
+								node.prepend(etree.fromstring("""<div style="height: 0; width: 0; overflow: hidden; line-height: 0; font-size: 0;">x</div>"""))
+
+						# If this is the endnotes file, convert endnotes to Kindle popup compatible notes
+						# To do this, we move the backlink to the front of the endnote's first <p> (or we create a first <p> if there
+						# isn't one) and change its text to the note number instead of a back arrow.
+						# Then, we remove all endnote <li> wrappers and put their IDs on the first <p> child, leaving just a series of <p>s
+						if dom.xpath("/html/body//section[contains(@epub:type, 'endnotes')]"):
+							# While Kindle now supports soft hyphens, popup endnotes break words but don't insert the hyphen characters.  So for now, remove soft hyphens from the endnotes file.
+							replace_shy_hyphens = True
+
+							# Loop over each endnote and move the ending backlink to the front of the endnote for Kindles
+							note_number = 1
+							for endnote in dom.xpath("//li[re:test(@epub:type, '\\b(endnote|footnote)\\b')]"):
+								first_p = endnote.xpath("(./p[not(preceding-sibling::*)])[1]")
+
+								# Sometimes there is no leading <p> tag (for example, if the endnote starts with a blockquote
+								# If that's the case, just insert one in front.
+								if first_p:
+									first_p = first_p[0]
+								else:
+									first_p = se.easy_xml.EasyXmlElement("<p/>")
+									endnote.prepend(first_p)
+
+								first_p.set_attr("id", endnote.get_attr("id"))
+
+								for node in endnote.xpath(".//a[contains(@epub:type, 'backlink')]"):
+									node.set_text(str(note_number))
+									node.lxml_element.tail = ". "
+									first_p.prepend(node)
+
+								# Sometimes backlinks were in their own <p> tag, which is now empty. Remove those.
+								for node in endnote.xpath(".//p[not(normalize-space(.))]"):
+									node.remove()
+
+								# Now remove the wrapping li node from the note
+								endnote.unwrap()
+
+								note_number = note_number + 1
+
+						# Remove the epub:type attribute, as Calibre turns it into just "type"
+						for node in dom.xpath("//*[@epub:type]"):
+							node.remove_attr("epub:type")
+
+						# Kindle doesn't recognize most zero-width spaces or word joiners, so just remove them.
+						# It does recognize the word joiner character, but only in the old mobi7 format.  The new format renders them as spaces.
+						xhtml = dom.to_string().replace(se.ZERO_WIDTH_SPACE, "")
+
+						if replace_shy_hyphens:
+							xhtml = xhtml.replace(se.SHY_HYPHEN, "")
+
 						with open(filename, "r+", encoding="utf-8") as file:
-							dom = se.easy_xml.EasyXmlTree(file.read())
-							replace_shy_hyphens = False
-
-							# Remove se:color-depth.black-on-transparent, as Calibre removes media queries so this will *always* be invisible
-							for node in dom.xpath("/html/body//img[contains(@class, 'epub-type-se-image-color-depth-black-on-transparent') or contains(@epub:type, 'se:image.color-depth.black-on-transparent')]"):
-								if node.get_attr("class"):
-									node.set_attr("class", node.get_attr("class").replace("epub-type-se-image-color-depth-black-on-transparent", ""))
-
-								if node.get_attr("epub:type"):
-									node.set_attr("epub:type", node.get_attr("epub:type").replace("se:image.color-depth.black-on-transparent", ""))
-
-							# If the only element on the page is an absolutely positioned image, Kindle will ignore the file in the reading order.
-							# So, in that case we add a `<div>` with some text content to fool Kindle.
-							# However, Calibre will remove `font-size: 0` so we have to use `overflow` to hide the div.
-							if dom.xpath("/html/body/*[(name() = 'section' or name() = 'article') and not(contains(@epub:type, 'titlepage'))]/*[(name() = 'figure' or name() = 'img') and not(preceding-sibling::node()[normalize-space(.)] or following-sibling::node()[normalize-space(.)])]"):
-								for node in dom.xpath("/html/body"):
-									node.prepend(etree.fromstring("""<div style="height: 0; width: 0; overflow: hidden; line-height: 0; font-size: 0;">x</div>"""))
-
-							# If this is the endnotes file, convert endnotes to Kindle popup compatible notes
-							# To do this, we move the backlink to the front of the endnote's first <p> (or we create a first <p> if there
-							# isn't one) and change its text to the note number instead of a back arrow.
-							# Then, we remove all endnote <li> wrappers and put their IDs on the first <p> child, leaving just a series of <p>s
-							if dom.xpath("/html/body//section[contains(@epub:type, 'endnotes')]"):
-								# While Kindle now supports soft hyphens, popup endnotes break words but don't insert the hyphen characters.  So for now, remove soft hyphens from the endnotes file.
-								replace_shy_hyphens = True
-
-								# Loop over each endnote and move the ending backlink to the front of the endnote for Kindles
-								note_number = 1
-								for endnote in dom.xpath("//li[re:test(@epub:type, '\\b(endnote|footnote)\\b')]"):
-									first_p = endnote.xpath("(./p[not(preceding-sibling::*)])[1]")
-
-									# Sometimes there is no leading <p> tag (for example, if the endnote starts with a blockquote
-									# If that's the case, just insert one in front.
-									if first_p:
-										first_p = first_p[0]
-									else:
-										first_p = se.easy_xml.EasyXmlElement("<p/>")
-										endnote.prepend(first_p)
-
-									first_p.set_attr("id", endnote.get_attr("id"))
-
-									for node in endnote.xpath(".//a[contains(@epub:type, 'backlink')]"):
-										node.set_text(str(note_number))
-										node.lxml_element.tail = ". "
-										first_p.prepend(node)
-
-									# Sometimes backlinks were in their own <p> tag, which is now empty. Remove those.
-									for node in endnote.xpath(".//p[not(normalize-space(.))]"):
-										node.remove()
-
-									# Now remove the wrapping li node from the note
-									endnote.unwrap()
-
-									note_number = note_number + 1
-
-							# Remove the epub:type attribute, as Calibre turns it into just "type"
-							for node in dom.xpath("//*[@epub:type]"):
-								node.remove_attr("epub:type")
-
-							# Kindle doesn't recognize most zero-width spaces or word joiners, so just remove them.
-							# It does recognize the word joiner character, but only in the old mobi7 format.  The new format renders them as spaces.
-							xhtml = dom.to_string().replace(se.ZERO_WIDTH_SPACE, "")
-
-							if replace_shy_hyphens:
-								xhtml = xhtml.replace(se.SHY_HYPHEN, "")
-
-							file.seek(0)
 							file.write(se.formatting.format_xhtml(xhtml))
 							file.truncate()
 
@@ -1039,3 +1043,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				kindle_cover_thumbnail = kindle_cover_thumbnail.convert("RGB") # Remove alpha channel from PNG if necessary
 				kindle_cover_thumbnail = kindle_cover_thumbnail.resize((432, 648))
 				kindle_cover_thumbnail.save(output_directory / f"thumbnail_{asin}_EBOK_portrait.jpg")
+
+	# Build is all done!
+	# Since we made heavy changes to the ebook's dom, flush the dom cache in case we use this class again
+	self._dom_cache = [] # pylint: disable=protected-access

@@ -2256,7 +2256,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 					abbr_elements += dom.xpath("/html/body//abbr[contains(@class, 'acronym')]")
 
-				# Check if language tags in individual files match the language in content.opf
+				# Check if language tags in individual files match the language in the metadata file
 				if filename.name not in se.IGNORED_FILENAMES:
 					file_language = dom.xpath("/html/@xml:lang", True)
 					if language != file_language:

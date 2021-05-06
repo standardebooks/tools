@@ -16,8 +16,8 @@ def print_spine() -> int:
 	Entry point for `se print-spine`
 	"""
 
-	parser = argparse.ArgumentParser(description="Print the <spine> element for the given Standard Ebooks source directory to standard output, for use in that directory’s content.opf.")
-	parser.add_argument("-i", "--in-place", action="store_true", help="overwrite the <spine> element in content.opf instead of printing to stdout")
+	parser = argparse.ArgumentParser(description="Print the <spine> element for the given Standard Ebooks source directory to standard output, for use in that directory’s metadata file.")
+	parser.add_argument("-i", "--in-place", action="store_true", help="overwrite the <spine> element in the metadata file instead of printing to stdout")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 

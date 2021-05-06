@@ -637,7 +637,7 @@ def format_xhtml(xhtml: str) -> str:
 	namespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "re": "http://exslt.org/regular-expressions"} # re enables regular expressions in xpath
 
 	# Epub3 doesn't allow named entities, so convert them to their unicode equivalents
-	# But, don't unescape the content.opf long-description accidentally
+	# But, don't unescape the metadata file long-description accidentally
 	xhtml = regex.sub(r"&#?\w+;", _replace_character_references, xhtml)
 
 	# Remove unnecessary doctypes which can cause xmllint to hang

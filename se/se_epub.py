@@ -965,21 +965,21 @@ class SeEpub:
 
 	def get_content_files(self) -> list:
 		"""
-		Reads the spine from content.opf to obtain a list of content files, in the order wanted for the ToC.
+		Reads the spine from the metadata file to obtain a list of content files, in the order wanted for the ToC.
 		It assumes this has already been manually ordered by the producer.
 
 		INPUTS:
 		None
 
 		OUTPUTS:
-		list of content files in the order given in the spine in content.opf
+		list of content files in the order given in the spine in the metadata file
 		"""
 
 		return self.metadata_dom.xpath("/package/spine/itemref/@idref")
 
 	def get_work_type(self) -> str:
 		"""
-		Returns either "fiction" or "non-fiction", based on analysis of se:subjects in content.opf
+		Returns either "fiction" or "non-fiction", based on analysis of se:subjects in the metadata file
 
 		INPUTS:
 		None
@@ -1012,7 +1012,7 @@ class SeEpub:
 
 	def get_work_title(self) -> str:
 		"""
-		Returns the title of the book from content.opf, which we assume has already been correctly completed.
+		Returns the title of the book from the metadata file, which we assume has already been correctly completed.
 
 		INPUTS:
 		None
