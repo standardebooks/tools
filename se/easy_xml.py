@@ -293,7 +293,7 @@ class EasyXmlElement:
 
 		return None
 
-	def remove_attr(self, attribute: str):
+	def remove_attr(self, attribute: str) -> None:
 		"""
 		Remove an attribute from this node.
 		"""
@@ -304,7 +304,7 @@ class EasyXmlElement:
 			# If the attribute doesn't exist, just continue
 			pass
 
-	def add_attr_value(self, attribute: str, value: str):
+	def add_attr_value(self, attribute: str, value: str) -> None:
 		"""
 		Add a space-separated attribute value to the target attribute.
 		If the attribute doesn't exist, add it.
@@ -319,7 +319,7 @@ class EasyXmlElement:
 
 		self.set_attr(attribute, (existing_value + " " + value).strip())
 
-	def remove_attr_value(self, attribute: str, value: str):
+	def remove_attr_value(self, attribute: str, value: str) -> None:
 		"""
 		Remove a space-separated attribute value from the target attribute.
 		If removing the value makes the attribute empty, remove the attribute.
@@ -548,3 +548,11 @@ class EasyXmlElement:
 		"""
 
 		return self.lxml_element.text
+
+	@text.setter
+	def text(self, value) -> None:
+		"""
+		Set the lxml text attribute (the text up to the first child element)
+		"""
+
+		self.lxml_element.text = value

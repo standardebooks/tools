@@ -25,13 +25,8 @@ def typogrify() -> int:
 
 	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 	return_code = 0
-	ignored_filenames = se.IGNORED_FILENAMES
-	ignored_filenames.remove("toc.xhtml")
-	ignored_filenames.remove("halftitlepage.xhtml")
-	ignored_filenames.remove("loi.xhtml")
-	ignored_filenames.remove("colophon.xhtml")
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml", ".opf"), ignored_filenames):
+	for filename in se.get_target_filenames(args.targets, (".xhtml", ".opf")):
 		if args.verbose:
 			console.print(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", end="")
 
@@ -39,38 +34,46 @@ def typogrify() -> int:
 			with open(filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 
-				if filename.name == "content.opf":
+				dom = None
+				try:
 					dom = se.easy_xml.EasyXmlTree(xhtml)
+				except:
+					# If we can't parse the XHTML, don't crash, just typogrify whatever we have
+					pass
 
+				if dom:
+					# Ignore some files
+					if dom.xpath("/html/body/section[re:test(@epub:type, '\\b(titlepage|imprint|copyright-page)\\b')]"):
+						continue
+
+					# Is this a metadata file?
 					# Typogrify metadata except for URLs, dates, and LoC subjects
-					for node in dom.xpath("/package/metadata/dc:*[local-name() != 'subject' and local-name() != 'source' and local-name() != 'date']") + dom.xpath("/package/metadata/meta[not(contains(@property, 'se:url') or @property = 'dcterms:modified' or @property = 'se:production-notes')]"):
-						contents = node.lxml_element.text
+					if dom.xpath("/package"):
+						for node in dom.xpath("/package/metadata/dc:*[normalize-space(.) and local-name() != 'subject' and local-name() != 'source' and local-name() != 'date']") + dom.xpath("/package/metadata/meta[normalize-space(.) and (not(contains(@property, 'se:url') or @property = 'dcterms:modified' or @property = 'se:production-notes'))]"):
+							node.text = html.unescape(node.text)
 
-						if contents:
-							contents = html.unescape(contents)
-
-							contents = se.typography.typogrify(contents)
+							node.text = se.typography.typogrify(node.text)
 
 							# Tweak: Word joiners and nbsp don't go in metadata
-							contents = contents.replace(se.WORD_JOINER, "")
-							contents = contents.replace(se.NO_BREAK_SPACE, " ")
+							node.text = node.text.replace(se.WORD_JOINER, "")
+							node.text = node.text.replace(se.NO_BREAK_SPACE, " ")
 
 							# Typogrify escapes ampersands, and then lxml will also escape them again, so we unescape them
 							# before passing to lxml.
 							if node.get_attr("property") != "se:long-description":
-								contents = contents.replace("&amp;", "&").strip()
+								node.text = node.text.replace("&amp;", "&").strip()
 
-							node.lxml_element.text = contents
+							processed_xhtml = dom.to_string()
+					else:
+						processed_xhtml = se.typography.typogrify(xhtml, args.quotes)
 
-					processed_xhtml = dom.to_string()
+					# Tweak: Word joiners and nbsp don't go in the ToC
+					if dom.xpath("/html/body//nav[contains(@epub:type, 'toc')]"):
+						processed_xhtml = processed_xhtml.replace(se.WORD_JOINER, "")
+						processed_xhtml = processed_xhtml.replace(se.NO_BREAK_SPACE, " ")
 
 				else:
 					processed_xhtml = se.typography.typogrify(xhtml, args.quotes)
-
-					if filename.name == "toc.xhtml":
-						# Tweak: Word joiners and nbsp don't go in the ToC
-						processed_xhtml = processed_xhtml.replace(se.WORD_JOINER, "")
-						processed_xhtml = processed_xhtml.replace(se.NO_BREAK_SPACE, " ")
 
 				if processed_xhtml != xhtml:
 					file.seek(0)
