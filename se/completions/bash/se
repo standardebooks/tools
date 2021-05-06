@@ -30,7 +30,7 @@ _se(){
 				COMPREPLY+=($(compgen -f -X "!*.svg" -- "${cur}"))
 				;;
 			compare-versions)
-				COMPREPLY+=($(compgen -W "-h --help -i --include-common -n --no-images -v --verbose" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-h --help -i --include-se-files -n --no-images -v --verbose" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			create-draft)

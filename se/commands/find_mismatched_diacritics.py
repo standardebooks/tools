@@ -22,7 +22,7 @@ def find_mismatched_diacritics() -> int:
 	return_code = 0
 	accented_words = set()
 	mismatches = {}
-	target_filenames = se.get_target_filenames(args.targets, (".xhtml",))
+	target_filenames = se.get_target_filenames(args.targets, ".xhtml")
 	files_xhtml = []
 
 	# Read files and cache for later

@@ -35,7 +35,7 @@ def compare_versions() -> int:
 	"""
 
 	parser = argparse.ArgumentParser(description="Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, place screenshots of the new, original, and diff (if available) renderings in the current working directory. A file called diff.html is created to allow for side-by-side comparisons of original and new files.")
-	parser.add_argument("-i", "--include-common", dest="include_common_files", action="store_true", help="include commonly-excluded SE files like imprint, titlepage, and colophon")
+	parser.add_argument("-i", "--include-se-files", dest="include_se_files", action="store_true", help="include commonly-excluded SE files like imprint, titlepage, and colophon")
 	parser.add_argument("-n", "--no-images", dest="copy_images", action="store_false", help="don’t create images of diffs")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="a directory containing XHTML files")
@@ -75,7 +75,14 @@ def compare_versions() -> int:
 
 				for root, _, filenames in os.walk(work_directory_name):
 					for xhtml_filename in fnmatch.filter(filenames, "*.xhtml"):
-						if args.include_common_files or xhtml_filename not in se.IGNORED_FILENAMES:
+						if not args.include_se_files:
+							with open(Path(root) / xhtml_filename, "r", encoding="utf-8") as file:
+								is_ignored, _ = se.get_dom_if_not_ignored(file.read())
+
+							if not is_ignored:
+								target_filenames.add(Path(root) / xhtml_filename)
+
+						else:
 							target_filenames.add(Path(root) / xhtml_filename)
 
 				git_command = git.cmd.Git(work_directory_name)

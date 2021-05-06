@@ -34,51 +34,43 @@ def typogrify() -> int:
 			with open(filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 
-				dom = None
-				try:
-					dom = se.easy_xml.EasyXmlTree(xhtml)
-				except:
-					# If we can't parse the XHTML, don't crash, just typogrify whatever we have
-					pass
+				is_ignored, dom = se.get_dom_if_not_ignored(xhtml, ["titlepage", "imprint", "copyright-page"])
 
-				if dom:
-					# Ignore some files
-					if dom.xpath("/html/body/section[re:test(@epub:type, '\\b(titlepage|imprint|copyright-page)\\b')]"):
-						continue
+				if not is_ignored:
+					if dom:
+						# Is this a metadata file?
+						# Typogrify metadata except for URLs, dates, and LoC subjects
+						if dom.xpath("/package"):
+							for node in dom.xpath("/package/metadata/dc:*[normalize-space(.) and local-name() != 'subject' and local-name() != 'source' and local-name() != 'date']") + dom.xpath("/package/metadata/meta[normalize-space(.) and (not(contains(@property, 'se:url') or @property = 'dcterms:modified' or @property = 'se:production-notes'))]"):
+								node.text = html.unescape(node.text)
 
-					# Is this a metadata file?
-					# Typogrify metadata except for URLs, dates, and LoC subjects
-					if dom.xpath("/package"):
-						for node in dom.xpath("/package/metadata/dc:*[normalize-space(.) and local-name() != 'subject' and local-name() != 'source' and local-name() != 'date']") + dom.xpath("/package/metadata/meta[normalize-space(.) and (not(contains(@property, 'se:url') or @property = 'dcterms:modified' or @property = 'se:production-notes'))]"):
-							node.text = html.unescape(node.text)
+								node.text = se.typography.typogrify(node.text)
 
-							node.text = se.typography.typogrify(node.text)
+								# Tweak: Word joiners and nbsp don't go in metadata
+								node.text = node.text.replace(se.WORD_JOINER, "")
+								node.text = node.text.replace(se.NO_BREAK_SPACE, " ")
 
-							# Tweak: Word joiners and nbsp don't go in metadata
-							node.text = node.text.replace(se.WORD_JOINER, "")
-							node.text = node.text.replace(se.NO_BREAK_SPACE, " ")
+								# Typogrify escapes ampersands, and then lxml will also escape them again, so we unescape them
+								# before passing to lxml.
+								if node.get_attr("property") != "se:long-description":
+									node.text = node.text.replace("&amp;", "&").strip()
 
-							# Typogrify escapes ampersands, and then lxml will also escape them again, so we unescape them
-							# before passing to lxml.
-							if node.get_attr("property") != "se:long-description":
-								node.text = node.text.replace("&amp;", "&").strip()
+								processed_xhtml = dom.to_string()
+						else:
+							processed_xhtml = se.typography.typogrify(xhtml, args.quotes)
 
-							processed_xhtml = dom.to_string()
+						# Tweak: Word joiners and nbsp don't go in the ToC
+						if dom.xpath("/html/body//nav[contains(@epub:type, 'toc')]"):
+							processed_xhtml = processed_xhtml.replace(se.WORD_JOINER, "")
+							processed_xhtml = processed_xhtml.replace(se.NO_BREAK_SPACE, " ")
+
 					else:
 						processed_xhtml = se.typography.typogrify(xhtml, args.quotes)
 
-					# Tweak: Word joiners and nbsp don't go in the ToC
-					if dom.xpath("/html/body//nav[contains(@epub:type, 'toc')]"):
-						processed_xhtml = processed_xhtml.replace(se.WORD_JOINER, "")
-						processed_xhtml = processed_xhtml.replace(se.NO_BREAK_SPACE, " ")
-
-				else:
-					processed_xhtml = se.typography.typogrify(xhtml, args.quotes)
-
-				if processed_xhtml != xhtml:
-					file.seek(0)
-					file.write(processed_xhtml)
-					file.truncate()
+					if processed_xhtml != xhtml:
+						file.seek(0)
+						file.write(processed_xhtml)
+						file.truncate()
 
 			if args.verbose:
 				console.print(" OK")

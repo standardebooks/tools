@@ -11,8 +11,9 @@ import regex
 from lxml import cssselect, etree
 from cssselect import parser
 
-import se
-import se.css
+# Not sure how to get around pylint error, so just ignore it for now
+# until someone can solve it
+import se.css # pylint: disable=cyclic-import
 
 CSS_SELECTOR_CACHE: Dict[str, cssselect.CSSSelector] = {}
 CSS_RULES_CACHE: Dict[str, List[se.css.CssRule]] = {}

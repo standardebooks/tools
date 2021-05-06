@@ -34,7 +34,7 @@ complete -c se -A -n "__fish_seen_subcommand_from clean" -s v -l verbose -d "inc
 
 complete -c se -n "__fish_se_no_subcommand" -a compare-versions -d "Render and compare XHTML files in an ebook repository."
 complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s i -l include-common -d "include commonly-excluded SE files like imprint, titlepage, and colophon"
+complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s i -l include-se-files -d "include commonly-excluded SE files like imprint, titlepage, and colophon"
 complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s n -l no-images -d "don’t create images of diffs"
 complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s v -l verbose -d "increase output verbosity"
 

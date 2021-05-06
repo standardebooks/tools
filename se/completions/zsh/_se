@@ -79,7 +79,7 @@ case $state in
 			compare-versions)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
-					{-i,--include-common}'[include commonly-excluded SE files like imprint, titlepage, and colophon]' \
+					{-i,--include-se-files}'[include commonly-excluded SE files like imprint, titlepage, and colophon]' \
 					{-n,--no-images}'[don’t copy diff images to the current working directory in case of difference]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_directories'

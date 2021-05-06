@@ -4,11 +4,12 @@ Defines various typography-related functions
 """
 
 import html
-from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
+
 import pyphen
 import regex
 import smartypants
+
 import se
 from se.formatting import EasyXmlTree
 
@@ -285,30 +286,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 	return xhtml
 
-def hyphenate_file(filename: Path, language: Optional[str], ignore_h_tags: bool = False) -> None:
-	"""
-	Add soft hyphens to an XHTML file.
-
-	INPUTS
-	filename: A filename containing well-formed XHTML.
-	language: An ISO language code, like en-US, or None to auto-detect based on XHTML input
-	ignore_h_tags: True to not hyphenate within <h1-6> tags
-
-	OUTPUTS
-	None.
-	"""
-
-	with open(filename, "r+", encoding="utf-8") as file:
-		xhtml = file.read()
-
-		processed_xhtml = se.typography.hyphenate(xhtml, language, ignore_h_tags)
-
-		if processed_xhtml != xhtml:
-			file.seek(0)
-			file.write(processed_xhtml)
-			file.truncate()
-
-def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) -> str:
+def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_tags: bool = False) -> str:
 	"""
 	Add soft hyphens to a string of XHTML.
 
@@ -321,7 +299,14 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 	A string of XHTML with soft hyphens inserted in words. The output is not guaranteed to be pretty-printed.
 	"""
 
-	dom = EasyXmlTree(xhtml)
+	output_xhtml = ""
+
+	if isinstance(xhtml, EasyXmlTree):
+		dom = xhtml
+		output_xhtml = dom.to_string()
+	else:
+		dom = EasyXmlTree(xhtml)
+		output_xhtml  = xhtml
 
 	if language is None:
 		try:
@@ -393,9 +378,9 @@ def hyphenate(xhtml: str, language: Optional[str], ignore_h_tags: bool = False) 
 
 		pos = pos + 1
 
-	xhtml = regex.sub(r"(<body[^>]*?>).+?<\/body>", fr"\1{result}</body>", xhtml, flags=regex.DOTALL)
+	output_xhtml = regex.sub(r"(<body[^>]*?>).+?<\/body>", fr"\1{result}</body>", output_xhtml, flags=regex.DOTALL)
 
-	return xhtml
+	return output_xhtml
 
 def guess_quoting_style(xhtml: str) -> str:
 	"""

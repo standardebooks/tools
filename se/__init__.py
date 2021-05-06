@@ -8,13 +8,15 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from typing import Set, Union
+from typing import Set, Union, List, Tuple
 
 from rich.console import Console
 from rich.text import Text
 from rich.theme import Theme
 from natsort import natsorted, ns
 import regex
+
+import se.easy_xml
 
 VERSION = "1.9.3"
 MESSAGE_INDENT = "    "
@@ -28,7 +30,6 @@ FUNCTION_APPLICATION = "\u2061"
 NO_BREAK_HYPHEN = "\u2011"
 COMBINING_VERTICAL_LINE_ABOVE = "\u030d"
 COMBINING_ACUTE_ACCENT = "\u0301"
-IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitlepage.xhtml", "toc.xhtml", "loi.xhtml"]
 SELECTORS_TO_SIMPLIFY = [":first-child", ":only-child", ":last-child", ":nth-child", ":nth-last-child", ":first-of-type", ":only-of-type", ":last-of-type", ":nth-of-type", ":nth-last-of-type"]
 MESSAGE_TYPE_WARNING = 1
 MESSAGE_TYPE_ERROR = 2
@@ -186,22 +187,19 @@ def is_positive_integer(value: str) -> int:
 
 	return int_value
 
-def get_target_filenames(targets: list, allowed_extensions: Union[tuple, str], ignored_filenames: list = None) -> list:
+def get_target_filenames(targets: list, allowed_extensions: Union[tuple, str]) -> list:
 	"""
 	Helper function to convert a list of filenames or directories into a list of filenames based on some parameters.
+
+	allowed_extensions is only applied on targets that are directories.
 
 	INPUTS
 	targets: A list of filenames or directories
 	allowed_extensions: A tuple containing a series of allowed filename extensions; extensions must begin with "."
-	ignored_filenames: If None, ignore files in the se.IGNORED_FILENAMES constant. If a list, ignore that list of filenames.
-				Pass an empty list to ignore no files.
 
 	OUTPUTS
 	A set of file paths and filenames contained in the target list.
 	"""
-
-	if ignored_filenames is None:
-		ignored_filenames = IGNORED_FILENAMES
 
 	target_xhtml_filenames = set()
 
@@ -213,14 +211,12 @@ def get_target_filenames(targets: list, allowed_extensions: Union[tuple, str], i
 				for filename in filenames:
 					if allowed_extensions:
 						if filename.endswith(allowed_extensions):
-							if filename not in ignored_filenames:
-								target_xhtml_filenames.add(Path(root) / filename)
-					else:
-						if filename not in ignored_filenames:
 							target_xhtml_filenames.add(Path(root) / filename)
+					else:
+						target_xhtml_filenames.add(Path(root) / filename)
 		else:
-			if target.name.endswith(allowed_extensions):
-				target_xhtml_filenames.add(target)
+			# If we're looking at an actual file, just add it regardless of whether it's ignored
+			target_xhtml_filenames.add(target)
 
 	return natsorted(list(target_xhtml_filenames), key=lambda x: str(x.name), alg=ns.PATH)
 
@@ -246,3 +242,43 @@ def is_called_from_parallel(return_none=True) -> Union[bool,None]:
 		pass
 
 	return None if return_none else False
+
+def get_dom_if_not_ignored(xhtml: str, ignored_types: List[str] = None) -> Tuple[bool, Union[None, se.easy_xml.EasyXmlTree]]:
+	"""
+	Given a string of XHTML, return a dom tree ONLY IF the dom does not contain a
+	top-level <section> element with any of the passed semantics.
+
+	Pass an empty list to ignored_types to ignore nothing.
+	Pass None to empty list to ignore a default set of SE files.
+
+	RETURNS
+	A tuple of (is_ignored, dom)
+	If the file is ignored, is_ignored will be True.
+	"""
+
+	is_ignored = False
+	ignored_regex = None
+	dom = None
+
+	try:
+		dom = se.easy_xml.EasyXmlTree(xhtml)
+	except:
+		return (False, None)
+
+	# Ignore some SE files
+	# Default ignore list
+	if ignored_types is None:
+		ignored_regex = "(colophon|titlepage|imprint|copyright-page|halftitlepage|toc|loi)"
+
+	elif len(ignored_types) > 0:
+		ignored_regex = "("
+		for item in ignored_types:
+			ignored_regex = f"{ignored_regex}{regex.escape(item)}|"
+
+		ignored_regex = ignored_regex.rstrip("|") + ")"
+
+	if ignored_regex:
+		if dom.xpath(f"/html[re:test(@epub:prefix, '[\\s\\b]se:[\\s\\b]')]/body/*[(name() = 'section' or name() = 'nav') and re:test(@epub:type, '\\b{ignored_regex}\\b')]"):
+			is_ignored = True
+
+	return (is_ignored, dom)

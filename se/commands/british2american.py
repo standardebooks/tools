@@ -24,7 +24,7 @@ def british2american() -> int:
 	return_code = 0
 	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml",)):
+	for filename in se.get_target_filenames(args.targets, ".xhtml"):
 		if args.verbose:
 			console.print(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", end="")
 

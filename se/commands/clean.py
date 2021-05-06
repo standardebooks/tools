@@ -22,7 +22,7 @@ def clean() -> int:
 
 	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
-	for filepath in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx", ".xml"), []):
+	for filepath in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx", ".xml")):
 		if args.verbose:
 			console.print(f"Processing [path][link=file://{filepath}]{filepath}[/][/] ...", end="")
 
@@ -38,11 +38,7 @@ def clean() -> int:
 		if args.verbose:
 			console.print(" OK")
 
-	for filepath in se.get_target_filenames(args.targets, (".css",), []):
-		# Skip core.css as this must be copied in from the template
-		if filepath.name == "core.css":
-			continue
-
+	for filepath in se.get_target_filenames(args.targets, ".css"):
 		if args.verbose:
 			console.print(f"Processing [path][link=file://{filepath}]{filepath}[/][/] ...", end="")
 

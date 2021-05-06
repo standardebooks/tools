@@ -35,6 +35,7 @@ IGNORED_CLASSES = ["elision", "name", "temperature", "state", "era", "compass", 
 BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", ".xcf", ".otf"]
 FRONTMATTER_FILENAMES = ["dedication.xhtml", "introduction.xhtml", "preface.xhtml", "foreword.xhtml", "preamble.xhtml", "titlepage.xhtml", "halftitlepage.xhtml", "imprint.xhtml"]
 BACKMATTER_FILENAMES = ["endnotes.xhtml", "loi.xhtml", "afterword.xhtml", "appendix.xhtml", "colophon.xhtml", "uncopyright.xhtml"]
+IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitlepage.xhtml", "toc.xhtml", "loi.xhtml"]
 
 """
 POSSIBLE BBCODE TAGS
@@ -1203,7 +1204,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						has_frontmatter = True
 
 				# Add new CSS classes to global list
-				if filename.name not in se.IGNORED_FILENAMES:
+				if filename.name not in IGNORED_FILENAMES:
 					for node in dom.xpath("//*[@class]"):
 						for css_class in node.get_attr("class").split():
 							if css_class in xhtml_css_classes:
@@ -1859,7 +1860,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-074", "[xhtml]<hgroup>[/] element containing sequential [xhtml]<h#>[/] elements at the same heading level.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for possessive 's within name italics, but not in ignored files like the colophon which we know have no possessives
-				if filename.name not in se.IGNORED_FILENAMES:
+				if filename.name not in IGNORED_FILENAMES:
 					nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.') and re:match(., '’s$')]")
 					if nodes:
 						messages.append(LintMessage("t-007", "Possessive [text]’s[/] within name italics. If the name in italics is doing the possessing, [text]’s[/] goes outside italics.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
@@ -2035,7 +2036,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							img_alt_not_typogrified.append(node.to_tag_string())
 
 						# Check alt attributes not ending in punctuation
-						if filename.name not in se.IGNORED_FILENAMES and not regex.search(r"""[\.\!\?]”?$""", alt):
+						if filename.name not in IGNORED_FILENAMES and not regex.search(r"""[\.\!\?]”?$""", alt):
 							img_alt_lacking_punctuation.append(node.to_tag_string())
 
 						# Check that alt attributes match SVG titles
@@ -2168,7 +2169,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-006", "Poem or verse [xhtml]<p>[/] (stanza) without [xhtml]<span>[/] (line) element.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check to see if we included poetry or verse without the appropriate styling
-				if filename.name not in se.IGNORED_FILENAMES:
+				if filename.name not in IGNORED_FILENAMES:
 					nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][./p/span]")
 					for node in nodes:
 						if "z3998:poem" in node.get_attr("epub:type") and not local_css_has_poem_style:
@@ -2257,7 +2258,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					abbr_elements += dom.xpath("/html/body//abbr[contains(@class, 'acronym')]")
 
 				# Check if language tags in individual files match the language in the metadata file
-				if filename.name not in se.IGNORED_FILENAMES:
+				if filename.name not in IGNORED_FILENAMES:
 					file_language = dom.xpath("/html/@xml:lang", True)
 					if language != file_language:
 						messages.append(LintMessage("s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/].", se.MESSAGE_TYPE_WARNING, filename))

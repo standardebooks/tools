@@ -28,14 +28,11 @@ def word_count() -> int:
 
 	total_word_count = 0
 
-	excluded_filenames = []
+	excluded_files = []
 	if args.exclude_se_files:
-		excluded_filenames = se.IGNORED_FILENAMES
+		excluded_files = ["colophon", "titlepage", "imprint", "copyright-page", "halftitlepage", "toc", "loi", "endnotes"]
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml", ".html", ".htm"), excluded_filenames):
-		if args.exclude_se_files and filename.name == "endnotes.xhtml":
-			continue
-
+	for filename in se.get_target_filenames(args.targets, (".xhtml", ".html", ".htm")):
 		try:
 			with open(filename, "r", encoding="utf-8") as file:
 				try:
@@ -50,15 +47,29 @@ def word_count() -> int:
 						se.print_error(f"File is not UTF-8: [path][link=file://{filename}]{filename}[/][/].")
 						return se.InvalidEncodingException.code
 
-			# Try to remove PG header/footers
-			if args.ignore_pg_boilerplate:
-				xhtml = regex.sub(r"<pre>\s*The Project Gutenberg Ebook[^<]+?</pre>", "", xhtml, flags=regex.IGNORECASE|regex.DOTALL)
-				xhtml = regex.sub(r"<pre>\s*End of Project Gutenberg[^<]+?</pre>", "", xhtml, flags=regex.IGNORECASE|regex.DOTALL)
-				xhtml = regex.sub(r"<p>[^<]*The Project Gutenberg[^<]+?</p>", "", xhtml, flags=regex.IGNORECASE|regex.DOTALL)
-				xhtml = regex.sub(r"<p[^<]*?End of the Project Gutenberg.+", "", xhtml, flags=regex.IGNORECASE|regex.DOTALL)
-				xhtml = regex.sub(r"<span class=\"pagenum\">.+?</span>", "", xhtml, flags=regex.IGNORECASE|regex.DOTALL)
+			# Remove HTML entities
+			xhtml = regex.sub(r"&[^;\s\b]+?;", " ", xhtml)
 
-			total_word_count += se.formatting.get_word_count(xhtml)
+			is_ignored, dom = se.get_dom_if_not_ignored(xhtml, excluded_files)
+
+			if not is_ignored:
+				# Try to remove PG header/footers
+				if args.ignore_pg_boilerplate:
+					if dom:
+						for node in dom.xpath("//span[contains(@class, 'pagenum')]"):
+							node.remove()
+
+						for node in dom.xpath("//*[(name()='pre' or name()='div' or name()='p') and re:test(., 'Project Gutenberg', 'i')]"):
+							node.remove()
+
+						xhtml = dom.to_string()
+
+					else:
+						# We couldn't generate a dom, fall back to regex replacements
+						xhtml = regex.sub(r"<(pre|div|p)[^>]*?>[^<]*Project Gutenberg[^<]+?</\1>", "", xhtml, flags=regex.IGNORECASE|regex.DOTALL)
+						xhtml = regex.sub(r"<span class=\"pagenum\">.+?</span>", "", xhtml, flags=regex.IGNORECASE|regex.DOTALL)
+
+				total_word_count += se.formatting.get_word_count(xhtml)
 
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")

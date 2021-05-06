@@ -658,7 +658,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 				# All done, clean the output
 				# Note that we don't clean .xhtml files, because the way kobo spans are added means that it will screw up spaces inbetween endnotes.
-				for filepath in se.get_target_filenames([kobo_work_directory], (".opf")):
+				for filepath in se.get_target_filenames([kobo_work_directory], ".opf"):
 					se.formatting.format_xml_file(filepath)
 
 				se.epub.write_epub(kobo_work_directory, output_directory / kobo_output_filename)
@@ -999,6 +999,10 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						if replace_shy_hyphens:
 							xhtml = xhtml.replace(se.SHY_HYPHEN, "")
 
+						# Add soft hyphens, but not to the ToC
+						if not dom.xpath("/html[re:test(@epub:prefix, '[\\s\\b]se:[\\s\\b]')]/body/nav[contains(@epub:type, 'toc')]"):
+							xhtml = se.typography.hyphenate(xhtml, None, True)
+
 						with open(filename, "r+", encoding="utf-8") as file:
 							file.write(se.formatting.format_xhtml(xhtml))
 							file.truncate()
@@ -1007,10 +1011,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			with open(work_epub_root_directory / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:
 				with importlib_resources.open_text("se.data.templates", "kindle.css", encoding="utf-8") as compatibility_css_file:
 					core_css_file.write(compatibility_css_file.read())
-
-			# Add soft hyphens
-			for filepath in se.get_target_filenames([work_epub_root_directory], ".xhtml"):
-				se.typography.hyphenate_file(filepath, None, True)
 
 			# Build an epub file we can send to Calibre
 			se.epub.write_epub(work_epub_root_directory, work_directory / compatible_epub_output_filename)

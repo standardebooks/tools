@@ -10,6 +10,7 @@ import math
 import string
 import unicodedata
 from pathlib import Path
+from typing import Union
 
 import regex
 import roman
@@ -1250,7 +1251,7 @@ def simplify_css(css: str) -> str:
 	return css
 
 
-def generate_title(xhtml) -> str:
+def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 	"""
 	Generate the value for the <title> tag of a string of XHTML, based on the rules in the SE manual.
 

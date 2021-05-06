@@ -712,8 +712,13 @@ class SeEpub:
 
 		text = ""
 
-		for filename in se.get_target_filenames([self.path], (".xhtml",)):
-			text += self.get_file(filename)
+		for filename in se.get_target_filenames([self.path], ".xhtml"):
+			xhtml = self.get_file(filename)
+
+			is_ignored, _ = se.get_dom_if_not_ignored(xhtml, ["colophon", "titlepage", "imprint", "copyright-page", "halftitlepage", "toc", "loi"])
+
+			if not is_ignored:
+				text += xhtml
 
 		for node in self.metadata_dom.xpath("/package/metadata/meta[@property='se:reading-ease.flesch']"):
 			node.set_text(str(se.formatting.get_flesch_reading_ease(text)))
@@ -736,11 +741,13 @@ class SeEpub:
 		"""
 		word_count = 0
 
-		for filename in se.get_target_filenames([self.path], (".xhtml",)):
-			if filename.name == "endnotes.xhtml":
-				continue
+		for filename in se.get_target_filenames([self.path], ".xhtml"):
+			xhtml = self.get_file(filename)
 
-			word_count += se.formatting.get_word_count(self.get_file(filename))
+			is_ignored, _ = se.get_dom_if_not_ignored(xhtml, ["colophon", "titlepage", "imprint", "copyright-page", "halftitlepage", "toc", "loi", "endnotes"])
+
+			if not is_ignored:
+				word_count += se.formatting.get_word_count(xhtml)
 
 		return word_count
 

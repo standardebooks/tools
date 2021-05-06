@@ -24,11 +24,22 @@ def hyphenate() -> int:
 
 	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
-	for filename in se.get_target_filenames(args.targets, (".xhtml",)):
+	for filename in se.get_target_filenames(args.targets, ".xhtml"):
 		if args.verbose:
 			console.print(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", end="")
 
-		se.typography.hyphenate_file(filename, args.language, args.ignore_h_tags)
+		with open(filename, "r+", encoding="utf-8") as file:
+			xhtml = file.read()
+
+			is_ignored, dom = se.get_dom_if_not_ignored(xhtml, ["toc"])
+
+			if not is_ignored and dom:
+				processed_xhtml = se.typography.hyphenate(dom, args.language, args.ignore_h_tags)
+
+				if processed_xhtml != xhtml:
+					file.seek(0)
+					file.write(processed_xhtml)
+					file.truncate()
 
 		if args.verbose:
 			console.print(" OK")
