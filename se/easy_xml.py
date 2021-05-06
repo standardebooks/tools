@@ -550,9 +550,48 @@ class EasyXmlElement:
 		return self.lxml_element.text
 
 	@text.setter
-	def text(self, value) -> None:
+	def text(self, value: str) -> None:
 		"""
 		Set the lxml text attribute (the text up to the first child element)
 		"""
 
 		self.lxml_element.text = value
+
+	@property
+	def tail(self) -> str:
+		"""
+		Return only returns the text after this node
+
+		Example:
+		`<p class="test">Hello there!</p>` -> ``
+		`<p class="test">Hello there!</p> he said.` -> ` he said.`
+		"""
+
+		return self.lxml_element.tail
+
+	@tail.setter
+	def tail(self, value: str) -> None:
+		"""
+		Set the lxml tail attribute (the text after this element)
+		"""
+
+		self.lxml_element.tail = value
+
+	@property
+	def attrs(self) -> Dict:
+		"""
+		Return a dict of attributes for this node
+		"""
+
+		return self.lxml_element.attrib
+
+	@attrs.setter
+	def attrs(self, value: Dict) -> None:
+		"""
+		Return a dict of attributes for this node
+		"""
+
+		self.lxml_element.attrib.clear()
+
+		for name, val in sorted(value.items()):
+			self.set_attr(name, val)

@@ -255,6 +255,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							for element in dom.css_select(selector):
 								# Create a new element and move this element's children in to it
 								span = se.easy_xml.EasyXmlElement("<span/>")
+								span.text = element.text
+								span.attrs = element.attrs
+
 								for child in element.children:
 									span.append(child)
 
