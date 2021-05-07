@@ -249,11 +249,13 @@ def get_dom_if_not_ignored(xhtml: str, ignored_types: List[str] = None) -> Tuple
 	top-level <section> element with any of the passed semantics.
 
 	Pass an empty list to ignored_types to ignore nothing.
-	Pass None to empty list to ignore a default set of SE files.
+	Pass None to ignored_types to ignore a default set of SE files.
 
 	RETURNS
 	A tuple of (is_ignored, dom)
 	If the file is ignored, is_ignored will be True.
+	If the dom couldn't be created (for example it is invalid XML) then the dom part
+	of the tuple will be None.
 	"""
 
 	is_ignored = False
