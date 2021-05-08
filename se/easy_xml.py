@@ -412,11 +412,19 @@ class EasyXmlElement:
 		if self.lxml_element.tail:
 			prev = self.lxml_element.getprevious()
 			if prev is not None: # We can't do `if prev` because we get a FutureWarning from lxml
-				prev.tail = (prev.tail or '') + self.lxml_element.tail
+				prev.tail = (prev.tail or "") + self.lxml_element.tail
 			else:
-				parent.text = (parent.text or '') + self.lxml_element.tail
+				parent.text = (parent.text or "") + self.lxml_element.tail
 
 		parent.remove(self.lxml_element)
+
+	def wrap_with(self, node) -> None:
+		"""
+		Wrap this node in the passed node.
+		"""
+
+		self.lxml_element.addprevious(node.lxml_element)
+		node.lxml_element.insert(0, self.lxml_element)
 
 	def unwrap(self) -> None:
 		"""
@@ -444,10 +452,11 @@ class EasyXmlElement:
 		if self.lxml_element.text:
 			prev = self.lxml_element.getprevious()
 			if prev is None:
-				if parent.text:
-					parent.text = parent.text + self.lxml_element.text
-				else:
-					parent.text = self.lxml_element.text
+				if parent is not None:
+					if parent.text:
+						parent.text = parent.text + self.lxml_element.text
+					else:
+						parent.text = self.lxml_element.text
 			else:
 				if prev.tail:
 					prev.tail = prev.tail + self.lxml_element.text
@@ -457,11 +466,30 @@ class EasyXmlElement:
 		# This calls the EasyXmlTree.remove() function, not an lxml function
 		self.remove()
 
+	def replace_outer(self, node) -> None:
+		"""
+		Replace this node's wrapping element with the wrapping element of the passed
+		node, but keep this node's children.
+
+		Example:
+		<p>foo <b>bar</b></p> -> <div class="baz">foo <b>bar</b></div>
+		"""
+
+		node.lxml_element.tail = self.lxml_element.tail
+		node.lxml_element.text = self.lxml_element.text
+		node.children = self.children
+
+		self.lxml_element.text = ""
+		self.lxml_element.tail = ""
+		self.lxml_element.addnext(node.lxml_element)
+		self.unwrap()
+
 	def replace_with(self, node) -> None:
 		"""
 		Remove this node and replace it with the passed node
 		"""
 
+		# lxml.addnext() moves this element's tail to the new element
 		if isinstance(node, EasyXmlElement):
 			self.lxml_element.addnext(node.lxml_element)
 		else:
@@ -521,6 +549,21 @@ class EasyXmlElement:
 			children.append(EasyXmlElement(child))
 
 		return children
+
+	@children.setter
+	def children(self, children) -> None:
+		"""
+		Set the node's children.
+		"""
+
+		for child in self.lxml_element:
+			self.lxml_element.remove(child)
+
+		for child in children:
+			if isinstance(child, EasyXmlElement):
+				self.lxml_element.append(child.lxml_element)
+			else:
+				self.lxml_element.append(child)
 
 	@property
 	def tag(self) -> str:

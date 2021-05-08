@@ -15,7 +15,6 @@ from distutils.dir_util import copy_tree
 from copy import deepcopy
 from hashlib import sha1
 from pathlib import Path
-from typing import List
 import importlib_resources
 
 from cairosvg import svg2png
@@ -272,10 +271,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				# Now we just remove all remaining abbr tags that did not get converted to spans
 				for node in dom.xpath("/html/body//abbr"):
 					node.unwrap()
-
-				with open(filename, "r+", encoding="utf-8") as file:
-					file.write(dom.to_string())
-					file.truncate()
 
 		# Done simplifying CSS and tags!
 
@@ -543,9 +538,12 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					# while replacements > 0:
 					# 	processed_xhtml, replacements = regex.subn(r"<title>([^<>]+?)<span class=\"quote-align\">([^<>]+?)</span>", r"""<title>\1\2""", processed_xhtml)
 
-					with open(filename, "r+", encoding="utf-8") as file:
+					with open(filename, "w+", encoding="utf-8") as file:
 						file.write(processed_xhtml)
 						file.truncate()
+
+					# Since we changed the dom string using regex, we have to flush its cache entry so we can re-build it later
+					self.flush_dom_cache_entry(filename)
 
 				if filename.suffix == ".css":
 					with open(filename, "r+", encoding="utf-8") as file:
@@ -703,83 +701,127 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				for root, _, filenames in os.walk(work_epub_root_directory):
 					for filename_string in filenames:
 						filename = Path(root) / filename_string
+
 						if filename.suffix == ".xhtml":
-							with open(filename, "r+", encoding="utf-8") as file:
-								xhtml = file.read()
-								processed_xhtml = xhtml
-								replaced_mathml: List[str] = []
+							dom = self.get_dom(filename)
 
-								# Check if there's MathML we want to convert
-								# We take a naive approach and use some regexes to try to simplify simple MathML expressions.
-								# For each MathML expression, if our round of regexes finishes and there is still MathML in the processed result, we abandon the attempt and render to PNG using Firefox.
-								for line in regex.findall(r"<(?:m:)?math[^>]*?>(?:.+?)</(?:m:)?math>", processed_xhtml, flags=regex.DOTALL):
-									if line not in replaced_mathml:
-										replaced_mathml.append(line) # Store converted lines to save time in case we have multiple instances of the same MathML
-										mathml_tree = se.easy_xml.EasyXmlTree("<?xml version=\"1.0\" encoding=\"utf-8\"?>{}".format(regex.sub(r"<(/?)m:", "<\\1", line)))
-										processed_line = line
+							# Iterate over mathml nodes and try to make some basic replacements to achieve the same appearance
+							# but without mathml. If we're able to remove all mathml namespaced elements, we don't need to render it as png.
+							mathml_nodes = dom.xpath("/html/body//m:math")
+							for node in mathml_nodes:
+								node_clone = deepcopy(node)
 
-										# If the mfenced element has more than one child, they are separated by commas when rendered.
-										# This is too complex for our naive regexes to work around. So, if there is an mfenced element with more than one child, abandon the attempt.
-										if not mathml_tree.css_select("mfenced > * + *"):
-											processed_line = regex.sub(r"</?(?:m:)?math[^>]*?>", "", processed_line)
-											processed_line = regex.sub(r"<!--.+?-->", "", processed_line)
-											processed_line = regex.sub(r"<(?:m:)?mfenced/>", "()", processed_line)
-											processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi)>(.+?)</\3><((?:m:)?mi)>(.+?)</\5></\1>", "<i>\\4</i><\\2><i>\\6</i></\\2>", processed_line)
-											processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi)>(.+?)</\3><((?:m:)?mn)>(.+?)</\5></\1>", "<i>\\4</i><\\2>\\6</\\2>", processed_line)
-											processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mn)>(.+?)</\3><((?:m:)?mn)>(.+?)</\5></\1>", "\\4<\\2>\\6</\\2>", processed_line)
-											processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mn)>(.+?)</\3><((?:m:)?mi)>(.+?)</\5></\1>", "\\4<\\2><i>\\6</i></\\2>", processed_line)
-											processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi) mathvariant=\"normal\">(.+?)</\3><((?:m:)?mi)>(.+?)</\5></\1>", "\\4<\\2><i>\\6</i></\\2>", processed_line)
-											processed_line = regex.sub(r"<((?:m:)?m(sub|sup))><((?:m:)?mi) mathvariant=\"normal\">(.+?)</\3><((?:m:)?mn)>(.+?)</\5></\1>", "\\4<\\2>\\6</\\2>", processed_line)
-											processed_line = regex.sub(fr"<(?:m:)?mo>{se.FUNCTION_APPLICATION}</(?:m:)?mo>", "", processed_line, flags=regex.IGNORECASE) # The ignore case flag is required to match here with the special FUNCTION_APPLICATION character, it's unclear why
-											processed_line = regex.sub(r"<(?:m:)?mfenced><((?:m:)(?:mo|mi|mn|mrow))>(.+?)</\1></(?:m:)?mfenced>", "(<\\1>\\2</\\1>)", processed_line)
-											processed_line = regex.sub(r"<(?:m:)?mrow>([^>].+?)</(?:m:)?mrow>", "\\1", processed_line)
-											processed_line = regex.sub(r"<(?:m:)?mi>([^<]+?)</(?:m:)?mi>", "<i>\\1</i>", processed_line)
-											processed_line = regex.sub(r"<(?:m:)?mi mathvariant=\"normal\">([^<]+?)</(?:m:)?mi>", "\\1", processed_line)
-											processed_line = regex.sub(r"<(?:m:)?mo>([+\-−=×])</(?:m:)?mo>", " \\1 ", processed_line)
-											processed_line = regex.sub(r"<((?:m:)?m[no])>(.+?)</\1>", "\\2", processed_line)
-											processed_line = regex.sub(r"</?(?:m:)?mrow>", "", processed_line)
-											processed_line = processed_line.strip()
-											processed_line = regex.sub(r"</i><i>", "", processed_line, flags=regex.DOTALL)
+								for child in node_clone.xpath(".//m:msup/*[2]"):
+									replacement_node = se.easy_xml.EasyXmlElement("<sup/>", {"m": "http://www.w3.org/1998/Math/MathML"})
 
-										# Did we succeed? Is there any more MathML in our string?
-										if regex.findall("</?(?:m:)?m", processed_line):
-											# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
-											# First, remove the m: namespace shorthand and add the actual namespace to our fragment
-											namespaced_line = regex.sub(r"<(/?)m:", "<\\1", line)
-											namespaced_line = namespaced_line.replace("<math", "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"")
+									child.parent.unwrap()
 
-											# Have Firefox render the fragment
-											se.images.render_mathml_to_png(driver, namespaced_line, work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png", work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}-2x.png")
-											# iBooks srcset bug: once srcset works in iBooks, this block can go away
-											# calculate the "normal" height/width from the 2x image
-											ifile = work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}-2x.png"
-											image = Image.open(ifile)
-											img_width = image.size[0]
-											img_height = image.size[1]
-											# if either dimension is odd, add a pixel
-											right = img_width % 2
-											bottom = img_height % 2
-											# if either dimension was odd, expand the canvas
-											if (right != 0 or bottom != 0):
-												border = (0, 0, right, bottom)
-												image = ImageOps.expand(image, border)
-												image.save(ifile)
-											# get the "display" dimensions
-											img_width = img_width // 2
-											img_height = img_height // 2
+									mrows = child.xpath("//m:mrow")
+									for mrow in mrows:
+										mrow.wrap_with(replacement_node)
+										mrow.unwrap()
 
-											# iBooks srcset bug: once srcset works in iBooks, we can use this line instead of the one below it
-											# processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}.png\" srcset=\"../images/mathml-{mathml_count}-2x.png 2x, ../images/mathml-{mathml_count}.png 1x\"/>")
-											processed_xhtml = processed_xhtml.replace(line, f"<img class=\"mathml epub-type-se-image-color-depth-black-on-transparent\" epub:type=\"se:image.color-depth.black-on-transparent\" src=\"../images/mathml-{mathml_count}-2x.png\" height=\"{img_height}\" width=\"{img_width}\"/>")
-											mathml_count = mathml_count + 1
-										else:
-											# Success! Replace the MathML with our new string.
-											processed_xhtml = processed_xhtml.replace(line, processed_line)
+									if not mrows:
+										child.wrap_with(replacement_node)
 
-								if processed_xhtml != xhtml:
-									file.seek(0)
-									file.write(processed_xhtml)
+								for child in node_clone.xpath(".//m:msub/*[2]"):
+									replacement_node = se.easy_xml.EasyXmlElement("<sub/>", {"m": "http://www.w3.org/1998/Math/MathML"})
+
+									child.parent.unwrap()
+
+									mrows = child.xpath("//m:mrow")
+									for mrow in mrows:
+										mrow.wrap_with(replacement_node)
+										mrow.unwrap()
+
+									if not mrows:
+										child.wrap_with(replacement_node)
+
+								for child in node_clone.xpath(".//m:mi[not(./*)]"):
+									replacement_node = se.easy_xml.EasyXmlElement("<var/>")
+									replacement_node.text = child.text
+									child.replace_with(replacement_node)
+
+								for child in node_clone.xpath(".//m:mo[re:test(., '^[⋅+\\-−=×′]$')]"):
+									child.unwrap()
+
+								for child in node_clone.xpath(".//m:mo[re:test(., '^[\\(\\)\\[\\]]$')]"):
+									child.unwrap()
+
+								for child in node_clone.xpath(f".//m:mo[re:test(., '^[{se.INVISIBLE_TIMES}{se.FUNCTION_APPLICATION}]$')]"):
+									child.remove()
+
+								for child in node_clone.xpath(".//m:mn"):
+									child.unwrap()
+
+								# If there are no more mathml-namespaced elements, we succeeded; replace the mathml node
+								# with our modified clone
+								if not node_clone.xpath(".//*[namespace-uri()='http://www.w3.org/1998/Math/MathML']"):
+									# Success!
+									node_clone.lxml_element.tail = ""
+									# Strip white space we may have added in previous operations,
+									# and re-add white space around some operators
+									for child in node_clone.lxml_element.iter("*"):
+										if child.text is not None:
+											child.text = child.text.strip()
+											child.text = regex.sub(r"([⋅+\-−=×′])", r" \1 ", child.text)
+										if child.tail is not None:
+											child.tail = child.tail.strip()
+											child.tail = regex.sub(r"\s*([⋅+\-−=×′])\s*", r" \1 ", child.tail)
+									node.replace_with(node_clone)
+									node_clone.unwrap()
+								else:
+									# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
+									# First, remove the m: namespace shorthand and add the actual namespace to our fragment
+									namespaced_line = regex.sub(r"<(/?)m:", "<\\1", node.to_string())
+									namespaced_line = namespaced_line.replace("<math", "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"")
+
+									# Have Firefox render the fragment
+									se.images.render_mathml_to_png(driver, namespaced_line, work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png", work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}-2x.png")
+
+									img_node = se.easy_xml.EasyXmlElement("<img/>", {"epub": "http://www.idpf.org/2007/ops"})
+									img_node.set_attr("class", "mathml epub-type-se-image-color-depth-black-on-transparent")
+									img_node.set_attr("epub:type", "se:image.color-depth.black-on-transparent")
+									img_node.set_attr("src", f"../images/mathml-{mathml_count}-2x.png")
+
+									if ibooks_srcset_bug_exists:
+										# Calculate the "normal" height/width from the 2x image
+										ifile = work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}-2x.png"
+										image = Image.open(ifile)
+										img_width = image.size[0]
+										img_height = image.size[1]
+
+										# If either dimension is odd, add a pixel
+										right = img_width % 2
+										bottom = img_height % 2
+
+										# If either dimension was odd, expand the canvas
+										if (right != 0 or bottom != 0):
+											border = (0, 0, right, bottom)
+											image = ImageOps.expand(image, border)
+											image.save(ifile)
+
+										# Get the "display" dimensions
+										img_width = img_width // 2
+										img_height = img_height // 2
+
+										img_node.set_attr("width", str(img_width))
+										img_node.set_attr("height", str(img_height))
+
+										# We don't need the 1x file if we're not using srcset
+										os.unlink(work_epub_root_directory / "epub" / "images" / f"mathml-{mathml_count}.png")
+									else:
+										img_node.set_attr("srcset", f"../images/mathml-{mathml_count}-2x.png 2x, ../images/mathml-{mathml_count}.png 1x")
+
+									node.replace_with(img_node)
+
+									mathml_count = mathml_count + 1
+
+							if mathml_nodes:
+								with open(filename, "w", encoding="utf-8") as file:
+									file.write(dom.to_string())
 									file.truncate()
+
 			except KeyboardInterrupt as ex:
 				# Bubble the exception up, but proceed to `finally` so we quit the driver
 				raise ex
@@ -1050,3 +1092,4 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 	# Build is all done!
 	# Since we made heavy changes to the ebook's dom, flush the dom cache in case we use this class again
 	self._dom_cache = [] # pylint: disable=protected-access
+	self._file_cache = [] # pylint: disable=protected-access

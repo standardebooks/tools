@@ -30,6 +30,7 @@ FUNCTION_APPLICATION = "\u2061"
 NO_BREAK_HYPHEN = "\u2011"
 COMBINING_VERTICAL_LINE_ABOVE = "\u030d"
 COMBINING_ACUTE_ACCENT = "\u0301"
+INVISIBLE_TIMES = "\u2062"
 SELECTORS_TO_SIMPLIFY = [":first-child", ":only-child", ":last-child", ":nth-child", ":nth-last-child", ":first-of-type", ":only-of-type", ":last-of-type", ":nth-of-type", ":nth-last-of-type"]
 MESSAGE_TYPE_WARNING = 1
 MESSAGE_TYPE_ERROR = 2

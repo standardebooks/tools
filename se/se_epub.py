@@ -277,6 +277,28 @@ class SeEpub:
 
 		return self._file_cache[file_path_str]
 
+	def flush_dom_cache_entry(self, file_path: Path) -> None:
+		"""
+		Remove a dom cache entry for the given file, regardless of whether comments were removed.
+
+		INPUTS
+		file_path: A Path pointing to the file
+		"""
+
+		keys_to_delete = []
+
+		for key in self._dom_cache:
+			if key.startswith(str(file_path)):
+				keys_to_delete.append(key)
+
+		for key in keys_to_delete:
+			del self._dom_cache[key]
+
+		try:
+			del self._file_cache[str(file_path)]
+		except:
+			pass
+
 	# Cache dom objects so we don't have to create them multiple times
 	def get_dom(self, file_path: Path, remove_comments=False) -> se.easy_xml.EasyXmlTree:
 		"""
