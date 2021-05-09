@@ -1113,7 +1113,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if nodes:
 						messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the<br/>\n" + node.to_string() for node in nodes]))
 
-					se_url = self.generated_identifier.replace('url:', '')
+					se_url = self.generated_identifier.replace("url:", "")
 					if not dom.xpath(f"/html/body//a[@href='{se_url}' and text()='{se_url.replace('https://', '')}']"):
 						messages.append(LintMessage("m-035", f"Unexpected SE identifier in colophon. Expected: [url]{se_url}[/].", se.MESSAGE_TYPE_ERROR, filename))
 

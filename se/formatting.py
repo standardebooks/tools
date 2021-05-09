@@ -549,7 +549,7 @@ def _format_style_elements(tree: etree.ElementTree):
 			indent = node.xpath("preceding-sibling::text()[1]")[0].replace("\n", "")
 
 			# Indent the CSS one level deeper than the <style> element
-			css = ''.join(indent + "\t" + line + "\n" for line in css.splitlines())
+			css = "".join(indent + "\t" + line + "\n" for line in css.splitlines())
 			css = css.strip("\n")
 			css = regex.sub(r"^\s+$", "", css, flags=regex.MULTILINE) # Remove indents from lines that are just white space
 
