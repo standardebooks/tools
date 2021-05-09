@@ -847,8 +847,8 @@ class SeEpub:
 					# the `glossary` semantic may also appear in the ToC landmarks, so specifically exclude that
 					if dom.xpath("//*[contains(@epub:type, 'glossary') and not(ancestor-or-self::nav)]"):
 						properties.append("glossary")
-
-					if dom.xpath("/html[namespace::m]"):
+						#if dom.xpath("/html/body//*[namespace-uri()='http://www.w3.org/1998/Math/MathML']"):
+					if dom.xpath("/html[namespace::*='http://www.w3.org/1998/Math/MathML']"):
 						properties.append("mathml")
 
 					if dom.xpath("//img[re:test(@src, '\\.svg$')]"):
