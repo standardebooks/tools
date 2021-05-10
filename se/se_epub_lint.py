@@ -743,8 +743,23 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		if matches:
 			messages.append(LintMessage("t-047", "[text]US[/] should be [text]U.S.[/]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
+		# Make sure long-description is escaped HTML
+		if "<" not in long_description:
+			messages.append(LintMessage("m-016", "Long description must be escaped HTML.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+		else:
+			# Check for malformed long description HTML
+			try:
+				etree.parse(io.StringIO(f"<?xml version=\"1.0\"?><html xmlns=\"http://www.w3.org/1999/xhtml\">{long_description}</html>"))
+			except lxml.etree.XMLSyntaxError as ex:
+				messages.append(LintMessage("m-015", f"Metadata long description is not valid XHTML. LXML says: {ex}", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+		# Check for HTML entities in long-description, but allow &amp;amp;
+		matches = regex.findall(r"&[a-z0-9]+?;", long_description.replace("&amp;", ""))
+		if matches:
+			messages.append(LintMessage("m-018", "HTML entities found. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+
 	except Exception as ex:
-		raise se.InvalidSeEbookException(f"No [xml]<meta property=\"se:long-description\">[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/].") from ex
+		missing_metadata_elements.append("""<meta id="long-description" property="se:long-description" refines="#description">""")
 
 	nodes = self.metadata_dom.xpath("//*[text() != 'LCSH' and text() != 'WORD_COUNT' and text() != 'READING_EASE' and re:test(., '^\\s*[A-Z_]+[0-9]*\\s*$')]")
 	if nodes:
@@ -792,24 +807,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 			break
 
-	# Make sure long-description is escaped HTML
-	if "<" not in long_description:
-		messages.append(LintMessage("m-016", "Long description must be escaped HTML.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-	else:
-		# Check for malformed long description HTML
-		try:
-			etree.parse(io.StringIO(f"<?xml version=\"1.0\"?><html xmlns=\"http://www.w3.org/1999/xhtml\">{long_description}</html>"))
-		except lxml.etree.XMLSyntaxError as ex:
-			messages.append(LintMessage("m-015", f"Metadata long description is not valid XHTML. LXML says: {ex}", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-
-	# Check for HTML entities in long-description, but allow &amp;amp;
-	matches = regex.findall(r"&[a-z0-9]+?;", long_description.replace("&amp;", ""))
-	if matches:
-		messages.append(LintMessage("m-018", "HTML entities found. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
-
 	# Check that the word count is correct, if it's currently set
 	word_count = self.metadata_dom.xpath("/package/metadata/meta[@property='se:word-count']/text()", True)
-	if word_count != "WORD_COUNT" and int(word_count) != self.get_word_count():
+	if word_count is None:
+		missing_metadata_elements.append("""<meta property="se:word-count">""")
+	elif word_count != "WORD_COUNT" and int(word_count) != self.get_word_count():
 		messages.append(LintMessage("m-065", "Word count in metadata doesn’t match actual word count.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for tags that imply other tags
