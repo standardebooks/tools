@@ -134,9 +134,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				node.set_text(last_updated_iso)
 
 			with open(work_epub_root_directory / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
-				file.seek(0)
 				file.write(metadata_dom.to_string())
-				file.truncate()
 
 			# Update the colophon with release info
 			# If there's no colophon, skip this
@@ -570,7 +568,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		# Output the modified the metadata file so that we can build the kobo book before making more compatibility hacks that aren’t needed on that platform.
 		with open(work_epub_root_directory / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
 			file.write(metadata_dom.to_string())
-			file.truncate()
 
 		if build_kobo:
 			with tempfile.TemporaryDirectory() as temp_directory:
@@ -586,9 +583,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						for node in dom.xpath("/package[contains(@prefix, 'se:')]/metadata"):
 							node.append(etree.fromstring("""<meta property="se:transform">kobo</meta>"""))
 
-						with open(filename, "r+", encoding="utf-8") as file:
+						with open(filename, "w", encoding="utf-8") as file:
 							file.write(dom.to_string())
-							file.truncate()
 
 					# Kobo .kepub files need each clause wrapped in a special <span> tag to enable highlighting.
 					# Do this here. Hopefully Kobo will get their act together soon and drop this requirement.
@@ -649,9 +645,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						xhtml = xhtml.replace(" xmlns:html=\"http://www.w3.org/1999/xhtml\"", "")
 						xhtml = regex.sub(r"<(/?)html:span", r"<\1span", xhtml)
 
-						with open(filename, "r+", encoding="utf-8") as file:
+						with open(filename, "w", encoding="utf-8") as file:
 							file.write(xhtml)
-							file.truncate()
 
 				# All done, clean the output
 				# Note that we don't clean .xhtml files, because the way kobo spans are added means that it will screw up spaces inbetween endnotes.
@@ -839,7 +834,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 					with open(filename, "w", encoding="utf-8") as file:
 						file.write(dom.to_string())
-						file.truncate()
 
 			except KeyboardInterrupt as ex:
 				# Bubble the exception up, but proceed to `finally` so we quit the driver
@@ -913,7 +907,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		# Output the modified metadata file before making more compatibility hacks.
 		with open(work_epub_root_directory / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
 			file.write(se.formatting.format_opf(metadata_dom.to_string()))
-			file.truncate()
 
 		# All done, clean the output
 		for filepath in se.get_target_filenames([work_epub_root_directory], (".xhtml", ".ncx")):
@@ -954,9 +947,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		if build_kindle:
 			# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
 			with open(work_epub_root_directory / "epub" / toc_filename, "r+", encoding="utf-8") as file:
-				xhtml = file.read()
-
-				dom = se.easy_xml.EasyXmlTree(xhtml)
+				dom = se.easy_xml.EasyXmlTree(file.read())
 
 				for node in dom.xpath("//ol/li/ol/li/ol"):
 					node.lxml_element.getparent().addnext(node.lxml_element)
@@ -1049,9 +1040,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						if not dom.xpath("/html[re:test(@epub:prefix, '[\\s\\b]se:[\\s\\b]')]/body/nav[contains(@epub:type, 'toc')]"):
 							xhtml = se.typography.hyphenate(xhtml, None, True)
 
-						with open(filename, "r+", encoding="utf-8") as file:
+						with open(filename, "w", encoding="utf-8") as file:
 							file.write(se.formatting.format_xhtml(xhtml))
-							file.truncate()
 
 			# Include compatibility CSS
 			with open(work_epub_root_directory / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:

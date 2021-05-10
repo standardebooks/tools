@@ -706,9 +706,7 @@ class SeEpub:
 				node.set_text(now_iso)
 
 			with open(self.metadata_file_path, "w", encoding="utf-8") as file:
-				file.seek(0)
 				file.write(self.metadata_dom.to_string())
-				file.truncate()
 
 			with open(self.content_path / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
 				file_dom = se.easy_xml.EasyXmlTree(file.read())
@@ -746,9 +744,7 @@ class SeEpub:
 			node.set_text(str(se.formatting.get_flesch_reading_ease(text)))
 
 		with open(self.metadata_file_path, "w", encoding="utf-8") as file:
-			file.seek(0)
 			file.write(self.metadata_dom.to_string())
-			file.truncate()
 
 	def get_word_count(self) -> int:
 		"""

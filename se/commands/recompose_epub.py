@@ -27,7 +27,6 @@ def recompose_epub() -> int:
 		if args.output:
 			with open(args.output, "w", encoding="utf-8") as file:
 				file.write(recomposed_epub)
-				file.truncate()
 		else:
 			print(recomposed_epub)
 	except se.SeException as ex:

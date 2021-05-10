@@ -35,9 +35,9 @@ def print_toc() -> int:
 		try:
 			if args.in_place:
 				toc_path = se_epub.path / "src/epub/toc.xhtml"
-				with open(toc_path, "r+", encoding="utf-8") as file:
-					file.write(se_epub.generate_toc())
-					file.truncate()
+				toc = se_epub.generate_toc()
+				with open(toc_path, "w", encoding="utf-8") as file:
+					file.write(toc)
 			else:
 				print(se_epub.generate_toc())
 		except se.SeException as ex:

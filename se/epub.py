@@ -50,7 +50,6 @@ def convert_toc_to_ncx(epub_root_absolute_path: Path, toc_filename: str, xsl_fil
 
 	with open(epub_root_absolute_path / "epub" / "toc.ncx", "w", encoding="utf-8") as file:
 		file.write(ncx_dom.to_string())
-		file.truncate()
 
 	return toc_tree
 

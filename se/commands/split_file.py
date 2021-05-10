@@ -26,7 +26,6 @@ def _split_file_output_file(filename_format_string: str, chapter_number: int, te
 
 	with open(filename, "w", encoding="utf-8") as file:
 		file.write(xhtml)
-		file.truncate()
 
 def split_file() -> int:
 	"""

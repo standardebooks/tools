@@ -193,7 +193,6 @@ def compare_versions() -> int:
 
 						with open(output_directory / "diff.html", "w") as file:
 							file.write(html)
-							file.truncate()
 	except KeyboardInterrupt as ex:
 		# Bubble the exception up, but proceed to `finally` so we quit the driver
 		raise ex
