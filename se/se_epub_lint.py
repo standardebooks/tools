@@ -140,6 +140,7 @@ METADATA
 "m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"se:alternate-title\"> element in metadata."
 "m-053", "[xml]<meta property=\"se:subject\">[/] elements not in alphabetical order."
 "m-054", "Standard Ebooks URL with illegal trailing slash."
+"m-055", "[xml]dc:description[/] does not end with a period."
 "m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their SE author page."
 "m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/]."
 "m-058", "[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/]."
@@ -152,7 +153,6 @@ METADATA
 "m-066", "[url]id.loc.gov[/] URI starting with illegal https."
 "m-067", "Non-SE link in long description."
 vvvvvvvvvvvvvvvvvvUNUSEDvvvvvvvvvvvvvvvv
-"m-055", "Missing data in metadata."
 "m-062", "Missing data in imprint."
 
 SEMANTICS & CONTENT
@@ -905,6 +905,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	if self.metadata_dom.xpath("/package/metadata/*[re:test(., 'id\\.loc\\.gov/authorities/names/[^\\.]+\\.html')]"):
 		messages.append(LintMessage("m-008", "[url]id.loc.gov[/] URI ending with illegal [path].html[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+	if self.metadata_dom.xpath("/package/metadata/dc:description[re:test(., '[^\\.”]$')]"):
+		messages.append(LintMessage("m-055", "[xml]dc:description[/] does not end with a period.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Does the manifest match the generated manifest?
 	try:
