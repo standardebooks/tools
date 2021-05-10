@@ -501,13 +501,12 @@ class SeEpub:
 
 		output_xhtml = f"<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" epub:prefix=\"z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0\" xml:lang=\"{language}\"><head><meta charset=\"utf-8\"/><title>{title}</title><style/></head><body></body></html>"
 		output_dom = se.formatting.EasyXmlTree(output_xhtml)
+		output_dom.is_css_applied = True # We will apply CSS recursively to nodes that will be attached to output_dom, so set the bit here
 
 		# Iterate over spine items in order and recompose them into our output
 		needs_wrapper_css = False
-		for ref in self.metadata_dom.xpath("/package/spine/itemref/@idref"):
-			filename = self.metadata_dom.xpath(f"/package/manifest/item[@id='{ref}']/@href")[0]
-
-			dom = self.get_dom(self.content_path / filename)
+		for file_path in self.spine_file_paths:
+			dom = self.get_dom(file_path)
 
 			# Apply the stylesheet to see if we have `position: absolute` on any items. If so, apply `position: relative` to its closest <section> ancestor
 			# See https://standardebooks.org/ebooks/jean-toomer/cane for an example of this in action
@@ -528,7 +527,7 @@ class SeEpub:
 				try:
 					self._recompose_xhtml(node, output_dom)
 				except se.SeException as ex:
-					raise se.SeException(f"[path][link=file://{self.path / 'src/epub/' / filename}]{filename}[/][/]: {ex}") from ex
+					raise se.SeException(f"[path][link=file://{file_path}]{file_path}[/][/]: {ex}") from ex
 
 		# Did we add wrappers? If so add the CSS
 		# We also have to give the wrapper a height, because it may have siblings that were recomposed in from other files
@@ -559,7 +558,7 @@ class SeEpub:
 		for node in output_dom.xpath("/html/body//a[re:test(@href, '^(\\.\\./)?text/.+?\\.xhtml#(.+?)$')]"):
 			node.set_attr("href", regex.sub(r"(\.\./)?text/.+?\.xhtml#(.+?)", r"#\2", node.get_attr("href")))
 
-		# make some compatibility adjustments
+		# Make some compatibility adjustments
 		if output_xhtml5:
 			for node in output_dom.xpath("/html/head/meta[@charset]"):
 				node.remove()

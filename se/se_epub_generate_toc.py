@@ -8,7 +8,6 @@ the function is very big and it makes editing easier to put in a separate file.
 """
 
 from enum import Enum
-from pathlib import Path
 from typing import Tuple, List
 import regex
 from lxml import etree
