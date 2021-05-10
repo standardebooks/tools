@@ -2329,7 +2329,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		messages.append(LintMessage("s-028", f"[path][link=file://{self.cover_path}]{self.cover_path.name}[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match.", se.MESSAGE_TYPE_ERROR, self.cover_path))
 
 	if has_frontmatter and not has_halftitle:
-		messages.append(LintMessage("s-020", "Frontmatter found, but no half title page. Half title page is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR, None))
+		messages.append(LintMessage("s-020", "Frontmatter found, but no half title page. Half title page is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	if not has_cover_source:
 		missing_files.append("images/cover.source.jpg")
@@ -2386,7 +2386,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			id_attrs = deepcopy(unused_id_attrs)
 
 		if unused_id_attrs:
-			messages.append(LintMessage("x-018", "Unused [xhtml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, None, natsorted(unused_id_attrs)))
+			messages.append(LintMessage("x-018", "Unused [xhtml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, natsorted(unused_id_attrs)))
 
 	if files_not_url_safe:
 		try:
@@ -2481,7 +2481,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		messages.append(LintMessage("t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)", se.MESSAGE_TYPE_ERROR, double_spaced_file))
 
 	if missing_files:
-		messages.append(LintMessage("f-002", "Missing expected file or directory.", se.MESSAGE_TYPE_ERROR, None, missing_files))
+		messages.append(LintMessage("f-002", "Missing expected file or directory.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_files))
 
 	if unused_selectors:
 		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, local_css_path, unused_selectors))
