@@ -3,9 +3,7 @@ This module implements the `se build-images` command.
 """
 
 import argparse
-import fnmatch
 from pathlib import Path
-import os
 
 from rich.console import Console
 
@@ -38,9 +36,8 @@ def build_images() -> int:
 				console.print("\tCleaning metadata ...", end="")
 
 			# Remove useless metadata from cover source files
-			for root, _, filenames in os.walk(directory):
-				for filename in fnmatch.filter(filenames, "cover.*"):
-					se.images.remove_image_metadata(Path(root) / filename)
+			for file_path in directory.glob("**/cover.*"):
+				se.images.remove_image_metadata(file_path)
 
 			if args.verbose:
 				console.print(" OK")

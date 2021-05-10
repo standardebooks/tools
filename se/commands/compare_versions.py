@@ -4,8 +4,6 @@ This module implements the `se compare-versions` command.
 
 import argparse
 from distutils.dir_util import copy_tree
-import fnmatch
-import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -73,17 +71,16 @@ def compare_versions() -> int:
 
 				target_filenames = set()
 
-				for root, _, filenames in os.walk(work_directory_name):
-					for xhtml_filename in fnmatch.filter(filenames, "*.xhtml"):
-						if not args.include_se_files:
-							with open(Path(root) / xhtml_filename, "r", encoding="utf-8") as file:
-								is_ignored, _ = se.get_dom_if_not_ignored(file.read())
+				for file_path in Path(work_directory_name).glob("**/*.xhtml"):
+					if not args.include_se_files:
+						with open(file_path, "r", encoding="utf-8") as file:
+							is_ignored, _ = se.get_dom_if_not_ignored(file.read())
 
-							if not is_ignored:
-								target_filenames.add(Path(root) / xhtml_filename)
+						if not is_ignored:
+							target_filenames.add(file_path)
 
-						else:
-							target_filenames.add(Path(root) / xhtml_filename)
+					else:
+						target_filenames.add(file_path)
 
 				git_command = git.cmd.Git(work_directory_name)
 

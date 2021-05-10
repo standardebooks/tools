@@ -204,17 +204,20 @@ def get_target_filenames(targets: list, allowed_extensions: Union[tuple, str]) -
 
 	target_xhtml_filenames = set()
 
+	if isinstance(allowed_extensions, str):
+		allowed_extensions = (allowed_extensions,)
+
 	for target in targets:
 		target = Path(target).resolve()
 
 		if target.is_dir():
-			for root, _, filenames in os.walk(target):
-				for filename in filenames:
-					if allowed_extensions:
-						if filename.endswith(allowed_extensions):
-							target_xhtml_filenames.add(Path(root) / filename)
-					else:
-						target_xhtml_filenames.add(Path(root) / filename)
+			for file_path in target.glob("**/*"):
+				file_path.resolve()
+				if allowed_extensions:
+					if file_path.suffix in allowed_extensions:
+						target_xhtml_filenames.add(file_path)
+				else:
+					target_xhtml_filenames.add(file_path)
 		else:
 			# If we're looking at an actual file, just add it regardless of whether it's ignored
 			target_xhtml_filenames.add(target)

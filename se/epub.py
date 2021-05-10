@@ -3,7 +3,6 @@
 Defines several functions that are useful for interacting with epub files.
 """
 
-import os
 from pathlib import Path
 import zipfile
 from lxml import etree
@@ -70,7 +69,6 @@ def write_epub(epub_root_absolute_path: Path, output_absolute_path: Path) -> Non
 		epub.write(epub_root_absolute_path / "mimetype", "mimetype")
 		epub.write(epub_root_absolute_path / "META-INF" / "container.xml", "META-INF/container.xml", compress_type=zipfile.ZIP_DEFLATED)
 
-		for root, _, files in os.walk(epub_root_absolute_path):
-			for file in files:
-				if file not in ("mimetype", "container.xml"):
-					epub.write(Path(root) / file, (Path(root) / file).relative_to(epub_root_absolute_path), compress_type=zipfile.ZIP_DEFLATED)
+		for file_path in epub_root_absolute_path.glob("**/*"):
+			if file_path.name not in ("mimetype", "container.xml"):
+				epub.write(file_path, file_path.relative_to(epub_root_absolute_path), compress_type=zipfile.ZIP_DEFLATED)

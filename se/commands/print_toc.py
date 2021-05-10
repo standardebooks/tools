@@ -34,9 +34,8 @@ def print_toc() -> int:
 
 		try:
 			if args.in_place:
-				toc_path = se_epub.path / "src/epub/toc.xhtml"
 				toc = se_epub.generate_toc()
-				with open(toc_path, "w", encoding="utf-8") as file:
+				with open(se_epub.toc_path, "w", encoding="utf-8") as file:
 					file.write(toc)
 			else:
 				print(se_epub.generate_toc())
@@ -44,7 +43,7 @@ def print_toc() -> int:
 			se.print_error(ex)
 			return ex.code
 		except FileNotFoundError as ex:
-			se.print_error(f"Couldn’t open file: [path][link=file://{toc_path}]{toc_path}[/][/].")
+			se.print_error(f"Couldn’t open file: [path][link=file://{se_epub.toc_path}]{se_epub.toc_path}[/][/].")
 			return se.InvalidSeEbookException.code
 
 	return 0

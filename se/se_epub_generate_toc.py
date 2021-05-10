@@ -626,7 +626,7 @@ def strip_notes(text: str) -> str:
 
 	return regex.sub(r'<a[^>]*?epub:type="noteref"[^>]*?>.*?<\/a>', "", text)
 
-def process_all_content(file_list: list, text_path: str) -> Tuple[list, list]:
+def process_all_content(file_list: list) -> Tuple[list, list]:
 	"""
 	Analyze the whole content of the project, build and return lists
 	if toc_items and landmarks.
@@ -645,14 +645,13 @@ def process_all_content(file_list: list, text_path: str) -> Tuple[list, list]:
 	# We make two passes through the work, because we need to know
 	# how many bodymatter items there are. So we do landmarks first.
 	for textf in file_list:
-		file_path = Path(text_path) / textf
 		try:
-			with open(file_path, encoding="utf-8") as file:
+			with open(textf, encoding="utf-8") as file:
 				dom = se.easy_xml.EasyXmlTree(file.read())
 		except Exception as ex:
-			raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{file_path}]{file_path}[/][/]. Exception: {ex}") from ex
+			raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{textf}]{textf}[/][/]. Exception: {ex}") from ex
 
-		add_landmark(dom, textf, landmarks)
+		add_landmark(dom, textf.name, landmarks)
 
 	# Now we test to see if there is only one body item
 	body_items = [item for item in landmarks if item.place == Position.BODY]
@@ -661,7 +660,7 @@ def process_all_content(file_list: list, text_path: str) -> Tuple[list, list]:
 	nest_under_halftitle = False
 	place = Position.NONE
 	for textf in file_list:
-		with open(Path(text_path) / textf, "r", encoding="utf-8") as file:
+		with open(textf, "r", encoding="utf-8") as file:
 			dom = se.easy_xml.EasyXmlTree(file.read())
 		body = dom.xpath("//body")
 		if body:
@@ -670,8 +669,8 @@ def process_all_content(file_list: list, text_path: str) -> Tuple[list, list]:
 			raise se.InvalidInputException("Couldn't locate body node")
 		if place == Position.BACK:
 			nest_under_halftitle = False
-		process_headings(dom, textf, toc_list, nest_under_halftitle, single_file)
-		if textf == "halftitlepage.xhtml":
+		process_headings(dom, textf.name, toc_list, nest_under_halftitle, single_file)
+		if dom.xpath("/html/body//*[contains(@epub:type, 'halftitlepage')]"):
 			nest_under_halftitle = True
 
 	# We add this dummy item because outputtoc always needs to look ahead to the next item.
@@ -687,10 +686,9 @@ def generate_toc(self) -> str:
 	Entry point for `SeEpub.generate_toc()`.
 	"""
 
-	file_list = self.get_content_files()
 	work_title = self.get_work_title()
 	work_type = self.get_work_type()
 
-	landmarks, toc_list = process_all_content(file_list, self.content_path / "text")
+	landmarks, toc_list = process_all_content(self.spine_file_paths)
 
-	return output_toc(toc_list, landmarks, self.content_path / "toc.xhtml", work_type, work_title)
+	return output_toc(toc_list, landmarks, self.toc_path, work_type, work_title)

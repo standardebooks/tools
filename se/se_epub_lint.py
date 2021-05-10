@@ -33,8 +33,6 @@ EPUB_SEMANTIC_VOCABULARY = ["cover", "frontmatter", "bodymatter", "backmatter", 
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Childrens", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Romance", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
 IGNORED_CLASSES = ["elision", "name", "temperature", "state", "era", "compass", "acronym", "postal", "eoc", "initialism", "degree", "time", "compound", "timezone", "full-page", "continued", "together"]
 BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", ".xcf", ".otf"]
-FRONTMATTER_FILENAMES = ["dedication.xhtml", "introduction.xhtml", "preface.xhtml", "foreword.xhtml", "preamble.xhtml", "titlepage.xhtml", "halftitlepage.xhtml", "imprint.xhtml"]
-BACKMATTER_FILENAMES = ["endnotes.xhtml", "loi.xhtml", "afterword.xhtml", "appendix.xhtml", "colophon.xhtml", "uncopyright.xhtml"]
 IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitlepage.xhtml", "toc.xhtml", "loi.xhtml"]
 
 """
@@ -954,6 +952,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		missing_files.append("src/epub/css/se.css")
 
 	# Now iterate over individual files for some checks
+	# We use os.walk() and not Path.glob() so that we can ignore `.git` and its children
 	for root, directories, filenames in os.walk(self.path):
 		if ".git" in directories:
 			directories.remove(".git")
@@ -1021,7 +1020,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# If we're looking at the cover image, ensure that the producer has built it.
 				# The default cover image is a white background which when encoded to base64 begins with 299 characters and then has a long string of `A`s
-				if filename.name == "cover.svg" and svg_dom.xpath("//image[re:test(@xlink:href, '^.{299}A{50,}')]"):
+				if filename.name == self.cover_path.name and svg_dom.xpath("//image[re:test(@xlink:href, '^.{299}A{50,}')]"):
 					messages.append(LintMessage("m-063", "Cover image has not been built.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for fill: #000 which should simply be removed
@@ -1058,7 +1057,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				if f"{os.sep}src{os.sep}" not in root:
 					# Check that cover and titlepage images are in all caps
-					if filename.name == "cover.svg":
+					if filename.name == self.cover_path.name:
 						nodes = svg_dom.xpath("//text[re:test(., '[a-z]')]")
 						if nodes:
 							messages.append(LintMessage("s-002", "Lowercase letters in cover. Cover text must be all uppercase.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
@@ -1200,10 +1199,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Done checking for unused selectors.
 
-				# Check if this is a frontmatter file
-				if filename.name not in ("titlepage.xhtml", "imprint.xhtml", "toc.xhtml"):
-					if dom.xpath("//*[contains(@epub:type, 'frontmatter')]"):
-						has_frontmatter = True
+				# Check if this is a frontmatter file, but exclude the titlepage, imprint, and toc
+				if dom.xpath("/html//*[contains(@epub:type, 'frontmatter') and not(descendant-or-self::*[re:test(@epub:type, '\\b(titlepage|imprint|toc)\\b')])]"):
+					has_frontmatter = True
 
 				# Add new CSS classes to global list
 				if filename.name not in IGNORED_FILENAMES:
@@ -2308,18 +2306,18 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if dom.xpath("/html/body/*[contains(@epub:type, 'loi')]") and not self.metadata_dom.xpath("/package/metadata/meta[ (@property='role' or @property='se:role') and text()='ill']"):
 						messages.append(LintMessage("m-034", "[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator).", se.MESSAGE_TYPE_WARNING, filename))
 
-			# Check for wrong semantics in frontmatter/backmatter
-			if filename.name in FRONTMATTER_FILENAMES and not dom.xpath("//*[contains(@epub:type, 'frontmatter')]"):
-				messages.append(LintMessage("s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename))
+				# Check for wrong semantics in frontmatter/backmatter
+				if dom.xpath("/html/body/section[re:test(@epub:type, '\\b(dedication|introduction|preface|foreword|preamble|titlepage|halftitlepage|imprint|epigraph|acknowledgements)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'frontmatter')])]"):
+					messages.append(LintMessage("s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
-			if filename.name in BACKMATTER_FILENAMES and not dom.xpath("//*[contains(@epub:type, 'backmatter')]"):
-				messages.append(LintMessage("s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
+				if dom.xpath("/html/body/section[re:test(@epub:type, '\\b(endnotes|loi|afterword|appendix|colophon|copyright\\-page|lot)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'backmatter')])]"):
+					messages.append(LintMessage("s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
 	if cover_svg_title != titlepage_svg_title:
-		messages.append(LintMessage("s-028", f"[path][link=file://{self.path / 'images/cover.svg'}]cover.svg[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match.", se.MESSAGE_TYPE_ERROR, self.path / "images/cover.svg"))
+		messages.append(LintMessage("s-028", f"[path][link=file://{self.cover_path}]{self.cover_path.name}[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match.", se.MESSAGE_TYPE_ERROR, self.cover_path))
 
 	if has_frontmatter and not has_halftitle:
-		messages.append(LintMessage("s-020", "Frontmatter found, but no half title page. Half title page is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+		messages.append(LintMessage("s-020", "Frontmatter found, but no half title page. Half title page is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR, None))
 
 	if not has_cover_source:
 		missing_files.append("images/cover.source.jpg")
@@ -2351,14 +2349,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 		# Href links are mostly found in endnotes, so if there's an endnotes file process it first
 		# to try to speed things up a little
-		for root, _, filenames in os.walk(Path(self.path) / "src" / "epub"):
-			for filename in filenames:
-				filename = (Path(root) / filename).resolve()
-
-				if filename.name == "endnotes.xhtml" or filename.name == "glossary-search-key-map.xml" or filename.name == "glossary.xhtml":
-					sorted_filenames.insert(0, filename)
-				elif filename.suffix == ".xhtml":
-					sorted_filenames.append(filename)
+		for file_path in self.content_path.glob("**/*"):
+			if file_path.suffix == ".xhtml" or file_path.suffix == ".xml":
+				dom = self.get_dom(file_path)
+				if dom.xpath("/html/body/section[contains(@epub:type, 'glossary') or contains(@epub:type, 'endnotes')]") or dom.xpath("/search-key-map"):
+					sorted_filenames.insert(0, file_path)
+				else:
+					sorted_filenames.append(file_path)
 
 		for filename in sorted_filenames:
 			xhtml = self.get_file(filename)
@@ -2373,11 +2370,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						# We get here if we try to remove a value that has already been removed
 						pass
 
-			# Reduce the list of ID attrs to check in the next pass, again a time saver for big ebooks
+			# Reduce the list of ID attrs to check in the next pass, a time saver for big ebooks
 			id_attrs = deepcopy(unused_id_attrs)
 
 		if unused_id_attrs:
-			messages.append(LintMessage("x-018", "Unused [xhtml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, natsorted(unused_id_attrs)))
+			messages.append(LintMessage("x-018", "Unused [xhtml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, None, natsorted(unused_id_attrs)))
 
 	if files_not_url_safe:
 		try:
@@ -2418,7 +2415,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	# Check our headings against the ToC and landmarks
 	headings = list(set(headings))
-	toc_dom = self.get_dom(self.path / "src/epub/toc.xhtml")
+	toc_dom = self.get_dom(self.toc_path)
 	toc_headings = []
 	toc_files = []
 	toc_entries = toc_dom.xpath("/html/body/nav[@epub:type='toc']//a")

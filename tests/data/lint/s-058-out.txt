@@ -1,4 +1,4 @@
-x-018 Error: content.opf Unused `id` attribute.
+x-018 Error:  Unused `id` attribute.
         note-1
         note-2
         note-3
