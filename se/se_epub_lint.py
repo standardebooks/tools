@@ -28,7 +28,7 @@ import se.easy_xml
 import se.formatting
 import se.images
 
-COLOPHON_VARIABLES = ["TITLE", "YEAR", "AUTHOR_WIKI_URL", "AUTHOR", "PRODUCER_URL", "PRODUCER", "PG_YEAR", "TRANSCRIBER_1", "TRANSCRIBER_2", "PG_URL", "IA_URL", "PAINTING", "ARTIST_WIKI_URL", "ARTIST", "ORIGINAL_LANGUAGE", "TRANSLATION_YEAR"]
+SE_VARIABLES = ["SE_IDENTIFIER", "TITLE", "TITLE_SORT", "SUBJECT_1", "SUBJECT_2", "LCSH_ID_1", "LCSH_ID_2", "TAG", "DESCRIPTION", "LONG_DESCRIPTION", "LANG", "PG_URL", "IA_URL", "EBOOK_WIKI_URL", "VCS_IDENTIFIER", "YEAR", "AUTHOR_WIKI_URL", "AUTHOR", "AUTHOR_SORT", "AUTHOR_FULL_NAME", "AUTHOR_NACOAF_URI", "TRANSLATOR", "TRANSLATOR_SORT", "TRANSLATOR_WIKI_URL", "TRANSLATOR_NACOAF_URI", "COVER_ARTIST", "COVER_ARTIST_SORT", "COVER_ARTIST_WIKI_URL", "COVER_ARTIST_NACOAF_URI", "ILLUSTRATOR", "ILLUSTRATOR_SORT", "ILLUSTRATOR_WIKI_URL", "ILLUSTRATOR_NACOAF_URI", "TRANSCRIBER", "TRANSCRIBER_SORT", "TRANSCRIBER_URL", "PRODUCER_URL", "PRODUCER", "PRODUCER_SORT", "PG_YEAR", "TRANSCRIBER_1", "TRANSCRIBER_2", "PAINTING", "ORIGINAL_LANGUAGE", "TRANSLATION_YEAR"]
 EPUB_SEMANTIC_VOCABULARY = ["cover", "frontmatter", "bodymatter", "backmatter", "volume", "part", "chapter", "division", "foreword", "preface", "prologue", "introduction", "preamble", "conclusion", "epilogue", "afterword", "epigraph", "toc", "landmarks", "loa", "loi", "lot", "lov", "appendix", "colophon", "index", "index-headnotes", "index-legend", "index-group", "index-entry-list", "index-entry", "index-term", "index-editor-note", "index-locator", "index-locator-list", "index-locator-range", "index-xref-preferred", "index-xref-related", "index-term-category", "index-term-categories", "glossary", "glossterm", "glossdef", "bibliography", "biblioentry", "titlepage", "halftitlepage", "copyright-page", "acknowledgments", "imprint", "imprimatur", "contributors", "other-credits", "errata", "dedication", "revision-history", "notice", "tip", "halftitle", "fulltitle", "covertitle", "title", "subtitle", "bridgehead", "learning-objective", "learning-resource", "assessment", "qna", "panel", "panel-group", "balloon", "text-area", "sound-area", "footnote", "endnote", "footnotes", "endnotes", "noteref", "keyword", "topic-sentence", "concluding-sentence", "pagebreak", "page-list", "table", "table-row", "table-cell", "list", "list-item", "figure", "aside"]
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Childrens", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Romance", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
 IGNORED_CLASSES = ["elision", "name", "temperature", "state", "era", "compass", "acronym", "postal", "eoc", "initialism", "degree", "time", "compound", "timezone", "full-page", "continued", "together"]
@@ -121,7 +121,7 @@ METADATA
 "m-033", f"[val]endnotes[/] semantic inflection found, but no MARC relator [val]ann[/] (Annotator)."
 "m-034", f"[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator)."
 "m-035", f"Unexpected SE identifier in colophon. Expected: [url]{se_url}[/]."
-"m-036", "Missing data in colophon."
+"m-036", "Variable not replaced with value."
 "m-037", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/]."
 "m-038", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>[/]."
 "m-039", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">Internet Archive</a>[/]."
@@ -140,19 +140,20 @@ METADATA
 "m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"se:alternate-title\"> element in metadata."
 "m-053", "[xml]<meta property=\"se:subject\">[/] elements not in alphabetical order."
 "m-054", "Standard Ebooks URL with illegal trailing slash."
-"m-055", "Missing data in metadata."
 "m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their SE author page."
 "m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/]."
 "m-058", "[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/]."
 "m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata."
 "m-060", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/]."
 "m-061", "Link must be preceded by [text]the[/]."
-"m-062", "Missing data in imprint."
 "m-063", "Cover image has not been built."
 "m-064", "SE ebook hyperlinked in long description but not italicized."
 "m-065", "Word count in metadata doesn’t match actual word count."
 "m-066", "[url]id.loc.gov[/] URI starting with illegal https."
 "m-067", "Non-SE link in long description."
+vvvvvvvvvvvvvvvvvvUNUSEDvvvvvvvvvvvvvvvv
+"m-055", "Missing data in metadata."
+"m-062", "Missing data in imprint."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -759,9 +760,16 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	except Exception as ex:
 		missing_metadata_elements.append("""<meta id="long-description" property="se:long-description" refines="#description">""")
 
-	nodes = self.metadata_dom.xpath("//*[text() != 'LCSH' and text() != 'WORD_COUNT' and text() != 'READING_EASE' and re:test(., '^\\s*[A-Z_]+[0-9]*\\s*$')]")
-	if nodes:
-		messages.append(LintMessage("m-055", "Missing data in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.text.strip() for node in nodes]))
+	missing_metadata_vars = []
+	for node in self.metadata_dom.xpath("/package/metadata/*/text()"):
+		for var in SE_VARIABLES:
+			if regex.search(fr"\b{var}\b", node):
+				missing_metadata_vars.append(var)
+				# Quit the loop early to save some time
+				break
+
+	if missing_metadata_vars:
+		messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_metadata_vars))
 
 	# Check if there are non-typogrified quotes or em-dashes in the title.
 	try:
@@ -1122,9 +1130,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check if we forgot to fill any variable slots
-					missing_colophon_vars = [var for var in COLOPHON_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
+					missing_colophon_vars = [var for var in SE_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
 					if missing_colophon_vars:
-						messages.append(LintMessage("m-036", "Missing data in colophon.", se.MESSAGE_TYPE_ERROR, filename, missing_colophon_vars))
+						messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, missing_colophon_vars))
 
 					# Check that we have <br/>s at the end of lines
 					# First, check for b or a elements that are preceded by a newline but not by a br
@@ -2230,9 +2238,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the " + node.to_string() for node in nodes]))
 
 					# Check if we forgot to fill any variable slots
-					missing_imprint_vars = [var for var in COLOPHON_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
+					missing_imprint_vars = [var for var in SE_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
 					if missing_imprint_vars:
-						messages.append(LintMessage("m-062", "Missing data in imprint.", se.MESSAGE_TYPE_ERROR, filename, missing_imprint_vars))
+						messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, missing_imprint_vars))
 
 					links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
 					if len(links) <= 2:
