@@ -1,4 +1,5 @@
-x-018 Error:  Unused `id` attribute.
+m-055 Error: content.opf `dc:description` does not end with a period.
+x-018 Error: content.opf Unused `id` attribute.
         note-1
         note-2
         note-3
