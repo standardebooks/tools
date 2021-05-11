@@ -96,7 +96,6 @@ METADATA
 "m-008", "[url]id.loc.gov[/] URI ending with illegal [path].html[/]."
 "m-009", f"[xml]<meta property=\"se:url.vcs.github\">[/] value does not match expected: [url]{self.generated_github_repo_url}[/]."
 "m-010", "Invalid [xml]refines[/] property."
-"m-011", "Use HathiTrust record URLs, not page scan URLs, in metadata, imprint, and colophon. Record URLs look like: [url]https://catalog.hathitrust.org/Record/<RECORD-ID>[/]."
 "m-012", "Non-typogrified character in [xml]<dc:title>[/] element."
 "m-013", "Non-typogrified character in [xml]<dc:description>[/] element."
 "m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element."
@@ -153,6 +152,7 @@ METADATA
 "m-066", "[url]id.loc.gov[/] URI starting with illegal https."
 "m-067", "Non-SE link in long description."
 vvvvvvvvvvvvvvvvvvUNUSEDvvvvvvvvvvvvvvvv
+"m-011", "Use HathiTrust record URLs, not page scan URLs, in metadata, imprint, and colophon. Record URLs look like: [url]https://catalog.hathitrust.org/Record/<RECORD-ID>[/]."
 "m-062", "Missing data in imprint."
 
 SEMANTICS & CONTENT
@@ -356,13 +356,13 @@ class LintMessage:
 		else:
 			self.submessages = None
 
-def _get_malformed_urls(xhtml: str, filename: Path) -> list:
+def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 	"""
 	Helper function used in self.lint()
 	Get a list of URLs in the epub that don't match SE standards.
 
 	INPUTS
-	xhtml: A string of XHTML to check
+	dom: A dom tree to check
 
 	OUTPUTS
 	A list of LintMessages representing any malformed URLs in the XHTML string
@@ -371,42 +371,50 @@ def _get_malformed_urls(xhtml: str, filename: Path) -> list:
 	messages = []
 
 	# Check for non-https URLs
-	matches = regex.findall(r"(?<!www\.)gutenberg\.org[^\"<\s]*", xhtml)
-	if matches:
-		messages.append(LintMessage("m-001", "gutenberg.org URL missing leading [text]www.[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
+	search_regex = r"(?<!www\.)gutenberg\.org"
+	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	if nodes:
+		messages.append(LintMessage("m-001", "gutenberg.org URL missing leading [text]www.[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	matches = regex.findall(r"www\.archive\.org[^\"<\s]*", xhtml)
-	if matches:
-		messages.append(LintMessage("m-002", "archive.org URL should not have leading [text]www.[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
+	search_regex = r"www\.archive\.org"
+	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	if nodes:
+		messages.append(LintMessage("m-002", "archive.org URL should not have leading [text]www.[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	matches = regex.findall(r"http://(?:gutenberg\.org|archive\.org|pgdp\.net|catalog\.hathitrust\.org|en\.wikipedia\.org|standardebooks\.org)[^\"<\s]*", xhtml)
-	if matches:
-		messages.append(LintMessage("m-003", "Non-HTTPS URL.", se.MESSAGE_TYPE_ERROR, filename, matches))
+	search_regex = r"http://(gutenberg\.org|archive\.org|pgdp\.net|catalog\.hathitrust\.org|en\.wikipedia\.org|standardebooks\.org)"
+	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	if nodes:
+		messages.append(LintMessage("m-003", "Non-HTTPS URL.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for malformed canonical URLs
-	matches = regex.findall(r"https?://books\.google\.com/books\?id=.+?[&#][^<\s\"]+", xhtml)
-	if matches:
-		messages.append(LintMessage("m-004", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://books.google.com/books?id=<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
+	search_regex = r"https?://books\.google\.com/books\?id=.+?[&#]"
+	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	if nodes:
+		messages.append(LintMessage("m-004", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://books.google.com/books?id=<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	matches = regex.findall(r"https?://www\.google\.com/books/edition/[^/]+?/[^/?#]+/?[&#?][^<\s\"]+", xhtml)
-	if matches:
-		messages.append(LintMessage("m-060", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
+	search_regex = r"https?://www\.google\.com/books/edition/[^/]+?/[^/?#]+/?[&#?]"
+	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	if nodes:
+		messages.append(LintMessage("m-060", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	matches = regex.findall(r"https?://babel\.hathitrust\.org[^<\s\"]+", xhtml)
-	if matches:
-		messages.append(LintMessage("m-005", "Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like [url]https://catalog.hathitrust.org/Record/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
+	search_regex = r"https?://(babel\.hathitrust\.org|hdl\.handle\.net)"
+	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	if nodes:
+		messages.append(LintMessage("m-005", "Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like [url]https://catalog.hathitrust.org/Record/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	matches = regex.findall(r"https?://.*?gutenberg\.org/(?:files|cache)[^<\s\"]+", xhtml)
-	if matches:
-		messages.append(LintMessage("m-006", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like [url]https://www.gutenberg.org/ebooks/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
+	search_regex = r"https?://.*?gutenberg\.org/(files|cache)"
+	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	if nodes:
+		messages.append(LintMessage("m-006", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like [url]https://www.gutenberg.org/ebooks/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	matches = regex.findall(r"https?://.*?archive\.org/stream[^<\s\"]+", xhtml) + regex.findall(r"https?://.*?archive\.org/details/[^/\"<>]+?/[^\"<>]+", xhtml)
-	if matches:
-		messages.append(LintMessage("m-007", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like [url]https://archive.org/details/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, matches))
+	search_regex = r"https?://.*?archive\.org/stream"
+	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	if nodes:
+		messages.append(LintMessage("m-007", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like [url]https://archive.org/details/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	matches = regex.findall(r"https?://standardebooks.org/[^<\s\"]/(?![<\s\"])", xhtml)
-	if matches:
-		messages.append(LintMessage("m-054", "Standard Ebooks URL with illegal trailing slash.", se.MESSAGE_TYPE_ERROR, filename, matches))
+	search_regex = r"https?://standardebooks\.org[^\s]*/$"
+	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	if nodes:
+		messages.append(LintMessage("m-054", "Standard Ebooks URL with illegal trailing slash.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 	return messages
 
@@ -841,10 +849,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	if nodes:
 		messages.append(LintMessage("m-009", f"[xml]<meta property=\"se:url.vcs.github\">[/] value does not match expected: [url]{self.generated_github_repo_url}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-	# Check for HathiTrust scan URLs instead of actual record URLs
-	if self.metadata_dom.xpath("/package/metadata/*[contains(., 'babel.hathitrust.org') or contains(., 'hdl.handle.net')]"):
-		messages.append(LintMessage("m-011", "Use HathiTrust record URLs, not page scan URLs, in metadata, imprint, and colophon. Record URLs look like: [url]https://catalog.hathitrust.org/Record/<RECORD-ID>[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-
 	# Check for illegal se:subject tags
 	illegal_subjects = []
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']/text()")
@@ -897,7 +901,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		messages.append(LintMessage("m-010", "Invalid [xml]refines[/] property.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, invalid_refines))
 
 	# Check for malformed URLs
-	messages = messages + _get_malformed_urls(metadata_xml, self.metadata_file_path)
+	messages = messages + _get_malformed_urls(self.metadata_dom, self.metadata_file_path)
 
 	if self.metadata_dom.xpath("/package/metadata/*[contains(., 'https://id.loc.gov/')]"):
 		messages.append(LintMessage("m-066", "[url]id.loc.gov[/] URI starting with illegal https.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
@@ -1098,12 +1102,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# First apply the browser default stylesheet
 				dom.apply_css(self.get_file(Path("default")), "default")
 
+				messages = messages + _get_malformed_urls(dom, filename)
+
 				# Apply any CSS files in the DOM
 				for node in dom.xpath("/html/head/link[@rel='stylesheet']"):
 					css_filename = (filename.parent / node.get_attr("href")).resolve()
 					dom.apply_css(self.get_file(css_filename), str(css_filename))
 
-				messages = messages + _get_malformed_urls(file_contents, filename)
 				typos: List[str] = []
 
 				# Extract ID attributes for later checks
