@@ -1626,8 +1626,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("t-044", "Comma required after leading [text]Or[/] in subtitles.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-				# Check for endnotes
-				nodes = dom.xpath("//*[contains(@epub:type, 'endnote')]//cite[not(./abbr[last()]) and ./following-sibling::*[1][contains(@epub:type, 'backlink')] and (re:test(., '\\.$') or ./following-sibling::node()[re:test(., '^\\.')])]")
+				# Check for period in cite in endnotes
+				nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]//cite[not((./node()[last()])[name() = 'abbr']) and ./following-sibling::*[1][contains(@epub:type, 'backlink')] and re:test(., '^—') and ( (re:test(., '\\.$') and ./following-sibling::node()[re:test(., '^\\s*$')]) or ./following-sibling::node()[re:test(., '^\\.\\s*$')])]")
 				if nodes:
 					messages.append(LintMessage("t-059", "Period at the end of [xhtml]<cite>[/] element before endnote backlink.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
