@@ -55,10 +55,10 @@ class SeEpub:
 	An SE epub can have various operations performed on it, including recomposing and linting.
 	"""
 
-	path = Path()
-	content_path = Path()
-	metadata_file_path = Path()
-	toc_path = Path()
+	path: Path = Path()
+	content_path: Path = Path()
+	metadata_file_path: Path = Path()
+	toc_path: Path = Path()
 	local_css = ""
 	_file_cache: Dict[str, str] = {}
 	_dom_cache: Dict[str, se.easy_xml.EasyXmlTree] = {}
@@ -102,7 +102,7 @@ class SeEpub:
 			raise se.InvalidSeEbookException(f"Not a Standard Ebooks source directory: [path][link=file://{self.path}]{self.path}[/][/].") from ex
 
 	@property
-	def cover_path(self) -> Path:
+	def cover_path(self):
 		"""
 		Accessor
 		"""
@@ -114,7 +114,7 @@ class SeEpub:
 		return self._cover_path
 
 	@property
-	def endnotes_path(self) -> Path:
+	def endnotes_path(self):
 		"""
 		Accessor
 		"""
