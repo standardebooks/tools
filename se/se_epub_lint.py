@@ -1030,7 +1030,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# If we're looking at the cover image, ensure that the producer has built it.
 				# The default cover image is a white background which when encoded to base64 begins with 299 characters and then has a long string of `A`s
-				if filename.name == self.cover_path.name and svg_dom.xpath("//image[re:test(@xlink:href, '^.{299}A{50,}')]"):
+				if self.cover_path and filename.name == self.cover_path.name and svg_dom.xpath("//image[re:test(@xlink:href, '^.{299}A{50,}')]"):
 					messages.append(LintMessage("m-063", "Cover image has not been built.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for fill: #000 which should simply be removed
@@ -1067,7 +1067,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				if f"{os.sep}src{os.sep}" not in root:
 					# Check that cover and titlepage images are in all caps
-					if filename.name == self.cover_path.name:
+					if self.cover_path and filename.name == self.cover_path.name:
 						nodes = svg_dom.xpath("//text[re:test(., '[a-z]')]")
 						if nodes:
 							messages.append(LintMessage("s-002", "Lowercase letters in cover. Cover text must be all uppercase.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
@@ -2329,7 +2329,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if dom.xpath("/html/body/section[re:test(@epub:type, '\\b(endnotes|loi|afterword|appendix|colophon|copyright\\-page|lot)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'backmatter')])]"):
 					messages.append(LintMessage("s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
-	if cover_svg_title != titlepage_svg_title:
+	if self.cover_path and cover_svg_title != titlepage_svg_title:
 		messages.append(LintMessage("s-028", f"[path][link=file://{self.cover_path}]{self.cover_path.name}[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match.", se.MESSAGE_TYPE_ERROR, self.cover_path))
 
 	if has_frontmatter and not has_halftitle:
