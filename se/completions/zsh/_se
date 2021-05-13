@@ -116,7 +116,7 @@ case $state in
 					{-h,--help}'[show a help message and exit]' \
 					{-i,--illustrator}'[the illustrator of the ebook]' \
 					{-o,--offline}'[create draft without network access]' \
-					{-p,--pg-url}'[the URL of the Project Gutenberg ebook to download]' \
+					{-p,--pg-id}'[the Project Gutenberg ID number of the ebook to download]' \
 					{-r,--translator}'[the translator of the ebook]' \
 					{-t,--title}'[the title of the ebook]'
 				;;

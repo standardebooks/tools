@@ -43,7 +43,7 @@ complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s a -l author -
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s e -l email -d "use this email address as the main committer for the local Git repository"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s i -l illustrator -d "the illustrator of the ebook"
-complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s p -l pg-url -d "the URL of the Project Gutenberg ebook to download"
+complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s p -l pg-id -d "the Project Gutenberg ID number of the ebook to download"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s o -l offline -d "create draft without network access"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s r -l translator -d "the translator of the ebook"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s t -l title -d "the title of the ebook"

@@ -182,9 +182,12 @@ def is_positive_integer(value: str) -> int:
 	Raise an exception if value is not a positive integer.
 	"""
 
-	int_value = int(value)
-	if int_value <= 0:
-		raise argparse.ArgumentTypeError(f"{value} is not a positive integer")
+	try:
+		int_value = int(value)
+		if int_value <= 0:
+			raise argparse.ArgumentTypeError(f"{value} is not a positive integer")
+	except Exception as ex:
+		raise argparse.ArgumentTypeError(f"{value} is not a positive integer") from ex
 
 	return int_value
 
