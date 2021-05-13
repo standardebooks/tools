@@ -685,8 +685,11 @@ class SeEpub:
 		None.
 		"""
 
-		increment = step == 1
+		increment = step > 0
 		endnote_count = 0
+
+		if step == 0:
+			return
 
 		dom = self.get_dom(self.endnotes_path)
 
