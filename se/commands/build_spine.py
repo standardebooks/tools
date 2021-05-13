@@ -4,7 +4,6 @@ This module implements the `se build-spine` command.
 
 import argparse
 
-import lxml.etree as etree
 import se
 import se.easy_xml
 import se.formatting
@@ -35,8 +34,13 @@ def build_spine() -> int:
 		if args.stdout:
 			print(se_epub.generate_spine().to_string())
 		else:
-			for node in se_epub.metadata_dom.xpath("/package/spine"):
-				node.replace_with(se_epub.generate_spine())
+			nodes = se_epub.metadata_dom.xpath("/package/spine")
+			if nodes:
+				for node in nodes:
+					node.replace_with(se_epub.generate_spine())
+			else:
+				for node in se_epub.metadata_dom.xpath("/package"):
+					node.append(se_epub.generate_spine())
 
 			with open(se_epub.metadata_file_path, "w", encoding="utf-8") as file:
 				file.write(se.formatting.format_xml(se_epub.metadata_dom.to_string()))
