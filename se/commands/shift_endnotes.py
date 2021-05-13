@@ -1,5 +1,5 @@
 """
-This module implements the `se reorder-endnotes` command.
+This module implements the `se shift-endnotes` command.
 """
 
 import argparse
@@ -8,9 +8,9 @@ import se
 from se.se_epub import SeEpub
 
 
-def reorder_endnotes() -> int:
+def shift_endnotes() -> int:
 	"""
-	Entry point for `se reorder-endnotes`
+	Entry point for `se shift-endnotes`
 	"""
 
 	parser = argparse.ArgumentParser(description="Increment or decrement the specified endnote and all following endnotes by 1 or a specified amount.")
@@ -18,7 +18,7 @@ def reorder_endnotes() -> int:
 	group.add_argument("-d", "--decrement", action="store_true", help="decrement the target endnote number and all following endnotes")
 	group.add_argument("-i", "--increment", action="store_true", help="increment the target endnote number and all following endnotes")
 	parser.add_argument("-a", "--amount", metavar="NUMBER", dest="amount", default=1, type=se.is_positive_integer, help="the amount to increment or decrement by; defaults to 1")
-	parser.add_argument("target_endnote_number", metavar="ENDNOTE-NUMBER", type=se.is_positive_integer, help="the endnote number to start reordering at")
+	parser.add_argument("target_endnote_number", metavar="ENDNOTE-NUMBER", type=se.is_positive_integer, help="the endnote number to start shifting at")
 	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
@@ -31,7 +31,7 @@ def reorder_endnotes() -> int:
 			step = args.amount * -1
 
 		se_epub = SeEpub(args.directory)
-		se_epub.reorder_endnotes(args.target_endnote_number, step)
+		se_epub.shift_endnotes(args.target_endnote_number, step)
 
 	except se.SeException as ex:
 		se.print_error(ex)

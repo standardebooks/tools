@@ -309,10 +309,6 @@ We need volunteers to take the lead on the following goals:
 
 	Renumber all endnotes and noterefs sequentially from the beginning.
 
--	### `se reorder-endnotes`
-
-	Increment or decrement the specified endnote and all following endnotes by 1 or a specified amount.
-
 -	### `se roman2dec`
 
 	Convert a Roman numeral to a decimal number.
@@ -320,6 +316,10 @@ We need volunteers to take the lead on the following goals:
 -	### `se semanticate`
 
 	Apply some scriptable semantics rules from the Standard Ebooks semantics manual to a Standard Ebook source directory.
+
+-	### `se shift-endnotes`
+
+	Increment or decrement the specified endnote and all following endnotes by 1 or a specified amount.
 
 -	### `se split-file`
 

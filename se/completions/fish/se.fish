@@ -1,6 +1,6 @@
 function __fish_se_no_subcommand --description "Test if se has yet to be given the subcommand"
 	for i in (commandline -opc)
-		if contains -- $i british2american build build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-sr lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes reorder-endnotes roman2dec semanticate split-file titlecase typogrify unicode-names version word-count xpath
+		if contains -- $i british2american build build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-sr lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes split-file titlecase typogrify unicode-names version word-count xpath
 			return 1
 		end
 	end
@@ -120,11 +120,6 @@ complete -c se -n "__fish_se_no_subcommand" -a renumber-endnotes -d "Renumber al
 complete -c se -A -n "__fish_seen_subcommand_from renumber-endnotes" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from renumber-endnotes" -s v -l verbose -d "increase output verbosity"
 
-complete -c se -n "__fish_se_no_subcommand" -a reorder-endnotes -d "Increment the specified endnote and all following endnotes by 1."
-complete -c se -A -n "__fish_seen_subcommand_from reorder-endnotes" -s d -l decrement -d "decrement the target endnote number and all following endnotes"
-complete -c se -A -n "__fish_seen_subcommand_from reorder-endnotes" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from reorder-endnotes" -s i -l increment -d "increment the target endnote number and all following endnotes"
-
 complete -c se -n "__fish_se_no_subcommand" -a roman2dec -d "Convert a Roman numeral to a decimal number."
 complete -c se -A -n "__fish_seen_subcommand_from roman2dec" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from roman2dec" -s n -l no-newline -d "don’t end output with a newline"
@@ -132,6 +127,11 @@ complete -c se -A -n "__fish_seen_subcommand_from roman2dec" -s n -l no-newline 
 complete -c se -n "__fish_se_no_subcommand" -a semanticate -d "Apply some scriptable semantics rules from the Standard Ebooks semantics manual."
 complete -c se -A -n "__fish_seen_subcommand_from semanticate" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from semanticate" -s v -l verbose -d "increase output verbosity"
+
+complete -c se -n "__fish_se_no_subcommand" -a shift-endnotes -d "Increment the specified endnote and all following endnotes by 1."
+complete -c se -A -n "__fish_seen_subcommand_from shift-endnotes" -s d -l decrement -d "decrement the target endnote number and all following endnotes"
+complete -c se -A -n "__fish_seen_subcommand_from shift-endnotes" -s h -l help -x -d "show this help message and exit"
+complete -c se -A -n "__fish_seen_subcommand_from shift-endnotes" -s i -l increment -d "increment the target endnote number and all following endnotes"
 
 complete -c se -n "__fish_se_no_subcommand" -a split-file -d "Split an XHTML file into many files."
 complete -c se -A -n "__fish_seen_subcommand_from split-file" -s f -l filename-format -d "a format string for the output files; `%n` is replaced with the current chapter number; defaults to `chapter-%n.xhtml`"

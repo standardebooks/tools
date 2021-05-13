@@ -673,12 +673,12 @@ class SeEpub:
 			with open(dest_cover_svg_filename, "w", encoding="utf-8") as file:
 				file.write(dom.to_string())
 
-	def reorder_endnotes(self, target_endnote_number: int, step: int = 1) -> None:
+	def shift_endnotes(self, target_endnote_number: int, step: int = 1) -> None:
 		"""
-		Reorder endnotes starting at target_endnote_number.
+		Shift endnotes starting at target_endnote_number.
 
 		INPUTS:
-		target_endnote_number: The endnote to start reordering at
+		target_endnote_number: The endnote to start shifting at
 		step: 1 to increment or -1 to decrement
 
 		OUTPUTS:
