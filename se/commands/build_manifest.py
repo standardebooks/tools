@@ -34,8 +34,13 @@ def build_manifest() -> int:
 		if args.stdout:
 			print(se_epub.generate_manifest().to_string())
 		else:
-			for node in se_epub.metadata_dom.xpath("/package/manifest"):
-				node.replace_with(se_epub.generate_manifest())
+			nodes = se_epub.metadata_dom.xpath("/package/manifest")
+			if nodes:
+				for node in nodes:
+					node.replace_with(se_epub.generate_manifest())
+			else:
+				for node in se_epub.metadata_dom.xpath("/package"):
+					node.append(se_epub.generate_manifest())
 
 			with open(se_epub.metadata_file_path, "w", encoding="utf-8") as file:
 				file.write(se.formatting.format_xml(se_epub.metadata_dom.to_string()))
