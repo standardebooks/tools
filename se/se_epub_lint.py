@@ -1881,8 +1881,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-074", "[xhtml]<hgroup>[/] element containing sequential [xhtml]<h#>[/] elements at the same heading level.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for possessive 's within name italics, but not in ignored files like the colophon which we know have no possessives
+				# Allow some known exceptions like `Harper's`, etc.
 				if filename.name not in IGNORED_FILENAMES:
-					nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.') and re:match(., '’s$')]")
+					nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.') and re:match(., '’s$') and not(contains(@epub:type, 'se:name.publication.') and re:test(., '(Pearson’s|Harper’s|Blackwood’s|Fraser’s)$'))]")
 					if nodes:
 						messages.append(LintMessage("t-007", "Possessive [text]’s[/] within name italics. If the name in italics is doing the possessing, [text]’s[/] goes outside italics.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
