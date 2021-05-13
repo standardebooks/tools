@@ -1,6 +1,6 @@
 function __fish_se_no_subcommand --description "Test if se has yet to be given the subcommand"
 	for i in (commandline -opc)
-		if contains -- $i british2american build build-images clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-sr lint make-url-safe modernize-spelling prepare-release print-manifest print-spine print-toc recompose-epub renumber-endnotes reorder-endnotes roman2dec semanticate split-file titlecase typogrify unicode-names version word-count xpath
+		if contains -- $i british2american build build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-sr lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes reorder-endnotes roman2dec semanticate split-file titlecase typogrify unicode-names version word-count xpath
 			return 1
 		end
 	end
@@ -94,21 +94,21 @@ complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s r -l no-re
 complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s w -l no-word-count -d "don’t calculate word count"
 complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s v -l verbose -d "increase output verbosity"
 
-complete -c se -n "__fish_se_no_subcommand" -a print-spine -d "Print the <manifest> element for the given Standard Ebooks source directory to standard output, for use in that directory’s metadata file."
-complete -c se -A -n "__fish_seen_subcommand_from print-manifest" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from print-manifest" -s i -l in-place -d "overwrite the <manifest> element in the metadata file instead of printing to stdout"
+complete -c se -n "__fish_se_no_subcommand" -a build-manifest -d "Generate the <manifest> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file."
+complete -c se -A -n "__fish_seen_subcommand_from build-manifest" -s h -l help -x -d "show this help message and exit"
+complete -c se -A -n "__fish_seen_subcommand_from build-manifest" -s s -l stdout -d "print to stdout instead of writing to the metadata file"
 
-complete -c se -n "__fish_se_no_subcommand" -a print-spine -d "Print the <spine> element for the given Standard Ebooks source directory to standard output, for use in that directory’s metadata file."
-complete -c se -A -n "__fish_seen_subcommand_from print-spine" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from print-spine" -s i -l in-place -d "overwrite the <spine> element in the metadata file instead of printing to stdout"
+complete -c se -n "__fish_se_no_subcommand" -a build-spine -d "Generate the <spine> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file."
+complete -c se -A -n "__fish_seen_subcommand_from build-spine" -s h -l help -x -d "show this help message and exit"
+complete -c se -A -n "__fish_seen_subcommand_from build-spine" -s s -l stdout -d "print to stdout instead of writing to the metadata file"
 
-complete -c se -n "__fish_se_no_subcommand" -a print-title -d "Print the expected value for an XHTML file’s <title> element."
-complete -c se -A -n "__fish_seen_subcommand_from print-toc" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from print-toc" -s i -l in-place -d "replace the file’s <title> element instead of printing to stdout"
+complete -c se -n "__fish_se_no_subcommand" -a build-title -d "Generate the title of an XHTML file based on its headings and update the file’s <title> element."
+complete -c se -A -n "__fish_seen_subcommand_from build-title" -s h -l help -x -d "show this help message and exit"
+complete -c se -A -n "__fish_seen_subcommand_from build-title" -s s -l stdout -d "print to stdout intead of writing to the file"
 
-complete -c se -n "__fish_se_no_subcommand" -a print-toc -d "Build a table of contents for an SE source directory and print to stdout."
-complete -c se -A -n "__fish_seen_subcommand_from print-toc" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from print-toc" -s i -l in-place -d "overwrite the existing toc.xhtml file instead of printing to stdout."
+complete -c se -n "__fish_se_no_subcommand" -a build-toc -d "Generate the table of contents for the ebook’s source directory and update the ToC file."
+complete -c se -A -n "__fish_seen_subcommand_from build-toc" -s h -l help -x -d "show this help message and exit"
+complete -c se -A -n "__fish_seen_subcommand_from build-toc" -s s -l stdout -d "print to stdout intead of writing to the ToC file"
 
 complete -c se -n "__fish_se_no_subcommand" -a recompose-epub -d "Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output"
 complete -c se -A -n "__fish_seen_subcommand_from recompose-epub" -s h -l help -x -d "show this help message and exit"

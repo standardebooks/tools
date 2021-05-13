@@ -233,6 +233,22 @@ We need volunteers to take the lead on the following goals:
 
 	Build ebook cover and titlepage images in a Standard Ebook source directory and place the output in DIRECTORY/src/epub/images/.
 
+-	### `se build-manifest`
+
+	Generate the <manifest> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.
+
+-	### `se build-spine`
+
+	Generate the <spine> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.
+
+-	### `se build-title`
+
+	Generate the title of an XHTML file based on its headings and update the file’s <title> element.
+
+-	### `se build-toc`
+
+	Generate the table of contents for the ebook’s source directory and update the ToC file.
+
 -	### `se clean`
 
 	Prettify and canonicalize individual XHTML, SVG, or CSS files, or all XHTML, SVG, or CSS files in a source directory. Note that this only prettifies the source code; it doesn’t perform typography changes.
@@ -284,22 +300,6 @@ We need volunteers to take the lead on the following goals:
 -	### `se prepare-release`
 
 	Calculate work word count, insert release date if not yet set, and update modified date and revision number.
-
--	### `se print-manifest`
-
-	Print the <manifest> element for the given Standard Ebooks source directory to standard output, for use in that directory’s content.opf.
-
--	### `se print-spine`
-
-	Print the <spine> element for the given Standard Ebooks source directory to standard output, for use in that directory’s content.opf.
-
--	### `se print-title`
-
-	Print the expected value for an XHTML file’s `<title>` element.
-
--	### `se print-toc`
-
-	Build a table of contents for an SE source directory and print to stdout.
 
 -	### `se recompose-epub`
 

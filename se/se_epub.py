@@ -840,15 +840,15 @@ class SeEpub:
 			file.write(self.metadata_dom.to_string())
 			file.truncate()
 
-	def generate_manifest(self) -> str:
+	def generate_manifest(self) -> se.easy_xml.EasyXmlElement:
 		"""
-		Return the <manifest> element for this ebook as an XML string.
+		Return the <manifest> element for this ebook as an EasyXmlElement.
 
 		INPUTS
 		None
 
 		OUTPUTS
-		An XML fragment string representing the manifest.
+		An EasyXmlElement representing the manifest.
 		"""
 
 		manifest = []
@@ -927,14 +927,14 @@ class SeEpub:
 		manifest = natsorted(manifest)
 
 		# Assemble the manifest XML string
-		manifest_xhtml = "<manifest>\n"
+		manifest_xml = "<manifest>\n"
 
 		for line in manifest:
-			manifest_xhtml = manifest_xhtml + "\t" + line + "\n"
+			manifest_xml = manifest_xml + "\t" + line + "\n"
 
-		manifest_xhtml = manifest_xhtml + "</manifest>"
+		manifest_xml = manifest_xml + "</manifest>"
 
-		return manifest_xhtml
+		return se.easy_xml.EasyXmlElement(etree.fromstring(str.encode(manifest_xml)))
 
 	def __add_to_spine(self, spine: List[str], items: List[Path], semantic: str) -> Tuple[List[str], List[Path]]:
 		"""
@@ -961,15 +961,15 @@ class SeEpub:
 
 		return (spine + spine_additions, filtered_items)
 
-	def generate_spine(self) -> str:
+	def generate_spine(self) -> se.easy_xml.EasyXmlElement:
 		"""
-		Return the <spine> element of this ebook as an XML string, with a best guess as to the correct order. Manual review is required.
+		Return the <spine> element of this ebook as an EasyXmlElement, with a best guess as to the correct order. Manual review is required.
 
 		INPUTS
 		None
 
 		OUTPUTS
-		An XML fragment string representing the spine.
+		An EasyXmlElement representing the spine.
 		"""
 
 		spine: List[str] = []
@@ -1024,13 +1024,13 @@ class SeEpub:
 		spine = spine + natsorted([file_path.name for file_path in backmatter])
 
 		# Now build the spine output
-		spine_xhtml = "<spine>\n"
+		spine_xml = "<spine>\n"
 		for filename in spine:
-			spine_xhtml = spine_xhtml + f"""\t<itemref idref="{filename}"/>\n"""
+			spine_xml = spine_xml + f"""\t<itemref idref="{filename}"/>\n"""
 
-		spine_xhtml = spine_xhtml + "</spine>"
+		spine_xml = spine_xml + "</spine>"
 
-		return spine_xhtml
+		return se.easy_xml.EasyXmlElement(etree.fromstring(str.encode(spine_xml)))
 
 	def get_work_type(self) -> str:
 		"""

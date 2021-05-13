@@ -1,5 +1,5 @@
 """
-Test the print-toc command and related functions
+Test the build-toc command and related functions
 """
 
 from pathlib import Path
@@ -8,17 +8,17 @@ from se.se_epub_generate_toc import add_landmark
 import se.easy_xml
 
 
-def test_print_toc(data_dir: Path, draft_dir: Path, work_dir: Path, update_golden: bool, capfd):
+def test_build_toc(data_dir: Path, draft_dir: Path, work_dir: Path, update_golden: bool, capfd):
 	"""Verify the expected TOC is generated from test book"""
-	text_dir = data_dir / "print-toc" / "in"
+	text_dir = data_dir / "build-toc" / "in"
 	book_dir = assemble_book(draft_dir, work_dir, text_dir)
 
-	must_run(f"se print-toc {book_dir}")
+	must_run(f"se build-toc --stdout {book_dir}")
 
 	out, err = capfd.readouterr()
 	assert err == ""
 
-	golden_file = data_dir / "print-toc" / "toc-out.txt"
+	golden_file = data_dir / "build-toc" / "toc-out.txt"
 	assert output_is_golden(out, golden_file, update_golden)
 
 def test_add_landmark_no_title():

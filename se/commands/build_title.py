@@ -1,5 +1,5 @@
 """
-This module implements the `se print-title` command.
+This module implements the `se build-title` command.
 """
 
 import argparse
@@ -12,20 +12,20 @@ import se.easy_xml
 import se.formatting
 
 
-def print_title() -> int:
+def build_title() -> int:
 	"""
-	Entry point for `se print-title`
+	Entry point for `se build-title`
 	"""
 
-	parser = argparse.ArgumentParser(description="Print the expected value for an XHTML file’s <title> element.")
-	parser.add_argument("-i", "--in-place", action="store_true", help="replace the file’s <title> element instead of printing to stdout")
+	parser = argparse.ArgumentParser(description="Generate the title of an XHTML file based on its headings and update the file’s <title> element.")
+	parser.add_argument("-s", "--stdout", action="store_true", help="print to stdout intead of writing to the file")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
 	targets = se.get_target_filenames(args.targets, ".xhtml")
 
-	if not args.in_place and (len(targets) > 1):
-		se.print_error("Multiple targets or directories are only allowed with the [bash]--in-place[/] option.")
+	if args.stdout and (len(targets) > 1):
+		se.print_error("Multiple targets or directories are only allowed without the [bash]--stdout[/] option.")
 		return se.InvalidArgumentsException.code
 
 	return_code = 0
@@ -37,7 +37,9 @@ def print_title() -> int:
 
 				title = se.formatting.generate_title(dom)
 
-				if args.in_place:
+				if args.stdout:
+					print(title)
+				else:
 					if title == "":
 						se.print_error(f"Couldn’t deduce title for file: [path][link=file://{filename}]{filename}[/][/].", False, True)
 					else:
@@ -48,8 +50,6 @@ def print_title() -> int:
 							file.seek(0)
 							file.write(dom.to_string())
 							file.truncate()
-				else:
-					print(title)
 
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")

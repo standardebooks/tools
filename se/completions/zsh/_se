@@ -13,6 +13,10 @@ case $state in
 			"british2american[Try to convert British quote style to American quote style.]" \
 			"build[Build an ebook from a Standard Ebook source directory.]" \
 			"build-images[Build ebook cover and titlepage images in a Standard Ebook source directory.]" \
+			"build-manifest[Generate the <manifest> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.]" \
+			"build-spine[Generate the <spine> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.]" \
+			"build-title[Generate the title of an XHTML file based on its headings and update the file’s <title> element.]" \
+			"build-toc[Generate the table of contents for the ebook’s source directory and update the ToC file.]" \
 			"clean[Prettify and canonicalize individual XHTML or SVG files.]" \
 			"compare-versions[Render and compare XHTML files in an ebook repository.]" \
 			"create-draft[Create a skeleton of a new Standard Ebook.]" \
@@ -26,10 +30,6 @@ case $state in
 			"make-url-safe[Make a string URL-safe.]" \
 			"modernize-spelling[Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.]" \
 			"prepare-release[Calculate work word count, insert release date if not yet set, and update modified date and revision number.]" \
-			"print-manifest[Print the <manifest> element for the given Standard Ebooks source directory to standard output, for use in that directory’s metadata file.]" \
-			"print-spine[Print the <spine> element for the given Standard Ebooks source directory to standard output, for use in that directory’s metadata file.]" \
-			"print-title[Print the expected value for an XHTML file’s <title> element.]" \
-			"print-toc[Build a table of contents for an SE source directory and print to stdout.]" \
 			"recompose-epub[Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output.]" \
 			"renumber-endnotes[Renumber all endnotes and noterefs sequentially from the beginning.]" \
 			"reorder-endnotes[Increment the specified endnote and all following endnotes by 1.]" \
@@ -68,6 +68,31 @@ case $state in
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
 					{-v,--verbose}'[increase output verbosity]' \
+					'*: :_directories'
+				;;
+
+			build-manifest)
+				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
+					{-s,--stdout}'[print to stdout instead of writing to the metadata file]' \
+					'*: :_directories'
+				;;
+			build-spine)
+				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
+					{-s,--stdout}'[print to stdout instead of writing to the metadata file]' \
+					'*: :_directories'
+				;;
+			build-title)
+				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
+					{-s,--stdout}'[print to stdout intead of writing to the file]' \
+					'*: :_files -g \*.xhtml'
+				;;
+			build-toc)
+				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
+					{-s,--stdout}'[print to stdout intead of writing to the ToC file]' \
 					'*: :_directories'
 				;;
 			clean)
@@ -155,30 +180,6 @@ case $state in
 					{-r,--no-revision}'[don’t increment the revision number]' \
 					{-w,--no-word-count}'[don’t calculate word count]' \
 					{-v,--verbose}'[increase output verbosity]' \
-					'*: :_directories'
-				;;
-			print-manifest)
-				_arguments -s \
-					{-h,--help}'[show a help message and exit]' \
-					{-i,--in-place}'[overwrite the <manifest> element in the metadata file instead of printing to stdout]' \
-					'*: :_directories'
-				;;
-			print-spine)
-				_arguments -s \
-					{-h,--help}'[show a help message and exit]' \
-					{-i,--in-place}'[overwrite the <spine> element in the metadata file instead of printing to stdout]' \
-					'*: :_directories'
-				;;
-			print-title)
-				_arguments -s \
-					{-h,--help}'[show a help message and exit]' \
-					{-i,--in-place}'[replace the file’s <title> element instead of printing to stdou]' \
-					'*: :_files -g \*.xhtml'
-				;;
-			print-toc)
-				_arguments -s \
-					{-h,--help}'[show a help message and exit]' \
-					{-i,--in-place}'[overwrite the existing toc.xhtml file instead of printing to stdout]' \
 					'*: :_directories'
 				;;
 			recompose-epub)

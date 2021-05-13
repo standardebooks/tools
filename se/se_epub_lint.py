@@ -915,7 +915,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	# Does the manifest match the generated manifest?
 	try:
 		manifest = self.metadata_dom.xpath("/package/manifest")[0]
-		if manifest.to_string().replace("\t", "") != self.generate_manifest().replace("\t", ""):
+		if manifest.to_string().replace("\t", "") != self.generate_manifest().to_string().replace("\t", ""):
 			messages.append(LintMessage("m-042", "[xml]<manifest>[/] element does not match expected structure.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 	except:
 		missing_metadata_elements.append("<manifest>")
