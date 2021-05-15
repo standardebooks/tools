@@ -505,6 +505,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				processed_xhtml = processed_xhtml.replace("✗", "×")
 				processed_xhtml = processed_xhtml.replace("〃", "“")
 				processed_xhtml = processed_xhtml.replace(" ", f"{se.NO_BREAK_SPACE}{se.NO_BREAK_SPACE}") # em-space to two nbsps
+				processed_xhtml = processed_xhtml.replace("∶", ":")
 
 				# Replace combining vertical line above, used to indicate stressed syllables, with combining acute accent
 				processed_xhtml = processed_xhtml.replace(fr"{se.COMBINING_VERTICAL_LINE_ABOVE}", fr"{se.COMBINING_ACUTE_ACCENT}")
