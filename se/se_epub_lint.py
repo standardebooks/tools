@@ -239,7 +239,7 @@ SEMANTICS & CONTENT
 "s-081", "[xhtml]<p>[/] preceded by [xhtml]<figure>[/], [xhtml]<blockquote>[/xhtml], or [xhtml]<table>[/], but without [val]continued[/] class."
 "s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/]."
 "s-083", "[xhtml]<td epub:type=\"z3998:persona\">[/] element with child [xhtml]<p>[/] element."
-
+"s-084", "Poem has incorrect semantics."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1716,6 +1716,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[span[@epub:type][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
 				if nodes:
 					messages.append(LintMessage("s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				# Check for incorrect semantics on some common publications
+				nodes = dom.xpath("/html/body//i[@epub:type='se:name.publication.book' and re:test(., '^(The )?(Iliad|Odyssey|Aeneid|Metamorphoses|Beowulf|Divine Comedy|Paradise Lost)$')]")
+				if nodes:
+					messages.append(LintMessage("s-084", "Poem has incorrect semantics.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for <header> preceded by non-sectioning elements
 				nodes = dom.xpath("/html/body//header[./preceding-sibling::*[not(re:test(name(), '^(section|div|article)$'))]]")
