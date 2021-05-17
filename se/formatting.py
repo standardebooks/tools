@@ -867,7 +867,7 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 	# Here we try to re-add spaces after a : if it's within a paren block.
 	# We could do this during parsing but we would need to peek ahead to the next item in the loop which
 	# is too much trouble right now.
-	output = regex.sub(r"\(([^\s]+?):([^\s]+?)", r"(\1: \2", output)
+	output = regex.sub(r"\(([^\"\s]+?):([^\"\s]+?)", r"(\1: \2", output)
 
 	return output.strip()
 
