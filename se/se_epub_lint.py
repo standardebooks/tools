@@ -301,6 +301,7 @@ TYPOGRAPHY
 "t-057", "[xhtml]<p>[/] starting with lowercase letter. Hint: [xhtml]<p>[/] that continues text after a [xhtml]<blockquote>[/] requires the [class]continued[/] class; and use [xhtml]<br/>[/] to split one clause over many lines."
 "t-058", "Quotation mark used instead of ditto mark ([text]〃[/] or U+3003) in table."
 "t-059", "Period at the end of [xhtml]<cite>[/] element before endnote backlink."
+"t-060", "Old style Bible citation."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1913,6 +1914,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[re:match(., '—$')]]")
 				if nodes:
 					messages.append(LintMessage("t-034", "[xhtml]<cite>[/] element preceded by em-dash. Hint: em-dashes go within [xhtml]<cite>[/] elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for Bible verses in old-style notation
+				nodes = dom.xpath("/html/body//*[(name()='p' or name()='cite') and .//node()[re:test(., '(Genesis|Gen\\.|Exodus|Ex\\.|Leviticus|Lev\\.|Numbers|Num\\.|Deuteronomy|Deut\\.|Joshua|Josh\\.|Judges|Ruth|Kings|Chronicles|Chron\\.|Ezra|Nehemiah|Neh\\.|Esther|Esth\\.|Job|Psalm|Psalms|Ps\\.|Proverbs|Prov\\.|Ecclesiastes|Ecc\\.|Eccl\\.|Solomon|Sol\\.|Isaiah|Is\\.|Isa\\.|Jeremiah|Jer\\.|Lamentations|Lam\\.|Ezekiel|Ez\\.|Ezek\\.|Daniel|Dan\\.|Hosea|Hos\\.|Joel|Amos|Obadiah|Obad\\.|Jonah|Jon\\.|Micah|Mic\\.|Nahum|Nah\\.|Habakkuk|Hab\\.|Zephaniah|Zeph\\.|Haggai|Hag\\.|Zechariah|Zech\\.|Malachi|Mal\\.|Tobit|Judith|Sirach|Baruch|Maccabees|Esdras|Manasses|Matthew|Matt\\.|Mark|Luke|John|Acts|Romans|Rom\\.|Corinthians|Cor\\.|Corinth\\.|Galatians|Gal\\.|Ephesians|Eph\\.|Philippians|Phil\\.|Philipp\\.|Colossians|Col\\.|Coloss\\.|Thessalonians|Thes\\.|Thess\\.|Timothy|Tim\\.|Titus|Tit\\.|Philemon|Phil\\.|Hebrews|Heb\\.|James|Jas\\.|Peter|Pet\\.|Jude|Revelation|Revelations|Rev\\.)\\s*$') and following-sibling::node()[1][contains(@epub:type, 'z3998:roman') and following-sibling::node()[1][re:test(., '^\\s*\\.?\\s+[0-9]')]]]]")
+				if nodes:
+					messages.append(LintMessage("t-060", "Old style Bible citation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for block-level postscripts that don't have margin-top: 1em. Exclude postscripts that are the first child of blockquote or footer, since blockquotes/footers gives the desired margin.
 				nodes = dom.xpath("/html/body//*[(name() = 'div' or name() = 'p') and contains(@epub:type, 'z3998:postscript') and not((./parent::blockquote or ./parent::footer) and count(./preceding-sibling::*) = 0) and @data-css-margin-top != '1em']")
