@@ -240,6 +240,7 @@ SEMANTICS & CONTENT
 "s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/]."
 "s-083", "[xhtml]<td epub:type=\"z3998:persona\">[/] element with child [xhtml]<p>[/] element."
 "s-084", "Poem has incorrect semantics."
+"s-085", "[xhtml]<h2>[/] element found in a [xhtml]<section>[/] that is deeper than expected. Hint: If this work has parts, should this header be [xhtml]<h3>[/] or higher?"
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1568,6 +1569,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath(r"/html/body//p[re:test(., '”\s(?:said|[A-Za-z]{2,}ed)\s[A-Za-z]+?(?<!\bthe)(?<!\bto)(?<!\bwith)(?<!\bfrom)(?<!\ba\b)(?<!\bis)\s“') or re:test(., '[^\.]”\s(\bhe\b|\bshe\b|I|[A-Z][a-z]+?)\s(?:said|[A-Za-z]{2,}ed)\s“')]")
 				if nodes:
 					messages.append(LintMessage("t-043", "Dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for h2 elements that are 2 or more <section>s deep.
+				# The deep nesting suggests they should be at least h3
+				nodes = dom.xpath("/html/body//section/section/*[name()='h2' or (name()='hgroup' and ./h2)]")
+				if nodes:
+					messages.append(LintMessage("s-085", "[xhtml]<h2>[/] element found in a [xhtml]<section>[/] that is deeper than expected. Hint: If this work has parts, should this header be [xhtml]<h3>[/] or higher?", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for abbreviations followed by periods
 				# But we exclude some SI units, which don't take periods; abbreviations ending in numbers for example in stage directions; abbreviations like `r^o` (recto) that contain <sup>; and some Imperial abbreviations that are multi-word
