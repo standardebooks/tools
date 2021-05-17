@@ -1740,11 +1740,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("s-078", "[xhtml]<footer>[/] element followed by non-sectioning element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-				# Check for <span>s that only exist to apply epub:type
-				nodes = dom.xpath("/html/body//*[span[@epub:type][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
-				if nodes:
-					messages.append(LintMessage("s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
 				# Check for <dt> elements without exactly one <dfn> child, but only in glossaries
 				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'glossary')]//dt[not(count(./dfn)=1)]")
 				if nodes:
