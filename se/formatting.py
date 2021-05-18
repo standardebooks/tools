@@ -129,16 +129,14 @@ def semanticate(xhtml: str) -> str:
 
 	# Get Roman numerals >= 2 characters
 	# We only wrap these if they're standalone (i.e. not already wrapped in a tag) to prevent recursion in multiple runs
-	xhtml = regex.sub(r"([^\p{Letter}>])([ixvIXV]{2,})(\b|st\b|nd\b|rd\b|th\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
+	# Ignore "numerals" followed by a dash, as they are more likely something like `x-ray` or `v-shaped`
+	xhtml = regex.sub(r"([^\p{Letter}>])([ixvIXV]{2,})(\b[^\-]|st\b|nd\b|rd\b|th\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
 
 	# Get Roman numerals that are X or V and single characters.  We can't do I for obvious reasons.
-	xhtml = regex.sub(r"""([^\p{Letter}>\"])([vxVX])(\b|st\b|nd\b|rd\b|th\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
+	xhtml = regex.sub(r"""([^\p{Letter}>\"])([vxVX])(\b[^\-]|st\b|nd\b|rd\b|th\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
 
 	# We can assume a lowercase i is always a Roman numeral unless followed by ’
 	xhtml = regex.sub(r"""([^\p{Letter}<>/\"])i\b(?!’)""", r"""\1<span epub:type="z3998:roman">i</span>""", xhtml)
-
-	# Fix X-ray
-	xhtml = regex.sub(r"""<span epub:type="z3998:roman">([Xx])</span>-ray""", r"""\1-ray""", xhtml)
 
 	# Fix obscured names starting with I, V, or X
 	xhtml = regex.sub(fr"""<span epub:type="z3998:roman">([IVX])</span>{se.WORD_JOINER}⸺""", fr"""\1{se.WORD_JOINER}⸺""", xhtml)
