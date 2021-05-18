@@ -210,7 +210,7 @@ SEMANTICS & CONTENT
 "s-052", "[xhtml]<abbr>[/] element with illegal [attr]title[/] attribute."
 "s-053", "Colophon line not preceded by [xhtml]<br/>[/]."
 "s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/]."
-"s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor."
+"s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Note: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute."
 "s-056", "Last [xhtml]<p>[/] child of endnote missing backlink."
 "s-057", "Backlink noteref fragment identifier doesn’t match endnote number."
 "s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/], [xhtml]<abbr>[/], and [xhtml]<p>[/] elements."
@@ -1394,10 +1394,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if dom.xpath("/html/body//table[not(tbody)]"):
 					messages.append(LintMessage("s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child.", se.MESSAGE_TYPE_ERROR, filename))
 
-				# Check for <th> element without a <thead> ancestor. However, <th scope="row|rowgroup">  and <th/> are allowed, for use in vertical table headers
-				# like in https://standardebooks.org/ebooks/charles-babbage/passages-from-the-life-of-a-philosopher
-				if dom.xpath("/html/body//table//th[not(ancestor::thead)][not(contains(@scope, 'row'))][not(count(node())=0)]"):
-					messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Note: [xhtml]<th>[/] elements used as horizontal row headings require the [attr]scope[/] attribute of [val]row[/] or [val]rowgroup[/].", se.MESSAGE_TYPE_ERROR, filename))
+				# Check for <th> element without a <thead> ancestor. However, <th scope="...">  and <th/> are allowed, for use in tables with headers in the middle of tables (url:https://standardebooks.org/ebooks/dorothy-day/the-eleventh-virgin) and vertical table headers
+				# (https://standardebooks.org/ebooks/charles-babbage/passages-from-the-life-of-a-philosopher)
+				if dom.xpath("/html/body//table//th[not(ancestor::thead)][not(@scope)][not(count(node())=0)]"):
+					messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Note: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for money not separated by commas
 				matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
