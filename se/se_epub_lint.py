@@ -1118,7 +1118,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# concat() to not match `halftitlepage`
 				if dom.xpath("/html/body/section[contains(concat(' ', @epub:type, ' '), ' titlepage ')]"):
-					if not dom.xpath("/html/head/title[text()='Titlepage']"):
+					# Check if the <title> element is set correctly, but only if there's no heading content.
+					# If there's heading content, then <title> should match the expected generated value from the heading content.
+					if dom.xpath("/html[not(./body//*[re:test(name(), '^h(group|[1-6])$')]) and ./head/title[text()!='Titlepage']]"):
 						messages.append(LintMessage("s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/].", se.MESSAGE_TYPE_ERROR, filename))
 				else:
 					# Check for common typos
