@@ -241,6 +241,7 @@ SEMANTICS & CONTENT
 "s-083", "[xhtml]<td epub:type=\"z3998:persona\">[/] element with child [xhtml]<p>[/] element."
 "s-084", "Poem has incorrect semantics."
 "s-085", "[xhtml]<h2>[/] element found in a [xhtml]<section>[/] that is deeper than expected. Hint: If this work has parts, should this header be [xhtml]<h3>[/] or higher?"
+"s-086", "[text]Op. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] means [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1583,6 +1584,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//abbr[(contains(@class, 'initialism') or contains(@class, 'name') or not(@class))][not(re:test(., '[cmk][mgl]')) and not(re:test(., '[0-9]$')) and not(./sup) and not(text()='mpg' or text()='mph' or text()='hp' or text()='TV')][following-sibling::text()[1][starts-with(self::text(), '.')]]")
 				if nodes:
 					messages.append(LintMessage("t-032", "Initialism or name followed by period. Hint: Periods go within [xhtml]<abbr>[/]. [xhtml]<abbr>[/]s containing periods that end a clause require the [class]eoc[/] class.", se.MESSAGE_TYPE_WARNING, filename, [f"{node.to_string()}." for node in nodes]))
+
+				# Check for `Op. Cit.` in endnotes. `Op. Cit.` means "the previous reference" which doesn't make sense
+				# in popup endnotes. But, if the endnote has a book reference, then allow it as it might be referring to that.
+				nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote') and re:test(., 'Op. Cit.', 'i') and not(.//*[contains(@epub:type, 'se:name.publication')])]")
+				if nodes:
+					messages.append(LintMessage("s-086", "[text]Op. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] means [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded.", se.MESSAGE_TYPE_WARNING, filename, [f"{node.to_tag_string()}." for node in nodes]))
 
 				# Check for lang="" instead of xml:lang=""
 				nodes = dom.xpath("/html/body//*[@lang]")
