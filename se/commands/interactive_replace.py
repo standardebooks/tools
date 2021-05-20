@@ -70,7 +70,7 @@ def print_ui(screen, filepath: Path) -> None:
 	# Create the footer bar
 	# Be very careful with generating a footer of correct width, because unlike
 	# the header, a footer that is too long will cause curses to crash
-	footer_bar = "(y)es/(n)o/(a)ccept remaining/(r)eject remaining/(q)uit"
+	footer_bar = "(y)es (n)o (a)ccept remaining (r)eject remaining (q)uit"
 
 	if len(footer_bar) >= screen_width:
 		footer_bar = "y/n; a/r; q"
@@ -86,7 +86,19 @@ def print_ui(screen, filepath: Path) -> None:
 	# Print the header and footer
 	screen.attron(curses.A_REVERSE)
 	screen.addstr(0, 0, header_bar)
-	screen.addstr(screen_height - 1, 0, footer_bar)
+
+	# Make acceletors bold
+	footer_index = 0
+	for char in footer_bar:
+		if char == "(":
+			screen.attron(curses.A_BOLD)
+
+		# If the previous char was ), turn off bold
+		if footer_index > 0 and footer_bar[footer_index - 1] == ")":
+			screen.attroff(curses.A_BOLD)
+
+		screen.addstr(screen_height - 1, footer_index, char)
+		footer_index = footer_index + 1
 	# The bottom right corner has to be set with insch() for some reason
 	screen.insch(screen_height - 1, screen_width - 1, " ")
 	screen.attroff(curses.A_REVERSE)
@@ -127,7 +139,7 @@ def print_screen(screen, filepath: Path, text: str, start_matching_at: int, rege
 	pad.addstr(text[:match_start])
 	# Print the match itself, in reversed color
 	if curses.has_colors():
-		pad.addstr(text[match_start:match_end], curses.color_pair(1))
+		pad.addstr(text[match_start:match_end], curses.color_pair(1) | curses.A_BOLD)
 	else:
 		pad.attron(curses.A_REVERSE)
 		pad.addstr(text[match_start:match_end])
