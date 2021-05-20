@@ -283,7 +283,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se interactive-replace`
 
-	Perform an interactive search and replace on a list of files using Python-flavored regex. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (q) Save this file and quit.
+	Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (q) Save this file and quit.
 
 -	### `se lint`
 

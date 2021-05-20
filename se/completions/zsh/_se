@@ -25,7 +25,7 @@ case $state in
 			"find-mismatched-diacritics[Find words with mismatched diacritics in Standard Ebook source directories.]" \
 			"help[List available SE commands.]" \
 			"hyphenate[Insert soft hyphens at syllable breaks in an XHTML file.]" \
-			"interactive-replace[Perform an interactive search and replace on a list of files using Python-flavored regex. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (q) Save this file and quit.]" \
+			"interactive-replace[Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (q) Save this file and quit.]" \
 			"lint[Check for various Standard Ebooks style errors.]" \
 			"make-url-safe[Make a string URL-safe.]" \
 			"modernize-spelling[Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling.]" \
@@ -153,6 +153,7 @@ case $state in
 					{-i,--ignore-case}'[ignore case when matching; equivalent to regex.IGNORECASE]' \
 					{-m,--multiline}'[make `^` and `$` consider each line; equivalent to regex.MULTILINE]' \
 					{-d,--dot-all}'[make `.` match newlines; equivalent to regex.DOTALL]' \
+					{-v,--vim}'[use basic Vim-like navigation shortcuts]' \
 					'*: :_files'
 				;;
 			lint)

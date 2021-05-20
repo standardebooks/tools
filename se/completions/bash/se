@@ -78,7 +78,7 @@ _se(){
 				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
 				;;
 			interactive-replace)
-				COMPREPLY+=($(compgen -W "-h --help -i --ignore-case -m --multiline -d --dotall" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-h --help -i --ignore-case -m --multiline -d --dotall -v --vim" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			lint)
