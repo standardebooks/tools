@@ -93,6 +93,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<!\<abbr\>)(Jan\.|Feb\.|Mar\.|Apr\.|Jun\.|Jul\.|Aug\.|Sep\.|Sept\.|Oct\.|Nov\.|Dec\.)", r"<abbr>\1</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!\<abbr\>)No\.(\s+[0-9]+)", r"<abbr>No.</abbr>\1", xhtml)
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)([Vv])s\.", r"<abbr>\1s.</abbr>", xhtml)
+	xhtml = regex.sub(r"\b(?<!\<abbr\>)([Ff])f\.", r"<abbr>\1f.</abbr>", xhtml) # ff. typically used in footnotes, means "and following"
 	# python allows a variable lookbehind with the ( eoc)?; HOWEVER, it counts it as the
 	#	first capture group, so if there are one or more capture groups in the regex itself,
 	#	be sure to start at 2 when specifying the group(s) in the replacement spec.
