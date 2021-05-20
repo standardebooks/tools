@@ -281,9 +281,9 @@ We need volunteers to take the lead on the following goals:
 
 	Insert soft hyphens at syllable breaks in an XHTML file.
 
--	### `se interactive-sr`
+-	### `se interactive-replace`
 
-	Use Vim to perform an interactive search and replace on a list of files. Use y/n/a to confirm (y) or reject (n) a replacement, or to replace (a)ll.
+	Perform an interactive search and replace on a list of files using Python-flavored regex. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (q) Save this file and quit.
 
 -	### `se lint`
 

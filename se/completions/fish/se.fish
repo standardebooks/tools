@@ -1,6 +1,6 @@
 function __fish_se_no_subcommand --description "Test if se has yet to be given the subcommand"
 	for i in (commandline -opc)
-		if contains -- $i british2american build build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-sr lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes split-file titlecase typogrify unicode-names version word-count xpath
+		if contains -- $i british2american build build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes split-file titlecase typogrify unicode-names version word-count xpath
 			return 1
 		end
 	end
@@ -68,8 +68,11 @@ complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s i -l ignore-h-ta
 complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s l -l language -d "specify the language for the XHTML files; if unspecified, defaults to the `xml:lang` or `lang` attribute of the root <html> element"
 complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s v -l verbose -d "increase output verbosity"
 
-complete -c se -n "__fish_se_no_subcommand" -a interactive-sr -d "Use Vim to perform an interactive search and replace on a list of files."
-complete -c se -A -n "__fish_seen_subcommand_from interactive-sr" -s h -l help -x -d "show this help message and exit"
+complete -c se -n "__fish_se_no_subcommand" -a interactive-replace -d "Perform an interactive search and replace on a list of files using Python-flavored regex. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (q) Save this file and quit."
+complete -c se -A -n "__fish_seen_subcommand_from interactive-replace" -s h -l help -x -d "show this help message and exit"
+complete -c se -A -n "__fish_seen_subcommand_from interactive-replace" -s i -l ignore-case -x -d "ignore case when matching; equivalent to regex.IGNORECASE"
+complete -c se -A -n "__fish_seen_subcommand_from interactive-replace" -s m -l multiline -x -d "make `^` and `$` consider each line; equivalent to regex.MULTILINE"
+complete -c se -A -n "__fish_seen_subcommand_from interactive-replace" -s d -l dot-all -x -d "make `.` match newlines; equivalent to regex.DOTALL"
 
 complete -c se -n "__fish_se_no_subcommand" -a lint -d "Check for various Standard Ebooks style errors."
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s h -l help -x -d "show this help message and exit"
