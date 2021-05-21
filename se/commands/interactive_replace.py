@@ -17,7 +17,7 @@ import se
 TAB_SIZE = 8
 
 
-def get_text_dimensions(text: str) -> Tuple[int, int]:
+def _get_text_dimensions(text: str) -> Tuple[int, int]:
 	"""
 	Get the number of rows and columns to fit the given text.
 
@@ -44,7 +44,7 @@ def get_text_dimensions(text: str) -> Tuple[int, int]:
 
 	return (text_height + 1, text_width + 1)
 
-def print_ui(screen, filepath: Path) -> None:
+def _print_ui(screen, filepath: Path) -> None:
 	"""
 	Print the header and footer bars to the screen
 	"""
@@ -107,7 +107,7 @@ def print_ui(screen, filepath: Path) -> None:
 
 	screen.refresh()
 
-def get_center_of_match(text: str, match_start: int, match_end: int, screen_height: int, screen_width: int) -> Tuple[int, int]:
+def _get_center_of_match(text: str, match_start: int, match_end: int, screen_height: int, screen_width: int) -> Tuple[int, int]:
 	"""
 	Given the text, the start and end of the match, and the screen dimensions, return
 	a tuple representing the pad x and y that will result in the pad's
@@ -156,7 +156,7 @@ def get_center_of_match(text: str, match_start: int, match_end: int, screen_heig
 
 	return (pad_y, pad_x)
 
-def print_screen(screen, filepath: Path, text: str, start_matching_at: int, regex_search: str, regex_flags: int):
+def _print_screen(screen, filepath: Path, text: str, start_matching_at: int, regex_search: str, regex_flags: int):
 	"""
 	Print the complete UI to the screen.
 
@@ -166,7 +166,7 @@ def print_screen(screen, filepath: Path, text: str, start_matching_at: int, rege
 	"""
 
 	# Get the dimensions of the complete text, and the terminal screen
-	text_height, text_width = get_text_dimensions(text)
+	text_height, text_width = _get_text_dimensions(text)
 	screen_height, screen_width = screen.getmaxyx()
 	line_numbers_height = text_height
 	line_numbers_width = len(str(text_height))
@@ -213,10 +213,10 @@ def print_screen(screen, filepath: Path, text: str, start_matching_at: int, rege
 	# Print the text after the match
 	pad.addstr(text[match_end:len(text)])
 
-	pad_y, pad_x = get_center_of_match(text, match_start, match_end, screen_height, screen_width)
+	pad_y, pad_x = _get_center_of_match(text, match_start, match_end, screen_height, screen_width)
 
 	# Print the header and footer
-	print_ui(screen, filepath)
+	_print_ui(screen, filepath)
 
 	# Output to the screen
 	pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
@@ -295,7 +295,7 @@ def interactive_replace() -> int:
 			# In curses terminology, a "pad" is a window that is larger than the viewport.
 			# Pads can be scrolled around.
 			# Create and output our initial pad
-			pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = print_screen(screen, filepath, xhtml, 0, args.regex, regex_flags)
+			pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = _print_screen(screen, filepath, xhtml, 0, args.regex, regex_flags)
 
 			while pad:
 				# Wait for input
@@ -351,21 +351,21 @@ def interactive_replace() -> int:
 					# Our replacement has changed the XHTML string, so the
 					# match_end doesn't point to the right place any more.
 					# Update match_end to account for the change in string length
-					# caused by the replacement before passing it to print_screen()
+					# caused by the replacement before passing it to _print_screen()
 					match_end = match_end + (len(new_xhtml) - len(xhtml))
 
 					# OK, now set our xhtml to the replaced version
 					xhtml = new_xhtml
 
-					pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = print_screen(screen, filepath, xhtml, match_end, args.regex, regex_flags)
+					pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = _print_screen(screen, filepath, xhtml, match_end, args.regex, regex_flags)
 
 				if curses.keyname(char) in (b"n", b"N"):
 					# Skip this match
-					pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = print_screen(screen, filepath, xhtml, match_end, args.regex, regex_flags)
+					pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = _print_screen(screen, filepath, xhtml, match_end, args.regex, regex_flags)
 
 				# Center on the match
 				if curses.keyname(char) in (b"c", b"C"):
-					pad_y, pad_x = get_center_of_match(xhtml, match_start, match_end, screen_height, screen_width)
+					pad_y, pad_x = _get_center_of_match(xhtml, match_start, match_end, screen_height, screen_width)
 
 					pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
 					line_numbers_pad.refresh(pad_y, 0, 1, 0, screen_height - 2, line_numbers_width)
@@ -375,7 +375,7 @@ def interactive_replace() -> int:
 					screen_height, screen_width = screen.getmaxyx()
 					# Note that we pass match_start instead of match_end to print screen, so that we don't
 					# appear to increment the search when we resize!
-					pad, line_numbers_pad, pad_y, pad_x, _, _ = print_screen(screen, filepath, xhtml, match_start, args.regex, regex_flags)
+					pad, line_numbers_pad, pad_y, pad_x, _, _ = _print_screen(screen, filepath, xhtml, match_start, args.regex, regex_flags)
 
 				if curses.keyname(char) in (b"KEY_DOWN", nav_down):
 					if pad_height - pad_y - screen_height >= 0:
