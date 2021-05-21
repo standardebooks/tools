@@ -72,10 +72,10 @@ def print_ui(screen, filepath: Path) -> None:
 	# Create the footer bar
 	# Be very careful with generating a footer of correct width, because unlike
 	# the header, a footer that is too long will cause curses to crash
-	footer_bar = "(y)es (n)o (a)ccept remaining (r)eject remaining (q)uit"
+	footer_bar = "(y)es (n)o (a)ccept remaining (r)eject remaining (c)enter on match (q)uit"
 
 	if len(footer_bar) >= screen_width:
-		footer_bar = "y/n; a/r; q"
+		footer_bar = "y/n; a/r; c; q"
 
 	if len(footer_bar) >= screen_width:
 		footer_bar = ""
@@ -106,6 +106,55 @@ def print_ui(screen, filepath: Path) -> None:
 	screen.attroff(curses.A_REVERSE)
 
 	screen.refresh()
+
+def get_center_of_match(text: str, match_start: int, match_end: int, screen_height: int, screen_width: int) -> Tuple[int, int]:
+	"""
+	Given the text, the start and end of the match, and the screen dimensions, return
+	a tuple representing the pad x and y that will result in the pad's
+	view being centered on the match.
+	"""
+
+	# Now we want to try to center the highlighted section on the screen
+	# First, get the row/col dimensions of the highlighted region
+	index = 0
+	highlight_start_x = 0
+	highlight_start_y = 0
+	highlight_end_x = 0
+	highlight_end_y = 0
+	for char in text:
+		if index < match_start:
+			if char == "\n":
+				highlight_start_y = highlight_start_y + 1
+				highlight_end_y = highlight_end_y + 1
+				highlight_start_x = 0
+				highlight_end_x = 0
+			elif char == "\t":
+				highlight_start_x = highlight_start_x + TAB_SIZE
+				highlight_end_x = highlight_end_x + TAB_SIZE
+			else:
+				highlight_start_x = highlight_start_x + 1
+				highlight_end_x = highlight_end_x + 1
+
+			index = index + 1
+
+		elif index < match_end:
+			if char == "\n":
+				highlight_end_y = highlight_end_y + 1
+				highlight_end_x = 0
+			elif char == "\t":
+				highlight_end_x = highlight_end_x + TAB_SIZE
+			else:
+				highlight_end_x = highlight_end_x + 1
+
+			index = index + 1
+
+		else:
+			break
+
+	pad_y = max(highlight_start_y - floor((highlight_start_y - highlight_end_y) / 2) - floor(screen_height / 2), 0)
+	pad_x = max(highlight_start_x - floor((highlight_start_x - highlight_end_x) / 2) - floor(screen_width / 2), 0)
+
+	return (pad_y, pad_x)
 
 def print_screen(screen, filepath: Path, text: str, start_matching_at: int, regex_search: str, regex_flags: int):
 	"""
@@ -164,46 +213,7 @@ def print_screen(screen, filepath: Path, text: str, start_matching_at: int, rege
 	# Print the text after the match
 	pad.addstr(text[match_end:len(text)])
 
-	# Now we want to try to center the highlighted section on the screen
-	# First, get the row/col dimensions of the highlighted region
-	index = 0
-	highlight_start_x = 0
-	highlight_start_y = 0
-	highlight_end_x = 0
-	highlight_end_y = 0
-	for char in text:
-		if index < match_start:
-			if char == "\n":
-				highlight_start_y = highlight_start_y + 1
-				highlight_end_y = highlight_end_y + 1
-				highlight_start_x = 0
-				highlight_end_x = 0
-			elif char == "\t":
-				highlight_start_x = highlight_start_x + TAB_SIZE
-				highlight_end_x = highlight_end_x + TAB_SIZE
-			else:
-				highlight_start_x = highlight_start_x + 1
-				highlight_end_x = highlight_end_x + 1
-
-			index = index + 1
-
-		elif index < match_end:
-			if char == "\n":
-				highlight_end_y = highlight_end_y + 1
-				highlight_end_x = 0
-			elif char == "\t":
-				highlight_end_x = highlight_end_x + TAB_SIZE
-			else:
-				highlight_end_x = highlight_end_x + 1
-
-			index = index + 1
-
-		else:
-			break
-
-	# We have the dimensions we need, now center match on the screen
-	pad_y = max(highlight_start_y - floor((highlight_start_y - highlight_end_y) / 2) - floor(screen_height / 2), 0)
-	pad_x = max(highlight_start_x - floor((highlight_start_x - highlight_end_x) / 2) - floor(screen_width / 2), 0)
+	pad_y, pad_x = get_center_of_match(text, match_start, match_end, screen_height, screen_width)
 
 	# Print the header and footer
 	print_ui(screen, filepath)
@@ -220,7 +230,7 @@ def interactive_replace() -> int:
 	Entry point for `se interactive-replace`
 	"""
 
-	parser = argparse.ArgumentParser(description="Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (q) Save this file and quit.")
+	parser = argparse.ArgumentParser(description="Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (c) Center on match. (q) Save this file and quit.")
 	parser.add_argument("-i", "--ignore-case", action="store_true", help="ignore case when matching; equivalent to regex.IGNORECASE")
 	parser.add_argument("-m", "--multiline", action="store_true", help="make `^` and `$` consider each line; equivalent to regex.MULTILINE")
 	parser.add_argument("-d", "--dot-all", action="store_true", help="make `.` match newlines; equivalent to regex.DOTALL")
@@ -353,6 +363,13 @@ def interactive_replace() -> int:
 					# Skip this match
 					pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = print_screen(screen, filepath, xhtml, match_end, args.regex, regex_flags)
 
+				# Center on the match
+				if curses.keyname(char) in (b"c", b"C"):
+					pad_y, pad_x = get_center_of_match(xhtml, match_start, match_end, screen_height, screen_width)
+
+					pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
+					line_numbers_pad.refresh(pad_y, 0, 1, 0, screen_height - 2, line_numbers_width)
+
 				# The terminal has been resized, redraw the UI
 				if curses.keyname(char) == b"KEY_RESIZE":
 					screen_height, screen_width = screen.getmaxyx()
@@ -424,8 +441,8 @@ def interactive_replace() -> int:
 			return_code = se.InvalidInputException.code
 
 		# We may get here if we pressed `q`
-	#finally:
-	#	curses.endwin()
+	finally:
+		curses.endwin()
 
 	for error in errors:
 		se.print_error(error)
