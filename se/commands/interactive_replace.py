@@ -27,6 +27,8 @@ def get_text_dimensions(text: str) -> Tuple[int, int]:
 	text_height = 0
 	text_width = 0
 
+	text = text.rstrip()
+
 	for line in text.split("\n"):
 		text_height = text_height + 1
 
@@ -109,14 +111,29 @@ def print_screen(screen, filepath: Path, text: str, start_matching_at: int, rege
 	"""
 	Print the complete UI to the screen.
 
-	Returns a tuple of (pad, pad_y, pad_x, match_start, match_end)
+	Returns a tuple of (pad, line_numbers_pad, pad_y, pad_x, match_start, match_end)
 	if there are more replacements to be made. If not, returns a tuple of
-	(None, 0, 0, 0, 0)
+	(None, None, 0, 0, 0, 0)
 	"""
 
 	# Get the dimensions of the complete text, and the terminal screen
 	text_height, text_width = get_text_dimensions(text)
 	screen_height, screen_width = screen.getmaxyx()
+	line_numbers_height = text_height
+	line_numbers_width = len(str(text_height))
+
+	#print(line_numbers_height)
+	#exit()
+
+	# Create the line numbers pad
+	line_numbers_pad = curses.newpad(line_numbers_height, line_numbers_width)
+	# Reset the cursor
+	line_numbers_pad.addstr(0, 0, "")
+	line_numbers_pad.attron(curses.A_REVERSE)
+	line_numbers_pad.attron(curses.A_DIM)
+	# Add the line numbers
+	for i in range(line_numbers_height - 1):
+		line_numbers_pad.addstr(i, 0, f"{i + 1}".rjust(line_numbers_width))
 
 	# Create a new pad
 	pad = curses.newpad(text_height, text_width)
@@ -130,7 +147,7 @@ def print_screen(screen, filepath: Path, text: str, start_matching_at: int, rege
 	match = regex.search(fr"{regex_search}", text[start_matching_at:], flags=regex_flags)
 
 	if not match:
-		return (None, 0, 0, 0, 0)
+		return (None, None, 0, 0, 0, 0)
 
 	match_start = start_matching_at + match.start()
 	match_end = start_matching_at + match.end()
@@ -185,16 +202,18 @@ def print_screen(screen, filepath: Path, text: str, start_matching_at: int, rege
 			break
 
 	# We have the dimensions we need, now center match on the screen
-	pad_y = highlight_start_y - floor((highlight_start_y - highlight_end_y) / 2) - floor(screen_height / 2)
+	pad_y = max(highlight_start_y - floor((highlight_start_y - highlight_end_y) / 2) - floor(screen_height / 2), 0)
 	pad_x = max(highlight_start_x - floor((highlight_start_x - highlight_end_x) / 2) - floor(screen_width / 2), 0)
 
 	# Print the header and footer
 	print_ui(screen, filepath)
 
 	# Output to the screen
-	pad.refresh(pad_y, pad_x, 1, 0, screen_height - 2, screen_width - 1)
+	pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
 
-	return (pad, pad_y, pad_x, match_start, match_end)
+	line_numbers_pad.refresh(pad_y, 0, 1, 0, screen_height - 2, line_numbers_width)
+
+	return (pad, line_numbers_pad, pad_y, pad_x, match_start, match_end)
 
 def interactive_replace() -> int:
 	"""
@@ -266,7 +285,7 @@ def interactive_replace() -> int:
 			# In curses terminology, a "pad" is a window that is larger than the viewport.
 			# Pads can be scrolled around.
 			# Create and output our initial pad
-			pad, pad_y, pad_x, match_start, match_end = print_screen(screen, filepath, xhtml, 0, args.regex, regex_flags)
+			pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = print_screen(screen, filepath, xhtml, 0, args.regex, regex_flags)
 
 			while pad:
 				# Wait for input
@@ -287,6 +306,7 @@ def interactive_replace() -> int:
 				# We have input!
 
 				pad_height, pad_width = pad.getmaxyx()
+				_, line_numbers_width = line_numbers_pad.getmaxyx()
 
 				# Accept all remaining replacements and continue to the next file
 				if curses.keyname(char) in (b"a", b"A"):
@@ -327,66 +347,70 @@ def interactive_replace() -> int:
 					# OK, now set our xhtml to the replaced version
 					xhtml = new_xhtml
 
-					pad, pad_y, pad_x, match_start, match_end = print_screen(screen, filepath, xhtml, match_end, args.regex, regex_flags)
+					pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = print_screen(screen, filepath, xhtml, match_end, args.regex, regex_flags)
 
 				if curses.keyname(char) in (b"n", b"N"):
 					# Skip this match
-					pad, pad_y, pad_x, match_start, match_end = print_screen(screen, filepath, xhtml, match_end, args.regex, regex_flags)
+					pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = print_screen(screen, filepath, xhtml, match_end, args.regex, regex_flags)
 
 				# The terminal has been resized, redraw the UI
 				if curses.keyname(char) == b"KEY_RESIZE":
 					screen_height, screen_width = screen.getmaxyx()
 					# Note that we pass match_start instead of match_end to print screen, so that we don't
 					# appear to increment the search when we resize!
-					pad, pad_y, pad_x, _, _ = print_screen(screen, filepath, xhtml, match_start, args.regex, regex_flags)
+					pad, line_numbers_pad, pad_y, pad_x, _, _ = print_screen(screen, filepath, xhtml, match_start, args.regex, regex_flags)
 
 				if curses.keyname(char) in (b"KEY_DOWN", nav_down):
-					if pad_height - pad_y - screen_height > 0:
+					if pad_height - pad_y - screen_height >= 0:
 						pad_y = pad_y + 1
-						pad.refresh(pad_y, pad_x, 1, 0, screen_height - 2, screen_width - 1)
+						pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
+						line_numbers_pad.refresh(pad_y, 0, 1, 0, screen_height - 2, line_numbers_width)
 
 				if curses.keyname(char) in (b"KEY_UP", nav_up):
 					if pad_y > 0:
 						pad_y = pad_y - 1
-						pad.refresh(pad_y, pad_x, 1, 0, screen_height - 2, screen_width - 1)
+						pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
+						line_numbers_pad.refresh(pad_y, 0, 1, 0, screen_height - 2, line_numbers_width)
 
 				# pgdown or alt + down, which has its own keycode
 				if curses.keyname(char) in (b"KEY_NPAGE", b"kDN3") or (not args.vim and curses.keyname(char) == b"^V") or (args.vim and curses.keyname(char) == b"^F"):
 					if pad_height - pad_y - screen_height > 0:
 						pad_y = pad_y + screen_height
 						if pad_y + screen_height > pad_height:
-							pad_y = pad_height - screen_height
-						pad.refresh(pad_y, pad_x, 1, 0, screen_height - 2, screen_width - 1)
+							pad_y = pad_height - screen_height + 1
+						pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
+						line_numbers_pad.refresh(pad_y, 0, 1, 0, screen_height - 2, line_numbers_width)
 
 				# pgup or alt + up, which has its own keycode
 				if curses.keyname(char) in (b"KEY_PPAGE", b"kUP3") or (not args.vim and alt_pressed and curses.keyname(char) == b"v") or (args.vim and curses.keyname(char) == b"^B"):
 					if pad_y > 0:
 						pad_y = max(pad_y - screen_height, 0)
-						pad.refresh(pad_y, pad_x, 1, 0, screen_height - 2, screen_width - 1)
+						pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
+						line_numbers_pad.refresh(pad_y, 0, 1, 0, screen_height - 2, line_numbers_width)
 
 				if curses.keyname(char) in (b"KEY_RIGHT", nav_right):
-					if pad_width - pad_x - screen_width > 0:
+					if pad_width - pad_x - screen_width + line_numbers_width > 1:
 						pad_x = pad_x + 1
-						pad.refresh(pad_y, pad_x, 1, 0, screen_height - 2, screen_width - 1)
+						pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
 
 				if curses.keyname(char) in (b"KEY_LEFT", nav_left):
 					if pad_x > 0:
 						pad_x = pad_x - 1
-						pad.refresh(pad_y, pad_x, 1, 0, screen_height - 2, screen_width - 1)
+						pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
 
 				# alt + right, which as its own key code
-				if curses.keyname(char) == b"kLFT3":
-					if pad_width - pad_x - screen_width > 0:
-						pad_x = pad_x + screen_width
-						if pad_x + screen_width > pad_width:
-							pad_x = pad_width - screen_width
-						pad.refresh(pad_y, pad_x, 1, 0, screen_height - 2, screen_width - 1)
+				if curses.keyname(char) == b"kRIT3":
+					if pad_width - pad_x - screen_width + line_numbers_width > 1:
+						pad_x = pad_x + screen_width - line_numbers_width
+						if pad_x + screen_width >= pad_width:
+							pad_x = pad_width - screen_width + line_numbers_width - 1
+						pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
 
 				# alt + left, which as its own key code
-				if curses.keyname(char) == b"kRIT3":
+				if curses.keyname(char) == b"kLFT3":
 					if pad_x > 0:
 						pad_x = max(pad_x - screen_width, 0)
-						pad.refresh(pad_y, pad_x, 1, 0, screen_height - 2, screen_width - 1)
+						pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
 
 			with open(filepath, "w", encoding="utf-8") as file:
 				file.write(xhtml)
@@ -400,8 +424,8 @@ def interactive_replace() -> int:
 			return_code = se.InvalidInputException.code
 
 		# We may get here if we pressed `q`
-	finally:
-		curses.endwin()
+	#finally:
+	#	curses.endwin()
 
 	for error in errors:
 		se.print_error(error)
