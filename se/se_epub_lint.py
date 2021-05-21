@@ -1189,8 +1189,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# Ignore the colophon because paintings might have punctuation in their names
 
 					# This xpath matches b or i elements with epub:type="se:name...", that are not stage direction, whose last text node ends in punctuation.
-					# Note that we check that the last node is a text node, because we may have <abbr> a sthe last node
+					# Note that we check that the last node is a text node, because we may have <abbr> as the last node
 					matches = [node.to_string() for node in dom.xpath("(//b | //i)[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., '[\\.,!\\?]$')]]")]
+
+					# Match b or i elements that are not stage directions, and that end in a comma followed by a lowercase letter
+					matches = [node.to_string() for node in dom.xpath("(//b | //i)[not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., ',$')] and following-sibling::node()[re:test(., '^\\s*[a-z]')] ]")]
 
 					# ...and also check for ending punctuation inside em tags, if it looks like a *part* of a clause
 					# instead of a whole clause. If the <em> is preceded by an em dash or quotes, or if there's punctuation
@@ -2122,7 +2125,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for correct typography around measurements like 2 ft.
 				# But first remove href and id attrs because URLs and IDs may contain strings that look like measurements
 				# Note that while we check m,min (minutes) and h,hr (hours) we don't check s (seconds) because we get too many false positives on years, like `the 1540s`
-				matches = regex.findall(fr"\b[0-9]+[{se.NO_BREAK_SPACE}\-]?(?:[mck]?[mgl]|ft|in|min?|h|sec|hr)\.?\b", regex.sub(r"(href|id)=\"[^\"]*?\"", "", file_contents))
+				matches = regex.findall(fr"\b[1-9][0-9]*[{se.NO_BREAK_SPACE}\-]?(?:[mck]?[mgl]|ft|in|min?|h|sec|hr)\.?\b", regex.sub(r"(href|id)=\"[^\"]*?\"", "", file_contents))
 				# Exclude number ordinals, they're not measurements
 				matches = [match for match in matches if not regex.search(r"(st|nd|rd|th)", match)]
 				if matches:
