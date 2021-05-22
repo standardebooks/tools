@@ -441,9 +441,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					node.replace_with(etree.fromstring(str.encode(mathml_presentation_xhtml)))
 
 				# Since we added an outlining stroke to the titlepage/publisher logo images, we
-				# want to remove the se:color-depth.black-on-transparent semantic
-				for node in dom.xpath("/html/body//img[ (contains(@epub:type, 'z3998:publisher-logo') or ancestor-or-self::*[re:test(@epub:type, '\\btitlepage\\b')]) and contains(@epub:type, 'se:color-depth.black-on-transparent')]"):
-					node.remove_attr_value("epub:type", "se:color-depth.black-on-transparent")
+				# want to remove the se:image.color-depth.black-on-transparent semantic
+				for node in dom.xpath("/html/body//img[ (contains(@epub:type, 'z3998:publisher-logo') or ancestor-or-self::*[re:test(@epub:type, '\\btitlepage\\b')]) and contains(@epub:type, 'se:image.color-depth.black-on-transparent')]"):
+					node.remove_attr_value("epub:type", "se:image.color-depth.black-on-transparent")
 
 				# Add ARIA roles, which are just mostly duplicate attributes to epub:type
 				for role in ARIA_ROLES:
@@ -958,7 +958,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				dom = self.get_dom(file_path)
 				replace_shy_hyphens = False
 
-				# Remove se:color-depth.black-on-transparent, as Calibre removes media queries so this will *always* be invisible
+				# Remove se:image.color-depth.black-on-transparent, as Calibre removes media queries so this will *always* be invisible
 				for node in dom.xpath("/html/body//img[contains(@class, 'epub-type-se-image-color-depth-black-on-transparent') or contains(@epub:type, 'se:image.color-depth.black-on-transparent')]"):
 					if node.get_attr("class"):
 						node.set_attr("class", node.get_attr("class").replace("epub-type-se-image-color-depth-black-on-transparent", ""))
