@@ -29,7 +29,16 @@ import se.formatting
 import se.images
 
 SE_VARIABLES = ["SE_IDENTIFIER", "TITLE", "TITLE_SORT", "SUBJECT_1", "SUBJECT_2", "LCSH_ID_1", "LCSH_ID_2", "TAG", "DESCRIPTION", "LONG_DESCRIPTION", "LANG", "PG_URL", "IA_URL", "EBOOK_WIKI_URL", "VCS_IDENTIFIER", "YEAR", "AUTHOR_WIKI_URL", "AUTHOR", "AUTHOR_SORT", "AUTHOR_FULL_NAME", "AUTHOR_NACOAF_URI", "TRANSLATOR", "TRANSLATOR_SORT", "TRANSLATOR_WIKI_URL", "TRANSLATOR_NACOAF_URI", "COVER_ARTIST", "COVER_ARTIST_SORT", "COVER_ARTIST_WIKI_URL", "COVER_ARTIST_NACOAF_URI", "ILLUSTRATOR", "ILLUSTRATOR_SORT", "ILLUSTRATOR_WIKI_URL", "ILLUSTRATOR_NACOAF_URI", "TRANSCRIBER", "TRANSCRIBER_SORT", "TRANSCRIBER_URL", "PRODUCER_URL", "PRODUCER", "PRODUCER_SORT", "PG_YEAR", "TRANSCRIBER_1", "TRANSCRIBER_2", "PAINTING", "ORIGINAL_LANGUAGE", "TRANSLATION_YEAR"]
-EPUB_SEMANTIC_VOCABULARY = ["cover", "frontmatter", "bodymatter", "backmatter", "volume", "part", "chapter", "division", "foreword", "preface", "prologue", "introduction", "preamble", "conclusion", "epilogue", "afterword", "epigraph", "toc", "landmarks", "loa", "loi", "lot", "lov", "appendix", "colophon", "index", "index-headnotes", "index-legend", "index-group", "index-entry-list", "index-entry", "index-term", "index-editor-note", "index-locator", "index-locator-list", "index-locator-range", "index-xref-preferred", "index-xref-related", "index-term-category", "index-term-categories", "glossary", "glossterm", "glossdef", "bibliography", "biblioentry", "titlepage", "halftitlepage", "copyright-page", "acknowledgments", "imprint", "imprimatur", "contributors", "other-credits", "errata", "dedication", "revision-history", "notice", "tip", "halftitle", "fulltitle", "covertitle", "title", "subtitle", "bridgehead", "learning-objective", "learning-resource", "assessment", "qna", "panel", "panel-group", "balloon", "text-area", "sound-area", "footnote", "endnote", "footnotes", "endnotes", "noteref", "keyword", "topic-sentence", "concluding-sentence", "pagebreak", "page-list", "table", "table-row", "table-cell", "list", "list-item", "figure", "aside"]
+
+# See https://idpf.github.io/epub-vocabs/structure/
+EPUB_SEMANTIC_VOCABULARY = ["cover", "frontmatter", "bodymatter", "backmatter", "volume", "part", "chapter", "division", "foreword", "preface", "prologue", "introduction", "preamble", "conclusion", "epilogue", "afterword", "epigraph", "toc", "landmarks", "loa", "loi", "lot", "lov", "appendix", "colophon", "index", "index-headnotes", "index-legend", "index-group", "index-entry-list", "index-entry", "index-term", "index-editor-note", "index-locator", "index-locator-list", "index-locator-range", "index-xref-preferred", "index-xref-related", "index-term-category", "index-term-categories", "glossary", "glossterm", "glossdef", "bibliography", "biblioentry", "titlepage", "halftitlepage", "copyright-page", "acknowledgments", "imprint", "imprimatur", "contributors", "other-credits", "errata", "dedication", "revision-history", "notice", "tip", "halftitle", "fulltitle", "covertitle", "title", "subtitle", "bridgehead", "learning-objective", "learning-resource", "assessment", "qna", "panel", "panel-group", "balloon", "text-area", "sound-area", "footnote", "endnote", "footnotes", "endnotes", "noteref", "keyword", "topic-sentence", "concluding-sentence", "pagebreak", "page-list", "table", "table-row", "table-cell", "list", "list-item", "figure", "aside", "label", "ordinal"]
+
+# See https://www.daisy.org/z3998/2012/vocab/structure/
+Z3998_SEMANTIC_VOCABULARY = ["abbreviations", "acknowledgments", "acronym", "actor", "afterword", "alteration", "annoref", "annotation", "appendix", "article", "aside", "attribution", "author", "award", "backmatter", "bcc", "bibliography", "biographical-note", "bodymatter", "cardinal", "catalogue", "cc", "chapter", "citation", "clarification", "collection", "colophon", "commentary", "commentator", "compound", "concluding-sentence", "conclusion", "continuation", "continuation-of", "contributors", "coordinate", "correction", "covertitle", "currency", "decimal", "decorative", "dedication", "diary", "diary-entry", "discography", "division", "drama", "dramatis-personae", "editor", "editorial-note", "email", "email-message", "epigraph", "epilogue", "errata", "essay", "event", "example", "family-name", "fiction", "figure", "filmography", "footnote", "footnotes", "foreword", "fraction", "from", "frontispiece", "frontmatter", "ftp", "fulltitle", "gallery", "general-editor", "geographic", "given-name", "glossary", "grant-acknowledgment", "grapheme", "halftitle", "halftitle-page", "help", "homograph", "http", "hymn", "illustration", "image-placeholder", "imprimatur", "imprint", "index", "initialism", "introduction", "introductory-note", "ip", "isbn", "keyword", "letter", "loi", "lot", "lyrics", "marginalia", "measure", "mixed", "morpheme", "name-title", "nationality", "non-fiction", "nonresolving-citation", "nonresolving-reference", "note", "noteref", "notice", "orderedlist", "ordinal", "organization", "other-credits", "pagebreak", "page-footer", "page-header", "part", "percentage", "persona", "personal-name", "pgroup", "phone", "phoneme", "photograph", "phrase", "place", "plate", "poem", "portmanteau", "postal", "postal-code", "postscript", "practice", "preamble", "preface", "prefix", "presentation", "primary", "product", "production", "prologue", "promotional-copy", "published-works", "publisher-address", "publisher-note", "publisher-logo", "range", "ratio", "rearnote", "rearnotes", "recipient", "recto", "reference", "republisher", "resolving-reference", "result", "role-description", "roman", "root", "salutation", "scene", "secondary", "section", "sender", "sentence", "sidebar", "signature", "song", "speech", "stage-direction", "stem", "structure", "subchapter", "subject", "subsection", "subtitle", "suffix", "surname", "taxonomy", "tertiary", "text", "textbook", "t-form", "timeline", "title", "title-page", "to", "toc", "topic-sentence", "translator", "translator-note", "truncation", "unorderedlist", "valediction", "verse", "verso", "v-form", "volume", "warning", "weight", "word"]
+
+# See https://standardebooks.org/vocab/1.0
+SE_SEMANTIC_VOCABULARY = ["se", "collection", "diary", "diary.dateline", "image", "image.color-depth", "image.color-depth.black-on-transparent", "image.color-depth.default-on-transparent", "letter", "letter.dateline", "long-description", "name", "name.person", "name.person.full-name", "name.person.pen-name", "name.vehicle", "name.vehicle.auto", "name.vehicle.train", "name.vessel", "name.vessel.boat", "name.vessel.ship", "name.publication", "name.publication.book", "name.publication.essay", "name.publication.journal", "name.publication.newspaper", "name.publication.magazine", "name.publication.pamphlet", "name.publication.paper", "name.publication.play", "name.publication.poem", "name.publication.short-story", "name.music", "name.music.opera", "name.music.song", "name.visual-art", "name.visual-art.engraving", "name.visual-art.film", "name.visual-art.illustration", "name.visual-art.painting", "name.visual-art.photograph", "name.visual-art.sculpture", "name.visual-art.typeface", "name.broadcast", "name.broadcast.television-show", "name.legal-case", "novel", "novella", "publication-notes", "reading-ease", "reading-ease.flesch", "short-story", "sic", "transform", "url", "url.authority", "url.authority.nacoaf", "url.homepage", "url.encyclopedia", "url.encyclopedia.wikipedia", "url.vcs", "url.vcs.github", "word-count"]
+
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Childrens", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Romance", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
 IGNORED_CLASSES = ["elision", "name", "temperature", "state", "era", "compass", "acronym", "postal", "eoc", "initialism", "degree", "time", "compound", "timezone", "full-page", "continued", "together"]
 BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", ".xcf", ".otf"]
@@ -186,8 +195,7 @@ SEMANTICS & CONTENT
 "s-028", f"[path][link=file://{self.path / 'images/cover.svg'}]cover.svg[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match."
 "s-029", "If a [xhtml]<span>[/] exists only for the [val]z3998:roman[/] semantic, then [val]z3998:roman[/] should be pulled into parent element instead."
 "s-030", "[val]z3998:nonfiction[/] should be [val]z3998:non-fiction[/]."
-"s-031", "Illegal [text]:[/] in SE identifier. SE identifiers are separated by [text].[/], not [text]:[/]. E.g., [val]se:name.vessel.ship[/]."
-"s-032", "SE namespace must be followed by a [text]:[/], not a [text].[/]. E.g., [val]se:name.vessel[/]."
+"s-032", "Invalid value for [attr]epub:type[/]."
 "s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/]."
 "s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary."
 "s-035", "Endnote containing only [xhtml]<cite>[/]."
@@ -242,6 +250,9 @@ SEMANTICS & CONTENT
 "s-084", "Poem has incorrect semantics."
 "s-085", "[xhtml]<h2>[/] element found in a [xhtml]<section>[/] that is deeper than expected. Hint: If this work has parts, should this header be [xhtml]<h3>[/] or higher?"
 "s-086", "[text]Op. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] means [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded."
+UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+"s-031", "Illegal [text]:[/] in SE identifier. SE identifiers are separated by [text].[/], not [text]:[/]. E.g., [val]se:name.vessel.ship[/]."
+
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -2152,32 +2163,35 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Run some checks on epub:type values
 				incorrect_attrs = set()
-				illegal_colons = set()
-				illegal_se_namespaces = set()
-				for attrs in dom.xpath("//*/@epub:type"):
-					for attr in attrs.split():
-						# Did someone use colons instead of dots for SE identifiers? e.g. se:name:vessel:ship
-						for match in regex.findall(r"^se:[\p{Lowercase_Letter}]+:(?:[\p{Lowercase_Letter}]+:?)*", attr):
-							illegal_colons.add(match)
+				duplicate_attrs = set()
 
-						# Did someone use periods instead of colons for the SE namespace? e.g. se.name.vessel.ship
-						for match in regex.findall(r"^se\.[\p{Lowercase_Letter}]+(?:\.[\p{Lowercase_Letter}]+)*", attr):
-							illegal_se_namespaces.add(match)
+				# "s-087", "Invalid value for [attr]epub:type[/]."
 
-						# Did we draw from the z3998 vocabulary when the item exists in the epub vocabulary?
-						if attr.startswith("z3998:"):
-							bare_attr = attr.replace("z3998:", "")
-							if bare_attr in EPUB_SEMANTIC_VOCABULARY:
-								incorrect_attrs.add((attr, bare_attr))
+				for attr in dom.xpath("//*/@epub:type"):
+					for val in regex.split(r"\s+", attr):
+						if val.startswith("z3998:"):
+							bare_val = val.replace("z3998:", "")
+							if bare_val not in Z3998_SEMANTIC_VOCABULARY:
+								incorrect_attrs.add(val)
 
-				if illegal_colons:
-					messages.append(LintMessage("s-031", "Illegal [text]:[/] in SE identifier. SE identifiers are separated by [text].[/], not [text]:[/]. E.g., [val]se:name.vessel.ship[/].", se.MESSAGE_TYPE_ERROR, filename, illegal_colons))
+							elif bare_val in EPUB_SEMANTIC_VOCABULARY:
+								duplicate_attrs.add((val, bare_val))
 
-				if illegal_se_namespaces:
-					messages.append(LintMessage("s-032", "SE namespace must be followed by a [text]:[/], not a [text].[/]. E.g., [val]se:name.vessel[/].", se.MESSAGE_TYPE_ERROR, filename, illegal_se_namespaces))
+						elif val.startswith("se:"):
+							bare_val = val.replace("se:", "")
+							if bare_val not in SE_SEMANTIC_VOCABULARY:
+								incorrect_attrs.add(val)
+
+						else:
+							# Regular epub vocabulary
+							if val not in EPUB_SEMANTIC_VOCABULARY:
+								incorrect_attrs.add(val)
 
 				if incorrect_attrs:
-					messages.append(LintMessage("s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary.", se.MESSAGE_TYPE_ERROR, filename, [attr for (attr, bare_attr) in incorrect_attrs]))
+					messages.append(LintMessage("s-032", "Invalid value for [attr]epub:type[/].", se.MESSAGE_TYPE_ERROR, filename, incorrect_attrs))
+
+				if duplicate_attrs:
+					messages.append(LintMessage("s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary.", se.MESSAGE_TYPE_ERROR, filename, [attr for (attr, bare_attr) in duplicate_attrs]))
 
 				# Check for title attrs on abbr elements
 				nodes = dom.xpath("/html/body//abbr[@title]")
