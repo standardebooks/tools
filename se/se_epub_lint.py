@@ -195,7 +195,8 @@ SEMANTICS & CONTENT
 "s-028", f"[path][link=file://{self.path / 'images/cover.svg'}]cover.svg[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match."
 "s-029", "If a [xhtml]<span>[/] exists only for the [val]z3998:roman[/] semantic, then [val]z3998:roman[/] should be pulled into parent element instead."
 "s-030", "[val]z3998:nonfiction[/] should be [val]z3998:non-fiction[/]."
-"s-032", "Invalid value for [attr]epub:type[/]."
+"s-031", "Duplicate value in [attr]epub:type[/] attribute."
+"s-032", "Invalid value for [attr]epub:type[/] attribute."
 "s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/]."
 "s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary."
 "s-035", "Endnote containing only [xhtml]<cite>[/]."
@@ -250,8 +251,6 @@ SEMANTICS & CONTENT
 "s-084", "Poem has incorrect semantics."
 "s-085", "[xhtml]<h2>[/] element found in a [xhtml]<section>[/] that is deeper than expected. Hint: If this work has parts, should this header be [xhtml]<h3>[/] or higher?"
 "s-086", "[text]Op. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] means [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded."
-UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"s-031", "Illegal [text]:[/] in SE identifier. SE identifiers are separated by [text].[/], not [text]:[/]. E.g., [val]se:name.vessel.ship[/]."
 
 
 TYPOGRAPHY
@@ -2163,17 +2162,25 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Run some checks on epub:type values
 				incorrect_attrs = set()
-				duplicate_attrs = set()
+				unnecessary_z3998_attrs = set()
+				duplicate_attrs = []
 
-				for attr in dom.xpath("//*/@epub:type"):
-					for val in regex.split(r"\s+", attr):
+				for node in dom.xpath("//*[@epub:type]"):
+					attrs = set()
+
+					for val in regex.split(r"\s+", node.get_attr("epub:type")):
+						if val in attrs:
+							duplicate_attrs.append(node.to_tag_string())
+						else:
+							attrs.add(val)
+
 						if val.startswith("z3998:"):
 							bare_val = val.replace("z3998:", "")
 							if bare_val not in Z3998_SEMANTIC_VOCABULARY:
 								incorrect_attrs.add(val)
 
 							elif bare_val in EPUB_SEMANTIC_VOCABULARY:
-								duplicate_attrs.add((val, bare_val))
+								unnecessary_z3998_attrs.add((val, bare_val))
 
 						elif val.startswith("se:"):
 							bare_val = val.replace("se:", "")
@@ -2186,10 +2193,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 								incorrect_attrs.add(val)
 
 				if incorrect_attrs:
-					messages.append(LintMessage("s-032", "Invalid value for [attr]epub:type[/].", se.MESSAGE_TYPE_ERROR, filename, incorrect_attrs))
+					messages.append(LintMessage("s-032", "Invalid value for [attr]epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, incorrect_attrs))
+
+				if unnecessary_z3998_attrs:
+					messages.append(LintMessage("s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary.", se.MESSAGE_TYPE_ERROR, filename, [attr for (attr, bare_attr) in unnecessary_z3998_attrs]))
 
 				if duplicate_attrs:
-					messages.append(LintMessage("s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary.", se.MESSAGE_TYPE_ERROR, filename, [attr for (attr, bare_attr) in duplicate_attrs]))
+					messages.append(LintMessage("s-031", "Duplicate value in [attr]epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, duplicate_attrs))
+
 
 				# Check for title attrs on abbr elements
 				nodes = dom.xpath("/html/body//abbr[@title]")
