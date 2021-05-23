@@ -89,7 +89,7 @@ def _print_ui(screen, filepath: Path) -> None:
 	screen.attron(curses.A_REVERSE)
 	screen.addstr(0, 0, header_bar)
 
-	# Make acceletors bold
+	# Make accelerators bold
 	footer_index = 0
 	for char in footer_bar:
 		if char == "(":
@@ -259,7 +259,6 @@ def interactive_replace() -> int:
 		nav_up = b"k"
 		nav_right = b"l"
 		nav_left = b"h"
-
 
 	regex_flags = 0
 	if args.ignore_case:
@@ -436,7 +435,7 @@ def interactive_replace() -> int:
 		# We check for the `pattern` attr instead of catching
 		# regex._regex_core.error because the regex error type is
 		# private and pylint will complain
-		if hasattr(ex, 'pattern'):
+		if hasattr(ex, "pattern"):
 			errors.append(f"Invalid regular expression: {ex}")
 			return_code = se.InvalidInputException.code
 
