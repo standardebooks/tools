@@ -1203,7 +1203,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					matches = [node.to_string() for node in dom.xpath("(//b | //i)[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., '[\\.,!\\?]$')]]")]
 
 					# Match b or i elements that are not stage directions, and that end in a comma followed by a lowercase letter
-					matches = [node.to_string() for node in dom.xpath("(//b | //i)[not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., ',$')] and following-sibling::node()[re:test(., '^\\s*[a-z]')] ]")]
+					matches = matches + [node.to_string() for node in dom.xpath("(//b | //i)[not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., ',$')] and following-sibling::node()[re:test(., '^\\s*[a-z]')] ]")]
 
 					# ...and also check for ending punctuation inside em tags, if it looks like a *part* of a clause
 					# instead of a whole clause. If the <em> is preceded by an em dash or quotes, or if there's punctuation
