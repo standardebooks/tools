@@ -419,7 +419,7 @@ def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 	if nodes:
 		messages.append(LintMessage("m-006", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like [url]https://www.gutenberg.org/ebooks/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	search_regex = r"https?://.*?archive\.org/stream"
+	search_regex = r"^https?://.*?archive\.org/(stream|details/.+?/page.+)"
 	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
 	if nodes:
 		messages.append(LintMessage("m-007", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like [url]https://archive.org/details/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
