@@ -36,7 +36,10 @@ COVER_THUMBNAIL_WIDTH = int(se.COVER_WIDTH / 4) # Cast to int required for PIL
 COVER_THUMBNAIL_HEIGHT = int(se.COVER_HEIGHT / 4) # Cast to int required for PIL
 SVG_OUTER_STROKE_WIDTH = 2
 SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
-ARIA_ROLES = ["afterword", "appendix", "biblioentry", "bibliography", "chapter", "colophon", "conclusion", "dedication", "epilogue", "foreword", "introduction", "noteref", "part", "preface", "prologue", "subtitle", "toc"]
+
+# See https://www.w3.org/TR/dpub-aria-1.0/
+# Without preceding `doc-`
+ARIA_ROLES = ["abstract", "acknowledgments", "afterword", "appendix", "backlink", "biblioentry", "bibliography", "biblioref", "chapter", "colophon", "conclusion", "cover", "credit", "credits", "dedication", "endnote", "endnotes", "epigraph", "epilogue", "errata", "example", "footnote", "foreword", "glossary", "glossref", "index", "introduction", "noteref", "notice", "pagebreak", "pagelist", "part", "preface", "prologue", "pullquote", "qna", "subtitle", "tip", "toc"]
 
 def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool) -> None:
 	"""
@@ -447,15 +450,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 				# Add ARIA roles, which are just mostly duplicate attributes to epub:type
 				for role in ARIA_ROLES:
-					if role == "toc":
-						for node in dom.xpath(f"/html/body//nav[re:test(@epub:type, '\\b{role}\\b')]"):
-							node.add_attr_value("role", f"doc-{role}")
-					elif role == "noteref":
-						for node in dom.xpath(f"/html/body//a[re:test(@epub:type, '\\b{role}\\b')]"):
-							node.add_attr_value("role", f"doc-{role}")
-					else:
-						for node in dom.xpath(f"/html/body//section[re:test(@epub:type, '\\b{role}\\b')]"):
-							node.add_attr_value("role", f"doc-{role}")
+					# Exclude landmarks because while their semantics indicate what their *links* contain, not what *they themselves are*.
+					for node in dom.xpath(f"/html//*[not(ancestor-or-self::nav[contains(@epub:type, 'landmarks')]) and re:test(@epub:type, '\\b{role}\\b')]"):
+						node.add_attr_value("role", f"doc-{role}")
 
 				# We converted svgs to pngs, so replace references
 				for node in dom.xpath("/html/body//img[re:test(@src, '\\.svg$')]"):
