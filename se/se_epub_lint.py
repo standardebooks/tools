@@ -1200,7 +1200,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 					# This xpath matches b or i elements with epub:type="se:name...", that are not stage direction, whose last text node ends in punctuation.
 					# Note that we check that the last node is a text node, because we may have <abbr> as the last node
-					matches = [node.to_string() for node in dom.xpath("(//b | //i)[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., '[\\.,!\\?]$')]]")]
+					matches = [node.to_string() for node in dom.xpath("(//b | //i)[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., '[\\.,!\\?;:]$')]]")]
 
 					# Match b or i elements that are not stage directions, and that end in a comma followed by a lowercase letter
 					matches = matches + [node.to_string() for node in dom.xpath("(//b | //i)[not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., ',$')] and following-sibling::node()[re:test(., '^\\s*[a-z]')] ]")]
