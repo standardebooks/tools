@@ -270,7 +270,7 @@ TYPOGRAPHY
 "t-014", "Two or more em-dashes in a row found. Elided words should use the two- or three-em-dash Unicode character, and dialog ending in em-dashes should only end in a single em-dash."
 "t-015", "Numbers not grouped by commas. Separate numbers greater than 1,000 with commas at every three numerals."
 "t-016", "Initials in [xhtml]<abbr class=\"name\">[/] not separated by spaces."
-"t-017", "Ending punctuation inside italics. Ending punctuation is only allowed within italics if the phrase is an independent clause."
+"t-017", "Ending punctuation inside formatting like bold, small caps, or italics. Ending punctuation is only allowed within formatting if the phrase is an independent clause."
 "t-018", "Stage direction ending in period next to other punctuation. Remove trailing periods in stage direction."
 "t-019", "When a complete clause is italicized, ending punctuation except commas must be within containing italics."
 "t-020", "Endnote links must be outside of punctuation, including quotation marks."
@@ -1212,7 +1212,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					matches = matches + [match.strip() for match in regex.findall(r"(?<!.[—“‘>]|[!\.\?…;]\s)<em>(?:\w+?\s*)+[\.,\!\?;]</em>", file_contents) if match.islower()]
 
 					if matches:
-						messages.append(LintMessage("t-017", "Ending punctuation inside italics. Ending punctuation is only allowed within italics if the phrase is an independent clause.", se.MESSAGE_TYPE_WARNING, filename, matches))
+						messages.append(LintMessage("t-017", "Ending punctuation inside formatting like bold, small caps, or italics. Ending punctuation is only allowed within formatting if the phrase is an independent clause.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check for unused selectors
 				if dom.xpath("/html/head/link[contains(@href, 'local.css')]"):
