@@ -766,6 +766,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							img_node.set_attr("class", "mathml epub-type-se-image-color-depth-black-on-transparent")
 							img_node.set_attr("epub:type", "se:image.color-depth.black-on-transparent")
 							img_node.set_attr("src", f"../images/mathml-{mathml_count}-2x.png")
+							if node.get_attr("alttext"):
+								img_node.set_attr("alt", node.get_attr("alttext"))
 
 							if ibooks_srcset_bug_exists:
 								# Calculate the "normal" height/width from the 2x image
