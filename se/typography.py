@@ -77,6 +77,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Some older texts use the ,— construct; remove that archaichism
 	xhtml = xhtml.replace(",—", "—")
 
+	# Remove shy hyphens
+	xhtml = xhtml.replace(se.SHY_HYPHEN, "")
+
 	# Fix some common em-dash transcription errors
 	xhtml = regex.sub(r"([:;])-([\p{Letter}])", r"\1—\2", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"([\p{Letter}])-“", r"\1—“", xhtml, flags=regex.IGNORECASE)
