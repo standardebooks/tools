@@ -41,7 +41,13 @@ def xpath() -> int:
 							# We may select text() nodes as a result
 							output = str(node)
 
-						console.print("".join([f"\t{line}\n" for line in output.splitlines()]))
+						output = "".join([f"\t{line}\n" for line in output.splitlines()])
+
+						# We only have to escape leading [ to prevent Rich from converting
+						# it to a style. If we also escape ] then Rich will print the slash.
+						output = output.replace("[", "\\[")
+
+						console.print(output)
 
 		except etree.XPathEvalError as ex:
 			se.print_error("Invalid xpath expression.")
