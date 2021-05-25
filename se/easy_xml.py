@@ -250,7 +250,11 @@ class EasyXmlElement:
 
 				attrs += f" {short_name}=\"{value}\""
 
-		return f"<{self.lxml_element.tag}{attrs}>"
+		tag_name = self.lxml_element.tag
+		for namespace, identifier in self.namespaces.items():
+			tag_name = tag_name.replace(f"{{{identifier}}}", f"{namespace}:")
+
+		return f"<{tag_name}{attrs}>"
 
 	def to_string(self) -> str:
 		"""
