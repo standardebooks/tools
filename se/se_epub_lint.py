@@ -162,6 +162,7 @@ METADATA
 "m-065", "Word count in metadata doesn’t match actual word count."
 "m-066", "[url]id.loc.gov[/] URI starting with illegal https."
 "m-067", "Non-SE link in long description."
+"m-068", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"title-type\">[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -884,14 +885,23 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	else:
 		messages.append(LintMessage("m-021", "No [xml]<meta property=\"se:subject\">[/] element found.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-	# Check that each <dc:title> has a file-as
+	# Check that each <dc:title> has a file-as and title-type, if applicable
 	titles_missing_file_as = []
-	for node in self.metadata_dom.xpath("/package/metadata/dc:title"):
+	titles_missing_title_type = []
+	titles = self.metadata_dom.xpath("/package/metadata/dc:title")
+	for node in titles:
 		if not self.metadata_dom.xpath(f"/package/metadata/meta[@property='file-as' and @refines='#{node.get_attr('id')}']"):
 			titles_missing_file_as.append(node)
 
+		# Only check for title-type if there is more than one <dc:title>
+		if len(titles) > 1 and not self.metadata_dom.xpath(f"/package/metadata/meta[@property='title-type' and @refines='#{node.get_attr('id')}']"):
+			titles_missing_title_type.append(node)
+
 	if titles_missing_file_as:
 		messages.append(LintMessage("m-062", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"file-as\">[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in titles_missing_file_as]))
+
+	if titles_missing_title_type:
+		messages.append(LintMessage("m-068", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"title-type\">[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in titles_missing_title_type]))
 
 	# Check for CDATA tags
 	if "<![CDATA[" in metadata_xml:
