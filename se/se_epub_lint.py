@@ -157,12 +157,11 @@ METADATA
 "m-060", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/]."
 "m-061", "Link must be preceded by [text]the[/]."
 "m-063", "Cover image has not been built."
+"m-062", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"file-as\">[/]."
 "m-064", "SE ebook hyperlinked in long description but not italicized."
 "m-065", "Word count in metadata doesn’t match actual word count."
 "m-066", "[url]id.loc.gov[/] URI starting with illegal https."
 "m-067", "Non-SE link in long description."
-vvvvvvvvvvvvvvvvvvUNUSEDvvvvvvvvvvvvvvvv
-"m-062", "Missing data in imprint."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -884,6 +883,15 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	else:
 		messages.append(LintMessage("m-021", "No [xml]<meta property=\"se:subject\">[/] element found.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+	# Check that each <dc:title> has a file-as
+	titles_missing_file_as = []
+	for node in self.metadata_dom.xpath("/package/metadata/dc:title"):
+		if not self.metadata_dom.xpath(f"/package/metadata/meta[@property='file-as' and @refines='#{node.get_attr('id')}']"):
+			titles_missing_file_as.append(node)
+
+	if titles_missing_file_as:
+		messages.append(LintMessage("m-062", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"file-as\">[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in titles_missing_file_as]))
 
 	# Check for CDATA tags
 	if "<![CDATA[" in metadata_xml:
