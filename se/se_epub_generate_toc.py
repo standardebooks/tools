@@ -179,9 +179,14 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list):
 
 	if not epub_type:  # some productions don't have an epub:type in outermost section, so get it from body tag
 		epub_type = bodys[0].get_attr("epub:type")
+		if not epub_type:
+			epub_type = ""
 
 	if epub_type in ["frontmatter", "bodymatter", "backmatter"]:
 		return  # if epub_type is ONLY frontmatter, bodymatter, backmatter, we don't want this as a landmark
+
+	# We may wind up with a (front|body|back)matter semantic in epub_type, remove it here since we add it to the landmark later
+	epub_type = regex.sub(r"(front|body|back)matter\s*", "", epub_type)
 
 	landmark = TocItem()
 	if epub_type:

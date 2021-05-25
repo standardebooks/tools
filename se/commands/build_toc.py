@@ -12,7 +12,7 @@ def build_toc() -> int:
 	"""
 	Entry point for `se build-toc`
 
-	The meat of this function is broken out into the generate_toc.py module for readability
+	The meat of this function is broken out into the se_epub_generate_toc.py module for readability
 	and maintainability.
 	"""
 
