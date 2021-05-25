@@ -105,6 +105,7 @@ METADATA
 "m-008", "[url]id.loc.gov[/] URI ending with illegal [path].html[/]."
 "m-009", f"[xml]<meta property=\"se:url.vcs.github\">[/] value does not match expected: [url]{self.generated_github_repo_url}[/]."
 "m-010", "Invalid [xml]refines[/] property."
+"m-011", "Subtitle in metadata, but no full title element."
 "m-012", "Non-typogrified character in [xml]<dc:title>[/] element."
 "m-013", "Non-typogrified character in [xml]<dc:description>[/] element."
 "m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element."
@@ -161,7 +162,6 @@ METADATA
 "m-066", "[url]id.loc.gov[/] URI starting with illegal https."
 "m-067", "Non-SE link in long description."
 vvvvvvvvvvvvvvvvvvUNUSEDvvvvvvvvvvvvvvvv
-"m-011", "Use HathiTrust record URLs, not page scan URLs, in metadata, imprint, and colophon. Record URLs look like: [url]https://catalog.hathitrust.org/Record/<RECORD-ID>[/]."
 "m-062", "Missing data in imprint."
 
 SEMANTICS & CONTENT
@@ -839,6 +839,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		missing_metadata_elements.append("""<meta property="se:word-count">""")
 	elif word_count != "WORD_COUNT" and int(word_count) != self.get_word_count():
 		messages.append(LintMessage("m-065", "Word count in metadata doesn’t match actual word count.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+	# Check if we have a subtitle but no fulltitle
+	if self.metadata_dom.xpath("/package/metadata[./meta[@property='title-type' and text()='subtitle'] and not(./meta[@property='title-type' and text()='extended'])]"):
+		messages.append(LintMessage("m-011", "Subtitle in metadata, but no full title element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for tags that imply other tags
 	implied_tags = {"Fiction": ["Science Fiction", "Drama", "Fantasy"]}
