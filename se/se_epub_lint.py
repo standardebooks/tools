@@ -105,7 +105,7 @@ METADATA
 "m-008", "[url]id.loc.gov[/] URI ending with illegal [path].html[/]."
 "m-009", f"[xml]<meta property=\"se:url.vcs.github\">[/] value does not match expected: [url]{self.generated_github_repo_url}[/]."
 "m-010", "Invalid [xml]refines[/] property."
-"m-011", "Subtitle in metadata, but no full title element."
+"m-011", "Subtitle in metadata, but no full/extended title element."
 "m-012", "Non-typogrified character in [xml]<dc:title>[/] element."
 "m-013", "Non-typogrified character in [xml]<dc:description>[/] element."
 "m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element."
@@ -253,6 +253,7 @@ SEMANTICS & CONTENT
 "s-086", "[text]Op. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] means [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded."
 "s-087", "Subtitle in metadata, but no subtitle in the half title page."
 "s-088", "Subtitle in half title page, but no subtitle in metadata."
+"s-089", "MathML missing [attr]alttext[/] attribute."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -844,7 +845,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	# Check if we have a subtitle but no fulltitle
 	if self.metadata_dom.xpath("/package/metadata[./meta[@property='title-type' and text()='subtitle'] and not(./meta[@property='title-type' and text()='extended'])]"):
-		messages.append(LintMessage("m-011", "Subtitle in metadata, but no full title element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+		messages.append(LintMessage("m-011", "Subtitle in metadata, but no full/extended title element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for tags that imply other tags
 	implied_tags = {"Fiction": ["Science Fiction", "Drama", "Fantasy"]}
@@ -1891,6 +1892,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//i[@epub:type='z3998:stage-direction' and re:test(., '^[a-z]') and (not(./preceding-sibling::node()[normalize-space(.)]) or ./preceding-sibling::node()[1][re:test(normalize-space(.), '[^a-z:—,;]$')])]")
 				if nodes:
 					messages.append(LintMessage("t-053", "Stage direction starting in lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for MathML without alttext
+				nodes = dom.xpath("/html/body//m:math[not(@alttext)]")
+				if nodes:
+					messages.append(LintMessage("s-089", "MathML missing [attr]alttext[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for rdquo preceded by space (but not a rsquo, which might indicate a nested quotation)
 				matches = regex.findall(r".*[^’]\s”", regex.sub(r"<td>.*?</td>", "", file_contents, regex.DOTALL))
