@@ -1503,6 +1503,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for ,.
 				typos = typos + regex.findall(r",\.", file_contents)
 
+				# Check for two quotations in one paragraph
+				typos = typos + [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^”]+?”\\s“[^”]+?”$')]")]
+
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
