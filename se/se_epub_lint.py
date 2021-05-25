@@ -163,6 +163,7 @@ METADATA
 "m-066", "[url]id.loc.gov[/] URI starting with illegal https."
 "m-067", "Non-SE link in long description."
 "m-068", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"title-type\">[/]."
+"m-069", "[text]comprised of[/] in metadata. Hint: Is there a better phrase to use here?"
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -854,6 +855,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			for tag in tags:
 				if self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text()={se.easy_xml.escape_xpath(tag)}]"):
 					messages.append(LintMessage("m-058", f"[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+
+	# Check for 'comprised of'
+	if self.metadata_dom.xpath("/package/metadata/*[re:test(., '[Cc]omprised of')]"):
+		messages.append(LintMessage("m-069", "[text]comprised of[/] in metadata. Hint: Is there a better phrase to use here?", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for illegal em-dashes in <dc:subject>
 	nodes = self.metadata_dom.xpath("/package/metadata/dc:subject[contains(text(), '—')]")
