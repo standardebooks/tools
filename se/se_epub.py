@@ -1133,11 +1133,8 @@ class SeEpub:
 		notes_changed = 0
 		change_list: List[str] = []
 
-		for file_path in self.content_path.glob("**/*.xhtml"):
+		for file_path in self.spine_file_paths:
 			dom = self.get_dom(file_path)
-
-			if dom.xpath("/html/body//*[re:test(@epub:type, '\\b(titlepage|colophon|copyright-page|imprint|halftitlepage|endnotes)\\b')]"):
-				continue
 
 			processed += 1
 
