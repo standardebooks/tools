@@ -251,7 +251,8 @@ SEMANTICS & CONTENT
 "s-084", "Poem has incorrect semantics."
 "s-085", "[xhtml]<h2>[/] element found in a [xhtml]<section>[/] that is deeper than expected. Hint: If this work has parts, should this header be [xhtml]<h3>[/] or higher?"
 "s-086", "[text]Op. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] means [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded."
-
+"s-087", "Subtitle in metadata, but no subtitle in the half title page."
+"s-088", "Subtitle in half title page, but no subtitle in metadata."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -628,6 +629,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	files_not_url_safe = []
 	id_values = {}
 	duplicate_id_values = []
+	ebook_has_subtitle = bool(self.metadata_dom.xpath("/package/metadata/meta[@property='title-type' and text()='subtitle']"))
 
 	# Iterate over rules to do some other checks
 	abbr_with_whitespace = []
@@ -1131,8 +1133,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Extract ID attributes for later checks
 				id_attrs = id_attrs + dom.xpath("//*[name() != 'section' and name() != 'article' and name() != 'figure']/@id")
 
-				# concat() to not match `halftitlepage`
-				if dom.xpath("/html/body/section[contains(concat(' ', @epub:type, ' '), ' titlepage ')]"):
+				# Test against word boundaries to not match `halftitlepage`
+				if dom.xpath("/html/body/section[re:test(@epub:type, '\\btitlepage\\b')]"):
 					# Check if the <title> element is set correctly, but only if there's no heading content.
 					# If there's heading content, then <title> should match the expected generated value from the heading content.
 					if dom.xpath("/html[not(./body//*[re:test(name(), '^h(group|[1-6])$')]) and ./head/title[text()!='Titlepage']]"):
@@ -1489,6 +1491,19 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
 				if nodes:
 					messages.append(LintMessage("s-024", "Header elements that are entirely non-English should not be set in italics. Instead, the [xhtml]<h#>[/] element has the [attr]xml:lang[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				# Check for half title pages missing subtitles
+				if ebook_has_subtitle:
+					# Make sure we exclude <a> because that appears in the ToC landmarks
+					nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage') and not(.//*[contains(@epub:type, 'subtitle')])]")
+					if nodes:
+						messages.append(LintMessage("s-087", "Subtitle in metadata, but no subtitle in the half title page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+				else:
+					# Make sure we exclude <a> because that appears in the ToC landmarks
+					nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage') and .//*[contains(@epub:type, 'subtitle')]]")
+					if nodes:
+						messages.append(LintMessage("s-088", "Subtitle in half title page, but no subtitle in metadata.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for header elements that have a label, but are missing the label semantic
 				# Find h# nodes whose first child is a text node matching a label type, and where that text node's next sibling is a semantic roman numeral
