@@ -49,6 +49,7 @@ class TocItem:
 	# pylint: disable=too-many-instance-attributes
 
 	file_link = ""
+	hidden = False # Did the <h#> element have the `hidden` attribute? If so, that means we MUST include it as a subtitle
 	level = 0
 	roman = ""
 	title = ""
@@ -89,7 +90,7 @@ class TocItem:
 				out_string += f"<a href=\"text/{self.file_link}\"><span epub:type=\"z3998:roman\">{self.roman}</span>: {self.subtitle}</a>\n"
 		else:
 			# title has text other than a roman numeral
-			if self.subtitle != "" and (self.title_is_ordinal or (self.division in [BookDivision.PART, BookDivision.DIVISION, BookDivision.VOLUME])):
+			if self.subtitle != "" and (self.hidden or self.title_is_ordinal or (self.division in [BookDivision.PART, BookDivision.DIVISION, BookDivision.VOLUME])):
 				# Use the subtitle only if we're a Part or Division or Volume or if title was an ordinal
 				out_string += f"<a href=\"text/{self.file_link}\">{self.title}"
 
@@ -107,7 +108,7 @@ class TocItem:
 
 		return out_string
 
-	def landmark_link(self, work_type: str = "fiction", work_title: str = "WORK_TITLE"):
+	def landmark_link(self, work_type: str = "fiction", work_title: str = "WORK_TITLE") -> str:
 		"""
 		Generates the landmark item (including list item tags) for the ToC item
 
@@ -155,7 +156,7 @@ def get_place(node: EasyXmlElement) -> Position:
 
 	return retval
 
-def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list):
+def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list) -> None:
 	"""
 	Adds an item to landmark list with appropriate details.
 
@@ -202,7 +203,7 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list):
 				landmark.title = landmark.epub_type.capitalize()
 		landmarks.append(landmark)
 
-def process_landmarks(landmarks_list: list, work_type: str, work_title: str):
+def process_landmarks(landmarks_list: list, work_type: str, work_title: str) -> str:
 	"""
 	Runs through all found landmark items and writes them to the toc file.
 
@@ -210,9 +211,6 @@ def process_landmarks(landmarks_list: list, work_type: str, work_title: str):
 	landmarks_list: the completed list of landmark items
 	work_type: "fiction" or "non-fiction"
 	work_title: the title of the book
-
-	OUTPUTS:
-	None
 	"""
 
 	# we don't want frontmatter items to be included once we've started the body items
@@ -366,7 +364,7 @@ def extract_strings(node: EasyXmlElement) -> str:
 	out_string = strip_notes(out_string)
 	return regex.sub(r"[\n\t]", "", out_string)
 
-def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, nest_under_halftitle: bool, single_file: bool):
+def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, nest_under_halftitle: bool, single_file: bool) -> None:
 	"""
 	Find headings in current file and extract title data
 	into items added to toc_list.
@@ -477,6 +475,9 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 
 	toc_item.lang = node.get_attr("xml:lang")
 
+	if node.get_attr("hidden"):
+		toc_item.hidden = True
+
 	epub_type = node.get_attr("epub:type")
 
 	# it may be an empty header tag eg <h3>, so we pass its parent rather than itself to evaluate the parent's descendants
@@ -525,7 +526,7 @@ def get_child_strings(node: EasyXmlElement) -> str:
 	return child_strs
 
 
-def evaluate_descendants(node: EasyXmlElement, toc_item):
+def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem) -> TocItem:
 	"""
 	Burrow down into a hgroup structure to qualify the ToC item
 
@@ -540,6 +541,10 @@ def evaluate_descendants(node: EasyXmlElement, toc_item):
 		if not toc_item.lang:
 			toc_item.lang = child.get_attr("xml:lang")
 		epub_type = child.get_attr("epub:type")
+
+		if child.get_attr("hidden"):
+			toc_item.hidden = True
+
 		if not epub_type:
 			# should be a label/ordinal grouping
 			child_strings = get_child_strings(child)
