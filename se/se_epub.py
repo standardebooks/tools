@@ -230,7 +230,15 @@ class SeEpub:
 				identifier = identifier.strip("_") + "/"
 
 			for illustrator in illustrators:
-				if (not illustrators_have_display_seq and illustrator["include"]) or illustrator["display_seq"]:
+				include_illustrator = True
+
+				# If the translator is also the illustrator, don't include them twice
+				for translator in translators:
+					if illustrator["name"] == translator["name"]:
+						include_illustrator = False
+						break
+
+				if (include_illustrator and not illustrators_have_display_seq and illustrator["include"]) or illustrator["display_seq"]:
 					identifier += se.formatting.make_url_safe(illustrator["name"]) + "_"
 
 			identifier = identifier.strip("_/")
