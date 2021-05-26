@@ -1134,6 +1134,8 @@ class SeEpub:
 		change_list: List[str] = []
 
 		for file_path in self.spine_file_paths:
+			if file_path.name == "endnotes.xhtml": #don't want to process this file here
+				continue
 			dom = self.get_dom(file_path)
 
 			processed += 1
