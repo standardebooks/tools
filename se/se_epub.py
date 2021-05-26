@@ -1136,6 +1136,10 @@ class SeEpub:
 		for file_path in self.spine_file_paths:
 			dom = self.get_dom(file_path)
 
+			# Skip the actual endnotes file, we'll handle that later
+			if dom.xpath("/html/body//*[contains(@epub:type, 'endnotes')]"):
+				continue
+
 			processed += 1
 
 			needs_rewrite = False
