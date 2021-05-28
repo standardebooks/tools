@@ -1235,9 +1235,6 @@ def simplify_css(css: str) -> str:
 	css = css.replace("{,", ",")
 	css = css.replace(",,", ",")
 
-	# Now replace abbr styles with spans, because ADE screws up with unrecognized elements
-	css = css.replace("abbr", "span")
-
 	# Replace shorthand CSS with longhand properties, another ADE screwup
 	css = regex.sub(r"margin:\s*([^\s]+?)\s*;", "margin-top: \\1;\n\tmargin-right: \\1;\n\tmargin-bottom: \\1;\n\tmargin-left: \\1;", css)
 	css = regex.sub(r"margin:\s*([^\s]+?)\s+([^\s]+?)\s*;", "margin-top: \\1;\n\tmargin-right: \\2;\n\tmargin-bottom: \\1;\n\tmargin-left: \\2;", css)

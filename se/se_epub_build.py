@@ -191,10 +191,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			with open(file_path, "r+", encoding="utf-8") as file:
 				css = file.read()
 
-				# Before we do anything, we process a special case in core.css
-				if file_path.name == "core.css":
-					css = regex.sub(r"abbr{.+?}", "", css, flags=regex.DOTALL)
-
 				total_css = total_css + css + "\n"
 				file.seek(0)
 				file.write(se.formatting.simplify_css(css))
@@ -263,30 +259,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							if new_class not in current_class:
 								current_class = f"{current_class} {new_class}".strip()
 								element.set_attr("class", current_class)
-
-				if "abbr" in selector:
-					try:
-						# Convert <abbr> to <span>
-						for element in dom.css_select(selector):
-							# Create a new element and move this element's children in to it
-							span = se.easy_xml.EasyXmlElement("<span/>")
-							span.text = element.text
-							span.attrs = element.attrs
-
-							for child in element.children:
-								span.append(child)
-
-							element.replace_with(span)
-
-					except lxml.cssselect.ExpressionError:
-						# This gets thrown if we use pseudo-elements, which lxml doesn't support
-						continue
-					except lxml.cssselect.SelectorSyntaxError as ex:
-						raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
-
-			# Now we just remove all remaining abbr tags that did not get converted to spans
-			for node in dom.xpath("/html/body//abbr"):
-				node.unwrap()
 
 		# Done simplifying CSS and tags!
 
