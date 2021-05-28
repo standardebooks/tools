@@ -14,6 +14,7 @@ from distutils.dir_util import copy_tree
 from copy import deepcopy
 from hashlib import sha1
 from pathlib import Path
+import zipfile
 import importlib_resources
 
 from cairosvg import svg2png
@@ -909,8 +910,21 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			# Path arguments must be cast to string for Windows compatibility.
 			with importlib_resources.path("se.data.epubcheck", "epubcheck.jar") as jar_path:
 				try:
-					epubcheck_result = subprocess.run(["java", "-jar", str(jar_path), "--quiet", str(output_directory / compatible_epub_output_filename)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+					# Extract our epub so that epubcheck will have actual files to point to in its output
+					# We can't use tempfile.TemporaryDirectory() because it's cleaned up automatically at the end of the script
+					temp_dir = Path(tempfile.mkdtemp())
+					expanded_epub_dir = temp_dir / (compatible_epub_output_filename + ".extracted")
+
+					# Expand the epub into a temp dir, so that if epubcheck fails, we can inspect the actual outputted files
+					with zipfile.ZipFile(output_directory / compatible_epub_output_filename, "r") as file:
+						file.extractall(expanded_epub_dir)
+
+					epubcheck_result = subprocess.run(["java", "-jar", str(jar_path), "--quiet", "--mode", "exp", str(expanded_epub_dir)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
 					epubcheck_result.check_returncode()
+
+					# Success, remove our temp dir
+					shutil.rmtree(temp_dir)
+
 				except subprocess.CalledProcessError as ex:
 					output = epubcheck_result.stdout.decode().strip()
 					# Get the epubcheck version to print to the console
