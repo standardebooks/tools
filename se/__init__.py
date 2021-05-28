@@ -134,16 +134,6 @@ def strip_bom(string: str) -> str:
 
 	return string
 
-def quiet_remove(file: Path) -> None:
-	"""
-	Helper function to delete a file without throwing an exception if the file doesn't exist.
-	"""
-
-	try:
-		file.unlink()
-	except Exception:
-		pass
-
 def print_error(message: Union[SeException, str], verbose: bool = False, is_warning: bool = False) -> None:
 	"""
 	Helper function to print a colored error message to the console.

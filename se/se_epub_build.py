@@ -108,13 +108,13 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 	shutil.rmtree(work_compatible_epub_dir / ".git", ignore_errors=True)
 
 	# Clean up old output files if any
-	se.quiet_remove(output_dir / f"thumbnail_{asin}_EBOK_portrait.jpg")
-	se.quiet_remove(output_dir / "cover.jpg")
-	se.quiet_remove(output_dir / "cover-thumbnail.jpg")
-	se.quiet_remove(output_dir / compatible_epub_output_filename)
-	se.quiet_remove(output_dir / advanced_epub_output_filename)
-	se.quiet_remove(output_dir / kobo_output_filename)
-	se.quiet_remove(output_dir / kindle_output_filename)
+	(output_dir / f"thumbnail_{asin}_EBOK_portrait.jpg").unlink(missing_ok=True)
+	(output_dir / "cover.jpg").unlink(missing_ok=True)
+	(output_dir / "cover-thumbnail.jpg").unlink(missing_ok=True)
+	(output_dir / compatible_epub_output_filename).unlink(missing_ok=True)
+	(output_dir / advanced_epub_output_filename).unlink(missing_ok=True)
+	(output_dir / kobo_output_filename).unlink(missing_ok=True)
+	(output_dir / kindle_output_filename).unlink(missing_ok=True)
 
 	# Are we including proofreading CSS?
 	if proof:
