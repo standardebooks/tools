@@ -116,8 +116,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 	kindle_output_filename = f"{output_filename}{'.proof' if proof else ''}.azw3"
 
 	# Create our temp work directory
-	with tempfile.TemporaryDirectory() as work_dir:
-		work_dir = Path(work_dir)
+	with tempfile.TemporaryDirectory() as temp_dir:
+		work_dir = Path(temp_dir)
 		work_compatible_epub_dir = work_dir / self.path.name
 
 		copy_tree(self.path / "src", str(work_compatible_epub_dir))
@@ -921,44 +921,46 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		if run_epubcheck:
 			# Path arguments must be cast to string for Windows compatibility.
 			with importlib_resources.path("se.data.epubcheck", "epubcheck.jar") as jar_path:
-				try:
-					epubcheck_result = subprocess.run(["java", "-jar", str(jar_path), "--quiet", "--mode", "exp", str(work_compatible_epub_dir)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
-					epubcheck_result.check_returncode()
-
-				except subprocess.CalledProcessError as ex:
-					output = epubcheck_result.stdout.decode().strip()
-					# Get the epubcheck version to print to the console
-					version_output = subprocess.run(["java", "-jar", str(jar_path), "--version"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False).stdout.decode().strip()
-					version = regex.search(r"[0-9]+\.([0-9]+\.?)*", version_output, flags=regex.MULTILINE).group(0)
-
-					# The last two lines from epubcheck output are not necessary. Remove them here.
-					# Remove them as lines instead of as a matching regex to work with localized output strings.
-					split_output = output.split("\n")
-					output = "\n".join(split_output[:-2])
-
-					# Save the epub output so the user can inspect it
-					epub_debug_dir = __save_debug_epub(work_compatible_epub_dir)
-
-					# Replace instances of the temp epub path, with our permanent epub path
-					# Note that epubcheck always appends ".epub" to the dir name
-					output = output.replace(str(work_compatible_epub_dir) + ".epub", str(epub_debug_dir))
-
-					# Try to linkify files in output if we can find them
+				# We have to use a temp file to hold stdout, because if the output is too large for the output buffer in subprocess.run() (and thus popen()) it will be truncated
+				with tempfile.TemporaryFile() as stdout:
 					try:
-						# epubcheck adds an additional ".epub" extension to the output filename, we must remove it so that the filenames actually match the filesystem
-						output = regex.sub(r"(ERROR\(.+?\): )(.+?)(\([0-9]+,[0-9]+\))", lambda match: match.group(1) + f"[path][link=file://{match.group(2)}]{match.group(2)}[/][/]" + match.group(3), output)
-					except:
-						# If something goes wrong, just pass through the usual output
-						pass
+						epubcheck_result = subprocess.run(["java", "-jar", str(jar_path), "--quiet", "--mode", "exp", str(work_compatible_epub_dir)], stdout=stdout, stderr=subprocess.STDOUT, check=False)
+						epubcheck_result.check_returncode()
 
-					raise se.BuildFailedException(f"[bash]epubcheck[/] v{version} failed with:\n{output}") from ex
+					except subprocess.CalledProcessError as ex:
+						stdout.seek(0)
+						output = stdout.read().decode().strip()
+						# Get the epubcheck version to print to the console
+						version_output = subprocess.run(["java", "-jar", str(jar_path), "--version"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False).stdout.decode().strip()
+						version = regex.search(r"[0-9]+\.([0-9]+\.?)*", version_output, flags=regex.MULTILINE).group(0)
+
+						# The last two lines from epubcheck output are not necessary. Remove them here.
+						# Remove them as lines instead of as a matching regex to work with localized output strings.
+						split_output = output.split("\n")
+						output = "\n".join(split_output[:-2])
+
+						# Save the epub output so the user can inspect it
+						epub_debug_dir = __save_debug_epub(work_compatible_epub_dir)
+
+						# Replace instances of the temp epub path, with our permanent epub path
+						# Note that epubcheck always appends ".epub" to the dir name
+						output = output.replace(str(work_compatible_epub_dir) + ".epub", str(epub_debug_dir))
+
+						# Try to linkify files in output if we can find them
+						try:
+							# epubcheck adds an additional ".epub" extension to the output filename, we must remove it so that the filenames actually match the filesystem
+							output = regex.sub(r"(ERROR\(.+?\): )(.+?)(\([0-9]+,[0-9]+\))", lambda match: match.group(1) + f"[path][link=file://{match.group(2)}]{match.group(2)}[/][/]" + match.group(3), output)
+						except:
+							# If something goes wrong, just pass through the usual output
+							pass
+
+						raise se.BuildFailedException(f"[bash]epubcheck[/] v{version} failed with:\n{output}") from ex
 
 		# Now run Ace
-		# Ace only runs if epubcheck already ran, so our temp directory from epubcheck is still there for us to use.
 		if run_ace:
-			try:
-				# We have to use a temp file to hold stdout, because ace output is too large for the output buffer in subprocess.run() (and thus popen())
-				with tempfile.TemporaryFile() as stdout:
+			# We have to use a temp file to hold stdout, because if the output is too large for the output buffer in subprocess.run() (and thus popen()) it will be truncated
+			with tempfile.TemporaryFile() as stdout:
+				try:
 					ace_result = subprocess.run(["ace", "--silent", str(work_compatible_epub_dir)], stdout=stdout, check=False)
 					ace_result.check_returncode()
 
@@ -982,8 +984,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 						raise se.BuildFailedException(f"[bash]ace[/] failed with:\n\n{output.strip()}")
 
-			except subprocess.CalledProcessError as ex:
-				raise se.BuildFailedException("[bash]ace[/] failed.") from ex
+				except subprocess.CalledProcessError as ex:
+					raise se.BuildFailedException("[bash]ace[/] failed.") from ex
 
 		# Epubcheck and Ace passed!
 
