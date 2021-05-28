@@ -6,6 +6,7 @@ Strictly speaking, the build() function should be a class member of SeEpub. But
 the function is very big and it makes editing easier to put it in a separate file.
 """
 
+import json
 import os
 import shutil
 import subprocess
@@ -41,6 +42,7 @@ SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
 # See https://www.w3.org/TR/dpub-aria-1.0/
 # Without preceding `doc-`
 ARIA_ROLES = ["abstract", "acknowledgments", "afterword", "appendix", "backlink", "biblioentry", "bibliography", "biblioref", "chapter", "colophon", "conclusion", "cover", "credit", "credits", "dedication", "endnote", "endnotes", "epigraph", "epilogue", "errata", "example", "footnote", "foreword", "glossary", "glossref", "index", "introduction", "noteref", "notice", "pagebreak", "pagelist", "part", "preface", "prologue", "pullquote", "qna", "subtitle", "tip", "toc"]
+ARIA_ROLES = []
 
 def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool, build_covers: bool) -> None:
 	"""
@@ -60,9 +62,13 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			if not ebook_convert_path.exists():
 				raise se.MissingDependencyException("Couldn’t locate [bash]ebook-convert[/]. Is [bash]calibre[/] installed?")
 
+	run_ace = False
 	if run_epubcheck:
 		if not shutil.which("java"):
 			raise se.MissingDependencyException("Couldn’t locate [bash]java[/]. Is it installed?")
+
+		if shutil.which("ace"):
+			run_ace = True
 
 	# Check the output directory and create it if it doesn't exist
 	try:
@@ -907,23 +913,20 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		se.epub.write_epub(work_epub_root_directory, output_directory / compatible_epub_output_filename)
 
 		if run_epubcheck:
+			# Extract our epub so that epubcheck will have actual files to point to in its output
+			# We can't use tempfile.TemporaryDirectory() because it's cleaned up automatically at the end of the script
+			temp_dir = Path(tempfile.mkdtemp())
+			expanded_epub_dir = temp_dir / (compatible_epub_output_filename + ".extracted")
+
+			with zipfile.ZipFile(output_directory / compatible_epub_output_filename, "r") as zip_file:
+				zip_file.extractall(expanded_epub_dir)
+
 			# Path arguments must be cast to string for Windows compatibility.
+			# Run epubcheck
 			with importlib_resources.path("se.data.epubcheck", "epubcheck.jar") as jar_path:
 				try:
-					# Extract our epub so that epubcheck will have actual files to point to in its output
-					# We can't use tempfile.TemporaryDirectory() because it's cleaned up automatically at the end of the script
-					temp_dir = Path(tempfile.mkdtemp())
-					expanded_epub_dir = temp_dir / (compatible_epub_output_filename + ".extracted")
-
-					# Expand the epub into a temp dir, so that if epubcheck fails, we can inspect the actual outputted files
-					with zipfile.ZipFile(output_directory / compatible_epub_output_filename, "r") as file:
-						file.extractall(expanded_epub_dir)
-
 					epubcheck_result = subprocess.run(["java", "-jar", str(jar_path), "--quiet", "--mode", "exp", str(expanded_epub_dir)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
 					epubcheck_result.check_returncode()
-
-					# Success, remove our temp dir
-					shutil.rmtree(temp_dir)
 
 				except subprocess.CalledProcessError as ex:
 					output = epubcheck_result.stdout.decode().strip()
@@ -938,12 +941,46 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 					# Try to linkify files in output if we can find them
 					try:
-						output = regex.sub(r"(ERROR\(.+?\): )(.+?)(\([0-9]+,[0-9]+\))", lambda match: match.group(1) + "[path][link=file://" + str(self.path / "src" / regex.sub(fr"^\..+?\.epub{os.sep}", "", match.group(2))) + "]" + match.group(2) + "[/][/]" + match.group(3), output)
+						# epubcheck adds an additional ".epub" extension to the output filename, we must remove it so that the filenames actually match the filesystem
+						output = regex.sub(r"(ERROR\(.+?\): )(.+?)(\([0-9]+,[0-9]+\))", lambda match: match.group(1) + "[path][link=file://" + str(self.path / "src" / regex.sub(r"\.extracted\.epub", ".extracted", regex.sub(fr"^\..+?\.epub{os.sep}", "", match.group(2)))) + "]" + regex.sub(r"\.extracted\.epub", ".extracted", match.group(2)) + "[/][/]" + match.group(3), output)
 					except:
 						# If something goes wrong, just pass through the usual output
 						pass
 
 					raise se.BuildFailedException(f"[bash]epubcheck[/] v{version} failed with:\n{output}") from ex
+
+		# Now run Ace
+		# Ace only runs if epubcheck already ran, so our temp directory from epubcheck is still there for us to use.
+		if run_ace:
+			try:
+				# We have to use a temp file to hold stdout, because ace output is too large for the output buffer in subprocess.run() (and thus popen())
+				with tempfile.TemporaryFile() as stdout:
+					ace_result = subprocess.run(["ace", "--silent", str(output_directory / compatible_epub_output_filename)], stdout=stdout, check=False)
+					ace_result.check_returncode()
+
+					stdout.seek(0)
+					ace_dom = json.loads(stdout.read().decode().strip())
+					output = ""
+
+					# Print Ace output to the console in a nice way
+					if ace_dom["earl:result"]["earl:outcome"] != "pass":
+						for assertion in ace_dom["assertions"]:
+							if assertion["earl:result"]["earl:outcome"] != "pass":
+								file = assertion["earl:testSubject"]["url"]
+								output += f"[path][link=file://{expanded_epub_dir / self.content_path.name / file}]{file}[/][/]\n"
+								for file_assertion in assertion["assertions"]:
+									if file_assertion["earl:result"]["earl:outcome"] != "pass":
+										output += f"\t{file_assertion['earl:result']['dct:description']}:\n"
+										output += f"\t[xhtml]{file_assertion['earl:result']['html']}[/]\n\n"
+
+						raise se.BuildFailedException(f"[bash]ace[/] failed with:\n\n{output.strip()}")
+
+			except subprocess.CalledProcessError as ex:
+				raise se.BuildFailedException("[bash]ace[/] failed.") from ex
+
+		if run_epubcheck or run_ace:
+			# If we made it here, all checks were successful, so remove our temp dir
+			shutil.rmtree(temp_dir)
 
 		if build_kindle:
 			# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
