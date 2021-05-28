@@ -341,10 +341,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		for node in metadata_dom.xpath("/package[contains(@prefix, 'se:')]/metadata"):
 			node.append(etree.fromstring(f"<meta property=\"se:built-with\">{se.VERSION}</meta>"))
 
-		# Google Play Books chokes on https XML namespace identifiers (as of at least 2017-07)
-		for node in metadata_dom.xpath("/package[contains(@prefix, 'se:')]"):
-			node.set_attr('prefix', node.get_attr('prefix').replace("https://standardebooks.org/vocab/1.0", "http://standardebooks.org/vocab/1.0"))
-
 		# Add replace SVGs with PNGs in the manifest
 		# The actual conversion occurs later
 		for node in metadata_dom.xpath("/package/manifest/item[@media-type='image/svg+xml']"):
