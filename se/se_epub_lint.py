@@ -164,6 +164,7 @@ METADATA
 "m-067", "Non-SE link in long description."
 "m-068", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"title-type\">[/]."
 "m-069", "[text]comprised of[/] in metadata. Hint: Is there a better phrase to use here?"
+"m-070", f"Glossary entry [text]{entry}[/] not present in the text."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -1134,8 +1135,27 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				xml_dom = self.get_dom(filename)
 
 				# / selects the root element, so we have to test against the name instead of doing /search-key-map
-				if xml_dom.xpath("/search-key-map") and filename.name !="glossary-search-key-map.xml":
+				if xml_dom.xpath("/search-key-map") and filename.name != "glossary-search-key-map.xml":
 					messages.append(LintMessage("f-013", "Glossary search key map must be named [path]glossary-search-key-map.xml[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+				# Make sure that everything in glossaries are in the rest of the text
+				if filename.name == "glossary-search-key-map.xml":
+					# Map the glossary to tuples of the values and whether they’re used (initially false)
+					glossary_usage = list(map(lambda node: (node.get_attr("value"), False), xml_dom.xpath(".//*[@value]")))
+					# Walk the tree and mark if any of the glossary entries are used
+					for text_root, text_directories, text_filenames in os.walk(os.path.join(self.path, "src", "epub", "text")):
+						del text_directories
+						for text_filename in text_filenames:
+							text_file = (Path(text_root) / text_filename).resolve()
+							if text_file.suffix == ".xhtml":
+								text = self.get_file(text_file)
+								for glossary_index, glossary_value in enumerate(glossary_usage):
+									if glossary_value[1] is False and glossary_value[0] in text:
+										glossary_usage[glossary_index] = (glossary_value[0], True)
+					# Finally, log any entries that don’t exist in the text
+					for glossary_value in glossary_usage:
+						if glossary_value[1] is False:
+							messages.append(LintMessage("m-070", f"Glossary entry [text]{glossary_value[0]}[/] not present in the text.", se.MESSAGE_TYPE_ERROR, filename))
 
 			if filename.suffix == ".xhtml":
 				# Read file contents into a DOM for querying
