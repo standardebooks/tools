@@ -55,10 +55,11 @@ class SeEpub:
 	An SE epub can have various operations performed on it, including recomposing and linting.
 	"""
 
-	path: Path = Path()
-	content_path: Path = Path()
-	metadata_file_path: Path = Path()
-	toc_path: Path = Path()
+	path: Path = Path() # The path to the base of the ebook repo, i.e., a folder containing ./images/ and ./src/
+	epub_root_path = Path() # The path to the epub source root, i.e. self.path / src
+	content_path: Path = Path() # The path to the epub content base, i.e. self.epub_root_path / epub
+	metadata_file_path: Path = Path() # The path to the metadata file, i.e. self.content_path / content.opf
+	toc_path: Path = Path()  # The path to the metadata file, i.e. self.content_path / toc.xhtml
 	local_css = ""
 	_file_cache: Dict[str, str] = {}
 	_dom_cache: Dict[str, se.easy_xml.EasyXmlTree] = {}
@@ -78,9 +79,11 @@ class SeEpub:
 			if not self.path.is_dir():
 				raise se.InvalidSeEbookException(f"Not a directory: [path][link=file://{self.path}]{self.path}[/][/].")
 
-			container_tree = self.get_dom(self.path / "src" / "META-INF" / "container.xml")
+			self.epub_root_path = self.path / "src"
 
-			self.metadata_file_path = self.path / "src" / container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
+			container_tree = self.get_dom(self.epub_root_path / "META-INF" / "container.xml")
+
+			self.metadata_file_path = self.epub_root_path / container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
 
 			self.content_path = self.metadata_file_path.parent
 
@@ -630,7 +633,7 @@ class SeEpub:
 		"""
 		source_images_directory = self.path / "images"
 		source_titlepage_svg_filename = source_images_directory / "titlepage.svg"
-		dest_images_directory = self.path / "src/epub/images"
+		dest_images_directory = self.content_path / "images"
 		dest_titlepage_svg_filename = dest_images_directory / "titlepage.svg"
 
 		if source_titlepage_svg_filename.is_file():
@@ -651,7 +654,7 @@ class SeEpub:
 		source_images_directory = self.path / "images"
 		source_cover_jpg_filename = source_images_directory / "cover.jpg"
 		source_cover_svg_filename = source_images_directory / "cover.svg"
-		dest_images_directory = self.path / "src/epub/images"
+		dest_images_directory = self.content_path / "images"
 		dest_cover_svg_filename = self.cover_path
 
 		# Create output directory if it doesn't exist

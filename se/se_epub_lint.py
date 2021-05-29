@@ -517,7 +517,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	A list of LintMessage objects.
 	"""
 
-	local_css_path = self.path / "src/epub/css/local.css"
+	local_css_path = self.content_path / "css/local.css"
 	messages: List[LintMessage] = []
 	has_halftitle = False
 	has_frontmatter = False
@@ -978,35 +978,35 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			if not filecmp.cmp(license_file_path, self.path / "LICENSE.md"):
 				messages.append(LintMessage("f-003", f"File does not match [path][link=file://{license_file_path}]{license_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "LICENSE.md"))
 	except Exception:
-		missing_files.append("LICENSE.md")
+		missing_files.append(self.path / "LICENSE.md")
 
 	try:
 		with importlib_resources.path("se.data.templates", "core.css") as core_css_file_path:
-			if not filecmp.cmp(core_css_file_path, self.path / "src/epub/css/core.css"):
-				messages.append(LintMessage("f-004", f"File does not match [path][link=file://{core_css_file_path}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/css/core.css"))
+			if not filecmp.cmp(core_css_file_path, self.content_path / "css/core.css"):
+				messages.append(LintMessage("f-004", f"File does not match [path][link=file://{core_css_file_path}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "css/core.css"))
 	except Exception:
-		missing_files.append("src/epub/css/core.css")
+		missing_files.append(self.content_path / "css/core.css")
 
 	try:
 		with importlib_resources.path("se.data.templates", "logo.svg") as logo_svg_file_path:
-			if not filecmp.cmp(logo_svg_file_path, self.path / "src/epub/images/logo.svg"):
-				messages.append(LintMessage("f-005", f"File does not match [path][link=file://{logo_svg_file_path}]{logo_svg_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/images/logo.svg"))
+			if not filecmp.cmp(logo_svg_file_path, self.content_path / "images/logo.svg"):
+				messages.append(LintMessage("f-005", f"File does not match [path][link=file://{logo_svg_file_path}]{logo_svg_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "images/logo.svg"))
 	except Exception:
-		missing_files.append("src/epub/images/logo.svg")
+		missing_files.append(self.content_path / "images/logo.svg")
 
 	try:
 		with importlib_resources.path("se.data.templates", "uncopyright.xhtml") as uncopyright_file_path:
-			if not filecmp.cmp(uncopyright_file_path, self.path / "src/epub/text/uncopyright.xhtml"):
-				messages.append(LintMessage("f-006", f"File does not match [path][link=file://{uncopyright_file_path}]{uncopyright_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/text/uncopyright.xhtml"))
+			if not filecmp.cmp(uncopyright_file_path, self.content_path / "text/uncopyright.xhtml"):
+				messages.append(LintMessage("f-006", f"File does not match [path][link=file://{uncopyright_file_path}]{uncopyright_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "text/uncopyright.xhtml"))
 	except Exception:
-		missing_files.append("src/epub/text/uncopyright.xhtml")
+		missing_files.append(self.content_path / "text/uncopyright.xhtml")
 
 	try:
 		with importlib_resources.path("se.data.templates", "se.css") as core_css_file_path:
-			if not filecmp.cmp(core_css_file_path, self.path / "src/epub/css/se.css"):
-				messages.append(LintMessage("f-014", f"File does not match [path][link=file://{self.path / 'src/epub/css/se.css'}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "src/epub/css/se.css"))
+			if not filecmp.cmp(core_css_file_path, self.content_path / "css/se.css"):
+				messages.append(LintMessage("f-014", f"File does not match [path][link=file://{self.path / 'src/epub/css/se.css'}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "css/se.css"))
 	except Exception:
-		missing_files.append("src/epub/css/se.css")
+		missing_files.append(self.content_path / "css/se.css")
 
 	# Now iterate over individual files for some checks
 	# We use os.walk() and not Path.glob() so that we can ignore `.git` and its children
@@ -2164,7 +2164,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 									messages.append(LintMessage("s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
 
 							except FileNotFoundError:
-								missing_files.append(f"src/epub/images/{image_ref}")
+								missing_files.append(self.content_path / "images" / image_ref)
 
 					else:
 						img_no_alt.append(node.to_tag_string())
@@ -2390,7 +2390,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					chapter_ref = regex.findall(r"(.*?)#.*", node.get_attr("href"))[0]
 					figcaption_text = ""
 					loi_text = node.inner_text()
-					file_dom = self.get_dom(self.path / "src/epub/text" / chapter_ref)
+					file_dom = self.get_dom(self.content_path / "text" / chapter_ref)
 
 					try:
 						figure = file_dom.xpath(f"//*[@id={se.easy_xml.escape_xpath(figure_ref)}]")[0]

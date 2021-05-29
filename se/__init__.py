@@ -118,6 +118,10 @@ class BuildFailedException(SeException):
 	""" Build failed """
 	code = 17
 
+	def __init__(self, message, messages: List = None):
+		super().__init__(message)
+		self.messages = messages if messages else []
+
 def strip_bom(string: str) -> str:
 	"""
 	Remove the Unicode Byte Order Mark from a string.
@@ -134,7 +138,7 @@ def strip_bom(string: str) -> str:
 
 	return string
 
-def print_error(message: Union[SeException, str], verbose: bool = False, is_warning: bool = False) -> None:
+def print_error(message: Union[SeException, str], verbose: bool = False, is_warning: bool = False, colors: bool = True) -> None:
 	"""
 	Helper function to print a colored error message to the console.
 
@@ -164,7 +168,14 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 		message = str(message).replace("\n", f"\n{MESSAGE_INDENT}")
 
 	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
-	console.print(f"{MESSAGE_INDENT if verbose else ''}[white on {bg_color} bold] {label} [/] {message}")
+
+	if colors:
+		console.print(f"{MESSAGE_INDENT if verbose else ''}[white on {bg_color} bold] {label} [/] {message}")
+	else:
+		# Replace color markup with `
+		message = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message)
+		message = regex.sub(r"`+", "`", message)
+		console.print(f"{MESSAGE_INDENT if verbose else ''}{label} {message}")
 
 def is_positive_integer(value: str) -> int:
 	"""

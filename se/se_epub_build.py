@@ -15,6 +15,7 @@ from distutils.dir_util import copy_tree
 from copy import deepcopy
 from hashlib import sha1
 from pathlib import Path
+from typing import Dict, Tuple, List
 import importlib_resources
 
 from cairosvg import svg2png
@@ -41,6 +42,23 @@ SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
 # See https://www.w3.org/TR/dpub-aria-1.0/
 # Without preceding `doc-`
 ARIA_ROLES = ["abstract", "acknowledgments", "afterword", "appendix", "backlink", "biblioentry", "bibliography", "biblioref", "chapter", "colophon", "conclusion", "cover", "credit", "credits", "dedication", "endnote", "endnotes", "epigraph", "epilogue", "errata", "example", "footnote", "foreword", "glossary", "glossref", "index", "introduction", "noteref", "notice", "pagebreak", "pagelist", "part", "preface", "prologue", "pullquote", "qna", "subtitle", "tip", "toc"]
+
+class BuildMessage:
+	"""
+	An object representing an output message for the build function.
+
+	Contains information like message text, severity, and the epub filename that generated the message.
+	"""
+
+	def __init__(self, source: str, code: str, text: str, filename: Path = None, line: int = None, col: int = None, submessages: List = None):
+		self.source = source
+		self.code = code
+		self.text = text.strip()
+		self.filename = filename
+		self.line = line
+		self.col = col
+		self.location = f"({line}:{col})" if self.line and self.col else None
+		self.submessages = submessages if submessages else []
 
 def __save_debug_epub(work_compatible_epub_dir: Path) -> Path:
 	"""
@@ -120,7 +138,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 		work_dir = Path(temp_dir)
 		work_compatible_epub_dir = work_dir / self.path.name
 
-		copy_tree(self.path / "src", str(work_compatible_epub_dir))
+		copy_tree(self.epub_root_path, str(work_compatible_epub_dir))
 
 		shutil.rmtree(work_compatible_epub_dir / ".git", ignore_errors=True)
 
@@ -886,26 +904,24 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 			except se.SeException as ex:
 				raise se.InvalidXhtmlException(f"{ex}. File: [path][link={filepath}]{filepath}[/][/]") from ex
 
+		# Run checks, if specified
+		build_messages = []
+
 		if run_epubcheck:
 			# Path arguments must be cast to string for Windows compatibility.
 			with importlib_resources.path("se.data.epubcheck", "epubcheck.jar") as jar_path:
 				# We have to use a temp file to hold stdout, because if the output is too large for the output buffer in subprocess.run() (and thus popen()) it will be truncated
 				with tempfile.TemporaryFile() as stdout:
 					try:
-						epubcheck_result = subprocess.run(["java", "-jar", str(jar_path), "--quiet", "--mode", "exp", str(work_compatible_epub_dir)], stdout=stdout, stderr=subprocess.STDOUT, check=False)
+						epubcheck_result = subprocess.run(["java", "-jar", str(jar_path), "--out", "-", "--mode", "exp", str(work_compatible_epub_dir)], stdout=stdout, stderr=subprocess.STDOUT, check=False)
 						epubcheck_result.check_returncode()
 
 					except subprocess.CalledProcessError as ex:
 						stdout.seek(0)
 						output = stdout.read().decode().strip()
-						# Get the epubcheck version to print to the console
-						version_output = subprocess.run(["java", "-jar", str(jar_path), "--version"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False).stdout.decode().strip()
-						version = regex.search(r"[0-9]+\.([0-9]+\.?)*", version_output, flags=regex.MULTILINE).group(0)
 
-						# The last two lines from epubcheck output are not necessary. Remove them here.
-						# Remove them as lines instead of as a matching regex to work with localized output strings.
-						split_output = output.split("\n")
-						output = "\n".join(split_output[:-2])
+						# Remove header from epub output
+						output = regex.sub(r"^\s*Check finished with errors\s*", "", output, regex.DOTALL)
 
 						# Save the epub output so the user can inspect it
 						epub_debug_dir = __save_debug_epub(work_compatible_epub_dir)
@@ -914,15 +930,16 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# Note that epubcheck always appends ".epub" to the dir name
 						output = output.replace(str(work_compatible_epub_dir) + ".epub", str(epub_debug_dir))
 
-						# Try to linkify files in output if we can find them
-						try:
-							# epubcheck adds an additional ".epub" extension to the output filename, we must remove it so that the filenames actually match the filesystem
-							output = regex.sub(r"(ERROR\(.+?\): )(.+?)(\([0-9]+,[0-9]+\))", lambda match: match.group(1) + f"[path][link=file://{match.group(2)}]{match.group(2)}[/][/]" + match.group(3), output)
-						except:
-							# If something goes wrong, just pass through the usual output
-							pass
+						epubcheck_dom = se.easy_xml.EasyXmlTree(output)
 
-						raise se.BuildFailedException(f"[bash]epubcheck[/] v{version} failed with:\n{output}") from ex
+						for message in epubcheck_dom.xpath("/jhove/repInfo/messages/message"):
+							error_text = regex.search(r"\[(.+?)\]", message.text)
+							file_text = regex.search(r"\], (.+?) \(([0-9]+)-([0-9]+)\)$", message.text)
+							file_path = epub_debug_dir / file_text[1]
+
+							build_messages.append(BuildMessage("epubcheck", message.get_attr("id"), error_text[1], file_path, file_text[2], file_text[3]))
+
+						raise se.BuildFailedException("[bash]epubcheck[/] failed.", build_messages)
 
 		# Now run Ace
 		if run_ace:
@@ -941,11 +958,14 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						# Save the epub output so the user can inspect it
 						epub_debug_dir = __save_debug_epub(work_compatible_epub_dir)
 
+						# Ace outputs a flat list of errors, so here we try to arrange them so that each combination of (file, error)
+						# has a list of errors below it, instead of repeating the filename and code over and over.
+						# A dict whose keys are a tuple of (filename, code) and whose values are an array of (message, html)
+						file_messages: Dict[Tuple[str, str], List[Tuple[str, str]]] = {}
+
 						for assertion in ace_dom["assertions"]:
 							if assertion["earl:result"]["earl:outcome"] != "pass":
-								file = assertion["earl:testSubject"]["url"]
-
-								file_output = ""
+								file = epub_debug_dir / self.content_path.name / assertion["earl:testSubject"]["url"]
 
 								for file_assertion in assertion["assertions"]:
 									if file_assertion["earl:result"]["earl:outcome"] != "pass":
@@ -953,11 +973,25 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 										# Don't include those false positives in the results.
 										# See https://github.com/daisy/ace/issues/169
 										if not (file_assertion["earl:test"]["dct:title"] == "valid-lang" and "lang=\"x-" in file_assertion['earl:result']['html']):
-											file_output += f"\t{file_assertion['earl:result']['dct:description']}:\n"
-											file_output += f"\t[xhtml]{file_assertion['earl:result']['html']}[/]\n\n"
+											code = file_assertion["earl:test"]["dct:title"]
+											if (str(file), code) not in file_messages:
+												file_messages[(str(file), code)] = []
 
-								if file_output:
-									output += f"[path][link=file://{epub_debug_dir / self.content_path.name / file}]{file}[/][/]\n{file_output}"
+											file_messages[(str(file), code)].append((file_assertion['earl:result']['dct:description'], file_assertion['earl:result']['html']))
+
+						# Unpack our sorted messages for output
+						for (file_path_str, code), message_list in file_messages.items():
+							item_messages = []
+							for (message, html) in message_list:
+								# Ace output includes namespaces on each element, remove them
+								html = regex.sub(r" xmlns=\"[^\"]+?\"", "", html)
+								item_messages.append(html)
+
+							# message_list[0][n] will always be the same so [0][0] suffices
+							build_messages.append(BuildMessage("ace", code, message_list[0][0], Path(file_path_str), None, None, item_messages))
+
+						if build_messages:
+							raise se.BuildFailedException("[bash]ace[/] failed.", build_messages)
 
 						if output:
 							raise se.BuildFailedException(f"[bash]ace[/] failed with:\n\n{output.strip()}")

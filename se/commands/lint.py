@@ -66,12 +66,14 @@ def lint() -> int:
 			has_output = True
 			if args.plain:
 				console.print(directory)
+			elif args.colors:
+				console.print(f"[reverse][path][link=file://{directory}]{directory}[/][/][/reverse]")
 			else:
-				console.print(f"[reverse]{directory}[/reverse]")
+				console.print(f"{directory}")
 
 		if exception:
 			has_output = True
-			se.print_error(exception)
+			se.print_error(exception, colors=args.colors)
 
 		# Print the tables
 		if messages:
