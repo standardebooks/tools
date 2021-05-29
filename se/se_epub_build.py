@@ -944,13 +944,23 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						for assertion in ace_dom["assertions"]:
 							if assertion["earl:result"]["earl:outcome"] != "pass":
 								file = assertion["earl:testSubject"]["url"]
-								output += f"[path][link=file://{epub_debug_dir / self.content_path.name / file}]{file}[/][/]\n"
+
+								file_output = ""
+
 								for file_assertion in assertion["assertions"]:
 									if file_assertion["earl:result"]["earl:outcome"] != "pass":
-										output += f"\t{file_assertion['earl:result']['dct:description']}:\n"
-										output += f"\t[xhtml]{file_assertion['earl:result']['html']}[/]\n\n"
+										# Ace fails a test if the language tag is a private-use subtag, like lang="x-alien"
+										# Don't include those false positives in the results.
+										# See https://github.com/daisy/ace/issues/169
+										if not (file_assertion["earl:test"]["dct:title"] == "valid-lang" and "lang=\"x-" in file_assertion['earl:result']['html']):
+											file_output += f"\t{file_assertion['earl:result']['dct:description']}:\n"
+											file_output += f"\t[xhtml]{file_assertion['earl:result']['html']}[/]\n\n"
 
-						raise se.BuildFailedException(f"[bash]ace[/] failed with:\n\n{output.strip()}")
+								if file_output:
+									output += f"[path][link=file://{epub_debug_dir / self.content_path.name / file}]{file}[/][/]\n{file_output}"
+
+						if output:
+							raise se.BuildFailedException(f"[bash]ace[/] failed with:\n\n{output.strip()}")
 
 				except subprocess.CalledProcessError as ex:
 					raise se.BuildFailedException("[bash]ace[/] failed.") from ex
