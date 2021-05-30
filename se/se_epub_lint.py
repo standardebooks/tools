@@ -1149,7 +1149,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							if text_file.suffix == ".xhtml":
 								text = self.get_file(text_file)
 								for glossary_index, glossary_value in enumerate(glossary_usage):
-									if glossary_value[1] is False and glossary_value[0] in text:
+									if glossary_value[1] is False and regex.search(glossary_value[0], text, flags=regex.IGNORECASE):
 										glossary_usage[glossary_index] = (glossary_value[0], True)
 					# Finally, log any entries that don’t exist in the text
 					entries = []
