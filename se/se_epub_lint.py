@@ -1143,7 +1143,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# Map the glossary to tuples of the values and whether they’re used (initially false)
 					glossary_usage = list(map(lambda node: (node.get_attr("value"), False), xml_dom.xpath(".//*[@value]")))
 					# Walk the tree and mark if any of the glossary entries are used
-					for text_root, _, text_filenames in os.walk(os.path.join(self.path, "src", "epub", "text")):
+					for text_root, _, text_filenames in os.walk(Path(self.path / "src/epub/text")):
 						for text_filename in text_filenames:
 							text_file = (Path(text_root) / text_filename).resolve()
 							if text_file.suffix == ".xhtml":
