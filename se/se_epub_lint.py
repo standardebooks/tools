@@ -183,7 +183,7 @@ SEMANTICS & CONTENT
 "s-015", "Element has [val]subtitle[/] semantic, but without a sibling having a [val]title[/] semantic."
 "s-016", "Incorrect [text]the[/] before Google Books link."
 "s-017", "[xhtml]<m:mfenced>[/] is deprecated in the MathML spec. Use [xhtml]<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>[/]."
-"s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements."
+"s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements. Hint: Images that are inline (i.e. that do not have parent [xhtml]<figure>[/]s do not have [attr]id[/] attributes."
 "s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute."
 "s-020", "Frontmatter found, but no half title page. Half title page is required when frontmatter is present."
 "s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)"
@@ -2123,7 +2123,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for <figure> tags without id attributes
 				nodes = dom.xpath("/html/body//img[@id]")
 				if nodes:
-					messages.append(LintMessage("s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+					messages.append(LintMessage("s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements. Hint: Images that are inline (i.e. that do not have parent [xhtml]<figure>[/]s do not have [attr]id[/] attributes.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 				# Check for closing dialog without comma
 				matches = regex.findall(r"[\p{Lowercase_Letter}]+?” [\p{Letter}]+? said", file_contents)
