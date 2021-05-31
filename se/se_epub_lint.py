@@ -164,7 +164,7 @@ METADATA
 "m-067", "Non-SE link in long description."
 "m-068", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"title-type\">[/]."
 "m-069", "[text]comprised of[/] in metadata. Hint: Is there a better phrase to use here?"
-"m-070", f"Glossary entries not present in the text: [text]{entries_text}[/]."
+"m-070", "Glossary entries not present in the text:"
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -1156,8 +1156,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					for glossary_value in glossary_usage:
 						if glossary_value[1] is False:
 							entries.append(glossary_value[0])
-					entries_text = ", ".join(entries)
-					messages.append(LintMessage("m-070", f"Glossary entries not present in the text: [text]{entries_text}[/]", se.MESSAGE_TYPE_ERROR, filename))
+					messages.append(LintMessage("m-070", "Glossary entries not present in the text:", se.MESSAGE_TYPE_ERROR, filename, entries))
 
 			if filename.suffix == ".xhtml":
 				# Read file contents into a DOM for querying
