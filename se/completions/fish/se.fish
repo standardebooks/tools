@@ -17,10 +17,12 @@ complete -c se -A -n "__fish_seen_subcommand_from british2american" -s v -l verb
 complete -c se -n "__fish_se_no_subcommand" -a build -d "Build an ebook from a Standard Ebook source directory."
 complete -c se -A -n "__fish_seen_subcommand_from build" -s b -l kobo -d "also build a .kepub.epub file for Kobo"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s c -l check -d "use epubcheck to validate the compatible .epub file; if Ace is installed, also validate using Ace; if --kindle is also specified and epubcheck or Ace fail, don’t create a Kindle file"
+complete -c se -A -n "__fish_seen_subcommand_from build" -s f -l proof -d "insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s k -l kindle -d "also build an .azw3 file for Kindle."
+complete -c se -A -n "__fish_seen_subcommand_from build" -s n -l no-colors -d "don’t use color or hyperlinks in output"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s o -l output-dir -d "a directory to place output files in; will be created if it doesn’t exist"
-complete -c se -A -n "__fish_seen_subcommand_from build" -s p -l proof -d "insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof"
+complete -c se -A -n "__fish_seen_subcommand_from build" -s p -l plain -d "print plain text output, without tables or colors"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s t -l covers -d "output the cover and a cover thumbnail; can only be used when there is a single build target"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s v -l verbose -d "increase output verbosity"
 
