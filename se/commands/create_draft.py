@@ -534,7 +534,7 @@ def _create_draft(args: Namespace):
 	translators = []
 	illustrators = []
 	pg_producers = []
-	title = args.title.replace("'", "’")
+	title = se.formatting.titlecase(args.title.replace("'", "’"))
 
 	for author in args.author:
 		authors.append({"name": author.replace("'", "’"), "wiki_url": None, "nacoaf_uri": None})
