@@ -8,7 +8,7 @@ import se
 from se.se_epub import SeEpub
 
 
-def renumber_endnotes() -> int:
+def renumber_endnotes(plain_output: bool) -> int:
 	"""
 	Entry point for `se renumber-endnotes`
 	"""
@@ -24,19 +24,19 @@ def renumber_endnotes() -> int:
 		try:
 			se_epub = SeEpub(directory)
 		except se.SeException as ex:
-			se.print_error(ex)
+			se.print_error(ex, plain_output=plain_output)
 			return_code = ex.code
 			return return_code
 
 		try:
 			found_endnote_count, changed_endnote_count = se_epub.generate_endnotes()
 			if args.verbose:
-				print(f"Found {found_endnote_count} endnote{'s' if found_endnote_count != 1 else ''} and changed {changed_endnote_count} endnote{'s' if changed_endnote_count != 1 else ''}.")
+				print(se.prep_output(f"Found {found_endnote_count} endnote{'s' if found_endnote_count != 1 else ''} and changed {changed_endnote_count} endnote{'s' if changed_endnote_count != 1 else ''}.", plain_output))
 		except se.SeException as ex:
-			se.print_error(ex)
+			se.print_error(ex, plain_output=plain_output)
 			return_code = ex.code
 		except FileNotFoundError:
-			se.print_error("Couldn’t find [path]endnotes.xhtml[/].")
+			se.print_error("Couldn’t find [path]endnotes.xhtml[/].", plain_output=plain_output)
 			return_code = se.InvalidSeEbookException.code
 
 	return return_code

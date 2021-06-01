@@ -27,7 +27,7 @@ def _resize_canvas(image: Image, new_width: int, new_height: int) -> Image:
 
 	return temp_image
 
-def compare_versions() -> int:
+def compare_versions(plain_output: bool) -> int:
 	"""
 	Entry point for `se compare-versions`
 	"""
@@ -48,7 +48,7 @@ def compare_versions() -> int:
 		try:
 			driver = se.browser.initialize_selenium_firefox_webdriver()
 		except se.MissingDependencyException as ex:
-			se.print_error(ex)
+			se.print_error(ex, plain_output=plain_output)
 			return ex.code
 
 		# Ready to go!
@@ -56,11 +56,11 @@ def compare_versions() -> int:
 			target = Path(target).resolve()
 
 			if not target.is_dir():
-				se.print_error(f"Target must be a directory: [path][link=file://{target}]{target}[/][/].")
+				se.print_error(f"Target must be a directory: [path][link=file://{target}]{target}[/][/].", plain_output=plain_output)
 				continue
 
 			if args.verbose:
-				console.print(f"Processing [path][link=file://{target}]{target}[/][/] ...")
+				console.print(se.prep_output(f"Processing [path][link=file://{target}]{target}[/][/] ...", plain_output))
 
 			with tempfile.TemporaryDirectory() as work_directory_name:
 				# Copy the Git repo to a temp folder, so we can stash and pop with impunity.
@@ -85,7 +85,7 @@ def compare_versions() -> int:
 				git_command = git.cmd.Git(work_directory_name)
 
 				if "nothing to commit" in git_command.status():
-					se.print_error("Repo is clean. This command must be run on a dirty repo.", args.verbose)
+					se.print_error("Repo is clean. This command must be run on a dirty repo.", args.verbose, plain_output=plain_output)
 					continue
 
 				output_directory = Path(f"./{target.name}_diff-output/")
@@ -99,7 +99,7 @@ def compare_versions() -> int:
 						filename = Path(filename).resolve()
 
 						if args.verbose:
-							console.print(f"\tProcessing original [path][link=file://{filename}]{filename.name}[/][/] ...")
+							console.print(se.prep_output(f"\tProcessing original [path][link=file://{filename}]{filename.name}[/][/] ...", plain_output))
 
 						driver.get(f"file://{filename}")
 						# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
@@ -117,7 +117,7 @@ def compare_versions() -> int:
 						file_original_screenshot_path = Path(temp_directory_name) / (filename.name + "-original.png")
 
 						if args.verbose:
-							console.print(f"\tProcessing new [path][link=file://{filename}]{filename.name}[/][/] ...")
+							console.print(se.prep_output(f"\tProcessing new [path][link=file://{filename}]{filename.name}[/][/] ...", plain_output))
 
 						driver.get(f"file://{filename}")
 						# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
@@ -176,7 +176,7 @@ def compare_versions() -> int:
 									pass
 
 					for filename in natsorted(list(files_with_differences)):
-						console.print("{}Difference in {}".format("\t" if args.verbose else "", f"[path][link=file://{filename}]{filename.name}[/][/]"))
+						console.print(se.prep_output("{}Difference in {}".format("\t" if args.verbose else "", f"[path][link=file://{filename}]{filename.name}[/][/]"), plain_output))
 
 					if files_with_differences and args.copy_images:
 						# Generate an HTML file with diffs side by side

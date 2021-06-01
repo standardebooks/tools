@@ -12,7 +12,7 @@ import se.easy_xml
 import se.formatting
 
 
-def build_title() -> int:
+def build_title(plain_output: bool) -> int:
 	"""
 	Entry point for `se build-title`
 	"""
@@ -25,7 +25,7 @@ def build_title() -> int:
 	targets = se.get_target_filenames(args.targets, ".xhtml")
 
 	if args.stdout and (len(targets) > 1):
-		se.print_error("Multiple targets or directories are only allowed without the [bash]--stdout[/] option.")
+		se.print_error("Multiple targets or directories are only allowed without the [bash]--stdout[/] option.", plain_output=plain_output)
 		return se.InvalidArgumentsException.code
 
 	return_code = 0
@@ -41,7 +41,7 @@ def build_title() -> int:
 					print(title)
 				else:
 					if title == "":
-						se.print_error(f"Couldn’t deduce title for file: [path][link=file://{filename}]{filename}[/][/].", False, True)
+						se.print_error(f"Couldn’t deduce title for file: [path][link=file://{filename}]{filename}[/][/].", False, True, plain_output=plain_output)
 					else:
 						if dom:
 							for node in dom.xpath("/html/head/title"):
@@ -52,13 +52,13 @@ def build_title() -> int:
 							file.truncate()
 
 		except FileNotFoundError:
-			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
+			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return_code = se.InvalidInputException.code
 		except InvalidRomanNumeralError as ex:
-			se.print_error(regex.sub(r"^.+: (.+)$", fr"Invalid Roman numeral: [text]\1[/]. File: [path][link=file://{filename}]{filename}[/][/].", str(ex)))
+			se.print_error(regex.sub(r"^.+: (.+)$", fr"Invalid Roman numeral: [text]\1[/]. File: [path][link=file://{filename}]{filename}[/][/].", str(ex)), plain_output=plain_output)
 			return_code = se.InvalidInputException.code
 		except se.SeException as ex:
-			se.print_error(f"File: [path][link=file://{filename}]{filename}[/][/]. {ex}")
+			se.print_error(f"File: [path][link=file://{filename}]{filename}[/][/]. {ex}", plain_output=plain_output)
 			return_code = ex.code
 
 	return return_code

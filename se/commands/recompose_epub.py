@@ -8,7 +8,7 @@ import se
 from se.se_epub import SeEpub
 
 
-def recompose_epub() -> int:
+def recompose_epub(plain_output: bool) -> int:
 	"""
 	Entry point for `se recompose-epub`
 	"""
@@ -30,7 +30,7 @@ def recompose_epub() -> int:
 		else:
 			print(recomposed_epub)
 	except se.SeException as ex:
-		se.print_error(ex)
+		se.print_error(ex, plain_output=plain_output)
 		return ex.code
 	except Exception as ex:
 		se.print_error("Couldn’t recompose epub.")

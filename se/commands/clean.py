@@ -10,7 +10,7 @@ import se
 import se.formatting
 
 
-def clean() -> int:
+def clean(plain_output: bool) -> int:
 	"""
 	Entry point for `se clean`
 	"""
@@ -24,15 +24,15 @@ def clean() -> int:
 
 	for filepath in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx", ".xml")):
 		if args.verbose:
-			console.print(f"Processing [path][link=file://{filepath}]{filepath}[/][/] ...", end="")
+			console.print(se.prep_output(f"Processing [path][link=file://{filepath}]{filepath}[/][/] ...", plain_output), end="")
 
 		try:
 			se.formatting.format_xml_file(filepath)
 		except se.MissingDependencyException as ex:
-			se.print_error(ex)
+			se.print_error(ex, plain_output=plain_output)
 			return ex.code
 		except se.SeException as ex:
-			se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]. Exception: {ex}", args.verbose)
+			se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]. Exception: {ex}", args.verbose, plain_output=plain_output)
 			return ex.code
 
 		if args.verbose:
@@ -40,7 +40,7 @@ def clean() -> int:
 
 	for filepath in se.get_target_filenames(args.targets, ".css"):
 		if args.verbose:
-			console.print(f"Processing [path][link=file://{filepath}]{filepath}[/][/] ...", end="")
+			console.print(se.prep_output(f"Processing [path][link=file://{filepath}]{filepath}[/][/] ...", plain_output), end="")
 
 		with open(filepath, "r+", encoding="utf-8") as file:
 			css = file.read()
@@ -53,7 +53,7 @@ def clean() -> int:
 					file.write(processed_css)
 					file.truncate()
 			except se.SeException as ex:
-				se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]. Exception: {ex}", args.verbose)
+				se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]. Exception: {ex}", args.verbose, plain_output=plain_output)
 				return ex.code
 
 		if args.verbose:

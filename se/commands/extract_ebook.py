@@ -47,7 +47,7 @@ def _is_mobi(file_bytes: bytes) -> bool:
 
 	return file_bytes[:78][0x3C:0x3C+8] in (b"BOOKMOBI", b"TEXtREAd")
 
-def extract_ebook() -> int:
+def extract_ebook(plain_output: bool) -> int:
 	"""
 	Entry point for `se extract-ebook`
 	"""
@@ -64,10 +64,10 @@ def extract_ebook() -> int:
 		target = Path(target).resolve()
 
 		if args.verbose:
-			console.print(f"Processing [path][link=file://{target}]{target}[/][/] ...", end="")
+			console.print(se.prep_output(f"Processing [path][link=file://{target}]{target}[/][/] ...", plain_output), end="")
 
 		if not path.isfile(target):
-			se.print_error(f"Not a file: [path][link=file://{target}]{target}[/][/].")
+			se.print_error(f"Not a file: [path][link=file://{target}]{target}[/][/].", plain_output=plain_output)
 			return se.InvalidInputException.code
 
 		if args.output_dir is None:
@@ -76,7 +76,7 @@ def extract_ebook() -> int:
 			extracted_path = Path(args.output_dir)
 
 		if extracted_path.exists():
-			se.print_error(f"Directory already exists: [path][link=file://{extracted_path}]{extracted_path}[/][/].")
+			se.print_error(f"Directory already exists: [path][link=file://{extracted_path}]{extracted_path}[/][/].", plain_output=plain_output)
 			return se.FileExistsException.code
 
 		with open(target, "rb") as binary_file:

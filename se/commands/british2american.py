@@ -10,7 +10,7 @@ import se
 import se.typography
 
 
-def british2american() -> int:
+def british2american(plain_output: bool) -> int:
 	"""
 	Entry point for `se british2american`
 	"""
@@ -26,7 +26,7 @@ def british2american() -> int:
 
 	for filename in se.get_target_filenames(args.targets, ".xhtml"):
 		if args.verbose:
-			console.print(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", end="")
+			console.print(se.prep_output(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", plain_output), end="")
 
 		try:
 			with open(filename, "r+", encoding="utf-8") as file:
@@ -39,7 +39,7 @@ def british2american() -> int:
 						convert = False
 						if args.verbose:
 							console.print("")
-						se.print_error(f"File appears to already use American quote style, ignoring. Use [bash]--force[/] to convert anyway.{f' File: [path][link=file://{filename}]{filename}[/][/]' if not args.verbose else ''}", args.verbose, True)
+						se.print_error(f"File appears to already use American quote style, ignoring. Use [bash]--force[/] to convert anyway.{f' File: [path][link=file://{filename}]{filename}[/][/]' if not args.verbose else ''}", args.verbose, plain_output=plain_output)
 
 				if convert:
 					new_xhtml = se.typography.convert_british_to_american(xhtml)
@@ -50,7 +50,7 @@ def british2american() -> int:
 						file.truncate()
 
 		except FileNotFoundError:
-			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
+			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return_code = se.InvalidInputException.code
 
 	return return_code

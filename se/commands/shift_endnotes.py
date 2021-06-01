@@ -8,7 +8,7 @@ import se
 from se.se_epub import SeEpub
 
 
-def shift_endnotes() -> int:
+def shift_endnotes(plain_output: bool) -> int:
 	"""
 	Entry point for `se shift-endnotes`
 	"""
@@ -34,7 +34,7 @@ def shift_endnotes() -> int:
 		se_epub.shift_endnotes(args.target_endnote_number, step)
 
 	except se.SeException as ex:
-		se.print_error(ex)
+		se.print_error(ex, plain_output=plain_output)
 		return_code = ex.code
 
 	return return_code

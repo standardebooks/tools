@@ -9,7 +9,7 @@ import se
 import se.formatting
 
 
-def titlecase() -> int:
+def titlecase(plain_output: bool) -> int: # pylint: disable=unused-argument
 	"""
 	Entry point for `se titlecase`
 	"""

@@ -9,7 +9,7 @@ import se
 import se.formatting
 
 
-def make_url_safe() -> int:
+def make_url_safe(plain_output: bool) -> int: # pylint: disable=unused-argument
 	"""
 	Entry point for `se make-url-safe`
 	"""

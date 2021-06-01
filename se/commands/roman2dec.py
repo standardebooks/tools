@@ -10,7 +10,7 @@ import roman
 import se
 
 
-def roman2dec() -> int:
+def roman2dec(plain_output: bool) -> int:
 	"""
 	Entry point for `se roman2dec`
 	"""
@@ -36,7 +36,7 @@ def roman2dec() -> int:
 			else:
 				print(roman.fromRoman(line.upper()), end="")
 		except roman.InvalidRomanNumeralError:
-			se.print_error(f"Not a Roman numeral: [text]{line}[/]")
+			se.print_error(f"Not a Roman numeral: [text]{line}[/]", plain_output=plain_output)
 			return se.InvalidInputException.code
 
 	return 0

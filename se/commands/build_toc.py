@@ -8,7 +8,7 @@ import se
 from se.se_epub import SeEpub
 
 
-def build_toc() -> int:
+def build_toc(plain_output: bool) -> int:
 	"""
 	Entry point for `se build-toc`
 
@@ -22,7 +22,7 @@ def build_toc() -> int:
 	args = parser.parse_args()
 
 	if args.stdout and len(args.directories) > 1:
-		se.print_error("Multiple directories are only allowed without the [bash]--stdout[/] option.")
+		se.print_error("Multiple directories are only allowed without the [bash]--stdout[/] option.", plain_output=plain_output)
 		return se.InvalidArgumentsException.code
 
 	for directory in args.directories:
@@ -44,7 +44,7 @@ def build_toc() -> int:
 			se.print_error(ex)
 			return ex.code
 		except FileNotFoundError as ex:
-			se.print_error(f"Couldn’t open file: [path][link=file://{se_epub.toc_path}]{se_epub.toc_path}[/][/].")
+			se.print_error(f"Couldn’t open file: [path][link=file://{se_epub.toc_path}]{se_epub.toc_path}[/][/].", plain_output=plain_output)
 			return se.InvalidSeEbookException.code
 
 	return 0

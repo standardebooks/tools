@@ -39,16 +39,32 @@ def main() -> None:
 	commands = get_commands()
 
 	parser = argparse.ArgumentParser(description="The entry point for the Standard Ebooks toolset.")
+	parser.add_argument("-p", "--plain", dest="plain_output", action="store_true", help="print plain text output, without tables or formatting")
 	parser.add_argument("-v", "--version", action="store_true", help="print version number and exit")
 	parser.add_argument("command", metavar="COMMAND", choices=commands, help="one of: " + " ".join(commands))
 	parser.add_argument("arguments", metavar="ARGS", nargs="*", help="arguments for the subcommand")
-	args = parser.parse_args(sys.argv[1:2])
 
-	# Remove the command name from the list of passed args.
-	sys.argv.pop(1)
+	# We do some hand-parsing of high-level args, because argparse
+	# can expect flags at any point in the command. We'll pass any args up to
+	# and including the subcommand to the main argparse instance, then pass
+	# the subcommand and its args to the final function we call.
+	main_args = []
+	subcommand_args = []
+	parsing_subcommand = False
+	for arg in sys.argv[1:]:
+		if not parsing_subcommand and arg.startswith("-"):
+			main_args.append(arg)
+		elif not parsing_subcommand and not arg.startswith("-"):
+			main_args.append(arg)
+			subcommand_args.append(arg)
+			parsing_subcommand = True
+		elif parsing_subcommand:
+			subcommand_args.append(arg)
 
-	# Change the command name so that argparse instances in child functions report the correct command on help/error.
-	sys.argv[0] = args.command
+	args = parser.parse_args(main_args)
+
+	# Change argv to our subcommand values, so that arg parsing by child functions works as expected
+	sys.argv = subcommand_args
 
 	command_name = args.command.replace("-", "_")
 	command_module = f"se.commands.{command_name}"
@@ -61,6 +77,6 @@ def main() -> None:
 	module = importlib.import_module(command_module)
 
 	try:
-		sys.exit(getattr(module, command_function)())
+		sys.exit(getattr(module, command_function)(args.plain_output))
 	except KeyboardInterrupt:
 		sys.exit(130) # See http://www.tldp.org/LDP/abs/html/exitcodes.html

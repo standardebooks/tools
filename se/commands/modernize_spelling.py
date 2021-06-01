@@ -10,7 +10,7 @@ import se
 import se.spelling
 
 
-def modernize_spelling() -> int:
+def modernize_spelling(plain_output: bool) -> int:
 	"""
 	Entry point for `se modernize-spelling`
 	"""
@@ -26,7 +26,7 @@ def modernize_spelling() -> int:
 
 	for filename in se.get_target_filenames(args.targets, ".xhtml"):
 		if args.verbose:
-			console.print(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", end="")
+			console.print(se.prep_output(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", plain_output), end="")
 
 		try:
 			with open(filename, "r+", encoding="utf-8") as file:
@@ -37,10 +37,10 @@ def modernize_spelling() -> int:
 					problem_spellings = se.spelling.detect_problem_spellings(xhtml)
 
 					for problem_spelling in problem_spellings:
-						console.print(f"{('[path][link=file://' + str(filename) + ']' + filename.name + '[/][/]') + ': ' if not args.verbose else ''}{problem_spelling}")
+						console.print(se.prep_output(f"{('[path][link=file://' + str(filename) + ']' + filename.name + '[/][/]') + ': ' if not args.verbose else ''}{problem_spelling}", plain_output))
 
 				except se.InvalidLanguageException as ex:
-					se.print_error(f"{ex}{' File: [path][link=file://' + str(filename) + ']' + str(filename) + '[/][/]' if not args else ''}")
+					se.print_error(f"{ex}{' File: [path][link=file://' + str(filename) + ']' + str(filename) + '[/][/]' if not args else ''}", plain_output=plain_output)
 					return ex.code
 
 				if args.modernize_hyphenation:
@@ -51,7 +51,7 @@ def modernize_spelling() -> int:
 					file.write(new_xhtml)
 					file.truncate()
 		except FileNotFoundError:
-			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
+			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return_code = se.InvalidInputException.code
 
 		if args.verbose:

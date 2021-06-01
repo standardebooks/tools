@@ -138,7 +138,19 @@ def strip_bom(string: str) -> str:
 
 	return string
 
-def print_error(message: Union[SeException, str], verbose: bool = False, is_warning: bool = False, colors: bool = True) -> None:
+def prep_output(message: str, plain_output: bool = False) -> str:
+	"""
+	Return a message formatted for the chosen output style, i.e., color or plain.
+	"""
+
+	if plain_output:
+		# Replace color markup with `
+		message = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message)
+		message = regex.sub(r"`+", "`", message)
+
+	return message
+
+def print_error(message: Union[SeException, str], verbose: bool = False, is_warning: bool = False, plain_output: bool = False) -> None:
 	"""
 	Helper function to print a colored error message to the console.
 
@@ -169,13 +181,12 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 
 	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
-	if colors:
-		console.print(f"{MESSAGE_INDENT if verbose else ''}[white on {bg_color} bold] {label} [/] {message}")
-	else:
+	if plain_output:
 		# Replace color markup with `
-		message = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message)
-		message = regex.sub(r"`+", "`", message)
-		console.print(f"{MESSAGE_INDENT if verbose else ''}{label} {message}")
+		message = prep_output(message, True)
+		console.print(f"{MESSAGE_INDENT if verbose else ''}[{label}] {message}")
+	else:
+		console.print(f"{MESSAGE_INDENT if verbose else ''}[white on {bg_color} bold] {label} [/] {message}")
 
 def is_positive_integer(value: str) -> int:
 	"""

@@ -6,7 +6,6 @@ import argparse
 import os
 from pathlib import Path
 
-import regex
 from rich import box
 from rich.console import Console
 from rich.table import Table
@@ -15,7 +14,7 @@ from rich.text import Text
 import se
 from se.se_epub import SeEpub
 
-def build() -> int:
+def build(plain_output: bool) -> int:
 	"""
 	Entry point for `se build`
 	"""
@@ -23,11 +22,9 @@ def build() -> int:
 	parser = argparse.ArgumentParser(description="Build compatible .epub and advanced .epub ebooks from a Standard Ebook source directory. Output is placed in the current directory, or the target directory with --output-dir.")
 	parser.add_argument("-b", "--kobo", dest="build_kobo", action="store_true", help="also build a .kepub.epub file for Kobo")
 	parser.add_argument("-c", "--check", action="store_true", help="use epubcheck to validate the compatible .epub file; if Ace is installed, also validate using Ace; if --kindle is also specified and epubcheck or Ace fail, don’t create a Kindle file")
-	parser.add_argument("-f", "--proof", dest="proof", action="store_true", help="insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof")
 	parser.add_argument("-k", "--kindle", dest="build_kindle", action="store_true", help="also build an .azw3 file for Kindle")
-	parser.add_argument("-n", "--no-colors", dest="colors", action="store_false", help="don’t use color or hyperlinks in output")
 	parser.add_argument("-o", "--output-dir", metavar="DIRECTORY", type=str, default="", help="a directory to place output files in; will be created if it doesn’t exist")
-	parser.add_argument("-p", "--plain", action="store_true", help="print plain text output, without tables or colors")
+	parser.add_argument("-p", "--proof", dest="proof", action="store_true", help="insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof")
 	parser.add_argument("-t", "--covers", dest="build_covers", action="store_true", help="output the cover and a cover thumbnail; can only be used when there is a single build target")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
@@ -44,7 +41,7 @@ def build() -> int:
 	console = Console(width=int(os.environ['COLUMNS']) if called_from_parallel and "COLUMNS" in os.environ else None, highlight=False, theme=se.RICH_THEME, force_terminal=force_terminal) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
 	if args.build_covers and len(args.directories) > 1:
-		se.print_error("[bash]--covers[/] option specified, but more than one build target specified.", colors=args.colors)
+		se.print_error("[bash]--covers[/] option specified, but more than one build target specified.", plain_output=plain_output)
 		return se.InvalidInputException.code
 
 	for directory in args.directories:
@@ -70,27 +67,24 @@ def build() -> int:
 		# Print the table header
 		if ((len(args.directories) > 1 or called_from_parallel) and (messages or exception)) or args.verbose:
 			has_output = True
-			if args.plain:
+			if plain_output:
 				console.print(directory)
-			elif args.colors:
-				console.print(f"[reverse][path][link=file://{directory}]{directory}[/][/][/reverse]")
 			else:
-				console.print(f"{directory}")
+				console.print(f"[reverse][path][link=file://{directory}]{directory}[/][/][/reverse]")
 
 		if exception:
 			has_output = True
-			se.print_error(exception, colors=args.colors)
+			se.print_error(exception, plain_output=plain_output)
 
 		# Print the tables
 		if messages:
 			has_output = True
 			return_code = se.BuildFailedException.code
 
-			if args.plain:
+			if plain_output:
 				for message in messages:
 					# Replace color markup with `
-					message.text = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message.text)
-					message.text = regex.sub(r"`+", "`", message.text)
+					message.text = se.prep_output(message.text, True)
 
 					message_filename = ""
 					if message.filename:
@@ -101,29 +95,18 @@ def build() -> int:
 				for message in messages:
 					message_text = message.text
 
-					if args.colors:
-						# Add hyperlinks around message filenames
-						message_filename = ""
+					# Add hyperlinks around message filenames
+					message_filename = ""
 
-						if message.filename:
-							message_filename = f"[link=file://{message.filename}]{message.filename.name}[/link]{message.location if message.location else ''}"
-					else:
-						# Replace color markup with `
-						message_text = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message_text)
-						message_text = regex.sub(r"`+", "`", message_text)
-						message_filename = ""
-						if message.filename:
-							message_filename = f"{message.filename.name}{message.location}"
+					if message.filename:
+						message_filename = f"[link=file://{message.filename}]{message.filename.name}[/link]{message.location if message.location else ''}"
 
 					table_data.append([message.source, message.code, message_filename, message_text])
 
 					if message.submessages:
 						for submessage in message.submessages:
 							# Brackets don't need to be escaped in submessages if we instantiate them in Text()
-							if args.colors:
-								submessage_object = Text(submessage, style="dim")
-							else:
-								submessage_object = Text(submessage)
+							submessage_object = Text(submessage, style="dim")
 
 							table_data.append([" ", " ", Text("→", justify="right"), submessage_object])
 
@@ -139,11 +122,11 @@ def build() -> int:
 				console.print(table)
 
 		if args.verbose and not messages and not exception:
-			if args.plain:
+			if plain_output:
 				console.print("OK")
 			else:
 				table = Table(show_header=False, box=box.SQUARE)
-				table.add_column("", style="white on green4 bold" if args.colors else None)
+				table.add_column("", style="white on green4 bold")
 				table.add_row("OK")
 				console.print(table)
 

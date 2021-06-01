@@ -10,7 +10,7 @@ import pkg_resources
 import se
 
 
-def version() -> int:
+def version(plain_output: bool) -> int: # pylint: disable=unused-argument
 	"""
 	Entry point for `se version`
 	"""

@@ -2,10 +2,12 @@
 
 local state line
 
-_arguments -C -A "-v" -A "--version" \
-	'(- 1 *)'{-v,--version}'[print version number and exit]' \
-	'1: :->cmds' \
-	'*:: :->args'
+_arguments -C \
+	'(- :)'{-h,--help}'[show a help message and exit]' \
+	'(-p --plain)'{-p,--plain}'[print plain text output, without tables or formatting]' \
+	'(- :)'{-v,--version}'[print version number and exit]' \
+	'(-): :->cmds' \
+	'(-)*:: :->args'
 
 case $state in
 	cmds)
@@ -56,12 +58,10 @@ case $state in
 				_arguments -s \
 					{-b,--kobo}'[also build a .kepub.epub file for Kobo]' \
 					{-c,--check}'[use epubcheck to validate the compatible .epub file; if Ace is installed, also validate using Ace; if --kindle is also specified and epubcheck or Ace fail, don’t create a Kindle file]' \
-					{-f,--proof}'[insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof]' \
 					{-h,--help}'[show a help message and exit]' \
 					{-k,--kindle}'[also build an .azw3 file for Kindle]' \
 					{-o,--output-dir}'=[a directory to place output files in; will be created if it doesn’t exist]: :_directories' \
-					{-n,--no-colors}'=[don’t use color or hyperlinks in output]' \
-					{-p,--plain}'=[print plain text output, without tables or colors]' \
+					{-p,--proof}'[insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof]' \
 					{-t,--covers}'[output the cover and a cover thumbnail]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_directories'
@@ -161,8 +161,6 @@ case $state in
 			lint)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
-					{-n,--no-colors}'[don’t use color or hyperlinks in output]' \
-					{-p,--plain}'[print plain output]' \
 					{-s,--skip-lint-ignore}'[ignore rules in se-lint-ignore.xml file]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					{-w,--wrap}'[force lines to wrap at this number of columns instead of auto-wrapping]' \

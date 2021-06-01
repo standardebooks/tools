@@ -10,7 +10,7 @@ import regex
 import se
 
 
-def find_mismatched_diacritics() -> int:
+def find_mismatched_diacritics(plain_output: bool) -> int:
 	"""
 	Entry point for `se find-mismatched-diacritics`
 	"""
@@ -32,7 +32,7 @@ def find_mismatched_diacritics() -> int:
 				files_xhtml.append(file.read())
 
 		except FileNotFoundError:
-			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
+			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return_code = se.InvalidInputException.code
 
 	# Create a list of accented words

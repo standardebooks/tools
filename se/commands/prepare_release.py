@@ -11,7 +11,7 @@ import se
 from se.se_epub import SeEpub
 
 
-def prepare_release() -> int:
+def prepare_release(plain_output: bool) -> int:
 	"""
 	Entry point for `se prepare-release`
 	"""
@@ -29,7 +29,7 @@ def prepare_release() -> int:
 		directory = Path(directory).resolve()
 
 		if args.verbose:
-			console.print(f"Processing [path][link=file://{directory}]{directory}[/][/] ...")
+			console.print(se.prep_output(f"Processing [path][link=file://{directory}]{directory}[/][/] ...", plain_output))
 
 		try:
 			se_epub = SeEpub(directory)
@@ -53,7 +53,7 @@ def prepare_release() -> int:
 				if args.verbose:
 					console.print(" OK")
 		except se.SeException as ex:
-			se.print_error(ex)
+			se.print_error(ex, plain_output=plain_output)
 			return ex.code
 
 	return 0

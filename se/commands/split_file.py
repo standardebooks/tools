@@ -28,7 +28,7 @@ def _split_file_output_file(filename_format_string: str, chapter_number: int, te
 	with open(filename, "w", encoding="utf-8") as file:
 		file.write(xhtml)
 
-def split_file() -> int:
+def split_file(plain_output: bool) -> int:
 	"""
 	Entry point for `se split-file`
 	"""
@@ -45,7 +45,7 @@ def split_file() -> int:
 		with open(filename, "r", encoding="utf-8") as file:
 			xhtml = se.strip_bom(file.read())
 	except FileNotFoundError:
-		se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
+		se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 		return se.InvalidFileException.code
 
 	if args.template_file:
@@ -54,7 +54,7 @@ def split_file() -> int:
 			with open(filename, "r", encoding="utf-8") as file:
 				template_xhtml = file.read()
 		except FileNotFoundError:
-			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
+			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return se.InvalidFileException.code
 	else:
 		with importlib_resources.open_text("se.data.templates", "chapter-template.xhtml", encoding="utf-8") as file:

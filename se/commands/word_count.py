@@ -14,7 +14,7 @@ import se.formatting
 NOVELLA_MIN_WORD_COUNT = 17500
 NOVEL_MIN_WORD_COUNT = 40000
 
-def word_count() -> int:
+def word_count(plain_output: bool) -> int:
 	"""
 	Entry point for `se word-count`
 	"""
@@ -44,7 +44,7 @@ def word_count() -> int:
 							binary_xhtml = binary_file.read()
 							xhtml = binary_xhtml.decode(chardet.detect(binary_xhtml)["encoding"])
 					except UnicodeDecodeError:
-						se.print_error(f"File is not UTF-8: [path][link=file://{filename}]{filename}[/][/].")
+						se.print_error(f"File is not UTF-8: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 						return se.InvalidEncodingException.code
 
 			# Remove HTML entities
@@ -72,7 +72,7 @@ def word_count() -> int:
 				total_word_count += se.formatting.get_word_count(xhtml)
 
 		except FileNotFoundError:
-			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
+			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return se.InvalidInputException.code
 
 	if args.categorize:

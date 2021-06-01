@@ -2,7 +2,7 @@ _se(){
 	COMPREPLY=()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local prev="${COMP_WORDS[COMP_CWORD-1]}"
-	local commands="--help --version british2american build build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes split-file titlecase typogrify unicode-names version word-count xpath"
+	local commands="--help --plain --version british2american build build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft dec2roman extract-ebook find-mismatched-diacritics help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes split-file titlecase typogrify unicode-names version word-count xpath"
 	if [[ $COMP_CWORD -gt 1 ]]; then
 		case "${COMP_WORDS[1]}" in
 			british2american)
@@ -16,7 +16,7 @@ _se(){
 					COMPREPLY+=($(compgen -d -X ".*"))
 					return 0
 				fi
-				COMPREPLY+=($(compgen -W "-b --kobo -c --check -f --proof -h --help -k --kindle -n --no-colors -o= --output-dir= -p --plain -t --covers -v --verbose" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-b --kobo -c --check -h --help -k --kindle -o= --output-dir= -p --proof -t --covers -v --verbose" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			build-images)
@@ -82,7 +82,7 @@ _se(){
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			lint)
-				COMPREPLY+=($(compgen -W "-h --help -n --no-colors -p --plain -s --skip-lint-ignore -v --verbose -w --wrap=" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-h --help -s --skip-lint-ignore -v --verbose -w --wrap=" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			make-url-safe)

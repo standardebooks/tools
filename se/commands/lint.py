@@ -15,14 +15,12 @@ from rich.text import Text
 import se
 from se.se_epub import SeEpub
 
-def lint() -> int:
+def lint(plain_output: bool) -> int:
 	"""
 	Entry point for `se lint`
 	"""
 
 	parser = argparse.ArgumentParser(description="Check for various Standard Ebooks style errors.")
-	parser.add_argument("-n", "--no-colors", dest="colors", action="store_false", help="don’t use color or hyperlinks in output")
-	parser.add_argument("-p", "--plain", action="store_true", help="print plain text output, without tables or colors")
 	parser.add_argument("-s", "--skip-lint-ignore", action="store_true", help="ignore rules in se-lint-ignore.xml file")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
@@ -64,32 +62,29 @@ def lint() -> int:
 		# Print the table header
 		if ((len(args.directories) > 1 or called_from_parallel) and (messages or exception)) or args.verbose:
 			has_output = True
-			if args.plain:
+			if plain_output:
 				console.print(directory)
-			elif args.colors:
-				console.print(f"[reverse][path][link=file://{directory}]{directory}[/][/][/reverse]")
 			else:
-				console.print(f"{directory}")
+				console.print(f"[reverse][path][link=file://{directory}]{directory}[/][/][/reverse]")
 
 		if exception:
 			has_output = True
-			se.print_error(exception, colors=args.colors)
+			se.print_error(exception, plain_output=plain_output)
 
 		# Print the tables
 		if messages:
 			has_output = True
 			return_code = se.LintFailedException.code
 
-			if args.plain:
+			if plain_output:
 				for message in messages:
-					label = "Manual Review:"
+					label = "[Manual Review]"
 
 					if message.message_type == se.MESSAGE_TYPE_ERROR:
-						label = "Error:"
+						label = "[Error]"
 
 					# Replace color markup with `
-					message.text = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message.text)
-					message.text = regex.sub(r"`+", "`", message.text)
+					message.text = se.prep_output(message.text, True)
 
 					message_filename = ""
 					if message.filename:
@@ -110,33 +105,22 @@ def lint() -> int:
 
 					message_text = message.text
 
-					if args.colors:
-						if message.message_type == se.MESSAGE_TYPE_ERROR:
-							alert = f"[bright_red]{alert}[/bright_red]"
-						else:
-							alert = f"[bright_yellow]{alert}[/bright_yellow]"
-
-						# Add hyperlinks around message filenames
-						message_filename = ""
-						if message.filename:
-							message_filename = f"[link=file://{message.filename.resolve()}]{message.filename.name}[/link]"
+					if message.message_type == se.MESSAGE_TYPE_ERROR:
+						alert = f"[bright_red]{alert}[/bright_red]"
 					else:
-						# Replace color markup with `
-						message_text = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message_text)
-						message_text = regex.sub(r"`+", "`", message_text)
-						message_filename = ""
-						if message.filename:
-							message_filename = message.filename.name
+						alert = f"[bright_yellow]{alert}[/bright_yellow]"
+
+					# Add hyperlinks around message filenames
+					message_filename = ""
+					if message.filename:
+						message_filename = f"[link=file://{message.filename.resolve()}]{message.filename.name}[/link]"
 
 					table_data.append([message.code, alert, message_filename, message_text])
 
 					if message.submessages:
 						for submessage in message.submessages:
 							# Brackets don't need to be escaped in submessages if we instantiate them in Text()
-							if args.colors:
-								submessage_object = Text(submessage, style="dim")
-							else:
-								submessage_object = Text(submessage)
+							submessage_object = Text(submessage, style="dim")
 
 							table_data.append([" ", " ", Text("→", justify="right"), submessage_object])
 
@@ -152,11 +136,11 @@ def lint() -> int:
 				console.print(table)
 
 		if args.verbose and not messages and not exception:
-			if args.plain:
+			if plain_output:
 				console.print("OK")
 			else:
 				table = Table(show_header=False, box=box.SQUARE)
-				table.add_column("", style="white on green4 bold" if args.colors else None)
+				table.add_column("", style="white on green4 bold")
 				table.add_row("OK")
 				console.print(table)
 

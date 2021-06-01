@@ -10,7 +10,7 @@ import roman
 import se
 
 
-def dec2roman() -> int:
+def dec2roman(plain_output: bool) -> int: # pylint: disable=unused-argument
 	"""
 	Entry point for `se dec2roman`
 	"""

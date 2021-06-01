@@ -10,7 +10,7 @@ import se
 import se.formatting
 
 
-def semanticate() -> int:
+def semanticate(plain_output: bool) -> int:
 	"""
 	Entry point for `se semanticate`
 	"""
@@ -25,7 +25,7 @@ def semanticate() -> int:
 
 	for filename in se.get_target_filenames(args.targets, ".xhtml"):
 		if args.verbose:
-			console.print(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", end="")
+			console.print(se.prep_output(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", plain_output), end="")
 
 		try:
 			with open(filename, "r+", encoding="utf-8") as file:
@@ -41,7 +41,7 @@ def semanticate() -> int:
 						file.write(processed_xhtml)
 						file.truncate()
 		except FileNotFoundError:
-			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].")
+			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return_code = se.InvalidInputException.code
 
 		if args.verbose:

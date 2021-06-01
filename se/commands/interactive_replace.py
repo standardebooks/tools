@@ -225,7 +225,7 @@ def _print_screen(screen, filepath: Path, text: str, start_matching_at: int, reg
 
 	return (pad, line_numbers_pad, pad_y, pad_x, match_start, match_end)
 
-def interactive_replace() -> int:
+def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-argument
 	"""
 	Entry point for `se interactive-replace`
 	"""

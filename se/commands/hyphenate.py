@@ -10,7 +10,7 @@ import se
 import se.typography
 
 
-def hyphenate() -> int:
+def hyphenate(plain_output: bool) -> int:
 	"""
 	Entry point for `se hyphenate`
 	"""
@@ -26,7 +26,7 @@ def hyphenate() -> int:
 
 	for filename in se.get_target_filenames(args.targets, ".xhtml"):
 		if args.verbose:
-			console.print(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", end="")
+			console.print(se.prep_output(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", plain_output), end="")
 
 		with open(filename, "r+", encoding="utf-8") as file:
 			xhtml = file.read()

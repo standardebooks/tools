@@ -10,7 +10,7 @@ import se
 import se.easy_xml
 
 
-def xpath() -> int:
+def xpath(plain_output: bool) -> int:
 	"""
 	Entry point for `se xpath`
 	"""
@@ -32,7 +32,7 @@ def xpath() -> int:
 			nodes = dom.xpath(args.xpath)
 
 			if nodes:
-				console.print(f"[path][link=file://{filepath}]{filepath}[/][/]", highlight=False)
+				console.print(se.prep_output(f"[path][link=file://{filepath}]{filepath}[/][/]", plain_output), highlight=False)
 				if not args.only_filenames:
 					for node in nodes:
 						if isinstance(node, se.easy_xml.EasyXmlElement):
@@ -54,7 +54,7 @@ def xpath() -> int:
 			return se.InvalidInputException.code
 
 		except se.SeException as ex:
-			se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]. Exception: {ex}")
+			se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]. Exception: {ex}", plain_output=plain_output)
 			return ex.code
 
 	return 0

@@ -370,7 +370,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> Tuple[Optional[str]
 	try:
 		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": "1"}, allow_redirects=False)
 	except Exception as ex:
-		se.print_error(f"Couldn’t contact Wikipedia. Exception: {ex}")
+		raise se.RemoteCommandErrorException(f"Couldn’t contact Wikipedia. Exception: {ex}") from ex
 
 	if response.status_code == 302:
 		nacoaf_uri = None
@@ -383,7 +383,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> Tuple[Optional[str]
 			try:
 				response = requests.get(wiki_url)
 			except Exception as ex:
-				se.print_error(f"Couldn’t contact Wikipedia. Exception: {ex}")
+				raise se.RemoteCommandErrorException(f"Couldn’t contact Wikipedia. Exception: {ex}") from ex
 
 			for match in regex.findall(r"https?://id\.loc\.gov/authorities/names/n[0-9]+", response.text):
 				nacoaf_uri = match.replace("https:","http:")
@@ -407,7 +407,6 @@ def _add_name_abbr(contributor: str) -> str:
 	contributor = regex.sub(r"([\p{Uppercase_Letter}]\.(?:\s*[\p{Uppercase_Letter}]\.)*)", r"""<abbr class="name">\1</abbr>""", contributor)
 
 	return contributor
-
 
 def _generate_contributor_string(contributors: List[Dict], include_xhtml: bool) -> str:
 	"""
@@ -929,7 +928,7 @@ def _create_draft(args: Namespace):
 	if args.pg_id and pg_ebook_html and not is_pg_html_parsed:
 		raise se.InvalidXhtmlException("Couldn’t parse Project Gutenberg ebook source. This is usually due to invalid HTML in the ebook.")
 
-def create_draft() -> int:
+def create_draft(plain_output: bool) -> int:
 	"""
 	Entry point for `se create-draft`
 	"""
@@ -948,13 +947,13 @@ def create_draft() -> int:
 		# Before we continue, confirm that there isn't a subtitle passed in with the title
 		if ":" in args.title:
 			console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
-			console.print("Titles should not include a subtitle, as subtitles are separate metadata elements in [path]content.opf[/]. Are you sure you want to continue? \\[y/N]")
+			console.print(se.prep_output("Titles should not include a subtitle, as subtitles are separate metadata elements in [path]content.opf[/]. Are you sure you want to continue? \\[y/N]", plain_output))
 			if input().lower() not in {"yes", "y"}:
 				return se.InvalidInputException.code
 
 		_create_draft(args)
 	except se.SeException as ex:
-		se.print_error(ex)
+		se.print_error(ex, plain_output=plain_output)
 		return ex.code
 
 	return 0

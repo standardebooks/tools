@@ -11,7 +11,7 @@ import se
 from se.se_epub import SeEpub
 
 
-def build_images() -> int:
+def build_images(plain_output: bool) -> int:
 	"""
 	Entry point for `se build-images`
 	"""
@@ -27,7 +27,7 @@ def build_images() -> int:
 		directory = Path(directory).resolve()
 
 		if args.verbose:
-			console.print(f"Processing [path][link=file://{directory}]{directory}[/][/] ...")
+			console.print(se.prep_output(f"Processing [path][link=file://{directory}]{directory}[/][/] ...", plain_output))
 
 		try:
 			se_epub = SeEpub(directory)
@@ -41,13 +41,13 @@ def build_images() -> int:
 
 			if args.verbose:
 				console.print(" OK")
-				console.print(f"\tBuilding [path][link=file://{directory / 'src/epub/images/cover.svg'}]cover.svg[/][/] ...", end="")
+				console.print(se.prep_output(f"\tBuilding [path][link=file://{directory / 'src/epub/images/cover.svg'}]cover.svg[/][/] ...", plain_output), end="")
 
 			se_epub.generate_cover_svg()
 
 			if args.verbose:
 				console.print(" OK")
-				console.print(f"\tBuilding [path][link=file://{directory / 'src/epub/images/titlepage.svg'}]titlepage.svg[/][/] ...", end="")
+				console.print(se.prep_output(f"\tBuilding [path][link=file://{directory / 'src/epub/images/titlepage.svg'}]titlepage.svg[/][/] ...", plain_output), end="")
 
 			se_epub.generate_titlepage_svg()
 
