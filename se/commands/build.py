@@ -93,15 +93,12 @@ def build(plain_output: bool) -> int:
 					console.print(f"{message.source}: {message.code} {message_filename}{message.location if message.location else ''} {message.text}")
 			else:
 				for message in messages:
-					message_text = message.text
-
 					# Add hyperlinks around message filenames
 					message_filename = ""
-
 					if message.filename:
 						message_filename = f"[link=file://{message.filename}]{message.filename.name}[/link]{message.location if message.location else ''}"
 
-					table_data.append([message.source, message.code, message_filename, message_text])
+					table_data.append([message.source, message.code, message_filename, message.text])
 
 					if message.submessages:
 						for submessage in message.submessages:

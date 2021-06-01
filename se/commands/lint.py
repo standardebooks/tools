@@ -98,24 +98,17 @@ def lint(plain_output: bool) -> int:
 							console.print(regex.sub(r"^", "\t", submessage, flags=regex.MULTILINE))
 			else:
 				for message in messages:
-					alert = "Manual Review"
+					alert = "[bright_yellow]Manual Review[/bright_yellow]"
 
 					if message.message_type == se.MESSAGE_TYPE_ERROR:
-						alert = "Error"
-
-					message_text = message.text
-
-					if message.message_type == se.MESSAGE_TYPE_ERROR:
-						alert = f"[bright_red]{alert}[/bright_red]"
-					else:
-						alert = f"[bright_yellow]{alert}[/bright_yellow]"
+						alert = "[bright_red]Error[/bright_red]"
 
 					# Add hyperlinks around message filenames
 					message_filename = ""
 					if message.filename:
 						message_filename = f"[link=file://{message.filename.resolve()}]{message.filename.name}[/link]"
 
-					table_data.append([message.code, alert, message_filename, message_text])
+					table_data.append([message.code, alert, message_filename, message.text])
 
 					if message.submessages:
 						for submessage in message.submessages:
