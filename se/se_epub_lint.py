@@ -2445,7 +2445,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check and log missing glossary keys
-				if has_glossary_search_key_map:
+				if has_glossary_search_key_map and filename.name != "glossary.xhtml" and filename.name not in IGNORED_FILENAMES:
 					for glossary_index, glossary_value in enumerate(glossary_usage):
 						if glossary_value[1] is False and regex.search(glossary_value[0], file_contents, flags=regex.IGNORECASE):
 							glossary_usage[glossary_index] = (glossary_value[0], True)
