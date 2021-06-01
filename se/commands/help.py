@@ -5,7 +5,7 @@ This module implements the `se help` command.
 from se.main import get_commands
 
 
-def se_help() -> int:
+def se_help(plain_output: bool) -> int: # pylint: disable=unused-argument
 	"""
 	Entry point for `se help`
 
