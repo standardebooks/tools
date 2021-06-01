@@ -533,6 +533,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	missing_metadata_elements = []
 	abbr_elements: List[se.easy_xml.EasyXmlElement] = []
 	metadata_xml = self.metadata_dom.to_string()
+	has_glossary_search_key_map = False
+	glossary_usage = []
 
 	# These are partly defined in semos://1.0.0/8.10.9.2
 	initialism_exceptions = ["G", # as in `G-Force`
@@ -1139,24 +1141,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("f-013", "Glossary search key map must be named [path]glossary-search-key-map.xml[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Make sure that everything in glossaries are in the rest of the text
+				# We’ll check the files later, and log any errors at the end
 				if filename.name == "glossary-search-key-map.xml":
+					has_glossary_search_key_map = True
 					# Map the glossary to tuples of the values and whether they’re used (initially false)
 					glossary_usage = list(map(lambda node: (node.get_attr("value"), False), xml_dom.xpath(".//*[@value]")))
-					# Walk the tree and mark if any of the glossary entries are used
-					for text_root, _, text_filenames in os.walk(Path(self.path / "src/epub/text")):
-						for text_filename in text_filenames:
-							text_file = (Path(text_root) / text_filename).resolve()
-							if text_file.suffix == ".xhtml":
-								text = self.get_file(text_file)
-								for glossary_index, glossary_value in enumerate(glossary_usage):
-									if glossary_value[1] is False and regex.search(glossary_value[0], text, flags=regex.IGNORECASE):
-										glossary_usage[glossary_index] = (glossary_value[0], True)
-					# Finally, log any entries that don’t exist in the text
-					entries = []
-					for glossary_value in glossary_usage:
-						if glossary_value[1] is False:
-							entries.append(glossary_value[0])
-					messages.append(LintMessage("m-070", "Glossary entries not present in the text:", se.MESSAGE_TYPE_ERROR, filename, entries))
 
 			if filename.suffix == ".xhtml":
 				# Read file contents into a DOM for querying
@@ -2455,6 +2444,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if dom.xpath("/html/body/section[re:test(@epub:type, '\\b(endnotes|loi|afterword|appendix|colophon|copyright\\-page|lot)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'backmatter')])]"):
 					messages.append(LintMessage("s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
+				# Check and log missing glossary keys
+				if has_glossary_search_key_map:
+					for glossary_index, glossary_value in enumerate(glossary_usage):
+						if glossary_value[1] is False and regex.search(glossary_value[0], file_contents, flags=regex.IGNORECASE):
+							glossary_usage[glossary_index] = (glossary_value[0], True)
+
 	if self.cover_path and cover_svg_title != titlepage_svg_title:
 		messages.append(LintMessage("s-028", f"[path][link=file://{self.cover_path}]{self.cover_path.name}[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match.", se.MESSAGE_TYPE_ERROR, self.cover_path))
 
@@ -2615,6 +2610,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	if unused_selectors:
 		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, local_css_path, unused_selectors))
+
+	if has_glossary_search_key_map:
+		entries = []
+		for glossary_value in glossary_usage:
+			if glossary_value[1] is False:
+				entries.append(glossary_value[0])
+		messages.append(LintMessage("m-070", "Glossary entries not present in the text:", se.MESSAGE_TYPE_ERROR, Path("src/epub/glossary-search-key-map.xml"), entries))
 
 	# Now that we have our lint messages, we filter out ones that we've ignored.
 	if ignored_codes:
