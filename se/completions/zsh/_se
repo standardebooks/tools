@@ -88,6 +88,7 @@ case $state in
 			build-title)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
+					{-n,--no-newline}'[with --stdout, don’t end output with a newline]' \
 					{-s,--stdout}'[print to stdout intead of writing to the file]' \
 					'*: :_files -g \*.xhtml'
 				;;

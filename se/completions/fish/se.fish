@@ -108,6 +108,7 @@ complete -c se -A -n "__fish_seen_subcommand_from build-spine" -s s -l stdout -d
 
 complete -c se -n "__fish_se_no_subcommand" -a build-title -d "Generate the title of an XHTML file based on its headings and update the file’s <title> element."
 complete -c se -A -n "__fish_seen_subcommand_from build-title" -s h -l help -x -d "show this help message and exit"
+complete -c se -A -n "__fish_seen_subcommand_from build-title" -s n -l no-newline -d "with --stdout, don’t end output with a newline"
 complete -c se -A -n "__fish_seen_subcommand_from build-title" -s s -l stdout -d "print to stdout intead of writing to the file"
 
 complete -c se -n "__fish_se_no_subcommand" -a build-toc -d "Generate the table of contents for the ebook’s source directory and update the ToC file."

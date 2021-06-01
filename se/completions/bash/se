@@ -32,7 +32,7 @@ _se(){
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			build-title)
-				COMPREPLY+=($(compgen -W "-h --help -s --stdout" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-h --help -n --no-newline -s --stdout" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X "!*.xhtml" -- "${cur}"))
 				;;
 			build-toc)

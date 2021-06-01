@@ -18,6 +18,7 @@ def build_title(plain_output: bool) -> int:
 	"""
 
 	parser = argparse.ArgumentParser(description="Generate the title of an XHTML file based on its headings and update the file’s <title> element.")
+	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="with --stdout, don’t end output with a newline")
 	parser.add_argument("-s", "--stdout", action="store_true", help="print to stdout intead of writing to the file")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
@@ -27,6 +28,9 @@ def build_title(plain_output: bool) -> int:
 	if args.stdout and (len(targets) > 1):
 		se.print_error("Multiple targets or directories are only allowed without the [bash]--stdout[/] option.", plain_output=plain_output)
 		return se.InvalidArgumentsException.code
+
+	if not args.newline and not args.stdout:
+		se.print_error("The [bash]--no-newline[/] option can only be used with the [bash]--stdout[/] option.", plain_output=plain_output)
 
 	return_code = 0
 
@@ -38,7 +42,11 @@ def build_title(plain_output: bool) -> int:
 				title = se.formatting.generate_title(dom)
 
 				if args.stdout:
-					print(title)
+					if args.newline:
+						print(title)
+					else:
+						print(title, end="")
+
 				else:
 					if title == "":
 						se.print_error(f"Couldn’t deduce title for file: [path][link=file://{filename}]{filename}[/][/].", False, True, plain_output=plain_output)
