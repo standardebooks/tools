@@ -2616,7 +2616,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		for glossary_value in glossary_usage:
 			if glossary_value[1] is False:
 				entries.append(glossary_value[0])
-		messages.append(LintMessage("m-070", "Glossary entries not present in the text:", se.MESSAGE_TYPE_ERROR, Path("src/epub/glossary-search-key-map.xml"), entries))
+		if len(entries) > 0:
+			messages.append(LintMessage("m-070", "Glossary entries not present in the text:", se.MESSAGE_TYPE_ERROR, Path("src/epub/glossary-search-key-map.xml"), entries))
 
 	# Now that we have our lint messages, we filter out ones that we've ignored.
 	if ignored_codes:
