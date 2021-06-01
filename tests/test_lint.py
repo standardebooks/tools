@@ -16,7 +16,7 @@ def test_lint(data_dir: Path, draft_dir: Path, work_dir: Path, capfd, test_name:
 	text_dir = data_dir / "lint" / test_name
 	book_dir = assemble_book(draft_dir, work_dir, text_dir)
 
-	result = run(f"se lint --plain {book_dir}")
+	result = run(f"se --plain lint {book_dir}")
 
 	# All books with errors should return a non-zero return code
 	if test_name != "clean":
