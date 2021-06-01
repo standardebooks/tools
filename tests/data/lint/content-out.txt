@@ -40,7 +40,6 @@ m-036 [Error] content.opf Variable not replaced with value.
         PRODUCER
         PRODUCER_SORT
         PRODUCER_URL
-m-055 [Error] content.opf `dc:description` does not end with a period.
 m-063 [Error] cover.svg Cover image has not been built.
 m-036 [Error] imprint.xhtml Variable not replaced with value.
         PG_URL

@@ -952,7 +952,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	if self.metadata_dom.xpath("/package/metadata/*[re:test(., 'id\\.loc\\.gov/authorities/names/[^\\.]+\\.html')]"):
 		messages.append(LintMessage("m-008", "[url]id.loc.gov[/] URI ending with illegal [path].html[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-	if self.metadata_dom.xpath("/package/metadata/dc:description[re:test(., '[^\\.”]$')]"):
+	if self.metadata_dom.xpath("/package/metadata/dc:description[text()!='DESCRIPTION' and re:test(., '[^\\.”]$')]"):
 		messages.append(LintMessage("m-055", "[xml]dc:description[/] does not end with a period.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Does the manifest match the generated manifest?
