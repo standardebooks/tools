@@ -28,7 +28,7 @@ import se.easy_xml
 import se.formatting
 import se.images
 
-SE_VARIABLES = ["SE_IDENTIFIER", "TITLE", "TITLE_SORT", "SUBJECT_1", "SUBJECT_2", "LCSH_ID_1", "LCSH_ID_2", "TAG", "DESCRIPTION", "LONG_DESCRIPTION", "LANG", "PG_URL", "IA_URL", "EBOOK_WIKI_URL", "VCS_IDENTIFIER", "YEAR", "AUTHOR_WIKI_URL", "AUTHOR", "AUTHOR_SORT", "AUTHOR_FULL_NAME", "AUTHOR_NACOAF_URI", "TRANSLATOR", "TRANSLATOR_SORT", "TRANSLATOR_WIKI_URL", "TRANSLATOR_NACOAF_URI", "COVER_ARTIST", "COVER_ARTIST_SORT", "COVER_ARTIST_WIKI_URL", "COVER_ARTIST_NACOAF_URI", "ILLUSTRATOR", "ILLUSTRATOR_SORT", "ILLUSTRATOR_WIKI_URL", "ILLUSTRATOR_NACOAF_URI", "TRANSCRIBER", "TRANSCRIBER_SORT", "TRANSCRIBER_URL", "PRODUCER_URL", "PRODUCER", "PRODUCER_SORT", "PG_YEAR", "TRANSCRIBER_1", "TRANSCRIBER_2", "PAINTING", "ORIGINAL_LANGUAGE", "TRANSLATION_YEAR"]
+SE_VARIABLES = ["SE_IDENTIFIER", "TITLE", "TITLE_SORT", "SUBJECT_1", "SUBJECT_2", "LCSH_ID_1", "LCSH_ID_2", "TAG", "DESCRIPTION", "LONG_DESCRIPTION", "LANG", "PG_URL", "PRODUCTION_NOTES", "IA_URL", "EBOOK_WIKI_URL", "VCS_IDENTIFIER", "YEAR", "AUTHOR_WIKI_URL", "AUTHOR", "AUTHOR_SORT", "AUTHOR_FULL_NAME", "AUTHOR_NACOAF_URI", "TRANSLATOR", "TRANSLATOR_SORT", "TRANSLATOR_WIKI_URL", "TRANSLATOR_NACOAF_URI", "COVER_ARTIST", "COVER_ARTIST_SORT", "COVER_ARTIST_WIKI_URL", "COVER_ARTIST_NACOAF_URI", "ILLUSTRATOR", "ILLUSTRATOR_SORT", "ILLUSTRATOR_WIKI_URL", "ILLUSTRATOR_NACOAF_URI", "TRANSCRIBER", "TRANSCRIBER_SORT", "TRANSCRIBER_URL", "PRODUCER_URL", "PRODUCER", "PRODUCER_SORT", "PG_YEAR", "TRANSCRIBER_1", "TRANSCRIBER_2", "PAINTING", "ORIGINAL_LANGUAGE", "TRANSLATION_YEAR"]
 
 # See https://idpf.github.io/epub-vocabs/structure/
 EPUB_SEMANTIC_VOCABULARY = ["abstract", "acknowledgments", "afterword", "answer", "answers", "appendix", "aside", "assessment", "assessments", "backlink", "backmatter", "balloon", "biblioentry", "bibliography", "biblioref", "bodymatter", "bridgehead", "case-study", "chapter", "colophon", "concluding-sentence", "conclusion", "contributors", "copyright-page", "cover", "covertitle", "credit", "credits", "dedication", "division", "endnote", "endnotes", "epigraph", "epilogue", "errata", "feedback", "figure", "fill-in-the-blank-problem", "footnote", "footnotes", "foreword", "frontmatter", "fulltitle", "general-problem", "glossary", "glossdef", "glossref", "glossterm", "halftitle", "halftitlepage", "imprimatur", "imprint", "index", "index-editor-note", "index-entry", "index-entry-list", "index-group", "index-headnotes", "index-legend", "index-locator", "index-locator-list", "index-locator-range", "index-term", "index-term-categories", "index-term-category", "index-xref-preferred", "index-xref-related", "introduction", "keyword", "keywords", "label", "landmarks", "learning-objective", "learning-objectives", "learning-outcome", "learning-outcomes", "learning-resource", "learning-resources", "learning-standard", "learning-standards", "list", "list-item", "loa", "loi", "lot", "lov", "match-problem", "multiple-choice-problem", "noteref", "notice", "ordinal", "other-credits", "pagebreak", "page-list", "panel", "panel-group", "part", "practice", "practices", "preamble", "preface", "prologue", "pullquote", "qna", "question", "revision-history", "seriespage ", "sound-area", "subtitle", "table", "table-cell", "table-row", "text-area", "tip", "title", "titlepage", "toc", "toc-brief", "topic-sentence", "true-false-problem", "volume"]
@@ -865,9 +865,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	if nodes:
 		messages.append(LintMessage("m-019", "Illegal em-dash in [xml]<dc:subject>[/] element; use [text]--[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.text for node in nodes]))
 
-	# Check for empty production notes
-	if self.metadata_dom.xpath("/package/metadata/meta[@property='se:production-notes' and text()='Any special notes about the production of this ebook for future editors/producers? Remove this element if not.']"):
-		messages.append(LintMessage("m-022", "Empty [xml]<meta property=\"se:production-notes\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+	# Check for metadata elements
+	nodes = self.metadata_dom.xpath("/package/metadata/*[not(name()='link') and not(normalize-space(.)) and not(./*)]")
+	if nodes:
+		messages.append(LintMessage("m-022", "Empty element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 	# Check for illegal VCS URLs
 	nodes = self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:url.vcs.github' and not(text()='{self.generated_github_repo_url}')]")

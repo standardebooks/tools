@@ -15,7 +15,6 @@ m-036 [Error] colophon.xhtml Variable not replaced with value.
 m-020 [Error] content.opf Illegal value for `<meta property="se:subject">` 
 element.
         TAG
-m-022 [Error] content.opf Empty `<meta property="se:production-notes">` element.
 m-036 [Error] content.opf Variable not replaced with value.
         SUBJECT_1
         SUBJECT_2
@@ -26,6 +25,7 @@ m-036 [Error] content.opf Variable not replaced with value.
         LONG_DESCRIPTION
         LANG
         PG_URL
+        PRODUCTION_NOTES
         EBOOK_WIKI_URL
         AUTHOR_SORT
         AUTHOR_FULL_NAME
