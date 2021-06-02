@@ -767,7 +767,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			messages.append(LintMessage("t-047", "[text]US[/] should be [text]U.S.[/]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
 		# Make sure long-description is escaped HTML
-		if "<" not in long_description:
+		if "<" not in long_description and long_description.strip() != "LONG_DESCRIPTION":
 			messages.append(LintMessage("m-016", "Long description must be escaped HTML.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 		else:
 			# Check for malformed long description HTML
