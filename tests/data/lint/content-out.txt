@@ -12,7 +12,6 @@ m-036 [Error] colophon.xhtml Variable not replaced with value.
         TRANSCRIBER_1
         TRANSCRIBER_2
         PAINTING
-m-016 [Error] content.opf Long description must be escaped HTML.
 m-020 [Error] content.opf Illegal value for `<meta property="se:subject">` 
 element.
         TAG
