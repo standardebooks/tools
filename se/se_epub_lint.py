@@ -251,7 +251,7 @@ SEMANTICS & CONTENT
 "s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/]."
 "s-083", "[xhtml]<td epub:type=\"z3998:persona\">[/] element with child [xhtml]<p>[/] element."
 "s-084", "Poem has incorrect semantics."
-"s-085", "[xhtml]<h2>[/] element found in a [xhtml]<section>[/] that is deeper than expected. Hint: If this work has parts, should this header be [xhtml]<h3>[/] or higher?"
+"s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. Hint: Headings not in the half title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?"
 "s-086", "[text]Op. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] means [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded."
 "s-087", "Subtitle in metadata, but no subtitle in the half title page."
 "s-088", "Subtitle in half title page, but no subtitle in metadata."
@@ -1643,11 +1643,28 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("t-043", "Dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-				# Check for h2 elements that are 2 or more <section>s deep.
-				# The deep nesting suggests they should be at least h3
-				nodes = dom.xpath("/html/body//section/section/*[name()='h2' or (name()='hgroup' and ./h2)]")
-				if nodes:
-					messages.append(LintMessage("s-085", "[xhtml]<h2>[/] element found in a [xhtml]<section>[/] that is deeper than expected. Hint: If this work has parts, should this header be [xhtml]<h3>[/] or higher?", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+				# Check for <h#> elements that are higher or lower than their expected level based on how deep they are in <section>s
+				# or <article>s. Exclude <nav> in the ToC.
+				invalid_headers = []
+				for node in dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and not(parent::hgroup) and not(parent::nav)] | /html/body//hgroup/*[re:test(name(), '^h[1-6]$')][1]"):
+					parent_section_count = len(node.xpath(".//ancestor::section | .//ancestor::article"))
+					heading_level = int(regex.search(r"^h([1-6]$)", node.tag)[1])
+
+					is_half_title = bool(dom.xpath("/html/body//section[contains(@epub:type, 'halftitlepage')]"))
+
+					# Only the half title page is allowed an <h1> element. All other files must start at <h2>.
+					if not is_half_title and heading_level == 1:
+						invalid_headers.append(node.to_string())
+
+					if is_half_title and heading_level > 1:
+						invalid_headers.append(node.to_string())
+
+					# All other headers must at least one parent <section> or <article> and start at <h2>
+					if heading_level > 1 and heading_level - 1 > parent_section_count:
+						invalid_headers.append(node.to_string())
+
+				if invalid_headers:
+					messages.append(LintMessage("s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. Hint: Headings not in the half title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?", se.MESSAGE_TYPE_ERROR, filename, invalid_headers))
 
 				# Check for abbreviations followed by periods
 				# But we exclude some SI units, which don't take periods; abbreviations ending in numbers for example in stage directions; abbreviations like `r^o` (recto) that contain <sup>; and some Imperial abbreviations that are multi-word
@@ -1771,7 +1788,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for illegal elements in <head>
 				nodes = dom.xpath("/html/head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
 				if nodes:
-					messages.append(LintMessage("x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.lxml_element.tag}>" for node in nodes]))
+					messages.append(LintMessage("x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.tag}>" for node in nodes]))
 
 				# Check for xml:lang attribute starting in uppercase
 				nodes = dom.xpath("//*[re:test(@xml:lang, '^[A-Z]')]")
