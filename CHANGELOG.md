@@ -1,3 +1,259 @@
+# 2.0.0
+
+## Breaking changes
+
+- `se reorder-endnotes` has been renamed to `se shift-endnotes` to better differentiate it from `se renumber-endnotes`
+
+- `se print-manifest`, `se print-spine`, and `se print-toc` have been renamed to `se build-manifest`, `se build-spine`, and `se build-toc`. The `-i,--in-place` option has been removed and the tool now writes to disk by default. The `-s,--stdout` option has been added to print to stdout instead of writing to disk
+
+- The `se create-draft` `-p`,`--pg-url` option has been replaced with `-p`,`--pg-id`, which takes the Project Gutenberg book ID number instead of a whole URL
+
+- The `se interactive-sr` command has been replaced with the `se interactive-replace` command, a totally independent TUI utility that removes the Vim dependency
+
+- The `se build` `-t`,`--covers` option has been removed
+
+## General
+
+- Add a new `-p`,`--plain` option to the base `se` command to enable plain-text output for all subcommands. For example: `se --plain lint .`
+
+- Replace all XHTML-processing regexes in all tools with dom operations
+
+- Most checks that perform actions based on a filename now check the dom and perform checks based on the semantics in the file instead
+
+- Don't include contributor name twice in SE identifier string if they are both a translator and illustrator
+
+-  Remove the `quiet_remove` function now that `Path.unlink()` accepts the `missing_ok` parameter
+
+## se build
+
+- The `--check` flag now invokes Ace to check accessibility. Ace is only invoked if it's present in `$PATH`, otherwise it is not invoked and the build process will continue uninterrupted
+
+- If epubcheck/Ace fails, the build files are kept on disk and are hyperlinked in the output
+
+- Replace ditto mark (U+3003) with ldquo
+
+- Don't crash if the colophon is missing
+
+- Allow building without a cover image, or with a jpg/png cover image
+
+- Alpha sort simplified class names so builds are deterministic
+
+- Remove obsolete replacement of `<abbr>` with `<span>`
+
+- Improve MathML replacement so many more basic MathML expressions get converted to plain text instead of an image
+
+- Print epubcheck/Ace output in a lint-style table instead of using raw output
+
+- Replace Unicode ratio character U+2236 with colon
+
+- Add more ARIA roles to include, and improve xpath to include them
+
+- Add alt text to mathml nodes that were converted to PNG
+
+- Restructure work directory format during the build process and don't zip an epub until epubcheck/ace pass
+
+- Save debug epub into a fixed location to prevent multiple runs from taking up disk space
+
+- Use a temp file to capture epubcheck's stdout in case it's too long
+
+- Remove outdated Google Play Books compatibility fix
+
+- Pretty-print some more obscure errors instead of crashing
+
+- Don't add more than one `role` attribute when adding ARIA roles
+
+- Add first ARIA-valid `epub:type` to the role attribute
+
+- Don't add ARIA roles to `<article>`
+
+- Remove the `-t`,`--covers` option
+
+## se build-manifest
+
+- Don't add glossary property for the ToC
+
+- Don't fail if no manifest exists
+
+## se build-spine
+
+- Don't fail if no spine exists
+
+## se build-title
+
+- Add the `n`,`--no-newline` option
+
+## se build-toc
+
+- Don't duplicate `*matter` semantic in landmarks
+
+- Add support for `hidden` attribute on headings
+
+## se clean
+
+- Trim white space within `<p>` in content.opf long description
+
+- Don't remove spaces after `:` in CSS media queries
+
+- When formatting CSS, don't add spaces after colons in strings
+
+## se create-draft
+
+- Add LCCN entry for David Widger automatically
+
+- Don't allow unidecode to convert rsquo to straight quote
+
+- Don't try to find Wikipedia URL for a book if it's a generic compilation
+
+- Update colophon template
+
+- Update Uncopyright template
+
+- Replace `-p`,`--pg-url` with `-p`,`--pg-id`
+
+- Use correct `se:image.color-depth` semantic instead of `se:color-depth`
+
+- Titlecase the book title
+
+- Update metadata template to use variable for production notes
+
+## se lint
+
+- Allow ex units for font size in c-023
+
+- Correct URL references to URI in `id.loc.gov` errors. Thanks to Vince Rice
+
+- Add t-058, quote used instead of ditto mark in table
+
+- Add t-059, period at end of `<cite>` element before endnote backlink
+
+- Add `together` to list of ignored classes
+
+- Emit lint error instead of crashing in some cases
+
+- Output f-002 only once, with sub items
+
+- Check for half title page at any sectioning level
+
+- Merge m-036, m-052, and m-062 into m-036, variable not replaced with value
+
+- Add m-055, description does not end with a period
+
+- Improve t-059
+
+- Add s-035, endnote containing only `<cite>`
+
+- Don't crash if there is no cover
+
+- Merge m-011 into m-005
+
+- Ignore some common known names in t-007
+
+- Add s-084, poem has incorrect semantics
+
+- Add t-060, old style Bible citation
+
+- Add s-085, h# element found at unexpected depth
+
+- Remove accidental duplicate message s-050
+
+- Allow any value for the scope attribute in s-055
+
+- Don't throw s-025 if the titlepage has any heading content
+
+- Add s-086, Op. Cit. in endnote
+
+- Improve t-060
+
+- Improve t-017
+
+- Remove s-031; replace s-032 with generic 'invalid epub:type value' check that checks against set vocabularies
+
+- Remove incorrect entry in SE vocabulary definition and update epub vocabulary definitions
+
+- Add s-031, duplicate value in `epub:type` attribute
+
+- Expand on t-017 error message
+
+- Fix error in t-017
+
+- Improve m-007
+
+- Improve c-015
+
+- Add m-011, Subtitle in metadata but no full title element
+
+- Add s-087, subtitle in metadata but no subtitle in half title page
+
+- Add s-088, subtitle in half title page but no subtitle in metadata
+
+- Add m-062, `<dc:title>` missing matching file-as
+
+- Add m-068, `<dc:title>` missing matching title-type
+
+- Add s-089, MathML without `alttext` attribute
+
+- Add m-069, `comprised of` in metadata
+
+- Improve t-042
+
+- Improve message for s-018
+
+- Don't throw m-055 if the short description is not yet filled
+
+- Don't throw m-016 if the long description is not yet filled out
+
+- Update m-022 to check for any empty element, not just production notes
+
+- Add m-070, lint check for glossary entries missing from the text. Thanks to Robin Whittleton
+
+- Add s-090, invalid language tag
+
+## se modernize-spelling
+
+- Various additions
+
+## se recompose-epub
+
+- Improve fix for positioning figures/images with `positon: absolute;` during recomposition
+
+- Remove `data-css` classes from output
+
+## se renumber-endnotes
+
+- Don't print traceback if the target is not an SE directory
+
+- Properly process endnotes within endnotes.xhtml itself. Thanks to David Grigg
+
+- Actually follow spine order
+
+## se semanticate
+
+- Various additions
+
+## se shift-endnotes
+
+- Correctly handle endnotes within endnotes
+
+- Add `-a`,`--amount` flag to shift endnotes by any amount
+
+- Fix incorrect increment calculation
+
+## se split-file
+
+- Add NUMBER parameter to template
+
+## se typogrify
+
+- Remove shy hyphens
+
+## se xpath
+
+- Add `-f`,`--only-filenames` option
+
+- Smarter check when adding Roman semantics
+
+- Escape `[` to prevent Rich from parsing those characters as styling commands
+
 # 1.9.3
 
 ## se build
