@@ -454,9 +454,21 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				# Add ARIA roles, which are just mostly duplicate attributes to epub:type
 				for role in ARIA_ROLES:
 					# Exclude landmarks because while their semantics indicate what their *links* contain, not what *they themselves are*.
-					# Skip elements that already have a `role` attribute, as more than one role is illegal
+					# Skip elements that already have a `role` attribute, as more than one role will cause ace to fail
 					for node in dom.xpath(f"/html//*[not(@role) and not(ancestor-or-self::nav[contains(@epub:type, 'landmarks')]) and re:test(@epub:type, '\\b{role}\\b')]"):
-						node.add_attr_value("role", f"doc-{role}")
+						attr_values = regex.split(r"\s", node.get_attr("epub:type"))
+
+						if len(attr_values) > 1:
+							# If there is more than one value for epub:type, ace expects the `role` attribute
+							# to be set to the first aria-valid epub:type value. Iterate over the epub:type values
+							# and break when we find our first match.
+							for attr_value in attr_values:
+								if attr_value in ARIA_ROLES:
+									node.set_attr("role", f"doc-{attr_value}")
+									break
+						else:
+							node.set_attr("role", f"doc-{attr_values[0]}")
+
 
 				# We converted svgs to pngs, so replace references
 				for node in dom.xpath("/html/body//img[re:test(@src, '\\.svg$')]"):
@@ -901,7 +913,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 				ref_node.set_attr("type", " ".join(new_node_types))
 
-				# We add the 'text' attribute to the titlepage to tell the reader to start there
+				# We add the `text` attribute to the titlepage to tell the reader to start there
 				if ref_node.get_attr("type") == "titlepage":
 					ref_node.set_attr("type", "title-page text")
 
@@ -989,15 +1001,26 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 								for file_assertion in assertion["assertions"]:
 									if file_assertion["earl:result"]["earl:outcome"] != "pass":
+										emit_result = True
+
 										# Ace fails a test if the language tag is a private-use subtag, like lang="x-alien"
 										# Don't include those false positives in the results.
 										# See https://github.com/daisy/ace/issues/169
-										if not (file_assertion["earl:test"]["dct:title"] == "valid-lang" and "lang=\"x-" in file_assertion['earl:result']['html']):
+										if file_assertion["earl:test"]["dct:title"] == "valid-lang" and "lang=\"x-" in file_assertion["earl:result"]["html"]:
+											emit_result = False
+
+										# Ace fails if a <section> doesn't have a clear title; but for recomposability, we must nest <section>s without titles.
+										# Attempt to skip that result here, if it looks like we're looking at <section>s nested for recomposability.
+										# See https://standardebooks.org/ebooks/fyodor-dostoevsky/the-brothers-karamazov/constance-garnett
+										if file_assertion["earl:test"]["dct:title"] == "landmark-unique" and len(regex.findall(r"<(section|article)", file_assertion["earl:result"]["html"])) >= 2:
+											emit_result = False
+
+										if emit_result:
 											code = file_assertion["earl:test"]["dct:title"]
 											if (str(file), code) not in file_messages:
 												file_messages[(str(file), code)] = []
 
-											file_messages[(str(file), code)].append((file_assertion['earl:result']['dct:description'], file_assertion['earl:result']['html']))
+											file_messages[(str(file), code)].append((file_assertion["earl:result"]["dct:description"], file_assertion["earl:result"]["html"]))
 
 						# Unpack our sorted messages for output
 						for (file_path_str, code), message_list in file_messages.items():
