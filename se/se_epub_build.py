@@ -454,7 +454,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				# Add ARIA roles, which are just mostly duplicate attributes to epub:type
 				for role in ARIA_ROLES:
 					# Exclude landmarks because while their semantics indicate what their *links* contain, not what *they themselves are*.
-					for node in dom.xpath(f"/html//*[not(ancestor-or-self::nav[contains(@epub:type, 'landmarks')]) and re:test(@epub:type, '\\b{role}\\b')]"):
+					# Skip elements that already have a `role` attribute, as more than one role is illegal
+					for node in dom.xpath(f"/html//*[not(@role) and not(ancestor-or-self::nav[contains(@epub:type, 'landmarks')]) and re:test(@epub:type, '\\b{role}\\b')]"):
 						node.add_attr_value("role", f"doc-{role}")
 
 				# We converted svgs to pngs, so replace references
