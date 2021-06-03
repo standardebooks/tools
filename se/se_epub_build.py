@@ -456,6 +456,10 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					# Exclude landmarks because while their semantics indicate what their *links* contain, not what *they themselves are*.
 					# Skip elements that already have a `role` attribute, as more than one role will cause ace to fail
 					for node in dom.xpath(f"/html//*[not(@role) and not(ancestor-or-self::nav[contains(@epub:type, 'landmarks')]) and re:test(@epub:type, '\\b{role}\\b')]"):
+						# <article>s generally aren't allowed aria roles, so skip them
+						if node.tag == "article":
+							continue
+
 						attr_values = regex.split(r"\s", node.get_attr("epub:type"))
 
 						if len(attr_values) > 1:
@@ -1013,6 +1017,14 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 										# Attempt to skip that result here, if it looks like we're looking at <section>s nested for recomposability.
 										# See https://standardebooks.org/ebooks/fyodor-dostoevsky/the-brothers-karamazov/constance-garnett
 										if file_assertion["earl:test"]["dct:title"] == "landmark-unique" and len(regex.findall(r"<(section|article)", file_assertion["earl:result"]["html"])) >= 2:
+											emit_result = False
+
+										# Ace fails if an <article> doesn't have a `role` that matches its `epub:type`; but epubcheck
+										# will complain if the `role` is not allowed on that element. This mostly affects <article>s.
+										# We choose to satisfy epubcheck first by not including `role` on <article>, then ignoring Ace's complaint.
+										# See https://github.com/daisy/ace/issues/354
+										# See https://standardebooks.org/ebooks/robert-frost/north-of-boston
+										if file_assertion["earl:test"]["dct:title"] == "epub-type-has-matching-role" and "<article" in file_assertion["earl:result"]["html"]:
 											emit_result = False
 
 										if emit_result:
