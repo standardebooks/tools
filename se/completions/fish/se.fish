@@ -23,7 +23,6 @@ complete -c se -A -n "__fish_seen_subcommand_from build" -s h -l help -x -d "sho
 complete -c se -A -n "__fish_seen_subcommand_from build" -s k -l kindle -d "also build an .azw3 file for Kindle."
 complete -c se -A -n "__fish_seen_subcommand_from build" -s o -l output-dir -d "a directory to place output files in; will be created if it doesn’t exist"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s p -l proof -d "insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof"
-complete -c se -A -n "__fish_seen_subcommand_from build" -s t -l covers -d "output the cover and a cover thumbnail; can only be used when there is a single build target"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s v -l verbose -d "increase output verbosity"
 
 complete -c se -n "__fish_se_no_subcommand" -a build-images -d "Build ebook cover and titlepage images in a Standard Ebook source directory."

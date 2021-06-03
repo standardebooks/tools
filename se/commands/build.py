@@ -25,7 +25,6 @@ def build(plain_output: bool) -> int:
 	parser.add_argument("-k", "--kindle", dest="build_kindle", action="store_true", help="also build an .azw3 file for Kindle")
 	parser.add_argument("-o", "--output-dir", metavar="DIRECTORY", type=str, default="", help="a directory to place output files in; will be created if it doesn’t exist")
 	parser.add_argument("-p", "--proof", dest="proof", action="store_true", help="insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof")
-	parser.add_argument("-t", "--covers", dest="build_covers", action="store_true", help="output the cover and a cover thumbnail; can only be used when there is a single build target")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
@@ -40,10 +39,6 @@ def build(plain_output: bool) -> int:
 	# invoking Parallel, and then get that value here.
 	console = Console(width=int(os.environ['COLUMNS']) if called_from_parallel and "COLUMNS" in os.environ else None, highlight=False, theme=se.RICH_THEME, force_terminal=force_terminal) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
-	if args.build_covers and len(args.directories) > 1:
-		se.print_error("[bash]--covers[/] option specified, but more than one build target specified.", plain_output=plain_output)
-		return se.InvalidInputException.code
-
 	for directory in args.directories:
 		directory = Path(directory).resolve()
 		messages = []
@@ -53,7 +48,7 @@ def build(plain_output: bool) -> int:
 
 		try:
 			se_epub = SeEpub(directory)
-			se_epub.build(args.check, args.build_kobo, args.build_kindle, Path(args.output_dir), args.proof, args.build_covers)
+			se_epub.build(args.check, args.build_kobo, args.build_kindle, Path(args.output_dir), args.proof)
 		except se.BuildFailedException as ex:
 			exception = ex
 			messages = ex.messages

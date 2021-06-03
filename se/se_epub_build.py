@@ -78,7 +78,7 @@ def __save_debug_epub(work_compatible_epub_dir: Path) -> Path:
 
 	return epub_temp_dir
 
-def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_dir: Path, proof: bool, build_covers: bool) -> None:
+def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_dir: Path, proof: bool) -> None:
 	"""
 	Entry point for `se build`
 	"""
@@ -297,11 +297,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				cover = cover.convert("RGB") # Remove alpha channel from PNG if necessary
 				cover.save(work_compatible_epub_dir / "epub" / "images" / "cover.jpg")
 
-				# Save <output-dir>/cover-thumbnail.jpg while we're here
-				if build_covers:
-					cover = cover.resize((COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT))
-					cover.save(output_dir / "cover-thumbnail.jpg")
-
 				cover_work_path.unlink()
 
 				# Replace .svg/.png with .jpg in the metadata
@@ -310,18 +305,6 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						node.set_attr(name, regex.sub(r"\.(svg|png)$", ".jpg", value))
 
 					node.set_attr("media-type", "image/jpeg")
-
-			elif cover_work_path.suffix == ".jpg":
-				# If we start from JPG then it's much easier, just resize the thumbnail
-				if build_covers:
-					cover = Image.open(cover_work_path)
-					cover = cover.resize((COVER_THUMBNAIL_WIDTH, COVER_THUMBNAIL_HEIGHT))
-					cover.save(output_dir / "cover-thumbnail.jpg")
-
-			if build_covers:
-				# Copy the final cover.jpg to the output dir
-				cover_work_path = Path(regex.sub(r"\.(svg|png)$", ".jpg", str(cover_work_path)))
-				shutil.copy2(cover_work_path, output_dir / cover_work_path.name)
 
 		# Remove SVG item properties in the metadata file since we will convert all SVGs to PNGs further down
 		for node in metadata_dom.xpath("/package/manifest/item[contains(@properties, 'svg')]"):
