@@ -696,7 +696,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 							child.parent.unwrap()
 
-							mrows = child.xpath("//m:mrow")
+							mrows = child.xpath(".//m:mrow")
 							for mrow in mrows:
 								mrow.wrap_with(replacement_node)
 								mrow.unwrap()
@@ -709,7 +709,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 
 							child.parent.unwrap()
 
-							mrows = child.xpath("//m:mrow")
+							mrows = child.xpath(".//m:mrow")
 							for mrow in mrows:
 								mrow.wrap_with(replacement_node)
 								mrow.unwrap()
@@ -732,6 +732,9 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						for child in node_clone.xpath(".//m:mn"):
 							child.unwrap()
 
+						for child in node_clone.xpath(".//m:mrow"):
+							child.unwrap()
+
 						# If there are no more mathml-namespaced elements, we succeeded; replace the mathml node
 						# with our modified clone
 						if not node_clone.xpath(".//*[namespace-uri()='http://www.w3.org/1998/Math/MathML']"):
@@ -743,11 +746,27 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 								if child.text is not None:
 									child.text = child.text.strip()
 									child.text = child.text.replace("|se:mo|", " ")
-									child.text = regex.sub(r"^\s+", "", child.text)
+									child.text = regex.sub(r"\s+([\)\]])", r"\1", child.text)
+									child.text = regex.sub(r"([\(\[])\s+", r"\1", child.text)
+									child.text = regex.sub(r"([0-9])\s+\(", r"\1(", child.text)
 								if child.tail is not None:
 									child.tail = child.tail.strip()
 									child.tail = child.tail.replace("|se:mo|", " ")
-									child.tail = regex.sub(r"\s+$", "", child.tail)
+									child.tail = regex.sub(r"\s+([\)\]])", r"\1", child.tail)
+									child.tail = regex.sub(r"([\(\[])\s+", r"\1", child.tail)
+									child.tail = regex.sub(r"([0-9])\s+\(", r"\1(", child.tail)
+
+									if child.tag == "var":
+										child.tail = regex.sub(r"\s+([\(\[])", r"\1", child.tail)
+
+							# Remove leading spaces from the root
+							if node_clone.lxml_element.text is not None:
+								node_clone.lxml_element.text = node_clone.lxml_element.text.lstrip()
+
+							# Remove trailing spaces from the tail of the last element
+							for child in node_clone.xpath("./*[last()]"):
+								if child.lxml_element.tail is not None:
+									child.lxml_element.tail = child.lxml_element.tail.rstrip()
 
 							# If the node has no children, strip its text value
 							if not node_clone.children:
