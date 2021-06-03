@@ -256,6 +256,7 @@ SEMANTICS & CONTENT
 "s-087", "Subtitle in metadata, but no subtitle in the half title page."
 "s-088", "Subtitle in half title page, but no subtitle in metadata."
 "s-089", "MathML missing [attr]alttext[/] attribute."
+"s-090", "Invalid language tag."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1970,6 +1971,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//hgroup[./*[following-sibling::*[1][name() !='h6' and name()=name(preceding-sibling::*[1])]]]")
 				if nodes:
 					messages.append(LintMessage("s-074", "[xhtml]<hgroup>[/] element containing sequential [xhtml]<h#>[/] elements at the same heading level.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for common errors in language tags
+				# `gr` is often used instead of `el`, `sp` instead of `es`, and `ge` instead of `de` (`ge` is the Georgian geographic region subtag but not a language subtag itself)
+				nodes = dom.xpath("//*[re:test(@xml:lang, '^(gr|sp|ge)$')]")
+				if nodes:
+					messages.append(LintMessage("s-090", "Invalid language tag.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 				# Check for possessive 's within name italics, but not in ignored files like the colophon which we know have no possessives
 				# Allow some known exceptions like `Harper's`, etc.
