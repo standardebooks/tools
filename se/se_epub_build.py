@@ -984,7 +984,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 							item_messages = []
 							for (message, html) in message_list:
 								# Ace output includes namespaces on each element, remove them
-								html = regex.sub(r" xmlns=\"[^\"]+?\"", "", html)
+								html = regex.sub(r" xmlns(?::.*?)?=\"[^\"]+?\"", "", html)
 								item_messages.append(html)
 
 							# message_list[0][n] will always be the same so [0][0] suffices
