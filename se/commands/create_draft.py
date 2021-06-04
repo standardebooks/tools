@@ -721,7 +721,7 @@ def _create_draft(args: Namespace):
 			# Save this error for later, because it's still useful to complete the create-draft process
 			# even if we've failed to parse PG's HTML source.
 			is_pg_html_parsed = False
-			(repo_path / "src" / "epub" / "text" / "body.xhtml").unlink(missing_ok=True)
+			se.quiet_remove(repo_path / "src" / "epub" / "text" / "body.xhtml")
 
 	# Copy over templates
 	_copy_template_file("gitignore", repo_path / ".gitignore")
