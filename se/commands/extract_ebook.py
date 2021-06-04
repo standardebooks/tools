@@ -52,7 +52,7 @@ def extract_ebook(plain_output: bool) -> int:
 	Entry point for `se extract-ebook`
 	"""
 
-	parser = argparse.ArgumentParser(description="Extract an epub, mobi, or azw3 ebook into ./FILENAME.extracted/ or a target directory.")
+	parser = argparse.ArgumentParser(description="Extract an .epub, .mobi, or .azw3 ebook into ./FILENAME.extracted/ or a target directory.")
 	parser.add_argument("-o", "--output-dir", type=str, help="a target directory to extract into")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an epub, mobi, or azw3 file")

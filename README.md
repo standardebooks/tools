@@ -10,6 +10,8 @@ The toolset requires Python >= 3.6.
 
 To install the toolset locally for development and debugging, see [Installation for Developers](#installation-for-developers).
 
+Optionally, install [Ace](https://daisy.github.io/ace/) and the `se build --check` command will automatically run it as part of the checking process.
+
 ## Ubuntu 20.04 (Trusty) users
 
 ```shell
@@ -217,7 +219,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se british2american`
 
-	Try to convert British quote style to American quote style in DIRECTORY/src/epub/text/.
+	Try to convert British quote style to American quote style in `DIRECTORY/src/epub/text/`.
 
 	Quotes must already be typogrified using the `se typogrify` tool.
 
@@ -229,19 +231,19 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se build-images`
 
-	Build ebook cover and titlepage images in a Standard Ebook source directory and place the output in DIRECTORY/src/epub/images/.
+	Build ebook cover and titlepage images in a Standard Ebook source directory and place the output in `DIRECTORY/src/epub/images/`.
 
 -	### `se build-manifest`
 
-	Generate the <manifest> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.
+	Generate the `<manifest>` element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.
 
 -	### `se build-spine`
 
-	Generate the <spine> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.
+	Generate the `<spine>` element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.
 
 -	### `se build-title`
 
-	Generate the title of an XHTML file based on its headings and update the file’s <title> element.
+	Generate the title of an XHTML file based on its headings and update the file’s `<title>` element.
 
 -	### `se build-toc`
 
@@ -249,7 +251,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se clean`
 
-	Prettify and canonicalize individual XHTML, SVG, or CSS files, or all XHTML, SVG, or CSS files in a source directory. Note that this only prettifies the source code; it doesn’t perform typography changes.
+	Prettify and canonicalize individual XHTML, SVG, or CSS files, or all XHTML, SVG, or CSS files in a source directory.
 
 -	### `se compare-versions`
 
@@ -265,11 +267,11 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se extract-ebook`
 
-	Extract an EPUB, MOBI, or AZW3 ebook into ./FILENAME.extracted/ or a target directory.
+	Extract an .epub, .mobi, or .azw3 ebook into `./FILENAME.extracted/` or a target directory.
 
 -	### `se find-mismatched-diacritics`
 
-	Find words with mismatched diacritics in Standard Ebook source directories. For example, `cafe` in one file and `café` in another.
+	Find words with mismatched diacritics in a set of XHTML files. For example, `cafe` in one file and `café` in another.
 
 -	### `se help`
 
@@ -334,10 +336,6 @@ We need volunteers to take the lead on the following goals:
 -	### `se unicode-names`
 
 	Display Unicode code points, descriptions, and links to more details for each character in a string. Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.
-
--	### `se version`
-
-	Print the version number and exit.
 
 -	### `se word-count`
 
