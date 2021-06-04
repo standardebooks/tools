@@ -28,7 +28,7 @@ def test_simple_cmds(cmd_name: str, cmd_args: str, cmd_out: str, capfd):
 
 def test_version(capfd):
 	"""Verify that the version command returns the version"""
-	must_run("se version")
+	must_run("se --version")
 	out, _ = capfd.readouterr()
 	assert out.startswith(se.VERSION)
 

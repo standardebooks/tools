@@ -19,7 +19,8 @@ def get_commands() -> List[str]:
 	commands = []
 	for module_info in pkgutil.iter_modules(se.commands.__path__): # type: ignore # mypy issue 1422
 		command = module_info.name.replace("_", "-")
-		commands.append(command)
+		if command != "version":
+			commands.append(command)
 	commands.sort()
 
 	return commands
