@@ -1517,6 +1517,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for two quotations in one paragraph
 				typos = typos + [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^”]+?”\\s“[^”]+?”$')]")]
 
+				# Check for dashes instead of em-dashes
+				typos = typos + [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\s[a-z]+-(the|there|is)\\s')]")]
+
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
