@@ -1,3 +1,11 @@
+# 2.0.1
+
+## General
+
+- Fix broken `se --version` command
+
+- Restore the `quiet_remove()` function until the SE server is running a version of Python that can handle the alternative
+
 # 2.0.0
 
 ## Breaking changes
