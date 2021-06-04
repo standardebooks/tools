@@ -319,6 +319,7 @@ TYPOGRAPHY
 "t-058", "Quotation mark used instead of ditto mark ([text]〃[/] or U+3003) in table."
 "t-059", "Period at the end of [xhtml]<cite>[/] element before endnote backlink."
 "t-060", "Old style Bible citation."
+"t-061", "Summary-style bridgehead without ending punctuation."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -2021,6 +2022,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html//*[contains(@epub:type, 'z3998:drama')]//td[./text()[normalize-space(.)] and ./*[name() = 'p' or name() = 'blockquote' or name() = 'div']]")
 				if nodes:
 					messages.append(LintMessage("s-080", "[xhtml]<td>[/] in drama containing both inline text and a block-level element. All children should either be only text, or only block-level elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for summary-style bridgeheads not ending in punctuation
+				# Decide if it's a summary-style bridgehead if it contains two or more em dashes. We use Python regex because
+				# xpath can't count the number of occurances of a string.
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'bridgehead') and re:test(., '[^\\.\\!\\?”]”?$')]")
+				nodes = [node for node in nodes if len(regex.findall(r"—", node.to_string())) >= 2]
+				if nodes:
+					messages.append(LintMessage("t-061", "Summary-style bridgehead without ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for <cite> preceded by em dash
 				nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[re:match(., '—$')]]")
