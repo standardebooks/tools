@@ -2482,10 +2482,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check and log missing glossary keys
 				if has_glossary_search_key_map and filename.name not in IGNORED_FILENAMES:
-					source_text = file_contents
+					source_text = dom.xpath("/html/body")[0].inner_text()
 					if dom.xpath("/html/body//section[contains(@epub:type, 'glossary')]"):
 						nodes = dom.xpath("/html/body//dd[contains(@epub:type, 'glossdef')]")
-						source_text = "".join([node.to_string() for node in nodes])
+						source_text = " ".join([node.inner_text() for node in nodes])
 					for glossary_index, glossary_value in enumerate(glossary_usage):
 						if glossary_value[1] is False and regex.search(glossary_value[0], source_text, flags=regex.IGNORECASE):
 							glossary_usage[glossary_index] = (glossary_value[0], True)
