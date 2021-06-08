@@ -316,7 +316,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Tt])yth", r"\1ith", xhtml)				# tythe -> tithe
 	xhtml = regex.sub(r"\b([Ss])lily", r"\1lyly", xhtml)				# slily -> slyly
 	xhtml = regex.sub(r"\b([Ff])oretel\b", r"\1oretell", xhtml)			# foretel -> foretell
-	xhtml = regex.sub(r"\b([Cc])ypher", r"\1cipher", xhtml)				# cypher -> cipher
+	xhtml = regex.sub(r"\b([Cc])ypher", r"\1ipher", xhtml)				# cypher -> cipher
 	xhtml = regex.sub(r"\b([Dd])ivers\b", r"\1iverse", xhtml)			# divers -> diverse
 	xhtml = regex.sub(r"\b([Ll])anthorn", r"\1antern", xhtml)			# lanthorn -> lantern
 	xhtml = regex.sub(r"\b([Oo])rgie\b", r"\1rgy", xhtml)				# orgie -> orgy
