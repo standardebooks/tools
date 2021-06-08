@@ -262,8 +262,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Remove word joiners if the em dash is preceded by a space
 	xhtml = regex.sub(fr"(\s+){se.WORD_JOINER}—", r"\1—", xhtml)
 
-	# Fix a common typo
+	# Fix some common error cases
 	xhtml = regex.sub(r"‘n’", "’n’", xhtml)
+	xhtml = regex.sub(r"</(a|abbr|b|i|span)>‘(s|d)\b", r"</\1>’\2", xhtml)
 
 	# Remove periods from O.K. (also, it is not an abbreviation)
 	xhtml = regex.sub(r"O\.K\.", r"OK", xhtml)
