@@ -358,6 +358,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"Francois", r"François", xhtml)				# Francois -> François
 	xhtml = regex.sub(r"Hayti", r"Haiti", xhtml)					# Hayti -> Haiti
 	xhtml = regex.sub(r"Zymbabwe", r"Zimbabwe", xhtml)				# Zymbabwe -> Zimbabwe
+	xhtml = regex.sub(r"Moslem(s?)\b", r"Muslim\1", xhtml)				# Moslem -> Muslim, but stop at a word break for `Moslemin`, a rare word that has no modern spelling equivalent
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
