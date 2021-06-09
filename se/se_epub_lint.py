@@ -2606,7 +2606,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	# Match ToC headings against text headings
 	for node in toc_entries:
 		# Remove # anchors after filenames (for books like Aesop's fables)
-		entry_file = self.path / "src/epub" / regex.sub(r"#.+$", "", node.get_attr("href"))
+		entry_file = self.content_path / regex.sub(r"#.+$", "", node.get_attr("href"))
 		toc_headings.append((node.inner_text(), str(entry_file)))
 
 	for heading in headings:
