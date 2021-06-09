@@ -61,6 +61,7 @@ class SeEpub:
 	metadata_file_path: Path = Path() # The path to the metadata file, i.e. self.content_path / content.opf
 	toc_path: Path = Path()  # The path to the metadata file, i.e. self.content_path / toc.xhtml
 	local_css = ""
+	is_white_label = False
 	_file_cache: Dict[str, str] = {}
 	_dom_cache: Dict[str, se.easy_xml.EasyXmlTree] = {}
 	_generated_identifier = None
@@ -76,33 +77,37 @@ class SeEpub:
 		try:
 			self.path = Path(epub_root_directory).resolve()
 
+
 			if not self.path.is_dir():
-				raise se.InvalidSeEbookException(f"Not a directory: [path][link=file://{self.path}]{self.path}[/][/].")
-
-			self.epub_root_path = self.path / "src"
-
-			container_tree = self.get_dom(self.epub_root_path / "META-INF" / "container.xml")
-
-			self.metadata_file_path = self.epub_root_path / container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
-
-			self.content_path = self.metadata_file_path.parent
-
-			try:
-				self.metadata_dom = self.get_dom(self.metadata_file_path)
-			except Exception as ex:
-				raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]. Exception: {ex}") from ex
-
-			toc_href = self.metadata_dom.xpath("/package/manifest/item[contains(@properties, 'nav')]/@href", True)
-			if toc_href:
-				self.toc_path = self.content_path / toc_href
-			else:
-				raise se.InvalidSeEbookException("Couldn’t find table of contents.")
-
-			if not self.metadata_dom.xpath("/package/metadata/dc:identifier[re:test(text(), '^url:https://standardebooks.org/ebooks/')]"):
-				raise se.InvalidSeEbookException
+				raise Exception
 
 		except Exception as ex:
-			raise se.InvalidSeEbookException(f"Not a Standard Ebooks source directory: [path][link=file://{self.path}]{self.path}[/][/].") from ex
+			raise se.InvalidSeEbookException(f"Not a directory: [path][link=file://{self.path}]{self.path}[/][/].") from ex
+
+		# Decide if this is an SE epub, or a white-label epub
+		# SE epubs have a ./src dir
+		if (self.path / "src").is_dir():
+			self.epub_root_path = self.path / "src"
+		else:
+			self.epub_root_path = self.path
+			self.is_white_label = True
+
+		container_tree = self.get_dom(self.epub_root_path / "META-INF" / "container.xml")
+
+		self.metadata_file_path = self.epub_root_path / container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
+
+		self.content_path = self.metadata_file_path.parent
+
+		try:
+			self.metadata_dom = self.get_dom(self.metadata_file_path)
+		except Exception as ex:
+			raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]. Exception: {ex}") from ex
+
+		toc_href = self.metadata_dom.xpath("/package/manifest/item[contains(@properties, 'nav')]/@href", True)
+		if toc_href:
+			self.toc_path = self.content_path / toc_href
+		else:
+			raise se.InvalidSeEbookException("Couldn’t find table of contents.")
 
 	@property
 	def cover_path(self):
@@ -178,8 +183,14 @@ class SeEpub:
 		"""
 
 		if not self._generated_identifier:
-			# Add authors
 			identifier = "url:https://standardebooks.org/ebooks/"
+
+			if self.is_white_label:
+				identifier = ""
+				for publisher in self.metadata_dom.xpath("/package/metadata/dc:publisher"):
+					identifier += se.formatting.make_url_safe(publisher.text) + "_"
+
+			# Add authors
 			authors = []
 			for author in self.metadata_dom.xpath("/package/metadata/dc:creator"):
 				authors.append(author.text)

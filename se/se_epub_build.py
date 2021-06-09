@@ -120,18 +120,22 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 	# By convention the ASIN is set to the SHA-1 sum of the book's identifying URL
 	try:
 		identifier = metadata_dom.xpath("//dc:identifier")[0].inner_xml().replace("url:", "")
+		if identifier == "":
+			identifier = self.generated_identifier
+
 		asin = sha1(identifier.encode("utf-8")).hexdigest()
+
+		identifier = identifier.replace("https://standardebooks.org/ebooks/", "").replace("/", "_")
 	except Exception as ex:
 		raise se.InvalidSeEbookException(f"Missing [xml]<dc:identifier>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/].") from ex
 
 	if not metadata_dom.xpath("//dc:title"):
 		raise se.InvalidSeEbookException(f"Missing [xml]<dc:title>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/].")
 
-	output_filename = identifier.replace("https://standardebooks.org/ebooks/", "").replace("/", "_")
-	compatible_epub_output_filename = f"{output_filename}{'.proof' if proof else ''}.epub"
-	advanced_epub_output_filename = f"{output_filename}{'.proof' if proof else ''}_advanced.epub"
-	kobo_output_filename = f"{output_filename}{'.proof' if proof else ''}.kepub.epub"
-	kindle_output_filename = f"{output_filename}{'.proof' if proof else ''}.azw3"
+	compatible_epub_output_filename = f"{identifier}{'.proof' if proof else ''}.epub"
+	advanced_epub_output_filename = f"{identifier}{'.proof' if proof else ''}_advanced.epub"
+	kobo_output_filename = f"{identifier}{'.proof' if proof else ''}.kepub.epub"
+	kindle_output_filename = f"{identifier}{'.proof' if proof else ''}.azw3"
 
 	# Create our temp work directory
 	with tempfile.TemporaryDirectory() as temp_dir:
