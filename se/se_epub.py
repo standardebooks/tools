@@ -42,7 +42,6 @@ class Endnote:
 	def __init__(self):
 		self.node = None
 		self.number = 0
-		self.id = ""
 		self.anchor = ""
 		self.contents = []  # The strings and tags inside an <li> element
 		self.back_link = ""
