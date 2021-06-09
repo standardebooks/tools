@@ -61,7 +61,7 @@ class SeEpub:
 	metadata_file_path: Path = Path() # The path to the metadata file, i.e. self.content_path / content.opf
 	toc_path: Path = Path()  # The path to the metadata file, i.e. self.content_path / toc.xhtml
 	local_css = ""
-	is_white_label = False
+	is_se_ebook = True
 	_file_cache: Dict[str, str] = {}
 	_dom_cache: Dict[str, se.easy_xml.EasyXmlTree] = {}
 	_generated_identifier = None
@@ -90,7 +90,7 @@ class SeEpub:
 			self.epub_root_path = self.path / "src"
 		else:
 			self.epub_root_path = self.path
-			self.is_white_label = True
+			self.is_se_ebook = False
 
 		container_tree = self.get_dom(self.epub_root_path / "META-INF" / "container.xml")
 
@@ -185,7 +185,7 @@ class SeEpub:
 		if not self._generated_identifier:
 			identifier = "url:https://standardebooks.org/ebooks/"
 
-			if self.is_white_label:
+			if not self.is_se_ebook:
 				identifier = ""
 				for publisher in self.metadata_dom.xpath("/package/metadata/dc:publisher"):
 					identifier += se.formatting.make_url_safe(publisher.text) + "_"

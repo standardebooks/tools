@@ -705,26 +705,27 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		messages.append(LintMessage("c-025", "Illegal percent unit used to set [css]height[/] or positioning property. Hint: [css]vh[/] to specify vertical-oriented properties like height or position.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
 	# Done checking local.css
+	missing_files = []
+	if self.is_se_ebook:
+		root_files = os.listdir(self.path)
+		expected_root_files = ["images", "src", "LICENSE.md"]
+		illegal_files = [root_file for root_file in root_files if root_file not in expected_root_files and root_file != "se-lint-ignore.xml"] # se-lint-ignore.xml is optional
+		missing_files = [expected_root_file for expected_root_file in expected_root_files if expected_root_file not in root_files and expected_root_file != "LICENSE.md"] # We add more to this later on. LICENSE.md gets checked later on, so we don't want to add it twice
 
-	root_files = os.listdir(self.path)
-	expected_root_files = ["images", "src", "LICENSE.md"]
-	illegal_files = [root_file for root_file in root_files if root_file not in expected_root_files and root_file != "se-lint-ignore.xml"] # se-lint-ignore.xml is optional
-	missing_files = [expected_root_file for expected_root_file in expected_root_files if expected_root_file not in root_files and expected_root_file != "LICENSE.md"] # We add more to this later on. LICENSE.md gets checked later on, so we don't want to add it twice
+		# If we have illegal files, check if they are tracked in Git.
+		# If they are, then they're still illegal.
+		# If not, ignore them for linting purposes.
+		if illegal_files:
+			try:
+				illegal_files = self.repo.git.ls_files(illegal_files).split("\n")
+				if illegal_files and illegal_files[0] == "":
+					illegal_files = []
+			except:
+				# If we can't initialize Git, then just pass through the list of illegal files
+				pass
 
-	# If we have illegal files, check if they are tracked in Git.
-	# If they are, then they're still illegal.
-	# If not, ignore them for linting purposes.
-	if illegal_files:
-		try:
-			illegal_files = self.repo.git.ls_files(illegal_files).split("\n")
-			if illegal_files and illegal_files[0] == "":
-				illegal_files = []
-		except:
-			# If we can't initialize Git, then just pass through the list of illegal files
-			pass
-
-	for illegal_file in illegal_files:
-		messages.append(LintMessage("f-001", "Illegal file or directory.", se.MESSAGE_TYPE_ERROR, Path(illegal_file)))
+		for illegal_file in illegal_files:
+			messages.append(LintMessage("f-001", "Illegal file or directory.", se.MESSAGE_TYPE_ERROR, Path(illegal_file)))
 
 	# Check the long description for some errors
 	try:
@@ -787,7 +788,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			messages.append(LintMessage("m-018", "HTML entities found. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
 	except Exception as ex:
-		missing_metadata_elements.append("""<meta id="long-description" property="se:long-description" refines="#description">""")
+		if self.is_se_ebook:
+			missing_metadata_elements.append("""<meta id="long-description" property="se:long-description" refines="#description">""")
 
 	missing_metadata_vars = []
 	for node in self.metadata_dom.xpath("/package/metadata/*/text()"):
@@ -844,10 +846,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 	# Check that the word count is correct, if it's currently set
 	word_count = self.metadata_dom.xpath("/package/metadata/meta[@property='se:word-count']/text()", True)
-	if word_count is None:
-		missing_metadata_elements.append("""<meta property="se:word-count">""")
-	elif word_count != "WORD_COUNT" and int(word_count) != self.get_word_count():
-		messages.append(LintMessage("m-065", "Word count in metadata doesn’t match actual word count.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+	if self.is_se_ebook:
+		if word_count is None:
+			missing_metadata_elements.append("""<meta property="se:word-count">""")
+		elif word_count != "WORD_COUNT" and int(word_count) != self.get_word_count():
+			messages.append(LintMessage("m-065", "Word count in metadata doesn’t match actual word count.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check if we have a subtitle but no fulltitle
 	if self.metadata_dom.xpath("/package/metadata[./meta[@property='title-type' and text()='subtitle'] and not(./meta[@property='title-type' and text()='extended'])]"):
@@ -894,7 +897,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		if sorted(nodes) != nodes:
 			messages.append(LintMessage("m-053", "[xml]<meta property=\"se:subject\">[/] elements not in alphabetical order.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-	else:
+	elif self.is_se_ebook:
 		messages.append(LintMessage("m-021", "No [xml]<meta property=\"se:subject\">[/] element found.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check that each <dc:title> has a file-as and title-type, if applicable
@@ -920,12 +923,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		messages.append(LintMessage("m-017", "[xml]<!\\[CDATA\\[[/] found. Run [bash]se clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] sections.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check that our provided identifier matches the generated identifier
-	try:
-		identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier")[0].text
-		if identifier != self.generated_identifier:
-			messages.append(LintMessage("m-023", f"[xml]<dc:identifier>[/] does not match expected: [text]{self.generated_identifier}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-	except:
-		missing_metadata_elements.append("<dc:identifier>")
+	if self.is_se_ebook:
+		try:
+			identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier")[0].text
+			if identifier != self.generated_identifier:
+				messages.append(LintMessage("m-023", f"[xml]<dc:identifier>[/] does not match expected: [text]{self.generated_identifier}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+		except:
+			missing_metadata_elements.append("<dc:identifier>")
 
 	# Check if se:name.person.full-name matches their titlepage name
 	duplicate_names = []
@@ -979,40 +983,41 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
 	# Make sure some static files are unchanged
-	try:
-		with importlib_resources.path("se.data.templates", "LICENSE.md") as license_file_path:
-			if not filecmp.cmp(license_file_path, self.path / "LICENSE.md"):
-				messages.append(LintMessage("f-003", f"File does not match [path][link=file://{license_file_path}]{license_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "LICENSE.md"))
-	except Exception:
-		missing_files.append("LICENSE.md")
+	if self.is_se_ebook:
+		try:
+			with importlib_resources.path("se.data.templates", "LICENSE.md") as license_file_path:
+				if not filecmp.cmp(license_file_path, self.path / "LICENSE.md"):
+					messages.append(LintMessage("f-003", f"File does not match [path][link=file://{license_file_path}]{license_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "LICENSE.md"))
+		except Exception:
+			missing_files.append("LICENSE.md")
 
-	try:
-		with importlib_resources.path("se.data.templates", "core.css") as core_css_file_path:
-			if not filecmp.cmp(core_css_file_path, self.content_path / "css/core.css"):
-				messages.append(LintMessage("f-004", f"File does not match [path][link=file://{core_css_file_path}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "css/core.css"))
-	except Exception:
-		missing_files.append("css/core.css")
+		try:
+			with importlib_resources.path("se.data.templates", "core.css") as core_css_file_path:
+				if not filecmp.cmp(core_css_file_path, self.content_path / "css/core.css"):
+					messages.append(LintMessage("f-004", f"File does not match [path][link=file://{core_css_file_path}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "css/core.css"))
+		except Exception:
+			missing_files.append("css/core.css")
 
-	try:
-		with importlib_resources.path("se.data.templates", "logo.svg") as logo_svg_file_path:
-			if not filecmp.cmp(logo_svg_file_path, self.content_path / "images/logo.svg"):
-				messages.append(LintMessage("f-005", f"File does not match [path][link=file://{logo_svg_file_path}]{logo_svg_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "images/logo.svg"))
-	except Exception:
-		missing_files.append("images/logo.svg")
+		try:
+			with importlib_resources.path("se.data.templates", "logo.svg") as logo_svg_file_path:
+				if not filecmp.cmp(logo_svg_file_path, self.content_path / "images/logo.svg"):
+					messages.append(LintMessage("f-005", f"File does not match [path][link=file://{logo_svg_file_path}]{logo_svg_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "images/logo.svg"))
+		except Exception:
+			missing_files.append("images/logo.svg")
 
-	try:
-		with importlib_resources.path("se.data.templates", "uncopyright.xhtml") as uncopyright_file_path:
-			if not filecmp.cmp(uncopyright_file_path, self.content_path / "text/uncopyright.xhtml"):
-				messages.append(LintMessage("f-006", f"File does not match [path][link=file://{uncopyright_file_path}]{uncopyright_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "text/uncopyright.xhtml"))
-	except Exception:
-		missing_files.append("text/uncopyright.xhtml")
+		try:
+			with importlib_resources.path("se.data.templates", "uncopyright.xhtml") as uncopyright_file_path:
+				if not filecmp.cmp(uncopyright_file_path, self.content_path / "text/uncopyright.xhtml"):
+					messages.append(LintMessage("f-006", f"File does not match [path][link=file://{uncopyright_file_path}]{uncopyright_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "text/uncopyright.xhtml"))
+		except Exception:
+			missing_files.append("text/uncopyright.xhtml")
 
-	try:
-		with importlib_resources.path("se.data.templates", "se.css") as core_css_file_path:
-			if not filecmp.cmp(core_css_file_path, self.content_path / "css/se.css"):
-				messages.append(LintMessage("f-014", f"File does not match [path][link=file://{self.path / 'src/epub/css/se.css'}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "css/se.css"))
-	except Exception:
-		missing_files.append("css/se.css")
+		try:
+			with importlib_resources.path("se.data.templates", "se.css") as core_css_file_path:
+				if not filecmp.cmp(core_css_file_path, self.content_path / "css/se.css"):
+					messages.append(LintMessage("f-014", f"File does not match [path][link=file://{self.path / 'src/epub/css/se.css'}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "css/se.css"))
+		except Exception:
+			missing_files.append("css/se.css")
 
 	# Now iterate over individual files for some checks
 	# We use os.walk() and not Path.glob() so that we can ignore `.git` and its children
@@ -1657,8 +1662,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					is_half_title = bool(dom.xpath("/html/body//section[contains(@epub:type, 'halftitlepage')]"))
 
 					# Only the half title page is allowed an <h1> element. All other files must start at <h2>.
-					if not is_half_title and heading_level == 1:
-						invalid_headers.append(node.to_string())
+					if self.is_se_ebook:
+						if not is_half_title and heading_level == 1:
+							invalid_headers.append(node.to_string())
 
 					if is_half_title and heading_level > 1:
 						invalid_headers.append(node.to_string())
@@ -2496,7 +2502,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	if has_frontmatter and not has_halftitle:
 		messages.append(LintMessage("s-020", "Frontmatter found, but no half title page. Half title page is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-	if not has_cover_source:
+	if self.is_se_ebook and not has_cover_source:
 		missing_files.append("images/cover.source.jpg")
 
 	missing_selectors = []
