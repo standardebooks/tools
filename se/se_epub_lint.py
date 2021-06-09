@@ -984,35 +984,35 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			if not filecmp.cmp(license_file_path, self.path / "LICENSE.md"):
 				messages.append(LintMessage("f-003", f"File does not match [path][link=file://{license_file_path}]{license_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "LICENSE.md"))
 	except Exception:
-		missing_files.append(self.path / "LICENSE.md")
+		missing_files.append("LICENSE.md")
 
 	try:
 		with importlib_resources.path("se.data.templates", "core.css") as core_css_file_path:
 			if not filecmp.cmp(core_css_file_path, self.content_path / "css/core.css"):
 				messages.append(LintMessage("f-004", f"File does not match [path][link=file://{core_css_file_path}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "css/core.css"))
 	except Exception:
-		missing_files.append(self.content_path / "css/core.css")
+		missing_files.append("css/core.css")
 
 	try:
 		with importlib_resources.path("se.data.templates", "logo.svg") as logo_svg_file_path:
 			if not filecmp.cmp(logo_svg_file_path, self.content_path / "images/logo.svg"):
 				messages.append(LintMessage("f-005", f"File does not match [path][link=file://{logo_svg_file_path}]{logo_svg_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "images/logo.svg"))
 	except Exception:
-		missing_files.append(self.content_path / "images/logo.svg")
+		missing_files.append("images/logo.svg")
 
 	try:
 		with importlib_resources.path("se.data.templates", "uncopyright.xhtml") as uncopyright_file_path:
 			if not filecmp.cmp(uncopyright_file_path, self.content_path / "text/uncopyright.xhtml"):
 				messages.append(LintMessage("f-006", f"File does not match [path][link=file://{uncopyright_file_path}]{uncopyright_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "text/uncopyright.xhtml"))
 	except Exception:
-		missing_files.append(self.content_path / "text/uncopyright.xhtml")
+		missing_files.append("text/uncopyright.xhtml")
 
 	try:
 		with importlib_resources.path("se.data.templates", "se.css") as core_css_file_path:
 			if not filecmp.cmp(core_css_file_path, self.content_path / "css/se.css"):
 				messages.append(LintMessage("f-014", f"File does not match [path][link=file://{self.path / 'src/epub/css/se.css'}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "css/se.css"))
 	except Exception:
-		missing_files.append(self.content_path / "css/se.css")
+		missing_files.append("css/se.css")
 
 	# Now iterate over individual files for some checks
 	# We use os.walk() and not Path.glob() so that we can ignore `.git` and its children
@@ -1519,7 +1519,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				typos = typos + [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^”]+?”\\s“[^”]+?”$')]")]
 
 				# Check for dashes instead of em-dashes
-				typos = typos + [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\s[a-z]+-(the|there|is)\\s')]")]
+				typos = typos + [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\s[a-z]+-(the|there|is|and|they|when)\\s')]")]
 
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_WARNING, filename, typos))
@@ -2210,7 +2210,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 									messages.append(LintMessage("s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
 
 							except FileNotFoundError:
-								missing_files.append(self.content_path / "images" / image_ref)
+								missing_files.append(str(Path("images") / image_ref))
 
 					else:
 						img_no_alt.append(node.to_tag_string())
