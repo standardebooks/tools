@@ -42,6 +42,7 @@ class Endnote:
 	def __init__(self):
 		self.node = None
 		self.number = 0
+		self.id = ""
 		self.anchor = ""
 		self.contents = []  # The strings and tags inside an <li> element
 		self.back_link = ""
@@ -303,7 +304,7 @@ class SeEpub:
 			for node in dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol/li[contains(@epub:type, 'endnote')]"):
 				note = Endnote()
 				note.node = node
-				note.number = int(node.get_attr("id").replace("note-", ""))
+				# note that we DON'T need the existing note number, just the anchor as an ID for later matching
 				note.contents = node.xpath("./*")
 				note.anchor = node.get_attr("id") or ""
 
@@ -1222,6 +1223,7 @@ class SeEpub:
 			hash_position = href.find("#") + 1  # we want the characters AFTER the hash
 			if hash_position > 0:
 				old_anchor = href[hash_position:]
+
 		new_anchor = f"note-{current_note_number:d}"
 		if new_anchor != old_anchor:
 			change_list.append(f"Changed {old_anchor} to {new_anchor} in {file_name}")
