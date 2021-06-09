@@ -1297,7 +1297,7 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 			raise se.InvalidSeEbookException("No [xhtml]<section>[/] or [xhtml]<article>[/] element for [xhtml]<hgroup>[/]")
 
 		# If the closest parent <section> or <article> is a part, division, or volume, then keep all <hgroup> children
-		if closest_parent_section.get_attr("epub:type") and ("part" not in closest_parent_section.get_attr("epub:type") and "division" not in closest_parent_section.get_attr("epub:type") and "volume" not in closest_parent_section.get_attr("epub:type")):
+		if not closest_parent_section.get_attr("epub:type") or (closest_parent_section.get_attr("epub:type") and ("part" not in closest_parent_section.get_attr("epub:type") and "division" not in closest_parent_section.get_attr("epub:type") and "volume" not in closest_parent_section.get_attr("epub:type"))):
 			# Else, if the closest parent <section> or <article> is a halftitlepage, then discard <hgroup> subtitles
 			if closest_parent_section.get_attr("epub:type") and "halftitlepage" in closest_parent_section.get_attr("epub:type"):
 				for node in hgroup_element.xpath("./*[contains(@epub:type, 'subtitle')]"):
