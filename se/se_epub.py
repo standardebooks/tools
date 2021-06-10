@@ -303,15 +303,18 @@ class SeEpub:
 			for node in dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol/li[contains(@epub:type, 'endnote')]"):
 				note = Endnote()
 				note.node = node
-				# note that we DON'T need the existing note number, just the anchor as an ID for later matching
+				try:
+					note.number = int(node.get_attr("id").replace("note-", ""))
+				except ValueError:
+					note.number = 0
 				note.contents = node.xpath("./*")
 				note.anchor = node.get_attr("id") or ""
 
-				for back_link in node.xpath("//a[contains(@epub:type, 'backlink')]/@href"):
+				for back_link in node.xpath(".//a[contains(@epub:type, 'backlink')]/@href"):
 					note.back_link = back_link
-
+				if not note.back_link:
+					raise se.InvalidInputException(f"No backlink found in note {note.anchor} in existing endnotes file.")
 				self._endnotes.append(note)
-
 		return self._endnotes
 
 	@property
