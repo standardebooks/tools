@@ -3,6 +3,7 @@ This module implements the `se find-mismatched-dashes` command.
 """
 
 import argparse
+from typing import Dict, Tuple
 
 import regex
 from rich import box
@@ -24,8 +25,8 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 
 	console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths
 	return_code = 0
-	dashed_words = {}
-	mismatches = {}
+	dashed_words: Dict[str, int] = {} # key: word; value: count
+	mismatches: Dict[str, Dict[str, Tuple[int, int]]] = {} # key: base word; value: dict with key: plain word; value: (base count, plain count)
 	target_filenames = se.get_target_filenames(args.targets, ".xhtml")
 	files_xhtml = []
 
@@ -74,6 +75,7 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 						mismatches[dashed_word] = {}
 						mismatches[dashed_word][plain_word] = (count, len(matches))
 
+	# Sort and prepare the output
 	lines = []
 
 	for dashed_word, child in mismatches.items():
