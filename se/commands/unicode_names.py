@@ -45,7 +45,7 @@ def unicode_names(plain_output: bool) -> int:
 
 		for line in lines:
 			for character in line:
-				table.add_row(f"{character}", "U+{:04X}".format(ord(character)), unicodedata.name(character), f"[link=https://util.unicode.org/UnicodeJsps/character.jsp?a={urllib.parse.quote_plus(character)}]Properties page[/]")
+				table.add_row(character, "U+{:04X}".format(ord(character)), unicodedata.name(character), f"[link=https://util.unicode.org/UnicodeJsps/character.jsp?a={urllib.parse.quote_plus(character)}]Properties page[/]")
 
 		console.print(table)
 

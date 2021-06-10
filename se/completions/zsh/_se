@@ -24,7 +24,8 @@ case $state in
 			"create-draft[Create a skeleton of a new Standard Ebook.]" \
 			"dec2roman[Convert a decimal number to a Roman numeral.]" \
 			"extract-ebook[Extract an EPUB, MOBI, or AZW3 ebook.]" \
-			"find-mismatched-diacritics[Find words with mismatched diacritics in Standard Ebook source directories.]" \
+			"find-mismatched-dashes[Find words with mismatched dashes in a set of XHTML files.]" \
+			"find-mismatched-diacritics[Find words with mismatched diacritics in a set of XHTML files.]" \
 			"help[List available SE commands.]" \
 			"hyphenate[Insert soft hyphens at syllable breaks in an XHTML file.]" \
 			"interactive-replace[Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (c) Center on match. (q) Save this file and quit.]" \
@@ -133,6 +134,11 @@ case $state in
 					{-o,--output-dir}'=[a directory to place output files in; will be created if it doesn’t exist]: :_directories' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_files -g \*.\(mobi\|azw3\|epub\)'
+				;;
+			find-mismatched-dashes)
+				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
+					'*: :_files -g \*.xhtml'
 				;;
 			find-mismatched-diacritics)
 				_arguments -s \

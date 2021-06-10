@@ -269,6 +269,10 @@ We need volunteers to take the lead on the following goals:
 
 	Extract an .epub, .mobi, or .azw3 ebook into `./FILENAME.extracted/` or a target directory.
 
+-	### `se find-mismatched-dashes`
+
+	Find words with mismatched dashes in a set of XHTML files. For example, `extra-physical` in one file and `extraphysical` in another.
+
 -	### `se find-mismatched-diacritics`
 
 	Find words with mismatched diacritics in a set of XHTML files. For example, `cafe` in one file and `café` in another.
