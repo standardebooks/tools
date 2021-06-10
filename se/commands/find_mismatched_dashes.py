@@ -48,7 +48,9 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 
 	# Create a list of dashed words
 	for xhtml in files_xhtml:
-		for word in regex.findall(r"\b\w+\-\w+\b", xhtml):
+		# This regex excludes words with three dashes like `bric-a-brac`, because removing dashes
+		# may erroneously match regular words. Don't match `’` to prevent matches like `life’s-end` -> `s-end`
+		for word in regex.findall(r"(?<![\-’])\b\w+\-\w+\b(?![\-’])", xhtml):
 			lower_word = word.lower()
 
 			if lower_word in dashed_words:
