@@ -3,8 +3,9 @@ This module implements the `se find-mismatched-diacritics` command.
 """
 
 import argparse
-import unicodedata
 from typing import Dict, Tuple
+import urllib
+import unicodedata
 
 import regex
 from rich import box
@@ -112,7 +113,7 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 			table.add_column("Count", style="dim", no_wrap=True)
 
 			for accented_word, accented_word_count, plain_word, plain_word_count in lines:
-				table.add_row(accented_word, f"({accented_word_count})", plain_word, f"({plain_word_count})")
+				table.add_row(f"[link=https://www.merriam-webster.com/dictionary/{urllib.parse.quote(accented_word)}]{accented_word}[/]", f"({accented_word_count})", f"[link=https://www.merriam-webster.com/dictionary/{urllib.parse.quote(plain_word)}]{plain_word}[/]", f"({plain_word_count})")
 
 			console.print(table)
 

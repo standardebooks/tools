@@ -4,6 +4,7 @@ This module implements the `se find-mismatched-dashes` command.
 
 import argparse
 from typing import Dict, Tuple
+import urllib
 
 import regex
 from rich import box
@@ -99,7 +100,7 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 			table.add_column("Count", style="dim", no_wrap=True)
 
 			for dashed_word, dashed_word_count, plain_word, plain_word_count in lines:
-				table.add_row(dashed_word, f"({dashed_word_count})", plain_word, f"({plain_word_count})")
+				table.add_row(f"[link=https://www.merriam-webster.com/dictionary/{urllib.parse.quote(dashed_word)}]{dashed_word}[/]", f"({dashed_word_count})", f"[link=https://www.merriam-webster.com/dictionary/{urllib.parse.quote(plain_word)}]{plain_word}[/]", f"({plain_word_count})")
 
 			console.print(table)
 
