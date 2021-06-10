@@ -2327,13 +2327,13 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check to see if we've marked something as poetry or verse, but didn't include a first <span>
 				# This xpath selects the p elements, whose parents are poem/verse, and whose first child is not a span
-				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')]/p[not(*[name()='span' and position()=1])]")
+				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')]/p[not(./*[name()='span' and position()=1])]")
 				if nodes:
 					matches = []
 					for node in nodes:
 						# Get the first line of the poem, if it's a text node, so that we can include it in the error messages.
 						# If it's not a text node then just ignore it and add the error anyway.
-						first_line = node.xpath("descendant-or-self::text()[normalize-space(.)]", True)
+						first_line = node.xpath("./descendant-or-self::text()[normalize-space(.)]", True)
 						if first_line:
 							match = first_line.strip()
 							if match: # Make sure we don't append an empty string

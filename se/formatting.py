@@ -548,7 +548,7 @@ def _format_style_elements(tree: etree.ElementTree):
 			css = format_css(node.text)
 
 			# Get the <style> element's indentation
-			indent = node.xpath("preceding-sibling::text()[1]")[0].replace("\n", "")
+			indent = node.xpath("./preceding-sibling::text()[1]")[0].replace("\n", "")
 
 			# Indent the CSS one level deeper than the <style> element
 			css = "".join(indent + "\t" + line + "\n" for line in css.splitlines())

@@ -519,7 +519,7 @@ def get_child_strings(node: EasyXmlElement) -> str:
 	Get child strings
 	"""
 
-	children = node.xpath("*")
+	children = node.xpath("./*")
 	child_strs = ""
 	for child in children:
 		child_strs += child.to_string() + "\n"
