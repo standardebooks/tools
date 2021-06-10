@@ -78,12 +78,17 @@ def __save_debug_epub(work_compatible_epub_dir: Path) -> Path:
 
 	return epub_temp_dir
 
-def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, output_dir: Path, proof: bool) -> None:
+def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_kindle: bool, output_dir: Path, proof: bool) -> None:
 	"""
 	Entry point for `se build`
 	"""
 
 	ibooks_srcset_bug_exists = True
+
+	if check_only:
+		run_epubcheck = True
+		build_kobo = False
+		build_kindle = False
 
 	# Check for some required tools
 	if build_kindle:
@@ -193,7 +198,8 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					break
 
 		# Output the pure epub3 file
-		se.epub.write_epub(work_compatible_epub_dir, output_dir / advanced_epub_output_filename)
+		if not check_only:
+			se.epub.write_epub(work_compatible_epub_dir, output_dir / advanced_epub_output_filename)
 
 		# Now add compatibility fixes for older ereaders.
 
@@ -462,7 +468,7 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 				# We converted svgs to pngs, so replace references
 				for node in dom.xpath("/html/body//img[re:test(@src, '\\.svg$')]"):
 					src = node.get_attr("src")
-					if self.cover_path.name in src:
+					if self.cover_path and self.cover_path.name in src:
 						node.set_attr("src", src.replace(".svg", ".jpg"))
 					else:
 						node.set_attr("src", src.replace(".svg", ".png"))
@@ -956,9 +962,12 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 						for message in epubcheck_dom.xpath("/jhove/repInfo/messages/message"):
 							error_text = regex.search(r"\[(.+?)\]", message.text)
 							file_text = regex.search(r"\], (.+?) \(([0-9]+)-([0-9]+)\)$", message.text)
-							file_path = epub_debug_dir / file_text[1]
 
-							build_messages.append(BuildMessage("epubcheck", message.get_attr("id"), error_text[1], file_path, file_text[2], file_text[3]))
+							if file_text:
+								file_path = epub_debug_dir / file_text[1]
+								build_messages.append(BuildMessage("epubcheck", message.get_attr("id"), error_text[1], file_path, file_text[2], file_text[3]))
+							else:
+								build_messages.append(BuildMessage("epubcheck", message.get_attr("id"), error_text[1]))
 
 						raise se.BuildFailedException("[bash]epubcheck[/] failed.", build_messages)
 
@@ -1040,6 +1049,10 @@ def build(self, run_epubcheck: bool, build_kobo: bool, build_kindle: bool, outpu
 					raise se.BuildFailedException("[bash]ace[/] failed.") from ex
 
 		# Epubcheck and Ace passed!
+
+		# If we're only checking, quit now
+		if check_only:
+			return
 
 		# Write the compatible epub
 		se.epub.write_epub(work_compatible_epub_dir, output_dir / compatible_epub_output_filename)

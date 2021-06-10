@@ -19,6 +19,7 @@ complete -c se -A -n "__fish_seen_subcommand_from british2american" -s v -l verb
 complete -c se -n "__fish_se_no_subcommand" -a build -d "Build an ebook from a Standard Ebook source directory."
 complete -c se -A -n "__fish_seen_subcommand_from build" -s b -l kobo -d "also build a .kepub.epub file for Kobo"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s c -l check -d "use epubcheck to validate the compatible .epub file; if Ace is installed, also validate using Ace; if --kindle is also specified and epubcheck or Ace fail, don’t create a Kindle file"
+complete -c se -A -n "__fish_seen_subcommand_from build" -s y -l check-only -d "use epubcheck to validate the compatible .epub file; if Ace is installed, also validate using Ace; do not output any ebook files and exit after checking"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s k -l kindle -d "also build an .azw3 file for Kindle."
 complete -c se -A -n "__fish_seen_subcommand_from build" -s o -l output-dir -d "a directory to place output files in; will be created if it doesn’t exist"
