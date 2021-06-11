@@ -1042,6 +1042,10 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 						if build_messages:
 							raise se.BuildFailedException("[bash]ace[/] failed.", build_messages)
 
+						# We had to copy the epub dir to a temp dir so that we could get the real file paths for ace messages.
+						# But if we got here, then Ace had no real messages to emit, so we have to clean up the temp dir we created.
+						shutil.rmtree(epub_debug_dir, ignore_errors=True)
+
 						if output:
 							raise se.BuildFailedException(f"[bash]ace[/] failed with:\n\n{output.strip()}")
 
