@@ -16,7 +16,7 @@ _se(){
 					COMPREPLY+=($(compgen -d -X ".*"))
 					return 0
 				fi
-				COMPREPLY+=($(compgen -W "-b --kobo -c --check -y --check-only -h --help -k --kindle -o= --output-dir= -p --proof -v --verbose" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-b --kobo -c --check -h --help -k --kindle -o= --output-dir= -p --proof -v --verbose -y --check-only" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			build-images)
