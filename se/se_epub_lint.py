@@ -37,12 +37,22 @@ EPUB_SEMANTIC_VOCABULARY = ["abstract", "acknowledgments", "afterword", "answer"
 Z3998_SEMANTIC_VOCABULARY = ["abbreviations", "acknowledgments", "acronym", "actor", "afterword", "alteration", "annoref", "annotation", "appendix", "article", "aside", "attribution", "author", "award", "backmatter", "bcc", "bibliography", "biographical-note", "bodymatter", "cardinal", "catalogue", "cc", "chapter", "citation", "clarification", "collection", "colophon", "commentary", "commentator", "compound", "concluding-sentence", "conclusion", "continuation", "continuation-of", "contributors", "coordinate", "correction", "covertitle", "currency", "decimal", "decorative", "dedication", "diary", "diary-entry", "discography", "division", "drama", "dramatis-personae", "editor", "editorial-note", "email", "email-message", "epigraph", "epilogue", "errata", "essay", "event", "example", "family-name", "fiction", "figure", "filmography", "footnote", "footnotes", "foreword", "fraction", "from", "frontispiece", "frontmatter", "ftp", "fulltitle", "gallery", "general-editor", "geographic", "given-name", "glossary", "grant-acknowledgment", "grapheme", "halftitle", "halftitle-page", "help", "homograph", "http", "hymn", "illustration", "image-placeholder", "imprimatur", "imprint", "index", "initialism", "introduction", "introductory-note", "ip", "isbn", "keyword", "letter", "loi", "lot", "lyrics", "marginalia", "measure", "mixed", "morpheme", "name-title", "nationality", "non-fiction", "nonresolving-citation", "nonresolving-reference", "note", "noteref", "notice", "orderedlist", "ordinal", "organization", "other-credits", "pagebreak", "page-footer", "page-header", "part", "percentage", "persona", "personal-name", "pgroup", "phone", "phoneme", "photograph", "phrase", "place", "plate", "poem", "portmanteau", "postal", "postal-code", "postscript", "practice", "preamble", "preface", "prefix", "presentation", "primary", "product", "production", "prologue", "promotional-copy", "published-works", "publisher-address", "publisher-note", "publisher-logo", "range", "ratio", "rearnote", "rearnotes", "recipient", "recto", "reference", "republisher", "resolving-reference", "result", "role-description", "roman", "root", "salutation", "scene", "secondary", "section", "sender", "sentence", "sidebar", "signature", "song", "speech", "stage-direction", "stem", "structure", "subchapter", "subject", "subsection", "subtitle", "suffix", "surname", "taxonomy", "tertiary", "text", "textbook", "t-form", "timeline", "title", "title-page", "to", "toc", "topic-sentence", "translator", "translator-note", "truncation", "unorderedlist", "valediction", "verse", "verso", "v-form", "volume", "warning", "weight", "word"]
 
 # See https://standardebooks.org/vocab/1.0
-SE_SEMANTIC_VOCABULARY = ["collection", "diary", "diary.dateline", "image", "image.color-depth", "image.color-depth.black-on-transparent", "image.color-depth.default-on-transparent", "letter", "letter.dateline", "long-description", "name", "name.person", "name.person.full-name", "name.person.pen-name", "name.vehicle", "name.vehicle.auto", "name.vehicle.train", "name.vessel", "name.vessel.boat", "name.vessel.ship", "name.publication", "name.publication.book", "name.publication.essay", "name.publication.journal", "name.publication.newspaper", "name.publication.magazine", "name.publication.pamphlet", "name.publication.paper", "name.publication.play", "name.publication.poem", "name.publication.short-story", "name.music", "name.music.opera", "name.music.song", "name.visual-art", "name.visual-art.engraving", "name.visual-art.film", "name.visual-art.illustration", "name.visual-art.painting", "name.visual-art.photograph", "name.visual-art.sculpture", "name.visual-art.typeface", "name.broadcast", "name.broadcast.television-show", "name.legal-case", "novel", "novella", "publication-notes", "reading-ease", "reading-ease.flesch", "short-story", "sic", "transform", "url", "url.authority", "url.authority.nacoaf", "url.homepage", "url.encyclopedia", "url.encyclopedia.wikipedia", "url.vcs", "url.vcs.github", "word-count"]
+SE_SEMANTIC_VOCABULARY = ["collection", "compass", "compound", "diary", "diary.dateline", "era", "image", "image.color-depth", "image.color-depth.black-on-transparent", "image.color-depth.default-on-transparent", "letter", "letter.dateline", "long-description", "name", "name.person", "name.person.full-name", "name.person.pen-name", "name.vehicle", "name.vehicle.auto", "name.vehicle.train", "name.vessel", "name.vessel.boat", "name.vessel.ship", "name.publication", "name.publication.book", "name.publication.essay", "name.publication.journal", "name.publication.newspaper", "name.publication.magazine", "name.publication.pamphlet", "name.publication.paper", "name.publication.play", "name.publication.poem", "name.publication.short-story", "name.music", "name.music.opera", "name.music.song", "name.visual-art", "name.visual-art.engraving", "name.visual-art.film", "name.visual-art.illustration", "name.visual-art.painting", "name.visual-art.photograph", "name.visual-art.sculpture", "name.visual-art.typeface", "name.broadcast", "name.broadcast.television-show", "name.legal-case", "novel", "novella", "publication-notes", "reading-ease", "reading-ease.flesch", "short-story", "sic", "temperature", "transform", "url", "url.authority", "url.authority.nacoaf", "url.homepage", "url.encyclopedia", "url.encyclopedia.wikipedia", "url.vcs", "url.vcs.github", "word-count"]
 
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Childrens", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Romance", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
-IGNORED_CLASSES = ["elision", "name", "temperature", "state", "era", "compass", "acronym", "postal", "eoc", "initialism", "degree", "time", "compound", "timezone", "full-page", "continued", "together"]
+IGNORED_CLASSES = ["elision", "eoc", "full-page", "continued", "together"]
 BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", ".xcf", ".otf"]
 IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitlepage.xhtml", "toc.xhtml", "loi.xhtml"]
+
+# These are partly defined in semos://1.0.0/8.10.9.2
+INITIALISM_EXCEPTIONS = ["G", # as in `G-Force`
+			"1D", "2D", "3D", "4D", # as in `n-dimensional`
+			"MS.", "MSS.", # Manuscript(s)
+			"MM.",  # Messiuers
+			"κ.τ.λ.", # "etc." in Greek, and we don't match Greek chars.
+			"TV",
+			"AC", "DC" # electrical current
+]
 
 """
 POSSIBLE BBCODE TAGS
@@ -211,7 +221,7 @@ SEMANTICS & CONTENT
 "s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child."
 "s-043", "[val]se:short-story[/] semantic on element that is not [xhtml]<article>[/]."
 "s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element."
-"s-045", "[xhtml]<abbr>[/] element without semantic class like [class]name[/] or [class]initialism[/]."
+"s-045", "[xhtml]<abbr>[/] element without semantic inflection like [class]z3998:personal-name[/] or [class]z3998:initialism[/]."
 "s-046", "[xhtml]<p>[/] element containing only [xhtml]<span>[/] and [xhtml]<br>[/] elements, but its parent doesn’t have the [val]z3998:poem[/], [val]z3998:verse[/], [val]z3998:song[/], [val]z3998:hymn[/], or [val]z3998:lyrics[/] semantic. Multi-line clauses that are not verse don’t require [xhtml]<span>[/]s."
 "s-047", "[val]noteref[/] as a direct child of element with poem or verse semantic. [val]noteref[/]s should be in their parent [xhtml]<span>[/]."
 "s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something."
@@ -267,20 +277,20 @@ TYPOGRAPHY
 "t-006", "Comma after producer name, but there are only two producers."
 "t-007", "Possessive [text]’s[/] within name italics. If the name in italics is doing the possessing, [text]’s[/] goes outside italics."
 "t-008", "Repeated punctuation."
-"t-009", "Required no-break space not found before [xhtml]<abbr class=\"time\">[/]."
+"t-009", "Required no-break space not found before time and [text]a.m.[/] or [text]p.m.[/]."
 "t-010", "Time set with [text].[/] instead of [text]:[/]."
 "t-011", "Missing punctuation before closing quotes."
 "t-012", "Illegal white space before noteref."
 "t-013", "Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period."
 "t-014", "Two or more em-dashes in a row found. Elided words should use the two- or three-em-dash Unicode character, and dialog ending in em-dashes should only end in a single em-dash."
 "t-015", "Numbers not grouped by commas. Separate numbers greater than 1,000 with commas at every three numerals."
-"t-016", "Initials in [xhtml]<abbr class=\"name\">[/] not separated by spaces."
+"t-016", "Initials in [xhtml]<abbr epub:type=\"z3998:*-name\">[/] not separated by spaces."
 "t-017", "Ending punctuation inside formatting like bold, small caps, or italics. Ending punctuation is only allowed within formatting if the phrase is an independent clause."
 "t-018", "Stage direction ending in period next to other punctuation. Remove trailing periods in stage direction."
 "t-019", "When a complete clause is italicized, ending punctuation except commas must be within containing italics."
 "t-020", "Endnote links must be outside of punctuation, including quotation marks."
 "t-021", "Measurement not to standard. Numbers are followed by a no-break space and abbreviated units require an [xhtml]<abbr>[/] element. See [path][link=https://standardebooks.org/manual/1.0.0/8-typography#8.8.5]semos://1.0.0/8.8.5[/][/]."
-"t-022", "No-break space found in [xhtml]<abbr class=\"name\">[/]. This is redundant."
+"t-022", "No-break space found in [xhtml]<abbr epub:type=\"z3998:*-name\">[/]. This is redundant."
 "t-023", "Comma inside [xhtml]<i>[/] element before closing dialog."
 "t-024", "When italicizing language in dialog, italics go inside quotation marks."
 "t-025", "Non-typogrified [text]'[/], [text]\"[/] (as [xhtml]&quot;[/]), or [text]--[/] in image [attr]alt[/] attribute."
@@ -533,20 +543,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	unused_selectors: List[str] = []
 	id_attrs: List[str] = []
 	missing_metadata_elements = []
-	abbr_elements: List[se.easy_xml.EasyXmlElement] = []
+	abbr_elements_requiring_css: List[se.easy_xml.EasyXmlElement] = []
 	metadata_xml = self.metadata_dom.to_string()
 	has_glossary_search_key_map = False
 	glossary_usage = []
-
-	# These are partly defined in semos://1.0.0/8.10.9.2
-	initialism_exceptions = ["G", # as in `G-Force`
-				"1D", "2D", "3D", "4D", # as in `n-dimensional`
-				"MS.", "MSS.", # Manuscript(s)
-				"MM.",  # Messiuers
-				"κ.τ.λ.", # "etc." in Greek, and we don't match Greek chars.
-				"TV",
-				"AC", "DC" # electrical current
-	]
 
 	# This is a dict with where keys are the path and values are a list of code dicts.
 	# Each code dict has a key "code" which is the actual code, and a key "used" which is a
@@ -630,7 +630,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	local_css_has_hymn_style = False
 	local_css_has_lyrics_style = False
 	local_css_has_elision_style = False
-	abbr_styles = regex.findall(r"abbr\.[\p{Lowercase_Letter}]+", self.local_css)
 	missing_styles: List[str] = []
 	directories_not_url_safe = []
 	files_not_url_safe = []
@@ -1400,9 +1399,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-029", "Period followed by lowercase letter. Hint: Abbreviations require an [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check for nbsp before times
-				nodes = dom.xpath(f"/html/body//text()[re:test(., '[0-9][^{se.NO_BREAK_SPACE}]?$')][(following-sibling::abbr[1])[contains(@class, 'time')]]")
+				nodes = dom.xpath(f"/html/body//text()[re:test(., '[0-9][^{se.NO_BREAK_SPACE}]?$')][(following-sibling::abbr[1])[re:test(., '^[ap]\\.m\\.$')]]")
 				if nodes:
-					messages.append(LintMessage("t-009", "Required no-break space not found before [xhtml]<abbr class=\"time\">[/].", se.MESSAGE_TYPE_WARNING, filename, [node[-10:] + "<abbr" for node in nodes]))
+					messages.append(LintMessage("t-009", "Required no-break space not found before time and [text]a.m.[/] or [text]p.m.[/].", se.MESSAGE_TYPE_WARNING, filename, [node[-10:] + "<abbr" for node in nodes]))
 
 				# Check for low-hanging misquoted fruit
 				matches = regex.findall(r"[\p{Letter}]+[“‘]", file_contents) + regex.findall(r"[^>]+</(?:em|i|b|span)>‘[\p{Lowercase_Letter}]+", file_contents)
@@ -1596,11 +1595,26 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("t-013", "Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "." for node in nodes]))
 
-				# Check for <abbr> elements that have two or more letters/periods, that don't have a semantic class
+				# Check for <abbr> elements that have two or more letters/periods, that don't have a semantic epub:type
 				# SS. is the French abbreviation for "Saints"
-				nodes = [node.to_string() for node in dom.xpath("/html/body//abbr[not(@class)][text() != 'U.S.' and text() != 'SS.'][re:test(., '([A-Z]\\.?){2,}')]") if node.text not in initialism_exceptions]
-				if nodes:
-					messages.append(LintMessage("s-045", "[xhtml]<abbr>[/] element without semantic class like [class]name[/] or [class]initialism[/].", se.MESSAGE_TYPE_WARNING, filename, nodes))
+				nodes = dom.xpath("/html/body//abbr[not(@epub:type)][text() != 'U.S.' and text() != 'SS.'][re:test(., '([A-Z]\\.?){2,}')]")
+				filtered_nodes = []
+				for node in nodes:
+					add_node = True
+
+					if node.text in INITIALISM_EXCEPTIONS:
+						add_node = False
+					elif node.get_attr("class"):
+						for attr_value in node.get_attr("class").split():
+							if attr_value in IGNORED_CLASSES:
+								add_node = False
+								break
+
+					if add_node:
+						filtered_nodes.append(node)
+
+				if filtered_nodes:
+					messages.append(LintMessage("s-045", "[xhtml]<abbr>[/] element without semantic inflection like [class]z3998:personal-name[/] or [class]z3998:initialism[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in filtered_nodes]))
 
 				# Check for <article>s or <section>s that occur more than once in a file, without page break CSS
 				nodes = dom.xpath("/html/body[count(./article) > 1 or count(./section) > 1]/*[(name() = 'article' or name() = 'section') and (not(@data-css-break-after) or @data-css-break-after != 'page')]")
@@ -1627,7 +1641,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-030", "[val]z3998:nonfiction[/] should be [val]z3998:non-fiction[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for initialisms without periods
-				nodes = [node.to_string() for node in dom.xpath("/html/body//abbr[contains(@class, 'initialism') and not(re:test(., '^[0-9]*([a-zA-Z]\\.)+[0-9]*$'))]") if node.text not in initialism_exceptions]
+				nodes = [node.to_string() for node in dom.xpath("/html/body//abbr[contains(@epub:type, 'z3998:initialism') and not(re:test(., '^[0-9]*([a-zA-Z]\\.)+[0-9]*$'))]") if node.text not in INITIALISM_EXCEPTIONS]
 				if nodes:
 					messages.append(LintMessage("t-030", "Initialism with spaces or without periods.", se.MESSAGE_TYPE_WARNING, filename, set(nodes)))
 
@@ -1636,10 +1650,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("c-013", "Element with margin or padding not in increments of [css].5em[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-				# Check for <abbr class="name"> that does not contain spaces
-				nodes = dom.xpath("/html/body//abbr[contains(@class, 'name')][re:test(., '[A-Z]\\.[A-Z]\\.')]")
+				# Check for <abbr epub:type="z3998:*-name"> that does not contain spaces
+				nodes = dom.xpath("/html/body//abbr[re:test(@epub:type, '\\bz3998:[^\\s\"]+name\\b') and re:test(., '[A-Z]\\.[A-Z]\\.')]")
 				if nodes:
-					messages.append(LintMessage("t-016", "Initials in [xhtml]<abbr class=\"name\">[/] not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+					messages.append(LintMessage("t-016", "Initials in [xhtml]<abbr epub:type=\"z3998:*-name\">[/] not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for z3998:stage-direction on elements that are not <i>
 				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:stage-direction') and name() !='i' and name() !='abbr' and name() !='p']")
@@ -1678,7 +1692,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for abbreviations followed by periods
 				# But we exclude some SI units, which don't take periods; abbreviations ending in numbers for example in stage directions; abbreviations like `r^o` (recto) that contain <sup>; and some Imperial abbreviations that are multi-word
-				nodes = dom.xpath("/html/body//abbr[(contains(@class, 'initialism') or contains(@class, 'name') or not(@class))][not(re:test(., '[cmk][mgl]')) and not(re:test(., '[0-9]$')) and not(./sup) and not(text()='mpg' or text()='mph' or text()='hp' or text()='TV')][following-sibling::text()[1][starts-with(self::text(), '.')]]")
+				nodes = dom.xpath("/html/body//abbr[(contains(@epub:type, 'z3998:initialism') or re:test(@epub:type, 'z3998:[^\\s]+?name') or not(@epub:type))][not(re:test(., '[cmk][mgl]')) and not(re:test(., '[0-9]$')) and not(./sup) and not(re:test(@class, '\\b(era|temperature|compound)\\b')) and not(re:test(text(), '^(mpg|mph|hp|TV)$'))][following-sibling::text()[1][starts-with(self::text(), '.')]]")
 				if nodes:
 					messages.append(LintMessage("t-032", "Initialism or name followed by period. Hint: Periods go within [xhtml]<abbr>[/]. [xhtml]<abbr>[/]s containing periods that end a clause require the [class]eoc[/] class.", se.MESSAGE_TYPE_WARNING, filename, [f"{node.to_string()}." for node in nodes]))
 
@@ -1816,10 +1830,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("c-019", "Element with [val]z3998:signature[/] semantic, but without [css]font-variant: small-caps;[/] or [css]font-style: italic;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-				# Check for nbsp within <abbr class="name">, which is redundant
-				nodes = dom.xpath(f"/html/body//abbr[contains(@class, 'name')][contains(text(), '{se.NO_BREAK_SPACE}')]")
+				# Check for nbsp within <abbr epub:type="z3998:*-name">, which is redundant
+				nodes = dom.xpath(f"/html/body//abbr[re:test(@epub:type, '\\bz3998:[^\\s\"]+name\\b') and contains(text(), '{se.NO_BREAK_SPACE}')]")
 				if nodes:
-					messages.append(LintMessage("t-022", "No-break space found in [xhtml]<abbr class=\"name\">[/]. This is redundant.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+					messages.append(LintMessage("t-022", "No-break space found in [xhtml]<abbr epub:type=\"z3998:*-name\">[/]. This is redundant.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for two-em-dashes used for elision instead of three-em-dashes
 				matches = regex.findall(fr"[^{se.WORD_JOINER}\p{{Letter}}”]⸺[^“{se.WORD_JOINER}\p{{Letter}}].*", file_contents, flags=regex.MULTILINE)
@@ -2421,14 +2435,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 							if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
 								messages.append(LintMessage("m-029", f"Google Books source not present. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
 
-				# Collect certain abbr elements for later check, but not in the colophon
+				# Collect certain abbr elements to check that required styles are included, but not in the colophon
 				if not dom.xpath("/html/body/*[contains(@epub:type, 'colophon')]"):
-					abbr_elements += dom.xpath("/html/body//abbr[contains(@class, 'temperature')]")
-
-					# note that 'temperature' contains 'era'...
-					abbr_elements += dom.xpath("/html/body//abbr[contains(concat(' ', @class, ' '), ' era ')]")
-
-					abbr_elements += dom.xpath("/html/body//abbr[contains(@class, 'acronym')]")
+					# For now, temperature, acronym, and era are the only abbrs with required styles
+					abbr_elements_requiring_css += dom.xpath("/html/body//abbr[re:test(@epub:type, '\\b(se:temperature|se:era|z3998:acronym)\\b')]")
 
 				# Check if language tags in individual files match the language in the metadata file
 				if filename.name not in IGNORED_FILENAMES:
@@ -2640,10 +2650,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			messages.append(LintMessage("m-044", f"The spine order does not match the order of the ToC and landmarks. Expected [text]{node.get_attr('idref')}[/], found [text]{toc_files[index]}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 			break
 
-	for element in abbr_elements:
-		abbr_class = element.get_attr("class").replace(" eoc", "").strip()
-		if f"abbr.{abbr_class}" not in abbr_styles:
-			missing_styles.append(element.to_tag_string())
+	for element in abbr_elements_requiring_css:
+		# All abbr elements have an epub:type because we selected them based on epub:type in the xpath
+		for value in element.get_attr("epub:type").split():
+			if f"[epub|type~=\"{value}\"]" not in self.local_css:
+				missing_styles.append(element.to_tag_string())
 
 	if missing_styles:
 		messages.append(LintMessage("c-006", f"Semantic found, but missing corresponding style in [path][link=file://{local_css_path}]local.css[/][/].", se.MESSAGE_TYPE_ERROR, local_css_path, set(missing_styles)))

@@ -174,7 +174,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					last_updated_iso = regex.sub(r"\+.+?Z$", "Z", last_updated_iso)
 					# In the line below, we can't use %l (unpadded 12 hour clock hour) because it isn't portable to Windows.
 					# Instead we use %I (padded 12 hour clock hour) and then do a string replace to remove leading zeros.
-					last_updated_friendly = f"{self.last_commit.timestamp:%B %e, %Y, %I:%M <abbr class=\"time eoc\">%p</abbr>}".replace(" 0", " ")
+					last_updated_friendly = f"{self.last_commit.timestamp:%B %e, %Y, %I:%M <abbr class=\"eoc\">%p</abbr>}".replace(" 0", " ")
 					last_updated_friendly = regex.sub(r"\s+", " ", last_updated_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
 					# Set modified date in the metadata file

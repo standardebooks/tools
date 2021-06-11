@@ -775,7 +775,7 @@ class SeEpub:
 			now = datetime.datetime.utcnow()
 			now_iso = regex.sub(r"\.[0-9]+$", "", now.isoformat()) + "Z"
 			now_iso = regex.sub(r"\+.+?Z$", "Z", now_iso)
-			now_friendly = f"{now:%B %e, %Y, %l:%M <abbr class=\"time eoc\">%p</abbr>}"
+			now_friendly = f"{now:%B %e, %Y, %l:%M <abbr class=\"eoc\">%p</abbr>}"
 			now_friendly = regex.sub(r"\s+", " ", now_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
 
 			for node in self.metadata_dom.xpath("/package/metadata/dc:date"):

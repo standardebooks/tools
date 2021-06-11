@@ -401,17 +401,17 @@ def _copy_template_file(filename: str, dest_path: Path) -> None:
 
 def _add_name_abbr(contributor: str) -> str:
 	"""
-	Add <abbr class="name"> around contributor names
+	Add <abbr epub:type="z3998:given-name"> around contributor names
 	"""
 
-	contributor = regex.sub(r"([\p{Uppercase_Letter}]\.(?:\s*[\p{Uppercase_Letter}]\.)*)", r"""<abbr class="name">\1</abbr>""", contributor)
+	contributor = regex.sub(r"([\p{Uppercase_Letter}]\.(?:\s*[\p{Uppercase_Letter}]\.)*)", r"""<abbr epub:type="z3998:given-name">\1</abbr>""", contributor)
 
 	return contributor
 
 def _generate_contributor_string(contributors: List[Dict], include_xhtml: bool) -> str:
 	"""
 	Given a list of contributors, generate a contributor string like `Bob Smith, Jane Doe, and Sam Johnson`.
-	With include_xhtml, the string looks like: `<b class="name">Bob Smith</b>, <a href="https://en.wikipedia.org/wiki/Jane_Doe">Jane Doe</a>, and <b class="name">Sam Johnson</b>`
+	With include_xhtml, the string looks like: `<b epub:type="z3998:personal-name">Bob Smith</b>, <a href="https://en.wikipedia.org/wiki/Jane_Doe">Jane Doe</a>, and <b epub:type="z3998:personal-name">Sam Johnson</b>`
 
 	INPUTS
 	contributors: A list of contributor dicts
@@ -429,25 +429,25 @@ def _generate_contributor_string(contributors: List[Dict], include_xhtml: bool) 
 	if len(contributors) == 1:
 		if include_xhtml:
 			if contributors[0]["wiki_url"]:
-				output += f"<a href=\"{contributors[0]['wiki_url']}\">{_add_name_abbr(contributors[0]['name'])}</a>"
+				output += f"""<a href="{contributors[0]['wiki_url']}">{_add_name_abbr(contributors[0]['name'])}</a>"""
 			else:
-				output += f"<b class=\"name\">{_add_name_abbr(contributors[0]['name'])}</b>"
+				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(contributors[0]['name'])}</b>"""
 		else:
 			output += contributors[0]["name"]
 
 	elif len(contributors) == 2:
 		if include_xhtml:
 			if contributors[0]["wiki_url"]:
-				output += f"<a href=\"{contributors[0]['wiki_url']}\">{_add_name_abbr(contributors[0]['name'])}</a>"
+				output += f"""<a href="{contributors[0]['wiki_url']}">{_add_name_abbr(contributors[0]['name'])}</a>"""
 			else:
-				output += f"<b class=\"name\">{_add_name_abbr(contributors[0]['name'])}</b>"
+				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(contributors[0]['name'])}</b>"""
 
 			output += " and "
 
 			if contributors[1]["wiki_url"]:
-				output += f"<a href=\"{contributors[1]['wiki_url']}\">{_add_name_abbr(contributors[1]['name'])}</a>"
+				output += f"""<a href="{contributors[1]['wiki_url']}">{_add_name_abbr(contributors[1]['name'])}</a>"""
 			else:
-				output += f"<b class=\"name\">{_add_name_abbr(contributors[1]['name'])}</b>"
+				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(contributors[1]['name'])}</b>"""
 		else:
 			output += contributors[0]["name"] + " and " + contributors[1]["name"]
 
@@ -461,9 +461,9 @@ def _generate_contributor_string(contributors: List[Dict], include_xhtml: bool) 
 
 			if include_xhtml:
 				if contributor["wiki_url"]:
-					output += f"<a href=\"{contributor['wiki_url']}\">{_add_name_abbr(contributor['name'])}</a>"
+					output += f"""<a href="{contributor['wiki_url']}">{_add_name_abbr(contributor['name'])}</a>"""
 				else:
-					output += f"<b class=\"name\">{_add_name_abbr(contributor['name'])}</b>"
+					output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(contributor['name'])}</b>"""
 			else:
 				output += contributor["name"]
 
@@ -803,11 +803,11 @@ def _create_draft(args: Namespace):
 				producers_xhtml = ""
 				for i, producer in enumerate(pg_producers):
 					if "Distributed Proofread" in producer:
-						producers_xhtml = producers_xhtml + "<a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a>"
+						producers_xhtml = producers_xhtml + """<a href="https://www.pgdp.net">The Online Distributed Proofreading Team</a>"""
 					elif "anonymous" in producer.lower():
-						producers_xhtml = producers_xhtml + "<b class=\"name\">An Anonymous Volunteer</b>"
+						producers_xhtml = producers_xhtml + """<b epub:type="z3998:personal-name">An Anonymous Volunteer</b>"""
 					else:
-						producers_xhtml = producers_xhtml + f"<b class=\"name\">{_add_name_abbr(producer).strip('.')}</b>"
+						producers_xhtml = producers_xhtml + f"""<b epub:type="z3998:personal-name">{_add_name_abbr(producer).strip('.')}</b>"""
 
 					if i < len(pg_producers) - 1:
 						producers_xhtml = producers_xhtml + ", "
@@ -817,7 +817,7 @@ def _create_draft(args: Namespace):
 
 				producers_xhtml = producers_xhtml + "<br/>"
 
-				colophon_xhtml = colophon_xhtml.replace("<b class=\"name\">TRANSCRIBER_1</b>, <b class=\"name\">TRANSCRIBER_2</b>, and <a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a><br/>", producers_xhtml)
+				colophon_xhtml = colophon_xhtml.replace("""<b epub:type="z3998:personal-name">TRANSCRIBER_1</b>, <b epub:type="z3998:personal-name">TRANSCRIBER_2</b>, and <a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a><br/>""", producers_xhtml)
 
 		file.seek(0)
 		file.write(colophon_xhtml)
