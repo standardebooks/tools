@@ -1294,7 +1294,7 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 		if closest_parent_sections:
 			closest_parent_section = closest_parent_sections[0]
 		else:
-			raise se.InvalidSeEbookException("No [xhtml]<section>[/] or [xhtml]<article>[/] element for [xhtml]<hgroup>[/]")
+			raise se.InvalidSeEbookException("No [xhtml]<section>[/] or [xhtml]<article>[/] element for [xhtml]<hgroup>[/].")
 
 		# If the closest parent <section> or <article> is a part, division, or volume, then keep all <hgroup> children
 		if not closest_parent_section.get_attr("epub:type") or (closest_parent_section.get_attr("epub:type") and ("part" not in closest_parent_section.get_attr("epub:type") and "division" not in closest_parent_section.get_attr("epub:type") and "volume" not in closest_parent_section.get_attr("epub:type"))):
@@ -1314,7 +1314,7 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 		try:
 			title = regex.sub(r"\s+", " ", hgroup_element.xpath("./*[1]")[0].inner_text().strip())
 		except Exception as ex:
-			raise se.InvalidSeEbookException("Couldn't find title in [xhml]<hgroup>[/]") from ex
+			raise se.InvalidSeEbookException("Couldn’t find title in [xhml]<hgroup>[/].") from ex
 
 		subtitle = hgroup_element.xpath("./*[2]")
 		if subtitle:

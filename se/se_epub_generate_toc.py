@@ -75,7 +75,7 @@ class TocItem:
 
 		out_string = ""
 		if not self.title:
-			raise se.InvalidInputException(f"Couldn't find title in: [path][link=file://{self.file_link}]{self.file_link}[/][/].")
+			raise se.InvalidInputException(f"Couldn’t find title in: [path][link=file://{self.file_link}]{self.file_link}[/][/].")
 
 		if self.subtitle and self.lang:
 			# test for a foreign language subtitle, and adjust accordingly
@@ -172,11 +172,11 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list) -> None:
 	epub_type = ""
 	sections = dom.xpath("//body/*[name() = 'section' or name() = 'article']")
 	if not sections:
-		raise se.InvalidInputException("Couldn't locate first section")
+		raise se.InvalidInputException("Couldn’t locate first [xhtml]<section>[/] or [xhtml]<article>[/].")
 	epub_type = sections[0].get_attr("epub:type")
 	bodys = dom.xpath("//body")
 	if not bodys:
-		raise se.InvalidInputException("Couldn't locate body")
+		raise se.InvalidInputException("Couldn’t locate [xhtml]<body>[/].")
 
 	if not epub_type:  # some productions don't have an epub:type in outermost section, so get it from body tag
 		epub_type = bodys[0].get_attr("epub:type")
@@ -385,7 +385,7 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, nest_under_ha
 	if body:
 		place = get_place(body[0])
 	else:
-		raise se.InvalidInputException("Couldn't locate body node")
+		raise se.InvalidInputException("Couldn’t locate [xhtml]<body>[/].")
 
 	is_toplevel = True
 
@@ -573,7 +573,7 @@ def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem) -> TocItem:
 		if "subtitle" in epub_type:
 			toc_item.subtitle = extract_strings(child)
 		else:
-			if "title" in epub_type:  # this allows for 'fulltitle' to work here, too
+			if "title" in epub_type:  # this allows for `fulltitle` to work here, too
 				if toc_item.title or toc_item.roman or toc_item.title_is_ordinal:  # if title already filled, must be a subtitle
 					toc_item.subtitle = extract_strings(child)
 				else:
@@ -633,7 +633,7 @@ def strip_notes(text: str) -> str:
 	cleaned html string
 	"""
 
-	return regex.sub(r'<a[^>]*?epub:type="noteref"[^>]*?>.*?<\/a>', "", text)
+	return regex.sub(r"""<a[^>]*?epub:type="noteref"[^>]*?>.*?<\/a>""", "", text)
 
 def process_all_content(file_list: list) -> Tuple[list, list]:
 	"""
@@ -675,7 +675,7 @@ def process_all_content(file_list: list) -> Tuple[list, list]:
 		if body:
 			place = get_place(body[0])
 		else:
-			raise se.InvalidInputException("Couldn't locate body node")
+			raise se.InvalidInputException("Couldn’t locate [xhtml]<body>[/].")
 		if place == Position.BACK:
 			nest_under_halftitle = False
 		process_headings(dom, textf.name, toc_list, nest_under_halftitle, single_file)

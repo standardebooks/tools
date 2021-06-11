@@ -168,7 +168,7 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 	"""
 
 	label = "Error" if not is_warning else "Warning"
-	bg_color = 'red' if not is_warning else 'yellow'
+	bg_color = "red" if not is_warning else "yellow"
 
 	# We have to print to stdout in case we're called from GNU Parallel, otherwise weird newline issues occur
 	# This no longer works with rich because it can't (yet) output to stderr

@@ -34,7 +34,7 @@ def lint(plain_output: bool) -> int:
 	# Rich needs to know the terminal width in order to format tables.
 	# If we're called from Parallel, there is no width because Parallel is not a terminal. Thus we must export $COLUMNS before
 	# invoking Parallel, and then get that value here.
-	console = Console(width=int(os.environ['COLUMNS']) if called_from_parallel and "COLUMNS" in os.environ else None, highlight=False, theme=se.RICH_THEME, force_terminal=force_terminal) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	console = Console(width=int(os.environ["COLUMNS"]) if called_from_parallel and "COLUMNS" in os.environ else None, highlight=False, theme=se.RICH_THEME, force_terminal=force_terminal) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
 	for directory in args.directories:
 		directory = Path(directory).resolve()

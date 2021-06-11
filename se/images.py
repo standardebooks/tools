@@ -267,7 +267,7 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 	try:
 		xml = etree.fromstring(str.encode(svg_in_raw))
 	except Exception as ex:
-		raise se.InvalidXmlException(f"Couldn’t parse SVG file: [path][link={in_svg.resolve()}]{in_svg}[/][/]") from ex
+		raise se.InvalidXmlException(f"Couldn’t parse SVG file: [path][link={in_svg.resolve()}]{in_svg}[/][/].") from ex
 
 	svg_ns = "{http://www.w3.org/2000/svg}"
 
