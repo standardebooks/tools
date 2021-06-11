@@ -330,6 +330,7 @@ TYPOGRAPHY
 "t-059", "Period at the end of [xhtml]<cite>[/] element before endnote backlink."
 "t-060", "Old style Bible citation."
 "t-061", "Summary-style bridgehead without ending punctuation."
+"t-062", "Uppercased [text]a.m.[/] and [text]p.m.[/]"
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1402,6 +1403,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath(f"/html/body//text()[re:test(., '[0-9][^{se.NO_BREAK_SPACE}]?$')][(following-sibling::abbr[1])[re:test(., '^[ap]\\.m\\.$')]]")
 				if nodes:
 					messages.append(LintMessage("t-009", "Required no-break space not found before time and [text]a.m.[/] or [text]p.m.[/].", se.MESSAGE_TYPE_WARNING, filename, [node[-10:] + "<abbr" for node in nodes]))
+
+				# Check for uppercased am/pm, except for if they have an epub:type, or when uppercased in titles, or in the nav document
+				if not dom.xpath("//nav[contains(@epub:type, 'toc')]"):
+					nodes = dom.xpath("/html/body//abbr[re:test(., '^[AP]\\.M\\.$') and not(@epub:type) and not(./ancestor::*[contains(@epub:type, 'title')])]")
+					if nodes:
+						messages.append(LintMessage("t-062", "Uppercased [text]a.m.[/] and [text]p.m.[/]", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for low-hanging misquoted fruit
 				matches = regex.findall(r"[\p{Letter}]+[“‘]", file_contents) + regex.findall(r"[^>]+</(?:em|i|b|span)>‘[\p{Lowercase_Letter}]+", file_contents)
