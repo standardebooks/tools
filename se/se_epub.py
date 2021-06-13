@@ -77,7 +77,6 @@ class SeEpub:
 		try:
 			self.path = Path(epub_root_directory).resolve()
 
-
 			if not self.path.is_dir():
 				raise Exception
 
@@ -92,7 +91,10 @@ class SeEpub:
 			self.epub_root_path = self.path
 			self.is_se_ebook = False
 
-		container_tree = self.get_dom(self.epub_root_path / "META-INF" / "container.xml")
+		try:
+			container_tree = self.get_dom(self.epub_root_path / "META-INF" / "container.xml")
+		except Exception as ex:
+			raise se.InvalidSeEbookException("Target does’t appear to be an epub.") from ex
 
 		self.metadata_file_path = self.epub_root_path / container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
 
