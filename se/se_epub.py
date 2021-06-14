@@ -94,7 +94,7 @@ class SeEpub:
 		try:
 			container_tree = self.get_dom(self.epub_root_path / "META-INF" / "container.xml")
 		except Exception as ex:
-			raise se.InvalidSeEbookException("Target does’t appear to be an epub.") from ex
+			raise se.InvalidSeEbookException("Target doesn’t appear to be an epub (no container.xml).") from ex
 
 		self.metadata_file_path = self.epub_root_path / container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
 
