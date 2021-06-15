@@ -1,3 +1,57 @@
+# 2.1.0
+
+## General
+
+- Allow non-SE ebook folders to be parsed and operated on. A non-SE ebook does not have a `./src/` folder and does not have an SE-style `<dc:identifier>`.
+
+- Fixes for all commands to work with the manual 1.6.1 rules for semantics vs classes
+
+## se build
+
+- Add the `--check-only` option to only run epubcheck/ace without outputting any ebook files
+
+## se create-draft
+
+- Add the `-w`, `--white-label` option to create an epub skeleton without SE branding
+
+## se find-mismatched-dashes
+
+- Create this command. Scans an ebook for cases of the same compound word with and without dashes. Output is like `se find-mismatched-diacritics`.
+
+## se find-mismatched-diacritics
+
+- Revamp output format to use Rich and to linkify words to M-W
+
+## se lint
+
+- Improve t-042
+
+- Add t-061, summary-style bridgehead without ending punctuation
+
+- Improve t-060
+
+- Strip elements before glossary search key map linting. Thanks to Robin Whittleton
+
+- Don't crash when throwing f-002
+
+- Use self.content_path instead of hard-coded path
+
+- Add t-062, uppercased a.m./p.m.
+
+## se modernize-spelling
+
+- Various additions
+
+- Fix a broken regex. Thanks to David Grigg
+
+## se renumber-endnotes
+
+- Fix an error with endnote IDs. Thanks to David Grigg
+
+## se typogrify
+
+- Fix a common error case for incorrectly curled left quote
+
 # 2.0.1
 
 ## General
