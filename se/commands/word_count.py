@@ -22,7 +22,7 @@ def word_count(plain_output: bool) -> int:
 	parser = argparse.ArgumentParser(description="Count the number of words in an XHTML file and optionally categorize by length. If multiple files are specified, show the total word count for all.")
 	parser.add_argument("-c", "--categorize", action="store_true", help="include length categorization in output")
 	parser.add_argument("-p", "--ignore-pg-boilerplate", action="store_true", help="attempt to ignore Project Gutenberg boilerplate headers and footers before counting")
-	parser.add_argument("-x", "--exclude-se-files", action="store_true", help="exclude some non-bodymatter files common to SE ebooks, like the ToC and colophon")
+	parser.add_argument("-x", "--exclude-se-files", action="store_true", help="exclude some non-bodymatter files common to S.E. ebooks, like the ToC and colophon")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 

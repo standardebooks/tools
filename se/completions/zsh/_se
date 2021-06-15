@@ -26,7 +26,7 @@ case $state in
 			"extract-ebook[Extract an EPUB, MOBI, or AZW3 ebook.]" \
 			"find-mismatched-dashes[Find words with mismatched dashes in a set of XHTML files.]" \
 			"find-mismatched-diacritics[Find words with mismatched diacritics in a set of XHTML files.]" \
-			"help[List available SE commands.]" \
+			"help[List available S.E. commands.]" \
 			"hyphenate[Insert soft hyphens at syllable breaks in an XHTML file.]" \
 			"interactive-replace[Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (c) Center on match. (q) Save this file and quit.]" \
 			"lint[Check for various Standard Ebooks style errors.]" \
@@ -108,7 +108,7 @@ case $state in
 			compare-versions)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
-					{-i,--include-se-files}'[include commonly-excluded SE files like imprint, titlepage, and colophon]' \
+					{-i,--include-se-files}'[include commonly-excluded S.E. files like imprint, titlepage, and colophon]' \
 					{-n,--no-images}'[don’t copy diff images to the current working directory in case of difference]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_directories'
@@ -256,7 +256,7 @@ case $state in
 					{-c,--categorize}'[include length categorization in output]' \
 					{-h,--help}'[show a help message and exit]' \
 					{-p,--ignore-pg-boilerplate}'[attempt to ignore Project Gutenberg boilerplate headers and footers before counting]' \
-					{-x,--exclude-se-files}'[exclude some non-bodymatter files common to SE ebooks, like the ToC and colophon]' \
+					{-x,--exclude-se-files}'[exclude some non-bodymatter files common to S.E. ebooks, like the ToC and colophon]' \
 					'*: :_files -g \*.\(htm\|html\|xhtml\)'
 				;;
 			xpath)

@@ -69,7 +69,7 @@ CSS
 "c-006", f"Semantic found, but missing corresponding style in [path][link=file://{local_css_path}]local.css[/][/]."
 "c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy."
 "c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks."
-"c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles."
+"c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding S.E. base styles."
 "c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [css]text-align[/] is usually set to [css]right[/]."
 "c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/]."
 "c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/]."
@@ -139,7 +139,7 @@ METADATA
 "m-032", f"[val]afterword[/] semantic inflection found, but no MARC relator [val]aft[/] (Author of colophon, afterword, etc.)."
 "m-033", f"[val]endnotes[/] semantic inflection found, but no MARC relator [val]ann[/] (Annotator)."
 "m-034", f"[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator)."
-"m-035", f"Unexpected SE identifier in colophon. Expected: [url]{se_url}[/]."
+"m-035", f"Unexpected S.E. identifier in colophon. Expected: [url]{se_url}[/]."
 "m-036", "Variable not replaced with value."
 "m-037", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/]."
 "m-038", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>[/]."
@@ -160,7 +160,7 @@ METADATA
 "m-053", "[xml]<meta property=\"se:subject\">[/] elements not in alphabetical order."
 "m-054", "Standard Ebooks URL with illegal trailing slash."
 "m-055", "[xml]dc:description[/] does not end with a period."
-"m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their SE author page."
+"m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their S.E. author page."
 "m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/]."
 "m-058", "[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/]."
 "m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata."
@@ -168,10 +168,10 @@ METADATA
 "m-061", "Link must be preceded by [text]the[/]."
 "m-063", "Cover image has not been built."
 "m-062", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"file-as\">[/]."
-"m-064", "SE ebook hyperlinked in long description but not italicized."
+"m-064", "S.E. ebook hyperlinked in long description but not italicized."
 "m-065", "Word count in metadata doesn’t match actual word count."
 "m-066", "[url]id.loc.gov[/] URI starting with illegal https."
-"m-067", "Non-SE link in long description."
+"m-067", "Non-S.E. link in long description."
 "m-068", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"title-type\">[/]."
 "m-069", "[text]comprised of[/] in metadata. Hint: Is there a better phrase to use here?"
 "m-070", "Glossary entries not present in the text:"
@@ -618,7 +618,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	local_css_rules, duplicate_selectors = _get_selectors_and_rules(self)
 
 	if duplicate_selectors:
-		messages.append(LintMessage("c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding SE base styles.", se.MESSAGE_TYPE_WARNING, local_css_path, list(set(duplicate_selectors))))
+		messages.append(LintMessage("c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding S.E. base styles.", se.MESSAGE_TYPE_WARNING, local_css_path, list(set(duplicate_selectors))))
 
 	# Store a list of CSS selectors, and duplicate it into a list of unused selectors, for later checks
 	# We use a regex to remove pseudo-elements like ::before, because we want the *selectors* to see if they're unused.
@@ -746,14 +746,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				author_last_name = author_last_name.replace("'", "’") # Typogrify apostrophes so that we correctly match in the long description
 				# We can't use xpath here because the long description is escaped; it has no dom to query against.
 				if author_last_name in long_description and not regex.search(fr"<a href=\"https://standardebooks\.org/ebooks/.+?\">.*?{author_last_name}.*?</a>", long_description):
-					messages.append(LintMessage("m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their SE author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+					messages.append(LintMessage("m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their S.E. author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 		# Did we mention an SE book in the long description, but without italics?
 		if regex.search(r"""(?<!<i>)<a href="https://standardebooks\.org/ebooks/[^"]+?/[^"]+?">(?!<i>)""", long_description):
-			messages.append(LintMessage("m-064", "SE ebook hyperlinked in long description but not italicized.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+			messages.append(LintMessage("m-064", "S.E. ebook hyperlinked in long description but not italicized.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 		if regex.search(r"""<a href="https?://(?!standardebooks\.org)""", long_description):
-			messages.append(LintMessage("m-067", "Non-SE link in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+			messages.append(LintMessage("m-067", "Non-S.E. link in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 		# xml:lang is correct for the rest of the publication, but should be lang in the long desc
 		if "xml:lang" in long_description:
@@ -1193,7 +1193,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 					se_url = self.generated_identifier.replace("url:", "")
 					if not dom.xpath(f"/html/body//a[@href='{se_url}' and text()='{se_url.replace('https://', '')}']"):
-						messages.append(LintMessage("m-035", f"Unexpected SE identifier in colophon. Expected: [url]{se_url}[/].", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("m-035", f"Unexpected S.E. identifier in colophon. Expected: [url]{se_url}[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 					if self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text()='trl']") and "translated from" not in file_contents:
 						messages.append(LintMessage("m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon.", se.MESSAGE_TYPE_ERROR, filename))

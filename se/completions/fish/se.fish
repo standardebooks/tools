@@ -36,7 +36,7 @@ complete -c se -A -n "__fish_seen_subcommand_from clean" -s v -l verbose -d "inc
 
 complete -c se -n "__fish_se_no_subcommand" -a compare-versions -d "Render and compare XHTML files in an ebook repository."
 complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s i -l include-se-files -d "include commonly-excluded SE files like imprint, titlepage, and colophon"
+complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s i -l include-se-files -d "include commonly-excluded S.E. files like imprint, titlepage, and colophon"
 complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s n -l no-images -d "don’t create images of diffs"
 complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s v -l verbose -d "increase output verbosity"
 
@@ -65,7 +65,7 @@ complete -c se -A -n "__fish_seen_subcommand_from find-mismatched-dashes" -s h -
 complete -c se -n "__fish_se_no_subcommand" -a find-mismatched-diacritics -d "Find words with mismatched diacritics in a set of XHTML files."
 complete -c se -A -n "__fish_seen_subcommand_from find-mismatched-diacritics" -s h -l help -x -d "show this help message and exit"
 
-complete -c se -n "__fish_se_no_subcommand" -f -a help -d "List available SE commands"
+complete -c se -n "__fish_se_no_subcommand" -f -a help -d "List available S.E. commands"
 
 complete -c se -n "__fish_se_no_subcommand" -a hyphenate -d "Insert soft hyphens at syllable breaks in an XHTML file."
 complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s h -l help -x -d "show this help message and exit"
@@ -164,7 +164,7 @@ complete -c se -n "__fish_se_no_subcommand" -a version -d "Print the version num
 complete -c se -n "__fish_se_no_subcommand" -a word-count -d "Count the number of words in an HTML file and optionally categorize by length."
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s c -l categorize -d "include length categorization in output"
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s p -l ignore-pg-boilerplate -d "attempt to ignore Project Gutenberg boilerplate headers and footers before counting"
-complete -c se -A -n "__fish_seen_subcommand_from word-count" -s x -l exclude-se-files -d "exclude some non-bodymatter files common to SE ebooks, like the ToC and colophon"
+complete -c se -A -n "__fish_seen_subcommand_from word-count" -s x -l exclude-se-files -d "exclude some non-bodymatter files common to S.E. ebooks, like the ToC and colophon"
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s h -l help -x -d "show this help message and exit"
 
 complete -c se -n "__fish_se_no_subcommand" -a xpath -d "Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed."
