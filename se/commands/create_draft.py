@@ -738,17 +738,18 @@ def _create_draft(args: Namespace):
 	_copy_template_file("onix.xml", content_path / "epub")
 	_copy_template_file("toc.xhtml", content_path / "epub")
 	_copy_template_file("core.css", content_path / "epub" / "css")
-	_copy_template_file("local.css", content_path / "epub" / "css")
-	_copy_template_file("cover.jpg", repo_path / "images")
 
 	if args.white_label:
 		_copy_template_file("content-white-label.opf", content_path / "epub" / "content.opf")
 		_copy_template_file("titlepage-white-label.xhtml", content_path / "epub" / "text" / "titlepage.xhtml")
 		_copy_template_file("cover.jpg", content_path / "epub" / "images")
+		_copy_template_file("local-white-label.css", content_path / "epub" / "css" / "local.css")
 
 	else:
+		_copy_template_file("cover.jpg", repo_path / "images")
 		_copy_template_file("cover.svg", repo_path / "images")
 		_copy_template_file("titlepage.svg", repo_path / "images")
+		_copy_template_file("local.css", content_path / "epub" / "css")
 		_copy_template_file("se.css", content_path / "epub" / "css")
 		_copy_template_file("logo.svg", content_path / "epub" / "images")
 		_copy_template_file("colophon.xhtml", content_path / "epub" / "text")
@@ -766,6 +767,7 @@ def _create_draft(args: Namespace):
 
 	if args.white_label:
 		_replace_in_file(content_path / "epub" / "text" / "titlepage.xhtml", "TITLE", title)
+		_replace_in_file(content_path / "epub" / "text" / "titlepage.xhtml", "AUTHOR", _generate_contributor_string(authors, False))
 
 	else:
 		_replace_in_file(content_path / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", title_string)
