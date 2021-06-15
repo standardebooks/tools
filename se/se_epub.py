@@ -84,8 +84,8 @@ class SeEpub:
 			raise se.InvalidSeEbookException(f"Not a directory: [path][link=file://{self.path}]{self.path}[/][/].") from ex
 
 		# Decide if this is an SE epub, or a white-label epub
-		# SE epubs have a ./src dir
-		if (self.path / "src").is_dir():
+		# SE epubs have a ./src dir and the identifier looks like an SE identifier
+		if (self.path / "src" / "META-INF" / "container.xml").is_file():
 			self.epub_root_path = self.path / "src"
 		else:
 			self.epub_root_path = self.path
@@ -93,10 +93,10 @@ class SeEpub:
 
 		try:
 			container_tree = self.get_dom(self.epub_root_path / "META-INF" / "container.xml")
-		except Exception as ex:
-			raise se.InvalidSeEbookException("Target doesn’t appear to be an epub (no container.xml).") from ex
 
-		self.metadata_file_path = self.epub_root_path / container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
+			self.metadata_file_path = self.epub_root_path / container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
+		except Exception as ex:
+			raise se.InvalidSeEbookException("Target doesn’t appear to be an epub: no [path]container.xml[/] or no metadata file.") from ex
 
 		self.content_path = self.metadata_file_path.parent
 
@@ -110,6 +110,11 @@ class SeEpub:
 			self.toc_path = self.content_path / toc_href
 		else:
 			raise se.InvalidSeEbookException("Couldn’t find table of contents.")
+
+		# If our identifier isn't SE-style, we're not an SE ebook
+		identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier/text()", True)
+		if not identifier or not identifier.startswith("url:https://standardebooks.org/ebooks/"):
+			self.is_se_ebook = False
 
 	@property
 	def cover_path(self):
