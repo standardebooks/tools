@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" dir="ltr" prefix="se: https://standardebooks.org/vocab/1.0" unique-identifier="uid" version="3.0" xml:lang="en-US">
+	<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+		<dc:identifier id="uid">IDENTIFIER</dc:identifier>
+		<dc:date>1900-01-01T00:00:00Z</dc:date>
+		<meta property="dcterms:modified">1900-01-01T00:00:00Z</meta>
+		<dc:rights>RIGHTS</dc:rights>
+		<dc:publisher id="publisher">PUBLISHER</dc:publisher>
+		<meta property="file-as" refines="#publisher">PUBLISHER_SORT</meta>
+		<meta property="se:url.homepage" refines="#publisher">https://standardebooks.org</meta>
+		<link href="onix.xml" media-type="application/xml" properties="onix" rel="record"/>
+		<link href="http://www.idpf.org/epub/a11y/accessibility-20170105.html#wcag-aa" rel="dcterms:conformsTo"/>
+		<meta property="a11y:certifiedBy">PUBLISHER</meta>
+		<meta property="schema:accessMode">textual</meta>
+		<meta property="schema:accessModeSufficient">textual</meta>
+		<meta property="schema:accessibilityFeature">alternativeText</meta>
+		<meta property="schema:accessibilityFeature">readingOrder</meta>
+		<meta property="schema:accessibilityFeature">structuralNavigation</meta>
+		<meta property="schema:accessibilityFeature">tableOfContents</meta>
+		<meta property="schema:accessibilityHazard">none</meta>
+		<meta property="schema:accessibilitySummary">This publication conforms to WCAG 2.1 Level AA.</meta>
+		<dc:title id="title">TITLE</dc:title>
+		<meta property="file-as" refines="#title">TITLE_SORT</meta>
+		<dc:subject id="subject-1">SUBJECT_1</dc:subject>
+		<dc:subject id="subject-2">SUBJECT_2</dc:subject>
+		<meta property="authority" refines="#subject-1">LCSH</meta>
+		<meta property="term" refines="#subject-1">LCSH_ID_1</meta>
+		<meta property="authority" refines="#subject-2">LCSH</meta>
+		<meta property="term" refines="#subject-2">LCSH_ID_2</meta>
+		<dc:description id="description">DESCRIPTION</dc:description>
+		<dc:language>LANG</dc:language>
+		<dc:source>PG_URL</dc:source>
+		<dc:source>IA_URL</dc:source>
+		<meta property="se:word-count">WORD_COUNT</meta>
+		<meta property="se:url.encyclopedia.wikipedia">EBOOK_WIKI_URL</meta>
+		<dc:creator id="author">AUTHOR</dc:creator>
+		<meta property="file-as" refines="#author">AUTHOR_SORT</meta>
+		<meta property="se:name.person.full-name" refines="#author">AUTHOR_FULL_NAME</meta>
+		<meta property="se:url.encyclopedia.wikipedia" refines="#author">AUTHOR_WIKI_URL</meta>
+		<meta property="se:url.authority.nacoaf" refines="#author">AUTHOR_NACOAF_URI</meta>
+		<meta property="role" refines="#author" scheme="marc:relators">aut</meta>
+		<dc:contributor id="translator">TRANSLATOR</dc:contributor>
+		<meta property="file-as" refines="#translator">TRANSLATOR_SORT</meta>
+		<meta property="se:url.encyclopedia.wikipedia" refines="#translator">TRANSLATOR_WIKI_URL</meta>
+		<meta property="se:url.authority.nacoaf" refines="#translator">TRANSLATOR_NACOAF_URI</meta>
+		<meta property="display-seq" refines="#translator">1</meta>
+		<meta property="role" refines="#translator" scheme="marc:relators">trl</meta>
+		<dc:contributor id="artist">COVER_ARTIST</dc:contributor>
+		<meta property="file-as" refines="#artist">COVER_ARTIST_SORT</meta>
+		<meta property="se:url.encyclopedia.wikipedia" refines="#artist">COVER_ARTIST_WIKI_URL</meta>
+		<meta property="se:url.authority.nacoaf" refines="#artist">COVER_ARTIST_NACOAF_URI</meta>
+		<meta property="role" refines="#artist" scheme="marc:relators">art</meta>
+		<dc:contributor id="producer-1">PRODUCER</dc:contributor>
+		<meta property="file-as" refines="#producer-1">PRODUCER_SORT</meta>
+		<meta property="se:url.homepage" refines="#producer-1">PRODUCER_URL</meta>
+		<meta property="role" refines="#producer-1" scheme="marc:relators">bkp</meta>
+	</metadata>
+	<manifest>
+		<item href="css/core.css" id="core.css" media-type="text/css"/>
+		<item href="css/local.css" id="local.css" media-type="text/css"/>
+		<item href="images/cover.svg" id="cover.svg" media-type="image/svg+xml" properties="cover-image"/>
+		<item href="images/titlepage.svg" id="titlepage.svg" media-type="image/svg+xml"/>
+		<item href="text/titlepage.xhtml" id="titlepage.xhtml" media-type="application/xhtml+xml" properties="svg"/>
+		<item href="toc.xhtml" id="toc.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+	</manifest>
+	<spine>
+		<itemref idref="titlepage.xhtml"/>
+	</spine>
+</package>

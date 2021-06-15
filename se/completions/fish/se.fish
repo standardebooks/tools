@@ -49,6 +49,7 @@ complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s p -l pg-id -d
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s o -l offline -d "create draft without network access"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s r -l translator -d "the translator of the ebook"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s t -l title -d "the title of the ebook"
+complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s w -l white-label -d "create a generic epub skeleton without S.E. branding"
 
 complete -c se -n "__fish_se_no_subcommand" -a dec2roman -d "Convert a decimal number to a Roman numeral."
 complete -c se -A -n "__fish_seen_subcommand_from dec2roman" -s h -l help -x -d "show this help message and exit"

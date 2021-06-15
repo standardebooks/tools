@@ -585,20 +585,26 @@ def _create_draft(args: Namespace):
 	if repo_path.is_dir():
 		raise se.InvalidInputException(f"Directory already exists: [path][link=file://{repo_path}]{repo_path}[/][/].")
 
-	# Get data on authors
-	for i, author in enumerate(authors):
-		if not args.offline and author["name"].lower() != "anonymous":
-			author["wiki_url"], author["nacoaf_uri"] = _get_wikipedia_url(author["name"], True)
+	content_path = repo_path / "src"
 
-	# Get data on translators
-	for i, translator in enumerate(translators):
-		if not args.offline and translator["name"].lower() != "anonymous":
-			translator["wiki_url"], translator["nacoaf_uri"] = _get_wikipedia_url(translator["name"], True)
+	if args.white_label:
+		content_path = repo_path
 
-	# Get data on illlustrators
-	for i, illustrator in enumerate(illustrators):
-		if not args.offline and illustrator["name"].lower() != "anonymous":
-			illustrator["wiki_url"], illustrator["nacoaf_uri"] = _get_wikipedia_url(illustrator["name"], True)
+	if not args.white_label:
+		# Get data on authors
+		for i, author in enumerate(authors):
+			if not args.offline and author["name"].lower() != "anonymous":
+				author["wiki_url"], author["nacoaf_uri"] = _get_wikipedia_url(author["name"], True)
+
+		# Get data on translators
+		for i, translator in enumerate(translators):
+			if not args.offline and translator["name"].lower() != "anonymous":
+				translator["wiki_url"], translator["nacoaf_uri"] = _get_wikipedia_url(translator["name"], True)
+
+		# Get data on illlustrators
+		for i, illustrator in enumerate(illustrators):
+			if not args.offline and illustrator["name"].lower() != "anonymous":
+				illustrator["wiki_url"], illustrator["nacoaf_uri"] = _get_wikipedia_url(illustrator["name"], True)
 
 	# Download PG HTML and do some fixups
 	if args.pg_id:
@@ -657,11 +663,13 @@ def _create_draft(args: Namespace):
 			pg_language = "en-GB"
 
 	# Create necessary directories
-	(repo_path / "images").mkdir(parents=True)
-	(repo_path / "src" / "epub" / "css").mkdir(parents=True)
-	(repo_path / "src" / "epub" / "images").mkdir(parents=True)
-	(repo_path / "src" / "epub" / "text").mkdir(parents=True)
-	(repo_path / "src" / "META-INF").mkdir(parents=True)
+	(content_path / "epub" / "css").mkdir(parents=True)
+	(content_path / "epub" / "images").mkdir(parents=True)
+	(content_path / "epub" / "text").mkdir(parents=True)
+	(content_path / "META-INF").mkdir(parents=True)
+
+	if not args.white_label:
+		(repo_path / "images").mkdir(parents=True)
 
 	is_pg_html_parsed = True
 
@@ -712,7 +720,7 @@ def _create_draft(args: Namespace):
 			# lxml can also output duplicate default namespace declarations so remove the first one only
 			output = regex.sub(r"(xmlns=\".+?\")(\sxmlns=\".+?\")+", r"\1", output)
 
-			with open(repo_path / "src" / "epub" / "text" / "body.xhtml", "w", encoding="utf-8") as file:
+			with open(content_path / "epub" / "text" / "body.xhtml", "w", encoding="utf-8") as file:
 				file.write(output)
 
 		except OSError as ex:
@@ -721,27 +729,34 @@ def _create_draft(args: Namespace):
 			# Save this error for later, because it's still useful to complete the create-draft process
 			# even if we've failed to parse PG's HTML source.
 			is_pg_html_parsed = False
-			se.quiet_remove(repo_path / "src" / "epub" / "text" / "body.xhtml")
+			se.quiet_remove(content_path / "epub" / "text" / "body.xhtml")
 
 	# Copy over templates
 	_copy_template_file("gitignore", repo_path / ".gitignore")
-	_copy_template_file("LICENSE.md", repo_path)
-	_copy_template_file("container.xml", repo_path / "src" / "META-INF")
-	_copy_template_file("mimetype", repo_path / "src")
-	_copy_template_file("content.opf", repo_path / "src" / "epub")
-	_copy_template_file("onix.xml", repo_path / "src" / "epub")
-	_copy_template_file("toc.xhtml", repo_path / "src" / "epub")
-	_copy_template_file("core.css", repo_path / "src" / "epub" / "css")
-	_copy_template_file("local.css", repo_path / "src" / "epub" / "css")
-	_copy_template_file("se.css", repo_path / "src" / "epub" / "css")
-	_copy_template_file("logo.svg", repo_path / "src" / "epub" / "images")
-	_copy_template_file("colophon.xhtml", repo_path / "src" / "epub" / "text")
-	_copy_template_file("imprint.xhtml", repo_path / "src" / "epub" / "text")
-	_copy_template_file("titlepage.xhtml", repo_path / "src" / "epub" / "text")
-	_copy_template_file("uncopyright.xhtml", repo_path / "src" / "epub" / "text")
-	_copy_template_file("titlepage.svg", repo_path / "images")
-	_copy_template_file("cover.jpg", repo_path / "images" / "cover.jpg")
-	_copy_template_file("cover.svg", repo_path / "images" / "cover.svg")
+	_copy_template_file("container.xml", content_path / "META-INF")
+	_copy_template_file("mimetype", content_path)
+	_copy_template_file("onix.xml", content_path / "epub")
+	_copy_template_file("toc.xhtml", content_path / "epub")
+	_copy_template_file("core.css", content_path / "epub" / "css")
+	_copy_template_file("local.css", content_path / "epub" / "css")
+	_copy_template_file("cover.jpg", repo_path / "images")
+
+	if args.white_label:
+		_copy_template_file("content-white-label.opf", content_path / "epub" / "content.opf")
+		_copy_template_file("titlepage-white-label.xhtml", content_path / "epub" / "text" / "titlepage.xhtml")
+		_copy_template_file("cover.jpg", content_path / "epub" / "images")
+
+	else:
+		_copy_template_file("cover.svg", repo_path / "images")
+		_copy_template_file("titlepage.svg", repo_path / "images")
+		_copy_template_file("se.css", content_path / "epub" / "css")
+		_copy_template_file("logo.svg", content_path / "epub" / "images")
+		_copy_template_file("colophon.xhtml", content_path / "epub" / "text")
+		_copy_template_file("imprint.xhtml", content_path / "epub" / "text")
+		_copy_template_file("uncopyright.xhtml", content_path / "epub" / "text")
+		_copy_template_file("titlepage.xhtml", content_path / "epub" / "text")
+		_copy_template_file("content.opf", content_path / "epub")
+		_copy_template_file("LICENSE.md", repo_path)
 
 	# Try to find Wikipedia links if possible
 	ebook_wiki_url = None
@@ -749,82 +764,85 @@ def _create_draft(args: Namespace):
 	if not args.offline and title not in ("Short Fiction", "Poetry", "Essays", "Plays"):
 		ebook_wiki_url, _ = _get_wikipedia_url(title, False)
 
-	# Pre-fill titlepage.xhtml
-	_replace_in_file(repo_path / "src" / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", title_string)
+	if args.white_label:
+		_replace_in_file(content_path / "epub" / "text" / "titlepage.xhtml", "TITLE", title)
 
-	# Create the titlepage SVG
-	contributors = {}
-	if translators:
-		contributors["translated by"] = _generate_contributor_string(translators, False)
+	else:
+		_replace_in_file(content_path / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", title_string)
 
-	if illustrators:
-		contributors["illustrated by"] = _generate_contributor_string(illustrators, False)
-
-	with open(repo_path / "images" / "titlepage.svg", "w", encoding="utf-8") as file:
-		file.write(_generate_titlepage_svg(title, [author["name"] for author in authors], contributors, title_string))
-
-	# Create the cover SVG
-	with open(repo_path / "images" / "cover.svg", "w", encoding="utf-8") as file:
-		file.write(_generate_cover_svg(title, [author["name"] for author in authors], title_string))
-
-	# Build the cover/titlepage for distribution
-	epub = SeEpub(repo_path)
-	epub.generate_cover_svg()
-	epub.generate_titlepage_svg()
-
-	if args.pg_id:
-		_replace_in_file(repo_path / "src" / "epub" / "text" / "imprint.xhtml", "PG_URL", pg_url)
-
-	# Fill out the colophon
-	with open(repo_path / "src" / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
-		colophon_xhtml = file.read()
-
-		colophon_xhtml = colophon_xhtml.replace("SE_IDENTIFIER", identifier)
-		colophon_xhtml = colophon_xhtml.replace("TITLE", title)
-
-		contributor_string =  _generate_contributor_string(authors, True)
-
-		if contributor_string == "":
-			colophon_xhtml = colophon_xhtml.replace(" by<br/>\n\t\t\t<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", contributor_string)
-		else:
-			colophon_xhtml = colophon_xhtml.replace("<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", contributor_string)
-
+		# Create the titlepage SVG
+		contributors = {}
 		if translators:
-			translator_block = f"It was translated from ORIGINAL_LANGUAGE in TRANSLATION_YEAR by<br/>\n\t\t\t{_generate_contributor_string(translators, True)}.</p>"
-			colophon_xhtml = colophon_xhtml.replace("</p>\n\t\t\t<p>This ebook was produced for the<br/>", f"<br/>\n\t\t\t{translator_block}\n\t\t\t<p>This ebook was produced for the<br/>")
+			contributors["translated by"] = _generate_contributor_string(translators, False)
+
+		if illustrators:
+			contributors["illustrated by"] = _generate_contributor_string(illustrators, False)
+
+		with open(repo_path / "images" / "titlepage.svg", "w", encoding="utf-8") as file:
+			file.write(_generate_titlepage_svg(title, [author["name"] for author in authors], contributors, title_string))
+
+		# Create the cover SVG
+		with open(repo_path / "images" / "cover.svg", "w", encoding="utf-8") as file:
+			file.write(_generate_cover_svg(title, [author["name"] for author in authors], title_string))
+
+		# Build the cover/titlepage for distribution
+		epub = SeEpub(repo_path)
+		epub.generate_cover_svg()
+		epub.generate_titlepage_svg()
 
 		if args.pg_id:
-			colophon_xhtml = colophon_xhtml.replace("PG_URL", pg_url)
+			_replace_in_file(content_path / "epub" / "text" / "imprint.xhtml", "PG_URL", pg_url)
 
-			if pg_publication_year:
-				colophon_xhtml = colophon_xhtml.replace("PG_YEAR", pg_publication_year)
+		# Fill out the colophon
+		with open(content_path / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
+			colophon_xhtml = file.read()
 
-			if pg_producers:
-				producers_xhtml = ""
-				for i, producer in enumerate(pg_producers):
-					if "Distributed Proofread" in producer:
-						producers_xhtml = producers_xhtml + """<a href="https://www.pgdp.net">The Online Distributed Proofreading Team</a>"""
-					elif "anonymous" in producer.lower():
-						producers_xhtml = producers_xhtml + """<b epub:type="z3998:personal-name">An Anonymous Volunteer</b>"""
-					else:
-						producers_xhtml = producers_xhtml + f"""<b epub:type="z3998:personal-name">{_add_name_abbr(producer).strip('.')}</b>"""
+			colophon_xhtml = colophon_xhtml.replace("SE_IDENTIFIER", identifier)
+			colophon_xhtml = colophon_xhtml.replace("TITLE", title)
 
-					if i < len(pg_producers) - 1:
-						producers_xhtml = producers_xhtml + ", "
+			contributor_string =  _generate_contributor_string(authors, True)
 
-					if i == len(pg_producers) - 2:
-						producers_xhtml = producers_xhtml + "and "
+			if contributor_string == "":
+				colophon_xhtml = colophon_xhtml.replace(" by<br/>\n\t\t\t<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", contributor_string)
+			else:
+				colophon_xhtml = colophon_xhtml.replace("<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", contributor_string)
 
-				producers_xhtml = producers_xhtml + "<br/>"
+			if translators:
+				translator_block = f"It was translated from ORIGINAL_LANGUAGE in TRANSLATION_YEAR by<br/>\n\t\t\t{_generate_contributor_string(translators, True)}.</p>"
+				colophon_xhtml = colophon_xhtml.replace("</p>\n\t\t\t<p>This ebook was produced for the<br/>", f"<br/>\n\t\t\t{translator_block}\n\t\t\t<p>This ebook was produced for the<br/>")
 
-				colophon_xhtml = colophon_xhtml.replace("""<b epub:type="z3998:personal-name">TRANSCRIBER_1</b>, <b epub:type="z3998:personal-name">TRANSCRIBER_2</b>, and <a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a><br/>""", producers_xhtml)
+			if args.pg_id:
+				colophon_xhtml = colophon_xhtml.replace("PG_URL", pg_url)
 
-		file.seek(0)
-		file.write(colophon_xhtml)
-		file.truncate()
+				if pg_publication_year:
+					colophon_xhtml = colophon_xhtml.replace("PG_YEAR", pg_publication_year)
+
+				if pg_producers:
+					producers_xhtml = ""
+					for i, producer in enumerate(pg_producers):
+						if "Distributed Proofread" in producer:
+							producers_xhtml = producers_xhtml + """<a href="https://www.pgdp.net">The Online Distributed Proofreading Team</a>"""
+						elif "anonymous" in producer.lower():
+							producers_xhtml = producers_xhtml + """<b epub:type="z3998:personal-name">An Anonymous Volunteer</b>"""
+						else:
+							producers_xhtml = producers_xhtml + f"""<b epub:type="z3998:personal-name">{_add_name_abbr(producer).strip('.')}</b>"""
+
+						if i < len(pg_producers) - 1:
+							producers_xhtml = producers_xhtml + ", "
+
+						if i == len(pg_producers) - 2:
+							producers_xhtml = producers_xhtml + "and "
+
+					producers_xhtml = producers_xhtml + "<br/>"
+
+					colophon_xhtml = colophon_xhtml.replace("""<b epub:type="z3998:personal-name">TRANSCRIBER_1</b>, <b epub:type="z3998:personal-name">TRANSCRIBER_2</b>, and <a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a><br/>""", producers_xhtml)
+
+			file.seek(0)
+			file.write(colophon_xhtml)
+			file.truncate()
 
 	# Fill out the metadata file
-	with open(repo_path / "src" / "epub" / "content.opf", "r+", encoding="utf-8") as file:
+	with open(content_path / "epub" / "content.opf", "r+", encoding="utf-8") as file:
 		metadata_xml = file.read()
 
 		metadata_xml = metadata_xml.replace("SE_IDENTIFIER", identifier)
@@ -941,6 +959,7 @@ def create_draft(plain_output: bool) -> int:
 	parser.add_argument("-o", "--offline", dest="offline", action="store_true", help="create draft without network access")
 	parser.add_argument("-a", "--author", dest="author", required=True, nargs="+", help="an author of the ebook")
 	parser.add_argument("-t", "--title", dest="title", required=True, help="the title of the ebook")
+	parser.add_argument("-w", "--white-label", action="store_true", help="create a generic epub skeleton without S.E. branding")
 	args = parser.parse_args()
 
 	try:
