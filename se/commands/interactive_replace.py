@@ -289,6 +289,9 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 				return_code = se.InvalidFileException.code
 				continue
 
+			original_xhtml = xhtml
+			is_file_dirty = False
+
 			screen_height, screen_width = screen.getmaxyx()
 
 			# In curses terminology, a "pad" is a window that is larger than the viewport.
@@ -321,22 +324,26 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 				if curses.keyname(char) in (b"a", b"A"):
 					xhtml = xhtml[:match_start] + regex.sub(fr"{args.regex}", fr"{args.replace}", xhtml[match_start:], flags=regex_flags)
 
-					with open(filepath, "w", encoding="utf-8") as file:
-						file.write(xhtml)
+					# Can't check is_file_dirty, we have to compare file contents
+					if xhtml != original_xhtml:
+						with open(filepath, "w", encoding="utf-8") as file:
+							file.write(xhtml)
 
 					break
 
 				# Reject all remaining replacements and continue to the next file
 				if curses.keyname(char) in (b"r", b"R") or esc_pressed:
-					with open(filepath, "w", encoding="utf-8") as file:
-						file.write(xhtml)
+					if is_file_dirty:
+						with open(filepath, "w", encoding="utf-8") as file:
+							file.write(xhtml)
 
 					break
 
 				# Save this file and quit immediately
 				if curses.keyname(char) in (b"q", b"Q"):
-					with open(filepath, "w", encoding="utf-8") as file:
-						file.write(xhtml)
+					if is_file_dirty:
+						with open(filepath, "w", encoding="utf-8") as file:
+							file.write(xhtml)
 
 					# Throw a blank exception so that we break out of the loop
 					# and disinitialize curses in `finally`
@@ -352,6 +359,8 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 					# Update match_end to account for the change in string length
 					# caused by the replacement before passing it to _print_screen()
 					match_end = match_end + (len(new_xhtml) - len(xhtml))
+
+					is_file_dirty = True
 
 					# OK, now set our xhtml to the replaced version
 					xhtml = new_xhtml
@@ -428,8 +437,9 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 						pad_x = max(pad_x - screen_width, 0)
 						pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
 
-			with open(filepath, "w", encoding="utf-8") as file:
-				file.write(xhtml)
+			if is_file_dirty:
+				with open(filepath, "w", encoding="utf-8") as file:
+					file.write(xhtml)
 
 	except Exception as ex:
 		# We check for the `pattern` attr instead of catching
