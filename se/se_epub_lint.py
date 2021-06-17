@@ -1532,6 +1532,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for dashes instead of em-dashes
 				typos = typos + [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\s[a-z]+-(the|there|is|and|they|when)\\s')]")]
 
+				# Check for punctuation missing before conjunctions
+				typos = typos + [node.to_string() for node in dom.xpath(f"/html/body//p[re:test(., '\\b[a-z]+\\s(But|And|For|Nor|Yet|Or)\\b[^\\.\\?\\-{se.WORD_JOINER}]')]")]
+
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
