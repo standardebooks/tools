@@ -98,7 +98,9 @@ class EasyXmlTree:
 
 		try:
 			for element in self.etree.xpath(selector, namespaces=self.namespaces):
-				if isinstance(element, str):
+				if isinstance(element, etree._ElementUnicodeResult): # pylint: disable=protected-access
+					result.append(str(element))
+				elif isinstance(element, str):
 					result.append(element)
 				else:
 					result.append(EasyXmlElement(element, self.namespaces))
@@ -364,7 +366,9 @@ class EasyXmlElement:
 		result: List[Union[str, EasyXmlElement]] = []
 
 		for element in self.lxml_element.xpath(selector, namespaces=self.namespaces):
-			if isinstance(element, str):
+			if isinstance(element, etree._ElementUnicodeResult): # pylint: disable=protected-access
+				result.append(str(element))
+			elif isinstance(element, str):
 				result.append(element)
 			else:
 				result.append(EasyXmlElement(element, self.namespaces))

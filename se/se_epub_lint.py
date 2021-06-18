@@ -331,6 +331,7 @@ TYPOGRAPHY
 "t-060", "Old style Bible citation."
 "t-061", "Summary-style bridgehead without ending punctuation."
 "t-062", "Uppercased [text]a.m.[/] and [text]p.m.[/]"
+"t-063", "Latin phrase set without italics."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1762,6 +1763,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '^(he|ru|el|zh|bn|hi|sa)$') and re:test(., '[a-zA-Z]')]")
 				if nodes:
 					messages.append(LintMessage("s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				# Check for some Latinisms that need italics according to the manual. We check ancestor-or-self in case the phrase is set in Roman because it's nested in a parent italic.
+				# Exclude toto followed by ’ since Toto can be a name.
+				# Exclude <h#> whose entire contents is a matched Latinism as we do not italicize those.
+				# Ignore the ToC because we have different rules there
+				nodes = dom.xpath("/html/body//text()[re:test(., '\\b(a (priori|posteriori|fortiori)|ad (hominem|absurdum|nauseam|infinitum|interim)|in (loco|situ|vitro|absentia|camera)|in toto[^’])\\b', 'i') and not(ancestor-or-self::*[@data-css-font-style='italic']) and not(parent::*[re:test(name(), '^h[1-6]$') and @xml:lang='la']) and not(ancestor::nav[contains(@epub:type, 'toc')]) ]")
+				if nodes:
+					messages.append(LintMessage("t-063", "Latin phrase set without italics.", se.MESSAGE_TYPE_WARNING, filename, nodes))
 
 				# Check for comma after leading Or in subtitles
 				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'subtitle') and re:test(text(), '^Or\\s')]")
