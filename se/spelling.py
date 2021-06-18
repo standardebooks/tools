@@ -178,6 +178,9 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Rr])ôle(s?)\b", r"\1ole\2", xhtml)			# rôle -> role
 	xhtml = regex.sub(r"\b([Cc])oö", r"\1oo", xhtml)				# coö -> coo (as in coöperate)
 	xhtml = regex.sub(r"\b([Rr])eë", r"\1ee", xhtml)				# reë -> ree (as in reëvaluate)
+	xhtml = regex.sub(r"\b([Pp])reë", r"\1ree", xhtml)				# preë -> pree (as in preëmpt)
+	xhtml = regex.sub(r"\b([Cc])oërc", r"\1oerc", xhtml)				# coërc -> coerc (as in coërcion)
+	xhtml = regex.sub(r"\b([Cc])oëd", r"\1oed", xhtml)				# coëd -> coed (as in coëducation)
 	xhtml = regex.sub(r"\b([Dd])aïs\b", r"\1ais", xhtml)				# daïs -> dais
 	xhtml = regex.sub(r"\b([Cc])oup\-de\-grace", r"\1oup-de-grâce", xhtml)		# coup-de-grace -> coup-de-grâce
 	xhtml = regex.sub(r"\b([Cc])anape", r"\1anapé", xhtml)				# canape -> canapé
