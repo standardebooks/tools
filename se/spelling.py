@@ -322,6 +322,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Oo])rgie\b", r"\1rgy", xhtml)				# orgie -> orgy
 	xhtml = regex.sub(r"\b([Oo])urang-[Oo]utang?", r"\1rangutan", xhtml)		# ourang-outang -> orangutan
 	xhtml = regex.sub(r"(?<!-)\b([Ss])o\sand\s([Ss])o\b(?!-)", r"\1o-and-\2o", xhtml)		# so and so -> so-and-so; ignore `so-and-so and so-and-so`
+	xhtml = regex.sub(r"\b([Cc])añon", r"\1anyon", xhtml)				# cañon -> canyon
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
