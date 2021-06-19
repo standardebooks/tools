@@ -12,9 +12,6 @@ m-036 [Error] colophon.xhtml Variable not replaced with value.
         TRANSCRIBER_1
         TRANSCRIBER_2
         PAINTING
-m-020 [Error] content.opf Illegal value for `<meta property="se:subject">` 
-element.
-        TAG
 m-036 [Error] content.opf Variable not replaced with value.
         SUBJECT_1
         SUBJECT_2

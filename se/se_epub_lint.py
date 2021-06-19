@@ -889,7 +889,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']/text()")
 	if nodes:
 		for node in nodes:
-			if node not in SE_GENRES:
+			if node not in SE_GENRES and node != "TAG":
 				illegal_subjects.append(node)
 
 		if illegal_subjects:
