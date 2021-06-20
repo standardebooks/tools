@@ -931,6 +931,10 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			except se.SeException as ex:
 				raise se.InvalidXhtmlException(f"{ex}. File: [path][link={filepath}]{filepath}[/][/]") from ex
 
+		# Write the compatible epub
+		if not check_only:
+			se.epub.write_epub(work_compatible_epub_dir, output_dir / compatible_epub_output_filename)
+
 		# Run checks, if specified
 		build_messages = []
 
@@ -1057,9 +1061,6 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		# If we're only checking, quit now
 		if check_only:
 			return
-
-		# Write the compatible epub
-		se.epub.write_epub(work_compatible_epub_dir, output_dir / compatible_epub_output_filename)
 
 		if build_kindle:
 			# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
