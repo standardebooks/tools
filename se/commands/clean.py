@@ -21,8 +21,13 @@ def clean(plain_output: bool) -> int:
 	args = parser.parse_args()
 
 	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	non_css_extensions = (".xhtml", ".svg", ".opf", ".ncx", ".xml")
+	css_extension = ".css"
 
-	for filepath in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx", ".xml")):
+	for filepath in se.get_target_filenames(args.targets, non_css_extensions):
+		if not (filepath.is_dir() or filepath.suffix in non_css_extensions):
+			continue
+
 		if args.verbose:
 			console.print(se.prep_output(f"Processing [path][link=file://{filepath}]{filepath}[/][/] ...", plain_output), end="")
 
@@ -38,7 +43,10 @@ def clean(plain_output: bool) -> int:
 		if args.verbose:
 			console.print(" OK")
 
-	for filepath in se.get_target_filenames(args.targets, ".css"):
+	for filepath in se.get_target_filenames(args.targets, css_extension):
+		if not (filepath.is_dir() or filepath.suffix in css_extension):
+			continue
+
 		if args.verbose:
 			console.print(se.prep_output(f"Processing [path][link=file://{filepath}]{filepath}[/][/] ...", plain_output), end="")
 
