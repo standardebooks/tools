@@ -1769,7 +1769,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Exclude toto followed by ’ since Toto can be a name.
 				# Exclude <h#> whose entire contents is a matched Latinism as we do not italicize those.
 				# Ignore the ToC because we have different rules there
-				nodes = dom.xpath("/html/body//text()[re:test(., '\\b(a (priori|posteriori|fortiori)|ad (hominem|absurdum|nauseam|infinitum|interim)|in (loco|situ|vitro|absentia|camera)|in toto[^’])\\b', 'i') and not(ancestor-or-self::*[@data-css-font-style='italic']) and not(parent::*[re:test(name(), '^h[1-6]$') and @xml:lang='la']) and not(ancestor::nav[contains(@epub:type, 'toc')]) ]")
+				nodes = dom.xpath("/html/body//text()[re:test(., '\\b(a (priori|posteriori|fortiori)|ad (hominem|absurdum|nauseam|infinitum|interim|valem)|in (loco|situ|vitro|absentia|camera)|in toto[^’])\\b', 'i') and not(ancestor-or-self::*[@data-css-font-style='italic']) and not(parent::*[re:test(name(), '^h[1-6]$') and @xml:lang='la']) and not(ancestor::nav[contains(@epub:type, 'toc')]) ]")
 				if nodes:
 					messages.append(LintMessage("t-063", "Latin phrase set without italics.", se.MESSAGE_TYPE_WARNING, filename, nodes))
 
