@@ -262,7 +262,7 @@ SEMANTICS & CONTENT
 "s-083", "[xhtml]<td epub:type=\"z3998:persona\">[/] element with child [xhtml]<p>[/] element."
 "s-084", "Poem has incorrect semantics."
 "s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. Hint: Headings not in the half title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?"
-"s-086", "[text]Op. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] means [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded."
+"s-086", "[text]Op. Cit.[/] or [text]Loc. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] and [text]Loc. Cit.[/] mean [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded."
 "s-087", "Subtitle in metadata, but no subtitle in the half title page."
 "s-088", "Subtitle in half title page, but no subtitle in metadata."
 "s-089", "MathML missing [attr]alttext[/] attribute."
@@ -1710,9 +1710,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for `Op. Cit.` in endnotes. `Op. Cit.` means "the previous reference" which doesn't make sense
 				# in popup endnotes. But, if the endnote has a book reference, then allow it as it might be referring to that.
-				nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote') and re:test(., 'Op. Cit.', 'i') and not(.//*[contains(@epub:type, 'se:name.publication')])]")
+				nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote') and re:test(., '(Loc\\.|Op\\.) Cit\\.', 'i') and not(.//*[contains(@epub:type, 'se:name.publication')])]")
 				if nodes:
-					messages.append(LintMessage("s-086", "[text]Op. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] means [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded.", se.MESSAGE_TYPE_WARNING, filename, [f"{node.to_tag_string()}." for node in nodes]))
+					messages.append(LintMessage("s-086", "[text]Op. Cit.[/] or [text]Loc. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] and [text]Loc. Cit.[/] mean [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded.", se.MESSAGE_TYPE_WARNING, filename, [f"{node.to_tag_string()}." for node in nodes]))
 
 				# Check for lang="" instead of xml:lang=""
 				nodes = dom.xpath("/html/body//*[@lang]")
