@@ -106,7 +106,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"""(\s)(?<!\<abbr epub:type="se:era"\>)A\.?D""", r"""\1<abbr epub:type="se:era">AD</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(\s)(?<!\<abbr epub:type="se:era"( class="eoc")?\>)B\.?C""", r"""\1<abbr epub:type="se:era">BC</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr( class="eoc")?\>)([ap])\.\s?m\.""", r"""<abbr>\2.m.</abbr>""", xhtml)
-	xhtml = regex.sub(r"""(?<!\<abbr epub:type="z3998:given-name"( class="eoc")?\>)(Thos\.|Jas\.|Chas\.)""", r"""<abbr epub:type="z3998:given-name">\2</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr epub:type="z3998:given-name"( class="eoc")?\>)(Thos\.|Jas\.|Chas\.|Wm\.)""", r"""<abbr epub:type="z3998:given-name">\2</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr epub:type="z3998:initialism"( class="eoc")?\>)T\.?V\.?\b""", r"""<abbr epub:type="z3998:initialism">TV</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr epub:type="z3998:initialism"( class="eoc")?\>)S\.?O\.?S\.?\b""", r"""<abbr epub:type="z3998:initialism">SOS</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr epub:type="z3998:initialism"( class="eoc")?\>)\b([1-4]D)\b""", r"""<abbr epub:type="z3998:initialism">\2</abbr>""", xhtml)
