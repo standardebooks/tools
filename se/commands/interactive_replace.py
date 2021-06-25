@@ -278,7 +278,12 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 			curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)
 
 		# Disable the blinking cursor
-		curses.curs_set(False)
+		try:
+			curses.curs_set(False)
+		# Because some terminals do not support the invisible cursor, proceeed
+		# if curs_set fails to change the visibility
+		except Exception:
+			pass
 
 		for filepath in se.get_target_filenames(args.targets, ".xhtml"):
 			try:
