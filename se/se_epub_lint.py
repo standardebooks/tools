@@ -2084,8 +2084,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("t-060", "Old style Bible citation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-				# Check for <span> in poetry not followed by <br/>. Ignore spans that are roman as they might be present in poem headers.
-				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]//p/span[not(@epub:type='z3998:roman') and following-sibling::*[1][name()='span']]")
+				# Check for <span> in poetry not followed by <br/>. Ignore spans that are roman as they might be present in poem headers, or spans with xml:lang.
+				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]//p/span[not(@epub:type='z3998:roman') and not(@xml:lang) and following-sibling::*[1][name()='span']]")
 				if nodes:
 					messages.append(LintMessage("s-091", "[xhtml]<span>[/] not followed by [xhtml]<br/>[/] in poetry.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
