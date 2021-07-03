@@ -83,6 +83,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Fix some common em-dash transcription errors
 	xhtml = regex.sub(r"([:;])-([\p{Letter}])", r"\1—\2", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"([\p{Letter}])-“", r"\1—“", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r":-</", fr":{se.WORD_JOINER}—</", xhtml)
 
 	# Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
 	xhtml = regex.sub(fr"([^\s{se.WORD_JOINER}{se.NO_BREAK_SPACE}{se.HAIR_SPACE}])([—⸻])", fr"\1{se.WORD_JOINER}\2", xhtml, flags=regex.IGNORECASE)
