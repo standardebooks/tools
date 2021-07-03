@@ -268,6 +268,7 @@ SEMANTICS & CONTENT
 "s-089", "MathML missing [attr]alttext[/] attribute."
 "s-090", "Invalid language tag."
 "s-091", "[xhtml]<span>[/] not followed by [xhtml]<br/>[/] in poetry."
+"s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -2127,6 +2128,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//abbr[text()='I.O.U.'][(following-sibling::node()[1])[starts-with(., '’s')]]")
 				if nodes:
 					messages.append(LintMessage("t-039", "Initialism followed by [text]’s[/]. Hint: Plurals of initialisms are not followed by [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "’s" for node in nodes]))
+
+				# Check for some known initialisms with incorrect possessive apostrophes
+				nodes = dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]//b[re:test(., 'anonymous', 'i') and re:test(@epub:type, 'z3998:.*?name')]")
+				if nodes:
+					messages.append(LintMessage("s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for ldquo or rdquo used instead of ditto mark in tables
 				nodes = dom.xpath("/html/body//table[not(ancestor-or-self::*[contains(@epub:type, 'z3998:drama')])]//td[re:test(normalize-space(.), '(^|\\s)[“”\"]+$')]")
