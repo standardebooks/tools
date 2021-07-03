@@ -46,10 +46,9 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 		decomposed_xhtml = unicodedata.normalize("NFKD", xhtml)
 
 		for decomposed_word in regex.findall(r"\b\w*\p{M}\w*\b", decomposed_xhtml):
-			word = unicodedata.normalize("NFKC", decomposed_word)
+			word = unicodedata.normalize("NFKC", decomposed_word).lower()
 
 			if len(word) > 2:
-
 				if word in accented_words:
 					accented_words[word] = accented_words[word] + 1
 				else:
