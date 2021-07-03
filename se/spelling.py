@@ -326,6 +326,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Oo])urang-[Oo]utang?", r"\1rangutan", xhtml)		# ourang-outang -> orangutan
 	xhtml = regex.sub(r"(?<!-)\b([Ss])o\sand\s([Ss])o\b(?!-)", r"\1o-and-\2o", xhtml)		# so and so -> so-and-so; ignore `so-and-so and so-and-so`
 	xhtml = regex.sub(r"\b([Cc])añon", r"\1anyon", xhtml)				# cañon -> canyon
+	xhtml = regex.sub(r"\b([Kk])vas\b", r"\1vass", xhtml)				# kvas -> kvass
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
@@ -364,6 +365,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"Hayti", r"Haiti", xhtml)					# Hayti -> Haiti
 	xhtml = regex.sub(r"Zymbabwe", r"Zimbabwe", xhtml)				# Zymbabwe -> Zimbabwe
 	xhtml = regex.sub(r"Moslem(s?)\b", r"Muslim\1", xhtml)				# Moslem -> Muslim, but stop at a word break for `Moslemin`, a rare word that has no modern spelling equivalent
+	xhtml = regex.sub(r"Bronte\b", r"Brontë", xhtml)				# Bronte -> Brontë
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
