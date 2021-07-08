@@ -104,6 +104,28 @@ def _color_to_alpha(image: Image, color=None) -> Image:
 
 	return new_image
 
+def has_transparency(filename: Path) -> bool:
+	"""
+	Return True if the given image file has transparency
+	"""
+
+	try:
+		image = Image.open(filename)
+	except UnidentifiedImageError as ex:
+		raise se.InvalidFileException(f"Couldn’t identify image type of [path][link=file://{filename.resolve()}]{filename}[/].") from ex
+
+	if image.mode == "P":
+		transparent = image.info.get("transparency", -1)
+		for _, index in image.getcolors():
+			if index == transparent:
+				return True
+	elif image.mode == "RGBA":
+		extrema = image.getextrema()
+		if extrema[3][0] < 255:
+			return True
+
+	return False
+
 # Note: We can't type hint driver, because we conditionally import selenium for performance reasons
 def render_mathml_to_png(driver, mathml: str, output_filename: Path, output_filename_2x: Path) -> None:
 	"""

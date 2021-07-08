@@ -1052,6 +1052,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 			if "-0" in filename.name:
 				messages.append(LintMessage("f-009", "Illegal leading [text]0[/] in filename.", se.MESSAGE_TYPE_ERROR, filename))
 
+			if filename.suffix == ".png":
+				if str(filename).startswith(str(self.epub_root_path)) and not se.images.has_transparency(filename):
+					messages.append(LintMessage("f-017", "[path].png[/] file without transparency. Hint: If an image doesn’t have transparency, it should be saved as a [path].jpg[/].", se.MESSAGE_TYPE_ERROR, filename))
+
 			if filename.stem != "LICENSE":
 				url_safe_filename = se.formatting.make_url_safe(filename.stem) + filename.suffix
 				if filename.name != url_safe_filename and not filename.stem.endswith(".source"):
