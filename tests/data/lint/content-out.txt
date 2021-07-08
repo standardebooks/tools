@@ -12,6 +12,10 @@ m-036 [Error] colophon.xhtml Variable not replaced with value.
         TRANSCRIBER_1
         TRANSCRIBER_2
         PAINTING
+t-064 [Manual Review] colophon.xhtml Title not correctly titlecased. Hint: 
+Non-English titles should have an `xml:lang` attribute as they have different 
+titlecasing rules.
+        <i epub:type="se:name.visual-art.painting">PAINTING</i>
 m-036 [Error] content.opf Variable not replaced with value.
         SUBJECT_1
         SUBJECT_2

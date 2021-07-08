@@ -334,7 +334,7 @@ TYPOGRAPHY
 "t-061", "Summary-style bridgehead without ending punctuation."
 "t-062", "Uppercased [text]a.m.[/] and [text]p.m.[/]"
 "t-063", "Latin phrase set without italics."
-"t-064", "Title not correctly titlecased. Hint: Non-English titles should have an [attr]xml:lang[/] attribute as have different titlecasing rules."
+"t-064", "Title not correctly titlecased. Hint: Non-English titles should have an [attr]xml:lang[/] attribute as they have different titlecasing rules."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -2180,7 +2180,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						incorrectly_cased_titles.append(node.to_string())
 
 				if incorrectly_cased_titles:
-					messages.append(LintMessage("t-064", "Title not correctly titlecased. Hint: Non-English titles should have an [attr]xml:lang[/] attribute as have different titlecasing rules.", se.MESSAGE_TYPE_WARNING, filename, incorrectly_cased_titles))
+					messages.append(LintMessage("t-064", "Title not correctly titlecased. Hint: Non-English titles should have an [attr]xml:lang[/] attribute as they have different titlecasing rules.", se.MESSAGE_TYPE_WARNING, filename, incorrectly_cased_titles))
 
 				# Check to see if <h#> tags are correctly titlecased
 				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(contains(@epub:type, 'z3998:roman'))]")
