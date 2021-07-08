@@ -311,7 +311,7 @@ def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_
 		output_xhtml = dom.to_string()
 	else:
 		dom = EasyXmlTree(xhtml)
-		output_xhtml  = xhtml
+		output_xhtml = xhtml
 
 	if language is None:
 		try:
@@ -383,7 +383,9 @@ def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_
 
 		pos = pos + 1
 
-	output_xhtml = regex.sub(r"(<body[^>]*?>).+?<\/body>", fr"\1{result}</body>", output_xhtml, flags=regex.DOTALL)
+	# We need to double-escape backslashes in the replacement string, in case the string contains a backslash+number that
+	# the regex engine will misinterpret as a capture group
+	output_xhtml = regex.sub(r"(<body[^>]*?>).+</body>", r"\1" + result.replace("\\", "\\\\") + "</body>", output_xhtml, flags=regex.DOTALL)
 
 	return output_xhtml
 
