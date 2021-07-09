@@ -14,6 +14,49 @@ import se
 from se.formatting import EasyXmlTree
 
 
+def _number_to_fraction(string: str) -> str:
+	"""
+	Helper function to convert a regular fraction string to a
+	Unicode superscript/subscript fraction.
+
+	Example:
+	4/19 -> ⁴⁄₁₉
+	"""
+
+	output = ""
+	in_numerator = True
+
+	try:
+		for char in string:
+			if char == "/":
+				# Fraction slash, not solidus
+				output = output + "⁄"
+				in_numerator = False
+			else:
+				if 0 <= int(char) <= 9:
+					if in_numerator:
+						# Convert to superscript
+						# superscript 0-3 are exceptions
+						if char == "0":
+							output = output + "⁰"
+						elif char == "1":
+							output = output + "¹"
+						elif char == "2":
+							output = output + "²"
+						elif char == "3":
+							output = output + "³"
+						else:
+							output = output + chr(ord(char) + 8256)
+					else:
+						# Convert to subscript
+						output = output + chr(ord(char) + 8272)
+				else:
+					output = output + char
+	except:
+		return string
+
+	return output
+
 def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	"""
 	Typogrify a string of XHTML according to SE house style.
@@ -229,24 +272,30 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"P\.?\s*S\.", r"P.S.", xhtml)
 
 	# Fractions
-	xhtml = xhtml.replace("1/4", "¼")
-	xhtml = xhtml.replace("1/2", "½")
-	xhtml = xhtml.replace("3/4", "¾")
-	xhtml = xhtml.replace("1/3", "⅓")
-	xhtml = xhtml.replace("2/3", "⅔")
-	xhtml = xhtml.replace("1/5", "⅕")
-	xhtml = xhtml.replace("2/5", "⅖")
-	xhtml = xhtml.replace("3/5", "⅗")
-	xhtml = xhtml.replace("4/5", "⅘")
-	xhtml = xhtml.replace("1/6", "⅙")
-	xhtml = xhtml.replace("5/6", "⅚")
-	xhtml = xhtml.replace("1/8", "⅛")
-	xhtml = xhtml.replace("3/8", "⅜")
-	xhtml = xhtml.replace("5/8", "⅝")
-	xhtml = xhtml.replace("7/8", "⅞")
+	xhtml = regex.sub(r"\b1/4\b", "¼", xhtml)
+	xhtml = regex.sub(r"\b1/2\b", "½", xhtml)
+	xhtml = regex.sub(r"\b3/4\b", "¾", xhtml)
+	xhtml = regex.sub(r"\b1/7\b", "⅐", xhtml)
+	xhtml = regex.sub(r"\b1/9\b", "⅑", xhtml)
+	xhtml = regex.sub(r"\b1/10\b", "⅒", xhtml)
+	xhtml = regex.sub(r"\b1/3\b", "⅓", xhtml)
+	xhtml = regex.sub(r"\b2/3\b", "⅔", xhtml)
+	xhtml = regex.sub(r"\b1/5\b", "⅕", xhtml)
+	xhtml = regex.sub(r"\b2/5\b", "⅖", xhtml)
+	xhtml = regex.sub(r"\b3/5\b", "⅗", xhtml)
+	xhtml = regex.sub(r"\b4/5\b", "⅘", xhtml)
+	xhtml = regex.sub(r"\b1/6\b", "⅙", xhtml)
+	xhtml = regex.sub(r"\b5/6\b", "⅚", xhtml)
+	xhtml = regex.sub(r"\b1/8\b", "⅛", xhtml)
+	xhtml = regex.sub(r"\b3/8\b", "⅜", xhtml)
+	xhtml = regex.sub(r"\b5/8\b", "⅝", xhtml)
+	xhtml = regex.sub(r"\b7/8\b", "⅞", xhtml)
+
+	# Convert any remaining fractions to use the fraction slash
+	xhtml = regex.sub(r"\b([0-9]+)/([0-9]+)\b", lambda result: _number_to_fraction(result.group(0)), xhtml)
 
 	# Remove spaces between whole numbers and fractions
-	xhtml = regex.sub(r"([0-9,]+)\s+([¼½¾⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])", r"\1\2", xhtml)
+	xhtml = regex.sub(r"([0-9,]+)\s+([¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]|[⁰¹²³⁴⁵⁶⁷⁸⁹]+⁄[₀₁₂₃₄₅₆₇₈₉]+)", r"\1\2", xhtml)
 
 	# Use the Unicode Minus glyph (U+2212) for negative numbers
 	xhtml = regex.sub(r"([\s>])\-([0-9,]+)", r"\1−\2", xhtml)
