@@ -1313,13 +1313,13 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 		# Then after processing <hgroup>, the title becomes the 1st <hgroup> child;
 		# if there is a 2nd <hgroup> child after processing, add a colon and space, then the text of the 2nd <hgroup> child.
 		try:
-			title = regex.sub(r"\s+", " ", hgroup_element.xpath("./*[1]")[0].inner_text().strip())
+			title = regex.sub(r"\s+", " ", hgroup_element.xpath("./*[1]")[0].inner_text())
 		except Exception as ex:
 			raise se.InvalidSeEbookException("Couldn’t find title in [xhml]<hgroup>[/].") from ex
 
 		subtitle = hgroup_element.xpath("./*[2]")
 		if subtitle:
-			subtitle_text = subtitle[0].inner_text().strip()
+			subtitle_text = subtitle[0].inner_text()
 			title += f": {subtitle_text}"
 
 	else:
@@ -1333,7 +1333,7 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 			for node in h_element.xpath("//*[contains(@epub:type, 'noteref')]"):
 				node.remove()
 
-			title = h_element.inner_text().strip()
+			title = h_element.inner_text()
 
 		else:
 			# No <h#> elements found. Try to get the title from the epub:type of the deepest <section> or <article> that has no <section> or <article> siblings. (Note the parenthesis
@@ -1360,5 +1360,8 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 	# This matches all white space EXCEPT hair space; note the double negation with uppercase \S
 	# See https://stackoverflow.com/questions/3548949/how-can-i-exclude-some-characters-from-a-class
 	title = regex.sub(fr"[^\S{se.HAIR_SPACE}]+", " ", title)
+
+	# Unescape ampersands since we are returning a plain string, not XML
+	title = title.replace("&amp;", "&")
 
 	return title
