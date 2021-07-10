@@ -106,6 +106,9 @@ class TocItem:
 				else:
 					out_string += f"<a href=\"text/{self.file_link}\">{self.title}</a>\n"
 
+		# Replace <br/> with a single space
+		out_string = regex.sub(r"<br/>\s*", " ", out_string, flags=regex.DOTALL)
+
 		return out_string
 
 	def landmark_link(self, work_type: str = "fiction", work_title: str = "WORK_TITLE") -> str:
