@@ -335,6 +335,7 @@ TYPOGRAPHY
 "t-062", "Uppercased [text]a.m.[/] and [text]p.m.[/]"
 "t-063", "Latin phrase set without italics."
 "t-064", "Title not correctly titlecased. Hint: Non-English titles should have an [attr]xml:lang[/] attribute as they have different titlecasing rules."
+"t-065", "Header ending in a period."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1964,6 +1965,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents.replace("&amp;", ""))
 				if matches:
 					messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+				# Check for headers ending in periods
+				# Allow periods at the end of headers that both start and end with double quotes; but headers that only end in double quotes probably don't need periods
+				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and not((./node()[last()])[name() = 'abbr']) and (re:test(., '\\.$') or re:test(., '^[^“].+\\.”$'))]")
+				if nodes:
+					messages.append(LintMessage("t-065", "Header ending in a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check obviously miscurled quotation marks
 				matches = regex.findall(r".*“</p>", file_contents)
