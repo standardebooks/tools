@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Tuple, Union
 from sys import getsizeof
 
 import git
-import lxml.etree as etree
+from lxml import etree
 from natsort import natsorted
 import regex
 
