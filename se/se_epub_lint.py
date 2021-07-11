@@ -18,7 +18,7 @@ import importlib_resources
 
 import cssutils
 import lxml.cssselect
-import lxml.etree as etree
+from lxml import etree
 from PIL import Image, UnidentifiedImageError
 import regex
 from natsort import natsorted, ns

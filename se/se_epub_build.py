@@ -21,7 +21,7 @@ import importlib_resources
 from cairosvg import svg2png
 from PIL import Image, ImageOps
 import lxml.cssselect
-import lxml.etree as etree
+from lxml import etree
 import regex
 
 import se
