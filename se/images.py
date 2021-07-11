@@ -284,12 +284,12 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 	for font_path in font_paths:
 		font = _parse_font(font_path)
 		fonts.append(font)
-	svg_in_raw = open(in_svg, "rt").read()
 
-	try:
-		xml = etree.fromstring(str.encode(svg_in_raw))
-	except Exception as ex:
-		raise se.InvalidXmlException(f"Couldn’t parse SVG file: [path][link={in_svg.resolve()}]{in_svg}[/][/].") from ex
+	with open(in_svg, "rt") as svg_in_raw:
+		try:
+			xml = etree.fromstring(str.encode(svg_in_raw.read()))
+		except Exception as ex:
+			raise se.InvalidXmlException(f"Couldn’t parse SVG file: [path][link={in_svg.resolve()}]{in_svg}[/][/].") from ex
 
 	svg_ns = "{http://www.w3.org/2000/svg}"
 
@@ -328,7 +328,8 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 	xmlstr = etree.tostring(xml, pretty_print=True).decode("UTF-8")
 	result_all_text = xmlstr.replace("ns0:", "").replace(":ns0", "")
 	result_all_text = se.formatting.format_xml(result_all_text)
-	open(out_svg, "wt").write(result_all_text)
+	with open(out_svg, "wt") as output:
+		output.write(result_all_text)
 
 def _apply_css(elem: etree.Element, css_text: str) -> dict:
 	chunks = [[y.strip() for y in x.split("\n") if y.strip() != ""] for x in css_text.replace("\r", "").split("}")]
@@ -566,8 +567,8 @@ def _d_apply_matrix(d_attrib: str, matrix: List) -> str:
 	return " ".join(shapes).strip()
 
 def _parse_font(font_path: Path) -> dict:
-	font_svg_raw = open(font_path, "rt").read()
-	xml = etree.fromstring(str.encode(font_svg_raw))
+	with open(font_path, "rt") as font_svg_raw:
+		xml = etree.fromstring(str.encode(font_svg_raw.read()))
 	font: Dict = {"glyphs": {}, "hkern": {}, "meta": {}}
 	glyphs = font["glyphs"]
 	hkern = font["hkern"]
