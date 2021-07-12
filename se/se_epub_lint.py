@@ -2573,14 +2573,14 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	missing_selectors = []
 	single_use_css_classes = []
 
-	for css_class in xhtml_css_classes.items():
-		if css_class[0] not in IGNORED_CLASSES:
-			if f".{css_class[0]}" not in self.local_css:
-				missing_selectors.append(css_class[0])
+	for css_class, count in xhtml_css_classes.items():
+		if css_class not in IGNORED_CLASSES:
+			if f".{css_class}" not in self.local_css:
+				missing_selectors.append(css_class)
 
-		if css_class[1] == 1 and css_class[0] not in IGNORED_CLASSES and not regex.match(r"^i[0-9]+$", css_class[0]):
+		if count == 1 and css_class not in IGNORED_CLASSES and not regex.match(r"^i[0-9]+$", css_class):
 			# Don't count ignored classes OR i[0-9] which are used for poetry styling
-			single_use_css_classes.append(css_class[0])
+			single_use_css_classes.append(css_class)
 
 	if missing_selectors:
 		messages.append(LintMessage("x-013", f"CSS class found in XHTML, but not in [path][link=file://{local_css_path}]local.css[/][/].", se.MESSAGE_TYPE_ERROR, local_css_path, missing_selectors))
