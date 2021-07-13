@@ -1897,7 +1897,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for empty elements. Elements are empty if they have no children and no non-whitespace text
 				# Use name() to check for MathML elements, because if the MathML namespace is not declared in a given file and we search by the m: namespace then this xpath will fail entirely.
-				nodes = dom.xpath("/html/body//*[not(self::br) and not(self::hr) and not(self::img) and not(self::td) and not(self::th) and not(self::link) and not(local-name()='none') and not(local-name()='mspace') and not(local-name()='mprescripts')][not(./*)][not(normalize-space())]")
+				nodes = dom.xpath("/html/body//*[not(self::br) and not(self::hr) and not(self::img) and not(self::td) and not(self::th) and not(self::link) and not(self::col) and not(self::colgroup) and not(local-name()='none') and not(local-name()='mspace') and not(local-name()='mprescripts')][not(./*)][not(normalize-space())]")
 				if nodes:
 					messages.append(LintMessage("s-010", "Empty element. Use [xhtml]<hr/>[/] for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
