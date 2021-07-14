@@ -1152,6 +1152,41 @@ class SeEpub:
 
 		return toc_xhtml
 
+	def check_endnotes(self) -> Tuple[str, str]:
+		"""
+		Initial check to see if all note references in the body have matching endnotes
+		in endnotes.xhtml and no duplicates.
+
+		Returns string of failures if any. If these are empty, all was well.
+		"""
+		missing = []
+		duplicates = []
+		missing_str = ""
+		duplicates_str = ""
+		for file_path in self.spine_file_paths:
+			dom = self.get_dom(file_path)
+
+			for link in dom.xpath("/html/body//a[contains(@epub:type, 'noteref')]"):
+				anchor = ""
+				href = link.get_attr("href") or ""
+				if href:
+					# Extract just the anchor from a URL (ie, what follows a hash symbol)
+					hash_position = href.find("#") + 1  # we want the characters AFTER the hash
+					if hash_position > 0:
+						anchor = href[hash_position:]
+				# Now try to find this in endnotes
+				match_anchor = lambda x, old=anchor: x.anchor == old
+				matches = list(filter(match_anchor, self.endnotes))
+				if not matches:
+					missing.append(anchor)
+				if len(matches) > 1:
+					duplicates.append(anchor)
+		if missing:
+			missing_str = ", ".join(missing)
+		if duplicates:
+			duplicates_str = ", ".join(duplicates)
+		return missing_str, duplicates_str
+
 	def generate_endnotes(self) -> Tuple[int, int]:
 		"""
 		Read the epub spine to regenerate all endnotes in order of appearance, starting from 1.
@@ -1160,6 +1195,14 @@ class SeEpub:
 		Returns a tuple of (found_endnote_count, changed_endnote_count)
 		"""
 
+		# do a safety check first, throw exception if it failed
+		missing, duplicates = self.check_endnotes()
+		if missing:
+			raise se.InvalidInputException(f"Couldn’t find endnote(s) with anchor(s) [attr]{missing}[/].")
+		if duplicates:
+			raise se.InvalidInputException(f"Duplicate endnote anchors found for [attr]{duplicates}[/].")
+
+		# if we get here, it's safe to proceed
 		processed = 0
 		current_note_number = 1
 		notes_changed = 0
