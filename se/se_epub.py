@@ -1193,7 +1193,7 @@ class SeEpub:
 			if note.anchor not in references:
 				orphans.append(note.anchor)
 		if orphans:
-			response += "\n" + "Ophaned endnote(s) found in endnotes.xhtml with anchor(s) " + ", ".join(duplicates)
+			response += "\n" + "Orphaned endnote(s) found in endnotes.xhtml with anchor(s) " + ", ".join(duplicates)
 
 		return response
 
