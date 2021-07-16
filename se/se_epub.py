@@ -1152,7 +1152,7 @@ class SeEpub:
 
 		return toc_xhtml
 
-	def check_endnotes(self) -> Tuple[str, str]:
+	def check_endnotes(self) -> str:
 		"""
 		Initial check to see if all note references in the body have matching endnotes
 		in endnotes.xhtml and no duplicates.
@@ -1161,8 +1161,9 @@ class SeEpub:
 		"""
 		missing = []
 		duplicates = []
-		missing_str = ""
-		duplicates_str = ""
+		orphans = []
+		references = []
+		response = ""
 		for file_path in self.spine_file_paths:
 			dom = self.get_dom(file_path)
 
@@ -1174,7 +1175,8 @@ class SeEpub:
 					hash_position = href.find("#") + 1  # we want the characters AFTER the hash
 					if hash_position > 0:
 						anchor = href[hash_position:]
-				# Now try to find this in endnotes
+				references.append(anchor)  # keep these for later reverse check
+				# Now try to find anchor in endnotes
 				match_anchor = lambda x, old=anchor: x.anchor == old
 				matches = list(filter(match_anchor, self.endnotes))
 				if not matches:
@@ -1182,10 +1184,18 @@ class SeEpub:
 				if len(matches) > 1:
 					duplicates.append(anchor)
 		if missing:
-			missing_str = ", ".join(missing)
+			response += "\n\n" + "Couldn’t find endnote(s) with anchor(s) " + ", ".join(missing)
 		if duplicates:
-			duplicates_str = ", ".join(duplicates)
-		return missing_str, duplicates_str
+			response += "\n\n" + "Duplicate endnote anchors found for " + ", ".join(duplicates)
+		# reverse check: look for orphaned endnotes
+		for note in self.endnotes:
+			# try to find it in our references collection
+			if note.anchor not in references:
+				orphans.append(note.anchor)
+		if orphans:
+			response += "\n\n" + "Ophaned endnote(s) found in endnotes.xhtml with anchor(s) " + ", ".join(duplicates)
+
+		return response
 
 	def generate_endnotes(self) -> Tuple[int, int]:
 		"""
@@ -1196,11 +1206,9 @@ class SeEpub:
 		"""
 
 		# do a safety check first, throw exception if it failed
-		missing, duplicates = self.check_endnotes()
-		if missing:
-			raise se.InvalidInputException(f"Couldn’t find endnote(s) with anchor(s) [attr]{missing}[/].")
-		if duplicates:
-			raise se.InvalidInputException(f"Duplicate endnote anchors found for [attr]{duplicates}[/].")
+		report = self.check_endnotes()
+		if report:
+			raise se.InvalidInputException(f"Endnote errors found: [attr]{report}[/].")
 
 		# if we get here, it's safe to proceed
 		processed = 0
