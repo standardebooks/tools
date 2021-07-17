@@ -1152,7 +1152,7 @@ class SeEpub:
 
 		return toc_xhtml
 
-	def check_endnotes(self) -> str:
+	def check_endnotes(self) -> list:
 		"""
 		Initial check to see if all note references in the body have matching endnotes
 		in endnotes.xhtml and no duplicates.
@@ -1163,7 +1163,7 @@ class SeEpub:
 		duplicates = []
 		orphans = []
 		references = []
-		response = ""
+		response = []
 		for file_path in self.spine_file_paths:
 			dom = self.get_dom(file_path)
 
@@ -1183,18 +1183,17 @@ class SeEpub:
 					missing.append(anchor)
 				if len(matches) > 1:
 					duplicates.append(anchor)
-		if missing:
-			response += "\n" + "Couldn’t find endnote(s) with anchor(s) " + ", ".join(missing)
-		if duplicates:
-			response += "\n" + "Duplicate endnote anchors found for " + ", ".join(duplicates)
+		for miss in missing:
+			response.append(f"Missing endnote with anchor: {miss}")
+		for dupe in duplicates:
+			response.append(f"Duplicate endnotes with anchor: {dupe}")
 		# reverse check: look for orphaned endnotes
 		for note in self.endnotes:
 			# try to find it in our references collection
 			if note.anchor not in references:
 				orphans.append(note.anchor)
-		if orphans:
-			response += "\n" + "Orphaned endnote(s) found in endnotes.xhtml with anchor(s) " + ", ".join(duplicates)
-
+		for orphan in orphans:
+			response.append(f"Orphan endnote with anchor: {orphan}")
 		return response
 
 	def generate_endnotes(self) -> Tuple[int, int]:
@@ -1206,9 +1205,10 @@ class SeEpub:
 		"""
 
 		# do a safety check first, throw exception if it failed
-		report = self.check_endnotes()
-		if report:
-			raise se.InvalidInputException(f"Endnote errors found: [attr]{report}[/].")
+		results = self.check_endnotes()
+		if results:
+			report = "\n".join(results)
+			raise se.InvalidInputException(f"Endnote error(s) found: {report}.")
 
 		# if we get here, it's safe to proceed
 		processed = 0
