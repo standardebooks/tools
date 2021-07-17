@@ -22,36 +22,31 @@ def clean(plain_output: bool) -> int:
 
 	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
-	for filepath in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx", ".xml")):
+	for filepath in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx", ".xml", ".css")):
 		if args.verbose:
 			console.print(se.prep_output(f"Processing [path][link=file://{filepath}]{filepath}[/][/] ...", plain_output), end="")
 
-		try:
-			se.formatting.format_xml_file(filepath)
-		except se.MissingDependencyException as ex:
-			se.print_error(ex, plain_output=plain_output)
-			return ex.code
-		except se.SeException as ex:
-			se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]. Exception: {ex}", args.verbose, plain_output=plain_output)
-			return ex.code
+		if filepath.suffix == ".css":
+			with open(filepath, "r+", encoding="utf-8") as file:
+				css = file.read()
 
-		if args.verbose:
-			console.print(" OK")
+				try:
+					processed_css = se.formatting.format_css(css)
 
-	for filepath in se.get_target_filenames(args.targets, ".css"):
-		if args.verbose:
-			console.print(se.prep_output(f"Processing [path][link=file://{filepath}]{filepath}[/][/] ...", plain_output), end="")
+					if processed_css != css:
+						file.seek(0)
+						file.write(processed_css)
+						file.truncate()
+				except se.SeException as ex:
+					se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]. Exception: {ex}", args.verbose, plain_output=plain_output)
+					return ex.code
 
-		with open(filepath, "r+", encoding="utf-8") as file:
-			css = file.read()
-
+		else:
 			try:
-				processed_css = se.formatting.format_css(css)
-
-				if processed_css != css:
-					file.seek(0)
-					file.write(processed_css)
-					file.truncate()
+				se.formatting.format_xml_file(filepath)
+			except se.MissingDependencyException as ex:
+				se.print_error(ex, plain_output=plain_output)
+				return ex.code
 			except se.SeException as ex:
 				se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]. Exception: {ex}", args.verbose, plain_output=plain_output)
 				return ex.code
