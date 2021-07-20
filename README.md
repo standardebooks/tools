@@ -157,7 +157,7 @@ We export `COLUMNS` because `se lint` needs to know the width of the terminal so
 Before we can use `pylint` or `mypy` on the toolset source, we have to inject them into the venv `pipx` created for the `standardebooks` package:
 
 ```shell
-pipx inject standardebooks pylint mypy
+pipx inject standardebooks pylint==2.8.2 mypy==0.812
 ```
 
 Then make sure to call the `pylint` and `mypy` binaries that `pipx` installed in the `standardebooks` venv, *not* any other globally-installed binaries:
@@ -172,7 +172,7 @@ $HOME/.local/pipx/venvs/standardebooks/bin/pylint se
 Similar to `pylint`, the `pytest` command can be injected into the venv `pipx` created for the `standardebooks` package:
 
 ```shell
-pipx inject standardebooks pytest
+pipx inject standardebooks pytest==6.2.4
 ```
 
 The tests are executed by calling `pytest` from the top level or your tools repo:
