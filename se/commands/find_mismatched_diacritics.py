@@ -35,7 +35,18 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 	for filename in target_filenames:
 		try:
 			with open(filename, "r", encoding="utf-8") as file:
-				files_xhtml.append(file.read())
+				xhtml = file.read()
+				dom = se.easy_xml.EasyXmlTree(xhtml)
+
+				# Save any `alt` and `title` attributes because we may be interested in their contents
+				for node in dom.xpath("//*[@alt or @title]"):
+					for _, value in node.attrs.items():
+						xhtml = xhtml + f" {value} "
+
+				# Strip tags
+				xhtml = regex.sub(r"<[^>]+?>", " ", xhtml)
+
+				files_xhtml.append(xhtml)
 
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
