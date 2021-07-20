@@ -985,7 +985,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	for node in self.metadata_dom.xpath("/package/metadata/dc:description") + self.metadata_dom.xpath("/package/metadata/meta[@property='se:long-description']"):
 		matches = [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", node.text, flags=regex.IGNORECASE)]
 		if matches:
-			messages.append(LintMessage("t-042", "Possible typo: possible doubled [text]the/and/of/or/as[/].", se.MESSAGE_TYPE_WARNING, filename, matches))
+			messages.append(LintMessage("t-042", "Possible typo: possible doubled [text]the/and/of/or/as[/].", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
 
 	# Make sure some static files are unchanged
 	if self.is_se_ebook:
