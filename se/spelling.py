@@ -330,6 +330,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Pp])apier[-\s]mache\b", r"\1apier-mâché", xhtml)	# papier-mache -> papier-mâché
 	xhtml = regex.sub(r"\b([Cc])yder\b", r"\1ider", xhtml)				# cyder -> cider
 	xhtml = regex.sub(r"\b([Cc])onsomme", r"\1onsommé", xhtml)			# consomme -> consommé
+	xhtml = regex.sub(r"\b([Cc])loath(s?)\b", r"\1lothe\2", xhtml)			# cloath(s) -> clothe(s)
+	xhtml = regex.sub(r"\b([Cc])loath", r"\1loth", xhtml)				# cloath -> cloth(ed|ing|...)
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
