@@ -8,7 +8,6 @@
 		<dc:publisher id="publisher">PUBLISHER</dc:publisher>
 		<meta property="file-as" refines="#publisher">PUBLISHER_SORT</meta>
 		<meta property="se:url.homepage" refines="#publisher">PUBLISHER_URL</meta>
-		<link href="onix.xml" media-type="application/xml" properties="onix" rel="record"/>
 		<link href="http://www.idpf.org/epub/a11y/accessibility-20170105.html#wcag-aa" rel="dcterms:conformsTo"/>
 		<meta property="a11y:certifiedBy">PUBLISHER</meta>
 		<meta property="schema:accessMode">textual</meta>
@@ -19,6 +18,7 @@
 		<meta property="schema:accessibilityFeature">tableOfContents</meta>
 		<meta property="schema:accessibilityHazard">none</meta>
 		<meta property="schema:accessibilitySummary">This publication conforms to WCAG 2.1 Level AA.</meta>
+		<link href="onix.xml" media-type="application/xml" properties="onix" rel="record"/>
 		<dc:title id="title">TITLE</dc:title>
 		<meta property="file-as" refines="#title">TITLE_SORT</meta>
 		<dc:subject id="subject-1">SUBJECT_1</dc:subject>
