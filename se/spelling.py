@@ -332,6 +332,15 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Cc])onsomme", r"\1onsommé", xhtml)			# consomme -> consommé
 	xhtml = regex.sub(r"\b([Cc])loath(s?)\b", r"\1lothe\2", xhtml)			# cloath(s) -> clothe(s)
 	xhtml = regex.sub(r"\b([Cc])loath", r"\1loth", xhtml)				# cloath -> cloth(ed|ing|...)
+	xhtml = regex.sub(r"\b([Pp])aultry", r"\1altry", xhtml)				# paultry -> paltry
+	xhtml = regex.sub(r"\b([Bb])ye-?(word|law)", r"\1y\2", xhtml)			# bye-(word|law) -> by(word|law)
+	xhtml = regex.sub(r"\btaylor", r"tailor", xhtml)				# taylor -> tailor (but not uppercase as it might be a last name
+	xhtml = regex.sub(r"\b([Gg])ulph", r"\1ulf", xhtml)				# gulph -> gulf
+	xhtml = regex.sub(r"\b([Mm])usicke?\b", r"\1usic", xhtml)			# musick -> music
+	xhtml = regex.sub(r"\b([Ee])very where\b", r"\1verywhere", xhtml)		# every where -> everywhere
+	xhtml = regex.sub(r"\b([Aa])ny where\b", r"\1nywhere", xhtml)			# any where -> anywhere
+	xhtml = regex.sub(r"\b([Ee])very thing\b", r"\1verything", xhtml)		# every thing -> everything
+	xhtml = regex.sub(r"\b([Aa])ny thing\b", r"\1nything", xhtml)			# any thing -> anything
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
@@ -372,6 +381,9 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"Moslem(s?)\b", r"Muslim\1", xhtml)				# Moslem -> Muslim, but stop at a word break for `Moslemin`, a rare word that has no modern spelling equivalent
 	xhtml = regex.sub(r"Bronte\b", r"Brontë", xhtml)				# Bronte -> Brontë
 	xhtml = regex.sub(r"Leipsick?\b", r"Leipzig", xhtml)				# Leipsic -> Leipzig; note that there are some US cities actually named `Leipsic`!
+	xhtml = regex.sub(r"Gengis", r"Genghis", xhtml)					# Gengis -> Genghis
+	xhtml = regex.sub(r"Hamburgh", r"Hamburg", xhtml)				# Hamburgh -> Hamburg
+	xhtml = regex.sub(r"Dant[sz]ick?", r"Danzig", xhtml)				# Dantsic -> Danzig
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
