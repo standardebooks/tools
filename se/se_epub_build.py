@@ -947,27 +947,25 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			with importlib_resources.path("se.data.epubcheck", "epubcheck.jar") as jar_path:
 				# We have to use a temp file to hold stdout, because if the output is too large for the output buffer in subprocess.run() (and thus popen()) it will be truncated
 				with tempfile.TemporaryFile() as stdout:
-					try:
-						epubcheck_result = subprocess.run(["java", "-jar", str(jar_path), "--out", "-", "--mode", "exp", str(work_compatible_epub_dir)], stdout=stdout, stderr=subprocess.STDOUT, check=False)
-						epubcheck_result.check_returncode()
+					# We can't check the return code, because if only warnings are returned then epubcheck will return 0 (success)
+					subprocess.run(["java", "-jar", str(jar_path), "--quiet", "--out", "-", "--mode", "exp", str(work_compatible_epub_dir)], stdout=stdout, stderr=subprocess.DEVNULL, check=False)
 
-					except subprocess.CalledProcessError as ex:
-						stdout.seek(0)
-						output = stdout.read().decode().strip()
+					stdout.seek(0)
+					output = stdout.read().decode().strip()
 
-						# Remove header from epub output
-						output = regex.sub(r"^\s*Check finished with errors\s*", "", output, regex.DOTALL)
+					epubcheck_dom = se.easy_xml.EasyXmlTree(output)
 
+					messages = epubcheck_dom.xpath("/jhove/repInfo/messages/message")
+
+					if messages:
 						# Save the epub output so the user can inspect it
 						epub_debug_dir = __save_debug_epub(work_compatible_epub_dir)
 
-						# Replace instances of the temp epub path, with our permanent epub path
+						# Replace instances of the temp epub path with our permanent epub path
 						# Note that epubcheck always appends ".epub" to the dir name
 						output = output.replace(str(work_compatible_epub_dir) + ".epub", str(epub_debug_dir))
 
-						epubcheck_dom = se.easy_xml.EasyXmlTree(output)
-
-						for message in epubcheck_dom.xpath("/jhove/repInfo/messages/message"):
+						for message in messages:
 							error_text = regex.search(r"\[(.+?)\]", message.text)
 							file_text = regex.search(r"\], (.+?) \(([0-9]+)-([0-9]+)\)$", message.text)
 
