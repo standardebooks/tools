@@ -336,6 +336,7 @@ TYPOGRAPHY
 "t-063", "Latin phrase set without italics."
 "t-064", "Title not correctly titlecased. Hint: Non-English titles should have an [attr]xml:lang[/] attribute as they have different titlecasing rules."
 "t-065", "Header ending in a period."
+"t-066", "Regnal ordinal preceded by [text]the[/]."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -2162,6 +2163,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//abbr[text()='I.O.U.'][(following-sibling::node()[1])[starts-with(., '’s')]]")
 				if nodes:
 					messages.append(LintMessage("t-039", "Initialism followed by [text]’s[/]. Hint: Plurals of initialisms are not followed by [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "’s" for node in nodes]))
+
+				# Check for royal names whose roman numeral is preceded by `the`
+				nodes = dom.xpath("//span[contains(@epub:type, 'z3998:roman') and ./preceding-sibling::node()[1][re:test(., '[A-Z]\\w+ the $')]]/parent::*")
+				if nodes:
+					messages.append(LintMessage("t-066", "Regnal ordinal preceded by [text]the[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for some known initialisms with incorrect possessive apostrophes
 				nodes = dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]//b[re:test(., 'anonymous', 'i') and re:test(@epub:type, 'z3998:.*?name')]")
