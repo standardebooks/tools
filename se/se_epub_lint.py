@@ -1518,7 +1518,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for dialog starting with a lowercase letter. Only check the first child text node of <p>, because other first children might be valid lowercase, like <m:math> or <b>;
 				# exclude <p> inside or preceded by <blockquote>; and exclude <p> inside endnotes, as definitions may start with lowercase letters.
-
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::li[contains(@epub:type, 'endnote')]) and not(preceding-sibling::*[1][name()='blockquote'])][re:test(./node()[1], '^“[a-z]')]")]
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: dialog begins with lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
@@ -1571,7 +1570,12 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				# Check for punctuation missing before conjunctions. Ignore <p> with an <i> child starting in a conjunction, as those are probably book titles or non-English languages
 				typos = [node.to_string() for node in dom.xpath(f"/html/body//p[re:test(., '\\b[a-z]+\\s(But|And|For|Nor|Yet|Or)\\b[^’\\.\\?\\-{se.WORD_JOINER}]') and not(./i[re:test(., '^(But|And|For|Nor|Yet|Or)\\b')])]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/]", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("t-042", "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+				# Check for extra closing single quote at the end of dialog
+				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^‘]+”\\s*’$')]")]
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: Extra [text]’[/] at end of paragraph.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for body element without child section or article. Ignore the ToC because it has a unique structure
 				nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and contains(@epub:type, 'toc'))])]")
@@ -2165,7 +2169,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-039", "Initialism followed by [text]’s[/]. Hint: Plurals of initialisms are not followed by [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "’s" for node in nodes]))
 
 				# Check for royal names whose roman numeral is preceded by `the`
-				nodes = dom.xpath("//span[contains(@epub:type, 'z3998:roman') and ./preceding-sibling::node()[1][re:test(., '[A-Z]\\w+ the $')]]/parent::*")
+				nodes = dom.xpath("/html/body//span[contains(@epub:type, 'z3998:roman') and ./preceding-sibling::node()[1][re:test(., '[A-Z]\\w+ the $')]]/parent::*")
 				if nodes:
 					messages.append(LintMessage("t-066", "Regnal ordinal preceded by [text]the[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
