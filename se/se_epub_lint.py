@@ -1952,7 +1952,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if not local_css_has_elision_style:
 					missing_styles += [node.to_tag_string() for node in dom.xpath("/html/body//span[contains(@class, 'elision')]")]
 
-				nodes = dom.xpath("/html/body//*[re:test(., '\\bA\\s*B\\s*C\\s*\\b')]")
+				nodes = dom.xpath("/html/body//*[re:test(text(), '\\bA\\s*B\\s*C\\s*\\b')]")
 				if nodes:
 					messages.append(LintMessage("t-031", "[text]A B C[/] must be set as [text]A.B.C.[/] It is not an abbreviation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
