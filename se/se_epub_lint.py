@@ -733,6 +733,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		for illegal_file in illegal_files:
 			messages.append(LintMessage("f-001", "Illegal file or directory.", se.MESSAGE_TYPE_ERROR, Path(illegal_file)))
 
+	# Check for repeated punctuation
+	nodes = self.metadata_dom.xpath("/package/metadata/*[re:test(., '[,;]{2,}.{0,20}')]")
+	if nodes:
+		messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [node.to_string() for node in nodes]))
+
 	# Check the long description for some errors
 	try:
 		# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
@@ -764,14 +769,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 		# xml:lang is correct for the rest of the publication, but should be lang in the long desc
 		if "xml:lang" in long_description:
 			messages.append(LintMessage("m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-
-		# Check for repeated punctuation
-		# First replace html entities so we don't catch `&gt;,`
-		for node in self.metadata_dom.xpath("/package/metadata/*"):
-			if node.text:
-				matches = regex.findall(r"[,;]{2,}.{0,20}", regex.sub(r"&[a-z0-9]+?;", "", node.text))
-				if matches:
-					messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
 
 		# US -> U.S.
 		matches = regex.findall(r"\bUS\b", long_description)
@@ -1481,9 +1478,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Note: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for money not separated by commas
-				matches = regex.findall(r"[£\$][0-9]{4,}", file_contents)
-				if matches:
-					messages.append(LintMessage("t-015", "Numbers not grouped by commas. Separate numbers greater than 1,000 with commas at every three numerals.", se.MESSAGE_TYPE_WARNING, filename, matches))
+				nodes = dom.xpath("/html/body//*[re:test(text(), '[£\\$][0-9]{4,}')]")
+				if nodes:
+					messages.append(LintMessage("t-015", "Numbers not grouped by commas. Separate numbers greater than 1,000 with commas at every three numerals.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Do we have any elements that have specified border color?
 				# `transparent` and `none` are allowed values for border-color
@@ -1548,7 +1545,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-042", "Possible typo: [text]”[/] without opening [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for ,.
-				typos = regex.findall(r",\.", file_contents)
+				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., ',\\.')]")]
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: consecutive comma-period ([text],.[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
 
@@ -1671,9 +1668,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("c-020", "Multiple [xhtml]<article>[/]s or [xhtml]<section>[/]s in file, but missing [css]break-after: page;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
 
 				# Check for two em dashes in a row
-				matches = regex.findall(fr"—{se.WORD_JOINER}*—+", file_contents)
-				if matches:
-					messages.append(LintMessage("t-014", "Two or more em-dashes in a row found. Elided words should use the two- or three-em-dash Unicode character, and dialog ending in em-dashes should only end in a single em-dash.", se.MESSAGE_TYPE_ERROR, filename))
+				nodes = dom.xpath(f"/html/body//*[re:test(text(), '—{se.WORD_JOINER}*—+')]")
+				if nodes:
+					messages.append(LintMessage("t-014", "Two or more em-dashes in a row found. Elided words should use the two- or three-em-dash Unicode character, and dialog ending in em-dashes should only end in a single em-dash.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				nodes = dom.xpath("/html/body//blockquote//p[parent::*[name()='footer'] or parent::*[name()='blockquote']]//cite") # Sometimes the <p> may be in a <footer>
 				if nodes:
@@ -1955,9 +1952,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if not local_css_has_elision_style:
 					missing_styles += [node.to_tag_string() for node in dom.xpath("/html/body//span[contains(@class, 'elision')]")]
 
-				matches = regex.findall(r"\bA\s*B\s*C\s*\b", file_contents)
-				if matches:
-					messages.append(LintMessage("t-031", "[text]A B C[/] must be set as [text]A.B.C.[/] It is not an abbreviation.", se.MESSAGE_TYPE_WARNING, filename, matches))
+				nodes = dom.xpath("/html/body//*[re:test(., '\\bA\\s*B\\s*C\\s*\\b')]")
+				if nodes:
+					messages.append(LintMessage("t-031", "[text]A B C[/] must be set as [text]A.B.C.[/] It is not an abbreviation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for elements that don't have a direct block child
 				# Allow white space and comments before the first child
@@ -2000,9 +1997,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-065", "Header ending in a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check obviously miscurled quotation marks
-				matches = regex.findall(r".*“</p>", file_contents)
-				if matches:
-					messages.append(LintMessage("t-038", "[text]“[/] before closing [xhtml]</p>[/].", se.MESSAGE_TYPE_WARNING, filename, [match[-20:] for match in matches]))
+				nodes = dom.xpath("/html/body//p[re:test(., '“$')]")
+				if nodes:
+					messages.append(LintMessage("t-038", "[text]“[/] before closing [xhtml]</p>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for stage direction without ending punctuation. We only want to consider stage direction that is not an interjection in a parent clause.
 				# We match if the stage direction ends in lowercase, and if there's no following node, or if there's a following node that doesn't begin in lowercase or an em dash or semicolon (which suggests an interjection).
@@ -2021,10 +2018,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("s-089", "MathML missing [attr]alttext[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-				# Check for rdquo preceded by space (but not a rsquo, which might indicate a nested quotation)
-				matches = regex.findall(r".*[^’]\s”", regex.sub(r"<td>.*?</td>", "", file_contents, regex.DOTALL))
-				if matches:
-					messages.append(LintMessage("t-037", "[text]”[/] preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [match[-20:] for match in matches]))
+				# Check for rdquo preceded by space (but not preceded by a rsquo, which might indicate a nested quotation)
+				nodes = dom.xpath("/html/body//p[re:test(., '[^’]\\s”')]")
+				if nodes:
+					messages.append(LintMessage("t-037", "[text]”[/] preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Remove tds in case ldquo means "ditto mark"
 				matches = regex.findall(r"”[^“‘]+?”", regex.sub(r"<td>[”\s]+?</td>", "", file_contents), flags=regex.DOTALL)
@@ -2053,9 +2050,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
 
 				# Check for degree confusable
-				matches = regex.findall(r"[0-9]+º", file_contents)
-				if matches:
-					messages.append(LintMessage("t-056", "Masculine ordinal indicator ([val]º[/]) used instead of degree symbol ([val]°[/]). Note that the masculine ordinal indicator may be appropriate for ordinal numbers read as Latin, i.e. [val]12º[/] reading [val]duodecimo[/].", se.MESSAGE_TYPE_WARNING, filename, matches))
+				nodes = dom.xpath("/html/body//*[re:test(text(), '[0-9]+º')]")
+				if nodes:
+					messages.append(LintMessage("t-056", "Masculine ordinal indicator ([val]º[/]) used instead of degree symbol ([val]°[/]). Note that the masculine ordinal indicator may be appropriate for ordinal numbers read as Latin, i.e. [val]12º[/] reading [val]duodecimo[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check that possessives appear within persona blocks
 				nodes = dom.xpath("/html/body//b[contains(@epub:type, 'z3998:persona') and ./following-sibling::node()[1][re:test(., '^’s?')]]")
@@ -2475,9 +2472,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 					# Do we have to replace Ibid.?
-					matches = regex.findall(r"\bibid\b", file_contents, flags=regex.IGNORECASE)
-					if matches:
-						messages.append(LintMessage("s-039", "[text]Ibid[/] in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing [text]Ibid[/] refers to, unless it refers to text within the same endnote.", se.MESSAGE_TYPE_WARNING, filename))
+					nodes = dom.xpath("/html/body//*[re:test(text(), '\\bibid\\b', 'i')]")
+					if nodes:
+						messages.append(LintMessage("s-039", "[text]Ibid[/] in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing [text]Ibid[/] refers to, unless it refers to text within the same endnote.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 					# Match backlink elements whose preceding node doesn't end with ' ', and is also not all whitespace
 					nodes = dom.xpath("/html/body//a[@epub:type='backlink'][(preceding-sibling::node()[1])[not(re:test(., ' $')) and not(normalize-space(.)='')]]")
