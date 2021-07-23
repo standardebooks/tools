@@ -2209,9 +2209,10 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("s-060", "Italics on name that requires quotes instead.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-				# Check that all names are correctly titlecased. Ignore titles with xml:lang since non-English languages have different titlecasing rules.
+				# Check that all names are correctly titlecased. Ignore titles with xml:lang since non-English languages have different titlecasing rules,
+				# and ignore titles that have children elements, because se.titlecase() can't handle XML-like titles right now.
 				incorrectly_cased_titles = []
-				for node in dom.xpath("/html/body//*[contains(@epub:type, 'se:name') and not(@xml:lang)]"):
+				for node in dom.xpath("/html/body//*[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'se:name.legal-case')) and not(@xml:lang) and not(./*)]"):
 					# Replace any space that is not a hair space with a regular space. This is because in inline titles, we may correctly
 					# have nbsp for example after `St.`, but titlecase will remove that nbsp.
 					if se.formatting.titlecase(node.inner_text()) != regex.sub(fr"[^\S{se.HAIR_SPACE}]+", " ", node.inner_text()):
