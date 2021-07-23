@@ -1061,8 +1061,9 @@ def titlecase(text: str) -> str:
 	text = regex.sub(r"<(/?)([^>]+?)>", lambda result: "<" + result.group(1) + result.group(2).lower() + ">", text)
 
 	# Uppercase Roman numerals, but only if they are valid Roman numerals and they are not `MIX` (which is much more likely to be an English word than a Roman numeral)
+	# or `DI` which may be an Italian word
 	try:
-		text = regex.sub(r"(\s)([ivxlcdm]+)(\b)", lambda result: result.group(1) + result.group(2).upper() + result.group(3) if result.group(2).upper() != "MIX" and roman.fromRoman(result.group(2).upper()) else result.group(1) + result.group(2), text, flags=regex.IGNORECASE)
+		text = regex.sub(r"(\s)([ivxlcdm]+)(\b)", lambda result: result.group(1) + result.group(2).upper() + result.group(3) if result.group(2).upper() not in ("MIX", "DI") and roman.fromRoman(result.group(2).upper()) else result.group(1) + result.group(2), text, flags=regex.IGNORECASE)
 	except roman.InvalidRomanNumeralError:
 		pass
 
@@ -1080,8 +1081,11 @@ def titlecase(text: str) -> str:
 	# Lowercase `and`, if it's not the very first word, and not preceded by an em-dash
 	text = regex.sub(r"(?<!^)\bAnd\b", r"and", text)
 
-	# Lowercase `in` and `the`, if preceded by a semicolon or dash (like `Puss-in-Boots` or `Jack-in-the-Box`) (but not words like "inheritance")
-	text = regex.sub(r"\b(; |-)(In|The)\b", lambda result: result.group(1) + result.group(2).lower(), text)
+	# Lowercase `the`, if preceded by a dash (like `Puss-in-Boots` or `Jack-in-the-Box`)
+	text = regex.sub(r"\b(-)(In|The|Sur|Of|Au)\b", lambda result: result.group(1) + result.group(2).lower(), text)
+
+	# Lowercase "in", if followed by a semicolon (but not words like "inheritance")
+	text = regex.sub(r"\b; In\b", "; in", text)
 
 	# Lowercase `th’`, sometimes used poetically
 	text = regex.sub(r"\b Th’ \b", " th’ ", text)
@@ -1102,7 +1106,7 @@ def titlecase(text: str) -> str:
 	text = regex.sub(r"(?:vs\.) The\b", "vs. the", text)
 
 	# Lowercase `de`, `von`, `van`, `le`, `du` as in `Charles de Gaulle`, `Werner von Braun`, etc., and if not the first word and not preceded by an &ldquo;
-	text = regex.sub(r"(?<!^|“)\b(Von|Van|Le|Des|De La|De|Du)\b", lambda result: result.group(1).lower(), text)
+	text = regex.sub(r"(?<!^|“)\b(Von|Van Der|Van|Le|Des|De La|De|Du|Di|Del)\b", lambda result: result.group(1).lower(), text)
 
 	# Uppercase word following `Or,`, since it is probably a subtitle
 	text = regex.sub(r"\bOr, ([\p{Lowercase_Letter}])", lambda result: "Or, " + result.group(1).upper(), text)
@@ -1126,11 +1130,14 @@ def titlecase(text: str) -> str:
 	# Lowercase `by`
 	text = regex.sub(r"(\s)By(\s|%)", lambda result: result.group(1) + "by" + result.group(2), text)
 
-	# Lowercase leading `d'`, as in `Marie d'Elle`
+	# Lowercase leading `d’`, as in `Marie d’Elle`
 	text = regex.sub(r"(?:\b|^)D’([\p{Letter}])", lambda result: "d’" + result.group(1).upper(), text)
 
 	# # Uppercase letter after leading `L'`, as in `L'Affaire`
 	# text = regex.sub(r"(?:\b|^)L’([\p{Letter}])", lambda result: "L’" + result.group(1).upper(), text)
+
+	# Uppercase `l’` as in `l’Affaire`, but not if it's a the first letter
+	text = regex.sub(r"(?<!^)L’([\p{Letter}])", lambda result: "l’" + result.group(1), text)
 
 	# Uppercase some known initialisms
 	text = regex.sub(r"(\s|^)(sos|md)(?:\b|$)", lambda result: result.group(1) + result.group(2).upper(), text, flags=regex.IGNORECASE)
@@ -1142,6 +1149,12 @@ def titlecase(text: str) -> str:
 	# Uppercase initialisms
 	text = regex.sub(r"\b(([\p{Letter}]\.)+)", lambda result: result.group(1).upper(), text)
 
+	# Uppercase No. as in Number
+	text = regex.sub(r"\b(no\.\s+)", lambda result: result.group(1).upper(), text)
+
+	# Lowercase V. as in versus in a legal case
+	text = regex.sub(r"\b(V\.\s+)", lambda result: result.group(1).lower(), text)
+
 	# Lowercase `mm` (millimeters, as in `50 mm gun`) unless it's followed by a period in which case it's likely `Mm.` (Monsieurs)
 	text = regex.sub(r"(\s)MM(\s|$)", r"\1mm\2", text)
 
@@ -1150,6 +1163,9 @@ def titlecase(text: str) -> str:
 
 	# Lowercase etc.
 	text = text.replace("Etc.", "etc.")
+
+	# Lowercase some special cases.
+	text = text.replace("A.B.C. Of", "A.B.C. of")
 
 	return text
 
