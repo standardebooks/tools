@@ -269,6 +269,7 @@ SEMANTICS & CONTENT
 "s-090", "Invalid language tag."
 "s-091", "[xhtml]<span>[/] not followed by [xhtml]<br/>[/] in poetry."
 "s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic."
+"s-093", "Nested [xhtml]<abbr>[/] element."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -2151,6 +2152,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[(contains(@epub:type, 'z3998:salutation') or ./preceding-sibling::*[1][contains(@epub:type, 'z3998:salutation') or (name() != 'blockquote' and count(./node()[normalize-space(.)]) = 1 and ./*[contains(@epub:type, 'z3998:salutation')])] or ./*[1][contains(@epub:type, 'z3998:salutation') and not((./following-sibling::node()[1][self::text()]))]) and @data-css-text-indent != '0']")
 				if nodes:
 					messages.append(LintMessage("c-015", "Element after or containing [val]z3998:salutation[/] does not have [css]text-indent: 0;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for nested `<abbr>` elements
+				nodes = dom.xpath("/html/body//abbr[./abbr]")
+				if nodes:
+					messages.append(LintMessage("s-093", "Nested [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for <cite> without preceding space in text node. (preceding ( or [ are also OK)
 				nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[not(re:match(., '[\\[\\(\\s]$'))]]")
