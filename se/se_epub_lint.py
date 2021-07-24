@@ -2479,8 +2479,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if nodes:
 						messages.append(LintMessage("s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-					# Do we have to replace Ibid.?
-					nodes = dom.xpath("/html/body//*[re:test(text(), '\\bibid\\b', 'i')]")
+					# Do we have to replace Ibid.? Only match Ibid. if the endnote does not appear to cite any names.
+					nodes = dom.xpath("/html/body//li[re:test(@epub:type, '\\bendnote\\b')]//abbr[re:test(., '\\b[Ii]bid\\b') and not(ancestor::li[1]//*[contains(@epub:type, 'se:name')])]")
 					if nodes:
 						messages.append(LintMessage("s-039", "[text]Ibid[/] in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing [text]Ibid[/] refers to, unless it refers to text within the same endnote.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
