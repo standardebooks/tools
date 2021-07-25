@@ -676,7 +676,7 @@ def _create_draft(args: Namespace):
 	# Write PG data if we have it
 	if args.pg_id and pg_ebook_html:
 		try:
-			dom = etree.parse(StringIO(regex.sub(r"encoding=\".+?\"", "", pg_ebook_html)), parser)
+			dom = etree.parse(StringIO(regex.sub(r"encoding=(?P<quote>[\'\"]).+?(?P=quote)", "", pg_ebook_html)), parser)
 			namespaces = {"re": "http://exslt.org/regular-expressions"}
 
 			for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*Produced by.+')]", namespaces=namespaces):
