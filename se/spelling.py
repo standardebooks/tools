@@ -384,6 +384,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"Gengis", r"Genghis", xhtml)					# Gengis -> Genghis
 	xhtml = regex.sub(r"Hamburgh", r"Hamburg", xhtml)				# Hamburgh -> Hamburg
 	xhtml = regex.sub(r"Dant[sz]ick?", r"Danzig", xhtml)				# Dantsic -> Danzig
+	xhtml = regex.sub(r"Barbadoes", r"Barbados", xhtml)				# Barbadoes -> Barbados
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
