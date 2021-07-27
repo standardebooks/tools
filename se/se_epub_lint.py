@@ -1211,27 +1211,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if nodes:
 						messages.append(LintMessage("m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-					# Check for "Hathi Trust" instead of "HathiTrust"
 					nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
 					if nodes:
 						messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-					# Are the sources represented correctly?
-					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
-					links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
-					if len(links) <= 2:
-						for link in links:
-							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
-								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-							if "hathitrust.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
-								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-							if "archive.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">Internet Archive</a>" not in file_contents:
-								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]the<br/> <a href=\"{link}\">Internet Archive</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-							if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
-								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 				if is_colophon:
 					# Check for wrong grammar filled in from template
@@ -1273,6 +1255,24 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					for node in dom.xpath("/html/body//a[re:test(@href, '(gutenberg\\.org/ebooks/[0-9]+|hathitrust\\.org|archive\\.org|books\\.google\\.com|www\\.google\\.com/books/)')]"):
 						if not self.metadata_dom.xpath(f"/package/metadata/dc:source[contains(text(), {se.easy_xml.escape_xpath(node.get_attr('href'))})]"):
 							messages.append(LintMessage("m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+					# Are the sources represented correctly?
+					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
+					# We can't merge this with the imprint check because imprint doesn't have `<br/>` between `the`
+					links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
+					if len(links) <= 2:
+						for link in links:
+							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
+								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+							if "hathitrust.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
+								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+							if "archive.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">Internet Archive</a>" not in file_contents:
+								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]the<br/> <a href=\"{link}\">Internet Archive</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+							if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
+								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 				else:
 					# This file is not the colophon.
@@ -2531,6 +2531,22 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					missing_imprint_vars = [var for var in SE_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
 					if missing_imprint_vars:
 						messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, missing_imprint_vars))
+
+					# Check for correctly named links. We can't merge this with the colophon check because the colophon breaks `the` with `<br/>`
+					links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
+					if len(links) <= 2:
+						for link in links:
+							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
+								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+							if "hathitrust.org" in link and f"the <a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
+								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: the [xhtml]<a href=\"{link}\">HathiTrust Digital Library</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+							if "archive.org" in link and f"the <a href=\"{link}\">Internet Archive</a>" not in file_contents:
+								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected:: the [xhtml]<a href=\"{link}\">Internet Archive</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+							if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
+								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Collect certain abbr elements to check that required styles are included, but not in the colophon
 				if not dom.xpath("/html/body/*[contains(@epub:type, 'colophon')]"):
