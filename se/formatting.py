@@ -1167,6 +1167,9 @@ def titlecase(text: str) -> str:
 	# Lowercase some special cases.
 	text = text.replace("A.B.C. Of", "A.B.C. of")
 
+	# More special cases
+	text = regex.sub(r"des Moines", "Des Moines", text)
+
 	return text
 
 def make_url_safe(text: str) -> str:
