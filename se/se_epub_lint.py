@@ -130,10 +130,6 @@ METADATA
 "m-023", f"[xml]<dc:identifier>[/] does not match expected: [text]{self.generated_identifier}[/]."
 "m-024", "[xml]<meta property=\"se:name.person.full-name\">[/] property identical to regular name. If the two are identical the full name [xml]<meta>[/] element must be removed."
 "m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon."
-"m-026", f"Project Gutenberg source not present. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/]."
-"m-027", f"HathiTrust source not present. Expected: the [xhtml]<a href=\"{link}\">HathiTrust Digital Library</a>[/]."
-"m-028", f"Internet Archive source not present. Expected: the [xhtml]<a href=\"{link}\">Internet Archive</a>[/]."
-"m-029", f"Google Books source not present. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/]."
 "m-030", f"[val]introduction[/] semantic inflection found, but no MARC relator [val]aui[/] (Author of introduction, but not the chief author) or [val]win[/] (Writer of introduction)."
 "m-031", f"[val]preface[/] semantic inflection found, but no MARC relator [val]wpr[/] (Writer of preface)."
 "m-032", f"[val]afterword[/] semantic inflection found, but no MARC relator [val]aft[/] (Author of colophon, afterword, etc.)."
@@ -141,10 +137,7 @@ METADATA
 "m-034", f"[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator)."
 "m-035", f"Unexpected S.E. identifier in colophon. Expected: [url]{se_url}[/]."
 "m-036", "Variable not replaced with value."
-"m-037", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/]."
-"m-038", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>[/]."
-"m-039", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">Internet Archive</a>[/]."
-"m-040", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/]."
+"m-037", f"Transcription/page scan source link not found. Expected: [xhtml]{href}[/]."
 "m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
 "m-042", "[xml]<manifest>[/] element does not match expected structure."
 "m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)})."
@@ -177,6 +170,14 @@ METADATA
 "m-070", "Glossary entries not present in the text:"
 "m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/]."
 "m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/]."
+UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+"m-026", f"Project Gutenberg source not present. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/]."
+"m-027", f"HathiTrust source not present. Expected: the [xhtml]<a href=\"{link}\">HathiTrust Digital Library</a>[/]."
+"m-028", f"Internet Archive source not present. Expected: the [xhtml]<a href=\"{link}\">Internet Archive</a>[/]."
+"m-029", f"Google Books source not present. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/]."
+"m-038", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>[/]."
+"m-039", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">Internet Archive</a>[/]."
+"m-040", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -1209,6 +1210,23 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if nodes:
 						messages.append(LintMessage("m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
+					# Are the sources represented correctly?
+					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
+					links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
+					if len(links) <= 2:
+						for link in links:
+							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
+								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+							if "hathitrust.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
+								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+							if "archive.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">Internet Archive</a>" not in file_contents:
+								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]the<br/> <a href=\"{link}\">Internet Archive</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+							if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
+								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
 				if is_colophon:
 					# Check for wrong grammar filled in from template
 					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
@@ -1244,24 +1262,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					nodes = dom.xpath("/html/body//b[re:test(., 'anonymous', 'i') and re:test(@epub:type, 'z3998:.*?name')]")
 					if nodes:
 						messages.append(LintMessage("s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-					# Are the sources represented correctly?
-					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
-					nodes = self.metadata_dom.xpath("/package/metadata/dc:source")
-					if len(nodes) <= 2:
-						for node in nodes:
-							link = node.text
-							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
-								messages.append(LintMessage("m-037", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
-
-							if "hathitrust.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
-								messages.append(LintMessage("m-038", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
-
-							if "archive.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">Internet Archive</a>" not in file_contents:
-								messages.append(LintMessage("m-039", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">Internet Archive</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
-
-							if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
-								messages.append(LintMessage("m-040", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
 
 					# Is there a page scan link in the colophon, but missing in the metadata?
 					for node in dom.xpath("/html/body//a[re:test(@href, '(gutenberg\\.org/ebooks/[0-9]+|hathitrust\\.org|archive\\.org|books\\.google\\.com|www\\.google\\.com/books/)')]"):
@@ -2530,21 +2530,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					missing_imprint_vars = [var for var in SE_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
 					if missing_imprint_vars:
 						messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, missing_imprint_vars))
-
-					links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
-					if len(links) <= 2:
-						for link in links:
-							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
-								messages.append(LintMessage("m-026", f"Project Gutenberg source not present. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
-
-							if "hathitrust.org" in link and f"the <a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
-								messages.append(LintMessage("m-027", f"HathiTrust source not present. Expected: the [xhtml]<a href=\"{link}\">HathiTrust Digital Library</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
-
-							if "archive.org" in link and f"the <a href=\"{link}\">Internet Archive</a>" not in file_contents:
-								messages.append(LintMessage("m-028", f"Internet Archive source not present. Expected: the [xhtml]<a href=\"{link}\">Internet Archive</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
-
-							if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
-								messages.append(LintMessage("m-029", f"Google Books source not present. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Collect certain abbr elements to check that required styles are included, but not in the colophon
 				if not dom.xpath("/html/body/*[contains(@epub:type, 'colophon')]"):
