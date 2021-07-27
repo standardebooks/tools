@@ -1269,7 +1269,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					matches = matches + [match.strip() for match in regex.findall(r"(?<!.[—“‘>]|[!\.\?…;]\s)<em>(?:\w+?\s*)+[\.,\!\?;]</em>", file_contents) if match.islower()]
 
 					if matches:
-						messages.append(LintMessage("t-017", "Ending punctuation inside formatting like bold, small caps, or italics. Ending punctuation is only allowed within formatting if the phrase is an independent clause.", se.MESSAGE_TYPE_WARNING, filename, matches))
+						messages.append(LintMessage("t-017", "Ending punctuation inside formatting like bold, small caps, or italics. Ending punctuation is only allowed within formatting if the phrase is an independent clause.", se.MESSAGE_TYPE_WARNING, filename, list(set(matches))))
 
 				# Check for unused selectors
 				if dom.xpath("/html/head/link[contains(@href, 'local.css')]"):
