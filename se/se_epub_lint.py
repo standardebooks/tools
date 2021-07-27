@@ -175,6 +175,8 @@ METADATA
 "m-068", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"title-type\">[/]."
 "m-069", "[text]comprised of[/] in metadata. Hint: Is there a better phrase to use here?"
 "m-070", "Glossary entries not present in the text:"
+"m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/]."
+"m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -1195,7 +1197,19 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if typos:
 						messages.append(LintMessage("t-042", "Possible typo: possible doubled [text]the/and/of/or/as[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-				if dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"):
+				is_colophon = bool(dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"))
+				is_imprint = bool(dom.xpath("/html/body/section[contains(@epub:type, 'imprint')]"))
+
+				if is_colophon or is_imprint:
+					nodes = dom.xpath("/html/body//a[@href='https://www.pgdp.net' and text()!='The Online Distributed Proofreading Team']")
+					if nodes:
+						messages.append(LintMessage("m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+					nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www.pgdp.org/ols/') and text()!='Distributed Proofreaders Open Library System']")
+					if nodes:
+						messages.append(LintMessage("m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				if is_colophon:
 					# Check for wrong grammar filled in from template
 					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
 					if nodes:
@@ -1226,6 +1240,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					if nodes:
 						messages.append(LintMessage("t-006", "Comma after producer name, but there are only two producers.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
+					# Check for some known initialisms with incorrect possessive apostrophes
+					nodes = dom.xpath("/html/body//b[re:test(., 'anonymous', 'i') and re:test(@epub:type, 'z3998:.*?name')]")
+					if nodes:
+						messages.append(LintMessage("s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
 					# Are the sources represented correctly?
 					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
 					nodes = self.metadata_dom.xpath("/package/metadata/dc:source")
@@ -1243,7 +1262,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 							if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
 								messages.append(LintMessage("m-040", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_WARNING, filename))
-
 
 					# Is there a page scan link in the colophon, but missing in the metadata?
 					for node in dom.xpath("/html/body//a[re:test(@href, '(gutenberg\\.org/ebooks/[0-9]+|hathitrust\\.org|archive\\.org|books\\.google\\.com|www\\.google\\.com/books/)')]"):
@@ -2181,11 +2199,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if nodes:
 					messages.append(LintMessage("t-066", "Regnal ordinal preceded by [text]the[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-				# Check for some known initialisms with incorrect possessive apostrophes
-				nodes = dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]//b[re:test(., 'anonymous', 'i') and re:test(@epub:type, 'z3998:.*?name')]")
-				if nodes:
-					messages.append(LintMessage("s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
 				# Check for ldquo or rdquo used instead of ditto mark in tables
 				nodes = dom.xpath("/html/body//table[not(ancestor-or-self::*[contains(@epub:type, 'z3998:drama')])]//td[re:test(normalize-space(.), '(^|\\s)[“”\"]+$')]")
 				if nodes:
@@ -2507,7 +2520,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# If we're in the imprint, are the sources represented correctly?
 				# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
-				if dom.xpath("/html/body/section[contains(@epub:type, 'imprint')]"):
+				if is_imprint:
 					# Check for wrong grammar filled in from template
 					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::node()[1])[re:test(., 'the\\s+$')]]")
 					if nodes:
