@@ -647,6 +647,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 	id_values = {}
 	duplicate_id_values = []
 	ebook_has_subtitle = bool(self.metadata_dom.xpath("/package/metadata/meta[@property='title-type' and text()='subtitle']"))
+	source_links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
 
 	# Iterate over rules to do some other checks
 	abbr_with_whitespace = []
@@ -1201,7 +1202,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				is_colophon = bool(dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"))
 				is_imprint = bool(dom.xpath("/html/body/section[contains(@epub:type, 'imprint')]"))
 
-				if is_colophon or is_imprint:
+				if (is_colophon or is_imprint) and len(source_links) <= 2:
 					# Check that links back to sources are represented correctly
 					nodes = dom.xpath("/html/body//a[@href='https://www.pgdp.net' and text()!='The Online Distributed Proofreading Team']")
 					if nodes:
@@ -1259,9 +1260,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					# Are the sources represented correctly?
 					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
 					# We can't merge this with the imprint check because imprint doesn't have `<br/>` between `the`
-					links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
-					if len(links) <= 2:
-						for link in links:
+					if len(source_links) <= 2:
+						for link in source_links:
 							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
 								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -2533,9 +2533,8 @@ def lint(self, skip_lint_ignore: bool) -> list:
 						messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, missing_imprint_vars))
 
 					# Check for correctly named links. We can't merge this with the colophon check because the colophon breaks `the` with `<br/>`
-					links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
-					if len(links) <= 2:
-						for link in links:
+					if len(source_links) <= 2:
+						for link in source_links:
 							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
 								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
 
