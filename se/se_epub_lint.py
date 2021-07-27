@@ -1202,6 +1202,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				is_imprint = bool(dom.xpath("/html/body/section[contains(@epub:type, 'imprint')]"))
 
 				if is_colophon or is_imprint:
+					# Check that links back to sources are represented correctly
 					nodes = dom.xpath("/html/body//a[@href='https://www.pgdp.net' and text()!='The Online Distributed Proofreading Team']")
 					if nodes:
 						messages.append(LintMessage("m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
@@ -1209,6 +1210,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www.pgdp.org/ols/') and text()!='Distributed Proofreaders Open Library System']")
 					if nodes:
 						messages.append(LintMessage("m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+					# Check for "Hathi Trust" instead of "HathiTrust"
+					nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
+					if nodes:
+						messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 					# Are the sources represented correctly?
 					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
@@ -1354,11 +1360,6 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:roman')][re:test(normalize-space(text()), '[^ivxlcdmIVXLCDM]')]")
 				if nodes:
 					messages.append(LintMessage("s-026", "Invalid Roman numeral.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for "Hathi Trust" instead of "HathiTrust"
-				nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
-				if nodes:
-					messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check that `Internet Archive` and `HathiTrust` are preceded by `the`. They might have an immediate preceding text node that ends in `the`, or they
 				# might be preceded by a white space node, then a <br/>, then a text node ending in `the`.
