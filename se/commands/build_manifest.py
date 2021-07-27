@@ -27,22 +27,23 @@ def build_manifest(plain_output: bool) -> int:
 	for directory in args.directories:
 		try:
 			se_epub = SeEpub(directory)
+
+			if args.stdout:
+				print(se_epub.generate_manifest().to_string())
+			else:
+				nodes = se_epub.metadata_dom.xpath("/package/manifest")
+				if nodes:
+					for node in nodes:
+						node.replace_with(se_epub.generate_manifest())
+				else:
+					for node in se_epub.metadata_dom.xpath("/package"):
+						node.append(se_epub.generate_manifest())
+
+				with open(se_epub.metadata_file_path, "w", encoding="utf-8") as file:
+					file.write(se.formatting.format_xml(se_epub.metadata_dom.to_string()))
+
 		except se.SeException as ex:
 			se.print_error(ex)
 			return ex.code
-
-		if args.stdout:
-			print(se_epub.generate_manifest().to_string())
-		else:
-			nodes = se_epub.metadata_dom.xpath("/package/manifest")
-			if nodes:
-				for node in nodes:
-					node.replace_with(se_epub.generate_manifest())
-			else:
-				for node in se_epub.metadata_dom.xpath("/package"):
-					node.append(se_epub.generate_manifest())
-
-			with open(se_epub.metadata_file_path, "w", encoding="utf-8") as file:
-				file.write(se.formatting.format_xml(se_epub.metadata_dom.to_string()))
 
 	return 0
