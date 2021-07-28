@@ -294,7 +294,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b[EÉ]migr[eé](?!e)", r"Émigré", xhtml)			# Emigre -> Émigré (but not emigrée, which is French)
 	xhtml = regex.sub(r"\b[eé]migr[eé](?!e)", r"émigré", xhtml)			# emigre -> émigré (but not emigrée, which is French)
 	xhtml = regex.sub(r"\b([Cc])ourtezan", r"\1ourtesan", xhtml)			# courtezan -> courtesan
-	xhtml = regex.sub(r"\b([Cc])ompleat", r"\1omplete", xhtml)			# compleat -> complete
+	xhtml = regex.sub(r"\b([Cc])ompleate?", r"\1omplete", xhtml)			# compleat -> complete
 	xhtml = regex.sub(r"\b([Dd])umfound", r"\1umbfound", xhtml)			# dumfound -> dumbfound
 	xhtml = regex.sub(r"\b’([Cc])ello(s?)\b", r"\1ello\2", xhtml)			# 'cello -> cello
 	xhtml = regex.sub(r"\bwelsh (rarebit|rabbit)\b", r"Welsh \1", xhtml)		# welsh rarebit/rabbit -> Welsh rarebit/rabbit
