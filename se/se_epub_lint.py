@@ -2011,7 +2011,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 					messages.append(LintMessage("t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for repeated punctuation, but first remove `&amp;` so we don't match `&amp;,`
-				matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents.replace("&amp;", "")) + regex.findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}", file_contents)
+				matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents.replace("&amp;", "")) + regex.findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}", file_contents) +  regex.findall(r"[\p{Letter}][,\.:;]\s[,\.:;]\s?[\p{Letter}<].{0,20}", file_contents, flags=regex.IGNORECASE)
 				if matches:
 					messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
