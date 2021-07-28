@@ -1106,7 +1106,7 @@ def titlecase(text: str) -> str:
 	text = regex.sub(r"(?:vs\.) The\b", "vs. the", text)
 
 	# Lowercase `de`, `von`, `van`, `le`, `du` as in `Charles de Gaulle`, `Werner von Braun`, etc., and if not the first word and not preceded by an &ldquo;
-	text = regex.sub(r"(?<!^|“)\b(Von|Van Der|Van|Le|Des|De La|De|Du|Di|Del)\b", lambda result: result.group(1).lower(), text)
+	text = regex.sub(r"(?<!^|“)\b(Von|Van Der|Van|Le|\b[aA] La|\b[àÀ] La|Des|De La|De|Du|Di|Del)\b", lambda result: result.group(1).lower(), text)
 
 	# Uppercase word following `Or,`, since it is probably a subtitle
 	text = regex.sub(r"\bOr, ([\p{Lowercase_Letter}])", lambda result: "Or, " + result.group(1).upper(), text)
