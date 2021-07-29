@@ -1569,10 +1569,21 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: consecutive comma-period ([text],.[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
 
+				# Check for missing ending punctuation in paragraphs.
+				# Ignore paragraphs followed by a blockquote/figure/footer, or that are header, table, list, or letter material.
+				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\b(said|[a-z]{2,}ed)$') and not(@epub:type or ancestor::*[name()='header' or name()='table' or name()='blockquote' or name()='li' or contains(@epub:type, 'z3998:letter')] or (following-sibling::*[1])[name()='blockquote' or name()='figure' or name()='footer'])]")]
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
 				# Check for two quotations in one paragraph
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^”]+?”\\s“[^”]+?”$')]")]
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+				# Check for incorrectly nested quotation marks
+				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^‘”]+“') and not(.//br)]")]
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: two opening quotation marks in a run. Hint: Nested quotes should switch between [text]“[/] and [text]‘[/]", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for dashes instead of em-dashes
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\s[a-z]+-(the|there|is|and|they|when)\\s')]")]
