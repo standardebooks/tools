@@ -711,7 +711,7 @@ def _create_draft(args: Namespace):
 				easy_node = se.easy_xml.EasyXmlElement(node)
 				easy_node.remove()
 
-			# lxml will but the xml declaration in a weird place, remove it first
+			# lxml will put the xml declaration in a weird place, remove it first
 			output = regex.sub(r"<\?xml.+?\?>", "", etree.tostring(dom, encoding="unicode"))
 
 			# Now re-add it
@@ -720,16 +720,17 @@ def _create_draft(args: Namespace):
 			# lxml can also output duplicate default namespace declarations so remove the first one only
 			output = regex.sub(r"(xmlns=\".+?\")(\sxmlns=\".+?\")+", r"\1", output)
 
+		except Exception as ex:
+			# Save this error for later; we still want to save the book text and complete the
+			#  create-draft process even if we've failed to parse PG's HTML source.
+			is_pg_html_parsed = False
+			output = pg_ebook_html
+
+		try:
 			with open(content_path / "epub" / "text" / "body.xhtml", "w", encoding="utf-8") as file:
 				file.write(output)
-
 		except OSError as ex:
 			raise se.InvalidFileException(f"Couldn’t write to ebook directory. Exception: {ex}")
-		except Exception as ex:
-			# Save this error for later, because it's still useful to complete the create-draft process
-			# even if we've failed to parse PG's HTML source.
-			is_pg_html_parsed = False
-			se.quiet_remove(content_path / "epub" / "text" / "body.xhtml")
 
 	# Copy over templates
 	_copy_template_file("gitignore", repo_path / ".gitignore")
@@ -802,7 +803,7 @@ def _create_draft(args: Namespace):
 			colophon_xhtml = colophon_xhtml.replace("SE_IDENTIFIER", identifier)
 			colophon_xhtml = colophon_xhtml.replace("TITLE", title)
 
-			contributor_string =  _generate_contributor_string(authors, True)
+			contributor_string = _generate_contributor_string(authors, True)
 
 			if contributor_string == "":
 				colophon_xhtml = colophon_xhtml.replace(" by<br/>\n\t\t\t<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", contributor_string)
@@ -946,7 +947,7 @@ def _create_draft(args: Namespace):
 			config.set_value("user", "email", args.email)
 
 	if args.pg_id and pg_ebook_html and not is_pg_html_parsed:
-		raise se.InvalidXhtmlException("Couldn’t parse Project Gutenberg ebook source. This is usually due to invalid HTML in the ebook.")
+		raise se.InvalidXhtmlException("Couldn’t parse Project Gutenberg ebook source; this is usually due to invalid HTML in the ebook. The raw text was saved to [path]body.xhtml[/].")
 
 def create_draft(plain_output: bool) -> int:
 	"""
