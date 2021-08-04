@@ -675,6 +675,7 @@ def _create_draft(args: Namespace):
 
 	# Write PG data if we have it
 	if args.pg_id and pg_ebook_html:
+		pg_file_local_path = content_path / "epub" / "text" / "body.xhtml"
 		try:
 			dom = etree.parse(StringIO(regex.sub(r"encoding=(?P<quote>[\'\"]).+?(?P=quote)", "", pg_ebook_html)), parser)
 			namespaces = {"re": "http://exslt.org/regular-expressions"}
@@ -727,7 +728,7 @@ def _create_draft(args: Namespace):
 			output = pg_ebook_html
 
 		try:
-			with open(content_path / "epub" / "text" / "body.xhtml", "w", encoding="utf-8") as file:
+			with open(pg_file_local_path, "w", encoding="utf-8") as file:
 				file.write(output)
 		except OSError as ex:
 			raise se.InvalidFileException(f"Couldn’t write to ebook directory. Exception: {ex}")
@@ -947,7 +948,7 @@ def _create_draft(args: Namespace):
 			config.set_value("user", "email", args.email)
 
 	if args.pg_id and pg_ebook_html and not is_pg_html_parsed:
-		raise se.InvalidXhtmlException("Couldn’t parse Project Gutenberg ebook source; this is usually due to invalid HTML in the ebook. The raw text was saved to [path]body.xhtml[/].")
+		raise se.InvalidXhtmlException(f"Couldn’t parse Project Gutenberg ebook source; this is usually due to invalid HTML in the ebook. The raw text was saved to [path][link={pg_file_local_path}]{pg_file_local_path}[/][/].")
 
 def create_draft(plain_output: bool) -> int:
 	"""
