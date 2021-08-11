@@ -1170,6 +1170,9 @@ def titlecase(text: str) -> str:
 	# More special cases
 	text = regex.sub(r"des Moines", "Des Moines", text)
 
+	# Like `Will-o’-the-Wisp`
+	text = regex.sub(r"(?<=-)(O’|The)-", lambda result: result.group(1).lower() + "-", text)
+
 	return text
 
 def make_url_safe(text: str) -> str:
