@@ -50,6 +50,9 @@ def clean(plain_output: bool) -> int:
 			except se.SeException as ex:
 				se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]. Exception: {ex}", args.verbose, plain_output=plain_output)
 				return ex.code
+			except FileNotFoundError as ex:
+				se.print_error(f"Invalid file: [path][link=file://{filepath}]{filepath}[/][/].", args.verbose, plain_output=plain_output)
+				return se.InvalidFileException.code
 
 		if args.verbose:
 			console.print(" OK")
