@@ -273,6 +273,7 @@ SEMANTICS & CONTENT
 "s-091", "[xhtml]<span>[/] not followed by [xhtml]<br/>[/] in poetry."
 "s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic."
 "s-093", "Nested [xhtml]<abbr>[/] element."
+"s-094", "Endnote out of sequence."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1857,6 +1858,16 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]/p[not(preceding-sibling::*)]/cite[not(preceding-sibling::node()[normalize-space(.)]) and (following-sibling::node()[normalize-space(.)])[1][contains(@epub:type, 'backlink')]]")
 				if nodes:
 					messages.append(LintMessage("s-035", "Endnote containing only [xhtml]<cite>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check that endnotes start at 1 and are in an uninterrupted sequence
+				nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]")
+				if nodes:
+					current_endnote = 1
+					for node in nodes:
+						if node.get_attr("id").replace("note-", "") != str(current_endnote):
+							messages.append(LintMessage("s-094", "Endnote out of sequence.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string()]))
+
+						current_endnote = current_endnote + 1
 
 				# Check for style attributes
 				nodes = dom.xpath("/html/body//*[@style]")
