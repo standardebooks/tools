@@ -205,6 +205,7 @@ case $state in
 			renumber-endnotes)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
+					{-b,--brute-force}'[renumber without checking that noterefs and endnotes match; may result in endnotes with empty backlinks or noterefs without matching endnotes]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_directories'
 				;;

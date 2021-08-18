@@ -111,7 +111,7 @@ _se(){
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			renumber-endnotes)
-				COMPREPLY+=($(compgen -W "-h --help -v --verbose" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-h --help -b --brute-force -v --verbose" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			roman2dec)

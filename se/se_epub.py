@@ -1152,7 +1152,7 @@ class SeEpub:
 
 		return toc_xhtml
 
-	def check_endnotes(self) -> list:
+	def _check_endnotes(self) -> list:
 		"""
 		Initial check to see if all note references in the body have matching endnotes
 		in endnotes.xhtml and no duplicates.
@@ -1196,6 +1196,46 @@ class SeEpub:
 			response.append(f"Orphan endnote with anchor: {orphan}")
 		return response
 
+	def recreate_endnotes(self) -> None:
+		"""
+		Renumber all noterefs starting from 1, and renumber all endnotes starting from 1.
+		Does not perform any sanity checks or do any rearranging; may result in more noterefs than endnotes, or more endnotes than noterefs.
+		Changes are written to disk.
+		"""
+
+		noteref_locations = {}
+
+		current_note_number = 1
+
+		# Renumber all noterefs starting from 1
+		for file_path in self.spine_file_paths:
+			dom = self.get_dom(file_path)
+
+			for node in dom.xpath("/html/body//a[contains(@epub:type, 'noteref')]"):
+				node.set_attr("href", f"endnotes.xhtml#note-{current_note_number}")
+				node.set_attr("id", f"noteref-{current_note_number}")
+				node.set_text(str(current_note_number))
+				noteref_locations[current_note_number] = file_path
+
+				current_note_number += 1
+
+			with open(file_path, "w") as file:
+				file.write(dom.to_string())
+
+		# Renumber all endnotes starting from 1
+		current_note_number = 1
+		endnotes_dom = self.get_dom(self.endnotes_path)
+		for node in endnotes_dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]"):
+			node.set_attr("id", f"note-{current_note_number}")
+			for backlink in node.xpath(".//a[contains(@epub:type, 'backlink')]"):
+				filename = noteref_locations[current_note_number].name if current_note_number in noteref_locations else ""
+				backlink.set_attr("href", f"{filename}#noteref-{current_note_number}")
+
+			current_note_number += 1
+
+		with open(self.endnotes_path, "w") as file:
+			file.write(endnotes_dom.to_string())
+
 	def generate_endnotes(self) -> Tuple[int, int]:
 		"""
 		Read the epub spine to regenerate all endnotes in order of appearance, starting from 1.
@@ -1204,13 +1244,13 @@ class SeEpub:
 		Returns a tuple of (found_endnote_count, changed_endnote_count)
 		"""
 
-		# do a safety check first, throw exception if it failed
-		results = self.check_endnotes()
+		# Do a safety check first, throw exception if it failed
+		results = self._check_endnotes()
 		if results:
 			report = "\n".join(results)
 			raise se.InvalidInputException(f"Endnote error(s) found: {report}.")
 
-		# if we get here, it's safe to proceed
+		# If we get here, it's safe to proceed
 		processed = 0
 		current_note_number = 1
 		notes_changed = 0
@@ -1235,7 +1275,7 @@ class SeEpub:
 				with open(file_path, "w") as file:
 					file.write(se.formatting.format_xhtml(dom.to_string()))
 
-		# now process any endnotes WITHIN the endnotes
+		# Now process any endnotes WITHIN the endnotes
 		for source_note in self.endnotes:
 			node = source_note.node
 			needs_rewrite = False
