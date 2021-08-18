@@ -120,7 +120,7 @@ def lint(plain_output: bool) -> int:
 				table = Table(show_header=True, header_style="bold", show_lines=True, expand=True)
 				table.add_column("Code", width=5, no_wrap=True)
 				table.add_column("Severity", no_wrap=True)
-				table.add_column("File", no_wrap=True)
+				table.add_column("File", max_width=25, no_wrap=True)
 				table.add_column("Message", ratio=10)
 
 				for row in table_data:
