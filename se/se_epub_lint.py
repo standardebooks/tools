@@ -1869,11 +1869,15 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]")
 				if nodes:
 					current_endnote = 1
+					endnotes_out_of_sequence = []
 					for node in nodes:
 						if node.get_attr("id").replace("note-", "") != str(current_endnote):
-							messages.append(LintMessage("s-094", "Endnote out of sequence.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string()]))
+							endnotes_out_of_sequence.append(node.to_tag_string())
 
 						current_endnote = current_endnote + 1
+
+					if endnotes_out_of_sequence:
+						messages.append(LintMessage("s-094", "Endnote out of sequence.", se.MESSAGE_TYPE_ERROR, filename, endnotes_out_of_sequence))
 
 				# Check for style attributes
 				nodes = dom.xpath("/html/body//*[@style]")
