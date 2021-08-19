@@ -1612,6 +1612,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: [xhtml]<abbr>[/] directly preceded or followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
+				# Check for misapplied italics. Ignore 's' because the plural is too common.
+				typos = [node.to_string() for node in dom.xpath("/html/body//*[(name() = 'i' or name() = 'em') and ./following-sibling::node()[1][re:test(., '^[a-z]\\b', 'i') and not(re:test(., '^s\\b'))]]")]
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: Italics followed by a letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
 				# Check for body element without child section or article. Ignore the ToC because it has a unique structure
 				nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and contains(@epub:type, 'toc'))])]")
 				if nodes:
