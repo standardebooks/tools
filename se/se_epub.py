@@ -1113,7 +1113,7 @@ class SeEpub:
 
 		return self.metadata_dom.xpath("/package/metadata/dc:title/text()", True) or "WORK_TITLE"
 
-	def lint(self, skip_lint_ignore: bool) -> list:
+	def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> list:
 		"""
 		The lint() function is very big so for readability and maintainability
 		it's broken out to a separate file. Strictly speaking that file can be inlined
@@ -1122,7 +1122,7 @@ class SeEpub:
 
 		from se.se_epub_lint import lint # pylint: disable=import-outside-toplevel
 
-		return lint(self, skip_lint_ignore)
+		return lint(self, skip_lint_ignore, allowed_messages)
 
 	def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool) -> None:
 		"""

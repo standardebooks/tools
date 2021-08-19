@@ -83,9 +83,9 @@ complete -c se -A -n "__fish_seen_subcommand_from interactive-replace" -s v -l v
 
 complete -c se -n "__fish_se_no_subcommand" -a lint -d "Check for various Standard Ebooks style errors."
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from lint" -s s -l skip-lint-ignore -d "ignore rules in se-lint-ignore.xml file"
+complete -c se -A -n "__fish_seen_subcommand_from lint" -s a -l allow -d "if an se-lint-ignore.xml file is present, allow these specific codes to be raised by lint"
+complete -c se -A -n "__fish_seen_subcommand_from lint" -s s -l skip-lint-ignore -d "ignore all rules in the se-lint-ignore.xml file"
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s v -l verbose -d "increase output verbosity"
-complete -c se -A -n "__fish_seen_subcommand_from lint" -s w -l wrap -d "force lines to wrap at this number of columns instead of auto-wrapping"
 
 complete -c se -n "__fish_se_no_subcommand" -a make-url-safe -d "Make a string URL-safe."
 complete -c se -A -n "__fish_seen_subcommand_from make-url-safe" -s h -l help -x -d "show this help message and exit"

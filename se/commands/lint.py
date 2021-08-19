@@ -21,7 +21,8 @@ def lint(plain_output: bool) -> int:
 	"""
 
 	parser = argparse.ArgumentParser(description="Check for various Standard Ebooks style errors.")
-	parser.add_argument("-s", "--skip-lint-ignore", action="store_true", help="ignore rules in se-lint-ignore.xml file")
+	parser.add_argument("-a", "--allow", dest="allowed_messages", nargs="+", help="if an se-lint-ignore.xml file is present, allow these specific codes to be raised by lint")
+	parser.add_argument("-s", "--skip-lint-ignore", action="store_true", help="ignore all rules in the se-lint-ignore.xml file")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
@@ -45,7 +46,7 @@ def lint(plain_output: bool) -> int:
 
 		try:
 			se_epub = SeEpub(directory)
-			messages = se_epub.lint(args.skip_lint_ignore)
+			messages = se_epub.lint(args.skip_lint_ignore, args.allowed_messages)
 		except se.SeException as ex:
 			exception = ex
 			if len(args.directories) > 1:

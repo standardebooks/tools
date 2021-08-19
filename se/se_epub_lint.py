@@ -532,7 +532,7 @@ def _get_selectors_and_rules (self) -> tuple:
 
 	return (local_css_rules, duplicate_selectors)
 
-def lint(self, skip_lint_ignore: bool) -> list:
+def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> list:
 	"""
 	Check this ebook for some common SE style errors.
 
@@ -582,6 +582,9 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 		has_illegal_path = False
 
+		if not allowed_messages:
+			allowed_messages = []
+
 		for element in elements:
 			path = element.get_attr("path").strip()
 
@@ -595,7 +598,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				if ignore.tag == "ignore":
 					has_reason = False
 					for child in ignore:
-						if child.tag == "code":
+						if child.tag == "code" and child.text.strip() not in allowed_messages:
 							ignored_codes[path].append({"code": child.text.strip(), "used": False})
 
 						if child.tag == "reason" and child.text.strip() != "":

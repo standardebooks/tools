@@ -86,7 +86,7 @@ _se(){
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			lint)
-				COMPREPLY+=($(compgen -W "-h --help -s --skip-lint-ignore -v --verbose -w --wrap=" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-h --help -a= --allow= -s --skip-lint-ignore -v --verbose" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			make-url-safe)

@@ -169,9 +169,9 @@ case $state in
 			lint)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
-					{-s,--skip-lint-ignore}'[ignore rules in se-lint-ignore.xml file]' \
+					{-a,--allow}'[if an se-lint-ignore.xml file is present, allow these specific codes to be raised by lint]' \
+					{-s,--skip-lint-ignore}'[ignore all rules in the se-lint-ignore.xml file]' \
 					{-v,--verbose}'[increase output verbosity]' \
-					{-w,--wrap}'[force lines to wrap at this number of columns instead of auto-wrapping]' \
 					'*: :_directories'
 				;;
 			make-url-safe)
