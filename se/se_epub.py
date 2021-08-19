@@ -957,7 +957,8 @@ class SeEpub:
 					properties_attr = f" properties=\"{properties_attr}\""
 
 				# Add the manifest item
-				manifest.append(f"""<item href="{file_path.relative_to(self.content_path)}" id="{file_path.name}" media-type="{mime_type}"{properties_attr}/>""")
+				# Replace the path separator because if run on Windows we will get the wrong slash direction from pathlib
+				manifest.append(f"""<item href="{str(file_path.relative_to(self.content_path)).replace(os.sep, "/")}" id="{file_path.name}" media-type="{mime_type}"{properties_attr}/>""")
 
 		manifest = natsorted(manifest)
 
