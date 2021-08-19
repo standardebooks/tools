@@ -343,6 +343,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Aa])ny thing\b", r"\1nything", xhtml)			# any thing -> anything
 	xhtml = regex.sub(r"\b([Rr])e-?enforce", r"\1inforce", xhtml)			# re-enforce -> reinforce
 	xhtml = regex.sub(r"\b([Ll])uny", r"\1oony", xhtml)				# luny -> loony
+	xhtml = regex.sub(r"\b([Vv])icuna", r"\1icuña", xhtml)				# vicuna -> vicuña
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
