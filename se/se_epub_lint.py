@@ -1781,7 +1781,7 @@ def lint(self, skip_lint_ignore: bool) -> list:
 
 				# Check for `Op. Cit.` in endnotes. `Op. Cit.` means "the previous reference" which doesn't make sense
 				# in popup endnotes. But, if the endnote has a book reference, then allow it as it might be referring to that.
-				nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote') and re:test(., '(Loc\\.|Op\\.) Cit\\.', 'i') and not(.//*[contains(@epub:type, 'se:name.publication')])]")
+				nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote') and (re:test(., '(Loc\\.|Op\\.) Cit\\.', 'i') or re:test(., '\\bl\\.c\\.\\b', 'i')) and not(.//*[contains(@epub:type, 'se:name.publication')])]")
 				if nodes:
 					messages.append(LintMessage("s-086", "[text]Op. Cit.[/] or [text]Loc. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] and [text]Loc. Cit.[/] mean [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
 
