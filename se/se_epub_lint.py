@@ -342,6 +342,7 @@ TYPOGRAPHY
 "t-064", "Title not correctly titlecased. Hint: Non-English titles should have an [attr]xml:lang[/] attribute as they have different titlecasing rules."
 "t-065", "Header ending in a period."
 "t-066", "Regnal ordinal preceded by [text]the[/]."
+"t-067", "Plural [val]z3998:grapheme[/], [val]z3998:phoneme[/], or [val]z3998:morpheme[/] formed without apostrophe ([text]’[/])."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1825,6 +1826,11 @@ def lint(self, skip_lint_ignore: bool) -> list:
 				nodes = dom.xpath("/html/body/*[name() != 'section' and name() != 'article' and name() != 'nav']")
 				if nodes:
 					messages.append(LintMessage("s-075", "[xhtml]<body>[/] element with direct child that is not [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+				# Check for plural graphemes without apostrophes
+				nodes = dom.xpath("/html/body//i[re:test(@epub:type, 'z3998:(grapheme|phoneme|morpheme)') and ./following-sibling::node()[1][starts-with(., 's')]]")
+				if nodes:
+					messages.append(LintMessage("t-067", "Plural [val]z3998:grapheme[/], [val]z3998:phoneme[/], or [val]z3998:morpheme[/] formed without apostrophe ([text]’[/]).", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for quotation marks in italicized dialog
 				nodes = dom.xpath("/html/body//i[@xml:lang][starts-with(., '“') or re:test(., '”$')]")
