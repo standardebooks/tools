@@ -95,27 +95,27 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)([Vv])s\.", r"<abbr>\1s.</abbr>", xhtml)
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)([Ff])f\.", r"<abbr>\1f.</abbr>", xhtml) # ff. typically used in footnotes, means "and following"
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)([Ll])ib\.", r"<abbr>\1ib.</abbr>", xhtml) # Lib. = Liber = Book
-	# python allows a variable lookbehind with the ( eoc)?; HOWEVER, it counts it as the
-	#	first capture group, so if there are one or more capture groups in the regex itself,
-	#	be sure to start at 2 when specifying the group(s) in the replacement spec.
-	xhtml = regex.sub(r"""(?<!\<abbr epub:type="z3998:initialism"( class="eoc")?\>)([Ii])\.e\.""", r"""<abbr epub:type="z3998:initialism">\2.e.</abbr>""", xhtml)
-	xhtml = regex.sub(r"""(?<!\<abbr epub:type="z3998:initialism"( class="eoc")?\>)([Ee])\.g\.""", r"""<abbr epub:type="z3998:initialism">\2.g.</abbr>""", xhtml)
-	xhtml = regex.sub(r"""(?<!\<abbr epub:type="z3998:initialism"( class="eoc")?\>)\bN\.?B\.\b""", r"""<abbr epub:type="z3998:initialism">N.B.</abbr>""", xhtml)
-	xhtml = regex.sub(r"""(?<!\<abbr epub:type="z3998:name-title"( class="eoc")?\>)Ph\.?\s*D\.?""", r"""<abbr epub:type="z3998:name-title">Ph. D.</abbr>""", xhtml)
-	xhtml = regex.sub(r"""(?<!\<abbr epub:type="z3998:initialism"( class="eoc")?\>)I\.?O\.?U\.?\b""", r"""<abbr epub:type="z3998:initialism">I.O.U.</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(\s)(?<!\<abbr epub:type="se:era"\>)A\.?D""", r"""\1<abbr epub:type="se:era">AD</abbr>""", xhtml)
-	xhtml = regex.sub(r"""(\s)(?<!\<abbr epub:type="se:era"( class="eoc")?\>)B\.?C""", r"""\1<abbr epub:type="se:era">BC</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(\s)(?<!\<abbr epub:type="se:era"\>)B\.?C""", r"""\1<abbr epub:type="se:era">BC</abbr>""", xhtml)
+	# python allows a variable lookbehind with the ( class="eoc")?; HOWEVER, it counts as a
+	#	capture group, so replacement groups have to begin with \2; when looking before and
+	#	after a tag, the replacement groups have to begin with \3.
+	xhtml = regex.sub(r"""(?<!\<abbr( class="eoc")? epub:type="z3998:initialism"( class="eoc")?\>)([Ii])\.e\.""", r"""<abbr epub:type="z3998:initialism">\3.e.</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr( class="eoc")? epub:type="z3998:initialism"( class="eoc")?\>)([Ee])\.g\.""", r"""<abbr epub:type="z3998:initialism">\3.g.</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr( class="eoc")? epub:type="z3998:initialism"( class="eoc")?\>)\bN\.?B\.\b""", r"""<abbr epub:type="z3998:initialism">N.B.</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr( class="eoc")? epub:type="z3998:name-title"( class="eoc")?\>)Ph\.?\s*D\.?""", r"""<abbr epub:type="z3998:name-title">Ph. D.</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr( class="eoc")? epub:type="z3998:initialism"?( class="eoc")?\>)I\.?O\.?U\.?\b""", r"""<abbr epub:type="z3998:initialism">I.O.U.</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr( class="eoc")? epub:type="z3998:initialism"( class="eoc")?\>)T\.?V\.?\b""", r"""<abbr epub:type="z3998:initialism">TV</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr( class="eoc")? epub:type="z3998:initialism"( class="eoc")?\>)\b([1-4]D)\b""", r"""<abbr epub:type="z3998:initialism">\3</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(?<!\<abbr( class="eoc")? epub:type="z3998:given-name"( class="eoc")?\>)(Thos\.|Jas\.|Chas\.|Wm\.)""", r"""<abbr epub:type="z3998:given-name">\3</abbr>""", xhtml)
 	xhtml = regex.sub(r"""(?<!\<abbr( class="eoc")?\>)([ap])\.\s?m\.""", r"""<abbr>\2.m.</abbr>""", xhtml)
-	xhtml = regex.sub(r"""(?<!\<abbr epub:type="z3998:given-name"( class="eoc")?\>)(Thos\.|Jas\.|Chas\.|Wm\.)""", r"""<abbr epub:type="z3998:given-name">\2</abbr>""", xhtml)
-	xhtml = regex.sub(r"""(?<!\<abbr epub:type="z3998:initialism"( class="eoc")?\>)T\.?V\.?\b""", r"""<abbr epub:type="z3998:initialism">TV</abbr>""", xhtml)
-	xhtml = regex.sub(r"""(?<!\<abbr epub:type="z3998:initialism"( class="eoc")?\>)\b([1-4]D)\b""", r"""<abbr epub:type="z3998:initialism">\2</abbr>""", xhtml)
 
 	# Wrap £sd shorthand
 	xhtml = regex.sub(r"([0-9½¼⅙⅚⅛⅜⅝]+)([sd⅞]\.)", r"\1<abbr>\2</abbr>", xhtml)
 
 	# Guess at adding eoc (End Of Clause) class
 	xhtml = regex.sub(r"""<abbr>([\p{Letter}\.]+?\.)</abbr></p>""", r"""<abbr class="eoc">\1</abbr></p>""", xhtml)
-	xhtml = regex.sub(r"""<abbr class="(.+?)">([\p{Letter}\.]+?\.)</abbr></p>""", r"""<abbr class="\1 eoc">\2</abbr></p>""", xhtml)
+	xhtml = regex.sub(r"""<abbr(.*?) class="(.+?)"(.*?)>([\p{Letter}\.]+?\.)</abbr></p>""", r"""<abbr\1 class="\2 eoc"\3>\4</abbr></p>""", xhtml)
 	xhtml = regex.sub(r"""<abbr>etc\.</abbr>(\s+[\p{Uppercase_Letter}])""", r"""<abbr class="eoc">etc.</abbr>\1""", xhtml)
 	xhtml = regex.sub(r"""<abbr>etc\.</abbr>(”?)</p>""", r"""<abbr class="eoc">etc.</abbr>\1</p>""", xhtml)
 
