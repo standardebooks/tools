@@ -95,8 +95,12 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)([Vv])s\.", r"<abbr>\1s.</abbr>", xhtml)
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)([Ff])f\.", r"<abbr>\1f.</abbr>", xhtml) # ff. typically used in footnotes, means "and following"
 	xhtml = regex.sub(r"\b(?<!\<abbr\>)([Ll])ib\.", r"<abbr>\1ib.</abbr>", xhtml) # Lib. = Liber = Book
-	xhtml = regex.sub(r"""(\s)(?<!\<abbr epub:type="se:era"\>)A\.?D""", r"""\1<abbr epub:type="se:era">AD</abbr>""", xhtml)
-	xhtml = regex.sub(r"""(\s)(?<!\<abbr epub:type="se:era"\>)B\.?C""", r"""\1<abbr epub:type="se:era">BC</abbr>""", xhtml)
+    # keep a period after AD/BC that terminates a clause
+	xhtml = regex.sub(r"""(\s)(?<!\<abbr epub:type="se:era"\>)A\.?D\.([”’]?</p>|\s+[“‘]?[\p{Uppercase_Letter}])""", r"""\1<abbr epub:type="se:era">AD</abbr>.\2""", xhtml)
+	xhtml = regex.sub(r"""(\s)(?<!\<abbr epub:type="se:era"\>)B\.?C\.([”’]?</p>|\s+[“‘]?[\p{Uppercase_Letter}])""", r"""\1<abbr epub:type="se:era">BC</abbr>.\2""", xhtml)
+    # otherwise, get rid of any periods in the abbreviation
+	xhtml = regex.sub(r"""(\s)(?<!\<abbr epub:type="se:era"\>)A\.?D\.?""", r"""\1<abbr epub:type="se:era">AD</abbr>""", xhtml)
+	xhtml = regex.sub(r"""(\s)(?<!\<abbr epub:type="se:era"\>)B\.?C\.?""", r"""\1<abbr epub:type="se:era">BC</abbr>""", xhtml)
 	# python allows a variable lookbehind with the ( class="eoc")?; HOWEVER, it counts as a
 	#	capture group, so replacement groups have to begin with \2; when looking before and
 	#	after a tag, the replacement groups have to begin with \3.
