@@ -7,6 +7,7 @@ from io import StringIO
 import shutil
 import urllib.parse
 from argparse import Namespace
+from html import escape
 from pathlib import Path
 from typing import Optional, Tuple, Union, List, Dict
 
@@ -208,7 +209,7 @@ def _generate_titlepage_svg(title: str, authors: List[str], contributors: dict, 
 	# Add the title
 	for line in title_lines:
 		element_y += TITLEPAGE_TITLE_HEIGHT
-		text_elements += f"\t<text class=\"title\" x=\"700\" y=\"{element_y:.0f}\">{line}</text>\n"
+		text_elements += f"\t<text class=\"title\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
 		element_y += TITLEPAGE_TITLE_MARGIN
 
 	element_y -= TITLEPAGE_TITLE_MARGIN
@@ -220,7 +221,7 @@ def _generate_titlepage_svg(title: str, authors: List[str], contributors: dict, 
 	for author_lines in authors_lines:
 		for line in author_lines:
 			element_y += TITLEPAGE_AUTHOR_HEIGHT
-			text_elements += f"\t<text class=\"author\" x=\"700\" y=\"{element_y:.0f}\">{line}</text>\n"
+			text_elements += f"\t<text class=\"author\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
 			element_y += TITLEPAGE_AUTHOR_MARGIN
 
 	if authors:
@@ -231,12 +232,12 @@ def _generate_titlepage_svg(title: str, authors: List[str], contributors: dict, 
 		element_y += TITLEPAGE_CONTRIBUTORS_SPACING
 		for contributor in contributor_lines:
 			element_y += TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT
-			text_elements += f"\t<text class=\"contributor-descriptor\" x=\"700\" y=\"{element_y:.0f}\">{contributor[0]}</text>\n"
+			text_elements += f"\t<text class=\"contributor-descriptor\" x=\"700\" y=\"{element_y:.0f}\">{escape(contributor[0])}</text>\n"
 			element_y += TITLEPAGE_CONTRIBUTOR_MARGIN
 
 			for person in contributor[1]:
 				element_y += TITLEPAGE_CONTRIBUTOR_HEIGHT
-				text_elements += f"\t<text class=\"contributor\" x=\"700\" y=\"{element_y:.0f}\">{person}</text>\n"
+				text_elements += f"\t<text class=\"contributor\" x=\"700\" y=\"{element_y:.0f}\">{escape(person)}</text>\n"
 				element_y += TITLEPAGE_CONTRIBUTOR_MARGIN
 
 			element_y -= TITLEPAGE_CONTRIBUTOR_MARGIN
@@ -251,7 +252,7 @@ def _generate_titlepage_svg(title: str, authors: List[str], contributors: dict, 
 
 	element_y += TITLEPAGE_VERTICAL_PADDING
 
-	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLE_STRING", title_string)
+	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLE_STRING", escape(title_string))
 	svg = regex.sub(r"viewBox=\".+?\"", f"viewBox=\"0 0 {se.TITLEPAGE_WIDTH} {element_y:.0f}\"", svg)
 
 	return svg
@@ -320,7 +321,7 @@ def _generate_cover_svg(title: str, authors: List[str], title_string: str) -> st
 	# Add the title
 	for line in title_lines:
 		element_y += title_height
-		text_elements += f"\t<text class=\"{title_class}\" x=\"700\" y=\"{element_y:.0f}\">{line}</text>\n"
+		text_elements += f"\t<text class=\"{title_class}\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
 		element_y += COVER_TITLE_MARGIN
 
 	element_y -= COVER_TITLE_MARGIN
@@ -332,7 +333,7 @@ def _generate_cover_svg(title: str, authors: List[str], title_string: str) -> st
 		for author_lines in authors_lines:
 			for line in author_lines:
 				element_y += COVER_AUTHOR_HEIGHT
-				text_elements += f"\t<text class=\"author\" x=\"700\" y=\"{element_y:.0f}\">{line}</text>\n"
+				text_elements += f"\t<text class=\"author\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
 				element_y += COVER_AUTHOR_MARGIN
 
 		element_y -= COVER_AUTHOR_MARGIN
@@ -347,7 +348,7 @@ def _generate_cover_svg(title: str, authors: List[str], title_string: str) -> st
 	if title_class != "title-xsmall":
 		svg = regex.sub(r"\n\n\t\t\.title-xsmall\{.+?\}", "", svg, flags=regex.DOTALL)
 
-	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLE_STRING", title_string)
+	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLE_STRING", escape(title_string))
 
 	return svg
 
@@ -429,25 +430,25 @@ def _generate_contributor_string(contributors: List[Dict], include_xhtml: bool) 
 	if len(contributors) == 1:
 		if include_xhtml:
 			if contributors[0]["wiki_url"]:
-				output += f"""<a href="{contributors[0]['wiki_url']}">{_add_name_abbr(contributors[0]['name'])}</a>"""
+				output += f"""<a href="{contributors[0]['wiki_url']}">{_add_name_abbr(escape(contributors[0]['name']))}</a>"""
 			else:
-				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(contributors[0]['name'])}</b>"""
+				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributors[0]['name']))}</b>"""
 		else:
 			output += contributors[0]["name"]
 
 	elif len(contributors) == 2:
 		if include_xhtml:
 			if contributors[0]["wiki_url"]:
-				output += f"""<a href="{contributors[0]['wiki_url']}">{_add_name_abbr(contributors[0]['name'])}</a>"""
+				output += f"""<a href="{contributors[0]['wiki_url']}">{_add_name_abbr(escape(contributors[0]['name']))}</a>"""
 			else:
-				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(contributors[0]['name'])}</b>"""
+				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributors[0]['name']))}</b>"""
 
 			output += " and "
 
 			if contributors[1]["wiki_url"]:
-				output += f"""<a href="{contributors[1]['wiki_url']}">{_add_name_abbr(contributors[1]['name'])}</a>"""
+				output += f"""<a href="{contributors[1]['wiki_url']}">{_add_name_abbr(escape(contributors[1]['name']))}</a>"""
 			else:
-				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(contributors[1]['name'])}</b>"""
+				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributors[1]['name']))}</b>"""
 		else:
 			output += contributors[0]["name"] + " and " + contributors[1]["name"]
 
@@ -461,9 +462,9 @@ def _generate_contributor_string(contributors: List[Dict], include_xhtml: bool) 
 
 			if include_xhtml:
 				if contributor["wiki_url"]:
-					output += f"""<a href="{contributor['wiki_url']}">{_add_name_abbr(contributor['name'])}</a>"""
+					output += f"""<a href="{contributor['wiki_url']}">{_add_name_abbr(escape(contributor['name']))}</a>"""
 				else:
-					output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(contributor['name'])}</b>"""
+					output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributor['name']))}</b>"""
 			else:
 				output += contributor["name"]
 
@@ -495,7 +496,7 @@ def _generate_metadata_contributor_xml(contributors: List[Dict], contributor_typ
 		# Make an attempt at figuring out the file-as name. We check for some common two-word last names.
 		matches = regex.findall(r"^(.+?)\s+((?:(?:Da|Das|De|Del|Della|Di|Du|El|La|Le|Van|Van Der|Von)\s+)?[^\s]+)$", contributor["name"])
 		if matches:
-			contributor_block = contributor_block.replace(">CONTRIBUTOR_SORT<", f">{matches[0][1]}, {matches[0][0]}<")
+			contributor_block = contributor_block.replace(">CONTRIBUTOR_SORT<", f">{escape(matches[0][1])}, {escape(matches[0][0])}<")
 
 		if contributor["name"].lower() == "anonymous":
 			contributor_block = contributor_block.replace(">CONTRIBUTOR_SORT<", ">Anonymous<")
@@ -503,7 +504,7 @@ def _generate_metadata_contributor_xml(contributors: List[Dict], contributor_typ
 			contributor_block = contributor_block.replace("""<meta property="se:url.encyclopedia.wikipedia" refines="#ID">CONTRIBUTOR_WIKI_URL</meta>""", "")
 			contributor_block = contributor_block.replace("""<meta property="se:url.authority.nacoaf" refines="#ID">CONTRIBUTOR_NACOAF_URI</meta>""", "")
 
-		contributor_block = contributor_block.replace(">CONTRIBUTOR_NAME<", f">{contributor['name']}<")
+		contributor_block = contributor_block.replace(">CONTRIBUTOR_NAME<", f">{escape(contributor['name'])}<")
 		contributor_block = contributor_block.replace("id=\"CONTRIBUTOR_ID\"", f"id=\"{contributor_type}-{i + 1}\"")
 		contributor_block = contributor_block.replace("#CONTRIBUTOR_ID", f"#{contributor_type}-{i + 1}")
 
@@ -768,11 +769,11 @@ def _create_draft(args: Namespace):
 		ebook_wiki_url, _ = _get_wikipedia_url(title, False)
 
 	if args.white_label:
-		_replace_in_file(content_path / "epub" / "text" / "titlepage.xhtml", "TITLE", title)
-		_replace_in_file(content_path / "epub" / "text" / "titlepage.xhtml", "AUTHOR", _generate_contributor_string(authors, False))
+		_replace_in_file(content_path / "epub" / "text" / "titlepage.xhtml", "TITLE", escape(title))
+		_replace_in_file(content_path / "epub" / "text" / "titlepage.xhtml", "AUTHOR", escape(_generate_contributor_string(authors, False)))
 
 	else:
-		_replace_in_file(content_path / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", title_string)
+		_replace_in_file(content_path / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", escape(title_string))
 
 		# Create the titlepage SVG
 		contributors = {}
@@ -802,12 +803,12 @@ def _create_draft(args: Namespace):
 			colophon_xhtml = file.read()
 
 			colophon_xhtml = colophon_xhtml.replace("SE_IDENTIFIER", identifier)
-			colophon_xhtml = colophon_xhtml.replace("TITLE", title)
+			colophon_xhtml = colophon_xhtml.replace("TITLE", escape(title))
 
 			contributor_string = _generate_contributor_string(authors, True)
 
 			if contributor_string == "":
-				colophon_xhtml = colophon_xhtml.replace(" by<br/>\n\t\t\t<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", contributor_string)
+				colophon_xhtml = colophon_xhtml.replace(" by<br/>\n\t\t\t<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", escape(contributor_string))
 			else:
 				colophon_xhtml = colophon_xhtml.replace("<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", contributor_string)
 
@@ -829,7 +830,7 @@ def _create_draft(args: Namespace):
 						elif "anonymous" in producer.lower():
 							producers_xhtml = producers_xhtml + """<b epub:type="z3998:personal-name">An Anonymous Volunteer</b>"""
 						else:
-							producers_xhtml = producers_xhtml + f"""<b epub:type="z3998:personal-name">{_add_name_abbr(producer).strip('.')}</b>"""
+							producers_xhtml = producers_xhtml + f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(producer)).strip('.')}</b>"""
 
 						if i < len(pg_producers) - 1:
 							producers_xhtml = producers_xhtml + ", "
@@ -850,8 +851,8 @@ def _create_draft(args: Namespace):
 		metadata_xml = file.read()
 
 		metadata_xml = metadata_xml.replace("SE_IDENTIFIER", identifier)
-		metadata_xml = metadata_xml.replace(">TITLE_SORT<", f">{sorted_title}<")
-		metadata_xml = metadata_xml.replace(">TITLE<", f">{title}<")
+		metadata_xml = metadata_xml.replace(">TITLE_SORT<", f">{escape(sorted_title)}<")
+		metadata_xml = metadata_xml.replace(">TITLE<", f">{escape(title)}<")
 		metadata_xml = metadata_xml.replace("VCS_IDENTIFIER", str(repo_name))
 
 		if pg_producers:
@@ -864,7 +865,7 @@ def _create_draft(args: Namespace):
 				elif "anonymous" in producer.lower():
 					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">An Anonymous Volunteer</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Anonymous Volunteer, An</meta>\n"
 				else:
-					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">{producer.strip('.')}</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">TRANSCRIBER_SORT</meta>\n"
+					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">{escape(producer.strip('.'))}</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">TRANSCRIBER_SORT</meta>\n"
 
 				# Homepage
 				if "Distributed Proofread" in producer:
