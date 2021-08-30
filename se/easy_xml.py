@@ -97,13 +97,18 @@ class EasyXmlTree:
 		result: List[Union[str, EasyXmlElement]] = []
 
 		try:
-			for element in self.etree.xpath(selector, namespaces=self.namespaces):
-				if isinstance(element, etree._ElementUnicodeResult): # pylint: disable=protected-access
-					result.append(str(element))
-				elif isinstance(element, str):
-					result.append(element)
-				else:
-					result.append(EasyXmlElement(element, self.namespaces))
+			query_result = self.etree.xpath(selector, namespaces=self.namespaces)
+			if isinstance(query_result, etree._ElementUnicodeResult): # pylint: disable=protected-access
+				result.append(str(query_result))
+			else:
+				for element in query_result:
+					if isinstance(element, etree._ElementUnicodeResult): # pylint: disable=protected-access
+						result.append(str(element))
+					elif isinstance(element, str):
+						result.append(element)
+					else:
+						result.append(EasyXmlElement(element, self.namespaces))
+
 		except etree.XPathEvalError as ex:
 			# If we ask for an undefined namespace prefix, just return nothing
 			# instead of crashing
@@ -365,13 +370,17 @@ class EasyXmlElement:
 
 		result: List[Union[str, EasyXmlElement]] = []
 
-		for element in self.lxml_element.xpath(selector, namespaces=self.namespaces):
-			if isinstance(element, etree._ElementUnicodeResult): # pylint: disable=protected-access
-				result.append(str(element))
-			elif isinstance(element, str):
-				result.append(element)
-			else:
-				result.append(EasyXmlElement(element, self.namespaces))
+		query_result = self.lxml_element.xpath(selector, namespaces=self.namespaces)
+		if isinstance(query_result, etree._ElementUnicodeResult): # pylint: disable=protected-access
+			result.append(str(query_result))
+		else:
+			for element in query_result:
+				if isinstance(element, etree._ElementUnicodeResult): # pylint: disable=protected-access
+					result.append(str(element))
+				elif isinstance(element, str):
+					result.append(element)
+				else:
+					result.append(EasyXmlElement(element, self.namespaces))
 
 		if return_string and result:
 			return str(result[0])
