@@ -1,3 +1,201 @@
+# 2.2.0
+
+## General
+
+- Remove Pylint warnings on C extensions and runtime class errors. Thanks to Robin Whittleton
+
+- Update some `import`, `with`, and `items` syntax. Thanks to Robin Whittleton
+
+- Remove python-version to pin test runner to OS version. Thanks to Robin Whittleton
+
+- Fix error flagged by mypy in lint. Thanks to Robin Whittleton
+
+- Allow xpath to return a single string
+
+## se build
+
+- Restore unconditional creation of compatible epub. Thanks to Vince Rice
+
+- Remove `.gitignore` from white-label epub builds
+
+- Capture warnings from epubcheck even if there are no errors
+
+- Use quiet_remove instead of try/catch
+
+## se build-manifest
+
+- Improve output on invalid XHTML
+
+- Fix incorrect path separator when run on Windows
+
+## se build-spine
+
+- Improve output on invalid XHTML
+
+## se build-title
+
+- Improve output when `<br/>` and `&` are present
+
+## se build-toc
+
+- Handle `<br/>` in titles
+
+## se clean
+
+- Fix error when checking single XHTML files. Thanks to Robin Whittleton
+
+- Polite failure if file doesn't exist
+
+## se create-draft
+
+- Improve output of `--white-label` option
+
+- Fix missing translator block in new productions. Thanks to Robin Whittleton
+
+- Move `<link>` to correct location in white label OPF file
+
+- Parse single/double quote encoding. Thanks to Mike Colagrosso
+
+- Save body text even if it can't be parsed. Thanks to Vince Rice
+
+- Linkify error message
+
+- Handle titles and contributors containing XML entities
+
+## se find-mismatched-dashes
+
+- Strip tags before processing, but keep `alt` and `title` attributes
+
+## se find-mismatched-diacritics
+
+- Lowercase matches so that uppercased entries don't cause duplicate output
+
+- Strip tags before processing, but keep `alt` and `title` attributes
+
+## se interactive-replace
+
+- Don't overwrite file if the file is not dirty
+
+- Fix curs_set issue in interactive-replace. Thanks to Weijia Cheng
+
+## se lint
+
+- Improve t-042
+
+- Add t-063, Latin phrase set without italics
+
+- Don't emit m-020 if SE subject has not yet been filled out
+
+- Add s-091, `<span>` not followed by `<br/>` in poetry
+
+- Improve t-063
+
+- Make s-086 also check for Loc. Cit.
+
+- Improve s-091
+
+- Tweak message for s-086
+
+- Add s-092, anonymous contributor with name semantic
+
+- Add t-064, title not correctly titlecased
+
+- Add f-017, png file without transparency
+
+- Fix broken t-064 message
+
+- Add t-065: Header ending in a period
+
+- Allow empty `<col/>` and `<colgroup/>`
+
+- Make separate messages for t-042 typos. Thanks to Vince Rice
+
+- Add t-066, regnal ordinal preceded by 'the'
+
+- Fix broken hyperlink in m-070 error message
+
+- Convert some tests to xpath instead of regex
+
+- Improve s-064
+
+- Fix t-031
+
+- Don't include legal cases in t-064
+
+- Improve t-008
+
+- Improve s-039
+
+- Add s-093, nested `<abbr>` element
+
+- Don't duplicate entries in t-017
+
+- Add m-071 and m-072, DP links with incorrect text
+
+- Merge m-026, m-027, m-028, m-029, m-037, m-038, m-039, m-040 into single m-037 message
+
+- m-041 only check colophon and imprint
+
+- Fix bug in m-037
+
+- Only emit m-071, m-072, m-041 if there are fewer than 2 sources
+
+- Add Ukranian to the set of scripts that need a Latn suffix. Thanks to Robin Whittleton
+
+- Add s-094, endnote out of sequence
+
+- Stop extremely long filenames from breaking lint output. Thanks to Robin Whittleton
+
+- Add t-067, plural grapheme formed without apostrophe
+
+- Merge multiple s-094 messsages into one entry
+
+- Add `--allow` option to allow passing through specific errors that are ignored in `se-lint-ignore.xml`.
+
+- Add s-095, `<hgroup>` with `<h#>` that is out of order
+
+## se modernize-spelling
+
+- Various additions
+
+- Fix `per cent.,` -> `percent,`
+
+## se renumber-endnotes
+
+- Added safety check before running. thanks to David Grigg
+
+- Improved endnote check. Thanks to David Grigg
+
+- Add `--brute-force` option
+
+## se semanticate
+
+- Reduce false positives when adding semantics to 'in.'
+
+- Various additions
+
+- Don't add abbr semantics to `SOS`
+
+- Rework checks for eoc on abbreviations. Thanks to Vince Rice
+
+- Handle AD/BC terminating periods. Thanks to Vince Rice
+
+## se titlecase
+
+- Various titlecasing improvements
+
+## se typogrify
+
+- Fix common transcription error of :- -> :—
+
+- Escape user input before passing to regex when hyphenating
+
+- Improved typogrification of fractions
+
+## se unicode-names
+
+- Gracefully handle unrecognized character
+
 # 2.1.0
 
 ## General
