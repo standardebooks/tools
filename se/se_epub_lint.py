@@ -274,6 +274,7 @@ SEMANTICS & CONTENT
 "s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic."
 "s-093", "Nested [xhtml]<abbr>[/] element."
 "s-094", "Endnote out of sequence."
+"s-095", "[xhtml]<hgroup>[/] element containing [xhtml]<h#>[/] element in the wrong heading order."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -2134,9 +2135,13 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if nodes:
 					messages.append(LintMessage("s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
 
-				nodes = dom.xpath("/html/body//hgroup[./*[following-sibling::*[1][name() !='h6' and name()=name(preceding-sibling::*[1])]]]")
+				nodes = dom.xpath("/html/body//hgroup[./*[following-sibling::*[1][name()!='h6' and name()=name(preceding-sibling::*[1])]]]")
 				if nodes:
 					messages.append(LintMessage("s-074", "[xhtml]<hgroup>[/] element containing sequential [xhtml]<h#>[/] elements at the same heading level.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				nodes = dom.xpath("//hgroup/*[./preceding-sibling::* and number(substring(name(./preceding-sibling::*[1]), 2, 1)) != number(substring(name(), 2, 1)) - 1 ]")
+				if nodes:
+					messages.append(LintMessage("s-095", "[xhtml]<hgroup>[/] element containing [xhtml]<h#>[/] element in the wrong heading order.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for common errors in language tags
 				# `gr` is often used instead of `el`, `sp` instead of `es`, and `ge` instead of `de` (`ge` is the Georgian geographic region subtag but not a language subtag itself)
