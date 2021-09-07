@@ -2293,7 +2293,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("t-064", "Title not correctly titlecased. Hint: Non-English titles should have an [attr]xml:lang[/] attribute as they have different titlecasing rules.", se.MESSAGE_TYPE_WARNING, filename, incorrectly_cased_titles))
 
 				# Check to see if <h#> tags are correctly titlecased
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(contains(@epub:type, 'z3998:roman'))]")
+				# Ignore <h#> tags with an `xml:lang` attribute, as other languages have different titlecasing rules
+				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(contains(@epub:type, 'z3998:roman')) and not(@xml:lang)]")
 				for node in nodes:
 					node_copy = deepcopy(node)
 
