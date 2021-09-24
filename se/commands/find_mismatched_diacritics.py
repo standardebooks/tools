@@ -52,6 +52,10 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return_code = se.InvalidInputException.code
 
+		except se.SeException as ex:
+			se.print_error(str(ex) + f" File: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
+			return_code = ex.code
+
 	# Create a list of accented words
 	for xhtml in files_xhtml:
 		decomposed_xhtml = unicodedata.normalize("NFKD", xhtml)
