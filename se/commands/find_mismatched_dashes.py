@@ -52,6 +52,10 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return_code = se.InvalidInputException.code
 
+		except se.SeException as ex:
+			se.print_error(str(ex) + f" File: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
+			return_code = ex.code
+
 	# Create a list of dashed words
 	for xhtml in files_xhtml:
 		# This regex excludes words with three dashes like `bric-a-brac`, because removing dashes
