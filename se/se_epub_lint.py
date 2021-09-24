@@ -771,7 +771,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their S.E. author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 		# Did we mention an SE book in the long description, but without italics?
-		if regex.search(r"""(?<!<i>)<a href="https://standardebooks\.org/ebooks/[^"]+?/[^"]+?">(?!<i>)""", long_description):
+		# Only match if the title appears to contain an uppercase letter. This prevents matches on a non-title link like `<a href>short stories</a>`
+		matches = regex.search(r"""(?<!<i>)<a href="https://standardebooks\.org/ebooks/[^"]+?/[^"]+?">(?!<i>)([\p{Letter}\s]+)""", long_description)
+		if matches and regex.search(r"[\p{Uppercase_Letter}]", matches[1]):
 			messages.append(LintMessage("m-064", "S.E. ebook hyperlinked in long description but not italicized.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 		if regex.search(r"""<a href="https?://(?!standardebooks\.org)""", long_description):
