@@ -277,6 +277,10 @@ We need volunteers to take the lead on the following goals:
 
 	Find words with mismatched diacritics in a set of XHTML files. For example, `cafe` in one file and `café` in another.
 
+-	### `se find-unusual-characters`
+
+	Find unusual characters: characters that would sometimes, but not usually, be expected to appear in a SE production.
+
 -	### `se help`
 
 	List available SE commands.

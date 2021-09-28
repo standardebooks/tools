@@ -26,6 +26,7 @@ case $state in
 			"extract-ebook[Extract an EPUB, MOBI, or AZW3 ebook.]" \
 			"find-mismatched-dashes[Find words with mismatched dashes in a set of XHTML files.]" \
 			"find-mismatched-diacritics[Find words with mismatched diacritics in a set of XHTML files.]" \
+			"find-unusual-characters[Find characters outside a nominal expected range in a set of XHTML files.]" \
 			"help[List available S.E. commands.]" \
 			"hyphenate[Insert soft hyphens at syllable breaks in an XHTML file.]" \
 			"interactive-replace[Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (c) Center on match. (q) Save this file and quit.]" \
@@ -143,6 +144,11 @@ case $state in
 					'*: :_files -g \*.xhtml'
 				;;
 			find-mismatched-diacritics)
+				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
+					'*: :_files -g \*.xhtml'
+				;;
+			find-unusual-characters)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
 					'*: :_files -g \*.xhtml'
