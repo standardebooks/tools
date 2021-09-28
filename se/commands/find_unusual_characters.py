@@ -96,10 +96,8 @@ def find_unusual_characters(plain_output: bool) -> int:
 	# Ignore ZERO WIDTH SPACE ufeff
 	unusual_character_set += "]"
 
-	unusual_character_regex = regex.compile(unusual_character_set)
-
 	for xhtml in files_xhtml:
-		for character in regex.findall(unusual_character_regex, xhtml):
+		for character in regex.findall(unusual_character_set, xhtml):
 			if character in unusual_characters:
 				unusual_characters[character] = unusual_characters[character] + len(character)
 			else:
