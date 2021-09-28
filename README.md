@@ -279,7 +279,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se find-unusual-characters`
 
-	Find unusual characters: characters that would sometimes, but not usually, be expected to appear in a SE production.
+	Find characters outside a nominal expected range in a set of XHTML files. This can be useful to find transcription mistakes and mojibake.
 
 -	### `se help`
 
