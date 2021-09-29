@@ -1144,6 +1144,9 @@ def titlecase(text: str) -> str:
 	# Uppercase `l’` as in `l’Affaire`, but not if it's a the first letter
 	text = regex.sub(r"(?<!^)L’([\p{Letter}])", lambda result: "l’" + result.group(1), text)
 
+	# Uppercase leading `A-` as in `A-Breaking`
+	text = regex.sub(r"(\s)a\-([\p{Uppercase_Letter}])", lambda result: result.group(1) + "A-" + result.group(2), text)
+
 	# Uppercase some known initialisms
 	text = regex.sub(r"(\s|^)(sos|md)(?:\b|$)", lambda result: result.group(1) + result.group(2).upper(), text, flags=regex.IGNORECASE)
 	text = regex.sub(r"(\s)(bc|ad)(?:\b|$)", lambda result: result.group(1) + result.group(2).upper(), text, flags=regex.IGNORECASE)
