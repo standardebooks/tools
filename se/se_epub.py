@@ -342,7 +342,10 @@ class SeEpub:
 			self._spine_file_paths = []
 
 			for idref in self.metadata_dom.xpath("/package/spine/itemref/@idref"):
-				self._spine_file_paths.append(self.content_path / self.metadata_dom.xpath(f"/package/manifest/item[@id='{idref}']/@href", True))
+				try:
+					self._spine_file_paths.append(self.content_path / self.metadata_dom.xpath(f"/package/manifest/item[@id='{idref}']/@href", True))
+				except Exception as ex:
+					raise se.InvalidSeEbookException(f"Couldn’t find spine item: {idref}") from ex
 
 		return self._spine_file_paths
 
