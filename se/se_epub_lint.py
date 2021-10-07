@@ -1708,6 +1708,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 							if attr_value in IGNORED_CLASSES:
 								add_node = False
 								break
+					elif node.text in ("A.M.", "P.M.") and node.xpath("./preceding-sibling::node()[re:test(., '[0-9]\\s$')]"):
+						# Ignore instances of capitalized times, usually in titles. For example:
+						# `From 10:20 <abbr>P.M.</abbr> to 10:47 <abbr>P.M.</abbr>` in a chapter title.
+						# We have to test for a preceding number because `<abbr>P.M.</abbr>` in other contexts may mean `Prime Minister`
+						add_node = False
 
 					if add_node:
 						filtered_nodes.append(node)
