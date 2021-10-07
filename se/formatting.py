@@ -1174,6 +1174,7 @@ def titlecase(text: str) -> str:
 
 	# Lowercase some special cases.
 	text = text.replace("A.B.C. Of", "A.B.C. of")
+	text = regex.sub(r"((A|P)\.M\.) To", r"\1 to", text)
 
 	# More special cases
 	text = regex.sub(r"des Moines", "Des Moines", text)
