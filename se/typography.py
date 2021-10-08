@@ -458,21 +458,18 @@ def guess_quoting_style(xhtml: str) -> str:
 	# Quote style percentage above the threshold is returned.
 	threshold = 80
 
-	lsq_count = len([m for m in regex.findall(r"\t*<p>(.*?)‘", xhtml) if m.count("“") == 0])
-	ldq_count = len([m for m in regex.findall(r"\t*<p>(.*?)“", xhtml) if m.count("‘") == 0])
-
+	ldq_count = len([m for m in regex.findall(r"\t*<p[^>]*>(.*?)“", xhtml) if m.count("‘") == 0])
+	lsq_count = len([m for m in regex.findall(r"\t*<p[^>]*>(.*?)‘", xhtml) if m.count("“") == 0])
 	detected_style = "unsure"
-	american_percentage = 0
 
-	try:
-		american_percentage = int(ldq_count / (ldq_count + lsq_count) * 100)
-	except ZeroDivisionError:
-		pass
+	if (ldq_count + lsq_count) != 0:
+		american_percentage = int((ldq_count / (ldq_count + lsq_count)) * 100)
+		british_percentage = int((lsq_count / (ldq_count + lsq_count)) * 100)
 
-	if american_percentage >= threshold:
-		detected_style = "american"
-	elif 100 - american_percentage >= threshold:
-		detected_style = "british"
+		if american_percentage >= threshold:
+			detected_style = "american"
+		elif british_percentage >= threshold:
+			detected_style = "british"
 
 	return detected_style
 
