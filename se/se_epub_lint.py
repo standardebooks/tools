@@ -344,6 +344,7 @@ TYPOGRAPHY
 "t-065", "Header ending in a period."
 "t-066", "Regnal ordinal preceded by [text]the[/]."
 "t-067", "Plural [val]z3998:grapheme[/], [val]z3998:phoneme[/], or [val]z3998:morpheme[/] formed without apostrophe ([text]’[/])."
+"t-068", "Citation not offset with em dash."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1733,6 +1734,12 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				nodes = dom.xpath("/html/body//blockquote//p[parent::*[name()='footer'] or parent::*[name()='blockquote']]//cite") # Sometimes the <p> may be in a <footer>
 				if nodes:
 					messages.append(LintMessage("s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Find citations not offset by em dashes. We're only interested in <cite>s in endnotes that are directly followed by the backlink;
+				# ignore <cite>s starting with `Cf.` which means `Compare` and was often used to mean `see`
+				nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]/p[last()]/cite[following-sibling::node()[normalize-space(.)][1][name() = 'a' and contains(@epub:type, 'backlink')] and re:test(., '^[^—]') and not(re:test(., '^(Cf\\.|\\()'))]")
+				if nodes:
+					messages.append(LintMessage("t-068", "Citation not offset with em dash.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for <table> without set margins. We ignore tables that are for drama structuring, and tables that are ancestors of <blockquote> because <blockquote> has its own margin.
 				# We also ignore tables whose preceding sibling sets a bottom margin that is not 0.
