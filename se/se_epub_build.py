@@ -103,7 +103,19 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 	run_ace = False
 	if run_epubcheck:
+		java_present = True
 		if not shutil.which("java"):
+			java_present = False
+		# Mac Big Sur+ has a "dummy" /usr/bin/java; test -version to see if java is really installed
+		elif os.uname()[0] == "Darwin":
+			try:
+				java_check = subprocess.run(["java", "-version"], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=False)
+				if java_check.stderr.decode().find("Unable to locate") >= 0:
+					java_present = False
+			except:
+				java_present = False
+
+		if not java_present:
 			raise se.MissingDependencyException("Couldn’t locate [bash]java[/]. Is it installed?")
 
 		if shutil.which("ace"):
