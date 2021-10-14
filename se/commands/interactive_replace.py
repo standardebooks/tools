@@ -27,8 +27,6 @@ def _get_text_dimensions(text: str) -> Tuple[int, int]:
 	text_height = 0
 	text_width = 0
 
-	text = text.rstrip()
-
 	for line in text.split("\n"):
 		text_height = text_height + 1
 
@@ -170,9 +168,6 @@ def _print_screen(screen, filepath: Path, text: str, start_matching_at: int, reg
 	screen_height, screen_width = screen.getmaxyx()
 	line_numbers_height = text_height
 	line_numbers_width = len(str(text_height))
-
-	#print(line_numbers_height)
-	#exit()
 
 	# Create the line numbers pad
 	line_numbers_pad = curses.newpad(line_numbers_height, line_numbers_width)
