@@ -341,7 +341,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Aa])ny where\b", r"\1nywhere", xhtml)			# any where -> anywhere
 	xhtml = regex.sub(r"\b([Ee])very thing\b", r"\1verything", xhtml)		# every thing -> everything
 	xhtml = regex.sub(r"\b([Aa])ny thing\b", r"\1nything", xhtml)			# any thing -> anything
-	xhtml = regex.sub(r"\b([Rr])e-?enforce", r"\1inforce", xhtml)			# re-enforce -> reinforce
+	xhtml = regex.sub(r"\b([Rr])e-?enforce", r"\1einforce", xhtml)			# re-enforce -> reinforce
 	xhtml = regex.sub(r"\b([Ll])uny", r"\1oony", xhtml)				# luny -> loony
 	xhtml = regex.sub(r"\b([Vv])icuna", r"\1icuña", xhtml)				# vicuna -> vicuña
 	xhtml = regex.sub(r"\b([Cc])larionet", r"\1larinet", xhtml)			# clarionet -> clarinet
