@@ -130,6 +130,7 @@ METADATA
 "m-023", f"[xml]<dc:identifier>[/] does not match expected: [text]{self.generated_identifier}[/]."
 "m-024", "[xml]<meta property=\"se:name.person.full-name\">[/] property identical to regular name. If the two are identical the full name [xml]<meta>[/] element must be removed."
 "m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon."
+"m-026", f"Illegal [url]https://en.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs."
 "m-030", f"[val]introduction[/] semantic inflection found, but no MARC relator [val]aui[/] (Author of introduction, but not the chief author) or [val]win[/] (Writer of introduction)."
 "m-031", f"[val]preface[/] semantic inflection found, but no MARC relator [val]wpr[/] (Writer of preface)."
 "m-032", f"[val]afterword[/] semantic inflection found, but no MARC relator [val]aft[/] (Author of colophon, afterword, etc.)."
@@ -171,7 +172,6 @@ METADATA
 "m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/]."
 "m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/]."
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"m-026", f"Project Gutenberg source not present. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/]."
 "m-027", f"HathiTrust source not present. Expected: the [xhtml]<a href=\"{link}\">HathiTrust Digital Library</a>[/]."
 "m-028", f"Internet Archive source not present. Expected: the [xhtml]<a href=\"{link}\">Internet Archive</a>[/]."
 "m-029", f"Google Books source not present. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/]."
@@ -854,6 +854,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 	if self.metadata_dom.xpath(f"/package/metadata/*[re:test(., '[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}')]"):
 		double_spaced_files.append(self.metadata_file_path)
 
+	# Check for illegal Wikipedia URLs
+	nodes = self.metadata_dom.xpath("/package/metadata/*[contains(., 'en.m.wikipedia.org') or @*[contains(., 'en.m.wikipedia.org')]]")
+	if nodes:
+		messages.append(LintMessage("m-026", "Illegal [url]https://en.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 	# We can't use xpath's built-in regex because it doesn't support Unicode classes
 	for node in self.metadata_dom.xpath("/package/metadata/*"):
@@ -1226,6 +1231,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 						messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				if is_colophon:
+					# Check for illegal Wikipedia URLs
+					nodes = dom.xpath("/html/body//a[contains(@href, 'en.m.wikipedia.org')]")
+					if nodes:
+						messages.append(LintMessage("m-026", "Illegal [url]https://en.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
 					# Check for wrong grammar filled in from template
 					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
 					if nodes:
