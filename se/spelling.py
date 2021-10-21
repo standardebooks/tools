@@ -348,6 +348,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Bb])ye?[\- ]the[\- ]bye?\b", r"\1y the by", xhtml)	# by-the-bye -> by the by
 	xhtml = regex.sub(r"\b([Ss])pung", r"\1pong", xhtml)				# spung(e|ing|y) -> sponge
 	xhtml = regex.sub(r"\b([Ww])oful", r"\1oeful", xhtml)				# woful -> woeful
+	xhtml = regex.sub(r"\b([Hh]e|[Ss]he|[Yy]ou|[Tt]hey)’ld", r"\1’d", xhtml)	# he'ld, she'ld, you'ld, they'ld -> he'd, she'd, you'd, they'd
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
