@@ -66,9 +66,9 @@ sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se
 sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 ```
 
-## macOS users (up to macOS 10.15)
+## macOS users (up to macOS 11)
 
-These instructions were tested on macOS 10.12 to 10.16, on Intel macs.
+These instructions were tested on macOS 10.15 to 11, on Intel macs.
 
 1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it’s up to date:
 
@@ -93,6 +93,7 @@ These instructions were tested on macOS 10.12 to 10.16, on Intel macs.
 	# Optional: Fish users can install tab completion.
 	ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 	```
+
 ## OpenBSD 6.6 Users
 
 These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 release as well.
