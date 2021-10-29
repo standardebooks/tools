@@ -384,7 +384,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"Esthonian", "Estonian", xhtml)				# Esthonian -> Estonian
 	xhtml = regex.sub(r"\b([Ss])anscrit\b", r"\1anskrit", xhtml)			# Sanscrit -> Sanskrit
 	xhtml = regex.sub(r"Francois", r"François", xhtml)				# Francois -> François
-	xhtml = regex.sub(r"Hayti", r"Haiti", xhtml)					# Hayti -> Haiti
+	xhtml = regex.sub(r"Hayti(\b|an\b)", r"Haiti\1", xhtml)				# Hayti -> Haiti
 	xhtml = regex.sub(r"Zymbabwe", r"Zimbabwe", xhtml)				# Zymbabwe -> Zimbabwe
 	xhtml = regex.sub(r"Moslem(s?)\b", r"Muslim\1", xhtml)				# Moslem -> Muslim, but stop at a word break for `Moslemin`, a rare word that has no modern spelling equivalent
 	xhtml = regex.sub(r"Bronte\b", r"Brontë", xhtml)				# Bronte -> Brontë
