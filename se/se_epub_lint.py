@@ -131,6 +131,7 @@ METADATA
 "m-024", "[xml]<meta property=\"se:name.person.full-name\">[/] property identical to regular name. If the two are identical the full name [xml]<meta>[/] element must be removed."
 "m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon."
 "m-026", f"Illegal [url]https://en.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs."
+"m-027", f"[val]se:short-story[/] semantic inflection found, but no [val]se:subject[/] with the value of [text]Shorts[/]."
 "m-030", f"[val]introduction[/] semantic inflection found, but no MARC relator [val]aui[/] (Author of introduction, but not the chief author) or [val]win[/] (Writer of introduction)."
 "m-031", f"[val]preface[/] semantic inflection found, but no MARC relator [val]wpr[/] (Writer of preface)."
 "m-032", f"[val]afterword[/] semantic inflection found, but no MARC relator [val]aft[/] (Author of colophon, afterword, etc.)."
@@ -172,7 +173,6 @@ METADATA
 "m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/]."
 "m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/]."
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"m-027", f"HathiTrust source not present. Expected: the [xhtml]<a href=\"{link}\">HathiTrust Digital Library</a>[/]."
 "m-028", f"Internet Archive source not present. Expected: the [xhtml]<a href=\"{link}\">Internet Archive</a>[/]."
 "m-029", f"Google Books source not present. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/]."
 "m-038", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>[/]."
@@ -648,6 +648,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 	local_css_has_hymn_style = False
 	local_css_has_lyrics_style = False
 	local_css_has_elision_style = False
+	short_story_count = 0
 	missing_styles: List[str] = []
 	directories_not_url_safe = []
 	files_not_url_safe = []
@@ -1199,6 +1200,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 				# Extract ID attributes for later checks
 				id_attrs = id_attrs + dom.xpath("//*[name() != 'section' and name() != 'article' and name() != 'figure']/@id")
+
+				# Add to the short story count for later checks
+				short_story_count += len(dom.xpath("/html/body//article[contains(@epub:type, 'se:short-story')]"))
 
 				# Test against word boundaries to not match `halftitlepage`
 				if dom.xpath("/html/body/section[re:test(@epub:type, '\\btitlepage\\b')]"):
@@ -2854,6 +2858,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 	if unused_selectors:
 		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, local_css_path, unused_selectors))
+
+	if short_story_count and not self.metadata_dom.xpath("//meta[@property='se:subject' and text() = 'Shorts']"):
+		messages.append(LintMessage("m-123", "[val]se:short-story[/] semantic inflection found, but no [val]se:subject[/] with the value of [text]Shorts[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	if has_glossary_search_key_map:
 		entries = []
