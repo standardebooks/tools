@@ -2860,7 +2860,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, local_css_path, unused_selectors))
 
 	if short_story_count and not self.metadata_dom.xpath("//meta[@property='se:subject' and text() = 'Shorts']"):
-		messages.append(LintMessage("m-123", "[val]se:short-story[/] semantic inflection found, but no [val]se:subject[/] with the value of [text]Shorts[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+		messages.append(LintMessage("m-027", "[val]se:short-story[/] semantic inflection found, but no [val]se:subject[/] with the value of [text]Shorts[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	if has_glossary_search_key_map:
 		entries = []
