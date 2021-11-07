@@ -1566,6 +1566,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: dialog begins with lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
+				typos = [node.to_string() for node in dom.xpath("//p[not(ancestor::blockquote) and not(following-sibling::*[1][name() = 'blockquote' or contains(@class, 'continued')]) and re:test(., ',”$')]")]
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: comma ending dialogue.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
 				# Check for mis-curled &lsquo; or &lsquo; without matching &rsquo;
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[A-Za-z][^“’]+?”')]")]
 				if typos:
