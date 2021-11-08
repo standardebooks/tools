@@ -60,6 +60,10 @@ def extract_ebook(plain_output: bool) -> int:
 
 	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
+	if args.output_dir and len(args.targets) > 1:
+		se.print_error("The [bash]--output-dir[/] option can’t be used when more than one ebook target is specified.", plain_output=plain_output)
+		return se.InvalidArgumentsException.code
+
 	for target in args.targets:
 		target = Path(target).resolve()
 
