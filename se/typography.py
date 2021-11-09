@@ -187,7 +187,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"([0-9]+)\s<abbr", fr"\1{se.NO_BREAK_SPACE}<abbr", xhtml)
 
 	# Add rsquo to bare `tis` and `twas`
-	xhtml = regex.sub(r"([^’>])\b([Tt]is|[Tt]was)\b", r"\1’\2", xhtml)
+	xhtml = regex.sub(r"([^’>])\b([Tt]is|[Tt]was|[Tt]were|[Tt]won’t)\b", r"\1’\2", xhtml)
 
 	# A note on spacing:
 	# 					ibooks	kindle (mobi7)
@@ -203,7 +203,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Years
 	xhtml = regex.sub(r"‘([0-9]{2,}[^\p{Letter}0-9’])", r"’\1", xhtml, flags=regex.IGNORECASE)
 
-	xhtml = regex.sub(r"‘([Aa]ve|[Oo]me|[Ii]m|[Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Cc]os|[Tt]is|[Tt]isn’t|[Tt]was|[Tt]wixt|[Tt]were|[Tt]would|[Tt]wouldn|[Tt]ween|[Tt]will|[Rr]ound|[Pp]on|[Uu]ns?|[Uu]d|[Cc]ept|[Oo]w|[Aa]ppen|[Ee])\b", r"’\1", xhtml)
+	xhtml = regex.sub(r"‘([Aa]ve|[Oo]me|[Ii]m|[Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Cc]os|[Tt]is|[Tt]isn’t|[Tt]was|[Tt]wixt|[Tt]were|[Tt]would|[Tt]wouldn|[Tt]won|[Tt]ween|[Tt]will|[Rr]ound|[Pp]on|[Uu]ns?|[Uu]d|[Cc]ept|[Oo]w|[Aa]ppen|[Ee])\b", r"’\1", xhtml)
 
 	xhtml = regex.sub(r"\b‘e\b", r"’e", xhtml)
 	xhtml = regex.sub(r"\b‘([Ee])r\b", r"’\1r", xhtml)
