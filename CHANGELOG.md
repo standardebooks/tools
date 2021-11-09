@@ -1,3 +1,81 @@
+# 2.3.0
+
+## General
+
+- Template backmatter references to U.S. should be initialisms. Thanks to Robin Whittleton
+
+## se british2american
+
+- Improve guess function
+
+## se build
+
+- Confirm java is really installed on Mac OSX. Thanks to Vince Rice
+
+## se build-toc
+
+- Gracefully fail on invalid spine
+
+## se create-draft
+
+- Handle titles with em dashes
+
+## se extract-ebook
+
+- Don't allow the `--output-dir` option when more than one ebook is specified
+
+## se find-mismatched-dashes
+
+- Pretty print some exceptions
+
+## se find-mismatched-diacritics
+
+- Pretty print some exceptions
+
+## se find-unusual-characters
+
+- Add this new command. Thanks to Robin Whittleton
+
+## se interactive-replace
+
+- Don't rstrip file contents to prevent crash when a file ends in multiple newlines
+
+## se lint
+
+- Improve t-063
+
+- Improve s-023
+
+- Improve m-064
+
+- Improve t-042
+
+- Improve s-045 when times are capitalized in titles
+
+- Add t-068, `<cite>` without leading em dash
+
+- Add m-026, illegal mobile Wikipedia URL
+
+- Add m-027, se:short-story found but no Shorts subject in metadata
+
+- Correct broken m-027 error code
+
+## se modernize-spelling
+
+- Various additions and improvements
+
+## se titlecase
+
+- Improve titlecasing by checking some exceptions
+
+- Add corner case exception for capitalized times
+
+## se typogrify
+
+- Add rsquo to bare `tis`
+
+- Improve typogrification of `'twas` and `'twon't`
+
 # 2.2.0
 
 ## General
