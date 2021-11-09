@@ -334,7 +334,6 @@ TYPOGRAPHY
 "t-055", "Lone acute accent ([val]´[/]). A more accurate Unicode character like prime for coordinates or measurements, or combining accent or breathing mark for Greek text, is required."
 "t-056", "Masculine ordinal indicator ([val]º[/]) used instead of degree symbol ([val]°[/]). Note that the masculine ordinal indicator may be appropriate for ordinal numbers read as Latin, i.e. [val]12º[/] reading [val]duodecimo[/]."
 "t-057", "[xhtml]<p>[/] starting with lowercase letter. Hint: [xhtml]<p>[/] that continues text after a [xhtml]<blockquote>[/] requires the [class]continued[/] class; and use [xhtml]<br/>[/] to split one clause over many lines."
-"t-058", "Quotation mark used instead of ditto mark ([text]〃[/] or U+3003) in table."
 "t-059", "Period at the end of [xhtml]<cite>[/] element before endnote backlink."
 "t-060", "Old style Bible citation."
 "t-061", "Summary-style bridgehead without ending punctuation."
@@ -345,6 +344,9 @@ TYPOGRAPHY
 "t-066", "Regnal ordinal preceded by [text]the[/]."
 "t-067", "Plural [val]z3998:grapheme[/], [val]z3998:phoneme[/], or [val]z3998:morpheme[/] formed without apostrophe ([text]’[/])."
 "t-068", "Citation not offset with em dash."
+UNUSED
+vvvvvvvvvvvvvvvvvvvvvvvvv
+"t-058", "Quotation mark used instead of ditto mark ([text]〃[/] or U+3003) in table."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -2280,11 +2282,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				nodes = dom.xpath("/html/body//span[contains(@epub:type, 'z3998:roman') and ./preceding-sibling::node()[1][re:test(., '[A-Z]\\w+ the $')]]/parent::*")
 				if nodes:
 					messages.append(LintMessage("t-066", "Regnal ordinal preceded by [text]the[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for ldquo or rdquo used instead of ditto mark in tables
-				nodes = dom.xpath("/html/body//table[not(ancestor-or-self::*[contains(@epub:type, 'z3998:drama')])]//td[re:test(normalize-space(.), '(^|\\s)[“”\"]+$')]")
-				if nodes:
-					messages.append(LintMessage("t-058", "Quotation mark used instead of ditto mark ([text]〃[/] or U+3003) in table.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for <header> elements with only h# child nodes
 				nodes = dom.xpath("/html/body//header[./*[re:test(name(), 'h[1-6]') and (count(preceding-sibling::*) + count(following-sibling::*)=0)]]")
