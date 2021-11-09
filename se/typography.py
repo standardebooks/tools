@@ -186,8 +186,8 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 	xhtml = regex.sub(r"([0-9]+)\s<abbr", fr"\1{se.NO_BREAK_SPACE}<abbr", xhtml)
 
-	# Add rsquo to bare `tis`
-	xhtml = regex.sub(r"[^’>]\b([Tt])is\b", r"’\1is", xhtml)
+	# Add rsquo to bare `tis` and `twas`
+	xhtml = regex.sub(r"([^’>])\b([Tt]is|[Tt]was)\b", r"\1’\2", xhtml)
 
 	# A note on spacing:
 	# 					ibooks	kindle (mobi7)
