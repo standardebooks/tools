@@ -1,3 +1,13 @@
+# 2.3.1
+
+## General
+
+- Roll back incompatible GitPython version
+
+## se lint
+
+- Remove t-058, since CJK ditto mark isn't appropriate for the Latin alphabet
+
 # 2.3.0
 
 ## General
