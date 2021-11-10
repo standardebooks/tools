@@ -64,7 +64,7 @@ setup(
 		"cssselect==1.1.0",
 		"cssutils==2.3.0",
 		"ftfy==6.0.3",
-		"gitpython==3.1.18",
+		"gitpython==3.1.11", # Must stay at this version until the server can use Python >= 3.7
 		"importlib_resources==1.0.2",
 		"lxml==4.6.3",
 		"natsort==7.1.1",
