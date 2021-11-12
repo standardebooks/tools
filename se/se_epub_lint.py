@@ -275,6 +275,7 @@ SEMANTICS & CONTENT
 "s-093", "Nested [xhtml]<abbr>[/] element."
 "s-094", "Endnote out of sequence."
 "s-095", "[xhtml]<hgroup>[/] element containing [xhtml]<h#>[/] element in the wrong heading order."
+"s-096", "[xhtml]h1[/] element in half title page missing the [val]fulltitle[/] semantic."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1670,6 +1671,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage') and .//*[contains(@epub:type, 'subtitle')]]")
 					if nodes:
 						messages.append(LintMessage("s-088", "Subtitle in half title page, but no subtitle in metadata.", se.MESSAGE_TYPE_ERROR, filename))
+
+				# Check that half titles without subtitles have the fulltitle semantic
+				nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage')]/h1[not(contains(@epub:type, 'fulltitle'))]")
+				if nodes:
+					messages.append(LintMessage("s-096", "[xhtml]h1[/] element in half title page missing the [val]fulltitle[/] semantic.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for header elements that have a label, but are missing the label semantic
 				# Find h# nodes whose first child is a text node matching a label type, and where that text node's next sibling is a semantic roman numeral
