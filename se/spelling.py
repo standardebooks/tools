@@ -110,6 +110,9 @@ def detect_problem_spellings(xhtml: str) -> list:
 	if regex.search(r"\bmay[\-\s]?day", xhtml):
 		output.append("“mayday” or “may day” or “may-day” detected. Confirm that “may day” and “may-day” refer to the day, and that “mayday” is used in the sense of a distress signal.")
 
+	if regex.search(r"\bfree[\-\s]?will", xhtml):
+		output.append("“freewill” or “free will” or “free-will” detected. Confirm that “free will” and “free-will” are strictly nouns, and that “freewill” is strictly an adjective.")
+
 	return output
 
 def modernize_spelling(xhtml: str) -> str:
