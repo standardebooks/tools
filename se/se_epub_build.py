@@ -290,11 +290,11 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
 
 				# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
-				if "[epub|type" in selector:
-					for namespace_selector in regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", selector):
+				if regex.search(r"\[[a-z]+\|[a-z]+", selector):
+					for namespace_selector in regex.findall(r"\[[a-z]+\|[a-z]+(?:\~\=\"[^\"]*?\")?\]", selector):
+						new_class = regex.sub(r"^\.", "", se.formatting.namespace_to_class(namespace_selector))
 
 						for element in dom.css_select(namespace_selector):
-							new_class = regex.sub(r"^\.", "", se.formatting.namespace_to_class(namespace_selector))
 							current_class = element.get_attr("class") or ""
 
 							if new_class not in current_class:

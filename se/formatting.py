@@ -1230,9 +1230,9 @@ def namespace_to_class(selector: str) -> str:
 	"""
 
 	# First, remove periods from epub:type.	 We can't remove periods in the entire selector because there might be class selectors involved
-	epub_type = regex.search(r"\"[^\"]+?\"", selector).group()
+	epub_type = regex.search(r"\"[^\"]+?\"", selector)
 	if epub_type:
-		selector = selector.replace(epub_type, epub_type.replace(".", "-"))
+		selector = selector.replace(epub_type.group(), epub_type.group().replace(".", "-"))
 
 	# Now clean things up
 	return selector.replace(":", "-").replace("|", "-").replace("~=", "-").replace("[", ".").replace("]", "").replace("\"", "")
@@ -1284,7 +1284,7 @@ def simplify_css(css: str) -> str:
 
 	# Replace CSS namespace selectors with classes
 	# For example, p[epub|type~="z3998:salutation"] becomes p.epub-type-z3998-salutation
-	for line in regex.findall(r"\[epub\|type\~\=\"[^\"]*?\"\]", css):
+	for line in regex.findall(r"\[[a-z]+\|[a-z]+(?:\~\=\"[^\"]*?\")?\]", css):
 		fixed_line = namespace_to_class(line)
 		css = css.replace(line, fixed_line)
 
