@@ -1964,7 +1964,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("s-015", "Element has [val]subtitle[/] semantic, but without a sibling having a [val]title[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for <p> starting in lowercase
-				nodes = dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::figure or ancestor::ol[not(ancestor::section[contains(@epub:type, 'endnotes')])] or ancestor::ul or ancestor::table or preceding-sibling::*[1][name() = 'hr']) and not(contains(@class, 'continued') or contains(@epub:type, 'z3998:signature')) and not(./*[1][name() = 'math' or name() = 'var' or contains(@epub:type, 'z3998:grapheme')]) and re:test(., '^[^A-Za-z0-9]?[a-z]') and not(re:test(., '^\\([a-z]\\.?\\)\\.?'))]")
+				# Exclude <p> starting in constructs like `(a)` or `a.` as they may be numbered lists
+				nodes = dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::figure or ancestor::ol[not(ancestor::section[contains(@epub:type, 'endnotes')])] or ancestor::ul or ancestor::table or preceding-sibling::*[1][name() = 'hr']) and not(contains(@class, 'continued') or contains(@epub:type, 'z3998:signature')) and not(./*[1][name() = 'math' or name() = 'var' or contains(@epub:type, 'z3998:grapheme')]) and re:test(., '^[^A-Za-z0-9]?[a-z]') and not(re:test(., '^\\([a-z0-9]\\.?\\)\\.?')) and not(re:test(., '^[a-z0-9]\\.\\s'))]")
 
 				# We have to additionally filter using the regex library, because often a sentence may begin with an uppercase ACCENTED letter,
 				# and xpath's limited regex library doesn't support Unicode classes
