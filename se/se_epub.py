@@ -364,8 +364,11 @@ class SeEpub:
 		file_path_str = str(file_path)
 
 		if file_path_str not in self._file_cache:
-			with open(file_path, "r", encoding="utf-8") as file:
-				file_contents = file.read()
+			try:
+				with open(file_path, "r", encoding="utf-8") as file:
+					file_contents = file.read()
+			except Exception as ex:
+				raise se.InvalidFileException(f"Couldn’t read file: [path]{file_path_str}[/]") from ex
 
 			self._file_cache[file_path_str] = file_contents
 
