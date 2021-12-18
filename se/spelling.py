@@ -198,7 +198,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\beclat\b", r"éclat", xhtml)				# eclat -> éclat
 	xhtml = regex.sub(r"\ba la\b", r"à la", xhtml)					# a la -> à la
 	xhtml = regex.sub(r"\ba propos\b", r"apropos", xhtml)				# a propos -> apropos
-	xhtml = regex.sub(r"\bper cent(s?)\b", r"percent\1", xhtml)			# per cent -> percent
+	xhtml = regex.sub(r"\bper cent(s|ages?)?\b", r"percent\1", xhtml)			# per cent -> percent
 	xhtml = regex.sub(r"\bpercent\.(\s+[\p{Lowercase_Letter}])", r"percent\1", xhtml)		# percent. followed by lowercase -> percent
 	xhtml = regex.sub(r"\bpercent\.[,;:\!\?]", r"percent,", xhtml)			# per cent. -> percent
 	xhtml = regex.sub(r"\b([Ee])ntree(s?)\b", r"\1ntrée\2", xhtml)			# entree -> entrée
