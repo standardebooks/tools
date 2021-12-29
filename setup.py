@@ -70,7 +70,6 @@ setup(
 		"natsort==7.1.1",
 		"pillow==8.3.2",
 		"psutil==5.8.0",
-		"pyopenssl==20.0.0",  # Required to allow the `requests` package to use https on Mac OSX
 		"pyphen==0.11.0",
 		"regex==2021.08.28",
 		"requests==2.26.0",
