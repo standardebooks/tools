@@ -357,6 +357,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Pp])rythee\b", r"\1rithee", xhtml)			# prythee -> prithee
 	xhtml = regex.sub(r"\b([Hh])av’n’t", r"\1aven’t", xhtml)			# hav’n’t -> haven’t
 	xhtml = regex.sub(r"\b([Bb])awble", r"\1auble", xhtml)				# bawble -> bauble
+	xhtml = regex.sub(r"\b([Pp])iny?on(s?)\b", r"\1iñon\2", xhtml)			# pinyon -> piñon
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
