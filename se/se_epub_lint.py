@@ -103,6 +103,7 @@ FILESYSTEM
 "f-013", "Glossary search key map must be named [path]glossary-search-key-map.xml[/]."
 "f-014", f"File does not match [path][link=file://{self.path / 'src/epub/css/se.css'}]{core_css_file_path}[/][/]."
 "f-015", "Filename doesn’t match [attr]id[/] attribute of primary [xhtml]<section>[/] or [xhtml]<article>[/]. Hint: [attr]id[/] attributes don’t include the file extension."
+"f-016", "[path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] more than 1.5MB in size."
 
 METADATA
 "m-001", "gutenberg.org URL missing leading [text]www.[/]."
@@ -1086,6 +1087,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					image = Image.open(filename)
 					if image.size != (se.COVER_WIDTH, se.COVER_HEIGHT):
 						messages.append(LintMessage("s-051", f"Wrong height or width. [path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}.", se.MESSAGE_TYPE_ERROR, filename))
+
+					if os.path.getsize(filename) > 1500000: # 1.5MB
+						messages.append(LintMessage("f-016", f"[path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] more than 1.5MB in size.", se.MESSAGE_TYPE_ERROR, filename))
 
 				except UnidentifiedImageError as ex:
 					raise se.InvalidFileException(f"Couldn’t identify image type of [path][link=file://{filename}]{filename.name}[/][/].") from ex
