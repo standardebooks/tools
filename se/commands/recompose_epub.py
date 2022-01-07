@@ -33,7 +33,7 @@ def recompose_epub(plain_output: bool) -> int:
 		se.print_error(ex, plain_output=plain_output)
 		return ex.code
 	except Exception as ex:
-		se.print_error("Couldn’t recompose epub.")
+		se.print_error(f"Couldn’t recompose epub. Exception: {ex}")
 		return se.InvalidFileException.code
 
 	return 0
