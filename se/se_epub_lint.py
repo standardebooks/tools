@@ -2675,6 +2675,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 						if child.tag == "figcaption":
 							figcaption_text = child.inner_text()
 
+							# Replace tabs and newlines with a single space to better match figcaptions that contain <br/>
+							figcaption_text = regex.sub(r"(\n|\t)", " ", figcaption_text)
+							figcaption_text = regex.sub(r"[ ]+", " ", figcaption_text)
+
 					if (figcaption_text != "" and loi_text != "" and figcaption_text != loi_text) and (figure_img_alt != "" and loi_text != "" and figure_img_alt != loi_text):
 						messages.append(LintMessage("s-041", f"The [xhtml]<figcaption>[/] element of [attr]#{figure_ref}[/] does not match the text in its LoI entry.", se.MESSAGE_TYPE_WARNING, self.path / "src/epub/text" / chapter_ref))
 
