@@ -133,6 +133,8 @@ METADATA
 "m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon."
 "m-026", f"Illegal [url]https://en.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs."
 "m-027", f"[val]se:short-story[/] semantic inflection found, but no [val]se:subject[/] with the value of [text]Shorts[/]."
+"m-028", "Images found in ebook, but no [attr]schema:accessMode[/] property set to [val]visual[/] in metadata."
+"m-029", "Images found in ebook, but no [attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata."
 "m-030", f"[val]introduction[/] semantic inflection found, but no MARC relator [val]aui[/] (Author of introduction, but not the chief author) or [val]win[/] (Writer of introduction)."
 "m-031", f"[val]preface[/] semantic inflection found, but no MARC relator [val]wpr[/] (Writer of preface)."
 "m-032", f"[val]afterword[/] semantic inflection found, but no MARC relator [val]aft[/] (Author of colophon, afterword, etc.)."
@@ -141,6 +143,8 @@ METADATA
 "m-035", f"Unexpected S.E. identifier in colophon. Expected: [url]{se_url}[/]."
 "m-036", "Variable not replaced with value."
 "m-037", f"Transcription/page scan source link not found. Expected: [xhtml]{href}[/]."
+"m-038", "[attr]schema:accessMode[/] property set to [val]visual[/] in metadata, but no images in ebook."
+"m-039", "[attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata, but no images in ebook."
 "m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
 "m-042", "[xml]<manifest>[/] element does not match expected structure."
 "m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)})."
@@ -174,10 +178,6 @@ METADATA
 "m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/]."
 "m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/]."
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"m-028", f"Internet Archive source not present. Expected: the [xhtml]<a href=\"{link}\">Internet Archive</a>[/]."
-"m-029", f"Google Books source not present. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/]."
-"m-038", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>[/]."
-"m-039", f"Source not represented in colophon.xhtml. Expected: [xhtml]the<br/> <a href=\"{link}\">Internet Archive</a>[/]."
 "m-040", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/]."
 
 SEMANTICS & CONTENT
@@ -564,6 +564,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 	metadata_xml = self.metadata_dom.to_string()
 	has_glossary_search_key_map = False
 	glossary_usage = []
+	has_images = False
 
 	# This is a dict with where keys are the path and values are a list of code dicts.
 	# Each code dict has a key "code" which is the actual code, and a key "used" which is a
@@ -2410,7 +2411,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				img_alt_not_typogrified = []
 				img_alt_lacking_punctuation = []
 				for node in nodes:
-					alt = node.lxml_element.get("alt")
+					if "titlepage.svg" not in node.get_attr("src"):
+						has_images = True # Save for a later check
+
+					alt = node.get_attr("alt")
 
 					if alt:
 						# Check for non-typogrified img alt attributes
@@ -2867,6 +2871,24 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 		for value in element.get_attr("epub:type").split():
 			if f"[epub|type~=\"{value}\"]" not in self.local_css:
 				missing_styles.append(element.to_tag_string())
+
+	# Check for some accessibility metadata regarding images
+	has_visual_accessmode = len(self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessMode' and text() = 'visual']")) > 0
+	has_accessibility_feature_alt = len(self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'alternativeText']")) > 0
+
+	if has_images:
+		if not has_visual_accessmode:
+			messages.append(LintMessage("m-028", "Images found in ebook, but no [attr]schema:accessMode[/] property set to [val]visual[/] in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+		if not has_accessibility_feature_alt:
+			messages.append(LintMessage("m-029", "Images found in ebook, but no [attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+	if not has_images:
+		if has_visual_accessmode:
+			messages.append(LintMessage("m-038", "[attr]schema:accessMode[/] property set to [val]visual[/] in metadata, but no images in ebook.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+		if has_accessibility_feature_alt:
+			messages.append(LintMessage("m-039", "[attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata, but no images in ebook.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	if missing_styles:
 		messages.append(LintMessage("c-006", f"Semantic found, but missing corresponding style in [path][link=file://{local_css_path}]local.css[/][/].", se.MESSAGE_TYPE_ERROR, local_css_path, set(missing_styles)))
