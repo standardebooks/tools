@@ -761,6 +761,7 @@ def _create_draft(args: Namespace):
 		_copy_template_file("logo.svg", content_path / "epub" / "images")
 		_copy_template_file("colophon.xhtml", content_path / "epub" / "text")
 		_copy_template_file("imprint.xhtml", content_path / "epub" / "text")
+		_copy_template_file("halftitlepage.xhtml", content_path / "epub" / "text")
 		_copy_template_file("uncopyright.xhtml", content_path / "epub" / "text")
 		_copy_template_file("titlepage.xhtml", content_path / "epub" / "text")
 		_copy_template_file("content.opf", content_path / "epub")
@@ -849,6 +850,16 @@ def _create_draft(args: Namespace):
 			file.seek(0)
 			file.write(colophon_xhtml)
 			file.truncate()
+
+	# Fill out the half title
+	with open(content_path / "epub" / "text" / "halftitlepage.xhtml", "r+", encoding="utf-8") as file:
+		xml = file.read()
+
+		xml = xml.replace(">TITLE<", f">{escape(title)}<")
+
+		file.seek(0)
+		file.write(xml)
+		file.truncate()
 
 	# Fill out the metadata file
 	with open(content_path / "epub" / "content.opf", "r+", encoding="utf-8") as file:
