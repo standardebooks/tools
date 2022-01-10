@@ -369,7 +369,7 @@ XHTML
 "x-014", "Illegal [xml]id[/] attribute."
 "x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed."
 "x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter."
-"x-017", "Duplicate value for [attr]id[/] attribute. [attr]id[/] attribute values must be unique across the entire ebook on all elements that do not have [attr]epub:type[/] of [val]volume[/], [val]division[/], or [val]part[/]."
+"x-017", "Duplicate value for [attr]id[/] attribute."
 "x-018", "Unused [xhtml]id[/] attribute."
 """
 
@@ -1414,7 +1414,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if nodes:
 					messages.append(LintMessage("s-011", "Element without [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, {node.to_tag_string() for node in nodes}))
 
-				for node in dom.xpath("/html/body//*[@id and not(re:test(@epub:type, '(division|part|volume)'))]/@id"):
+				for node in dom.xpath("/html/body//*[@id]/@id"):
 					if node in id_values:
 						duplicate_id_values.append(node)
 					else:
@@ -2845,7 +2845,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 	if duplicate_id_values:
 		duplicate_id_values = natsorted(list(set(duplicate_id_values)))
-		messages.append(LintMessage("x-017", "Duplicate value for [attr]id[/] attribute. [attr]id[/] attribute values must be unique across the entire ebook on all elements that do not have [attr]epub:type[/] of [val]volume[/], [val]division[/], or [val]part[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_id_values))
+		messages.append(LintMessage("x-017", "Duplicate value for [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_id_values))
 
 	# We can't convert to set() to get unique items because set() is unordered
 	unique_toc_files: List[str] = []
