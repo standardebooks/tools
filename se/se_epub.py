@@ -520,7 +520,7 @@ class SeEpub:
 
 		css = css.strip()
 
-		namespaces = list(set(namespaces))
+		namespaces = sorted(list(set(namespaces)), reverse=True)
 
 		if namespaces:
 			css = "\n" + css
