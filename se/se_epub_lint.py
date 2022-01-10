@@ -277,6 +277,7 @@ SEMANTICS & CONTENT
 "s-094", "Endnote out of sequence."
 "s-095", "[xhtml]<hgroup>[/] element containing [xhtml]<h#>[/] element in the wrong heading order."
 "s-096", "[xhtml]h1[/] element in half title page missing the [val]fulltitle[/] semantic."
+"s-097", "[xhtml]a[/] element without [attr]href[/] attribute."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1945,6 +1946,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				nodes = dom.xpath("/html/body//*[@style]")
 				if nodes:
 					messages.append(LintMessage("x-012", "Illegal [attr]style[/] attribute. Don’t use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, {node.to_tag_string() for node in nodes}))
+
+				# Check for missing href attributes, sometimes a leftover from PG transcriptions
+				nodes = dom.xpath("/html/body//a[not(@href)]")
+				if nodes:
+					messages.append(LintMessage("s-097", "[xhtml]a[/] element without [attr]href[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, {node.to_string() for node in nodes}))
 
 				# Check for elements that are set in italics, and whose italic children don't have font-style: normal.
 				nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and ./*[(name()='i' or name()='em') and @data-css-font-style='italic']]")
