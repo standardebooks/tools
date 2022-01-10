@@ -200,7 +200,6 @@ SEMANTICS & CONTENT
 "s-017", "[xhtml]<m:mfenced>[/] is deprecated in the MathML spec. Use [xhtml]<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>[/]."
 "s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements. Hint: Images that are inline (i.e. that do not have parent [xhtml]<figure>[/]s do not have [attr]id[/] attributes."
 "s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute."
-"s-020", "Frontmatter found, but no half title page. Half title page is required when frontmatter is present."
 "s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)"
 "s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/]."
 "s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/]."
@@ -278,6 +277,10 @@ SEMANTICS & CONTENT
 "s-095", "[xhtml]<hgroup>[/] element containing [xhtml]<h#>[/] element in the wrong heading order."
 "s-096", "[xhtml]h1[/] element in half title page missing the [val]fulltitle[/] semantic."
 "s-097", "[xhtml]a[/] element without [attr]href[/] attribute."
+UNUSED
+vvvvvvvvvvvvvvvvvvvv
+"s-020", "Frontmatter found, but no half title page. Half title page is required when frontmatter is present."
+
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -550,8 +553,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 	local_css_path = self.content_path / "css/local.css"
 	messages: List[LintMessage] = []
-	has_halftitle = False
-	has_frontmatter = False
 	has_cover_source = False
 	cover_svg_title = ""
 	titlepage_svg_title = ""
@@ -1343,10 +1344,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 				# Done checking for unused selectors.
 
-				# Check if this is a frontmatter file, but exclude the titlepage, imprint, and toc
-				if dom.xpath("/html//*[contains(@epub:type, 'frontmatter') and not(descendant-or-self::*[re:test(@epub:type, '\\b(titlepage|imprint|toc)\\b')])]"):
-					has_frontmatter = True
-
 				# Add new CSS classes to global list
 				if filename.name not in IGNORED_FILENAMES:
 					for node in dom.xpath("//*[@class]"):
@@ -1498,10 +1495,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 				if matches:
 					messages.append(LintMessage("t-010", "Time set with [text].[/] instead of [text]:[/].", se.MESSAGE_TYPE_WARNING, filename, set(matches)))
-
-				# Do we have a half title?
-				if dom.xpath("/html/body//section[contains(@epub:type, 'halftitlepage')]"):
-					has_halftitle = True
 
 				# Check for leading 0 in IDs (note: not the same as checking for IDs that start with an integer)
 				# We only check for *leading* 0s in numbers; this allows IDs like `wind-force-0` in the Worst Journey in the World glossary.
@@ -2730,9 +2723,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 	if self.cover_path and cover_svg_title != titlepage_svg_title:
 		messages.append(LintMessage("s-028", f"[path][link=file://{self.cover_path}]{self.cover_path.name}[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match.", se.MESSAGE_TYPE_ERROR, self.cover_path))
-
-	if has_frontmatter and not has_halftitle:
-		messages.append(LintMessage("s-020", "Frontmatter found, but no half title page. Half title page is required when frontmatter is present.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	if self.is_se_ebook and not has_cover_source:
 		missing_files.append("images/cover.source.jpg")
