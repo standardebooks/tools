@@ -68,7 +68,7 @@ setup(
 		"importlib_resources==1.0.2",
 		"lxml==4.6.5",
 		"natsort==7.1.1",
-		"pillow==8.3.2",
+		"pillow==9.0.0",
 		"psutil==5.8.0",
 		"pyphen==0.11.0",
 		"regex==2021.08.28",
