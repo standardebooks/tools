@@ -472,13 +472,13 @@ class SeEpub:
 				image_contents_base64 = base64.b64encode(binary_file.read()).decode()
 
 			if src.endswith(".svg"):
-				img.set_attr("src", f"data:image/svg+xml;base64, {image_contents_base64}")
+				img.set_attr("src", f"data:image/svg+xml;base64,{image_contents_base64}")
 
 			if src.endswith(".jpg"):
-				img.set_attr("src", f"data:image/jpg;base64, {image_contents_base64}")
+				img.set_attr("src", f"data:image/jpg;base64,{image_contents_base64}")
 
 			if src.endswith(".png"):
-				img.set_attr("src", f"data:image/png;base64, {image_contents_base64}")
+				img.set_attr("src", f"data:image/png;base64,{image_contents_base64}")
 
 		for child in section.xpath("./*"):
 			if child.tag in ("section", "article"):
