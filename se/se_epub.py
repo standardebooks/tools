@@ -644,7 +644,9 @@ class SeEpub:
 
 			# Make some replacements for HTML5 compatibility
 			output_xhtml = output_xhtml.replace("epub|type", "data-epub-type")
+			output_xhtml = output_xhtml.replace("xml|lang", "lang")
 			output_xhtml = regex.sub(r" xmlns.+?=\".+?\"", "", output_xhtml)
+			output_xhtml = regex.sub(r"@namespace (epub|xml).+?\s+", "", output_xhtml, flags=regex.MULTILINE)
 
 			# The Nu HTML5 Validator barfs if non-void elements are self-closed (like <td/>)
 			# Try to un-self-close them for HTML5 output.
