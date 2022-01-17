@@ -772,13 +772,27 @@ def _create_draft(args: Namespace):
 	if not args.offline and title not in ("Short Fiction", "Poetry", "Essays", "Plays"):
 		ebook_wiki_url, _ = _get_wikipedia_url(title, False)
 
-	if args.white_label:
-		_replace_in_file(content_path / "epub" / "text" / "titlepage.xhtml", "TITLE", escape(title))
-		_replace_in_file(content_path / "epub" / "text" / "titlepage.xhtml", "AUTHOR", escape(_generate_contributor_string(authors, False)))
+	with open(content_path / "epub" / "text" / "titlepage.xhtml", "r+", encoding="utf-8") as file:
+		titlepage_xhtml = file.read()
 
-	else:
-		_replace_in_file(content_path / "epub" / "text" / "titlepage.xhtml", "TITLE_STRING", escape(title_string))
+		titlepage_xhtml = titlepage_xhtml.replace("TITLE", escape(title))
+		titlepage_xhtml = titlepage_xhtml.replace("AUTHOR", _add_name_abbr(escape(_generate_contributor_string(authors, False))))
 
+		if translators:
+			titlepage_xhtml = titlepage_xhtml.replace("TRANSLATOR", _add_name_abbr(escape(_generate_contributor_string(translators, False))))
+		else:
+			titlepage_xhtml = regex.sub(r"<p>Translated by.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)
+
+		if illustrators:
+			titlepage_xhtml = titlepage_xhtml.replace("ILLUSTRATOR", _add_name_abbr(escape(_generate_contributor_string(illustrators, False))))
+		else:
+			titlepage_xhtml = regex.sub(r"<p>Illustrated by.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)
+
+		file.seek(0)
+		file.write(se.formatting.format_xhtml(titlepage_xhtml))
+		file.truncate()
+
+	if not args.white_label:
 		# Create the titlepage SVG
 		contributors = {}
 		if translators:
