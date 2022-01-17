@@ -14,6 +14,7 @@ import tempfile
 from distutils.dir_util import copy_tree
 from copy import deepcopy
 from hashlib import sha1
+from html import unescape
 from pathlib import Path
 from typing import Dict, Tuple, List
 import importlib_resources
@@ -991,6 +992,51 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 								build_messages.append(BuildMessage("epubcheck", message.get_attr("id"), error_text[1]))
 
 						raise se.BuildFailedException("[bash]epubcheck[/] failed.", build_messages)
+
+			# Now run the Nu Validator
+			with importlib_resources.path("se.data.vnu", "vnu.jar") as jar_path:
+				# We have to use a temp file to hold stdout, because if the output is too large for the output buffer in subprocess.run() (and thus popen()) it will be truncated
+				with tempfile.TemporaryFile() as stdout:
+					subprocess.run(["java", "-jar", str(jar_path), "--format", "xml", str(self.epub_root_path / "epub" / "text")], stdout=stdout, stderr=stdout, check=False)
+
+					stdout.seek(0)
+					vnu_dom = se.easy_xml.EasyXmlTree(stdout.read().decode().strip())
+
+					# The Nu Validator will return errors for epub-specific attributes (like `epub:prefix` and `epub:type`) because they're
+					# not defined in the XHTML5 spec. So, we simply filter out those errors.
+					messages = vnu_dom.xpath("/messages/*[not(re:test(./message, '^Attribute (prefix|type) not allowed'))]")
+
+					for message in messages:
+						message_text = message.xpath("./message")[0].inner_xml()
+						submessage = None
+
+						# Colorize output
+						message_text = regex.sub(r"([Aa]ttribute) <code>", r"\1 [attr]", message_text)
+						message_text = regex.sub(r"([Ee]lement) <code>(.+?)</code>", r"\1 [xhtml]<\2>[/]", message_text)
+						message_text = message_text.replace("<code>", "[xhtml]")
+						message_text = message_text.replace("</code>", "[/]")
+						message_text = unescape(message_text)
+
+						# Do we have a submessage?
+						extract = message.xpath("./extract")
+
+						if extract:
+							# The extract will contain the offending line plus some lines around it.
+							# The offending line is marked up with <m> so pull it out and discard the surrounding lines.
+							target = extract[0].xpath("./m")
+							if target:
+								submessage = target[0].inner_xml()
+							else:
+								submessage = extract[0].inner_xml()
+
+							submessage = unescape(submessage).strip()
+							submessage = [submessage]
+
+						file_path = Path(regex.sub(r"^file:", "", message.get_attr("url")))
+						build_messages.append(BuildMessage("vnu", "", message_text, file_path, message.get_attr("last-line"), message.get_attr("first-column"), submessage))
+
+					if messages:
+						raise se.BuildFailedException("[bash]vnu[/] failed.", build_messages)
 
 		# Now run Ace
 		if run_ace:
