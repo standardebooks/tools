@@ -342,7 +342,7 @@ TYPOGRAPHY
 "t-060", "Old style Bible citation."
 "t-061", "Summary-style bridgehead without ending punctuation."
 "t-062", "Uppercased [text]a.m.[/] and [text]p.m.[/]"
-"t-063", "Latin phrase set without italics."
+"t-063", "Non-English confusable phrase set without italics."
 "t-064", "Title not correctly titlecased. Hint: Non-English titles should have an [attr]xml:lang[/] attribute as they have different titlecasing rules."
 "t-065", "Header ending in a period."
 "t-066", "Regnal ordinal preceded by [text]the[/]."
@@ -1909,9 +1909,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				# Exclude toto followed by ’ since Toto can be a name.
 				# Exclude <h#> whose entire contents is a matched Latinism as we do not italicize those.
 				# Ignore the ToC because we have different rules there
-				nodes = dom.xpath("/html/body//text()[re:test(., '\\b(a (priori|posteriori|fortiori)|(?<!reductio )ad (hominem|absurdum|nauseam|infinitum|interim|valem)|in (extremis|loco|situ|vitro|absentia|camera|statu quo)|in toto[^’]|more suo)\\b', 'i') and not(ancestor-or-self::*[@data-css-font-style='italic']) and not(parent::*[re:test(name(), '^h[1-6]$') and @xml:lang='la']) and not(ancestor::nav[contains(@epub:type, 'toc')]) ]")
+				nodes = dom.xpath("/html/body//text()[re:test(., '\\b(a (priori|posteriori|fortiori)|(?<!reductio )ad (hominem|absurdum|nauseam|infinitum|interim|valem)|in (extremis|loco|situ|vitro|absentia|camera|statu quo)|in toto[^’]|more suo|par excellence)\\b', 'i') and not(ancestor-or-self::*[@data-css-font-style='italic']) and not(parent::*[re:test(name(), '^h[1-6]$') and @xml:lang]) and not(ancestor::nav[contains(@epub:type, 'toc')]) ]")
 				if nodes:
-					messages.append(LintMessage("t-063", "Latin phrase set without italics.", se.MESSAGE_TYPE_WARNING, filename, nodes))
+					messages.append(LintMessage("t-063", "Non-English confusable phrase set without italics.", se.MESSAGE_TYPE_WARNING, filename, nodes))
 
 				# Check for comma after leading Or in subtitles
 				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'subtitle') and re:test(text(), '^Or\\s')]")
