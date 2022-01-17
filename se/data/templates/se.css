@@ -89,23 +89,3 @@ section[epub|type~="copyright-page"] blockquote p span{
 section[epub|type~="copyright-page"] blockquote br{
 	display: none;
 }
-
-@supports(display: flex){
-	section[epub|type~="imprint"]{
-		align-content: center;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		min-height: calc(98vh - 3em);
-		padding-top: 3em;
-	}
-
-	section[epub|type~="imprint"] header{
-		margin-bottom: 2em;
-		margin-top: 0;
-	}
-
-	img[epub|type~="z3998:publisher-logo"]{
-		max-width: 25vw;
-	}
-}
