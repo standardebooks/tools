@@ -621,6 +621,10 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					# for node in dom.xpath("/html/body//span[contains(@class, 'quote-align')]"):
 					# 	node.unwrap()
 
+					# Change 'noteref' to 'endnote' so that popup endnotes work in Kobo. Kobo doesn't understand 'noteref', only 'endnote'.
+					for node in dom.xpath("/html/body//a[contains(@epub:type, 'noteref')]"):
+						node.set_attr("epub:type", node.get_attr("epub:type") + " endnote")
+
 					# Now add the kobo spans
 					kobo.add_kobo_spans_to_node(dom.xpath("/html/body")[0].lxml_element)
 
