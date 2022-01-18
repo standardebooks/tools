@@ -33,7 +33,7 @@ img[epub|type~="se:image.color-depth.black-on-transparent"][epub|type~="z3998:pu
 
 /* Or if the device supports prefers-color-scheme. We’ll invert the image in core.css. RMSDK requires a target media as well as a state. */
 @media all and (prefers-color-scheme){
-	img[epub|type~="se:image.color-depth.black-on-transparent"]{
+	img[epub|type~="se:image.color-depth.black-on-transparent"]:not([epub|type~="se:image.style.realistic"]){
 		background: transparent !important;
 	}
 }

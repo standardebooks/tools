@@ -1154,10 +1154,10 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				# Remove se:image.color-depth.black-on-transparent, as Calibre removes media queries so this will *always* be invisible
 				for node in dom.xpath("/html/body//img[contains(@class, 'epub-type-se-image-color-depth-black-on-transparent') or contains(@epub:type, 'se:image.color-depth.black-on-transparent')]"):
 					if node.get_attr("class"):
-						node.set_attr("class", node.get_attr("class").replace("epub-type-se-image-color-depth-black-on-transparent", ""))
+						node.set_attr("class", node.get_attr("class").replace("epub-type-se-image-color-depth-black-on-transparent", "").replace("epub-type-se-image-style-realistic", ""))
 
 					if node.get_attr("epub:type"):
-						node.set_attr("epub:type", node.get_attr("epub:type").replace("se:image.color-depth.black-on-transparent", ""))
+						node.set_attr("epub:type", node.get_attr("epub:type").replace("se:image.color-depth.black-on-transparent", "").replace("se:image.style.realistic", ""))
 
 				# If the only element on the page is an absolutely positioned image, Kindle will ignore the file in the reading order.
 				# So, in that case we add a `<div>` with some text content to fool Kindle.
