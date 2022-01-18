@@ -791,7 +791,10 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 			if output.endswith("| ") or output.endswith("|= ") or output.endswith("^= ") or output.endswith("~= ") or output.endswith("*= ") or output.endswith("|| "):
 				output = output.rstrip()
 
-			output += token.lower_value
+			if token.lower_value == "currentcolor": # special case
+				output += "currentColor"
+			else:
+				output += token.lower_value
 
 		if token.type == "literal":
 			if token.value == ":" and in_paren_block:
