@@ -147,8 +147,6 @@ METADATA
 "m-039", "[attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata, but no images in ebook."
 "m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
 "m-042", "[xml]<manifest>[/] element does not match expected structure."
-"m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)})."
-"m-044", f"The spine order does not match the order of the ToC. Expected [text]{node.get_attr('idref')}[/], found [text]{toc_files[index]}[/]."
 "m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC."
 "m-046", "Missing or empty [xml]<reason>[/] element."
 "m-047", "Ignoring [path]*[/] is too general. Target specific files if possible."
@@ -179,6 +177,8 @@ METADATA
 "m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/]."
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 "m-040", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/]."
+"m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)})."
+"m-044", f"The spine order does not match the order of the ToC. Expected [text]{node.get_attr('idref')}[/], found [text]{toc_files[index]}[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -2826,6 +2826,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 			url_safe_filename = se.formatting.make_url_safe(filepath.stem)
 			messages.append(LintMessage("f-008", f"Filename is not URL-safe. Expected: [path]{url_safe_filename}[/].", se.MESSAGE_TYPE_ERROR, filepath))
 
+	if duplicate_id_values:
+		duplicate_id_values = natsorted(list(set(duplicate_id_values)))
+		messages.append(LintMessage("x-017", "Duplicate value for [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_id_values))
+
 	# Check our headings against the ToC and landmarks
 	headings = list(set(headings))
 	toc_dom = self.get_dom(self.toc_path)
@@ -2843,29 +2847,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 		# Some compilations, like Songs of a Sourdough, have their title in the half title, so check against that before adding an error
 		if heading not in toc_headings and (heading[0], str(self.path / "src/epub/text/halftitlepage.xhtml")) not in toc_headings:
 			messages.append(LintMessage("m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, Path(heading[1])))
-
-	# Check our ordered ToC entries against the spine
-	for node in toc_entries:
-		toc_files.append(regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", node.get_attr("href")))
-
-	if duplicate_id_values:
-		duplicate_id_values = natsorted(list(set(duplicate_id_values)))
-		messages.append(LintMessage("x-017", "Duplicate value for [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_id_values))
-
-	# We can't convert to set() to get unique items because set() is unordered
-	unique_toc_files: List[str] = []
-	for toc_file in toc_files:
-		if toc_file not in unique_toc_files:
-			unique_toc_files.append(toc_file)
-	toc_files = unique_toc_files
-
-	spine_entries = self.metadata_dom.xpath("/package/spine/itemref")
-	if len(toc_files) != len(spine_entries):
-		messages.append(LintMessage("m-043", f"The number of elements in the spine ({len(spine_entries)}) does not match the number of elements in the ToC and landmarks ({len(toc_files)}).", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-	for index, node in enumerate(spine_entries):
-		if toc_files[index] != node.get_attr("idref"):
-			messages.append(LintMessage("m-044", f"The spine order does not match the order of the ToC. Expected [text]{node.get_attr('idref')}[/], found [text]{toc_files[index]}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-			break
 
 	for element in abbr_elements_requiring_css:
 		# All abbr elements have an epub:type because we selected them based on epub:type in the xpath
