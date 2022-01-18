@@ -349,7 +349,7 @@ def get_word_count(xhtml: str) -> int:
 	xhtml = regex.sub(r"<(m:)?math.+?</(m:)?math>", " ", xhtml)
 
 	# Remove HTML tags
-	xhtml = regex.sub(r"<title>.+?</title>", " ", xhtml)
+	xhtml = regex.sub(r"<title[^>]*?>.+?</title>", " ", xhtml)
 	xhtml = regex.sub(r"<.+?>", " ", xhtml, flags=regex.DOTALL)
 
 	# Replace some formatting characters
