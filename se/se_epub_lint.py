@@ -148,7 +148,7 @@ METADATA
 "m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
 "m-042", "[xml]<manifest>[/] element does not match expected structure."
 "m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)})."
-"m-044", f"The spine order does not match the order of the ToC and landmarks. Expected [text]{node.get_attr('idref')}[/], found [text]{toc_files[index]}[/]."
+"m-044", f"The spine order does not match the order of the ToC. Expected [text]{node.get_attr('idref')}[/], found [text]{toc_files[index]}[/]."
 "m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC."
 "m-046", "Missing or empty [xml]<reason>[/] element."
 "m-047", "Ignoring [path]*[/] is too general. Target specific files if possible."
@@ -2844,9 +2844,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 			messages.append(LintMessage("m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, Path(heading[1])))
 
 	# Check our ordered ToC entries against the spine
-	# To cover all possibilities, we combine the toc and the landmarks to get the full set of entries
-	for node in toc_dom.xpath("/html/body/nav[@epub:type='landmarks']//a[re:test(@epub:type, '(front|body)matter')]"):
-		toc_files.append(regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", node.get_attr("href")))
 	for node in toc_entries:
 		toc_files.append(regex.sub(r"^text\/(.*?\.xhtml).*$", r"\1", node.get_attr("href")))
 
@@ -2866,7 +2863,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 		messages.append(LintMessage("m-043", f"The number of elements in the spine ({len(spine_entries)}) does not match the number of elements in the ToC and landmarks ({len(toc_files)}).", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 	for index, node in enumerate(spine_entries):
 		if toc_files[index] != node.get_attr("idref"):
-			messages.append(LintMessage("m-044", f"The spine order does not match the order of the ToC and landmarks. Expected [text]{node.get_attr('idref')}[/], found [text]{toc_files[index]}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+			messages.append(LintMessage("m-044", f"The spine order does not match the order of the ToC. Expected [text]{node.get_attr('idref')}[/], found [text]{toc_files[index]}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 			break
 
 	for element in abbr_elements_requiring_css:
