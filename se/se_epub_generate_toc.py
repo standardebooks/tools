@@ -199,6 +199,9 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list) -> None:
 		landmark.place = get_place(bodys[0])
 		if epub_type == "halftitlepage":
 			landmark.title = "Half Title"
+		elif epub_type == "titlepage":
+			# Exception: The titlepage always has is titled 'titlepage' in the ToC
+			landmark.title = "Titlepage"
 		else:
 			landmark.title = dom.xpath("//head/title/text()", True)  # Use the page title as the landmark entry title.
 			if landmark.title is None:
@@ -429,6 +432,10 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, nest_under_ha
 
 		toc_item.level = get_level(heading, toc_list)
 		toc_item.place = place
+
+		# Exception: The titlepage always has is titled 'titlepage' in the ToC
+		if dom.xpath("//section[re:test(@epub:type, '\\btitlepage\\b')]"):
+			toc_item.title = "Titlepage"
 
 		is_toplevel = False
 		toc_list.append(toc_item)

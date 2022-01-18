@@ -245,7 +245,7 @@ SEMANTICS & CONTENT
 "s-062", "[xhtml]<dt>[/] element in a glossary without exactly one [xhtml]<dfn>[/] child."
 "s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/]."
 "s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space."
-"s-065", "[val]fulltitle[/] semantic on element that is not [xhtml]<h1>[/] or [xhtml]<hgroup>[/]."
+"s-065", "[val]fulltitle[/] semantic on element that is not in the half title."
 "s-066", "Header element missing [val]label[/] semantic."
 "s-067", "Header element with a [val]label[/] semantic child, but without an [val]ordinal[/] semantic child."
 "s-068", "Header element missing [val]ordinal[/] semantic."
@@ -1569,9 +1569,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if nodes:
 					messages.append(LintMessage("c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[a-z]$') and not(following-sibling::*[1]/node()[1][contains(@epub:type, 'z3998:roman')] or following-sibling::*[1][re:test(., '^([0-9]|first|second|third|fourth|fifth|sixth|seventh|eight|ninth|tenth)', 'i')]) and not(@class or contains(@epub:type, 'z3998:salutation')) and not(following-sibling::*[1][name() = 'blockquote' or name() = 'figure' or name() = 'table' or name() = 'footer' or name() = 'ul' or name() = 'ol'] or ancestor::*[name() = 'blockquote' or name() = 'footer' or name() = 'header' or name() = 'table' or name() = 'ul' or name() = 'ol' or name() = 'figure' or re:test(@epub:type, '(z3998:drama|dedication|halftitlepage)')])]")]
-				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: paragraph missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
+				# Check for possible typos, but the titlepage is exempt
+				if not dom.xpath("/html/body//section[contains(@epub:type, 'titlepage')]"):
+					typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[a-z]$') and not(following-sibling::*[1]/node()[1][contains(@epub:type, 'z3998:roman')] or following-sibling::*[1][re:test(., '^([0-9]|first|second|third|fourth|fifth|sixth|seventh|eight|ninth|tenth)', 'i')]) and not(@class or contains(@epub:type, 'z3998:salutation')) and not(following-sibling::*[1][name() = 'blockquote' or name() = 'figure' or name() = 'table' or name() = 'footer' or name() = 'ul' or name() = 'ol'] or ancestor::*[name() = 'blockquote' or name() = 'footer' or name() = 'header' or name() = 'table' or name() = 'ul' or name() = 'ol' or name() = 'figure' or re:test(@epub:type, '(z3998:drama|dedication|halftitlepage)')])]")]
+					if typos:
+						messages.append(LintMessage("t-042", "Possible typo: paragraph missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for dialog starting with a lowercase letter. Only check the first child text node of <p>, because other first children might be valid lowercase, like <m:math> or <b>;
 				# exclude <p> inside or preceded by <blockquote>; and exclude <p> inside endnotes, as definitions may start with lowercase letters.
@@ -1820,14 +1822,14 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					parent_section_count = len(node.xpath(".//ancestor::section | .//ancestor::article"))
 					heading_level = int(regex.search(r"^h([1-6]$)", node.tag)[1])
 
-					is_half_title = bool(dom.xpath("/html/body//section[contains(@epub:type, 'halftitlepage')]"))
+					is_title = bool(dom.xpath("/html/body//section[re:test(@epub:type, '\\btitlepage\\b')]"))
 
-					# Only the half title page is allowed an <h1> element. All other files must start at <h2>.
+					# Only the title page is allowed an <h1> element. All other files must start at <h2>.
 					if self.is_se_ebook:
-						if not is_half_title and heading_level == 1:
+						if not is_title and heading_level == 1:
 							invalid_headers.append(node.to_string())
 
-					if is_half_title and heading_level > 1:
+					if is_title and heading_level > 1:
 						invalid_headers.append(node.to_string())
 
 					# All other headers must at least one parent <section> or <article> and start at <h2>
@@ -1835,7 +1837,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 						invalid_headers.append(node.to_string())
 
 				if invalid_headers:
-					messages.append(LintMessage("s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. Hint: Headings not in the half title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?", se.MESSAGE_TYPE_ERROR, filename, invalid_headers))
+					messages.append(LintMessage("s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. Hint: Headings not in the title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?", se.MESSAGE_TYPE_ERROR, filename, invalid_headers))
 
 				# Check for abbreviations followed by periods
 				# But we exclude some SI units, which don't take periods; abbreviations ending in numbers for example in stage directions; abbreviations like `r^o` (recto) that contain <sup>; and some Imperial abbreviations that are multi-word
@@ -2051,10 +2053,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if nodes:
 					messages.append(LintMessage("s-010", "Empty element. Use [xhtml]<hr/>[/] for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-				# Check for fulltitle semantic on non-h1
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'fulltitle') and name() !='h1' and name() !='hgroup']")
+				# Check for fulltitle semantic on a header not in the half title
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'fulltitle') and name() !='h2' and name() !='hgroup' and not(ancestor::*[contains(@epub:type, 'halftitlepage')])]")
 				if nodes:
-					messages.append(LintMessage("s-065", "[val]fulltitle[/] semantic on element that is not [xhtml]<h1>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+					messages.append(LintMessage("s-065", "[val]fulltitle[/] semantic on element that is not in the half title.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for HTML tags in <title> tags
 				nodes = dom.xpath("/html/head/title/*")
@@ -2412,7 +2414,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("t-005", "Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check alt attributes on images, except for the logo
-				nodes = dom.xpath("/html/body//img[not(re:test(@src, '/logo.svg$'))]")
+				nodes = dom.xpath("/html/body//img[not(re:test(@src, '/(logo|titlepage)\\.(svg|png)$'))]")
 				img_no_alt = []
 				img_alt_not_typogrified = []
 				img_alt_lacking_punctuation = []
@@ -2696,26 +2698,26 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				# Don't check the landmarks as that may introduce duplicate errors
 				# Only check for top-level elements, to avoid intros in short stories or poems in compilation.
 				if not dom.xpath("/html/body//nav[contains(@epub:type, 'landmarks')]"):
-					if dom.xpath("/html/body/*[contains(@epub:type, 'introduction')]") and not self.metadata_dom.xpath("/package/metadata/meta[ (@property='role' or @property='se:role') and (text()='aui' or text()='win')]"):
+					if dom.xpath("/html/body/*[contains(@epub:type, 'introduction') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[ (@property='role' or @property='se:role') and (text()='aui' or text()='win')]"):
 						messages.append(LintMessage("m-030", "[val]introduction[/] semantic inflection found, but no MARC relator [val]aui[/] (Author of introduction, but not the chief author) or [val]win[/] (Writer of introduction).", se.MESSAGE_TYPE_WARNING, filename))
 
-					if dom.xpath("/html/body/*[contains(@epub:type, 'preface')]") and not self.metadata_dom.xpath("/package/metadata/meta[ (@property='role' or @property='se:role') and text()='wpr']"):
+					if dom.xpath("/html/body/*[contains(@epub:type, 'preface') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[ (@property='role' or @property='se:role') and text()='wpr']"):
 						messages.append(LintMessage("m-031", "[val]preface[/] semantic inflection found, but no MARC relator [val]wpr[/] (Writer of preface).", se.MESSAGE_TYPE_WARNING, filename))
 
-					if dom.xpath("/html/body/*[contains(@epub:type, 'afterword')]") and not self.metadata_dom.xpath("/package/metadata/meta[ (@property='role' or @property='se:role') and text()='aft']"):
+					if dom.xpath("/html/body/*[contains(@epub:type, 'afterword') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[ (@property='role' or @property='se:role') and text()='aft']"):
 						messages.append(LintMessage("m-032", "[val]afterword[/] semantic inflection found, but no MARC relator [val]aft[/] (Author of colophon, afterword, etc.).", se.MESSAGE_TYPE_WARNING, filename))
 
-					if dom.xpath("/html/body/*[contains(@epub:type, 'endnotes')]") and not self.metadata_dom.xpath("/package/metadata/meta[ (@property='role' or @property='se:role') and text()='ann']"):
+					if dom.xpath("/html/body/*[contains(@epub:type, 'endnotes') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[ (@property='role' or @property='se:role') and text()='ann']"):
 						messages.append(LintMessage("m-033", "[val]endnotes[/] semantic inflection found, but no MARC relator [val]ann[/] (Annotator).", se.MESSAGE_TYPE_WARNING, filename))
 
-					if dom.xpath("/html/body/*[contains(@epub:type, 'loi')]") and not self.metadata_dom.xpath("/package/metadata/meta[ (@property='role' or @property='se:role') and text()='ill']"):
+					if dom.xpath("/html/body/*[contains(@epub:type, 'loi') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[ (@property='role' or @property='se:role') and text()='ill']"):
 						messages.append(LintMessage("m-034", "[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator).", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check for wrong semantics in frontmatter/backmatter
-				if dom.xpath("/html/body/section[re:test(@epub:type, '\\b(dedication|introduction|preface|foreword|preamble|titlepage|halftitlepage|imprint|epigraph|acknowledgements)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'frontmatter')])]"):
+				if dom.xpath("/html/body/section[not(@data-parent) and re:test(@epub:type, '\\b(dedication|introduction|preface|foreword|preamble|titlepage|halftitlepage|imprint|epigraph|acknowledgements)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'frontmatter')])]"):
 					messages.append(LintMessage("s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
-				if dom.xpath("/html/body/section[re:test(@epub:type, '\\b(endnotes|loi|afterword|appendix|colophon|copyright\\-page|lot)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'backmatter')])]"):
+				if dom.xpath("/html/body/section[not(@data-parent) and re:test(@epub:type, '\\b(endnotes|loi|afterword|appendix|colophon|copyright\\-page|lot)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'backmatter')])]"):
 					messages.append(LintMessage("s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check and log missing glossary keys

@@ -131,4 +131,9 @@ section[epub|type~="endnotes"] > ol > li{
 	img[epub|type~="se:image.color-depth.black-on-transparent"]{
 		filter: invert(100%);
 	}
+
+	img[epub|type~="se:image.color-depth.black-on-transparent"][epub|type~="se:image.style.realistic"]{
+		background: currentColor;
+		filter: none;
+	}
 }

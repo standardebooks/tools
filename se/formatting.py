@@ -1310,6 +1310,10 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 	except Exception as ex:
 		raise se.InvalidXhtmlException(f"Couldn’t parse XHTML file. Exception: {ex}")
 
+	# Titlepages are the exception
+	if dom.xpath("/html/body//section[re:test(@epub:type, '\\btitlepage\\b')]"):
+		return "Titlepage"
+
 	title = ""
 
 	# Do we have an hgroup element to process?

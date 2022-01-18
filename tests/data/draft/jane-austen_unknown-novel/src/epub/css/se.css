@@ -6,6 +6,18 @@ abbr.era{
 	font-variant: all-small-caps;
 }
 
+section[epub|type~="titlepage"] h1,
+section[epub|type~="titlepage"] p,
+section[epub|type~="colophon"] h2,
+section[epub|type~="imprint"] h2{
+	/* Required for Kobo not to add an extra page to the title */
+	font-size: 0;
+
+	/* Required for Kindle */
+	position: absolute;
+	left: -999em;
+}
+
 section[epub|type~="titlepage"] img{
 	display: block;
 	width: 100%;
@@ -21,11 +33,6 @@ section[epub|type~="colophon"] header,
 section[epub|type~="imprint"] header{
 	line-height: 0;
 	margin-top: 3em;
-}
-
-section[epub|type~="colophon"] h2,
-section[epub|type~="imprint"] h2{
-	display: none;
 }
 
 img[epub|type~="z3998:publisher-logo"]{
@@ -81,24 +88,4 @@ section[epub|type~="copyright-page"] blockquote p span{
 
 section[epub|type~="copyright-page"] blockquote br{
 	display: none;
-}
-
-@supports(display: flex){
-	section[epub|type~="imprint"]{
-		align-content: center;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		min-height: calc(98vh - 3em);
-		padding-top: 3em;
-	}
-
-	section[epub|type~="imprint"] header{
-		margin-bottom: 2em;
-		margin-top: 0;
-	}
-
-	img[epub|type~="z3998:publisher-logo"]{
-		max-width: 25vw;
-	}
 }
