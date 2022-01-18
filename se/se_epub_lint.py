@@ -1497,7 +1497,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("t-010", "Time set with [text].[/] instead of [text]:[/].", se.MESSAGE_TYPE_WARNING, filename, set(matches)))
 
 				# Do we have a half title?
-				if dom.xpath("/html/body//section[contains(@epub:type, 'halftitlepage')]"):
+				# Sometimes the half title might not be a section, like in Cane by Jean Toomer
+				if dom.xpath("/html/body//*[contains(@epub:type, 'halftitlepage')]"):
 					has_halftitle = True
 
 				# Check for leading 0 in IDs (note: not the same as checking for IDs that start with an integer)
