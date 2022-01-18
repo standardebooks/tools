@@ -1208,7 +1208,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				typos: List[str] = []
 
 				# Extract ID attributes for later checks
-				id_attrs = id_attrs + dom.xpath("//*[name() != 'section' and name() != 'article' and name() != 'figure']/@id")
+				id_attrs = id_attrs + dom.xpath("//*[name() != 'section' and name() != 'article' and name() != 'figure' and name() != 'nav']/@id")
 
 				# Add to the short story count for later checks
 				short_story_count += len(dom.xpath("/html/body//article[contains(@epub:type, 'se:short-story')]"))
@@ -1657,7 +1657,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("t-042", "Possible typo: Italics followed by a letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for body element without child section or article. Ignore the ToC because it has a unique structure
-				nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and contains(@epub:type, 'toc'))])]")
+				nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and re:test(@epub:type, '\\b(toc|loi)\\b'))])]")
 				if nodes:
 					messages.append(LintMessage("s-069", "[xhtml]<body>[/] element missing direct child [xhtml]<section>[/] or [xhtml]<article>[/] element.", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -2662,7 +2662,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 						messages.append(LintMessage("s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/].", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check LoI descriptions to see if they match associated figcaptions
-				for node in dom.xpath("/html/body/section[contains(@epub:type, 'loi')]//li//a"):
+				for node in dom.xpath("/html/body/nav[contains(@epub:type, 'loi')]//li//a"):
 					figure_ref = node.get_attr("href").split("#")[1]
 					chapter_ref = regex.findall(r"(.*?)#.*", node.get_attr("href"))[0]
 					figcaption_text = ""

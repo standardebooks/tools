@@ -173,9 +173,9 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list) -> None:
 	"""
 
 	epub_type = ""
-	sections = dom.xpath("//body/*[name() = 'section' or name() = 'article']")
+	sections = dom.xpath("//body/*[name() = 'section' or name() = 'article' or name() = 'nav']")
 	if not sections:
-		raise se.InvalidInputException("Couldn’t locate first [xhtml]<section>[/] or [xhtml]<article>[/].")
+		raise se.InvalidInputException("Couldn’t locate first [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/].")
 	epub_type = sections[0].get_attr("epub:type")
 	bodys = dom.xpath("//body")
 	if not bodys:
