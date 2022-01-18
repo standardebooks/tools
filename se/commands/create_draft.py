@@ -528,6 +528,17 @@ def _generate_metadata_contributor_xml(contributors: List[Dict], contributor_typ
 
 	return output.strip()
 
+def _generate_titlepage_string(contributors: List[Dict], type: str) -> str:
+	output = _generate_contributor_string(contributors, True)
+	output = regex.sub(r"<a href[^<>]+?>", "<b epub:type=\"z3998:personal-name\">", output)
+	output = output.replace("</a>", "</b>")
+
+	if type != "illustrator":
+		# There's no z3998:illustrator term
+		output = output.replace("\"z3998:personal-name", f"\"z3998:{type} z3998:personal-name")
+
+	return output
+
 def _create_draft(args: Namespace):
 	"""
 	Implementation for `se create-draft`
@@ -776,15 +787,16 @@ def _create_draft(args: Namespace):
 		titlepage_xhtml = file.read()
 
 		titlepage_xhtml = titlepage_xhtml.replace("TITLE", escape(title))
-		titlepage_xhtml = titlepage_xhtml.replace("AUTHOR", _add_name_abbr(escape(_generate_contributor_string(authors, False))))
+
+		titlepage_xhtml = titlepage_xhtml.replace("AUTHOR", _generate_titlepage_string(authors, "author"))
 
 		if translators:
-			titlepage_xhtml = titlepage_xhtml.replace("TRANSLATOR", _add_name_abbr(escape(_generate_contributor_string(translators, False))))
+			titlepage_xhtml = titlepage_xhtml.replace("TRANSLATOR", _generate_titlepage_string(translators, "translator"))
 		else:
 			titlepage_xhtml = regex.sub(r"<p>Translated by.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)
 
 		if illustrators:
-			titlepage_xhtml = titlepage_xhtml.replace("ILLUSTRATOR", _add_name_abbr(escape(_generate_contributor_string(illustrators, False))))
+			titlepage_xhtml = titlepage_xhtml.replace("ILLUSTRATOR", _generate_titlepage_string(illustrators, "illustrator"))
 		else:
 			titlepage_xhtml = regex.sub(r"<p>Illustrated by.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)
 

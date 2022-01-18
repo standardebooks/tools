@@ -1566,11 +1566,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if nodes:
 					messages.append(LintMessage("c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-				# Check for possible typos, but the titlepage is exempt
-				if not dom.xpath("/html/body//section[contains(@epub:type, 'titlepage')]"):
-					typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[a-z]$') and not(following-sibling::*[1]/node()[1][contains(@epub:type, 'z3998:roman')] or following-sibling::*[1][re:test(., '^([0-9]|first|second|third|fourth|fifth|sixth|seventh|eight|ninth|tenth)', 'i')]) and not(@class or contains(@epub:type, 'z3998:salutation')) and not(following-sibling::*[1][name() = 'blockquote' or name() = 'figure' or name() = 'table' or name() = 'footer' or name() = 'ul' or name() = 'ol'] or ancestor::*[name() = 'blockquote' or name() = 'footer' or name() = 'header' or name() = 'table' or name() = 'ul' or name() = 'ol' or name() = 'figure' or re:test(@epub:type, '(z3998:drama|dedication|halftitlepage)')])]")]
-					if typos:
-						messages.append(LintMessage("t-042", "Possible typo: paragraph missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
+				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[a-z]$') and not(following-sibling::*[1]/node()[1][contains(@epub:type, 'z3998:roman')] or following-sibling::*[1][re:test(., '^([0-9]|first|second|third|fourth|fifth|sixth|seventh|eight|ninth|tenth)', 'i')]) and not(@class or contains(@epub:type, 'z3998:salutation')) and not(following-sibling::*[1][name() = 'blockquote' or name() = 'figure' or name() = 'table' or name() = 'footer' or name() = 'ul' or name() = 'ol'] or ancestor::*[name() = 'blockquote' or name() = 'footer' or name() = 'header' or name() = 'table' or name() = 'ul' or name() = 'ol' or name() = 'figure' or re:test(@epub:type, '(z3998:drama|dedication|halftitlepage)')])]")]
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: paragraph missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for dialog starting with a lowercase letter. Only check the first child text node of <p>, because other first children might be valid lowercase, like <m:math> or <b>;
 				# exclude <p> inside or preceded by <blockquote>; and exclude <p> inside endnotes, as definitions may start with lowercase letters.

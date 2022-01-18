@@ -40,3 +40,5 @@ H. H.</abbr> <a href="chapter-1.xhtml#noteref-3" epub:type="backlink">↩</a></p
 t-059 [Manual Review] endnotes.xhtml Period at the end of `<cite>` element 
 before endnote backlink.
         <cite>—Editor.</cite>
+f-014 [Error] se.css File does not match 
+`/home/alex/projects/standardebooks.org/tools/se/data/templates/se.css`.
