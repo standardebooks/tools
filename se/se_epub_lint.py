@@ -2116,7 +2116,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 				# Check for headers ending in periods
 				# Allow periods at the end of headers that both start and end with double quotes; but headers that only end in double quotes probably don't need periods
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and not((./node()[last()])[name() = 'abbr']) and (re:test(., '\\.$') or re:test(., '^[^“].+\\.”$'))]")
+				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and not(contains(@epub:type, 'z3998:initialism')) and not((./node()[last()])[name() = 'abbr']) and (re:test(., '\\.$') or re:test(., '^[^“].+\\.”$'))]")
 				if nodes:
 					messages.append(LintMessage("t-065", "Header ending in a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
