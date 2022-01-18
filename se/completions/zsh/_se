@@ -269,6 +269,7 @@ case $state in
 				;;
 			xpath)
 				_arguments -s \
+					{-f,--only-filenames}'[only output filenames of files that contain matches, not the matches themselves]' \
 					{-h,--help}'[show a help message and exit]' \
 					'*: :_files -g \*.xhtml'
 				;;

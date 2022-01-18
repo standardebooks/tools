@@ -152,7 +152,7 @@ _se(){
 				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
 				;;
 			xpath)
-				COMPREPLY+=($(compgen -W "-h --help" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-h --help -f --only-filenames" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
 				;;

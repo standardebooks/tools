@@ -173,4 +173,5 @@ complete -c se -A -n "__fish_seen_subcommand_from word-count" -s x -l exclude-se
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s h -l help -x -d "show this help message and exit"
 
 complete -c se -n "__fish_se_no_subcommand" -a xpath -d "Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed."
+complete -c se -A -n "__fish_seen_subcommand_from xpath" -s f -l only-files -x -d "only output filenames of files that contain matches, not the matches themselves"
 complete -c se -A -n "__fish_seen_subcommand_from xpath" -s h -l help -x -d "show this help message and exit"
