@@ -111,7 +111,7 @@ class TocItem:
 
 		return out_string
 
-	def landmark_link(self, work_type: str = "fiction", work_title: str = "WORK_TITLE") -> str:
+	def landmark_link(self, work_title: str = "WORK_TITLE") -> str:
 		"""
 		Generates the landmark item (including list item tags) for the ToC item
 
@@ -127,7 +127,7 @@ class TocItem:
 		if self.place == Position.FRONT:
 			out_string = f"<li>\n<a href=\"text/{self.file_link}\" epub:type=\"frontmatter {self.epub_type}\">{self.title}</a>\n</li>\n"
 		if self.place == Position.BODY:
-			out_string = f"<li>\n<a href=\"text/{self.file_link}\" epub:type=\"bodymatter z3998:{work_type}\">{work_title}</a>\n</li>\n"
+			out_string = f"<li>\n<a href=\"text/{self.file_link}\" epub:type=\"bodymatter\">{work_title}</a>\n</li>\n"
 		if self.place == Position.BACK:
 			out_string = f"<li>\n<a href=\"text/{self.file_link}\" epub:type=\"backmatter {self.epub_type}\">{self.title}</a>\n</li>\n"
 
@@ -172,6 +172,12 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list) -> None:
 	None
 	"""
 
+	# According to the IDPF a11y best practices page: <http://idpf.org/epub/a11y/techniques/#sem-003>:
+	# > it is recommended to include a link to the start of the body matter as well as to any major
+	# > reference sections (e.g., table of contents, endnotes, bibliography, glossary, index).
+	#
+	# So, we only want the start of the text, and (endnotes,glossary,bibliography,loi) in the landmarks.
+
 	epub_type = ""
 	sections = dom.xpath("//body/*[name() = 'section' or name() = 'article' or name() = 'nav']")
 	if not sections:
@@ -188,6 +194,12 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list) -> None:
 
 	if epub_type in ["frontmatter", "bodymatter", "backmatter"]:
 		return  # if epub_type is ONLY frontmatter, bodymatter, backmatter, we don't want this as a landmark
+
+	if dom.xpath("//*[contains(@epub:type, 'frontmatter')]"):
+		return # We don't want frontmatter in the landmarks
+
+	if dom.xpath("//*[contains(@epub:type, 'backmatter')]") and not regex.findall(r"\b(loi|endnotes|bibliography|glossary|index)\b", epub_type):
+		return # We only want certain backmatter in the landmarks
 
 	# We may wind up with a (front|body|back)matter semantic in epub_type, remove it here since we add it to the landmark later
 	epub_type = regex.sub(r"(front|body|back)matter\s*", "", epub_type)
@@ -209,7 +221,7 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list) -> None:
 				landmark.title = landmark.epub_type.capitalize()
 		landmarks.append(landmark)
 
-def process_landmarks(landmarks_list: list, work_type: str, work_title: str) -> str:
+def process_landmarks(landmarks_list: list, work_title: str) -> str:
 	"""
 	Runs through all found landmark items and writes them to the toc file.
 
@@ -235,7 +247,7 @@ def process_landmarks(landmarks_list: list, work_type: str, work_title: str) -> 
 	for item in front_items:
 		out_string += item.landmark_link()
 	if body_items:
-		out_string += body_items[0].landmark_link(work_type, work_title)  # Just the first bodymatter item.
+		out_string += body_items[0].landmark_link(work_title)  # Just the first bodymatter item.
 	for item in back_items:
 		out_string += item.landmark_link()
 	return out_string
@@ -287,7 +299,7 @@ def process_items(item_list: list) -> str:
 
 
 
-def output_toc(item_list: list, landmark_list, toc_path: str, work_type: str, work_title: str) -> str:
+def output_toc(item_list: list, landmark_list, toc_path: str, work_title: str) -> str:
 	"""
 	Outputs the contructed ToC based on the lists of items and landmarks found,
 	either to stdout or overwriting the existing ToC file
@@ -332,7 +344,7 @@ def output_toc(item_list: list, landmark_list, toc_path: str, work_type: str, wo
 	navs[1].append(landmark_ol)
 	xhtml = toc_dom.to_string()
 	xhtml = xhtml.replace("TOC_ITEMS", process_items(item_list))
-	xhtml = xhtml.replace("LANDMARK_ITEMS", process_landmarks(landmark_list, work_type, work_title))
+	xhtml = xhtml.replace("LANDMARK_ITEMS", process_landmarks(landmark_list, work_title))
 
 	return se.formatting.format_xhtml(xhtml)
 
@@ -733,8 +745,7 @@ def generate_toc(self) -> str:
 	"""
 
 	work_title = self.get_work_title()
-	work_type = self.get_work_type()
 
 	landmarks, toc_list = process_all_content(self.spine_file_paths)
 
-	return output_toc(toc_list, landmarks, self.toc_path, work_type, work_title)
+	return output_toc(toc_list, landmarks, self.toc_path, work_title)
