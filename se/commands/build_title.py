@@ -55,6 +55,10 @@ def build_title(plain_output: bool) -> int:
 							for node in dom.xpath("/html/head/title"):
 								node.set_text(title)
 
+								# If the title looks like a roman numeral, then add a semantic too
+								if regex.match(r"^[IXVLCDM]+$", title):
+									node.set_attr("epub:type", "z3998:roman")
+
 							file.seek(0)
 							file.write(dom.to_string())
 							file.truncate()
