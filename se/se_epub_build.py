@@ -1074,12 +1074,6 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 										if file_assertion["earl:test"]["dct:title"] == "valid-lang" and "lang=\"x-" in file_assertion["earl:result"]["html"]:
 											emit_result = False
 
-										# Ace fails if a <section> doesn't have a clear title; but for recomposability, we must nest <section>s without titles.
-										# Attempt to skip that result here, if it looks like we're looking at <section>s nested for recomposability.
-										# See https://standardebooks.org/ebooks/fyodor-dostoevsky/the-brothers-karamazov/constance-garnett
-										if file_assertion["earl:test"]["dct:title"] == "landmark-unique" and len(regex.findall(r"<(section|article)", file_assertion["earl:result"]["html"])) >= 2:
-											emit_result = False
-
 										# Ace fails if an <article> doesn't have a `role` that matches its `epub:type`; but epubcheck
 										# will complain if the `role` is not allowed on that element. This mostly affects <article>s.
 										# We choose to satisfy epubcheck first by not including `role` on <article>, then ignoring Ace's complaint.
