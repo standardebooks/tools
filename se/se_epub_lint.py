@@ -209,6 +209,7 @@ SEMANTICS & CONTENT
 "s-026", "Invalid Roman numeral."
 "s-027", f"{image_ref} missing [xhtml]<title>[/] element."
 "s-028", f"[path][link=file://{self.path / 'images/cover.svg'}]cover.svg[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match."
+"s-029", "Section with [attr]data-parent[/] attribute, but no section having that [attr]id[/] in ebook."
 "s-030", "[val]z3998:nonfiction[/] should be [val]z3998:non-fiction[/]."
 "s-031", "Duplicate value in [attr]epub:type[/] attribute."
 "s-032", "Invalid value for [attr]epub:type[/] attribute."
@@ -277,9 +278,6 @@ SEMANTICS & CONTENT
 "s-095", "[xhtml]<hgroup>[/] element containing [xhtml]<h#>[/] element in the wrong heading order."
 "s-096", "[xhtml]h1[/] element in half title page missing the [val]fulltitle[/] semantic."
 "s-097", "[xhtml]a[/] element without [attr]href[/] attribute."
-UNUSED
-vvvvvvvvvvvvvvvvvvvvv
-"s-029", "If a [xhtml]<span>[/] exists only for the [val]z3998:roman[/] semantic, then [val]z3998:roman[/] should be pulled into parent element instead."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -404,6 +402,35 @@ class LintMessage:
 				self.submessages = submessages
 		else:
 			self.submessages = None
+
+class EbookSection:
+	"""
+	A convenience class representing a section, its expected <h#> level, and its children EbookSections
+	"""
+
+	def __init__(self, section_id: str, depth: int, has_header: bool):
+		self.section_id = section_id
+		self.children: List[EbookSection] = []
+		self.has_header = has_header
+		# h# can't go past 6, but we may go deeper in real life like in
+		# Wealth of Nations by Adam Smith
+		self.depth = depth if depth <= 6 else 6
+
+def _find_ebook_section(section_id: str, sections: List[EbookSection]) -> Union[EbookSection, None]:
+	"""
+	Find an ebook section in a tree of sections.
+	"""
+
+	for section in sections:
+		if section.section_id == section_id:
+			return section
+
+		target_section = _find_ebook_section(section_id, section.children)
+
+		if target_section:
+			return target_section
+
+	return None
 
 def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 	"""
@@ -662,6 +689,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 	duplicate_id_values = []
 	ebook_has_subtitle = bool(self.metadata_dom.xpath("/package/metadata/meta[@property='title-type' and text()='subtitle']"))
 	source_links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
+	section_tree: List[EbookSection] = []
 
 	# Iterate over rules to do some other checks
 	abbr_with_whitespace = []
@@ -1047,6 +1075,60 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("f-014", f"File does not match [path][link=file://{self.path / 'src/epub/css/se.css'}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "css/se.css"))
 		except Exception:
 			missing_files.append("css/se.css")
+
+	# Before we start, walk the files in spine order to build a tree of sections and heading levels.
+	# section_tree is a list of EbookSections.
+	# For example, The Woman in White by Wilkie Collins would have a section_tree that looks like this:
+	# titlepage (1)
+	#  imprint (2)
+	#  dedication (2)
+	#  preface (2)
+	#  halftitlepage (2)
+	#  part-1 (2)
+	#    division-1-1 (3)
+	#      chapter-1-1-1 (4)
+	#      chapter-1-1-2 (4)
+	#      chapter-1-1-3 (4)
+	#      chapter-1-1-4 (4)
+	for filename in self.spine_file_paths:
+		dom = self.get_dom(filename)
+		for dom_section in dom.xpath("/html/body//*[re:test(name(), '^(section|article|nav)$')][@id]"):
+			# Start at h2 by default except for the titlepage, which is always h1
+			starting_depth = 1 if regex.findall(r"\btitlepage\b", dom_section.get_attr("epub:type") or "") else 2
+
+			section = _find_ebook_section(dom_section.get_attr("id"), section_tree)
+
+			section_parent_id = dom_section.get_attr("data-parent")
+
+			has_header = bool(dom_section.xpath("./*[re:test(name(), '^h[1-6]$')] | .//*[not(re:test(name(), '^(section|article|nav)$'))]//*[re:test(name(), '^h[1-6]$')]"))
+
+			if not section_parent_id:
+				# We don't have a data-parent, but do we have a direct parent section in the same file as this section?
+				direct_parent = dom_section.xpath("./ancestor::*[re:test(name(), '^(section|article|nav)$')][@id][1]")
+
+				if direct_parent:
+					section_parent_id = direct_parent[0].get_attr("id")
+
+			# If we don't have the section in our list yet, and it has a parent, append it to the parent
+			if not section and section_parent_id:
+				parent = _find_ebook_section(section_parent_id, section_tree)
+				if parent:
+					# Only increment the depth if the parent has a header. If it doesn't then we don't want to increment,
+					# because we will end up skipping an h# level (like h2 -> h4 instead of h2 -> h3)
+					parent.children.append(EbookSection(dom_section.get_attr("id"), parent.depth + 1 if parent.has_header else parent.depth, has_header))
+
+			# If we don't have it in our list yet, and it has no parent, append it to the top
+			elif not section:
+				section_tree.append(EbookSection(dom_section.get_attr("id"), starting_depth, has_header))
+
+	# This block is useful for pretty-printing section_tree should we need to debug it in the future
+	# def dump(item, char):
+	# 	print(f"{char} {item.section_id} ({item.depth}) {item.has_header}")
+	# 	for child in item.children:
+	# 		dump(child, f"  {char}")
+	# for section in section_tree:
+	# 	dump(section, "")
+	# exit()
 
 	# Now iterate over individual files for some checks
 	# We use os.walk() and not Path.glob() so that we can ignore `.git` and its children
@@ -1814,27 +1896,28 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 				# Check for <h#> elements that are higher or lower than their expected level based on how deep they are in <section>s
 				# or <article>s. Exclude <nav> in the ToC.
+				# Get all h# elements not preceded by other h# elements (this includes the 1st item of an hgroup but not the next items)
+				# Exclude the ToC and landmarks
 				invalid_headers = []
-				for node in dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and not(parent::hgroup) and not(parent::nav)] | /html/body//hgroup/*[re:test(name(), '^h[1-6]$')][1]"):
-					parent_section_count = len(node.xpath(".//ancestor::section | .//ancestor::article"))
-					heading_level = int(regex.search(r"^h([1-6]$)", node.tag)[1])
+				invalid_parent_ids = []
+				for heading in dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and not(./preceding-sibling::*[re:test(name(), '^h[1-6]$')]) and not(./ancestor::*[re:test(@epub:type, '\\b(toc|landmarks)\\b')])]"):
+					# Get the IDs of the direct parent section
+					parent_section = heading.xpath("./ancestor::*[@id and re:test(name(), '^(section|article|nav)$')][1]")
 
-					is_title = bool(dom.xpath("/html/body//section[re:test(@epub:type, '\\btitlepage\\b')]"))
+					if parent_section:
+						section = _find_ebook_section(parent_section[0].get_attr("id"), section_tree)
 
-					# Only the title page is allowed an <h1> element. All other files must start at <h2>.
-					if self.is_se_ebook:
-						if not is_title and heading_level == 1:
-							invalid_headers.append(node.to_string())
-
-					if is_title and heading_level > 1:
-						invalid_headers.append(node.to_string())
-
-					# All other headers must at least one parent <section> or <article> and start at <h2>
-					if heading_level > 1 and heading_level - 1 > parent_section_count:
-						invalid_headers.append(node.to_string())
+						if not section:
+							invalid_parent_ids.append(parent_section[0].to_tag_string())
+						else:
+							if str(section.depth) != heading.tag[1:2]:
+								invalid_headers.append(heading.to_string())
 
 				if invalid_headers:
 					messages.append(LintMessage("s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. Hint: Headings not in the title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?", se.MESSAGE_TYPE_ERROR, filename, invalid_headers))
+
+				if invalid_parent_ids:
+					messages.append(LintMessage("s-029", "Section with [attr]data-parent[/] attribute, but no section having that [attr]id[/] in ebook.", se.MESSAGE_TYPE_ERROR, filename, invalid_parent_ids))
 
 				# Check for abbreviations followed by periods
 				# But we exclude some SI units, which don't take periods; abbreviations ending in numbers for example in stage directions; abbreviations like `r^o` (recto) that contain <sup>; and some Imperial abbreviations that are multi-word
@@ -2835,7 +2918,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 	headings = list(set(headings))
 	toc_dom = self.get_dom(self.toc_path)
 	toc_headings = []
-	toc_files = []
 	toc_entries = toc_dom.xpath("/html/body/nav[@epub:type='toc']//a")
 
 	# Match ToC headings against text headings
