@@ -528,14 +528,14 @@ def _generate_metadata_contributor_xml(contributors: List[Dict], contributor_typ
 
 	return output.strip()
 
-def _generate_titlepage_string(contributors: List[Dict], type: str) -> str:
+def _generate_titlepage_string(contributors: List[Dict], contributor_type: str) -> str:
 	output = _generate_contributor_string(contributors, True)
 	output = regex.sub(r"<a href[^<>]+?>", "<b epub:type=\"z3998:personal-name\">", output)
 	output = output.replace("</a>", "</b>")
 
-	if type != "illustrator":
+	if contributor_type != "illustrator":
 		# There's no z3998:illustrator term
-		output = output.replace("\"z3998:personal-name", f"\"z3998:{type} z3998:personal-name")
+		output = output.replace("\"z3998:personal-name", f"\"z3998:{contributor_type} z3998:personal-name")
 
 	return output
 
