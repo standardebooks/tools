@@ -364,6 +364,13 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Rr])icketty", r"\1ickety", xhtml)			# ricketty -> rickety
 	xhtml = regex.sub(r"\b([Dd])[ié]shabille", r"\1eshabille", xhtml)		# déshabille -> deshabille
 	xhtml = regex.sub(r"\b([Mm])ollah", r"\1ullah", xhtml)				# mollah -> mullah
+	xhtml = regex.sub(r"\b([Ss])opha(s?)\b", r"\1opha\2", xhtml)			# sopha -> sofa
+	xhtml = regex.sub(r"\b([Oo])dalisk", r"\1dalisque", xhtml)			# odalisk -> odalisque
+	xhtml = regex.sub(r"\b([Ss])cissar", r"\1cissor", xhtml)			# scissar -> scissor
+	xhtml = regex.sub(r"\b([Aa])lmanack", r"\1lmanac", xhtml)			# almanack -> almanac
+	xhtml = regex.sub(r"\b([Nn])egociation", r"\1egotiation", xhtml)		# negociation -> negotiation
+	xhtml = regex.sub(r"Incumber", r"Encumber", xhtml)				# incumber -> encumber
+	xhtml = regex.sub(r"incumber", r"encumber", xhtml)				# incumber -> encumber
 
 
 	# Normalize some names
