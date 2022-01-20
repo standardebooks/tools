@@ -1763,9 +1763,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 						messages.append(LintMessage("s-088", "Subtitle in half title page, but no subtitle in metadata.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check that half titles without subtitles have the fulltitle semantic
-				nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage')]/h1[not(contains(@epub:type, 'fulltitle'))]")
+				nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage')]/*[re:test(name(), '^h[1-6]$') and not(contains(@epub:type, 'fulltitle'))]")
 				if nodes:
-					messages.append(LintMessage("s-096", "[xhtml]h1[/] element in half title page missing the [val]fulltitle[/] semantic.", se.MESSAGE_TYPE_ERROR, filename))
+					messages.append(LintMessage("s-096", "Heading element in half title page missing the [val]fulltitle[/] semantic.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for header elements that have a label, but are missing the label semantic
 				# Find h# nodes whose first child is a text node matching a label type, and where that text node's next sibling is a semantic roman numeral
