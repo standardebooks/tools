@@ -1,3 +1,9 @@
+# 2.3.4
+
+## se create-draft
+
+- Add `id` attributes to `<nav>` elements in ToC
+
 # 2.3.3
 
 ## General
