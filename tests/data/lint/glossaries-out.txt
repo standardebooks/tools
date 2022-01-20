@@ -7,5 +7,3 @@ some other material.</dd>
 s-062 [Error] glossary.xhtml `<dt>` element in a glossary without exactly one 
 `<dfn>` child.
         <dt>Aberrant</dt>
-f-014 [Error] se.css File does not match 
-`/home/alex/projects/standardebooks.org/tools/se/data/templates/se.css`.
