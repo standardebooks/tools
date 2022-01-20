@@ -28,7 +28,7 @@
 
 ## se build-toc
 
-- Update to use data-parent attributes instead of nested `<section>`s
+- Update to use data-parent attributes instead of nested `<section>`s. Thanks to David Grigg
 
 - Update landmarks to IDPF a11y best practices
 
