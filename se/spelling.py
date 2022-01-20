@@ -361,6 +361,9 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ii])kon(s?)\b", r"\1con\2", xhtml)			# ikon -> icon
 	xhtml = regex.sub(r"\b([Pp])remiss\b", r"\1remise", xhtml)			# premiss -> premise
 	xhtml = regex.sub(r"\b([Pp])remisses", r"\1remises", xhtml)			# premisses -> premises
+	xhtml = regex.sub(r"\b([Rr])icketty", r"\1ickety", xhtml)			# ricketty -> rickety
+	xhtml = regex.sub(r"\b([Dd])[ié]shabille", r"\1eshabille", xhtml)		# déshabille -> deshabille
+
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
