@@ -1,3 +1,123 @@
+# 2.3.2
+
+## General
+
+- Remove accessibilityFeature=longDescription from content.opf template
+
+- Gracefully fail when file can't be opened in various cases
+
+- Remove deprecated pyopenssl. Thanks to Robin Whittleton
+
+- Add support for se:image.style.realistic
+
+- Change the LoI to be a top-level `<nav>` element
+
+- Update shell completions for `se xpath` command
+
+## se build
+
+- Also simplify `[xml|lang]` selectors to classes
+
+- Change 'noteref' to 'endnote' in Kobo builds to enable popup endnotes
+
+- Use the Nu Validator (v.Nu) to check epubs for XHTML5 compatibility when using the `--check` option
+
+- Remove now-unused exception filter for Ace output
+
+- Ignore v.Nu warning about possibly invalid datetime value
+
+## se build-toc
+
+- Update to use data-parent attributes instead of nested `<section>`s
+
+- Update landmarks to IDPF a11y best practices
+
+## se build-manifest
+
+- Adjust accessibility metadata if we have images in the manifest
+
+## se build-title
+
+- Add a `z3998:roman` semantic to the `<title>` element if the title looks to be an entirely Roman numeral
+
+## se clean
+
+- Don't lowercase `currentColor` values
+
+## se create-draft
+
+- Update titlepage with `h1` and author/contributor information
+
+- Remove display: flex from imprint because it doesn't play nice with page breaks in Webkit
+
+## se lint
+
+- Add s-096, heading in half title without fulltitle semantic
+
+- Improve t-036
+
+- Improve t-008
+
+- Improve t-017
+
+- Improve t-057
+
+- Improve s-041
+
+- Improve t-065
+
+- Improve s-020
+
+- Improve c-020
+
+- Improve s-085
+
+- Add t-058, illegal character
+
+- Add `yi` to s-082 check
+
+- t-063: Add `in extremis` and `par excellence`
+
+- Add m-028, m-029, m-038, m-039, checks for image accessibility metadata
+
+- Add s-097, `a` element without `href` attribute
+
+- Add f-016, cover.jpg larger than 1.5MB
+
+- Update x-017 to include all ID attributes across whole ebook
+
+- Remove s-029 as it's a duplicate of s-050, and replace with s-029, section with nonexistent parent
+
+- Don't check landmarks in m-044
+
+- Remove m-043 and m-044 as they're obviated by updates in `se build-toc`
+
+## se modernize-spelling
+
+- Add `free-will` problem spelling check. Thanks to Robin Whittleton
+
+- Various additions
+
+- Improve removal of period after `percent`
+
+## se prepare-release
+
+- Exclude `<title>` elements that also have attributes from the word count
+
+## se recompose-epub
+
+- Print detailed exceptions
+
+- Sort CSS namespaces so recompositions are deterministic
+
+- Don't add a space before base64 images, in order to pass nu validation
+
+- Un-self-close non-void elements in HTML5 output to satisfy the Nu HTML5 validator
+
+- Replace `xml|lang` in CSS and remove CSS namespaces from HTML5 output
+
+- Update to recompose using data-parent attribute instead of nested `<section>`s
+
 # 2.3.1
 
 ## General
