@@ -363,6 +363,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Pp])remisses", r"\1remises", xhtml)			# premisses -> premises
 	xhtml = regex.sub(r"\b([Rr])icketty", r"\1ickety", xhtml)			# ricketty -> rickety
 	xhtml = regex.sub(r"\b([Dd])[ié]shabille", r"\1eshabille", xhtml)		# déshabille -> deshabille
+	xhtml = regex.sub(r"\b([Mm])ollah", r"\1ullah", xhtml)				# mollah -> mullah
 
 
 	# Normalize some names
