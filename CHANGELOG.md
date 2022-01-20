@@ -1,3 +1,9 @@
+# 2.3.3
+
+## General
+
+- Downgrade Pillow so that it's compatible with the SE server
+
 # 2.3.2
 
 ## General
