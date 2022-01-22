@@ -10,6 +10,7 @@ the function is very big and it makes editing easier to put in a separate file.
 from enum import Enum
 from typing import Tuple, List
 import regex
+import roman
 from lxml import etree
 import se
 import se.formatting
@@ -525,15 +526,19 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 	if not epub_type and node.tag in ["h1", "h2", "h3", "h4", "h5", "h6"]:
 		parent = node.parent
 		if parent:
-			evaluate_descendants(parent, toc_item)
+			evaluate_descendants(parent, toc_item, textf)
 		else:  # shouldn't ever happen, but... just in case, raise an error
-			raise se.InvalidInputException(f"Header without parent in file: [path][link=file://{textf}]{textf}[/][/].")
+			raise se.InvalidInputException(f"Heading without parent in file: [path][link=file://{textf}]{textf}[/][/].")
 		return toc_item
 	if epub_type:
 		# A heading may include z3998:roman directly,
 		# eg <h5 epub:type="title z3998:roman">II</h5>.
 		if "z3998:roman" in epub_type:
 			toc_item.roman = extract_strings(node)
+			try:
+				roman.fromRoman(toc_item.roman)
+			except roman.InvalidRomanNumeralError as err:
+				raise se.InvalidInputException(f"Heading tagged as roman numeral is invalid: [path][link=file://{textf}]{textf}[/][/].") from err
 			toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
 			return toc_item
 		if "ordinal" in epub_type:  # but not a roman numeral (eg in Nietzche's Beyond Good and Evil)
@@ -542,7 +547,7 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 			return toc_item
 		# may be the halftitle page with a subtitle, so we need to burrow down
 		if ("fulltitle" in epub_type) and (node.tag == "hgroup"):
-			evaluate_descendants(node, toc_item)
+			evaluate_descendants(node, toc_item, textf)
 			return toc_item
 		# or it may be a straightforward one-level title eg: <h2 epub:type="title">Imprint</h2>
 		if "title" in epub_type:
@@ -550,7 +555,7 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 			return toc_item
 
 	# otherwise, burrow down into its structure to get the info
-	evaluate_descendants(node, toc_item)
+	evaluate_descendants(node, toc_item, textf)
 
 	return toc_item
 
@@ -567,7 +572,7 @@ def get_child_strings(node: EasyXmlElement) -> str:
 	return child_strs
 
 
-def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem) -> TocItem:
+def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem, textf: str) -> TocItem:
 	"""
 	Burrow down into a hgroup structure to qualify the ToC item
 
@@ -607,6 +612,10 @@ def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem) -> TocItem:
 			continue  # skip the following
 		if "z3998:roman" in epub_type:
 			toc_item.roman = extract_strings(child)
+			try:
+				roman.fromRoman(toc_item.roman)
+			except roman.InvalidRomanNumeralError as err:
+				raise se.InvalidInputException(f"Heading tagged as roman numeral is invalid: [path][link=file://{textf}]{textf}[/][/].") from err
 			if not toc_item.title:
 				toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
 		elif "ordinal" in epub_type:  # but not a roman numeral or a labelled item, cases caught caught above
