@@ -43,6 +43,10 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 					for _, value in node.attrs.items():
 						xhtml = xhtml + f" {value} "
 
+				# If we're in the colophon, remove the SE link because the author's name might have diacritics
+				if dom.xpath("/html/body//section[contains(@epub:type, 'colophon')]"):
+					xhtml = regex.sub(r"<a href=\"https://standardebooks\.org.+?</a>", "", xhtml)
+
 				# Strip tags
 				xhtml = regex.sub(r"<[^>]+?>", " ", xhtml)
 
