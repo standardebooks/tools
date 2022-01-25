@@ -326,7 +326,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Dd])ivers\b", r"\1iverse", xhtml)			# divers -> diverse
 	xhtml = regex.sub(r"\b([Ll])anthorn", r"\1antern", xhtml)			# lanthorn -> lantern
 	xhtml = regex.sub(r"\b([Oo])rgie\b", r"\1rgy", xhtml)				# orgie -> orgy
-	xhtml = regex.sub(r"\b([Oo])u?rang-[Oo]utang?", r"\1rangutan", xhtml)		# ourang-outang -> orangutan
+	xhtml = regex.sub(r"\b([Oo])u?rang[\s-][Oo]utang?", r"\1rangutan", xhtml)	# ourang-outang -> orangutan
 	xhtml = regex.sub(r"(?<!-)\b([Ss])o\sand\s([Ss])o\b(?!-)", r"\1o-and-\2o", xhtml)		# so and so -> so-and-so; ignore `so-and-so and so-and-so`
 	xhtml = regex.sub(r"\b([Cc])añon", r"\1anyon", xhtml)				# cañon -> canyon
 	xhtml = regex.sub(r"\b([Kk])vas\b", r"\1vass", xhtml)				# kvas -> kvass
