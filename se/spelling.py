@@ -371,6 +371,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Nn])egociation", r"\1egotiation", xhtml)		# negociation -> negotiation
 	xhtml = regex.sub(r"Incumber", r"Encumber", xhtml)				# incumber -> encumber
 	xhtml = regex.sub(r"incumber", r"encumber", xhtml)				# incumber -> encumber
+	xhtml = regex.sub(r"\bCadi\b", r"Qadi", xhtml)					# cadi -> qadi
+	xhtml = regex.sub(r"\bcadi\b", r"qadi", xhtml)					# cadi -> qadi
 
 
 	# Normalize some names
