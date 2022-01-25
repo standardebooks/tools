@@ -373,6 +373,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"incumber", r"encumber", xhtml)				# incumber -> encumber
 	xhtml = regex.sub(r"\bCadi\b", r"Qadi", xhtml)					# cadi -> qadi
 	xhtml = regex.sub(r"\bcadi\b", r"qadi", xhtml)					# cadi -> qadi
+	xhtml = regex.sub(r"\b([Pp])edler", r"\1eddler", xhtml)				# pedler -> peddler
 
 
 	# Normalize some names
