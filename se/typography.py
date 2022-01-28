@@ -253,6 +253,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(fr"([\!\?\.\;”’])[\s{se.NO_BREAK_SPACE}]?…", fr"\1{se.HAIR_SPACE}…", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(fr"\,[\s{se.NO_BREAK_SPACE}]?…", fr",{se.HAIR_SPACE}…", xhtml, flags=regex.IGNORECASE)
 
+	# Add nbsp to ellipses that open dialog
+	xhtml = regex.sub(r"([“‘])…\s([\p{{Letter}}0-9])", fr"\1…{se.NO_BREAK_SPACE}\2", xhtml, flags=regex.IGNORECASE)
+
 	# Remove spaces between ellipses and endnotes directly after
 	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?(<a[^>]+?id=\"noteref-[0-9]+\"[^>]*?>)", r"…\1", xhtml, flags=regex.IGNORECASE)
 
