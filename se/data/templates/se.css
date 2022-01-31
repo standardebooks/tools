@@ -11,14 +11,14 @@ section[epub|type~="titlepage"] p,
 section[epub|type~="colophon"] h2,
 section[epub|type~="imprint"] h2{
 	font-size: 0; /* Required for Kobo not to add an extra page to the title */
-	position: absolute; /* Required for Kindle */
 	left: -999em;
+	position: absolute; /* Required for Kindle */
 }
 
 section[epub|type~="titlepage"] img{
 	display: block;
-	width: 100%;
 	margin: 3em auto auto auto;
+	width: 100%;
 }
 
 section[epub|type~="colophon"],

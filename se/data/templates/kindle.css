@@ -1,9 +1,8 @@
-
 /* kindle compatibility CSS */
 .endnotes p[id],
 .footnotes p[id]{
-	text-indent: 0em;
 	margin-top: 1em;
+	text-indent: 0;
 }
 
 .no-break{
