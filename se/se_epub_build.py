@@ -178,7 +178,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		if proof:
 			with open(work_compatible_epub_dir / "epub" / "css" / "local.css", "a", encoding="utf-8") as local_css_file:
 				with importlib_resources.open_text("se.data.templates", "proofreading.css", encoding="utf-8") as proofreading_css_file:
-					local_css_file.write(proofreading_css_file.read())
+					local_css_file.write("\n" + proofreading_css_file.read())
 
 		# Update the release date in the metadata and colophon
 		if self.last_commit:
@@ -1220,7 +1220,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			# Include compatibility CSS
 			with open(work_compatible_epub_dir / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:
 				with importlib_resources.open_text("se.data.templates", "kindle.css", encoding="utf-8") as compatibility_css_file:
-					core_css_file.write(compatibility_css_file.read())
+					core_css_file.write("\n" + compatibility_css_file.read())
 
 			# Build an epub file we can send to Calibre
 			se.epub.write_epub(work_compatible_epub_dir, work_dir / compatible_epub_output_filename)

@@ -929,7 +929,69 @@ def _format_css_declarations(content: list, indent_level: int) -> str:
 
 	output = ""
 
-	for token in tinycss2.parse_declaration_list(content):
+	tokens = tinycss2.parse_declaration_list(content)
+
+	# Hold on to your butts...
+	# When we alpha-sort declarations, we want to keep comments that are on the same
+	# line attached to that declaration after it's reordered.
+	# To do this, first create a list of sorted_declarations that is list of tuples.
+	# The first tuple value is the declaration itself, and the second is a comment on the same line, if it exists.
+	# While we do this, remove those same-line comments from our master list of tokens,
+	# so that we don't process them twice later when we iterate over the master list again.
+	sorted_declarations = []
+	i = 0
+	while i < len(tokens):
+		if tokens[i].type == "declaration":
+			if i + 1 < len(tokens) and tokens[i + 1].type == "comment":
+				sorted_declarations.append((tokens[i], tokens[i + 1]))
+				tokens.pop(i + 1) # Remove from the master list
+
+			# Use regex to test if the token is on the same line, i.e. if the intervening white space doesn't include a newline
+			elif i + 2 < len(tokens) and tokens[i + 1].type == "whitespace" and regex.match(r"[^\n]+", tokens[i + 1].value) and tokens[i + 2].type == "comment":
+				sorted_declarations.append((tokens[i], tokens[i + 2]))
+				tokens.pop(i + 1)  # Remove from the master list
+				tokens.pop(i + 1)
+
+			else:
+				# Special case in alpha-sorting: Sort -epub-* properties as if -epub- didn't exist
+				# Note that we modify token.name, which DOESN'T change token.lower_name; and we use token.name
+				# for sorting, but token.lower_name for output, so we don't have to undo this before outputting
+				tokens[i].name = regex.sub(r"^-([a-z]+?)-(.+)", r"\2-\1-\2", tokens[i].name)
+				sorted_declarations.append((tokens[i], None))
+
+		i = i + 1
+
+	# Actually sort declaration tokens and their associated comments, if any
+	sorted_declarations.sort(key = lambda x : x[0].name)
+
+	# Now, sort the master token list using an intermediary list, output_tokens
+	# This will iterate over all tokens, including non-declaration tokens. If we encounter a declaration,
+	# pull the nth declaration out of our sorted list instead.
+
+	output_tokens = []
+	current_declaration_number = 0
+	for token in tokens:
+		if token.type == "error":
+			raise se.InvalidCssException("Couldn’t parse CSS. Exception: {token.message}")
+
+		# Append the declaration to the output based on its sorted index.
+		# This will sort declarations but keep things like comments before and after
+		# declarations in the expected order.
+		if token.type == "declaration":
+			output_tokens.append(sorted_declarations[current_declaration_number])
+			current_declaration_number = current_declaration_number + 1
+		else:
+			output_tokens.append((token, None))
+
+	# tokens is now a alpha-sorted list of tuples of (token, comment)
+	tokens = output_tokens
+
+	for token in tokens:
+		comment = None
+		if isinstance(token, tuple):
+			comment = token[1]
+			token = token[0]
+
 		if token.type == "error":
 			raise se.InvalidCssException("Couldn’t parse CSS. Exception: {token.message}")
 
@@ -941,7 +1003,12 @@ def _format_css_declarations(content: list, indent_level: int) -> str:
 			if token.important:
 				output += " !important"
 
-			output += ";\n"
+			output += ";"
+
+			if comment:
+				output += " /* " + comment.value.strip() + " */"
+
+			output += "\n"
 
 		if token.type == "comment":
 			output = output.rstrip()
