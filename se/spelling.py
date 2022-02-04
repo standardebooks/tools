@@ -376,6 +376,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Pp])edler", r"\1eddler", xhtml)				# pedler -> peddler
 	xhtml = regex.sub(r"\b([Cc])aldron(s?)", r"\1auldron\2", xhtml)			# caldron -> cauldron
 	xhtml = regex.sub(r"\b([Tt])hru\b", r"\1hru", xhtml)				# thru -> through
+	xhtml = regex.sub(r"\b[‘’]([Ss])cope(s?)\b", r"\1cope\2", xhtml)		# 'scope -> scope
 
 
 	# Normalize some names
