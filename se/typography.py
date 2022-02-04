@@ -254,7 +254,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(fr"\,[\s{se.NO_BREAK_SPACE}]?…", fr",{se.HAIR_SPACE}…", xhtml, flags=regex.IGNORECASE)
 
 	# Add nbsp to ellipses that open dialog
-	xhtml = regex.sub(r"([“‘])…\s([\p{{Letter}}0-9])", fr"\1…{se.NO_BREAK_SPACE}\2", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"([“‘])…\s([\p{Letter}0-9])", fr"\1…{se.NO_BREAK_SPACE}\2", xhtml, flags=regex.IGNORECASE)
 
 	# Don't use . ... if within a clause
 	xhtml = regex.sub(r"\.(\s…\s[\p{Lowercase_Letter}])", r"\1", xhtml)
