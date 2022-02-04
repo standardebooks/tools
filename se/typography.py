@@ -256,9 +256,6 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Add nbsp to ellipses that open dialog
 	xhtml = regex.sub(r"([“‘])…\s([\p{{Letter}}0-9])", fr"\1…{se.NO_BREAK_SPACE}\2", xhtml, flags=regex.IGNORECASE)
 
-	# Remove spaces between ellipses and endnotes directly after
-	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?(<a[^>]+?id=\"noteref-[0-9]+\"[^>]*?>)", r"…\1", xhtml, flags=regex.IGNORECASE)
-
 	# Don't use . ... if within a clause
 	xhtml = regex.sub(r"\.(\s…\s[\p{Lowercase_Letter}])", r"\1", xhtml)
 
@@ -327,14 +324,14 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"OK([”’]\s+[\p{Uppercase_Letter}])", r"OK.\1", xhtml)
 	xhtml = regex.sub(r"(“[^”]+?)OK ([\p{Uppercase_Letter}]\w+)", r"\1OK.” \2", xhtml)
 
-	# Remove spaces between ellipses and noterefs
-	xhtml = regex.sub(r""" … (<a[^>]+?epub:type="noteref">)""", r" …\1", xhtml)
-
 	# Add an &nbsp; before &amp;
 	xhtml = regex.sub(r" &amp;", f"{se.NO_BREAK_SPACE}&amp;", xhtml)
 
 	# Add word joines to ellipses
 	xhtml = regex.sub(r" …", f"{se.WORD_JOINER} {se.WORD_JOINER}…", xhtml)
+
+	# Remove spaces between ellipses and endnotes directly after
+	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?(<a[^>]+?epub:type=\"noteref\"[^>]*?>)", r"…\1", xhtml, flags=regex.IGNORECASE)
 
 	# Remove word joiners and nbsp from img alt attributes
 	for match in regex.findall(fr"alt=\"[^\"]*?[{se.NO_BREAK_SPACE}{se.WORD_JOINER}][^\"]*?\"", xhtml):
