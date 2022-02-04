@@ -235,7 +235,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Dd])ulness", r"\1ullness", xhtml)			# dulness -> dullness
 	xhtml = regex.sub(r"\b([Ff])iord", r"\1jord", xhtml)				# fiord -> fjord
 	xhtml = regex.sub(r"\b([Ff])ulness\b", r"\1ullness", xhtml)			# fulness -> fullness (but not for ex. thoughtfulness)
-	xhtml = regex.sub(r"['’]([Pp])hone", r"\1hone", xhtml)				# ’phone -> phone; note that we can't use \b on the left because it won't match for some reason
+	xhtml = regex.sub(r"['’]([Pp])hon(e|ing)", r"\1hon\2", xhtml)			# ’phone -> phone; note that we can't use \b on the left because it won't match for some reason
 	xhtml = regex.sub(r"\b([Ss])hew", r"\1how", xhtml)				# shew -> show
 	xhtml = regex.sub(r"\b([Tt])rowsers", r"\1rousers", xhtml)			# trowsers -> trousers
 	xhtml = regex.sub(r"([Bb])iass", r"\1ias", xhtml)				# (un)biass(ed) -> (un)bias(ed)
