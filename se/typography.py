@@ -224,7 +224,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 	# WARNING! This and below can remove the ending period of a sentence, if AD or BC is the last word!  We need interactive S&R for this
 	xhtml = regex.sub(r"([\d\s])A\.\s+D\.", r"\1AD", xhtml)
-	xhtml = regex.sub(r"B\.\s+C\.", r"BC", xhtml)
+	xhtml = regex.sub(r"(?<!A\. )B\.\s+C\.", r"BC", xhtml)
 
 	# Put spacing next to close quotes
 	xhtml = regex.sub(fr"“[\s{se.NO_BREAK_SPACE}]*‘", fr"“{se.HAIR_SPACE}‘", xhtml, flags=regex.IGNORECASE)
