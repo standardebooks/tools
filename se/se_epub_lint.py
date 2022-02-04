@@ -1699,6 +1699,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
+				# Check for single quotes instead of double quotes
+				typos = [node.to_string() for node in dom.xpath("/html/body//p[not(contains(@class, 'continued') or ancestor::blockquote or ancestor::*[re:test(@epub:type, 'z3998:(verse|song|poem|hymn)')]) and re:test(., '^[^“]+?‘')]")]
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: Opening [text]‘[/] without preceding [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+
 				# Check for two quotations in one paragraph
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^”]+?”\\s“[^”]+?”$')]")]
 				if typos:
