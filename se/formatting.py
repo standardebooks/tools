@@ -134,7 +134,8 @@ def semanticate(xhtml: str) -> str:
 	# Get Roman numerals >= 2 characters
 	# We only wrap these if they're standalone (i.e. not already wrapped in a tag) to prevent recursion in multiple runs
 	# Ignore "numerals" followed by a dash, as they are more likely something like `x-ray` or `v-shaped`
-	xhtml = regex.sub(r"([^\p{Letter}>])([ixvIXV]{2,})(\b[^\-]|st\b|nd\b|rd\b|th\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
+	# Note that `j` may occur only at the end of a numeral as an old-fashioned terminal `i`, like int `ij` (2), `vij` (7)
+	xhtml = regex.sub(r"([^\p{Letter}>])([ixvIXV]{2,}j?)(\b[^\-]|st\b|nd\b|rd\b|th\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
 
 	# Get Roman numerals that are X or V and single characters.  We can't do I for obvious reasons.
 	xhtml = regex.sub(r"""([^\p{Letter}>\"])([vxVX])(\b[^\-]|st\b|nd\b|rd\b|th\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
