@@ -1472,7 +1472,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("t-058", "Illegal character.", se.MESSAGE_TYPE_ERROR, filename, list({match.encode("unicode_escape").decode().replace("\\u", "U+").upper():None for match in matches}.keys())))
 
 				# Check for z3998:roman elements with invalid values
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:roman')][re:test(normalize-space(text()), '[^ivxlcdmIVXLCDM]')]")
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:roman')][not(re:test(normalize-space(text()), '^[ivxlcdmIVXLCDM]+j?$'))]")
 				if nodes:
 					messages.append(LintMessage("s-026", "Invalid Roman numeral.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
