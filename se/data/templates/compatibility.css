@@ -11,8 +11,22 @@ section{
 	display: block;
 }
 
-.quote-align{
-	margin-left: -.15em;
+/* ADE can't handle the way we hide the title/author/contributor blocks in the titlepage, so hide them from ADE... */
+section[epub|type~="titlepage"] h1,
+section[epub|type~="titlepage"] p,
+section[epub|type~="colophon"] h2,
+section[epub|type~="imprint"] h2{
+	display: none;
+}
+
+/* ...but enable them accessibility in all other ereaders */
+@supports(font-size: 0){
+	section[epub|type~="titlepage"] h1,
+	section[epub|type~="titlepage"] p,
+	section[epub|type~="colophon"] h2,
+	section[epub|type~="imprint"] h2{
+		display: block;
+	}
 }
 
 /* Epub2 compatibility CSS */
@@ -31,7 +45,7 @@ img[epub|type~="se:image.color-depth.black-on-transparent"][epub|type~="z3998:pu
 	background: transparent !important;
 }
 
-/* Or if the device supports prefers-color-scheme. We’ll invert the image in core.css. RMSDK requires a target media as well as a state. */
+/* ..or if the device supports prefers-color-scheme. We’ll invert the image in core.css. RMSDK requires a target media as well as a state. */
 @media all and (prefers-color-scheme){
 	img[epub|type~="se:image.color-depth.black-on-transparent"]:not([epub|type~="se:image.style.realistic"]){
 		background: transparent !important;
