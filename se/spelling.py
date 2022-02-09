@@ -377,6 +377,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Cc])aldron(s?)", r"\1auldron\2", xhtml)			# caldron -> cauldron
 	xhtml = regex.sub(r"\b([Tt])hru\b", r"\1hru", xhtml)				# thru -> through
 	xhtml = regex.sub(r"\b[‘’]([Ss])cope(s?)\b", r"\1cope\2", xhtml)		# 'scope -> scope
+	xhtml = regex.sub(r"\b([Ff])(aqu?ir|akeer)", r"\1akir", xhtml)			# faqir, fakeer -> fakir
+	xhtml = regex.sub(r"\b([Ii])maum", r"\1mam", xhtml)				# imaum -> imam
 
 
 	# Normalize some names
