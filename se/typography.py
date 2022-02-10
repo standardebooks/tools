@@ -189,6 +189,10 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Add rsquo to bare `tis` and `twas`
 	xhtml = regex.sub(r"([^’>])\b([Tt]is|[Tt]was|[Tt]were|[Tt]won’t)\b", r"\1’\2", xhtml)
 
+	# Replace `M‘<letter>` with `Mc<letter>`; use of lsquo in this case is a historical case of a "poor man's superscript c". See
+	# https://english.stackexchange.com/questions/543272/why-were-scottish-irish-names-once-rendered-with-apostrophes-instead-of-mac#543329
+	xhtml = regex.sub(r"\bM‘([\p{Uppercase_Letter}][\p{Letter}]+?)", r"Mc\1", xhtml)
+
 	# A note on spacing:
 	# 					ibooks	kindle (mobi7)
 	# thin space U+2009:			yes	yes
