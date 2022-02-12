@@ -1663,6 +1663,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: comma ending dialogue.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
+				# Check for period not inside rsquo
+				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[^”’]+?’[\\.,]”')]")]
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: punctuation not within [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+
 				# Check for mis-curled &lsquo; or &lsquo; without matching &rsquo;
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[A-Za-z][^“’]+?”')]")]
 				if typos:
