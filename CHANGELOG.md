@@ -1,3 +1,9 @@
+# 2.3.6
+
+## se build
+
+- Fix bug when simplifying CSS/HTML
+
 # 2.3.5
 
 ## se build
