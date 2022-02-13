@@ -292,12 +292,17 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 				# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
 				if regex.search(r"\[[a-z]+\|[a-z]+", selector):
-					for namespace_selector in regex.findall(r"\[[a-z]+\|[a-z]+(?:\~\=\"[^\"]*?\")?\]", selector):
+					for namespace_selector in regex.findall(r"\[[a-z]+\|[a-z]+(?:[\~\^\|\$\*]?\=\"[^\"]*?\")?\]", selector):
 						new_class = regex.sub(r"^\.", "", se.formatting.namespace_to_class(namespace_selector))
 
-						selector_without_pseudo_elements = regex.sub(r"::[a-z]+", "", selector)
+						for element in dom.css_select(namespace_selector):
+							# If we're targeting xml:lang attributes, never add the class to `<html>` or `<body>`.
+							# We were most likely targeting `body [xml|lang]` but since by default we add classes to
+							# everything, that could result in `<html>` getting the `xml-lang` class and making everything
+							# italics.
+							if namespace_selector == "[xml|lang]" and element.tag in ("html", "body"):
+								continue
 
-						for element in dom.css_select(selector_without_pseudo_elements):
 							current_class = element.get_attr("class") or ""
 
 							if new_class not in current_class:
