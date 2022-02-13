@@ -295,7 +295,9 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					for namespace_selector in regex.findall(r"\[[a-z]+\|[a-z]+(?:\~\=\"[^\"]*?\")?\]", selector):
 						new_class = regex.sub(r"^\.", "", se.formatting.namespace_to_class(namespace_selector))
 
-						for element in dom.css_select(namespace_selector):
+						selector_without_pseudo_elements = regex.sub(r"::[a-z]+", "", selector)
+
+						for element in dom.css_select(selector_without_pseudo_elements):
 							current_class = element.get_attr("class") or ""
 
 							if new_class not in current_class:
@@ -479,7 +481,6 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 									break
 						else:
 							node.set_attr("role", f"doc-{attr_values[0]}")
-
 
 				# We converted svgs to pngs, so replace references
 				for node in dom.xpath("/html/body//img[re:test(@src, '\\.svg$')]"):
