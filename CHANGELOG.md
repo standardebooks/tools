@@ -1,3 +1,55 @@
+# 2.3.5
+
+## se build
+
+- When simplifying CSS, don't add classes to elements that are not targeted by a selector
+
+- Improve RMSDK compatibility for new titlepages
+
+## se build-toc
+
+- Added check on valid roman numerals in headings. Thanks to David Grigg
+
+## se clean
+
+-  Alpha-order CSS declarations
+
+## se find-mismatched-diacritics
+
+- Exclude link in colophon which may confuse results
+
+## se lint
+
+- Improve m-056
+
+- Improve t-042
+
+- Exclude valedictions from t-057
+
+- Allow trailing `j` in s-026
+
+## se modernize-spelling
+
+- Various additions and fixes
+
+## se semanticate
+
+- Add check for Roman numerals ending in `j`
+
+## se typogrify
+
+- Use nbsp after ellipses that open dialog
+
+- Fix broken regex
+
+- Remove duplicate regex
+
+- Prevent check for `B.C.` from matching `A. B. C.`
+
+- Improve matching two-em-dashes at the end of dialog
+
+- Replace `M‘foo` with `McFoo`
+
 # 2.3.4
 
 ## se create-draft
