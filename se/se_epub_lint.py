@@ -145,6 +145,7 @@ METADATA
 "m-037", f"Transcription/page scan source link not found. Expected: [xhtml]{href}[/]."
 "m-038", "[attr]schema:accessMode[/] property set to [val]visual[/] in metadata, but no images in ebook."
 "m-039", "[attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata, but no images in ebook."
+"m-040", "Images found in ebook, but no [attr]role[/] property set to [val]wat[/] in metadata for the writer of the alt text."
 "m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
 "m-042", "[xml]<manifest>[/] element does not match expected structure."
 "m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC."
@@ -176,7 +177,6 @@ METADATA
 "m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/]."
 "m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/]."
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"m-040", f"Source not represented in colophon.xhtml. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/]."
 "m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)})."
 "m-044", f"The spine order does not match the order of the ToC. Expected [text]{node.get_attr('idref')}[/], found [text]{toc_files[index]}[/]."
 
@@ -2950,6 +2950,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 	# Check for some accessibility metadata regarding images
 	has_visual_accessmode = len(self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessMode' and text() = 'visual']")) > 0
 	has_accessibility_feature_alt = len(self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'alternativeText']")) > 0
+	has_wat_role = len(self.metadata_dom.xpath("/package/metadata/meta[(@property='role' or @property='se:role') and text() = 'wat']")) > 0
 
 	if has_images:
 		if not has_visual_accessmode:
@@ -2957,6 +2958,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 		if not has_accessibility_feature_alt:
 			messages.append(LintMessage("m-029", "Images found in ebook, but no [attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+		if not has_wat_role:
+			messages.append(LintMessage("m-040", "Images found in ebook, but no [attr]role[/] property set to [val]wat[/] in metadata for the writer of the alt text.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	if not has_images:
 		if has_visual_accessmode:
