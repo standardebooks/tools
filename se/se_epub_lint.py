@@ -1653,6 +1653,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: paragraph missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
+				# Check for single quotes when there should be double quotes in an interjection in dialog
+				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '“[^”]+?’⁠—[^”]+?—“')]")]
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: dialog interrupted by interjection but with incorrect closing quote.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
 				# Check for dialog starting with a lowercase letter. Only check the first child text node of <p>, because other first children might be valid lowercase, like <m:math> or <b>;
 				# exclude <p> inside or preceded by <blockquote>; and exclude <p> inside endnotes, as definitions may start with lowercase letters.
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::li[contains(@epub:type, 'endnote')]) and not(preceding-sibling::*[1][name()='blockquote'])][re:test(./node()[1], '^“[a-z]')]")]
