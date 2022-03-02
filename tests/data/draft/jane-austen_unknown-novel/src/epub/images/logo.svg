@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" height="140" version="1.1" width="220">
-	<title>The Standard Ebooks logo</title>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 220 140">
+	<title>The Standard Ebooks logo.</title>
 	<desc>The logo portrays an open book with the letter "S" on the left page and the letter "E" on the right page. A power cord is attached to the bottom of the book and curled beneath it. The book is surrounded by laurels.</desc>
 	<g>
 		<path d="m 167.55764,127.47036 c 0,0 6.34186,-2.00352 11.37468,-1.41331 7.99011,0.93699 8.72666,5.89372 8.72666,5.89372 0,0 -3.20546,1.98854 -10.08083,1.23287 -8.05429,-0.88529 -10.02051,-5.71338 -10.02051,-5.71338 Z"/>

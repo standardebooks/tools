@@ -2,7 +2,7 @@
 @namespace epub "http://www.idpf.org/2007/ops";
 
 /* This may appear in the colophon */
-abbr.era{
+abbr[epub|type~="se:era"]{
 	font-variant: all-small-caps;
 }
 
@@ -34,6 +34,7 @@ section[epub|type~="imprint"] header{
 
 img[epub|type~="z3998:publisher-logo"]{
 	max-width: 25%;
+	width: 220px;
 }
 
 section[epub|type~="colophon"] p,
