@@ -159,8 +159,8 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(fr"([I\p{{Lowercase_Letter}}>\.\?\!,’]{se.WORD_JOINER})⸺”", r"\1—”", xhtml)
 	xhtml = regex.sub(fr"([^\s‘“—][a-z\.]{se.WORD_JOINER})⸺\s?", r"\1—", xhtml)
 
-	# Some older texts use the ,— construct; remove that archaichism
-	xhtml = xhtml.replace(",—", "—")
+	# Some older texts use the ,— construct; remove that archaism
+	xhtml = regex.sub(fr",({se.WORD_JOINER}?)—", r"\1—", xhtml)
 
 	# Remove spaces after two-em-dashes that do not appear to be elision
 	xhtml = regex.sub(fr"(\p{{Letter}}{{2,}}{se.WORD_JOINER})⸺\s", r"\1—", xhtml)
