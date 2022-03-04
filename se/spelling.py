@@ -380,6 +380,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ff])(aqu?ir|akeer)", r"\1akir", xhtml)			# faqir, fakeer -> fakir
 	xhtml = regex.sub(r"\b([Ii])maum", r"\1mam", xhtml)				# imaum -> imam
 	xhtml = regex.sub(r"\b([Mm])oujik", r"\1uzhik", xhtml)				# moujik -> muzhik
+	xhtml = regex.sub(r"\b([Cc])har[ -][aà][ -]banc", "\1arabanc", xhtml)		# char-à-banc -> charabanc
 
 
 	# Normalize some names
