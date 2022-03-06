@@ -399,7 +399,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bPekin\b", r"Peking", xhtml)				# Pekin -> Peking
 	xhtml = regex.sub(r"\bBuenos Ayres\b", r"Buenos Aires", xhtml)			# Buenos Ayres -> Buenos Aires
 	xhtml = regex.sub(r"\bCracow", r"Krakow", xhtml)				# Cracow -> Krakow
-	xhtml = regex.sub(r"\bKieff?\b", r"Kiev", xhtml)				# Kief -> Kiev
+	xhtml = regex.sub(r"\bKie(ff?|v)\b", r"Kyiv", xhtml)				# Kieff/Kiev -> Kyiv
 	xhtml = regex.sub(r"\bRo?umania", r"Romania", xhtml)				# Roumania(n) -> Romania(n)
 	xhtml = regex.sub(r"\b([Rr])enascence", r"\1enaissance", xhtml)			# renascence -> renaissance
 	xhtml = regex.sub(r"\bThibet", r"Tibet", xhtml)					# Thibet -> Tibet
