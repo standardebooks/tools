@@ -66,9 +66,9 @@ sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se
 sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 ```
 
-## macOS users (up to macOS 11)
+## macOS users (up to macOS 12)
 
-These instructions were tested on macOS 10.15 to 11, on Intel macs.
+These instructions were tested on macOS 10.15 to 12, on Intel macs.
 
 1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it’s up to date:
 
@@ -82,7 +82,7 @@ These instructions were tested on macOS 10.15 to 11, on Intel macs.
 	# Install some pre-flight dependencies.
 	brew install cairo calibre git openjdk pipx python
 	pipx ensurepath
-	sudo ln -sfn /usr/local/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
+	sudo ln -sfn $(brew --prefix)/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
 
 	# Install the toolset.
 	pipx install standardebooks
