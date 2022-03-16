@@ -62,13 +62,19 @@ def find_unusual_characters(plain_output: bool) -> int:
 	# Ignore CENT SIGN and POUND SIGN u00a2-u00a3
 	unusual_character_set += "\u00a4-\u00af"
 	# Ignore DEGREE SYMBOL u00b0
-	unusual_character_set += "\u00b1-\u00bb"
+	unusual_character_set += "\u00b1-\u00b6"
+	# Ignore MIDDLE DOT u00b7 (used for Morse code)
+	unusual_character_set += "\u00b8-\u00bb"
 	# Ignore vulgar fractions u00bc-u00be
 	unusual_character_set += "\u00bf"
 	# Ignore standard accented letters u00c0-u00ff
 	unusual_character_set += "\u0100-\u0151"
 	# Ignore œ / Œ u0152-u0153
-	unusual_character_set += "\u0154-\u030c"
+	unusual_character_set += "\u0154-\u02ba"
+	# Ignore MODIFIER LETTER TURNED COMMA u02bb (used for glottal stops)
+	unusual_character_set += "\u02bc"
+	# Ignore MODIFIER LETTER REVERSED COMMA u02bd (used for Greek / Chinese)
+	unusual_character_set += "\u02be-\u030c"
 	# Ignore COMBINING VERTICAL LINE ABOVE u030d
 	unusual_character_set += "\u030e-\u036f"
 	# Ignore basic Greek characters u0370-u03ff
@@ -84,11 +90,23 @@ def find_unusual_characters(plain_output: bool) -> int:
 	# Ignore valid double quotes u201c-u201d
 	unusual_character_set += "\u201e-\u2025"
 	# Ignore HORIZONTAL ELLIPSIS u2026
-	unusual_character_set += "\u2027-\u205f"
+	unusual_character_set += "\u2027-\u2031"
+	# Ignore single/double prime marks u2032-u2033
+	unusual_character_set += "\u2034-\u203d"
+	# Ignore OVERLINE u203e (used in MathML)
+	unusual_character_set += "\u203f-\u2043"
+	# Ignore FRACTION SLASH u2044
+	unusual_character_set += "\u2045-\u205f"
 	# Ignore WORD JOINER u2060
 	unusual_character_set += "\u2061-\u21a8"
 	# Ignore LEFTWARDS ARROW WITH HOOK u21a9 (used in endquotes)
-	unusual_character_set += "\u21aa-\u22ed"
+	unusual_character_set += "\u21aa-\u2211"
+	# Ignore MINUS SIGN u2212
+	unusual_character_set += "\u2213-\u2235"
+	# Ignore RATIO u2236
+	unusual_character_set += "\u2237-\u2260"
+	# Ignore IDENTICAL TO u2261
+	unusual_character_set += "\u2262-\u22ed"
 	# Ignore VERTICAL ELLIPSIS u22ee
 	unusual_character_set += "\u22ef-\u2e39"
 	# Ignore two-/three-em dashes u2e3a-u2e3b
