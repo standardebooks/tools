@@ -1335,7 +1335,7 @@ class SeEpub:
 
 		new_anchor = f"note-{current_note_number:d}"
 		if new_anchor != old_anchor:
-			change_list.append(f"{old_anchor}->{new_anchor}")
+			change_list.append(f"{old_anchor}->{new_anchor}, {file_name}")
 			notes_changed += 1
 			# Update the link in the dom
 			link.set_attr("href", f"{self.endnotes_path.name}#{new_anchor}")
