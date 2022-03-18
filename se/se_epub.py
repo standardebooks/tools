@@ -1245,7 +1245,7 @@ class SeEpub:
 		with open(self.endnotes_path, "w") as file:
 			file.write(endnotes_dom.to_string())
 
-	def generate_endnotes(self) -> Tuple[int, int]:
+	def generate_endnotes(self) -> Tuple[int, int, list]:
 		"""
 		Read the epub spine to regenerate all endnotes in order of appearance, starting from 1.
 		Changes are written to disk.
@@ -1316,7 +1316,7 @@ class SeEpub:
 			with open(self.endnotes_path, "w") as file:
 				file.write(se.formatting.format_xhtml(endnotes_dom.to_string()))
 
-		return current_note_number - 1, notes_changed
+		return current_note_number - 1, notes_changed, change_list
 
 	def __process_link(self, change_list, current_note_number, file_name, link, needs_rewrite, notes_changed) -> Tuple[bool, int]:
 		"""
@@ -1335,7 +1335,7 @@ class SeEpub:
 
 		new_anchor = f"note-{current_note_number:d}"
 		if new_anchor != old_anchor:
-			change_list.append(f"Changed {old_anchor} to {new_anchor} in {file_name}")
+			change_list.append(f"{old_anchor}->{new_anchor}")
 			notes_changed += 1
 			# Update the link in the dom
 			link.set_attr("href", f"{self.endnotes_path.name}#{new_anchor}")

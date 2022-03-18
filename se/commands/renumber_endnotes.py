@@ -33,9 +33,11 @@ def renumber_endnotes(plain_output: bool) -> int:
 			if args.brute_force:
 				se_epub.recreate_endnotes()
 			else:
-				found_endnote_count, changed_endnote_count = se_epub.generate_endnotes()
+				found_endnote_count, changed_endnote_count, change_list = se_epub.generate_endnotes()
 				if args.verbose:
 					print(se.prep_output(f"Found {found_endnote_count} endnote{'s' if found_endnote_count != 1 else ''} and changed {changed_endnote_count} endnote{'s' if changed_endnote_count != 1 else ''}.", plain_output))
+					for change in change_list:
+						print(change)
 		except se.SeException as ex:
 			se.print_error(ex, plain_output=plain_output)
 			return_code = ex.code
