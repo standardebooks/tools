@@ -431,6 +431,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"jesuit", r"Jesuit", xhtml)					# jesuit -> Jesuit
 	xhtml = regex.sub(r"Roman catholic", r"Roman Catholic", xhtml)			# Roman catholic -> Roman Catholic; Note that we can't uppercase `catholic` in the generic sense because `catholic` can mean "worldly"
 	xhtml = regex.sub(r"Burmah", r"Burma", xhtml)					# Burmah -> Burma
+	xhtml = regex.sub(r"Turgenieff", r"Turgenev", xhtml)				# Turgenieff -> Turgenev
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
