@@ -1755,6 +1755,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: Italics followed by a letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
+				# Check for lowercase letters starting quotations after a preceding period
+				typos = dom.xpath("/html/body//p/child::text()[re:test(., '\\.\\s[‘“][a-z]')]")
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: Lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
 				# Check for body element without child section or article. Ignore the ToC because it has a unique structure
 				nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and re:test(@epub:type, '\\b(toc|loi)\\b'))])]")
 				if nodes:
