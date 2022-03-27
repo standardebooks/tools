@@ -1596,7 +1596,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("x-011", "Illegal underscore in attribute. Use dashes instead of underscores.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 				# Check for stage direction that ends in ?! but also has a trailing period
-				nodes = dom.xpath("/html/body//i[contains(@epub:type, 'z3998:stage-direction')][re:test(., '\\.$')][(following-sibling::node()[1])[re:test(., '^[,:;!?]')]]")
+				nodes = dom.xpath("/html/body//i[contains(@epub:type, 'z3998:stage-direction') and re:test(., '\\.$') and not((./node()[last()])[name() = 'abbr']) and (following-sibling::node()[1])[re:test(., '^[,:;!?]')]]")
 				if nodes:
 					messages.append(LintMessage("t-018", "Stage direction ending in period next to other punctuation. Remove trailing periods in stage direction.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
