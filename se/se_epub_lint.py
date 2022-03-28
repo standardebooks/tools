@@ -1472,8 +1472,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					# Get the keys of a dict in order to create a list without duplicates
 					messages.append(LintMessage("t-058", "Illegal character.", se.MESSAGE_TYPE_ERROR, filename, list({match.encode("unicode_escape").decode().replace("\\u", "U+").upper():None for match in matches}.keys())))
 
-				# Check for z3998:roman elements with invalid values
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:roman')][not(re:test(normalize-space(text()), '^[ivxlcdmIVXLCDM]+j?$'))]")
+				# Check for z3998:roman elements with invalid values. Roman numerals can occasionally end in `j` as an alias for ending `i`. See _The Worm Ouroboros_.
+				# We also allow the numeral to end in a digit, because that might be an endnote. For example `<h2 epub:type="ordinal z3998:roman">II<a href="..." epub:type="noteref">3</a></h2>`
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:roman') and not(re:test(normalize-space(.), '^[ivxlcdmIVXLCDM]+j?[0-9]*?$'))]")
 				if nodes:
 					messages.append(LintMessage("s-026", "Invalid Roman numeral.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
