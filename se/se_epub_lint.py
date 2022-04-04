@@ -349,6 +349,7 @@ TYPOGRAPHY
 "t-066", "Regnal ordinal preceded by [text]the[/]."
 "t-067", "Plural [val]z3998:grapheme[/], [val]z3998:phoneme[/], or [val]z3998:morpheme[/] formed without apostrophe ([text]’[/])."
 "t-068", "Citation not offset with em dash."
+"t-069", "[xhtml]<cite>[/] in [xhtml]<header>[/] starting with an em dash."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -2370,6 +2371,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				nodes = dom.xpath("/html/body//*[(name() = 'div' or name() = 'p') and contains(@epub:type, 'z3998:postscript') and not((./parent::blockquote or ./parent::footer) and count(./preceding-sibling::*) = 0) and @data-css-margin-top != '1em']")
 				if nodes:
 					messages.append(LintMessage("c-017", "Element with [val]z3998:postscript[/] semantic, but without [css]margin-top: 1em;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for <cite> in <header>s that start with a leading em dash
+				nodes = dom.xpath("/html/body//header//cite[re:test(., '^—')]")
+				if nodes:
+					messages.append(LintMessage("t-069", "[xhtml]<cite>[/] in [xhtml]<header>[/] starting with an em dash.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for persona <td>s that have child <p> elements
 				nodes = dom.xpath("/html/body//td[contains(@epub:type, 'z3998:persona') and ./p]")
