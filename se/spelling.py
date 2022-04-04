@@ -185,7 +185,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Cc])oërc", r"\1oerc", xhtml)				# coërc -> coerc (as in coërcion)
 	xhtml = regex.sub(r"\b([Cc])oëd", r"\1oed", xhtml)				# coëd -> coed (as in coëducation)
 	xhtml = regex.sub(r"\b([Dd])aïs\b", r"\1ais", xhtml)				# daïs -> dais
-	xhtml = regex.sub(r"\b([Cc])oup\-de\-grace", r"\1oup-de-grâce", xhtml)		# coup-de-grace -> coup-de-grâce
+	xhtml = regex.sub(r"\b([Cc])oup[\- ]de[\- ]gr[aâ]ce", r"\1oup de grâce", xhtml)	# coup-de-grace -> coup-de-grâce
 	xhtml = regex.sub(r"\b([Cc])anape", r"\1anapé", xhtml)				# canape -> canapé
 	xhtml = regex.sub(r"\b([Pp])recis\b", r"\1récis", xhtml)			# precis -> précis
 	xhtml = regex.sub(r"\b([Gg])ood\-night", r"\1ood night", xhtml)			# good-night -> good night
