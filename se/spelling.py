@@ -384,6 +384,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"’([Cc])ellist", "\1ellist", xhtml)				# 'cellist -> cellist
 	xhtml = regex.sub(r"([Pp])ourtray", "\1ortray", xhtml)				# pourtray -> portray
 	xhtml = regex.sub(r"([S])toopid", "\1tupid", xhtml)				# stoopid -> stupid
+	xhtml = regex.sub(r"([S])uède", "\1uede", xhtml)				# suède -> suede
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
