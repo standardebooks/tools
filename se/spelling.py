@@ -352,7 +352,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])pung", r"\1pong", xhtml)				# spung(e|ing|y) -> sponge
 	xhtml = regex.sub(r"\b([Ww])oful", r"\1oeful", xhtml)				# woful -> woeful
 	xhtml = regex.sub(r"\b([Hh]e|[Ss]he|[Yy]ou|[Tt]hey)’ld", r"\1’d", xhtml)	# he'ld, she'ld, you'ld, they'ld -> he'd, she'd, you'd, they'd
-	xhtml = regex.sub(r"\b([Ii])n the mean time", r"\1n the meantime", xhtml)	# in the mean time -> in the meantime
+	xhtml = regex.sub(r"\b([Mm])ean time", r"\1eantime", xhtml)				# mean time -> meantime
 	xhtml = regex.sub(r"\b([Ch])huck[\- ]full\b", r"\1ock-full", xhtml)		# chuck-full -> chock-full
 	xhtml = regex.sub(r"\b([Pp])rythee\b", r"\1rithee", xhtml)			# prythee -> prithee
 	xhtml = regex.sub(r"\b([Hh])av’n’t", r"\1aven’t", xhtml)			# hav’n’t -> haven’t
