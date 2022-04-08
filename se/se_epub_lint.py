@@ -1807,7 +1807,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("s-066", "Header element missing [val]label[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for header elements that are missing both label and ordinal semantics
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(./*) and re:match(normalize-space(.), '^(Part|Book|Volume|Section|Act|Scene)\\s+[ixvIXVmcd]+$')]")
+				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(./*) and re:test(normalize-space(.), '^(Part|Book|Volume|Section|Act|Scene)\\s+[ixvIXVmcd]+$')]")
 				if nodes:
 					messages.append(LintMessage("s-073", "Header element that requires [val]label[/] and [val]ordinal[/] semantic children.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
@@ -2333,7 +2333,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				# Check for possessive 's within name italics, but not in ignored files like the colophon which we know have no possessives
 				# Allow some known exceptions like `Harper's`, etc.
 				if filename.name not in IGNORED_FILENAMES:
-					nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.') and re:match(., '’s$') and not(contains(@epub:type, 'se:name.publication.') and re:test(., '(Pearson’s|Harper’s|Blackwood’s|Fraser’s)$'))]")
+					nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.') and re:test(., '’s$') and not(contains(@epub:type, 'se:name.publication.') and re:test(., '(Pearson’s|Harper’s|Blackwood’s|Fraser’s)$'))]")
 					if nodes:
 						messages.append(LintMessage("t-007", "Possessive [text]’s[/] within name italics. If the name in italics is doing the possessing, [text]’s[/] goes outside italics.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
@@ -2363,7 +2363,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("t-061", "Summary-style bridgehead without ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for <cite> preceded by em dash
-				nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[re:match(., '—$')]]")
+				nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[re:test(., '—$')]]")
 				if nodes:
 					messages.append(LintMessage("t-034", "[xhtml]<cite>[/] element preceded by em-dash. Hint: em-dashes go within [xhtml]<cite>[/] elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
@@ -2409,7 +2409,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("s-093", "Nested [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for <cite> without preceding space in text node. (preceding ( or [ are also OK)
-				nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[not(re:match(., '[\\[\\(\\s]$'))]]")
+				nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[not(re:test(., '[\\[\\(\\s]$'))]]")
 				if nodes:
 					messages.append(LintMessage("t-035", "[xhtml]<cite>[/] element not preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
