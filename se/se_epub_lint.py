@@ -1656,6 +1656,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: paragraph missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
+				# Check for commas or periods following exclamation or question marks
+				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[!?][\\.,][^”’]')]")]
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: question mark or exclamation mark followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
 				# Check for single quotes when there should be double quotes in an interjection in dialog
 				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '“[^”]+?’⁠—[^”]+?—“')]")]
 				if typos:
