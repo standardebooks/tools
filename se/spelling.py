@@ -386,6 +386,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"([S])toopid", "\1tupid", xhtml)				# stoopid -> stupid
 	xhtml = regex.sub(r"([S])uède", "\1uede", xhtml)				# suède -> suede
 	xhtml = regex.sub(r"([Ff])or ever\b","\1orever", xhtml)				# for ever -> forever
+	xhtml = regex.sub(r"([Dd])ébris\b","\1ebris", xhtml)				# débris -> debris
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
