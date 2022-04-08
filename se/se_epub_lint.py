@@ -1661,6 +1661,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: question mark or exclamation mark followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
+				# Check for opening lsquo in quote that doesn't appear to have a matching rsquo. Rsquos must be followed by a space, punctuation (except period/comma), word joiner and thus em dash, or a number for an endnote.
+				typos = dom.xpath(f"re:match(//*, '“\\s*‘[^“]+?”', 'g')/text()[not(re:test(., '’[\\s\\?\\!;<2060{se.WORD_JOINER}0-9]'))]")
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: Left single quote without matching right single quote. Note that right single quotes are used for abbreviations, and that commas and periods must go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
 				# Check for single quotes when there should be double quotes in an interjection in dialog
 				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '“[^”]+?’⁠—[^”]+?—“')]")]
 				if typos:
