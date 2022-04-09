@@ -380,13 +380,13 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ff])(aqu?ir|akeer)", r"\1akir", xhtml)			# faqir, fakeer -> fakir
 	xhtml = regex.sub(r"\b([Ii])maum", r"\1mam", xhtml)				# imaum -> imam
 	xhtml = regex.sub(r"\b([Mm])oujik", r"\1uzhik", xhtml)				# moujik -> muzhik
-	xhtml = regex.sub(r"\b([Cc])har[ -][aà][ -]banc", "\1arabanc", xhtml)		# char-à-banc -> charabanc
-	xhtml = regex.sub(r"’([Cc])ellist", "\1ellist", xhtml)				# 'cellist -> cellist
-	xhtml = regex.sub(r"([Pp])ourtray", "\1ortray", xhtml)				# pourtray -> portray
-	xhtml = regex.sub(r"([S])toopid", "\1tupid", xhtml)				# stoopid -> stupid
-	xhtml = regex.sub(r"([S])uède", "\1uede", xhtml)				# suède -> suede
-	xhtml = regex.sub(r"([Ff])or ever\b","\1orever", xhtml)				# for ever -> forever
-	xhtml = regex.sub(r"([Dd])ébris\b","\1ebris", xhtml)				# débris -> debris
+	xhtml = regex.sub(r"\b([Cc])har[ -][aà][ -]banc", r"\1arabanc", xhtml)		# char-à-banc -> charabanc
+	xhtml = regex.sub(r"’([Cc])ellist", r"\1ellist", xhtml)				# 'cellist -> cellist
+	xhtml = regex.sub(r"([Pp])ourtray", r"\1ortray", xhtml)				# pourtray -> portray
+	xhtml = regex.sub(r"([S])toopid", r"\1tupid", xhtml)				# stoopid -> stupid
+	xhtml = regex.sub(r"([S])uède", r"\1uede", xhtml)				# suède -> suede
+	xhtml = regex.sub(r"([Ff])or ever\b",r"\1orever", xhtml)				# for ever -> forever
+	xhtml = regex.sub(r"([Dd])ébris\b", r"\1ebris", xhtml)				# débris -> debris
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
@@ -412,15 +412,15 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bTokio", r"Tokyo", xhtml)					# Tokio -> Tokyo
 	xhtml = regex.sub(r"\bTchekh?ov", r"Chekhov", xhtml)				# Tchekhov -> Chekhov
 	xhtml = regex.sub(r"\bVereshtchagin", r"Vereshchagin", xhtml)			# Vereshtchagin -> Vereshchagin
-	xhtml = regex.sub(r"\bSoudan", "Sudan", xhtml)					# Soudan -> Sudan
-	xhtml = regex.sub(r"\bJack-in-the-box", "jack-in-the-box", xhtml)		# Jack-in-the-box -> jack-in-the-box
+	xhtml = regex.sub(r"\bSoudan", r"Sudan", xhtml)					# Soudan -> Sudan
+	xhtml = regex.sub(r"\bJack-in-the-box", r"jack-in-the-box", xhtml)		# Jack-in-the-box -> jack-in-the-box
 	xhtml = regex.sub(r"\bServia", r"Serbia", xhtml)				# Servia(n) -> Serbia(n)
 	xhtml = regex.sub(r"\bEsquimaux?\b", r"Eskimo", xhtml)				# Esquimau -> Eskimo
 	xhtml = regex.sub(r"\bLaocoon", r"Laocoön", xhtml)				# Lacoon -> Laocoön
-	xhtml = regex.sub(r"Porto Rico", "Puerto Rico", xhtml)				# Porto Rico -> Puerto Rico
-	xhtml = regex.sub(r"Mahomet", "Muhammad", xhtml)				# Mahomet -> Muhammad
-	xhtml = regex.sub(r"M[ao]hommed", "Muhammad", xhtml)		        	# Mahommed -> Muhammad
-	xhtml = regex.sub(r"Esthonian", "Estonian", xhtml)				# Esthonian -> Estonian
+	xhtml = regex.sub(r"Porto Rico", r"Puerto Rico", xhtml)				# Porto Rico -> Puerto Rico
+	xhtml = regex.sub(r"Mahomet", r"Muhammad", xhtml)				# Mahomet -> Muhammad
+	xhtml = regex.sub(r"M[ao]hommed", r"Muhammad", xhtml)		        	# Mahommed -> Muhammad
+	xhtml = regex.sub(r"Esthonian", r"Estonian", xhtml)				# Esthonian -> Estonian
 	xhtml = regex.sub(r"\b([Ss])anscrit\b", r"\1anskrit", xhtml)			# Sanscrit -> Sanskrit
 	xhtml = regex.sub(r"Francois", r"François", xhtml)				# Francois -> François
 	xhtml = regex.sub(r"Hayti(\b|an\b)", r"Haiti\1", xhtml)				# Hayti -> Haiti
@@ -439,23 +439,23 @@ def modernize_spelling(xhtml: str) -> str:
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
-	xhtml = xhtml.replace("Cæsar", "Caesar")
-	xhtml = xhtml.replace("Crœsus", "Croesus")
-	xhtml = xhtml.replace("\bæon\b", "aeon")
-	xhtml = xhtml.replace("\bÆon\b", "Aeon")
-	xhtml = xhtml.replace("Æneas", "Aeneas")
-	xhtml = xhtml.replace("Æneid", "Aeneid")
-	xhtml = xhtml.replace("Æschylus", "Aeschylus")
-	xhtml = xhtml.replace("æsthet", "aesthet") # aesthetic, aesthete, etc.
-	xhtml = xhtml.replace("Æsthet", "Aesthet") # Aesthetic, Aesthete, etc.
+	xhtml = xhtml.replace("Cæsar", r"Caesar")
+	xhtml = xhtml.replace("Crœsus", r"Croesus")
+	xhtml = xhtml.replace("\bæon\b", r"aeon")
+	xhtml = xhtml.replace("\bÆon\b", r"Aeon")
+	xhtml = xhtml.replace("Æneas", r"Aeneas")
+	xhtml = xhtml.replace("Æneid", r"Aeneid")
+	xhtml = xhtml.replace("Æschylus", r"Aeschylus")
+	xhtml = xhtml.replace("æsthet", r"aesthet") # aesthetic, aesthete, etc.
+	xhtml = xhtml.replace("Æsthet", r"Aesthet") # Aesthetic, Aesthete, etc.
 	xhtml = regex.sub(r"\b([Hh])yæna", r"\1yena", xhtml)
 	xhtml = regex.sub(r"\b([Ll])arvæ", r"\1arvae", xhtml)
-	xhtml = xhtml.replace("Œdip", "Oedip") # Oedipus, Oedipal
+	xhtml = xhtml.replace("Œdip", r"Oedip") # Oedipus, Oedipal
 	xhtml = regex.sub(r"\b([Pp])æan", r"\1aean", xhtml)
 	xhtml = regex.sub(r"\b([Vv])ertebræ", r"\1ertebrae", xhtml)
 
 	# Remove spaces before contractions like `n’t` e.g. `is n’t` -> `isn’t`
-	xhtml = regex.sub(r" n’t\b", "n’t", xhtml)
+	xhtml = regex.sub(r" n’t\b", r"n’t", xhtml)
 
 	# Remove spaces before contractions like `it 'll`
 	xhtml = regex.sub(r"([\p{Letter}])\s[‘’]ll\b", r"\1’ll", xhtml)
