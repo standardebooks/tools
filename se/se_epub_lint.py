@@ -131,7 +131,7 @@ METADATA
 "m-023", f"[xml]<dc:identifier>[/] does not match expected: [text]{self.generated_identifier}[/]."
 "m-024", "[xml]<meta property=\"se:name.person.full-name\">[/] property identical to regular name. If the two are identical the full name [xml]<meta>[/] element must be removed."
 "m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon."
-"m-026", f"Illegal [url]https://en.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs."
+"m-026", f"Illegal [url]https://*.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs."
 "m-027", f"[val]se:short-story[/] semantic inflection found, but no [val]se:subject[/] with the value of [text]Shorts[/]."
 "m-028", "Images found in ebook, but no [attr]schema:accessMode[/] property set to [val]visual[/] in metadata."
 "m-029", "Images found in ebook, but no [attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata."
@@ -148,6 +148,7 @@ METADATA
 "m-040", "Images found in ebook, but no [attr]role[/] property set to [val]wat[/] in metadata for the writer of the alt text."
 "m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
 "m-042", "[xml]<manifest>[/] element does not match expected structure."
+"m-043", f"Non-English Wikipedia URL."
 "m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC."
 "m-046", "Missing or empty [xml]<reason>[/] element."
 "m-047", "Ignoring [path]*[/] is too general. Target specific files if possible."
@@ -177,7 +178,6 @@ METADATA
 "m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/]."
 "m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/]."
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"m-043", f"The number of elements in the spine ({len(toc_files)}) does not match the number of elements in the ToC and landmarks ({len(spine_entries)})."
 "m-044", f"The spine order does not match the order of the ToC. Expected [text]{node.get_attr('idref')}[/], found [text]{toc_files[index]}[/]."
 
 SEMANTICS & CONTENT
@@ -787,6 +787,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 	if nodes:
 		messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [node.to_string() for node in nodes]))
 
+	# Check for non-English Wikipedia URLs
+	nodes = self.metadata_dom.xpath("/package/metadata/*[re:test(., 'https://(?!en)[a-z]{2,}\\.wikipedia\\.org')]")
+	if nodes:
+		messages.append(LintMessage("m-043", "Non-English Wikipedia URL.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+
 	# Check the long description for some errors
 	try:
 		# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
@@ -892,9 +897,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 		double_spaced_files.append(self.metadata_file_path)
 
 	# Check for illegal Wikipedia URLs
-	nodes = self.metadata_dom.xpath("/package/metadata/*[contains(., 'en.m.wikipedia.org') or @*[contains(., 'en.m.wikipedia.org')]]")
+	nodes = self.metadata_dom.xpath("/package/metadata/*[contains(., '.m.wikipedia.org') or @*[contains(., '.m.wikipedia.org')]]")
 	if nodes:
-		messages.append(LintMessage("m-026", "Illegal [url]https://en.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-026", "Illegal [url]https://*.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 	# We can't use xpath's built-in regex because it doesn't support Unicode classes
@@ -1329,9 +1334,14 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 				if is_colophon:
 					# Check for illegal Wikipedia URLs
-					nodes = dom.xpath("/html/body//a[contains(@href, 'en.m.wikipedia.org')]")
+					nodes = dom.xpath("/html/body//a[contains(@href, '.m.wikipedia.org')]")
 					if nodes:
-						messages.append(LintMessage("m-026", "Illegal [url]https://en.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+						messages.append(LintMessage("m-026", "Illegal [url]https://*.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+					# Check for non-English Wikipedia URLs
+					nodes = dom.xpath("/html/body//a[re:test(@href, 'https://(?!en)[a-z]{2,}\\.wikipedia\\.org')]")
+					if nodes:
+						messages.append(LintMessage("m-043", "Non-English Wikipedia URL.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 					# Check for wrong grammar filled in from template
 					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
@@ -1665,6 +1675,14 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				typos = dom.xpath(f"re:match(//*, '“\\s*‘[^“]+?”', 'g')/text()[not(re:test(., '’[\\s\\?\\!;<2060{se.WORD_JOINER}0-9]'))]")
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: Left single quote without matching right single quote. Note that right single quotes are used for abbreviations, and that commas and periods must go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+				# Try to find top-level lsquo; for example, <p>“Bah!” he said to the ‘minister.’</p>
+				# We can't do this on xpath because we can't iterate over the output of re:replace().
+				temp_xhtml = regex.sub(r"“[^“]+?”", "", file_contents) # Remove all regular quotes
+				temp_xhtml = regex.sub(r"<p>.*“.+?</p>", "", temp_xhtml) # Remove all spans of ldquo that are likely to spill to the next <p>
+				typos = regex.findall(r"‘[a-z]{1,10}", temp_xhtml) # Match remaining lsquo plus a little extra to help find them
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: [text]‘[/] not within [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for single quotes when there should be double quotes in an interjection in dialog
 				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '“[^”]+?’⁠—[^”]+?—“')]")]
