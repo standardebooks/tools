@@ -323,7 +323,6 @@ TYPOGRAPHY
 "t-040", "Subtitle with illegal ending period."
 "t-041", "Illegal space before punctuation."
 "t-042", "Possible typo."
-"t-043", "Dialog tag missing punctuation."
 "t-044", "Comma required after leading [text]Or[/] in subtitles."
 "t-045", "Element has [val]z3998:persona[/] semantic and is also set in italics."
 "t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead."
@@ -350,6 +349,9 @@ TYPOGRAPHY
 "t-067", "Plural [val]z3998:grapheme[/], [val]z3998:phoneme[/], or [val]z3998:morpheme[/] formed without apostrophe ([text]’[/])."
 "t-068", "Citation not offset with em dash."
 "t-069", "[xhtml]<cite>[/] in [xhtml]<header>[/] starting with an em dash."
+UNUSED
+vvvvvvvvvvvvvvvvvvvvvvvv
+"t-043", "Dialog tag missing punctuation."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1794,6 +1796,12 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: Lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
+				# Check for missing punctuation in continued quotations
+				# ” said Bob “
+				nodes = dom.xpath("/html/body//p[re:test(., '”\\s(?:said|[A-Za-z]{2,}ed)\\s[A-Za-z]+?(?<!\\bthe)(?<!\\bto)(?<!\\bwith)(?<!\\bfrom)(?<!\\ba\\b)(?<!\\bis)\\s“') or re:test(., '[^\\.]”\\s(\\bhe\\b|\\bshe\\b|I|[A-Z][a-z]+?)\\s(?:said|[A-Za-z]{2,}ed)\\s“') or re:test(., ',” (?:said|[A-Za-z]{2,}ed) [A-Za-z]+? [A-Za-z]+?ly “')]")
+				if nodes:
+					messages.append(LintMessage("t-042", "Possible typo: Dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
 				# Check for body element without child section or article. Ignore the ToC because it has a unique structure
 				nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and re:test(@epub:type, '\\b(toc|loi)\\b'))])]")
 				if nodes:
@@ -1947,12 +1955,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:stage-direction') and name() !='i' and name() !='abbr' and name() !='p']")
 				if nodes:
 					messages.append(LintMessage("s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/], [xhtml]<abbr>[/], and [xhtml]<p>[/] elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for missing punctuation in continued quotations
-				# ” said Bob “
-				nodes = dom.xpath("/html/body//p[re:test(., '”\\s(?:said|[A-Za-z]{2,}ed)\\s[A-Za-z]+?(?<!\\bthe)(?<!\\bto)(?<!\\bwith)(?<!\\bfrom)(?<!\\ba\\b)(?<!\\bis)\\s“') or re:test(., '[^\\.]”\\s(\\bhe\\b|\\bshe\\b|I|[A-Z][a-z]+?)\\s(?:said|[A-Za-z]{2,}ed)\\s“') or re:test(., ',” (?:said|[A-Za-z]{2,}ed) [A-Za-z]+? [A-Za-z]+?ly “')]")
-				if nodes:
-					messages.append(LintMessage("t-043", "Dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for <h#> elements that are higher or lower than their expected level based on how deep they are in <section>s
 				# or <article>s. Exclude <nav> in the ToC.
