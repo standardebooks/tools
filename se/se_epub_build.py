@@ -586,6 +586,9 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					# Replace `vw` or `vh` units with percent, a reasonable approximation
 					processed_css = regex.sub(r"([0-9\.]+\s*)v(w|h);", r"\1%;", processed_css)
 
+					# We converted svgs to pngs, so replace references
+					processed_css = regex.sub(r'(url\(".*\.)(svg)("\))', r"\1png\3", processed_css)
+
 					if processed_css != css:
 						file.seek(0)
 						file.write(processed_css)
