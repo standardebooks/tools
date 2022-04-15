@@ -24,7 +24,6 @@ t-057 [Manual Review] chapter-1.xhtml `<p>` starting with lowercase letter.
 Hint: `<p>` that continues text after a `<blockquote>` requires the `continued` 
 class; and use `<br/>` to split one clause over many lines.
         <p>test</p>
-m-055 [Error] content.opf `dc:description` does not end with a period.
 x-018 [Error] content.opf Unused `id` attribute.
         note-3
 m-063 [Error] cover.svg Cover image has not been built.
