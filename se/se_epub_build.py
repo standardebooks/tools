@@ -587,7 +587,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					processed_css = regex.sub(r"([0-9\.]+\s*)v(w|h);", r"\1%;", processed_css)
 
 					# We converted svgs to pngs, so replace references
-					processed_css = regex.sub(r'(url\(".*\.)(svg)("\))', r"\1png\3", processed_css)
+					processed_css = regex.sub(r"""url\("(.*?)\.svg"\)""", r"""url("\1.png")""", processed_css)
 
 					if processed_css != css:
 						file.seek(0)
