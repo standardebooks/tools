@@ -508,6 +508,24 @@ class SeEpub:
 
 			file_css = regex.sub(r"\s*@(charset|namespace).+?;\s*", "\n", file_css).strip()
 
+			# Convert background-image URLs (from local.css only) to base64
+			if filename == "local.css":
+				for img in regex.finditer(pattern=r"url\(\"(.+?\.(?:svg|png|jpg))\"\)", string=file_css):
+					img_file = img.captures(1)[0].replace("../", "")
+
+					with open(self.content_path / img_file, "rb") as binary_file:
+						image_contents_base64 = base64.b64encode(binary_file.read()).decode()
+
+					if img_file.endswith(".svg"):
+						replacement = f"url('data:image/svg+xml;base64,{image_contents_base64}')"
+					elif img_file.endswith(".jpg"):
+						replacement = f"url('data:image/jpg;base64,{image_contents_base64}')"
+					elif img_file.endswith(".png"):
+						replacement = f"url('data:image/png;base64,{image_contents_base64}')"
+					else:
+						continue
+					file_css = file_css.replace(img.group(0), replacement)
+
 			css = css + f"\n\n\n/* {filepath.name} */\n" + file_css
 
 		css = css.strip()
