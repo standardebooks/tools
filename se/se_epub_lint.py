@@ -149,6 +149,7 @@ METADATA
 "m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
 "m-042", "[xml]<manifest>[/] element does not match expected structure."
 "m-043", f"Non-English Wikipedia URL."
+"m-044", f"Possessive [text]’[/] or [text]’s[/] outside of [xhtml]<a>[/] element in long description."
 "m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC."
 "m-046", "Missing or empty [xml]<reason>[/] element."
 "m-047", "Ignoring [path]*[/] is too general. Target specific files if possible."
@@ -177,8 +178,6 @@ METADATA
 "m-070", "Glossary entries not present in the text:"
 "m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/]."
 "m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/]."
-UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"m-044", f"The spine order does not match the order of the ToC. Expected [text]{node.get_attr('idref')}[/], found [text]{toc_files[index]}[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -842,6 +841,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				etree.parse(io.StringIO(f"<?xml version=\"1.0\"?><html xmlns=\"http://www.w3.org/1999/xhtml\">{long_description}</html>"))
 			except lxml.etree.XMLSyntaxError as ex:
 				messages.append(LintMessage("m-015", f"Metadata long description is not valid XHTML. LXML says: {ex}", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+		# Check for apostrophes outside links in long description
+		matches = regex.findall(r"</a>’s", long_description) + regex.findall(r"s</a>’", long_description)
+		if matches:
+			messages.append(LintMessage("m-044", "Possessive [text]’[/] or [text]’s[/] outside of [xhtml]<a>[/] element in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
 		# Check for HTML entities in long-description, but allow &amp;amp;
 		matches = regex.findall(r"&[a-z0-9]+?;", long_description.replace("&amp;", ""))
