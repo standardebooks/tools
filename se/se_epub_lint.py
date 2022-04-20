@@ -315,7 +315,6 @@ TYPOGRAPHY
 "t-033", "Space after dash."
 "t-034", "[xhtml]<cite>[/] element preceded by em-dash. Hint: em-dashes go within [xhtml]<cite>[/] elements."
 "t-035", "[xhtml]<cite>[/] element not preceded by space."
-"t-036", "[text]”[/] missing matching [text]“[/]."
 "t-037", "[text]”[/] preceded by space."
 "t-038", "[text]“[/] before closing [xhtml]</p>[/]."
 "t-039", "Initialism followed by [text]’s[/]. Hint: Plurals of initialisms are not followed by [text]’[/]."
@@ -350,6 +349,9 @@ TYPOGRAPHY
 "t-068", "Citation not offset with em dash."
 "t-069", "[xhtml]<cite>[/] in epigraph starting with an em dash."
 "t-070", "[xhtml]<cite>[/] in epigraph ending in a period."
+UNUSED
+vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+"t-036", "[text]”[/] missing matching [text]“[/]."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -1767,7 +1769,19 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("t-042", "Possible typo: [text]‘[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for closing rdquo without opening ldquo. We ignore blockquotes because they usually have unique quote formatting.
-				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '^[^“]+”') and not(./preceding-sibling::*[1][name() = 'blockquote']) and not(./ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]) and not(./ancestor::blockquote)]")]
+				# Remove tds in case rdquo means "ditto mark"
+				typos = regex.findall(r"”[^“‘]+?”", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents), flags=regex.DOTALL)
+
+				# We create a filter to try to exclude nested quotations
+				# Remove tags in case they're enclosing punctuation we want to match against at the end of a sentence.
+				typos = [match for match in typos if not regex.search(r"(?:[\.!\?;…—]|”\s)’\s", se.formatting.remove_tags(match))]
+
+				# Try some additional matches before adding the lint message
+				# Search for <p> tags that have an ending closing quote but no opening quote; but exclude <p>s that are preceded by a <blockquote>
+				# or that have a <blockquote> ancestor, because that may indicate that the opening quote is elsewhere in the quotation.
+				for node in dom.xpath("//p[re:test(., '^[^“]+”') and not(./preceding-sibling::*[1][name() = 'blockquote']) and not(./ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]) and not(./ancestor::blockquote)]"):
+					typos.append(node.to_string()[-20:])
+
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: [text]”[/] without opening [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
@@ -2334,22 +2348,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				nodes = dom.xpath("/html/body//p[re:test(., '[^’]\\s”')]")
 				if nodes:
 					messages.append(LintMessage("t-037", "[text]”[/] preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Remove tds in case rdquo means "ditto mark"
-				matches = regex.findall(r"”[^“‘]+?”", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents), flags=regex.DOTALL)
-				# We create a filter to try to exclude nested quotations
-				# Remove tags in case they're enclosing punctuation we want to match against at the end of a sentence.
-				matches = [match for match in matches if not regex.search(r"([\.!\?;…—]|”\s)’\s", se.formatting.remove_tags(match))]
-
-				# Try some additional matches before adding the lint message
-				# Search for <p> tags that have an ending closing quote but no opening quote; but exclude <p>s that are preceded by a <blockquote>
-				# or that have a <blockquote> ancestor, because that may indicate that the opening quote is elsewhere in the quotation.
-				nodes = dom.xpath("/html/body//p[not(preceding-sibling::*[1][name()='blockquote']) and not(ancestor::blockquote) and re:test(., '^[^“]+?”$')]")
-				for node in nodes:
-					matches.append(node.to_string()[-20:])
-
-				if matches:
-					messages.append(LintMessage("t-036", "[text]”[/] missing matching [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check if a subtitle ends in a text node with a terminal period; or if it ends in an <i> node containing a terminal period.
 				nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6]/*[contains(@epub:type, 'subtitle')][(./text())[last()][re:test(., '\\.$')] or (./i)[last()][re:test(., '\\.$')]]")
