@@ -1670,23 +1670,56 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: paragraph missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-				# Check for commas or periods following exclamation or question marks
-				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[!?][\\.,][^”’]')]")]
-				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: question mark or exclamation mark followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, typos))
+				# Check for commas or periods following exclamation or question marks. Exclude the colophon because we may have painting names with punctuation
+				if not is_colophon:
+					typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[!?][\\.,][^”’]')]")]
+					if typos:
+						messages.append(LintMessage("t-042", "Possible typo: question mark or exclamation mark followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for opening lsquo in quote that doesn't appear to have a matching rsquo. Rsquos must be followed by a space, punctuation (except period/comma), word joiner and thus em dash, or a number for an endnote.
 				typos = dom.xpath(f"re:match(//*, '“\\s*‘[^“]+?”', 'g')/text()[not(re:test(., '’[\\s\\?\\!;<2060{se.WORD_JOINER}0-9]'))]")
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: Left single quote without matching right single quote. Note that right single quotes are used for abbreviations, and that commas and periods must go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("t-042", "Possible typo: [text]‘[/] without matching [text]’[/]. Hints: [text]’[/] are used for abbreviations;  commas and periods must go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Try to find top-level lsquo; for example, <p>“Bah!” he said to the ‘minister.’</p>
 				# We can't do this on xpath because we can't iterate over the output of re:replace().
-				temp_xhtml = regex.sub(r"“[^“]+?”", "", file_contents) # Remove all regular quotes
-				temp_xhtml = regex.sub(r"<p>.*“.+?</p>", "", temp_xhtml) # Remove all spans of ldquo that are likely to spill to the next <p>
-				typos = regex.findall(r"‘[a-z]{1,10}", temp_xhtml) # Match remaining lsquo plus a little extra to help find them
+				# A fully-featured solution would parse quotes to find balanced pairs. This quick-n-dirty
+				# solution takes the raw XHTML string, strips any seemingly-valid balanced pairs using regex,
+				# then searches for unmatched `‘`. If found, it returns the dom node of the match; we can't return
+				# the actual string match because we stripped surrounding text.
+
+				# Start by merging all <p> into single lines, including poetry, but exclude blockquotes as they have special quoting rules
+				temp_xhtml = ""
+				dom_copy = deepcopy(dom)
+				node_number = 0
+				# Add IDs to the dom so we can find the paragraphs after we run our regex
+				# Exclude paragraphs in blockquotes, which may have special quoting rules, and "continued" paragraphs, which may be continued dialog without an “
+				for node in dom_copy.xpath("/html/body//p[not(ancestor::blockquote) and not(contains(@class, 'continued'))]"):
+					node.set_attr("id", "lint-" + str(node_number))
+					temp_xhtml = temp_xhtml + f"<p id=\"lint-{node_number}\">" + regex.sub(r"[\s\n]+", " ", node.inner_text(), flags=regex.DOTALL) + "\n"
+					node_number = node_number + 1
+
+				replacement_count = 1
+				while replacement_count > 0:
+					# Remove all regular quotes. Run this in a loop because we may need to remove triple-nested quotes.
+					(temp_xhtml, replacement_count) = regex.subn(r"“[^“]+?”", " ", temp_xhtml) # Remove all regular quotes
+
+				# Remove contractions to reduce rsquo for next regex
+				temp_xhtml = regex.sub(r"[\p{Letter}]’[\p{Letter}]", " ", temp_xhtml, flags=regex.MULTILINE)
+
+				# Remove all runs of ldquo that are likely to spill to the next <p>
+				replacement_count = 1
+				while replacement_count > 0:
+					(temp_xhtml, replacement_count) = regex.subn(r"“[^“”]+?$", " ", temp_xhtml, flags=regex.MULTILINE)
+
+				# Match problem `‘` using regex, and if found, get the actual node text from the dom to return.
+				typos = []
+				for match in regex.findall(r"""<p id="lint-([0-9]+?)">.*‘[\p{Letter}\s]""", temp_xhtml):
+					for node in dom_copy.xpath(f"/html/body//p[@id='lint-{match}' and re:test(., '‘[A-Za-z\\s]')]"):
+						typos.append(node.inner_text())
+
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: [text]‘[/] not within [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("t-042", "Possible typo: [text]‘[/] not within [text]“[/]. Hints: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for single quotes when there should be double quotes in an interjection in dialog
 				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '“[^”]+?’⁠—[^”]+?—“')]")]
