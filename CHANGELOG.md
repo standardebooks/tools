@@ -1,3 +1,75 @@
+# 2.3.7
+
+## General
+
+- Update templates files to follow standards in the SEMoS
+
+- Add .DS_Store to .gitignore
+
+- Update templates to harmonize license information
+
+## se build
+
+- Replace ℅ with c/o in compatible epubs
+
+- Replace image URL references in local.css with built PNGs. Thanks to ConcaveTrillion
+
+## se find-unusual-characters
+
+- Remove some characters from the set. Thanks to Robin Whittleton
+
+## se lint
+
+- Add check for required `wat` role. Thanks to Robin Whittleton
+
+- Improve m-016
+
+- Improve t-042
+
+- Ad ds-098, `<header>` with only one child
+
+- Don't emit t-018 if the last child node of the stage direction is an abbreviation
+
+- Remove `Romance` from allowed genres
+
+- Improve s-026
+
+- Add t-069, `<cite>` in epigraph starting with em dash
+
+- Add m-043, non-English Wikipedia URL
+
+- Merge t-043 and t-036 into t-042
+
+- Add m-044, possessive `'s` inside link in long descriptoin
+
+- Add t-070, `<cite>` in epigraph ending in a period
+
+- Add t-043, common loan word set in italics
+
+- Add s-099, endnote missing semantic
+
+## se modernize-spelling
+
+- Various additions
+
+- Fix some broken regexes
+
+## se recompose-epub
+
+- Convert background images to inline base64 encoding. Thanks to ConcaveTrillion
+
+## se renumber-endnotes
+
+- Expand verbose report. Thanks to David Grigg.
+
+## se typogrify
+
+- Fix broken regex for replacing comma followed by em dash
+
+- c/o -> ℅
+
+- Improve lsquo match for `'tain't`
+
 # 2.3.6
 
 ## se build
