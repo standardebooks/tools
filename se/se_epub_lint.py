@@ -278,6 +278,7 @@ SEMANTICS & CONTENT
 "s-096", "[xhtml]h1[/] element in half title page missing the [val]fulltitle[/] semantic."
 "s-097", "[xhtml]a[/] element without [attr]href[/] attribute."
 "s-098", "[xhtml]<header>[/] element with only one child."
+"s-099", "List item in endnotes missing [xhtml]endnote[/] semantic."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -306,7 +307,7 @@ TYPOGRAPHY
 "t-024", "When italicizing language in dialog, italics go inside quotation marks."
 "t-025", "Non-typogrified [text]'[/], [text]\"[/] (as [xhtml]&quot;[/]), or [text]--[/] in image [attr]alt[/] attribute."
 "t-026", "[attr]alt[/] attribute does not appear to end with punctuation. [attr]alt[/] attributes must be composed of complete sentences ending in appropriate punctuation."
-"t-027", "Endnote referrer link not preceded by exactly one space."
+"t-027", "Endnote backlink not preceded by exactly one space."
 "t-028", "Possible mis-curled quotation mark."
 "t-029", "Period followed by lowercase letter. Hint: Abbreviations require an [xhtml]<abbr>[/] element."
 "t-030", "Initialism with spaces or without periods."
@@ -2798,6 +2799,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					if nodes:
 						messages.append(LintMessage("s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
+					# Did we forget the endnote semantic on li elements?
+					nodes = dom.xpath("/html/body/section/ol/li[not(re:test(@epub:type, '\\bendnote\\b'))]")
+					if nodes:
+						messages.append(LintMessage("s-099", "List item in endnotes missing [xhtml]endnote[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
 					# Do we have to replace Ibid.? Only match Ibid. if the endnote does not appear to cite any names.
 					nodes = dom.xpath("/html/body//li[re:test(@epub:type, '\\bendnote\\b')]//abbr[re:test(., '\\b[Ii]bid\\b') and not(ancestor::li[1]//*[contains(@epub:type, 'se:name')])]")
 					if nodes:
@@ -2806,7 +2812,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					# Match backlink elements whose preceding node doesn't end with ' ', and is also not all whitespace
 					nodes = dom.xpath("/html/body//a[@epub:type='backlink'][(preceding-sibling::node()[1])[not(re:test(., ' $')) and not(normalize-space(.)='')]]")
 					if nodes:
-						messages.append(LintMessage("t-027", "Endnote referrer link not preceded by exactly one space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+						messages.append(LintMessage("t-027", "Endnote backlink not preceded by exactly one space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 					# Check that endnotes have their backlink in the last <p> element child of the <li>. This also highlights backlinks that are totally missing.
 					nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')][./p[last()][not(a[contains(@epub:type, 'backlink')])] or not(./p[last()])]")
