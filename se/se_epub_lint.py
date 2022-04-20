@@ -347,10 +347,8 @@ TYPOGRAPHY
 "t-066", "Regnal ordinal preceded by [text]the[/]."
 "t-067", "Plural [val]z3998:grapheme[/], [val]z3998:phoneme[/], or [val]z3998:morpheme[/] formed without apostrophe ([text]’[/])."
 "t-068", "Citation not offset with em dash."
-"t-069", "[xhtml]<cite>[/] in [xhtml]<header>[/] starting with an em dash."
-UNUSED
-vvvvvvvvvvvvvvvvvvvvvvvv
-"t-043", "Dialog tag missing punctuation."
+"t-069", "[xhtml]<cite>[/] in epigraph starting with an em dash."
+"t-070", "[xhtml]<cite>[/] in epigraph ending in a period."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -2411,9 +2409,14 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("c-017", "Element with [val]z3998:postscript[/] semantic, but without [css]margin-top: 1em;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for <cite> in <header>s that start with a leading em dash
-				nodes = dom.xpath("/html/body//header//cite[re:test(., '^—')]")
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph')]//cite[re:test(., '^—')]")
 				if nodes:
-					messages.append(LintMessage("t-069", "[xhtml]<cite>[/] in [xhtml]<header>[/] starting with an em dash.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+					messages.append(LintMessage("t-069", "[xhtml]<cite>[/] in epigraph starting with an em dash.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for <cite> in <header>s that end with a period. Try to exclude <abbr>s that are last children
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph')]//cite[re:test(., '\\.$') and not( (./node()[last()])[./descendant-or-self::abbr]) ]")
+				if nodes:
+					messages.append(LintMessage("t-070", "[xhtml]<cite>[/] in epigraph ending in a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for persona <td>s that have child <p> elements
 				nodes = dom.xpath("/html/body//td[contains(@epub:type, 'z3998:persona') and ./p]")
