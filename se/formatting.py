@@ -578,9 +578,11 @@ def _format_xml_str(xml: str) -> etree.ElementTree:
 	An etree representing the pretty-printed XML.
 	"""
 
-	tree = etree.fromstring(str.encode(xml))
+	# huge_tree allows XML files of arbitrary size, like Ulysses S. Grant
+	custom_parser = etree.XMLParser(huge_tree=True)
+	tree = etree.fromstring(str.encode(xml), parser=custom_parser)
 	canonical_bytes = etree.tostring(tree, method="c14n")
-	tree = etree.fromstring(canonical_bytes)
+	tree = etree.fromstring(canonical_bytes, parser=custom_parser)
 	_indent(tree, space="\t")
 
 	# Remove white space around attribute values

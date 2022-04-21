@@ -66,7 +66,9 @@ class EasyXmlTree:
 			self.namespaces[match[0]] = match[1]
 
 		try:
-			self.etree = etree.fromstring(str.encode(xml_string))
+			# huge_tree allows XML files of arbitrary size, like Ulysses S. Grant
+			custom_parser = etree.XMLParser(huge_tree=True)
+			self.etree = etree.fromstring(str.encode(xml_string), parser=custom_parser)
 		except etree.XMLSyntaxError as ex:
 			raise se.InvalidXmlException(f"Couldn’t parse XML. Exception: {ex}") from ex
 

@@ -9,7 +9,6 @@ import datetime
 import os
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
-from sys import getsizeof
 
 import git
 from lxml import etree
@@ -634,12 +633,7 @@ class SeEpub:
 		output_xhtml = output_dom.to_string()
 
 		# All done, clean the output
-		# Very large files like Ulysses S. Grant's memoirs or Through the Looking Glass will crash lxml due to their size.
-		# The inlined SVGs get too big.
-		# So, if the byte size of the XHTML string is larger than an arbitrary size, don't pretty print the output.
-		# Pepys is about 20,000,000 bytes
-		if getsizeof(output_xhtml) < 100000000:
-			output_xhtml = se.formatting.format_xhtml(output_xhtml)
+		output_xhtml = se.formatting.format_xhtml(output_xhtml)
 
 		# Insert our CSS. We do this after `clean` because `clean` will escape > in the CSS
 		output_xhtml = regex.sub(r"<style/>", "<style><![CDATA[\n\t\t\t" + css + "\t\t]]></style>", output_xhtml)
