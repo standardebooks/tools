@@ -61,6 +61,7 @@ class TocItem:
 	epub_type = ""
 	division = BookDivision.NONE
 	place = Position.FRONT
+	has_headers = True
 
 	@property
 	def toc_link(self) -> str:
@@ -210,6 +211,7 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list) -> None:
 		landmark.epub_type = epub_type
 		landmark.file_link = textf
 		landmark.place = get_place(bodys[0])
+		landmark.has_headers = len(dom.xpath("//hgroup | //h1 | //h2 | //h3 | //h4 | //h5 | //h6")) > 0
 		if epub_type == "halftitlepage":
 			landmark.title = "Half Title"
 		elif epub_type == "titlepage":
@@ -384,7 +386,7 @@ def extract_strings(node: EasyXmlElement) -> str:
 	out_string = out_string.replace("\n", "")
 	return regex.sub(r"[\n\t]", "", out_string)
 
-def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, nest_under_halftitle: bool, single_file: bool) -> None:
+def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, single_file: bool, single_file_without_headers: bool) -> None:
 	"""
 	Find headings in current file and extract title data
 	into items added to toc_list.
@@ -393,7 +395,6 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, nest_under_ha
 	dom: an EasyXmlTree representation of the current file
 	textf: the path to the file
 	toc_list: the list of ToC items we are building
-	nest_under_halftitle: does this item need to be nested?
 	single_file: is there only a single content item in the production?
 
 	OUTPUTS:
@@ -414,10 +415,6 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, nest_under_ha
 
 	# special treatment where we can't find any header or hgroups
 	if not heads:  # May be a dedication or an epigraph, with no heading tag.
-		if single_file and nest_under_halftitle:
-			# There's a halftitle, but only this one content file with no subsections,
-			# so leave out of ToC because the Toc will link to the halftitle.
-			return
 		special_item = TocItem()
 		# Need to determine level depth.
 		# We don't have a heading, so get first content item
@@ -449,6 +446,14 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, nest_under_ha
 		# Exception: The titlepage always has is titled 'titlepage' in the ToC
 		if dom.xpath("//section[re:test(@epub:type, '\\btitlepage\\b')]"):
 			toc_item.title = "Titlepage"
+
+		# Exception: If there is only a single body item WITHOUT HEADERS (like Father Goriot or The Path to Rome),
+		# the half title page is listed as "Half-Titlepage" instead of the work title,
+		# so that we don't duplicate the work title in the ToC. We always include a link to the work body
+		# in the ToC because readers on the web version need to have access to the text starting point, since
+		# there are no back/forward nav buttons in XHTML files served on the web.
+		if single_file_without_headers and dom.xpath("//section[re:test(@epub:type, '\\bhalftitlepage\\b')]"):
+			toc_item.title = "Half-Titlepage"
 
 		is_toplevel = False
 		toc_list.append(toc_item)
@@ -687,7 +692,7 @@ def strip_notes(text: str) -> str:
 
 	return regex.sub(r"""<a[^>]*?epub:type="noteref"[^>]*?>.*?<\/a>""", "", text)
 
-def process_all_content(file_list: list) -> Tuple[list, list]:
+def process_all_content(self, file_list: list) -> Tuple[list, list]:
 	"""
 	Analyze the whole content of the project, build and return lists
 	if toc_items and landmarks.
@@ -707,8 +712,7 @@ def process_all_content(file_list: list) -> Tuple[list, list]:
 	# how many bodymatter items there are. So we do landmarks first.
 	for textf in file_list:
 		try:
-			with open(textf, encoding="utf-8") as file:
-				dom = se.easy_xml.EasyXmlTree(file.read())
+			dom = self.get_dom(textf)
 		except Exception as ex:
 			raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{textf}]{textf}[/][/]. Exception: {ex}") from ex
 
@@ -717,13 +721,18 @@ def process_all_content(file_list: list) -> Tuple[list, list]:
 	# Now we test to see if there is only one body item
 	body_items = [item for item in landmarks if item.place == Position.BODY]
 	single_file = (len(body_items) == 1)
+	single_file_without_headers = False
+
+	# If there's only one body item, does that item have a header?
+	if single_file:
+		single_file_without_headers = not body_items[0].has_headers
 
 	nest_under_halftitle = False
 
 	for textf in file_list:
 		with open(textf, "r", encoding="utf-8") as file:
 			dom = se.easy_xml.EasyXmlTree(file.read())
-		process_headings(dom, textf.name, toc_list, nest_under_halftitle, single_file)
+		process_headings(dom, textf.name, toc_list, single_file, single_file_without_headers)
 		if dom.xpath("/html/body//*[contains(@epub:type, 'halftitlepage')]"):
 			nest_under_halftitle = True
 
@@ -755,6 +764,6 @@ def generate_toc(self) -> str:
 
 	work_title = self.get_work_title()
 
-	landmarks, toc_list = process_all_content(self.spine_file_paths)
+	landmarks, toc_list = process_all_content(self, self.spine_file_paths)
 
 	return output_toc(toc_list, landmarks, self.toc_path, work_title)
