@@ -137,7 +137,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Oo])ker\b", r"\1cher", xhtml)				# oker -> ocher
 	xhtml = regex.sub(r"\b([Ww])ellnigh\b", r"\1ell-nigh", xhtml)			# wellnigh -> well-nigh
 	xhtml = regex.sub(r"\b([Tt]he|[Aa]nd|[Oo]r) what not(?! to)\b", r"\1 whatnot", xhtml)	# what not -> whatnot
-	xhtml = regex.sub(r"\b([Gg])ood[\-]?bye?\b", r"\1oodbye", xhtml)			# good-by -> goodbye
+	xhtml = regex.sub(r"\b([Gg])ood[\-]?bye?\b", r"\1oodbye", xhtml)		# good-by -> goodbye
 	xhtml = regex.sub(r"\b([Gg])ood\sbye\b", r"\1oodbye", xhtml)			# good bye -> goodbye (Note that we can't do `good by` -> `goodby` because one might do good by someone.
 	xhtml = regex.sub(r"\b([Gg])ood[\-\s]?bye?s\b", r"\1oodbyes", xhtml)		# good bys -> goodbyes
 	xhtml = regex.sub(r"\b([Hh])ind(u|oo)stanee", r"\1industani", xhtml)		# hindoostanee -> hindustani
@@ -152,8 +152,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bindorse", r"endorse", xhtml)				# indorse -> endorse
 	xhtml = regex.sub(r"\bIntrust", r"Entrust", xhtml)				# Intrust -> Entrust
 	xhtml = regex.sub(r"\bintrust", r"entrust", xhtml)				# intrust -> entrust
-	xhtml = regex.sub(r"\bPhantasies", r"Fantasies", xhtml)			# Phantasies -> Fantasies
-	xhtml = regex.sub(r"\bphantasies", r"fantasies", xhtml)			# phantasies -> fantasies
+	xhtml = regex.sub(r"\bPhantasies", r"Fantasies", xhtml)				# Phantasies -> Fantasies
+	xhtml = regex.sub(r"\bphantasies", r"fantasies", xhtml)				# phantasies -> fantasies
 	xhtml = regex.sub(r"\bPhantas(y|ie)", r"Fantasy", xhtml)			# Phantasie -> Fantasy
 	xhtml = regex.sub(r"\bphantas(y|ie)", r"fantasy", xhtml)			# phantasie -> fantasy
 	xhtml = regex.sub(r"\bPhantastic", r"Fantastic", xhtml)				# Phantastic -> Fantastic
@@ -198,7 +198,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\beclat\b", r"éclat", xhtml)				# eclat -> éclat
 	xhtml = regex.sub(r"\ba la\b", r"à la", xhtml)					# a la -> à la
 	xhtml = regex.sub(r"\ba propos\b", r"apropos", xhtml)				# a propos -> apropos
-	xhtml = regex.sub(r"\bper cent(s|ages?)?\b", r"percent\1", xhtml)			# per cent -> percent
+	xhtml = regex.sub(r"\bper cent(s|ages?)?\b", r"percent\1", xhtml)		# per cent -> percent
 	xhtml = regex.sub(r"\bpercent\.(\s+[\p{Lowercase_Letter}])", r"percent\1", xhtml)		# percent. followed by lowercase -> percent
 	xhtml = regex.sub(r"\bpercent\.[,;:\!\?]", r"percent,", xhtml)			# per cent. -> percent
 	xhtml = regex.sub(r"\b([Ee])ntree(s?)\b", r"\1ntrée\2", xhtml)			# entree -> entrée
@@ -253,7 +253,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])ate\b", r"\1at", xhtml)				# sate -> sat
 	xhtml = regex.sub(r"\b([Aa])ttache\b", r"\1ttaché", xhtml)			# attache -> attaché
 	xhtml = regex.sub(r"\b([Pp])orte[\- ]coch[eè]re\b", r"\1orte-cochère", xhtml)	# porte-cochere -> porte-cochère
-	xhtml = regex.sub(r"\b([Nn])[eé]glig[eé]e?(s?)\b", r"\1egligee\2", xhtml)		# négligée -> negligee
+	xhtml = regex.sub(r"\b([Nn])[eé]glig[eé]e?(s?)\b", r"\1egligee\2", xhtml)	# négligée -> negligee
 	xhtml = regex.sub(r"\b([Ss])hort cut(s?)\b", r"\1hortcut\2", xhtml)		# short cut -> shortcut
 	xhtml = regex.sub(r"\b([Ff])ocuss", r"\1ocus", xhtml)				# focuss -> focus
 	xhtml = regex.sub(r"\b([Mm])ise[ \-]en[ \-]sc[eè]ne", r"\1ise-en-scène", xhtml)	# mise en scene -> mise-en-scène
@@ -269,14 +269,14 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Pp])ere\b", r"\1ère", xhtml)				# pere -> père (e.g. père la chaise)
 	xhtml = regex.sub(r"\b([Tt])able(s?) d’hote\b", r"\1able\2 d’hôte", xhtml)	# table d'hote -> table d'hôte
 	xhtml = regex.sub(r"\b([Ee])au(x?)[ \-]de[ \-]vie\b", r"\1au\2-de-vie", xhtml)	# eau de vie -> eau-de-vie
-	xhtml = regex.sub(r"\b3d\b", r"3rd", xhtml)						# 3d -> 3rd (warning: check that we don't convert 3d in the "3 pence" sense!)
-	xhtml = regex.sub(r"\b2d\b", r"2nd", xhtml)						# 2d -> 2nd (warning: check that we don't convert 2d in the "2 pence" sense!)
+	xhtml = regex.sub(r"\b3d\b", r"3rd", xhtml)					# 3d -> 3rd (warning: check that we don't convert 3d in the "3 pence" sense!)
+	xhtml = regex.sub(r"\b2d\b", r"2nd", xhtml)					# 2d -> 2nd (warning: check that we don't convert 2d in the "2 pence" sense!)
 	xhtml = regex.sub(r"\b([Mm])ia[uo]w", r"\1eow", xhtml)				# miauw, miaow -> meow
 	xhtml = regex.sub(r"\b([Cc])aviare", r"\1aviar", xhtml)				# caviare -> caviar
 	xhtml = regex.sub(r"\b([Ss])ha’n’t", r"\1han’t", xhtml)				# sha'n't -> shan't (see https://english.stackexchange.com/questions/71414/apostrophes-in-contractions-shant-shant-or-shant)
 	xhtml = regex.sub(r"\b([Ss])[uû]ret[eé]", r"\1ûreté", xhtml)			# Surete -> Sûreté
 	xhtml = regex.sub(r"\b([Ss])eance", r"\1éance", xhtml)				# seance -> séance
-	xhtml = regex.sub(r"\b([Ff])in[\- ]de[\- ]siecle", r"\1in de siècle", xhtml)		# fin de siecle -> fin de siècle
+	xhtml = regex.sub(r"\b([Ff])in[\- ]de[\- ]siecle", r"\1in de siècle", xhtml)	# fin de siecle -> fin de siècle
 	xhtml = regex.sub(r"\bEmpale", r"Impale", xhtml)				# Empale -> Impale
 	xhtml = regex.sub(r"\bempale", r"impale", xhtml)				# empale -> impale
 	xhtml = regex.sub(r"\b([Tt])abu(s?)\b", r"\1aboo\2", xhtml)			# tabu -> taboo
@@ -352,7 +352,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])pung", r"\1pong", xhtml)				# spung(e|ing|y) -> sponge
 	xhtml = regex.sub(r"\b([Ww])oful", r"\1oeful", xhtml)				# woful -> woeful
 	xhtml = regex.sub(r"\b([Hh]e|[Ss]he|[Yy]ou|[Tt]hey)’ld", r"\1’d", xhtml)	# he'ld, she'ld, you'ld, they'ld -> he'd, she'd, you'd, they'd
-	xhtml = regex.sub(r"\b([Mm])ean time", r"\1eantime", xhtml)				# mean time -> meantime
+	xhtml = regex.sub(r"\b([Mm])ean time", r"\1eantime", xhtml)			# mean time -> meantime
 	xhtml = regex.sub(r"\b([Ch])huck[\- ]full\b", r"\1ock-full", xhtml)		# chuck-full -> chock-full
 	xhtml = regex.sub(r"\b([Pp])rythee\b", r"\1rithee", xhtml)			# prythee -> prithee
 	xhtml = regex.sub(r"\b([Hh])av’n’t", r"\1aven’t", xhtml)			# hav’n’t -> haven’t
@@ -385,13 +385,14 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"([Pp])ourtray", r"\1ortray", xhtml)				# pourtray -> portray
 	xhtml = regex.sub(r"([S])toopid", r"\1tupid", xhtml)				# stoopid -> stupid
 	xhtml = regex.sub(r"([S])uède", r"\1uede", xhtml)				# suède -> suede
-	xhtml = regex.sub(r"([Ff])or ever\b",r"\1orever", xhtml)				# for ever -> forever
+	xhtml = regex.sub(r"([Ff])or ever\b",r"\1orever", xhtml)			# for ever -> forever
 	xhtml = regex.sub(r"([Dd])ébris\b", r"\1ebris", xhtml)				# débris -> debris
+	xhtml = regex.sub(r"\b([Tt])ho['’]\b", r"\1hough", xhtml)			# tho' -> though
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
 	xhtml = regex.sub(r"Tolstoi", r"Tolstoy", xhtml)				# Tolstoi -> Tolstoy
-	xhtml = regex.sub(r"Dostoi?e(v|ff)sky", r"Dostoevsky", xhtml)				# Dostoievsky -> Dostoevsky
+	xhtml = regex.sub(r"Dostoi?e(v|ff)sky", r"Dostoevsky", xhtml)			# Dostoievsky -> Dostoevsky
 	xhtml = regex.sub(r"Buonaparte", r"Bonaparte", xhtml)				# Buonaparte -> Bonaparte
 	xhtml = regex.sub(r"Shake?spea?r([^ie])", r"Shakespeare\1", xhtml)		# Shakespear/Shakspeare -> Shakespeare
 	xhtml = regex.sub(r"Shake?spea?re", r"Shakespeare", xhtml)			# Shakespear/Shakspeare -> Shakespeare
