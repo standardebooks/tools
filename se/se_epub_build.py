@@ -632,6 +632,14 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					# for node in dom.xpath("/html/body//span[contains(@class, 'quote-align')]"):
 					# 	node.unwrap()
 
+					# Inserted koboSpans do not play nicely with our default poetry CSS, which target all spans.
+					# Mark up original verse spans with 'kobo-verse-span' to make the poetry CSS more specific.
+					for node in dom.xpath("/html/body//*[contains(@epub:type, 'z3998:poem') or contains(@epub:type, 'z3998:verse') or contains(@epub:type, 'z3998:song') or contains(@epub:type, 'z3998:hymn')]//p[not(text()[normalize-space() != ''])]/span"):
+						if node.get_attr("class"):
+							node.set_attr("class", node.get_attr("class") + " kobo-verse-span")
+						else:
+							node.set_attr("class", "kobo-verse-span")
+
 					# Change 'noteref' to 'endnote' so that popup endnotes work in Kobo. Kobo doesn't understand 'noteref', only 'endnote'.
 					for node in dom.xpath("/html/body//a[contains(@epub:type, 'noteref')]"):
 						node.set_attr("epub:type", node.get_attr("epub:type") + " endnote")
@@ -676,6 +684,21 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 					with open(file_path, "w", encoding="utf-8") as file:
 						file.write(xhtml)
+
+				if file_path.suffix == ".css":
+					with open(file_path, "r+", encoding="utf-8") as file:
+						css = file.read()
+						processed_css = css
+
+						# Instead of targeting all spans with poetry CSS, only target proper verse spans (not inserted koboSpans)
+						processed_css = regex.sub(r"""(\.epub-type-z3998-(poem|verse|song|hymn)(.*))span(?![[.])""", r"""\1span.kobo-verse-span""", processed_css)
+						# Indentation selectors need to be more specific as well to compensate
+						processed_css = regex.sub(r"""p span\.i\d+""", r"""\g<0>.kobo-verse-span""", processed_css)
+
+						if processed_css != css:
+							file.seek(0)
+							file.write(processed_css)
+							file.truncate()
 
 			# All done, clean the output
 			# Note that we don't clean .xhtml files, because the way kobo spans are added means that it will screw up spaces inbetween endnotes.
