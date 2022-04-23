@@ -15,7 +15,7 @@ def get_xhtml_language(xhtml: str) -> str:
 	Try to get the IETF lang tag for a complete XHTML document
 	"""
 
-	supported_languages = ["en-US", "en-GB", "en-AU", "en-CA"]
+	supported_languages = ["en-US", "en-GB", "en-AU", "en-CA", "en-IE"]
 
 	match = regex.search(r"<html[^>]+?xml:lang=\"([^\"]+)\"", xhtml)
 
@@ -476,8 +476,8 @@ def modernize_spelling(xhtml: str) -> str:
 	if language in ["en-US", "en-CA"]:
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)
 
-	# Australian spelling follows GB
-	if language in ["en-GB", "en-AU"]:
+	# Australian and Irish spelling follows GB
+	if language in ["en-GB", "en-AU", "en-IE"]:
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1osy", xhtml)
 
 	# US spelling is unique
