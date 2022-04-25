@@ -1749,6 +1749,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: punctuation not within [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
+				# Check for period before dialog tag; try to exclude abbrevations that close a quotation, like `“<abbr>Mr.</abbr>”`.
+				typos = [node.to_string() for node in dom.xpath("/html/body//p[(re:test(., '\\.”\\s[a-z\\s]*?(\\bsaid|[a-z]+ed)') or re:test(., '\\.”\\s(s?he|they?|and)\\b')) and not(.//abbr[following-sibling::node()[re:test(., '^”')]])]")]
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: Unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?", se.MESSAGE_TYPE_WARNING, filename, typos))
+
 				# Check for mis-curled &lsquo; or &lsquo; without matching &rsquo;
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[A-Za-z][^“’]+?”')]")]
 				if typos:
