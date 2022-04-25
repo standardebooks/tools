@@ -3050,7 +3050,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 	for heading in headings:
 		# Some compilations, like Songs of a Sourdough, have their title in the half title, so check against that before adding an error
-		if heading not in toc_headings and (heading[0], str(self.path / "src/epub/text/halftitlepage.xhtml")) not in toc_headings:
+		# Ignore the half title page, because its text may differ in collections with only one file, like Father Goriot or The Path to Rome
+		if heading not in toc_headings and Path(heading[1]).name != 'halftitlepage.xhtml' and (heading[0], str(self.path / "src/epub/text/halftitlepage.xhtml")) not in toc_headings:
 			messages.append(LintMessage("m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, Path(heading[1])))
 
 	for element in abbr_elements_requiring_css:
