@@ -1,3 +1,17 @@
+# 2.3.9
+
+## se build
+
+- Fix hyphenate for en-IE. Thanks to Weijia Cheng
+
+## se clean
+
+- Correctly escape quotes in XML output
+
+## se recompose-epub
+
+- Inline SVGs as utf8 strings instead of base64 to save space
+
 # 2.3.8
 
 ## General
