@@ -377,11 +377,11 @@ def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_
 		except Exception as ex:
 			raise se.InvalidLanguageException("No [attr]xml:lang[/] or [attr]lang[/] attribute on [xhtml]<html>[/] element; couldn’t guess file language.") from ex
 
-	language = language.replace("-", "_")
-
 	# Cope with known missing languages
-	if language in ["en_AU", "en_CA", "en_IE"] :
-		language = "en_GB"
+	if language in ["en-AU", "en-CA", "en-IE"] :
+		language = "en-GB"
+
+	language = language.replace("-", "_")
 
 	if language not in pyphen.LANGUAGES:
 		raise se.MissingDependencyException(f"Hyphenator for language [text]{language}[/] not available.\nInstalled hyphenators: {pyphen.LANGUAGES}.")
