@@ -1169,7 +1169,7 @@ def titlecase(text: str) -> str:
 	text = regex.sub(r"\b Th’ \b", " th’ ", text)
 
 	# Lowercase `o’`
-	text = regex.sub(r"\b O’ \b", " o’ ", text)
+	text = regex.sub(r" O’ ", " o’ ", text)
 
 	# Uppercase words that begin compound words, like `to-night` (which might appear in poetry)
 	text = regex.sub(r" ([\p{Lowercase_Letter}])([\p{Lowercase_Letter}]+\-)", lambda result: " " + result.group(1).upper() + result.group(2), text)
