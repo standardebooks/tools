@@ -368,7 +368,7 @@ def get_word_count(xhtml: str) -> int:
 def _replace_character_references(match_object) -> str:
 	"""Replace most XML character references with literal characters.
 
-	This function excludes &, >, and < (&amp;, &lt;, and &gt;), since
+	This function excludes ", ', &, >, and < (&amp;, &lt;, and &gt;), since
 	un-escaping them would create an invalid document.
 	"""
 
@@ -376,9 +376,9 @@ def _replace_character_references(match_object) -> str:
 
 	retval = entity
 
-	# Explicitly whitelist the three (nine) essential character references
+	# Explicitly whitelist the six (nine) essential character references
 	try:
-		if entity in ["&gt;", "&lt;", "&amp;", "&#62;", "&#60;", "&#38;", "&#x3e;", "&#x3c;", "&#x26;"]:
+		if entity in ["&gt;", "&lt;", "&amp;", "&quot;", "&apos;", "&#62;", "&#60;", "&#38;", "&#x3e;", "&#x3c;", "&#x26;"]:
 			retval = entity
 		# Convert base 16 references
 		elif entity.startswith("&#x"):
