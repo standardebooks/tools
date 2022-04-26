@@ -1,3 +1,25 @@
+# 2.3.8
+
+## General
+
+- Pass huge_tree option to LXML to allow for large files like Ulysses S. Grant to be recomposed and cleaned
+
+- Add Irish English to the list of supported spellings. Thanks to Robin Whittleton
+
+## se build
+
+- Fix Kobo poetry build compatibility. Thanks to Weijia Cheng
+
+## se build-toc
+
+- Include ToC entry for single-file books like Father Goriot and The Path to Rome
+
+## se lint
+
+- Improve t-042
+
+- Improve m-045
+
 # 2.3.7
 
 ## General
