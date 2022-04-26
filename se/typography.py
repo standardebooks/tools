@@ -380,7 +380,7 @@ def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_
 	language = language.replace("-", "_")
 
 	# Cope with known missing languages
-	if language in ["en_AU", "en_CA"] :
+	if language in ["en_AU", "en_CA", "en_IE"] :
 		language = "en_GB"
 
 	if language not in pyphen.LANGUAGES:
