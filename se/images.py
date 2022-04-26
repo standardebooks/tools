@@ -3,6 +3,7 @@
 Defines various functions useful for image processing tasks common to epubs.
 """
 
+import base64
 from pathlib import Path
 import tempfile
 import struct
@@ -16,6 +17,35 @@ from lxml import etree
 
 import se
 import se.formatting
+
+def get_data_url(image_path: Path) -> str:
+	"""
+	Return a data URL for the contents of a given image path.
+
+	INPUTS
+	image_path: A path to an image.
+
+	OUTPUTS
+	A string representing the data URL, in the format `data:image/TYPE;ENCODING,CONTENTS`
+	"""
+	data_url = ""
+
+	# SVGs can be inlined as utf8 data, which results in a much smaller file.
+	# Other images are converted to base64 first.
+	if image_path.suffix == ".svg":
+		with open(image_path, "r", encoding="utf-8") as file:
+			svg_contents = file.read().replace("\n", "")
+			data_url = f"data:image/svg+xml;utf8,{svg_contents}"
+	else:
+		with open(image_path, "rb") as binary_file:
+			mime_type = f"image/{image_path.suffix.replace('.', '')}"
+
+			if image_path.suffix == ".jpg":
+				mime_type = "image/jpeg"
+
+			data_url = f"data:{mime_type};base64,{base64.b64encode(binary_file.read()).decode()}"
+
+	return data_url
 
 def _color_to_alpha(image: Image, color=None) -> Image:
 	"""

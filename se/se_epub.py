@@ -464,18 +464,7 @@ class SeEpub:
 		# We even convert SVGs instead of inlining them, because CSS won't allow us to style inlined SVGs
 		# (for example if we want to apply max-width or filter: invert())
 		for img in section.xpath("//img[starts-with(@src, '../images/')]"):
-			src = img.get_attr("src").replace("../", "")
-			with open(self.content_path / src, "rb") as binary_file:
-				image_contents_base64 = base64.b64encode(binary_file.read()).decode()
-
-			if src.endswith(".svg"):
-				img.set_attr("src", f"data:image/svg+xml;base64,{image_contents_base64}")
-
-			if src.endswith(".jpg"):
-				img.set_attr("src", f"data:image/jpg;base64,{image_contents_base64}")
-
-			if src.endswith(".png"):
-				img.set_attr("src", f"data:image/png;base64,{image_contents_base64}")
+			img.set_attr("src", se.images.get_data_url(self.content_path / img.get_attr("src").replace("../", "")))
 
 	def recompose(self, output_xhtml5: bool, extra_css_file: Path = None) -> str:
 		"""
@@ -510,21 +499,8 @@ class SeEpub:
 			# Convert background-image URLs (from local.css only) to base64
 			if filename == "local.css":
 				for image in regex.finditer(pattern=r"""url\("(.+?\.(?:svg|png|jpg))"\)""", string=file_css):
-					image_path = image.captures(1)[0].replace("../", "")
-
-					with open(self.content_path / image_path, "rb") as binary_file:
-						image_contents_base64 = base64.b64encode(binary_file.read()).decode()
-
-					if image_path.endswith(".svg"):
-						replacement = f"""url("data:image/svg+xml;base64,{image_contents_base64}")"""
-					elif image_path.endswith(".jpg"):
-						replacement = f"""url("data:image/jpg;base64,{image_contents_base64}")"""
-					elif image_path.endswith(".png"):
-						replacement = f"""url("data:image/png;base64,{image_contents_base64}")"""
-					else:
-						continue
-
-					file_css = file_css.replace(image.group(0), replacement)
+					data_url = se.images.get_data_url(self.content_path / image.captures(1)[0].replace("../", "")).replace("\"", "\\\"")
+					file_css = file_css.replace(image.group(0), f"""url("{data_url}")""")
 
 			css = css + f"\n\n\n/* {filepath.name} */\n" + file_css
 
