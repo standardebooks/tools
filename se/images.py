@@ -7,6 +7,7 @@ import base64
 from pathlib import Path
 import tempfile
 import struct
+import urllib.parse
 
 from html import unescape
 from typing import List, Callable, Dict
@@ -33,9 +34,18 @@ def get_data_url(image_path: Path) -> str:
 	# SVGs can be inlined as utf8 data, which results in a much smaller file.
 	# Other images are converted to base64 first.
 	if image_path.suffix == ".svg":
-		with open(image_path, "r", encoding="utf-8") as file:
-			svg_contents = file.read().replace("\n", "")
-			data_url = f"data:image/svg+xml;utf8,{svg_contents}"
+		with open(image_path, "r") as file:
+			svg_contents = file.read()
+
+			# Try to find the encoding of the XML file, default to utf-8
+			encoding="utf-8"
+			matches = regex.search(r"""^<\?xml[^>]*?encoding="([^"]+?)"[^>]*?\?>""", svg_contents)
+			if matches and matches[1]:
+				encoding = urllib.parse.quote(matches[1])
+
+			svg_uri = urllib.parse.quote(svg_contents.replace("\n", ""), safe="")
+
+			data_url = f"data:image/svg+xml;encoding={encoding},{svg_uri}"
 	else:
 		with open(image_path, "rb") as binary_file:
 			mime_type = f"image/{image_path.suffix.replace('.', '')}"
