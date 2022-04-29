@@ -1,3 +1,17 @@
+# 2.3.10
+
+## se modernize-spelling
+
+- Various additions
+
+## se recompose-epub
+
+- Allow (hopefully) arbitrary SVG encodings when converting to data-URL, and correctly escape reserved characters in data-URL
+
+## se titlecase
+
+- Fix broken regex
+
 # 2.3.9
 
 ## se build
