@@ -10,7 +10,7 @@ import struct
 import urllib.parse
 
 from html import unescape
-from typing import List, Callable, Dict
+from typing import List, Callable, Dict, Union
 import regex
 from PIL import Image, ImageMath, PngImagePlugin, UnidentifiedImageError
 import importlib_resources
@@ -144,15 +144,18 @@ def _color_to_alpha(image: Image, color=None) -> Image:
 
 	return new_image
 
-def has_transparency(filename: Path) -> bool:
+def has_transparency(file: Union[Path, Image.Image]) -> bool:
 	"""
 	Return True if the given image file has transparency
 	"""
 
-	try:
-		image = Image.open(filename)
-	except UnidentifiedImageError as ex:
-		raise se.InvalidFileException(f"Couldn’t identify image type of [path][link=file://{filename.resolve()}]{filename}[/].") from ex
+	image = file
+
+	if isinstance(image, Path):
+		try:
+			image = Image.open(file)
+		except UnidentifiedImageError as ex:
+			raise se.InvalidFileException(f"Couldn’t identify image type of [path][link=file://{file.resolve()}]{file}[/].") from ex
 
 	if image.mode == "P":
 		transparent = image.info.get("transparency", -1)

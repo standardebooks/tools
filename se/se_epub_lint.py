@@ -103,7 +103,10 @@ FILESYSTEM
 "f-013", "Glossary search key map must be named [path]glossary-search-key-map.xml[/]."
 "f-014", f"File does not match [path][link=file://{self.path / 'src/epub/css/se.css'}]{core_css_file_path}[/][/]."
 "f-015", "Filename doesn’t match [attr]id[/] attribute of primary [xhtml]<section>[/] or [xhtml]<article>[/]. Hint: [attr]id[/] attributes don’t include the file extension."
-"f-016", "[path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] more than 1.5MB in size."
+"f-016", "Image more than 1.5MB in size."
+"f-017", f"[path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}."
+"f-018", "Image greater than 4,000,000 pixels square in dimension."
+"f-019", "[path].png[/] file without transparency. Hint: If an image doesn’t have transparency, it should be saved as a [path].jpg[/]."
 
 METADATA
 "m-001", "gutenberg.org URL missing leading [text]www.[/]."
@@ -230,7 +233,6 @@ SEMANTICS & CONTENT
 "s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something."
 "s-049", "[xhtml]<header>[/] element whose only child is an [xhtml]<h#>[/] element."
 "s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element."
-"s-051", f"Wrong height or width. [path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}."
 "s-052", "[xhtml]<abbr>[/] element with illegal [attr]title[/] attribute."
 "s-053", "Colophon line not preceded by [xhtml]<br/>[/]."
 "s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/]."
@@ -279,6 +281,8 @@ SEMANTICS & CONTENT
 "s-097", "[xhtml]a[/] element without [attr]href[/] attribute."
 "s-098", "[xhtml]<header>[/] element with only one child."
 "s-099", "List item in endnotes missing [xhtml]endnote[/] semantic."
+UNUSED
+"s-051", f"Wrong height or width. [path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1162,38 +1166,48 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 		for filename in natsorted(filenames):
 			filename = (Path(root) / filename).resolve()
 
+			if filename.stem != "LICENSE":
+				url_safe_filename = se.formatting.make_url_safe(filename.stem) + filename.suffix
+				if filename.name != url_safe_filename and not filename.stem.endswith(".source"):
+					files_not_url_safe.append(filename)
+
+			if "-0" in filename.name:
+				messages.append(LintMessage("f-009", "Illegal leading [text]0[/] in filename.", se.MESSAGE_TYPE_ERROR, filename))
+
+			if filename.stem == "cover.source":
+				has_cover_source = True
+
 			if filename.suffix == ".jpeg":
 				messages.append(LintMessage("f-011", "JPEG files must end in [path].jpg[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 			if filename.suffix == ".tiff":
 				messages.append(LintMessage("f-012", "TIFF files must end in [path].tif[/].", se.MESSAGE_TYPE_ERROR, filename))
 
-			if filename.stem == "cover.source":
-				has_cover_source = True
-
-			if "-0" in filename.name:
-				messages.append(LintMessage("f-009", "Illegal leading [text]0[/] in filename.", se.MESSAGE_TYPE_ERROR, filename))
-
-			if filename.suffix == ".png":
-				if str(filename).startswith(str(self.epub_root_path)) and not se.images.has_transparency(filename):
-					messages.append(LintMessage("f-017", "[path].png[/] file without transparency. Hint: If an image doesn’t have transparency, it should be saved as a [path].jpg[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-			if filename.stem != "LICENSE":
-				url_safe_filename = se.formatting.make_url_safe(filename.stem) + filename.suffix
-				if filename.name != url_safe_filename and not filename.stem.endswith(".source"):
-					files_not_url_safe.append(filename)
-
-			if filename.name == "cover.jpg":
+			# Run some general tests on images, but skip the cover source since it's an exception to all of these rules
+			if filename.suffix in (".jpg", ".jpeg", ".tif", ".tiff", ".png") and "cover.source" not in filename.name:
 				try:
 					image = Image.open(filename)
-					if image.size != (se.COVER_WIDTH, se.COVER_HEIGHT):
-						messages.append(LintMessage("s-051", f"Wrong height or width. [path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}.", se.MESSAGE_TYPE_ERROR, filename))
-
-					if os.path.getsize(filename) > 1500000: # 1.5MB
-						messages.append(LintMessage("f-016", f"[path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] more than 1.5MB in size.", se.MESSAGE_TYPE_ERROR, filename))
-
 				except UnidentifiedImageError as ex:
 					raise se.InvalidFileException(f"Couldn’t identify image type of [path][link=file://{filename}]{filename.name}[/][/].") from ex
+
+				# Check the source cover image
+				if self.path / "images" / "cover.jpg" == filename:
+					if image.size != (se.COVER_WIDTH, se.COVER_HEIGHT):
+						messages.append(LintMessage("f-017", f"[path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}.", se.MESSAGE_TYPE_ERROR, filename))
+
+				# Run some tests on distributable images in ./src/epub/images/
+				# Once we reach Python 3.9 we can use path.is_relative_to() instead of this string comparison
+				if str(filename).startswith(str(self.content_path / "images")):
+					if os.path.getsize(filename) > 1500000: # 1.5MB
+						messages.append(LintMessage("f-016", "Image more than 1.5MB in size.", se.MESSAGE_TYPE_ERROR, filename))
+
+					# Make sure distributable images have reasonable dimensions
+					# We check SVGs later on in a separate check
+					if image.size[0] * image.size[1] > 4000000:
+						messages.append(LintMessage("f-018", "Image greater than 4,000,000 pixels square in dimension.", se.MESSAGE_TYPE_ERROR, filename))
+
+					if filename.suffix == ".png" and not se.images.has_transparency(image):
+						messages.append(LintMessage("f-019", "[path].png[/] file without transparency. Hint: If an image doesn’t have transparency, it should be saved as a [path].jpg[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 			if filename.suffix in BINARY_EXTENSIONS or filename.name == "core.css":
 				continue
@@ -1202,7 +1216,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 			try:
 				file_contents = self.get_file(filename)
 			except UnicodeDecodeError:
-				# This is more to help developers find weird files that might choke 'lint', hopefully unnecessary for end users
+				# This is more to help developers find weird files that might choke `se lint`, hopefully unnecessary for end users
 				messages.append(LintMessage("f-010", "Problem decoding file as utf-8.", se.MESSAGE_TYPE_ERROR, filename))
 				continue
 
@@ -1231,12 +1245,22 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 				# Check for illegal height or width on root <svg> element
 				if filename.name != "logo.svg": # Do as I say, not as I do...
-					if svg_dom.xpath("//svg[@height or @width]"):
+					if svg_dom.xpath("/svg[@height or @width]"):
 						messages.append(LintMessage("x-005", "Illegal [xml]height[/] or [xml]width[/] attribute on root [xml]<svg>[/] element. Size SVGs using the [xml]viewBox[/] attribute only.", se.MESSAGE_TYPE_ERROR, filename))
 
 				match = regex.search(r"viewbox", file_contents, flags=regex.IGNORECASE)
 				if match and match[0] != "viewBox":
 					messages.append(LintMessage("x-006", f"[xml]{match}[/] found instead of [xml]viewBox[/]. [xml]viewBox[/] must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename))
+
+				# Make images have reasonable dimensions
+				viewbox = svg_dom.xpath("/svg/@viewBox", True)
+				if viewbox:
+					svg_dimensions = viewbox.split()
+					try:
+						if float(svg_dimensions[2]) * float(svg_dimensions[3]) > 4000000:
+							messages.append(LintMessage("f-018", "Image greater than 4,000,000 pixels square in dimension.", se.MESSAGE_TYPE_ERROR, filename))
+					except Exception as ex:
+						raise se.InvalidFileException(f"Couldn’t parse SVG [xhtml]viewBox[/] attribute in [path][link=file://{filename.resolve()}]{filename}[/][/].") from ex
 
 				# Check for illegal transform or id attribute
 				nodes = svg_dom.xpath("//*[@transform or @id]")
