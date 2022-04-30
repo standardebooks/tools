@@ -181,6 +181,7 @@ METADATA
 "m-070", "Glossary entries not present in the text:"
 "m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/]."
 "m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/]."
+"m-073", "Anonymous contributor values must be exactly [text]Anonymous[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -948,6 +949,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 	nodes = self.metadata_dom.xpath("/package/metadata/dc:subject[contains(text(), '—')]")
 	if nodes:
 		messages.append(LintMessage("m-019", "Illegal em-dash in [xml]<dc:subject>[/] element; use [text]--[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.text for node in nodes]))
+
+	# Check for incorrect 'anonymous' strings in metadata
+	nodes = self.metadata_dom.xpath("/package/metadata/dc:contributor[re:test(., 'anonymous', 'i') and text() != 'Anonymous'] | /package/metadata/meta[@property='file-as' and re:test(., 'anonymous', 'i') and text() != 'Anonymous']")
+	if nodes:
+		messages.append(LintMessage("m-073", "Anonymous contributor values must be exactly [text]Anonymous[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 	# Check for metadata elements
 	nodes = self.metadata_dom.xpath("/package/metadata/*[not(name()='link') and not(normalize-space(.)) and not(./*)]")
