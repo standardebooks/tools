@@ -389,6 +389,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"([Ff])or ever\b",r"\1orever", xhtml)			# for ever -> forever
 	xhtml = regex.sub(r"([Dd])ébris\b", r"\1ebris", xhtml)				# débris -> debris
 	xhtml = regex.sub(r"\b([Tt])ho['’]\b", r"\1hough", xhtml)			# tho' -> though
+	xhtml = regex.sub(r"\b([Aa])ntient", r"\1ncient", xhtml)			# antient -> ancient
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
