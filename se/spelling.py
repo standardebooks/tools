@@ -392,6 +392,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Aa])ntient", r"\1ncient", xhtml)			# antient -> ancient
 	xhtml = regex.sub(r"\b([Bb])efal(s?)\b", r"\1efall\2", xhtml)			# befal -> befall
 	xhtml = regex.sub(r"\b([Tt])enour", r"\1enor", xhtml)				# tenor -> tenour
+	xhtml = regex.sub(r"\b([Rr])ibb?and", r"\1ibbon", xhtml)			# ribband -> ribbon (note: `ribband` has a legitimate 2nd meaning but it's extremely rare)
+	xhtml = regex.sub(r"\b([Gg])rewsome", r"\1ruesome", xhtml)			# grewsome -> gruesome
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
