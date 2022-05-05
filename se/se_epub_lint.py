@@ -234,7 +234,7 @@ SEMANTICS & CONTENT
 "s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something."
 "s-049", "[xhtml]<header>[/] element whose only child is an [xhtml]<h#>[/] element."
 "s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element."
-"s-051", "Element with [xhtml]xml:lang=\"unk\"[/] (Enawené-Nawé) almost certainly should be [xhtml]xml:lang=\"und\"[/] (undefined)."
+"s-051", "Element with [xhtml]xml:lang=\"unk\"[/] should be [xhtml]xml:lang=\"und\"[/] (undefined)."
 "s-052", "[xhtml]<abbr>[/] element with illegal [attr]title[/] attribute."
 "s-053", "Colophon line not preceded by [xhtml]<br/>[/]."
 "s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/]."
@@ -2135,9 +2135,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("t-024", "When italicizing language in dialog, italics go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for language tags misusing the unk lang code
-				nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '^unk$')]")
+				nodes = dom.xpath("//*[@xml:lang='unk']")
 				if nodes:
-					messages.append(LintMessage("s-051", "Element with [xhtml]xml:lang=\"unk\"[/] (Enawené-Nawé) almost certainly should be [xhtml]xml:lang=\"und\"[/] (undefined).", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+					messages.append(LintMessage("s-051", "Element with [xhtml]xml:lang=\"unk\"[/] should be [xhtml]xml:lang=\"und\"[/] (undefined).", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for language tags transliterated into Latin script but missing `-Latn` suffix
 				nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '^(he|ru|el|zh|bn|hi|sa|uk|yi)$') and re:test(., '[a-zA-Z]')]")
