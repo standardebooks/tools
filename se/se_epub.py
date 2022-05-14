@@ -1319,7 +1319,6 @@ class SeEpub:
 			# example: (see <a href="endnotes.xhtml#note-1553">this note</a>.)
 			# most but not all such are likely to be in the newly re-written endnotes.xhtml
 			for file_path in self.spine_file_paths:
-				print("trawling body files looking for links")
 				needs_rewrite = False
 				dom = self.get_dom(file_path)
 				for link in dom.xpath("/html/body//a[contains(@href, 'endnotes.xhtml#note-')]"):
@@ -1330,7 +1329,7 @@ class SeEpub:
 
 		return current_note_number - 1, notes_changed, change_list
 
-	def __process_direct_link(self, change_list, link) -> Boolean:
+	def __process_direct_link(self, change_list, link) -> bool:
 		"""
 		Checks all hyperlinks to the endnotes to see if the existing anchor needs to be updated with a new number
 
