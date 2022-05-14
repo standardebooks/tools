@@ -1390,3 +1390,4 @@ class SeEpub:
 		# We don't change the anchor or the back ref just yet
 		endnote.source_file = file_name
 		return needs_rewrite, notes_changed
+		
