@@ -47,6 +47,16 @@ class Endnote:
 		self.source_file = ""
 		self.matched = False
 
+class EndnoteChange:
+	"""
+	Class to hold a record of what changes have been made to endnote numbers
+	"""
+
+	def __init__(self, old_anchor, new_anchor, filename):
+		self.old_anchor = old_anchor  # the previous anchor
+		self.new_anchor = new_anchor  # the anchor it has been changed to
+		self.filename = filename	# the file in which it was changed
+
 class SeEpub:
 	"""
 	An object representing an SE epub file.
@@ -1239,7 +1249,7 @@ class SeEpub:
 		Read the epub spine to regenerate all endnotes in order of appearance, starting from 1.
 		Changes are written to disk.
 
-		Returns a tuple of (found_endnote_count, changed_endnote_count)
+		Returns a tuple of (found_endnote_count, changed_endnote_count, change_list)
 		"""
 
 		# Do a safety check first, throw exception if it failed
@@ -1252,7 +1262,7 @@ class SeEpub:
 		processed = 0
 		current_note_number = 1
 		notes_changed = 0
-		change_list: List[str] = []
+		change_list: List[EndnoteChange] = []
 
 		for file_path in self.spine_file_paths:
 			dom = self.get_dom(file_path)
@@ -1265,7 +1275,7 @@ class SeEpub:
 
 			needs_rewrite = False
 			for link in dom.xpath("/html/body//a[contains(@epub:type, 'noteref')]"):
-				needs_rewrite, notes_changed = self.__process_link(change_list, current_note_number, file_path.name, link, needs_rewrite, notes_changed)
+				needs_rewrite, notes_changed = self.__process_noteref_link(change_list, current_note_number, file_path.name, link, needs_rewrite, notes_changed)
 				current_note_number += 1
 
 			# If we need to write back the body text file
@@ -1278,7 +1288,7 @@ class SeEpub:
 			node = source_note.node
 			needs_rewrite = False
 			for link in node.xpath(".//a[contains(@epub:type, 'noteref')]"):
-				needs_rewrite, notes_changed = self.__process_link(change_list, current_note_number, self.endnotes_path.name, link, needs_rewrite, notes_changed)
+				needs_rewrite, notes_changed = self.__process_noteref_link(change_list, current_note_number, self.endnotes_path.name, link, needs_rewrite, notes_changed)
 				current_note_number += 1
 
 		if processed == 0:
@@ -1305,9 +1315,44 @@ class SeEpub:
 			with open(self.endnotes_path, "w") as file:
 				file.write(se.formatting.format_xhtml(endnotes_dom.to_string()))
 
+			# now trawl through the body files to locate any direct links to endnotes (not in an actual endnote reference)
+			# example: (see <a href="endnotes.xhtml#note-1553">this note</a>.)
+			# most but not all such are likely to be in the newly re-written endnotes.xhtml
+			for file_path in self.spine_file_paths:
+				print("trawling body files looking for links")
+				needs_rewrite = False
+				dom = self.get_dom(file_path)
+				for link in dom.xpath("/html/body//a[contains(@href, 'endnotes.xhtml#note-')]"):
+					needs_rewrite = self.__process_direct_link(change_list, link)
+				if needs_rewrite:
+					with open(file_path, "w") as file:
+						file.write(se.formatting.format_xhtml(dom.to_string()))
+
 		return current_note_number - 1, notes_changed, change_list
 
-	def __process_link(self, change_list, current_note_number, file_name, link, needs_rewrite, notes_changed) -> Tuple[bool, int]:
+	def __process_direct_link(self, change_list, link) -> Boolean:
+		"""
+		Checks all hyperlinks to the endnotes to see if the existing anchor needs to be updated with a new number
+
+		Returns a boolean of needs_write (whether object needs to be re-written)
+		"""
+		epub_type = link.get_attr("epub:type") or ""
+		if not epub_type: # it wasn't an actual endnote reference but a direct link (we hope!)
+			href = link.get_attr("href") or ""
+			if href:
+				# Extract just the anchor from a URL (ie, what follows a hash symbol)
+				hash_position = href.find("#") + 1  # we want the characters AFTER the hash
+				if hash_position > 0:
+					old_anchor = href[hash_position:]
+					try:
+						change = next(ch for ch in change_list if ch.old_anchor == old_anchor)
+						link.set_attr("href", f"{self.endnotes_path.name}#{change.new_anchor}")
+						return True
+					except StopIteration:  # didn't find the old anchor, keep going
+						pass
+		return False
+
+	def __process_noteref_link(self, change_list, current_note_number, file_name, link, needs_rewrite, notes_changed) -> Tuple[bool, int]:
 		"""
 		Checks each endnote link to see if the existing anchor needs to be updated with a new number
 
@@ -1324,7 +1369,8 @@ class SeEpub:
 
 		new_anchor = f"note-{current_note_number:d}"
 		if new_anchor != old_anchor:
-			change_list.append(f"{old_anchor}->{new_anchor}, {file_name}")
+			endnote_change = EndnoteChange(old_anchor, new_anchor, file_name)
+			change_list.append(endnote_change)
 			notes_changed += 1
 			# Update the link in the dom
 			link.set_attr("href", f"{self.endnotes_path.name}#{new_anchor}")

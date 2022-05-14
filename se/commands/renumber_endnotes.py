@@ -37,7 +37,7 @@ def renumber_endnotes(plain_output: bool) -> int:
 				if args.verbose:
 					print(se.prep_output(f"Found {found_endnote_count} endnote{'s' if found_endnote_count != 1 else ''} and changed {changed_endnote_count} endnote{'s' if changed_endnote_count != 1 else ''}.", plain_output))
 					for change in change_list:
-						print(change)
+						print(f"{change.old_anchor}->{change.new_anchor} in {change.filename}")
 		except se.SeException as ex:
 			se.print_error(ex, plain_output=plain_output)
 			return_code = ex.code
