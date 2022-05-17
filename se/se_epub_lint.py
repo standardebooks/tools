@@ -1063,6 +1063,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 		if matches:
 			messages.append(LintMessage("t-042", "Possible typo: possible doubled [text]the/and/of/or/as[/].", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
 
+	nodes = self.metadata_dom.xpath("/package/metadata//*[re:test(., ',[A-Za-z]')]")
+	if nodes:
+		messages.append(LintMessage("t-042", "Possible typo: comma followed by letter.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [node.to_string() for node in nodes]))
+
 	# Make sure some static files are unchanged
 	if self.is_se_ebook:
 		try:
