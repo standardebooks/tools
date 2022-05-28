@@ -42,7 +42,7 @@ SE_SEMANTIC_VOCABULARY = ["collection", "compass", "compound", "diary", "diary.d
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Childrens", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
 IGNORED_CLASSES = ["elision", "eoc", "full-page", "continued", "together"]
 BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", ".xcf", ".otf", ".jp2"]
-IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "halftitlepage.xhtml", "toc.xhtml", "loi.xhtml"]
+IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "toc.xhtml", "loi.xhtml"]
 
 # These are partly defined in semos://1.0.0/8.10.9.2
 INITIALISM_EXCEPTIONS = ["G", # as in `G-Force`
