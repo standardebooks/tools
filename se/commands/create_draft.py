@@ -401,8 +401,10 @@ def _copy_template_file(filename: str, dest_path: Path) -> None:
 	"""
 	Copy a template file to the given destination Path
 	"""
+	if dest_path.is_dir():
+		dest_path = dest_path / filename
 	with importlib_resources.path("se.data.templates", filename) as src_path:
-		shutil.copy(src_path, dest_path)
+		shutil.copyfile(src_path, dest_path)
 
 def _add_name_abbr(contributor: str) -> str:
 	"""
