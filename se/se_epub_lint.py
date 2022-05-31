@@ -283,6 +283,8 @@ SEMANTICS & CONTENT
 "s-097", "[xhtml]a[/] element without [attr]href[/] attribute."
 "s-098", "[xhtml]<header>[/] element with only one child."
 "s-099", "List item in endnotes missing [xhtml]endnote[/] semantic."
+"s-100", "Anonymous digital contributor value not exactly [text]An Anonymous Volunteer[/]."
+"s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/]."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1414,10 +1416,20 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					if nodes:
 						messages.append(LintMessage("t-006", "Comma after producer name, but there are only two producers.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-					# Check for some known initialisms with incorrect possessive apostrophes
 					nodes = dom.xpath("/html/body//b[re:test(., 'anonymous', 'i') and re:test(@epub:type, 'z3998:.*?name')]")
 					if nodes:
-						messages.append(LintMessage("s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+						messages.append(LintMessage("s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+					# Check for anonymous volunteers misrepresented in the colophon. Note that we only match SE producers and transcribers, because
+					# a cover art artist can also be anonymous but they're not volunteers.
+					nodes = dom.xpath("/html/body//b[re:test(., 'anonymous', 'i') and text() != 'An Anonymous Volunteer' and (preceding-sibling::a[@href='https://standardebooks.org'])]")
+					if nodes:
+						messages.append(LintMessage("s-100", "Anonymous digital contributor value not exactly [text]An Anonymous Volunteer[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+					# Check for primary contributors misrepresented in the colophon. these differ from ebook production volunteers.
+					nodes = dom.xpath("/html/body//b[re:test(., 'anonymous', 'i') and text() != 'Anonymous' and (preceding-sibling::node()[contains(., 'The cover page')] or preceding-sibling::i[contains(@epub:type, 'se:name.publication')])]")
+					if nodes:
+						messages.append(LintMessage("s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 					# Is there a page scan link in the colophon, but missing in the metadata?
 					for node in dom.xpath("/html/body//a[re:test(@href, '(gutenberg\\.org/ebooks/[0-9]+|hathitrust\\.org|archive\\.org|books\\.google\\.com|www\\.google\\.com/books/)')]"):
