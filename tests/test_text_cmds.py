@@ -16,11 +16,10 @@ TEXT_CMDS = [
     ("build-spine", ""),
 ]
 
-
 @pytest.mark.parametrize("cmd_name, cmd_args", TEXT_CMDS)
 def test_text_cmds(data_dir: Path, draft_dir: Path, work_dir: Path, cmd_name: str, cmd_args: str, update_golden: bool):
 	"""Run each command on the input content and validate that the
-	tranformed text matches the expected output content."""
+	transformed text matches the expected output content."""
 	in_dir = data_dir / cmd_name / "in"
 	book_dir = assemble_book(draft_dir, work_dir, in_dir)
 
