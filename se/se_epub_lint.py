@@ -184,6 +184,7 @@ METADATA
 "m-073", "Anonymous contributor values must be exactly [text]Anonymous[/]."
 "m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/]."
 "m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/]."
+"m-076", "gutenberg.net.au URL should not have leading [text]www.[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -471,6 +472,11 @@ def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
 	if nodes:
 		messages.append(LintMessage("m-002", "archive.org URL should not have leading [text]www.[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	search_regex = r"www\.gutenberg\.net\.au"
+	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	if nodes:
+		messages.append(LintMessage("m-076", "gutenberg.net.au URL should not have leading [text]www.[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 	search_regex = r"http://(gutenberg\.org|gutenberg\.net\.au|gutenberg\.ca|www\.fadedpage\.com|archive\.org|pgdp\.net|catalog\.hathitrust\.org|en\.wikipedia\.org|standardebooks\.org)"
 	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
