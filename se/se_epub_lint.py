@@ -359,6 +359,7 @@ TYPOGRAPHY
 "t-069", "[xhtml]<cite>[/] in epigraph starting with an em dash."
 "t-070", "[xhtml]<cite>[/] in epigraph ending in a period."
 "t-071", "Multiple transcriptions listed, but preceding text is [text]a transcription[/]."
+"t-072", "[text]various sources[/] link not preceded by [text]from[/]."
 UNUSED
 vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 "t-036", "[text]”[/] missing matching [text]“[/]."
@@ -1430,6 +1431,12 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 					if ebook_has_multiple_page_scans and not dom.xpath("/html/body//a[contains(@href, '#page-scans')]"):
 						messages.append(LintMessage("m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+					# Check that the formula changed from the default if we added 'various sources'
+					if ebook_has_multiple_transcriptions or ebook_has_multiple_page_scans:
+						nodes = dom.xpath("/html/body//a[text() = 'various sources' and not(re:test(preceding-sibling::br[1]/preceding-sibling::node()[1], '(digital scans|transcriptions) from\\s*$'))]")
+						if nodes:
+							messages.append(LintMessage("t-072", "[text]various sources[/] link not preceded by [text]from[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check if we forgot to fill any variable slots
 					missing_colophon_vars = [var for var in SE_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
@@ -2932,6 +2939,12 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 					if ebook_has_multiple_page_scans and not dom.xpath("/html/body//a[contains(@href, '#page-scans')]"):
 						messages.append(LintMessage("m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+					# Check that the formula changed from the default if we added 'various sources'
+					if ebook_has_multiple_transcriptions or ebook_has_multiple_page_scans:
+						nodes = dom.xpath("/html/body//a[text() = 'various sources' and not(re:test(preceding-sibling::node()[1], '(digital scans|transcriptions) from\\s*$'))]")
+						if nodes:
+							messages.append(LintMessage("t-072", "[text]various sources[/] link not preceded by [text]from[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check for correctly named links. We can't merge this with the colophon check because the colophon breaks `the` with `<br/>`
 					if not ebook_has_multiple_transcriptions and not ebook_has_other_sources:
