@@ -182,6 +182,8 @@ METADATA
 "m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/]."
 "m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/]."
 "m-073", "Anonymous contributor values must be exactly [text]Anonymous[/]."
+"m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/]."
+"m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -701,6 +703,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 	ebook_has_subtitle = bool(self.metadata_dom.xpath("/package/metadata/meta[@property='title-type' and text()='subtitle']"))
 	source_links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
 	section_tree: List[EbookSection] = []
+	ebook_has_multiple_transcriptions = False
+	ebook_has_multiple_page_scans = False
 
 	# Iterate over rules to do some other checks
 	abbr_with_whitespace = []
@@ -905,6 +909,23 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 			messages.append(LintMessage("m-013", "Non-typogrified character in [xml]<dc:description>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 	except:
 		missing_metadata_elements.append("<dc:description>")
+
+	# Set some variables for later
+	transcription_source_count = 0
+	page_scan_source_count = 0
+	other_source_count = 0
+	sources = self.metadata_dom.xpath("/package/metadata/dc:source")
+	for source in sources:
+		if regex.search(r"(gutenberg\.org|wikisource\.org|fadedpage\.com|gutenberg\.net\.au|gutenberg\.ca)", source.inner_text()):
+			transcription_source_count = transcription_source_count + 1
+		elif regex.search(r"(hathitrust\.org|/archive\.org|books\.google\.com|google\.com/books)", source.inner_text()):
+			page_scan_source_count = page_scan_source_count + 1
+		else:
+			other_source_count = other_source_count + 1
+
+	ebook_has_multiple_transcriptions = transcription_source_count >= 2
+	ebook_has_multiple_page_scans = page_scan_source_count >= 2
+	ebook_has_other_sources = other_source_count > 0
 
 	# Check for double spacing
 	if self.metadata_dom.xpath(f"/package/metadata/*[re:test(., '[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}')]"):
@@ -1361,19 +1382,20 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				is_colophon = bool(dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"))
 				is_imprint = bool(dom.xpath("/html/body/section[contains(@epub:type, 'imprint')]"))
 
-				if (is_colophon or is_imprint) and len(source_links) <= 2:
-					# Check that links back to sources are represented correctly
-					nodes = dom.xpath("/html/body//a[@href='https://www.pgdp.net' and text()!='The Online Distributed Proofreading Team']")
-					if nodes:
-						messages.append(LintMessage("m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+				if (is_colophon or is_imprint):
+					if len(source_links) <= 2:
+						# Check that links back to sources are represented correctly
+						nodes = dom.xpath("/html/body//a[@href='https://www.pgdp.net' and text()!='The Online Distributed Proofreading Team']")
+						if nodes:
+							messages.append(LintMessage("m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-					nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www.pgdp.org/ols/') and text()!='Distributed Proofreaders Open Library System']")
-					if nodes:
-						messages.append(LintMessage("m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+						nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www.pgdp.org/ols/') and text()!='Distributed Proofreaders Open Library System']")
+						if nodes:
+							messages.append(LintMessage("m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-					nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
-					if nodes:
-						messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+						nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
+						if nodes:
+							messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				if is_colophon:
 					# Check for illegal Wikipedia URLs
@@ -1397,6 +1419,12 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 					if self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text()='trl']") and "translated from" not in file_contents:
 						messages.append(LintMessage("m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
+
+					if ebook_has_multiple_transcriptions and not dom.xpath("/html/body//a[contains(@href, '#transcriptions')]"):
+						messages.append(LintMessage("m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+					if ebook_has_multiple_page_scans and not dom.xpath("/html/body//a[contains(@href, '#page-scans')]"):
+						messages.append(LintMessage("m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 					# Check if we forgot to fill any variable slots
 					missing_colophon_vars = [var for var in SE_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
@@ -1432,18 +1460,20 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 						messages.append(LintMessage("s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 					# Is there a page scan link in the colophon, but missing in the metadata?
-					for node in dom.xpath("/html/body//a[re:test(@href, '(gutenberg\\.org/ebooks/[0-9]+|hathitrust\\.org|archive\\.org|books\\.google\\.com|www\\.google\\.com/books/)')]"):
+					for node in dom.xpath("/html/body//a[re:test(@href, '(gutenberg\\.org/ebooks/[0-9]+|hathitrust\\.org|/archive\\.org|books\\.google\\.com|www\\.google\\.com/books/)')]"):
 						if not self.metadata_dom.xpath(f"/package/metadata/dc:source[contains(text(), {se.easy_xml.escape_xpath(node.get_attr('href'))})]"):
 							messages.append(LintMessage("m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 					# Are the sources represented correctly?
 					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
 					# We can't merge this with the imprint check because imprint doesn't have `<br/>` between `the`
-					if len(source_links) <= 2:
+					if not ebook_has_multiple_transcriptions and not ebook_has_other_sources:
 						for link in source_links:
 							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
 								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
 
+					if not ebook_has_multiple_page_scans and not ebook_has_other_sources:
+						for link in source_links:
 							if "hathitrust.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
 								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -2892,12 +2922,20 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					if missing_imprint_vars:
 						messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, missing_imprint_vars))
 
+					if ebook_has_multiple_transcriptions and not dom.xpath("/html/body//a[contains(@href, '#transcriptions')]"):
+						messages.append(LintMessage("m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+					if ebook_has_multiple_page_scans and not dom.xpath("/html/body//a[contains(@href, '#page-scans')]"):
+						messages.append(LintMessage("m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/].", se.MESSAGE_TYPE_ERROR, filename))
+
 					# Check for correctly named links. We can't merge this with the colophon check because the colophon breaks `the` with `<br/>`
-					if len(source_links) <= 2:
+					if not ebook_has_multiple_transcriptions and not ebook_has_other_sources:
 						for link in source_links:
 							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
 								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
 
+					if not ebook_has_multiple_page_scans and not ebook_has_other_sources:
+						for link in source_links:
 							if "hathitrust.org" in link and f"the <a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
 								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: the [xhtml]<a href=\"{link}\">HathiTrust Digital Library</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
 
