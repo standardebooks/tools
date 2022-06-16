@@ -358,6 +358,7 @@ TYPOGRAPHY
 "t-068", "Citation not offset with em dash."
 "t-069", "[xhtml]<cite>[/] in epigraph starting with an em dash."
 "t-070", "[xhtml]<cite>[/] in epigraph ending in a period."
+"t-071", "Multiple transcriptions listed, but preceding text is [text]a transcription[/]."
 UNUSED
 vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 "t-036", "[text]”[/] missing matching [text]“[/]."
@@ -1396,6 +1397,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 						nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
 						if nodes:
 							messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+					nodes = dom.xpath("/html/body//p[re:test(., '\\ba transcription\\b') and ./a[contains(@href, '#transcriptions')]]")
+					if nodes:
+						messages.append(LintMessage("t-071", "Multiple transcriptions listed, but preceding text is [text]a transcription[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				if is_colophon:
 					# Check for illegal Wikipedia URLs
