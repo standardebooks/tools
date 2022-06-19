@@ -388,7 +388,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"([S])uède", r"\1uede", xhtml)				# suède -> suede
 	xhtml = regex.sub(r"([Ff])or ever\b",r"\1orever", xhtml)			# for ever -> forever
 	xhtml = regex.sub(r"([Dd])ébris\b", r"\1ebris", xhtml)				# débris -> debris
-	xhtml = regex.sub(r"\b([Tt])ho(['’]|\b)(?!\.</abbr>)", r"\1hough", xhtml)				# tho' -> though
+	xhtml = regex.sub(r"\b([Tt])ho(['’]|\b)(?!\.</abbr>)", r"\1hough", xhtml)	# tho' -> though
 	xhtml = regex.sub(r"\b([Aa])ntient", r"\1ncient", xhtml)			# antient -> ancient
 	xhtml = regex.sub(r"\b([Bb])efal(s?)\b", r"\1efall\2", xhtml)			# befal -> befall
 	xhtml = regex.sub(r"\b([Tt])enour", r"\1enor", xhtml)				# tenor -> tenour
