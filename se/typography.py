@@ -188,8 +188,12 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 	xhtml = regex.sub(r"c/o", "℅", xhtml, flags=regex.IGNORECASE)
 
-	# Add rsquo to bare `tis` and `twas`
-	xhtml = regex.sub(r"([^’>])\b([Tt]is|[Tt]was|[Tt]were|[Tt]won’t)\b", r"\1’\2", xhtml)
+	# Sort out preceding rsquos for  `tis` / `twas` / `twere` / `twont’t`
+	# 1. If there’s a missing quote (after a space or tag) add it.
+	# 2. If there’s a right double-quote assumed it should be an open and closing single quote pair.
+	contractions = r"[Tt]is|[Tt]was|[Tt]were|[Tt]won’t"
+	xhtml = regex.sub(fr"([\s>])({ contractions })\b", r"\1’\2", xhtml) # 1.
+	xhtml = regex.sub(fr"”\b({ contractions })\b", r"‘’\1", xhtml)      # 2.
 
 	# Replace `M‘<letter>` with `Mc<letter>`; use of lsquo in this case is a historical case of a "poor man's superscript c". See
 	# https://english.stackexchange.com/questions/543272/why-were-scottish-irish-names-once-rendered-with-apostrophes-instead-of-mac#543329
