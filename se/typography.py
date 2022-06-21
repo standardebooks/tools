@@ -76,7 +76,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 		xhtml = xhtml.replace("`", "'")
 
 		# First, convert entities.  Sometimes Gutenberg has entities instead of straight quotes.
-		xhtml = html.unescape(xhtml) # This converts html entites to unicode
+		xhtml = html.unescape(xhtml) # This converts html entities to unicode
 		xhtml = regex.sub(r"&(?![#\p{Lowercase_Letter}]+;)", "&amp;", xhtml) # Oops!  html.unescape also unescapes plain ampersands...
 
 		# Replace rsquo character with an escape sequence. We can't use HTML comments
@@ -87,7 +87,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 		xhtml = smartypants.smartypants(xhtml) # Attr.u *should* output unicode characters instead of HTML entities, but it doesn't work
 
 		# Convert entities again
-		xhtml = html.unescape(xhtml) # This converts html entites to unicode
+		xhtml = html.unescape(xhtml) # This converts html entities to unicode
 		xhtml = regex.sub(r"&(?![#\p{Lowercase_Letter}]+;)", "&amp;", xhtml) # Oops!  html.unescape also unescapes plain ampersands...
 
 	# Replace no-break hyphen with regular hyphen
@@ -333,7 +333,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Add an &nbsp; before &amp;
 	xhtml = regex.sub(r" &amp;", f"{se.NO_BREAK_SPACE}&amp;", xhtml)
 
-	# Add word joines to ellipses
+	# Add word joiners to ellipses
 	xhtml = regex.sub(r" …", f"{se.WORD_JOINER} {se.WORD_JOINER}…", xhtml)
 
 	# Remove spaces between ellipses and endnotes directly after
