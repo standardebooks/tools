@@ -401,6 +401,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])e’nnight", r"\1ennight", xhtml)			# se'nnight -> sennight
 	xhtml = regex.sub(r"\b([Pp])aroquet", r"\1arakeet", xhtml)			# paroquet -> parakeet
 	xhtml = regex.sub(r"\b([Rr])isque\b", r"\1isqué", xhtml)			# risque -> risqué
+	xhtml = regex.sub(r"\b([Ff])rolick\b", r"\1rolic", xhtml)			# frolick -> frolic
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
