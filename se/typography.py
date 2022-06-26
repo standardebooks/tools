@@ -351,6 +351,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	for match in regex.findall(fr"<title>[^<]*?[{se.NO_BREAK_SPACE}{se.WORD_JOINER}][^<]*?</title>", xhtml):
 		xhtml = xhtml.replace(match, match.replace(se.NO_BREAK_SPACE, " ").replace(se.WORD_JOINER, ""))
 
+	# Remove no-break spaces added before etc.
+	xhtml = regex.sub(fr"{se.NO_BREAK_SPACE}(<abbr[^>]*?>etc\.)", r" \1", xhtml)
+
 	return xhtml
 
 def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_tags: bool = False) -> str:
