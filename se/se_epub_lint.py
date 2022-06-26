@@ -1935,6 +1935,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: [xhtml]<abbr>[/] directly preceded or followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
+				# Check for basic typo
+				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[a-z],[a-z]', 'i')]")]
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: comma followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
 				# Check for misapplied italics. Ignore 's' because the plural is too common.
 				typos = [node.to_string() for node in dom.xpath("/html/body//*[(name() = 'i' or name() = 'em') and ./following-sibling::node()[1][re:test(., '^[a-z]\\b', 'i') and not(re:test(., '^s\\b'))]]")]
 				if typos:
