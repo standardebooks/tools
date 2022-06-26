@@ -338,7 +338,10 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r" &amp;", f"{se.NO_BREAK_SPACE}&amp;", xhtml)
 
 	# Add word joiners to ellipses
-	xhtml = regex.sub(r" …", f"{se.WORD_JOINER} {se.WORD_JOINER}…", xhtml)
+	xhtml = regex.sub(fr"{se.HAIR_SPACE}…", f"{se.WORD_JOINER}{se.HAIR_SPACE}{se.WORD_JOINER}…", xhtml)
+
+	# Remove any extra spaces in 4-dot ellipses that occur before the starting period
+	xhtml = regex.sub(fr"([\p{{Letter}}]){se.HAIR_SPACE}(\.{se.WORD_JOINER}{se.HAIR_SPACE}{se.WORD_JOINER}…)", r"\1\2", xhtml)
 
 	# Remove spaces between ellipses and endnotes directly after
 	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?(<a[^>]+?epub:type=\"noteref\"[^>]*?>)", r"…\1", xhtml, flags=regex.IGNORECASE)
