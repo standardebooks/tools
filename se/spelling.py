@@ -402,6 +402,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Pp])aroquet", r"\1arakeet", xhtml)			# paroquet -> parakeet
 	xhtml = regex.sub(r"\b([Rr])isque\b", r"\1isqué", xhtml)			# risque -> risqué
 	xhtml = regex.sub(r"\b([Ff])rolick\b", r"\1rolic", xhtml)			# frolick -> frolic
+	xhtml = regex.sub(r"\bIncroach", r"Encroach", xhtml)				# Incroach -> Encroach
+	xhtml = regex.sub(r"\bincroach", r"encroach", xhtml)				# incroach -> encroach
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
@@ -451,6 +453,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"Roman catholic", r"Roman Catholic", xhtml)			# Roman catholic -> Roman Catholic; Note that we can't uppercase `catholic` in the generic sense because `catholic` can mean "worldly"
 	xhtml = regex.sub(r"Burmah", r"Burma", xhtml)					# Burmah -> Burma
 	xhtml = regex.sub(r"Turgenieff", r"Turgenev", xhtml)				# Turgenieff -> Turgenev
+	xhtml = regex.sub(r"Gizeh", r"Giza", xhtml)					# Gizeh -> Giza
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
