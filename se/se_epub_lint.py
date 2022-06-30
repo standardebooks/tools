@@ -1095,7 +1095,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 		if matches:
 			messages.append(LintMessage("t-042", "Possible typo: possible doubled [text]the/and/of/or/as[/].", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
 
-	nodes = self.metadata_dom.xpath("/package/metadata//*[re:test(., ',[A-Za-z]')]")
+	nodes = self.metadata_dom.xpath("/package/metadata//*[re:test(., ',[a-z]', 'i')]")
 	if nodes:
 		messages.append(LintMessage("t-042", "Possible typo: comma followed by letter.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [node.to_string() for node in nodes]))
 
@@ -1936,8 +1936,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: [xhtml]<abbr>[/] directly preceded or followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-				# Check for basic typo
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[a-z],[a-z]', 'i')]")]
+				# Check for basic typo, but exclude MathML
+				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[a-z],[a-z]', 'i')  and not(.//*[namespace-uri() = 'http://www.w3.org/1998/Math/MathML' and re:test(., '[a-z],[a-z]', 'i')])]")]
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: comma followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
