@@ -1095,9 +1095,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 		if matches:
 			messages.append(LintMessage("t-042", "Possible typo: possible doubled [text]the/and/of/or/as[/].", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
 
-	nodes = self.metadata_dom.xpath("/package/metadata//*[re:test(., ',[a-z]', 'i')]")
+	nodes = self.metadata_dom.xpath("/package/metadata//*[re:test(., '[,;][a-z]', 'i')]")
 	if nodes:
-		messages.append(LintMessage("t-042", "Possible typo: comma followed by letter.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("t-042", "Possible typo: punctuation followed directly by a letter, without a space.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 	# Make sure some static files are unchanged
 	if self.is_se_ebook:
@@ -1936,10 +1936,14 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: [xhtml]<abbr>[/] directly preceded or followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-				# Check for basic typo, but exclude MathML
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[a-z],[a-z]', 'i')  and not(.//*[namespace-uri() = 'http://www.w3.org/1998/Math/MathML' and re:test(., '[a-z],[a-z]', 'i')])]")]
+				# Check for basic typo, but exclude MathML and endnotes. Some endnotes (like in Ten Days that Shook the World) may start with letters.
+				dom_copy = deepcopy(dom)
+				for node in dom_copy.xpath("//a[contains(@epub:type, 'noteref')]") + dom_copy.xpath("//*[namespace-uri() = 'http://www.w3.org/1998/Math/MathML']"):
+					node.remove()
+
+				typos = [node.to_string() for node in dom_copy.xpath("/html/body//p[re:match(., '[a-z][;,][a-z]', 'i')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: comma followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("t-042", "Possible typo: punctuation followed directly by a letter, without a space.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for misapplied italics. Ignore 's' because the plural is too common.
 				typos = [node.to_string() for node in dom.xpath("/html/body//*[(name() = 'i' or name() = 'em') and ./following-sibling::node()[1][re:test(., '^[a-z]\\b', 'i') and not(re:test(., '^s\\b'))]]")]
