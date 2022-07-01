@@ -288,7 +288,6 @@ SEMANTICS & CONTENT
 "s-099", "List item in endnotes missing [xhtml]endnote[/] semantic."
 "s-100", "Anonymous digital contributor value not exactly [text]An Anonymous Volunteer[/]."
 "s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/]."
-"s-102", "[xhtml]<p>[/] element with numbered [xhtml]id[/] attribute whose number doesn’t match the element’s position."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -385,6 +384,7 @@ XHTML
 "x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter."
 "x-017", "Duplicate value for [attr]id[/] attribute."
 "x-018", "Unused [xhtml]id[/] attribute."
+"x-019", "Unexpected value of [attr]id[/] attribute. Expected: [attr]{unexpected_id[1]}[/]."
 """
 
 class LintMessage:
@@ -2522,9 +2522,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 				# Check for ID attributes of numbered paragraphs (like `p-44`) that are used as refs in endnotes.
 				# Make sure their number is actually their correct sequence number in the text.
-				nodes = dom.xpath("/html/body//p[@id and re:match(@id, '[0-9]+$') != position()]")
-				if nodes:
-					messages.append(LintMessage("s-102", "[xhtml]<p>[/] element with numbered [xhtml]id[/] attribute whose number doesn’t match the element’s position.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+				for unexpected_id in se.formatting.find_unexpected_ids(dom):
+					messages.append(LintMessage("x-019", f"Unexpected value of [attr]id[/] attribute. Expected: [attr]{unexpected_id[1]}[/].", se.MESSAGE_TYPE_ERROR, filename, [unexpected_id[0].to_tag_string()]))
 
 				# Epigraphs that are entirely non-English should still be in italics, not Roman
 				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'bridgehead')]//p[./i[@xml:lang and @data-css-font-style='normal' and ( (./preceding-sibling::node()='“' and ./following-sibling::node()='”') or not(./preceding-sibling::node()[normalize-space(.)] or ./following-sibling::node()[normalize-space(.)]) ) ]]")
