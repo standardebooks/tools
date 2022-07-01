@@ -230,6 +230,10 @@ We need volunteers to take the lead on the following goals:
 
 	Build an ebook from a Standard Ebook source directory.
 
+-	### `se build-ids`
+
+	Change ID attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced.
+
 -	### `se build-images`
 
 	Build ebook cover and titlepage images in a Standard Ebook source directory and place the output in `DIRECTORY/src/epub/images/`.

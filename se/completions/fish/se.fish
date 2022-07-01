@@ -1,6 +1,6 @@
 function __fish_se_no_subcommand --description "Test if se has yet to be given the subcommand"
 	for i in (commandline -opc)
-		if contains -- $i british2american build build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes split-file titlecase typogrify unicode-names version word-count xpath
+		if contains -- $i british2american build build-ids build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes split-file titlecase typogrify unicode-names version word-count xpath
 			return 1
 		end
 	end
@@ -25,6 +25,10 @@ complete -c se -A -n "__fish_seen_subcommand_from build" -s o -l output-dir -d "
 complete -c se -A -n "__fish_seen_subcommand_from build" -s p -l proof -d "insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s v -l verbose -d "increase output verbosity"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s y -l check-only -d "run tests used by --check but don’t output any ebook files and exit after checking"
+
+complete -c se -n "__fish_se_no_subcommand" -a build-ids -d "Change ID attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced."
+complete -c se -A -n "__fish_seen_subcommand_from build-images" -s h -l help -x -d "show this help message and exit"
+complete -c se -A -n "__fish_seen_subcommand_from build-images" -s v -l verbose -d "increase output verbosity"
 
 complete -c se -n "__fish_se_no_subcommand" -a build-images -d "Build ebook cover and titlepage images in a Standard Ebook source directory."
 complete -c se -A -n "__fish_seen_subcommand_from build-images" -s h -l help -x -d "show this help message and exit"

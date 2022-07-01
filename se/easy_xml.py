@@ -96,12 +96,14 @@ class EasyXmlTree:
 		If return_string is true, return a single string value instead of a list.
 		"""
 
-		result: List[Union[str, EasyXmlElement]] = []
+		result: List[Union[str, EasyXmlElement, float]] = []
 
 		try:
 			query_result = self.etree.xpath(selector, namespaces=self.namespaces)
 			if isinstance(query_result, etree._ElementUnicodeResult): # pylint: disable=protected-access
 				result.append(str(query_result))
+			elif isinstance(query_result, float):
+				result.append(query_result)
 			else:
 				for element in query_result:
 					if isinstance(element, etree._ElementUnicodeResult): # pylint: disable=protected-access
@@ -370,11 +372,13 @@ class EasyXmlElement:
 		Shortcut to select elements based on xpath selector.
 		"""
 
-		result: List[Union[str, EasyXmlElement]] = []
+		result: List[Union[str, EasyXmlElement, float]] = []
 
 		query_result = self.lxml_element.xpath(selector, namespaces=self.namespaces)
 		if isinstance(query_result, etree._ElementUnicodeResult): # pylint: disable=protected-access
 			result.append(str(query_result))
+		elif isinstance(query_result, float):
+			result.append(query_result)
 		else:
 			for element in query_result:
 				if isinstance(element, etree._ElementUnicodeResult): # pylint: disable=protected-access
@@ -565,7 +569,7 @@ class EasyXmlElement:
 		children = []
 
 		for child in self.lxml_element:
-			children.append(EasyXmlElement(child))
+			children.append(EasyXmlElement(child, self.namespaces))
 
 		return children
 

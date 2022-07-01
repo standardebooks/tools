@@ -10,7 +10,7 @@ import math
 import string
 import unicodedata
 from pathlib import Path
-from typing import Union
+from typing import Dict, Union, List, Tuple
 
 import regex
 import roman
@@ -20,7 +20,7 @@ from titlecase import titlecase as pip_titlecase
 from unidecode import unidecode
 
 import se
-from se.easy_xml import EasyXmlTree
+from se.easy_xml import EasyXmlTree, EasyXmlElement
 
 
 # This list of phrasing tags is not intended to be exhaustive. The list is only used
@@ -1475,3 +1475,79 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 	title = title.replace("&amp;", "&")
 
 	return title
+
+def _get_children(node: EasyXmlElement) -> List[EasyXmlElement]:
+	"""
+	Helper function for find_unexpected_ids().
+
+	Get a flat list of children that are not headers or sectioning elements,
+	and return a list of those nodes.
+	"""
+
+	result = []
+
+	for child in node.children:
+		is_endnote = False
+		if child.get_attr("epub:type"):
+			is_endnote = regex.search(r"\bendnote\b", child.get_attr("epub:type"))
+
+		if child.tag not in ("header", "section", "article", "figure", "nav", "dt", "tr") and not is_endnote:
+			result.append(child)
+			result = result + _get_children(child)
+
+	return result
+
+def find_unexpected_ids(dom: EasyXmlTree) -> List[Tuple[EasyXmlElement, str]]:
+	"""
+	Given a DOM tree, return a list of tuples containing nodes and their expected ID attributes.
+	Only nodes with unexpected IDs are returned.
+
+	INPUTS
+	dom: An EasyXmlTree
+
+	OUTPUTS
+	A list of tuples of (node, expected_id)
+	"""
+
+	dom_copy = deepcopy(dom)
+	replacements = []
+
+	# Remove noterefs as they have their own ID rules
+	for node in dom_copy.xpath("/html/body//*[contains(@epub:type, 'noteref')]"):
+		node.remove()
+
+	# IDs are set to `{closest_parent_sectioning_element_id}-{tag_name}-{n}`.
+	# Lines of poetry are set to `{closest_poem_sectioning_element_id}-line-{n}`.
+	line_number = 0
+	container_poem_section_id = ""
+	for section in dom_copy.xpath("/html/body//*[@id and (name() = 'section' or name() = 'article' or re:test(@epub:type, '\\bendnote\\b'))]"):
+		counts: Dict[str, int] = {}
+		is_poem = bool(section.xpath("./ancestor-or-self::*[contains(@epub:type, 'z3998:poem')]"))
+		section_id = section.get_attr("id")
+
+		section_epub_type = section.get_attr("epub:type")
+		if section_epub_type and "z3998:poem" in section_epub_type:
+			line_number = 0
+			container_poem_section_id = section_id
+
+		for node in _get_children(section):
+			if node.tag in counts:
+				counts[node.tag] = counts[node.tag] + 1
+			else:
+				counts[node.tag] = 1
+
+			if is_poem and node.tag == "span" and node.parent.tag == "p":
+				line_number = line_number + 1
+
+			id_attr = node.get_attr("id")
+			# If the element has an ID attribute and it's not an endnote node (i.e. <li epub:type="endnote">)
+			if id_attr and not (node.get_attr("epub:type") and regex.search(r"\bendnote\b", node.get_attr("epub:type"))):
+				expected_id = f"{section_id}-{node.tag}-{counts[node.tag]}"
+
+				if is_poem and node.tag == "span" and node.parent.tag == "p":
+					expected_id = f"{container_poem_section_id}-line-{line_number}"
+
+				if id_attr != expected_id:
+					replacements.append((node, expected_id))
+
+	return replacements

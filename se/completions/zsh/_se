@@ -14,6 +14,7 @@ case $state in
 		_values "se command" \
 			"british2american[Try to convert British quote style to American quote style.]" \
 			"build[Build an ebook from a Standard Ebook source directory.]" \
+			"build-ids[Change ID attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced.]" \
 			"build-images[Build ebook cover and titlepage images in a Standard Ebook source directory.]" \
 			"build-manifest[Generate the <manifest> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.]" \
 			"build-spine[Generate the <spine> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.]" \
@@ -68,13 +69,18 @@ case $state in
 					{-y,--check-only}'[run tests used by --check but don’t output any ebook files and exit after checking]' \
 					'*: :_directories'
 				;;
+			build-ids)
+				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
+					{-v,--verbose}'[increase output verbosity]' \
+					'*: :_directories'
+				;;
 			build-images)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_directories'
 				;;
-
 			build-manifest)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
