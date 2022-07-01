@@ -3110,7 +3110,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 			for attr in id_attrs:
 				# We use a simple `in` check instead of xpath because it's an order of magnitude faster on
 				# really big ebooks with lots of IDs like Pepys.
-				if f"#{attr}" in xhtml:
+				if f"#{attr}\"" in xhtml:
 					try:
 						unused_id_attrs.remove(attr)
 					except ValueError:
