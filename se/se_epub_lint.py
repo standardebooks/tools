@@ -348,7 +348,7 @@ TYPOGRAPHY
 "t-057", "[xhtml]<p>[/] starting with lowercase letter. Hint: [xhtml]<p>[/] that continues text after a [xhtml]<blockquote>[/] requires the [class]continued[/] class; and use [xhtml]<br/>[/] to split one clause over many lines."
 "t-058", "Illegal character."
 "t-059", "Period at the end of [xhtml]<cite>[/] element before endnote backlink."
-"t-060", "Old style Bible citation."
+"t-060", "Old style Bible citation. Hint: This should be fixed in an editorial commit separate from non-editorial changes."
 "t-061", "Summary-style bridgehead without ending punctuation."
 "t-062", "Uppercased [text]a.m.[/] and [text]p.m.[/]"
 "t-063", "Non-English confusable phrase set without italics."
