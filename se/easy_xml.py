@@ -4,6 +4,7 @@ Defines the EasyXmlTree class, which is a convenience wrapper around etree.
 The class exposes some helpful functions like css_select() and xpath().
 """
 
+from html import unescape
 from typing import Dict, List, Union
 import unicodedata
 
@@ -421,7 +422,7 @@ class EasyXmlElement:
 		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `Hello there, Mr. Smith!`
 		"""
 
-		return regex.sub(r"<[^>]+?>", "", self.inner_xml().strip())
+		return unescape(regex.sub(r"<[^>]+?>", "", self.inner_xml().strip()))
 
 	def remove(self) -> None:
 		"""
