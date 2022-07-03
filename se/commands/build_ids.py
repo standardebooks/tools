@@ -41,7 +41,7 @@ def build_ids(plain_output: bool) -> int:
 
 				# First, get a list of all eligible elements with an ID.
 				# We want to wipe their IDs so that we don't accidentally introduce duplicates.
-				for node in dom.xpath("//*[@id and not(re:test(@epub:type, '(noteref|endnote)')) and not(re:test(local-name(), '(section|article|nav|figure|dt|tr)'))]"):
+				for node in dom.xpath("//*[@id and not(re:test(@epub:type, 'noteref')) and not(re:test(local-name(), '(section|article|nav|figure|dt|tr)'))]"):
 					old_id = node.get_attr("id")
 					new_id = f"se-replacement-id-{id_counter}"
 					node.set_attr("id", new_id)
@@ -69,7 +69,12 @@ def build_ids(plain_output: bool) -> int:
 					file.write(dom.to_string())
 
 			# Now, actually perform the replacements
-			for filename in se_epub.spine_file_paths:
+			# Make sure to include the glossary search key map, if present
+			files = se_epub.spine_file_paths
+			if se_epub.glossary_search_key_map_path:
+				files.append(se_epub.glossary_search_key_map_path)
+
+			for filename in files:
 				with open(filename, "r+", encoding="utf-8") as file:
 					file_contents = file.read()
 

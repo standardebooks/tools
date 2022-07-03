@@ -1476,7 +1476,7 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 
 	return title
 
-def _get_children(node: EasyXmlElement) -> List[EasyXmlElement]:
+def _get_children(node: EasyXmlElement, allow_header: bool) -> List[EasyXmlElement]:
 	"""
 	Helper function for find_unexpected_ids().
 
@@ -1485,15 +1485,21 @@ def _get_children(node: EasyXmlElement) -> List[EasyXmlElement]:
 	"""
 
 	result = []
+	sectioning_elements = ["section", "article", "figure", "nav"]
+
+	if not allow_header:
+		sectioning_elements.append("header")
 
 	for child in node.children:
 		is_endnote = False
+		is_glossdef = False
 		if child.get_attr("epub:type"):
 			is_endnote = regex.search(r"\bendnote\b", child.get_attr("epub:type"))
+			is_glossdef = "glossdef" in child.get_attr("epub:type")
 
-		if child.tag not in ("section", "article", "figure", "nav") and not is_endnote:
+		if child.tag not in sectioning_elements and not is_endnote and not is_glossdef:
 			result.append(child)
-			result = result + _get_children(child)
+			result = result + _get_children(child, allow_header)
 
 	return result
 
@@ -1522,33 +1528,60 @@ def find_unexpected_ids(dom: EasyXmlTree) -> List[Tuple[EasyXmlElement, str]]:
 	# 1. Endnotes count as their own sectioning elements for the purposes of assigning IDs
 	# 2. Exclude glossaries, as IDs there should be related to the glossterm somehow
 	line_number = 0
+	endnote_number = 0
 	container_poem_section_id = ""
-	for section in dom_copy.xpath("/html/body//*[@id and (name() = 'section' or name() = 'article' or re:test(@epub:type, '\\bendnote\\b')) and not(ancestor-or-self::*[contains(@epub:type, 'glossary')])]"):
+	for section in dom_copy.xpath("/html/body//*[@id and (name() = 'section' or name() = 'article' or re:test(@epub:type, '\\bendnote\\b'))]"):
 		counts: Dict[str, int] = {}
 		is_poem = bool(section.xpath("./ancestor-or-self::*[contains(@epub:type, 'z3998:poem')]"))
 		section_id = section.get_attr("id")
+		allow_header = not is_poem
 
 		section_epub_type = section.get_attr("epub:type")
-		if section_epub_type and "z3998:poem" in section_epub_type:
-			line_number = 0
-			container_poem_section_id = section_id
+		if section_epub_type:
+			# If this section is a poem or an endnotes container, reset the counters
+			if "z3998:poem" in section_epub_type:
+				line_number = 0
+				container_poem_section_id = section_id
+				allow_header = False
 
-		for node in _get_children(section):
+			if "endnotes" in section_epub_type:
+				endnote_number = 0
+
+			# If this section is an endnote, increment the note number and check the ID right now
+			if regex.search(r"\bendnote\b", section.get_attr("epub:type")):
+				endnote_number = endnote_number + 1
+				expected_id = f"note-{endnote_number}"
+
+				if section_id != expected_id:
+					replacements.append((section, expected_id))
+
+		for node in _get_children(section, allow_header):
 			if node.tag in counts:
 				counts[node.tag] = counts[node.tag] + 1
 			else:
 				counts[node.tag] = 1
 
+			# If the line is a line of poetry, increment the line count
 			if is_poem and node.tag == "span" and node.parent.tag == "p":
 				line_number = line_number + 1
 
 			id_attr = node.get_attr("id")
 			# If the element has an ID attribute and it's not an endnote node (i.e. <li epub:type="endnote">)
-			if id_attr and not (node.get_attr("epub:type") and regex.search(r"\bendnote\b", node.get_attr("epub:type"))):
-				expected_id = f"{section_id}-{node.tag}-{counts[node.tag]}"
+			if id_attr:
+				expected_id = id_attr
 
-				if is_poem and node.tag == "span" and node.parent.tag == "p":
-					expected_id = f"{container_poem_section_id}-line-{line_number}"
+				# <dt>s have an id attribute set to their defining word
+				if node.tag == "dt":
+					dfn = node.xpath("./dfn")
+					if dfn:
+						expected_id = make_url_safe(dfn[0].inner_text())
+
+				# All other elements
+				else:
+					expected_id = f"{section_id}-{node.tag}-{counts[node.tag]}"
+
+					if is_poem and node.tag == "span" and node.parent.tag == "p":
+						expected_id = f"{container_poem_section_id}-line-{line_number}"
 
 				if id_attr != expected_id:
 					replacements.append((node, expected_id))

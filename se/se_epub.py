@@ -69,6 +69,7 @@ class SeEpub:
 	content_path: Path = Path() # The path to the epub content base, i.e. self.epub_root_path / epub
 	metadata_file_path: Path = Path() # The path to the metadata file, i.e. self.content_path / content.opf
 	toc_path: Path = Path()  # The path to the metadata file, i.e. self.content_path / toc.xhtml
+	glossary_search_key_map_path = None # The path to the glossary search key map, or None
 	local_css = ""
 	is_se_ebook = True
 	_file_cache: Dict[str, str] = {}
@@ -119,6 +120,10 @@ class SeEpub:
 			self.toc_path = self.content_path / toc_href
 		else:
 			raise se.InvalidSeEbookException("Couldn’t find table of contents.")
+
+		gskm_href = self.metadata_dom.xpath("/package/manifest/item[contains(@properties, 'search-key-map')]/@href", True)
+		if gskm_href:
+			self.glossary_search_key_map_path = self.content_path / gskm_href
 
 		# If our identifier isn't SE-style, we're not an SE ebook
 		identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier/text()", True)
@@ -933,7 +938,6 @@ class SeEpub:
 				# the `glossary` semantic may also appear in the ToC landmarks, so specifically exclude that
 				if dom.xpath("//*[contains(@epub:type, 'glossary') and not(ancestor-or-self::nav)]"):
 					properties.append("glossary")
-					#if dom.xpath("/html/body//*[namespace-uri()='http://www.w3.org/1998/Math/MathML']"):
 				if dom.xpath("/html[namespace::*='http://www.w3.org/1998/Math/MathML']"):
 					properties.append("mathml")
 
@@ -1390,4 +1394,3 @@ class SeEpub:
 		# We don't change the anchor or the back ref just yet
 		endnote.source_file = file_name
 		return needs_rewrite, notes_changed
-		
