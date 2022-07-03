@@ -1491,7 +1491,7 @@ def _get_children(node: EasyXmlElement) -> List[EasyXmlElement]:
 		if child.get_attr("epub:type"):
 			is_endnote = regex.search(r"\bendnote\b", child.get_attr("epub:type"))
 
-		if child.tag not in ("header", "section", "article", "figure", "nav", "dt", "tr") and not is_endnote:
+		if child.tag not in ("section", "article", "figure", "nav") and not is_endnote:
 			result.append(child)
 			result = result + _get_children(child)
 
@@ -1518,9 +1518,12 @@ def find_unexpected_ids(dom: EasyXmlTree) -> List[Tuple[EasyXmlElement, str]]:
 
 	# IDs are set to `{closest_parent_sectioning_element_id}-{tag_name}-{n}`.
 	# Lines of poetry are set to `{closest_poem_sectioning_element_id}-line-{n}`.
+	# Notes:
+	# 1. Endnotes count as their own sectioning elements for the purposes of assigning IDs
+	# 2. Exclude glossaries, as IDs there should be related to the glossterm somehow
 	line_number = 0
 	container_poem_section_id = ""
-	for section in dom_copy.xpath("/html/body//*[@id and (name() = 'section' or name() = 'article' or re:test(@epub:type, '\\bendnote\\b'))]"):
+	for section in dom_copy.xpath("/html/body//*[@id and (name() = 'section' or name() = 'article' or re:test(@epub:type, '\\bendnote\\b')) and not(ancestor-or-self::*[contains(@epub:type, 'glossary')])]"):
 		counts: Dict[str, int] = {}
 		is_poem = bool(section.xpath("./ancestor-or-self::*[contains(@epub:type, 'z3998:poem')]"))
 		section_id = section.get_attr("id")
