@@ -1578,8 +1578,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 						header_text = ""
 
 					if header_text != "":
-						# Make sure to escape & to match the ToC text
-						headings.append((header_text.replace("&", "&amp;"), str(filename)))
+						headings.append((header_text, str(filename)))
 
 				# Check for illegal characters
 				matches = regex.findall(fr"({se.UNICODE_BOM}|{se.SHY_HYPHEN})", file_contents)
