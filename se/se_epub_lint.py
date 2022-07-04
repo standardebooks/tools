@@ -86,6 +86,7 @@ CSS
 "c-023", "Illegal unit used to set [css]font-size[/]. Hint: Use [css]em[/] units."
 "c-024", "Illegal unit used to set [css]line-height[/]. Hint: [css]line-height[/] is set without any units."
 "c-025", "Illegal percent unit used to set [css]height[/] or positioning property. Hint: [css]vh[/] to specify vertical-oriented properties like height or position."
+"c-026", "Table that appears to be listing numbers, but without [css]font-variant-numeric: tabular-nums;[/]."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -2449,6 +2450,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				nodes = dom.xpath("/html/body//p[re:test(., '[^’]\\s”')]")
 				if nodes:
 					messages.append(LintMessage("t-037", "[text]”[/] preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for tables that appear to be summing/listing numbers, but that are missing font-variant-numeric styling
+				nodes = dom.xpath("/html/body//table[count(.//td[not(following-sibling::*) and re:test(., '^[0-9]+$') and not(@data-css-font-variant-numeric='tabular-nums')]) >= 2]")
+				if nodes:
+					messages.append(LintMessage("c-026", "Table that appears to be listing numbers, but without [css]font-variant-numeric: tabular-nums;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
 
 				# Check if a subtitle ends in a text node with a terminal period; or if it ends in an <i> node containing a terminal period.
 				nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6]/*[contains(@epub:type, 'subtitle')][(./text())[last()][re:test(., '\\.$')] or (./i)[last()][re:test(., '\\.$')]]")
