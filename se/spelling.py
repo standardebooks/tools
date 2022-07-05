@@ -404,6 +404,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ff])rolick\b", r"\1rolic", xhtml)			# frolick -> frolic
 	xhtml = regex.sub(r"\bIncroach", r"Encroach", xhtml)				# Incroach -> Encroach
 	xhtml = regex.sub(r"\bincroach", r"encroach", xhtml)				# incroach -> encroach
+	xhtml = regex.sub(r"\bmizen ?mast", r"mizzenmast", xhtml)			# mizenmast -> mizzenmast
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
