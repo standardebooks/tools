@@ -65,7 +65,7 @@ setup(
 		"ftfy==6.0.3",
 		"gitpython==3.1.11", # Must stay at this version until the server can use Python >= 3.7
 		"importlib_resources==1.0.2",
-		"lxml==4.6.5",
+		"lxml==4.9.1",
 		"natsort==7.1.1",
 		"pillow==8.4.0", # 9.0.0 isn't compatible with the version of Python on Ubuntu 18.04
 		"psutil==5.8.0",
