@@ -26,7 +26,7 @@ complete -c se -A -n "__fish_seen_subcommand_from build" -s p -l proof -d "inser
 complete -c se -A -n "__fish_seen_subcommand_from build" -s v -l verbose -d "increase output verbosity"
 complete -c se -A -n "__fish_seen_subcommand_from build" -s y -l check-only -d "run tests used by --check but don’t output any ebook files and exit after checking"
 
-complete -c se -n "__fish_se_no_subcommand" -a build-ids -d "Change ID attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced."
+complete -c se -n "__fish_se_no_subcommand" -a build-ids -d "Change ID attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced, and the ebook spine must be complete."
 complete -c se -A -n "__fish_seen_subcommand_from build-images" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from build-images" -s v -l verbose -d "increase output verbosity"
 

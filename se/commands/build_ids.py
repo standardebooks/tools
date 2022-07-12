@@ -1,5 +1,5 @@
 """
-This module implements the `se build-spine` command.
+This module implements the `se build-ids` command.
 """
 
 import argparse
@@ -18,7 +18,7 @@ def build_ids(plain_output: bool) -> int:
 	Entry point for `se build-ids`
 	"""
 
-	parser = argparse.ArgumentParser(description="Change ID attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced.")
+	parser = argparse.ArgumentParser(description="Change ID attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced, and the ebook spine must be complete.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()

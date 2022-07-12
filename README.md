@@ -232,7 +232,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se build-ids`
 
-	Change ID attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced.
+	Change ID attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced, and the ebook spine must be complete.
 
 -	### `se build-images`
 
