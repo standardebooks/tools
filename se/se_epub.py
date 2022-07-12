@@ -1183,7 +1183,7 @@ class SeEpub:
 				anchor = ""
 				href = link.get_attr("href") or ""
 				if href:
-					# Extract just the anchor from a URL (ie, what follows a hash symbol)
+					# Extract just the anchor from a URL (i.e., what follows a hash symbol)
 					hash_position = href.find("#") + 1  # we want the characters AFTER the hash
 					if hash_position > 0:
 						anchor = href[hash_position:]
@@ -1206,6 +1206,8 @@ class SeEpub:
 				orphans.append(note.anchor)
 		for orphan in orphans:
 			response.append(f"Orphan endnote with anchor: {orphan}")
+		if len(orphans) > 0:
+			response.append("Is your spine generated and valid?")
 		return response
 
 	def recreate_endnotes(self) -> None:
@@ -1260,7 +1262,7 @@ class SeEpub:
 		results = self._check_endnotes()
 		if results:
 			report = "\n".join(results)
-			raise se.InvalidInputException(f"Endnote error(s) found: {report}.")
+			raise se.InvalidInputException(f"Endnote error(s) found:\n{report}")
 
 		# If we get here, it's safe to proceed
 		processed = 0
