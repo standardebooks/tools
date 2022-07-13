@@ -1476,12 +1476,26 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 
 	return title
 
-def _get_children(node: EasyXmlElement, allow_header: bool) -> List[EasyXmlElement]:
+def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> List[EasyXmlElement]:
 	"""
 	Helper function for find_unexpected_ids().
 
 	Get a flat list of children that are not headers or sectioning elements,
 	and return a list of those nodes.
+	In other words, input like this:
+	<section>
+		<p></p>
+		<blockquote>
+			<p></p>
+		</blockquote>
+		<p></p>
+	</section>
+
+	Would result in this flat list:
+	p
+	blockquote
+	p
+	p
 	"""
 
 	result = []
@@ -1499,7 +1513,7 @@ def _get_children(node: EasyXmlElement, allow_header: bool) -> List[EasyXmlEleme
 
 		if child.tag not in sectioning_elements and not is_endnote and not is_glossdef:
 			result.append(child)
-			result = result + _get_children(child, allow_header)
+			result = result + _get_flattened_children(child, allow_header)
 
 	return result
 
@@ -1555,7 +1569,7 @@ def find_unexpected_ids(dom: EasyXmlTree) -> List[Tuple[EasyXmlElement, str]]:
 				if section_id != expected_id:
 					replacements.append((section, expected_id))
 
-		for node in _get_children(section, allow_header):
+		for node in _get_flattened_children(section, allow_header):
 			if node.tag in counts:
 				counts[node.tag] = counts[node.tag] + 1
 			else:
