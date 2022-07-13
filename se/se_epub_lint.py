@@ -591,6 +591,22 @@ def _get_selectors_and_rules (self) -> tuple:
 
 	return (local_css_rules, duplicate_selectors)
 
+def files_not_in_spine(self) -> set:
+	"""
+	Check the spine against the actual files.
+
+	INPUTS
+	None
+
+	OUTPITS
+	Set of files not in the spine (typically an empty set)
+	"""
+
+	xhtml_files = set(self.path.glob("src/epub/**/*.xhtml"))
+	spine_files = set(self.spine_file_paths)
+	spine_files.add(self.toc_path)
+	return xhtml_files.difference(spine_files)
+
 def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> list:
 	"""
 	Check this ebook for some common SE style errors.
