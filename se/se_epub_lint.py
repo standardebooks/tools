@@ -95,7 +95,7 @@ FILESYSTEM
 "f-004", f"File does not match [path][link=file://{core_css_file_path}]{core_css_file_path}[/][/]."
 "f-005", f"File does not match [path][link=file://{logo_svg_file_path}]{logo_svg_file_path}[/][/]."
 "f-006", f"File does not match [path][link=file://{uncopyright_file_path}]{uncopyright_file_path}[/][/]."
-"f-008", f"Filename is not URL-safe. Expected: [path]{url_safe_filename}[/]."
+"f-007", "File not listed in [xml]<spine>[/]."
 "f-008", f"Filename is not URL-safe. Expected: [path]{url_safe_filename}[/]."
 "f-009", "Illegal leading [text]0[/] in filename."
 "f-010", "Problem decoding file as utf-8."
@@ -687,6 +687,12 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 			messages.append(LintMessage("m-047", "Ignoring [path]*[/] is too general. Target specific files if possible.", se.MESSAGE_TYPE_WARNING, lint_ignore_path))
 
 	# Done parsing ignore list
+
+	# Check that the spine has all the expected files in the book
+	missing_spine_files = files_not_in_spine(self)
+	if missing_spine_files:
+		for missing_spine_file in missing_spine_files:
+			messages.append(LintMessage("f-007", "File not listed in [xml]<spine>[/].", se.MESSAGE_TYPE_ERROR, missing_spine_file))
 
 	# Get the ebook language for later use
 	try:
