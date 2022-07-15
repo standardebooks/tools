@@ -12,6 +12,7 @@ import se
 import se.easy_xml
 import se.formatting
 from se.se_epub import SeEpub
+from se.se_epub_lint import files_not_in_spine
 
 def build_ids(plain_output: bool) -> int:
 	"""
@@ -31,6 +32,12 @@ def build_ids(plain_output: bool) -> int:
 				console.print(se.prep_output(f"Processing [path][link=file://{directory}]{directory}[/][/] ...", plain_output))
 
 			se_epub = SeEpub(directory)
+
+			# First, check for spine sanity: no point in proceeding if it’s not correct
+			missing_spine_files = files_not_in_spine(se_epub)
+			if missing_spine_files:
+				missing_spine_file_list = ", ".join([file.name for file in missing_spine_files])
+				raise se.InvalidSeEbookException(f"Additional files not in spine: {missing_spine_file_list}")
 
 			replacements: List[Tuple[se.easy_xml.EasyXmlElement, str]] = []
 			id_counter = 0
