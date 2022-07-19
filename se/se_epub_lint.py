@@ -281,6 +281,7 @@ SEMANTICS & CONTENT
 "s-091", "[xhtml]<span>[/] not followed by [xhtml]<br/>[/] in poetry."
 "s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic."
 "s-093", "Nested [xhtml]<abbr>[/] element."
+"s-094", "Element has an [attr]xml:lang[/] attribute that incorrectly contains [val]-latn[/] instead of [val]-Latn[/]."
 "s-095", "[xhtml]<hgroup>[/] element containing [xhtml]<h#>[/] element in the wrong heading order."
 "s-096", "[xhtml]h1[/] element in half title page missing the [val]fulltitle[/] semantic."
 "s-097", "[xhtml]a[/] element without [attr]href[/] attribute."
@@ -288,9 +289,6 @@ SEMANTICS & CONTENT
 "s-099", "List item in endnotes missing [xhtml]endnote[/] semantic."
 "s-100", "Anonymous digital contributor value not exactly [text]An Anonymous Volunteer[/]."
 "s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/]."
-UNUSED
-vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"s-094", "Endnote out of sequence."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -2240,6 +2238,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '^(he|ru|el|zh|bn|hi|sa|uk|yi)$') and re:test(., '[a-zA-Z]')]")
 				if nodes:
 					messages.append(LintMessage("s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				# Check for language tags transliterated into Latin script with incorrect `-latn` suffix (lowercase l)
+				nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '-latn')]")
+				if nodes:
+					messages.append(LintMessage("s-094", "Element has an [attr]xml:lang[/] attribute that incorrectly contains [val]-latn[/] instead of [val]-Latn[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for some Latinisms that need italics according to the manual. We check ancestor-or-self in case the phrase is set in Roman because it's nested in a parent italic.
 				# Exclude toto followed by ’ since Toto can be a name.
