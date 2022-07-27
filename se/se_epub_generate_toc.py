@@ -733,7 +733,8 @@ def process_all_content(self, file_list: list) -> Tuple[list, list]:
 		with open(textf, "r", encoding="utf-8") as file:
 			dom = se.easy_xml.EasyXmlTree(file.read())
 		process_headings(dom, textf.name, toc_list, single_file, single_file_without_headers)
-		if dom.xpath("/html/body//*[contains(@epub:type, 'halftitlepage')]"):
+		# Only consider half title pages that are front matter. Some books, like C.S. Lewis Poetry, may have half titles that are bodymatter
+		if dom.xpath("/html/body//*[contains(@epub:type, 'halftitlepage') and ancestor-or-self::*[contains(@epub:type, 'frontmatter')]]"):
 			nest_under_halftitle = True
 
 	# now go through adjusting for nesting under halftitle
