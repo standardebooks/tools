@@ -1978,7 +1978,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 				# Check for missing punctuation in continued quotations
 				# ” said Bob “
-				nodes = dom.xpath("/html/body//p[re:test(., '”\\s(?:said|[A-Za-z]{2,}ed)\\s[A-Za-z]+?(?<!\\bthe)(?<!\\bto)(?<!\\bwith)(?<!\\bfrom)(?<!\\ba\\b)(?<!\\bis)\\s“') or re:test(., '[^\\.]”\\s(\\bhe\\b|\\bshe\\b|I|[A-Z][a-z]+?)\\s(?:said|[A-Za-z]{2,}ed)\\s“') or re:test(., ',” (?:said|[A-Za-z]{2,}ed) [A-Za-z]+? [A-Za-z]+?ly “')]")
+				nodes = dom.xpath("/html/body//p[re:test(., '”\\s(?:said|[A-Za-z]{2,}ed)\\s[A-Za-z]+?(?<!\\bthe)(?<!\\bto)(?<!\\bwith)(?<!\\bfrom)(?<!\\ba\\b)(?<!\\bis)\\s“') or re:test(., '[^\\.]”\\s(\\bhe\\b|\\bshe\\b|I|[A-Z][a-z]+?)\\s(?:said|[A-Za-z]{2,}ed)\\s“') or re:test(., ',” (?:said|[A-Za-z]{2,}ed) [A-Za-z]+? [A-Za-z]+?ly “') or re:test(., '“[A-Z][^”]+?[a-z]” ((s?he|we|they) [a-z]+?ed|[a-z]+?ed (the|[A-Z][a-z]+))\\b')]")
 				if nodes:
 					messages.append(LintMessage("t-042", "Possible typo: Dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
