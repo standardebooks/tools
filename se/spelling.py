@@ -409,6 +409,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bto a [‘“]?[Tt]([^’”]?)[’”]?(\s)", r"to a T\1\2", xhtml)		# Remove quotes from `to a T` and capitalize T
 	xhtml = regex.sub(r"\b([Tt])eaze", r"\1ease", xhtml)				# teaze -> tease
 	xhtml = regex.sub(r"\b([Cc])hrystal", r"\1rystal", xhtml)			# chrystal -> crystal
+	xhtml = regex.sub(r"\b([Pp])arty-?colo(u?)r", r"\1articolo\2r", xhtml)		# party-color -> particolor
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
