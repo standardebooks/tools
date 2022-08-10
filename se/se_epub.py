@@ -498,21 +498,40 @@ class SeEpub:
 		css = ""
 		namespaces: List[str] = []
 
-		css_filenames = ["core.css", "se.css", "local.css"]
+		css_filenames = list(self.content_path.glob("**/*.css"))
 
+		# If we have standard SE CSS files, attempt to sort them in the order we expect them to appear in the ebook.
+		# core.css -> se.css -> local.css
+		sorted_css_filenames = {}
+		for filepath in css_filenames:
+			if filepath.name == "core.css":
+				sorted_css_filenames[0] = filepath
+			if filepath.name == "se.css":
+				sorted_css_filenames[1] = filepath
+			if filepath.name == "local.css":
+				sorted_css_filenames[2] = filepath
+
+		# Turn the dict into a list, sorting by key
+		sorted_css_filenames_list = [sorted_css_filenames[key] for key in sorted(sorted_css_filenames.keys())]
+
+		# If we hit all 3 files then we're probably an SE ebook, replace our list of CSS files with the sorted list
+		if len(sorted_css_filenames_list) == 3:
+			css_filenames = sorted_css_filenames_list
+
+		# Add the extra CSS file if present
 		if extra_css_file:
-			css_filenames.append(str(extra_css_file))
+			css_filenames.append(extra_css_file)
 
-		for filename in css_filenames:
-			filepath = self.content_path / "css" / filename
+		# Now recompose the CSS
+		for filepath in css_filenames:
 			file_css = self.get_file(filepath)
 
 			namespaces = namespaces + regex.findall(r"@namespace.+?;", file_css)
 
 			file_css = regex.sub(r"\s*@(charset|namespace).+?;\s*", "\n", file_css).strip()
 
-			# Convert background-image URLs (from local.css only) to base64
-			if filename == "local.css":
+			# Convert background-image URLs to base64
+			if filepath.name == "local.css":
 				for image in regex.finditer(pattern=r"""url\("(.+?\.(?:svg|png|jpg))"\)""", string=file_css):
 					data_url = se.images.get_data_url(self.content_path / image.captures(1)[0].replace("../", ""))
 					file_css = file_css.replace(image.group(0), f"""url("{data_url}")""")

@@ -3,6 +3,7 @@ This module implements the `se recompose-epub` command.
 """
 
 import argparse
+from pathlib import Path
 
 import se
 from se.se_epub import SeEpub
@@ -22,7 +23,7 @@ def recompose_epub(plain_output: bool) -> int:
 
 	try:
 		se_epub = SeEpub(args.directory)
-		recomposed_epub = se_epub.recompose(args.xhtml, args.extra_css_file)
+		recomposed_epub = se_epub.recompose(args.xhtml, Path(args.extra_css_file))
 
 		if args.output:
 			with open(args.output, "w", encoding="utf-8") as file:
