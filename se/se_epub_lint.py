@@ -1859,6 +1859,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: two or more [text]’[/] in a row.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
+				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '”[a-z]')]")]
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: [text]”[/] directly followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
 				# Check for period not inside rsquo
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[^”’]+?’[\\.,]”')]")]
 				if typos:
