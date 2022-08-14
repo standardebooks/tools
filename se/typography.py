@@ -399,13 +399,12 @@ def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_
 	hyphenator = pyphen.Pyphen(lang=language)
 
 	text = dom.xpath("/html/body")[0].inner_xml()
-	result = text
+	result = ""
 	word = ""
 	in_tag = False
 	tag_name = ""
 	reading_tag_name = False
 	in_h_tag = False
-	pos = 1
 
 	# The general idea here is to read the whole contents of the <body> tag character by character.
 	# If we hit a <, we ignore the contents until we hit the next >.
@@ -413,6 +412,7 @@ def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_
 	# We can't just split at whitespace because HTML tags can contain whitespace (attributes for example)
 	for char in text:
 		process = False
+		reading_word = False
 
 		if char == "<":
 			process = True
@@ -429,6 +429,7 @@ def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_
 			tag_name = tag_name + char
 		elif not in_tag and char.isalnum():
 			word = word + char
+			reading_word = True
 		elif not in_tag:
 			process = True
 
@@ -445,11 +446,13 @@ def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_
 		if process:
 			if word != "":
 				new_word = hyphenator.inserted(word, hyphen=se.SHY_HYPHEN)
-				result = result[:pos - len(word) - 1] + new_word + char + result[pos:]
-				pos = pos + len(new_word) - len(word)
-			word = ""
+				result = result + new_word + char
+			else:
+				result = result + char
 
-		pos = pos + 1
+			word = ""
+		elif not reading_word:
+			result = result + char
 
 	# We need to double-escape backslashes in the replacement string, in case the string contains a backslash+number that
 	# the regex engine will misinterpret as a capture group
