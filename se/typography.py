@@ -451,7 +451,7 @@ def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_
 				result = result + char
 
 			word = ""
-		elif not reading_word:
+		elif not reading_word or (in_h_tag and ignore_h_tags):
 			result = result + char
 
 	# We need to double-escape backslashes in the replacement string, in case the string contains a backslash+number that
