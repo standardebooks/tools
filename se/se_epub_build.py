@@ -39,6 +39,7 @@ COVER_THUMBNAIL_WIDTH = int(se.COVER_WIDTH / 4) # Cast to int required for PIL
 COVER_THUMBNAIL_HEIGHT = int(se.COVER_HEIGHT / 4) # Cast to int required for PIL
 SVG_OUTER_STROKE_WIDTH = 2
 SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
+ENDNOTE_CHUNK_SIZE = 500
 
 # See https://www.w3.org/TR/dpub-aria-1.0/
 # Without preceding `doc-`
@@ -154,6 +155,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 	advanced_epub_output_filename = f"{identifier}{'.proof' if proof else ''}_advanced.epub"
 	kobo_output_filename = f"{identifier}{'.proof' if proof else ''}.kepub.epub"
 	kindle_output_filename = f"{identifier}{'.proof' if proof else ''}.azw3"
+	endnote_files_to_be_chunked = []
 
 	# Create our temp work directory
 	with tempfile.TemporaryDirectory() as temp_dir:
@@ -513,6 +515,10 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					if "epub-type-endnote" + plural in (node.get_attr("class") or ""):
 						node.add_attr_value("class", "epub-type-footnote" + plural)
 
+				# If this file is an endnotes file, add it to our list for later processing
+				if float(dom.xpath("count(/html/body//section[contains(@epub:type, 'endnotes')]/ol/li)", True)) > ENDNOTE_CHUNK_SIZE + 100:
+					endnote_files_to_be_chunked.append(file_path)
+
 				# Include extra lang tag for accessibility compatibility
 				for node in dom.xpath("//*[@xml:lang]"):
 					node.set_attr("lang", node.get_attr("xml:lang"))
@@ -594,9 +600,111 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 						file.write(processed_css)
 						file.truncate()
 
+		# If we have any endnote files, split them if they contain more than 500 endnotes.
+		for endnote_file in endnote_files_to_be_chunked:
+			endnote_manifest_href = regex.sub(fr"^{regex.escape(str(work_compatible_epub_dir / 'epub') + os.sep)}", "", str(endnote_file.parent))
+
+			dom = self.get_dom(endnote_file)
+			# Before we continue, update any a@href that are only anchors
+			for node in dom.xpath("/html/body//a[re:test(@href, '^#')]"):
+				node.set_attr("href", f"{endnote_file.name}{node.get_attr('href')}")
+
+			endnotes = dom.xpath("/html/body//*[re:test(@epub:type, '\\bendnote\\b')]")
+
+			# Split our endnotes into chunks of 500 endnotes each
+			chunked_endnotes = []
+			for i in range(0, len(endnotes), ENDNOTE_CHUNK_SIZE):
+				chunked_endnotes.append(endnotes[i:i + ENDNOTE_CHUNK_SIZE])
+
+			# We use our endnotes file dom as as base for the split endnotes. Remove all endnotes and add an empty <ol> to start.
+			endnotes_base = deepcopy(dom)
+			endnotes_base.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol")[0].remove()
+			endnotes_base.xpath("/html/body/section[contains(@epub:type, 'endnotes')]")[0].append(se.easy_xml.EasyXmlElement("<ol></ol>"))
+			chunk_number = 1
+			toc_relative_path = metadata_dom.xpath("/package/manifest/item[re:test(@properties, '\\bnav\\b')]/@href", True)
+			toc_dom = self.get_dom(work_compatible_epub_dir / "epub" / toc_relative_path)
+			endnotes_manifest_entry = metadata_dom.xpath(f"/package/manifest/item[@href='{endnote_manifest_href}/{endnote_file.name}']")[0]
+			endnotes_spine_entry = metadata_dom.xpath(f"/package/spine/itemref[@idref='{endnotes_manifest_entry.get_attr('id')}']")[0]
+			endnotes_toc_entry = toc_dom.xpath(f"/html/body//*[re:test(@epub:type, '\\btoc\\b')]//li[./a[re:test(@href, '^{endnote_manifest_href}/{endnote_file.name}')]]")[0]
+			endnotes_id_map = {}
+
+			# Update the landmarks entry right away; we only want to point it to the first endnotes file
+			# on the assumption that the rest will be in sequence
+			endnotes_landmarks_entry = toc_dom.xpath(f"/html/body//*[re:test(@epub:type, '\\blandmarks\\b')]//a[re:test(@href, '^{endnote_manifest_href}/{endnote_file.name}')]")[0]
+			endnotes_landmarks_entry.set_attr("href", f"{endnote_manifest_href}/{endnote_file.stem}-1.xhtml")
+
+			# Chunk the endnotes and write the new endnote files to disk
+			for chunk in chunked_endnotes:
+				current_endnotes_file = deepcopy(endnotes_base)
+				ol_node = current_endnotes_file.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol")[0]
+				chunk_start = ((chunk_number - 1) * ENDNOTE_CHUNK_SIZE) + 1
+				chunk_end = chunk_start - 1 + len(chunk)
+				new_filename = f"{endnote_file.stem}-{chunk_number}.xhtml"
+
+				if chunk_number > 1:
+					ol_node.set_attr("start", str(chunk_start))
+
+				# Add the endnotes to the new endnotes file
+				for endnote in chunk:
+					ol_node.append(endnote)
+
+				# Generate and set the new title element of the new endnotes file
+				endnotes_title = f"Endnotes {format(chunk_start, ',d')}–{format(chunk_end, ',d')}"
+				endnotes_header_node = current_endnotes_file.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/*[re:test(@epub:type, '\\btitle\\b')]")[0]
+				endnotes_header_node.set_text(endnotes_title)
+				endnotes_title_node = current_endnotes_file.xpath("/html/head/title")[0]
+				endnotes_title_node.set_text(endnotes_title)
+
+				# Generate our ID map so that we can update links in the ebook later
+				# We inspect ALL IDs, because we might have an ID that isn't on an endnote
+				for node in current_endnotes_file.xpath("//*[@id]"):
+					endnotes_id_map[node.get_attr("id")] = new_filename
+
+				# Write the new file
+				with open(endnote_file.parent / new_filename, "w", encoding="utf-8") as file:
+					file.write(current_endnotes_file.to_string())
+
+				# Update the manifest and spine
+				endnotes_manifest_entry.lxml_element.addprevious(etree.XML(f"""<item href="{endnote_manifest_href}/{new_filename}" id="{new_filename}" media-type="application/xhtml+xml"/>"""))
+				endnotes_spine_entry.lxml_element.addprevious(etree.XML(f"""<itemref idref="{new_filename}"/>"""))
+
+				# Update the ToC
+				node_clone = deepcopy(endnotes_toc_entry)
+				node_clone_link = node_clone.xpath(".//a")[0]
+				node_clone_link.set_attr("href", f"{endnote_manifest_href}/{new_filename}")
+				node_clone_link.set_text(endnotes_title)
+				endnotes_toc_entry.lxml_element.addprevious(node_clone.lxml_element)
+
+				chunk_number = chunk_number + 1
+
+			# Update the metadata file with new manifest/spine
+			endnotes_manifest_entry.remove()
+			endnotes_spine_entry.remove()
+			endnotes_toc_entry.remove()
+
+			# Remove the old endnotes file
+			endnote_file.unlink()
+
+			# Iterate over all XHTML files to replace ID refs
+			for file_path in work_compatible_epub_dir.glob("**/*.xhtml"):
+				dom = self.get_dom(file_path)
+				has_anchor = False
+				for ref in dom.xpath(f"/html/body//a[re:test(@href, '{regex.escape(endnote_file.name)}#')]"):
+					anchor = regex.sub("^.+?#", "", ref.get_attr("href"))
+					ref.set_attr("href", endnotes_id_map[anchor] + "#" + anchor)
+					has_anchor = True
+
+				if has_anchor:
+					with open(file_path, "w", encoding="utf-8") as file:
+						file.write(dom.to_string())
+
+			# Output the modified the ToC file
+			with open(work_compatible_epub_dir / "epub" / toc_relative_path, "w", encoding="utf-8") as file:
+				file.write(se.formatting.format_xhtml(toc_dom.to_string()))
+
 		# Output the modified the metadata file so that we can build the kobo book before making more compatibility hacks that aren’t needed on that platform.
 		with open(work_compatible_epub_dir / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
-			file.write(metadata_dom.to_string())
+			file.write(se.formatting.format_xhtml(metadata_dom.to_string()))
 
 		if build_kobo:
 			work_kepub_dir = Path(work_dir / (work_compatible_epub_dir.name + ".kepub"))
@@ -1204,7 +1312,13 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					replace_shy_hyphens = True
 
 					# Loop over each endnote and move the ending backlink to the front of the endnote for Kindles
+					note_container = dom.xpath("/html/body//section[contains(@epub:type, 'endnotes')]/ol")[0]
+
 					note_number = 1
+
+					if note_container.get_attr("start"):
+						note_number = int(note_container.get_attr("start"))
+
 					for endnote in dom.xpath("//li[re:test(@epub:type, '\\b(endnote|footnote)\\b')]"):
 						first_p = endnote.xpath("(./p[not(preceding-sibling::*)])[1]")
 
@@ -1231,6 +1345,9 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 						endnote.unwrap()
 
 						note_number = note_number + 1
+
+					# Remove the containing <ol>, since the children are just <p>s now
+					note_container.unwrap()
 
 				# Remove the epub:type attribute, as Calibre turns it into just "type"
 				for node in dom.xpath("//*[@epub:type]"):
