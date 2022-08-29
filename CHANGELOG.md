@@ -1,3 +1,105 @@
+# 2.4.0
+
+## General
+
+- Update colophon and imprint boilerplate
+
+- Various GitHub workflow improvements. Thanks to James Clark and Matt Chan
+
+- Add se build-ids command
+
+- easy_xml: Unescape output of inner_text
+
+## se build
+
+- For ebooks with more than 600 endnotes, chunk the endnotes file into several files
+
+## se build-toc
+
+- Only consider half titles that are frontmatter when deciding on whether to nest items below them
+
+## se create-draft
+
+- Don't copy metadata from template files. Thanks to ash
+
+## se hyphenate
+
+- Improve speed of hyphenate by building result string instead of slicing it repeatedly
+
+## se lint
+
+- Rename s-051 to f-017; make f-016 a general rule for all images; add f-018, images can't be greater than 4,000,000 pixels square
+
+- Add m-073, invalid anonymous contributor value
+
+- Add s-051, invalid 'unk' language tag warning. Thanks to Robin Whittleton
+
+- Improve t-042
+
+- Don’t fail lint on presence of JPEG2000 files. Thanks to Robin Whittleton
+
+- Don’t ignore the halftitlepage when linting. Thanks to Robin Whittleton
+
+- Add s-100 and s-101, correct Anonymous strings in colophon
+
+- Improve m-003
+
+- Change m-052 to use the dcterms:alternate vocabulary
+
+- Fix typo in error message in m-037
+
+- Add m-074 and m-075, multiple transcriptions/page scans in metadata, but no link in imprint/colophon
+
+- Add t-071, multiple transcriptions listed but preceding text is singular
+
+- Add t-072, 'various sources' link not preceded by 'from'
+
+- Add m-076, gutenberg.net.au with leading www.
+
+- Add apostrophe to 'childrens' subject
+
+- Add missing SE variable to check
+
+- Add x-019, numbered p element whose number doesn't match its position
+
+- Fix broken match in x-018
+
+- Full support for glossary IDs in build-ids and lint
+
+- Remove s-094 which is now superseded by x-019
+
+- Add c-026, table missing font-variant-numeric: tabular-nums
+
+- Add a lint check for missing spine items. Thanks to Robin Whittleton
+
+- Add s-094, xml:lang attributes containing -latn, not -Latn. Thanks to Robin Whittleton
+
+- Don't match s-029 in some cases to prevent misleading messages
+
+## se modernize-spelling
+
+- Various additions and fixes
+
+## se recompose-epub
+
+- Recompose CSS in the general case instead of hard-coding expected CSS files
+
+- Convert all background-images to base64, not just in local.css
+
+## se renumber-endnotes
+
+- Change non-noteref links. Thanks to David Grigg
+
+- Add a spine hint for orphan errors on renumber-endnotes. Thanks to Robin Whittleton
+
+## se typogrify
+
+- Rework the tis/twas quoting code to cope with more cases. Thanks to Robin Whittleton
+
+- Remove nbsp before 'etc.'
+
+- Fix edge case when working on ellipses spacing
+
 # 2.3.10
 
 ## se modernize-spelling
