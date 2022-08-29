@@ -649,11 +649,11 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					ol_node.append(endnote)
 
 				# Generate and set the new title element of the new endnotes file
-				endnotes_title = f"Endnotes {format(chunk_start, ',d')}–{format(chunk_end, ',d')}"
+				endnotes_title = f"Endnotes {format(chunk_start, ',d')}⁠–⁠{format(chunk_end, ',d')}"
 				endnotes_header_node = current_endnotes_file.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/*[re:test(@epub:type, '\\btitle\\b')]")[0]
 				endnotes_header_node.set_text(endnotes_title)
 				endnotes_title_node = current_endnotes_file.xpath("/html/head/title")[0]
-				endnotes_title_node.set_text(endnotes_title)
+				endnotes_title_node.set_text(endnotes_title.replace("⁠", ""))
 
 				# Generate our ID map so that we can update links in the ebook later
 				# We inspect ALL IDs, because we might have an ID that isn't on an endnote
