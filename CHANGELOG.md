@@ -1,3 +1,11 @@
+# 2.4.2
+
+## se recompose-epub
+
+- Don't crash if inline image is not in the ebook
+
+- Don't crash if no CSS file is passed
+
 # 2.4.1
 
 ## General
