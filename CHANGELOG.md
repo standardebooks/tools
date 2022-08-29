@@ -1,3 +1,13 @@
+# 2.4.1
+
+## General
+
+- Try to fix Python dependencies
+
+## se build
+
+-  Don't include word joiners in ToC when splitting endnotes files
+
 # 2.4.0
 
 ## General
