@@ -532,8 +532,16 @@ class SeEpub:
 
 			# Convert background-image URLs to base64
 			for image in regex.finditer(pattern=r"""url\("(.+?\.(?:svg|png|jpg))"\)""", string=file_css):
-				data_url = se.images.get_data_url(self.content_path / image.captures(1)[0].replace("../", ""))
-				file_css = file_css.replace(image.group(0), f"""url("{data_url}")""")
+				url = image.captures(1)[0].replace("../", "")
+				url = regex.sub(r"^/", "", url)
+				try:
+					data_url = se.images.get_data_url(self.content_path / url)
+					file_css = file_css.replace(image.group(0), f"""url("{data_url}")""")
+				except FileNotFoundError:
+					# If the file isn't found, continue silently.
+					# File may not be found for example in web.css, which points to an image on the web
+					# server, not in the ebook.
+					pass
 
 			css = css + f"\n\n\n/* {filepath.name} */\n" + file_css
 
