@@ -2159,7 +2159,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 						section = _find_ebook_section(parent_section[0].get_attr("id"), section_tree)
 
 						if not section:
-							invalid_parent_ids.append(parent_section[0].to_tag_string())
+							# We can accidentally raise s-029 if the file isn't in the spine. This is technically correct, but s-029 is a
+							# misleading message in that case, and f-007 will also be raised, which is the correct message.
+							if filename in self.spine_file_paths:
+								invalid_parent_ids.append(parent_section[0].to_tag_string())
 						else:
 							if str(section.depth) != heading.tag[1:2]:
 								invalid_headers.append(heading.to_string())
