@@ -672,7 +672,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				node_clone = deepcopy(endnotes_toc_entry)
 				node_clone_link = node_clone.xpath(".//a")[0]
 				node_clone_link.set_attr("href", f"{endnote_manifest_href}/{new_filename}")
-				node_clone_link.set_text(endnotes_title)
+				node_clone_link.set_text(endnotes_title.replace("⁠", ""))
 				endnotes_toc_entry.lxml_element.addprevious(node_clone.lxml_element)
 
 				chunk_number = chunk_number + 1
