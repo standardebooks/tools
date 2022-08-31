@@ -8,7 +8,7 @@ Installing this toolset using `pipx` makes the `se` command line executable avai
 
 The toolset requires Python >= 3.6.
 
-To install the toolset locally for development and debugging, see [Installation for Developers](#installation-for-developers).
+To install the toolset locally for development and debugging, see [Installation for toolset developers](#installation-for-toolset-developers).
 
 Optionally, install [Ace](https://daisy.github.io/ace/) and the `se build --check` command will automatically run it as part of the checking process.
 
@@ -124,7 +124,7 @@ These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 rele
 	pipx install standardebooks
 	```
 
-## Installation for developers
+## Installation for toolset developers
 
 If you want to work on the toolset source, it’s helpful to tell `pipx` to install the package in “editable” mode. This will allow you to edit the source of the package live and see changes immediately, without having to uninstall and re-install the package.
 
@@ -215,6 +215,8 @@ We need volunteers to take the lead on the following goals:
 - Writing installation instructions for Bash and ZSH completions for MacOS.
 
 - Currently we install the whole Calibre package, which is very big, but it’s only used to convert epub to azw3. Can we inline Calibre’s azw3 conversion code in the `./vendor/` directory, to avoid having to install the entire package as a big dependency?
+
+- Over the years, `./se/se_epub_build.py` and `./se/se_epub_lint.py` have evolved to become very large and unwieldy. Is there a better, clearer way to organize this code?
 
 # Tool descriptions
 
