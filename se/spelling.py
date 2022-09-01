@@ -213,7 +213,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Nn])ew comer(s?)\b", r"\1ewcomer\2", xhtml)		# new comer -> newcomer
 	xhtml = regex.sub(r"\b([Pp])ease\b(?![ \-]pudding)", r"\1eas", xhtml)		# pease -> peas (but "pease pudding")
 	xhtml = regex.sub(r"\b([Ss])uch like\b", r"\1uchlike", xhtml)			# such like -> suchlike
-	xhtml = regex.sub(r"\b([Ee])mployé", r"\1mployee", xhtml)			# employé -> employee
+	xhtml = regex.sub(r"\b([Ee])mploy[eé](s?)\b", r"\1mployee\2", xhtml)		# employé -> employee
 	xhtml = regex.sub(r"\b(?<!ancien )([Rr])égime", r"\1egime", xhtml)		# régime -> regime (but "ancien régime")
 	xhtml = regex.sub(r"\b([Bb])urthen", r"\1urden", xhtml)				# burthen -> burden
 	xhtml = regex.sub(r"\b([Dd])isburthen", r"\1isburden", xhtml)			# disburthen -> disburden
