@@ -699,7 +699,15 @@ def _create_draft(args: Namespace):
 			namespaces = {"re": "http://exslt.org/regular-expressions"}
 
 			for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*Produced by.+')]", namespaces=namespaces):
-				producers_text = regex.sub(r"^<[^>]+?>", "", etree.tostring(node, encoding=str, with_tail=False))
+				node_html = etree.tostring(node, encoding=str, method="html", with_tail=False)
+
+				# Sometimes, lxml returns the entire HTML instead of the node HTML for a node.
+				# It's unclear why this happens. An example is https://www.gutenberg.org/ebooks/21721
+				# If the HTML is larger than some large size, abort trying to find producers
+				if len(node_html) > 3000:
+					continue
+
+				producers_text = regex.sub(r"^<[^>]+?>", "", node_html)
 				producers_text = regex.sub(r"<[^>]+?>$", "", producers_text)
 
 				producers_text = regex.sub(r".+?Produced by (.+?)\s*$", "\\1", producers_text, flags=regex.DOTALL)
