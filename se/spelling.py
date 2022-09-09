@@ -412,6 +412,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Pp])arty-?colo(u?)r", r"\1articolo\2r", xhtml)		# party-color -> particolor
 	xhtml = regex.sub(r"\b([Aa])ukward", r"\1wkward", xhtml)			# aukward -> awkward
 	xhtml = regex.sub(r"\b([Aa])lledg(ing|e[sd])", r"\1lleg\2", xhtml)		# alledge -> allege
+	xhtml = regex.sub(r"\b([Hh])er’s", r"\1ers", xhtml)				# her's -> hers
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
