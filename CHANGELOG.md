@@ -1,3 +1,15 @@
+# 2.4.3
+
+## se create-draft
+
+- Tweak HTML parsing to better discover PG producers
+
+- Fix typo in Uncopyright template
+
+## se modernize-spelling
+
+- Various additions
+
 # 2.4.2
 
 ## se recompose-epub
