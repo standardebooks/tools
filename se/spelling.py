@@ -463,6 +463,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"Burmah", r"Burma", xhtml)					# Burmah -> Burma
 	xhtml = regex.sub(r"Turgenieff", r"Turgenev", xhtml)				# Turgenieff -> Turgenev
 	xhtml = regex.sub(r"Gizeh", r"Giza", xhtml)					# Gizeh -> Giza
+	xhtml = regex.sub(r"Feejee", r"Fiji", xhtml)					# Feejee -> Fiji
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
