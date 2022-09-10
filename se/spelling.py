@@ -224,7 +224,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bincase", r"encase", xhtml)				# incase -> encase
 	xhtml = regex.sub(r"\bInclose", r"Enclose", xhtml)				# Inclose -> Enclose
 	xhtml = regex.sub(r"\binclose", r"enclose", xhtml)				# inclose -> enclose
-	xhtml = regex.sub(r"\b([Cc])ocoa-?nut", r"\1oconut", xhtml)			# cocoanut / cocoa-nut -> coconut
+	xhtml = regex.sub(r"\b([Cc])ocoa[ -]?nut", r"\1oconut", xhtml)			# cocoanut / cocoa-nut -> coconut
 	xhtml = regex.sub(r"\b([Ww])aggon", r"\1agon", xhtml)				# waggon -> wagon
 	xhtml = regex.sub(r"\b([Ss])wop", r"\1wap", xhtml)				# swop -> swap
 	xhtml = regex.sub(r"\b([Ll])acquey", r"\1ackey", xhtml)				# lacquey -> lackey
