@@ -893,7 +893,7 @@ def _create_draft(args: Namespace):
 		metadata_xml = metadata_xml.replace("SE_IDENTIFIER", identifier)
 		metadata_xml = metadata_xml.replace(">TITLE_SORT<", f">{escape(sorted_title)}<")
 		metadata_xml = metadata_xml.replace(">TITLE<", f">{escape(title)}<")
-		metadata_xml = metadata_xml.replace("VCS_IDENTIFIER", str(repo_name))
+		metadata_xml = metadata_xml.replace("VCS_IDENTIFIER", str(repo_name[0:100]))
 
 		if pg_producers:
 			producers_xhtml = ""
