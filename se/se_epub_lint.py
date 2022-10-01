@@ -289,6 +289,7 @@ SEMANTICS & CONTENT
 "s-099", "List item in endnotes missing [xhtml]endnote[/] semantic."
 "s-100", "Anonymous digital contributor value not exactly [text]An Anonymous Volunteer[/]."
 "s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/]."
+"s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -2029,6 +2030,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./span[contains(@epub:type, 'label')]][not(./span[contains(@epub:type, 'ordinal')])]")
 				if nodes:
 					messages.append(LintMessage("s-067", "Header element with a [val]label[/] semantic child, but without an [val]ordinal[/] semantic child.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+				# Check for @lang attributes
+				nodes = dom.xpath("//*[@lang]")
+				if nodes:
+					messages.append(LintMessage("s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 				# Check for sectioning elements with more than one heading element
 				nodes = dom.xpath("/html/body//*[name()='article' or name()='section'][count(./*[name()='header' or name()='hgroup' or re:test(name(), '^h[1-6]$')]) > 1]")
