@@ -323,7 +323,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])lily", r"\1lyly", xhtml)				# slily -> slyly
 	xhtml = regex.sub(r"\b([Ff])oretel\b", r"\1oretell", xhtml)			# foretel -> foretell
 	xhtml = regex.sub(r"\b([Cc])ypher", r"\1ipher", xhtml)				# cypher -> cipher
-	xhtml = regex.sub(r"\b([Dd])ivers\b", r"\1iverse", xhtml)			# divers -> diverse
+	# xhtml = regex.sub(r"\b([Dd])ivers\b", r"\1iverse", xhtml)			# divers -> diverse NOTE: these two are not the same word! https://www.merriam-webster.com/dictionary/divers "Divers is not a misspelling of diverse—it is a word in its own right."
 	xhtml = regex.sub(r"\b([Ll])anthorn", r"\1antern", xhtml)			# lanthorn -> lantern
 	xhtml = regex.sub(r"\b([Oo])rgie\b", r"\1rgy", xhtml)				# orgie -> orgy
 	xhtml = regex.sub(r"\b([Oo])u?rang[\s-][Oo]utang?", r"\1rangutan", xhtml)	# ourang-outang -> orangutan
