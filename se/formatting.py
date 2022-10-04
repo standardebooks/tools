@@ -87,6 +87,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))MS(S?)\.", r"""<abbr>MS\1.</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Vv])iz\.", r"<abbr>\1iz.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))etc\.", r"<abbr>etc.</abbr>", xhtml)
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))inst\.", r"""<abbr xml:lang="la">inst.</abbr>""", xhtml) # `inst.` is short for `instante mense` but it is not italicized
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Cc])f\.", r"<abbr>\1f.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))ed\.", r"<abbr>ed.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(Jan\.|Feb\.|Mar\.|Apr\.|Jun\.|Jul\.|Aug\.|Sep\.|Sept\.|Oct\.|Nov\.|Dec\.)", r"<abbr>\1</abbr>", xhtml)
