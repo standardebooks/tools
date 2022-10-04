@@ -104,16 +104,16 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([ap])\.\s?m\.", r"<abbr>\1.m.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([0-9]{1,2})\s?[Aa]\.?\s?[Mm](?:\.|\b)", r"\1 <abbr>a.m.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([0-9]{1,2})\s?[Pp]\.?\s?[Mm](?:\.|\b)", r"\1 <abbr>p.m.</abbr>", xhtml)
-    # this should be placed after the am/pm test, to prevent tagging just the p. in "p. m."
+	# this should be placed after the am/pm test, to prevent tagging just the p. in "p. m."
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))p(p?)\.([\s0-9])", r"<abbr>p\1.</abbr>\2", xhtml)
-    # keep a period after TV that terminates a clause
+	# keep a period after TV that terminates a clause
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))T\.?V\.([”’]?</p>|\s+[“‘]?[\p{Uppercase_Letter}])", r"""<abbr epub:type="z3998:initialism">TV</abbr>.\1""", xhtml)
-    # otherwise, get rid of any periods in TV
+	# otherwise, get rid of any periods in TV
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(?:TV\b|T\.V\.\B)", r"""<abbr epub:type="z3998:initialism">TV</abbr>""", xhtml)
-    # keep a period after AD/BC that terminates a clause
+	# keep a period after AD/BC that terminates a clause
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))A\.?D\.([”’]?</p>|\s+[“‘]?[\p{Uppercase_Letter}])", r"""<abbr epub:type="se:era">AD</abbr>.\1""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))B\.?C\.([”’]?</p>|\s+[“‘]?[\p{Uppercase_Letter}])", r"""<abbr epub:type="se:era">BC</abbr>.\1""", xhtml)
-    # otherwise, get rid of any periods in AD/BC
+	# otherwise, get rid of any periods in AD/BC
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(?:AD\b|A\.D\.\B)", r"""<abbr epub:type="se:era">AD</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(?:BC\b|B\.C\.\B)", r"""<abbr epub:type="se:era">BC</abbr>""", xhtml)
 
@@ -137,7 +137,7 @@ def semanticate(xhtml: str) -> str:
 	# Note that `j` may occur only at the end of a numeral as an old-fashioned terminal `i`, like int `ij` (2), `vij` (7)
 	xhtml = regex.sub(r"([^\p{Letter}>])([ixvIXV]{2,}j?)(\b[^\-]|st\b|nd\b|rd\b|th\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
 
-	# Get Roman numerals that are X or V and single characters.  We can't do I for obvious reasons.
+	# Get Roman numerals that are X or V and single characters. We can't do I for obvious reasons.
 	xhtml = regex.sub(r"""([^\p{Letter}>\"])([vxVX])(\b[^\-]|st\b|nd\b|rd\b|th\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
 
 	# We can assume a lowercase i is always a Roman numeral unless followed by ’
@@ -162,7 +162,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"([0-9]+)\s*m\.?p\.?h\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>mph</abbr>", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"([0-9]+)\s*h\.?p\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>hp</abbr>", xhtml, flags=regex.IGNORECASE)
 
-	# We may have added HTML tags within title tags.  Remove those here
+	# We may have added HTML tags within title tags. Remove those here
 	matches = regex.findall(r"<title>.+?</title>", xhtml)
 	if matches:
 		xhtml = regex.sub(r"<title>.+?</title>", f"<title>{se.formatting.remove_tags(matches[0])}</title>", xhtml)
@@ -952,7 +952,7 @@ def _format_css_declarations(content: list, indent_level: int) -> str:
 			# Use regex to test if the token is on the same line, i.e. if the intervening white space doesn't include a newline
 			elif i + 2 < len(tokens) and tokens[i + 1].type == "whitespace" and regex.match(r"[^\n]+", tokens[i + 1].value) and tokens[i + 2].type == "comment":
 				sorted_declarations.append((tokens[i], tokens[i + 2]))
-				tokens.pop(i + 1)  # Remove from the master list
+				tokens.pop(i + 1) # Remove from the master list
 				tokens.pop(i + 1)
 
 			else:
