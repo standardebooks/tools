@@ -327,6 +327,7 @@ TYPOGRAPHY
 "t-033", "Space after dash."
 "t-034", "[xhtml]<cite>[/] element preceded by em-dash. Hint: em-dashes go within [xhtml]<cite>[/] elements."
 "t-035", "[xhtml]<cite>[/] element not preceded by space."
+"t-036", "Em-dash used to obscure single digit in year. Hint: Use a hyphen instead."
 "t-037", "[text]”[/] preceded by space."
 "t-038", "[text]“[/] before closing [xhtml]</p>[/]."
 "t-039", "Initialism followed by [text]’s[/]. Hint: Plurals of initialisms are not followed by [text]’[/]."
@@ -363,9 +364,6 @@ TYPOGRAPHY
 "t-070", "[xhtml]<cite>[/] in epigraph ending in a period."
 "t-071", "Multiple transcriptions listed, but preceding text is [text]a transcription[/]."
 "t-072", "[text]various sources[/] link not preceded by [text]from[/]."
-UNUSED
-vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"t-036", "[text]”[/] missing matching [text]“[/]."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -2304,6 +2302,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				nodes = dom.xpath("/html/body//*[not(./*) and re:test(., '^\\s+$')]")
 				if nodes:
 					messages.append(LintMessage("s-079", "Element containing only white space.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				# Check for partially obscured years in which the last year is an em dash
+				nodes = dom.xpath("/html/body//p[re:test(.,  '1\\d{2}⁠—[^a-z<]')]")
+				if nodes:
+					messages.append(LintMessage("t-036", "Em-dash used to obscure single digit in year. Hint: Use a hyphen instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for quotations that carry to the next paragraph, but the next paragraph has no opening quotation mark
 				# Exclude p in blockquote because often that has different formatting
