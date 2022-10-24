@@ -417,6 +417,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bencreas", r"increas", xhtml)				# encreas(e|ing) -> increas(e|ing)
 	xhtml = regex.sub(r"\bEncreas", r"Increas", xhtml)				# encreas(e|ing) -> increas(e|ing)
 	xhtml = regex.sub(r"\b([Ee])nterpriz", r"\1nterpris", xhtml)			# enterprize -> enterprise
+	xhtml = regex.sub(r"\b([Ff])ye\b", r"\1ie", xhtml)				# fye -> fie
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
