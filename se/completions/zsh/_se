@@ -40,6 +40,7 @@ case $state in
 			"roman2dec[Convert a Roman numeral to a decimal number.]" \
 			"semanticate[Apply some scriptable semantics rules from the Standard Ebooks semantics manual.]" \
 			"shift-endnotes[Increment the specified endnote and all following endnotes by 1.]" \
+			"shift-illustrations[Increment the specified illustration and all following illustrations by 1.]" \
 			"split-file[Split an XHTML file into many files.]" \
 			"titlecase[Convert a string to titlecase.]" \
 			"typogrify[Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory.]" \
