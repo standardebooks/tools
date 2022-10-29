@@ -80,6 +80,7 @@ class SeEpub:
 	_last_commit = None # GitCommit object
 	_endnotes: Optional[List[Endnote]] = None # List of Endnote objects
 	_endnotes_path = None
+	_loi_path = None
 	_cover_path = None
 	_spine_file_paths: Optional[List[Path]] = None # List of Path objects
 
@@ -156,6 +157,21 @@ class SeEpub:
 					break
 
 		return self._endnotes_path
+
+	@property
+	def loi_path(self):
+		"""
+		Accessor
+		"""
+
+		if not self._loi_path:
+			for file_path in self.content_path.glob("**/*.xhtml"):
+				dom = self.get_dom(file_path)
+				if dom.xpath("/html/body/nav[contains(@epub:type, 'loi')]"):
+					self._loi_path = file_path
+					break
+
+		return self._loi_path
 
 	@property
 	def repo(self) -> git.Repo:
@@ -807,6 +823,84 @@ class SeEpub:
 
 					node.set_attr("href", regex.sub(fr"#note-{endnote_number}$", f"#note-{new_endnote_number}", node.get_attr("href")))
 					node.set_text(regex.sub(fr"\b{endnote_number}\b", f"{new_endnote_number}", node.text))
+
+			with open(file_path, "w", encoding="utf-8") as file:
+				file.write(dom.to_string())
+
+	def shift_illustrations(self, target_illustration_number: int, step: int = 1) -> None:
+		"""
+		Shift illustrations starting at target_illustration_number.
+
+		INPUTS:
+		target_illustration_number: The illustration to start shifting at
+		step: 1 to increment or -1 to decrement
+
+		OUTPUTS:
+		None.
+		"""
+
+		increment = step > 0
+		illustration_count = 0
+
+		if step == 0:
+			return
+
+		dom = self.get_dom(self.loi_path)
+
+		illustration_count = len(dom.xpath("/html/body/nav/ol/li"))
+		if increment:
+			# Range is from COUNT -> target_illustration_number
+			illustration_range = range(illustration_count, target_illustration_number - 1, -1)
+		else:
+			# Range is from target_illustration_number -> COUNT
+			illustration_range = range(target_illustration_number, illustration_count + 1, 1)
+
+		# Update image files
+		for illustration_number in illustration_range:
+			new_illustration_number = illustration_number + step
+
+			# Test for previously existing file
+			for illustration_path in [self.path / "images", self.content_path / "images"]:
+				existing_file = None
+
+				try:
+					existing_file = next(illustration_path.glob(f"illustration-{new_illustration_number}.*"))
+				except Exception as ex:
+					pass
+
+				if existing_file:
+					raise se.FileExistsException(f"Couldn’t rename illustration to already existing file: [path][link=file://{existing_file}]{existing_file}[/][/]")
+
+				file_to_rename = next(illustration_path.glob(f"illustration-{illustration_number}.*"))
+				file_to_rename.rename(illustration_path / f"illustration-{new_illustration_number}{file_to_rename.suffix}")
+
+		# Update the LoI file
+		for illustration_number in illustration_range:
+			new_illustration_number = illustration_number + step
+
+			# Update all the illustrations in the illustrations file
+			for node in dom.xpath(f"/html/body//a[re:test(@href, '#illustration-{illustration_number}$')]"):
+				node.set_attr("href", node.get_attr("href").replace(f"#illustration-{illustration_number}", f"#illustration-{new_illustration_number}"))
+
+		# Write the LoI file
+		try:
+			with open(self.loi_path, "w", encoding="utf-8") as file:
+				file.write(dom.to_string())
+
+		except Exception as ex:
+			raise se.InvalidSeEbookException(f"Couldn’t open LoI file: [path][link=file://{self.loi_path}]{self.loi_path}[/][/].") from ex
+
+		# Now update illustrations in all other files.
+		for file_path in self.content_path.glob("**/*.xhtml"):
+			dom = self.get_dom(file_path)
+
+			for illustration_number in illustration_range:
+				new_illustration_number = illustration_number + step
+
+				for node in dom.xpath(f"/html/body//figure[@id='illustration-{illustration_number}']"):
+					node.set_attr("id", f"illustration-{new_illustration_number}")
+					for img in node.xpath("./img"):
+						img.set_attr("src", img.get_attr("src").replace(f"illustration-{illustration_number}", f"illustration-{new_illustration_number}"))
 
 			with open(file_path, "w", encoding="utf-8") as file:
 				file.write(dom.to_string())

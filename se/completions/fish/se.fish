@@ -1,6 +1,6 @@
 function __fish_se_no_subcommand --description "Test if se has yet to be given the subcommand"
 	for i in (commandline -opc)
-		if contains -- $i british2american build build-ids build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes split-file titlecase typogrify unicode-names version word-count xpath
+		if contains -- $i british2american build build-ids build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names version word-count xpath
 			return 1
 		end
 	end
@@ -149,6 +149,11 @@ complete -c se -n "__fish_se_no_subcommand" -a shift-endnotes -d "Increment the 
 complete -c se -A -n "__fish_seen_subcommand_from shift-endnotes" -s d -l decrement -d "decrement the target endnote number and all following endnotes"
 complete -c se -A -n "__fish_seen_subcommand_from shift-endnotes" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from shift-endnotes" -s i -l increment -d "increment the target endnote number and all following endnotes"
+
+complete -c se -n "__fish_se_no_subcommand" -a shift-illustrations -d "Increment the specified illustration and all following illustrations by 1."
+complete -c se -A -n "__fish_seen_subcommand_from shift-illustrations" -s d -l decrement -d "decrement the target illustration number and all following illustrations"
+complete -c se -A -n "__fish_seen_subcommand_from shift-illustrations" -s h -l help -x -d "show this help message and exit"
+complete -c se -A -n "__fish_seen_subcommand_from shift-illustrations" -s i -l increment -d "increment the target illustration number and all following illustrations"
 
 complete -c se -n "__fish_se_no_subcommand" -a split-file -d "Split an XHTML file into many files."
 complete -c se -A -n "__fish_seen_subcommand_from split-file" -s f -l filename-format -d "a format string for the output files; `%n` is replaced with the current chapter number; defaults to `chapter-%n.xhtml`"
