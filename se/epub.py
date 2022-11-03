@@ -47,7 +47,7 @@ def convert_toc_to_ncx(epub_root_absolute_path: Path, toc_filename: str, xsl_fil
 		node.set_attr("playOrder", f"{count}")
 		count = count + 1
 
-	with open(epub_root_absolute_path / "epub" / "toc.ncx", "w", encoding="utf-8") as file:
+	with open(epub_root_absolute_path / "epub" / "toc.ncx", "w", encoding="utf-8", newline="\n") as file:
 		file.write(ncx_dom.to_string())
 
 	return toc_tree

@@ -756,7 +756,7 @@ class SeEpub:
 			for node in dom.xpath("/svg/style"):
 				node.set_text("\n\t\tpath{\n\t\t\tfill: #fff;\n\t\t}\n\n\t\t.title-box{\n\t\t\tfill: #000;\n\t\t\tfill-opacity: .75;\n\t\t}\n\t")
 
-			with open(dest_cover_svg_filename, "w", encoding="utf-8") as file:
+			with open(dest_cover_svg_filename, "w", encoding="utf-8", newline="\n") as file:
 				file.write(dom.to_string())
 
 	def shift_endnotes(self, target_endnote_number: int, step: int = 1) -> None:
@@ -800,7 +800,7 @@ class SeEpub:
 
 		# Write the endnotes file
 		try:
-			with open(self.endnotes_path, "w", encoding="utf-8") as file:
+			with open(self.endnotes_path, "w", encoding="utf-8", newline="\n") as file:
 				file.write(dom.to_string())
 
 		except Exception as ex:
@@ -824,7 +824,7 @@ class SeEpub:
 					node.set_attr("href", regex.sub(fr"#note-{endnote_number}$", f"#note-{new_endnote_number}", node.get_attr("href")))
 					node.set_text(regex.sub(fr"\b{endnote_number}\b", f"{new_endnote_number}", node.text))
 
-			with open(file_path, "w", encoding="utf-8") as file:
+			with open(file_path, "w", encoding="utf-8", newline="\n") as file:
 				file.write(dom.to_string())
 
 	def shift_illustrations(self, target_illustration_number: int, step: int = 1) -> None:
@@ -884,7 +884,7 @@ class SeEpub:
 
 		# Write the LoI file
 		try:
-			with open(self.loi_path, "w", encoding="utf-8") as file:
+			with open(self.loi_path, "w", encoding="utf-8", newline="\n") as file:
 				file.write(dom.to_string())
 
 		except Exception as ex:
@@ -902,7 +902,7 @@ class SeEpub:
 					for img in node.xpath("./img"):
 						img.set_attr("src", img.get_attr("src").replace(f"illustration-{illustration_number}", f"illustration-{new_illustration_number}"))
 
-			with open(file_path, "w", encoding="utf-8") as file:
+			with open(file_path, "w", encoding="utf-8", newline="\n") as file:
 				file.write(dom.to_string())
 
 	def set_release_timestamp(self) -> None:
@@ -923,7 +923,7 @@ class SeEpub:
 			for node in self.metadata_dom.xpath("/package/metadata/meta[@property='dcterms:modified']"):
 				node.set_text(now_iso)
 
-			with open(self.metadata_file_path, "w", encoding="utf-8") as file:
+			with open(self.metadata_file_path, "w", encoding="utf-8", newline="\n") as file:
 				file.write(self.metadata_dom.to_string())
 
 			for file_path in self.content_path.glob("**/*.xhtml"):
@@ -933,7 +933,7 @@ class SeEpub:
 					for node in dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]//b[contains(text(), 'January 1, 1900')]"):
 						node.replace_with(se.easy_xml.EasyXmlElement(etree.fromstring(str.encode("<b>" + now_friendly + "</b>"))))
 
-					with open(file_path, "w", encoding="utf-8") as file:
+					with open(file_path, "w", encoding="utf-8", newline="\n") as file:
 						file.write(dom.to_string())
 
 	def update_flesch_reading_ease(self) -> None:
@@ -961,7 +961,7 @@ class SeEpub:
 		for node in self.metadata_dom.xpath("/package/metadata/meta[@property='se:reading-ease.flesch']"):
 			node.set_text(str(se.formatting.get_flesch_reading_ease(text)))
 
-		with open(self.metadata_file_path, "w", encoding="utf-8") as file:
+		with open(self.metadata_file_path, "w", encoding="utf-8", newline="\n") as file:
 			file.write(self.metadata_dom.to_string())
 
 	def get_word_count(self) -> int:
@@ -1002,7 +1002,7 @@ class SeEpub:
 		for node in self.metadata_dom.xpath("/package/metadata/meta[@property='se:word-count']"):
 			node.set_text(str(self.get_word_count()))
 
-		with open(self.metadata_file_path, "r+", encoding="utf-8") as file:
+		with open(self.metadata_file_path, "r+", encoding="utf-8", newline="\n") as file:
 			file.seek(0)
 			file.write(self.metadata_dom.to_string())
 			file.truncate()
@@ -1353,7 +1353,7 @@ class SeEpub:
 
 				current_note_number += 1
 
-			with open(file_path, "w") as file:
+			with open(file_path, "w", newline="\n") as file:
 				file.write(dom.to_string())
 
 		# Renumber all endnotes starting from 1
@@ -1367,7 +1367,7 @@ class SeEpub:
 
 			current_note_number += 1
 
-		with open(self.endnotes_path, "w") as file:
+		with open(self.endnotes_path, "w", newline="\n") as file:
 			file.write(endnotes_dom.to_string())
 
 	def generate_endnotes(self) -> Tuple[int, int, list]:
@@ -1406,7 +1406,7 @@ class SeEpub:
 
 			# If we need to write back the body text file
 			if needs_rewrite:
-				with open(file_path, "w") as file:
+				with open(file_path, "w", newline="\n") as file:
 					file.write(se.formatting.format_xhtml(dom.to_string()))
 
 		# Now process any endnotes WITHIN the endnotes
@@ -1438,7 +1438,7 @@ class SeEpub:
 
 						ol_node.append(endnote.node)
 
-			with open(self.endnotes_path, "w") as file:
+			with open(self.endnotes_path, "w", newline="\n") as file:
 				file.write(se.formatting.format_xhtml(endnotes_dom.to_string()))
 
 			# now trawl through the body files to locate any direct links to endnotes (not in an actual endnote reference)
@@ -1450,7 +1450,7 @@ class SeEpub:
 				for link in dom.xpath("/html/body//a[contains(@href, 'endnotes.xhtml#note-')]"):
 					needs_rewrite = self.__process_direct_link(change_list, link)
 				if needs_rewrite:
-					with open(file_path, "w") as file:
+					with open(file_path, "w", newline="\n") as file:
 						file.write(se.formatting.format_xhtml(dom.to_string()))
 
 		return current_note_number - 1, notes_changed, change_list

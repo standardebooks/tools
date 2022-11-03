@@ -26,7 +26,7 @@ def recompose_epub(plain_output: bool) -> int:
 		recomposed_epub = se_epub.recompose(args.xhtml, Path(args.extra_css_file) if args.extra_css_file else None)
 
 		if args.output:
-			with open(args.output, "w", encoding="utf-8") as file:
+			with open(args.output, "w", encoding="utf-8", newline="\n") as file:
 				file.write(recomposed_epub)
 		else:
 			print(recomposed_epub)

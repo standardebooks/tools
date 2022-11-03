@@ -522,7 +522,7 @@ def format_xml_file(filename: Path) -> None:
 	None.
 	"""
 
-	with open(filename, "r+", encoding="utf-8") as file:
+	with open(filename, "r+", encoding="utf-8", newline="\n") as file:
 		xml = file.read()
 
 		if filename.suffix == ".xhtml":

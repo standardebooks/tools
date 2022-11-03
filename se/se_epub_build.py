@@ -199,11 +199,11 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					for node in metadata_dom.xpath("//meta[@property='dcterms:modified']"):
 						node.set_text(last_updated_iso)
 
-					with open(work_compatible_epub_dir / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
+					with open(work_compatible_epub_dir / "epub" / self.metadata_file_path.name, "w", encoding="utf-8", newline="\n") as file:
 						file.write(metadata_dom.to_string())
 
 					# Update the colophon with release info
-					with open(file_path, "r+", encoding="utf-8") as file:
+					with open(file_path, "r+", encoding="utf-8", newline="\n") as file:
 						xhtml = file.read()
 
 						xhtml = xhtml.replace("<p>The first edition of this ebook was released on<br/>", f"<p>This edition was released on<br/>\n\t\t\t<b>{last_updated_friendly}</b><br/>\n\t\t\tand is based on<br/>\n\t\t\t<b>revision {self.last_commit.short_sha}</b>.<br/>\n\t\t\tThe first edition of this ebook was released on<br/>")
@@ -232,7 +232,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		# Simplify the CSS first.  Later we'll update the document to match our simplified selectors.
 		# While we're doing this, we store the original css into a single variable so we can extract the original selectors later.
 		for file_path in work_compatible_epub_dir.glob("**/*.css"):
-			with open(file_path, "r+", encoding="utf-8") as file:
+			with open(file_path, "r+", encoding="utf-8", newline="\n") as file:
 				css = file.read()
 
 				total_css = total_css + css + "\n"
@@ -418,7 +418,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 							element.lxml_element.insert(0, fragment)
 
 					# All done, write the SVG so that we can convert to PNG
-					with open(file_path, "w", encoding="utf-8") as file:
+					with open(file_path, "w", encoding="utf-8", newline="\n") as file:
 						file.write(dom.to_string())
 
 				# Convert SVGs to PNGs at 2x resolution
@@ -568,14 +568,14 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				# while replacements > 0:
 				# 	processed_xhtml, replacements = regex.subn(r"<title>([^<>]+?)<span class=\"quote-align\">([^<>]+?)</span>", r"""<title>\1\2""", processed_xhtml)
 
-				with open(file_path, "w", encoding="utf-8") as file:
+				with open(file_path, "w", encoding="utf-8", newline="\n") as file:
 					file.write(processed_xhtml)
 
 				# Since we changed the dom string using regex, we have to flush its cache entry so we can re-build it later
 				self.flush_dom_cache_entry(file_path)
 
 			if file_path.suffix == ".css":
-				with open(file_path, "r+", encoding="utf-8") as file:
+				with open(file_path, "r+", encoding="utf-8", newline="\n") as file:
 					css = file.read()
 					processed_css = css
 
@@ -661,7 +661,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					endnotes_id_map[node.get_attr("id")] = new_filename
 
 				# Write the new file
-				with open(endnote_file.parent / new_filename, "w", encoding="utf-8") as file:
+				with open(endnote_file.parent / new_filename, "w", encoding="utf-8", newline="\n") as file:
 					file.write(current_endnotes_file.to_string())
 
 				# Update the manifest and spine
@@ -695,15 +695,15 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					has_anchor = True
 
 				if has_anchor:
-					with open(file_path, "w", encoding="utf-8") as file:
+					with open(file_path, "w", encoding="utf-8", newline="\n") as file:
 						file.write(dom.to_string())
 
 			# Output the modified the ToC file
-			with open(work_compatible_epub_dir / "epub" / toc_relative_path, "w", encoding="utf-8") as file:
+			with open(work_compatible_epub_dir / "epub" / toc_relative_path, "w", encoding="utf-8", newline="\n") as file:
 				file.write(se.formatting.format_xhtml(toc_dom.to_string()))
 
 		# Output the modified the metadata file so that we can build the kobo book before making more compatibility hacks that aren’t needed on that platform.
-		with open(work_compatible_epub_dir / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
+		with open(work_compatible_epub_dir / "epub" / self.metadata_file_path.name, "w", encoding="utf-8", newline="\n") as file:
 			file.write(se.formatting.format_xhtml(metadata_dom.to_string()))
 
 		if build_kobo:
@@ -718,7 +718,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					for node in dom.xpath("/package[contains(@prefix, 'se:')]/metadata"):
 						node.append(etree.fromstring("""<meta property="se:transform">kobo</meta>"""))
 
-					with open(file_path, "w", encoding="utf-8") as file:
+					with open(file_path, "w", encoding="utf-8", newline="\n") as file:
 						file.write(dom.to_string())
 
 				# Kobo .kepub files need each clause wrapped in a special <span> tag to enable highlighting.
@@ -790,11 +790,11 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					xhtml = xhtml.replace(" xmlns:html=\"http://www.w3.org/1999/xhtml\"", "")
 					xhtml = regex.sub(r"<(/?)html:span", r"<\1span", xhtml)
 
-					with open(file_path, "w", encoding="utf-8") as file:
+					with open(file_path, "w", encoding="utf-8", newline="\n") as file:
 						file.write(xhtml)
 
 				if file_path.suffix == ".css":
-					with open(file_path, "r+", encoding="utf-8") as file:
+					with open(file_path, "r+", encoding="utf-8", newline="\n") as file:
 						css = file.read()
 						processed_css = css
 
@@ -819,7 +819,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		# Recurse over css files to make some compatibility replacements.
 		for file_path in work_compatible_epub_dir.glob("**/*.css"):
-			with open(file_path, "r+", encoding="utf-8") as file:
+			with open(file_path, "r+", encoding="utf-8", newline="\n") as file:
 				css = file.read()
 				processed_css = css
 
@@ -1009,7 +1009,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 						# Update the metadata file to remove the `mathml` property
 						metadata_item_node.remove_attr_value("properties", "mathml")
 
-					with open(filename, "w", encoding="utf-8") as file:
+					with open(filename, "w", encoding="utf-8", newline="\n") as file:
 						file.write(dom.to_string())
 
 			except KeyboardInterrupt as ex:
@@ -1082,7 +1082,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		# Guide is done, now write the metadata file and clean it.
 		# Output the modified metadata file before making more compatibility hacks.
-		with open(work_compatible_epub_dir / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
+		with open(work_compatible_epub_dir / "epub" / self.metadata_file_path.name, "w", encoding="utf-8", newline="\n") as file:
 			file.write(se.formatting.format_opf(metadata_dom.to_string()))
 
 		# All done, clean the output
@@ -1264,7 +1264,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		if build_kindle:
 			# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
-			with open(work_compatible_epub_dir / "epub" / toc_filename, "r+", encoding="utf-8") as file:
+			with open(work_compatible_epub_dir / "epub" / toc_filename, "r+", encoding="utf-8", newline="\n") as file:
 				dom = se.easy_xml.EasyXmlTree(file.read())
 
 				for node in dom.xpath("//ol/li/ol/li/ol"):
@@ -1364,7 +1364,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				if not dom.xpath("/html[re:test(@epub:prefix, '[\\s\\b]se:[\\s\\b]')]/body/nav[contains(@epub:type, 'toc')]"):
 					xhtml = se.typography.hyphenate(xhtml, None, True)
 
-				with open(file_path, "w", encoding="utf-8") as file:
+				with open(file_path, "w", encoding="utf-8", newline="\n") as file:
 					file.write(se.formatting.format_xhtml(xhtml))
 
 			# Include compatibility CSS

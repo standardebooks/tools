@@ -31,7 +31,7 @@ def typogrify(plain_output: bool) -> int:
 			console.print(se.prep_output(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", plain_output), end="")
 
 		try:
-			with open(filename, "r+", encoding="utf-8") as file:
+			with open(filename, "r+", encoding="utf-8", newline="\n") as file:
 				xhtml = file.read()
 
 				is_ignored, dom = se.get_dom_if_not_ignored(xhtml, ["titlepage", "imprint", "copyright-page"])

@@ -25,7 +25,7 @@ def _split_file_output_file(filename_format_string: str, chapter_number: int, te
 	xhtml = xhtml.replace("NUMBER", str(chapter_number))
 	xhtml = xhtml.replace("TEXT", chapter_xhtml)
 
-	with open(filename, "w", encoding="utf-8") as file:
+	with open(filename, "w", encoding="utf-8", newline="\n") as file:
 		file.write(xhtml)
 
 def split_file(plain_output: bool) -> int:

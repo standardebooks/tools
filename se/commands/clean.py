@@ -27,7 +27,7 @@ def clean(plain_output: bool) -> int:
 			console.print(se.prep_output(f"Processing [path][link=file://{filepath}]{filepath}[/][/] ...", plain_output), end="")
 
 		if filepath.suffix == ".css":
-			with open(filepath, "r+", encoding="utf-8") as file:
+			with open(filepath, "r+", encoding="utf-8", newline="\n") as file:
 				css = file.read()
 
 				try:

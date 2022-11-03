@@ -63,7 +63,7 @@ def build_ids(plain_output: bool) -> int:
 
 						# If we changed this file, make sure to write it to disk
 						if write_to_disk:
-							with open(other_file, "w", encoding="utf-8") as file:
+							with open(other_file, "w", encoding="utf-8", newline="\n") as file:
 								file.write(other_file_dom.to_string())
 
 					id_counter = id_counter + 1
@@ -72,7 +72,7 @@ def build_ids(plain_output: bool) -> int:
 				replacements = replacements + se.formatting.find_unexpected_ids(dom)
 
 				# Write our wiped file, we'll update it later
-				with open(filename, "w", encoding="utf-8") as file:
+				with open(filename, "w", encoding="utf-8", newline="\n") as file:
 					file.write(dom.to_string())
 
 			# Now, actually perform the replacements
@@ -82,7 +82,7 @@ def build_ids(plain_output: bool) -> int:
 				files.append(se_epub.glossary_search_key_map_path)
 
 			for filename in files:
-				with open(filename, "r+", encoding="utf-8") as file:
+				with open(filename, "r+", encoding="utf-8", newline="\n") as file:
 					file_contents = file.read()
 
 					for node, new_id in replacements:

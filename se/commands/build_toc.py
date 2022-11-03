@@ -37,7 +37,7 @@ def build_toc(plain_output: bool) -> int:
 				print(se_epub.generate_toc())
 			else:
 				toc = se_epub.generate_toc()
-				with open(se_epub.toc_path, "w", encoding="utf-8") as file:
+				with open(se_epub.toc_path, "w", encoding="utf-8", newline="\n") as file:
 					file.write(toc)
 
 		except se.SeException as ex:

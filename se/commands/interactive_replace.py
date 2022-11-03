@@ -326,7 +326,7 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 
 					# Can't check is_file_dirty, we have to compare file contents
 					if xhtml != original_xhtml:
-						with open(filepath, "w", encoding="utf-8") as file:
+						with open(filepath, "w", encoding="utf-8", newline="\n") as file:
 							file.write(xhtml)
 
 					break
@@ -334,7 +334,7 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 				# Reject all remaining replacements and continue to the next file
 				if curses.keyname(char) in (b"r", b"R") or esc_pressed:
 					if is_file_dirty:
-						with open(filepath, "w", encoding="utf-8") as file:
+						with open(filepath, "w", encoding="utf-8", newline="\n") as file:
 							file.write(xhtml)
 
 					break
@@ -342,7 +342,7 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 				# Save this file and quit immediately
 				if curses.keyname(char) in (b"q", b"Q"):
 					if is_file_dirty:
-						with open(filepath, "w", encoding="utf-8") as file:
+						with open(filepath, "w", encoding="utf-8", newline="\n") as file:
 							file.write(xhtml)
 
 					# Throw a blank exception so that we break out of the loop
@@ -438,7 +438,7 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 						pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
 
 			if is_file_dirty:
-				with open(filepath, "w", encoding="utf-8") as file:
+				with open(filepath, "w", encoding="utf-8", newline="\n") as file:
 					file.write(xhtml)
 
 	except Exception as ex:

@@ -64,7 +64,7 @@ def _replace_in_file(file_path: Path, search: Union[str, list], replace: Union[s
 	Helper function to replace in a file.
 	"""
 
-	with open(file_path, "r+", encoding="utf-8") as file:
+	with open(file_path, "r+", encoding="utf-8", newline="\n") as file:
 		data = file.read()
 		processed_data = data
 
@@ -754,7 +754,7 @@ def _create_draft(args: Namespace):
 			output = pg_ebook_html
 
 		try:
-			with open(pg_file_local_path, "w", encoding="utf-8") as file:
+			with open(pg_file_local_path, "w", encoding="utf-8", newline="\n") as file:
 				file.write(output)
 		except OSError as ex:
 			raise se.InvalidFileException(f"Couldn’t write to ebook directory. Exception: {ex}")
@@ -793,7 +793,7 @@ def _create_draft(args: Namespace):
 	if not args.offline and title not in ("Short Fiction", "Poetry", "Essays", "Plays"):
 		ebook_wiki_url, _ = _get_wikipedia_url(title, False)
 
-	with open(content_path / "epub" / "text" / "titlepage.xhtml", "r+", encoding="utf-8") as file:
+	with open(content_path / "epub" / "text" / "titlepage.xhtml", "r+", encoding="utf-8", newline="\n") as file:
 		titlepage_xhtml = file.read()
 
 		titlepage_xhtml = titlepage_xhtml.replace("TITLE", escape(title))
@@ -823,11 +823,11 @@ def _create_draft(args: Namespace):
 		if illustrators:
 			contributors["illustrated by"] = _generate_contributor_string(illustrators, False)
 
-		with open(repo_path / "images" / "titlepage.svg", "w", encoding="utf-8") as file:
+		with open(repo_path / "images" / "titlepage.svg", "w", encoding="utf-8", newline="\n") as file:
 			file.write(_generate_titlepage_svg(title, [author["name"] for author in authors], contributors, title_string))
 
 		# Create the cover SVG
-		with open(repo_path / "images" / "cover.svg", "w", encoding="utf-8") as file:
+		with open(repo_path / "images" / "cover.svg", "w", encoding="utf-8", newline="\n") as file:
 			file.write(_generate_cover_svg(title, [author["name"] for author in authors], title_string))
 
 		# Build the cover/titlepage for distribution
@@ -839,7 +839,7 @@ def _create_draft(args: Namespace):
 			_replace_in_file(content_path / "epub" / "text" / "imprint.xhtml", "PG_URL", pg_url)
 
 		# Fill out the colophon
-		with open(content_path / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
+		with open(content_path / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8", newline="\n") as file:
 			colophon_xhtml = file.read()
 
 			colophon_xhtml = colophon_xhtml.replace("SE_IDENTIFIER", identifier)
@@ -887,7 +887,7 @@ def _create_draft(args: Namespace):
 			file.truncate()
 
 	# Fill out the metadata file
-	with open(content_path / "epub" / "content.opf", "r+", encoding="utf-8") as file:
+	with open(content_path / "epub" / "content.opf", "r+", encoding="utf-8", newline="\n") as file:
 		metadata_xml = file.read()
 
 		metadata_xml = metadata_xml.replace("SE_IDENTIFIER", identifier)

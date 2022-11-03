@@ -102,7 +102,7 @@ def output_is_golden(out: str, golden_file: Path, update_golden: bool) ->bool:
 	__tracebackhide__ = True # pylint: disable=unused-variable
 
 	if update_golden:
-		with open(golden_file, "w") as file:
+		with open(golden_file, "w", newline="\n") as file:
 			file.write(out)
 
 	# Output of stdout should match expected output

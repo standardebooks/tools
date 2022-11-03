@@ -60,7 +60,7 @@ def build_manifest(plain_output: bool) -> int:
 					for node in access_mode_sufficient_nodes:
 						node.remove()
 
-				with open(se_epub.metadata_file_path, "w", encoding="utf-8") as file:
+				with open(se_epub.metadata_file_path, "w", encoding="utf-8", newline="\n") as file:
 					file.write(se.formatting.format_xml(se_epub.metadata_dom.to_string()))
 
 		except se.SeException as ex:
