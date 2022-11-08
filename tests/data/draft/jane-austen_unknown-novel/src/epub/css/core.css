@@ -99,6 +99,12 @@ i > em{
 	font-style: normal;
 }
 
+ol,
+ul{
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+
 header{
 	break-after: avoid;
 	break-inside: avoid;
