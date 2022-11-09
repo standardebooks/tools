@@ -2246,7 +2246,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("s-051", "Element with [xhtml]xml:lang=\"unk\"[/] should be [xhtml]xml:lang=\"und\"[/] (undefined).", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for language tags transliterated into Latin script but missing `-Latn` suffix
-				nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '^(he|ru|el|zh|bn|hi|sa|uk|yi)$') and re:test(., '[a-zA-Z]')]")
+				nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '^(he|ru|el|zh|bn|hi|sa|uk|yi|grc)$') and re:test(., '[a-zA-Z]')]")
 				if nodes:
 					messages.append(LintMessage("s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
