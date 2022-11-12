@@ -444,7 +444,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bThibet", r"Tibet", xhtml)					# Thibet -> Tibet
 	xhtml = regex.sub(r"\bTimbuctoo", r"Timbuktu", xhtml)				# Timbuctoo -> Timbuktu
 	xhtml = regex.sub(r"\bTokio", r"Tokyo", xhtml)					# Tokio -> Tokyo
-	xhtml = regex.sub(r"\bTchekh?ov", r"Chekhov", xhtml)				# Tchekhov -> Chekhov
+	xhtml = regex.sub(r"\bT?[Cc]hekh?o(v|ff)", r"Chekhov", xhtml)			# Tchekhov/Chekov/Chekoff -> Chekhov
 	xhtml = regex.sub(r"\bVereshtchagin", r"Vereshchagin", xhtml)			# Vereshtchagin -> Vereshchagin
 	xhtml = regex.sub(r"\bSoudan", r"Sudan", xhtml)					# Soudan -> Sudan
 	xhtml = regex.sub(r"\bJack-in-the-box", r"jack-in-the-box", xhtml)		# Jack-in-the-box -> jack-in-the-box
