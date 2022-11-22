@@ -67,7 +67,7 @@ setup(
 		"importlib_resources==1.0.2",
 		"lxml==4.9.1",
 		"natsort==7.1.1",
-		"pillow==8.4.0", # 9.0.0 isn't compatible with the version of Python on Ubuntu 18.04
+		"pillow==9.3.0", # 9.0.0 isn't compatible with the version of Python on Ubuntu 18.04
 		"psutil==5.8.0",
 		"pyphen==0.11.0",
 		"regex==2021.08.28",
