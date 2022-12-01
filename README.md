@@ -210,11 +210,11 @@ We need volunteers to take the lead on the following goals:
 
 - Add more test cases to the test framework.
 
-- Figure out if it’s possible to install Bash/ZSH completions using setup.py, *without* root; this may not be possible?
+- Figure out if it’s possible to install Bash/ZSH completions using setup.py, *without* root; this may not be possible? If it’s not possible, we need to know that too.
 
 - Writing installation instructions for Bash and ZSH completions for MacOS.
 
-- Currently we install the whole Calibre package, which is very big, but it’s only used to convert epub to azw3. Can we inline Calibre’s azw3 conversion code in the `./vendor/` directory, to avoid having to install the entire package as a big dependency?
+- Currently the toolset requires the whole Calibre package, which is very big, but it’s only used to convert epub to azw3. Can we inline Calibre’s azw3 conversion code into our `./vendor/` directory, to avoid having to install the entire Calibre package as a big dependency? If so, how do we keep it updated as Calibre evolves?
 
 - Over the years, `./se/se_epub_build.py` and `./se/se_epub_lint.py` have evolved to become very large and unwieldy. Is there a better, clearer way to organize this code?
 
