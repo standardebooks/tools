@@ -386,7 +386,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"([Pp])ourtray", r"\1ortray", xhtml)				# pourtray -> portray
 	xhtml = regex.sub(r"([S])toopid", r"\1tupid", xhtml)				# stoopid -> stupid
 	xhtml = regex.sub(r"([S])uède", r"\1uede", xhtml)				# suède -> suede
-	xhtml = regex.sub(r"([Ff])or ever\b",r"\1orever", xhtml)			# for ever -> forever
+	xhtml = regex.sub(r"([Ff])or ever\b(?!\s+so long)",r"\1orever", xhtml)		# for ever -> forever
 	xhtml = regex.sub(r"([Dd])ébris\b", r"\1ebris", xhtml)				# débris -> debris
 	xhtml = regex.sub(r"\b([Tt])ho(['’]|\b)(?!\.</abbr>)", r"\1hough", xhtml)	# tho' -> though
 	xhtml = regex.sub(r"\b([Aa])ntient", r"\1ncient", xhtml)			# antient -> ancient
