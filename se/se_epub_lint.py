@@ -290,6 +290,7 @@ SEMANTICS & CONTENT
 "s-100", "Anonymous digital contributor value not exactly [text]An Anonymous Volunteer[/]."
 "s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/]."
 "s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead."
+"s-103", "Probable missing semantics for a roman I numeral."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -2070,6 +2071,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				nodes = dom.xpath("/html/body//node()[name()='span' and contains(@epub:type, 'z3998:roman') and not(position()=1)][(following-sibling::node()[1])[re:test(., '^\\.\\s*[a-z]')]]")
 				if nodes:
 					messages.append(LintMessage("t-013", "Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "." for node in nodes]))
+
+				# Check for common missing roman semantics for “I”
+				matches = regex.findall(r"(?:Charles|Edward|Elizabeth|George|Henry|James|Wilhelm|William)\sI\b", file_contents)
+				if matches:
+					messages.append(LintMessage("s-103", "Probable missing semantics for a roman I numeral.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 				# Check for <abbr> elements that have two or more letters/periods, that don't have a semantic epub:type
 				# SS. is the French abbreviation for "Saints"
