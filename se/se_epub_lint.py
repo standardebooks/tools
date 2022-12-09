@@ -2073,7 +2073,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("t-013", "Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "." for node in nodes]))
 
 				# Check for common missing roman semantics for “I”
-				matches = regex.findall(r"(?:Charles|Edward|Elizabeth|George|Henry|James|Wilhelm|William)\sI\b", file_contents)
+				regent_regex = r"(?:Charles|Edward|George|Henry|James|William) I\b"
+				matches = regex.findall(fr"King {regent_regex}", file_contents) + regex.findall(fr"{regent_regex}’s", file_contents)
 				if matches:
 					messages.append(LintMessage("s-103", "Probable missing semantics for a roman I numeral.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
