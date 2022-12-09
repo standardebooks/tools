@@ -638,8 +638,8 @@ def _create_draft(args: Namespace):
 		except Exception as ex:
 			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page. Exception: {ex}")
 
-		parser = etree.HTMLParser()
-		dom = etree.parse(StringIO(pg_metadata_html), parser)
+		html_parser = etree.HTMLParser()
+		dom = etree.parse(StringIO(pg_metadata_html), html_parser)
 
 		# Get the ebook HTML URL from the metadata
 		pg_ebook_url = None
@@ -695,7 +695,7 @@ def _create_draft(args: Namespace):
 	if args.pg_id and pg_ebook_html:
 		pg_file_local_path = content_path / "epub" / "text" / "body.xhtml"
 		try:
-			dom = etree.parse(StringIO(regex.sub(r"encoding=(?P<quote>[\'\"]).+?(?P=quote)", "", pg_ebook_html)), parser)
+			dom = etree.parse(StringIO(regex.sub(r"encoding=(?P<quote>[\'\"]).+?(?P=quote)", "", pg_ebook_html)), html_parser)
 			namespaces = {"re": "http://exslt.org/regular-expressions"}
 
 			for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*Produced by.+')]", namespaces=namespaces):
@@ -746,6 +746,9 @@ def _create_draft(args: Namespace):
 
 			# lxml can also output duplicate default namespace declarations so remove the first one only
 			output = regex.sub(r"(xmlns=\".+?\")(\sxmlns=\".+?\")+", r"\1", output)
+
+			# lxml may also create duplicate xml:lang attributes on the root element. Not sure why. Remove them.
+			output = regex.sub(r'(xml:lang="[^"]+?" lang="[^"]+?") xml:lang="[^"]+?"', r"\1", output)
 
 		except Exception as ex:
 			# Save this error for later; we still want to save the book text and complete the
