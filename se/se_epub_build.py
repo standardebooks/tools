@@ -339,26 +339,9 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 					node.set_attr("media-type", "image/jpeg")
 
-		# Remove SVG item properties in the metadata file since we will convert all SVGs to PNGs further down
-		for node in metadata_dom.xpath("/package/manifest/item[contains(@properties, 'svg')]"):
-			node.remove_attr_value("properties", "svg")
-
 		# Add an element noting the version of the se tools that built this ebook, but only if the se vocab prefix is present
 		for node in metadata_dom.xpath("/package[contains(@prefix, 'se:')]/metadata"):
 			node.append(etree.fromstring(f"<meta property=\"se:built-with\">{se.VERSION}</meta>"))
-
-		# Add replace SVGs with PNGs in the manifest
-		# The actual conversion occurs later
-		for node in metadata_dom.xpath("/package/manifest/item[@media-type='image/svg+xml']"):
-			node.set_attr("media-type", "image/png")
-
-			for name, value in node.lxml_element.items():
-				node.set_attr(name, regex.sub(r"\.svg$", ".png", value))
-
-			# Once iBooks allows srcset we can remove this check
-			if not ibooks_srcset_bug_exists:
-				filename_2x = Path(regex.sub(r"\.png$", "-2x.png", node.get_attr("href")))
-				node.lxml_element.addnext(etree.fromstring(f"""<item href="{filename_2x}" id="{filename_2x.stem}-2x.png" media-type="image/png"/>"""))
 
 		# Loop over files to make some compatibility replacements
 		for file_path in work_compatible_epub_dir.glob("**/*"):
@@ -421,16 +404,6 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					with open(file_path, "w", encoding="utf-8") as file:
 						file.write(dom.to_string())
 
-				# Convert SVGs to PNGs at 2x resolution
-				# Path arguments must be cast to string
-				svg2png(url=str(file_path), write_to=str(file_path.parent / (str(file_path.stem) + ".png")))
-
-				if not ibooks_srcset_bug_exists:
-					svg2png(url=str(file_path), write_to=str(file_path.parent / (str(file_path.stem) + "-2x.png")), scale=2)
-
-				# Remove the SVG
-				(file_path).unlink()
-
 			if file_path.suffix == ".xhtml":
 				dom = self.get_dom(file_path)
 
@@ -488,18 +461,6 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 									break
 						else:
 							node.set_attr("role", f"doc-{attr_values[0]}")
-
-				# We converted svgs to pngs, so replace references
-				for node in dom.xpath("/html/body//img[re:test(@src, '\\.svg$')]"):
-					src = node.get_attr("src")
-					if self.cover_path and self.cover_path.name in src:
-						node.set_attr("src", src.replace(".svg", ".jpg"))
-					else:
-						node.set_attr("src", src.replace(".svg", ".png"))
-
-						if not ibooks_srcset_bug_exists:
-							filename = regex.search(r"(?<=/)[^/]+(?=\.svg)", src)[0]
-							node.set_attr("srcset", f"{filename}-2x.png 2x, {filename}.png 1x")
 
 				# To get popup footnotes in iBooks, we have to add the `footnote` and `footnotes` semantic
 				# Still required as of 2021-05
@@ -591,9 +552,6 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 					# Replace `vw` or `vh` units with percent, a reasonable approximation
 					processed_css = regex.sub(r"([0-9\.]+\s*)v(w|h);", r"\1%;", processed_css)
-
-					# We converted svgs to pngs, so replace references
-					processed_css = regex.sub(r"""url\("(.*?)\.svg"\)""", r"""url("\1.png")""", processed_css)
 
 					if processed_css != css:
 						file.seek(0)
@@ -817,6 +775,55 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		# Now work on more compatibility fixes
 
+		# Prep for SVG to PNG conversion. First, remove SVG item properties in the metadata file
+		for node in metadata_dom.xpath("/package/manifest/item[contains(@properties, 'svg')]"):
+			node.remove_attr_value("properties", "svg")
+
+		# Replace SVGs with PNGs in the manifest
+		for node in metadata_dom.xpath("/package/manifest/item[@media-type='image/svg+xml']"):
+			node.set_attr("media-type", "image/png")
+
+			for name, value in node.lxml_element.items():
+				node.set_attr(name, regex.sub(r"\.svg$", ".png", value))
+
+			# Once iBooks allows srcset we can remove this check
+			if not ibooks_srcset_bug_exists:
+				filename_2x = Path(regex.sub(r"\.png$", "-2x.png", node.get_attr("href")))
+				node.lxml_element.addnext(etree.fromstring(f"""<item href="{filename_2x}" id="{filename_2x.stem}-2x.png" media-type="image/png"/>"""))
+
+		# Now convert the SVGs
+		for file_path in work_compatible_epub_dir.glob("**/*.svg"):
+			# Convert SVGs to PNGs at 2x resolution
+			# Path arguments must be cast to string
+			svg2png(url=str(file_path), write_to=str(file_path.parent / (str(file_path.stem) + ".png")))
+
+			if not ibooks_srcset_bug_exists:
+				svg2png(url=str(file_path), write_to=str(file_path.parent / (str(file_path.stem) + "-2x.png")), scale=2)
+
+			# Remove the SVG
+			(file_path).unlink()
+
+		# We converted svgs to pngs, so replace references
+		for file_path in work_compatible_epub_dir.glob("**/*.xhtml"):
+			dom = self.get_dom(file_path)
+			has_svg = False
+
+			for node in dom.xpath("/html/body//img[re:test(@src, '\\.svg$')]"):
+				has_svg = True
+				src = node.get_attr("src")
+				if self.cover_path and self.cover_path.name in src:
+					node.set_attr("src", src.replace(".svg", ".jpg"))
+				else:
+					node.set_attr("src", src.replace(".svg", ".png"))
+
+					if not ibooks_srcset_bug_exists:
+						filename = regex.search(r"(?<=/)[^/]+(?=\.svg)", src)[0]
+						node.set_attr("srcset", f"{filename}-2x.png 2x, {filename}.png 1x")
+
+			if has_svg:
+				with open(file_path, "w", encoding="utf-8") as file:
+					file.write(dom.to_string())
+
 		# Recurse over css files to make some compatibility replacements.
 		for file_path in work_compatible_epub_dir.glob("**/*.css"):
 			with open(file_path, "r+", encoding="utf-8") as file:
@@ -829,6 +836,9 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				# We add a 20vh margin to sections without heading elements to drop them down on the page a little.
 				# As of 01-2021 the vh unit is not supported on Nook or Kindle (but is on kepub and ibooks).
 				processed_css = regex.sub(r"^(\s*)margin-top\s*:\s*20vh;", r"\1margin-top: 5em;", processed_css, flags=regex.MULTILINE)
+
+				# We converted svgs to pngs, so replace references
+				processed_css = regex.sub(r"""url\("(.*?)\.svg"\)""", r"""url("\1.png")""", processed_css)
 
 				if processed_css != css:
 					file.seek(0)
