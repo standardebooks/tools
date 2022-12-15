@@ -407,6 +407,12 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			if file_path.suffix == ".xhtml":
 				dom = self.get_dom(file_path)
 
+				# Fix any references in the markup to the cover SVG
+				for node in dom.xpath("/html/body//img[re:test(@src, '\\.svg$')]"):
+					src = node.get_attr("src")
+					if self.cover_path and self.cover_path.name in src:
+						node.set_attr("src", src.replace(".svg", ".jpg"))
+
 				# Check if there's any MathML to convert from "content" to "presentational" type
 				# We expect MathML to be the "content" type (versus the "presentational" type).
 				# We use an XSL transform to convert from "content" to "presentational" MathML.
@@ -811,14 +817,11 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			for node in dom.xpath("/html/body//img[re:test(@src, '\\.svg$')]"):
 				has_svg = True
 				src = node.get_attr("src")
-				if self.cover_path and self.cover_path.name in src:
-					node.set_attr("src", src.replace(".svg", ".jpg"))
-				else:
-					node.set_attr("src", src.replace(".svg", ".png"))
+				node.set_attr("src", src.replace(".svg", ".png"))
 
-					if not ibooks_srcset_bug_exists:
-						filename = regex.search(r"(?<=/)[^/]+(?=\.svg)", src)[0]
-						node.set_attr("srcset", f"{filename}-2x.png 2x, {filename}.png 1x")
+				if not ibooks_srcset_bug_exists:
+					filename = regex.search(r"(?<=/)[^/]+(?=\.svg)", src)[0]
+					node.set_attr("srcset", f"{filename}-2x.png 2x, {filename}.png 1x")
 
 			if has_svg:
 				with open(file_path, "w", encoding="utf-8") as file:
