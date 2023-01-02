@@ -222,8 +222,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ll])aw suit", r"\1awsuit", xhtml)			# law suit -> lawsuit
 	xhtml = regex.sub(r"\bIncase", r"Encase", xhtml)				# Incase -> Encase
 	xhtml = regex.sub(r"\bincase", r"encase", xhtml)				# incase -> encase
-	xhtml = regex.sub(r"\bInclose", r"Enclose", xhtml)				# Inclose -> Enclose
-	xhtml = regex.sub(r"\binclose", r"enclose", xhtml)				# inclose -> enclose
+	xhtml = regex.sub(r"\bInclos(es?|ed?|ures?|ing)\b", r"Enclos\1", xhtml)		# Inclose -> Enclose
+	xhtml = regex.sub(r"\binclos(es?|ed?|ures?|ing)\b", r"enclos\1", xhtml)		# inclose -> enclose
 	xhtml = regex.sub(r"\b([Cc])ocoa[ -]?nut", r"\1oconut", xhtml)			# cocoanut / cocoa-nut -> coconut
 	xhtml = regex.sub(r"\b([Ww])aggon", r"\1agon", xhtml)				# waggon -> wagon
 	xhtml = regex.sub(r"\b([Ss])wop", r"\1wap", xhtml)				# swop -> swap
