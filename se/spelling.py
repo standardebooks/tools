@@ -422,6 +422,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])pight", r"\1pite", xhtml)				# spight -> spite
 	xhtml = regex.sub(r"\b([Ss])tedfast", r"\1teadfast", xhtml)			# stedfast -> steadfast
 	xhtml = regex.sub(r"\b([Rr])elique", r"\1elic", xhtml)				# relique -> relic
+	xhtml = regex.sub(r"\b([Ll])agune", r"\1agoon", xhtml)				# lagune -> lagoon
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
