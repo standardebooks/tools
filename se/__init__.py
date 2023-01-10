@@ -179,7 +179,7 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 	if verbose:
 		message = str(message).replace("\n", f"\n{MESSAGE_INDENT}")
 
-	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=bool(is_called_from_parallel())) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
 	if plain_output:
 		# Replace color markup with `
@@ -273,7 +273,7 @@ def is_called_from_parallel(return_none=True) -> Union[bool,None]:
 
 	return None if return_none else False
 
-def get_dom_if_not_ignored(xhtml: str, ignored_types: List[str] = None) -> Tuple[bool, Union[None, se.easy_xml.EasyXmlTree]]:
+def get_dom_if_not_ignored(xhtml: str, ignored_types: Union[List[str],None] = None) -> Tuple[bool, Union[None, se.easy_xml.EasyXmlTree]]:
 	"""
 	Given a string of XHTML, return a dom tree ONLY IF the dom does not contain a
 	top-level <section> element with any of the passed semantics.

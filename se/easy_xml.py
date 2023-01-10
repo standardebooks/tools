@@ -14,6 +14,7 @@ from cssselect import parser
 
 # Not sure how to get around pylint error, so just ignore it for now
 # until someone can solve it
+import se # pylint: disable=cyclic-import
 import se.css # pylint: disable=cyclic-import
 
 CSS_SELECTOR_CACHE: Dict[str, cssselect.CSSSelector] = {}
@@ -216,7 +217,7 @@ class EasyXmlElement:
 		self.namespaces = namespaces
 
 		if isinstance(lxml_element, str):
-			dom = se.easy_xml.EasyXmlTree(lxml_element)
+			dom = EasyXmlTree(lxml_element)
 			self.lxml_element = dom.etree
 		else:
 			self.lxml_element = lxml_element
