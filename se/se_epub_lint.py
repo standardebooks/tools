@@ -2310,7 +2310,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("s-079", "Element containing only white space.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for partially obscured years in which the last year is an em dash
-				nodes = dom.xpath("/html/body//p[re:test(.,  '1\\d{2}⁠—[^a-z<]')]")
+				nodes = dom.xpath("/html/body//p[re:test(.,  '1\\d{2}⁠—[^A-Za-z<]')]")
 				if nodes:
 					messages.append(LintMessage("t-036", "Em-dash used to obscure single digit in year. Hint: Use a hyphen instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
