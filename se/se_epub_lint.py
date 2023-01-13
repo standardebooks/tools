@@ -2549,7 +2549,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				# Check for possessive 's within name italics, but not in ignored files like the colophon which we know have no possessives
 				# Allow some known exceptions like `Harper's`, etc.
 				if filename.name not in IGNORED_FILENAMES:
-					nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.') and re:test(., '’s$') and not(contains(@epub:type, 'se:name.publication.') and re:test(., '(Pearson’s|Harper’s|Blackwood’s|Fraser’s)$'))]")
+					nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.') and re:test(., '’s$') and not(contains(@epub:type, 'se:name.publication.') and re:test(., '(Pearson’s|Harper’s|Blackwood’s|Fraser’s|Baedeker’s)$'))]")
 					if nodes:
 						messages.append(LintMessage("t-007", "Possessive [text]’s[/] within name italics. If the name in italics is doing the possessing, [text]’s[/] goes outside italics.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
