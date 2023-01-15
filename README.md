@@ -173,7 +173,7 @@ $HOME/.local/pipx/venvs/standardebooks/bin/pylint se
 Similar to `pylint`, the `pytest` command can be injected into the venv `pipx` created for the `standardebooks` package:
 
 ```shell
-pipx inject standardebooks pytest==6.2.4
+pipx inject standardebooks pytest==7.0.1
 ```
 
 The tests are executed by calling `pytest` from the top level or your tools repo:
