@@ -78,7 +78,7 @@ setup(
 		"smartypants==2.0.1",
 		"tinycss2==1.1.1", # Must stay at this version until the server can use Python >= 3.7
 		"titlecase==2.3", # Must stay at this version until the server can use Python >= 3.7
-		"unidecode==1.2.0"
+		"unidecode==1.3.6"
 	],
 	include_package_data=True,
 	entry_points={
