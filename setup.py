@@ -63,7 +63,7 @@ setup(
 		"cssselect==1.1.0", # Must stay at this version until the server can use Python >= 3.7
 		"cssutils==2.3.0", # Must stay at this version until the server can use Python >= 3.7
 		"ftfy==6.0.3", # Must stay at this version until the server can use Python >= 3.7
-		"gitpython==3.1.11", # Must stay at this version until the server can use Python >= 3.7
+		"gitpython==3.1.30", # Must stay at this version until the server can use Python >= 3.7
 		"importlib_resources==1.0.2",
 		"lxml==4.9.2",
 		"natsort==7.1.1", # Can't update until we update mypy to 900+
