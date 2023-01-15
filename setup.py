@@ -70,7 +70,7 @@ setup(
 		"pillow==8.4.0", # Must stay at this version until the server can use Python >= 3.7
 		"psutil==5.9.4",
 		"pyphen==0.11.0", # Must stay at this version until the server can use Python >= 3.7
-		"regex==2021.08.28",
+		"regex==2022.10.31",
 		"requests==2.27.1", # Must stay at this version until the server can use Python >= 3.7
 		"rich==12.6.0", # Must stay at this version until the server can use Python >= 3.7
 		"roman==3.3.0",
