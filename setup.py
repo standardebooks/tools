@@ -59,7 +59,7 @@ setup(
 	python_requires=">=3.6.*", # The latest version installed by default on Ubuntu 18.04 is 3.6.9
 	install_requires=[
 		"cairosvg==2.5.2",
-		"chardet==5.0.0", # Must stay at this version until the server can use Python >= 3.7
+		"chardet==4.0.0", # Must stay at this version until `requests` can be updated
 		"cssselect==1.1.0", # Must stay at this version until the server can use Python >= 3.7
 		"cssutils==2.3.0", # Must stay at this version until the server can use Python >= 3.7
 		"ftfy==6.0.3", # Must stay at this version until the server can use Python >= 3.7
