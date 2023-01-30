@@ -1985,6 +1985,12 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if nodes:
 					messages.append(LintMessage("t-042", "Possible typo: Dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
+				# Check for italics having epub:type that run in to preceding or following characters
+				# Ignore things like <i>Newspaper</i>s
+				nodes = dom.xpath("/html/body//i[@epub:type and ( (following-sibling::node()[1][re:test(., '^[a-z]', 'i') and not(re:test(., '^(s|es|er)'))]) or preceding-sibling::node()[1][re:test(., '[a-z]$')]) ]")
+				if nodes:
+					messages.append(LintMessage("t-042", "Possible typo: Italics running into preceding or following characters.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
 				# Check for body element without child section or article. Ignore the ToC because it has a unique structure
 				nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and re:test(@epub:type, '\\b(toc|loi)\\b'))])]")
 				if nodes:
