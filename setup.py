@@ -56,7 +56,7 @@ setup(
 	],
 	keywords="ebooks epub",
 	packages=find_packages(),
-	python_requires=">=3.6.*", # The latest version installed by default on Ubuntu 18.04 is 3.6.9
+	python_requires=">=3.6.9", # The latest version installed by default on Ubuntu 18.04 is 3.6.9
 	install_requires=[
 		"cairosvg==2.5.2",
 		"chardet==4.0.0", # Must stay at this version until `requests` can be updated
