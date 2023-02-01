@@ -4,9 +4,6 @@ This module implements the `se build-title` command.
 
 import argparse
 
-import regex
-
-from roman import InvalidRomanNumeralError
 import se
 import se.easy_xml
 import se.formatting
@@ -55,19 +52,12 @@ def build_title(plain_output: bool) -> int:
 							for node in dom.xpath("/html/head/title"):
 								node.set_text(title)
 
-								# If the title looks like a roman numeral, then add a semantic too
-								if regex.match(r"^[IXVLCDM]+$", title):
-									node.set_attr("epub:type", "z3998:roman")
-
 							file.seek(0)
 							file.write(dom.to_string())
 							file.truncate()
 
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
-			return_code = se.InvalidInputException.code
-		except InvalidRomanNumeralError as ex:
-			se.print_error(regex.sub(r"^.+: (.+)$", fr"Invalid Roman numeral: [text]\1[/]. File: [path][link=file://{filename}]{filename}[/][/].", str(ex)), plain_output=plain_output)
 			return_code = se.InvalidInputException.code
 		except se.SeException as ex:
 			se.print_error(f"File: [path][link=file://{filename}]{filename}[/][/]. {ex}", plain_output=plain_output)
