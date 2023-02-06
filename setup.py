@@ -56,6 +56,20 @@ setup(
 	],
 	keywords="ebooks epub",
 	packages=find_packages(),
+
+
+	############################################################
+	# WARNING!!!!!!
+	#
+	# NOBODY MAY EDIT THESE DEPENDENCIES, IN ANY WAY, FOR ANY REASON.
+	# THE ONLY PERSON WHO MAY EDIT THESE IS THE EDITOR-IN-CHIEF.
+	#
+	# Packaging and dependencies in Python are complex and fragile.
+	# Well-meaning attempts at upgrading packages or messing with pinned dependencies
+	# often end up breaking the entire install.
+	# This toolset targets a specific version of Python, and libraries are pinned to specific
+	# versions to prevent surprise breakage. Don't edit this!
+	############################################################
 	python_requires=">=3.6.9", # The latest version installed by default on Ubuntu 18.04 is 3.6.9
 	install_requires=[
 		"cairosvg==2.5.2",
