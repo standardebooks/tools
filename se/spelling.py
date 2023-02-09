@@ -523,9 +523,11 @@ def modernize_spelling(xhtml: str) -> str:
 
 	# US spelling is unique
 	if language == "en-US":
+		xhtml = regex.sub(r"\b([Mm])anœuvred", r"\1aneuvered", xhtml)
 		xhtml = regex.sub(r"\b([Mm])anœuv(?:er|re)", r"\1aneuver", xhtml) # Omit last letter to catch both maneuverS and maneuverING
 		xhtml = regex.sub(r"\b([Mm])anœuvering", r"\1aneuvering", xhtml)
 	else:
+		xhtml = regex.sub(r"\b([Mm])anœuvred", r"\1anoeuvred", xhtml)
 		xhtml = regex.sub(r"\b([Mm])anœuv(?:er|re)", r"\1anoeuvre", xhtml)
 		xhtml = regex.sub(r"\b([Mm])anœuvring", r"\1anoeuvring", xhtml)
 		xhtml = regex.sub(r"\b([Mm])anoeuvreing", r"\1anoeuvring", xhtml)
