@@ -1,3 +1,59 @@
+# 2.5.0
+
+## General
+
+- Add default vertical margin to lists in core.css. Thanks to Robin Whittleton
+
+- Bump to epubcheck 5.0.0
+
+## se build
+
+- Add support for simplifying `:empty` selector. Thanks to Robin Whittleton
+
+- Remove SVG -> PNG conversion for Kobo as it is no longer necessary. Thanks to Robin Whittleton
+
+## se build-title
+
+- Don't add Roman semantics to `<title>` as `epub:type` is illegal on `<title>`.
+
+## se create-draft
+
+- Truncate GitHub repo name to 100 characters max. Thanks to Robin Whittleton
+
+- Remove duplicate `xml:lang` attibute that is sometimes added by lxml
+
+## se lint
+
+- Various small fixes
+
+- Add s-102, `lang` attribute found
+
+- Add t-036, em dash used to obscure last digit of year
+
+- Improve s-082
+
+- Add se.name.vehicle.airplane to vocab
+
+- Improve regex for punctuation in `<em>`. Thanks to Vince Rice
+
+- Add check for missing semantics on some probable monarch names. Thanks to Robin Whittleton
+
+- Improve t-007
+
+- Improve t-042
+
+## se modernize-spelling
+
+- Various additions
+
+## se semanticate
+
+- Add `inst.`
+
+## se shift-illustrations
+
+- Add this command. Thanks to Robin Whittleton
+
 # 2.4.3
 
 ## se create-draft
