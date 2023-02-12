@@ -6,6 +6,8 @@
 
 - Bump to epubcheck 5.0.0
 
+- Fix broken version specifier in setup.py. Thanks to Ben Steinberg
+
 ## se build
 
 - Add support for simplifying `:empty` selector. Thanks to Robin Whittleton
