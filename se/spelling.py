@@ -427,6 +427,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ll])agune", r"\1agoon", xhtml)				# lagune -> lagoon
 	xhtml = regex.sub(r"\b([Ss])irup", r"\1yrup", xhtml)				# sirup -> syrup
 	xhtml = regex.sub(r"\b([Bb])ye-?way", r"\1yway", xhtml)				# bye-way -> byway
+	xhtml = regex.sub(r"\b([Bb])efel\b", r"\1efell", xhtml)				# befel -> befell
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
