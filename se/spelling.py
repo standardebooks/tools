@@ -500,6 +500,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Pp])æan", r"\1aean", xhtml)
 	xhtml = regex.sub(r"\b([Vv])ertebræ", r"\1ertebrae", xhtml)
 	xhtml = xhtml.replace("Linnæus", r"Linnaeus")
+	xhtml = regex.sub(r"\b([Ff])œtus", r"\1oetus", xhtml)
 
 	# Remove spaces before contractions like `n’t` e.g. `is n’t` -> `isn’t`
 	xhtml = regex.sub(r" n’t\b", r"n’t", xhtml)
