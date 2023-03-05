@@ -1459,6 +1459,10 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 				if top_level_wrapper.get_attr("epub:type"):
 					# Get the first non-namespaced value as the title
 					for value in top_level_wrapper.get_attr("epub:type").split(" "):
+						if value == "z3998:frontispiece":
+							title = "Frontispiece"
+							break
+
 						if ":" not in value:
 							title = titlecase(value.replace("-", " "))
 							break
