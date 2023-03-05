@@ -2057,7 +2057,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 					messages.append(LintMessage("s-098", "[xhtml]<header>[/] element with only one child.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for a list of some common English loan words that used to be italicized as foreign, but are no longer
-				nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and re:test(., '^(fianc[eé]+|divorc[eé]+|menu|recherch[eé]|tour-de-force|outr[eé]|d[ée]but(ante)?|apropos|[eé]lite|prot[ée]g[ée]+|chef|salon|r[eé]gime|contretemps|[eé]clat|aides?|entr[ée]+)$')]")
+				nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and re:test(., '^(fianc[eé]+|divorc[eé]+|menu|recherch[eé]|tour-de-force|outr[eé]|d[ée]but(ante)?|apropos|[eé]lite|prot[ée]g[ée]+|chef|salon|r[eé]gime|contretemps|[eé]clat|aides?|entr[ée]+|t[eê]te-[aà]-t[eê]tes?|blas[eé]|bourgeoisie)$')]")
 				if nodes:
 					messages.append(LintMessage("t-043", "Non-English loan word set in italics, when modern typography omits italics. Hint: A word may be correctly italicized when emphasis is desired, if the word is meant to be pronounced with an accent, or if the word is part of non-English speech.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
