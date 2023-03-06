@@ -282,7 +282,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Tt])abu(s?)\b", r"\1aboo\2", xhtml)			# tabu -> taboo
 	xhtml = regex.sub(r"\b([Kk])idnaping\b", r"\1idnapping", xhtml)			# kidnaping -> kidnapping
 	xhtml = regex.sub(r"([,;a-z]\s)Quixotic\b", r"\1quixotic", xhtml)		# Quixotic -> quixotic but not at the start of a clause
-	xhtml = regex.sub(r"([^\p{Lowercase_Letter}]’[Tt])\s(is|were|was|isn’t)\b", r"\1\2", xhtml)		# 't is, 't was, 't were 't isn't -> 'tis, 'twas, 'twere, 't isn't
+	xhtml = regex.sub(r"([^\p{Lowercase_Letter}]’[Tt])\s(is|were|was|wasn’t|isn’t|ain’t)\b", r"\1\2", xhtml)		# 't is, 't was, 't were 't isn't -> 'tis, 'twas, 'twere, 't isn't
 	xhtml = regex.sub(r"\b([Uu])p stairs\b", r"\1pstairs", xhtml)			# up stairs -> upstairs
 	xhtml = regex.sub(r"(?<!up and )(?<!up or )\b([Dd])own stairs\b", r"\1ownstairs", xhtml)		# down stairs -> downstairs, but not "up (or|and) down stairs"
 	xhtml = regex.sub(r"([Pp])artizan", r"\1artisan", xhtml)			# partizan -> partisan
