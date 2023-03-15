@@ -314,7 +314,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"([\s>])\-([0-9,]+)", r"\1−\2", xhtml)
 
 	# Convert L to £ if next to a number
-	xhtml = regex.sub(r"L([0-9]+)", r"£\1", xhtml)
+	xhtml = regex.sub(r"\bL([0-9]+)", r"£\1", xhtml)
 
 	# Make sure there are periods after old-style shilling/pence denominations
 	xhtml = regex.sub(r"\b([0-9]+)s\.? ([0-9]+)d\.?", r"\1s. \2d.", xhtml)
