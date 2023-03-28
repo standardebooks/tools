@@ -497,7 +497,7 @@ class SeEpub:
 		for img in section.xpath("//img[starts-with(@src, '../images/')]"):
 			img.set_attr("src", se.images.get_data_url(self.content_path / img.get_attr("src").replace("../", "")))
 
-	def recompose(self, output_xhtml5: bool, extra_css_file: Path = None) -> str:
+	def recompose(self, output_xhtml5: bool, extra_css_file: Union[Path,None] = None) -> str:
 		"""
 		Iterate over the XHTML files in this epub and "recompose" them into a single XHTML string representing this ebook.
 
