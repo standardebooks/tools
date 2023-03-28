@@ -1158,7 +1158,7 @@ def titlecase(text: str) -> str:
 	text = regex.sub(fr"([—–]{se.WORD_JOINER}?)([\p{{Lowercase_Letter}}])", lambda result: result.group(1) + result.group(2).upper(), text)
 
 	# Lowercase `and`, if it's not the very first word, and not preceded by an em-dash
-	text = regex.sub(r"(?<!^)\bAnd\b", r"and", text)
+	text = regex.sub(r"(?<!^)\b(And|Nor)\b", lambda result: result.group(1).lower(), text)
 
 	# Lowercase `the`, if preceded by a dash (like `Puss-in-Boots` or `Jack-in-the-Box`)
 	text = regex.sub(r"\b(-)(In|The|Sur|Of|Au)\b", lambda result: result.group(1) + result.group(2).lower(), text)
