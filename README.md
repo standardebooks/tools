@@ -268,6 +268,10 @@ We need volunteers to take the lead on the following goals:
 
 	Create a skeleton of a new Standard Ebook.
 
+-	### `se css-select`
+
+	Print the results of a CSS selector evaluated against a set of XHTML files.
+
 -	### `se dec2roman`
 
 	Convert a decimal number to a Roman numeral.

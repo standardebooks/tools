@@ -1,6 +1,6 @@
 function __fish_se_no_subcommand --description "Test if se has yet to be given the subcommand"
 	for i in (commandline -opc)
-		if contains -- $i british2american build build-ids build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names version word-count xpath
+		if contains -- $i british2american build build-ids build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft css-select dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names version word-count xpath
 			return 1
 		end
 	end
@@ -54,6 +54,10 @@ complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s o -l offline 
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s r -l translator -d "the translator of the ebook"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s t -l title -d "the title of the ebook"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s w -l white-label -d "create a generic epub skeleton without S.E. branding"
+
+complete -c se -n "__fish_se_no_subcommand" -a css-select -d "Print the results of a CSS selector evaluated against a set of XHTML files."
+complete -c se -A -n "__fish_seen_subcommand_from css-select" -s f -l only-files -x -d "only output filenames of files that contain matches, not the matches themselves"
+complete -c se -A -n "__fish_seen_subcommand_from css-select" -s h -l help -x -d "show this help message and exit"
 
 complete -c se -n "__fish_se_no_subcommand" -a dec2roman -d "Convert a decimal number to a Roman numeral."
 complete -c se -A -n "__fish_seen_subcommand_from dec2roman" -s h -l help -x -d "show this help message and exit"

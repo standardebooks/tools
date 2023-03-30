@@ -56,6 +56,11 @@ _se(){
 			create-draft)
 				COMPREPLY+=($(compgen -W "-a --author -e --email -h --help -i --illustrator -o --offline -p --pg-id -r --translator -t --title -w --white-label" -- "${cur}"))
 				;;
+			css-select)
+				COMPREPLY+=($(compgen -W "-h --help -f --only-filenames" -- "${cur}"))
+				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				;;
 			dec2roman)
 				COMPREPLY+=($(compgen -W "-h --help -n --no-newline" -- "${cur}"))
 				;;

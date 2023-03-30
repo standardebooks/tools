@@ -23,6 +23,7 @@ case $state in
 			"clean[Prettify and canonicalize individual XHTML or SVG files.]" \
 			"compare-versions[Render and compare XHTML files in an ebook repository.]" \
 			"create-draft[Create a skeleton of a new Standard Ebook.]" \
+			"css-select[Print the results of a CSS selector evaluated against a set of XHTML files.]" \
 			"dec2roman[Convert a decimal number to a Roman numeral.]" \
 			"extract-ebook[Extract an EPUB, MOBI, or AZW3 ebook.]" \
 			"find-mismatched-dashes[Find words with mismatched dashes in a set of XHTML files.]" \
@@ -132,6 +133,12 @@ case $state in
 					{-r,--translator}'[the translator of the ebook]' \
 					{-t,--title}'[the title of the ebook]' \
 					{-w,--white-label}'[create a generic epub skeleton without S.E. branding]'
+				;;
+			css-select)
+				_arguments -s \
+					{-f,--only-filenames}'[only output filenames of files that contain matches, not the matches themselves]' \
+					{-h,--help}'[show a help message and exit]' \
+					'*: :_files -g \*.xhtml'
 				;;
 			dec2roman)
 				_arguments -s \
