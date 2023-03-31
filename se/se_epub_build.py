@@ -1135,14 +1135,14 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 						output = output.replace(str(work_compatible_epub_dir) + ".epub", str(epub_debug_dir))
 
 						for message in messages:
-							error_text = regex.search(r"\[(.+?)\]", message.text)
+							error_text = regex.search(r"(\[(.+)\]), ", message.text)
 							file_text = regex.search(r"\], (.+?) \(([0-9]+)-([0-9]+)\)$", message.text)
 
 							if file_text:
 								file_path = epub_debug_dir / file_text[1]
-								build_messages.append(BuildMessage("epubcheck", message.get_attr("id"), error_text[1], file_path, file_text[2], file_text[3]))
+								build_messages.append(BuildMessage("epubcheck", message.get_attr("id"), error_text[2], file_path, file_text[2], file_text[3]))
 							else:
-								build_messages.append(BuildMessage("epubcheck", message.get_attr("id"), error_text[1]))
+								build_messages.append(BuildMessage("epubcheck", message.get_attr("id"), error_text[2]))
 
 						raise se.BuildFailedException("[bash]epubcheck[/] failed.", build_messages)
 
