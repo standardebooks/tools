@@ -1,5 +1,5 @@
 """
-This module implements the `se xpath` command.
+This module implements the `se css-select` command.
 """
 
 import argparse
@@ -11,7 +11,7 @@ import se.easy_xml
 
 def css_select(plain_output: bool) -> int:
 	"""
-	Entry point for `se xpath`
+	Entry point for `se css-select`
 	"""
 
 	parser = argparse.ArgumentParser(description="Print the results of a CSS selector evaluated against a set of XHTML files.")
