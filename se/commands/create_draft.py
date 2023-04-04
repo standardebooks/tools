@@ -959,10 +959,18 @@ def _create_draft(args: Namespace):
 
 					# Now, get the LCSH ID by querying LCSH directly.
 					try:
-						response = requests.get(f"https://id.loc.gov/search/?q=cs:http://id.loc.gov/authorities/subjects&q=\"{urllib.parse.quote(subject)}\"")
-						result = regex.search(fr"<a title=\"Click to view record\" href=\"/authorities/subjects/([^\"]+?)\">{regex.escape(subject.replace(' -- ', '--'))}</a>", response.text)
-
+						search_url = "https://id.loc.gov/search/?q=cs:http://id.loc.gov/authorities/{}&q=\"" + urllib.parse.quote(subject) + "\""
+						record_link = "<a title=\"Click to view record\" href=\"/authorities/{}/([^\"]+?)\">" + regex.escape(subject.replace(' -- ', '--')) + "</a>"
 						loc_id = "Unknown"
+
+						response = requests.get(search_url.format("subjects"))
+						result = regex.search(record_link.format("subjects"), response.text)
+
+						# If Subject authority does not exist we can also check the Names authority
+						if result is None:
+							response = requests.get(search_url.format("names"))
+							result = regex.search(record_link.format("names"), response.text)
+
 						try:
 							loc_id = result.group(1)
 						except Exception as ex:
