@@ -1113,9 +1113,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 	# Check for common typos
 	for node in self.metadata_dom.xpath("/package/metadata/dc:description") + self.metadata_dom.xpath("/package/metadata/meta[@property='se:long-description']"):
-		matches = [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", node.text, flags=regex.IGNORECASE)]
+		matches = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?!-)", node.text, flags=regex.IGNORECASE)
+		matches = matches + regex.findall(r"\ba a\b(?!-)", node.text)
 		if matches:
-			messages.append(LintMessage("t-042", "Possible typo: possible doubled [text]the/and/of/or/as[/].", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
+			messages.append(LintMessage("t-042", "Possible typo: doubled [text]a/the/and/of/or/as/if[/].", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
 
 	nodes = self.metadata_dom.xpath("/package/metadata//*[re:test(., '[,;][a-z]', 'i')]")
 	if nodes:
@@ -1406,9 +1407,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				else:
 					# Check for common typos
 					# Don't check the titlepage because it has a standard format and may raise false positives
-					typos = [match[0] for match in regex.findall(r"\s((the|and|of|or|as)\s\2)\s", file_contents, flags=regex.IGNORECASE)]
+					typos = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?!-)", file_contents, flags=regex.IGNORECASE)
+					typos = typos + regex.findall(r"\ba a\b(?!-)", file_contents)
+
 					if typos:
-						messages.append(LintMessage("t-042", "Possible typo: possible doubled [text]the/and/of/or/as[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+						messages.append(LintMessage("t-042", "Possible typo: doubled [text]a/the/and/of/or/as/if[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				is_colophon = bool(dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"))
 				is_imprint = bool(dom.xpath("/html/body/section[contains(@epub:type, 'imprint')]"))
