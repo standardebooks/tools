@@ -34,14 +34,12 @@ def get_data_url(image_path: Path) -> str:
 	# SVGs can be inlined as utf8 data, which results in a much smaller file.
 	# Other images are converted to base64 first.
 	if image_path.suffix == ".svg":
-		with open(image_path, "r") as file:
-			svg_contents = file.read()
-
-			# Try to find the encoding of the XML file, default to utf-8
-			encoding="utf-8"
-			matches = regex.search(r"""^<\?xml[^>]*?encoding="([^"]+?)"[^>]*?\?>""", svg_contents)
-			if matches and matches[1]:
-				encoding = urllib.parse.quote(matches[1])
+		with open(image_path, "rb") as binary_file:
+			# We parse the XML using LXML because otherwise, Python might guess that the file is
+			# encoded in ASCII and throw errors when unexpected characters are found
+			tree = etree.parse(binary_file)
+			encoding = tree.docinfo.encoding
+			svg_contents = etree.tostring(tree, encoding=encoding, xml_declaration=True).decode(encoding)
 
 			svg_uri = urllib.parse.quote(svg_contents.replace("\n", ""), safe="")
 
@@ -328,9 +326,9 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 		font = _parse_font(font_path)
 		fonts.append(font)
 
-	with open(in_svg, "rt") as svg_in_raw:
+	with open(in_svg, "rb") as binary_file:
 		try:
-			xml = etree.fromstring(str.encode(svg_in_raw.read()))
+			xml = etree.parse(binary_file).getroot()
 		except Exception as ex:
 			raise se.InvalidXmlException(f"Couldn’t parse SVG file: [path][link={in_svg.resolve()}]{in_svg}[/][/].") from ex
 
