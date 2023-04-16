@@ -1791,6 +1791,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: paragraph missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
+				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '-[‘“]')]")]
+				if typos:
+					messages.append(LintMessage("t-042", "Possible typo: mis-curled quotation mark after dash.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
 				# Check for commas or periods following exclamation or question marks. Exclude the colophon because we may have painting names with punctuation
 				if not is_colophon:
 					typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[!?][\\.,][^”’]')]")]
