@@ -819,7 +819,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				illegal_files = self.repo.git.ls_files(illegal_files).split("\n")
 				if illegal_files and illegal_files[0] == "":
 					illegal_files = []
-			except:
+			except Exception:
 				# If we can't initialize Git, then just pass through the list of illegal files
 				pass
 
@@ -895,7 +895,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 		if matches:
 			messages.append(LintMessage("m-018", "HTML entities found. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
-	except Exception as ex:
+	except Exception:
 		if self.is_se_ebook:
 			missing_metadata_elements.append("""<meta id="long-description" property="se:long-description" refines="#description">""")
 
@@ -922,7 +922,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 		matches = regex.findall(r"(?:[0-9]+|\bone\b|\btwo\b|\bthree\b|\bfour\b|\bfive\b|\bsix\b|\bseven\b|\beight\b|\bnine\b|\bten\b|\beleven\b|\btwelve\b|\bthirteen\b|\bfourteen\b|\bfifteen\b|\bsixteen\b|\bseventeen\b|\beighteen\b|\bnineteen\b|\btwenty\b|\bthirty\b|\bforty\b|\bfifty\b|\bsixty\b|\bseventy\b|\beighty|\bninety)", title, flags=regex.IGNORECASE)
 		if matches and not self.metadata_dom.xpath("/package/metadata/meta[@property='dcterms:alternate']"):
 			messages.append(LintMessage("m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"dcterms:alternate\" refines=\"#title\"> element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
-	except:
+	except Exception:
 		missing_metadata_elements.append("<dc:title>")
 
 	try:
@@ -930,7 +930,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 		matches = regex.findall(r".(?:['\"]|\-\-|\s-\s).", file_as)
 		if matches:
 			messages.append(LintMessage("m-050", "Non-typogrified character in [xml]<meta property=\"file-as\" refines=\"#title\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
-	except:
+	except Exception:
 		missing_metadata_elements.append("<meta property=\"file-as\" refines=\"#title\">")
 
 	try:
@@ -938,7 +938,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 		matches = regex.findall(r"(?:['\"]|\-\-|\s-\s)", description)
 		if matches:
 			messages.append(LintMessage("m-013", "Non-typogrified character in [xml]<dc:description>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
-	except:
+	except Exception:
 		missing_metadata_elements.append("<dc:description>")
 
 	# Set some variables for later
@@ -1063,7 +1063,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 			identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier")[0].text
 			if identifier != self.generated_identifier:
 				messages.append(LintMessage("m-023", f"[xml]<dc:identifier>[/] does not match expected: [text]{self.generated_identifier}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-		except:
+		except Exception:
 			missing_metadata_elements.append("<dc:identifier>")
 
 	# Check if se:name.person.full-name matches their titlepage name
@@ -1077,9 +1077,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				name = self.metadata_dom.xpath(f"/package/metadata/*[@id={se.easy_xml.escape_xpath(refines)}]")[0].text
 				if name == node.text:
 					duplicate_names.append(name)
-			except:
+			except Exception:
 				invalid_refines.append(refines)
-		except:
+		except Exception:
 			invalid_refines.append("<meta property=\"se:name.person.full-name\">")
 
 	if duplicate_names:
@@ -1105,7 +1105,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 		manifest = self.metadata_dom.xpath("/package/manifest")[0]
 		if manifest.to_string().replace("\t", "") != self.generate_manifest().to_string().replace("\t", ""):
 			messages.append(LintMessage("m-042", "[xml]<manifest>[/] element does not match expected structure.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-	except:
+	except Exception:
 		missing_metadata_elements.append("<manifest>")
 
 	if missing_metadata_elements:
@@ -1553,7 +1553,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 						try:
 							if dom.css_select(selector):
 								unused_selectors.remove(selector)
-						except lxml.cssselect.ExpressionError as ex:
+						except lxml.cssselect.ExpressionError:
 							# This gets thrown on some selectors not yet implemented by lxml, like *:first-of-type
 							unused_selectors.remove(selector)
 							continue
@@ -1596,7 +1596,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 				if not dom.xpath("/html/body/nav[contains(@epub:type, 'toc')]") and not dom.xpath("/html/body[count(./section) + count(./article) > 3]"):
 					try:
 						header_text = dom.xpath("/html/head/title/text()")[0]
-					except:
+					except Exception:
 						header_text = ""
 
 					if header_text != "":
@@ -3179,7 +3179,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 			files_not_url_safe = self.repo.git.ls_files([str(f.relative_to(self.path)) for f in files_not_url_safe]).split("\n")
 			if files_not_url_safe and files_not_url_safe[0] == "":
 				files_not_url_safe = []
-		except:
+		except Exception:
 			# If we can't initialize Git, then just pass through the list of illegal files
 			pass
 
@@ -3202,7 +3202,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 
 			# Remove duplicates
 			directories_not_url_safe = list(set(directories_not_url_safe))
-		except:
+		except Exception:
 			# If we can't initialize Git, then just pass through the list of illegal files
 			pass
 
@@ -3297,12 +3297,12 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> li
 							messages.remove(message)
 							code["used"] = True
 
-					except ValueError as ex:
+					except ValueError:
 						# This gets raised if the message has already been removed by a previous rule.
 						# For example, chapter-*.xhtml gets t-001 removed, then subsequently *.xhtml gets t-001 removed.
 						pass
 					except Exception as ex:
-						raise se.InvalidInputException(f"Invalid path in [path][link=file://{lint_ignore_path}]se-lint-ignore.xml[/][/] rule: [path]{path}[/].")
+						raise se.InvalidInputException(f"Invalid path in [path][link=file://{lint_ignore_path}]se-lint-ignore.xml[/][/] rule: [path]{path}[/].") from ex
 
 		# Check for unused ignore rules
 		unused_codes: List[str] = []

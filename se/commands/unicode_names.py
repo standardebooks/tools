@@ -48,7 +48,7 @@ def unicode_names(plain_output: bool) -> int:
 				try:
 					character_name = unicodedata.name(character)
 					table.add_row(character, "U+{:04X}".format(ord(character)), character_name, f"[link=https://util.unicode.org/UnicodeJsps/character.jsp?a={urllib.parse.quote_plus(character)}]Properties page[/]")
-				except:
+				except Exception:
 					table.add_row("[white on red bold]?[/]", "U+{:04X}".format(ord(character)), "[white on red bold]Unrecognized[/]", "")
 
 		console.print(table)

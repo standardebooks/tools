@@ -5,13 +5,11 @@ Defines various package-level constants and helper functions.
 
 import argparse
 import os
-import shutil
 import sys
 from pathlib import Path
-from typing import Set, Union, List, Tuple
+from typing import Union, List, Tuple
 
 from rich.console import Console
-from rich.text import Text
 from rich.theme import Theme
 from natsort import natsorted, ns
 import regex
@@ -267,7 +265,7 @@ def is_called_from_parallel(return_none=True) -> Union[bool,None]:
 		for line in psutil.Process(psutil.Process().ppid()).cmdline():
 			if regex.search(fr"{os.sep}parallel$", line):
 				return True
-	except:
+	except Exception:
 		# If we can't figure it out, don't worry about it
 		pass
 
@@ -294,7 +292,7 @@ def get_dom_if_not_ignored(xhtml: str, ignored_types: Union[List[str],None] = No
 
 	try:
 		dom = se.easy_xml.EasyXmlTree(xhtml)
-	except:
+	except Exception:
 		return (False, None)
 
 	# Ignore some SE files

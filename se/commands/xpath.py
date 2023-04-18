@@ -49,7 +49,7 @@ def xpath(plain_output: bool) -> int:
 
 						console.print(output)
 
-		except etree.XPathEvalError as ex:
+		except etree.XPathEvalError:
 			se.print_error("Invalid xpath expression.")
 			return se.InvalidInputException.code
 

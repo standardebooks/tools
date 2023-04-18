@@ -79,22 +79,22 @@ def _color_to_alpha(image: Image, color=None) -> Image:
 	# once.
 	alpha = ImageMath.eval(
 		"""float(
-		    max(
-			max(
-			    max(
-				difference1(red_band, cred_band),
-				difference1(green_band, cgreen_band)
-			    ),
-			    difference1(blue_band, cblue_band)
-			),
-			max(
-			    max(
-				difference2(red_band, cred_band),
-				difference2(green_band, cgreen_band)
-			    ),
-			    difference2(blue_band, cblue_band)
-			)
-		    )
+				max(
+					max(
+						max(
+							difference1(red_band, cred_band),
+							difference1(green_band, cgreen_band)
+						),
+						difference1(blue_band, cblue_band)
+					),
+					max(
+						max(
+							difference2(red_band, cred_band),
+							difference2(green_band, cgreen_band)
+						),
+						difference2(blue_band, cblue_band)
+					)
+				)
 		)""",
 		difference1=lambda source, color: (source - color) / (255.0 - color),
 		difference2=lambda source, color: (color - source) / color,
@@ -446,20 +446,20 @@ def _float_to_str(float_value: float) -> str:
 def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: Dict) -> None:
 	# Required properties to make any progress
 	for key in "x y font text font-size".split():
-		if not key in text_properties:
+		if key not in text_properties:
 			raise se.InvalidCssException(f"svg_text_to_paths: Missing key [text]{key}[/] in [text]text_properties[/] for [xml]<{g_elem.tag}>[/] element in [path]./images/titlepage.svg[/] or [path]./images/cover.svg[/].")
 	# We know we have x, y, text, font-size, and font so we can render vectors.
 	# Now set up some defaults if not specified.
 	text_properties["font-size"] = float(text_properties["font-size"].replace("px", "")) # NOTE assumes pixels and ignores it
 	font = text_properties["font"]
-	if not "letter-spacing" in text_properties:
+	if "letter-spacing" not in text_properties:
 		text_properties["letter-spacing"] = 0
 	text_properties["letter-spacing"] = float(text_properties["letter-spacing"].replace("px", ""))
-	if not "text-anchor" in text_properties:
+	if "text-anchor" not in text_properties:
 		text_properties["text-anchor"] = "left"
-	if not "units-per-em" in text_properties:
+	if "units-per-em" not in text_properties:
 		text_properties["units-per-em"] = float(font["meta"]["font-face"]["units-per-em"])
-	if not "horiz-adv-x" in text_properties:
+	if "horiz-adv-x" not in text_properties:
 		text_properties["horiz-adv-x"] = float(font["meta"]["horiz-adv-x"])
 	font = text_properties["font"]
 	text_string = text_properties["text"]
@@ -668,10 +668,10 @@ def _parse_font(font_path: Path) -> dict:
 				glyphs2 = elem.attrib["g2"].split(",")
 				kerning = elem.attrib["k"]
 				for glyph1 in glyphs1:
-					if not glyph1 in g_name_to_unicode:
+					if glyph1 not in g_name_to_unicode:
 						continue
 					for glyph2 in glyphs2:
-						if not glyph2 in g_name_to_unicode:
+						if glyph2 not in g_name_to_unicode:
 							continue
 						pair = g_name_to_unicode[glyph1] +"," + g_name_to_unicode[glyph2]
 						hkern[pair] = kerning

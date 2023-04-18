@@ -423,7 +423,7 @@ class SeEpub:
 
 		try:
 			del self._file_cache[str(file_path)]
-		except:
+		except Exception:
 			pass
 
 	# Cache dom objects so we don't have to create them multiple times
@@ -865,7 +865,7 @@ class SeEpub:
 
 				try:
 					existing_file = next(illustration_path.glob(f"illustration-{new_illustration_number}.*"))
-				except Exception as ex:
+				except Exception:
 					pass
 
 				if existing_file:
@@ -1309,8 +1309,7 @@ class SeEpub:
 						anchor = href[hash_position:]
 				references.append(anchor)  # keep these for later reverse check
 				# Now try to find anchor in endnotes
-				match_anchor = lambda x, old=anchor: x.anchor == old
-				matches = list(filter(match_anchor, self.endnotes))
+				matches = list(filter(lambda x, old=anchor: x.anchor == old, self.endnotes)) # type: ignore [misc]
 				if not matches:
 					missing.append(anchor)
 				if len(matches) > 1:
@@ -1503,8 +1502,7 @@ class SeEpub:
 			link.lxml_element.text = str(current_note_number)
 			needs_rewrite = True
 		# Now try to find this in endnotes
-		match_old = lambda x, old=old_anchor: x.anchor == old
-		matches = list(filter(match_old, self.endnotes))
+		matches = list(filter(lambda x, old=old_anchor: x.anchor == old, self.endnotes)) # type: ignore [misc]
 		if not matches:
 			raise se.InvalidInputException(f"Couldn’t find endnote with anchor [attr]{old_anchor}[/].")
 		if len(matches) > 1:

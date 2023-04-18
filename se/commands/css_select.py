@@ -48,7 +48,7 @@ def css_select(plain_output: bool) -> int:
 
 						console.print(output)
 
-		except se.InvalidCssException as ex:
+		except se.InvalidCssException:
 			se.print_error("Invalid CSS selector.")
 			return se.InvalidInputException.code
 

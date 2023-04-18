@@ -52,7 +52,7 @@ def _number_to_fraction(string: str) -> str:
 						output = output + chr(ord(char) + 8272)
 				else:
 					output = output + char
-	except:
+	except Exception:
 		return string
 
 	return output

@@ -610,17 +610,17 @@ def _create_draft(args: Namespace):
 
 	if not args.white_label:
 		# Get data on authors
-		for i, author in enumerate(authors):
+		for _, author in enumerate(authors):
 			if not args.offline and author["name"].lower() != "anonymous":
 				author["wiki_url"], author["nacoaf_uri"] = _get_wikipedia_url(author["name"], True)
 
 		# Get data on translators
-		for i, translator in enumerate(translators):
+		for _, translator in enumerate(translators):
 			if not args.offline and translator["name"].lower() != "anonymous":
 				translator["wiki_url"], translator["nacoaf_uri"] = _get_wikipedia_url(translator["name"], True)
 
 		# Get data on illlustrators
-		for i, illustrator in enumerate(illustrators):
+		for _, illustrator in enumerate(illustrators):
 			if not args.offline and illustrator["name"].lower() != "anonymous":
 				illustrator["wiki_url"], illustrator["nacoaf_uri"] = _get_wikipedia_url(illustrator["name"], True)
 
@@ -636,7 +636,7 @@ def _create_draft(args: Namespace):
 			response = requests.get(pg_url)
 			pg_metadata_html = response.text
 		except Exception as ex:
-			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page. Exception: {ex}")
+			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page. Exception: {ex}") from ex
 
 		html_parser = etree.HTMLParser()
 		dom = etree.parse(StringIO(pg_metadata_html), html_parser)
@@ -667,13 +667,13 @@ def _create_draft(args: Namespace):
 			response = requests.get(pg_ebook_url)
 			pg_ebook_html = response.text
 		except Exception as ex:
-			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook HTML. Exception: {ex}")
+			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook HTML. Exception: {ex}") from ex
 
 		try:
 			fixed_pg_ebook_html = fix_text(pg_ebook_html, uncurl_quotes=False)
 			pg_ebook_html = se.strip_bom(fixed_pg_ebook_html)
 		except Exception as ex:
-			raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Project Gutenberg HTML file. Exception: {ex}")
+			raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Project Gutenberg HTML file. Exception: {ex}") from ex
 
 		# Try to guess the ebook language
 		pg_language = "en-US"
@@ -750,7 +750,7 @@ def _create_draft(args: Namespace):
 			# lxml may also create duplicate xml:lang attributes on the root element. Not sure why. Remove them.
 			output = regex.sub(r'(xml:lang="[^"]+?" lang="[^"]+?") xml:lang="[^"]+?"', r"\1", output)
 
-		except Exception as ex:
+		except Exception:
 			# Save this error for later; we still want to save the book text and complete the
 			#  create-draft process even if we've failed to parse PG's HTML source.
 			is_pg_html_parsed = False
@@ -760,7 +760,7 @@ def _create_draft(args: Namespace):
 			with open(pg_file_local_path, "w", encoding="utf-8") as file:
 				file.write(output)
 		except OSError as ex:
-			raise se.InvalidFileException(f"Couldn’t write to ebook directory. Exception: {ex}")
+			raise se.InvalidFileException(f"Couldn’t write to ebook directory. Exception: {ex}") from ex
 
 	# Copy over templates
 	_copy_template_file("gitignore", repo_path / ".gitignore")
@@ -970,16 +970,16 @@ def _create_draft(args: Namespace):
 						if result is None:
 							response = requests.get(search_url.format("names"))
 							result = regex.search(record_link.format("names"), response.text)
-
-						try:
-							loc_id = result.group(1)
-						except Exception as ex:
-							pass
+						else:
+							try:
+								loc_id = result.group(1)
+							except Exception:
+								pass
 
 						subject_xhtml = subject_xhtml + f"\t\t<meta property=\"term\" refines=\"#subject-{i}\">{loc_id}</meta>\n"
 
 					except Exception as ex:
-						raise se.RemoteCommandErrorException(f"Couldn’t connect to [url][link=https://id.loc.gov]https://id.loc.gov[/][/]. Exception: {ex}")
+						raise se.RemoteCommandErrorException(f"Couldn’t connect to [url][link=https://id.loc.gov]https://id.loc.gov[/][/]. Exception: {ex}") from ex
 
 					i = i + 1
 

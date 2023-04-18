@@ -114,7 +114,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				java_check = subprocess.run(["java", "-version"], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=False)
 				if java_check.stderr.decode().find("Unable to locate") >= 0:
 					java_present = False
-			except:
+			except Exception:
 				java_present = False
 
 		if not java_present:

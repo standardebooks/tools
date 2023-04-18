@@ -43,7 +43,7 @@ def build_toc(plain_output: bool) -> int:
 		except se.SeException as ex:
 			se.print_error(ex)
 			return ex.code
-		except FileNotFoundError as ex:
+		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: [path][link=file://{se_epub.toc_path}]{se_epub.toc_path}[/][/].", plain_output=plain_output)
 			return se.InvalidSeEbookException.code
 
