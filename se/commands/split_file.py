@@ -36,7 +36,7 @@ def split_file(plain_output: bool) -> int:
 	parser = argparse.ArgumentParser(description="Split an XHTML file into many files at all instances of <!--se:split-->, and include a header template for each file.")
 	parser.add_argument("-f", "--filename-format", metavar="STRING", type=str, default="chapter-%n.xhtml", help="a format string for the output files; `%%n` is replaced with the current chapter number; defaults to `chapter-%%n.xhtml`")
 	parser.add_argument("-s", "--start-at", metavar="INTEGER", type=se.is_positive_integer, default="1", help="start numbering chapters at this number, instead of at 1")
-	parser.add_argument("-t", "--template-file", metavar="FILE", type=str, default="", help="a file containing an XHTML template to use for each chapter; the string `NUMBER` is replaced by the chapter number, the string `NUMERAL` is replaced by the chapter Roman numeral, and the string `TEXT` is replaced by the chapter body")
+	parser.add_argument("-t", "--template-file", metavar="FILE", type=str, default="", help="a file containing an XHTML template to use for each chapter; the string `LANG` is replaced by the guessed language, the string `NUMBER` is replaced by the chapter number, the string `NUMERAL` is replaced by the chapter Roman numeral, and the string `TEXT` is replaced by the chapter body")
 	parser.add_argument("filename", metavar="FILE", help="an HTML/XHTML file")
 	args = parser.parse_args()
 
@@ -59,6 +59,13 @@ def split_file(plain_output: bool) -> int:
 	else:
 		with importlib_resources.open_text("se.data.templates", "chapter-template.xhtml", encoding="utf-8") as file:
 			template_xhtml = file.read()
+
+	# Try to guess the ebook language and update the template accordingly
+	pg_language = "en-US"
+	if "colour" in xhtml or "favour" in xhtml or "honour" in xhtml:
+		pg_language = "en-GB"
+
+	template_xhtml = template_xhtml.replace("LANG", pg_language)
 
 	chapter_xhtml = ""
 
