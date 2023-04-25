@@ -668,7 +668,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		# Output the modified the metadata file so that we can build the kobo book before making more compatibility hacks that aren’t needed on that platform.
 		with open(work_compatible_epub_dir / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
-			file.write(se.formatting.format_xhtml(metadata_dom.to_string()))
+			file.write(se.formatting.format_opf(metadata_dom.to_string()))
 
 		if build_kobo:
 			work_kepub_dir = Path(work_dir / (work_compatible_epub_dir.name + ".kepub"))
@@ -1095,7 +1095,14 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		# Guide is done, now write the metadata file and clean it.
 		# Output the modified metadata file before making more compatibility hacks.
 		with open(work_compatible_epub_dir / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
-			file.write(se.formatting.format_opf(metadata_dom.to_string()))
+			# Nook has a bug where the cover image <meta> element MUST have attributes in a certain order
+			# See:
+			# https://nachtimwald.com/2011/08/21/nook-covers-not-showing-up/
+			# https://github.com/standardebooks/tools/issues/577
+			# Change the order with a regex before writing out the file
+			xml = se.formatting.format_opf(metadata_dom.to_string())
+			xml = regex.sub(r"""<meta content="([^"]+?)" name="cover"/>""", r"""<meta name="cover" content="\1"/>""", xml)
+			file.write(xml)
 
 		# All done, clean the output
 		for filepath in se.get_target_filenames([work_compatible_epub_dir], (".xhtml", ".ncx")):
