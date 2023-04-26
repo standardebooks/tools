@@ -17,7 +17,7 @@ def get_commands() -> List[str]:
 	"""
 
 	commands = []
-	for module_info in pkgutil.iter_modules(se.commands.__path__): # type: ignore # mypy issue 1422
+	for module_info in pkgutil.iter_modules(se.commands.__path__):
 		command = module_info.name.replace("_", "-")
 		if command != "version":
 			commands.append(command)

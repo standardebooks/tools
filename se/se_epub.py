@@ -1245,7 +1245,7 @@ class SeEpub:
 
 		return self.metadata_dom.xpath("/package/metadata/dc:title/text()", True) or "WORK_TITLE"
 
-	def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> list:
+	def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = None) -> list:
 		"""
 		The lint() function is very big so for readability and maintainability
 		it's broken out to a separate file. Strictly speaking that file can be inlined
@@ -1309,7 +1309,7 @@ class SeEpub:
 						anchor = href[hash_position:]
 				references.append(anchor)  # keep these for later reverse check
 				# Now try to find anchor in endnotes
-				matches = list(filter(lambda x, old=anchor: x.anchor == old, self.endnotes)) # type: ignore [misc]
+				matches = list(filter(lambda x, old=anchor: x.anchor == old, self.endnotes)) # type: ignore [arg-type]
 				if not matches:
 					missing.append(anchor)
 				if len(matches) > 1:
@@ -1502,7 +1502,7 @@ class SeEpub:
 			link.lxml_element.text = str(current_note_number)
 			needs_rewrite = True
 		# Now try to find this in endnotes
-		matches = list(filter(lambda x, old=old_anchor: x.anchor == old, self.endnotes)) # type: ignore [misc]
+		matches = list(filter(lambda x, old=old_anchor: x.anchor == old, self.endnotes)) # type: ignore [arg-type]
 		if not matches:
 			raise se.InvalidInputException(f"Couldn’t find endnote with anchor [attr]{old_anchor}[/].")
 		if len(matches) > 1:
