@@ -5,7 +5,7 @@ The class exposes some helpful functions like css_select() and xpath().
 """
 
 from html import unescape
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional
 import unicodedata
 
 import regex
@@ -140,7 +140,7 @@ class EasyXmlTree:
 				node.set_attr(f"data-css-{declaration.name}", declaration.value)
 				node.set_attr(f"data-css-{declaration.name}-specificity", str(specificity_number))
 
-	def apply_css(self, css: str, filename: str=None):
+	def apply_css(self, css: str, filename: Optional[str] = None):
 		"""
 		Apply a CSS stylesheet to an XHTML tree.
 		The application is naive and should not be expected to be browser-grade.

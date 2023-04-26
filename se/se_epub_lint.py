@@ -13,7 +13,7 @@ from fnmatch import translate
 import io
 import os
 from pathlib import Path
-from typing import Dict, List, Set, Union
+from typing import Dict, List, Set, Union, Optional
 import importlib_resources
 
 import cssutils
@@ -395,7 +395,7 @@ class LintMessage:
 	Contains information like message text, severity, and the epub filename that generated the message.
 	"""
 
-	def __init__(self, code: str, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: Path = None, submessages: Union[List[str], Set[str]] = None):
+	def __init__(self, code: str, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: Optional[Path] = None, submessages: Optional[Union[List[str], Set[str]]] = None):
 		self.code = code
 		self.text = text.strip()
 		self.filename = filename
@@ -604,7 +604,7 @@ def files_not_in_spine(self) -> set:
 	spine_files = set(self.spine_file_paths + [self.toc_path])
 	return xhtml_files.difference(spine_files)
 
-def lint(self, skip_lint_ignore: bool, allowed_messages: List[str] = None) -> list:
+def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = None) -> list:
 	"""
 	Check this ebook for some common SE style errors.
 

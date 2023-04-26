@@ -7,7 +7,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Optional
 
 from rich.console import Console
 from rich.theme import Theme
@@ -116,7 +116,7 @@ class BuildFailedException(SeException):
 	""" Build failed """
 	code = 17
 
-	def __init__(self, message, messages: List = None):
+	def __init__(self, message, messages: Optional[List] = None):
 		super().__init__(message)
 		self.messages = messages if messages else []
 

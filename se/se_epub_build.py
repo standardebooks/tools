@@ -16,7 +16,7 @@ from copy import deepcopy
 from hashlib import sha1
 from html import unescape
 from pathlib import Path
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Optional
 import importlib_resources
 
 from cairosvg import svg2png
@@ -52,7 +52,7 @@ class BuildMessage:
 	Contains information like message text, severity, and the epub filename that generated the message.
 	"""
 
-	def __init__(self, source: str, code: str, text: str, filename: Path = None, line: int = None, col: int = None, submessages: List = None):
+	def __init__(self, source: str, code: str, text: str, filename: Optional[Path] = None, line: Optional[int] = None, col: Optional[int] = None, submessages: Optional[List] = None):
 		self.source = source
 		self.code = code
 		self.text = text.strip()

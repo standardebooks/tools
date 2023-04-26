@@ -10,7 +10,7 @@ import math
 import string
 import unicodedata
 from pathlib import Path
-from typing import Dict, Union, List, Tuple
+from typing import Dict, Union, List, Tuple, Optional
 
 import regex
 import roman
@@ -596,7 +596,7 @@ def _format_xml_str(xml: str) -> etree.ElementTree:
 
 	return tree
 
-def _xml_tree_to_string(tree: etree.ElementTree, doctype: str = None) -> str:
+def _xml_tree_to_string(tree: etree.ElementTree, doctype: Optional[str] = None) -> str:
 	"""
 	Given an XML etree, return a string representing the etree's XML.
 
