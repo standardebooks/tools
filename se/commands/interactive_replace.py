@@ -347,7 +347,7 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 
 					# Throw a blank exception so that we break out of the loop
 					# and disinitialize curses in `finally`
-					raise Exception
+					raise Exception # pylint: disable=broad-exception-raised
 
 				if curses.keyname(char) in (b"y", b"Y"):
 					# Do the replacement, but starting from the beginning of the match in case we

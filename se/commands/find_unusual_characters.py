@@ -124,8 +124,8 @@ def find_unusual_characters(plain_output: bool) -> int:
 	# Sort and prepare the output
 	lines = []
 
-	for unusual_character, _ in unusual_characters.items():
-		lines.append((unusual_character, unusual_characters[unusual_character]))
+	for unusual_character, count in unusual_characters.items():
+		lines.append((unusual_character, count))
 
 	lines.sort()
 

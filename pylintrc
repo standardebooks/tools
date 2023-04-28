@@ -6,7 +6,7 @@ ignore=vendor
 extension-pkg-whitelist=lxml,math,unicodedata
 
 [MESSAGES CONTROL]
-disable=line-too-long,too-many-nested-blocks,too-many-branches,too-many-statements,too-many-boolean-expressions,too-many-lines,too-many-locals,broad-except,bare-except,too-few-public-methods,too-many-arguments,too-many-instance-attributes,bad-continuation,too-many-public-methods,duplicate-code,no-member
+disable=line-too-long,too-many-nested-blocks,too-many-branches,too-many-statements,too-many-boolean-expressions,too-many-lines,too-many-locals,broad-except,bare-except,too-few-public-methods,too-many-arguments,too-many-instance-attributes,too-many-public-methods,duplicate-code,no-member
 
 [FORMAT]
 indent-string=\t

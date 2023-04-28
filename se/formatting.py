@@ -821,9 +821,9 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 					output += " " + token.value + " "
 				else:
 					output += token.value
-			elif token.value == "<" or token.value == ">" or token.value == "+" or token.value == "-" or token.value == "/":
+			elif token.value in ("<", ">", "+", "-", "/"):
 				output += " " + token.value + " "
-			elif token.value == "|" or token.value == "|=" or token.value == "^=" or token.value == "~=" or token.value == "*=" or token.value == "||":
+			elif token.value in ("|", "|=", "^=", "~=", "*=", "||"):
 				output = output.rstrip() + token.value
 			else:
 				output += token.value
@@ -1110,7 +1110,7 @@ def get_ordinal(number: str) -> str:
 	"""
 
 	value = int(number)
-	return "%d%s" % (value, "tsnrhtdd"[(math.floor(value / 10) % 10 != 1) * (value % 10 < 4) * value % 10::4])
+	return "%d%s" % (value, "tsnrhtdd"[(math.floor(value / 10) % 10 != 1) * (value % 10 < 4) * value % 10::4]) # pylint: disable=consider-using-f-string
 
 def titlecase(text: str) -> str:
 	"""

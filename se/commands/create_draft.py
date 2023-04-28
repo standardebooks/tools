@@ -373,7 +373,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> Tuple[Optional[str]
 	# returns HTTP 200, then we didn't find a direct match and return nothing.
 
 	try:
-		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": "1"}, allow_redirects=False)
+		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": "1"}, allow_redirects=False, timeout=60)
 	except Exception as ex:
 		raise se.RemoteCommandErrorException(f"Couldn’t contact Wikipedia. Exception: {ex}") from ex
 
@@ -386,7 +386,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> Tuple[Optional[str]
 
 		if get_nacoaf_uri:
 			try:
-				response = requests.get(wiki_url)
+				response = requests.get(wiki_url, timeout=60)
 			except Exception as ex:
 				raise se.RemoteCommandErrorException(f"Couldn’t contact Wikipedia. Exception: {ex}") from ex
 
@@ -633,7 +633,7 @@ def _create_draft(args: Namespace):
 
 		# Get the ebook metadata
 		try:
-			response = requests.get(pg_url)
+			response = requests.get(pg_url, timeout=60)
 			pg_metadata_html = response.text
 		except Exception as ex:
 			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page. Exception: {ex}") from ex
@@ -664,7 +664,7 @@ def _create_draft(args: Namespace):
 
 		# Get the actual ebook URL
 		try:
-			response = requests.get(pg_ebook_url)
+			response = requests.get(pg_ebook_url, timeout=60)
 			pg_ebook_html = response.text
 		except Exception as ex:
 			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook HTML. Exception: {ex}") from ex
@@ -963,12 +963,12 @@ def _create_draft(args: Namespace):
 						record_link = "<a title=\"Click to view record\" href=\"/authorities/{}/([^\"]+?)\">" + regex.escape(subject.replace(' -- ', '--')) + "</a>"
 						loc_id = "Unknown"
 
-						response = requests.get(search_url.format("subjects"))
+						response = requests.get(search_url.format("subjects"), timeout=60)
 						result = regex.search(record_link.format("subjects"), response.text)
 
 						# If Subject authority does not exist we can also check the Names authority
 						if result is None:
-							response = requests.get(search_url.format("names"))
+							response = requests.get(search_url.format("names"), timeout=60)
 							result = regex.search(record_link.format("names"), response.text)
 						else:
 							try:

@@ -11,7 +11,7 @@ import os
 import shutil
 import subprocess
 import tempfile
-from distutils.dir_util import copy_tree
+from distutils.dir_util import copy_tree # pylint: disable=deprecated-module
 from copy import deepcopy
 from hashlib import sha1
 from html import unescape
@@ -320,8 +320,8 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		if cover_local_path:
 			cover_work_path = work_compatible_epub_dir / "epub" / cover_local_path
 
-			if cover_work_path.suffix == ".svg" or cover_work_path.suffix == ".png":
-				# If the cover is SVG, conver to PNG first
+			if cover_work_path.suffix in (".svg", ".png"):
+				# If the cover is SVG, convert to PNG first
 				if cover_work_path.suffix == ".svg":
 					svg2png(url=str(cover_work_path), write_to=str(work_dir / "cover.png"))
 

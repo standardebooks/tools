@@ -89,7 +89,7 @@ class SeEpub:
 			self.path = Path(epub_root_directory).resolve()
 
 			if not self.path.is_dir():
-				raise Exception
+				raise NotADirectoryError
 
 		except Exception as ex:
 			raise se.InvalidSeEbookException(f"Not a directory: [path][link=file://{self.path}]{self.path}[/][/].") from ex
@@ -1352,7 +1352,7 @@ class SeEpub:
 
 				current_note_number += 1
 
-			with open(file_path, "w") as file:
+			with open(file_path, "w", encoding="utf-8") as file:
 				file.write(dom.to_string())
 
 		# Renumber all endnotes starting from 1
@@ -1366,7 +1366,7 @@ class SeEpub:
 
 			current_note_number += 1
 
-		with open(self.endnotes_path, "w") as file:
+		with open(self.endnotes_path, "w", encoding="utf-8") as file:
 			file.write(endnotes_dom.to_string())
 
 	def generate_endnotes(self) -> Tuple[int, int, list]:
@@ -1405,7 +1405,7 @@ class SeEpub:
 
 			# If we need to write back the body text file
 			if needs_rewrite:
-				with open(file_path, "w") as file:
+				with open(file_path, "w", encoding="utf-8") as file:
 					file.write(se.formatting.format_xhtml(dom.to_string()))
 
 		# Now process any endnotes WITHIN the endnotes
@@ -1437,7 +1437,7 @@ class SeEpub:
 
 						ol_node.append(endnote.node)
 
-			with open(self.endnotes_path, "w") as file:
+			with open(self.endnotes_path, "w", encoding="utf-8") as file:
 				file.write(se.formatting.format_xhtml(endnotes_dom.to_string()))
 
 			# now trawl through the body files to locate any direct links to endnotes (not in an actual endnote reference)
@@ -1449,7 +1449,7 @@ class SeEpub:
 				for link in dom.xpath("/html/body//a[contains(@href, 'endnotes.xhtml#note-')]"):
 					needs_rewrite = self.__process_direct_link(change_list, link)
 				if needs_rewrite:
-					with open(file_path, "w") as file:
+					with open(file_path, "w", encoding="utf-8") as file:
 						file.write(se.formatting.format_xhtml(dom.to_string()))
 
 		return current_note_number - 1, notes_changed, change_list

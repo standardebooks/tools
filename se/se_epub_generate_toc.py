@@ -720,7 +720,7 @@ def process_all_content(self, file_list: list) -> Tuple[list, list]:
 
 	# Now we test to see if there is only one body item
 	body_items = [item for item in landmarks if item.place == Position.BODY]
-	single_file = (len(body_items) == 1)
+	single_file = len(body_items) == 1
 	single_file_without_headers = False
 
 	# If there's only one body item, does that item have a header?
