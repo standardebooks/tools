@@ -35,7 +35,7 @@ def unicode_names(plain_output: bool) -> int:
 	if plain_output:
 		for line in lines:
 			for character in line:
-				console.print(character, "\tU+{:04X}".format(ord(character)), "\t", unicodedata.name(character))
+				console.print(character, "\tU+{:04X}".format(ord(character)), "\t", unicodedata.name(character)) # pylint: disable=consider-using-f-string
 	else:
 		table = Table(show_header=False, show_lines=True, box=box.HORIZONTALS)
 		table.add_column("Character", style="bold", width=1, no_wrap=True)
@@ -47,9 +47,9 @@ def unicode_names(plain_output: bool) -> int:
 			for character in line:
 				try:
 					character_name = unicodedata.name(character)
-					table.add_row(character, "U+{:04X}".format(ord(character)), character_name, f"[link=https://util.unicode.org/UnicodeJsps/character.jsp?a={urllib.parse.quote_plus(character)}]Properties page[/]")
+					table.add_row(character, "U+{:04X}".format(ord(character)), character_name, f"[link=https://util.unicode.org/UnicodeJsps/character.jsp?a={urllib.parse.quote_plus(character)}]Properties page[/]") # pylint: disable=consider-using-f-string
 				except Exception:
-					table.add_row("[white on red bold]?[/]", "U+{:04X}".format(ord(character)), "[white on red bold]Unrecognized[/]", "")
+					table.add_row("[white on red bold]?[/]", "U+{:04X}".format(ord(character)), "[white on red bold]Unrecognized[/]", "") # pylint: disable=consider-using-f-string
 
 		console.print(table)
 

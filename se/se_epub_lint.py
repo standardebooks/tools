@@ -3148,7 +3148,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 		# Href links are mostly found in endnotes, so if there's an endnotes file process it first
 		# to try to speed things up a little
 		for file_path in self.content_path.glob("**/*"):
-			if file_path.suffix == ".xhtml" or file_path.suffix == ".xml":
+			if file_path.suffix in (".xhtml", ".xml"):
 				dom = self.get_dom(file_path)
 				if dom.xpath("/html/body/section[contains(@epub:type, 'glossary') or contains(@epub:type, 'endnotes')]") or dom.xpath("/search-key-map"):
 					sorted_filenames.insert(0, file_path)

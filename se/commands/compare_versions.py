@@ -3,7 +3,7 @@ This module implements the `se compare-versions` command.
 """
 
 import argparse
-from distutils.dir_util import copy_tree
+from distutils.dir_util import copy_tree # pylint: disable=deprecated-module
 import shutil
 import tempfile
 from pathlib import Path
@@ -188,7 +188,7 @@ def compare_versions(plain_output: bool) -> int:
 						with importlib_resources.open_text("se.data.templates", "diff-template.html", encoding="utf-8") as file:
 							html = file.read().replace("<!--se:sections-->", html.strip())
 
-						with open(output_directory / "diff.html", "w") as file:
+						with open(output_directory / "diff.html", "w", encoding="utf-8") as file:
 							file.write(html)
 	except KeyboardInterrupt as ex:
 		# Bubble the exception up, but proceed to `finally` so we quit the driver

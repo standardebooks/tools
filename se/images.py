@@ -214,7 +214,7 @@ def remove_image_metadata(filename: Path) -> None:
 	None.
 	"""
 
-	if filename.suffix == ".xcf" or filename.suffix == ".svg":
+	if filename.suffix in (".xcf", ".svg"):
 		# Skip GIMP XCF and SVG files
 		return
 
@@ -369,7 +369,7 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 	xmlstr = etree.tostring(xml, pretty_print=True).decode("UTF-8")
 	result_all_text = xmlstr.replace("ns0:", "").replace(":ns0", "")
 	result_all_text = se.formatting.format_xml(result_all_text)
-	with open(out_svg, "wt") as output:
+	with open(out_svg, "wt", encoding="utf-8") as output:
 		output.write(result_all_text)
 
 def _apply_css(elem: etree.Element, css_text: str) -> dict:
@@ -441,7 +441,7 @@ def _add_font_to_properties(properties: Dict, fonts: List) -> None:
 		return # One chunk of text can only have one font/variant
 
 def _float_to_str(float_value: float) -> str:
-	return "{0:.2f}".format(round(float_value, 2))
+	return "{0:.2f}".format(round(float_value, 2)) # pylint: disable=consider-using-f-string
 
 def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: Dict) -> None:
 	# Required properties to make any progress
@@ -608,7 +608,7 @@ def _d_apply_matrix(d_attrib: str, matrix: List) -> str:
 	return " ".join(shapes).strip()
 
 def _parse_font(font_path: Path) -> dict:
-	with open(font_path, "rt") as font_svg_raw:
+	with open(font_path, "rt", encoding="utf-8") as font_svg_raw:
 		xml = etree.fromstring(str.encode(font_svg_raw.read()))
 	font: Dict = {"glyphs": {}, "hkern": {}, "meta": {}}
 	glyphs = font["glyphs"]
