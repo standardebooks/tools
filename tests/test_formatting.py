@@ -35,13 +35,13 @@ def assert_match(data_dir: Path, test_name: str):
 	infile = f"{data_dir}/formatting/in/{test_name}.xhtml"
 	outfile = f"{data_dir}/formatting/out/{test_name}.xhtml"
 
-	with open(infile, "r") as file:
+	with open(infile, "r", encoding="utf-8") as file:
 		xml = file.read()
 
 	result = format_xml(xml)
 	print(result)
 
-	with open(outfile, "r") as file:
+	with open(outfile, "r", encoding="utf-8") as file:
 		assert file.read() == result
 
 

@@ -77,23 +77,23 @@ def files_are_golden(in_dir: Path, text_dir: Path, golden_dir: Path, update_gold
 	# If there are mismatches, do an assert on the text of the files
 	# so that we get a nice context diff from pytest.
 	for mismatch in mismatches:
-		with open(golden_dir / mismatch) as file:
+		with open(golden_dir / mismatch, encoding="utf-8") as file:
 			golden_text = file.read()
-		with open(text_dir / mismatch) as file:
+		with open(text_dir / mismatch, encoding="utf-8") as file:
 			test_text = file.read()
 		assert test_text == golden_text
 
 	if check_content_opf:
-		with open(golden_dir / "content.opf") as file:
+		with open(golden_dir / "content.opf", encoding="utf-8") as file:
 			golden_text = file.read()
-		with open(content_opf_out) as file:
+		with open(content_opf_out, encoding="utf-8") as file:
 			test_text = file.read()
 		assert test_text == golden_text
 
 	# Do a redundant check in case there is no text diff for some reason
-	assert mismatches == []
+	assert not mismatches
 	# Fail on any other errors
-	assert errors == []
+	assert not errors
 
 	return True
 
@@ -102,11 +102,11 @@ def output_is_golden(out: str, golden_file: Path, update_golden: bool) ->bool:
 	__tracebackhide__ = True # pylint: disable=unused-variable
 
 	if update_golden:
-		with open(golden_file, "w") as file:
+		with open(golden_file, "w", encoding="utf-8") as file:
 			file.write(out)
 
 	# Output of stdout should match expected output
-	with open(golden_file) as file:
+	with open(golden_file, encoding="utf-8") as file:
 		assert file.read() == out
 
 	return True

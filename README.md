@@ -165,7 +165,7 @@ Then make sure to call the `pylint` and `mypy` binaries that `pipx` installed in
 
 ```shell
 cd /path/to/tools/repo
-$HOME/.local/pipx/venvs/standardebooks/bin/pylint se
+$HOME/.local/pipx/venvs/standardebooks/bin/pylint tests/*.py se
 ```
 
 ### Testing with `pytest`
