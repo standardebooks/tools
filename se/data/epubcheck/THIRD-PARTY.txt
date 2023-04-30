@@ -22,6 +22,12 @@ Licenses of third-party dependencies
   ICU4J, 72.1
     Unicode/ICU License
 
+  json-path, 2.8.0
+    Apache License, Version 2.0
+
+  json-path-assert, 2.8.0
+    Apache License, Version 2.0
+
   TwelveMonkeys :: Common :: Image, 3.9.4
     The 3-Clause BSD License
 
@@ -45,6 +51,12 @@ Licenses of third-party dependencies
 
   isorelax, 20030108
     The 3-clause BSD License
+
+  ASM based accessors helper used by json-smart, 2.4.9
+    Apache License, Version 2.0
+
+  JSON Small and Fast Parser, 2.4.10
+    Apache License, Version 2.0
 
   Saxon-HE, 11.4
     Mozilla Public License Version 2.0
@@ -73,10 +85,16 @@ Licenses of third-party dependencies
   Data Mapper for Jackson, 1.9.12
     Apache License, Version 2.0
 
+  asm, 9.3
+    BSD-3-Clause
+
   Jing, 20181222
     The 3-Clause BSD License
 
-  SLF4J API Module, 1.7.25
+  SLF4J API Module, 1.7.36
+    MIT License
+
+  SLF4J NOP Binding, 1.7.36
     MIT License
 
   Simple API for CSS, 1.3
