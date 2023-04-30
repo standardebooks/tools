@@ -72,26 +72,26 @@ setup(
 	############################################################
 	python_requires=">=3.6.9", # The latest version installed by default on Ubuntu 18.04 is 3.6.9
 	install_requires=[
-		"cairosvg==2.5.2",
-		"chardet==4.0.0", # Must stay at this version until `requests` can be updated
-		"cssselect==1.1.0", # Must stay at this version until the server can use Python >= 3.7
-		"cssutils==2.3.0", # Must stay at this version until the server can use Python >= 3.7
-		"ftfy==6.0.3", # Must stay at this version until the server can use Python >= 3.7
-		"gitpython==3.1.11", # Must stay at this version until the server can use Python >= 3.7
+		"cairosvg==2.7.0",
+		"chardet==5.1.0",
+		"cssselect==1.2.0",
+		"cssutils==2.6.0",
+		"ftfy==6.0.3",
+		"gitpython==3.1.30",
 		"importlib_resources==1.0.2",
 		"lxml==4.9.2",
-		"natsort==7.1.1", # Can't update until we update mypy to 900+
-		"pillow==8.4.0", # Must stay at this version until the server can use Python >= 3.7
+		"natsort==8.3.1",
+		"pillow==9.5.0",
 		"psutil==5.9.4",
-		"pyphen==0.11.0", # Must stay at this version until the server can use Python >= 3.7
+		"pyphen==0.14.0",
 		"regex==2022.10.31",
-		"requests==2.27.1", # Must stay at this version until the server can use Python >= 3.7
-		"rich==12.6.0", # Must stay at this version until the server can use Python >= 3.7
-		"roman==3.3.0",
-		"selenium==3.141.0", # Must stay at this version until the server can use Python >= 3.7
+		"requests==2.29.0",
+		"rich==13.3.5",
+		"roman==4.0",
+		"selenium==4.9.0",
 		"smartypants==2.0.1",
-		"tinycss2==1.1.1", # Must stay at this version until the server can use Python >= 3.7
-		"titlecase==2.3", # Must stay at this version until the server can use Python >= 3.7
+		"tinycss2==1.2.1",
+		"titlecase==2.4",
 		"unidecode==1.3.6"
 	],
 	include_package_data=True,

@@ -6,13 +6,15 @@ Defines functions for interacting with headless browser sessions.
 import os
 import shutil
 from pathlib import Path
+import importlib_resources
 
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 
+
 import se
 
-def initialize_selenium_firefox_webdriver() -> webdriver:
+def initialize_selenium_firefox_webdriver() -> webdriver.firefox.webdriver.WebDriver:
 	"""
 	Initialize a Selenium Firefox driver and return it for use in other applications.
 
@@ -30,7 +32,7 @@ def initialize_selenium_firefox_webdriver() -> webdriver:
 
 	# We have to use the headless option, otherwise it will pop up a Firefox window
 	options = webdriver.FirefoxOptions()
-	options.add_argument("--headless")
+	options.headless = True
 
 	# Disable the history, because otherwise links to (for example to end notes) may appear as "visited" in visits to other pages, and thus cause a fake diff
 	profile = webdriver.FirefoxProfile()
@@ -42,7 +44,8 @@ def initialize_selenium_firefox_webdriver() -> webdriver:
 	profile.set_preference("layout.css.devPixelsPerPx", "2.0")
 
 	try:
-		driver = webdriver.Firefox(firefox_profile=profile, firefox_options=options, service_log_path=os.devnull)
+		with importlib_resources.path("se.data.geckodriver", "geckodriver") as geckodriver_path:
+			driver = webdriver.Firefox(firefox_profile=profile, options=options, service_log_path=os.devnull, executable_path=geckodriver_path)
 	except WebDriverException as ex:
 		raise se.MissingDependencyException("Selenium Firefox web driver is not installed. To install it on Linux, download the appropriate zip file from [url][link=https://github.com/mozilla/geckodriver/releases/latest]https://github.com/mozilla/geckodriver/releases/latest[/][/] and place the [bash]geckodriver[/] executable in your [path]$PATH[/] (for example, in [path]~/.local/bin/[/] or [path]/usr/local/bin/[/]). To install it on macOS, run [bash]brew install geckodriver[/].") from ex
 

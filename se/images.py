@@ -190,7 +190,8 @@ def render_mathml_to_png(driver, mathml: str, output_filename: Path, output_file
 
 			driver.get(f"file://{mathml_file.name}")
 			# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
-			driver.find_element_by_tag_name("html").screenshot(png_file.name)
+
+			driver.find_element("tag name", "html").screenshot(png_file.name)
 
 			# Save hiDPI 2x version
 			image = Image.open(png_file.name)

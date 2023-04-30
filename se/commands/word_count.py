@@ -42,7 +42,7 @@ def word_count(plain_output: bool) -> int:
 					try:
 						with open(filename, "rb") as binary_file:
 							binary_xhtml = binary_file.read()
-							xhtml = binary_xhtml.decode(chardet.detect(binary_xhtml)["encoding"])
+							xhtml = binary_xhtml.decode(chardet.detect(binary_xhtml)["encoding"] or "")
 					except UnicodeDecodeError:
 						se.print_error(f"File is not UTF-8: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 						return se.InvalidEncodingException.code

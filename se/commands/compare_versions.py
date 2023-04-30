@@ -103,7 +103,7 @@ def compare_versions(plain_output: bool) -> int:
 
 						driver.get(f"file://{filename}")
 						# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
-						driver.find_element_by_tag_name("html").screenshot(f"{temp_directory_name}/{filename.name}-original.png")
+						driver.find_element("tag name", "html").screenshot(f"{temp_directory_name}/{filename.name}-original.png")
 
 					# Pop the stash
 					git_command.stash("pop")
@@ -121,7 +121,7 @@ def compare_versions(plain_output: bool) -> int:
 
 						driver.get(f"file://{filename}")
 						# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
-						driver.find_element_by_tag_name("html").screenshot(str(file_new_screenshot_path))
+						driver.find_element("tag name", "html").screenshot(str(file_new_screenshot_path))
 
 						has_difference = False
 						original_image = Image.open(file_original_screenshot_path)
