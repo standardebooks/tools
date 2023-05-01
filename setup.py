@@ -70,7 +70,7 @@ setup(
 	# This toolset targets a specific version of Python, and libraries are pinned to specific
 	# versions to prevent surprise breakage. Don't edit this!
 	############################################################
-	python_requires=">=3.6.9", # The latest version installed by default on Ubuntu 18.04 is 3.6.9
+	python_requires=">=3.7",
 	install_requires=[
 		"cairosvg==2.7.0",
 		"chardet==5.1.0",

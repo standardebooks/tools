@@ -6,7 +6,7 @@ Installing this toolset using `pipx` makes the `se` command line executable avai
 
 # Installation
 
-The toolset requires Python >= 3.6.
+The toolset requires Python >= 3.7.
 
 To install the toolset locally for development and debugging, see [Installation for toolset developers](#installation-for-toolset-developers).
 
