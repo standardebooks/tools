@@ -1632,7 +1632,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				# Check for <section> and <article> without ID attribute
 				nodes = dom.xpath("/html/body//*[self::section or self::article][not(@id)]")
 				if nodes:
-					messages.append(LintMessage("s-011", "Element without [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, {node.to_tag_string() for node in nodes}))
+					messages.append(LintMessage("s-011", "Element without [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 				for node in dom.xpath("/html/body//*[@id]/@id"):
 					if node in id_values:
@@ -2077,7 +2077,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				# Note we dont select directly on element name, because we want to ignore any namespaces that may (or may not) be defined
 				nodes = dom.xpath("/html/body//*[local-name()='mfenced']")
 				if nodes:
-					messages.append(LintMessage("s-017", "[xhtml]<m:mfenced>[/] is deprecated in the MathML spec. Use [xhtml]<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>[/].", se.MESSAGE_TYPE_ERROR, filename, {node.to_tag_string() for node in nodes}))
+					messages.append(LintMessage("s-017", "[xhtml]<m:mfenced>[/] is deprecated in the MathML spec. Use [xhtml]<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 				# Check for period following Roman numeral, which is an old-timey style we must fix
 				# But ignore the numeral if it's the first item in a <p> tag, as that suggests it might be a kind of list item.
@@ -2216,7 +2216,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				# Check for block-level tags that end with <br/>
 				nodes = dom.xpath("/html/body//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article][br[last()][not(following-sibling::text()[normalize-space()])][not(following-sibling::*)]]")
 				if nodes:
-					messages.append(LintMessage("s-008", "[xhtml]<br/>[/] element found before closing tag of block-level element.", se.MESSAGE_TYPE_ERROR, filename, {node.to_tag_string() for node in nodes}))
+					messages.append(LintMessage("s-008", "[xhtml]<br/>[/] element found before closing tag of block-level element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 				# Check for single words that are in italics, but that have closing punctuation outside italics
 				# Outer wrapping match is so that .findall returns the entire match and not the subgroup
@@ -2305,7 +2305,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				# Check for missing href attributes, sometimes a leftover from PG transcriptions
 				nodes = dom.xpath("/html/body//a[not(@href)]")
 				if nodes:
-					messages.append(LintMessage("s-097", "[xhtml]a[/] element without [attr]href[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, {node.to_string() for node in nodes}))
+					messages.append(LintMessage("s-097", "[xhtml]a[/] element without [attr]href[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for elements that are set in italics, and whose italic children don't have font-style: normal.
 				nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and ./*[(name()='i' or name()='em') and @data-css-font-style='italic']]")
@@ -2847,7 +2847,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				# Check for <br/> after block-level elements
 				nodes = dom.xpath("/html/body//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article][following-sibling::br]")
 				if nodes:
-					messages.append(LintMessage("s-014", "[xhtml]<br/>[/] after block-level element.", se.MESSAGE_TYPE_ERROR, filename, {node.to_tag_string() for node in nodes}))
+					messages.append(LintMessage("s-014", "[xhtml]<br/>[/] after block-level element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 				# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 				matches = regex.findall(fr"[\p{{Letter}}]+”[,\.](?!{se.WORD_JOINER} {se.WORD_JOINER}…)", file_contents)
