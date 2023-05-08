@@ -27,6 +27,7 @@ import se
 import se.easy_xml
 import se.formatting
 import se.images
+import se.typography
 
 SE_VARIABLES = ["SE_IDENTIFIER", "TITLE", "TITLE_SORT", "SUBJECT_1", "SUBJECT_2", "LCSH_ID_1", "LCSH_ID_2", "TAG", "DESCRIPTION", "LONG_DESCRIPTION", "LANG", "PG_URL", "PRODUCTION_NOTES", "IA_URL", "EBOOK_WIKI_URL", "VCS_IDENTIFIER", "YEAR", "AUTHOR_WIKI_URL", "AUTHOR", "AUTHOR_SORT", "AUTHOR_FULL_NAME", "AUTHOR_NACOAF_URI", "TRANSLATOR", "TRANSLATOR_SORT", "TRANSLATOR_WIKI_URL", "TRANSLATOR_NACOAF_URI", "COVER_ARTIST", "COVER_ARTIST_SORT", "COVER_ARTIST_WIKI_URL", "COVER_ARTIST_NACOAF_URI", "ILLUSTRATOR", "ILLUSTRATOR_SORT", "ILLUSTRATOR_WIKI_URL", "ILLUSTRATOR_NACOAF_URI", "TRANSCRIBER", "TRANSCRIBER_SORT", "TRANSCRIBER_URL", "PRODUCER_URL", "PRODUCER", "PRODUCER_SORT", "PG_YEAR", "TRANSCRIBER_1", "TRANSCRIBER_2", "PAINTING", "ORIGINAL_LANGUAGE", "TRANSLATION_YEAR", "CONTRIBUTOR_FULL_NAME"]
 
@@ -365,6 +366,7 @@ TYPOGRAPHY
 "t-070", "[xhtml]<cite>[/] in epigraph ending in a period."
 "t-071", "Multiple transcriptions listed, but preceding text is [text]a transcription[/]."
 "t-072", "[text]various sources[/] link not preceded by [text]from[/]."
+"t-073", "Possible transcription error in Greek."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -2300,7 +2302,14 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				# Check for style attributes
 				nodes = dom.xpath("/html/body//*[@style]")
 				if nodes:
-					messages.append(LintMessage("x-012", "Illegal [attr]style[/] attribute. Don’t use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, {node.to_tag_string() for node in nodes}))
+					messages.append(LintMessage("x-012", "Illegal [attr]style[/] attribute. Don’t use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+				# If we have Greek text, try to normalize it
+				for node in dom.xpath("/html/body//*[@xml:lang='grc' or @xml:lang='el']"):
+					node_text = node.inner_text()
+					expected_text = se.typography.normalize_greek(node_text)
+					if node_text != expected_text:
+						messages.append(LintMessage("t-073", f"Possible transcription error in Greek. Found: [text]{node_text}[/], but expected [text]{expected_text}[/text]. Hint: Use [bash]se unicode-names[/] to see differences in Unicode characters.", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check for missing href attributes, sometimes a leftover from PG transcriptions
 				nodes = dom.xpath("/html/body//a[not(@href)]")

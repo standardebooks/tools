@@ -5,13 +5,14 @@ Defines various typography-related functions
 
 import html
 from typing import Optional, Union
+import unicodedata
 
 import pyphen
 import regex
 import smartypants
 
 import se
-from se.formatting import EasyXmlTree
+from se.easy_xml import EasyXmlTree
 
 
 def _number_to_fraction(string: str) -> str:
@@ -527,3 +528,59 @@ def convert_british_to_american(xhtml: str) -> str:
 	xhtml = regex.sub(r"“([^‘”]+?)’([!\?:;\)])", r"“\1”\2", xhtml)
 
 	return xhtml
+
+
+def normalize_greek(text: str) -> str:
+	"""
+	Given a string of supposed Greek text, return a normalized version
+	that attempts to correct some common transcription errors.
+	A better check would be:
+		`regex.match(r"\\p{Script=Latin}", "τŵν")`
+	but Python doesn't support `script=` in regex yet. For a potential workaround see:
+		https://stackoverflow.com/questions/9868792/find-out-the-unicode-script-of-a-character
+
+	Also see:
+		https://github.com/standardebooks/plato_dialogues_benjamin-jowett/pull/4
+		https://github.com/standardebooks/herman-melville_moby-dick/issues/2212
+		https://jktauber.com/articles/python-unicode-ancient-greek/
+		https://www.unicode.org/faq/greek.html
+		http://www.opoudjis.net/unicode/unicode.html
+	"""
+
+	table = [
+		('\u0302', '\u0342'), # circumflex -> perispomeni
+		('\u0323', '\u0345'), # dot below -> ypogegrammeni
+		('a', 'α'),
+		('i', 'ι'),
+		('ɩ', 'ι'), # Latin iota -> Greek iota
+		('o', 'ο'), # Latin o -> Greek omicron
+		('w', 'ω'),
+		(r'ν(?=\p{Mn})', 'υ'),
+		('\u0020\u0313', '’'), # non-spacing psili -> space + comma above -> apostrophe
+	]
+
+	mark_order = {
+		'\u0313': -1, # comma above
+		'\u0314': -1, # reversed comma above
+		'\u0345': 1, # ypogegrammeni
+	}
+
+	expected_contents = unicodedata.normalize('NFKC', text)
+	for wrong_char, correct_char in table:
+		expected_contents = regex.sub(wrong_char, correct_char, expected_contents)
+
+	expected_contents = regex.sub(r'\p{Mn}+',
+		lambda marks: ''.join(
+			[m for _, m in sorted(
+				[(mark_order.get(m, 0), m) for m in marks.group()],
+				key=lambda x: x[0]
+			)]
+	), expected_contents)
+
+	expected_contents = unicodedata.normalize('NFC', expected_contents)
+
+	# Unicode normalization changes `…` to `...`, and also `hairsp` to `space`, so change those back
+	expected_contents = expected_contents.replace("⁠ ⁠...", "⁠ ⁠…")
+	expected_contents = expected_contents.replace("... ", "… ")
+
+	return expected_contents
