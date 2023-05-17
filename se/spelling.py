@@ -440,7 +440,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"Shakspea?rean", r"Shakespearean", xhtml)			# Shaksperean -> Shakespearean
 	xhtml = regex.sub(r"Shakspea?re?’s", r"Shakespeare’s", xhtml)			# Shakspere’s -> Shakespeare’s
 	xhtml = regex.sub(r"Raffaelle", r"Raphael", xhtml)				# Raffaelle -> Raphael
-	xhtml = regex.sub(r"Michael ?[Aa]ngelo", r"Michelangelo", xhtml)		# Michael Angelo -> Michelangelo
+	xhtml = regex.sub(r"Michael[\- ]?[Aa]ngelo", r"Michelangelo", xhtml)		# Michael Angelo -> Michelangelo
 	xhtml = regex.sub(r"\bVergil", r"Virgil", xhtml)				# Vergil -> Virgil
 	xhtml = regex.sub(r"\bVishnoo", r"Vishnu", xhtml)				# Vishnoo -> Vishnu
 	xhtml = regex.sub(r"\bPekin\b", r"Peking", xhtml)				# Pekin -> Peking
