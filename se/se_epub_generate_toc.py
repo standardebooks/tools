@@ -422,7 +422,7 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, single_file: 
 		if content_item:
 			special_item.level = get_level(content_item[0], toc_list)
 		else:
-			raise se.InvalidInputException(f"Unable to find content item (p, header or img) in file: [path][link=file://{textf}]{textf}[/][/].")
+			raise se.InvalidInputException(f"Unable to find heading or content item (p, header or img) in file: [path][link=file://{textf}]{textf}[/][/].")
 		special_item.title = dom.xpath("//head/title/text()", True)  # Use the page title as the ToC entry title.
 		if special_item.title is None:
 			special_item.title = "NO TITLE"
