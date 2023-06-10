@@ -430,6 +430,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Bb])efel\b", r"\1efell", xhtml)				# befel -> befell
 	xhtml = regex.sub(r"\b([Vv])illan(ies|ous)", r"\1illain\2", xhtml)		# villanies/villainous -> villainies/villainous
 	xhtml = regex.sub(r"\b([Bb])rand([\- ])new\b", r"\1rand\2new", xhtml)		# bran new -> brand new
+	xhtml = regex.sub(r"\b([Mm])illionnaire", r"\1illionaire", xhtml)		# millionnaire -> millionaire
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
