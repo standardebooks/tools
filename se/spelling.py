@@ -480,7 +480,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"Burmah", r"Burma", xhtml)					# Burmah -> Burma
 	xhtml = regex.sub(r"Turgenieff", r"Turgenev", xhtml)				# Turgenieff -> Turgenev
 	xhtml = regex.sub(r"Gizeh", r"Giza", xhtml)					# Gizeh -> Giza
-	xhtml = regex.sub(r"Feejee", r"Fiji", xhtml)					# Feejee -> Fiji
+	xhtml = regex.sub(r"Fee?jee", r"Fiji", xhtml)					# Feejee -> Fiji
 	xhtml = regex.sub(r"[YJ]edd?o\b", r"Edo", xhtml)				# Yeddo/Jeddo -> Edo
 	xhtml = regex.sub(r"Pesth\b", r"Pest", xhtml)					# Pesth -> Pest, i.e. Buda-Pest
 	xhtml = regex.sub(r"Buda-Pest\b", r"Budapest", xhtml)				# Buda-Pest -> Budapest
