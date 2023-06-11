@@ -1240,6 +1240,9 @@ def titlecase(text: str) -> str:
 	# Lowercase `mm` (millimeters, as in `50 mm gun`) unless it's followed by a period in which case it's likely `Mm.` (Monsieurs)
 	text = regex.sub(r"(\s)MM(\s|$)", r"\1mm\2", text)
 
+	# Lowercase `al-` (as in the Arabic definite article) unless it’s the first word
+	text = regex.sub(r"(?<!^)\bAl-", "al-", text)
+
 	# Fix html entities
 	text = text.replace("&Amp;", "&amp;")
 
