@@ -486,6 +486,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"Pesth\b", r"Pest", xhtml)					# Pesth -> Pest, i.e. Buda-Pest
 	xhtml = regex.sub(r"Buda-Pest\b", r"Budapest", xhtml)				# Buda-Pest -> Budapest
 	xhtml = regex.sub(r"Chili(\b|an\b)\b", r"Chile\1", xhtml)				# Chili -> Chile
+	xhtml = regex.sub(r"(?<![\.!\?])\sAl-([A-Z])", r" al-\1", xhtml)				# Lowercase Arabic definite article (e.g. Al-Zubayr -> al-Zubayr) in the middle of a sentence
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
