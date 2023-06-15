@@ -14,7 +14,7 @@
 
 - Fix regex when matching epubcheck messages
 
-- Add compatiblity hack for missing covers in Nook
+- Add compatibility hack for missing covers in Nook
 
 - Fix cover building as only a black image. Thanks to Robin Whittleton
 
