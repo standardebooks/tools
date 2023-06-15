@@ -1,3 +1,75 @@
+# 2.6.0
+
+## General
+
+- Add the `se css-select` command
+
+- Bump to epubcheck 5.0.1
+
+- Remove usage of `se:role` metadata now that the epub spec allows for multiple `role`s. Thanks to Robin Whittleton
+
+## se build
+
+- Fix Kobo span issues in build. Thanks to Weijia Cheng
+
+- Fix regex when matching epubcheck messages
+
+- Add compatiblity hack for missing covers in Nook
+
+- Fix cover building as only a black image. Thanks to Robin Whittleton
+
+## se build-title
+
+- Add exception for frontispieces
+
+## se build-toc
+
+- Fix to prevent crash in build-toc due to no content item on page
+
+## se create-draft
+
+- If an LCSH subject heading isn't found, try to find it in the Names authority
+
+## se interactive-replace
+
+- Print error if file contains a line too long for curses to process
+
+## se lint
+
+- Add more loan words to t-043
+
+- Improve t-042
+
+- Don't match `m:annotation-xml` elements in s-010
+
+- Add t-073, possible error in Greek transcription. Thanks to John Factotum
+
+## se modernize-spelling
+
+- Various additions and improvements
+
+- Lowercase al- in a title with Arabic words in Latin orthography. Thanks to Robin Whittleton
+
+## se recompose-epub
+
+- Correctly get encoding of SVG files
+
+## se split-file
+
+- Guess language of split files. Thanks to Vince Rice
+
+## se titlecase
+
+- Lowercase `nor`
+
+- Lowercase al- in a title with Arabic words in Latin orthography. Thanks to Robin Whittleton
+
+## se typogrify
+
+- Improve £ match
+
+- Ensure fractions aren't actually dates before converting them
+
 # 2.5.0
 
 ## General
