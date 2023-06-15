@@ -181,6 +181,7 @@ def _print_screen(screen, filepath: Path, text: str, start_matching_at: int, reg
 
 	# Create a new pad
 	pad = curses.newpad(text_height, text_width)
+
 	pad.keypad(True)
 
 	# Reset the cursor
@@ -297,7 +298,20 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 			# In curses terminology, a "pad" is a window that is larger than the viewport.
 			# Pads can be scrolled around.
 			# Create and output our initial pad
-			pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = _print_screen(screen, filepath, xhtml, 0, args.regex, regex_flags)
+			try:
+				pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = _print_screen(screen, filepath, xhtml, 0, args.regex, regex_flags)
+			except curses.error as ex:
+				# Curses has a hard upper limit on the width of a pad, around 32k. If a line is too long,
+				# curses will crash with this error message. This happens in ebooks with very very long lines,
+				# like Proust. It's very rare for this to occur, so we just print an error instead of trying
+				# to solve the general case; the solution would probably involve soft-wrapping very long lines before
+				# sending to curses.
+				if str(ex) == "curses function returned NULL":
+					errors.append(f"File contains a line that is too long to process: {filepath}")
+					return_code = se.InvalidInputException.code
+					continue
+
+				raise ex
 
 			while pad:
 				# Wait for input
