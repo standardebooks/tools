@@ -258,11 +258,10 @@ SEMANTICS & CONTENT
 "s-067", "Header element with a [val]label[/] semantic child, but without an [val]ordinal[/] semantic child."
 "s-068", "Header element missing [val]ordinal[/] semantic."
 "s-069", "[xhtml]<body>[/] element missing direct child [xhtml]<section>[/] or [xhtml]<article>[/] element."
-"s-070", "[xhtml]<h#>[/] element without [xhtml]<hgroup>[/] parent and without semantic inflection."
+"s-070", "[xhtml]<h#>[/] element without semantic inflection."
 "s-071", "Sectioning element with more than one heading element."
 "s-072", "Element with single [xhtml]<span>[/] child. [xhtml]<span>[/] should be removed and its attributes promoted to the parent element."
 "s-073", "Header element that requires [val]label[/] and [val]ordinal[/] semantic children."
-"s-074", "[xhtml]<hgroup>[/] element containing sequential [xhtml]<h#>[/] elements at the same heading level."
 "s-075", "[xhtml]<body>[/] element with direct children that are not [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/]."
 "s-076", "[attr]lang[/] attribute used instead of [attr]xml:lang[/]."
 "s-077", "[xhtml]<header>[/] element preceded by non-sectioning element."
@@ -283,7 +282,6 @@ SEMANTICS & CONTENT
 "s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic."
 "s-093", "Nested [xhtml]<abbr>[/] element."
 "s-094", "Element has an [attr]xml:lang[/] attribute that incorrectly contains [val]-latn[/] instead of [val]-Latn[/]."
-"s-095", "[xhtml]<hgroup>[/] element containing [xhtml]<h#>[/] element in the wrong heading order."
 "s-096", "[xhtml]h1[/] element in half title page missing the [val]fulltitle[/] semantic."
 "s-097", "[xhtml]a[/] element without [attr]href[/] attribute."
 "s-098", "[xhtml]<header>[/] element with only one child."
@@ -292,6 +290,10 @@ SEMANTICS & CONTENT
 "s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/]."
 "s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead."
 "s-103", "Probable missing semantics for a roman I numeral."
+UNUSED
+vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+"s-074", "[xhtml]<hgroup>[/] element containing sequential [xhtml]<h#>[/] elements at the same heading level."
+"s-095", "[xhtml]<hgroup>[/] element containing [xhtml]<h#>[/] element in the wrong heading order."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1739,10 +1741,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				if nodes:
 					messages.append(LintMessage("t-018", "Stage direction ending in period next to other punctuation. Remove trailing periods in stage direction.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-				# Check for h# without semantics. h# that are children of hgroup are OK, as are any h# that have child elements (which likely have the correct semantics)
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(@epub:type)][not(./*[not(name()='a' and contains(@epub:type, 'noteref'))])][ancestor::*[1][name() !='hgroup']]")
+				# Check for h# without semantics; h# that have child elements (which likely have the correct semantics) are OK
+				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(@epub:type)][not(./*[not(name()='a' and contains(@epub:type, 'noteref'))])]")
 				if nodes:
-					messages.append(LintMessage("s-070", "[xhtml]<h#>[/] element without [xhtml]<hgroup>[/] parent and without semantic inflection.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+					messages.append(LintMessage("s-070", "[xhtml]<h#>[/] element without semantic inflection.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for <table> element without a <tbody> child
 				if dom.xpath("/html/body//table[not(tbody)]"):
@@ -2553,14 +2555,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
 				if nodes:
 					messages.append(LintMessage("s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
-
-				nodes = dom.xpath("/html/body//hgroup[./*[following-sibling::*[1][name()!='h6' and name()=name(preceding-sibling::*[1])]]]")
-				if nodes:
-					messages.append(LintMessage("s-074", "[xhtml]<hgroup>[/] element containing sequential [xhtml]<h#>[/] elements at the same heading level.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				nodes = dom.xpath("//hgroup/*[./preceding-sibling::* and number(substring(name(./preceding-sibling::*[1]), 2, 1)) != number(substring(name(), 2, 1)) - 1 ]")
-				if nodes:
-					messages.append(LintMessage("s-095", "[xhtml]<hgroup>[/] element containing [xhtml]<h#>[/] element in the wrong heading order.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for common errors in language tags
 				# `gr` is often used instead of `el`, `sp` instead of `es`, and `ge` instead of `de` (`ge` is the Georgian geographic region subtag but not a language subtag itself)
