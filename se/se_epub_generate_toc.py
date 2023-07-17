@@ -589,8 +589,13 @@ def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem, textf: str) ->
 	OUTPUTS:
 	toc_item: qualified ToC item
 	"""
-	children = node.xpath("./h1 | ./h2 | ./h3 | ./h4 | ./h5 | ./h6")
-	for child in children:  # we expect these to be h1, h2, h3, h4 etc
+	# DEBUG
+	print("processing hgroup")
+	# END DEBUG
+
+	children = node.xpath("./p | ./h1 | ./h2 | ./h3 | ./h4 | ./h5 | ./h6") # h# is now deprecated here, keeping for legacy purposes
+	child:EasyXmlElement = None
+	for child in children:  # we expect these to be p, h1, h2, h3, h4 etc
 		if not toc_item.lang:
 			toc_item.lang = child.get_attr("xml:lang")
 		epub_type = child.get_attr("epub:type")
