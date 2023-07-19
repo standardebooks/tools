@@ -2505,7 +2505,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 				# Check for stage direction starting in lowercase.  We only want to consider stage direction that is not an interjection in a parent clause.
 				# We match if the stage direction starts with a lowercase, and if there's no preceding node, or if there is a preceding node and it doesn't end in a lowercase letter or a small subset of conjoining punctuation.
-				nodes = dom.xpath("/html/body//i[@epub:type='z3998:stage-direction' and re:test(., '^[a-z]') and (not(./preceding-sibling::node()[normalize-space(.)]) or ./preceding-sibling::node()[1][re:test(normalize-space(.), '[^a-z:—,;]$')])]")
+				nodes = dom.xpath("/html/body//i[@epub:type='z3998:stage-direction' and re:test(., '^[a-z]') and (not(./preceding-sibling::node()[normalize-space(.)]) or ./preceding-sibling::node()[1][re:test(normalize-space(.), '[^a-z:—,;…]$')])]")
 				if nodes:
 					messages.append(LintMessage("t-053", "Stage direction starting in lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
