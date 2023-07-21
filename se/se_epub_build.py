@@ -43,7 +43,7 @@ ENDNOTE_CHUNK_SIZE = 500
 
 # See https://www.w3.org/TR/dpub-aria-1.0/
 # Without preceding `doc-`
-ARIA_ROLES = ["abstract", "acknowledgments", "afterword", "appendix", "backlink", "biblioentry", "bibliography", "biblioref", "chapter", "colophon", "conclusion", "cover", "credit", "credits", "dedication", "endnotes", "epigraph", "epilogue", "errata", "example", "footnote", "foreword", "glossary", "glossref", "index", "introduction", "noteref", "notice", "pagebreak", "pagelist", "part", "preface", "prologue", "pullquote", "qna", "subtitle", "tip", "toc"]
+ARIA_ROLES = ["abstract", "acknowledgments", "afterword", "appendix", "backlink", "bibliography", "biblioref", "chapter", "colophon", "conclusion", "cover", "credit", "credits", "dedication", "endnotes", "epigraph", "epilogue", "errata", "example", "footnote", "foreword", "glossary", "glossref", "index", "introduction", "noteref", "notice", "pagebreak", "pagelist", "part", "preface", "prologue", "pullquote", "qna", "subtitle", "tip", "toc"]
 
 class BuildMessage:
 	"""
