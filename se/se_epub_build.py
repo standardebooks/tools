@@ -1206,7 +1206,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			# We have to use a temp file to hold stdout, because if the output is too large for the output buffer in subprocess.run() (and thus popen()) it will be truncated
 			with tempfile.TemporaryFile() as stdout:
 				try:
-					ace_result = subprocess.run(["ace", "--silent", str(work_compatible_epub_dir)], stdout=stdout, check=False)
+					ace_result = subprocess.run(["ace", "--silent", str(work_compatible_epub_dir)], stdout=stdout, stderr=subprocess.DEVNULL, check=False)
 					ace_result.check_returncode()
 
 					stdout.seek(0)
