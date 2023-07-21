@@ -80,6 +80,10 @@ hgroup > *:first-child{
 	font-weight: bold;
 }
 
+hgroup > p{
+	text-indent: 0;
+}
+
 p.continued,
 h2 + p,
 h3 + p,
