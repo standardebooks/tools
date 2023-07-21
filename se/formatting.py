@@ -1507,7 +1507,7 @@ def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> List[Ea
 	"""
 
 	result = []
-	sectioning_elements = ["section", "article", "figure", "nav"]
+	sectioning_elements = ["section", "article", "figure", "nav", "hgroup"]
 
 	if not allow_header:
 		sectioning_elements.append("header")
@@ -1549,6 +1549,7 @@ def find_unexpected_ids(dom: EasyXmlTree) -> List[Tuple[EasyXmlElement, str]]:
 	# Notes:
 	# 1. Endnotes count as their own sectioning elements for the purposes of assigning IDs
 	# 2. Exclude glossaries, as IDs there should be related to the glossterm somehow
+	# 3. Exclude <p> children of <hgroup> as they are really titles and not <p> per se
 	line_number = 0
 	endnote_number = 0
 	container_poem_section_id = ""

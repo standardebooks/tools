@@ -1791,7 +1791,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				if nodes:
 					messages.append(LintMessage("c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[a-z]$') and not(following-sibling::*[1]/node()[1][contains(@epub:type, 'z3998:roman')] or following-sibling::*[1][re:test(., '^([0-9]|first|second|third|fourth|fifth|sixth|seventh|eight|ninth|tenth)', 'i')]) and not(@class or contains(@epub:type, 'z3998:salutation')) and not(following-sibling::*[1][name() = 'blockquote' or name() = 'figure' or name() = 'table' or name() = 'footer' or name() = 'ul' or name() = 'ol'] or ancestor::*[name() = 'blockquote' or name() = 'footer' or name() = 'header' or name() = 'table' or name() = 'ul' or name() = 'ol' or name() = 'figure' or re:test(@epub:type, '(z3998:drama|dedication|halftitlepage)')])]")]
+				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[a-z]$') and not(following-sibling::*[1]/node()[1][contains(@epub:type, 'z3998:roman')] or following-sibling::*[1][re:test(., '^([0-9]|first|second|third|fourth|fifth|sixth|seventh|eight|ninth|tenth)', 'i')]) and not(@class or contains(@epub:type, 'z3998:salutation')) and not(following-sibling::*[1][name() = 'blockquote' or name() = 'figure' or name() = 'table' or name() = 'footer' or name() = 'ul' or name() = 'ol'] or ancestor::*[name() = 'blockquote' or name() = 'footer' or name() = 'header' or name() = 'table' or name() = 'ul' or name() = 'ol' or name() = 'figure' or name() = 'hgroup' or re:test(@epub:type, '(z3998:drama|dedication|halftitlepage)')])]")]
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: paragraph missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
@@ -1957,7 +1957,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 					messages.append(LintMessage("t-042", "Possible typo: comma without space followed by quotation mark.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for punctuation missing before conjunctions. Ignore <p> with an <i> child starting in a conjunction, as those are probably book titles or non-English languages
-				typos = [node.to_string() for node in dom.xpath(f"/html/body//p[re:test(., '\\b[a-z]+\\s(But|And|For|Nor|Yet|Or)\\b[^’\\.\\?\\-{se.WORD_JOINER}]') and not(./i[re:test(., '^(But|And|For|Nor|Yet|Or)\\b')])]")]
+				typos = [node.to_string() for node in dom.xpath(f"/html/body//p[not(parent::hgroup) and re:test(., '\\b[a-z]+\\s(But|And|For|Nor|Yet|Or)\\b[^’\\.\\?\\-{se.WORD_JOINER}]') and not(./i[re:test(., '^(But|And|For|Nor|Yet|Or)\\b')])]")]
 				if typos:
 					messages.append(LintMessage("t-042", "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
@@ -2282,7 +2282,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				# Exclude toto followed by ’ since Toto can be a name.
 				# Exclude <h#> whose entire contents is a matched Latinism as we do not italicize those.
 				# Ignore the ToC because we have different rules there
-				nodes = dom.xpath("/html/body//text()[re:test(., '\\b(a (priori|posteriori|fortiori)|(?<!reductio )ad (hominem|absurdum|nauseam|infinitum|interim|valem)|in (extremis|loco|situ|vitro|absentia|camera|statu quo)|in toto[^’]|more suo|par excellence)\\b', 'i') and not(ancestor-or-self::*[@data-css-font-style='italic']) and not(parent::*[re:test(name(), '^h[1-6]$') and @xml:lang]) and not(ancestor::nav[contains(@epub:type, 'toc')]) ]")
+				nodes = dom.xpath("/html/body//text()[re:test(., '\\b(a (priori|posteriori|fortiori)|(?<!reductio )ad (hominem|absurdum|nauseam|infinitum|interim|valem)|in (extremis|loco|situ|vitro|absentia|camera|statu quo)|in toto[^’]|more suo|par excellence)\\b', 'i') and not(ancestor-or-self::*[@data-css-font-style='italic']) and not(parent::*[re:test(name(), '^h[1-6]$') and @xml:lang]) and not(ancestor::hgroup) and not(ancestor::nav[contains(@epub:type, 'toc')]) ]")
 				if nodes:
 					messages.append(LintMessage("t-063", "Non-English confusable phrase set without italics.", se.MESSAGE_TYPE_WARNING, filename, nodes))
 
@@ -2351,7 +2351,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 				# Check for <p> starting in lowercase
 				# Exclude <p> starting in constructs like `(a)` or `a.` as they may be numbered lists
-				nodes = dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::figure or ancestor::ol[not(ancestor::section[contains(@epub:type, 'endnotes')])] or ancestor::ul or ancestor::table or preceding-sibling::*[1][name() = 'hr']) and not(contains(@class, 'continued') or re:test(@epub:type, 'z3998:(signature|valediction)')) and not(./*[1][name() = 'math' or name() = 'var' or contains(@epub:type, 'z3998:grapheme')]) and re:test(., '^[^A-Za-z0-9]?[a-z]') and not(re:test(., '^\\([a-z0-9]\\.?\\)\\.?')) and not(re:test(., '^[a-z0-9]\\.\\s'))]")
+				nodes = dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::figure or ancestor::ol[not(ancestor::section[contains(@epub:type, 'endnotes')])] or ancestor::ul or ancestor::table or ancestor::hgroup or preceding-sibling::*[1][name() = 'hr']) and not(contains(@class, 'continued') or re:test(@epub:type, 'z3998:(signature|valediction)')) and not(./*[1][name() = 'math' or name() = 'var' or contains(@epub:type, 'z3998:grapheme')]) and re:test(., '^[^A-Za-z0-9]?[a-z]') and not(re:test(., '^\\([a-z0-9]\\.?\\)\\.?')) and not(re:test(., '^[a-z0-9]\\.\\s'))]")
 
 				# We have to additionally filter using the regex library, because often a sentence may begin with an uppercase ACCENTED letter,
 				# and xpath's limited regex library doesn't support Unicode classes
@@ -2717,7 +2717,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 				# Check to see if <h#> tags are correctly titlecased
 				# Ignore <h#> tags with an `xml:lang` attribute, as other languages have different titlecasing rules
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(contains(@epub:type, 'z3998:roman')) and not(@xml:lang)]")
+				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') or (name() = 'p' and parent::hgroup)][not(contains(@epub:type, 'z3998:roman')) and not(@xml:lang)]")
 				for node in nodes:
 					node_copy = deepcopy(node)
 
@@ -2920,7 +2920,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 				# Check for missing punctuation before closing quotes
 				# Exclude signatures in footers as those are commonly quoted without ending punctuation
-				nodes = dom.xpath("/html/body//p[not( (parent::header or (parent::footer and contains(@epub:type, 'z3998:signature'))) and position()=last())][re:test(., '[a-z]+[”’]$')]")
+				nodes = dom.xpath("/html/body//p[not( (parent::header or parent::hgroup or (parent::footer and contains(@epub:type, 'z3998:signature'))) and position()=last())][re:test(., '[a-z]+[”’]$')]")
 				if nodes:
 					messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string()[-30:] for node in nodes]))
 
