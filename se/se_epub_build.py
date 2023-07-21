@@ -1166,7 +1166,8 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					# not defined in the XHTML5 spec. So, we simply filter out those errors.
 					# We also filter out "section lacks heading" messages, because they are warnings and we may have sections without headings (like dedications, frontispieces)
 					# Also filter out warnings about potentially bad values for datetimes, which are raised for years < 1000. This can occur in works like Omega by Camille Flammarion.
-					messages = vnu_dom.xpath("/messages/*[not(re:test(./message, '^(Attribute (prefix|type) not allowed|(Section|Article) lacks heading.|Potentially bad value.+datetime)'))]")
+					# Also filter out errors about <p> being a child of <hgroup>. The spec changed but our current VNU version has not caught up.
+					messages = vnu_dom.xpath("/messages/*[not(re:test(./message, '^(Attribute (prefix|type) not allowed|(Section|Article) lacks heading.|Potentially bad value.+datetime|Element p not allowed as child of element hgroup in this context.)'))]")
 
 					for message in messages:
 						message_text = message.xpath("./message")[0].inner_xml()
