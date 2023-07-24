@@ -262,6 +262,7 @@ SEMANTICS & CONTENT
 "s-071", "Sectioning element with more than one heading element."
 "s-072", "Element with single [xhtml]<span>[/] child. [xhtml]<span>[/] should be removed and its attributes promoted to the parent element."
 "s-073", "Header element that requires [val]label[/] and [val]ordinal[/] semantic children."
+"s-074", "[xhtml]<th>[/] element with no text content should be a [xhtml]<td>[/] element instead."
 "s-075", "[xhtml]<body>[/] element with direct children that are not [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/]."
 "s-076", "[attr]lang[/] attribute used instead of [attr]xml:lang[/]."
 "s-077", "[xhtml]<header>[/] element preceded by non-sectioning element."
@@ -292,7 +293,6 @@ SEMANTICS & CONTENT
 "s-103", "Probable missing semantics for a roman I numeral."
 UNUSED
 vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"s-074", "[xhtml]<hgroup>[/] element containing sequential [xhtml]<h#>[/] elements at the same heading level."
 "s-095", "[xhtml]<hgroup>[/] element containing [xhtml]<h#>[/] element in the wrong heading order."
 
 TYPOGRAPHY
@@ -2422,8 +2422,14 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				if nodes:
 					messages.append(LintMessage("s-010", "Empty element. Use [xhtml]<hr/>[/] for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
+				# Check for table headers that don't have content, which is an accessibility issue.
+				# Note that @aria-label and @title should (apparently) not be used for table headers
+				nodes = dom.xpath("/html/body//th[not(text())]")
+				if nodes:
+					messages.append(LintMessage("s-074", "[xhtml]<th>[/] element with no text content should be a [xhtml]<td>[/] element instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
 				# Check for fulltitle semantic on a header not in the half title
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'fulltitle') and name() !='h2' and name() !='hgroup' and not(ancestor::*[contains(@epub:type, 'halftitlepage')])]")
+				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'fulltitle') and name()!='h2' and name()!='hgroup' and not(ancestor::*[contains(@epub:type, 'halftitlepage')])]")
 				if nodes:
 					messages.append(LintMessage("s-065", "[val]fulltitle[/] semantic on element that is not in the half title.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
