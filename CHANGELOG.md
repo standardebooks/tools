@@ -1,3 +1,31 @@
+# 2.6.1
+
+## General
+
+- Update various tools to take new WHATWG standards for `<hgroup>` into account
+
+- Bump various dependencies
+
+## se build
+
+- Bump to epubcheck 5.1.0
+
+- Redirect ACE stderr output to /dev/null to avoid warnings from headless Chrome
+
+- Don't add several deprecated ARIA roles that are now depracated to the compatible build
+
+## se lint
+
+- Improve t-053
+
+## se modernize-spelling
+
+- Various additions and improvements
+
+## se xpath
+
+- Pretty-print invalid file error instead of crashing
+
 # 2.6.0
 
 ## General
