@@ -2,7 +2,7 @@
 
 ## General
 
-- Update various tools to take new WHATWG standards for `<hgroup>` into account
+- Update various tools to take new WHATWG standards for `<hgroup>` into account. Thanks to David Grigg and Vince Rice
 
 - Bump various dependencies
 
