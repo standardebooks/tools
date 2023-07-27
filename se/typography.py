@@ -541,7 +541,7 @@ def normalize_greek(text: str) -> str:
 
 	Also see:
 		https://github.com/standardebooks/plato_dialogues_benjamin-jowett/pull/4
-		https://github.com/standardebooks/herman-melville_moby-dick/issues/2212
+		https://github.com/standardebooks/herman-melville_moby-dick/issues/12
 		https://jktauber.com/articles/python-unicode-ancient-greek/
 		https://www.unicode.org/faq/greek.html
 		http://www.opoudjis.net/unicode/unicode.html
