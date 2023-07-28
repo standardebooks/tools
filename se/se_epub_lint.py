@@ -283,6 +283,7 @@ SEMANTICS & CONTENT
 "s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic."
 "s-093", "Nested [xhtml]<abbr>[/] element."
 "s-094", "Element has an [attr]xml:lang[/] attribute that incorrectly contains [val]-latn[/] instead of [val]-Latn[/]."
+"s-095", "[xhtml]<p>[/] child of [xhtml]<hgroup>[/] in poetry/verse does not have [css]text-align: center;[/]."
 "s-096", "[xhtml]h1[/] element in half title page missing the [val]fulltitle[/] semantic."
 "s-097", "[xhtml]a[/] element without [attr]href[/] attribute."
 "s-098", "[xhtml]<header>[/] element with only one child."
@@ -291,9 +292,6 @@ SEMANTICS & CONTENT
 "s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/]."
 "s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead."
 "s-103", "Probable missing semantics for a roman I numeral."
-UNUSED
-vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"s-095", "[xhtml]<hgroup>[/] element containing [xhtml]<h#>[/] element in the wrong heading order."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -2655,6 +2653,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				nodes = dom.xpath("/html/body//abbr[./abbr]")
 				if nodes:
 					messages.append(LintMessage("s-093", "Nested [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				# Check for poetry/verse that has an hgroup but which does not have the correct text alignment
+				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(hymn|poem|song|verse)')]//hgroup/p[@data-css-text-align != 'center']")
+				if nodes:
+					messages.append(LintMessage("s-095", "[xhtml]<p>[/] child of [xhtml]<hgroup>[/] in poetry/verse does not have [css]text-align: center;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 				# Check for <cite> without preceding space in text node. (preceding ( or [ are also OK)
 				nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[not(re:test(., '[\\[\\(\\s]$'))]]")
