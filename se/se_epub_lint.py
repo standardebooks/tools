@@ -335,7 +335,6 @@ TYPOGRAPHY
 "t-039", "Initialism followed by [text]’s[/]. Hint: Plurals of initialisms are not followed by [text]’[/]."
 "t-040", "Subtitle with illegal ending period."
 "t-041", "Illegal space before punctuation."
-"t-042", "Possible typo."
 "t-043", "Non-English loan word set in italics, when modern typography omits italics. Hint: A word may be correctly italicized when emphasis is desired, if the word is meant to be pronounced with an accent, or if the word is part of non-English speech."
 "t-044", "Comma required after leading [text]Or[/] in subtitles."
 "t-045", "Element has [val]z3998:persona[/] semantic and is also set in italics."
@@ -367,6 +366,9 @@ TYPOGRAPHY
 "t-071", "Multiple transcriptions listed, but preceding text is [text]a transcription[/]."
 "t-072", "[text]various sources[/] link not preceded by [text]from[/]."
 "t-073", "Possible transcription error in Greek."
+UNUSED
+vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+"t-042", "Possible typo."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -388,6 +390,40 @@ XHTML
 "x-017", "Duplicate value for [attr]id[/] attribute."
 "x-018", "Unused [xhtml]id[/] attribute."
 "x-019", "Unexpected value of [attr]id[/] attribute. Expected: [attr]{unexpected_id[1]}[/]."
+
+TYPOS
+"y-001", "Possible typo: doubled [text]a/the/and/of/or/as/if[/]."
+"y-002”, "Possible typo: punctuation followed directly by a letter, without a space."
+"y-003”, "Possible typo: paragraph missing ending punctuation."
+"y-004”, "Possible typo: mis-curled quotation mark after dash."
+"y-005”, "Possible typo: question mark or exclamation mark followed by period or comma."
+"y-006”, "Possible typo: [text]‘[/] without matching [text]’[/]. Hints: [text]’[/] are used for abbreviations;  commas and periods must go inside quotation marks."
+"y-007”, "Possible typo: [text]‘[/] not within [text]“[/]. Hints: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?"
+"y-008”, "Possible typo: dialog interrupted by interjection but with incorrect closing quote."
+"y-009”, "Possible typo: dialog begins with lowercase letter."
+"y-010”, "Possible typo: comma ending dialogue."
+"y-011", "Possible typo: two or more [text]’[/] in a row."
+"y-012”, "Possible typo: [text]”[/] directly followed by letter."
+"y-013”, "Possible typo: punctuation not within [text]’[/]."
+"y-014”, "Possible typo: Unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?"
+"y-015”, "Possible typo: mis-curled [text]‘[/] or missing [text]’[/]."
+"y-016”, "Possible typo: consecutive periods ([text]..[/])."
+"y-017”, "Possible typo: [text]“[/] followed by space."
+"y-018”, "Possible typo: [text]‘[/] followed by space."
+"y-019”, "Possible typo: [text]”[/] without opening [text]“[/]."
+"y-020”, "Possible typo: consecutive comma-period ([text],.[/])."
+"y-021”, "Possible typo: Opening [text]‘[/] without preceding [text]“[/]."
+"y-022”, "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/]."
+"y-023”, "Possible typo: two opening quotation marks in a run. Hint: Nested quotes should switch between [text]“[/] and [text]‘[/]"
+"y-024”, "Possible typo: dash before [text]the/there/is/and/they/when[/] probably should be em-dash."
+"y-025”, "Possible typo: comma without space followed by quotation mark."
+"y-026”, "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/]."
+"y-027”, "Possible typo: Extra [text]’[/] at end of paragraph."
+"y-028”, "Possible typo: [xhtml]<abbr>[/] directly preceded or followed by letter."
+"y-029", "Possible typo: Italics followed by a letter."
+"y-030”, "Possible typo: Lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital."
+"y-031”, "Possible typo: Dialog tag missing punctuation."
+"y-032”, "Possible typo: Italics running into preceding or following characters."
 """
 
 class LintMessage:
@@ -1118,11 +1154,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 		matches = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?!-)", node.text, flags=regex.IGNORECASE)
 		matches = matches + regex.findall(r"\ba a\b(?!-)", node.text)
 		if matches:
-			messages.append(LintMessage("t-042", "Possible typo: doubled [text]a/the/and/of/or/as/if[/].", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
+			messages.append(LintMessage("y-001", "Possible typo: doubled [text]a/the/and/of/or/as/if[/].", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
 
 	nodes = self.metadata_dom.xpath("/package/metadata//*[re:test(., '[,;][a-z]', 'i')]")
 	if nodes:
-		messages.append(LintMessage("t-042", "Possible typo: punctuation followed directly by a letter, without a space.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("y-002", "Possible typo: punctuation followed directly by a letter, without a space.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 	# Make sure some static files are unchanged
 	if self.is_se_ebook:
@@ -1413,7 +1449,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 					typos = typos + regex.findall(r"\ba a\b(?!-)", file_contents)
 
 					if typos:
-						messages.append(LintMessage("t-042", "Possible typo: doubled [text]a/the/and/of/or/as/if[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+						messages.append(LintMessage("y-001", "Possible typo: doubled [text]a/the/and/of/or/as/if[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				is_colophon = bool(dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"))
 				is_imprint = bool(dom.xpath("/html/body/section[contains(@epub:type, 'imprint')]"))
@@ -1789,24 +1825,34 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				if nodes:
 					messages.append(LintMessage("c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[a-z]$') and not(following-sibling::*[1]/node()[1][contains(@epub:type, 'z3998:roman')] or following-sibling::*[1][re:test(., '^([0-9]|first|second|third|fourth|fifth|sixth|seventh|eight|ninth|tenth)', 'i')]) and not(@class or contains(@epub:type, 'z3998:salutation')) and not(following-sibling::*[1][name() = 'blockquote' or name() = 'figure' or name() = 'table' or name() = 'footer' or name() = 'ul' or name() = 'ol'] or ancestor::*[name() = 'blockquote' or name() = 'footer' or name() = 'header' or name() = 'table' or name() = 'ul' or name() = 'ol' or name() = 'figure' or name() = 'hgroup' or re:test(@epub:type, '(z3998:drama|dedication|halftitlepage)')])]")]
+				# Check for basic typo, but exclude MathML and endnotes. Some endnotes (like in Ten Days that Shook the World) may start with letters.
+				dom_copy = deepcopy(dom)
+				for node in dom_copy.xpath("//a[contains(@epub:type, 'noteref')]") + dom_copy.xpath("//*[namespace-uri() = 'http://www.w3.org/1998/Math/MathML']"):
+					node.remove()
+
+				typos = [node.to_string() for node in dom_copy.xpath("/html/body//p[re:match(., '[a-z][;,][a-z]', 'i')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: paragraph missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-002", "Possible typo: punctuation followed directly by a letter, without a space.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+                # Check for paragraphs ending in lowercase letters, excluding a number of instances where that might be valid.
+				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[a-z]$') and not(@epub:type) and not(following-sibling::*[1]/node()[1][contains(@epub:type, 'z3998:roman')] or following-sibling::*[1][re:test(., '^([0-9]|first|second|third|fourth|fifth|sixth|seventh|eight|ninth|tenth)', 'i')]) and not(@class or contains(@epub:type, 'z3998:salutation')) and not(following-sibling::*[1][name() = 'blockquote' or name() = 'figure' or name() = 'table' or name() = 'footer' or name() = 'ul' or name() = 'ol'] or ancestor::*[name() = 'blockquote' or name() = 'footer' or name() = 'header' or name() = 'table' or name() = 'ul' or name() = 'ol' or name() = 'li' or name() = 'figure' or name() = 'hgroup' or re:test(@epub:type, '(z3998:drama|z3998:letter|dedication|halftitlepage)')])]")]
+				if typos:
+					messages.append(LintMessage("y-003", "Possible typo: paragraph missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '-[‘“]')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: mis-curled quotation mark after dash.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-004", "Possible typo: mis-curled quotation mark after dash.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-				# Check for commas or periods following exclamation or question marks. Exclude the colophon because we may have painting names with punctuation
+				# Check for commas or periods following exclamation or question marks. Exclude the colophon because we may have painting names with punctuation.
 				if not is_colophon:
 					typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[!?][\\.,][^”’]')]")]
 					if typos:
-						messages.append(LintMessage("t-042", "Possible typo: question mark or exclamation mark followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, typos))
+						messages.append(LintMessage("y-005", "Possible typo: question mark or exclamation mark followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for opening lsquo in quote that doesn't appear to have a matching rsquo. Rsquos must be followed by a space, punctuation (except period/comma), word joiner and thus em dash, or a number for an endnote.
 				typos = dom.xpath(f"re:match(//*, '“\\s*‘[^“]+?”', 'g')/text()[not(re:test(., '’[\\s\\?\\!;<2060{se.WORD_JOINER}0-9]'))]")
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: [text]‘[/] without matching [text]’[/]. Hints: [text]’[/] are used for abbreviations;  commas and periods must go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hints: [text]’[/] are used for abbreviations;  commas and periods must go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Try to find top-level lsquo; for example, <p>“Bah!” he said to the ‘minister.’</p>
 				# We can't do this on xpath because we can't iterate over the output of re:replace().
@@ -1846,60 +1892,60 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 						typos.append(node.inner_text())
 
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: [text]‘[/] not within [text]“[/]. Hints: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-007", "Possible typo: [text]‘[/] not within [text]“[/]. Hints: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for single quotes when there should be double quotes in an interjection in dialog
 				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '“[^”]+?’⁠—[^”]+?—“')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: dialog interrupted by interjection but with incorrect closing quote.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-008", "Possible typo: dialog interrupted by interjection but with incorrect closing quote.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for dialog starting with a lowercase letter. Only check the first child text node of <p>, because other first children might be valid lowercase, like <m:math> or <b>;
 				# exclude <p> inside or preceded by <blockquote>; and exclude <p> inside endnotes, as definitions may start with lowercase letters.
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::li[contains(@epub:type, 'endnote')]) and not(preceding-sibling::*[1][name()='blockquote'])][re:test(./node()[1], '^“[a-z]')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: dialog begins with lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-009", "Possible typo: dialog begins with lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				typos = [node.to_string() for node in dom.xpath("//p[not(ancestor::blockquote) and not(following-sibling::*[1][name() = 'blockquote' or contains(@class, 'continued')]) and re:test(., ',”$')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: comma ending dialogue.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-010", "Possible typo: comma ending dialogue.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '’{2,}')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: two or more [text]’[/] in a row.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-011", "Possible typo: two or more [text]’[/] in a row.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '”[a-z]')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: [text]”[/] directly followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-012", "Possible typo: [text]”[/] directly followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for period not inside rsquo
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[^”’]+?’[\\.,]”')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: punctuation not within [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-013", "Possible typo: punctuation not within [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for period before dialog tag; try to exclude abbrevations that close a quotation, like `“<abbr>Mr.</abbr>”`.
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[(re:test(., '\\.”\\s[a-z\\s]*?(\\bsaid|[a-z]+ed)') or re:test(., '\\.”\\s(s?he|they?|and)\\b')) and not(.//abbr[following-sibling::node()[re:test(., '^”')]])]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: Unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-014", "Possible typo: Unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for mis-curled &lsquo; or &lsquo; without matching &rsquo;
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[A-Za-z][^“’]+?”')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: mis-curled [text]‘[/] or missing [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-015", "Possible typo: mis-curled [text]‘[/] or missing [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for two periods in a row, almost always a typo for one period or a hellip
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\.\\.[^\\.]')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: consecutive periods ([text]..[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-016", "Possible typo: consecutive periods ([text]..[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for ldquo followed by space
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '“\\s+[^‘’]')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: [text]“[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-017", "Possible typo: [text]“[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for lsquo followed by space
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘\\s+[^“’]')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: [text]‘[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-018", "Possible typo: [text]‘[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for closing rdquo without opening ldquo. We ignore blockquotes because they usually have unique quote formatting.
 				# Remove tds in case rdquo means "ditto mark"
@@ -1916,89 +1962,74 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 					typos.append(node.to_string()[-20:])
 
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: [text]”[/] without opening [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-019", "Possible typo: [text]”[/] without opening [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for ,.
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., ',\\.')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: consecutive comma-period ([text],.[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for missing ending punctuation in paragraphs.
-				# Ignore paragraphs followed by a blockquote/figure/footer, or that are header, table, list, or letter material.
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\b(said|[a-z]{2,}ed)$') and not(@epub:type or ancestor::*[name()='header' or name()='table' or name()='blockquote' or name()='li' or contains(@epub:type, 'z3998:letter')] or (following-sibling::*[1])[name()='blockquote' or name()='figure' or name()='footer'])]")]
-				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-020", "Possible typo: consecutive comma-period ([text],.[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for single quotes instead of double quotes
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[not(contains(@class, 'continued') or ancestor::blockquote or ancestor::*[re:test(@epub:type, 'z3998:(verse|song|poem|hymn)')]) and re:test(., '^[^“]+?‘')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: Opening [text]‘[/] without preceding [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-021", "Possible typo: Opening [text]‘[/] without preceding [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for two quotations in one paragraph
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^”]+?”\\s“[^”]+?”$')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-022", "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for incorrectly nested quotation marks
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^‘”]+“') and not(.//br)]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: two opening quotation marks in a run. Hint: Nested quotes should switch between [text]“[/] and [text]‘[/]", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-023", "Possible typo: two opening quotation marks in a run. Hint: Nested quotes should switch between [text]“[/] and [text]‘[/]", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for dashes instead of em-dashes
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\s[a-z]+-(the|there|is|and|they|when)\\s')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: dash before [text]the/there/is/and/they/when[/] probably should be em-dash.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-024", "Possible typo: dash before [text]the/there/is/and/they/when[/] probably should be em-dash.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for comma not followed by space but followed by quotation mark
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[a-z],[“”‘’][a-z]', 'i')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: comma without space followed by quotation mark.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-025", "Possible typo: comma without space followed by quotation mark.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for punctuation missing before conjunctions. Ignore <p> with an <i> child starting in a conjunction, as those are probably book titles or non-English languages
 				typos = [node.to_string() for node in dom.xpath(f"/html/body//p[not(parent::hgroup) and re:test(., '\\b[a-z]+\\s(But|And|For|Nor|Yet|Or)\\b[^’\\.\\?\\-{se.WORD_JOINER}]') and not(./i[re:test(., '^(But|And|For|Nor|Yet|Or)\\b')])]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-026", "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for extra closing single quote at the end of dialog
 				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^‘]+”\\s*’$')]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: Extra [text]’[/] at end of paragraph.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-027", "Possible typo: Extra [text]’[/] at end of paragraph.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for `<abbr>` preceded or followed by text. Ignore compass directions followed by `ly`, like S.S.W.ly
 				typos = [node.to_string() for node in dom.xpath("/html/body//abbr[(preceding-sibling::node()[1])[re:test(., '[A-Za-z]$')] or (following-sibling::node()[1])[re:test(., '^[A-Za-z](?<!s\\b)') and not((./preceding-sibling::abbr[1])[contains(@epub:type, 'se:compass')] and re:test(., '^ly\\b'))]]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: [xhtml]<abbr>[/] directly preceded or followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for basic typo, but exclude MathML and endnotes. Some endnotes (like in Ten Days that Shook the World) may start with letters.
-				dom_copy = deepcopy(dom)
-				for node in dom_copy.xpath("//a[contains(@epub:type, 'noteref')]") + dom_copy.xpath("//*[namespace-uri() = 'http://www.w3.org/1998/Math/MathML']"):
-					node.remove()
-
-				typos = [node.to_string() for node in dom_copy.xpath("/html/body//p[re:match(., '[a-z][;,][a-z]', 'i')]")]
-				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: punctuation followed directly by a letter, without a space.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-028", "Possible typo: [xhtml]<abbr>[/] directly preceded or followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for misapplied italics. Ignore 's' because the plural is too common.
 				typos = [node.to_string() for node in dom.xpath("/html/body//*[(name() = 'i' or name() = 'em') and ./following-sibling::node()[1][re:test(., '^[a-z]\\b', 'i') and not(re:test(., '^s\\b'))]]")]
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: Italics followed by a letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-029", "Possible typo: Italics followed by a letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for lowercase letters starting quotations after a preceding period
 				typos = dom.xpath("/html/body//p/child::text()[re:test(., '\\.\\s[‘“][a-z]')]")
 				if typos:
-					messages.append(LintMessage("t-042", "Possible typo: Lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital.", se.MESSAGE_TYPE_WARNING, filename, typos))
+					messages.append(LintMessage("y-030", "Possible typo: Lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 				# Check for missing punctuation in continued quotations
 				# ” said Bob “
 				nodes = dom.xpath("/html/body//p[re:test(., '”\\s(?:said|[A-Za-z]{2,}ed)\\s[A-Za-z]+?(?<!\\bthe)(?<!\\bto)(?<!\\bwith)(?<!\\bfrom)(?<!\\ba\\b)(?<!\\bis)\\s“') or re:test(., '[^\\.]”\\s(\\bhe\\b|\\bshe\\b|I|[A-Z][a-z]+?)\\s(?:said|[A-Za-z]{2,}ed)\\s“') or re:test(., ',” (?:said|[A-Za-z]{2,}ed) [A-Za-z]+? [A-Za-z]+?ly “')]")
 				if nodes:
-					messages.append(LintMessage("t-042", "Possible typo: Dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+					messages.append(LintMessage("y-031", "Possible typo: Dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for italics having epub:type that run in to preceding or following characters
 				# Ignore things like <i>Newspaper</i>s
 				nodes = dom.xpath("/html/body//i[@epub:type and ( (following-sibling::node()[1][re:test(., '^[a-z]', 'i') and not(re:test(., '^(s|es|er)'))]) or preceding-sibling::node()[1][re:test(., '[a-z]$')]) ]")
 				if nodes:
-					messages.append(LintMessage("t-042", "Possible typo: Italics running into preceding or following characters.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+					messages.append(LintMessage("y-032", "Possible typo: Italics running into preceding or following characters.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for body element without child section or article. Ignore the ToC because it has a unique structure
 				nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and re:test(@epub:type, '\\b(toc|loi)\\b'))])]")
