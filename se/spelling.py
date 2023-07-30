@@ -468,7 +468,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"Porto Rico", r"Puerto Rico", xhtml)				# Porto Rico -> Puerto Rico
 	xhtml = regex.sub(r"Mahomet", r"Muhammad", xhtml)				# Mahomet -> Muhammad
 	xhtml = regex.sub(r"M[ao]hommed", r"Muhammad", xhtml)		        	# Mahommed -> Muhammad
-	xhtml = regex.sub(r"Esthonian", r"Estonian", xhtml)				# Esthonian -> Estonian
+	xhtml = regex.sub(r"Esthonia(n?)", r"Estonia\1", xhtml)				# Esthonia(n) -> Estonia(n)
 	xhtml = regex.sub(r"\b([Ss])anscrit\b", r"\1anskrit", xhtml)			# Sanscrit -> Sanskrit
 	xhtml = regex.sub(r"Francois", r"François", xhtml)				# Francois -> François
 	xhtml = regex.sub(r"Hayti(\b|an\b)", r"Haiti\1", xhtml)				# Hayti -> Haiti
