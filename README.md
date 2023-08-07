@@ -368,33 +368,43 @@ We need volunteers to take the lead on the following goals:
 
 Many of these tools act on Standard Ebooks source directories. Such directories have a consistent minimal structure:
 
-	.
-	|-images/
-	|--cover.jpg
-	|--cover.source.jpg
-	|--cover.svg
-	|--titlepage.svg
-	|-src/
-	|--epub/
-	|---css/
-	|----core.css
-	|----local.css
-	|----se.css
-	|---images/
-	|----cover.svg
-	|----titlepage.svg
-	|---text/
-	|----colophon.xhtml
-	|----imprint.xhtml
-	|----titlepage.xhtml
-	|----uncopyright.xhtml
-	|---content.opf
-	|---onix.xml
-	|---toc.xhtml
-	|--META-INF/
-	|---container.xml
-	|--mimetype
-	|-LICENSE.md
+```
+.  
+|__ images/  
+|   |__ cover.jpg  
+|   |__ cover.source.jpg  
+|   |__ cover.svg  
+|   |__ titlepage.svg  
+|       
+|__ src/  
+|   |__ META-INF/  
+|   |   |__ container.xml  
+|   |  
+|   |__ epub/  
+|   |   |__ css/  
+|   |   |   |__ core.css  
+|   |   |   |__ local.css  
+|   |   |   |__ se.css  
+|   |   |  
+|   |   |__ images/  
+|   |   |   |__ cover.svg  
+|   |   |   |__ logo.svg  
+|   |   |   |__ titlepage.svg  
+|   |   |  
+|   |   |__ text/  
+|   |   |   |__ colophon.xhtml  
+|   |   |   |__ imprint.xhtml  
+|   |   |   |__ titlepage.xhtml  
+|   |   |   |__ uncopyright.xhtml  
+|   |   |  
+|   |   |__ content.opf  
+|   |   |__ onix.xml  
+|   |   |__ toc.xhtml  
+|   |  
+|   |__ mimetype  
+|  
+|__ LICENSE.md  
+```
 
 `./images/` contains source images for the cover and titlepages, as well as ebook-specific source images. Source images should be in their maximum available resolution, then compressed and placed in `./src/epub/images/` for distribution.
 
