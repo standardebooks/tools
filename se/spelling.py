@@ -230,7 +230,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ll])acquey", r"\1ackey", xhtml)				# lacquey -> lackey
 	xhtml = regex.sub(r"\b([Bb])ric-à-brac", r"\1ric-a-brac", xhtml)		# bric-à-brac -> bric-a-brac
 	xhtml = regex.sub(r"\b([Kk])iosque", r"\1iosk", xhtml)				# kiosque -> kiosk
-	xhtml = regex.sub(r"\b([Dd])epôt", r"\1epot", xhtml)				# depôt -> depot
+	xhtml = regex.sub(r"\b([Dd])[eé]pôt", r"\1epot", xhtml)				# depôt / dépôt -> depot
 	xhtml = regex.sub(r"(?<![Cc]ompl)exion", r"ection", xhtml)			# -extion -> -exction (connexion, reflexion, etc., but "complexion")
 	xhtml = regex.sub(r"\b([Dd])ulness", r"\1ullness", xhtml)			# dulness -> dullness
 	xhtml = regex.sub(r"\b([Ff])iord", r"\1jord", xhtml)				# fiord -> fjord
