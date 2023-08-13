@@ -1168,10 +1168,15 @@ class SeEpub:
 		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "preface")
 		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "epigraph")
 		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "z3998:dramatis-personae")
-		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "halftitlepage")
+
+		# Extract half title page for subsequent addition
+		halftitlepage, frontmatter = self.__add_to_spine([], frontmatter, "halftitlepage")
 
 		# Add any remaining frontmatter
 		spine = spine + natsorted([file_path.name for file_path in frontmatter])
+
+		# The half title page is always the last front matter
+		spine = spine + halftitlepage
 
 		# Add bodymatter
 		spine, bodymatter = self.__add_to_spine(spine, bodymatter, "prologue")
