@@ -1189,11 +1189,17 @@ class SeEpub:
 		spine, backmatter = self.__add_to_spine(spine, backmatter, "glossary")
 		spine, backmatter = self.__add_to_spine(spine, backmatter, "endnotes")
 		spine, backmatter = self.__add_to_spine(spine, backmatter, "loi")
-		spine, backmatter = self.__add_to_spine(spine, backmatter, "colophon")
-		spine, backmatter = self.__add_to_spine(spine, backmatter, "copyright-page")
+
+		# Extract colophon and copyright page for subsequent addition
+		colophon, backmatter = self.__add_to_spine([], backmatter, "colophon")
+		copyright_page, backmatter = self.__add_to_spine([], backmatter, "copyright-page")
 
 		# Add any remaining backmatter
 		spine = spine + natsorted([file_path.name for file_path in backmatter])
+
+		# Colophon and copyright page are always last
+		spine = spine + colophon
+		spine = spine + copyright_page
 
 		# Now build the spine output
 		spine_xml = "<spine>\n"
