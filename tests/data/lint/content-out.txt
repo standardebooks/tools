@@ -3,11 +3,11 @@ s-033 [Manual Review] chapter-1.xhtml File language is `en-GB`, but
 m-036 [Error] colophon.xhtml Variable not replaced with value.
         PG_URL
         IA_URL
-        YEAR
         COVER_ARTIST
         COVER_ARTIST_WIKI_URL
-        PRODUCER_URL
         PRODUCER
+        PRODUCER_URL
+        YEAR
         PG_YEAR
         TRANSCRIBER_1
         TRANSCRIBER_2
