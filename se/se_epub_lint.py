@@ -99,6 +99,7 @@ SE_GENRES = ["Adventure", "Autobiography", "Biography", "Children’s", "Comedy"
 IGNORED_CLASSES = ["elision", "eoc", "full-page", "continued", "together"]
 BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", ".xcf", ".otf", ".jp2"]
 IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "toc.xhtml", "loi.xhtml"]
+SPECIAL_FILES = ["colophon", "endnotes", "imprint", "loi"]
 
 # These are partly defined in semos://1.0.0/8.10.9.2
 INITIALISM_EXCEPTIONS = ["G", # as in `G-Force`
@@ -808,7 +809,7 @@ def _update_missing_styles(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 
 	return missing_styles
 
-def _lint_special_file(self, filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, ebook_info: dict, special_file: str) -> list:
+def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, ebook_info: dict, special_file: str) -> list:
 	"""
 	Process error checks in “special” .xhtml files
 
@@ -827,7 +828,7 @@ def _lint_special_file(self, filename: Path, dom: se.easy_xml.EasyXmlTree, file_
 	messages = []
 	source_links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
 
-	if special_file in = "colophon" or special_file = "imprint":
+	if special_file == "colophon" or special_file == "imprint":
 		if len(source_links) <= 2:
 			# Check that links back to sources are represented correctly
 			nodes = dom.xpath("/html/body//a[@href='https://www.pgdp.net' and text()!='The Online Distributed Proofreading Team']")
@@ -2310,7 +2311,7 @@ def _lint_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_conten
 
 	return messages
 
-def _lint_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, is_titlepage: bool, special_file: str) -> list:
+def _lint_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: str) -> list:
 	"""
 	Helper function used in self.lint()
 	Process typo checks on an .xhtml file
@@ -2327,7 +2328,7 @@ def _lint_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_content
 	messages = []
 
 	# Check for common typos
-	if not is_titlepage:
+	if special_file == "titlepage":
 		# Don't check the titlepage because it has a standard format and may raise false positives
 		typos = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?!-)", file_contents, flags=regex.IGNORECASE)
 		typos = typos + regex.findall(r"\ba a\b(?!-)", file_contents)
@@ -3308,28 +3309,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				# Add to the short story count for later checks
 				short_story_count += len(dom.xpath("/html/body//article[contains(@epub:type, 'se:short-story')]"))
 
-				# Test against word boundaries to not match `halftitlepage`
-				if dom.xpath("/html/body/section[re:test(@epub:type, '\\btitlepage\\b')]"):
-					is_titlepage = True
-					# Check if the <title> element is set correctly, but only if there's no heading content.
-					# If there's heading content, then <title> should match the expected generated value from the heading content.
-					if dom.xpath("/html[not(./body//*[re:test(name(), '^h(group|[1-6])$')]) and ./head/title[text()!='Titlepage']]"):
-						messages.append(LintMessage("s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-				if dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"):
-					special_file = "colophon"
-				elif dom.xpath("/html/body/section[contains(@epub:type, 'imprint')]"):
-					special_file = "imprint"
-				elif dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]"):
-					special_file = "endnotes"
-				elif dom.xpath("/html/body/nav[contains(@epub:type, 'loi')]"):
-					special_file = "loi"
-				else:
-					special_file = ""
-
-				if special_file != "":
-					messages = messages + _lint_special_file(self, filename, dom, file_contents, ebook_info, special_file)
-
 				# Check for unused selectors
 				if dom.xpath("/html/head/link[contains(@href, 'local.css')]"):
 					for selector in local_css_selectors:
@@ -3404,6 +3383,28 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 						if glossary_value[1] is False and regex.search(glossary_value[0], source_text, flags=regex.IGNORECASE):
 							glossary_usage[glossary_index] = (glossary_value[0], True)
 
+				# Test against word boundaries to not match `halftitlepage`
+				if dom.xpath("/html/body/section[re:test(@epub:type, '\\btitlepage\\b')]"):
+					special_file = "titlepage"
+					# Check if the <title> element is set correctly, but only if there's no heading content.
+					# If there's heading content, then <title> should match the expected generated value from the heading content.
+					if dom.xpath("/html[not(./body//*[re:test(name(), '^h(group|[1-6])$')]) and ./head/title[text()!='Titlepage']]"):
+						messages.append(LintMessage("s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+				elif dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"):
+					special_file = "colophon"
+				elif dom.xpath("/html/body/section[contains(@epub:type, 'imprint')]"):
+					special_file = "imprint"
+				elif dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]"):
+					special_file = "endnotes"
+				elif dom.xpath("/html/body/nav[contains(@epub:type, 'loi')]"):
+					special_file = "loi"
+				else:
+					special_file = ""
+
+				if special_file in SPECIAL_FILES:
+					messages = messages + _lint_special_file_checks(self, filename, dom, file_contents, ebook_info, special_file)
+
 				missing_styles = missing_styles + _update_missing_styles(filename, dom, local_css)
 
 				messages = messages + _lint_css_checks(filename, dom)
@@ -3416,7 +3417,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 				messages = messages + _lint_xhtml_checks(filename, dom, file_contents)
 
-				messages = messages + _lint_typo_checks(filename, dom, file_contents, is_titlepage, special_file)
+				messages = messages + _lint_typo_checks(filename, dom, file_contents, special_file)
 
 	if self.cover_path and cover_svg_title != titlepage_svg_title:
 		messages.append(LintMessage("s-028", f"[path][link=file://{self.cover_path}]{self.cover_path.name}[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match.", se.MESSAGE_TYPE_ERROR, self.cover_path))
