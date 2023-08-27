@@ -528,6 +528,68 @@ class EbookSection:
 		# Wealth of Nations by Adam Smith
 		self.depth = depth if depth <= 6 else 6
 
+def _build_section_tree(self) -> List[EbookSection]:
+	"""
+	Helper function used in self.lint()
+	Walk the files in spine order to build a tree of sections and heading levels.
+
+	INPUTS
+	self
+
+	OUTPUTS
+	section_tree, A list of EbookSections
+	"""
+
+	# section_tree is a list of EbookSections.
+	# For example, The Woman in White by Wilkie Collins would have a section_tree that looks like this:
+	# titlepage (1)
+	#  imprint (2)
+	#  dedication (2)
+	#  preface (2)
+	#  halftitlepage (2)
+	#  part-1 (2)
+	#    division-1-1 (3)
+	#      chapter-1-1-1 (4)
+	#      chapter-1-1-2 (4)
+	#      chapter-1-1-3 (4)
+	#      chapter-1-1-4 (4)
+	section_tree: List[EbookSection] = []
+
+	for filename in self.spine_file_paths:
+		dom = self.get_dom(filename)
+		for dom_section in dom.xpath("/html/body//*[re:test(name(), '^(section|article|nav)$')][@id]"):
+			# Start at h2 by default except for the titlepage, which is always h1
+			starting_depth = 1 if regex.findall(r"\btitlepage\b", dom_section.get_attr("epub:type") or "") else 2
+
+			section = _find_ebook_section(dom_section.get_attr("id"), section_tree)
+
+			section_parent_id = dom_section.get_attr("data-parent")
+
+			has_header = bool(dom_section.xpath("./*[re:test(name(), '^h[1-6]$')]"))
+			if not has_header:
+				has_header = bool(dom_section.xpath(".//*[not(re:test(name(), '^(section|article|nav)$'))]//*[re:test(name(), '^h[1-6]$')]"))
+
+			if not section_parent_id:
+				# We don't have a data-parent, but do we have a direct parent section in the same file as this section?
+				direct_parent = dom_section.xpath("./ancestor::*[re:test(name(), '^(section|article|nav)$')][@id][1]")
+
+				if direct_parent:
+					section_parent_id = direct_parent[0].get_attr("id")
+
+			# If we don't have the section in our list yet, and it has a parent, append it to the parent
+			if not section and section_parent_id:
+				parent = _find_ebook_section(section_parent_id, section_tree)
+				if parent:
+					# Only increment the depth if the parent has a header. If it doesn't then we don't want to increment,
+					# because we will end up skipping an h# level (like h2 -> h4 instead of h2 -> h3)
+					parent.children.append(EbookSection(dom_section.get_attr("id"), parent.depth + 1 if parent.has_header else parent.depth, has_header))
+
+			# If we don't have it in our list yet, and it has no parent, append it to the top
+			elif not section:
+				section_tree.append(EbookSection(dom_section.get_attr("id"), starting_depth, has_header))
+
+	return section_tree
+
 def _find_ebook_section(section_id: str, sections: List[EbookSection]) -> Union[EbookSection, None]:
 	"""
 	Find an ebook section in a tree of sections.
@@ -690,13 +752,1798 @@ def files_not_in_spine(self) -> set:
 	INPUTS
 	None
 
-	OUTPITS
+	OUTPUTS
 	Set of files not in the spine (typically an empty set)
 	"""
 
 	xhtml_files = set(self.content_path.glob("**/*.xhtml"))
 	spine_files = set(self.spine_file_paths + [self.toc_path])
 	return xhtml_files.difference(spine_files)
+
+def _update_missing_styles(filename: str, dom: se.easy_xml.EasyXmlTree, local_css: dict) -> list:
+	"""
+	Identify any missing CSS styles in the file being checked
+
+	INPUTS
+	filename: the name of the file being checked
+	dom: The dom of the file being checked
+	local_css: Dictionary containing several flags concerning the local CSS
+
+	OUTPUTS
+	Set of files not in the spine (typically an empty set)
+	"""
+
+	missing_styles: List[str] = []
+
+	if not local_css["has_elision_style"]:
+		missing_styles += [node.to_tag_string() for node in dom.xpath("/html/body//span[contains(@class, 'elision')]")]
+
+	# Check to see if we included poetry or verse without the appropriate styling
+	if filename.name not in IGNORED_FILENAMES:
+		nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][./p/span]")
+		for node in nodes:
+			if "z3998:poem" in node.get_attr("epub:type") and not local_css["has_poem_style"]:
+				missing_styles.append(node.to_tag_string())
+
+			if "z3998:verse" in node.get_attr("epub:type") and not local_css["has_verse_style"]:
+				missing_styles.append(node.to_tag_string())
+
+			if "z3998:song" in node.get_attr("epub:type") and not local_css["has_song_style"]:
+				missing_styles.append(node.to_tag_string())
+
+			if "z3998:hymn" in node.get_attr("epub:type") and not local_css["has_hymn_style"]:
+				missing_styles.append(node.to_tag_string())
+
+			if "z3998:lyrics" in node.get_attr("epub:type") and not local_css["has_lyrics_style"]:
+				missing_styles.append(node.to_tag_string())
+
+		# Check frontmatter for missing styling
+		nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'dedication|epigraph')]")
+		for node in nodes:
+			if "dedication" in node.get_attr("epub:type") and not local_css["has_dedication_style"]:
+				missing_styles.append(node.to_tag_string())
+
+			if "epigraph" in node.get_attr("epub:type") and not local_css["has_epigraph_style"]:
+				missing_styles.append(node.to_tag_string())
+
+	return missing_styles
+
+def _lint_special_file(self, filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, ebook_info: dict, special_file: str) -> list:
+	"""
+	Process error checks in “special” .xhtml files
+
+	INPUTS
+	filename: The name of the file being checked
+	dom: The dom of the file being checked
+	file_contents: The contents of the file being checked
+	ebook_info: A dictionary containing several pieces of information about the ebook
+	special_file: A string identifying the type of special file being checked
+	self
+
+	OUTPUTS
+	A list of LintMessages representing errors found in the special file
+	"""
+
+	messages = [];
+	source_links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
+
+	if special_file in ("colophon,imprint"):
+		if len(source_links) <= 2:
+			# Check that links back to sources are represented correctly
+			nodes = dom.xpath("/html/body//a[@href='https://www.pgdp.net' and text()!='The Online Distributed Proofreading Team']")
+			if nodes:
+				messages.append(LintMessage("m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www.pgdp.org/ols/') and text()!='Distributed Proofreaders Open Library System']")
+			if nodes:
+				messages.append(LintMessage("m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
+			if nodes:
+				messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+		nodes = dom.xpath("/html/body//p[re:test(., '\\ba transcription\\b') and ./a[contains(@href, '#transcriptions')]]")
+		if nodes:
+			messages.append(LintMessage("t-071", "Multiple transcriptions listed, but preceding text is [text]a transcription[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	if special_file == "colophon":
+		# Check for illegal Wikipedia URLs
+		nodes = dom.xpath("/html/body//a[contains(@href, '.m.wikipedia.org')]")
+		if nodes:
+			messages.append(LintMessage("m-026", "Illegal [url]https://*.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+		# Check for non-English Wikipedia URLs
+		nodes = dom.xpath("/html/body//a[re:test(@href, 'https://(?!en)[a-z]{2,}\\.wikipedia\\.org')]")
+		if nodes:
+			messages.append(LintMessage("m-043", "Non-English Wikipedia URL.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+
+		# Check for wrong grammar filled in from template
+		nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
+		if nodes:
+			messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the<br/>\n" + node.to_string() for node in nodes]))
+
+		se_url = self.generated_identifier.replace("url:", "")
+		if not dom.xpath(f"/html/body//a[@href='{se_url}' and text()='{se_url.replace('https://', '')}']"):
+			messages.append(LintMessage("m-035", f"Unexpected S.E. identifier in colophon. Expected: [url]{se_url}[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+		if self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text()='trl']") and "translated from" not in file_contents:
+			messages.append(LintMessage("m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
+
+		if ebook_info["has_multiple_transcriptions"] and not dom.xpath("/html/body//a[contains(@href, '#transcriptions')]"):
+			messages.append(LintMessage("m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+		if ebook_info["has_multiple_page_scans"] and not dom.xpath("/html/body//a[contains(@href, '#page-scans')]"):
+			messages.append(LintMessage("m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+		# Check that the formula changed from the default if we added 'various sources'
+		if ebook_info["has_multiple_transcriptions"] or ebook_info["has_multiple_page_scans"]:
+			nodes = dom.xpath("/html/body//a[text() = 'various sources' and not(re:test(preceding-sibling::br[1]/preceding-sibling::node()[1], '(digital scans|transcriptions) from\\s*$'))]")
+			if nodes:
+				messages.append(LintMessage("t-072", "[text]various sources[/] link not preceded by [text]from[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+		# Check if we forgot to fill any variable slots
+		missing_colophon_vars = [var for var in SE_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
+		if missing_colophon_vars:
+			messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, missing_colophon_vars))
+
+		# Check that we have <br/>s at the end of lines
+		# First, check for b or a elements that are preceded by a newline but not by a br
+		nodes = [node.to_string() for node in dom.xpath("/html/body/section/p/*[name()='b' or name()='a'][(preceding-sibling::node()[1])[contains(., '\n')]][not((preceding-sibling::node()[2])[self::br]) or (normalize-space(preceding-sibling::node()[1]) and re:test(preceding-sibling::node()[1], '\\n\\s*$')) ]")]
+		# Next, check for text nodes that contain newlines but are not preceded by brs
+		nodes = nodes + [node.strip() for node in dom.xpath("/html/body/section/p/text()[contains(., '\n') and normalize-space(.)][(preceding-sibling::node()[1])[not(self::br)]]")]
+		if nodes:
+			messages.append(LintMessage("s-053", "Colophon line not preceded by [xhtml]<br/>[/].", se.MESSAGE_TYPE_ERROR, filename, nodes))
+
+		# Is there a comma after a producer name, if there's only two producers?
+		nodes = dom.xpath("/html/body/section/p/*[name()='b' or name()='a'][(following-sibling::node()[1])[normalize-space(.)=', and']][(preceding-sibling::*[1])[name()='br']]")
+		if nodes:
+			messages.append(LintMessage("t-006", "Comma after producer name, but there are only two producers.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+		nodes = dom.xpath("/html/body//b[re:test(., 'anonymous', 'i') and re:test(@epub:type, 'z3998:.*?name')]")
+		if nodes:
+			messages.append(LintMessage("s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+		# Check for anonymous volunteers misrepresented in the colophon. Note that we only match SE producers and transcribers, because
+		# a cover art artist can also be anonymous but they're not volunteers.
+		nodes = dom.xpath("/html/body//b[re:test(., 'anonymous', 'i') and text() != 'An Anonymous Volunteer' and (preceding-sibling::a[@href='https://standardebooks.org'])]")
+		if nodes:
+			messages.append(LintMessage("s-100", "Anonymous digital contributor value not exactly [text]An Anonymous Volunteer[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+		# Check for primary contributors misrepresented in the colophon. these differ from ebook production volunteers.
+		nodes = dom.xpath("/html/body//b[re:test(., 'anonymous', 'i') and text() != 'Anonymous' and (preceding-sibling::node()[contains(., 'The cover page')] or preceding-sibling::i[contains(@epub:type, 'se:name.publication')])]")
+		if nodes:
+			messages.append(LintMessage("s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+		# Is there a page scan link in the colophon, but missing in the metadata?
+		for node in dom.xpath("/html/body//a[re:test(@href, '(gutenberg\\.org/ebooks/[0-9]+|hathitrust\\.org|/archive\\.org|books\\.google\\.com|www\\.google\\.com/books/)')]"):
+			if not self.metadata_dom.xpath(f"/package/metadata/dc:source[contains(text(), {se.easy_xml.escape_xpath(node.get_attr('href'))})]"):
+				messages.append(LintMessage("m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+		# Are the sources represented correctly?
+		# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
+		# We can't merge this with the imprint check because imprint doesn't have `<br/>` between `the`
+		if not ebook_info["has_multiple_transcriptions"] and not ebook_info["has_other_sources"]:
+			for link in source_links:
+				if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
+					messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+		if not ebook_info["has_multiple_page_scans"] and not ebook_info["has_other_sources"]:
+			for link in source_links:
+				if "hathitrust.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
+					messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+				if "archive.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">Internet Archive</a>" not in file_contents:
+					messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]the<br/> <a href=\"{link}\">Internet Archive</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+				if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
+					messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+	# If we're in the imprint, are the sources represented correctly?
+	# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
+	elif special_file == "imprint":
+		# Check for wrong grammar filled in from template
+		nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::node()[1])[re:test(., 'the\\s+$')]]")
+		if nodes:
+			messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the " + node.to_string() for node in nodes]))
+
+		# Check if we forgot to fill any variable slots
+		missing_imprint_vars = [var for var in SE_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
+		if missing_imprint_vars:
+			messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, missing_imprint_vars))
+
+		if ebook_info["has_multiple_transcriptions"] and not dom.xpath("/html/body//a[contains(@href, '#transcriptions')]"):
+			messages.append(LintMessage("m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+		if ebook_info["has_multiple_page_scans"] and not dom.xpath("/html/body//a[contains(@href, '#page-scans')]"):
+			messages.append(LintMessage("m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+		# Check that the formula changed from the default if we added 'various sources'
+		if ebook_info["has_multiple_transcriptions"] or ebook_info["has_multiple_page_scans"]:
+			nodes = dom.xpath("/html/body//a[text() = 'various sources' and not(re:test(preceding-sibling::node()[1], '(digital scans|transcriptions) from\\s*$'))]")
+			if nodes:
+				messages.append(LintMessage("t-072", "[text]various sources[/] link not preceded by [text]from[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+		# Check for correctly named links. We can't merge this with the colophon check because the colophon breaks `the` with `<br/>`
+		if not ebook_info["has_multiple_transcriptions"] and not ebook_info["has_other_sources"]:
+			for link in source_links:
+				if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
+					messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+		if not ebook_info["has_multiple_page_scans"] and not ebook_info["has_other_sources"]:
+			for link in source_links:
+				if "hathitrust.org" in link and f"the <a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
+					messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: the [xhtml]<a href=\"{link}\">HathiTrust Digital Library</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+				if "archive.org" in link and f"the <a href=\"{link}\">Internet Archive</a>" not in file_contents:
+					messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: the [xhtml]<a href=\"{link}\">Internet Archive</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+				if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
+					messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+
+	# Endnote checks
+	elif special_file == "endnotes":
+		# Do we have to replace Ibid.? Only match Ibid. if the endnote does not appear to cite any names.
+		nodes = dom.xpath("/html/body//li[re:test(@epub:type, '\\bendnote\\b')]//abbr[re:test(., '\\b[Ii]bid\\b') and not(ancestor::li[1]//*[contains(@epub:type, 'se:name')])]")
+		if nodes:
+			messages.append(LintMessage("s-039", "[text]Ibid[/] in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing [text]Ibid[/] refers to, unless it refers to text within the same endnote.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+		# Check that endnotes have their backlink in the last <p> element child of the <li>. This also highlights backlinks that are totally missing.
+		nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')][./p[last()][not(a[contains(@epub:type, 'backlink')])] or not(./p[last()])]")
+		if nodes:
+			messages.append(LintMessage("s-056", "Last [xhtml]<p>[/] child of endnote missing backlink.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+		# Make sure the backlink points to the same note number as the parent endnote ID
+		nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]//a[contains(@epub:type, 'backlink')][not(re:match(@href, '\\-[0-9]+$')=re:match(ancestor::li/@id, '\\-[0-9]+$'))]")
+		if nodes:
+			messages.append(LintMessage("s-057", "Backlink noteref fragment identifier doesn’t match endnote number.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+		# Check that citations at the end of endnotes are in a <cite> element. If not typogrify will run the last space together with the em dash.
+		# This tries to catch that, but limits the match to 20 chars so that we don't accidentally match a whole sentence that happens to be at the end of an endnote.
+		nodes = dom.xpath(f"/html/body//li[contains(@epub:type, 'endnote')]/p[last()][re:test(., '\\.”?{se.WORD_JOINER}?—[A-Z].{{0,20}}\\s*↩$')]")
+		if nodes:
+			messages.append(LintMessage("s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+		# Did we forget the endnote semantic on li elements?
+		nodes = dom.xpath("/html/body/section/ol/li[not(re:test(@epub:type, '\\bendnote\\b'))]")
+		if nodes:
+			messages.append(LintMessage("s-099", "List item in endnotes missing [xhtml]endnote[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+		# Match backlink elements whose preceding node doesn't end with ' ', and is also not all whitespace
+		nodes = dom.xpath("/html/body//a[@epub:type='backlink'][(preceding-sibling::node()[1])[not(re:test(., ' $')) and not(normalize-space(.)='')]]")
+		if nodes:
+			messages.append(LintMessage("t-027", "Endnote backlink not preceded by exactly one space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check LoI descriptions to see if they match associated figcaptions
+	elif special_file == "loi":
+		for node in dom.xpath("/html/body/nav[contains(@epub:type, 'loi')]//li//a"):
+			figure_ref = node.get_attr("href").split("#")[1]
+			chapter_ref = regex.findall(r"(.*?)#.*", node.get_attr("href"))[0]
+			figcaption_text = ""
+			loi_text = node.inner_text()
+			file_dom = self.get_dom(self.content_path / "text" / chapter_ref)
+
+			try:
+				figure = file_dom.xpath(f"//*[@id={se.easy_xml.escape_xpath(figure_ref)}]")[0]
+			except Exception:
+				messages.append(LintMessage("s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
+				continue
+
+			for child in figure.xpath("./*"):
+				if child.tag == "img":
+					figure_img_alt = child.get_attr("alt")
+
+				if child.tag == "figcaption":
+					figcaption_text = child.inner_text()
+
+					# Replace tabs and newlines with a single space to better match figcaptions that contain <br/>
+					figcaption_text = regex.sub(r"(\n|\t)", " ", figcaption_text)
+					figcaption_text = regex.sub(r"[ ]+", " ", figcaption_text)
+
+			if (figcaption_text != "" and loi_text != "" and figcaption_text != loi_text) and (figure_img_alt != "" and loi_text != "" and figure_img_alt != loi_text):
+				messages.append(LintMessage("s-041", f"The [xhtml]<figcaption>[/] element of [attr]#{figure_ref}[/] does not match the text in its LoI entry.", se.MESSAGE_TYPE_WARNING, self.path / "src/epub/text" / chapter_ref))
+
+	return messages
+
+def _lint_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, is_titlepage: bool, special_file: str) -> list:
+	"""
+	Helper function used in self.lint()
+	Process typo checks on an .xhtml file
+
+	INPUTS
+	filename: The name of the file being checked
+	dom: A dom tree to check
+	file_contents: The contents of the file being checked
+
+	OUTPUTS
+	A list of LintMessages representing possible typos found in the file
+	"""
+
+	messages = [];
+
+	# Check for common typos
+	if not is_titlepage:
+		# Don't check the titlepage because it has a standard format and may raise false positives
+		typos = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?!-)", file_contents, flags=regex.IGNORECASE)
+		typos = typos + regex.findall(r"\ba a\b(?!-)", file_contents)
+
+		if typos:
+			messages.append(LintMessage("y-001", "Possible typo: doubled [text]a/the/and/of/or/as/if[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for basic typo, but exclude MathML and endnotes. Some endnotes (like in Ten Days that Shook the World) may start with letters.
+	dom_copy = deepcopy(dom)
+	for node in dom_copy.xpath("//a[contains(@epub:type, 'noteref')]") + dom_copy.xpath("//*[namespace-uri() = 'http://www.w3.org/1998/Math/MathML']"):
+		node.remove()
+
+	typos = [node.to_string() for node in dom_copy.xpath("/html/body//p[re:match(., '[a-z][;,][a-z]', 'i')]")]
+	if typos:
+		messages.append(LintMessage("y-002", "Possible typo: punctuation followed directly by a letter, without a space.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for paragraphs ending in lowercase letters, excluding a number of instances where that might be valid.
+	typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[a-z]$') and not(@epub:type) and not(following-sibling::*[1]/node()[1][contains(@epub:type, 'z3998:roman')] or following-sibling::*[1][re:test(., '^([0-9]|first|second|third|fourth|fifth|sixth|seventh|eight|ninth|tenth)', 'i')]) and not(@class or contains(@epub:type, 'z3998:salutation')) and not(following-sibling::*[1][name() = 'blockquote' or name() = 'figure' or name() = 'table' or name() = 'footer' or name() = 'ul' or name() = 'ol'] or ancestor::*[name() = 'blockquote' or name() = 'footer' or name() = 'header' or name() = 'table' or name() = 'ul' or name() = 'ol' or name() = 'li' or name() = 'figure' or name() = 'hgroup' or re:test(@epub:type, '(z3998:drama|z3998:letter|dedication|halftitlepage)')])]")]
+	if typos:
+		messages.append(LintMessage("y-003", "Possible typo: paragraph missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	typos = [node.to_string() for node in dom.xpath("//p[re:test(., '-[‘“]')]")]
+	if typos:
+		messages.append(LintMessage("y-004", "Possible typo: mis-curled quotation mark after dash.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for commas or periods following exclamation or question marks. Exclude the colophon because we may have painting names with punctuation.
+	if special_file != "colophon":
+		typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[!?][\\.,][^”’]')]")]
+		if typos:
+			messages.append(LintMessage("y-005", "Possible typo: question mark or exclamation mark followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for opening lsquo in quote that doesn't appear to have a matching rsquo. Rsquos must be followed by a space, punctuation (except period/comma), word joiner and thus em dash, or a number for an endnote.
+	typos = dom.xpath(f"re:match(//*, '“\\s*‘[^“]+?”', 'g')/text()[not(re:test(., '’[\\s\\?\\!;<2060{se.WORD_JOINER}0-9]'))]")
+	if typos:
+		messages.append(LintMessage("y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hints: [text]’[/] are used for abbreviations;  commas and periods must go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Try to find top-level lsquo; for example, <p>“Bah!” he said to the ‘minister.’</p>
+	# We can't do this on xpath because we can't iterate over the output of re:replace().
+	# A fully-featured solution would parse quotes to find balanced pairs. This quick-n-dirty
+	# solution takes the raw XHTML string, strips any seemingly-valid balanced pairs using regex,
+	# then searches for unmatched `‘`. If found, it returns the dom node of the match; we can't return
+	# the actual string match because we stripped surrounding text.
+
+	# Start by merging all <p> into single lines, including poetry, but exclude blockquotes as they have special quoting rules
+	temp_xhtml = ""
+	dom_copy = deepcopy(dom)
+	node_number = 0
+	# Add IDs to the dom so we can find the paragraphs after we run our regex
+	# Exclude paragraphs in blockquotes, which may have special quoting rules, and "continued" paragraphs, which may be continued dialog without an “
+	for node in dom_copy.xpath("/html/body//p[not(ancestor::blockquote) and not(contains(@class, 'continued'))]"):
+		node.set_attr("id", "lint-" + str(node_number))
+		temp_xhtml = temp_xhtml + f"<p id=\"lint-{node_number}\">" + regex.sub(r"[\s\n]+", " ", node.inner_text(), flags=regex.DOTALL) + "\n"
+		node_number = node_number + 1
+
+	replacement_count = 1
+	while replacement_count > 0:
+		# Remove all regular quotes. Run this in a loop because we may need to remove triple-nested quotes.
+		(temp_xhtml, replacement_count) = regex.subn(r"“[^“]+?”", " ", temp_xhtml) # Remove all regular quotes
+
+	# Remove contractions to reduce rsquo for next regex
+	temp_xhtml = regex.sub(r"[\p{Letter}]’[\p{Letter}]", " ", temp_xhtml, flags=regex.MULTILINE)
+
+	# Remove all runs of ldquo that are likely to spill to the next <p>
+	replacement_count = 1
+	while replacement_count > 0:
+		(temp_xhtml, replacement_count) = regex.subn(r"“[^“”]+?$", " ", temp_xhtml, flags=regex.MULTILINE)
+
+	# Match problem `‘` using regex, and if found, get the actual node text from the dom to return.
+	typos = []
+	for match in regex.findall(r"""<p id="lint-([0-9]+?)">.*‘[\p{Letter}\s]""", temp_xhtml):
+		for node in dom_copy.xpath(f"/html/body//p[@id='lint-{match}' and re:test(., '‘[A-Za-z\\s]')]"):
+			typos.append(node.inner_text())
+
+	if typos:
+		messages.append(LintMessage("y-007", "Possible typo: [text]‘[/] not within [text]“[/]. Hints: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for single quotes when there should be double quotes in an interjection in dialog
+	typos = [node.to_string() for node in dom.xpath("//p[re:test(., '“[^”]+?’⁠—[^”]+?—“')]")]
+	if typos:
+		messages.append(LintMessage("y-008", "Possible typo: dialog interrupted by interjection but with incorrect closing quote.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for dialog starting with a lowercase letter. Only check the first child text node of <p>, because other first children might be valid lowercase, like <m:math> or <b>;
+	# exclude <p> inside or preceded by <blockquote>; and exclude <p> inside endnotes, as definitions may start with lowercase letters.
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::li[contains(@epub:type, 'endnote')]) and not(preceding-sibling::*[1][name()='blockquote'])][re:test(./node()[1], '^“[a-z]')]")]
+	if typos:
+		messages.append(LintMessage("y-009", "Possible typo: dialog begins with lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	typos = [node.to_string() for node in dom.xpath("//p[not(ancestor::blockquote) and not(following-sibling::*[1][name() = 'blockquote' or contains(@class, 'continued')]) and re:test(., ',”$')]")]
+	if typos:
+		messages.append(LintMessage("y-010", "Possible typo: comma ending dialogue.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '’{2,}')]")]
+	if typos:
+		messages.append(LintMessage("y-011", "Possible typo: two or more [text]’[/] in a row.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '”[a-z]')]")]
+	if typos:
+		messages.append(LintMessage("y-012", "Possible typo: [text]”[/] directly followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for period not inside rsquo
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[^”’]+?’[\\.,]”')]")]
+	if typos:
+		messages.append(LintMessage("y-013", "Possible typo: punctuation not within [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for period before dialog tag; try to exclude abbrevations that close a quotation, like `“<abbr>Mr.</abbr>”`.
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[(re:test(., '\\.”\\s[a-z\\s]*?(\\bsaid|[a-z]+ed)') or re:test(., '\\.”\\s(s?he|they?|and)\\b')) and not(.//abbr[following-sibling::node()[re:test(., '^”')]])]")]
+	if typos:
+		messages.append(LintMessage("y-014", "Possible typo: Unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for mis-curled &lsquo; or &lsquo; without matching &rsquo;
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[A-Za-z][^“’]+?”')]")]
+	if typos:
+		messages.append(LintMessage("y-015", "Possible typo: mis-curled [text]‘[/] or missing [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for two periods in a row, almost always a typo for one period or a hellip
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\.\\.[^\\.]')]")]
+	if typos:
+		messages.append(LintMessage("y-016", "Possible typo: consecutive periods ([text]..[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for ldquo followed by space
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '“\\s+[^‘’]')]")]
+	if typos:
+		messages.append(LintMessage("y-017", "Possible typo: [text]“[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for lsquo followed by space
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘\\s+[^“’]')]")]
+	if typos:
+		messages.append(LintMessage("y-018", "Possible typo: [text]‘[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for closing rdquo without opening ldquo. We ignore blockquotes because they usually have unique quote formatting.
+	# Remove tds in case rdquo means "ditto mark"
+	typos = regex.findall(r"”[^“‘]+?”", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents), flags=regex.DOTALL)
+
+	# We create a filter to try to exclude nested quotations
+	# Remove tags in case they're enclosing punctuation we want to match against at the end of a sentence.
+	typos = [match for match in typos if not regex.search(r"(?:[\.!\?;…—]|”\s)’\s", se.formatting.remove_tags(match))]
+
+	# Try some additional matches before adding the lint message
+	# Search for <p> tags that have an ending closing quote but no opening quote; but exclude <p>s that are preceded by a <blockquote>
+	# or that have a <blockquote> ancestor, because that may indicate that the opening quote is elsewhere in the quotation.
+	for node in dom.xpath("//p[re:test(., '^[^“]+”') and not(./preceding-sibling::*[1][name() = 'blockquote']) and not(./ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]) and not(./ancestor::blockquote)]"):
+		typos.append(node.to_string()[-20:])
+
+	if typos:
+		messages.append(LintMessage("y-019", "Possible typo: [text]”[/] without opening [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for ,.
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., ',\\.')]")]
+	if typos:
+		messages.append(LintMessage("y-020", "Possible typo: consecutive comma-period ([text],.[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for single quotes instead of double quotes
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[not(contains(@class, 'continued') or ancestor::blockquote or ancestor::*[re:test(@epub:type, 'z3998:(verse|song|poem|hymn)')]) and re:test(., '^[^“]+?‘')]")]
+	if typos:
+		messages.append(LintMessage("y-021", "Possible typo: Opening [text]‘[/] without preceding [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for two quotations in one paragraph
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^”]+?”\\s“[^”]+?”$')]")]
+	if typos:
+		messages.append(LintMessage("y-022", "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for incorrectly nested quotation marks
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^‘”]+“') and not(.//br)]")]
+	if typos:
+		messages.append(LintMessage("y-023", "Possible typo: two opening quotation marks in a run. Hint: Nested quotes should switch between [text]“[/] and [text]‘[/]", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for dashes instead of em-dashes
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\s[a-z]+-(the|there|is|and|they|when)\\s')]")]
+	if typos:
+		messages.append(LintMessage("y-024", "Possible typo: dash before [text]the/there/is/and/they/when[/] probably should be em-dash.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for comma not followed by space but followed by quotation mark
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[a-z],[“”‘’][a-z]', 'i')]")]
+	if typos:
+		messages.append(LintMessage("y-025", "Possible typo: comma without space followed by quotation mark.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for punctuation missing before conjunctions. Ignore <p> with an <i> child starting in a conjunction, as those are probably book titles or non-English languages
+	typos = [node.to_string() for node in dom.xpath(f"/html/body//p[not(parent::hgroup) and re:test(., '\\b[a-z]+\\s(But|And|For|Nor|Yet|Or)\\b[^’\\.\\?\\-{se.WORD_JOINER}]') and not(./i[re:test(., '^(But|And|For|Nor|Yet|Or)\\b')])]")]
+	if typos:
+		messages.append(LintMessage("y-026", "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for extra closing single quote at the end of dialog
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^‘]+”\\s*’$')]")]
+	if typos:
+		messages.append(LintMessage("y-027", "Possible typo: Extra [text]’[/] at end of paragraph.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for `<abbr>` preceded or followed by text. Ignore compass directions followed by `ly`, like S.S.W.ly
+	typos = [node.to_string() for node in dom.xpath("/html/body//abbr[(preceding-sibling::node()[1])[re:test(., '[A-Za-z]$')] or (following-sibling::node()[1])[re:test(., '^[A-Za-z](?<!s\\b)') and not((./preceding-sibling::abbr[1])[contains(@epub:type, 'se:compass')] and re:test(., '^ly\\b'))]]")]
+	if typos:
+		messages.append(LintMessage("y-028", "Possible typo: [xhtml]<abbr>[/] directly preceded or followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for misapplied italics. Ignore 's' because the plural is too common.
+	typos = [node.to_string() for node in dom.xpath("/html/body//*[(name() = 'i' or name() = 'em') and ./following-sibling::node()[1][re:test(., '^[a-z]\\b', 'i') and not(re:test(., '^s\\b'))]]")]
+	if typos:
+		messages.append(LintMessage("y-029", "Possible typo: Italics followed by a letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for lowercase letters starting quotations after a preceding period
+	typos = dom.xpath("/html/body//p/child::text()[re:test(., '\\.\\s[‘“][a-z]')]")
+	if typos:
+		messages.append(LintMessage("y-030", "Possible typo: Lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital.", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for missing punctuation in continued quotations
+	# ” said Bob “
+	nodes = dom.xpath("/html/body//p[re:test(., '”\\s(?:said|[A-Za-z]{2,}ed)\\s[A-Za-z]+?(?<!\\bthe)(?<!\\bto)(?<!\\bwith)(?<!\\bfrom)(?<!\\ba\\b)(?<!\\bis)\\s“') or re:test(., '[^\\.]”\\s(\\bhe\\b|\\bshe\\b|I|[A-Z][a-z]+?)\\s(?:said|[A-Za-z]{2,}ed)\\s“') or re:test(., ',” (?:said|[A-Za-z]{2,}ed) [A-Za-z]+? [A-Za-z]+?ly “')]")
+	if nodes:
+		messages.append(LintMessage("y-031", "Possible typo: Dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for italics having epub:type that run in to preceding or following characters
+	# Ignore things like <i>Newspaper</i>s
+	nodes = dom.xpath("/html/body//i[@epub:type and ( (following-sibling::node()[1][re:test(., '^[a-z]', 'i') and not(re:test(., '^(s|es|er)'))]) or preceding-sibling::node()[1][re:test(., '[a-z]$')]) ]")
+	if nodes:
+		messages.append(LintMessage("y-032", "Possible typo: Italics running into preceding or following characters.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for three-em-dashes not preceded by a space
+	nodes = dom.xpath(f"/html/body//p[re:test(., '[^>“(\\s{se.WORD_JOINER}]{se.WORD_JOINER}?⸻')]")
+	if nodes:
+		messages.append(LintMessage("y-033", "Possible typo: Three-em-dash obscuring an entire word, but not preceded by a space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	return messages
+
+def _lint_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str) -> list:
+	"""
+	Helper function used in self.lint()
+	Process XHTML checks on an .xhtml file
+
+	INPUTS
+	filename: The name of the file being checked
+	dom: A dom tree to check
+	file_contents: The contents of the file being checked
+
+	OUTPUTS
+	A list of LintMessages representing XHTML errors found in the file
+	"""
+
+	messages = [];
+
+	# Check for uppercase letters in IDs or classes
+	nodes = dom.xpath("//*[re:test(@id, '[A-Z]') or re:test(@class, '[A-Z]') or re:test(@epub:type, '[A-Z]')]")
+	if nodes:
+		messages.append(LintMessage("x-002", "Uppercase in attribute value. Attribute values must be all lowercase.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	nodes = dom.xpath("//*[re:test(@id, '^[0-9]+')]")
+	if nodes:
+		messages.append(LintMessage("x-007", "[attr]id[/] attributes starting with a number are illegal XHTML.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for double greater-than at the end of a tag
+	matches = regex.findall(r"(>>|>&gt;)", file_contents)
+	if matches:
+		messages.append(LintMessage("x-008", "Elements should end with a single [text]>[/].", se.MESSAGE_TYPE_WARNING, filename))
+
+	# Check for leading 0 in IDs (note: not the same as checking for IDs that start with an integer)
+	# We only check for *leading* 0s in numbers; this allows IDs like `wind-force-0` in the Worst Journey in the World glossary.
+	nodes = dom.xpath("//*[re:test(@id, '-0[0-9]')]")
+	if nodes:
+		messages.append(LintMessage("x-009", "Illegal leading 0 in [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for HTML tags in <title> tags
+	nodes = dom.xpath("/html/head/title/*")
+	if nodes:
+		messages.append(LintMessage("x-010", "Illegal element in [xhtml]<title>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for underscores in attributes, but not if the attribute is href (links often have underscores) or MathMl alttext, which can have underscores as part of math notation
+	nodes = dom.xpath("//@*[contains(., '_') and name() !='href' and name() !='alttext']/..")
+	if nodes:
+		messages.append(LintMessage("x-011", "Illegal underscore in attribute. Use dashes instead of underscores.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for style attributes
+	nodes = dom.xpath("/html/body//*[@style]")
+	if nodes:
+		messages.append(LintMessage("x-012", "Illegal [attr]style[/] attribute. Don’t use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for illegal elements in <head>
+	nodes = dom.xpath("/html/head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
+	if nodes:
+		messages.append(LintMessage("x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.tag}>" for node in nodes]))
+
+	# Check for xml:lang attribute starting in uppercase
+	nodes = dom.xpath("//*[re:test(@xml:lang, '^[A-Z]')]")
+	if nodes:
+		messages.append(LintMessage("x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for ID attributes of numbered paragraphs (like `p-44`) that are used as refs in endnotes.
+	# Make sure their number is actually their correct sequence number in the text.
+	for unexpected_id in se.formatting.find_unexpected_ids(dom):
+		messages.append(LintMessage("x-019", f"Unexpected value of [attr]id[/] attribute. Expected: [attr]{unexpected_id[1]}[/].", se.MESSAGE_TYPE_ERROR, filename, [unexpected_id[0].to_tag_string()]))
+
+	return messages
+
+def _lint_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: str) -> list:
+	"""
+	Helper function used in self.lint()
+	Process typography checks on an .xhtml file
+
+	INPUTS
+	filename: The name of the file being checked
+	dom: A dom tree to check
+	file_contents: The contents of the file being checked
+	special_file: A string containing the type of special file, if any
+
+	OUTPUTS
+	A list of LintMessages representing typography errors found in the file
+	"""
+
+	messages = [];
+
+ 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
+	matches = regex.findall(fr"[\p{{Letter}}]+”[,\.](?!{se.WORD_JOINER} {se.WORD_JOINER}…)", file_contents)
+	if matches:
+		messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+	# Check for ldquo not correctly closed
+	# Ignore closing paragraphs, line breaks, and closing cells in case ldquo means "ditto mark"
+	matches = regex.findall(r"“[^‘”]+?“", file_contents)
+	matches = [match for match in matches if "</p" not in match and "<br/>" not in match and "</td>" not in match]
+	# xpath to check for opening quote in p, without a next child p that starts with an opening quote or an opening bracket (for editorial insertions within paragraphs of quotation); or that consists of only an ellipses (like an elided part of a longer quotation)
+	# Matching <p>s can't have a poem/verse ancestor as formatting is often special for those.
+	matches = matches + [regex.findall(r"“[^”]+</p>", node.to_string())[0] for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+$')][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')])][(following-sibling::*[1])[name()='p'][not(re:test(normalize-space(.), '^[“\\[]') or re:test(normalize-space(.), '^…$'))]]")]
+
+	# Additionally, match short <p> tags (< 100 chars) that lack closing quote, and whose direct siblings do have closing quotes (to exclude runs of same-speaker dialog), and that is not within a blockquote, verse, or letter
+	matches = matches + [regex.findall(r"“[^”]+</p>", node.to_string())[0] for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+$') and not(re:test(., '[…:]$')) and string-length(normalize-space(.)) <=100][(following-sibling::*[1])[not(re:test(., '“[^”]+$'))] and (preceding-sibling::*[1])[not(re:test(., '“[^”]+$'))]][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')]) and not(ancestor::blockquote) and not (ancestor::*[contains(@epub:type, 'z3998:letter')])][(following-sibling::*[1])[name()='p'][re:test(normalize-space(.), '^[“\\[]') and not(contains(., 'continued'))]]")]
+	if matches:
+		messages.append(LintMessage("t-003", "[text]“[/] missing matching [text]”[/]. Note: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+	# Check for closing dialog without comma
+	matches = regex.findall(r"[\p{Lowercase_Letter}]+?” [\p{Letter}]+? said", file_contents)
+	if matches:
+		messages.append(LintMessage("t-005", "Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+	# Check for possessive 's within name italics, but not in ignored files like the colophon which we know have no possessives
+	# Allow some known exceptions like `Harper's`, etc.
+	if filename.name not in IGNORED_FILENAMES:
+		nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.') and re:test(., '’s$') and not(contains(@epub:type, 'se:name.publication.') and re:test(., '(Pearson’s|Harper’s|Blackwood’s|Fraser’s|Baedeker’s)$'))]")
+		if nodes:
+			messages.append(LintMessage("t-007", "Possessive [text]’s[/] within name italics. If the name in italics is doing the possessing, [text]’s[/] goes outside italics.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for lsquo not correctly closed
+	matches = regex.findall(r"‘[^“’]+?‘", file_contents)
+	matches = [match for match in matches if "</p" not in match and "<br/>" not in match]
+	if matches:
+		messages.append(LintMessage("t-004", "[text]‘[/] missing matching [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+	# Check for repeated punctuation, but first remove `&amp;` so we don't match `&amp;,`
+	# Remove tds with repeated ” as they are probably ditto marks
+	matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents.replace("&amp;", "")) + regex.findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents)) +  regex.findall(r"[\p{Letter}][,\.:;]\s[,\.:;]\s?[\p{Letter}<].{0,20}", file_contents, flags=regex.IGNORECASE)
+	if matches:
+		messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+	# Check for nbsp before times
+	nodes = dom.xpath(f"/html/body//text()[re:test(., '[0-9][^{se.NO_BREAK_SPACE}]?$')][(following-sibling::abbr[1])[re:test(., '^[ap]\\.m\\.$')]]")
+	if nodes:
+		messages.append(LintMessage("t-009", "Required no-break space not found before time and [text]a.m.[/] or [text]p.m.[/].", se.MESSAGE_TYPE_WARNING, filename, [node[-10:] + "<abbr" for node in nodes]))
+
+	# Check for times with periods instead of colons.
+	# Only check p, because things like tables/td are more likely to contain non-time numbers
+	# Exclude numbers preceded by equals, or succeeded by some measurements
+	# Also remove <a> first because they are likely to contain numbered section references
+	dom_copy = deepcopy(dom)
+	for node in dom_copy.xpath("/html/body//p/a"):
+		node.remove()
+
+	nodes = dom_copy.xpath("/html/body//p[re:test(., '[^=]\\s[0-9]{1,2}\\.[0-9]{2}(?![0-9′″°%]|\\.[0-9]|\\scubic|\\smetric|\\smeters|\\smiles|\\sfeet|\\sinches)')]")
+	matches = []
+	for node in nodes:
+		for time_match in regex.findall(r"(?<=[^=]\s)[0-9]{1,2}\.[0-9]{2}(?![0-9′″°%]|\.[0-9]|\scubic|\smetric|\smeters|\smiles|\sfeet|\sinches)", node.inner_text()):
+			time = time_match.split(".")
+			if not time[0].startswith("0") and int(time[0]) >= 1 and int(time[0]) <= 12 and int(time[1]) >= 0 and int(time[1]) <= 59:
+				matches.append(time_match)
+
+	if matches:
+		messages.append(LintMessage("t-010", "Time set with [text].[/] instead of [text]:[/].", se.MESSAGE_TYPE_WARNING, filename, set(matches)))
+
+	# Check for missing punctuation before closing quotes
+	# Exclude signatures in footers as those are commonly quoted without ending punctuation
+	nodes = dom.xpath("/html/body//p[not( (parent::header or parent::hgroup or (parent::footer and contains(@epub:type, 'z3998:signature'))) and position()=last())][re:test(., '[a-z]+[”’]$')]")
+	if nodes:
+		messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string()[-30:] for node in nodes]))
+
+	# Check for whitespace before noteref
+	# Do this early because we remove noterefs from headers later
+	# Allow noterefs that do not have preceding text/elements (for example a "see note X" ref that is the only child in a <td>)
+	nodes = dom.xpath("/html/body//a[contains(@epub:type, 'noteref') and preceding-sibling::node()[normalize-space(.)] and re:test(preceding-sibling::node()[1], '\\s+$')]")
+	if nodes:
+		messages.append(LintMessage("t-012", "Illegal white space before noteref.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for period following Roman numeral, which is an old-timey style we must fix
+	# But ignore the numeral if it's the first item in a <p> tag, as that suggests it might be a kind of list item.
+	nodes = dom.xpath("/html/body//node()[name()='span' and contains(@epub:type, 'z3998:roman') and not(position()=1)][(following-sibling::node()[1])[re:test(., '^\\.\\s*[a-z]')]]")
+	if nodes:
+		messages.append(LintMessage("t-013", "Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "." for node in nodes]))
+
+	# Check for two em dashes in a row
+	nodes = dom.xpath(f"/html/body//*[re:test(text(), '—{se.WORD_JOINER}*—+')]")
+	if nodes:
+		messages.append(LintMessage("t-014", "Two or more em-dashes in a row found. Elided words should use the two- or three-em-dash Unicode character, and dialog ending in em-dashes should only end in a single em-dash.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for money not separated by commas
+	nodes = dom.xpath("/html/body//*[re:test(text(), '[£\\$][0-9]{4,}')]")
+	if nodes:
+		messages.append(LintMessage("t-015", "Numbers not grouped by commas. Separate numbers greater than 1,000 with commas at every three numerals.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for <abbr epub:type="z3998:*-name"> that does not contain spaces
+	nodes = dom.xpath("/html/body//abbr[re:test(@epub:type, '\\bz3998:[^\\s\"]+name\\b') and re:test(., '[A-Z]\\.[A-Z]\\.')]")
+	if nodes:
+		messages.append(LintMessage("t-016", "Initials in [xhtml]<abbr epub:type=\"z3998:*-name\">[/] not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	if special_file != "colophon":
+		# This file is not the colophon.
+		# Check for ending punctuation inside italics that have semantics.
+		# Ignore the colophon because paintings might have punctuation in their names
+
+		# This xpath matches b or i elements with epub:type="se:name...", that are not stage direction, whose last text node ends in punctuation.
+		# Note that we check that the last node is a text node, because we may have <abbr> as the last node
+		matches = [node.to_string() for node in dom.xpath("(//b | //i)[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., '[\\.,!\\?;:]$')]]")]
+
+		# Match b or i elements that are not stage directions, and that end in a comma followed by a lowercase letter
+		matches = matches + [node.to_string() for node in dom.xpath("(//b | //i)[not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., ',$')] and following-sibling::node()[re:test(., '^\\s*[a-z]')] ]")]
+
+		# ...and also check for ending punctuation inside em tags, if it looks like a *part* of a clause
+		# instead of a whole clause. If the <em> is preceded by an em dash or quotes, or if there's punctuation
+		# and a space before it, then it's presumed to be a whole clause.
+		matches = matches + [match.strip() for match in regex.findall(r"(?<!.[—“‘>]|[!\.\?…;:]\s)<em>(?:\w+?\s*)+[\.,\!\?;]</em>", file_contents) if match.islower()]
+
+		if matches:
+			messages.append(LintMessage("t-017", "Ending punctuation inside formatting like bold, small caps, or italics. Ending punctuation is only allowed within formatting if the phrase is an independent clause.", se.MESSAGE_TYPE_WARNING, filename, list(set(matches))))
+
+	# Check for stage direction that ends in ?! but also has a trailing period
+	nodes = dom.xpath("/html/body//i[contains(@epub:type, 'z3998:stage-direction') and re:test(., '\\.$') and not((./node()[last()])[name() = 'abbr']) and (following-sibling::node()[1])[re:test(., '^[\\.,:;!?]')]]")
+	if nodes:
+		messages.append(LintMessage("t-018", "Stage direction ending in period next to other punctuation. Remove trailing periods in stage direction.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for single words that are in italics, but that have closing punctuation outside italics
+	# Outer wrapping match is so that .findall returns the entire match and not the subgroup
+	# The first regex also matches the first few characters before the first double quote; we use those for more sophisticated
+	# checks below, to give fewer false positives like `with its downy red hairs and its “<i xml:lang="fr">doigts de faune</i>.”`
+	matches = regex.findall(r"((?:.{1,2}\s)?“<(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])", file_contents) + regex.findall(r"([\.\!\?] <(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])", file_contents)
+
+	# But, if we've matched a name of something, don't include that as an error. For example, `He said, “<i epub:type="se:name.publication.book">The Decameron</i>.”`
+	# We also exclude the match from the list if:
+	# 1. The double quote is directly preceded by a lowercase letter and a space: `with its downy red hairs and its “<i xml:lang="fr">doigts de faune</i>.”`
+	# 2. The double quote is directly preceded by a lowercase letter, a comma, and a space, and the first letter within the double quote is lowercase: In the original, “<i xml:lang="es">que era un Conde de Irlos</i>.”
+	# 3. The text is a single letter that is not "I" or "a" (because then it is likely a mathematical variable)
+	matches = [match for match in matches if "epub:type=\"se:name." not in match[0] and "epub:type=\"z3998:taxonomy" not in match[0] and not regex.match(r"^[\p{Lowercase_Letter}’]+\s“", match[0]) and not regex.match(r"^[\p{Lowercase_Letter}’]+,\s“[\p{Lowercase_Letter}]", se.formatting.remove_tags(match[0])) and not regex.match(r"^.*?<.+?>[^Ia]<.+?>", match[0])]
+	if matches:
+		messages.append(LintMessage("t-019", "When a complete clause is italicized, ending punctuation except commas must be within containing italics.", se.MESSAGE_TYPE_WARNING, filename, [match[0] for match in matches]))
+
+	# Check for punctuation after endnotes
+	nodes = dom.xpath(f"/html/body//a[contains(@epub:type, 'noteref')][(following-sibling::node()[1])[re:test(., '^[^\\s<–\\]\\)—{se.WORD_JOINER}a-zA-Z0-9]')]]")
+	if nodes:
+		messages.append(LintMessage("t-020", "Endnote links must be outside of punctuation, including quotation marks.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for correct typography around measurements like 2 ft.
+	# But first remove href and id attrs because URLs and IDs may contain strings that look like measurements
+	# Note that while we check m,min (minutes) and h,hr (hours) we don't check s (seconds) because we get too many false positives on years, like `the 1540s`
+	matches = regex.findall(fr"\b[1-9][0-9]*[{se.NO_BREAK_SPACE}\-]?(?:[mck]?[mgl]|ft|in|min?|h|sec|hr)\.?\b", regex.sub(r"(href|id)=\"[^\"]*?\"", "", file_contents))
+	# Exclude number ordinals, they're not measurements
+	matches = [match for match in matches if not regex.search(r"(st|nd|rd|th)", match)]
+	if matches:
+		messages.append(LintMessage("t-021", "Measurement not to standard. Numbers are followed by a no-break space and abbreviated units require an [xhtml]<abbr>[/] element. See [path][link=https://standardebooks.org/manual/1.0.0/8-typography#8.8.5]semos://1.0.0/8.8.5[/][/].", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+	# Check for nbsp within <abbr epub:type="z3998:*-name">, which is redundant
+	nodes = dom.xpath(f"/html/body//abbr[re:test(@epub:type, '\\bz3998:[^\\s\"]+name\\b') and contains(text(), '{se.NO_BREAK_SPACE}')]")
+	if nodes:
+		messages.append(LintMessage("t-022", "No-break space found in [xhtml]<abbr epub:type=\"z3998:*-name\">[/]. This is redundant.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for trailing commas inside <i> tags at the close of dialog
+	# More sophisticated version of: \b[^\s]+?,</i>”
+	nodes = dom.xpath("/html/body//i[re:test(., ',$')][(following-sibling::node()[1])[starts-with(., '”')]]")
+	if nodes:
+		messages.append(LintMessage("t-023", "Comma inside [xhtml]<i>[/] element before closing dialog.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "”" for node in nodes]))
+
+	# Check for quotation marks in italicized dialog
+	nodes = dom.xpath("/html/body//i[@xml:lang][starts-with(., '“') or re:test(., '”$')]")
+	if nodes:
+		messages.append(LintMessage("t-024", "When italicizing language in dialog, italics go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check alt attributes on images, except for the logo
+	nodes = dom.xpath("/html/body//img[not(re:test(@src, '/(logo|titlepage)\\.(svg|png)$'))]")
+	img_no_alt = []
+	img_alt_not_typogrified = []
+	img_alt_lacking_punctuation = []
+	for node in nodes:
+		if "titlepage.svg" not in node.get_attr("src"):
+			has_images = True # Save for a later check
+
+		alt = node.get_attr("alt")
+
+		if alt:
+			# Check for non-typogrified img alt attributes
+			if regex.search(r"""('|"|--|\s-\s|&quot;)""", alt):
+				img_alt_not_typogrified.append(node.to_tag_string())
+
+			# Check alt attributes not ending in punctuation
+			if filename.name not in IGNORED_FILENAMES and not regex.search(r"""[\.\!\?]”?$""", alt):
+				img_alt_lacking_punctuation.append(node.to_tag_string())
+
+			# Check that alt attributes match SVG titles
+			img_src = node.lxml_element.get("src")
+			if img_src and img_src.endswith("svg"):
+				title_text = ""
+				image_ref = img_src.split("/").pop()
+				try:
+					svg_path = self.content_path / "images" / image_ref
+					svg_dom = self.get_dom(svg_path)
+					try:
+						title_text = svg_dom.xpath("/svg/title")[0].text
+					except Exception:
+						messages.append(LintMessage("s-027", f"{image_ref} missing [xhtml]<title>[/] element.", se.MESSAGE_TYPE_ERROR, svg_path))
+
+					if title_text != "" and alt != "" and title_text != alt:
+						messages.append(LintMessage("s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
+
+				except FileNotFoundError:
+					missing_files.append(str(Path("images") / image_ref))
+
+		else:
+			img_no_alt.append(node.to_tag_string())
+
+	if img_alt_not_typogrified:
+		messages.append(LintMessage("t-025", "Non-typogrified [text]'[/], [text]\"[/] (as [xhtml]&quot;[/]), or [text]--[/] in image [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, img_alt_not_typogrified))
+	if img_alt_lacking_punctuation:
+		messages.append(LintMessage("t-026", "[attr]alt[/] attribute does not appear to end with punctuation. [attr]alt[/] attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename, img_alt_lacking_punctuation))
+	if img_no_alt:
+		messages.append(LintMessage("s-004", "[xhtml]img[/] element missing [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, img_no_alt))
+
+	# Check for low-hanging misquoted fruit
+	matches = regex.findall(r"[\p{Letter}]+[“‘]", file_contents) + regex.findall(r"[^>]+</(?:em|i|b|span)>‘[\p{Lowercase_Letter}]+", file_contents)
+	if matches:
+		messages.append(LintMessage("t-028", "Possible mis-curled quotation mark.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+	# Check for periods followed by lowercase.
+	temp_xhtml = regex.sub(r"<title[^>]*?>.+?</title>", "", file_contents) # Remove <title> because it might contain something like <title>Chapter 2: The Antechamber of M. de Tréville</title>
+	temp_xhtml = regex.sub(r"<abbr[^>]*?>", "<abbr>", temp_xhtml) # Replace things like <abbr xml:lang="la">
+	temp_xhtml = regex.sub(r"<img[^>]*?>", "", temp_xhtml) # Remove <img alt> attributes
+	temp_xhtml = temp_xhtml.replace("A.B.C.", "X") # Remove A.B.C, which is not an abbreviations.
+	# Note the regex also excludes preceding numbers, so that we can have inline numbering like:
+	# "A number of questions: 1. regarding those who make heretics; 2. concerning those who were made heretics..."
+	matches = regex.findall(r"[^\s0-9]+\.\s+[\p{Lowercase_Letter}](?!’[\p{Uppercase_Letter}])[\p{Lowercase_Letter}]+", temp_xhtml)
+	# If <abbr> is in the match, remove it from the matches so we exclude things like <abbr>et. al.</abbr>
+	matches = [match for match in matches if "<abbr>" not in match]
+	if matches:
+		messages.append(LintMessage("t-029", "Period followed by lowercase letter. Hint: Abbreviations require an [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+	# Check for initialisms without periods
+	nodes = [node.to_string() for node in dom.xpath("/html/body//abbr[contains(@epub:type, 'z3998:initialism') and not(re:test(., '^[0-9]*([a-zA-Z]\\.)+[0-9]*$'))]") if node.text not in INITIALISM_EXCEPTIONS]
+	if nodes:
+		messages.append(LintMessage("t-030", "Initialism with spaces or without periods.", se.MESSAGE_TYPE_WARNING, filename, set(nodes)))
+
+	nodes = dom.xpath("/html/body//*[re:test(text(), '\\bA\\s*B\\s*C\\s*\\b')]")
+	if nodes:
+		messages.append(LintMessage("t-031", "[text]A B C[/] must be set as [text]A.B.C.[/] It is not an abbreviation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for abbreviations followed by periods
+	# But we exclude some SI units, which don't take periods; abbreviations ending in numbers for example in stage directions; abbreviations like `r^o` (recto) that contain <sup>; and some Imperial abbreviations that are multi-word
+	nodes = dom.xpath("/html/body//abbr[(contains(@epub:type, 'z3998:initialism') or re:test(@epub:type, 'z3998:[^\\s]+?name') or not(@epub:type))][not(re:test(., '[cmk][mgl]')) and not(re:test(., '[0-9]$')) and not(./sup) and not(re:test(@class, '\\b(era|temperature|compound)\\b')) and not(re:test(text(), '^(mpg|mph|hp|TV)$'))][following-sibling::text()[1][starts-with(self::text(), '.')]]")
+	if nodes:
+		messages.append(LintMessage("t-032", "Initialism or name followed by period. Hint: Periods go within [xhtml]<abbr>[/]. [xhtml]<abbr>[/]s containing periods that end a clause require the [class]eoc[/] class.", se.MESSAGE_TYPE_WARNING, filename, [f"{node.to_string()}." for node in nodes]))
+
+	# Check for space after dash
+	nodes = dom.xpath("/html/body//*[name()='p' or name()='span' or name='em' or name='i' or name='b' or name='strong'][not(self::comment())][re:test(., '[a-zA-Z]-\\s(?!(and|or|nor|to|und|…)\\b)')]")
+	if nodes:
+		messages.append(LintMessage("t-033", "Space after dash.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for <cite> preceded by em dash
+	nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[re:test(., '—$')]]")
+	if nodes:
+		messages.append(LintMessage("t-034", "[xhtml]<cite>[/] element preceded by em-dash. Hint: em-dashes go within [xhtml]<cite>[/] elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for <cite> without preceding space in text node. (preceding ( or [ are also OK)
+	nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[not(re:test(., '[\\[\\(\\s]$'))]]")
+	if nodes:
+		messages.append(LintMessage("t-035", "[xhtml]<cite>[/] element not preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for partially obscured years in which the last year is an em dash
+	nodes = dom.xpath("/html/body//p[re:test(.,  '1\\d{2}⁠—[^“’A-Za-z<]')]")
+	if nodes:
+		messages.append(LintMessage("t-036", "Em-dash used to obscure single digit in year. Hint: Use a hyphen instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for rdquo preceded by space (but not preceded by a rsquo, which might indicate a nested quotation)
+	nodes = dom.xpath("/html/body//p[re:test(., '[^’]\\s”')]")
+	if nodes:
+		messages.append(LintMessage("t-037", "[text]”[/] preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check obviously miscurled quotation marks
+	nodes = dom.xpath("/html/body//p[re:test(., '“$')]")
+	if nodes:
+		messages.append(LintMessage("t-038", "[text]“[/] before closing [xhtml]</p>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for some known initialisms with incorrect possessive apostrophes
+	nodes = dom.xpath("/html/body//abbr[text()='I.O.U.'][(following-sibling::node()[1])[starts-with(., '’s')]]")
+	if nodes:
+		messages.append(LintMessage("t-039", "Initialism followed by [text]’s[/]. Hint: Plurals of initialisms are not followed by [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "’s" for node in nodes]))
+
+	# Check if a subtitle ends in a text node with a terminal period; or if it ends in an <i> node containing a terminal period.
+	nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6]/*[contains(@epub:type, 'subtitle')][(./text())[last()][re:test(., '\\.$')] or (./i)[last()][re:test(., '\\.$')]]")
+	if nodes:
+		messages.append(LintMessage("t-040", "Subtitle with illegal ending period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	matches = regex.findall(r"[^…]\s[!?;:,].{0,10}", file_contents) # If we don't include preceding chars, the regex is 6x faster
+	if matches:
+		messages.append(LintMessage("t-041", "Illegal space before punctuation.", se.MESSAGE_TYPE_ERROR, filename, matches))
+
+	# Check for a list of some common English loan words that used to be italicized as foreign, but are no longer
+	nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and re:test(., '^(fianc[eé]+|divorc[eé]+|menu|recherch[eé]|tour-de-force|outr[eé]|d[ée]but(ante)?|apropos|[eé]lite|prot[ée]g[ée]+|chef|salon|r[eé]gime|contretemps|[eé]clat|aides?|entr[ée]+|t[eê]te-[aà]-t[eê]tes?|blas[eé]|bourgeoisie)$')]")
+	if nodes:
+		messages.append(LintMessage("t-043", "Non-English loan word set in italics, when modern typography omits italics. Hint: A word may be correctly italicized when emphasis is desired, if the word is meant to be pronounced with an accent, or if the word is part of non-English speech.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for comma after leading Or in subtitles
+	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'subtitle') and re:test(text(), '^Or\\s')]")
+	if nodes:
+		messages.append(LintMessage("t-044", "Comma required after leading [text]Or[/] in subtitles.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for personas that are italicized. Use re:test instead of contains to avoid catching z3998:personal-name
+	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:persona\\b') and @data-css-font-style = 'italic']")
+	if nodes:
+		messages.append(LintMessage("t-045", "Element has [val]z3998:persona[/] semantic and is also set in italics.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	if "῾" in file_contents:
+		messages.append(LintMessage("t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead.", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Check for all-caps first paragraphs in sections/articles
+	# Note that we don't check for small-caps CSS, because there are lots of legitimate cases for that,
+	# and it would generate too many false positives.
+	# If we did want to do that, this xpath after the last re:test would help: or ./*[not(preceding-sibling::node()[normalize-space(.)]) and @data-css-font-variant='small-caps' and following-sibling::node()[1][self::text()]]
+	nodes = dom.xpath("/html/body//*[(name() = 'section' or name() = 'article') and not(contains(@epub:type, 'dedication') or contains(@epub:type, 'z3998:letter'))]/p[1][re:test(normalize-space(.), '^[“’]?(?:[A-Z’]+\\s){2,}')]")
+	if nodes:
+		messages.append(LintMessage("t-048", "Chapter opening text in all-caps.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for two-em-dashes used for elision instead of three-em-dashes
+	matches = regex.findall(fr"[^{se.WORD_JOINER}\p{{Letter}}”]⸺[^“{se.WORD_JOINER}\p{{Letter}}].*", file_contents, flags=regex.MULTILINE)
+	if matches:
+		messages.append(LintMessage("t-049", "Two-em-dash used for eliding an entire word. Use a three-em-dash instead.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+	# Check that possessives appear within persona blocks
+	nodes = dom.xpath("/html/body//b[contains(@epub:type, 'z3998:persona') and ./following-sibling::node()[1][re:test(., '^’s?')]]")
+	if nodes:
+		messages.append(LintMessage("t-050", "Possessive [text]’s[/] or [text]’[/] outside of element with [val]z3998:persona[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for quotations that carry to the next paragraph, but the next paragraph has no opening quotation mark
+	# Exclude p in blockquote because often that has different formatting
+	nodes = dom.xpath("/html/body//p[re:test(., '^“[^”]+$') and not(./ancestor::blockquote) and ./following-sibling::*[1][name() = 'p' and re:test(normalize-space(), '^[^“]')]]")
+	if nodes:
+		messages.append(LintMessage("t-051", "Dialog in [xhtml]<p>[/] that continues to the next [xhtml]<p>[/], but the next [xhtml]<p>[/] does not begin with [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for stage direction without ending punctuation. We only want to consider stage direction that is not an interjection in a parent clause.
+	# We match if the stage direction ends in lowercase, and if there's no following node, or if there's a following node that doesn't begin in lowercase or an em dash or semicolon (which suggests an interjection).
+	nodes = dom.xpath(f"/html/body//i[@epub:type='z3998:stage-direction' and re:test(., '[a-z]$') and re:test(., '^[A-Z]') and (not(./following-sibling::node()[normalize-space(.)]) or ./following-sibling::node()[1][re:test(normalize-space(.), '^[^{se.WORD_JOINER}—;a-z]')])]")
+	if nodes:
+		messages.append(LintMessage("t-052", "Stage direction without ending punctuation. Note that ending punctuation is optional in stage direction that is an interjection in a parent clause, and such interjections should begin with a lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for stage direction starting in lowercase.  We only want to consider stage direction that is not an interjection in a parent clause.
+	# We match if the stage direction starts with a lowercase, and if there's no preceding node, or if there is a preceding node and it doesn't end in a lowercase letter or a small subset of conjoining punctuation.
+	nodes = dom.xpath("/html/body//i[@epub:type='z3998:stage-direction' and re:test(., '^[a-z]') and (not(./preceding-sibling::node()[normalize-space(.)]) or ./preceding-sibling::node()[1][re:test(normalize-space(.), '[^a-z:—,;…]$')])]")
+	if nodes:
+		messages.append(LintMessage("t-053", "Stage direction starting in lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Epigraphs that are entirely non-English should still be in italics, not Roman
+	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'bridgehead')]//p[./i[@xml:lang and @data-css-font-style='normal' and ( (./preceding-sibling::node()='“' and ./following-sibling::node()='”') or not(./preceding-sibling::node()[normalize-space(.)] or ./following-sibling::node()[normalize-space(.)]) ) ]]")
+	if nodes:
+		messages.append(LintMessage("t-054", "Epigraphs that are entirely non-English should be set in italics, not Roman.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for lone acute accents, which should always be combined or swapped for a more accurate Unicode char
+	if "´" in file_contents:
+		messages.append(LintMessage("t-055", "Lone acute accent ([val]´[/]). A more accurate Unicode character like prime for coordinates or measurements, or combining accent or breathing mark for Greek text, is required.", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Check for degree confusable
+	nodes = dom.xpath("/html/body//*[re:test(text(), '[0-9]+º')]")
+	if nodes:
+		messages.append(LintMessage("t-056", "Masculine ordinal indicator ([val]º[/]) used instead of degree symbol ([val]°[/]). Note that the masculine ordinal indicator may be appropriate for ordinal numbers read as Latin, i.e. [val]12º[/] reading [val]duodecimo[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for <p> starting in lowercase
+	# Exclude <p> starting in constructs like `(a)` or `a.` as they may be numbered lists
+	nodes = dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::figure or ancestor::ol[not(ancestor::section[contains(@epub:type, 'endnotes')])] or ancestor::ul or ancestor::table or ancestor::hgroup or preceding-sibling::*[1][name() = 'hr']) and not(contains(@class, 'continued') or re:test(@epub:type, 'z3998:(signature|valediction)')) and not(./*[1][name() = 'math' or name() = 'var' or contains(@epub:type, 'z3998:grapheme')]) and re:test(., '^[^A-Za-z0-9]?[a-z]') and not(re:test(., '^\\([a-z0-9]\\.?\\)\\.?')) and not(re:test(., '^[a-z0-9]\\.\\s'))]")
+
+	# We have to additionally filter using the regex library, because often a sentence may begin with an uppercase ACCENTED letter,
+	# and xpath's limited regex library doesn't support Unicode classes
+	nodes = [node for node in nodes if regex.match(r"^[^\p{Letter}0-9]?[\p{Lowercase_Letter}]", node.inner_text())]
+
+	if nodes:
+		messages.append(LintMessage("t-057", "[xhtml]<p>[/] starting with lowercase letter. Hint: [xhtml]<p>[/] that continues text after a [xhtml]<blockquote>[/] requires the [class]continued[/] class; and use [xhtml]<br/>[/] to split one clause over many lines.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for illegal characters
+	matches = regex.findall(fr"({se.UNICODE_BOM}|{se.SHY_HYPHEN})", file_contents)
+	if matches:
+		# Get the keys of a dict in order to create a list without duplicates
+		messages.append(LintMessage("t-058", "Illegal character.", se.MESSAGE_TYPE_ERROR, filename, list({match.encode("unicode_escape").decode().replace("\\u", "U+").upper():None for match in matches}.keys())))
+
+	# Check for period in cite in endnotes
+	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]//cite[not((./node()[last()])[name() = 'abbr']) and ./following-sibling::*[1][contains(@epub:type, 'backlink')] and re:test(., '^—') and ( (re:test(., '\\.$') and ./following-sibling::node()[re:test(., '^\\s*$')]) or ./following-sibling::node()[re:test(., '^\\.\\s*$')])]")
+	if nodes:
+		messages.append(LintMessage("t-059", "Period at the end of [xhtml]<cite>[/] element before endnote backlink.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for Bible verses in old-style notation
+	nodes = dom.xpath("/html/body//*[(name()='p' or name()='cite' or re:test(name(), '^h[1-6]$')) and .//node()[re:test(., '(Genesis|Gen\\.|Exodus|Ex\\.|Leviticus|Lev\\.|Numbers|Num\\.|Deuteronomy|Deut\\.|Joshua|Josh\\.|Judges|Ruth|Kings|Chronicles|Chron\\.|Ezra|Nehemiah|Neh\\.|Esther|Esth\\.|Job|Psalm|Psalms|Ps\\.|Proverbs|Prov\\.|Ecclesiastes|Ecc\\.|Eccl\\.|Solomon|Sol\\.|Isaiah|Is\\.|Isa\\.|Jeremiah|Jer\\.|Lamentations|Lam\\.|Ezekiel|Ez\\.|Ezek\\.|Daniel|Dan\\.|Hosea|Hos\\.|Joel|Amos|Obadiah|Obad\\.|Jonah|Jon\\.|Micah|Mic\\.|Nahum|Nah\\.|Habakkuk|Hab\\.|Zephaniah|Zeph\\.|Haggai|Hag\\.|Zechariah|Zech\\.|Malachi|Mal\\.|Tobit|Judith|Sirach|Baruch|Maccabees|Esdras|Manasses|Matthew|Matt\\.|Mark|Luke|John|Acts|Romans|Rom\\.|Corinthians|Cor\\.|Corinth\\.|Galatians|Gal\\.|Ephesians|Eph\\.|Philippians|Phil\\.|Philipp\\.|Colossians|Col\\.|Coloss\\.|Thessalonians|Thes\\.|Thess\\.|Timothy|Tim\\.|Titus|Tit\\.|Philemon|Phil\\.|Hebrews|Heb\\.|James|Jas\\.|Peter|Pet\\.|Jude|Revelation|Revelations|Rev\\.)\\s*$') and following-sibling::node()[normalize-space(.)][1][contains(@epub:type, 'z3998:roman') and following-sibling::node()[1][re:test(., '^\\s*[\\.,]?\\s+[0-9]')]]]]")
+	if nodes:
+		messages.append(LintMessage("t-060", "Old style Bible citation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for summary-style bridgeheads not ending in punctuation
+	# Decide if it's a summary-style bridgehead if it contains two or more em dashes. We use Python regex because
+	# xpath can't count the number of occurances of a string.
+	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'bridgehead') and re:test(., '[^\\.\\!\\?”]”?$')]")
+	nodes = [node for node in nodes if len(regex.findall(r"—", node.to_string())) >= 2]
+	if nodes:
+		messages.append(LintMessage("t-061", "Summary-style bridgehead without ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for uppercased am/pm, except for if they have an epub:type, or when uppercased in titles, or in the nav document
+	if not dom.xpath("//nav[contains(@epub:type, 'toc')]"):
+		nodes = dom.xpath("/html/body//abbr[re:test(., '^[AP]\\.M\\.$') and not(@epub:type) and not(./ancestor::*[contains(@epub:type, 'title')])]")
+		if nodes:
+			messages.append(LintMessage("t-062", "Uppercased [text]a.m.[/] and [text]p.m.[/]", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for some Latinisms that need italics according to the manual. We check ancestor-or-self in case the phrase is set in Roman because it's nested in a parent italic.
+	# Exclude toto followed by ’ since Toto can be a name.
+	# Exclude <h#> whose entire contents is a matched Latinism as we do not italicize those.
+	# Ignore the ToC because we have different rules there
+	nodes = dom.xpath("/html/body//text()[re:test(., '\\b(a (priori|posteriori|fortiori)|(?<!reductio )ad (hominem|absurdum|nauseam|infinitum|interim|valem)|in (extremis|loco|situ|vitro|absentia|camera|statu quo)|in toto[^’]|more suo|par excellence)\\b', 'i') and not(ancestor-or-self::*[@data-css-font-style='italic']) and not(parent::*[re:test(name(), '^h[1-6]$') and @xml:lang]) and not(ancestor::hgroup) and not(ancestor::nav[contains(@epub:type, 'toc')]) ]")
+	if nodes:
+		messages.append(LintMessage("t-063", "Non-English confusable phrase set without italics.", se.MESSAGE_TYPE_WARNING, filename, nodes))
+
+	# Check that all names are correctly titlecased. Ignore titles with xml:lang since non-English languages have different titlecasing rules,
+	# and ignore titles that have children elements, because se.titlecase() can't handle XML-like titles right now.
+	# Ignore titles longer than 150 chars, as long titles are likely old-timey super-long titles that should be mostly sentence-cased
+	incorrectly_cased_titles = []
+	for node in dom.xpath("/html/body//*[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'se:name.legal-case')) and not(@xml:lang) and not(./*) and string-length(.) <= 150]"):
+		# Replace any space that is not a hair space with a regular space. This is because in inline titles, we may correctly
+		# have nbsp for example after `St.`, but titlecase will remove that nbsp.
+		if se.formatting.titlecase(node.inner_text()) != regex.sub(fr"[^\S{se.HAIR_SPACE}]+", " ", node.inner_text()):
+			incorrectly_cased_titles.append(node.to_string())
+
+	if incorrectly_cased_titles:
+		messages.append(LintMessage("t-064", "Title not correctly titlecased. Hint: Non-English titles should have an [attr]xml:lang[/] attribute as they have different titlecasing rules.", se.MESSAGE_TYPE_WARNING, filename, incorrectly_cased_titles))
+
+	# Check for headers ending in periods
+	# Allow periods at the end of headers that both start and end with double quotes; but headers that only end in double quotes probably don't need periods
+	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and not(contains(@epub:type, 'z3998:initialism')) and not((./node()[last()])[name() = 'abbr']) and (re:test(., '\\.$') or re:test(., '^[^“].+\\.”$'))]")
+	if nodes:
+		messages.append(LintMessage("t-065", "Header ending in a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for royal names whose roman numeral is preceded by `the`
+	nodes = dom.xpath("/html/body//span[contains(@epub:type, 'z3998:roman') and ./preceding-sibling::node()[1][re:test(., '[A-Z]\\w+ the $')]]/parent::*")
+	if nodes:
+		messages.append(LintMessage("t-066", "Regnal ordinal preceded by [text]the[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for plural graphemes without apostrophes
+	nodes = dom.xpath("/html/body//i[re:test(@epub:type, 'z3998:(grapheme|phoneme|morpheme)') and ./following-sibling::node()[1][starts-with(., 's')]]")
+	if nodes:
+		messages.append(LintMessage("t-067", "Plural [val]z3998:grapheme[/], [val]z3998:phoneme[/], or [val]z3998:morpheme[/] formed without apostrophe ([text]’[/]).", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Find citations not offset by em dashes. We're only interested in <cite>s in endnotes that are directly followed by the backlink;
+	# ignore <cite>s starting with `Cf.` which means `Compare` and was often used to mean `see`
+	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]/p[last()]/cite[following-sibling::node()[normalize-space(.)][1][name() = 'a' and contains(@epub:type, 'backlink')] and re:test(., '^[^—]') and not(re:test(., '^(Cf\\.|\\()'))]")
+	if nodes:
+		messages.append(LintMessage("t-068", "Citation not offset with em dash.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for <cite> in <header>s that start with a leading em dash
+	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph')]//cite[re:test(., '^—')]")
+	if nodes:
+		messages.append(LintMessage("t-069", "[xhtml]<cite>[/] in epigraph starting with an em dash.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for <cite> in <header>s that end with a period. Try to exclude <abbr>s that are last children
+	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph')]//cite[re:test(., '\\.$') and not( (./node()[last()])[./descendant-or-self::abbr]) ]")
+	if nodes:
+		messages.append(LintMessage("t-070", "[xhtml]<cite>[/] in epigraph ending in a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# If we have Greek text, try to normalize it
+	for node in dom.xpath("/html/body//*[@xml:lang='grc' or @xml:lang='el']"):
+		node_text = node.inner_text()
+		expected_text = se.typography.normalize_greek(node_text)
+		if node_text != expected_text:
+			messages.append(LintMessage("t-073", f"Possible transcription error in Greek. Found: [text]{node_text}[/], but expected [text]{expected_text}[/text]. Hint: Use [bash]se unicode-names[/] to see differences in Unicode characters.", se.MESSAGE_TYPE_WARNING, filename))
+
+	return messages
+
+def _lint_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, ebook_info: dict, language: str) -> list:
+	"""
+	Helper function used in self.lint()
+	Process syntax checks on an .xhtml file
+
+	INPUTS
+	filename: The name of the file being checked
+	dom: A dom tree to check
+	file_contents: The contents of the file being checked
+	ebook_info: A dictionary containing several pieces of information about an ebook
+
+	OUTPUTS
+	A list of LintMessages representing syntax errors found in the file
+	"""
+
+	messages = [];
+
+	# Check for numeric entities
+	matches = regex.findall(r"&#[0-9]+?;", file_contents)
+	if matches:
+		messages.append(LintMessage("s-001", "Illegal numeric entity (like [xhtml]&#913;[/]).", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Check nested <blockquote> elements, but only if it's the first child of another <blockquote>
+	nodes = dom.xpath("/html/body//blockquote/*[1][name()='blockquote']")
+	if nodes:
+		messages.append(LintMessage("s-005", "Nested [xhtml]<blockquote>[/] element.", se.MESSAGE_TYPE_WARNING, filename))
+
+	# Check to see if we've marked something as poetry or verse, but didn't include a first <span>
+	# This xpath selects the p elements, whose parents are poem/verse, and whose first child is not a span
+	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')]/p[not(./*[name()='span' and position()=1])]")
+	if nodes:
+		matches = []
+		for node in nodes:
+			# Get the first line of the poem, if it's a text node, so that we can include it in the error messages.
+			# If it's not a text node then just ignore it and add the error anyway.
+			first_line = node.xpath("./descendant-or-self::text()[normalize-space(.)]", True)
+			if first_line:
+				match = first_line.strip()
+				if match: # Make sure we don't append an empty string
+					matches.append(match)
+
+		messages.append(LintMessage("s-006", "Poem or verse [xhtml]<p>[/] (stanza) without [xhtml]<span>[/] (line) element.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+	# Check for elements that don't have a direct block child
+	# Allow white space and comments before the first child
+	# Ignore children of the ToC and landmarks as they do not require p children
+	nodes = dom.xpath("/html/body//*[(name()='blockquote' or name()='dd' or name()='header' or name()='li' or name()='footer') and not(./ancestor::*[contains(@epub:type, 'toc') or contains(@epub:type, 'landmarks')]) and (node()[normalize-space(.) and not(self::comment())])[1][not(name()='p' or name()='blockquote' or name()='div' or name()='table' or name()='header' or name()='ul' or name()='ol' or name()='footer' or name()='hgroup' or re:test(name(), '^h[0-6]'))]]")
+	if nodes:
+		messages.append(LintMessage("s-007", "Element requires at least one block-level child.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for block-level tags that end with <br/>
+	nodes = dom.xpath("/html/body//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article][br[last()][not(following-sibling::text()[normalize-space()])][not(following-sibling::*)]]")
+	if nodes:
+		messages.append(LintMessage("s-008", "[xhtml]<br/>[/] element found before closing tag of block-level element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for hgroup elements with only one child
+	nodes = dom.xpath("/html/body//hgroup[count(*)=1]")
+	if nodes:
+		messages.append(LintMessage("s-009", "[xhtml]<hgroup>[/] element with only one child.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for empty elements. Elements are empty if they have no children and no non-whitespace text
+	# Use name() to check for MathML elements, because if the MathML namespace is not declared in a given file and we search by the m: namespace then this xpath will fail entirely.
+	nodes = dom.xpath("/html/body//*[not(self::br) and not(self::hr) and not(self::img) and not(self::td) and not(self::th) and not(self::link) and not(self::col) and not(self::colgroup) and not(local-name()='none') and not(local-name()='mspace') and not(local-name()='mprescripts')][not(./*)][not(normalize-space())][not(./ancestor::*[local-name()='annotation-xml'])]")
+	if nodes:
+		messages.append(LintMessage("s-010", "Empty element. Use [xhtml]<hr/>[/] for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for <section> and <article> without ID attribute
+	nodes = dom.xpath("/html/body//*[self::section or self::article][not(@id)]")
+	if nodes:
+		messages.append(LintMessage("s-011", "Element without [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for <pre> tags
+	if dom.xpath("/html/body//pre"):
+		messages.append(LintMessage("s-013", "Illegal [xhtml]<pre>[/] element.", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Check for <br/> after block-level elements
+	nodes = dom.xpath("/html/body//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article][following-sibling::br]")
+	if nodes:
+		messages.append(LintMessage("s-014", "[xhtml]<br/>[/] after block-level element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for <hr> tags before the end of a section, which is a common PG artifact
+	if dom.xpath("/html/body//hr[count(following-sibling::*)=0]"):
+		messages.append(LintMessage("s-012", "Illegal [xhtml]<hr/>[/] as last child.", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Check for hgroup elements with a subtitle but no title
+	nodes = dom.xpath("/html/body//hgroup[./*[contains(@epub:type, 'subtitle')] and not(./*[contains(concat(' ', @epub:type, ' '), ' title ')])]")
+	if nodes:
+		messages.append(LintMessage("s-015", "Element has [val]subtitle[/] semantic, but without a sibling having a [val]title[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for deprecated MathML elements
+	# Note we dont select directly on element name, because we want to ignore any namespaces that may (or may not) be defined
+	nodes = dom.xpath("/html/body//*[local-name()='mfenced']")
+	if nodes:
+		messages.append(LintMessage("s-017", "[xhtml]<m:mfenced>[/] is deprecated in the MathML spec. Use [xhtml]<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for <figure> tags without id attributes
+	nodes = dom.xpath("/html/body//img[@id]")
+	if nodes:
+		messages.append(LintMessage("s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements. Hint: Images that are inline (i.e. that do not have parent [xhtml]<figure>[/]s do not have [attr]id[/] attributes.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for IDs on <h#> tags
+	nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
+	if nodes:
+		messages.append(LintMessage("s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for legal cases that aren't italicized
+	# We can't use this because v. appears as short for "volume", and we may also have sporting events without italics.
+	#nodes = dom.xpath("/html/body//abbr[text()='v.' or text()='versus'][not(parent::i)]")
+	#if nodes:
+	#	messages.append(LintMessage("t-xxx", "Legal case without parent [xhtml]<i>[/].", se.MESSAGE_TYPE_WARNING, filename, {f"{node.to_string()}." for node in nodes}))
+
+	# Only do this check if there's one <h#> or one <hgroup> tag. If there's more than one, then the xhtml file probably requires an overarching title
+	# We merge two xpaths here because <h#>/<hgroup> can be either a direct child of <section>, or it could be nested in <header>
+	if len(dom.xpath("/html/body/*[name()='section' or name()='article']/*[re:test(name(), '^h[1-6]$') or name()='hgroup'] | /html/body/*[name()='section' or name()='article']/header/*[re:test(name(), '^h[1-6]$') or name()='hgroup']"))==1:
+		title = se.formatting.generate_title(dom)
+
+		if not dom.xpath(f"/html/head/title[text()={se.easy_xml.escape_xpath(title.replace('&amp;', '&'))}]"):
+			messages.append(LintMessage("s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Check to see if <h#> tags are correctly titlecased
+	# Ignore <h#> tags with an `xml:lang` attribute, as other languages have different titlecasing rules
+	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') or (name() = 'p' and parent::hgroup)][not(contains(@epub:type, 'z3998:roman')) and not(@xml:lang)]")
+	for node in nodes:
+		node_copy = deepcopy(node)
+
+		# Remove *leading* Roman spans
+		# This matches the first child node excluding white space nodes, if it contains the z3998:roman semantic.
+		for element in node_copy.xpath("./node()[normalize-space(.)][1][contains(@epub:type, 'z3998:roman')]"):
+			element.remove()
+
+		# Remove noterefs
+		for element in node_copy.xpath(".//a[contains(@epub:type, 'noteref')]"):
+			element.remove()
+
+		# Remove hidden elements, for example in poetry identified by first line (keats)
+		for element in node_copy.xpath(".//*[@hidden]"):
+			element.remove()
+
+		# Unwrap (not remove) any subelements in subtitles, as they may trip up further regexes
+		for element in node_copy.xpath(".//*[contains(@epub:type, 'subtitle')]//*"):
+			element.unwrap()
+
+		title = node_copy.inner_xml()
+
+		# Remove leading leftover spacing and punctuation
+		title = regex.sub(r"^[\s\.\,\!\?\:\;]*", "", title)
+
+		# Normalize whitespace
+		title = regex.sub(r"\s+", " ", title, flags=regex.DOTALL).strip()
+
+		# Do we have a subtitle? If so the first letter of that must be capitalized, so we pull that out
+		subtitle_matches = regex.findall(r"(.*?)<span epub:type=\"subtitle\">(.*?)</span>(.*?)", title, flags=regex.DOTALL)
+		if subtitle_matches:
+			for title_header, subtitle, title_footer in subtitle_matches:
+				title_header = se.formatting.titlecase(se.formatting.remove_tags(title_header).strip())
+				subtitle = se.formatting.titlecase(se.formatting.remove_tags(subtitle).strip())
+				title_footer = se.formatting.titlecase(se.formatting.remove_tags(title_footer).strip())
+
+				titlecased_title = f"{title_header} {subtitle} {title_footer}"
+				titlecased_title = titlecased_title.strip()
+
+				title = se.formatting.remove_tags(title).strip()
+				if title != titlecased_title:
+					messages.append(LintMessage("s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/].", se.MESSAGE_TYPE_WARNING, filename))
+
+		# No subtitle? Much more straightforward
+		else:
+			titlecased_title = se.formatting.titlecase(se.formatting.remove_tags(title))
+			title = se.formatting.remove_tags(title)
+			if title != titlecased_title:
+				messages.append(LintMessage("s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/].", se.MESSAGE_TYPE_WARNING, filename))
+
+	# Check for header elements that are entirely non-English
+	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
+	if nodes:
+		messages.append(LintMessage("s-024", "Header elements that are entirely non-English should not be set in italics. Instead, the [xhtml]<h#>[/] element has the [attr]xml:lang[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for z3998:roman elements with invalid values. Roman numerals can occasionally end in `j` as an alias for ending `i`. See _The Worm Ouroboros_.
+	# We also allow the numeral to end in a digit, because that might be an endnote. For example `<h2 epub:type="ordinal z3998:roman">II<a href="..." epub:type="noteref">3</a></h2>`
+	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:roman') and not(re:test(normalize-space(.), '^[ivxlcdmIVXLCDM]+j?[0-9]*?$'))]")
+	if nodes:
+		messages.append(LintMessage("s-026", "Invalid Roman numeral.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for <h#> elements that are higher or lower than their expected level based on how deep they are in <section>s
+	# or <article>s. Exclude <nav> in the ToC.
+	# Get all h# elements not preceded by other h# elements (this includes the 1st item of an hgroup but not the next items)
+	# Exclude the ToC and landmarks
+	invalid_headers = []
+	invalid_parent_ids = []
+	for heading in dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and not(./preceding-sibling::*[re:test(name(), '^h[1-6]$')]) and not(./ancestor::*[re:test(@epub:type, '\\b(toc|landmarks)\\b')])]"):
+		# Get the IDs of the direct parent section
+		parent_section = heading.xpath("./ancestor::*[@id and re:test(name(), '^(section|article|nav)$')][1]")
+
+		if parent_section:
+			section = _find_ebook_section(parent_section[0].get_attr("id"), section_tree)
+
+			if not section:
+				# We can accidentally raise s-029 if the file isn't in the spine. This is technically correct, but s-029 is a
+				# misleading message in that case, and f-007 will also be raised, which is the correct message.
+				if filename in self.spine_file_paths:
+					invalid_parent_ids.append(parent_section[0].to_tag_string())
+			else:
+				if str(section.depth) != heading.tag[1:2]:
+					invalid_headers.append(heading.to_string())
+
+	if invalid_parent_ids:
+		messages.append(LintMessage("s-029", "Section with [attr]data-parent[/] attribute, but no section having that [attr]id[/] in ebook.", se.MESSAGE_TYPE_ERROR, filename, invalid_parent_ids))
+	if invalid_headers:
+		messages.append(LintMessage("s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. Hint: Headings not in the title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?", se.MESSAGE_TYPE_ERROR, filename, invalid_headers))
+
+	# Check for a common typo
+	if "z3998:nonfiction" in file_contents:
+		messages.append(LintMessage("s-030", "[val]z3998:nonfiction[/] should be [val]z3998:non-fiction[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Run some checks on epub:type values
+	incorrect_attrs = set()
+	unnecessary_z3998_attrs = set()
+	duplicate_attrs = []
+
+	for node in dom.xpath("//*[@epub:type]"):
+		attrs = set()
+
+		for val in regex.split(r"\s+", node.get_attr("epub:type")):
+			if val in attrs:
+				duplicate_attrs.append(node.to_tag_string())
+			else:
+				attrs.add(val)
+
+			if val.startswith("z3998:"):
+				bare_val = val.replace("z3998:", "")
+				if bare_val not in Z3998_SEMANTIC_VOCABULARY:
+					incorrect_attrs.add(val)
+
+				elif bare_val in EPUB_SEMANTIC_VOCABULARY:
+					unnecessary_z3998_attrs.add((val, bare_val))
+
+			elif val.startswith("se:"):
+				bare_val = val.replace("se:", "")
+				if bare_val not in SE_SEMANTIC_VOCABULARY:
+					incorrect_attrs.add(val)
+
+			else:
+				# Regular epub vocabulary
+				if val not in EPUB_SEMANTIC_VOCABULARY:
+					incorrect_attrs.add(val)
+
+	if duplicate_attrs:
+		messages.append(LintMessage("s-031", "Duplicate value in [attr]epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, duplicate_attrs))
+	if incorrect_attrs:
+		messages.append(LintMessage("s-032", "Invalid value for [attr]epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, incorrect_attrs))
+	if unnecessary_z3998_attrs:
+		messages.append(LintMessage("s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary.", se.MESSAGE_TYPE_ERROR, filename, [attr for (attr, bare_attr) in unnecessary_z3998_attrs]))
+
+	# Check if language tags in individual files match the language in the metadata file
+	if filename.name not in IGNORED_FILENAMES:
+		file_language = dom.xpath("/html/@xml:lang", True)
+		if language != file_language:
+			messages.append(LintMessage("s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/].", se.MESSAGE_TYPE_WARNING, filename))
+
+	# Check for endnotes
+	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]/p[not(preceding-sibling::*)]/cite[not(preceding-sibling::node()[normalize-space(.)]) and (following-sibling::node()[normalize-space(.)])[1][contains(@epub:type, 'backlink')]]")
+	if nodes:
+		messages.append(LintMessage("s-035", "Endnote containing only [xhtml]<cite>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for wrong semantics in frontmatter/backmatter
+	if dom.xpath("/html/body/section[not(@data-parent) and re:test(@epub:type, '\\b(dedication|introduction|preface|foreword|preamble|titlepage|halftitlepage|imprint|epigraph|acknowledgements)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'frontmatter')])]"):
+		messages.append(LintMessage("s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename))
+
+	if dom.xpath("/html/body/section[not(@data-parent) and re:test(@epub:type, '\\b(endnotes|loi|afterword|appendix|colophon|copyright\\-page|lot)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'backmatter')])]"):
+		messages.append(LintMessage("s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
+
+	# Check for leftover asterisms. Asterisms are sequences of any of these chars: * . • -⁠ —
+	nodes = dom.xpath("/html/body//*[self::p or self::div][re:test(., '^\\s*[\\*\\.•\\-⁠—]\\s*([\\*\\.•\\-⁠—]\\s*)+$')]")
+	if nodes:
+		messages.append(LintMessage("s-038", "Illegal asterism. Section/scene breaks must be defined by an [xhtml]<hr/>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for <table> element without a <tbody> child
+	if dom.xpath("/html/body//table[not(tbody)]"):
+		messages.append(LintMessage("s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child.", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Check that short stories are on an <article> element
+	nodes = dom.xpath("/html/body/section[contains(@epub:type, 'se:short-story') or contains(@epub:type, 'se:novella')]")
+	if nodes:
+		messages.append(LintMessage("s-043", "[val]se:short-story[/] semantic on element that is not [xhtml]<article>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for poetry/verse without a descendent <p> element.
+	# Skip the ToC landmarks because it may have poem/verse semantic children.
+	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][not(descendant::p)][not(ancestor::nav[contains(@epub:type, 'landmarks')])]")
+	if nodes:
+		messages.append(LintMessage("s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for <abbr> elements that have two or more letters/periods, that don't have a semantic epub:type
+	# SS. is the French abbreviation for "Saints"
+	nodes = dom.xpath("/html/body//abbr[not(@epub:type)][text() != 'U.S.' and text() != 'SS.'][re:test(., '([A-Z]\\.?){2,}')]")
+	filtered_nodes = []
+	for node in nodes:
+		add_node = True
+
+		if node.text in INITIALISM_EXCEPTIONS:
+			add_node = False
+		elif node.get_attr("class"):
+			for attr_value in node.get_attr("class").split():
+				if attr_value in IGNORED_CLASSES:
+					add_node = False
+					break
+		elif node.text in ("A.M.", "P.M.") and node.xpath("./preceding-sibling::node()[re:test(., '[0-9]\\s$')]"):
+			# Ignore instances of capitalized times, usually in titles. For example:
+			# `From 10:20 <abbr>P.M.</abbr> to 10:47 <abbr>P.M.</abbr>` in a chapter title.
+			# We have to test for a preceding number because `<abbr>P.M.</abbr>` in other contexts may mean `Prime Minister`
+			add_node = False
+
+		if add_node:
+			filtered_nodes.append(node)
+
+	if filtered_nodes:
+		messages.append(LintMessage("s-045", "[xhtml]<abbr>[/] element without semantic inflection like [class]z3998:personal-name[/] or [class]z3998:initialism[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in filtered_nodes]))
+
+	# Check for <p> elems that has some element children, which are only <span> and <br> children, but the parent doesn't have poem/verse semantics.
+	# Ignore spans that have a class, but not if the class is an i# class (for poetry indentation)
+	nodes = dom.xpath("/html/body//p[not(./text()[normalize-space(.)])][*][not(ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')])][not(*[not(self::span) and not(self::br)])][ (not(span[@epub:type]) and not(span[@class]) ) or span[re:test(@class, '\\bi[0-9]\\b')]]")
+	if nodes:
+		messages.append(LintMessage("s-046", "[xhtml]<p>[/] element containing only [xhtml]<span>[/] and [xhtml]<br>[/] elements, but its parent doesn’t have the [val]z3998:poem[/], [val]z3998:verse[/], [val]z3998:song[/], [val]z3998:hymn[/], or [val]z3998:lyrics[/] semantic. Multi-line clauses that are not verse don’t require [xhtml]<span>[/]s.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# For this series of selections, we select spans that are direct children of p, because sometimes a line of poetry may have a nested span.
+	nodes = dom.xpath("/html/body/*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')]/descendant-or-self::*/p/span/following-sibling::*[contains(@epub:type, 'noteref') and name()='a' and position()=1]")
+	if nodes:
+		messages.append(LintMessage("s-047", "[val]noteref[/] as a direct child of element with poem or verse semantic. [val]noteref[/]s should be in their parent [xhtml]<span>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for incorrectly applied se:name semantic
+	nodes = dom.xpath("/html/body//*[self::p or self::blockquote][contains(@epub:type, 'se:name.')]")
+	if nodes:
+		messages.append(LintMessage("s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for <header> elements with only h# child nodes
+	nodes = dom.xpath("/html/body//header[./*[re:test(name(), 'h[1-6]') and (count(preceding-sibling::*) + count(following-sibling::*)=0)]]")
+	if nodes:
+		messages.append(LintMessage("s-049", "[xhtml]<header>[/] element whose only child is an [xhtml]<h#>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for <span>s that only exist to apply epub:type
+	nodes = dom.xpath("/html/body//*[span[@epub:type][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
+	if nodes:
+		messages.append(LintMessage("s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for language tags misusing the unk lang code
+	nodes = dom.xpath("//*[@xml:lang='unk']")
+	if nodes:
+		messages.append(LintMessage("s-051", "Element with [xhtml]xml:lang=\"unk\"[/] should be [xhtml]xml:lang=\"und\"[/] (undefined).", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for title attrs on abbr elements
+	nodes = dom.xpath("/html/body//abbr[@title]")
+	if nodes:
+		messages.append(LintMessage("s-052", "[xhtml]<abbr>[/] element with illegal [attr]title[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	nodes = dom.xpath("/html/body//blockquote//p[parent::*[name()='footer'] or parent::*[name()='blockquote']]//cite") # Sometimes the <p> may be in a <footer>
+	if nodes:
+		messages.append(LintMessage("s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for <th> element without a <thead> ancestor. However, <th scope="...">  and <th/> are allowed, for use in tables with headers in the middle of tables (url:https://standardebooks.org/ebooks/dorothy-day/the-eleventh-virgin) and vertical table headers
+	# (https://standardebooks.org/ebooks/charles-babbage/passages-from-the-life-of-a-philosopher)
+	if dom.xpath("/html/body//table//th[not(ancestor::thead)][not(@scope)][not(count(node())=0)]"):
+		messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Note: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute.", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Check for z3998:stage-direction on elements that are not <i>
+	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:stage-direction') and name() !='i' and name() !='abbr' and name() !='p']")
+	if nodes:
+		messages.append(LintMessage("s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/], [xhtml]<abbr>[/], and [xhtml]<p>[/] elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check that internal links don't begin with ../
+	nodes = dom.xpath("/html/body//a[re:test(@href, '^\\.\\./text/')]")
+	if nodes:
+		messages.append(LintMessage("s-059", "Internal link beginning with [val]../text/[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for italics on things that shouldn't be italics
+	nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.music.song') or contains(@epub:type, 'se:name.publication.short-story') or contains(@epub:type, 'se:name.publication.essay')]")
+	if nodes:
+		messages.append(LintMessage("s-060", "Italics on name that requires quotes instead.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for h# tags followed by header content, that are not children of <header>.
+	# Only match if there is a following <p>, because we could have the case where there's an epigraph after a division title.
+	nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][following-sibling::*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'bridgehead')]][following-sibling::p][not(parent::header)]")
+	if nodes:
+		messages.append(LintMessage("s-061", "Title and following header content not in a [xhtml]<header>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for <dt> elements without exactly one <dfn> child, but only in glossaries
+	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'glossary')]//dt[not(count(./dfn)=1)]")
+	if nodes:
+		messages.append(LintMessage("s-062", "[xhtml]<dt>[/] element in a glossary without exactly one [xhtml]<dfn>[/] child.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check that `z3998:persona` is only on <b> or <td>. We use the contact() xpath function so we don't catch `z3998:personal-name`
+	nodes = dom.xpath("/html/body//*[contains(concat(' ', @epub:type, ' '), ' z3998:persona ') and not(self::b or self::td)]")
+	if nodes:
+		messages.append(LintMessage("s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for fulltitle semantic on a header not in the half title
+	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'fulltitle') and name()!='h2' and name()!='hgroup' and not(ancestor::*[contains(@epub:type, 'halftitlepage')])]")
+	if nodes:
+		messages.append(LintMessage("s-065", "[val]fulltitle[/] semantic on element that is not in the half title.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for header elements that have a label, but are missing the label semantic
+	# Find h# nodes whose first child is a text node matching a label type, and where that text node's next sibling is a semantic roman numeral
+	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./node()[1][self::text() and not(./*) and re:test(normalize-space(.), '^(Part|Book|Volume|Section|Act|Scene)$') and following-sibling::*[1][contains(@epub:type, 'z3998:roman')]]]")
+	if nodes:
+		messages.append(LintMessage("s-066", "Header element missing [val]label[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for header elements that have a label semantic, but are missing an ordinal sibling
+	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./span[contains(@epub:type, 'label')]][not(./span[contains(@epub:type, 'ordinal')])]")
+	if nodes:
+		messages.append(LintMessage("s-067", "Header element with a [val]label[/] semantic child, but without an [val]ordinal[/] semantic child.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for header elements with a roman semantic but without an ordinal semantic
+	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][contains(@epub:type, 'z3998:roman') and not(contains(@epub:type, 'ordinal'))]")
+	if nodes:
+		messages.append(LintMessage("s-068", "Header element missing [val]ordinal[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for body element without child section or article. Ignore the ToC because it has a unique structure
+	nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and re:test(@epub:type, '\\b(toc|loi)\\b'))])]")
+	if nodes:
+		messages.append(LintMessage("s-069", "[xhtml]<body>[/] element missing direct child [xhtml]<section>[/] or [xhtml]<article>[/] element.", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Check for h# without semantics; h# that have child elements (which likely have the correct semantics) are OK
+	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(@epub:type)][not(./*[not(name()='a' and contains(@epub:type, 'noteref'))])]")
+	if nodes:
+		messages.append(LintMessage("s-070", "[xhtml]<h#>[/] element without semantic inflection.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for sectioning elements with more than one heading element
+	nodes = dom.xpath("/html/body//*[name()='article' or name()='section'][count(./*[name()='header' or name()='hgroup' or re:test(name(), '^h[1-6]$')]) > 1]")
+	if nodes:
+		messages.append(LintMessage("s-071", "Sectioning element with more than one heading element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for some elements that only have a <span> child (including text inline to the parent).
+	# But, exclude such elements that are <p> elements that have poetry-type parents.
+	nodes = dom.xpath("/html/body//*[name() !='p' and not(ancestor-or-self::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')])][./span[count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
+	if nodes:
+		messages.append(LintMessage("s-072", "Element with single [xhtml]<span>[/] child. [xhtml]<span>[/] should be removed and its attributes promoted to the parent element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for header elements that are missing both label and ordinal semantics
+	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(./*) and re:test(normalize-space(.), '^(Part|Book|Volume|Section|Act|Scene)\\s+[ixvIXVmcd]+$')]")
+	if nodes:
+		messages.append(LintMessage("s-073", "Header element that requires [val]label[/] and [val]ordinal[/] semantic children.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for table headers that don't have content, which is an accessibility issue.
+	# Note that @aria-label and @title should (apparently) not be used for table headers
+	nodes = dom.xpath("/html/body//th[not(text())]")
+	if nodes:
+		messages.append(LintMessage("s-074", "[xhtml]<th>[/] element with no text content should be a [xhtml]<td>[/] element instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for incorrect children of <body>
+	nodes = dom.xpath("/html/body/*[name() != 'section' and name() != 'article' and name() != 'nav']")
+	if nodes:
+		messages.append(LintMessage("s-075", "[xhtml]<body>[/] element with direct child that is not [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Check for lang="" instead of xml:lang=""
+	nodes = dom.xpath("/html/body//*[@lang]")
+	if nodes:
+		messages.append(LintMessage("s-076", "[attr]lang[/] attribute used instead of [attr]xml:lang[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for <header> preceded by non-sectioning elements
+	nodes = dom.xpath("/html/body//header[./preceding-sibling::*[not(re:test(name(), '^(section|div|article)$'))]]")
+	if nodes:
+		messages.append(LintMessage("s-077", "[xhtml]<header>[/] element preceded by non-sectioning element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for <footer> followed by non-sectioning elements
+	nodes = dom.xpath("/html/body//footer[./following-sibling::*[not(re:test(name(), '^(section|div|article)$'))]]")
+	if nodes:
+		messages.append(LintMessage("s-078", "[xhtml]<footer>[/] element followed by non-sectioning element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for elements with no children and only white space contents
+	nodes = dom.xpath("/html/body//*[not(./*) and re:test(., '^\\s+$')]")
+	if nodes:
+		messages.append(LintMessage("s-079", "Element containing only white space.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for a play <td> that contains both inline text and block-level elements.
+	# Note that we check any child of <html> because often <body> has the drama semantic.
+	nodes = dom.xpath("/html//*[contains(@epub:type, 'z3998:drama')]//td[./text()[normalize-space(.)] and ./*[name() = 'p' or name() = 'blockquote' or name() = 'div']]")
+	if nodes:
+		messages.append(LintMessage("s-080", "[xhtml]<td>[/] in drama containing both inline text and a block-level element. All children should either be only text, or only block-level elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for <p> tags that follow figure, blockquote, or table, and start with a lowercase letter, but that don't have the `continued` class. Exclude matches whose first child is <cite>, so we don't match things like <p><cite>—Editor</cite>
+	nodes = dom.xpath("/html/body//p[preceding-sibling::*[1][name() = 'figure' or name() = 'blockquote' or name() = 'table'] and re:test(., '^([a-z]|—|…)') and not(contains(@class, 'continued')) and not(./*[1][self::cite])]")
+	if nodes:
+		messages.append(LintMessage("s-081", "[xhtml]<p>[/] preceded by [xhtml]<figure>[/], [xhtml]<blockquote>[/xhtml], or [xhtml]<table>[/], but without [val]continued[/] class.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for language tags transliterated into Latin script but missing `-Latn` suffix
+	nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '^(he|ru|el|zh|bn|hi|sa|uk|yi|grc)$') and re:test(., '[a-zA-Z]')]")
+	if nodes:
+		messages.append(LintMessage("s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for persona <td>s that have child <p> elements
+	nodes = dom.xpath("/html/body//td[contains(@epub:type, 'z3998:persona') and ./p]")
+	if nodes:
+		messages.append(LintMessage("s-083", "[xhtml]<td epub:type=\"z3998:persona\">[/] element with child [xhtml]<p>[/] element.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for incorrect semantics on some common publications
+	nodes = dom.xpath("/html/body//i[@epub:type='se:name.publication.book' and re:test(., '^(The )?(Iliad|Odyssey|Aeneid|Metamorphoses|Beowulf|Divine Comedy|Paradise Lost)$')]")
+	if nodes:
+		messages.append(LintMessage("s-084", "Poem has incorrect semantics.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for `Op. Cit.` in endnotes. `Op. Cit.` means "the previous reference" which doesn't make sense
+	# in popup endnotes. But, if the endnote has a book reference, then allow it as it might be referring to that.
+	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote') and (re:test(., '(Loc\\.|Op\\.) Cit\\.', 'i') or re:test(., '\\bl\\.c\\.\\b', 'i')) and not(.//*[contains(@epub:type, 'se:name.publication')])]")
+	if nodes:
+		messages.append(LintMessage("s-086", "[text]Op. Cit.[/] or [text]Loc. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] and [text]Loc. Cit.[/] mean [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for half title pages missing subtitles
+	if ebook_info["has_subtitle"]:
+		# Make sure we exclude <a> because that appears in the ToC landmarks
+		nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage') and not(.//*[contains(@epub:type, 'subtitle')])]")
+		if nodes:
+			messages.append(LintMessage("s-087", "Subtitle in metadata, but no subtitle in the half title page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+	else:
+		# Make sure we exclude <a> because that appears in the ToC landmarks
+		nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage') and .//*[contains(@epub:type, 'subtitle')]]")
+		if nodes:
+			messages.append(LintMessage("s-088", "Subtitle in half title page, but no subtitle in metadata.", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Check for MathML without alttext
+	nodes = dom.xpath("/html/body//m:math[not(@alttext)]")
+	if nodes:
+		messages.append(LintMessage("s-089", "MathML missing [attr]alttext[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for common errors in language tags
+	# `gr` is often used instead of `el`, `sp` instead of `es`, and `ge` instead of `de` (`ge` is the Georgian geographic region subtag but not a language subtag itself)
+	nodes = dom.xpath("//*[re:test(@xml:lang, '^(gr|sp|ge)$')]")
+	if nodes:
+		messages.append(LintMessage("s-090", "Invalid language tag.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for <span> in poetry not followed by <br/>. Ignore spans that are roman as they might be present in poem headers, or spans with xml:lang.
+	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]//p/span[not(@epub:type='z3998:roman') and not(@xml:lang) and following-sibling::*[1][name()='span']]")
+	if nodes:
+		messages.append(LintMessage("s-091", "[xhtml]<span>[/] not followed by [xhtml]<br/>[/] in poetry.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for nested `<abbr>` elements
+	nodes = dom.xpath("/html/body//abbr[./abbr]")
+	if nodes:
+		messages.append(LintMessage("s-093", "Nested [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for language tags transliterated into Latin script with incorrect `-latn` suffix (lowercase l)
+	nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '-latn')]")
+	if nodes:
+		messages.append(LintMessage("s-094", "Element has an [attr]xml:lang[/] attribute that incorrectly contains [val]-latn[/] instead of [val]-Latn[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for poetry/verse that has an hgroup but which does not have the correct text alignment
+	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(hymn|poem|song|verse)')]//hgroup/p[@data-css-text-align != 'center']")
+	if nodes:
+		messages.append(LintMessage("s-095", "[xhtml]<p>[/] child of [xhtml]<hgroup>[/] in poetry/verse does not have [css]text-align: center;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check that half titles without subtitles have the fulltitle semantic
+	nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage')]/*[re:test(name(), '^h[1-6]$') and not(contains(@epub:type, 'fulltitle'))]")
+	if nodes:
+		messages.append(LintMessage("s-096", "Heading element in half title page missing the [val]fulltitle[/] semantic.", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Check for missing href attributes, sometimes a leftover from PG transcriptions
+	nodes = dom.xpath("/html/body//a[not(@href)]")
+	if nodes:
+		messages.append(LintMessage("s-097", "[xhtml]a[/] element without [attr]href[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for <headers>s with only one child
+	nodes = dom.xpath("/html/body/*[name() = 'section' or name() = 'article']/header[./*[not(name() = 'p') and not(preceding-sibling::* or following-sibling::*)]]")
+	if nodes:
+		messages.append(LintMessage("s-098", "[xhtml]<header>[/] element with only one child.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for @lang attributes
+	nodes = dom.xpath("//*[@lang]")
+	if nodes:
+		messages.append(LintMessage("s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for common missing roman semantics for “I”
+	regent_regex = r"(?:Charles|Edward|George|Henry|James|William) I\b"
+	matches = regex.findall(fr"King {regent_regex}", file_contents) + regex.findall(fr"{regent_regex}’s", file_contents)
+	if matches:
+		messages.append(LintMessage("s-103", "Probable missing semantics for a roman I numeral.", se.MESSAGE_TYPE_WARNING, filename, matches))
+
+	return messages
+
+def _lint_metadata_checks(filename: Path, dom: se.easy_xml.EasyXmlTree) -> list:
+	"""
+	Helper function used in self.lint()
+	Process metadata checks on an .xhtml file
+
+	INPUTS
+	filename: The name of the file being checked
+	dom: A dom tree to check
+
+	OUTPUTS
+	A list of LintMessages representing metadata errors found in the file
+	"""
+
+	messages = [];
+
+	# Check for missing MARC relators
+	# Don't check the landmarks as that may introduce duplicate errors
+	# Only check for top-level elements, to avoid intros in short stories or poems in compilation.
+	if not dom.xpath("/html/body//nav[contains(@epub:type, 'landmarks')]"):
+		if dom.xpath("/html/body/*[contains(@epub:type, 'introduction') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and (text()='aui' or text()='win')]"):
+			messages.append(LintMessage("m-030", "[val]introduction[/] semantic inflection found, but no MARC relator [val]aui[/] (Author of introduction, but not the chief author) or [val]win[/] (Writer of introduction).", se.MESSAGE_TYPE_WARNING, filename))
+
+		if dom.xpath("/html/body/*[contains(@epub:type, 'preface') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='wpr']"):
+			messages.append(LintMessage("m-031", "[val]preface[/] semantic inflection found, but no MARC relator [val]wpr[/] (Writer of preface).", se.MESSAGE_TYPE_WARNING, filename))
+
+		if dom.xpath("/html/body/*[contains(@epub:type, 'afterword') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='aft']"):
+			messages.append(LintMessage("m-032", "[val]afterword[/] semantic inflection found, but no MARC relator [val]aft[/] (Author of colophon, afterword, etc.).", se.MESSAGE_TYPE_WARNING, filename))
+
+		if dom.xpath("/html/body/*[contains(@epub:type, 'endnotes') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='ann']"):
+			messages.append(LintMessage("m-033", "[val]endnotes[/] semantic inflection found, but no MARC relator [val]ann[/] (Annotator).", se.MESSAGE_TYPE_WARNING, filename))
+
+		if dom.xpath("/html/body/*[contains(@epub:type, 'loi') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='ill']"):
+			messages.append(LintMessage("m-034", "[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator).", se.MESSAGE_TYPE_WARNING, filename))
+
+	# Check that `Internet Archive` and `HathiTrust` are preceded by `the`. They might have an immediate preceding text node that ends in `the`, or they
+	# might be preceded by a white space node, then a <br/>, then a text node ending in `the`.
+	nodes = dom.xpath("/html/body//a[(re:test(text(), '[Hh]athi') and re:test(@href, '^https://[^\"]*?hathitrust.org')) or (re:test(text(), 'Internet Archive') and re:test(@href, 'https://[^\"]*?archive.org'))][(preceding-sibling::node()[2][not(self::br)] and preceding-sibling::node()[1][not(re:test(., '\\sthe $'))]) or (preceding-sibling::node()[2][self::br] and preceding-sibling::node()[3][not(re:test(., '\\sthe$'))]) ]")
+	if nodes:
+		messages.append(LintMessage("m-061", "Link must be preceded by [text]the[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	return messages
+
+def _lint_css_checks(filename: Path, dom: se.easy_xml.EasyXmlTree) -> list:
+	"""
+	Helper function used in self.lint()
+	Process CSS checks on an .xhtml file
+
+	INPUTS
+	filename: The name of the file being checked
+	dom: A dom tree to check
+
+	OUTPUTS
+	A list of LintMessages representing CSS errors found in the file
+	"""
+
+	messages = [];
+
+	# Do we have any elements that have specified border color?
+	# `transparent` and `none` are allowed values for border-color
+	if dom.xpath("/html/body//*[attribute::*[re:test(local-name(), 'data-css-border.+?-color') and text() != 'transparent' and text != 'none']]"):
+		messages.append(LintMessage("c-004", "Don’t specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, local_css_path, matches))
+
+	# Check that footers have the expected styling
+	# Footers may sometimes be aligned with text-align: center as well as text-align: right
+	# We also ignore text-align on any footers whose only child is a postscript, which is typically left-aligned
+	nodes = dom.xpath("/html/body//footer[not(@data-css-margin-top='1em') or (not(@data-css-text-align) and not(./*[contains(@epub:type, 'z3998:postscript') and not(following-sibling::*) and not(preceding-sibling::*) ]))]")
+	if nodes:
+		messages.append(LintMessage("c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [css]text-align[/] is usually set to [css]right[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for elements that have `text-align: center` but also `text-indent: 1em`
+	nodes = dom.xpath("/html/body//*[@data-css-text-align='center' and @data-css-text-indent='1em']")
+	if nodes:
+		messages.append(LintMessage("c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for sections that don't have header elements, and that do not have margin-top: 8em.
+	# This tries to find the first <section> or <article> whose first child is <p>, and that doesn't
+	# have any ancestor <section>s or <articles>s with heading content, and that doesn't have the correct top margin.
+	# Ignore the titlepage, loi, and dedications as they typically have unique styling.
+	nodes = dom.xpath("/html/body//*[name()='section' or name()='article'][1][./p[1][not(preceding-sibling::*)] and not(re:test(@epub:type, '(titlepage|loi|dedication)')) and not(ancestor::*/*[re:test(name(), '^(h[1-6]|header|hgroup)$')]) and not(@data-css-margin-top='20vh')]")
+	if nodes:
+		messages.append(LintMessage("c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for padding and margin not in .5 increments, except for table headers/cells which usually need .25em increments
+	nodes = dom.xpath("/html/body//*[not(re:test(name(), '^(h[1-6]|td|th)$'))][attribute::*[re:test(local-name(), 'data-css-(margin|padding)')][re:test(., '^[0-9]*\\.[^5]')]]")
+	if nodes:
+		messages.append(LintMessage("c-013", "Element with margin or padding not in increments of [css].5em[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for <table> without set margins. We ignore tables that are for drama structuring, and tables that are ancestors of <blockquote> because <blockquote> has its own margin.
+	# We also ignore tables whose preceding sibling sets a bottom margin that is not 0.
+	nodes = dom.xpath("/html/body//table[not(./ancestor-or-self::*[contains(@epub:type, 'z3998:drama')]) and not(./ancestor::blockquote) and not(./preceding-sibling::*[1][@data-css-margin-bottom != '0']) and (not(@data-css-margin-top) or not(@data-css-margin-right) or not(@data-css-margin-bottom) or not(@data-css-margin-left))]")
+	if nodes:
+		messages.append(LintMessage("c-014", "[xhtml]<table>[/] element without explicit margins. Most tables need [css]margin: 1em;[/] or [css]margin: 1em auto 1em auto;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for elements that follow salutations, but that don't have text-indent: 0;
+	# We have to check both <p> elems that are salutations, and also <p> elems that have a first-child inline element that is a salutation, and that does not have following siblings that are senders/valedictions, as that might indicate a letter in a prose context
+	nodes = dom.xpath("/html/body//*[(contains(@epub:type, 'z3998:salutation') or ./preceding-sibling::*[1][contains(@epub:type, 'z3998:salutation') or (name() != 'blockquote' and count(./node()[normalize-space(.)]) = 1 and ./*[contains(@epub:type, 'z3998:salutation')])] or ./*[1][contains(@epub:type, 'z3998:salutation') and not((./following-sibling::node()[1][self::text()]))]) and @data-css-text-indent != '0']")
+	if nodes:
+		messages.append(LintMessage("c-015", "Element after or containing [val]z3998:salutation[/] does not have [css]text-indent: 0;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for block-level postscripts that don't have margin-top: 1em. Exclude postscripts that are the first child of blockquote or footer, since blockquotes/footers gives the desired margin.
+	nodes = dom.xpath("/html/body//*[(name() = 'div' or name() = 'p') and contains(@epub:type, 'z3998:postscript') and not((./parent::blockquote or ./parent::footer) and count(./preceding-sibling::*) = 0) and @data-css-margin-top != '1em']")
+	if nodes:
+		messages.append(LintMessage("c-017", "Element with [val]z3998:postscript[/] semantic, but without [css]margin-top: 1em;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for <p> postscripts that don't have text-indent: 0.
+	nodes = dom.xpath("/html/body//p[contains(@epub:type, 'z3998:postscript') and (not(@data-css-text-align) or @data-css-text-align = 'initial' or @data-css-text-align = 'left') and @data-css-text-indent != '0']")
+	if nodes:
+		messages.append(LintMessage("c-018", "Element with [val]z3998:postscript[/] semantic, but without [css]text-indent: 0;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for signature semantic without small caps
+	# Ignore signatures that are only capital letters
+	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:signature') and not(@data-css-font-variant = 'small-caps') and not(@data-css-font-style = 'italic') and not(re:test(., '^[A-Z\\.\\s]+$'))]")
+	if nodes:
+		messages.append(LintMessage("c-019", "Element with [val]z3998:signature[/] semantic, but without [css]font-variant: small-caps;[/] or [css]font-style: italic;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for <article>s or <section>s that occur more than once in a file, without page break CSS
+	# Exclude the last element because we don't care if it breaks after the last one.
+	nodes = dom.xpath("/html/body[count(./article) > 1 or count(./section) > 1]/*[(name() = 'article' or name() = 'section') and (not(@data-css-break-after) or @data-css-break-after != 'page') and not(position() = last())]")
+	if nodes:
+		messages.append(LintMessage("c-020", "Multiple [xhtml]<article>[/]s or [xhtml]<section>[/]s in file, but missing [css]break-after: page;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check for elements that are set in italics, and whose italic children don't have font-style: normal.
+	nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and ./*[(name()='i' or name()='em') and @data-css-font-style='italic']]")
+	if nodes:
+		messages.append(LintMessage("c-021", "Element with [css]font-style: italic;[/], but child [xhtml]<i>[/] or [xhtml]<em>[/] does not have [css]font-style: normal;[/]. Hint: Italics within italics are typically set in Roman for contrast; if that’s not the case here, can [xhtml]<i>[/] be removed while still preserving italics and semantic inflection?", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for tables that appear to be summing/listing numbers, but that are missing font-variant-numeric styling
+	nodes = dom.xpath("/html/body//table[count(.//td[not(following-sibling::*) and re:test(., '^[0-9]+$') and not(@data-css-font-variant-numeric='tabular-nums')]) >= 2]")
+	if nodes:
+		messages.append(LintMessage("c-026", "Table that appears to be listing numbers, but without [css]font-variant-numeric: tabular-nums;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+
+	return messages
+
+
 
 def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = None) -> list:
 	"""
@@ -711,6 +2558,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 	local_css_path = self.content_path / "css/local.css"
 	messages: List[LintMessage] = []
+	is_titlepage = False
 	has_halftitle = False
 	has_frontmatter = False
 	has_cover_source = False
@@ -813,52 +2661,55 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	local_css_selectors = [regex.sub(r"::[\p{Lowercase_Letter}\-]+", "", selector) for selector in local_css_rules]
 	unused_selectors = local_css_selectors.copy()
 
-	local_css_has_poem_style = False
-	local_css_has_verse_style = False
-	local_css_has_song_style = False
-	local_css_has_hymn_style = False
-	local_css_has_lyrics_style = False
-	local_css_has_elision_style = False
-	local_css_has_dedication_style = False
-	local_css_has_epigraph_style = False
+	local_css = {
+		"has_poem_stye": False,
+		"has_verse_style": False,
+		"has_song_style": False,
+		"has_hymn_style": False,
+		"has_lyrics_style": False,
+		"has_elision_style": False
+		"has_dedication_style": False
+		"has_epigraph_style": False
+	}
+	ebook_info = {
+		"has_subtitle": bool(self.metadata_dom.xpath("/package/metadata/meta[@property='title-type' and text()='subtitle']")),
+		"has_multiple_transcriptions": False,
+		"has_multiple_page_scans": False,
+		"has_other_sources": False
+	}
 	short_story_count = 0
 	missing_styles: List[str] = []
 	directories_not_url_safe = []
 	files_not_url_safe = []
 	id_values = {}
 	duplicate_id_values = []
-	ebook_has_subtitle = bool(self.metadata_dom.xpath("/package/metadata/meta[@property='title-type' and text()='subtitle']"))
-	source_links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
-	section_tree: List[EbookSection] = []
-	ebook_has_multiple_transcriptions = False
-	ebook_has_multiple_page_scans = False
 
 	# Iterate over rules to do some other checks
 	abbr_with_whitespace = []
 	for selector, rules in local_css_rules.items():
 		if "z3998:poem" in selector:
-			local_css_has_poem_style = True
+			local_css["has_poem_style"] = True
 
 		if "z3998:verse" in selector:
-			local_css_has_verse_style = True
+			local_css["has_verse_style"] = True
 
 		if "z3998:song" in selector:
-			local_css_has_song_style = True
+			local_css["has_song_style"] = True
 
 		if "z3998:hymn" in selector:
-			local_css_has_hymn_style = True
+			local_css["has_hymn_style"] = True
 
 		if "z3998:lyrics" in selector:
-			local_css_has_lyrics_style = True
+			local_css["has_lyrics_style"] = True
 
 		if "span.elision" in selector:
-			local_css_has_elision_style = True
+			local_css["has_elision_style"] = True
 
 		if "dedication" in selector:
-			local_css_has_dedication_style = True
+			local_css["has_dedication_style"] = True
 
 		if "epigraph" in selector:
-			local_css_has_epigraph_style = True
+			local_css["has_epigraph_style"] = True
 
 		if "abbr" in selector and "nowrap" in rules:
 			abbr_with_whitespace.append(selector)
@@ -1056,9 +2907,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 		else:
 			other_source_count = other_source_count + 1
 
-	ebook_has_multiple_transcriptions = transcription_source_count >= 2
-	ebook_has_multiple_page_scans = page_scan_source_count >= 2
-	ebook_has_other_sources = other_source_count > 0
+	ebook_info["has_multiple_transcriptions"] = transcription_source_count >= 2
+	ebook_info["has_multiple_page_scans"] = page_scan_source_count >= 2
+	ebook_info["has_other_sources"] = other_source_count > 0
 
 	# Check for double spacing
 	if self.metadata_dom.xpath(f"/package/metadata/*[re:test(., '[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}')]"):
@@ -1262,52 +3113,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 			missing_files.append("css/se.css")
 
 	# Before we start, walk the files in spine order to build a tree of sections and heading levels.
-	# section_tree is a list of EbookSections.
-	# For example, The Woman in White by Wilkie Collins would have a section_tree that looks like this:
-	# titlepage (1)
-	#  imprint (2)
-	#  dedication (2)
-	#  preface (2)
-	#  halftitlepage (2)
-	#  part-1 (2)
-	#    division-1-1 (3)
-	#      chapter-1-1-1 (4)
-	#      chapter-1-1-2 (4)
-	#      chapter-1-1-3 (4)
-	#      chapter-1-1-4 (4)
-	for filename in self.spine_file_paths:
-		dom = self.get_dom(filename)
-		for dom_section in dom.xpath("/html/body//*[re:test(name(), '^(section|article|nav)$')][@id]"):
-			# Start at h2 by default except for the titlepage, which is always h1
-			starting_depth = 1 if regex.findall(r"\btitlepage\b", dom_section.get_attr("epub:type") or "") else 2
-
-			section = _find_ebook_section(dom_section.get_attr("id"), section_tree)
-
-			section_parent_id = dom_section.get_attr("data-parent")
-
-			has_header = bool(dom_section.xpath("./*[re:test(name(), '^h[1-6]$')]"))
-			if not has_header:
-				has_header = bool(dom_section.xpath(".//*[not(re:test(name(), '^(section|article|nav)$'))]//*[re:test(name(), '^h[1-6]$')]"))
-
-			if not section_parent_id:
-				# We don't have a data-parent, but do we have a direct parent section in the same file as this section?
-				direct_parent = dom_section.xpath("./ancestor::*[re:test(name(), '^(section|article|nav)$')][@id][1]")
-
-				if direct_parent:
-					section_parent_id = direct_parent[0].get_attr("id")
-
-			# If we don't have the section in our list yet, and it has a parent, append it to the parent
-			if not section and section_parent_id:
-				parent = _find_ebook_section(section_parent_id, section_tree)
-				if parent:
-					# Only increment the depth if the parent has a header. If it doesn't then we don't want to increment,
-					# because we will end up skipping an h# level (like h2 -> h4 instead of h2 -> h3)
-					parent.children.append(EbookSection(dom_section.get_attr("id"), parent.depth + 1 if parent.has_header else parent.depth, has_header))
-
-			# If we don't have it in our list yet, and it has no parent, append it to the top
-			elif not section:
-				section_tree.append(EbookSection(dom_section.get_attr("id"), starting_depth, has_header))
-
+	section_tree: List[EbookSection] = _build_section_tree(self)
 	# This block is useful for pretty-printing section_tree should we need to debug it in the future
 	# def dump(item, char):
 	# 	print(f"{char} {item.section_id} ({item.depth}) {item.has_header}")
@@ -1401,25 +3207,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 			if filename.suffix == ".svg":
 				svg_dom = self.get_dom(filename)
 
-				# If we're looking at the cover image, ensure that the producer has built it.
-				# The default cover image is a white background which when encoded to base64 begins with 299 characters and then has a long string of `A`s
-				if self.cover_path and filename.name == self.cover_path.name and svg_dom.xpath("//image[re:test(@xlink:href, '^.{299}A{50,}')]"):
-					messages.append(LintMessage("m-063", "Cover image has not been built.", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for fill: #000 which should simply be removed
-				nodes = svg_dom.xpath("//*[contains(@fill, '#000') or contains(translate(@style, ' ', ''), 'fill:#000')]")
-				if nodes:
-					messages.append(LintMessage("x-004", "Illegal [xml]style=\"fill: #000\"[/] or [xml]fill=\"#000\"[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for illegal height or width on root <svg> element
-				if filename.name != "logo.svg": # Do as I say, not as I do...
-					if svg_dom.xpath("/svg[@height or @width]"):
-						messages.append(LintMessage("x-005", "Illegal [xml]height[/] or [xml]width[/] attribute on root [xml]<svg>[/] element. Size SVGs using the [xml]viewBox[/] attribute only.", se.MESSAGE_TYPE_ERROR, filename))
-
-				match = regex.search(r"viewbox", file_contents, flags=regex.IGNORECASE)
-				if match and match[0] != "viewBox":
-					messages.append(LintMessage("x-006", f"[xml]{match}[/] found instead of [xml]viewBox[/]. [xml]viewBox[/] must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename))
-
 				# Make images have reasonable dimensions
 				viewbox = svg_dom.xpath("/svg/@viewBox", True)
 				if viewbox:
@@ -1429,6 +3216,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 							messages.append(LintMessage("f-018", "Image greater than 4,000,000 pixels square in dimension.", se.MESSAGE_TYPE_ERROR, filename))
 					except Exception as ex:
 						raise se.InvalidFileException(f"Couldn’t parse SVG [xhtml]viewBox[/] attribute in [path][link=file://{filename.resolve()}]{filename}[/][/].") from ex
+
+				# If we're looking at the cover image, ensure that the producer has built it.
+				# The default cover image is a white background which when encoded to base64 begins with 299 characters and then has a long string of `A`s
+				if self.cover_path and filename.name == self.cover_path.name and svg_dom.xpath("//image[re:test(@xlink:href, '^.{299}A{50,}')]"):
+					messages.append(LintMessage("m-063", "Cover image has not been built.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Check for illegal transform or id attribute
 				nodes = svg_dom.xpath("//*[@transform or @id]")
@@ -1444,6 +3236,20 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 					if invalid_transform_attributes:
 						messages.append(LintMessage("x-003", "Illegal [xml]transform[/] attribute. SVGs should be optimized to remove use of [xml]transform[/]. Try using Inkscape to save as an “optimized SVG”.", se.MESSAGE_TYPE_ERROR, filename, invalid_transform_attributes))
+
+				# Check for fill: #000 which should simply be removed
+				nodes = svg_dom.xpath("//*[contains(@fill, '#000') or contains(translate(@style, ' ', ''), 'fill:#000')]")
+				if nodes:
+					messages.append(LintMessage("x-004", "Illegal [xml]style=\"fill: #000\"[/] or [xml]fill=\"#000\"[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+				# Check for illegal height or width on root <svg> element
+				if filename.name != "logo.svg": # Do as I say, not as I do...
+					if svg_dom.xpath("/svg[@height or @width]"):
+						messages.append(LintMessage("x-005", "Illegal [xml]height[/] or [xml]width[/] attribute on root [xml]<svg>[/] element. Size SVGs using the [xml]viewBox[/] attribute only.", se.MESSAGE_TYPE_ERROR, filename))
+
+				match = regex.search(r"viewbox", file_contents, flags=regex.IGNORECASE)
+				if match and match[0] != "viewBox":
+					messages.append(LintMessage("x-006", f"[xml]{match}[/] found instead of [xml]viewBox[/]. [xml]viewBox[/] must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename))
 
 					if invalid_id_attributes:
 						messages.append(LintMessage("x-014", "Illegal [xml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, invalid_id_attributes))
@@ -1504,152 +3310,25 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 				# Test against word boundaries to not match `halftitlepage`
 				if dom.xpath("/html/body/section[re:test(@epub:type, '\\btitlepage\\b')]"):
+					is_titlepage = True
 					# Check if the <title> element is set correctly, but only if there's no heading content.
 					# If there's heading content, then <title> should match the expected generated value from the heading content.
 					if dom.xpath("/html[not(./body//*[re:test(name(), '^h(group|[1-6])$')]) and ./head/title[text()!='Titlepage']]"):
 						messages.append(LintMessage("s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+				if dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"):
+					special_file = "colophon"
+				elif dom.xpath("/html/body/section[contains(@epub:type, 'imprint')]"):
+					special_file = "imprint"
+				elif dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]"):
+					special_file = "endnotes"
+				elif dom.xpath("/html/body/nav[contains(@epub:type, 'loi')]"):
+					special_file = "loi"
 				else:
-					# Check for common typos
-					# Don't check the titlepage because it has a standard format and may raise false positives
-					typos = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?!-)", file_contents, flags=regex.IGNORECASE)
-					typos = typos + regex.findall(r"\ba a\b(?!-)", file_contents)
+					special_file = ""
 
-					if typos:
-						messages.append(LintMessage("y-001", "Possible typo: doubled [text]a/the/and/of/or/as/if[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				is_colophon = bool(dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"))
-				is_imprint = bool(dom.xpath("/html/body/section[contains(@epub:type, 'imprint')]"))
-
-				if (is_colophon or is_imprint):
-					if len(source_links) <= 2:
-						# Check that links back to sources are represented correctly
-						nodes = dom.xpath("/html/body//a[@href='https://www.pgdp.net' and text()!='The Online Distributed Proofreading Team']")
-						if nodes:
-							messages.append(LintMessage("m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-						nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www.pgdp.org/ols/') and text()!='Distributed Proofreaders Open Library System']")
-						if nodes:
-							messages.append(LintMessage("m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-						nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
-						if nodes:
-							messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-					nodes = dom.xpath("/html/body//p[re:test(., '\\ba transcription\\b') and ./a[contains(@href, '#transcriptions')]]")
-					if nodes:
-						messages.append(LintMessage("t-071", "Multiple transcriptions listed, but preceding text is [text]a transcription[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				if is_colophon:
-					# Check for illegal Wikipedia URLs
-					nodes = dom.xpath("/html/body//a[contains(@href, '.m.wikipedia.org')]")
-					if nodes:
-						messages.append(LintMessage("m-026", "Illegal [url]https://*.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-					# Check for non-English Wikipedia URLs
-					nodes = dom.xpath("/html/body//a[re:test(@href, 'https://(?!en)[a-z]{2,}\\.wikipedia\\.org')]")
-					if nodes:
-						messages.append(LintMessage("m-043", "Non-English Wikipedia URL.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
-
-					# Check for wrong grammar filled in from template
-					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
-					if nodes:
-						messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the<br/>\n" + node.to_string() for node in nodes]))
-
-					se_url = self.generated_identifier.replace("url:", "")
-					if not dom.xpath(f"/html/body//a[@href='{se_url}' and text()='{se_url.replace('https://', '')}']"):
-						messages.append(LintMessage("m-035", f"Unexpected S.E. identifier in colophon. Expected: [url]{se_url}[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-					if self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text()='trl']") and "translated from" not in file_contents:
-						messages.append(LintMessage("m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
-
-					if ebook_has_multiple_transcriptions and not dom.xpath("/html/body//a[contains(@href, '#transcriptions')]"):
-						messages.append(LintMessage("m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-					if ebook_has_multiple_page_scans and not dom.xpath("/html/body//a[contains(@href, '#page-scans')]"):
-						messages.append(LintMessage("m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-					# Check that the formula changed from the default if we added 'various sources'
-					if ebook_has_multiple_transcriptions or ebook_has_multiple_page_scans:
-						nodes = dom.xpath("/html/body//a[text() = 'various sources' and not(re:test(preceding-sibling::br[1]/preceding-sibling::node()[1], '(digital scans|transcriptions) from\\s*$'))]")
-						if nodes:
-							messages.append(LintMessage("t-072", "[text]various sources[/] link not preceded by [text]from[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-					# Check if we forgot to fill any variable slots
-					missing_colophon_vars = [var for var in SE_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
-					if missing_colophon_vars:
-						messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, missing_colophon_vars))
-
-					# Check that we have <br/>s at the end of lines
-					# First, check for b or a elements that are preceded by a newline but not by a br
-					nodes = [node.to_string() for node in dom.xpath("/html/body/section/p/*[name()='b' or name()='a'][(preceding-sibling::node()[1])[contains(., '\n')]][not((preceding-sibling::node()[2])[self::br]) or (normalize-space(preceding-sibling::node()[1]) and re:test(preceding-sibling::node()[1], '\\n\\s*$')) ]")]
-					# Next, check for text nodes that contain newlines but are not preceded by brs
-					nodes = nodes + [node.strip() for node in dom.xpath("/html/body/section/p/text()[contains(., '\n') and normalize-space(.)][(preceding-sibling::node()[1])[not(self::br)]]")]
-					if nodes:
-						messages.append(LintMessage("s-053", "Colophon line not preceded by [xhtml]<br/>[/].", se.MESSAGE_TYPE_ERROR, filename, nodes))
-
-					# Is there a comma after a producer name, if there's only two producers?
-					nodes = dom.xpath("/html/body/section/p/*[name()='b' or name()='a'][(following-sibling::node()[1])[normalize-space(.)=', and']][(preceding-sibling::*[1])[name()='br']]")
-					if nodes:
-						messages.append(LintMessage("t-006", "Comma after producer name, but there are only two producers.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-					nodes = dom.xpath("/html/body//b[re:test(., 'anonymous', 'i') and re:test(@epub:type, 'z3998:.*?name')]")
-					if nodes:
-						messages.append(LintMessage("s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-					# Check for anonymous volunteers misrepresented in the colophon. Note that we only match SE producers and transcribers, because
-					# a cover art artist can also be anonymous but they're not volunteers.
-					nodes = dom.xpath("/html/body//b[re:test(., 'anonymous', 'i') and text() != 'An Anonymous Volunteer' and (preceding-sibling::a[@href='https://standardebooks.org'])]")
-					if nodes:
-						messages.append(LintMessage("s-100", "Anonymous digital contributor value not exactly [text]An Anonymous Volunteer[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-					# Check for primary contributors misrepresented in the colophon. these differ from ebook production volunteers.
-					nodes = dom.xpath("/html/body//b[re:test(., 'anonymous', 'i') and text() != 'Anonymous' and (preceding-sibling::node()[contains(., 'The cover page')] or preceding-sibling::i[contains(@epub:type, 'se:name.publication')])]")
-					if nodes:
-						messages.append(LintMessage("s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-					# Is there a page scan link in the colophon, but missing in the metadata?
-					for node in dom.xpath("/html/body//a[re:test(@href, '(gutenberg\\.org/ebooks/[0-9]+|hathitrust\\.org|/archive\\.org|books\\.google\\.com|www\\.google\\.com/books/)')]"):
-						if not self.metadata_dom.xpath(f"/package/metadata/dc:source[contains(text(), {se.easy_xml.escape_xpath(node.get_attr('href'))})]"):
-							messages.append(LintMessage("m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-
-					# Are the sources represented correctly?
-					# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
-					# We can't merge this with the imprint check because imprint doesn't have `<br/>` between `the`
-					if not ebook_has_multiple_transcriptions and not ebook_has_other_sources:
-						for link in source_links:
-							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
-								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-					if not ebook_has_multiple_page_scans and not ebook_has_other_sources:
-						for link in source_links:
-							if "hathitrust.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
-								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]the<br/> <a href=\"{link}\">HathiTrust Digital Library</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-							if "archive.org" in link and f"the<br/>\n\t\t\t<a href=\"{link}\">Internet Archive</a>" not in file_contents:
-								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]the<br/> <a href=\"{link}\">Internet Archive</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-							if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
-								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-				else:
-					# This file is not the colophon.
-					# Check for ending punctuation inside italics that have semantics.
-					# Ignore the colophon because paintings might have punctuation in their names
-
-					# This xpath matches b or i elements with epub:type="se:name...", that are not stage direction, whose last text node ends in punctuation.
-					# Note that we check that the last node is a text node, because we may have <abbr> as the last node
-					matches = [node.to_string() for node in dom.xpath("(//b | //i)[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., '[\\.,!\\?;:]$')]]")]
-
-					# Match b or i elements that are not stage directions, and that end in a comma followed by a lowercase letter
-					matches = matches + [node.to_string() for node in dom.xpath("(//b | //i)[not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., ',$')] and following-sibling::node()[re:test(., '^\\s*[a-z]')] ]")]
-
-					# ...and also check for ending punctuation inside em tags, if it looks like a *part* of a clause
-					# instead of a whole clause. If the <em> is preceded by an em dash or quotes, or if there's punctuation
-					# and a space before it, then it's presumed to be a whole clause.
-					matches = matches + [match.strip() for match in regex.findall(r"(?<!.[—“‘>]|[!\.\?…;:]\s)<em>(?:\w+?\s*)+[\.,\!\?;]</em>", file_contents) if match.islower()]
-
-					if matches:
-						messages.append(LintMessage("t-017", "Ending punctuation inside formatting like bold, small caps, or italics. Ending punctuation is only allowed within formatting if the phrase is an independent clause.", se.MESSAGE_TYPE_WARNING, filename, list(set(matches))))
+				if special_file != "":
+					messages = messages + _lint_special_file(self, filename, dom, file_contents, ebook_info, special_file)
 
 				# Check for unused selectors
 				if dom.xpath("/html/head/link[contains(@href, 'local.css')]"):
@@ -1673,6 +3352,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				if dom.xpath("/html//*[contains(@epub:type, 'frontmatter') and not(descendant-or-self::*[re:test(@epub:type, '\\b(titlepage|imprint|toc)\\b')])]"):
 					has_frontmatter = True
 
+				# Do we have a half title?
+				# Sometimes the half title might not be a section, like in Cane by Jean Toomer
+				if dom.xpath("/html/body//*[contains(@epub:type, 'halftitlepage')]"):
+					has_halftitle = True
+
 				# Add new CSS classes to global list
 				if filename.name not in IGNORED_FILENAMES:
 					for node in dom.xpath("//*[@class]"):
@@ -1682,17 +3366,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 							else:
 								xhtml_css_classes[css_class] = 1
 
-				# Check for whitespace before noteref
-				# Do this early because we remove noterefs from headers later
-				# Allow noterefs that do not have preceding text/elements (for example a "see note X" ref that is the only child in a <td>)
-				nodes = dom.xpath("/html/body//a[contains(@epub:type, 'noteref') and preceding-sibling::node()[normalize-space(.)] and re:test(preceding-sibling::node()[1], '\\s+$')]")
-				if nodes:
-					messages.append(LintMessage("t-012", "Illegal white space before noteref.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check that internal links don't begin with ../
-				nodes = dom.xpath("/html/body//a[re:test(@href, '^\\.\\./text/')]")
-				if nodes:
-					messages.append(LintMessage("s-059", "Internal link beginning with [val]../text/[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+				for node in dom.xpath("/html/body//*[@id]/@id"):
+					if node in id_values:
+						duplicate_id_values.append(node)
+					else:
+						id_values[node] = True
 
 				# Get the title of this file to compare against the ToC later.
 				# We ignore the ToC file itself.
@@ -1706,1523 +3384,15 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 					if header_text != "":
 						headings.append((header_text, str(filename)))
 
-				# Check for illegal characters
-				matches = regex.findall(fr"({se.UNICODE_BOM}|{se.SHY_HYPHEN})", file_contents)
-				if matches:
-					# Get the keys of a dict in order to create a list without duplicates
-					messages.append(LintMessage("t-058", "Illegal character.", se.MESSAGE_TYPE_ERROR, filename, list({match.encode("unicode_escape").decode().replace("\\u", "U+").upper():None for match in matches}.keys())))
-
-				# Check for z3998:roman elements with invalid values. Roman numerals can occasionally end in `j` as an alias for ending `i`. See _The Worm Ouroboros_.
-				# We also allow the numeral to end in a digit, because that might be an endnote. For example `<h2 epub:type="ordinal z3998:roman">II<a href="..." epub:type="noteref">3</a></h2>`
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:roman') and not(re:test(normalize-space(.), '^[ivxlcdmIVXLCDM]+j?[0-9]*?$'))]")
-				if nodes:
-					messages.append(LintMessage("s-026", "Invalid Roman numeral.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check that `Internet Archive` and `HathiTrust` are preceded by `the`. They might have an immediate preceding text node that ends in `the`, or they
-				# might be preceded by a white space node, then a <br/>, then a text node ending in `the`.
-				nodes = dom.xpath("/html/body//a[(re:test(text(), '[Hh]athi') and re:test(@href, '^https://[^\"]*?hathitrust.org')) or (re:test(text(), 'Internet Archive') and re:test(@href, 'https://[^\"]*?archive.org'))][(preceding-sibling::node()[2][not(self::br)] and preceding-sibling::node()[1][not(re:test(., '\\sthe $'))]) or (preceding-sibling::node()[2][self::br] and preceding-sibling::node()[3][not(re:test(., '\\sthe$'))]) ]")
-				if nodes:
-					messages.append(LintMessage("m-061", "Link must be preceded by [text]the[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for uppercase letters in IDs or classes
-				nodes = dom.xpath("//*[re:test(@id, '[A-Z]') or re:test(@class, '[A-Z]') or re:test(@epub:type, '[A-Z]')]")
-				if nodes:
-					messages.append(LintMessage("x-002", "Uppercase in attribute value. Attribute values must be all lowercase.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				nodes = dom.xpath("//*[re:test(@id, '^[0-9]+')]")
-				if nodes:
-					messages.append(LintMessage("x-007", "[attr]id[/] attributes starting with a number are illegal XHTML.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for <section> and <article> without ID attribute
-				nodes = dom.xpath("/html/body//*[self::section or self::article][not(@id)]")
-				if nodes:
-					messages.append(LintMessage("s-011", "Element without [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				for node in dom.xpath("/html/body//*[@id]/@id"):
-					if node in id_values:
-						duplicate_id_values.append(node)
-					else:
-						id_values[node] = True
-
-				# Check for numeric entities
-				matches = regex.findall(r"&#[0-9]+?;", file_contents)
-				if matches:
-					messages.append(LintMessage("s-001", "Illegal numeric entity (like [xhtml]&#913;[/]).", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check nested <blockquote> elements, but only if it's the first child of another <blockquote>
-				nodes = dom.xpath("/html/body//blockquote/*[1][name()='blockquote']")
-				if nodes:
-					messages.append(LintMessage("s-005", "Nested [xhtml]<blockquote>[/] element.", se.MESSAGE_TYPE_WARNING, filename))
-
-				# Check for <hr> tags before the end of a section, which is a common PG artifact
-				if dom.xpath("/html/body//hr[count(following-sibling::*)=0]"):
-					messages.append(LintMessage("s-012", "Illegal [xhtml]<hr/>[/] as last child.", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for space after dash
-				nodes = dom.xpath("/html/body//*[name()='p' or name()='span' or name='em' or name='i' or name='b' or name='strong'][not(self::comment())][re:test(., '[a-zA-Z]-\\s(?!(and|or|nor|to|und|…)\\b)')]")
-				if nodes:
-					messages.append(LintMessage("t-033", "Space after dash.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for double greater-than at the end of a tag
-				matches = regex.findall(r"(>>|>&gt;)", file_contents)
-				if matches:
-					messages.append(LintMessage("x-008", "Elements should end with a single [text]>[/].", se.MESSAGE_TYPE_WARNING, filename))
-
-				# Check for lone acute accents, which should always be combined or swapped for a more accurate Unicode char
-				if "´" in file_contents:
-					messages.append(LintMessage("t-055", "Lone acute accent ([val]´[/]). A more accurate Unicode character like prime for coordinates or measurements, or combining accent or breathing mark for Greek text, is required.", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for periods followed by lowercase.
-				temp_xhtml = regex.sub(r"<title[^>]*?>.+?</title>", "", file_contents) # Remove <title> because it might contain something like <title>Chapter 2: The Antechamber of M. de Tréville</title>
-				temp_xhtml = regex.sub(r"<abbr[^>]*?>", "<abbr>", temp_xhtml) # Replace things like <abbr xml:lang="la">
-				temp_xhtml = regex.sub(r"<img[^>]*?>", "", temp_xhtml) # Remove <img alt> attributes
-				temp_xhtml = temp_xhtml.replace("A.B.C.", "X") # Remove A.B.C, which is not an abbreviations.
-				# Note the regex also excludes preceding numbers, so that we can have inline numbering like:
-				# "A number of questions: 1. regarding those who make heretics; 2. concerning those who were made heretics..."
-				matches = regex.findall(r"[^\s0-9]+\.\s+[\p{Lowercase_Letter}](?!’[\p{Uppercase_Letter}])[\p{Lowercase_Letter}]+", temp_xhtml)
-				# If <abbr> is in the match, remove it from the matches so we exclude things like <abbr>et. al.</abbr>
-				matches = [match for match in matches if "<abbr>" not in match]
-				if matches:
-					messages.append(LintMessage("t-029", "Period followed by lowercase letter. Hint: Abbreviations require an [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_WARNING, filename, matches))
-
-				# Check for nbsp before times
-				nodes = dom.xpath(f"/html/body//text()[re:test(., '[0-9][^{se.NO_BREAK_SPACE}]?$')][(following-sibling::abbr[1])[re:test(., '^[ap]\\.m\\.$')]]")
-				if nodes:
-					messages.append(LintMessage("t-009", "Required no-break space not found before time and [text]a.m.[/] or [text]p.m.[/].", se.MESSAGE_TYPE_WARNING, filename, [node[-10:] + "<abbr" for node in nodes]))
-
-				# Check for uppercased am/pm, except for if they have an epub:type, or when uppercased in titles, or in the nav document
-				if not dom.xpath("//nav[contains(@epub:type, 'toc')]"):
-					nodes = dom.xpath("/html/body//abbr[re:test(., '^[AP]\\.M\\.$') and not(@epub:type) and not(./ancestor::*[contains(@epub:type, 'title')])]")
-					if nodes:
-						messages.append(LintMessage("t-062", "Uppercased [text]a.m.[/] and [text]p.m.[/]", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for low-hanging misquoted fruit
-				matches = regex.findall(r"[\p{Letter}]+[“‘]", file_contents) + regex.findall(r"[^>]+</(?:em|i|b|span)>‘[\p{Lowercase_Letter}]+", file_contents)
-				if matches:
-					messages.append(LintMessage("t-028", "Possible mis-curled quotation mark.", se.MESSAGE_TYPE_WARNING, filename, matches))
-
-				# Check for times with periods instead of colons.
-				# Only check p, because things like tables/td are more likely to contain non-time numbers
-				# Exclude numbers preceded by equals, or succeeded by some measurements
-				# Also remove <a> first because they are likely to contain numbered section references
-				dom_copy = deepcopy(dom)
-				for node in dom_copy.xpath("/html/body//p/a"):
-					node.remove()
-
-				nodes = dom_copy.xpath("/html/body//p[re:test(., '[^=]\\s[0-9]{1,2}\\.[0-9]{2}(?![0-9′″°%]|\\.[0-9]|\\scubic|\\smetric|\\smeters|\\smiles|\\sfeet|\\sinches)')]")
-				matches = []
-				for node in nodes:
-					for time_match in regex.findall(r"(?<=[^=]\s)[0-9]{1,2}\.[0-9]{2}(?![0-9′″°%]|\.[0-9]|\scubic|\smetric|\smeters|\smiles|\sfeet|\sinches)", node.inner_text()):
-						time = time_match.split(".")
-						if not time[0].startswith("0") and int(time[0]) >= 1 and int(time[0]) <= 12 and int(time[1]) >= 0 and int(time[1]) <= 59:
-							matches.append(time_match)
-
-				if matches:
-					messages.append(LintMessage("t-010", "Time set with [text].[/] instead of [text]:[/].", se.MESSAGE_TYPE_WARNING, filename, set(matches)))
-
-				# Do we have a half title?
-				# Sometimes the half title might not be a section, like in Cane by Jean Toomer
-				if dom.xpath("/html/body//*[contains(@epub:type, 'halftitlepage')]"):
-					has_halftitle = True
-
-				# Check for leading 0 in IDs (note: not the same as checking for IDs that start with an integer)
-				# We only check for *leading* 0s in numbers; this allows IDs like `wind-force-0` in the Worst Journey in the World glossary.
-				nodes = dom.xpath("//*[re:test(@id, '-0[0-9]')]")
-				if nodes:
-					messages.append(LintMessage("x-009", "Illegal leading 0 in [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for underscores in attributes, but not if the attribute is href (links often have underscores) or MathMl alttext, which can have underscores as part of math notation
-				nodes = dom.xpath("//@*[contains(., '_') and name() !='href' and name() !='alttext']/..")
-				if nodes:
-					messages.append(LintMessage("x-011", "Illegal underscore in attribute. Use dashes instead of underscores.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for stage direction that ends in ?! but also has a trailing period
-				nodes = dom.xpath("/html/body//i[contains(@epub:type, 'z3998:stage-direction') and re:test(., '\\.$') and not((./node()[last()])[name() = 'abbr']) and (following-sibling::node()[1])[re:test(., '^[\\.,:;!?]')]]")
-				if nodes:
-					messages.append(LintMessage("t-018", "Stage direction ending in period next to other punctuation. Remove trailing periods in stage direction.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for h# without semantics; h# that have child elements (which likely have the correct semantics) are OK
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(@epub:type)][not(./*[not(name()='a' and contains(@epub:type, 'noteref'))])]")
-				if nodes:
-					messages.append(LintMessage("s-070", "[xhtml]<h#>[/] element without semantic inflection.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for <table> element without a <tbody> child
-				if dom.xpath("/html/body//table[not(tbody)]"):
-					messages.append(LintMessage("s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child.", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for <th> element without a <thead> ancestor. However, <th scope="...">  and <th/> are allowed, for use in tables with headers in the middle of tables (url:https://standardebooks.org/ebooks/dorothy-day/the-eleventh-virgin) and vertical table headers
-				# (https://standardebooks.org/ebooks/charles-babbage/passages-from-the-life-of-a-philosopher)
-				if dom.xpath("/html/body//table//th[not(ancestor::thead)][not(@scope)][not(count(node())=0)]"):
-					messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Note: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute.", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for money not separated by commas
-				nodes = dom.xpath("/html/body//*[re:test(text(), '[£\\$][0-9]{4,}')]")
-				if nodes:
-					messages.append(LintMessage("t-015", "Numbers not grouped by commas. Separate numbers greater than 1,000 with commas at every three numerals.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Do we have any elements that have specified border color?
-				# `transparent` and `none` are allowed values for border-color
-				if dom.xpath("/html/body//*[attribute::*[re:test(local-name(), 'data-css-border.+?-color') and text() != 'transparent' and text != 'none']]"):
-					messages.append(LintMessage("c-004", "Don’t specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, local_css_path, matches))
-
-				# Check for all-caps first paragraphs in sections/articles
-				# Note that we don't check for small-caps CSS, because there are lots of legitimate cases for that,
-				# and it would generate too many false positives.
-				# If we did want to do that, this xpath after the last re:test would help: or ./*[not(preceding-sibling::node()[normalize-space(.)]) and @data-css-font-variant='small-caps' and following-sibling::node()[1][self::text()]]
-				nodes = dom.xpath("/html/body//*[(name() = 'section' or name() = 'article') and not(contains(@epub:type, 'dedication') or contains(@epub:type, 'z3998:letter'))]/p[1][re:test(normalize-space(.), '^[“’]?(?:[A-Z’]+\\s){2,}')]")
-				if nodes:
-					messages.append(LintMessage("t-048", "Chapter opening text in all-caps.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check that footers have the expected styling
-				# Footers may sometimes be aligned with text-align: center as well as text-align: right
-				# We also ignore text-align on any footers whose only child is a postscript, which is typically left-aligned
-				nodes = dom.xpath("/html/body//footer[not(@data-css-margin-top='1em') or (not(@data-css-text-align) and not(./*[contains(@epub:type, 'z3998:postscript') and not(following-sibling::*) and not(preceding-sibling::*) ]))]")
-				if nodes:
-					messages.append(LintMessage("c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [css]text-align[/] is usually set to [css]right[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for poetry/verse without a descendent <p> element.
-				# Skip the ToC landmarks because it may have poem/verse semantic children.
-				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][not(descendant::p)][not(ancestor::nav[contains(@epub:type, 'landmarks')])]")
-				if nodes:
-					messages.append(LintMessage("s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for elements that have `text-align: center` but also `text-indent: 1em`
-				nodes = dom.xpath("/html/body//*[@data-css-text-align='center' and @data-css-text-indent='1em']")
-				if nodes:
-					messages.append(LintMessage("c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for basic typo, but exclude MathML and endnotes. Some endnotes (like in Ten Days that Shook the World) may start with letters.
-				dom_copy = deepcopy(dom)
-				for node in dom_copy.xpath("//a[contains(@epub:type, 'noteref')]") + dom_copy.xpath("//*[namespace-uri() = 'http://www.w3.org/1998/Math/MathML']"):
-					node.remove()
-
-				typos = [node.to_string() for node in dom_copy.xpath("/html/body//p[re:match(., '[a-z][;,][a-z]', 'i')]")]
-				if typos:
-					messages.append(LintMessage("y-002", "Possible typo: punctuation followed directly by a letter, without a space.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-                # Check for paragraphs ending in lowercase letters, excluding a number of instances where that might be valid.
-				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[a-z]$') and not(@epub:type) and not(following-sibling::*[1]/node()[1][contains(@epub:type, 'z3998:roman')] or following-sibling::*[1][re:test(., '^([0-9]|first|second|third|fourth|fifth|sixth|seventh|eight|ninth|tenth)', 'i')]) and not(@class or contains(@epub:type, 'z3998:salutation')) and not(following-sibling::*[1][name() = 'blockquote' or name() = 'figure' or name() = 'table' or name() = 'footer' or name() = 'ul' or name() = 'ol'] or ancestor::*[name() = 'blockquote' or name() = 'footer' or name() = 'header' or name() = 'table' or name() = 'ul' or name() = 'ol' or name() = 'li' or name() = 'figure' or name() = 'hgroup' or re:test(@epub:type, '(z3998:drama|z3998:letter|dedication|halftitlepage)')])]")]
-				if typos:
-					messages.append(LintMessage("y-003", "Possible typo: paragraph missing ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '-[‘“]')]")]
-				if typos:
-					messages.append(LintMessage("y-004", "Possible typo: mis-curled quotation mark after dash.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for commas or periods following exclamation or question marks. Exclude the colophon because we may have painting names with punctuation.
-				if not is_colophon:
-					typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[!?][\\.,][^”’]')]")]
-					if typos:
-						messages.append(LintMessage("y-005", "Possible typo: question mark or exclamation mark followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for opening lsquo in quote that doesn't appear to have a matching rsquo. Rsquos must be followed by a space, punctuation (except period/comma), word joiner and thus em dash, or a number for an endnote.
-				typos = dom.xpath(f"re:match(//*, '“\\s*‘[^“]+?”', 'g')/text()[not(re:test(., '’[\\s\\?\\!;<2060{se.WORD_JOINER}0-9]'))]")
-				if typos:
-					messages.append(LintMessage("y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hints: [text]’[/] are used for abbreviations;  commas and periods must go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Try to find top-level lsquo; for example, <p>“Bah!” he said to the ‘minister.’</p>
-				# We can't do this on xpath because we can't iterate over the output of re:replace().
-				# A fully-featured solution would parse quotes to find balanced pairs. This quick-n-dirty
-				# solution takes the raw XHTML string, strips any seemingly-valid balanced pairs using regex,
-				# then searches for unmatched `‘`. If found, it returns the dom node of the match; we can't return
-				# the actual string match because we stripped surrounding text.
-
-				# Start by merging all <p> into single lines, including poetry, but exclude blockquotes as they have special quoting rules
-				temp_xhtml = ""
-				dom_copy = deepcopy(dom)
-				node_number = 0
-				# Add IDs to the dom so we can find the paragraphs after we run our regex
-				# Exclude paragraphs in blockquotes, which may have special quoting rules, and "continued" paragraphs, which may be continued dialog without an “
-				for node in dom_copy.xpath("/html/body//p[not(ancestor::blockquote) and not(contains(@class, 'continued'))]"):
-					node.set_attr("id", "lint-" + str(node_number))
-					temp_xhtml = temp_xhtml + f"<p id=\"lint-{node_number}\">" + regex.sub(r"[\s\n]+", " ", node.inner_text(), flags=regex.DOTALL) + "\n"
-					node_number = node_number + 1
-
-				replacement_count = 1
-				while replacement_count > 0:
-					# Remove all regular quotes. Run this in a loop because we may need to remove triple-nested quotes.
-					(temp_xhtml, replacement_count) = regex.subn(r"“[^“]+?”", " ", temp_xhtml) # Remove all regular quotes
-
-				# Remove contractions to reduce rsquo for next regex
-				temp_xhtml = regex.sub(r"[\p{Letter}]’[\p{Letter}]", " ", temp_xhtml, flags=regex.MULTILINE)
-
-				# Remove all runs of ldquo that are likely to spill to the next <p>
-				replacement_count = 1
-				while replacement_count > 0:
-					(temp_xhtml, replacement_count) = regex.subn(r"“[^“”]+?$", " ", temp_xhtml, flags=regex.MULTILINE)
-
-				# Match problem `‘` using regex, and if found, get the actual node text from the dom to return.
-				typos = []
-				for match in regex.findall(r"""<p id="lint-([0-9]+?)">.*‘[\p{Letter}\s]""", temp_xhtml):
-					for node in dom_copy.xpath(f"/html/body//p[@id='lint-{match}' and re:test(., '‘[A-Za-z\\s]')]"):
-						typos.append(node.inner_text())
-
-				if typos:
-					messages.append(LintMessage("y-007", "Possible typo: [text]‘[/] not within [text]“[/]. Hints: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for single quotes when there should be double quotes in an interjection in dialog
-				typos = [node.to_string() for node in dom.xpath("//p[re:test(., '“[^”]+?’⁠—[^”]+?—“')]")]
-				if typos:
-					messages.append(LintMessage("y-008", "Possible typo: dialog interrupted by interjection but with incorrect closing quote.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for dialog starting with a lowercase letter. Only check the first child text node of <p>, because other first children might be valid lowercase, like <m:math> or <b>;
-				# exclude <p> inside or preceded by <blockquote>; and exclude <p> inside endnotes, as definitions may start with lowercase letters.
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::li[contains(@epub:type, 'endnote')]) and not(preceding-sibling::*[1][name()='blockquote'])][re:test(./node()[1], '^“[a-z]')]")]
-				if typos:
-					messages.append(LintMessage("y-009", "Possible typo: dialog begins with lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				typos = [node.to_string() for node in dom.xpath("//p[not(ancestor::blockquote) and not(following-sibling::*[1][name() = 'blockquote' or contains(@class, 'continued')]) and re:test(., ',”$')]")]
-				if typos:
-					messages.append(LintMessage("y-010", "Possible typo: comma ending dialogue.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '’{2,}')]")]
-				if typos:
-					messages.append(LintMessage("y-011", "Possible typo: two or more [text]’[/] in a row.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '”[a-z]')]")]
-				if typos:
-					messages.append(LintMessage("y-012", "Possible typo: [text]”[/] directly followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for period not inside rsquo
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[^”’]+?’[\\.,]”')]")]
-				if typos:
-					messages.append(LintMessage("y-013", "Possible typo: punctuation not within [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for period before dialog tag; try to exclude abbrevations that close a quotation, like `“<abbr>Mr.</abbr>”`.
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[(re:test(., '\\.”\\s[a-z\\s]*?(\\bsaid|[a-z]+ed)') or re:test(., '\\.”\\s(s?he|they?|and)\\b')) and not(.//abbr[following-sibling::node()[re:test(., '^”')]])]")]
-				if typos:
-					messages.append(LintMessage("y-014", "Possible typo: Unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for mis-curled &lsquo; or &lsquo; without matching &rsquo;
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[A-Za-z][^“’]+?”')]")]
-				if typos:
-					messages.append(LintMessage("y-015", "Possible typo: mis-curled [text]‘[/] or missing [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for two periods in a row, almost always a typo for one period or a hellip
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\.\\.[^\\.]')]")]
-				if typos:
-					messages.append(LintMessage("y-016", "Possible typo: consecutive periods ([text]..[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for ldquo followed by space
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '“\\s+[^‘’]')]")]
-				if typos:
-					messages.append(LintMessage("y-017", "Possible typo: [text]“[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for lsquo followed by space
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘\\s+[^“’]')]")]
-				if typos:
-					messages.append(LintMessage("y-018", "Possible typo: [text]‘[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for closing rdquo without opening ldquo. We ignore blockquotes because they usually have unique quote formatting.
-				# Remove tds in case rdquo means "ditto mark"
-				typos = regex.findall(r"”[^“‘]+?”", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents), flags=regex.DOTALL)
-
-				# We create a filter to try to exclude nested quotations
-				# Remove tags in case they're enclosing punctuation we want to match against at the end of a sentence.
-				typos = [match for match in typos if not regex.search(r"(?:[\.!\?;…—]|”\s)’\s", se.formatting.remove_tags(match))]
-
-				# Try some additional matches before adding the lint message
-				# Search for <p> tags that have an ending closing quote but no opening quote; but exclude <p>s that are preceded by a <blockquote>
-				# or that have a <blockquote> ancestor, because that may indicate that the opening quote is elsewhere in the quotation.
-				for node in dom.xpath("//p[re:test(., '^[^“]+”') and not(./preceding-sibling::*[1][name() = 'blockquote']) and not(./ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]) and not(./ancestor::blockquote)]"):
-					typos.append(node.to_string()[-20:])
-
-				if typos:
-					messages.append(LintMessage("y-019", "Possible typo: [text]”[/] without opening [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for ,.
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., ',\\.')]")]
-				if typos:
-					messages.append(LintMessage("y-020", "Possible typo: consecutive comma-period ([text],.[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for single quotes instead of double quotes
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[not(contains(@class, 'continued') or ancestor::blockquote or ancestor::*[re:test(@epub:type, 'z3998:(verse|song|poem|hymn)')]) and re:test(., '^[^“]+?‘')]")]
-				if typos:
-					messages.append(LintMessage("y-021", "Possible typo: Opening [text]‘[/] without preceding [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for two quotations in one paragraph
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^”]+?”\\s“[^”]+?”$')]")]
-				if typos:
-					messages.append(LintMessage("y-022", "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for incorrectly nested quotation marks
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^‘”]+“') and not(.//br)]")]
-				if typos:
-					messages.append(LintMessage("y-023", "Possible typo: two opening quotation marks in a run. Hint: Nested quotes should switch between [text]“[/] and [text]‘[/]", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for dashes instead of em-dashes
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\s[a-z]+-(the|there|is|and|they|when)\\s')]")]
-				if typos:
-					messages.append(LintMessage("y-024", "Possible typo: dash before [text]the/there/is/and/they/when[/] probably should be em-dash.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for comma not followed by space but followed by quotation mark
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[a-z],[“”‘’][a-z]', 'i')]")]
-				if typos:
-					messages.append(LintMessage("y-025", "Possible typo: comma without space followed by quotation mark.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for punctuation missing before conjunctions. Ignore <p> with an <i> child starting in a conjunction, as those are probably book titles or non-English languages
-				typos = [node.to_string() for node in dom.xpath(f"/html/body//p[not(parent::hgroup) and re:test(., '\\b[a-z]+\\s(But|And|For|Nor|Yet|Or)\\b[^’\\.\\?\\-{se.WORD_JOINER}]') and not(./i[re:test(., '^(But|And|For|Nor|Yet|Or)\\b')])]")]
-				if typos:
-					messages.append(LintMessage("y-026", "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for extra closing single quote at the end of dialog
-				typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^‘]+”\\s*’$')]")]
-				if typos:
-					messages.append(LintMessage("y-027", "Possible typo: Extra [text]’[/] at end of paragraph.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for `<abbr>` preceded or followed by text. Ignore compass directions followed by `ly`, like S.S.W.ly
-				typos = [node.to_string() for node in dom.xpath("/html/body//abbr[(preceding-sibling::node()[1])[re:test(., '[A-Za-z]$')] or (following-sibling::node()[1])[re:test(., '^[A-Za-z](?<!s\\b)') and not((./preceding-sibling::abbr[1])[contains(@epub:type, 'se:compass')] and re:test(., '^ly\\b'))]]")]
-				if typos:
-					messages.append(LintMessage("y-028", "Possible typo: [xhtml]<abbr>[/] directly preceded or followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for misapplied italics. Ignore 's' because the plural is too common.
-				typos = [node.to_string() for node in dom.xpath("/html/body//*[(name() = 'i' or name() = 'em') and ./following-sibling::node()[1][re:test(., '^[a-z]\\b', 'i') and not(re:test(., '^s\\b'))]]")]
-				if typos:
-					messages.append(LintMessage("y-029", "Possible typo: Italics followed by a letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for lowercase letters starting quotations after a preceding period
-				typos = dom.xpath("/html/body//p/child::text()[re:test(., '\\.\\s[‘“][a-z]')]")
-				if typos:
-					messages.append(LintMessage("y-030", "Possible typo: Lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital.", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-				# Check for missing punctuation in continued quotations
-				# ” said Bob “
-				nodes = dom.xpath("/html/body//p[re:test(., '”\\s(?:said|[A-Za-z]{2,}ed)\\s[A-Za-z]+?(?<!\\bthe)(?<!\\bto)(?<!\\bwith)(?<!\\bfrom)(?<!\\ba\\b)(?<!\\bis)\\s“') or re:test(., '[^\\.]”\\s(\\bhe\\b|\\bshe\\b|I|[A-Z][a-z]+?)\\s(?:said|[A-Za-z]{2,}ed)\\s“') or re:test(., ',” (?:said|[A-Za-z]{2,}ed) [A-Za-z]+? [A-Za-z]+?ly “')]")
-				if nodes:
-					messages.append(LintMessage("y-031", "Possible typo: Dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for italics having epub:type that run in to preceding or following characters
-				# Ignore things like <i>Newspaper</i>s
-				nodes = dom.xpath("/html/body//i[@epub:type and ( (following-sibling::node()[1][re:test(., '^[a-z]', 'i') and not(re:test(., '^(s|es|er)'))]) or preceding-sibling::node()[1][re:test(., '[a-z]$')]) ]")
-				if nodes:
-					messages.append(LintMessage("y-032", "Possible typo: Italics running into preceding or following characters.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for body element without child section or article. Ignore the ToC because it has a unique structure
-				nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and re:test(@epub:type, '\\b(toc|loi)\\b'))])]")
-				if nodes:
-					messages.append(LintMessage("s-069", "[xhtml]<body>[/] element missing direct child [xhtml]<section>[/] or [xhtml]<article>[/] element.", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for header elements that are entirely non-English
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
-				if nodes:
-					messages.append(LintMessage("s-024", "Header elements that are entirely non-English should not be set in italics. Instead, the [xhtml]<h#>[/] element has the [attr]xml:lang[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for half title pages missing subtitles
-				if ebook_has_subtitle:
-					# Make sure we exclude <a> because that appears in the ToC landmarks
-					nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage') and not(.//*[contains(@epub:type, 'subtitle')])]")
-					if nodes:
-						messages.append(LintMessage("s-087", "Subtitle in metadata, but no subtitle in the half title page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-
-				else:
-					# Make sure we exclude <a> because that appears in the ToC landmarks
-					nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage') and .//*[contains(@epub:type, 'subtitle')]]")
-					if nodes:
-						messages.append(LintMessage("s-088", "Subtitle in half title page, but no subtitle in metadata.", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check that half titles without subtitles have the fulltitle semantic
-				nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage')]/*[re:test(name(), '^h[1-6]$') and not(contains(@epub:type, 'fulltitle'))]")
-				if nodes:
-					messages.append(LintMessage("s-096", "Heading element in half title page missing the [val]fulltitle[/] semantic.", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for header elements that have a label, but are missing the label semantic
-				# Find h# nodes whose first child is a text node matching a label type, and where that text node's next sibling is a semantic roman numeral
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./node()[1][self::text() and not(./*) and re:test(normalize-space(.), '^(Part|Book|Volume|Section|Act|Scene)$') and following-sibling::*[1][contains(@epub:type, 'z3998:roman')]]]")
-				if nodes:
-					messages.append(LintMessage("s-066", "Header element missing [val]label[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for header elements that are missing both label and ordinal semantics
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(./*) and re:test(normalize-space(.), '^(Part|Book|Volume|Section|Act|Scene)\\s+[ixvIXVmcd]+$')]")
-				if nodes:
-					messages.append(LintMessage("s-073", "Header element that requires [val]label[/] and [val]ordinal[/] semantic children.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for header elements that have a label semantic, but are missing an ordinal sibling
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./span[contains(@epub:type, 'label')]][not(./span[contains(@epub:type, 'ordinal')])]")
-				if nodes:
-					messages.append(LintMessage("s-067", "Header element with a [val]label[/] semantic child, but without an [val]ordinal[/] semantic child.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for @lang attributes
-				nodes = dom.xpath("//*[@lang]")
-				if nodes:
-					messages.append(LintMessage("s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for sectioning elements with more than one heading element
-				nodes = dom.xpath("/html/body//*[name()='article' or name()='section'][count(./*[name()='header' or name()='hgroup' or re:test(name(), '^h[1-6]$')]) > 1]")
-				if nodes:
-					messages.append(LintMessage("s-071", "Sectioning element with more than one heading element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for some elements that only have a <span> child (including text inline to the parent).
-				# But, exclude such elements that are <p> elements that have poetry-type parents.
-				nodes = dom.xpath("/html/body//*[name() !='p' and not(ancestor-or-self::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')])][./span[count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
-				if nodes:
-					messages.append(LintMessage("s-072", "Element with single [xhtml]<span>[/] child. [xhtml]<span>[/] should be removed and its attributes promoted to the parent element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for <headers>s with only one child
-				nodes = dom.xpath("/html/body/*[name() = 'section' or name() = 'article']/header[./*[not(name() = 'p') and not(preceding-sibling::* or following-sibling::*)]]")
-				if nodes:
-					messages.append(LintMessage("s-098", "[xhtml]<header>[/] element with only one child.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for a list of some common English loan words that used to be italicized as foreign, but are no longer
-				nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and re:test(., '^(fianc[eé]+|divorc[eé]+|menu|recherch[eé]|tour-de-force|outr[eé]|d[ée]but(ante)?|apropos|[eé]lite|prot[ée]g[ée]+|chef|salon|r[eé]gime|contretemps|[eé]clat|aides?|entr[ée]+|t[eê]te-[aà]-t[eê]tes?|blas[eé]|bourgeoisie)$')]")
-				if nodes:
-					messages.append(LintMessage("t-043", "Non-English loan word set in italics, when modern typography omits italics. Hint: A word may be correctly italicized when emphasis is desired, if the word is meant to be pronounced with an accent, or if the word is part of non-English speech.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for header elements with a roman semantic but without an ordinal semantic
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][contains(@epub:type, 'z3998:roman') and not(contains(@epub:type, 'ordinal'))]")
-				if nodes:
-					messages.append(LintMessage("s-068", "Header element missing [val]ordinal[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for deprecated MathML elements
-				# Note we dont select directly on element name, because we want to ignore any namespaces that may (or may not) be defined
-				nodes = dom.xpath("/html/body//*[local-name()='mfenced']")
-				if nodes:
-					messages.append(LintMessage("s-017", "[xhtml]<m:mfenced>[/] is deprecated in the MathML spec. Use [xhtml]<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for period following Roman numeral, which is an old-timey style we must fix
-				# But ignore the numeral if it's the first item in a <p> tag, as that suggests it might be a kind of list item.
-				nodes = dom.xpath("/html/body//node()[name()='span' and contains(@epub:type, 'z3998:roman') and not(position()=1)][(following-sibling::node()[1])[re:test(., '^\\.\\s*[a-z]')]]")
-				if nodes:
-					messages.append(LintMessage("t-013", "Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "." for node in nodes]))
-
-				# Check for common missing roman semantics for “I”
-				regent_regex = r"(?:Charles|Edward|George|Henry|James|William) I\b"
-				matches = regex.findall(fr"King {regent_regex}", file_contents) + regex.findall(fr"{regent_regex}’s", file_contents)
-				if matches:
-					messages.append(LintMessage("s-103", "Probable missing semantics for a roman I numeral.", se.MESSAGE_TYPE_WARNING, filename, matches))
-
-				# Check for <abbr> elements that have two or more letters/periods, that don't have a semantic epub:type
-				# SS. is the French abbreviation for "Saints"
-				nodes = dom.xpath("/html/body//abbr[not(@epub:type)][text() != 'U.S.' and text() != 'SS.'][re:test(., '([A-Z]\\.?){2,}')]")
-				filtered_nodes = []
-				for node in nodes:
-					add_node = True
-
-					if node.text in INITIALISM_EXCEPTIONS:
-						add_node = False
-					elif node.get_attr("class"):
-						for attr_value in node.get_attr("class").split():
-							if attr_value in IGNORED_CLASSES:
-								add_node = False
-								break
-					elif node.text in ("A.M.", "P.M.") and node.xpath("./preceding-sibling::node()[re:test(., '[0-9]\\s$')]"):
-						# Ignore instances of capitalized times, usually in titles. For example:
-						# `From 10:20 <abbr>P.M.</abbr> to 10:47 <abbr>P.M.</abbr>` in a chapter title.
-						# We have to test for a preceding number because `<abbr>P.M.</abbr>` in other contexts may mean `Prime Minister`
-						add_node = False
-
-					if add_node:
-						filtered_nodes.append(node)
-
-				if filtered_nodes:
-					messages.append(LintMessage("s-045", "[xhtml]<abbr>[/] element without semantic inflection like [class]z3998:personal-name[/] or [class]z3998:initialism[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in filtered_nodes]))
-
-				# Check for <article>s or <section>s that occur more than once in a file, without page break CSS
-				# Exclude the last element because we don't care if it breaks after the last one.
-				nodes = dom.xpath("/html/body[count(./article) > 1 or count(./section) > 1]/*[(name() = 'article' or name() = 'section') and (not(@data-css-break-after) or @data-css-break-after != 'page') and not(position() = last())]")
-				if nodes:
-					messages.append(LintMessage("c-020", "Multiple [xhtml]<article>[/]s or [xhtml]<section>[/]s in file, but missing [css]break-after: page;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for two em dashes in a row
-				nodes = dom.xpath(f"/html/body//*[re:test(text(), '—{se.WORD_JOINER}*—+')]")
-				if nodes:
-					messages.append(LintMessage("t-014", "Two or more em-dashes in a row found. Elided words should use the two- or three-em-dash Unicode character, and dialog ending in em-dashes should only end in a single em-dash.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				nodes = dom.xpath("/html/body//blockquote//p[parent::*[name()='footer'] or parent::*[name()='blockquote']]//cite") # Sometimes the <p> may be in a <footer>
-				if nodes:
-					messages.append(LintMessage("s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Find citations not offset by em dashes. We're only interested in <cite>s in endnotes that are directly followed by the backlink;
-				# ignore <cite>s starting with `Cf.` which means `Compare` and was often used to mean `see`
-				nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]/p[last()]/cite[following-sibling::node()[normalize-space(.)][1][name() = 'a' and contains(@epub:type, 'backlink')] and re:test(., '^[^—]') and not(re:test(., '^(Cf\\.|\\()'))]")
-				if nodes:
-					messages.append(LintMessage("t-068", "Citation not offset with em dash.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for <table> without set margins. We ignore tables that are for drama structuring, and tables that are ancestors of <blockquote> because <blockquote> has its own margin.
-				# We also ignore tables whose preceding sibling sets a bottom margin that is not 0.
-				nodes = dom.xpath("/html/body//table[not(./ancestor-or-self::*[contains(@epub:type, 'z3998:drama')]) and not(./ancestor::blockquote) and not(./preceding-sibling::*[1][@data-css-margin-bottom != '0']) and (not(@data-css-margin-top) or not(@data-css-margin-right) or not(@data-css-margin-bottom) or not(@data-css-margin-left))]")
-				if nodes:
-					messages.append(LintMessage("c-014", "[xhtml]<table>[/] element without explicit margins. Most tables need [css]margin: 1em;[/] or [css]margin: 1em auto 1em auto;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for a common typo
-				if "z3998:nonfiction" in file_contents:
-					messages.append(LintMessage("s-030", "[val]z3998:nonfiction[/] should be [val]z3998:non-fiction[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for initialisms without periods
-				nodes = [node.to_string() for node in dom.xpath("/html/body//abbr[contains(@epub:type, 'z3998:initialism') and not(re:test(., '^[0-9]*([a-zA-Z]\\.)+[0-9]*$'))]") if node.text not in INITIALISM_EXCEPTIONS]
-				if nodes:
-					messages.append(LintMessage("t-030", "Initialism with spaces or without periods.", se.MESSAGE_TYPE_WARNING, filename, set(nodes)))
-
-				# Check for padding and margin not in .5 increments, except for table headers/cells which usually need .25em increments
-				nodes = dom.xpath("/html/body//*[not(re:test(name(), '^(h[1-6]|td|th)$'))][attribute::*[re:test(local-name(), 'data-css-(margin|padding)')][re:test(., '^[0-9]*\\.[^5]')]]")
-				if nodes:
-					messages.append(LintMessage("c-013", "Element with margin or padding not in increments of [css].5em[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for <abbr epub:type="z3998:*-name"> that does not contain spaces
-				nodes = dom.xpath("/html/body//abbr[re:test(@epub:type, '\\bz3998:[^\\s\"]+name\\b') and re:test(., '[A-Z]\\.[A-Z]\\.')]")
-				if nodes:
-					messages.append(LintMessage("t-016", "Initials in [xhtml]<abbr epub:type=\"z3998:*-name\">[/] not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for z3998:stage-direction on elements that are not <i>
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:stage-direction') and name() !='i' and name() !='abbr' and name() !='p']")
-				if nodes:
-					messages.append(LintMessage("s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/], [xhtml]<abbr>[/], and [xhtml]<p>[/] elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for <h#> elements that are higher or lower than their expected level based on how deep they are in <section>s
-				# or <article>s. Exclude <nav> in the ToC.
-				# Get all h# elements not preceded by other h# elements (this includes the 1st item of an hgroup but not the next items)
-				# Exclude the ToC and landmarks
-				invalid_headers = []
-				invalid_parent_ids = []
-				for heading in dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and not(./preceding-sibling::*[re:test(name(), '^h[1-6]$')]) and not(./ancestor::*[re:test(@epub:type, '\\b(toc|landmarks)\\b')])]"):
-					# Get the IDs of the direct parent section
-					parent_section = heading.xpath("./ancestor::*[@id and re:test(name(), '^(section|article|nav)$')][1]")
-
-					if parent_section:
-						section = _find_ebook_section(parent_section[0].get_attr("id"), section_tree)
-
-						if not section:
-							# We can accidentally raise s-029 if the file isn't in the spine. This is technically correct, but s-029 is a
-							# misleading message in that case, and f-007 will also be raised, which is the correct message.
-							if filename in self.spine_file_paths:
-								invalid_parent_ids.append(parent_section[0].to_tag_string())
-						else:
-							if str(section.depth) != heading.tag[1:2]:
-								invalid_headers.append(heading.to_string())
-
-				if invalid_headers:
-					messages.append(LintMessage("s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. Hint: Headings not in the title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?", se.MESSAGE_TYPE_ERROR, filename, invalid_headers))
-
-				if invalid_parent_ids:
-					messages.append(LintMessage("s-029", "Section with [attr]data-parent[/] attribute, but no section having that [attr]id[/] in ebook.", se.MESSAGE_TYPE_ERROR, filename, invalid_parent_ids))
-
-				# Check for abbreviations followed by periods
-				# But we exclude some SI units, which don't take periods; abbreviations ending in numbers for example in stage directions; abbreviations like `r^o` (recto) that contain <sup>; and some Imperial abbreviations that are multi-word
-				nodes = dom.xpath("/html/body//abbr[(contains(@epub:type, 'z3998:initialism') or re:test(@epub:type, 'z3998:[^\\s]+?name') or not(@epub:type))][not(re:test(., '[cmk][mgl]')) and not(re:test(., '[0-9]$')) and not(./sup) and not(re:test(@class, '\\b(era|temperature|compound)\\b')) and not(re:test(text(), '^(mpg|mph|hp|TV)$'))][following-sibling::text()[1][starts-with(self::text(), '.')]]")
-				if nodes:
-					messages.append(LintMessage("t-032", "Initialism or name followed by period. Hint: Periods go within [xhtml]<abbr>[/]. [xhtml]<abbr>[/]s containing periods that end a clause require the [class]eoc[/] class.", se.MESSAGE_TYPE_WARNING, filename, [f"{node.to_string()}." for node in nodes]))
-
-				# Check for `Op. Cit.` in endnotes. `Op. Cit.` means "the previous reference" which doesn't make sense
-				# in popup endnotes. But, if the endnote has a book reference, then allow it as it might be referring to that.
-				nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote') and (re:test(., '(Loc\\.|Op\\.) Cit\\.', 'i') or re:test(., '\\bl\\.c\\.\\b', 'i')) and not(.//*[contains(@epub:type, 'se:name.publication')])]")
-				if nodes:
-					messages.append(LintMessage("s-086", "[text]Op. Cit.[/] or [text]Loc. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] and [text]Loc. Cit.[/] mean [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for lang="" instead of xml:lang=""
-				nodes = dom.xpath("/html/body//*[@lang]")
-				if nodes:
-					messages.append(LintMessage("s-076", "[attr]lang[/] attribute used instead of [attr]xml:lang[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for block-level tags that end with <br/>
-				nodes = dom.xpath("/html/body//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article][br[last()][not(following-sibling::text()[normalize-space()])][not(following-sibling::*)]]")
-				if nodes:
-					messages.append(LintMessage("s-008", "[xhtml]<br/>[/] element found before closing tag of block-level element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for single words that are in italics, but that have closing punctuation outside italics
-				# Outer wrapping match is so that .findall returns the entire match and not the subgroup
-				# The first regex also matches the first few characters before the first double quote; we use those for more sophisticated
-				# checks below, to give fewer false positives like `with its downy red hairs and its “<i xml:lang="fr">doigts de faune</i>.”`
-				matches = regex.findall(r"((?:.{1,2}\s)?“<(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])", file_contents) + regex.findall(r"([\.\!\?] <(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])", file_contents)
-
-				# But, if we've matched a name of something, don't include that as an error. For example, `He said, “<i epub:type="se:name.publication.book">The Decameron</i>.”`
-				# We also exclude the match from the list if:
-				# 1. The double quote is directly preceded by a lowercase letter and a space: `with its downy red hairs and its “<i xml:lang="fr">doigts de faune</i>.”`
-				# 2. The double quote is directly preceded by a lowercase letter, a comma, and a space, and the first letter within the double quote is lowercase: In the original, “<i xml:lang="es">que era un Conde de Irlos</i>.”
-				# 3. The text is a single letter that is not "I" or "a" (because then it is likely a mathematical variable)
-				matches = [match for match in matches if "epub:type=\"se:name." not in match[0] and "epub:type=\"z3998:taxonomy" not in match[0] and not regex.match(r"^[\p{Lowercase_Letter}’]+\s“", match[0]) and not regex.match(r"^[\p{Lowercase_Letter}’]+,\s“[\p{Lowercase_Letter}]", se.formatting.remove_tags(match[0])) and not regex.match(r"^.*?<.+?>[^Ia]<.+?>", match[0])]
-				if matches:
-					messages.append(LintMessage("t-019", "When a complete clause is italicized, ending punctuation except commas must be within containing italics.", se.MESSAGE_TYPE_WARNING, filename, [match[0] for match in matches]))
-
-				# Check for trailing commas inside <i> tags at the close of dialog
-				# More sophisticated version of: \b[^\s]+?,</i>”
-				nodes = dom.xpath("/html/body//i[re:test(., ',$')][(following-sibling::node()[1])[starts-with(., '”')]]")
-				if nodes:
-					messages.append(LintMessage("t-023", "Comma inside [xhtml]<i>[/] element before closing dialog.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "”" for node in nodes]))
-
-				# Check for <p> tags that follow figure, blockquote, or table, and start with a lowercase letter, but that don't have the `continued` class. Exclude matches whose first child is <cite>, so we don't match things like <p><cite>—Editor</cite>
-				nodes = dom.xpath("/html/body//p[preceding-sibling::*[1][name() = 'figure' or name() = 'blockquote' or name() = 'table'] and re:test(., '^([a-z]|—|…)') and not(contains(@class, 'continued')) and not(./*[1][self::cite])]")
-				if nodes:
-					messages.append(LintMessage("s-081", "[xhtml]<p>[/] preceded by [xhtml]<figure>[/], [xhtml]<blockquote>[/xhtml], or [xhtml]<table>[/], but without [val]continued[/] class.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for incorrect children of <body>
-				nodes = dom.xpath("/html/body/*[name() != 'section' and name() != 'article' and name() != 'nav']")
-				if nodes:
-					messages.append(LintMessage("s-075", "[xhtml]<body>[/] element with direct child that is not [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for plural graphemes without apostrophes
-				nodes = dom.xpath("/html/body//i[re:test(@epub:type, 'z3998:(grapheme|phoneme|morpheme)') and ./following-sibling::node()[1][starts-with(., 's')]]")
-				if nodes:
-					messages.append(LintMessage("t-067", "Plural [val]z3998:grapheme[/], [val]z3998:phoneme[/], or [val]z3998:morpheme[/] formed without apostrophe ([text]’[/]).", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for quotation marks in italicized dialog
-				nodes = dom.xpath("/html/body//i[@xml:lang][starts-with(., '“') or re:test(., '”$')]")
-				if nodes:
-					messages.append(LintMessage("t-024", "When italicizing language in dialog, italics go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for language tags misusing the unk lang code
-				nodes = dom.xpath("//*[@xml:lang='unk']")
-				if nodes:
-					messages.append(LintMessage("s-051", "Element with [xhtml]xml:lang=\"unk\"[/] should be [xhtml]xml:lang=\"und\"[/] (undefined).", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for language tags transliterated into Latin script but missing `-Latn` suffix
-				nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '^(he|ru|el|zh|bn|hi|sa|uk|yi|grc)$') and re:test(., '[a-zA-Z]')]")
-				if nodes:
-					messages.append(LintMessage("s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for language tags transliterated into Latin script with incorrect `-latn` suffix (lowercase l)
-				nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '-latn')]")
-				if nodes:
-					messages.append(LintMessage("s-094", "Element has an [attr]xml:lang[/] attribute that incorrectly contains [val]-latn[/] instead of [val]-Latn[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for some Latinisms that need italics according to the manual. We check ancestor-or-self in case the phrase is set in Roman because it's nested in a parent italic.
-				# Exclude toto followed by ’ since Toto can be a name.
-				# Exclude <h#> whose entire contents is a matched Latinism as we do not italicize those.
-				# Ignore the ToC because we have different rules there
-				nodes = dom.xpath("/html/body//text()[re:test(., '\\b(a (priori|posteriori|fortiori)|(?<!reductio )ad (hominem|absurdum|nauseam|infinitum|interim|valem)|in (extremis|loco|situ|vitro|absentia|camera|statu quo)|in toto[^’]|more suo|par excellence)\\b', 'i') and not(ancestor-or-self::*[@data-css-font-style='italic']) and not(parent::*[re:test(name(), '^h[1-6]$') and @xml:lang]) and not(ancestor::hgroup) and not(ancestor::nav[contains(@epub:type, 'toc')]) ]")
-				if nodes:
-					messages.append(LintMessage("t-063", "Non-English confusable phrase set without italics.", se.MESSAGE_TYPE_WARNING, filename, nodes))
-
-				# Check for comma after leading Or in subtitles
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'subtitle') and re:test(text(), '^Or\\s')]")
-				if nodes:
-					messages.append(LintMessage("t-044", "Comma required after leading [text]Or[/] in subtitles.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for period in cite in endnotes
-				nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]//cite[not((./node()[last()])[name() = 'abbr']) and ./following-sibling::*[1][contains(@epub:type, 'backlink')] and re:test(., '^—') and ( (re:test(., '\\.$') and ./following-sibling::node()[re:test(., '^\\s*$')]) or ./following-sibling::node()[re:test(., '^\\.\\s*$')])]")
-				if nodes:
-					messages.append(LintMessage("t-059", "Period at the end of [xhtml]<cite>[/] element before endnote backlink.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for endnotes
-				nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]/p[not(preceding-sibling::*)]/cite[not(preceding-sibling::node()[normalize-space(.)]) and (following-sibling::node()[normalize-space(.)])[1][contains(@epub:type, 'backlink')]]")
-				if nodes:
-					messages.append(LintMessage("s-035", "Endnote containing only [xhtml]<cite>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for style attributes
-				nodes = dom.xpath("/html/body//*[@style]")
-				if nodes:
-					messages.append(LintMessage("x-012", "Illegal [attr]style[/] attribute. Don’t use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# If we have Greek text, try to normalize it
-				for node in dom.xpath("/html/body//*[@xml:lang='grc' or @xml:lang='el']"):
-					node_text = node.inner_text()
-					expected_text = se.typography.normalize_greek(node_text)
-					if node_text != expected_text:
-						messages.append(LintMessage("t-073", f"Possible transcription error in Greek. Found: [text]{node_text}[/], but expected [text]{expected_text}[/text]. Hint: Use [bash]se unicode-names[/] to see differences in Unicode characters.", se.MESSAGE_TYPE_WARNING, filename))
-
-				# Check for missing href attributes, sometimes a leftover from PG transcriptions
-				nodes = dom.xpath("/html/body//a[not(@href)]")
-				if nodes:
-					messages.append(LintMessage("s-097", "[xhtml]a[/] element without [attr]href[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for elements that are set in italics, and whose italic children don't have font-style: normal.
-				nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and ./*[(name()='i' or name()='em') and @data-css-font-style='italic']]")
-				if nodes:
-					messages.append(LintMessage("c-021", "Element with [css]font-style: italic;[/], but child [xhtml]<i>[/] or [xhtml]<em>[/] does not have [css]font-style: normal;[/]. Hint: Italics within italics are typically set in Roman for contrast; if that’s not the case here, can [xhtml]<i>[/] be removed while still preserving italics and semantic inflection?", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for hgroup elements with only one child
-				nodes = dom.xpath("/html/body//hgroup[count(*)=1]")
-				if nodes:
-					messages.append(LintMessage("s-009", "[xhtml]<hgroup>[/] element with only one child.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for elements with no children and only white space contents
-				nodes = dom.xpath("/html/body//*[not(./*) and re:test(., '^\\s+$')]")
-				if nodes:
-					messages.append(LintMessage("s-079", "Element containing only white space.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for partially obscured years in which the last year is an em dash
-				nodes = dom.xpath("/html/body//p[re:test(.,  '1\\d{2}⁠—[^“’A-Za-z<]')]")
-				if nodes:
-					messages.append(LintMessage("t-036", "Em-dash used to obscure single digit in year. Hint: Use a hyphen instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for quotations that carry to the next paragraph, but the next paragraph has no opening quotation mark
-				# Exclude p in blockquote because often that has different formatting
-				nodes = dom.xpath("/html/body//p[re:test(., '^“[^”]+$') and not(./ancestor::blockquote) and ./following-sibling::*[1][name() = 'p' and re:test(normalize-space(), '^[^“]')]]")
-				if nodes:
-					messages.append(LintMessage("t-051", "Dialog in [xhtml]<p>[/] that continues to the next [xhtml]<p>[/], but the next [xhtml]<p>[/] does not begin with [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for hgroup elements with a subtitle but no title
-				nodes = dom.xpath("/html/body//hgroup[./*[contains(@epub:type, 'subtitle')] and not(./*[contains(concat(' ', @epub:type, ' '), ' title ')])]")
-				if nodes:
-					messages.append(LintMessage("s-015", "Element has [val]subtitle[/] semantic, but without a sibling having a [val]title[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for <p> starting in lowercase
-				# Exclude <p> starting in constructs like `(a)` or `a.` as they may be numbered lists
-				nodes = dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::figure or ancestor::ol[not(ancestor::section[contains(@epub:type, 'endnotes')])] or ancestor::ul or ancestor::table or ancestor::hgroup or preceding-sibling::*[1][name() = 'hr']) and not(contains(@class, 'continued') or re:test(@epub:type, 'z3998:(signature|valediction)')) and not(./*[1][name() = 'math' or name() = 'var' or contains(@epub:type, 'z3998:grapheme')]) and re:test(., '^[^A-Za-z0-9]?[a-z]') and not(re:test(., '^\\([a-z0-9]\\.?\\)\\.?')) and not(re:test(., '^[a-z0-9]\\.\\s'))]")
-
-				# We have to additionally filter using the regex library, because often a sentence may begin with an uppercase ACCENTED letter,
-				# and xpath's limited regex library doesn't support Unicode classes
-				nodes = [node for node in nodes if regex.match(r"^[^\p{Letter}0-9]?[\p{Lowercase_Letter}]", node.inner_text())]
-
-				if nodes:
-					messages.append(LintMessage("t-057", "[xhtml]<p>[/] starting with lowercase letter. Hint: [xhtml]<p>[/] that continues text after a [xhtml]<blockquote>[/] requires the [class]continued[/] class; and use [xhtml]<br/>[/] to split one clause over many lines.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for illegal elements in <head>
-				nodes = dom.xpath("/html/head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
-				if nodes:
-					messages.append(LintMessage("x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.tag}>" for node in nodes]))
-
-				# Check for typos
-				nodes = dom.xpath(f"/html/body//p[re:test(., '[^>“(\\s{se.WORD_JOINER}]{se.WORD_JOINER}?⸻')]")
-				if nodes:
-					messages.append(LintMessage("y-033", "Possible typo: Three-em-dash obscuring an entire word, but not preceded by a space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for xml:lang attribute starting in uppercase
-				nodes = dom.xpath("//*[re:test(@xml:lang, '^[A-Z]')]")
-				if nodes:
-					messages.append(LintMessage("x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for personas that are italicized. Use re:test instead of contains to avoid catching z3998:personal-name
-				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:persona\\b') and @data-css-font-style = 'italic']")
-				if nodes:
-					messages.append(LintMessage("t-045", "Element has [val]z3998:persona[/] semantic and is also set in italics.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for signature semantic without small caps
-				# Ignore signatures that are only capital letters
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:signature') and not(@data-css-font-variant = 'small-caps') and not(@data-css-font-style = 'italic') and not(re:test(., '^[A-Z\\.\\s]+$'))]")
-				if nodes:
-					messages.append(LintMessage("c-019", "Element with [val]z3998:signature[/] semantic, but without [css]font-variant: small-caps;[/] or [css]font-style: italic;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for nbsp within <abbr epub:type="z3998:*-name">, which is redundant
-				nodes = dom.xpath(f"/html/body//abbr[re:test(@epub:type, '\\bz3998:[^\\s\"]+name\\b') and contains(text(), '{se.NO_BREAK_SPACE}')]")
-				if nodes:
-					messages.append(LintMessage("t-022", "No-break space found in [xhtml]<abbr epub:type=\"z3998:*-name\">[/]. This is redundant.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for two-em-dashes used for elision instead of three-em-dashes
-				matches = regex.findall(fr"[^{se.WORD_JOINER}\p{{Letter}}”]⸺[^“{se.WORD_JOINER}\p{{Letter}}].*", file_contents, flags=regex.MULTILINE)
-				if matches:
-					messages.append(LintMessage("t-049", "Two-em-dash used for eliding an entire word. Use a three-em-dash instead.", se.MESSAGE_TYPE_WARNING, filename, matches))
-
-				# Check for <span>s that only exist to apply epub:type
-				nodes = dom.xpath("/html/body//*[span[@epub:type][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
-				if nodes:
-					messages.append(LintMessage("s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for incorrect semantics on some common publications
-				nodes = dom.xpath("/html/body//i[@epub:type='se:name.publication.book' and re:test(., '^(The )?(Iliad|Odyssey|Aeneid|Metamorphoses|Beowulf|Divine Comedy|Paradise Lost)$')]")
-				if nodes:
-					messages.append(LintMessage("s-084", "Poem has incorrect semantics.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for <header> preceded by non-sectioning elements
-				nodes = dom.xpath("/html/body//header[./preceding-sibling::*[not(re:test(name(), '^(section|div|article)$'))]]")
-				if nodes:
-					messages.append(LintMessage("s-077", "[xhtml]<header>[/] element preceded by non-sectioning element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for <footer> followed by non-sectioning elements
-				nodes = dom.xpath("/html/body//footer[./following-sibling::*[not(re:test(name(), '^(section|div|article)$'))]]")
-				if nodes:
-					messages.append(LintMessage("s-078", "[xhtml]<footer>[/] element followed by non-sectioning element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for <dt> elements without exactly one <dfn> child, but only in glossaries
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'glossary')]//dt[not(count(./dfn)=1)]")
-				if nodes:
-					messages.append(LintMessage("s-062", "[xhtml]<dt>[/] element in a glossary without exactly one [xhtml]<dfn>[/] child.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for empty elements. Elements are empty if they have no children and no non-whitespace text
-				# Use name() to check for MathML elements, because if the MathML namespace is not declared in a given file and we search by the m: namespace then this xpath will fail entirely.
-				nodes = dom.xpath("/html/body//*[not(self::br) and not(self::hr) and not(self::img) and not(self::td) and not(self::th) and not(self::link) and not(self::col) and not(self::colgroup) and not(local-name()='none') and not(local-name()='mspace') and not(local-name()='mprescripts')][not(./*)][not(normalize-space())][not(./ancestor::*[local-name()='annotation-xml'])]")
-				if nodes:
-					messages.append(LintMessage("s-010", "Empty element. Use [xhtml]<hr/>[/] for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for table headers that don't have content, which is an accessibility issue.
-				# Note that @aria-label and @title should (apparently) not be used for table headers
-				nodes = dom.xpath("/html/body//th[not(text())]")
-				if nodes:
-					messages.append(LintMessage("s-074", "[xhtml]<th>[/] element with no text content should be a [xhtml]<td>[/] element instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for fulltitle semantic on a header not in the half title
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'fulltitle') and name()!='h2' and name()!='hgroup' and not(ancestor::*[contains(@epub:type, 'halftitlepage')])]")
-				if nodes:
-					messages.append(LintMessage("s-065", "[val]fulltitle[/] semantic on element that is not in the half title.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for HTML tags in <title> tags
-				nodes = dom.xpath("/html/head/title/*")
-				if nodes:
-					messages.append(LintMessage("x-010", "Illegal element in [xhtml]<title>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for legal cases that aren't italicized
-				# We can't use this because v. appears as short for "volume", and we may also have sporting events without italics.
-				#nodes = dom.xpath("/html/body//abbr[text()='v.' or text()='versus'][not(parent::i)]")
-				#if nodes:
-				#	messages.append(LintMessage("t-xxx", "Legal case without parent [xhtml]<i>[/].", se.MESSAGE_TYPE_WARNING, filename, {f"{node.to_string()}." for node in nodes}))
-
-				# Only do this check if there's one <h#> or one <hgroup> tag. If there's more than one, then the xhtml file probably requires an overarching title
-				# We merge two xpaths here because <h#>/<hgroup> can be either a direct child of <section>, or it could be nested in <header>
-				if len(dom.xpath("/html/body/*[name()='section' or name()='article']/*[re:test(name(), '^h[1-6]$') or name()='hgroup'] | /html/body/*[name()='section' or name()='article']/header/*[re:test(name(), '^h[1-6]$') or name()='hgroup']"))==1:
-					title = se.formatting.generate_title(dom)
-
-					if not dom.xpath(f"/html/head/title[text()={se.easy_xml.escape_xpath(title.replace('&amp;', '&'))}]"):
-						messages.append(LintMessage("s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
-
-				if not local_css_has_elision_style:
-					missing_styles += [node.to_tag_string() for node in dom.xpath("/html/body//span[contains(@class, 'elision')]")]
-
-				nodes = dom.xpath("/html/body//*[re:test(text(), '\\bA\\s*B\\s*C\\s*\\b')]")
-				if nodes:
-					messages.append(LintMessage("t-031", "[text]A B C[/] must be set as [text]A.B.C.[/] It is not an abbreviation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for elements that don't have a direct block child
-				# Allow white space and comments before the first child
-				# Ignore children of the ToC and landmarks as they do not require p children
-				nodes = dom.xpath("/html/body//*[(name()='blockquote' or name()='dd' or name()='header' or name()='li' or name()='footer') and not(./ancestor::*[contains(@epub:type, 'toc') or contains(@epub:type, 'landmarks')]) and (node()[normalize-space(.) and not(self::comment())])[1][not(name()='p' or name()='blockquote' or name()='div' or name()='table' or name()='header' or name()='ul' or name()='ol' or name()='footer' or name()='hgroup' or re:test(name(), '^h[0-6]'))]]")
-				if nodes:
-					messages.append(LintMessage("s-007", "Element requires at least one block-level child.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for ldquo not correctly closed
-				# Ignore closing paragraphs, line breaks, and closing cells in case ldquo means "ditto mark"
-				matches = regex.findall(r"“[^‘”]+?“", file_contents)
-				matches = [match for match in matches if "</p" not in match and "<br/>" not in match and "</td>" not in match]
-				# xpath to check for opening quote in p, without a next child p that starts with an opening quote or an opening bracket (for editorial insertions within paragraphs of quotation); or that consists of only an ellipses (like an elided part of a longer quotation)
-				# Matching <p>s can't have a poem/verse ancestor as formatting is often special for those.
-				matches = matches + [regex.findall(r"“[^”]+</p>", node.to_string())[0] for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+$')][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')])][(following-sibling::*[1])[name()='p'][not(re:test(normalize-space(.), '^[“\\[]') or re:test(normalize-space(.), '^…$'))]]")]
-
-				# Additionally, match short <p> tags (< 100 chars) that lack closing quote, and whose direct siblings do have closing quotes (to exclude runs of same-speaker dialog), and that is not within a blockquote, verse, or letter
-				matches = matches + [regex.findall(r"“[^”]+</p>", node.to_string())[0] for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+$') and not(re:test(., '[…:]$')) and string-length(normalize-space(.)) <=100][(following-sibling::*[1])[not(re:test(., '“[^”]+$'))] and (preceding-sibling::*[1])[not(re:test(., '“[^”]+$'))]][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')]) and not(ancestor::blockquote) and not (ancestor::*[contains(@epub:type, 'z3998:letter')])][(following-sibling::*[1])[name()='p'][re:test(normalize-space(.), '^[“\\[]') and not(contains(., 'continued'))]]")]
-				if matches:
-					messages.append(LintMessage("t-003", "[text]“[/] missing matching [text]”[/]. Note: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog.", se.MESSAGE_TYPE_WARNING, filename, matches))
-
-				# Check for lsquo not correctly closed
-				matches = regex.findall(r"‘[^“’]+?‘", file_contents)
-				matches = [match for match in matches if "</p" not in match and "<br/>" not in match]
-				if matches:
-					messages.append(LintMessage("t-004", "[text]‘[/] missing matching [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, matches))
-
-				if "῾" in file_contents:
-					messages.append(LintMessage("t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead.", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for repeated punctuation, but first remove `&amp;` so we don't match `&amp;,`
-				# Remove tds with repeated ” as they are probably ditto marks
-				matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents.replace("&amp;", "")) + regex.findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents)) +  regex.findall(r"[\p{Letter}][,\.:;]\s[,\.:;]\s?[\p{Letter}<].{0,20}", file_contents, flags=regex.IGNORECASE)
-				if matches:
-					messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, filename, matches))
-
-				# Check for headers ending in periods
-				# Allow periods at the end of headers that both start and end with double quotes; but headers that only end in double quotes probably don't need periods
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and not(contains(@epub:type, 'z3998:initialism')) and not((./node()[last()])[name() = 'abbr']) and (re:test(., '\\.$') or re:test(., '^[^“].+\\.”$'))]")
-				if nodes:
-					messages.append(LintMessage("t-065", "Header ending in a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check obviously miscurled quotation marks
-				nodes = dom.xpath("/html/body//p[re:test(., '“$')]")
-				if nodes:
-					messages.append(LintMessage("t-038", "[text]“[/] before closing [xhtml]</p>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for stage direction without ending punctuation. We only want to consider stage direction that is not an interjection in a parent clause.
-				# We match if the stage direction ends in lowercase, and if there's no following node, or if there's a following node that doesn't begin in lowercase or an em dash or semicolon (which suggests an interjection).
-				nodes = dom.xpath(f"/html/body//i[@epub:type='z3998:stage-direction' and re:test(., '[a-z]$') and re:test(., '^[A-Z]') and (not(./following-sibling::node()[normalize-space(.)]) or ./following-sibling::node()[1][re:test(normalize-space(.), '^[^{se.WORD_JOINER}—;a-z]')])]")
-				if nodes:
-					messages.append(LintMessage("t-052", "Stage direction without ending punctuation. Note that ending punctuation is optional in stage direction that is an interjection in a parent clause, and such interjections should begin with a lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for stage direction starting in lowercase.  We only want to consider stage direction that is not an interjection in a parent clause.
-				# We match if the stage direction starts with a lowercase, and if there's no preceding node, or if there is a preceding node and it doesn't end in a lowercase letter or a small subset of conjoining punctuation.
-				nodes = dom.xpath("/html/body//i[@epub:type='z3998:stage-direction' and re:test(., '^[a-z]') and (not(./preceding-sibling::node()[normalize-space(.)]) or ./preceding-sibling::node()[1][re:test(normalize-space(.), '[^a-z:—,;…]$')])]")
-				if nodes:
-					messages.append(LintMessage("t-053", "Stage direction starting in lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for MathML without alttext
-				nodes = dom.xpath("/html/body//m:math[not(@alttext)]")
-				if nodes:
-					messages.append(LintMessage("s-089", "MathML missing [attr]alttext[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for rdquo preceded by space (but not preceded by a rsquo, which might indicate a nested quotation)
-				nodes = dom.xpath("/html/body//p[re:test(., '[^’]\\s”')]")
-				if nodes:
-					messages.append(LintMessage("t-037", "[text]”[/] preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for tables that appear to be summing/listing numbers, but that are missing font-variant-numeric styling
-				nodes = dom.xpath("/html/body//table[count(.//td[not(following-sibling::*) and re:test(., '^[0-9]+$') and not(@data-css-font-variant-numeric='tabular-nums')]) >= 2]")
-				if nodes:
-					messages.append(LintMessage("c-026", "Table that appears to be listing numbers, but without [css]font-variant-numeric: tabular-nums;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check if a subtitle ends in a text node with a terminal period; or if it ends in an <i> node containing a terminal period.
-				nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6]/*[contains(@epub:type, 'subtitle')][(./text())[last()][re:test(., '\\.$')] or (./i)[last()][re:test(., '\\.$')]]")
-				if nodes:
-					messages.append(LintMessage("t-040", "Subtitle with illegal ending period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for incorrectly applied se:name semantic
-				nodes = dom.xpath("/html/body//*[self::p or self::blockquote][contains(@epub:type, 'se:name.')]")
-				if nodes:
-					messages.append(LintMessage("s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for degree confusable
-				nodes = dom.xpath("/html/body//*[re:test(text(), '[0-9]+º')]")
-				if nodes:
-					messages.append(LintMessage("t-056", "Masculine ordinal indicator ([val]º[/]) used instead of degree symbol ([val]°[/]). Note that the masculine ordinal indicator may be appropriate for ordinal numbers read as Latin, i.e. [val]12º[/] reading [val]duodecimo[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check that possessives appear within persona blocks
-				nodes = dom.xpath("/html/body//b[contains(@epub:type, 'z3998:persona') and ./following-sibling::node()[1][re:test(., '^’s?')]]")
-				if nodes:
-					messages.append(LintMessage("t-050", "Possessive [text]’s[/] or [text]’[/] outside of element with [val]z3998:persona[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check that short stories are on an <article> element
-				nodes = dom.xpath("/html/body/section[contains(@epub:type, 'se:short-story') or contains(@epub:type, 'se:novella')]")
-				if nodes:
-					messages.append(LintMessage("s-043", "[val]se:short-story[/] semantic on element that is not [xhtml]<article>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for IDs on <h#> tags
-				nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
-				if nodes:
-					messages.append(LintMessage("s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for common errors in language tags
-				# `gr` is often used instead of `el`, `sp` instead of `es`, and `ge` instead of `de` (`ge` is the Georgian geographic region subtag but not a language subtag itself)
-				nodes = dom.xpath("//*[re:test(@xml:lang, '^(gr|sp|ge)$')]")
-				if nodes:
-					messages.append(LintMessage("s-090", "Invalid language tag.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for possessive 's within name italics, but not in ignored files like the colophon which we know have no possessives
-				# Allow some known exceptions like `Harper's`, etc.
-				if filename.name not in IGNORED_FILENAMES:
-					nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.') and re:test(., '’s$') and not(contains(@epub:type, 'se:name.publication.') and re:test(., '(Pearson’s|Harper’s|Blackwood’s|Fraser’s|Baedeker’s)$'))]")
-					if nodes:
-						messages.append(LintMessage("t-007", "Possessive [text]’s[/] within name italics. If the name in italics is doing the possessing, [text]’s[/] goes outside italics.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for <p> elems that has some element children, which are only <span> and <br> children, but the parent doesn't have poem/verse semantics.
-				# Ignore spans that have a class, but not if the class is an i# class (for poetry indentation)
-				nodes = dom.xpath("/html/body//p[not(./text()[normalize-space(.)])][*][not(ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')])][not(*[not(self::span) and not(self::br)])][ (not(span[@epub:type]) and not(span[@class]) ) or span[re:test(@class, '\\bi[0-9]\\b')]]")
-				if nodes:
-					messages.append(LintMessage("s-046", "[xhtml]<p>[/] element containing only [xhtml]<span>[/] and [xhtml]<br>[/] elements, but its parent doesn’t have the [val]z3998:poem[/], [val]z3998:verse[/], [val]z3998:song[/], [val]z3998:hymn[/], or [val]z3998:lyrics[/] semantic. Multi-line clauses that are not verse don’t require [xhtml]<span>[/]s.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for ID attributes of numbered paragraphs (like `p-44`) that are used as refs in endnotes.
-				# Make sure their number is actually their correct sequence number in the text.
-				for unexpected_id in se.formatting.find_unexpected_ids(dom):
-					messages.append(LintMessage("x-019", f"Unexpected value of [attr]id[/] attribute. Expected: [attr]{unexpected_id[1]}[/].", se.MESSAGE_TYPE_ERROR, filename, [unexpected_id[0].to_tag_string()]))
-
-				# Epigraphs that are entirely non-English should still be in italics, not Roman
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'bridgehead')]//p[./i[@xml:lang and @data-css-font-style='normal' and ( (./preceding-sibling::node()='“' and ./following-sibling::node()='”') or not(./preceding-sibling::node()[normalize-space(.)] or ./following-sibling::node()[normalize-space(.)]) ) ]]")
-				if nodes:
-					messages.append(LintMessage("t-054", "Epigraphs that are entirely non-English should be set in italics, not Roman.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for a play <td> that contains both inline text and block-level elements.
-				# Note that we check any child of <html> because often <body> has the drama semantic.
-				nodes = dom.xpath("/html//*[contains(@epub:type, 'z3998:drama')]//td[./text()[normalize-space(.)] and ./*[name() = 'p' or name() = 'blockquote' or name() = 'div']]")
-				if nodes:
-					messages.append(LintMessage("s-080", "[xhtml]<td>[/] in drama containing both inline text and a block-level element. All children should either be only text, or only block-level elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for summary-style bridgeheads not ending in punctuation
-				# Decide if it's a summary-style bridgehead if it contains two or more em dashes. We use Python regex because
-				# xpath can't count the number of occurances of a string.
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'bridgehead') and re:test(., '[^\\.\\!\\?”]”?$')]")
-				nodes = [node for node in nodes if len(regex.findall(r"—", node.to_string())) >= 2]
-				if nodes:
-					messages.append(LintMessage("t-061", "Summary-style bridgehead without ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for <cite> preceded by em dash
-				nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[re:test(., '—$')]]")
-				if nodes:
-					messages.append(LintMessage("t-034", "[xhtml]<cite>[/] element preceded by em-dash. Hint: em-dashes go within [xhtml]<cite>[/] elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for Bible verses in old-style notation
-				nodes = dom.xpath("/html/body//*[(name()='p' or name()='cite' or re:test(name(), '^h[1-6]$')) and .//node()[re:test(., '(Genesis|Gen\\.|Exodus|Ex\\.|Leviticus|Lev\\.|Numbers|Num\\.|Deuteronomy|Deut\\.|Joshua|Josh\\.|Judges|Ruth|Kings|Chronicles|Chron\\.|Ezra|Nehemiah|Neh\\.|Esther|Esth\\.|Job|Psalm|Psalms|Ps\\.|Proverbs|Prov\\.|Ecclesiastes|Ecc\\.|Eccl\\.|Solomon|Sol\\.|Isaiah|Is\\.|Isa\\.|Jeremiah|Jer\\.|Lamentations|Lam\\.|Ezekiel|Ez\\.|Ezek\\.|Daniel|Dan\\.|Hosea|Hos\\.|Joel|Amos|Obadiah|Obad\\.|Jonah|Jon\\.|Micah|Mic\\.|Nahum|Nah\\.|Habakkuk|Hab\\.|Zephaniah|Zeph\\.|Haggai|Hag\\.|Zechariah|Zech\\.|Malachi|Mal\\.|Tobit|Judith|Sirach|Baruch|Maccabees|Esdras|Manasses|Matthew|Matt\\.|Mark|Luke|John|Acts|Romans|Rom\\.|Corinthians|Cor\\.|Corinth\\.|Galatians|Gal\\.|Ephesians|Eph\\.|Philippians|Phil\\.|Philipp\\.|Colossians|Col\\.|Coloss\\.|Thessalonians|Thes\\.|Thess\\.|Timothy|Tim\\.|Titus|Tit\\.|Philemon|Phil\\.|Hebrews|Heb\\.|James|Jas\\.|Peter|Pet\\.|Jude|Revelation|Revelations|Rev\\.)\\s*$') and following-sibling::node()[normalize-space(.)][1][contains(@epub:type, 'z3998:roman') and following-sibling::node()[1][re:test(., '^\\s*[\\.,]?\\s+[0-9]')]]]]")
-				if nodes:
-					messages.append(LintMessage("t-060", "Old style Bible citation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for <span> in poetry not followed by <br/>. Ignore spans that are roman as they might be present in poem headers, or spans with xml:lang.
-				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]//p/span[not(@epub:type='z3998:roman') and not(@xml:lang) and following-sibling::*[1][name()='span']]")
-				if nodes:
-					messages.append(LintMessage("s-091", "[xhtml]<span>[/] not followed by [xhtml]<br/>[/] in poetry.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for block-level postscripts that don't have margin-top: 1em. Exclude postscripts that are the first child of blockquote or footer, since blockquotes/footers gives the desired margin.
-				nodes = dom.xpath("/html/body//*[(name() = 'div' or name() = 'p') and contains(@epub:type, 'z3998:postscript') and not((./parent::blockquote or ./parent::footer) and count(./preceding-sibling::*) = 0) and @data-css-margin-top != '1em']")
-				if nodes:
-					messages.append(LintMessage("c-017", "Element with [val]z3998:postscript[/] semantic, but without [css]margin-top: 1em;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for <cite> in <header>s that start with a leading em dash
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph')]//cite[re:test(., '^—')]")
-				if nodes:
-					messages.append(LintMessage("t-069", "[xhtml]<cite>[/] in epigraph starting with an em dash.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for <cite> in <header>s that end with a period. Try to exclude <abbr>s that are last children
-				nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph')]//cite[re:test(., '\\.$') and not( (./node()[last()])[./descendant-or-self::abbr]) ]")
-				if nodes:
-					messages.append(LintMessage("t-070", "[xhtml]<cite>[/] in epigraph ending in a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for persona <td>s that have child <p> elements
-				nodes = dom.xpath("/html/body//td[contains(@epub:type, 'z3998:persona') and ./p]")
-				if nodes:
-					messages.append(LintMessage("s-083", "[xhtml]<td epub:type=\"z3998:persona\">[/] element with child [xhtml]<p>[/] element.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for <p> postscripts that don't have text-indent: 0.
-				nodes = dom.xpath("/html/body//p[contains(@epub:type, 'z3998:postscript') and (not(@data-css-text-align) or @data-css-text-align = 'initial' or @data-css-text-align = 'left') and @data-css-text-indent != '0']")
-				if nodes:
-					messages.append(LintMessage("c-018", "Element with [val]z3998:postscript[/] semantic, but without [css]text-indent: 0;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for elements that follow salutations, but that don't have text-indent: 0;
-				# We have to check both <p> elems that are salutations, and also <p> elems that have a first-child inline element that is a salutation, and that does not have following siblings that are senders/valedictions, as that might indicate a letter in a prose context
-				nodes = dom.xpath("/html/body//*[(contains(@epub:type, 'z3998:salutation') or ./preceding-sibling::*[1][contains(@epub:type, 'z3998:salutation') or (name() != 'blockquote' and count(./node()[normalize-space(.)]) = 1 and ./*[contains(@epub:type, 'z3998:salutation')])] or ./*[1][contains(@epub:type, 'z3998:salutation') and not((./following-sibling::node()[1][self::text()]))]) and @data-css-text-indent != '0']")
-				if nodes:
-					messages.append(LintMessage("c-015", "Element after or containing [val]z3998:salutation[/] does not have [css]text-indent: 0;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for nested `<abbr>` elements
-				nodes = dom.xpath("/html/body//abbr[./abbr]")
-				if nodes:
-					messages.append(LintMessage("s-093", "Nested [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for poetry/verse that has an hgroup but which does not have the correct text alignment
-				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(hymn|poem|song|verse)')]//hgroup/p[@data-css-text-align != 'center']")
-				if nodes:
-					messages.append(LintMessage("s-095", "[xhtml]<p>[/] child of [xhtml]<hgroup>[/] in poetry/verse does not have [css]text-align: center;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for <cite> without preceding space in text node. (preceding ( or [ are also OK)
-				nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[not(re:test(., '[\\[\\(\\s]$'))]]")
-				if nodes:
-					messages.append(LintMessage("t-035", "[xhtml]<cite>[/] element not preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for ID attrs that don't match the filename.
-				# We simply check if there are *any* ids that match, because we can have multiple IDs--for example, works that are part of a volume or subchapters with IDs
-				# Ignore <body>s with more than 2 <article>s as those are probably short story collections
-				nodes = dom.xpath("/html/body[count(./article) < 2]//*[(name() = 'section' or name() = 'article') and @id]")
-
-				if nodes and filename.stem not in [node.get_attr("id") for node in nodes]:
-					messages.append(LintMessage("f-015", "Filename doesn’t match [attr]id[/] attribute of primary [xhtml]<section>[/] or [xhtml]<article>[/]. Hint: [attr]id[/] attributes don’t include the file extension.", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for some known initialisms with incorrect possessive apostrophes
-				nodes = dom.xpath("/html/body//abbr[text()='I.O.U.'][(following-sibling::node()[1])[starts-with(., '’s')]]")
-				if nodes:
-					messages.append(LintMessage("t-039", "Initialism followed by [text]’s[/]. Hint: Plurals of initialisms are not followed by [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "’s" for node in nodes]))
-
-				# Check for royal names whose roman numeral is preceded by `the`
-				nodes = dom.xpath("/html/body//span[contains(@epub:type, 'z3998:roman') and ./preceding-sibling::node()[1][re:test(., '[A-Z]\\w+ the $')]]/parent::*")
-				if nodes:
-					messages.append(LintMessage("t-066", "Regnal ordinal preceded by [text]the[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check for <header> elements with only h# child nodes
-				nodes = dom.xpath("/html/body//header[./*[re:test(name(), 'h[1-6]') and (count(preceding-sibling::*) + count(following-sibling::*)=0)]]")
-				if nodes:
-					messages.append(LintMessage("s-049", "[xhtml]<header>[/] element whose only child is an [xhtml]<h#>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for h# tags followed by header content, that are not children of <header>.
-				# Only match if there is a following <p>, because we could have the case where there's an epigraph after a division title.
-				nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][following-sibling::*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'bridgehead')]][following-sibling::p][not(parent::header)]")
-				if nodes:
-					messages.append(LintMessage("s-061", "Title and following header content not in a [xhtml]<header>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check that `z3998:persona` is only on <b> or <td>. We use the contact() xpath function so we don't catch `z3998:personal-name`
-				nodes = dom.xpath("/html/body//*[contains(concat(' ', @epub:type, ' '), ' z3998:persona ') and not(self::b or self::td)]")
-				if nodes:
-					messages.append(LintMessage("s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Check for sections that don't have header elements, and that do not have margin-top: 8em.
-				# This tries to find the first <section> or <article> whose first child is <p>, and that doesn't
-				# have any ancestor <section>s or <articles>s with heading content, and that doesn't have the correct top margin.
-				# Ignore the titlepage, loi, and dedications as they typically have unique styling.
-				nodes = dom.xpath("/html/body//*[name()='section' or name()='article'][1][./p[1][not(preceding-sibling::*)] and not(re:test(@epub:type, '(titlepage|loi|dedication)')) and not(ancestor::*/*[re:test(name(), '^(h[1-6]|header|hgroup)$')]) and not(@data-css-margin-top='20vh')]")
-				if nodes:
-					messages.append(LintMessage("c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for italics on things that shouldn't be italics
-				nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.music.song') or contains(@epub:type, 'se:name.publication.short-story') or contains(@epub:type, 'se:name.publication.essay')]")
-				if nodes:
-					messages.append(LintMessage("s-060", "Italics on name that requires quotes instead.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-				# Check that all names are correctly titlecased. Ignore titles with xml:lang since non-English languages have different titlecasing rules,
-				# and ignore titles that have children elements, because se.titlecase() can't handle XML-like titles right now.
-				# Ignore titles longer than 150 chars, as long titles are likely old-timey super-long titles that should be mostly sentence-cased
-				incorrectly_cased_titles = []
-				for node in dom.xpath("/html/body//*[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'se:name.legal-case')) and not(@xml:lang) and not(./*) and string-length(.) <= 150]"):
-					# Replace any space that is not a hair space with a regular space. This is because in inline titles, we may correctly
-					# have nbsp for example after `St.`, but titlecase will remove that nbsp.
-					if se.formatting.titlecase(node.inner_text()) != regex.sub(fr"[^\S{se.HAIR_SPACE}]+", " ", node.inner_text()):
-						incorrectly_cased_titles.append(node.to_string())
-
-				if incorrectly_cased_titles:
-					messages.append(LintMessage("t-064", "Title not correctly titlecased. Hint: Non-English titles should have an [attr]xml:lang[/] attribute as they have different titlecasing rules.", se.MESSAGE_TYPE_WARNING, filename, incorrectly_cased_titles))
-
-				# Check to see if <h#> tags are correctly titlecased
-				# Ignore <h#> tags with an `xml:lang` attribute, as other languages have different titlecasing rules
-				nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') or (name() = 'p' and parent::hgroup)][not(contains(@epub:type, 'z3998:roman')) and not(@xml:lang)]")
-				for node in nodes:
-					node_copy = deepcopy(node)
-
-					# Remove *leading* Roman spans
-					# This matches the first child node excluding white space nodes, if it contains the z3998:roman semantic.
-					for element in node_copy.xpath("./node()[normalize-space(.)][1][contains(@epub:type, 'z3998:roman')]"):
-						element.remove()
-
-					# Remove noterefs
-					for element in node_copy.xpath(".//a[contains(@epub:type, 'noteref')]"):
-						element.remove()
-
-					# Remove hidden elements, for example in poetry identified by first line (keats)
-					for element in node_copy.xpath(".//*[@hidden]"):
-						element.remove()
-
-					# Unwrap (not remove) any subelements in subtitles, as they may trip up further regexes
-					for element in node_copy.xpath(".//*[contains(@epub:type, 'subtitle')]//*"):
-						element.unwrap()
-
-					title = node_copy.inner_xml()
-
-					# Remove leading leftover spacing and punctuation
-					title = regex.sub(r"^[\s\.\,\!\?\:\;]*", "", title)
-
-					# Normalize whitespace
-					title = regex.sub(r"\s+", " ", title, flags=regex.DOTALL).strip()
-
-					# Do we have a subtitle? If so the first letter of that must be capitalized, so we pull that out
-					subtitle_matches = regex.findall(r"(.*?)<span epub:type=\"subtitle\">(.*?)</span>(.*?)", title, flags=regex.DOTALL)
-					if subtitle_matches:
-						for title_header, subtitle, title_footer in subtitle_matches:
-							title_header = se.formatting.titlecase(se.formatting.remove_tags(title_header).strip())
-							subtitle = se.formatting.titlecase(se.formatting.remove_tags(subtitle).strip())
-							title_footer = se.formatting.titlecase(se.formatting.remove_tags(title_footer).strip())
-
-							titlecased_title = f"{title_header} {subtitle} {title_footer}"
-							titlecased_title = titlecased_title.strip()
-
-							title = se.formatting.remove_tags(title).strip()
-							if title != titlecased_title:
-								messages.append(LintMessage("s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/].", se.MESSAGE_TYPE_WARNING, filename))
-
-					# No subtitle? Much more straightforward
-					else:
-						titlecased_title = se.formatting.titlecase(se.formatting.remove_tags(title))
-						title = se.formatting.remove_tags(title)
-						if title != titlecased_title:
-							messages.append(LintMessage("s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/].", se.MESSAGE_TYPE_WARNING, filename))
-
-				# Check for <figure> tags without id attributes
-				nodes = dom.xpath("/html/body//img[@id]")
-				if nodes:
-					messages.append(LintMessage("s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements. Hint: Images that are inline (i.e. that do not have parent [xhtml]<figure>[/]s do not have [attr]id[/] attributes.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for closing dialog without comma
-				matches = regex.findall(r"[\p{Lowercase_Letter}]+?” [\p{Letter}]+? said", file_contents)
-				if matches:
-					messages.append(LintMessage("t-005", "Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename, matches))
-
-				# Check alt attributes on images, except for the logo
-				nodes = dom.xpath("/html/body//img[not(re:test(@src, '/(logo|titlepage)\\.(svg|png)$'))]")
-				img_no_alt = []
-				img_alt_not_typogrified = []
-				img_alt_lacking_punctuation = []
-				for node in nodes:
-					if "titlepage.svg" not in node.get_attr("src"):
-						has_images = True # Save for a later check
-
-					alt = node.get_attr("alt")
-
-					if alt:
-						# Check for non-typogrified img alt attributes
-						if regex.search(r"""('|"|--|\s-\s|&quot;)""", alt):
-							img_alt_not_typogrified.append(node.to_tag_string())
-
-						# Check alt attributes not ending in punctuation
-						if filename.name not in IGNORED_FILENAMES and not regex.search(r"""[\.\!\?]”?$""", alt):
-							img_alt_lacking_punctuation.append(node.to_tag_string())
-
-						# Check that alt attributes match SVG titles
-						img_src = node.lxml_element.get("src")
-						if img_src and img_src.endswith("svg"):
-							title_text = ""
-							image_ref = img_src.split("/").pop()
-							try:
-								svg_path = self.content_path / "images" / image_ref
-								svg_dom = self.get_dom(svg_path)
-								try:
-									title_text = svg_dom.xpath("/svg/title")[0].text
-								except Exception:
-									messages.append(LintMessage("s-027", f"{image_ref} missing [xhtml]<title>[/] element.", se.MESSAGE_TYPE_ERROR, svg_path))
-
-								if title_text != "" and alt != "" and title_text != alt:
-									messages.append(LintMessage("s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
-
-							except FileNotFoundError:
-								missing_files.append(str(Path("images") / image_ref))
-
-					else:
-						img_no_alt.append(node.to_tag_string())
-
-				if img_alt_not_typogrified:
-					messages.append(LintMessage("t-025", "Non-typogrified [text]'[/], [text]\"[/] (as [xhtml]&quot;[/]), or [text]--[/] in image [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, img_alt_not_typogrified))
-
-				if img_alt_lacking_punctuation:
-					messages.append(LintMessage("t-026", "[attr]alt[/] attribute does not appear to end with punctuation. [attr]alt[/] attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename, img_alt_lacking_punctuation))
-
-				if img_no_alt:
-					messages.append(LintMessage("s-004", "[xhtml]img[/] element missing [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, img_no_alt))
-
-				# Check for punctuation after endnotes
-				nodes = dom.xpath(f"/html/body//a[contains(@epub:type, 'noteref')][(following-sibling::node()[1])[re:test(., '^[^\\s<–\\]\\)—{se.WORD_JOINER}a-zA-Z0-9]')]]")
-				if nodes:
-					messages.append(LintMessage("t-020", "Endnote links must be outside of punctuation, including quotation marks.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for correct typography around measurements like 2 ft.
-				# But first remove href and id attrs because URLs and IDs may contain strings that look like measurements
-				# Note that while we check m,min (minutes) and h,hr (hours) we don't check s (seconds) because we get too many false positives on years, like `the 1540s`
-				matches = regex.findall(fr"\b[1-9][0-9]*[{se.NO_BREAK_SPACE}\-]?(?:[mck]?[mgl]|ft|in|min?|h|sec|hr)\.?\b", regex.sub(r"(href|id)=\"[^\"]*?\"", "", file_contents))
-				# Exclude number ordinals, they're not measurements
-				matches = [match for match in matches if not regex.search(r"(st|nd|rd|th)", match)]
-				if matches:
-					messages.append(LintMessage("t-021", "Measurement not to standard. Numbers are followed by a no-break space and abbreviated units require an [xhtml]<abbr>[/] element. See [path][link=https://standardebooks.org/manual/1.0.0/8-typography#8.8.5]semos://1.0.0/8.8.5[/][/].", se.MESSAGE_TYPE_WARNING, filename, matches))
-
-				# Check for <pre> tags
-				if dom.xpath("/html/body//pre"):
-					messages.append(LintMessage("s-013", "Illegal [xhtml]<pre>[/] element.", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for <br/> after block-level elements
-				nodes = dom.xpath("/html/body//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article][following-sibling::br]")
-				if nodes:
-					messages.append(LintMessage("s-014", "[xhtml]<br/>[/] after block-level element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
-				matches = regex.findall(fr"[\p{{Letter}}]+”[,\.](?!{se.WORD_JOINER} {se.WORD_JOINER}…)", file_contents)
-				if matches:
-					messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
-
 				# Check for double spacing
 				matches = regex.search(fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}", file_contents)
 				if matches:
 					double_spaced_files.append(filename)
 
-				# Run some checks on epub:type values
-				incorrect_attrs = set()
-				unnecessary_z3998_attrs = set()
-				duplicate_attrs = []
-
-				for node in dom.xpath("//*[@epub:type]"):
-					attrs = set()
-
-					for val in regex.split(r"\s+", node.get_attr("epub:type")):
-						if val in attrs:
-							duplicate_attrs.append(node.to_tag_string())
-						else:
-							attrs.add(val)
-
-						if val.startswith("z3998:"):
-							bare_val = val.replace("z3998:", "")
-							if bare_val not in Z3998_SEMANTIC_VOCABULARY:
-								incorrect_attrs.add(val)
-
-							elif bare_val in EPUB_SEMANTIC_VOCABULARY:
-								unnecessary_z3998_attrs.add((val, bare_val))
-
-						elif val.startswith("se:"):
-							bare_val = val.replace("se:", "")
-							if bare_val not in SE_SEMANTIC_VOCABULARY:
-								incorrect_attrs.add(val)
-
-						else:
-							# Regular epub vocabulary
-							if val not in EPUB_SEMANTIC_VOCABULARY:
-								incorrect_attrs.add(val)
-
-				if incorrect_attrs:
-					messages.append(LintMessage("s-032", "Invalid value for [attr]epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, incorrect_attrs))
-
-				if unnecessary_z3998_attrs:
-					messages.append(LintMessage("s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary.", se.MESSAGE_TYPE_ERROR, filename, [attr for (attr, bare_attr) in unnecessary_z3998_attrs]))
-
-				if duplicate_attrs:
-					messages.append(LintMessage("s-031", "Duplicate value in [attr]epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, duplicate_attrs))
-
-
-				# Check for title attrs on abbr elements
-				nodes = dom.xpath("/html/body//abbr[@title]")
-				if nodes:
-					messages.append(LintMessage("s-052", "[xhtml]<abbr>[/] element with illegal [attr]title[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# Check for leftover asterisms. Asterisms are sequences of any of these chars: * . • -⁠ —
-				nodes = dom.xpath("/html/body//*[self::p or self::div][re:test(., '^\\s*[\\*\\.•\\-⁠—]\\s*([\\*\\.•\\-⁠—]\\s*)+$')]")
-				if nodes:
-					messages.append(LintMessage("s-038", "Illegal asterism. Section/scene breaks must be defined by an [xhtml]<hr/>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				matches = regex.findall(r"[^…]\s[!?;:,].{0,10}", file_contents) # If we don't include preceding chars, the regex is 6x faster
-				if matches:
-					messages.append(LintMessage("t-041", "Illegal space before punctuation.", se.MESSAGE_TYPE_ERROR, filename, matches))
-
-				# Check for missing punctuation before closing quotes
-				# Exclude signatures in footers as those are commonly quoted without ending punctuation
-				nodes = dom.xpath("/html/body//p[not( (parent::header or parent::hgroup or (parent::footer and contains(@epub:type, 'z3998:signature'))) and position()=last())][re:test(., '[a-z]+[”’]$')]")
-				if nodes:
-					messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string()[-30:] for node in nodes]))
-
-				# Check to see if we've marked something as poetry or verse, but didn't include a first <span>
-				# This xpath selects the p elements, whose parents are poem/verse, and whose first child is not a span
-				nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')]/p[not(./*[name()='span' and position()=1])]")
-				if nodes:
-					matches = []
-					for node in nodes:
-						# Get the first line of the poem, if it's a text node, so that we can include it in the error messages.
-						# If it's not a text node then just ignore it and add the error anyway.
-						first_line = node.xpath("./descendant-or-self::text()[normalize-space(.)]", True)
-						if first_line:
-							match = first_line.strip()
-							if match: # Make sure we don't append an empty string
-								matches.append(match)
-
-					messages.append(LintMessage("s-006", "Poem or verse [xhtml]<p>[/] (stanza) without [xhtml]<span>[/] (line) element.", se.MESSAGE_TYPE_WARNING, filename, matches))
-
-				# Check to see if we included poetry or verse without the appropriate styling
-				if filename.name not in IGNORED_FILENAMES:
-					nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][./p/span]")
-					for node in nodes:
-						if "z3998:poem" in node.get_attr("epub:type") and not local_css_has_poem_style:
-							missing_styles.append(node.to_tag_string())
-
-						if "z3998:verse" in node.get_attr("epub:type") and not local_css_has_verse_style:
-							missing_styles.append(node.to_tag_string())
-
-						if "z3998:song" in node.get_attr("epub:type") and not local_css_has_song_style:
-							missing_styles.append(node.to_tag_string())
-
-						if "z3998:hymn" in node.get_attr("epub:type") and not local_css_has_hymn_style:
-							missing_styles.append(node.to_tag_string())
-
-						if "z3998:lyrics" in node.get_attr("epub:type") and not local_css_has_lyrics_style:
-							missing_styles.append(node.to_tag_string())
-
-				# For this series of selections, we select spans that are direct children of p, because sometimes a line of poetry may have a nested span.
-				nodes = dom.xpath("/html/body/*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')]/descendant-or-self::*/p/span/following-sibling::*[contains(@epub:type, 'noteref') and name()='a' and position()=1]")
-				if nodes:
-					messages.append(LintMessage("s-047", "[val]noteref[/] as a direct child of element with poem or verse semantic. [val]noteref[/]s should be in their parent [xhtml]<span>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-				# Record missing styles for front matter
-				if filename.name not in IGNORED_FILENAMES:
-					nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'dedication|epigraph')]")
-					for node in nodes:
-						if "dedication" in node.get_attr("epub:type") and not local_css_has_dedication_style:
-							missing_styles.append(node.to_tag_string())
-						if "epigraph" in node.get_attr("epub:type") and not local_css_has_epigraph_style:
-							missing_styles.append(node.to_tag_string())
-
-				# Check for space before endnote backlinks
-				if dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]"):
-					# Check that citations at the end of endnotes are in a <cite> element. If not typogrify will run the last space together with the em dash.
-					# This tries to catch that, but limits the match to 20 chars so that we don't accidentally match a whole sentence that happens to be at the end of an endnote.
-					nodes = dom.xpath(f"/html/body//li[contains(@epub:type, 'endnote')]/p[last()][re:test(., '\\.”?{se.WORD_JOINER}?—[A-Z].{{0,20}}\\s*↩$')]")
-					if nodes:
-						messages.append(LintMessage("s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-					# Did we forget the endnote semantic on li elements?
-					nodes = dom.xpath("/html/body/section/ol/li[not(re:test(@epub:type, '\\bendnote\\b'))]")
-					if nodes:
-						messages.append(LintMessage("s-099", "List item in endnotes missing [xhtml]endnote[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-					# Do we have to replace Ibid.? Only match Ibid. if the endnote does not appear to cite any names.
-					nodes = dom.xpath("/html/body//li[re:test(@epub:type, '\\bendnote\\b')]//abbr[re:test(., '\\b[Ii]bid\\b') and not(ancestor::li[1]//*[contains(@epub:type, 'se:name')])]")
-					if nodes:
-						messages.append(LintMessage("s-039", "[text]Ibid[/] in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing [text]Ibid[/] refers to, unless it refers to text within the same endnote.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-					# Match backlink elements whose preceding node doesn't end with ' ', and is also not all whitespace
-					nodes = dom.xpath("/html/body//a[@epub:type='backlink'][(preceding-sibling::node()[1])[not(re:test(., ' $')) and not(normalize-space(.)='')]]")
-					if nodes:
-						messages.append(LintMessage("t-027", "Endnote backlink not preceded by exactly one space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
-
-					# Check that endnotes have their backlink in the last <p> element child of the <li>. This also highlights backlinks that are totally missing.
-					nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')][./p[last()][not(a[contains(@epub:type, 'backlink')])] or not(./p[last()])]")
-					if nodes:
-						messages.append(LintMessage("s-056", "Last [xhtml]<p>[/] child of endnote missing backlink.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-					# Make sure the backlink points to the same note number as the parent endnote ID
-					nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]//a[contains(@epub:type, 'backlink')][not(re:match(@href, '\\-[0-9]+$')=re:match(ancestor::li/@id, '\\-[0-9]+$'))]")
-					if nodes:
-						messages.append(LintMessage("s-057", "Backlink noteref fragment identifier doesn’t match endnote number.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
-
-				# If we're in the imprint, are the sources represented correctly?
-				# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
-				if is_imprint:
-					# Check for wrong grammar filled in from template
-					nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::node()[1])[re:test(., 'the\\s+$')]]")
-					if nodes:
-						messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the " + node.to_string() for node in nodes]))
-
-					# Check if we forgot to fill any variable slots
-					missing_imprint_vars = [var for var in SE_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
-					if missing_imprint_vars:
-						messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, missing_imprint_vars))
-
-					if ebook_has_multiple_transcriptions and not dom.xpath("/html/body//a[contains(@href, '#transcriptions')]"):
-						messages.append(LintMessage("m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-					if ebook_has_multiple_page_scans and not dom.xpath("/html/body//a[contains(@href, '#page-scans')]"):
-						messages.append(LintMessage("m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-					# Check that the formula changed from the default if we added 'various sources'
-					if ebook_has_multiple_transcriptions or ebook_has_multiple_page_scans:
-						nodes = dom.xpath("/html/body//a[text() = 'various sources' and not(re:test(preceding-sibling::node()[1], '(digital scans|transcriptions) from\\s*$'))]")
-						if nodes:
-							messages.append(LintMessage("t-072", "[text]various sources[/] link not preceded by [text]from[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-					# Check for correctly named links. We can't merge this with the colophon check because the colophon breaks `the` with `<br/>`
-					if not ebook_has_multiple_transcriptions and not ebook_has_other_sources:
-						for link in source_links:
-							if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
-								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Project Gutenberg</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-					if not ebook_has_multiple_page_scans and not ebook_has_other_sources:
-						for link in source_links:
-							if "hathitrust.org" in link and f"the <a href=\"{link}\">HathiTrust Digital Library</a>" not in file_contents:
-								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: the [xhtml]<a href=\"{link}\">HathiTrust Digital Library</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-							if "archive.org" in link and f"the <a href=\"{link}\">Internet Archive</a>" not in file_contents:
-								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: the [xhtml]<a href=\"{link}\">Internet Archive</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-							if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
-								messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
-
 				# Collect certain abbr elements to check that required styles are included, but not in the colophon
 				if not dom.xpath("/html/body/*[contains(@epub:type, 'colophon')]"):
 					# For now, temperature, acronym, and era are the only abbrs with required styles
 					abbr_elements_requiring_css += dom.xpath("/html/body//abbr[re:test(@epub:type, '\\b(se:temperature|se:era|z3998:acronym)\\b')]")
-
-				# Check if language tags in individual files match the language in the metadata file
-				if filename.name not in IGNORED_FILENAMES:
-					file_language = dom.xpath("/html/@xml:lang", True)
-					if language != file_language:
-						messages.append(LintMessage("s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/].", se.MESSAGE_TYPE_WARNING, filename))
-
-				# Check LoI descriptions to see if they match associated figcaptions
-				for node in dom.xpath("/html/body/nav[contains(@epub:type, 'loi')]//li//a"):
-					figure_ref = node.get_attr("href").split("#")[1]
-					chapter_ref = regex.findall(r"(.*?)#.*", node.get_attr("href"))[0]
-					figcaption_text = ""
-					loi_text = node.inner_text()
-					file_dom = self.get_dom(self.content_path / "text" / chapter_ref)
-
-					try:
-						figure = file_dom.xpath(f"//*[@id={se.easy_xml.escape_xpath(figure_ref)}]")[0]
-					except Exception:
-						messages.append(LintMessage("s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
-						continue
-
-					for child in figure.xpath("./*"):
-						if child.tag == "img":
-							figure_img_alt = child.get_attr("alt")
-
-						if child.tag == "figcaption":
-							figcaption_text = child.inner_text()
-
-							# Replace tabs and newlines with a single space to better match figcaptions that contain <br/>
-							figcaption_text = regex.sub(r"(\n|\t)", " ", figcaption_text)
-							figcaption_text = regex.sub(r"[ ]+", " ", figcaption_text)
-
-					if (figcaption_text != "" and loi_text != "" and figcaption_text != loi_text) and (figure_img_alt != "" and loi_text != "" and figure_img_alt != loi_text):
-						messages.append(LintMessage("s-041", f"The [xhtml]<figcaption>[/] element of [attr]#{figure_ref}[/] does not match the text in its LoI entry.", se.MESSAGE_TYPE_WARNING, self.path / "src/epub/text" / chapter_ref))
-
-				# Check for missing MARC relators
-				# Don't check the landmarks as that may introduce duplicate errors
-				# Only check for top-level elements, to avoid intros in short stories or poems in compilation.
-				if not dom.xpath("/html/body//nav[contains(@epub:type, 'landmarks')]"):
-					if dom.xpath("/html/body/*[contains(@epub:type, 'introduction') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and (text()='aui' or text()='win')]"):
-						messages.append(LintMessage("m-030", "[val]introduction[/] semantic inflection found, but no MARC relator [val]aui[/] (Author of introduction, but not the chief author) or [val]win[/] (Writer of introduction).", se.MESSAGE_TYPE_WARNING, filename))
-
-					if dom.xpath("/html/body/*[contains(@epub:type, 'preface') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='wpr']"):
-						messages.append(LintMessage("m-031", "[val]preface[/] semantic inflection found, but no MARC relator [val]wpr[/] (Writer of preface).", se.MESSAGE_TYPE_WARNING, filename))
-
-					if dom.xpath("/html/body/*[contains(@epub:type, 'afterword') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='aft']"):
-						messages.append(LintMessage("m-032", "[val]afterword[/] semantic inflection found, but no MARC relator [val]aft[/] (Author of colophon, afterword, etc.).", se.MESSAGE_TYPE_WARNING, filename))
-
-					if dom.xpath("/html/body/*[contains(@epub:type, 'endnotes') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='ann']"):
-						messages.append(LintMessage("m-033", "[val]endnotes[/] semantic inflection found, but no MARC relator [val]ann[/] (Annotator).", se.MESSAGE_TYPE_WARNING, filename))
-
-					if dom.xpath("/html/body/*[contains(@epub:type, 'loi') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='ill']"):
-						messages.append(LintMessage("m-034", "[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator).", se.MESSAGE_TYPE_WARNING, filename))
-
-				# Check for wrong semantics in frontmatter/backmatter
-				if dom.xpath("/html/body/section[not(@data-parent) and re:test(@epub:type, '\\b(dedication|introduction|preface|foreword|preamble|titlepage|halftitlepage|imprint|epigraph|acknowledgements)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'frontmatter')])]"):
-					messages.append(LintMessage("s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename))
-
-				if dom.xpath("/html/body/section[not(@data-parent) and re:test(@epub:type, '\\b(endnotes|loi|afterword|appendix|colophon|copyright\\-page|lot)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'backmatter')])]"):
-					messages.append(LintMessage("s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
 				# Check and log missing glossary keys
 				if has_glossary_search_key_map and filename.name not in IGNORED_FILENAMES:
@@ -3233,6 +3403,20 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 					for glossary_index, glossary_value in enumerate(glossary_usage):
 						if glossary_value[1] is False and regex.search(glossary_value[0], source_text, flags=regex.IGNORECASE):
 							glossary_usage[glossary_index] = (glossary_value[0], True)
+
+				missing_styles = missing_styles + _update_missing_styles(filename, dom, local_css)
+
+				messages = messages + _lint_css_checks(filename, dom)
+
+				messages = messages + _lint_metadata_checks(filename, dom)
+
+				messages = messages + _lint_syntax_checks(self, filename, dom, file_contents, ebook_info, language)
+
+				messages = messages + _lint_typography_checks(filename, dom, file_contents, special_file)
+
+				messages = messages + _lint_xhtml_checks(filename, dom, file_contents)
+
+				messages = messages + _lint_typo_checks(filename, dom, file_contents, is_titlepage, special_file)
 
 	if self.cover_path and cover_svg_title != titlepage_svg_title:
 		messages.append(LintMessage("s-028", f"[path][link=file://{self.cover_path}]{self.cover_path.name}[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match.", se.MESSAGE_TYPE_ERROR, self.cover_path))
