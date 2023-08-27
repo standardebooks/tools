@@ -105,7 +105,7 @@ SPECIAL_FILES = ["colophon", "endnotes", "imprint", "loi"]
 INITIALISM_EXCEPTIONS = ["G", # as in `G-Force`
 			"1D", "2D", "3D", "4D", # as in `n-dimensional`
 			"MS.", "MSS.", # Manuscript(s)
-			"MM.",  # Messiuers
+			"MM.",	# Messiuers
 			"κ.τ.λ.", # "etc." in Greek, and we don't match Greek chars.
 			"TV",
 			"AC", "DC" # electrical current
@@ -453,7 +453,7 @@ TYPOS
 "y-003”, "Possible typo: paragraph missing ending punctuation."
 "y-004”, "Possible typo: mis-curled quotation mark after dash."
 "y-005”, "Possible typo: question mark or exclamation mark followed by period or comma."
-"y-006”, "Possible typo: [text]‘[/] without matching [text]’[/]. Hints: [text]’[/] are used for abbreviations;  commas and periods must go inside quotation marks."
+"y-006”, "Possible typo: [text]‘[/] without matching [text]’[/]. Hints: [text]’[/] are used for abbreviations;	commas and periods must go inside quotation marks."
 "y-007”, "Possible typo: [text]‘[/] not within [text]“[/]. Hints: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?"
 "y-008”, "Possible typo: dialog interrupted by interjection but with incorrect closing quote."
 "y-009”, "Possible typo: dialog begins with lowercase letter."
@@ -549,11 +549,11 @@ def _build_section_tree(self) -> List[EbookSection]:
 	#  preface (2)
 	#  halftitlepage (2)
 	#  part-1 (2)
-	#    division-1-1 (3)
-	#      chapter-1-1-1 (4)
-	#      chapter-1-1-2 (4)
-	#      chapter-1-1-3 (4)
-	#      chapter-1-1-4 (4)
+	#	 division-1-1 (3)
+	#	   chapter-1-1-1 (4)
+	#	   chapter-1-1-2 (4)
+	#	   chapter-1-1-3 (4)
+	#	   chapter-1-1-4 (4)
 	section_tree: List[EbookSection] = []
 
 	for filename in self.spine_file_paths:
@@ -771,7 +771,7 @@ def _update_missing_styles(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 	local_css: Dictionary containing several flags concerning the local CSS
 
 	OUTPUTS
-	Set of files not in the spine (typically an empty set)
+	List of styles used in this file but missing from local CSS
 	"""
 
 	missing_styles: List[str] = []
@@ -808,6 +808,84 @@ def _update_missing_styles(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 				missing_styles.append(node.to_tag_string())
 
 	return missing_styles
+
+def _lint_svg_checks(self, filename: Path, file_contents: str, svg_dom: se.easy_xml.EasyXmlTree, root: str) -> list:
+	"""
+	Perform several checks on svg files
+
+	INPUTS
+	filename: The name of the svg file being checked
+	file_contents: The contents of the svg file being checked
+	svg_dom: The dom of the svg file being checked
+	self
+	root
+
+	OUTPUTS
+	A list of LintMessages representing errors found in the svg file
+	"""
+
+	messages = []
+
+	# Make images have reasonable dimensions
+	viewbox = svg_dom.xpath("/svg/@viewBox", True)
+	if viewbox:
+		svg_dimensions = viewbox.split()
+		try:
+			if float(svg_dimensions[2]) * float(svg_dimensions[3]) > 4000000:
+				messages.append(LintMessage("f-018", "Image greater than 4,000,000 pixels square in dimension.", se.MESSAGE_TYPE_ERROR, filename))
+		except Exception as ex:
+			raise se.InvalidFileException(f"Couldn’t parse SVG [xhtml]viewBox[/] attribute in [path][link=file://{filename.resolve()}]{filename}[/][/].") from ex
+
+	# If we're looking at the cover image, ensure that the producer has built it.
+	# The default cover image is a white background which when encoded to base64 begins with 299 characters and then has a long string of `A`s
+	if self.cover_path and filename.name == self.cover_path.name and svg_dom.xpath("//image[re:test(@xlink:href, '^.{299}A{50,}')]"):
+		messages.append(LintMessage("m-063", "Cover image has not been built.", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Check for illegal transform or id attribute
+	nodes = svg_dom.xpath("//*[@transform or @id]")
+	if nodes:
+		invalid_transform_attributes = set()
+		invalid_id_attributes = []
+		for node in nodes:
+			if node.get_attr("transform"):
+				invalid_transform_attributes.add(f"transform=\"{node.get_attr('transform')}\"")
+
+			if node.get_attr("id"):
+				invalid_id_attributes.append(f"id=\"{node.get_attr('id')}\"")
+
+		if invalid_transform_attributes:
+			messages.append(LintMessage("x-003", "Illegal [xml]transform[/] attribute. SVGs should be optimized to remove use of [xml]transform[/]. Try using Inkscape to save as an “optimized SVG”.", se.MESSAGE_TYPE_ERROR, filename, invalid_transform_attributes))
+
+	# Check for fill: #000 which should simply be removed
+	nodes = svg_dom.xpath("//*[contains(@fill, '#000') or contains(translate(@style, ' ', ''), 'fill:#000')]")
+	if nodes:
+		messages.append(LintMessage("x-004", "Illegal [xml]style=\"fill: #000\"[/] or [xml]fill=\"#000\"[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+	# Check for illegal height or width on root <svg> element
+	if filename.name != "logo.svg": # Do as I say, not as I do...
+		if svg_dom.xpath("/svg[@height or @width]"):
+			messages.append(LintMessage("x-005", "Illegal [xml]height[/] or [xml]width[/] attribute on root [xml]<svg>[/] element. Size SVGs using the [xml]viewBox[/] attribute only.", se.MESSAGE_TYPE_ERROR, filename))
+
+	match = regex.search(r"viewbox", file_contents, flags=regex.IGNORECASE)
+	if match and match[0] != "viewBox":
+		messages.append(LintMessage("x-006", f"[xml]{match}[/] found instead of [xml]viewBox[/]. [xml]viewBox[/] must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename))
+
+		if invalid_id_attributes:
+			messages.append(LintMessage("x-014", "Illegal [xml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, invalid_id_attributes))
+
+	if f"{os.sep}src{os.sep}" not in root:
+		# Check that cover and titlepage images are in all caps
+		if self.cover_path and filename.name == self.cover_path.name:
+			nodes = svg_dom.xpath("//text[re:test(., '[a-z]')]")
+			if nodes:
+				messages.append(LintMessage("s-002", "Lowercase letters in cover. Cover text must be all uppercase.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+		if filename.name == "titlepage.svg":
+			nodes = svg_dom.xpath("//text[re:test(., '[a-z]') and not(text()='translated by' or text()='illustrated by' or text()='and')]")
+			if nodes:
+				messages.append(LintMessage("s-003", "Lowercase letters in titlepage. Titlepage text must be all uppercase except [text]translated by[/] and [text]illustrated by[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	return messages
 
 def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, ebook_info: dict, special_file: str) -> list:
 	"""
@@ -1541,7 +1619,7 @@ def _lint_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree, file
 	if nodes:
 		messages.append(LintMessage("s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for <th> element without a <thead> ancestor. However, <th scope="...">  and <th/> are allowed, for use in tables with headers in the middle of tables (url:https://standardebooks.org/ebooks/dorothy-day/the-eleventh-virgin) and vertical table headers
+	# Check for <th> element without a <thead> ancestor. However, <th scope="...">	and <th/> are allowed, for use in tables with headers in the middle of tables (url:https://standardebooks.org/ebooks/dorothy-day/the-eleventh-virgin) and vertical table headers
 	# (https://standardebooks.org/ebooks/charles-babbage/passages-from-the-life-of-a-philosopher)
 	if dom.xpath("/html/body//table//th[not(ancestor::thead)][not(@scope)][not(count(node())=0)]"):
 		messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Note: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute.", se.MESSAGE_TYPE_ERROR, filename))
@@ -1814,7 +1892,7 @@ def _lint_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 
 	# Check for repeated punctuation, but first remove `&amp;` so we don't match `&amp;,`
 	# Remove tds with repeated ” as they are probably ditto marks
-	matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents.replace("&amp;", "")) + regex.findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents)) +  regex.findall(r"[\p{Letter}][,\.:;]\s[,\.:;]\s?[\p{Letter}<].{0,20}", file_contents, flags=regex.IGNORECASE)
+	matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents.replace("&amp;", "")) + regex.findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents)) +	 regex.findall(r"[\p{Letter}][,\.:;]\s[,\.:;]\s?[\p{Letter}<].{0,20}", file_contents, flags=regex.IGNORECASE)
 	if matches:
 		messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
@@ -2044,7 +2122,7 @@ def _lint_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 		messages.append(LintMessage("t-035", "[xhtml]<cite>[/] element not preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 	# Check for partially obscured years in which the last year is an em dash
-	nodes = dom.xpath("/html/body//p[re:test(.,  '1\\d{2}⁠—[^“’A-Za-z<]')]")
+	nodes = dom.xpath("/html/body//p[re:test(.,	 '1\\d{2}⁠—[^“’A-Za-z<]')]")
 	if nodes:
 		messages.append(LintMessage("t-036", "Em-dash used to obscure single digit in year. Hint: Use a hyphen instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
@@ -2120,7 +2198,7 @@ def _lint_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	if nodes:
 		messages.append(LintMessage("t-052", "Stage direction without ending punctuation. Note that ending punctuation is optional in stage direction that is an interjection in a parent clause, and such interjections should begin with a lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for stage direction starting in lowercase.  We only want to consider stage direction that is not an interjection in a parent clause.
+	# Check for stage direction starting in lowercase.	We only want to consider stage direction that is not an interjection in a parent clause.
 	# We match if the stage direction starts with a lowercase, and if there's no preceding node, or if there is a preceding node and it doesn't end in a lowercase letter or a small subset of conjoining punctuation.
 	nodes = dom.xpath("/html/body//i[@epub:type='z3998:stage-direction' and re:test(., '^[a-z]') and (not(./preceding-sibling::node()[normalize-space(.)]) or ./preceding-sibling::node()[1][re:test(normalize-space(.), '[^a-z:—,;…]$')])]")
 	if nodes:
@@ -2363,7 +2441,7 @@ def _lint_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_content
 	# Check for opening lsquo in quote that doesn't appear to have a matching rsquo. Rsquos must be followed by a space, punctuation (except period/comma), word joiner and thus em dash, or a number for an endnote.
 	typos = dom.xpath(f"re:match(//*, '“\\s*‘[^“]+?”', 'g')/text()[not(re:test(., '’[\\s\\?\\!;<2060{se.WORD_JOINER}0-9]'))]")
 	if typos:
-		messages.append(LintMessage("y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hints: [text]’[/] are used for abbreviations;  commas and periods must go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, typos))
+		messages.append(LintMessage("y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hints: [text]’[/] are used for abbreviations;	commas and periods must go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Try to find top-level lsquo; for example, <p>“Bah!” he said to the ‘minister.’</p>
 	# We can't do this on xpath because we can't iterate over the output of re:replace().
@@ -3117,11 +3195,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	section_tree: List[EbookSection] = _build_section_tree(self)
 	# This block is useful for pretty-printing section_tree should we need to debug it in the future
 	# def dump(item, char):
-	# 	print(f"{char} {item.section_id} ({item.depth}) {item.has_header}")
-	# 	for child in item.children:
-	# 		dump(child, f"  {char}")
+	#	print(f"{char} {item.section_id} ({item.depth}) {item.has_header}")
+	#	for child in item.children:
+	#		dump(child, f"	{char}")
 	# for section in section_tree:
-	# 	dump(section, "")
+	#	dump(section, "")
 	# exit()
 
 	# Now iterate over individual files for some checks
@@ -3207,71 +3285,14 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 			if filename.suffix == ".svg":
 				svg_dom = self.get_dom(filename)
+				messages = messages + _lint_svg_checks(self, filename, file_contents, svg_dom, root)
+				if self.cover_path and filename.name == self.cover_path.name:
+					# For later comparison with titlepage
+					cover_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The cover for ", "") # <title> can appear on any element in SVG, but we only want to check the root one
+				elif filename.name == "titlepage.svg":
+					# For later comparison with cover
+					titlepage_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The titlepage for ", "") # <title> can appear on any element in SVG, but we only want to check the root one
 
-				# Make images have reasonable dimensions
-				viewbox = svg_dom.xpath("/svg/@viewBox", True)
-				if viewbox:
-					svg_dimensions = viewbox.split()
-					try:
-						if float(svg_dimensions[2]) * float(svg_dimensions[3]) > 4000000:
-							messages.append(LintMessage("f-018", "Image greater than 4,000,000 pixels square in dimension.", se.MESSAGE_TYPE_ERROR, filename))
-					except Exception as ex:
-						raise se.InvalidFileException(f"Couldn’t parse SVG [xhtml]viewBox[/] attribute in [path][link=file://{filename.resolve()}]{filename}[/][/].") from ex
-
-				# If we're looking at the cover image, ensure that the producer has built it.
-				# The default cover image is a white background which when encoded to base64 begins with 299 characters and then has a long string of `A`s
-				if self.cover_path and filename.name == self.cover_path.name and svg_dom.xpath("//image[re:test(@xlink:href, '^.{299}A{50,}')]"):
-					messages.append(LintMessage("m-063", "Cover image has not been built.", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for illegal transform or id attribute
-				nodes = svg_dom.xpath("//*[@transform or @id]")
-				if nodes:
-					invalid_transform_attributes = set()
-					invalid_id_attributes = []
-					for node in nodes:
-						if node.get_attr("transform"):
-							invalid_transform_attributes.add(f"transform=\"{node.get_attr('transform')}\"")
-
-						if node.get_attr("id"):
-							invalid_id_attributes.append(f"id=\"{node.get_attr('id')}\"")
-
-					if invalid_transform_attributes:
-						messages.append(LintMessage("x-003", "Illegal [xml]transform[/] attribute. SVGs should be optimized to remove use of [xml]transform[/]. Try using Inkscape to save as an “optimized SVG”.", se.MESSAGE_TYPE_ERROR, filename, invalid_transform_attributes))
-
-				# Check for fill: #000 which should simply be removed
-				nodes = svg_dom.xpath("//*[contains(@fill, '#000') or contains(translate(@style, ' ', ''), 'fill:#000')]")
-				if nodes:
-					messages.append(LintMessage("x-004", "Illegal [xml]style=\"fill: #000\"[/] or [xml]fill=\"#000\"[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-				# Check for illegal height or width on root <svg> element
-				if filename.name != "logo.svg": # Do as I say, not as I do...
-					if svg_dom.xpath("/svg[@height or @width]"):
-						messages.append(LintMessage("x-005", "Illegal [xml]height[/] or [xml]width[/] attribute on root [xml]<svg>[/] element. Size SVGs using the [xml]viewBox[/] attribute only.", se.MESSAGE_TYPE_ERROR, filename))
-
-				match = regex.search(r"viewbox", file_contents, flags=regex.IGNORECASE)
-				if match and match[0] != "viewBox":
-					messages.append(LintMessage("x-006", f"[xml]{match}[/] found instead of [xml]viewBox[/]. [xml]viewBox[/] must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename))
-
-					if invalid_id_attributes:
-						messages.append(LintMessage("x-014", "Illegal [xml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, invalid_id_attributes))
-
-				if f"{os.sep}src{os.sep}" not in root:
-					# Check that cover and titlepage images are in all caps
-					if self.cover_path and filename.name == self.cover_path.name:
-						nodes = svg_dom.xpath("//text[re:test(., '[a-z]')]")
-						if nodes:
-							messages.append(LintMessage("s-002", "Lowercase letters in cover. Cover text must be all uppercase.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-						# For later comparison with titlepage
-						cover_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The cover for ", "") # <title> can appear on any element in SVG, but we only want to check the root one
-
-					if filename.name == "titlepage.svg":
-						nodes = svg_dom.xpath("//text[re:test(., '[a-z]') and not(text()='translated by' or text()='illustrated by' or text()='and')]")
-						if nodes:
-							messages.append(LintMessage("s-003", "Lowercase letters in titlepage. Titlepage text must be all uppercase except [text]translated by[/] and [text]illustrated by[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-						# For later comparison with cover
-						titlepage_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The titlepage for ", "") # <title> can appear on any element in SVG, but we only want to check the root one
 
 			if filename.suffix == ".xml":
 				xml_dom = self.get_dom(filename)
