@@ -119,7 +119,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(?:BC\b|B\.C\.\B)", r"""<abbr epub:type="se:era">BC</abbr>""", xhtml)
 
 	# Wrap £sd shorthand
-	xhtml = regex.sub(r"([0-9½¼⅙⅚⅛⅜⅝]+)([sd⅞]\.)", r"\1<abbr>\2</abbr>", xhtml)
+	xhtml = regex.sub(r"([0-9½¼¾⅙⅚⅛⅜⅝⅞]+)([sd]\.)", r"\1<abbr>\2</abbr>", xhtml)
 
 	# add eoc (End Of Clause) class
 	xhtml = regex.sub(r"<abbr>etc\.</abbr>([”’]?(?:</p>|\s+[“‘]?[\p{Uppercase_Letter}]))", r"""<abbr class="eoc">etc.</abbr>\1""", xhtml)
