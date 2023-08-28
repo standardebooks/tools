@@ -315,13 +315,13 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"([\s>])\-([0-9,]+)", r"\1−\2", xhtml)
 
 	# Convert L to £ if next to a number
-	xhtml = regex.sub(r"\bL([0-9]+)", r"£\1", xhtml)
+	xhtml = regex.sub(r"\bL([0-9½¼¾⅙⅚⅛⅜⅝⅞]+)", r"£\1", xhtml)
 
 	# Make sure there are periods after old-style shilling/pence denominations
-	xhtml = regex.sub(r"\b([0-9]+)s\.? ([0-9]+)d\.?", r"\1s. \2d.", xhtml)
+	xhtml = regex.sub(r"\b([0-9½¼¾⅙⅚⅛⅜⅝⅞]+)s\.? ([0-9½¼¾⅙⅚⅛⅜⅝⅞]+)d\.?", r"\1s. \2d.", xhtml)
 
 	# Remove periods after pounds if followed by shillings
-	xhtml = regex.sub(r"£([0-9]+)\.? ([0-9]+)s\.?", r"£\1 \2s.", xhtml)
+	xhtml = regex.sub(r"£([0-9½¼¾⅙⅚⅛⅜⅝⅞]+)\.? ([0-9½¼¾⅙⅚⅛⅜⅝⅞]+)s\.?", r"£\1 \2s.", xhtml)
 
 	# Remove word joiners if the em dash is preceded by a space
 	xhtml = regex.sub(fr"(\s+){se.WORD_JOINER}—", r"\1—", xhtml)
