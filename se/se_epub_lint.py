@@ -479,6 +479,7 @@ TYPOS
 "y-030”, "Possible typo: Lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital."
 "y-031”, "Possible typo: Dialog tag missing punctuation."
 "y-032”, "Possible typo: Italics running into preceding or following characters."
+"y-033", "Possible typo: Three-em-dash obscuring an entire word, but not preceded by a space."
 """
 
 class LintMessage:
@@ -2448,6 +2449,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				nodes = dom.xpath("/html/head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
 				if nodes:
 					messages.append(LintMessage("x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.tag}>" for node in nodes]))
+
+				# Check for typos
+				nodes = dom.xpath(f"/html/body//p[re:test(., '[^>“(\\s{se.WORD_JOINER}]{se.WORD_JOINER}?⸻')]")
+				if nodes:
+					messages.append(LintMessage("y-033", "Possible typo: Three-em-dash obscuring an entire word, but not preceded by a space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 				# Check for xml:lang attribute starting in uppercase
 				nodes = dom.xpath("//*[re:test(@xml:lang, '^[A-Z]')]")
