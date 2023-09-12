@@ -2238,7 +2238,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 	return messages
 
-def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: str, ebook_flags: dict) -> list:
+def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: Optional[str], ebook_flags: dict, self) -> list:
 	"""
 	Helper function used in self.lint()
 	Process typography checks on an .xhtml file
@@ -2248,6 +2248,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	dom: A dom tree to check
 	file_contents: The contents of the file being checked
 	special_file: A string containing the type of special file the current file is, if any
+	self
 
 	OUTPUTS
 	A list of LintMessages representing typography errors found in the file
@@ -2720,7 +2721,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 		if node_text != expected_text:
 			messages.append(LintMessage("t-073", f"Possible transcription error in Greek. Found: [text]{node_text}[/], but expected [text]{expected_text}[/text]. Hint: Use [bash]se unicode-names[/] to see differences in Unicode characters.", se.MESSAGE_TYPE_WARNING, filename))
 
-	return (messages)
+	return messages
 
 def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str) -> list:
 	"""
@@ -3551,9 +3552,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 				messages = messages + _lint_xhtml_syntax_checks(self, filename, dom, file_contents, ebook_flags, language, section_tree)
 
-				(typography_messages) = _lint_xhtml_typography_checks(filename, dom, file_contents, special_file, ebook_flags)
-				if typography_messages:
-					messages = messages + typography_messages
+				messages = messages + _lint_xhtml_typography_checks(filename, dom, file_contents, special_file, ebook_flags, self)
 
 				messages = messages + _lint_xhtml_xhtml_checks(filename, dom, file_contents)
 
