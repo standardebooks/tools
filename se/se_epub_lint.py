@@ -594,7 +594,14 @@ def _build_section_tree(self) -> List[EbookSection]:
 def _find_ebook_section(section_id: str, sections: List[EbookSection]) -> Union[EbookSection, None]:
 	"""
 	Find an ebook section in a tree of sections.
-	"""
+
+	INPUTS
+	section_id: The name of the section to be found
+	sections: A list of EbookSections
+
+	OUTPUTS
+	The entry from sections, if any, that contains section_id
+ 	"""
 
 	for section in sections:
 		if section.section_id == section_id:
@@ -607,7 +614,7 @@ def _find_ebook_section(section_id: str, sections: List[EbookSection]) -> Union[
 
 	return None
 
-def _lint_metadata_checks(self):
+def _lint_metadata_checks(self) -> list:
 	"""
 	Process main metadata checks
 
@@ -905,7 +912,7 @@ def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 	filename: The filename being processed
 
 	OUTPUTS
-	A list of LintMessages objects.
+	A list of LintMessage objects.
 	"""
 
 	messages = []
@@ -1061,7 +1068,7 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 	local_css_rules: Dictionary of the local CSS rules
 
 	OUTPUTS
-	messages
+	A list of LintMessage objects
 	"""
 	messages = []
 
@@ -1518,15 +1525,15 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 def _lint_xhtml_css_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, local_css_path: Path) -> list:
 	"""
-	Helper function used in self.lint()
 	Process CSS checks on an .xhtml file
 
 	INPUTS
 	filename: The name of the file being checked
-	dom: A dom tree to check
+	dom: The dom tree of the file being checked
+	local_css_path: The path to the local CSS file
 
 	OUTPUTS
-	A list of LintMessages representing CSS errors found in the file
+	A list of LintMessage objects
 	"""
 
 	messages = []
@@ -1614,15 +1621,15 @@ def _lint_xhtml_css_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 
 def _lint_xhtml_metadata_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree) -> list:
 	"""
-	Helper function used in self.lint()
 	Process metadata checks on an .xhtml file
 
 	INPUTS
 	filename: The name of the file being checked
-	dom: A dom tree to check
+	dom: The dom of the file being checked
+	self
 
 	OUTPUTS
-	A list of LintMessages representing metadata errors found in the file
+	A list of LintMessage objects
 	"""
 
 	messages = []
@@ -1656,17 +1663,17 @@ def _lint_xhtml_metadata_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTr
 
 def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, ebook_flags: dict, language: str, section_tree: List[EbookSection]) -> list:
 	"""
-	Helper function used in self.lint()
 	Process syntax checks on an .xhtml file
 
 	INPUTS
 	filename: The name of the file being checked
-	dom: A dom tree to check
+	dom: The dom tree of the file being checked
 	file_contents: The contents of the file being checked
-	ebook_flags: A dictionary containing several pieces of information about an ebook
+	ebook_flags: A dictionary containing several flags about an ebook
+	language: The language identified in the metadata
 
 	OUTPUTS
-	A list of LintMessages representing syntax errors found in the file
+	A list of LintMessage objects
 	"""
 
 	messages = []
@@ -2240,18 +2247,18 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: Optional[str], ebook_flags: dict, self) -> list:
 	"""
-	Helper function used in self.lint()
 	Process typography checks on an .xhtml file
 
 	INPUTS
 	filename: The name of the file being checked
-	dom: A dom tree to check
+	dom: The dom tree of the file being checked
 	file_contents: The contents of the file being checked
 	special_file: A string containing the type of special file the current file is, if any
+	ebook_flags: A dictionary containing several flags about an ebook
 	self
 
 	OUTPUTS
-	A list of LintMessages representing typography errors found in the file
+	A list of LintMessage objects
 	"""
 
 	messages = []
@@ -2725,16 +2732,15 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 
 def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str) -> list:
 	"""
-	Helper function used in self.lint()
 	Process XHTML checks on an .xhtml file
 
 	INPUTS
 	filename: The name of the file being checked
-	dom: A dom tree to check
+	dom: The dom tree of the file being checked
 	file_contents: The contents of the file being checked
 
 	OUTPUTS
-	A list of LintMessages representing XHTML errors found in the file
+	A list of LintMessage objects
 	"""
 
 	messages = []
@@ -2793,17 +2799,16 @@ def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_
 
 def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: str) -> list:
 	"""
-	Helper function used in self.lint()
 	Process typo checks on an .xhtml file
 
 	INPUTS
 	filename: The name of the file being checked
-	dom: A dom tree to check
+	dom: The dom tree of the file being checked
 	file_contents: The contents of the file being checked
 	special_file: A string containing the type of special file the current file is, if any
 
 	OUTPUTS
-	A list of LintMessages representing possible typos found in the file
+	A list of LintMessage objects
 	"""
 
 	messages = []
@@ -3026,6 +3031,17 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	return messages
 
 def _lint_image_metadata_checks(self, has_images: bool) -> list:
+	"""
+	Process metadata checks on an image file
+
+	INPUTS
+	self
+	has_images: Flag indicating whether the ebook has images
+
+	OUTPUTS
+	A list of LintMessage objects
+	"""
+
 	messages = []
 
 	# Check for some accessibility metadata regarding images
@@ -3052,7 +3068,20 @@ def _lint_image_metadata_checks(self, has_images: bool) -> list:
 
 	return messages
 
-def _lint_process_ignore_file(self, skip_lint_ignore: bool, messages: list, allowed_messages: list) -> list:
+def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: list, messages: list) -> list:
+	"""
+	Parse a lint ignore file if pressent and if applicable remove its ignored messages
+
+	INPUTS
+	self
+	skip_lint_ignore: Flag indicating whether the lint ignore file should be respected
+	messages: The list of LintMessages that have been generated so far
+	allowed_messages: A list of messages from the lint ignore file to allow for this run
+
+	OUTPUTS
+	A list of LintMessage objects
+	"""
+
 	# This is a dict with where keys are the path and values are a list of code dicts.
 	# Each code dict has a key "code" which is the actual code, and a key "used" which is a
 	# bool indicating whether or not the code has actually been caught in the linting run.
@@ -3136,6 +3165,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	INPUTS
 	self
 	skip_lint_ignore: Flag indicating whether ignore file should be used
+	allowed_messages: Optional list of messages from lint ignore file to allow this run
 
 	OUTPUTS
 	A list of LintMessage objects.
@@ -3713,7 +3743,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	if not allowed_messages:
 		allowed_messages = []
 
-	messages = _lint_process_ignore_file(self, skip_lint_ignore, messages, allowed_messages)
+	messages = _lint_process_ignore_file(self, skip_lint_ignore, allowed_messages, messages)
 
 	messages = natsorted(messages, key=lambda x: ((str(x.filename.name) if x.filename else "") + " " + x.code), alg=ns.PATH)
 
