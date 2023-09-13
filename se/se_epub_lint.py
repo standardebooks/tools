@@ -3052,7 +3052,7 @@ def _lint_image_metadata_checks(self, has_images: bool) -> list:
 
 	return messages
 
-def _lint_process_ignore_file(self, skip_lint_ignore: bool, messages: list) -> list:
+def _lint_process_ignore_file(self, skip_lint_ignore: bool, messages: list, allowed_messages: list) -> list:
 	# This is a dict with where keys are the path and values are a list of code dicts.
 	# Each code dict has a key "code" which is the actual code, and a key "used" which is a
 	# bool indicating whether or not the code has actually been caught in the linting run.
@@ -3069,9 +3069,6 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, messages: list) -> l
 			messages.append(LintMessage("m-049", "No [path]se-lint-ignore.xml[/] rules. Delete the file if there are no rules.", se.MESSAGE_TYPE_ERROR, lint_ignore_path))
 
 		has_illegal_path = False
-
-		if not allowed_messages:
-			allowed_messages = []
 
 		for element in elements:
 			path = element.get_attr("path").strip()
@@ -3713,7 +3710,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 		if entries:
 			messages.append(LintMessage("m-070", "Glossary entry not found in the text.", se.MESSAGE_TYPE_ERROR, self.content_path / "glossary-search-key-map.xml", entries))
 
-	messages = _lint_process_ignore_file(self, skip_lint_ignore, messages)
+	if not allowed_messages:
+		allowed_messages = []
+
+	messages = _lint_process_ignore_file(self, skip_lint_ignore, messages, allowed_messages)
 
 	messages = natsorted(messages, key=lambda x: ((str(x.filename.name) if x.filename else "") + " " + x.code), alg=ns.PATH)
 
