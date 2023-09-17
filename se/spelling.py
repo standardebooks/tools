@@ -435,6 +435,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Uu])nder weigh\b", r"\1nderway", xhtml)			# under weigh -> underway
 	xhtml = regex.sub(r"\bQuire(s?)\b", r"Choir\1", xhtml)				# quire -> choir
 	xhtml = regex.sub(r"\bquire(s?)\b", r"choir\1", xhtml)				# quire -> choir
+	xhtml = regex.sub(r"\b([Bb])onâ fide\b", r"\1ona fide", xhtml)				# bonâ fide -> bona fide
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
