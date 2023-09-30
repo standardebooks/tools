@@ -77,7 +77,7 @@ setup(
 		"cssselect==1.2.0",
 		"cssutils==2.7.1",
 		"ftfy==6.0.3",
-		"gitpython==3.1.34",
+		"gitpython==3.1.35",
 		"importlib_resources==1.0.2",
 		"lxml==4.9.3",
 		"natsort==8.4.0",
