@@ -222,9 +222,13 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		# Now add compatibility fixes for older ereaders.
 
 		# Include compatibility CSS
+		compatibility_css_filename = "compatibility.css"
+		if not self.metadata_dom.xpath("//dc:identifier[starts-with(., 'url:https://standardebooks.org')]"):
+			compatibility_css_filename = "compatibility-white-label.css"
+
 		with open(work_compatible_epub_dir / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:
-			with importlib_resources.open_text("se.data.templates", "compatibility.css", encoding="utf-8") as compatibility_css_file:
-				core_css_file.write(compatibility_css_file.read())
+			with importlib_resources.open_text("se.data.templates", compatibility_css_filename, encoding="utf-8") as compatibility_css_file:
+				core_css_file.write("\n" + compatibility_css_file.read())
 
 		# Simplify CSS and tags
 		total_css = ""

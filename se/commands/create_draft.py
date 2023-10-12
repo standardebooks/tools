@@ -767,7 +767,6 @@ def _create_draft(args: Namespace):
 	_copy_template_file("container.xml", content_path / "META-INF")
 	_copy_template_file("mimetype", content_path)
 	_copy_template_file("onix.xml", content_path / "epub")
-	_copy_template_file("toc.xhtml", content_path / "epub")
 	_copy_template_file("core.css", content_path / "epub" / "css")
 
 	if args.white_label:
@@ -775,6 +774,7 @@ def _create_draft(args: Namespace):
 		_copy_template_file("titlepage-white-label.xhtml", content_path / "epub" / "text" / "titlepage.xhtml")
 		_copy_template_file("cover.jpg", content_path / "epub" / "images")
 		_copy_template_file("local-white-label.css", content_path / "epub" / "css" / "local.css")
+		_copy_template_file("toc-white-label.xhtml", content_path / "epub" / "toc.xhtml")
 
 	else:
 		_copy_template_file("cover.jpg", repo_path / "images")
@@ -788,6 +788,7 @@ def _create_draft(args: Namespace):
 		_copy_template_file("uncopyright.xhtml", content_path / "epub" / "text")
 		_copy_template_file("titlepage.xhtml", content_path / "epub" / "text")
 		_copy_template_file("content.opf", content_path / "epub")
+		_copy_template_file("toc.xhtml", content_path / "epub")
 		_copy_template_file("LICENSE.md", repo_path)
 
 	# Try to find Wikipedia links if possible
