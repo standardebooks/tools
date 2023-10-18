@@ -1,0 +1,64 @@
+s-033 [Manual Review] chapter-1.xhtml File language is `en-GB`, but 
+`content.opf` language is `LANG`.
+m-036 [Error] colophon.xhtml Variable not replaced with value.
+        PG_URL
+        IA_URL
+        COVER_ARTIST
+        COVER_ARTIST_WIKI_URL
+        PRODUCER
+        PRODUCER_URL
+        YEAR
+        PG_YEAR
+        TRANSCRIBER_1
+        TRANSCRIBER_2
+        PAINTING
+t-064 [Manual Review] colophon.xhtml Title not correctly titlecased. Hint: 
+Non-English titles should have an `xml:lang` attribute as they have different 
+titlecasing rules.
+        <i epub:type="se:name.visual-art.painting">PAINTING</i>
+m-036 [Error] content.opf Variable not replaced with value.
+        SUBJECT_1
+        SUBJECT_2
+        LCSH_ID_1
+        LCSH_ID_2
+        TAG
+        DESCRIPTION
+        LONG_DESCRIPTION
+        LANG
+        PG_URL
+        PRODUCTION_NOTES
+        EBOOK_WIKI_URL
+        AUTHOR_SORT
+        AUTHOR_FULL_NAME
+        COVER_ARTIST
+        COVER_ARTIST_SORT
+        COVER_ARTIST_WIKI_URL
+        COVER_ARTIST_NACOAF_URI
+        TRANSCRIBER
+        TRANSCRIBER_SORT
+        TRANSCRIBER_URL
+        PRODUCER
+        PRODUCER_SORT
+        PRODUCER_URL
+s-020 [Error] content.opf Frontmatter found, but no half title page. Half title 
+page is required when frontmatter is present.
+m-063 [Error] cover.svg Cover image has not been built.
+s-033 [Manual Review] dedication.xhtml File language is `en-GB`, but 
+`content.opf` language is `LANG`.
+s-033 [Manual Review] epigraph.xhtml File language is `en-US`, but `content.opf`
+language is `LANG`.
+m-036 [Error] imprint.xhtml Variable not replaced with value.
+        PG_URL
+        IA_URL
+c-006 [Error] local.css Semantic found, but missing corresponding style in 
+`local.css`.
+        <abbr epub:type="se:era">
+        <abbr epub:type="se:temperature">
+        <abbr epub:type="z3998:acronym">
+        <blockquote epub:type="z3998:hymn">
+        <blockquote epub:type="z3998:lyrics">
+        <blockquote epub:type="z3998:poem">
+        <blockquote epub:type="z3998:verse">
+        <section id="dedication" epub:type="dedication">
+        <section id="epigraph" epub:type="epigraph">
+        <span class="elision">
