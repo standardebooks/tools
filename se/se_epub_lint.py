@@ -819,6 +819,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	local_css_has_hymn_style = False
 	local_css_has_lyrics_style = False
 	local_css_has_elision_style = False
+	local_css_has_dedication_style = False
+	local_css_has_epigraph_style = False
 	short_story_count = 0
 	missing_styles: List[str] = []
 	directories_not_url_safe = []
@@ -851,6 +853,12 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 		if "span.elision" in selector:
 			local_css_has_elision_style = True
+
+		if "dedication" in selector:
+			local_css_has_dedication_style = True
+
+		if "epigraph" in selector:
+			local_css_has_epigraph_style = True
 
 		if "abbr" in selector and "nowrap" in rules:
 			abbr_with_whitespace.append(selector)
@@ -3064,6 +3072,15 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				nodes = dom.xpath("/html/body/*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')]/descendant-or-self::*/p/span/following-sibling::*[contains(@epub:type, 'noteref') and name()='a' and position()=1]")
 				if nodes:
 					messages.append(LintMessage("s-047", "[val]noteref[/] as a direct child of element with poem or verse semantic. [val]noteref[/]s should be in their parent [xhtml]<span>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+				# Record missing styles for front matter
+				if filename.name not in IGNORED_FILENAMES:
+					nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'dedication|epigraph')]")
+					for node in nodes:
+						if "dedication" in node.get_attr("epub:type") and not local_css_has_dedication_style:
+							missing_styles.append(node.to_tag_string())
+						if "epigraph" in node.get_attr("epub:type") and not local_css_has_epigraph_style:
+							missing_styles.append(node.to_tag_string())
 
 				# Check for space before endnote backlinks
 				if dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]"):
