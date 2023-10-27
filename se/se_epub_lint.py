@@ -739,10 +739,6 @@ def _lint_metadata_checks(self) -> list:
 	except Exception:
 		missing_metadata_elements.append("<dc:description>")
 
-	# Check for double spacing
-	if self.metadata_dom.xpath(f"/package/metadata/*[re:test(., '[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}')]"):
-		double_spaced_files.append(self.metadata_file_path)
-
 	# Check for illegal Wikipedia URLs
 	nodes = self.metadata_dom.xpath("/package/metadata/*[contains(., '.m.wikipedia.org') or @*[contains(., '.m.wikipedia.org')]]")
 	if nodes:
@@ -1541,7 +1537,7 @@ def _lint_xhtml_css_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 	# Do we have any elements that have specified border color?
 	# `transparent` and `none` are allowed values for border-color
 	if dom.xpath("/html/body//*[attribute::*[re:test(local-name(), 'data-css-border.+?-color') and text() != 'transparent' and text != 'none']]"):
-		messages.append(LintMessage("c-004", "Don’t specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, local_css_path, matches))
+		messages.append(LintMessage("c-004", "Don’t specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, local_css_path))
 
 	# Check that footers have the expected styling
 	# Footers may sometimes be aligned with text-align: center as well as text-align: right
@@ -2245,7 +2241,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 	return messages
 
-def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: Optional[str], ebook_flags: dict, self) -> list:
+def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: Optional[str], ebook_flags: dict, missing_files: list, self) -> tuple:
 	"""
 	Process typography checks on an .xhtml file
 
@@ -2255,10 +2251,11 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	file_contents: The contents of the file being checked
 	special_file: A string containing the type of special file the current file is, if any
 	ebook_flags: A dictionary containing several flags about an ebook
+	missing_files: A list of missing files
 	self
 
 	OUTPUTS
-	A list of LintMessage objects
+	tuple
 	"""
 
 	messages = []
@@ -2728,7 +2725,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 		if node_text != expected_text:
 			messages.append(LintMessage("t-073", f"Possible transcription error in Greek. Found: [text]{node_text}[/], but expected [text]{expected_text}[/text]. Hint: Use [bash]se unicode-names[/] to see differences in Unicode characters.", se.MESSAGE_TYPE_WARNING, filename))
 
-	return messages
+	return (messages, missing_files)
 
 def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str) -> list:
 	"""
@@ -2797,7 +2794,7 @@ def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_
 
 	return messages
 
-def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: str) -> list:
+def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: Optional[str]) -> list:
 	"""
 	Process typo checks on an .xhtml file
 
@@ -3173,6 +3170,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 	local_css_path = self.content_path / "css/local.css"
 	messages: List[LintMessage] = []
+	typography_messages: List[LintMessage] = []
 	cover_svg_title = ""
 	titlepage_svg_title = ""
 	xhtml_css_classes: Dict[str, int] = {}
@@ -3328,6 +3326,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	ebook_flags["has_other_sources"] = other_source_count > 0
 
 	messages = messages + _lint_metadata_checks(self)
+	# Check for double spacing (done here so double_spaced_files doesn't have to be passed to function)
+	if self.metadata_dom.xpath(f"/package/metadata/*[re:test(., '[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}')]"):
+		double_spaced_files.append(self.metadata_file_path)
 
 	# Check for malformed URLs
 	messages = messages + _get_malformed_urls(self.metadata_dom, self.metadata_file_path)
@@ -3579,7 +3580,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 				messages = messages + _lint_xhtml_syntax_checks(self, filename, dom, file_contents, ebook_flags, language, section_tree)
 
-				messages = messages + _lint_xhtml_typography_checks(filename, dom, file_contents, special_file, ebook_flags, self)
+				(typography_messages, missing_files) = _lint_xhtml_typography_checks(filename, dom, file_contents, special_file, ebook_flags, missing_files, self)
+				if typography_messages:
+					messages = messages + typography_messages
 
 				messages = messages + _lint_xhtml_xhtml_checks(filename, dom, file_contents)
 
