@@ -6,7 +6,7 @@ Installing this toolset using `pipx` makes the `se` command line executable avai
 
 # Installation
 
-The toolset requires Python >= 3.7.
+The toolset requires Python >= 3.7 and < 3.12.
 
 To install the toolset locally for development and debugging, see [Installation for toolset developers](#installation-for-toolset-developers).
 
@@ -66,9 +66,7 @@ sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se
 sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 ```
 
-## macOS users (up to macOS 12)
-
-These instructions were tested on macOS 10.15 to 12, on Intel macs.
+## macOS users
 
 1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it’s up to date:
 
@@ -80,12 +78,12 @@ These instructions were tested on macOS 10.15 to 12, on Intel macs.
 
 	```shell
 	# Install some pre-flight dependencies.
-	brew install cairo calibre git openjdk pipx python
+	brew install cairo calibre git openjdk pipx python@3.11
 	pipx ensurepath
 	sudo ln -sfn $(brew --prefix)/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
 
 	# Install the toolset.
-	pipx install standardebooks
+	pipx install --python python3.11 standardebooks
 
 	# Optional: Bash users who have set up bash-completion via brew can install tab completion.
 	ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $(brew --prefix)/etc/bash_completion.d/se
