@@ -39,14 +39,21 @@ img[epub|type~="z3998:publisher-logo"]{
 
 section[epub|type~="colophon"] p,
 section[epub|type~="imprint"] p{
-	margin: 1em auto 0 auto;
+	margin-top: 1em;
+	margin-bottom: 0;
 	text-indent: 0;
+}
+
+section[epub|type~="colophon"] p{
+	margin-left: 0;
+	margin-right: 0;
 }
 
 section[epub|type~="imprint"] p{
 	font-size: .75em;
+	margin-left: 12.5%;
+	margin-right: 12.5%;
 	text-align: justify;
-	width: 75%;
 }
 
 section[epub|type~="colophon"] p + p::before{
