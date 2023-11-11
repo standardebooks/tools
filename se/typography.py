@@ -233,6 +233,12 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"([Ii])\.\s+e\.", r"\1.e.", xhtml)
 	xhtml = regex.sub(r"([Ee])\.\s+g\.", r"\1.g.", xhtml)
 
+	# Remove nbsps between words
+	xhtml = regex.sub(fr"([^>…]){se.NO_BREAK_SPACE}([\p{{Letter}}\p{{Digit}}])", r"\1 \2", xhtml)
+
+	# Add nbsp before `De` last names, but not Latin titles like `<i xml:lang="la">De Natura</i>`
+	xhtml = regex.sub(r"([^>])De ([A-Z][a-z]+?)", fr"\1De{se.NO_BREAK_SPACE}\2", xhtml)
+
 	# WARNING! This and below can remove the ending period of a sentence, if AD or BC is the last word!  We need interactive S&R for this
 	xhtml = regex.sub(r"([\d\s])A\.\s+D\.", r"\1AD", xhtml)
 	xhtml = regex.sub(r"(?<!A\. )B\.\s+C\.", r"BC", xhtml)
@@ -277,7 +283,8 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"<p>\. …", "<p>…", xhtml)
 
 	# Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
-	xhtml = regex.sub(r"([0-9])\s+([\p{Letter}]{1,3}\.)", fr"\1{se.NO_BREAK_SPACE}\2", xhtml, flags=regex.IGNORECASE)
+	# Removed because it's adding too many false positives
+	#xhtml = regex.sub(r"([0-9])\s+([\p{Letter}]{1,3}\.)", fr"\1{se.NO_BREAK_SPACE}\2", xhtml, flags=regex.IGNORECASE)
 
 	# Add non-breaking spaces between Arabic numbers and AM/PM
 	xhtml = regex.sub(r"([0-9])\s+([ap])\.m\.", fr"\1{se.NO_BREAK_SPACE}\2.m.", xhtml, flags=regex.IGNORECASE)
