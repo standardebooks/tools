@@ -283,8 +283,8 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"<p>\. …", "<p>…", xhtml)
 
 	# Add non-breaking spaces between amounts with an abbreviated unit.  E.g. 8 oz., 10 lbs.
-	# Removed because it's adding too many false positives
-	#xhtml = regex.sub(r"([0-9])\s+([\p{Letter}]{1,3}\.)", fr"\1{se.NO_BREAK_SPACE}\2", xhtml, flags=regex.IGNORECASE)
+	# Don't generalize this to match letters because it will add too many false positives
+	xhtml = regex.sub(r"([0-9])\s+(oz\.|lbs\.)", fr"\1{se.NO_BREAK_SPACE}\2", xhtml, flags=regex.IGNORECASE)
 
 	# Add non-breaking spaces between Arabic numbers and AM/PM
 	xhtml = regex.sub(r"([0-9])\s+([ap])\.m\.", fr"\1{se.NO_BREAK_SPACE}\2.m.", xhtml, flags=regex.IGNORECASE)
