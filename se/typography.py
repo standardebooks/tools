@@ -92,7 +92,8 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 		xhtml = regex.sub(r"&(?![#\p{Lowercase_Letter}]+;)", "&amp;", xhtml) # Oops!  html.unescape also unescapes plain ampersands...
 
 	# Replace no-break hyphen with regular hyphen
-	xhtml = xhtml.replace(se.NO_BREAK_HYPHEN, "-")
+	# We don't do this anymore and leave this check to `se find-unusual-characters`
+	# xhtml = xhtml.replace(se.NO_BREAK_HYPHEN, "-")
 
 	# Replace horizontal bar with em dash
 	xhtml = xhtml.replace("―", "—")
