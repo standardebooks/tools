@@ -4,6 +4,7 @@ This module implements the `se find-unusual-characters` command.
 
 import argparse
 from typing import Dict
+import unicodedata
 
 import regex
 from rich import box
@@ -111,7 +112,8 @@ def find_unusual_characters(plain_output: bool) -> int:
 	unusual_character_set += "\u22ef-\u2e39"
 	# Ignore two-/three-em dashes u2e3a-u2e3b
 	unusual_character_set += "\u2e3c-\ufefe"
-	# Ignore ZERO WIDTH SPACE ufeff
+	# Ignore no-break hyphen
+	unusual_character_set += "\u2011"
 	unusual_character_set += "]"
 
 	for xhtml in files_xhtml:
@@ -125,22 +127,23 @@ def find_unusual_characters(plain_output: bool) -> int:
 	lines = []
 
 	for unusual_character, count in unusual_characters.items():
-		lines.append((unusual_character, count))
+		lines.append((unusual_character, unicodedata.name(unusual_character), count))
 
 	lines.sort()
 
 	if lines:
 		if plain_output:
-			for unusual_character, unusual_character_count in lines:
-				console.print(f"{unusual_character} ({unusual_character_count})")
+			for unusual_character, unusual_character_name, unusual_character_count in lines:
+				console.print(f"{unusual_character} {unusual_character_name} ({unusual_character_count})")
 
 		else:
 			table = Table(show_header=False, show_lines=True, box=box.HORIZONTALS)
 			table.add_column("Unusual character")
+			table.add_column("Name")
 			table.add_column("Count", style="dim", no_wrap=True)
 
-			for unusual_character, unusual_character_count in lines:
-				table.add_row(unusual_character, f"({unusual_character_count})")
+			for unusual_character, unusual_character_name, unusual_character_count in lines:
+				table.add_row(unusual_character, unusual_character_name, f"({unusual_character_count})")
 
 			console.print(table)
 
