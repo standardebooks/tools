@@ -1285,7 +1285,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 			section_parent_id = dom_section.get_attr("data-parent")
 
-			has_header = bool(dom_section.xpath("./*[re:test(name(), '^h[1-6]$')] | .//*[not(re:test(name(), '^(section|article|nav)$'))]//*[re:test(name(), '^h[1-6]$')]"))
+			has_header = bool(dom_section.xpath("./*[re:test(name(), '^h[1-6]$')]"))
+			if not has_header:
+				has_header = bool(dom_section.xpath(".//*[not(re:test(name(), '^(section|article|nav)$'))]//*[re:test(name(), '^h[1-6]$')]"))
 
 			if not section_parent_id:
 				# We don't have a data-parent, but do we have a direct parent section in the same file as this section?
