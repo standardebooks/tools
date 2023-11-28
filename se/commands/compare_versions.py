@@ -3,7 +3,6 @@ This module implements the `se compare-versions` command.
 """
 
 import argparse
-from distutils.dir_util import copy_tree # pylint: disable=deprecated-module
 import shutil
 import tempfile
 from pathlib import Path
@@ -64,10 +63,7 @@ def compare_versions(plain_output: bool) -> int:
 
 			with tempfile.TemporaryDirectory() as work_directory_name:
 				# Copy the Git repo to a temp folder, so we can stash and pop with impunity.
-				# If we work directly on the real repo, ctrl + c may leave it in a stashed state unexpectedly.
-				# We have to use this function instead of shutil.copytree because shutil.copytree
-				# raises an error if the directory exists, in Python 3.6. Python 3.8+ has an option to ignore that.
-				copy_tree(target, work_directory_name)
+				shutil.copytree(target, work_directory_name, dirs_exist_ok=True)
 
 				target_filenames = set()
 

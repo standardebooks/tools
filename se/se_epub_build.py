@@ -11,7 +11,6 @@ import os
 import shutil
 import subprocess
 import tempfile
-from distutils.dir_util import copy_tree # pylint: disable=deprecated-module
 from copy import deepcopy
 from hashlib import sha1
 from html import unescape
@@ -162,7 +161,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		work_dir = Path(temp_dir)
 		work_compatible_epub_dir = work_dir / self.path.name
 
-		copy_tree(self.epub_root_path, str(work_compatible_epub_dir))
+		shutil.copytree(self.epub_root_path, str(work_compatible_epub_dir), dirs_exist_ok=True)
 
 		shutil.rmtree(work_compatible_epub_dir / ".git", ignore_errors=True)
 
@@ -676,7 +675,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		if build_kobo:
 			work_kepub_dir = Path(work_dir / (work_compatible_epub_dir.name + ".kepub"))
-			copy_tree(work_compatible_epub_dir, str(work_kepub_dir))
+			shutil.copytree(work_compatible_epub_dir, str(work_kepub_dir), dirs_exist_ok=True)
 
 			for file_path in work_kepub_dir.glob("**/*"):
 				# Add a note to the metadata file indicating this is a transform build
