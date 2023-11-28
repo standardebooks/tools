@@ -87,8 +87,8 @@ def find_unusual_characters(plain_output: bool) -> int:
 	# OK: extended Greek characters u1f00-u1fff
 	unusual_character_set += "\u2000-\u2009"
 	# OK: HAIR SPACE u200a
-	unusual_character_set += "\u200b-\u2010"
-	# OK: valid dashes u2011-u2014
+	unusual_character_set += "\u200b-\u2011"
+	# OK: valid dashes u2012-u2014, but no-break hyphen is invalid
 	unusual_character_set += "\u2015-\u2017"
 	# OK: valid single quotes u2018-u2019
 	unusual_character_set += "\u201a-\u201b"
@@ -116,8 +116,6 @@ def find_unusual_characters(plain_output: bool) -> int:
 	unusual_character_set += "\u22ef-\u2e39"
 	# OK: two-/three-em dashes u2e3a-u2e3b
 	unusual_character_set += "\u2e3c-\ufefe"
-	# OK: no-break hyphen
-	unusual_character_set += "\u2011"
 	unusual_character_set += "]"
 
 	for xhtml in files_xhtml:
