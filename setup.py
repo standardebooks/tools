@@ -70,29 +70,29 @@ setup(
 	# This toolset targets a specific version of Python, and libraries are pinned to specific
 	# versions to prevent surprise breakage. Don't edit this!
 	############################################################
-	python_requires=">=3.7,<=3.11",
+	python_requires=">=3.8,<=3.11",
 	install_requires=[
-		"cairosvg==2.7.0",
-		"chardet==5.1.0",
+		"cairosvg==2.7.1",
+		"chardet==5.2.0",
 		"cssselect==1.2.0",
-		"cssutils==2.7.1",
+		"cssutils==2.9.0",
 		"ftfy==6.0.3",
-		"gitpython==3.1.37",
+		"gitpython==3.1.40",
 		"importlib_resources==1.0.2",
 		"lxml==4.9.3",
 		"natsort==8.4.0",
-		"pillow==10.0.1",
-		"psutil==5.9.5",
+		"pillow==10.1.0",
+		"psutil==5.9.6",
 		"pyphen==0.14.0",
-		"regex==2023.6.3",
+		"regex==2023.10.3",
 		"requests==2.31.0",
-		"rich==13.4.2",
+		"rich==13.7.0",
 		"roman==4.1",
 		"selenium==4.9.0",
 		"smartypants==2.0.1",
 		"tinycss2==1.2.1",
 		"titlecase==2.4",
-		"unidecode==1.3.6"
+		"unidecode==1.3.7"
 	],
 	include_package_data=True,
 	entry_points={
