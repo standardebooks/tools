@@ -166,14 +166,14 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		shutil.rmtree(work_compatible_epub_dir / ".git", ignore_errors=True)
 
 		# We may have a .gitignore file in the epub root if this is a white-label epub. If so, remove it before continuing
-		se.quiet_remove(work_compatible_epub_dir / ".gitignore")
+		(work_compatible_epub_dir / ".gitignore").unlink(True)
 
 		# Clean up old output files if any
-		se.quiet_remove(output_dir / f"thumbnail_{asin}_EBOK_portrait.jpg")
-		se.quiet_remove(output_dir / compatible_epub_output_filename)
-		se.quiet_remove(output_dir / advanced_epub_output_filename)
-		se.quiet_remove(output_dir / kobo_output_filename)
-		se.quiet_remove(output_dir / kindle_output_filename)
+		(output_dir / f"thumbnail_{asin}_EBOK_portrait.jpg").unlink(True)
+		(output_dir / compatible_epub_output_filename).unlink(True)
+		(output_dir / advanced_epub_output_filename).unlink(True)
+		(output_dir / kobo_output_filename).unlink(True)
+		(output_dir / kindle_output_filename).unlink(True)
 
 		# Are we including proofreading CSS?
 		if proof:

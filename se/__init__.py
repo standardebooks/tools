@@ -201,17 +201,6 @@ def is_positive_integer(value: str) -> int:
 
 	return int_value
 
-def quiet_remove(file: Path) -> None:
-	"""
-	Helper function to delete a file without crashing if it doesn't exist.
-	This has to remain until the SE server is on Ubuntu 22.04 or Python 3.8.5+
-	"""
-
-	try:
-		file.unlink()
-	except Exception:
-		pass
-
 def get_target_filenames(targets: list, allowed_extensions: Union[tuple, str]) -> list:
 	"""
 	Helper function to convert a list of filenames or directories into a list of filenames based on some parameters.
