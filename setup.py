@@ -70,7 +70,7 @@ setup(
 	# This toolset targets a specific version of Python, and libraries are pinned to specific
 	# versions to prevent surprise breakage. Don't edit this!
 	############################################################
-	python_requires=">=3.8,<=3.11",
+	python_requires=">=3.8,<=3.12",
 	install_requires=[
 		"cairosvg==2.7.1",
 		"chardet==5.2.0",
