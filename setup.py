@@ -56,7 +56,15 @@ setup(
 	],
 	keywords="ebooks epub",
 	packages=find_packages(),
-
+	include_package_data=True,
+	entry_points={
+		"console_scripts": [
+			"se = se.main:main",
+		],
+	},
+	project_urls={
+		"Source": "https://standardebooks.org/tools",
+	},
 
 	############################################################
 	# WARNING!!!!!!
@@ -70,7 +78,7 @@ setup(
 	# This toolset targets a specific version of Python, and libraries are pinned to specific
 	# versions to prevent surprise breakage. Don't edit this!
 	############################################################
-	python_requires=">=3.8,<=3.11",
+	python_requires=">=3.8,<=3.12",
 	install_requires=[
 		"cairosvg==2.7.1",
 		"chardet==5.2.0",
@@ -93,14 +101,5 @@ setup(
 		"tinycss2==1.2.1",
 		"titlecase==2.4",
 		"unidecode==1.3.7"
-	],
-	include_package_data=True,
-	entry_points={
-		"console_scripts": [
-			"se = se.main:main",
-		],
-	},
-	project_urls={
-		"Source": "https://standardebooks.org/tools",
-	}
+	]
 )
