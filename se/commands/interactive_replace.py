@@ -221,6 +221,28 @@ def _print_screen(screen, filepath: Path, text: str, start_matching_at: int, reg
 
 	return (pad, line_numbers_pad, pad_y, pad_x, match_start, match_end)
 
+def _init_screen(screen):
+	# Initialize curses
+
+	# Only initialize the screen if it's not already initialized
+	if screen is not None:
+		return screen
+
+	screen = curses.initscr()
+	curses.start_color()
+	if curses.has_colors():
+		curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)
+
+	# Disable the blinking cursor
+	try:
+		curses.curs_set(False)
+	# Because some terminals do not support the invisible cursor, proceeed
+	# if curs_set fails to change the visibility
+	except Exception:
+		pass
+
+	return screen
+
 def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-argument
 	"""
 	Entry point for `se interactive-replace`
@@ -244,6 +266,7 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 	# deinitialized
 	errors = []
 	return_code = 0
+	screen = None
 
 	nav_down = b"^N"
 	nav_up = b"^P"
@@ -267,20 +290,6 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 		regex_flags = regex_flags | regex.DOTALL
 
 	try:
-		# Initialize curses
-		screen = curses.initscr()
-		curses.start_color()
-		if curses.has_colors():
-			curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)
-
-		# Disable the blinking cursor
-		try:
-			curses.curs_set(False)
-		# Because some terminals do not support the invisible cursor, proceeed
-		# if curs_set fails to change the visibility
-		except Exception:
-			pass
-
 		for filepath in se.get_target_filenames(args.targets, ".xhtml"):
 			try:
 				with open(filepath, "r", encoding="utf-8") as file:
@@ -292,6 +301,15 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 
 			original_xhtml = xhtml
 			is_file_dirty = False
+
+			# Only init the screen if we actually have matches
+
+			# Do we have a regex match in the text?
+			# We only consider text after the last completed match
+			if regex.search(fr"{args.regex}", original_xhtml, flags=regex_flags):
+				screen = _init_screen(screen)
+			else:
+				continue
 
 			screen_height, screen_width = screen.getmaxyx()
 
@@ -465,7 +483,8 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 
 		# We may get here if we pressed `q`
 	finally:
-		curses.endwin()
+		if screen is not None:
+			curses.endwin()
 
 	for error in errors:
 		se.print_error(error)
