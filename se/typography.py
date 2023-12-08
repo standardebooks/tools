@@ -314,7 +314,8 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"\b(?<!/)7/8(?!/)\b", "⅞", xhtml)
 
 	# Convert any remaining fractions to use the fraction slash
-	xhtml = regex.sub(r"\b(?<!/)([0-9]+)/([0-9]+)(?!/)\b", lambda result: _number_to_fraction(result.group(0)), xhtml)
+	# Don't match possible years, like 1945/6, 1945/46, 1945/1946
+	xhtml = regex.sub(r"\b(?<!/)([0-9]{1,3}|[0-9]{5,})/\b([0-9]{1,3}|[0-9]{5,})(?!/)\b", lambda result: _number_to_fraction(result.group(0)), xhtml)
 
 	# Remove spaces between whole numbers and fractions
 	xhtml = regex.sub(r"([0-9,]+)\s+([¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]|[⁰¹²³⁴⁵⁶⁷⁸⁹]+⁄[₀₁₂₃₄₅₆₇₈₉]+)", r"\1\2", xhtml)
