@@ -1356,20 +1356,20 @@ def tagged_titlecase(text: str) -> str:
 	"""
 	if "<" not in text:  # if no tags, process normally
 		return titlecase(text)
-	else:
-		cased_string = process_tagged_string(text)  # treat it specially
+	
+	cased_string = process_tagged_string(text)  # treat it specially
 
-		# now we have to check for book, play, etc titles and process them again as separate units
-		# this patternlooks for book/play/vessel etc. names
-		regex_pattern = regex.compile(r'<i epub:type="se:name\.(.*?)"(.*?)>(.*?)</i>')
+	# now we have to check for book, play, etc titles and process them again as separate units
+	# this patternlooks for book/play/vessel etc. names
+	regex_pattern = regex.compile(r'<i epub:type="se:name\.(.*?)"(.*?)>(.*?)</i>')
 
-		for match in regex_pattern.finditer(cased_string): # we iterate because there may be more than one such
-			# we make a recursive call because the book title may contain tags of its own such as <abbr>
-			titled_semantic = tagged_titlecase(match.group(3))
-			replacement = f'<i epub:type="se:name.{match.group(1)}"{match.group(2)}>{titled_semantic}</i>'
-			cased_string = cased_string.replace(match.group(0), replacement)
+	for match in regex_pattern.finditer(cased_string): # we iterate because there may be more than one such
+		# we make a recursive call because the book title may contain tags of its own such as <abbr>
+		titled_semantic = tagged_titlecase(match.group(3))
+		replacement = f'<i epub:type="se:name.{match.group(1)}"{match.group(2)}>{titled_semantic}</i>'
+		cased_string = cased_string.replace(match.group(0), replacement)
 
-		return cased_string
+	return cased_string
 
 def make_url_safe(text: str) -> str:
 	"""
