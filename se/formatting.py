@@ -1277,7 +1277,7 @@ def check_badly_formed(text) -> bool:
 	return (right_angle_index < left_angle_index)  
 
 
-def remove_tags(text: str) -> str:
+def get_untagged(text: str) -> str:
 	"""
 	Remove HTML tags from a string.
 
@@ -1318,7 +1318,7 @@ def process_tagged_string(text: str) -> str:
 	A titlecased version of the tagged input string
 
 	"""
-	untagged = remove_tags(text)
+	untagged = get_untagged(text)
 	cased = titlecase(untagged)
 	tagged_index = 0
 	untagged_index = 0
