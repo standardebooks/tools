@@ -1258,8 +1258,118 @@ def titlecase(text: str) -> str:
 
 	# Like `Will-o’-the-Wisp`
 	text = regex.sub(r"(?<=-)(O’|The)-", lambda result: result.group(1).lower() + "-", text)
-
 	return text
+
+def check_badly_formed(text) -> bool:
+	"""
+	Helper function to determine if the supplied string starts partway through a tag
+	
+	INPUTS
+	text: The string including angle brackets
+	
+	RETURNS
+	True if the first right angle is BEFORE the first left angle, otherwise False
+	"""
+	# we know from earlier in the call stack that there's at least one < char
+	# but we need to know if the start of the string is already INSIDE a tag
+	right_angle_index = text.find(">")
+	left_angle_index = text.find("<")
+	return (right_angle_index < left_angle_index)  
+
+
+def remove_tags(text: str) -> str:
+	"""
+	Remove HTML tags from a string.
+
+	INPUTS
+	text: The string including tags
+
+	OUTPUTS
+	A version of the string stripped of tags
+
+	"""
+	# take out the tags by transcribing and omitting them
+	# with a well-formed string we could do this more efficiently with a regex,
+	# but this way is more certain in case a string is badly formed, eg 'h3>A TITLE</h3'
+	untagged = ""
+	in_a_tag = check_badly_formed(text)
+	tagged_index = 0
+	while tagged_index < len(text):
+		if not in_a_tag:
+			if text[tagged_index] == "<":
+				in_a_tag = True
+			else:
+				untagged += text[tagged_index]  # transfer the char
+		else:  # we're inside a tag
+			if text[tagged_index] == ">":
+				in_a_tag = False
+		tagged_index += 1
+	return untagged.strip()
+
+
+def process_tagged_string(text: str) -> str:
+	"""
+	Applies titlecasing to those parts of a string outside of html tags.
+
+	INPUTS
+	text: The string including tags to be titlecased
+
+	OUTPUTS
+	A titlecased version of the tagged input string
+
+	"""
+	untagged = remove_tags(text)
+	cased = titlecase(untagged)
+	tagged_index = 0
+	untagged_index = 0
+	in_a_tag = check_badly_formed(text)
+	outstring = ""
+	while tagged_index < len(text):
+		if not in_a_tag:
+			if text[tagged_index] == "<":
+				in_a_tag = True
+				outstring += "<"
+			else:
+				outstring += cased[untagged_index]  # transfer the titlecased letter
+				untagged_index += 1
+		else:  # we're inside a tag
+			if text[tagged_index] == ">":
+				in_a_tag = False
+				outstring += ">"
+			else:  # we're inside a tag, keep going
+				outstring += text[tagged_index]
+		tagged_index += 1
+	return outstring
+
+def tagged_titlecase(text: str) -> str:
+	"""
+	Titlecase a string which includes <abbr> and other tags. 
+	
+	Calls SE titlecase on a version of the string stripped of tags, 
+	then re-applies the casing around those tags.
+
+	INPUTS
+	text: The string to titlecase
+
+	OUTPUTS
+	A titlecased version of the tagged input string
+	"""
+	if "<" not in text:  # if no tags, process normally
+		return titlecase(text)
+	else:
+		cased_string = process_tagged_string(text)  # treat it specially
+
+		# now we have to check for book, play, etc titles and process them again as separate units
+		# this patternlooks for book/play/vessel etc. names
+		regex_pattern = regex.compile(r'<i epub:type="se:name\.(.*?)"(.*?)>(.*?)</i>')
+
+		for match in regex_pattern.finditer(cased_string): # we iterate because there may be more than one such
+			# we make a recursive call because the book title may contain tags of its own such as <abbr>
+			titled_semantic = tagged_titlecase(match.group(3))
+			replacement = f'<i epub:type="se:name.{match.group(1)}"{match.group(2)}>{titled_semantic}</i>'
+			cased_string = cased_string.replace(match.group(0), replacement)
+
+		return cased_string
 
 def make_url_safe(text: str) -> str:
 	"""
@@ -1442,7 +1552,6 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 
 		if h_elements:
 			h_element = h_elements[0]
-
 			# Strip any endnote references first
 			for node in h_element.xpath("//*[contains(@epub:type, 'noteref')]"):
 				node.remove()
