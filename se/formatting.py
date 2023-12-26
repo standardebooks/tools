@@ -1128,8 +1128,8 @@ def titlecase(text: str) -> str:
 	# So, convert to all lowercase first.
 	text = text.lower()
 
-	# Replace all white space except hair space with a space character
-	text = regex.sub(fr"[^\S{se.HAIR_SPACE}]+", " ", text)
+	# Replace all white space except hair spaces and non-breaking spaces with a space character
+	text = regex.sub(fr"[^\S{se.HAIR_SPACE}{se.NO_BREAK_SPACE}]+", " ", text)
 
 	text = pip_titlecase(text)
 
@@ -1258,6 +1258,10 @@ def titlecase(text: str) -> str:
 
 	# Like `Will-o’-the-Wisp`
 	text = regex.sub(r"(?<=-)(O’|The)-", lambda result: result.group(1).lower() + "-", text)
+
+	# Fix non-breaking spaces - we can assume that they’re intentionally used in names
+	# If `titlecase` is fixed we can remove this, see https://github.com/ppannuto/python-titlecase/issues/95
+	text = regex.sub(fr"{se.NO_BREAK_SPACE}([a-z])", lambda result: " " + result.group(1).upper(), text)
 
 	return text
 

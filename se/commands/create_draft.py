@@ -94,7 +94,8 @@ def _get_word_widths(string: str, target_height: int) -> list:
 	"""
 
 	words = []
-	for word in reversed(string.split()):
+	# Forcing a split on " " means that we can use non-breaking spaces to tie together blocks (e.g. Mrs. Seacole)
+	for word in reversed(string.strip().split(" ")):
 		width = 0
 
 		for char in word:
