@@ -1397,10 +1397,10 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 
 	title = ""
 
-	# Do we have an hgroup element to process?
+	# Do we have an hgroup element in the first <section> or <article> to process?
 	# Only match hgroups that do not have a ancestor containing an h# or header (which presumably contains an h# element). Note
 	# how we exclude <header>s that contain an <hgroup> otherwise we would match ourselves!
-	hgroup_elements = dom.xpath("//hgroup[not(ancestor::*[./*[re:test(name(), '^h[1-6]$') or (name() = 'header' and not(./hgroup))]])]")
+	hgroup_elements = dom.xpath("/html/body/*[re:test(name(), '(article|section)')][1]//hgroup[not(ancestor::*[./*[re:test(name(), '^h[1-6]$') or (name() = 'header' and not(./hgroup))]])]")
 	if hgroup_elements:
 		hgroup_element = hgroup_elements[0]
 
@@ -1416,9 +1416,10 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 			raise se.InvalidSeEbookException("No [xhtml]<section>[/] or [xhtml]<article>[/] element for [xhtml]<hgroup>[/].")
 
 		# If the closest parent <section> or <article> is a part, division, or volume, then keep all <hgroup> children
-		if not closest_parent_section.get_attr("epub:type") or (closest_parent_section.get_attr("epub:type") and ("part" not in closest_parent_section.get_attr("epub:type") and "division" not in closest_parent_section.get_attr("epub:type") and "volume" not in closest_parent_section.get_attr("epub:type"))):
+		closest_parent_section_epub_type = closest_parent_section.get_attr("epub:type")
+		if not closest_parent_section_epub_type or (closest_parent_section_epub_type and ("part" not in closest_parent_section_epub_type and "division" not in closest_parent_section_epub_type and "volume" not in closest_parent_section_epub_type)):
 			# Else, if the closest parent <section> or <article> is a halftitlepage, then discard <hgroup> subtitles
-			if closest_parent_section.get_attr("epub:type") and "halftitlepage" in closest_parent_section.get_attr("epub:type"):
+			if closest_parent_section_epub_type and "halftitlepage" in closest_parent_section_epub_type:
 				for node in hgroup_element.xpath("./*[contains(@epub:type, 'subtitle')]"):
 					node.remove()
 
@@ -1442,7 +1443,7 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 
 	else:
 		# No hgroups, so try to find the first h# element. The title becomes that element's inner text.
-		h_elements = dom.xpath("//*[re:test(name(), '^h[1-6]')][1]")
+		h_elements = dom.xpath("/html/body/*[re:test(name(), '(article|section)')][1]//*[re:test(name(), '^h[1-6]')][1]")
 
 		if h_elements:
 			h_element = h_elements[0]
