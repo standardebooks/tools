@@ -177,7 +177,7 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 	if verbose:
 		message = str(message).replace("\n", f"\n{MESSAGE_INDENT}")
 
-	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=bool(is_called_from_parallel())) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 
 	if plain_output:
 		# Replace color markup with `
