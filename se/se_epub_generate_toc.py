@@ -591,8 +591,6 @@ def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem, textf: str) ->
 	"""
 	children = node.xpath("./p | ./h1 | ./h2 | ./h3 | ./h4 | ./h5 | ./h6")
 	for child in children:  # we expect these to be h1, h2, h3, h4 etc
-		if not toc_item.lang:
-			toc_item.lang = child.get_attr("xml:lang")
 		epub_type = child.get_attr("epub:type")
 
 		if child.get_attr("hidden"):
@@ -637,7 +635,9 @@ def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem, textf: str) ->
 					toc_item.subtitle = extract_strings(child)
 				else:
 					toc_item.title = extract_strings(child)
-		if toc_item.title and toc_item.subtitle:  # then we're done
+					# this is the only time we need to worry about the language of the title
+					if not toc_item.lang:
+						toc_item.lang = child.get_attr("xml:lang")
 			return toc_item
 	return toc_item
 
