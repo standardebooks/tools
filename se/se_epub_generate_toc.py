@@ -633,9 +633,10 @@ def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem, textf: str) ->
 			if "title" in epub_type:  # this allows for `fulltitle` to work here, too
 				if toc_item.title or toc_item.roman or toc_item.title_is_ordinal:  # if title already filled, must be a subtitle
 					toc_item.subtitle = extract_strings(child)
+					if toc_item.roman or toc_item.title_is_ordinal:  # in these cases, we want to check language on subtitle
+						toc_item.lang = child.get_attr("xml:lang")
 				else:
 					toc_item.title = extract_strings(child)
-					# this is the only time we need to worry about the language of the title
 					if not toc_item.lang:
 						toc_item.lang = child.get_attr("xml:lang")
 
