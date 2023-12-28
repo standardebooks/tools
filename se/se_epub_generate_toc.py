@@ -638,6 +638,8 @@ def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem, textf: str) ->
 					# this is the only time we need to worry about the language of the title
 					if not toc_item.lang:
 						toc_item.lang = child.get_attr("xml:lang")
+
+		if toc_item.title and toc_item.subtitle:  # then we're done, get out of loop by returning
 			return toc_item
 	return toc_item
 
