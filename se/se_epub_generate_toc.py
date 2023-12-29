@@ -475,7 +475,7 @@ def get_toc_id_for_special_item(node: EasyXmlElement) -> str:
 		if toc_id:
 			return toc_id
 	return ""
-		
+
 
 def get_level(node: EasyXmlElement, toc_list: list) -> int:
 	"""
