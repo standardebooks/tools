@@ -427,6 +427,7 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, single_file: 
 		if special_item.title is None:
 			special_item.title = "NO TITLE"
 		special_item.file_link = textf
+		special_item.id = textf.replace('.xhtml','')  # quick and dirty way of getting the id of a special item
 		special_item.place = place
 		toc_list.append(special_item)
 		return
