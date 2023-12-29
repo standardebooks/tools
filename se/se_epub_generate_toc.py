@@ -427,6 +427,9 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, single_file: 
 		if special_item.title is None:
 			special_item.title = "NO TITLE"
 		special_item.file_link = textf
+		special_item.toc_id = get_toc_id_for_special_item(content_item[0])
+		if not special_item.toc_id: # no id found, report as error
+			raise se.InvalidInputException("Couldn’t determine section or article id in file: [path][link=file://{textf}]{textf}[/][/].")
 		special_item.toc_id = textf.replace('.xhtml','')  # quick and dirty way of getting the id of a special item
 		special_item.place = place
 		toc_list.append(special_item)
@@ -461,6 +464,18 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, single_file: 
 		is_toplevel = False
 		toc_list.append(toc_item)
 
+
+def get_toc_id_for_special_item(node: EasyXmlElement) -> str:
+	"""
+	Get the id for a 'special item' node
+	"""
+	parent_sections = node.xpath("./ancestor::*[name() = 'section' or name() = 'article']")
+	for parent in parent_sections:
+		toc_id = parent.get_attr("id")
+		if toc_id:
+			return toc_id
+	return None
+		
 
 def get_level(node: EasyXmlElement, toc_list: list) -> int:
 	"""
