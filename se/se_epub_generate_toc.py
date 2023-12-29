@@ -474,7 +474,7 @@ def get_toc_id_for_special_item(node: EasyXmlElement) -> str:
 		toc_id = parent.get_attr("id")
 		if toc_id:
 			return toc_id
-	return None
+	return ""
 		
 
 def get_level(node: EasyXmlElement, toc_list: list) -> int:
