@@ -57,7 +57,7 @@ class TocItem:
 	subtitle = ""
 	title_is_ordinal = False
 	lang = ""
-	id = ""
+	toc_id = ""
 	epub_type = ""
 	division = BookDivision.NONE
 	place = Position.FRONT
@@ -427,7 +427,7 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, single_file: 
 		if special_item.title is None:
 			special_item.title = "NO TITLE"
 		special_item.file_link = textf
-		special_item.id = textf.replace('.xhtml','')  # quick and dirty way of getting the id of a special item
+		special_item.toc_id = textf.replace('.xhtml','')  # quick and dirty way of getting the id of a special item
 		special_item.place = place
 		toc_list.append(special_item)
 		return
@@ -485,7 +485,7 @@ def get_level(node: EasyXmlElement, toc_list: list) -> int:
 
 	if data_parent:
 		# see if we can find it in already processed (as we should if spine is correctly ordered)
-		parent_file = [t for t in toc_list if t.id == data_parent]
+		parent_file = [t for t in toc_list if t.toc_id == data_parent]
 		if parent_file:
 			this_level = parent_file[0].level + 1
 			return this_level + depth - 1  # subtract from depth because all headings should have depth >= 1
@@ -512,14 +512,14 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 
 	# is_top_level stops the first heading in a file getting an anchor id, we don't generally want that.
 	# The exceptions are things like poems within a single-file volume.
-	toc_item.id = get_parent_id(node)  # pylint: disable=invalid-name
-	if toc_item.id == "":
+	toc_item.toc_id = get_parent_id(node)  # pylint: disable=invalid-name
+	if toc_item.toc_id == "":
 		toc_item.file_link = textf
 	else:
 		if not is_toplevel:
-			toc_item.file_link = f"{textf}#{toc_item.id}"
+			toc_item.file_link = f"{textf}#{toc_item.toc_id}"
 		elif single_file:  # It IS the first heading in the file, but there's only a single content file?
-			toc_item.file_link = f"{textf}#{toc_item.id}"
+			toc_item.file_link = f"{textf}#{toc_item.toc_id}"
 		else:
 			toc_item.file_link = textf
 
