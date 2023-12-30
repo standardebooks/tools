@@ -137,7 +137,6 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Oo])ker\b", r"\1cher", xhtml)				# oker -> ocher
 	xhtml = regex.sub(r"\b([Ww])ellnigh\b", r"\1ell-nigh", xhtml)			# wellnigh -> well-nigh
 	xhtml = regex.sub(r"\b([Tt]he|[Aa]nd|[Oo]r) what not(?! to)\b", r"\1 whatnot", xhtml)	# what not -> whatnot
-	xhtml = regex.sub(r"\b([Gg])ood[\-]?bye?\b", r"\1oodbye", xhtml)		# good-by -> goodbye
 	xhtml = regex.sub(r"\b([Gg])ood\sbye\b", r"\1oodbye", xhtml)			# good bye -> goodbye (Note that we can't do `good by` -> `goodby` because one might do good by someone.
 	xhtml = regex.sub(r"\b([Gg])ood[\-\s]?bye?s\b", r"\1oodbyes", xhtml)		# good bys -> goodbyes
 	xhtml = regex.sub(r"\b([Hh])ind(u|oo)stanee", r"\1industani", xhtml)		# hindoostanee -> hindustani
@@ -188,11 +187,6 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Cc])oup[\- ]de[\- ]gr[aâ]ce", r"\1oup de grâce", xhtml)	# coup-de-grace -> coup-de-grâce
 	xhtml = regex.sub(r"\b([Cc])anape", r"\1anapé", xhtml)				# canape -> canapé
 	xhtml = regex.sub(r"\b([Pp])recis\b", r"\1récis", xhtml)			# precis -> précis
-	xhtml = regex.sub(r"\b([Gg])ood\-night", r"\1ood night", xhtml)			# good-night -> good night
-	xhtml = regex.sub(r"\b([Gg])ood\-morning", r"\1ood morning", xhtml)		# good-morning -> good morning
-	xhtml = regex.sub(r"\b([Gg])ood\-evening", r"\1ood evening", xhtml)		# good-evening -> good evening
-	xhtml = regex.sub(r"\b([Gg])ood\-day", r"\1ood day", xhtml)			# good-day -> good day
-	xhtml = regex.sub(r"\b([Gg])ood\-afternoon", r"\1ood afternoon", xhtml)		# good-afternoon -> good afternoon
 	xhtml = regex.sub(r"\b([Bb])ete noir", r"\1ête noir", xhtml)			# bete noir -> bête noir
 	xhtml = regex.sub(r"\bEclat\b", r"Éclat", xhtml)				# Eclat -> Éclat
 	xhtml = regex.sub(r"\beclat\b", r"éclat", xhtml)				# eclat -> éclat
