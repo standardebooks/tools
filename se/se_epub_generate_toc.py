@@ -428,9 +428,8 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, single_file: 
 			special_item.title = "NO TITLE"
 		special_item.file_link = textf
 		special_item.toc_id = get_toc_id_for_special_item(content_item[0])
-		if not special_item.toc_id: # no id found, report as error
-			raise se.InvalidInputException("Couldn’t determine section or article id in file: [path][link=file://{textf}]{textf}[/][/].")
-		special_item.toc_id = textf.replace('.xhtml','')  # quick and dirty way of getting the id of a special item
+		if not special_item.toc_id: # no luck so use quick and dirty method
+			special_item.toc_id = textf.replace('.xhtml','')
 		special_item.place = place
 		toc_list.append(special_item)
 		return
