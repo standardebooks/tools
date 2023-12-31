@@ -413,14 +413,18 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, single_file: 
 	# Find all the hgroups and h1, h2 etc headings.
 	heads = dom.xpath("//hgroup | //h1 | //h2 | //h3 | //h4 | //h5 | //h6")
 
-	# special treatment where we can't find any header or hgroups
+	# special treatment where we can't find any heading or hgroups
 	if not heads:  # May be a dedication or an epigraph, with no heading tag.
 		special_item = TocItem()
 		# Need to determine level depth.
 		# We don't have a heading, so get first content item
 		content_item = dom.xpath("//p | //header | //img")
-		if content_item:
-			special_item.level = get_level(content_item[0], toc_list)
+		if content_item: # check to see if it has a data-parent, if so, we'll use that to determine depth
+			data_parent = content_item[0].xpath("//*[@data-parent]")
+			if data_parent:
+				special_item.level = get_level(content_item[0], toc_list)
+			else: # special items without data-parents get a default dept of 1
+				special_item.level = 1
 		else:
 			raise se.InvalidInputException(f"Unable to find heading or content item (p, header or img) in file: [path][link=file://{textf}]{textf}[/][/].")
 		special_item.title = dom.xpath("//head/title/text()", True)  # Use the page title as the ToC entry title.
