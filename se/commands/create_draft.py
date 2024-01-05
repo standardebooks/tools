@@ -966,7 +966,7 @@ def _create_draft(args: Namespace):
 						loc_id = "Unknown"
 
 						response = requests.get(search_url.format("subjects"), timeout=60)
-						result = regex.search(record_link.format("subjects"), response.text)
+						result = regex.search(record_link.format("subjects"), response.text, regex.IGNORECASE)
 
 						# If Subject authority does not exist we can also check the Names authority
 						if result is None:
