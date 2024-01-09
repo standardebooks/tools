@@ -2594,7 +2594,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 
 	# Check for quotations that carry to the next paragraph, but the next paragraph has no opening quotation mark
 	# Exclude p in blockquote because often that has different formatting
-	nodes = dom.xpath("/html/body//p[re:test(., '^“[^”]+$') and not(./ancestor::blockquote) and ./following-sibling::*[1][name() = 'p' and re:test(normalize-space(), '^[^“]')]]")
+	nodes = dom.xpath("/html/body//p[re:test(., '“[^”]+$') and not(./ancestor::blockquote) and not(./ancestor::*[re:test(@epub:type, 'z3998:(verse|hymn|song|poem)')]) and ./following-sibling::*[1][name() = 'p' and re:test(normalize-space(), '^[^“]')]]")
 	if nodes:
 		messages.append(LintMessage("t-051", "Dialog in [xhtml]<p>[/] that continues to the next [xhtml]<p>[/], but the next [xhtml]<p>[/] does not begin with [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
