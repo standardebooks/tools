@@ -3479,6 +3479,14 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				# Add to the short story count for later checks
 				short_story_count += len(dom.xpath("/html/body//article[contains(@epub:type, 'se:short-story')]"))
 
+				# Check for ID attrs that don't match the filename.
+				# We simply check if there are *any* ids that match, because we can have multiple IDs--for example, works that are part of a volume or subchapters with IDs
+				# Ignore <body>s with more than 2 <article>s as those are probably short story collections
+				nodes = dom.xpath("/html/body[count(./article) < 2]//*[(name() = 'section' or name() = 'article') and @id]")
+
+				if nodes and filename.stem not in [node.get_attr("id") for node in nodes]:
+					messages.append(LintMessage("f-015", "Filename doesn’t match [attr]id[/] attribute of primary [xhtml]<section>[/] or [xhtml]<article>[/]. Hint: [attr]id[/] attributes don’t include the file extension.", se.MESSAGE_TYPE_ERROR, filename))
+
 				# Check for unused selectors
 				if dom.xpath("/html/head/link[contains(@href, 'local.css')]"):
 					for selector in local_css_selectors:
