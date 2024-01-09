@@ -1147,12 +1147,15 @@ def _update_missing_styles(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 				missing_styles.append(node.to_tag_string())
 
 		# Check frontmatter for missing styling
-		nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'dedication|epigraph')]")
+		nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'epigraph') and not(.//h2)]")
 		for node in nodes:
-			if "dedication" in node.get_attr("epub:type") and not local_css["has_dedication_style"]:
+			if not local_css["has_epigraph_style"]:
 				missing_styles.append(node.to_tag_string())
 
-			if "epigraph" in node.get_attr("epub:type") and not local_css["has_epigraph_style"]:
+		# Check for missing dedication styling, but not if the dedication is in a <header> as those are typically unstyled
+		nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'dedication') and not(re:test(@epub:type, 'z3998:(poem|verse|hymn|song)')) and not(./ancestor::header) and not(.//h2) and not(count(.//p) > 3)]")
+		for node in nodes:
+			if not local_css["has_dedication_style"]:
 				missing_styles.append(node.to_tag_string())
 
 	return missing_styles
