@@ -88,7 +88,7 @@ complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s v -l verbose -d 
 complete -c se -n "__fish_se_no_subcommand" -a interactive-replace -d "Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (c) Center on match. (q) Save this file and quit."
 complete -c se -A -n "__fish_seen_subcommand_from interactive-replace" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from interactive-replace" -s i -l ignore-case -x -d "ignore case when matching; equivalent to regex.IGNORECASE"
-complete -c se -A -n "__fish_seen_subcommand_from interactive-replace" -s m -l multiline -x -d "make `^` and `$` consider each line; equivalent to regex.MULTILINE"
+complete -c se -A -n "__fish_seen_subcommand_from interactive-replace" -s m -l multiline -x -d "make `^` and `\$` consider each line; equivalent to regex.MULTILINE"
 complete -c se -A -n "__fish_seen_subcommand_from interactive-replace" -s d -l dot-all -x -d "make `.` match newlines; equivalent to regex.DOTALL"
 complete -c se -A -n "__fish_seen_subcommand_from interactive-replace" -s v -l vim -x -d "use basic Vim-like navigation shortcuts"
 
