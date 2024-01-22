@@ -1140,9 +1140,9 @@ def titlecase(text: str) -> str:
 	text = regex.sub(r"<(/?)([^>]+?)>", lambda result: "<" + result.group(1) + result.group(2).lower() + ">", text)
 
 	# Uppercase Roman numerals, but only if they are valid Roman numerals and they are not `MIX` (which is much more likely to be an English word than a Roman numeral)
-	# or `DI` which may be an Italian word
+	# or `DI` which may be an Italian word. May be preceded by a space or parenthesis.
 	try:
-		text = regex.sub(r"(\s)([ivxlcdm]+)(\b)", lambda result: result.group(1) + result.group(2).upper() + result.group(3) if result.group(2).upper() not in ("MIX", "DI") and roman.fromRoman(result.group(2).upper()) else result.group(1) + result.group(2), text, flags=regex.IGNORECASE)
+		text = regex.sub(r"([\s\(])([ivxlcdm]+)(\b)", lambda result: result.group(1) + result.group(2).upper() + result.group(3) if result.group(2).upper() not in ("MIX", "DI") and roman.fromRoman(result.group(2).upper()) else result.group(1) + result.group(2), text, flags=regex.IGNORECASE)
 	except roman.InvalidRomanNumeralError:
 		pass
 
