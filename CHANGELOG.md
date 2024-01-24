@@ -1,3 +1,101 @@
+# 2.6.2
+
+## General
+
+- Fix issue reference in normalise_greek. Thanks to Robin Whittleton
+
+- Removed dependency on distutils. Thanks to Deepak Jois
+
+- Fix broken color output
+
+- Fix fish completions syntax error. Thanks to Job Curtis
+
+## se build-title
+
+- Select the title from the first `<section>` or `<article>`, instead of the first `<hgroup>` in the whole document
+
+- Add `<nav>` as top level selectable element
+
+## se build-toc
+
+- Moved location of reading of `xml:lang` for title to avoid it picking up that in subtitle
+
+- Added `xml:lang` check for subtitle if title an ordinal and/or roman numeral
+
+- Show the problematic heading on roman error. Thanks to Robin Whittleton
+
+## se create-draft
+
+- Fix various template issues with --white-label option for better ereader compatibility
+
+- Allow non-breaking spaces to tie together title blocks in draft creation
+
+- Ignore case when searching for LCSH subject headings
+
+## se find-unusual-characters
+
+- Check for no-break hyphens, and print character name in output
+
+- Change how no-break hyphen is found
+
+## se interactive-replace
+
+- Only initialize the screen if we have replacements to make
+
+## se lint
+
+- Add s-074, empty `<th>` elements should be `<td>` elements
+
+- Add s-095, `<p>` child of `<hgroup>` has wrong text-align
+
+- Add missing SE variables to some checks. Thanks to Robin Whittleton
+
+- Add y-033, incorrect three-em-dash usage
+
+- Sort c-006 matches so tests are reproducable
+
+- Add checks for missing dedication and epigraph CSS. Thanks to Erin Endrei
+
+- Reorganize lint internals for better readability. Thanks to Vince Rice
+
+- Improve t-051
+
+- Improve c-006
+
+## se modernize-spelling
+
+- Various additions
+
+- Split typos (t-042) into separate codes (y-XXX). Thanks to Vince Rice
+
+## se build-spine
+
+- Order half title page after other front matter. Thanks to Andrew Paseltiner
+
+- Always place colophon and copyright page last in the backmatter
+
+## se semanticate
+
+- Fix £sd fractions bug. Thanks to Robin Whittleton
+
+- Add z3998:name-title semantic to name titles. Thanks to Erin Endrei
+
+## se titlecase
+
+- Improve Roman numeral algorithm
+
+##  se typogrify
+
+- Don't try to add nbsp to weight abbreviations
+
+- Remove nbsp between words;
+
+- Add nbsp to names starting with `De `
+
+- Don't change no-break hyphens to regular hyphens, in favor of check in `se find-unusual-characters`
+
+- Ignore possible years when creating Unicode fractions
+
 # 2.6.1
 
 ## General
