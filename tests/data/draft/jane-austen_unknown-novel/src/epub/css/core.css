@@ -5,6 +5,7 @@ body{
 	font-variant-numeric: oldstyle-nums;
 	hyphens: auto;
 	-epub-hyphens: auto;
+	text-wrap: pretty;
 }
 
 p{
