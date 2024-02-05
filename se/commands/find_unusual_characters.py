@@ -140,12 +140,13 @@ def find_unusual_characters(plain_output: bool) -> int:
 
 		else:
 			table = Table(show_header=False, show_lines=True, box=box.HORIZONTALS)
-			table.add_column("Unusual character")
+			table.add_column("Character", style="bold", width=1, no_wrap=True)
+			table.add_column("Code point", style="dim", no_wrap=True)
 			table.add_column("Name")
 			table.add_column("Count", style="dim", no_wrap=True)
 
 			for unusual_character, unusual_character_name, unusual_character_count in lines:
-				table.add_row(unusual_character, unusual_character_name, f"({unusual_character_count})")
+				table.add_row(unusual_character, "U+{:04X}".format(ord(unusual_character)), unusual_character_name, f"({unusual_character_count})") # pylint: disable=consider-using-f-string
 
 			console.print(table)
 
