@@ -1736,7 +1736,9 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		messages.append(LintMessage("s-010", "Empty element. Use [xhtml]<hr/>[/] for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 	# Check for <section> and <article> without ID attribute
-	nodes = dom.xpath("/html/body//*[self::section or self::article][not(@id)]")
+	# Ignore items within <blockquote> as that is a new sectioning root and we don't need to address
+	# sectioning elements in quotations.
+	nodes = dom.xpath("/html/body//*[self::section or self::article][not(@id)][not(ancestor::blockquote)]")
 	if nodes:
 		messages.append(LintMessage("s-011", "Element without [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
