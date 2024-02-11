@@ -54,6 +54,7 @@ complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s o -l offline 
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s r -l translator -d "the translator of the ebook"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s t -l title -d "the title of the ebook"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s w -l white-label -d "create a generic epub skeleton without S.E. branding"
+complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s v -l verbose -d "increase output verbosity"
 
 complete -c se -n "__fish_se_no_subcommand" -a css-select -d "Print the results of a CSS selector evaluated against a set of XHTML files."
 complete -c se -A -n "__fish_seen_subcommand_from css-select" -s f -l only-files -x -d "only output filenames of files that contain matches, not the matches themselves"

@@ -132,7 +132,8 @@ case $state in
 					{-p,--pg-id}'[the Project Gutenberg ID number of the ebook to download]' \
 					{-r,--translator}'[the translator of the ebook]' \
 					{-t,--title}'[the title of the ebook]' \
-					{-w,--white-label}'[create a generic epub skeleton without S.E. branding]'
+					{-w,--white-label}'[create a generic epub skeleton without S.E. branding]' \
+					{-v,--verbose}'[increase output verbosity]'
 				;;
 			css-select)
 				_arguments -s \
