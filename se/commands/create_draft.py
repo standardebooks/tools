@@ -59,6 +59,8 @@ CONTRIBUTOR_BLOCK_TEMPLATE = """<dc:contributor id="CONTRIBUTOR_ID">CONTRIBUTOR_
 		<meta property="se:url.authority.nacoaf" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_NACOAF_URI</meta>
 		<meta property="role" refines="#CONTRIBUTOR_ID" scheme="marc:relators">CONTRIBUTOR_MARC</meta>"""
 
+console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+
 def _replace_in_file(file_path: Path, search: Union[str, list], replace: Union[str, list]) -> None:
 	"""
 	Helper function to replace in a file.
@@ -542,7 +544,7 @@ def _generate_titlepage_string(contributors: List[Dict], contributor_type: str) 
 
 	return output
 
-def _create_draft(args: Namespace):
+def _create_draft(args: Namespace, plain_output: bool):
 	"""
 	Implementation for `se create-draft`
 	"""
@@ -604,6 +606,9 @@ def _create_draft(args: Namespace):
 	if repo_path.is_dir():
 		raise se.InvalidInputException(f"Directory already exists: [path][link=file://{repo_path}]{repo_path}[/][/].")
 
+	if args.verbose:
+		console.print(se.prep_output(f"Creating ebook directory at [path][link=file://{repo_path}]{repo_path}[/][/] ...", plain_output))
+
 	content_path = repo_path / "src"
 
 	if args.white_label:
@@ -633,6 +638,8 @@ def _create_draft(args: Namespace):
 		pg_url = f"https://www.gutenberg.org/ebooks/{args.pg_id}"
 
 		# Get the ebook metadata
+		if args.verbose:
+			console.print(se.prep_output(f"Downloading ebook metadata from [path][link={pg_url}]{pg_url}[/][/] ...", plain_output))
 		try:
 			response = requests.get(pg_url, timeout=60)
 			pg_metadata_html = response.text
@@ -664,6 +671,8 @@ def _create_draft(args: Namespace):
 			pg_publication_year = regex.sub(r".+?([0-9]{4})", "\\1", node.text)
 
 		# Get the actual ebook URL
+		if args.verbose:
+			console.print(se.prep_output(f"Downloading ebook transcription from [path][link={pg_ebook_url}]{pg_ebook_url}[/][/] ...", plain_output))
 		try:
 			response = requests.get(pg_ebook_url, timeout=60)
 			pg_ebook_html = response.text
@@ -682,6 +691,9 @@ def _create_draft(args: Namespace):
 			pg_language = "en-GB"
 
 	# Create necessary directories
+	if args.verbose:
+		console.print(se.prep_output(f"Building ebook structure in [path][link=file://{repo_path}]{repo_path}[/][/] ...", plain_output))
+
 	(content_path / "epub" / "css").mkdir(parents=True)
 	(content_path / "epub" / "images").mkdir(parents=True)
 	(content_path / "epub" / "text").mkdir(parents=True)
@@ -694,6 +706,8 @@ def _create_draft(args: Namespace):
 
 	# Write PG data if we have it
 	if args.pg_id and pg_ebook_html:
+		if args.verbose:
+			console.print(se.prep_output("Cleaning transcription ...", plain_output))
 		pg_file_local_path = content_path / "epub" / "text" / "body.xhtml"
 		try:
 			dom = etree.parse(StringIO(regex.sub(r"encoding=(?P<quote>[\'\"]).+?(?P=quote)", "", pg_ebook_html)), html_parser)
@@ -764,6 +778,8 @@ def _create_draft(args: Namespace):
 			raise se.InvalidFileException(f"Couldn’t write to ebook directory. Exception: {ex}") from ex
 
 	# Copy over templates
+	if args.verbose:
+		console.print(se.prep_output("Copying in standard files ...", plain_output))
 	_copy_template_file("gitignore", repo_path / ".gitignore")
 	_copy_template_file("container.xml", content_path / "META-INF")
 	_copy_template_file("mimetype", content_path)
@@ -791,6 +807,9 @@ def _create_draft(args: Namespace):
 		_copy_template_file("content.opf", content_path / "epub")
 		_copy_template_file("toc.xhtml", content_path / "epub")
 		_copy_template_file("LICENSE.md", repo_path)
+
+	if args.verbose:
+		console.print(se.prep_output("Setting up ebook metadata ...", plain_output))
 
 	# Try to find Wikipedia links if possible
 	ebook_wiki_url = None
@@ -995,6 +1014,8 @@ def _create_draft(args: Namespace):
 		file.truncate()
 
 	# Set up local git repo
+	if args.verbose:
+		console.print(se.prep_output("Initialising git repository ...", plain_output))
 	repo = git.Repo.init(repo_path)
 
 	if args.email:
@@ -1018,17 +1039,17 @@ def create_draft(plain_output: bool) -> int:
 	parser.add_argument("-a", "--author", dest="author", required=True, nargs="+", help="an author of the ebook")
 	parser.add_argument("-t", "--title", dest="title", required=True, help="the title of the ebook")
 	parser.add_argument("-w", "--white-label", action="store_true", help="create a generic epub skeleton without S.E. branding")
+	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	args = parser.parse_args()
 
 	try:
 		# Before we continue, confirm that there isn't a subtitle passed in with the title
 		if ":" in args.title:
-			console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
 			console.print(se.prep_output("Titles should not include a subtitle, as subtitles are separate metadata elements in [path]content.opf[/]. Are you sure you want to continue? \\[y/N]", plain_output))
 			if input().lower() not in {"yes", "y"}:
 				return se.InvalidInputException.code
 
-		_create_draft(args)
+		_create_draft(args, plain_output)
 	except se.SeException as ex:
 		se.print_error(ex, plain_output=plain_output)
 		return ex.code

@@ -54,7 +54,7 @@ _se(){
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			create-draft)
-				COMPREPLY+=($(compgen -W "-a --author -e --email -h --help -i --illustrator -o --offline -p --pg-id -r --translator -t --title -w --white-label" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-a --author -e --email -h --help -i --illustrator -o --offline -p --pg-id -r --translator -t --title -w --white-label -v --verbose" -- "${cur}"))
 				;;
 			css-select)
 				COMPREPLY+=($(compgen -W "-h --help -f --only-filenames" -- "${cur}"))
