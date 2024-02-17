@@ -3,6 +3,7 @@ Common helper functions for tests.
 """
 
 import filecmp
+import os
 import shlex
 import shutil
 import subprocess
@@ -32,6 +33,16 @@ def must_run(cmd: str) -> None:
 			fail_msg += "\n" + result.stderr.decode()
 		pytest.fail(fail_msg)
 
+# is there a subdirectory in the test data?
+def subdir_present(text_dir: Path) -> bool:
+	"""Determine if the test input directory has a subdirectory in it
+	"""
+	with os.scandir(text_dir) as entries:
+		for entry in entries:
+			if entry.is_dir():
+				return True
+	return False
+
 def assemble_book(draft__dir: Path, work_dir: Path, text_dir: Path) -> Path:
 	"""Merge contents of draft book skeleton with test-specific files for
 	the book contents.
@@ -39,11 +50,18 @@ def assemble_book(draft__dir: Path, work_dir: Path, text_dir: Path) -> Path:
 	book_dir = work_dir / "test-book"
 	# Copy skeleton from draft__dir
 	shutil.copytree(draft__dir, book_dir)
-	# Add metadata and text files for test book
-	if (text_dir / "content.opf").is_file():
-		shutil.copy(text_dir / "content.opf", book_dir / "src" / "epub")
-	for file in text_dir.glob("*.xhtml"):
-		shutil.copy(file, book_dir / "src" / "epub" / "text")
+	# if a subdirectory exists in text_dir, copy the entire tree
+	if subdir_present(text_dir):
+		shutil.copytree(text_dir, book_dir, dirs_exist_ok=True)
+	# otherwise, copy just the files to the text directory (special-casing the metadata)
+	else:
+		# metadata
+		if (text_dir / "content.opf").is_file():
+			shutil.copy(text_dir / "content.opf", book_dir / "src" / "epub")
+		# files
+		for file in text_dir.glob("*.xhtml"):
+			shutil.copy(file, book_dir / "src" / "epub" / "text")
+
 	# Rebuild file metadata
 	must_run(f"se build-manifest {book_dir}")
 	must_run(f"se build-spine {book_dir}")
