@@ -4,7 +4,7 @@
 		<title>Table of Contents</title>
 	</head>
 	<body epub:type="frontmatter">
-		<nav epub:type="toc">
+		<nav id="toc" epub:type="toc">
 			<h2 epub:type="title">Table of Contents</h2>
 			<ol>
 				<li>
@@ -24,7 +24,7 @@
 				</li>
 			</ol>
 		</nav>
-		<nav epub:type="landmarks">
+		<nav id="landmarks" epub:type="landmarks">
 			<h2 epub:type="title">Landmarks</h2>
 			<ol>
 				<li>

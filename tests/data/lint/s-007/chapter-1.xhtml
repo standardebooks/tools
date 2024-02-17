@@ -9,58 +9,56 @@
 		<section id="chapter-1" epub:type="chapter">
 			<h2 epub:type="ordinal z3998:roman">I</h2>
 			<!-- Test s-007 -->
-			<p>test</p>
-			<blockquote>Fail 1</blockquote>
+			<p>This is a valid paragraph.</p>
+			<blockquote>Fail 1, blockquote has no p.</blockquote>
 			<blockquote>
-				<i>Fail 2</i>
+				<i>Fail 2, blockquote has italics but no p.</i>
 			</blockquote>
 			<blockquote>
 				<!--Fail 3-->
-				Fail 3
+				Fail 3, blockquote has no p.
 			</blockquote>
 			<blockquote>
-				<p>Pass 1</p>
+				<p>Pass 1, blockquote has a p.</p>
 			</blockquote>
 			<blockquote>
 				<!--Pass 2-->
-				<p>Pass 2</p>
+				<p>Pass 2, blockquote has a p and comment.</p>
 			</blockquote>
 			<dl>
 				<dt>Fail 4</dt>
-				<dd>Fail 4</dd>
+				<dd>Fail 4, dd has no p.</dd>
 				<dt>Fail 5</dt>
 				<dd>
-					<i>Fail 5</i>
+					<i>Fail 5, dd has no p.</i>
 				</dd>
 				<dt>Pass 3</dt>
 				<dd>
-					<p>Pass 3</p>
+					<p>Pass 3, dd has a p.</p>
 				</dd>
 				<dt>Pass 4</dt>
 				<dd>
 					<!--Pass 4-->
-					<p>Pass 4</p>
+					<p>Pass 4, dd has a p and comment.</p>
 				</dd>
 			</dl>
 			<ul>
-				<li>Fail 6</li>
+				<li>Fail 6, li has no p.</li>
 				<li>
-					<i>Fail 6</i>
+					<i>Fail 7, li has italics but no p.</i>
 				</li>
 				<li>
-					<!--Fail 7-->
-					Fail 7
+					<!--Fail 8-->
+					Fail 8, li has no p.
 				</li>
 				<li>
-					<p>Pass 5</p>
+					<p>Pass 5, li has a p.</p>
 				</li>
 				<li>
 					<!--Pass 6-->
-					<p>Pass 6</p>
+					<p>Pass 6, li has a p and comment.</p>
 				</li>
 			</ul>
-			<p>Test<a href="endnotes.xhtml#note-1" id="noteref-1" epub:type="noteref">1</a></p>
-			<p>Test<a href="endnotes.xhtml#note-2" id="noteref-2" epub:type="noteref">2</a></p>
 		</section>
 	</body>
 </html>

@@ -2,12 +2,15 @@
 Tests for lint command.
 """
 
+import os
 from pathlib import Path
 import pytest
 from helpers import assemble_book, run, output_is_golden
 
+# get list of tests from the subdirectory names (outside the function, so data_dir fixture isn't available)
+test_names = [os.path.basename(s.path) for s in os.scandir(Path(__file__).parent / "data/lint") if s.is_dir()]
+@pytest.mark.parametrize("test_name", test_names)
 
-@pytest.mark.parametrize("test_name", ["c-006", "clean", "content", "s-058", "glossaries", "elements"])
 def test_lint(data_dir: Path, draft_dir: Path, work_dir: Path, capfd, test_name: str, update_golden: bool):
 	"""Run lint command on several books with different expected lint output:
 		clean   - No errors expected

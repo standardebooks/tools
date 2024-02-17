@@ -1,1 +1,0 @@
-m-063 [Error] cover.svg Cover image has not been built.
