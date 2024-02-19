@@ -2839,7 +2839,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 
 	# Check for commas or periods following exclamation or question marks. Exclude the colophon because we may have painting names with punctuation.
 	if special_file != "colophon":
-		typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[!?][\\.,][^”’]')]")]
+		typos = [node.to_string() for node in dom.xpath("//p[re:test(., '[!?][\\.,]([^”’]|$)')]")]
 		if typos:
 			messages.append(LintMessage("y-005", "Possible typo: question mark or exclamation mark followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
