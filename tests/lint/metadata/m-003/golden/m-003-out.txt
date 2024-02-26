@@ -1,0 +1,6 @@
+m-037 [Error] colophon.xhtml Transcription/page scan source link not found. 
+Expected: `<a href="http://www.gutenberg.org/ebooks/161">Project Gutenberg</a>`.
+m-059 [Error] content.opf Link to `https://www.gutenberg.org/ebooks/161` found 
+in colophon, but missing matching `dc:source` element in metadata.
+m-037 [Error] imprint.xhtml Transcription/page scan source link not found. 
+Expected: `<a href="http://www.gutenberg.org/ebooks/161">Project Gutenberg</a>`.
