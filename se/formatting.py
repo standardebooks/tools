@@ -181,6 +181,11 @@ def get_flesch_reading_ease(xhtml: str) -> float:
 	A float representing the Flesch reading ease of the text.
 	"""
 
+	# Add a full stop to sentences that don’t end in punctuation
+	# This is primarily for free-form poetry like Mina Loy’s, where the
+	# reading score can end up being extremely low without this.
+	xhtml = regex.sub(r"([A-Za-z])(<\/span>\n)*\s*</p>", r"\1.\2</p>", xhtml)
+
 	# Remove HTML tags
 	text = regex.sub(r"<title>.+?</title>", " ", xhtml)
 	text = regex.sub(r"<.+?>", " ", text, flags=regex.DOTALL)
