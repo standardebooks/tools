@@ -6,7 +6,7 @@ Similar to `pylint`, the `pytest` command can be injected into the venv `pipx` c
 pipx inject standardebooks pytest==7.3.1
 ```
 
-The tests are executed by calling `pytest` from the top level or your tools repo:
+The tests are executed by calling `pytest` from the top level of your tools repo:
 
 ```shell
 cd /path/to/tools/repo
@@ -25,7 +25,7 @@ Tests are located in the `tests` subdirectory of the `tools` top-level directory
 4. `stdout_commands`—These take a draft (i.e. incomplete) SE ebook directory structure as input, combined with the file(s) provided for the test, and output text to stdout. The test directory structure is the same as for draft_commands.
 5. `lint`—`se`’s lint command takes a feature-complete ebook directory structure as input, and writes any errors found in the ebook to stdout. There is a separate directory for each type of lint error, e.g. css, filesystem, metadata, etc., each of which contains the test directories for the errors of that type. The test directories are named for the specific lint error being tested, e.g. `c-003`, `x-015`, etc. Each error has a single test, and therefore a single directory.
 6. `string_commands`—These take a string as input and output a string to stdout. Since they do not take file input, all tests are contained in a single file, contained in a directory named for the command being tested. The file contains one line per test.
-7. In addition, there is a `data` directory that contains two SE ebook structures beneath it, one for a draft ebook (created via `se create-draft`), and one for a feature-complete test ebook, i.e. it will build without error and generates no lint errors.
+7. In addition, there is a `data` directory that contains two SE ebook structures beneath it, one for a draft ebook (created via `se create-draft`) used by the `draft_commands` and `stdout_commands` tests, and one for a feature-complete test ebook, i.e. it builds without error and generates no lint errors, used by the `ebook_commands` and `lint` modules.
 
 ## Creating a test
 For the first four modules above (draft, ebook, file, stdout), creating a test involves these steps.
@@ -36,7 +36,7 @@ For the first four modules above (draft, ebook, file, stdout), creating a test i
 4. Within the `in` directory, create the minimum SE ebook directory tree needed for the files being used in the test. For example, if only a chapter file is needed for the test, then create an `src/epub/text` directory structure. If a css file is needed for the test, create a `src/epub/css` directory structure.
 5. Copy/create the files needed for the test into that directory structure, putting the files in their appropriate directory.
 6. If no arguments are needed for the command being tested, that is all that is needed in the `in` directory. However, if arguments to the `se` command are needed for the test, then a file named `{command}-command`, e.g. `build-manifest-command` should be created in the test directory. That file should contain a single line, with the command name and arguments on it. Thus, to test that the standard out argument to the `build-manifest` command is working, create a `build-manifest-command` file in the test-X directory and populate it with a line containing `build-manifest --stdout`.
-7. Run the test with the `--save-golden-files` option to create a valid “golden” file, i.e. the file that future tests will be compared against. See Running tests below for how to run a single test.
+7. Run the test with the `--save-golden-files` option to create valid “golden” file(s), i.e. the files that future tests will be compared against. See Running tests below for how to run a single test.
 
 For lint, the steps are almost the same, with the exception of the top-level test directory.
 1. Beneath the appropriate lint subtype directory, create a directory for the lint error id being tested. For example, c-XXX errors are beneath the `css` directory, m-XXX errors beneath the `metadata` directory, etc. Note that unlike the above modules, there should only be a single test for each lint error id. If additional conditions need to be tested for a lint error, the existing input file(s) should be updated to include the additional conditions.
@@ -54,7 +54,7 @@ For string commands:
 To run all tests manually, run `pytest tests` from the top-level `tools` directory.
 To run a single module's test, include the module file, e.g. `pytest tests/test_stdout_commands.py`.
 To run a single test, include the module file basename and the test id in the format `pytest tests/test_{module}.py::test_{module}[{test-id}]`. For example, the third test for `build-spine` would be `pytest tests/test_stdout_commands.py::test_stdout_commands[build-spine-test-3]`.
-For lint, the format is `tests_lint.py::test_lint_py[{lint-error-id}]`, e.g. `pytest tests/test_lint.py::test_lint[c-003]`.
+For lint, the format is `tests_lint.py::test_lint[{lint-error-id}]`, e.g. `pytest tests/test_lint.py::test_lint[c-003]`.
 
 To see test ids, run pytest in collect-only mode, e.g. `pytest --collect-only tests` or `pytest --collect-only tests:/test_lint.py`, or pass the -v[v] option when running the tests, e.g. `pytest -v tests`.
 
