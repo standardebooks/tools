@@ -1253,15 +1253,16 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 											if (str(file), code) not in file_messages:
 												file_messages[(str(file), code)] = []
 
-											file_messages[(str(file), code)].append((file_assertion["earl:result"]["dct:description"], file_assertion["earl:result"]["html"]))
+											file_messages[(str(file), code)].append((file_assertion["earl:result"]["dct:description"], file_assertion["earl:result"]["html"] if "html" in file_assertion["earl:result"].keys() else ""))
 
 						# Unpack our sorted messages for output
 						for (file_path_str, code), message_list in file_messages.items():
 							item_messages = []
 							for (message, html) in message_list:
-								# Ace output includes namespaces on each element, remove them
-								html = regex.sub(r" xmlns(?::.*?)?=\"[^\"]+?\"", "", html)
-								item_messages.append(html)
+								if html:
+									# Ace output includes namespaces on each element, remove them
+									html = regex.sub(r" xmlns(?::.*?)?=\"[^\"]+?\"", "", html)
+									item_messages.append(html)
 
 							# message_list[0][n] will always be the same so [0][0] suffices
 							build_messages.append(BuildMessage("ace", code, message_list[0][0], Path(file_path_str), None, None, item_messages))
