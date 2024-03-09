@@ -2843,10 +2843,10 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 		if typos:
 			messages.append(LintMessage("y-005", "Possible typo: question mark or exclamation mark followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for opening lsquo in quote that doesn't appear to have a matching rsquo. Rsquos must be followed by a space, punctuation (except period/comma), word joiner and thus em dash, or a number for an endnote.
-	typos = dom.xpath(f"re:match(//*, '“\\s*‘[^“]+?”', 'g')/text()[not(re:test(., '’[\\s\\?\\!;<2060{se.WORD_JOINER}0-9]'))]")
+	# Check for opening lsquo in quote that doesn't appear to have a matching rsquo, ignoring contractions/edlided words as false matches.
+	typos = dom.xpath("re:match(//*, '“[^‘”]*‘[^“]+?”', 'g')/text()[not(re:test(., '’[^A-Za-z]'))]")
 	if typos:
-		messages.append(LintMessage("y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hints: [text]’[/] are used for abbreviations;	commas and periods must go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, typos))
+		messages.append(LintMessage("y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hint: [text]’[/] are used for abbreviations.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Try to find top-level lsquo; for example, <p>“Bah!” he said to the ‘minister.’</p>
 	# We can't do this on xpath because we can't iterate over the output of re:replace().
@@ -2911,8 +2911,8 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	if typos:
 		messages.append(LintMessage("y-012", "Possible typo: [text]”[/] directly followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for period not inside rsquo
-	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[^”’]+?’[\\.,]”')]")]
+  	# Check for comma/period outside rsquo; ensure no rsquo following the punctuation to exclude elided false positives, e.g. ‘That was somethin’.’
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[^”’]+?’[\\.,](?!⁠? ⁠?…)(?![^‘]*’)')]")]
 	if typos:
 		messages.append(LintMessage("y-013", "Possible typo: punctuation not within [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
