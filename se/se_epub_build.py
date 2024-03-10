@@ -850,10 +850,14 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					file.write(processed_css)
 					file.truncate()
 
-		# Sort out MathML compatibility
+		# Replace MathML with either plain characters or an image of the equation
 		if metadata_dom.xpath("/package/manifest/*[contains(@properties, 'mathml')]"):
 			# We import this late because we don't want to load selenium if we're not going to use it!
 			from se import browser # pylint: disable=import-outside-toplevel
+
+			# Remove MathML / describedMath accessibilityFeatures as we’re not going to use MathML
+			for node in metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and (text() = 'describedMath' or text() = 'MathML')]"):
+				node.remove()
 
 			# We wrap this whole thing in a try block, because we need to call
 			# driver.quit() if execution is interrupted (like by ctrl + c, or by an unhandled exception). If we don't call driver.quit(),
