@@ -243,6 +243,7 @@ METADATA
 "m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/]."
 "m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/]."
 "m-076", "gutenberg.net.au URL should not have leading [text]www.[/]."
+"m-077", "MathML found in ebook, but no [attr]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -2186,6 +2187,11 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	nodes = dom.xpath("/html/body//m:math[not(@alttext)]")
 	if nodes:
 		messages.append(LintMessage("s-089", "MathML missing [attr]alttext[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Check for MathML, and no MathML / describedMath accessibilityFeature
+	nodes = dom.xpath("/html/body//m:math")
+	if nodes and len(self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'describedMath']")) == 0:
+		messages.append(LintMessage("m-077", "MathML found in ebook, but no [attr]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 	# Check for common errors in language tags
 	# `gr` is often used instead of `el`, `sp` instead of `es`, and `ge` instead of `de` (`ge` is the Georgian geographic region subtag but not a language subtag itself)
