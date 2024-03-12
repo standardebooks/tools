@@ -1,3 +1,53 @@
+# 2.6.3
+
+## General
+
+- Add `text-wrap: pretty` to `core.css` template
+
+- Rewrite testing framework to make it easier to write and organize tests. Thanks to Vince Rice
+
+- Improve Flesch-Kincaid reading ease calculation when dealing with freeform poetry. Thanks to Robin Whittleton
+
+- Update metadata file to list WCAG 2.2 compliance. Thanks to Robin Whittleton
+
+## se build
+
+- Allow `ace` to output messages that don't include HTML
+
+- Remove MathML metadata in compatible builds. Thanks to Robin Whittleton
+
+- Fix MathML generation on Macs by bundling `geckodriver`. Thanks to Robin Whittleton
+
+## se create-draft
+
+- Add `--verbose` flag. Thanks to Robin Whittleton
+
+## se find-unusual-characters
+
+- Show code point in output
+
+## se lint
+
+- Improve s-007
+
+- Improve s-011
+
+- Improve y-005
+
+- Improve y-006
+
+- Improve y-013
+
+- Merge and reogranize several codes. Thanks to Vince Rice
+
+- Remove some xpath redundancies. Thanks to Vince Rice
+
+- Add m-077, MathML found in ebook but missing metadata. Thanks to Robin Whittleton
+
+## se modernize-spelling
+
+- Various additions
+
 # 2.6.2
 
 ## General
