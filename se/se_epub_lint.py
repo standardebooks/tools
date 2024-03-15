@@ -2929,7 +2929,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 		messages.append(LintMessage("y-013", "Possible typo: punctuation not within [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for period before dialog tag; try to exclude abbrevations that close a quotation, like `“<abbr>Mr.</abbr>”`.
-	typos = [node.to_string() for node in dom.xpath("/html/body//p[(re:test(., '\\.”\\s[a-z\\s]*?(\\bsaid|[a-z]+ed)') or re:test(., '\\.”\\s(s?he|they?|and)\\b')) and not(.//abbr[following-sibling::node()[re:test(., '^”')]])]")]
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[(re:test(., '\\.”\\s[a-z\\s]*?(\\bsaid|[a-z]+ed\\b)') or re:test(., '\\.”\\s(s?he|they?|we|and)\\b')) and not(.//abbr[following-sibling::node()[re:test(., '^”')]])]")]
 	if typos:
 		messages.append(LintMessage("y-014", "Possible typo: Unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?", se.MESSAGE_TYPE_WARNING, filename, typos))
 
