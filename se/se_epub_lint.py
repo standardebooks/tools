@@ -2913,7 +2913,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	if typos:
 		messages.append(LintMessage("y-011", "Possible typo: two or more [text]’[/] in a row.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '”[a-z]')]")]
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '”[A-Za-z]')]")]
 	if typos:
 		messages.append(LintMessage("y-012", "Possible typo: [text]”[/] directly followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
