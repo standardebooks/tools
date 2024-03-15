@@ -447,6 +447,7 @@ XHTML
 "x-017", "Duplicate value for [attr]id[/] attribute."
 "x-018", "Unused [xhtml]id[/] attribute."
 "x-019", "Unexpected value of [attr]id[/] attribute. Expected: [attr]{unexpected_id[1]}[/]."
+"x-020", "Link to [path][link=file://{local_css_path}]se.css[/][/] in [xhtml]<head>[/], but not an SE boilerplate file."
 
 TYPOS
 "y-001", "Possible typo: doubled [text]a/the/and/of/or/as/if[/]."
@@ -2733,7 +2734,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 
 	return (messages, missing_files)
 
-def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str) -> list:
+def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, local_css_path: str) -> list:
 	"""
 	Process XHTML checks on an .xhtml file
 
@@ -2797,6 +2798,11 @@ def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_
 	# Make sure their number is actually their correct sequence number in the text.
 	for unexpected_id in se.formatting.find_unexpected_ids(dom):
 		messages.append(LintMessage("x-019", f"Unexpected value of [attr]id[/] attribute. Expected: [attr]{unexpected_id[1]}[/].", se.MESSAGE_TYPE_ERROR, filename, [unexpected_id[0].to_tag_string()]))
+
+	if filename.name not in ("titlepage.xhtml", "imprint.xhtml", "colophon.xhtml", "uncopyright.xhtml"):
+		nodes = dom.xpath("/html/head/link[@href='../css/se.css']")
+		if nodes:
+			messages.append(LintMessage("x-020", f"Link to [path][link=file://{local_css_path}]se.css[/][/] in [xhtml]<head>[/], but not an SE boilerplate file.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 	return messages
 
@@ -3603,7 +3609,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				if typography_messages:
 					messages = messages + typography_messages
 
-				messages = messages + _lint_xhtml_xhtml_checks(filename, dom, file_contents)
+				messages = messages + _lint_xhtml_xhtml_checks(filename, dom, file_contents, local_css_path)
 
 				messages = messages + _lint_xhtml_typo_checks(filename, dom, file_contents, special_file)
 
