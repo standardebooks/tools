@@ -438,6 +438,9 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Bb])onâ fide\b", r"\1ona fide", xhtml)			# bonâ fide -> bona fide
 	xhtml = regex.sub(r"\b([Hh])alf [Ww]ay\b", r"\1alfway", xhtml)			# half way -> halfway
 	xhtml = regex.sub(r"\b([Tt])hreshhold", r"\1hreshold", xhtml)			# threshhold -> threshold
+	xhtml = regex.sub(r"\b([Aa])fr(i|ee)te?", r"\1freet", xhtml)			# afrit -> afreet
+	xhtml = regex.sub(r"\bEfr(i|ee)te?", r"Afreet", xhtml)				# efrit, efreet -> afreet
+	xhtml = regex.sub(r"\befr(i|ee)te?", r"afreet", xhtml)				# efrit, efreet -> afreet
 
 	# Normalize some names
 	xhtml = regex.sub(r"Moliere", r"Molière", xhtml)				# Moliere -> Molière
