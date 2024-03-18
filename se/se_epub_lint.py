@@ -464,7 +464,6 @@ TYPOS
 "y-012”, "Possible typo: [text]”[/] directly followed by letter."
 "y-013”, "Possible typo: punctuation not within [text]’[/]."
 "y-014”, "Possible typo: Unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?"
-"y-015”, "Possible typo: mis-curled [text]‘[/] or missing [text]’[/]."
 "y-016”, "Possible typo: consecutive periods ([text]..[/])."
 "y-017”, "Possible typo: [text]“[/] followed by space."
 "y-018”, "Possible typo: [text]‘[/] followed by space."
@@ -483,6 +482,9 @@ TYPOS
 "y-031”, "Possible typo: Dialog tag missing punctuation."
 "y-032”, "Possible typo: Italics running into preceding or following characters."
 "y-033", "Possible typo: Three-em-dash obscuring an entire word, but not preceded by a space."
+UNUSED
+vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+"y-015”, "Possible typo: mis-curled [text]‘[/] or missing [text]’[/]."
 """
 
 class LintMessage:
@@ -2932,11 +2934,6 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[(re:test(., '\\.”\\s[a-z\\s]*?(\\bsaid|[a-z]+ed\\b)') or re:test(., '\\.”\\s(s?he|they?|we|and)\\b')) and not(.//abbr[following-sibling::node()[re:test(., '^”')]])]")]
 	if typos:
 		messages.append(LintMessage("y-014", "Possible typo: Unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-	# Check for mis-curled &lsquo; or &lsquo; without matching &rsquo;
-	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[A-Za-z][^“’]+?”')]")]
-	if typos:
-		messages.append(LintMessage("y-015", "Possible typo: mis-curled [text]‘[/] or missing [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for two periods in a row, almost always a typo for one period or a hellip
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\.\\.[^\\.]')]")]
