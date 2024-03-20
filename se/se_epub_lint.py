@@ -2952,7 +2952,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 
 	# Check for closing rdquo without opening ldquo. We ignore blockquotes because they usually have unique quote formatting.
 	# Remove tds in case rdquo means "ditto mark"
-	typos = regex.findall(r"”[^“‘]+?”", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents), flags=regex.DOTALL)
+	typos = regex.findall(r"”[^“‘]+?”", regex.sub(r"<td[^>]*?>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents), flags=regex.DOTALL)
 
 	# We create a filter to try to exclude nested quotations
 	# Remove tags in case they're enclosing punctuation we want to match against at the end of a sentence.
