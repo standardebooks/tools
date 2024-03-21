@@ -392,6 +392,7 @@ TYPOGRAPHY
 "t-039", "Initialism followed by [text]’s[/]. Hint: Plurals of initialisms are not followed by [text]’[/]."
 "t-040", "Subtitle with illegal ending period."
 "t-041", "Illegal space before punctuation."
+"t-042", "[text]‘[/] used for Greek dasia or [text]’[/] used for Greek psili, but expected the single precomposed Unicode character, or a combining mark if a precomposed character doesn’t exist."
 "t-043", "Non-English loan word set in italics, when modern typography omits italics. Hint: A word may be correctly italicized when emphasis is desired, if the word is meant to be pronounced with an accent, or if the word is part of non-English speech."
 "t-044", "Comma required after leading [text]Or[/] in subtitles."
 "t-045", "Element has [val]z3998:persona[/] semantic and is also set in italics."
@@ -423,9 +424,6 @@ TYPOGRAPHY
 "t-071", "Multiple transcriptions listed, but preceding text is [text]a transcription[/]."
 "t-072", "[text]various sources[/] link not preceded by [text]from[/]."
 "t-073", "Possible transcription error in Greek."
-UNUSED
-vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"t-042", "Possible typo."
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -2564,6 +2562,14 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	matches = regex.findall(r"[^…]\s[!?;:,].{0,10}", file_contents) # If we don't include preceding chars, the regex is 6x faster
 	if matches:
 		messages.append(LintMessage("t-041", "Illegal space before punctuation.", se.MESSAGE_TYPE_ERROR, filename, matches))
+
+	# Check for rsquo and lsquo used as breathing marks in Greek.
+	# We can't merge this with t-073 because given the quote + Greek character, we can't easily decide what the correct precomposed
+	# Unicode character should be (i.e. ‘Ε -> Ἑ), so we give a generic message instead.
+	# Also note that we have to use the basic Greek character range instead of a Unicode property like \p{Script=Greek} because
+	# xpath regex doesn't support Unicode properties.
+	for node in dom.xpath("/html/body//*[(@xml:lang='grc' or @xml:lang='el') and re:test(., '(^|\\s)[’‘][α-ωΑ-Ω]')]"):
+		messages.append(LintMessage("t-042", "[text]‘[/] used for Greek dasia or [text]’[/] used for Greek psili, but expected the single precomposed Unicode character, or a combining mark if a precomposed character doesn’t exist.", se.MESSAGE_TYPE_ERROR, filename))
 
 	# Check for a list of some common English loan words that used to be italicized as foreign, but are no longer
 	nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and re:test(., '^(fianc[eé]+|divorc[eé]+|menu|recherch[eé]|tour-de-force|outr[eé]|d[ée]but(ante)?|apropos|[eé]lite|prot[ée]g[ée]+|chef|salon|r[eé]gime|contretemps|[eé]clat|aides?|entr[ée]+|t[eê]te-[aà]-t[eê]tes?|blas[eé]|bourgeoisie)$')]")
