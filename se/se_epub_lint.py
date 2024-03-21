@@ -2559,7 +2559,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	if nodes:
 		messages.append(LintMessage("t-040", "Subtitle with illegal ending period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	matches = regex.findall(r"[^…]\s[!?;:,].{0,10}", file_contents) # If we don't include preceding chars, the regex is 6x faster
+	matches = regex.findall(r"[^…]\s[!?;:,.].{0,10}", file_contents) # If we don't include preceding chars, the regex is 6x faster
 	if matches:
 		messages.append(LintMessage("t-041", "Illegal space before punctuation.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
