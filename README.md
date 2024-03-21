@@ -36,7 +36,7 @@ sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se
 sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completion/completions/se
 
 # Install Fish completions.
-sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
+ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 ```
 
 ## Fedora users
@@ -63,7 +63,7 @@ sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se
 sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completion/completions/se
 
 # Install Fish completions.
-sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
+ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 ```
 
 ## macOS users
