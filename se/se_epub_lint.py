@@ -467,7 +467,6 @@ TYPOS
 "y-018”, "Possible typo: [text]‘[/] followed by space."
 "y-019”, "Possible typo: [text]”[/] without opening [text]“[/]."
 "y-020”, "Possible typo: consecutive comma-period ([text],.[/])."
-"y-021”, "Possible typo: Opening [text]‘[/] without preceding [text]“[/]."
 "y-022”, "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/]."
 "y-023”, "Possible typo: two opening quotation marks in a run. Hint: Nested quotes should switch between [text]“[/] and [text]‘[/]"
 "y-024”, "Possible typo: dash before [text]the/there/is/and/they/when[/] probably should be em-dash."
@@ -483,6 +482,7 @@ TYPOS
 UNUSED
 vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 "y-015”, "Possible typo: mis-curled [text]‘[/] or missing [text]’[/]."
+"y-021”, "Possible typo: Opening [text]‘[/] without preceding [text]“[/]."
 """
 
 class LintMessage:
@@ -2977,11 +2977,6 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., ',\\.')]")]
 	if typos:
 		messages.append(LintMessage("y-020", "Possible typo: consecutive comma-period ([text],.[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-	# Check for single quotes instead of double quotes
-	typos = [node.to_string() for node in dom.xpath("/html/body//p[not(contains(@class, 'continued') or ancestor::blockquote or ancestor::*[re:test(@epub:type, 'z3998:(verse|song|poem|hymn)')]) and re:test(., '^[^“]+?‘')]")]
-	if typos:
-		messages.append(LintMessage("y-021", "Possible typo: Opening [text]‘[/] without preceding [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for two quotations in one paragraph
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^”]+?”\\s“[^”]+?”$')]")]
