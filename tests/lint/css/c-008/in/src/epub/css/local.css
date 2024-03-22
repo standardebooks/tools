@@ -1,0 +1,15 @@
+@charset "utf-8";
+@namespace epub "http://www.idpf.org/2007/ops";
+
+/* custom */
+.dl2,
+.dl3,
+.elision,
+.full-page,
+.together,
+.samefile,
+.difffile,
+.onetimeclass{
+	font-style: normal;
+}
+/* end of custom */
