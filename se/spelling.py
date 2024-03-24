@@ -442,6 +442,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bEfr(i|ee)te?", r"Afreet", xhtml)				# efrit, efreet -> afreet
 	xhtml = regex.sub(r"\befr(i|ee)te?", r"afreet", xhtml)				# efrit, efreet -> afreet
 	xhtml = regex.sub(r"\b([Mm])etier", r"\1étier", xhtml)				# metier -> métier
+	xhtml = regex.sub(r"\b([Cc])igaret(s?)\b", r"\1igarette\2", xhtml)		# cigaret -> cigarette
 
 
 	# Normalize some names
