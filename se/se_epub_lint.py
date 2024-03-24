@@ -2942,7 +2942,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 		messages.append(LintMessage("y-014", "Possible typo: Unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for two periods in a row, almost always a typo for one period or a hellip
-	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\.\\.[^\\.]')]")]
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[^\\.]\\.\\.[^\\.]')]")]
 	if typos:
 		messages.append(LintMessage("y-016", "Possible typo: consecutive periods ([text]..[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
 
