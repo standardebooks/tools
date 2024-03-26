@@ -2570,8 +2570,9 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	# Unicode character should be (i.e. ‘Ε -> Ἑ), so we give a generic message instead.
 	# Also note that we have to use the basic Greek character range instead of a Unicode property like \p{Script=Greek} because
 	# xpath regex doesn't support Unicode properties.
-	for node in dom.xpath("/html/body//*[(@xml:lang='grc' or @xml:lang='el') and re:test(., '(^|\\s)[’‘][α-ωΑ-Ω]')]"):
-		messages.append(LintMessage("t-042", "[text]‘[/] used for Greek dasia or [text]’[/] used for Greek psili, but expected the single precomposed Unicode character, or a combining mark if a precomposed character doesn’t exist.", se.MESSAGE_TYPE_ERROR, filename))
+	nodes = dom.xpath("/html/body//*[(@xml:lang='grc' or @xml:lang='el') and re:test(., '(^|\\s)[’‘][α-ωΑ-Ω]')]")
+	if nodes:
+		messages.append(LintMessage("t-042", "[text]‘[/] used for Greek dasia or [text]’[/] used for Greek psili, but expected the single precomposed Unicode character, or a combining mark if a precomposed character doesn’t exist.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 	# Check for a list of some common English loan words that used to be italicized as foreign, but are no longer
 	nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and re:test(., '^(fianc[eé]+|divorc[eé]+|menu|recherch[eé]|tour-de-force|outr[eé]|d[ée]but(ante)?|apropos|[eé]lite|prot[ée]g[ée]+|chef|salon|r[eé]gime|contretemps|[eé]clat|aides?|entr[ée]+|t[eê]te-[aà]-t[eê]tes?|blas[eé]|bourgeoisie)$')]")
