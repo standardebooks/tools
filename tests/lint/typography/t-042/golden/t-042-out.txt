@@ -1,0 +1,5 @@
+t-042 [Error] chapter-1.xhtml `‘` used for Greek dasia or `’` used for Greek 
+psili, but expected the single precomposed Unicode character, or a combining 
+mark if a precomposed character doesn’t exist.
+        <i xml:lang="el">’αποικα</i>
+        <i xml:lang="el">‘αποικα</i>
