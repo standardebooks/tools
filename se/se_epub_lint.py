@@ -424,6 +424,8 @@ TYPOGRAPHY
 "t-071", "Multiple transcriptions listed, but preceding text is [text]a transcription[/]."
 "t-072", "[text]various sources[/] link not preceded by [text]from[/]."
 "t-073", "Possible transcription error in Greek."
+"t-074", "Extended sound using hyphen-minus [text]-[/] instead of non-breaking hyphen [text]‑[/]."
+
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -2739,6 +2741,12 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 		expected_text = se.typography.normalize_greek(node_text)
 		if node_text != expected_text:
 			messages.append(LintMessage("t-073", f"Possible transcription error in Greek. Found: [text]{node_text}[/], but expected [text]{expected_text}[/text]. Hint: Use [bash]se unicode-names[/] to see differences in Unicode characters.", se.MESSAGE_TYPE_WARNING, filename))
+
+	# Check for hyphen-minus instead of non-breaking hyphen in sounds.
+	# Ignore very long <i> as they are more likely to be a sentence containing a dash, than a sound
+	nodes = dom.xpath("/html/body//i[not(@epub:type) and not(xml:lang) and re:test(., '-[A-Za-z]-') and string-length(.) < 50]")
+	if nodes:
+		messages.append(LintMessage("t-074", "Extended sound using hyphen-minus [text]-[/] instead of non-breaking hyphen [text]‑[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 	return (messages, missing_files)
 

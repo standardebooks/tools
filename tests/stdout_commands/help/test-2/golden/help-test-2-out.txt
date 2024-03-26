@@ -1,4 +1,4 @@
-usage: se [-h] [-p] [-v] COMMAND [ARGS ...]
+usage: se [-h] [-p] [-v] COMMAND [ARGS [ARGS ...]]
 
 The entry point for the Standard Ebooks toolset.
 
@@ -14,7 +14,7 @@ positional arguments:
                  names word-count xpath
   ARGS           arguments for the subcommand
 
-options:
+optional arguments:
   -h, --help     show this help message and exit
   -p, --plain    print plain text output, without tables or formatting
   -v, --version  print version number and exit
