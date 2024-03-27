@@ -891,7 +891,7 @@ def _lint_metadata_checks(self) -> list:
 
 	# Check for common typos in description
 	for node in self.metadata_dom.xpath("/package/metadata/dc:description") + self.metadata_dom.xpath("/package/metadata/meta[@property='se:long-description']"):
-		matches = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?!-)", node.text, flags=regex.IGNORECASE)
+		matches = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?![-’])", node.text, flags=regex.IGNORECASE)
 		matches = matches + regex.findall(r"\ba a\b(?!-)", node.text)
 		if matches:
 			messages.append(LintMessage("y-001", "Possible typo: doubled [text]a/the/and/of/or/as/if[/].", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
@@ -2842,7 +2842,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 
 	if special_file != "titlepage":
 		# Don't check the titlepage because it has a standard format and may raise false positives
-		typos = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?!-)", file_contents, flags=regex.IGNORECASE)
+		typos = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?![-’])", file_contents, flags=regex.IGNORECASE)
 		typos = typos + regex.findall(r"\ba a\b(?!-)", file_contents)
 
 		if typos:
