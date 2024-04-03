@@ -11,13 +11,14 @@ import importlib_resources
 import git
 from natsort import natsorted
 from PIL import Image, ImageChops
+from PIL.Image import Image as Image_type
 from rich.console import Console
 
 import se
 import se.browser
 
 
-def _resize_canvas(image: Image, new_width: int, new_height: int) -> Image:
+def _resize_canvas(image: Image_type, new_width: int, new_height: int) -> Image_type:
 	"""
 	Expand an image's canvas with black, to the new height and width.
 	"""

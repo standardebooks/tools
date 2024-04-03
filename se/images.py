@@ -10,9 +10,10 @@ import struct
 import urllib.parse
 
 from html import unescape
-from typing import List, Callable, Dict, Union
+from typing import List, Callable, Dict
 import regex
 from PIL import Image, ImageMath, PngImagePlugin, UnidentifiedImageError
+from PIL.Image import Image as Image_type # Separate import to satisfy type checking
 import importlib_resources
 from lxml import etree
 
@@ -55,7 +56,7 @@ def get_data_url(image_path: Path) -> str:
 
 	return data_url
 
-def _color_to_alpha(image: Image, color=None) -> Image:
+def _color_to_alpha(image: Image_type, color=None) -> Image_type:
 	"""
 	Implements GIMP's color to alpha algorithm.
 	See https://stackoverflow.com/a/1617909
@@ -142,18 +143,10 @@ def _color_to_alpha(image: Image, color=None) -> Image:
 
 	return new_image
 
-def has_transparency(file: Union[Path, Image.Image]) -> bool:
+def has_transparency(image: Image_type) -> bool:
 	"""
 	Return True if the given image file has transparency
 	"""
-
-	image = file
-
-	if isinstance(image, Path):
-		try:
-			image = Image.open(file)
-		except UnidentifiedImageError as ex:
-			raise se.InvalidFileException(f"Couldn’t identify image type of [path][link=file://{file.resolve()}]{file}[/].") from ex
 
 	if image.mode == "P":
 		transparent = image.info.get("transparency", -1)
