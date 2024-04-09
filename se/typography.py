@@ -367,6 +367,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Remove no-break spaces added before etc.
 	xhtml = regex.sub(fr"{se.NO_BREAK_SPACE}(<abbr[^>]*?>etc\.)", r" \1", xhtml)
 
+	# Replace single obscured year digit with figure dash
+	xhtml = regex.sub(r"\b([0-9]{3})-([^0-9\p{Letter}])(?!abbr)", r"\1‒\2", xhtml)
+
 	return xhtml
 
 def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_tags: bool = False) -> str:
