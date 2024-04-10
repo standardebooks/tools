@@ -140,7 +140,7 @@ def find_unusual_characters(plain_output: bool) -> int:
 
 		else:
 			table = Table(show_header=False, show_lines=True, box=box.HORIZONTALS)
-			table.add_column("Character", style="bold", width=1, no_wrap=True)
+			table.add_column("Character", style="bold", no_wrap=True)
 			table.add_column("Code point", style="dim", no_wrap=True)
 			table.add_column("Name")
 			table.add_column("Count", style="dim", no_wrap=True)
