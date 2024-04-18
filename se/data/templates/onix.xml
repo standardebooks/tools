@@ -9,6 +9,11 @@
 	<Product>
 		<DescriptiveDetail>
 			<ProductFormFeature>
+				<!--Compliant with ePub Accessibility Spec v1.1-->
+				<ProductFormFeatureType>09</ProductFormFeatureType>
+				<ProductFormFeatureValue>04</ProductFormFeatureValue>
+			</ProductFormFeature>
+			<ProductFormFeature>
 				<!--No reading system accessibility options disabled-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>10</ProductFormFeatureValue>
@@ -32,6 +37,21 @@
 				<!--Language tagging provided-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>22</ProductFormFeatureValue>
+			</ProductFormFeature>
+			<ProductFormFeature>
+				<!--All non-decorative content supports reading without sight-->
+				<ProductFormFeatureType>09</ProductFormFeatureType>
+				<ProductFormFeatureValue>52</ProductFormFeatureValue>
+			</ProductFormFeature>
+			<ProductFormFeature>
+				<!--WCAG v2.2-->
+				<ProductFormFeatureType>09</ProductFormFeatureType>
+				<ProductFormFeatureValue>82</ProductFormFeatureValue>
+			</ProductFormFeature>
+			<ProductFormFeature>
+				<!--WCAG level AA-->
+				<ProductFormFeatureType>09</ProductFormFeatureType>
+				<ProductFormFeatureValue>85</ProductFormFeatureValue>
 			</ProductFormFeature>
 		</DescriptiveDetail>
 	</Product>
