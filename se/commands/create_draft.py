@@ -625,7 +625,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 			if not args.offline and translator["name"].lower() != "anonymous":
 				translator["wiki_url"], translator["nacoaf_uri"] = _get_wikipedia_url(translator["name"], True)
 
-		# Get data on illlustrators
+		# Get data on illustrators
 		for _, illustrator in enumerate(illustrators):
 			if not args.offline and illustrator["name"].lower() != "anonymous":
 				illustrator["wiki_url"], illustrator["nacoaf_uri"] = _get_wikipedia_url(illustrator["name"], True)
