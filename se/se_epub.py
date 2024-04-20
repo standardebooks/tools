@@ -69,7 +69,7 @@ class SeEpub:
 	content_path: Path = Path() # The path to the epub content base, i.e. self.epub_root_path / epub
 	metadata_file_path: Path = Path() # The path to the metadata file, i.e. self.content_path / content.opf
 	onix_path: Path = Path() # The path to the ONIX file, i.e. self.content_path / onix.xml
-	toc_path: Path = Path()  # The path to the metadata file, i.e. self.content_path / toc.xhtml
+	toc_path: Path = Path()  # The path to the ToC file, i.e. self.content_path / toc.xhtml
 	glossary_search_key_map_path = None # The path to the glossary search key map, or None
 	local_css = ""
 	is_se_ebook = True
@@ -224,7 +224,7 @@ class SeEpub:
 		"""
 		Accessor
 
-		Generate an SE identifer based on the metadata in the metadata file.
+		Generate an SE identifier based on the metadata in the metadata file.
 		"""
 
 		if not self._generated_identifier:

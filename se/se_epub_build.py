@@ -1020,7 +1020,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 							mathml_count = mathml_count + 1
 
-					# Do we still have mathml in this file?. If not, remove the namespace and also the `mathml` propery from the metadata file.
+					# Do we still have MathML in this file? If not, remove the namespace and also the `mathml` property from the metadata file.
 					if not dom.xpath("/html/body//*[namespace-uri()='http://www.w3.org/1998/Math/MathML']"):
 						# Remove unused namespaces, e.g. mathml
 						etree.cleanup_namespaces(dom.etree)
