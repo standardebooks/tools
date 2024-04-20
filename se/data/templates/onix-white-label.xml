@@ -2,7 +2,7 @@
 <ONIXMessage xmlns="http://ns.editeur.org/onix/3.1/reference" release="3.1">
 	<Header>
 		<Sender>
-			<SenderName>Standard Ebooks</SenderName>
+			<SenderName>Publisher Name</SenderName>
 		</Sender>
 		<SentDateTime>2014-05-25T00:00:00Z</SentDateTime>
 	</Header>
@@ -52,12 +52,6 @@
 				<!--WCAG level AA-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>85</ProductFormFeatureValue>
-			</ProductFormFeature>
-			<ProductFormFeature>
-				<!--Publisher contact for further accessibility information-->
-				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>99</ProductFormFeatureValue>
-				<ProductFormFeatureDescription>standardebooks@googlegroups.com</ProductFormFeatureDescription>
 			</ProductFormFeature>
 		</DescriptiveDetail>
 	</Product>

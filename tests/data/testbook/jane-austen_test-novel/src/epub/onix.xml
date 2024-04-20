@@ -53,6 +53,12 @@
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>85</ProductFormFeatureValue>
 			</ProductFormFeature>
+			<ProductFormFeature>
+				<!--Publisher contact for further accessibility information-->
+				<ProductFormFeatureType>09</ProductFormFeatureType>
+				<ProductFormFeatureValue>99</ProductFormFeatureValue>
+				<ProductFormFeatureDescription>standardebooks@googlegroups.com</ProductFormFeatureDescription>
+			</ProductFormFeature>
 		</DescriptiveDetail>
 	</Product>
 </ONIXMessage>
