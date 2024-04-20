@@ -68,6 +68,7 @@ class SeEpub:
 	epub_root_path = Path() # The path to the epub source root, i.e. self.path / src
 	content_path: Path = Path() # The path to the epub content base, i.e. self.epub_root_path / epub
 	metadata_file_path: Path = Path() # The path to the metadata file, i.e. self.content_path / content.opf
+	onix_path: Path = Path() # The path to the ONIX file, i.e. self.content_path / onix.xml
 	toc_path: Path = Path()  # The path to the metadata file, i.e. self.content_path / toc.xhtml
 	glossary_search_key_map_path = None # The path to the glossary search key map, or None
 	local_css = ""
@@ -110,11 +111,18 @@ class SeEpub:
 			raise se.InvalidSeEbookException("Target doesn’t appear to be an epub: no [path]container.xml[/] or no metadata file.") from ex
 
 		self.content_path = self.metadata_file_path.parent
+		self.onix_path = self.content_path / "onix.xml"
 
 		try:
 			self.metadata_dom = self.get_dom(self.metadata_file_path)
 		except Exception as ex:
 			raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]. Exception: {ex}") from ex
+
+		try:
+			self.onix_path = self.content_path / "onix.xml"
+			self.onix_dom = self.get_dom(self.onix_path)
+		except Exception as ex:
+			raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.onix_path}]{self.onix_path}[/][/]. Exception: {ex}") from ex
 
 		toc_href = self.metadata_dom.xpath("/package/manifest/item[contains(@properties, 'nav')]/@href", True)
 		if toc_href:
