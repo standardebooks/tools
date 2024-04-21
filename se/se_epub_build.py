@@ -131,8 +131,9 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 	# All clear to start building!
 
-	# Make a copy of the metadata dom because we'll be making changes
+	# Make a copy of the metadata and ONIX doms because we'll be making changes
 	metadata_dom = deepcopy(self.metadata_dom)
+	onix_dom = deepcopy(self.onix_dom)
 
 	# Initiate the various filenames we'll be using for output
 	# By convention the ASIN is set to the SHA-1 sum of the book's identifying URL
@@ -859,6 +860,9 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			for node in metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and (text() = 'describedMath' or text() = 'MathML')]"):
 				node.remove()
 
+			for node in onix_dom.xpath("//ProductFormFeatureType[text()='09']/following-sibling::ProductFormFeatureValue[text()='17']/parent::ProductFormFeature"):
+				node.remove()
+
 			# We wrap this whole thing in a try block, because we need to call
 			# driver.quit() if execution is interrupted (like by ctrl + c, or by an unhandled exception). If we don't call driver.quit(),
 			# Firefox will stay around as a zombie process even if the Python script is dead.
@@ -1110,6 +1114,10 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			xml = se.formatting.format_opf(metadata_dom.to_string())
 			xml = regex.sub(r"""<meta content="([^"]+?)" name="cover"/>""", r"""<meta name="cover" content="\1"/>""", xml)
 			file.write(xml)
+
+		# Also write out the ONIX file with potential MathML changes
+		with open(work_compatible_epub_dir / "epub" / self.onix_path.name, "w", encoding="utf-8") as file:
+			file.write(onix_dom.to_string())
 
 		# All done, clean the output
 		for filepath in se.get_target_filenames([work_compatible_epub_dir], (".xhtml", ".ncx")):
