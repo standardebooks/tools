@@ -2,57 +2,11 @@
 <ONIXMessage xmlns="http://ns.editeur.org/onix/3.1/reference" release="3.1">
 	<Header>
 		<Sender>
-			<SenderName>Publisher Name</SenderName>
+			<SenderName></SenderName>
 		</Sender>
 		<SentDateTime>2014-05-25T00:00:00Z</SentDateTime>
 	</Header>
 	<Product>
-		<DescriptiveDetail>
-			<ProductFormFeature>
-				<!--Compliant with ePub Accessibility Spec v1.1-->
-				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>04</ProductFormFeatureValue>
-			</ProductFormFeature>
-			<ProductFormFeature>
-				<!--No reading system accessibility options disabled-->
-				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>10</ProductFormFeatureValue>
-			</ProductFormFeature>
-			<ProductFormFeature>
-				<!--Table of contents navigation-->
-				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>11</ProductFormFeatureValue>
-			</ProductFormFeature>
-			<ProductFormFeature>
-				<!--Reading order-->
-				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>13</ProductFormFeatureValue>
-			</ProductFormFeature>
-			<ProductFormFeature>
-				<!--Short alternative descriptions-->
-				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>14</ProductFormFeatureValue>
-			</ProductFormFeature>
-			<ProductFormFeature>
-				<!--Language tagging provided-->
-				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>22</ProductFormFeatureValue>
-			</ProductFormFeature>
-			<ProductFormFeature>
-				<!--All non-decorative content supports reading without sight-->
-				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>52</ProductFormFeatureValue>
-			</ProductFormFeature>
-			<ProductFormFeature>
-				<!--WCAG v2.2-->
-				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>82</ProductFormFeatureValue>
-			</ProductFormFeature>
-			<ProductFormFeature>
-				<!--WCAG level AA-->
-				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>85</ProductFormFeatureValue>
-			</ProductFormFeature>
-		</DescriptiveDetail>
+		<DescriptiveDetail></DescriptiveDetail>
 	</Product>
 </ONIXMessage>
