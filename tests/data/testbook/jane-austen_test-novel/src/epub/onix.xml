@@ -54,6 +54,12 @@
 				<ProductFormFeatureValue>85</ProductFormFeatureValue>
 			</ProductFormFeature>
 			<ProductFormFeature>
+				<!--Publisher’s web page for detailed accessibility information-->
+				<ProductFormFeatureType>09</ProductFormFeatureType>
+				<ProductFormFeatureValue>96</ProductFormFeatureValue>
+				<ProductFormFeatureDescription>https://standardebooks.org/about/accessibility</ProductFormFeatureDescription>
+			</ProductFormFeature>
+			<ProductFormFeature>
 				<!--Publisher contact for further accessibility information-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>99</ProductFormFeatureValue>
