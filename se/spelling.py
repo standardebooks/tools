@@ -445,6 +445,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Cc])igaret(s?)\b", r"\1igarette\2", xhtml)		# cigaret -> cigarette
 	xhtml = regex.sub(r"\b([Dd])umbfounder", r"\1umbfound", xhtml)			# dumbfoundered -> dumbfounded
 	xhtml = regex.sub(r"\b([Ss])uttee", r"\1ati", xhtml)				# suttee -> sati
+	xhtml = regex.sub(r"\b([Bb])y-by\b", r"\1ye-bye", xhtml)			# by-by -> bye-bye
 
 
 	# Normalize some names
