@@ -2750,7 +2750,8 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 		messages.append(LintMessage("t-074", "Extended sound using hyphen-minus [text]-[/] instead of non-breaking hyphen [text]‑[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 	# Check if we have a word accented with an acute accent instead of a grave accent in verse scansion.
-	nodes = dom.xpath("/html/body//*[not(@xml:lang) and re:test(@epub:type, 'z3998:(poem|verse|hymn|song)')]//span[not(ancestor-or-self::*[not(name() = 'html') and @xml:lang]) and not(./span) and re:test(., '[A-Za-z][áéíóú][A-za-z]')]")
+	dom_copy = deepcopy(dom)
+	nodes = dom_copy.xpath("/html/body//*[not(@xml:lang) and re:test(@epub:type, 'z3998:(poem|verse|hymn|song)')]//span[not(ancestor-or-self::*[not(name() = 'html') and @xml:lang]) and not(./span) and re:test(., '[A-Za-z][áéíóú][A-za-z]')]")
 	filtered_nodes = []
 
 	if nodes:
