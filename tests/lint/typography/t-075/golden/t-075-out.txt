@@ -1,0 +1,4 @@
+t-075 [Manual Review] chapter-1.xhtml Word in verse with acute accent for 
+scansion instead of grave accent.
+        <span>He forcéd</span>
+        <span>The accurséd</span>

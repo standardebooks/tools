@@ -2,3 +2,6 @@ t-074 [Manual Review] chapter-1.xhtml Extended sound using hyphen-minus `-`
 instead of non-breaking hyphen `‑`.
         <i>Bor-r-r-r-n!</i>
         <em>Ow-w-w!</em>
+y-003 [Manual Review] chapter-1.xhtml Possible typo: paragraph missing ending 
+punctuation.
+        <p><i xml:lang="fr">X-x-x-x</i></p>
