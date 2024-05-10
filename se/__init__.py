@@ -224,13 +224,18 @@ def get_target_filenames(targets: list, allowed_extensions: Union[tuple, str]) -
 		target = Path(target).resolve()
 
 		if target.is_dir():
-			for file_path in target.glob("**/*"):
-				file_path.resolve()
-				if allowed_extensions:
-					if file_path.suffix in allowed_extensions:
+			# We use os.walk() and not Path.glob() so that we can ignore `.git` and its children
+			for root, directories, filenames in os.walk(target):
+				if ".git" in directories:
+					directories.remove(".git")
+
+				for filename in natsorted(filenames):
+					file_path =Path(root) / Path(filename)
+					if allowed_extensions:
+						if file_path.suffix in allowed_extensions:
+							target_xhtml_filenames.add(file_path)
+					else:
 						target_xhtml_filenames.add(file_path)
-				else:
-					target_xhtml_filenames.add(file_path)
 		else:
 			# If we're looking at an actual file, just add it regardless of whether it's ignored
 			target_xhtml_filenames.add(target)
