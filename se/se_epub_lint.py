@@ -2750,7 +2750,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 
 	# Check for hyphen-minus instead of non-breaking hyphen in sounds.
 	# Ignore very long <i> as they are more likely to be a sentence containing a dash, than a sound
-	nodes = dom.xpath("/html/body//*[(name() = 'i' or name() = 'em') and not(@epub:type) and not(xml:lang) and re:test(., '-[A-Za-z]-') and string-length(.) < 50]")
+	nodes = dom.xpath("/html/body//*[(name() = 'i' or name() = 'em') and not(@epub:type) and not(@xml:lang) and re:test(., '-[A-Za-z]-') and string-length(.) < 50]")
 	if nodes:
 		messages.append(LintMessage("t-074", "Extended sound using hyphen-minus [text]-[/] instead of non-breaking hyphen [text]‑[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
