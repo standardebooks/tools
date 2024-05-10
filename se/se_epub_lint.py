@@ -2192,15 +2192,6 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	if nodes:
 		messages.append(LintMessage("s-089", "MathML missing [attr]alttext[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for MathML, and no MathML / describedMath accessibilityFeature
-	nodes = dom.xpath("/html/body//m:math")
-	if nodes and len(self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'describedMath']")) == 0:
-		messages.append(LintMessage("m-077", "MathML found in ebook, but no [attr]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
-	# …and no ONIX MathML feature
-	if nodes and len(self.onix_dom.xpath("//ProductFormFeatureType[text()='09']/following-sibling::ProductFormFeatureValue[text()='17']")) == 0:
-		messages.append(LintMessage("m-078", "MathML found in ebook, but no MathML accessibility [xml]<ProductFormFeatureValue>17</ProductFormFeatureValue>[/] set in ONIX data.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
-
 	# Check for common errors in language tags
 	# `gr` is often used instead of `el`, `sp` instead of `es`, and `ge` instead of `de` (`ge` is the Georgian geographic region subtag but not a language subtag itself)
 	nodes = dom.xpath("//*[re:test(@xml:lang, '^(gr|sp|ge)$')]")
@@ -3234,7 +3225,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 		"has_images": False,
 		"has_multiple_transcriptions": False,
 		"has_multiple_page_scans": False,
-		"has_other_sources": False
+		"has_other_sources": False,
+		"has_mathml": False
 	}
 
 	# Cache the browser default stylesheet for later use
@@ -3530,14 +3522,16 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				local_css_selectors = list(unused_selectors)
 
 				# Done checking for unused selectors.
+				if not ebook_flags["has_mathml"] and dom.xpath("/html/body//m:math"):
+					ebook_flags["has_mathml"] = True
 
 				# Check if this is a frontmatter file, but exclude the titlepage, imprint, and toc
-				if dom.xpath("/html//*[contains(@epub:type, 'frontmatter') and not(descendant-or-self::*[re:test(@epub:type, '\\b(titlepage|imprint|toc)\\b')])]"):
+				if not ebook_flags["has_frontmatter"] and dom.xpath("/html//*[contains(@epub:type, 'frontmatter') and not(descendant-or-self::*[re:test(@epub:type, '\\b(titlepage|imprint|toc)\\b')])]"):
 					ebook_flags["has_frontmatter"] = True
 
 				# Do we have a half title?
 				# Sometimes the half title might not be a section, like in Cane by Jean Toomer
-				if dom.xpath("/html/body//*[contains(@epub:type, 'halftitlepage')]"):
+				if not ebook_flags["has_halftitle"] and dom.xpath("/html/body//*[contains(@epub:type, 'halftitlepage')]"):
 					ebook_flags["has_halftitle"] = True
 
 				# Add new CSS classes to global list
@@ -3633,6 +3627,15 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 	if self.is_se_ebook and not ebook_flags["has_cover_source"]:
 		missing_files.append("images/cover.source.jpg")
+
+	if ebook_flags["has_mathml"]:
+		# Check for MathML, and no MathML / describedMath accessibilityFeature
+		if not self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'describedMath']"):
+			messages.append(LintMessage("m-077", "MathML found in ebook, but no [attr]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+		# …and no ONIX MathML feature
+		if not self.onix_dom.xpath("//ProductFormFeatureType[text()='09']/following-sibling::ProductFormFeatureValue[text()='17']"):
+			messages.append(LintMessage("m-078", "MathML found in ebook, but no MathML accessibility [xml]<ProductFormFeatureValue>17</ProductFormFeatureValue>[/] set in ONIX data.", se.MESSAGE_TYPE_ERROR, self.onix_path))
 
 	# check for classes used but not in CSS, and classes only used once
 	missing_selectors = []
