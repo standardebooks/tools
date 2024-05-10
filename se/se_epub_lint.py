@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 from typing import Dict, List, Set, Union, Optional
 import importlib_resources
+from unidecode import unidecode
 
 import cssutils
 import lxml.cssselect
@@ -27,6 +28,7 @@ import se
 import se.easy_xml
 import se.formatting
 import se.images
+import se.spelling
 import se.typography
 
 SE_VARIABLES = [
@@ -426,6 +428,7 @@ TYPOGRAPHY
 "t-072", "[text]various sources[/] link not preceded by [text]from[/]."
 "t-073", "Possible transcription error in Greek."
 "t-074", "Extended sound using hyphen-minus [text]-[/] instead of non-breaking hyphen [text]‑[/]."
+"t-075", "Word in verse with acute accent for scansion instead of grave accent."
 
 
 XHTML
@@ -2741,9 +2744,38 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 
 	# Check for hyphen-minus instead of non-breaking hyphen in sounds.
 	# Ignore very long <i> as they are more likely to be a sentence containing a dash, than a sound
-	nodes = dom.xpath("/html/body//*[(name() = 'i' or name() = 'em') and not(@epub:type) and not(xml:lang) and re:test(., '-[A-Za-z]-') and string-length(.) < 50]")
+	nodes = dom.xpath("/html/body//*[(name() = 'i' or name() = 'em') and not(@epub:type) and not(@xml:lang) and re:test(., '-[A-Za-z]-') and string-length(.) < 50]")
 	if nodes:
 		messages.append(LintMessage("t-074", "Extended sound using hyphen-minus [text]-[/] instead of non-breaking hyphen [text]‑[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check if we have a word accented with an acute accent instead of a grave accent in verse scansion.
+	nodes = dom.xpath("/html/body//*[not(@xml:lang) and re:test(@epub:type, 'z3998:(poem|verse|hymn|song)')]//span[not(ancestor-or-self::*[not(name() = 'html') and @xml:lang]) and not(./span) and re:test(., '[A-Za-z][áéíóú][A-za-z]')]")
+	filtered_nodes = []
+
+	if nodes:
+		# These words are English but have acute accents. Don't include the accent in this list because below we compare against the unaccented version.
+		ignored_words = ["cafe",  "cafes", "regime", "regimes", "reveille", "reveilles"]
+
+		# Initialize our dictionary
+		se.spelling.initialize_dictionary()
+
+		for node in nodes:
+			# Remove any child nodes that have a language specified
+			for inner_node in node.xpath(".//*[@xml:lang]"):
+				inner_node.remove()
+
+			# Extract each accented word, then compare against our dictionary.
+			# If the word IS in the dictionary, add it to the error list.
+			# Words that are NOT in the dictinoary are more likely to be proper names
+			# Note that this doesn't match word with two accent marks, like résumé. Such words are highly unlikely
+			# to altered for scansion anyway.
+			for word in regex.findall(r"[A-Za-z]+[áéíóú]+[A-za-z]+", node.inner_text()):
+				unaccented_word = unidecode(word)
+				if unaccented_word in se.spelling.DICTIONARY and unaccented_word not in ignored_words:
+					filtered_nodes.append(node)
+
+	if filtered_nodes:
+		messages.append(LintMessage("t-075", "Word in verse with acute accent for scansion instead of grave accent.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in filtered_nodes]))
 
 	return (messages, missing_files)
 
