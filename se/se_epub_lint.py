@@ -665,7 +665,8 @@ def _lint_metadata_checks(self) -> list:
 
 		# Did we mention an SE book in the long description, but without italics?
 		# Only match if the title appears to contain an uppercase letter. This prevents matches on a non-title link like `<a href>short stories</a>`
-		matches = regex.search(r"""(?<!<i>)<a href="https://standardebooks\.org/ebooks/[^"]+?/[^"]+?">(?!<i>)([\p{Letter}\s]+)""", long_description)
+		# Also don't match if preceded by “ as that might refer to a short work that does not need italics (like "The Vampire")
+		matches = regex.search(r"""(?<!“)(?<!<i>)<a href="https://standardebooks\.org/ebooks/[^"]+?/[^"]+?">(?!<i>)([\p{Letter}\s]+)""", long_description)
 		if matches and regex.search(r"[\p{Uppercase_Letter}]", matches[1]):
 			messages.append(LintMessage("m-064", "S.E. ebook hyperlinked in long description but not italicized.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
