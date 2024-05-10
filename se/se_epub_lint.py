@@ -2755,7 +2755,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 
 	if nodes:
 		# These words are English but have acute accents. Don't include the accent in this list because below we compare against the unaccented version.
-		ignored_words = ["cafe",  "cafes", "regime", "regimes", "reveille", "reveilles"]
+		ignored_words = ["cafe",  "cafes", "menage", "regime", "regimes", "reveille", "reveilles"]
 
 		# Initialize our dictionary
 		se.spelling.initialize_dictionary()
@@ -2767,9 +2767,9 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 
 			# Extract each accented word, then compare against our dictionary.
 			# If the word IS in the dictionary, add it to the error list.
-			# Words that are NOT in the dictinoary are more likely to be proper names
+			# Words that are NOT in the dictionary are more likely to be proper names
 			# Note that this doesn't match word with two accent marks, like résumé. Such words are highly unlikely
-			# to altered for scansion anyway.
+			# to have accents for scansion anyway.
 			for word in regex.findall(r"[A-Za-z]+[áéíóú]+[A-za-z]+", node.inner_text()):
 				unaccented_word = unidecode(word)
 				if unaccented_word in se.spelling.DICTIONARY and unaccented_word not in ignored_words:
