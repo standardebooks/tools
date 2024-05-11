@@ -363,7 +363,7 @@ def get_word_count(xhtml: str) -> int:
 	xhtml = regex.sub(r"[…–—― ‘’“”\{\}\(\)]", " ", xhtml, flags=regex.IGNORECASE | regex.DOTALL)
 
 	# Remove word-connecting dashes, apostrophes, commas, and slashes (and/or), they count as a word boundry but they shouldn't
-	xhtml = regex.sub(r"[\p{Letter}0-9][\-\'\,\.\/][\p{Letter}0-9]", "aa", xhtml, flags=regex.IGNORECASE | regex.DOTALL)
+	xhtml = regex.sub(fr"[\p{{Letter}}0-9][\-\'\,\.\/{se.NO_BREAK_HYPHEN}{se.SHY_HYPHEN}][\p{{Letter}}0-9]", "aa", xhtml, flags=regex.IGNORECASE | regex.DOTALL)
 
 	# Replace sequential spaces with one space
 	xhtml = regex.sub(r"\s+", " ", xhtml, flags=regex.IGNORECASE | regex.DOTALL)
