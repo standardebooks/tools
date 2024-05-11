@@ -8,14 +8,22 @@
 	<body epub:type="bodymatter z3998:fiction">
 		<section id="chapter-1" epub:type="chapter">
 			<h2 epub:type="ordinal z3998:roman">I</h2>
-			<!-- Ignore, not a sound -->
-			<p><i>Bon-bon.</i></p>
+			<!-- VALID 1, italic -->
+			<p><i>C‑r‑a‑c‑k!</i> A sound with non-breaking hyphen.</p>
+			<!-- VALID 2, emphasis -->
+			<p>He’s <em>out‑t‑t‑t‑a</em> here!</p>
+			<!-- EXCLUSION 1, has an epub:type -->
+			<p>This is <i epub:type="se:name.publication.book">A Book Title with a S-S-S-Sound in It</i>.</p>
+			<!-- EXCLUSION 2, has a language tag -->
+			<p>He threw back his head, <i xml:lang="es">Anoche-e-e</i>!</p>
+			<!-- EXCLUSION 3a, more than one character between the dashes -->
+			<p><i>Bu-bu-bu-but what now?</i></p>
+			<!-- EXCLUSION 3b, only one instance of a single character in dashes -->
+			<p><i>Stay-a-day away!</i></p>
+			<!-- FAIL 1, italic -->
 			<p><i>Bor-r-r-r-n!</i></p>
-			<p><em>Ow-w-w!</em></p>
-			<!-- Ignore, language -->
-			<p><i xml:lang="fr">X-x-x-x</i></p>
-			<!-- Ignore, too long -->
-			<p><i>Can this be the Seigneur du Vallon de Bracieux de Pierrefonds? Well-a-day! how he has shrunk since he gave up the name of Porthos!</i></p>
+			<!-- FAIL 2, emphasis -->
+			<p><em>Ow-w-w-w!</em></p>
 		</section>
 	</body>
 </html>
