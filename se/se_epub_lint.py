@@ -2995,19 +2995,19 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	if typos:
 		messages.append(LintMessage("y-018", "Possible typo: [text]‘[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for closing rdquo without opening ldquo. We ignore blockquotes because they usually have unique quote formatting.
+	# Check for closing rdquo without opening ldquo.
 	# Remove tds in case rdquo means "ditto mark"
 	typos = regex.findall(r"”[^“‘]+?”", regex.sub(r"<td[^>]*?>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents), flags=regex.DOTALL)
 
 	# We create a filter to try to exclude nested quotations
 	# Remove tags in case they're enclosing punctuation we want to match against at the end of a sentence.
-	typos = [match for match in typos if not regex.search(r"(?:[\.!\?;…—]|”\s)’\s", se.formatting.remove_tags(match))]
+	typos = [match for match in typos if not regex.search(r"(?:[.!?;…—]|”\s)’\s", se.formatting.remove_tags(match))]
 
 	# Try some additional matches before adding the lint message
 	# Search for <p> tags that have an ending closing quote but no opening quote; but exclude <p>s that are preceded by a <blockquote>
 	# or that have a <blockquote> ancestor, because that may indicate that the opening quote is elsewhere in the quotation.
 	for node in dom.xpath("//p[re:test(., '^[^“]+”') and not(./preceding-sibling::*[1][name() = 'blockquote']) and not(./ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]) and not(./ancestor::blockquote)]"):
-		typos.append(node.to_string()[-20:])
+		typos.append(node.to_string())
 
 	if typos:
 		messages.append(LintMessage("y-019", "Possible typo: [text]”[/] without opening [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
