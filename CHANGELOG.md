@@ -1,3 +1,71 @@
+# 2.6.4
+
+## General
+
+- Don't include the .git directory when finding target files in commands
+
+- Add `setuptools` as a required package during install.
+
+## se create-draft
+
+- Bump ONIX conformance to 3.1 and update messages to reflect the current state of our ebooks. Thanks to Robin Whittleton
+
+- Update to ePub a11y 1.1 spec conformance metadata. Thanks to Robin Whittleton
+
+## se find-unusual-characters
+
+- Fix broken overflow on wide unusual characters. Thanks to Robin Whittleton
+
+## se lint
+
+- Add various tests. Thanks to Vince Rice
+
+- Look for uppercase as well in y-012. Thanks to Vince Rice
+
+- Add x-020, link to SE CSS file not in boilerplate file
+
+- Improve y-014
+
+- Remove y-015
+
+- Improve y-019
+
+- Add t-042, incorrect Greek breathing mark
+
+- Remove y-021. Thanks to Vince Rice
+
+- Add dl2/dl3 to ignored classes for c-008. Thanks to Vince Rice
+
+- Modify y-016 to properly exclude more than two periods in a row. Thanks to Vince Rice
+
+- Add t-074, sound with hyphen-minus and not non-breaking hyphen
+
+- Correctly output matches in t-042
+
+- Improve y-001
+
+- Improve t-074
+
+- Improve m-077
+
+- Improve m-078
+
+- Add t-075, word in verse with acute accent for scansion instead of grave accent
+
+- Improve m-064
+
+## se modernize-spelling
+
+- Various additions
+
+## se typogrify
+
+- Single obscured years should be obscured with a figure dash
+
+## se word-count
+
+- Don't count no-break-hyphens as a word boundary
+
 # 2.6.3
 
 ## General
