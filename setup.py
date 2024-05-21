@@ -93,7 +93,7 @@ setup(
 		"psutil==5.9.6",
 		"pyphen==0.14.0",
 		"regex==2023.10.3",
-		"requests==2.31.0",
+		"requests==2.32.0",
 		"rich==13.7.0",
 		"roman==4.1",
 		"selenium==4.9.0",
