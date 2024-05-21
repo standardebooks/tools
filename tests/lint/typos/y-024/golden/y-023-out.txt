@@ -1,0 +1,9 @@
+t-003 [Manual Review] chapter-1.xhtml `“` missing matching `”`. Note: When 
+dialog from the same speaker spans multiple `<p>` elements, it’s correct grammar
+to omit closing `”` until the last `<p>` of dialog.
+        “The horn of a brass becomes a labrid examination. “
+y-023 [Manual Review] chapter-1.xhtml Possible typo: two opening quotation marks
+in a run. Hint: Nested quotes should switch between `“` and `‘`
+        <p>“The horn of a brass becomes a labrid examination. “Extending this 
+logic, a zoology is the disgust of a permission.” Their windscreen was, in this 
+moment, a chanceless men. The unwept drug comes from a wiry software.</p>

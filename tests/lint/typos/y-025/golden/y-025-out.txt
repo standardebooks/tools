@@ -1,0 +1,8 @@
+y-025 [Manual Review] chapter-1.xhtml Possible typo: letter/comma/quote 
+mark/letter with no intervening space.
+        <p>One cannot separate spaces from rattish trucks,“It's an undeniable 
+fact, really; a lobster sees a surfboard as a crudest colon.”</p>
+        <p>“In modern times few can name an utmost rooster,‘that’ isn't a 
+townless lunchroom.”</p>
+        <p>“We know that a stringent,’Tis without hemps is truly a pedestrian of
+yearly bengals.</p>
