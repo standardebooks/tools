@@ -474,9 +474,8 @@ TYPOS
 "y-019”, "Possible typo: [text]”[/] without opening [text]“[/]."
 "y-020”, "Possible typo: consecutive comma-period ([text],.[/])."
 "y-022”, "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/]."
-"y-023”, "Possible typo: two opening quotation marks in a run. Hint: Nested quotes should switch between [text]“[/] and [text]‘[/]"
 "y-024”, "Possible typo: dash before [text]the/there/is/and/they/when[/] probably should be em-dash."
-"y-025”, "Possible typo: comma without space followed by quotation mark."
+"y-025”, "Possible typo: letter/comma/quote mark/letter with no intervening space."
 "y-026”, "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/]."
 "y-027”, "Possible typo: Extra [text]’[/] at end of paragraph."
 "y-028”, "Possible typo: [xhtml]<abbr>[/] directly preceded or followed by letter."
@@ -489,6 +488,7 @@ UNUSED
 vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 "y-015”, "Possible typo: mis-curled [text]‘[/] or missing [text]’[/]."
 "y-021”, "Possible typo: Opening [text]‘[/] without preceding [text]“[/]."
+"y-023”, "Possible typo: two opening quotation marks in a run. Hint: Nested quotes should switch between [text]“[/] and [text]‘[/]"
 """
 
 class LintMessage:
@@ -3017,25 +3017,20 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	if typos:
 		messages.append(LintMessage("y-020", "Possible typo: consecutive comma-period ([text],.[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for two quotations in one paragraph
+	# Check for a paragraph consisting entirely of two quotations
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^”]+?”\\s“[^”]+?”$')]")]
 	if typos:
 		messages.append(LintMessage("y-022", "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
-
-	# Check for incorrectly nested quotation marks
-	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^‘”]+“') and not(.//br)]")]
-	if typos:
-		messages.append(LintMessage("y-023", "Possible typo: two opening quotation marks in a run. Hint: Nested quotes should switch between [text]“[/] and [text]‘[/]", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for dashes instead of em-dashes
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\s[a-z]+-(the|there|is|and|they|when)\\s')]")]
 	if typos:
 		messages.append(LintMessage("y-024", "Possible typo: dash before [text]the/there/is/and/they/when[/] probably should be em-dash.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for comma not followed by space but followed by quotation mark
-	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[a-z],[“”‘’][a-z]', 'i')]")]
+	# Check for letter/comma/quote mark/letter with no intervening space (rdquo is already handled by y-012)
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[a-z],[“‘’][a-z]', 'i')]")]
 	if typos:
-		messages.append(LintMessage("y-025", "Possible typo: comma without space followed by quotation mark.", se.MESSAGE_TYPE_WARNING, filename, typos))
+		messages.append(LintMessage("y-025", "Possible typo: letter/comma/quote mark/letter with no intervening space.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for punctuation missing before conjunctions. Ignore <p> with an <i> child starting in a conjunction, as those are probably book titles or non-English languages
 	typos = [node.to_string() for node in dom.xpath(f"/html/body//p[not(parent::hgroup) and re:test(., '\\b[a-z]+\\s(But|And|For|Nor|Yet|Or)\\b[^’\\.\\?\\-{se.WORD_JOINER}]') and not(./i[re:test(., '^(But|And|For|Nor|Yet|Or)\\b')])]")]
