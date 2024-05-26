@@ -1,0 +1,4 @@
+y-032 [Manual Review] chapter-1.xhtml Possible typo: Italics running into 
+preceding or following characters.
+        <i epub:type="se:name.publication.play">Hamlet</i>
+        <i epub:type="se:name.publication.book">Threatful Flood</i>

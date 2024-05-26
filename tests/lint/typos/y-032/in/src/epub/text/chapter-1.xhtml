@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0" xml:lang="en-GB">
+	<head>
+		<title>I</title>
+		<link href="../css/core.css" rel="stylesheet" type="text/css"/>
+		<link href="../css/local.css" rel="stylesheet" type="text/css"/>
+	</head>
+	<body epub:type="bodymatter z3998:fiction">
+		<section id="chapter-1" epub:type="chapter">
+			<h2 epub:type="ordinal z3998:roman">I</h2>
+			<!-- VALID 1, italics with epub:type with whitespace on each side -->
+			<p>I will here produce a few extracts taken from our <i epub:type="se:name.publication.book">Protocol of Peace</i> for the year 1867.</p>
+			<!-- VALID 2, italics with epub:type with punctuation on one side -->
+			<p>It was <i epub:type="se:name.publication.book">Caesar’s Commentaries</i>, which La Ramee had lent him.</p>
+			<!-- EXCLUSION 1, italics with epub:type followed by 's' -->
+			<p>All my <i epub:type="se:name.publication.newspaper">Herald</i>s went off like hot cakes.</p>
+			<!-- EXCLUSION 2, italics with epub:type followed by 'es' -->
+			<p>Once there happened to be only two <i epub:type="z3998:taxonomy">Semper Augustus</i>es in all Holland, one in Haarlem and one in Amsterdam.</p>
+			<!-- EXCLUSION 3, italics with epub:type followed by 'er' -->
+			<p>A well-informed <i epub:type="se:name.publication.book">Critical Review</i>er would have amended the title thus: “Lucian reviv’d: or Gulliver Beat with his own Bow.”</p>
+			<!-- FAIL 1, italics with epub:type followed by something other than s/es/er -->
+			<p>This one was definitely the <i epub:type="se:name.publication.play">Hamlet</i>est of the fake <i epub:type="se:name.publication.play">Hamlet</i>s.</p>
+			<!-- FAIL 2, italics with epub:type immediately preceded by test -->
+			<p>Recent controversy aside, a<i epub:type="se:name.publication.book">Threatful Flood</i> is a litter of the mind.</p>
+		</section>
+	</body>
+</html>
