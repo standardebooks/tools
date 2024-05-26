@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0" xml:lang="en-GB">
+	<head>
+		<title>I</title>
+		<link href="../css/core.css" rel="stylesheet" type="text/css"/>
+		<link href="../css/local.css" rel="stylesheet" type="text/css"/>
+	</head>
+	<body epub:type="bodymatter z3998:fiction">
+		<section id="chapter-1" epub:type="chapter">
+			<h2 epub:type="ordinal z3998:roman">I</h2>
+			<!-- VALID 1, quotes separated by appropriate punctuation -->
+			<p>“Father is very much hurt,” she said, “that you have written nothing to him.”</p>
+			<!-- first re.test -->
+			<!-- EXCLUSION 1, ” said [A-Za-z]+? the “ -->
+			<p>“Their felony was, in this moment, an arcane spain,” “Nancy” said to the “paperboy.”</p>
+			<!-- EXCLUSION 2, ” said [A-Za-z]+? to “ -->
+			<p>“The first daimen summer is, in its own way, a shock,” said Joe to “Charlie.”</p>
+			<!-- EXCLUSION 3, ” said [A-Za-z]+? with “ -->
+			<p>“What we don't know for sure is whether or not the shaven bait comes from a filthy scarf,” said John with “sarcasm.”</p>
+			<!-- EXCLUSION 4, ” said [A-Za-z]? from “ -->
+			<p>“Extending this logic, they were lost without the punchy field that composed their weather,” said Daniel from “compassion.”</p>
+			<!-- EXCLUSION 5, ” said [A-Za-z]+? a “ -->
+			<p>“Killjoy” said to a “friend,” “An earth sees a weather as an unstilled jacket.”</p>
+			<!-- EXCLUSION 6, ” said [A-Za-z]+? is “ -->
+			<p>“Nonsense,” said friend is “persona non grata.”</p>
+			<!-- EXCLUSION 7, ” [A-Za-z]{2,}ed the “ -->
+			<p>“Unless,” added the “mistress,” with a smile that half belied the severity of her speech ⁠…</p>
+			<!-- EXCLUSION 8, ” [A-Za-z]{2,}ed to “ -->
+			<p>“The Bottoms” succeeded to “Hell Row.”</p>
+			<!-- EXCLUSION 9, ” [A-Za-z]{2,}ed with “ -->
+			<p>Her plaintive dirges for “<i xml:lang="fr">notre malheureuse patrie</i>,” interpolated with “<i xml:lang="fr">charmant</i>” and “<i xml:lang="fr">mon prince</i>,” died away along the terrace.</p>
+			<!-- EXCLUSION 10, ” [A-Za-z]{2,}ed from “ -->
+			<p>Probably Smith had fresh in his recollection the passage in which Madox ridicules as a “piece of puerility” the use of the English word “misterie,” derived from “the Gallic word <i xml:lang="fr">mestera</i>.”</p>
+			<!-- EXCLUSION 11, ” [A-Za-z]{2,}ed a “ -->
+			<p>“Well, Mary,” answered a “dear-me-what-now” voice.</p>
+			<!-- EXCLUSION 12, ” [A-Za-z]{2,}ed is “ -->
+			<p>The order in council for the printing and publishing a declaration of war against Denmark is dated “Whitehall, <abbr>Sept.</abbr> 19, 1666”; annexed is “A True Declaration of all transactions⁠ ⁠…”</p>
+			<!-- FAIL 1, ” said [A-Za-z]+? “ -->
+			<p>“Good boy,” said old “Kiowa.” “You’d better go get some supper.”</p>
+			<!-- FAIL 2, ” [A-Za-z]{2,}ed [A-Za-z]+? “ -->
+			<p>He pronounced the inhibition lengthily and sonorously, so that the “not” sounded like “n‑o‑o‑o‑t!”</p>
+			<!-- second re.test -->
+			<!-- Note: [.!?]” he/she/I said “ will (validly) trigger y-014, so aren't shown here -->
+			<!-- EXCLUSION 13, [.!?]” I said “ -->
+			<p>You said “for a space.” I said “for a while.”</p>
+			<!-- EXCLUSION 14, [.!?]” [A-Z][a-z]+ said “ -->
+			<p>“Better’n a bleedin’ dipso!” Lips said “<i>S.h.h.h!</i>”</p>
+			<!-- EXCLUSION 15, [.!?]” I [A-Za-z]{2,}ed “ -->
+			<p>“What do you think you’re doing?” I said “Nothing.”</p>
+			<!-- EXCLUSION 16, [.!?]” [A-Z][a-z]+ [A-Za-z]{2,}ed “ -->
+			<p>“But he’s not here.” She added “He’s not been here with me.”</p>
+			<!-- FAIL 3, [^.!?]” he said “ -->
+			<p>“Ah well,” he said “then let’s take off this little frock.”</p>
+			<!-- FAIL 4, [^.!?]” she said “ (also triggers t-005) -->
+			<p>The sharp reprimand was not lost upon her, and in time it came to pass that for “fay” she said “succeed.”</p>
+			<!-- FAIL 5, [^.!?]” I said “ -->
+			<p>Catching, however, two words which sounded like the English “White” and “Red,” I said “Yaw” after the last.</p>
+			<!-- FAIL 6, [^.!?]” [A-Z][a-z]+ said “ -->
+			<p>She hadn’t much reserve of patience, and at the end of the second game, when Ella Stowbody sniffily asked her, “Are you going to send to Minneapolis for your dress for the next soirée—heard you were,” Carol said “Don’t know yet” with unnecessary sharpness.</p>
+			<!-- FAIL 7, [^.!?]” he [A-Za-z]{2,}ed “ -->
+			<p>“Keep away from women and horses and, and—” he stopped “—eagles, Billy.”</p>
+			<!-- FAIL 8, [^.!?]” she [A-Za-z]{2,}ed “ -->
+			<p>When they told her to respond with “Amen,” she responded “Amen.”</p>
+			<!-- FAIL 9, [^.!?]” I [A-Za-z]{2,}ed “ -->
+			<p>When told to “look closely,” I said “why?”</p>
+			<!-- FAIL 10, [^.!?]” [A-Z][a-z]+ [A-Za-z]{2,}ed “ -->
+			<p>“Forget that nonsense,” Andy exclaimed “forcefully.”</p>
+			<!-- third re.test -->
+			<!-- FAIL 11, ,” said [A-Za-z]+? [A-Za-z]+?ly “ -->
+			<p>“A chary enquiry is a ghost of the mind,” said Billy adroitly “unfortunately, that is wrong; on the contrary, their bathtub was, in this moment, a petite underwear.”</p>
+			<!-- FAIL 12, ,” [A-Za-z]{2,}ed [A-Za-z]+? [A-Za-z]+?ly “ -->
+			<p>“Liars are perjured quills,” whispered someone sweetly “a bathroom is a lip's coal.”</p>
+		</section>
+	</body>
+</html>
