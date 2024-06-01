@@ -50,31 +50,34 @@ def semanticate(xhtml: str) -> str:
 	"""
 
 	# Some common abbreviations
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Mr\.", r"""<abbr epub:type="z3998:name-title">Mr.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Mrs\.", r"""<abbr epub:type="z3998:name-title">Mrs.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Ms\.", r"""<abbr epub:type="z3998:name-title">Ms.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Dr\.", r"""<abbr epub:type="z3998:name-title">Dr.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Drs\.", r"""<abbr epub:type="z3998:name-title">Drs.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Prof\.", r"""<abbr epub:type="z3998:name-title">Prof.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Rev\.", r"""<abbr epub:type="z3998:name-title">Rev.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Hon\.", r"""<abbr epub:type="z3998:name-title">Hon.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Lieut\.", r"""<abbr epub:type="z3998:name-title">Lieut.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Fr\.", r"""<abbr epub:type="z3998:name-title">Fr.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Lt\.", r"""<abbr epub:type="z3998:name-title">Lt.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Capt\.", r"""<abbr epub:type="z3998:name-title">Capt.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Pvt\.", r"""<abbr epub:type="z3998:name-title">Pvt.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Esq\.", r"""<abbr epub:type="z3998:name-title">Esq.</abbr>""", xhtml)
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(\L<titles>\.)", r"""<abbr epub:type="z3998:name-title">\1</abbr>""", xhtml, titles=[
+		"Mr",
+		"Mrs",
+		"Ms",
+		"Dr",
+		"Drs",
+		"Prof",
+		"Rev",
+		"Hon",
+		"Lieut",
+		"Fr",
+		"Lt",
+		"Capt",
+		"Pvt",
+		"Esq",
+		"MM",
+		"Mme",
+		"Mmes",
+		"Mon",
+		"Mlle",
+		"Mdlle",
+		"Mlles",
+		"Messrs",
+		"Messers",
+		"Col",
+	])
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Bros\.", r"<abbr>Bros.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Mt\.", r"<abbr>Mt.</abbr>", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))MM\.", r"""<abbr epub:type="z3998:name-title">MM.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Mme\.", r"""<abbr epub:type="z3998:name-title">Mme.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Mmes\.", r"""<abbr epub:type="z3998:name-title">Mmes.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Mon\.", r"""<abbr epub:type="z3998:name-title">Mon.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Mlle\.", r"""<abbr epub:type="z3998:name-title">Mlle.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Mdlle\.", r"""<abbr epub:type="z3998:name-title">Mdlle.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Mlles\.", r"""<abbr epub:type="z3998:name-title">Mlles.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Messrs\.", r"""<abbr epub:type="z3998:name-title">Messrs.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Messers\.", r"""<abbr epub:type="z3998:name-title">Messers.</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Vv])ol(s?)\.", r"<abbr>\1ol\2.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Cc])hap\. ([0-9])", r"<abbr>\1hap.</abbr> \2", xhtml) # The number allows us to avoid phrases like `Hello, old chap.`
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>)|\.)(P\.(?:P\.)?S\.(?:S\.)?\B)", r"""<abbr epub:type="z3998:initialism">\1</abbr>""", xhtml)
@@ -83,7 +86,6 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Ltd\.", r"<abbr>Ltd.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))St\.", r"<abbr>St.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Gg])ov\.", r"<abbr>\1ov.</abbr>", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Col\.", r"""<abbr epub:type="z3998:name-title">Col.</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))MS(S?)\.", r"""<abbr>MS\1.</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Vv])iz\.", r"<abbr>\1iz.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))etc\.", r"<abbr>etc.</abbr>", xhtml)
