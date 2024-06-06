@@ -75,6 +75,8 @@ def word_count(plain_output: bool) -> int:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return se.InvalidInputException.code
 
+	category = ""
+
 	if args.categorize:
 		category = "se:short-story"
 		if NOVELLA_MIN_WORD_COUNT <= total_word_count < NOVEL_MIN_WORD_COUNT:
@@ -82,6 +84,6 @@ def word_count(plain_output: bool) -> int:
 		elif total_word_count >= NOVEL_MIN_WORD_COUNT:
 			category = "se:novel"
 
-	print(f"{total_word_count}\t{category if args.categorize else ''}")
+	print(f"{total_word_count}\t{category}")
 
 	return 0

@@ -510,8 +510,7 @@ class LintMessage:
 			for submessage in submessages:
 				# Try to flatten leading indentation
 				for indent in regex.findall(r"^\t+(?=<)", submessage, flags=regex.MULTILINE):
-					if len(indent) < smallest_indent:
-						smallest_indent = len(indent)
+					smallest_indent = min(smallest_indent, len(indent))
 
 			if smallest_indent == 1000:
 				smallest_indent = 0
@@ -1505,6 +1504,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		for node in dom.xpath("/html/body/nav[contains(@epub:type, 'loi')]//li//a"):
 			figure_ref = node.get_attr("href").split("#")[1]
 			chapter_ref = regex.findall(r"(.*?)#.*", node.get_attr("href"))[0]
+			figure_img_alt = ""
 			figcaption_text = ""
 			loi_text = node.inner_text()
 			file_dom = self.get_dom(self.content_path / "text" / chapter_ref)

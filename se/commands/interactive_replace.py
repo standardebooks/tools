@@ -37,8 +37,7 @@ def _get_text_dimensions(text: str) -> Tuple[int, int]:
 			else:
 				line_length = line_length + 1
 
-		if line_length > text_width:
-			text_width = line_length
+		text_width = max(text_width, line_length)
 
 	return (text_height + 1, text_width + 1)
 
