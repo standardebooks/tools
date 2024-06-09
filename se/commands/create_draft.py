@@ -9,10 +9,10 @@ import urllib.parse
 from argparse import Namespace
 from html import escape
 from pathlib import Path
+import importlib.resources
 from typing import Optional, Tuple, Union, List, Dict
 
 import git
-import importlib_resources
 import regex
 import requests
 from rich.console import Console
@@ -190,7 +190,7 @@ def _generate_titlepage_svg(title: str, authors: List[str], contributors: dict, 
 	canvas_width = se.TITLEPAGE_WIDTH - (TITLEPAGE_HORIZONTAL_PADDING * 2)
 
 	# Read our template SVG to get some values before we begin
-	with importlib_resources.open_text("se.data.templates", "titlepage.svg", encoding="utf-8") as file:
+	with importlib.resources.files("se.data.templates").joinpath("titlepage.svg").open("r", encoding="utf-8") as file:
 		svg = file.read()
 
 	# Remove the template text elements from the SVG source, we'll write out to it later
@@ -286,7 +286,7 @@ def _generate_cover_svg(title: str, authors: List[str], title_string: str) -> st
 	canvas_width = COVER_TITLE_BOX_WIDTH - (COVER_TITLE_BOX_PADDING * 2)
 
 	# Read our template SVG to get some values before we begin
-	with importlib_resources.open_text("se.data.templates", "cover.svg", encoding="utf-8") as file:
+	with importlib.resources.files("se.data.templates").joinpath("cover.svg").open("r", encoding="utf-8") as file:
 		svg = file.read()
 
 	# Remove the template text elements from the SVG source, we'll write out to it later
@@ -406,7 +406,7 @@ def _copy_template_file(filename: str, dest_path: Path) -> None:
 	"""
 	if dest_path.is_dir():
 		dest_path = dest_path / filename
-	with importlib_resources.path("se.data.templates", filename) as src_path:
+	with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath(filename)) as src_path:
 		shutil.copyfile(src_path, dest_path)
 
 def _add_name_abbr(contributor: str) -> str:

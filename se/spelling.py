@@ -4,7 +4,7 @@ Defines various spelling-related helper functions.
 """
 
 from typing import Set
-import importlib_resources
+import importlib.resources
 import regex
 import se
 
@@ -35,7 +35,7 @@ def initialize_dictionary():
 	"""
 
 	if not se.spelling.DICTIONARY:
-		with importlib_resources.open_text("se.data", "words") as dictionary:
+		with importlib.resources.files("se.data").joinpath("words").open("r", encoding="utf-8") as dictionary:
 			se.spelling.DICTIONARY = {line.strip().lower() for line in dictionary}
 
 def modernize_hyphenation(xhtml: str) -> str:

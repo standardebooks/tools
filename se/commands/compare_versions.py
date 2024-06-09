@@ -6,8 +6,8 @@ import argparse
 import shutil
 import tempfile
 from pathlib import Path
+import importlib.resources
 
-import importlib_resources
 import git
 from natsort import natsorted
 from PIL import Image, ImageChops
@@ -182,7 +182,7 @@ def compare_versions(plain_output: bool) -> int:
 						for filename in natsorted(list(files_with_differences)):
 							html += f"\t\t<section>\n\t\t\t<h1>{filename.name}</h1>\n\t\t\t<img src=\"{filename.name}-original.png\">\n\t\t\t<img src=\"{filename.name}-new.png\">\n\t\t</section>\n"
 
-						with importlib_resources.open_text("se.data.templates", "diff-template.html", encoding="utf-8") as file:
+						with importlib.resources.files("se.data.templates").joinpath("diff-template.html").open("r", encoding="utf-8") as file:
 							html = file.read().replace("<!--se:sections-->", html.strip())
 
 						with open(output_directory / "diff.html", "w", encoding="utf-8") as file:

@@ -15,8 +15,8 @@ from copy import deepcopy
 from hashlib import sha1
 from html import unescape
 from pathlib import Path
+import importlib.resources
 from typing import Dict, Tuple, List, Optional
-import importlib_resources
 
 from cairosvg import svg2png
 from PIL import Image, ImageOps
@@ -179,7 +179,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		# Are we including proofreading CSS?
 		if proof:
 			with open(work_compatible_epub_dir / "epub" / "css" / "local.css", "a", encoding="utf-8") as local_css_file:
-				with importlib_resources.open_text("se.data.templates", "proofreading.css", encoding="utf-8") as proofreading_css_file:
+				with importlib.resources.files("se.data.templates").joinpath("proofreading.css").open("r", encoding="utf-8") as proofreading_css_file:
 					local_css_file.write("\n" + proofreading_css_file.read())
 
 		# Update the release date in the metadata and colophon
@@ -227,7 +227,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			compatibility_css_filename = "compatibility-white-label.css"
 
 		with open(work_compatible_epub_dir / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:
-			with importlib_resources.open_text("se.data.templates", compatibility_css_filename, encoding="utf-8") as compatibility_css_file:
+			with importlib.resources.files("se.data.templates").joinpath(compatibility_css_filename).open("r", encoding="utf-8") as compatibility_css_file:
 				core_css_file.write("\n" + compatibility_css_file.read())
 
 		# Simplify CSS and tags
@@ -430,7 +430,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 					# Initialize the transform object, if we haven't yet
 					if not mathml_transform:
-						with importlib_resources.path("se.data", "mathmlcontent2presentation.xsl") as mathml_xsl_filename:
+						with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("mathmlcontent2presentation.xsl")) as mathml_xsl_filename:
 							mathml_transform = etree.XSLT(etree.parse(str(mathml_xsl_filename)))
 
 					# Transform the mathml and get a string representation
@@ -1064,7 +1064,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			node.append(etree.fromstring("""<item href="toc.ncx" id="ncx" media-type="application/x-dtbncx+xml"/>"""))
 
 		# Now use an XSLT transform to generate the NCX
-		with importlib_resources.path("se.data", "navdoc2ncx.xsl") as navdoc2ncx_xsl_filename:
+		with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("navdoc2ncx.xsl")) as navdoc2ncx_xsl_filename:
 			toc_tree = se.epub.convert_toc_to_ncx(work_compatible_epub_dir, toc_filename, navdoc2ncx_xsl_filename)
 
 		# Convert the <nav> landmarks element to the <guide> element in the metadata file
@@ -1135,7 +1135,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		if run_epubcheck:
 			# Path arguments must be cast to string for Windows compatibility.
-			with importlib_resources.path("se.data.epubcheck", "epubcheck.jar") as jar_path:
+			with importlib.resources.as_file(importlib.resources.files("se.data.epubcheck").joinpath("epubcheck.jar")) as jar_path:
 				# We have to use a temp file to hold stdout, because if the output is too large for the output buffer in subprocess.run() (and thus popen()) it will be truncated
 				with tempfile.TemporaryFile() as stdout:
 					# We can't check the return code, because if only warnings are returned then epubcheck will return 0 (success)
@@ -1169,7 +1169,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 						raise se.BuildFailedException("[bash]epubcheck[/] failed.", build_messages)
 
 			# Now run the Nu Validator
-			with importlib_resources.path("se.data.vnu", "vnu.jar") as jar_path:
+			with importlib.resources.as_file(importlib.resources.files("se.data.vnu").joinpath("vnu.jar")) as jar_path:
 				# We have to use a temp file to hold stdout, because if the output is too large for the output buffer in subprocess.run() (and thus popen()) it will be truncated
 				with tempfile.TemporaryFile() as stdout:
 					subprocess.run(["java", "-jar", str(jar_path), "--format", "xml", str(self.epub_root_path / "epub" / "text")], stdout=stdout, stderr=stdout, check=False)
@@ -1312,7 +1312,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				file.truncate()
 
 			# Rebuild the NCX
-			with importlib_resources.path("se.data", "navdoc2ncx.xsl") as navdoc2ncx_xsl_filename:
+			with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("navdoc2ncx.xsl")) as navdoc2ncx_xsl_filename:
 				se.epub.convert_toc_to_ncx(work_compatible_epub_dir, toc_filename, navdoc2ncx_xsl_filename)
 
 			# Clean just the ToC and NCX
@@ -1405,7 +1405,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 			# Include compatibility CSS
 			with open(work_compatible_epub_dir / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:
-				with importlib_resources.open_text("se.data.templates", "kindle.css", encoding="utf-8") as compatibility_css_file:
+				with importlib.resources.files("se.data.templates").joinpath("kindle.css").open("r", encoding="utf-8") as compatibility_css_file:
 					core_css_file.write("\n" + compatibility_css_file.read())
 
 			# Build an epub file we can send to Calibre

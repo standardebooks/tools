@@ -4,8 +4,8 @@ This module implements the `se split-file` command.
 
 import argparse
 from pathlib import Path
+import importlib.resources
 
-import importlib_resources
 import regex
 import roman
 
@@ -57,7 +57,7 @@ def split_file(plain_output: bool) -> int:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return se.InvalidFileException.code
 	else:
-		with importlib_resources.open_text("se.data.templates", "chapter-template.xhtml", encoding="utf-8") as file:
+		with importlib.resources.files("se.data.templates").joinpath("chapter-template.xhtml").open("r", encoding="utf-8") as file:
 			template_xhtml = file.read()
 
 	# Try to guess the ebook language and update the template accordingly
