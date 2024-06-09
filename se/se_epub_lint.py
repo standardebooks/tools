@@ -14,7 +14,7 @@ import io
 import os
 from pathlib import Path
 from typing import Dict, List, Set, Union, Optional
-import importlib_resources
+import importlib.resources
 from unidecode import unidecode
 
 import cssutils
@@ -3259,7 +3259,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	}
 
 	# Cache the browser default stylesheet for later use
-	with importlib_resources.open_text("se.data", "browser.css", encoding="utf-8") as css:
+	with importlib.resources.files("se.data").joinpath("browser.css").open("r", encoding="utf-8") as css:
 		self._file_cache["default"] = css.read() # pylint: disable=protected-access
 
 	# Check that the spine has all the expected files in the book
@@ -3386,35 +3386,35 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	# Make sure some static files are unchanged
 	if self.is_se_ebook:
 		try:
-			with importlib_resources.path("se.data.templates", "LICENSE.md") as license_file_path:
+			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("LICENSE.md")) as license_file_path:
 				if not filecmp.cmp(license_file_path, self.path / "LICENSE.md"):
 					messages.append(LintMessage("f-003", f"File does not match [path][link=file://{license_file_path}]{license_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.path / "LICENSE.md"))
 		except Exception:
 			missing_files.append("LICENSE.md")
 
 		try:
-			with importlib_resources.path("se.data.templates", "core.css") as core_css_file_path:
+			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("core.css")) as core_css_file_path:
 				if not filecmp.cmp(core_css_file_path, self.content_path / "css/core.css"):
 					messages.append(LintMessage("f-004", f"File does not match [path][link=file://{core_css_file_path}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "css/core.css"))
 		except Exception:
 			missing_files.append("css/core.css")
 
 		try:
-			with importlib_resources.path("se.data.templates", "logo.svg") as logo_svg_file_path:
+			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("logo.svg")) as logo_svg_file_path:
 				if not filecmp.cmp(logo_svg_file_path, self.content_path / "images/logo.svg"):
 					messages.append(LintMessage("f-005", f"File does not match [path][link=file://{logo_svg_file_path}]{logo_svg_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "images/logo.svg"))
 		except Exception:
 			missing_files.append("images/logo.svg")
 
 		try:
-			with importlib_resources.path("se.data.templates", "uncopyright.xhtml") as uncopyright_file_path:
+			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("uncopyright.xhtml")) as uncopyright_file_path:
 				if not filecmp.cmp(uncopyright_file_path, self.content_path / "text/uncopyright.xhtml"):
 					messages.append(LintMessage("f-006", f"File does not match [path][link=file://{uncopyright_file_path}]{uncopyright_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "text/uncopyright.xhtml"))
 		except Exception:
 			missing_files.append("text/uncopyright.xhtml")
 
 		try:
-			with importlib_resources.path("se.data.templates", "se.css") as core_css_file_path:
+			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("se.css")) as core_css_file_path:
 				if not filecmp.cmp(core_css_file_path, self.content_path / "css/se.css"):
 					messages.append(LintMessage("f-014", f"File does not match [path][link=file://{self.path / 'src/epub/css/se.css'}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "css/se.css"))
 		except Exception:

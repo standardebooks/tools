@@ -8,13 +8,13 @@ from pathlib import Path
 import tempfile
 import struct
 import urllib.parse
+import importlib.resources
 
 from html import unescape
 from typing import List, Callable, Dict
 import regex
 from PIL import Image, ImageMath, PngImagePlugin, UnidentifiedImageError
 from PIL.Image import Image as Image_type # Separate import to satisfy type checking
-import importlib_resources
 from lxml import etree
 
 import se
@@ -313,7 +313,7 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 	name_list = {"league_spartan": ["league-spartan-bold.svg"], "sorts_mill_goudy": ["sorts-mill-goudy-italic.svg", "sorts-mill-goudy.svg"]}
 	for font_family, font_names in name_list.items():
 		for font_name in font_names:
-			with importlib_resources.path(f"se.data.fonts.{font_family}", font_name) as font_path:
+			with importlib.resources.as_file(importlib.resources.files(f"se.data.fonts.{font_family}").joinpath(font_name)) as font_path:
 				font_paths.append(font_path)
 	fonts = []
 	for font_path in font_paths:
