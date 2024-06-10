@@ -161,7 +161,7 @@ FILESYSTEM
 "f-011", "JPEG files must end in [path].jpg[/]."
 "f-012", "TIFF files must end in [path].tif[/]."
 "f-013", "Glossary search key map must be named [path]glossary-search-key-map.xml[/]."
-"f-014", f"File does not match [path][link=file://{self.path / 'src/epub/css/se.css'}]{core_css_file_path}[/][/]."
+"f-014", f"File does not match [path][link=file://{se_css_file_path}]{se_css_file_path}[/][/]."
 "f-015", "Filename doesn’t match [attr]id[/] attribute of primary [xhtml]<section>[/] or [xhtml]<article>[/]. Hint: [attr]id[/] attributes don’t include the file extension."
 "f-016", "Image more than 1.5MB in size."
 "f-017", f"[path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}."
@@ -3414,9 +3414,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 			missing_files.append("text/uncopyright.xhtml")
 
 		try:
-			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("se.css")) as core_css_file_path:
-				if not filecmp.cmp(core_css_file_path, self.content_path / "css/se.css"):
-					messages.append(LintMessage("f-014", f"File does not match [path][link=file://{self.path / 'src/epub/css/se.css'}]{core_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "css/se.css"))
+			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("se.css")) as se_css_file_path:
+				if not filecmp.cmp(se_css_file_path, self.content_path / "css/se.css"):
+					messages.append(LintMessage("f-014", f"File does not match [path][link=file://{se_css_file_path}]{se_css_file_path}[/][/].", se.MESSAGE_TYPE_ERROR, self.content_path / "css/se.css"))
 		except Exception:
 			missing_files.append("css/se.css")
 
