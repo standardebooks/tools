@@ -2986,7 +2986,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 		messages.append(LintMessage("y-016", "Possible typo: consecutive periods ([text]..[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for ldquo followed by space
-	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '“\\s+[^‘’]')]")]
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '“\\s+[^‘’ʻ]')]")]
 	if typos:
 		messages.append(LintMessage("y-017", "Possible typo: [text]“[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
