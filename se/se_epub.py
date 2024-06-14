@@ -1328,7 +1328,7 @@ class SeEpub:
 						anchor = href[hash_position:]
 				references.append(anchor)  # keep these for later reverse check
 				# Now try to find anchor in endnotes
-				matches = list(filter(lambda x, old=anchor: x.anchor == old, self.endnotes)) # type: ignore [arg-type]
+				matches = list(filter(lambda x, old=anchor: x.anchor == old, self.endnotes)) # type: ignore [arg-type, var-annotated]
 				if not matches:
 					missing.append(anchor)
 				if len(matches) > 1:
@@ -1521,7 +1521,7 @@ class SeEpub:
 			link.lxml_element.text = str(current_note_number)
 			needs_rewrite = True
 		# Now try to find this in endnotes
-		matches = list(filter(lambda x, old=old_anchor: x.anchor == old, self.endnotes)) # type: ignore [arg-type]
+		matches = list(filter(lambda x, old=old_anchor: x.anchor == old, self.endnotes)) # type: ignore [arg-type, var-annotated]
 		if not matches:
 			raise se.InvalidInputException(f"Couldn’t find endnote with anchor [attr]{old_anchor}[/].")
 		if len(matches) > 1:
