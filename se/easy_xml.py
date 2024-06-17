@@ -231,16 +231,13 @@ class EasyXmlElement:
 		shorthand namespaces.
 
 		Example:
-		epub:type -> {http://www.idpf.org/2007/ops}:type
+		epub:type -> {http://www.idpf.org/2007/ops}type
 		"""
 
-		output = value
-
 		if self.namespaces:
-			for name, identifier in self.namespaces.items():
-				output = regex.sub(fr"^{name}:", f"{{{identifier}}}", output)
+			value = regex.sub(r"^(\L<ns>):", lambda m: f"{{{self.namespaces[m[1]]}}}", value, ns=self.namespaces.keys())
 
-		return output
+		return value
 
 	def to_tag_string(self) -> str:
 		"""
