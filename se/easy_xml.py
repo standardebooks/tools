@@ -234,7 +234,9 @@ class EasyXmlElement:
 		epub:type -> {http://www.idpf.org/2007/ops}type
 		"""
 
-		if self.namespaces:
+		# The in check is redundant with the regex but is far more efficient
+		# when the value is un-namespaced
+		if ':' in value and self.namespaces:
 			value = regex.sub(r"^(\L<ns>):", lambda m: f"{{{self.namespaces[m[1]]}}}", value, ns=self.namespaces.keys())
 
 		return value
