@@ -1653,7 +1653,7 @@ def _lint_xhtml_metadata_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTr
 		if dom.xpath("/html/body/*[contains(@epub:type, 'endnotes') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='ann']"):
 			messages.append(LintMessage("m-033", "[val]endnotes[/] semantic inflection found, but no MARC relator [val]ann[/] (Annotator).", se.MESSAGE_TYPE_WARNING, filename))
 
-		if dom.xpath("/html/body/*[contains(@epub:type, 'loi') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='ill']"):
+		if dom.xpath("/html/body/*[contains(@epub:type, 'loi') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and (text()='ill' or text()='pht')]"):
 			messages.append(LintMessage("m-034", "[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator).", se.MESSAGE_TYPE_WARNING, filename))
 
 	# Check that `Internet Archive` and `HathiTrust` are preceded by `the`. They might have an immediate preceding text node that ends in `the`, or they
