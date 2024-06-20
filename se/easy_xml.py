@@ -101,16 +101,12 @@ class EasyXmlTree:
 		result: List[Union[str, EasyXmlElement, float]] = []
 
 		try:
-			query_result = self.etree.xpath(selector, namespaces=self.namespaces)
-			if isinstance(query_result, etree._ElementUnicodeResult): # pylint: disable=protected-access
-				result.append(str(query_result))
-			elif isinstance(query_result, float):
+			query_result = self.etree.xpath(selector, namespaces=self.namespaces, smart_strings=False)
+			if isinstance(query_result, str|float):
 				result.append(query_result)
 			else:
 				for element in query_result:
-					if isinstance(element, etree._ElementUnicodeResult): # pylint: disable=protected-access
-						result.append(str(element))
-					elif isinstance(element, str):
+					if isinstance(element, str):
 						result.append(element)
 					else:
 						result.append(EasyXmlElement(element, self.namespaces))
@@ -375,16 +371,12 @@ class EasyXmlElement:
 
 		result: List[Union[str, EasyXmlElement, float]] = []
 
-		query_result = self.lxml_element.xpath(selector, namespaces=self.namespaces)
-		if isinstance(query_result, etree._ElementUnicodeResult): # pylint: disable=protected-access
-			result.append(str(query_result))
-		elif isinstance(query_result, float):
+		query_result = self.lxml_element.xpath(selector, namespaces=self.namespaces, smart_strings=False)
+		if isinstance(query_result, str|float):
 			result.append(query_result)
 		else:
 			for element in query_result:
-				if isinstance(element, etree._ElementUnicodeResult): # pylint: disable=protected-access
-					result.append(str(element))
-				elif isinstance(element, str):
+				if isinstance(element, str):
 					result.append(element)
 				else:
 					result.append(EasyXmlElement(element, self.namespaces))
