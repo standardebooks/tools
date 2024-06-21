@@ -87,7 +87,7 @@ class EasyXmlTree:
 				sel = cssselect.CSSSelector(selector, translator="xhtml", namespaces=self.namespaces)
 				CSS_SELECTOR_CACHE[selector] = sel
 
-			return self.xpath(sel.path)
+			return [EasyXmlElement(element, self.namespaces) for element in sel(self.etree)]
 		except parser.SelectorSyntaxError as ex:
 			raise se.InvalidCssException(f"Invalid selector: [css]{selector}[/]") from ex
 
