@@ -1313,7 +1313,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	messages = []
 	source_links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
 
-	if special_file in ("colophon", "imprint"):
+	if self.is_se_ebook and special_file in ("colophon", "imprint"):
 		if len(source_links) <= 2:
 			# Check that links back to sources are represented correctly
 			nodes = dom.xpath("/html/body//a[@href='https://www.pgdp.net' and text()!='The Online Distributed Proofreading Team']")
@@ -1332,7 +1332,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		if nodes:
 			messages.append(LintMessage("t-071", "Multiple transcriptions listed, but preceding text is [text]a transcription[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	if special_file == "colophon":
+	if self.is_se_ebook and special_file == "colophon":
 		# Check for illegal Wikipedia URLs
 		nodes = dom.xpath("/html/body//a[contains(@href, '.m.wikipedia.org')]")
 		if nodes:
@@ -1426,7 +1426,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 	# If we're in the imprint, are the sources represented correctly?
 	# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
-	elif special_file == "imprint":
+	elif self.is_se_ebook and special_file == "imprint":
 		# Check for wrong grammar filled in from template
 		nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::node()[1])[re:test(., 'the\\s+$')]]")
 		if nodes:
