@@ -567,7 +567,7 @@ def _build_section_tree(self) -> List[EbookSection]:
 		dom = self.get_dom(filename)
 		for dom_section in dom.xpath("/html/body//*[re:test(name(), '^(section|article|nav)$')][@id]"):
 			# Start at h2 by default except for the titlepage, which is always h1
-			starting_depth = 1 if regex.findall(r"\btitlepage\b", dom_section.get_attr("epub:type") or "") else 2
+			starting_depth = 1 if regex.search(r"\btitlepage\b", dom_section.get_attr("epub:type") or "") else 2
 
 			section = _find_ebook_section(dom_section.get_attr("id"), section_tree)
 
@@ -1085,7 +1085,7 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 
 	# If we select on the xml namespace, make sure we define the namespace in the CSS, otherwise the selector won't work
 	# We do this using a regex and not with cssutils, because cssutils will barf in this particular case and not even record the selector.
-	matches = regex.findall(r"\[\s*xml\s*\|", self.local_css)
+	matches = regex.search(r"\[\s*xml\s*\|", self.local_css)
 	if matches and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
 		messages.append(LintMessage("c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/]).", se.MESSAGE_TYPE_ERROR, local_css_path))
 
@@ -1095,23 +1095,23 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 	if regex.search(r"\s+hyphens:.+?;(?!\s+-epub-hyphens)", self.local_css):
 		messages.append(LintMessage("c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
-	matches = regex.findall(r"text-align:\s*left\s*;", self.local_css)
+	matches = regex.search(r"text-align:\s*left\s*;", self.local_css)
 	if matches:
 		messages.append(LintMessage("c-016", "[css]text-align: left;[/] found. Use [css]text-align: initial;[/] instead.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
-	matches = regex.findall(r"[0-9\.]\s?rem;", self.local_css)
+	matches = regex.search(r"[0-9\.]\s?rem;", self.local_css)
 	if matches:
 		messages.append(LintMessage("c-022", "Illegal [css]rem[/] unit. Use [css]em[/] instead.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
-	matches = regex.findall(r"font-size\s*:\s*[0-9\.]+(?![0-9\.]|em|ex)", self.local_css)
+	matches = regex.search(r"font-size\s*:\s*[0-9\.]+(?![0-9\.]|em|ex)", self.local_css)
 	if matches:
 		messages.append(LintMessage("c-023", "Illegal unit used to set [css]font-size[/]. Hint: Use [css]em[/] units.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
-	matches = regex.findall(r"line-height\s*:\s*[0-9\.]+(?!;|[0-9\.]+)", self.local_css)
+	matches = regex.search(r"line-height\s*:\s*[0-9\.]+(?!;|[0-9\.]+)", self.local_css)
 	if matches:
 		messages.append(LintMessage("c-024", "Illegal unit used to set [css]line-height[/]. Hint: [css]line-height[/] is set without any units.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
-	matches = regex.findall(r"(height|\stop|\sbottom)\s*:\s*[0-9\.]+%", self.local_css)
+	matches = regex.search(r"(height|\stop|\sbottom)\s*:\s*[0-9\.]+%", self.local_css)
 	if matches:
 		messages.append(LintMessage("c-025", "Illegal percent unit used to set [css]height[/] or positioning property. Hint: [css]vh[/] to specify vertical-oriented properties like height or position.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
@@ -2806,7 +2806,7 @@ def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_
 		messages.append(LintMessage("x-007", "[attr]id[/] attributes starting with a number are illegal XHTML.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 	# Check for double greater-than at the end of a tag
-	matches = regex.findall(r"(>>|>&gt;)", file_contents)
+	matches = regex.search(r"(>>|>&gt;)", file_contents)
 	if matches:
 		messages.append(LintMessage("x-008", "Elements should end with a single [text]>[/].", se.MESSAGE_TYPE_WARNING, filename))
 

@@ -200,7 +200,7 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list) -> None:
 	if dom.xpath("//*[contains(@epub:type, 'frontmatter')]"):
 		return # We don't want frontmatter in the landmarks
 
-	if dom.xpath("//*[contains(@epub:type, 'backmatter')]") and not regex.findall(r"\b(loi|endnotes|bibliography|glossary|index)\b", epub_type):
+	if dom.xpath("//*[contains(@epub:type, 'backmatter')]") and not regex.search(r"\b(loi|endnotes|bibliography|glossary|index)\b", epub_type):
 		return # We only want certain backmatter in the landmarks
 
 	# We may wind up with a (front|body|back)matter semantic in epub_type, remove it here since we add it to the landmark later
