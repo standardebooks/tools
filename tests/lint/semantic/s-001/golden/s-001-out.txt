@@ -1,0 +1,1 @@
+s-001 [Error] chapter-1.xhtml Illegal numeric entity (like `&#913;`).
