@@ -34,3 +34,14 @@ def test_add_landmark_with_title():
 	add_landmark(dom, "file", landmarks)
 
 	assert landmarks[0].title == "Bar"
+
+def test_inner_text():
+	"""
+	Verify that inner_text strips leading and trailing whitespace from the root
+	element, retains interior whitespace, excludes all tags and attributes, and
+	returns both named and numeric entities as their corresponding characters.
+	"""
+	dom = se.easy_xml.EasyXmlTree('<?xml version="1.0" encoding="utf-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en-US"><body><p epub:type="foo"> a <i>&lt;</i>b <span epub:type="bar">\t&#913; </span>c<br/>\nd </p>e</body></html>')
+	p = dom.xpath("//p")[0]
+
+	assert p.inner_text() == "a <b \tΑ c\nd"
