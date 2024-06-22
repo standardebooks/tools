@@ -1533,7 +1533,7 @@ def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> List[Ea
 
 		if child.tag not in sectioning_elements and not is_endnote and not is_glossdef:
 			result.append(child)
-			result = result + _get_flattened_children(child, allow_header)
+			result += _get_flattened_children(child, allow_header)
 
 	return result
 

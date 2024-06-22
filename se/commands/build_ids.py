@@ -69,7 +69,7 @@ def build_ids(plain_output: bool) -> int:
 					id_counter = id_counter + 1
 
 				# Now, get a list of what we expect all eligible IDs to be.
-				replacements = replacements + se.formatting.find_unexpected_ids(dom)
+				replacements += se.formatting.find_unexpected_ids(dom)
 
 				# Write our wiped file, we'll update it later
 				with open(filename, "w", encoding="utf-8") as file:

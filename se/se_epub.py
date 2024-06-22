@@ -553,7 +553,7 @@ class SeEpub:
 		for filepath in css_filenames:
 			file_css = self.get_file(filepath)
 
-			namespaces = namespaces + regex.findall(r"@namespace.+?;", file_css)
+			namespaces += regex.findall(r"@namespace.+?;", file_css)
 
 			file_css = regex.sub(r"\s*@(charset|namespace).+?;\s*", "\n", file_css).strip()
 
@@ -1248,15 +1248,15 @@ class SeEpub:
 		halftitlepage, frontmatter = self.__add_to_spine([], frontmatter, "halftitlepage")
 
 		# Add any remaining frontmatter
-		spine = spine + natsorted([file_path.name for file_path in frontmatter])
+		spine += natsorted([file_path.name for file_path in frontmatter])
 
 		# The half title page is always the last front matter
-		spine = spine + halftitlepage
+		spine += halftitlepage
 
 		# Add bodymatter
 		spine, bodymatter = self.__add_to_spine(spine, bodymatter, "prologue")
 
-		spine = spine + natsorted([file_path.name for file_path in bodymatter])
+		spine += natsorted([file_path.name for file_path in bodymatter])
 
 		# Add backmatter
 		spine, backmatter = self.__add_to_spine(spine, backmatter, "afterword")
@@ -1270,11 +1270,11 @@ class SeEpub:
 		copyright_page, backmatter = self.__add_to_spine([], backmatter, "copyright-page")
 
 		# Add any remaining backmatter
-		spine = spine + natsorted([file_path.name for file_path in backmatter])
+		spine += natsorted([file_path.name for file_path in backmatter])
 
 		# Colophon and copyright page are always last
-		spine = spine + colophon
-		spine = spine + copyright_page
+		spine += colophon
+		spine += copyright_page
 
 		# Now build the spine output
 		spine_xml = "<spine>\n"
