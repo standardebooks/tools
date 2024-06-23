@@ -1,6 +1,6 @@
 function __fish_se_no_subcommand --description "Test if se has yet to be given the subcommand"
 	for i in (commandline -opc)
-		if contains -- $i british2american build build-ids build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft css-select dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names version word-count xpath
+		if contains -- $i british2american build build-ids build-images build-loi build-manifest build-spine build-title build-toc clean compare-versions create-draft css-select dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names version word-count xpath
 			return 1
 		end
 	end
@@ -113,6 +113,10 @@ complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s h -l help 
 complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s r -l no-revision -d "don’t increment the revision number"
 complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s w -l no-word-count -d "don’t calculate word count"
 complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s v -l verbose -d "increase output verbosity"
+
+complete -c se -n "__fish_se_no_subcommand" -a build-loi -d "Update the LoI file based on all <figure> elements that contain an <img>."
+complete -c se -A -n "__fish_seen_subcommand_from build-loi" -s h -l help -x -d "show this help message and exit"
+complete -c se -A -n "__fish_seen_subcommand_from build-loi" -s s -l stdout -d "print to stdout intead of writing to the LoI file"
 
 complete -c se -n "__fish_se_no_subcommand" -a build-manifest -d "Generate the <manifest> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file."
 complete -c se -A -n "__fish_seen_subcommand_from build-manifest" -s h -l help -x -d "show this help message and exit"

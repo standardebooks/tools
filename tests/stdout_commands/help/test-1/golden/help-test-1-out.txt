@@ -3,6 +3,7 @@ british2american
 build
 build-ids
 build-images
+build-loi
 build-manifest
 build-spine
 build-title
