@@ -913,6 +913,45 @@ class SeEpub:
 			with open(file_path, "w", encoding="utf-8") as file:
 				file.write(dom.to_string())
 
+	def generate_loi(self, loi_dom: se.easy_xml.EasyXmlTree) -> None:
+		"""
+		Updates the given LoI DOM based on all <figure> elements that contain an
+		<img>. Text from the <figcaption>, if any, is preferred over that from
+		the <img>'s alt attribute.
+		"""
+
+		ols = loi_dom.xpath("/html/body/nav/ol")
+		if len(ols) != 1:
+			raise se.InvalidSeEbookException(f"LoI contains unexpected number of [html]<ol/>[/]: [path][link=file://{self.loi_path}]{self.loi_path}[/][/].")
+
+		etree.strip_elements(ols[0].lxml_element, "li")
+
+		for file_path in self.spine_file_paths:
+			dom = self.get_dom(file_path)
+
+			for figure in dom.xpath("/html/body//figure[@id and img]"):
+				figure_id = figure.get_attr("id")
+
+				text = (figure.xpath("./img")[0].get_attr("alt") or "").strip()
+
+				figcaption = figure.xpath("./figcaption")
+				if figcaption:
+					figcaption_text = figcaption[0].inner_text()
+					# The alt text is probably more useful to the reader in this case.
+					if figcaption_text and not regex.search(r"^[Ff]igure\s+\d+$", figcaption_text):
+						text = figcaption_text
+
+				a = se.easy_xml.EasyXmlElement("<a/>")
+				a.set_text(text or f"Unable to auto-generate LoI text for #{figure_id}.")
+				a.set_attr("href", f"{file_path.name}#{figure_id}")
+
+				p = se.easy_xml.EasyXmlElement("<p/>")
+				p.append(a)
+
+				li = se.easy_xml.EasyXmlElement("<li/>")
+				li.append(p)
+				ols[0].append(li)
+
 	def set_release_timestamp(self) -> None:
 		"""
 		If this ebook has not yet been released, set the first release timestamp in the metadata file.

@@ -4,9 +4,9 @@ The entry point for the Standard Ebooks toolset.
 
 positional arguments:
   COMMAND        one of: british2american build build-ids build-images build-
-                 manifest build-spine build-title build-toc clean compare-
-                 versions create-draft css-select dec2roman extract-ebook
-                 find-mismatched-dashes find-mismatched-diacritics find-
+                 loi build-manifest build-spine build-title build-toc clean
+                 compare-versions create-draft css-select dec2roman extract-
+                 ebook find-mismatched-dashes find-mismatched-diacritics find-
                  unusual-characters help hyphenate interactive-replace lint
                  make-url-safe modernize-spelling prepare-release recompose-
                  epub renumber-endnotes roman2dec semanticate shift-endnotes

@@ -1,8 +1,8 @@
 """
 Tests for commands that transform epub text files and only need a draft ebook to run.
 This includes:
-	british2american, build-title, clean, hyphenate, modernize-spelling,
-	semanticate, typogrify
+	british2american, build-loi, build-title, clean, hyphenate,
+	modernize-spelling, semanticate, typogrify
 """
 
 import os
