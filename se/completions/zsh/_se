@@ -243,9 +243,18 @@ case $state in
 				;;
 			shift-endnotes)
 				_arguments -s \
+					{-a,--amount}'[the amount to increment or decrement by; defaults to 1]' \
 					{-d,--decrement}'[decrement the target endnote number and all following endnotes]' \
 					{-h,--help}'[show a help message and exit]' \
 					{-i,--increment}'[increment the target endnote number and all following endnotes]' \
+					'*: :_directories'
+				;;
+			shift-illustrations)
+				_arguments -s \
+					{-a,--amount}'[the amount to increment or decrement by; defaults to 1]' \
+					{-d,--decrement}'[decrement the target illustration number and all following illustrations]' \
+					{-h,--help}'[show a help message and exit]' \
+					{-i,--increment}'[increment the target illustration number and all following illustrations]' \
 					'*: :_directories'
 				;;
 			split-file)

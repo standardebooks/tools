@@ -151,11 +151,13 @@ complete -c se -A -n "__fish_seen_subcommand_from semanticate" -s h -l help -x -
 complete -c se -A -n "__fish_seen_subcommand_from semanticate" -s v -l verbose -d "increase output verbosity"
 
 complete -c se -n "__fish_se_no_subcommand" -a shift-endnotes -d "Increment the specified endnote and all following endnotes by 1 or a specified amount."
+complete -c se -A -n "__fish_seen_subcommand_from shift-endnotes" -s a -l amount -d "the amount to increment or decrement by; defaults to 1"
 complete -c se -A -n "__fish_seen_subcommand_from shift-endnotes" -s d -l decrement -d "decrement the target endnote number and all following endnotes"
 complete -c se -A -n "__fish_seen_subcommand_from shift-endnotes" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from shift-endnotes" -s i -l increment -d "increment the target endnote number and all following endnotes"
 
 complete -c se -n "__fish_se_no_subcommand" -a shift-illustrations -d "Increment the specified illustration and all following illustrations by 1 or a specified amount."
+complete -c se -A -n "__fish_seen_subcommand_from shift-illustrations" -s a -l amount -d "the amount to increment or decrement by; defaults to 1"
 complete -c se -A -n "__fish_seen_subcommand_from shift-illustrations" -s d -l decrement -d "decrement the target illustration number and all following illustrations"
 complete -c se -A -n "__fish_seen_subcommand_from shift-illustrations" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from shift-illustrations" -s i -l increment -d "increment the target illustration number and all following illustrations"
