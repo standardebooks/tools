@@ -289,7 +289,7 @@ SEMANTICS & CONTENT
 "s-038", "Illegal asterism. Section/scene breaks must be defined by an [xhtml]<hr/>[/] element."
 "s-039", "[text]Ibid[/] in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes"
 "s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/]."
-"s-041", f"The [xhtml]<figcaption>[/] element of [attr]#{figure_ref}[/] does not match the text in its LoI entry."
+"s-041", f"The text in [attr]#{figure_ref}[/]'s LoI entry does not match either its [xhtml]<figcaption>[/] element or its [xhtml]<img>[/] [attr]alt[/] attribute."
 "s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child."
 "s-043", "[val]se:short-story[/] semantic on element that is not [xhtml]<article>[/]."
 "s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element."
@@ -1504,8 +1504,6 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		for node in dom.xpath("/html/body/nav[contains(@epub:type, 'loi')]//li//a"):
 			figure_ref = node.get_attr("href").split("#")[1]
 			chapter_ref = regex.findall(r"(.*?)#.*", node.get_attr("href"))[0]
-			figure_img_alt = ""
-			figcaption_text = ""
 			loi_text = node.inner_text()
 			file_dom = self.get_dom(self.content_path / "text" / chapter_ref)
 
@@ -1515,19 +1513,21 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 				messages.append(LintMessage("s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
 				continue
 
-			for child in figure.xpath("./*"):
+			loi_text_matches_figure = False
+			for child in figure.xpath("./img|./figcaption"):
+				figure_text = ""
 				if child.tag == "img":
-					figure_img_alt = child.get_attr("alt")
-
-				if child.tag == "figcaption":
-					figcaption_text = child.inner_text()
-
+					figure_text = child.get_attr("alt")
+				elif child.tag == "figcaption":
 					# Replace tabs and newlines with a single space to better match figcaptions that contain <br/>
-					figcaption_text = regex.sub(r"(\n|\t)", " ", figcaption_text)
-					figcaption_text = regex.sub(r"[ ]+", " ", figcaption_text)
+					figure_text = regex.sub(r"[ \n\t]+", " ", child.inner_text())
 
-			if (figcaption_text != "" and loi_text != "" and figcaption_text != loi_text) and (figure_img_alt != "" and loi_text != "" and figure_img_alt != loi_text):
-				messages.append(LintMessage("s-041", f"The [xhtml]<figcaption>[/] element of [attr]#{figure_ref}[/] does not match the text in its LoI entry.", se.MESSAGE_TYPE_WARNING, self.path / "src/epub/text" / chapter_ref))
+				if loi_text == figure_text:
+					loi_text_matches_figure = True
+					break
+
+			if not loi_text_matches_figure:
+				messages.append(LintMessage("s-041", f"The text in [attr]#{figure_ref}[/]'s LoI entry does not match either its [xhtml]<figcaption>[/] element or its [xhtml]<img>[/] [attr]alt[/] attribute.", se.MESSAGE_TYPE_WARNING, self.path / "src/epub/text" / chapter_ref))
 
 	return messages
 
@@ -2445,7 +2445,9 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	img_alt_not_typogrified = []
 	img_alt_lacking_punctuation = []
 	for node in nodes:
-		if "titlepage.svg" not in node.get_attr("src"):
+		img_src = node.lxml_element.get("src")
+		# Avoid crashing if the src attribute is missing
+		if img_src and "titlepage.svg" not in img_src:
 			ebook_flags["has_images"] = True # Save for a later check
 
 		alt = node.get_attr("alt")
@@ -2460,7 +2462,6 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 				img_alt_lacking_punctuation.append(node.to_tag_string())
 
 			# Check that alt attributes match SVG titles
-			img_src = node.lxml_element.get("src")
 			if img_src and img_src.endswith("svg"):
 				title_text = ""
 				image_ref = img_src.split("/").pop()
