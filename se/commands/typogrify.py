@@ -57,7 +57,12 @@ def typogrify(plain_output: bool) -> int:
 
 								processed_xhtml = dom.to_string()
 						else:
-							processed_xhtml = se.typography.typogrify(xhtml, args.quotes)
+							for node in dom.xpath("/html/body//img[@alt]"):
+								node.set_attr("alt", se.typography.typogrify(node.get_attr("alt"), args.quotes))
+
+							processed_xhtml = dom.to_string()
+							# Word joiners and nbsp don't belong in alt but that is handled by typogrify itself
+							processed_xhtml = se.typography.typogrify(processed_xhtml, args.quotes)
 
 						# Tweak: Word joiners and nbsp don't go in the ToC
 						if dom.xpath("/html/body//nav[contains(@epub:type, 'toc')]"):
