@@ -2,7 +2,7 @@ _se(){
 	COMPREPLY=()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local prev="${COMP_WORDS[COMP_CWORD-1]}"
-	local commands="--help --plain --version british2american build build-ids build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names version word-count xpath"
+	local commands="--help --plain --version british2american build build-ids build-images build-manifest build-spine build-title build-toc clean compare-versions create-draft css-select dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names version word-count xpath"
 	if [[ $COMP_CWORD -gt 1 ]]; then
 		case "${COMP_WORDS[1]}" in
 			british2american)
@@ -134,6 +134,14 @@ _se(){
 				COMPREPLY+=($(compgen -W "-h --help -v --verbose" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				;;
+			shift-endnotes)
+				COMPREPLY+=($(compgen -W "-a --amount -d --decrement -h --help -i --increment" -- "${cur}"))
+				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				;;
+			shift-illustrations)
+				COMPREPLY+=($(compgen -W "-a --amount -d --decrement -h --help -i --increment" -- "${cur}"))
+				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			split-file)
 				COMPREPLY+=($(compgen -W "-f --filename-format= -h --help -s --start-at= -t --template-file=" -- "${cur}"))
