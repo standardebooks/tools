@@ -5,6 +5,7 @@ Standard Ebooks epub3 files.
 """
 
 import base64
+from copy import deepcopy
 import datetime
 import os
 from pathlib import Path
@@ -16,6 +17,7 @@ from natsort import natsorted
 import regex
 
 import se
+import se.css
 import se.easy_xml
 import se.formatting
 import se.images
@@ -932,18 +934,31 @@ class SeEpub:
 			for figure in dom.xpath("/html/body//figure[@id and img]"):
 				figure_id = figure.get_attr("id")
 
-				text = (figure.xpath("./img")[0].get_attr("alt") or "").strip()
+				entry = (figure.xpath("./img")[0].get_attr("alt") or "").strip()
 
 				figcaption = figure.xpath("./figcaption")
 				if figcaption:
 					figcaption_text = figcaption[0].inner_text()
 					# The alt text is probably more useful to the reader in this case.
 					if figcaption_text and not regex.search(r"^[Ff]igure\s+\d+$", figcaption_text):
-						text = figcaption_text
+						has_block = False
+						for tag in se.css.CSS_BLOCK_ELEMENTS:
+							if figcaption[0].xpath(f"./{tag}"):
+								has_block = True
+								break
+
+						# Try to retain semantic phrasing structure.
+						if not has_block:
+							entry = deepcopy(figcaption[0])
 
 				a = se.easy_xml.EasyXmlElement("<a/>")
-				a.set_text(text or f"Unable to auto-generate LoI text for #{figure_id}.")
 				a.set_attr("href", f"{file_path.name}#{figure_id}")
+
+				if isinstance(entry, str):
+					a.set_text(entry or f"Unable to auto-generate LoI text for #{figure_id}.")
+				else:
+					a.append(entry)
+					entry.unwrap()
 
 				p = se.easy_xml.EasyXmlElement("<p/>")
 				p.append(a)
