@@ -34,7 +34,8 @@ def build_loi(plain_output: bool) -> int:
 			if args.stdout:
 				print(xhtml)
 			else:
-				with open(se_epub.loi_path, "w", encoding="utf-8") as file:
+				loi_path = se_epub.loi_path or (se_epub.content_path / "text/loi.xhtml")
+				with open(loi_path, "w", encoding="utf-8") as file:
 					file.write(xhtml)
 
 		except se.SeException as ex:

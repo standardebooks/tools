@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" dir="ltr" prefix="se: https://standardebooks.org/vocab/1.0" unique-identifier="uid" version="3.0" xml:lang="en-US">
+	<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+		<dc:identifier id="uid">url:https://standardebooks.org/ebooks/samuel-pepys/the-diary</dc:identifier>
+		<dc:date>2019-08-21T18:40:45Z</dc:date>
+		<meta property="dcterms:modified">2019-08-21T18:40:45Z</meta>
+		<dc:rights>The source text and artwork in this ebook are believed to be in the United States public domain; that is, they are believed to be free of copyright restrictions in the United States. They may still be copyrighted in other countries, so users located outside of the United States must check their local laws before using this ebook. The creators of, and contributors to, this ebook dedicate their contributions to the worldwide public domain via the terms in the [CC0 1.0 Universal Public Domain Dedication](https://creativecommons.org/publicdomain/zero/1.0/).</dc:rights>
+		<dc:publisher id="publisher">Standard Ebooks</dc:publisher>
+		<meta property="file-as" refines="#publisher">Standard Ebooks</meta>
+		<meta property="se:url.homepage" refines="#publisher">https://standardebooks.org</meta>
+		<meta property="role" refines="#publisher" scheme="marc:relators">bkd</meta>
+		<meta property="role" refines="#publisher" scheme="marc:relators">mdc</meta>
+		<meta property="role" refines="#publisher" scheme="marc:relators">pbl</meta>
+		<dc:contributor id="type-designer">The League of Moveable Type</dc:contributor>
+		<meta property="file-as" refines="#type-designer">League of Moveable Type, The</meta>
+		<meta property="se:url.homepage" refines="#type-designer">https://www.theleagueofmoveabletype.com</meta>
+		<meta property="role" refines="#type-designer" scheme="marc:relators">tyd</meta>
+		<link href="http://www.idpf.org/epub/a11y/accessibility-20170105.html#wcag-aa" rel="dcterms:conformsTo"/>
+		<meta property="a11y:certifiedBy">Standard Ebooks</meta>
+		<meta property="schema:accessMode">textual</meta>
+		<meta property="schema:accessModeSufficient">textual</meta>
+		<meta property="schema:accessibilityFeature">readingOrder</meta>
+		<meta property="schema:accessibilityFeature">structuralNavigation</meta>
+		<meta property="schema:accessibilityFeature">tableOfContents</meta>
+		<meta property="schema:accessibilityHazard">none</meta>
+		<meta property="schema:accessibilitySummary">This publication conforms to WCAG 2.2 Level AA.</meta>
+		<link href="onix.xml" media-type="application/xml" properties="onix" rel="record"/>
+		<dc:title id="title">The Diary</dc:title>
+		<meta property="file-as" refines="#title">Diary, The</meta>
+		<dc:subject id="subject-1">Pepys, Samuel, 1633-1703 -- Diaries</dc:subject>
+		<dc:subject id="subject-2">Cabinet officers -- Great Britain -- Diaries</dc:subject>
+		<dc:subject id="subject-3">Diarists -- Great Britain -- Diaries</dc:subject>
+		<dc:subject id="subject-4">Great Britain -- Social life and customs -- 17th century -- Sources</dc:subject>
+		<dc:subject id="subject-5">Great Britain -- History -- Charles II, 1660-1685 -- Sources</dc:subject>
+		<meta property="authority" refines="#subject-1">LCSH</meta>
+		<meta property="term" refines="#subject-1">Unknown</meta>
+		<meta property="authority" refines="#subject-2">LCSH</meta>
+		<meta property="term" refines="#subject-2">sh2008100004</meta>
+		<meta property="authority" refines="#subject-3">LCSH</meta>
+		<meta property="term" refines="#subject-3">Unknown</meta>
+		<meta property="authority" refines="#subject-4">LCSH</meta>
+		<meta property="term" refines="#subject-4">sh2007100274</meta>
+		<meta property="authority" refines="#subject-5">LCSH</meta>
+		<meta property="term" refines="#subject-5">sh2008115250</meta>
+		<meta property="se:subject">Autobiography</meta>
+		<meta property="se:subject">Nonfiction</meta>
+		<dc:description id="description">The diary of a man living in London in the 17th century.</dc:description>
+		<meta id="long-description" property="se:long-description" refines="#description">
+			&lt;p&gt;Pepys’ &lt;i&gt;Diary&lt;/i&gt; is an incredibly frank decade-long snapshot of the life of an up and coming naval administrator in mid-17th century London. In it he describes everything from battles against the Dutch and the intrigues of court, down to the plays he saw, his marital infidelities, and the quality of the meat provided for his supper. His observations have proved invaluable in establishing an accurate record of the daily life of the people of London of that period.&lt;/p&gt;
+			&lt;p&gt;Pepys eventually stopped writing his diary due to progressively worse eyesight, a condition he feared. He did consider employing an amanuensis to transcribe future entries for him, but worried that the content he wanted written would be too personal. Luckily for Pepys, his eyesight difficulties never progressed to blindness and he was able to go on to become both a Member of Parliament and the President of the Royal Society.&lt;/p&gt;
+			&lt;p&gt;After Pepys’ death he left his large library of books and manuscripts first to his nephew, which was then passed on to Magdalene College, Cambridge, where it survives to this day. The diary, originally written in a shorthand, was included in this trove and was eventually deciphered in the early 19th century, and published by Lord Baybrooke in 1825. This early release censored large amounts of the text, and it was only in the 1970s that an uncensored version was published. Presented here is the 1893 edition, which restores the majority of the originally censored content but omits “a few passages which cannot possibly be printed.” The rich collection of endnotes serve to further illustrate the lives of the people Pepys meets and the state of England’s internal politics and international relations at the time.&lt;/p&gt;
+		</meta>
+		<dc:language>en-GB</dc:language>
+		<dc:source>https://www.gutenberg.org/ebooks/4200</dc:source>
+		<dc:source>https://archive.org/details/diaryofsamuelpep01pepy</dc:source>
+		<meta property="se:production-notes">
+			• Volumes 9 and 10 (appendix and Pepysiana) of the original series have been omitted from the production due to time constraints.
+			• Each diary entry has a time element to start. The datetime attribute is ISO8601 compliant (Gregorian), but the actual dates Pepys uses are Julian, so they don’t appear to match. This is correct.
+			• This date is copied into the `entry-x` id attribute for each diary entry. Unfortunately, this causes linting to fail with leading 0 errors, so we remove those for the id.
+		</meta>
+		<meta property="se:word-count">1209949</meta>
+		<meta property="se:reading-ease.flesch">70.57</meta>
+		<meta property="se:url.encyclopedia.wikipedia">https://en.wikipedia.org/wiki/Samuel_Pepys#The_diary</meta>
+		<meta property="se:url.vcs.github">https://github.com/standardebooks/samuel-pepys_the-diary</meta>
+		<dc:creator id="author">Samuel Pepys</dc:creator>
+		<meta property="file-as" refines="#author">Pepys, Samuel</meta>
+		<meta property="se:url.encyclopedia.wikipedia" refines="#author">https://en.wikipedia.org/wiki/Samuel_Pepys</meta>
+		<meta property="se:url.authority.nacoaf" refines="#author">http://id.loc.gov/authorities/names/n79018796</meta>
+		<meta property="role" refines="#author" scheme="marc:relators">aut</meta>
+		<dc:contributor id="artist">John Hayls</dc:contributor>
+		<meta property="file-as" refines="#artist">Hayls, John</meta>
+		<meta property="se:url.encyclopedia.wikipedia" refines="#artist">https://en.wikipedia.org/wiki/John_Hayls</meta>
+		<meta property="se:url.authority.nacoaf" refines="#artist">http://id.loc.gov/authorities/names/nr94041870</meta>
+		<meta property="role" refines="#artist" scheme="marc:relators">art</meta>
+		<dc:contributor id="editor-1">Henry B. Wheatley</dc:contributor>
+		<meta property="file-as" refines="#editor-1">Wheatley, Henry B.</meta>
+		<meta property="se:name.person.full-name" refines="#editor-1">Henry Benjamin Wheatley</meta>
+		<meta property="se:url.encyclopedia.wikipedia" refines="#editor-1">https://en.wikipedia.org/wiki/Henry_B._Wheatley</meta>
+		<meta property="se:url.authority.nacoaf" refines="#editor-1">http://id.loc.gov/authorities/names/n87860971</meta>
+		<meta property="role" refines="#editor-1" scheme="marc:relators">aft</meta>
+		<meta property="role" refines="#editor-1" scheme="marc:relators">ann</meta>
+		<meta property="role" refines="#editor-1" scheme="marc:relators">aui</meta>
+		<meta property="role" refines="#editor-1" scheme="marc:relators">edt</meta>
+		<meta property="role" refines="#editor-1" scheme="marc:relators">trc</meta>
+		<dc:contributor id="annotator-1">Richard Griffin</dc:contributor>
+		<meta property="display-seq" refines="#annotator-1">0</meta>
+		<meta property="file-as" refines="#annotator-1">Griffin, Richard</meta>
+		<meta property="se:url.encyclopedia.wikipedia" refines="#annotator-1">https://en.wikipedia.org/wiki/Richard_Griffin,_3rd_Baron_Braybrooke</meta>
+		<meta property="se:url.authority.nacoaf" refines="#annotator-1">http://id.loc.gov/authorities/names/n50014973</meta>
+		<meta property="role" refines="#annotator-1" scheme="marc:relators">ann</meta>
+		<meta property="role" refines="#annotator-1" scheme="marc:relators">cns</meta>
+		<meta property="role" refines="#annotator-1" scheme="marc:relators">ill</meta>
+		<dc:contributor id="transcriber-1">David Widger</dc:contributor>
+		<meta property="file-as" refines="#transcriber-1">Widger, David</meta>
+		<meta property="se:url.authority.nacoaf" refines="#transcriber-1">http://id.loc.gov/authorities/names/no2011017869</meta>
+		<meta property="role" refines="#transcriber-1" scheme="marc:relators">trc</meta>
+		<dc:contributor id="producer-1">Robin Whittleton</dc:contributor>
+		<meta property="file-as" refines="#producer-1">Whittleton, Robin</meta>
+		<meta property="se:url.homepage" refines="#producer-1">https://www.robinwhittleton.com</meta>
+		<meta property="role" refines="#producer-1" scheme="marc:relators">bkp</meta>
+		<meta property="role" refines="#producer-1" scheme="marc:relators">blw</meta>
+		<meta property="role" refines="#producer-1" scheme="marc:relators">cov</meta>
+		<meta property="role" refines="#producer-1" scheme="marc:relators">mrk</meta>
+		<meta property="role" refines="#producer-1" scheme="marc:relators">pfr</meta>
+		<meta property="role" refines="#producer-1" scheme="marc:relators">trc</meta>
+		<meta property="role" refines="#producer-1" scheme="marc:relators">tyg</meta>
+		<dc:contributor id="producer-2">David Grigg</dc:contributor>
+		<meta property="file-as" refines="#producer-2">Grigg, David</meta>
+		<meta property="se:url.homepage" refines="#producer-2">https://rightword.com.au/david.php</meta>
+		<meta property="role" refines="#producer-2" scheme="marc:relators">pfr</meta>
+	</metadata>
+	<manifest>
+		<item href="text/chapter-1.xhtml" id="chapter-1.xhtml" media-type="application/xhtml+xml"/>
+		<item href="toc.xhtml" id="toc.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+	</manifest>
+	<spine>
+		<itemref idref="chapter-1.xhtml"/>
+	</spine>
+</package>
