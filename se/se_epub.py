@@ -9,6 +9,7 @@ from copy import deepcopy
 import datetime
 import os
 from pathlib import Path
+import importlib.resources
 from typing import Dict, List, Optional, Tuple, Union
 
 import git
@@ -917,12 +918,21 @@ class SeEpub:
 
 	def generate_loi(self) -> str:
 		"""
-		Updates the given LoI DOM based on all <figure> elements that contain an
+		Generate an LoI DOM based on all <figure> elements that contain an
 		<img>. Text from the <figcaption>, if any, is preferred over that from
 		the <img>'s alt attribute.
 		"""
 
-		loi_dom = self.get_dom(self.loi_path)
+		loi_dom = None
+		if not self.loi_path:
+			with importlib.resources.files("se.data.templates").joinpath("loi.xhtml").open("r", encoding="utf-8") as file:
+				loi_dom = se.easy_xml.EasyXmlTree(file.read())
+
+			language = self.metadata_dom.xpath("/package/metadata/dc:language/text()")[0]
+			loi_dom.xpath("/html")[0].set_attr("xml:lang", language)
+		else:
+			loi_dom = self.get_dom(self.loi_path)
+
 		ols = loi_dom.xpath("/html/body/nav/ol")
 		if len(ols) != 1:
 			raise se.InvalidSeEbookException(f"LoI contains unexpected number of [html]<ol/>[/]: [path][link=file://{self.loi_path}]{self.loi_path}[/][/].")
