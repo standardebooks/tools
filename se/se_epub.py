@@ -915,13 +915,14 @@ class SeEpub:
 			with open(file_path, "w", encoding="utf-8") as file:
 				file.write(dom.to_string())
 
-	def generate_loi(self, loi_dom: se.easy_xml.EasyXmlTree) -> None:
+	def generate_loi(self) -> str:
 		"""
 		Updates the given LoI DOM based on all <figure> elements that contain an
 		<img>. Text from the <figcaption>, if any, is preferred over that from
 		the <img>'s alt attribute.
 		"""
 
+		loi_dom = self.get_dom(self.loi_path)
 		ols = loi_dom.xpath("/html/body/nav/ol")
 		if len(ols) != 1:
 			raise se.InvalidSeEbookException(f"LoI contains unexpected number of [html]<ol/>[/]: [path][link=file://{self.loi_path}]{self.loi_path}[/][/].")
@@ -966,6 +967,8 @@ class SeEpub:
 				li = se.easy_xml.EasyXmlElement("<li/>")
 				li.append(p)
 				ols[0].append(li)
+
+		return se.formatting.format_xhtml(loi_dom.to_string())
 
 	def set_release_timestamp(self) -> None:
 		"""

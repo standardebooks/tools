@@ -5,7 +5,6 @@ This module implements the `se build-loi` command.
 import argparse
 
 import se
-import se.easy_xml
 from se.se_epub import SeEpub
 
 def build_loi(plain_output: bool) -> int:
@@ -30,9 +29,7 @@ def build_loi(plain_output: bool) -> int:
 			return ex.code
 
 		try:
-			loi_dom = se_epub.get_dom(se_epub.loi_path)
-			se_epub.generate_loi(loi_dom)
-			xhtml = se.formatting.format_xhtml(loi_dom.to_string())
+			xhtml = se_epub.generate_loi()
 
 			if args.stdout:
 				print(xhtml)
