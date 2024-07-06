@@ -2757,7 +2757,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 
 	if nodes:
 		# These words are English but have acute accents. Don't include the accent in this list because below we compare against the unaccented version.
-		ignored_words = ["cafe",  "cafes", "menage", "regime", "regimes", "reveille", "reveilles"]
+		ignored_words = ["cafe", "cafes", "consomme", "debut", "menage", "puree", "regime", "regimes", "reveille", "reveilles"]
 
 		# Initialize our dictionary
 		se.spelling.initialize_dictionary()
