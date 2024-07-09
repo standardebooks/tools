@@ -452,6 +452,7 @@ XHTML
 "x-018", "Unused [xhtml]id[/] attribute."
 "x-019", "Unexpected value of [attr]id[/] attribute. Expected: [attr]{unexpected_id[1]}[/]."
 "x-020", "Link to [path][link=file://{local_css_path}]se.css[/][/] in [xhtml]<head>[/], but not an SE boilerplate file."
+"x-021", "[xhtml]<figure>[/] element with no [attr]id[/] attribute."
 
 TYPOS
 "y-001", "Possible typo: doubled [text]a/the/and/of/or/as/if[/]."
@@ -2853,6 +2854,11 @@ def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_
 		nodes = dom.xpath("/html/head/link[@href='../css/se.css']")
 		if nodes:
 			messages.append(LintMessage("x-020", f"Link to [path][link=file://{local_css_path}]se.css[/][/] in [xhtml]<head>[/], but not an SE boilerplate file.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+
+	# Check that all `<img>` elements have an `@id` attribute. If the `<img>` has a parent `<figure>`, then the `<figure>` should have the `@id`.
+	nodes = dom.xpath("/html/body//figure[not(@id)]")
+	if nodes:
+		messages.append(LintMessage("x-021", "[xhtml]<figure>[/] element with no [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 	return messages
 

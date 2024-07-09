@@ -1,3 +1,10 @@
+x-021 [Error] chapter-1.xhtml `<figure>` element with no `id` attribute.
+        <figure>
+                <figcaption>
+                        
+                        <p>Look ma, no picture</p>
+                </figcaption>
+        </figure>
 y-003 [Manual Review] chapter-1.xhtml Possible typo: paragraph missing ending 
 punctuation.
         <p>This one should error</p>

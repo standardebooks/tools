@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0" xml:lang="en-GB">
+	<head>
+		<title>I</title>
+		<link href="../css/core.css" rel="stylesheet" type="text/css"/>
+		<link href="../css/local.css" rel="stylesheet" type="text/css"/>
+	</head>
+	<body epub:type="bodymatter z3998:fiction">
+		<section id="chapter-1" epub:type="chapter">
+			<!-- Match, no @id attribute. -->
+			<figure>
+				<img alt="A portrait illustration of a young woman." src="test.png" epub:type="z3998:illustration se:image.color-depth.black-on-transparent se:image.style.realistic"/>
+			</figure>
+			<!-- Don't match, has an @id attribute. -->
+			<figure id="illustration-1">
+				<img alt="A portrait illustration of a young woman." src="test.png" epub:type="z3998:illustration se:image.color-depth.black-on-transparent se:image.style.realistic"/>
+			</figure>
+		</section>
+	</body>
+</html>
