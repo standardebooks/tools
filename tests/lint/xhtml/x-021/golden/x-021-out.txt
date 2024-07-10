@@ -1,0 +1,12 @@
+x-021 [Error] chapter-1.xhtml `<figure>` element with no `id` attribute.
+        <figure>
+                <img alt="A portrait illustration of a young woman." 
+src="test.png" epub:type="z3998:illustration 
+se:image.color-depth.black-on-transparent se:image.style.realistic"/>
+        </figure>
+m-028 [Error] content.opf Images found in ebook, but no `schema:accessMode` 
+property set to `visual` in metadata.
+m-029 [Error] content.opf Images found in ebook, but no 
+`schema:accessibilityFeature` property set to `alternativeText` in metadata.
+m-040 [Error] content.opf Images found in ebook, but no `role` property set to 
+`wat` in metadata for the writer of the alt text.

@@ -1,0 +1,1 @@
+x-001 [Error] chapter-1.xhtml String `UTF-8` must always be lowercase.
