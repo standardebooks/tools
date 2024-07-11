@@ -68,7 +68,7 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 
 ## macOS users
 
-1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it’s up to date:
+1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it’s up-to-date:
 
 	```shell
 	brew update
@@ -147,7 +147,7 @@ se lint /path/to/ebook/repos/*
 export COLUMNS; parallel --keep-order se lint ::: /path/to/ebook/repos/*
 ```
 
-The toolset tries to detect when it’s being invoked from `parallel`, and it adjusts its output to accomodate.
+The toolset tries to detect when it’s being invoked from `parallel`, and it adjusts its output to accommodate.
 
 We export `COLUMNS` because `se lint` needs to know the width of the terminal so that it can format its tabular output correctly. We pass the `--keep-order` flag to output results in the order we passed them in, which is useful if comparing the results of multiple runs.
 
@@ -172,7 +172,7 @@ Instructions are found in the testing [README](tests/README.md).
 
 ### Code style
 
-- In general we follow a relaxed version of [PEP 8](https://www.python.org/dev/peps/pep-0008/). In particular, we use tabs instead of spaces, and there is no line length limit.
+- In general, we follow a relaxed version of [PEP 8](https://www.python.org/dev/peps/pep-0008/). In particular, we use tabs instead of spaces, and there is no line length limit.
 
 - Always use the `regex` module instead of the `re` module.
 
@@ -182,9 +182,9 @@ We need volunteers to take the lead on the following goals:
 
 - Add more test cases to the test framework.
 
-- Writing installation instructions for Bash and ZSH completions for MacOS.
+- Writing installation instructions for Bash and ZSH completions for macOS.
 
-- Currently the toolset requires the whole Calibre package, which is very big, but it’s only used to convert epub to azw3. Can we inline Calibre’s azw3 conversion code into our `./vendor/` directory, to avoid having to install the entire Calibre package as a big dependency? If so, how do we keep it updated as Calibre evolves?
+- Currently, the toolset requires the whole Calibre package, which is very big, but it’s only used to convert epub to azw3. Can we inline Calibre’s azw3 conversion code into our `./vendor/` directory, to avoid having to install the entire Calibre package as a big dependency? If so, how do we keep it updated as Calibre evolves?
 
 - Over the years, `./se/se_epub_build.py` has evolved to become very large and unwieldy. Is there a better, clearer way to organize this code?
 
