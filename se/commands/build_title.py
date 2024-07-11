@@ -16,7 +16,7 @@ def build_title(plain_output: bool) -> int:
 
 	parser = argparse.ArgumentParser(description="Generate the title of an XHTML file based on its headings and update the file’s <title> element.")
 	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="with --stdout, don’t end output with a newline")
-	parser.add_argument("-s", "--stdout", action="store_true", help="print to stdout intead of writing to the file")
+	parser.add_argument("-s", "--stdout", action="store_true", help="print to stdout instead of writing to the file")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 

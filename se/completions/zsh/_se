@@ -87,7 +87,7 @@ case $state in
 			build-loi)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
-					{-s,--stdout}'[print to stdout intead of writing to the LoI file]' \
+					{-s,--stdout}'[print to stdout instead of writing to the LoI file]' \
 					'*: :_directories'
 				;;
 			build-manifest)
@@ -106,13 +106,13 @@ case $state in
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
 					{-n,--no-newline}'[with --stdout, don’t end output with a newline]' \
-					{-s,--stdout}'[print to stdout intead of writing to the file]' \
+					{-s,--stdout}'[print to stdout instead of writing to the file]' \
 					'*: :_files -g \*.xhtml'
 				;;
 			build-toc)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
-					{-s,--stdout}'[print to stdout intead of writing to the ToC file]' \
+					{-s,--stdout}'[print to stdout instead of writing to the ToC file]' \
 					'*: :_directories'
 				;;
 			clean)
