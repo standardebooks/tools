@@ -83,7 +83,7 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 	sudo ln -sfn $(brew --prefix)/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
 
 	# Install the toolset.
-	pipx install --python python3.12 standardebooks
+	pipx install --python "$(brew --prefix)"/bin/python3.12 standardebooks
 
 	# Optional: Bash users who have set up bash-completion via brew can install tab completion.
 	ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $(brew --prefix)/etc/bash_completion.d/se
