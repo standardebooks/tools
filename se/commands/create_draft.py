@@ -425,7 +425,7 @@ def _generate_contributor_string(contributors: List[Dict], include_xhtml: bool) 
 
 	INPUTS
 	contributors: A list of contributor dicts
-	include_xhtml: Include <b> or <a> for each contributor, making the output suitable for the coloiphon
+	include_xhtml: Include <b> or <a> for each contributor, making the output suitable for the colophon
 
 	OUTPUTS
 	A string of XML representing the contributors
