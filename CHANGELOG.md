@@ -316,7 +316,7 @@
 
 - Improve y-013
 
-- Merge and reogranize several codes. Thanks to Vince Rice
+- Merge and reorganize several codes. Thanks to Vince Rice
 
 - Remove some xpath redundancies. Thanks to Vince Rice
 
@@ -380,7 +380,7 @@
 
 - Add y-033, incorrect three-em-dash usage
 
-- Sort c-006 matches so tests are reproducable
+- Sort c-006 matches so tests are reproducible
 
 - Add checks for missing dedication and epigraph CSS. Thanks to Erin Endrei
 
@@ -438,7 +438,7 @@
 
 - Redirect ACE stderr output to /dev/null to avoid warnings from headless Chrome
 
-- Don't add several deprecated ARIA roles that are now depracated to the compatible build
+- Don't add several deprecated ARIA roles that are now deprecated to the compatible build
 
 ## se lint
 
@@ -548,7 +548,7 @@
 
 - Truncate GitHub repo name to 100 characters max. Thanks to Robin Whittleton
 
-- Remove duplicate `xml:lang` attibute that is sometimes added by lxml
+- Remove duplicate `xml:lang` attribute that is sometimes added by lxml
 
 ## se lint
 
@@ -806,7 +806,7 @@
 
 - Merge t-043 and t-036 into t-042
 
-- Add m-044, possessive `'s` inside link in long descriptoin
+- Add m-044, possessive `'s` inside link in long description
 
 - Add t-070, `<cite>` in epigraph ending in a period
 
@@ -1256,7 +1256,7 @@
 
 - Only emit m-071, m-072, m-041 if there are fewer than 2 sources
 
-- Add Ukranian to the set of scripts that need a Latn suffix. Thanks to Robin Whittleton
+- Add Ukrainian to the set of scripts that need a Latin suffix. Thanks to Robin Whittleton
 
 - Add s-094, endnote out of sequence
 
@@ -1264,7 +1264,7 @@
 
 - Add t-067, plural grapheme formed without apostrophe
 
-- Merge multiple s-094 messsages into one entry
+- Merge multiple s-094 messages into one entry
 
 - Add `--allow` option to allow passing through specific errors that are ignored in `se-lint-ignore.xml`.
 
@@ -1634,7 +1634,7 @@
 
 ## se build
 
-- Add compatibility code to allow Kindle to display pages whose only content is an aboslutely positioned image
+- Add compatibility code to allow Kindle to display pages whose only content is an absolutely positioned image
 
 - Replace vh/vw units with percent for compatible epub
 
@@ -1672,7 +1672,7 @@
 
 - Ensure NACOAF prefix is http. Thanks to Vince Rice
 
-- Add `unlocked` accesibility feature to `content.opf` template
+- Add `unlocked` accessibility feature to `content.opf` template
 
 ## se lint
 
@@ -1694,7 +1694,7 @@
 
 ## se print-spine
 
-- Add dramatis-personae and halftitlepage to exluded files. Thanks to Asher Smith
+- Add dramatis-personae and halftitlepage to excluded files. Thanks to Asher Smith
 
 ## se reorder-endnotes
 
@@ -1746,7 +1746,7 @@
 
 ## se lint
 
-- Update t-011 to exlude quotations in letter signatures
+- Update t-011 to exclude quotations in letter signatures
 
 - Add c-022, illegal rem unit
 
@@ -1809,7 +1809,7 @@
 
 - Add t-050, possessive `'s` outside of persona element
 
-- Add t-051, dialog in `<p>` without closing double quote, but next `<p>` doesn't have opening double qoute
+- Add t-051, dialog in `<p>` without closing double quote, but next `<p>` doesn't have opening double quote
 
 - Add t-052, stage direction without ending punctuation
 
@@ -1929,7 +1929,7 @@
 
 ## General
 
-- Add the ability to apply a stylesheet to an EasyXml DOM tree. Applied styles can be accessed on an EaxyXmlElement by getting the `data-css-<attr>` property.
+- Add the ability to apply a stylesheet to an EasyXml DOM tree. Applied styles can be accessed on an EasyXmlElement by getting the `data-css-<attr>` property.
 
 - Use EasyXhtmlTree instead of raw lxml for various operations across the codebase
 
@@ -2181,9 +2181,9 @@
 
 ## se lint
 
-- t-032: Ignore abbrevations that contain `<sup>`, like `r<sup>o</sup>`
+- t-032: Ignore abbreviations that contain `<sup>`, like `r<sup>o</sup>`
 
-- t-032: Ignore abbrevations ending in numbers, like stage direction
+- t-032: Ignore abbreviations ending in numbers, like stage direction
 
 - Add new Google Books URL structure to checks
 
@@ -2475,7 +2475,7 @@
 
 ## se modernize-spelling
 
-- Various additions. Thanks to matistric
+- Various additions. Thanks to maticstric
 
 ## se print-manifest
 
@@ -2495,7 +2495,7 @@
 
 - Add a no break space before ampersands
 
-- Remove word joiners and nbsps from alt attributs
+- Remove word joiners and nbsps from alt attributes
 
 - Don't add an nbsp before `St.` if it is within an `<abbr class="name">` element
 
@@ -2641,7 +2641,7 @@ Released in error; no changes.
 
 - Add m-056, author name present in long description but first instance isn't hyperlinked
 
-- Add s-058, stage direction sematnics only allowed in `<i>` elements
+- Add s-058, stage direction semantics only allowed in `<i>` elements
 
 - Add s-059 internal link beginning with ../text/
 
@@ -2855,7 +2855,7 @@ Released in error; no changes.
 
 - Internally, convert all instances of BS4 to LXML for consistency and performance
 
-- If invoked with multiple ebooks, and one throws an exception (like invald XHTML), print to console and continue linting the rest of the books instead of exiting
+- If invoked with multiple ebooks, and one throws an exception (like invalid XHTML), print to console and continue linting the rest of the books instead of exiting
 
 - Add s-053, newlines in colophon not preceded by `<br/>`
 
@@ -2905,9 +2905,9 @@ Released in error; no changes.
 
 - Fix maneuver modernization
 
-- Add punctuation after some abbrevations even if not followed by white space
+- Add punctuation after some abbreviations even if not followed by white space
 
-- Internally, remove some duplicate checks and merge some othes
+- Internally, remove some duplicate checks and merge some others
 
 
 ## se print-title
