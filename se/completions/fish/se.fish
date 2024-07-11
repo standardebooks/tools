@@ -116,7 +116,7 @@ complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s v -l verbo
 
 complete -c se -n "__fish_se_no_subcommand" -a build-loi -d "Update the LoI file based on all <figure> elements that contain an <img>."
 complete -c se -A -n "__fish_seen_subcommand_from build-loi" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from build-loi" -s s -l stdout -d "print to stdout intead of writing to the LoI file"
+complete -c se -A -n "__fish_seen_subcommand_from build-loi" -s s -l stdout -d "print to stdout instead of writing to the LoI file"
 
 complete -c se -n "__fish_se_no_subcommand" -a build-manifest -d "Generate the <manifest> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file."
 complete -c se -A -n "__fish_seen_subcommand_from build-manifest" -s h -l help -x -d "show this help message and exit"
@@ -129,11 +129,11 @@ complete -c se -A -n "__fish_seen_subcommand_from build-spine" -s s -l stdout -d
 complete -c se -n "__fish_se_no_subcommand" -a build-title -d "Generate the title of an XHTML file based on its headings and update the file’s <title> element."
 complete -c se -A -n "__fish_seen_subcommand_from build-title" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from build-title" -s n -l no-newline -d "with --stdout, don’t end output with a newline"
-complete -c se -A -n "__fish_seen_subcommand_from build-title" -s s -l stdout -d "print to stdout intead of writing to the file"
+complete -c se -A -n "__fish_seen_subcommand_from build-title" -s s -l stdout -d "print to stdout instead of writing to the file"
 
 complete -c se -n "__fish_se_no_subcommand" -a build-toc -d "Generate the table of contents for the ebook’s source directory and update the ToC file."
 complete -c se -A -n "__fish_seen_subcommand_from build-toc" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from build-toc" -s s -l stdout -d "print to stdout intead of writing to the ToC file"
+complete -c se -A -n "__fish_seen_subcommand_from build-toc" -s s -l stdout -d "print to stdout instead of writing to the ToC file"
 
 complete -c se -n "__fish_se_no_subcommand" -a recompose-epub -d "Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output"
 complete -c se -A -n "__fish_seen_subcommand_from recompose-epub" -s h -l help -x -d "show this help message and exit"

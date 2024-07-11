@@ -17,7 +17,7 @@ def build_toc(plain_output: bool) -> int:
 	"""
 
 	parser = argparse.ArgumentParser(description="Generate the table of contents for the ebook’s source directory and update the ToC file.")
-	parser.add_argument("-s", "--stdout", action="store_true", help="print to stdout intead of writing to the ToC file")
+	parser.add_argument("-s", "--stdout", action="store_true", help="print to stdout instead of writing to the ToC file")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 

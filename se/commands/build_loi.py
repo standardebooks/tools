@@ -13,7 +13,7 @@ def build_loi(plain_output: bool) -> int:
 	"""
 
 	parser = argparse.ArgumentParser(description="Update the LoI file based on all <figure> elements that contain an <img>.")
-	parser.add_argument("-s", "--stdout", action="store_true", help="print to stdout intead of writing to the LoI file")
+	parser.add_argument("-s", "--stdout", action="store_true", help="print to stdout instead of writing to the LoI file")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
