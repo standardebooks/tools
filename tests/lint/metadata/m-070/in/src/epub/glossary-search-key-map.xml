@@ -6,4 +6,10 @@
 	<search-key-group href="text/glossary.xhtml#bar">
 		<match value="R+L=J"/>
 	</search-key-group>
+	<search-key-group href="text/glossary.xhtml#xyz">
+		<match value="M.O."/>
+	</search-key-group>
+	<search-key-group href="text/glossary.xhtml#abc">
+		<match value="’versal"/>
+	</search-key-group>
 </search-key-map>
