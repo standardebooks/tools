@@ -1,0 +1,6 @@
+m-033 [Manual Review] endnotes.xhtml `endnotes` semantic inflection found, but 
+no MARC relator `ann` (Annotator).
+s-056 [Error] endnotes.xhtml Last `<p>` child of endnote missing backlink.
+        <li epub:type="endnote">
+t-076 [Manual Review] endnotes.xhtml `<dfn>` at beginning of endnote should be 
+set in italics.

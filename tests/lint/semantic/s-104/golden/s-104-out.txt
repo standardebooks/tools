@@ -1,0 +1,19 @@
+m-033 [Manual Review] endnotes.xhtml `endnotes` semantic inflection found, but 
+no MARC relator `ann` (Annotator).
+s-056 [Error] endnotes.xhtml Last `<p>` child of endnote missing backlink.
+        <li epub:type="endnote">
+        <li epub:type="endnote">
+        <li epub:type="endnote">
+        <li epub:type="endnote">
+        <li epub:type="endnote">
+        <li epub:type="endnote">
+s-104 [Error] endnotes.xhtml `<i>` element without semantic at beginning of 
+endnote. Hint: Should this be `<dfn>` instead?
+        <li epub:type="endnote">
+                <p><i>Cho</i> is generally translated as “street.”</p>
+        </li>
+        <li epub:type="endnote">
+                <p>Some other text.</p>
+                <p><i>Tsu</i> is an instance of shortening a name in familiar 
+speech.</p>
+        </li>

@@ -1,0 +1,6 @@
+@charset "utf-8";
+
+/* browser.css defaults this to italic, so override it here */
+dfn{
+	font-style: normal;
+}
