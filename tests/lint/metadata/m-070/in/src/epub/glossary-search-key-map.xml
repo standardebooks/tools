@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search-key-map xmlns="http://www.idpf.org/2007/ops" xml:lang="en">
+	<search-key-group href="text/glossary.xhtml#foo">
+		<match value="foo"/>
+	</search-key-group>
+	<search-key-group href="text/glossary.xhtml#bar">
+		<match value="R+L=J"/>
+	</search-key-group>
+</search-key-map>
