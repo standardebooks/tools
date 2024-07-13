@@ -3618,7 +3618,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 						nodes = dom.xpath("/html/body//dd[contains(@epub:type, 'glossdef')]")
 						source_text = " ".join([node.inner_text() for node in nodes])
 					for glossary_index, glossary_value in enumerate(glossary_usage):
-						if glossary_value[1] is False and regex.search(r"\b\L<val>\b", source_text, flags=regex.IGNORECASE, val=[glossary_value[0]]):
+						if glossary_value[1] is False and regex.search(r"(?<!\w)\L<val>(?!\w)", source_text, flags=regex.IGNORECASE, val=[glossary_value[0]]):
 							glossary_usage[glossary_index] = (glossary_value[0], True)
 
 				# Test against word boundaries to not match `halftitlepage`
