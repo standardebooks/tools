@@ -727,8 +727,8 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 				producers_text = regex.sub(r".+?Produced by (.+?)\s*$", "\\1", producers_text, flags=regex.DOTALL)
 				producers_text = regex.sub(r"\(.+?\)", "", producers_text, flags=regex.DOTALL)
-				producers_text = regex.sub(r"(at )?https?://www\.pgdp\.net", "", producers_text, flags=regex.DOTALL)
-				producers_text = regex.sub(r"[\r\n]+", " ", producers_text, flags=regex.DOTALL)
+				producers_text = regex.sub(r"(at )?https?://www\.pgdp\.net", "", producers_text)
+				producers_text = regex.sub(r"[\r\n]+", " ", producers_text)
 				producers_text = regex.sub(r",? and ", ", and ", producers_text)
 				producers_text = producers_text.replace(" and the Online", " and The Online")
 				producers_text = producers_text.replace(", and ", ", ").strip()
@@ -945,7 +945,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 				i = i + 1
 
-			metadata_xml = regex.sub(r"\t\t<dc:contributor id=\"transcriber-1\">TRANSCRIBER</dc:contributor>\s*<meta property=\"file-as\" refines=\"#transcriber-1\">TRANSCRIBER_SORT</meta>\s*<meta property=\"se:url.homepage\" refines=\"#transcriber-1\">TRANSCRIBER_URL</meta>\s*<meta property=\"role\" refines=\"#transcriber-1\" scheme=\"marc:relators\">trc</meta>", "\t\t" + producers_xhtml.strip(), metadata_xml, flags=regex.DOTALL)
+			metadata_xml = regex.sub(r"\t\t<dc:contributor id=\"transcriber-1\">TRANSCRIBER</dc:contributor>\s*<meta property=\"file-as\" refines=\"#transcriber-1\">TRANSCRIBER_SORT</meta>\s*<meta property=\"se:url\.homepage\" refines=\"#transcriber-1\">TRANSCRIBER_URL</meta>\s*<meta property=\"role\" refines=\"#transcriber-1\" scheme=\"marc:relators\">trc</meta>", "\t\t" + producers_xhtml.strip(), metadata_xml)
 
 		if ebook_wiki_url:
 			metadata_xml = metadata_xml.replace(">EBOOK_WIKI_URL<", f">{ebook_wiki_url}<")

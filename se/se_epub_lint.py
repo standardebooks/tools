@@ -1827,7 +1827,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		title = regex.sub(r"^[\s\.\,\!\?\:\;]*", "", title)
 
 		# Normalize whitespace
-		title = regex.sub(r"\s+", " ", title, flags=regex.DOTALL).strip()
+		title = regex.sub(r"\s+", " ", title).strip()
 
 		# Do we have a subtitle? If so the first letter of that must be capitalized, so we pull that out
 		subtitle_matches = regex.findall(r"(.*?)<span epub:type=\"subtitle\">(.*?)</span>(.*?)", title, flags=regex.DOTALL)
@@ -2313,7 +2313,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 
 	# Check for repeated punctuation, but first remove `&amp;` so we don't match `&amp;,`
 	# Remove tds with repeated ” as they are probably ditto marks
-	matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents.replace("&amp;", "")) + regex.findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents)) +	 regex.findall(r"[\p{Letter}][,\.:;]\s[,\.:;]\s?[\p{Letter}<].{0,20}", file_contents, flags=regex.IGNORECASE)
+	matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents.replace("&amp;", "")) + regex.findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents)) +	 regex.findall(r"[\p{Letter}][,\.:;]\s[,\.:;]\s?[\p{Letter}<].{0,20}", file_contents)
 	if matches:
 		messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
@@ -2608,7 +2608,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 		messages.append(LintMessage("t-048", "Chapter opening text in all-caps.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 	# Check for two-em-dashes used for elision instead of three-em-dashes
-	matches = regex.findall(fr"[^{se.WORD_JOINER}\p{{Letter}}”]⸺[^“{se.WORD_JOINER}\p{{Letter}}].*", file_contents, flags=regex.MULTILINE)
+	matches = regex.findall(fr"[^{se.WORD_JOINER}\p{{Letter}}”]⸺[^“{se.WORD_JOINER}\p{{Letter}}].*", file_contents)
 	if matches:
 		messages.append(LintMessage("t-049", "Two-em-dash used for eliding an entire word. Use a three-em-dash instead.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
@@ -2934,7 +2934,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	# Exclude paragraphs in blockquotes, which may have special quoting rules, and "continued" paragraphs, which may be continued dialog without an “
 	for node in dom_copy.xpath("/html/body//p[not(ancestor::blockquote) and not(contains(@class, 'continued'))]"):
 		node.set_attr("id", "lint-" + str(node_number))
-		temp_xhtml = temp_xhtml + f"<p id=\"lint-{node_number}\">" + regex.sub(r"[\s\n]+", " ", node.inner_text(), flags=regex.DOTALL) + "\n"
+		temp_xhtml = temp_xhtml + f"<p id=\"lint-{node_number}\">" + regex.sub(r"\s+", " ", node.inner_text()) + "\n"
 		node_number = node_number + 1
 
 	replacement_count = 1
@@ -2943,12 +2943,12 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 		(temp_xhtml, replacement_count) = regex.subn(r"“[^“]+?”", " ", temp_xhtml) # Remove all regular quotes
 
 	# Remove contractions to reduce rsquo for next regex
-	temp_xhtml = regex.sub(r"[\p{Letter}]’[\p{Letter}]", " ", temp_xhtml, flags=regex.MULTILINE)
+	temp_xhtml = regex.sub(r"[\p{Letter}]’[\p{Letter}]", " ", temp_xhtml)
 
 	# Remove all runs of ldquo that are likely to spill to the next <p>
 	replacement_count = 1
 	while replacement_count > 0:
-		(temp_xhtml, replacement_count) = regex.subn(r"“[^“”]+?$", " ", temp_xhtml, flags=regex.MULTILINE)
+		(temp_xhtml, replacement_count) = regex.subn(r"“[^“”]+?$", " ", temp_xhtml)
 
 	# Match problem `‘` using regex, and if found, get the actual node text from the dom to return.
 	typos = []
@@ -3009,7 +3009,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 
 	# Check for closing rdquo without opening ldquo.
 	# Remove tds in case rdquo means "ditto mark"
-	typos = regex.findall(r"”[^“‘]+?”", regex.sub(r"<td[^>]*?>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents), flags=regex.DOTALL)
+	typos = regex.findall(r"”[^“‘]+?”", regex.sub(r"<td[^>]*?>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents))
 
 	# We create a filter to try to exclude nested quotations
 	# Remove tags in case they're enclosing punctuation we want to match against at the end of a sentence.
