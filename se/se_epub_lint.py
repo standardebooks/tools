@@ -3365,7 +3365,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 			messages.append(LintMessage("f-001", "Illegal file or directory.", se.MESSAGE_TYPE_ERROR, Path(illegal_file)))
 
 	# Check for repeated punctuation
-	nodes = self.metadata_dom.xpath("/package/metadata/*[re:test(., '[,;]{2,}.{0,20}')]")
+	nodes = self.metadata_dom.xpath("/package/metadata/*[re:test(., '[,;]{2,}')]")
 	if nodes:
 		messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [node.to_string() for node in nodes]))
 
