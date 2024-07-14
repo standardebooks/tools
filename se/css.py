@@ -214,17 +214,17 @@ def parse_rules(css: str):
 	"""
 	Apply a CSS stylesheet to an XHTML tree.
 	The application is naive and should not be expected to be browser-grade.
-	CSS declarationerties on specific elements can be returned using EasyXmlElement.get_css_declarationerty()
+	CSS properties on specific elements can be returned using EasyXmlElement.get_css_property()
 
 	For example,
 
 	for node in dom.xpath("//em")"
-		print(node.get_css_declarationerty("font-style"))
+		print(node.get_css_property("font-style"))
 	"""
 
 	rules = []
 
-	# Parse the stylesheet to break it into rules and their associated declarationerties
+	# Parse the stylesheet to break it into rules and their associated properties
 	for token in tinycss2.parse_stylesheet(css, skip_comments=True):
 		if token.type == "error":
 			raise se.InvalidCssException(token.message)
