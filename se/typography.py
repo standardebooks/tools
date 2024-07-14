@@ -103,10 +103,10 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = xhtml.replace("——", "⸺")
 
 	# Smartypants doesn't do well on em dashes followed by open quotes. Fix that here
-	xhtml = regex.sub(r"—”([\p{Letter}])", r"—“\1", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"—’([\p{Letter}])", r"—‘\1", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"-“</p>", r"—”</p>", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"‘”</p>", fr"’{se.HAIR_SPACE}”</p>", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"—”([\p{Letter}])", r"—“\1", xhtml)
+	xhtml = regex.sub(r"—’([\p{Letter}])", r"—‘\1", xhtml)
+	xhtml = regex.sub(r"-“</p>", r"—”</p>", xhtml)
+	xhtml = regex.sub(r"‘”</p>", fr"’{se.HAIR_SPACE}”</p>", xhtml)
 
 	# Now that we've fixed Smartypants' output, put our quotes back in
 	xhtml = xhtml.replace("!#se:rsquo#!", "’")
@@ -114,7 +114,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Remove spaces between en and em dashes
 	# Note that we match at least one character before the dashes, so that we don't catch start-of-line em dashes like in poetry.
 	# We do a negative lookbehind for <br/ to prevent newlines/indents after <br/>s from being included
-	xhtml = regex.sub(r"(?<!<br/)([^\.…\s])\s*([–—])\s*", r"\1\2", xhtml, flags=regex.DOTALL)
+	xhtml = regex.sub(r"(?<!<br/)([^\.…\s])\s*([–—])\s*", r"\1\2", xhtml)
 
 	# First, remove stray word joiners
 	xhtml = xhtml.replace(se.WORD_JOINER, "")
@@ -123,12 +123,12 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = xhtml.replace(se.SHY_HYPHEN, "")
 
 	# Fix some common em-dash transcription errors
-	xhtml = regex.sub(r"([:;])-([\p{Letter}])", r"\1—\2", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"([\p{Letter}])-“", r"\1—“", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"([:;])-([\p{Letter}])", r"\1—\2", xhtml)
+	xhtml = regex.sub(r"([\p{Letter}])-“", r"\1—“", xhtml)
 	xhtml = regex.sub(r":-</", fr":{se.WORD_JOINER}—</", xhtml)
 
 	# Em dashes and two-em-dashes can be broken before, so add a word joiner between letters/punctuation and the following em dash
-	xhtml = regex.sub(fr"([^\s{se.WORD_JOINER}{se.NO_BREAK_SPACE}{se.HAIR_SPACE}])([—⸻])", fr"\1{se.WORD_JOINER}\2", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"([^\s{se.WORD_JOINER}{se.NO_BREAK_SPACE}{se.HAIR_SPACE}])([—⸻])", fr"\1{se.WORD_JOINER}\2", xhtml)
 
 	# Add en dashes; don't replace match that is within an html tag, since ids and attrs often contain the pattern DIGIT-DIGIT
 	xhtml = regex.sub(r"(?<!<[^>]*)([0-9]+)\-([0-9]+)", r"\1–\2", xhtml)
@@ -146,7 +146,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(fr"([\p{{Lowercase_Letter}}]){se.WORD_JOINER}—th\b", r"\1 —th", xhtml)
 
 	# Remove word joiners from following opening tags--they're usually never correct
-	xhtml = regex.sub(fr"<([\p{{Letter}}]+)([^>]*?)>{se.WORD_JOINER}", r"<\1\2>", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"<([\p{{Letter}}]+)([^>]*?)>{se.WORD_JOINER}", r"<\1\2>", xhtml)
 
 	# Add a word joiner after em dashes within <cite> elements
 	xhtml = regex.sub(r"<cite([^>]*?)>—", fr"<cite\1>—{se.WORD_JOINER}", xhtml)
@@ -213,7 +213,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"(\s)‘a’(\s)", r"\1’a’\2", xhtml, flags=regex.IGNORECASE)
 
 	# Years
-	xhtml = regex.sub(r"‘([0-9]{2,}[^\p{Letter}0-9’])", r"’\1", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"‘([0-9]{2,}[^\p{Letter}0-9’])", r"’\1", xhtml)
 
 	xhtml = regex.sub(r"‘([Aa]ve|[Oo]me|[Ii]m|[Mm]idst|[Gg]ainst|[Nn]eath|[Ee]m|[Cc]os|[Tt]is|[Tt]isn’t|[Tt]was|[Tt]ain’t|[Tt]wixt|[Tt]were|[Tt]would|[Tt]wouldn|[Tt]won|[Tt]ween|[Tt]will|[Rr]ound|[Pp]on|[Uu]ns?|[Uu]d|[Cc]ept|[Oo]w|[Aa]ppen|[Ee])\b", r"’\1", xhtml)
 
@@ -245,34 +245,34 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"(?<!A\. )B\.\s+C\.", r"BC", xhtml)
 
 	# Put spacing next to close quotes
-	xhtml = regex.sub(fr"“[\s{se.NO_BREAK_SPACE}]*‘", fr"“{se.HAIR_SPACE}‘", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(fr"’[\s{se.NO_BREAK_SPACE}]*”", fr"’{se.HAIR_SPACE}”", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(fr"“[\s{se.NO_BREAK_SPACE}]*’", fr"“{se.HAIR_SPACE}’", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(fr"‘[\s{se.NO_BREAK_SPACE}]*“", fr"‘{se.HAIR_SPACE}“", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(fr"‘[\s{se.NO_BREAK_SPACE}]*’", fr"‘{se.HAIR_SPACE}’", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"“[\s{se.NO_BREAK_SPACE}]*‘", fr"“{se.HAIR_SPACE}‘", xhtml)
+	xhtml = regex.sub(fr"’[\s{se.NO_BREAK_SPACE}]*”", fr"’{se.HAIR_SPACE}”", xhtml)
+	xhtml = regex.sub(fr"“[\s{se.NO_BREAK_SPACE}]*’", fr"“{se.HAIR_SPACE}’", xhtml)
+	xhtml = regex.sub(fr"‘[\s{se.NO_BREAK_SPACE}]*“", fr"‘{se.HAIR_SPACE}“", xhtml)
+	xhtml = regex.sub(fr"‘[\s{se.NO_BREAK_SPACE}]*’", fr"‘{se.HAIR_SPACE}’", xhtml)
 
 	# We require a non-letter char at the end, otherwise we might match a contraction: “Hello,” ’e said.
-	xhtml = regex.sub(fr"”[\s{se.NO_BREAK_SPACE}]*’([^\p{{Letter}}])", fr"”{se.HAIR_SPACE}’\1", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"”[\s{se.NO_BREAK_SPACE}]*’([^\p{{Letter}}])", fr"”{se.HAIR_SPACE}’\1", xhtml)
 
 	# Fix ellipses spacing
-	xhtml = regex.sub(r"\s*\.\s*\.\s*\.\s*", r"…", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(fr"[\s{se.NO_BREAK_SPACE}]?…[\s{se.NO_BREAK_SPACE}]?\.", fr".{se.HAIR_SPACE}…", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(fr"[\s{se.NO_BREAK_SPACE}]?…[\s{se.NO_BREAK_SPACE}]?", fr"{se.HAIR_SPACE}… ", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(fr"<p([^>]*?)>{se.HAIR_SPACE}…", r"<p\1>…", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"\s*\.\s*\.\s*\.\s*", r"…", xhtml)
+	xhtml = regex.sub(fr"[\s{se.NO_BREAK_SPACE}]?…[\s{se.NO_BREAK_SPACE}]?\.", fr".{se.HAIR_SPACE}…", xhtml)
+	xhtml = regex.sub(fr"[\s{se.NO_BREAK_SPACE}]?…[\s{se.NO_BREAK_SPACE}]?", fr"{se.HAIR_SPACE}… ", xhtml)
+	xhtml = regex.sub(fr"<p([^>]*?)>{se.HAIR_SPACE}…", r"<p\1>…", xhtml)
 
 	# Remove spaces between opening tags and ellipses
-	xhtml = regex.sub(fr"(<[\p{{Letter}}0-9]+[^<]+?>)[\s{se.NO_BREAK_SPACE}]+?…", r"\1…", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"(<[\p{{Letter}}0-9]+[^<]+?>)[\s{se.NO_BREAK_SPACE}]+?…", r"\1…", xhtml)
 
 	# Remove spaces between closing tags and ellipses
-	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?(</[\p{{Letter}}0-9]+>)", r"…\1", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]+([\)”’])(?![\p{{Letter}}])", r"…\1", xhtml, flags=regex.IGNORECASE) # If followed by a letter, the single quote is probably a leading elision
-	xhtml = regex.sub(fr"([\(“‘])[\s{se.NO_BREAK_SPACE}]+…", r"\1…", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?([\!\?\.\;\,])", fr"…{se.HAIR_SPACE}\1", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(fr"([\!\?\.\;”’])[\s{se.NO_BREAK_SPACE}]?…", fr"\1{se.HAIR_SPACE}…", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(fr"\,[\s{se.NO_BREAK_SPACE}]?…", fr",{se.HAIR_SPACE}…", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?(</[\p{{Letter}}0-9]+>)", r"…\1", xhtml)
+	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]+([\)”’])(?![\p{{Letter}}])", r"…\1", xhtml) # If followed by a letter, the single quote is probably a leading elision
+	xhtml = regex.sub(fr"([\(“‘])[\s{se.NO_BREAK_SPACE}]+…", r"\1…", xhtml)
+	xhtml = regex.sub(fr"…[\s{se.NO_BREAK_SPACE}]?([\!\?\.\;\,])", fr"…{se.HAIR_SPACE}\1", xhtml)
+	xhtml = regex.sub(fr"([\!\?\.\;”’])[\s{se.NO_BREAK_SPACE}]?…", fr"\1{se.HAIR_SPACE}…", xhtml)
+	xhtml = regex.sub(fr"\,[\s{se.NO_BREAK_SPACE}]?…", fr",{se.HAIR_SPACE}…", xhtml)
 
 	# Add nbsp to ellipses that open dialog
-	xhtml = regex.sub(r"([“‘])…\s([\p{Letter}0-9])", fr"\1…{se.NO_BREAK_SPACE}\2", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"([“‘])…\s([\p{Letter}0-9])", fr"\1…{se.NO_BREAK_SPACE}\2", xhtml)
 
 	# Don't use . ... if within a clause
 	xhtml = regex.sub(r"\.(\s…\s[\p{Lowercase_Letter}])", r"\1", xhtml)

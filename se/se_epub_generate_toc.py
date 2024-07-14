@@ -109,7 +109,7 @@ class TocItem:
 					out_string += f"<a href=\"text/{self.file_link}\">{self.title}</a>\n"
 
 		# Replace <br/> with a single space
-		out_string = regex.sub(r"<br/>\s*", " ", out_string, flags=regex.DOTALL)
+		out_string = regex.sub(r"<br/>\s*", " ", out_string)
 
 		return out_string
 

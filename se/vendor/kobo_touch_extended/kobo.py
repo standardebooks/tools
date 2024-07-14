@@ -32,7 +32,7 @@ def append_kobo_spans_from_text(node, text):
 			return False
 		else:
 			# Split text in sentences
-			groups = regex.split(fr'(.*?[\.\!\?\:](?:{se.HAIR_SPACE}…)?[\'"\u201d\u2019]?(?:{se.HAIR_SPACE}\u201d)?\s*)', text, flags=regex.MULTILINE)
+			groups = regex.split(fr'(.*?[\.\!\?\:](?:{se.HAIR_SPACE}…)?[\'"\u201d\u2019]?(?:{se.HAIR_SPACE}\u201d)?\s*)', text)
 			# Remove empty strings resulting from split()
 			groups = [g for g in groups if g != ""]
 

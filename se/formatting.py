@@ -362,16 +362,16 @@ def get_word_count(xhtml: str) -> int:
 	xhtml = regex.sub(r"<.+?>", " ", xhtml, flags=regex.DOTALL)
 
 	# Replace some formatting characters
-	xhtml = regex.sub(r"[…–—― ‘’“”\{\}\(\)]", " ", xhtml, flags=regex.IGNORECASE | regex.DOTALL)
+	xhtml = regex.sub(r"[…–—― ‘’“”\{\}\(\)]", " ", xhtml)
 
 	# Remove word-connecting dashes, apostrophes, commas, and slashes (and/or), they count as a word boundry but they shouldn't
-	xhtml = regex.sub(fr"[\p{{Letter}}0-9][\-\'\,\.\/{se.NO_BREAK_HYPHEN}{se.SHY_HYPHEN}][\p{{Letter}}0-9]", "aa", xhtml, flags=regex.IGNORECASE | regex.DOTALL)
+	xhtml = regex.sub(fr"[\p{{Letter}}0-9][\-\'\,\.\/{se.NO_BREAK_HYPHEN}{se.SHY_HYPHEN}][\p{{Letter}}0-9]", "aa", xhtml)
 
 	# Replace sequential spaces with one space
-	xhtml = regex.sub(r"\s+", " ", xhtml, flags=regex.IGNORECASE | regex.DOTALL)
+	xhtml = regex.sub(r"\s+", " ", xhtml)
 
 	# Get the word count
-	return len(regex.findall(r"\b\w+\b", xhtml, flags=regex.IGNORECASE | regex.DOTALL))
+	return len(regex.findall(r"\b\w+\b", xhtml))
 
 def _replace_character_references(match_object) -> str:
 	"""Replace most XML character references with literal characters.
@@ -660,13 +660,13 @@ def format_xhtml(xhtml: str) -> str:
 	xhtml = regex.sub(r"&#?\w+;", _replace_character_references, xhtml)
 
 	# Remove unnecessary doctypes which can cause xmllint to hang
-	xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", xhtml, flags=regex.DOTALL)
+	xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", xhtml)
 
 	# Remove white space between opening/closing tag and text nodes
 	# We do this first so that we can still format line breaks after <br/>
 	# Exclude comments
 	xhtml = regex.sub(r"(<(?:[^!/][^>]*?[^/]|[a-z])>)\s+([^\s<])", r"\1\2", xhtml, flags=regex.IGNORECASE)
-	xhtml = regex.sub(r"([^\s>])\s+(</[^>]+?>)", r"\1\2", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"([^\s>])\s+(</[^>]+?>)", r"\1\2", xhtml)
 
 	try:
 		tree = _format_xml_str(xhtml)
@@ -1088,7 +1088,7 @@ def format_css(css: str) -> str:
 	output = regex.sub(r"(@[\p{Letter}]+) \(", "\\1(", output)
 
 	# Remove empty rules
-	output = regex.sub(r"^\t*[^\{\}]+?\{\s*\}\n", "", output, flags=regex.DOTALL|regex.MULTILINE)
+	output = regex.sub(r"^\t*[^\{\}]+?\{\s*\}\n", "", output, flags=regex.MULTILINE)
 
 	return output
 
@@ -1103,7 +1103,7 @@ def remove_tags(text: str) -> str:
 	A string with all HTML tags removed
 	"""
 
-	return regex.sub(r"</?[\p{Letter}]+[^>]*?>", "", text, flags=regex.DOTALL)
+	return regex.sub(r"</?[\p{Letter}]+[^>]*?>", "", text)
 
 def get_ordinal(number: str) -> str:
 	"""
@@ -1296,7 +1296,7 @@ def make_url_safe(text: str) -> str:
 	text = regex.sub(r"['‘’`]", "", text)
 
 	# 5. Convert any non-digit, non-letter character to a space
-	text = regex.sub(r"[^0-9\p{Letter}]", " ", text, flags=regex.IGNORECASE)
+	text = regex.sub(r"[^0-9\p{Letter}]", " ", text)
 
 	# 6. Convert any instance of one or more space to a dash
 	text = regex.sub(r"\s+", "-", text)

@@ -66,7 +66,7 @@ def word_count(plain_output: bool) -> int:
 
 					else:
 						# We couldn't generate a dom, fall back to regex replacements
-						xhtml = regex.sub(r"<(pre|div|p)[^>]*?>[^<]*Project Gutenberg[^<]+?</\1>", "", xhtml, flags=regex.IGNORECASE|regex.DOTALL)
+						xhtml = regex.sub(r"<(pre|div|p)[^>]*?>[^<]*Project Gutenberg[^<]+?</\1>", "", xhtml, flags=regex.IGNORECASE)
 						xhtml = regex.sub(r"<span class=\"pagenum\">.+?</span>", "", xhtml, flags=regex.IGNORECASE|regex.DOTALL)
 
 				total_word_count += se.formatting.get_word_count(xhtml)
