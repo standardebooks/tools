@@ -2248,7 +2248,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 	# Check for common missing roman semantics for “I”
 	regent_regex = r"(?:Charles|Edward|George|Henry|James|William) I\b"
-	matches = regex.findall(fr"King {regent_regex}", file_contents) + regex.findall(fr"{regent_regex}’s", file_contents)
+	matches = regex.findall(fr"King {regent_regex}|{regent_regex}’s", file_contents)
 	if matches:
 		messages.append(LintMessage("s-103", "Probable missing semantics for a roman I numeral.", se.MESSAGE_TYPE_WARNING, filename, matches))
 

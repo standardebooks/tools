@@ -1,5 +1,11 @@
 s-103 [Manual Review] chapter-1.xhtml Probable missing semantics for a roman I 
 numeral.
+        Charles I’s
+        Edward I’s
+        George I’s
+        Henry I’s
+        James I’s
+        William I’s
         King Charles I
         King Edward I
         King George I
@@ -12,15 +18,3 @@ numeral.
         King Henry I
         King James I
         King William I
-        Charles I’s
-        Edward I’s
-        George I’s
-        Henry I’s
-        James I’s
-        William I’s
-        Charles I’s
-        Edward I’s
-        George I’s
-        Henry I’s
-        James I’s
-        William I’s
