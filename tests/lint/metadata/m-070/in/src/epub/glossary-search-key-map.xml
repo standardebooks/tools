@@ -15,4 +15,10 @@
 	<search-key-group href="text/glossary.xhtml#def">
 		<match value="unsiker"/>
 	</search-key-group>
+	<search-key-group href="text/glossary.xhtml#ghi">
+		<match value="pariah">
+			<value value="pariahs"/>
+			<value value="pariahsss"/>
+		</match>
+	</search-key-group>
 </search-key-map>
