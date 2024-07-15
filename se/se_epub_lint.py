@@ -3613,9 +3613,14 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 				# Check and log missing glossary keys
 				if ebook_flags["has_glossary_search_key_map"] and filename.name not in IGNORED_FILENAMES:
-					source_text = dom.xpath("/html/body")[0].inner_text()
+					# Remove all noterefs, as their anchor text will otherwise immediately follow a potential glossary term, defeating the below regex.
+					dom_copy = deepcopy(dom)
+					for node in dom_copy.xpath(".//a[contains(@epub:type, 'noteref')]"):
+						node.remove()
+
+					source_text = dom_copy.xpath("/html/body")[0].inner_text()
 					if dom.xpath("/html/body//section[contains(@epub:type, 'glossary')]"):
-						nodes = dom.xpath("/html/body//dd[contains(@epub:type, 'glossdef')]")
+						nodes = dom_copy.xpath("/html/body//dd[contains(@epub:type, 'glossdef')]")
 						source_text = " ".join([node.inner_text() for node in nodes])
 					for glossary_index, glossary_value in enumerate(glossary_usage):
 						if glossary_value[1] is False and regex.search(r"(?<!\w)\L<val>(?!\w)", source_text, flags=regex.IGNORECASE, val=[glossary_value[0]]):
