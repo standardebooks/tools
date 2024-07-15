@@ -3514,7 +3514,15 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				if filename.name == "glossary-search-key-map.xml":
 					ebook_flags["has_glossary_search_key_map"] = True
 					# Map the glossary to tuples of the values and whether they’re used (initially false)
-					glossary_usage = list(map(lambda node: (node.get_attr("value"), False), xml_dom.xpath(".//*[@value]")))
+					# If a <match> has no <value> children, its @value must appear in the text
+					# Otherwise, each of its <value> children's @value must appear
+					for match in xml_dom.xpath("/search-key-map/search-key-group/match[@value]"):
+						values = match.xpath("./value[@value]")
+						if not values:
+							glossary_usage.append((match.get_attr("value"), False))
+						else:
+							for value in values:
+								glossary_usage.append((value.get_attr("value"), False))
 
 			if filename.suffix == ".xhtml":
 				# Read file contents into a DOM for querying
