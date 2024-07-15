@@ -226,9 +226,9 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		if not self.metadata_dom.xpath("//dc:identifier[starts-with(., 'url:https://standardebooks.org')]"):
 			compatibility_css_filename = "compatibility-white-label.css"
 
-		with open(work_compatible_epub_dir / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:
+		with open(work_compatible_epub_dir / "epub" / "css" / "core.css", "a", encoding="utf-8") as css_file:
 			with importlib.resources.files("se.data.templates").joinpath(compatibility_css_filename).open("r", encoding="utf-8") as compatibility_css_file:
-				core_css_file.write("\n" + compatibility_css_file.read())
+				css_file.write("\n\n" + compatibility_css_file.read())
 
 		# Simplify CSS and tags
 		total_css = ""
@@ -677,6 +677,10 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		if build_kobo:
 			work_kepub_dir = Path(work_dir / (work_compatible_epub_dir.name + ".kepub"))
 			shutil.copytree(work_compatible_epub_dir, str(work_kepub_dir), dirs_exist_ok=True)
+
+			with open(work_kepub_dir / "epub" / "css" / "se.css", "a", encoding="utf-8") as css_file:
+				with importlib.resources.files("se.data.templates").joinpath("se-kobo.css").open("r", encoding="utf-8") as compatibility_css_file:
+					css_file.write("\n\n" + compatibility_css_file.read())
 
 			for file_path in work_kepub_dir.glob("**/*"):
 				# Add a note to the metadata file indicating this is a transform build
@@ -1299,6 +1303,10 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			return
 
 		if build_kindle:
+			with open(work_compatible_epub_dir / "epub" / "css" / "se.css", "a", encoding="utf-8") as css_file:
+				with importlib.resources.files("se.data.templates").joinpath("se-kindle.css").open("r", encoding="utf-8") as compatibility_css_file:
+					css_file.write("\n\n" + compatibility_css_file.read())
+
 			# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
 			with open(work_compatible_epub_dir / "epub" / toc_filename, "r+", encoding="utf-8") as file:
 				dom = se.easy_xml.EasyXmlTree(file.read())
@@ -1406,7 +1414,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			# Include compatibility CSS
 			with open(work_compatible_epub_dir / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:
 				with importlib.resources.files("se.data.templates").joinpath("kindle.css").open("r", encoding="utf-8") as compatibility_css_file:
-					core_css_file.write("\n" + compatibility_css_file.read())
+					core_css_file.write("\n\n" + compatibility_css_file.read())
 
 			# Build an epub file we can send to Calibre
 			se.epub.write_epub(work_compatible_epub_dir, work_dir / compatible_epub_output_filename)

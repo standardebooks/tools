@@ -1,0 +1,8 @@
+/* Kobo compatibility CSS */
+
+section[epub|type~="titlepage"] h1,
+section[epub|type~="titlepage"] p,
+section[epub|type~="colophon"] h2,
+section[epub|type~="imprint"] h2{
+	font-size: 0; /* Required for Kobo not to add an extra page to the title */
+}
