@@ -2703,9 +2703,8 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	# Ignore titles longer than 150 chars, as long titles are likely old-timey super-long titles that should be mostly sentence-cased
 	incorrectly_cased_titles = []
 	for node in dom.xpath("/html/body//*[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'se:name.legal-case')) and not(@xml:lang) and not(./*) and string-length(.) <= 150]"):
-		# Replace any space that is not a hair space with a regular space. This is because in inline titles, we may correctly
-		# have nbsp for example after `St.`, but titlecase will remove that nbsp.
-		if se.formatting.titlecase(node.inner_text()) != regex.sub(fr"[^\S{se.HAIR_SPACE}]+", " ", node.inner_text()):
+		# Replace any space that is not a hair space or nbsp with a regular space.
+		if se.formatting.titlecase(node.inner_text()) != regex.sub(fr"[^\S{se.HAIR_SPACE}{se.NO_BREAK_SPACE}]+", " ", node.inner_text()):
 			incorrectly_cased_titles.append(node.to_string())
 
 	if incorrectly_cased_titles:
