@@ -1,8 +1,0 @@
-/* Kindle compatibility CSS */
-
-section[epub|type~="titlepage"] h1,
-section[epub|type~="titlepage"] p,
-section[epub|type~="colophon"] h2,
-section[epub|type~="imprint"] h2{
-	position: absolute;
-}

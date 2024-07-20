@@ -1303,10 +1303,6 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			return
 
 		if build_kindle:
-			with open(work_compatible_epub_dir / "epub" / "css" / "se.css", "a", encoding="utf-8") as css_file:
-				with importlib.resources.files("se.data.templates").joinpath("se-kindle.css").open("r", encoding="utf-8") as compatibility_css_file:
-					css_file.write("\n\n" + compatibility_css_file.read())
-
 			# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
 			with open(work_compatible_epub_dir / "epub" / toc_filename, "r+", encoding="utf-8") as file:
 				dom = se.easy_xml.EasyXmlTree(file.read())
