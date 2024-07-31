@@ -1,3 +1,63 @@
+# 2.7.0
+
+## General
+
+- Various performance improvements. Thanks to Andrew Paseltiner
+
+- Various code readability improvements. Thanks to Andrew Paseltiner.
+
+- Formatting: Remove turned comma when making string URL safe
+
+- Remove use of importlib_resources. Thanks to Robin Whittleton
+
+- Add missing shell completions. Thanks to Andrew Paseltiner
+
+- Add `se build-loi` command for updating an LoI file from `<figure>`s. Thanks to Andrew Paseltiner
+
+## se build
+
+- Only include Kobo/Kindle se.css compatiblity fixes in those particular builds, not all builds
+
+## se lint
+
+- Remove y-023. Thanks to Vince Rice
+
+- Add various tests. Thanks to Vince Rice
+
+- Improve y-029, y-031, and y-032. Thanks to Vince Rice
+
+- Improve y-017
+
+- Make se.css linting path variable unique. Thanks to Robin Whittleton
+
+- Include photographer as a possible LoI contributor in m-034
+
+- Disable colophon and imprint lints for white-label productions. Thanks to Andrew Paseltiner
+
+- Include matched numeric entities in s-001 lint message. Thanks to Andrew Paseltiner
+
+- Fix check for LoI text against either figcaption or alt text in s-041. Thanks to Andrew Paseltiner
+
+- Add x-021, `<figure>` with no `@id` attribute
+
+- Improve t-005
+
+- Improve t-075
+
+- Ignore non-breaking spaces and word joiners in s-041. Thanks to Andrew Paseltiner
+
+- Remove duplicate matches for s-103. Thanks to Andrew Paseltiner
+
+- Improve t-064
+
+- Properly handle noterefs, plus other fixes, in m-070. Thanks to Andrew Paseltiner
+
+- Remove pointless trailing text from t-008 regex. Thanks to Andrew Paseltiner
+
+## se typogrify
+
+- Typogrify alt attributes in images when a DOM can be parsed. Thanks to Andrew Paseltiner
+
 # 2.6.4
 
 ## General
