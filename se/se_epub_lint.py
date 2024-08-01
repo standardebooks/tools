@@ -1527,7 +1527,12 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 					# Replace tabs and newlines with a single space to better match figcaptions that contain <br/>
 					figure_text = regex.sub(r"[ \n\t]+", " ", child.inner_text())
 
-				if loi_text_to_compare == figure_text:
+				if figure_text is None:
+					figure_text = ""
+
+				# Don't create a lint error if the figure text 20 chars or more longer than the LoI text. Sometimes the alt text is very long and descriptive, and the LoI text is truncated on purpose.
+
+				if (len(figure_text) - len(loi_text_to_compare) >= 20) or loi_text_to_compare == figure_text:
 					loi_text_matches_figure = True
 					break
 
