@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0" xml:lang="en-GB">
+	<head>
+		<title>Endnotes</title>
+		<link href="../css/core.css" rel="stylesheet" type="text/css"/>
+		<link href="../css/local.css" rel="stylesheet" type="text/css"/>
+	</head>
+	<body epub:type="backmatter">
+		<section id="endnotes" epub:type="endnotes">
+			<h2 epub:type="title">Endnotes</h2>
+			<ol>
+				<li epub:type="endnote">
+					<p><i>Cho</i> is generally translated as “street.”</p>
+				</li>
+				<!-- s-104 looks at each <p> within an endnote -->
+				<li epub:type="endnote">
+					<p>Some other text.</p>
+					<p><i>Tsu</i> is an instance of shortening a name in familiar speech.</p>
+				</li>
+				<!-- not relevant for s-104 because the <i> has an epub:type -->
+				<li epub:type="endnote">
+					<p><i epub:type="se:name.vessel.ship">Nautilus</i> is a submarine.</p>
+				</li>
+				<!-- not relevant for s-104 because the <i> text is too long -->
+				<li epub:type="endnote">
+					<p><i>012345678901234567891</i> is 21 characters long.</p>
+				</li>
+				<!-- not relevant for s-104 because the following text is too short -->
+				<li epub:type="endnote">
+					<p><i>X</i> 12345678901234567.</p>
+				</li>
+				<!-- not relevant for s-104 because the <i> is not the first child of the <p> -->
+				<li epub:type="endnote">
+					<p>An <i>X</i> marked the spot.</p>
+				</li>
+			</ol>
+		</section>
+	</body>
+</html>
