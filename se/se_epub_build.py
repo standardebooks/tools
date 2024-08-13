@@ -1071,13 +1071,17 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("navdoc2ncx.xsl")) as navdoc2ncx_xsl_filename:
 			toc_tree = se.epub.convert_toc_to_ncx(work_compatible_epub_dir, toc_filename, navdoc2ncx_xsl_filename)
 
-		# Convert the <nav> landmarks element to the <guide> element in the metadata file
+		# Convert the <nav> landmarks element to the <guide> element in the metadata file, and add a reference element for the titlepage to it
 		guide_root_node = se.easy_xml.EasyXmlElement("<guide/>")
-		for node in toc_tree.xpath("//nav[@epub:type=\"landmarks\"]/ol/li/a"):
+		for node in toc_tree.xpath("//nav[@epub:type=\"toc\"]/ol/li[1]/a | //nav[@epub:type=\"landmarks\"]/ol/li/a"):
 			ref_node = se.easy_xml.EasyXmlElement("<reference/>")
-
 			ref_node.set_attr("title", node.text)
 			ref_node.set_attr("href", node.get_attr("href"))
+
+			# Set the `type` attribute for the titlepage reference element
+			if ref_node.get_attr("title") == "Titlepage":
+				ref_node.set_attr("type", "title-page")
+
 			if node.get_attr("epub:type"):
 				# Set the `type` attribute and remove any z3998 items, as well as front/body/backmatter
 				ref_node.set_attr("type", node.get_attr("epub:type"))
@@ -1089,16 +1093,12 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				new_node_types = []
 
 				for node_type in ref_node.get_attr("type").split():
-					if node_type in ("acknowledgements", "bibliography", "colophon", "copyright-page", "cover", "dedication", "epigraph", "foreword", "glossary", "index", "loi", "lot", "notes", "preface", "bodymatter", "titlepage", "toc"):
+					if node_type in ("acknowledgements", "bibliography", "colophon", "copyright-page", "cover", "dedication", "epigraph", "foreword", "glossary", "index", "loi", "lot", "notes", "preface", "bodymatter", "title-page", "toc"):
 						new_node_types.append(node_type)
 					else:
 						new_node_types.append(f"other.{node_type}")
 
 				ref_node.set_attr("type", " ".join(new_node_types))
-
-				# We add the `text` attribute to the titlepage to tell the reader to start there
-				if ref_node.get_attr("type") == "titlepage":
-					ref_node.set_attr("type", "title-page text")
 
 				guide_root_node.append(ref_node)
 
