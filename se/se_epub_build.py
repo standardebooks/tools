@@ -1072,18 +1072,24 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			toc_tree = se.epub.convert_toc_to_ncx(work_compatible_epub_dir, toc_filename, navdoc2ncx_xsl_filename)
 
 		# Convert the <nav> landmarks element to the <guide> element in the metadata file, and add a reference element for the titlepage to it
+		# Here we need to work around a Kindle issue present as of August 2024: if there is not at least one reference element in the guide whose href links to body, front or back matter, current chapter locations on Kindle become frozen to an incorrect value (for SE books, the current chapter is shown as "Titlepage" no matter which chapter is open).
+		# Note: The `text` type attribute usually sets where the ebook opens on Kindle, but in its absence, the book will open at the titlepage even when the `type` attribute of the titlepage reference element is not `text` but `title-page`.
+		# Given this, and the fact that we currently want books to open at the titlepage, we do not need to add a reference element to the guide whose `type` attribute is `text`.
+		# SE books will also open on Kindle at the titlepage if there is neither a reference element whose `type` attribute is`text`, nor one whose `type` attribute is `titlepage`.
 		guide_root_node = se.easy_xml.EasyXmlElement("<guide/>")
+		# In an earlier version of tools the titlepage was in the landmarks, but it is no longer, so use union in xpath to get its node from the ToC
 		for node in toc_tree.xpath("//nav[@epub:type=\"toc\"]/ol/li[1]/a | //nav[@epub:type=\"landmarks\"]/ol/li/a"):
 			ref_node = se.easy_xml.EasyXmlElement("<reference/>")
 			ref_node.set_attr("title", node.text)
 			ref_node.set_attr("href", node.get_attr("href"))
 
-			# Set the `type` attribute for the titlepage reference element
+			# Set the `type` attribute for the titlepage reference element, using the `title` attribute to identify the the titlepage <a> node from the ToC, because it has no epub:type
 			if ref_node.get_attr("title") == "Titlepage":
 				ref_node.set_attr("type", "title-page")
 
 			if node.get_attr("epub:type"):
 				# Set the `type` attribute and remove any z3998 items, as well as front/body/backmatter
+				# Removing bodymatter is OK because, as above, we're appending a titlepage reference element to the guide, so we do not also need one whose type attribute is `text`. If we include both a titlepage reference element whose type attribute is `title-page` and a bodymatter reference element whose `type`` attribute is `text`, ebooks will open on Kindle at the relevant bodymatter href, not at the titlepage.
 				ref_node.set_attr("type", node.get_attr("epub:type"))
 				ref_node.set_attr("type", regex.sub(r"\s*\b(front|body|back)matter\b\s*", "", ref_node.get_attr("type")))
 				ref_node.set_attr("type", regex.sub(r"\s*\bz3998:.+\b\s*", "", ref_node.get_attr("type")))
@@ -1093,10 +1099,13 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				new_node_types = []
 
 				for node_type in ref_node.get_attr("type").split():
+					# Include only types from the allow list that might possibly appear as landmark epub:types, plus `title-page` as we've manually set above
 					if node_type in ("acknowledgements", "bibliography", "glossary", "index", "loi", "lot", "title-page"):
 						new_node_types.append(node_type)
+					# Manually set type for endnotes files
 					elif node_type == "endnotes":
 						new_node_types.append("notes")
+					# Earlier in this file the endnote file epub:type was modified to include "footnotes"; ignore "footnotes" as we've just handled "endnotes", and catch any remaining types
 					elif node_type != "footnotes":
 						new_node_types.append(f"other.{node_type}")
 
