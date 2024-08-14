@@ -1093,9 +1093,11 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				new_node_types = []
 
 				for node_type in ref_node.get_attr("type").split():
-					if node_type in ("acknowledgements", "bibliography", "glossary", "index", "loi", "lot", "notes", "title-page"):
+					if node_type in ("acknowledgements", "bibliography", "glossary", "index", "loi", "lot", "title-page"):
 						new_node_types.append(node_type)
-					else:
+					elif node_type == "endnotes":
+						new_node_types.append("notes")
+					elif node_type != "footnotes":
 						new_node_types.append(f"other.{node_type}")
 
 				ref_node.set_attr("type", " ".join(new_node_types))
