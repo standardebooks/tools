@@ -1200,9 +1200,8 @@ def _lint_image_checks(self, filename: Path) -> list:
 			if image.size != (se.COVER_WIDTH, se.COVER_HEIGHT):
 				messages.append(LintMessage("f-017", f"[path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}.", se.MESSAGE_TYPE_ERROR, filename))
 
-		# Run some tests on distributable images in ./src/epub/images/
-		# Once we reach Python 3.9 we can use path.is_relative_to() instead of this string comparison
-		if str(filename).startswith(str(self.content_path / "images")):
+		# Run some tests on distributable images in ./src/epub/images/ and the cover
+		if filename.is_relative_to(self.content_path / "images") or (self.path / "images" / "cover.jpg" == filename):
 			if os.path.getsize(filename) > 1500000: # 1.5MB
 				messages.append(LintMessage("f-016", "Image more than 1.5MB in size.", se.MESSAGE_TYPE_ERROR, filename))
 
