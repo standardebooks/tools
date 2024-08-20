@@ -105,6 +105,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))\b([1-4]D)\b", r"""<abbr epub:type="z3998:initialism">\1</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(Thos\.|Jas\.|Chas\.|Wm\.)", r"""<abbr epub:type="z3998:given-name">\1</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([ap])\.\s?m\.", r"<abbr>\1.m.</abbr>", xhtml)
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(4to|8vo|12mo|16mo|18mo|32mo|48mo|64mo)(?:\.(\s+\p{Lowercase_Letter}))?", r"<abbr>\1</abbr>\2", xhtml) # Book sizes
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([0-9]{1,2})\s?[Aa]\.?\s?[Mm](?:\.|\b)", r"\1 <abbr>a.m.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([0-9]{1,2})\s?[Pp]\.?\s?[Mm](?:\.|\b)", r"\1 <abbr>p.m.</abbr>", xhtml)
 	# this should be placed after the am/pm test, to prevent tagging just the p. in "p. m."
