@@ -1,3 +1,15 @@
+# 2.7.1
+
+## se build
+
+- Fix error in section titles of azw3 files. Thanks to Erin Endrei
+
+## se lint
+
+- Improve s-041
+
+- Fix filesize check for JPG covers. Thanks to Robin Whittleton
+
 # 2.7.0
 
 ## General
