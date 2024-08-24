@@ -352,6 +352,7 @@ SEMANTICS & CONTENT
 "s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/]."
 "s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead."
 "s-103", "Probable missing semantics for a roman I numeral."
+"s-104", "[xhtml]<i>[/] element without semantic at beginning of endnote. Hint: Should this be [xhtml]<dfn>[/] instead?"
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -429,6 +430,7 @@ TYPOGRAPHY
 "t-073", "Possible transcription error in Greek."
 "t-074", "Extended sound using hyphen-minus [text]-[/] instead of non-breaking hyphen [text]‑[/]."
 "t-075", "Word in verse with acute accent for scansion instead of grave accent."
+"t-076", "[xhtml]<dfn>[/] at beginning of endnote should be set in italics."
 
 
 XHTML
@@ -1499,6 +1501,15 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		nodes = dom.xpath("/html/body//a[@epub:type='backlink'][(preceding-sibling::node()[1])[not(re:test(., ' $')) and not(normalize-space(.)='')]]")
 		if nodes:
 			messages.append(LintMessage("t-027", "Endnote backlink not preceded by exactly one space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+		# Check for semantic-less <i> at beginning of endnotes
+		nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote') and ./p/node()[1][name() = 'i' and not(@epub:type) and string-length(.) < 20 and string-length(./following-sibling::text()) > 20]]")
+		if nodes:
+			messages.append(LintMessage("s-104", "[xhtml]<i>[/] element without semantic at beginning of endnote. Hint: Should this be [xhtml]<dfn>[/] instead?", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+		# <dfn> in endnotes without font-style: italic
+		if dom.xpath("/html/body//li[contains(@epub:type, 'endnote') and ./p/node()[1][name() = 'dfn' and not(@data-css-font-style = 'italic')]]"):
+			messages.append(LintMessage("t-076", "[xhtml]<dfn>[/] at beginning of endnote should be set in italics.", se.MESSAGE_TYPE_WARNING, filename))
 
 	# Check LoI descriptions to see if they match associated figcaptions
 	elif special_file == "loi":
