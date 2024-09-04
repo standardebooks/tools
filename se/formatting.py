@@ -864,7 +864,7 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 			output += f"#{token.value}"
 
 		if token.type == "string":
-			output += f"\"{token.value}\""
+			output += token.representation
 
 		if token.type == "() block":
 			output += f"({_format_css_component_list(token.content, in_selector, True)})"
