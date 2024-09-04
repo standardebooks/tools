@@ -170,6 +170,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Dash before closing double quote in clauses with more than two words is almost always a typo
 	xhtml = regex.sub(r"(“[^<]+?\s[^<]+?)-”", fr"\1{se.WORD_JOINER}—”", xhtml)
 
+	# Remove nbsps between words
+	xhtml = regex.sub(fr"([^>…]){se.NO_BREAK_SPACE}([\p{{Letter}}\p{{Digit}}])", r"\1 \2", xhtml)
+
 	# Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
 	xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?|Hon|Mdlle)\.?(</abbr>)?\s+", fr"\1.\2{se.NO_BREAK_SPACE}", xhtml)
 
@@ -233,9 +236,6 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# House style: remove spacing from common Latinisms
 	xhtml = regex.sub(r"([Ii])\.\s+e\.", r"\1.e.", xhtml)
 	xhtml = regex.sub(r"([Ee])\.\s+g\.", r"\1.g.", xhtml)
-
-	# Remove nbsps between words
-	xhtml = regex.sub(fr"([^>…]){se.NO_BREAK_SPACE}([\p{{Letter}}\p{{Digit}}])", r"\1 \2", xhtml)
 
 	# Add nbsp before `De` last names, but not Latin titles like `<i xml:lang="la">De Natura</i>`
 	xhtml = regex.sub(r"([^>])De ([A-Z][a-z]+?)", fr"\1De{se.NO_BREAK_SPACE}\2", xhtml)
