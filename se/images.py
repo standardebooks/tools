@@ -150,12 +150,19 @@ def has_transparency(image: Image_type) -> bool:
 
 	if image.mode == "P":
 		transparent = image.info.get("transparency", -1)
-		for _, index in image.getcolors():
-			if index == transparent:
-				return True
-	elif image.mode == "RGBA":
+		if isinstance(transparent, bytes):
+			for _, index in image.getcolors():
+				if index >= len(transparent):
+					return False
+				if transparent[index] < 255:
+					return True
+		else:
+			for _, index in image.getcolors():
+				if index == transparent:
+					return True
+	elif image.mode in ("LA", "RGBA"):
 		extrema = image.getextrema()
-		if extrema[3][0] < 255:
+		if extrema[-1][0] < 255:
 			return True
 
 	return False
