@@ -1,0 +1,9 @@
+
+
+p:nth-of-type(1)::before{content: "test";}
+    @media all    and (prefers-color-scheme:dark){p{text-align:initial;}}
+
+
+#chapter-1::after {content: "test";}
+  #chapter-1 tr:first-child{
+content: "test";}
