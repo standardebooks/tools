@@ -561,7 +561,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					processed_css = regex.sub(r"(\s+)page-break-(before|after):\s+page;", "\\1page-break-\\2: always;", processed_css)
 
 					# Replace `vw` or `vh` units with percent, a reasonable approximation
-					processed_css = regex.sub(r"([0-9\.]+\s*)v(w|h);", r"\1%;", processed_css)
+					processed_css = regex.sub(r"^(.+?:\s*[0-9\.]+\s*)(v(w|h));", r"\1%;\n\1\2;", processed_css, flags=regex.MULTILINE)
 
 					if processed_css != css:
 						file.seek(0)

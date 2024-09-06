@@ -3,17 +3,22 @@
 
 figure.full-page{
 	max-height: 100%;
+	max-height: 100vh;
 }
 
 section.epub-type-preface{
 	margin-top: 20%;
+	margin-top: 20vh;
 }
 
 p{
 	margin-top: 20%;
+	margin-top: 20vh;
 	margin-right: 10%;
 	margin-bottom: 10px;
 	margin-left: 10em;
 	width: 5%;
+	width: 5vw;
 	max-width: 12.5%;
+	max-width: 12.5vh;
 }
