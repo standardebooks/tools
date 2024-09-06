@@ -1,0 +1,16 @@
+@charset "utf-8";
+@namespace epub "http://www.idpf.org/2007/ops";
+
+figure.full-page{
+	max-height: 100vh;
+}
+
+section[epub|type~="preface"]{
+	margin-top: 20vh;
+}
+
+p{
+	margin: 20vh 10% 10px 10em;
+	width: 5vw;
+	max-width: 12.5vh;
+}

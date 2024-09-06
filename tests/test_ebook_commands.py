@@ -37,20 +37,24 @@ def test_ebook_commands(testbook__directory: Path, work__directory: Path, comman
 	command_to_use = command
 	test_directory = module_directory / command / test
 	# if a file exists in test_directory with the same name as the {command}-command, e.g. help-command,
-	# the first line should contain the full command to use, with any arguments.
+	# each line should contain a full command to use, with any arguments.
 	command_file = test_directory / (command + "-command")
 	if command_file.is_file():
 		with open(command_file, "r", encoding="utf-8") as cfile:
-			command_full = cfile.readline().rstrip()
-		# make sure command is present
-		if command in command_full:
-			command_to_use = command_full
+			commands_full = [line.strip() for line in cfile.readlines() if line.strip() != ""]
+		# make sure command is present in at least one line
+		if any(command in line for line in commands_full):
+			commands_to_use = commands_full
 		else:
-			assert "" == f"'{command_full}' does not contain the command '{command}'"
+			assert "" == f"{command_file} does not contain the command '{command}'"
+	else:
+		commands_to_use = [f"{command} {{book_directory}}"]
 
 	in_directory = test_directory / "in"
 	golden_directory = test_directory / "golden"
 	book_directory = assemble_testbook(testbook__directory, in_directory, work__directory)
 
-	must_run(f"se {command_to_use} {book_directory}")
-	files_are_golden(in_directory, book_directory, golden_directory, update_golden)
+	for command_to_use in commands_to_use:
+		command_to_use = command_to_use.format(book_directory=book_directory)
+		must_run(f"se {command_to_use}")
+	files_are_golden(golden_directory, book_directory, golden_directory, update_golden)
