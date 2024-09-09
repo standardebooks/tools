@@ -324,7 +324,6 @@ SEMANTICS & CONTENT
 "s-073", "Header element that requires [val]label[/] and [val]ordinal[/] semantic children."
 "s-074", "[xhtml]<th>[/] element with no text content should be a [xhtml]<td>[/] element instead."
 "s-075", "[xhtml]<body>[/] element with direct children that are not [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/]."
-"s-076", "[attr]lang[/] attribute used instead of [attr]xml:lang[/]."
 "s-077", "[xhtml]<header>[/] element preceded by non-sectioning element."
 "s-078", "[xhtml]<footer>[/] element followed by non-sectioning element."
 "s-079", "Element containing only white space."
@@ -352,6 +351,9 @@ SEMANTICS & CONTENT
 "s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/]."
 "s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead."
 "s-103", "Probable missing semantics for a roman I numeral."
+UNUSED
+vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+"s-076", "[attr]lang[/] attribute used instead of [attr]xml:lang[/]."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -2134,11 +2136,6 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	nodes = dom.xpath("/html/body/*[name() != 'section' and name() != 'article' and name() != 'nav']")
 	if nodes:
 		messages.append(LintMessage("s-075", "[xhtml]<body>[/] element with direct child that is not [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-	# Check for lang="" instead of xml:lang=""
-	nodes = dom.xpath("/html/body//*[@lang]")
-	if nodes:
-		messages.append(LintMessage("s-076", "[attr]lang[/] attribute used instead of [attr]xml:lang[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 	# Check for <header> preceded by non-sectioning elements
 	nodes = dom.xpath("/html/body//header[./preceding-sibling::*[not(re:test(name(), '^(section|div|article)$'))]]")
