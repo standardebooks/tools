@@ -2469,7 +2469,8 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 				img_alt_not_typogrified.append(node.to_tag_string())
 
 			# Check alt attributes not ending in punctuation
-			if filename.name not in IGNORED_FILENAMES and not regex.search(r"""[\.\!\?]”?$""", alt):
+			# Ignore <img> that is in <p>, as such images are likely to require alt attributes that are running text.
+			if filename.name not in IGNORED_FILENAMES and not regex.search(r"""[\.\!\?]”?$""", alt) and not node.parent.tag == "p":
 				img_alt_lacking_punctuation.append(node.to_tag_string())
 
 			# Check that alt attributes match SVG titles
