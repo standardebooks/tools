@@ -92,6 +92,19 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 						mismatches[accented_word] = {}
 						mismatches[accented_word][plain_word] = (count, len(matches))
 
+	# Find accented words with multiple variants
+	if accented_words:
+		plain_to_accented_words: Dict[str, str] = {} # key: plain word; value: accented word
+		for accented_word, count in accented_words.items():
+			plain_word = regex.sub(r"\p{M}", "", unicodedata.normalize("NFKD", accented_word))
+			if plain_word in plain_to_accented_words:
+				first_variant = plain_to_accented_words[plain_word]
+				if first_variant not in mismatches:
+					mismatches[first_variant] = {}
+				mismatches[first_variant][accented_word] = (accented_words[first_variant], count)
+			else:
+				plain_to_accented_words[plain_word] = accented_word
+
 	# Search for some exceptions
 	filtered_mismatches = {}
 	for accented_word, child in mismatches.items():
