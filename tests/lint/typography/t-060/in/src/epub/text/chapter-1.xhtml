@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0" xml:lang="en-GB">
+	<head>
+		<title>I</title>
+	</head>
+	<body epub:type="bodymatter z3998:fiction">
+		<section id="chapter-1" epub:type="chapter">
+			<h2 epub:type="ordinal z3998:roman">I</h2>
+			<!--- FAIL 1 -->
+				<p>And God said, “Let there be light,” and there was light.</p>
+				<cite>Genesis, <span epub:type="z3998:roman">i</span>, 3</cite>
+			<!--- FAIL 2 -->
+			<blockquote>
+				<p>And God said, “Let there be light,” and there was light.</p>
+				<cite>Genesis <span epub:type="z3998:roman">i</span>, 3</cite>
+			</blockquote>
+			<!--- VALID -->
+			<blockquote>
+				<p>And God said, “Let there be light,” and there was light.</p>
+				<cite>Genesis 1:3</cite>
+			</blockquote>
+		</section>
+	</body>
+</html>
