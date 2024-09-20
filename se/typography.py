@@ -318,7 +318,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"\b(?<!/)([0-9]{1,3}|[0-9]{5,})/\b([0-9]{1,3}|[0-9]{5,})(?!/)\b", lambda result: _number_to_fraction(result.group(0)), xhtml)
 
 	# Remove spaces between whole numbers and fractions
-	xhtml = regex.sub(r"([0-9,]+)\s+([¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]|[⁰¹²³⁴⁵⁶⁷⁸⁹]+⁄[₀₁₂₃₄₅₆₇₈₉]+)", r"\1\2", xhtml)
+	xhtml = regex.sub(r"([0-9])\s+([¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]|[⁰¹²³⁴⁵⁶⁷⁸⁹]+⁄[₀₁₂₃₄₅₆₇₈₉]+)", r"\1\2", xhtml)
 
 	# Use the Unicode Minus glyph (U+2212) for negative numbers
 	xhtml = regex.sub(r"([\s>])\-([0-9,]+)", r"\1−\2", xhtml)
