@@ -962,6 +962,15 @@ class SeEpub:
 						if not has_block:
 							entry = deepcopy(figcaption[0])
 
+						if isinstance(entry, se.easy_xml.EasyXmlElement):
+							# Remove endnote references.
+							for noteref in entry.xpath("a[contains(@epub:type, 'noteref')]"):
+								noteref.remove()
+
+							# For other links, keep only the contents.
+							for a in entry.xpath("a"):
+								a.unwrap()
+
 				a = se.easy_xml.EasyXmlElement("<a/>")
 				a.set_attr("href", f"{file_path.name}#{figure_id}")
 
