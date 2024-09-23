@@ -49,6 +49,244 @@ def semanticate(xhtml: str) -> str:
 	A string of XHTML with semantics added.
 	"""
 
+	dom = EasyXmlTree(xhtml)
+
+	for el in dom.xpath("/html/body/*"):
+		_semanticate_element(el, ancestors=['html', 'body'])
+
+	return dom.to_string()
+
+def _semanticate_element(el: EasyXmlElement, ancestors: List[str]):
+	"""
+	Recursive helper function to semanticate an XML element and its descendants.
+	"""
+
+	# Keep track of ancestors (to exclude rules inside <abbr>, etc.)
+	ancestors.append(el.tag)
+
+	def sub_fn(pattern: str, repl: str, **kwargs):
+		# Finds pattern in the text of this element and the tail of its children
+		# Replaces with repl, which may introduce new XML elements
+		# Additional arguments are passed to regex.sub
+
+		if el.text:
+			# Apply the regex to the text before the first child
+			new_text, new_els = _sub_elements(pattern, repl, el.text, **kwargs)
+			el.text = new_text
+			# Insert new elements before the first child
+			for new_el in reversed(new_els):
+				el.lxml_element.insert(0, new_el.lxml_element)
+
+		for child in el.children:
+			if child.tail:
+				# Apply the regex to the text after this child
+				new_tail, new_els = _sub_elements(pattern, repl, child.tail, **kwargs)
+				if child.tail != new_tail or new_els:
+					child.tail = new_tail
+					# Insert new elements after this child
+					for new_el in new_els:
+						el.lxml_element.insert(el.lxml_element.index(child.lxml_element) + 1, new_el.lxml_element)
+
+	# Run the semanticate rules, using sub_fn as a callback to make the replacements
+	_semanticate_rules(el, ancestors, sub_fn)
+
+	# Recursively process all children
+	for child in el.children:
+		_semanticate_element(child, ancestors)
+
+	ancestors.pop()
+
+table = str.maketrans({
+    "<": "&lt;",
+    ">": "&gt;",
+    "&": "&amp;",
+    "'": "&apos;",
+    '"': "&quot;",
+})
+def xmlescape(txt):
+    return txt.translate(table)
+
+def _sub_elements(pattern: str, repl: str, text: str, **kwargs) -> List[Union[str, EasyXmlElement]]:
+	"""
+	Helper function to apply a regex to a string and return a list of new XML elements.
+	"""
+
+	escaped_text = xmlescape(text)
+	new_text = regex.sub(pattern, repl, escaped_text, **kwargs)
+	if new_text != escaped_text:
+		root = EasyXmlElement(f"""<root xmlns:epub="http://www.idpf.org/2007/ops">{new_text}</root>""")
+		return root.text, root.children
+	else:
+		return text, []
+
+def _semanticate_rules(el, ancestors, sub):
+	"""
+	Helper function to apply the semanticate rules to an XML element.
+	"""
+
+	if "abbr" not in ancestors:
+		# Some common abbreviations
+		sub(r"(?<!(?:\.|\B))(\L<titles>\.)", r"""<abbr epub:type="z3998:name-title">\1</abbr>""", titles=[
+			"Capt",
+			"Col",
+			"Dr",
+			"Drs",
+			"Esq",
+			"Fr",
+			"Hon",
+			"Lieut",
+			"Lt",
+			"MM",
+			"Mdlle",
+			"Messers",
+			"Messrs",
+			"Mlle",
+			"Mlles",
+			"Mme",
+			"Mmes",
+			"Mon",
+			"Mr",
+			"Mrs",
+			"Ms",
+			"Prof",
+			"Pvt",
+			"Rev",
+		])
+		sub(r"(?<!(?:\.|\B))(\L<abbreviations>\.)", r"""<abbr>\1</abbr>""", abbreviations=[
+			"Bros",
+			"Mt",
+			"[Vv]ols?",
+			"Co",
+			"Inc",
+			"Ltd",
+			"St",
+			"[Gg]ov",
+			"MSS?",
+			"[Vv]iz",
+			"etc",
+			"[Cc])f",
+			"ed",
+			"(?:Jan\.|Feb\.|Mar\.|Apr\.|Jun\.|Jul\.|Aug\.|Sep\.|Sept\.|Oct\.|Nov\.|Dec\.)",
+			"[Vv]s",
+			"[Ff]f",  # ff. typically used in footnotes, means "and following"
+			"[Ll]ib", # Lib. = Liber = Book
+		])
+		sub(r"(?<!(?:\.|\B))(No\.)(\s+[0-9]+)", r"<abbr>\1</abbr>\2")
+		sub(r"(?<!(?:\.|\B))([Cc])hap\. ([0-9])", r"<abbr>\1hap.</abbr> \2") # The number allows us to avoid phrases like `Hello, old chap.`
+		sub(r"(?<!(?:\.|\B))(P\.(?:P\.)?S\.(?:S\.)?\B)", r"""<abbr epub:type="z3998:initialism">\1</abbr>""")
+		sub(r"(?<!(?:\.|\B))inst\.", r"""<abbr xml:lang="la">inst.</abbr>""") # `inst.` is short for `instante mense` but it is not italicized
+		sub(r"(?<!(?:\.|\B))([Ii])\.e\.", r"""<abbr epub:type="z3998:initialism">\1.e.</abbr>""")
+		sub(r"(?<!(?:\.|\B))([Ee])\.g\.", r"""<abbr epub:type="z3998:initialism">\1.g.</abbr>""")
+		sub(r"(?<!(?:\.|\B))\bN\.?B\.\B", r"""<abbr epub:type="z3998:initialism">N.B.</abbr>""")
+		sub(r"(?<!(?:\.|\B))Ph\.?\s*D\.?", r"""<abbr epub:type="z3998:name-title">Ph. D.</abbr>""")
+		sub(r"(?<!(?:\.|\B))(?:IOU(?:\.|\b)|I\.O\.U\.)", r"""<abbr epub:type="z3998:initialism">I.O.U.</abbr>""")
+		sub(r"(?<!(?:\.|\B))\b([1-4]D)\b", r"""<abbr epub:type="z3998:initialism">\1</abbr>""")
+		sub(r"(?<!(?:\.|\B))(Thos\.|Jas\.|Chas\.|Wm\.)", r"""<abbr epub:type="z3998:given-name">\1</abbr>""")
+		sub(r"(?<!(?:\.|\B))([ap])\.\s?m\.", r"<abbr>\1.m.</abbr>")
+		sub(r"(?<!(?:\.|\B))(4to|8vo|12mo|16mo|18mo|32mo|48mo|64mo)(?:\.(\s+\p{Lowercase_Letter}))?", r"<abbr>\1</abbr>\2") # Book sizes
+		sub(r"(?<!(?:\.|\B))([0-9]{1,2})\s?[Aa]\.?\s?[Mm](?:\.|\b)", r"\1 <abbr>a.m.</abbr>")
+		sub(r"(?<!(?:\.|\B))([0-9]{1,2})\s?[Pp]\.?\s?[Mm](?:\.|\b)", r"\1 <abbr>p.m.</abbr>")
+
+		# this should be placed after the am/pm test, to prevent tagging just the p. in "p. m."
+		sub(r"(?<!(?:\.|\B))p(p?)\.([\s0-9])", r"<abbr>p\1.</abbr>\2")
+		# keep a period after TV that terminates a clause
+		if el.tag == "p":
+			sub(r"(?<!(?:\.|\B))T\.?V\.([”’]?)$", r"""<abbr epub:type="z3998:initialism">TV</abbr>.\1""")
+		sub(r"(?<!(?:\.|\B))T\.?V\.(\s+[“‘]?[\p{Uppercase_Letter}])", r"""<abbr epub:type="z3998:initialism">TV</abbr>.\1""")
+		# otherwise, get rid of any periods in TV
+		sub(r"(?<!(?:\.|\B))(?:TV\b|T\.V\.\B)", r"""<abbr epub:type="z3998:initialism">TV</abbr>""")
+		# keep a period after AD/BC that terminates a clause
+		if el.tag == "p":
+			sub(r"(?<!(?:\.|\B))A\.?D\.([”’]?)$", r"""<abbr epub:type="se:era">AD</abbr>.\1""")
+			sub(r"(?<!(?:\.|\B))B\.?C\.([”’]?)$", r"""<abbr epub:type="se:era">BC</abbr>.\1""")
+		sub(r"(?<!(?:\.|\B))A\.?D\.([”’]?</p>|\s+[“‘]?[\p{Uppercase_Letter}])", r"""<abbr epub:type="se:era">AD</abbr>.\1""")
+		sub(r"(?<!(?:\.|\B))B\.?C\.([”’]?</p>|\s+[“‘]?[\p{Uppercase_Letter}])", r"""<abbr epub:type="se:era">BC</abbr>.\1""")
+		# otherwise, get rid of any periods in AD/BC
+		sub(r"(?<!(?:\.|\B))(?:AD\b|A\.D\.\B)", r"""<abbr epub:type="se:era">AD</abbr>""")
+		sub(r"(?<!(?:\.|\B))(?:BC\b|B\.C\.\B)", r"""<abbr epub:type="se:era">BC</abbr>""")
+
+		# Wrap £sd shorthand
+		sub(r"([0-9½¼¾⅙⅚⅛⅜⅝⅞]+)([sd]\.)", r"\1<abbr>\2</abbr>")
+
+		# Add abbrevations around some SI measurements
+		sub(r"([0-9]+)\s*([cmk][mgl])\b", fr"\1{se.NO_BREAK_SPACE}<abbr>\2</abbr>")
+
+		# Add abbrevations around Imperial measurements
+		sub(r"(?<![\$£0-9,])([0-9½¼⅙⅚⅛⅜⅝⅞]+)\s*(ft|yd|mi|pt|qt|gal|oz|lbs)\.?\b", fr"\1{se.NO_BREAK_SPACE}<abbr>\2.</abbr>")
+
+		# Handle `in.` separately to require a period, because with an optional period there are too many false positives
+		sub(r"(?<![\$£0-9,])([0-9½¼⅙⅚⅛⅜⅝⅞]+)\s*in\.(\b|\s)", fr"\1{se.NO_BREAK_SPACE}<abbr>in.</abbr>")
+
+		# Tweak some other Imperial measurements
+		sub(r"([0-9]+)\s*m\.?p\.?h\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>mph</abbr>", flags=regex.IGNORECASE)
+		sub(r"([0-9]+)\s*h\.?p\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>hp</abbr>", flags=regex.IGNORECASE)
+
+	if el.tag == "abbr":
+		# add eoc (End Of Clause) class
+		eoc = False
+
+		# sub(r"<abbr>etc\.</abbr>([”’]?(?:</p>|\s+[“‘]?[\p{Uppercase_Letter}]))", r"""<abbr class="eoc">etc.</abbr>\1""")
+		# sub(r"""<abbr( epub:type="[^"]+")?>([^<]+\.)</abbr>([”’]?</p>)""", r"""<abbr class="eoc"\1>\2</abbr>\3""")
+		if el.text == "etc." and not el.children:
+			if el.tail and regex.match(r"[”’]?\s+[“‘]?[\p{Uppercase_Letter}]", el.tail):
+				eoc = True
+
+		if el.text.endswith(".") and not el.children:
+			if el.parent.tag == "p" and el.next is None and (not el.tail or el.tail in "”’"):
+				eoc = True
+
+		if eoc and not "eoc" in (el.get_attr("class") or ""):
+			el.add_attr_value("class", "eoc")
+			# sort attributes
+			el.attrs = dict(el.attrs)
+
+	if "abbr" not in ancestors and "span" not in ancestors:
+		# Get Roman numerals >= 2 characters
+		# Ignore "numerals" followed by a dash, as they are more likely something like `x-ray` or `v-shaped`
+		# Note that `j` may occur only at the end of a numeral as an old-fashioned terminal `i`, like int `ij` (2), `vij` (7)
+		sub(r"([^\p{Letter}])([ixvIXV]{2,}j?)(\b[^\-]|st\b|nd\b|rd\b|th\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""")
+
+		# Get Roman numerals that are X or V and single characters. We can't do I for obvious reasons.
+		sub(r"""([^\p{Letter}\"])([vxVX])(\b[^\-]|st\b|nd\b|rd\b|th\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""")
+
+		# We can assume a lowercase i is always a Roman numeral unless followed by ’
+		sub(r"""([^\p{Letter}<>/\"])i\b(?!’)""", r"""\1<span epub:type="z3998:roman">i</span>""")
+
+
+
+
+
+
+def _semanticate_todo():
+	"""
+	Temporary holding place for unconverted functions from the old semanticate.
+	"""
+
+	# Fix obscured names starting with I, V, or X
+	xhtml = regex.sub(fr"""<span epub:type="z3998:roman">([IVX])</span>{se.WORD_JOINER}⸺""", fr"""\1{se.WORD_JOINER}⸺""", xhtml)
+
+	# Fix some possible errors introduced by the above
+	xhtml = regex.sub(fr"((?:[Nn]o\.|[Nn]umber)\s[0-9]+){se.NO_BREAK_SPACE}<abbr>in\.</abbr>", r"\1 in", xhtml)
+
+	# We may have added HTML tags within title tags. Remove those here
+	matches = regex.findall(r"<title>.+?</title>", xhtml)
+	if matches:
+		xhtml = regex.sub(r"<title>.+?</title>", f"<title>{se.formatting.remove_tags(matches[0])}</title>", xhtml)
+
+	return xhtml
+
+
+def semanticate_old(xhtml: str) -> str:
+	"""
+	Add semantics to well-formed XHTML
+
+	INPUTS
+	xhtml: A string of well-formed XHTML
+
+	OUTPUTS
+	A string of XHTML with semantics added.
+	"""
+
 	# Some common abbreviations
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(\L<titles>\.)", r"""<abbr epub:type="z3998:name-title">\1</abbr>""", xhtml, titles=[
 		"Capt",

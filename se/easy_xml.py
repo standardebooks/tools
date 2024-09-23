@@ -582,6 +582,18 @@ class EasyXmlElement:
 				self.lxml_element.append(child)
 
 	@property
+	def first_child(self):
+		"""
+		Return an EasyXmlElement representing this node's first child.
+		"""
+
+		children = self.lxml_element.getchildren()
+		if children:
+			return EasyXmlElement(children[0], self.namespaces)
+		else:
+			return None
+
+	@property
 	def tag(self) -> str:
 		"""
 		Return a string representing this node's tag name, like `body` or `section`
@@ -596,6 +608,17 @@ class EasyXmlElement:
 		"""
 
 		return EasyXmlElement(self.lxml_element.getparent(), self.namespaces)
+
+	@property
+	def next(self):
+		"""
+		Return an EasyXmlElement representing this node's next sibling.
+		"""
+
+		sibling = self.lxml_element.getnext()
+		if sibling is not None:
+			sibling = EasyXmlElement(sibling, self.namespaces)
+		return sibling
 
 	@property
 	def text(self) -> str:
