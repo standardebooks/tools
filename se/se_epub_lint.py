@@ -3822,7 +3822,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 		messages.append(LintMessage("c-006", f"Semantic found, but missing corresponding style in [path][link=file://{local_css_path}]local.css[/][/].", se.MESSAGE_TYPE_ERROR, local_css_path, sorted(set(missing_styles))))
 
 	for double_spaced_file in double_spaced_files:
-		messages.append(LintMessage("t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)", se.MESSAGE_TYPE_ERROR, double_spaced_file))
+		messages.append(LintMessage("t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break and/or hair spaces!)", se.MESSAGE_TYPE_ERROR, double_spaced_file))
 
 	if missing_files:
 		messages.append(LintMessage("f-002", "Missing expected file or directory.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_files))
