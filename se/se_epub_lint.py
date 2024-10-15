@@ -431,6 +431,7 @@ TYPOGRAPHY
 "t-073", "Possible transcription error in Greek."
 "t-074", "Extended sound using hyphen-minus [text]-[/] instead of non-breaking hyphen [text]‑[/]."
 "t-075", "Word in verse with acute accent for scansion instead of grave accent."
+"t-076", "Grapheme or phoneme not italicized. Hint: Dialect with missing letters should mark missing letters with [text]’[/]."
 
 
 XHTML
@@ -2791,6 +2792,11 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 
 	if filtered_nodes:
 		messages.append(LintMessage("t-075", "Word in verse with acute accent for scansion instead of grave accent.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in filtered_nodes]))
+
+	# Check for graphemes or phonemes that are not italicized.
+	nodes = dom.xpath("/html/body//text()[re:test(., '\\s[a-z]’s\\b')]")
+	if nodes:
+		messages.append(LintMessage("t-076", "Grapheme or phoneme not italicized. Hint: Dialect with missing letters should mark missing letters with [text]’[/].", se.MESSAGE_TYPE_ERROR, filename, nodes))
 
 	return (messages, missing_files)
 
