@@ -23,7 +23,7 @@ python3 -m pip install --user pipx
 python3 -m pipx ensurepath
 
 # Install the toolset.
-pipx install standardebooks
+pipx install --python=3.12 --fetch-missing-python standardebooks
 ```
 
 ### Optional: Install shell completions

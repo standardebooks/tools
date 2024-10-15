@@ -73,12 +73,12 @@ setup(
 	# THE ONLY PERSON WHO MAY EDIT THESE IS THE EDITOR-IN-CHIEF.
 	#
 	# Packaging and dependencies in Python are complex and fragile.
-	# Well-meaning attempts at upgrading packages or messing with pinned dependencies
-	# often end up breaking the entire install.
-	# This toolset targets a specific version of Python, and libraries are pinned to specific
-	# versions to prevent surprise breakage. Don't edit this!
+	# Well-meaning attempts at upgrading packages or messing with pinned
+	# dependencies often end up breaking the entire install.
+	# This toolset targets a specific version of Python, and libraries are
+	# pinned to specific versions to prevent surprise breakage. Don't edit this!
 	############################################################
-	python_requires=">=3.10.12,<=3.12.4",
+	python_requires=">=3.10.12,<=3.12",
 	install_requires=[
 		"cairosvg==2.7.1",
 		"chardet==5.2.0",
