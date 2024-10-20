@@ -453,6 +453,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])uttee", r"\1ati", xhtml)				# suttee -> sati
 	xhtml = regex.sub(r"\b([Bb])y-by\b", r"\1ye-bye", xhtml)			# by-by -> bye-bye
 	xhtml = regex.sub(r"(?<!O’)\b([Ll])eary\b", r"\1eery", xhtml)				# leary -> leery
+	xhtml = regex.sub(r"\b([Bb])rief case", r"\1riefcase", xhtml)			# brief case -> briefcase
 
 
 	# Normalize some names
