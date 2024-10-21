@@ -91,7 +91,7 @@ class TocItem:
 			else:
 				out_string += f"<a href=\"text/{self.file_link}\"><span epub:type=\"z3998:roman\">{self.roman}</span>: {self.subtitle}</a>\n"
 		else:
-			# title has text other than a roman numeral
+			# Title has text other than a roman numeral
 			if self.subtitle != "" and (self.hidden or self.title_is_ordinal or (self.division in [BookDivision.PART, BookDivision.DIVISION, BookDivision.VOLUME])):
 				# Use the subtitle only if we're a Part or Division or Volume or if title was an ordinal
 				out_string += f"<a href=\"text/{self.file_link}\">{self.title}"
@@ -102,7 +102,7 @@ class TocItem:
 
 				out_string += f" {self.subtitle}</a>\n"
 			else:
-				# test for a foreign language title, and adjust accordingly
+				# Test for a foreign language title, and adjust accordingly
 				if self.lang:
 					out_string += f"<a href=\"text/{self.file_link}\" xml:lang=\"{self.lang}\">{self.title}</a>\n"
 				else:
@@ -215,13 +215,15 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list) -> None:
 		if epub_type == "halftitlepage":
 			landmark.title = "Half Title"
 		elif epub_type == "titlepage":
-			# Exception: The titlepage always has is titled 'titlepage' in the ToC
+			# Exception: The titlepage always is always titled 'titlepage' in the ToC
 			landmark.title = "Titlepage"
+			landmark.lang = "" # Reset the language in case the ebook is title is not English.
 		else:
 			landmark.title = dom.xpath("//head/title/text()", True)  # Use the page title as the landmark entry title.
 			if landmark.title is None:
 				# This is a bit desperate, use this only if there's no proper <title> tag in file.
 				landmark.title = landmark.epub_type.capitalize()
+
 		landmarks.append(landmark)
 
 def process_landmarks(landmarks_list: list, work_title: str) -> str:
@@ -455,6 +457,7 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, single_file: 
 		# Exception: The titlepage always has is titled 'titlepage' in the ToC
 		if dom.xpath("//section[re:test(@epub:type, '\\btitlepage\\b')]"):
 			toc_item.title = "Titlepage"
+			toc_item.lang = "" # Reset in case the title is not English.
 
 		# Exception: If there is only a single body item WITHOUT HEADERS (like Father Goriot or The Path to Rome),
 		# the half title page is listed as "Half-Titlepage" instead of the work title,
