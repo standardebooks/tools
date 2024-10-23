@@ -69,10 +69,18 @@
 		<meta property="se:url.encyclopedia.wikipedia" refines="#illustrator">ILLUSTRATOR_WIKI_URL</meta>
 		<meta property="se:url.authority.nacoaf" refines="#artist">ILLUSTRATOR_NACOAF_URI</meta>
 		<meta property="role" refines="#illustrator" scheme="marc:relators">ill</meta>
-		<dc:contributor id="transcriber-1">TRANSCRIBER</dc:contributor>
-		<meta property="file-as" refines="#transcriber-1">TRANSCRIBER_SORT</meta>
-		<meta property="se:url.homepage" refines="#transcriber-1">TRANSCRIBER_URL</meta>
+		<dc:contributor id="transcriber-1">TRANSCRIBER_1</dc:contributor>
+		<meta property="file-as" refines="#transcriber-1">TRANSCRIBER_1_SORT</meta>
+		<meta property="se:url.homepage" refines="#transcriber-1">TRANSCRIBER_1_URL</meta>
 		<meta property="role" refines="#transcriber-1" scheme="marc:relators">trc</meta>
+		<dc:contributor id="transcriber-2">TRANSCRIBER_2</dc:contributor>
+		<meta property="file-as" refines="#transcriber-2">TRANSCRIBER_2_SORT</meta>
+		<meta property="se:url.homepage" refines="#transcriber-1">TRANSCRIBER_2_URL</meta>
+		<meta property="role" refines="#transcriber-2" scheme="marc:relators">trc</meta>
+		<dc:contributor id="transcriber-3">The Online Distributed Proofreading Team</dc:contributor>
+		<meta property="file-as" refines="#transcriber-3">Online Distributed Proofreading Team, The</meta>
+		<meta property="se:url.homepage" refines="#transcriber-3">https://pgdp.net</meta>
+		<meta property="role" refines="#transcriber-3" scheme="marc:relators">trc</meta>
 		<dc:contributor id="producer-1">PRODUCER</dc:contributor>
 		<meta property="file-as" refines="#producer-1">PRODUCER_SORT</meta>
 		<meta property="se:url.homepage" refines="#producer-1">PRODUCER_URL</meta>
