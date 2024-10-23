@@ -1,6 +1,7 @@
 /* Proofreading CSS */
 [epub|type~="z3998:roman"],
 [lang]:not(html),
-abbr{
+abbr,
+time{
 	background: #C0C0C0;
 }
