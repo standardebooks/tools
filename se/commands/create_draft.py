@@ -393,7 +393,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> Tuple[Optional[str]
 			except Exception as ex:
 				raise se.RemoteCommandErrorException(f"Couldn’t contact Wikipedia. Exception: {ex}") from ex
 
-			for match in regex.findall(r"https?://id\.loc\.gov/authorities/names/n[0-9]+", response.text):
+			for match in regex.findall(r"https?://id\.loc\.gov/authorities/n[0-9]+", response.text):
 				nacoaf_uri = match.replace("https:","http:")
 
 		return wiki_url, nacoaf_uri
