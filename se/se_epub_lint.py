@@ -471,7 +471,8 @@ TYPOS
 "y-011", "Possible typo: two or more [text]’[/] in a row."
 "y-012”, "Possible typo: [text]”[/] directly followed by letter."
 "y-013”, "Possible typo: punctuation not within [text]’[/]."
-"y-014”, "Possible typo: Unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?"
+"y-014”, "Possible typo: unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?"
+"y-015”, "Possible typo: misspelled word."
 "y-016”, "Possible typo: consecutive periods ([text]..[/])."
 "y-017”, "Possible typo: [text]“[/] followed by space."
 "y-018”, "Possible typo: [text]‘[/] followed by space."
@@ -481,17 +482,16 @@ TYPOS
 "y-024”, "Possible typo: dash before [text]the/there/is/and/they/when[/] probably should be em-dash."
 "y-025”, "Possible typo: letter/comma/quote mark/letter with no intervening space."
 "y-026”, "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/]."
-"y-027”, "Possible typo: Extra [text]’[/] at end of paragraph."
+"y-027”, "Possible typo: extra [text]’[/] at end of paragraph."
 "y-028”, "Possible typo: [xhtml]<abbr>[/] directly preceded or followed by letter."
-"y-029", "Possible typo: Italics followed by a letter."
-"y-030”, "Possible typo: Lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital."
-"y-031”, "Possible typo: Dialog tag missing punctuation."
-"y-032”, "Possible typo: Italics running into preceding or following characters."
-"y-033", "Possible typo: Three-em-dash obscuring an entire word, but not preceded by a space."
+"y-029", "Possible typo: italics followed by a letter."
+"y-030”, "Possible typo: lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital."
+"y-031”, "Possible typo: dialog tag missing punctuation."
+"y-032”, "Possible typo: italics running into preceding or following characters."
+"y-033", "Possible typo: three-em-dash obscuring an entire word, but not preceded by a space."
 UNUSED
 vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"y-015”, "Possible typo: mis-curled [text]‘[/] or missing [text]’[/]."
-"y-021”, "Possible typo: Opening [text]‘[/] without preceding [text]“[/]."
+"y-021”, "Possible typo: opening [text]‘[/] without preceding [text]“[/]."
 "y-023”, "Possible typo: two opening quotation marks in a run. Hint: Nested quotes should switch between [text]“[/] and [text]‘[/]"
 """
 
@@ -3002,7 +3002,12 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	# Check for period before dialog tag; try to exclude abbrevations that close a quotation, like `“<abbr>Mr.</abbr>”`.
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[(re:test(., '\\.”\\s[a-z\\s]*?(\\bsaid|[a-z]+ed\\b)') or re:test(., '\\.”\\s(s?he|they?|we|and)\\b')) and not(.//abbr[following-sibling::node()[re:test(., '^”')]])]")]
 	if typos:
-		messages.append(LintMessage("y-014", "Possible typo: Unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?", se.MESSAGE_TYPE_WARNING, filename, typos))
+		messages.append(LintMessage("y-014", "Possible typo: unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for some common OCR misspellings
+	typos = regex.findall(r"\bbad (?:been|seen)\b", file_contents)
+	if typos:
+		messages.append(LintMessage("y-015", "Possible typo: misspelled word.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for two periods in a row, almost always a typo for one period or a hellip
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[^\\.]\\.\\.[^\\.]')]")]
@@ -3064,7 +3069,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	# Check for extra closing single quote at the end of dialog
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^‘]+”\\s*’$')]")]
 	if typos:
-		messages.append(LintMessage("y-027", "Possible typo: Extra [text]’[/] at end of paragraph.", se.MESSAGE_TYPE_WARNING, filename, typos))
+		messages.append(LintMessage("y-027", "Possible typo: extra [text]’[/] at end of paragraph.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for `<abbr>` preceded or followed by text. Ignore plurals (e.g. TVs) and compass directions followed by `ly`, like S.S.W.ly
 	typos = [node.to_string() for node in dom.xpath("/html/body//abbr[(preceding-sibling::node()[1])[re:test(., '[A-Za-z]$')] or (following-sibling::node()[1])[re:test(., '^[A-Za-z](?<!s\\b)') and not((./preceding-sibling::abbr[1])[contains(@epub:type, 'se:compass')] and re:test(., '^ly\\b'))]]")]
@@ -3074,29 +3079,29 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	# Check for misapplied italics. Ignore 's' because the plural is too common. i with epub:type handled by y-032.
 	typos = [node.to_string() for node in dom.xpath("/html/body//*[(name() = 'em' or (name() = 'i' and not(@epub:type))) and ./following-sibling::node()[1][re:test(., '^[a-z]\\b', 'i') and not(re:test(., '^s\\b'))]]")]
 	if typos:
-		messages.append(LintMessage("y-029", "Possible typo: Italics followed by a letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
+		messages.append(LintMessage("y-029", "Possible typo: italics followed by a letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for lowercase letters starting quotations after a preceding period
 	typos = dom.xpath("/html/body//p/child::text()[re:test(., '\\.\\s[‘“][a-z]')]")
 	if typos:
-		messages.append(LintMessage("y-030", "Possible typo: Lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital.", se.MESSAGE_TYPE_WARNING, filename, typos))
+		messages.append(LintMessage("y-030", "Possible typo: lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for missing punctuation in continued quotations
 	# ” said Bob “
 	nodes = dom.xpath("/html/body//p[re:test(., '”\\s(?:said|[A-Za-z]{2,}ed)\\s[A-Za-z]+?(?<!\\bthe)(?<!\\bto)(?<!\\bwith)(?<!\\bfrom)(?<!\\ba\\b)(?<!\\bis)\\s“') or re:test(., '[^.?!]”\\s(he\\b|she\\b|I\\b|[A-Z][a-z]+?)\\s(?:said|[A-Za-z]{2,}ed)\\s“') or re:test(., ',” (?:said|[A-Za-z]{2,}ed) [A-Za-z]+? [A-Za-z]+?ly “') or re:test(., '[a-z]” said s?he[,\\.;]')]")
 	if nodes:
-		messages.append(LintMessage("y-031", "Possible typo: Dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("y-031", "Possible typo: dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 	# Check for italics having epub:type that run in to preceding or following characters
 	# Ignore things like <i>Newspaper</i>s
 	nodes = dom.xpath("/html/body//i[@epub:type and ( (following-sibling::node()[1][re:test(., '^[a-z]', 'i') and not(re:test(., '^(s|es|er)\\b'))]) or preceding-sibling::node()[1][re:test(., '[a-z]$')]) ]")
 	if nodes:
-		messages.append(LintMessage("y-032", "Possible typo: Italics running into preceding or following characters.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("y-032", "Possible typo: italics running into preceding or following characters.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 	# Check for three-em-dashes not preceded by a space
 	nodes = dom.xpath(f"/html/body//p[re:test(., '[^>“(\\s{se.WORD_JOINER}]{se.WORD_JOINER}?⸻')]")
 	if nodes:
-		messages.append(LintMessage("y-033", "Possible typo: Three-em-dash obscuring an entire word, but not preceded by a space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("y-033", "Possible typo: three-em-dash obscuring an entire word, but not preceded by a space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 	return messages
 

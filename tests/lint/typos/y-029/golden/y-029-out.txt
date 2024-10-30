@@ -1,4 +1,4 @@
-y-029 [Manual Review] chapter-1.xhtml Possible typo: Italics followed by a 
+y-029 [Manual Review] chapter-1.xhtml Possible typo: italics followed by a 
 letter.
         <i>caw-caw-caw-caw</i>
         <em>Is</em>
