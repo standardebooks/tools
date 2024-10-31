@@ -478,7 +478,7 @@ TYPOS
 "y-019”, "Possible typo: [text]”[/] without opening [text]“[/]."
 "y-020”, "Possible typo: consecutive comma-period ([text],.[/])."
 "y-022”, "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/]."
-"y-024”, "Possible typo: dash before [text]the/there/is/and/they/when[/] probably should be em-dash."
+"y-024”, "Possible typo: dash before [text]the/there/is/and/or/they/when[/] probably should be em-dash."
 "y-025”, "Possible typo: letter/comma/quote mark/letter with no intervening space."
 "y-026”, "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/]."
 "y-027”, "Possible typo: Extra [text]’[/] at end of paragraph."
@@ -3047,9 +3047,9 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 		messages.append(LintMessage("y-022", "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for dashes instead of em-dashes
-	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\s[a-z]+-(the|there|is|and|they|when)\\s')]")]
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\s[a-z]+-(the|there|is|and|or|they|when)\\s')]")]
 	if typos:
-		messages.append(LintMessage("y-024", "Possible typo: dash before [text]the/there/is/and/they/when[/] probably should be em-dash.", se.MESSAGE_TYPE_WARNING, filename, typos))
+		messages.append(LintMessage("y-024", "Possible typo: dash before [text]the/there/is/and/or/they/when[/] probably should be em-dash.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for letter/comma/quote mark/letter with no intervening space (rdquo is already handled by y-012)
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[a-z],[“‘’][a-z]', 'i')]")]
