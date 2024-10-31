@@ -1,5 +1,5 @@
 y-024 [Manual Review] chapter-1.xhtml Possible typo: dash before 
-`the/there/is/and/they/when` probably should be em-dash.
+`the/there/is/and/or/they/when` probably should be em-dash.
         <p>The cushion of-the celery becomes a clausal yak.</p>
         <p>A desk sees-there as a patent description.</p>
         <p>An unrhymed leopard without kittens-is truly a twist of hoven 
