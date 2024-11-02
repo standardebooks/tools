@@ -98,6 +98,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Replace horizontal bar with em dash
 	xhtml = xhtml.replace("―", "—")
 
+	# Replace space + en dash with em dash
+	xhtml = regex.sub(r"\s–\s?", f"{se.WORD_JOINER}—", xhtml)
+
 	# Replace sequential em dashes with the two or three em dash character
 	xhtml = xhtml.replace("———", "⸻")
 	xhtml = xhtml.replace("——", "⸺")
