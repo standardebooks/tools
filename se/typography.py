@@ -179,6 +179,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Replace Mr., Mrs., and other abbreviations, and include a non-breaking space
 	xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?|Hon|Mdlle)\.?(</abbr>)?\s+", fr"\1.\2{se.NO_BREAK_SPACE}", xhtml)
 
+	# Add a period to Messrs, without a non-breaking space
+	xhtml = regex.sub(r"\bMessrs\.?(</abbr>)?\s+", r"Messrs.\1 ", xhtml)
+
 	# Include a non-breaking space after Mon. We can't include it in the above regex because `Mon` may appear as running French language (i.e. `Mon Dieu`)
 	xhtml = regex.sub(r"\bMon\.(</abbr>)?\s+", fr"Mon.\1{se.NO_BREAK_SPACE}", xhtml)
 
