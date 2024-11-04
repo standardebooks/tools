@@ -39,31 +39,31 @@ sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se
 ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 ```
 
-## Fedora users
+## Fedora 41 users
 
 ```shell
 # Install some pre-flight dependencies.
-sudo dnf install calibre git java-1.8.0-openjdk python3-devel
+sudo dnf install pipx python3.12 python3.12-devel gcc libxslt-devel calibre git java-21-openjdk-headless
 
-# Install pipx.
-python3 -m pip install --user pipx
-python3 -m pipx ensurepath
+# Ensure PATH environment variable is correctly set up for pipx
+pipx ensurepath
 
 # Install the toolset.
-pipx install standardebooks
+pipx install --python=3.12 standardebooks
+pipx inject standardebooks setuptools
 ```
 
 ### Optional: Install shell completions
 
 ```shell
 # Install ZSH completions.
-sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
+sudo ln -s $HOME/.local/share/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
 
 # Install Bash completions.
-sudo ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completion/completions/se
+sudo ln -s $HOME/.local/share/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completion/completions/se
 
 # Install Fish completions.
-ln -s $HOME/.local/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
+ln -s $HOME/.local/share/pipx/venvs/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 ```
 
 ## macOS users
