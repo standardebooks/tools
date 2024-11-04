@@ -119,6 +119,9 @@ def detect_problem_spellings(xhtml: str) -> list:
 	if regex.search(r"\bfree[\-\s]?will", xhtml):
 		output.append("“freewill” or “free will” or “free-will” detected. Confirm that “free will” and “free-will” are strictly nouns, and that “freewill” is strictly an adjective.")
 
+	if regex.search(r"\bna[iï]f", xhtml):
+		output.append("“naif” or “naïf” detected. Confirm that “naïf” is strictly a noun, and “naive” is strictly an adjective.")
+
 	return output
 
 def modernize_spelling(xhtml: str) -> str:
@@ -170,6 +173,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"([Hh])ypothenuse", r"\1ypotenuse", xhtml)			# hypothenuse -> hypotenuse
 	xhtml = regex.sub(r"[‘’]([Bb])us\b", r"\1us", xhtml)				# ’bus -> bus
 	xhtml = regex.sub(r"([Nn])aïve", r"\1aive", xhtml)				# naïve -> naive
+	xhtml = regex.sub(r"([Nn])aif", r"\1aïf", xhtml)					# naif -> naïf
 	xhtml = regex.sub(r"([Nn])a[ïi]vet[ée]", r"\1aivete", xhtml)			# naïveté -> naivete
 	xhtml = regex.sub(r"&amp;c\.", r"etc.", xhtml)					# &c. -> etc.
 	xhtml = regex.sub(r"([Pp])rot[ée]g[ée]", r"\1rotégé", xhtml)			# protege -> protégé
