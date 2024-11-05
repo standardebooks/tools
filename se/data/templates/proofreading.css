@@ -2,6 +2,8 @@
 [epub|type~="z3998:roman"],
 [lang]:not(html),
 abbr,
-time{
+time,
+.proofreading,
+span[epub|type]{
 	background: #C0C0C0;
 }

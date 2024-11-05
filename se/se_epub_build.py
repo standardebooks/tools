@@ -182,6 +182,16 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				with importlib.resources.files("se.data.templates").joinpath("proofreading.css").open("r", encoding="utf-8") as proofreading_css_file:
 					local_css_file.write("\n" + proofreading_css_file.read())
 
+			# Wrap no-break hyphens and no-break spaces in a class that will colorize them when proofing.
+			for file_path in work_compatible_epub_dir.glob("**/*.xhtml"):
+				with open(file_path, "r+", encoding="utf-8") as file:
+					xhtml = file.read()
+
+					xhtml = regex.sub(fr"([{se.NO_BREAK_HYPHEN}{se.NO_BREAK_SPACE}])", r"""<span class="proofreading">\1</span>""", xhtml)
+					file.seek(0)
+					file.write(se.formatting.simplify_css(xhtml))
+					file.truncate()
+
 		# Update the release date in the metadata and colophon
 		if self.last_commit:
 			for file_path in work_compatible_epub_dir.glob("**/*.xhtml"):
