@@ -1,3 +1,6 @@
 t-060 [Manual Review] chapter-1.xhtml Old style Bible citation.
         <cite>Genesis, <span epub:type="z3998:roman">i</span>, 3</cite>
         <cite>Genesis <span epub:type="z3998:roman">i</span>, 3</cite>
+        <cite><abbr>Gen.,</abbr> <span epub:type="z3998:roman">i</span>, 
+3</cite>
+        <p><abbr>Gen.</abbr>, <span epub:type="z3998:roman">i</span>, 3</p>
