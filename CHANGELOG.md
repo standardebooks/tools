@@ -1,3 +1,95 @@
+# 2.7.2
+
+## General
+
+- Add various tests.
+
+- Update installation instructions for Fedora users. Thanks to François Grandjean
+
+- Update boilerplate CSS to use relative font size for endnotes
+
+## se build
+
+- Remove unused CSS compatibility rule. Thanks to Gijs van Tulder
+
+- Keep `vh`/`vw` units in CSS, but add `%` as fallback. Thanks to Gijs van Tulder
+
+- Highlight time elements when proofreading. Thanks to Robin Whittleton
+
+- Fix wrong click behaviour in Apple Books with drama. Thanks to Robin Whittleton
+
+- Improve proofreading CSS, and add color to no-break spaces and no-break hyphens
+
+## se build-loi
+
+- Remove links and noterefs from figcaption. Thanks to Gijs van Tulder
+
+## se build-toc
+
+- Don't assign a non-English language to the titlepage element
+
+## se clean
+
+- Escape strings in clean CSS output. Thanks to Gijs van Tulder
+
+- Do not insert spaces between colons in pseudo-elements (`::before`). Thanks to Gijs van Tulder
+
+- Remove leading 0 from CSS dimensions
+
+## se create-draft
+
+- Update content.opf template to include transcriber 2 and PGDP to match colophon
+
+- Fix LCCN prefill
+
+## se find-mismatched-diacritics
+
+- Check for accent variants. Thanks to Gijs van Tulder
+
+## se lint
+
+- Capture Bible chapters followed by comma in t-060. Thanks to Erin Endrei
+
+- Improve y-031
+
+- Improve t-001 and its test. Thanks to Vince Rice
+
+- Add t-076, grapheme or phoneme not italicized
+
+- Add y-015, possible typo: misspelled word
+
+- Add “or” to y-024 lint check. Thanks to Robin Whittleton
+
+- Fix t-060 case where abbreviation is followed by a comma
+
+- Add c-027, font size below 1
+
+- Improve c-027
+
+## se modernize-spelling
+
+- Various additions
+
+- Make detect_problem_spellings insensitive to case. Thanks to Robin Whittleton
+
+## se semanticate
+
+- Add book size abbreviations to semanticate. Thanks to Robin Whittleton
+
+- i inside a tag is not a Roman numeral. Thanks to Gijs van Tulder
+
+## se typogrify
+
+- Correctly insert nbsp after some abbreviations even if they don't have semantics yet
+
+- Add test for number+space+fraction. Thanks to Gijs van Tulder
+
+- Do not remove space between comma and fraction. Thanks to Gijs van Tulder
+
+- Change some en dashes to em dashes
+
+- Add a period after Messrs
+
 # 2.7.1
 
 ## se build
