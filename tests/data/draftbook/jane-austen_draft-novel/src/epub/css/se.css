@@ -43,7 +43,7 @@ section[epub|type~="imprint"] p{
 }
 
 section[epub|type~="imprint"] p{
-	font-size: .75em;
+	font-size: smaller;
 	text-align: justify;
 	width: 75%;
 }
