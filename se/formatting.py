@@ -840,7 +840,8 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 			if token.representation == "0":
 				output += "0"
 			else:
-				output += token.representation + token.lower_unit
+				# Remove leading 0 from dimensions
+				output += token.representation.lstrip("0") + token.lower_unit
 
 		if token.type == "number":
 			output += token.representation
