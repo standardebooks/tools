@@ -1121,7 +1121,7 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 	if matches:
 		messages.append(LintMessage("c-025", "Illegal percent unit used to set [css]height[/] or positioning property. Hint: [css]vh[/] to specify vertical-oriented properties like height or position.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
-	matches = regex.search(r"font-size: \.", self.local_css)
+	matches = regex.search(r"font-size: 0?\.", self.local_css)
 	if matches:
 		messages.append(LintMessage("c-027", "Font size below 1.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
