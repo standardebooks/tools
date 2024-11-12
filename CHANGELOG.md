@@ -1,3 +1,13 @@
+# 2.7.3
+
+## General
+
+- Relax required Python version.
+
+## se lint
+
+- Improve t-060. Thanks to Vince Rice
+
 # 2.7.2
 
 ## General
