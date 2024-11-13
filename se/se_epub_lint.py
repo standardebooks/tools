@@ -2540,7 +2540,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 
 	# Check for abbreviations followed by periods
 	# But we exclude some SI units, which don't take periods; abbreviations ending in numbers for example in stage directions; abbreviations like `r^o` (recto) that contain <sup>; and some Imperial abbreviations that are multi-word
-	nodes = dom.xpath("/html/body//abbr[(contains(@epub:type, 'z3998:initialism') or re:test(@epub:type, 'z3998:[^\\s]+?name') or not(@epub:type))][not(re:test(., '[cmk][mgl]')) and not(re:test(., '[0-9]$')) and not(./sup) and not(re:test(@class, '\\b(era|temperature|compound)\\b')) and not(re:test(text(), '^(mpg|mph|hp|TV)$'))][following-sibling::text()[1][starts-with(self::text(), '.')]]")
+	nodes = dom.xpath("/html/body//abbr[(contains(@epub:type, 'z3998:initialism') or re:test(@epub:type, 'z3998:[^\\s]+?name') or not(@epub:type))][not(re:test(., '[cmk][mgl]')) and not(re:test(., '[0-9]$')) and not(./sup) and not(re:test(@class, '\\b(era|temperature|compound)\\b')) and not(re:test(text(), '^(mpg|mph|hp|TV|4to|8vo|12mo|16mo|18mo|32mo)$'))][following-sibling::text()[1][starts-with(self::text(), '.')]]")
 	if nodes:
 		messages.append(LintMessage("t-032", "Initialism or name followed by period. Hint: Periods go within [xhtml]<abbr>[/]. [xhtml]<abbr>[/]s containing periods that end a clause require the [class]eoc[/] class.", se.MESSAGE_TYPE_WARNING, filename, [f"{node.to_string()}." for node in nodes]))
 
