@@ -458,40 +458,40 @@ XHTML
 
 TYPOS
 "y-001", "Possible typo: doubled [text]a/the/and/of/or/as/if[/]."
-"y-002”, "Possible typo: punctuation followed directly by a letter, without a space."
-"y-003”, "Possible typo: paragraph missing ending punctuation."
-"y-004”, "Possible typo: mis-curled quotation mark after dash."
-"y-005”, "Possible typo: question mark or exclamation mark followed by period or comma."
-"y-006”, "Possible typo: [text]‘[/] without matching [text]’[/]. Hints: [text]’[/] are used for abbreviations;	commas and periods must go inside quotation marks."
-"y-007”, "Possible typo: [text]‘[/] not within [text]“[/]. Hints: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?"
-"y-008”, "Possible typo: dialog interrupted by interjection but with incorrect closing quote."
-"y-009”, "Possible typo: dialog begins with lowercase letter."
-"y-010”, "Possible typo: comma ending dialogue."
+"y-002", "Possible typo: punctuation followed directly by a letter, without a space."
+"y-003", "Possible typo: paragraph missing ending punctuation."
+"y-004", "Possible typo: mis-curled quotation mark after dash."
+"y-005", "Possible typo: question mark or exclamation mark followed by period or comma."
+"y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hints: [text]’[/] are used for abbreviations;	commas and periods must go inside quotation marks."
+"y-007", "Possible typo: [text]‘[/] not within [text]“[/]. Hints: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?"
+"y-008", "Possible typo: dialog interrupted by interjection but with incorrect closing quote."
+"y-009", "Possible typo: dialog begins with lowercase letter."
+"y-010", "Possible typo: comma ending dialogue."
 "y-011", "Possible typo: two or more [text]’[/] in a row."
-"y-012”, "Possible typo: [text]”[/] directly followed by letter."
-"y-013”, "Possible typo: punctuation not within [text]’[/]."
-"y-014”, "Possible typo: unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?"
-"y-015”, "Possible typo: misspelled word."
-"y-016”, "Possible typo: consecutive periods ([text]..[/])."
-"y-017”, "Possible typo: [text]“[/] followed by space."
-"y-018”, "Possible typo: [text]‘[/] followed by space."
-"y-019”, "Possible typo: [text]”[/] without opening [text]“[/]."
-"y-020”, "Possible typo: consecutive comma-period ([text],.[/])."
-"y-022”, "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/]."
-"y-024”, "Possible typo: dash before [text]the/there/is/and/or/they/when[/] probably should be em-dash."
-"y-025”, "Possible typo: letter/comma/quote mark/letter with no intervening space."
-"y-026”, "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/]."
-"y-027”, "Possible typo: extra [text]’[/] at end of paragraph."
-"y-028”, "Possible typo: [xhtml]<abbr>[/] directly preceded or followed by letter."
+"y-012", "Possible typo: [text]”[/] directly followed by letter."
+"y-013", "Possible typo: punctuation not within [text]’[/]."
+"y-014", "Possible typo: unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?"
+"y-015", "Possible typo: misspelled word."
+"y-016", "Possible typo: consecutive periods ([text]..[/])."
+"y-017", "Possible typo: [text]“[/] followed by space."
+"y-018", "Possible typo: [text]‘[/] followed by space."
+"y-019", "Possible typo: [text]”[/] without opening [text]“[/]."
+"y-020", "Possible typo: consecutive comma-period ([text],.[/])."
+"y-021", "Possible typo: closing [text]’[/] without opening [text]‘[/]."
+"y-022", "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/]."
+"y-024", "Possible typo: dash before [text]the/there/is/and/or/they/when[/] probably should be em-dash."
+"y-025", "Possible typo: letter/comma/quote mark/letter with no intervening space."
+"y-026", "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/]."
+"y-027", "Possible typo: extra [text]’[/] at end of paragraph."
+"y-028", "Possible typo: [xhtml]<abbr>[/] directly preceded or followed by letter."
 "y-029", "Possible typo: italics followed by a letter."
-"y-030”, "Possible typo: lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital."
-"y-031”, "Possible typo: dialog tag missing punctuation."
-"y-032”, "Possible typo: italics running into preceding or following characters."
+"y-030", "Possible typo: lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital."
+"y-031", "Possible typo: dialog tag missing punctuation."
+"y-032", "Possible typo: italics running into preceding or following characters."
 "y-033", "Possible typo: three-em-dash obscuring an entire word, but not preceded by a space."
 UNUSED
 vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"y-021”, "Possible typo: opening [text]‘[/] without preceding [text]“[/]."
-"y-023”, "Possible typo: two opening quotation marks in a run. Hint: Nested quotes should switch between [text]“[/] and [text]‘[/]"
+"y-023", "Possible typo: two opening quotation marks in a run. Hint: Nested quotes should switch between [text]“[/] and [text]‘[/]"
 """
 
 class LintMessage:
@@ -3053,6 +3053,10 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., ',\\.')]")]
 	if typos:
 		messages.append(LintMessage("y-020", "Possible typo: consecutive comma-period ([text],.[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+’$')]")]
+	if typos:
+		messages.append(LintMessage("y-021", "Possible typo: closing [text]’[/] without opening [text]‘[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for a paragraph consisting entirely of two quotations
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^”]+?”\\s“[^”]+?”$')]")]
