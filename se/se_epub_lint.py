@@ -1521,7 +1521,8 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 				continue
 
 			loi_text_matches_figure = False
-			for child in figure.xpath("./img|./figcaption"):
+			# Use `.//img` instead of `./img` because sometimes images can be children of something like `<p>` in a `<figure>`.
+			for child in figure.xpath(".//img|./figcaption"):
 				figure_text = ""
 				loi_text_to_compare = loi_text
 				if child.tag == "img":
@@ -1536,7 +1537,6 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 					figure_text = ""
 
 				# Don't create a lint error if the figure text 20 chars or more longer than the LoI text. Sometimes the alt text is very long and descriptive, and the LoI text is truncated on purpose.
-
 				if (len(figure_text) - len(loi_text_to_compare) >= 20) or loi_text_to_compare == figure_text:
 					loi_text_matches_figure = True
 					break
