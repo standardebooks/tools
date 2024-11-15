@@ -460,6 +460,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<!O’)\b([Ll])eary\b", r"\1eery", xhtml)			# leary -> leery
 	xhtml = regex.sub(r"\b([Bb])rief case", r"\1riefcase", xhtml)			# brief case -> briefcase
 	xhtml = regex.sub(r"’([Ff])lu\b", r"\1lu", xhtml)				# 'flu -> flu
+	xhtml = regex.sub(r"\b([Aa])nnexe\b", r"\1nnex", xhtml)				# annexe -> annex
 
 
 	# Normalize some names
