@@ -1,3 +1,33 @@
+c-014 [Manual Review] chapter-1.xhtml `<table>` element without explicit 
+margins. Most tables need `margin: 1em;` or `margin: 1em auto 1em auto;`.
+        <table>
+                <tbody>
+                        <tr>
+                                <td/>
+                                <th scope="rowgroup"><time 
+datetime="1865">1865</time>.</th>
+                                <td/>
+                                <td/>
+                                <td/>
+                                <td/>
+                        </tr>
+                        <tr>
+                                <td>14</td>
+                                <td>
+                                        <time datetime="1865-06-21">June 
+21</time>
+                                </td>
+                                
+                                <td>”       ”</td>
+                                <td>Southeast face</td>
+                                <td>11,200?</td>
+                                <td>Guides⁠—Michel Croz, Christian Almer, Franz 
+Biener; porter⁠—Luc Meynet. See <a 
+href="chapter-15.xhtml#chapter-15-p-32">Chapter <span 
+epub:type="z3998:roman">XV</span></a>.</td>
+                        </tr>
+                </tbody>
+        </table>
 t-001 [Error] chapter-1.xhtml Double spacing found. Sentences should be 
 single-spaced. (Note that double spaces might include Unicode no-break and/or 
 hair spaces!)

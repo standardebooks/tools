@@ -3645,7 +3645,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 						headings.append((header_text, str(filename)))
 
 				# Check for double spacing
-				matches = regex.search(fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}", file_contents)
+				# First, remove any table cells which contain quotation marks followed by multiple spaces, as those are probably ditto marks.
+				dom_copy = deepcopy(dom)
+				for td_node in dom_copy.xpath(f"//td[re:test(., '”[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]+”')]"):
+					td_node.remove()
+				matches = regex.search(fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}", dom_copy.to_string())
 				if matches:
 					double_spaced_files.append(filename)
 
