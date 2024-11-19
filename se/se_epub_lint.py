@@ -1530,8 +1530,13 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 					# Replace/remove characters that don't appear in alt attributes.
 					loi_text_to_compare = loi_text_to_compare.replace(se.NO_BREAK_SPACE, ' ').replace(se.WORD_JOINER, '')
 				elif child.tag == "figcaption":
-					# Replace tabs and newlines with a single space to better match figcaptions that contain <br/>
-					figure_text = regex.sub(r"[ \n\t]+", " ", child.inner_text())
+					# Remove endnotes.
+					child_copy = deepcopy(child)
+					for noteref_node in child_copy.xpath("//a[contains(@epub:type, 'noteref')]"):
+						noteref_node.remove()
+
+					# Replace tabs and newlines with a single space to better match figcaptions that contain `<br/>`.
+					figure_text = regex.sub(r"[ \n\t]+", " ", child_copy.inner_text())
 
 				if figure_text is None:
 					figure_text = ""
