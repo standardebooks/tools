@@ -157,8 +157,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])ubtile?(?!(ize|izing))", r"\1ubtle", xhtml)		# subtil -> subtle (but "subtilize" and "subtilizing")
 	xhtml = regex.sub(r"\bQuoiff", r"Coif", xhtml)					# quoiff -> coif
 	xhtml = regex.sub(r"\bquoiff", r"coif", xhtml)					# quoiff -> coif
-	xhtml = regex.sub(r"\bIndorse", r"Endorse", xhtml)				# Indorse -> Endorse
-	xhtml = regex.sub(r"\bindorse", r"endorse", xhtml)				# indorse -> endorse
+	xhtml = regex.sub(r"\bIndors(e|ing)", r"Endors\1", xhtml)				# Indorse -> Endorse
+	xhtml = regex.sub(r"\bindors(e|ing)", r"endors\1", xhtml)				# indorse -> endorse
 	xhtml = regex.sub(r"\bIntrust", r"Entrust", xhtml)				# Intrust -> Entrust
 	xhtml = regex.sub(r"\bintrust", r"entrust", xhtml)				# intrust -> entrust
 	xhtml = regex.sub(r"\bPhantasies", r"Fantasies", xhtml)				# Phantasies -> Fantasies
