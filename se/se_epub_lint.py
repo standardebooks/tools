@@ -144,7 +144,7 @@ CSS
 "c-022", "Illegal [css]rem[/] unit. Use [css]em[/] instead."
 "c-023", "Illegal unit used to set [css]font-size[/]. Hint: Use [css]em[/] units."
 "c-024", "Illegal unit used to set [css]line-height[/]. Hint: [css]line-height[/] is set without any units."
-"c-025", "Illegal percent unit used to set [css]height[/] or positioning property. Hint: [css]vh[/] to specify vertical-oriented properties like height or position."
+"c-025", "Illegal percent unit used to set [css]height[/] or positioning property. Hint: Use [css]vh[/] to specify vertical-oriented properties like height or position."
 "c-026", "Table that appears to be listing numbers, but without [css]font-variant-numeric: tabular-nums;[/]."
 "c-027", "Font size below 1."
 
@@ -1115,9 +1115,10 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 	if matches:
 		messages.append(LintMessage("c-024", "Illegal unit used to set [css]line-height[/]. Hint: [css]line-height[/] is set without any units.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
-	matches = regex.search(r"(height|\stop|\sbottom)\s*:\s*[0-9\.]+%", self.local_css)
+	# Allow `max-height` in percentages which is useful because the percentage may refer to a parent container.
+	matches = regex.search(r"(?<!max-)(height|\stop|\sbottom)\s*:\s*[0-9\.]+%", self.local_css)
 	if matches:
-		messages.append(LintMessage("c-025", "Illegal percent unit used to set [css]height[/] or positioning property. Hint: [css]vh[/] to specify vertical-oriented properties like height or position.", se.MESSAGE_TYPE_ERROR, local_css_path))
+		messages.append(LintMessage("c-025", "Illegal percent unit used to set [css]height[/] or positioning property. Hint: Use [css]vh[/] to specify vertical-oriented properties like height or position.", se.MESSAGE_TYPE_ERROR, local_css_path))
 
 	matches = regex.search(r"font-size: 0?\.", self.local_css)
 	if matches:
