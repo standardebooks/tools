@@ -1807,30 +1807,30 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	#if nodes:
 	#	messages.append(LintMessage("t-xxx", "Legal case without parent [xhtml]<i>[/].", se.MESSAGE_TYPE_WARNING, filename, {f"{node.to_string()}." for node in nodes}))
 
-	# Only do this check if there's one <h#> or one <hgroup> tag. If there's more than one, then the xhtml file probably requires an overarching title
-	# We merge two xpaths here because <h#>/<hgroup> can be either a direct child of <section>, or it could be nested in <header>
+	# Only do this check if there's one `<h#>` or one `<hgroup>` elements. If there's more than one, then the XHTML file probably requires an overarching title
+	# We merge two xpaths here because `<h#>`/`<hgroup>` can be either a direct child of `<section>`, or it could be nested in `<header>`
 	if len(dom.xpath("/html/body/*[name()='section' or name()='article']/*[re:test(name(), '^h[1-6]$') or name()='hgroup'] | /html/body/*[name()='section' or name()='article']/header/*[re:test(name(), '^h[1-6]$') or name()='hgroup']"))==1:
 		title = se.formatting.generate_title(dom)
 
 		if not dom.xpath(f"/html/head/title[text()={se.easy_xml.escape_xpath(title.replace('&amp;', '&'))}]"):
 			messages.append(LintMessage("s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Check to see if <h#> tags are correctly titlecased
-	# Ignore <h#> tags with an `xml:lang` attribute, as other languages have different titlecasing rules
+	# Check to see if `<h#>` elements are correctly titlecased
+	# Ignore `<h#>` elements with an `xml:lang` attribute, as other languages have different titlecasing rules
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') or (name() = 'p' and parent::hgroup)][not(contains(@epub:type, 'z3998:roman')) and not(@xml:lang)]")
 	for node in nodes:
 		node_copy = deepcopy(node)
 
-		# Remove *leading* Roman spans
-		# This matches the first child node excluding white space nodes, if it contains the z3998:roman semantic.
-		for element in node_copy.xpath("./node()[normalize-space(.)][1][contains(@epub:type, 'z3998:roman')]"):
+		# Remove *leading* and *ending* Roman `<spans>`
+		# This matches the first child node and last child node, excluding white space nodes, if it contains the `z3998:roman` semantic.
+		for element in node_copy.xpath("./node()[normalize-space(.)][1][contains(@epub:type, 'z3998:roman')] | ./node()[normalize-space(.)][last()][contains(@epub:type, 'z3998:roman')]"):
 			element.remove()
 
 		# Remove noterefs
 		for element in node_copy.xpath(".//a[contains(@epub:type, 'noteref')]"):
 			element.remove()
 
-		# Remove hidden elements, for example in poetry identified by first line (keats)
+		# Remove hidden elements, for example in poetry identified by first line (Keats)
 		for element in node_copy.xpath(".//*[@hidden]"):
 			element.remove()
 
