@@ -2223,8 +2223,8 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	if nodes:
 		messages.append(LintMessage("s-090", "Invalid language tag.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for <span> in poetry not followed by <br/>. Ignore spans that are roman as they might be present in poem headers, or spans with xml:lang.
-	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]//p/span[not(@epub:type='z3998:roman') and not(@xml:lang) and following-sibling::*[1][name()='span']]")
+	# Check for `<span>` in poetry not followed by `<br/>`. Ignore `<span>`s that are roman or names, `<span>`s with `@xml:lang`, or `<span>`s that are part of a `<header>` or `<hgroup>`.
+	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]//p/span[not(re:test(@epub:type, '\\b(z3998:roman|se:name\\.)')) and not(@xml:lang) and following-sibling::*[1][name()='span'] and not(ancestor::header) and not(ancestor::hgroup)]")
 	if nodes:
 		messages.append(LintMessage("s-091", "[xhtml]<span>[/] not followed by [xhtml]<br/>[/] in poetry.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
