@@ -3530,6 +3530,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				messages.append(LintMessage("x-001", "String [text]UTF-8[/] must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename))
 
 			if filename.suffix == ".svg":
+				# If this is an SVG that is in the `./images/` folder, ignore it, because it's a source that could have any kind of internal formatting.
+				if self.path / "images" / filename.name == filename:
+					continue
+
 				svg_dom = self.get_dom(filename)
 				messages += _lint_svg_checks(self, filename, file_contents, svg_dom, root)
 				if self.cover_path and filename.name == self.cover_path.name:
