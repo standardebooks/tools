@@ -7,3 +7,12 @@ time,
 span[epub|type]{
 	background: #C0C0C0;
 }
+
+abbr.eoc{
+	border: 1px solid;
+}
+
+/* Remove colored background from common abbreviations like Mr., which make reading distracting. */
+abbr[epub|type~="z3998:name-title"]{
+	background: transparent;
+}
