@@ -1,3 +1,39 @@
+# 2.7.4
+
+## se build
+
+- Improve proofreading CSS
+
+- Restrict blocking of drama table popup to just Apple Books. Thanks to Robin Whittleton
+
+## se lint
+
+- Add s-076, dedication with letter semantics
+
+- Improve t-032
+
+- Add y-021, closing quote without opening quote
+
+- Improve t-076
+
+- Improve s-041
+
+- Don't include noterefs when checking s-041
+
+- Don't include table cells that are probably ditto marks when checking t-001
+
+- Refine c-025 and fix typo in message
+
+- Improve s-023
+
+- Don't check SVGs that are in the `./images/` folder
+
+- Improve s-091
+
+## se modernize-spelling
+
+- Various additions
+
 # 2.7.3
 
 ## General
