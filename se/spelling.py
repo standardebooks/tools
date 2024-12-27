@@ -29,14 +29,17 @@ def get_xhtml_language(xhtml: str) -> str:
 
 	return language
 
-def initialize_dictionary():
+def initialize_dictionary() -> Set[str]:
 	"""
 	Initialize the spelling word list dictionary, if we haven't already.
 	"""
 
-	if not se.spelling.DICTIONARY:
+	if not DICTIONARY:
 		with importlib.resources.files("se.data").joinpath("words").open("r", encoding="utf-8") as dictionary:
-			se.spelling.DICTIONARY = {line.strip().lower() for line in dictionary}
+			return {line.strip().lower() for line in dictionary}
+
+	else:
+		return DICTIONARY
 
 def modernize_hyphenation(xhtml: str) -> str:
 	"""
@@ -49,7 +52,7 @@ def modernize_hyphenation(xhtml: str) -> str:
 	A string representing the XHTML with its hyphenation modernized
 	"""
 
-	initialize_dictionary()
+	dictionary = initialize_dictionary()
 
 	# Easy fix for a common case
 	xhtml = regex.sub(r"\b([Nn])ow-a-days\b", r"\1owadays", xhtml)	# now-a-days -> nowadays
@@ -60,7 +63,7 @@ def modernize_hyphenation(xhtml: str) -> str:
 
 	for word in set(result): # set() removes duplicates
 		new_word = word.replace("-", "").lower()
-		if new_word in se.spelling.DICTIONARY:
+		if new_word in dictionary:
 			# To preserve capitalization of the first word, we get the individual parts
 			# then replace the original match with them joined together and titlecased.
 			lhs = regex.sub(r"\-.+$", r"", word)

@@ -2787,7 +2787,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 		ignored_words = ["cafe", "cafes", "consomme", "debut", "menage", "puree", "regime", "regimes", "reveille", "reveilles"]
 
 		# Initialize our dictionary
-		se.spelling.initialize_dictionary()
+		dictionary = se.spelling.initialize_dictionary()
 
 		for node in nodes:
 			# Remove any child nodes that have a language specified
@@ -2801,7 +2801,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 			# to have accents for scansion anyway.
 			for word in regex.findall(r"[A-Za-z]+[áéíóú]+[A-za-z]+", node.inner_text()):
 				unaccented_word = unidecode(word)
-				if unaccented_word in se.spelling.DICTIONARY and unaccented_word not in ignored_words:
+				if unaccented_word in dictionary and unaccented_word not in ignored_words:
 					filtered_nodes.append(node)
 
 	if filtered_nodes:

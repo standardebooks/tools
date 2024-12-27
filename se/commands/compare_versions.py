@@ -44,6 +44,7 @@ def compare_versions(plain_output: bool) -> int:
 	# We wrap this whole thing in a try block, because we need to call
 	# driver.quit() if execution is interrupted (like by ctrl + c, or by an unhandled exception). If we don't call driver.quit(),
 	# Firefox will stay around as a zombie process even if the Python script is dead.
+	driver = None
 	try:
 		driver = se.browser.initialize_selenium_firefox_webdriver()
 
@@ -194,7 +195,8 @@ def compare_versions(plain_output: bool) -> int:
 
 	finally:
 		try:
-			driver.quit()
+			if driver:
+				driver.quit()
 		except Exception:
 			# We might get here if we ctrl + c before selenium has finished initializing the driver
 			pass
