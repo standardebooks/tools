@@ -45,11 +45,7 @@ def compare_versions(plain_output: bool) -> int:
 	# driver.quit() if execution is interrupted (like by ctrl + c, or by an unhandled exception). If we don't call driver.quit(),
 	# Firefox will stay around as a zombie process even if the Python script is dead.
 	try:
-		try:
-			driver = se.browser.initialize_selenium_firefox_webdriver()
-		except se.MissingDependencyException as ex:
-			se.print_error(ex, plain_output=plain_output)
-			return ex.code
+		driver = se.browser.initialize_selenium_firefox_webdriver()
 
 		# Ready to go!
 		for target in args.targets:
@@ -187,9 +183,15 @@ def compare_versions(plain_output: bool) -> int:
 
 						with open(output_directory / "diff.html", "w", encoding="utf-8") as file:
 							file.write(html)
+
+	except se.MissingDependencyException as ex:
+		se.print_error(ex, plain_output=plain_output)
+		return ex.code
+
 	except KeyboardInterrupt as ex:
 		# Bubble the exception up, but proceed to `finally` so we quit the driver
 		raise ex
+
 	finally:
 		try:
 			driver.quit()
