@@ -1256,7 +1256,7 @@
 
 - Only emit m-071, m-072, m-041 if there are fewer than 2 sources
 
-- Add Ukrainian to the set of scripts that need a Latin suffix. Thanks to Robin Whittleton
+- Add Ukrainian to the set of scripts that need a Latn suffix. Thanks to Robin Whittleton
 
 - Add s-094, endnote out of sequence
 
