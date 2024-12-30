@@ -78,12 +78,12 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 
 	```shell
 	# Install some pre-flight dependencies.
-	brew install cairo calibre git openjdk pipx python@3.11
+	brew install cairo calibre git openjdk pipx python@3.12
 	pipx ensurepath
 	sudo ln -sfn $(brew --prefix)/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
 
 	# Install the toolset.
-	pipx install --python python3.11 standardebooks
+	pipx install --python python3.12 standardebooks
 
 	# Optional: Bash users who have set up bash-completion via brew can install tab completion.
 	ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $(brew --prefix)/etc/bash_completion.d/se
