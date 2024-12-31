@@ -4,7 +4,8 @@
 abbr,
 time,
 .proofreading,
-span[epub|type]{
+span[epub|type],
+i[epub|type]{
 	background: #C0C0C0;
 }
 
