@@ -530,6 +530,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bLuxembo?urgh?\b", r"Luxembourg", xhtml)			# Luxemburgh -> Luxembourg
 	xhtml = regex.sub(r"\bBehring", r"Bering", xhtml)				# Behring -> Bering (i.e. the Bering Straight)
 	xhtml = regex.sub(r"\bRomanoff", r"Romanov", xhtml)				# Romanoff -> Romanov
+	xhtml = regex.sub(r"\bCezanne", r"Cézanne", xhtml)				# Cezanne -> Cézanne
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
