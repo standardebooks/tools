@@ -376,6 +376,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Replace single obscured year digit with figure dash
 	xhtml = regex.sub(r"\b([0-9]{3})-([^0-9\p{Letter}])(?!abbr)", r"\1‒\2", xhtml)
 
+	# Replace a common error, two- or three-em-dash followed by dash
+	xhtml = regex.sub(r"(⸺|⸻)-", r"\1", xhtml)
+
 	return xhtml
 
 def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_tags: bool = False) -> str:
