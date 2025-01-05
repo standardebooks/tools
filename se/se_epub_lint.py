@@ -431,6 +431,7 @@ TYPOGRAPHY
 "t-074", "Extended sound using hyphen-minus [text]-[/] instead of non-breaking hyphen [text]‑[/]."
 "t-075", "Word in verse with acute accent for scansion instead of grave accent."
 "t-076", "Grapheme or phoneme not italicized. Hint: Dialect with missing letters should mark missing letters with [text]’[/]."
+"t-077", "Punctuation followed by opening quotation."
 
 
 XHTML
@@ -2811,6 +2812,10 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	nodes = dom.xpath("/html/body//text()[re:test(., '\\s[a-z]’s\\b') and not(contains(., 'p’s and q’s'))]")
 	if nodes:
 		messages.append(LintMessage("t-076", "Grapheme or phoneme not italicized. Hint: Dialect with missing letters should mark missing letters with [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, nodes))
+
+	nodes = dom.xpath("/html/body//text()[re:test(., '[:;!\\?][“‘]')]")
+	if nodes:
+		messages.append(LintMessage("t-077", "Punctuation followed by opening quotation.", se.MESSAGE_TYPE_WARNING, filename, nodes))
 
 	return (messages, missing_files)
 
