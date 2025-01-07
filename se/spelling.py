@@ -468,7 +468,9 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"Hallowe’en", r"Halloween", xhtml)				# Hallowe’en -> Halloween
 	xhtml = regex.sub(r"’([Pp])lane\b", r"\1lane", xhtml)				# 'plane -> plane
 	xhtml = regex.sub(r"([Bb])ye?-and-([Bb])ye?\b", r"\1y-and-\2y", xhtml)		# by-and-bye, bye-and-by -> by-and-by (Note, may be capitalized in a song title)
-	xhtml = regex.sub(r"\b([Cc])liche([sd]?)\b", r"\1liché\2", xhtml)			# cliche -> cliché
+	xhtml = regex.sub(r"\b([Cc])liche([sd]?)\b", r"\1liché\2", xhtml)		# cliche -> cliché
+	xhtml = regex.sub("r\bmantle-?piece", r"mantelpiece", xhtml)			# mantlepiece -> mantelpiece
+	xhtml = regex.sub("r\bmantle-?shel(f|ves)\b", r"mantelshel\1", xhtml)		# mantleshelf -> mantelshelf
 
 
 	# Normalize some names
