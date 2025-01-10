@@ -2159,7 +2159,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		messages.append(LintMessage("s-077", "[xhtml]<header>[/] element preceded by non-sectioning element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 	# Check for <footer> followed by non-sectioning elements
-	nodes = dom.xpath("/html/body//footer[./following-sibling::*[not(re:test(name(), '^(section|div|article)$'))]]")
+	nodes = dom.xpath("/html/body//footer[./following-sibling::*[not(re:test(name(), '^(section|div|article|figure)$'))]]")
 	if nodes:
 		messages.append(LintMessage("s-078", "[xhtml]<footer>[/] element followed by non-sectioning element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
