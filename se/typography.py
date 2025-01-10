@@ -379,6 +379,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Replace a common error, two- or three-em-dash followed by dash
 	xhtml = regex.sub(r"(⸺|⸻)-", r"\1", xhtml)
 
+	# Fix a common error
+	xhtml = regex.sub(r"<p>”⁠ ⁠…", "<p>“⁠ ⁠…", xhtml)
+
 	return xhtml
 
 def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_tags: bool = False) -> str:
