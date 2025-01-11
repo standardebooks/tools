@@ -522,7 +522,12 @@ def guess_quoting_style(xhtml: str) -> str:
 
 def convert_british_to_american(xhtml: str) -> str:
 	"""
-	Attempt to convert a string of XHTML from British-style quotation to American-style quotation.
+	Attempt to convert a string of XHTML from British-style quotation to American-style quotation. The overall method is to:
+		o Replace double quotes with ldq/rdq tags
+		o Replace "known" improper left single quotes with ap tag
+		o Replace remaining left single quotes with ap tag
+		o Tag closing right single quotes as ap or rsq depending on context
+		o Replace tags with appropriate (American) quote, e.g. ldq with left single quote
 
 	INPUTS
 	xhtml: A string of XHTML
@@ -532,24 +537,46 @@ def convert_british_to_american(xhtml: str) -> str:
 	"""
 	xhtml = regex.sub(r"“", r"<ldq>", xhtml)
 	xhtml = regex.sub(r"”", r"<rdq>", xhtml)
+	# mark as apostrophe reversed (opening rather than closed) quote on known dialect;
+	# at, is, and the decades are also words on their own, but are deemed more likely to
+	# be elisions than starting a quote
+	xhtml = regex.sub(r"([^A-Za-z])‘([Aa]lf|at|[Aa]ve|[Ee]|[Ee]ard|[Ee]lp(ed|s)?|[Ee]m|[Ee]re|[Ee]rself|[I]im|is|[Ii]sself|[Ii]story|[Oo]ller|[Oo]w|[Oo]wever|[Rr]e|(twen|thir|four|fif|six|seven|eigh|nine)ties)\b",r"\1<ap>\2", xhtml)
+	# treat any remaining opening single quotes as lsq
 	xhtml = regex.sub(r"‘", r"<lsq>", xhtml)
-	xhtml = regex.sub(r"<rdq>⁠ ’(\s+)", r"<rdq> <rsq>\1", xhtml)
-	xhtml = regex.sub(r"<rdq>⁠ ’</", r"<rdq> <rsq></", xhtml)
-	xhtml = regex.sub(r"([\.\,\!\?\…\:\;])’", r"\1<rsq>", xhtml)
-	xhtml = regex.sub(r"—’(\s+)", r"—<rsq>\1", xhtml)
-	xhtml = regex.sub(r"—’</", r"—<rsq></", xhtml)
-	xhtml = regex.sub(r"([\p{Lowercase_Letter}])’([\p{Lowercase_Letter}])", r"\1<ap>\2", xhtml)
-	xhtml = regex.sub(r"(\s+)’([\p{Lowercase_Letter}])", r"\1<ap>\2", xhtml)
+	# ’a’ is two apostrophes
+	xhtml = regex.sub(r"(\W)’a’(\W)", r"\1<ap>a<ap>\2", xhtml)
+	# o’ on its own is an apostrophe
+	xhtml = regex.sub(r"\bo’(\W)", r"o<ap>\1", xhtml)
+	# treat any instance of a closing single quote followed by a letter as an apostrophe
+	xhtml = regex.sub(r"’(\p{Letter})", r"<ap>\1", xhtml)
+	# closing single quote followed by period and another closing single quote is
+	# treated as ap period rsq, e.g. … happenin’.’
+	xhtml = regex.sub(r"’\.’", r"<ap>.<rsq>", xhtml)
+	# closing single quote immediately following closing double treated as rsq
+	xhtml = regex.sub(r"<rdq>( ?)’(\s+|</)", r"<rdq>\1<rsq>\2", xhtml)
+	# quotes on either side of an aside are treated as rsq—text—lsq
+	xhtml = regex.sub(r"(\w)’(⁠?—[^—]+⁠?—<lsq>)", r"\1<rsq>\2", xhtml)
+	# closing single quote immediately following punctuation treated as rsq
+	xhtml = regex.sub(r"([.,!?…:;])’", r"\1<rsq>", xhtml)
+	# closing single quote preceded by em-dash and followed by whitespace/closing html
+	# tag treated as rsq
+	xhtml = regex.sub(r"—’(\s+|</)", r"—<rsq>\1", xhtml)
+
+	# at this point there are still closing single quotes present, a mixture of
+	# unmarked rsq's and apostrophes; try to identify some of the former
+
+	# first, mark matching lsq/rsq pairs
+	xhtml = regex.sub(r"<lsq>((?:(?!<lsq>).)*?)<rsq>", r"<lsqm>\1<rsqm>", xhtml)
+	# closing single quotes following an unmatched lsq are now treated as rsq
+	xhtml = regex.sub(r"<lsq>((?:(?!<rsq>).)*?)’", r"<lsqm>\1<rsqm>", xhtml)
+	# move comma/period inside quotes
+	xhtml = regex.sub(r"([^;:,.!?])(<rdq>|<rsqm>)([,.])", r"\1\3\2", xhtml)
+	# replace the tags with the appropriate quote character
 	xhtml = regex.sub(r"<ldq>", r"‘", xhtml)
 	xhtml = regex.sub(r"<rdq>", r"’", xhtml)
-	xhtml = regex.sub(r"<lsq>", r"“", xhtml)
-	xhtml = regex.sub(r"<rsq>", r"”", xhtml)
+	xhtml = regex.sub(r"<lsqm?>", r"“", xhtml)
+	xhtml = regex.sub(r"<rsqm?>", r"”", xhtml)
 	xhtml = regex.sub(r"<ap>", r"’", xhtml)
-
-	# Correct some common errors
-	xhtml = regex.sub(r"’ ’", r"’ ”", xhtml)
-	xhtml = regex.sub(r"“([^‘”]+?[^s])’([!\?:;\)\s])", r"“\1”\2", xhtml)
-	xhtml = regex.sub(r"“([^‘”]+?)’([!\?:;\)])", r"“\1”\2", xhtml)
 
 	return xhtml
 
