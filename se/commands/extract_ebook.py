@@ -100,7 +100,7 @@ def extract_ebook(plain_output: bool) -> int:
 			with zipfile.ZipFile(target, "r") as file:
 				file.extractall(extracted_path)
 		else:
-			se.print_error("File doesn’t look like an epub, mobi, or azw3 file.")
+			se.print_error(f"File doesn’t look like an epub, mobi, or azw3: [path][link=file://{target}]{target}[/][/].", plain_output=plain_output)
 			return se.InvalidFileException.code
 
 		if args.verbose:
