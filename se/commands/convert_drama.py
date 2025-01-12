@@ -5,6 +5,7 @@ This module implements the `se convert-drama` command.
 import argparse
 import html
 from pathlib import Path
+import regex
 
 from rich.console import Console
 
@@ -85,5 +86,57 @@ def convert_drama(plain_output: bool) -> int:
 			except FileNotFoundError:
 				se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 				return_code = se.InvalidInputException.code
+
+		# Adjust CSS
+		filename = directory / "src" / "epub" / "css" / "local.css"
+		if args.verbose:
+			console.print(se.prep_output(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", plain_output), end="")
+
+		try:
+			with open(filename, "r+", encoding="utf-8") as file:
+				css = file.read()
+				processed_css = css
+
+				# standard drama styles
+				processed_css = regex.sub(r"\[epub\|type~=\"z3998:drama\"\] table", fr'[epub|type~="z3998:drama"] .{TABLE_CLASS}', processed_css)
+				processed_css = regex.sub(r"table\[epub\|type~=\"z3998:drama\"\]", fr'.{TABLE_CLASS}[epub|type~="z3998:drama"]', processed_css)
+				processed_css = regex.sub(fr"\.{TABLE_CLASS}(.*?)border-collapse: collapse;", fr".{TABLE_CLASS}\1display: table;", processed_css, flags=regex.DOTALL)
+
+				while regex.search(r"\[epub\|type~=\"z3998:drama\"\](.*?)tr", processed_css):
+					processed_css = regex.sub(r"\[epub\|type~=\"z3998:drama\"\](.*?)tr", fr'[epub|type~="z3998:drama"]\1.{TABLE_ROW_CLASS}', processed_css)
+				base_drama_row_rule = fr"\[epub\|type~=\"z3998:drama\"\] \.{TABLE_ROW_CLASS}{{"
+				if regex.search(base_drama_row_rule, processed_css) is not None:
+					processed_css = regex.sub(fr"({base_drama_row_rule}\n\t)", r"\1display: table-row;", processed_css, flags=regex.DOTALL)
+				else:
+					console.print(f"Added {base_drama_row_rule.replace('\\', '')}}} rule to end of local.css, please move it to an appropriate place in the CSS.")
+					processed_css += f"{base_drama_row_rule.replace('\\', '')}display: table-row;}}"
+
+				while regex.search(r"\[epub\|type~=\"z3998:drama\"\](.*?)td", processed_css):
+					processed_css = regex.sub(r"\[epub\|type~=\"z3998:drama\"\](.*?)td", fr'[epub|type~="z3998:drama"]\1.{TABLE_CELL_CLASS}', processed_css)
+				base_drama_cell_rule = fr"\[epub\|type~=\"z3998:drama\"\] \.{TABLE_CELL_CLASS}{{"
+				if regex.search(base_drama_cell_rule, processed_css) is not None:
+					processed_css = regex.sub(fr"({base_drama_cell_rule}\n\t)", r"\1display: table-cell;", processed_css, flags=regex.DOTALL)
+				else:
+					console.print(f"Added {base_drama_cell_rule.replace('\\', '')}}} rule to end of local.css, please move it to an appropriate place in the CSS.")
+					processed_css += f"{base_drama_cell_rule.replace('\\', '')}display: table-cell;}}"
+
+				# together styles
+				processed_css = regex.sub(r"(?:tr)?\.together(.*?)", fr'.{TABLE_ROW_CLASS}.together\1', processed_css)
+				while regex.search(r"together.*?td", processed_css):
+					processed_css = regex.sub(r"(?:tr)?\.together(.*?)td( + td)?", fr'.together\1.{TABLE_CELL_CLASS}', processed_css)
+
+				processed_css = se.formatting.format_css(processed_css)
+
+				if processed_css != css:
+					file.seek(0)
+					file.write(processed_css)
+					file.truncate()
+
+			if args.verbose:
+				console.print(" OK")
+
+		except FileNotFoundError:
+			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
+			return_code = se.InvalidInputException.code
 
 	return return_code
