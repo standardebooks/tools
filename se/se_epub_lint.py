@@ -1598,9 +1598,9 @@ def _lint_xhtml_css_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 	if nodes:
 		messages.append(LintMessage("c-013", "Element with margin or padding not in increments of [css].5em[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for <table> without set margins. We ignore tables that are for drama structuring, and tables that are ancestors of <blockquote> because <blockquote> has its own margin.
+	# Check for <table> without set margins. We ignore tables that are ancestors of <blockquote> because <blockquote> has its own margin.
 	# We also ignore tables whose preceding sibling sets a bottom margin that is not 0.
-	nodes = dom.xpath("/html/body//table[not(./ancestor-or-self::*[contains(@epub:type, 'z3998:drama')]) and not(./ancestor::blockquote) and not(./preceding-sibling::*[1][@data-css-margin-bottom != '0']) and (not(@data-css-margin-top) or not(@data-css-margin-right) or not(@data-css-margin-bottom) or not(@data-css-margin-left))]")
+	nodes = dom.xpath("/html/body//table[not(./ancestor::blockquote) and not(./preceding-sibling::*[1][@data-css-margin-bottom != '0']) and (not(@data-css-margin-top) or not(@data-css-margin-right) or not(@data-css-margin-bottom) or not(@data-css-margin-left))]")
 	if nodes:
 		messages.append(LintMessage("c-014", "[xhtml]<table>[/] element without explicit margins. Most tables need [css]margin: 1em;[/] or [css]margin: 1em auto 1em auto;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
