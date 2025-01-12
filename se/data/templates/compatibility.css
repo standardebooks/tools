@@ -80,14 +80,3 @@ img.mathml{
 	hanging-punctuation: first last !important;
 }
 
-/* Apple Books will load a pannable zoomable table view when clicked, which is useful unless you’re
-   trying to read a piece of drama. */
-:root[__ibooks_internal_theme] [epub|type~="z3998:drama"] table,
-:root[__ibooks_internal_theme] table[epub|type~="z3998:drama"]{
-	pointer-events: none;
-}
-
-:root[__ibooks_internal_theme] [epub|type~="z3998:drama"] table a,
-:root[__ibooks_internal_theme] table[epub|type~="z3998:drama"] a{
-	pointer-events: auto;
-}
