@@ -525,7 +525,7 @@ def convert_british_to_american(xhtml: str) -> str:
 	Attempt to convert a string of XHTML from British-style quotation to American-style quotation. The overall method is to:
 		o Replace double quotes with ldq/rdq tags
 		o Replace "known" improper left single quotes with ap tag
-		o Replace remaining left single quotes with ap tag
+		o Replace remaining left single quotes with lsq tag
 		o Tag closing right single quotes as ap or rsq depending on context
 		o Replace tags with appropriate (American) quote, e.g. ldq with left single quote
 
@@ -535,12 +535,13 @@ def convert_british_to_american(xhtml: str) -> str:
 	OUTPUTS
 	The XHTML with British-style quotation converted to American style
 	"""
+	# double-quotes are unambiguous, so tagged immediately
 	xhtml = regex.sub(r"“", r"<ldq>", xhtml)
 	xhtml = regex.sub(r"”", r"<rdq>", xhtml)
-	# mark as apostrophe reversed (opening rather than closed) quote on known dialect;
-	# at, is, and the decades are also words on their own, but are deemed more likely to
-	# be elisions than starting a quote
-	xhtml = regex.sub(r"([^A-Za-z])‘([Aa]lf|at|[Aa]ve|[Ee]|[Ee]ard|[Ee]lp(ed|s)?|[Ee]m|[Ee]re|[Ee]rself|[I]im|is|[Ii]sself|[Ii]story|[Oo]ller|[Oo]w|[Oo]wever|[Rr]e|(twen|thir|four|fif|six|seven|eigh|nine)ties)\b",r"\1<ap>\2", xhtml)
+	# mark as apostrophe reversed quote (opening rather than closed) on known dialect;
+	# at and the decades are also words on their own, but are deemed more likely to be elisions
+	# than starting a quote
+	xhtml = regex.sub(r"([^A-Za-z])‘([Aa]lf|at|[Aa]ve|[Cc]ording|[Ee]|[Ee]ard|[Ee]lp(ed|s)?|[Ee]m|[Ee]re|[Ee]rself|[I]im|[Ii]sself|[Ii]story|Merr?i[ck]{1,2}[aei](r|ns?)|[Oo]ller|oo?man|[Oo]w|[Oo]wever|[Rr]e|(twen|thir|four|fif|six|seven|eigh|nine)ties)\b",r"\1<ap>\2", xhtml)
 	# treat any remaining opening single quotes as lsq
 	xhtml = regex.sub(r"‘", r"<lsq>", xhtml)
 	# ’a’ is two apostrophes
