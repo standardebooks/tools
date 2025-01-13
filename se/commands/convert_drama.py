@@ -3,7 +3,6 @@ This module implements the `se convert-drama` command.
 """
 
 import argparse
-import html
 from pathlib import Path
 import regex
 
@@ -13,15 +12,14 @@ import se
 import se.easy_xml
 import se.formatting
 
+TABLE_CLASS = "drama-table"
+TABLE_ROW_CLASS = "drama-row"
+TABLE_CELL_CLASS = "drama-cell"
 
 def convert_drama(plain_output: bool) -> int:
 	"""
 	Entry point for `se convert-drama`
 	"""
-
-	TABLE_CLASS = "drama-table"
-	TABLE_ROW_CLASS = "drama-row"
-	TABLE_CELL_CLASS = "drama-cell"
 
 	parser = argparse.ArgumentParser(description="Convert older-style drama tables to new markup standard.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
@@ -42,6 +40,7 @@ def convert_drama(plain_output: bool) -> int:
 			try:
 				with open(filename, "r+", encoding="utf-8") as file:
 					xhtml = file.read()
+					processed_xhtml = xhtml
 					is_ignored, dom = se.get_dom_if_not_ignored(xhtml, ["colophon", "titlepage", "imprint", "copyright-page", "halftitlepage", "toc", "loi"])
 
 					if not is_ignored:
