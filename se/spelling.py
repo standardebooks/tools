@@ -471,6 +471,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Cc])liche([sd]?)\b", r"\1liché\2", xhtml)		# cliche -> cliché
 	xhtml = regex.sub("r\bmantle-?piece", r"mantelpiece", xhtml)			# mantlepiece -> mantelpiece
 	xhtml = regex.sub("r\bmantle-?shel(f|ves)\b", r"mantelshel\1", xhtml)		# mantleshelf -> mantelshelf
+	xhtml = regex.sub("r\b([Tt])epee", r"\1eepee", xhtml)				# tepee -> teepee
 
 
 	# Normalize some names
