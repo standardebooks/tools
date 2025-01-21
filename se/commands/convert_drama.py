@@ -7,6 +7,7 @@ from pathlib import Path
 import regex
 
 from rich.console import Console
+from lxml import etree
 
 import se
 import se.easy_xml
@@ -31,6 +32,8 @@ def convert_drama(plain_output: bool) -> int:
 
 	for directory in args.directories:
 		directory = Path(directory).resolve()
+
+		has_multiple_speakers_in_one_cell = False
 
 		## Adjust markup
 		for filename in se.get_target_filenames([directory], (".xhtml")):
@@ -62,6 +65,30 @@ def convert_drama(plain_output: bool) -> int:
 									for cell in cells:
 										cell.lxml_element.tag = "div"
 										cell.add_attr_value("class", TABLE_CELL_CLASS)
+
+									# try to automatically fix rowspans
+									rowspan = row.xpath('.//@rowspan')
+									if rowspan:
+										print("Attempting to convert rowspans with together blocks, PLEASE double check that this worked OK.")
+										has_multiple_speakers_in_one_cell = True
+										rowspan_steps = int(rowspan[0]) - 1
+										persona_cell = row.xpath('.//*[1]')[0]
+
+										personas = [persona_cell.inner_xml()]
+
+										# Collect personas from the following lines and delete them
+										while rowspan_steps:
+											next_row = row.xpath('following-sibling::*')[0]
+											personas.append(next_row.xpath('.//*[1]')[0].inner_xml())
+											next_row.remove()
+											rowspan_steps = rowspan_steps - 1
+
+										# Replace the initial cell with the collected list of personas
+										persona_cell.set_text('')
+										persona_cell.remove_attr_value('epub:type', 'z3998:persona')
+										for persona in personas:
+											persona_cell.append(etree.fromstring(f'<b xmlns:epub="http://www.idpf.org/2007/ops" epub:type="z3998:persona">{persona}</b>'))
+											etree.indent(persona_cell.lxml_element)
 
 							processed_xhtml = dom.to_string()
 
@@ -119,10 +146,18 @@ def convert_drama(plain_output: bool) -> int:
 					console.print(f"Added {base_drama_cell_rule.replace('\\', '')}}} rule to end of local.css, please move it to an appropriate place in the CSS.")
 					processed_css += f"{base_drama_cell_rule.replace('\\', '')}display: table-cell;}}"
 
+				# process old persona-specific styles to be applied to :first-child
+				processed_css = regex.sub(r"\[epub\|type~=\"z3998:drama\"\] .drama-cell:first-child\{", "[epub|type~=\"z3998:drama\"] .drama-cell:first-child{text-align:right;width:20%;", processed_css)
+				processed_css = regex.sub(r"(\[epub\|type~=\"z3998:drama\"\] .drama-cell\[epub\|type~=\"z3998:persona\"\]\{\n\thyphens: none;\n\t-epub-hyphens: none;)\n\ttext-align: right;\n\twidth: 20%;", r"\1", processed_css, flags=regex.DOTALL)
+
 				# together styles
 				processed_css = regex.sub(r"(?:tr)?\.together(.*?)", fr'.{TABLE_ROW_CLASS}.together\1', processed_css)
 				while regex.search(r"together.*?td", processed_css):
 					processed_css = regex.sub(r"(?:tr)?\.together(.*?)td( + td)?", fr'.together\1.{TABLE_CELL_CLASS}', processed_css)
+				if has_multiple_speakers_in_one_cell:
+					multiple_persona_cell_rull = fr"\[epub\|type~=\"z3998:drama\"\] \.{TABLE_CELL_CLASS}:first-child > b\[epub\|type~=\"z3998:persona\"\]{{"
+					console.print(f"Added {multiple_persona_cell_rull.replace('\\', '')}}} rule to end of local.css, please move it to an appropriate place in the CSS.")
+					processed_css += f"{multiple_persona_cell_rull.replace('\\', '')}display: block;}}"
 
 				processed_css = se.formatting.format_css(processed_css)
 
