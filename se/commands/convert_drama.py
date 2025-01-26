@@ -7,6 +7,7 @@ from pathlib import Path
 import regex
 
 from rich.console import Console
+from rich.markup import escape
 from lxml import etree
 
 import se
@@ -134,8 +135,8 @@ def convert_drama(plain_output: bool) -> int:
 				if regex.search(base_drama_row_rule, processed_css) is not None:
 					processed_css = regex.sub(fr"({base_drama_row_rule}\n\t)", r"\1display: table-row;", processed_css, flags=regex.DOTALL)
 				else:
-					console.print(f"Added {base_drama_row_rule.replace('\\', '')}}} rule to end of local.css, please move it to an appropriate place in the CSS.")
-					processed_css += f"{base_drama_row_rule.replace('\\', '')}display: table-row;}}"
+					console.print("Added {0}}} rule to end of local.css, please move it to an appropriate place in the CSS.".format(escape(base_drama_row_rule.replace('\\', ''))))
+					processed_css += "{0}display: table-row;}}".format(base_drama_row_rule.replace('\\', ''))
 
 				while regex.search(r"\[epub\|type~=\"z3998:drama\"\](.*?)td", processed_css):
 					processed_css = regex.sub(r"\[epub\|type~=\"z3998:drama\"\](.*?)td", fr'[epub|type~="z3998:drama"]\1.{TABLE_CELL_CLASS}', processed_css)
@@ -143,8 +144,8 @@ def convert_drama(plain_output: bool) -> int:
 				if regex.search(base_drama_cell_rule, processed_css) is not None:
 					processed_css = regex.sub(fr"({base_drama_cell_rule}\n\t)", r"\1display: table-cell;", processed_css, flags=regex.DOTALL)
 				else:
-					console.print(f"Added {base_drama_cell_rule.replace('\\', '')}}} rule to end of local.css, please move it to an appropriate place in the CSS.")
-					processed_css += f"{base_drama_cell_rule.replace('\\', '')}display: table-cell;}}"
+					console.print("Added {0}}} rule to end of local.css, please move it to an appropriate place in the CSS.".format(escape(base_drama_cell_rule.replace('\\', ''))))
+					processed_css += "{0}display: table-cell;}}".format(base_drama_cell_rule.replace('\\', ''))
 
 				# process old persona-specific styles to be applied to :first-child
 				processed_css = regex.sub(r"\[epub\|type~=\"z3998:drama\"\] .drama-cell:first-child\{", "[epub|type~=\"z3998:drama\"] .drama-cell:first-child{text-align:right;width:20%;", processed_css)
@@ -156,8 +157,8 @@ def convert_drama(plain_output: bool) -> int:
 					processed_css = regex.sub(r"(?:tr)?\.together(.*?)td( + td)?", fr'.together\1.{TABLE_CELL_CLASS}', processed_css)
 				if has_multiple_speakers_in_one_cell:
 					multiple_persona_cell_rull = fr"\[epub\|type~=\"z3998:drama\"\] \.{TABLE_CELL_CLASS}:first-child > b\[epub\|type~=\"z3998:persona\"\]{{"
-					console.print(f"Added {multiple_persona_cell_rull.replace('\\', '')}}} rule to end of local.css, please move it to an appropriate place in the CSS.")
-					processed_css += f"{multiple_persona_cell_rull.replace('\\', '')}display: block;}}"
+					console.print("Added {0}}} rule to end of local.css, please move it to an appropriate place in the CSS.".format(escape(multiple_persona_cell_rull.replace('\\', ''))))
+					processed_css += "{0}display: block;}}".format(multiple_persona_cell_rull.replace('\\', ''))
 
 				processed_css = se.formatting.format_css(processed_css)
 
