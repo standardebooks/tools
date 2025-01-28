@@ -70,26 +70,27 @@ def convert_drama(plain_output: bool) -> int:
 									# try to automatically fix rowspans
 									rowspan = row.xpath('.//@rowspan')
 									if rowspan:
-										print("Attempting to convert rowspans with together blocks, PLEASE double check that this worked OK.")
-										has_multiple_speakers_in_one_cell = True
-										rowspan_steps = int(rowspan[0]) - 1
-										persona_cell = row.xpath('.//*[1]')[0]
+										console.print("Together block with rowspans found. Styles will automatically be added, but THIS NEEDS MANUAL CONVERSION.")
+										# print("Attempting to convert rowspans with together blocks, PLEASE double check that this worked OK.")
+										# has_multiple_speakers_in_one_cell = True
+										# rowspan_steps = int(rowspan[0]) - 1
+										# persona_cell = row.xpath('.//*[1]')[0]
 
-										personas = [persona_cell.inner_xml()]
+										# personas = [persona_cell.inner_xml()]
 
-										# Collect personas from the following lines and delete them
-										while rowspan_steps:
-											next_row = row.xpath('following-sibling::*')[0]
-											personas.append(next_row.xpath('.//*[1]')[0].inner_xml())
-											next_row.remove()
-											rowspan_steps = rowspan_steps - 1
+										# # Collect personas from the following lines and delete them
+										# while rowspan_steps:
+										# 	next_row = row.xpath('following-sibling::*')[0]
+										# 	personas.append(next_row.xpath('.//*[1]')[0].inner_xml())
+										# 	next_row.remove()
+										# 	rowspan_steps = rowspan_steps - 1
 
-										# Replace the initial cell with the collected list of personas
-										persona_cell.set_text('')
-										persona_cell.remove_attr_value('epub:type', 'z3998:persona')
-										for persona in personas:
-											persona_cell.append(etree.fromstring(f'<b xmlns:epub="http://www.idpf.org/2007/ops" epub:type="z3998:persona">{persona}</b>'))
-											etree.indent(persona_cell.lxml_element)
+										# # Replace the initial cell with the collected list of personas
+										# persona_cell.set_text('')
+										# persona_cell.remove_attr_value('epub:type', 'z3998:persona')
+										# for persona in personas:
+										# 	persona_cell.append(etree.fromstring(f'<b xmlns:epub="http://www.idpf.org/2007/ops" epub:type="z3998:persona">{persona}</b>'))
+										# 	etree.indent(persona_cell.lxml_element)
 
 							processed_xhtml = dom.to_string()
 
