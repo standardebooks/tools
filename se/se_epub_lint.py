@@ -480,6 +480,7 @@ TYPOS
 "y-020", "Possible typo: consecutive comma-period ([text],.[/])."
 "y-021", "Possible typo: closing [text]’[/] without opening [text]‘[/]."
 "y-022", "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/]."
+"y-023", "Possible typo: quotation mark within words."
 "y-024", "Possible typo: dash before [text]the/there/is/and/or/they/when[/] probably should be em-dash."
 "y-025", "Possible typo: letter/comma/quote mark/letter with no intervening space."
 "y-026", "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/]."
@@ -490,9 +491,6 @@ TYPOS
 "y-031", "Possible typo: dialog tag missing punctuation."
 "y-032", "Possible typo: italics running into preceding or following characters."
 "y-033", "Possible typo: three-em-dash obscuring an entire word, but not preceded by a space."
-UNUSED
-vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"y-023", "Possible typo: two opening quotation marks in a run. Hint: Nested quotes should switch between [text]“[/] and [text]‘[/]"
 """
 
 class LintMessage:
@@ -3073,6 +3071,12 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^”]+?”\\s“[^”]+?”$')]")]
 	if typos:
 		messages.append(LintMessage("y-022", "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+
+	# Check for question marks within words
+	# Check for at least two letters following the question mark to ensure we matched a word-like thing, and not an endnote startin with a letter like <https://standardebooks.org/ebooks/john-reed/ten-days-that-shook-the-world>
+	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[a-z]\\?[a-z]{2,}', 'i')]")]
+	if typos:
+		messages.append(LintMessage("y-023", "Possible typo: question mark within words.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for dashes instead of em-dashes
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\s[a-z]+-(the|there|is|and|or|they|when)\\s')]")]
