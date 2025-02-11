@@ -248,6 +248,7 @@ METADATA
 "m-076", "gutenberg.net.au URL should not have leading [text]www.[/]."
 "m-077", "MathML found in ebook, but no [attr]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata."
 "m-078", "MathML found in ebook, but no MathML accessibility [xml]<ProductFormFeatureValue>17</ProductFormFeatureValue>[/] set in ONIX data."
+"m-079", "Ebook looks like a collection, but no [xml]<meta property=\"se:is-a-collection\">true</meta>[/] element in metadata."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -3291,6 +3292,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	files_not_url_safe = []
 	id_values = {}
 	duplicate_id_values = []
+	does_ebook_look_like_collection = False
 	local_css = {
 		"has_poem_style": False,
 		"has_verse_style": False,
@@ -3709,6 +3711,12 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				if special_file in SPECIAL_FILES:
 					messages += _lint_special_file_checks(self, filename, dom, file_contents, ebook_flags, special_file)
 
+				if filename.name not in IGNORED_FILENAMES:
+					# Does this book look like a collection? It does if there is a `bodymatter` section that only contains `<article>` children.
+					nodes = dom.xpath("/html/body[contains(@epub:type, 'bodymatter') and ./article and count(./*[name() != 'article']) = 0]")
+					if nodes:
+						does_ebook_look_like_collection = True
+
 				missing_styles += _update_missing_styles(filename, dom, local_css)
 
 				messages += _lint_xhtml_css_checks(filename, dom, local_css_path)
@@ -3887,6 +3895,12 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 		if entries:
 			messages.append(LintMessage("m-070", "Glossary entry not found in the text.", se.MESSAGE_TYPE_ERROR, self.content_path / "glossary-search-key-map.xml", entries))
+
+	# Does this book look like a collection? It does if there is a `bodymatter` section that only contains `<article>` children.
+	if does_ebook_look_like_collection:
+		nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='se:is-a-collection' and text()='true']")
+		if not nodes:
+			messages.append(LintMessage("m-079", "Ebook looks like a collection, but no [xml]<meta property=\"se:is-a-collection\">true</meta>[/] element in metadata.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
 
 	if not allowed_messages:
 		allowed_messages = []
