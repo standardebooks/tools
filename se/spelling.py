@@ -473,6 +473,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bmantle-?shel(f|ves)\b", r"mantelshel\1", xhtml)		# mantleshelf -> mantelshelf
 	xhtml = regex.sub(r"\b([Tt])epee", r"\1eepee", xhtml)				# tepee -> teepee
 	xhtml = regex.sub(r"\b([Dd])[eé]b[aâ]cle", r"\1ebacle", xhtml)			# débâcle -> debacle
+	xhtml = regex.sub(r"\b(Ee])cstac(y|ies)", r"\1cstas\2", xhtml)			# ecstacy -> ecstasy
 
 
 	# Normalize some names
