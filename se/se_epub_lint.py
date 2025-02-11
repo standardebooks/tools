@@ -1569,7 +1569,7 @@ def _lint_xhtml_css_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 
 	# Do we have any elements that have specified border color?
 	# `transparent` and `none` are allowed values for border-color
-	if dom.xpath("/html/body//*[attribute::*[re:test(local-name(), 'data-css-border.+?-color') and text() != 'transparent' and text != 'none']]"):
+	if dom.xpath("/html/body//*[attribute::*[re:test(local-name(), 'data-css-border.+?-color') and text() != 'transparent' and text() != 'none']]"):
 		messages.append(LintMessage("c-004", "Don’t specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, local_css_path))
 
 	# Check that footers have the expected styling
