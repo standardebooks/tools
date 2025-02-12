@@ -1616,7 +1616,9 @@ class SeEpub:
 		"""
 		If this ebook looks like a collection, split the collection file into multiple different files.
 
-		E-ink Kobo doesn't support CSS `break-*` properties, so to create page breaks in single-file collections, we split those files into several files.
+		For example, a file called `poetry.xhtml` containing `poetry.xhtml#poem-1` and `poetry.xhtml#poem-2` would be split into `poem-1.xhtml` and `poem-2.xhtml`.
+
+		This is useful because eink Kobos don't support CSS `break-*` properties, so creating different files forces a page break on Kobos.
 
 		See <https://github.com/kobolabs/epub-spec#css> for the CSS that Kobos support.
 		"""
