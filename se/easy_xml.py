@@ -4,7 +4,7 @@ Defines the EasyXmlTree class, which is a convenience wrapper around etree.
 The class exposes some helpful functions like css_select() and xpath().
 """
 
-from typing import Dict, List, Union, Optional
+from typing import Dict, List, Union, Optional, Any
 import unicodedata
 
 import regex
@@ -90,11 +90,13 @@ class EasyXmlTree:
 		except parser.SelectorSyntaxError as ex:
 			raise se.InvalidCssException(f"Invalid selector: [css]{selector}[/]") from ex
 
-	def xpath(self, selector: str, return_string: bool = False):
+	def xpath(self, selector: str, return_string: bool = False) -> Any:
 		"""
 		Shortcut to select elements based on xpath selector.
 
-		If return_string is true, return a single string value instead of a list.
+		If `return_string` is `True`, return a single string value instead of a list.
+
+		Return `Any` to quiet `mypy` for now. Should be upgraded to a real type hint ASAP.
 		"""
 
 		result: List[Union[str, EasyXmlElement, float]] = []
@@ -363,9 +365,11 @@ class EasyXmlElement:
 
 		return self.lxml_element.set(self._replace_shorthand_namespaces(attribute), value)
 
-	def xpath(self, selector: str, return_string: bool = False):
+	def xpath(self, selector: str, return_string: bool = False) -> Any:
 		"""
 		Shortcut to select elements based on xpath selector.
+
+		Return `Any` to quiet `mypy` for now. Should be upgraded to a real type hint ASAP.
 		"""
 
 		result: List[Union[str, EasyXmlElement, float]] = []

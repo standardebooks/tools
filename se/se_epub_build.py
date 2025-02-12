@@ -1453,7 +1453,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				calibre_result = subprocess.run(calibre_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
 				calibre_result.check_returncode()
 			except subprocess.CalledProcessError as ex:
-				output = calibre_result.stdout.decode().strip()
+				output = calibre_result.stdout.decode().strip() # pyright: ignore # `calibre_result` is always bound because this exception is thrown from `calibre_result.check_returncode()`.
 
 				raise se.BuildFailedException(f"[bash]ebook-convert[/] failed with:\n{output}") from ex
 
