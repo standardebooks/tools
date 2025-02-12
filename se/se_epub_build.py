@@ -30,6 +30,7 @@ import se.epub
 import se.formatting
 import se.images
 import se.typography
+from se.se_epub import SeEpub # pylint: disable=cyclic-import
 from se.vendor.kobo_touch_extended import kobo
 from se.vendor.mobi import mobi
 
@@ -687,15 +688,19 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		if build_kobo:
 			work_kepub_dir = Path(work_dir / (work_compatible_epub_dir.name + ".kepub"))
 			shutil.copytree(work_compatible_epub_dir, str(work_kepub_dir), dirs_exist_ok=True)
+			work_kepub = SeEpub(work_kepub_dir)
 
 			with open(work_kepub_dir / "epub" / "css" / "se.css", "a", encoding="utf-8") as css_file:
 				with importlib.resources.files("se.data.templates").joinpath("se-kobo.css").open("r", encoding="utf-8") as compatibility_css_file:
 					css_file.write("\n\n" + compatibility_css_file.read())
 
+			# Kobos don't support `break-*` CSS, so attempt to single-file collections into multiple files to create a page break effect.
+			work_kepub.split_collection_files()
+
 			for file_path in work_kepub_dir.glob("**/*"):
 				# Add a note to the metadata file indicating this is a transform build
 				if file_path.name == self.metadata_file_path.name:
-					dom = self.get_dom(file_path)
+					dom = work_kepub.get_dom(file_path)
 
 					for node in dom.xpath("/package[contains(@prefix, 'se:')]/metadata"):
 						node.append(etree.fromstring("""<meta property="se:transform">kobo</meta>"""))
@@ -712,7 +717,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					# Note: Kobo supports CSS hyphenation, but it can be improved with soft hyphens.
 					# However we can't insert them, because soft hyphens break the dictionary search when
 					# a word is highlighted.
-					dom = self.get_dom(file_path)
+					dom = work_kepub.get_dom(file_path)
 
 					# Don't add spans to the ToC
 					if dom.xpath("/html/body//nav[contains(@epub:type, 'toc')]"):

@@ -390,6 +390,13 @@ class SeEpub:
 
 		return self._spine_file_paths
 
+	def write_metadata_file(self) -> None:
+		"""
+		Write the metadata file to disk.
+		"""
+		with open(self.metadata_file_path, "w", encoding="utf-8") as file:
+			file.write(self.metadata_dom.to_string())
+
 	def get_file(self, file_path: Path) -> str:
 		"""
 		Get raw file contents of a file in the epub.
@@ -1007,8 +1014,7 @@ class SeEpub:
 			for node in self.metadata_dom.xpath("/package/metadata/meta[@property='dcterms:modified']"):
 				node.set_text(now_iso)
 
-			with open(self.metadata_file_path, "w", encoding="utf-8") as file:
-				file.write(self.metadata_dom.to_string())
+			self.write_metadata_file()
 
 			for file_path in self.content_path.glob("**/*.xhtml"):
 				dom = self.get_dom(file_path)
@@ -1045,8 +1051,7 @@ class SeEpub:
 		for node in self.metadata_dom.xpath("/package/metadata/meta[@property='se:reading-ease.flesch']"):
 			node.set_text(str(se.formatting.get_flesch_reading_ease(text)))
 
-		with open(self.metadata_file_path, "w", encoding="utf-8") as file:
-			file.write(self.metadata_dom.to_string())
+		self.write_metadata_file()
 
 	def get_word_count(self) -> int:
 		"""
@@ -1086,10 +1091,7 @@ class SeEpub:
 		for node in self.metadata_dom.xpath("/package/metadata/meta[@property='se:word-count']"):
 			node.set_text(str(self.get_word_count()))
 
-		with open(self.metadata_file_path, "r+", encoding="utf-8") as file:
-			file.seek(0)
-			file.write(self.metadata_dom.to_string())
-			file.truncate()
+		self.write_metadata_file()
 
 	def generate_manifest(self) -> se.easy_xml.EasyXmlElement:
 		"""
@@ -1609,3 +1611,124 @@ class SeEpub:
 		# We don't change the anchor or the back ref just yet
 		endnote.source_file = file_name
 		return needs_rewrite, notes_changed
+
+	def split_collection_files(self) -> None:
+		"""
+		If this ebook looks like a collection, split the collection file into multiple different files.
+
+		E-ink Kobo doesn't support CSS `break-*` properties, so to create page breaks in single-file collections, we split those files into several files.
+
+		See <https://github.com/kobolabs/epub-spec#css> for the CSS that Kobos support.
+		"""
+
+		for file_path in self.content_path.glob("**/*.xhtml"):
+			dom = self.get_dom(file_path)
+
+			# Does this file looks like a possible collection file?
+			# It does if the only children of `<body>` are `<article>`s and `<section>`s, and there is more than one child.
+			if dom.xpath("/html/body[contains(@epub:type, 'bodymatter') and count(./*[name() = 'article' or name() = 'section']) > 1 and count(./*[name() != 'article' and name() != 'section']) = 0]"):
+				# Yes!
+
+				# Apply any CSS files in the DOM to this file.
+				for node in dom.xpath("/html/head/link[@rel='stylesheet']"):
+					css_filename = (file_path.parent / node.get_attr("href")).resolve()
+					dom.apply_css(self.get_file(css_filename), str(css_filename))
+
+				# Do all of the `<article>`s/`<section>`s have `break-*: page` CSS?
+				if dom.xpath("/html/body[count(./*[name() = 'article' or name() = 'section']) = count(./*[(name() = 'article' or name() = 'section') and @id and attribute::*[re:test(local-name(), '^data-css-break-(before|after)$')]])]"):
+					# Yes. Now split this file!
+
+					# A list of `{"filename": filename, "title": title}`
+					new_files = []
+					dom_template = deepcopy(dom)
+					# Remove the children of `<body>`.
+					for node in dom_template.xpath("/html/body/*"):
+						node.remove()
+
+					for article_node in dom.xpath("/html/body/*[name() = 'article' or name() = 'section']"):
+						new_filename = article_node.get_attr("id") + ".xhtml"
+
+						# Create a new DOM that we write to a new file
+						new_dom = deepcopy(dom_template)
+
+						new_dom.xpath("/html/body")[0].append(article_node)
+
+						title = se.formatting.generate_title(new_dom)
+						for node in new_dom.xpath("/html/head/title"):
+							node.set_text(title)
+
+						with open(file_path.parent / new_filename, "w", encoding="utf-8") as xhtml_file:
+							xhtml_file.write(new_dom.to_string())
+
+						se.formatting.format_xml_file(file_path.parent / new_filename)
+
+						# Get a list of all IDs contained in this new DOM, so we can adjust any links in the ebook later.
+						id_attrs = new_dom.xpath("/html/body/*[name() = 'article' or name() = 'section']//@id")
+
+						new_files.append({"filename": new_filename, "id": article_node.get_attr("id"), "title": title, "descendant_id_attrs": id_attrs})
+
+					# Replace the original file with the new files in the metadata spine
+					original_spine_node = self.metadata_dom.xpath(f"/package/spine/itemref[@idref='{file_path.name}']")[0]
+					for new_file in new_files:
+						original_spine_node.insert_before(se.easy_xml.EasyXmlElement(f"<itemref idref=\"{new_file['filename']}\"/>"))
+
+					original_spine_node.remove()
+
+					# Generate the new ToC.
+					# Don't use `self.generate_toc()` because the producer may have edited the ToC by hand.
+					toc_dom = self.get_dom(self.toc_path)
+					toc_node = toc_dom.xpath(f"/html/body/nav[@epub:type='toc']/ol//li[./a[re:test(@href, '^text/{file_path.name}')]]")[0]
+					for new_file in new_files:
+						li_node = se.easy_xml.EasyXmlElement("<li/>")
+						li_node.append(se.easy_xml.EasyXmlElement(f"""<a href="text/{new_file['filename']}">{new_file['title']}</a>"""))
+						toc_node.insert_before(li_node)
+
+					# Remove any ToC nodes that mention this file
+					for node in toc_dom.xpath(f"/html/body/nav[@epub:type='toc']/ol//li[./a[re:test(@href, '^text/{file_path.name}')]]"):
+						node.remove()
+
+					# If the ToC has a landmark node mentioning this file, replace it with the first `<article>`.
+					for node in toc_dom.xpath(f"/html/body/nav[@epub:type='landmarks']/ol//li/a[re:test(@href, '^text/{file_path.name}')]"):
+						node.set_attr("href", f"text/{new_files[0]['filename']}")
+
+					with open(self.toc_path, "w", encoding="utf-8") as file:
+						file.write(toc_dom.to_string())
+
+					se.formatting.format_xml_file(self.toc_path)
+
+					# Remove the original file.
+					file_path.unlink()
+
+					# Generate the new manifest.
+					for node in self.metadata_dom.xpath("/package/manifest"):
+						node.replace_with(self.generate_manifest())
+
+					self.write_metadata_file()
+
+					se.formatting.format_xml_file(self.metadata_file_path)
+
+					# Now iterate over all files in the ebook to update any links that might refer to the file we just split.
+					for nested_file_path in self.content_path.glob("**/*.xhtml"):
+						dom = self.get_dom(nested_file_path)
+
+						# Replace links to the original file with no anchor with a link to the first `<article>`
+						for node in dom.xpath(f"/html/body//a[re:test(@href, '^(.+/)?{file_path.name}$')]"):
+							node.set_attr("href", node.get_attr("href").replace(file_path.name, new_files[0]['filename']))
+
+						# Replace anchored links with the new file
+						for node in dom.xpath(f"/html/body//a[re:test(@href, '^(.+/)?{file_path.name}#')]"):
+							old_target_id = regex.sub(fr"^(.+/)?{file_path.name}#", "", node.get_attr("href"))
+
+							for new_file in new_files:
+								# Does the old target ID point to the top of a new file? If so, link directly to the new file, without an anchor.
+								if old_target_id == new_file['id']:
+									node.set_attr("href", regex.sub(fr"^(.+/)?{file_path.name}#.+", fr"\1{new_file['filename']}", node.get_attr("href")))
+									break
+
+								# Does the old target ID exist as a descendent of this new file?
+								if old_target_id in new_file['descendant_id_attrs']:
+									node.set_attr("href", regex.sub(fr"^(.+/)?{file_path.name}#(.+)", fr"\1{new_file['filename']}#\2", node.get_attr("href")))
+									break
+
+						with open(nested_file_path, "w", encoding="utf-8") as file:
+							file.write(dom.to_string())
