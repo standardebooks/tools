@@ -537,6 +537,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bBehring", r"Bering", xhtml)				# Behring -> Bering (i.e. the Bering Straight)
 	xhtml = regex.sub(r"\bRomanoff", r"Romanov", xhtml)				# Romanoff -> Romanov
 	xhtml = regex.sub(r"\bCezanne", r"Cézanne", xhtml)				# Cezanne -> Cézanne
+	xhtml = regex.sub(r"\bSamarcand", r"Samarkand", xhtml)				# Samarcand -> Samarkand
 
 	# Remove archaic diphthongs
 	xhtml = regex.sub(r"\b([Mm])edi(æ|ae)val", r"\1edieval", xhtml)
