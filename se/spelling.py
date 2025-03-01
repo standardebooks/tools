@@ -166,7 +166,6 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Bb])awble", r"\1auble", xhtml)				# bawble -> bauble
 	xhtml = regex.sub(r"\b([Bb])bee[’']s[ \-]wax\b", r"\1eeswax", xhtml)		# bee’s-wax -> beeswax
 	xhtml = regex.sub(r"\b([Bb])efal(s?)\b", r"\1efall\2", xhtml)			# befal -> befall
-	xhtml = regex.sub(r"\bbefal(s?)\b", r"befall\1", xhtml)				# befal -> befall
 	xhtml = regex.sub(r"\b([Bb])efel\b", r"\1efell", xhtml)				# befel -> befell
 	xhtml = regex.sub(r"([Bb])iass", r"\1ias", xhtml)				# (un)biass(ed) -> (un)bias(ed)
 	xhtml = regex.sub(r"\b([Bb])owlder(s?)\b", r"\1oulder\2", xhtml)		# bowlder/bowlders -> boulder/boulders
