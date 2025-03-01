@@ -148,9 +148,9 @@ def modernize_spelling(xhtml: str) -> str:
 
         # spelling changes on words with no diacritics or elision quotes
 	xhtml = regex.sub(r"(?<![Cc]ompl)exion", r"ection", xhtml)			# -extion -> -exction (connexion, reflexion, etc., but "complexion")
-	xhtml = regex.sub(r"([^\p{Lowercase_Letter}]’[Tt])\s(is|were|was|wasn’t|isn’t|ain’t)\b", r"\1\2", xhtml)		# 't is, 't was, 't were 't isn't -> 'tis, 'twas, 'twere, 't isn't
+	xhtml = regex.sub(r"([^\p{Lowercase_Letter}]’[Tt])\s(is|were|was|wasn’t|isn’t|ain’t)\b", r"\1\2", xhtml)	# 't is, 't was, 't were 't isn't -> 'tis, 'twas, 'twere, 't isn't
 	xhtml = regex.sub(r"&amp;c\.", r"etc.", xhtml)					# &c. -> etc.
-	xhtml = regex.sub(r"\ba propos\b", r"apropos", xhtml)				# a propos -> apropos
+	xhtml = regex.sub(r"\b[Aa] propos\b", r"\1propos", xhtml)			# a propos -> apropos
 	xhtml = regex.sub(r"\b([Aa])fr(i|ee)te?", r"\1freet", xhtml)			# afrit -> afreet
 	xhtml = regex.sub(r"\b([Aa])larum\b", r"\1larm", xhtml)				# alarum -> alarm
 	xhtml = regex.sub(r"\b([Aa])lledg(ing|e[sd])", r"\1lleg\2", xhtml)		# alledge -> allege
