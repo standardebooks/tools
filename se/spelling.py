@@ -150,8 +150,6 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<![Cc]ompl)exion", r"ection", xhtml)			# -extion -> -exction (connexion, reflexion, etc., but "complexion")
 	xhtml = regex.sub(r"([^\p{Lowercase_Letter}]’[Tt])\s(is|were|was|wasn’t|isn’t|ain’t)\b", r"\1\2", xhtml)		# 't is, 't was, 't were 't isn't -> 'tis, 'twas, 'twere, 't isn't
 	xhtml = regex.sub(r"&amp;c\.", r"etc.", xhtml)					# &c. -> etc.
-	xhtml = regex.sub(r"\b2d\b", r"2nd", xhtml)					# 2d -> 2nd (warning: check that we don't convert 2d in the "2 pence" sense!)
-	xhtml = regex.sub(r"\b3d\b", r"3rd", xhtml)					# 3d -> 3rd (warning: check that we don't convert 3d in the "3 pence" sense!)
 	xhtml = regex.sub(r"\ba propos\b", r"apropos", xhtml)				# a propos -> apropos
 	xhtml = regex.sub(r"\b([Aa])fr(i|ee)te?", r"\1freet", xhtml)			# afrit -> afreet
 	xhtml = regex.sub(r"\b([Aa])larum\b", r"\1larm", xhtml)				# alarum -> alarm
