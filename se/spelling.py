@@ -435,8 +435,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Aa])ttache\b", r"\1ttaché", xhtml)			# attache -> attaché
 	xhtml = regex.sub(r"\b([Bb])ete noir", r"\1ête noir", xhtml)			# bete noir -> bête noir
 	xhtml = regex.sub(r"\b([Bb])lase\b", r"\1lasé", xhtml)				# blase -> blasé
-	xhtml = regex.sub(r"\b([Cc])afe\b", r"\1afé", xhtml)				# cafe -> café
-	xhtml = regex.sub(r"\b([Cc])afes\b", r"\1afés", xhtml)				# cafes -> cafés; We break up cafe so that we don't catch 'cafeteria'
+	xhtml = regex.sub(r"\b([Cc])afe(s?)\b", r"\1afé\2", xhtml)			# cafe(s) -> café(s)
 	xhtml = regex.sub(r"\b([Cc])anape", r"\1anapé", xhtml)				# canape -> canapé
 	xhtml = regex.sub(r"([Cc])h?ateau([sx]?\b)", r"\1hâteau\2", xhtml)		# chateau -> château
 	xhtml = regex.sub(r"\b([Cc])liche([sd]?)\b", r"\1liché\2", xhtml)		# cliche -> cliché
