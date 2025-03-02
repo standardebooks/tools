@@ -389,14 +389,14 @@ def modernize_spelling(xhtml: str) -> str:
 
         # remove elision quotes from words that no longer need them
 	xhtml = regex.sub(r"[‘’]([Bb])us\b", r"\1us", xhtml)				# ’bus -> bus
-	xhtml = regex.sub(r"’([Cc])ello(s?)\b", r"\1ello\2", xhtml)			# 'cello -> cello
-	xhtml = regex.sub(r"’([Cc])ellist", r"\1ellist", xhtml)				# 'cellist -> cellist
+	xhtml = regex.sub(r"’([Cc])ello(s?)\b", r"\1ello\2", xhtml)			# ’cello -> cello
+	xhtml = regex.sub(r"’([Cc])ellist", r"\1ellist", xhtml)				# ’cellist -> cellist
 	xhtml = regex.sub(r"([^\p{Letter}])([Dd])amn’([^\p{Letter}])", r"\1\2amn\3", xhtml)	# damn' -> damn
-	xhtml = regex.sub(r"’([Ff])lu\b", r"\1lu", xhtml)				# 'flu -> flu
+	xhtml = regex.sub(r"’([Ff])lu\b", r"\1lu", xhtml)				# ’flu -> flu
 	xhtml = regex.sub(r"['’]([Pp])hon(e|ing)", r"\1hon\2", xhtml)			# ’phone -> phone; note that we can't use \b on the left because it won't match for some reason
-	xhtml = regex.sub(r"’([Pp])lane\b", r"\1lane", xhtml)				# 'plane -> plane
-	xhtml = regex.sub(r"['’]([Pp])ossum", r"\1ossum", xhtml)			# 'possum -> possum
-	xhtml = regex.sub(r"\b[‘’]([Ss])cope(s?)\b", r"\1cope\2", xhtml)		# 'scope -> scope
+	xhtml = regex.sub(r"’([Pp])lane\b", r"\1lane", xhtml)				# ’plane -> plane
+	xhtml = regex.sub(r"['’]([Pp])ossum", r"\1ossum", xhtml)			# ’possum -> possum
+	xhtml = regex.sub(r"\b[‘’]([Ss])cope(s?)\b", r"\1cope\2", xhtml)		# ’scope -> scope
 
 
         # remove diacritics from words that no longer need them
