@@ -1950,7 +1950,8 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		messages.append(LintMessage("s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary.", se.MESSAGE_TYPE_ERROR, filename, [attr for (attr, bare_attr) in unnecessary_z3998_attrs]))
 
 	# Check if language tags in individual files match the language in the metadata file
-	if filename.name not in IGNORED_FILENAMES:
+	# loi is in IGNORED_FILENAMES, but should not be excluded from this particular test
+	if filename.name not in IGNORED_FILENAMES or filename.name == "loi.xhtml":
 		file_language = dom.xpath("/html/@xml:lang", True)
 		if language != file_language:
 			messages.append(LintMessage("s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/].", se.MESSAGE_TYPE_WARNING, filename))
