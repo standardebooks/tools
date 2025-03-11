@@ -1324,6 +1324,10 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	if self.is_se_ebook and special_file in ("colophon", "imprint"):
 		if len(source_links) <= 2:
 			# Check that links back to sources are represented correctly
+			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
+			if nodes:
+				messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
 			nodes = dom.xpath("/html/body//a[@href='https://www.pgdp.net' and text()!='The Online Distributed Proofreading Team']")
 			if nodes:
 				messages.append(LintMessage("m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
@@ -1332,9 +1336,9 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 			if nodes:
 				messages.append(LintMessage("m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
+			nodes = dom.xpath("/html/body//a[@href='https://www.pgdpcanada.net' and text()!='The Online Distributed Proofreaders Canada Team']")
 			if nodes:
-				messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+				messages.append(LintMessage("m-080", "DP link must be exactly [text]The Online Distributed Proofreaders Canada Team[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 		nodes = dom.xpath("/html/body//p[re:test(., '\\ba transcription\\b') and ./a[contains(@href, '#transcriptions')]]")
 		if nodes:
