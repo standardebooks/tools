@@ -249,6 +249,7 @@ METADATA
 "m-077", "MathML found in ebook, but no [attr]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata."
 "m-078", "MathML found in ebook, but no MathML accessibility [xml]<ProductFormFeatureValue>17</ProductFormFeatureValue>[/] set in ONIX data."
 "m-079", "Ebook looks like a collection, but no [xml]<meta property=\"se:is-a-collection\">true</meta>[/] element in metadata."
+"m-080", "DP link must be exactly [text]The Online Distributed Proofreaders Canada Team[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
