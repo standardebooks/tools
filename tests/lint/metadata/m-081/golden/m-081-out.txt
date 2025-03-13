@@ -1,0 +1,5 @@
+m-081 [Error] colophon.xhtml When published between a range of years, the text 
+must be `published between year1 and year2`.
+        <p><i epub:type="se:name.publication.book">Unknown Novel</i><br/>
+        was published in 1810⁠–⁠1813 by<br/>
+        <a href="https://en.wikipedia.org/wiki/Jane_Austen">Jane Austen</a>.</p>
