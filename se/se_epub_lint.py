@@ -249,7 +249,7 @@ METADATA
 "m-077", "MathML found in ebook, but no [attr]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata."
 "m-078", "MathML found in ebook, but no MathML accessibility [xml]<ProductFormFeatureValue>17</ProductFormFeatureValue>[/] set in ONIX data."
 "m-079", "Ebook looks like a collection, but no [xml]<meta property=\"se:is-a-collection\">true</meta>[/] element in metadata."
-"m-080", "DP link must be exactly [text]The Online Distributed Proofreaders Canada Team[/]."
+"m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/]."
 "m-081", "When published between a range of years, the text must be [text]published between year1 and year2[/]."
 
 SEMANTICS & CONTENT
@@ -1340,7 +1340,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 			nodes = dom.xpath("/html/body//a[@href='https://www.pgdpcanada.net' and text()!='The Online Distributed Proofreaders Canada Team']")
 			if nodes:
-				messages.append(LintMessage("m-080", "DP link must be exactly [text]The Online Distributed Proofreaders Canada Team[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+				messages.append(LintMessage("m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 		nodes = dom.xpath("/html/body//p[re:test(., '\\ba transcription\\b') and ./a[contains(@href, '#transcriptions')]]")
 		if nodes:
