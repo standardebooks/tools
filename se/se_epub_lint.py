@@ -240,7 +240,7 @@ METADATA
 "m-068", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"title-type\">[/]."
 "m-069", "[text]comprised of[/] in metadata. Hint: Is there a better phrase to use here?"
 "m-070", "Glossary entries not present in the text:"
-"m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/]."
+"m-071", "DP link must be exactly [text]Distributed Proofreaders[/]."
 "m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/]."
 "m-073", "Anonymous contributor values must be exactly [text]Anonymous[/]."
 "m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/]."
@@ -1330,9 +1330,9 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 			if nodes:
 				messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-			nodes = dom.xpath("/html/body//a[@href='https://www.pgdp.net' and text()!='The Online Distributed Proofreading Team']")
+			nodes = dom.xpath("/html/body//a[@href='https://www.pgdp.net' and text()!='Distributed Proofreaders']")
 			if nodes:
-				messages.append(LintMessage("m-071", "DP link must be exactly [text]The Online Distributed Proofreading Team[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+				messages.append(LintMessage("m-071", "DP link must be exactly [text]Distributed Proofreaders[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www.pgdp.org/ols/') and text()!='Distributed Proofreaders Open Library System']")
 			if nodes:
