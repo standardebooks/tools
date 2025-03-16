@@ -1338,7 +1338,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 			if nodes:
 				messages.append(LintMessage("m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-			nodes = dom.xpath("/html/body//a[@href='https://www.pgdpcanada.net' and text()!='The Online Distributed Proofreaders Canada Team']")
+			nodes = dom.xpath("/html/body//a[@href='https://www.pgdpcanada.net' and text()!='Distributed Proofreaders Canada']")
 			if nodes:
 				messages.append(LintMessage("m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
