@@ -251,6 +251,7 @@ METADATA
 "m-079", "Ebook looks like a collection, but no [xml]<meta property=\"se:is-a-collection\">true</meta>[/] element in metadata."
 "m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/]."
 "m-081", "When published between a range of years, the text must be [text]published between year1 and year2[/]."
+"m-082", "Faded Page link text must be exactly [text]Faded Page[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -1341,6 +1342,10 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 			nodes = dom.xpath("/html/body//a[@href='https://www.pgdpcanada.net' and text()!='Distributed Proofreaders Canada']")
 			if nodes:
 				messages.append(LintMessage("m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www.fadedpage.com') and not(text()='Faded Page')]")
+			if nodes:
+				messages.append(LintMessage("m-082", "Faded Page link text must be exactly [text]Faded Page[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 		nodes = dom.xpath("/html/body//p[re:test(., '\\ba transcription\\b') and ./a[contains(@href, '#transcriptions')]]")
 		if nodes:
