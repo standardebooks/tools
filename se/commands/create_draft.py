@@ -730,7 +730,6 @@ def _create_draft(args: Namespace, plain_output: bool):
 				producers_text = regex.sub(r"(at )?https?://www\.pgdp\.net", "", producers_text)
 				producers_text = regex.sub(r"[\r\n]+", " ", producers_text)
 				producers_text = regex.sub(r",? and ", ", and ", producers_text)
-				producers_text = producers_text.replace(" and the Online", " and The Online")
 				producers_text = producers_text.replace(", and ", ", ").strip()
 
 				pg_producers = [producer.strip() for producer in regex.split(',|;', producers_text)]
@@ -891,7 +890,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 					producers_xhtml = ""
 					for i, producer in enumerate(pg_producers):
 						if "Distributed Proofread" in producer:
-							producers_xhtml = producers_xhtml + """<a href="https://www.pgdp.net">The Online Distributed Proofreading Team</a>"""
+							producers_xhtml = producers_xhtml + """<a href="https://www.pgdp.net">Distributed Proofreaders</a>"""
 						elif "anonymous" in producer.lower():
 							producers_xhtml = producers_xhtml + """<b epub:type="z3998:personal-name">An Anonymous Volunteer</b>"""
 						else:
@@ -905,7 +904,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 					producers_xhtml = producers_xhtml + "<br/>"
 
-					colophon_xhtml = colophon_xhtml.replace("""<b epub:type="z3998:personal-name">TRANSCRIBER_1</b>, <b epub:type="z3998:personal-name">TRANSCRIBER_2</b>, and <a href=\"https://www.pgdp.net\">The Online Distributed Proofreading Team</a><br/>""", producers_xhtml)
+					colophon_xhtml = colophon_xhtml.replace("""<b epub:type="z3998:personal-name">TRANSCRIBER_1</b>, <b epub:type="z3998:personal-name">TRANSCRIBER_2</b>, and <a href=\"https://www.pgdp.net\">Distributed Proofreaders</a><br/>""", producers_xhtml)
 
 			file.seek(0)
 			file.write(colophon_xhtml)
@@ -926,7 +925,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 			for producer in pg_producers:
 				# Name and File-As
 				if "Distributed Proofread" in producer:
-					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">The Online Distributed Proofreading Team</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Online Distributed Proofreading Team, The</meta>\n"
+					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">Distributed Proofreaders</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Distributed Proofreaders</meta>\n"
 				elif "anonymous" in producer.lower():
 					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">An Anonymous Volunteer</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Anonymous Volunteer, An</meta>\n"
 				else:
