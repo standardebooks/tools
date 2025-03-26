@@ -784,7 +784,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 			# lxml may also create duplicate `xml:lang` attributes on the root element. Not sure why. Remove them.
 			output = regex.sub(r'(xml:lang="[^"]+?" lang="[^"]+?") xml:lang="[^"]+?"', r"\1", output)
 
-		except Exception as ex:
+		except Exception:
 			# Save this error for later; we still want to save the book text and complete the `create-draft` process even if we've failed to parse PG's HTML source.
 			is_pg_html_parsed = False
 			output = pg_ebook_html
