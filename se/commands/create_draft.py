@@ -742,23 +742,35 @@ def _create_draft(args: Namespace, plain_output: bool):
 					if "Distributed Proofread" in producer:
 						pg_producers[key] = "Distributed Proofreaders"
 
-			# Try to strip out the PG header.
-			for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*START OF THIS')]", namespaces=namespaces):
-				for sibling_node in node.xpath("./preceding-sibling::*"):
-					easy_node = se.easy_xml.EasyXmlElement(sibling_node)
-					easy_node.remove()
-
+			# Strip everything in `<head>`.
+			for node in dom.xpath("/html/head//*"):
 				easy_node = se.easy_xml.EasyXmlElement(node)
 				easy_node.remove()
 
-			# Try to strip out the PG license footer.
-			for node in dom.xpath("//*[re:test(text(), 'End of (the )?Project Gutenberg')]", namespaces=namespaces):
-				for sibling_node in node.xpath("./following-sibling::*"):
-					easy_node = se.easy_xml.EasyXmlElement(sibling_node)
+			# Try to strip out the PG header and footer for new PG ebooks.
+			nodes = dom.xpath("//section[contains(@class, 'pg-boilerplate')]")
+			if nodes:
+				for node in nodes:
+					easy_node = se.easy_xml.EasyXmlElement(node)
+					easy_node.remove()
+			else:
+				# Old PG ebooks might have a different structure.
+				for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*START OF (THE|THIS)')]", namespaces=namespaces):
+					for sibling_node in node.xpath("./preceding-sibling::*"):
+						easy_node = se.easy_xml.EasyXmlElement(sibling_node)
+						easy_node.remove()
+
+					easy_node = se.easy_xml.EasyXmlElement(node)
 					easy_node.remove()
 
-				easy_node = se.easy_xml.EasyXmlElement(node)
-				easy_node.remove()
+				# Try to strip out the PG license footer.
+				for node in dom.xpath("//*[re:test(text(), 'End of (the )?Project Gutenberg')]", namespaces=namespaces):
+					for sibling_node in node.xpath("./following-sibling::*"):
+						easy_node = se.easy_xml.EasyXmlElement(sibling_node)
+						easy_node.remove()
+
+					easy_node = se.easy_xml.EasyXmlElement(node)
+					easy_node.remove()
 
 			# lxml will put the XML declaration in a weird place, remove it first.
 			output = regex.sub(r"<\?xml.+?\?>", "", etree.tostring(dom, encoding="unicode"))
@@ -772,7 +784,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 			# lxml may also create duplicate `xml:lang` attributes on the root element. Not sure why. Remove them.
 			output = regex.sub(r'(xml:lang="[^"]+?" lang="[^"]+?") xml:lang="[^"]+?"', r"\1", output)
 
-		except Exception:
+		except Exception as ex:
 			# Save this error for later; we still want to save the book text and complete the `create-draft` process even if we've failed to parse PG's HTML source.
 			is_pg_html_parsed = False
 			output = pg_ebook_html
