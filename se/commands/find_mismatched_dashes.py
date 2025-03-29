@@ -4,7 +4,7 @@ This module implements the `se find-mismatched-dashes` command.
 
 import argparse
 from typing import Dict, Tuple
-import urllib
+import urllib.parse
 
 import regex
 from rich import box

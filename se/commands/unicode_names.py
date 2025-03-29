@@ -4,7 +4,7 @@ This module implements the `se unicode-names` command.
 
 import argparse
 import sys
-import urllib
+import urllib.parse
 import unicodedata
 
 from rich import box
