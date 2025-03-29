@@ -4,7 +4,7 @@ This module implements the `se find-mismatched-diacritics` command.
 
 import argparse
 from typing import Dict, Tuple
-import urllib
+import urllib.parse
 import unicodedata
 
 import regex
