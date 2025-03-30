@@ -730,7 +730,10 @@ def _create_draft(args: Namespace, plain_output: bool):
 				producers_text = regex.sub(r"<[^>]+?>$", "", producers_text)
 
 				producers_text = regex.sub(r".+?(Produced by|Credits\s*:\s*) (.+?)\s*$", "\\2", producers_text, flags=regex.DOTALL)
+				# workaround for what appears to be a PG bug where the credits start as "Credits: Produced by Name1"
+				producers_text = regex.sub(r"Produced by ", "", producers_text)
 				producers_text = regex.sub(r"\(.+?\)", "", producers_text, flags=regex.DOTALL)
+				producers_text = regex.sub(r" \s+", " ", producers_text, flags=regex.DOTALL)
 				producers_text = regex.sub(r"(at )?https?://www\.pgdp\.net", "", producers_text)
 				producers_text = regex.sub(r"[\r\n]+", " ", producers_text)
 				producers_text = regex.sub(r",? and ", ", and ", producers_text)
@@ -906,6 +909,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 					colophon_xhtml = colophon_xhtml.replace("PG_YEAR", pg_publication_year)
 
 				if pg_producers:
+					producer_count = len(pg_producers)
 					producers_xhtml = ""
 					for i, producer in enumerate(pg_producers):
 						if "Distributed Proofread" in producer:
@@ -915,10 +919,14 @@ def _create_draft(args: Namespace, plain_output: bool):
 						else:
 							producers_xhtml = producers_xhtml + f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(producer)).strip('.')}</b>"""
 
-						if i < len(pg_producers) - 1:
-							producers_xhtml = producers_xhtml + ", "
+						if i < producer_count - 1:
+							# If exactly two producers, we don't want a comma between them
+							if producer_count == 2:
+								producers_xhtml = producers_xhtml + " "
+							else:
+								producers_xhtml = producers_xhtml + ", "
 
-						if i == len(pg_producers) - 2:
+						if i == producer_count - 2:
 							producers_xhtml = producers_xhtml + "and "
 
 					producers_xhtml = producers_xhtml + "<br/>"
@@ -963,7 +971,12 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 				i = i + 1
 
-			metadata_xml = regex.sub(r"\t\t<dc:contributor id=\"transcriber-1\">TRANSCRIBER_1</dc:contributor>\s*<meta property=\"file-as\" refines=\"#transcriber-1\">TRANSCRIBER_1_SORT</meta>\s*<meta property=\"se:url\.homepage\" refines=\"#transcriber-1\">TRANSCRIBER_1_URL</meta>\s*<meta property=\"role\" refines=\"#transcriber-1\" scheme=\"marc:relators\">trc</meta>", "\t\t" + producers_xhtml.strip(), metadata_xml)
+			# replace the first transcriber line with a placeholder
+			metadata_xml = regex.sub(r"\t\t<dc:contributor id=\"transcriber-1\">TRANSCRIBER_1</dc:contributor>", "\t\tCREDITS_PLACEHOLDER", metadata_xml)
+			# remove the remaining transcriber lines
+			metadata_xml = regex.sub(r"^.+?transcriber.+?\n", "", metadata_xml, flags=regex.MULTILINE)
+			# replace the placeholder with the actual transcribers
+			metadata_xml = regex.sub(r"\t\tCREDITS_PLACEHOLDER", "\t\t" + producers_xhtml.strip(), metadata_xml, flags=regex.DOTALL)
 
 		if ebook_wiki_url:
 			metadata_xml = metadata_xml.replace(">EBOOK_WIKI_URL<", f">{ebook_wiki_url}<")
