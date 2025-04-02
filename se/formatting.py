@@ -128,13 +128,6 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"<abbr>etc\.</abbr>([”’]?(?:</p>|\s+[“‘]?[\p{Uppercase_Letter}]))", r"""<abbr class="eoc">etc.</abbr>\1""", xhtml)
 	xhtml = regex.sub(r"""<abbr( epub:type="[^"]+")?>([^<]+\.)</abbr>([”’]?</p>)""", r"""<abbr class="eoc"\1>\2</abbr>\3""", xhtml)
 
-	# We may have added eoc classes twice, so remove duplicates here
-	xhtml = regex.sub(r"""<abbr class="(.*) eoc(\s+eoc)+">""", r"""<abbr class="\1 eoc">""", xhtml)
-
-	# Clean up nesting errors
-	xhtml = regex.sub(r"""<abbr class="eoc"><abbr>([^<]+)</abbr></abbr>""", r"""<abbr class="eoc">\1</abbr>""", xhtml)
-	xhtml = regex.sub(r"""class="eoc eoc""", r"""class="eoc""", xhtml)
-
 	# Get Roman numerals >= 2 characters
 	# We only wrap these if they're standalone (i.e. not already wrapped in a tag) to prevent recursion in multiple runs
 	# Ignore "numerals" followed by a dash, as they are more likely something like `x-ray` or `v-shaped`
@@ -166,12 +159,25 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"([0-9]+)\s*m\.?p\.?h\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>mph</abbr>", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"([0-9]+)\s*h\.?p\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>hp</abbr>", xhtml, flags=regex.IGNORECASE)
 
-	# We may have added HTML tags within title tags. Remove those here
-	matches = regex.findall(r"<title>.+?</title>", xhtml)
-	if matches:
-		xhtml = regex.sub(r"<title>.+?</title>", f"<title>{se.formatting.remove_tags(matches[0])}</title>", xhtml)
+	dom = se.easy_xml.EasyXmlTree(xhtml)
 
-	return xhtml
+	# We may have added HTML tags within title tags. Remove those here.
+	for node in dom.xpath("/html/head/title"):
+		replacement_node = se.easy_xml.EasyXmlElement(f"<title>{node.inner_text()}</title>")
+		node.replace_with(replacement_node)
+
+	# We may have added `eoc` classes twice, so remove duplicates here
+	for node in dom.xpath("/html/body//*[re:test(@class, '\\beoc\\seoc\\b')]"):
+		node.set_attr("class", regex.sub(r"\beoc\seoc\b", "eoc", node.get_attr("class")))
+
+	# Clean up nesting errors
+	for node in dom.xpath("/html/body//abbr/abbr"):
+		node.unwrap()
+
+	for node in dom.xpath("/html/body//blockquote//*[name() = 'header' or name() = 'footer']"):
+		node.set_attr("role", "presentation")
+
+	return dom.to_string()
 
 def get_flesch_reading_ease(xhtml: str) -> float:
 	"""
