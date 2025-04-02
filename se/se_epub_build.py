@@ -444,7 +444,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 						with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("mathmlcontent2presentation.xsl")) as mathml_xsl_filename:
 							mathml_transform = etree.XSLT(etree.parse(str(mathml_xsl_filename)))
 
-					# Transform the mathml and get a string representation
+					# Transform the MathML and get a string representation
 					# XSLT comes from https://github.com/fred-wang/webextension-content-mathml-polyfill
 					mathml_presentation_tree = mathml_transform(mathml_content_tree)
 					mathml_presentation_xhtml = etree.tostring(mathml_presentation_tree, encoding="unicode", pretty_print=True, with_tail=False).strip()
@@ -453,7 +453,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					mathml_presentation_xhtml = regex.sub(r" xmlns=", " xmlns:m=", mathml_presentation_xhtml)
 					mathml_presentation_xhtml = regex.sub(r"<(/)?", r"<\1m:", mathml_presentation_xhtml)
 
-					# Plop our presentational mathml back in to the XHTML we're processing
+					# Plop our presentational MathML back in to the XHTML we're processing
 					node.replace_with(etree.fromstring(str.encode(mathml_presentation_xhtml)))
 
 				# Since we added an outlining stroke to the titlepage/publisher logo images, we
@@ -871,7 +871,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			# We import this late because we don't want to load selenium if we're not going to use it!
 			from se import browser # pylint: disable=import-outside-toplevel
 
-			# Remove MathML / describedMath accessibilityFeatures as we’re not going to use MathML
+			# Remove MathML / `describedMath` accessibilityFeatures as we’re not going to use MathML
 			for node in metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and (text() = 'describedMath' or text() = 'MathML')]"):
 				node.remove()
 
@@ -879,7 +879,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				node.remove()
 
 			# We wrap this whole thing in a try block, because we need to call
-			# driver.quit() if execution is interrupted (like by ctrl + c, or by an unhandled exception). If we don't call driver.quit(),
+			# `driver.quit()` if execution is interrupted (like by ctrl + c, or by an unhandled exception). If we don't call `driver.quit()`,
 			# Firefox will stay around as a zombie process even if the Python script is dead.
 			try:
 				driver = browser.initialize_selenium_firefox_webdriver()
@@ -890,8 +890,8 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 					dom = self.get_dom(filename)
 
-					# Iterate over mathml nodes and try to make some basic replacements to achieve the same appearance
-					# but without mathml. If we're able to remove all mathml namespaced elements, we don't need to render it as png.
+					# Iterate over MathML nodes and try to make some basic replacements to achieve the same appearance
+					# but without MathML. If we're able to remove all MathML namespaced elements, we don't need to render it as png.
 					for node in dom.xpath("/html/body//m:math"):
 						node_clone = deepcopy(node)
 
@@ -942,7 +942,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 						for child in node_clone.xpath(".//m:mrow"):
 							child.unwrap()
 
-						# If there are no more mathml-namespaced elements, we succeeded; replace the mathml node
+						# If there are no more mathml-namespaced elements, we succeeded; replace the MathML node
 						# with our modified clone
 						if not node_clone.xpath(".//*[namespace-uri()='http://www.w3.org/1998/Math/MathML']"):
 							# Success!

@@ -509,7 +509,7 @@ class EasyXmlElement:
 		Remove this node and replace it with the passed node
 		"""
 
-		# lxml.addnext() moves this element's tail to the new element
+		# `lxml.addnext()` moves this element's tail to the new element
 		if isinstance(node, EasyXmlElement):
 			self.lxml_element.addnext(node.lxml_element)
 		else:
