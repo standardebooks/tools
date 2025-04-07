@@ -2,7 +2,7 @@
 Tests for commands that transform epub text files, and require a substantially
 complete ebook directory structure to do so.
 This includes:
-	build, build-ids, build-images, prepare-release, recompose-epub, renumber-endnotes,
+	build-ids, build-images, prepare-release, recompose-epub, renumber-endnotes,
 	shift-endnotes, shift-illustrations
 """
 

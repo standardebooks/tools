@@ -1,2 +1,0 @@
-build --output {book_directory}/dist {book_directory}
-extract-ebook --output {book_directory}/extracted {book_directory}/dist/jane-austen_unknown-novel.epub
