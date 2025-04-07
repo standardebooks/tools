@@ -1,8 +1,8 @@
 """
 Tests for commands that transform epub text files and only need a draft ebook to run.
 These include:
-	british2american, build-loi, build-title, clean, hyphenate, modernize-spelling,
-	semanticate, typogrify
+	british2american, build-loi, build-manifest, build-spine, build-title, build-toc,
+	clean, hyphenate, modernize-spelling, semanticate, typogrify
 """
 
 import os
@@ -42,7 +42,7 @@ def test_draft_commands(draftbook__directory: Path, work__directory: Path, comma
 	command_file = test_directory / (command + "-command")
 	if command_file.is_file():
 		with open(command_file, "r", encoding="utf-8") as cfile:
-			command_full = cfile.readline().rstrip()
+			command_full = cfile.readline().strip()
 		# make sure command is present
 		if command in command_full:
 			command_to_use = command_full
