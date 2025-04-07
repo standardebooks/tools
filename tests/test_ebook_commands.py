@@ -1,6 +1,5 @@
 """
-Tests for commands that transform epub text files and require a substantially
-complete ebook directory structure.
+Tests for commands that transform epub text files and require a substantially complete ebook.
 These include:
 	build-ids, build-images, prepare-release, recompose-epub, renumber-endnotes, shift-endnotes,
 	shift-illustrations
@@ -26,7 +25,7 @@ if module_directory.is_dir():
 				module_tests.append([test_command, os.path.basename(directory_entry)])
 	module_tests.sort()
 
-# pass the plain command and subdir name so the test ids are easy to read, e.g. build-ids-test-1
+# pass the plain command and test name so the test ids are easy to read, e.g. build-ids-test-1
 @pytest.mark.parametrize("command, test", module_tests)
 
 def test_ebook_commands(testbook__directory: Path, work__directory: Path, command: str, test: Path, update_golden: bool):
@@ -43,14 +42,12 @@ def test_ebook_commands(testbook__directory: Path, work__directory: Path, comman
 	command_file = test_directory / (command + "-command")
 	if command_file.is_file():
 		with open(command_file, "r", encoding="utf-8") as cfile:
-			commands_full = [line.strip() for line in cfile.readlines() if line.strip() != ""]
-		# make sure command is present in at least one line
-		if any(command in line for line in commands_full):
-			commands_to_use = commands_full
+			command_full = cfile.readline().strip()
+		# make sure command is present
+		if command in command_full:
+			command_to_use = command_full
 		else:
-			assert "" == f"{command_file} does not contain the command '{command}'"
-	else:
-		commands_to_use = [f"{command} {{book_directory}}"]
+			assert "" == f"{command_full} does not contain the command '{command}'"
 
 	# contains the files specific to the particular test being run
 	in_directory = test_directory / "in"
@@ -59,7 +56,5 @@ def test_ebook_commands(testbook__directory: Path, work__directory: Path, comman
 	# contains the "golden" files, i.e. the files as they should look after the test
 	golden_directory = test_directory / "golden"
 
-	for command_to_use in commands_to_use:
-		command_to_use = command_to_use.format(book_directory=book_directory)
-		must_run(f"se {command_to_use}")
+	must_run(f"se {command_to_use} {book_directory}")
 	files_are_golden(golden_directory, book_directory, golden_directory, update_golden)
