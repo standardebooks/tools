@@ -188,45 +188,73 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 
 	return True
 
-def files_are_golden(files_dir: Path, results_dir: Path, golden_dir: Path, update_golden: bool) -> bool:
+def files_are_golden(in_dir: Path, results_dir: Path, golden_dir: Path, update_golden: bool) -> bool:
 	"""
-	Check that the results of the test are the same as the "golden" files.
+	Verify the results of a test are the same as the "golden" files.
 
 	INPUTS
-	files_dir: the directory containing the file names to be compared
+	in_dir: the directory containing the input files of the test; this is used to build the list
+			of files that will be compared between the results and the golden files
 	results_dir: the directory containing the results of the test
 	golden_dir: the directory containing the “golden” files, i.e. what the test should produce
 	update_golden: Whether to update golden_dir with the files in results_dir before the comparison
 	"""
 	__tracebackhide__ = True # pylint: disable=unused-variable
 
-	# Get the list of files to check
-	files_to_check = []
-	files_and_dirs = files_dir.glob("**/*")
-	files_to_check = [fd.relative_to(files_dir) for fd in files_and_dirs if fd.is_file()]
-	assert files_to_check
+	# The list of files to compare comes from the input directory, but the actual files compared
+	# are the results files. This is so the entire epub directory tree doesn't have to be saved to
+	# the golden files and files compared that aren't impacted by the commands.
+	results_files = []
+	in_glob = in_dir.glob("**/*")
+	results_files = [rf.relative_to(in_dir) for rf in in_glob if rf.is_file()]
+	assert results_files
 
 	# Either update the golden files from the results…
 	if update_golden:
 		# get rid of everything currently in the golden directory
 		clean_golden_directory(golden_dir)
 
-		for file in files_to_check:
-			shutil.copy(results_dir / file, golden_dir / file)
-	# Or check all the result files against the existing golden files
+		# copy each file, automatically creating any needed subdirectories in the golden tree
+		for file in results_files:
+			try:
+				shutil.copy(results_dir / file, golden_dir / file)
+			except FileNotFoundError:
+				golden_file_dir = (golden_dir / file).parent
+				golden_file_dir.mkdir(parents=True, exist_ok=True)
+				shutil.copy(results_dir / file, golden_dir / file)
+				continue
+	# … or check all the results files against the existing golden files
 	else:
-		for file in files_to_check:
+		# Get the golden files
+		golden_files = []
+		golden_glob = golden_dir.glob("**/*")
+		golden_files = [gf.relative_to(golden_dir) for gf in golden_glob if gf.is_file()]
+		assert golden_files
+
+		# get the list of files in both results/golden, and the list in one but not the other
+		results_same = list(set(results_files).intersection(golden_files))
+		results_diffs = list(set(results_files).symmetric_difference(golden_files))
+
+		# files in both are compared for equality
+		for file in results_same:
 			with open(golden_dir / file, encoding="utf-8") as gfile:
 				golden_text = gfile.read()
 			with open(results_dir / file, encoding="utf-8") as rfile:
-				result_text = rfile.read()
-			assert result_text == golden_text
+				results_text = rfile.read()
+			assert results_text == golden_text
+
+		# files in one but not the other are errors
+		for file in results_diffs:
+			if file not in results_files:
+				assert "" == f"Golden file {file} not present in results"
+			else:
+				assert "" == f"Extraneous results file {file} not present in golden files"
 
 	return True
 
 def output_is_golden(results: str, golden_file: Path, update_golden: bool) ->bool:
 	"""
-	Check that out string matches the contents of the golden file.
+	Verify the output from a test matches the contents of the golden file.
 	"""
 	__tracebackhide__ = True # pylint: disable=unused-variable
 
