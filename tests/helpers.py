@@ -2,7 +2,6 @@
 Common helper functions for tests.
 """
 
-import os
 import shlex
 import shutil
 import subprocess
@@ -33,17 +32,6 @@ def must_run(cmd: str) -> None:
 		if result.stderr:
 			fail_msg += "\n" + result.stderr.decode()
 		pytest.fail(fail_msg)
-
-# is there a subdirectory in the test data?
-def subdir_present(test_dir: Path) -> bool:
-	"""
-	Determine if the test input directory has a subdirectory in it
-	"""
-	with os.scandir(test_dir) as entries:
-		for entry in entries:
-			if entry.is_dir():
-				return True
-	return False
 
 def assemble_draftbook(draftbook__dir: Path, input_dir: Path, work__dir: Path) -> Path:
 	"""
