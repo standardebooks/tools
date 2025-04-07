@@ -85,6 +85,21 @@ def assemble_testbook(testbook__dir: Path, input_dir: Path, work__dir: Path, bui
 		must_run(f"se build-toc {book_dir}")
 	return book_dir
 
+def clean_golden_directory(golden_dir: Path) -> None:
+	"""
+	Delete all files and subdirectory trees in a passed golden directory
+
+	INPUTS
+	golden_dir: the golden directory to be cleaned
+	"""
+
+	golden_glob = golden_dir.glob("*")
+	for gfd in golden_glob:
+		if gfd.is_file():
+			gfd.unlink()
+		elif gfd.is_dir():
+			shutil.rmtree(gfd)
+
 def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update_golden: bool) -> bool:
 	"""
 	Verify the results of both the build and the extract are the same as the corresponding "golden"
@@ -115,6 +130,9 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 
 	# Either update the golden files from the results…
 	if update_golden:
+		# get rid of everything currently in the golden directory
+		clean_golden_directory(golden_dir)
+
 		# copy each file, automatically creating any needed subdirectories in the golden tree
 		for file in build_files:
 			try:
@@ -133,7 +151,7 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 				golden_file_dir.mkdir(parents=True, exist_ok=True)
 				shutil.copy(extract_dir / file, golden_extract_dir / file)
 				continue
-			
+
 	# … or check all the result files against the existing golden files
 	else:
 		# Get the list of golden build files (only a single level)
@@ -141,7 +159,7 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 		golden_build_glob = golden_build_dir.glob("*")
 		golden_build_files = [gbf.relative_to(golden_build_dir) for gbf in golden_build_glob if gbf.is_file()]
 		assert golden_build_files
-	
+
 		# Get the list of golden extract files (directory tree)
 		golden_extract_files = []
 		golden_extract_glob = golden_extract_dir.glob("**/*")
@@ -202,6 +220,9 @@ def files_are_golden(files_dir: Path, results_dir: Path, golden_dir: Path, updat
 
 	# Either update the golden files from the results…
 	if update_golden:
+		# get rid of everything currently in the golden directory
+		clean_golden_directory(golden_dir)
+
 		for file in files_to_check:
 			shutil.copy(results_dir / file, golden_dir / file)
 	# Or check all the result files against the existing golden files
