@@ -7,6 +7,7 @@ import shlex
 import shutil
 import subprocess
 from pathlib import Path
+import filecmp
 import pytest
 
 def run(cmd: str) -> subprocess.CompletedProcess:
@@ -83,6 +84,103 @@ def assemble_testbook(testbook__dir: Path, input_dir: Path, work__dir: Path, bui
 	if build_toc:
 		must_run(f"se build-toc {book_dir}")
 	return book_dir
+
+def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update_golden: bool) -> bool:
+	"""
+	Verify the results of both the build and the extract are the same as the corresponding "golden"
+	files.
+
+	INPUTS
+	build_dir: the directory containing the build output
+	extract_dir: the directory containing the extracted epub files
+	golden_dir: the directory containing the “golden” files, i.e. what the test should produce
+	update_golden: Whether to update golden_dir with the files in results_dir before the comparison
+	"""
+	__tracebackhide__ = True # pylint: disable=unused-variable
+
+	golden_build_dir = golden_dir / "build"
+	golden_extract_dir = golden_dir / "extract"
+
+	# Get the list of build files (only a single level)
+	build_files = []
+	build_glob = build_dir.glob("*")
+	build_files = [bf.relative_to(build_dir) for bf in build_glob if bf.is_file()]
+	assert build_files
+
+	# Get the list of extract files (directory tree)
+	extract_files = []
+	extract_glob = extract_dir.glob("**/*")
+	extract_files = [ef.relative_to(extract_dir) for ef in extract_glob if ef.is_file()]
+	assert extract_files
+
+	# Either update the golden files from the results…
+	if update_golden:
+		# copy each file, automatically creating any needed subdirectories in the golden tree
+		for file in build_files:
+			try:
+				shutil.copy(build_dir / file, golden_build_dir / file)
+			except FileNotFoundError:
+				golden_file_dir = (golden_build_dir / file).parent
+				golden_file_dir.mkdir(parents=True, exist_ok=True)
+				shutil.copy(build_dir / file, golden_build_dir / file)
+				continue
+
+		for file in extract_files:
+			try:
+				shutil.copy(extract_dir / file, golden_extract_dir / file)
+			except FileNotFoundError:
+				golden_file_dir = (golden_extract_dir / file).parent
+				golden_file_dir.mkdir(parents=True, exist_ok=True)
+				shutil.copy(extract_dir / file, golden_extract_dir / file)
+				continue
+			
+	# … or check all the result files against the existing golden files
+	else:
+		# Get the list of golden build files (only a single level)
+		golden_build_files = []
+		golden_build_glob = golden_build_dir.glob("*")
+		golden_build_files = [gbf.relative_to(golden_build_dir) for gbf in golden_build_glob if gbf.is_file()]
+		assert golden_build_files
+	
+		# Get the list of golden extract files (directory tree)
+		golden_extract_files = []
+		golden_extract_glob = golden_extract_dir.glob("**/*")
+		golden_extract_files = [gef.relative_to(golden_extract_dir) for gef in golden_extract_glob if gef.is_file()]
+		assert golden_extract_files
+
+		# get files in build or golden_build but not both
+		build_diffs = list(set(build_files).symmetric_difference(golden_build_files))
+		for file in build_diffs:
+			if file not in build_files:
+				assert "" == f"Golden build file {file} not present in test build results"
+			else:
+				assert "" == f"Extraneous build file {file} not present in golden build files"
+
+		# extract files are checked as normal, i.e. for equality
+		extract_same = list(set(extract_files).intersection(golden_extract_files))
+		extract_diffs = list(set(extract_files).symmetric_difference(golden_extract_files))
+
+		# files in both are compared for equality
+		for file in extract_same:
+			# image files aren't utf-8, and a dump isn't useful, so let filecmp handle them
+			if file.suffix in (".bmp", ".jpg", ".png", ".tif"):
+				if not filecmp.cmp(extract_dir / file, golden_extract_dir / file):
+					assert "" == f"Extract image file {file} different than golden file"
+			else:
+				with open(golden_extract_dir / file, encoding="utf-8") as gfile:
+					golden_text = gfile.read()
+				with open(extract_dir / file, encoding="utf-8") as rfile:
+					extract_text = rfile.read()
+				assert extract_text == golden_text
+
+		# files in one but not the other are errors
+		for file in extract_diffs:
+			if file not in extract_files:
+				assert "" == f"Golden extract file {file} not present in test extract results"
+			else:
+				assert "" == f"Extraneous extract file {file} not present in golden extract files"
+
+	return True
 
 def files_are_golden(files_dir: Path, results_dir: Path, golden_dir: Path, update_golden: bool) -> bool:
 	"""
