@@ -1,9 +1,19 @@
 """
-Tests for commands that will run against a draft ebook and produce output to stdout.
-These include:
-	build-manifest, build-spine, build-toc, css-select, find-mismatched-dashes,
-	find-mismatched-diacritics, find-unusual-characters, help, unicode-names,
-	word-count, xpath
+Tests for commands that run against a draft ebook and produce output to stdout.
+The stdout commands are:
+	build-loi, build-manifest, build-spine, build-title, build-toc, css-select, 
+	find-mismatched-dashes, find-mismatched-diacritics, find-unusual-characters, help,
+	recompose-epub, unicode-names, word-count, xpath
+
+The build-* commands are special in that they can either update existing files, or they can,
+with an argument, generate their output to stdout. Thus, to test them here, in the stdout
+group, they require the `--stdout` argument. It is automatically added if there is no command
+file, otherwise the command file must include it.
+
+The command `unicode_names` is special in that it takes a string as input rather than an ebook
+directory. Thus it also requires a command file, with the command and input string parameter.
+
+The command `help` is special in that it does not take any input.
 """
 
 import os
@@ -11,6 +21,9 @@ from pathlib import Path
 import pytest
 from helpers import assemble_draftbook, must_run, output_is_golden
 
+no_ebook_directory_commands = ["unicode-names", "help"]
+stdout_argument_commands = ["build-loi", "build-manifest", "build-spine", "build-title", "build-toc"]
+command_file_commands = stdout_argument_commands + ["unicode-names"]
 module_directory = Path(__file__).parent / "stdout_commands"
 module_tests = []
 
@@ -34,7 +47,7 @@ def test_stdout_commands(draftbook__directory: Path, work__directory: Path, comm
 	Run each command on assembled draft book, capture output and compare it to "golden" output
 	"""
 
-	# the default command to call is the name of the cmd directory
+	# the default command to call is the name of the command directory
 	command_to_use = command
 	test_directory = module_directory / command / test
 	# if a file exists in test_directory with the name of {command}-command, e.g. word-count-command,
@@ -42,15 +55,24 @@ def test_stdout_commands(draftbook__directory: Path, work__directory: Path, comm
 	command_file = test_directory / (command + "-command")
 	if command_file.is_file():
 		with open(command_file, "r", encoding="utf-8") as cfile:
-			command_full = cfile.readline().rstrip()
-		# make sure the command is present in the string
-		if command in command_full:
-			command_to_use = command_full
-		else:
+			command_full = cfile.readline().strip()
+		# the command must be in the command file
+		if command not in command_full:
 			assert "" == f"'{command_full}' does not contain the command '{command}'"
+		# for the commands requiring --stdout, it must be in the command file
+		elif command in stdout_argument_commands and "--stdout" not in command_full:
+			assert "" == f"{command_full} does not contain --stdout argument"
+		else:
+			command_to_use = command_full
+	# these commands require a command file
+	elif command in command_file_commands:
+		assert "" == f"{command} requires a command file and none was found"
+	# no command file, automatically add the --stdout argument to the commands requiring it
+	elif command in stdout_argument_commands:
+		command_to_use += " --stdout"
 
-	# help doesn't have any input files and doesn't need/use a ebook directory structure
-	if command == "help":
+	# these commands don't have any input files and thus don't need/use the book directory
+	if command in no_ebook_directory_commands:
 		must_run(f"se {command_to_use}")
 	else:
 		# contains the files specific to the particular test being run
@@ -64,5 +86,4 @@ def test_stdout_commands(draftbook__directory: Path, work__directory: Path, comm
 	assert err == ""
 
 	golden_file = test_directory / "golden" / f"{command}-{test}-out.txt"
-	print(f"testdir: {test_directory}, golden: {golden_file}")
 	assert output_is_golden(out, golden_file, update_golden)
