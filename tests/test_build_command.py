@@ -40,7 +40,7 @@ def test_build_command(testbook__directory: Path, work__directory: Path, command
 	# the default command to call
 	command_to_use = command
 	test_directory = module_directory / test
-	# if a file exists in test_directory with the same name as the {command}-command, e.g.
+	# if a file exists in test_directory with the same name as {command}-command, e.g.
 	# build-command, the first line should contain the command to use, with any arguments, e.g.
 	# `build --arg1 --arg2`
 	command_file = test_directory / (command + "-command")
