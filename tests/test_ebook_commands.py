@@ -1,7 +1,7 @@
 """
 Tests for commands that transform epub text files and require a substantially complete ebook.
-These include:
-	build-ids, build-images, prepare-release, recompose-epub, renumber-endnotes, shift-endnotes,
+The ebook commands are:
+	build-ids, build-images, prepare-release, renumber-endnotes, shift-endnotes,
 	shift-illustrations
 """
 
@@ -43,11 +43,14 @@ def test_ebook_commands(testbook__directory: Path, work__directory: Path, comman
 	if command_file.is_file():
 		with open(command_file, "r", encoding="utf-8") as cfile:
 			command_full = cfile.readline().strip()
-		# make sure command is present
-		if command in command_full:
-			command_to_use = command_full
+		# the command must be in the command file
+		if command not in command_full:
+			assert "" == f"'{command_full}' does not contain the command '{command}'"
+		# make sure the --stdout argument isn't part of the command file
+		elif "--stdout" in command_full:
+			assert "" == f"{command_full} cannot contain --stdout argument"
 		else:
-			assert "" == f"{command_full} does not contain the command '{command}'"
+			command_to_use = command_full
 
 	# contains the files specific to the particular test being run
 	in_directory = test_directory / "in"
@@ -56,5 +59,7 @@ def test_ebook_commands(testbook__directory: Path, work__directory: Path, comman
 	# contains the "golden" files, i.e. the files as they should look after the test
 	golden_directory = test_directory / "golden"
 
+	# run the command against the book directory
 	must_run(f"se {command_to_use} {book_directory}")
+	# verify the result files against the golden ones
 	files_are_golden(in_directory, book_directory, golden_directory, update_golden)
