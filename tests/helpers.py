@@ -190,8 +190,7 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 
 def files_are_golden(command: str, in_dir: Path, results_dir: Path, golden_dir: Path, update_golden: bool) -> bool:
 	"""
-	Verify the results of a test of a command affecting ebook files are the same as the "golden"
-	files.
+	Verify the results of a test are the same as the "golden" files.
 
 	INPUTS
 	command: the name of the command being tested
@@ -218,6 +217,15 @@ def files_are_golden(command: str, in_dir: Path, results_dir: Path, golden_dir: 
 		# compared that aren't impacted by the commands.
 		in_glob = in_dir.glob("**/*")
 		results_files = [rf.relative_to(in_dir) for rf in in_glob if rf.is_file()]
+
+        # The build-loi is an exception to the above: it can create a file that does not already
+        # exist. If it is the command being tested, see if the file is in the results, and if so
+        # add it to results_files if it is not already present. (The command can either create a
+        # new file or update an existing one, so it is possible for it to already be present.)
+		if command == "build-loi":
+			build_loi_file = Path("src/epub/text/loi.xhtml")
+			if (results_dir / build_loi_file).is_file() and build_loi_file not in results_files:
+				results_files.append(build_loi_file)
 
 	assert results_files
 
