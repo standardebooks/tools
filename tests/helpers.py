@@ -188,11 +188,13 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 
 	return True
 
-def files_are_golden(in_dir: Path, results_dir: Path, golden_dir: Path, update_golden: bool) -> bool:
+def files_are_golden(command: str, in_dir: Path, results_dir: Path, golden_dir: Path, update_golden: bool) -> bool:
 	"""
-	Verify the results of a test are the same as the "golden" files.
+	Verify the results of a test of a command affecting ebook files are the same as the "golden"
+	files.
 
 	INPUTS
+	command: the name of the command being tested
 	in_dir: the directory containing the input files of the test; this is used to build the list
 			of files that will be compared between the results and the golden files
 	results_dir: the directory containing the results of the test
@@ -201,12 +203,22 @@ def files_are_golden(in_dir: Path, results_dir: Path, golden_dir: Path, update_g
 	"""
 	__tracebackhide__ = True # pylint: disable=unused-variable
 
-	# The list of files to compare comes from the input directory, but the actual files compared
-	# are the results files. This is so the entire epub directory tree doesn't have to be saved to
-	# the golden files and files compared that aren't impacted by the commands.
+	file_commands = ["create-draft", "extract-ebook", "split-file"]
 	results_files = []
-	in_glob = in_dir.glob("**/*")
-	results_files = [rf.relative_to(in_dir) for rf in in_glob if rf.is_file()]
+
+	if command in file_commands:
+		# Commands in the file_commands group use the actual results files for the list of files to
+		# compare.
+		results_glob = results_dir.glob("**/*")
+		results_files = [rf.relative_to(results_dir) for rf in results_glob if rf.is_file()]
+	else:
+		# The other test groups using this function get the list of files to compare from the
+		# input directory, but the actual files compared are the results files. This is so the
+		# entire epub directory tree doesn't have to be saved to the golden files and files
+		# compared that aren't impacted by the commands.
+		in_glob = in_dir.glob("**/*")
+		results_files = [rf.relative_to(in_dir) for rf in in_glob if rf.is_file()]
+
 	assert results_files
 
 	# Either update the golden files from the results…
@@ -214,7 +226,8 @@ def files_are_golden(in_dir: Path, results_dir: Path, golden_dir: Path, update_g
 		# get rid of everything currently in the golden directory
 		clean_golden_directory(golden_dir)
 
-		# copy each file, automatically creating any needed subdirectories in the golden tree
+		# copy each results file to the golden directory, automatically creating any needed
+		# subdirectories in the golden tree
 		for file in results_files:
 			try:
 				shutil.copy(results_dir / file, golden_dir / file)
@@ -237,11 +250,16 @@ def files_are_golden(in_dir: Path, results_dir: Path, golden_dir: Path, update_g
 
 		# files in both are compared for equality
 		for file in results_same:
-			with open(golden_dir / file, encoding="utf-8") as gfile:
-				golden_text = gfile.read()
-			with open(results_dir / file, encoding="utf-8") as rfile:
-				results_text = rfile.read()
-			assert results_text == golden_text
+			# image files aren't utf-8, and a dump isn't useful, so let filecmp handle them
+			if file.suffix in (".bmp", ".jpg", ".png", ".tif"):
+				if not filecmp.cmp(results_dir / file, golden_dir / file):
+					assert "" == f"Results image file {file} different than golden file"
+			else:
+				with open(golden_dir / file, encoding="utf-8") as gfile:
+					golden_text = gfile.read()
+				with open(results_dir / file, encoding="utf-8") as rfile:
+					results_text = rfile.read()
+				assert results_text == golden_text
 
 		# files in one but not the other are errors
 		for file in results_diffs:

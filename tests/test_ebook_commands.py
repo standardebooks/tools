@@ -62,4 +62,4 @@ def test_ebook_commands(testbook__directory: Path, work__directory: Path, comman
 	# run the command against the book directory
 	must_run(f"se {command_to_use} {book_directory}")
 	# verify the result files against the golden ones
-	files_are_golden(in_directory, book_directory, golden_directory, update_golden)
+	files_are_golden(command, in_directory, book_directory, golden_directory, update_golden)

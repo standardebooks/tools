@@ -68,4 +68,4 @@ def test_file_commands(work__directory: Path, command: str, test: Path, update_g
 
 	# run the command on that file and verify the output
 	must_run(f"se {command_to_use}")
-	files_are_golden(in_directory, work__directory, golden_directory, update_golden)
+	files_are_golden(command, in_directory, work__directory, golden_directory, update_golden)
