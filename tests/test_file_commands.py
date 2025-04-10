@@ -1,12 +1,14 @@
 """
-Tests for commands that take zero or more files as input and produce one or more output files.
-These include:
-	create-draft, extract-ebook, split-file, unicode-names
+Tests for commands that take zero or one file as input and produce one or more output files.
+The file commands are:
+	create-draft, extract-ebook, split-file
+
+NOTE: Changes to this list should be reflected in the file_commands variable in the files_are_golden
+helper function.
 """
 
 import os
 from pathlib import Path
-import shutil
 import pytest
 from helpers import must_run, files_are_golden
 
@@ -28,7 +30,7 @@ if module_directory.is_dir():
 # pass the plain command and test name so the test ids are easy to read, e.g. create-draft-test-1
 @pytest.mark.parametrize("command, test", module_tests)
 
-def test_filecommands(work__directory: Path, command: str, test: Path, update_golden: bool):
+def test_file_commands(work__directory: Path, command: str, test: Path, update_golden: bool):
 	"""
 	Run each command on the input content and validate that the output of the command
 	matches the expected output content.
@@ -42,8 +44,7 @@ def test_filecommands(work__directory: Path, command: str, test: Path, update_go
 	command_file = test_directory / (command + "-command")
 	if command_file.is_file():
 		with open(command_file, "r", encoding="utf-8") as cfile:
-			command_full = cfile.readline().rstrip()
-
+			command_full = cfile.readline().strip()
 		# make sure command is present
 		if command in command_full:
 			command_to_use = command_full
@@ -54,11 +55,17 @@ def test_filecommands(work__directory: Path, command: str, test: Path, update_go
 	in_directory = test_directory / "in"
 	# contains the "golden" files, i.e. the files as they should look after the test
 	golden_directory = test_directory / "golden"
-	# make a directory for the test in the working directory
-	work_test_directory = work__directory / command / test
-	# copy the input files (if any) to the working test directory
-	shutil.copytree(in_directory, work_test_directory)
 
-	# run the command on that directory and verify the output
-	must_run(f"se {command_to_use} {work_test_directory}")
-	files_are_golden(work_test_directory, work_test_directory, golden_directory, update_golden)
+	# The file commands either take no input (create-draft) or a single file (extract-ebook,
+	# split-file), rather than a directory. Get the name of the file to pass to the must_run
+	# command rather than a directory as in the other test groups.
+	if command != "create-draft":
+		in_glob = in_directory.glob("*")
+		for infile in in_glob:
+			if infile.is_file():
+				command_to_use += f" {infile}"
+				break
+
+	# run the command on that file and verify the output
+	must_run(f"se {command_to_use}")
+	files_are_golden(in_directory, work__directory, golden_directory, update_golden)
