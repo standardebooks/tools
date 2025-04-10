@@ -103,6 +103,10 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 
 	golden_build_dir = golden_dir / "build"
 	golden_extract_dir = golden_dir / "extract"
+	# These files are updated by build from the last commit date. Since this changes after every
+	# commit to the tools repository, any future test runs after a commit would fail the comparison
+	# tests to the golden files. Therefore exclude them from the compare.
+	excluded_extract_files = ["content.opf", "colophon.xhtml"]
 
 	# Get the list of build files (only a single level)
 	build_files = []
@@ -113,7 +117,7 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 	# Get the list of extract files (directory tree)
 	extract_files = []
 	extract_glob = extract_dir.glob("**/*")
-	extract_files = [ef.relative_to(extract_dir) for ef in extract_glob if ef.is_file()]
+	extract_files = [ef.relative_to(extract_dir) for ef in extract_glob if ef.is_file() and ef.name not in excluded_extract_files]
 	assert extract_files
 
 	# Either update the golden files from the results…
@@ -151,7 +155,7 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 		# Get the list of golden extract files (directory tree)
 		golden_extract_files = []
 		golden_extract_glob = golden_extract_dir.glob("**/*")
-		golden_extract_files = [gef.relative_to(golden_extract_dir) for gef in golden_extract_glob if gef.is_file()]
+		golden_extract_files = [gef.relative_to(golden_extract_dir) for gef in golden_extract_glob if gef.is_file() and gef.name not in excluded_extract_files]
 		assert golden_extract_files
 
 		# get files in build or golden_build but not both
