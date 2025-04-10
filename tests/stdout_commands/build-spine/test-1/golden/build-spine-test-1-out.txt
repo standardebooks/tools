@@ -1,0 +1,7 @@
+<spine>
+	<itemref idref="titlepage.xhtml"/>
+	<itemref idref="imprint.xhtml"/>
+	<itemref idref="chapter-1.xhtml"/>
+	<itemref idref="colophon.xhtml"/>
+	<itemref idref="uncopyright.xhtml"/>
+</spine>
