@@ -55,14 +55,17 @@ def assemble_testbook(testbook__dir: Path, input_dir: Path, work__dir: Path, bui
 
 	INPUTS
 	testbook__dir: the directory containing the stock test ebook files
-	input_dir: the directory containing the ebook files specific to this test
+	input_dir: the directory containing the ebook files specific to this test; this can be 
+		non-existent, as git won't save an empty directory, so if there are no input files, then
+		the input directory won't exist
 	work__dir: the working directory for this test that will contain the combined ebook files
 	"""
 	book_dir = work__dir / "testbook"
 	# Copy test book skeleton
 	shutil.copytree(testbook__dir, book_dir)
-	# copy the input directory over the test book files
-	shutil.copytree(input_dir, book_dir, dirs_exist_ok=True)
+	# if it exists, copy the input directory over the test book files
+	if input_dir.is_dir():
+		shutil.copytree(input_dir, book_dir, dirs_exist_ok=True)
 
 	# Rebuild file metadata
 	if build_manifest:
