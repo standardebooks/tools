@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 from helpers import assemble_testbook, must_run, build_is_golden
 
-test_command = "build"
+test_command = "build"	# pylint: disable=invalid-name
 module_directory = Path(__file__).parent / test_command
 module_tests = []
 
