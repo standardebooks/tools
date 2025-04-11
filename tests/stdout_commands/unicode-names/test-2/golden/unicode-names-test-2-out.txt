@@ -1,0 +1,165 @@
+ ─────────────────────────────────────────────────────────── 
+  π   U+03C0   GREEK SMALL LETTER PI        Properties page  
+ ─────────────────────────────────────────────────────────── 
+  α   U+03B1   GREEK SMALL LETTER ALPHA     Properties page  
+ ─────────────────────────────────────────────────────────── 
+  μ   U+03BC   GREEK SMALL LETTER MU        Properties page  
+ ─────────────────────────────────────────────────────────── 
+  π   U+03C0   GREEK SMALL LETTER PI        Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ο   U+03BF   GREEK SMALL LETTER OMICRON   Properties page  
+ ─────────────────────────────────────────────────────────── 
+  λ   U+03BB   GREEK SMALL LETTER LAMDA     Properties page  
+ ─────────────────────────────────────────────────────────── 
+  λ   U+03BB   GREEK SMALL LETTER LAMDA     Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ο   U+03BF   GREEK SMALL LETTER OMICRON   Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ι   U+03B9   GREEK SMALL LETTER IOTA      Properties page  
+ ─────────────────────────────────────────────────────────── 
+      U+0020   SPACE                        Properties page  
+ ─────────────────────────────────────────────────────────── 
+  …   U+5354   CJK UNIFIED IDEOGRAPH-5354   Properties page  
+ ─────────────────────────────────────────────────────────── 
+  …   U+529B   CJK UNIFIED IDEOGRAPH-529B   Properties page  
+ ─────────────────────────────────────────────────────────── 
+  …   U+5C71   CJK UNIFIED IDEOGRAPH-5C71   Properties page  
+ ─────────────────────────────────────────────────────────── 
+  …   U+6210   CJK UNIFIED IDEOGRAPH-6210   Properties page  
+ ─────────────────────────────────────────────────────────── 
+  …   U+7389   CJK UNIFIED IDEOGRAPH-7389   Properties page  
+ ─────────────────────────────────────────────────────────── 
+  …   U+540C   CJK UNIFIED IDEOGRAPH-540C   Properties page  
+ ─────────────────────────────────────────────────────────── 
+  …   U+5FC3   CJK UNIFIED IDEOGRAPH-5FC3   Properties page  
+ ─────────────────────────────────────────────────────────── 
+  …   U+576D   CJK UNIFIED IDEOGRAPH-576D   Properties page  
+ ─────────────────────────────────────────────────────────── 
+  …   U+8B8A   CJK UNIFIED IDEOGRAPH-8B8A   Properties page  
+ ─────────────────────────────────────────────────────────── 
+  …   U+91D1   CJK UNIFIED IDEOGRAPH-91D1   Properties page  
+ ─────────────────────────────────────────────────────────── 
+      U+0020   SPACE                        Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܘ   U+0718   SYRIAC LETTER WAW            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܢ   U+0722   SYRIAC LETTER NUN            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܗ   U+0717   SYRIAC LETTER HE             Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܘ   U+0718   SYRIAC LETTER WAW            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܐ   U+0710   SYRIAC LETTER ALAPH          Properties page  
+ ─────────────────────────────────────────────────────────── 
+      U+0020   SPACE                        Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܡ   U+0721   SYRIAC LETTER MIM            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܒ   U+0712   SYRIAC LETTER BETH           Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܝ   U+071D   SYRIAC LETTER YUDH           Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܐ   U+0710   SYRIAC LETTER ALAPH          Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܢ   U+0722   SYRIAC LETTER NUN            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܐ   U+0710   SYRIAC LETTER ALAPH          Properties page  
+ ─────────────────────────────────────────────────────────── 
+      U+0020   SPACE                        Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܠ   U+0720   SYRIAC LETTER LAMADH         Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܢ   U+0722   SYRIAC LETTER NUN            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܦ   U+0726   SYRIAC LETTER PE             Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܫ   U+072B   SYRIAC LETTER SHIN           Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܟ   U+071F   SYRIAC LETTER KAPH           Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܝ   U+071D   SYRIAC LETTER YUDH           Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ̣    U+0323   COMBINING DOT BELOW          Properties page  
+ ─────────────────────────────────────────────────────────── 
+  .   U+002E   FULL STOP                    Properties page  
+ ─────────────────────────────────────────────────────────── 
+      U+0020   SPACE                        Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܘ   U+0718   SYRIAC LETTER WAW            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܡ   U+0721   SYRIAC LETTER MIM            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܬ   U+072C   SYRIAC LETTER TAW            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܪ   U+072A   SYRIAC LETTER RISH           Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܣ   U+0723   SYRIAC LETTER SEMKATH        Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܝ   U+071D   SYRIAC LETTER YUDH           Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܢ   U+0722   SYRIAC LETTER NUN            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܐ   U+0710   SYRIAC LETTER ALAPH          Properties page  
+ ─────────────────────────────────────────────────────────── 
+      U+0020   SPACE                        Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܠ   U+0720   SYRIAC LETTER LAMADH         Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܡ   U+0721   SYRIAC LETTER MIM            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܕ   U+0715   SYRIAC LETTER DALATH         Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܝ   U+071D   SYRIAC LETTER YUDH           Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܢ   U+0722   SYRIAC LETTER NUN            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܬ   U+072C   SYRIAC LETTER TAW            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܟ   U+071F   SYRIAC LETTER KAPH           Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ܝ   U+071D   SYRIAC LETTER YUDH           Properties page  
+ ─────────────────────────────────────────────────────────── 
+      U+0020   SPACE                        Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ט   U+05D8   HEBREW LETTER TET            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ו   U+05D5   HEBREW LETTER VAV            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ב   U+05D1   HEBREW LETTER BET            Properties page  
+ ─────────────────────────────────────────────────────────── 
+      U+0020   SPACE                        Properties page  
+ ─────────────────────────────────────────────────────────── 
+  א   U+05D0   HEBREW LETTER ALEF           Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ח   U+05D7   HEBREW LETTER HET            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ר   U+05E8   HEBREW LETTER RESH           Properties page  
+ ─────────────────────────────────────────────────────────── 
+  י   U+05D9   HEBREW LETTER YOD            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ת   U+05EA   HEBREW LETTER TAV            Properties page  
+ ─────────────────────────────────────────────────────────── 
+      U+0020   SPACE                        Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ד   U+05D3   HEBREW LETTER DALET          Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ב   U+05D1   HEBREW LETTER BET            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ר   U+05E8   HEBREW LETTER RESH           Properties page  
+ ─────────────────────────────────────────────────────────── 
+      U+0020   SPACE                        Properties page  
+ ─────────────────────────────────────────────────────────── 
+  מ   U+05DE   HEBREW LETTER MEM            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ר   U+05E8   HEBREW LETTER RESH           Properties page  
+ ─────────────────────────────────────────────────────────── 
+  א   U+05D0   HEBREW LETTER ALEF           Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ש   U+05E9   HEBREW LETTER SHIN           Properties page  
+ ─────────────────────────────────────────────────────────── 
+  י   U+05D9   HEBREW LETTER YOD            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ת   U+05EA   HEBREW LETTER TAV            Properties page  
+ ─────────────────────────────────────────────────────────── 
+  ו   U+05D5   HEBREW LETTER VAV            Properties page  
+ ─────────────────────────────────────────────────────────── 
