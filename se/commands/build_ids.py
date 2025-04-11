@@ -20,6 +20,7 @@ def build_ids(plain_output: bool) -> int:
 	"""
 
 	parser = argparse.ArgumentParser(description="Change ID attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced, and the ebook spine must be complete.")
+	parser.add_argument("-n", "--no-endnotes", action="store_true", help="exclude endnotes")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
@@ -48,7 +49,13 @@ def build_ids(plain_output: bool) -> int:
 
 				# First, get a list of all eligible elements with an ID.
 				# We want to wipe their IDs so that we don't accidentally introduce duplicates.
-				for node in dom.xpath("//*[@id and not(re:test(@epub:type, 'noteref')) and not(re:test(local-name(), '(section|article|nav|figure|dt|tr)'))]"):
+				if args.no_endnotes:
+					nodes = dom.xpath("//*[@id and not(re:test(@epub:type, 'endnote|noteref')) and not(re:test(local-name(), '(section|article|nav|figure|dt|tr)'))]")
+				else:
+					nodes = dom.xpath("//*[@id and not(re:test(@epub:type, 'noteref')) and not(re:test(local-name(), '(section|article|nav|figure|dt|tr)'))]")
+
+				print(f"filename={filename.name}, nodes={nodes}")
+				for node in nodes:
 					old_id = node.get_attr("id")
 					new_id = f"se-replacement-id-{id_counter}"
 					node.set_attr("id", new_id)
@@ -69,7 +76,7 @@ def build_ids(plain_output: bool) -> int:
 					id_counter = id_counter + 1
 
 				# Now, get a list of what we expect all eligible IDs to be.
-				replacements += se.formatting.find_unexpected_ids(dom)
+				replacements += se.formatting.find_unexpected_ids(dom, args.no_endnotes)
 
 				# Write our wiped file, we'll update it later
 				with open(filename, "w", encoding="utf-8") as file:

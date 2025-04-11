@@ -1,0 +1,88 @@
+@charset "utf-8";
+@namespace epub "http://www.idpf.org/2007/ops";
+
+/* This may appear in the colophon */
+abbr[epub|type~="se:era"]{
+	font-variant: all-small-caps;
+}
+
+section[epub|type~="titlepage"] h1,
+section[epub|type~="titlepage"] p,
+section[epub|type~="colophon"] h2,
+section[epub|type~="imprint"] h2{
+	left: -999em;
+	position: absolute;
+}
+
+section[epub|type~="titlepage"] img{
+	display: block;
+	margin: 3em auto auto auto;
+	width: 100%;
+}
+
+section[epub|type~="colophon"],
+section[epub|type~="imprint"]{
+	text-align: center;
+}
+
+section[epub|type~="colophon"] header,
+section[epub|type~="imprint"] header{
+	line-height: 0;
+	margin-top: 3em;
+}
+
+img[epub|type~="z3998:publisher-logo"]{
+	max-width: 25%;
+	width: 220px;
+}
+
+section[epub|type~="colophon"] p,
+section[epub|type~="imprint"] p{
+	margin: 1em auto 0 auto;
+	text-indent: 0;
+}
+
+section[epub|type~="imprint"] p{
+	font-size: smaller;
+	text-align: justify;
+	width: 75%;
+}
+
+section[epub|type~="colophon"] p + p::before{
+	border-top: 1px solid;
+	content: "";
+	display: block;
+	margin: auto auto 1em auto;
+	width: 25%;
+}
+
+section[epub|type~="colophon"] a{
+	font-variant: small-caps;
+}
+
+section[epub|type~="imprint"] a,
+section[epub|type~="colophon"] a{
+	hyphens: none;
+	-epub-hyphens: none;
+}
+
+section[epub|type~="copyright-page"] p{
+	margin: 1em auto;
+	text-indent: 0;
+}
+
+section[epub|type~="copyright-page"] blockquote p{
+	font-style: italic;
+	text-align: initial;
+	text-indent: 0;
+}
+
+section[epub|type~="copyright-page"] blockquote p span{
+	display: block;
+	padding-left: 1em;
+	text-indent: -1em;
+}
+
+section[epub|type~="copyright-page"] blockquote br{
+	display: none;
+}

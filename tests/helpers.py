@@ -7,6 +7,7 @@ import shutil
 import subprocess
 from pathlib import Path
 import filecmp
+from typing import List, Optional
 import pytest
 
 def run(cmd: str) -> subprocess.CompletedProcess:
@@ -84,12 +85,28 @@ def clean_golden_directory(golden_dir: Path) -> None:
 	golden_dir: the golden directory to be cleaned
 	"""
 
-	golden_glob = golden_dir.glob("*")
-	for gfd in golden_glob:
+	for gfd in golden_dir.glob("*"):
 		if gfd.is_file():
 			gfd.unlink()
 		elif gfd.is_dir():
 			shutil.rmtree(gfd)
+
+def get_files(file_dir: Path, file_filter: str = "**/*", excluded_files: Optional[List[str]] = None) -> List[Path]:
+	"""
+	Return a list of files matching a filter in a given directory.
+	
+	INPUTS
+	file_dir: The directory to be searched
+	file_filter: The glob filter to be used; by default, it searches the entire directory tree
+	excluded_files: List of file names to be excluded from the list
+	"""
+
+	if excluded_files is None:
+		excluded_files = []
+	file_list = []
+
+	file_list = [f.relative_to(file_dir) for f in file_dir.glob(f"{file_filter}") if f.is_file() and f.name not in excluded_files and str(f.parent).find("/.git") == -1 and f.name != ".gitignore"]
+	return file_list
 
 def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update_golden: bool) -> bool:
 	"""
@@ -111,16 +128,14 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 	# tests to the golden files. Therefore exclude them from the compare.
 	excluded_extract_files = ["content.opf", "colophon.xhtml"]
 
-	# Get the list of build files (only a single level)
+	# Get the list of build files (only a single level).
 	build_files = []
-	build_glob = build_dir.glob("*")
-	build_files = [bf.relative_to(build_dir) for bf in build_glob if bf.is_file()]
+	build_files = get_files(build_dir, "*")
 	assert build_files
 
 	# Get the list of extract files (directory tree)
 	extract_files = []
-	extract_glob = extract_dir.glob("**/*")
-	extract_files = [ef.relative_to(extract_dir) for ef in extract_glob if ef.is_file() and ef.name not in excluded_extract_files]
+	extract_files = get_files(extract_dir, excluded_files=excluded_extract_files)
 	assert extract_files
 
 	# Either update the golden files from the results…
@@ -150,15 +165,11 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 	# … or check all the result files against the existing golden files
 	else:
 		# Get the list of golden build files (only a single level)
-		golden_build_files = []
-		golden_build_glob = golden_build_dir.glob("*")
-		golden_build_files = [gbf.relative_to(golden_build_dir) for gbf in golden_build_glob if gbf.is_file()]
+		golden_build_files = get_files(golden_build_dir, "*")
 		assert golden_build_files
 
 		# Get the list of golden extract files (directory tree)
-		golden_extract_files = []
-		golden_extract_glob = golden_extract_dir.glob("**/*")
-		golden_extract_files = [gef.relative_to(golden_extract_dir) for gef in golden_extract_glob if gef.is_file() and gef.name not in excluded_extract_files]
+		golden_extract_files = get_files(golden_extract_dir, excluded_files=excluded_extract_files)
 		assert golden_extract_files
 
 		# get files in build or golden_build but not both
@@ -215,15 +226,13 @@ def files_are_golden(command: str, in_dir: Path, results_dir: Path, golden_dir: 
 	if command in file_commands:
 		# Commands in the file_commands group use the actual results files for the list of files to
 		# compare.
-		results_glob = results_dir.glob("**/*")
-		results_files = [rf.relative_to(results_dir) for rf in results_glob if rf.is_file()]
+		results_files = get_files(results_dir)
 	else:
 		# The other test groups using this function get the list of files to compare from the
 		# input directory, but the actual files compared are the results files. This is so the
 		# entire epub directory tree doesn't have to be saved to the golden files and files
 		# compared that aren't impacted by the commands.
-		in_glob = in_dir.glob("**/*")
-		results_files = [rf.relative_to(in_dir) for rf in in_glob if rf.is_file()]
+		results_files = get_files(in_dir)
 
         # The build-loi is an exception to the above: it can create a file that does not already
         # exist. If it is the command being tested, see if the file is in the results, and if so
@@ -254,9 +263,7 @@ def files_are_golden(command: str, in_dir: Path, results_dir: Path, golden_dir: 
 	# … or check all the results files against the existing golden files
 	else:
 		# Get the golden files
-		golden_files = []
-		golden_glob = golden_dir.glob("**/*")
-		golden_files = [gf.relative_to(golden_dir) for gf in golden_glob if gf.is_file()]
+		golden_files = get_files(golden_dir)
 		assert golden_files
 
 		# get the list of files in both results/golden, and the list in one but not the other

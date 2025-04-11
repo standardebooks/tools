@@ -1545,13 +1545,14 @@ def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> List[Ea
 
 	return result
 
-def find_unexpected_ids(dom: EasyXmlTree) -> List[Tuple[EasyXmlElement, str]]:
+def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> List[Tuple[EasyXmlElement, str]]:
 	"""
 	Given a DOM tree, return a list of tuples containing nodes and their expected ID attributes.
 	Only nodes with unexpected IDs are returned.
 
 	INPUTS
 	dom: An EasyXmlTree
+	no_endnotes: A boolean indicating whether endnotes are examined; by default they are
 
 	OUTPUTS
 	A list of tuples of (node, expected_id)
@@ -1563,6 +1564,11 @@ def find_unexpected_ids(dom: EasyXmlTree) -> List[Tuple[EasyXmlElement, str]]:
 	# Remove noterefs as they have their own ID rules
 	for node in dom_copy.xpath("/html/body//*[contains(@epub:type, 'noteref')]"):
 		node.remove()
+
+	# The build-ids command has an option to exclude endnotes; if true, then remove endnotes as well
+	if no_endnotes:
+		for node in dom_copy.xpath("/html/body//*[contains(@epub:type, 'endnote')]"):
+			node.remove()
 
 	# IDs are set to `{closest_parent_sectioning_element_id}-{tag_name}-{n}`.
 	# Lines of poetry are set to `{closest_poem_sectioning_element_id}-line-{n}`.
