@@ -783,29 +783,37 @@ class SeEpub:
 
 		INPUTS:
 		target_endnote_number: The endnote to start shifting at
-		step: 1 to increment or -1 to decrement
+		step: X to increment or -X to decrement
 
 		OUTPUTS:
 		None.
 		"""
 
 		increment = step > 0
-		endnote_count = 0
 
 		if step == 0:
 			return
 
 		dom = self.get_dom(self.endnotes_path)
 
-		endnote_count = len(dom.xpath("//li[contains(@epub:type, 'endnote')]"))
-		if increment:
-			# Range is from COUNT -> target_endnote_number
-			note_range = range(endnote_count, target_endnote_number - 1, -1)
-		else:
-			# Range is from target_endnote_number -> COUNT
-			note_range = range(target_endnote_number, endnote_count + 1, 1)
+		# Get a list of all the integer endnote ids (we have books with non-integer endnote ids;
+		# this command won't work on them)
+		all_endnote_numbers = []
+		for node in dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]"):
+			endnote_number = regex.sub("note-", "", node.get_attr("id"))
+			if endnote_number.isdigit():
+				all_endnote_numbers.append(int(endnote_number))
 
-		for endnote_number in note_range:
+		# The shift begins at target_endnote_number, so remove the endnote numbers before it
+		orig_endnote_numbers = [n for n in all_endnote_numbers if n >= target_endnote_number]
+
+		# If incrementing, start at the end and work backwards to keep from duplicating ids
+		if increment:
+			endnote_numbers = orig_endnote_numbers[::-1]
+		else:
+			endnote_numbers = orig_endnote_numbers
+
+		for endnote_number in endnote_numbers:
 			new_endnote_number = endnote_number + step
 
 			# Update all the actual endnotes in the endnotes file
@@ -824,12 +832,12 @@ class SeEpub:
 		except Exception as ex:
 			raise se.InvalidSeEbookException(f"Couldn’t open endnotes file: [path][link=file://{self.endnotes_path}]{self.endnotes_path}[/][/].") from ex
 
-		# Now update endnotes in all other files. We also do a pass over the endnotes file itself.
-		# again just in case there are endnotes within endnotes.
+		# Now update endnotes in all other files. We also do another pass over the endnotes file
+		# in case there are endnotes within endnotes.
 		for file_path in self.content_path.glob("**/*.xhtml"):
 			dom = self.get_dom(file_path)
 
-			for endnote_number in note_range:
+			for endnote_number in endnote_numbers:
 				new_endnote_number = endnote_number + step
 
 				# We don't use an xpath matching epub:type="noteref" because we can have hrefs that are not noterefs pointing to endnotes (like "see here")
