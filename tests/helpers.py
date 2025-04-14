@@ -56,7 +56,7 @@ def assemble_testbook(testbook__dir: Path, input_dir: Path, work__dir: Path, bui
 
 	INPUTS
 	testbook__dir: the directory containing the stock test ebook files
-	input_dir: the directory containing the ebook files specific to this test; this can be 
+	input_dir: the directory containing the ebook files specific to this test; this can be
 		non-existent, as git won't save an empty directory, so if there are no input files, then
 		the input directory won't exist
 	work__dir: the working directory for this test that will contain the combined ebook files
@@ -94,7 +94,7 @@ def clean_golden_directory(golden_dir: Path) -> None:
 def get_files(file_dir: Path, file_filter: str = "**/*", excluded_files: Optional[List[str]] = None) -> List[Path]:
 	"""
 	Return a list of files matching a filter in a given directory.
-	
+
 	INPUTS
 	file_dir: The directory to be searched
 	file_filter: The glob filter to be used; by default, it searches the entire directory tree
@@ -103,9 +103,11 @@ def get_files(file_dir: Path, file_filter: str = "**/*", excluded_files: Optiona
 
 	if excluded_files is None:
 		excluded_files = []
+	# Always exclude these files
+	excluded_files += [".gitignore", ".DS_Store"]
 	file_list = []
 
-	file_list = [f.relative_to(file_dir) for f in file_dir.glob(f"{file_filter}") if f.is_file() and f.name not in excluded_files and str(f.parent).find("/.git") == -1 and f.name != ".gitignore"]
+	file_list = [f.relative_to(file_dir) for f in file_dir.glob(f"{file_filter}") if f.is_file() and f.name not in excluded_files and str(f.parent).find("/.git") == -1]
 	return file_list
 
 def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update_golden: bool) -> bool:
@@ -218,30 +220,24 @@ def files_are_golden(command: str, in_dir: Path, results_dir: Path, golden_dir: 
 	golden_dir: the directory containing the “golden” files, i.e. what the test should produce
 	update_golden: Whether to update golden_dir with the files in results_dir before the comparison
 	"""
-	__tracebackhide__ = True # pylint: disable=unused-variable
+	#__tracebackhide__ = True # pylint: disable=unused-variable
 
 	file_commands = ["create-draft", "extract-ebook", "split-file"]
+	result_list_from_results_commands = file_commands + ["build-loi", "shift-illustrations"]
 	results_files = []
 
-	if command in file_commands:
-		# Commands in the file_commands group use the actual results files for the list of files to
-		# compare.
+	if command in result_list_from_results_commands:
+		# Commands in the file_commands group do not update ebook files, so have to use the actual
+		# results files for the list of files to compare. The other commands can either create
+		# files that don't previously exist or rename files, so they also have to use the actual
+		# results files to get the list of files to compare.
 		results_files = get_files(results_dir)
 	else:
 		# The other test groups using this function get the list of files to compare from the
-		# input directory, but the actual files compared are the results files. This is so the
-		# entire epub directory tree doesn't have to be saved to the golden files and files
-		# compared that aren't impacted by the commands.
+		# input directory, but the actual files compared are the results files. This keeps the
+		# entire epub directory tree from having to be saved to the golden files, and files from
+		# having to be compared that aren't impacted by the commands.
 		results_files = get_files(in_dir)
-
-        # The build-loi is an exception to the above: it can create a file that does not already
-        # exist. If it is the command being tested, see if the file is in the results, and if so
-        # add it to results_files if it is not already present. (The command can either create a
-        # new file or update an existing one, so it is possible for it to already be present.)
-		if command == "build-loi":
-			build_loi_file = Path("src/epub/text/loi.xhtml")
-			if (results_dir / build_loi_file).is_file() and build_loi_file not in results_files:
-				results_files.append(build_loi_file)
 
 	assert results_files
 

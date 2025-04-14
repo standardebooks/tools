@@ -859,30 +859,37 @@ class SeEpub:
 
 		INPUTS:
 		target_illustration_number: The illustration to start shifting at
-		step: 1 to increment or -1 to decrement
+		step: X to increment or -X to decrement
 
 		OUTPUTS:
 		None.
 		"""
 
 		increment = step > 0
-		illustration_count = 0
 
 		if step == 0:
 			return
 
 		dom = self.get_dom(self.loi_path)
 
-		illustration_count = len(dom.xpath("/html/body/nav/ol/li"))
+		# Get a list of all the integer illustration ids
+		all_illustration_numbers = []
+		for node in dom.xpath("/html/body//a[re:test(@href,'#illustration-[0-9]+$')]"):
+			illustration_number = regex.sub("^.*?#illustration-", "", node.get_attr("href"))
+			if illustration_number.isdigit():
+				all_illustration_numbers.append(int(illustration_number))
+
+		# The shift begins at target_illustration_number, so remove the illustration numbers before it
+		orig_illustration_numbers = [n for n in all_illustration_numbers if n >= target_illustration_number]
+
+		# If incrementing, start at the end and work backwards to keep from duplicating ids
 		if increment:
-			# Range is from COUNT -> target_illustration_number
-			illustration_range = range(illustration_count, target_illustration_number - 1, -1)
+			illustration_numbers = orig_illustration_numbers[::-1]
 		else:
-			# Range is from target_illustration_number -> COUNT
-			illustration_range = range(target_illustration_number, illustration_count + 1, 1)
+			illustration_numbers = orig_illustration_numbers
 
 		# Update image files
-		for illustration_number in illustration_range:
+		for illustration_number in illustration_numbers:
 			new_illustration_number = illustration_number + step
 
 			# Test for previously existing file
@@ -901,7 +908,7 @@ class SeEpub:
 				file_to_rename.rename(illustration_path / f"illustration-{new_illustration_number}{file_to_rename.suffix}")
 
 		# Update the LoI file
-		for illustration_number in illustration_range:
+		for illustration_number in illustration_numbers:
 			new_illustration_number = illustration_number + step
 
 			# Update all the illustrations in the illustrations file
@@ -920,7 +927,7 @@ class SeEpub:
 		for file_path in self.content_path.glob("**/*.xhtml"):
 			dom = self.get_dom(file_path)
 
-			for illustration_number in illustration_range:
+			for illustration_number in illustration_numbers:
 				new_illustration_number = illustration_number + step
 
 				for node in dom.xpath(f"/html/body//figure[@id='illustration-{illustration_number}']"):
