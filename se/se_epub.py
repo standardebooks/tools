@@ -6,7 +6,7 @@ Standard Ebooks epub3 files.
 
 import base64
 from copy import deepcopy
-import datetime
+from datetime import datetime, timezone
 import os
 from pathlib import Path
 import importlib.resources
@@ -32,7 +32,7 @@ class GitCommit:
 	short_sha = ""
 	timestamp = None
 
-	def __init__(self, short_sha: str, timestamp: datetime.datetime):
+	def __init__(self, short_sha: str, timestamp: datetime):
 		self.short_sha = short_sha
 		self.timestamp = timestamp
 
@@ -216,7 +216,7 @@ class SeEpub:
 				git_command = git.cmd.Git(self.path)
 				output = git_command.show("-s", "--format=%h %ct", "HEAD").split()
 
-				self._last_commit = GitCommit(output[0], datetime.datetime.fromtimestamp(int(output[1]), datetime.timezone.utc))
+				self._last_commit = GitCommit(output[0], datetime.fromtimestamp(int(output[1]), timezone.utc))
 			except Exception:
 				self._last_commit = None
 
@@ -1017,7 +1017,7 @@ class SeEpub:
 		"""
 
 		if self.metadata_dom.xpath("/package/metadata/dc:date[text() = '1900-01-01T00:00:00Z']"):
-			now = datetime.datetime.utcnow()
+			now = datetime.now(timezone.utc)
 			now_iso = regex.sub(r"\.[0-9]+$", "", now.isoformat()) + "Z"
 			now_iso = regex.sub(r"\+.+?Z$", "Z", now_iso)
 			now_friendly = f"{now:%B %e, %Y, %l:%M <abbr class=\"eoc\">%p</abbr>}"
