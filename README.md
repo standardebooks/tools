@@ -12,13 +12,23 @@ To install the toolset locally for development and debugging, see [Installation 
 
 Optionally, install [Ace](https://daisy.github.io/ace/) and the `se build --check` command will automatically run it as part of the checking process.
 
+## Ubuntu 24.04 (Noble) users
+
+```shell
+# Install some pre-flight dependencies.
+sudo apt install -y calibre default-jre git python3-dev python3-pip python3-venv pipx
+
+# Install the toolset.
+pipx install standardebooks
+```
+
 ## Ubuntu 20.04 (Trusty) users
 
 ```shell
 # Install some pre-flight dependencies.
 sudo apt install -y calibre default-jre git python3-dev python3-pip python3-venv
 
-# Install pipx.
+# Install `pipx`.
 python3 -m pip install --user pipx
 python3 -m pipx ensurepath
 
@@ -45,7 +55,7 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 # Install some pre-flight dependencies.
 sudo dnf install pipx python3.12 python3.12-devel gcc libxslt-devel calibre git java-21-openjdk-headless
 
-# Ensure PATH environment variable is correctly set up for pipx
+# Ensure `$PATH` environment variable is correctly set up for `pipx`.
 pipx ensurepath
 
 # Install the toolset.
@@ -96,7 +106,7 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 
 These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 release as well.
 
-1. Create a text file to feed into ```pkg_add``` called `~/standard-ebooks-packages`. It should contain the following:
+1. Create a text file to feed into `pkg_add` called `~/standard-ebooks-packages`. It should contain the following:
 
 	```shell
 	py3-pip--
@@ -107,13 +117,13 @@ These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 rele
 	git--
 	```
 
-2. Install dependencies using ```doas pkg_add -ivl ~/standard-ebooks-packages```. Follow linking instructions provided by ```pkg_add``` to save keystrokes, unless you want to have multiple python versions and pip versions. In my case, I ran ```doas ln -sf /usr/local/bin/pip3.7 /usr/local/bin/pip```.
+2. Install dependencies using `doas pkg_add -ivl ~/standard-ebooks-packages`. Follow linking instructions provided by `pkg_add` to save keystrokes, unless you want to have multiple python versions and pip versions. In my case, I ran `doas ln -sf /usr/local/bin/pip3.7 /usr/local/bin/pip`.
 
-3. Add ```~/.local/bin``` to your path.
+3. Add `~/.local/bin` to your path.
 
-4. Run ```pip install --user pipx```
+4. Run `pip install --user pipx`
 
-5. If you’re using ```ksh``` from base and have already added ```~/.local/bin```, you can skip ```pipx ensurepath``` because this step is for ```bash``` users.
+5. If you’re using KSH from base and have already added `~/.local/bin`, you can skip `pipx ensurepath` because this step is for Bash users.
 
 6. The rest of the process is similar to that used on other platforms:
 
@@ -309,6 +319,10 @@ We need volunteers to take the lead on the following goals:
 -	### `se shift-endnotes`
 
 	Increment or decrement the specified endnote and all following endnotes by 1 or a specified amount.
+
+-	### `se shift-illustrations`
+
+	Increment or decrement the specified illustration and all following illustrations by 1 or a specified amount.
 
 -	### `se split-file`
 
