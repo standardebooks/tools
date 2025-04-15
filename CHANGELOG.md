@@ -1,3 +1,99 @@
+# 2.7.5
+
+## General
+
+- Fix various typos. Thanks to Alex Hedges
+
+- More graceful exits on keyboard interrupts
+
+- Various additions to the testing framework. Thanks to Vince Rice
+
+- Fix errors with `urllib.parse`. Thanks to Robin Whittleton
+
+- Fix edge case when unwrapping nodes in `easy_xml`
+
+## se british2american
+
+- Improve output. Thanks to Vince Rice
+
+## se build
+
+- Improve proofreading CSS
+
+- Bump to epubcheck 5.2.1
+
+- If an ebook is a single-file collection (like a poetry omnibus), split the file into multiple files for Kobo builds
+
+## se build-ids
+
+- Add `--no-endnotes` option. Thanks to Vince Rice
+
+## se create-draft
+
+- Fix typos in template. Thanks to David Reimer and Erik Bledsoe
+
+- Update PG transcribe rparsing to handle PG's new credits format
+
+- Strip headers and footers from new-style PG ebooks
+
+- Improve handling of transcribers. Thanks to Vince Rice
+
+## se extract-ebook
+
+- Add path to error messages. Thanks to Neil Pankey
+
+## se lint
+
+- Add `telegram` to list of ignored classes
+
+- Add t-077, punctuation followed by opening quote
+
+- Allow `<figure>` in s-078
+
+- Add y-023, question mark within words
+
+- Add m-079, ebook looks like a collection but no collection metadata specified
+
+- Fix xpath when checking for border colors
+
+- Improve t-029
+
+- Include LoI in s-033
+
+- Add m-080, check for PGDP Canada name. Thanks to Vince Rice
+
+- Add m-081, check for published year range. Thanks to Vince Rice
+
+- Update m-071 to use `Distributed Proofreaders`. Thanks to Vince Rice
+
+- Add m-082, check for Faded page text
+
+## se modernize-spelling
+
+- Various additions
+
+## se semanticate
+
+- Add `presentation` role to headers and footers in `<blockquote>`s
+
+## se shift-endnotes
+
+- Handle non-contiguous endnotes. Thanks to Vince Rice
+
+- Fix error when using `--decrement` option. Thanks to Vince Rice
+
+## se shift-illustrations
+
+- Handle non-contiguous endnotes. Thanks to Vince Rice
+
+- Fix error when using `--decrement` option. Thanks to Vince Rice
+
+## se typogrify
+
+- Remove dash after two- or three-em-dashes
+
+- Fix common erro in opening double quote
+
 # 2.7.4
 
 ## se build
