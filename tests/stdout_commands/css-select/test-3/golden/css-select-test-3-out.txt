@@ -1,0 +1,2 @@
+/Users/vrice/src/SE/tools/tests/stdout_commands/css-select/test-3/in/src/epub/te
+xt/chapter-1.xhtml

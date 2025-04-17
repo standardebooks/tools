@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/" xml:lang="en-GB">
+	<head>
+		<title>I</title>
+		<link href="../css/core.css" rel="stylesheet" type="text/css"/>
+		<link href="../css/local.css" rel="stylesheet" type="text/css"/>
+	</head>
+	<body epub:type="bodymatter z3998:fiction">
+		<section id="chapter-1" epub:type="chapter">
+			<h2 epub:type="ordinal z3998:roman">I</h2>
+			<!-- these should not be included in the LoI -->
+			<!-- no id -->
+			<figure>
+				<img/>
+			</figure>
+			<!-- no img -->
+			<figure id="illustration-1"/>
+
+			<!-- these should be included in the LoI; we use deliberately unsorted ids to ensure that document order is preserved -->
+
+			<!-- various situations in which placeholder text should be used -->
+			<figure id="illustration-3">
+				<img/>
+			</figure>
+			<figure id="illustration-2">
+				<img alt=""/>
+			</figure>
+			<figure id="illustration-4">
+				<img/>
+				<figcaption/>
+			</figure>
+
+			<figure id="illustration-5">
+				<img alt="	This alt text includes leading/trailing whitespace, which is trimmed. "/>
+			</figure>
+
+			<figure id="illustration-6">
+				<img/>
+				<figcaption> <b>Non-block</b> elements in figcaptions are retained; this figcaption also includes leading/trailing whitespace that is trimmed.	</figcaption>
+			</figure>
+
+			<figure id="illustration-7">
+				<img alt="illustration-7-alt"/>
+				<figcaption>This figcaption text is preferred over alt when both are present.</figcaption>
+			</figure>
+
+			<figure id="illustration-8">
+				<img alt="This alt text is preferred over a ‘Figure N’-type figcaption."/>
+				<figcaption> <em> Figure 8 </em> </figcaption>
+			</figure>
+
+			<figure id="illustration-9">
+				<img alt="This alt text is preferred over figcaption with block element."/>
+				<figcaption>
+					<blockquote>
+						<p>Text appearing within a figcaption block element.</p>
+					</blockquote>
+				</figcaption>
+			</figure>
+
+			<figure id="illustration-10">
+				<img/>
+				<figcaption>This figcaption includes an endnote reference, which is removed.<a href="endnotes.xhtml#note-8" id="noteref-8" epub:type="noteref">8</a></figcaption>
+			</figure>
+
+			<figure id="illustration-11">
+				<img/>
+				<figcaption>This figcaption includes a hyperlink; only the hyperlink text (see next sentence) is retained. <a href="chapter-2.xhtml">See Chapter 2.</a></figcaption>
+			</figure>
+		</section>
+	</body>
+</html>

@@ -1,0 +1,14 @@
+/Users/vrice/src/SE/tools/tests/stdout_commands/css-select/test-1/in/src/epub/te
+xt/chapter-1.xhtml
+        <p>Chapter 1, first blockquote (letter), second p.</p>
+
+        <p>Chapter 1, second p, first p after first blockquote (letter).</p>
+
+        <p>Chapter 1, first ol, second li, second p.</p>
+
+/Users/vrice/src/SE/tools/tests/stdout_commands/css-select/test-1/in/src/epub/te
+xt/chapter-2.xhtml
+        <p>Chapter 2, second p, first p after first blockquote (letter).</p>
+
+        <p>Chapter 2, first ol, second li, second p.</p>
+

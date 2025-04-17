@@ -1,0 +1,46 @@
+/Users/vrice/src/SE/tools/tests/stdout_commands/xpath/test-1/in/src/epub/text/ch
+apter-1.xhtml
+        <blockquote class="chapter-1-first-blockquote-letter" 
+epub:type="z3998:letter">
+                                        <p>Chapter 1, first blockquote (letter),
+first p.</p>
+                                        <p>Chapter 1, first blockquote (letter),
+second p.</p>
+                                </blockquote>
+
+        <blockquote class="chapter-1-second-blockquote-verse" 
+epub:type="z3998:verse">
+                                        <header>
+                                                <p>Chapter 1, second blockquote 
+(verse), header, first p</p>
+                                        </header>
+                                        <p 
+class="chapter-1-second-blockquote-verse-first-p">
+                                                <span>Chapter 1, second 
+blockquote (verse), first p, first span</span>
+                                                <br/>
+                                                <span class="i1">Chapter 1, 
+second blockquote (verse), first p, second span (first class=i1)</span>
+                                                <br/>
+                                                <span>Chapter 1, second 
+blockquote (verse), first p, third span</span>
+                                                <br/>
+                                                <span class="i1">Chapter 1, 
+second blockquote (verse), first p, fourth span (second class=i1)</span>
+                                        </p>
+                                </blockquote>
+
+/Users/vrice/src/SE/tools/tests/stdout_commands/xpath/test-1/in/src/epub/text/ch
+apter-2.xhtml
+        <blockquote class="chapter-2-second-blockquote-letter" 
+epub:type="z3998:letter">
+                                        <p>Chapter 2, second blockquote 
+(letter), first p.</p>
+                                        <footer 
+class="chapter-2-second-blockquote-letter-footer">
+                                                <p epub:type="z3998:sender 
+z3998:signature">Chapter 2, second blockquote (letter), footer, first p, first 
+sender/signature</p>
+                                        </footer>
+                                </blockquote>
+
