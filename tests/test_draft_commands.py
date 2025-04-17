@@ -1,12 +1,12 @@
 """
 Tests for commands that transform epub text files and only need a draft ebook to run.
 The draft commands are:
-	british2american, build-loi, build-manifest, build-spine, build-title, build-toc,
-	clean, hyphenate, modernize-spelling, semanticate, typogrify
+	british2american, build-images, build-loi, build-manifest, build-spine, build-title,
+	build-toc, clean, hyphenate, modernize-spelling, semanticate, typogrify
 
-The build-* commands are special in that they can either update existing files, or they can, with an
-argument, generate their output to stdout. To test them here, in the draft group, they have to update
-files, so disallow `--stdout` in any command file.
+The build-loi/manifest/spine/title/toc commands can either update existing files, or they can,
+with an argument, generate their output to stdout. To test them here, in the draft module, they
+have to update files, so the `--stdout` argument is disallowed in any command file.
 """
 
 import os

@@ -1,8 +1,7 @@
 """
 Tests for commands that transform epub text files and require a substantially complete ebook.
 The ebook commands are:
-	build-ids, build-images, prepare-release, renumber-endnotes, shift-endnotes,
-	shift-illustrations
+	build-ids, prepare-release, renumber-endnotes, shift-endnotes, shift-illustrations
 """
 
 import os

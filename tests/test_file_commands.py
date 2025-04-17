@@ -3,8 +3,8 @@ Tests for commands that take zero or one file as input and produce one or more o
 The file commands are:
 	create-draft, extract-ebook, split-file
 
-NOTE: Changes to this list should be reflected in the file_commands variable in the files_are_golden
-helper function.
+NOTE: Changes to this list should be reflected in the file_commands variable in the helper
+function files_are_golden.
 """
 
 import os
