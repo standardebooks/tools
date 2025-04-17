@@ -1,7 +1,12 @@
 <spine>
 	<itemref idref="titlepage.xhtml"/>
 	<itemref idref="imprint.xhtml"/>
+	<itemref idref="dedication.xhtml"/>
+	<itemref idref="book-1.xhtml"/>
+	<itemref idref="book-2.xhtml"/>
 	<itemref idref="chapter-1.xhtml"/>
+	<itemref idref="chapter-2.xhtml"/>
+	<itemref idref="loi.xhtml"/>
 	<itemref idref="colophon.xhtml"/>
 	<itemref idref="uncopyright.xhtml"/>
 </spine>
