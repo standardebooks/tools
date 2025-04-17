@@ -1,19 +1,25 @@
 """
-Tests for commands that run against a draft ebook and produce output to stdout.
+Tests for commands that (mostly) run against a draft ebook and produce output to stdout.
 The stdout commands are:
 	build-loi, build-manifest, build-spine, build-title, build-toc, css-select, 
 	find-mismatched-dashes, find-mismatched-diacritics, find-unusual-characters, help,
 	recompose-epub, unicode-names, word-count, xpath
 
-The build-* commands are special in that they can either update existing files, or they can,
-with an argument, generate their output to stdout. Thus, to test them here, in the stdout
-group, they require the `--stdout` argument. It is automatically added if there is no command
-file, otherwise the command file must include it.
+The `css-select`, `unicode-names`, and `xpath` commands require an input string. They therefore
+require a command file, with at least the command and input string parameter.
 
-The command `unicode_names` is special in that it takes a string as input rather than an ebook
-directory. Thus it also requires a command file, with the command and input string parameter.
+The `help` and `unicode-names` commands do not take a directory as input.
 
-The command `help` is special in that it does not take any input.
+The `build-title`, `css-select`, and `xpath` commands take the input directory as input rather
+than the ebook directory. For `build-title`, this is because it can only take a single file as
+input. For `css-select` and `xpath`, it's because the directory name of the files being
+selected appear in the output, and the book-directory is a transient name that changes on every
+test run.
+
+ The build-* commands can either update existing files, or they can, with an argument, generate
+ their output to stdout. Thus, to test them here, in the stdout module, they require the
+ `--stdout` argument. It is automatically added if there is no command file, otherwise the
+ command file must include it.
 """
 
 import os
@@ -21,9 +27,10 @@ from pathlib import Path
 import pytest
 from helpers import assemble_draftbook, must_run, output_is_golden
 
-no_ebook_directory_commands = ["unicode-names", "help"]
+command_file_commands = ["css-select", "unicode-names", "xpath"]
+no_directory_commands = ["help", "unicode-names"]
+input_directory_commands = ["build-title", "css-select", "xpath"]
 stdout_argument_commands = ["build-loi", "build-manifest", "build-spine", "build-title", "build-toc"]
-command_file_commands = stdout_argument_commands + ["unicode-names"]
 module_directory = Path(__file__).parent / "stdout_commands"
 module_tests = []
 
@@ -71,15 +78,19 @@ def test_stdout_commands(draftbook__directory: Path, work__directory: Path, comm
 	elif command in stdout_argument_commands:
 		command_to_use += " --stdout"
 
-	# these commands don't have any input files and thus don't need/use the book directory
-	if command in no_ebook_directory_commands:
-		must_run(f"se {command_to_use}")
-	else:
-		# contains the files specific to the particular test being run
-		in_directory = test_directory / "in"
-		# contains the full ebook structure, with the in_directory files copied over the draft ebook files
+	# contains the files specific to the particular test being run
+	in_directory = test_directory / "in"
+
+	# these commands use the input directory rather than the book directory
+	if command in input_directory_commands:
+		command_to_use += f" {in_directory}"
+	# except for the no_directory_commands, everything else uses the book directory
+	elif command not in no_directory_commands:
+		# contains the full ebook structure, with the in_directory files copied over the draft
+		# ebook files
 		book_directory = assemble_draftbook(draftbook__directory, in_directory, work__directory)
-		must_run(f"se {command_to_use} {book_directory}")
+		command_to_use += f" {book_directory}"
+	must_run(f"se {command_to_use}")
 
 	# Output of stderr should always be empty
 	out, err = capfd.readouterr()
