@@ -159,6 +159,13 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"([0-9]+)\s*m\.?p\.?h\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>mph</abbr>", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"([0-9]+)\s*h\.?p\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>hp</abbr>", xhtml, flags=regex.IGNORECASE)
 
+	# In the above regexes, we may have introduced HTML into attribute values, for example:
+	# `<a id="CHAPTER_<span epub:type="z3998:roman">II</span>"/>`
+	# Try to remove those here.
+	compiled_regex = regex.compile(r'=\s*"([^"]*)</?[a-z]+[^>]*?>([^"]*)"')
+	while regex.search(compiled_regex, xhtml) is not None:
+		xhtml = regex.sub(compiled_regex, r'="\1\2"', xhtml)
+
 	dom = se.easy_xml.EasyXmlTree(xhtml)
 
 	# We may have added HTML tags within title tags. Remove those here.
