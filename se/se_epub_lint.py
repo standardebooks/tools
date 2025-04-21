@@ -2155,7 +2155,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 	# Check for table headers that don't have content, which is an accessibility issue.
 	# Note that @aria-label and @title should (apparently) not be used for table headers
-	nodes = dom.xpath("/html/body//th[not(text())]")
+	nodes = dom.xpath("/html/body//th[text() = '']")
 	if nodes:
 		messages.append(LintMessage("s-074", "[xhtml]<th>[/] element with no text content should be a [xhtml]<td>[/] element instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
