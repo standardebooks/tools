@@ -495,6 +495,7 @@ TYPOS
 "y-031", "Possible typo: dialog tag missing punctuation."
 "y-032", "Possible typo: italics running into preceding or following characters."
 "y-033", "Possible typo: three-em-dash obscuring an entire word, but not preceded by a space."
+"y-034", "Possible typo: [text].[/] embedded in word. Hint: Abbreviations must be in an [xhtml]<abbr>[/] element."
 """
 
 class LintMessage:
@@ -3155,6 +3156,31 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	nodes = dom.xpath(f"/html/body//p[re:test(., '[^>“(\\s{se.WORD_JOINER}]{se.WORD_JOINER}?⸻')]")
 	if nodes:
 		messages.append(LintMessage("y-033", "Possible typo: three-em-dash obscuring an entire word, but not preceded by a space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for no space after periods, but first remove any `<a>` elements as that might match URLs like `standardebooks.org`.
+	dom_clone = deepcopy(dom)
+	for node in dom_clone.xpath("//a[@href]"):
+		# If the link text includes a TLD, clear out the text too.
+		if any(tld in node.inner_text() for tld in (".org", ".com", ".net", ".gov", ".edu", ".us", ".uk", ".nz", ".au", ".ca")):
+			node.remove()
+		else:
+			epub_type = node.get_attr("epub:type")
+			if epub_type and "noteref" in epub_type:
+				# If the link is a noteref, remove it, because some noterefs may start with letters (see <https://standardebooks.org/ebooks/john-reed/ten-days-that-shook-the-world>).
+				node.remove()
+			else:
+				node.remove_attr("href")
+
+	for node in dom_clone.xpath("//abbr"):
+		node.remove()
+
+	for node in dom_clone.xpath("//m:math"):
+		node.remove()
+
+	# Exclude some common non-abbreviations, and don't match if the paragraph contains phonemes or graphemes as it's likely we're spelling something.
+	nodes = dom_clone.xpath("/html/body//p[re:test(.,'[a-z]{1,}\\.[a-z]{1,}', 'i') and not(re:test(., 'A.B.C.|X.Y.Z.') or .//*[re:test(@epub:type, 'grapheme|phoneme')])]")
+	if nodes:
+		messages.append(LintMessage("y-034", "Possible typo: [text].[/] embedded in word. Hint: Abbreviations must be in an [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 	return messages
 

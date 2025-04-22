@@ -150,10 +150,10 @@ Now the `se` binary is in your path, and any edits you make to source files in t
 As a developer, it’s often useful to run an `se` command like `se lint` or `se build` on the entire corpus for testing purposes. This can be very time-consuming in a regular invocation (like `se lint /path/to/ebook/repos/*`), because each argument is processed sequentially. Instead of waiting for a single invocation to process all of its arguments sequentially, use [GNU Parallel](https://www.gnu.org/software/parallel/) to start multiple invocations in parallel, with each one processing a single argument. For example:
 
 ```shell
-# Slow, each argument is processed in sequence
+# Slow: Each argument is processed in sequence.
 se lint /path/to/ebook/repos/*
 
-# Fast, multiple invocations each process a single argument in parallel
+# Fast: Multiple invocations each process a single argument in parallel.
 export COLUMNS; parallel --keep-order se lint ::: /path/to/ebook/repos/*
 ```
 
