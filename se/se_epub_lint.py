@@ -3061,8 +3061,15 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 		messages.append(LintMessage("y-018", "Possible typo: [text]‘[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Check for closing rdquo without opening ldquo.
-	# Remove tds in case rdquo means "ditto mark"
-	typos = regex.findall(r"”[^“‘]+?”", regex.sub(r"<td[^>]*?>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents))
+	# First, remove `<td>` and `<th>` in case rdquo means "ditto mark". Also remove noterefs which may interfere with this test.
+	dom_copy = deepcopy(dom)
+	for node in dom_copy.xpath("/html/body//table//a[contains(@epub:type, 'noteref')]"):
+		node.remove()
+
+	for node in dom_copy.xpath("/html/body//table//*[re:test(name(), 'td|th') and re:test(., '\\s*”\\s*')]"):
+		node.remove()
+
+	typos = regex.findall(r"”[^“‘]+?”", regex.sub(r"<t[dh][^>]*?>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</t[dh]>", "", dom_copy.to_string()))
 
 	# We create a filter to try to exclude nested quotations
 	# Remove tags in case they're enclosing punctuation we want to match against at the end of a sentence.
