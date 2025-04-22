@@ -3764,7 +3764,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 				if filename.name not in IGNORED_FILENAMES:
 					# Does this book look like a collection? It does if there is a `bodymatter` section that only contains `<article>` children, and none of the titles are roman numerals.
-					nodes = dom.xpath("/html/body[contains(@epub:type, 'bodymatter') and ./article and count(./*[name() != 'article']) = 0 and not(./article/*[re:test(name(), '^h[1-6]$') and contains(@epub:type, 'ordinal')]) and not(./article/hgroup//*[contains(@epub:type, 'ordinal')])]")
+					nodes = dom.xpath("/html/body[contains(@epub:type, 'bodymatter') and ./article and count(./*[name() != 'article']) = 0 and not(./article/*[re:test(name(), '^h[1-6]$') and contains(@epub:type, 'ordinal')]) and not(./article/hgroup//*[contains(@epub:type, 'ordinal')]) and not(./article/header/hgroup//*[contains(@epub:type, 'ordinal')])]")
 					if nodes:
 						does_ebook_look_like_collection = True
 
