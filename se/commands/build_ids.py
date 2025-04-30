@@ -54,7 +54,6 @@ def build_ids(plain_output: bool) -> int:
 				else:
 					nodes = dom.xpath("//*[@id and not(re:test(@epub:type, 'noteref')) and not(re:test(local-name(), '(section|article|nav|figure|dt|tr)'))]")
 
-				print(f"filename={filename.name}, nodes={nodes}")
 				for node in nodes:
 					old_id = node.get_attr("id")
 					new_id = f"se-replacement-id-{id_counter}"
