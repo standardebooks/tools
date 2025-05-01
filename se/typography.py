@@ -136,6 +136,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Add en dashes; don't replace match that is within an html tag, since ids and attrs often contain the pattern DIGIT-DIGIT
 	xhtml = regex.sub(r"(?<!<[^>]*)([0-9]+)\-([0-9]+)", r"\1–\2", xhtml)
 
+	# Add en dashes to ranges of roman numerals.
+	xhtml = regex.sub(r"""(<span epub:type="z3998:roman">[^<]+?</span>)-(<span epub:type="z3998:roman">[^<]+?</span>)""", r"\1–\2", xhtml)
+
 	# Add a word joiner on both sides of en dashes
 	xhtml = regex.sub(fr"{se.WORD_JOINER}?–{se.WORD_JOINER}?", fr"{se.WORD_JOINER}–{se.WORD_JOINER}", xhtml)
 
