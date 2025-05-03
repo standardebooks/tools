@@ -385,6 +385,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Tt]he|[Aa]nd|[Oo]r) what not(?! to)\b", r"\1 whatnot", xhtml)	# what not -> whatnot
 	xhtml = regex.sub(r"\b([Ww])oful", r"\1oeful", xhtml)				# woful -> woeful
 	xhtml = regex.sub(r"\b([Yy])our self\b(?!-)", r"\1ourself", xhtml)		# your self -> your self, but ignore constructs like `your self-determination` or `your selfish sister`.
+	xhtml = regex.sub(r"\b([Gg])overnour", r"\1overnor", xhtml)			# governour -> governor
 
 
         # remove elision quotes from words that no longer need them
