@@ -20,7 +20,7 @@ _se(){
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			build-ids)
-				COMPREPLY+=($(compgen -W "-h --help -v --verbose" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-h --help -n --no-endnotes -v --verbose" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			build-images)

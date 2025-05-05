@@ -75,6 +75,7 @@ case $state in
 			build-ids)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
+					{-n,--no-endnotes}'[exclude endnotes]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_directories'
 				;;
