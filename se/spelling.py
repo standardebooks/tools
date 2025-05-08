@@ -386,7 +386,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ww])oful", r"\1oeful", xhtml)				# woful -> woeful
 	xhtml = regex.sub(r"\b([Yy])our self\b(?!-)", r"\1ourself", xhtml)		# your self -> your self, but ignore constructs like `your self-determination` or `your selfish sister`.
 	xhtml = regex.sub(r"\b([Gg])overnour", r"\1overnor", xhtml)			# governour -> governor
-
+	xhtml = regex.sub(r"\b([Tt])umbler\-?full?", r"\1umblerful", xhtml)		# tumbler-full -> tumblerful
+	xhtml = regex.sub(r"\b([Ww])ine\-?glass\-?full?", r"\1ineglassful", xhtml)	# wine-glass-full -> wineglassful
 
         # remove elision quotes from words that no longer need them
 	xhtml = regex.sub(r"’([Bb])us\b", r"\1us", xhtml)				# ’bus -> bus
