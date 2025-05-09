@@ -199,12 +199,10 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				dom = self.get_dom(file_path)
 
 				if dom.xpath("/html/body//section[contains(@epub:type, 'colophon')]"):
-					last_updated_iso = regex.sub(r"\.[0-9]+$", "", self.last_commit.timestamp.isoformat()) + "Z"
-					last_updated_iso = regex.sub(r"\+.+?Z$", "Z", last_updated_iso)
-					# In the line below, we can't use %l (unpadded 12 hour clock hour) because it isn't portable to Windows.
-					# Instead we use %I (padded 12 hour clock hour) and then do a string replace to remove leading zeros.
-					last_updated_friendly = f"{self.last_commit.timestamp:%B %e, %Y, %I:%M <abbr class=\"eoc\">%p</abbr>}".replace(" 0", " ")
-					last_updated_friendly = regex.sub(r"\s+", " ", last_updated_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
+					last_updated = self.last_commit.timestamp
+
+					last_updated_iso = se.formatting.generate_iso_timestamp(last_updated)
+					last_updated_friendly = se.formatting.generate_colophon_timestamp(last_updated)
 
 					# Set modified date in the metadata file
 					for node in metadata_dom.xpath("//meta[@property='dcterms:modified']"):

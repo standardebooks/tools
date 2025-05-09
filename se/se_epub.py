@@ -1016,12 +1016,10 @@ class SeEpub:
 		If this ebook has not yet been released, set the first release timestamp in the metadata file.
 		"""
 
-		if self.metadata_dom.xpath("/package/metadata/dc:date[text() = '1900-01-01T00:00:00Z']"):
+		if self.metadata_dom.xpath("/package/metadata/dc:date[text() = '1900-01-01T00:00:00Z' or text() = '']"):
 			now = datetime.now(timezone.utc)
-			now_iso = regex.sub(r"\.[0-9]+$", "", now.isoformat()) + "Z"
-			now_iso = regex.sub(r"\+.+?Z$", "Z", now_iso)
-			now_friendly = f"{now:%B %e, %Y, %l:%M <abbr class=\"eoc\">%p</abbr>}"
-			now_friendly = regex.sub(r"\s+", " ", now_friendly).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", " <abbr")
+			now_iso = se.formatting.generate_iso_timestamp(now)
+			now_friendly = se.formatting.generate_colophon_timestamp(now)
 
 			for node in self.metadata_dom.xpath("/package/metadata/dc:date"):
 				node.set_text(now_iso)

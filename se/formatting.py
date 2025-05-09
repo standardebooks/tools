@@ -5,6 +5,7 @@ several text-level statistics like reading ease, and for adding semantics.
 """
 
 from copy import deepcopy
+from datetime import datetime
 import html.entities
 import math
 import string
@@ -1509,6 +1510,30 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 	title = title.replace("&amp;", "&")
 
 	return title
+
+def generate_iso_timestamp(timestamp: datetime) -> str:
+	"""
+	Given a `datetime` in UTC, generate a string in the format `YYY-mm-ddTHH:ii:ssZ`.
+	"""
+
+	# Remove time zone.
+	formatted_timestamp = regex.sub(r"\+.+", "", timestamp.isoformat())
+	# Remove microseconds.
+	formatted_timestamp = regex.sub(r"\.[0-9]+", "", formatted_timestamp) + "Z"
+
+	return formatted_timestamp
+
+def generate_colophon_timestamp(timestamp: datetime) -> str:
+	"""
+	Given a `datetime` in UTC, generate a "friendly" timestamp in HTML format for use in an S.E. colophon.
+	"""
+
+	# In the line below, we can't use %l (unpadded 12 hour clock hour) because it isn't portable to Windows.
+	# Instead we use %I (padded 12 hour clock hour) and then do a string replace to remove leading zeros.
+	formatted_timestamp = f"{timestamp:%B %e, %Y, %I:%M{se.NO_BREAK_SPACE}<abbr class=\"eoc\">%p</abbr>}".replace(" 0", " ")
+	formatted_timestamp = regex.sub(r"\s+", " ", formatted_timestamp).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", f"{se.NO_BREAK_SPACE}<abbr")
+
+	return formatted_timestamp
 
 def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> List[EasyXmlElement]:
 	"""
