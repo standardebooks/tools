@@ -480,13 +480,14 @@ class SeEpub:
 
 		return self._dom_cache[file_path_str]
 
-	def _recompose_xhtml(self, section: se.easy_xml.EasyXmlElement, output_dom: se.easy_xml.EasyXmlTree) -> None:
+	def _recompose_xhtml(self, section: se.easy_xml.EasyXmlElement, output_dom: se.easy_xml.EasyXmlTree, use_image_files: bool = False) -> None:
 		"""
 		Helper function used in self.recompose()
 
 		INPUTS
 		section: An EasyXmlElement to inspect
 		output_dom: A EasyXmlTree representing the entire output dom
+		use_image_files: if True, leave image src attributes as relative URLs instead of inlining as data: URIs
 
 		OUTPUTS
 		None
@@ -509,18 +510,21 @@ class SeEpub:
 		else:
 			output_dom.xpath("/html/body")[0].append(section)
 
-		# Convert all <img> references to inline base64
+		# Convert all <img> references to inline base64, unless use_image_files is True
 		# We even convert SVGs instead of inlining them, because CSS won't allow us to style inlined SVGs
 		# (for example if we want to apply max-width or filter: invert())
-		for img in section.xpath("//img[starts-with(@src, '../images/')]"):
-			img.set_attr("src", se.images.get_data_url(self.content_path / img.get_attr("src").replace("../", "")))
+		if not use_image_files:
+			for img in section.xpath("//img[starts-with(@src, '../images/')]"):
+				img.set_attr("src", se.images.get_data_url(self.content_path / img.get_attr("src").replace("../", "")))
 
-	def recompose(self, output_xhtml5: bool, extra_css_file: Union[Path,None] = None) -> str:
+	def recompose(self, output_xhtml5: bool, extra_css_file: Union[Path,None] = None, use_image_files: bool = False) -> str:
 		"""
 		Iterate over the XHTML files in this epub and "recompose" them into a single XHTML string representing this ebook.
 
 		INPUTS
 		output_xhtml5: true to output XHTML5 instead of HTML5
+		extra_css_file: path to an additional CSS file to include
+		use_image_files: if True, leave image src attributes as relative URLs instead of inlining as data: URIs
 
 		OUTPUTS
 		A string of HTML5 representing the entire recomposed ebook.
@@ -564,18 +568,19 @@ class SeEpub:
 
 			file_css = regex.sub(r"\s*@(charset|namespace).+?;\s*", "\n", file_css).strip()
 
-			# Convert background-image URLs to base64
-			for image in regex.finditer(pattern=r"""url\("(.+?\.(?:svg|png|jpg))"\)""", string=file_css):
-				url = image.captures(1)[0].replace("../", "")
-				url = regex.sub(r"^/", "", url)
-				try:
-					data_url = se.images.get_data_url(self.content_path / url)
-					file_css = file_css.replace(image.group(0), f"""url("{data_url}")""")
-				except FileNotFoundError:
-					# If the file isn't found, continue silently.
-					# File may not be found for example in web.css, which points to an image on the web
-					# server, not in the ebook.
-					pass
+			# Convert background-image URLs to base64, unless use_image_files is True
+			if not use_image_files:
+				for image in regex.finditer(pattern=r"""url\("(.+?\.(?:svg|png|jpg))"\)""", string=file_css):
+					url = image.captures(1)[0].replace("../", "")
+					url = regex.sub(r"^/", "", url)
+					try:
+						data_url = se.images.get_data_url(self.content_path / url)
+						file_css = file_css.replace(image.group(0), f"""url("{data_url}")""")
+					except FileNotFoundError:
+						# If the file isn't found, continue silently.
+						# File may not be found for example in web.css, which points to an image on the web
+						# server, not in the ebook.
+						pass
 
 			css = css + f"\n\n\n/* {filepath.name} */\n" + file_css
 
@@ -624,7 +629,7 @@ class SeEpub:
 			# Now, recompose the children
 			for node in dom.xpath("/html/body/*"):
 				try:
-					self._recompose_xhtml(node, output_dom)
+					self._recompose_xhtml(node, output_dom, use_image_files)
 				except se.SeException as ex:
 					raise se.SeException(f"[path][link=file://{file_path}]{file_path}[/][/]: {ex}") from ex
 
