@@ -186,6 +186,10 @@ Instructions are found in the testing [README](tests/README.md).
 
 - Always use the `regex` module instead of the `re` module.
 
+### Contributing guidelines
+
+Please see the [`CONTRIBUTING`](CONTRIBUTING.md) file for other contribution guidelines, including our Generative AI Disclosure Policy
+
 # Help wanted
 
 We need volunteers to take the lead on the following goals:
