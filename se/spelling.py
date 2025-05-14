@@ -388,6 +388,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Gg])overnour", r"\1overnor", xhtml)			# governour -> governor
 	xhtml = regex.sub(r"\b([Tt])umbler\-?full?", r"\1umblerful", xhtml)		# tumbler-full -> tumblerful
 	xhtml = regex.sub(r"\b([Ww])ine\-?glass\-?full?", r"\1ineglassful", xhtml)	# wine-glass-full -> wineglassful
+	xhtml = regex.sub(r"\b([Ss])oubriquet", r"\1obriquet", xhtml)			# soubriquet -> sobriquet
 
         # remove elision quotes from words that no longer need them
 	xhtml = regex.sub(r"’([Bb])us\b", r"\1us", xhtml)				# ’bus -> bus
