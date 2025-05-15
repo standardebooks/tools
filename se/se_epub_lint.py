@@ -252,6 +252,7 @@ METADATA
 "m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/]."
 "m-081", "When published between a range of years, the text must be [text]published between year1 and year2[/]."
 "m-082", "Faded Page link text must be exactly [text]Faded Page[/]."
+"m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]extended[/], or [val]short[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -911,6 +912,10 @@ def _lint_metadata_checks(self) -> list:
 	nodes = self.metadata_dom.xpath("/package/metadata//*[re:test(., '[,;][a-z]', 'i')]")
 	if nodes:
 		messages.append(LintMessage("y-002", "Possible typo: punctuation followed directly by a letter, without a space.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [node.to_string() for node in nodes]))
+
+	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='title-type' and text()='main' and not(following-sibling::meta[@property='title-type'])] | /package/metadata/meta[@property='title-type' and (text()='subtitle' or text()='extended' or text()='short') and not(preceding-sibling::meta[@property='title-type' and text()='main'])]")
+	if nodes:
+		messages.append(LintMessage("m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]extended[/], or [val]short[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 	return messages
 

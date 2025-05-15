@@ -1,0 +1,5 @@
+m-059 [Error] content.opf Link to `https://www.gutenberg.org/ebooks/161` found 
+in colophon, but missing matching `dc:source` element in metadata.
+m-083 [Error] content.opf `<meta property="title-type">` element without sibling
+element with contents of `main`, `subtitle`, `extended`, or `short`.
+        <meta property="title-type" refines="#title">main</meta>
