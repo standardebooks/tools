@@ -41,7 +41,7 @@ def typogrify(plain_output: bool) -> int:
 						# Is this a metadata file?
 						# Typogrify metadata except for URLs, dates, and LoC subjects
 						if dom.xpath("/package"):
-							for node in dom.xpath("/package/metadata/dc:*[normalize-space(.) and local-name() != 'subject' and local-name() != 'source' and local-name() != 'date']") + dom.xpath("/package/metadata/meta[normalize-space(.) and (not(contains(@property, 'se:url') or @property = 'dcterms:modified' or @property = 'se:production-notes'))]"):
+							for node in dom.xpath("/package/metadata/dc:*[normalize-space(.) and local-name() != 'subject' and local-name() != 'source' and local-name() != 'date' and local-name() != 'identifier']") + dom.xpath("/package/metadata/meta[normalize-space(.) and (not(contains(@property, 'se:url') or @property = 'dcterms:modified' or @property = 'se:production-notes'))]"):
 								node.text = html.unescape(node.text)
 
 								node.text = se.typography.typogrify(node.text)
