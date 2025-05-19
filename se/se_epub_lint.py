@@ -2171,7 +2171,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		messages.append(LintMessage("s-075", "[xhtml]<body>[/] element with direct child that is not [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 	# Check for dedications with letter semantics
-	nodes = dom.xpath("/html/body//section[contains(@epub:type, 'dedication') and (descendant-or-self::*[contains(@epub:type, 'z3998:letter')] or .//*[re:test(@epub:type, 'z3998:(sender|valediction|recipient)')])]")
+	nodes = dom.xpath("/html/body//section[contains(@epub:type, 'dedication') and (descendant-or-self::*[contains(@epub:type, 'z3998:letter')] or .//*[re:test(@epub:type, 'z3998:(salutation|sender|valediction|recipient|postscript)')])]")
 	if nodes:
 		messages.append(LintMessage("s-076", "Dedication with letter semantics. Hint: Dedications are never letters, even if they appear to be addressed to someone.", se.MESSAGE_TYPE_ERROR, filename))
 
