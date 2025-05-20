@@ -1396,7 +1396,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		if self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text()='trl']") and "translated from" not in file_contents:
 			messages.append(LintMessage("m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
 
-		se_url = self.generated_identifier.replace("url:", "")
+		se_url = self.generated_identifier
 		if not dom.xpath(f"/html/body//a[@href='{se_url}' and text()='{se_url.replace('https://', '')}']"):
 			messages.append(LintMessage("m-035", f"Unexpected S.E. identifier in colophon. Expected: [url]{se_url}[/].", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -2115,7 +2115,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	if nodes:
 		messages.append(LintMessage("s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for <th> element without a <thead> ancestor. However, <th scope="...">	and <th/> are allowed, for use in tables with headers in the middle of tables (url:https://standardebooks.org/ebooks/dorothy-day/the-eleventh-virgin) and vertical table headers
+	# Check for <th> element without a <thead> ancestor. However, <th scope="...">	and <th/> are allowed, for use in tables with headers in the middle of tables (https://standardebooks.org/ebooks/dorothy-day/the-eleventh-virgin) and vertical table headers
 	# (https://standardebooks.org/ebooks/charles-babbage/passages-from-the-life-of-a-philosopher)
 	if dom.xpath("/html/body//table//th[not(ancestor::thead)][not(@scope)][not(count(node())=0)]"):
 		messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Note: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute.", se.MESSAGE_TYPE_ERROR, filename))
