@@ -140,7 +140,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 	# Initiate the various filenames we'll be using for output
 	# By convention the ASIN is set to the SHA-1 sum of the book's identifying URL
 	try:
-		identifier = metadata_dom.xpath("//dc:identifier")[0].inner_xml().replace("url:", "")
+		identifier = metadata_dom.xpath("//dc:identifier")[0].inner_xml()
 		if identifier == "":
 			identifier = self.generated_identifier
 
@@ -236,7 +236,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		# Include compatibility CSS
 		compatibility_css_filename = "compatibility.css"
-		if not self.metadata_dom.xpath("//dc:identifier[starts-with(., 'url:https://standardebooks.org')]"):
+		if not self.metadata_dom.xpath("//dc:identifier[starts-with(., 'https://standardebooks.org')]"):
 			compatibility_css_filename = "compatibility-white-label.css"
 
 		with open(work_compatible_epub_dir / "epub" / "css" / "core.css", "a", encoding="utf-8") as css_file:
