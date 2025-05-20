@@ -139,7 +139,7 @@ class SeEpub:
 
 		# If our identifier isn't SE-style, we're not an SE ebook
 		identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier/text()", True)
-		if not identifier or not identifier.startswith("url:https://standardebooks.org/ebooks/"):
+		if not identifier or not identifier.startswith("https://standardebooks.org/ebooks/"):
 			self.is_se_ebook = False
 
 	@property
@@ -231,7 +231,7 @@ class SeEpub:
 		"""
 
 		if not self._generated_identifier:
-			identifier = "url:https://standardebooks.org/ebooks/"
+			identifier = "https://standardebooks.org/ebooks/"
 
 			if not self.is_se_ebook:
 				identifier = ""
@@ -325,7 +325,7 @@ class SeEpub:
 		"""
 
 		if not self._generated_github_repo_url:
-			self._generated_github_repo_url = "https://github.com/standardebooks/" + self.generated_identifier.replace("url:https://standardebooks.org/ebooks/", "").replace("/", "_")[0:100]
+			self._generated_github_repo_url = "https://github.com/standardebooks/" + self.generated_identifier.replace("https://standardebooks.org/ebooks/", "").replace("/", "_")[0:100]
 
 		return self._generated_github_repo_url
 
