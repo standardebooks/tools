@@ -2836,7 +2836,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	if nodes:
 		messages.append(LintMessage("t-076", "Grapheme or phoneme not italicized. Hint: Dialect with missing letters should mark missing letters with [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, nodes))
 
-	nodes = dom.xpath("/html/body//text()[re:test(., '[:;!\\?][“‘]')]")
+	nodes = dom.xpath("/html/body//text()[re:test(., '[:;!\\?\\.][“‘]')]")
 	if nodes:
 		messages.append(LintMessage("t-077", "Punctuation followed by opening quotation.", se.MESSAGE_TYPE_WARNING, filename, nodes))
 
