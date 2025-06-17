@@ -27,6 +27,7 @@ import se.formatting
 import se.images
 import se.spelling
 import se.typography
+import se.xhtml
 
 SE_VARIABLES = [
 	"SE_IDENTIFIER",
@@ -512,12 +513,18 @@ class LintError:
 	properties like line numbers.
 	"""
 
-	def __init__(self, text: str, line_num: int | None = None):
+	def __init__(self, text: str, line_num: int | None = None, column_num: int | None = None):
 		self.text = text
 		self.line_num = line_num
+		self.column_num = column_num
 
 	def __str__(self) -> str:
 		return self.text
+
+	@classmethod
+	def from_matches(cls, matches: list[(str, int, int)]) -> list['LintError']:
+		"""Create a list of LintError objects from search match tuples."""
+		return [cls(match_text, line_num, column_num) for match_text, line_num, column_num in matches]
 
 class LintMessage:
 	"""
@@ -1386,6 +1393,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	"""
 
 	messages = []
+	source_file = se.xhtml.XhtmlSourceFile(filename, dom, file_contents)
 	source_links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
 
 	if self.is_se_ebook and special_file in ("colophon", "imprint"):
@@ -1424,9 +1432,9 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 			messages.append(LintMessage("m-035", f"Unexpected S.E. identifier in colophon. Expected: [url]{se_url}[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 		# Check if we forgot to fill any variable slots.
-		missing_colophon_vars = [var for var in SE_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
+		missing_colophon_vars = [match for var in SE_VARIABLES for match in source_file.search_lines(fr"\b{var}\b")]
 		if missing_colophon_vars:
-			messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, missing_colophon_vars))
+			messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_matches(missing_colophon_vars)))
 
 		# Are the sources represented correctly?
 		# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
@@ -1524,9 +1532,9 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 			messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the " + node.to_string() for node in nodes]))
 
 		# Check if we forgot to fill any variable slots.
-		missing_imprint_vars = [var for var in SE_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
+		missing_imprint_vars = [match for var in SE_VARIABLES for match in source_file.search_lines(fr"\b{var}\b")]
 		if missing_imprint_vars:
-			messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, missing_imprint_vars))
+			messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_matches(missing_imprint_vars)))
 
 		if ebook_flags["has_multiple_transcriptions"] and not dom.xpath("/html/body//a[contains(@href, '#transcriptions')]"):
 			messages.append(LintMessage("m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/].", se.MESSAGE_TYPE_ERROR, filename))
