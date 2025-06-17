@@ -528,8 +528,13 @@ class LintError:
 
 	@classmethod
 	def from_nodes(cls, nodes: list) -> list['LintError']:
-		"""Create a list of LintError objects from xpath node mathces."""
+		"""Create a list of LintError objects from xpath node matches."""
 		return [cls(node.to_string(), node.sourceline) for node in nodes]
+
+	@classmethod
+	def from_node_tags(cls, nodes: list) -> list['LintError']:
+		"""Create a list of LintError objects from xpath node tag matches."""
+		return [cls(node.to_tag_string(), node.sourceline) for node in nodes]
 
 class LintMessage:
 	"""
@@ -1580,12 +1585,12 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		# Check that endnotes have their backlink in the last `<p>` element child of the `<li>`. This also highlights backlinks that are totally missing.
 		nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')][./p[last()][not(a[contains(@epub:type, 'backlink')])] or not(./p[last()])]")
 		if nodes:
-			messages.append(LintMessage("s-056", "Last [xhtml]<p>[/] child of endnote missing backlink.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+			messages.append(LintMessage("s-056", "Last [xhtml]<p>[/] child of endnote missing backlink.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 		# Make sure the backlink points to the same note number as the parent endnote ID.
 		nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]//a[contains(@epub:type, 'backlink')][not(re:match(@href, '\\-[0-9]+$')=re:match(ancestor::li/@id, '\\-[0-9]+$'))]")
 		if nodes:
-			messages.append(LintMessage("s-057", "Backlink noteref fragment identifier doesn’t match endnote number.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+			messages.append(LintMessage("s-057", "Backlink noteref fragment identifier doesn’t match endnote number.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 		# Check that citations at the end of endnotes are in a `<cite>` element. If not typogrify will run the last space together with the em dash.
 		# This tries to catch that, but limits the match to 20 characterss so that we don't accidentally match a whole sentence that happens to be at the end of an endnote.
@@ -1596,7 +1601,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		# Did we forget the endnote semantic on `<li>` elements?
 		nodes = dom.xpath("/html/body/section/ol/li[not(re:test(@epub:type, '\\bendnote\\b'))]")
 		if nodes:
-			messages.append(LintMessage("s-099", "List item in endnotes missing [xhtml]endnote[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+			messages.append(LintMessage("s-099", "List item in endnotes missing [xhtml]endnote[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 		# Match backlink elements whose preceding node doesn't end with ` `, and is also not all whitespace.
 		nodes = dom.xpath("/html/body//a[@epub:type='backlink'][(preceding-sibling::node()[1])[not(re:test(., ' $')) and not(normalize-space(.)='')]]")
@@ -1685,7 +1690,7 @@ def _lint_xhtml_css_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 	# Ignore the titlepage, LoI, and dedications as they typically have unique styling.
 	nodes = dom.xpath("/html/body//*[name()='section' or name()='article'][1][./p[1][not(preceding-sibling::*)] and not(re:test(@epub:type, '(titlepage|loi|dedication)')) and not(ancestor::*/*[re:test(name(), '^(h[1-6]|header|hgroup)$')]) and not(@data-css-margin-top='20vh')]")
 	if nodes:
-		messages.append(LintMessage("c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/].", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for padding and margin not in `.5` increments, except for table headers/cells which usually need `.25em` increments.
 	nodes = dom.xpath("/html/body//*[not(re:test(name(), '^(h[1-6]|td|th)$'))][attribute::*[re:test(local-name(), 'data-css-(margin|padding)')][re:test(., '^[0-9]*\\.[^5]')]]")
@@ -1724,7 +1729,7 @@ def _lint_xhtml_css_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 	# Exclude the last element because we don't care if it breaks after the last one.
 	nodes = dom.xpath("/html/body[count(./article) > 1 or count(./section) > 1]/*[(name() = 'article' or name() = 'section') and (not(@data-css-break-after) or @data-css-break-after != 'page') and not(position() = last())]")
 	if nodes:
-		messages.append(LintMessage("c-020", "Multiple [xhtml]<article>[/]s or [xhtml]<section>[/]s in file, but missing [css]break-after: page;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("c-020", "Multiple [xhtml]<article>[/]s or [xhtml]<section>[/]s in file, but missing [css]break-after: page;[/].", se.MESSAGE_TYPE_WARNING, filename, LintError.from_node_tags(nodes)))
 
 	# Check for elements that are set in italics, and whose italic children don't have `font-style: normal`.
 	nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and ./*[(name()='i' or name()='em') and @data-css-font-style='italic']]")
@@ -1734,7 +1739,7 @@ def _lint_xhtml_css_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 	# Check for tables that appear to be summing/listing numbers, but that are missing `font-variant-numeric` styling.
 	nodes = dom.xpath("/html/body//table[count(.//td[not(following-sibling::*) and re:test(., '^[0-9]+$') and not(@data-css-font-variant-numeric='tabular-nums')]) >= 2]")
 	if nodes:
-		messages.append(LintMessage("c-026", "Table that appears to be listing numbers, but without [css]font-variant-numeric: tabular-nums;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("c-026", "Table that appears to be listing numbers, but without [css]font-variant-numeric: tabular-nums;[/].", se.MESSAGE_TYPE_WARNING, filename, LintError.from_node_tags(nodes)))
 
 	return messages
 
@@ -1841,7 +1846,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	# Check for block-level tags that end with `<br/>`.
 	nodes = dom.xpath("/html/body//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article][br[last()][not(following-sibling::text()[normalize-space()])][not(following-sibling::*)]]")
 	if nodes:
-		messages.append(LintMessage("s-008", "[xhtml]<br/>[/] element found before closing tag of block-level element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-008", "[xhtml]<br/>[/] element found before closing tag of block-level element.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for `<hgroup>` elements with only one child.
 	nodes = dom.xpath("/html/body//hgroup[count(*)=1]")
@@ -1858,7 +1863,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	# Ignore items within `<blockquote>` as that is a new sectioning root and we don't need to address sectioning elements in quotations.
 	nodes = dom.xpath("/html/body//*[self::section or self::article][not(@id)][not(ancestor::blockquote)]")
 	if nodes:
-		messages.append(LintMessage("s-011", "Element without [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-011", "Element without [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for `<pre>` elements.
 	if dom.xpath("/html/body//pre"):
@@ -1867,7 +1872,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	# Check for `<br/>` after block-level elements.
 	nodes = dom.xpath("/html/body//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article][following-sibling::br]")
 	if nodes:
-		messages.append(LintMessage("s-014", "[xhtml]<br/>[/] after block-level element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-014", "[xhtml]<br/>[/] after block-level element.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for `<hr>` elements before the end of a section, which is a common PG artifact.
 	if dom.xpath("/html/body//hr[count(following-sibling::*)=0]"):
@@ -1882,17 +1887,17 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	# Note we dont select directly on element name, because we want to ignore any namespaces that may (or may not) be defined.
 	nodes = dom.xpath("/html/body//*[local-name()='mfenced']")
 	if nodes:
-		messages.append(LintMessage("s-017", "[xhtml]<m:mfenced>[/] is deprecated in the MathML spec. Use [xhtml]<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-017", "[xhtml]<m:mfenced>[/] is deprecated in the MathML spec. Use [xhtml]<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>[/].", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for `<figure>` elements without `id` attributes.
 	nodes = dom.xpath("/html/body//img[@id]")
 	if nodes:
-		messages.append(LintMessage("s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements. Hint: Images that are inline (i.e. that do not have parent [xhtml]<figure>[/]s do not have [attr]id[/] attributes.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements. Hint: Images that are inline (i.e. that do not have parent [xhtml]<figure>[/]s do not have [attr]id[/] attributes.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for `id`s on `<h#>` elements.
 	nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
 	if nodes:
-		messages.append(LintMessage("s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute.", se.MESSAGE_TYPE_WARNING, filename, LintError.from_node_tags(nodes)))
 
 	# Check for legal cases that aren't italicized.
 	# We can't use this because `v.` appears as short for `volume`, and we may also have sporting events without italics.
@@ -2071,13 +2076,13 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	# Check that short stories are on an `<article>` element.
 	nodes = dom.xpath("/html/body/section[contains(@epub:type, 'se:short-story') or contains(@epub:type, 'se:novella')]")
 	if nodes:
-		messages.append(LintMessage("s-043", "[val]se:short-story[/] semantic on element that is not [xhtml]<article>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-043", "[val]se:short-story[/] semantic on element that is not [xhtml]<article>[/].", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for poetry/verse without a descendent `<p>` element.
 	# Skip the ToC landmarks because it may have poem/verse semantic children.
 	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][not(descendant::p)][not(ancestor::nav[contains(@epub:type, 'landmarks')])]")
 	if nodes:
-		messages.append(LintMessage("s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, LintError.from_node_tags(nodes)))
 
 	# Check for `<abbr>` elements that have two or more letters/periods, that don't have a semantic `epub:type`.
 	# `SS.` is the French abbreviation for `Saints`.
@@ -2118,7 +2123,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	# Check for incorrectly applied `se:name` semantic.
 	nodes = dom.xpath("/html/body//*[self::p or self::blockquote][contains(@epub:type, 'se:name.')]")
 	if nodes:
-		messages.append(LintMessage("s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something.", se.MESSAGE_TYPE_WARNING, filename, LintError.from_node_tags(nodes)))
 
 	# Check for `<header>` elements with only `<h#>` child elements.
 	nodes = dom.xpath("/html/body//header[./*[re:test(name(), 'h[1-6]') and (count(preceding-sibling::*) + count(following-sibling::*)=0)]]")
@@ -2138,7 +2143,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	# Check for `title` attributes on `<abbr>` elements.
 	nodes = dom.xpath("/html/body//abbr[@title]")
 	if nodes:
-		messages.append(LintMessage("s-052", "[xhtml]<abbr>[/] element with illegal [attr]title[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-052", "[xhtml]<abbr>[/] element with illegal [attr]title[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	nodes = dom.xpath("/html/body//blockquote//p[parent::*[name()='footer'] or parent::*[name()='blockquote']]//cite") # Sometimes the `<p>` may be in a `<footer>`.
 	if nodes:
@@ -2156,7 +2161,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	# Check that internal links don't begin with `../`.
 	nodes = dom.xpath("/html/body//a[re:test(@href, '^\\.\\./text/')]")
 	if nodes:
-		messages.append(LintMessage("s-059", "Internal link beginning with [val]../text/[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-059", "Internal link beginning with [val]../text/[/].", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for italics on things that shouldn't be italics.
 	nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.music.song') or contains(@epub:type, 'se:name.publication.short-story') or contains(@epub:type, 'se:name.publication.essay')]")
@@ -2218,7 +2223,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	# Check for sectioning elements with more than one heading element
 	nodes = dom.xpath("/html/body//*[name()='article' or name()='section'][count(./*[name()='header' or name()='hgroup' or re:test(name(), '^h[1-6]$')]) > 1]")
 	if nodes:
-		messages.append(LintMessage("s-071", "Sectioning element with more than one heading element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-071", "Sectioning element with more than one heading element.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for some elements that only have a `<span>` child (including text inline to the parent).
 	# But, exclude such elements that are `<p>` elements that have poetry-type parents.
@@ -2291,7 +2296,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	# Check for `Op. Cit.` in endnotes. `Op. Cit.` means `the previous reference` which doesn't make sense in popup endnotes. But, if the endnote has a book reference, then allow it as it might be referring to that.
 	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote') and (re:test(., '(Loc\\.|Op\\.) Cit\\.', 'i') or re:test(., '\\bl\\.c\\.\\b', 'i')) and not(.//*[contains(@epub:type, 'se:name.publication')])]")
 	if nodes:
-		messages.append(LintMessage("s-086", "[text]Op. Cit.[/] or [text]Loc. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] and [text]Loc. Cit.[/] mean [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-086", "[text]Op. Cit.[/] or [text]Loc. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] and [text]Loc. Cit.[/] mean [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded.", se.MESSAGE_TYPE_WARNING, filename, LintError.from_node_tags(nodes)))
 
 	# Check for half title pages missing subtitles.
 	if ebook_flags["has_subtitle"]:
@@ -2315,7 +2320,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	# `gr` is often used instead of `el`, `sp` instead of `es`, and `ge` instead of `de` (`ge` is the Georgian geographic region subtag but not a language subtag itself).
 	nodes = dom.xpath("//*[re:test(@xml:lang, '^(gr|sp|ge)$')]")
 	if nodes:
-		messages.append(LintMessage("s-090", "Invalid language tag.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-090", "Invalid language tag.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for `<span>` in poetry not followed by `<br/>`. Ignore `<span>`s that are roman or names, `<span>`s with `@xml:lang`, or `<span>`s that are part of a `<header>` or `<hgroup>`.
 	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]//p/span[not(re:test(@epub:type, '\\b(z3998:roman|se:name\\.)')) and not(@xml:lang) and following-sibling::*[1][name()='span'] and not(ancestor::header) and not(ancestor::hgroup)]")
@@ -2355,7 +2360,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	# Check for `@lang` attributes.
 	nodes = dom.xpath("//*[@lang]")
 	if nodes:
-		messages.append(LintMessage("s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for common missing roman semantics for `I`.
 	regent_regex = r"(?:Charles|Edward|George|Henry|James|William) I\b"
@@ -2530,7 +2535,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	# Check for punctuation after endnotes.
 	nodes = dom.xpath(f"/html/body//a[contains(@epub:type, 'noteref')][(following-sibling::node()[1])[re:test(., '^[^\\s<–\\]\\)—{se.WORD_JOINER}a-zA-Z0-9]')]]")
 	if nodes:
-		messages.append(LintMessage("t-020", "Endnote links must be outside of punctuation, including quotation marks.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("t-020", "Endnote links must be outside of punctuation, including quotation marks.", se.MESSAGE_TYPE_WARNING, filename, LintError.from_node_tags(nodes)))
 
 	# Check for correct typography around measurements like `2 ft.`.
 	# But first remove `@href` and `@id` attributes, because URLs and IDs may contain strings that look like measurements.
@@ -2923,11 +2928,11 @@ def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_
 	# Check for uppercase letters in IDs or classes.
 	nodes = dom.xpath("//*[re:test(@id, '[A-Z]') or re:test(@class, '[A-Z]') or re:test(@epub:type, '[A-Z]')]")
 	if nodes:
-		messages.append(LintMessage("x-002", "Uppercase in attribute value. Attribute values must be all lowercase.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("x-002", "Uppercase in attribute value. Attribute values must be all lowercase.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	nodes = dom.xpath("//*[re:test(@id, '^[0-9]+')]")
 	if nodes:
-		messages.append(LintMessage("x-007", "[attr]id[/] attributes starting with a number are illegal XHTML.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("x-007", "[attr]id[/] attributes starting with a number are illegal XHTML.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for double greater-than at the end of a closing tag.
 	matches = regex.search(r"(>>|>&gt;)", file_contents)
@@ -2938,22 +2943,22 @@ def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_
 	# We only check for *leading* `0`s in numbers; this allows IDs like `wind-force-0` in the _Worst Journey in the World_ glossary.
 	nodes = dom.xpath("//*[re:test(@id, '-0[0-9]')]")
 	if nodes:
-		messages.append(LintMessage("x-009", "Illegal leading 0 in [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("x-009", "Illegal leading 0 in [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for elements in `<title>` tags.
 	nodes = dom.xpath("/html/head/title/*")
 	if nodes:
-		messages.append(LintMessage("x-010", "Illegal element in [xhtml]<title>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("x-010", "Illegal element in [xhtml]<title>[/] element.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for underscores in attributes, but not if the attribute is `href` (links often have underscores) or MathMl `alttext`, which can have underscores as part of math notation.
 	nodes = dom.xpath("//@*[contains(., '_') and name() !='href' and name() !='alttext']/..")
 	if nodes:
-		messages.append(LintMessage("x-011", "Illegal underscore in attribute. Use dashes instead of underscores.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("x-011", "Illegal underscore in attribute. Use dashes instead of underscores.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for style attributes.
 	nodes = dom.xpath("/html/body//*[@style]")
 	if nodes:
-		messages.append(LintMessage("x-012", "Illegal [attr]style[/] attribute. Don’t use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("x-012", "Illegal [attr]style[/] attribute. Don’t use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for illegal elements in `<head>`.
 	nodes = dom.xpath("/html/head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
@@ -2963,7 +2968,7 @@ def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_
 	# Check for `xml:lang` attribute starting in uppercase.
 	nodes = dom.xpath("//*[re:test(@xml:lang, '^[A-Z]')]")
 	if nodes:
-		messages.append(LintMessage("x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+		messages.append(LintMessage("x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check for `id` attributes of numbered paragraphs (like `p-44`) that are used as refs in endnotes.
 	# Make sure their number is actually their correct sequence number in the text.
@@ -2973,7 +2978,7 @@ def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_
 	if filename.name not in ("titlepage.xhtml", "imprint.xhtml", "colophon.xhtml", "uncopyright.xhtml"):
 		nodes = dom.xpath("/html/head/link[@href='../css/se.css']")
 		if nodes:
-			messages.append(LintMessage("x-020", f"Link to [path][link=file://{local_css_path}]se.css[/][/] in [xhtml]<head>[/], but not an SE boilerplate file.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
+			messages.append(LintMessage("x-020", f"Link to [path][link=file://{local_css_path}]se.css[/][/] in [xhtml]<head>[/], but not an SE boilerplate file.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_node_tags(nodes)))
 
 	# Check that all `<img>` elements have an `@id` attribute. If the `<img>` has a parent `<figure>`, then the `<figure>` should have the `@id`.
 	nodes = dom.xpath("/html/body//figure[not(@id)]")
