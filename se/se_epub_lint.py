@@ -504,6 +504,21 @@ TYPOS
 "y-035", "Possible typo: single letter. Hints: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [xhtml]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?"
 """
 
+class LintError:
+	"""
+	An object representing a single instance of a lint error within a file.
+
+	Contains the original submessage text and can be extended with additional
+	properties like line numbers.
+	"""
+
+	def __init__(self, text: str, line_num: int | None = None):
+		self.text = text
+		self.line_num = line_num
+
+	def __str__(self) -> str:
+		return self.text
+
 class LintMessage:
 	"""
 	An object representing an output message for the lint function.
@@ -511,30 +526,31 @@ class LintMessage:
 	Contains information like message text, severity, and the epub filename that generated the message.
 	"""
 
-	def __init__(self, code: str, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: Path | None = None, submessages: list[str] | set[str] | None = None):
+	def __init__(self, code: str, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: Path | None = None, submessages: list[str] | set[str] | list[LintError] | None = None):
 		self.code = code
 		self.text = text.strip()
 		self.filename = filename
 		self.message_type = message_type
+		self.submessages: list[LintError] | None = None
 
 		if submessages:
-			self.submessages: list[str] | set[str] | None = []
+			self.submessages = []
 			smallest_indent = 1000
 			for submessage in submessages:
+				if not isinstance(submessage, LintError):
+					submessage = LintError(submessage)
+				self.submessages.append(submessage)
+
 				# Try to flatten leading indentation
-				for indent in regex.findall(r"^\t+(?=<)", submessage, flags=regex.MULTILINE):
+				for indent in regex.findall(r"^\t+(?=<)", submessage.text, flags=regex.MULTILINE):
 					smallest_indent = min(smallest_indent, len(indent))
 
 			if smallest_indent == 1000:
 				smallest_indent = 0
 
-			if smallest_indent:
-				for submessage in submessages:
-					self.submessages.append(regex.sub(fr"^\t{{{smallest_indent}}}", "", submessage, flags=regex.MULTILINE))
-			else:
-				self.submessages = submessages
-		else:
-			self.submessages = None
+			for submessage in self.submessages:
+				if smallest_indent:
+					submessage.text = regex.sub(fr"^\t{{{smallest_indent}}}", "", submessage.text, flags=regex.MULTILINE)
 
 class EbookSection:
 	"""
@@ -3067,7 +3083,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	if typos:
 		messages.append(LintMessage("y-012", "Possible typo: [text]”[/] directly followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-  	# Check for comma/period outside rsquo; ensure no rsquo following the punctuation to exclude elided false positives, e.g. ‘That was somethin’.’
+	# Check for comma/period outside rsquo; ensure no rsquo following the punctuation to exclude elided false positives, e.g. ‘That was somethin’.’
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘[^”’]+?’[\\.,](?!⁠? ⁠?…)(?![^‘]*’)')]")]
 	if typos:
 		messages.append(LintMessage("y-013", "Possible typo: punctuation not within [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, typos))

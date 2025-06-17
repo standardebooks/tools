@@ -95,7 +95,7 @@ def lint(plain_output: bool) -> int:
 					if message.submessages:
 						for submessage in message.submessages:
 							# Indent each line in case we have a multi-line submessage.
-							console.print(regex.sub(r"^", "\t", submessage, flags=regex.MULTILINE))
+							console.print(regex.sub(r"^", "\t", submessage.text, flags=regex.MULTILINE))
 			else:
 				for message in messages:
 					alert = "[bright_yellow]Manual Review[/bright_yellow]"
@@ -113,7 +113,7 @@ def lint(plain_output: bool) -> int:
 					if message.submessages:
 						for submessage in message.submessages:
 							# Brackets don't need to be escaped in submessages if we instantiate them in `Text()`.
-							submessage_object = Text(submessage, style="dim")
+							submessage_object = Text(submessage.text, style="dim")
 
 							table_data.append([" ", " ", Text("→", justify="right"), submessage_object])
 
