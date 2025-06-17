@@ -731,10 +731,10 @@ def _lint_metadata_checks(self) -> list:
 			missing_metadata_elements.append("""<meta id="long-description" property="se:long-description" refines="#description">""")
 
 	missing_metadata_vars = []
-	for node in self.metadata_dom.xpath("/package/metadata/*/text()"):
+	for node in self.metadata_dom.xpath("/package/metadata/*[text()]"):
 		for var in SE_VARIABLES:
-			if regex.search(fr"\b{var}\b", node):
-				missing_metadata_vars.append(var)
+			if regex.search(fr"\b{var}\b", node.text):
+				missing_metadata_vars.append(LintError(var, node.sourceline))
 				# Quit the loop early to save some time
 				break
 
