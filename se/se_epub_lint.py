@@ -752,9 +752,8 @@ def _lint_metadata_checks(self) -> list:
 	missing_metadata_vars = []
 	for node in self.metadata_dom.xpath("/package/metadata/*[re:test(., '[A-Z_]{2,}') or re:test(@*, '[A-Z_]{2,}')]"):
 		for var in SE_VARIABLES:
-			if regex.search(fr"\b{var}\b", node.to_string()):
-				missing_metadata_vars.append(var)
-				break
+			if regex.search(fr"\b{var}\b", node.text):
+				missing_metadata_vars.append(LintError(var, node.sourceline))
 
 	if missing_metadata_vars:
 		messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_metadata_vars))
