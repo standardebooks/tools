@@ -526,6 +526,11 @@ class LintError:
 		"""Create a list of LintError objects from search match tuples."""
 		return [cls(match_text, line_num, column_num) for match_text, line_num, column_num in matches]
 
+	@classmethod
+	def from_nodes(cls, nodes: list) -> List['LintError']:
+		"""Create a list of LintError objects from xpath node mathces."""
+		return [cls(node.to_string(), node.sourceline) for node in nodes]
+
 class LintMessage:
 	"""
 	An object representing an output message for the lint function.
@@ -3236,7 +3241,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	# Exclude some common non-abbreviations, and don't match if the paragraph contains phonemes or graphemes as it's likely we're spelling something.
 	nodes = dom_clone.xpath("/html/body//p[re:test(.,'[a-z]{1,}\\.[a-z]{1,}', 'i') and not(re:test(., 'A.B.C.|X.Y.Z.') or .//*[re:test(@epub:type, 'grapheme|phoneme')])]")
 	if nodes:
-		messages.append(LintMessage("y-034", "Possible typo: [text].[/] embedded in word. Hint: Abbreviations must be in an [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("y-034", "Possible typo: [text].[/] embedded in word. Hint: Abbreviations must be in an [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_WARNING, filename, LintError.from_nodes(nodes)))
 
 	# Exclude nodes that have `@xml:lang` or are graphemes, phonemes, or roman numerals.
 	nodes = dom.xpath("/html/body//*[re:test(., '\\s[b-xz]\\s') and not(ancestor-or-self::*[re:test(@xml:lang, '^(?!en-).')]) and not(descendant::*[re:test(., '\\b[b-xz]\\b')]) and not(descendant::i[re:test(@epub:type, 'z3998:(grapheme|phoneme|roman)')])]")
