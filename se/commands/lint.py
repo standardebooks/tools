@@ -114,8 +114,12 @@ def lint(plain_output: bool) -> int:
 						for submessage in message.submessages:
 							# Brackets don't need to be escaped in submessages if we instantiate them in `Text()`.
 							submessage_object = Text(submessage.text, style="dim")
+							if submessage.line_num:
+								submessage_line = Text(f"Line: {submessage.line_num}", justify="right")
+							else:
+								submessage_line = Text("→", justify="right")
 
-							table_data.append([" ", " ", Text("→", justify="right"), submessage_object])
+							table_data.append([" ", " ", submessage_line, submessage_object])
 
 				table = Table(show_header=True, header_style="bold", show_lines=True, expand=True)
 				table.add_column("Code", width=5, no_wrap=True)
