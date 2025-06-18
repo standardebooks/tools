@@ -828,7 +828,7 @@ def _lint_metadata_checks(self) -> list:
 	# Check for illegal em-dashes in <dc:subject>
 	nodes = self.metadata_dom.xpath("/package/metadata/dc:subject[contains(text(), '—')]")
 	if nodes:
-		messages.append(LintMessage("m-019", "Illegal em-dash in [xml]<dc:subject>[/] element; use [text]--[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.text for node in nodes]))
+		messages.append(LintMessage("m-019", "Illegal em-dash in [xml]<dc:subject>[/] element; use [text]--[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintError(node.text, node.sourceline) for node in nodes]))
 
 	# Check for incorrect 'anonymous' strings in metadata
 	nodes = self.metadata_dom.xpath("/package/metadata/dc:contributor[re:test(., 'anonymous', 'i') and text() != 'Anonymous'] | /package/metadata/meta[@property='file-as' and re:test(., 'anonymous', 'i') and text() != 'Anonymous']")
@@ -875,10 +875,10 @@ def _lint_metadata_checks(self) -> list:
 			titles_missing_title_type.append(node)
 
 	if titles_missing_file_as:
-		messages.append(LintMessage("m-062", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"file-as\">[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in titles_missing_file_as]))
+		messages.append(LintMessage("m-062", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"file-as\">[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintError.from_nodes(titles_missing_file_as)))
 
 	if titles_missing_title_type:
-		messages.append(LintMessage("m-068", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"title-type\">[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in titles_missing_title_type]))
+		messages.append(LintMessage("m-068", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"title-type\">[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintError.from_nodes(titles_missing_title_type)))
 
 	# Check for CDATA tags
 	if "<![CDATA[" in metadata_xml:
@@ -1452,7 +1452,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		# Check for wrong grammar filled in from template
 		nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
 		if nodes:
-			messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the<br/>\n" + node.to_string() for node in nodes]))
+			messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, [LintError("the<br/>\n" + node.to_string(), node.sourceline) for node in nodes]))
 
 		# Check that we have <br/>s at the end of lines
 		# First, check for b or a elements that are preceded by a newline but not by a br
@@ -1494,7 +1494,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		# Check for wrong grammar filled in from template
 		nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::node()[1])[re:test(., 'the\\s+$')]]")
 		if nodes:
-			messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the " + node.to_string() for node in nodes]))
+			messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, [LintError("the " + node.to_string(), node.sourceline) for node in nodes]))
 
 		# Check if we forgot to fill any variable slots
 		missing_imprint_vars = [match for var in SE_VARIABLES if (match := source_file.search(fr"\b{var}\b")) is not None]
@@ -2068,7 +2068,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 			filtered_nodes.append(node)
 
 	if filtered_nodes:
-		messages.append(LintMessage("s-045", "[xhtml]<abbr>[/] element without semantic inflection like [class]z3998:personal-name[/] or [class]z3998:initialism[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in filtered_nodes]))
+		messages.append(LintMessage("s-045", "[xhtml]<abbr>[/] element without semantic inflection like [class]z3998:personal-name[/] or [class]z3998:initialism[/].", se.MESSAGE_TYPE_WARNING, filename, LintError.from_nodes(filtered_nodes)))
 
 	# Check for <p> elems that has some element children, which are only <span> and <br> children, but the parent doesn't have poem/verse semantics.
 	# Ignore spans that have a class, but not if the class is an i# class (for poetry indentation)
@@ -2396,7 +2396,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	# Check for nbsp before times
 	nodes = dom.xpath(f"/html/body//text()[re:test(., '[0-9][^{se.NO_BREAK_SPACE}]?$')][(following-sibling::abbr[1])[re:test(., '^[ap]\\.m\\.$')]]")
 	if nodes:
-		messages.append(LintMessage("t-009", "Required no-break space not found before time and [text]a.m.[/] or [text]p.m.[/].", se.MESSAGE_TYPE_WARNING, filename, [node[-10:] + "<abbr" for node in nodes]))
+		messages.append(LintMessage("t-009", "Required no-break space not found before time and [text]a.m.[/] or [text]p.m.[/].", se.MESSAGE_TYPE_WARNING, filename, [LintError(node[-10:] + "<abbr", node.sourceline) for node in nodes]))
 
 	# Check for times with periods instead of colons.
 	# Only check p, because things like tables/td are more likely to contain non-time numbers
@@ -2421,7 +2421,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	# Exclude signatures in footers as those are commonly quoted without ending punctuation
 	nodes = dom.xpath("/html/body//p[not( (parent::header or parent::hgroup or (parent::footer and contains(@epub:type, 'z3998:signature'))) and position()=last())][re:test(., '[a-z]+[”’]$')]")
 	if nodes:
-		messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string()[-30:] for node in nodes]))
+		messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, [LintError(node.to_string()[-30:], node.sourceline) for node in nodes]))
 
 	# Check for whitespace before noteref
 	# Do this early because we remove noterefs from headers later
@@ -2434,7 +2434,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	# But ignore the numeral if it's the first item in a <p> tag, as that suggests it might be a kind of list item.
 	nodes = dom.xpath("/html/body//node()[name()='span' and contains(@epub:type, 'z3998:roman') and not(position()=1)][(following-sibling::node()[1])[re:test(., '^\\.\\s*[a-z]')]]")
 	if nodes:
-		messages.append(LintMessage("t-013", "Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "." for node in nodes]))
+		messages.append(LintMessage("t-013", "Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename, [LintError(node.to_string() + ".", node.sourceline) for node in nodes]))
 
 	# Check for two em dashes in a row
 	nodes = dom.xpath(f"/html/body//*[re:test(text(), '—{se.WORD_JOINER}*—+')]")
@@ -2641,7 +2641,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	# Check for some known initialisms with incorrect possessive apostrophes
 	nodes = dom.xpath("/html/body//abbr[text()='I.O.U.'][(following-sibling::node()[1])[starts-with(., '’s')]]")
 	if nodes:
-		messages.append(LintMessage("t-039", "Initialism followed by [text]’s[/]. Hint: Plurals of initialisms are not followed by [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "’s" for node in nodes]))
+		messages.append(LintMessage("t-039", "Initialism followed by [text]’s[/]. Hint: Plurals of initialisms are not followed by [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, [LintError(node.to_string() + "’s", node.sourceline) for node in nodes]))
 
 	# Check if a subtitle ends in a text node with a terminal period; or if it ends in an <i> node containing a terminal period.
 	nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6]/*[contains(@epub:type, 'subtitle')][(./text())[last()][re:test(., '\\.$')] or (./i)[last()][re:test(., '\\.$')]]")
@@ -2929,7 +2929,7 @@ def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_
 	# Check for illegal elements in <head>
 	nodes = dom.xpath("/html/head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
 	if nodes:
-		messages.append(LintMessage("x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.tag}>" for node in nodes]))
+		messages.append(LintMessage("x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed.", se.MESSAGE_TYPE_ERROR, filename, [LintError(f"<{node.tag}>", node.sourceline) for node in nodes]))
 
 	# Check for xml:lang attribute starting in uppercase
 	nodes = dom.xpath("//*[re:test(@xml:lang, '^[A-Z]')]")
@@ -3042,7 +3042,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	typos = []
 	for match in regex.findall(r"""<p id="lint-([0-9]+?)">.*‘[\p{Letter}\s]""", temp_xhtml):
 		for node in dom_copy.xpath(f"/html/body//p[@id='lint-{match}' and re:test(., '‘[A-Za-z\\s]')]"):
-			typos.append(node.inner_text())
+			typos.append(LintError(node.inner_text(), node.sourceline))
 
 	if typos:
 		messages.append(LintMessage("y-007", "Possible typo: [text]‘[/] not within [text]“[/]. Hints: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?", se.MESSAGE_TYPE_WARNING, filename, typos))
