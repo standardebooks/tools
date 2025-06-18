@@ -22,17 +22,30 @@ class XhtmlSourceFile:
 		self.contents = contents
 		self.lines = contents.splitlines()
 
-	def search_lines(self, pattern: Union[str, regex.Pattern]) -> List[Tuple[str, int, int]]:
+	def search(self, pattern: Union[str, regex.Pattern]) -> Union[Tuple[str, int, int], None]:
 		"""
-		Search the file contents and also extract line and column numbers.
+		Search the file contents to find the first match, with line and column number.
+		"""
+		if isinstance(pattern, str):
+			pattern = regex.compile(pattern)
+
+		for line_num, line in enumerate(self.lines, 1):
+			match = pattern.search(line)
+			if match:
+				return (match.group(), line_num, match.start()+1)
+
+		return None
+
+	def findall(self, pattern: Union[str, regex.Pattern]) -> List[Tuple[str, int, int]]:
+		"""
+		Find all matches in the file contents, including line and column numbers.
 		"""
 		if isinstance(pattern, str):
 			pattern = regex.compile(pattern)
 
 		matches = []
 		for line_num, line in enumerate(self.lines, 1):
-			match = pattern.search(line)
-			if match:
+			for match in regex.finditer(pattern, line):
 				matches.append((match.group(), line_num, match.start()+1))
 
 		return matches

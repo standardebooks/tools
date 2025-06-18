@@ -1442,7 +1442,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 			messages.append(LintMessage("m-035", f"Unexpected S.E. identifier in colophon. Expected: [url]{se_url}[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 		# Check if we forgot to fill any variable slots.
-		missing_colophon_vars = [match for var in SE_VARIABLES for match in source_file.search_lines(fr"\b{var}\b")]
+		missing_colophon_vars = [match for var in SE_VARIABLES if (match := source_file.search(fr"\b{var}\b")) is not None]
 		if missing_colophon_vars:
 			messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_matches(missing_colophon_vars)))
 
@@ -1542,7 +1542,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 			messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the " + node.to_string() for node in nodes]))
 
 		# Check if we forgot to fill any variable slots.
-		missing_imprint_vars = [match for var in SE_VARIABLES for match in source_file.search_lines(fr"\b{var}\b")]
+		missing_imprint_vars = [match for var in SE_VARIABLES if (match := source_file.search(fr"\b{var}\b")) is not None]
 		if missing_imprint_vars:
 			messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, LintError.from_matches(missing_imprint_vars)))
 
