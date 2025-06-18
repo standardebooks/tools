@@ -358,6 +358,7 @@ SEMANTICS & CONTENT
 "s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/]."
 "s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead."
 "s-103", "Probable missing semantics for a roman I numeral."
+"s-104", "Header element should be either [val]title[/] or [val]ordinal[/], not both."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -2132,6 +2133,11 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][contains(@epub:type, 'z3998:roman') and not(contains(@epub:type, 'ordinal'))]")
 	if nodes:
 		messages.append(LintMessage("s-068", "Header element missing [val]ordinal[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Check for header elements with both a title and ordinal semantics
+	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][contains(@epub:type, 'title') and contains(@epub:type, 'ordinal')]")
+	if nodes:
+		messages.append(LintMessage("s-104", "Header element should be either [val]title[/] or [val]ordinal[/], not both.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 	# Check for body element without child section or article. Ignore the ToC because it has a unique structure
 	nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and re:test(@epub:type, '\\b(toc|loi)\\b'))])]")
