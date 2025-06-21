@@ -5,7 +5,7 @@ to omit closing `”` until the last `<p>` of dialog.
 thrones⁠—“
 y-008 [Manual Review] chapter-1.xhtml Possible typo: dialog interrupted by 
 interjection but with incorrect closing quote.
-        <p>We know that few can name an unpolled fox that isn't a turbaned 
+ 14:    <p>We know that few can name an unpolled fox that isn't a turbaned 
 rowboat. “Extending this logic,’⁠—phoney rates show us how feathers can be 
 thrones⁠—“a herbaged eel's roll comes with it” the thought that the foetid faucet
 is a lamb. The zeitgeist contends that we can assume that any instance of a 
