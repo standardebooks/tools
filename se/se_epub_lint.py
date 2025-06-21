@@ -30,7 +30,7 @@ import se.formatting
 import se.images
 import se.spelling
 import se.typography
-import se.xhtml
+import se.xml_file
 
 SE_VARIABLES = [
 	"SE_IDENTIFIER",
@@ -1361,7 +1361,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	"""
 
 	messages = []
-	source_file = se.xhtml.XhtmlSourceFile(filename, dom, file_contents)
+	source_file = se.xml_file.XmlSourceFile(filename, dom, file_contents)
 	source_links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
 
 	if self.is_se_ebook and special_file in ("colophon", "imprint"):
@@ -3621,6 +3621,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				continue
 
 			# Remove comments before we do any further processing
+			# BUG: Assumes the files are x[ht]ml and is going to break the line number stuff
+			# Is it safe to otherwise replace comments with the equivalent sized whitespace?
 			file_contents = regex.sub(r"<!--.+?-->", "", file_contents, flags=regex.DOTALL)
 
 			matches = regex.findall(r"http://standardebooks\.org[^\"<\s]*", file_contents)
