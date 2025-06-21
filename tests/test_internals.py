@@ -4,6 +4,7 @@ Test internal SE programming functions
 
 from se.se_epub_generate_toc import add_landmark
 import se.easy_xml
+from se.xml_file import strip_comments_with_line_mapping
 
 def test_add_landmark_empty_title():
 	"""
@@ -45,3 +46,86 @@ def test_inner_text():
 	p = dom.xpath("//p")[0]
 
 	assert p.inner_text() == "a <b \tΑ c\nd"
+
+def test_line_numbers_no_comments():
+	"""
+	Verify line number offset calculations without comments.
+	"""
+	contents = """\
+<p>L1</p>
+<p>L2</p>
+<p>L3</p>"""
+
+	_, bounds = strip_comments_with_line_mapping(contents)
+	assert bounds == [(0, 1), (10, 2), (20, 3)]
+
+def test_line_numbers_leading_comments():
+	"""
+	Verify line number offset calculations with leading comments.
+	"""
+	contents = """\
+<!-- C1 --><p>L1</p>
+<!-- C2 --><p>L2</p>
+<!-- C3 --><p>L3</p>"""
+
+	_, bounds = strip_comments_with_line_mapping(contents)
+	assert bounds == [(0, 1), (10, 2), (20, 3)]
+
+def test_line_numbers_trailing_comments():
+	"""
+	Verify line number offset calculations with trailing comments.
+	"""
+	contents = """\
+<p>L1</p><!-- C1 -->
+<p>L2</p><!-- C2 -->
+<p>L3</p><!-- C3 -->"""
+
+	_, bounds = strip_comments_with_line_mapping(contents)
+	assert bounds == [(0, 1), (10, 2), (20, 3)]
+
+def test_line_numbers_inline_comments():
+	"""
+	Verify line number offset calculations with inline comments.
+	"""
+	contents = """\
+<p>L1<!-- C1 --></p>
+<p><!-- C2 -->L2</p>
+<p>L3</p>"""
+
+	_, bounds = strip_comments_with_line_mapping(contents)
+	assert bounds == [(0, 1), (10, 2), (20, 3)]
+
+def test_line_numbers_line_comments():
+	"""
+	Verify line number offset calculations with full line comments.
+	"""
+	contents = """\
+<p>L1</p>
+<!--L2-->
+<p>L3</p>
+<!--L4-->
+<p>L5</p>"""
+
+	_, bounds = strip_comments_with_line_mapping(contents)
+	assert bounds == [(0, 1), (10, 2), (11, 3), (21, 4), (22, 5)]
+
+def test_line_numbers_multiline_comments():
+	"""
+	Verify line number offset calculations with multiline comments.
+	"""
+	contents = """\
+<!--   L1
+   L2 -->
+<p>L3</p>
+<!--   L4
+       L5
+	  L6-->
+<p>L7</p>
+<!--   L8
+    L9-->
+<p>LA</p>
+<!--   LB
+    LC-->"""
+
+	_, bounds = strip_comments_with_line_mapping(contents)
+	assert bounds == [(0, 1), (1, 3), (11, 4), (12, 7), (22, 8), (23, 10), (33, 11)]
