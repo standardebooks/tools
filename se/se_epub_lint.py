@@ -1835,13 +1835,13 @@ def _lint_xhtml_syntax_checks(self, source_file: se.xml_file.XmlSourceFile, eboo
 	# Check for numeric entities.
 	matches = source_file.findall(r"&#[0-9]+?;")
 	if matches:
-		submessages = natsorted(list({ match[0] for match in matches }))
-		messages.append(LintMessage("s-001", "Illegal numeric entity (like [xhtml]&#913;[/]).", se.MESSAGE_TYPE_ERROR, filename, submessages))
+		messages.append(LintMessage("s-001", "Illegal numeric entity (like [xhtml]&#913;[/]).", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_matches(matches)))
 
 	# Check nested `<blockquote>` elements, but only if it's the first child of another `<blockquote>`.
 	nodes = dom.xpath("/html/body//blockquote/*[1][name()='blockquote']")
 	if nodes:
-		messages.append(LintMessage("s-005", "Nested [xhtml]<blockquote>[/] element.", se.MESSAGE_TYPE_WARNING, filename))
+		submessages = [LintSubmessage(node.to_string()[:100], node.sourceline) for node in nodes]
+		messages.append(LintMessage("s-005", "Nested [xhtml]<blockquote>[/] element.", se.MESSAGE_TYPE_WARNING, filename, submessages))
 
 	# Check to see if we've marked something as poetry or verse, but didn't include a first `<span>`.
 	# This xpath selects the `<p>` elements, whose parents are poem/verse, and whose first child is not a `<span>`.
@@ -2015,15 +2015,15 @@ def _lint_xhtml_syntax_checks(self, source_file: se.xml_file.XmlSourceFile, eboo
 			if not section:
 				# We can accidentally raise `s-029` if the file isn't in the spine. This is technically correct, but `s-029` is a misleading message in that case, and `f-007` will also be raised, which is the correct message.
 				if filename in self.spine_file_paths:
-					invalid_parent_ids.append(parent_section[0].to_tag_string())
+					invalid_parent_ids.append(parent_section[0])
 			else:
 				if str(section.depth) != heading.tag[1:2]:
-					invalid_headers.append(heading.to_string())
+					invalid_headers.append(heading)
 
 	if invalid_parent_ids:
-		messages.append(LintMessage("s-029", "Section with [attr]data-parent[/] attribute, but no section having that [attr]id[/] in ebook.", se.MESSAGE_TYPE_ERROR, filename, invalid_parent_ids))
+		messages.append(LintMessage("s-029", "Section with [attr]data-parent[/] attribute, but no section having that [attr]id[/] in ebook.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(invalid_parent_ids)))
 	if invalid_headers:
-		messages.append(LintMessage("s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. Hint: Headings not in the title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?", se.MESSAGE_TYPE_ERROR, filename, invalid_headers))
+		messages.append(LintMessage("s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. Hint: Headings not in the title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(invalid_headers)))
 
 	# Check for a common typo.
 	if "z3998:nonfiction" in source_file.contents:
@@ -2039,7 +2039,7 @@ def _lint_xhtml_syntax_checks(self, source_file: se.xml_file.XmlSourceFile, eboo
 
 		for val in regex.split(r"\s+", node.get_attr("epub:type")):
 			if val in attrs:
-				duplicate_attrs.append(node.to_tag_string())
+				duplicate_attrs.append(node)
 			else:
 				attrs.add(val)
 
@@ -2062,7 +2062,7 @@ def _lint_xhtml_syntax_checks(self, source_file: se.xml_file.XmlSourceFile, eboo
 					incorrect_attrs.add(val)
 
 	if duplicate_attrs:
-		messages.append(LintMessage("s-031", "Duplicate value in [attr]epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, duplicate_attrs))
+		messages.append(LintMessage("s-031", "Duplicate value in [attr]epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(duplicate_attrs)))
 	if incorrect_attrs:
 		messages.append(LintMessage("s-032", "Invalid value for [attr]epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, incorrect_attrs))
 	if unnecessary_z3998_attrs:
@@ -2628,14 +2628,14 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 					missing_files.append(str(Path("images") / image_ref))
 
 		else:
-			img_no_alt.append(node.to_tag_string())
+			img_no_alt.append(node)
 
 	if img_alt_not_typogrified:
 		messages.append(LintMessage("t-025", "Non-typogrified [text]'[/], [text]\"[/] (as [xhtml]&quot;[/]), or [text]--[/] in image [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, img_alt_not_typogrified))
 	if img_alt_lacking_punctuation:
 		messages.append(LintMessage("t-026", "[attr]alt[/] attribute does not appear to end with punctuation. [attr]alt[/] attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename, img_alt_lacking_punctuation))
 	if img_no_alt:
-		messages.append(LintMessage("s-004", "[xhtml]img[/] element missing [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, img_no_alt))
+		messages.append(LintMessage("s-004", "[xhtml]img[/] element missing [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(img_no_alt)))
 
 	# Check for low-hanging misquoted fruit.
 	matches = regex.findall(r"[\p{Letter}]+[“‘]", file_contents)
