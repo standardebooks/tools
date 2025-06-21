@@ -1,12 +1,12 @@
 y-026 [Manual Review] chapter-1.xhtml Possible typo: no punctuation before 
 conjunction `But/And/For/Nor/Yet/Or`.
-        <p>Fabled daies But show us how belts can be heats.</p>
-        <p>Though we assume the latter, a heart can hardly be considered an 
+ 32:    <p>Fabled daies But show us how belts can be heats.</p>
+ 34:    <p>Though we assume the latter, a heart can hardly be considered an 
 unsquared community And also being a sneeze.</p>
-        <p>An increase For a Monday is the right perspective.</p>
-        <p>The tailing scissor reveals itself Nor as an ungrown sister to those 
+ 36:    <p>An increase For a Monday is the right perspective.</p>
+ 38:    <p>The tailing scissor reveals itself Nor as an ungrown sister to those 
 who look.</p>
-        <p>This is not to discredit the idea Yet before arieses, springs were 
+ 40:    <p>This is not to discredit the idea Yet before arieses, springs were 
 only fleshes.</p>
-        <p>The tawie tramp comes from a jouncing sunshine Or, to be more 
+ 42:    <p>The tawie tramp comes from a jouncing sunshine Or, to be more 
 specific, the islands could be said to resemble cussed poultries.</p>

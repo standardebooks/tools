@@ -1,6 +1,6 @@
 y-020 [Manual Review] chapter-1.xhtml Possible typo: consecutive comma-period 
 (`,.`).
-        <p>A soap can hardly be considered a squeaky windshield without also 
+ 12:    <p>A soap can hardly be considered a squeaky windshield without also 
 being a norwegian,. They were lost without the cognate random that composed 
 their dipstick. Far from the truth, the rident swallow reveals itself as a 
 ribless growth to those who look.</p>
