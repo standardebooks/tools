@@ -27,31 +27,37 @@ class XmlSourceFile:
 		# For binary searching line number lookups on regex matches
 		self._offsets = [offset for (offset, _) in self._lines]
 
-	def search(self, pattern: Union[str, regex.Pattern]) -> Union[Tuple[str, int, int], None]:
+	def search(self, pattern: Union[str, regex.Pattern]) -> Union[Tuple[str, int], None]:
 		"""
-		Search the file contents to find the first match, with line and column number.
+		Search the file contents to find the first regex match, with line number.
 		"""
 		if isinstance(pattern, str):
 			pattern = regex.compile(pattern)
 
 		match = pattern.search(self.contents)
 		if match:
-			return (match.group(), self.line_num(match), 0)
+			return (match.group(), self.line_num(match))
 
 		return None
 
-	def findall(self, pattern: Union[str, regex.Pattern]) -> List[Tuple[str, int, int]]:
+	def findall(self, pattern: Union[str, regex.Pattern]) -> List[Tuple[str, int]]:
 		"""
-		Find all matches in the file contents, including line and column numbers.
+		Find all regex matches in the file contents, including line numbers.
 		"""
 		if isinstance(pattern, str):
 			pattern = regex.compile(pattern)
 
 		matches = []
 		for match in regex.finditer(pattern, self.contents):
-			matches.append((match.group(), self.line_num(match), 0))
+			matches.append((match.group(), self.line_num(match)))
 
 		return matches
+
+	def xpath(self, query: str) -> List[se.easy_xml.EasyXmlElement]:
+		"""
+		Execute XPath query and return matching nodes.
+		"""
+		return self.dom.xpath(query)
 
 	def line_num(self, match: regex.Match) -> int:
 		"""
