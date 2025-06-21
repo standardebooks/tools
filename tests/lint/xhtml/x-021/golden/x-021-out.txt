@@ -1,5 +1,5 @@
 x-021 [Error] chapter-1.xhtml `<figure>` element with no `id` attribute.
-        <figure>
+ 11:    <figure>
                 <img alt="A portrait illustration of a young woman." 
 src="test.png" epub:type="z3998:illustration 
 se:image.color-depth.black-on-transparent se:image.style.realistic"/>

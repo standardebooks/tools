@@ -1,241 +1,241 @@
 t-060 [Manual Review] chapter-1.xhtml Old style Bible citation.
-        <cite>Genesis, <span epub:type="z3998:roman">i</span>, 1</cite>
-        <cite><abbr>Gen.</abbr>, <span epub:type="z3998:roman">i</span>, 
+ 15:    <cite>Genesis, <span epub:type="z3998:roman">i</span>, 1</cite>
+ 20:    <cite><abbr>Gen.</abbr>, <span epub:type="z3998:roman">i</span>, 
 1</cite>
-        <p>As Exodus <span epub:type="z3998:roman">III</span> 14 says, “And God 
+ 23:    <p>As Exodus <span epub:type="z3998:roman">III</span> 14 says, “And God 
 said unto Moses, <b>I am that I am</b>: and he said, Thus shalt thou say unto 
 the children of Israel, <b>I am</b> hath sent me unto you.”</p>
-        <p>As <abbr>Exod.</abbr> <span epub:type="z3998:roman">III</span> 14 
+ 25:    <p>As <abbr>Exod.</abbr> <span epub:type="z3998:roman">III</span> 14 
 says, “And God said unto Moses, <b>I am that I am</b>: and he said, Thus shalt 
 thou say unto the children of Israel, <b>I am</b> hath sent me unto you.”</p>
-        <p>As <abbr>Ex.</abbr> <span epub:type="z3998:roman">III</span> 14 says,
+ 27:    <p>As <abbr>Ex.</abbr> <span epub:type="z3998:roman">III</span> 14 says,
 “And God said unto Moses, <b>I am that I am</b>: and he said, Thus shalt thou 
 say unto the children of Israel, <b>I am</b> hath sent me unto you.”</p>
-        <cite>Leviticus <span epub:type="z3998:roman">xix</span>, 34</cite>
-        <cite><abbr>Lev.</abbr> <span epub:type="z3998:roman">xix</span>, 
+ 31:    <cite>Leviticus <span epub:type="z3998:roman">xix</span>, 34</cite>
+ 36:    <cite><abbr>Lev.</abbr> <span epub:type="z3998:roman">xix</span>, 
 34</cite>
-        <cite>Numbers <span epub:type="z3998:roman">VI</span> 24⁠–⁠26</cite>
-        <cite><abbr>Num.</abbr> <span epub:type="z3998:roman">VI</span>, 
+ 41:    <cite>Numbers <span epub:type="z3998:roman">VI</span> 24⁠–⁠26</cite>
+ 46:    <cite><abbr>Num.</abbr> <span epub:type="z3998:roman">VI</span>, 
 24⁠–⁠26</cite>
-        <cite>Deuteronomy, <span epub:type="z3998:roman">vi</span> 4⁠–⁠5</cite>
-        <cite><abbr>Deut.</abbr>, <span epub:type="z3998:roman">vi</span> 
+ 51:    <cite>Deuteronomy, <span epub:type="z3998:roman">vi</span> 4⁠–⁠5</cite>
+ 56:    <cite><abbr>Deut.</abbr>, <span epub:type="z3998:roman">vi</span> 
 4⁠–⁠5</cite>
-        <cite>Joshua <span epub:type="z3998:roman">I</span>, 7</cite>
-        <cite><abbr>Josh.</abbr> <span epub:type="z3998:roman">I</span>, 
+ 61:    <cite>Joshua <span epub:type="z3998:roman">I</span>, 7</cite>
+ 66:    <cite><abbr>Josh.</abbr> <span epub:type="z3998:roman">I</span>, 
 7</cite>
-        <cite>Judges <span epub:type="z3998:roman">xxi</span> 25</cite>
-        <cite><abbr>Judg.</abbr> <span epub:type="z3998:roman">xxi</span> 
+ 71:    <cite>Judges <span epub:type="z3998:roman">xxi</span> 25</cite>
+ 76:    <cite><abbr>Judg.</abbr> <span epub:type="z3998:roman">xxi</span> 
 25</cite>
-        <cite>Ruth, <span epub:type="z3998:roman">I</span> 16⁠–⁠17</cite>
-        <cite><span epub:type="z3998:roman">I</span> Samuel <span 
+ 81:    <cite>Ruth, <span epub:type="z3998:roman">I</span> 16⁠–⁠17</cite>
+ 86:    <cite><span epub:type="z3998:roman">I</span> Samuel <span 
 epub:type="z3998:roman">xvii</span> 45</cite>
-        <cite><span epub:type="z3998:roman">I</span> <abbr>Sam.</abbr> <span 
+ 91:    <cite><span epub:type="z3998:roman">I</span> <abbr>Sam.</abbr> <span 
 epub:type="z3998:roman">xvii</span> 45</cite>
-        <cite><span epub:type="z3998:roman">II</span> Samuel <span 
+ 96:    <cite><span epub:type="z3998:roman">II</span> Samuel <span 
 epub:type="z3998:roman">VII</span>, 12</cite>
-        <cite><span epub:type="z3998:roman">II</span> <abbr>Sam.</abbr> <span 
+ 101:   <cite><span epub:type="z3998:roman">II</span> <abbr>Sam.</abbr> <span 
 epub:type="z3998:roman">VII</span>, 12</cite>
-        <cite><span epub:type="z3998:roman">I</span> Kings, <span 
+ 106:   <cite><span epub:type="z3998:roman">I</span> Kings, <span 
 epub:type="z3998:roman">viii</span>, 27</cite>
-        <cite><span epub:type="z3998:roman">I</span> <abbr>Kgs.</abbr>, <span 
+ 111:   <cite><span epub:type="z3998:roman">I</span> <abbr>Kgs.</abbr>, <span 
 epub:type="z3998:roman">viii</span>, 27</cite>
-        <cite><span epub:type="z3998:roman">II</span> Kings <span 
+ 116:   <cite><span epub:type="z3998:roman">II</span> Kings <span 
 epub:type="z3998:roman">II</span> 11</cite>
-        <cite><span epub:type="z3998:roman">II</span> <abbr>Kgs.</abbr> <span 
+ 121:   <cite><span epub:type="z3998:roman">II</span> <abbr>Kgs.</abbr> <span 
 epub:type="z3998:roman">II</span> 11</cite>
-        <cite><span epub:type="z3998:roman">I</span> Chronicles <span 
+ 127:   <cite><span epub:type="z3998:roman">I</span> Chronicles <span 
 epub:type="z3998:roman">xvi</span>, 34</cite>
-        <cite><span epub:type="z3998:roman">I</span> <abbr>Chr.</abbr> <span 
+ 133:   <cite><span epub:type="z3998:roman">I</span> <abbr>Chr.</abbr> <span 
 epub:type="z3998:roman">xvi</span>, 34</cite>
-        <cite><span epub:type="z3998:roman">II</span> Chronicles, <span 
+ 138:   <cite><span epub:type="z3998:roman">II</span> Chronicles, <span 
 epub:type="z3998:roman">VII</span> 14</cite>
-        <cite><span epub:type="z3998:roman">II</span> <abbr>Chron.</abbr>, <span
+ 143:   <cite><span epub:type="z3998:roman">II</span> <abbr>Chron.</abbr>, <span
 epub:type="z3998:roman">VII</span> 14</cite>
-        <cite>Ezra <span epub:type="z3998:roman">vii</span>, 10</cite>
-        <cite>Nehemiah <span epub:type="z3998:roman">IV</span> 14</cite>
-        <cite><abbr>Neh.</abbr> <span epub:type="z3998:roman">IV</span> 
+ 148:   <cite>Ezra <span epub:type="z3998:roman">vii</span>, 10</cite>
+ 153:   <cite>Nehemiah <span epub:type="z3998:roman">IV</span> 14</cite>
+ 158:   <cite><abbr>Neh.</abbr> <span epub:type="z3998:roman">IV</span> 
 14</cite>
-        <cite>Esther <span epub:type="z3998:roman">iv</span>, 14</cite>
-        <cite><abbr>Esth.</abbr> <span epub:type="z3998:roman">iv</span>, 
+ 163:   <cite>Esther <span epub:type="z3998:roman">iv</span>, 14</cite>
+ 168:   <cite><abbr>Esth.</abbr> <span epub:type="z3998:roman">iv</span>, 
 14</cite>
-        <cite>Job <span epub:type="z3998:roman">XIX</span> 25</cite>
-        <cite>Psalm <span epub:type="z3998:roman">CXIX</span> 105</cite>
-        <cite><abbr>Ps.</abbr> <span epub:type="z3998:roman">CXIX</span> 
+ 173:   <cite>Job <span epub:type="z3998:roman">XIX</span> 25</cite>
+ 178:   <cite>Psalm <span epub:type="z3998:roman">CXIX</span> 105</cite>
+ 183:   <cite><abbr>Ps.</abbr> <span epub:type="z3998:roman">CXIX</span> 
 105</cite>
-        <cite>Proverbs, <span epub:type="z3998:roman">ix</span>, 10</cite>
-        <cite><abbr>Prov.</abbr>, <span epub:type="z3998:roman">ix</span>, 
+ 188:   <cite>Proverbs, <span epub:type="z3998:roman">ix</span>, 10</cite>
+ 193:   <cite><abbr>Prov.</abbr>, <span epub:type="z3998:roman">ix</span>, 
 10</cite>
-        <cite>Ecclesiastes <span epub:type="z3998:roman">XII</span>, 13</cite>
-        <cite><abbr>Eccl.</abbr> <span epub:type="z3998:roman">XII</span>, 
+ 198:   <cite>Ecclesiastes <span epub:type="z3998:roman">XII</span>, 13</cite>
+ 203:   <cite><abbr>Eccl.</abbr> <span epub:type="z3998:roman">XII</span>, 
 13</cite>
-        <cite>Song of Solomon <span epub:type="z3998:roman">iv</span> 7</cite>
-        <cite>Song of Solomon <span epub:type="z3998:roman">iv</span> 7</cite>
-        <cite>Song <span epub:type="z3998:roman">iv</span> 7</cite>
-        <cite>Isaiah, <span epub:type="z3998:roman">IX</span>, 7</cite>
-        <cite><abbr>Isa.</abbr>, <span epub:type="z3998:roman">IX</span>, 
+ 208:   <cite>Song of Solomon <span epub:type="z3998:roman">iv</span> 7</cite>
+ 213:   <cite>Song of Solomon <span epub:type="z3998:roman">iv</span> 7</cite>
+ 218:   <cite>Song <span epub:type="z3998:roman">iv</span> 7</cite>
+ 234:   <cite>Isaiah, <span epub:type="z3998:roman">IX</span>, 7</cite>
+ 250:   <cite><abbr>Isa.</abbr>, <span epub:type="z3998:roman">IX</span>, 
 7</cite>
-        <cite><abbr>Is.</abbr>, <span epub:type="z3998:roman">IX</span>, 
+ 266:   <cite><abbr>Is.</abbr>, <span epub:type="z3998:roman">IX</span>, 
 7</cite>
-        <cite>Jeremiah <span epub:type="z3998:roman">xx</span> 9</cite>
-        <cite><abbr>Jer.</abbr> <span epub:type="z3998:roman">xx</span> 9</cite>
-        <cite>Lamentations <span epub:type="z3998:roman">III</span>, 
+ 279:   <cite>Jeremiah <span epub:type="z3998:roman">xx</span> 9</cite>
+ 292:   <cite><abbr>Jer.</abbr> <span epub:type="z3998:roman">xx</span> 9</cite>
+ 298:   <cite>Lamentations <span epub:type="z3998:roman">III</span>, 
 22⁠–⁠23</cite>
-        <cite><abbr>Lam.</abbr> <span epub:type="z3998:roman">III</span>, 
+ 304:   <cite><abbr>Lam.</abbr> <span epub:type="z3998:roman">III</span>, 
 22⁠–⁠23</cite>
-        <cite>Ezekiel <span epub:type="z3998:roman">xi</span> 19⁠–⁠20</cite>
-        <cite><abbr>Ezek.</abbr> <span epub:type="z3998:roman">xi</span> 
+ 309:   <cite>Ezekiel <span epub:type="z3998:roman">xi</span> 19⁠–⁠20</cite>
+ 314:   <cite><abbr>Ezek.</abbr> <span epub:type="z3998:roman">xi</span> 
 19⁠–⁠20</cite>
-        <cite><abbr>Ez.</abbr> <span epub:type="z3998:roman">xi</span> 
+ 319:   <cite><abbr>Ez.</abbr> <span epub:type="z3998:roman">xi</span> 
 19⁠–⁠20</cite>
-        <cite>Daniel <span epub:type="z3998:roman">VII</span> 14</cite>
-        <cite><abbr>Dan.</abbr> <span epub:type="z3998:roman">VII</span> 
+ 324:   <cite>Daniel <span epub:type="z3998:roman">VII</span> 14</cite>
+ 329:   <cite><abbr>Dan.</abbr> <span epub:type="z3998:roman">VII</span> 
 14</cite>
-        <cite>Hosea <span epub:type="z3998:roman">x</span>, 12</cite>
-        <cite><abbr>Hos.</abbr> <span epub:type="z3998:roman">x</span>, 
+ 334:   <cite>Hosea <span epub:type="z3998:roman">x</span>, 12</cite>
+ 339:   <cite><abbr>Hos.</abbr> <span epub:type="z3998:roman">x</span>, 
 12</cite>
-        <cite>Joel <span epub:type="z3998:roman">II</span>, 13</cite>
-        <cite>Amos <span epub:type="z3998:roman">v</span> 24</cite>
-        <cite>Obadiah <span epub:type="z3998:roman">i</span>, 17</cite>
-        <cite><abbr>Obad.</abbr> <span epub:type="z3998:roman">i</span>, 
+ 344:   <cite>Joel <span epub:type="z3998:roman">II</span>, 13</cite>
+ 349:   <cite>Amos <span epub:type="z3998:roman">v</span> 24</cite>
+ 354:   <cite>Obadiah <span epub:type="z3998:roman">i</span>, 17</cite>
+ 359:   <cite><abbr>Obad.</abbr> <span epub:type="z3998:roman">i</span>, 
 17</cite>
-        <cite>Jonah <span epub:type="z3998:roman">II</span> 6</cite>
-        <cite><abbr>Jon.</abbr> <span epub:type="z3998:roman">II</span> 6</cite>
-        <cite>Micah <span epub:type="z3998:roman">vi</span> 8</cite>
-        <cite><abbr>Mic.</abbr> <span epub:type="z3998:roman">vi</span> 8</cite>
-        <cite>Nahum, <span epub:type="z3998:roman">I</span>, 7</cite>
-        <cite><abbr>Nah.</abbr>, <span epub:type="z3998:roman">I</span>, 
+ 364:   <cite>Jonah <span epub:type="z3998:roman">II</span> 6</cite>
+ 369:   <cite><abbr>Jon.</abbr> <span epub:type="z3998:roman">II</span> 6</cite>
+ 374:   <cite>Micah <span epub:type="z3998:roman">vi</span> 8</cite>
+ 379:   <cite><abbr>Mic.</abbr> <span epub:type="z3998:roman">vi</span> 8</cite>
+ 384:   <cite>Nahum, <span epub:type="z3998:roman">I</span>, 7</cite>
+ 389:   <cite><abbr>Nah.</abbr>, <span epub:type="z3998:roman">I</span>, 
 7</cite>
-        <cite>Habakkuk <span epub:type="z3998:roman">ii</span> 14</cite>
-        <cite><abbr>Hab.</abbr> <span epub:type="z3998:roman">ii</span> 
+ 394:   <cite>Habakkuk <span epub:type="z3998:roman">ii</span> 14</cite>
+ 399:   <cite><abbr>Hab.</abbr> <span epub:type="z3998:roman">ii</span> 
 14</cite>
-        <cite>Zephaniah, <span epub:type="z3998:roman">III</span> 17</cite>
-        <cite><abbr>Zeph.</abbr>, <span epub:type="z3998:roman">III</span> 
+ 404:   <cite>Zephaniah, <span epub:type="z3998:roman">III</span> 17</cite>
+ 409:   <cite><abbr>Zeph.</abbr>, <span epub:type="z3998:roman">III</span> 
 17</cite>
-        <cite>Haggai <span epub:type="z3998:roman">ii</span>, 9</cite>
-        <cite><abbr>Hag.</abbr> <span epub:type="z3998:roman">ii</span>, 
+ 414:   <cite>Haggai <span epub:type="z3998:roman">ii</span>, 9</cite>
+ 419:   <cite><abbr>Hag.</abbr> <span epub:type="z3998:roman">ii</span>, 
 9</cite>
-        <cite>Zechariah, <span epub:type="z3998:roman">IX</span> 9</cite>
-        <cite><abbr>Zech.</abbr>, <span epub:type="z3998:roman">IX</span> 
+ 424:   <cite>Zechariah, <span epub:type="z3998:roman">IX</span> 9</cite>
+ 429:   <cite><abbr>Zech.</abbr>, <span epub:type="z3998:roman">IX</span> 
 9</cite>
-        <cite>Malachi <span epub:type="z3998:roman">i</span>, 11</cite>
-        <cite><abbr>Mal.</abbr> <span epub:type="z3998:roman">i</span>, 
+ 434:   <cite>Malachi <span epub:type="z3998:roman">i</span>, 11</cite>
+ 439:   <cite><abbr>Mal.</abbr> <span epub:type="z3998:roman">i</span>, 
 11</cite>
-        <cite>Tobit <span epub:type="z3998:roman">III</span>, 2</cite>
-        <cite><abbr>Tob.</abbr> <span epub:type="z3998:roman">III</span>, 
+ 445:   <cite>Tobit <span epub:type="z3998:roman">III</span>, 2</cite>
+ 450:   <cite><abbr>Tob.</abbr> <span epub:type="z3998:roman">III</span>, 
 2</cite>
-        <cite>Judith, <span epub:type="z3998:roman">xv</span> 8</cite>
-        <cite><abbr>Jdt.</abbr>, <span epub:type="z3998:roman">xv</span> 
+ 455:   <cite>Judith, <span epub:type="z3998:roman">xv</span> 8</cite>
+ 460:   <cite><abbr>Jdt.</abbr>, <span epub:type="z3998:roman">xv</span> 
 8</cite>
-        <cite>Sirach <span epub:type="z3998:roman">XXXVIII</span>, 4</cite>
-        <cite>Ecclesiasticus <span epub:type="z3998:roman">XXXVIII</span>, 
+ 465:   <cite>Sirach <span epub:type="z3998:roman">XXXVIII</span>, 4</cite>
+ 470:   <cite>Ecclesiasticus <span epub:type="z3998:roman">XXXVIII</span>, 
 4</cite>
-        <cite><abbr>Sir.</abbr> <span epub:type="z3998:roman">XXXVIII</span>, 
+ 475:   <cite><abbr>Sir.</abbr> <span epub:type="z3998:roman">XXXVIII</span>, 
 4</cite>
-        <cite>Baruch <span epub:type="z3998:roman">iii</span> 6</cite>
-        <cite><abbr>Bar.</abbr> <span epub:type="z3998:roman">iii</span> 
+ 480:   <cite>Baruch <span epub:type="z3998:roman">iii</span> 6</cite>
+ 485:   <cite><abbr>Bar.</abbr> <span epub:type="z3998:roman">iii</span> 
 6</cite>
-        <cite><span epub:type="z3998:roman">I</span> Maccabees, <span 
+ 490:   <cite><span epub:type="z3998:roman">I</span> Maccabees, <span 
 epub:type="z3998:roman">VII</span> 48</cite>
-        <cite><span epub:type="z3998:roman">I</span> <abbr>Macc.</abbr>, <span 
+ 495:   <cite><span epub:type="z3998:roman">I</span> <abbr>Macc.</abbr>, <span 
 epub:type="z3998:roman">VII</span> 48</cite>
-        <cite>Second Maccabees <span epub:type="z3998:roman">iii</span>, 
+ 500:   <cite>Second Maccabees <span epub:type="z3998:roman">iii</span>, 
 24</cite>
-        <cite>Second <abbr>Macc.</abbr> <span 
+ 505:   <cite>Second <abbr>Macc.</abbr> <span 
 epub:type="z3998:roman">iii</span>, 24</cite>
-        <cite><span epub:type="z3998:roman">I</span> Esdras <span 
+ 510:   <cite><span epub:type="z3998:roman">I</span> Esdras <span 
 epub:type="z3998:roman">VIII</span> 25⁠–⁠26</cite>
-        <cite><span epub:type="z3998:roman">I</span> <abbr>Esd.</abbr> <span 
+ 515:   <cite><span epub:type="z3998:roman">I</span> <abbr>Esd.</abbr> <span 
 epub:type="z3998:roman">VIII</span> 25⁠–⁠26</cite>
-        <cite><span epub:type="z3998:roman">II</span> Esdras <span 
+ 520:   <cite><span epub:type="z3998:roman">II</span> Esdras <span 
 epub:type="z3998:roman">II</span> 20⁠–⁠21</cite>
-        <cite><span epub:type="z3998:roman">II</span> <abbr>Esd.</abbr> <span 
+ 525:   <cite><span epub:type="z3998:roman">II</span> <abbr>Esd.</abbr> <span 
 epub:type="z3998:roman">II</span> 20⁠–⁠21</cite>
-        <cite>Prayer of Manasseh <span epub:type="z3998:roman">i</span>, 
+ 530:   <cite>Prayer of Manasseh <span epub:type="z3998:roman">i</span>, 
 7</cite>
-        <cite>Manasses <span epub:type="z3998:roman">i</span>, 7</cite>
-        <cite><abbr>Pr.</abbr> <abbr>Man.</abbr> <span 
+ 535:   <cite>Manasses <span epub:type="z3998:roman">i</span>, 7</cite>
+ 540:   <cite><abbr>Pr.</abbr> <abbr>Man.</abbr> <span 
 epub:type="z3998:roman">i</span>, 7</cite>
-        <cite>Wisdom of Solomon <span epub:type="z3998:roman">XIX</span> 
+ 545:   <cite>Wisdom of Solomon <span epub:type="z3998:roman">XIX</span> 
 6</cite>
-        <cite><abbr>Wis.</abbr> <span epub:type="z3998:roman">XIX</span> 
+ 550:   <cite><abbr>Wis.</abbr> <span epub:type="z3998:roman">XIX</span> 
 6</cite>
-        <cite>Matthew <span epub:type="z3998:roman">V</span>, 44⁠–⁠45</cite>
-        <cite><abbr>Matt.</abbr> <span epub:type="z3998:roman">V</span>, 
+ 556:   <cite>Matthew <span epub:type="z3998:roman">V</span>, 44⁠–⁠45</cite>
+ 561:   <cite><abbr>Matt.</abbr> <span epub:type="z3998:roman">V</span>, 
 44⁠–⁠45</cite>
-        <cite>Mark, <span epub:type="z3998:roman">x</span> 45</cite>
-        <cite>Luke, <span epub:type="z3998:roman">XVI</span> 11</cite>
-        <cite>John <span epub:type="z3998:roman">iii</span> 16</cite>
-        <cite>Acts <span epub:type="z3998:roman">I</span> 8</cite>
-        <cite>Romans <span epub:type="z3998:roman">xii</span>, 1⁠–⁠2</cite>
-        <cite><abbr>Rom.</abbr> <span epub:type="z3998:roman">xii</span>, 
+ 566:   <cite>Mark, <span epub:type="z3998:roman">x</span> 45</cite>
+ 571:   <cite>Luke, <span epub:type="z3998:roman">XVI</span> 11</cite>
+ 576:   <cite>John <span epub:type="z3998:roman">iii</span> 16</cite>
+ 581:   <cite>Acts <span epub:type="z3998:roman">I</span> 8</cite>
+ 586:   <cite>Romans <span epub:type="z3998:roman">xii</span>, 1⁠–⁠2</cite>
+ 591:   <cite><abbr>Rom.</abbr> <span epub:type="z3998:roman">xii</span>, 
 1⁠–⁠2</cite>
-        <cite>First Corinthians <span epub:type="z3998:roman">XV</span> 
+ 596:   <cite>First Corinthians <span epub:type="z3998:roman">XV</span> 
 58</cite>
-        <cite>First <abbr>Cor.</abbr> <span epub:type="z3998:roman">XV</span> 
+ 601:   <cite>First <abbr>Cor.</abbr> <span epub:type="z3998:roman">XV</span> 
 58</cite>
-        <cite><span epub:type="z3998:roman">II</span> Corinthians <span 
+ 606:   <cite><span epub:type="z3998:roman">II</span> Corinthians <span 
 epub:type="z3998:roman">v</span> 17</cite>
-        <cite><span epub:type="z3998:roman">II</span> <abbr>Corinth.</abbr> 
+ 611:   <cite><span epub:type="z3998:roman">II</span> <abbr>Corinth.</abbr> 
 <span epub:type="z3998:roman">v</span> 17</cite>
-        <cite>Galatians, <span epub:type="z3998:roman">ii</span>, 20</cite>
-        <cite><abbr>Gal.</abbr>, <span epub:type="z3998:roman">ii</span>, 
+ 616:   <cite>Galatians, <span epub:type="z3998:roman">ii</span>, 20</cite>
+ 621:   <cite><abbr>Gal.</abbr>, <span epub:type="z3998:roman">ii</span>, 
 20</cite>
-        <cite>Ephesians <span epub:type="z3998:roman">ii</span> 8⁠–⁠9</cite>
-        <cite><abbr>Eph.</abbr> <span epub:type="z3998:roman">ii</span> 
+ 626:   <cite>Ephesians <span epub:type="z3998:roman">ii</span> 8⁠–⁠9</cite>
+ 631:   <cite><abbr>Eph.</abbr> <span epub:type="z3998:roman">ii</span> 
 8⁠–⁠9</cite>
-        <cite>Philippians <span epub:type="z3998:roman">I</span>, 6</cite>
-        <cite><abbr>Phil.</abbr> <span epub:type="z3998:roman">I</span>, 
+ 636:   <cite>Philippians <span epub:type="z3998:roman">I</span>, 6</cite>
+ 641:   <cite><abbr>Phil.</abbr> <span epub:type="z3998:roman">I</span>, 
 6</cite>
-        <cite>Colossians <span epub:type="z3998:roman">i</span> 16</cite>
-        <cite><abbr>Col.</abbr> <span epub:type="z3998:roman">i</span> 16</cite>
-        <cite><abbr>Coloss.</abbr> <span epub:type="z3998:roman">i</span> 
+ 646:   <cite>Colossians <span epub:type="z3998:roman">i</span> 16</cite>
+ 651:   <cite><abbr>Col.</abbr> <span epub:type="z3998:roman">i</span> 16</cite>
+ 656:   <cite><abbr>Coloss.</abbr> <span epub:type="z3998:roman">i</span> 
 16</cite>
-        <cite><span epub:type="z3998:roman">I</span> Thessalonians <span 
+ 661:   <cite><span epub:type="z3998:roman">I</span> Thessalonians <span 
 epub:type="z3998:roman">V</span>, 15</cite>
-        <cite><span epub:type="z3998:roman">I</span> <abbr>Thess.</abbr> <span 
+ 666:   <cite><span epub:type="z3998:roman">I</span> <abbr>Thess.</abbr> <span 
 epub:type="z3998:roman">V</span>, 15</cite>
-        <cite><span epub:type="z3998:roman">I</span> <abbr>Thes.</abbr> <span 
+ 671:   <cite><span epub:type="z3998:roman">I</span> <abbr>Thes.</abbr> <span 
 epub:type="z3998:roman">V</span>, 15</cite>
-        <cite><span epub:type="z3998:roman">II</span> Thessalonians <span 
+ 676:   <cite><span epub:type="z3998:roman">II</span> Thessalonians <span 
 epub:type="z3998:roman">iii</span> 16</cite>
-        <cite><span epub:type="z3998:roman">II</span> <abbr>Thess.</abbr> <span 
+ 681:   <cite><span epub:type="z3998:roman">II</span> <abbr>Thess.</abbr> <span 
 epub:type="z3998:roman">iii</span> 16</cite>
-        <cite><span epub:type="z3998:roman">II</span> <abbr>Thes.</abbr> <span 
+ 686:   <cite><span epub:type="z3998:roman">II</span> <abbr>Thes.</abbr> <span 
 epub:type="z3998:roman">iii</span> 16</cite>
-        <cite><span epub:type="z3998:roman">I</span> Timothy, <span 
+ 691:   <cite><span epub:type="z3998:roman">I</span> Timothy, <span 
 epub:type="z3998:roman">I</span> 15</cite>
-        <cite><span epub:type="z3998:roman">I</span> <abbr>Tim.</abbr>, <span 
+ 696:   <cite><span epub:type="z3998:roman">I</span> <abbr>Tim.</abbr>, <span 
 epub:type="z3998:roman">I</span> 15</cite>
-        <cite><span epub:type="z3998:roman">II</span> Timothy, <span 
+ 701:   <cite><span epub:type="z3998:roman">II</span> Timothy, <span 
 epub:type="z3998:roman">iii</span>, 16⁠–⁠17</cite>
-        <cite><span epub:type="z3998:roman">II</span> <abbr>Tim.</abbr>, <span 
+ 706:   <cite><span epub:type="z3998:roman">II</span> <abbr>Tim.</abbr>, <span 
 epub:type="z3998:roman">iii</span>, 16⁠–⁠17</cite>
-        <cite>Titus <span epub:type="z3998:roman">iii</span> 4⁠–⁠7</cite>
-        <cite><abbr>Tit.</abbr> <span epub:type="z3998:roman">iii</span> 
+ 711:   <cite>Titus <span epub:type="z3998:roman">iii</span> 4⁠–⁠7</cite>
+ 716:   <cite><abbr>Tit.</abbr> <span epub:type="z3998:roman">iii</span> 
 4⁠–⁠7</cite>
-        <cite>Philemon <span epub:type="z3998:roman">i</span>, 4</cite>
-        <cite><abbr>Phlm.</abbr> <span epub:type="z3998:roman">i</span>, 
+ 721:   <cite>Philemon <span epub:type="z3998:roman">i</span>, 4</cite>
+ 726:   <cite><abbr>Phlm.</abbr> <span epub:type="z3998:roman">i</span>, 
 4</cite>
-        <cite>Hebrews, <span epub:type="z3998:roman">IV</span> 12</cite>
-        <cite><abbr>Heb.</abbr>, <span epub:type="z3998:roman">IV</span> 
+ 731:   <cite>Hebrews, <span epub:type="z3998:roman">IV</span> 12</cite>
+ 736:   <cite><abbr>Heb.</abbr>, <span epub:type="z3998:roman">IV</span> 
 12</cite>
-        <cite>James <span epub:type="z3998:roman">v</span>, 16</cite>
-        <cite><abbr>Jas.</abbr> <span epub:type="z3998:roman">v</span>, 
+ 741:   <cite>James <span epub:type="z3998:roman">v</span>, 16</cite>
+ 746:   <cite><abbr>Jas.</abbr> <span epub:type="z3998:roman">v</span>, 
 16</cite>
-        <cite>First Peter <span epub:type="z3998:roman">II</span> 5</cite>
-        <cite>First <abbr>Pet.</abbr> <span epub:type="z3998:roman">II</span> 
+ 751:   <cite>First Peter <span epub:type="z3998:roman">II</span> 5</cite>
+ 756:   <cite>First <abbr>Pet.</abbr> <span epub:type="z3998:roman">II</span> 
 5</cite>
-        <cite><span epub:type="z3998:roman">II</span> Peter <span 
+ 761:   <cite><span epub:type="z3998:roman">II</span> Peter <span 
 epub:type="z3998:roman">i</span> 19⁠–⁠21</cite>
-        <cite><span epub:type="z3998:roman">II</span> <abbr>Pet.</abbr> <span 
+ 766:   <cite><span epub:type="z3998:roman">II</span> <abbr>Pet.</abbr> <span 
 epub:type="z3998:roman">i</span> 19⁠–⁠21</cite>
-        <cite><span epub:type="z3998:roman">I</span> John <span 
+ 771:   <cite><span epub:type="z3998:roman">I</span> John <span 
 epub:type="z3998:roman">v</span>, 13</cite>
-        <cite><span epub:type="z3998:roman">II</span> John, <span 
+ 776:   <cite><span epub:type="z3998:roman">II</span> John, <span 
 epub:type="z3998:roman">i</span> 3</cite>
-        <cite><span epub:type="z3998:roman">III</span> John <span 
+ 781:   <cite><span epub:type="z3998:roman">III</span> John <span 
 epub:type="z3998:roman">I</span> 4</cite>
-        <cite>Jude <span epub:type="z3998:roman">i</span> 2</cite>
-        <cite>Revelation, <span epub:type="z3998:roman">xxi</span>, 4</cite>
-        <cite><abbr>Rev.</abbr>, <span epub:type="z3998:roman">xxi</span>, 
+ 786:   <cite>Jude <span epub:type="z3998:roman">i</span> 2</cite>
+ 791:   <cite>Revelation, <span epub:type="z3998:roman">xxi</span>, 4</cite>
+ 796:   <cite><abbr>Rev.</abbr>, <span epub:type="z3998:roman">xxi</span>, 
 4</cite>

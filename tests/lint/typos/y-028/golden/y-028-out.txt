@@ -1,4 +1,4 @@
 y-028 [Manual Review] chapter-1.xhtml Possible typo: `<abbr>` directly preceded 
 or followed by letter.
-        <abbr epub:type="z3998:initialism">I.B.M.</abbr>
-        <abbr epub:type="z3998:initialism">P.D.Q.</abbr>
+ 18:    <abbr epub:type="z3998:initialism">I.B.M.</abbr>
+ 20:    <abbr epub:type="z3998:initialism">P.D.Q.</abbr>

@@ -1,2 +1,2 @@
 m-071 [Error] colophon.xhtml DP link must be exactly `Distributed Proofreaders`.
-        <a href="https://www.pgdp.net/">Distributed Proofreading Team</a>
+ 22:    <a href="https://www.pgdp.net/">Distributed Proofreading Team</a>

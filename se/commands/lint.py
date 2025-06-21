@@ -95,7 +95,10 @@ def lint(plain_output: bool) -> int:
 					if message.submessages:
 						for submessage in message.submessages:
 							# Indent each line in case we have a multi-line submessage.
-							console.print(regex.sub(r"^", "\t", submessage.text, flags=regex.MULTILINE))
+							text = regex.sub(r"^", "\t", submessage.text, flags=regex.MULTILINE)
+							if submessage.line_num:
+								text = f" {submessage.line_num}:{text}"
+							console.print(text)
 			else:
 				for message in messages:
 					alert = "[bright_yellow]Manual Review[/bright_yellow]"
