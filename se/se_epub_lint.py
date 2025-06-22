@@ -25,9 +25,9 @@ import se
 import se.easy_xml
 import se.formatting
 import se.images
+import se.lint
 import se.spelling
 import se.typography
-import se.xml_file
 
 SE_VARIABLES = [
 	"SE_IDENTIFIER",
@@ -970,20 +970,19 @@ def _lint_metadata_checks(self) -> list:
 
 	return messages
 
-def _get_malformed_urls(source_file: se.xml_file.XmlSourceFile) -> list:
+def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 	"""
 	Helper function used in self.lint()
 	Get a list of URLs in the epub that don't match SE standards.
 
 	INPUTS
-	xhtml_source: The source file being checked
+	dom: A dom tree to check
+	filename: The filename being processed
 
 	OUTPUTS
 	A list of LintMessage objects.
 	"""
 
-	dom = source_file.dom
-	filename = source_file.filename
 	messages = []
 
 	search_regex = r"^https?://[^/]+[^/]$"
@@ -1308,12 +1307,13 @@ def _lint_image_checks(self, filename: Path) -> list:
 
 	return messages
 
-def _lint_svg_checks(self, source_file: se.xml_file.XmlSourceFile, root: str) -> list:
+def _lint_svg_checks(self, source_file: se.lint.SourceFile, svg_dom: se.easy_xml.EasyXmlTree, root: str) -> list:
 	"""
 	Perform several checks on SVG files.
 
 	INPUTS
 	source_file: The svg file being checked
+	svg_dom: The dom of the svg file being checked
 	self
 	root: The top-level directory.
 
@@ -1322,7 +1322,6 @@ def _lint_svg_checks(self, source_file: se.xml_file.XmlSourceFile, root: str) ->
 	"""
 
 	filename = source_file.filename
-	svg_dom = source_file.dom
 	messages = []
 
 	if f"{os.sep}src{os.sep}images{os.sep}" not in root:
@@ -1388,22 +1387,15 @@ def _lint_svg_checks(self, source_file: se.xml_file.XmlSourceFile, root: str) ->
 
 	return messages
 
-def _lint_special_file_checks(self, source_file: se.xml_file.XmlSourceFile, ebook_flags: dict, special_file: str) -> list:
+def _lint_special_file_checks(self, source_file: se.lint.SourceFile, dom: se.easy_xml.EasyXmlTree, ebook_flags: dict, special_file: str) -> list:
 	"""
 	Process error checks in “special” `.xhtml` files.
 
 	INPUTS
-<<<<<<< HEAD
-=======
+  self
 	source_file: The source file being checked
+	dom: The dom of the file being checked
 	ebook_flags: A dictionary containing ebook information
-	special_file: A string identifying the type of special file being checked
->>>>>>> 513a3b8d (lint: mostly plumb source_file)
-	self
-	filename: The name of the file being checked.
-	dom: The DOM of the file being checked.
-	file_contents: The contents of the file being checked.
-	ebook_flags: A dictionary containing ebook information.
 	special_file: A string identifying the type of special file being checked
 
 	OUTPUTS
@@ -1412,7 +1404,6 @@ def _lint_special_file_checks(self, source_file: se.xml_file.XmlSourceFile, eboo
 
 	messages = []
 	filename = source_file.filename
-	dom = source_file.dom
 	source_links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
 
 	if self.is_se_ebook and special_file in ("colophon", "imprint"):
@@ -1662,19 +1653,14 @@ def _lint_special_file_checks(self, source_file: se.xml_file.XmlSourceFile, eboo
 
 	return messages
 
-def _lint_xhtml_css_checks(source_file: se.xml_file.XmlSourceFile, local_css_path: Path) -> list:
+def _lint_xhtml_css_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.EasyXmlTree, local_css_path: Path) -> list:
 	"""
 	Process CSS checks on an `.xhtml` file.
 
 	INPUTS
-<<<<<<< HEAD
-	filename: The name of the file being checked.
-	dom: The DOm tree of the file being checked.
-	local_css_path: The path to the local CSS file.
-=======
 	source_file: The source file being checked
+	dom: The dom of the file being checked
 	local_css_path: The path to the local CSS file
->>>>>>> 513a3b8d (lint: mostly plumb source_file)
 
 	OUTPUTS
 	A list of `LintMessage` objects.
@@ -1682,7 +1668,6 @@ def _lint_xhtml_css_checks(source_file: se.xml_file.XmlSourceFile, local_css_pat
 
 	messages = []
 	filename = source_file.filename
-	dom = source_file.dom
 
 	# Do we have any elements that have specified border color?
 	# `transparent` and `none` are allowed values for `border-color`.
@@ -1759,17 +1744,13 @@ def _lint_xhtml_css_checks(source_file: se.xml_file.XmlSourceFile, local_css_pat
 
 	return messages
 
-def _lint_xhtml_metadata_checks(self, source_file: se.xml_file.XmlSourceFile) -> list:
+def _lint_xhtml_metadata_checks(self, source_file: se.lint.SourceFile, dom: se.easy_xml.EasyXmlTree) -> list:
 	"""
 	Process metadata checks on an `.xhtml` file.
 
 	INPUTS
-<<<<<<< HEAD
-	filename: The name of the file being checked.
-	dom: The DOM of the file being checked.
-=======
 	source_file: The source file being checked
->>>>>>> 513a3b8d (lint: mostly plumb source_file)
+	dom: The dom of the file being checked
 	self
 
 	OUTPUTS
@@ -1778,7 +1759,6 @@ def _lint_xhtml_metadata_checks(self, source_file: se.xml_file.XmlSourceFile) ->
 
 	messages = []
 	filename = source_file.filename
-	dom = source_file.dom
 
 	# Check for missing MARC relators.
 	# Don't check the landmarks as that may introduce duplicate errors.
@@ -1806,12 +1786,13 @@ def _lint_xhtml_metadata_checks(self, source_file: se.xml_file.XmlSourceFile) ->
 
 	return messages
 
-def _lint_xhtml_syntax_checks(self, source_file: se.xml_file.XmlSourceFile, ebook_flags: dict, language: str, section_tree: list[EbookSection]) -> list:
+def _lint_xhtml_syntax_checks(self, source_file: se.lint.SourceFile, dom: se.easy_xml.EasyXmlTree, ebook_flags: dict, language: str, section_tree: list[EbookSection]) -> list:
 	"""
 	Process syntax checks on an .xhtml file
 
 	INPUTS
 	source_file: The source file being checked
+	dom: The dom of the file being checked
 	ebook_flags: A dictionary containing several flags about an ebook
 	language: The language identified in the metadata
 
@@ -1821,7 +1802,6 @@ def _lint_xhtml_syntax_checks(self, source_file: se.xml_file.XmlSourceFile, eboo
 
 	messages = []
 	filename = source_file.filename
-	dom = source_file.dom
 
 	# This block is useful for pretty-printing section_tree should we need to debug it in the future
 	# def dump(item, char):
@@ -2393,12 +2373,13 @@ def _lint_xhtml_syntax_checks(self, source_file: se.xml_file.XmlSourceFile, eboo
 
 	return messages
 
-def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, special_file: str | None, ebook_flags: dict, missing_files: list, self) -> tuple:
+def _lint_xhtml_typography_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.EasyXmlTree, special_file: str | None, ebook_flags: dict, missing_files: list, self) -> tuple:
 	"""
 	Process typography checks on an `.xhtml` file.
 
 	INPUTS
 	source_file: The source file being checked
+	dom: The dom of the file being checked
 	special_file: A string containing the type of special file the current file is, if any
 	ebook_flags: A dictionary containing several flags about an ebook
 	missing_files: A list of missing files
@@ -2410,7 +2391,6 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 
 	messages = []
 	filename = source_file.filename
-	dom = source_file.dom
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 	line_matches = source_file.findall(fr"[\p{{Letter}}]+”[,\.](?!{se.WORD_JOINER} {se.WORD_JOINER}…)")
@@ -2934,19 +2914,14 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 
 	return (messages, missing_files)
 
-def _lint_xhtml_xhtml_checks(source_file: se.xml_file.XmlSourceFile, local_css_path: str) -> list:
+def _lint_xhtml_xhtml_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.EasyXmlTree, local_css_path: str) -> list:
 	"""
 	Process XHTML checks on an `.xhtml` file.
 
 	INPUTS
-<<<<<<< HEAD
-	filename: The name of the file being checked.
-	dom: The DOM tree of the file being checked.
-	file_contents: The contents of the file being checked.
-=======
 	source_file: The source file being checked
+	dom: The dom of the file being checked
 	local_css_path: Path to local.css file
->>>>>>> 513a3b8d (lint: mostly plumb source_file)
 
 	OUTPUTS
 	A list of `LintMessage` objects.
@@ -2954,7 +2929,6 @@ def _lint_xhtml_xhtml_checks(source_file: se.xml_file.XmlSourceFile, local_css_p
 
 	messages = []
 	filename = source_file.filename
-	dom = source_file.dom
 
 	# Check for uppercase letters in IDs or classes.
 	nodes = dom.xpath("//*[re:test(@id, '[A-Z]') or re:test(@class, '[A-Z]') or re:test(@epub:type, '[A-Z]')]")
@@ -3018,19 +2992,19 @@ def _lint_xhtml_xhtml_checks(source_file: se.xml_file.XmlSourceFile, local_css_p
 
 	return messages
 
-def _lint_xhtml_typo_checks(source_file: se.xml_file.XmlSourceFile, special_file: str | None) -> list:
+def _lint_xhtml_typo_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.EasyXmlTree, special_file: str | None) -> list:
 	"""
 	Process typo checks on an `.xhtml` file.
 
 	INPUTS
 	source_file: The source file being checked
+	dom: The dom of the file being checked
 	special_file: A string containing the type of special file the current file is, if any
 
 	OUTPUTS
 	A list of `LintMessage` objects.
 	"""
 	filename = source_file.filename
-	dom = source_file.dom
 
 	messages = []
 	typos = [] # list[str | LintSubmessage] = []
@@ -3588,8 +3562,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 		double_spaced_files.append(self.metadata_file_path)
 
 	# Check for malformed URLs.
-	metadata_xhtml_source = se.xml_file.XmlSourceFile(self.metadata_file_path, self.metadata_dom, self.get_file(self.metadata_file_path))
-	messages += _get_malformed_urls(metadata_xhtml_source)
+	messages += _get_malformed_urls(self.metadata_dom, self.metadata_file_path)
 
 	# Make sure some static files are unchanged.
 	if self.is_se_ebook:
@@ -3674,16 +3647,16 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 			# Read the file and start doing some serious checks!
 			try:
-				file_contents = self.get_file(filename)
+				source_file = se.lint.SourceFile(filename, self.get_file(filename))
 			except UnicodeDecodeError:
 				# This is more to help developers find weird files that might choke `se lint`, hopefully unnecessary for end users.
 				messages.append(LintMessage("f-010", "Problem decoding file as utf-8.", se.MESSAGE_TYPE_ERROR, filename))
 				continue
 
 			# Remove comments before we do any further processing
-			file_contents = regex.sub(r"<!--.+?-->", "", file_contents, flags=regex.DOTALL)
+			source_file = source_file.sub(regex.compile(r"<!--.+?-->", flags=regex.DOTALL), "")
 
-			if "UTF-8" in file_contents:
+			if "UTF-8" in source.file_contents:
 				messages.append(LintMessage("x-001", "String [text]UTF-8[/] must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename))
 
 			if filename.suffix == ".svg":
@@ -3691,10 +3664,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 				if self.path / "images" / filename.name == filename:
 					continue
 
-				# Get the original file from the cache.
-				svg_source = se.xml_file.XmlSourceFile(filename, self.get_dom(filename), self.get_file(filename))
-				svg_dom = svg_source.dom
-				messages += _lint_svg_checks(self, svg_source, root)
+				# Get the original file from the cache
+				svg_dom = self.get_dom(filename)
+				messages += _lint_svg_checks(self, source_file, svg_dom, root)
 				if self.cover_path and filename.name == self.cover_path.name:
 					# For later comparison with titlepage.
 					cover_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The cover for ", "") # `<title>` can appear on any element in SVG, but we only want to check the root one
@@ -3703,8 +3675,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 					titlepage_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The titlepage for ", "") # `<title>` can appear on any element in SVG, but we only want to check the root one.
 
 			if filename.suffix == ".xml":
-				xml_source = se.xml_file.XmlSourceFile(filename, self.get_dom(filename), self.get_file(filename))
-				xml_dom = xml_source.dom
+				xml_dom = self.get_dom(filename)
 
 				if xml_dom.xpath("/search-key-map") and filename.name != "glossary-search-key-map.xml":
 					messages.append(LintMessage("f-013", "Glossary search key map must be named [path]glossary-search-key-map.xml[/].", se.MESSAGE_TYPE_ERROR, filename))
@@ -3727,7 +3698,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 			if filename.suffix == ".xhtml":
 				# Read file contents into a DOM for querying.
 				# asdf: Check that removing comments retains the original sourcelines
-				xhtml_source = se.xml_file.XmlSourceFile(filename, self.get_dom(filename, True), self.get_file(filename))
 				dom = self.get_dom(filename, True)
 
 				# Apply stylesheets.
@@ -3739,7 +3709,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 					css_filename = (filename.parent / node.get_attr("href")).resolve()
 					dom.apply_css(self.get_file(css_filename), str(css_filename))
 
-				messages += _get_malformed_urls(xhtml_source)
+				messages += _get_malformed_urls(dom, filename)
 
 				# Extract `id` attributes for later checks.
 				id_attrs += dom.xpath("//*[name() != 'section' and name() != 'article' and name() != 'figure' and name() != 'nav']/@id")
@@ -3860,7 +3830,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 					special_file = None
 
 				if special_file in SPECIAL_FILES:
-					messages += _lint_special_file_checks(self, xhtml_source, ebook_flags, special_file)
+					messages += _lint_special_file_checks(self, source_file, dom, ebook_flags, special_file)
 
 				if filename.name not in IGNORED_FILENAMES:
 					# Does this book look like a collection? It does if there is a `bodymatter` section that only contains `<article>` children, and none of the titles are roman numerals.
@@ -3870,18 +3840,18 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 				missing_styles += _update_missing_styles(filename, dom, local_css)
 
-				messages += _lint_xhtml_css_checks(xhtml_source, local_css_path)
+				messages += _lint_xhtml_css_checks(source_file, dom, local_css_path)
 
-				messages += _lint_xhtml_metadata_checks(self, xhtml_source)
+				messages += _lint_xhtml_metadata_checks(self, source_file, dom)
 
-				messages += _lint_xhtml_syntax_checks(self, xhtml_source, ebook_flags, language, section_tree)
+				messages += _lint_xhtml_syntax_checks(self, source_file, dom, ebook_flags, language, section_tree)
 
-				(typography_messages, missing_files) = _lint_xhtml_typography_checks(xhtml_source, special_file, ebook_flags, missing_files, self)
+				(typography_messages, missing_files) = _lint_xhtml_typography_checks(source_file, dom, special_file, ebook_flags, missing_files, self)
 				messages += typography_messages
 
-				messages += _lint_xhtml_xhtml_checks(xhtml_source, local_css_path)
+				messages += _lint_xhtml_xhtml_checks(source_file, dom, local_css_path)
 
-				messages += _lint_xhtml_typo_checks(xhtml_source, special_file)
+				messages += _lint_xhtml_typo_checks(source_file, dom, special_file)
 
 	if self.cover_path and cover_svg_title != titlepage_svg_title:
 		messages.append(LintMessage("s-028", f"[path][link=file://{self.cover_path}]{self.cover_path.name}[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match.", se.MESSAGE_TYPE_ERROR, self.cover_path))

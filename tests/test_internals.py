@@ -4,7 +4,7 @@ Test internal SE programming functions
 
 from se.se_epub_generate_toc import add_landmark
 import se.easy_xml
-from se.xml_file import strip_comments_with_line_mapping
+from se.lint import sub_with_line_mapping, XML_COMMENT_PATTERN
 
 def test_add_landmark_empty_title():
 	"""
@@ -56,7 +56,7 @@ def test_line_numbers_no_comments():
 <p>L2</p>
 <p>L3</p>"""
 
-	_, bounds = strip_comments_with_line_mapping(contents)
+	_, bounds = sub_with_line_mapping(contents, XML_COMMENT_PATTERN)
 	assert bounds == [(0, 1), (10, 2), (20, 3)]
 
 def test_line_numbers_leading_comments():
@@ -68,7 +68,7 @@ def test_line_numbers_leading_comments():
 <!-- C2 --><p>L2</p>
 <!-- C3 --><p>L3</p>"""
 
-	_, bounds = strip_comments_with_line_mapping(contents)
+	_, bounds = sub_with_line_mapping(contents, XML_COMMENT_PATTERN)
 	assert bounds == [(0, 1), (10, 2), (20, 3)]
 
 def test_line_numbers_trailing_comments():
@@ -80,7 +80,7 @@ def test_line_numbers_trailing_comments():
 <p>L2</p><!-- C2 -->
 <p>L3</p><!-- C3 -->"""
 
-	_, bounds = strip_comments_with_line_mapping(contents)
+	_, bounds = sub_with_line_mapping(contents, XML_COMMENT_PATTERN)
 	assert bounds == [(0, 1), (10, 2), (20, 3)]
 
 def test_line_numbers_inline_comments():
@@ -92,7 +92,7 @@ def test_line_numbers_inline_comments():
 <p><!-- C2 -->L2</p>
 <p>L3</p>"""
 
-	_, bounds = strip_comments_with_line_mapping(contents)
+	_, bounds = sub_with_line_mapping(contents, XML_COMMENT_PATTERN)
 	assert bounds == [(0, 1), (10, 2), (20, 3)]
 
 def test_line_numbers_line_comments():
@@ -106,7 +106,7 @@ def test_line_numbers_line_comments():
 <!--L4-->
 <p>L5</p>"""
 
-	_, bounds = strip_comments_with_line_mapping(contents)
+	_, bounds = sub_with_line_mapping(contents, XML_COMMENT_PATTERN)
 	assert bounds == [(0, 1), (10, 2), (11, 3), (21, 4), (22, 5)]
 
 def test_line_numbers_multiline_comments():
@@ -127,5 +127,5 @@ def test_line_numbers_multiline_comments():
 <!--   LB
     LC-->"""
 
-	_, bounds = strip_comments_with_line_mapping(contents)
+	_, bounds = sub_with_line_mapping(contents, XML_COMMENT_PATTERN)
 	assert bounds == [(0, 1), (1, 3), (11, 4), (12, 7), (22, 8), (23, 10), (33, 11)]
