@@ -2411,16 +2411,15 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 	messages = []
 	filename = source_file.filename
 	dom = source_file.dom
-	file_contents = source_file.contents
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
-	matches = regex.findall(fr"[\p{{Letter}}]+”[,\.](?!{se.WORD_JOINER} {se.WORD_JOINER}…)", file_contents)
-	if matches:
-		messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
+	line_matches = source_file.findall(fr"[\p{{Letter}}]+”[,\.](?!{se.WORD_JOINER} {se.WORD_JOINER}…)")
+	if line_matches:
+		messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(line_matches)))
 
 	# Check for `ldquo` not correctly closed.
 	# Ignore closing paragraphs, line breaks, and closing cells in case `ldquo` means `ditto mark`.
-	matches = regex.findall(r"“[^‘”]+?“", file_contents)
+	matches = regex.findall(r"“[^‘”]+?“", source_file.contents)
 	matches = [match for match in matches if "</p" not in match and "<br/>" not in match and "</td>" not in match]
 	# Xpath to check for opening quote in `<p>`, without a next child `<p>` that starts with an opening quote or an opening bracket (for editorial insertions within paragraphs of quotation); or that consists of only an ellipses (like an elided part of a longer quotation).
 	# Matching `<p>`s can't have a poem/verse ancestor as formatting is often special for those.
@@ -2432,17 +2431,17 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 		messages.append(LintMessage("t-003", "[text]“[/] missing matching [text]”[/]. Note: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 	# Check for `lsquo` not correctly closed.
-	matches = regex.findall(r"‘[^“’]+?‘", file_contents)
-	matches = [match for match in matches if "</p" not in match and "<br/>" not in match]
-	if matches:
-		messages.append(LintMessage("t-004", "[text]‘[/] missing matching [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, matches))
+	line_matches = source_file.findall(r"‘[^“’]+?‘")
+	line_matches = [match for match in line_matches if "</p" not in match[0] and "<br/>" not in match[0]]
+	if line_matches:
+		messages.append(LintMessage("t-004", "[text]‘[/] missing matching [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(line_matches)))
 
 	# Check for closing dialog without comma.
 	# Exclude `is said` as that's usually not indicative of dialog.
-	matches = regex.findall(r"[\p{Lowercase_Letter}]+?” [\p{Letter}]+? said", file_contents)
-	matches = [match for match in matches if " is said" not in match]
-	if matches:
-		messages.append(LintMessage("t-005", "Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename, matches))
+	line_matches = source_file.findall(r"[\p{Lowercase_Letter}]+?” [\p{Letter}]+? said")
+	line_matches = [match for match in line_matches if " is said" not in match[0]]
+	if line_matches:
+		messages.append(LintMessage("t-005", "Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(line_matches)))
 
 	# Check for possessive `'s` within name italics, but not in ignored files like the colophon which we know have no possessives.
 	# Allow some known exceptions like `Harper's`, etc.
@@ -2453,9 +2452,9 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 
 	# Check for repeated punctuation, but first remove `&amp;` so we don't match `&amp;,`.
 	# Remove `<td>`s with repeated `”` as they are probably ditto marks.
-	matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents.replace("&amp;", ""))
-	matches += regex.findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents))
-	matches += regex.findall(r"[\p{Letter}][,\.:;]\s[,\.:;]\s?[\p{Letter}<].{0,20}", file_contents)
+	matches = regex.findall(r"[,;]{2,}.{0,20}", source_file.contents.replace("&amp;", ""))
+	matches += regex.findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", source_file.contents))
+	matches += regex.findall(r"[\p{Letter}][,\.:;]\s[,\.:;]\s?[\p{Letter}<].{0,20}", source_file.contents)
 	if matches:
 		messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
@@ -2524,17 +2523,18 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 
 		# This xpath matches `<b>` or `<i>` elements with `@epub:type="se:name..."`, that are not stage direction, whose last text node ends in punctuation.
 		# Note that we check that the last node is a text node, because we may have `<abbr>` as the last node.
-		matches = [node.to_string() for node in dom.xpath("(//b | //i)[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., '[\\.,!\\?;:]$')]]")]
+		nodes = dom.xpath("(//b | //i)[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., '[\\.,!\\?;:]$')]]")
 
 		# Match `<b>` or `<i>` elements that are not stage directions, and that end in a comma followed by a lowercase letter.
-		matches += [node.to_string() for node in dom.xpath("(//b | //i)[not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., ',$')] and following-sibling::node()[re:test(., '^\\s*[a-z]')] ]")]
+		nodes += dom.xpath("(//b | //i)[not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., ',$')] and following-sibling::node()[re:test(., '^\\s*[a-z]')] ]")
 
 		# ...and also check for ending punctuation inside `<em>` elements, if it looks like a *part* of a clause instead of a whole clause.
 		# If the `<em>` is preceded by an em dash or quotes, or if there's punctuation and a space before it, then it's presumed to be a whole clause.
-		matches += [match.strip() for match in regex.findall(r"(?<!.[—“‘>]|[!\.\?…;:]\s)<em>(?:\w+?\s*)+[\.,\!\?;]</em>", file_contents) if match.islower()]
+		line_matches = [ (match.strip(), line_num) for (match, line_num) in source_file.findall(r"(?<!.[—“‘>]|[!\.\?…;:]\s)<em>(?:\w+?\s*)+[\.,\!\?;]</em>") if match.islower()]
 
-		if matches:
-			messages.append(LintMessage("t-017", "Ending punctuation inside formatting like bold, small caps, or italics. Ending punctuation is only allowed within formatting if the phrase is an independent clause.", se.MESSAGE_TYPE_WARNING, filename, list(set(matches))))
+		submessages = LintSubmessage.from_nodes(nodes) + LintSubmessage.from_matches(line_matches)
+		if submessages:
+			messages.append(LintMessage("t-017", "Ending punctuation inside formatting like bold, small caps, or italics. Ending punctuation is only allowed within formatting if the phrase is an independent clause.", se.MESSAGE_TYPE_WARNING, filename, submessages))
 
 	# Check for stage direction that ends in `?!` but also has a trailing period.
 	nodes = dom.xpath("/html/body//i[contains(@epub:type, 'z3998:stage-direction') and re:test(., '\\.$') and not((./node()[last()])[name() = 'abbr']) and (following-sibling::node()[1])[re:test(., '^[\\.,:;!?]')]]")
@@ -2544,17 +2544,17 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 	# Check for single words that are in italics, but that have closing punctuation outside italics.
 	# Outer wrapping match is so that `findall()` returns the entire match and not the subgroup.
 	# The first regex also matches the first few characters before the first double quote; we use those for more sophisticated checks below, to give fewer false positives like `with its downy red hairs and its “<i xml:lang="fr">doigts de faune</i>.”`.
-	matches = regex.findall(r"((?:.{1,2}\s)?“<(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])", file_contents)
-	matches += regex.findall(r"([\.\!\?] <(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])", file_contents)
+	line_matches = source_file.findall(r"((?:.{1,2}\s)?“<(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])")
+	line_matches += source_file.findall(r"([\.\!\?] <(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])")
 
 	# But, if we've matched a name of something, don't include that as an error. For example, `He said, “<i epub:type="se:name.publication.book">The Decameron</i>.”`.
 	# We also exclude the match from the list if:
 	# 1. The double quote is directly preceded by a lowercase letter and a space: `with its downy red hairs and its “<i xml:lang="fr">doigts de faune</i>.”`.
 	# 2. The double quote is directly preceded by a lowercase letter, a comma, and a space, and the first letter within the double quote is lowercase: `In the original, “<i xml:lang="es">que era un Conde de Irlos</i>.”`.
 	# 3. The text is a single letter that is not `I` or `a` (because then it is likely a mathematical variable).
-	matches = [match for match in matches if "epub:type=\"se:name." not in match[0] and "epub:type=\"z3998:taxonomy" not in match[0] and not regex.match(r"^[\p{Lowercase_Letter}’]+\s“", match[0]) and not regex.match(r"^[\p{Lowercase_Letter}’]+,\s“[\p{Lowercase_Letter}]", se.formatting.remove_tags(match[0])) and not regex.match(r"^.*?<.+?>[^Ia]<.+?>", match[0])]
-	if matches:
-		messages.append(LintMessage("t-019", "When a complete clause is italicized, ending punctuation except commas must be within containing italics.", se.MESSAGE_TYPE_WARNING, filename, [match[0] for match in matches]))
+	line_matches = [match for match in line_matches if "epub:type=\"se:name." not in match[0] and "epub:type=\"z3998:taxonomy" not in match[0] and not regex.match(r"^[\p{Lowercase_Letter}’]+\s“", match[0]) and not regex.match(r"^[\p{Lowercase_Letter}’]+,\s“[\p{Lowercase_Letter}]", se.formatting.remove_tags(match[0])) and not regex.match(r"^.*?<.+?>[^Ia]<.+?>", match[0])]
+	if line_matches:
+		messages.append(LintMessage("t-019", "When a complete clause is italicized, ending punctuation except commas must be within containing italics.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(line_matches)))
 
 	# Check for punctuation after endnotes.
 	nodes = dom.xpath(f"/html/body//a[contains(@epub:type, 'noteref')][(following-sibling::node()[1])[re:test(., '^[^\\s<–\\]\\)—{se.WORD_JOINER}a-zA-Z0-9]')]]")
@@ -2564,7 +2564,7 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 	# Check for correct typography around measurements like `2 ft.`.
 	# But first remove `@href` and `@id` attributes, because URLs and IDs may contain strings that look like measurements.
 	# Note that while we check `m,min` (minutes) and `h,hr` (hours) we don't check `s` (seconds) because we get too many false positives on years, like `the 1540s`.
-	matches = regex.findall(fr"\b[1-9][0-9]*[{se.NO_BREAK_SPACE}\-]?(?:[mck]?[mgl]|ft|in|min?|h|sec|hr)\.?\b", regex.sub(r"(href|id)=\"[^\"]*?\"", "", file_contents))
+	matches = regex.findall(fr"\b[1-9][0-9]*[{se.NO_BREAK_SPACE}\-]?(?:[mck]?[mgl]|ft|in|min?|h|sec|hr)\.?\b", regex.sub(r"(href|id)=\"[^\"]*?\"", "", source_file.contents))
 	# Exclude number ordinals, they're not measurements.
 	matches = [match for match in matches if not regex.search(r"(st|nd|rd|th)", match)]
 	if matches:
@@ -2602,12 +2602,12 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 		if alt:
 			# Check for non-typogrified `img@alt` attributes.
 			if regex.search(r"""('|"|--|\s-\s|&quot;)""", alt):
-				img_alt_not_typogrified.append(node.to_tag_string())
+				img_alt_not_typogrified.append(node)
 
 			# Check `@alt` attributes not ending in punctuation.
 			# Ignore `<img>` that is in `<p>`, as such images are likely to require `@alt` attributes that are running text.
 			if filename.name not in IGNORED_FILENAMES and not regex.search(r"""[\.\!\?]”?$""", alt) and not node.parent.tag == "p":
-				img_alt_lacking_punctuation.append(node.to_tag_string())
+				img_alt_lacking_punctuation.append(node)
 
 			# Check that `@alt` attributes match SVG titles.
 			if img_src and img_src.endswith("svg"):
@@ -2631,20 +2631,20 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 			img_no_alt.append(node)
 
 	if img_alt_not_typogrified:
-		messages.append(LintMessage("t-025", "Non-typogrified [text]'[/], [text]\"[/] (as [xhtml]&quot;[/]), or [text]--[/] in image [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, img_alt_not_typogrified))
+		messages.append(LintMessage("t-025", "Non-typogrified [text]'[/], [text]\"[/] (as [xhtml]&quot;[/]), or [text]--[/] in image [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(img_alt_not_typogrified)))
 	if img_alt_lacking_punctuation:
-		messages.append(LintMessage("t-026", "[attr]alt[/] attribute does not appear to end with punctuation. [attr]alt[/] attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename, img_alt_lacking_punctuation))
+		messages.append(LintMessage("t-026", "[attr]alt[/] attribute does not appear to end with punctuation. [attr]alt[/] attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(img_alt_lacking_punctuation)))
 	if img_no_alt:
 		messages.append(LintMessage("s-004", "[xhtml]img[/] element missing [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(img_no_alt)))
 
 	# Check for low-hanging misquoted fruit.
-	matches = regex.findall(r"[\p{Letter}]+[“‘]", file_contents)
-	matches += regex.findall(r"[^>]+</(?:em|i|b|span)>‘[\p{Lowercase_Letter}]+", file_contents)
-	if matches:
-		messages.append(LintMessage("t-028", "Possible mis-curled quotation mark.", se.MESSAGE_TYPE_WARNING, filename, matches))
+	line_matches = source_file.findall(r"[\p{Letter}]+[“‘]")
+	line_matches += source_file.findall(r"[^>]+</(?:em|i|b|span)>‘[\p{Lowercase_Letter}]+")
+	if line_matches:
+		messages.append(LintMessage("t-028", "Possible mis-curled quotation mark.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(line_matches)))
 
 	# Check for periods followed by lowercase.
-	temp_xhtml = regex.sub(r"<title[^>]*?>.+?</title>", "", file_contents) # Remove `<title>` because it might contain something like `<title>Chapter 2: The Antechamber of M. de Tréville</title>`.
+	temp_xhtml = regex.sub(r"<title[^>]*?>.+?</title>", "", source_file.contents) # Remove `<title>` because it might contain something like `<title>Chapter 2: The Antechamber of M. de Tréville</title>`.
 	temp_xhtml = regex.sub(r"<abbr[^>]*?>", "<abbr>", temp_xhtml) # Replace things like `<abbr xml:lang="la">`.
 	temp_xhtml = regex.sub(r"<img[^>]*?>", "", temp_xhtml) # Remove `img@alt` attributes.
 	temp_xhtml = temp_xhtml.replace("A.B.C.", "X") # Remove `A.B.C.`, which is not an abbreviation.
@@ -2713,7 +2713,7 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 		messages.append(LintMessage("t-040", "Subtitle with illegal ending period.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# If we don't include preceding characters, the regex is 6x faster.
-	matches = regex.findall(r"[^…]\s[!?;:,].{0,10}", file_contents)
+	matches = regex.findall(r"[^…]\s[!?;:,].{0,10}", source_file.contents)
 	if matches:
 		messages.append(LintMessage("t-041", "Illegal space before punctuation.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
@@ -2739,7 +2739,7 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 	if nodes:
 		messages.append(LintMessage("t-045", "Element has [val]z3998:persona[/] semantic and is also set in italics.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
-	if "῾" in file_contents:
+	if "῾" in source_file.contents:
 		messages.append(LintMessage("t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead.", se.MESSAGE_TYPE_ERROR, filename))
 
 	# Check for all-caps first paragraphs in `<section>`s/`<article>`s.
@@ -2750,7 +2750,7 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 		messages.append(LintMessage("t-048", "Chapter opening text in all-caps.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for two-em-dashes used for elision instead of three-em-dashes.
-	matches = regex.findall(fr"[^{se.WORD_JOINER}\p{{Letter}}”]⸺[^“{se.WORD_JOINER}\p{{Letter}}].*", file_contents)
+	matches = regex.findall(fr"[^{se.WORD_JOINER}\p{{Letter}}”]⸺[^“{se.WORD_JOINER}\p{{Letter}}].*", source_file.contents)
 	if matches:
 		messages.append(LintMessage("t-049", "Two-em-dash used for eliding an entire word. Use a three-em-dash instead.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
@@ -2784,7 +2784,7 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 		messages.append(LintMessage("t-054", "Epigraphs that are entirely non-English should be set in italics, not Roman.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for lone acute accents, which should always be combined or swapped for a more accurate Unicode chararacter.
-	if "´" in file_contents:
+	if "´" in source_file.contents:
 		messages.append(LintMessage("t-055", "Lone acute accent ([val]´[/]). A more accurate Unicode character like prime for coordinates or measurements, or combining accent or breathing mark for Greek text, is required.", se.MESSAGE_TYPE_ERROR, filename))
 
 	# Check for degree confusable.
@@ -2803,7 +2803,7 @@ def _lint_xhtml_typography_checks(source_file: se.xml_file.XmlSourceFile, specia
 		messages.append(LintMessage("t-057", "[xhtml]<p>[/] starting with lowercase letter. Hint: [xhtml]<p>[/] that continues text after a [xhtml]<blockquote>[/] requires the [class]continued[/] class; and use [xhtml]<br/>[/] to split one clause over many lines.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for illegal characters.
-	matches = regex.findall(fr"({se.UNICODE_BOM}|{se.SHY_HYPHEN})", file_contents)
+	matches = regex.findall(fr"({se.UNICODE_BOM}|{se.SHY_HYPHEN})", source_file.contents)
 	if matches:
 		# Get the keys of a dict in order to create a list without duplicates.
 		messages.append(LintMessage("t-058", "Illegal character.", se.MESSAGE_TYPE_ERROR, filename, list({match.encode("unicode_escape").decode().replace("\\u", "U+").upper():None for match in matches}.keys())))
