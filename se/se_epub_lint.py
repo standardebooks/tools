@@ -3656,8 +3656,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 			# Remove comments before we do any further processing
 			source_file = source_file.sub(regex.compile(r"<!--.+?-->", flags=regex.DOTALL), "")
 
-			if "UTF-8" in source.file_contents:
-				messages.append(LintMessage("x-001", "String [text]UTF-8[/] must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename))
+			line_matches = source_file.findall("UTF-8")
+			if line_matches:
+				messages.append(LintMessage("x-001", "String [text]UTF-8[/] must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_matches(line_matches)))
 
 			if filename.suffix == ".svg":
 				# If this is an SVG that is in the `./images/` folder, ignore it, because it's a source that could have any kind of internal formatting.
