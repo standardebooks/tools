@@ -2746,7 +2746,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	# Exclude toto followed by ’ since Toto can be a name.
 	# Exclude <h#> whose entire contents is a matched Latinism as we do not italicize those.
 	# Ignore the ToC because we have different rules there
-	nodes = dom.xpath("/html/body//text()[re:test(., '\\b(a (priori|posteriori|fortiori)|(?<!reductio )ad (hominem|absurdum|nauseam|infinitum|interim|valem)|in (extremis|loco|situ|vitro|absentia|camera|statu quo)|in toto[^’]|more suo|par excellence)\\b', 'i') and not(ancestor-or-self::*[@data-css-font-style='italic']) and not(parent::*[re:test(name(), '^h[1-6]$') and @xml:lang]) and not(ancestor::hgroup) and not(ancestor::nav[contains(@epub:type, 'toc')]) ]")
+	nodes = dom.xpath("/html/body//text()[re:test(., '\\b(a (priori|posteriori|fortiori)|(?<!reductio )(?<!reductiones )ad (hominem|absurdum|nauseam|infinitum|interim|valem)|in (extremis|loco|situ|vitro|absentia|camera|statu quo)|in toto[^’]|more suo|par excellence)\\b', 'i') and not(ancestor-or-self::*[@data-css-font-style='italic']) and not(parent::*[re:test(name(), '^h[1-6]$') and @xml:lang]) and not(ancestor::hgroup) and not(ancestor::nav[contains(@epub:type, 'toc')]) ]")
 	if nodes:
 		messages.append(LintMessage("t-063", "Non-English confusable phrase set without italics.", se.MESSAGE_TYPE_WARNING, filename, nodes))
 
