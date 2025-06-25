@@ -177,7 +177,7 @@ METADATA
 "m-005", "Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like [url]https://catalog.hathitrust.org/Record/<BOOK-ID>[/]."
 "m-006", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like [url]https://www.gutenberg.org/ebooks/<BOOK-ID>[/]."
 "m-007", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like [url]https://archive.org/details/<BOOK-ID>[/]."
-"m-008", "[url]id.loc.gov[/] URI ending with illegal [path].html[/]."
+"m-008", "Non-canonical Library of Congress Name Authority URI. Expected [url]http://id.loc.gov/authorities/names/<IDENTIFIER>[/]."
 "m-009", f"[xml]<meta property=\"se:url.vcs.github\">[/] value does not match expected: [url]{self.generated_github_repo_url}[/]."
 "m-010", "Invalid [xml]refines[/] property."
 "m-011", "Subtitle in metadata, but no full/extended title element."
@@ -235,7 +235,6 @@ METADATA
 "m-062", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"file-as\">[/]."
 "m-064", "S.E. ebook hyperlinked in long description but not italicized."
 "m-065", "Word count in metadata doesn’t match actual word count."
-"m-066", "[url]id.loc.gov[/] URI starting with illegal https."
 "m-067", "Non-S.E. link in long description."
 "m-068", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"title-type\">[/]."
 "m-069", "[text]comprised of[/] in metadata. Hint: Is there a better phrase to use here?"
@@ -253,6 +252,8 @@ METADATA
 "m-081", "When published between a range of years, the text must be [text]published between year1 and year2[/]."
 "m-082", "Faded Page link text must be exactly [text]Faded Page[/]."
 "m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]extended[/], or [val]short[/]."
+UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvv
+"m-066", "[url]id.loc.gov[/] URI starting with illegal https."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -438,7 +439,6 @@ TYPOGRAPHY
 "t-075", "Word in verse with acute accent for scansion instead of grave accent."
 "t-076", "Grapheme or phoneme not italicized. Hint: Dialect with missing letters should mark missing letters with [text]’[/]."
 "t-077", "Punctuation followed by opening quotation."
-
 
 XHTML
 "x-001", "String [text]UTF-8[/] must always be lowercase."
@@ -883,11 +883,8 @@ def _lint_metadata_checks(self) -> list:
 	if invalid_refines:
 		messages.append(LintMessage("m-010", "Invalid [xml]refines[/] property.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, invalid_refines))
 
-	if self.metadata_dom.xpath("/package/metadata/*[contains(., 'https://id.loc.gov/')]"):
-		messages.append(LintMessage("m-066", "[url]id.loc.gov[/] URI starting with illegal https.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-
-	if self.metadata_dom.xpath("/package/metadata/*[re:test(., 'id\\.loc\\.gov/authorities/names/[^\\.]+\\.html')]"):
-		messages.append(LintMessage("m-008", "[url]id.loc.gov[/] URI ending with illegal [path].html[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+	if self.metadata_dom.xpath("/package/metadata/*[re:test(., '^https?://id\\.loc\\.gov/') and not(re:test(., '^http://id\\.loc\\.gov/authorities/names/n[0-9]+$'))]"):
+		messages.append(LintMessage("m-008", "Non-canonical Library of Congress Name Authority URI. Expected [url]http://id.loc.gov/authorities/names/<IDENTIFIER>[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	if self.metadata_dom.xpath("/package/metadata/dc:description[text()!='DESCRIPTION' and re:test(., '[^\\.”]$')]"):
 		messages.append(LintMessage("m-055", "[xml]dc:description[/] does not end with a period.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
