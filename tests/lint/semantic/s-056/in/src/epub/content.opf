@@ -7,13 +7,13 @@
 		<dc:rights>The source text and artwork in this ebook are believed to be in the United States public domain; that is, they are believed to be free of copyright restrictions in the United States. They may still be copyrighted in other countries, so users located outside of the United States must check their local laws before using this ebook. The creators of, and contributors to, this ebook dedicate their contributions to the worldwide public domain via the terms in the [CC0 1.0 Universal Public Domain Dedication](https://creativecommons.org/publicdomain/zero/1.0/).</dc:rights>
 		<dc:publisher id="publisher">Standard Ebooks</dc:publisher>
 		<meta property="file-as" refines="#publisher">Standard Ebooks</meta>
-		<meta property="se:url.homepage" refines="#publisher">https://standardebooks.org</meta>
+		<meta property="se:url.homepage" refines="#publisher">https://standardebooks.org/</meta>
 		<meta property="role" refines="#publisher" scheme="marc:relators">bkd</meta>
 		<meta property="role" refines="#publisher" scheme="marc:relators">mdc</meta>
 		<meta property="role" refines="#publisher" scheme="marc:relators">pbl</meta>
 		<dc:contributor id="type-designer">The League of Moveable Type</dc:contributor>
 		<meta property="file-as" refines="#type-designer">League of Moveable Type, The</meta>
-		<meta property="se:url.homepage" refines="#type-designer">https://www.theleagueofmoveabletype.com</meta>
+		<meta property="se:url.homepage" refines="#type-designer">https://www.theleagueofmoveabletype.com/</meta>
 		<meta property="role" refines="#type-designer" scheme="marc:relators">tyd</meta>
 		<link href="http://www.idpf.org/epub/a11y/accessibility-20170105.html#wcag-aa" rel="dcterms:conformsTo"/>
 		<meta property="a11y:certifiedBy">Standard Ebooks</meta>
@@ -44,7 +44,7 @@
 		<meta property="se:production-notes">Test book production notes</meta>
 		<meta property="se:word-count">WORD_COUNT</meta>
 		<meta property="se:reading-ease.flesch">READING_EASE</meta>
-		<meta property="se:url.encyclopedia.wikipedia">https://en.wikipedia.org/wiki/Jane_Austen/standardebooks/jane-austen_unknown-novel</meta>
+		<meta property="se:url.encyclopedia.wikipedia">https://en.wikipedia.org/wiki/jane-austen_unknown-novel</meta>
 		<meta property="se:url.vcs.github">https://github.com/standardebooks/jane-austen_unknown-novel</meta>
 		<dc:creator id="author">Jane Austen</dc:creator>
 		<meta property="file-as" refines="#author">Austen, Jane</meta>
@@ -60,11 +60,11 @@
 		<meta property="role" refines="#artist" scheme="marc:relators">art</meta>
 		<dc:contributor id="transcriber-1">Test transcriber</dc:contributor>
 		<meta property="file-as" refines="#transcriber-1">Test transcriber</meta>
-		<meta property="se:url.homepage" refines="#transcriber-1">https://www.example.com</meta>
+		<meta property="se:url.homepage" refines="#transcriber-1">https://www.example.com/</meta>
 		<meta property="role" refines="#transcriber-1" scheme="marc:relators">trc</meta>
 		<dc:contributor id="producer-1">The Producer</dc:contributor>
 		<meta property="file-as" refines="#producer-1">Producer, The</meta>
-		<meta property="se:url.homepage" refines="#producer-1">https://www.example.com</meta>
+		<meta property="se:url.homepage" refines="#producer-1">https://www.example.com/</meta>
 		<meta property="role" refines="#producer-1" scheme="marc:relators">bkp</meta>
 		<meta property="role" refines="#producer-1" scheme="marc:relators">blw</meta>
 		<meta property="role" refines="#producer-1" scheme="marc:relators">cov</meta>

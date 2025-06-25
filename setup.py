@@ -44,7 +44,7 @@ setup(
 	description="The toolset used to produce Standard Ebooks epub ebooks.",
 	long_description=_get_file_contents(Path(__file__).resolve().parent / "README.md"),
 	long_description_content_type="text/markdown",
-	url="https://standardebooks.org",
+	url="https://standardebooks.org/",
 	author="Standard Ebooks",
 	author_email="admin@standardebooks.org",
 	classifiers=[

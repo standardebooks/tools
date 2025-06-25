@@ -170,14 +170,14 @@ FILESYSTEM
 "f-019", "[path].png[/] file without transparency. Hint: If an image doesn’t have transparency, it should be saved as a [path].jpg[/]."
 
 METADATA
-"m-001", "gutenberg.org URL missing leading [text]www.[/]."
-"m-002", "archive.org URL should not have leading [text]www.[/]."
-"m-003", "Non-HTTPS URL."
-"m-004", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://books.google.com/books?id=<BOOK-ID>[/]."
-"m-005", "Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like [url]https://catalog.hathitrust.org/Record/<BOOK-ID>[/]."
-"m-006", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like [url]https://www.gutenberg.org/ebooks/<BOOK-ID>[/]."
-"m-007", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like [url]https://archive.org/details/<BOOK-ID>[/]."
-"m-008", "Non-canonical Library of Congress Name Authority URI. Expected [url]http://id.loc.gov/authorities/names/<IDENTIFIER>[/]."
+"m-001", "Non-canonical Faded Page URL. Expected [url]https://www.fadedpage.com/showbook.php?pid=<BOOK-ID>[/]."
+"m-002", "Non-canonical Project Gutenberg Canada URL. Expected [url]https://gutenberg.ca/<PATH>/<FILENAME>.html[/]."
+"m-003", "Bare URL without trailing slash."
+"m-004", "Non-canonical Google Books URL. Expected [url]https://books.google.com/books?id=<BOOK-ID>[/]."
+"m-005", "Non-canonical HathiTrust URL. Expected [url]https://catalog.hathitrust.org/Record/<BOOK-ID>[/]."
+"m-006", "Non-canonical Project Gutenberg URL. Expected [url]https://www.gutenberg.org/ebooks/<BOOK-ID>[/] or [url]https://www.gutenberg.org/[/]."
+"m-007", "Non-canonical Internet Archive URL. Expected [url]https://archive.org/details/<BOOK-ID>[/]."
+"m-008", "Non-canonical Library of Congress Name Authority URI. Expected [url]http://id.loc.gov/authorities/names/<IDENTIFIER>[/]. Hint: Must be [text]http[/] and without file extension."
 "m-009", f"[xml]<meta property=\"se:url.vcs.github\">[/] value does not match expected: [url]{self.generated_github_repo_url}[/]."
 "m-010", "Invalid [xml]refines[/] property."
 "m-011", "Subtitle in metadata, but no full/extended title element."
@@ -195,7 +195,7 @@ METADATA
 "m-023", f"[xml]<dc:identifier>[/] does not match expected: [text]{self.generated_identifier}[/]."
 "m-024", "[xml]<meta property=\"se:name.person.full-name\">[/] property identical to regular name. If the two are identical the full name [xml]<meta>[/] element must be removed."
 "m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon."
-"m-026", f"Illegal [url]https://*.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs."
+"m-026", f"Non-canonical Wikipedia URL. Expected [url]http://en.wikipedia.org/wiki/<ARTICLE-ID>[/]."
 "m-027", f"[val]se:short-story[/] semantic inflection found, but no [val]se:subject[/] with the value of [text]Shorts[/]."
 "m-028", "Images found in ebook, but no [attr]schema:accessMode[/] property set to [val]visual[/] in metadata."
 "m-029", "Images found in ebook, but no [attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata."
@@ -212,7 +212,7 @@ METADATA
 "m-040", "Images found in ebook, but no [attr]role[/] property set to [val]wat[/] in metadata for the writer of the alt text."
 "m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
 "m-042", "[xml]<manifest>[/] element does not match expected structure."
-"m-043", f"Non-English Wikipedia URL."
+"m-043", f"Non-canonical Wayback Machine URL. Expected [url]https://web.archive.org/web/<DATE>/<ARCHIVED-URL>[/]."
 "m-044", f"Possessive [text]’[/] or [text]’s[/] outside of [xhtml]<a>[/] element in long description."
 "m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC."
 "m-046", "Missing or empty [xml]<reason>[/] element."
@@ -223,18 +223,19 @@ METADATA
 "m-051", "Missing expected element in metadata."
 "m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"dcterms:alternate\" refines="#title"> element in metadata."
 "m-053", "[xml]<meta property=\"se:subject\">[/] elements not in alphabetical order."
-"m-054", "Standard Ebooks URL with illegal trailing slash."
+"m-054", "Non-canonical Standard Ebooks URL. Expected [url]https://standardebooks.org/ebooks/<AUTHOR>/<TITLE>\\[/<CONTRIBUTOR> ...][/]. Hint: No trailing slash."
 "m-055", "[xml]dc:description[/] does not end with a period."
 "m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their S.E. author page."
 "m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/]."
 "m-058", "[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/]."
 "m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata."
-"m-060", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/]."
+"m-060", "Non-canonical Google Books URL. Expected [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/]."
 "m-061", "Link must be preceded by [text]the[/]."
 "m-063", "Cover image has not been built."
 "m-062", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"file-as\">[/]."
 "m-064", "S.E. ebook hyperlinked in long description but not italicized."
 "m-065", "Word count in metadata doesn’t match actual word count."
+"m-066", "Subject identifiers must be IDs and not URLs."
 "m-067", "Non-S.E. link in long description."
 "m-068", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"title-type\">[/]."
 "m-069", "[text]comprised of[/] in metadata. Hint: Is there a better phrase to use here?"
@@ -244,7 +245,7 @@ METADATA
 "m-073", "Anonymous contributor values must be exactly [text]Anonymous[/]."
 "m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/]."
 "m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/]."
-"m-076", "gutenberg.net.au URL should not have leading [text]www.[/]."
+"m-076", "Non-canonical Project Gutenberg Australia URL. Expected [url]https://www.gutenberg.net.au/<PATH>/<FILENAME>.html[/] or [url]https://www.gutenberg.net.au/[/]."
 "m-077", "MathML found in ebook, but no [attr]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata."
 "m-078", "MathML found in ebook, but no MathML accessibility [xml]<ProductFormFeatureValue>17</ProductFormFeatureValue>[/] set in ONIX data."
 "m-079", "Ebook looks like a collection, but no [xml]<meta property=\"se:is-a-collection\">true</meta>[/] element in metadata."
@@ -252,8 +253,6 @@ METADATA
 "m-081", "When published between a range of years, the text must be [text]published between year1 and year2[/]."
 "m-082", "Faded Page link text must be exactly [text]Faded Page[/]."
 "m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]extended[/], or [val]short[/]."
-UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvv
-"m-066", "[url]id.loc.gov[/] URI starting with illegal https."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -645,11 +644,6 @@ def _lint_metadata_checks(self) -> list:
 	metadata_xml = self.metadata_dom.to_string()
 	missing_metadata_elements = []
 
-	# Check for non-English Wikipedia URLs
-	nodes = self.metadata_dom.xpath("/package/metadata/*[re:test(., 'https://(?!en)[a-z]{2,}\\.wikipedia\\.org')]")
-	if nodes:
-		messages.append(LintMessage("m-043", "Non-English Wikipedia URL.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
-
 	# Check the long description for some errors
 	try:
 		# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
@@ -756,11 +750,6 @@ def _lint_metadata_checks(self) -> list:
 			messages.append(LintMessage("m-013", "Non-typogrified character in [xml]<dc:description>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 	except Exception:
 		missing_metadata_elements.append("<dc:description>")
-
-	# Check for illegal Wikipedia URLs
-	nodes = self.metadata_dom.xpath("/package/metadata/*[contains(., '.m.wikipedia.org') or @*[contains(., '.m.wikipedia.org')]]")
-	if nodes:
-		messages.append(LintMessage("m-026", "Illegal [url]https://*.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 	# We can't use xpath's built-in regex because it doesn't support Unicode classes
@@ -883,8 +872,9 @@ def _lint_metadata_checks(self) -> list:
 	if invalid_refines:
 		messages.append(LintMessage("m-010", "Invalid [xml]refines[/] property.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, invalid_refines))
 
-	if self.metadata_dom.xpath("/package/metadata/*[re:test(., '^https?://id\\.loc\\.gov/') and not(re:test(., '^http://id\\.loc\\.gov/authorities/names/n[0-9]+$'))]"):
-		messages.append(LintMessage("m-008", "Non-canonical Library of Congress Name Authority URI. Expected [url]http://id.loc.gov/authorities/names/<IDENTIFIER>[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+	nodes = self.metadata_dom.xpath("/package/metadata/*[re:test(., '^https?://id\\.loc\\.gov/authorities/(names/)?n[^/]+$') and not(re:test(., '^http://id\\.loc\\.gov/authorities/names/[^/\\.]+$'))]")
+	if nodes:
+		messages.append(LintMessage("m-008", "Non-canonical Library of Congress Name Authority URI. Expected [url]http://id.loc.gov/authorities/names/<IDENTIFIER>[/]. Hint: Must be [text]http[/] and without file extension.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 	if self.metadata_dom.xpath("/package/metadata/dc:description[text()!='DESCRIPTION' and re:test(., '[^\\.”]$')]"):
 		messages.append(LintMessage("m-055", "[xml]dc:description[/] does not end with a period.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
@@ -932,56 +922,79 @@ def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 
 	messages = []
 
-	# Check for non-https URLs
-	search_regex = r"(?<!www\.)gutenberg\.org"
-	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	search_regex = r"^https?://[^/]+[^/]$"
+	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
 	if nodes:
-		messages.append(LintMessage("m-001", "gutenberg.org URL missing leading [text]www.[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-003", "Bare URL without trailing slash.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	search_regex = r"www\.archive\.org"
-	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	search_regex = r"^https?://(.+\.)?fadedpage\.com/"
+	expected_regex = r"^https://www\.fadedpage\.com/showbook\.php\?pid=[a-zA-Z0-9]+$"
+	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and not(re:test(., '{expected_regex}'))] | /html/body//a[re:test(@href, '{search_regex}') and not(re:test(@href, '{expected_regex}'))]")
 	if nodes:
-		messages.append(LintMessage("m-002", "archive.org URL should not have leading [text]www.[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-001", "Non-canonical Faded Page URL. Expected [url]https://www.fadedpage.com/showbook.php?pid=<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	search_regex = r"www\.gutenberg\.net\.au"
-	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	search_regex = r"^https?://(.+\.)?gutenberg\.net\.au/"
+	expected_regex = r"^https://www\.gutenberg\.net\.au(/|/.+\.html)$"
+	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and not(re:test(., '{expected_regex}'))] | /html/body//a[re:test(@href, '{search_regex}') and not(re:test(@href, '{expected_regex}'))]")
 	if nodes:
-		messages.append(LintMessage("m-076", "gutenberg.net.au URL should not have leading [text]www.[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-076", "Non-canonical Project Gutenberg Australia URL. Expected [url]https://www.gutenberg.net.au/<PATH>/<FILENAME>.html[/] or [url]https://www.gutenberg.net.au/[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	search_regex = r"http://(gutenberg\.org|gutenberg\.net\.au|gutenberg\.ca|www\.fadedpage\.com|archive\.org|pgdp\.net|catalog\.hathitrust\.org|en\.wikipedia\.org|standardebooks\.org)"
-	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	search_regex = r"https?://books\.google\.com/"
+	expected_regex = r"^https?://books\.google\.com/books\?id=[^/\?#&]+?$"
+	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and not(re:test(., '{expected_regex}'))] | /html/body//a[re:test(@href, '{search_regex}') and not(re:test(@href, '{expected_regex}'))]")
 	if nodes:
-		messages.append(LintMessage("m-003", "Non-HTTPS URL.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-004", "Non-canonical Google Books URL. Expected [url]https://books.google.com/books?id=<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	search_regex = r"https?://books\.google\.com/books\?id=.+?[&#]"
-	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	search_regex = r"https?://www\.google\.com/books/"
+	expected_regex = r"^https?://www\.google\.com/books/edition/[^/]+/[^/\?#&]+$"
+	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and not(re:test(., '{expected_regex}'))] | /html/body//a[re:test(@href, '{search_regex}') and not(re:test(@href, '{expected_regex}'))]")
 	if nodes:
-		messages.append(LintMessage("m-004", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://books.google.com/books?id=<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-060", "Non-canonical Google Books URL. Expected [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	search_regex = r"https?://www\.google\.com/books/edition/[^/]+?/[^/?#]+/?[&#?]"
-	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	search_regex = r"^https?://((.+\.)?hathitrust\.org|hdl\.handle\.net)"
+	expected_regex = r"^https://catalog\.hathitrust\.org/Record/[^/]+$"
+	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and not(re:test(., '{expected_regex}'))] | /html/body//a[re:test(@href, '{search_regex}') and not(re:test(@href, '{expected_regex}'))]")
 	if nodes:
-		messages.append(LintMessage("m-060", "Non-canonical Google Books URL. Google Books URLs must look exactly like [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-005", "Non-canonical HathiTrust URL. Expected [url]https://catalog.hathitrust.org/Record/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	search_regex = r"https?://(babel\.hathitrust\.org|hdl\.handle\.net)"
-	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	search_regex = r"^https?://(.+\.)?gutenberg\.org/"
+	expected_regex = r"^https://www\.gutenberg\.org(/|/ebooks/[0-9]+)$"
+	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and not(re:test(., '{expected_regex}'))] | /html/body//a[re:test(@href, '{search_regex}') and not(re:test(@href, '{expected_regex}'))]")
 	if nodes:
-		messages.append(LintMessage("m-005", "Non-canonical HathiTrust URL. HathiTrust URLs must look exactly like [url]https://catalog.hathitrust.org/Record/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-006", "Non-canonical Project Gutenberg URL. Expected [url]https://www.gutenberg.org/ebooks/<BOOK-ID>[/] or [url]https://www.gutenberg.org/[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	search_regex = r"https?://.*?gutenberg\.org/(files|cache)"
-	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	# Search the `www.` subdomain specifically because we have a different check for the Wayback Machine, `web.archive.org`.
+	# Some archive.org IDs may contains forward slashes!
+	search_regex = r"^https?://(www\.)?archive\.org/"
+	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and re:test(., '/mode/|\\?|#|&')] | /html/body//a[re:test(@href, '{search_regex}') and re:test(., '/mode/|\\?|#|&')]")
 	if nodes:
-		messages.append(LintMessage("m-006", "Non-canonical Project Gutenberg URL. Project Gutenberg URLs must look exactly like [url]https://www.gutenberg.org/ebooks/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-007", "Non-canonical Internet Archive URL. Expected [url]https://archive.org/details/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	search_regex = r"^https?://.*?archive\.org/(stream|details/.+?/page.+)"
-	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	search_regex = r"^https?://web\.archive\.org/"
+	expected_regex = r"^https://web\.archive\.org/web/[0-9]+/.+$"
+	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and not(re:test(., '{expected_regex}'))] | /html/body//a[re:test(@href, '{search_regex}') and not(re:test(@href, '{expected_regex}'))]")
 	if nodes:
-		messages.append(LintMessage("m-007", "Non-canonical archive.org URL. Internet Archive URLs must look exactly like [url]https://archive.org/details/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-043", "Non-canonical Wayback Machine URL. Expected [url]https://web.archive.org/web/<DATE>/<ARCHIVED-URL>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	search_regex = r"https?://standardebooks\.org[^\s]*/$"
-	nodes = dom.xpath(f"/package/metadata/*[re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
+	search_regex = r"^https?://(.+\.)?wikipedia\.org/"
+	expected_regex = r"^https://en\.wikipedia\.org/wiki/[^/]+$"
+	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and not(re:test(., '{expected_regex}'))] | /html/body//a[re:test(@href, '{search_regex}') and not(re:test(@href, '{expected_regex}'))]")
 	if nodes:
-		messages.append(LintMessage("m-054", "Standard Ebooks URL with illegal trailing slash.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-026", "Non-canonical Wikipedia URL. Expected [url]http://en.wikipedia.org/wiki/<ARTICLE-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# Note that SE URLs must have a trailing slash if referring to the homepage (i.e., `https://standardebook.org/`), but must *not* have a trailing slash otherwise.
+	# SE URLs *may* have an anchor (`#`) as we may be referring to a single URL pointing to multiple page scans in the colophon (i.e., `https://standardebooks.org/ebooks/<AUTHOR>/<TITLE>#page-scans`).
+	search_regex = r"https?://(.+\.)?standardebooks\.org/"
+	expected_regex = r"https://standardebooks\.org(/|(/[a-z0-9\-_]+)+)($|[#\"<])"
+	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and not(re:test(., '{expected_regex}'))] | /html/body//a[re:test(@href, '{search_regex}') and not(re:test(@href, '{expected_regex}'))]")
+	if nodes:
+		messages.append(LintMessage("m-054", "Non-canonical Standard Ebooks URL. Expected [url]https://standardebooks.org/ebooks/<AUTHOR>/<TITLE>\\[/<CONTRIBUTOR> ...][/]. Hint: No trailing slash.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	search_regex = r"^https?://(.+\.)?gutenberg\.ca/"
+	expected_regex = r"^https://gutenberg\.ca/.+\.html$"
+	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and not(re:test(., '{expected_regex}'))] | /html/body//a[re:test(@href, '{search_regex}') and not(re:test(@href, '{expected_regex}'))]")
+	if nodes:
+		messages.append(LintMessage("m-002", "Non-canonical Project Gutenberg Canada URL. Expected [url]https://gutenberg.ca/<PATH>/<FILENAME>.html[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 	return messages
 
@@ -1335,19 +1348,19 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 			if nodes:
 				messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-			nodes = dom.xpath("/html/body//a[@href='https://www.pgdp.net' and text()!='Distributed Proofreaders']")
+			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.pgdp\\.net') and text()!='Distributed Proofreaders']")
 			if nodes:
 				messages.append(LintMessage("m-071", "DP link must be exactly [text]Distributed Proofreaders[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www.pgdp.org/ols/') and text()!='Distributed Proofreaders Open Library System']")
+			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.pgdp\\.org/ols\\b') and text()!='Distributed Proofreaders Open Library System']")
 			if nodes:
 				messages.append(LintMessage("m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-			nodes = dom.xpath("/html/body//a[@href='https://www.pgdpcanada.net' and text()!='Distributed Proofreaders Canada']")
+			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.pgdpcanada\\.net') and text()!='Distributed Proofreaders Canada']")
 			if nodes:
 				messages.append(LintMessage("m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www.fadedpage.com') and not(text()='Faded Page')]")
+			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.fadedpage\\.com') and not(text()='Faded Page')]")
 			if nodes:
 				messages.append(LintMessage("m-082", "Faded Page link text must be exactly [text]Faded Page[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
@@ -1358,11 +1371,6 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	if self.is_se_ebook and special_file == "colophon":
 		if self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text()='trl']") and "translated from" not in file_contents:
 			messages.append(LintMessage("m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
-
-		# Check for illegal Wikipedia URLs
-		nodes = dom.xpath("/html/body//a[contains(@href, '.m.wikipedia.org')]")
-		if nodes:
-			messages.append(LintMessage("m-026", "Illegal [url]https://*.m.wikipedia.org[/] URL. Hint: use non-mobile Wikipedia URLs.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 		se_url = self.generated_identifier.replace("url:", "")
 		if not dom.xpath(f"/html/body//a[@href='{se_url}' and text()='{se_url.replace('https://', '')}']"):
@@ -1391,11 +1399,6 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 				if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in file_contents:
 					messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
-
-		# Check for non-English Wikipedia URLs
-		nodes = dom.xpath("/html/body//a[re:test(@href, 'https://(?!en)[a-z]{2,}\\.wikipedia\\.org')]")
-		if nodes:
-			messages.append(LintMessage("m-043", "Non-English Wikipedia URL.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 		# Is there a page scan link in the colophon, but missing in the metadata?
 		for node in dom.xpath("/html/body//a[re:test(@href, '(gutenberg\\.org/ebooks/[0-9]+|hathitrust\\.org|/archive\\.org|books\\.google\\.com|www\\.google\\.com/books/)')]"):
@@ -3591,10 +3594,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 			# Remove comments before we do any further processing
 			file_contents = regex.sub(r"<!--.+?-->", "", file_contents, flags=regex.DOTALL)
-
-			matches = regex.findall(r"http://standardebooks\.org[^\"<\s]*", file_contents)
-			if matches:
-				messages.append(LintMessage("m-003", "Non-HTTPS URL.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
 			if "UTF-8" in file_contents:
 				messages.append(LintMessage("x-001", "String [text]UTF-8[/] must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename))

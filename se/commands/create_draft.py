@@ -393,8 +393,8 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> Tuple[Optional[str]
 			except Exception as ex:
 				raise se.RemoteCommandErrorException(f"Couldn’t contact Wikipedia. Exception: {ex}") from ex
 
-			for match in regex.findall(r"https?://id\.loc\.gov/authorities/n[0-9]+", response.text):
-				nacoaf_uri = match.replace("https:","http:")
+			for match in regex.findall(r"https?://id\.loc\.gov/authorities/(?:names/)?(n[a-z0-9]+)", response.text):
+				nacoaf_uri = "http://id.loc.gov/authorities/names/" + match
 
 		return wiki_url, nacoaf_uri
 
@@ -913,7 +913,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 					producers_xhtml = ""
 					for i, producer in enumerate(pg_producers):
 						if "Distributed Proofread" in producer:
-							producers_xhtml = producers_xhtml + """<a href="https://www.pgdp.net">Distributed Proofreaders</a>"""
+							producers_xhtml = producers_xhtml + """<a href="https://www.pgdp.net/">Distributed Proofreaders</a>"""
 						elif "anonymous" in producer.lower():
 							producers_xhtml = producers_xhtml + """<b epub:type="z3998:personal-name">An Anonymous Volunteer</b>"""
 						else:

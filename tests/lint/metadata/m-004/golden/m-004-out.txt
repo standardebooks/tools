@@ -1,0 +1,14 @@
+m-004 [Error] colophon.xhtml Non-canonical Google Books URL. Expected 
+`https://books.google.com/books?id=<BOOK-ID>`.
+        <a href="https://books.google.com/books?id=1234&amp;var=val#hash">Google
+Books</a>
+m-037 [Error] colophon.xhtml Transcription/page scan source link not found. 
+Expected: `<a href="https://books.google.com/books?id=1234&var=val#hash">Google 
+Books</a>`.
+m-004 [Error] content.opf Non-canonical Google Books URL. Expected 
+`https://books.google.com/books?id=<BOOK-ID>`.
+        <dc:source>https://books.google.com/books?id=1234&amp;var=val#hash</dc:s
+ource>
+m-037 [Error] imprint.xhtml Transcription/page scan source link not found. 
+Expected: `<a href="https://books.google.com/books?id=1234&var=val#hash">Google 
+Books</a>`.
