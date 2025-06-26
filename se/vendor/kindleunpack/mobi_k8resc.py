@@ -60,7 +60,10 @@ class K8RESCProcessor(object):
         if self.resc_length != resc_size:
             print("Warning: RESC section length({:d}bytes) does not match its size({:d}bytes).".format(self.resc_length, resc_size))
         # now parse RESC after converting it to unicode from utf-8
-        self.resc = unicode_str(data[start_pos:start_pos+self.resc_length])
+        try:
+            self.resc = unicode_str(data[start_pos:start_pos+self.resc_length])
+        except UnicodeDecodeError:
+            self.resc = unicode_str(data[start_pos:start_pos+self.resc_length], enc='latin-1')
         self.parseData()
 
     def prepend_to_spine(self, key, idref, linear, properties):

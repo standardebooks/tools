@@ -52,80 +52,115 @@ def dump_contexth(cpage, extheader):
     if extheader == b'':
         return
     id_map_strings = {
-        1 : 'Drm Server Id (1)',
-        2 : 'Drm Commerce Id (2)',
-        3 : 'Drm Ebookbase Book Id(3)',
-        100 : 'Creator_(100)',
-        101 : 'Publisher_(101)',
-        102 : 'Imprint_(102)',
-        103 : 'Description_(103)',
-        104 : 'ISBN_(104)',
-        105 : 'Subject_(105)',
-        106 : 'Published_(106)',
-        107 : 'Review_(107)',
-        108 : 'Contributor_(108)',
-        109 : 'Rights_(109)',
-        110 : 'SubjectCode_(110)',
-        111 : 'Type_(111)',
-        112 : 'Source_(112)',
-        113 : 'ASIN_(113)',
-        114 : 'versionNumber_(114)',
-        117 : 'Adult_(117)',
-        118 : 'Price_(118)',
-        119 : 'Currency_(119)',
-        122 : 'fixed-layout_(122)',
-        123 : 'book-type_(123)',
-        124 : 'orientation-lock_(124)',
-        126 : 'original-resolution_(126)',
-        127 : 'zero-gutter_(127)',
-        128 : 'zero-margin_(128)',
-        129 : 'K8_Masthead/Cover_Image_(129)',
-        132 : 'RegionMagnification_(132)',
-        200 : 'DictShortName_(200)',
-        501 : 'cdeType_(501)',
-        502 : 'last_update_time_(502)',
-        503 : 'Updated_Title_(503)',
-        504 : 'ASIN_(504)',
-        508 : 'Unknown_Title_Furigana?_(508)',
-        517 : 'Unknown_Creator_Furigana?_(517)',
-        522 : 'Unknown_Publisher_Furigana?_(522)',
-        524 : 'Language_(524)',
-        525 : 'primary-writing-mode_(525)',
-        526 : 'Unknown_(526)',
-        527 : 'page-progression-direction_(527)',
-        528 : 'override-kindle-fonts_(528)',
-        529 : 'kindlegen_Source-Target_(529)',
-        529 : 'Unknown_(529)',
-        534 : 'Input_Source_Type_(534)',
-        535 : 'Kindlegen_BuildRev_Number_(535)',
-        536 : 'Container_Info_(536)',  # CONT_Header is 0, Ends with CONTAINER_BOUNDARY (or Asset_Type?)
-        538 : 'Container_Resolution_(538)',
-        539 : 'Container_Mimetype_(539)',
-        542 : 'Unknown_but_changes_with_file_name_only_(542)',
-        543 : 'Container_id_(543)',  # FONT_CONTAINER, BW_CONTAINER, HD_CONTAINER
-        544 : 'Unknown_(544)',
+        1 : 'Drm Server Id',
+        2 : 'Drm Commerce Id',
+        3 : 'Drm Ebookbase Book Id',
+        4 : 'Drm Ebookbase Dep Id',
+        100 : 'Creator',
+        101 : 'Publisher',
+        102 : 'Imprint',
+        103 : 'Description',
+        104 : 'ISBN',
+        105 : 'Subject',
+        106 : 'Published',
+        107 : 'Review',
+        108 : 'Contributor',
+        109 : 'Rights',
+        110 : 'SubjectCode',
+        111 : 'Type',
+        112 : 'Source',
+        113 : 'ASIN',
+        # 114 : 'versionNumber',
+        117 : 'Adult',
+        118 : 'Retail-Price',
+        119 : 'Retail-Currency',
+        120 : 'TSC',
+        122 : 'fixed-layout',
+        123 : 'book-type',
+        124 : 'orientation-lock',
+        126 : 'original-resolution',
+        127 : 'zero-gutter',
+        128 : 'zero-margin',
+        129 : 'MetadataResourceURI',
+        132 : 'RegionMagnification',
+        150 : 'LendingEnabled',
+        200 : 'DictShortName',
+        501 : 'cdeType',
+        502 : 'last_update_time',
+        503 : 'Updated_Title',
+        504 : 'CDEContentKey',
+        505 : 'AmazonContentReference',
+        506 : 'Title-Language',
+        507 : 'Title-Display-Direction',
+        508 : 'Title-Pronunciation',
+        509 : 'Title-Collation',
+        510 : 'Secondary-Title',
+        511 : 'Secondary-Title-Language',
+        512 : 'Secondary-Title-Direction',
+        513 : 'Secondary-Title-Pronunciation',
+        514 : 'Secondary-Title-Collation',
+        515 : 'Author-Language',
+        516 : 'Author-Display-Direction',
+        517 : 'Author-Pronunciation',
+        518 : 'Author-Collation',
+        519 : 'Author-Type',
+        520 : 'Publisher-Language',
+        521 : 'Publisher-Display-Direction',
+        522 : 'Publisher-Pronunciation',
+        523 : 'Publisher-Collation',
+        524 : 'Content-Language-Tag',
+        525 : 'primary-writing-mode',
+        526 : 'NCX-Ingested-By-Software',
+        527 : 'page-progression-direction',
+        528 : 'override-kindle-fonts',
+        529 : 'Compression-Upgraded',
+        530 : 'Soft-Hyphens-In-Content',
+        531 : 'Dictionary_In_Langague',
+        532 : 'Dictionary_Out_Language',
+        533 : 'Font_Converted',
+        534 : 'Amazon_Creator_Info',
+        535 : 'Creator-Build-Tag',
+        536 : 'HD-Media-Containers-Info',  # CONT_Header is 0, Ends with CONTAINER_BOUNDARY (or Asset_Type?)
+        538 : 'Resource-Container-Fidelity',
+        539 : 'HD-Container-Mimetype',
+        540 : 'Sample-For_Special-Purpose',
+        541 : 'Kindletool-Operation-Information',
+        542 : 'Container_Id',
+        543 : 'Asset-Type',  # FONT_CONTAINER, BW_CONTAINER, HD_CONTAINER
+        544 : 'Unknown_544',
     }
     id_map_values = {
-        115 : 'sample_(115)',
-        116 : 'StartOffset_(116)',
-        121 : 'K8(121)_Boundary_Section_(121)',
-        125 : 'K8_Count_of_Resources_Fonts_Images_(125)',
-        131 : 'K8_Unidentified_Count_(131)',
-        201 : 'CoverOffset_(201)',
-        202 : 'ThumbOffset_(202)',
-        203 : 'Fake_Cover_(203)',
-        204 : 'Creator_Software_(204)',
-        205 : 'Creator_Major_Version_(205)',
-        206 : 'Creator_Minor_Version_(206)',
-        207 : 'Creator_Build_Number_(207)',
-        401 : 'Clipping_Limit_(401)',
-        402 : 'Publisher_Limit_(402)',
-        404 : 'Text_to_Speech_Disabled_(404)',
+        114 : 'versionNumber',
+        115 : 'sample',
+        116 : 'StartOffset',
+        121 : 'Mobi8-Boundary-Section',
+        125 : 'Embedded-Record-Count',
+        130 : 'Offline-Sample',
+        131 : 'Metadata-Record-Offset',
+        201 : 'CoverOffset',
+        202 : 'ThumbOffset',
+        203 : 'HasFakeCover',
+        204 : 'Creator-Software',
+        205 : 'Creator-Major-Version',
+        206 : 'Creator-Minor-Version',
+        207 : 'Creator-Build-Number',
+        401 : 'Clipping-Limit',
+        402 : 'Publisher-Limit',
+        404 : 'Text-to-Speech-Disabled',
+        406 : 'Rental-Expiration-Time',
     }
     id_map_hexstrings = {
-        208 : 'Watermark_(208_in_hex)',
-        209 : 'Tamper_Proof_Keys_(209_in_hex)',
-        300 : 'Font_Signature_(300_in_hex)',
+        208 : 'Watermark_(hex)',
+        209 : 'Tamper-Proof-Keys_(hex)',
+        300 : 'Font-Signature_(hex)',
+        403 : 'Unknown_(403)_(hex)',
+        405 : 'Ownership-Type_(hex)',
+        407 : 'Unknown_(407)_(hex)',
+        420 : 'Multimedia-Content-Reference_(hex)',
+        450 : 'Locations_Match_(hex)',
+        451 : 'Full-Story-Length_(hex)',
+        452 : 'Sample-Start_Location_(hex)',
+        453 : 'Sample-End-Location_(hex)',
     }
     _length, num_items = struct.unpack(b'>LL', extheader[4:12])
     extheader = extheader[12:]
@@ -135,7 +170,7 @@ def dump_contexth(cpage, extheader):
         content = extheader[pos + 8: pos + size]
         if id in id_map_strings:
             name = id_map_strings[id]
-            print('\n    Key: "%s"\n        Value: "%s"' % (name, content.decode(codec)))
+            print('\n    Key: "%s"\n        Value: "%s"' % (name, content.decode(codec, errors='replace')))
         elif id in id_map_values:
             name = id_map_values[id]
             if size == 9:
@@ -354,6 +389,7 @@ class MobiHeader:
         1 : 'Drm Server Id',
         2 : 'Drm Commerce Id',
         3 : 'Drm Ebookbase Book Id',
+        4 : 'Drm Ebookbase Dep Id',
         100 : 'Creator',
         101 : 'Publisher',
         102 : 'Imprint',
@@ -368,71 +404,97 @@ class MobiHeader:
         111 : 'Type',
         112 : 'Source',
         113 : 'ASIN',
-        114 : 'versionNumber',
+        # 114 : 'versionNumber',
         117 : 'Adult',
-        118 : 'Price',
-        119 : 'Currency',
+        118 : 'Retail-Price',
+        119 : 'Retail-Currency',
+        120 : 'TSC',
         122 : 'fixed-layout',
         123 : 'book-type',
         124 : 'orientation-lock',
         126 : 'original-resolution',
         127 : 'zero-gutter',
         128 : 'zero-margin',
-        129 : 'K8(129)_Masthead/Cover_Image',
+        129 : 'MetadataResourceURI',
         132 : 'RegionMagnification',
+        150 : 'LendingEnabled',
         200 : 'DictShortName',
         501 : 'cdeType',
         502 : 'last_update_time',
         503 : 'Updated_Title',
-        504 : 'ASIN_504',
-        508 : 'Unknown_508',
-        517 : 'Unknown_517',
-        522 : 'Unknown_522',
-        524 : 'Language_524',
+        504 : 'CDEContentKey',
+        505 : 'AmazonContentReference',
+        506 : 'Title-Language',
+        507 : 'Title-Display-Direction',
+        508 : 'Title-Pronunciation',
+        509 : 'Title-Collation',
+        510 : 'Secondary-Title',
+        511 : 'Secondary-Title-Language',
+        512 : 'Secondary-Title-Direction',
+        513 : 'Secondary-Title-Pronunciation',
+        514 : 'Secondary-Title-Collation',
+        515 : 'Author-Language',
+        516 : 'Author-Display-Direction',
+        517 : 'Author-Pronunciation',
+        518 : 'Author-Collation',
+        519 : 'Author-Type',
+        520 : 'Publisher-Language',
+        521 : 'Publisher-Display-Direction',
+        522 : 'Publisher-Pronunciation',
+        523 : 'Publisher-Collation',
+        524 : 'Content-Language-Tag',
         525 : 'primary-writing-mode',
+        526 : 'NCX-Ingested-By-Software',
         527 : 'page-progression-direction',
         528 : 'override-kindle-fonts',
-        529 : 'kindlegen_Source-Target',
-        534 : 'kindlegen_Input_Source_Type',
-        535 : 'kindlegen_BuildRev_Number',
-        536 : 'Container_Info',  # CONT_Header is 0, Ends with CONTAINER_BOUNDARY (or Asset_Type?)
-        538 : 'Container_Resolution',
-        539 : 'Container_Mimetype',
-        542 : 'Unknown_but_changes_with_file_name_only_542',
-        543 : 'Container_id',  # FONT_CONTAINER, BW_CONTAINER, HD_CONTAINER
+        529 : 'Compression-Upgraded',
+        530 : 'Soft-Hyphens-In-Content',
+        531 : 'Dictionary_In_Langague',
+        532 : 'Dictionary_Out_Language',
+        533 : 'Font_Converted',
+        534 : 'Amazon_Creator_Info',
+        535 : 'Creator-Build-Tag',
+        536 : 'HD-Media-Containers-Info',  # CONT_Header is 0, Ends with CONTAINER_BOUNDARY (or Asset_Type?)
+        538 : 'Resource-Container-Fidelity',
+        539 : 'HD-Container-Mimetype',
+        540 : 'Sample-For_Special-Purpose',
+        541 : 'Kindletool-Operation-Information',
+        542 : 'Container_Id',
+        543 : 'Asset-Type',  # FONT_CONTAINER, BW_CONTAINER, HD_CONTAINER
         544 : 'Unknown_544',
-
     }
     id_map_values = {
+        114 : 'versionNumber',
         115 : 'sample',
         116 : 'StartOffset',
-        121 : 'K8(121)_Boundary_Section',
-        125 : 'K8(125)_Count_of_Resources_Fonts_Images',
-        131 : 'K8(131)_Unidentified_Count',
+        121 : 'Mobi8-Boundary-Section',
+        125 : 'Embedded-Record-Count',
+        130 : 'Offline-Sample',
+        131 : 'Metadata-Record-Offset',
         201 : 'CoverOffset',
         202 : 'ThumbOffset',
-        203 : 'Has Fake Cover',
-        204 : 'Creator Software',
-        205 : 'Creator Major Version',
-        206 : 'Creator Minor Version',
-        207 : 'Creator Build Number',
-        401 : 'Clipping Limit',
-        402 : 'Publisher Limit',
-        404 : 'Text to Speech Disabled',
-        406 : 'Rental_Indicator',
+        203 : 'HasFakeCover',
+        204 : 'Creator-Software',
+        205 : 'Creator-Major-Version',
+        206 : 'Creator-Minor-Version',
+        207 : 'Creator-Build-Number',
+        401 : 'Clipping-Limit',
+        402 : 'Publisher-Limit',
+        404 : 'Text-to-Speech-Disabled',
+        406 : 'Rental-Expiration-Time',
     }
     id_map_hexstrings = {
-        208 : 'Watermark (hex)',
-        209 : 'Tamper Proof Keys (hex)',
-        300 : 'Font Signature (hex)',
-        403 : 'Unknown_(403) (hex)',
-        405 : 'Unknown_(405) (hex)',
-        407 : 'Unknown_(407) (hex)',
-        450 : 'Unknown_(450) (hex)',
-        451 : 'Unknown_(451) (hex)',
-        452 : 'Unknown_(452) (hex)',
-        453 : 'Unknown_(453) (hex)',
-
+        208 : 'Watermark_(hex)',
+        209 : 'Tamper-Proof-Keys_(hex)',
+        300 : 'Font-Signature_(hex)',
+        403 : 'Unknown_(403)_(hex)',
+        405 : 'Ownership-Type_(hex)',
+        407 : 'Unknown_(407)_(hex)',
+        420 : 'Multimedia-Content-Reference_(hex)',
+        450 : 'Locations_Match_(hex)',
+        451 : 'Full-Story-Length_(hex)',
+        452 : 'Sample-Start_Location_(hex)',
+        453 : 'Sample-End-Location_(hex)',
     }
 
     def __init__(self, sect, sectNumber):
@@ -451,7 +513,7 @@ class MobiHeader:
         self.records, = struct.unpack_from(b'>H', self.header, 0x8)
 
         # set defaults in case this is a PalmDOC
-        self.title = self.sect.palmname.decode('latin-1')
+        self.title = self.sect.palmname.decode('latin-1', errors='replace')
         self.length = len(self.header)-16
         self.type = 3
         self.codepage = 1252
@@ -509,7 +571,7 @@ class MobiHeader:
         # title
         toff, tlen = struct.unpack(b'>II', self.header[0x54:0x5c])
         tend = toff + tlen
-        self.title=self.header[toff:tend].decode(self.codec)
+        self.title=self.header[toff:tend].decode(self.codec, errors='replace')
 
         exth_flag, = struct.unpack(b'>L', self.header[0x80:0x84])
         self.hasExth = exth_flag & 0x40
@@ -601,14 +663,14 @@ class MobiHeader:
             return
         num_items, = struct.unpack(b'>L', self.exth[8:12])
         pos = 12
-        print("Key Size Decription                     Value")
+        print("Key Size Description                    Value")
         for _ in range(num_items):
             id, size = struct.unpack(b'>LL', self.exth[pos:pos+8])
             contentsize = size-8
             content = self.exth[pos + 8: pos + size]
             if id in MobiHeader.id_map_strings:
                 exth_name = MobiHeader.id_map_strings[id]
-                print('{0: >3d} {1: >4d} {2: <30s} {3:s}'.format(id, contentsize, exth_name, content.decode(codec)))
+                print('{0: >3d} {1: >4d} {2: <30s} {3:s}'.format(id, contentsize, exth_name, content.decode(codec, errors='replace')))
             elif id in MobiHeader.id_map_values:
                 exth_name = MobiHeader.id_map_values[id]
                 if size == 9:
@@ -664,9 +726,9 @@ class MobiHeader:
         if title_offset == 0:
             title_offset = len(self.header)
             title_length = 0
-            self.title = self.sect.palmname.decode('latin-1')
+            self.title = self.sect.palmname.decode('latin-1', errors='replace')
         else:
-            self.title = self.header[title_offset:title_offset+title_length].decode(self.codec)
+            self.title = self.header[title_offset:title_offset+title_length].decode(self.codec, errors='replace')
             # title record always padded with two nul bytes and then padded with nuls to next 4 byte boundary
             title_length = ((title_length+2+3)>>2)<<2
 
@@ -815,7 +877,7 @@ class MobiHeader:
                 content = extheader[pos + 8: pos + size]
                 if id in MobiHeader.id_map_strings:
                     name = MobiHeader.id_map_strings[id]
-                    addValue(name, content.decode(codec))
+                    addValue(name, content.decode(codec, errors='replace'))
                 elif id in MobiHeader.id_map_values:
                     name = MobiHeader.id_map_values[id]
                     if size == 9:

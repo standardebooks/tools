@@ -41,13 +41,13 @@ BEGIN_INFO_ONLY = '<!-- BEGIN INFORMATION ONLY '
 END_INFO_ONLY = 'END INFORMATION ONLY -->'
 """ The comment to indicate the end of metadata which will be ignored by kindlegen. """
 
-EXTH_TITLE_FURIGANA = 'Unknown_508'
+EXTH_TITLE_FURIGANA = 'Title-Pronunciation'
 """ The name for Title Furigana(similar to file-as) set by KDP. """
 
-EXTH_CREATOR_FURIGANA = 'Unknown_517'
+EXTH_CREATOR_FURIGANA = 'Author-Pronunciation'
 """ The name for Creator Furigana(similar to file-as) set by KDP. """
 
-EXTH_PUBLISHER_FURIGANA = 'Unknown_522'
+EXTH_PUBLISHER_FURIGANA = 'Publisher-Pronunciation'
 """ The name for Publisher Furigana(similar to file-as) set by KDP. """
 
 EXTRA_ENTITIES = {'"': '&quot;', "'": "&apos;"}
@@ -194,14 +194,23 @@ class OPFProcessor(object):
             # It doesn't need to be _THE_ unique identifier to work as a key
             # for obfuscated fonts in Sigil, ADE and calibre. Its just has
             # to use the opf:scheme="UUID" and have the urn:uuid: prefix.
-            data.append('<dc:identifier opf:scheme="UUID">urn:uuid:'+self.BookId+'</dc:identifier>\n')
+            if self.target_epubver == '3':
+                data.append('<dc:identifier>urn:uuid:'+self.BookId+'</dc:identifier>\n')
+            else:
+                data.append('<dc:identifier opf:scheme="UUID">urn:uuid:'+self.BookId+'</dc:identifier>\n')
 
         handleTag(data, metadata, 'Creator', 'dc:creator', self.creator_attrib)
         handleTag(data, metadata, 'Contributor', 'dc:contributor')
         handleTag(data, metadata, 'Publisher', 'dc:publisher', self.publisher_attrib)
         handleTag(data, metadata, 'Source', 'dc:source')
         handleTag(data, metadata, 'Type', 'dc:type')
-        handleTag(data, metadata, 'ISBN', 'dc:identifier opf:scheme="ISBN"')
+        if self.target_epubver == '3':
+            if 'ISBN' in metadata:
+                for i, value in enumerate(metadata['ISBN']):
+                    res = '<dc:identifier>urn:isbn:%s</dc:identifier>\n' % self.escapeit(value)
+                    data.append(res)
+        else:
+            handleTag(data, metadata, 'ISBN', 'dc:identifier opf:scheme="ISBN"')
         if 'Subject' in metadata:
             if 'SubjectCode' in metadata:
                 codeList = metadata['SubjectCode']
@@ -216,7 +225,13 @@ class OPFProcessor(object):
                 data.append(self.escapeit(metadata['Subject'][i])+'</dc:subject>\n')
             del metadata['Subject']
         handleTag(data, metadata, 'Description', 'dc:description')
-        handleTag(data, metadata, 'Published', 'dc:date opf:event="publication"')
+        if self.target_epubver == '3':
+            if 'Published' in metadata:
+                for i, value in enumerate(metadata['Published']):
+                    res = '<dc:date>%s</dc:date>\n' % self.escapeit(value)
+                    data.append(res)
+        else:
+            handleTag(data, metadata, 'Published', 'dc:date opf:event="publication"')
         handleTag(data, metadata, 'Rights', 'dc:rights')
 
         if self.epubver == 'F':
@@ -292,7 +307,7 @@ class OPFProcessor(object):
         if self.target_epubver == '3':
             # Append metadata for EPUB3.
             if self.exth_fixedlayout_metadata:
-                data.append('<!-- EPUB3 MedaData converted from EXTH -->\n')
+                data.append('<!-- EPUB3 MetaData converted from EXTH -->\n')
                 data += self.exth_fixedlayout_metadata
 
         # all that remains is extra EXTH info we will store inside a comment inside meta name/content pairs
@@ -300,7 +315,12 @@ class OPFProcessor(object):
         data.append(BEGIN_INFO_ONLY + '\n')
         if 'ThumbOffset' in metadata:
             imageNumber = int(metadata['ThumbOffset'][0])
-            imageName = self.rscnames[imageNumber]
+            # Some bad books give image indexes that are 'out of range'
+            try:
+                imageName = self.rscnames[imageNumber]
+            except:
+                print('Number given for Cover Thumbnail is out of range: %s' % imageNumber)
+                imageName = None
             if imageName is None:
                 print("Error: Cover Thumbnail image %s was not recognized as a valid image" % imageNumber)
             else:
@@ -493,6 +513,7 @@ class OPFProcessor(object):
             navname = None
             package = '<package version="2.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="uid">\n'
             tours = '<tours>\n</tours>\n'
+            metadata_tag = '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">'
         else:
             has_ncx = EPUB3_WITH_NCX
             has_guide = EPUB3_WITH_GUIDE
@@ -502,10 +523,11 @@ class OPFProcessor(object):
             navname = NAVIGATION_DOCUMENT
             package = '<package version="3.0" xmlns="http://www.idpf.org/2007/opf" prefix="rendition: http://www.idpf.org/vocab/rendition/#" unique-identifier="uid">\n'
             tours = ''
+            metadata_tag = '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">'
+
         data = []
         data.append('<?xml version="1.0" encoding="utf-8"?>\n')
         data.append(package)
-        metadata_tag = '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">'
         opf_metadata = self.buildOPFMetadata(metadata_tag, has_obfuscated_fonts)
         data += opf_metadata
         [opf_manifest, spinerefs] = self.buildOPFManifest(ncxname, navname)
@@ -655,10 +677,9 @@ class OPFProcessor(object):
         # meta viewport property tag stored in the <head></head> of **each**
         # xhtml page - so this tag would need to be handled by editing each part
         # before reaching this routine
-        # we need to add support for this to the k8html routine
-        # if 'original-resolution' in metadata.keys():
-        #     resolution = metadata['original-resolution'][0].lower()
-        #     width, height = resolution.split('x')
-        #     if width.isdigit() and int(width) > 0 and height.isdigit() and int(height) > 0:
-        #         viewport = 'width=%s, height=%s' % (width, height)
-        #         self.createMetaTag(self.exth_fixedlayout_metadata, 'rendition:viewport', viewport)
+        if 'original-resolution' in metadata.keys():
+            resolution = metadata['original-resolution'][0].lower()
+            width, height = resolution.split('x')
+            if width.isdigit() and int(width) > 0 and height.isdigit() and int(height) > 0:
+                viewport = 'width=%s, height=%s' % (width, height)
+                self.createMetaTag(self.exth_fixedlayout_metadata, 'rendition:viewport', viewport)

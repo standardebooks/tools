@@ -160,6 +160,7 @@ xmlns:enc="http://www.w3.org/2001/04/xmlenc#" xmlns:deenc="http://ns.adobe.com/d
         with open(pathof(fileout),'wb') as f:
             f.write(mimetype)
         nzinfo = ZipInfo('mimetype', compress_type=zipfile.ZIP_STORED)
+        nzinfo.external_attr = 0o600 << 16 # make this a normal file
         self.outzip.writestr(nzinfo, mimetype)
         self.zipUpDir(self.outzip,self.k8dir,'META-INF')
         self.zipUpDir(self.outzip,self.k8dir,'OEBPS')

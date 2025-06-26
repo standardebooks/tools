@@ -180,9 +180,11 @@ class K8Processor:
         fragptr = 0
         baseptr = 0
         cnt = 0
+        filename = 'part%04d.xhtml' % cnt
         for [skelnum, skelname, fragcnt, skelpos, skellen] in self.skeltbl:
             baseptr = skelpos + skellen
             skeleton = text[skelpos: baseptr]
+            aidtext = "0"
             for i in range(fragcnt):
                 [insertpos, idtext, filenum, seqnum, startpos, length] = self.fragtbl[fragptr]
                 aidtext = idtext[12:-2]

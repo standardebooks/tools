@@ -156,11 +156,13 @@ class NAVProcessor(object):
         nav_header = ''
         nav_header += '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>'
         nav_header += '<html xmlns="http://www.w3.org/1999/xhtml"'
-        nav_header += ' xmlns:epub="http://www.idpf.org/2011/epub"'
+        nav_header += ' xmlns:epub="http://www.idpf.org/2007/ops"'
         nav_header += ' lang="{0:s}" xml:lang="{0:s}">\n'.format(lang)
         nav_header += '<head>\n<title>{:s}</title>\n'.format(title)
+        nav_header += '<meta charset="UTF-8" />\n'
         nav_header += '<style type="text/css">\n'
         nav_header += 'nav#landmarks { display:none; }\n'
+        nav_header += 'ol { list-style-type: none; }'
         nav_header += '</style>\n</head>\n<body>\n'
         nav_footer = '</body>\n</html>\n'
 

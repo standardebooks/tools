@@ -22,6 +22,12 @@ import struct
 from .mobi_index import getVariableWidthValue, readTagSection, getTagMap
 from .mobi_utils import toHex
 
+#python 3.9 dropped support for array tostring()
+def convert_to_bytes(ar):
+    if PY2:
+        return ar.tostring()
+    return ar.tobytes()
+
 DEBUG_DICT = False
 
 class InflectionData(object):
@@ -374,4 +380,4 @@ class dictSupport(object):
             else:
                 print("Error: Inflection rule mode %x is not implemented" % abyte)
                 return None
-        return utf8_str(byteArray.tostring())
+        return utf8_str(convert_to_bytes(byteArray))
