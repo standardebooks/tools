@@ -253,6 +253,7 @@ METADATA
 "m-081", "When published between a range of years, the text must be [text]published between year1 and year2[/]."
 "m-082", "Faded Page link text must be exactly [text]Faded Page[/]."
 "m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]extended[/], or [val]short[/]."
+"m-084", "[xhtml]<meta <meta property=\"se:url....\">[/] element not containing a URL."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -908,6 +909,10 @@ def _lint_metadata_checks(self) -> list:
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='term' and re:test(., '^https?://')]")
 	if nodes:
 		messages.append(LintMessage("m-066", "Subject identifiers must be IDs and not URLs.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+
+	nodes = self.metadata_dom.xpath("/package/metadata/meta[re:test(@property, '^se:url\\.') and not(re:test(., 'https?://'))]")
+	if nodes:
+		messages.append(LintMessage("m-084", "[xhtml]<meta <meta property=\"se:url....\">[/] element not containing a URL.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 	return messages
 
