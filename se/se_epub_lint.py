@@ -358,6 +358,7 @@ SEMANTICS & CONTENT
 "s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead."
 "s-103", "Probable missing semantics for a roman I numeral."
 "s-104", "Header element should be either [val]title[/] or [val]ordinal[/], not both."
+"s-105", "Dates in the colophon need to be wrapped in an [xhtml]<time>[/] element."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1431,6 +1432,11 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 		if ebook_flags["has_multiple_page_scans"] and not dom.xpath("/html/body//a[contains(@href, '#page-scans')]"):
 			messages.append(LintMessage("m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+		# Check for dates without a time wrapper
+		matches = regex.findall(r"\s\d{3,4}\s", file_contents)
+		if matches:
+			messages.append(LintMessage("s-105", "Dates in the colophon need to be wrapped in an [xhtml]<time>[/] element.", se.MESSAGE_TYPE_ERROR, filename))
 
 		# A range of years for published should be "published between X and Y"
 		nodes = dom.xpath(f"/html/body//p[re:test(., '\\bpublished (in|between) [0-9]+{se.WORD_JOINER}?–{se.WORD_JOINER}?[0-9]+\\b')]")
