@@ -8,6 +8,8 @@ No trailing slash.
         <a 
 href="https://standardebooks.org/ebooks/jane-austen/unknown-novel/">standardeboo
 ks.org/ebooks/jane-austen/unknown-novel</a>
+s-105 [Error] colophon.xhtml Dates in the colophon need to be wrapped in an 
+`<time>` element.
 m-003 [Error] content.opf Bare URL without trailing slash.
         <meta property="se:url.homepage" 
 refines="#publisher">https://standardebooks.org</meta>

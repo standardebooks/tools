@@ -1,3 +1,5 @@
+s-105 [Error] colophon.xhtml Dates in the colophon need to be wrapped in an 
+`<time>` element.
 m-007 [Error] content.opf Non-canonical Internet Archive URL. Expected 
 `https://archive.org/details/<BOOK-ID>`.
         <dc:source>https://archive.org/details/bub_gb_RtT0OLKFMHsC/asdf/mode/2up
