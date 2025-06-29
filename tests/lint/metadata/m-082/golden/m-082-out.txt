@@ -1,3 +1,5 @@
 m-082 [Error] colophon.xhtml Faded Page link text must be exactly `Faded Page`.
         <a href="https://www.fadedpage.com/showbook.php?pid=20160413">Faded Page
 Canada</a>
+s-105 [Error] colophon.xhtml Dates in the colophon need to be wrapped in an 
+`<time>` element.
