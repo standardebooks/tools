@@ -215,7 +215,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					with open(file_path, "r+", encoding="utf-8") as file:
 						xhtml = file.read()
 
-						xhtml = xhtml.replace("<p>The first edition of this ebook was released on<br/>", f"<p>This edition was released on<br/>\n\t\t\t<b>{last_updated_friendly}</b><br/>\n\t\t\tand is based on<br/>\n\t\t\t<b>revision {self.last_commit.short_sha}</b>.<br/>\n\t\t\tThe first edition of this ebook was released on<br/>")
+						xhtml = xhtml.replace("<p>The first edition of this ebook was released on<br/>", f"<p>This edition was released on<br/>\n\t\t\t<b><time datetime=\"{last_updated_iso}\">{last_updated_friendly}</time></b><br/>\n\t\t\tand is based on<br/>\n\t\t\t<b>revision {self.last_commit.short_sha}</b>.<br/>\n\t\t\tThe first edition of this ebook was released on<br/>")
 
 						file.seek(0)
 						file.write(xhtml)

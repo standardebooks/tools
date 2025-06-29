@@ -1038,8 +1038,8 @@ class SeEpub:
 				dom = self.get_dom(file_path)
 
 				if dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"):
-					for node in dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]//b[contains(text(), 'January 1, 1900')]"):
-						node.replace_with(se.easy_xml.EasyXmlElement(etree.fromstring(str.encode("<b>" + now_friendly + "</b>"))))
+					for node in dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]//time[contains(text(), 'January 1, 1900')]"):
+						node.replace_with(se.easy_xml.EasyXmlElement(etree.fromstring(str.encode("<time datetime=\"" + now_iso + "\">" + now_friendly + "</time>"))))
 
 					with open(file_path, "w", encoding="utf-8") as file:
 						file.write(dom.to_string())
