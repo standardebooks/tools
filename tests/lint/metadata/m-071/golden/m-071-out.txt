@@ -1,2 +1,4 @@
 m-071 [Error] colophon.xhtml DP link must be exactly `Distributed Proofreaders`.
         <a href="https://www.pgdp.net/">Distributed Proofreading Team</a>
+s-105 [Error] colophon.xhtml Dates in the colophon need to be wrapped in an 
+`<time>` element.

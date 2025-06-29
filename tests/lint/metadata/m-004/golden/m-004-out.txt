@@ -5,6 +5,8 @@ Books</a>
 m-037 [Error] colophon.xhtml Transcription/page scan source link not found. 
 Expected: `<a href="https://books.google.com/books?id=1234&var=val#hash">Google 
 Books</a>`.
+s-105 [Error] colophon.xhtml Dates in the colophon need to be wrapped in an 
+`<time>` element.
 m-004 [Error] content.opf Non-canonical Google Books URL. Expected 
 `https://books.google.com/books?id=<BOOK-ID>`.
         <dc:source>https://books.google.com/books?id=1234&amp;var=val#hash</dc:s

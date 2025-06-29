@@ -3,6 +3,8 @@ m-006 [Error] colophon.xhtml Non-canonical Project Gutenberg URL. Expected
         <a 
 href="https://www.gutenberg.org/cache/epub/2701/pg2701-images.html">Project 
 Gutenberg</a>
+s-105 [Error] colophon.xhtml Dates in the colophon need to be wrapped in an 
+`<time>` element.
 m-006 [Error] content.opf Non-canonical Project Gutenberg URL. Expected 
 `https://www.gutenberg.org/ebooks/<BOOK-ID>` or `https://www.gutenberg.org/`.
         <dc:source>https://www.gutenberg.org/cache/epub/2701/pg2701-images.html<
