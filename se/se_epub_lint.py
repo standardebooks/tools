@@ -1434,7 +1434,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 			messages.append(LintMessage("m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 		# Check for dates without a time wrapper
-		matches = regex.findall(r"\s\d{3,4}\s", file_contents)
+		matches = regex.findall(r"\s\d{3,4}\s(?!<abbr epub:type=\"se:era\">BC)", file_contents)
 		if matches:
 			messages.append(LintMessage("s-105", "Dates in the colophon need to be wrapped in an [xhtml]<time>[/] element.", se.MESSAGE_TYPE_ERROR, filename))
 
