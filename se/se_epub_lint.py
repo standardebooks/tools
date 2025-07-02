@@ -682,7 +682,7 @@ def _lint_metadata_checks(self) -> list:
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']//a[re:test(@href, '^https://standardebooks\\.org/ebooks/[^/]+/[^/]+') and not(parent::i) and not(.//i) and not(preceding-sibling::node()[re:test(., '“$')])]")
 		filtered_nodes = []
 		for node in nodes:
-			if not regex.search(r"[\p{Uppercase_Letter}]", node.inner_text()):
+			if regex.search(r"[\p{Uppercase_Letter}]", node.inner_text()):
 				filtered_nodes.append(node)
 
 		if filtered_nodes:
