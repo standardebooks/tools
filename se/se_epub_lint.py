@@ -225,7 +225,7 @@ METADATA
 "m-053", "[xml]<meta property=\"se:subject\">[/] elements not in alphabetical order."
 "m-054", "Non-canonical Standard Ebooks URL. Expected [url]https://standardebooks.org/ebooks/<AUTHOR>/<TITLE>\\[/<CONTRIBUTOR> ...][/]. Hint: No trailing slash."
 "m-055", "[xml]dc:description[/] does not end with a period."
-"m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their S.E. author page."
+"m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not linked to their S.E. author page."
 "m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/]."
 "m-058", "[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/]."
 "m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata."
@@ -233,7 +233,7 @@ METADATA
 "m-061", "Link must be preceded by [text]the[/]."
 "m-063", "Cover image has not been built."
 "m-062", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"file-as\">[/]."
-"m-064", "S.E. ebook hyperlinked in long description but not italicized."
+"m-064", "S.E. ebook linked in long description but not italicized."
 "m-065", "Word count in metadata doesn’t match actual word count."
 "m-066", "Subject identifiers must be IDs and not URLs."
 "m-067", "Non-S.E. link in long description."
@@ -253,7 +253,7 @@ METADATA
 "m-081", "When published between a range of years, the text must be [text]published between year1 and year2[/]."
 "m-082", "Faded Page link text must be exactly [text]Faded Page[/]."
 "m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]extended[/], or [val]short[/]."
-"m-084", "[xhtml]<meta <meta property=\"se:url....\">[/] element not containing a URL."
+"m-084", "[xhtml]<meta property=\"se:url....\">[/] element not containing a URL."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -446,7 +446,7 @@ XHTML
 "x-003", "Illegal [xml]transform[/] attribute. SVGs should be optimized to remove use of [xml]transform[/]. Try using Inkscape to save as an “optimized SVG”."
 "x-004", "Illegal [xml]style=\"fill: #000\"[/] or [xml]fill=\"#000\"[/]."
 "x-005", "Illegal [xml]height[/] or [xml]width[/] attribute on root [xml]<svg>[/] element. Size SVGs using the [xml]viewBox[/] attribute only."
-"x-006", f"[xml]{match}[/] found instead of [xml]viewBox[/]. [xml]viewBox[/] must be correctly capitalized."
+"x-006", "SVG root without [xml]viewBox[/] attribute. Hint: [xml]viewBox[/] must be correctly capitalized."
 "x-007", "[attr]id[/] attributes starting with a number are illegal XHTML."
 "x-008", "Elements should end with a single [text]>[/]."
 "x-009", "Illegal leading 0 in [attr]id[/] attribute."
@@ -651,9 +651,18 @@ def _lint_metadata_checks(self) -> list:
 		# lxml unescapes this for us
 		# Also, remove HTML elements like <a href> so that we don't catch quotation marks in attribute values
 		long_description = self.metadata_dom.xpath("/package/metadata/meta[@property='se:long-description']")[0].text
-		matches = regex.findall(r"(?:['\"]|\-\-|\s-\s)", regex.sub(r"<[^<]+?>", "", long_description))
-		if matches:
-			messages.append(LintMessage("m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+
+		metadata_dom_with_parsed_long_description = deepcopy(self.metadata_dom)
+		for node in metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']"):
+			opening_tag = node.to_tag_string()
+			tag_name = node.lxml_element.tag
+			new_element = se.easy_xml.EasyXmlElement(f"<?xml version=\"1.0\" encoding=\"utf-8\"?>{opening_tag}{long_description}</{tag_name}>")
+			node.replace_with(new_element)
+
+		# Have to use `concat()` for the regex because it's not possible to escape both `'` and `"` in the same string in xpath 1.0. See <https://stackoverflow.com/a/57639969>.
+		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']/*[re:test(., concat('([', \"'\", '\"]|\\-\\-|\\s-\\s)'))]")
+		if nodes:
+			messages.append(LintMessage("m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 		# Is the first instance of the author's last name a hyperlink in the metadata?
 		authors = self.metadata_dom.xpath("/package/metadata/dc:creator")
@@ -662,28 +671,36 @@ def _lint_metadata_checks(self) -> list:
 			if author_sort:
 				author_last_name = regex.sub(r",.+$", "", author_sort[0])
 				author_last_name = author_last_name.replace("'", "’") # Typogrify apostrophes so that we correctly match in the long description
-				# We can't use xpath here because the long description is escaped; it has no dom to query against.
-				if author_last_name.lower() in regex.sub(r"https://standardebooks\.org/ebooks/[^/]+?/", "", long_description.lower()) and not regex.search(fr"<a href=\"https://standardebooks\.org/ebooks/.+?\">.*?{author_last_name}.*?</a>", long_description, flags=regex.IGNORECASE):
-					messages.append(LintMessage("m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not hyperlinked to their S.E. author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+				nodes = metadata_dom_with_parsed_long_description.xpath(f"/package/metadata/meta[@property='se:long-description']/p[re:test(., '{regex.escape(author_last_name)}', 'i') and not((.//a|./preceding-sibling::p//a)[re:test(@href, '^https://standardebooks\\.org/.+') and re:test(., '{author_last_name}', 'i')])]")
+				if nodes:
+					messages.append(LintMessage("m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not linked to their S.E. author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 		# Did we mention an SE book in the long description, but without italics?
-		# Only match if the title appears to contain an uppercase letter. This prevents matches on a non-title link like `<a href>short stories</a>`
-		# Also don't match if preceded by “ as that might refer to a short work that does not need italics (like "The Vampire")
-		matches = regex.search(r"""(?<!“)(?<!<i>)<a href="https://standardebooks\.org/ebooks/[^"]+?/[^"]+?">(?!<i>)([\p{Letter}\s]+)""", long_description)
-		if matches and regex.search(r"[\p{Uppercase_Letter}]", matches[1]):
-			messages.append(LintMessage("m-064", "S.E. ebook hyperlinked in long description but not italicized.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+		# Only match if the title appears to contain an uppercase letter. This prevents matches on a non-title link like `<a href="...">short stories</a>`. Xpath 1.0 doesn't support Unicode character classes like `\p{Letter}` so we do an additional filtering step.
+		# Also don't match if preceded by `“` as that might refer to a short work that does not need italics (like `“The Vampire”`).
+		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']//a[re:test(@href, '^https://standardebooks\\.org/ebooks/[^/]+/[^/]+') and not(parent::i) and not(.//i) and not(preceding-sibling::node()[re:test(., '“$')])]")
+		filtered_nodes = []
+		for node in nodes:
+			if not regex.search(r"[\p{Uppercase_Letter}]", node.inner_text()):
+				filtered_nodes.append(node)
 
-		if regex.search(r"""<a href="https?://(?!standardebooks\.org)""", long_description):
-			messages.append(LintMessage("m-067", "Non-S.E. link in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+		if filtered_nodes:
+			messages.append(LintMessage("m-064", "S.E. ebook linked in long description but not italicized.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in filtered_nodes]))
+
+		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']//a[not(re:test(@href, '^https?://standardebooks\\.org'))]")
+		if nodes:
+			messages.append(LintMessage("m-067", "Non-S.E. link in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 		# xml:lang is correct for the rest of the publication, but should be lang in the long desc
-		if "xml:lang" in long_description:
-			messages.append(LintMessage("m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']//*[@xml:lang]")
+		if nodes:
+			messages.append(LintMessage("m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 		# US -> U.S.
-		matches = regex.findall(r"\bUS\b", long_description)
-		if matches:
-			messages.append(LintMessage("t-047", "[text]US[/] should be [text]U.S.[/]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']/*[re:test(., '\\bUS\\b')]")
+		if nodes:
+			messages.append(LintMessage("t-047", "[text]US[/] should be [text]U.S.[/]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 		# Make sure long-description is escaped HTML
 		if not regex.search(r"^\s*<p>", long_description) and long_description.strip() != "LONG_DESCRIPTION":
@@ -711,11 +728,10 @@ def _lint_metadata_checks(self) -> list:
 			missing_metadata_elements.append("""<meta id="long-description" property="se:long-description" refines="#description">""")
 
 	missing_metadata_vars = []
-	for node in self.metadata_dom.xpath("/package/metadata/*/text()"):
+	for node in self.metadata_dom.xpath("/package/metadata/*[re:test(., '[A-Z_]{2,}') or re:test(@*, '[A-Z_]{2,}')]"):
 		for var in SE_VARIABLES:
-			if regex.search(fr"\b{var}\b", node):
+			if regex.search(fr"\b{var}\b", node.to_string()):
 				missing_metadata_vars.append(var)
-				# Quit the loop early to save some time
 				break
 
 	if missing_metadata_vars:
@@ -756,7 +772,7 @@ def _lint_metadata_checks(self) -> list:
 	# We can't use xpath's built-in regex because it doesn't support Unicode classes
 	for node in self.metadata_dom.xpath("/package/metadata/*"):
 		if node.text and regex.search(r"[\p{Letter}]+”[,\.](?! …)", node.text):
-			messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
+			messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [node.to_string() for node in nodes]))
 			break
 
 	# Check that the word count is correct, if it's currently set
@@ -912,7 +928,7 @@ def _lint_metadata_checks(self) -> list:
 
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[re:test(@property, '^se:url\\.') and not(re:test(., 'https?://'))]")
 	if nodes:
-		messages.append(LintMessage("m-084", "[xhtml]<meta <meta property=\"se:url....\">[/] element not containing a URL.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-084", "[xhtml]<meta property=\"se:url....\">[/] element not containing a URL.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
 	return messages
 
@@ -1251,13 +1267,12 @@ def _lint_image_checks(self, filename: Path) -> list:
 
 	return messages
 
-def _lint_svg_checks(self, filename: Path, file_contents: str, svg_dom: se.easy_xml.EasyXmlTree, root: str) -> list:
+def _lint_svg_checks(self, filename: Path, svg_dom: se.easy_xml.EasyXmlTree, root: str) -> list:
 	"""
 	Perform several checks on svg files
 
 	INPUTS
 	filename: The name of the svg file being checked
-	file_contents: The contents of the svg file being checked
 	svg_dom: The dom of the svg file being checked
 	self
 	root: The top-level directory
@@ -1325,9 +1340,9 @@ def _lint_svg_checks(self, filename: Path, file_contents: str, svg_dom: se.easy_
 		if svg_dom.xpath("/svg[@height or @width]"):
 			messages.append(LintMessage("x-005", "Illegal [xml]height[/] or [xml]width[/] attribute on root [xml]<svg>[/] element. Size SVGs using the [xml]viewBox[/] attribute only.", se.MESSAGE_TYPE_ERROR, filename))
 
-	match = regex.search(r"viewbox", file_contents, flags=regex.IGNORECASE)
-	if match and match[0] != "viewBox":
-		messages.append(LintMessage("x-006", f"[xml]{match}[/] found instead of [xml]viewBox[/]. [xml]viewBox[/] must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename))
+	nodes = svg_dom.xpath("/svg[not(@viewBox)]")
+	for node in nodes:
+		messages.append(LintMessage("x-006", "SVG root without [xml]viewBox[/] attribute. Hint: [xml]viewBox[/] must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
 	return messages
 
@@ -3613,7 +3628,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 					continue
 
 				svg_dom = self.get_dom(filename)
-				messages += _lint_svg_checks(self, filename, file_contents, svg_dom, root)
+				messages += _lint_svg_checks(self, filename, svg_dom, root)
 				if self.cover_path and filename.name == self.cover_path.name:
 					# For later comparison with titlepage
 					cover_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The cover for ", "") # <title> can appear on any element in SVG, but we only want to check the root one
