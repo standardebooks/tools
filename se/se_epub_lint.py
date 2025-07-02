@@ -672,7 +672,7 @@ def _lint_metadata_checks(self) -> list:
 				author_last_name = regex.sub(r",.+$", "", author_sort[0])
 				author_last_name = author_last_name.replace("'", "’") # Typogrify apostrophes so that we correctly match in the long description
 
-				nodes = metadata_dom_with_parsed_long_description.xpath(f"/package/metadata/meta[@property='se:long-description']/p[re:test(., '{regex.escape(author_last_name)}', 'i') and not((.//a|./preceding-sibling::p//a)[re:test(@href, '^https://standardebooks\\.org/.+') and re:test(., '{author_last_name}', 'i')])]")
+				nodes = metadata_dom_with_parsed_long_description.xpath(f"/package/metadata/meta[@property='se:long-description']/p[re:test(., '{regex.escape(author_last_name)}', 'i') and not((.//a|./preceding-sibling::p//a)[re:test(@href, '^https://standardebooks\\.org/.+') and re:test(., '{regex.escape(author_last_name)}', 'i')])]")
 				if nodes:
 					messages.append(LintMessage("m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not linked to their S.E. author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
