@@ -10,7 +10,6 @@ the function is very big and it makes editing easier to put in a separate file.
 from copy import deepcopy
 import filecmp
 from fnmatch import translate
-import io
 import os
 from pathlib import Path
 from typing import Dict, List, Set, Union, Optional
@@ -19,7 +18,6 @@ from unidecode import unidecode
 
 import cssutils
 import lxml.cssselect
-from lxml import etree
 from PIL import Image, UnidentifiedImageError
 import regex
 from natsort import natsorted, ns
@@ -185,7 +183,7 @@ METADATA
 "m-013", "Non-typogrified character in [xml]<dc:description>[/] element."
 "m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element."
 "m-015", f"Metadata long description is not valid XHTML. LXML says: {ex}"
-"m-016", "Long description must be escaped HTML."
+"m-016", "Long description must be an escaped XHTML fragment."
 "m-017", "[xml]<!\\[CDATA\\[[/] found. Run [bash]se clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] sections."
 "m-018", "HTML entities found. Use Unicode equivalents instead."
 "m-019", "Illegal em-dash in [xml]<dc:subject>[/] element; use [text]--[/]."
@@ -647,18 +645,21 @@ def _lint_metadata_checks(self) -> list:
 
 	# Check the long description for some errors
 	try:
-		# Check if there are non-typogrified quotes or em-dashes in metadata descriptions
-		# lxml unescapes this for us
-		# Also, remove HTML elements like <a href> so that we don't catch quotation marks in attribute values
 		long_description = self.metadata_dom.xpath("/package/metadata/meta[@property='se:long-description']")[0].text
 
 		metadata_dom_with_parsed_long_description = deepcopy(self.metadata_dom)
 		for node in metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']"):
 			opening_tag = node.to_tag_string()
 			tag_name = node.lxml_element.tag
+			# If the HTML is malformed, this will emit `se.InvalidXmlException` which we catch below.
 			new_element = se.easy_xml.EasyXmlElement(f"<?xml version=\"1.0\" encoding=\"utf-8\"?>{opening_tag}{long_description}</{tag_name}>")
 			node.replace_with(new_element)
 
+		# Make sure long-description is an escaped XHTML fragment.
+		if not regex.search(r"^\s*<p>", long_description) and long_description.strip() != "LONG_DESCRIPTION":
+			messages.append(LintMessage("m-016", "Long description must be an escaped XHTML fragment.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+		# Check if there are non-typogrified quotes or em-dashes in metadata descriptions.
 		# Have to use `concat()` for the regex because it's not possible to escape both `'` and `"` in the same string in xpath 1.0. See <https://stackoverflow.com/a/57639969>.
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']/*[re:test(., concat('([', \"'\", '\"]|\\-\\-|\\s-\\s)'))]")
 		if nodes:
@@ -670,9 +671,12 @@ def _lint_metadata_checks(self) -> list:
 			author_sort = self.metadata_dom.xpath(f"/package/metadata/meta[@property='file-as'][@refines='#{author.get_attr('id')}']/text()")
 			if author_sort:
 				author_last_name = regex.sub(r",.+$", "", author_sort[0])
-				author_last_name = author_last_name.replace("'", "’") # Typogrify apostrophes so that we correctly match in the long description
+				# Typogrify apostrophes so that we correctly match in the long description.
+				author_last_name = author_last_name.replace("'", "’")
 
-				nodes = metadata_dom_with_parsed_long_description.xpath(f"/package/metadata/meta[@property='se:long-description']/p[re:test(., '{regex.escape(author_last_name)}', 'i') and not((.//a|./preceding-sibling::p//a)[re:test(@href, '^https://standardebooks\\.org/.+') and re:test(., '{regex.escape(author_last_name)}', 'i')])]")
+				# We ignore `<i>` elements that contain the author name, because sometimes the author name might be in the book title. See _The Education of Henry Adams_.
+				# Use `\\b` in the regex to avoid matching words like `Dickensian`.
+				nodes = metadata_dom_with_parsed_long_description.xpath(f"/package/metadata/meta[@property='se:long-description']/p[.//text()[re:test(., '\\b{regex.escape(author_last_name)}\\b', 'i') and not(./ancestor-or-self::i or ./ancestor-or-self::a) and not((./ancestor-or-self::p/preceding-sibling::p//a|./preceding-sibling::a)[re:test(@href, '^https://standardebooks\\.org/.+') and re:test(., '\\b{regex.escape(author_last_name)}\\b', 'i')])]]")
 				if nodes:
 					messages.append(LintMessage("m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not linked to their S.E. author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
@@ -692,36 +696,29 @@ def _lint_metadata_checks(self) -> list:
 		if nodes:
 			messages.append(LintMessage("m-067", "Non-S.E. link in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
-		# xml:lang is correct for the rest of the publication, but should be lang in the long desc
+		# 1xml:lang1 is correct for the rest of the publication, but should be lang in the long description.
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']//*[@xml:lang]")
 		if nodes:
 			messages.append(LintMessage("m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
-		# US -> U.S.
+		# `US` -> `U.S.`
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']/*[re:test(., '\\bUS\\b')]")
 		if nodes:
 			messages.append(LintMessage("t-047", "[text]US[/] should be [text]U.S.[/]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
-		# Make sure long-description is escaped HTML
-		if not regex.search(r"^\s*<p>", long_description) and long_description.strip() != "LONG_DESCRIPTION":
-			messages.append(LintMessage("m-016", "Long description must be escaped HTML.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-		else:
-			# Check for malformed long description HTML
-			try:
-				etree.parse(io.StringIO(f"<?xml version=\"1.0\"?><html xmlns=\"http://www.w3.org/1999/xhtml\">{long_description}</html>"))
-			except lxml.etree.XMLSyntaxError as ex:
-				messages.append(LintMessage("m-015", f"Metadata long description is not valid XHTML. LXML says: {ex}", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-
-		# Check for apostrophes outside links in long description
+		# Check for apostrophes outside links in long description.
 		matches = regex.findall(r"</a>’s", long_description)
 		matches += regex.findall(r"s</a>’", long_description)
 		if matches:
 			messages.append(LintMessage("m-044", "Possessive [text]’[/] or [text]’s[/] outside of [xhtml]<a>[/] element in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
-		# Check for HTML entities in long-description, but allow &amp;amp;
+		# Check for HTML entities in long description, but allow `&amp;amp`;.
 		matches = regex.findall(r"&[a-z0-9]+?;", long_description.replace("&amp;", ""))
 		if matches:
 			messages.append(LintMessage("m-018", "HTML entities found. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+
+	except se.InvalidXmlException as ex:
+		messages.append(LintMessage("m-015", f"Metadata long description is not valid XHTML. LXML says: {ex}", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	except Exception:
 		if self.is_se_ebook:
@@ -737,15 +734,15 @@ def _lint_metadata_checks(self) -> list:
 	if missing_metadata_vars:
 		messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_metadata_vars))
 
-	# Check if there are non-typogrified quotes or em-dashes in the title.
+	# Check if there are non-typogrified quotes or em dashes in the title.
 	try:
 		title = self.metadata_dom.xpath("/package/metadata/dc:title")[0].text
 		matches = regex.findall(r"(?:['\"]|\-\-|\s-\s)", title)
 		if matches:
 			messages.append(LintMessage("m-012", "Non-typogrified character in [xml]<dc:title>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
-		# Do we need an dcterms:alternate meta element?
-		# Match spelled-out numbers with a word joiner, so for ex. we don't print "eight" if we matched "eighty"
+		# Do we need an `<dcterms:alternate>` meta element?
+		# Match spelled-out numbers with a word joiner, so for example we don't print `eight` if we matched `eighty`.
 		matches = regex.findall(r"(?:[0-9]+|\bone\b|\btwo\b|\bthree\b|\bfour\b|\bfive\b|\bsix\b|\bseven\b|\beight\b|\bnine\b|\bten\b|\beleven\b|\btwelve\b|\bthirteen\b|\bfourteen\b|\bfifteen\b|\bsixteen\b|\bseventeen\b|\beighteen\b|\bnineteen\b|\btwenty\b|\bthirty\b|\bforty\b|\bfifty\b|\bsixty\b|\bseventy\b|\beighty|\bninety)", title, flags=regex.IGNORECASE)
 		if matches and not self.metadata_dom.xpath("/package/metadata/meta[@property='dcterms:alternate']"):
 			messages.append(LintMessage("m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"dcterms:alternate\" refines=\"#title\"> element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
@@ -769,13 +766,13 @@ def _lint_metadata_checks(self) -> list:
 		missing_metadata_elements.append("<dc:description>")
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
-	# We can't use xpath's built-in regex because it doesn't support Unicode classes
+	# We can't use xpath's built-in regex because it doesn't support Unicode classes.
 	for node in self.metadata_dom.xpath("/package/metadata/*"):
 		if node.text and regex.search(r"[\p{Letter}]+”[,\.](?! …)", node.text):
 			messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [node.to_string() for node in nodes]))
 			break
 
-	# Check that the word count is correct, if it's currently set
+	# Check that the word count is correct, if it's currently set.
 	word_count = self.metadata_dom.xpath("/package/metadata/meta[@property='se:word-count']/text()", True)
 	if self.is_se_ebook:
 		if word_count is None:
@@ -783,11 +780,11 @@ def _lint_metadata_checks(self) -> list:
 		elif word_count != "WORD_COUNT" and int(word_count) != self.get_word_count():
 			messages.append(LintMessage("m-065", "Word count in metadata doesn’t match actual word count.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-	# Check if we have a subtitle but no fulltitle
+	# Check if we have a subtitle but no full title.
 	if self.metadata_dom.xpath("/package/metadata[./meta[@property='title-type' and text()='subtitle'] and not(./meta[@property='title-type' and text()='extended'])]"):
 		messages.append(LintMessage("m-011", "Subtitle in metadata, but no full/extended title element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-	# Check for tags that imply other tags
+	# Check for tags that imply other tags.
 	implied_tags = {"Fiction": ["Science Fiction", "Drama", "Fantasy"]}
 	for implied_tag, tags in implied_tags.items():
 		if self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text()={se.easy_xml.escape_xpath(implied_tag)}]"):
@@ -795,31 +792,31 @@ def _lint_metadata_checks(self) -> list:
 				if self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text()={se.easy_xml.escape_xpath(tag)}]"):
 					messages.append(LintMessage("m-058", f"[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
 
-	# Check for 'comprised of'
+	# Check for `comprised of`.
 	if self.metadata_dom.xpath("/package/metadata/*[re:test(., '[Cc]omprised of')]"):
 		messages.append(LintMessage("m-069", "[text]comprised of[/] in metadata. Hint: Is there a better phrase to use here?", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-	# Check for illegal em-dashes in <dc:subject>
+	# Check for illegal em dashes in `<dc:subject>`.
 	nodes = self.metadata_dom.xpath("/package/metadata/dc:subject[contains(text(), '—')]")
 	if nodes:
 		messages.append(LintMessage("m-019", "Illegal em-dash in [xml]<dc:subject>[/] element; use [text]--[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.text for node in nodes]))
 
-	# Check for incorrect 'anonymous' strings in metadata
+	# Check for incorrect `anonymous` strings in metadata.
 	nodes = self.metadata_dom.xpath("/package/metadata/dc:contributor[re:test(., 'anonymous', 'i') and text() != 'Anonymous'] | /package/metadata/meta[@property='file-as' and re:test(., 'anonymous', 'i') and text() != 'Anonymous']")
 	if nodes:
 		messages.append(LintMessage("m-073", "Anonymous contributor values must be exactly [text]Anonymous[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
-	# Check for metadata elements
+	# Check for metadata elements.
 	nodes = self.metadata_dom.xpath("/package/metadata/*[not(name()='link') and not(normalize-space(.)) and not(./*)]")
 	if nodes:
 		messages.append(LintMessage("m-022", "Empty element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
 
-	# Check for illegal VCS URLs
+	# Check for illegal VCS URLs.
 	nodes = self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:url.vcs.github' and not(text()='{self.generated_github_repo_url}')]")
 	if nodes:
 		messages.append(LintMessage("m-009", f"[xml]<meta property=\"se:url.vcs.github\">[/] value does not match expected: [url]{self.generated_github_repo_url}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-	# Check for illegal se:subject tags
+	# Check for illegal `se:subject` values.
 	illegal_subjects = []
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']/text()")
 	if nodes:
@@ -836,7 +833,7 @@ def _lint_metadata_checks(self) -> list:
 	elif self.is_se_ebook:
 		messages.append(LintMessage("m-021", "No [xml]<meta property=\"se:subject\">[/] element found.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-	# Check that each <dc:title> has a file-as and title-type, if applicable
+	# Check that each `<dc:title>` has a file-as and title-type, if applicable.
 	titles_missing_file_as = []
 	titles_missing_title_type = []
 	titles = self.metadata_dom.xpath("/package/metadata/dc:title")
@@ -844,7 +841,7 @@ def _lint_metadata_checks(self) -> list:
 		if not self.metadata_dom.xpath(f"/package/metadata/meta[@property='file-as' and @refines='#{node.get_attr('id')}']"):
 			titles_missing_file_as.append(node)
 
-		# Only check for title-type if there is more than one <dc:title>
+		# Only check for title-type if there is more than one `<dc:title>`.
 		if len(titles) > 1 and not self.metadata_dom.xpath(f"/package/metadata/meta[@property='title-type' and @refines='#{node.get_attr('id')}']"):
 			titles_missing_title_type.append(node)
 
@@ -854,11 +851,11 @@ def _lint_metadata_checks(self) -> list:
 	if titles_missing_title_type:
 		messages.append(LintMessage("m-068", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"title-type\">[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in titles_missing_title_type]))
 
-	# Check for CDATA tags
+	# Check for `CDATA` elements.
 	if "<![CDATA[" in metadata_xml:
 		messages.append(LintMessage("m-017", "[xml]<!\\[CDATA\\[[/] found. Run [bash]se clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] sections.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-	# Check that our provided identifier matches the generated identifier
+	# Check that our provided identifier matches the generated identifier.
 	if self.is_se_ebook:
 		try:
 			identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier")[0].text
@@ -867,7 +864,7 @@ def _lint_metadata_checks(self) -> list:
 		except Exception:
 			missing_metadata_elements.append("<dc:identifier>")
 
-	# Check if se:name.person.full-name matches their titlepage name
+	# Check if `se:name.person.full-name` matches their titlepage name.
 	duplicate_names = []
 	invalid_refines = []
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='se:name.person.full-name']")
@@ -907,7 +904,7 @@ def _lint_metadata_checks(self) -> list:
 	if missing_metadata_elements:
 		messages.append(LintMessage("m-051", "Missing expected element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_metadata_elements))
 
-	# Check for common typos in description
+	# Check for common typos in description.
 	for node in self.metadata_dom.xpath("/package/metadata/dc:description") + self.metadata_dom.xpath("/package/metadata/meta[@property='se:long-description']"):
 		matches = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?![-’])", node.text, flags=regex.IGNORECASE)
 		matches += regex.findall(r"\ba a\b(?!-)", node.text)
