@@ -1145,145 +1145,144 @@ def titlecase(text: str) -> str:
 	A titlecased version of the input string
 	"""
 
-	# For some reason, pip_titlecase() doesn't do anything if the string is mostly (but not all) uppercase.
-	# For example "STOPPING BY WOODS ON a SNOWY EVENING" would not be changed by pip_titlecase()
+	# For some reason, `pip_titlecase()` doesn't do anything if the string is mostly (but not all) uppercase.
+	# For example `STOPPING BY WOODS ON a SNOWY EVENING` would not be changed by `pip_titlecase()`.
 	# So, convert to all lowercase first.
 	text = text.lower()
 
-	# Replace all white space except hair spaces and non-breaking spaces with a space character
+	# Replace all white space except hair spaces and non-breaking spaces with a space character.
 	text = regex.sub(fr"[^\S{se.HAIR_SPACE}{se.NO_BREAK_SPACE}]+", " ", text)
 
 	text = pip_titlecase(text)
 
-	# We make some additional adjustments here
+	# We make some additional adjustments here.
 
-	# Lowercase HTML tags that titlecase might have screwed up. We just lowercase the entire contents of the tag, including attributes,
-	# since they're typically lowercased anyway. (Except for things like `alt`, but we won't be titlecasing images!)
+	# Lowercase HTML tags that titlecase might have screwed up. We just lowercase the entire contents of the tag, including attributes, since they're typically lowercased anyway. (Except for things like `alt`, but we won't be titlecasing images!)
 	text = regex.sub(r"<(/?)([^>]+?)>", lambda result: "<" + result.group(1) + result.group(2).lower() + ">", text)
 
-	# Uppercase Roman numerals, but only if they are valid Roman numerals and they are not `MIX` (which is much more likely to be an English word than a Roman numeral)
-	# or `DI` which may be an Italian word. May be preceded by a space or parenthesis.
+	# Uppercase Roman numerals, but only if they are valid Roman numerals and they are not `MIX` (which is much more likely to be an English word than a Roman numeral) or `DI` which may be an Italian word. May be preceded by a space or parenthesis.
 	try:
 		text = regex.sub(r"([\s\(])([ivxlcdm]+)(\b)", lambda result: result.group(1) + result.group(2).upper() + result.group(3) if result.group(2).upper() not in ("MIX", "DI") and roman.fromRoman(result.group(2).upper()) else result.group(1) + result.group(2), text, flags=regex.IGNORECASE)
 	except roman.InvalidRomanNumeralError:
 		pass
 
-	# Lowercase `and`, `or` even if preceded by punctuation
+	# Lowercase `and`, `or`, and `of`, even if preceded by punctuation.
 	text = regex.sub(r"([^\p{Letter}]) (And|Or)\b", lambda result: result.group(1) + " " + result.group(2).lower(), text)
 
-	# pip_titlecase capitalizes *all* prepositions preceded by parenthesis; we only want to capitalize ones that *aren't the first word of a subtitle*
-	# OK: From Sergeant Bulmer (of the Detective Police) to Mr. Pendril
-	# OK: Three Men in a Boat (To Say Nothing of the Dog)
+	# `pip_titlecase()` capitalizes *all* prepositions preceded by parenthesis; we only want to capitalize ones that *aren't the first word of a subtitle*.
+	# OK: `From Sergeant Bulmer (of the Detective Police) to Mr. Pendril`
+	# OK: `Three Men in a Boat (To Say Nothing of the Dog)`
 	text = regex.sub(r"\((For|Of|To)(.*?)\)(.+?)", lambda result: "(" + result.group(1).lower() + result.group(2) + ")" + result.group(3), text)
 
-	# Uppercase words preceded by en or em dash
+	# Uppercase words preceded by en or em dash.
 	text = regex.sub(fr"([—–]{se.WORD_JOINER}?)([\p{{Lowercase_Letter}}])", lambda result: result.group(1) + result.group(2).upper(), text)
 
-	# Lowercase `and`, if it's not the very first word, and not preceded by an em-dash
+	# Lowercase `and`, if it's not the very first word, and not preceded by an em dash.
 	text = regex.sub(r"(?<!^)\b(And|Nor)\b", lambda result: result.group(1).lower(), text)
 
-	# Lowercase `the`, if preceded by a dash (like `Puss-in-Boots` or `Jack-in-the-Box`)
+	# Lowercase `the`, if preceded by a dash (like `Puss-in-Boots` or `Jack-in-the-Box`).
 	text = regex.sub(r"\b(-)(In|The|Sur|Of|Au)\b", lambda result: result.group(1) + result.group(2).lower(), text)
 
-	# Lowercase "in", if followed by a semicolon (but not words like "inheritance")
+	# Lowercase "in", if followed by a semicolon (but not words like `inheritance`).
 	text = regex.sub(r"\b; In\b", "; in", text)
 
-	# Lowercase `th’`, sometimes used poetically
+	# Lowercase `th’`, sometimes used poetically.
 	text = regex.sub(r"\b Th’ \b", " th’ ", text)
 
-	# Lowercase `o’`
+	# Lowercase `o’`.
 	text = regex.sub(r" O’ ", " o’ ", text)
 
-	# Uppercase words that begin compound words, like `to-night` (which might appear in poetry)
+	# Uppercase words that begin compound words, like `to-night` (which might appear in poetry).
 	text = regex.sub(r" ([\p{Lowercase_Letter}])([\p{Lowercase_Letter}]+\-)", lambda result: " " + result.group(1).upper() + result.group(2), text)
 
-	# Lowercase `from`, `with`, as long as they're not the first word and not preceded by a parenthesis
+	# Lowercase `from`, `with`, as long as they're not the first word and not preceded by a parenthesis.
 	text = regex.sub(r"(?<!^)(?<!\()\b(From|With)\b", lambda result: result.group(1).lower(), text)
 
-	# Capitalise the first word after an opening quote or italicisation that signifies a work
+	# Capitalise the first word after an opening quote or italicisation that signifies a work.
 	text = regex.sub(r"(‘|“|<i.*?epub:type=\".*?se:.*?\".*?>)([\p{Lowercase_Letter}])", lambda result: result.group(1) + result.group(2).upper(), text)
 
-	# Lowercase `the` if preceded by `vs.`
+	# Lowercase `the` if preceded by `vs.`.
 	text = regex.sub(r"(?:vs\.) The\b", "vs. the", text)
 
-	# Lowercase `de`, `von`, `van`, `le`, `du` as in `Charles de Gaulle`, `Werner von Braun`, etc., and if not the first word and not preceded by an &ldquo;
+	# Lowercase `de`, `von`, `van`, `le`, `du` as in `Charles de Gaulle`, `Werner von Braun`, etc., and if not the first word and not preceded by an `&ldquo;`.
 	text = regex.sub(r"(?<!^|“)\b(Von|Van Der|Van|Le|\b[aA] La|\b[àÀ] La|Des|De La|De|Du|Di|Del)\b", lambda result: result.group(1).lower(), text)
 
-	# Uppercase word following `Or,`, since it is probably a subtitle
+	# Uppercase word following `Or,`, since it is probably a subtitle.
 	text = regex.sub(r"\bOr, ([\p{Lowercase_Letter}])", lambda result: "Or, " + result.group(1).upper(), text)
 
-	# Uppercase word following `:`, except `or, `, which indicates a kind of subtitle
+	# Uppercase word following `:`, except `or, `, which indicates a kind of subtitle.
 	text = regex.sub(r": ([\p{Lowercase_Letter}])(?!r, )", lambda result: ": " + result.group(1).upper(), text)
 
-	# Uppercase words after an initial contraction, like `O'Keefe` or `L'Affaire`. But only if there's at least 3 letters
-	# after, to prevent catching things like `I'm` or `E're`
+	# Uppercase words after an initial contraction, like `O'Keefe` or `L'Affaire`, but only if there's at least 3 letters.
+	# after, to prevent catching things like `I'm` or `E're`.
 	text = regex.sub(r"\b([\p{Uppercase_Letter}]’)([\p{Lowercase_Letter}])([\p{Letter}]{2,})", lambda result: result.group(1) + result.group(2).upper() + result.group(3), text)
 
-	# Uppercase letter after `Mc`
+	# Uppercase letter after `Mc`.
 	text = regex.sub(r"\bMc([\p{Lowercase_Letter}])", lambda result: "Mc" + result.group(1).upper(), text)
 
-	# Uppercase first letter after beginning contraction
+	# Uppercase first letter after beginning contraction.
 	text = regex.sub(r"(\s|^)(’[\p{Lowercase_Letter}])", lambda result: result.group(1) + result.group(2).upper(), text)
 
-	# Uppercase first letter
+	# Uppercase first letter.
 	text = regex.sub(r"^(\p{Lowercase_Letter}])", lambda result: result.group(1).upper(), text)
 
-	# Lowercase `by`
+	# Lowercase `by`.
 	text = regex.sub(r"(\s)By(\s|%)", lambda result: result.group(1) + "by" + result.group(2), text)
 
-	# Lowercase leading `d’`, as in `Marie d’Elle`
+	# Lowercase leading `d’`, as in `Marie d’Elle`.
 	text = regex.sub(r"(?:\b|^)D’([\p{Letter}])", lambda result: "d’" + result.group(1).upper(), text)
 
-	# # Uppercase letter after leading `L'`, as in `L'Affaire`
+	# # Uppercase letter after leading `L'`, as in `L'Affaire`.
 	# text = regex.sub(r"(?:\b|^)L’([\p{Letter}])", lambda result: "L’" + result.group(1).upper(), text)
 
-	# Uppercase `l’` as in `l’Affaire`, but not if it's a the first letter
+	# Uppercase `l’` as in `l’Affaire`, but not if it's a the first letter.
 	text = regex.sub(r"(?<!^)L’([\p{Letter}])", lambda result: "l’" + result.group(1), text)
 
-	# Uppercase leading `A-` as in `A-Breaking`
+	# Uppercase leading `A-` as in `A-Breaking`.
 	text = regex.sub(r"(\s)a\-([\p{Uppercase_Letter}])", lambda result: result.group(1) + "A-" + result.group(2), text)
 
-	# Uppercase some known initialisms
+	# Uppercase some known initialisms.
 	text = regex.sub(r"(\s|^)(sos|md)(?:\b|$)", lambda result: result.group(1) + result.group(2).upper(), text, flags=regex.IGNORECASE)
 	text = regex.sub(r"(\s)(bc|ad)(?:\b|$)", lambda result: result.group(1) + result.group(2).upper(), text, flags=regex.IGNORECASE)
 
-	# Lowercase `À` (as in `À La Carte`) unless it's the first word
+	# Lowercase `À` (as in `À La Carte`) unless it's the first word.
 	text = regex.sub(r"(?<!^)\bÀ\b", "à", text)
 
-	# Uppercase initialisms
+	# Uppercase initialisms.
 	text = regex.sub(r"\b(([\p{Letter}]\.)+)", lambda result: result.group(1).upper(), text)
 
-	# Uppercase No. as in Number
+	# Uppercase No. as in Number.
 	text = regex.sub(r"\b(no\.\s+)", lambda result: result.group(1).upper(), text)
 
-	# Lowercase V. as in versus in a legal case
+	# Lowercase V. as in versus in a legal case.
 	text = regex.sub(r"\b(V\.\s+)", lambda result: result.group(1).lower(), text)
 
-	# Lowercase `mm` (millimeters, as in `50 mm gun`) unless it's followed by a period in which case it's likely `Mm.` (Monsieurs)
+	# Lowercase `mm` (millimeters, as in `50 mm gun`) unless it's followed by a period in which case it's likely `Mm.` (Monsieurs).
 	text = regex.sub(r"(\s)MM(\s|$)", r"\1mm\2", text)
 
-	# Lowercase `al-` (as in the Arabic definite article) unless it’s the first word
+	# Lowercase `al-` (as in the Arabic definite article) unless it’s the first word.
 	text = regex.sub(r"(?<!^)\bAl-", "al-", text)
 
-	# Fix html entities
+	# Fix HTML entities.
 	text = text.replace("&Amp;", "&amp;")
 
-	# Lowercase etc.
+	# Lowercase `etc.`.
 	text = text.replace("Etc.", "etc.")
 
+	# Initialisms followed by `of` should have `of` lowercased.
+	text = regex.sub(r"\b(([A-Z]\.)+) Of", r"\1 of", text)
 	# Lowercase some special cases.
-	text = text.replace("A.B.C. Of", "A.B.C. of")
 	text = regex.sub(r"((A|P)\.M\.) To", r"\1 to", text)
 
-	# More special cases
-	text = regex.sub(r"des Moines", "Des Moines", text)
-
-	# Like `Will-o’-the-Wisp`
+	# Like `Will-o’-the-Wisp`.
 	text = regex.sub(r"(?<=-)(O’|The)-", lambda result: result.group(1).lower() + "-", text)
 
-	# Fix non-breaking spaces - we can assume that they’re intentionally used in names
-	# If `titlecase` is fixed we can remove this, see https://github.com/ppannuto/python-titlecase/issues/95
+	# Fix non-breaking spaces; we can assume that they’re intentionally used in names.
+	# If `titlecase` is fixed we can remove this, see <https://github.com/ppannuto/python-titlecase/issues/95>.
 	text = regex.sub(fr"{se.NO_BREAK_SPACE}([a-z])", lambda result: " " + result.group(1).upper(), text)
+
+	# Finally, some special exceptions.
+	text = regex.sub(r"des Moines", "Des Moines", text)
 
 	return text
 
