@@ -145,7 +145,10 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		asin = sha1(identifier.encode("utf-8")).hexdigest()
 
-		identifier = identifier.replace("https://standardebooks.org/ebooks/", "").replace("/", "_")
+		identifier = identifier.replace("https://standardebooks.org/ebooks/", "")
+		pieces = identifier.split("/")
+		safe_pieces = [se.formatting.make_url_safe(piece) for piece in pieces]
+		identifier = "_".join(safe_pieces)
 	except Exception as ex:
 		raise se.InvalidSeEbookException(f"Missing [xml]<dc:identifier>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/].") from ex
 
