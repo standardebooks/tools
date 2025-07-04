@@ -93,6 +93,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		build_kindle = False
 
 	# Check for some required tools
+	ebook_convert_path = None
 	if build_kindle:
 		which_ebook_convert = shutil.which("ebook-convert")
 		if which_ebook_convert:
@@ -843,8 +844,10 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				node.set_attr("src", src.replace(".svg", ".png"))
 
 				if not ibooks_srcset_bug_exists:
-					filename = regex.search(r"(?<=/)[^/]+(?=\.svg)", src)[0]
-					node.set_attr("srcset", f"{filename}-2x.png 2x, {filename}.png 1x")
+					match = regex.search(r"(?<=/)[^/]+(?=\.svg)", src)
+					filename = match[0] if match else None
+					if filename:
+						node.set_attr("srcset", f"{filename}-2x.png 2x, {filename}.png 1x")
 
 			if has_svg:
 				with open(file_path, "w", encoding="utf-8") as file:
@@ -882,6 +885,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			# We wrap this whole thing in a try block, because we need to call
 			# `driver.quit()` if execution is interrupted (like by ctrl + c, or by an unhandled exception). If we don't call `driver.quit()`,
 			# Firefox will stay around as a zombie process even if the Python script is dead.
+			driver = None
 			try:
 				driver = browser.initialize_selenium_firefox_webdriver()
 
@@ -1056,7 +1060,8 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				raise ex
 			finally:
 				try:
-					driver.quit()
+					if driver:
+						driver.quit()
 				except Exception:
 					# We might get here if we ctrl + c before selenium has finished initializing the driver
 					pass
