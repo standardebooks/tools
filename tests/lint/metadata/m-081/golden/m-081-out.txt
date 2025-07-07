@@ -5,3 +5,6 @@ must be `published between year1 and year2`.
         <a href="https://en.wikipedia.org/wiki/Jane_Austen">Jane Austen</a>.</p>
 s-105 [Error] colophon.xhtml Dates in the colophon need to be wrapped in an 
 `<time>` element.
+        <p><i epub:type="se:name.publication.book">Unknown Novel</i><br/>
+        was published in 1810⁠–⁠1813 by<br/>
+        <a href="https://en.wikipedia.org/wiki/Jane_Austen">Jane Austen</a>.</p>

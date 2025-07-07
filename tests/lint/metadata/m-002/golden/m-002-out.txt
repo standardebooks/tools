@@ -2,8 +2,6 @@ m-002 [Error] colophon.xhtml Non-canonical Project Gutenberg Canada URL.
 Expected `https://gutenberg.ca/<PATH>/<FILENAME>.html`.
         <a href="https://www.gutenberg.ca/books/1234">Project Gutenberg 
 Canada</a>
-s-105 [Error] colophon.xhtml Dates in the colophon need to be wrapped in an 
-`<time>` element.
 m-002 [Error] content.opf Non-canonical Project Gutenberg Canada URL. Expected 
 `https://gutenberg.ca/<PATH>/<FILENAME>.html`.
         <dc:source>https://www.gutenberg.ca/books/1234</dc:source>
