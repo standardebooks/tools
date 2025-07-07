@@ -248,7 +248,7 @@ METADATA
 "m-078", "MathML found in ebook, but no MathML accessibility [xml]<ProductFormFeatureValue>17</ProductFormFeatureValue>[/] set in ONIX data."
 "m-079", "Ebook looks like a collection, but no [xml]<meta property=\"se:is-a-collection\">true</meta>[/] element in metadata."
 "m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/]."
-"m-081", "When published between a range of years, the text must be [text]published between year1 and year2[/]."
+"m-081", "When a work was published or completed between a range of years, the text must be [text]between year1 and year2[/]."
 "m-082", "Faded Page link text must be exactly [text]Faded Page[/]."
 "m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]extended[/], or [val]short[/]."
 "m-084", "[xhtml]<meta property=\"se:url....\">[/] element not containing a URL."
@@ -1439,9 +1439,9 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 			messages.append(LintMessage("s-105", "Dates in the colophon need to be wrapped in an [xhtml]<time>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 		# A range of years for published should be "published between X and Y"
-		nodes = dom.xpath(f"/html/body//p[re:test(., '\\bpublished (in|between) [0-9]+{se.WORD_JOINER}?–{se.WORD_JOINER}?[0-9]+\\b')]")
+		nodes = dom.xpath(f"/html/body//p[re:test(., '\\b(published|completed) (in|between|circa) [0-9]+{se.WORD_JOINER}?–{se.WORD_JOINER}?[0-9]+\\b')]")
 		if nodes:
-			messages.append(LintMessage("m-081", "When published between a range of years, the text must be [text]published between year1 and year2[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+			messages.append(LintMessage("m-081", "When a work was published or completed between a range of years, the text must be [text]between year1 and year2[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 		# Check for wrong grammar filled in from template
 		nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
