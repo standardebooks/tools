@@ -31,7 +31,7 @@ def semanticate(plain_output: bool) -> int:
 			with open(filename, "r+", encoding="utf-8") as file:
 				xhtml = file.read()
 
-				is_ignored, _ = se.get_dom_if_not_ignored(xhtml)
+				is_ignored, _ = se.get_dom_if_not_ignored(xhtml, ["titlepage", "imprint", "copyright-page", "halftitlepage", "toc", "loi"])
 
 				if not is_ignored:
 					processed_xhtml = se.formatting.semanticate(xhtml)

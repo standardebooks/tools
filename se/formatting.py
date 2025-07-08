@@ -168,6 +168,8 @@ def semanticate(xhtml: str) -> str:
 
 	dom = se.easy_xml.EasyXmlTree(xhtml)
 
+	is_colophon = len(dom.xpath("/html/body//section[contains(@epub:type, 'colophon')]")) > 0
+
 	# We may have added HTML tags within title tags. Remove those here.
 	for node in dom.xpath("/html/head/title"):
 		replacement_node = se.easy_xml.EasyXmlElement(f"<title>{node.inner_text()}</title>")
@@ -184,7 +186,21 @@ def semanticate(xhtml: str) -> str:
 	for node in dom.xpath("/html/body//blockquote//*[name() = 'header' or name() = 'footer']"):
 		node.set_attr("role", "presentation")
 
-	return dom.to_string()
+	xhtml = dom.to_string()
+
+	if is_colophon:
+		# Try to add year semantics to years in the colophon.
+
+		# Four-digit years.
+		xhtml = regex.sub(r"(\b[\d]{4}\b)([\s])", r"<time>\1</time>\2", xhtml)
+
+		# Three-digit years.
+		xhtml = regex.sub(r"(\b[\d]{3}\b)([\s])", r"""<time datetime="0\1">\1</time>\2""", xhtml)
+
+		# Undo those changes to three digit BC(E) dates, which are not supported in HTML.
+		xhtml = regex.sub(r"<time datetime=\"0[\d]{3}\">([\d]{3})</time>(\s.*>BCE?<)", r"\1\2", xhtml)
+
+	return xhtml
 
 def get_flesch_reading_ease(xhtml: str) -> float:
 	"""
