@@ -1,3 +1,105 @@
+# 2.8.0
+
+## General
+
+- Correctly format released/modified timestamps without microseconds
+
+- Colophons now use `<time>` markup. Thanks to Robin Whittleton
+
+- SE identifiers no longer include leading `url:`. Thanks to brendanny
+
+## se build
+
+- Cleans more characters disallowed in filenames, when generating a filename from `<dc:identifier>`. Thanks to kewlar
+
+## se build-ids
+
+- Remove stray debugging `print()` statement
+
+- Add completions for `--no-endnotes` argument
+
+## se extract-ebook
+
+- Update kindleunpack source. Thanks to Vince Rice
+
+## se lint
+
+- Improve s-074
+
+- Improve m-079
+
+- Improve t-019
+
+- Add y-034, Possible typo, period embedded in word
+
+- Improve m-079
+
+- Add exception to t-007
+
+- Add m-083, title-type element without similar siblings
+
+- Improve s-076. Thanks to Vince Rice
+
+- Improve t-077
+
+- Add s-104, headings should be either title or ordinal, not both. Thanks to Robin Whittleton
+
+- Improve t-063
+
+- Remove m-066, replace m-008 with general LoC URI check
+
+- Restructure and merge various malformed URL checks
+
+- Add m-066, subject identifiers must be IDs and not URLs
+
+- Add m-084, URL metadata element that is not a complete URL
+
+- Convert some regex-based tests to xpath
+
+- Fix logic in m-064
+
+- Improve m-056 and error case when long description is invalid HTML
+
+- Output matches for s-105
+
+- add `completed` to m-081 check. Thanks to Robin Whittleton
+
+- Add s-106, proper names in colophon must be wrapped in `<a>` or `<b>`
+
+- Add s-107, incorrect string for anonymous contributor
+
+## se modernize-spelling
+
+- Fix broken regex
+
+- Various additions
+
+## se recompose-epub
+
+- Add `--image-files` flag
+
+## se semanticate
+
+- Try to fix incorrectly-formatted attributes before parsing DOM
+
+- Add some items and improve regexes
+
+- Fix regex when replacing inches
+
+- Semanticate colophon, and add `<time>` to colophon years
+
+## se titlecase
+
+- Lowercase `of` if preceded by an initialism
+
+## se typogrify
+
+- Add en dashes to ranges of roman numerals
+
+- Don't typogrify `<dc:identifier>`. Thanks to brendanny
+
+- Improve check for elided words
+
 # 2.7.5
 
 ## General
