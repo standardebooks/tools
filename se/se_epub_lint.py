@@ -359,6 +359,7 @@ SEMANTICS & CONTENT
 "s-103", "Probable missing semantics for a roman I numeral."
 "s-104", "Header element should be either [val]title[/] or [val]ordinal[/], not both."
 "s-105", "Dates in the colophon need to be wrapped in an [xhtml]<time>[/] element."
+"s-106", "Proper names in the colophon must be wrapped in [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], unless anonymous, in which case [xhtml]<b>[/]."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1481,6 +1482,11 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 			nodes = dom.xpath("/html/body//a[text() = 'various sources' and not(re:test(preceding-sibling::br[1]/preceding-sibling::node()[1], '(digital scans|transcriptions) from\\s*$'))]")
 			if nodes:
 				messages.append(LintMessage("t-072", "[text]various sources[/] link not preceded by [text]from[/].", se.MESSAGE_TYPE_ERROR, filename))
+
+		# In this xpath, we select the 2nd node following `<br/>`, because the node following `<br/>` is white space.
+		nodes = dom.xpath("/html/body//p[./text()[re:test(., '\\bby$') and following-sibling::*[1][name() = 'br' and following-sibling::node()[2][name() != 'a' and name() != 'b']]]]")
+		if nodes:
+			messages.append(LintMessage("s-106", "Proper names in the colophon must be wrapped in [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], unless anonymous, in which case [xhtml]<b>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 	# If we're in the imprint, are the sources represented correctly?
 	# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
