@@ -1,0 +1,3 @@
+s-107 [Error] colophon.xhtml Anonymous contributors in the colophon must be 
+exactly `<b>An Anonymous Volunteer</b>` or `<b>An Unknown Artist</b>`.
+        <b>an unidentified artist</b>
