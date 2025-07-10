@@ -66,6 +66,11 @@ section.epub-type-colophon p + p::before{
 	width: 25%;
 }
 
+section.epub-type-colophon p.nth-last-child-2 time,
+section.epub-type-colophon p:nth-last-child(2) time{
+	font-variant: small-caps;
+}
+
 section.epub-type-colophon a{
 	font-variant: small-caps;
 }
