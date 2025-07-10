@@ -482,7 +482,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])enor", r"\1eñor", xhtml)				# senor -> señor (senores, senorita/s, etc.)
 	xhtml = regex.sub(r"\b([Ss])oupcon", r"\1oupçon", xhtml)			# soupcon -> soupçon
 	xhtml = regex.sub(r"\b([Ss])[uû]ret[eé]", r"\1ûreté", xhtml)			# Surete -> Sûreté
-	xhtml = regex.sub(r"([Tt])ete-a-tete", r"\1ête-à-tête", xhtml)			# tete-a-tete -> tête-à-tête
+	xhtml = regex.sub(r"([Tt])ete[ \-]a[ \-]tete", r"\1ête-à-tête", xhtml)		# tete-a-tete -> tête-à-tête
 	xhtml = regex.sub(r"([Vv])is-a-vis", r"\1is-à-vis", xhtml)			# vis-a-vis -> vis-à-vis
 
 
