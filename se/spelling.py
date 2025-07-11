@@ -444,7 +444,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Cc])liche([sd]?)\b", r"\1liché\2", xhtml)		# cliche -> cliché
 	xhtml = regex.sub(r"\b([Cc])onsomme", r"\1onsommé", xhtml)			# consomme -> consommé
 	xhtml = regex.sub(r"\b([Cc])oup[\- ]de[\- ]gr[aâ]ce", r"\1oup de grâce", xhtml)	# coup-de-grace -> coup-de-grâce
-	xhtml = regex.sub(r"\b([Cc])uracao", r"\1uraçao", xhtml)			# curacao -> curaçao
+	xhtml = regex.sub(r"\b([Cc])urac(ao|oa)", r"\1uraç\2", xhtml)			# curacao -> curaçao
 	xhtml = regex.sub(r"\b([Dd])istingue\b", r"\1istingué", xhtml)			# distingue -> distingué
 	xhtml = regex.sub(r"\b[EÉ]cart[eé]\b", r"Écarté", xhtml)			# Ecarte -> Écarté
 	xhtml = regex.sub(r"\b[eé]cart[eé]\b", r"écarté", xhtml)			# ecarte -> écarté
