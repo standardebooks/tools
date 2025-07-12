@@ -1368,7 +1368,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	if self.is_se_ebook and special_file in ("colophon", "imprint"):
 		if len(source_links) <= 2:
 			# Check that links back to sources are represented correctly
-			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
+			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust\\.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
 			if nodes:
 				messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
@@ -1740,7 +1740,7 @@ def _lint_xhtml_metadata_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTr
 
 	# Check that `Internet Archive` and `HathiTrust` are preceded by `the`. They might have an immediate preceding text node that ends in `the`, or they
 	# might be preceded by a white space node, then a <br/>, then a text node ending in `the`.
-	nodes = dom.xpath("/html/body//a[(re:test(text(), '[Hh]athi') and re:test(@href, '^https://[^\"]*?hathitrust.org')) or (re:test(text(), 'Internet Archive') and re:test(@href, 'https://[^\"]*?archive.org'))][(preceding-sibling::node()[2][not(self::br)] and preceding-sibling::node()[1][not(re:test(., '\\sthe $'))]) or (preceding-sibling::node()[2][self::br] and preceding-sibling::node()[3][not(re:test(., '\\sthe$'))]) ]")
+	nodes = dom.xpath("/html/body//a[(re:test(text(), '[Hh]athi') and re:test(@href, '^https://[^\"]*?hathitrust\\.org')) or (re:test(text(), 'Internet Archive') and re:test(@href, 'https://[^\"]*?archive\\.org'))][(preceding-sibling::node()[2][not(self::br)] and preceding-sibling::node()[1][not(re:test(., '\\sthe $'))]) or (preceding-sibling::node()[2][self::br] and preceding-sibling::node()[3][not(re:test(., '\\sthe$'))]) ]")
 	if nodes:
 		messages.append(LintMessage("m-061", "Link must be preceded by [text]the[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
