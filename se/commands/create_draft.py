@@ -931,7 +931,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 					producers_xhtml = producers_xhtml + "<br/>"
 
-					colophon_xhtml = colophon_xhtml.replace("""<b epub:type="z3998:personal-name">TRANSCRIBER_1</b>, <b epub:type="z3998:personal-name">TRANSCRIBER_2</b>, and <a href=\"https://www.pgdp.net\">Distributed Proofreaders</a><br/>""", producers_xhtml)
+					colophon_xhtml = colophon_xhtml.replace("""<b epub:type="z3998:personal-name">TRANSCRIBER_1</b>, <b epub:type="z3998:personal-name">TRANSCRIBER_2</b>, and <a href="https://www.pgdp.net/">Distributed Proofreaders</a><br/>""", producers_xhtml)
 
 			file.seek(0)
 			file.write(colophon_xhtml)
