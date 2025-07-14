@@ -360,7 +360,7 @@ SEMANTICS & CONTENT
 "s-104", "Header element should be either [val]title[/] or [val]ordinal[/], not both."
 "s-105", "Dates in the colophon need to be wrapped in an [xhtml]<time>[/] element."
 "s-106", "Proper names in the colophon must be wrapped in [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], unless anonymous, in which case [xhtml]<b>[/]."
-"s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]."
+"s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?"
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1491,7 +1491,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 		nodes = dom.xpath("/html/body//p/b[not(@epub:type) and text() != 'An Unknown Artist' and text() != 'An Anonymous Volunteer']")
 		if nodes:
-			messages.append(LintMessage("s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+			messages.append(LintMessage("s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 	# If we're in the imprint, are the sources represented correctly?
 	# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
