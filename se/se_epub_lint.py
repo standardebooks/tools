@@ -499,6 +499,7 @@ TYPOS
 "y-032", "Possible typo: italics running into preceding or following characters."
 "y-033", "Possible typo: three-em-dash obscuring an entire word, but not preceded by a space."
 "y-034", "Possible typo: [text].[/] embedded in word. Hint: Abbreviations must be in an [xhtml]<abbr>[/] element."
+"y-035", "Possible typo: single letter. Hints: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [xhtml]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?"
 """
 
 class LintMessage:
@@ -3230,6 +3231,11 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	nodes = dom_clone.xpath("/html/body//p[re:test(.,'[a-z]{1,}\\.[a-z]{1,}', 'i') and not(re:test(., 'A.B.C.|X.Y.Z.') or .//*[re:test(@epub:type, 'grapheme|phoneme')])]")
 	if nodes:
 		messages.append(LintMessage("y-034", "Possible typo: [text].[/] embedded in word. Hint: Abbreviations must be in an [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+
+	# Exclude nodes that have `@xml:lang` or are graphemes, phonemes, or roman numerals.
+	nodes = dom.xpath("/html/body//*[re:test(., '\\s[b-xz]\\s') and not(ancestor-or-self::*[re:test(@xml:lang, '^(?!en-).')]) and not(descendant::*[re:test(., '\\b[b-xz]\\b')]) and not(descendant::i[re:test(@epub:type, 'z3998:(grapheme|phoneme|roman)')])]")
+	if nodes:
+		messages.append(LintMessage("y-035", "Possible typo: single letter. Hints: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [xhtml]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 	return messages
 
