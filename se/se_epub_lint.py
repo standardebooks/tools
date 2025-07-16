@@ -252,6 +252,7 @@ METADATA
 "m-082", "Faded Page link text must be exactly [text]Faded Page[/]."
 "m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]extended[/], or [val]short[/]."
 "m-084", "[xhtml]<meta property=\"se:url....\">[/] element not containing a URL."
+"m-085", "Non-canonical PGDP URL. Expected [url]https://www.pgdp.net/[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -1021,6 +1022,13 @@ def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and not(re:test(., '{expected_regex}'))] | /html/body//a[re:test(@href, '{search_regex}') and not(re:test(@href, '{expected_regex}'))]")
 	if nodes:
 		messages.append(LintMessage("m-002", "Non-canonical Project Gutenberg Canada URL. Expected [url]https://gutenberg.ca/<PATH>/<FILENAME>.html[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+
+	# `pgdp.org` is their test/dev site, `pgdp.net` is the actual domain we want.
+	search_regex = r"^https?://(.+\.)?pgdp\.(net|org)/"
+	expected_regex = r"^https://www\.pgdp.net/.*$"
+	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and not(re:test(., '{expected_regex}'))] | /html/body//a[re:test(@href, '{search_regex}') and not(re:test(@href, '{expected_regex}'))]")
+	if nodes:
+		messages.append(LintMessage("m-085", "Non-canonical PGDP URL. Expected [url]https://www.pgdp.net/[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 	return messages
 
