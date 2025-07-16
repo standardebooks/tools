@@ -960,7 +960,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 				# Homepage
 				if "Distributed Proofread" in producer:
-					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{i}\">https://pgdp.net/</meta>\n"
+					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{i}\">https://www.pgdp.net/</meta>\n"
 
 				# LCCN
 				if "David Widger" in producer:
