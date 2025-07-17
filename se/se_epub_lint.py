@@ -2371,56 +2371,56 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	if matches:
 		messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-	# Check for ldquo not correctly closed
-	# Ignore closing paragraphs, line breaks, and closing cells in case ldquo means "ditto mark"
+	# Check for `ldquo` not correctly closed.
+	# Ignore closing paragraphs, line breaks, and closing cells in case `ldquo` means "ditto mark".
 	matches = regex.findall(r"“[^‘”]+?“", file_contents)
 	matches = [match for match in matches if "</p" not in match and "<br/>" not in match and "</td>" not in match]
-	# xpath to check for opening quote in p, without a next child p that starts with an opening quote or an opening bracket (for editorial insertions within paragraphs of quotation); or that consists of only an ellipses (like an elided part of a longer quotation)
-	# Matching <p>s can't have a poem/verse ancestor as formatting is often special for those.
+	# xpath to check for opening quote in `<p>`, without a next child `<p>` that starts with an opening quote or an opening bracket (for editorial insertions within paragraphs of quotation); or that consists of only an ellipses (like an elided part of a longer quotation).
+	# Matching `<p>`s can't have a poem/verse ancestor as formatting is often special for those.
 	matches += [regex.findall(r"“[^”]+</p>", node.to_string())[0] for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+$')][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')])][(following-sibling::*[1])[name()='p'][not(re:test(normalize-space(.), '^[“\\[]') or re:test(normalize-space(.), '^…$'))]]")]
 
-	# Additionally, match short <p> tags (< 100 chars) that lack closing quote, and whose direct siblings do have closing quotes (to exclude runs of same-speaker dialog), and that is not within a blockquote, verse, or letter
+	# Additionally, match short `<p>` tags (< 100 characters) that lack closing quote, and whose direct siblings do have closing quotes (to exclude runs of same-speaker dialog), and that is not within a `<blockquote>`, verse, or letter.
 	matches += [regex.findall(r"“[^”]+</p>", node.to_string())[0] for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+$') and not(re:test(., '[…:]$')) and string-length(normalize-space(.)) <=100][(following-sibling::*[1])[not(re:test(., '“[^”]+$'))] and (preceding-sibling::*[1])[not(re:test(., '“[^”]+$'))]][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')]) and not(ancestor::blockquote) and not (ancestor::*[contains(@epub:type, 'z3998:letter')])][(following-sibling::*[1])[name()='p'][re:test(normalize-space(.), '^[“\\[]') and not(contains(., 'continued'))]]")]
 	if matches:
 		messages.append(LintMessage("t-003", "[text]“[/] missing matching [text]”[/]. Note: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-	# Check for lsquo not correctly closed
+	# Check for `lsquo` not correctly closed.
 	matches = regex.findall(r"‘[^“’]+?‘", file_contents)
 	matches = [match for match in matches if "</p" not in match and "<br/>" not in match]
 	if matches:
 		messages.append(LintMessage("t-004", "[text]‘[/] missing matching [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-	# Check for closing dialog without comma
-	# Exclude `is said` as that's usually not indicative of dialog
+	# Check for closing dialog without comma.
+	# Exclude `is said` as that's usually not indicative of dialog.
 	matches = regex.findall(r"[\p{Lowercase_Letter}]+?” [\p{Letter}]+? said", file_contents)
 	matches = [match for match in matches if " is said" not in match]
 	if matches:
 		messages.append(LintMessage("t-005", "Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-	# Check for possessive 's within name italics, but not in ignored files like the colophon which we know have no possessives
+	# Check for possessive `'s` within name italics, but not in ignored files like the colophon which we know have no possessives.
 	# Allow some known exceptions like `Harper's`, etc.
 	if filename.name not in IGNORED_FILENAMES:
 		nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.') and re:test(., '’s$') and not(contains(@epub:type, 'se:name.publication.') and re:test(., '(Pearson’s|Harper’s|Blackwood’s|Fraser’s|Baedeker’s|Lloyd’s)$'))]")
 		if nodes:
 			messages.append(LintMessage("t-007", "Possessive [text]’s[/] within name italics. If the name in italics is doing the possessing, [text]’s[/] goes outside italics.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for repeated punctuation, but first remove `&amp;` so we don't match `&amp;,`
-	# Remove tds with repeated ” as they are probably ditto marks
+	# Check for repeated punctuation, but first remove `&amp;` so we don't match `&amp;,`.
+	# Remove `<td>`s with repeated `”` as they are probably ditto marks.
 	matches = regex.findall(r"[,;]{2,}.{0,20}", file_contents.replace("&amp;", ""))
 	matches += regex.findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", file_contents))
 	matches += regex.findall(r"[\p{Letter}][,\.:;]\s[,\.:;]\s?[\p{Letter}<].{0,20}", file_contents)
 	if matches:
 		messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-	# Check for nbsp before times
+	# Check for `nbsp` before times.
 	nodes = dom.xpath(f"/html/body//text()[re:test(., '[0-9][^{se.NO_BREAK_SPACE}]?$')][(following-sibling::abbr[1])[re:test(., '^[ap]\\.m\\.$')]]")
 	if nodes:
 		messages.append(LintMessage("t-009", "Required no-break space not found before time and [text]a.m.[/] or [text]p.m.[/].", se.MESSAGE_TYPE_WARNING, filename, [node[-10:] + "<abbr" for node in nodes]))
 
 	# Check for times with periods instead of colons.
-	# Only check p, because things like tables/td are more likely to contain non-time numbers
-	# Exclude numbers preceded by equals, or succeeded by some measurements
-	# Also remove <a> first because they are likely to contain numbered section references
+	# Only check `<p>`, because things like `<table>`/`<td>` are more likely to contain non-time numbers.
+	# Exclude numbers preceded by equals, or succeeded by some measurements.
+	# Also remove `<a>` first because they are likely to contain numbered section references.
 	dom_copy = deepcopy(dom)
 	for node in dom_copy.xpath("/html/body//p/a"):
 		node.remove()
@@ -2436,36 +2436,36 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	if matches:
 		messages.append(LintMessage("t-010", "Time set with [text].[/] instead of [text]:[/].", se.MESSAGE_TYPE_WARNING, filename, natsorted(list(matches))))
 
-	# Check for missing punctuation before closing quotes
-	# Exclude signatures in footers as those are commonly quoted without ending punctuation
+	# Check for missing punctuation before closing quotes.
+	# Exclude signatures in footers as those are commonly quoted without ending punctuation.
 	nodes = dom.xpath("/html/body//p[not( (parent::header or parent::hgroup or (parent::footer and contains(@epub:type, 'z3998:signature'))) and position()=last())][re:test(., '[a-z]+[”’]$')]")
 	if nodes:
 		messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string()[-30:] for node in nodes]))
 
-	# Check for whitespace before noteref
-	# Do this early because we remove noterefs from headers later
-	# Allow noterefs that do not have preceding text/elements (for example a "see note X" ref that is the only child in a <td>)
+	# Check for whitespace before noterefs.
+	# Do this early because we remove noterefs from headers later.
+	# Allow noterefs that do not have preceding text/elements (for example a `see note X` ref that is the only child in a `<td>`).
 	nodes = dom.xpath("/html/body//a[contains(@epub:type, 'noteref') and preceding-sibling::node()[normalize-space(.)] and re:test(preceding-sibling::node()[1], '\\s+$')]")
 	if nodes:
 		messages.append(LintMessage("t-012", "Illegal white space before noteref.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for period following Roman numeral, which is an old-timey style we must fix
-	# But ignore the numeral if it's the first item in a <p> tag, as that suggests it might be a kind of list item.
+	# Check for period following Roman numeral, which is an old-timey style we must fix.
+	# But ignore the numeral if it's the first item in a `<p>` element, as that suggests it might be a kind of list item.
 	nodes = dom.xpath("/html/body//node()[name()='span' and contains(@epub:type, 'z3998:roman') and not(position()=1)][(following-sibling::node()[1])[re:test(., '^\\.\\s*[a-z]')]]")
 	if nodes:
 		messages.append(LintMessage("t-013", "Roman numeral followed by a period. When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "." for node in nodes]))
 
-	# Check for two em dashes in a row
+	# Check for two em dashes in a row.
 	nodes = dom.xpath(f"/html/body//*[re:test(text(), '—{se.WORD_JOINER}*—+')]")
 	if nodes:
 		messages.append(LintMessage("t-014", "Two or more em-dashes in a row found. Elided words should use the two- or three-em-dash Unicode character, and dialog ending in em-dashes should only end in a single em-dash.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for money not separated by commas
+	# Check for money not separated by commas.
 	nodes = dom.xpath("/html/body//*[re:test(text(), '[£\\$][0-9]{4,}')]")
 	if nodes:
 		messages.append(LintMessage("t-015", "Numbers not grouped by commas. Separate numbers greater than 1,000 with commas at every three numerals.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for <abbr epub:type="z3998:*-name"> that does not contain spaces
+	# Check for `<abbr epub:type="z3998:*-name">` that does not contain spaces.
 	nodes = dom.xpath("/html/body//abbr[re:test(@epub:type, '\\bz3998:[^\\s\"]+name\\b') and re:test(., '[A-Z]\\.[A-Z]\\.')]")
 	if nodes:
 		messages.append(LintMessage("t-016", "Initials in [xhtml]<abbr epub:type=\"z3998:*-name\">[/] not separated by spaces.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
@@ -2473,98 +2473,96 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	if special_file != "colophon":
 		# This file is not the colophon.
 		# Check for ending punctuation inside italics that have semantics.
-		# Ignore the colophon because paintings might have punctuation in their names
+		# Ignore the colophon because paintings might have punctuation in their names.
 
-		# This xpath matches b or i elements with epub:type="se:name...", that are not stage direction, whose last text node ends in punctuation.
-		# Note that we check that the last node is a text node, because we may have <abbr> as the last node
+		# This xpath matches `<b>` or `<i>` elements with `@epub:type="se:name..."`, that are not stage direction, whose last text node ends in punctuation.
+		# Note that we check that the last node is a text node, because we may have `<abbr>` as the last node.
 		matches = [node.to_string() for node in dom.xpath("(//b | //i)[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., '[\\.,!\\?;:]$')]]")]
 
-		# Match b or i elements that are not stage directions, and that end in a comma followed by a lowercase letter
+		# Match `<b>` or `<i>` elements that are not stage directions, and that end in a comma followed by a lowercase letter.
 		matches += [node.to_string() for node in dom.xpath("(//b | //i)[not(contains(@epub:type, 'z3998:stage-direction'))][(text()[last()])[re:test(., ',$')] and following-sibling::node()[re:test(., '^\\s*[a-z]')] ]")]
 
-		# ...and also check for ending punctuation inside em tags, if it looks like a *part* of a clause
-		# instead of a whole clause. If the <em> is preceded by an em dash or quotes, or if there's punctuation
-		# and a space before it, then it's presumed to be a whole clause.
+		# ...and also check for ending punctuation inside `<em>` elements, if it looks like a *part* of a clause instead of a whole clause.
+		# If the `<em>` is preceded by an em dash or quotes, or if there's punctuation and a space before it, then it's presumed to be a whole clause.
 		matches += [match.strip() for match in regex.findall(r"(?<!.[—“‘>]|[!\.\?…;:]\s)<em>(?:\w+?\s*)+[\.,\!\?;]</em>", file_contents) if match.islower()]
 
 		if matches:
 			messages.append(LintMessage("t-017", "Ending punctuation inside formatting like bold, small caps, or italics. Ending punctuation is only allowed within formatting if the phrase is an independent clause.", se.MESSAGE_TYPE_WARNING, filename, list(set(matches))))
 
-	# Check for stage direction that ends in ?! but also has a trailing period
+	# Check for stage direction that ends in `?!` but also has a trailing period.
 	nodes = dom.xpath("/html/body//i[contains(@epub:type, 'z3998:stage-direction') and re:test(., '\\.$') and not((./node()[last()])[name() = 'abbr']) and (following-sibling::node()[1])[re:test(., '^[\\.,:;!?]')]]")
 	if nodes:
 		messages.append(LintMessage("t-018", "Stage direction ending in period next to other punctuation. Remove trailing periods in stage direction.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for single words that are in italics, but that have closing punctuation outside italics
-	# Outer wrapping match is so that .findall returns the entire match and not the subgroup
-	# The first regex also matches the first few characters before the first double quote; we use those for more sophisticated
-	# checks below, to give fewer false positives like `with its downy red hairs and its “<i xml:lang="fr">doigts de faune</i>.”`
+	# Check for single words that are in italics, but that have closing punctuation outside italics.
+	# Outer wrapping match is so that `findall()` returns the entire match and not the subgroup.
+	# The first regex also matches the first few characters before the first double quote; we use those for more sophisticated checks below, to give fewer false positives like `with its downy red hairs and its “<i xml:lang="fr">doigts de faune</i>.”`.
 	matches = regex.findall(r"((?:.{1,2}\s)?“<(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])", file_contents)
 	matches += regex.findall(r"([\.\!\?] <(i|em)[^>]*?>[^<]+?</\2>[\!\?\.])", file_contents)
 
-	# But, if we've matched a name of something, don't include that as an error. For example, `He said, “<i epub:type="se:name.publication.book">The Decameron</i>.”`
+	# But, if we've matched a name of something, don't include that as an error. For example, `He said, “<i epub:type="se:name.publication.book">The Decameron</i>.”`.
 	# We also exclude the match from the list if:
-	# 1. The double quote is directly preceded by a lowercase letter and a space: `with its downy red hairs and its “<i xml:lang="fr">doigts de faune</i>.”`
-	# 2. The double quote is directly preceded by a lowercase letter, a comma, and a space, and the first letter within the double quote is lowercase: In the original, “<i xml:lang="es">que era un Conde de Irlos</i>.”
-	# 3. The text is a single letter that is not "I" or "a" (because then it is likely a mathematical variable)
+	# 1. The double quote is directly preceded by a lowercase letter and a space: `with its downy red hairs and its “<i xml:lang="fr">doigts de faune</i>.”`.
+	# 2. The double quote is directly preceded by a lowercase letter, a comma, and a space, and the first letter within the double quote is lowercase: `In the original, “<i xml:lang="es">que era un Conde de Irlos</i>.”`.
+	# 3. The text is a single letter that is not `I` or `a` (because then it is likely a mathematical variable).
 	matches = [match for match in matches if "epub:type=\"se:name." not in match[0] and "epub:type=\"z3998:taxonomy" not in match[0] and not regex.match(r"^[\p{Lowercase_Letter}’]+\s“", match[0]) and not regex.match(r"^[\p{Lowercase_Letter}’]+,\s“[\p{Lowercase_Letter}]", se.formatting.remove_tags(match[0])) and not regex.match(r"^.*?<.+?>[^Ia]<.+?>", match[0])]
 	if matches:
 		messages.append(LintMessage("t-019", "When a complete clause is italicized, ending punctuation except commas must be within containing italics.", se.MESSAGE_TYPE_WARNING, filename, [match[0] for match in matches]))
 
-	# Check for punctuation after endnotes
+	# Check for punctuation after endnotes.
 	nodes = dom.xpath(f"/html/body//a[contains(@epub:type, 'noteref')][(following-sibling::node()[1])[re:test(., '^[^\\s<–\\]\\)—{se.WORD_JOINER}a-zA-Z0-9]')]]")
 	if nodes:
 		messages.append(LintMessage("t-020", "Endnote links must be outside of punctuation, including quotation marks.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for correct typography around measurements like 2 ft.
-	# But first remove href and id attrs because URLs and IDs may contain strings that look like measurements
-	# Note that while we check m,min (minutes) and h,hr (hours) we don't check s (seconds) because we get too many false positives on years, like `the 1540s`
+	# Check for correct typography around measurements like `2 ft.`.
+	# But first remove `@href` and `@id` attributes, because URLs and IDs may contain strings that look like measurements.
+	# Note that while we check `m,min` (minutes) and `h,hr` (hours) we don't check `s` (seconds) because we get too many false positives on years, like `the 1540s`.
 	matches = regex.findall(fr"\b[1-9][0-9]*[{se.NO_BREAK_SPACE}\-]?(?:[mck]?[mgl]|ft|in|min?|h|sec|hr)\.?\b", regex.sub(r"(href|id)=\"[^\"]*?\"", "", file_contents))
-	# Exclude number ordinals, they're not measurements
+	# Exclude number ordinals, they're not measurements.
 	matches = [match for match in matches if not regex.search(r"(st|nd|rd|th)", match)]
 	if matches:
 		messages.append(LintMessage("t-021", "Measurement not to standard. Numbers are followed by a no-break space and abbreviated units require an [xhtml]<abbr>[/] element. See [path][link=https://standardebooks.org/manual/1.0.0/8-typography#8.8.5]semos://1.0.0/8.8.5[/][/].", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-	# Check for nbsp within <abbr epub:type="z3998:*-name">, which is redundant
+	# Check for `nbsp` within `<abbr epub:type="z3998:*-name">`, which is redundant.
 	nodes = dom.xpath(f"/html/body//abbr[re:test(@epub:type, '\\bz3998:[^\\s\"]+name\\b') and contains(text(), '{se.NO_BREAK_SPACE}')]")
 	if nodes:
 		messages.append(LintMessage("t-022", "No-break space found in [xhtml]<abbr epub:type=\"z3998:*-name\">[/]. This is redundant.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for trailing commas inside <i> tags at the close of dialog
-	# More sophisticated version of: \b[^\s]+?,</i>”
+	# Check for trailing commas inside `<i>` tags at the close of dialog.
+	# More sophisticated version of: `\b[^\s]+?,</i>”`.
 	nodes = dom.xpath("/html/body//i[re:test(., ',$')][(following-sibling::node()[1])[starts-with(., '”')]]")
 	if nodes:
 		messages.append(LintMessage("t-023", "Comma inside [xhtml]<i>[/] element before closing dialog.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "”" for node in nodes]))
 
-	# Check for quotation marks in italicized dialog
+	# Check for quotation marks in italicized dialog.
 	nodes = dom.xpath("/html/body//i[@xml:lang][starts-with(., '“') or re:test(., '”$')]")
 	if nodes:
 		messages.append(LintMessage("t-024", "When italicizing language in dialog, italics go inside quotation marks.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check alt attributes on images, except for the logo
+	# Check `@alt` attributes on images, except for the logo.
 	nodes = dom.xpath("/html/body//img[not(re:test(@src, '/(logo|titlepage)\\.(svg|png)$'))]")
 	img_no_alt = []
 	img_alt_not_typogrified = []
 	img_alt_lacking_punctuation = []
 	for node in nodes:
 		img_src = node.lxml_element.get("src")
-		# Avoid crashing if the src attribute is missing
+		# Avoid crashing if the `@src` attribute is missing.
 		if img_src and "titlepage.svg" not in img_src:
-			ebook_flags["has_images"] = True # Save for a later check
+			ebook_flags["has_images"] = True # Save for a later check.
 
 		alt = node.get_attr("alt")
 
 		if alt:
-			# Check for non-typogrified img alt attributes
+			# Check for non-typogrified `img@alt` attributes.
 			if regex.search(r"""('|"|--|\s-\s|&quot;)""", alt):
 				img_alt_not_typogrified.append(node.to_tag_string())
 
-			# Check alt attributes not ending in punctuation
-			# Ignore <img> that is in <p>, as such images are likely to require alt attributes that are running text.
+			# Check `@alt` attributes not ending in punctuation.
+			# Ignore `<img>` that is in `<p>`, as such images are likely to require `@alt` attributes that are running text.
 			if filename.name not in IGNORED_FILENAMES and not regex.search(r"""[\.\!\?]”?$""", alt) and not node.parent.tag == "p":
 				img_alt_lacking_punctuation.append(node.to_tag_string())
 
-			# Check that alt attributes match SVG titles
+			# Check that `@alt` attributes match SVG titles.
 			if img_src and img_src.endswith("svg"):
 				title_text = ""
 				image_ref = img_src.split("/").pop()
@@ -2592,27 +2590,27 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	if img_no_alt:
 		messages.append(LintMessage("s-004", "[xhtml]img[/] element missing [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, img_no_alt))
 
-	# Check for low-hanging misquoted fruit
+	# Check for low-hanging misquoted fruit.
 	matches = regex.findall(r"[\p{Letter}]+[“‘]", file_contents)
 	matches += regex.findall(r"[^>]+</(?:em|i|b|span)>‘[\p{Lowercase_Letter}]+", file_contents)
 	if matches:
 		messages.append(LintMessage("t-028", "Possible mis-curled quotation mark.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 	# Check for periods followed by lowercase.
-	temp_xhtml = regex.sub(r"<title[^>]*?>.+?</title>", "", file_contents) # Remove <title> because it might contain something like <title>Chapter 2: The Antechamber of M. de Tréville</title>
-	temp_xhtml = regex.sub(r"<abbr[^>]*?>", "<abbr>", temp_xhtml) # Replace things like <abbr xml:lang="la">
-	temp_xhtml = regex.sub(r"<img[^>]*?>", "", temp_xhtml) # Remove <img alt> attributes
-	temp_xhtml = temp_xhtml.replace("A.B.C.", "X") # Remove A.B.C, which is not an abbreviation.
-	temp_xhtml = temp_xhtml.replace("X.Y.Z.", "X") # Remove X.Y.Z., which is usually used in the same sense as `A.B.C.` and is also not an abbreviation.
+	temp_xhtml = regex.sub(r"<title[^>]*?>.+?</title>", "", file_contents) # Remove `<title>` because it might contain something like `<title>Chapter 2: The Antechamber of M. de Tréville</title>`.
+	temp_xhtml = regex.sub(r"<abbr[^>]*?>", "<abbr>", temp_xhtml) # Replace things like `<abbr xml:lang="la">`.
+	temp_xhtml = regex.sub(r"<img[^>]*?>", "", temp_xhtml) # Remove `img@alt` attributes.
+	temp_xhtml = temp_xhtml.replace("A.B.C.", "X") # Remove `A.B.C.`, which is not an abbreviation.
+	temp_xhtml = temp_xhtml.replace("X.Y.Z.", "X") # Remove `X.Y.Z.`, which is usually used in the same sense as `A.B.C.` and is also not an abbreviation.
 	# Note the regex also excludes preceding numbers, so that we can have inline numbering like:
-	# "A number of questions: 1. regarding those who make heretics; 2. concerning those who were made heretics..."
+	# `A number of questions: 1. regarding those who make heretics; 2. concerning those who were made heretics...`
 	matches = regex.findall(r"[^\s0-9]+\.\s+[\p{Lowercase_Letter}](?!’[\p{Uppercase_Letter}])[\p{Lowercase_Letter}]+", temp_xhtml)
-	# If <abbr> is in the match, remove it from the matches so we exclude things like <abbr>et. al.</abbr>
+	# If `<abbr>` is in the match, remove it from the matches so we exclude things like `<abbr>et. al.</abbr>`.
 	matches = [match for match in matches if "<abbr>" not in match]
 	if matches:
 		messages.append(LintMessage("t-029", "Period followed by lowercase letter. Hint: Abbreviations require an [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-	# Check for initialisms without periods
+	# Check for initialisms without periods.
 	nodes = [node.to_string() for node in dom.xpath("/html/body//abbr[contains(@epub:type, 'z3998:initialism') and not(re:test(., '^[0-9]*([a-zA-Z]\\.)+[0-9]*$'))]") if node.text not in INITIALISM_EXCEPTIONS]
 	if nodes:
 		messages.append(LintMessage("t-030", "Initialism with spaces or without periods.", se.MESSAGE_TYPE_WARNING, filename, set(nodes)))
@@ -2621,76 +2619,75 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	if nodes:
 		messages.append(LintMessage("t-031", "[text]A B C[/] must be set as [text]A.B.C.[/] It is not an abbreviation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for abbreviations followed by periods
-	# But we exclude some SI units, which don't take periods; abbreviations ending in numbers for example in stage directions; abbreviations like `r^o` (recto) that contain <sup>; and some Imperial abbreviations that are multi-word
+	# Check for abbreviations followed by periods.
+	# But we exclude some SI units, which don't take periods; abbreviations ending in numbers for example in stage directions; abbreviations like `r^o` (recto) that contain `<sup>`; and some Imperial abbreviations that are multi-word.
 	nodes = dom.xpath("/html/body//abbr[(contains(@epub:type, 'z3998:initialism') or re:test(@epub:type, 'z3998:[^\\s]+?name') or not(@epub:type))][not(re:test(., '[cmk][mgl]')) and not(re:test(., '[0-9]$')) and not(./sup) and not(re:test(@class, '\\b(era|temperature|compound)\\b')) and not(re:test(text(), '^(mpg|mph|hp|TV|4to|8vo|12mo|16mo|18mo|32mo)$'))][following-sibling::text()[1][starts-with(self::text(), '.')]]")
 	if nodes:
 		messages.append(LintMessage("t-032", "Initialism or name followed by period. Hint: Periods go within [xhtml]<abbr>[/]. [xhtml]<abbr>[/]s containing periods that end a clause require the [class]eoc[/] class.", se.MESSAGE_TYPE_WARNING, filename, [f"{node.to_string()}." for node in nodes]))
 
-	# Check for space after dash
+	# Check for space after dash.
 	nodes = dom.xpath("/html/body//*[name()='p' or name()='span' or name='em' or name='i' or name='b' or name='strong'][not(self::comment())][re:test(., '[a-zA-Z]-\\s(?!(and|or|nor|to|und|…)\\b)')]")
 	if nodes:
 		messages.append(LintMessage("t-033", "Space after dash.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for <cite> preceded by em dash
+	# Check for `<cite>` preceded by em dash.
 	nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[re:test(., '—$')]]")
 	if nodes:
 		messages.append(LintMessage("t-034", "[xhtml]<cite>[/] element preceded by em-dash. Hint: em-dashes go within [xhtml]<cite>[/] elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for <cite> without preceding space in text node. (preceding ( or [ are also OK)
+	# Check for `<cite>` without preceding space in text node. (Preceding `(` or `[` are also OK.)
 	nodes = dom.xpath("/html/body//cite[(preceding-sibling::node()[1])[not(re:test(., '[\\[\\(\\s]$'))]]")
 	if nodes:
 		messages.append(LintMessage("t-035", "[xhtml]<cite>[/] element not preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for partially obscured years in which the last year is an em dash
+	# Check for partially obscured years in which the last year is an em dash.
 	nodes = dom.xpath("/html/body//p[re:test(.,	 '1\\d{2}⁠—[^“’A-Za-z<]')]")
 	if nodes:
 		messages.append(LintMessage("t-036", "Em-dash used to obscure single digit in year. Hint: Use a hyphen instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for rdquo preceded by space (but not preceded by a rsquo, which might indicate a nested quotation)
+	# Check for `rdquo` preceded by space (but not preceded by a `rsquo`, which might indicate a nested quotation).
 	nodes = dom.xpath("/html/body//p[re:test(., '[^’]\\s”')]")
 	if nodes:
 		messages.append(LintMessage("t-037", "[text]”[/] preceded by space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check obviously miscurled quotation marks
+	# Check obviously miscurled quotation marks.
 	nodes = dom.xpath("/html/body//p[re:test(., '“$')]")
 	if nodes:
 		messages.append(LintMessage("t-038", "[text]“[/] before closing [xhtml]</p>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for some known initialisms with incorrect possessive apostrophes
+	# Check for some known initialisms with incorrect possessive apostrophes.
 	nodes = dom.xpath("/html/body//abbr[text()='I.O.U.'][(following-sibling::node()[1])[starts-with(., '’s')]]")
 	if nodes:
 		messages.append(LintMessage("t-039", "Initialism followed by [text]’s[/]. Hint: Plurals of initialisms are not followed by [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() + "’s" for node in nodes]))
 
-	# Check if a subtitle ends in a text node with a terminal period; or if it ends in an <i> node containing a terminal period.
+	# Check if a subtitle ends in a text node with a terminal period; or if it ends in an `<i>` node containing a terminal period.
 	nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6]/*[contains(@epub:type, 'subtitle')][(./text())[last()][re:test(., '\\.$')] or (./i)[last()][re:test(., '\\.$')]]")
 	if nodes:
 		messages.append(LintMessage("t-040", "Subtitle with illegal ending period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	matches = regex.findall(r"[^…]\s[!?;:,].{0,10}", file_contents) # If we don't include preceding chars, the regex is 6x faster
+	# If we don't include preceding characters, the regex is 6x faster.
+	matches = regex.findall(r"[^…]\s[!?;:,].{0,10}", file_contents)
 	if matches:
 		messages.append(LintMessage("t-041", "Illegal space before punctuation.", se.MESSAGE_TYPE_ERROR, filename, matches))
 
-	# Check for rsquo and lsquo used as breathing marks in Greek.
-	# We can't merge this with t-073 because given the quote + Greek character, we can't easily decide what the correct precomposed
-	# Unicode character should be (i.e. ‘Ε -> Ἑ), so we give a generic message instead.
-	# Also note that we have to use the basic Greek character range instead of a Unicode property like \p{Script=Greek} because
-	# xpath regex doesn't support Unicode properties.
+	# Check for `rsquo` and `lsquo` used as breathing marks in Greek.
+	# We can't merge this with `t-073` because given the quote + Greek character, we can't easily decide what the correct precomposed Unicode character should be (i.e. `‘Ε` -> `Ἑ`), so we give a generic message instead.
+	# Also note that we have to use the basic Greek character range instead of a Unicode property like `\p{Script=Greek}` because xpath regex doesn't support Unicode properties.
 	nodes = dom.xpath("/html/body//*[(@xml:lang='grc' or @xml:lang='el') and re:test(., '(^|\\s)[’‘][α-ωΑ-Ω]')]")
 	if nodes:
 		messages.append(LintMessage("t-042", "[text]‘[/] used for Greek dasia or [text]’[/] used for Greek psili, but expected the single precomposed Unicode character, or a combining mark if a precomposed character doesn’t exist.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for a list of some common English loan words that used to be italicized as foreign, but are no longer
+	# Check for a list of some common English loan words that used to be italicized as foreign, but are no longer.
 	nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and re:test(., '^(fianc[eé]+|divorc[eé]+|menu|recherch[eé]|tour-de-force|outr[eé]|d[ée]but(ante)?|apropos|[eé]lite|prot[ée]g[ée]+|chef|salon|r[eé]gime|contretemps|[eé]clat|aides?|entr[ée]+|t[eê]te-[aà]-t[eê]tes?|blas[eé]|bourgeoisie)$')]")
 	if nodes:
 		messages.append(LintMessage("t-043", "Non-English loan word set in italics, when modern typography omits italics. Hint: A word may be correctly italicized when emphasis is desired, if the word is meant to be pronounced with an accent, or if the word is part of non-English speech.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for comma after leading Or in subtitles
+	# Check for comma after leading `Or` in subtitles.
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'subtitle') and re:test(text(), '^Or\\s')]")
 	if nodes:
 		messages.append(LintMessage("t-044", "Comma required after leading [text]Or[/] in subtitles.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for personas that are italicized. Use re:test instead of contains to avoid catching z3998:personal-name
+	# Check for personas that are italicized. Use `re:test()` instead of contains to avoid catching `z3998:personal-name`.
 	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:persona\\b') and @data-css-font-style = 'italic']")
 	if nodes:
 		messages.append(LintMessage("t-045", "Element has [val]z3998:persona[/] semantic and is also set in italics.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
@@ -2698,26 +2695,25 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	if "῾" in file_contents:
 		messages.append(LintMessage("t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead.", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Check for all-caps first paragraphs in sections/articles
-	# Note that we don't check for small-caps CSS, because there are lots of legitimate cases for that,
-	# and it would generate too many false positives.
-	# If we did want to do that, this xpath after the last re:test would help: or ./*[not(preceding-sibling::node()[normalize-space(.)]) and @data-css-font-variant='small-caps' and following-sibling::node()[1][self::text()]]
+	# Check for all-caps first paragraphs in `<section>`s/`<article>`s.
+	# Note that we don't check for small-caps CSS, because there are lots of legitimate cases for that, and it would generate too many false positives.
+	# If we *did* want to do that, this xpath after the last `re:test()` would help: `or ./*[not(preceding-sibling::node()[normalize-space(.)]) and @data-css-font-variant='small-caps' and following-sibling::node()[1][self::text()]]`.
 	nodes = dom.xpath("/html/body//*[(name() = 'section' or name() = 'article') and not(contains(@epub:type, 'dedication') or contains(@epub:type, 'z3998:letter'))]/p[1][re:test(normalize-space(.), '^[“’]?(?:[A-Z’]+\\s){2,}')]")
 	if nodes:
 		messages.append(LintMessage("t-048", "Chapter opening text in all-caps.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for two-em-dashes used for elision instead of three-em-dashes
+	# Check for two-em-dashes used for elision instead of three-em-dashes.
 	matches = regex.findall(fr"[^{se.WORD_JOINER}\p{{Letter}}”]⸺[^“{se.WORD_JOINER}\p{{Letter}}].*", file_contents)
 	if matches:
 		messages.append(LintMessage("t-049", "Two-em-dash used for eliding an entire word. Use a three-em-dash instead.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-	# Check that possessives appear within persona blocks
+	# Check that possessives appear within persona blocks.
 	nodes = dom.xpath("/html/body//b[contains(@epub:type, 'z3998:persona') and ./following-sibling::node()[1][re:test(., '^’s?')]]")
 	if nodes:
 		messages.append(LintMessage("t-050", "Possessive [text]’s[/] or [text]’[/] outside of element with [val]z3998:persona[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for quotations that carry to the next paragraph, but the next paragraph has no opening quotation mark
-	# Exclude p in blockquote because often that has different formatting
+	# Check for quotations that carry to the next paragraph, but the next paragraph has no opening quotation mark.
+	# Exclude `<p>` in `<blockquote>` because often that has different formatting.
 	nodes = dom.xpath("/html/body//p[re:test(., '“[^”]+$') and not(./ancestor::blockquote) and not(./ancestor::*[re:test(@epub:type, 'z3998:(verse|hymn|song|poem)')]) and ./following-sibling::*[1][name() = 'p' and re:test(normalize-space(), '^[^“]')]]")
 	if nodes:
 		messages.append(LintMessage("t-051", "Dialog in [xhtml]<p>[/] that continues to the next [xhtml]<p>[/], but the next [xhtml]<p>[/] does not begin with [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
@@ -2728,32 +2724,32 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	if nodes:
 		messages.append(LintMessage("t-052", "Stage direction without ending punctuation. Note that ending punctuation is optional in stage direction that is an interjection in a parent clause, and such interjections should begin with a lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for stage direction starting in lowercase.	We only want to consider stage direction that is not an interjection in a parent clause.
+	# Check for stage direction starting in lowercase.
+	# We only want to consider stage direction that is not an interjection in a parent clause.
 	# We match if the stage direction starts with a lowercase, and if there's no preceding node, or if there is a preceding node and it doesn't end in a lowercase letter or a small subset of conjoining punctuation.
 	nodes = dom.xpath("/html/body//i[@epub:type='z3998:stage-direction' and re:test(., '^[a-z]') and (not(./preceding-sibling::node()[normalize-space(.)]) or ./preceding-sibling::node()[1][re:test(normalize-space(.), '[^a-z:—,;…]$')])]")
 	if nodes:
 		messages.append(LintMessage("t-053", "Stage direction starting in lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Epigraphs that are entirely non-English should still be in italics, not Roman
+	# Epigraphs that are entirely non-English should still be in italics, not Roman.
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'bridgehead')]//p[./i[@xml:lang and @data-css-font-style='normal' and ( (./preceding-sibling::node()='“' and ./following-sibling::node()='”') or not(./preceding-sibling::node()[normalize-space(.)] or ./following-sibling::node()[normalize-space(.)]) ) ]]")
 	if nodes:
 		messages.append(LintMessage("t-054", "Epigraphs that are entirely non-English should be set in italics, not Roman.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for lone acute accents, which should always be combined or swapped for a more accurate Unicode char
+	# Check for lone acute accents, which should always be combined or swapped for a more accurate Unicode chararacter.
 	if "´" in file_contents:
 		messages.append(LintMessage("t-055", "Lone acute accent ([val]´[/]). A more accurate Unicode character like prime for coordinates or measurements, or combining accent or breathing mark for Greek text, is required.", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Check for degree confusable
+	# Check for degree confusable.
 	nodes = dom.xpath("/html/body//*[re:test(text(), '[0-9]+º')]")
 	if nodes:
 		messages.append(LintMessage("t-056", "Masculine ordinal indicator ([val]º[/]) used instead of degree symbol ([val]°[/]). Note that the masculine ordinal indicator may be appropriate for ordinal numbers read as Latin, i.e. [val]12º[/] reading [val]duodecimo[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for <p> starting in lowercase
-	# Exclude <p> starting in constructs like `(a)` or `a.` as they may be numbered lists
-	nodes = dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::figure or ancestor::ol[not(ancestor::section[contains(@epub:type, 'endnotes')])] or ancestor::ul or ancestor::table or ancestor::hgroup or preceding-sibling::*[1][name() = 'hr']) and not(contains(@class, 'continued') or re:test(@epub:type, 'z3998:(signature|valediction)')) and not(./*[1][name() = 'math' or name() = 'var' or contains(@epub:type, 'z3998:grapheme')]) and re:test(., '^[^A-Za-z0-9]?[a-z]') and not(re:test(., '^\\([a-z0-9]\\.?\\)\\.?')) and not(re:test(., '^[a-z0-9]\\.\\s'))]")
+	# Check for `<p`> starting in lowercase.
+	# Exclude `<p>` starting in constructs like `(a)` or `a.` as they may be numbered lists.
+	nodes = dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::figure or ancestor::ol[not(ancestor::section[contains(@epub:type, 'endnotes')])] or ancestor::ul or ancestor::table or ancestor::hgroup or preceding-sibling::*[1][name() = 'hr']) and not(contains(@class, 'continued') or re:test(@epub:type, 'z3998:(signature|valediction)')) and not(./*[1][name() = 'math' or name() = 'var' or re:test(@epub:type, 'z3998:(grapheme|roman)')]) and re:test(., '^[^A-Za-z0-9]?[a-z]') and not(re:test(., '^\\([a-z0-9]\\.?\\)\\.?')) and not(re:test(., '^[a-z0-9]\\.\\s'))]")
 
-	# We have to additionally filter using the regex library, because often a sentence may begin with an uppercase ACCENTED letter,
-	# and xpath's limited regex library doesn't support Unicode classes
+	# We have to additionally filter using the `regex` library, because often a sentence may begin with an uppercase *accented* letter, and xpath's limited regex implementation doesn't support Unicode classes.
 	nodes = [node for node in nodes if regex.match(r"^[^\p{Letter}0-9]?[\p{Lowercase_Letter}]", node.inner_text())]
 
 	if nodes:
