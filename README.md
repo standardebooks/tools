@@ -46,7 +46,7 @@ sudo ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/pytho
 sudo ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completion/completions/se
 
 # Install Fish completions.
-ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
+ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se.fish $HOME/.config/fish/completions/
 ```
 
 ## Fedora 41 users
@@ -199,6 +199,10 @@ We need volunteers to take the lead on the following goals:
 - Over the years, `./se/se_epub_build.py` has evolved to become very large and unwieldy. Is there a better, clearer way to organize this code?
 
 # Tool descriptions
+
+-	### `se add-file`
+
+	Add an SE template file and any accompanying CSS.
 
 -	### `se british2american`
 

@@ -12,7 +12,8 @@ _arguments -C \
 case $state in
 	cmds)
 		_values "se command" \
-			"british2american[Try to convert British quote style to American quote style.]" \
+			"add-file[Add an SE template file and any accompanying CSS.]" \
+			"british2american[Add an SE template file and any accompanying CSS.]" \
 			"build[Build an ebook from a Standard Ebook source directory.]" \
 			"build-ids[Change ID attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced, and the ebook spine must be complete.]" \
 			"build-images[Build ebook cover and titlepage images in a Standard Ebook source directory.]" \
@@ -53,6 +54,13 @@ case $state in
 		;;
 	args)
 		case $line[1] in
+			add-file)
+				_arguments -s \
+					{-f,--force}'[overwrite any existing files]' \
+					{-h,--help}'[show a help message and exit]' \
+					'1:file:(dedication endnotes epigraph glossary halftitlepage)' \
+					'*: :_directories'
+				;;
 			british2american)
 				_arguments -s \
 					{-f,--force}'[force conversion of quote style]' \
@@ -230,7 +238,8 @@ case $state in
 					'*: :_files -g \*.xhtml' \
 					{-x,--xhtml}'[output XHTML instead of HTML5]' \
 					{-e,--extra-css-file}'=[the path to an additional CSS file to include after any CSS files in the epub]: :_files' \
-					{-i,--image-files}'[leave image src attributes as relative URLs instead of inlining as data: URIs]'
+					{-i,--image-files}'[leave image src attributes as relative URLs instead of inlining as data: URIs]' \
+					'*: :_directories'
 				;;
 			renumber-endnotes)
 				_arguments -s \
@@ -306,7 +315,6 @@ case $state in
 					{-h,--help}'[show a help message and exit]' \
 					'*: :_files -g \*.xhtml'
 				;;
-			unicode-names)
 		esac
 		;;
 esac

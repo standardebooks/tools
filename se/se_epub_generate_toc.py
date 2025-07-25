@@ -790,7 +790,7 @@ def generate_toc(self) -> str:
 	Entry point for `SeEpub.generate_toc()`.
 	"""
 
-	work_title = self.get_work_title()
+	work_title = self.get_title()
 
 	landmarks, toc_list = process_all_content(self, self.spine_file_paths)
 

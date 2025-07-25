@@ -76,6 +76,7 @@ class SeEpub:
 	glossary_search_key_map_path = None # The path to the glossary search key map, or None
 	local_css = ""
 	is_se_ebook = True
+	_language = None
 	_file_cache: Dict[str, str] = {}
 	_dom_cache: Dict[str, se.easy_xml.EasyXmlTree] = {}
 	_generated_identifier = None
@@ -141,6 +142,17 @@ class SeEpub:
 		identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier/text()", True)
 		if not identifier or not identifier.startswith("https://standardebooks.org/ebooks/"):
 			self.is_se_ebook = False
+
+	@property
+	def language(self):
+		"""
+		Accessor
+		"""
+
+		if not self._language:
+			self._language = self.metadata_dom.xpath("/package/metadata/dc:language/text()", True)
+
+		return self._language
 
 	@property
 	def cover_path(self):
@@ -532,7 +544,6 @@ class SeEpub:
 
 		# Get some header data: title, core and local css
 		title = self.metadata_dom.xpath("/package/metadata/dc:title/text()")[0]
-		language = self.metadata_dom.xpath("/package/metadata/dc:language/text()")[0]
 		css = ""
 		namespaces: List[str] = []
 
@@ -603,7 +614,7 @@ class SeEpub:
 		# Remove -epub-* CSS as it's invalid in a browser context
 		css = regex.sub(r"\s*\-epub\-[^;]+?;", "", css)
 
-		output_xhtml = f"<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" epub:prefix=\"z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0\" xml:lang=\"{language}\"><head><meta charset=\"utf-8\"/><title>{title}</title><style/></head><body></body></html>"
+		output_xhtml = f"<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" epub:prefix=\"z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0\" xml:lang=\"{self.language}\"><head><meta charset=\"utf-8\"/><title>{title}</title><style/></head><body></body></html>"
 		output_dom = se.formatting.EasyXmlTree(output_xhtml)
 		output_dom.is_css_applied = True # We will apply CSS recursively to nodes that will be attached to output_dom, so set the bit here
 
@@ -955,8 +966,7 @@ class SeEpub:
 			with importlib.resources.files("se.data.templates").joinpath("loi.xhtml").open("r", encoding="utf-8") as file:
 				loi_dom = se.easy_xml.EasyXmlTree(file.read())
 
-			language = self.metadata_dom.xpath("/package/metadata/dc:language/text()")[0]
-			loi_dom.xpath("/html")[0].set_attr("xml:lang", language)
+			loi_dom.xpath("/html")[0].set_attr("xml:lang", self.language)
 		else:
 			loi_dom = self.get_dom(self.loi_path)
 
@@ -1350,7 +1360,7 @@ class SeEpub:
 
 		return worktype
 
-	def get_work_title(self) -> str:
+	def get_title(self) -> str:
 		"""
 		Returns the title of the book from the metadata file, which we assume has already been correctly completed.
 
@@ -1358,10 +1368,28 @@ class SeEpub:
 		None
 
 		OUTPUTS:
-		Either the title of the book or the default WORKING_TITLE
+		Either the title of the book, or `TITLE` if the required metadata element doesn't exist
 		"""
 
-		return self.metadata_dom.xpath("/package/metadata/dc:title/text()", True) or "WORK_TITLE"
+		return self.metadata_dom.xpath("/package/metadata/dc:title/text()", True) or "TITLE"
+
+	def get_subtitle(self) -> Union[str, None]:
+		"""
+		Returns the subtitle of the book from the metadata file, which we assume has already been correctly completed.
+
+		INPUTS:
+		None
+
+		OUTPUTS:
+		Either the title of the book, or `None` if there is no subtitle
+		"""
+		nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='title-type' and text()='subtitle']/@refines")
+		subtitle_element_id = nodes[0].replace("#", "") if nodes else None
+
+		nodes = self.metadata_dom.xpath(f"/package/metadata/dc:title[@id='{subtitle_element_id}']")
+		subtitle = nodes[0].inner_text() if nodes else None
+
+		return subtitle
 
 	def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = None) -> list:
 		"""

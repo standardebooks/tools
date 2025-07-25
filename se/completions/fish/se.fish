@@ -1,6 +1,6 @@
 function __fish_se_no_subcommand --description "Test if se has yet to be given the subcommand"
 	for i in (commandline -opc)
-		if contains -- $i british2american build build-ids build-images build-loi build-manifest build-spine build-title build-toc clean compare-versions create-draft css-select dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names version word-count xpath
+		if contains -- $i add-file british2american build build-ids build-images build-loi build-manifest build-spine build-title build-toc clean compare-versions create-draft css-select dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names version word-count xpath
 			return 1
 		end
 	end
@@ -10,6 +10,11 @@ end
 complete -c se -n "__fish_se_no_subcommand" -s h -l help -x -d "show a help message and exit"
 complete -c se -n "__fish_se_no_subcommand" -s p -l plain -x -d "print plain text output, without tables or formatting"
 complete -c se -n "__fish_se_no_subcommand" -s v -l version -x -d "print version number and exit"
+
+complete -c se -n "__fish_se_no_subcommand" -a add-file -d "Add an SE template file and any accompanying CSS."
+complete -c se -A -n "__fish_seen_subcommand_from add-file" -s f -l force -d "overwrite any existing files"
+complete -c se -A -n "__fish_seen_subcommand_from add-file" -s h -l help -x -d "show this help message and exit"
+complete -c se -A -n "__fish_seen_subcommand_from add-file" -l type -x -a "dedication endnotes epigraph glossary halftitlepage" -d "the type of file to add"
 
 complete -c se -n "__fish_se_no_subcommand" -a british2american -d "Try to convert British quote style to American quote style."
 complete -c se -A -n "__fish_seen_subcommand_from british2american" -s f -l force -d "force conversion of quote style"

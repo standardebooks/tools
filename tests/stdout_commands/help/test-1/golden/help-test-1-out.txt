@@ -1,4 +1,5 @@
 The following commands are available:
+add-file
 british2american
 build
 build-ids
