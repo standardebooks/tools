@@ -317,7 +317,7 @@ SEMANTICS & CONTENT
 "s-060", "Italics on name that requires quotes instead."
 "s-061", "Title and following header content not in a [xhtml]<header>[/] element."
 "s-062", "[xhtml]<dt>[/] element in a glossary without exactly one [xhtml]<dfn>[/] child."
-"s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/]."
+"s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<div>[/]."
 "s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space."
 "s-065", "[val]fulltitle[/] semantic on element that is not in the half title."
 "s-066", "Header element missing [val]label[/] semantic."
@@ -1667,9 +1667,9 @@ def _lint_xhtml_css_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 	if nodes:
 		messages.append(LintMessage("c-013", "Element with margin or padding not in increments of [css].5em[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for <table> without set margins. We ignore tables that are for drama structuring, and tables that are ancestors of <blockquote> because <blockquote> has its own margin.
+	# Check for <table> without set margins. We ignore tables that are ancestors of <blockquote> because <blockquote> has its own margin.
 	# We also ignore tables whose preceding sibling sets a bottom margin that is not 0.
-	nodes = dom.xpath("/html/body//table[not(./ancestor-or-self::*[contains(@epub:type, 'z3998:drama')]) and not(./ancestor::blockquote) and not(./preceding-sibling::*[1][@data-css-margin-bottom != '0']) and (not(@data-css-margin-top) or not(@data-css-margin-right) or not(@data-css-margin-bottom) or not(@data-css-margin-left))]")
+	nodes = dom.xpath("/html/body//table[not(./ancestor::blockquote) and not(./preceding-sibling::*[1][@data-css-margin-bottom != '0']) and (not(@data-css-margin-top) or not(@data-css-margin-right) or not(@data-css-margin-bottom) or not(@data-css-margin-left))]")
 	if nodes:
 		messages.append(LintMessage("c-014", "[xhtml]<table>[/] element without explicit margins. Most tables need [css]margin: 1em;[/] or [css]margin: 1em auto 1em auto;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
@@ -2155,10 +2155,10 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	if nodes:
 		messages.append(LintMessage("s-062", "[xhtml]<dt>[/] element in a glossary without exactly one [xhtml]<dfn>[/] child.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check that `z3998:persona` is only on <b> or <td>. We use the contact() xpath function so we don't catch `z3998:personal-name`
-	nodes = dom.xpath("/html/body//*[contains(concat(' ', @epub:type, ' '), ' z3998:persona ') and not(self::b or self::td)]")
+	# Check that `z3998:persona` is only on <b> or <div>. We use the contact() xpath function so we don't catch `z3998:personal-name`
+	nodes = dom.xpath("/html/body//*[contains(concat(' ', @epub:type, ' '), ' z3998:persona ') and not(self::b or self::div)]")
 	if nodes:
-		messages.append(LintMessage("s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<div>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
 	# Check for fulltitle semantic on a header not in the half title
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'fulltitle') and name()!='h2' and name()!='hgroup' and not(ancestor::*[contains(@epub:type, 'halftitlepage')])]")
