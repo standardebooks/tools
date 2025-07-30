@@ -2255,7 +2255,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		messages.append(LintMessage("s-081", "[xhtml]<p>[/] preceded by [xhtml]<figure>[/], [xhtml]<blockquote>[/xhtml], or [xhtml]<table>[/], but without [val]continued[/] class.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 	# Check for language tags transliterated into Latin script but missing `-Latn` suffix
-	nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '^(he|ru|el|zh|bn|hi|sa|uk|yi|grc|ja|ko)$') and re:test(., '[a-zA-Z]')]")
+	nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '^(he|ru|el|zh|bn|hi|sa|uk|yi|grc|ja|ko|ar)$') and re:test(., '[a-zA-Z]')]")
 	if nodes:
 		messages.append(LintMessage("s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
