@@ -25,7 +25,7 @@ import se.formatting
 from se.se_epub import SeEpub
 
 
-COVER_TITLE_BOX_Y = 1620 # In px; note that in SVG, Y starts from the TOP of the image
+COVER_TITLE_BOX_Y = 1620 # In px; note that in SVG, Y starts from the *top* of the image.
 COVER_TITLE_BOX_HEIGHT = 430
 COVER_TITLE_BOX_WIDTH = 1300
 COVER_TITLE_BOX_PADDING = 100
@@ -38,18 +38,18 @@ COVER_AUTHOR_HEIGHT = 40
 COVER_AUTHOR_MARGIN = 20
 TITLEPAGE_VERTICAL_PADDING = 50
 TITLEPAGE_HORIZONTAL_PADDING = 100
-TITLEPAGE_TITLE_HEIGHT = 80 # Height of each title line
-TITLEPAGE_TITLE_MARGIN = 20 # Space between consecutive title lines
-TITLEPAGE_AUTHOR_SPACING = 100 # Space between last title line and first author line
-TITLEPAGE_AUTHOR_HEIGHT = 60 # Height of each author line
-TITLEPAGE_AUTHOR_MARGIN = 20 # Space between consecutive author lines
-TITLEPAGE_CONTRIBUTORS_SPACING = 150 # Space between last author line and first contributor descriptor
-TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT = 40 # Height of each contributor descriptor line
-TITLEPAGE_CONTRIBUTOR_HEIGHT = 40 # Height of each contributor line
-TITLEPAGE_CONTRIBUTOR_MARGIN = 20 # Space between contributor descriptor and contributor line, and between sequential contributor lines
-TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN = 80 # Space between last contributor line and next contributor descriptor (if more than one contributor descriptor)
-LEAGUE_SPARTAN_KERNING = 5 # In px
-LEAGUE_SPARTAN_AVERAGE_SPACING = 7 # Guess at average default spacing between letters, in px
+TITLEPAGE_TITLE_HEIGHT = 80 # Height of each title line.
+TITLEPAGE_TITLE_MARGIN = 20 # Space between consecutive title lines.
+TITLEPAGE_AUTHOR_SPACING = 100 # Space between last title line and first author line.
+TITLEPAGE_AUTHOR_HEIGHT = 60 # Height of each author line.
+TITLEPAGE_AUTHOR_MARGIN = 20 # Space between consecutive author lines.
+TITLEPAGE_CONTRIBUTORS_SPACING = 150 # Space between last author line and first contributor descriptor.
+TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT = 40 # Height of each contributor descriptor line.
+TITLEPAGE_CONTRIBUTOR_HEIGHT = 40 # Height of each contributor line.
+TITLEPAGE_CONTRIBUTOR_MARGIN = 20 # Space between contributor descriptor and contributor line, and between sequential contributor lines.
+TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN = 80 # Space between last contributor line and next contributor descriptor (if more than one contributor descriptor).
+LEAGUE_SPARTAN_KERNING = 5 # In px.
+LEAGUE_SPARTAN_AVERAGE_SPACING = 7 # Guess at average default spacing between letters, in px.
 LEAGUE_SPARTAN_100_WIDTHS = {" ": 40.0, "A": 98.245, "B": 68.1875, "C": 83.97625, "D": 76.60875, "E": 55.205, "F": 55.79, "G": 91.57875, "H": 75.0875, "I": 21.98875, "J": 52.631254, "K": 87.83625, "L": 55.205, "M": 106.9, "N": 82.5725, "O": 97.1925, "P": 68.1875, "Q": 98.83, "R": 79.41599, "S": 72.63125, "T": 67.83625, "U": 75.32125, "V": 98.245, "W": 134.62, "X": 101.28625, "Y": 93.1, "Z": 86.19875, ".": 26.78375, ",": 26.78375, "/": 66.08125, "\\": 66.08125, "-": 37.66125, ":": 26.78375, ";": 26.78375, "’": 24.3275, "!": 26.78375, "?": 64.3275, "&": 101.87125, "0": 78.48, "1": 37.895, "2": 75.205, "3": 72.04625, "4": 79.29875, "5": 70.175, "6": 74.26875, "7": 76.95875, "8": 72.16375, "9": 74.26875, "—": 126.31475}
 
 CONTRIBUTOR_BLOCK_TEMPLATE = """<dc:contributor id="CONTRIBUTOR_ID">CONTRIBUTOR_NAME</dc:contributor>
@@ -59,7 +59,7 @@ CONTRIBUTOR_BLOCK_TEMPLATE = """<dc:contributor id="CONTRIBUTOR_ID">CONTRIBUTOR_
 		<meta property="se:url.authority.nacoaf" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_NACOAF_URI</meta>
 		<meta property="role" refines="#CONTRIBUTOR_ID" scheme="marc:relators">CONTRIBUTOR_MARC</meta>"""
 
-console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
 def _replace_in_file(file_path: Path, search: Union[str, list], replace: Union[str, list]) -> None:
 	"""
@@ -85,10 +85,11 @@ def _replace_in_file(file_path: Path, search: Union[str, list], replace: Union[s
 def _get_word_widths(string: str, target_height: int) -> list:
 	"""
 	Helper function.
+
 	Given a string and a target letter height, return an array of words with their corresponding widths.
 
 	INPUTS
-	string: The string to inspect
+	string: The string to inspect.
 	target_height: The target letter height, in pixels.
 
 	OUTPUTS
@@ -96,19 +97,19 @@ def _get_word_widths(string: str, target_height: int) -> list:
 	"""
 
 	words = []
-	# Forcing a split on " " means that we can use non-breaking spaces to tie together blocks (e.g. Mrs. Seacole)
+	# Forcing a split on ` ` means that we can use non-breaking spaces to tie together blocks (e.g. `Mrs. Seacole`).
 	for word in reversed(string.strip().split(" ")):
 		width = 0
 
 		for char in word:
-			# Convert accented characters to unaccented characters
+			# Convert accented characters to unaccented characters.
 			char = unidecode(char)
 
-			# Oops! unidecode also converts `’` to `'`. Change it back here
+			# Oops! unidecode also converts `’` to `'`. Change it back here.
 			if char == "'":
 				char = "’"
 
-			# unidecode also converts `—` to `--`
+			# `unidecode` also converts `—` to `--`.
 			if char == "--":
 				char = "—"
 
@@ -123,13 +124,13 @@ def _get_word_widths(string: str, target_height: int) -> list:
 def _calculate_image_lines(string: str, target_height: int, canvas_width: int) -> list:
 	"""
 	Helper function.
-	Given a string, a target letter height, and the canvas width, return an array representing the string
-	broken down into enough lines to fill the canvas without overflowing. Lines are ordered with the widest at the bottom.
+
+	Given a string, a target letter height, and the canvas width, return an array representing the string broken down into enough lines to fill the canvas without overflowing. Lines are ordered with the widest at the bottom.
 
 	INPUTS
-	string: The string to inspect
-	target_height: The target letter height, in pixels
-	canvas_width: The width of the canvas, in pixels
+	string: The string to inspect.
+	target_height: The target letter height, in pixels.
+	canvas_width: The width of the canvas, in pixels.
 
 	OUTPUTS
 	An array of strings. Each string represents one line of text in the final image. The lines are ordered with the widest at the bottom.
@@ -157,7 +158,7 @@ def _calculate_image_lines(string: str, target_height: int, canvas_width: int) -
 
 	lines.reverse()
 
-	# If the first line is a single short word, move up the first word of the next line
+	# If the first line is a single short word, move up the first word of the next line.
 	if len(lines[0]) <= 3 and len(lines) > 1:
 		first_word = regex.match(r"^[\p{Letter}]+(?=\s)", lines[1])
 
@@ -170,50 +171,52 @@ def _calculate_image_lines(string: str, target_height: int, canvas_width: int) -
 def _generate_titlepage_svg(title: str, authors: List[str], contributors: dict, title_string: str) -> str:
 	"""
 	Generate a draft of the titlepage SVG.
+
 	The function tries to build the title with the widest line at the bottom, moving up.
+
 	We approximate a few values, like the width of a space, which are variable in the font.
 
 	INPUTS
-	title: The title
-	authors: an author, or an array of authors
-	contributors: a dict in the form of: {"contributor descriptor": "contributor name(s)" ... }
-	title_string: The SE titlestring (e.g. "The Rubáiyát of Omar Khayyám. Translated by Edward Fitzgerald. Illustrated by Edmund Dulac")
+	title: The title.
+	authors: An author, or an array of authors.
+	contributors: A dict in the form of: `{"contributor descriptor": "contributor name(s)" ... }`.
+	title_string: The SE titlestring (e.g. `The Rubáiyát of Omar Khayyám. Translated by Edward Fitzgerald. Illustrated by Edmund Dulac`).
 
 	OUTPUTS
 	A string representing the complete SVG source code of the titlepage.
 	"""
 
-	# Don't include "anonymous" authors in the cover
+	# Don't include "anonymous" authors in the cover.
 	authors = [author for author in authors if author.lower() != "anonymous"]
 
 	svg = ""
 	canvas_width = se.TITLEPAGE_WIDTH - (TITLEPAGE_HORIZONTAL_PADDING * 2)
 
-	# Read our template SVG to get some values before we begin
+	# Read our template SVG to get some values before we begin.
 	with importlib.resources.files("se.data.templates").joinpath("titlepage.svg").open("r", encoding="utf-8") as file:
 		svg = file.read()
 
-	# Remove the template text elements from the SVG source, we'll write out to it later
+	# Remove the template text elements from the SVG source, we'll write out to it later.
 	svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
 
-	# Calculate the title lines
+	# Calculate the title lines.
 	title_lines = _calculate_image_lines(title.upper(), TITLEPAGE_TITLE_HEIGHT, canvas_width)
 
-	# Calculate the author lines
+	# Calculate the author lines.
 	authors_lines = []
 	for author in authors:
 		authors_lines.append(_calculate_image_lines(author.upper(), TITLEPAGE_AUTHOR_HEIGHT, canvas_width))
 
-	# Calculate the contributor lines
+	# Calculate the contributor lines.
 	contributor_lines = []
 	for descriptor, contributor in contributors.items():
 		contributor_lines.append([descriptor, _calculate_image_lines(contributor.upper(), TITLEPAGE_CONTRIBUTOR_HEIGHT, canvas_width)])
 
-	# Construct the output
+	# Construct the output.
 	text_elements = ""
 	element_y = TITLEPAGE_VERTICAL_PADDING
 
-	# Add the title
+	# Add the title.
 	for line in title_lines:
 		element_y += TITLEPAGE_TITLE_HEIGHT
 		text_elements += f"\t<text class=\"title\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
@@ -221,7 +224,7 @@ def _generate_titlepage_svg(title: str, authors: List[str], contributors: dict, 
 
 	element_y -= TITLEPAGE_TITLE_MARGIN
 
-	# Add the author(s)
+	# Add the author(s).
 	if authors:
 		element_y += TITLEPAGE_AUTHOR_SPACING
 
@@ -234,7 +237,7 @@ def _generate_titlepage_svg(title: str, authors: List[str], contributors: dict, 
 	if authors:
 		element_y -= TITLEPAGE_AUTHOR_MARGIN
 
-	# Add the contributor(s)
+	# Add the contributor(s).
 	if contributor_lines:
 		element_y += TITLEPAGE_CONTRIBUTORS_SPACING
 		for contributor in contributor_lines:
@@ -253,7 +256,7 @@ def _generate_titlepage_svg(title: str, authors: List[str], contributors: dict, 
 
 		element_y -= TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
 	else:
-		# Remove unused CSS
+		# Remove unused CSS.
 		svg = regex.sub(r"\n\t\t\.contributor-descriptor{.+?}\n", "", svg, flags=regex.DOTALL)
 		svg = regex.sub(r"\n\t\t\.contributor{.+?}\n", "", svg, flags=regex.DOTALL)
 
@@ -267,32 +270,34 @@ def _generate_titlepage_svg(title: str, authors: List[str], contributors: dict, 
 def _generate_cover_svg(title: str, authors: List[str], title_string: str) -> str:
 	"""
 	Generate a draft of the cover SVG.
+
 	The function tries to build the title box with the widest line at the bottom, moving up.
+
 	We approximate a few values, like the width of a space, which are variable in the font.
 
 	INPUTS
-	title: The title
-	authors: an author, or an array of authors
-	title_string: The SE titlestring (e.g. "The Rubáiyát of Omar Khayyám. Translated by Edward Fitzgerald. Illustrated by Edmund Dulac")
+	title: The title.
+	authors: An author, or an array of authors.
+	title_string: The SE titlestring (e.g. `The Rubáiyát of Omar Khayyám. Translated by Edward Fitzgerald. Illustrated by Edmund Dulac`).
 
 	OUTPUTS
 	A string representing the complete SVG source code of the cover page.
 	"""
 
-	# Don't include "anonymous" authors in the cover
+	# Don't include "anonymous" authors in the cover.
 	authors = [author for author in authors if author.lower() != "anonymous"]
 
 	svg = ""
 	canvas_width = COVER_TITLE_BOX_WIDTH - (COVER_TITLE_BOX_PADDING * 2)
 
-	# Read our template SVG to get some values before we begin
+	# Read our template SVG to get some values before we begin.
 	with importlib.resources.files("se.data.templates").joinpath("cover.svg").open("r", encoding="utf-8") as file:
 		svg = file.read()
 
-	# Remove the template text elements from the SVG source, we'll write out to it later
+	# Remove the template text elements from the SVG source, we'll write out to it later.
 	svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
 
-	# Calculate the title lines
+	# Calculate the title lines.
 	title_height = COVER_TITLE_HEIGHT
 	title_class = "title"
 	title_lines = _calculate_image_lines(title.upper(), title_height, canvas_width)
@@ -307,12 +312,12 @@ def _generate_cover_svg(title: str, authors: List[str], title_string: str) -> st
 		title_class = "title-xsmall"
 		title_lines = _calculate_image_lines(title.upper(), title_height, canvas_width)
 
-	# Calculate the author lines
+	# Calculate the author lines.
 	authors_lines = []
 	for author in authors:
 		authors_lines.append(_calculate_image_lines(author.upper(), COVER_AUTHOR_HEIGHT, canvas_width))
 
-	# Construct the output
+	# Construct the output.
 	text_elements = ""
 	spacing = COVER_AUTHOR_SPACING
 	if not authors:
@@ -325,7 +330,7 @@ def _generate_cover_svg(title: str, authors: List[str], title_string: str) -> st
 				+ (len(authors_lines) * COVER_AUTHOR_HEIGHT) \
 		)) / 2)
 
-	# Add the title
+	# Add the title.
 	for line in title_lines:
 		element_y += title_height
 		text_elements += f"\t<text class=\"{title_class}\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
@@ -333,7 +338,7 @@ def _generate_cover_svg(title: str, authors: List[str], title_string: str) -> st
 
 	element_y -= COVER_TITLE_MARGIN
 
-	# Add the author(s)
+	# Add the author(s).
 	if authors:
 		element_y += COVER_AUTHOR_SPACING
 
@@ -345,7 +350,7 @@ def _generate_cover_svg(title: str, authors: List[str], title_string: str) -> st
 
 		element_y -= COVER_AUTHOR_MARGIN
 
-	# Remove unused CSS
+	# Remove unused CSS.
 	if title_class != "title":
 		svg = regex.sub(r"\n\n\t\t\.title\{.+?\}", "", svg, flags=regex.DOTALL)
 
@@ -364,16 +369,14 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> Tuple[Optional[str]
 	Given a string, try to see if there's a Wikipedia page entry, and an optional NACOAF entry, for that string.
 
 	INPUTS
-	string: The string to find on Wikipedia
+	string: The string to find on Wikipedia.
 	get_nacoaf_uri: Include NACOAF URI in resulting tuple, if found?
 
 	OUTPUTS
 	A tuple of two strings. The first string is the Wikipedia URL, the second is the NACOAF URI.
 	"""
 
-	# We try to get the Wikipedia URL by the subject by taking advantage of the fact that Wikipedia's special search will redirect you immediately
-	# if there's an article match.  So if the search page tries to redirect us, we use that redirect link as the Wiki URL.  If the search page
-	# returns HTTP 200, then we didn't find a direct match and return nothing.
+	# We try to get the Wikipedia URL by the subject by taking advantage of the fact that Wikipedia's special search will redirect you immediately if there's an article match. So if the search page tries to redirect us, we use that redirect link as the Wiki URL. If the search page returns HTTP 200, then we didn't find a direct match and return nothing.
 
 	try:
 		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": "1"}, allow_redirects=False, timeout=60)
@@ -384,7 +387,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> Tuple[Optional[str]
 		nacoaf_uri = None
 		wiki_url = response.headers["Location"]
 		if urllib.parse.urlparse(wiki_url).path == "/wiki/Special:Search":
-			# Redirected back to search URL, no match
+			# Redirected back to search URL, no match.
 			return None, None
 
 		if get_nacoaf_uri:
@@ -402,7 +405,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> Tuple[Optional[str]
 
 def _copy_template_file(filename: str, dest_path: Path) -> None:
 	"""
-	Copy a template file to the given destination Path
+	Copy a template file to the given destination `Path`.
 	"""
 	if dest_path.is_dir():
 		dest_path = dest_path / filename
@@ -411,7 +414,7 @@ def _copy_template_file(filename: str, dest_path: Path) -> None:
 
 def _add_name_abbr(contributor: str) -> str:
 	"""
-	Add <abbr epub:type="z3998:given-name"> around contributor names
+	Add `<abbr epub:type="z3998:given-name">` around contributor names.
 	"""
 
 	contributor = regex.sub(r"([\p{Uppercase_Letter}]\.(?:\s*[\p{Uppercase_Letter}]\.)*)", r"""<abbr epub:type="z3998:given-name">\1</abbr>""", contributor)
@@ -421,19 +424,20 @@ def _add_name_abbr(contributor: str) -> str:
 def _generate_contributor_string(contributors: List[Dict], include_xhtml: bool) -> str:
 	"""
 	Given a list of contributors, generate a contributor string like `Bob Smith, Jane Doe, and Sam Johnson`.
-	With include_xhtml, the string looks like: `<b epub:type="z3998:personal-name">Bob Smith</b>, <a href="https://en.wikipedia.org/wiki/Jane_Doe">Jane Doe</a>, and <b epub:type="z3998:personal-name">Sam Johnson</b>`
+
+	With `include_xhtml`, the string looks like: `<b epub:type="z3998:personal-name">Bob Smith</b>, <a href="https://en.wikipedia.org/wiki/Jane_Doe">Jane Doe</a>, and <b epub:type="z3998:personal-name">Sam Johnson</b>`
 
 	INPUTS
-	contributors: A list of contributor dicts
-	include_xhtml: Include <b> or <a> for each contributor, making the output suitable for the colophon
+	contributors: A list of contributor dicts.
+	include_xhtml: Include `<b>` or `<a>` for each contributor, making the output suitable for the colophon.
 
 	OUTPUTS
-	A string of XML representing the contributors
+	A string of XML representing the contributors.
 	"""
 
 	output = ""
 
-	# Don't include "anonymous" contributors
+	# Don't include "anonymous" contributors.
 	contributors = [contributor for contributor in contributors if contributor["name"].lower() != "anonymous"]
 
 	if len(contributors) == 1:
@@ -484,11 +488,11 @@ def _generate_metadata_contributor_xml(contributors: List[Dict], contributor_typ
 	Given a list of contributors, generate a metadata XML block.
 
 	INPUTS
-	contributors: A list of contributor dicts
-	contributor_type: Either `author`, `translator`, or `illustrator`
+	contributors: A list of contributor dicts.
+	contributor_type: Either `author`, `translator`, or `illustrator`.
 
 	OUTPUTS
-	A string of XML representing the contributor block
+	A string of XML representing the contributor block.
 	"""
 
 	output = ""
@@ -539,17 +543,17 @@ def _generate_titlepage_string(contributors: List[Dict], contributor_type: str) 
 	output = output.replace("</a>", "</b>")
 
 	if contributor_type != "illustrator":
-		# There's no z3998:illustrator term
+		# There's no `z3998:illustrator` term.
 		output = output.replace("\"z3998:personal-name", f"\"z3998:{contributor_type} z3998:personal-name")
 
 	return output
 
 def _create_draft(args: Namespace, plain_output: bool):
 	"""
-	Implementation for `se create-draft`
+	Implementation for `se create-draft`.
 	"""
 
-	# Put together some variables for later use
+	# Put together some variables for later use.
 	authors = []
 	translators = []
 	illustrators = []
@@ -730,7 +734,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 				producers_text = regex.sub(r"<[^>]+?>$", "", producers_text)
 
 				producers_text = regex.sub(r".+?(Produced by|Credits\s*:\s*) (.+?)\s*$", "\\2", producers_text, flags=regex.DOTALL)
-				# workaround for what appears to be a PG bug where the credits start as "Credits: Produced by Name1"
+				# Workaround for what appears to be a PG bug where the credits start as `Credits: Produced by Name1`.
 				producers_text = regex.sub(r"Produced by ", "", producers_text)
 				producers_text = regex.sub(r"\(.+?\)", "", producers_text, flags=regex.DOTALL)
 				producers_text = regex.sub(r" \s+", " ", producers_text, flags=regex.DOTALL)
@@ -833,7 +837,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 	if args.verbose:
 		console.print(se.prep_output("Setting up ebook metadata ...", plain_output))
 
-	# Try to find Wikipedia links if possible
+	# Try to find Wikipedia links if possible.
 	ebook_wiki_url = None
 
 	if not args.offline and title not in ("Short Fiction", "Poetry", "Essays", "Plays"):
@@ -861,7 +865,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 		file.truncate()
 
 	if not args.white_label:
-		# Create the titlepage SVG
+		# Create the titlepage SVG.
 		contributors = {}
 		if translators:
 			contributors["translated by"] = _generate_contributor_string(translators, False)
@@ -872,11 +876,11 @@ def _create_draft(args: Namespace, plain_output: bool):
 		with open(repo_path / "images" / "titlepage.svg", "w", encoding="utf-8") as file:
 			file.write(_generate_titlepage_svg(title, [author["name"] for author in authors], contributors, title_string))
 
-		# Create the cover SVG
+		# Create the cover SVG.
 		with open(repo_path / "images" / "cover.svg", "w", encoding="utf-8") as file:
 			file.write(_generate_cover_svg(title, [author["name"] for author in authors], title_string))
 
-		# Build the cover/titlepage for distribution
+		# Build the cover/titlepage for distribution.
 		epub = SeEpub(repo_path)
 		epub.generate_cover_svg()
 		epub.generate_titlepage_svg()
@@ -884,7 +888,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 		if args.pg_id:
 			_replace_in_file(content_path / "epub" / "text" / "imprint.xhtml", "PG_URL", pg_url)
 
-		# Fill out the colophon
+		# Fill out the colophon.
 		with open(content_path / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
 			colophon_xhtml = file.read()
 
@@ -920,7 +924,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 							producers_xhtml = producers_xhtml + f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(producer)).strip('.')}</b>"""
 
 						if i < producer_count - 1:
-							# If exactly two producers, we don't want a comma between them
+							# If exactly two producers, we don't want a comma between them.
 							if producer_count == 2:
 								producers_xhtml = producers_xhtml + " "
 							else:
@@ -937,7 +941,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 			file.write(colophon_xhtml)
 			file.truncate()
 
-	# Fill out the metadata file
+	# Fill out the metadata file.
 	with open(content_path / "epub" / "content.opf", "r+", encoding="utf-8") as file:
 		metadata_xml = file.read()
 
@@ -950,7 +954,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 			producers_xhtml = ""
 			i = 1
 			for producer in pg_producers:
-				# Name and File-As
+				# Name and File-As.
 				if "Distributed Proofread" in producer:
 					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">Distributed Proofreaders</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Distributed Proofreaders</meta>\n"
 				elif "anonymous" in producer.lower():
@@ -958,24 +962,24 @@ def _create_draft(args: Namespace, plain_output: bool):
 				else:
 					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">{escape(producer.strip('.'))}</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">TRANSCRIBER_SORT</meta>\n"
 
-				# Homepage
+				# Homepage.
 				if "Distributed Proofread" in producer:
 					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{i}\">https://www.pgdp.net/</meta>\n"
 
-				# LCCN
+				# LCCN.
 				if "David Widger" in producer:
 					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"se:url.authority.nacoaf\" refines=\"#transcriber-{i}\">http://id.loc.gov/authorities/names/no2011017869</meta>\n"
 
-				# Role
+				# Role.
 				producers_xhtml = producers_xhtml + f"\t\t<meta property=\"role\" refines=\"#transcriber-{i}\" scheme=\"marc:relators\">trc</meta>\n"
 
 				i = i + 1
 
-			# replace the first transcriber line with a placeholder
+			# Replace the first transcriber line with a placeholder.
 			metadata_xml = regex.sub(r"\t\t<dc:contributor id=\"transcriber-1\">TRANSCRIBER_1</dc:contributor>", "\t\tCREDITS_PLACEHOLDER", metadata_xml)
-			# remove the remaining transcriber lines
+			# Remove the remaining transcriber lines.
 			metadata_xml = regex.sub(r"^.+?transcriber.+?\n", "", metadata_xml, flags=regex.MULTILINE)
-			# replace the placeholder with the actual transcribers
+			# Replace the placeholder with the actual transcribers.
 			metadata_xml = regex.sub(r"\t\tCREDITS_PLACEHOLDER", "\t\t" + producers_xhtml.strip(), metadata_xml, flags=regex.DOTALL)
 
 		if ebook_wiki_url:
@@ -1019,7 +1023,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 						response = requests.get(search_url.format("subjects"), timeout=60)
 						result = regex.search(record_link.format("subjects"), response.text, regex.IGNORECASE)
 
-						# If Subject authority does not exist we can also check the Names authority
+						# If Subject authority does not exist we can also check the Names authority.
 						if result is None:
 							response = requests.get(search_url.format("names"), timeout=60)
 							result = regex.search(record_link.format("names"), response.text)
@@ -1045,7 +1049,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 		file.write(metadata_xml)
 		file.truncate()
 
-	# Set up local git repo
+	# Set up local Git repo.
 	if args.verbose:
 		console.print(se.prep_output("Initialising git repository ...", plain_output))
 	repo = git.Repo.init(repo_path)
@@ -1059,7 +1063,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 def create_draft(plain_output: bool) -> int:
 	"""
-	Entry point for `se create-draft`
+	Entry point for `se create-draft`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Create a skeleton of a new Standard Ebook in the current directory.")
@@ -1075,7 +1079,7 @@ def create_draft(plain_output: bool) -> int:
 	args = parser.parse_args()
 
 	try:
-		# Before we continue, confirm that there isn't a subtitle passed in with the title
+		# Before we continue, confirm that there isn't a subtitle passed in with the title.
 		if ":" in args.title:
 			console.print(se.prep_output("Titles should not include a subtitle, as subtitles are separate metadata elements in [path]content.opf[/]. Are you sure you want to continue? \\[y/N]", plain_output))
 			if input().lower() not in {"yes", "y"}:

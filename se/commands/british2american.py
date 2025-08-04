@@ -12,7 +12,7 @@ import se.typography
 
 def british2american(plain_output: bool) -> int:
 	"""
-	Entry point for `se british2american`
+	Entry point for `se british2american`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Try to convert British quote style to American quote style. Quotes must already be typogrified using the `typogrify` tool. This script isn’t perfect; proofreading is required, especially near closing quotes near to em-dashes.")
@@ -22,10 +22,10 @@ def british2american(plain_output: bool) -> int:
 	args = parser.parse_args()
 
 	return_code = 0
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
 	for filename in se.get_target_filenames(args.targets, ".xhtml"):
-		# Skip the uncopyright, since it contains quotes but is a fixed file
+		# Skip the uncopyright, since it contains quotes but is a fixed file.
 		if filename.name == "uncopyright.xhtml":
 			continue
 

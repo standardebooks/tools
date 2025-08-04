@@ -16,7 +16,7 @@ NOVEL_MIN_WORD_COUNT = 40000
 
 def word_count(plain_output: bool) -> int:
 	"""
-	Entry point for `se word-count`
+	Entry point for `se word-count`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Count the number of words in an XHTML file and optionally categorize by length. If multiple files are specified, show the total word count for all.")
@@ -53,7 +53,7 @@ def word_count(plain_output: bool) -> int:
 			is_ignored, dom = se.get_dom_if_not_ignored(xhtml, excluded_files)
 
 			if not is_ignored:
-				# Try to remove PG header/footers
+				# Try to remove PG header/footers.
 				if args.ignore_pg_boilerplate:
 					if dom:
 						for node in dom.xpath("//span[contains(@class, 'pagenum')]"):
@@ -65,7 +65,7 @@ def word_count(plain_output: bool) -> int:
 						xhtml = dom.to_string()
 
 					else:
-						# We couldn't generate a dom, fall back to regex replacements
+						# We couldn't generate a DOM, fall back to regex replacements.
 						xhtml = regex.sub(r"<(pre|div|p)[^>]*?>[^<]*Project Gutenberg[^<]+?</\1>", "", xhtml, flags=regex.IGNORECASE)
 						xhtml = regex.sub(r"<span class=\"pagenum\">.+?</span>", "", xhtml, flags=regex.IGNORECASE|regex.DOTALL)
 

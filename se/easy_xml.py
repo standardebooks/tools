@@ -11,8 +11,7 @@ import regex
 from lxml import cssselect, etree
 from cssselect import parser
 
-# Not sure how to get around pylint error, so just ignore it for now
-# until someone can solve it
+# Not sure how to get around pylint error, so just ignore it for now until someone can solve it.
 import se # pylint: disable=cyclic-import
 import se.css # pylint: disable=cyclic-import
 
@@ -21,12 +20,14 @@ CSS_RULES_CACHE: Dict[str, List[se.css.CssRule]] = {}
 
 def escape_xpath(string: str) -> str:
 	"""
-	Xpath string literals don't have escape sequences for ' and "
-	So to escape them, we have to use the xpath concat() function.
-	See https://stackoverflow.com/a/6938681
+	Xpath string literals don't have escape sequences for `'` and `"`, so to escape them, we have to use the xpath `concat()` function.
+	See <https://stackoverflow.com/a/6938681>.
 
 	This function returns the *enclosing quotes*, so it must be used without them. For example:
+
+	```python
 	dom.xpath(f"//title[text() = {se.easy_xml.escape_xpath(title)}]")
+	```
 	"""
 
 	if "'" not in string:
@@ -35,19 +36,18 @@ def escape_xpath(string: str) -> str:
 	if '"' not in string:
 		return f'"{string}"'
 
-	# Can't use f-strings here because f-strings can't contain \ escapes
+	# Can't use f-strings here because f-strings can't contain `\` escapes.
 	return "concat('%s')" % string.replace("'", "',\"'\",'")
 
 class EasyXmlTree:
 	"""
-	A helper class to make some lxml operations a little less painful.
-	Represents an entire lxml tree.
+	A helper class to make some lxml operations a little less painful. Represents an entire lxml tree.
 
 	This is not a complete XML parser. It only works if namespaces are only declared on the root element.
 	"""
 
 	def __init__(self, xml: Union[str, etree._ElementTree]):
-		self.namespaces = {"re": "http://exslt.org/regular-expressions", "xml": "http://www.w3.org/XML/1998/namespace"} # Enable regular expressions in xpath; xml is the default xml namespace
+		self.namespaces = {"re": "http://exslt.org/regular-expressions", "xml": "http://www.w3.org/XML/1998/namespace"} # Enable regular expressions in xpath; `xml` is the default XML namespace.
 		self.default_namespace = None
 
 		if isinstance(xml, etree._ElementTree):
@@ -55,19 +55,19 @@ class EasyXmlTree:
 		else:
 			xml_string = xml
 
-		# Save the default namespace for later
+		# Save the default namespace for later.
 		for namespace in regex.findall(r" xmlns=\"([^\"]+?)\"", xml_string):
 			self.default_namespace = namespace
 
-		# Always remove the default namespaces, otherwise xpath with lxml is a huge pain
+		# Always remove the default namespaces, otherwise xpath with lxml is a huge pain.
 		xml_string = regex.sub(r" xmlns=\"[^\"]+?\"", "", xml_string)
 
-		# Add additional namespaces we may have
+		# Add additional namespaces we may have.
 		for match in regex.findall(r" xmlns:(.+?)=\"([^\"]+?)\"", xml_string):
 			self.namespaces[match[0]] = match[1]
 
 		try:
-			# huge_tree allows XML files of arbitrary size, like Ulysses S. Grant
+			# `huge_tree` allows XML files of arbitrary size, like _The Personal Memoirs of Ulysses S. Grant_.
 			custom_parser = etree.XMLParser(huge_tree=True)
 			self.etree = etree.fromstring(str.encode(xml_string), parser=custom_parser)
 		except etree.XMLSyntaxError as ex:
@@ -113,8 +113,7 @@ class EasyXmlTree:
 						result.append(EasyXmlElement(element, self.namespaces))
 
 		except etree.XPathEvalError as ex:
-			# If we ask for an undefined namespace prefix, just return nothing
-			# instead of crashing
+			# If we ask for an undefined namespace prefix, just return nothing instead of crashing.
 			if str(ex) != "Undefined namespace prefix":
 				raise ex
 
@@ -139,19 +138,18 @@ class EasyXmlTree:
 
 	def apply_css(self, css: str, filename: Optional[str] = None):
 		"""
-		Apply a CSS stylesheet to an XHTML tree.
-		The application is naive and should not be expected to be browser-grade.
-		CSS properties on specific elements can be returned using EasyXmlElement.get_css_property()
+		Apply a CSS stylesheet to an XHTML tree. The application is naive and should not be expected to be browser-grade. CSS properties on specific elements can be returned using `EasyXmlElement.get_css_property()`.
 
-		With filename, save the resulting rules in a cache to prevent having to re-parse
-		the same stylesheet over and over.
+		With `filename`, save the resulting rules in a cache to prevent having to re-parse the same stylesheet over and over.
 
-		Currently this does not support rules/declarations in @ blocks like @supports.
+		Currently this does not support rules/declarations in `@` blocks, like `@supports`.
 
 		For example,
 
-		for node in dom.xpath("//em")"
+		```python
+		for node in dom.xpath("//em")
 			print(node.get_css_property("font-style"))
+		```
 		"""
 		self.is_css_applied = True
 
@@ -162,21 +160,21 @@ class EasyXmlTree:
 			if filename:
 				CSS_RULES_CACHE[filename] = rules
 
-		# We've parsed the CSS, now apply it to the DOM tree
+		# We've parsed the CSS, now apply it to the DOM tree.
 		for rule in rules:
 			try:
 				for node in self.css_select(rule.selector):
 					for declaration in rule.declarations:
 						self._apply_css_declaration_to_node(node, declaration, rule.specificity_number)
 
-						# If the property is inherited, apply it to its descendants
-						# However inherited properties get 0 specificity, because they can be overriden
+						# If the property is inherited, apply it to its descendants.
+						# However inherited properties get `0` specificity, because they can be overriden.
 						if declaration.inherited:
 							for child in node.xpath(".//*"):
 								self._apply_css_declaration_to_node(child, declaration, 0)
 
 			except cssselect.ExpressionError:
-				# This gets thrown on some selectors not yet implemented by lxml, like *:first-of-type
+				# This gets thrown on some selectors not yet implemented by lxml, like `*:first-of-type`.
 				pass
 
 	def to_string(self) -> str:
@@ -184,8 +182,7 @@ class EasyXmlTree:
 		Serialize the tree to a string.
 		"""
 
-		# If we applied a CSS file to this tree, remove the special attributes we
-		# added before printing it out.
+		# If we applied a CSS file to this tree, remove the special attributes we added before printing it out.
 		if self.is_css_applied:
 			for node in self.xpath("//@*[starts-with(name(), 'data-css-')]/parent::*"):
 				for attr in node.lxml_element.attrib:
@@ -194,13 +191,13 @@ class EasyXmlTree:
 
 		xml = etree.tostring(self.etree, encoding="unicode")
 
-		# Re-insert the default namespace if we removed it earlier
+		# Re-insert the default namespace if we removed it earlier.
 		if self.default_namespace:
 			xml = regex.sub(r"^<([a-z0-9\-]+)\b", fr'<\1 xmlns="{self.default_namespace}"', xml)
 
 		xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + xml + "\n"
 
-		# Normalize unicode characters
+		# Normalize unicode characters.
 		xml = unicodedata.normalize("NFC", xml)
 
 		return xml
@@ -221,18 +218,16 @@ class EasyXmlElement:
 
 	def _replace_shorthand_namespaces(self, value:str) -> str:
 		"""
-		Given a string starting with a shorthand namespace, return
-		the fully qualified namespace.
+		Given a string starting with a shorthand namespace, return the fully qualified namespace.
 
-		This is useful for passing to raw lxml operations as lxml doesn't understand
-		shorthand namespaces.
+		This is useful for passing to raw lxml operations as lxml doesn't understand shorthand namespaces.
 
 		Example:
-		epub:type -> {http://www.idpf.org/2007/ops}type
+
+		`epub:type` -> `{http://www.idpf.org/2007/ops}type`.
 		"""
 
-		# The in check is redundant with the regex but is far more efficient
-		# when the value is un-namespaced
+		# The `in` check is redundant with the regex, but is far more efficient when the value is un-namespaced.
 		if ':' in value and self.namespaces:
 			value = regex.sub(r"^(\L<ns>):", lambda m: f"{{{self.namespaces[m[1]]}}}", value, ns=self.namespaces.keys())
 
@@ -243,16 +238,18 @@ class EasyXmlElement:
 		Return a string representing the opening tag of the element.
 
 		Example:
+
 		`<p class="test">Hello there!</p>` -> `<p class="test">`
+
 		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `<p>`
 		"""
 
 		attrs = ""
 
 		for name, value in self.lxml_element.items():
-			# Exclude applied CSS
+			# Exclude applied CSS.
 			if not name.startswith("data-css-"):
-				# Replace long namespaces from lxml with shorthand
+				# Replace long namespaces from lxml with shorthand.
 				short_name = name
 				for namespace, identifier in self.namespaces.items():
 					short_name = short_name.replace(f"{{{identifier}}}", f"{namespace}:")
@@ -270,23 +267,25 @@ class EasyXmlElement:
 		Return a string representing this element.
 
 		Example:
+
 		`<p class="test">Hello there!</p>` -> `<p class="test">Hello there!</p>`
+
 		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `<p>Hello there, <abbr>Mr.</abbr> Smith!</p>`
 		"""
 
 		value = etree.tostring(self.lxml_element, encoding=str, with_tail=False)
 
-		# Remove namespaces
+		# Remove namespaces.
 		value = regex.sub(r" xmlns(:[\p{Letter}]+?)?=\"[^\"]+?\"", "", value)
 
-		# Remove applied CSS
+		# Remove applied CSS.
 		value = regex.sub(r" data-css-[a-z\-]+?=\"[^\"]*?\"", "", value)
 
 		return value
 
 	def get_css(self) -> Dict:
 		"""
-		Return a dict of CSS properties applied to this node.
+		Return a `dict` of CSS properties applied to this node.
 		"""
 
 		output = {}
@@ -298,8 +297,7 @@ class EasyXmlElement:
 
 	def get_css_property(self, property_name: str):
 		"""
-		Return the applied CSS value for the given property name, like `border-color`,
-		or None if it does not exist.
+		Return the applied CSS value for the given property name, like `border-color`, or `None` if it does not exist.
 		"""
 
 		if f"data-css-{property_name}" in self.lxml_element.attrib:
@@ -315,18 +313,20 @@ class EasyXmlElement:
 		try:
 			self.lxml_element.attrib.pop(self._replace_shorthand_namespaces(attribute))
 		except KeyError:
-			# If the attribute doesn't exist, just continue
+			# If the attribute doesn't exist, just continue.
 			pass
 
 	def add_attr_value(self, attribute: str, value: str) -> None:
 		"""
 		Add a space-separated attribute value to the target attribute.
+
 		If the attribute doesn't exist, add it.
 
 		Mainly useful for HTML `class` attributes and epub `epub:type` attributes.
 
 		Example adding value `bar` to the `class` attribute:
-		<p class="foo"> -> <p class="foo bar">
+
+		`<p class="foo">` -> `<p class="foo bar">`
 		"""
 
 		existing_value = self.get_attr(attribute) or ""
@@ -336,18 +336,20 @@ class EasyXmlElement:
 	def remove_attr_value(self, attribute: str, value: str) -> None:
 		"""
 		Remove a space-separated attribute value from the target attribute.
+
 		If removing the value makes the attribute empty, remove the attribute.
 
 		Mainly useful for HTML `class` attributes and epub `epub:type` attributes.
 
 		Example removing value `bar` from the `class` attribute:
-		<p class="foo bar"> -> <p class="foo">
+
+		`<p class="foo bar">` -> `<p class="foo">`
 		"""
 
 		if self.get_attr(attribute):
 			self.set_attr(attribute, regex.sub(fr"\s*\b{regex.escape(value)}\b\s*", "", self.get_attr(attribute)))
 
-			# If the attribute is now empty, remove it
+			# If the attribute is now empty, remove it.
 			if not self.get_attr(attribute):
 				self.remove_attr(attribute)
 
@@ -395,11 +397,12 @@ class EasyXmlElement:
 		"""
 		Return a string representing the inner XML of this element.
 
-		Note: this is not *always* the same as lxml_element.text, which only returns
-		the text up to the first element node.
+		Note: this is not *always* the same as `lxml_element.text`, which only returns the text up to the first element node.
 
 		Example:
+
 		`<p class="test">Hello there!</p>` -> `Hello there!`
+
 		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `Hello there, <abbr>Mr.</abbr> Smith!`
 		"""
 
@@ -413,7 +416,9 @@ class EasyXmlElement:
 		Return the text portion of the inner XML, without any tags.
 
 		Example:
+
 		`<p class="test">Hello there!</p>` -> `Hello there!`
+
 		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `Hello there, Mr. Smith!`
 		"""
 
@@ -422,16 +427,16 @@ class EasyXmlElement:
 
 	def remove(self) -> None:
 		"""
-		Remove this element from its dom tree.
+		Remove this element from its DOM tree.
 		"""
 
-		# lxml_element.remove() removes both the element AND following elements.
-		# So, we have to have a custom remove() function here.
-		# See https://forums.wikitechy.com/question/how-to-remove-an-element-in-lxml/#70204
+		# `lxml_element.remove()` removes both the element *and* following elements.
+		# So, we have to have a custom `remove()` function here.
+		# See <https://forums.wikitechy.com/question/how-to-remove-an-element-in-lxml/#70204>.
 		parent = self.lxml_element.getparent()
 		if self.lxml_element.tail:
 			prev = self.lxml_element.getprevious()
-			if prev is not None: # We can't do `if prev` because we get a FutureWarning from lxml
+			if prev is not None: # We can't do `if prev` because we get a `FutureWarning` from lxml.
 				prev.tail = (prev.tail or "") + self.lxml_element.tail
 			else:
 				parent.text = (parent.text or "") + self.lxml_element.tail
@@ -448,11 +453,11 @@ class EasyXmlElement:
 
 	def unwrap(self) -> None:
 		"""
-		Remove the element's wrapping tag and replace it with the element's contents.
+		Remove the element's parent element, and replace it with the element's contents.
 		"""
 
 		# In lxml, there are no "text nodes" like in a classic DOM. There are only element nodes.
-		# An element has a `.text` property which is the child text UP TO THE FIRST CHILD ELEMENT.
+		# An element has a `.text` property which is the child text **up to the first child element**.
 		# An element's `.tail` property contains text *after* the element, up to its first element sibling.
 
 		parent = self.lxml_element.getparent()
@@ -462,13 +467,11 @@ class EasyXmlElement:
 		children.reverse()
 
 		# This will *move* each child element node to *after* the current element.
-		# Since any following text is stored in the child element's `.tail`, this will *also*
-		# move that text.
+		# Since any following text is stored in the child element's `.tail`, this will *also* move that text.
 		for child in children:
 			self.lxml_element.addnext(child)
 
-		# Now we've moved all child elements and the text following them. But what if there's
-		# text *before* any child elements? That is stored in the `.text` property.
+		# Now we've moved all child elements and the text following them. But what if there's text *before* any child elements? That is stored in the `.text` property.
 		if self.lxml_element.text:
 			prev = self.lxml_element.getprevious()
 			if prev is None:
@@ -494,16 +497,16 @@ class EasyXmlElement:
 
 			self.lxml_element.tail = None
 
-		# This calls the EasyXmlTree.remove() function, not an lxml function
+		# This calls the `EasyXmlTree.remove()` function, not an lxml function.
 		self.remove()
 
 	def replace_outer(self, node) -> None:
 		"""
-		Replace this node's wrapping element with the wrapping element of the passed
-		node, but keep this node's children.
+		Replace this node's wrapping element with the wrapping element of the passed node, but keep this node's children.
 
 		Example:
-		<p>foo <b>bar</b></p> -> <div class="baz">foo <b>bar</b></div>
+
+		`<p>foo <b>bar</b></p>` -> `<div class="baz">foo <b>bar</b></div>`
 		"""
 
 		node.lxml_element.tail = self.lxml_element.tail
@@ -517,10 +520,10 @@ class EasyXmlElement:
 
 	def replace_with(self, node) -> None:
 		"""
-		Remove this node and replace it with the passed node
+		Remove this node and replace it with the passed node.
 		"""
 
-		# `lxml.addnext()` moves this element's tail to the new element
+		# `lxml.addnext()` moves this element's tail to the new element.
 		if isinstance(node, EasyXmlElement):
 			self.lxml_element.addprevious(node.lxml_element)
 		else:
@@ -543,9 +546,7 @@ class EasyXmlElement:
 		Place node as the first child of this node.
 		"""
 
-		# If the node we're inserting in to has text, lxml will insert the new
-		# node *after* the text. So, we have to make the node's lxml `.text`
-		# the new node's lxml `.tail`.
+		# If the node we're inserting in to has text, lxml will insert the new node *after* the text. So, we have to make the node's lxml `.text` the new node's lxml `.tail`.
 		target = node
 		if isinstance(node, EasyXmlElement):
 			target = node.lxml_element
@@ -582,7 +583,7 @@ class EasyXmlElement:
 	@property
 	def children(self) -> List:
 		"""
-		Return a list representing of this node's direct children
+		Return a list representing of this node's direct children.
 		"""
 		children = []
 
@@ -609,15 +610,15 @@ class EasyXmlElement:
 	@property
 	def tag(self) -> str:
 		"""
-		Return a string representing this node's tag name, like `body` or `section`
+		Return a string representing this node's tag name, like `body` or `section`.
 		"""
 
 		return self.lxml_element.tag
 
 	@property
-	def parent(self): # This returns an EasyXmlElement but we can't type hint this until Python 3.10
+	def parent(self): # This returns an `EasyXmlElement` but we can't type hint this until Python 3.10.
 		"""
-		Return an EasyXmlElement representing this node's parent node
+		Return an `EasyXmlElement` representing this node's parent node.
 		"""
 
 		return EasyXmlElement(self.lxml_element.getparent(), self.namespaces)
@@ -625,10 +626,12 @@ class EasyXmlElement:
 	@property
 	def text(self) -> str:
 		"""
-		Return only returns the text up to the first element node
+		Return only returns the text up to the first element node.
 
 		Example:
+
 		`<p class="test">Hello there!</p>` -> `Hello there!`
+
 		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `Hello there, `
 		"""
 
@@ -637,7 +640,7 @@ class EasyXmlElement:
 	@text.setter
 	def text(self, value: str) -> None:
 		"""
-		Set the lxml text attribute (the text up to the first child element)
+		Set the lxml `text` attribute (the text up to the first child element).
 		"""
 
 		self.lxml_element.text = value
@@ -645,10 +648,12 @@ class EasyXmlElement:
 	@property
 	def tail(self) -> str:
 		"""
-		Return only returns the text after this node
+		Return only returns the text after this node.
 
 		Example:
+
 		`<p class="test">Hello there!</p>` -> ``
+
 		`<p class="test">Hello there!</p> he said.` -> ` he said.`
 		"""
 
@@ -657,7 +662,7 @@ class EasyXmlElement:
 	@tail.setter
 	def tail(self, value: str) -> None:
 		"""
-		Set the lxml tail attribute (the text after this element)
+		Set the lxml `tail` attribute (the text after this element).
 		"""
 
 		self.lxml_element.tail = value
@@ -665,7 +670,7 @@ class EasyXmlElement:
 	@property
 	def attrs(self) -> Dict:
 		"""
-		Return a dict of attributes for this node
+		Return a `dict` of attributes for this node.
 		"""
 
 		return self.lxml_element.attrib
@@ -673,7 +678,7 @@ class EasyXmlElement:
 	@attrs.setter
 	def attrs(self, value: Dict) -> None:
 		"""
-		Return a dict of attributes for this node
+		Return a `dict` of attributes for this node.
 		"""
 
 		self.lxml_element.attrib.clear()

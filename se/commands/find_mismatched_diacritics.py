@@ -17,7 +17,7 @@ import se
 
 def find_mismatched_diacritics(plain_output: bool) -> int:
 	"""
-	Entry point for `se find-mismatched-diacritics`
+	Entry point for `se find-mismatched-diacritics`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Find words with mismatched diacritics in a set of XHTML files. For example, `cafe` in one file and `café` in another.")
@@ -38,16 +38,16 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 				xhtml = file.read()
 				dom = se.easy_xml.EasyXmlTree(xhtml)
 
-				# Save any `alt` and `title` attributes because we may be interested in their contents
+				# Save any `alt` and `title` attributes because we may be interested in their contents.
 				for node in dom.xpath("//*[@alt or @title]"):
 					for _, value in node.attrs.items():
 						xhtml = xhtml + f" {value} "
 
-				# If we're in the colophon, remove the SE link because the author's name might have diacritics
+				# If we're in the colophon, remove the SE link because the author's name might have diacritics.
 				if dom.xpath("/html/body//section[contains(@epub:type, 'colophon')]"):
 					xhtml = regex.sub(r"<a href=\"https://standardebooks\.org.+?</a>", "", xhtml)
 
-				# Strip tags
+				# Strip tags.
 				xhtml = regex.sub(r"<[^>]+?>", " ", xhtml)
 
 				files_xhtml.append(xhtml)
@@ -60,7 +60,7 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 			se.print_error(str(ex) + f" File: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return_code = ex.code
 
-	# Create a list of accented words
+	# Create a list of accented words.
 	for xhtml in files_xhtml:
 		decomposed_xhtml = unicodedata.normalize("NFKD", xhtml)
 
@@ -73,7 +73,7 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 				else:
 					accented_words[word] = 1
 
-	# Now iterate over the list and search files for unaccented versions of the words
+	# Now iterate over the list and search files for unaccented versions of the words.
 	if accented_words:
 		for xhtml in files_xhtml:
 			for accented_word, count in accented_words.items():
@@ -92,7 +92,7 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 						mismatches[accented_word] = {}
 						mismatches[accented_word][plain_word] = (count, len(matches))
 
-	# Find accented words with multiple variants
+	# Find accented words with multiple variants.
 	if accented_words:
 		plain_to_accented_words: Dict[str, str] = {} # key: plain word; value: accented word
 		for accented_word, count in accented_words.items():
@@ -105,14 +105,14 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 			else:
 				plain_to_accented_words[plain_word] = accented_word
 
-	# Search for some exceptions
+	# Search for some exceptions.
 	filtered_mismatches = {}
 	for accented_word, child in mismatches.items():
 		keep_word = True
 		if accented_word == "hôtel":
 			keep_word = False
 			for xhtml in files_xhtml:
-				# Ignore cases of `maitre d'hôtel`, `hôtel du nord`, `hôtel d’nord`, `hôtel des baines`
+				# Ignore cases of `maitre d'hôtel`, `hôtel du nord`, `hôtel d’nord`, `hôtel des baines`.
 				if regex.search(r"(?<!d’)hôtel(?!\sd[ue]\b)(?!\sd’)(?!\sdes\b)", xhtml, flags=regex.IGNORECASE):
 					keep_word = True
 					break
@@ -120,7 +120,7 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 		if keep_word:
 			filtered_mismatches[accented_word] = child
 
-	# Sort and prepare the output
+	# Sort and prepare the output.
 	mismatches = filtered_mismatches
 
 	lines = []

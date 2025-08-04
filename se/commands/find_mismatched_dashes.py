@@ -17,7 +17,7 @@ import se.easy_xml
 
 def find_mismatched_dashes(plain_output: bool) -> int:
 	"""
-	Entry point for `se find-mismatched-dashes`
+	Entry point for `se find-mismatched-dashes`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Find words with mismatched dashes in a set of XHTML files. For example, `extra-physical` in one file and `extraphysical` in another.")
@@ -38,12 +38,12 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 				xhtml = file.read()
 				dom = se.easy_xml.EasyXmlTree(xhtml)
 
-				# Save any `alt` and `title` attributes because we may be interested in their contents
+				# Save any `alt` and `title` attributes because we may be interested in their contents.
 				for node in dom.xpath("//*[@alt or @title]"):
 					for _, value in node.attrs.items():
 						xhtml = xhtml + f" {value} "
 
-				# Strip tags
+				# Strip tags.
 				xhtml = regex.sub(r"<[^>]+?>", " ", xhtml)
 
 				files_xhtml.append(xhtml)
@@ -56,10 +56,9 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 			se.print_error(str(ex) + f" File: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return_code = ex.code
 
-	# Create a list of dashed words
+	# Create a list of dashed words.
 	for xhtml in files_xhtml:
-		# This regex excludes words with three dashes like `bric-a-brac`, because removing dashes
-		# may erroneously match regular words. Don't match `’` to prevent matches like `life’s-end` -> `s-end`
+		# This regex excludes words with three dashes like `bric-a-brac`, because removing dashes may erroneously match regular words. Don't match `’` to prevent matches like `life’s-end` -> `s-end`.
 		for word in regex.findall(r"(?<![\-’])\b\w+\-\w+\b(?![\-’])", xhtml):
 			lower_word = word.lower()
 
@@ -68,7 +67,7 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 			else:
 				dashed_words[lower_word] = 1
 
-	# Now iterate over the list and search files for undashed versions of the words
+	# Now iterate over the list and search files for undashed versions of the words.
 	if dashed_words:
 		for xhtml in files_xhtml:
 			for dashed_word, count in dashed_words.items():
@@ -87,7 +86,7 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 						mismatches[dashed_word] = {}
 						mismatches[dashed_word][plain_word] = (count, len(matches))
 
-	# Sort and prepare the output
+	# Sort and prepare the output.
 	lines = []
 
 	for dashed_word, child in mismatches.items():

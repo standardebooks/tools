@@ -12,7 +12,7 @@ import se
 
 def dec2roman(plain_output: bool) -> int: # pylint: disable=unused-argument
 	"""
-	Entry point for `se dec2roman`
+	Entry point for `se dec2roman`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Convert a decimal number to a Roman numeral.")

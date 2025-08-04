@@ -12,7 +12,7 @@ from se.se_epub import SeEpub
 
 def build_spine(plain_output: bool) -> int:
 	"""
-	Entry point for `se build-spine`
+	Entry point for `se build-spine`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Generate the <spine> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.")

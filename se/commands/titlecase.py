@@ -11,7 +11,7 @@ import se.formatting
 
 def titlecase(plain_output: bool) -> int: # pylint: disable=unused-argument
 	"""
-	Entry point for `se titlecase`
+	Entry point for `se titlecase`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Convert a string to titlecase.")

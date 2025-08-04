@@ -10,10 +10,9 @@ from se.se_epub import SeEpub
 
 def build_toc(plain_output: bool) -> int:
 	"""
-	Entry point for `se build-toc`
+	Entry point for `se build-toc`.
 
-	The meat of this function is broken out into the se_epub_generate_toc.py module for readability
-	and maintainability.
+	The meat of this function is broken out into the `se_epub_generate_toc.py` module for readability and maintainability.
 	"""
 
 	parser = argparse.ArgumentParser(description="Generate the table of contents for the ebook’s source directory and update the ToC file.")

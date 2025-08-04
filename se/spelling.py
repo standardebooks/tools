@@ -8,11 +8,11 @@ import importlib.resources
 import regex
 import se
 
-DICTIONARY: Set[str] = set()	# Store our hyphenation dictionary so we don't re-read the file on every pass
+DICTIONARY: Set[str] = set()	# Store our hyphenation dictionary so we don't re-read the file on every pass.
 
 def get_xhtml_language(xhtml: str) -> str:
 	"""
-	Try to get the IETF lang tag for a complete XHTML document
+	Try to get the IETF lang tag for a complete XHTML document.
 	"""
 
 	supported_languages = ["en-US", "en-GB", "en-AU", "en-CA", "en-IE"]
@@ -46,10 +46,10 @@ def modernize_hyphenation(xhtml: str) -> str:
 	Convert old-timey hyphenated compounds into single words based on the passed DICTIONARY.
 
 	INPUTS
-	xhtml: A string of XHTML to modernize
+	xhtml: A string of XHTML to modernize.
 
 	OUTPUTS
-	A string representing the XHTML with its hyphenation modernized
+	A string representing the XHTML with its hyphenation modernized.
 	"""
 
 	dictionary = initialize_dictionary()
@@ -57,20 +57,18 @@ def modernize_hyphenation(xhtml: str) -> str:
 	# Easy fix for a common case
 	xhtml = regex.sub(r"\b([Nn])ow-a-days\b", r"\1owadays", xhtml)	# now-a-days -> nowadays
 
-	# The non-capturing group at the beginning tries to prevent
-	# bad matches like stag's-horn -> stag'shorn or dog's-eared -> dog'seared
+	# The non-capturing group at the beginning tries to prevent bad matches like stag's-horn -> stag'shorn or dog's-eared -> dog'seared
 	result = regex.findall(r"(?<![’\'])\b[^\W\d_]+\-[^\W\d_]+\b", xhtml)
 
-	for word in set(result): # set() removes duplicates
+	for word in set(result): # `set()` removes duplicates.
 		new_word = word.replace("-", "").lower()
 		if new_word in dictionary:
-			# To preserve capitalization of the first word, we get the individual parts
-			# then replace the original match with them joined together and titlecased.
+			# To preserve capitalization of the first word, we get the individual parts then replace the original match with them joined together and titlecased.
 			lhs = regex.sub(r"\-.+$", r"", word)
 			rhs = regex.sub(r"^.+?\-", r"", word)
 			xhtml = regex.sub(fr"{lhs}-{rhs}", lhs + rhs.lower(), xhtml)
 
-	# Quick fix for a common error cases
+	# Quick fix for a common error cases.
 	xhtml = xhtml.replace("z3998:nonfiction", "z3998:non-fiction")
 	xhtml = regex.sub(r"\b([Mm])anat-arms", r"\1an-at-arms", xhtml)
 	xhtml = regex.sub(r"\b([Tt])abled’hôte", r"\1able-d’hôte", xhtml)
@@ -80,21 +78,18 @@ def modernize_hyphenation(xhtml: str) -> str:
 
 def detect_problem_spellings(xhtml: str) -> list:
 	"""
-	Return a list of potential problem spellings, that cannot be scripted due to a
-	word having various meanings.
+	Return a list of potential problem spellings, that cannot be scripted due to a word having various meanings.
 
-	For example, "staid" can be an archaic spelling of "stayed",
-	or as an adjective it could mean "marked by settled sedateness
-	and often prim self-restraint".
+	For example, `staid` can be an archaic spelling of `stayed`, or as an adjective it could mean `marked by settled sedateness and often prim self-restraint`.
 
 	INPUTS
-	xhtml: A string of XHTML to inspect
+	xhtml: A string of XHTML to inspect.
 
 	OUTPUTS
-	A list of strings representing potential words to manually inspect
+	A list of strings representing potential words to manually inspect.
 	"""
 
-	# Uncomment if we eventually need the document language
+	# Uncomment if we eventually need the document language.
 	# language = get_xhtml_language(xhtml)
 	output = []
 
@@ -132,21 +127,20 @@ def modernize_spelling(xhtml: str) -> str:
 	Convert old-timey spelling on a case-by-case basis.
 
 	INPUTS
-	xhtml: A string of XHTML to modernize
+	xhtml: A string of XHTML to modernize.
 
 	OUTPUTS
-	A string representing the XHTML with its spelling modernized
+	A string representing the XHTML with its spelling modernized.
 	"""
 
 	language = get_xhtml_language(xhtml)
 
 	# ADDING NEW WORDS TO THIS LIST:
-	# A good way to check if a word is "archaic" is to do a Google N-Gram search: https://books.google.com/ngrams/graph?case_insensitive=on&year_start=1800&year_end=2000&smoothing=3
+	# A good way to check if a word is "archaic" is to do a Google N-Gram search: <https://books.google.com/ngrams/graph?case_insensitive=on&year_start=1800&year_end=2000&smoothing=3>
 	# Remember that en-US and en-GB differ significantly, and just because a word might seem strange to you, doesn't mean it's not the common case in the other variant.
-	# If Google N-Gram shows that a word has declined significantly in usage in BOTH en-US and en-GB (or the SE editor-in-chief makes an exception) then it may be a good candidate to add to this list.
+	# If Google N-Gram shows that a word has declined significantly in usage in *both* en-US and en-GB (or the SE editor-in-chief makes an exception) then it may be a good candidate to add to this list.
 
-
-        # spelling changes on words with no diacritics or elision quotes
+        # Spelling changes on words with no diacritics or elision quotes.
 	xhtml = regex.sub(r"(?<![Cc]ompl)exion", r"ection", xhtml)			# -extion -> -exction (connexion, reflexion, etc., but "complexion")
 	xhtml = regex.sub(r"([^\p{Lowercase_Letter}]’[Tt])\s(is|were|was|wasn’t|isn’t|ain’t)\b", r"\1\2", xhtml)	# 't is, 't was, 't were 't isn't -> 'tis, 'twas, 'twere, 't isn't
 	xhtml = regex.sub(r"&amp;c\.", r"etc.", xhtml)					# &c. -> etc.
@@ -572,35 +566,35 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Pp])æan", r"\1aean", xhtml)
 	xhtml = regex.sub(r"\b([Vv])ertebræ", r"\1ertebrae", xhtml)
 
-	# Remove spaces before contractions like `n’t` e.g. `is n’t` -> `isn’t`
+	# Remove spaces before contractions like `n’t` e.g. `is n’t` -> `isn’t`.
 	xhtml = regex.sub(r" n’t\b", r"n’t", xhtml)
 
-	# Remove spaces before contractions like `it 'll`
+	# Remove spaces before contractions like `it 'll`.
 	xhtml = regex.sub(r"([\p{Letter}])\s[‘’]ll\b", r"\1’ll", xhtml)
 
-	# Remove roman ordinals
+	# Remove roman ordinals.
 	xhtml = regex.sub(r"<span epub:type=\"z3998:roman\">(.*?)</span>(st|nd|rd|th)\b", r'<span epub:type="z3998:roman">\1</span>', xhtml)
 
-	# X-ray is always capitalized. Match a preceding space so that we don't catch it in an ID attribute.
+	# `X-ray` is always capitalized. Match a preceding space so that we don't catch it in an ID attribute.
 	xhtml = regex.sub(r"([\p{Punctuation}\s])x-ray", r"\1X-ray", xhtml)
 
-	# Replace 2d with 2nd and 3d with 3rd
+	# Replace `2d` with `2nd` and `3d` with `3rd`.
 	# Check for a following abbr because `3<abbr>d.</abbr>` could mean `3 pence`
 	xhtml = regex.sub(r"\b([0-9]*2)d(?!</abbr>)", r"\1nd", xhtml)
 	xhtml = regex.sub(r"\b([0-9]*3)d(?!</abbr>)", r"\1rd", xhtml)
 
-	# Canadian spelling follows US
+	# Canadian spelling follows US.
 	if language in ["en-US", "en-CA"]:
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1ozy", xhtml)
 
-	# Australian and Irish spelling follows GB
+	# Australian and Irish spelling follows GB.
 	if language in ["en-GB", "en-AU", "en-IE"]:
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1osy", xhtml)
 
-	# US spelling is unique
+	# US spelling is unique.
 	if language == "en-US":
 		xhtml = regex.sub(r"\b([Mm])anœuvred", r"\1aneuvered", xhtml)
-		xhtml = regex.sub(r"\b([Mm])anœuv(?:er|re)", r"\1aneuver", xhtml) # Omit last letter to catch both maneuverS and maneuverING
+		xhtml = regex.sub(r"\b([Mm])anœuv(?:er|re)", r"\1aneuver", xhtml) # Omit last letter to catch both `maneuvers and `maneuvering`.
 		xhtml = regex.sub(r"\b([Mm])anœuvering", r"\1aneuvering", xhtml)
 	else:
 		xhtml = regex.sub(r"\b([Mm])anœuvred", r"\1anoeuvred", xhtml)

@@ -25,13 +25,13 @@ def initialize_selenium_firefox_webdriver() -> webdriver.Firefox:
 	if not shutil.which("firefox") and not Path("/Applications/Firefox.app/Contents/MacOS/firefox").exists():
 		raise se.MissingDependencyException("Couldn’t locate [bash]firefox[/]. Is it installed?")
 
-	# Initialize the selenium driver to take screenshots
+	# Initialize the selenium driver to take screenshots.
 
-	# We have to use the headless option, otherwise it will pop up a Firefox window
+	# We have to use the headless option, otherwise it will pop up a Firefox window.
 	options = Options()
 	options.add_argument('-headless')
 
-	# Disable the history, because otherwise links to (for example to end notes) may appear as "visited" in visits to other pages, and thus cause a fake diff
+	# Disable the history, because otherwise links to (for example to end notes) may appear as "visited" in visits to other pages, and thus cause a fake diff.
 	profile = webdriver.FirefoxProfile()
 	profile.set_preference("places.history.enabled", False)
 	profile.set_preference("browser.cache.disk.enable", False)

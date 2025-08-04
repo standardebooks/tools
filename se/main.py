@@ -33,7 +33,7 @@ def main() -> None:
 	"""
 
 	try:
-		# If we're asked for the version, short circuit and exit
+		# If we're asked for the version, short circuit and exit.
 		if len(sys.argv) == 2 and (sys.argv[1] == "-v" or sys.argv[1] == "--version"):
 			module = importlib.import_module("se.commands.version")
 			sys.exit(getattr(module, "version")())
@@ -46,10 +46,7 @@ def main() -> None:
 		parser.add_argument("command", metavar="COMMAND", choices=commands, help="one of: " + " ".join(commands))
 		parser.add_argument("arguments", metavar="ARGS", nargs="*", help="arguments for the subcommand")
 
-		# We do some hand-parsing of high-level args, because argparse
-		# can expect flags at any point in the command. We'll pass any args up to
-		# and including the subcommand to the main argparse instance, then pass
-		# the subcommand and its args to the final function we call.
+		# We do some hand-parsing of high-level arguments, because `argparse` can expect flags at any point in the command. We'll pass any arguments up to and including the subcommand to the main `argparse` instance, then pass the subcommand and its arguments to the final function we call.
 		main_args = []
 		subcommand_args = []
 		parsing_subcommand = False
@@ -65,19 +62,19 @@ def main() -> None:
 
 		args = parser.parse_args(main_args)
 
-		# Change argv to our subcommand values, so that arg parsing by child functions works as expected
+		# Change `argv` to our subcommand values, so that argument parsing by child functions works as expected.
 		sys.argv = subcommand_args
 
 		command_name = args.command.replace("-", "_")
 		command_module = f"se.commands.{command_name}"
 		if command_name == "help":
-			command_function = "se_help"  # Avoid name conflict with built-in function
+			command_function = "se_help"  # Avoid name conflict with built-in function.
 		else:
 			command_function = command_name
 
-		# Import command module and call command entrypoint
+		# Import command module and call command entrypoint.
 		module = importlib.import_module(command_module)
 
 		sys.exit(getattr(module, command_function)(args.plain_output))
 	except KeyboardInterrupt:
-		sys.exit(130) # See http://www.tldp.org/LDP/abs/html/exitcodes.html
+		sys.exit(130) # See <http://www.tldp.org/LDP/abs/html/exitcodes.html>.

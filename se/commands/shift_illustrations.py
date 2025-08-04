@@ -10,7 +10,7 @@ from se.se_epub import SeEpub
 
 def shift_illustrations(plain_output: bool) -> int:
 	"""
-	Entry point for `se shift-illustrations`
+	Entry point for `se shift-illustrations`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Increment or decrement the specified illustration and all following illustrations by 1 or a specified amount.")

@@ -16,7 +16,7 @@ from se.se_epub import SeEpub
 
 def build(plain_output: bool) -> int:
 	"""
-	Entry point for `se build`
+	Entry point for `se build`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Build compatible .epub and advanced .epub ebooks from a Standard Ebook source directory. Output is placed in the current directory, or the target directory with --output-dir.")
@@ -31,14 +31,13 @@ def build(plain_output: bool) -> int:
 	args = parser.parse_args()
 
 	called_from_parallel = se.is_called_from_parallel(False)
-	force_terminal = True if called_from_parallel else None # True will force colors, None will guess whether colors are enabled, False will disable colors
+	force_terminal = True if called_from_parallel else None # `True` will force colors, `None` will guess whether colors are enabled, `False` will disable colors.
 	first_output = True
 	return_code = 0
 
 	# Rich needs to know the terminal width in order to format tables.
-	# If we're called from Parallel, there is no width because Parallel is not a terminal. Thus we must export $COLUMNS before
-	# invoking Parallel, and then get that value here.
-	console = Console(width=int(os.environ["COLUMNS"]) if called_from_parallel and "COLUMNS" in os.environ else None, highlight=False, theme=se.RICH_THEME, force_terminal=force_terminal) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	# If we're called from Parallel, there is no width because Parallel is not a terminal. Thus we must export `$COLUMNS` before invoking Parallel, and then get that value here.
+	console = Console(width=int(os.environ["COLUMNS"]) if called_from_parallel and "COLUMNS" in os.environ else None, highlight=False, theme=se.RICH_THEME, force_terminal=force_terminal) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
 	if args.check_only and (args.check or args.build_kindle or args.build_kobo or args.proof or args.output_dir):
 		se.print_error("The [bash]--check-only[/] option can’t be combined with any other flags except for [bash]--verbose[/].", plain_output=plain_output)
@@ -60,13 +59,13 @@ def build(plain_output: bool) -> int:
 		except se.SeException as ex:
 			se.print_error(ex, plain_output=plain_output)
 
-		# Print a separator newline if more than one table is printed
+		# Print a separator newline if more than one table is printed.
 		if not first_output and (args.verbose or messages or exception):
 			console.print("")
 		elif first_output:
 			first_output = False
 
-		# Print the table header
+		# Print the table header.
 		if ((len(args.directories) > 1 or called_from_parallel) and (messages or exception)) or args.verbose:
 			has_output = True
 			if plain_output:
@@ -78,14 +77,14 @@ def build(plain_output: bool) -> int:
 			has_output = True
 			se.print_error(exception, plain_output=plain_output)
 
-		# Print the tables
+		# Print the tables.
 		if messages:
 			has_output = True
 			return_code = se.BuildFailedException.code
 
 			if plain_output:
 				for message in messages:
-					# Replace color markup with `
+					# Replace color markup with ```.
 					message.text = se.prep_output(message.text, True)
 
 					message_filename = ""
@@ -95,7 +94,7 @@ def build(plain_output: bool) -> int:
 					console.print(f"{message.source}: {message.code} {message_filename}{message.location if message.location else ''} {message.text}")
 			else:
 				for message in messages:
-					# Add hyperlinks around message filenames
+					# Add hyperlinks around message filenames.
 					message_filename = ""
 					if message.filename:
 						message_filename = f"[link=file://{message.filename}]{message.filename.name}[/link]{message.location if message.location else ''}"
@@ -104,7 +103,7 @@ def build(plain_output: bool) -> int:
 
 					if message.submessages:
 						for submessage in message.submessages:
-							# Brackets don't need to be escaped in submessages if we instantiate them in Text()
+							# Brackets don't need to be escaped in submessages if we instantiate them in `Text()`.
 							submessage_object = Text(submessage, style="dim")
 
 							table_data.append([" ", " ", Text("→", justify="right"), submessage_object])
@@ -129,8 +128,7 @@ def build(plain_output: bool) -> int:
 				table.add_row("OK")
 				console.print(table)
 
-		# Print a newline if we're called from parallel and we just printed something, to
-		# better visually separate output blocks
+		# Print a newline if we're called from Parallel and we just printed something, to better visually separate output blocks.
 		if called_from_parallel and has_output:
 			console.print("")
 

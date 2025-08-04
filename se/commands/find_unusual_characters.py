@@ -15,7 +15,7 @@ import se
 
 def find_unusual_characters(plain_output: bool) -> int:
 	"""
-	Entry point for `se find-unusual-characters`
+	Entry point for `se find-unusual-characters`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Find characters outside a nominal expected range in a set of XHTML files. This can be useful to find transcription mistakes and mojibake.")
@@ -28,10 +28,7 @@ def find_unusual_characters(plain_output: bool) -> int:
 	target_filenames = se.get_target_filenames(args.targets, ".xhtml")
 
 	# Create a regex for unusual characters.
-	# The result is a series of Unicode ranges that cover the characters
-	# we _don’t_ expect to see in a standard SE production. The comments
-	# indicate the Unicode ranges we exclude from the regex as they’re
-	# normal characters we don’t want to flag.
+	# The result is a series of Unicode ranges that cover the characters we *don’t* expect to see in a standard SE production. The comments indicate the Unicode ranges we exclude from the regex as they’re normal characters we don’t want to flag.
 
 	unusual_character_set = "["
 	# OK: basic ASCII u0000-u007e
@@ -92,19 +89,19 @@ def find_unusual_characters(plain_output: bool) -> int:
 	unusual_character_set += "\u2e3c-\ufefe"
 	unusual_character_set += "]"
 
-	# Read files and process one at a time
+	# Read files and process one at a time.
 	for filename in target_filenames:
 		try:
 			with open(filename, "r", encoding="utf-8") as file:
 				xhtml = file.read()
 				dom = se.easy_xml.EasyXmlTree(xhtml)
 
-				# Save any `alt` and `title` attributes because we may be interested in their contents
+				# Save any `alt` and `title` attributes because we may be interested in their contents.
 				for node in dom.xpath("//*[@alt or @title]"):
 					for _, value in node.attrs.items():
 						xhtml = xhtml + f" {value} "
 
-				# Strip tags
+				# Strip tags.
 				xhtml = regex.sub(r"<[^>]+?>", " ", xhtml)
 
 				for character in regex.findall(unusual_character_set, xhtml):
@@ -121,7 +118,7 @@ def find_unusual_characters(plain_output: bool) -> int:
 			se.print_error(str(ex) + f" File: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return_code = ex.code
 
-	# Sort and prepare the output
+	# Sort and prepare the output.
 	lines = []
 
 	for unusual_character, count in unusual_characters.items():

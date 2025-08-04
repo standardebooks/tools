@@ -29,7 +29,7 @@ def _resize_canvas(image: Image_type, new_width: int, new_height: int) -> Image_
 
 def compare_versions(plain_output: bool) -> int:
 	"""
-	Entry point for `se compare-versions`
+	Entry point for `se compare-versions`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, place screenshots of the new, original, and diff (if available) renderings in the current working directory. A file called diff.html is created to allow for side-by-side comparisons of original and new files.")
@@ -39,16 +39,13 @@ def compare_versions(plain_output: bool) -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="a directory containing XHTML files")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
-	# We wrap this whole thing in a try block, because we need to call
-	# driver.quit() if execution is interrupted (like by ctrl + c, or by an unhandled exception). If we don't call driver.quit(),
-	# Firefox will stay around as a zombie process even if the Python script is dead.
+	# We wrap this whole thing in a try block, because we need to call `driver.quit()` if execution is interrupted (like by `ctrl + c`, or by an unhandled exception). If we don't call `driver.quit()`, Firefox will stay around as a zombie process even if the Python script is dead.
 	driver = None
 	try:
 		driver = se.browser.initialize_selenium_firefox_webdriver()
 
-		# Ready to go!
 		for target in args.targets:
 			target = Path(target).resolve()
 
@@ -84,11 +81,11 @@ def compare_versions(plain_output: bool) -> int:
 
 				output_directory = Path(f"./{target.name}_diff-output/")
 
-				# Put Git's changes into the stash
+				# Put Git's changes into the stash.
 				git_command.stash()
 
 				with tempfile.TemporaryDirectory() as temp_directory_name:
-					# Generate screenshots of the pre-change repo
+					# Generate screenshots of the pre-change repo.
 					for filename in target_filenames:
 						filename = Path(filename).resolve()
 
@@ -96,15 +93,15 @@ def compare_versions(plain_output: bool) -> int:
 							console.print(se.prep_output(f"\tProcessing original [path][link=file://{filename}]{filename.name}[/][/] ...", plain_output))
 
 						driver.get(f"file://{filename}")
-						# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
+						# We have to take a screenshot of the HTML element, because otherwise we screenshot the viewport, which would result in a truncated image.
 						driver.find_element("tag name", "html").screenshot(f"{temp_directory_name}/{filename.name}-original.png")
 
-					# Pop the stash
+					# Pop the stash.
 					git_command.stash("pop")
 
 					files_with_differences = set()
 
-					# Generate screenshots of the post-change repo, and compare them to the old screenshots
+					# Generate screenshots of the post-change repo, and compare them to the old screenshots.
 					for filename in target_filenames:
 						filename = Path(filename).resolve()
 						file_new_screenshot_path = Path(temp_directory_name) / (filename.name + "-new.png")
@@ -114,7 +111,7 @@ def compare_versions(plain_output: bool) -> int:
 							console.print(se.prep_output(f"\tProcessing new [path][link=file://{filename}]{filename.name}[/][/] ...", plain_output))
 
 						driver.get(f"file://{filename}")
-						# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
+						# We have to take a screenshot of the HTML element, because otherwise we screenshot the viewport, which would result in a truncated image.
 						driver.find_element("tag name", "html").screenshot(str(file_new_screenshot_path))
 
 						has_difference = False
@@ -142,16 +139,16 @@ def compare_versions(plain_output: bool) -> int:
 							original_image = _resize_canvas(original_image, new_width, original_height)
 							original_image.save(file_original_screenshot_path)
 
-						# Now get the diff
+						# Now get the diff.
 						diff = ImageChops.difference(original_image, new_image)
 
-						# Process every pixel to see if there's a difference, and then convert that difference to red
+						# Process every pixel to see if there's a difference, and then convert that difference to red.
 						width, height = diff.size
 						for image_x in range(0, width - 1):
 							for image_y in range(0, height - 1):
 								if diff.getpixel((image_x, image_y)) != (0, 0, 0, 0):
 									has_difference = True
-									diff.putpixel((image_x, image_y), (255, 0, 0, 255)) # Change the mask color to red
+									diff.putpixel((image_x, image_y), (255, 0, 0, 255)) # Change the mask color to red.
 
 						if has_difference:
 							files_with_differences.add(filename)
@@ -173,7 +170,7 @@ def compare_versions(plain_output: bool) -> int:
 						console.print(se.prep_output("{}Difference in {}".format("\t" if args.verbose else "", f"[path][link=file://{filename}]{filename.name}[/][/]"), plain_output))
 
 					if files_with_differences and args.copy_images:
-						# Generate an HTML file with diffs side by side
+						# Generate an HTML file with diffs side by side.
 						html = ""
 
 						for filename in natsorted(list(files_with_differences)):
@@ -190,7 +187,7 @@ def compare_versions(plain_output: bool) -> int:
 		return ex.code
 
 	except KeyboardInterrupt as ex:
-		# Bubble the exception up, but proceed to `finally` so we quit the driver
+		# Bubble the exception up, but proceed to `finally` so we quit the driver.
 		raise ex
 
 	finally:
@@ -198,7 +195,7 @@ def compare_versions(plain_output: bool) -> int:
 			if driver:
 				driver.quit()
 		except Exception:
-			# We might get here if we ctrl + c before selenium has finished initializing the driver
+			# We might get here if we `ctrl + c` before Selenium has finished initializing the driver.
 			pass
 
 	return 0

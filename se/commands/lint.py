@@ -17,7 +17,7 @@ from se.se_epub import SeEpub
 
 def lint(plain_output: bool) -> int:
 	"""
-	Entry point for `se lint`
+	Entry point for `se lint`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Check for various Standard Ebooks style errors.")
@@ -28,14 +28,13 @@ def lint(plain_output: bool) -> int:
 	args = parser.parse_args()
 
 	called_from_parallel = se.is_called_from_parallel(False)
-	force_terminal = True if called_from_parallel else None # True will force colors, None will guess whether colors are enabled, False will disable colors
+	force_terminal = True if called_from_parallel else None # `True` will force colors, `None` will guess whether colors are enabled, `False` will disable colors.
 	first_output = True
 	return_code = 0
 
 	# Rich needs to know the terminal width in order to format tables.
-	# If we're called from Parallel, there is no width because Parallel is not a terminal. Thus we must export $COLUMNS before
-	# invoking Parallel, and then get that value here.
-	console = Console(width=int(os.environ["COLUMNS"]) if called_from_parallel and "COLUMNS" in os.environ else None, highlight=False, theme=se.RICH_THEME, force_terminal=force_terminal) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	# If we're called from Parallel, there is no width because Parallel is not a terminal. Thus we must export `$COLUMNS` before invoking Parallel, and then get that value here.
+	console = Console(width=int(os.environ["COLUMNS"]) if called_from_parallel and "COLUMNS" in os.environ else None, highlight=False, theme=se.RICH_THEME, force_terminal=force_terminal) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
 	for directory in args.directories:
 		directory = Path(directory).resolve()
@@ -54,13 +53,13 @@ def lint(plain_output: bool) -> int:
 			else:
 				return_code = ex.code
 
-		# Print a separator newline if more than one table is printed
+		# Print a separator newline if more than one table is printed.
 		if not first_output and (args.verbose or messages or exception):
 			console.print("")
 		elif first_output:
 			first_output = False
 
-		# Print the table header
+		# Print the table header.
 		if ((len(args.directories) > 1 or called_from_parallel) and (messages or exception)) or args.verbose:
 			has_output = True
 			if plain_output:
@@ -72,7 +71,7 @@ def lint(plain_output: bool) -> int:
 			has_output = True
 			se.print_error(exception, plain_output=plain_output)
 
-		# Print the tables
+		# Print the tables.
 		if messages:
 			has_output = True
 			return_code = se.LintFailedException.code
@@ -84,7 +83,7 @@ def lint(plain_output: bool) -> int:
 					if message.message_type == se.MESSAGE_TYPE_ERROR:
 						label = "[Error]"
 
-					# Replace color markup with `
+					# Replace color markup with ```.
 					message.text = se.prep_output(message.text, True)
 
 					message_filename = ""
@@ -95,7 +94,7 @@ def lint(plain_output: bool) -> int:
 
 					if message.submessages:
 						for submessage in message.submessages:
-							# Indent each line in case we have a multi-line submessage
+							# Indent each line in case we have a multi-line submessage.
 							console.print(regex.sub(r"^", "\t", submessage, flags=regex.MULTILINE))
 			else:
 				for message in messages:
@@ -104,7 +103,7 @@ def lint(plain_output: bool) -> int:
 					if message.message_type == se.MESSAGE_TYPE_ERROR:
 						alert = "[bright_red]Error[/bright_red]"
 
-					# Add hyperlinks around message filenames
+					# Add hyperlinks around message filenames.
 					message_filename = ""
 					if message.filename:
 						message_filename = f"[link=file://{message.filename.resolve()}]{message.filename.name}[/link]"
@@ -113,7 +112,7 @@ def lint(plain_output: bool) -> int:
 
 					if message.submessages:
 						for submessage in message.submessages:
-							# Brackets don't need to be escaped in submessages if we instantiate them in Text()
+							# Brackets don't need to be escaped in submessages if we instantiate them in `Text()`.
 							submessage_object = Text(submessage, style="dim")
 
 							table_data.append([" ", " ", Text("→", justify="right"), submessage_object])
@@ -138,8 +137,7 @@ def lint(plain_output: bool) -> int:
 				table.add_row("OK")
 				console.print(table)
 
-		# Print a newline if we're called from parallel and we just printed something, to
-		# better visually separate output blocks
+		# Print a newline if we're called from parallel and we just printed something, to better visually separate output blocks.
 		if called_from_parallel and has_output:
 			console.print("")
 

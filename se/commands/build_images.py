@@ -13,7 +13,7 @@ from se.se_epub import SeEpub
 
 def build_images(plain_output: bool) -> int:
 	"""
-	Entry point for `se build-images`
+	Entry point for `se build-images`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Build ebook covers and titlepages for a Standard Ebook source directory, and place the output in DIRECTORY/src/epub/images/.")
@@ -21,7 +21,7 @@ def build_images(plain_output: bool) -> int:
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
 	for directory in args.directories:
 		directory = Path(directory).resolve()
@@ -35,7 +35,7 @@ def build_images(plain_output: bool) -> int:
 			if args.verbose:
 				console.print("\tCleaning metadata ...", end="")
 
-			# Remove useless metadata from cover source files
+			# Remove useless metadata from cover source files.
 			for file_path in directory.glob("**/cover.*"):
 				se.images.remove_image_metadata(file_path)
 

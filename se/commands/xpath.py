@@ -12,7 +12,7 @@ import se.easy_xml
 
 def xpath(plain_output: bool) -> int:
 	"""
-	Entry point for `se xpath`
+	Entry point for `se xpath`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed.")
@@ -38,13 +38,12 @@ def xpath(plain_output: bool) -> int:
 						if isinstance(node, se.easy_xml.EasyXmlElement):
 							output = node.to_string()
 						else:
-							# We may select text() nodes as a result
+							# We may select `text()` nodes as a result.
 							output = str(node)
 
 						output = "".join([f"\t{line}\n" for line in output.splitlines()])
 
-						# We only have to escape leading [ to prevent Rich from converting
-						# it to a style. If we also escape ] then Rich will print the slash.
+						# We only have to escape leading `[` to prevent Rich from converting it to a style. If we also escape `]` then Rich will print the slash.
 						output = output.replace("[", "\\[")
 
 						console.print(output)

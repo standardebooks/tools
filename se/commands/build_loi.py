@@ -9,7 +9,7 @@ from se.se_epub import SeEpub
 
 def build_loi(plain_output: bool) -> int:
 	"""
-	Entry point for `se build-loi`
+	Entry point for `se build-loi`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Update the LoI file based on all <figure> elements that contain an <img>.")

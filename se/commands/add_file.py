@@ -46,7 +46,7 @@ def _insert_css(se_epub: SeEpub, filename: str) -> None:
 
 def add_file(plain_output: bool) -> int:
 	"""
-	Entry point for `se add-file`
+	Entry point for `se add-file`.
 	"""
 
 	file_types = ["dedication", "endnotes", "epigraph", "glossary", "halftitlepage"]

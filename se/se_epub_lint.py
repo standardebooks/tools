@@ -76,7 +76,7 @@ SE_VARIABLES = [
 	"CONTRIBUTOR_WIKI_URL",
 	"CONTRIBUTOR_NACOAF_URI",
 	"CONTRIBUTOR_MARC",
-	# colophon-specific
+	# Colophon-specific.
 	"YEAR",
 	"ORIGINAL_LANGUAGE",
 	"TRANSLATION_YEAR",
@@ -102,13 +102,13 @@ IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "unco
 SPECIAL_FILES = ["colophon", "endnotes", "imprint", "loi"]
 
 # These are partly defined in semos://1.0.0/8.10.9.2
-INITIALISM_EXCEPTIONS = ["G", # as in `G-Force`
-			"1D", "2D", "3D", "4D", # as in `n-dimensional`
-			"MS.", "MSS.", # Manuscript(s)
-			"MM.",	# Messiuers
-			"κ.τ.λ.", # "etc." in Greek, and we don't match Greek chars.
+INITIALISM_EXCEPTIONS = ["G", # As in `G-Force`.
+			"1D", "2D", "3D", "4D", # As in `n-dimensional`.
+			"MS.", "MSS.", # Manuscript(s).
+			"MM.",	# Messiuers.
+			"κ.τ.λ.", # "etc." in Greek, and we don't match Greek characters.
 			"TV",
-			"AC", "DC" # electrical current
+			"AC", "DC" # Electrical current.
 ]
 
 """
@@ -544,24 +544,24 @@ class EbookSection:
 		self.section_id = section_id
 		self.children: List[EbookSection] = []
 		self.has_header = has_header
-		# h# can't go past 6, but we may go deeper in real life like in
-		# Wealth of Nations by Adam Smith
+		# `<h#>` can't go past 6, but we may go deeper in real life like in _Wealth of Nations_ by Adam Smith.
 		self.depth = depth if depth <= 6 else 6
 
 def _build_section_tree(self) -> List[EbookSection]:
 	"""
-	Helper function used in self.lint()
+	Helper function used in `self.lint()`.
+
 	Walk the files in spine order to build a tree of sections and heading levels.
 
 	INPUTS
 	self
 
 	OUTPUTS
-	section_tree, A list of EbookSections
+	section_tree, A list of `EbookSection`.
 	"""
 
-	# section_tree is a list of EbookSections.
-	# For example, The Woman in White by Wilkie Collins would have a section_tree that looks like this:
+	# `section_tree` is a list of EbookSections.
+	# For example, _The Woman in White_ by Wilkie Collins would have a `section_tree` that looks like this:
 	# titlepage (1)
 	#  imprint (2)
 	#  dedication (2)
@@ -578,7 +578,7 @@ def _build_section_tree(self) -> List[EbookSection]:
 	for filename in self.spine_file_paths:
 		dom = self.get_dom(filename)
 		for dom_section in dom.xpath("/html/body//*[re:test(name(), '^(section|article|nav)$')][@id]"):
-			# Start at h2 by default except for the titlepage, which is always h1
+			# Start at `<h2>` by default except for the titlepage, which is always `<h1>`.
 			starting_depth = 1 if regex.search(r"\btitlepage\b", dom_section.get_attr("epub:type") or "") else 2
 
 			section = _find_ebook_section(dom_section.get_attr("id"), section_tree)
@@ -590,21 +590,20 @@ def _build_section_tree(self) -> List[EbookSection]:
 				has_header = bool(dom_section.xpath(".//*[not(re:test(name(), '^(section|article|nav)$'))]//*[re:test(name(), '^h[1-6]$')]"))
 
 			if not section_parent_id:
-				# We don't have a data-parent, but do we have a direct parent section in the same file as this section?
+				# We don't have a `data-parent`, but do we have a direct parent section in the same file as this section?
 				direct_parent = dom_section.xpath("./ancestor::*[re:test(name(), '^(section|article|nav)$')][@id][1]")
 
 				if direct_parent:
 					section_parent_id = direct_parent[0].get_attr("id")
 
-			# If we don't have the section in our list yet, and it has a parent, append it to the parent
+			# If we don't have the section in our list yet, and it has a parent, append it to the parent.
 			if not section and section_parent_id:
 				parent = _find_ebook_section(section_parent_id, section_tree)
 				if parent:
-					# Only increment the depth if the parent has a header. If it doesn't then we don't want to increment,
-					# because we will end up skipping an h# level (like h2 -> h4 instead of h2 -> h3)
+					# Only increment the depth if the parent has a header. If it doesn't then we don't want to increment, because we will end up skipping an `<h#>` level (like `<h2>` -> `<h4>` instead of `<h2>` -> `<h3>`).
 					parent.children.append(EbookSection(dom_section.get_attr("id"), parent.depth + 1 if parent.has_header else parent.depth, has_header))
 
-			# If we don't have it in our list yet, and it has no parent, append it to the top
+			# If we don't have it in our list yet, and it has no parent, append it to the top.
 			elif not section:
 				section_tree.append(EbookSection(dom_section.get_attr("id"), starting_depth, has_header))
 
@@ -615,11 +614,11 @@ def _find_ebook_section(section_id: str, sections: List[EbookSection]) -> Union[
 	Find an ebook section in a tree of sections.
 
 	INPUTS
-	section_id: The name of the section to be found
-	sections: A list of EbookSections
+	section_id: The name of the section to be found.
+	sections: A list of `EbookSection`s.
 
 	OUTPUTS
-	The entry from sections, if any, that contains section_id
+	The entry from sections, if any, that contains `section_id`.
  	"""
 
 	for section in sections:
@@ -635,20 +634,20 @@ def _find_ebook_section(section_id: str, sections: List[EbookSection]) -> Union[
 
 def _lint_metadata_checks(self) -> list:
 	"""
-	Process main metadata checks
+	Process main metadata checks.
 
 	INPUTS
 	self
 
 	OUTPUTS
-	A list of LintMessage objects
+	A list of `LintMessage` objects.
 	"""
 
 	messages = []
 	metadata_xml = self.metadata_dom.to_string()
 	missing_metadata_elements = []
 
-	# Check the long description for some errors
+	# Check the long description for some errors.
 	try:
 		long_description = self.metadata_dom.xpath("/package/metadata/meta[@property='se:long-description']")[0].text
 
@@ -1034,50 +1033,46 @@ def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 
 def _get_selectors_and_rules (self) -> tuple:
 	"""
-	Helper function used in self.lint()
-	Construct a set of CSS selectors and rules in local.css
+	Helper function used in `self.lint()`.
+
+	Construct a set of CSS selectors and rules in `local.css`.
 
 	INPUTS
 	None
 
 	OUTPUTS
-	2-tuple (local_css_rules, duplicate_selectors) to be used by the lint function
+	2-tuple (local_css_rules, duplicate_selectors) to be used by the `lint` function.
 	"""
 
 	def _recursive_helper(rules: cssutils.css.cssstylesheet.CSSStyleSheet, local_css_rules: dict, duplicate_selectors: list, single_selectors: list, top_level: bool):
 		"""
-		Because of the possibilty of nested @supports and @media at-rules, we
-		need to use recursion to get to rules and selectors within at-rules.
-		This function is the helper for _get_selectors_and_rules and does the
-		actual work.
+		Because of the possibilty of nested `@supports` and `@media` at-rules, we need to use recursion to get to rules and selectors within at-rules. This function is the helper for `_get_selectors_and_rules()` and does the actual work.
 
 		INPUTS
-		rules: A CSSStyleSheet with the rules
-		local_css_rules: A dictionary where key = selector and value = rules
-		duplicate_selectors: Selectors which are counted as duplicates and will be warned about
-		single_selectors: Not multiple selectors separated by comma
-		top_level: Boolean set to True on first level of recursion and False thereafter
+		rules: A `CSSStyleSheet` with the rules.
+		local_css_rules: A dictionary where key = selector and value = rules.
+		duplicate_selectors: Selectors which are counted as duplicates and will be warned about.
+		single_selectors: Not multiple selectors separated by comma.
+		top_level: Boolean set to `True` on first level of recursion and `False` thereafter.
 
 		OUTPUTS
-		2-tuple (local_css_rules, duplicate_selectors) to be used by the lint function
+		2-tuple (local_css_rules, duplicate_selectors) to be used by the lint function.
 		"""
 		for rule in rules:
-			# i.e. @supports or @media
+			# I.e. `@supports` or `@media`.
 			if isinstance(rule, cssutils.css.CSSMediaRule):
 				# Recurisive call to rules within CSSMediaRule.
 				new_rules = _recursive_helper(rule.cssRules, local_css_rules, duplicate_selectors, single_selectors, False)
 
-				# Then update local_css_rules. The duplicate and single selector lists aren't updated
-				# because anything within CSSMediaRules isn't counted as a duplicate
+				# Then update `local_css_rules`. The duplicate and single selector lists aren't updated because anything within `CSSMediaRules` isn't counted as a duplicate.
 				local_css_rules.update(new_rules[0])
 
-			# Recursive end condition
+			# Recursive end condition.
 			if isinstance(rule, cssutils.css.CSSStyleRule):
 				for selector in rule.selectorList:
 					# Check for duplicate selectors.
-					# We consider a selector a duplicate if it's a TOP LEVEL selector (i.e. we don't check within @supports)
-					# and ALSO if it is a SINGLE selector (i.e. not multiple selectors separated by ,)
-					# For example abbr{} abbr{} would be a duplicate, but not abbr{} abbr,p{}
+					# We consider a selector a duplicate if it's a *top level* selector (i.e. we don't check within `@supports`) and *also* if it is a *single* selector (i.e. not multiple selectors separated by `,`).
+					# For example `abbr{} abbr{}` would be a duplicate, but not `abbr{} abbr,p{}`.
 					if "," not in rule.selectorText:
 						if top_level:
 							if selector.selectorText in single_selectors:
@@ -1092,14 +1087,14 @@ def _get_selectors_and_rules (self) -> tuple:
 
 		return (local_css_rules, duplicate_selectors)
 
-	local_css_rules: Dict[str, str] = {} # A dict where key = selector and value = rules
+	local_css_rules: Dict[str, str] = {} # A dict where key = selector and value = rules.
 	duplicate_selectors: List[str] = []
 	single_selectors: List[str] = []
 
-	# cssutils doesn't understand @supports, but it *does* understand @media, so do a replacement here for the purposes of parsing
+	# `cssutils` doesn't understand `@supports`, but it *does* understand `@media`, so do a replacement here for the purposes of parsing.
 	all_rules = cssutils.parseString(self.local_css.replace("@supports", "@media"), validate=False)
 
-	# Initial recursive call
+	# Initial recursive call.
 	_recursive_helper(all_rules, local_css_rules, duplicate_selectors, single_selectors, True)
 
 	return (local_css_rules, duplicate_selectors)
@@ -1109,10 +1104,10 @@ def files_not_in_spine(self) -> set:
 	Check the spine against the actual files.
 
 	INPUTS
-	None
+	None.
 
 	OUTPUTS
-	Set of files not in the spine (typically an empty set)
+	Set of files not in the spine (typically an empty set).
 	"""
 
 	xhtml_files = set(self.content_path.glob("**/*.xhtml"))
@@ -1121,27 +1116,26 @@ def files_not_in_spine(self) -> set:
 
 def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> list:
 	"""
-	Process main CSS checks
+	Process main CSS checks.
 
 	INPUTS
 	self
-	local_css: Dictionary of local CSS flags
-	local_css_path: Path to local.css file
-	local_css_rules: Dictionary of the local CSS rules
+	local_css: Dictionary of local CSS flags.
+	local_css_path: Path to `local.css` file.
+	local_css_rules: Dictionary of the local CSS rules.
 
 	OUTPUTS
-	A list of LintMessage objects
+	A list of `LintMessage` objects.
 	"""
 	messages = []
 
-	# lxml has not implemented the following in cssselect: *:first-of-type, *:last-of-type, *:nth-of-type, *:nth-last-of-type, *:only-of-type
-	# BUT ONLY WHEN USED ON *. This includes for example: `section [epub|type~="test"]:first-of-type` (note the `*` is implicit)
+	# lxml has not implemented the following in cssselect: `*:first-of-type`, `*:last-of-type`, `*:nth-of-type`, `*:nth-last-of-type`, `*:only-of-type` *but only when used on `*`*. This includes for example: `section [epub|type~="test"]:first-of-type` (note the `*` is implicit).
 	# Therefore we can't simplify them in build or test against them.
 	matches = regex.findall(r"(?:^| )[^a-z\s][^\s]+?:(?:first-of-type|last-of-type|nth-of-type|nth-last-of-type|only-of-type)", self.local_css, flags=regex.MULTILINE)
 	if matches:
 		messages.append(LintMessage("c-001", "Don’t use [css]*:first-of-type[/], [css]*:last-of-type[/], [css]*:nth-of-type[/] [css]*:nth-last-of-type[/], or [css]*:only-of-type[/] on [css]*[/]. Instead, specify an element to apply it to.", se.MESSAGE_TYPE_ERROR, local_css_path, matches))
 
-	# If we select on the xml namespace, make sure we define the namespace in the CSS, otherwise the selector won't work
+	# If we select on the `xml` namespace, make sure we define the namespace in the CSS, otherwise the selector won't work.
 	# We do this using a regex and not with cssutils, because cssutils will barf in this particular case and not even record the selector.
 	matches = regex.search(r"\[\s*xml\s*\|", self.local_css)
 	if matches and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
@@ -1182,15 +1176,15 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 
 def _update_missing_styles(filename: Path, dom: se.easy_xml.EasyXmlTree, local_css: dict) -> list:
 	"""
-	Identify any missing CSS styles in the file being checked
+	Identify any missing CSS styles in the file being checked.
 
 	INPUTS
-	filename: the name of the file being checked
-	dom: The dom of the file being checked
-	local_css: Dictionary containing several flags concerning the local CSS
+	filename: the name of the file being checked.
+	dom: The DOM of the file being checked.
+	local_css: Dictionary containing several flags concerning the local CSS.
 
 	OUTPUTS
-	List of styles used in this file but missing from local CSS
+	List of styles used in this file but missing from local CSS.
 	"""
 
 	missing_styles: List[str] = []
@@ -1198,7 +1192,7 @@ def _update_missing_styles(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 	if not local_css["has_elision_style"]:
 		missing_styles += [node.to_tag_string() for node in dom.xpath("/html/body//span[contains(@class, 'elision')]")]
 
-	# Check to see if we included poetry or verse without the appropriate styling
+	# Check to see if we included poetry or verse without the appropriate styling.
 	if filename.name not in IGNORED_FILENAMES:
 		nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][./p/span]")
 		for node in nodes:
@@ -1217,13 +1211,13 @@ def _update_missing_styles(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 			if "z3998:lyrics" in node.get_attr("epub:type") and not local_css["has_lyrics_style"]:
 				missing_styles.append(node.to_tag_string())
 
-		# Check frontmatter for missing styling
+		# Check frontmatter for missing styling.
 		nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'epigraph') and not(.//h2)]")
 		for node in nodes:
 			if not local_css["has_epigraph_style"]:
 				missing_styles.append(node.to_tag_string())
 
-		# Check for missing dedication styling, but not if the dedication is in a <header> as those are typically unstyled
+		# Check for missing dedication styling, but not if the dedication is in a `<header>` as those are typically unstyled.
 		nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'dedication') and not(re:test(@epub:type, 'z3998:(poem|verse|hymn|song)')) and not(./ancestor::header) and not(.//h2) and not(count(.//p) > 3)]")
 		for node in nodes:
 			if not local_css["has_dedication_style"]:
@@ -1233,14 +1227,14 @@ def _update_missing_styles(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 
 def _lint_image_checks(self, filename: Path) -> list:
 	"""
-	Process image checks
+	Process image checks.
 
 	INPUTS
 	self
-	filename: The name of the file being processed
+	filename: The name of the file being processed.
 
 	OUTPUTS
-	A list of LintMessage objects.
+	A list of `LintMessage` objects.
 	"""
 	messages = []
 
@@ -1249,25 +1243,25 @@ def _lint_image_checks(self, filename: Path) -> list:
 	elif filename.suffix == ".tiff":
 		messages.append(LintMessage("f-012", "TIFF files must end in [path].tif[/].", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Run some general tests on images, but skip the cover source since it's an exception to all of these rules
+	# Run some general tests on images, but skip the cover source since it's an exception to all of these rules.
 	if "cover.source" not in filename.name:
 		try:
 			image = Image.open(filename)
 		except UnidentifiedImageError as ex:
 			raise se.InvalidFileException(f"Couldn’t identify image type of [path][link=file://{filename}]{filename.name}[/][/].") from ex
 
-		# Check the source cover image
+		# Check the source cover image.
 		if self.path / "images" / "cover.jpg" == filename:
 			if image.size != (se.COVER_WIDTH, se.COVER_HEIGHT):
 				messages.append(LintMessage("f-017", f"[path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}.", se.MESSAGE_TYPE_ERROR, filename))
 
-		# Run some tests on distributable images in ./src/epub/images/ and the cover
+		# Run some tests on distributable images in `./src/epub/images/` and the cover.
 		if filename.is_relative_to(self.content_path / "images") or (self.path / "images" / "cover.jpg" == filename):
 			if os.path.getsize(filename) > 1500000: # 1.5MB
 				messages.append(LintMessage("f-016", "Image more than 1.5MB in size.", se.MESSAGE_TYPE_ERROR, filename))
 
-			# Make sure distributable images have reasonable dimensions
-			# We check SVGs later on in a separate check
+			# Make sure distributable images have reasonable dimensions.
+			# We check SVGs later on in a separate check.
 			if image.size[0] * image.size[1] > 4000000:
 				messages.append(LintMessage("f-018", "Image greater than 4,000,000 pixels square in dimension.", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -1278,28 +1272,28 @@ def _lint_image_checks(self, filename: Path) -> list:
 
 def _lint_svg_checks(self, filename: Path, svg_dom: se.easy_xml.EasyXmlTree, root: str) -> list:
 	"""
-	Perform several checks on svg files
+	Perform several checks on SVG files.
 
 	INPUTS
-	filename: The name of the svg file being checked
-	svg_dom: The dom of the svg file being checked
+	filename: The name of the SVG file being checked.
+	svg_dom: The DOM of the SVG file being checked.
 	self
-	root: The top-level directory
+	root: The top-level directory.
 
 	OUTPUTS
-	A list of LintMessage objects.
+	A list of `LintMessage` objects.
 	"""
 
 	messages = []
 
 	if f"{os.sep}src{os.sep}images{os.sep}" not in root:
 		if self.cover_path and filename.name == self.cover_path.name:
-			# Check that cover is in all caps
+			# Check that cover is in all caps.
 			nodes = svg_dom.xpath("//text[re:test(., '[a-z]')]")
 			if nodes:
 				messages.append(LintMessage("s-002", "Lowercase letters in cover. Cover text must be all uppercase.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-		# Check that titlepage is in all caps
+		# Check that titlepage is in all caps.
 		if filename.name == "titlepage.svg":
 			nodes = svg_dom.xpath("//text[re:test(., '[a-z]') and not(text()='translated by' or text()='illustrated by' or text()='and')]")
 			if nodes:
@@ -1307,11 +1301,11 @@ def _lint_svg_checks(self, filename: Path, svg_dom: se.easy_xml.EasyXmlTree, roo
 
 	if self.cover_path and filename.name == self.cover_path.name:
 		# Ensure the producer has built the cover.
-		# The default cover image is a white background which when encoded to base64 begins with 299 characters and then has a long string of `A`s
+		# The default cover image is a white background which when encoded to base64 begins with 299 characters and then has a long string of `A`s.
 		if svg_dom.xpath("//image[re:test(@xlink:href, '^.{299}A{50,}')]"):
 			messages.append(LintMessage("m-063", "Cover image has not been built.", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Make images have reasonable dimensions
+	# Make images have reasonable dimensions.
 	viewbox = svg_dom.xpath("/svg/@viewBox", True)
 	if viewbox:
 		svg_dimensions = viewbox.split()
@@ -1321,7 +1315,7 @@ def _lint_svg_checks(self, filename: Path, svg_dom: se.easy_xml.EasyXmlTree, roo
 		except Exception as ex:
 			raise se.InvalidFileException(f"Couldn’t parse SVG [xhtml]viewBox[/] attribute in [path][link=file://{filename.resolve()}]{filename}[/][/].") from ex
 
-	# Check for illegal transform or id attribute
+	# Check for illegal `transform` or `id` attributes.
 	nodes = svg_dom.xpath("//*[@transform or @id]")
 	if nodes:
 		invalid_transform_attributes = set()
@@ -1339,12 +1333,12 @@ def _lint_svg_checks(self, filename: Path, svg_dom: se.easy_xml.EasyXmlTree, roo
 		if invalid_id_attributes:
 			messages.append(LintMessage("x-014", "Illegal [xml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, invalid_id_attributes))
 
-	# Check for fill: #000 which should simply be removed
+	# Check for `fill: #000` which should simply be removed.
 	nodes = svg_dom.xpath("//*[contains(@fill, '#000') or contains(translate(@style, ' ', ''), 'fill:#000')]")
 	if nodes:
 		messages.append(LintMessage("x-004", "Illegal [xml]style=\"fill: #000\"[/] or [xml]fill=\"#000\"[/].", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Check for illegal height or width on root <svg> element
+	# Check for illegal `height` or `width` on root `<svg>` element.
 	if filename.name != "logo.svg": # Do as I say, not as I do...
 		if svg_dom.xpath("/svg[@height or @width]"):
 			messages.append(LintMessage("x-005", "Illegal [xml]height[/] or [xml]width[/] attribute on root [xml]<svg>[/] element. Size SVGs using the [xml]viewBox[/] attribute only.", se.MESSAGE_TYPE_ERROR, filename))
@@ -1357,18 +1351,18 @@ def _lint_svg_checks(self, filename: Path, svg_dom: se.easy_xml.EasyXmlTree, roo
 
 def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, ebook_flags: dict, special_file: str) -> list:
 	"""
-	Process error checks in “special” .xhtml files
+	Process error checks in “special” `.xhtml` files.
 
 	INPUTS
-	filename: The name of the file being checked
-	dom: The dom of the file being checked
-	file_contents: The contents of the file being checked
-	ebook_flags: A dictionary containing ebook information
-	special_file: A string identifying the type of special file being checked
 	self
+	filename: The name of the file being checked.
+	dom: The DOM of the file being checked.
+	file_contents: The contents of the file being checked.
+	ebook_flags: A dictionary containing ebook information.
+	special_file: A string identifying the type of special file being checked
 
 	OUTPUTS
-	A list of LintMessage objects.
+	A list of `LintMessage` objects.
 	"""
 
 	messages = []
@@ -1376,7 +1370,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 	if self.is_se_ebook and special_file in ("colophon", "imprint"):
 		if len(source_links) <= 2:
-			# Check that links back to sources are represented correctly
+			# Check that links back to sources are represented correctly.
 			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust\\.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
 			if nodes:
 				messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
@@ -1409,14 +1403,14 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		if not dom.xpath(f"/html/body//a[@href='{se_url}' and text()='{se_url.replace('https://', '')}']"):
 			messages.append(LintMessage("m-035", f"Unexpected S.E. identifier in colophon. Expected: [url]{se_url}[/].", se.MESSAGE_TYPE_ERROR, filename))
 
-		# Check if we forgot to fill any variable slots
+		# Check if we forgot to fill any variable slots.
 		missing_colophon_vars = [var for var in SE_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
 		if missing_colophon_vars:
 			messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, missing_colophon_vars))
 
 		# Are the sources represented correctly?
 		# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
-		# We can't merge this with the imprint check because imprint doesn't have `<br/>` between `the`
+		# We can't merge this with the imprint check because imprint doesn't have `<br/>` between `the`.
 		if not ebook_flags["has_multiple_transcriptions"] and not ebook_flags["has_other_sources"]:
 			for link in source_links:
 				if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
@@ -1444,25 +1438,25 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		if ebook_flags["has_multiple_page_scans"] and not dom.xpath("/html/body//a[contains(@href, '#page-scans')]"):
 			messages.append(LintMessage("m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/].", se.MESSAGE_TYPE_ERROR, filename))
 
-		# Check for dates without a time wrapper
+		# Check for dates without a `<time>` wrapper.
 		nodes = dom.xpath("/html/body//p[text()[re:test(., '\\b\\d{3,4}\\s')][not(following-sibling::abbr[1][re:test(., '^BCE?$')])]]")
 		if nodes:
 			messages.append(LintMessage("s-105", "Dates in the colophon need to be wrapped in an [xhtml]<time>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-		# A range of years for published should be "published between X and Y"
+		# A range of years for published should be `published between X and Y`.
 		nodes = dom.xpath(f"/html/body//p[re:test(., '\\b(published|completed) (in|between|circa) [0-9]+{se.WORD_JOINER}?–{se.WORD_JOINER}?[0-9]+\\b')]")
 		if nodes:
 			messages.append(LintMessage("m-081", "When a work was published or completed between a range of years, the text must be [text]between year1 and year2[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-		# Check for wrong grammar filled in from template
+		# Check for wrong grammar filled in from template.
 		nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
 		if nodes:
 			messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the<br/>\n" + node.to_string() for node in nodes]))
 
-		# Check that we have <br/>s at the end of lines
-		# First, check for b or a elements that are preceded by a newline but not by a br
+		# Check that we have `<br/>`s at the end of lines.
+		# First, check for `<b>` or `<a>` elements that are preceded by a newline but not by a `<br>`.
 		nodes = [node.to_string() for node in dom.xpath("/html/body/section/p/*[name()='b' or name()='a'][(preceding-sibling::node()[1])[contains(., '\n')]][not((preceding-sibling::node()[2])[self::br]) or (normalize-space(preceding-sibling::node()[1]) and re:test(preceding-sibling::node()[1], '\\n\\s*$')) ]")]
-		# Next, check for text nodes that contain newlines but are not preceded by brs
+		# Next, check for text nodes that contain newlines but are not preceded by `<br>`s.
 		nodes += [node.strip() for node in dom.xpath("/html/body/section/p/text()[contains(., '\n') and normalize-space(.)][(preceding-sibling::node()[1])[not(self::br)]]")]
 		if nodes:
 			messages.append(LintMessage("s-053", "Colophon line not preceded by [xhtml]<br/>[/].", se.MESSAGE_TYPE_ERROR, filename, nodes))
@@ -1471,8 +1465,7 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		if nodes:
 			messages.append(LintMessage("s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-		# Check for anonymous volunteers misrepresented in the colophon. Note that we only match SE producers and transcribers, because
-		# a cover art artist can also be anonymous but they're not volunteers.
+		# Check for anonymous volunteers misrepresented in the colophon. Note that we only match SE producers and transcribers, because a cover art artist can also be anonymous but they're not volunteers.
 		nodes = dom.xpath("/html/body//b[re:test(., 'anonymous', 'i') and text() != 'An Anonymous Volunteer' and (preceding-sibling::a[@href='https://standardebooks.org'])]")
 		if nodes:
 			messages.append(LintMessage("s-100", "Anonymous digital contributor value not exactly [text]An Anonymous Volunteer[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
@@ -1505,12 +1498,12 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	# If we're in the imprint, are the sources represented correctly?
 	# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
 	elif self.is_se_ebook and special_file == "imprint":
-		# Check for wrong grammar filled in from template
+		# Check for wrong grammar filled in from template.
 		nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::node()[1])[re:test(., 'the\\s+$')]]")
 		if nodes:
 			messages.append(LintMessage("s-016", "Incorrect [text]the[/] before Google Books link.", se.MESSAGE_TYPE_ERROR, filename, ["the " + node.to_string() for node in nodes]))
 
-		# Check if we forgot to fill any variable slots
+		# Check if we forgot to fill any variable slots.
 		missing_imprint_vars = [var for var in SE_VARIABLES if regex.search(fr"\b{var}\b", file_contents)]
 		if missing_imprint_vars:
 			messages.append(LintMessage("m-036", "Variable not replaced with value.", se.MESSAGE_TYPE_ERROR, filename, missing_imprint_vars))
@@ -1521,13 +1514,13 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 		if ebook_flags["has_multiple_page_scans"] and not dom.xpath("/html/body//a[contains(@href, '#page-scans')]"):
 			messages.append(LintMessage("m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/].", se.MESSAGE_TYPE_ERROR, filename))
 
-		# Check that the formula changed from the default if we added 'various sources'
+		# Check that the formula changed from the default if we added `various sources`.
 		if ebook_flags["has_multiple_transcriptions"] or ebook_flags["has_multiple_page_scans"]:
 			nodes = dom.xpath("/html/body//a[text() = 'various sources' and not(re:test(preceding-sibling::node()[1], '(digital scans|transcriptions) from\\s*$'))]")
 			if nodes:
 				messages.append(LintMessage("t-072", "[text]various sources[/] link not preceded by [text]from[/].", se.MESSAGE_TYPE_ERROR, filename))
 
-		# Check for correctly named links. We can't merge this with the colophon check because the colophon breaks `the` with `<br/>`
+		# Check for correctly named links. We can't merge this with the colophon check because the colophon breaks `the` with `<br/>`.
 		if not ebook_flags["has_multiple_transcriptions"] and not ebook_flags["has_other_sources"]:
 			for link in source_links:
 				if "gutenberg.org" in link and f"<a href=\"{link}\">Project Gutenberg</a>" not in file_contents:
@@ -1546,38 +1539,38 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 	# Endnote checks
 	elif special_file == "endnotes":
-		# Do we have to replace Ibid.? Only match Ibid. if the endnote does not appear to cite any names.
+		# Do we have to replace `Ibid.`? Only match `Ibid.` if the endnote does not appear to cite any names.
 		nodes = dom.xpath("/html/body//li[re:test(@epub:type, '\\bendnote\\b')]//abbr[re:test(., '\\b[Ii]bid\\b') and not(ancestor::li[1]//*[contains(@epub:type, 'se:name')])]")
 		if nodes:
 			messages.append(LintMessage("s-039", "[text]Ibid[/] in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing [text]Ibid[/] refers to, unless it refers to text within the same endnote.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-		# Check that endnotes have their backlink in the last <p> element child of the <li>. This also highlights backlinks that are totally missing.
+		# Check that endnotes have their backlink in the last `<p>` element child of the `<li>`. This also highlights backlinks that are totally missing.
 		nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')][./p[last()][not(a[contains(@epub:type, 'backlink')])] or not(./p[last()])]")
 		if nodes:
 			messages.append(LintMessage("s-056", "Last [xhtml]<p>[/] child of endnote missing backlink.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-		# Make sure the backlink points to the same note number as the parent endnote ID
+		# Make sure the backlink points to the same note number as the parent endnote ID.
 		nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]//a[contains(@epub:type, 'backlink')][not(re:match(@href, '\\-[0-9]+$')=re:match(ancestor::li/@id, '\\-[0-9]+$'))]")
 		if nodes:
 			messages.append(LintMessage("s-057", "Backlink noteref fragment identifier doesn’t match endnote number.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-		# Check that citations at the end of endnotes are in a <cite> element. If not typogrify will run the last space together with the em dash.
-		# This tries to catch that, but limits the match to 20 chars so that we don't accidentally match a whole sentence that happens to be at the end of an endnote.
+		# Check that citations at the end of endnotes are in a `<cite>` element. If not typogrify will run the last space together with the em dash.
+		# This tries to catch that, but limits the match to 20 characterss so that we don't accidentally match a whole sentence that happens to be at the end of an endnote.
 		nodes = dom.xpath(f"/html/body//li[contains(@epub:type, 'endnote')]/p[last()][re:test(., '\\.”?{se.WORD_JOINER}?—[A-Z].{{0,20}}\\s*↩$')]")
 		if nodes:
 			messages.append(LintMessage("s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Em dashes go within [xhtml]<cite>[/] and it is preceded by one space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-		# Did we forget the endnote semantic on li elements?
+		# Did we forget the endnote semantic on `<li>` elements?
 		nodes = dom.xpath("/html/body/section/ol/li[not(re:test(@epub:type, '\\bendnote\\b'))]")
 		if nodes:
 			messages.append(LintMessage("s-099", "List item in endnotes missing [xhtml]endnote[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-		# Match backlink elements whose preceding node doesn't end with ' ', and is also not all whitespace
+		# Match backlink elements whose preceding node doesn't end with ` `, and is also not all whitespace.
 		nodes = dom.xpath("/html/body//a[@epub:type='backlink'][(preceding-sibling::node()[1])[not(re:test(., ' $')) and not(normalize-space(.)='')]]")
 		if nodes:
 			messages.append(LintMessage("t-027", "Endnote backlink not preceded by exactly one space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check LoI descriptions to see if they match associated figcaptions
+	# Check LoI descriptions to see if they match associated `<figcaption>s`.
 	elif special_file == "loi":
 		for node in dom.xpath("/html/body/nav[contains(@epub:type, 'loi')]//li//a"):
 			figure_ref = node.get_attr("href").split("#")[1]
@@ -1624,57 +1617,56 @@ def _lint_special_file_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 def _lint_xhtml_css_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, local_css_path: Path) -> list:
 	"""
-	Process CSS checks on an .xhtml file
+	Process CSS checks on an `.xhtml` file.
 
 	INPUTS
-	filename: The name of the file being checked
-	dom: The dom tree of the file being checked
-	local_css_path: The path to the local CSS file
+	filename: The name of the file being checked.
+	dom: The DOm tree of the file being checked.
+	local_css_path: The path to the local CSS file.
 
 	OUTPUTS
-	A list of LintMessage objects
+	A list of `LintMessage` objects.
 	"""
 
 	messages = []
 
 	# Do we have any elements that have specified border color?
-	# `transparent` and `none` are allowed values for border-color
+	# `transparent` and `none` are allowed values for `border-color`.
 	if dom.xpath("/html/body//*[attribute::*[re:test(local-name(), 'data-css-border.+?-color') and text() != 'transparent' and text() != 'none']]"):
 		messages.append(LintMessage("c-004", "Don’t specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, local_css_path))
 
-	# Check that footers have the expected styling
-	# Footers may sometimes be aligned with text-align: center as well as text-align: right
-	# We also ignore text-align on any footers whose only child is a postscript, which is typically left-aligned
+	# Check that `<footer>`s have the expected styling.
+	# `<footer>`s may sometimes be aligned with `text-align: center` as well as `text-align: right`.
+	# We also ignore ``text-align` on any `<footer>`s whose only child is a postscript, which is typically left-aligned.
 	nodes = dom.xpath("/html/body//footer[not(@data-css-margin-top='1em') or (not(@data-css-text-align) and not(./*[contains(@epub:type, 'z3998:postscript') and not(following-sibling::*) and not(preceding-sibling::*) ]))]")
 	if nodes:
 		messages.append(LintMessage("c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [css]text-align[/] is usually set to [css]right[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for elements that have `text-align: center` but also `text-indent: 1em`
+	# Check for elements that have `text-align: center` but also `text-indent: 1em`.
 	nodes = dom.xpath("/html/body//*[@data-css-text-align='center' and @data-css-text-indent='1em']")
 	if nodes:
 		messages.append(LintMessage("c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for sections that don't have header elements, and that do not have margin-top: 8em.
-	# This tries to find the first <section> or <article> whose first child is <p>, and that doesn't
-	# have any ancestor <section>s or <articles>s with heading content, and that doesn't have the correct top margin.
-	# Ignore the titlepage, loi, and dedications as they typically have unique styling.
+	# Check for sections that don't have heading elements, and that do not have `margin-top: 8em`.
+	# This tries to find the first `<section>` or `<article>` whose first child is `<p>`, and that doesn't have any ancestor `<section>`s or `<articles>`s with heading content, and that doesn't have the correct top margin.
+	# Ignore the titlepage, LoI, and dedications as they typically have unique styling.
 	nodes = dom.xpath("/html/body//*[name()='section' or name()='article'][1][./p[1][not(preceding-sibling::*)] and not(re:test(@epub:type, '(titlepage|loi|dedication)')) and not(ancestor::*/*[re:test(name(), '^(h[1-6]|header|hgroup)$')]) and not(@data-css-margin-top='20vh')]")
 	if nodes:
 		messages.append(LintMessage("c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for padding and margin not in .5 increments, except for table headers/cells which usually need .25em increments
+	# Check for padding and margin not in `.5` increments, except for table headers/cells which usually need `.25em` increments.
 	nodes = dom.xpath("/html/body//*[not(re:test(name(), '^(h[1-6]|td|th)$'))][attribute::*[re:test(local-name(), 'data-css-(margin|padding)')][re:test(., '^[0-9]*\\.[^5]')]]")
 	if nodes:
 		messages.append(LintMessage("c-013", "Element with margin or padding not in increments of [css].5em[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for <table> without set margins. We ignore tables that are for drama structuring, and tables that are ancestors of <blockquote> because <blockquote> has its own margin.
-	# We also ignore tables whose preceding sibling sets a bottom margin that is not 0.
+	# Check for `<table>` without set margins. We ignore tables that are for drama structuring, and tables that are ancestors of `<blockquote>`, because `<blockquote>` has its own margin.
+	# We also ignore tables whose preceding sibling sets a bottom margin that is not `0`.
 	nodes = dom.xpath("/html/body//table[not(./ancestor-or-self::*[contains(@epub:type, 'z3998:drama')]) and not(./ancestor::blockquote) and not(./preceding-sibling::*[1][@data-css-margin-bottom != '0']) and (not(@data-css-margin-top) or not(@data-css-margin-right) or not(@data-css-margin-bottom) or not(@data-css-margin-left))]")
 	if nodes:
 		messages.append(LintMessage("c-014", "[xhtml]<table>[/] element without explicit margins. Most tables need [css]margin: 1em;[/] or [css]margin: 1em auto 1em auto;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for elements that follow salutations, but that don't have text-indent: 0;
-	# We have to check both <p> elems that are salutations, and also <p> elems that have a first-child inline element that is a salutation, and that does not have following siblings that are senders/valedictions, as that might indicate a letter in a prose context
+	# Check for elements that follow salutations, but that don't have `text-indent: 0`;
+	# We have to check both `<p>` elements that are salutations, and also `<p>` elements that have a first child inline element that is a salutation, and that does not have following siblings that are senders/valedictions, as that might indicate a letter in a prose context.
 	nodes = dom.xpath("/html/body//*[(contains(@epub:type, 'z3998:salutation') or ./preceding-sibling::*[1][contains(@epub:type, 'z3998:salutation') or (name() != 'blockquote' and count(./node()[normalize-space(.)]) = 1 and ./*[contains(@epub:type, 'z3998:salutation')])] or ./*[1][contains(@epub:type, 'z3998:salutation') and not((./following-sibling::node()[1][self::text()]))]) and @data-css-text-indent != '0']")
 	if nodes:
 		messages.append(LintMessage("c-015", "Element after or containing [val]z3998:salutation[/] does not have [css]text-indent: 0;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
@@ -1684,29 +1676,29 @@ def _lint_xhtml_css_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 	if nodes:
 		messages.append(LintMessage("c-017", "Element with [val]z3998:postscript[/] semantic, but without [css]margin-top: 1em;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for <p> postscripts that don't have text-indent: 0.
+	# Check for `<p>` postscripts that don't have `text-indent: 0`.
 	nodes = dom.xpath("/html/body//p[contains(@epub:type, 'z3998:postscript') and (not(@data-css-text-align) or @data-css-text-align = 'initial' or @data-css-text-align = 'left') and @data-css-text-indent != '0']")
 	if nodes:
 		messages.append(LintMessage("c-018", "Element with [val]z3998:postscript[/] semantic, but without [css]text-indent: 0;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for signature semantic without small caps
-	# Ignore signatures that are only capital letters
+	# Check for signature semantic without small caps.
+	# Ignore signatures that are only capital letters.
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:signature') and not(@data-css-font-variant = 'small-caps') and not(@data-css-font-style = 'italic') and not(re:test(., '^[A-Z\\.\\s]+$'))]")
 	if nodes:
 		messages.append(LintMessage("c-019", "Element with [val]z3998:signature[/] semantic, but without [css]font-variant: small-caps;[/] or [css]font-style: italic;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for <article>s or <section>s that occur more than once in a file, without page break CSS
+	# Check for `<article>`s or `<section>`s that occur more than once in a file, without page break CSS.
 	# Exclude the last element because we don't care if it breaks after the last one.
 	nodes = dom.xpath("/html/body[count(./article) > 1 or count(./section) > 1]/*[(name() = 'article' or name() = 'section') and (not(@data-css-break-after) or @data-css-break-after != 'page') and not(position() = last())]")
 	if nodes:
 		messages.append(LintMessage("c-020", "Multiple [xhtml]<article>[/]s or [xhtml]<section>[/]s in file, but missing [css]break-after: page;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for elements that are set in italics, and whose italic children don't have font-style: normal.
+	# Check for elements that are set in italics, and whose italic children don't have `font-style: normal`.
 	nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and ./*[(name()='i' or name()='em') and @data-css-font-style='italic']]")
 	if nodes:
 		messages.append(LintMessage("c-021", "Element with [css]font-style: italic;[/], but child [xhtml]<i>[/] or [xhtml]<em>[/] does not have [css]font-style: normal;[/]. Hint: Italics within italics are typically set in Roman for contrast; if that’s not the case here, can [xhtml]<i>[/] be removed while still preserving italics and semantic inflection?", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for tables that appear to be summing/listing numbers, but that are missing font-variant-numeric styling
+	# Check for tables that appear to be summing/listing numbers, but that are missing `font-variant-numeric` styling.
 	nodes = dom.xpath("/html/body//table[count(.//td[not(following-sibling::*) and re:test(., '^[0-9]+$') and not(@data-css-font-variant-numeric='tabular-nums')]) >= 2]")
 	if nodes:
 		messages.append(LintMessage("c-026", "Table that appears to be listing numbers, but without [css]font-variant-numeric: tabular-nums;[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
@@ -1715,21 +1707,21 @@ def _lint_xhtml_css_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 
 def _lint_xhtml_metadata_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree) -> list:
 	"""
-	Process metadata checks on an .xhtml file
+	Process metadata checks on an `.xhtml` file.
 
 	INPUTS
-	filename: The name of the file being checked
-	dom: The dom of the file being checked
+	filename: The name of the file being checked.
+	dom: The DOM of the file being checked.
 	self
 
 	OUTPUTS
-	A list of LintMessage objects
+	A list of `LintMessage` objects.
 	"""
 
 	messages = []
 
-	# Check for missing MARC relators
-	# Don't check the landmarks as that may introduce duplicate errors
+	# Check for missing MARC relators.
+	# Don't check the landmarks as that may introduce duplicate errors.
 	# Only check for top-level elements, to avoid intros in short stories or poems in compilation.
 	if not dom.xpath("/html/body//nav[contains(@epub:type, 'landmarks')]"):
 		if dom.xpath("/html/body/*[contains(@epub:type, 'introduction') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and (text()='aui' or text()='win')]"):
@@ -1747,8 +1739,7 @@ def _lint_xhtml_metadata_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTr
 		if dom.xpath("/html/body/*[contains(@epub:type, 'loi') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and (text()='ill' or text()='pht')]"):
 			messages.append(LintMessage("m-034", "[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator).", se.MESSAGE_TYPE_WARNING, filename))
 
-	# Check that `Internet Archive` and `HathiTrust` are preceded by `the`. They might have an immediate preceding text node that ends in `the`, or they
-	# might be preceded by a white space node, then a <br/>, then a text node ending in `the`.
+	# Check that `Internet Archive` and `HathiTrust` are preceded by `the`. They might have an immediate preceding text node that ends in `the`, or they might be preceded by a white space node, then a `<br/>`, then a text node ending in `the`.
 	nodes = dom.xpath("/html/body//a[(re:test(text(), '[Hh]athi') and re:test(@href, '^https://[^\"]*?hathitrust\\.org')) or (re:test(text(), 'Internet Archive') and re:test(@href, 'https://[^\"]*?archive\\.org'))][(preceding-sibling::node()[2][not(self::br)] and preceding-sibling::node()[1][not(re:test(., '\\sthe $'))]) or (preceding-sibling::node()[2][self::br] and preceding-sibling::node()[3][not(re:test(., '\\sthe$'))]) ]")
 	if nodes:
 		messages.append(LintMessage("m-061", "Link must be preceded by [text]the[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
@@ -1786,13 +1777,13 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	if matches:
 		messages.append(LintMessage("s-001", "Illegal numeric entity (like [xhtml]&#913;[/]).", se.MESSAGE_TYPE_ERROR, filename, natsorted(list(set(matches)))))
 
-	# Check nested <blockquote> elements, but only if it's the first child of another <blockquote>
+	# Check nested `<blockquote>` elements, but only if it's the first child of another `<blockquote>`.
 	nodes = dom.xpath("/html/body//blockquote/*[1][name()='blockquote']")
 	if nodes:
 		messages.append(LintMessage("s-005", "Nested [xhtml]<blockquote>[/] element.", se.MESSAGE_TYPE_WARNING, filename))
 
-	# Check to see if we've marked something as poetry or verse, but didn't include a first <span>
-	# This xpath selects the p elements, whose parents are poem/verse, and whose first child is not a span
+	# Check to see if we've marked something as poetry or verse, but didn't include a first `<span>`.
+	# This xpath selects the `<p>` elements, whose parents are poem/verse, and whose first child is not a `<span>`.
 	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')]/p[not(./*[name()='span' and position()=1])]")
 	if nodes:
 		matches = []
@@ -1802,7 +1793,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 			first_line = node.xpath("./descendant-or-self::text()[normalize-space(.)]", True)
 			if first_line:
 				match = first_line.strip()
-				if match: # Make sure we don't append an empty string
+				if match: # Make sure we don't append an empty string.
 					matches.append(match)
 
 		messages.append(LintMessage("s-006", "Poem or verse [xhtml]<p>[/] (stanza) without [xhtml]<span>[/] (line) element.", se.MESSAGE_TYPE_WARNING, filename, matches))
@@ -1814,109 +1805,108 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	if nodes:
 		messages.append(LintMessage("s-007", "Element requires at least one block-level child.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for block-level tags that end with <br/>
+	# Check for block-level tags that end with `<br/>`.
 	nodes = dom.xpath("/html/body//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article][br[last()][not(following-sibling::text()[normalize-space()])][not(following-sibling::*)]]")
 	if nodes:
 		messages.append(LintMessage("s-008", "[xhtml]<br/>[/] element found before closing tag of block-level element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for hgroup elements with only one child
+	# Check for `<hgroup>` elements with only one child.
 	nodes = dom.xpath("/html/body//hgroup[count(*)=1]")
 	if nodes:
 		messages.append(LintMessage("s-009", "[xhtml]<hgroup>[/] element with only one child.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for empty elements. Elements are empty if they have no children and no non-whitespace text
-	# Use name() to check for MathML elements, because if the MathML namespace is not declared in a given file and we search by the m: namespace then this xpath will fail entirely.
+	# Check for empty elements. Elements are empty if they have no children and no non-whitespace text.
+	# Use `name()` to check for MathML elements, because if the MathML namespace is not declared in a given file and we search by the `m:` namespace then this xpath will fail entirely.
 	nodes = dom.xpath("/html/body//*[not(self::br) and not(self::hr) and not(self::img) and not(self::td) and not(self::th) and not(self::link) and not(self::col) and not(self::colgroup) and not(local-name()='none') and not(local-name()='mspace') and not(local-name()='mprescripts')][not(./*)][not(normalize-space())][not(./ancestor::*[local-name()='annotation-xml'])]")
 	if nodes:
 		messages.append(LintMessage("s-010", "Empty element. Use [xhtml]<hr/>[/] for thematic breaks if appropriate.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for <section> and <article> without ID attribute
-	# Ignore items within <blockquote> as that is a new sectioning root and we don't need to address
-	# sectioning elements in quotations.
+	# Check for `<section>` and `<article>` without `id` attribute.
+	# Ignore items within `<blockquote>` as that is a new sectioning root and we don't need to address sectioning elements in quotations.
 	nodes = dom.xpath("/html/body//*[self::section or self::article][not(@id)][not(ancestor::blockquote)]")
 	if nodes:
 		messages.append(LintMessage("s-011", "Element without [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for <pre> tags
+	# Check for `<pre>` elements.
 	if dom.xpath("/html/body//pre"):
 		messages.append(LintMessage("s-013", "Illegal [xhtml]<pre>[/] element.", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Check for <br/> after block-level elements
+	# Check for `<br/>` after block-level elements.
 	nodes = dom.xpath("/html/body//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article][following-sibling::br]")
 	if nodes:
 		messages.append(LintMessage("s-014", "[xhtml]<br/>[/] after block-level element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for <hr> tags before the end of a section, which is a common PG artifact
+	# Check for `<hr>` elements before the end of a section, which is a common PG artifact.
 	if dom.xpath("/html/body//hr[count(following-sibling::*)=0]"):
 		messages.append(LintMessage("s-012", "Illegal [xhtml]<hr/>[/] as last child.", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Check for hgroup elements with a subtitle but no title
+	# Check for `<hgroup>` elements with a subtitle but no title.
 	nodes = dom.xpath("/html/body//hgroup[./*[contains(@epub:type, 'subtitle')] and not(./*[contains(concat(' ', @epub:type, ' '), ' title ')])]")
 	if nodes:
 		messages.append(LintMessage("s-015", "Element has [val]subtitle[/] semantic, but without a sibling having a [val]title[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for deprecated MathML elements
-	# Note we dont select directly on element name, because we want to ignore any namespaces that may (or may not) be defined
+	# Check for deprecated MathML elements.
+	# Note we dont select directly on element name, because we want to ignore any namespaces that may (or may not) be defined.
 	nodes = dom.xpath("/html/body//*[local-name()='mfenced']")
 	if nodes:
 		messages.append(LintMessage("s-017", "[xhtml]<m:mfenced>[/] is deprecated in the MathML spec. Use [xhtml]<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for <figure> tags without id attributes
+	# Check for `<figure>` elements without `id` attributes.
 	nodes = dom.xpath("/html/body//img[@id]")
 	if nodes:
 		messages.append(LintMessage("s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements. Hint: Images that are inline (i.e. that do not have parent [xhtml]<figure>[/]s do not have [attr]id[/] attributes.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for IDs on <h#> tags
+	# Check for `id`s on `<h#>` elements.
 	nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
 	if nodes:
 		messages.append(LintMessage("s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for legal cases that aren't italicized
-	# We can't use this because v. appears as short for "volume", and we may also have sporting events without italics.
+	# Check for legal cases that aren't italicized.
+	# We can't use this because `v.` appears as short for `volume`, and we may also have sporting events without italics.
 	#nodes = dom.xpath("/html/body//abbr[text()='v.' or text()='versus'][not(parent::i)]")
 	#if nodes:
 	#	messages.append(LintMessage("t-xxx", "Legal case without parent [xhtml]<i>[/].", se.MESSAGE_TYPE_WARNING, filename, {f"{node.to_string()}." for node in nodes}))
 
-	# Only do this check if there's one `<h#>` or one `<hgroup>` elements. If there's more than one, then the XHTML file probably requires an overarching title
-	# We merge two xpaths here because `<h#>`/`<hgroup>` can be either a direct child of `<section>`, or it could be nested in `<header>`
+	# Only do this check if there's one `<h#>` or one `<hgroup>` elements. If there's more than one, then the XHTML file probably requires an overarching title.
+	# We merge two xpaths here because `<h#>`/`<hgroup>` can be either a direct child of `<section>`, or it could be nested in `<header>`.
 	if len(dom.xpath("/html/body/*[name()='section' or name()='article']/*[re:test(name(), '^h[1-6]$') or name()='hgroup'] | /html/body/*[name()='section' or name()='article']/header/*[re:test(name(), '^h[1-6]$') or name()='hgroup']"))==1:
 		title = se.formatting.generate_title(dom)
 
 		if not dom.xpath(f"/html/head/title[text()={se.easy_xml.escape_xpath(title.replace('&amp;', '&'))}]"):
 			messages.append(LintMessage("s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Check to see if `<h#>` elements are correctly titlecased
-	# Ignore `<h#>` elements with an `xml:lang` attribute, as other languages have different titlecasing rules
+	# Check to see if `<h#>` elements are correctly titlecased.
+	# Ignore `<h#>` elements with an `xml:lang` attribute, as other languages have different titlecasing rules.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') or (name() = 'p' and parent::hgroup)][not(contains(@epub:type, 'z3998:roman')) and not(@xml:lang)]")
 	for node in nodes:
 		node_copy = deepcopy(node)
 
-		# Remove *leading* and *ending* Roman `<spans>`
+		# Remove *leading* and *ending* Roman `<span>`s.
 		# This matches the first child node and last child node, excluding white space nodes, if it contains the `z3998:roman` semantic.
 		for element in node_copy.xpath("./node()[normalize-space(.)][1][contains(@epub:type, 'z3998:roman')] | ./node()[normalize-space(.)][last()][contains(@epub:type, 'z3998:roman')]"):
 			element.remove()
 
-		# Remove noterefs
+		# Remove noterefs.
 		for element in node_copy.xpath(".//a[contains(@epub:type, 'noteref')]"):
 			element.remove()
 
-		# Remove hidden elements, for example in poetry identified by first line (Keats)
+		# Remove hidden elements, for example in poetry identified by first line (Keats).
 		for element in node_copy.xpath(".//*[@hidden]"):
 			element.remove()
 
-		# Unwrap (not remove) any subelements in subtitles, as they may trip up further regexes
+		# Unwrap (not remove) any subelements in subtitles, as they may trip up further regexes.
 		for element in node_copy.xpath(".//*[contains(@epub:type, 'subtitle')]//*"):
 			element.unwrap()
 
 		title = node_copy.inner_xml()
 
-		# Remove leading leftover spacing and punctuation
+		# Remove leading leftover spacing and punctuation.
 		title = regex.sub(r"^[\s\.\,\!\?\:\;]*", "", title)
 
-		# Normalize whitespace
+		# Normalize whitespace.
 		title = regex.sub(r"\s+", " ", title).strip()
 
-		# Do we have a subtitle? If so the first letter of that must be capitalized, so we pull that out
+		# Do we have a subtitle? If so the first letter of that must be capitalized, so we pull that out.
 		subtitle_matches = regex.findall(r"(.*?)<span epub:type=\"subtitle\">(.*?)</span>(.*?)", title, flags=regex.DOTALL)
 		if subtitle_matches:
 			for title_header, subtitle, title_footer in subtitle_matches:
@@ -1931,40 +1921,38 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 				if title != titlecased_title:
 					messages.append(LintMessage("s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/].", se.MESSAGE_TYPE_WARNING, filename))
 
-		# No subtitle? Much more straightforward
+		# No subtitle? Much more straightforward.
 		else:
 			titlecased_title = se.formatting.titlecase(se.formatting.remove_tags(title))
 			title = se.formatting.remove_tags(title)
 			if title != titlecased_title:
 				messages.append(LintMessage("s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/].", se.MESSAGE_TYPE_WARNING, filename))
 
-	# Check for header elements that are entirely non-English
+	# Check for `<header>` elements that are entirely non-English.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
 	if nodes:
 		messages.append(LintMessage("s-024", "Header elements that are entirely non-English should not be set in italics. Instead, the [xhtml]<h#>[/] element has the [attr]xml:lang[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for z3998:roman elements with invalid values. Roman numerals can occasionally end in `j` as an alias for ending `i`. See _The Worm Ouroboros_.
-	# We also allow the numeral to end in a digit, because that might be an endnote. For example `<h2 epub:type="ordinal z3998:roman">II<a href="..." epub:type="noteref">3</a></h2>`
+	# Check for `z3998:roman elements with invalid values. Roman numerals can occasionally end in `j` as an alias for ending `i`. See _The Worm Ouroboros_.
+	# We also allow the numeral to end in a digit, because that might be an endnote. For example `<h2 epub:type="ordinal z3998:roman">II<a href="..." epub:type="noteref">3</a></h2>`.
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:roman') and not(re:test(normalize-space(.), '^[ivxlcdmIVXLCDM]+j?[0-9]*?$'))]")
 	if nodes:
 		messages.append(LintMessage("s-026", "Invalid Roman numeral.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for <h#> elements that are higher or lower than their expected level based on how deep they are in <section>s
-	# or <article>s. Exclude <nav> in the ToC.
-	# Get all h# elements not preceded by other h# elements (this includes the 1st item of an hgroup but not the next items)
-	# Exclude the ToC and landmarks
+	# Check for `<h#>` elements that are higher or lower than their expected level based on how deep they are in `<section>`s or `<article>`s. Exclude `<nav>` in the ToC.
+	# Get all `<h#>` elements not preceded by other `<h#>` elements (this includes the 1st item of an `<hgroup>` but not the next items).
+	# Exclude the ToC and landmarks.
 	invalid_headers = []
 	invalid_parent_ids = []
 	for heading in dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and not(./preceding-sibling::*[re:test(name(), '^h[1-6]$')]) and not(./ancestor::*[re:test(@epub:type, '\\b(toc|landmarks)\\b')])]"):
-		# Get the IDs of the direct parent section
+		# Get the IDs of the direct parent section.
 		parent_section = heading.xpath("./ancestor::*[@id and re:test(name(), '^(section|article|nav)$')][1]")
 
 		if parent_section:
 			section = _find_ebook_section(parent_section[0].get_attr("id"), section_tree)
 
 			if not section:
-				# We can accidentally raise s-029 if the file isn't in the spine. This is technically correct, but s-029 is a
-				# misleading message in that case, and f-007 will also be raised, which is the correct message.
+				# We can accidentally raise `s-029` if the file isn't in the spine. This is technically correct, but `s-029` is a misleading message in that case, and `f-007` will also be raised, which is the correct message.
 				if filename in self.spine_file_paths:
 					invalid_parent_ids.append(parent_section[0].to_tag_string())
 			else:
@@ -1976,11 +1964,11 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	if invalid_headers:
 		messages.append(LintMessage("s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. Hint: Headings not in the title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?", se.MESSAGE_TYPE_ERROR, filename, invalid_headers))
 
-	# Check for a common typo
+	# Check for a common typo.
 	if "z3998:nonfiction" in file_contents:
 		messages.append(LintMessage("s-030", "[val]z3998:nonfiction[/] should be [val]z3998:non-fiction[/].", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Run some checks on epub:type values
+	# Run some checks on `epub:type` values.
 	incorrect_attrs = set()
 	unnecessary_z3998_attrs = set()
 	duplicate_attrs = []
@@ -2008,7 +1996,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 					incorrect_attrs.add(val)
 
 			else:
-				# Regular epub vocabulary
+				# Regular epub vocabulary.
 				if val not in EPUB_SEMANTIC_VOCABULARY:
 					incorrect_attrs.add(val)
 
@@ -2019,47 +2007,47 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	if unnecessary_z3998_attrs:
 		messages.append(LintMessage("s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary.", se.MESSAGE_TYPE_ERROR, filename, [attr for (attr, bare_attr) in unnecessary_z3998_attrs]))
 
-	# Check if language tags in individual files match the language in the metadata file
-	# loi is in IGNORED_FILENAMES, but should not be excluded from this particular test
+	# Check if language tags in individual files match the language in the metadata file.
+	# `loi` is in `IGNORED_FILENAMES`, but should not be excluded from this particular test.
 	if filename.name not in IGNORED_FILENAMES or filename.name == "loi.xhtml":
 		file_language = dom.xpath("/html/@xml:lang", True)
 		if language != file_language:
 			messages.append(LintMessage("s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/].", se.MESSAGE_TYPE_WARNING, filename))
 
-	# Check for endnotes
+	# Check for endnotes.
 	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]/p[not(preceding-sibling::*)]/cite[not(preceding-sibling::node()[normalize-space(.)]) and (following-sibling::node()[normalize-space(.)])[1][contains(@epub:type, 'backlink')]]")
 	if nodes:
 		messages.append(LintMessage("s-035", "Endnote containing only [xhtml]<cite>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for wrong semantics in frontmatter/backmatter
+	# Check for wrong semantics in frontmatter/backmatter.
 	if dom.xpath("/html/body/section[not(@data-parent) and re:test(@epub:type, '\\b(dedication|introduction|preface|foreword|preamble|titlepage|halftitlepage|imprint|epigraph|acknowledgements)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'frontmatter')])]"):
 		messages.append(LintMessage("s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
 	if dom.xpath("/html/body/section[not(@data-parent) and re:test(@epub:type, '\\b(endnotes|loi|afterword|appendix|colophon|copyright\\-page|lot)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'backmatter')])]"):
 		messages.append(LintMessage("s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
 
-	# Check for leftover asterisms. Asterisms are sequences of any of these chars: * . • -⁠ —
+	# Check for leftover asterisms. Asterisms are sequences of any of these chars: `* . • -⁠ —`.
 	nodes = dom.xpath("/html/body//*[self::p or self::div][re:test(., '^\\s*[\\*\\.•\\-⁠—]\\s*([\\*\\.•\\-⁠—]\\s*)+$')]")
 	if nodes:
 		messages.append(LintMessage("s-038", "Illegal asterism. Section/scene breaks must be defined by an [xhtml]<hr/>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for <table> element without a <tbody> child
+	# Check for `<table>` element without a `<tbody>` child.
 	if dom.xpath("/html/body//table[not(tbody)]"):
 		messages.append(LintMessage("s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child.", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Check that short stories are on an <article> element
+	# Check that short stories are on an `<article>` element.
 	nodes = dom.xpath("/html/body/section[contains(@epub:type, 'se:short-story') or contains(@epub:type, 'se:novella')]")
 	if nodes:
 		messages.append(LintMessage("s-043", "[val]se:short-story[/] semantic on element that is not [xhtml]<article>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for poetry/verse without a descendent <p> element.
+	# Check for poetry/verse without a descendent `<p>` element.
 	# Skip the ToC landmarks because it may have poem/verse semantic children.
 	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][not(descendant::p)][not(ancestor::nav[contains(@epub:type, 'landmarks')])]")
 	if nodes:
 		messages.append(LintMessage("s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for <abbr> elements that have two or more letters/periods, that don't have a semantic epub:type
-	# SS. is the French abbreviation for "Saints"
+	# Check for `<abbr>` elements that have two or more letters/periods, that don't have a semantic `epub:type`.
+	# `SS.` is the French abbreviation for `Saints`.
 	nodes = dom.xpath("/html/body//abbr[not(@epub:type)][text() != 'U.S.' and text() != 'SS.'][re:test(., '([A-Z]\\.?){2,}')]")
 	filtered_nodes = []
 	for node in nodes:
@@ -2073,9 +2061,8 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 					add_node = False
 					break
 		elif node.text in ("A.M.", "P.M.") and node.xpath("./preceding-sibling::node()[re:test(., '[0-9]\\s$')]"):
-			# Ignore instances of capitalized times, usually in titles. For example:
-			# `From 10:20 <abbr>P.M.</abbr> to 10:47 <abbr>P.M.</abbr>` in a chapter title.
-			# We have to test for a preceding number because `<abbr>P.M.</abbr>` in other contexts may mean `Prime Minister`
+			# Ignore instances of capitalized times, usually in titles. For example: `From 10:20 <abbr>P.M.</abbr> to 10:47 <abbr>P.M.</abbr>` in a chapter title.
+			# We have to test for a preceding number because `<abbr>P.M.</abbr>` in other contexts may mean `Prime Minister`.
 			add_node = False
 
 		if add_node:
@@ -2084,114 +2071,113 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	if filtered_nodes:
 		messages.append(LintMessage("s-045", "[xhtml]<abbr>[/] element without semantic inflection like [class]z3998:personal-name[/] or [class]z3998:initialism[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in filtered_nodes]))
 
-	# Check for <p> elems that has some element children, which are only <span> and <br> children, but the parent doesn't have poem/verse semantics.
-	# Ignore spans that have a class, but not if the class is an i# class (for poetry indentation)
+	# Check for `<p>` elements that has some element children, which are only `<span>` and `<br>` children, but the parent doesn't have poem/verse semantics.
+	# Ignore `<span>`s that have a `class`, but not if it's an `i#` `class` (for poetry indentation).
 	nodes = dom.xpath("/html/body//p[not(./text()[normalize-space(.)])][*][not(ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')])][not(*[not(self::span) and not(self::br)])][ (not(span[@epub:type]) and not(span[@class]) ) or span[re:test(@class, '\\bi[0-9]\\b')]]")
 	if nodes:
 		messages.append(LintMessage("s-046", "[xhtml]<p>[/] element containing only [xhtml]<span>[/] and [xhtml]<br>[/] elements, but its parent doesn’t have the [val]z3998:poem[/], [val]z3998:verse[/], [val]z3998:song[/], [val]z3998:hymn[/], or [val]z3998:lyrics[/] semantic. Multi-line clauses that are not verse don’t require [xhtml]<span>[/]s.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# For this series of selections, we select spans that are direct children of p, because sometimes a line of poetry may have a nested span.
+	# For this series of selections, we select spans that are direct children of `<p>`, because sometimes a line of poetry may have a nested `<span>`.
 	nodes = dom.xpath("/html/body/*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')]/descendant-or-self::*/p/span/following-sibling::*[contains(@epub:type, 'noteref') and name()='a' and position()=1]")
 	if nodes:
 		messages.append(LintMessage("s-047", "[val]noteref[/] as a direct child of element with poem or verse semantic. [val]noteref[/]s should be in their parent [xhtml]<span>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for incorrectly applied se:name semantic
+	# Check for incorrectly applied `se:name` semantic.
 	nodes = dom.xpath("/html/body//*[self::p or self::blockquote][contains(@epub:type, 'se:name.')]")
 	if nodes:
 		messages.append(LintMessage("s-048", "[val]se:name[/] semantic on block element. [val]se:name[/] indicates the contents is the name of something.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for <header> elements with only h# child nodes
+	# Check for `<header>` elements with only `<h#>` child elements.
 	nodes = dom.xpath("/html/body//header[./*[re:test(name(), 'h[1-6]') and (count(preceding-sibling::*) + count(following-sibling::*)=0)]]")
 	if nodes:
 		messages.append(LintMessage("s-049", "[xhtml]<header>[/] element whose only child is an [xhtml]<h#>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for <span>s that only exist to apply epub:type
+	# Check for `<span>`s that only exist to apply `epub:type`.
 	nodes = dom.xpath("/html/body//*[span[@epub:type][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
 	if nodes:
 		messages.append(LintMessage("s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for language tags misusing the unk lang code
+	# Check for language tags misusing the `unk` lang code.
 	nodes = dom.xpath("//*[@xml:lang='unk']")
 	if nodes:
 		messages.append(LintMessage("s-051", "Element with [xhtml]xml:lang=\"unk\"[/] should be [xhtml]xml:lang=\"und\"[/] (undefined).", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for title attrs on abbr elements
+	# Check for `title` attributes on `<abbr>` elements.
 	nodes = dom.xpath("/html/body//abbr[@title]")
 	if nodes:
 		messages.append(LintMessage("s-052", "[xhtml]<abbr>[/] element with illegal [attr]title[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	nodes = dom.xpath("/html/body//blockquote//p[parent::*[name()='footer'] or parent::*[name()='blockquote']]//cite") # Sometimes the <p> may be in a <footer>
+	nodes = dom.xpath("/html/body//blockquote//p[parent::*[name()='footer'] or parent::*[name()='blockquote']]//cite") # Sometimes the `<p>` may be in a `<footer>`.
 	if nodes:
 		messages.append(LintMessage("s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for <th> element without a <thead> ancestor. However, <th scope="...">	and <th/> are allowed, for use in tables with headers in the middle of tables (https://standardebooks.org/ebooks/dorothy-day/the-eleventh-virgin) and vertical table headers
-	# (https://standardebooks.org/ebooks/charles-babbage/passages-from-the-life-of-a-philosopher)
+	# Check for `<th>` element without a `<thead>` ancestor. However, `<th scope="...">` and `<th/>` are allowed, for use in tables with headers in the middle of tables (https://standardebooks.org/ebooks/dorothy-day/the-eleventh-virgin) and vertical table headers (https://standardebooks.org/ebooks/charles-babbage/passages-from-the-life-of-a-philosopher).
 	if dom.xpath("/html/body//table//th[not(ancestor::thead)][not(@scope)][not(count(node())=0)]"):
 		messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Note: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute.", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Check for z3998:stage-direction on elements that are not <i>
+	# Check for `z3998:stage-direction` on elements that are not `<i>`.
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:stage-direction') and name() !='i' and name() !='abbr' and name() !='p']")
 	if nodes:
 		messages.append(LintMessage("s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/], [xhtml]<abbr>[/], and [xhtml]<p>[/] elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check that internal links don't begin with ../
+	# Check that internal links don't begin with `../`.
 	nodes = dom.xpath("/html/body//a[re:test(@href, '^\\.\\./text/')]")
 	if nodes:
 		messages.append(LintMessage("s-059", "Internal link beginning with [val]../text/[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for italics on things that shouldn't be italics
+	# Check for italics on things that shouldn't be italics.
 	nodes = dom.xpath("/html/body//i[contains(@epub:type, 'se:name.music.song') or contains(@epub:type, 'se:name.publication.short-story') or contains(@epub:type, 'se:name.publication.essay')]")
 	if nodes:
 		messages.append(LintMessage("s-060", "Italics on name that requires quotes instead.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for h# tags followed by header content, that are not children of <header>.
-	# Only match if there is a following <p>, because we could have the case where there's an epigraph after a division title.
+	# Check for `<h#>` elements followed by header content, that are not children of `<header>`.
+	# Only match if there is a following `<p>`, because we could have the case where there's an epigraph after a division title.
 	nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][following-sibling::*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'bridgehead')]][following-sibling::p][not(parent::header)]")
 	if nodes:
 		messages.append(LintMessage("s-061", "Title and following header content not in a [xhtml]<header>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for <dt> elements without exactly one <dfn> child, but only in glossaries
+	# Check for `<dt>` elements without exactly one `<dfn>` child, but only in glossaries.
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'glossary')]//dt[not(count(./dfn)=1)]")
 	if nodes:
 		messages.append(LintMessage("s-062", "[xhtml]<dt>[/] element in a glossary without exactly one [xhtml]<dfn>[/] child.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check that `z3998:persona` is only on <b> or <td>. We use the contact() xpath function so we don't catch `z3998:personal-name`
+	# Check that `z3998:persona` is only on `<b>` or `<td>`. We use the `contact()` xpath function so we don't catch `z3998:personal-name`.
 	nodes = dom.xpath("/html/body//*[contains(concat(' ', @epub:type, ' '), ' z3998:persona ') and not(self::b or self::td)]")
 	if nodes:
 		messages.append(LintMessage("s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for fulltitle semantic on a header not in the half title
+	# Check for `fulltitle` semantic on a header not in the half title.
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'fulltitle') and name()!='h2' and name()!='hgroup' and not(ancestor::*[contains(@epub:type, 'halftitlepage')])]")
 	if nodes:
 		messages.append(LintMessage("s-065", "[val]fulltitle[/] semantic on element that is not in the half title.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for header elements that have a label, but are missing the label semantic
-	# Find h# nodes whose first child is a text node matching a label type, and where that text node's next sibling is a semantic roman numeral
+	# Check for header elements that have a label, but are missing the `label` semantic.
+	# Find `<h#>` elements whose first child is a text node matching a label type, and where that text node's next sibling is a semantic roman numeral.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./node()[1][self::text() and not(./*) and re:test(normalize-space(.), '^(Part|Book|Volume|Section|Act|Scene)$') and following-sibling::*[1][contains(@epub:type, 'z3998:roman')]]]")
 	if nodes:
 		messages.append(LintMessage("s-066", "Header element missing [val]label[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for header elements that have a label semantic, but are missing an ordinal sibling
+	# Check for header elements that have a `label` semantic, but are missing an `ordinal` sibling.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./span[contains(@epub:type, 'label')]][not(./span[contains(@epub:type, 'ordinal')])]")
 	if nodes:
 		messages.append(LintMessage("s-067", "Header element with a [val]label[/] semantic child, but without an [val]ordinal[/] semantic child.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for header elements with a roman semantic but without an ordinal semantic
+	# Check for header elements with a `z3998:roman` semantic but without an `ordinal` semantic.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][contains(@epub:type, 'z3998:roman') and not(contains(@epub:type, 'ordinal'))]")
 	if nodes:
 		messages.append(LintMessage("s-068", "Header element missing [val]ordinal[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for header elements with both a title and ordinal semantics
+	# Check for header elements with both a `title` and `ordinal` semantics.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][contains(@epub:type, 'title') and contains(@epub:type, 'ordinal')]")
 	if nodes:
 		messages.append(LintMessage("s-104", "Header element should be either [val]title[/] or [val]ordinal[/], not both.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for body element without child section or article. Ignore the ToC because it has a unique structure
+	# Check for `<body>` element without child `<section>` or `<article>`. Ignore the ToC because it has a unique structure.
 	nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and re:test(@epub:type, '\\b(toc|loi)\\b'))])]")
 	if nodes:
 		messages.append(LintMessage("s-069", "[xhtml]<body>[/] element missing direct child [xhtml]<section>[/] or [xhtml]<article>[/] element.", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Check for h# without semantics; h# that have child elements (which likely have the correct semantics) are OK
+	# Check for `<h#>` without semantics; `<h#>` that have child elements (which likely have the correct semantics) are OK.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(@epub:type)][not(./*[not(name()='a' and contains(@epub:type, 'noteref'))])]")
 	if nodes:
 		messages.append(LintMessage("s-070", "[xhtml]<h#>[/] element without semantic inflection.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
@@ -2201,100 +2187,99 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	if nodes:
 		messages.append(LintMessage("s-071", "Sectioning element with more than one heading element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for some elements that only have a <span> child (including text inline to the parent).
-	# But, exclude such elements that are <p> elements that have poetry-type parents.
+	# Check for some elements that only have a `<span>` child (including text inline to the parent).
+	# But, exclude such elements that are `<p>` elements that have poetry-type parents.
 	nodes = dom.xpath("/html/body//*[name() !='p' and not(ancestor-or-self::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')])][./span[count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
 	if nodes:
 		messages.append(LintMessage("s-072", "Element with single [xhtml]<span>[/] child. [xhtml]<span>[/] should be removed and its attributes promoted to the parent element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for header elements that are missing both label and ordinal semantics
+	# Check for header elements that are missing both label and ordinal semantics.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(./*) and re:test(normalize-space(.), '^(Part|Book|Volume|Section|Act|Scene)\\s+[ixvIXVmcd]+$')]")
 	if nodes:
 		messages.append(LintMessage("s-073", "Header element that requires [val]label[/] and [val]ordinal[/] semantic children.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 	# Check for table headers that don't have content, which is an accessibility issue.
-	# Note that @aria-label and @title should (apparently) not be used for table headers
+	# Note that `@aria-label` and `@title` should (apparently) not be used for table headers.
 	nodes = dom.xpath("/html/body//th[text() = '']")
 	if nodes:
 		messages.append(LintMessage("s-074", "[xhtml]<th>[/] element with no text content should be a [xhtml]<td>[/] element instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for incorrect children of <body>
+	# Check for incorrect children of `<body>`.
 	nodes = dom.xpath("/html/body/*[name() != 'section' and name() != 'article' and name() != 'nav']")
 	if nodes:
 		messages.append(LintMessage("s-075", "[xhtml]<body>[/] element with direct child that is not [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/].", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Check for dedications with letter semantics
+	# Check for dedications with letter semantics.
 	nodes = dom.xpath("/html/body//section[contains(@epub:type, 'dedication') and (descendant-or-self::*[contains(@epub:type, 'z3998:letter')] or .//*[re:test(@epub:type, 'z3998:(salutation|sender|valediction|recipient|postscript)')])]")
 	if nodes:
 		messages.append(LintMessage("s-076", "Dedication with letter semantics. Hint: Dedications are never letters, even if they appear to be addressed to someone.", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Check for <header> preceded by non-sectioning elements
+	# Check for `<header>` preceded by non-sectioning elements.
 	nodes = dom.xpath("/html/body//header[./preceding-sibling::*[not(re:test(name(), '^(section|div|article)$'))]]")
 	if nodes:
 		messages.append(LintMessage("s-077", "[xhtml]<header>[/] element preceded by non-sectioning element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for <footer> followed by non-sectioning elements
+	# Check for `<footer>` followed by non-sectioning elements.
 	nodes = dom.xpath("/html/body//footer[./following-sibling::*[not(re:test(name(), '^(section|div|article|figure)$'))]]")
 	if nodes:
 		messages.append(LintMessage("s-078", "[xhtml]<footer>[/] element followed by non-sectioning element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for elements with no children and only white space contents
+	# Check for elements with no children and only white space contents.
 	nodes = dom.xpath("/html/body//*[not(./*) and re:test(., '^\\s+$')]")
 	if nodes:
 		messages.append(LintMessage("s-079", "Element containing only white space.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for a play <td> that contains both inline text and block-level elements.
-	# Note that we check any child of <html> because often <body> has the drama semantic.
+	# Check for a play `<td>` that contains both inline text and block-level elements.
+	# Note that we check any child of `<html>` because often `<body>` has the drama semantic.
 	nodes = dom.xpath("/html//*[contains(@epub:type, 'z3998:drama')]//td[./text()[normalize-space(.)] and ./*[name() = 'p' or name() = 'blockquote' or name() = 'div']]")
 	if nodes:
 		messages.append(LintMessage("s-080", "[xhtml]<td>[/] in drama containing both inline text and a block-level element. All children should either be only text, or only block-level elements.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for <p> tags that follow figure, blockquote, or table, and start with a lowercase letter, but that don't have the `continued` class. Exclude matches whose first child is <cite>, so we don't match things like <p><cite>—Editor</cite>
+	# Check for `<p>` elements that follow `<figure>`, `<blockquote>`, or `<table>`, and start with a lowercase letter, but that don't have the `continued` class. Exclude matches whose first child is `<cite>`, so we don't match things like `<p><cite>—Editor</cite>`.
 	nodes = dom.xpath("/html/body//p[preceding-sibling::*[1][name() = 'figure' or name() = 'blockquote' or name() = 'table'] and re:test(., '^([a-z]|—|…)') and not(contains(@class, 'continued')) and not(./*[1][self::cite])]")
 	if nodes:
 		messages.append(LintMessage("s-081", "[xhtml]<p>[/] preceded by [xhtml]<figure>[/], [xhtml]<blockquote>[/xhtml], or [xhtml]<table>[/], but without [val]continued[/] class.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for language tags transliterated into Latin script but missing `-Latn` suffix
+	# Check for language tags transliterated into Latin script but missing `-Latn` suffix.
 	nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '^(he|ru|el|zh|bn|hi|sa|uk|yi|grc|ja|ko|ar)$') and re:test(., '[a-zA-Z]')]")
 	if nodes:
 		messages.append(LintMessage("s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for persona <td>s that have child <p> elements
+	# Check for persona `<td>`s that have child `<p>` elements.
 	nodes = dom.xpath("/html/body//td[contains(@epub:type, 'z3998:persona') and ./p]")
 	if nodes:
 		messages.append(LintMessage("s-083", "[xhtml]<td epub:type=\"z3998:persona\">[/] element with child [xhtml]<p>[/] element.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for incorrect semantics on some common publications
+	# Check for incorrect semantics on some common publications.
 	nodes = dom.xpath("/html/body//i[@epub:type='se:name.publication.book' and re:test(., '^(The )?(Iliad|Odyssey|Aeneid|Metamorphoses|Beowulf|Divine Comedy|Paradise Lost)$')]")
 	if nodes:
 		messages.append(LintMessage("s-084", "Poem has incorrect semantics.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for `Op. Cit.` in endnotes. `Op. Cit.` means "the previous reference" which doesn't make sense
-	# in popup endnotes. But, if the endnote has a book reference, then allow it as it might be referring to that.
+	# Check for `Op. Cit.` in endnotes. `Op. Cit.` means `the previous reference` which doesn't make sense in popup endnotes. But, if the endnote has a book reference, then allow it as it might be referring to that.
 	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote') and (re:test(., '(Loc\\.|Op\\.) Cit\\.', 'i') or re:test(., '\\bl\\.c\\.\\b', 'i')) and not(.//*[contains(@epub:type, 'se:name.publication')])]")
 	if nodes:
 		messages.append(LintMessage("s-086", "[text]Op. Cit.[/] or [text]Loc. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] and [text]Loc. Cit.[/] mean [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded.", se.MESSAGE_TYPE_WARNING, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for half title pages missing subtitles
+	# Check for half title pages missing subtitles.
 	if ebook_flags["has_subtitle"]:
-		# Make sure we exclude <a> because that appears in the ToC landmarks
+		# Make sure we exclude `<a>` because that appears in the ToC landmarks.
 		nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage') and not(.//*[contains(@epub:type, 'subtitle')])]")
 		if nodes:
 			messages.append(LintMessage("s-087", "Subtitle in metadata, but no subtitle in the half title page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	else:
-		# Make sure we exclude <a> because that appears in the ToC landmarks
+		# Make sure we exclude `<a>` because that appears in the ToC landmarks.
 		nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage') and .//*[contains(@epub:type, 'subtitle')]]")
 		if nodes:
 			messages.append(LintMessage("s-088", "Subtitle in half title page, but no subtitle in metadata.", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Check for MathML without alttext
+	# Check for MathML without `alttext`.
 	nodes = dom.xpath("/html/body//m:math[not(@alttext)]")
 	if nodes:
 		messages.append(LintMessage("s-089", "MathML missing [attr]alttext[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for common errors in language tags
-	# `gr` is often used instead of `el`, `sp` instead of `es`, and `ge` instead of `de` (`ge` is the Georgian geographic region subtag but not a language subtag itself)
+	# Check for common errors in language tags.
+	# `gr` is often used instead of `el`, `sp` instead of `es`, and `ge` instead of `de` (`ge` is the Georgian geographic region subtag but not a language subtag itself).
 	nodes = dom.xpath("//*[re:test(@xml:lang, '^(gr|sp|ge)$')]")
 	if nodes:
 		messages.append(LintMessage("s-090", "Invalid language tag.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
@@ -2304,42 +2289,42 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	if nodes:
 		messages.append(LintMessage("s-091", "[xhtml]<span>[/] not followed by [xhtml]<br/>[/] in poetry.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for nested `<abbr>` elements
+	# Check for nested `<abbr>` elements.
 	nodes = dom.xpath("/html/body//abbr[./abbr]")
 	if nodes:
 		messages.append(LintMessage("s-093", "Nested [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for language tags transliterated into Latin script with incorrect `-latn` suffix (lowercase l)
+	# Check for language tags transliterated into Latin script with incorrect `-latn` suffix (lowercase `l`).
 	nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '-latn')]")
 	if nodes:
 		messages.append(LintMessage("s-094", "Element has an [attr]xml:lang[/] attribute that incorrectly contains [val]-latn[/] instead of [val]-Latn[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for poetry/verse that has an hgroup but which does not have the correct text alignment
+	# Check for poetry/verse that has an `<hgroup>` but which does not have the correct text alignment.
 	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(hymn|poem|song|verse)')]//hgroup/p[@data-css-text-align != 'center']")
 	if nodes:
 		messages.append(LintMessage("s-095", "[xhtml]<p>[/] child of [xhtml]<hgroup>[/] in poetry/verse does not have [css]text-align: center;[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check that half titles without subtitles have the fulltitle semantic
+	# Check that half titles without subtitles have the fulltitle semantic.
 	nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage')]/*[re:test(name(), '^h[1-6]$') and not(contains(@epub:type, 'fulltitle'))]")
 	if nodes:
 		messages.append(LintMessage("s-096", "Heading element in half title page missing the [val]fulltitle[/] semantic.", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Check for missing href attributes, sometimes a leftover from PG transcriptions
+	# Check for missing `href` attributes, sometimes a leftover from PG transcriptions.
 	nodes = dom.xpath("/html/body//a[not(@href)]")
 	if nodes:
 		messages.append(LintMessage("s-097", "[xhtml]a[/] element without [attr]href[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
 
-	# Check for <headers>s with only one child
+	# Check for `<headers>`s with only one child.
 	nodes = dom.xpath("/html/body/*[name() = 'section' or name() = 'article']/header[./*[not(name() = 'p') and not(preceding-sibling::* or following-sibling::*)]]")
 	if nodes:
 		messages.append(LintMessage("s-098", "[xhtml]<header>[/] element with only one child.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for @lang attributes
+	# Check for `@lang` attributes.
 	nodes = dom.xpath("//*[@lang]")
 	if nodes:
 		messages.append(LintMessage("s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for common missing roman semantics for “I”
+	# Check for common missing roman semantics for `I`.
 	regent_regex = r"(?:Charles|Edward|George|Henry|James|William) I\b"
 	matches = regex.findall(fr"King {regent_regex}|{regent_regex}’s", file_contents)
 	if matches:
@@ -2349,15 +2334,15 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: Optional[str], ebook_flags: dict, missing_files: list, self) -> tuple:
 	"""
-	Process typography checks on an .xhtml file
+	Process typography checks on an `.xhtml` file.
 
 	INPUTS
-	filename: The name of the file being checked
-	dom: The dom tree of the file being checked
-	file_contents: The contents of the file being checked
-	special_file: A string containing the type of special file the current file is, if any
-	ebook_flags: A dictionary containing several flags about an ebook
-	missing_files: A list of missing files
+	filename: The name of the file being checked.
+	dom: The DOM tree of the file being checked.
+	file_contents: The contents of the file being checked.
+	special_file: A string containing the type of special file the current file is, if any.
+	ebook_flags: A dictionary containing several flags about an ebook.
+	missing_files: A list of missing files.
 	self
 
 	OUTPUTS
@@ -2372,10 +2357,10 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 		messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
 	# Check for `ldquo` not correctly closed.
-	# Ignore closing paragraphs, line breaks, and closing cells in case `ldquo` means "ditto mark".
+	# Ignore closing paragraphs, line breaks, and closing cells in case `ldquo` means `ditto mark`.
 	matches = regex.findall(r"“[^‘”]+?“", file_contents)
 	matches = [match for match in matches if "</p" not in match and "<br/>" not in match and "</td>" not in match]
-	# xpath to check for opening quote in `<p>`, without a next child `<p>` that starts with an opening quote or an opening bracket (for editorial insertions within paragraphs of quotation); or that consists of only an ellipses (like an elided part of a longer quotation).
+	# Xpath to check for opening quote in `<p>`, without a next child `<p>` that starts with an opening quote or an opening bracket (for editorial insertions within paragraphs of quotation); or that consists of only an ellipses (like an elided part of a longer quotation).
 	# Matching `<p>`s can't have a poem/verse ancestor as formatting is often special for those.
 	matches += [regex.findall(r"“[^”]+</p>", node.to_string())[0] for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+$')][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')])][(following-sibling::*[1])[name()='p'][not(re:test(normalize-space(.), '^[“\\[]') or re:test(normalize-space(.), '^…$'))]]")]
 
@@ -2755,47 +2740,45 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	if nodes:
 		messages.append(LintMessage("t-057", "[xhtml]<p>[/] starting with lowercase letter. Hint: [xhtml]<p>[/] that continues text after a [xhtml]<blockquote>[/] requires the [class]continued[/] class; and use [xhtml]<br/>[/] to split one clause over many lines.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for illegal characters
+	# Check for illegal characters.
 	matches = regex.findall(fr"({se.UNICODE_BOM}|{se.SHY_HYPHEN})", file_contents)
 	if matches:
-		# Get the keys of a dict in order to create a list without duplicates
+		# Get the keys of a dict in order to create a list without duplicates.
 		messages.append(LintMessage("t-058", "Illegal character.", se.MESSAGE_TYPE_ERROR, filename, list({match.encode("unicode_escape").decode().replace("\\u", "U+").upper():None for match in matches}.keys())))
 
-	# Check for period in cite in endnotes
+	# Check for period in `<cite>` in endnotes.
 	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]//cite[not((./node()[last()])[name() = 'abbr']) and ./following-sibling::*[1][contains(@epub:type, 'backlink')] and re:test(., '^—') and ( (re:test(., '\\.$') and ./following-sibling::node()[re:test(., '^\\s*$')]) or ./following-sibling::node()[re:test(., '^\\.\\s*$')])]")
 	if nodes:
 		messages.append(LintMessage("t-059", "Period at the end of [xhtml]<cite>[/] element before endnote backlink.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for Bible verses in old-style notation
+	# Check for Bible verses in old-style notation.
 	nodes = dom.xpath("/html/body//*[(name()='p' or name()='cite' or re:test(name(), '^h[1-6]$')) and .//node()[re:test(., '(Genesis|Gen\\.|Exodus|Ex\\.|Exod\\.|Leviticus|Lev\\.|Numbers|Num\\.|Deuteronomy|Deut\\.|Joshua|Josh\\.|Judges|Judg\\.|Ruth|Samuel|Sam\\.|Kings|Kgs\\.|Chronicles|Chr\\.|Chron\\.|Ezra|Nehemiah|Neh\\.|Esther|Esth\\.|Job|Psalm|Psalms|Ps\\.|Pss\\.|Proverbs|Prov\\.|Ecclesiastes|Ecc\\.|Eccl\\.|Solomon|Songs?|Sol\\.|Isaiah|Is\\.|Isa\\.|Jeremiah|Jer\\.|Lamentations|Lam\\.|Ezekiel|Ez\\.|Ezek\\.|Daniel|Dan\\.|Hosea|Hos\\.|Joel|Amos|Obadiah|Obad\\.|Jonah|Jon\\.|Micah|Mic\\.|Nahum|Nah\\.|Habakkuk|Hab\\.|Zephaniah|Zeph\\.|Haggai|Hag\\.|Zechariah|Zech\\.|Malachi|Mal\\.|Tobit|Tob\\.|Judith|Jdt\\.|Sirach|Sir\\.|Ecclesiasticus|Baruch|Bar\\.|Maccabees|Macc\\.|Esdras|Esd\\.|Manasseh|Manasses|Man\\.|Wis\\.|Matthew|Matt\\.|Mark|Luke|John|Acts|Romans|Rom\\.|Corinthians|Cor\\.|Corinth\\.|Galatians|Gal\\.|Ephesians|Eph\\.|Philippians|Phil\\.|Philipp\\.|Colossians|Col\\.|Coloss\\.|Thessalonians|Thes\\.|Thess\\.|Timothy|Tim\\.|Titus|Tit\\.|Philemon|Phlm\\.|Hebrews|Heb\\.|James|Jas\\.|Peter|Pet\\.|Jude|Revelation|Revelations|Rev\\.),?\\s*$') and following-sibling::node()[position() = 1 or position() = 2][contains(@epub:type, 'z3998:roman') and following-sibling::node()[1][re:test(., '^\\s*[\\.,]?\\s+[0-9]')]]]]")
 	if nodes:
 		messages.append(LintMessage("t-060", "Old style Bible citation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for summary-style bridgeheads not ending in punctuation
-	# Decide if it's a summary-style bridgehead if it contains two or more em dashes. We use Python regex because
-	# xpath can't count the number of occurances of a string.
+	# Check for summary-style bridgeheads not ending in punctuation.
+	# Decide if it's a summary-style bridgehead if it contains two or more em dashes. We use Python regex because xpath can't count the number of occurances of a string.
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'bridgehead') and re:test(., '[^\\.\\!\\?”]”?$')]")
 	nodes = [node for node in nodes if len(regex.findall(r"—", node.to_string())) >= 2]
 	if nodes:
 		messages.append(LintMessage("t-061", "Summary-style bridgehead without ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for uppercased am/pm, except for if they have an epub:type, or when uppercased in titles, or in the nav document
+	# Check for uppercased `am`/`pm`, except for if they have an `epub:type`, or when uppercased in titles, or in the nav document.
 	if not dom.xpath("//nav[contains(@epub:type, 'toc')]"):
 		nodes = dom.xpath("/html/body//abbr[re:test(., '^[AP]\\.M\\.$') and not(@epub:type) and not(./ancestor::*[contains(@epub:type, 'title')])]")
 		if nodes:
 			messages.append(LintMessage("t-062", "Uppercased [text]a.m.[/] and [text]p.m.[/]", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
 	# Check for some Latinisms that need italics according to the manual. We check ancestor-or-self in case the phrase is set in Roman because it's nested in a parent italic.
-	# Exclude toto followed by ’ since Toto can be a name.
-	# Exclude <h#> whose entire contents is a matched Latinism as we do not italicize those.
-	# Ignore the ToC because we have different rules there
+	# Exclude `toto` followed by `’` since `Toto` can be a name.
+	# Exclude `<h#>` whose entire contents is a matched Latinism as we do not italicize those.
+	# Ignore the ToC because we have different rules there.
 	nodes = dom.xpath("/html/body//text()[re:test(., '\\b(a (priori|posteriori|fortiori)|(?<!reductio )(?<!reductiones )ad (hominem|absurdum|nauseam|infinitum|interim|valem)|in (extremis|loco|situ|vitro|absentia|camera|statu quo)|in toto[^’]|more suo|par excellence)\\b', 'i') and not(ancestor-or-self::*[@data-css-font-style='italic']) and not(parent::*[re:test(name(), '^h[1-6]$') and @xml:lang]) and not(ancestor::hgroup) and not(ancestor::nav[contains(@epub:type, 'toc')]) ]")
 	if nodes:
 		messages.append(LintMessage("t-063", "Non-English confusable phrase set without italics.", se.MESSAGE_TYPE_WARNING, filename, nodes))
 
-	# Check that all names are correctly titlecased. Ignore titles with xml:lang since non-English languages have different titlecasing rules,
-	# and ignore titles that have children elements, because se.titlecase() can't handle XML-like titles right now.
-	# Ignore titles longer than 150 chars, as long titles are likely old-timey super-long titles that should be mostly sentence-cased
+	# Check that all names are correctly titlecased. Ignore titles with `xml:lang` since non-English languages have different titlecasing rules, and ignore titles that have children elements, because `se.titlecase()` can't handle XML-like titles right now.
+	# Ignore titles longer than 150 characters, as long titles are likely old-timey super-long titles that should be mostly sentence-cased.
 	incorrectly_cased_titles = []
 	for node in dom.xpath("/html/body//*[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'se:name.legal-case')) and not(@xml:lang) and not(./*) and string-length(.) <= 150]"):
 		# Replace any space that is not a hair space or nbsp with a regular space.
@@ -2805,39 +2788,38 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 	if incorrectly_cased_titles:
 		messages.append(LintMessage("t-064", "Title not correctly titlecased. Hint: Non-English titles should have an [attr]xml:lang[/] attribute as they have different titlecasing rules.", se.MESSAGE_TYPE_WARNING, filename, incorrectly_cased_titles))
 
-	# Check for headers ending in periods
-	# Allow periods at the end of headers that both start and end with double quotes; but headers that only end in double quotes probably don't need periods
+	# Check for headers ending in periods.
+	# Allow periods at the end of headers that both start and end with double quotes; but headers that only end in double quotes probably don't need periods.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and not(contains(@epub:type, 'z3998:initialism')) and not((./node()[last()])[name() = 'abbr']) and (re:test(., '\\.$') or re:test(., '^[^“].+\\.”$'))]")
 	if nodes:
 		messages.append(LintMessage("t-065", "Header ending in a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for royal names whose roman numeral is preceded by `the`
+	# Check for royal names whose roman numeral is preceded by `the`.
 	nodes = dom.xpath("/html/body//span[contains(@epub:type, 'z3998:roman') and ./preceding-sibling::node()[1][re:test(., '[A-Z]\\w+ the $')]]/parent::*")
 	if nodes:
 		messages.append(LintMessage("t-066", "Regnal ordinal preceded by [text]the[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for plural graphemes without apostrophes
+	# Check for plural graphemes without apostrophes.
 	nodes = dom.xpath("/html/body//i[re:test(@epub:type, 'z3998:(grapheme|phoneme|morpheme)') and ./following-sibling::node()[1][starts-with(., 's')]]")
 	if nodes:
 		messages.append(LintMessage("t-067", "Plural [val]z3998:grapheme[/], [val]z3998:phoneme[/], or [val]z3998:morpheme[/] formed without apostrophe ([text]’[/]).", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Find citations not offset by em dashes. We're only interested in <cite>s in endnotes that are directly followed by the backlink;
-	# ignore <cite>s starting with `Cf.` which means `Compare` and was often used to mean `see`
+	# Find citations not offset by em dashes. We're only interested in `<cite>`s in endnotes that are directly followed by the backlink; ignore `<cite>`s starting with `Cf.` which means `Compare` and was often used to mean `see`.
 	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]/p[last()]/cite[following-sibling::node()[normalize-space(.)][1][name() = 'a' and contains(@epub:type, 'backlink')] and re:test(., '^[^—]') and not(re:test(., '^(Cf\\.|\\()'))]")
 	if nodes:
 		messages.append(LintMessage("t-068", "Citation not offset with em dash.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for <cite> in <header>s that start with a leading em dash
+	# Check for `<cite>` in `<header>`s that start with a leading em dash.
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph')]//cite[re:test(., '^—')]")
 	if nodes:
 		messages.append(LintMessage("t-069", "[xhtml]<cite>[/] in epigraph starting with an em dash.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for <cite> in <header>s that end with a period. Try to exclude <abbr>s that are last children
+	# Check for `<cite>` in `<header>`s that end with a period. Try to exclude `<abbr>`s that are last children.
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph')]//cite[re:test(., '\\.$') and not( (./node()[last()])[./descendant-or-self::abbr]) ]")
 	if nodes:
 		messages.append(LintMessage("t-070", "[xhtml]<cite>[/] in epigraph ending in a period.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# If we have Greek text, try to normalize it
+	# If we have Greek text, try to normalize it.
 	for node in dom.xpath("/html/body//*[@xml:lang='grc' or @xml:lang='el']"):
 		node_text = node.inner_text()
 		expected_text = se.typography.normalize_greek(node_text)
@@ -2845,7 +2827,7 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 			messages.append(LintMessage("t-073", f"Possible transcription error in Greek. Found: [text]{node_text}[/], but expected [text]{expected_text}[/text]. Hint: Use [bash]se unicode-names[/] to see differences in Unicode characters.", se.MESSAGE_TYPE_WARNING, filename))
 
 	# Check for hyphen-minus instead of non-breaking hyphen in sounds.
-	# Ignore very long <i> as they are more likely to be a sentence containing a dash, than a sound
+	# Ignore very long `<i>` as they are more likely to be a sentence containing a dash, than a sound.
 	nodes = dom.xpath("/html/body//*[(name() = 'i' or name() = 'em') and not(@epub:type) and not(@xml:lang) and re:test(., '-[A-Za-z]-[A-Za-z]-')]")
 	if nodes:
 		messages.append(LintMessage("t-074", "Extended sound using hyphen-minus [text]-[/] instead of non-breaking hyphen [text]‑[/].", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
@@ -2859,19 +2841,18 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 		# These words are English but have acute accents. Don't include the accent in this list because below we compare against the unaccented version.
 		ignored_words = ["cafe", "cafes", "consomme", "debut", "menage", "puree", "regime", "regimes", "reveille", "reveilles"]
 
-		# Initialize our dictionary
+		# Initialize our dictionary.
 		dictionary = se.spelling.initialize_dictionary()
 
 		for node in nodes:
-			# Remove any child nodes that have a language specified
+			# Remove any child nodes that have a language specified.
 			for inner_node in node.xpath(".//*[@xml:lang]"):
 				inner_node.remove()
 
 			# Extract each accented word, then compare against our dictionary.
-			# If the word IS in the dictionary, add it to the error list.
-			# Words that are NOT in the dictionary are more likely to be proper names
-			# Note that this doesn't match word with two accent marks, like résumé. Such words are highly unlikely
-			# to have accents for scansion anyway.
+			# If the word *is* in the dictionary, add it to the error list.
+			# Words that *are not* in the dictionary are more likely to be proper names.
+			# Note that this doesn't match word with two accent marks, like `résumé`. Such words are highly unlikely to have accents for scansion anyway.
 			for word in regex.findall(r"[A-Za-z]+[áéíóú]+[A-za-z]+", node.inner_text()):
 				unaccented_word = unidecode(word)
 				if unaccented_word in dictionary and unaccented_word not in ignored_words:
@@ -2893,20 +2874,20 @@ def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, 
 
 def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, local_css_path: str) -> list:
 	"""
-	Process XHTML checks on an .xhtml file
+	Process XHTML checks on an `.xhtml` file.
 
 	INPUTS
-	filename: The name of the file being checked
-	dom: The dom tree of the file being checked
-	file_contents: The contents of the file being checked
+	filename: The name of the file being checked.
+	dom: The DOM tree of the file being checked.
+	file_contents: The contents of the file being checked.
 
 	OUTPUTS
-	A list of LintMessage objects
+	A list of `LintMessage` objects.
 	"""
 
 	messages = []
 
-	# Check for uppercase letters in IDs or classes
+	# Check for uppercase letters in IDs or classes.
 	nodes = dom.xpath("//*[re:test(@id, '[A-Z]') or re:test(@class, '[A-Z]') or re:test(@epub:type, '[A-Z]')]")
 	if nodes:
 		messages.append(LintMessage("x-002", "Uppercase in attribute value. Attribute values must be all lowercase.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
@@ -2915,43 +2896,43 @@ def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_
 	if nodes:
 		messages.append(LintMessage("x-007", "[attr]id[/] attributes starting with a number are illegal XHTML.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for double greater-than at the end of a tag
+	# Check for double greater-than at the end of a closing tag.
 	matches = regex.search(r"(>>|>&gt;)", file_contents)
 	if matches:
 		messages.append(LintMessage("x-008", "Elements should end with a single [text]>[/].", se.MESSAGE_TYPE_WARNING, filename))
 
-	# Check for leading 0 in IDs (note: not the same as checking for IDs that start with an integer)
-	# We only check for *leading* 0s in numbers; this allows IDs like `wind-force-0` in the Worst Journey in the World glossary.
+	# Check for leading `0` in IDs (note: not the same as checking for IDs that start with an integer).
+	# We only check for *leading* `0`s in numbers; this allows IDs like `wind-force-0` in the _Worst Journey in the World_ glossary.
 	nodes = dom.xpath("//*[re:test(@id, '-0[0-9]')]")
 	if nodes:
 		messages.append(LintMessage("x-009", "Illegal leading 0 in [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for HTML tags in <title> tags
+	# Check for elements in `<title>` tags.
 	nodes = dom.xpath("/html/head/title/*")
 	if nodes:
 		messages.append(LintMessage("x-010", "Illegal element in [xhtml]<title>[/] element.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for underscores in attributes, but not if the attribute is href (links often have underscores) or MathMl alttext, which can have underscores as part of math notation
+	# Check for underscores in attributes, but not if the attribute is `href` (links often have underscores) or MathMl `alttext`, which can have underscores as part of math notation.
 	nodes = dom.xpath("//@*[contains(., '_') and name() !='href' and name() !='alttext']/..")
 	if nodes:
 		messages.append(LintMessage("x-011", "Illegal underscore in attribute. Use dashes instead of underscores.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for style attributes
+	# Check for style attributes.
 	nodes = dom.xpath("/html/body//*[@style]")
 	if nodes:
 		messages.append(LintMessage("x-012", "Illegal [attr]style[/] attribute. Don’t use inline styles, any element can be targeted with a clever enough selector.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for illegal elements in <head>
+	# Check for illegal elements in `<head>`.
 	nodes = dom.xpath("/html/head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
 	if nodes:
 		messages.append(LintMessage("x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed.", se.MESSAGE_TYPE_ERROR, filename, [f"<{node.tag}>" for node in nodes]))
 
-	# Check for xml:lang attribute starting in uppercase
+	# Check for `xml:lang` attribute starting in uppercase.
 	nodes = dom.xpath("//*[re:test(@xml:lang, '^[A-Z]')]")
 	if nodes:
 		messages.append(LintMessage("x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter.", se.MESSAGE_TYPE_ERROR, filename, [node.to_tag_string() for node in nodes]))
 
-	# Check for ID attributes of numbered paragraphs (like `p-44`) that are used as refs in endnotes.
+	# Check for `id` attributes of numbered paragraphs (like `p-44`) that are used as refs in endnotes.
 	# Make sure their number is actually their correct sequence number in the text.
 	for unexpected_id in se.formatting.find_unexpected_ids(dom):
 		messages.append(LintMessage("x-019", f"Unexpected value of [attr]id[/] attribute. Expected: [attr]{unexpected_id[1]}[/].", se.MESSAGE_TYPE_ERROR, filename, [unexpected_id[0].to_tag_string()]))
@@ -2970,16 +2951,16 @@ def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_
 
 def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: Optional[str]) -> list:
 	"""
-	Process typo checks on an .xhtml file
+	Process typo checks on an `.xhtml` file.
 
 	INPUTS
-	filename: The name of the file being checked
-	dom: The dom tree of the file being checked
-	file_contents: The contents of the file being checked
-	special_file: A string containing the type of special file the current file is, if any
+	filename: The name of the file being checked.
+	dom: The DOM tree of the file being checked.
+	file_contents: The contents of the file being checked.
+	special_file: A string containing the type of special file the current file is, if any.
 
 	OUTPUTS
-	A list of LintMessage objects
+	A list of `LintMessage` objects.
 	"""
 
 	messages = []
@@ -2993,7 +2974,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 		if typos:
 			messages.append(LintMessage("y-001", "Possible typo: doubled [text]a/the/and/of/or/as/if[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for basic typo, but exclude MathML and endnotes. Some endnotes (like in Ten Days that Shook the World) may start with letters.
+	# Check for basic typo, but exclude MathML and endnotes. Some endnotes (like in _Ten Days that Shook the World_) may start with letters.
 	dom_copy = deepcopy(dom)
 	for node in dom_copy.xpath("//a[contains(@epub:type, 'noteref')]") + dom_copy.xpath("//*[namespace-uri() = 'http://www.w3.org/1998/Math/MathML']"):
 		node.remove()
@@ -3017,24 +2998,21 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 		if typos:
 			messages.append(LintMessage("y-005", "Possible typo: question mark or exclamation mark followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for opening lsquo in quote that doesn't appear to have a matching rsquo, ignoring contractions/edlided words as false matches.
+	# Check for opening lsquo in quote that doesn't appear to have a matching `rsquo`, ignoring contractions/edlided words as false matches.
 	typos = dom.xpath("re:match(//*, '“[^‘”]*‘[^“]+?”', 'g')/text()[not(re:test(., '’[^A-Za-z]'))]")
 	if typos:
 		messages.append(LintMessage("y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hint: [text]’[/] are used for abbreviations.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Try to find top-level lsquo; for example, <p>“Bah!” he said to the ‘minister.’</p>
-	# We can't do this on xpath because we can't iterate over the output of re:replace().
-	# A fully-featured solution would parse quotes to find balanced pairs. This quick-n-dirty
-	# solution takes the raw XHTML string, strips any seemingly-valid balanced pairs using regex,
-	# then searches for unmatched `‘`. If found, it returns the dom node of the match; we can't return
-	# the actual string match because we stripped surrounding text.
+	# Try to find top-level `lsquo;` for example, `<p>“Bah!” he said to the ‘minister.’</p>`.
+	# We can't do this on xpath because we can't iterate over the output of `re:replace()`.
+	# A fully-featured solution would parse quotes to find balanced pairs. This quick-and-dirty solution takes the raw XHTML string, strips any seemingly-valid balanced pairs using regex, then searches for unmatched `‘`. If found, it returns the DOM node of the match; we can't return the actual string match because we stripped surrounding text.
 
-	# Start by merging all <p> into single lines, including poetry, but exclude blockquotes as they have special quoting rules
+	# Start by merging all `<p>` into single lines, including poetry, but exclude blockquotes as they have special quoting rules.
 	temp_xhtml = ""
 	dom_copy = deepcopy(dom)
 	node_number = 0
-	# Add IDs to the dom so we can find the paragraphs after we run our regex
-	# Exclude paragraphs in blockquotes, which may have special quoting rules, and "continued" paragraphs, which may be continued dialog without an “
+	# Add IDs to the DOM so we can find the paragraphs after we run our regex.
+	# Exclude paragraphs in blockquotes, which may have special quoting rules, and `continued` paragraphs, which may be continued dialog without an `“`.
 	for node in dom_copy.xpath("/html/body//p[not(ancestor::blockquote) and not(contains(@class, 'continued'))]"):
 		node.set_attr("id", "lint-" + str(node_number))
 		temp_xhtml = temp_xhtml + f"<p id=\"lint-{node_number}\">" + regex.sub(r"\s+", " ", node.inner_text()) + "\n"
@@ -3043,17 +3021,17 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	replacement_count = 1
 	while replacement_count > 0:
 		# Remove all regular quotes. Run this in a loop because we may need to remove triple-nested quotes.
-		(temp_xhtml, replacement_count) = regex.subn(r"“[^“]+?”", " ", temp_xhtml) # Remove all regular quotes
+		(temp_xhtml, replacement_count) = regex.subn(r"“[^“]+?”", " ", temp_xhtml) # Remove all regular quotes.
 
-	# Remove contractions to reduce rsquo for next regex
+	# Remove contractions to reduce `’` for next regex.
 	temp_xhtml = regex.sub(r"[\p{Letter}]’[\p{Letter}]", " ", temp_xhtml)
 
-	# Remove all runs of ldquo that are likely to spill to the next <p>
+	# Remove all runs of `“` that are likely to spill to the next `<p>`.
 	replacement_count = 1
 	while replacement_count > 0:
 		(temp_xhtml, replacement_count) = regex.subn(r"“[^“”]+?$", " ", temp_xhtml)
 
-	# Match problem `‘` using regex, and if found, get the actual node text from the dom to return.
+	# Match problem `‘` using regex, and if found, get the actual node text from the DOM to return.
 	typos = []
 	for match in regex.findall(r"""<p id="lint-([0-9]+?)">.*‘[\p{Letter}\s]""", temp_xhtml):
 		for node in dom_copy.xpath(f"/html/body//p[@id='lint-{match}' and re:test(., '‘[A-Za-z\\s]')]"):
@@ -3062,13 +3040,12 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	if typos:
 		messages.append(LintMessage("y-007", "Possible typo: [text]‘[/] not within [text]“[/]. Hints: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for single quotes when there should be double quotes in an interjection in dialog
+	# Check for single quotes when there should be double quotes in an interjection in dialog.
 	typos = [node.to_string() for node in dom.xpath("//p[re:test(., '“[^”]+?’⁠—[^”]+?—“')]")]
 	if typos:
 		messages.append(LintMessage("y-008", "Possible typo: dialog interrupted by interjection but with incorrect closing quote.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for dialog starting with a lowercase letter. Only check the first child text node of <p>, because other first children might be valid lowercase, like <m:math> or <b>;
-	# exclude <p> inside or preceded by <blockquote>; and exclude <p> inside endnotes, as definitions may start with lowercase letters.
+	# Check for dialog starting with a lowercase letter. Only check the first child text node of `<p>`, because other first children might be valid lowercase, like `<m:math>` or `<b>`; exclude `<p>` inside or preceded by `<blockquote>`; and exclude `<p>` inside endnotes, as definitions may start with lowercase letters.
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::li[contains(@epub:type, 'endnote')]) and not(preceding-sibling::*[1][name()='blockquote'])][re:test(./node()[1], '^“[a-z]')]")]
 	if typos:
 		messages.append(LintMessage("y-009", "Possible typo: dialog begins with lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
@@ -3095,28 +3072,28 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	if typos:
 		messages.append(LintMessage("y-014", "Possible typo: unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for some common OCR misspellings
+	# Check for some common OCR misspellings.
 	typos = regex.findall(r"\bbad (?:been|seen)\b", file_contents)
 	if typos:
 		messages.append(LintMessage("y-015", "Possible typo: misspelled word.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for two periods in a row, almost always a typo for one period or a hellip
+	# Check for two periods in a row, almost always a typo for one period or a `hellip`.
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[^\\.]\\.\\.[^\\.]')]")]
 	if typos:
 		messages.append(LintMessage("y-016", "Possible typo: consecutive periods ([text]..[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for ldquo followed by space
+	# Check for `ldquo` followed by space.
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '“\\s+[^‘’ʻ]')]")]
 	if typos:
 		messages.append(LintMessage("y-017", "Possible typo: [text]“[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for lsquo followed by space
+	# Check for `lsquo` followed by space.
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '‘\\s+[^“’]')]")]
 	if typos:
 		messages.append(LintMessage("y-018", "Possible typo: [text]‘[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for closing rdquo without opening ldquo.
-	# First, remove `<td>` and `<th>` in case rdquo means "ditto mark". Also remove noterefs which may interfere with this test.
+	# Check for closing `rdquo` without opening `ldquo`.
+	# First, remove `<td>` and `<th>` in case rdquo means `ditto mark`. Also remove noterefs which may interfere with this test.
 	dom_copy = deepcopy(dom)
 	for node in dom_copy.xpath("/html/body//table//a[contains(@epub:type, 'noteref')]"):
 		node.remove()
@@ -3126,20 +3103,19 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 
 	typos = regex.findall(r"”[^“‘]+?”", regex.sub(r"<t[dh][^>]*?>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</t[dh]>", "", dom_copy.to_string()))
 
-	# We create a filter to try to exclude nested quotations
+	# We create a filter to try to exclude nested quotations.
 	# Remove tags in case they're enclosing punctuation we want to match against at the end of a sentence.
 	typos = [match for match in typos if not regex.search(r"(?:[.!?;…—]|”\s)’\s", se.formatting.remove_tags(match))]
 
-	# Try some additional matches before adding the lint message
-	# Search for <p> tags that have an ending closing quote but no opening quote; but exclude <p>s that are preceded by a <blockquote>
-	# or that have a <blockquote> ancestor, because that may indicate that the opening quote is elsewhere in the quotation.
+	# Try some additional matches before adding the lint message.
+	# Search for `<p>` elements that have an ending closing quote but no opening quote; but exclude `<p>`s that are preceded by a `<blockquote>`, or that have a `<blockquote>` ancestor, because that may indicate that the opening quote is elsewhere in the quotation.
 	for node in dom.xpath("//p[re:test(., '^[^“]+”') and not(./preceding-sibling::*[1][name() = 'blockquote']) and not(./ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]) and not(./ancestor::blockquote)]"):
 		typos.append(node.to_string())
 
 	if typos:
 		messages.append(LintMessage("y-019", "Possible typo: [text]”[/] without opening [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for ,.
+	# Check for `,.`.
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., ',\\.')]")]
 	if typos:
 		messages.append(LintMessage("y-020", "Possible typo: consecutive comma-period ([text],.[/]).", se.MESSAGE_TYPE_WARNING, filename, typos))
@@ -3148,65 +3124,63 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	if typos:
 		messages.append(LintMessage("y-021", "Possible typo: closing [text]’[/] without opening [text]‘[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for a paragraph consisting entirely of two quotations
+	# Check for a paragraph consisting entirely of two quotations.
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^”]+?”\\s“[^”]+?”$')]")]
 	if typos:
 		messages.append(LintMessage("y-022", "Possible typo: consecutive quotations without intervening text, e.g. [text]“…” “…”[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for question marks within words
-	# Check for at least two letters following the question mark to ensure we matched a word-like thing, and not an endnote startin with a letter like <https://standardebooks.org/ebooks/john-reed/ten-days-that-shook-the-world>
+	# Check for question marks within words.
+	# Check for at least two letters following the question mark to ensure we matched a word-like thing, and not an endnote startin with a letter like <https://standardebooks.org/ebooks/john-reed/ten-days-that-shook-the-world>.
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[a-z]\\?[a-z]{2,}', 'i')]")]
 	if typos:
 		messages.append(LintMessage("y-023", "Possible typo: question mark within words.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for dashes instead of em-dashes
+	# Check for dashes instead of em-dashes.
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '\\s[a-z]+-(the|there|is|and|or|they|when)\\s')]")]
 	if typos:
 		messages.append(LintMessage("y-024", "Possible typo: dash before [text]the/there/is/and/or/they/when[/] probably should be em-dash.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for letter/comma/quote mark/letter with no intervening space (rdquo is already handled by y-012)
+	# Check for letter/comma/quote mark/letter with no intervening space (`rdquo` is already handled by `y-012`).
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '[a-z],[“‘’][a-z]', 'i')]")]
 	if typos:
 		messages.append(LintMessage("y-025", "Possible typo: letter/comma/quote mark/letter with no intervening space.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for punctuation missing before conjunctions. Ignore <p> with an <i> child starting in a conjunction, as those are probably book titles or non-English languages
+	# Check for punctuation missing before conjunctions. Ignore `<p>` with an `<i>` child starting in a conjunction, as those are probably book titles or non-English languages.
 	typos = [node.to_string() for node in dom.xpath(f"/html/body//p[not(parent::hgroup) and re:test(., '\\b[a-z]+\\s(But|And|For|Nor|Yet|Or)\\b[^’\\.\\?\\-{se.WORD_JOINER}]') and not(./i[re:test(., '^(But|And|For|Nor|Yet|Or)\\b')])]")]
 	if typos:
 		messages.append(LintMessage("y-026", "Possible typo: no punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for extra closing single quote at the end of dialog
+	# Check for extra closing single quote at the end of dialog.
 	typos = [node.to_string() for node in dom.xpath("/html/body//p[re:test(., '^“[^‘]+”\\s*’$')]")]
 	if typos:
 		messages.append(LintMessage("y-027", "Possible typo: extra [text]’[/] at end of paragraph.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for `<abbr>` preceded or followed by text. Ignore plurals (e.g. TVs) and compass directions followed by `ly`, like S.S.W.ly
+	# Check for `<abbr>` preceded or followed by text. Ignore plurals (e.g. `TVs`) and compass directions followed by `ly`, like `S.S.W.ly`.
 	typos = [node.to_string() for node in dom.xpath("/html/body//abbr[(preceding-sibling::node()[1])[re:test(., '[A-Za-z]$')] or (following-sibling::node()[1])[re:test(., '^[A-Za-z](?<!s\\b)') and not((./preceding-sibling::abbr[1])[contains(@epub:type, 'se:compass')] and re:test(., '^ly\\b'))]]")]
 	if typos:
 		messages.append(LintMessage("y-028", "Possible typo: [xhtml]<abbr>[/] directly preceded or followed by letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for misapplied italics. Ignore 's' because the plural is too common. i with epub:type handled by y-032.
+	# Check for misapplied italics. Ignore `s` because the plural is too common. `<i>` with `epub:type` is handled by `y-032`.
 	typos = [node.to_string() for node in dom.xpath("/html/body//*[(name() = 'em' or (name() = 'i' and not(@epub:type))) and ./following-sibling::node()[1][re:test(., '^[a-z]\\b', 'i') and not(re:test(., '^s\\b'))]]")]
 	if typos:
 		messages.append(LintMessage("y-029", "Possible typo: italics followed by a letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for lowercase letters starting quotations after a preceding period
+	# Check for lowercase letters starting quotations after a preceding period.
 	typos = dom.xpath("/html/body//p/child::text()[re:test(., '\\.\\s[‘“][a-z]')]")
 	if typos:
 		messages.append(LintMessage("y-030", "Possible typo: lowercase quotation following a period. Check either that the period should be a comma, or that the quotation should start with a capital.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	# Check for missing punctuation in continued quotations
-	# ” said Bob “
+	# Check for missing punctuation in continued quotations, like `” said Bob “`.
 	nodes = dom.xpath("/html/body//p[re:test(., '”\\s(?:said|[A-Za-z]{2,}ed)\\s[A-Za-z]+?(?<!\\bthe)(?<!\\bto)(?<!\\bwith)(?<!\\bfrom)(?<!\\ba\\b)(?<!\\bis)\\s“') or re:test(., '[^.?!]”\\s(he\\b|she\\b|I\\b|[A-Z][a-z]+?)\\s(?:said|[A-Za-z]{2,}ed)\\s“') or re:test(., ',” (?:said|[A-Za-z]{2,}ed) [A-Za-z]+? [A-Za-z]+?ly “') or re:test(., '[a-z]” said s?he[,\\.;]')]")
 	if nodes:
 		messages.append(LintMessage("y-031", "Possible typo: dialog tag missing punctuation.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for italics having epub:type that run in to preceding or following characters
-	# Ignore things like <i>Newspaper</i>s
+	# Check for italics having epub:type that run in to preceding or following characters. Ignore things like `<i>Newspaper</i>s`.
 	nodes = dom.xpath("/html/body//i[@epub:type and ( (following-sibling::node()[1][re:test(., '^[a-z]', 'i') and not(re:test(., '^(s|es|er)\\b'))]) or preceding-sibling::node()[1][re:test(., '[a-z]$')]) ]")
 	if nodes:
 		messages.append(LintMessage("y-032", "Possible typo: italics running into preceding or following characters.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
 
-	# Check for three-em-dashes not preceded by a space
+	# Check for three-em-dashes not preceded by a space.
 	nodes = dom.xpath(f"/html/body//p[re:test(., '[^>“(\\s{se.WORD_JOINER}]{se.WORD_JOINER}?⸻')]")
 	if nodes:
 		messages.append(LintMessage("y-033", "Possible typo: three-em-dash obscuring an entire word, but not preceded by a space.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
@@ -3249,15 +3223,15 @@ def _lint_image_metadata_checks(self, has_images: bool) -> list:
 
 	INPUTS
 	self
-	has_images: Flag indicating whether the ebook has images
+	has_images: Flag indicating whether the ebook has images.
 
 	OUTPUTS
-	A list of LintMessage objects
+	A list of `LintMessage` objects.
 	"""
 
 	messages = []
 
-	# Check for some accessibility metadata regarding images
+	# Check for some accessibility metadata regarding images.
 	has_visual_accessmode = len(self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessMode' and text() = 'visual']")) > 0
 	has_accessibility_feature_alt = len(self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'alternativeText']")) > 0
 	has_wat_role = len(self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text() = 'wat']")) > 0
@@ -3283,24 +3257,23 @@ def _lint_image_metadata_checks(self, has_images: bool) -> list:
 
 def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: list, messages: list) -> list:
 	"""
-	Parse a lint ignore file if pressent and if applicable remove its ignored messages
+	Parse a lint ignore file if pressent and if applicable remove its ignored messages.
 
 	INPUTS
 	self
-	skip_lint_ignore: Flag indicating whether the lint ignore file should be respected
-	messages: The list of LintMessages that have been generated so far
-	allowed_messages: A list of messages from the lint ignore file to allow for this run
+	skip_lint_ignore: Flag indicating whether the lint ignore file should be respected.
+	messages: The list of `LintMessage`s that have been generated so far.
+	allowed_messages: A list of messages from the lint ignore file to allow for this run.
 
 	OUTPUTS
-	A list of LintMessage objects
+	A list of `LintMessage` objects.
 	"""
 
 	# This is a dict with where keys are the path and values are a list of code dicts.
-	# Each code dict has a key "code" which is the actual code, and a key "used" which is a
-	# bool indicating whether or not the code has actually been caught in the linting run.
+	# Each code dict has a key "code" which is the actual code, and a key "used" which is a bool indicating whether or not the code has actually been caught in the linting run.
 	ignored_codes: Dict[str, List[Dict]] = {}
 
-	# First, check if we have an se-lint-ignore.xml file in the ebook root. If so, parse it. For an example se-lint-ignore file, see semos://1.0.0/2.3
+	# First, check if we have an `se-lint-ignore.xml` file in the ebook root. If so, parse it. For an example `se-lint-ignore.xml` file, see <semos://1.0.0/2.3>.
 	lint_ignore_path = self.path / "se-lint-ignore.xml"
 	if not skip_lint_ignore and lint_ignore_path.exists():
 		lint_config = self.get_dom(lint_ignore_path)
@@ -3316,7 +3289,7 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 			path = element.get_attr("path").strip()
 
 			if path == "*":
-				has_illegal_path = True # Set a bool so that we set a lint error later, to prevent adding it multiple times
+				has_illegal_path = True # Set a bool so that we set a lint error later, to prevent adding it multiple times.
 
 			if path not in ignored_codes:
 				ignored_codes[path] = []
@@ -3337,7 +3310,7 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 		if has_illegal_path:
 			messages.append(LintMessage("m-047", "Ignoring [path]*[/] is too general. Target specific files if possible.", se.MESSAGE_TYPE_WARNING, lint_ignore_path))
 
-	# Done parsing ignore list
+	# Done parsing ignore list.
 
 	# Now that we have our lint messages, we filter out ones that we've ignored.
 	if ignored_codes:
@@ -3346,19 +3319,19 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 			for path, codes in ignored_codes.items():
 				for code in codes:
 					try:
-						# fnmatch.translate() converts shell-style globs into a regex pattern
+						# `fnmatch.translate()` converts shell-style globs into a regex pattern.
 						if regex.match(fr"{translate(path)}", str(message.filename.name) if message.filename else "") and message.code == code["code"]:
 							messages.remove(message)
 							code["used"] = True
 
 					except ValueError:
 						# This gets raised if the message has already been removed by a previous rule.
-						# For example, chapter-*.xhtml gets t-001 removed, then subsequently *.xhtml gets t-001 removed.
+						# For example, `chapter-*.xhtml` gets `t-001` removed, then subsequently `*.xhtml` gets `t-001` removed.
 						pass
 					except Exception as ex:
 						raise se.InvalidInputException(f"Invalid path in [path][link=file://{lint_ignore_path}]se-lint-ignore.xml[/][/] rule: [path]{path}[/].") from ex
 
-		# Check for unused ignore rules
+		# Check for unused ignore rules.
 		unused_codes: List[str] = []
 		for path, codes in ignored_codes.items():
 			for code in codes:
@@ -3377,11 +3350,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 	INPUTS
 	self
-	skip_lint_ignore: Flag indicating whether ignore file should be used
-	allowed_messages: Optional list of messages from lint ignore file to allow this run
+	skip_lint_ignore: Flag indicating whether ignore file should be used.
+	allowed_messages: Optional list of messages from lint ignore file to allow this run.
 
 	OUTPUTS
-	A list of LintMessage objects.
+	A list of `LintMessage` objects.
 	"""
 
 	local_css_path = self.content_path / "css/local.css"
@@ -3426,17 +3399,17 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 		"has_mathml": False
 	}
 
-	# Cache the browser default stylesheet for later use
+	# Cache the browser default stylesheet for later use.
 	with importlib.resources.files("se.data").joinpath("browser.css").open("r", encoding="utf-8") as css:
 		self._file_cache["default"] = css.read() # pylint: disable=protected-access
 
-	# Check that the spine has all the expected files in the book
+	# Check that the spine has all the expected files in the book.
 	missing_spine_files = files_not_in_spine(self)
 	if missing_spine_files:
 		for missing_spine_file in missing_spine_files:
 			messages.append(LintMessage("f-007", "File not listed in [xml]<spine>[/].", se.MESSAGE_TYPE_ERROR, missing_spine_file))
 
-	# Get the ebook language for later use
+	# Get the ebook language for later use.
 	try:
 		language = self.metadata_dom.xpath("/package/metadata/dc:language")[0].text
 	except se.InvalidXmlException as ex:
@@ -3444,27 +3417,27 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	except Exception as ex:
 		raise se.InvalidSeEbookException(f"Missing [xml]<dc:language>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/].") from ex
 
-	# Check local.css for various items, for later use
+	# Check `local.css` for various items, for later use.
 	try:
 		self.local_css = self.get_file(local_css_path)
 	except Exception as ex:
 		raise se.InvalidSeEbookException(f"Couldn’t open [path]{local_css_path}[/].") from ex
 
-	# cssutils prints warnings/errors to stdout by default, so shut it up here
+	# `cssutils` prints warnings/errors to stdout by default, so shut it up here.
 	cssutils.log.enabled = False
 
-	# Get the css rules and selectors from helper function
+	# Get the CSS rules and selectors from helper function.
 	local_css_rules, duplicate_selectors = _get_selectors_and_rules(self)
 
 	if duplicate_selectors:
 		messages.append(LintMessage("c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding S.E. base styles.", se.MESSAGE_TYPE_WARNING, local_css_path, list(set(duplicate_selectors))))
 
-	# Store a list of CSS selectors, and duplicate it into a list of unused selectors, for later checks
-	# We use a regex to remove pseudo-elements like ::before, because we want the *selectors* to see if they're unused.
+	# Store a list of CSS selectors, and duplicate it into a list of unused selectors, for later checks.
+	# We use a regex to remove pseudo-elements like `::before`, because we want the *selectors* to see if they're unused.
 	local_css_selectors = [regex.sub(r"::[\p{Lowercase_Letter}\-]+", "", selector) for selector in local_css_rules]
 	unused_selectors = local_css_selectors.copy()
 
-	# Iterate over rules to do some other checks
+	# Iterate over rules to do some other checks.
 	abbr_with_whitespace = []
 	for selector, rules in local_css_rules.items():
 		if "z3998:poem" in selector:
@@ -3504,7 +3477,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 		root_files = os.listdir(self.path)
 		expected_root_files = ["images", "src", "LICENSE.md"]
 		illegal_files = [root_file for root_file in root_files if root_file not in expected_root_files and root_file != "se-lint-ignore.xml"] # se-lint-ignore.xml is optional
-		missing_files = [expected_root_file for expected_root_file in expected_root_files if expected_root_file not in root_files and expected_root_file != "LICENSE.md"] # We add more to this later on. LICENSE.md gets checked later on, so we don't want to add it twice
+		missing_files = [expected_root_file for expected_root_file in expected_root_files if expected_root_file not in root_files and expected_root_file != "LICENSE.md"] # We add more to this later on. LICENSE.md gets checked later on, so we don't want to add it twice.
 
 		# If we have illegal files, check if they are tracked in Git.
 		# If they are, then they're still illegal.
@@ -3515,18 +3488,18 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				if illegal_files and illegal_files[0] == "":
 					illegal_files = []
 			except Exception:
-				# If we can't initialize Git, then just pass through the list of illegal files
+				# If we can't initialize Git, then just pass through the list of illegal files.
 				pass
 
 		for illegal_file in illegal_files:
 			messages.append(LintMessage("f-001", "Illegal file or directory.", se.MESSAGE_TYPE_ERROR, Path(illegal_file)))
 
-	# Check for repeated punctuation
+	# Check for repeated punctuation.
 	nodes = self.metadata_dom.xpath("/package/metadata/*[re:test(., '[,;]{2,}')]")
 	if nodes:
 		messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [node.to_string() for node in nodes]))
 
-	# Set some variables for later
+	# Set some variables for later.
 	transcription_source_count = 0
 	page_scan_source_count = 0
 	other_source_count = 0
@@ -3544,14 +3517,14 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	ebook_flags["has_other_sources"] = other_source_count > 0
 
 	messages += _lint_metadata_checks(self)
-	# Check for double spacing (done here so double_spaced_files doesn't have to be passed to function)
+	# Check for double spacing (done here so double_spaced_files doesn't have to be passed to function).
 	if self.metadata_dom.xpath(f"/package/metadata/*[re:test(., '[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}')]"):
 		double_spaced_files.append(self.metadata_file_path)
 
-	# Check for malformed URLs
+	# Check for malformed URLs.
 	messages += _get_malformed_urls(self.metadata_dom, self.metadata_file_path)
 
-	# Make sure some static files are unchanged
+	# Make sure some static files are unchanged.
 	if self.is_se_ebook:
 		try:
 			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("LICENSE.md")) as license_file_path:
@@ -3590,7 +3563,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 	# Before we start, walk the files in spine order to build a tree of sections and heading levels.
 	section_tree: List[EbookSection] = _build_section_tree(self)
-	# This block is useful for pretty-printing section_tree should we need to debug it in the future
+	# This block is useful for pretty-printing section_tree should we need to debug it in the future.
 	# def dump(item, char):
 	#	print(f"{char} {item.section_id} ({item.depth}) {item.has_header}")
 	#	for child in item.children:
@@ -3599,8 +3572,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	#	dump(section, "")
 	# exit()
 
-	# Now iterate over individual files for some checks
-	# We use os.walk() and not Path.glob() so that we can ignore `.git` and its children
+	# Now iterate over individual files for some checks.
+	# We use `os.walk()` and not `Path.glob()` so that we can ignore `.git` and its children.
 	for root, directories, filenames in os.walk(self.path):
 		if ".git" in directories:
 			directories.remove(".git")
@@ -3636,11 +3609,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 			try:
 				file_contents = self.get_file(filename)
 			except UnicodeDecodeError:
-				# This is more to help developers find weird files that might choke `se lint`, hopefully unnecessary for end users
+				# This is more to help developers find weird files that might choke `se lint`, hopefully unnecessary for end users.
 				messages.append(LintMessage("f-010", "Problem decoding file as utf-8.", se.MESSAGE_TYPE_ERROR, filename))
 				continue
 
-			# Remove comments before we do any further processing
+			# Remove comments before we do any further processing.
 			file_contents = regex.sub(r"<!--.+?-->", "", file_contents, flags=regex.DOTALL)
 
 			if "UTF-8" in file_contents:
@@ -3654,11 +3627,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				svg_dom = self.get_dom(filename)
 				messages += _lint_svg_checks(self, filename, svg_dom, root)
 				if self.cover_path and filename.name == self.cover_path.name:
-					# For later comparison with titlepage
-					cover_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The cover for ", "") # <title> can appear on any element in SVG, but we only want to check the root one
+					# For later comparison with titlepage.
+					cover_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The cover for ", "") # `<title>` can appear on any element in SVG, but we only want to check the root one
 				elif filename.name == "titlepage.svg":
-					# For later comparison with cover
-					titlepage_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The titlepage for ", "") # <title> can appear on any element in SVG, but we only want to check the root one
+					# For later comparison with cover.
+					titlepage_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The titlepage for ", "") # `<title>` can appear on any element in SVG, but we only want to check the root one.
 
 			if filename.suffix == ".xml":
 				xml_dom = self.get_dom(filename)
@@ -3666,13 +3639,13 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				if xml_dom.xpath("/search-key-map") and filename.name != "glossary-search-key-map.xml":
 					messages.append(LintMessage("f-013", "Glossary search key map must be named [path]glossary-search-key-map.xml[/].", se.MESSAGE_TYPE_ERROR, filename))
 
-				# Make sure that everything in glossaries are in the rest of the text
-				# We’ll check the files later, and log any errors at the end
+				# Make sure that everything in glossaries are in the rest of the text.
+				# We’ll check the files later, and log any errors at the end.
 				if filename.name == "glossary-search-key-map.xml":
 					ebook_flags["has_glossary_search_key_map"] = True
-					# Map the glossary to tuples of the values and whether they’re used (initially false)
-					# If a <match> has no <value> children, its @value must appear in the text
-					# Otherwise, each of its <value> children's @value must appear
+					# Map the glossary to tuples of the values and whether they’re used (initially false).
+					# If a `<match>` has no `<value>` children, its `@value` must appear in the text.
+					# Otherwise, each of its `<value>` children's `@value` must appear.
 					for match in xml_dom.xpath("/search-key-map/search-key-group/match[@value]"):
 						values = match.xpath("./value[@value]")
 						if not values:
@@ -3682,64 +3655,64 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 								glossary_usage.append((value.get_attr("value"), False))
 
 			if filename.suffix == ".xhtml":
-				# Read file contents into a DOM for querying
+				# Read file contents into a DOM for querying.
 				dom = self.get_dom(filename, True)
 
 				# Apply stylesheets.
-				# First apply the browser default stylesheet
+				# First apply the browser default stylesheet.
 				dom.apply_css(self.get_file(Path("default")), "default")
 
-				# Apply any CSS files in the DOM
+				# Apply any CSS files in the DOM.
 				for node in dom.xpath("/html/head/link[@rel='stylesheet']"):
 					css_filename = (filename.parent / node.get_attr("href")).resolve()
 					dom.apply_css(self.get_file(css_filename), str(css_filename))
 
 				messages += _get_malformed_urls(dom, filename)
 
-				# Extract ID attributes for later checks
+				# Extract `id` attributes for later checks.
 				id_attrs += dom.xpath("//*[name() != 'section' and name() != 'article' and name() != 'figure' and name() != 'nav']/@id")
 
-				# Add to the short story count for later checks
+				# Add to the short story count for later checks.
 				short_story_count += len(dom.xpath("/html/body//article[contains(@epub:type, 'se:short-story')]"))
 
-				# Check for ID attrs that don't match the filename.
-				# We simply check if there are *any* ids that match, because we can have multiple IDs--for example, works that are part of a volume or subchapters with IDs
-				# Ignore <body>s with more than 2 <article>s as those are probably short story collections
+				# Check for `id` attributes that don't match the filename.
+				# We simply check if there are *any* IDs that match, because we can have multiple IDs 0 for example, works that are part of a volume or subchapters with IDs.
+				# Ignore `<body>`s with more than 2 `<article>`s, as those are probably short story collections.
 				nodes = dom.xpath("/html/body[count(./article) < 2]//*[(name() = 'section' or name() = 'article') and @id]")
 
 				if nodes and filename.stem not in [node.get_attr("id") for node in nodes]:
 					messages.append(LintMessage("f-015", "Filename doesn’t match [attr]id[/] attribute of primary [xhtml]<section>[/] or [xhtml]<article>[/]. Hint: [attr]id[/] attributes don’t include the file extension.", se.MESSAGE_TYPE_ERROR, filename))
 
-				# Check for unused selectors
+				# Check for unused selectors.
 				if dom.xpath("/html/head/link[contains(@href, 'local.css')]"):
 					for selector in local_css_selectors:
 						try:
 							if dom.css_select(selector):
 								unused_selectors.remove(selector)
 						except lxml.cssselect.ExpressionError:
-							# This gets thrown on some selectors not yet implemented by lxml, like *:first-of-type
+							# This gets thrown on some selectors not yet implemented by lxml, like `*:first-of-type`.
 							unused_selectors.remove(selector)
 							continue
 						except Exception as ex:
 							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
 
-				# Update our list of local.css selectors to check in the next file
+				# Update our list of `local.css` selectors to check in the next file.
 				local_css_selectors = list(unused_selectors)
 
 				# Done checking for unused selectors.
 				if not ebook_flags["has_mathml"] and dom.xpath("/html/body//m:math"):
 					ebook_flags["has_mathml"] = True
 
-				# Check if this is a frontmatter file, but exclude the titlepage, imprint, and toc
+				# Check if this is a frontmatter file, but exclude the titlepage, imprint, and toc.
 				if not ebook_flags["has_frontmatter"] and dom.xpath("/html//*[contains(@epub:type, 'frontmatter') and not(descendant-or-self::*[re:test(@epub:type, '\\b(titlepage|imprint|toc)\\b')])]"):
 					ebook_flags["has_frontmatter"] = True
 
 				# Do we have a half title?
-				# Sometimes the half title might not be a section, like in Cane by Jean Toomer
+				# Sometimes the half title might not be a section, like in _Cane_ by Jean Toomer.
 				if not ebook_flags["has_halftitle"] and dom.xpath("/html/body//*[contains(@epub:type, 'halftitlepage')]"):
 					ebook_flags["has_halftitle"] = True
 
-				# Add new CSS classes to global list
+				# Add new CSS classes to global list.
 				if filename.name not in IGNORED_FILENAMES:
 					for node in dom.xpath("//*[@class]"):
 						for css_class in node.get_attr("class").split():
@@ -3756,7 +3729,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 
 				# Get the title of this file to compare against the ToC later.
 				# We ignore the ToC file itself.
-				# Also ignore files that have more than 3 top-level sections or articles, as these are probably compilation works that will have unique titles.
+				# Also ignore files that have more than 3 top-level `<section>`s or `<article>`s, as these are probably compilation works that will have unique titles.
 				if not dom.xpath("/html/body/nav[contains(@epub:type, 'toc')]") and not dom.xpath("/html/body[count(./section) + count(./article) > 3]"):
 					try:
 						header_text = dom.xpath("/html/head/title/text()")[0]
@@ -3766,7 +3739,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 					if header_text != "":
 						headings.append((header_text, str(filename)))
 
-				# Check for double spacing
+				# Check for double spacing.
 				# First, remove any table cells which contain quotation marks followed by multiple spaces, as those are probably ditto marks.
 				dom_copy = deepcopy(dom)
 				for td_node in dom_copy.xpath(f"//td[re:test(., '”[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]+”')]"):
@@ -3775,12 +3748,12 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				if matches:
 					double_spaced_files.append(filename)
 
-				# Collect certain abbr elements to check that required styles are included, but not in the colophon
+				# Collect certain `<abbr>` elements to check that required styles are included, but not in the colophon.
 				if not dom.xpath("/html/body/*[contains(@epub:type, 'colophon')]"):
-					# For now, temperature, acronym, and era are the only abbrs with required styles
+					# For now, temperature, acronym, and era are the only `<abbr>`s with required styles.
 					abbr_elements_requiring_css += dom.xpath("/html/body//abbr[re:test(@epub:type, '\\b(se:temperature|se:era|z3998:acronym)\\b')]")
 
-				# Check and log missing glossary keys
+				# Check and log missing glossary keys.
 				if ebook_flags["has_glossary_search_key_map"] and filename.name not in IGNORED_FILENAMES:
 					# Remove all noterefs, as their anchor text will otherwise immediately follow a potential glossary term, defeating the below regex.
 					dom_copy = deepcopy(dom)
@@ -3795,11 +3768,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 						if glossary_value[1] is False and regex.search(r"(?<!\w)\L<val>(?!\w)", source_text, flags=regex.IGNORECASE, val=[glossary_value[0]]):
 							glossary_usage[glossary_index] = (glossary_value[0], True)
 
-				# Test against word boundaries to not match `halftitlepage`
+				# Test against word boundaries to not match `halftitlepage`.
 				if dom.xpath("/html/body/section[re:test(@epub:type, '\\btitlepage\\b')]"):
 					special_file = "titlepage"
-					# Check if the <title> element is set correctly, but only if there's no heading content.
-					# If there's heading content, then <title> should match the expected generated value from the heading content.
+					# Check if the `<title>` element is set correctly, but only if there's no heading content.
+					# If there's heading content, then `<title>` should match the expected generated value from the heading content.
 					if dom.xpath("/html[not(./body//*[re:test(name(), '^h(group|[1-6])$')]) and ./head/title[text()!='Titlepage']]"):
 						messages.append(LintMessage("s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/].", se.MESSAGE_TYPE_ERROR, filename))
 
@@ -3848,15 +3821,15 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 		missing_files.append("images/cover.source.jpg")
 
 	if ebook_flags["has_mathml"]:
-		# Check for MathML, and no MathML / describedMath accessibilityFeature
+		# Check for MathML, and no `MathML` / `describedMath` `accessibilityFeature`.
 		if not self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'describedMath']"):
 			messages.append(LintMessage("m-077", "MathML found in ebook, but no [attr]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-		# …and no ONIX MathML feature
+		# …and no `ONIX` MathML feature.
 		if not self.onix_dom.xpath("//ProductFormFeatureType[text()='09']/following-sibling::ProductFormFeatureValue[text()='17']"):
 			messages.append(LintMessage("m-078", "MathML found in ebook, but no MathML accessibility [xml]<ProductFormFeatureValue>17</ProductFormFeatureValue>[/] set in ONIX data.", se.MESSAGE_TYPE_ERROR, self.onix_path))
 
-	# check for classes used but not in CSS, and classes only used once
+	# Check for classes used but not in CSS, and classes only used once.
 	missing_selectors = []
 	single_use_css_classes = []
 
@@ -3866,7 +3839,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 				missing_selectors.append(css_class)
 
 		if count == 1 and css_class not in IGNORED_CLASSES and not regex.match(r"^i[0-9]+$", css_class):
-			# Don't count ignored classes OR i[0-9] which are used for poetry styling
+			# Don't count ignored classes *or* `i[0-9]` which are used for poetry styling.
 			single_use_css_classes.append(css_class)
 
 	if missing_selectors:
@@ -3875,15 +3848,14 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	if single_use_css_classes:
 		messages.append(LintMessage("c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks.", se.MESSAGE_TYPE_WARNING, local_css_path, single_use_css_classes))
 
-	# We have a list of ID attributes in the ebook. Now iterate over all XHTML files again to ensure each one has been used
-	# Only run this check if we actually have ID attributes to inspect
+	# We have a list of `id` attributes in the ebook. Now iterate over all XHTML files again to ensure each one has been used.
+	# Only run this check if we actually have `id` attributes to inspect.
 	if id_attrs:
 		id_attrs = list(set(id_attrs))
 		unused_id_attrs = deepcopy(id_attrs)
 		sorted_filenames: List[str] = []
 
-		# Href links are mostly found in endnotes, so if there's an endnotes file process it first
-		# to try to speed things up a little
+		# `href` links are mostly found in endnotes, so if there's an endnotes file process it first to try to speed things up a little.
 		for file_path in self.content_path.glob("**/*"):
 			if file_path.suffix in (".xhtml", ".xml"):
 				dom = self.get_dom(file_path)
@@ -3896,16 +3868,15 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 			xhtml = self.get_file(filename)
 
 			for attr in id_attrs:
-				# We use a simple `in` check instead of xpath because it's an order of magnitude faster on
-				# really big ebooks with lots of IDs like Pepys.
+				# We use a simple `in` check instead of xpath because it's an order of magnitude faster on really big ebooks with lots of IDs, like _Pepys_.
 				if f"#{attr}\"" in xhtml:
 					try:
 						unused_id_attrs.remove(attr)
 					except ValueError:
-						# We get here if we try to remove a value that has already been removed
+						# We get here if we try to remove a value that has already been removed.
 						pass
 
-			# Reduce the list of ID attrs to check in the next pass, a time saver for big ebooks
+			# Reduce the list of `id` attributes to check in the next pass, a time saver for big ebooks.
 			id_attrs = deepcopy(unused_id_attrs)
 
 		if unused_id_attrs:
@@ -3917,7 +3888,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 			if files_not_url_safe and files_not_url_safe[0] == "":
 				files_not_url_safe = []
 		except Exception:
-			# If we can't initialize Git, then just pass through the list of illegal files
+			# If we can't initialize Git, then just pass through the list of illegal files.
 			pass
 
 		for filepath in files_not_url_safe:
@@ -3932,15 +3903,15 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 			if directories_not_url_safe and directories_not_url_safe[0] == "":
 				directories_not_url_safe = []
 
-			# Git doesn't store directories, only files. So the above output will be a list of files within a badly-named dir.
-			# To get the dir name, get the parent of the file that Git outputs.
+			# Git doesn't store directories, only files. So the above output will be a list of files within a badly-named directory.
+			# To get the directory name, get the parent of the file that Git outputs.
 			for index, filepath in enumerate(directories_not_url_safe):
 				directories_not_url_safe[index] = str(Path(filepath).parent.name)
 
-			# Remove duplicates
+			# Remove duplicates.
 			directories_not_url_safe = list(set(directories_not_url_safe))
 		except Exception:
-			# If we can't initialize Git, then just pass through the list of illegal files
+			# If we can't initialize Git, then just pass through the list of illegal files.
 			pass
 
 		for filepath in directories_not_url_safe:
@@ -3952,26 +3923,26 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 		duplicate_id_values = natsorted(list(set(duplicate_id_values)))
 		messages.append(LintMessage("x-017", "Duplicate value for [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_id_values))
 
-	# Check our headings against the ToC and landmarks
+	# Check our headings against the ToC and landmarks.
 	headings = list(set(headings))
 	toc_dom = self.get_dom(self.toc_path)
 	toc_headings = []
 	toc_entries = toc_dom.xpath("/html/body/nav[@epub:type='toc']//a")
 
-	# Match ToC headings against text headings
+	# Match ToC headings against text headings.
 	for node in toc_entries:
-		# Remove # anchors after filenames (for books like Aesop's fables)
+		# Remove `#` anchors after filenames (for books like Aesop's _Fables_).
 		entry_file = self.content_path / regex.sub(r"#.+$", "", node.get_attr("href"))
 		toc_headings.append((node.inner_text(), str(entry_file)))
 
 	for heading in headings:
-		# Some compilations, like Songs of a Sourdough, have their title in the half title, so check against that before adding an error
-		# Ignore the half title page, because its text may differ in collections with only one file, like Father Goriot or The Path to Rome
+		# Some compilations, like _Songs of a Sourdough_, have their title in the half title, so check against that before adding an error.
+		# Ignore the half title page, because its text may differ in collections with only one file, like _Father Goriot_ or _The Path to Rome_.
 		if heading not in toc_headings and Path(heading[1]).name != 'halftitlepage.xhtml' and (heading[0], str(self.path / "src/epub/text/halftitlepage.xhtml")) not in toc_headings:
 			messages.append(LintMessage("m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, Path(heading[1])))
 
 	for element in abbr_elements_requiring_css:
-		# All abbr elements have an epub:type because we selected them based on epub:type in the xpath
+		# All `<abbr>` elements have an `epub:type` because we selected them based on `epub:type` in the xpath.
 		for value in element.get_attr("epub:type").split():
 			if f"[epub|type~=\"{value}\"]" not in self.local_css:
 				missing_styles.append(element.to_tag_string())

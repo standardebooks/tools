@@ -14,7 +14,7 @@ from se.se_epub import SeEpub
 
 def build_manifest(plain_output: bool) -> int:
 	"""
-	Entry point for `se build-manifest`
+	Entry point for `se build-manifest`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Generate the <manifest> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.")
@@ -41,19 +41,19 @@ def build_manifest(plain_output: bool) -> int:
 					for node in se_epub.metadata_dom.xpath("/package"):
 						node.append(se_epub.generate_manifest())
 
-				# If we have images in the manifest, add or remove some accessibility metadata while we're here
+				# If we have images in the manifest, add or remove some accessibility metadata while we're here.
 				access_mode_nodes = se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessMode' and text() = 'visual']")
 				access_mode_sufficient_nodes = se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'alternativeText']")
 
 				if se_epub.metadata_dom.xpath("/package/manifest/item[starts-with(@media-type, 'image/') and not(re:test(@href, 'images/(cover\\.svg||logo\\.svg|titlepage\\.svg)$'))]"):
-					# Add access modes if we have images
+					# Add access modes if we have images.
 					if not access_mode_nodes:
 						se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessMode' and text() = 'textual']")[0].lxml_element.addnext(etree.XML("<meta property=\"schema:accessMode\">visual</meta>"))
 
 					if not access_mode_sufficient_nodes:
 						se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessModeSufficient']")[0].lxml_element.addnext(etree.XML("<meta property=\"schema:accessibilityFeature\">alternativeText</meta>"))
 				else:
-					# If we don't have images, then remove any access modes that might be there erroneously
+					# If we don't have images, then remove any access modes that might be there erroneously.
 					for node in access_mode_nodes:
 						node.remove()
 

@@ -13,7 +13,7 @@ import tinycss2.color3
 
 import se
 
-# See https://developer.mozilla.org/en-US/docs/Web/HTML/Block-level_elements
+# See <https://developer.mozilla.org/en-US/docs/Web/HTML/Block-level_elements>.
 CSS_BLOCK_ELEMENTS = ["address", "article", "aside", "blockquote", "details", "dialog", "dd", "div", "dl", "dt", "fieldset", "figcaption", "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "header", "hgroup", "hr", "li", "main", "nav", "ol", "p", "pre", "section", "table", "ul"]
 CSS_PROPERTIES = {
 			"align-content": {"applies_to": "all", "inherited": False},
@@ -64,8 +64,7 @@ class CssDeclaration:
 
 	def expand(self):
 		"""
-		Given a declaration, if it is shorthand like `margin` (short for `margin-left`, `margin-top`, etc.)
-		then break it apart into its complete component declarations
+		Given a declaration, if it is shorthand like `margin` (short for `margin-left`, `margin-top`, etc.) then break it apart into its complete component declarations.
 		"""
 
 		output = []
@@ -75,8 +74,8 @@ class CssDeclaration:
 
 			identifiers = regex.split(r"-", self.name)
 
-			base_name = identifiers[0] # i.e. `border`
-			style_name = "" # i.e. `style`
+			base_name = identifiers[0] # i.e. `border`.
+			style_name = "" # i.e. `style`.
 			if len(identifiers) == 2:
 				style_name = f"-{identifiers[1]}"
 
@@ -150,7 +149,7 @@ class CssDeclaration:
 				output.append(expanded_declaration)
 
 		elif self.name == "border":
-			# border is short for <border-width>, <border-style>, and <border-color>, in any order.
+			# `border` is short for `<border-width>`, `<border-style>`, and `<border-color>`, in any order.
 			# Make an attempt to parse it here.
 
 			border_color = None
@@ -159,7 +158,7 @@ class CssDeclaration:
 
 			for item in self.raw_values:
 				if not border_color:
-					# This returns None if the value is an invalid color or an RGBA tuple otherwise
+					# This returns `None` if the value is an invalid color or an RGBA tuple otherwise.
 					border_color = tinycss2.color3.parse_color(item)
 
 					if border_color:
@@ -224,17 +223,17 @@ def parse_rules(css: str):
 
 	rules = []
 
-	# Parse the stylesheet to break it into rules and their associated properties
+	# Parse the stylesheet to break it into rules and their associated properties.
 	for token in tinycss2.parse_stylesheet(css, skip_comments=True):
 		if token.type == "error":
 			raise se.InvalidCssException(token.message)
 
-		# A CSS rule
+		# A CSS rule.
 		if token.type == "qualified-rule":
 			selectors = tinycss2.serialize(token.prelude).strip()
 
-			# First, get a list of declarations within the { } block.
-			# Parse each declaration and add it to the rule
+			# First, get a list of declarations within the `{}` block.
+			# Parse each declaration and add it to the rule.
 			declarations = []
 			for item in tinycss2.parse_declaration_list(token.content):
 				if item.type == "error":
@@ -244,9 +243,9 @@ def parse_rules(css: str):
 					declaration = CssDeclaration(item.lower_name, item.value, item.important)
 					declarations += declaration.expand()
 
-			# We can have multiple selectors in a rule separated by `,`
+			# We can have multiple selectors in a rule separated by `,`.
 			for selector in selectors.split(","):
-				# Skip selectors containing pseudo elements
+				# Skip selectors containing pseudo elements.
 				if "::" in selector:
 					continue
 
@@ -254,27 +253,27 @@ def parse_rules(css: str):
 
 				rule = CssRule(selector)
 
-				# Calculate the specificity of the selector
-				# See https://www.w3.org/TR/CSS2/cascade.html#specificity
-				# a = 0 always (no style attributes apply here)
+				# Calculate the specificity of the selector.
+				# See <https://www.w3.org/TR/CSS2/cascade.html#specificity>.
+				# a = 0 always (no style attributes apply here).
 
-				# First remove strings, because they can contain `:`
+				# First remove strings, because they can contain `:`.
 				selector = regex.sub(r"\"[^\"]+?\"", "", selector)
 
-				# b = number of ID attributes
+				# b = number of ID attributes.
 				specificity_b = len(regex.findall(r"#", selector))
 
-				# c = number of other attributes or pseudo classes
+				# c = number of other attributes or pseudo classes.
 				specificity_c = len(regex.findall(r"[\.\[\:]", selector))
 
-				# d = number of element names and pseudo elements (which will be 0 for us)
+				# d = number of element names and pseudo elements (which will be 0 for us).
 				specificity_d = len(regex.findall(r"(?:^[a-z]|\s[a-z])", selector))
 
 				rule.specificity = (specificity_b, specificity_c, specificity_d)
 
 				rule.specificity_number = specificity_b * 100 + specificity_c * 10 + specificity_d
 
-				# Done with specificity, assign the declarations and save the rule
+				# Done with specificity, assign the declarations and save the rule.
 
 				rule.declarations = declarations
 

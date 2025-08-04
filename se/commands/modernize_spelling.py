@@ -12,7 +12,7 @@ import se.spelling
 
 def modernize_spelling(plain_output: bool) -> int:
 	"""
-	Entry point for `se modernize-spelling`
+	Entry point for `se modernize-spelling`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling. For example, replace `ash-tray` with `ashtray`.")
@@ -22,7 +22,7 @@ def modernize_spelling(plain_output: bool) -> int:
 	args = parser.parse_args()
 
 	return_code = 0
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
 	for filename in se.get_target_filenames(args.targets, ".xhtml"):
 		if args.verbose:

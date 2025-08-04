@@ -11,7 +11,7 @@ import se.easy_xml
 
 def css_select(plain_output: bool) -> int:
 	"""
-	Entry point for `se css-select`
+	Entry point for `se css-select`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Print the results of a CSS selector evaluated against a set of XHTML files.")
@@ -37,13 +37,12 @@ def css_select(plain_output: bool) -> int:
 						if isinstance(node, se.easy_xml.EasyXmlElement):
 							output = node.to_string()
 						else:
-							# We may select text() nodes as a result
+							# We may select `text()` nodes as a result.
 							output = str(node)
 
 						output = "".join([f"\t{line}\n" for line in output.splitlines()])
 
-						# We only have to escape leading [ to prevent Rich from converting
-						# it to a style. If we also escape ] then Rich will print the slash.
+						# We only have to escape leading `[` to prevent Rich from converting it to a style. If we also escape `]` then Rich will print the slash.
 						output = output.replace("[", "\\[")
 
 						console.print(output)

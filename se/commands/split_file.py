@@ -14,8 +14,7 @@ import se
 
 def _split_file_output_file(filename_format_string: str, chapter_number: int, template_xhtml: str, chapter_xhtml: str) -> None:
 	"""
-	Helper function for split_file() to write a file given the chapter number,
-	header XHTML, and chapter body XHTML.
+	Helper function for `split_file()` to write a file given the chapter number, header XHTML, and chapter body XHTML.
 	"""
 
 	filename = filename_format_string.replace("%n", str(chapter_number))
@@ -30,7 +29,7 @@ def _split_file_output_file(filename_format_string: str, chapter_number: int, te
 
 def split_file(plain_output: bool) -> int:
 	"""
-	Entry point for `se split-file`
+	Entry point for `se split-file`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Split an XHTML file into many files at all instances of <!--se:split-->, and include a header template for each file.")
@@ -60,7 +59,7 @@ def split_file(plain_output: bool) -> int:
 		with importlib.resources.files("se.data.templates").joinpath("chapter-template.xhtml").open("r", encoding="utf-8") as file:
 			template_xhtml = file.read()
 
-	# Try to guess the ebook language and update the template accordingly
+	# Try to guess the ebook language and update the template accordingly.
 	pg_language = "en-US"
 	if "colour" in xhtml or "favour" in xhtml or "honour" in xhtml:
 		pg_language = "en-GB"
@@ -69,7 +68,7 @@ def split_file(plain_output: bool) -> int:
 
 	chapter_xhtml = ""
 
-	# Remove leading split tags
+	# Remove leading split tags.
 	xhtml = regex.sub(r"^\s*<\!--se:split-->", "", xhtml)
 
 	for line in xhtml.splitlines():

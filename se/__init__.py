@@ -53,8 +53,7 @@ class SeException(Exception):
 
 	code = 0
 
-# Note that we skip error codes 1 and 2 as they have special meanings:
-# http://www.tldp.org/LDP/abs/html/exitcodes.html
+# Note that we skip error codes 1 and 2 as they have special meanings: <http://www.tldp.org/LDP/abs/html/exitcodes.html>.
 
 class InvalidXhtmlException(SeException):
 	""" Invalid XHTML """
@@ -125,10 +124,10 @@ def strip_bom(string: str) -> str:
 	Remove the Unicode Byte Order Mark from a string.
 
 	INPUTS
-	string: A Unicode string
+	string: A Unicode string.
 
 	OUTPUTS
-	The input string with the Byte Order Mark removed
+	The input string with the Byte Order Mark removed.
 	"""
 
 	if string.startswith(UNICODE_BOM):
@@ -168,8 +167,8 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 	label = "Error" if not is_warning else "Warning"
 	bg_color = "red" if not is_warning else "yellow"
 
-	# We have to print to stdout in case we're called from GNU Parallel, otherwise weird newline issues occur
-	# This no longer works with rich because it can't (yet) output to stderr
+	# We have to print to `stdout` in case we're called from GNU Parallel, otherwise weird newline issues occur.
+	# This no longer works with Rich because it can't (yet) output to `stderr`.
 	output_file = sys.stderr if not is_warning and not is_called_from_parallel() else sys.stdout
 
 	message = str(message)
@@ -177,10 +176,10 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 	if verbose:
 		message = str(message).replace("\n", f"\n{MESSAGE_INDENT}")
 
-	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
 	if plain_output:
-		# Replace color markup with `
+		# Replace color markup with ```.
 		message = prep_output(message, True)
 		console.print(f"{MESSAGE_INDENT if verbose else ''}[{label}] {message}")
 	else:
@@ -189,6 +188,7 @@ def print_error(message: Union[SeException, str], verbose: bool = False, is_warn
 def is_positive_integer(value: str) -> int:
 	"""
 	Helper function for argparse.
+
 	Raise an exception if value is not a positive integer.
 	"""
 
@@ -208,8 +208,8 @@ def get_target_filenames(targets: list, allowed_extensions: Union[tuple, str]) -
 	allowed_extensions is only applied on targets that are directories.
 
 	INPUTS
-	targets: A list of filenames or directories
-	allowed_extensions: A tuple containing a series of allowed filename extensions; extensions must begin with "."
+	targets: A list of filenames or directories.
+	allowed_extensions: A tuple containing a series of allowed filename extensions; extensions must begin with `.`.
 
 	OUTPUTS
 	A set of file paths and filenames contained in the target list.
@@ -224,7 +224,7 @@ def get_target_filenames(targets: list, allowed_extensions: Union[tuple, str]) -
 		target = Path(target).resolve()
 
 		if target.is_dir():
-			# We use os.walk() and not Path.glob() so that we can ignore `.git` and its children
+			# We use `os.walk()` and not `Path.glob()` so that we can ignore `.git` and its children.
 			for root, directories, filenames in os.walk(target):
 				if ".git" in directories:
 					directories.remove(".git")
@@ -237,7 +237,7 @@ def get_target_filenames(targets: list, allowed_extensions: Union[tuple, str]) -
 					else:
 						target_xhtml_filenames.add(file_path)
 		else:
-			# If we're looking at an actual file, just add it regardless of whether it's ignored
+			# If we're looking at an actual file, just add it regardless of whether it's ignored.
 			target_xhtml_filenames.add(target)
 
 	return natsorted(list(target_xhtml_filenames), key=lambda x: str(x.name), alg=ns.PATH)
@@ -245,12 +245,14 @@ def get_target_filenames(targets: list, allowed_extensions: Union[tuple, str]) -
 def is_called_from_parallel(return_none=True) -> Union[bool,None]:
 	"""
 	Decide if we're being called from GNU parallel.
+
 	This is good to know in case we want to tweak some output.
 
-	This is almost always passed directly to the force_terminal option of rich.console(),
-	meaning that `None` means "guess terminal status" and `False` means "no colors at all".
-	We typically want to guess, so this returns None by default if not called from Parallel.
-	To return false in that case, pass return_none=False
+	This is almost always passed directly to the `force_terminal` option of `rich.console()`, meaning that `None` means "guess terminal status" and `False` means "no colors at all".
+
+	We typically want to guess, so this returns `None` by default if not called from Parallel.
+
+	To return `False` in that case, pass `return_none=False`.
 	"""
 
 	import psutil # pylint: disable=import-outside-toplevel
@@ -260,24 +262,23 @@ def is_called_from_parallel(return_none=True) -> Union[bool,None]:
 			if regex.search(fr"{os.sep}parallel$", line):
 				return True
 	except Exception:
-		# If we can't figure it out, don't worry about it
+		# If we can't figure it out, don't worry about it.
 		pass
 
 	return None if return_none else False
 
 def get_dom_if_not_ignored(xhtml: str, ignored_types: Union[List[str],None] = None) -> Tuple[bool, Union[None, se.easy_xml.EasyXmlTree]]:
 	"""
-	Given a string of XHTML, return a dom tree ONLY IF the dom does not contain a
-	top-level <section> element with any of the passed semantics.
+	Given a string of XHTML, return a DOM tree *only if* the DOM does not contain a top-level `<section>` element with any of the passed semantics.
 
-	Pass an empty list to ignored_types to ignore nothing.
-	Pass None to ignored_types to ignore a default set of SE files.
+	Pass an empty list to `ignored_types` to ignore nothing.
+
+	Pass `None` to `ignored_types` to ignore a default set of SE files.
 
 	RETURNS
 	A tuple of (is_ignored, dom)
-	If the file is ignored, is_ignored will be True.
-	If the dom couldn't be created (for example it is invalid XML) then the dom part
-	of the tuple will be None.
+	If the file is ignored, `is_ignored` will be `True`.
+	If the DOM couldn't be created (for example it is invalid XML) then the DOM part of the tuple will be `None`.
 	"""
 
 	is_ignored = False
@@ -289,8 +290,8 @@ def get_dom_if_not_ignored(xhtml: str, ignored_types: Union[List[str],None] = No
 	except Exception:
 		return (False, None)
 
-	# Ignore some SE files
-	# Default ignore list
+	# Ignore some SE files.
+	# Default ignore list.
 	if ignored_types is None:
 		ignored_regex = "(colophon|titlepage|imprint|copyright-page|halftitlepage|toc|loi)"
 

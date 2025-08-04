@@ -12,7 +12,7 @@ import se
 
 def roman2dec(plain_output: bool) -> int:
 	"""
-	Entry point for `se roman2dec`
+	Entry point for `se roman2dec`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Convert a Roman numeral to a decimal number.")

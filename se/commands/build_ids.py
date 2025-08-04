@@ -16,7 +16,7 @@ from se.se_epub_lint import files_not_in_spine
 
 def build_ids(plain_output: bool) -> int:
 	"""
-	Entry point for `se build-ids`
+	Entry point for `se build-ids`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Change ID attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced, and the ebook spine must be complete.")
@@ -25,7 +25,7 @@ def build_ids(plain_output: bool) -> int:
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
 	for directory in args.directories:
 		try:
@@ -34,7 +34,7 @@ def build_ids(plain_output: bool) -> int:
 
 			se_epub = SeEpub(directory)
 
-			# First, check for spine sanity: no point in proceeding if it’s not correct
+			# First, check for spine sanity: no point in proceeding if it’s not correct.
 			missing_spine_files = files_not_in_spine(se_epub)
 			if missing_spine_files:
 				missing_spine_file_list = ", ".join([file.name for file in missing_spine_files])
@@ -43,7 +43,7 @@ def build_ids(plain_output: bool) -> int:
 			replacements: List[Tuple[se.easy_xml.EasyXmlElement, str]] = []
 			id_counter = 0
 
-			# Get a list of IDs that need to be replaced across the ebook
+			# Get a list of IDs that need to be replaced across the ebook.
 			for filename in se_epub.spine_file_paths:
 				dom = se_epub.get_dom(filename)
 
@@ -59,7 +59,7 @@ def build_ids(plain_output: bool) -> int:
 					new_id = f"se-replacement-id-{id_counter}"
 					node.set_attr("id", new_id)
 
-					# Match references in other files
+					# Match references in other files.
 					for other_file in se_epub.spine_file_paths:
 						other_file_dom = se_epub.get_dom(other_file)
 						write_to_disk = False
@@ -67,7 +67,7 @@ def build_ids(plain_output: bool) -> int:
 							other_node.set_attr("href", regex.sub(fr"#{old_id}$", f"#{new_id}", other_node.get_attr("href")))
 							write_to_disk = True
 
-						# If we changed this file, make sure to write it to disk
+						# If we changed this file, make sure to write it to disk.
 						if write_to_disk:
 							with open(other_file, "w", encoding="utf-8") as file:
 								file.write(other_file_dom.to_string())
@@ -77,12 +77,12 @@ def build_ids(plain_output: bool) -> int:
 				# Now, get a list of what we expect all eligible IDs to be.
 				replacements += se.formatting.find_unexpected_ids(dom, args.no_endnotes)
 
-				# Write our wiped file, we'll update it later
+				# Write our wiped file, we'll update it later.
 				with open(filename, "w", encoding="utf-8") as file:
 					file.write(dom.to_string())
 
-			# Now, actually perform the replacements
-			# Make sure to include the glossary search key map, if present
+			# Now, actually perform the replacements.
+			# Make sure to include the glossary search key map, if present.
 			files = se_epub.spine_file_paths
 			if se_epub.glossary_search_key_map_path:
 				files.append(se_epub.glossary_search_key_map_path)

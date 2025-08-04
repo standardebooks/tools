@@ -28,7 +28,7 @@ def get_data_url(image_path: Path) -> str:
 	image_path: A path to an image.
 
 	OUTPUTS
-	A string representing the data URL, in the format `data:image/TYPE;ENCODING,CONTENTS`
+	A string representing the data URL, in the format `data:image/TYPE;ENCODING,CONTENTS`.
 	"""
 	data_url = ""
 
@@ -36,8 +36,7 @@ def get_data_url(image_path: Path) -> str:
 	# Other images are converted to base64 first.
 	if image_path.suffix == ".svg":
 		with open(image_path, "rb") as binary_file:
-			# We parse the XML using LXML because otherwise, Python might guess that the file is
-			# encoded in ASCII and throw errors when unexpected characters are found
+			# We parse the XML using LXML because otherwise, Python might guess that the file is encoded in ASCII and throw errors when unexpected characters are found.
 			tree = etree.parse(binary_file)
 			encoding = tree.docinfo.encoding
 			svg_contents = etree.tostring(tree, encoding=encoding, xml_declaration=True).decode(encoding)
@@ -59,15 +58,15 @@ def get_data_url(image_path: Path) -> str:
 def _color_to_alpha(image: Image_type, color=None) -> Image_type:
 	"""
 	Implements GIMP's color to alpha algorithm.
-	See https://stackoverflow.com/a/1617909
-	GPLv3: http://bazaar.launchpad.net/~stani/phatch/trunk/annotate/head:/phatch/actions/color_to_alpha.py#L50
+	See <https://stackoverflow.com/a/1617909>.
+	GPLv3: <http://bazaar.launchpad.net/~stani/phatch/trunk/annotate/head:/phatch/actions/color_to_alpha.py#L50>.
 
 	INPUTS
-	image: A PIL image to work on
-	color: A 4-tuple (R, G, B, A) value as the color to change to alpha
+	image: A PIL image to work on.
+	color: A 4-tuple (R, G, B, A) value as the color to change to alpha.
 
 	OUTPUTS
-	A string of XML representing the new SVG
+	A string of XML representing the new SVG.
 	"""
 
 	image = image.convert("RGBA")
@@ -75,9 +74,7 @@ def _color_to_alpha(image: Image_type, color=None) -> Image_type:
 	color = list(map(float, color))
 	img_bands = [band.convert("F") for band in image.split()]
 
-	# Find the maximum difference rate between source and color. I had to use two
-	# difference functions because ImageMath.eval only evaluates the expression
-	# once.
+	# Find the maximum difference rate between source and color. I had to use two difference functions because ImageMath.eval only evaluates the expression once.
 	alpha = ImageMath.eval(
 		"""float(
 				max(
@@ -107,7 +104,7 @@ def _color_to_alpha(image: Image_type, color=None) -> Image_type:
 		cblue_band=color[2]
 	)
 
-	# Calculate the new image colors after the removal of the selected color
+	# Calculate the new image colors after the removal of the selected color.
 	new_bands = [
 		ImageMath.eval(
 			"convert((image - color) / alpha + color, 'L')",
@@ -118,7 +115,7 @@ def _color_to_alpha(image: Image_type, color=None) -> Image_type:
 		for i in range(3)
 	]
 
-	# Add the new alpha band
+	# Add the new alpha band.
 	new_bands.append(ImageMath.eval(
 		"convert(alpha_band * alpha, 'L')",
 		alpha=alpha,
@@ -130,9 +127,8 @@ def _color_to_alpha(image: Image_type, color=None) -> Image_type:
 	background = Image.new("RGB", new_image.size, (0, 0, 0, 0))
 	background.paste(new_image.convert("RGB"), mask=new_image)
 
-	# SE addition: Lastly, convert transparent pixels to rgba(0, 0, 0, 0) so that Pillow's
-	# crop function can detect them.
-	# See https://stackoverflow.com/a/14211878
+	# SE addition: Lastly, convert transparent pixels to `rgba(0, 0, 0, 0)` so that Pillow's crop function can detect them.
+	# See <https://stackoverflow.com/a/14211878>.
 	pixdata = new_image.load()
 
 	width, height = new_image.size
@@ -145,7 +141,7 @@ def _color_to_alpha(image: Image_type, color=None) -> Image_type:
 
 def has_transparency(image: Image_type) -> bool:
 	"""
-	Return True if the given image file has transparency
+	Return `True` if the given image file has transparency.
 	"""
 
 	if image.mode == "P":
@@ -167,40 +163,40 @@ def has_transparency(image: Image_type) -> bool:
 
 	return False
 
-# Note: We can't type hint driver, because we conditionally import selenium for performance reasons
+# Note: We can't type hint driver, because we conditionally import Selenium for performance reasons.
 def render_mathml_to_png(driver, mathml: str, output_filename: Path, output_filename_2x: Path) -> None:
 	"""
 	Render a string of MathML into a transparent PNG file.
 
 	INPUTS
-	driver: A Selenium webdriver, usually initialized from se.browser.initialize_selenium_firefox_webdriver
-	mathml: A string of MathML
-	output_filename: A filename to store PNG output to
-	output_filename_2x: A filename to store hiDPI PNG output to
+	driver: A Selenium webdriver, usually initialized from `se.browser.initialize_selenium_firefox_webdriver()`.
+	mathml: A string of MathML.
+	output_filename: A filename to store PNG output to.
+	output_filename_2x: A filename to store hiDPI PNG output to.
 
 	OUTPUTS
 	None.
 	"""
 
-	# For some reason, we must use an .xhtml suffix. Without that, some mathml expressions don't render.
+	# For some reason, we must use an `.xhtml` suffix. Without that, some MathML expressions don't render.
 	with tempfile.NamedTemporaryFile(mode="w+", suffix=".xhtml", encoding="utf-8") as mathml_file:
 		with tempfile.NamedTemporaryFile(mode="w+", suffix=".png", encoding="utf-8") as png_file:
 			mathml_file.write(f"<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title>MathML</title></head><body>{mathml}</body></html>")
 			mathml_file.seek(0)
 
 			driver.get(f"file://{mathml_file.name}")
-			# We have to take a screenshot of the html element, because otherwise we screenshot the viewport, which would result in a truncated image
+			# We have to take a screenshot of the HTML element, because otherwise we screenshot the viewport, which would result in a truncated image.
 
 			driver.find_element("tag name", "html").screenshot(png_file.name)
 
-			# Save hiDPI 2x version
+			# Save hiDPI 2x version.
 			image = Image.open(png_file.name)
 			image = _color_to_alpha(image, (255, 255, 255, 255))
 			image = image.crop(image.getbbox())
 
 			image.save(output_filename_2x)
 
-			# Save normal version
+			# Save normal version.
 			image = image.resize((image.width // 2, image.height // 2))
 			image.save(output_filename)
 
@@ -209,20 +205,20 @@ def remove_image_metadata(filename: Path) -> None:
 	Remove exif metadata from an image.
 
 	INPUTS
-	filename: A filename of an image
+	filename: A filename of an image.
 
 	OUTPUTS
 	None.
 	"""
 
 	if filename.suffix in (".xcf", ".svg"):
-		# Skip GIMP XCF and SVG files
+		# Skip GIMP XCF and SVG files.
 		return
 
 	if filename.suffix == ".jpg":
 		# JPEG images are lossy, and PIL will recompress them on save.
 		# Instead of using PIL, read the byte stream and remove all metadata that way.
-		# Inspired by https://github.com/hMatoba/Piexif
+		# Inspired by <https://github.com/hMatoba/Piexif>.
 		with open(filename, "rb+") as file:
 			jpeg_data = file.read()
 
@@ -232,7 +228,7 @@ def remove_image_metadata(filename: Path) -> None:
 			exif_segments = []
 			head = 2
 
-			# Get a list of metadata segments from the jpg
+			# Get a list of metadata segments from the JPG.
 			while True:
 				if jpeg_data[head: head + 2] == b"\xff\xda":
 					break
@@ -245,10 +241,9 @@ def remove_image_metadata(filename: Path) -> None:
 				if head >= len(jpeg_data):
 					raise se.InvalidFileException(f"Invalid JPEG file: [path][link=file://{filename.resolve()}]{filename}[/].")
 
-				# See https://www.disktuna.com/list-of-jpeg-markers/
-				# and https://exiftool.org/TagNames/JPEG.html
-				# These are the 15 "app" segments, EXCEPT app 14, as well as the "comment" segment.
-				# This mirrors what exiftool does.
+				# See <https://www.disktuna.com/list-of-jpeg-markers/> and <https://exiftool.org/TagNames/JPEG.html>.
+				# These are the 15 `app` segments, *except* app 14, as well as the `comment` segment.
+				# This mirrors what `exiftool` does.
 				metadata_segments = [b"\xff\xe1", b"\xff\xe2", b"\xff\xe3", b"\xff\xe4", b"\xff\xe5",
 							b"\xff\xe6", b"\xff\xe7", b"\xff\xe8", b"\xff\xe9", b"\xff\xea",
 							b"\xff\xeb", b"\xff\xec", b"\xff\xed", b"\xff\xef",
@@ -257,7 +252,7 @@ def remove_image_metadata(filename: Path) -> None:
 				if seg[0:2] in metadata_segments:
 					exif_segments.append(seg)
 
-			# Now replace those segments with nothing
+			# Now replace those segments with nothing.
 			for segment in exif_segments:
 				jpeg_data = jpeg_data.replace(segment, b"")
 
@@ -265,7 +260,7 @@ def remove_image_metadata(filename: Path) -> None:
 			file.write(jpeg_data)
 			file.truncate()
 	else:
-		# PNG and other image types we expect are lossless so we can use PIL to remove metadata
+		# PNG and other image types we expect are lossless so we can use PIL to remove metadata.
 		try:
 			image = Image.open(filename)
 		except UnidentifiedImageError as ex:
@@ -277,7 +272,7 @@ def remove_image_metadata(filename: Path) -> None:
 		image_without_exif.putdata(data)
 
 		if image.format == "PNG":
-			# Some metadata, like chromaticity and gamma, are useful to preserve in PNGs
+			# Some metadata, like chromaticity and gamma, are useful to preserve in PNGs.
 			new_exif = PngImagePlugin.PngInfo()
 			for key, value in image.info.items():
 				if key.lower() == "gamma":
@@ -295,22 +290,22 @@ def remove_image_metadata(filename: Path) -> None:
 
 			image_without_exif.save(filename, optimize=True, pnginfo=new_exif)
 		elif image.format == "TIFF":
-			# For some reason, when saving as TIFF we have to cast filename to str() otherwise
-			# the save driver throws an exception
+			# For some reason, when saving as TIFF we have to cast filename to `str()` otherwise the save driver throws an exception.
 			image_without_exif.save(str(filename), compression="tiff_adobe_deflate")
 		else:
 			image_without_exif.save(str(filename))
 
 def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 	"""
-	Convert SVG <text> elements into <path> elements, using SVG
-	document's <style> tag and external font files.
+	Convert SVG <text> elements into <path> elements, using SVG document's `<style>` element and external font files.
+
 	(These SVG font files are built-in to the SE tools).
+
 	Resulting SVG file will have no dependency on external fonts.
 
 	INPUTS
-	in_svg: Path for the SVG file to convert <text> elements.
-	out_svg: Path for where to write the result SVG file, with <path> elements.
+	in_svg: Path for the SVG file to convert `<text>` elements.
+	out_svg: Path for where to write the result SVG file, with `<path>` elements.
 
 	OUTPUTS
 	None.
@@ -337,11 +332,11 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 
 	style = xml.find(svg_ns + "style")
 
-	# Possibly remove style tag if caller wants that
+	# Possibly remove `<style> element if caller wants that.
 	def filter_predicate(elem: etree.Element):
 		if remove_style and elem.tag.endswith("style"):
-			return None # Remove <style> tag
-		return elem # Keep all other elements
+			return None # Remove `<style>` element.
+		return elem # Keep all other elements.
 	if remove_style:
 		xml = _traverse_element(xml, filter_predicate)
 
@@ -356,11 +351,11 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 				raise se.InvalidFileException(f"SVG [xml]<text>[/] element has no content. File: [path][link=file://{in_svg.resolve()}]{in_svg}[/].")
 
 			elem.tag = "g"
-			# Replace <text> tag with <g> tag
+			# Replace `<text>` element with `<g>` element.
 			for k in elem.attrib.keys():
 				if k != "class":
 					del elem.attrib[k]
-				elif k == "class" and elem.attrib["class"] != "title-box": # Keep just class attribute if class="title-box"
+				elif k == "class" and elem.attrib["class"] != "title-box": # Keep just `class` attribute if it equals `title-box`.
 					del elem.attrib[k]
 			elem.attrib["aria-label"] = text
 			elem.tail = "\n"
@@ -380,7 +375,7 @@ def _apply_css(elem: etree.Element, css_text: str) -> dict:
 	def apply_css(kvs):
 		for pair in kvs:
 			k, css = [selector.strip() for selector in pair.split(":")]
-			result_css[k] = css.replace("\"", "") # Values may have quotes, like font-family: "League Spartan"
+			result_css[k] = css.replace("\"", "") # Values may have quotes, like `font-family: "League Spartan"`.
 
 	for chunk in chunks:
 		if len(chunk) < 2:
@@ -397,16 +392,15 @@ def _apply_css(elem: etree.Element, css_text: str) -> dict:
 
 	return result_css
 
-# Assumes return_elem is a new copy with no children
-# e.g.  xml = _traverse_element(xml, traverser)
-# This returns the original tree when traverser is lambda x: x
+# Assumes `return_elem` is a new copy with no children, e.g. `xml = _traverse_element(xml, traverser)`.
+# This returns the original tree when `traverser` is `lambda x: x`.
 def _traverse_children(return_elem: etree.Element, old_elem: etree.Element, traverser: Callable) -> None:
 	for child in old_elem:
 		new_child = traverser(child)
 		if new_child is None:
 			continue
-		# Append child if non-None
-		final_child = etree.Element(new_child.tag, new_child.attrib) # empty copy
+		# Append child if non-`None`.
+		final_child = etree.Element(new_child.tag, new_child.attrib) # Empty copy.
 		final_child.text = new_child.text
 		final_child.tail = new_child.tail
 		return_elem.append(final_child)
@@ -415,7 +409,7 @@ def _traverse_element(elem: etree.Element, traverser: Callable) -> etree.Element
 	return_elem = traverser(elem)
 	if return_elem is None:
 		return None
-	# Make an empty copy of the returned element, if non-None
+	# Make an empty copy of the returned element, if non-`None`.
 	return_elem = etree.Element(elem.tag, attrib=elem.attrib)
 	return_elem.text = elem.text
 	return_elem.tail = elem.tail
@@ -430,28 +424,28 @@ def _get_properties_from_text_elem(properties: Dict, elem: etree.Element) -> Non
 		properties["y"] = elem.get("y")
 
 def _add_font_to_properties(properties: Dict, fonts: List) -> None:
-	# Wire up with actual font object
+	# Wire up with actual font object.
 	for font in fonts:
 		face = font["meta"]["font-face"]
 		if face["font-family"] != properties["font-family"]:
 			continue
-		if "font-style" in face and "font-style" in properties: # Fine if either do not mention style, so defaults to regular or not italic
+		if "font-style" in face and "font-style" in properties: # Fine if either do not mention style, so defaults to regular or not italic.
 			if face["font-style"] != properties["font-style"]:
 				continue
 		properties["font"] = font
-		return # One chunk of text can only have one font/variant
+		return # One chunk of text can only have one font/variant.
 
 def _float_to_str(float_value: float) -> str:
 	return "{0:.2f}".format(round(float_value, 2)) # pylint: disable=consider-using-f-string
 
 def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: Dict) -> None:
-	# Required properties to make any progress
+	# Required properties to make any progress.
 	for key in "x y font text font-size".split():
 		if key not in text_properties:
 			raise se.InvalidCssException(f"svg_text_to_paths: Missing key [text]{key}[/] in [text]text_properties[/] for [xml]<{g_elem.tag}>[/] element in [path]./images/titlepage.svg[/] or [path]./images/cover.svg[/].")
-	# We know we have x, y, text, font-size, and font so we can render vectors.
+	# We know we have `x`, `y`, `text`, `font-size`, and font so we can render vectors.
 	# Now set up some defaults if not specified.
-	text_properties["font-size"] = float(text_properties["font-size"].replace("px", "")) # NOTE assumes pixels and ignores it
+	text_properties["font-size"] = float(text_properties["font-size"].replace("px", "")) # *Note*: assumes pixels and ignores it.
 	font = text_properties["font"]
 	if "letter-spacing" not in text_properties:
 		text_properties["letter-spacing"] = 0
@@ -480,19 +474,18 @@ def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: Dict) -> Non
 
 	path_ds = []
 	def walker(d_attrib: str, size: float, delta_x: float, delta_y: float) -> None:
-		# Render a glyph (text representaiton of a path outline) to a properly
-		# translated and scaled path outline.
+		# Render a glyph (text representaiton of a path outline) to a properly translated and scaled path outline.
 		d_attrib = _d_translate_and_scale(d_attrib, last_xy[0], last_xy[1], size, -size)
 		if d_attrib != "":
 			path_ds.append(d_attrib)
 		last_xy[0] += delta_x
 		last_xy[1] += delta_y
 	_walk_characters(text_string, font, text_properties, last_xy[0], last_xy[1], walker)
-	# Append each glyph outline as its own <path> tag, as Inkscape would do.
+	# Append each glyph outline as its own `<path>` element, as Inkscape would do.
 	for d_attr in path_ds:
 		path_elem = etree.Element("path", {"d": d_attr})
 		path_elem.tail = "\n"
-		g_elem.append(path_elem) # ?
+		g_elem.append(path_elem)
 
 def _get_text_width(text_string: str, font: Dict, text_properties: Dict) -> float:
 	last_xy = [0, 0]
@@ -511,8 +504,8 @@ def _walk_characters(text_string: str, font: Dict, text_properties: Dict, last_x
 		if ch0_ch1 in font["glyphs"]:
 			combo = font["glyphs"][ch0_ch1]
 		if text_properties["letter-spacing"] == 0 and index < len(text_string) - 2 and combo:
-			# if ligature or "wide" unicode character exists -- don't use ligature if letter-spacing set to something interesting :-)
-			# Found combined characters ch+ch1
+			# If ligature or "wide" unicode character exists, don't use ligature if letter-spacing set to something interesting :-)
+			# Found combined characters ch+ch1.
 			_advance_by_glyph(font, text_properties, last_x, last_y, ch0 + ch1, ch2, use_glyph_callback)
 			index += 1
 		if text_properties["letter-spacing"] == 0 and index < len(text_string) and combo:
@@ -523,7 +516,7 @@ def _walk_characters(text_string: str, font: Dict, text_properties: Dict, last_x
 
 def _advance_by_glyph(font: Dict, text_properties: Dict, _last_x, _last_y, uni: str, uni_next: str, callback: Callable) -> None:
 	glyphs = font["glyphs"]
-	glyph = {} # Default, but not None, to appease type-checker
+	glyph = {} # Default, but not `None`, to appease type-checker.
 	if uni in glyphs:
 		glyph = glyphs[uni]
 	if not uni:
@@ -532,7 +525,7 @@ def _advance_by_glyph(font: Dict, text_properties: Dict, _last_x, _last_y, uni: 
 	if "d" in glyph:
 		d_attrib = glyph["d"]
 	if not d_attrib:
-		# "" for Space character, not None
+		# `""` for Space character, not `None`.
 		d_attrib = ""
 	size = text_properties["font-size"] / text_properties["units-per-em"]
 	horiz_adv_x = float(glyph["horiz-adv-x"]) if "horiz-adv-x" in glyph else text_properties["horiz-adv-x"]
@@ -552,10 +545,7 @@ def _d_scale(d_attrib: str, scale_x=1.0, scale_y=1.0) -> str:
 	return _d_apply_matrix(d_attrib, [scale_x, 0.0, 0.0, scale_y, 0.0, 0.0])
 
 # This is the main interesting part of SVG glyph rendering process.
-# The d attribute (path outline data, see https://www.w3.org/TR/SVG/paths.html#DProperty)
-# from a single glyph or ligature will have its coordinates translated and scaled by the
-# matrix transform passed in, and a return d attribute string will be created, showing the
-# glyph in the correct location and size.
+# The `d` attribute (path outline data, see <https://www.w3.org/TR/SVG/paths.html#DProperty>) from a single glyph or ligature will have its coordinates translated and scaled by the matrix transform passed in, and a return `d` attribute string will be created, showing the glyph in the correct location and size.
 M_NOTZ_Z_REGEX = regex.compile("M[^zZ]*[zZ]")
 AZ_NOTAZ_REGEX = regex.compile("[a-zA-Z]+[^a-zA-Z]*")
 NOTAZ_REGEX = regex.compile("[^a-zA-Z]*")
@@ -580,23 +570,23 @@ def _d_apply_matrix_one_shape(d_attrib: str, matrix: List) -> str:
 		new_coords = []
 		while coords and len(coords) > 0:
 			[matrix_a, matrix_b, matrix_c, matrix_d, matrix_e, matrix_f] = matrix
-			if i == i.lower(): # Do not translate relative instructions (lowercase)
+			if i == i.lower(): # Do not translate relative instructions (lowercase).
 				matrix_e = 0
 				matrix_f = 0
 			def push_point(point_x: float, point_y: float) -> None:
 				new_coords.append(matrix_a * point_x + matrix_c * point_y + matrix_e)
 				new_coords.append(matrix_b * point_x + matrix_d * point_y + matrix_f)
-			# Convert horizontal lineto to lineto (relative)
+			# Convert horizontal lineto to lineto (relative).
 			if i == "h":
 				i = "l"
 				push_point(coords.pop(0), 0)
-			# Convert vertical lineto to lineto (relative)
+			# Convert vertical lineto to lineto (relative).
 			elif i == "v":
 				i = "l"
 				push_point(0, coords.pop(0))
-			# NOTE: We do not handle "a,A" (elliptic arc curve) commands in the SVG font d="..." attribute definitions
-			# cf. http://www.w3.org/TR/SVG/paths.html#PathDataCurveCommands
-			# Every other command -- M m L l c C s S Q q T t -- come in multiples of two numbers (coordinate pair (x,y)):
+			# *Note*: We do not handle "a,A" (elliptic arc curve) commands in the SVG font `d="..."` attribute definitions.
+			# Cf. <http://www.w3.org/TR/SVG/paths.html#PathDataCurveCommands>.
+			# Every other command -- `M m L l c C s S Q q T t` -- come in multiples of two numbers (coordinate pair (x,y)).
 			else:
 				push_point(coords.pop(0), coords.pop(0))
 		new_instruction = i + _clean_comma_minus(",".join([_float_to_str(num) for num in new_coords]))
@@ -626,8 +616,7 @@ def _parse_font(font_path: Path) -> dict:
 		elif tag == "missing-glyph":
 			meta["missing-glyph"] = dict(elem.attrib)
 		elif tag == "glyph" and elem.attrib:
-			# normalize keys for glyphs dictionary to be unicode strings and not
-			# glyph-name (which we presume are entity names, e.g. rdquo as in &rdquo;)
+			# Normalize keys for glyphs dictionary to be unicode strings and not glyph-name (which we presume are entity names, e.g. `rdquo` as in `&rdquo;`).
 			if "unicode" in elem.attrib:
 				g_name = elem.attrib["glyph-name"] if "glyph-name" in elem.attrib else None
 				uni = elem.attrib["unicode"]
@@ -656,7 +645,7 @@ def _parse_font(font_path: Path) -> dict:
 						glyphs[uni]["horiz-adv-x"] = elem.attrib["horiz-adv-x"]
 					if "d" in elem.attrib:
 						glyphs[uni]["d"] = elem.attrib["d"]
-	# Must parse hkern (horizontal kerning) elements after glyphs so we have g_name_to_unicode map available
+	# Must parse `<hkern>` (horizontal kerning) elements after glyphs so we have `g_name_to_unicode` map available.
 	for elem in xml.iter():
 		tag = elem.tag.replace("{http://www.w3.org/2000/svg}", "")
 		if tag == "hkern":

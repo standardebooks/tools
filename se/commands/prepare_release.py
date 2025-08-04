@@ -13,7 +13,7 @@ from se.se_epub import SeEpub
 
 def prepare_release(plain_output: bool) -> int:
 	"""
-	Entry point for `se prepare-release`
+	Entry point for `se prepare-release`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Calculate work word count, insert release date if not yet set, and update modified date and revision number.")
@@ -23,7 +23,7 @@ def prepare_release(plain_output: bool) -> int:
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
 	for directory in args.directories:
 		directory = Path(directory).resolve()

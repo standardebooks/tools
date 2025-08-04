@@ -24,10 +24,7 @@ import se
 from se.easy_xml import EasyXmlTree, EasyXmlElement
 
 
-# This list of phrasing tags is not intended to be exhaustive. The list is only used
-# to resolve the uncommon situation where there is no plain text in a paragraph. The
-# span and br tags are explicitly omitted because of how they are used in poetry formatting,
-# which differs from the normal formatting.
+# This list of phrasing elements is not intended to be exhaustive. The list is only used to resolve the uncommon situation where there is no plain text in a paragraph. The `<span>` and `<br>` elements are explicitly omitted because of how they are used in poetry formatting, which differs from the normal formatting.
 
 PHRASING_TAGS = [
 	"{http://www.w3.org/1999/xhtml}a",
@@ -50,7 +47,7 @@ def semanticate(xhtml: str) -> str:
 	A string of XHTML with semantics added.
 	"""
 
-	# Some common abbreviations
+	# Some common abbreviations.
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(\L<titles>\.)", r"""<abbr epub:type="z3998:name-title">\1</abbr>""", xhtml, titles=[
 		"Capt",
 		"Col",
@@ -84,83 +81,82 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Bros\.", r"<abbr>Bros.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Mt\.", r"<abbr>Mt.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Vv])ol(s?)\.", r"<abbr>\1ol\2.</abbr>", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Cc])hap\. ([0-9])", r"<abbr>\1hap.</abbr> \2", xhtml) # The number allows us to avoid phrases like `Hello, old chap.`
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Cc])hap\. ([0-9])", r"<abbr>\1hap.</abbr> \2", xhtml) # The number allows us to avoid phrases like `Hello, old chap.`.
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>)|\.)(P\.(?:P\.)?S\.(?:S\.)?\B)", r"""<abbr epub:type="z3998:initialism">\1</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(Co\.|Inc\.|Ltd\.|St\.)", r"<abbr>\1</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Gg])ov\.", r"<abbr>\1ov.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))MS(S?)\.", r"""<abbr>MS\1.</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Vv])iz\.", r"<abbr>\1iz.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))etc\.", r"<abbr>etc.</abbr>", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))inst\.", r"""<abbr xml:lang="la">inst.</abbr>""", xhtml) # `inst.` is short for `instante mense` but it is not italicized
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))inst\.", r"""<abbr xml:lang="la">inst.</abbr>""", xhtml) # `inst.` is short for `instante mense` but it is not italicized.
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Cc])f\.", r"<abbr>\1f.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))ed\.", r"<abbr>ed.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(Jan\.|Feb\.|Mar\.|Apr\.|Jun\.|Jul\.|Aug\.|Sep\.|Sept\.|Oct\.|Nov\.|Dec\.)", r"<abbr>\1</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))No\.(\s+[0-9]+)", r"<abbr>No.</abbr>\1", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Vv])s\.", r"<abbr>\1s.</abbr>", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Ff])f\.", r"<abbr>\1f.</abbr>", xhtml) # ff. typically used in footnotes, means "and following"
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Ll])ib\.", r"<abbr>\1ib.</abbr>", xhtml) # Lib. = Liber = Book
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Ff])f\.", r"<abbr>\1f.</abbr>", xhtml) # `ff.` typically used in footnotes, means `and following`.
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Ll])ib\.", r"<abbr>\1ib.</abbr>", xhtml) # `Lib.` = `Liber` = `Book`.
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Ii])\.e\.", r"""<abbr epub:type="z3998:initialism">\1.e.</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Ee])\.g\.", r"""<abbr epub:type="z3998:initialism">\1.g.</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Ph\.?\s*D\.?", r"""<abbr epub:type="z3998:name-title">Ph. D.</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))\b([1-4]D)\b", r"""<abbr epub:type="z3998:initialism">\1</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(Thos\.|Jas\.|Chas\.|Wm\.)", r"""<abbr epub:type="z3998:given-name">\1</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([ap])\.\s?m\.", r"<abbr>\1.m.</abbr>", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(4to|8vo|12mo|16mo|18mo|32mo|48mo|64mo)(?:\.(\s+\p{Lowercase_Letter}))?", r"<abbr>\1</abbr>\2", xhtml) # Book sizes
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(4to|8vo|12mo|16mo|18mo|32mo|48mo|64mo)(?:\.(\s+\p{Lowercase_Letter}))?", r"<abbr>\1</abbr>\2", xhtml) # Book sizes.
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([0-9]{1,2})\s?[Aa]\.?\s?[Mm](?:\.|\b)", r"\1 <abbr>a.m.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([0-9]{1,2})\s?[Pp]\.?\s?[Mm](?:\.|\b)", r"\1 <abbr>p.m.</abbr>", xhtml)
-	# this should be placed after the am/pm test, to prevent tagging just the p. in "p. m."
+	# This should be placed after the am/pm test, to prevent tagging just the `p.` in `p. m.`.
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))p(p?)\.([\s0-9])", r"<abbr>p\1.</abbr>\2", xhtml)
-	# keep a period after TV that terminates a clause
+	# Keep a period after `TV` that terminates a clause.
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))T\.?V\.([”’]?</p>|\s+[“‘]?[\p{Uppercase_Letter}])", r"""<abbr epub:type="z3998:initialism">TV</abbr>.\1""", xhtml)
-	# otherwise, get rid of any periods in TV
+	# Otherwise, get rid of any periods in `TV`.
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(?:TV\b|T\.V\.\B)", r"""<abbr epub:type="z3998:initialism">TV</abbr>""", xhtml)
-	# keep a period after AD/BC that terminates a clause
+	# Keep a period after `AD`/`BC` that terminates a clause.
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))A\.?D\.([”’]?</p>|\s+[“‘]?[\p{Uppercase_Letter}])", r"""<abbr epub:type="se:era">AD</abbr>.\1""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))B\.?C\.([”’]?</p>|\s+[“‘]?[\p{Uppercase_Letter}])", r"""<abbr epub:type="se:era">BC</abbr>.\1""", xhtml)
-	# otherwise, get rid of any periods in AD/BC
+	# Otherwise, get rid of any periods in `AD`/`BC`.
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(?:AD\b|A\.D\.\B)", r"""<abbr epub:type="se:era">AD</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(?:BC\b|B\.C\.\B)", r"""<abbr epub:type="se:era">BC</abbr>""", xhtml)
 
-	# Wrap £sd shorthand
+	# Wrap £sd shorthand.
 	xhtml = regex.sub(r"([0-9½¼¾⅙⅚⅛⅜⅝⅞]+)([sd]\.)", r"\1<abbr>\2</abbr>", xhtml)
 
-	# add eoc (End Of Clause) class
+	# Add `eoc` (End Of Clause) class.
 	xhtml = regex.sub(r"<abbr>etc\.</abbr>([”’]?(?:</p>|\s+[“‘]?[\p{Uppercase_Letter}]))", r"""<abbr class="eoc">etc.</abbr>\1""", xhtml)
 	xhtml = regex.sub(r"""<abbr( epub:type="[^"]+")?>([^<]+\.)</abbr>([”’]?</p>)""", r"""<abbr class="eoc"\1>\2</abbr>\3""", xhtml)
 
-	# Get Roman numerals >= 2 characters
-	# We only wrap these if they're standalone (i.e. not already wrapped in a tag) to prevent recursion in multiple runs
-	# Ignore "numerals" followed by a dash, as they are more likely something like `x-ray` or `v-shaped`
-	# Note that `j` may occur only at the end of a numeral as an old-fashioned terminal `i`, like int `ij` (2), `vij` (7)
+	# Get roman numerals >= 2 characters.
+	# We only wrap these if they're standalone (i.e. not already wrapped in an element) to prevent recursion in multiple runs.
+	# Ignore "numerals" followed by a dash, as they are more likely something like `x-ray` or `v-shaped`.
+	# Note that `j` may occur only at the end of a numeral as an old-fashioned terminal `i`, like int `ij` (2), `vij` (7).
 	xhtml = regex.sub(r"([^\p{Letter}>])([ixvIXV]{2,}j?)(\b[^\-]|st\b|nd\b|rd\b|th\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
 
-	# Get Roman numerals that are X or V and single characters. We can't do I for obvious reasons.
+	# Get roman numerals that are `X` or `V` and single characters. We can't do `I` for obvious reasons.
 	xhtml = regex.sub(r"""([^\p{Letter}>\"])([vxVX])(\b[^\-]|st\b|nd\b|rd\b|th\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
 
-	# We can assume a lowercase i is always a Roman numeral unless followed by ’
+	# We can assume a lowercase `i` is always a Roman numeral unless followed by `’`.
 	xhtml = regex.sub(r"""([^\p{Letter}<>/\"])i\b(?!’)(?![^<>]+>)""", r"""\1<span epub:type="z3998:roman">i</span>""", xhtml)
 
-	# Fix obscured names starting with I, V, or X
+	# Fix obscured names starting with `I`, `V`, or `X`.
 	xhtml = regex.sub(fr"""<span epub:type="z3998:roman">([IVX])</span>{se.WORD_JOINER}⸺""", fr"""\1{se.WORD_JOINER}⸺""", xhtml)
 
-	# Add abbrevations around some SI measurements
+	# Add abbrevations around some SI measurements.
 	xhtml = regex.sub(r"([0-9]+)\s*([cmk][mgl])\b", fr"\1{se.NO_BREAK_SPACE}<abbr>\2</abbr>", xhtml)
 
-	# Add abbrevations around Imperial measurements
+	# Add abbrevations around Imperial measurements.
 	xhtml = regex.sub(r"(?<![\$£0-9,])([0-9½¼⅙⅚⅛⅜⅝⅞]+)\s*(ft|yd|mi|pt|qt|gal|oz|lbs)\.?\b", fr"\1{se.NO_BREAK_SPACE}<abbr>\2.</abbr>", xhtml)
 
-	# Handle `in.` separately to require a period, because with an optional period there are too many false positives
+	# Handle `in.` separately to require a period, because with an optional period there are too many false positives.
 	xhtml = regex.sub(r"(?<![\$£0-9,])([0-9½¼⅙⅚⅛⅜⅝⅞]+)\s*in\.(\b|[\s,:;!?])", fr"\1{se.NO_BREAK_SPACE}<abbr>in.</abbr>\2", xhtml)
 
-	# Fix some possible errors introduced by the above
+	# Fix some possible errors introduced by the above.
 	xhtml = regex.sub(fr"((?:[Nn]o\.|[Nn]umber)\s[0-9]+){se.NO_BREAK_SPACE}<abbr>in\.</abbr>", r"\1 in", xhtml)
 
-	# Tweak some other Imperial measurements
+	# Tweak some other Imperial measurements.
 	xhtml = regex.sub(r"([0-9]+)\s*m\.?p\.?h\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>mph</abbr>", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"([0-9]+)\s*h\.?p\.?", fr"\1{se.NO_BREAK_SPACE}<abbr>hp</abbr>", xhtml, flags=regex.IGNORECASE)
 
-	# In the above regexes, we may have introduced HTML into attribute values, for example:
-	# `<a id="CHAPTER_<span epub:type="z3998:roman">II</span>"/>`
+	# In the above regexes, we may have introduced HTML into attribute values, for example `<a id="CHAPTER_<span epub:type="z3998:roman">II</span>"/>`.
 	# Try to remove those here.
 	compiled_regex = regex.compile(r'=\s*"([^"]*)</?[a-z]+[^>]*?>([^"]*)"')
 	while regex.search(compiled_regex, xhtml) is not None:
@@ -175,11 +171,11 @@ def semanticate(xhtml: str) -> str:
 		replacement_node = se.easy_xml.EasyXmlElement(f"<title>{node.inner_text()}</title>")
 		node.replace_with(replacement_node)
 
-	# We may have added `eoc` classes twice, so remove duplicates here
+	# We may have added `eoc` classes twice, so remove duplicates here.
 	for node in dom.xpath("/html/body//*[re:test(@class, '\\beoc\\seoc\\b')]"):
 		node.set_attr("class", regex.sub(r"\beoc\seoc\b", "eoc", node.get_attr("class")))
 
-	# Clean up nesting errors
+	# Clean up nesting errors.
 	for node in dom.xpath("/html/body//abbr/abbr"):
 		node.unwrap()
 
@@ -213,29 +209,28 @@ def get_flesch_reading_ease(xhtml: str) -> float:
 	A float representing the Flesch reading ease of the text.
 	"""
 
-	# Add a full stop to sentences that don’t end in punctuation
-	# This is primarily for free-form poetry like Mina Loy’s, where the
-	# reading score can end up being extremely low without this.
+	# Add a full stop to sentences that don’t end in punctuation.
+	# This is primarily for free-form poetry like Mina Loy’s, where the reading score can end up being extremely low without this.
 	xhtml = regex.sub(r"([A-Za-z])(<\/span>\n)*\s*</p>", r"\1.\2</p>", xhtml)
 
-	# Remove HTML tags
+	# Remove HTML tags.
 	text = regex.sub(r"<title>.+?</title>", " ", xhtml)
 	text = regex.sub(r"<.+?>", " ", text, flags=regex.DOTALL)
 
-	# Remove non-sentence-ending punctuation from source text
+	# Remove non-sentence-ending punctuation from source text.
 	included_characters = list(string.whitespace) + list(string.digits) + [":", ";", ".", "?", "!"]
 	processed_text = regex.sub(r"[—–\n]", " ", text.lower())
 	processed_text = "".join(c for c in processed_text if c.isalpha() or c in included_characters).strip()
 
-	# Remove accents
+	# Remove accents.
 	processed_text = "".join(c for c in unicodedata.normalize("NFD", processed_text) if unicodedata.category(c) != "Mn")
 
-	# Get word count
+	# Get word count.
 	word_count = se.formatting.get_word_count(processed_text)
 	if word_count <= 0:
 		word_count = 1
 
-	# Get average sentence length
+	# Get average sentence length.
 	ignore_count = 0
 	sentences = regex.split(r" *[\.\?!]['\"\)\]]* *", processed_text)
 	for sentence in sentences:
@@ -248,7 +243,7 @@ def get_flesch_reading_ease(xhtml: str) -> float:
 
 	average_sentence_length = round(float(word_count) / float(sentence_count), 1)
 
-	# Get average syllables per word
+	# Get average syllables per word.
 	syllable_count = 0
 	for word in processed_text.split():
 		syllable_count += _get_syllable_count(word)
@@ -262,7 +257,7 @@ def _get_syllable_count(word: str) -> int:
 	Helper function to get the syllable count of a word.
 	"""
 
-	# See http://eayd.in/?p=232
+	# See <http://eayd.in/?p=232>.
 	exception_add = ["serious", "crucial"]
 	exception_del = ["fortunately", "unfortunately"]
 
@@ -271,16 +266,16 @@ def _get_syllable_count(word: str) -> int:
 
 	pre_one = ["preach"]
 
-	syls = 0 # Added syllable number
-	disc = 0 # Discarded syllable number
+	syls = 0 # Added syllable number.
+	disc = 0 # Discarded syllable number.
 
-	# 1) if letters < 3: return 1
+	# 1) if letters < 3: return `1`.
 	if len(word) <= 3:
 		syls = 1
 		return syls
 
-	# 2) if doesn't end with "ted" or "tes" or "ses" or "ied" or "ies", discard "es" and "ed" at the end.
-	# if it has only 1 vowel or 1 set of consecutive vowels, discard. (like "speed", "fled" etc.)
+	# 2) if doesn't end with `ted` or `tes` or `ses` or `ied` or `ies`, discard `es` and `ed` at the end.
+	# if it has only 1 vowel or 1 set of consecutive vowels, discard. (like `speed`, `fled` etc.)
 	if word[-2:] == "es" or word[-2:] == "ed":
 		double_and_triple_1 = len(regex.findall(r"[eaoui][eaoui]", word))
 		if double_and_triple_1 > 1 or len(regex.findall(r"[eaoui][^eaoui]", word)) > 1:
@@ -289,7 +284,7 @@ def _get_syllable_count(word: str) -> int:
 			else:
 				disc += 1
 
-	# 3) discard trailing "e", except where ending is "le"
+	# 3) discard trailing `e`, except where ending is `le`.
 	le_except = ["whole", "mobile", "pole", "male", "female", "hale", "pale", "tale", "sale", "aisle", "whale", "while"]
 
 	if word[-1:] == "e":
@@ -307,29 +302,29 @@ def _get_syllable_count(word: str) -> int:
 	# 5) count remaining vowels in word.
 	num_vowels = len(regex.findall(r"[eaoui]", word))
 
-	# 6) add one if starts with "mc"
+	# 6) add one if starts with `mc`.
 	if word[:2] == "mc":
 		syls += 1
 
-	# 7) add one if ends with "y" but is not surrouned by vowel
+	# 7) add one if ends with `y` but is not surrouned by vowel.
 	if word[-1:] == "y" and word[-2] not in "aeoui":
 		syls += 1
 
-	# 8) add one if "y" is surrounded by non-vowels and is not in the last word.
+	# 8) add one if `y` is surrounded by non-vowels and is not in the last word.
 	for i, j in enumerate(word):
 		if j == "y":
 			if (i != 0) and (i != len(word) - 1): # pylint: disable=consider-using-in
 				if word[i - 1] not in "aeoui" and word[i + 1] not in "aeoui":
 					syls += 1
 
-	# 9) if starts with "tri-" or "bi-" and is followed by a vowel, add one.
+	# 9) if starts with `tri-` or `bi-` and is followed by a vowel, add one.
 	if word[:3] == "tri" and word[3] in "aeoui":
 		syls += 1
 
 	if word[:2] == "bi" and word[2] in "aeoui":
 		syls += 1
 
-	# 10) if ends with "-ian", should be counted as two syllables, except for "-tian" and "-cian"
+	# 10) if ends with `-ian`, should be counted as two syllables, except for `-tian` and `-cian`.
 	if word[-3:] == "ian":
 	# and (word[-4:] != "cian" or word[-4:] != "tian"):
 		if word[-4:] == "cian" or word[-4:] == "tian":
@@ -337,7 +332,7 @@ def _get_syllable_count(word: str) -> int:
 		else:
 			syls += 1
 
-	# 11) if starts with "co-" and is followed by a vowel, check if exists in the double syllable dictionary, if not, check if in single dictionary and act accordingly.
+	# 11) if starts with `co-` and is followed by a vowel, check if exists in the double syllable dictionary, if not, check if in single dictionary and act accordingly.
 	if word[:2] == "co" and word[2] in "eaoui":
 
 		if word[:4] in co_two or word[:5] in co_two or word[:6] in co_two:
@@ -347,14 +342,14 @@ def _get_syllable_count(word: str) -> int:
 		else:
 			syls += 1
 
-	# 12) if starts with "pre-" and is followed by a vowel, check if exists in the double syllable dictionary, if not, check if in single dictionary and act accordingly.
+	# 12) if starts with `pre-` and is followed by a vowel, check if exists in the double syllable dictionary, if not, check if in single dictionary and act accordingly.
 	if word[:3] == "pre" and word[3] in "eaoui":
 		if word[:6] in pre_one:
 			pass
 		else:
 			syls += 1
 
-	# 13) check for "-n't" and cross match with dictionary to add syllable.
+	# 13) check for `-n't` and cross match with dictionary to add syllable.
 	negative = ["doesn't", "isn't", "shouldn't", "couldn't", "wouldn't", "doesn’t", "isn’t", "shouldn’t", "couldn’t", "wouldn’t"]
 
 	if word[-3:] == "n't" or word[-3:] == "n’t":
@@ -370,7 +365,7 @@ def _get_syllable_count(word: str) -> int:
 	if word in exception_add:
 		syls += 1
 
-	# Calculate the output
+	# Calculate the output.
 	return num_vowels - disc + syls
 
 def get_word_count(xhtml: str) -> int:
@@ -384,23 +379,23 @@ def get_word_count(xhtml: str) -> int:
 	The number of words in the XHTML string.
 	"""
 
-	# Remove MathML
+	# Remove MathML.
 	xhtml = regex.sub(r"<(m:)?math.+?</(m:)?math>", " ", xhtml)
 
-	# Remove HTML tags
+	# Remove HTML elements.
 	xhtml = regex.sub(r"<title[^>]*?>.+?</title>", " ", xhtml)
 	xhtml = regex.sub(r"<.+?>", " ", xhtml, flags=regex.DOTALL)
 
-	# Replace some formatting characters
+	# Replace some formatting characters.
 	xhtml = regex.sub(r"[…–—― ‘’“”\{\}\(\)]", " ", xhtml)
 
-	# Remove word-connecting dashes, apostrophes, commas, and slashes (and/or), they count as a word boundry but they shouldn't
+	# Remove word-connecting dashes, apostrophes, commas, and slashes (and/or), they count as a word boundry but they shouldn't.
 	xhtml = regex.sub(fr"[\p{{Letter}}0-9][\-\'\,\.\/{se.NO_BREAK_HYPHEN}{se.SHY_HYPHEN}][\p{{Letter}}0-9]", "aa", xhtml)
 
-	# Replace sequential spaces with one space
+	# Replace sequential spaces with one space.
 	xhtml = regex.sub(r"\s+", " ", xhtml)
 
-	# Get the word count
+	# Get the word count.
 	return len(regex.findall(r"\b\w+\b", xhtml))
 
 def _replace_character_references(match_object) -> str:
@@ -414,17 +409,17 @@ def _replace_character_references(match_object) -> str:
 
 	retval = entity
 
-	# Explicitly whitelist the six (nine) essential character references
+	# Explicitly whitelist the six (nine) essential character references.
 	try:
 		if entity in ["&gt;", "&lt;", "&amp;", "&quot;", "&apos;", "&#62;", "&#60;", "&#38;", "&#x3e;", "&#x3c;", "&#x26;"]:
 			retval = entity
-		# Convert base 16 references
+		# Convert base 16 references.
 		elif entity.startswith("&#x"):
 			retval = chr(int(entity[3:-1], 16))
-		# Convert base 10 references
+		# Convert base 10 references.
 		elif entity.startswith("&#"):
 			retval = chr(int(entity[2:-1]))
-		# Convert named references
+		# Convert named references.
 		else:
 			retval = html.entities.html5[entity[1:]]
 	except (ValueError, KeyError):
@@ -456,7 +451,7 @@ def _indent_children(elem, level, one_space, indentations, has_child_tails=False
 	# Start a new indentation level for the first child.
 	child_indentation = indentations[level]
 
-	# Check if any children have tail content
+	# Check if any children have tail content.
 	if not has_child_tails:
 		if len(elem) > 0 and elem.text and not regex.match(r"^[\n\t ]+$", elem.text):
 			has_child_tails = True
@@ -466,7 +461,7 @@ def _indent_children(elem, level, one_space, indentations, has_child_tails=False
 					has_child_tails = True
 					break
 
-	# If elem text is empty, start a new indentation level
+	# If the element text is empty, start a new indentation level.
 	if not elem.text or regex.match(r"^[\n\t ]+$", elem.text):
 		if has_child_tails:
 			elem.text = ""
@@ -486,7 +481,7 @@ def _indent_children(elem, level, one_space, indentations, has_child_tails=False
 
 		next_child = child.getnext()
 
-		# Remove line wraps and extra whitespace from child text (except meta tags)
+		# Remove line wraps and extra whitespace from child text (except `<meta>` elements).
 		if child.text and not regex.match(r"^[\n\t ]+$", child.text):
 			if child.tag is etree.Comment:
 				child.text = regex.sub(r" *\n[\n\t ]*", child_indentation, child.text)
@@ -494,7 +489,7 @@ def _indent_children(elem, level, one_space, indentations, has_child_tails=False
 				_unwrap_text(child, remove_trailing_space=True)
 				child.text = regex.sub(r"[\t ]+", " ", child.text)
 
-		# Handle different cases for indentation in child tail content
+		# Handle different cases for indentation in child tail content.
 		if not child.tail or regex.match(r"^[\n\t ]+$", child.tail):
 			if next_child is None:
 				if has_child_tails:
@@ -518,10 +513,10 @@ def _indent_children(elem, level, one_space, indentations, has_child_tails=False
 			else:
 				child.tail = child_indentation
 		else:
-			# Remove line wraps and extra whitespace in child tail
+			# Remove line wraps and extra whitespace in child tail.
 			_unwrap_tail(child, remove_trailing_space=next_child is None)
 			child.tail = regex.sub(r"[\t ]+", " ", child.tail)
-			# Add special indentation for br tag with non-empty tail
+			# Add special indentation for `<br>` element with non-empty tail.
 			if child.tag == "{http://www.w3.org/1999/xhtml}br":
 				child_indentation = indentations[level - 1]
 				child.tail = child_indentation + child.tail
@@ -591,13 +586,13 @@ def _format_style_elements(tree: etree.ElementTree):
 		for node in tree.xpath("//svg:style", namespaces={"xhtml": "http://www.w3.org/1999/xhtml", "svg": "http://www.w3.org/2000/svg"}):
 			css = format_css(node.text)
 
-			# Get the <style> element's indentation
+			# Get the `<style>` element's indentation.
 			indent = node.xpath("./preceding-sibling::text()[1]")[0].replace("\n", "")
 
-			# Indent the CSS one level deeper than the <style> element
+			# Indent the CSS one level deeper than the `<style>` element.
 			css = "".join(indent + "\t" + line + "\n" for line in css.splitlines())
 			css = css.strip("\n")
-			css = regex.sub(r"^\s+$", "", css, flags=regex.MULTILINE) # Remove indents from lines that are just white space
+			css = regex.sub(r"^\s+$", "", css, flags=regex.MULTILINE) # Remove indents from lines that are just white space.
 
 			node.text = "\n" + css + "\n" + indent
 	except se.InvalidCssException as ex:
@@ -616,14 +611,14 @@ def _format_xml_str(xml: str) -> etree.ElementTree:
 	An etree representing the pretty-printed XML.
 	"""
 
-	# huge_tree allows XML files of arbitrary size, like Ulysses S. Grant
+	# `huge_tree` allows XML files of arbitrary size, like _The Personal Memoirs of Ulysses S. Grant_.
 	custom_parser = etree.XMLParser(huge_tree=True)
 	tree = etree.fromstring(str.encode(xml), parser=custom_parser)
 	canonical_bytes = etree.tostring(tree, method="c14n")
 	tree = etree.fromstring(canonical_bytes, parser=custom_parser)
 	_indent(tree, space="\t")
 
-	# Remove white space around attribute values
+	# Remove white space around attribute values.
 	for node in tree.xpath("//*[attribute::*[re:test(., '^\\s+') or re:test(., '\\s+$')]]", namespaces={"re": "http://exslt.org/regular-expressions"}):
 		for attribute in node.keys():
 			value = node.get(attribute)
@@ -646,7 +641,7 @@ def _xml_tree_to_string(tree: etree.ElementTree, doctype: Optional[str] = None) 
 
 	xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + etree.tostring(tree, encoding="unicode", doctype=doctype) + "\n"
 
-	# Normalize unicode characters
+	# Normalize unicode characters.
 	xml = unicodedata.normalize("NFC", xml)
 
 	return xml
@@ -667,7 +662,7 @@ def format_xml(xml: str) -> str:
 	except Exception as ex:
 		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
 
-	# Pull out the doctype if there is one, as etree seems to eat it
+	# Pull out the `doctype` if there is one, as etree seems to eat it.
 	doctypes = regex.search(r"<!doctype[^>]+?>", xml, flags=regex.IGNORECASE)
 
 	return _xml_tree_to_string(tree, doctypes.group(0) if doctypes else None)
@@ -683,18 +678,18 @@ def format_xhtml(xhtml: str) -> str:
 	A string of pretty-printed XHTML.
 	"""
 
-	namespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "re": "http://exslt.org/regular-expressions"} # re enables regular expressions in xpath
+	namespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "re": "http://exslt.org/regular-expressions"} # `re` enables regular expressions in xpath.
 
-	# Epub3 doesn't allow named entities, so convert them to their unicode equivalents
-	# But, don't unescape the metadata file long-description accidentally
+	# Epub3 doesn't allow named entities, so convert them to their unicode equivalents.
+	# But, don't unescape the metadata file long-description accidentally.
 	xhtml = regex.sub(r"&#?\w+;", _replace_character_references, xhtml)
 
-	# Remove unnecessary doctypes which can cause xmllint to hang
+	# Remove unnecessary `doctype`s which can cause `xmllint` to hang.
 	xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", xhtml)
 
-	# Remove white space between opening/closing tag and text nodes
-	# We do this first so that we can still format line breaks after <br/>
-	# Exclude comments
+	# Remove white space between opening/closing tag and text nodes.
+	# We do this first so that we can still format line breaks after `<br/>`.
+	# Exclude comments.
 	xhtml = regex.sub(r"(<(?:[^!/][^>]*?[^/]|[a-z])>)\s+([^\s<])", r"\1\2", xhtml, flags=regex.IGNORECASE)
 	xhtml = regex.sub(r"([^\s>])\s+(</[^>]+?>)", r"\1\2", xhtml)
 
@@ -703,33 +698,33 @@ def format_xhtml(xhtml: str) -> str:
 	except Exception as ex:
 		raise se.InvalidXhtmlException(f"Couldn’t parse XHTML file. Exception: {ex}")
 
-	# Lowercase attribute names
+	# Lowercase attribute names.
 	for node in tree.xpath("//*[attribute::*[re:test(local-name(), '[A-Z]')]]", namespaces=namespaces):
-		for key, value in node.items(): # Iterate over attributes
-			node.attrib.pop(key) # Remove the attribute
-			node.attrib[key.lower()] = value # Re-add the attribute, lowercased
+		for key, value in node.items(): # Iterate over attributes.
+			node.attrib.pop(key) # Remove the attribute.
+			node.attrib[key.lower()] = value # Re-add the attribute, lowercased.
 
-	# Sort classes alphabetically, except the "eoc" class always comes last
+	# Sort classes alphabetically, except the `eoc` class always comes last.
 	for node in tree.xpath("//*[re:test(@class, '\\s')]", namespaces=namespaces):
-		# Sort class elements
+		# Sort class elements.
 		classes = regex.split(r"\s+", node.get("class"))
 		classes = sorted(classes, key=str.lower)
 
-		# Move eoc to the end, if it exists
+		# Move `eoc` to the end, if it exists.
 		if "eoc" in classes:
 			classes += [classes.pop(classes.index("eoc"))]
 
-		# Set the new class value
+		# Set the new class value.
 		node.set("class", " ".join(classes))
 
-	# Lowercase tag names
+	# Lowercase elemetn names.
 	for node in tree.xpath("//*[re:test(local-name(), '[A-Z]')]", namespaces=namespaces):
 		node.tag = node.tag.lower()
 
-	# Format <style> elements
+	# Format `<style>` elements.
 	_format_style_elements(tree)
 
-	# Remove white space between non-tags and <br/>
+	# Remove white space between non-tags and `<br/>`.
 	xhtml = regex.sub(r"([^>\s])\s+<br/>", r"\1<br/>", _xml_tree_to_string(tree))
 
 	return xhtml
@@ -745,24 +740,22 @@ def format_opf(xml: str) -> str:
 	A string of pretty-printed XML.
 	"""
 
-	# Replace html entities in the long description so we can clean it too.
-	# We re-establish them later. Don't use html.unescape because that will unescape
-	# things like &amp; which would make an invalid XML document. (&amp; may appear in translator info,
-	# or other parts of the metadata that are not the long description.
+	# Replace HTML entities in the long description so we can clean it too.
+	# We re-establish them later. Don't use `html.unescape()` because that will unescape things like `&amp;` which would make an invalid XML document. (`&amp;` may appear in translator info, or other parts of the metadata that are not the long description.
 	xml = xml.replace("&lt;", "<")
 	xml = xml.replace("&gt;", ">")
-	xml = xml.replace("&amp;amp;", "&amp;") # Unescape escaped ampersands, which appear in the long description only
+	xml = xml.replace("&amp;amp;", "&amp;") # Unescape escaped ampersands, which appear in the long description only.
 
-	# Canonicalize and format XML
+	# Canonicalize and format XML.
 	try:
 		tree = _format_xml_str(xml)
 	except Exception as ex:
 		raise se.InvalidXmlException(f"Couldn’t parse OPF file. Exception: {ex}")
 
-	# Format the long description, then escape it
+	# Format the long description, then escape it.
 	for node in tree.xpath("/opf:package/opf:metadata/opf:meta[@property='se:long-description']", namespaces={"opf": "http://www.idpf.org/2007/opf"}):
 		# Convert the node contents to escaped text.
-		xhtml = node.text # This preserves the initial newline and indentation
+		xhtml = node.text # This preserves the initial newline and indentation.
 
 		if xhtml is None:
 			xhtml = ""
@@ -770,14 +763,14 @@ def format_opf(xml: str) -> str:
 		for child in node:
 			xhtml += etree.tostring(child, encoding="unicode")
 
-		# After composing the string, lxml adds namespaces to every tag. The only way to remove them is with regex.
+		# After composing the string, lxml adds namespaces to every element. The only way to remove them is with regex.
 		xhtml = regex.sub(r"\sxmlns(:.+?)?=\"[^\"]+?\"", "", xhtml)
 
-		# Make some easy fixes
+		# Make some easy fixes.
 		xhtml = regex.sub(r"<p>\s+", "<p>", xhtml)
 		xhtml = regex.sub(r"\s+</p>", "</p>", xhtml)
 
-		# Remove the children so that we can replace them with the escaped xhtml
+		# Remove the children so that we can replace them with the escaped XHTML.
 		for child in node:
 			node.remove(child)
 
@@ -801,15 +794,15 @@ def format_svg(svg: str) -> str:
 	except Exception as ex:
 		raise se.InvalidXmlException(f"Couldn’t parse SVG file. Exception: {ex}")
 
-	# Make sure viewBox is correctly-cased
+	# Make sure `viewBox` is correctly-cased.
 	for node in tree.xpath("/svg:svg", namespaces={"svg": "http://www.w3.org/2000/svg"}):
-		for key, value in node.items(): # Iterate over attributes
+		for key, value in node.items(): # Iterate over attributes.
 			if key.lower() == "viewbox":
-				node.attrib.pop(key) # Remove the attribute
-				node.attrib["viewBox"] = value # Re-add the attribute, correctly-cased
+				node.attrib.pop(key) # Remove the attribute.
+				node.attrib["viewBox"] = value # Re-add the attribute, correctly-cased.
 				break
 
-	# Format <style> elements
+	# Format `<style>` elements.
 	_format_style_elements(tree)
 
 	return _xml_tree_to_string(tree)
@@ -832,7 +825,7 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 			if output.endswith("| ") or output.endswith("|= ") or output.endswith("^= ") or output.endswith("~= ") or output.endswith("*= ") or output.endswith("|| "):
 				output = output.rstrip()
 
-			if token.lower_value == "currentcolor": # special case
+			if token.lower_value == "currentcolor": # Special case.
 				output += "currentColor"
 			else:
 				output += token.lower_value
@@ -845,8 +838,7 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 			elif token.value == ",":
 				output = output.rstrip() + token.value + (" " if in_paren_block or not in_selector else "\n")
 			elif token.value == "=":
-				# >= and <= should be surrounded by spaces, but they aren't recognized as separate tokens in tinycss2 yet. These are typically
-				# used in media queries.
+				# `>=` and `<=` should be surrounded by spaces, but they aren't recognized as separate tokens in tinycss2 yet. These are typically used in media queries.
 				if output.endswith("< ") or output.endswith("> "):
 					output = output.rstrip() + token.value + " "
 				elif not in_paren_block:
@@ -869,7 +861,7 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 			if token.representation == "0":
 				output += "0"
 			else:
-				# Remove leading 0 from dimensions
+				# Remove leading `0` from dimensions.
 				output += token.representation.lstrip("0") + token.lower_unit
 
 		if token.type == "number":
@@ -902,23 +894,20 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 		if token.type == "[] block":
 			output += f"[{_format_css_component_list(token.content, in_selector, True)}]"
 
-	# Collapse multiple spaces, and spaces at the start of lines
+	# Collapse multiple spaces, and spaces at the start of lines.
 	output = regex.sub(r" +", " ", output)
 	output = regex.sub(r"^ ", "", output, flags=regex.MULTILINE)
 
-	# : can be valid as a naked pseudo-class (x y :first-child), or as a connected pseudo-class
-	# (x y:first-child) but not like x y: first-child
+	# `:` can be valid as a naked pseudo-class (e.g. `x y :first-child`), or as a connected pseudo-class (e.g. `x y:first-child`) but not like `x y: first-child`.
 	if not in_paren_block:
 		output = output.replace(": ", ":")
 
-	# Replace naked :pseudo-class selectors with *
+	# Replace naked `:pseudo-class` selectors with `*`.
 	output = output.replace(" :", " *:")
 
-	# Removing spaces after : may mess up media queries like:
-	# `@media all and (prefers-color-scheme: dark)` -> `@media all and (prefers-color-scheme:dark)`
-	# Here we try to re-add spaces after a : if it's within a paren block.
-	# We could do this during parsing but we would need to peek ahead to the next item in the loop which
-	# is too much trouble right now.
+	# Removing spaces after `:` may mess up media queries like `@media all and (prefers-color-scheme: dark)` -> `@media all and (prefers-color-scheme:dark)`.
+	# Here we try to re-add spaces after a `:` if it's within a paren block.
+	# We could do this during parsing but we would need to peek ahead to the next item in the loop which is too much trouble right now.
 	output = regex.sub(r"\(([^\"\s)]+?):([^\"\s]+?)", r"(\1: \2", output)
 
 	return output.strip()
@@ -947,7 +936,7 @@ def _format_css_rules(content: list, indent_level: int) -> str:
 			output += ("\t" * indent_level) + "@" + token.lower_at_keyword + " " + _format_css_component_list(token.prelude, True).replace("\n", " ") + "{\n" + _format_css_rules(token.content, indent_level + 1) + "\n" + ("\t" * indent_level) + "}\n\n"
 
 		if token.type == "comment":
-			# House style: If the comment starts with /* End, then attach it to the previous block
+			# House style: If the comment starts with `/* End`, then attach it to the previous block.
 			if token.value.strip().lower().startswith("end"):
 				output = output.rstrip() + "\n"
 
@@ -974,41 +963,37 @@ def _format_css_declarations(content: list, indent_level: int) -> str:
 	tokens = tinycss2.parse_declaration_list(content)
 
 	# Hold on to your butts...
-	# When we alpha-sort declarations, we want to keep comments that are on the same
-	# line attached to that declaration after it's reordered.
+	# When we alpha-sort declarations, we want to keep comments that are on the same line attached to that declaration after it's reordered.
 	# To do this, first create a list of sorted_declarations that is list of tuples.
 	# The first tuple value is the declaration itself, and the second is a comment on the same line, if it exists.
-	# While we do this, remove those same-line comments from our master list of tokens,
-	# so that we don't process them twice later when we iterate over the master list again.
+	# While we do this, remove those same-line comments from our master list of tokens, so that we don't process them twice later when we iterate over the master list again.
 	sorted_declarations = []
 	i = 0
 	while i < len(tokens):
 		if tokens[i].type == "declaration":
 			if i + 1 < len(tokens) and tokens[i + 1].type == "comment":
 				sorted_declarations.append((tokens[i], tokens[i + 1]))
-				tokens.pop(i + 1) # Remove from the master list
+				tokens.pop(i + 1) # Remove from the master list.
 
-			# Use regex to test if the token is on the same line, i.e. if the intervening white space doesn't include a newline
+			# Use regex to test if the token is on the same line, i.e. if the intervening white space doesn't include a newline.
 			elif i + 2 < len(tokens) and tokens[i + 1].type == "whitespace" and regex.match(r"[^\n]+", tokens[i + 1].value) and tokens[i + 2].type == "comment":
 				sorted_declarations.append((tokens[i], tokens[i + 2]))
 				tokens.pop(i + 1) # Remove from the master list
 				tokens.pop(i + 1)
 
 			else:
-				# Special case in alpha-sorting: Sort -epub-* properties as if -epub- didn't exist
-				# Note that we modify token.name, which DOESN'T change token.lower_name; and we use token.name
-				# for sorting, but token.lower_name for output, so we don't have to undo this before outputting
+				# Special case in alpha-sorting: Sort `-epub-*` properties as if `-epub-` didn't exist.
+				# Note that we modify `token.name`, which *doesn't* change `token.lower_name`; and we use `token.name` for sorting, but `token.lower_name` for output, so we don't have to undo this before outputting.
 				tokens[i].name = regex.sub(r"^-([a-z]+?)-(.+)", r"\2-\1-\2", tokens[i].name)
 				sorted_declarations.append((tokens[i], None))
 
 		i = i + 1
 
-	# Actually sort declaration tokens and their associated comments, if any
+	# Actually sort declaration tokens and their associated comments, if any.
 	sorted_declarations.sort(key = lambda x : x[0].name)
 
-	# Now, sort the master token list using an intermediary list, output_tokens
-	# This will iterate over all tokens, including non-declaration tokens. If we encounter a declaration,
-	# pull the nth declaration out of our sorted list instead.
+	# Now, sort the master token list using an intermediary list, `output_tokens`.
+	# This will iterate over all tokens, including non-declaration tokens. If we encounter a declaration, pull the nth declaration out of our sorted list instead.
 
 	output_tokens = []
 	current_declaration_number = 0
@@ -1017,15 +1002,14 @@ def _format_css_declarations(content: list, indent_level: int) -> str:
 			raise se.InvalidCssException("Couldn’t parse CSS. Exception: {token.message}")
 
 		# Append the declaration to the output based on its sorted index.
-		# This will sort declarations but keep things like comments before and after
-		# declarations in the expected order.
+		# This will sort declarations but keep things like comments before and after declarations in the expected order.
 		if token.type == "declaration":
 			output_tokens.append(sorted_declarations[current_declaration_number])
 			current_declaration_number = current_declaration_number + 1
 		else:
 			output_tokens.append((token, None))
 
-	# tokens is now a alpha-sorted list of tuples of (token, comment)
+	# `tokens` is now a alpha-sorted list of tuples of (token, comment).
 	tokens = output_tokens
 
 	for token in tokens:
@@ -1098,13 +1082,12 @@ def format_css(css: str) -> str:
 				css_body += "@" + token.lower_at_keyword + " " + _format_css_component_list(token.prelude).replace("\n", " ", True) + "{\n" + _format_css_rules(token.content, 1) + "\n}\n\n"
 
 		# Selectors, including their rules.
-		# tinycss2 differentiates between selectors and their rules that are at the top level,
-		# and selectors and rules in nested blocks (like @supports).
+		# tinycss2 differentiates between selectors and their rules that are at the top level, and selectors and rules in nested blocks (like `@supports`).
 		if token.type == "qualified-rule":
 			css_body += _format_css_component_list(token.prelude, True) + "{\n" + _format_css_declarations(token.content, 1) + "\n}\n\n"
 
 		if token.type == "comment":
-			# House style: If the comment starts with /* End, then attach it to the previous block
+			# House style: If the comment starts with `/* End`, then attach it to the previous block.
 			if token.value.strip().lower().startswith("end"):
 				css_body = css_body.rstrip() + "\n"
 
@@ -1115,10 +1098,10 @@ def format_css(css: str) -> str:
 
 	output = (css_header + "\n" + css_body).strip() + "\n"
 
-	# Do a quick regex to move parens next to media rules
+	# Do a quick regex to move parens next to media rules.
 	output = regex.sub(r"(@[\p{Letter}]+) \(", "\\1(", output)
 
-	# Remove empty rules
+	# Remove empty rules.
 	output = regex.sub(r"^\t*[^\{\}]+?\{\s*\}\n", "", output, flags=regex.MULTILINE)
 
 	return output
@@ -1176,7 +1159,7 @@ def titlecase(text: str) -> str:
 	# Lowercase HTML tags that titlecase might have screwed up. We just lowercase the entire contents of the tag, including attributes, since they're typically lowercased anyway. (Except for things like `alt`, but we won't be titlecasing images!)
 	text = regex.sub(r"<(/?)([^>]+?)>", lambda result: "<" + result.group(1) + result.group(2).lower() + ">", text)
 
-	# Uppercase Roman numerals, but only if they are valid Roman numerals and they are not `MIX` (which is much more likely to be an English word than a Roman numeral) or `DI` which may be an Italian word. May be preceded by a space or parenthesis.
+	# Uppercase roman numerals, but only if they are valid roman numerals and they are not `MIX` (which is much more likely to be an English word than a Roman numeral) or `DI` which may be an Italian word. May be preceded by a space or parenthesis.
 	try:
 		text = regex.sub(r"([\s\(])([ivxlcdm]+)(\b)", lambda result: result.group(1) + result.group(2).upper() + result.group(3) if result.group(2).upper() not in ("MIX", "DI") and roman.fromRoman(result.group(2).upper()) else result.group(1) + result.group(2), text, flags=regex.IGNORECASE)
 	except roman.InvalidRomanNumeralError:
@@ -1313,25 +1296,25 @@ def make_url_safe(text: str) -> str:
 	A URL-safe version of the input string
 	"""
 
-	# 1. Convert accented characters to unaccented characters
+	# 1. Convert accented characters to unaccented characters.
 	text = unidecode(text)
 
-	# 2. Trim
+	# 2. Trim.
 	text = text.strip()
 
-	# 3. Convert title to lowercase
+	# 3. Convert title to lowercase.
 	text = text.lower()
 
-	# 4. Remove apostrophes
+	# 4. Remove apostrophes.
 	text = regex.sub(r"['‘’`]", "", text)
 
-	# 5. Convert any non-digit, non-letter character to a space
+	# 5. Convert any non-digit, non-letter character to a space.
 	text = regex.sub(r"[^0-9\p{Letter}]", " ", text)
 
-	# 6. Convert any instance of one or more space to a dash
+	# 6. Convert any instance of one or more space to a dash.
 	text = regex.sub(r"\s+", "-", text)
 
-	# 7. Remove trailing dashes
+	# 7. Remove trailing dashes.
 	text = regex.sub(r"\-+$", "", text)
 
 	return text
@@ -1347,12 +1330,12 @@ def namespace_to_class(selector: str) -> str:
 	A string representing the selector with namespaces replaced by classes
 	"""
 
-	# First, remove periods from epub:type.	 We can't remove periods in the entire selector because there might be class selectors involved
+	# First, remove periods from `epub:type`. We can't remove periods in the entire selector because there might be class selectors involved.
 	epub_type = regex.search(r"\"[^\"]+?\"", selector)
 	if epub_type:
 		selector = selector.replace(epub_type.group(), epub_type.group().replace(".", "-"))
 
-	# Now clean things up
+	# Now clean things up.
 	return selector.replace(":", "-").replace("|", "-").replace("~=", "-").replace("[", ".").replace("]", "").replace("\"", "")
 
 def simplify_css(css: str) -> str:
@@ -1366,10 +1349,9 @@ def simplify_css(css: str) -> str:
 	A string representing the simplified CSS
 	"""
 
-	# First we replace some more "complex" selectors (like :first-child) with an equivalent class (like .first-child), since ADE doesn't handle them
-	# Currently this replacement isn't perfect, because occasionally lxml generates an xpath expression
-	# from the css selector that lxml itself can't evaluate, even though the `xpath` binary can!
-	# We don't *replace* the selector, we *add* it, because lxml has problems selecting first-child sometimes
+	# First we replace some more "complex" selectors (like `:first-child`) with an equivalent class (like `.first-child`), since ADE doesn't handle them.
+	# Currently this replacement isn't perfect, because occasionally lxml generates an xpath expression from the CSS selector that lxml itself can't evaluate, even though the `xpath` binary can!
+	# We don't *replace* the selector, we *add* it, because lxml has problems selecting the first child sometimes.
 	lines = css.splitlines()
 	simplified_lines = []
 	for line in lines:
@@ -1387,21 +1369,21 @@ def simplify_css(css: str) -> str:
 	css = css.replace("{,", ",")
 	css = css.replace(",,", ",")
 
-	# Replace shorthand CSS with longhand properties, another ADE screwup
+	# Replace shorthand CSS with longhand properties, another ADE screwup.
 	css = regex.sub(r"margin:\s*([^\s]+?)\s*;", "margin-top: \\1;\n\tmargin-right: \\1;\n\tmargin-bottom: \\1;\n\tmargin-left: \\1;", css)
 	css = regex.sub(r"margin:\s*([^\s]+?)\s+([^\s]+?)\s*;", "margin-top: \\1;\n\tmargin-right: \\2;\n\tmargin-bottom: \\1;\n\tmargin-left: \\2;", css)
 	css = regex.sub(r"margin:\s*([^\s]+?)\s+([^\s]+?)\s+([^\s]+?)\s*;", "margin-top: \\1;\n\tmargin-right: \\2;\n\tmargin-bottom: \\3;\n\tmargin-left: \\2;", css)
 	css = regex.sub(r"margin:\s*([^\s]+?)\s+([^\s]+?)\s+([^\s]+?)\s+([^\s]+?)\s*;", "margin-top: \\1;\n\tmargin-right: \\2;\n\tmargin-bottom: \\3;\n\tmargin-left: \\4;", css)
 
-	# Replace some more poorly-supported CSS attributes
+	# Replace some more poorly-supported CSS attributes.
 	css = css.replace("all-small-caps;", "small-caps;\n\ttext-transform: lowercase;")
 	css = regex.sub(r"text-align:\s*initial\s*;", "text-align: left;", css)
 
-	# Include `all and` in @media queries, otherwise RMSDK will dump the entire stylesheet
+	# Include `all and` in `@media` queries, otherwise RMSDK will dump the entire stylesheet.
 	css = regex.sub(r"@media\s*\(", "@media all and (", css)
 
-	# Replace CSS namespace selectors with classes
-	# For example, p[epub|type~="z3998:salutation"] becomes p.epub-type-z3998-salutation
+	# Replace CSS namespace selectors with classes.
+	# For example, `p[epub|type~="z3998:salutation"]` becomes `p.epub-type-z3998-salutation`.
 	for line in regex.findall(r"\[[a-z]+\|[a-z]+(?:\~\=\"[^\"]*?\")?\]", css):
 		fixed_line = namespace_to_class(line)
 		css = css.replace(line, fixed_line)
@@ -1428,20 +1410,19 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 	except Exception as ex:
 		raise se.InvalidXhtmlException(f"Couldn’t parse XHTML file. Exception: {ex}")
 
-	# Titlepages are the exception
+	# Titlepages are the exception.
 	if dom.xpath("/html/body//section[re:test(@epub:type, '\\btitlepage\\b')]"):
 		return "Titlepage"
 
 	title = ""
 
-	# Do we have an hgroup element in the first <section> or <article> to process?
-	# Only match hgroups that do not have a ancestor containing an h# or header (which presumably contains an h# element). Note
-	# how we exclude <header>s that contain an <hgroup> otherwise we would match ourselves!
+	# Do we have an hgroup element in the first `<section>` or `<article>` to process?
+	# Only match `<hgroup>`s that do not have a ancestor containing an `<h#>` or `<header>` (which presumably contains an `<h#>` element). Note how we exclude `<header>`s that contain an `<hgroup>`, otherwise we would match ourselves!
 	hgroup_elements = dom.xpath("/html/body/*[re:test(name(), '(article|section|nav)')][1]//hgroup[not(ancestor::*[./*[re:test(name(), '^h[1-6]$') or (name() = 'header' and not(./hgroup))]])]")
 	if hgroup_elements:
 		hgroup_element = hgroup_elements[0]
 
-		# Strip any endnote references first
+		# Strip any endnote references first.
 		for node in hgroup_element.xpath("//*[contains(@epub:type, 'noteref')]"):
 			node.remove()
 
@@ -1452,22 +1433,21 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 		else:
 			raise se.InvalidSeEbookException("No [xhtml]<section>[/] or [xhtml]<article>[/] element for [xhtml]<hgroup>[/].")
 
-		# If the closest parent <section> or <article> is a part, division, or volume, then keep all <hgroup> children
+		# If the closest parent `<section>` or `<article>` is a part, division, or volume, then keep all `<hgroup>` children.
 		closest_parent_section_epub_type = closest_parent_section.get_attr("epub:type")
 		if not closest_parent_section_epub_type or (closest_parent_section_epub_type and ("part" not in closest_parent_section_epub_type and "division" not in closest_parent_section_epub_type and "volume" not in closest_parent_section_epub_type)):
-			# Else, if the closest parent <section> or <article> is a halftitlepage, then discard <hgroup> subtitles
+			# Else, if the closest parent `<section>` or `<article>` is a halftitlepage, then discard `<hgroup>` subtitles.
 			if closest_parent_section_epub_type and "halftitlepage" in closest_parent_section_epub_type:
 				for node in hgroup_element.xpath("./*[contains(@epub:type, 'subtitle')]"):
 					node.remove()
 
-			# Else, if the first child of the <hgroup> is a title, then also discard <hgroup> subtitles
-			# Note the concat() so that matching for `title` doesn't match `subtitle`
+			# Else, if the first child of the `<hgroup>` is a title, then also discard `<hgroup>` subtitles.
+			# Note the `concat()` so that matching for `title` doesn't match `subtitle`.
 			elif hgroup_element.xpath("./*[1][contains(concat(' ', @epub:type, ' '), ' title ')]"):
 				for node in hgroup_element.xpath("./*[contains(@epub:type, 'subtitle')]"):
 					node.remove()
 
-		# Then after processing <hgroup>, the title becomes the 1st <hgroup> child;
-		# if there is a 2nd <hgroup> child after processing, add a colon and space, then the text of the 2nd <hgroup> child.
+		# Then after processing `<hgroup>`, the title becomes the 1st `<hgroup>` child; if there is a second `<hgroup>` child after processing, add a colon and space, then the text of the second `<hgroup>` child.
 		try:
 			title = regex.sub(r"\s+", " ", hgroup_element.xpath("./*[1]")[0].inner_text())
 		except Exception as ex:
@@ -1479,30 +1459,29 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 			title += f": {subtitle_text}"
 
 	else:
-		# No hgroups, so try to find the first h# element. The title becomes that element's inner text.
+		# No `<hgroup>`s, so try to find the first `<h#>` element. The title becomes that element's inner text.
 		h_elements = dom.xpath("/html/body/*[re:test(name(), '(article|section|nav)')][1]//*[re:test(name(), '^h[1-6]')][1]")
 
 		if h_elements:
 			h_element = h_elements[0]
 
-			# Strip any endnote references first
+			# Strip any endnote references first.
 			for node in h_element.xpath("//*[contains(@epub:type, 'noteref')]"):
 				node.remove()
 
 			title = h_element.inner_text()
 
 		else:
-			# No <h#> elements found. Try to get the title from the epub:type of the deepest <section> or <article> that has no <section> or <article> siblings. (Note the parenthesis
-			# to match against `last()`).
-			# This is to catch cases of <section>s nested for recomposability, so that we don't get "Part 1" instead of "Epigraph" (of part 1)
+			# No `<h#>` elements found. Try to get the title from the `epub:type` of the deepest `<section>` or `<article>` that has no `<section>` or `<article>` siblings. (Note the parenthesis to match against `last()`).
+			# This is to catch cases of `<section>`s nested for recomposability, so that we don't get `Part 1` instead of `Epigraph` (of part 1).
 			top_level_wrappers = dom.xpath("(/html/body//*[name() = 'section' or name() = 'article' and count(preceding-sibling::*) + count(following-sibling::*) = 0])[last()]")
 
 			if top_level_wrappers:
 				top_level_wrapper = top_level_wrappers[0]
 
-				# Only guess the title if there is a single value for epub:type
+				# Only guess the title if there is a single value for `epub:type`.
 				if top_level_wrapper.get_attr("epub:type"):
-					# Get the first non-namespaced value as the title
+					# Get the first non-namespaced value as the title.
 					for value in top_level_wrapper.get_attr("epub:type").split(" "):
 						if value == "z3998:frontispiece":
 							title = "Frontispiece"
@@ -1512,16 +1491,16 @@ def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
 							title = titlecase(value.replace("-", " "))
 							break
 
-	# Remove odd spaces and word joiners
+	# Remove odd spaces and word joiners.
 	title = regex.sub(fr"[{se.NO_BREAK_SPACE}]", " ", title)
 	title = regex.sub(fr"[{se.WORD_JOINER}{se.ZERO_WIDTH_SPACE}]", "", title)
 
-	# Collapse spaces possibly introduced by white-space nodes
-	# This matches all white space EXCEPT hair space; note the double negation with uppercase \S
-	# See https://stackoverflow.com/questions/3548949/how-can-i-exclude-some-characters-from-a-class
+	# Collapse spaces possibly introduced by whitespace nodes.
+	# This matches all white space *except* hair space; note the double negation with uppercase `\S`.
+	# See <https://stackoverflow.com/questions/3548949/how-can-i-exclude-some-characters-from-a-class>.
 	title = regex.sub(fr"[^\S{se.HAIR_SPACE}]+", " ", title)
 
-	# Unescape ampersands since we are returning a plain string, not XML
+	# Unescape ampersands since we are returning a plain string, not XML.
 	title = title.replace("&amp;", "&")
 
 	return title
@@ -1543,8 +1522,8 @@ def generate_colophon_timestamp(timestamp: datetime) -> str:
 	Given a `datetime` in UTC, generate a "friendly" timestamp in HTML format for use in an S.E. colophon.
 	"""
 
-	# In the line below, we can't use %l (unpadded 12 hour clock hour) because it isn't portable to Windows.
-	# Instead we use %I (padded 12 hour clock hour) and then do a string replace to remove leading zeros.
+	# In the line below, we can't use `%l` (unpadded 12 hour clock hour) because it isn't portable to Windows.
+	# Instead we use `%I` (padded 12 hour clock hour) and then do a string replace to remove leading zeros.
 	formatted_timestamp = f"{timestamp:%B %e, %Y, %I:%M{se.NO_BREAK_SPACE}<abbr class=\"eoc\">%p</abbr>}".replace(" 0", " ")
 	formatted_timestamp = regex.sub(r"\s+", " ", formatted_timestamp).replace("AM", "a.m.").replace("PM", "p.m.").replace(" <abbr", f"{se.NO_BREAK_SPACE}<abbr")
 
@@ -1552,11 +1531,13 @@ def generate_colophon_timestamp(timestamp: datetime) -> str:
 
 def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> List[EasyXmlElement]:
 	"""
-	Helper function for find_unexpected_ids().
+	Helper function for `find_unexpected_ids()`.
 
-	Get a flat list of children that are not headers or sectioning elements,
-	and return a list of those nodes.
+	Get a flat list of children that are not headers or sectioning elements, and return a list of those nodes.
+
 	In other words, input like this:
+
+	```html
 	<section>
 		<p></p>
 		<blockquote>
@@ -1564,12 +1545,15 @@ def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> List[Ea
 		</blockquote>
 		<p></p>
 	</section>
+	```
 
 	Would result in this flat list:
+
 	p
 	blockquote
 	p
 	p
+
 	"""
 
 	result = []
@@ -1594,11 +1578,12 @@ def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> List[Ea
 def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> List[Tuple[EasyXmlElement, str]]:
 	"""
 	Given a DOM tree, return a list of tuples containing nodes and their expected ID attributes.
+
 	Only nodes with unexpected IDs are returned.
 
 	INPUTS
-	dom: An EasyXmlTree
-	no_endnotes: A boolean indicating whether endnotes are examined; by default they are
+	dom: An `EasyXmlTree`
+	no_endnotes: A boolean indicating whether endnotes are examined; by default they are.
 
 	OUTPUTS
 	A list of tuples of (node, expected_id)
@@ -1607,11 +1592,11 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> List[Tup
 	dom_copy = deepcopy(dom)
 	replacements = []
 
-	# Remove noterefs as they have their own ID rules
+	# Remove `noteref`s as they have their own ID rules.
 	for node in dom_copy.xpath("/html/body//*[contains(@epub:type, 'noteref')]"):
 		node.remove()
 
-	# The build-ids command has an option to exclude endnotes; if true, then remove endnotes as well
+	# The `build-ids` command has an option to exclude endnotes; if true, then remove endnotes as well.
 	if no_endnotes:
 		for node in dom_copy.xpath("/html/body//*[contains(@epub:type, 'endnote')]"):
 			node.remove()
@@ -1619,9 +1604,9 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> List[Tup
 	# IDs are set to `{closest_parent_sectioning_element_id}-{tag_name}-{n}`.
 	# Lines of poetry are set to `{closest_poem_sectioning_element_id}-line-{n}`.
 	# Notes:
-	# 1. Endnotes count as their own sectioning elements for the purposes of assigning IDs
-	# 2. Exclude glossaries, as IDs there should be related to the glossterm somehow
-	# 3. Exclude <p> children of <hgroup> as they are really titles and not <p> per se
+	# 1. Endnotes count as their own sectioning elements for the purposes of assigning IDs.
+	# 2. Exclude glossaries, as IDs there should be related to the glossterm somehow.
+	# 3. Exclude `<p>` children of `<hgroup>` as they are really titles and not `<p>` per se.
 	line_number = 0
 	endnote_number = 0
 	container_poem_section_id = ""
@@ -1633,7 +1618,7 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> List[Tup
 
 		section_epub_type = section.get_attr("epub:type")
 		if section_epub_type:
-			# If this section is a poem or an endnotes container, reset the counters
+			# If this section is a poem or an endnotes container, reset the counters.
 			if "z3998:poem" in section_epub_type:
 				line_number = 0
 				container_poem_section_id = section_id
@@ -1642,7 +1627,7 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> List[Tup
 			if "endnotes" in section_epub_type:
 				endnote_number = 0
 
-			# If this section is an endnote, increment the note number and check the ID right now
+			# If this section is an endnote, increment the note number and check the ID right now.
 			if regex.search(r"\bendnote\b", section.get_attr("epub:type")):
 				endnote_number = endnote_number + 1
 				expected_id = f"note-{endnote_number}"
@@ -1656,22 +1641,22 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> List[Tup
 			else:
 				counts[node.tag] = 1
 
-			# If the line is a line of poetry, increment the line count
+			# If the line is a line of poetry, increment the line count.
 			if is_poem and node.tag == "span" and node.parent.tag == "p":
 				line_number = line_number + 1
 
 			id_attr = node.get_attr("id")
-			# If the element has an ID attribute and it's not an endnote node (i.e. <li epub:type="endnote">)
+			# If the element has an ID attribute and it's not an endnote node (i.e. `<li epub:type="endnote">`).
 			if id_attr:
 				expected_id = id_attr
 
-				# <dt>s have an id attribute set to their defining word
+				# `<dt>`s have an `id` attribute set to their defining word.
 				if node.tag == "dt":
 					dfn = node.xpath("./dfn")
 					if dfn:
 						expected_id = make_url_safe(dfn[0].inner_text())
 
-				# All other elements
+				# All other elements.
 				else:
 					expected_id = f"{section_id}-{node.tag}-{counts[node.tag]}"
 

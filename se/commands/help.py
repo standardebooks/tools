@@ -7,9 +7,9 @@ from se.main import get_commands
 
 def se_help(plain_output: bool) -> int: # pylint: disable=unused-argument
 	"""
-	Entry point for `se help`
+	Entry point for `se help`.
 
-	help() is a built-in function so this function is called se_help().
+	`help()` is a Python built-in function so this function is called `se_help()`.
 	"""
 
 	commands = get_commands()

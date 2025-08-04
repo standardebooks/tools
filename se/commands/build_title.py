@@ -11,7 +11,7 @@ import se.formatting
 
 def build_title(plain_output: bool) -> int:
 	"""
-	Entry point for `se build-title`
+	Entry point for `se build-title`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Generate the title of an XHTML file based on its headings and update the file’s <title> element.")

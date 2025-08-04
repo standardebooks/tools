@@ -18,7 +18,8 @@ from se.vendor.kindleunpack import kindleunpack
 def _is_epub(file_bytes: bytes) -> bool:
 	"""
 	Decide if a file is an epub file.
-	From https://github.com/h2non/filetype.py (MIT license)
+
+	From <https://github.com/h2non/filetype.py> (MIT license).
 	"""
 
 	return (len(file_bytes) > 57 and
@@ -42,14 +43,15 @@ def _is_epub(file_bytes: bytes) -> bool:
 def _is_mobi(file_bytes: bytes) -> bool:
 	"""
 	Decide if a file is a MOBI/AZW3 file.
-	From ./se/vendor/kindleunpack/mobi_sectioner.py lines 49-53
+
+	From ./se/vendor/kindleunpack/mobi_sectioner.py lines 49-53.
 	"""
 
 	return file_bytes[:78][0x3C:0x3C+8] in (b"BOOKMOBI", b"TEXtREAd")
 
 def extract_ebook(plain_output: bool) -> int:
 	"""
-	Entry point for `se extract-ebook`
+	Entry point for `se extract-ebook`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Extract an .epub, .mobi, or .azw3 ebook into ./FILENAME.extracted/ or a target directory.")
@@ -58,7 +60,7 @@ def extract_ebook(plain_output: bool) -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an epub, mobi, or azw3 file")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; force_terminal prints colors when called from GNU Parallel
+	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
 	if args.output_dir and len(args.targets) > 1:
 		se.print_error("The [bash]--output-dir[/] option can’t be used when more than one ebook target is specified.", plain_output=plain_output)
@@ -87,13 +89,13 @@ def extract_ebook(plain_output: bool) -> int:
 			file_bytes = binary_file.read()
 
 		if _is_mobi(file_bytes):
-			# kindleunpack uses print() so just capture that output here
+			# `kindleunpack` uses `print()` so just capture that output here.
 			old_stdout = sys.stdout
 			sys.stdout = TextIOWrapper(BytesIO(), sys.stdout.encoding)
 
 			kindleunpack.unpackBook(str(target), str(extracted_path))
 
-			# Restore stdout
+			# Restore `stdout`.
 			sys.stdout.close()
 			sys.stdout = old_stdout
 		elif _is_epub(file_bytes):

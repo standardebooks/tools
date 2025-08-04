@@ -10,7 +10,7 @@ from se.se_epub import SeEpub
 
 def shift_endnotes(plain_output: bool) -> int:
 	"""
-	Entry point for `se shift-endnotes`
+	Entry point for `se shift-endnotes`.
 	"""
 
 	parser = argparse.ArgumentParser(description="Increment or decrement the specified endnote and all following endnotes by 1 or a specified amount.")

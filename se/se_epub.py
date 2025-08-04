@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Defines the SeEpub class, the master class for representing and operating on
-Standard Ebooks epub3 files.
+Defines the SeEpub class, the master class for representing and operating on Standard Ebooks epub3 files.
 """
 
 import base64
@@ -38,27 +37,27 @@ class GitCommit:
 
 class Endnote:
 	"""
-	Class to hold information on endnotes
+	Class to hold information on endnotes.
 	"""
 
 	def __init__(self):
 		self.node = None
 		self.number = 0
 		self.anchor = ""
-		self.contents = []  # The strings and tags inside an <li> element
+		self.contents = []  # The strings and tags inside an `<li>` element.
 		self.back_link = ""
 		self.source_file = ""
 		self.matched = False
 
 class EndnoteChange:
 	"""
-	Class to hold a record of what changes have been made to endnote numbers
+	Class to hold a record of what changes have been made to endnote numbers.
 	"""
 
 	def __init__(self, old_anchor, new_anchor, filename):
-		self.old_anchor = old_anchor  # the previous anchor
-		self.new_anchor = new_anchor  # the anchor it has been changed to
-		self.filename = filename	# the file in which it was changed
+		self.old_anchor = old_anchor	# The previous anchor.
+		self.new_anchor = new_anchor	# The anchor it has been changed to.
+		self.filename = filename	# The file in which it was changed.
 
 class SeEpub:
 	"""
@@ -67,13 +66,13 @@ class SeEpub:
 	An SE epub can have various operations performed on it, including recomposing and linting.
 	"""
 
-	path: Path = Path() # The path to the base of the ebook repo, i.e., a folder containing ./images/ and ./src/
-	epub_root_path = Path() # The path to the epub source root, i.e. self.path / src
-	content_path: Path = Path() # The path to the epub content base, i.e. self.epub_root_path / epub
-	metadata_file_path: Path = Path() # The path to the metadata file, i.e. self.content_path / content.opf
-	onix_path: Path = Path() # The path to the ONIX file, i.e. self.content_path / onix.xml
-	toc_path: Path = Path()  # The path to the ToC file, i.e. self.content_path / toc.xhtml
-	glossary_search_key_map_path = None # The path to the glossary search key map, or None
+	path: Path = Path() # The path to the base of the ebook repo, i.e., a folder containing `./images/` and `./src/`.
+	epub_root_path = Path() # The path to the epub source root, i.e. `self.path / src`.
+	content_path: Path = Path() # The path to the epub content base, i.e. `self.epub_root_path / epub`.
+	metadata_file_path: Path = Path() # The path to the metadata file, i.e. `self.content_path / content.opf`.
+	onix_path: Path = Path() # The path to the ONIX file, i.e. `self.content_path / onix.xml`.
+	toc_path: Path = Path()  # The path to the ToC file, i.e. `self.content_path / toc.xhtml`.
+	glossary_search_key_map_path = None # The path to the glossary search key map, or `None` if there isn't one.
 	local_css = ""
 	is_se_ebook = True
 	_language = None
@@ -83,11 +82,11 @@ class SeEpub:
 	_generated_github_repo_url = None
 	_repo = None # git.Repo object
 	_last_commit = None # GitCommit object
-	_endnotes: Optional[List[Endnote]] = None # List of Endnote objects
+	_endnotes: Optional[List[Endnote]] = None
 	_endnotes_path = None
 	_loi_path = None
 	_cover_path = None
-	_spine_file_paths: Optional[List[Path]] = None # List of Path objects
+	_spine_file_paths: Optional[List[Path]] = None
 
 	def __init__(self, epub_root_directory: Union[str, Path]):
 		try:
@@ -99,8 +98,8 @@ class SeEpub:
 		except Exception as ex:
 			raise se.InvalidSeEbookException(f"Not a directory: [path][link=file://{self.path}]{self.path}[/][/].") from ex
 
-		# Decide if this is an SE epub, or a white-label epub
-		# SE epubs have a ./src dir and the identifier looks like an SE identifier
+		# Decide if this is an SE epub, or a white-label epub.
+		# SE epubs have a `./src` directory and the identifier looks like an SE identifier.
 		if (self.path / "src" / "META-INF" / "container.xml").is_file():
 			self.epub_root_path = self.path / "src"
 		else:
@@ -138,7 +137,7 @@ class SeEpub:
 		if gskm_href:
 			self.glossary_search_key_map_path = self.content_path / gskm_href
 
-		# If our identifier isn't SE-style, we're not an SE ebook
+		# If our identifier isn't SE-style, we're not an SE ebook.
 		identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier/text()", True)
 		if not identifier or not identifier.startswith("https://standardebooks.org/ebooks/"):
 			self.is_se_ebook = False
@@ -157,7 +156,7 @@ class SeEpub:
 	@property
 	def cover_path(self):
 		"""
-		Accessor
+		Accessor.
 		"""
 
 		if not self._cover_path:
@@ -169,7 +168,7 @@ class SeEpub:
 	@property
 	def endnotes_path(self):
 		"""
-		Accessor
+		Accessor.
 		"""
 
 		if not self._endnotes_path:
@@ -199,7 +198,7 @@ class SeEpub:
 	@property
 	def repo(self) -> git.Repo:
 		"""
-		Accessor
+		Accessor.
 		"""
 
 		if not self._repo:
@@ -213,15 +212,14 @@ class SeEpub:
 	@property
 	def last_commit(self) -> Optional[GitCommit]:
 		"""
-		Accessor
+		Accessor.
 		"""
 
 		if not self._last_commit:
-			# We use git command instead of using gitpython's commit object because we want the short hash
+			# We use a `git` command instead of using `gitpython`'s `commit` object because we want the short hash.
 			try:
-				# We have to clear this environmental variable or else GitPython will think the repo is "." instead
-				# of the dir we actually pass, if we're called from a git hook (like post-receive).
-				# See https://stackoverflow.com/questions/42328426/gitpython-not-working-from-git-hook
+				# We have to clear this environmental variable or else `gitpython` will think the repo is `.` instead of the dir we actually pass, if we're called from a git hook (like `post-receive`).
+				# See <https://stackoverflow.com/questions/42328426/gitpython-not-working-from-git-hook>.
 				if "GIT_DIR" in os.environ:
 					del os.environ["GIT_DIR"]
 
@@ -237,7 +235,7 @@ class SeEpub:
 	@property
 	def generated_identifier(self) -> str:
 		"""
-		Accessor
+		Accessor.
 
 		Generate an SE identifier based on the metadata in the metadata file.
 		"""
@@ -250,7 +248,7 @@ class SeEpub:
 				for publisher in self.metadata_dom.xpath("/package/metadata/dc:publisher"):
 					identifier += se.formatting.make_url_safe(publisher.text) + "_"
 
-			# Add authors
+			# Add authors.
 			authors = []
 			for author in self.metadata_dom.xpath("/package/metadata/dc:creator"):
 				authors.append(author.text)
@@ -258,13 +256,12 @@ class SeEpub:
 
 			identifier = identifier.strip("_") + "/"
 
-			# Add title
+			# Add title.
 			for title in self.metadata_dom.xpath("/package/metadata/dc:title[@id=\"title\"]"):
 				identifier += se.formatting.make_url_safe(title.text) + "/"
 
 			# For contributors, we add both translators and illustrators.
-			# However, we may not include specific translators or illustrators in certain cases, namely
-			# if *some* contributors have a `display-seq` property, and others do not.
+			# However, we may not include specific translators or illustrators in certain cases, namely if *some* contributors have a `display-seq` property, and others do not.
 			# According to the epub spec, if that is the case, we should only add those that *do* have the attribute.
 			# By SE convention, any contributor with `display-seq == 0` will be excluded from the identifier string.
 			translators = []
@@ -306,7 +303,7 @@ class SeEpub:
 			for illustrator in illustrators:
 				include_illustrator = True
 
-				# If the translator is also the illustrator, don't include them twice
+				# If the translator is also the illustrator, don't include them twice.
 				for translator in translators:
 					if illustrator["name"] == translator["name"]:
 						include_illustrator = False
@@ -324,13 +321,12 @@ class SeEpub:
 	@property
 	def generated_github_repo_url(self) -> str:
 		"""
-		Accessor
+		Accessor.
 
-		Generate a GitHub repository URL based on the *generated* SE identifier,
-		*not* the SE identifier in the metadata file.
+		Generate a GitHub repository URL based on the *generated* SE identifier, *not* the SE identifier in the metadata file.
 
 		INPUTS
-		None
+		None.
 
 		OUTPUTS
 		A string representing the GitHub repository URL (capped at maximum 100 characters).
@@ -349,7 +345,7 @@ class SeEpub:
 		Return a list of Endnote objects representing the endnotes file for this ebook.
 
 		INPUTS
-		None
+		None.
 
 		OUTPUTS
 		A list of Endnote objects representing the endnotes file for this ebook.
@@ -381,13 +377,14 @@ class SeEpub:
 	def spine_file_paths(self) -> List[Path]:
 		"""
 		Reads the spine from the metadata file to obtain a list of content files, in the order wanted for the ToC.
+
 		It assumes this has already been manually ordered by the producer.
 
 		INPUTS:
-		None
+		None.
 
 		OUTPUTS:
-		list of content files paths in the order given in the spine in the metadata file
+		List of content files paths in the order given in the spine in the metadata file.
 		"""
 
 		if not self._spine_file_paths:
@@ -412,13 +409,14 @@ class SeEpub:
 	def get_file(self, file_path: Path) -> str:
 		"""
 		Get raw file contents of a file in the epub.
-		Contents are cached so that we don't hit the disk repeatedly
+
+		Contents are cached so that we don't hit the disk repeatedly.
 
 		INPUTS
-		file_path: A Path pointing to the file
+		file_path: A `Path` pointing to the file.
 
 		OUTPUTS
-		A string representing the file contents
+		A string representing the file contents.
 		"""
 
 		file_path_str = str(file_path)
@@ -436,10 +434,10 @@ class SeEpub:
 
 	def flush_dom_cache_entry(self, file_path: Path) -> None:
 		"""
-		Remove a dom cache entry for the given file, regardless of whether comments were removed.
+		Remove a DOM cache entry for the given file, regardless of whether comments were removed.
 
 		INPUTS
-		file_path: A Path pointing to the file
+		file_path: A `Path` pointing to the file.
 		"""
 
 		keys_to_delete = []
@@ -456,17 +454,18 @@ class SeEpub:
 		except Exception:
 			pass
 
-	# Cache dom objects so we don't have to create them multiple times
+	# Cache DOM objects so we don't have to create them multiple times.
 	def get_dom(self, file_path: Path, remove_comments=False) -> se.easy_xml.EasyXmlTree:
 		"""
-		Get an EasyXmlTree DOM object for a given file.
-		Contents are cached so that we don't hit the disk or re-parse DOMs repeatedly
+		Get an `EasyXmlTree` DOM object for a given file.
+
+		Contents are cached so that we don't hit the disk or re-parse DOMs repeatedly.
 
 		INPUTS
-		file_path: A Path pointing to the file
+		file_path: A Path pointing to the file.
 
 		OUTPUTS
-		A string representing the file contents
+		A string representing the file contents.
 		"""
 		file_path_str = str(file_path) + "_" + str(remove_comments)
 
@@ -476,7 +475,7 @@ class SeEpub:
 			try:
 				self._dom_cache[file_path_str] = se.easy_xml.EasyXmlTree(file_contents)
 
-				# Remove comments
+				# Remove comments.
 				if remove_comments:
 					for node in self._dom_cache[file_path_str].xpath("//comment()"):
 						node.remove()
@@ -494,26 +493,26 @@ class SeEpub:
 
 	def _recompose_xhtml(self, section: se.easy_xml.EasyXmlElement, output_dom: se.easy_xml.EasyXmlTree, use_image_files: bool = False) -> None:
 		"""
-		Helper function used in self.recompose()
+		Helper function used in `self.recompose()`.
 
 		INPUTS
-		section: An EasyXmlElement to inspect
-		output_dom: A EasyXmlTree representing the entire output dom
-		use_image_files: if True, leave image src attributes as relative URLs instead of inlining as data: URIs
+		section: An `EasyXmlElement` to inspect
+		output_dom: An `EasyXmlTree` representing the entire output dom
+		use_image_files: If `True`, leave image `src` attributes as relative URLs instead of inlining as `data:` URIs.
 
 		OUTPUTS
-		None
+		None.
 		"""
 
-		# Quick sanity check before we begin
+		# Quick sanity check before we begin.
 		if not section.get_attr("id") or (section.parent.tag.lower() != "body" and not section.parent.get_attr("id")):
 			raise se.InvalidXhtmlException(f"Section without [attr]id[/] attribute: [html]{section.to_tag_string()}[/]")
 
 		if section.parent.tag.lower() == "body" and not section.get_attr("data-parent"):
 			section.set_attr("epub:type", f"{section.get_attr('epub:type')} {section.parent.get_attr('epub:type')}".strip())
 
-		# Try to find our parent element in the current output dom, by ID.
-		# If it's not in the output, then append this element to the elements's closest parent by ID (or <body>), then iterate over its children and do the same.
+		# Try to find our parent element in the current output DOM, by ID.
+		# If it's not in the output, then append this element to the elements's closest parent by ID (or `<body>`), then iterate over its children and do the same.
 		existing_section = None
 		existing_section = output_dom.xpath(f"//*[@id='{section.get_attr('data-parent')}']")
 
@@ -522,9 +521,8 @@ class SeEpub:
 		else:
 			output_dom.xpath("/html/body")[0].append(section)
 
-		# Convert all <img> references to inline base64, unless use_image_files is True
-		# We even convert SVGs instead of inlining them, because CSS won't allow us to style inlined SVGs
-		# (for example if we want to apply max-width or filter: invert())
+		# Convert all `<img>` references to inline base64, unless use_image_files is `True`.
+		# We even convert SVGs instead of inlining them, because CSS won't allow us to style inlined SVGs (for example if we want to apply `max-width` or `filter: invert()`).
 		if not use_image_files:
 			for img in section.xpath("//img[starts-with(@src, '../images/')]"):
 				img.set_attr("src", se.images.get_data_url(self.content_path / img.get_attr("src").replace("../", "")))
@@ -534,15 +532,15 @@ class SeEpub:
 		Iterate over the XHTML files in this epub and "recompose" them into a single XHTML string representing this ebook.
 
 		INPUTS
-		output_xhtml5: true to output XHTML5 instead of HTML5
-		extra_css_file: path to an additional CSS file to include
-		use_image_files: if True, leave image src attributes as relative URLs instead of inlining as data: URIs
+		output_xhtml5: `True` to output XHTML5 instead of HTML5.
+		extra_css_file: path to an additional CSS file to include.
+		use_image_files: if `True`, leave image `src` attributes as relative URLs instead of inlining as `data:` URIs.
 
 		OUTPUTS
 		A string of HTML5 representing the entire recomposed ebook.
 		"""
 
-		# Get some header data: title, core and local css
+		# Get some header data: title, core and local CSS.
 		title = self.metadata_dom.xpath("/package/metadata/dc:title/text()")[0]
 		css = ""
 		namespaces: List[str] = []
@@ -550,7 +548,7 @@ class SeEpub:
 		css_filenames = list(self.content_path.glob("**/*.css"))
 
 		# If we have standard SE CSS files, attempt to sort them in the order we expect them to appear in the ebook.
-		# core.css -> se.css -> local.css
+		# `core.css` -> `se.css` -> `local.css`.
 		sorted_css_filenames = {}
 		for filepath in css_filenames:
 			if filepath.name == "core.css":
@@ -560,18 +558,18 @@ class SeEpub:
 			if filepath.name == "local.css":
 				sorted_css_filenames[2] = filepath
 
-		# Turn the dict into a list, sorting by key
+		# Turn the dict into a list, sorting by key.
 		sorted_css_filenames_list = [sorted_css_filenames[key] for key in sorted(sorted_css_filenames.keys())]
 
-		# If we hit all 3 files then we're probably an SE ebook, replace our list of CSS files with the sorted list
+		# If we hit all 3 files then we're probably an SE ebook, replace our list of CSS files with the sorted list.
 		if len(sorted_css_filenames_list) == 3:
 			css_filenames = sorted_css_filenames_list
 
-		# Add the extra CSS file if present
+		# Add the extra CSS file if present.
 		if extra_css_file:
 			css_filenames.append(extra_css_file)
 
-		# Now recompose the CSS
+		# Now recompose the CSS.
 		for filepath in css_filenames:
 			file_css = self.get_file(filepath)
 
@@ -579,7 +577,7 @@ class SeEpub:
 
 			file_css = regex.sub(r"\s*@(charset|namespace).+?;\s*", "\n", file_css).strip()
 
-			# Convert background-image URLs to base64, unless use_image_files is True
+			# Convert `background-image` URLs to base64, unless `use_image_files` is `True`.
 			if not use_image_files:
 				for image in regex.finditer(pattern=r"""url\("(.+?\.(?:svg|png|jpg))"\)""", string=file_css):
 					url = image.captures(1)[0].replace("../", "")
@@ -589,8 +587,7 @@ class SeEpub:
 						file_css = file_css.replace(image.group(0), f"""url("{data_url}")""")
 					except FileNotFoundError:
 						# If the file isn't found, continue silently.
-						# File may not be found for example in web.css, which points to an image on the web
-						# server, not in the ebook.
+						# File may not be found for example in `web.css`, which points to an image on the web server, not in the ebook.
 						pass
 
 			css = css + f"\n\n\n/* {filepath.name} */\n" + file_css
@@ -607,64 +604,64 @@ class SeEpub:
 
 		css = "\t\t\t".join(css.splitlines(True)) + "\n"
 
-		# Remove min-height from CSS since it doesn't really apply to the single page format.
-		# It occurs at least in se.css
+		# Remove `min-height` from CSS since it doesn't really apply to the single page format.
+		# It occurs at least in `se.css`.
 		css = regex.sub(r"\s*min-height: [^;]+?;", "", css)
 
-		# Remove -epub-* CSS as it's invalid in a browser context
+		# Remove `-epub-*` CSS as it's invalid in a browser context.
 		css = regex.sub(r"\s*\-epub\-[^;]+?;", "", css)
 
 		output_xhtml = f"<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" epub:prefix=\"z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0\" xml:lang=\"{self.language}\"><head><meta charset=\"utf-8\"/><title>{title}</title><style/></head><body></body></html>"
 		output_dom = se.formatting.EasyXmlTree(output_xhtml)
-		output_dom.is_css_applied = True # We will apply CSS recursively to nodes that will be attached to output_dom, so set the bit here
+		output_dom.is_css_applied = True # We will apply CSS recursively to nodes that will be attached to `output_dom`, so set the bit here.
 
-		# Iterate over spine items in order and recompose them into our output
+		# Iterate over spine items in order and recompose them into our output.
 		needs_wrapper_css = False
 		for file_path in self.spine_file_paths:
 			dom = self.get_dom(file_path)
 
-			# Apply the stylesheet to see if we have `position: absolute` on any items. If so, apply `position: relative` to its closest <section> ancestor
-			# See https://standardebooks.org/ebooks/jean-toomer/cane for an example of this in action
+			# Apply the stylesheet to see if we have `position: absolute` on any items. If so, apply `position: relative` to its closest `<section`> ancestor.
+			# See <https://standardebooks.org/ebooks/jean-toomer/cane> for an example of this in action.
 			dom.apply_css(css)
 
-			# Select deepest sections or articles with id attributes that have ONLY figure or img children, and one of those children has position: absolute
+			# Select deepest sections or articles with `id` attributes that have *only* `<figure>` or `<img>` children, and one of those children has `position: absolute`.
 			for node in dom.xpath("/html/body//*[@id and (name() = 'section' or name = 'article') and not(.//*[(name() = 'section' or name() = 'article') and not(preceding-sibling::* or following-sibling::*)]) and count(./*[(name() = 'figure' or name() = 'img')]) = count(./*) and .//*[(name() = 'figure' or name() = 'img') and @data-css-position = 'absolute']]"):
 				needs_wrapper_css = True
 
-				# Wrap the sections in a div that we style later
+				# Wrap the sections in a `<div>` that we style later.
 				wrapper_element = etree.SubElement(node.lxml_element, "div")
 				wrapper_element.set("class", "positioning-wrapper")
 				for child in node.xpath("./*[(name() = 'figure' or name() = 'img')]"):
-					wrapper_element.append(child.lxml_element) # .append() will *move* the element to the end of wrapper_element
+					wrapper_element.append(child.lxml_element) # `.append()` will *move* the element to the end of `wrapper_element`.
 
-			# Now, recompose the children
+			# Now, recompose the children.
 			for node in dom.xpath("/html/body/*"):
 				try:
 					self._recompose_xhtml(node, output_dom, use_image_files)
 				except se.SeException as ex:
 					raise se.SeException(f"[path][link=file://{file_path}]{file_path}[/][/]: {ex}") from ex
 
-		# Remove data-parent attributes
+		# Remove `data-parent` attributes.
 		for node in output_dom.xpath("//*[@data-parent]"):
 			node.remove_attr("data-parent")
 
-		# Did we add wrappers? If so add the CSS
-		# We also have to give the wrapper a height, because it may have siblings that were recomposed in from other files
+		# Did we add wrappers? If so add the CSS.
+		# We also have to give the wrapper a height, because it may have siblings that were recomposed in from other files.
 		if needs_wrapper_css:
 			css = css + "\n\t\t\t.positioning-wrapper{\n\t\t\t\tposition: relative; height: 100vh;\n\t\t\t}\n"
 
-		# Add the ToC after the titlepage
+		# Add the ToC after the titlepage.
 		toc_dom = self.get_dom(self.toc_path)
 		titlepage_node = output_dom.xpath("//*[contains(concat(' ', @epub:type, ' '), ' titlepage ')]")[0]
 
 		for node in toc_dom.xpath("//nav[1]"):
 			titlepage_node.lxml_element.addnext(node.lxml_element)
 
-		# Replace all <a href> links with internal links
+		# Replace all `<a href>` links with internal links.
 		for link in output_dom.xpath("//a[not(re:test(@href, '^https?://')) and contains(@href, '#')]"):
 			link.set_attr("href", regex.sub(r".+(#.+)$", r"\1", link.get_attr("href")))
 
-		# Replace all <a href> links to entire files
+		# Replace all `<a href>` links to entire files.
 		for link in output_dom.xpath("//a[not(re:test(@href, '^https?://')) and not(contains(@href, '#'))]"):
 			href = link.get_attr("href")
 			href = regex.sub(r".+/([^/]+)$", r"#\1", href)
@@ -677,7 +674,7 @@ class SeEpub:
 		for node in output_dom.xpath("/html/body//a[re:test(@href, '^(\\.\\./)?text/.+?\\.xhtml#(.+?)$')]"):
 			node.set_attr("href", regex.sub(r"(\.\./)?text/.+?\.xhtml#(.+?)", r"#\2", node.get_attr("href")))
 
-		# Make some compatibility adjustments
+		# Make some compatibility adjustments.
 		if output_xhtml5:
 			for node in output_dom.xpath("/html/head/meta[@charset]"):
 				node.remove()
@@ -696,35 +693,35 @@ class SeEpub:
 				node.set_attr("data-epub-type", node.get_attr("epub:type"))
 				node.remove_attr("epub:type")
 
-		# Get the output XHTML as a string
+		# Get the output XHTML as a string.
 		output_xhtml = output_dom.to_string()
 
-		# All done, clean the output
+		# All done, clean the output.
 		output_xhtml = se.formatting.format_xhtml(output_xhtml)
 
-		# Insert our CSS. We do this after `clean` because `clean` will escape > in the CSS
+		# Insert our CSS. We do this after `clean` because `clean` will escape `>` in the CSS.
 		output_xhtml = regex.sub(r"<style/>", "<style><![CDATA[\n\t\t\t" + css + "\t\t]]></style>", output_xhtml)
 
 		if output_xhtml5:
 			output_xhtml = output_xhtml.replace("\t\t<style/>\n", "")
 
-			# Re-add a doctype
+			# Re-add a `doctype`.
 			output_xhtml = output_xhtml.replace("<?xml version=\"1.0\" encoding=\"utf-8\"?>", "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE html>")
 		else:
-			# Remove xml declaration and re-add the doctype
+			# Remove XML declaration and re-add the doctype.
 			output_xhtml = regex.sub(r"<\?xml.+?\?>", "<!doctype html>", output_xhtml)
 
-			# Remove CDATA
+			# Remove `CDATA`.
 			output_xhtml = output_xhtml.replace("<![CDATA[", "")
 			output_xhtml = output_xhtml.replace("]]>", "")
 
-			# Make some replacements for HTML5 compatibility
+			# Make some replacements for HTML5 compatibility.
 			output_xhtml = output_xhtml.replace("epub|type", "data-epub-type")
 			output_xhtml = output_xhtml.replace("xml|lang", "lang")
 			output_xhtml = regex.sub(r" xmlns.+?=\".+?\"", "", output_xhtml)
 			output_xhtml = regex.sub(r"@namespace (epub|xml).+?\s+", "", output_xhtml)
 
-			# The Nu HTML5 Validator barfs if non-void elements are self-closed (like <td/>)
+			# The Nu HTML5 Validator barfs if non-void elements are self-closed (like `<td/>`).
 			# Try to un-self-close them for HTML5 output.
 			output_xhtml = regex.sub(r"<(colgroup|td|th|span)( [^/>]*?)?/>", r"<\1\2></\1>", output_xhtml)
 
@@ -732,10 +729,10 @@ class SeEpub:
 
 	def generate_titlepage_svg(self) -> None:
 		"""
-		Generate a distributable titlepage SVG in ./src/epub/images/ based on the titlepage file in ./images/
+		Generate a distributable titlepage SVG in `./src/epub/images/` based on the titlepage file in `./images/`.
 
 		INPUTS
-		None
+		None.
 
 		OUTPUTS
 		None.
@@ -746,15 +743,15 @@ class SeEpub:
 		dest_titlepage_svg_filename = dest_images_directory / "titlepage.svg"
 
 		if source_titlepage_svg_filename.is_file():
-			# Convert text to paths
+			# Convert text to paths.
 			se.images.svg_text_to_paths(source_titlepage_svg_filename, dest_titlepage_svg_filename)
 
 	def generate_cover_svg(self) -> None:
 		"""
-		Generate a distributable cover SVG in ./src/epub/images/ based on the cover file in ./images/
+		Generate a distributable cover SVG in `./src/epub/images/` based on the cover file in `./images/`.
 
 		INPUTS
-		None
+		None.
 
 		OUTPUTS
 		None.
@@ -766,27 +763,26 @@ class SeEpub:
 		dest_images_directory = self.content_path / "images"
 		dest_cover_svg_filename = self.cover_path
 
-		# Create output directory if it doesn't exist
+		# Create output directory if it doesn't exist.
 		dest_images_directory.mkdir(parents=True, exist_ok=True)
 
 		if source_cover_jpg_filename.is_file() and source_cover_svg_filename.is_file():
-			# base64 encode cover.jpg
+			# base64 encode `cover.jpg`.
 			with open(source_cover_jpg_filename, "rb") as binary_file:
 				source_cover_jpg_base64 = base64.b64encode(binary_file.read()).decode()
 
-			# Convert text to paths
+			# Convert text to paths.
 			if source_cover_svg_filename.is_file():
 				se.images.svg_text_to_paths(source_cover_svg_filename, dest_cover_svg_filename, remove_style=False)
 
-			# Embed cover.jpg
+			# Embed `cover.jpg`.
 			dom = self.get_dom(dest_cover_svg_filename)
 
-			# Embed the file
+			# Embed the file.
 			for node in dom.xpath("//*[re:test(@xlink:href, 'cover\\.jpg$')]"):
 				node.set_attr("xlink:href", "data:image/jpeg;base64," + source_cover_jpg_base64)
 
-			# For the cover we want to keep the path.title-box style, and add an additional
-			# style to color our new paths white
+			# For the cover we want to keep the `path.title-box` style, and add an additional style to color our new paths white.
 			for node in dom.xpath("/svg/style"):
 				node.set_text("\n\t\tpath{\n\t\t\tfill: #fff;\n\t\t}\n\n\t\t.title-box{\n\t\t\tfill: #000;\n\t\t\tfill-opacity: .75;\n\t\t}\n\t")
 
@@ -795,11 +791,11 @@ class SeEpub:
 
 	def shift_endnotes(self, target_endnote_number: int, step: int = 1) -> None:
 		"""
-		Shift endnotes starting at target_endnote_number.
+		Shift endnotes starting at `target_endnote_number`.
 
 		INPUTS:
-		target_endnote_number: The endnote to start shifting at
-		step: X to increment or -X to decrement
+		target_endnote_number: The endnote to start shifting at.
+		step: X to increment or -X to decrement.
 
 		OUTPUTS:
 		None.
@@ -812,18 +808,17 @@ class SeEpub:
 
 		dom = self.get_dom(self.endnotes_path)
 
-		# Get a list of all the integer endnote ids (we have books with non-integer endnote ids;
-		# this command won't work on them)
+		# Get a list of all the integer endnote IDs (we have books with non-integer endnote ids; this command won't work on them).
 		all_endnote_numbers = []
 		for node in dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]"):
 			endnote_number = regex.sub("note-", "", node.get_attr("id"))
 			if endnote_number.isdigit():
 				all_endnote_numbers.append(int(endnote_number))
 
-		# The shift begins at target_endnote_number, so remove the endnote numbers before it
+		# The shift begins at `target_endnote_number`, so remove the endnote numbers before it.
 		orig_endnote_numbers = [n for n in all_endnote_numbers if n >= target_endnote_number]
 
-		# If incrementing, start at the end and work backwards to keep from duplicating ids
+		# If incrementing, start at the end and work backwards to keep from duplicating IDs.
 		if increment:
 			endnote_numbers = orig_endnote_numbers[::-1]
 		else:
@@ -832,15 +827,15 @@ class SeEpub:
 		for endnote_number in endnote_numbers:
 			new_endnote_number = endnote_number + step
 
-			# Update all the actual endnotes in the endnotes file
+			# Update all the actual endnotes in the endnotes file.
 			for node in dom.xpath(f"/html/body//li[contains(@epub:type, 'endnote') and @id='note-{endnote_number}']"):
 				node.set_attr("id", f"note-{new_endnote_number}")
 
-			# Update all backlinks in the endnotes file
+			# Update all backlinks in the endnotes file.
 			for node in dom.xpath(f"/html/body//a[re:test(@href, '#noteref-{endnote_number}$')]"):
 				node.set_attr("href", node.get_attr("href").replace(f"#noteref-{endnote_number}", f"#noteref-{new_endnote_number}"))
 
-		# Write the endnotes file
+		# Write the endnotes file.
 		try:
 			with open(self.endnotes_path, "w", encoding="utf-8") as file:
 				file.write(dom.to_string())
@@ -848,19 +843,18 @@ class SeEpub:
 		except Exception as ex:
 			raise se.InvalidSeEbookException(f"Couldn’t open endnotes file: [path][link=file://{self.endnotes_path}]{self.endnotes_path}[/][/].") from ex
 
-		# Now update endnotes in all other files. We also do another pass over the endnotes file
-		# in case there are endnotes within endnotes.
+		# Now update endnotes in all other files. We also do another pass over the endnotes file in case there are endnotes within endnotes.
 		for file_path in self.content_path.glob("**/*.xhtml"):
 			dom = self.get_dom(file_path)
 
 			for endnote_number in endnote_numbers:
 				new_endnote_number = endnote_number + step
 
-				# We don't use an xpath matching epub:type="noteref" because we can have hrefs that are not noterefs pointing to endnotes (like "see here")
+				# We don't use an xpath matching `epub:type="noteref"` because we can have `href`s that are not noterefs pointing to endnotes (like "see here").
 				for node in dom.xpath(f"/html/body//a[re:test(@href, '(endnotes\\.xhtml)?#note-{endnote_number}$')]"):
-					# Update the `id` attribute of the link, if we have one (sometimes hrefs point to endnotes but they are not noterefs themselves)
+					# Update the `id` attribute of the link, if we have one (sometimes `href`s point to endnotes but they are not noterefs themselves).
 					if node.get_attr("id"):
-						# Use a regex instead of just replacing the entire ID so that we don't mess up IDs that do not fit this pattern
+						# Use a regex instead of just replacing the entire ID so that we don't mess up IDs that do not fit this pattern.
 						node.set_attr("id", regex.sub(r"noteref-\d+$", f"noteref-{new_endnote_number}", node.get_attr("id")))
 
 					node.set_attr("href", regex.sub(fr"#note-{endnote_number}$", f"#note-{new_endnote_number}", node.get_attr("href")))
@@ -871,11 +865,11 @@ class SeEpub:
 
 	def shift_illustrations(self, target_illustration_number: int, step: int = 1) -> None:
 		"""
-		Shift illustrations starting at target_illustration_number.
+		Shift illustrations starting at `target_illustration_number`.
 
 		INPUTS:
-		target_illustration_number: The illustration to start shifting at
-		step: X to increment or -X to decrement
+		target_illustration_number: The illustration to start shifting at.
+		step: X to increment or -X to decrement.
 
 		OUTPUTS:
 		None.
@@ -888,27 +882,27 @@ class SeEpub:
 
 		dom = self.get_dom(self.loi_path)
 
-		# Get a list of all the integer illustration ids
+		# Get a list of all the integer illustration IDs.
 		all_illustration_numbers = []
 		for node in dom.xpath("/html/body//a[re:test(@href,'#illustration-[0-9]+$')]"):
 			illustration_number = regex.sub("^.*?#illustration-", "", node.get_attr("href"))
 			if illustration_number.isdigit():
 				all_illustration_numbers.append(int(illustration_number))
 
-		# The shift begins at target_illustration_number, so remove the illustration numbers before it
+		# The shift begins at `target_illustration_number`, so remove the illustration numbers before it.
 		orig_illustration_numbers = [n for n in all_illustration_numbers if n >= target_illustration_number]
 
-		# If incrementing, start at the end and work backwards to keep from duplicating ids
+		# If incrementing, start at the end and work backwards to keep from duplicating IDs.
 		if increment:
 			illustration_numbers = orig_illustration_numbers[::-1]
 		else:
 			illustration_numbers = orig_illustration_numbers
 
-		# Update image files
+		# Update image files.
 		for illustration_number in illustration_numbers:
 			new_illustration_number = illustration_number + step
 
-			# Test for previously existing file
+			# Test for previously existing file.
 			for illustration_path in [self.path / "images", self.content_path / "images"]:
 				existing_file = None
 
@@ -923,15 +917,15 @@ class SeEpub:
 				file_to_rename = next(illustration_path.glob(f"illustration-{illustration_number}.*"))
 				file_to_rename.rename(illustration_path / f"illustration-{new_illustration_number}{file_to_rename.suffix}")
 
-		# Update the LoI file
+		# Update the LoI file.
 		for illustration_number in illustration_numbers:
 			new_illustration_number = illustration_number + step
 
-			# Update all the illustrations in the illustrations file
+			# Update all the illustrations in the illustrations file.
 			for node in dom.xpath(f"/html/body//a[re:test(@href, '#illustration-{illustration_number}$')]"):
 				node.set_attr("href", node.get_attr("href").replace(f"#illustration-{illustration_number}", f"#illustration-{new_illustration_number}"))
 
-		# Write the LoI file
+		# Write the LoI file.
 		try:
 			with open(self.loi_path, "w", encoding="utf-8") as file:
 				file.write(dom.to_string())
@@ -956,9 +950,7 @@ class SeEpub:
 
 	def generate_loi(self) -> str:
 		"""
-		Generate an LoI DOM based on all <figure> elements that contain an
-		<img>. Text from the <figcaption>, if any, is preferred over that from
-		the <img>'s alt attribute.
+		Generate an LoI DOM based on all `<figure>` elements that contain an `<img>`. Text from the `<figcaption>`, if any, is preferred over that from the `<img>`'s alt attribute.
 		"""
 
 		loi_dom = None
@@ -1060,10 +1052,11 @@ class SeEpub:
 	def update_flesch_reading_ease(self) -> None:
 		"""
 		Calculate a new reading ease for this ebook and update the metadata file.
+
 		Ignores SE boilerplate files like the imprint.
 
 		INPUTS
-		None
+		None.
 
 		OUTPUTS
 		None.
@@ -1087,10 +1080,11 @@ class SeEpub:
 	def get_word_count(self) -> int:
 		"""
 		Calculate the word count of this ebook.
+
 		Ignores SE boilerplate files like the imprint, as well as any endnotes.
 
 		INPUTS
-		None
+		None.
 
 		OUTPUTS
 		The number of words in the ebook.
@@ -1110,10 +1104,11 @@ class SeEpub:
 	def update_word_count(self) -> None:
 		"""
 		Calculate a new word count for this ebook and update the metadata file.
+
 		Ignores SE boilerplate files like the imprint, as well as any endnotes.
 
 		INPUTS
-		None
+		None.
 
 		OUTPUTS
 		None.
@@ -1126,24 +1121,24 @@ class SeEpub:
 
 	def generate_manifest(self) -> se.easy_xml.EasyXmlElement:
 		"""
-		Return the <manifest> element for this ebook as an EasyXmlElement.
+		Return the `<manifest>` element for this ebook as an `EasyXmlElement`.
 
 		INPUTS
-		None
+		None.
 
 		OUTPUTS
-		An EasyXmlElement representing the manifest.
+		An `EasyXmlElement` representing the manifest.
 		"""
 
 		manifest = []
 
 		for file_path in self.content_path.glob("**/*"):
 			if file_path.name == self.metadata_file_path.name:
-				# Don't add the metadata file to the manifest
+				# Don't add the metadata file to the manifest.
 				continue
 
 			if file_path.stem.startswith("."):
-				# Skip dotfiles
+				# Skip dotfiles.
 				continue
 
 			mime_type = None
@@ -1172,7 +1167,7 @@ class SeEpub:
 
 				mime_type = "application/xhtml+xml"
 
-				# the `glossary` semantic may also appear in the ToC landmarks, so specifically exclude that
+				# The `glossary` semantic may also appear in the ToC landmarks, so specifically exclude that.
 				if dom.xpath("//*[contains(@epub:type, 'glossary') and not(ancestor-or-self::nav)]"):
 					properties.append("glossary")
 				if dom.xpath("/html[namespace::*='http://www.w3.org/1998/Math/MathML']"):
@@ -1194,7 +1189,7 @@ class SeEpub:
 					properties.append("search-key-map")
 
 			if mime_type:
-				# Put together any properties we have
+				# Put together any properties we have.
 				properties_attr = ""
 				for prop in properties:
 					properties_attr += prop + " "
@@ -1204,13 +1199,13 @@ class SeEpub:
 				if properties_attr:
 					properties_attr = f" properties=\"{properties_attr}\""
 
-				# Add the manifest item
-				# Replace the path separator because if run on Windows we will get the wrong slash direction from pathlib
+				# Add the manifest item.
+				# Replace the path separator because if run on Windows we will get the wrong slash direction from `pathlib`.
 				manifest.append(f"""<item href="{str(file_path.relative_to(self.content_path)).replace(os.sep, "/")}" id="{file_path.name}" media-type="{mime_type}"{properties_attr}/>""")
 
 		manifest = natsorted(manifest)
 
-		# Assemble the manifest XML string
+		# Assemble the manifest XML string.
 		manifest_xml = "<manifest>\n"
 
 		for line in manifest:
@@ -1223,6 +1218,7 @@ class SeEpub:
 	def __add_to_spine(self, spine: List[str], items: List[Path], semantic: str) -> Tuple[List[str], List[Path]]:
 		"""
 		Given a spine and a list of items, add the item to the spine if it contains the specified semantic.
+
 		If an item is added to the spine, remove it from the original list.
 
 		Returns an updated spine and item list.
@@ -1234,26 +1230,26 @@ class SeEpub:
 		for file_path in items:
 			dom = self.get_dom(file_path)
 
-			# Match against \b because we might have `titlepage` and `halftitlepage`
+			# Match against `\b` because we might have `titlepage` and `halftitlepage`.
 			if dom.xpath(f"/html/body//section[re:test(@epub:type, '\\b{semantic}\\b')]"):
 				spine_additions.append(file_path.name)
 			else:
 				filtered_items.append(file_path)
 
-		# Sort the additions, for example if we have more than one dedication or introduction
+		# Sort the additions, for example if we have more than one dedication or introduction.
 		spine_additions = natsorted(spine_additions)
 
 		return (spine + spine_additions, filtered_items)
 
 	def generate_spine(self) -> se.easy_xml.EasyXmlElement:
 		"""
-		Return the <spine> element of this ebook as an EasyXmlElement, with a best guess as to the correct order. Manual review is required.
+		Return the `<spine>` element of this ebook as an `EasyXmlElement`, with a best guess as to the correct order. Manual review is required.
 
 		INPUTS
 		None
 
 		OUTPUTS
-		An EasyXmlElement representing the spine.
+		An `EasyXmlElement` representing the spine.
 		"""
 
 		spine: List[str] = []
@@ -1264,7 +1260,7 @@ class SeEpub:
 		for file_path in self.content_path.glob("**/*.xhtml"):
 			dom = self.get_dom(file_path)
 
-			# Exclude the ToC from the spine
+			# Exclude the ToC from the spine.
 			if dom.xpath("/html/body//nav[contains(@epub:type, 'toc')]"):
 				continue
 
@@ -1275,7 +1271,7 @@ class SeEpub:
 			else:
 				bodymatter.append(file_path)
 
-		# Add frontmatter
+		# Add frontmatter.
 		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "titlepage")
 		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "imprint")
 		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "dedication")
@@ -1286,39 +1282,39 @@ class SeEpub:
 		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "epigraph")
 		spine, frontmatter = self.__add_to_spine(spine, frontmatter, "z3998:dramatis-personae")
 
-		# Extract half title page for subsequent addition
+		# Extract half title page for subsequent addition.
 		halftitlepage, frontmatter = self.__add_to_spine([], frontmatter, "halftitlepage")
 
-		# Add any remaining frontmatter
+		# Add any remaining frontmatter.
 		spine += natsorted([file_path.name for file_path in frontmatter])
 
-		# The half title page is always the last front matter
+		# The half title page is always the last front matter.
 		spine += halftitlepage
 
-		# Add bodymatter
+		# Add bodymatter.
 		spine, bodymatter = self.__add_to_spine(spine, bodymatter, "prologue")
 
 		spine += natsorted([file_path.name for file_path in bodymatter])
 
-		# Add backmatter
+		# Add backmatter.
 		spine, backmatter = self.__add_to_spine(spine, backmatter, "afterword")
 		spine, backmatter = self.__add_to_spine(spine, backmatter, "appendix")
 		spine, backmatter = self.__add_to_spine(spine, backmatter, "glossary")
 		spine, backmatter = self.__add_to_spine(spine, backmatter, "endnotes")
 		spine, backmatter = self.__add_to_spine(spine, backmatter, "loi")
 
-		# Extract colophon and copyright page for subsequent addition
+		# Extract colophon and copyright page for subsequent addition.
 		colophon, backmatter = self.__add_to_spine([], backmatter, "colophon")
 		copyright_page, backmatter = self.__add_to_spine([], backmatter, "copyright-page")
 
-		# Add any remaining backmatter
+		# Add any remaining backmatter.
 		spine += natsorted([file_path.name for file_path in backmatter])
 
-		# Colophon and copyright page are always last
+		# Colophon and copyright page are always last.
 		spine += colophon
 		spine += copyright_page
 
-		# Now build the spine output
+		# Now build the spine output.
 		spine_xml = "<spine>\n"
 		for filename in spine:
 			spine_xml = spine_xml + f"""\t<itemref idref="{filename}"/>\n"""
@@ -1329,22 +1325,22 @@ class SeEpub:
 
 	def get_work_type(self) -> str:
 		"""
-		Returns either "fiction" or "non-fiction", based on analysis of se:subjects in the metadata file
+		Returns either `fiction` or `non-fiction`, based on analysis of `se:subject`s in the metadata file.
 
 		INPUTS:
-		None
+		None.
 
 		OUTPUTS:
-		The fiction or non-fiction type
+		The `fiction` or `non-fiction` type.
 		"""
 
-		worktype = "fiction"  # default
+		worktype = "fiction"  # Default.
 
 		subjects = self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']/text()")
 		if not subjects:
 			return worktype
 
-		# Unfortunately, some works are tagged "Philosophy" but are nevertheless fiction, so we have to double-check
+		# Unfortunately, some works are tagged `Philosophy` but are nevertheless fiction, so we have to double-check.
 		if "Nonfiction" in subjects:
 			return "non-fiction"
 
@@ -1365,10 +1361,10 @@ class SeEpub:
 		Returns the title of the book from the metadata file, which we assume has already been correctly completed.
 
 		INPUTS:
-		None
+		None.
 
 		OUTPUTS:
-		Either the title of the book, or `TITLE` if the required metadata element doesn't exist
+		Either the title of the book, or `TITLE` if the required metadata element doesn't exist.
 		"""
 
 		return self.metadata_dom.xpath("/package/metadata/dc:title/text()", True) or "TITLE"
@@ -1378,10 +1374,10 @@ class SeEpub:
 		Returns the subtitle of the book from the metadata file, which we assume has already been correctly completed.
 
 		INPUTS:
-		None
+		None.
 
 		OUTPUTS:
-		Either the title of the book, or `None` if there is no subtitle
+		Either the title of the book, or `None` if there is no subtitle.
 		"""
 		nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='title-type' and text()='subtitle']/@refines")
 		subtitle_element_id = nodes[0].replace("#", "") if nodes else None
@@ -1393,9 +1389,7 @@ class SeEpub:
 
 	def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = None) -> list:
 		"""
-		The lint() function is very big so for readability and maintainability
-		it's broken out to a separate file. Strictly speaking that file can be inlined
-		into this class.
+		The `self.lint()` function is very big so for readability and maintainability it's broken out to a separate file. Strictly speaking that file can be inlined into this class.
 		"""
 
 		from se.se_epub_lint import lint # pylint: disable=import-outside-toplevel
@@ -1404,9 +1398,7 @@ class SeEpub:
 
 	def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_kindle: bool, output_directory: Path, proof: bool) -> None:
 		"""
-		The build() function is very big so for readability and maintainability
-		it's broken out to a separate file. Strictly speaking that file can be inlined
-		into this class.
+		The `self.build()` function is very big so for readability and maintainability it's broken out to a separate file. Strictly speaking that file can be inlined into this class.
 		"""
 
 		from se.se_epub_build import build # pylint: disable=import-outside-toplevel
@@ -1424,7 +1416,7 @@ class SeEpub:
 
 		toc_xhtml = generate_toc(self)
 
-		# Word joiners and nbsp don't go in the ToC
+		# Word joiners and `nbsp` don't go in the ToC.
 		toc_xhtml = toc_xhtml.replace(se.WORD_JOINER, "")
 		toc_xhtml = toc_xhtml.replace(se.NO_BREAK_SPACE, " ")
 
@@ -1432,8 +1424,7 @@ class SeEpub:
 
 	def _check_endnotes(self) -> list:
 		"""
-		Initial check to see if all note references in the body have matching endnotes
-		in endnotes.xhtml and no duplicates.
+		Initial check to see if all note references in the body have matching endnotes in `endnotes.xhtml` and no duplicates.
 
 		Returns string of failures if any. If these are empty, all was well.
 		"""
@@ -1449,12 +1440,12 @@ class SeEpub:
 				anchor = ""
 				href = link.get_attr("href") or ""
 				if href:
-					# Extract just the anchor from a URL (i.e., what follows a hash symbol)
-					hash_position = href.find("#") + 1  # we want the characters AFTER the hash
+					# Extract just the anchor from a URL (i.e., what follows a hash symbol).
+					hash_position = href.find("#") + 1  # We want the characters *after* the hash.
 					if hash_position > 0:
 						anchor = href[hash_position:]
-				references.append(anchor)  # keep these for later reverse check
-				# Now try to find anchor in endnotes
+				references.append(anchor)  # Keep these for later reverse check.
+				# Now try to find anchor in endnotes.
 				matches = list(filter(lambda x, old=anchor: x.anchor == old, self.endnotes)) # type: ignore [arg-type, var-annotated]
 				if not matches:
 					missing.append(anchor)
@@ -1464,9 +1455,9 @@ class SeEpub:
 			response.append(f"Missing endnote with anchor: {miss}")
 		for dupe in duplicates:
 			response.append(f"Duplicate endnotes with anchor: {dupe}")
-		# reverse check: look for orphaned endnotes
+		# Reverse check: look for orphaned endnotes.
 		for note in self.endnotes:
-			# try to find it in our references collection
+			# Try to find it in our references collection.
 			if note.anchor not in references:
 				orphans.append(note.anchor)
 		for orphan in orphans:
@@ -1478,7 +1469,9 @@ class SeEpub:
 	def recreate_endnotes(self) -> None:
 		"""
 		Renumber all noterefs starting from 1, and renumber all endnotes starting from 1.
+
 		Does not perform any sanity checks or do any rearranging; may result in more noterefs than endnotes, or more endnotes than noterefs.
+
 		Changes are written to disk.
 		"""
 
@@ -1486,7 +1479,7 @@ class SeEpub:
 
 		current_note_number = 1
 
-		# Renumber all noterefs starting from 1
+		# Renumber all noterefs starting from 1.
 		for file_path in self.spine_file_paths:
 			dom = self.get_dom(file_path)
 
@@ -1501,7 +1494,7 @@ class SeEpub:
 			with open(file_path, "w", encoding="utf-8") as file:
 				file.write(dom.to_string())
 
-		# Renumber all endnotes starting from 1
+		# Renumber all endnotes starting from 1.
 		current_note_number = 1
 		endnotes_dom = self.get_dom(self.endnotes_path)
 		for node in endnotes_dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]"):
@@ -1518,18 +1511,19 @@ class SeEpub:
 	def generate_endnotes(self) -> Tuple[int, int, list]:
 		"""
 		Read the epub spine to regenerate all endnotes in order of appearance, starting from 1.
+
 		Changes are written to disk.
 
-		Returns a tuple of (found_endnote_count, changed_endnote_count, change_list)
+		Returns a tuple of `(found_endnote_count, changed_endnote_count, change_list)`.
 		"""
 
-		# Do a safety check first, throw exception if it failed
+		# Do a safety check first, throw exception if it failed.
 		results = self._check_endnotes()
 		if results:
 			report = "\n".join(results)
 			raise se.InvalidInputException(f"Endnote error(s) found:\n{report}")
 
-		# If we get here, it's safe to proceed
+		# If we get here, it's safe to proceed.
 		processed = 0
 		current_note_number = 1
 		notes_changed = 0
@@ -1538,7 +1532,7 @@ class SeEpub:
 		for file_path in self.spine_file_paths:
 			dom = self.get_dom(file_path)
 
-			# Skip the actual endnotes file, we'll handle that later
+			# Skip the actual endnotes file, we'll handle that later.
 			if dom.xpath("/html/body//*[contains(@epub:type, 'endnotes')]"):
 				continue
 
@@ -1549,12 +1543,12 @@ class SeEpub:
 				needs_rewrite, notes_changed = self.__process_noteref_link(change_list, current_note_number, file_path.name, link, needs_rewrite, notes_changed)
 				current_note_number += 1
 
-			# If we need to write back the body text file
+			# If we need to write back the body text file.
 			if needs_rewrite:
 				with open(file_path, "w", encoding="utf-8") as file:
 					file.write(se.formatting.format_xhtml(dom.to_string()))
 
-		# Now process any endnotes WITHIN the endnotes
+		# Now process any endnotes *within* the endnotes.
 		for source_note in self.endnotes:
 			node = source_note.node
 			needs_rewrite = False
@@ -1566,7 +1560,7 @@ class SeEpub:
 			raise se.InvalidInputException("No files processed. Did you update the manifest and order the spine?")
 
 		if notes_changed > 0:
-			# Now we need to recreate the endnotes file
+			# Now we need to recreate the endnotes file.
 			endnotes_dom = self.get_dom(self.endnotes_path)
 			for ol_node in endnotes_dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol[1]"):
 				for node in ol_node.xpath("./li[contains(@epub:type, 'endnote')]"):
@@ -1586,9 +1580,9 @@ class SeEpub:
 			with open(self.endnotes_path, "w", encoding="utf-8") as file:
 				file.write(se.formatting.format_xhtml(endnotes_dom.to_string()))
 
-			# now trawl through the body files to locate any direct links to endnotes (not in an actual endnote reference)
-			# example: (see <a href="endnotes.xhtml#note-1553">this note</a>.)
-			# most but not all such are likely to be in the newly re-written endnotes.xhtml
+			# Now trawl through the body files to locate any direct links to endnotes (not in an actual endnote reference).
+			# Example: `(see <a href="endnotes.xhtml#note-1553">this note</a>.)`.
+			# Most but not all such are likely to be in the newly re-written `endnotes.xhtml`.
 			for file_path in self.spine_file_paths:
 				needs_rewrite = False
 				dom = self.get_dom(file_path)
@@ -1602,38 +1596,38 @@ class SeEpub:
 
 	def __process_direct_link(self, change_list, link) -> bool:
 		"""
-		Checks all hyperlinks to the endnotes to see if the existing anchor needs to be updated with a new number
+		Checks all hyperlinks to the endnotes to see if the existing anchor needs to be updated with a new number.
 
-		Returns a boolean of needs_write (whether object needs to be re-written)
+		Returns a boolean of `needs_write` (whether object needs to be re-written).
 		"""
 		epub_type = link.get_attr("epub:type") or ""
-		if not epub_type: # it wasn't an actual endnote reference but a direct link (we hope!)
+		if not epub_type: # It wasn't an actual endnote reference but a direct link (we hope!).
 			href = link.get_attr("href") or ""
 			if href:
-				# Extract just the anchor from a URL (ie, what follows a hash symbol)
-				hash_position = href.find("#") + 1  # we want the characters AFTER the hash
+				# Extract just the anchor from a URL (i.e., what follows a hash symbol).
+				hash_position = href.find("#") + 1  # We want the characters *after* the hash.
 				if hash_position > 0:
 					old_anchor = href[hash_position:]
 					try:
 						change = next(ch for ch in change_list if ch.old_anchor == old_anchor)
 						link.set_attr("href", f"{self.endnotes_path.name}#{change.new_anchor}")
 						return True
-					except StopIteration:  # didn't find the old anchor, keep going
+					except StopIteration:  # Didn't find the old anchor, keep going.
 						pass
 		return False
 
 	def __process_noteref_link(self, change_list, current_note_number, file_name, link, needs_rewrite, notes_changed) -> Tuple[bool, int]:
 		"""
-		Checks each endnote link to see if the existing anchor needs to be updated with a new number
+		Checks each endnote link to see if the existing anchor needs to be updated with a new number.
 
-		Returns a tuple of needs_write (whether object needs to be re-written), and the number of notes_changed
+		Returns a tuple of `needs_write` (whether object needs to be re-written), and the number of notes changed.
 		"""
 
 		old_anchor = ""
 		href = link.get_attr("href") or ""
 		if href:
-			# Extract just the anchor from a URL (ie, what follows a hash symbol)
-			hash_position = href.find("#") + 1  # we want the characters AFTER the hash
+			# Extract just the anchor from a URL (i.e., what follows a hash symbol).
+			hash_position = href.find("#") + 1  # We want the characters *after* the hash.
 			if hash_position > 0:
 				old_anchor = href[hash_position:]
 
@@ -1642,22 +1636,22 @@ class SeEpub:
 			endnote_change = EndnoteChange(old_anchor, new_anchor, file_name)
 			change_list.append(endnote_change)
 			notes_changed += 1
-			# Update the link in the dom
+			# Update the link in the DOM.
 			link.set_attr("href", f"{self.endnotes_path.name}#{new_anchor}")
 			link.set_attr("id", f"noteref-{current_note_number:d}")
 			link.lxml_element.text = str(current_note_number)
 			needs_rewrite = True
-		# Now try to find this in endnotes
+		# Now try to find this in endnotes.
 		matches = list(filter(lambda x, old=old_anchor: x.anchor == old, self.endnotes)) # type: ignore [arg-type, var-annotated]
 		if not matches:
 			raise se.InvalidInputException(f"Couldn’t find endnote with anchor [attr]{old_anchor}[/].")
 		if len(matches) > 1:
 			raise se.InvalidInputException(f"Duplicate anchors in endnotes file for anchor [attr]{old_anchor}[/].")
-		# Found a single match, which is what we want
+		# Found a single match, which is what we want.
 		endnote = matches[0]
 		endnote.number = current_note_number
 		endnote.matched = True
-		# We don't change the anchor or the back ref just yet
+		# We don't change the anchor or the back ref just yet.
 		endnote.source_file = file_name
 		return needs_rewrite, notes_changed
 
@@ -1689,7 +1683,7 @@ class SeEpub:
 				if dom.xpath("/html/body[count(./*[name() = 'article' or name() = 'section']) = count(./*[(name() = 'article' or name() = 'section') and @id and attribute::*[re:test(local-name(), '^data-css-break-(before|after)$')]])]"):
 					# Yes. Now split this file!
 
-					# A list of `{"filename": filename, "title": title}`
+					# A list of `{"filename": filename, "title": title}`.
 					new_files = []
 					dom_template = deepcopy(dom)
 					# Remove the children of `<body>`.
@@ -1699,7 +1693,7 @@ class SeEpub:
 					for article_node in dom.xpath("/html/body/*[name() = 'article' or name() = 'section']"):
 						new_filename = article_node.get_attr("id") + ".xhtml"
 
-						# Create a new DOM that we write to a new file
+						# Create a new DOM that we write to a new file.
 						new_dom = deepcopy(dom_template)
 
 						new_dom.xpath("/html/body")[0].append(article_node)
@@ -1718,7 +1712,7 @@ class SeEpub:
 
 						new_files.append({"filename": new_filename, "id": article_node.get_attr("id"), "title": title, "descendant_id_attrs": id_attrs})
 
-					# Replace the original file with the new files in the metadata spine
+					# Replace the original file with the new files in the metadata spine.
 					original_spine_node = self.metadata_dom.xpath(f"/package/spine/itemref[@idref='{file_path.name}']")[0]
 					for new_file in new_files:
 						original_spine_node.insert_before(se.easy_xml.EasyXmlElement(f"<itemref idref=\"{new_file['filename']}\"/>"))
@@ -1734,7 +1728,7 @@ class SeEpub:
 						li_node.append(se.easy_xml.EasyXmlElement(f"""<a href="text/{new_file['filename']}">{new_file['title']}</a>"""))
 						toc_node.insert_before(li_node)
 
-					# Remove any ToC nodes that mention this file
+					# Remove any ToC nodes that mention this file.
 					for node in toc_dom.xpath(f"/html/body/nav[@epub:type='toc']/ol//li[./a[re:test(@href, '^text/{file_path.name}')]]"):
 						node.remove()
 
@@ -1762,11 +1756,11 @@ class SeEpub:
 					for nested_file_path in self.content_path.glob("**/*.xhtml"):
 						dom = self.get_dom(nested_file_path)
 
-						# Replace links to the original file with no anchor with a link to the first `<article>`
+						# Replace links to the original file with no anchor with a link to the first `<article>`.
 						for node in dom.xpath(f"/html/body//a[re:test(@href, '^(.+/)?{file_path.name}$')]"):
 							node.set_attr("href", node.get_attr("href").replace(file_path.name, new_files[0]['filename']))
 
-						# Replace anchored links with the new file
+						# Replace anchored links with the new file.
 						for node in dom.xpath(f"/html/body//a[re:test(@href, '^(.+/)?{file_path.name}#')]"):
 							old_target_id = regex.sub(fr"^(.+/)?{file_path.name}#", "", node.get_attr("href"))
 
