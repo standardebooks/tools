@@ -69,7 +69,7 @@ class TocItem:
 		None.
 
 		OUTPUTS:
-		the linking tag line eg `<a href=...` depending on the data found.
+		The linking tag line, e.g. `<a href=...` depending on the data found.
 		"""
 
 		out_string = ""

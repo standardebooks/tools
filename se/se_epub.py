@@ -354,23 +354,25 @@ class SeEpub:
 		if not self._endnotes:
 			self._endnotes = []
 
-			dom = self.get_dom(self.endnotes_path)
+			if self.endnotes_path is not None:
+				dom = self.get_dom(self.endnotes_path)
 
-			for node in dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol/li[contains(@epub:type, 'endnote')]"):
-				note = Endnote()
-				note.node = node
-				try:
-					note.number = int(node.get_attr("id").replace("note-", ""))
-				except ValueError:
-					note.number = 0
-				note.contents = node.xpath("./*")
-				note.anchor = node.get_attr("id") or ""
+				for node in dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol/li[contains(@epub:type, 'endnote')]"):
+					note = Endnote()
+					note.node = node
+					try:
+						note.number = int(node.get_attr("id").replace("note-", ""))
+					except ValueError:
+						note.number = 0
+					note.contents = node.xpath("./*")
+					note.anchor = node.get_attr("id") or ""
 
-				for back_link in node.xpath(".//a[contains(@epub:type, 'backlink')]/@href"):
-					note.back_link = back_link
-				if not note.back_link:
-					raise se.InvalidInputException(f"No backlink found in note {note.anchor} in existing endnotes file.")
-				self._endnotes.append(note)
+					for back_link in node.xpath(".//a[contains(@epub:type, 'backlink')]/@href"):
+						note.back_link = back_link
+					if not note.back_link:
+						raise se.InvalidInputException(f"No backlink found in note {note.anchor} in existing endnotes file.")
+					self._endnotes.append(note)
+
 		return self._endnotes
 
 	@property
@@ -803,7 +805,7 @@ class SeEpub:
 
 		increment = step > 0
 
-		if step == 0:
+		if step == 0 or self.endnotes_path is None:
 			return
 
 		dom = self.get_dom(self.endnotes_path)
@@ -874,6 +876,9 @@ class SeEpub:
 		OUTPUTS:
 		None.
 		"""
+
+		if self.loi_path is None:
+			return
 
 		increment = step > 0
 
@@ -1475,6 +1480,9 @@ class SeEpub:
 		Changes are written to disk.
 		"""
 
+		if self.endnotes_path is None:
+			return
+
 		noteref_locations = {}
 
 		current_note_number = 1
@@ -1516,6 +1524,9 @@ class SeEpub:
 
 		Returns a tuple of `(found_endnote_count, changed_endnote_count, change_list)`.
 		"""
+
+		if self.endnotes_path is None:
+			return (0, 0, [])
 
 		# Do a safety check first, throw exception if it failed.
 		results = self._check_endnotes()
@@ -1600,6 +1611,10 @@ class SeEpub:
 
 		Returns a boolean of `needs_write` (whether object needs to be re-written).
 		"""
+
+		if self.endnotes_path is None:
+			return False
+
 		epub_type = link.get_attr("epub:type") or ""
 		if not epub_type: # It wasn't an actual endnote reference but a direct link (we hope!).
 			href = link.get_attr("href") or ""
@@ -1622,6 +1637,9 @@ class SeEpub:
 
 		Returns a tuple of `needs_write` (whether object needs to be re-written), and the number of notes changed.
 		"""
+
+		if self.endnotes_path is None:
+			return (False, 0)
 
 		old_anchor = ""
 		href = link.get_attr("href") or ""
