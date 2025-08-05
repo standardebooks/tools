@@ -773,7 +773,7 @@ def _lint_metadata_checks(self) -> list:
 	# We can't use xpath's built-in regex because it doesn't support Unicode classes.
 	for node in self.metadata_dom.xpath("/package/metadata/*"):
 		if node.text and regex.search(r"[\p{Letter}]+”[,\.](?! …)", node.text):
-			messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [node.to_string() for node in nodes]))
+			messages.append(LintMessage("t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, node.to_string()))
 			break
 
 	# Check that the word count is correct, if it's currently set.
@@ -794,7 +794,7 @@ def _lint_metadata_checks(self) -> list:
 		if self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text()={se.easy_xml.escape_xpath(implied_tag)}]"):
 			for tag in tags:
 				if self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text()={se.easy_xml.escape_xpath(tag)}]"):
-					messages.append(LintMessage("m-058", f"[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+					messages.append(LintMessage("m-058", f"[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for `comprised of`.
 	if self.metadata_dom.xpath("/package/metadata/*[re:test(., '[Cc]omprised of')]"):

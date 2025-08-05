@@ -37,6 +37,8 @@ def typogrify(plain_output: bool) -> int:
 
 				if not is_ignored:
 					if dom:
+						processed_xhtml = ""
+
 						# Is this a metadata file?
 						# Typogrify metadata except for URLs, dates, and LoC subjects.
 						if dom.xpath("/package"):

@@ -22,6 +22,7 @@ from unidecode import unidecode
 
 import se
 import se.formatting
+import se.easy_xml
 from se.se_epub import SeEpub
 
 
@@ -558,6 +559,13 @@ def _create_draft(args: Namespace, plain_output: bool):
 	translators = []
 	illustrators = []
 	pg_producers = []
+	pg_subjects = []
+	pg_ebook_html = None
+	pg_url = None
+	pg_publication_year = None
+	pg_language = None
+	pg_file_local_path = None
+	html_parser = etree.HTMLParser()
 	title = se.formatting.titlecase(args.title.replace("'", "’"))
 
 	for author in args.author:
@@ -650,7 +658,6 @@ def _create_draft(args: Namespace, plain_output: bool):
 		except Exception as ex:
 			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page. Exception: {ex}") from ex
 
-		html_parser = etree.HTMLParser()
 		dom = etree.parse(StringIO(pg_metadata_html), html_parser)
 
 		# Get the ebook HTML URL from the metadata.
@@ -663,7 +670,6 @@ def _create_draft(args: Namespace, plain_output: bool):
 			raise se.RemoteCommandErrorException("Could download ebook metadata, but couldn’t find URL for the ebook HTML.")
 
 		# Get the ebook LCSH categories.
-		pg_subjects = []
 		for node in dom.xpath("/html/body//td[contains(@property, 'dcterms:subject')]"):
 			if node.get("datatype") == "dcterms:LCSH":
 				for subject_link in node.xpath("./a"):
@@ -885,7 +891,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 		epub.generate_cover_svg()
 		epub.generate_titlepage_svg()
 
-		if args.pg_id:
+		if args.pg_id and pg_url:
 			_replace_in_file(content_path / "epub" / "text" / "imprint.xhtml", "PG_URL", pg_url)
 
 		# Fill out the colophon.
@@ -907,7 +913,8 @@ def _create_draft(args: Namespace, plain_output: bool):
 				colophon_xhtml = colophon_xhtml.replace("</p>\n\t\t\t<p>This ebook was produced for<br/>", f"<br/>\n\t\t\t{translator_block}\n\t\t\t<p>This ebook was produced for<br/>")
 
 			if args.pg_id:
-				colophon_xhtml = colophon_xhtml.replace("PG_URL", pg_url)
+				if pg_url:
+					colophon_xhtml = colophon_xhtml.replace("PG_URL", pg_url)
 
 				if pg_publication_year:
 					colophon_xhtml = colophon_xhtml.replace("PG_YEAR", pg_publication_year)

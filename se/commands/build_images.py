@@ -8,6 +8,7 @@ from pathlib import Path
 from rich.console import Console
 
 import se
+import se.images
 from se.se_epub import SeEpub
 
 

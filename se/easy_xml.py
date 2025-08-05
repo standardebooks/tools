@@ -207,7 +207,10 @@ class EasyXmlElement:
 	Represents an lxml element.
 	"""
 
-	def __init__(self, lxml_element: Union[str, etree._ElementTree], namespaces=None):
+	def __init__(self, lxml_element: Union[str, etree._ElementTree], namespaces: Optional[dict[str,str]] = None):
+		if namespaces is None:
+			namespaces = {}
+
 		self.namespaces = namespaces
 
 		if isinstance(lxml_element, str):

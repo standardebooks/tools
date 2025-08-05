@@ -7,7 +7,6 @@ import argparse
 from lxml import etree
 
 import se
-import se.easy_xml
 import se.formatting
 from se.se_epub import SeEpub
 

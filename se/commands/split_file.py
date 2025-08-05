@@ -39,8 +39,9 @@ def split_file(plain_output: bool) -> int:
 	parser.add_argument("filename", metavar="FILE", help="an HTML/XHTML file")
 	args = parser.parse_args()
 
+	filename = Path(args.filename).resolve()
+
 	try:
-		filename = Path(args.filename).resolve()
 		with open(filename, "r", encoding="utf-8") as file:
 			xhtml = se.strip_bom(file.read())
 	except FileNotFoundError:

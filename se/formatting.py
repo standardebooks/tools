@@ -21,6 +21,7 @@ from titlecase import titlecase as pip_titlecase
 from unidecode import unidecode
 
 import se
+import se.easy_xml
 from se.easy_xml import EasyXmlTree, EasyXmlElement
 
 
@@ -226,7 +227,7 @@ def get_flesch_reading_ease(xhtml: str) -> float:
 	processed_text = "".join(c for c in unicodedata.normalize("NFD", processed_text) if unicodedata.category(c) != "Mn")
 
 	# Get word count.
-	word_count = se.formatting.get_word_count(processed_text)
+	word_count = get_word_count(processed_text)
 	if word_count <= 0:
 		word_count = 1
 
@@ -234,7 +235,7 @@ def get_flesch_reading_ease(xhtml: str) -> float:
 	ignore_count = 0
 	sentences = regex.split(r" *[\.\?!]['\"\)\]]* *", processed_text)
 	for sentence in sentences:
-		if se.formatting.get_word_count(sentence) <= 2:
+		if get_word_count(sentence) <= 2:
 			ignore_count = ignore_count + 1
 	sentence_count = len(sentences) - ignore_count
 
@@ -558,13 +559,13 @@ def format_xml_file(filename: Path) -> None:
 		xml = file.read()
 
 		if filename.suffix == ".xhtml":
-			processed_xml = se.formatting.format_xhtml(xml)
+			processed_xml = format_xhtml(xml)
 		elif filename.suffix == ".svg":
-			processed_xml = se.formatting.format_svg(xml)
+			processed_xml = format_svg(xml)
 		elif filename.suffix == ".opf":
-			processed_xml = se.formatting.format_opf(xml)
+			processed_xml = format_opf(xml)
 		else:
-			processed_xml = se.formatting.format_xml(xml)
+			processed_xml = format_xml(xml)
 		if processed_xml != xml:
 			file.seek(0)
 			file.write(processed_xml)

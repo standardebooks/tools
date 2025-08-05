@@ -408,6 +408,10 @@ def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_
 	if language is None:
 		try:
 			language = dom.xpath("/html/@xml:lang | /html/@lang")[0]
+
+			if language is None:
+				raise se.InvalidLanguageException()
+
 		except Exception as ex:
 			raise se.InvalidLanguageException("No [attr]xml:lang[/] or [attr]lang[/] attribute on [xhtml]<html>[/] element; couldn’t guess file language.") from ex
 

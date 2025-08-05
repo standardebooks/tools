@@ -55,7 +55,7 @@ def get_data_url(image_path: Path) -> str:
 
 	return data_url
 
-def _color_to_alpha(image: Image_type, color=None) -> Image_type:
+def _color_to_alpha(image: Image_type, color: tuple[int, int, int, int]) -> Image_type:
 	"""
 	Implements GIMP's color to alpha algorithm.
 	See <https://stackoverflow.com/a/1617909>.
@@ -71,7 +71,7 @@ def _color_to_alpha(image: Image_type, color=None) -> Image_type:
 
 	image = image.convert("RGBA")
 
-	color = list(map(float, color))
+	color_list = list(map(float, color))
 	img_bands = [band.convert("F") for band in image.split()]
 
 	# Find the maximum difference rate between source and color. I had to use two difference functions because ImageMath.eval only evaluates the expression once.
@@ -99,9 +99,9 @@ def _color_to_alpha(image: Image_type, color=None) -> Image_type:
 		red_band=img_bands[0],
 		green_band=img_bands[1],
 		blue_band=img_bands[2],
-		cred_band=color[0],
-		cgreen_band=color[1],
-		cblue_band=color[2]
+		cred_band=color_list[0],
+		cgreen_band=color_list[1],
+		cblue_band=color_list[2]
 	)
 
 	# Calculate the new image colors after the removal of the selected color.
@@ -109,7 +109,7 @@ def _color_to_alpha(image: Image_type, color=None) -> Image_type:
 		ImageMath.eval(
 			"convert((image - color) / alpha + color, 'L')",
 			image=img_bands[i],
-			color=color[i],
+			color=color_list[i],
 			alpha=alpha
 		)
 		for i in range(3)
@@ -449,7 +449,8 @@ def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: Dict) -> Non
 	font = text_properties["font"]
 	if "letter-spacing" not in text_properties:
 		text_properties["letter-spacing"] = 0
-	text_properties["letter-spacing"] = float(text_properties["letter-spacing"].replace("px", ""))
+	else:
+		text_properties["letter-spacing"] = float(text_properties["letter-spacing"].replace("px", ""))
 	if "text-anchor" not in text_properties:
 		text_properties["text-anchor"] = "left"
 	if "units-per-em" not in text_properties:

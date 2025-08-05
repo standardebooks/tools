@@ -5,7 +5,6 @@ This module implements the `se build-spine` command.
 import argparse
 
 import se
-import se.easy_xml
 import se.formatting
 from se.se_epub import SeEpub
 

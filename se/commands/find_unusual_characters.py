@@ -12,6 +12,7 @@ from rich.console import Console
 from rich.table import Table
 
 import se
+import se.easy_xml
 
 def find_unusual_characters(plain_output: bool) -> int:
 	"""

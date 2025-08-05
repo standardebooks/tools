@@ -205,7 +205,7 @@ class CssRule():
 
 	def __init__(self, selector: str):
 		self.selector = selector
-		self.specificity = (0, 0, 0)
+		self.specificity: tuple = (0, 0, 0)
 		self.specificity_number = 0
 		self.declarations: List[CssDeclaration] = []
 

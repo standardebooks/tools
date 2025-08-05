@@ -386,7 +386,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bIngulf", r"Engulf", xhtml)				# Ingulf -> Engulf
 	xhtml = regex.sub(r"\bingulf", r"engulf", xhtml)				# ingulf -> engulf
 
-        # remove elision quotes from words that no longer need them
+        # Remove elision quotes from words that no longer need them.
 	xhtml = regex.sub(r"’([Bb])us\b", r"\1us", xhtml)				# ’bus -> bus
 	xhtml = regex.sub(r"’([Cc])ello(s?)\b", r"\1ello\2", xhtml)			# ’cello -> cello
 	xhtml = regex.sub(r"’([Cc])ellist", r"\1ellist", xhtml)				# ’cellist -> cellist
@@ -398,7 +398,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"’([Ss])cope(s?)\b", r"\1cope\2", xhtml)			# ’scope -> scope
 
 
-        # remove diacritics from words that no longer need them
+        # Remove diacritics from words that no longer need them.
 	xhtml = regex.sub(r"\b[ÀA]\s?propos\b", r"Apropos", xhtml)			# À propos -> apropos
 	xhtml = regex.sub(r"\b[àa]\s?propos\b", r"apropos", xhtml)			# à propos -> apropos
 	xhtml = regex.sub(r"\b([Aa])ërial", r"\1erial", xhtml)				# aërial -> aerial
@@ -429,7 +429,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Tt])able(s?) d’hote\b", r"\1able\2 d’hôte", xhtml)	# table d'hote -> table d'hôte
 
 
-        # add diacritics to words that do need them
+        # Add diacritics to words that do need them.
 	xhtml = regex.sub(r"\ba la\b", r"à la", xhtml)					# a la -> à la
 	xhtml = regex.sub(r"\b([Aa])ttache\b", r"\1ttaché", xhtml)			# attache -> attaché
 	xhtml = regex.sub(r"\b([Bb])ete noir", r"\1ête noir", xhtml)			# bete noir -> bête noir
@@ -482,7 +482,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"([Vv])is-a-vis", r"\1is-à-vis", xhtml)			# vis-a-vis -> vis-à-vis
 
 
-	# Normalize some names
+	# Normalize some names.
 	xhtml = regex.sub(r"Barbadoes", r"Barbados", xhtml)				# Barbadoes -> Barbados
 	xhtml = regex.sub(r"\bBehring", r"Bering", xhtml)				# Behring -> Bering (i.e. the Bering Straight)
 	xhtml = regex.sub(r"Bronte\b", r"Brontë", xhtml)				# Bronte -> Brontë
@@ -547,7 +547,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"chianti", r"Chianti", xhtml)				# chianti -> Chianti
 	xhtml = regex.sub(r"([a-z]) Zeppelin", r"\1 zeppelin", xhtml)			# Zeppelin -> zeppelin
 
-	# Remove archaic diphthongs
+	# Remove archaic diphthongs.
 	xhtml = xhtml.replace("\bæon\b", r"aeon")
 	xhtml = xhtml.replace("\bÆon\b", r"Aeon")
 	xhtml = xhtml.replace("Æneas", r"Aeneas")
