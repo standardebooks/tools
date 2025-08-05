@@ -1681,6 +1681,8 @@ class SeEpub:
 
 		This is useful because eink Kobos don't support CSS `break-*` properties, so creating different files forces a page break on Kobos.
 
+		Note that the new ToC won't include subheaders of new files, because the producer may have hand-edited the ToC. Currently, the `self.generate_toc()` function only creates a ToC wholesale, instead of exposing a function to create ToC entries for individual `<section>`s.
+
 		See <https://github.com/kobolabs/epub-spec#css> for the CSS that Kobos support.
 		"""
 
@@ -1704,6 +1706,7 @@ class SeEpub:
 					# A list of `{"filename": filename, "title": title}`.
 					new_files = []
 					dom_template = deepcopy(dom)
+					delete_original_file = True
 					# Remove the children of `<body>`.
 					for node in dom_template.xpath("/html/body/*"):
 						node.remove()
@@ -1722,6 +1725,7 @@ class SeEpub:
 
 						with open(file_path.parent / new_filename, "w", encoding="utf-8") as xhtml_file:
 							xhtml_file.write(new_dom.to_string())
+							xhtml_file.truncate() # Truncate the file in case we're overwriting the original filename.
 
 						se.formatting.format_xml_file(file_path.parent / new_filename)
 
@@ -1729,6 +1733,10 @@ class SeEpub:
 						id_attrs = new_dom.xpath("/html/body/*[name() = 'article' or name() = 'section']//@id")
 
 						new_files.append({"filename": new_filename, "id": article_node.get_attr("id"), "title": title, "descendant_id_attrs": id_attrs})
+
+						if new_filename == file_path.name:
+							# We may run in to the case where the new filename is the same as the old filename, like `sonnets.xhtml`.
+							delete_original_file = False
 
 					# Replace the original file with the new files in the metadata spine.
 					original_spine_node = self.metadata_dom.xpath(f"/package/spine/itemref[@idref='{file_path.name}']")[0]
@@ -1739,28 +1747,33 @@ class SeEpub:
 
 					# Generate the new ToC.
 					# Don't use `self.generate_toc()` because the producer may have edited the ToC by hand.
-					toc_dom = self.get_dom(self.toc_path)
-					toc_node = toc_dom.xpath(f"/html/body/nav[@epub:type='toc']/ol//li[./a[re:test(@href, '^text/{file_path.name}')]]")[0]
-					for new_file in new_files:
-						li_node = se.easy_xml.EasyXmlElement("<li/>")
-						li_node.append(se.easy_xml.EasyXmlElement(f"""<a href="text/{new_file['filename']}">{new_file['title']}</a>"""))
-						toc_node.insert_before(li_node)
+					if delete_original_file:
+						toc_dom = self.get_dom(self.toc_path)
+						toc_node = toc_dom.xpath(f"/html/body/nav[@epub:type='toc']/ol//li[./a[re:test(@href, '^text/{file_path.name}')]]")[0]
+						for new_file in new_files:
+							li_node = se.easy_xml.EasyXmlElement("<li/>")
+							li_node.append(se.easy_xml.EasyXmlElement(f"""<a href="text/{new_file['filename']}">{new_file['title']}</a>"""))
+							toc_node.insert_before(li_node)
 
-					# Remove any ToC nodes that mention this file.
-					for node in toc_dom.xpath(f"/html/body/nav[@epub:type='toc']/ol//li[./a[re:test(@href, '^text/{file_path.name}')]]"):
-						node.remove()
+						# Remove any ToC nodes that mention this file.
+						for node in toc_dom.xpath(f"/html/body/nav[@epub:type='toc']/ol//li[./a[re:test(@href, '^text/{file_path.name}')]]"):
+							node.remove()
 
-					# If the ToC has a landmark node mentioning this file, replace it with the first `<article>`.
-					for node in toc_dom.xpath(f"/html/body/nav[@epub:type='landmarks']/ol//li/a[re:test(@href, '^text/{file_path.name}')]"):
-						node.set_attr("href", f"text/{new_files[0]['filename']}")
+						# If the ToC has a landmark node mentioning this file, replace it with the first `<article>`.
+						for node in toc_dom.xpath(f"/html/body/nav[@epub:type='landmarks']/ol//li/a[re:test(@href, '^text/{file_path.name}')]"):
+							node.set_attr("href", f"text/{new_files[0]['filename']}")
 
-					with open(self.toc_path, "w", encoding="utf-8") as file:
-						file.write(toc_dom.to_string())
+						with open(self.toc_path, "w", encoding="utf-8") as file:
+							file.write(toc_dom.to_string())
 
 					se.formatting.format_xml_file(self.toc_path)
 
 					# Remove the original file.
-					file_path.unlink()
+					if delete_original_file:
+						file_path.unlink()
+					else:
+						# Flush the DOM cache entry because since the filename is the same, we changed the DOM earlier.
+						self.flush_dom_cache_entry(file_path)
 
 					# Generate the new manifest.
 					for node in self.metadata_dom.xpath("/package/manifest"):
