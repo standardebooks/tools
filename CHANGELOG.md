@@ -1,3 +1,39 @@
+# 2.9.0
+
+## General
+
+- Added the `se add-file` command
+
+## se build
+
+- Correctly break out subfiles of collections in which one of the subitems has the same filename as the original file
+
+- Remove children of `<time>` in Kobo builds to conform to HTML spec
+
+## se create-draft
+
+- Fix missing trailing slash on PGDP url. Thanks to Robin Whittleton
+
+- Add trailing slash to pgdp.net URL
+
+- Fix PGDP URL in templates
+
+## se lint
+
+- Improve s-107 message
+
+- Add y-035, possible single letter typo
+
+- Add m-085, non-canonical PGDP URL
+
+- Improve t-057
+
+- Add Arabic to s-082. Thanks to Weijia Cheng
+
+## se modernize-spelling
+
+- Various additions
+
 # 2.8.0
 
 ## General
