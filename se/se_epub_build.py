@@ -730,12 +730,12 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					for node in dom.xpath("/html/body//a[contains(@epub:type, 'noteref')]"):
 						node.set_attr("epub:type", node.get_attr("epub:type") + " endnote")
 
-					# Now add the kobo spans
+					# Now add the Kobo `<span>`s.
 					kobo.add_kobo_spans_to_node(dom.xpath("/html/body")[0].lxml_element)
 
 					# The above will often nest `<span>`s within `<span>`s, which can surprise CSS selectors present in `local.css`.
 					# Try to remove those kinds of nested `<span>`s, which are the only children of other `<span>`s.
-					# The xpath uses `local-name()` instead of directly selecting `span` because the `add_kobo_spans_to_node()` function adds its spans with the `html` namespace (i.e. added spans are `html:span`), and `EasyXml` can't cope with new namespaces after the object has already been instantiated.
+					# The xpath uses `local-name()` instead of directly selecting `<span>` because the `add_kobo_spans_to_node()` function adds its `<span>`s with the `html` namespace (i.e. added `<span>`s are `html:span`), and `EasyXml` can't cope with new namespaces after the object has already been instantiated.
 					for node in dom.xpath("/html/body//*[local-name() = 'span' and parent::span and contains(@class, 'koboSpan') and not(following-sibling::node()[normalize-space(.)] or preceding-sibling::node()[normalize-space(.)])]"):
 						if node.get_attr("id"):
 							node.parent.set_attr("id", node.get_attr("id"))
@@ -751,9 +751,14 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 						node.unwrap()
 
+					# `<time>` without a `@datetime` attribute cannot contain child elements, so remove Kobo `<span>`s in that case.
+					# The xpath uses `local-name()` instead of directly selecting `<span>` because the `add_kobo_spans_to_node()` function adds its `<span>`s with the `html` namespace (i.e. added `<span>`s are `html:span`), and `EasyXml` can't cope with new namespaces after the object has already been instantiated.
+					for node in dom.xpath("/html/body//time[not(@datetime)]//*[local-name() = 'span' and @class='koboSpan']"):
+						node.unwrap()
+
 					# Kobos don't have fonts that support the `↩` character in endnotes, so replace it with `←`.
 					if dom.xpath("/html/body//section[contains(@epub:type, 'endnotes')]"):
-						# We use xpath to select the kobo spans that we just inserted
+						# We use xpath to select the Kobo `<span>`s that we just inserted.
 						for node in dom.xpath("/html/body//a[contains(@epub:type, 'backlink')]/*[local-name()='span']"):
 							node.set_text("←")
 
