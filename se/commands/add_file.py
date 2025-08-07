@@ -49,7 +49,7 @@ def add_file(plain_output: bool) -> int:
 	Entry point for `se add-file`.
 	"""
 
-	file_types = ["dedication", "endnotes", "epigraph", "glossary", "halftitlepage"]
+	file_types = ["dedication", "endnotes", "epigraph", "glossary", "halftitlepage", "ignore"]
 
 	parser = argparse.ArgumentParser(description="Add an SE template file and any accompanying CSS.")
 	parser.add_argument("-f", "--force", dest="force", action="store_true", help="overwrite any existing files")
@@ -128,6 +128,12 @@ def add_file(plain_output: bool) -> int:
 						file.seek(0)
 						file.write(xhtml)
 						file.truncate()
+
+				case "ignore":
+					dest_path = se_epub.path / "se-lint-ignore.xml"
+
+					_copy_file("se-lint-ignore.xml", dest_path, args.force)
+
 
 		except se.SeException as ex:
 			se.print_error(ex, plain_output=plain_output)
