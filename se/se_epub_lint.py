@@ -1772,7 +1772,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 	#	dump(section, "")
 	# exit()
 
-	# Check for numeric entities
+	# Check for numeric entities.
 	matches = regex.findall(r"&#[0-9]+?;", file_contents)
 	if matches:
 		messages.append(LintMessage("s-001", "Illegal numeric entity (like [xhtml]&#913;[/]).", se.MESSAGE_TYPE_ERROR, filename, natsorted(list(set(matches)))))
@@ -1798,9 +1798,9 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 		messages.append(LintMessage("s-006", "Poem or verse [xhtml]<p>[/] (stanza) without [xhtml]<span>[/] (line) element.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
-	# Check for elements that don't have a direct block child
-	# Allow white space and comments before the first child
-	# Ignore children of the ToC and landmarks as they do not require p children
+	# Check for elements that don't have a direct block child.
+	# Allow white space and comments before the first child.
+	# Ignore children of the ToC and landmarks as they do not require `<p>` children.
 	nodes = dom.xpath("/html/body//*[(name()='blockquote' or name()='dd' or name()='header' or name()='li' or name()='footer') and not(./ancestor::*[contains(@epub:type, 'toc') or contains(@epub:type, 'landmarks')]) and (node()[normalize-space(.) and not(self::comment())])[1][not(name()='p' or name()='blockquote' or name()='div' or name()='table' or name()='header' or name()='ul' or name()='ol' or name() = 'section' or name()='footer' or name()='hgroup' or re:test(name(), '^h[0-6]'))]]")
 	if nodes:
 		messages.append(LintMessage("s-007", "Element requires at least one block-level child.", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
