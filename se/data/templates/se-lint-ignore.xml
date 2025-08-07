@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<se-lint-ignore>
+	<file path="">
+		<ignore>
+			<code></code>
+			<reason></reason>
+		</ignore>
+	</file>
+</se-lint-ignore>
