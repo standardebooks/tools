@@ -78,6 +78,15 @@ def add_file(plain_output: bool) -> int:
 
 					_insert_css(se_epub, "dedication.css")
 
+				case "dramatis-personae":
+					dest_path = se_epub.content_path / "text/dramatis-personae.xhtml"
+
+					_copy_file("dramatis-personae.xhtml", dest_path, args.force)
+
+					_replace_languague(dest_path, se_epub.language)
+
+					_insert_css(se_epub, "dramatis-personae.css")
+
 				case "endnotes":
 					dest_path = se_epub.content_path / "text/endnotes.xhtml"
 
