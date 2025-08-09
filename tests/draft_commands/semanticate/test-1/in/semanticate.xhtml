@@ -168,9 +168,54 @@
 			<p>I gave him an <abbr class="eoc" epub:type="z3998:initialism">I.O.U.</abbr></p>
 			<p>The picture was almost <abbr class="eoc" epub:type="z3998:initialism">3D</abbr>.</p>
 			<p>His name was abbreviated <abbr class="eoc" epub:type="z3998:given-name">Chas.</abbr></p>
-			<!-- roman / not roman -->
-			<p>Edition i. Pages i and ii. Number i’.</p>
-			<p>See <a href="appendix-i.xhtml">Appendix</a>.</p>
+			<!-- ROMAN NUMERAL TESTS -->
+			<!-- SHOULD BE TAGGED -->
+			<!-- The lowercased roman 1 should be tagged. -->
+			<p>Standalone lowercase i is tagged (although should it be?).</p>
+			<!-- The `appendix-i` should not be tagged, but the standalone one should. -->
+			<p>See <a href="appendix-i.xhtml">Appendix i</a> .</p>
+			<!-- The roman 10 should be tagged. -->
+			<p>Charles X was a good one.</p>
+			<!-- The roman 16 should be tagged. -->
+			<p>Who was Louis XVI?</p>
+			<!-- The roman 1999 should be tagged. -->
+			<p>The year is MCMXCIX, the month is June.</p>
+			<!-- The roman 4888 should be tagged. -->
+			<p>How large a number is MMMMDCCCLXXXVIII?</p>
+			<!-- The roman number 5 should be tagged -->
+			<p>The book <i epub:type="se:name.publication.book">Charles V</i> is about who you would expect it to be.</p>
+			<!-- Small roman ordinals are tagged, even though we don't allow ordinals on roman numerals -->
+			<p>His birthday was July XXIst.</p>
+			<p>Go away or I will taunt you a iind time.</p>
+			<p>It was the iiird time this month.</p>
+			<p>Louis XVIth did not end well.</p>
+			<!-- All three of the examples should be tagged; the two standalone letters should not. -->
+			<p>J can be used for I as the last character only, for example LXVJ, VIIj, or iiij.</p>
+			<!-- SHOULD NOT BE TAGGED -->
+			<!-- The existing tag should be left alone, `I` in `I was not` should not be tagged. -->
+			<p>Charles <span epub:type="z3998:roman">I</span> was a bad king, I was not.</p>
+			<!-- Nothing on this line should be tagged (trailing apostrophe). -->
+			<p>Roman numerals preceding an apostrophe are not tagged, such as V’s and l’histoire.</p>
+			<!-- The vix, although consisting of all valid roman characters, is not a valid roman
+					numeral and so should not be tagged. -->
+			<p>Intra, si credere libet, vix homines magisque semiferi.</p>
+			<!-- Similarly `Cil` should not be tagged. -->
+			<p>My friends Cil and Cleo met me for coffee.</p>
+			<!-- The leading roman 10 in `X-ray` should not be tagged. -->
+			<p>Do you need an X-ray, do you think?</p>
+			<!-- Neither `LXVJI` nor `vijii` should be tagged. -->
+			<p>J must be the last character, so these are invalid: LXVJI, vijii.</p>
+			<!-- Although `di` and `mix` are valid roman numerals, they should not be tagged
+				 as they are more likely to be valid words, Italian and English respectively. -->
+			<p>The words di and mix, though valid roman numerals, should not be tagged.</p>
+			<!-- Nothing here should be tagged (ensures no stray ordinal suffixes are tagged). -->
+			<p>The 20th entry is ⅓rd of the total.</p>
+			<ol>
+				<!-- This element is a valid roman 51, but should not be tagged as roman. -->
+				<li>
+					<p>The above tag is a valid roman numeral, so must be excluded</p>
+				</li>
+			</ol>
 		</section>
 	</body>
 </html>
