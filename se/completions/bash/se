@@ -6,7 +6,7 @@ _se(){
 	if [[ $COMP_CWORD -gt 1 ]]; then
 		case "${COMP_WORDS[1]}" in
 			add-file)
-				COMPREPLY+=($(compgen -W "-f --force -h --help dedication endnotes epigraph glossary halftitlepage" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-f --force -h --help dedication endnotes epigraph glossary halftitlepage ignore" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			british2american)

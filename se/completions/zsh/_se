@@ -58,7 +58,7 @@ case $state in
 				_arguments -s \
 					{-f,--force}'[overwrite any existing files]' \
 					{-h,--help}'[show a help message and exit]' \
-					'1:file:(dedication endnotes epigraph glossary halftitlepage)' \
+					'1:file:(dedication endnotes epigraph glossary halftitlepage ignore)' \
 					'*: :_directories'
 				;;
 			british2american)

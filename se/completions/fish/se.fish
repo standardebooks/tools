@@ -14,7 +14,7 @@ complete -c se -n "__fish_se_no_subcommand" -s v -l version -x -d "print version
 complete -c se -n "__fish_se_no_subcommand" -a add-file -d "Add an SE template file and any accompanying CSS."
 complete -c se -A -n "__fish_seen_subcommand_from add-file" -s f -l force -d "overwrite any existing files"
 complete -c se -A -n "__fish_seen_subcommand_from add-file" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from add-file" -l type -x -a "dedication endnotes epigraph glossary halftitlepage" -d "the type of file to add"
+complete -c se -A -n "__fish_seen_subcommand_from add-file" -l type -x -a "dedication endnotes epigraph glossary halftitlepage ignore" -d "the type of file to add"
 
 complete -c se -n "__fish_se_no_subcommand" -a british2american -d "Try to convert British quote style to American quote style."
 complete -c se -A -n "__fish_seen_subcommand_from british2american" -s f -l force -d "force conversion of quote style"
