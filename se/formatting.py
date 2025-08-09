@@ -126,14 +126,15 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"<abbr>etc\.</abbr>([”’]?(?:</p>|\s+[“‘]?[\p{Uppercase_Letter}]))", r"""<abbr class="eoc">etc.</abbr>\1""", xhtml)
 	xhtml = regex.sub(r"""<abbr( epub:type="[^"]+")?>([^<]+\.)</abbr>([”’]?</p>)""", r"""<abbr class="eoc"\1>\2</abbr>\3""", xhtml)
 
-	# Get roman numerals >= 2 characters.
-	# We only wrap these if they're standalone (i.e. not already wrapped in an element) to prevent recursion in multiple runs.
-	# Ignore "numerals" followed by a dash, as they are more likely something like `x-ray` or `v-shaped`.
-	# Note that `j` may occur only at the end of a numeral as an old-fashioned terminal `i`, like int `ij` (2), `vij` (7).
-	xhtml = regex.sub(r"([^\p{Letter}>])([ixvIXV]{2,}j?)(\b[^\-]|st\b|nd\b|rd\b|th\b)", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
+	# First, get valid roman numerals containing the characters `IXV`; exclude `I`s, any that look
+	# like they've already been tagged or are in a tag, and any followed by a dash, to prevent false
+	# positives like `x-ray` or `v-shaped`.
+	xhtml = regex.sub(r"(?<![<>/\"])\b(?=[IXV]+(?:st\b|[nr]\b|th\b)?)(?!I\b)((?:X{0,3})(?:I[XV]|V?I{0,3}J?)(?:\b|st\b|[nr]d\b|th\b))(?![\w’-])", r"""<span epub:type="z3998:roman">\1</span>""", xhtml, flags=regex.IGNORECASE)
 
-	# Get roman numerals that are `X` or `V` and single characters. We can't do `I` for obvious reasons.
-	xhtml = regex.sub(r"""([^\p{Letter}>\"])([vxVX])(\b[^\-]|st\b|nd\b|rd\b|th\b)""", r"""\1<span epub:type="z3998:roman">\2</span>\3""", xhtml)
+	# Wrap all remaining valid roman numerals that are at least two characters; single characters
+	# containing `CDLM` cause too many false-positives. Also exclude `DI` and `MIX`, as they are
+	# more likely to be Italian and English words, respectively.
+	xhtml = regex.sub(r"(?<!>)(?<!</?)\b(?=[CDILMVX]{2,})(?!DI\b|MIX\b)(M{0,4}(?:C[MD]|D?C{0,3})(?:X[CL]|L?X{0,3})(?:I[XV]|V?I{0,3}J?))\b(?![\w’-])", r"""<span epub:type="z3998:roman">\1</span>""", xhtml, flags=regex.IGNORECASE)
 
 	# We can assume a lowercase `i` is always a Roman numeral unless followed by `’`.
 	xhtml = regex.sub(r"""([^\p{Letter}<>/\"])i\b(?!’)(?![^<>]+>)""", r"""\1<span epub:type="z3998:roman">i</span>""", xhtml)
