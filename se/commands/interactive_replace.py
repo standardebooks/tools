@@ -257,6 +257,7 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 
 	# Save errors for later, because we can only print them after curses is deinitialized.
 	errors = []
+	has_results = False
 	return_code = 0
 	screen = None
 
@@ -299,6 +300,7 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 			# Do we have a regex match in the text?
 			# We only consider text after the last completed match.
 			if regex.search(fr"{args.regex}", original_xhtml, flags=regex_flags):
+				has_results = True
 				screen = _init_screen(screen)
 			else:
 				continue
@@ -469,5 +471,8 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 
 	for error in errors:
 		se.print_error(error)
+
+	if not has_results:
+		return_code = se.NoResults.code
 
 	return return_code

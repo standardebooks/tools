@@ -46,6 +46,8 @@ def css_select(plain_output: bool) -> int:
 						output = output.replace("[", "\\[")
 
 						console.print(output)
+			else:
+				return se.NoResults.code
 
 		except se.InvalidCssException:
 			se.print_error("Invalid CSS selector.")

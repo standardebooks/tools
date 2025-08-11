@@ -112,4 +112,7 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 
 			console.print(table)
 
+	else:
+		return_code = se.NoResults.code
+
 	return return_code

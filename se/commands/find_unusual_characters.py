@@ -143,5 +143,7 @@ def find_unusual_characters(plain_output: bool) -> int:
 				table.add_row(unusual_character, "U+{:04X}".format(ord(unusual_character)), unusual_character_name, f"({unusual_character_count})") # pylint: disable=consider-using-f-string
 
 			console.print(table)
+	else:
+		return_code = se.NoResults.code
 
 	return return_code

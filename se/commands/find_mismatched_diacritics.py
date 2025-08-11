@@ -147,5 +147,7 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 				table.add_row(f"[link=https://www.merriam-webster.com/dictionary/{urllib.parse.quote(accented_word)}]{accented_word}[/]", f"({accented_word_count})", f"[link=https://www.merriam-webster.com/dictionary/{urllib.parse.quote(plain_word)}]{plain_word}[/]", f"({plain_word_count})")
 
 			console.print(table)
+	else:
+		return_code = se.NoResults.code
 
 	return return_code

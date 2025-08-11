@@ -23,6 +23,9 @@ def xpath(plain_output: bool) -> int:
 
 	console = Console(highlight=True, theme=se.RICH_THEME)
 
+	return_code = 0
+	has_results = False
+
 	for filepath in se.get_target_filenames(args.targets, ".xhtml"):
 		try:
 
@@ -32,6 +35,7 @@ def xpath(plain_output: bool) -> int:
 			nodes = dom.xpath(args.xpath)
 
 			if nodes:
+				has_results = True
 				console.print(se.prep_output(f"[path][link=file://{filepath}]{filepath}[/][/]", plain_output), highlight=False)
 				if not args.only_filenames:
 					for node in nodes:
@@ -60,4 +64,7 @@ def xpath(plain_output: bool) -> int:
 			se.print_error(f"Invalid file: [path][link=file://{filepath}]{filepath}[/][/].")
 			return se.InvalidFileException.code
 
-	return 0
+	if not has_results:
+		return_code = se.NoResults.code
+
+	return return_code

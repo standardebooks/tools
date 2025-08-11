@@ -119,6 +119,10 @@ class BuildFailedException(SeException):
 		super().__init__(message)
 		self.messages = messages if messages else []
 
+class NoResults(SeException):
+	""" Invalid XHTML """
+	code = 18
+
 def strip_bom(string: str) -> str:
 	"""
 	Remove the Unicode Byte Order Mark from a string.
