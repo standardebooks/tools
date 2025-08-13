@@ -3050,7 +3050,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	if typos:
 		messages.append(LintMessage("y-009", "Possible typo: dialog begins with lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
-	typos = [node.to_string() for node in dom.xpath("//p[not(ancestor::blockquote) and not(following-sibling::*[1][name() = 'blockquote' or contains(@class, 'continued')]) and re:test(., ',”$')]")]
+	typos = [node.to_string() for node in dom.xpath("//p[not(ancestor::blockquote) and not(following-sibling::*[1][name() = 'blockquote' or contains(@class, 'continued')]) and (re:test(., ',”$') or re:test(., ',” (And|It|Or)\\b'))]")]
 	if typos:
 		messages.append(LintMessage("y-010", "Possible typo: comma ending dialogue.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
