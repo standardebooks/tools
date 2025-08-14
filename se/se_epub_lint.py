@@ -360,7 +360,7 @@ SEMANTICS & CONTENT
 "s-103", "Probable missing semantics for a roman I numeral."
 "s-104", "Header element should be either [val]title[/] or [val]ordinal[/], not both."
 "s-105", "Dates in the colophon need to be wrapped in an [xhtml]<time>[/] element."
-"s-106", "Proper names in the colophon must be wrapped in [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], unless anonymous, in which case [xhtml]<b>[/]."
+"s-106", "Proper names in the colophon must be wrapped in [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:personal-name\">[/], unless anonymous, in which case [xhtml]<b>[/]."
 "s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?"
 
 TYPOGRAPHY
