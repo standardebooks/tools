@@ -18,7 +18,7 @@ def build_loi(plain_output: bool) -> int:
 	args = parser.parse_args()
 
 	if args.stdout and len(args.directories) > 1:
-		se.print_error("Multiple directories are only allowed without the [bash]--stdout[/] option.", plain_output=plain_output)
+		se.print_error("Multiple directories are not allowed with the [bash]--stdout[/] option.", plain_output=plain_output)
 		return se.InvalidArgumentsException.code
 
 	for directory in args.directories:

@@ -23,7 +23,7 @@ def build_title(plain_output: bool) -> int:
 	targets = se.get_target_filenames(args.targets, ".xhtml")
 
 	if args.stdout and (len(targets) > 1):
-		se.print_error("Multiple targets or directories are only allowed without the [bash]--stdout[/] option.", plain_output=plain_output)
+		se.print_error("Multiple targets or directories are not allowed with the [bash]--stdout[/] option.", plain_output=plain_output)
 		return se.InvalidArgumentsException.code
 
 	if not args.newline and not args.stdout:
