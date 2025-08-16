@@ -108,15 +108,12 @@ class SeEpub:
 
 		try:
 			container_tree = self.get_dom(self.epub_root_path / "META-INF" / "container.xml")
-
 			self.metadata_file_path = self.epub_root_path / container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
 		except Exception as ex:
 			raise se.InvalidSeEbookException("Target doesn’t appear to be an epub: no [path]container.xml[/] or no metadata file.") from ex
 
-		self.content_path = self.metadata_file_path.parent
-		self.onix_path = self.content_path / "onix.xml"
-
 		try:
+			self.content_path = self.metadata_file_path.parent
 			self.metadata_dom = self.get_dom(self.metadata_file_path)
 		except Exception as ex:
 			raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]. Exception: {ex}") from ex
@@ -1054,6 +1051,18 @@ class SeEpub:
 					with open(file_path, "w", encoding="utf-8") as file:
 						file.write(dom.to_string())
 
+			# Set modified date in the ONIX file.
+			now_onix = regex.sub(r"[:-]", "", now_iso)
+
+			for node in self.onix_dom.xpath("/ONIXMessage/Header/SentDateTime | /ONIXMessage/Product/PublishingDetail/PublishingDate/Date"):
+				node.set_text(now_onix)
+
+			for node in self.onix_dom.xpath("/ONIXMessage/Product[@datestamp]"):
+				node.set_attr("datestamp", now_onix)
+
+			with open(self.onix_path, "w", encoding="utf-8") as file:
+				file.write(self.onix_dom.to_string())
+
 	def update_flesch_reading_ease(self) -> None:
 		"""
 		Calculate a new reading ease for this ebook and update the metadata file.
@@ -1604,6 +1613,26 @@ class SeEpub:
 						file.write(se.formatting.format_xhtml(dom.to_string()))
 
 		return current_note_number - 1, notes_changed, change_list
+
+	def generate_onix(self) -> se.easy_xml.EasyXmlTree:
+		"""
+		Return an ONIX file describing this ebook, as an `EasyXmlTree`.
+
+		INPUTS
+		None.
+
+		OUTPUTS
+		An `EasyXmlTree` representing the ebook's ONIX record.
+		"""
+
+		with open(self.metadata_file_path, "r", encoding="utf-8") as file:
+			xml = file.read()
+
+		with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("opf2onix.xsl")) as opf2onix_xsl_filename:
+			transform = etree.XSLT(etree.parse(str(opf2onix_xsl_filename)))
+			onix_dom = se.easy_xml.EasyXmlTree(transform(etree.fromstring(str.encode(xml)), cwd=f"'{self.epub_root_path.as_posix()}/'"))
+
+		return onix_dom
 
 	def __process_direct_link(self, change_list, link) -> bool:
 		"""

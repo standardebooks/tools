@@ -193,7 +193,7 @@ class EasyXmlTree:
 
 		# Re-insert the default namespace if we removed it earlier.
 		if self.default_namespace:
-			xml = regex.sub(r"^<([a-z0-9\-]+)\b", fr'<\1 xmlns="{self.default_namespace}"', xml)
+			xml = regex.sub(r"^<([a-zA-Z0-9\-]+)\b", fr'<\1 xmlns="{self.default_namespace}"', xml)
 
 		xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + xml + "\n"
 

@@ -4,67 +4,196 @@
 		<Sender>
 			<SenderName>Standard Ebooks</SenderName>
 		</Sender>
-		<SentDateTime>2024-05-01T00:00:00Z</SentDateTime>
+		<SentDateTime>19000101T000000Z</SentDateTime>
 	</Header>
-	<Product>
+	<Product datestamp="19000101T000000Z">
+		<RecordReference>https://standardebooks.org/ebooks/SE_IDENTIFIER</RecordReference>
+		<NotificationType>03</NotificationType>
+		<ProductIdentifier>
+			<ProductIDType>22</ProductIDType>
+			<IDValue>https://standardebooks.org/ebooks/SE_IDENTIFIER</IDValue>
+		</ProductIdentifier>
 		<DescriptiveDetail>
+			<ProductComposition>00</ProductComposition>
+			<ProductForm>EB</ProductForm>
+			<ProductFormDetail>E101</ProductFormDetail>
 			<ProductFormFeature>
-				<!--Compliant with ePub Accessibility Spec v1.1-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>04</ProductFormFeatureValue>
 			</ProductFormFeature>
 			<ProductFormFeature>
-				<!--No reading system accessibility options disabled-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>10</ProductFormFeatureValue>
 			</ProductFormFeature>
 			<ProductFormFeature>
-				<!--Table of contents navigation-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>11</ProductFormFeatureValue>
 			</ProductFormFeature>
 			<ProductFormFeature>
-				<!--Reading order-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>13</ProductFormFeatureValue>
 			</ProductFormFeature>
 			<ProductFormFeature>
-				<!--Short alternative descriptions-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>14</ProductFormFeatureValue>
 			</ProductFormFeature>
 			<ProductFormFeature>
-				<!--Language tagging provided-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>22</ProductFormFeatureValue>
 			</ProductFormFeature>
 			<ProductFormFeature>
-				<!--All non-decorative content supports reading without sight-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>52</ProductFormFeatureValue>
 			</ProductFormFeature>
 			<ProductFormFeature>
-				<!--WCAG v2.2-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>82</ProductFormFeatureValue>
 			</ProductFormFeature>
 			<ProductFormFeature>
-				<!--WCAG level AA-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>85</ProductFormFeatureValue>
 			</ProductFormFeature>
 			<ProductFormFeature>
-				<!--Publisher’s web page for detailed accessibility information-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>96</ProductFormFeatureValue>
 				<ProductFormFeatureDescription>https://standardebooks.org/about/accessibility</ProductFormFeatureDescription>
 			</ProductFormFeature>
 			<ProductFormFeature>
-				<!--Publisher contact for further accessibility information-->
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>99</ProductFormFeatureValue>
 				<ProductFormFeatureDescription>standardebooks@googlegroups.com</ProductFormFeatureDescription>
 			</ProductFormFeature>
+			<ProductFormFeature>
+				<ProductFormFeatureType>15</ProductFormFeatureType>
+				<ProductFormFeatureValue>101F</ProductFormFeatureValue>
+			</ProductFormFeature>
+			<TitleDetail>
+				<TitleType>01</TitleType>
+				<TitleElement>
+					<SequenceNumber>1</SequenceNumber>
+					<TitleElementLevel>01</TitleElementLevel>
+					<NoPrefix/>
+					<TitleWithoutPrefix textcase="02">Poetry</TitleWithoutPrefix>
+				</TitleElement>
+				<TitleStatement>Poetry</TitleStatement>
+			</TitleDetail>
+			<Contributor>
+				<SequenceNumber>1</SequenceNumber>
+				<ContributorRole>A01</ContributorRole>
+				<PersonName>James Joyce</PersonName>
+				<PersonNameInverted>Joyce, James</PersonNameInverted>
+			</Contributor>
+			<Language>
+				<LanguageRole>01</LanguageRole>
+				<LanguageCode>eng</LanguageCode>
+				<CountryCode>GB</CountryCode>
+			</Language>
 		</DescriptiveDetail>
+		<CollateralDetail>
+			<SupportingResource>
+				<ResourceContentType>01</ResourceContentType>
+				<ContentAudience>00</ContentAudience>
+				<ResourceMode>03</ResourceMode>
+				<ResourceVersion>
+					<ResourceForm>02</ResourceForm>
+					<ResourceVersionFeature>
+						<ResourceVersionFeatureType>01</ResourceVersionFeatureType>
+						<FeatureValue>D502</FeatureValue>
+					</ResourceVersionFeature>
+					<ResourceLink>https://standardebooks.org/ebooks/SE_IDENTIFIER/downloads/cover.jpg</ResourceLink>
+				</ResourceVersion>
+			</SupportingResource>
+			<SupportingResource>
+				<ResourceContentType>28</ResourceContentType>
+				<ContentAudience>00</ContentAudience>
+				<ResourceMode>04</ResourceMode>
+				<ResourceVersion>
+					<ResourceForm>02</ResourceForm>
+					<ResourceVersionFeature>
+						<ResourceVersionFeatureType>01</ResourceVersionFeatureType>
+						<FeatureValue>E101</FeatureValue>
+						<FeatureNote>Recommended compatible epub</FeatureNote>
+					</ResourceVersionFeature>
+					<ResourceLink>https://standardebooks.org/ebooks/SE_IDENTIFIER/downloads/VCS_IDENTIFIER.epub?source=feed</ResourceLink>
+				</ResourceVersion>
+			</SupportingResource>
+			<SupportingResource>
+				<ResourceContentType>28</ResourceContentType>
+				<ContentAudience>00</ContentAudience>
+				<ResourceMode>04</ResourceMode>
+				<ResourceVersion>
+					<ResourceForm>02</ResourceForm>
+					<ResourceVersionFeature>
+						<ResourceVersionFeatureType>01</ResourceVersionFeatureType>
+						<FeatureValue>E101</FeatureValue>
+						<FeatureNote>Advanced epub</FeatureNote>
+					</ResourceVersionFeature>
+					<ResourceLink>https://standardebooks.org/ebooks/SE_IDENTIFIER/downloads/VCS_IDENTIFIER_advanced.epub?source=feed</ResourceLink>
+				</ResourceVersion>
+			</SupportingResource>
+			<SupportingResource>
+				<ResourceContentType>28</ResourceContentType>
+				<ContentAudience>00</ContentAudience>
+				<ResourceMode>04</ResourceMode>
+				<ResourceVersion>
+					<ResourceForm>02</ResourceForm>
+					<ResourceVersionFeature>
+						<ResourceVersionFeatureType>01</ResourceVersionFeatureType>
+						<FeatureValue>E101</FeatureValue>
+						<FeatureNote>Kobo Kepub epub</FeatureNote>
+					</ResourceVersionFeature>
+					<ResourceLink>https://standardebooks.org/ebooks/SE_IDENTIFIER/downloads/VCS_IDENTIFIER.kepub.epub?source=feed</ResourceLink>
+				</ResourceVersion>
+			</SupportingResource>
+			<SupportingResource>
+				<ResourceContentType>28</ResourceContentType>
+				<ContentAudience>00</ContentAudience>
+				<ResourceMode>04</ResourceMode>
+				<ResourceVersion>
+					<ResourceForm>02</ResourceForm>
+					<ResourceVersionFeature>
+						<ResourceVersionFeatureType>01</ResourceVersionFeatureType>
+						<FeatureValue>E116</FeatureValue>
+						<FeatureNote>Amazon Kindle azw3</FeatureNote>
+					</ResourceVersionFeature>
+					<ResourceLink>https://standardebooks.org/ebooks/SE_IDENTIFIER/downloads/VCS_IDENTIFIER.azw3?source=feed</ResourceLink>
+				</ResourceVersion>
+			</SupportingResource>
+			<SupportingResource>
+				<ResourceContentType>28</ResourceContentType>
+				<ContentAudience>00</ContentAudience>
+				<ResourceMode>04</ResourceMode>
+				<ResourceVersion>
+					<ResourceForm>02</ResourceForm>
+					<ResourceVersionFeature>
+						<ResourceVersionFeatureType>01</ResourceVersionFeatureType>
+						<FeatureValue>E113</FeatureValue>
+						<FeatureNote>XHTML</FeatureNote>
+					</ResourceVersionFeature>
+					<ResourceLink>https://standardebooks.org/ebooks/SE_IDENTIFIER/text/single-page</ResourceLink>
+				</ResourceVersion>
+			</SupportingResource>
+		</CollateralDetail>
+		<PublishingDetail>
+			<Publisher>
+				<PublishingRole>01</PublishingRole>
+				<PublisherName>Standard Ebooks</PublisherName>
+				<Website>
+					<WebsiteRole>01</WebsiteRole>
+					<WebsiteLink>https://standardebooks.org/</WebsiteLink>
+				</Website>
+			</Publisher>
+			<PublishingDate>
+				<PublishingDateRole>16</PublishingDateRole>
+				<Date>19000101T000000Z</Date>
+			</PublishingDate>
+		</PublishingDetail>
+		<ProductSupply>
+			<Market>
+				<Territory>
+					<CountriesIncluded>US</CountriesIncluded>
+				</Territory>
+			</Market>
+		</ProductSupply>
 	</Product>
 </ONIXMessage>
