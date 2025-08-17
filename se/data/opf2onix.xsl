@@ -174,8 +174,7 @@
 		<!-- Subtitle -->
 		<xsl:variable name="subtitle" select="normalize-space(opf:metadata/dc:title[key('meta-by-refines', concat('#', @id))[@property='title-type' andnormalize-space(.) = 'subtitle']][1])"/>
 
-		<!-- Use `dc:date` because we don't want this to change based on `dc:modified`; we should update this value in `se build` instead -->
-		<xsl:variable name="sentDate" select="translate(normalize-space(opf:metadata/dc:date), '-:', '')"/>
+		<xsl:variable name="sentDate" select="translate(normalize-space(opf:metadata/opf:meta[@property='dcterms:modified']), '-:', '')"/>
 
 		<!-- Start actual output -->
 		<ONIXMessage xmlns="http://ns.editeur.org/onix/3.1/reference" release="3.1">

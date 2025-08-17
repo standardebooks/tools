@@ -131,9 +131,8 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 	# All clear to start building!
 
-	# Make a copy of the metadata and ONIX DOms because we'll be making changes.
+	# Make a copy of the metadata DOM because we'll be making changes.
 	metadata_dom = deepcopy(self.metadata_dom)
-	onix_dom = deepcopy(self.onix_dom)
 
 	# Initiate the various filenames we'll be using for output.
 	# By convention the ASIN is set to the SHA-1 sum of the book's identifying URL.
@@ -871,9 +870,6 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			for node in metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and (text() = 'describedMath' or text() = 'MathML')]"):
 				node.remove()
 
-			for node in onix_dom.xpath("//ProductFormFeatureType[text()='09']/following-sibling::ProductFormFeatureValue[text()='17']/parent::ProductFormFeature"):
-				node.remove()
-
 			# We wrap this whole thing in a `try` block, because we need to call `driver.quit()` if execution is interrupted (like by `ctrl + c`, or by an unhandled exception). If we don't call `driver.quit()`, Firefox will stay around as a zombie process even if the Python script is dead.
 			driver = None
 			try:
@@ -1071,7 +1067,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		for node in metadata_dom.xpath("/package/manifest"):
 			node.append(etree.fromstring("""<item href="toc.ncx" id="ncx" media-type="application/x-dtbncx+xml"/>"""))
 
-		# Now use an XSLT transform to generate the NCX.
+		# Now use an XSL transform to generate the NCX.
 		with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("navdoc2ncx.xsl")) as navdoc2ncx_xsl_filename:
 			toc_tree = se.epub.convert_toc_to_ncx(work_compatible_epub_dir, toc_filename, navdoc2ncx_xsl_filename)
 
@@ -1122,6 +1118,14 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			for node in metadata_dom.xpath("/package"):
 				node.append(guide_root_node)
 
+		# Add an ONIX record based on our transformed metadata.
+		for node in metadata_dom.xpath("/package/metadata/dc:title[1]"):
+			node.insert_before(se.easy_xml.EasyXmlElement("""<link href="onix.xml" media-type="application/xml" properties="onix" rel="record"/>"""))
+
+		onix_dom = self.generate_onix(metadata_dom)
+		with open(work_compatible_epub_dir / "epub" / "onix.xml", "w", encoding="utf-8") as file:
+			file.write(se.formatting.format_xml(onix_dom.to_string()))
+
 		# Guide is done, now write the metadata file and clean it.
 		# Output the modified metadata file before making more compatibility hacks.
 		with open(work_compatible_epub_dir / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
@@ -1133,10 +1137,6 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			xml = se.formatting.format_opf(metadata_dom.to_string())
 			xml = regex.sub(r"""<meta content="([^"]+?)" name="cover"/>""", r"""<meta name="cover" content="\1"/>""", xml)
 			file.write(xml)
-
-		# Also write out the ONIX file with potential MathML changes.
-		with open(work_compatible_epub_dir / "epub" / self.onix_path.name, "w", encoding="utf-8") as file:
-			file.write(onix_dom.to_string())
 
 		# All done, clean the output.
 		for filepath in se.get_target_filenames([work_compatible_epub_dir], (".xhtml", ".ncx")):

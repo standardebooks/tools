@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 import os
 from pathlib import Path
 import importlib.resources
+from sys import meta_path
 from typing import Dict, List, Optional, Tuple, Union
 
 import git
@@ -70,7 +71,6 @@ class SeEpub:
 	epub_root_path = Path() # The path to the epub source root, i.e. `self.path / src`.
 	content_path: Path = Path() # The path to the epub content base, i.e. `self.epub_root_path / epub`.
 	metadata_file_path: Path = Path() # The path to the metadata file, i.e. `self.content_path / content.opf`.
-	onix_path: Path = Path() # The path to the ONIX file, i.e. `self.content_path / onix.xml`.
 	toc_path: Path = Path()  # The path to the ToC file, i.e. `self.content_path / toc.xhtml`.
 	glossary_search_key_map_path = None # The path to the glossary search key map, or `None` if there isn't one.
 	local_css = ""
@@ -117,12 +117,6 @@ class SeEpub:
 			self.metadata_dom = self.get_dom(self.metadata_file_path)
 		except Exception as ex:
 			raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]. Exception: {ex}") from ex
-
-		try:
-			self.onix_path = self.content_path / "onix.xml"
-			self.onix_dom = self.get_dom(self.onix_path)
-		except Exception as ex:
-			raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.onix_path}]{self.onix_path}[/][/]. Exception: {ex}") from ex
 
 		toc_href = self.metadata_dom.xpath("/package/manifest/item[contains(@properties, 'nav')]/@href", True)
 		if toc_href:
@@ -1051,18 +1045,6 @@ class SeEpub:
 					with open(file_path, "w", encoding="utf-8") as file:
 						file.write(dom.to_string())
 
-			# Set modified date in the ONIX file.
-			now_onix = regex.sub(r"[:-]", "", now_iso)
-
-			for node in self.onix_dom.xpath("/ONIXMessage/Header/SentDateTime | /ONIXMessage/Product/PublishingDetail/PublishingDate/Date"):
-				node.set_text(now_onix)
-
-			for node in self.onix_dom.xpath("/ONIXMessage/Product[@datestamp]"):
-				node.set_attr("datestamp", now_onix)
-
-			with open(self.onix_path, "w", encoding="utf-8") as file:
-				file.write(self.onix_dom.to_string())
-
 	def update_flesch_reading_ease(self) -> None:
 		"""
 		Calculate a new reading ease for this ebook and update the metadata file.
@@ -1614,23 +1596,23 @@ class SeEpub:
 
 		return current_note_number - 1, notes_changed, change_list
 
-	def generate_onix(self) -> se.easy_xml.EasyXmlTree:
+	def generate_onix(self, metadata_dom: se.easy_xml.EasyXmlTree | None = None) -> se.easy_xml.EasyXmlTree:
 		"""
 		Return an ONIX file describing this ebook, as an `EasyXmlTree`.
 
 		INPUTS
-		None.
+		metadata_dom: The DOM of the OPF file to base the ONIX record on; defaults to `self.metadata_dom`.
 
 		OUTPUTS
 		An `EasyXmlTree` representing the ebook's ONIX record.
 		"""
 
-		with open(self.metadata_file_path, "r", encoding="utf-8") as file:
-			xml = file.read()
+		if not metadata_dom:
+			metadata_dom = self.metadata_dom
 
 		with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("opf2onix.xsl")) as opf2onix_xsl_filename:
 			transform = etree.XSLT(etree.parse(str(opf2onix_xsl_filename)))
-			onix_dom = se.easy_xml.EasyXmlTree(transform(etree.fromstring(str.encode(xml)), cwd=f"'{self.epub_root_path.as_posix()}/'"))
+			onix_dom = se.easy_xml.EasyXmlTree(transform(etree.fromstring(str.encode(metadata_dom.to_string())), cwd=f"'{self.epub_root_path.as_posix()}/'"))
 
 		return onix_dom
 

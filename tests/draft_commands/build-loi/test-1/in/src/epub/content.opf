@@ -24,7 +24,6 @@
 		<meta property="schema:accessibilityFeature">tableOfContents</meta>
 		<meta property="schema:accessibilityHazard">none</meta>
 		<meta property="schema:accessibilitySummary">This publication conforms to WCAG 2.2 Level AA.</meta>
-		<link href="onix.xml" media-type="application/xml" properties="onix" rel="record"/>
 		<dc:title id="title">The Diary</dc:title>
 		<meta property="file-as" refines="#title">Diary, The</meta>
 		<dc:subject id="subject-1">Pepys, Samuel, 1633-1703 -- Diaries</dc:subject>

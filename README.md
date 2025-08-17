@@ -386,7 +386,6 @@ Many of these tools act on Standard Ebooks source directories. Such directories 
 |   |   |   |__ uncopyright.xhtml
 |   |   |
 |   |   |__ content.opf
-|   |   |__ onix.xml
 |   |   |__ toc.xhtml
 |   |
 |   |__ mimetype

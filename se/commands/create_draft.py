@@ -817,7 +817,6 @@ def _create_draft(args: Namespace, plain_output: bool):
 	_copy_template_file("core.css", content_path / "epub" / "css")
 
 	if args.white_label:
-		_copy_template_file("onix-white-label.xml", content_path / "epub" / "onix.xml")
 		_copy_template_file("content-white-label.opf", content_path / "epub" / "content.opf")
 		_copy_template_file("titlepage-white-label.xhtml", content_path / "epub" / "text" / "titlepage.xhtml")
 		_copy_template_file("cover.jpg", content_path / "epub" / "images")
@@ -828,7 +827,6 @@ def _create_draft(args: Namespace, plain_output: bool):
 		_copy_template_file("cover.jpg", repo_path / "images")
 		_copy_template_file("cover.svg", repo_path / "images")
 		_copy_template_file("titlepage.svg", repo_path / "images")
-		_copy_template_file("onix.xml", content_path / "epub")
 		_copy_template_file("local.css", content_path / "epub" / "css")
 		_copy_template_file("se.css", content_path / "epub" / "css")
 		_copy_template_file("logo.svg", content_path / "epub" / "images")
