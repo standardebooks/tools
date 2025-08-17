@@ -9,7 +9,6 @@ from datetime import datetime, timezone
 import os
 from pathlib import Path
 import importlib.resources
-from sys import meta_path
 from typing import Dict, List, Optional, Tuple, Union
 
 import git

@@ -1,0 +1,4 @@
+figure.full-page + figure.full-page{
+	break-before: initial;
+	page-break-before: initial;
+}

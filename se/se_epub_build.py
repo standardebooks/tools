@@ -158,6 +158,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 	kobo_output_filename = f"{identifier}{'.proof' if proof else ''}.kepub.epub"
 	kindle_output_filename = f"{identifier}{'.proof' if proof else ''}.azw3"
 	endnote_files_to_be_chunked = []
+	has_sequential_full_page_figures = False
 
 	# Create our temp work directory.
 	with tempfile.TemporaryDirectory() as temp_dir:
@@ -542,6 +543,9 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				# while replacements > 0:
 				# 	processed_xhtml, replacements = regex.subn(r"<title>([^<>]+?)<span class=\"quote-align\">([^<>]+?)</span>", r"""<title>\1\2""", processed_xhtml)
 
+				if not has_sequential_full_page_figures:
+					has_sequential_full_page_figures = len(dom.xpath("/html/body//figure[re:test(@class, '\\bfull-page\\b') and following-sibling::*[1][name() = 'figure' and re:test(@class, '\\bfull-page\\b')]]")) > 0
+
 				with open(file_path, "w", encoding="utf-8") as file:
 					file.write(processed_xhtml)
 
@@ -570,6 +574,13 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 						file.seek(0)
 						file.write(processed_css)
 						file.truncate()
+
+		# If we have sequential `<figure class="full-page">` elements, add compatibility CSS to avoid a blank page being inserted between them.
+		# See <https://groups.google.com/g/standardebooks/c/L8rm-ImUY_Q>.
+		if has_sequential_full_page_figures:
+			with open(work_compatible_epub_dir / "epub" / "css" / "core.css", "a", encoding="utf-8") as css_file:
+				with importlib.resources.files("se.data.templates").joinpath("full-page-figure-compatibility.css").open("r", encoding="utf-8") as compatibility_css_file:
+					css_file.write("\n\n" + compatibility_css_file.read())
 
 		# If we have any endnote files, split them if they contain more than 500 endnotes.
 		for endnote_file in endnote_files_to_be_chunked:
