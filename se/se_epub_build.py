@@ -122,7 +122,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		if shutil.which("ace"):
 			run_ace = True
 
-	# Check the output directory and create it if it doesn't exist
+	# Check the output directory and create it if it doesn't exist.
 	try:
 		output_dir = output_dir.resolve()
 		output_dir.mkdir(parents=True, exist_ok=True)
@@ -159,7 +159,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 	kindle_output_filename = f"{identifier}{'.proof' if proof else ''}.azw3"
 	endnote_files_to_be_chunked = []
 
-	# Create our temp work directory
+	# Create our temp work directory.
 	with tempfile.TemporaryDirectory() as temp_dir:
 		work_dir = Path(temp_dir)
 		work_compatible_epub_dir = work_dir / self.path.name
@@ -168,10 +168,10 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		shutil.rmtree(work_compatible_epub_dir / ".git", ignore_errors=True)
 
-		# We may have a .gitignore file in the epub root if this is a white-label epub. If so, remove it before continuing
+		# We may have a `.gitignore` file in the epub root if this is a white-label epub. If so, remove it before continuing.
 		(work_compatible_epub_dir / ".gitignore").unlink(True)
 
-		# Clean up old output files if any
+		# Clean up old output files if any.
 		(output_dir / f"thumbnail_{asin}_EBOK_portrait.jpg").unlink(True)
 		(output_dir / compatible_epub_output_filename).unlink(True)
 		(output_dir / advanced_epub_output_filename).unlink(True)
@@ -194,7 +194,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					file.write(se.formatting.simplify_css(xhtml))
 					file.truncate()
 
-		# Update the release date in the metadata and colophon
+		# Update the release date in the metadata and colophon.
 		if self.last_commit:
 			for file_path in work_compatible_epub_dir.glob("**/*.xhtml"):
 				dom = self.get_dom(file_path)
@@ -205,14 +205,14 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					last_updated_iso = se.formatting.generate_iso_timestamp(last_updated)
 					last_updated_friendly = se.formatting.generate_colophon_timestamp(last_updated)
 
-					# Set modified date in the metadata file
+					# Set modified date in the metadata file.
 					for node in metadata_dom.xpath("//meta[@property='dcterms:modified']"):
 						node.set_text(last_updated_iso)
 
 					with open(work_compatible_epub_dir / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
 						file.write(metadata_dom.to_string())
 
-					# Update the colophon with release info
+					# Update the colophon with release info.
 					with open(file_path, "r+", encoding="utf-8") as file:
 						xhtml = file.read()
 
@@ -225,13 +225,13 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					self.flush_dom_cache_entry(file_path)
 					break
 
-		# Output the pure epub3 file
+		# Output the pure epub3 file.
 		if not check_only:
 			se.epub.write_epub(work_compatible_epub_dir, output_dir / advanced_epub_output_filename)
 
 		# Now add compatibility fixes for older ereaders.
 
-		# Include compatibility CSS
+		# Include compatibility CSS.
 		compatibility_css_filename = "compatibility.css"
 		if not self.metadata_dom.xpath("//dc:identifier[starts-with(., 'https://standardebooks.org')]"):
 			compatibility_css_filename = "compatibility-white-label.css"
@@ -240,7 +240,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			with importlib.resources.files("se.data.templates").joinpath(compatibility_css_filename).open("r", encoding="utf-8") as compatibility_css_file:
 				css_file.write("\n\n" + compatibility_css_file.read())
 
-		# Simplify CSS and tags
+		# Simplify CSS and tags.
 		total_css = ""
 
 		# Simplify the CSS first. Later we'll update the document to match our simplified selectors.
@@ -254,34 +254,34 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				file.write(se.formatting.simplify_css(css))
 				file.truncate()
 
-		# Now get a list of original selectors
-		# Remove @supports and @media queries
+		# Now get a list of original selectors.
+		# Remove `@supports` and `@media` queries.
 		total_css = regex.sub(r"@\s*(?:supports|media).+?{(.+?)}\s*}", r"\1}", total_css, flags=regex.DOTALL)
 
-		# Remove CSS rules
+		# Remove CSS rules.
 		total_css = regex.sub(r"{[^}]+}", "", total_css)
 
-		# Remove trailing commas
+		# Remove trailing commas.
 		total_css = regex.sub(r",", "", total_css)
 
-		# Remove comments
+		# Remove comments.
 		total_css = regex.sub(r"/\*.+?\*/", "", total_css, flags=regex.DOTALL)
 
-		# Remove @ defines
+		# Remove `@` defines.
 		total_css = regex.sub(r"^@.+", "", total_css, flags=regex.MULTILINE)
 
-		# Construct a dictionary of the original selectors
+		# Construct a dictionary of the original selectors.
 		selectors = {line for line in total_css.splitlines() if line != ""}
 
-		# Get a list of .xhtml files to simplify
+		# Get a list of `.xhtml` files to simplify.
 		for file_path in work_compatible_epub_dir.glob("**/*.xhtml"):
 			dom = self.get_dom(file_path)
 
-			# Don't mess with the ToC, since if we have ol/li > first-child selectors we could screw it up
+			# Don't mess with the ToC, since if we have `ol/li > first-child` selectors we could screw it up.
 			if dom.xpath("/html/body//nav[contains(@epub:type, 'toc')]"):
 				continue
 
-			# Now iterate over each CSS selector and see if it's used in any of the files we found
+			# Now iterate over each CSS selector and see if it's used in any of the files we found.
 			for selector in selectors:
 				try:
 					# Add classes to elements that match any of our selectors to simplify. For example, if we select `:first-child`, add a `first-child` class to all elements that match that.
@@ -300,12 +300,12 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 									element.set_attr("class", f"{current_class} {replacement_class}".strip())
 
 				except lxml.cssselect.ExpressionError:
-					# This gets thrown if we use pseudo-elements, which lxml doesn't support
+					# This gets thrown if we use pseudo-elements, which lxml doesn't support.
 					pass
 				except lxml.cssselect.SelectorSyntaxError as ex:
 					raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
 
-				# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements
+				# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements.
 				if regex.search(r"\[[a-z]+\|[a-z]+", selector):
 					for namespace_selector in regex.findall(r"\[[a-z]+\|[a-z]+(?:[\~\^\|\$\*]?\=\"[^\"]*?\")?\]", selector):
 						new_class = regex.sub(r"^\.", "", se.formatting.namespace_to_class(namespace_selector))
@@ -324,7 +324,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		# Done simplifying CSS and tags!
 
-		# Extract cover and cover thumbnail
+		# Extract cover and cover thumbnail.
 		cover_local_path = metadata_dom.xpath("/package/manifest/item[@properties='cover-image'][1]/@href", True)
 
 		# If we have a cover, convert it to JPG.
@@ -334,7 +334,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			if cover_work_path.suffix in (".svg", ".png"):
 				# If the cover is SVG, convert to PNG first.
 				if cover_work_path.suffix == ".svg":
-					svg2png(url=str(cover_work_path), unsafe=True, write_to=str(work_dir / "cover.png")) # Remove unsafe flag when `cairosvg` > 2.7.0.
+					svg2png(url=str(cover_work_path), unsafe=True, write_to=str(work_dir / "cover.png")) # Remove unsafe flag when cairosvg > 2.7.0.
 
 				# Now convert PNG to JPG.
 				cover = Image.open(work_dir / "cover.png")
@@ -409,20 +409,20 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 						for element in dom.xpath("/svg"):
 							element.lxml_element.insert(0, fragment)
 
-					# All done, write the SVG so that we can convert to PNG
+					# All done, write the SVG so that we can convert to PNG.
 					with open(file_path, "w", encoding="utf-8") as file:
 						file.write(dom.to_string())
 
 			if file_path.suffix == ".xhtml":
 				dom = self.get_dom(file_path)
 
-				# Fix any references in the markup to the cover SVG
+				# Fix any references in the markup to the cover SVG.
 				for node in dom.xpath("/html/body//img[re:test(@src, '\\.svg$')]"):
 					src = node.get_attr("src")
 					if self.cover_path and self.cover_path.name in src:
 						node.set_attr("src", src.replace(".svg", ".jpg"))
 
-				# Check if there's any MathML to convert from "content" to "presentational" type
+				# Check if there's any MathML to convert from "content" to "presentational" type.
 				# We expect MathML to be the "content" type (versus the "presentational" type).
 				# We use an XSL transform to convert from "content" to "presentational" MathML.
 				# If we start with presentational, then nothing will be changed.
@@ -474,7 +474,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 						else:
 							node.set_attr("role", f"doc-{attr_values[0]}")
 
-				# To get popup footnotes in iBooks, we have to add the `footnote` and `footnotes` semantic
+				# To get popup footnotes in iBooks, we have to add the `footnote` and `footnotes` semantic.
 				# Still required as of 2021-05.
 				# Matching `endnote` will also catch `endnotes`.
 				for node in dom.xpath("/html/body//*[contains(@epub:type, 'endnote')]"):
@@ -484,7 +484,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 					node.add_attr_value("epub:type", "footnote" + plural)
 
-					# Remember to get our custom style selectors that we added, too
+					# Remember to get our custom style selectors that we added, too.
 					if "epub-type-endnote" + plural in (node.get_attr("class") or ""):
 						node.add_attr_value("class", "epub-type-footnote" + plural)
 
