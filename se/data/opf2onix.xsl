@@ -204,52 +204,79 @@
 					<ProductComposition>00</ProductComposition><!-- 00 = Single-component retail product -->
 					<ProductForm>EB</ProductForm> <!-- EB = Digital download and online -->
 					<ProductFormDetail>E101</ProductFormDetail> <!-- E101 = EPUB -->
-					<ProductFormFeature>
-						<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
-						<ProductFormFeatureValue>04</ProductFormFeatureValue> <!-- 04 = Compliant with ePub Accessibility Spec v1.1 -->
-					</ProductFormFeature>
+
+					<xsl:if test="opf:metadata/opf:meta[@property='dcterms:conformsTo' and contains(., 'EPUB Accessibility 1.1')]">
+						<ProductFormFeature>
+							<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
+							<ProductFormFeatureValue>04</ProductFormFeatureValue> <!-- 04 = Compliant with ePub Accessibility Spec v1.1 -->
+						</ProductFormFeature>
+					</xsl:if>
+
 					<ProductFormFeature>
 						<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
 						<ProductFormFeatureValue>10</ProductFormFeatureValue><!-- 10 = No reading system accessibility options disabled -->
 					</ProductFormFeature>
-					<ProductFormFeature>
-						<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
-						<ProductFormFeatureValue>11</ProductFormFeatureValue><!-- 11 = Table of contents navigation -->
-					</ProductFormFeature>
-					<ProductFormFeature>
-						<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
-						<ProductFormFeatureValue>13</ProductFormFeatureValue><!-- 13 = Reading order -->
-					</ProductFormFeature>
-					<ProductFormFeature>
-						<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
-						<ProductFormFeatureValue>14</ProductFormFeatureValue><!-- 14 = Short alternative descriptions -->
-					</ProductFormFeature>
+
+					<xsl:if test="opf:metadata/opf:meta[@property='schema:accessibilityFeature' and text() = 'tableOfContents']">
+						<ProductFormFeature>
+							<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
+							<ProductFormFeatureValue>11</ProductFormFeatureValue><!-- 11 = Table of contents navigation -->
+						</ProductFormFeature>
+					</xsl:if>
+
+					<xsl:if test="opf:metadata/opf:meta[@property='schema:accessibilityFeature' and text() = 'readingOrder']">
+						<ProductFormFeature>
+							<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
+							<ProductFormFeatureValue>13</ProductFormFeatureValue><!-- 13 = Reading order -->
+						</ProductFormFeature>
+					</xsl:if>
+
+					<xsl:if test="opf:metadata/opf:meta[@property='schema:accessibilityFeature' and text() = 'alternativeText']">
+						<ProductFormFeature>
+							<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
+							<ProductFormFeatureValue>14</ProductFormFeatureValue><!-- 14 = Short alternative descriptions -->
+						</ProductFormFeature>
+					</xsl:if>
+
 					<ProductFormFeature>
 						<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
 						<ProductFormFeatureValue>22</ProductFormFeatureValue><!-- 22 = Language tagging provided -->
 					</ProductFormFeature>
-					<ProductFormFeature>
-						<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
-						<ProductFormFeatureValue>52</ProductFormFeatureValue><!-- 52 = All non-decorative content supports reading without sight -->
-					</ProductFormFeature>
-					<ProductFormFeature>
-						<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
-						<ProductFormFeatureValue>82</ProductFormFeatureValue><!-- 82 = WCAG v2.2-->
-					</ProductFormFeature>
-					<ProductFormFeature>
-						<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
-						<ProductFormFeatureValue>85</ProductFormFeatureValue> <!-- 85 = WCAG level AA -->
-					</ProductFormFeature>
-					<ProductFormFeature>
-						<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
-						<ProductFormFeatureValue>96</ProductFormFeatureValue> <!-- 96 = Publisher’s web page for detailed accessibility information -->
-						<ProductFormFeatureDescription>https://standardebooks.org/about/accessibility</ProductFormFeatureDescription>
-					</ProductFormFeature>
-					<ProductFormFeature>
-						<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
-						<ProductFormFeatureValue>99</ProductFormFeatureValue> <!-- 99 = Publisher contact for further accessibility information -->
-						<ProductFormFeatureDescription>standardebooks@googlegroups.com</ProductFormFeatureDescription>
-					</ProductFormFeature>
+
+					<xsl:if test="opf:metadata/opf:meta[@property='schema:accessibilityFeature' and text() = 'alternativeText']">
+						<ProductFormFeature>
+							<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
+							<ProductFormFeatureValue>52</ProductFormFeatureValue><!-- 52 = All non-decorative content supports reading without sight -->
+						</ProductFormFeature>
+					</xsl:if>
+
+					<xsl:if test="opf:metadata/opf:meta[@property='dcterms:conformsTo' and contains(., 'WCAG 2.2')]">
+						<ProductFormFeature>
+							<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
+							<ProductFormFeatureValue>82</ProductFormFeatureValue><!-- 82 = WCAG v2.2-->
+						</ProductFormFeature>
+					</xsl:if>
+
+					<xsl:if test="opf:metadata/opf:meta[@property='dcterms:conformsTo' and contains(., 'Level AA')]">
+						<ProductFormFeature>
+							<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
+							<ProductFormFeatureValue>85</ProductFormFeatureValue> <!-- 85 = WCAG level AA -->
+						</ProductFormFeature>
+					</xsl:if>
+
+					<xsl:if test="opf:metadata/dc:identifier[starts-with(., 'https://standardebooks.org/')]">
+						<ProductFormFeature>
+							<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
+							<ProductFormFeatureValue>96</ProductFormFeatureValue> <!-- 96 = Publisher’s web page for detailed accessibility information -->
+							<ProductFormFeatureDescription>https://standardebooks.org/about/accessibility</ProductFormFeatureDescription>
+						</ProductFormFeature>
+						<ProductFormFeature>
+							<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
+							<ProductFormFeatureValue>99</ProductFormFeatureValue> <!-- 99 = Publisher contact for further accessibility information -->
+							<ProductFormFeatureDescription>https://standardebooks.org/about#editor-in-chief</ProductFormFeatureDescription>
+						</ProductFormFeature>
+					</xsl:if>
+
 					<ProductFormFeature>
 						<ProductFormFeatureType>15</ProductFormFeatureType> <!-- 15 = E-publication format version code -->
 						<ProductFormFeatureValue>101F</ProductFormFeatureValue> <!-- 101F = EPUB 3.3 -->
