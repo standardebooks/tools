@@ -59,6 +59,32 @@ def build_manifest(plain_output: bool) -> int:
 					for node in access_mode_sufficient_nodes:
 						node.remove()
 
+				# If we have MathML in the manifest, add some accessibility metadata while we're here.
+				mathml_accesibility_nodes = se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'MathML']")
+				mathml_described_accesibility_nodes = se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'describedMath']")
+
+				if se_epub.metadata_dom.xpath("/package/manifest/item[contains(@properties, 'mathml')]"):
+					start_nodes = se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'alternativeText']")
+					if not start_nodes:
+						start_nodes = se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessModeSufficient']")
+
+					start_node = start_nodes[0]
+
+					# Add access modes if we have MathML.
+					if not mathml_accesibility_nodes:
+						start_node.lxml_element.addnext(etree.XML("<meta property=\"schema:accessibilityFeature\">MathML</meta>"))
+
+					if not mathml_described_accesibility_nodes:
+						start_node.lxml_element.addnext(etree.XML("<meta property=\"schema:accessibilityFeature\">describedMath</meta>"))
+
+				else:
+					# If we don't have MathML, then remove any access modes that might be there erroneously.
+					for node in mathml_accesibility_nodes:
+						node.remove()
+
+					for node in mathml_described_accesibility_nodes:
+						node.remove()
+
 				with open(se_epub.metadata_file_path, "w", encoding="utf-8") as file:
 					file.write(se.formatting.format_xml(se_epub.metadata_dom.to_string()))
 
