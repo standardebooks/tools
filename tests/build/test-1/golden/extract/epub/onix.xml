@@ -19,10 +19,6 @@
 			<ProductFormDetail>E101</ProductFormDetail>
 			<ProductFormFeature>
 				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>04</ProductFormFeatureValue>
-			</ProductFormFeature>
-			<ProductFormFeature>
-				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>10</ProductFormFeatureValue>
 			</ProductFormFeature>
 			<ProductFormFeature>
@@ -35,23 +31,7 @@
 			</ProductFormFeature>
 			<ProductFormFeature>
 				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>14</ProductFormFeatureValue>
-			</ProductFormFeature>
-			<ProductFormFeature>
-				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>22</ProductFormFeatureValue>
-			</ProductFormFeature>
-			<ProductFormFeature>
-				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>52</ProductFormFeatureValue>
-			</ProductFormFeature>
-			<ProductFormFeature>
-				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>82</ProductFormFeatureValue>
-			</ProductFormFeature>
-			<ProductFormFeature>
-				<ProductFormFeatureType>09</ProductFormFeatureType>
-				<ProductFormFeatureValue>85</ProductFormFeatureValue>
 			</ProductFormFeature>
 			<ProductFormFeature>
 				<ProductFormFeatureType>09</ProductFormFeatureType>
@@ -61,7 +41,7 @@
 			<ProductFormFeature>
 				<ProductFormFeatureType>09</ProductFormFeatureType>
 				<ProductFormFeatureValue>99</ProductFormFeatureValue>
-				<ProductFormFeatureDescription>standardebooks@googlegroups.com</ProductFormFeatureDescription>
+				<ProductFormFeatureDescription>https://standardebooks.org/about#editor-in-chief</ProductFormFeatureDescription>
 			</ProductFormFeature>
 			<ProductFormFeature>
 				<ProductFormFeatureType>15</ProductFormFeatureType>
