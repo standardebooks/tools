@@ -1,3 +1,45 @@
+# 2.9.1
+
+## General
+
+- Return error codes if there are no results in various tools
+
+## se add-file
+
+- Add ignore file. Thanks to Vince Rice
+
+- Add completions
+
+- Add dramatis personae
+
+## se build
+
+- Generate an ONIX file in the compatible epub build
+
+- Add compatibility CSS for ebooks with sequential full-page `<figure>`s
+
+## se build-manifest
+
+- Add some MathML accessibility items automatically
+
+## se create-draft
+
+- Add missing `<time>` element. Thanks to Robin Whittleton
+
+- Remove ONIX file
+
+- Add additional accessibility metadata
+
+## se lint
+
+- Improve y-010
+
+- Add m-078, Nobel Prize string in unexpected format
+
+## se semanticate
+
+- Improve roman numeral handling. Thanks to Vince Rice
+
 # 2.9.0
 
 ## General
