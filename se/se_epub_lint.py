@@ -206,7 +206,6 @@ METADATA
 "m-036", "Variable not replaced with value."
 "m-037", f"Transcription/page scan source link not found. Expected: [xhtml]{href}[/]."
 "m-038", "[attr]schema:accessMode[/] property set to [val]visual[/] in metadata, but no images in ebook."
-"m-039", "[attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata, but no images in ebook."
 "m-040", "Images found in ebook, but no [attr]role[/] property set to [val]wat[/] in metadata for the writer of the alt text."
 "m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
 "m-042", "[xml]<manifest>[/] element does not match expected structure."
@@ -253,6 +252,8 @@ METADATA
 "m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]extended[/], or [val]short[/]."
 "m-084", "[xhtml]<meta property=\"se:url....\">[/] element not containing a URL."
 "m-085", "Non-canonical PGDP URL. Expected [url]https://www.pgdp.net/[/]."
+UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+"m-039", "[attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata, but no images in ebook."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity (like [xhtml]&#913;[/])."
@@ -3253,9 +3254,6 @@ def _lint_image_metadata_checks(self, has_images: bool) -> list:
 	if not has_images:
 		if has_visual_accessmode:
 			messages.append(LintMessage("m-038", "[attr]schema:accessMode[/] property set to [val]visual[/] in metadata, but no images in ebook.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
-
-		if has_accessibility_feature_alt:
-			messages.append(LintMessage("m-039", "[attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata, but no images in ebook.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	return messages
 
