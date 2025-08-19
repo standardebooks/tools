@@ -4,7 +4,6 @@ Defines various typography-related functions
 """
 
 import html
-from typing import Optional, Union
 import unicodedata
 
 import pyphen
@@ -383,7 +382,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 	return xhtml
 
-def hyphenate(xhtml: Union[str, EasyXmlTree], language: Optional[str], ignore_h_tags: bool = False) -> str:
+def hyphenate(xhtml: str | EasyXmlTree, language: str | None, ignore_h_tags: bool = False) -> str:
 	"""
 	Add soft hyphens to a string of XHTML.
 

@@ -15,7 +15,6 @@ from hashlib import sha1
 from html import unescape
 from pathlib import Path
 import importlib.resources
-from typing import Dict, Tuple, List, Optional
 
 from cairosvg import svg2png
 from PIL import Image, ImageOps
@@ -51,7 +50,7 @@ class BuildMessage:
 	Contains information like message text, severity, and the epub filename that generated the message.
 	"""
 
-	def __init__(self, source: str, code: str, text: str, filename: Optional[Path] = None, line: Optional[int] = None, col: Optional[int] = None, submessages: Optional[List] = None):
+	def __init__(self, source: str, code: str, text: str, filename: Path | None = None, line: int | None = None, col: int | None = None, submessages: list | None = None):
 		self.source = source
 		self.code = code
 		self.text = text.strip()
@@ -1264,7 +1263,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 						# Ace outputs a flat list of errors, so here we try to arrange them so that each combination of `(file, error)` has a list of errors below it, instead of repeating the filename and code over and over.
 						# A dict whose keys are a tuple of `(filename, code)` and whose values are an array of `(message, html)`.
-						file_messages: Dict[Tuple[str, str], List[Tuple[str, str]]] = {}
+						file_messages: dict[tuple[str, str], list[tuple[str, str]]] = {}
 
 						for assertion in ace_dom["assertions"]:
 							if assertion["earl:result"]["earl:outcome"] != "pass":

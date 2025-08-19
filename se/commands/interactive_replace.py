@@ -7,7 +7,6 @@ import curses
 from pathlib import Path
 import os
 from math import floor
-from typing import Tuple
 
 import regex
 
@@ -17,7 +16,7 @@ import se
 TAB_SIZE = 8
 
 
-def _get_text_dimensions(text: str) -> Tuple[int, int]:
+def _get_text_dimensions(text: str) -> tuple[int, int]:
 	"""
 	Get the number of rows and columns to fit the given text.
 
@@ -103,7 +102,7 @@ def _print_ui(screen, filepath: Path) -> None:
 
 	screen.refresh()
 
-def _get_center_of_match(text: str, match_start: int, match_end: int, screen_height: int, screen_width: int) -> Tuple[int, int]:
+def _get_center_of_match(text: str, match_start: int, match_end: int, screen_height: int, screen_width: int) -> tuple[int, int]:
 	"""
 	Given the text, the start and end of the match, and the screen dimensions, return a tuple representing the pad x and y that will result in the pad's view being centered on the match.
 	"""

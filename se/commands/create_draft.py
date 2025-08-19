@@ -10,7 +10,6 @@ from argparse import Namespace
 from html import escape
 from pathlib import Path
 import importlib.resources
-from typing import Optional, Tuple, Union, List, Dict
 
 import git
 import regex
@@ -62,7 +61,7 @@ CONTRIBUTOR_BLOCK_TEMPLATE = """<dc:contributor id="CONTRIBUTOR_ID">CONTRIBUTOR_
 
 console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
-def _replace_in_file(file_path: Path, search: Union[str, list], replace: Union[str, list]) -> None:
+def _replace_in_file(file_path: Path, search: str | list, replace: str | list) -> None:
 	"""
 	Helper function to replace in a file.
 	"""
@@ -169,7 +168,7 @@ def _calculate_image_lines(string: str, target_height: int, canvas_width: int) -
 
 	return lines
 
-def _generate_titlepage_svg(title: str, authors: List[str], contributors: dict, title_string: str) -> str:
+def _generate_titlepage_svg(title: str, authors: list[str], contributors: dict, title_string: str) -> str:
 	"""
 	Generate a draft of the titlepage SVG.
 
@@ -268,7 +267,7 @@ def _generate_titlepage_svg(title: str, authors: List[str], contributors: dict, 
 
 	return svg
 
-def _generate_cover_svg(title: str, authors: List[str], title_string: str) -> str:
+def _generate_cover_svg(title: str, authors: list[str], title_string: str) -> str:
 	"""
 	Generate a draft of the cover SVG.
 
@@ -365,7 +364,7 @@ def _generate_cover_svg(title: str, authors: List[str], title_string: str) -> st
 
 	return svg
 
-def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> Tuple[Optional[str], Optional[str]]:
+def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> tuple[str | None, str | None]:
 	"""
 	Given a string, try to see if there's a Wikipedia page entry, and an optional NACOAF entry, for that string.
 
@@ -422,7 +421,7 @@ def _add_name_abbr(contributor: str) -> str:
 
 	return contributor
 
-def _generate_contributor_string(contributors: List[Dict], include_xhtml: bool) -> str:
+def _generate_contributor_string(contributors: list[dict], include_xhtml: bool) -> str:
 	"""
 	Given a list of contributors, generate a contributor string like `Bob Smith, Jane Doe, and Sam Johnson`.
 
@@ -484,7 +483,7 @@ def _generate_contributor_string(contributors: List[Dict], include_xhtml: bool) 
 
 	return output
 
-def _generate_metadata_contributor_xml(contributors: List[Dict], contributor_type: str) -> str:
+def _generate_metadata_contributor_xml(contributors: list[dict], contributor_type: str) -> str:
 	"""
 	Given a list of contributors, generate a metadata XML block.
 
@@ -538,7 +537,7 @@ def _generate_metadata_contributor_xml(contributors: List[Dict], contributor_typ
 
 	return output.strip()
 
-def _generate_titlepage_string(contributors: List[Dict], contributor_type: str) -> str:
+def _generate_titlepage_string(contributors: list[dict], contributor_type: str) -> str:
 	output = _generate_contributor_string(contributors, True)
 	output = regex.sub(r"<a href[^<>]+?>", "<b epub:type=\"z3998:personal-name\">", output)
 	output = output.replace("</a>", "</b>")

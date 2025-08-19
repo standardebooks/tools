@@ -6,12 +6,11 @@ import argparse
 import importlib
 import pkgutil
 import sys
-from typing import List
 
 import se.commands
 
 
-def get_commands() -> List[str]:
+def get_commands() -> list[str]:
 	"""
 	Helper function to generate a list of available commands from all of the submodules in the se.cmd package
 	"""

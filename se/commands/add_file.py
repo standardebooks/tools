@@ -7,7 +7,6 @@ import importlib.resources
 import os
 from pathlib import Path
 import shutil
-from typing import Union
 
 import se
 from se.se_epub import SeEpub
@@ -20,7 +19,7 @@ def _copy_file(filename: str, dest_path: Path, force: bool) -> None:
 		shutil.copyfile(src_path, dest_path)
 
 
-def _replace_languague(file_path: Path, language: Union[str, None]) -> None:
+def _replace_languague(file_path: Path, language: str | None) -> None:
 	if language:
 		with open(file_path, "r+", encoding="utf-8") as file:
 			xhtml = file.read()

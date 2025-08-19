@@ -3,7 +3,6 @@ This module implements the `se build-ids` command.
 """
 
 import argparse
-from typing import List, Tuple
 
 import regex
 from rich.console import Console
@@ -40,7 +39,7 @@ def build_ids(plain_output: bool) -> int:
 				missing_spine_file_list = ", ".join([file.name for file in missing_spine_files])
 				raise se.InvalidSeEbookException(f"Additional files not in spine: {missing_spine_file_list}")
 
-			replacements: List[Tuple[se.easy_xml.EasyXmlElement, str]] = []
+			replacements: list[tuple[se.easy_xml.EasyXmlElement, str]] = []
 			id_counter = 0
 
 			# Get a list of IDs that need to be replaced across the ebook.

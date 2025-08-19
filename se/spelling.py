@@ -3,12 +3,11 @@
 Defines various spelling-related helper functions.
 """
 
-from typing import Set
 import importlib.resources
 import regex
 import se
 
-DICTIONARY: Set[str] = set()	# Store our hyphenation dictionary so we don't re-read the file on every pass.
+DICTIONARY: set[str] = set()	# Store our hyphenation dictionary so we don't re-read the file on every pass.
 
 def get_xhtml_language(xhtml: str) -> str:
 	"""
@@ -29,7 +28,7 @@ def get_xhtml_language(xhtml: str) -> str:
 
 	return language
 
-def initialize_dictionary() -> Set[str]:
+def initialize_dictionary() -> set[str]:
 	"""
 	Initialize the spelling word list dictionary, if we haven't already.
 	"""

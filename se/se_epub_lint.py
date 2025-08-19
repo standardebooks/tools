@@ -12,7 +12,6 @@ import filecmp
 from fnmatch import translate
 import os
 from pathlib import Path
-from typing import Dict, List, Set, Union, Optional
 import importlib.resources
 from unidecode import unidecode
 
@@ -511,14 +510,14 @@ class LintMessage:
 	Contains information like message text, severity, and the epub filename that generated the message.
 	"""
 
-	def __init__(self, code: str, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: Optional[Path] = None, submessages: Optional[Union[List[str], Set[str]]] = None):
+	def __init__(self, code: str, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: Path | None = None, submessages: list[str] | set[str] | None = None):
 		self.code = code
 		self.text = text.strip()
 		self.filename = filename
 		self.message_type = message_type
 
 		if submessages:
-			self.submessages: Union[List[str], Set[str], None] = []
+			self.submessages: list[str] | set[str] | None = []
 			smallest_indent = 1000
 			for submessage in submessages:
 				# Try to flatten leading indentation
@@ -543,12 +542,12 @@ class EbookSection:
 
 	def __init__(self, section_id: str, depth: int, has_header: bool):
 		self.section_id = section_id
-		self.children: List[EbookSection] = []
+		self.children: list[EbookSection] = []
 		self.has_header = has_header
 		# `<h#>` can't go past 6, but we may go deeper in real life like in _Wealth of Nations_ by Adam Smith.
 		self.depth = depth if depth <= 6 else 6
 
-def _build_section_tree(self) -> List[EbookSection]:
+def _build_section_tree(self) -> list[EbookSection]:
 	"""
 	Helper function used in `self.lint()`.
 
@@ -574,7 +573,7 @@ def _build_section_tree(self) -> List[EbookSection]:
 	#	   chapter-1-1-2 (4)
 	#	   chapter-1-1-3 (4)
 	#	   chapter-1-1-4 (4)
-	section_tree: List[EbookSection] = []
+	section_tree: list[EbookSection] = []
 
 	for filename in self.spine_file_paths:
 		dom = self.get_dom(filename)
@@ -610,7 +609,7 @@ def _build_section_tree(self) -> List[EbookSection]:
 
 	return section_tree
 
-def _find_ebook_section(section_id: str, sections: List[EbookSection]) -> Union[EbookSection, None]:
+def _find_ebook_section(section_id: str, sections: list[EbookSection]) -> EbookSection | None:
 	"""
 	Find an ebook section in a tree of sections.
 
@@ -1092,9 +1091,9 @@ def _get_selectors_and_rules (self) -> tuple:
 
 		return (local_css_rules, duplicate_selectors)
 
-	local_css_rules: Dict[str, str] = {} # A dict where key = selector and value = rules.
-	duplicate_selectors: List[str] = []
-	single_selectors: List[str] = []
+	local_css_rules: dict[str, str] = {} # A dict where key = selector and value = rules.
+	duplicate_selectors: list[str] = []
+	single_selectors: list[str] = []
 
 	# `cssutils` doesn't understand `@supports`, but it *does* understand `@media`, so do a replacement here for the purposes of parsing.
 	all_rules = cssutils.parseString(self.local_css.replace("@supports", "@media"), validate=False)
@@ -1192,7 +1191,7 @@ def _update_missing_styles(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 	List of styles used in this file but missing from local CSS.
 	"""
 
-	missing_styles: List[str] = []
+	missing_styles: list[str] = []
 
 	if not local_css["has_elision_style"]:
 		missing_styles += [node.to_tag_string() for node in dom.xpath("/html/body//span[contains(@class, 'elision')]")]
@@ -1751,7 +1750,7 @@ def _lint_xhtml_metadata_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTr
 
 	return messages
 
-def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, ebook_flags: dict, language: str, section_tree: List[EbookSection]) -> list:
+def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, ebook_flags: dict, language: str, section_tree: list[EbookSection]) -> list:
 	"""
 	Process syntax checks on an .xhtml file
 
@@ -2337,7 +2336,7 @@ def _lint_xhtml_syntax_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree
 
 	return messages
 
-def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: Optional[str], ebook_flags: dict, missing_files: list, self) -> tuple:
+def _lint_xhtml_typography_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: str | None, ebook_flags: dict, missing_files: list, self) -> tuple:
 	"""
 	Process typography checks on an `.xhtml` file.
 
@@ -2954,7 +2953,7 @@ def _lint_xhtml_xhtml_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_
 
 	return messages
 
-def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: Optional[str]) -> list:
+def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_contents: str, special_file: str | None) -> list:
 	"""
 	Process typo checks on an `.xhtml` file.
 
@@ -2969,7 +2968,7 @@ def _lint_xhtml_typo_checks(filename: Path, dom: se.easy_xml.EasyXmlTree, file_c
 	"""
 
 	messages = []
-	typos: List[str] = []
+	typos: list[str] = []
 
 	if special_file != "titlepage":
 		# Don't check the titlepage because it has a standard format and may raise false positives
@@ -3273,7 +3272,7 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 
 	# This is a dict with where keys are the path and values are a list of code dicts.
 	# Each code dict has a key "code" which is the actual code, and a key "used" which is a bool indicating whether or not the code has actually been caught in the linting run.
-	ignored_codes: Dict[str, List[Dict]] = {}
+	ignored_codes: dict[str, list[dict]] = {}
 
 	# First, check if we have an `se-lint-ignore.xml` file in the ebook root. If so, parse it. For an example `se-lint-ignore.xml` file, see <semos://1.0.0/2.3>.
 	lint_ignore_path = self.path / "se-lint-ignore.xml"
@@ -3334,7 +3333,7 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 						raise se.InvalidInputException(f"Invalid path in [path][link=file://{lint_ignore_path}]se-lint-ignore.xml[/][/] rule: [path]{path}[/].") from ex
 
 		# Check for unused ignore rules.
-		unused_codes: List[str] = []
+		unused_codes: list[str] = []
 		for path, codes in ignored_codes.items():
 			for code in codes:
 				if not code["used"]:
@@ -3346,7 +3345,7 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 	return messages
 
 
-def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = None) -> list:
+def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None) -> list:
 	"""
 	Check this ebook for some common SE style errors.
 
@@ -3360,19 +3359,19 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	"""
 
 	local_css_path = self.content_path / "css/local.css"
-	messages: List[LintMessage] = []
-	typography_messages: List[LintMessage] = []
+	messages: list[LintMessage] = []
+	typography_messages: list[LintMessage] = []
 	cover_svg_title = ""
 	titlepage_svg_title = ""
-	xhtml_css_classes: Dict[str, int] = {}
-	headings: List[tuple] = []
-	double_spaced_files: List[Path] = []
-	unused_selectors: List[str] = []
-	id_attrs: List[str] = []
-	abbr_elements_requiring_css: List[se.easy_xml.EasyXmlElement] = []
+	xhtml_css_classes: dict[str, int] = {}
+	headings: list[tuple] = []
+	double_spaced_files: list[Path] = []
+	unused_selectors: list[str] = []
+	id_attrs: list[str] = []
+	abbr_elements_requiring_css: list[se.easy_xml.EasyXmlElement] = []
 	glossary_usage = []
 	short_story_count = 0
-	missing_styles: List[str] = []
+	missing_styles: list[str] = []
 	directories_not_url_safe = []
 	files_not_url_safe = []
 	id_values = {}
@@ -3564,7 +3563,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 			missing_files.append("css/se.css")
 
 	# Before we start, walk the files in spine order to build a tree of sections and heading levels.
-	section_tree: List[EbookSection] = _build_section_tree(self)
+	section_tree: list[EbookSection] = _build_section_tree(self)
 	# This block is useful for pretty-printing section_tree should we need to debug it in the future.
 	# def dump(item, char):
 	#	print(f"{char} {item.section_id} ({item.depth}) {item.has_header}")
@@ -3851,7 +3850,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = N
 	if id_attrs:
 		id_attrs = list(set(id_attrs))
 		unused_id_attrs = deepcopy(id_attrs)
-		sorted_filenames: List[str] = []
+		sorted_filenames: list[str] = []
 
 		# `href` links are mostly found in endnotes, so if there's an endnotes file process it first to try to speed things up a little.
 		for file_path in self.content_path.glob("**/*"):

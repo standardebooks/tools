@@ -7,7 +7,6 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import Union, List, Tuple, Optional
 
 from rich.console import Console
 from rich.theme import Theme
@@ -115,7 +114,7 @@ class BuildFailedException(SeException):
 	""" Build failed """
 	code = 17
 
-	def __init__(self, message, messages: Optional[List] = None):
+	def __init__(self, message, messages: list | None = None):
 		super().__init__(message)
 		self.messages = messages if messages else []
 
@@ -151,7 +150,7 @@ def prep_output(message: str, plain_output: bool = False) -> str:
 
 	return message
 
-def print_error(message: Union[SeException, str], verbose: bool = False, is_warning: bool = False, plain_output: bool = False) -> None:
+def print_error(message: SeException | str, verbose: bool = False, is_warning: bool = False, plain_output: bool = False) -> None:
 	"""
 	Helper function to print a colored error message to the console.
 
@@ -205,7 +204,7 @@ def is_positive_integer(value: str) -> int:
 
 	return int_value
 
-def get_target_filenames(targets: list, allowed_extensions: Union[tuple, str]) -> list:
+def get_target_filenames(targets: list, allowed_extensions: tuple | str) -> list:
 	"""
 	Helper function to convert a list of filenames or directories into a list of filenames based on some parameters.
 
@@ -246,7 +245,7 @@ def get_target_filenames(targets: list, allowed_extensions: Union[tuple, str]) -
 
 	return natsorted(list(target_xhtml_filenames), key=lambda x: str(x.name), alg=ns.PATH)
 
-def is_called_from_parallel(return_none=True) -> Union[bool,None]:
+def is_called_from_parallel(return_none=True) -> bool | None:
 	"""
 	Decide if we're being called from GNU parallel.
 
@@ -271,7 +270,7 @@ def is_called_from_parallel(return_none=True) -> Union[bool,None]:
 
 	return None if return_none else False
 
-def get_dom_if_not_ignored(xhtml: str, ignored_types: Union[List[str],None] = None) -> Tuple[bool, Union[None, se.easy_xml.EasyXmlTree]]:
+def get_dom_if_not_ignored(xhtml: str, ignored_types: list[str] | None = None) -> tuple[bool, None | se.easy_xml.EasyXmlTree]:
 	"""
 	Given a string of XHTML, return a DOM tree *only if* the DOM does not contain a top-level `<section>` element with any of the passed semantics.
 

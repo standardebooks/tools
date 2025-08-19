@@ -3,7 +3,6 @@ This module implements the `se find-mismatched-diacritics` command.
 """
 
 import argparse
-from typing import Dict, Tuple
 import urllib.parse
 import unicodedata
 
@@ -26,8 +25,8 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 
 	console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths
 	return_code = 0
-	accented_words: Dict[str, int] = {} # key: word; value: count
-	mismatches: Dict[str, Dict[str, Tuple[int, int]]] = {} # key: base word; value: dict with key: plain word; value: (base count, plain count)
+	accented_words: dict[str, int] = {} # key: word; value: count
+	mismatches: dict[str, dict[str, tuple[int, int]]] = {} # key: base word; value: dict with key: plain word; value: (base count, plain count)
 	target_filenames = se.get_target_filenames(args.targets, ".xhtml")
 	files_xhtml = []
 
@@ -94,7 +93,7 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 
 	# Find accented words with multiple variants.
 	if accented_words:
-		plain_to_accented_words: Dict[str, str] = {} # key: plain word; value: accented word
+		plain_to_accented_words: dict[str, str] = {} # key: plain word; value: accented word
 		for accented_word, count in accented_words.items():
 			plain_word = regex.sub(r"\p{M}", "", unicodedata.normalize("NFKD", accented_word))
 			if plain_word in plain_to_accented_words:

@@ -3,7 +3,6 @@ This module implements the `se find-unusual-characters` command.
 """
 
 import argparse
-from typing import Dict
 import unicodedata
 
 import regex
@@ -25,7 +24,7 @@ def find_unusual_characters(plain_output: bool) -> int:
 
 	console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths
 	return_code = 0
-	unusual_characters: Dict[str, int] = {} # key: word; value: count
+	unusual_characters: dict[str, int] = {} # key: word; value: count
 	target_filenames = se.get_target_filenames(args.targets, ".xhtml")
 
 	# Create a regex for unusual characters.

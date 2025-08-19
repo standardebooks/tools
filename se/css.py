@@ -5,8 +5,6 @@ Defines various CSS classes and helper functions.
 
 from copy import deepcopy
 
-from typing import List
-
 import regex
 import tinycss2
 import tinycss2.color3
@@ -207,7 +205,7 @@ class CssRule():
 		self.selector = selector
 		self.specificity: tuple = (0, 0, 0)
 		self.specificity_number = 0
-		self.declarations: List[CssDeclaration] = []
+		self.declarations: list[CssDeclaration] = []
 
 def parse_rules(css: str):
 	"""

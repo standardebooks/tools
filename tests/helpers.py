@@ -7,7 +7,6 @@ import shutil
 import subprocess
 from pathlib import Path
 import filecmp
-from typing import List, Optional
 import pytest
 
 def run(cmd: str) -> subprocess.CompletedProcess:
@@ -91,7 +90,7 @@ def clean_golden_directory(golden_dir: Path) -> None:
 		elif gfd.is_dir():
 			shutil.rmtree(gfd)
 
-def get_files(file_dir: Path, file_filter: str = "**/*", excluded_files: Optional[List[str]] = None) -> List[Path]:
+def get_files(file_dir: Path, file_filter: str = "**/*", excluded_files: list[str] | None = None) -> list[Path]:
 	"""
 	Return a list of files matching a filter in a given directory.
 

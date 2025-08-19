@@ -11,7 +11,6 @@ import math
 import string
 import unicodedata
 from pathlib import Path
-from typing import Dict, Union, List, Tuple, Optional
 
 import regex
 import roman
@@ -630,7 +629,7 @@ def _format_xml_str(xml: str) -> etree.ElementTree:
 
 	return tree
 
-def _xml_tree_to_string(tree: etree.ElementTree, doctype: Optional[str] = None) -> str:
+def _xml_tree_to_string(tree: etree.ElementTree, doctype: str | None = None) -> str:
 	"""
 	Given an XML etree, return a string representing the etree's XML.
 
@@ -1393,7 +1392,7 @@ def simplify_css(css: str) -> str:
 	return css
 
 
-def generate_title(xhtml: Union[str, EasyXmlTree]) -> str:
+def generate_title(xhtml: str | EasyXmlTree) -> str:
 	"""
 	Generate the value for the <title> tag of a string of XHTML, based on the rules in the SE manual.
 
@@ -1531,7 +1530,7 @@ def generate_colophon_timestamp(timestamp: datetime) -> str:
 
 	return formatted_timestamp
 
-def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> List[EasyXmlElement]:
+def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> list[EasyXmlElement]:
 	"""
 	Helper function for `find_unexpected_ids()`.
 
@@ -1577,7 +1576,7 @@ def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> List[Ea
 
 	return result
 
-def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> List[Tuple[EasyXmlElement, str]]:
+def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tuple[EasyXmlElement, str]]:
 	"""
 	Given a DOM tree, return a list of tuples containing nodes and their expected ID attributes.
 
@@ -1613,7 +1612,7 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> List[Tup
 	endnote_number = 0
 	container_poem_section_id = ""
 	for section in dom_copy.xpath("/html/body//*[@id and (name() = 'section' or name() = 'article' or re:test(@epub:type, '\\bendnote\\b'))]"):
-		counts: Dict[str, int] = {}
+		counts: dict[str, int] = {}
 		is_poem = bool(section.xpath("./ancestor-or-self::*[contains(@epub:type, 'z3998:poem')]"))
 		section_id = section.get_attr("id")
 		allow_header = not is_poem

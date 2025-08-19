@@ -4,7 +4,7 @@ Defines the EasyXmlTree class, which is a convenience wrapper around etree.
 The class exposes some helpful functions like css_select() and xpath().
 """
 
-from typing import Dict, List, Union, Optional, Any
+from typing import Any
 import unicodedata
 
 import regex
@@ -15,8 +15,8 @@ from cssselect import parser
 import se # pylint: disable=cyclic-import
 import se.css # pylint: disable=cyclic-import
 
-CSS_SELECTOR_CACHE: Dict[str, cssselect.CSSSelector] = {}
-CSS_RULES_CACHE: Dict[str, List[se.css.CssRule]] = {}
+CSS_SELECTOR_CACHE: dict[str, cssselect.CSSSelector] = {}
+CSS_RULES_CACHE: dict[str, list[se.css.CssRule]] = {}
 
 def escape_xpath(string: str) -> str:
 	"""
@@ -46,7 +46,7 @@ class EasyXmlTree:
 	This is not a complete XML parser. It only works if namespaces are only declared on the root element.
 	"""
 
-	def __init__(self, xml: Union[str, etree._ElementTree]):
+	def __init__(self, xml: str | etree._ElementTree):
 		self.namespaces = {"re": "http://exslt.org/regular-expressions", "xml": "http://www.w3.org/XML/1998/namespace"} # Enable regular expressions in xpath; `xml` is the default XML namespace.
 		self.default_namespace = None
 
@@ -99,7 +99,7 @@ class EasyXmlTree:
 		Return `Any` to quiet `mypy` for now. Should be upgraded to a real type hint ASAP.
 		"""
 
-		result: List[Union[str, EasyXmlElement, float]] = []
+		result: list[str | EasyXmlElement | float] = []
 
 		try:
 			query_result = self.etree.xpath(selector, namespaces=self.namespaces, smart_strings=False)
@@ -136,7 +136,7 @@ class EasyXmlTree:
 				node.set_attr(f"data-css-{declaration.name}", declaration.value)
 				node.set_attr(f"data-css-{declaration.name}-specificity", str(specificity_number))
 
-	def apply_css(self, css: str, filename: Optional[str] = None):
+	def apply_css(self, css: str, filename: str | None = None):
 		"""
 		Apply a CSS stylesheet to an XHTML tree. The application is naive and should not be expected to be browser-grade. CSS properties on specific elements can be returned using `EasyXmlElement.get_css_property()`.
 
@@ -207,7 +207,7 @@ class EasyXmlElement:
 	Represents an lxml element.
 	"""
 
-	def __init__(self, lxml_element: Union[str, etree._ElementTree], namespaces: Optional[dict[str,str]] = None):
+	def __init__(self, lxml_element: str | etree._ElementTree, namespaces: dict[str,str] | None = None):
 		if namespaces is None:
 			namespaces = {}
 
@@ -286,7 +286,7 @@ class EasyXmlElement:
 
 		return value
 
-	def get_css(self) -> Dict:
+	def get_css(self) -> dict:
 		"""
 		Return a `dict` of CSS properties applied to this node.
 		"""
@@ -377,7 +377,7 @@ class EasyXmlElement:
 		Return `Any` to quiet `mypy` for now. Should be upgraded to a real type hint ASAP.
 		"""
 
-		result: List[Union[str, EasyXmlElement, float]] = []
+		result: list[str | EasyXmlElement | float] = []
 
 		query_result = self.lxml_element.xpath(selector, namespaces=self.namespaces, smart_strings=False)
 		if isinstance(query_result, str|float):
@@ -584,7 +584,7 @@ class EasyXmlElement:
 		self.lxml_element.text = string
 
 	@property
-	def children(self) -> List:
+	def children(self) -> list:
 		"""
 		Return a list representing of this node's direct children.
 		"""
@@ -671,7 +671,7 @@ class EasyXmlElement:
 		self.lxml_element.tail = value
 
 	@property
-	def attrs(self) -> Dict:
+	def attrs(self) -> dict:
 		"""
 		Return a `dict` of attributes for this node.
 		"""
@@ -679,7 +679,7 @@ class EasyXmlElement:
 		return self.lxml_element.attrib
 
 	@attrs.setter
-	def attrs(self, value: Dict) -> None:
+	def attrs(self, value: dict) -> None:
 		"""
 		Return a `dict` of attributes for this node.
 		"""

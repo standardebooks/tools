@@ -6,7 +6,6 @@ Strictly speaking, the generate_toc() function should be a class member of SeEpu
 """
 
 from enum import Enum
-from typing import Tuple, List
 import regex
 import roman
 from lxml import etree
@@ -708,7 +707,7 @@ def strip_notes(text: str) -> str:
 
 	return regex.sub(r"""<a[^>]*?epub:type="noteref"[^>]*?>.*?<\/a>""", "", text)
 
-def process_all_content(self, file_list: list) -> Tuple[list, list]:
+def process_all_content(self, file_list: list) -> tuple[list, list]:
 	"""
 	Analyze the whole content of the project, build and return lists of `toc_items` and landmarks.
 
@@ -720,8 +719,8 @@ def process_all_content(self, file_list: list) -> Tuple[list, list]:
 	A tuple containing the list of Toc items and the list of landmark items.
 	"""
 
-	toc_list: List[TocItem] = []
-	landmarks: List[TocItem] = []
+	toc_list: list[TocItem] = []
+	landmarks: list[TocItem] = []
 
 	# We make two passes through the work, because we need to know how many bodymatter items there are. So we do landmarks first.
 	for textf in file_list:

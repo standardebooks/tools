@@ -11,7 +11,7 @@ import urllib.parse
 import importlib.resources
 
 from html import unescape
-from typing import List, Callable, Dict
+from typing import Callable
 import regex
 from PIL import Image, ImageMath, PngImagePlugin, UnidentifiedImageError
 from PIL.Image import Image as Image_type # Separate import to satisfy type checking
@@ -416,14 +416,14 @@ def _traverse_element(elem: etree.Element, traverser: Callable) -> etree.Element
 	_traverse_children(return_elem, elem, traverser)
 	return return_elem
 
-def _get_properties_from_text_elem(properties: Dict, elem: etree.Element) -> None:
+def _get_properties_from_text_elem(properties: dict, elem: etree.Element) -> None:
 	properties["text"] = elem.text
 	if elem.get("x"):
 		properties["x"] = elem.get("x")
 	if elem.get("y"):
 		properties["y"] = elem.get("y")
 
-def _add_font_to_properties(properties: Dict, fonts: List) -> None:
+def _add_font_to_properties(properties: dict, fonts: list) -> None:
 	# Wire up with actual font object.
 	for font in fonts:
 		face = font["meta"]["font-face"]
@@ -438,7 +438,7 @@ def _add_font_to_properties(properties: Dict, fonts: List) -> None:
 def _float_to_str(float_value: float) -> str:
 	return "{0:.2f}".format(round(float_value, 2)) # pylint: disable=consider-using-f-string
 
-def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: Dict) -> None:
+def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: dict) -> None:
 	# Required properties to make any progress.
 	for key in "x y font text font-size".split():
 		if key not in text_properties:
@@ -488,7 +488,7 @@ def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: Dict) -> Non
 		path_elem.tail = "\n"
 		g_elem.append(path_elem)
 
-def _get_text_width(text_string: str, font: Dict, text_properties: Dict) -> float:
+def _get_text_width(text_string: str, font: dict, text_properties: dict) -> float:
 	last_xy = [0, 0]
 	def callback(_d, _size, delta_x, delta_y):
 		last_xy[0] += delta_x
@@ -496,7 +496,7 @@ def _get_text_width(text_string: str, font: Dict, text_properties: Dict) -> floa
 	_walk_characters(text_string, font, text_properties, last_xy[0], last_xy[1], callback)
 	return last_xy[0]
 
-def _walk_characters(text_string: str, font: Dict, text_properties: Dict, last_x: float, last_y: float, use_glyph_callback: Callable) -> None:
+def _walk_characters(text_string: str, font: dict, text_properties: dict, last_x: float, last_y: float, use_glyph_callback: Callable) -> None:
 	for index, ch0 in enumerate(text_string):
 		ch1 = text_string[index + 1] if index < len(text_string) - 1 else ""
 		ch2 = text_string[index + 2] if index < len(text_string) - 2 else ""
@@ -515,7 +515,7 @@ def _walk_characters(text_string: str, font: Dict, text_properties: Dict, last_x
 		else:
 			_advance_by_glyph(font, text_properties, last_x, last_y, ch0, ch1, use_glyph_callback)
 
-def _advance_by_glyph(font: Dict, text_properties: Dict, _last_x, _last_y, uni: str, uni_next: str, callback: Callable) -> None:
+def _advance_by_glyph(font: dict, text_properties: dict, _last_x, _last_y, uni: str, uni_next: str, callback: Callable) -> None:
 	glyphs = font["glyphs"]
 	glyph = {} # Default, but not `None`, to appease type-checker.
 	if uni in glyphs:
@@ -556,8 +556,8 @@ COMMA_MINUS_REGEX = regex.compile(",-")
 def _clean_comma_minus(d_attrib: str) -> str:
 	return COMMA_MINUS_REGEX.sub("-", d_attrib)
 
-def _d_apply_matrix_one_shape(d_attrib: str, matrix: List) -> str:
-	new_coords: List = []
+def _d_apply_matrix_one_shape(d_attrib: str, matrix: list) -> str:
+	new_coords: list = []
 	matrix_a = 0
 	matrix_b = 0
 	matrix_c = 0
@@ -594,7 +594,7 @@ def _d_apply_matrix_one_shape(d_attrib: str, matrix: List) -> str:
 		ret.append(new_instruction)
 	return "".join(ret) + " "
 
-def _d_apply_matrix(d_attrib: str, matrix: List) -> str:
+def _d_apply_matrix(d_attrib: str, matrix: list) -> str:
 	matches = M_NOTZ_Z_REGEX.findall(d_attrib)
 	shapes = [_d_apply_matrix_one_shape(shape, matrix) for shape in matches if shape]
 	return " ".join(shapes).strip()
@@ -602,7 +602,7 @@ def _d_apply_matrix(d_attrib: str, matrix: List) -> str:
 def _parse_font(font_path: Path) -> dict:
 	with open(font_path, "rt", encoding="utf-8") as font_svg_raw:
 		xml = etree.fromstring(str.encode(font_svg_raw.read()))
-	font: Dict = {"glyphs": {}, "hkern": {}, "meta": {}}
+	font: dict = {"glyphs": {}, "hkern": {}, "meta": {}}
 	glyphs = font["glyphs"]
 	hkern = font["hkern"]
 	meta = font["meta"]

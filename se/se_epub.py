@@ -9,7 +9,6 @@ from datetime import datetime, timezone
 import os
 from pathlib import Path
 import importlib.resources
-from typing import Dict, List, Optional, Tuple, Union
 
 import git
 from lxml import etree
@@ -75,19 +74,19 @@ class SeEpub:
 	local_css = ""
 	is_se_ebook = True
 	_language = None
-	_file_cache: Dict[str, str] = {}
-	_dom_cache: Dict[str, se.easy_xml.EasyXmlTree] = {}
+	_file_cache: dict[str, str] = {}
+	_dom_cache: dict[str, se.easy_xml.EasyXmlTree] = {}
 	_generated_identifier = None
 	_generated_github_repo_url = None
 	_repo = None # git.Repo object
 	_last_commit = None # GitCommit object
-	_endnotes: Optional[List[Endnote]] = None
+	_endnotes: list[Endnote] | None = None
 	_endnotes_path = None
 	_loi_path = None
 	_cover_path = None
-	_spine_file_paths: Optional[List[Path]] = None
+	_spine_file_paths: list[Path] | None = None
 
-	def __init__(self, epub_root_directory: Union[str, Path]):
+	def __init__(self, epub_root_directory: str | Path):
 		try:
 			self.path = Path(epub_root_directory).resolve()
 
@@ -200,7 +199,7 @@ class SeEpub:
 		return self._repo
 
 	@property
-	def last_commit(self) -> Optional[GitCommit]:
+	def last_commit(self) -> GitCommit | None:
 		"""
 		Accessor.
 		"""
@@ -366,7 +365,7 @@ class SeEpub:
 		return self._endnotes
 
 	@property
-	def spine_file_paths(self) -> List[Path]:
+	def spine_file_paths(self) -> list[Path]:
 		"""
 		Reads the spine from the metadata file to obtain a list of content files, in the order wanted for the ToC.
 
@@ -519,7 +518,7 @@ class SeEpub:
 			for img in section.xpath("//img[starts-with(@src, '../images/')]"):
 				img.set_attr("src", se.images.get_data_url(self.content_path / img.get_attr("src").replace("../", "")))
 
-	def recompose(self, output_xhtml5: bool, extra_css_file: Union[Path,None] = None, use_image_files: bool = False) -> str:
+	def recompose(self, output_xhtml5: bool, extra_css_file: Path | None = None, use_image_files: bool = False) -> str:
 		"""
 		Iterate over the XHTML files in this epub and "recompose" them into a single XHTML string representing this ebook.
 
@@ -535,7 +534,7 @@ class SeEpub:
 		# Get some header data: title, core and local CSS.
 		title = self.metadata_dom.xpath("/package/metadata/dc:title/text()")[0]
 		css = ""
-		namespaces: List[str] = []
+		namespaces: list[str] = []
 
 		css_filenames = list(self.content_path.glob("**/*.css"))
 
@@ -1210,7 +1209,7 @@ class SeEpub:
 
 		return se.easy_xml.EasyXmlElement(etree.fromstring(str.encode(manifest_xml)))
 
-	def __add_to_spine(self, spine: List[str], items: List[Path], semantic: str) -> Tuple[List[str], List[Path]]:
+	def __add_to_spine(self, spine: list[str], items: list[Path], semantic: str) -> tuple[list[str], list[Path]]:
 		"""
 		Given a spine and a list of items, add the item to the spine if it contains the specified semantic.
 
@@ -1247,7 +1246,7 @@ class SeEpub:
 		An `EasyXmlElement` representing the spine.
 		"""
 
-		spine: List[str] = []
+		spine: list[str] = []
 		frontmatter = []
 		bodymatter = []
 		backmatter = []
@@ -1364,7 +1363,7 @@ class SeEpub:
 
 		return self.metadata_dom.xpath("/package/metadata/dc:title/text()", True) or "TITLE"
 
-	def get_subtitle(self) -> Union[str, None]:
+	def get_subtitle(self) -> str | None:
 		"""
 		Returns the subtitle of the book from the metadata file, which we assume has already been correctly completed.
 
@@ -1382,7 +1381,7 @@ class SeEpub:
 
 		return subtitle
 
-	def lint(self, skip_lint_ignore: bool, allowed_messages: Optional[List[str]] = None) -> list:
+	def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None) -> list:
 		"""
 		The `self.lint()` function is very big so for readability and maintainability it's broken out to a separate file. Strictly speaking that file can be inlined into this class.
 		"""
@@ -1506,7 +1505,7 @@ class SeEpub:
 		with open(self.endnotes_path, "w", encoding="utf-8") as file:
 			file.write(endnotes_dom.to_string())
 
-	def generate_endnotes(self) -> Tuple[int, int, list]:
+	def generate_endnotes(self) -> tuple[int, int, list]:
 		"""
 		Read the epub spine to regenerate all endnotes in order of appearance, starting from 1.
 
@@ -1528,7 +1527,7 @@ class SeEpub:
 		processed = 0
 		current_note_number = 1
 		notes_changed = 0
-		change_list: List[EndnoteChange] = []
+		change_list: list[EndnoteChange] = []
 
 		for file_path in self.spine_file_paths:
 			dom = self.get_dom(file_path)
@@ -1641,7 +1640,7 @@ class SeEpub:
 						pass
 		return False
 
-	def __process_noteref_link(self, change_list, current_note_number, file_name, link, needs_rewrite, notes_changed) -> Tuple[bool, int]:
+	def __process_noteref_link(self, change_list, current_note_number, file_name, link, needs_rewrite, notes_changed) -> tuple[bool, int]:
 		"""
 		Checks each endnote link to see if the existing anchor needs to be updated with a new number.
 
