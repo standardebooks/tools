@@ -6,7 +6,6 @@ text that includes line number references.
 
 from bisect import bisect_right
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
 
 import regex
 
@@ -19,14 +18,14 @@ class SourceFile:
 	number references to matches.
 	"""
 
-	def __init__(self, filename: Path, contents: str, bounds: Optional[List[Tuple[int, int]]] = None):
+	def __init__(self, filename: Path, contents: str, bounds: list[tuple[int, int]] | None = None):
 		self.filename = filename
 		self.contents = contents
 		self._lines = _ensure_line_bounds(contents, bounds)
 		# For binary searching line number lookups on regex matches
 		self._offsets = [offset for (offset, _) in self._lines]
 
-	def sub(self, pattern: Union[str, regex.Pattern], replacement: str = "") -> 'SourceFile':
+	def sub(self, pattern: str | regex.Pattern, replacement: str = "") -> 'SourceFile':
 		"""
 		Creates a modified view of the source text that retains line number mappings
 		to the original text.
@@ -37,7 +36,7 @@ class SourceFile:
 		contents, bounds = sub_with_line_mapping(self.contents, pattern, replacement, self._lines)
 		return SourceFile(self.filename, contents, bounds)
 
-	def search(self, pattern: Union[str, regex.Pattern]) -> Union[Tuple[str, int], None]:
+	def search(self, pattern: str | regex.Pattern) -> tuple[str, int] | None:
 		"""
 		Search the file contents to find the first regex match, with line number.
 		"""
@@ -50,7 +49,7 @@ class SourceFile:
 
 		return None
 
-	def findall(self, pattern: Union[str, regex.Pattern]) -> List[Tuple[str, int]]:
+	def findall(self, pattern: str | regex.Pattern) -> list[tuple[str, int]]:
 		"""
 		Find all regex matches in the file contents, including line numbers.
 		"""
@@ -70,7 +69,7 @@ class SourceFile:
 		idx = bisect_right(self._offsets, match.start()) - 1
 		return 0 if idx < 0 else self._lines[idx][1]
 
-def sub_with_line_mapping(contents: str, pattern: regex.Pattern, replacement: str = "", bounds: Optional[List[Tuple[int, int]]] = None) -> Tuple[str, List[Tuple[int, int]]]:
+def sub_with_line_mapping(contents: str, pattern: regex.Pattern, replacement: str = "", bounds: list[tuple[int, int]] | None = None) -> tuple[str, list[tuple[int, int]]]:
 	"""
 	Processes the contents string, replacing matched patterns while building an
 	index mapping of byte offsets in the modified output to line numbers of the
@@ -102,7 +101,7 @@ def sub_with_line_mapping(contents: str, pattern: regex.Pattern, replacement: st
 
 	return (pattern.sub(replacement, contents), bounds)
 
-def _ensure_line_bounds(contents: str, bounds: Optional[List[Tuple[int, int]]] = None) -> List[Tuple[int, int]]:
+def _ensure_line_bounds(contents: str, bounds: list[tuple[int, int]] | None = None) -> list[tuple[int, int]]:
 	if bounds:
 		return list(bounds)
 
