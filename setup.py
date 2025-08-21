@@ -98,7 +98,7 @@ setup(
 		"roman==5.0",
 		"selenium==4.31.0",
 		"setuptools==78.1.1",
-		"smartypants==2.0.1",
+		"smartypants==2.0.2",
 		"tinycss2==1.4.0",
 		"titlecase==2.4.1",
 		"unidecode==1.3.8"
