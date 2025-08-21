@@ -105,9 +105,10 @@ INITIALISM_EXCEPTIONS = ["G", # As in `G-Force`.
 			"1D", "2D", "3D", "4D", # As in `n-dimensional`.
 			"MS.", "MSS.", # Manuscript(s).
 			"MM.",	# Messiuers.
-			"κ.τ.λ.", # "etc." in Greek, and we don't match Greek characters.
+			"κ.τ.λ.", # `etc.` in Greek, and we don't match Greek characters.
 			"TV",
-			"AC", "DC" # Electrical current.
+			"AC", "DC", # Electrical current.
+			"AFL", "CIO", "IBM", "UEW" # 20th-century brand marks stylized without periods.
 ]
 
 """
