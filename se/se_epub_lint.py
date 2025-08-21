@@ -701,7 +701,7 @@ def _lint_metadata_checks(self) -> list:
 		# Have to use `concat()` for the regex because it's not possible to escape both `'` and `"` in the same string in xpath 1.0. See <https://stackoverflow.com/a/57639969>.
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']/*[re:test(., concat('([', \"'\", '\"]|\\-\\-|\\s-\\s)'))]")
 		if nodes:
-			messages.append(LintMessage("m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+			messages.append(LintMessage("m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 		# Is the first instance of the author's last name a hyperlink in the metadata?
 		authors = self.metadata_dom.xpath("/package/metadata/dc:creator")
@@ -716,7 +716,7 @@ def _lint_metadata_checks(self) -> list:
 				# Use `\\b` in the regex to avoid matching words like `Dickensian`.
 				nodes = metadata_dom_with_parsed_long_description.xpath(f"/package/metadata/meta[@property='se:long-description']/p[.//text()[re:test(., '\\b{regex.escape(author_last_name)}\\b', 'i') and not(./ancestor-or-self::i or ./ancestor-or-self::a) and not((./ancestor-or-self::p/preceding-sibling::p//a|./preceding-sibling::a)[re:test(@href, '^https://standardebooks\\.org/.+') and re:test(., '\\b{regex.escape(author_last_name)}\\b', 'i')])]]")
 				if nodes:
-					messages.append(LintMessage("m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not linked to their S.E. author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+					messages.append(LintMessage("m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not linked to their S.E. author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 		# Did we mention an SE book in the long description, but without italics?
 		# Only match if the title appears to contain an uppercase letter. This prevents matches on a non-title link like `<a href="...">short stories</a>`. Xpath 1.0 doesn't support Unicode character classes like `\p{Letter}` so we do an additional filtering step.
@@ -732,21 +732,21 @@ def _lint_metadata_checks(self) -> list:
 
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']//a[not(re:test(@href, '^https?://standardebooks\\.org'))]")
 		if nodes:
-			messages.append(LintMessage("m-067", "Non-S.E. link in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+			messages.append(LintMessage("m-067", "Non-S.E. link in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']/p[re:test(., 'Nobel prize\\b') or re:test(., 'Nobel Prize for\\b')]")
 		if nodes:
-			messages.append(LintMessage("m-078", "Nobel Prize strings must read [text]Nobel Prize in ...[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+			messages.append(LintMessage("m-078", "Nobel Prize strings must read [text]Nobel Prize in ...[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 		# `xml:lang` is correct for the rest of the publication, but should be lang in the long description.
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']//*[@xml:lang]")
 		if nodes:
-			messages.append(LintMessage("m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+			messages.append(LintMessage("m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 		# `US` -> `U.S.`
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']/*[re:test(., '\\bUS\\b')]")
 		if nodes:
-			messages.append(LintMessage("t-047", "[text]US[/] should be [text]U.S.[/]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+			messages.append(LintMessage("t-047", "[text]US[/] should be [text]U.S.[/]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 		# Check for apostrophes outside links in long description.
 		matches = regex.findall(r"</a>’s", long_description)
@@ -929,7 +929,7 @@ def _lint_metadata_checks(self) -> list:
 
 	nodes = self.metadata_dom.xpath("/package/metadata/*[re:test(., '^https?://id\\.loc\\.gov/authorities/(names/)?n[^/]+$') and not(re:test(., '^http://id\\.loc\\.gov/authorities/names/[^/\\.]+$'))]")
 	if nodes:
-		messages.append(LintMessage("m-008", "Non-canonical Library of Congress Name Authority URI. Expected [url]http://id.loc.gov/authorities/names/<IDENTIFIER>[/]. Hint: Must be [text]http[/] and without file extension.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-008", "Non-canonical Library of Congress Name Authority URI. Expected [url]http://id.loc.gov/authorities/names/<IDENTIFIER>[/]. Hint: Must be [text]http[/] and without file extension.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	if self.metadata_dom.xpath("/package/metadata/dc:description[text()!='DESCRIPTION' and re:test(., '[^\\.”]$')]"):
 		messages.append(LintMessage("m-055", "[xml]dc:description[/] does not end with a period.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
@@ -962,11 +962,11 @@ def _lint_metadata_checks(self) -> list:
 
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='term' and re:test(., '^https?://')]")
 	if nodes:
-		messages.append(LintMessage("m-066", "Subject identifiers must be IDs and not URLs.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-066", "Subject identifiers must be IDs and not URLs.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[re:test(@property, '^se:url\\.') and not(re:test(., 'https?://'))]")
 	if nodes:
-		messages.append(LintMessage("m-084", "[xhtml]<meta property=\"se:url....\">[/] element not containing a URL.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("m-084", "[xhtml]<meta property=\"se:url....\">[/] element not containing a URL.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	return messages
 
@@ -1484,7 +1484,7 @@ def _lint_special_file_checks(self, source_file: se.lint.SourceFile, dom: se.eas
 		# A range of years for published should be `published between X and Y`.
 		nodes = dom.xpath(f"/html/body//p[re:test(., '\\b(published|completed) (in|between|circa) [0-9]+{se.WORD_JOINER}?–{se.WORD_JOINER}?[0-9]+\\b')]")
 		if nodes:
-			messages.append(LintMessage("m-081", "When a work was published or completed between a range of years, the text must be [text]between year1 and year2[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+			messages.append(LintMessage("m-081", "When a work was published or completed between a range of years, the text must be [text]between year1 and year2[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 		# Check for wrong grammar filled in from template.
 		nodes = dom.xpath("/html/body//a[starts-with(@href, 'https://books.google.com/') or starts-with(@href, 'https://www.google.com/books/')][(preceding-sibling::text()[normalize-space(.)][1])[re:test(., '\\bthe$')]]")
@@ -1527,11 +1527,11 @@ def _lint_special_file_checks(self, source_file: se.lint.SourceFile, dom: se.eas
 		# In this xpath, we select the 2nd node following `<br/>`, because the node following `<br/>` is white space.
 		nodes = dom.xpath("/html/body//p[./text()[re:test(., '\\bby$') and following-sibling::*[1][name() = 'br' and following-sibling::node()[2][name() != 'a' and name() != 'b']]]]")
 		if nodes:
-			messages.append(LintMessage("s-106", "Proper names in the colophon must be wrapped in [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], unless anonymous, in which case [xhtml]<b>[/].", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+			messages.append(LintMessage("s-106", "Proper names in the colophon must be wrapped in [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], unless anonymous, in which case [xhtml]<b>[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 		nodes = dom.xpath("/html/body//p/b[not(@epub:type) and text() != 'An Unknown Artist' and text() != 'An Anonymous Volunteer']")
 		if nodes:
-			messages.append(LintMessage("s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+			messages.append(LintMessage("s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# If we're in the imprint, are the sources represented correctly?
 	# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
@@ -2211,7 +2211,7 @@ def _lint_xhtml_syntax_checks(self, source_file: se.lint.SourceFile, dom: se.eas
 	# Check for header elements with both a `title` and `ordinal` semantics.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][contains(@epub:type, 'title') and contains(@epub:type, 'ordinal')]")
 	if nodes:
-		messages.append(LintMessage("s-104", "Header element should be either [val]title[/] or [val]ordinal[/], not both.", se.MESSAGE_TYPE_ERROR, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("s-104", "Header element should be either [val]title[/] or [val]ordinal[/], not both.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for `<body>` element without child `<section>` or `<article>`. Ignore the ToC because it has a unique structure.
 	nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and re:test(@epub:type, '\\b(toc|loi)\\b'))])]")
@@ -3256,7 +3256,7 @@ def _lint_xhtml_typo_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.Ea
 	# Exclude nodes that have `@xml:lang` or are graphemes, phonemes, or roman numerals.
 	nodes = dom.xpath("/html/body//*[re:test(., '\\s[b-xz]\\s') and not(ancestor-or-self::*[re:test(@xml:lang, '^(?!en-).')]) and not(descendant::*[re:test(., '\\b[b-xz]\\b')]) and not(descendant::i[re:test(@epub:type, 'z3998:(grapheme|phoneme|roman)')])]")
 	if nodes:
-		messages.append(LintMessage("y-035", "Possible typo: single letter. Hints: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [xhtml]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?", se.MESSAGE_TYPE_WARNING, filename, [node.to_string() for node in nodes]))
+		messages.append(LintMessage("y-035", "Possible typo: single letter. Hints: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [xhtml]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	return messages
 
