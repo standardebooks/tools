@@ -522,7 +522,7 @@ class LintSubmessage:
 		return self.text
 
 	@classmethod
-	def from_matches(cls, matches: list[(str, int)]) -> list['LintSubmessage']:
+	def from_matches(cls, matches: list[tuple[str, int]]) -> list['LintSubmessage']:
 		"""Create a list of LintSubmessage objects from search match tuples."""
 		return [cls(match_text, line_num) for match_text, line_num in matches]
 
@@ -988,7 +988,7 @@ def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 	search_regex = r"^https?://[^/]+[^/]$"
 	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
 	if nodes:
-		messages.append(LintMessage("m-003", "Bare URL without trailing slash.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(node.to_string() for node in nodes)))
+		messages.append(LintMessage("m-003", "Bare URL without trailing slash.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	search_regex = r"^https?://(.+\.)?fadedpage\.com/"
 	expected_regex = r"^https://www\.fadedpage\.com/showbook\.php\?pid=[a-zA-Z0-9]+$"
@@ -1381,7 +1381,7 @@ def _lint_svg_checks(self, source_file: se.lint.SourceFile, svg_dom: se.easy_xml
 		if svg_dom.xpath("/svg[@height or @width]"):
 			messages.append(LintMessage("x-005", "Illegal [xml]height[/] or [xml]width[/] attribute on root [xml]<svg>[/] element. Size SVGs using the [xml]viewBox[/] attribute only.", se.MESSAGE_TYPE_ERROR, filename))
 
-	nodes = source_file.xpath("/svg[not(@viewBox)]")
+	nodes = svg_dom.xpath("/svg[not(@viewBox)]")
 	if nodes:
 		messages.append(LintMessage("x-006", "SVG root without [xml]viewBox[/] attribute. Hint: [xml]viewBox[/] must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
