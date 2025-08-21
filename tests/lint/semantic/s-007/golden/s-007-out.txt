@@ -8,13 +8,13 @@ child.
                 
                 Fail 3, blockquote has no &lt;p&gt;.
         </blockquote>
- 30:    <dd>Fail 4, dd has no &lt;p&gt.</dd>
+ 30:    <dd>Fail 4, dd has no &lt;p&gt;.</dd>
  32:    <dd>
-                        <i>Fail 5, dd has no &lt;p&gt.</i>
+                        <i>Fail 5, dd has no &lt;p&gt;.</i>
                 </dd>
- 46:    <li>Fail 6, li has no &lt;p&gt.</li>
+ 46:    <li>Fail 6, li has no &lt;p&gt;.</li>
  47:    <li>
-                        <i>Fail 7, li has italics but no &lt;p&gt.</i>
+                        <i>Fail 7, li has italics but no &lt;p&gt;.</i>
                 </li>
  50:    <li>
                         

@@ -1,12 +1,13 @@
 m-006 [Error] colophon.xhtml Non-canonical Project Gutenberg URL. Expected 
 `https://www.gutenberg.org/ebooks/<BOOK-ID>` or `https://www.gutenberg.org/`.
-        <a 
+ 24:    <a 
 href="https://www.gutenberg.org/cache/epub/2701/pg2701-images.html">Project 
 Gutenberg</a>
 m-006 [Error] content.opf Non-canonical Project Gutenberg URL. Expected 
 `https://www.gutenberg.org/ebooks/<BOOK-ID>` or `https://www.gutenberg.org/`.
-        <dc:source>https://www.gutenberg.org/cache/epub/2701/pg2701-images.html<
-/dc:source>
+ 43:    
+<dc:source>https://www.gutenberg.org/cache/epub/2701/pg2701-images.html</dc:sour
+ce>
 m-037 [Error] imprint.xhtml Transcription/page scan source link not found. 
 Expected: `<a 
 href="https://www.gutenberg.org/cache/epub/2701/pg2701-images.html">Project 
