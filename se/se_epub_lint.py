@@ -636,6 +636,11 @@ class LintSubmessage:
 		"""Create a list of LintSubmessage objects from xpath node tag matches."""
 		return [cls(node.to_tag_string(), node.sourceline) for node in nodes]
 
+	@classmethod
+	def from_node_text(cls, nodes: list) -> list['LintSubmessage']:
+		"""Create a list of LintSubmessage objects from xpath node text values."""
+		return [cls(node.inner_text(), node.sourceline) for node in nodes]
+
 class LintMessage:
 	"""
 	An object representing an output message for the lint function.
@@ -959,16 +964,21 @@ def _lint_metadata_checks(self) -> list:
 
 	# Check for illegal `se:subject` values.
 	illegal_subjects = []
-	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']/text()")
+	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']")
 	if nodes:
+		node_string_values = []
+
 		for node in nodes:
-			if node not in SE_GENRES and node != "TAG":
+			node_inner_text = node.inner_text()
+			node_string_values.append(node_inner_text)
+
+			if node_inner_text not in SE_GENRES and node_inner_text != "TAG":
 				illegal_subjects.append(node)
 
 		if illegal_subjects:
-			messages.append(LintMessage("m-020", "Illegal value for [xml]<meta property=\"se:subject\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, illegal_subjects))
+			messages.append(LintMessage("m-020", "Illegal value for [xml]<meta property=\"se:subject\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_node_text(illegal_subjects)))
 
-		if sorted(nodes) != nodes:
+		if sorted(node_string_values) != node_string_values:
 			messages.append(LintMessage("m-053", "[xml]<meta property=\"se:subject\">[/] elements not in alphabetical order.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	elif self.is_se_ebook:
