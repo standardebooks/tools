@@ -1518,27 +1518,26 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	source_links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
 
 	if self.is_se_ebook and special_file in ("colophon", "imprint"):
-		if len(source_links) <= 2:
-			# Check that links back to sources are represented correctly.
-			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust\\.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
-			if nodes:
-				messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		# Check that links back to sources are represented correctly.
+		nodes = dom.xpath("/html/body//a[re:test(@href, '^https://[^\"]*?hathitrust\\.org') and re:test(text(), '[Hh]athi') and not(text()='HathiTrust Digital Library')]")
+		if nodes:
+			messages.append(LintMessage("m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
-			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.pgdp\\.net') and text()!='Distributed Proofreaders']")
-			if nodes:
-				messages.append(LintMessage("m-071", "DP link must be exactly [text]Distributed Proofreaders[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.pgdp\\.net') and text()!='Distributed Proofreaders']")
+		if nodes:
+			messages.append(LintMessage("m-071", "DP link must be exactly [text]Distributed Proofreaders[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
-			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.pgdp\\.org/ols\\b') and text()!='Distributed Proofreaders Open Library System']")
-			if nodes:
-				messages.append(LintMessage("m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.pgdp\\.org/ols\\b') and text()!='Distributed Proofreaders Open Library System']")
+		if nodes:
+			messages.append(LintMessage("m-072", "DP OLS link must be exactly [text]Distributed Proofreaders Open Library System[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
-			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.pgdpcanada\\.net') and text()!='Distributed Proofreaders Canada']")
-			if nodes:
-				messages.append(LintMessage("m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.pgdpcanada\\.net') and text()!='Distributed Proofreaders Canada']")
+		if nodes:
+			messages.append(LintMessage("m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
-			nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.fadedpage\\.com') and not(text()='Faded Page')]")
-			if nodes:
-				messages.append(LintMessage("m-082", "Faded Page link text must be exactly [text]Faded Page[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		nodes = dom.xpath("/html/body//a[re:test(@href, '^https://www\\.fadedpage\\.com') and not(text()='Faded Page')]")
+		if nodes:
+			messages.append(LintMessage("m-082", "Faded Page link text must be exactly [text]Faded Page[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 		nodes = dom.xpath("/html/body//p[re:test(., '\\ba transcription\\b') and ./a[contains(@href, '#transcriptions')]]")
 		if nodes:
