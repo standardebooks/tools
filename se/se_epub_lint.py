@@ -1170,7 +1170,8 @@ def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 		messages.append(LintMessage("m-002", "Non-canonical Project Gutenberg Canada URL. Expected [url]https://gutenberg.ca/<PATH>/<FILENAME>.html[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# `pgdp.org` is their test/dev site, `pgdp.net` is the actual domain we want.
-	search_regex = r"^https?://(.+\.)?pgdp\.(net|org)/"
+	# Exclude URLs ending in the `/ols/` as that was PGDP's old Open Library System, which is still the canonical source of some page scans.
+	search_regex = r"^https?://(.+\.)?pgdp\.(net|org)/(?!ols/)"
 	expected_regex = r"^https://www\.pgdp.net/.*$"
 	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and not(re:test(., '{expected_regex}'))] | /html/body//a[re:test(@href, '{search_regex}') and not(re:test(@href, '{expected_regex}'))]")
 	if nodes:
