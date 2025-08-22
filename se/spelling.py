@@ -384,6 +384,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])oubriquet", r"\1obriquet", xhtml)			# soubriquet -> sobriquet
 	xhtml = regex.sub(r"\bIngulf", r"Engulf", xhtml)				# Ingulf -> Engulf
 	xhtml = regex.sub(r"\bingulf", r"engulf", xhtml)				# ingulf -> engulf
+	xhtml = regex.sub(r"\b([Nn])ick-?nack", r"knickknack", xhtml)			# nicknack -> knickknack
 
         # Remove elision quotes from words that no longer need them.
 	xhtml = regex.sub(r"’([Bb])us\b", r"\1us", xhtml)				# ’bus -> bus
