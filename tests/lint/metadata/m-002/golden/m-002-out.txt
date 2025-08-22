@@ -1,7 +1,7 @@
 m-002 [Error] colophon.xhtml Non-canonical Project Gutenberg Canada URL. 
 Expected `https://gutenberg.ca/<PATH>/<FILENAME>.html`.
- 24:    <a href="https://www.gutenberg.ca/books/1234">Project Gutenberg 
+ Line 24:       <a href="https://www.gutenberg.ca/books/1234">Project Gutenberg 
 Canada</a>
 m-002 [Error] content.opf Non-canonical Project Gutenberg Canada URL. Expected 
 `https://gutenberg.ca/<PATH>/<FILENAME>.html`.
- 43:    <dc:source>https://www.gutenberg.ca/books/1234</dc:source>
+ Line 43:       <dc:source>https://www.gutenberg.ca/books/1234</dc:source>

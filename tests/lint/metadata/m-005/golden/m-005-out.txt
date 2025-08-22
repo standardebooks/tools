@@ -1,7 +1,7 @@
 m-005 [Error] colophon.xhtml Non-canonical HathiTrust URL. Expected 
 `https://catalog.hathitrust.org/Record/<BOOK-ID>`.
- 26:    <a href="https://hdl.handle.net/record/1234">HathiTrust Digital 
+ Line 26:       <a href="https://hdl.handle.net/record/1234">HathiTrust Digital 
 Library</a>
 m-005 [Error] content.opf Non-canonical HathiTrust URL. Expected 
 `https://catalog.hathitrust.org/Record/<BOOK-ID>`.
- 44:    <dc:source>https://hdl.handle.net/record/1234</dc:source>
+ Line 44:       <dc:source>https://hdl.handle.net/record/1234</dc:source>

@@ -1,7 +1,7 @@
 y-018 [Manual Review] chapter-1.xhtml Possible typo: `‘` followed by space.
- 16:    <p>A temperature sees a level as a shawlless pond. “ ‘ One cannot 
-separate governments from utile pancakes.’ Some posit the flaunty pimple to be 
-less than orphan.”</p>
- 18:    <p>“ ‘ A chord is a nifty office.’ ” A permission is a sense's yacht. 
-This is not to discredit the idea that one cannot separate burmas from hurtful 
-kitchens.</p>
+ Line 16:       <p>A temperature sees a level as a shawlless pond. “ ‘ One 
+cannot separate governments from utile pancakes.’ Some posit the flaunty pimple 
+to be less than orphan.”</p>
+ Line 18:       <p>“ ‘ A chord is a nifty office.’ ” A permission is a sense's 
+yacht. This is not to discredit the idea that one cannot separate burmas from 
+hurtful kitchens.</p>

@@ -1,26 +1,29 @@
 t-005 [Manual Review] chapter-1.xhtml Dialog without ending comma.
- 55:    fay” she said
+ Line 55:       fay” she said
 y-031 [Manual Review] chapter-1.xhtml Possible typo: dialog tag missing 
 punctuation.
- 39:    <p>“Good boy,” said old “Kiowa.” “You’d better go get some supper.”</p>
- 41:    <p>He pronounced the inhibition lengthily and sonorously, so that the 
-“not” sounded like “n‑o‑o‑o‑t!”</p>
- 53:    <p>“Ah well,” he said “then let’s take off this little frock.”</p>
- 55:    <p>The sharp reprimand was not lost upon her, and in time it came to 
-pass that for “fay” she said “succeed.”</p>
- 57:    <p>Catching, however, two words which sounded like the English “White” 
-and “Red,” I said “Yaw” after the last.</p>
- 59:    <p>She hadn’t much reserve of patience, and at the end of the second 
-game, when Ella Stowbody sniffily asked her, “Are you going to send to 
+ Line 39:       <p>“Good boy,” said old “Kiowa.” “You’d better go get some 
+supper.”</p>
+ Line 41:       <p>He pronounced the inhibition lengthily and sonorously, so 
+that the “not” sounded like “n‑o‑o‑o‑t!”</p>
+ Line 53:       <p>“Ah well,” he said “then let’s take off this little 
+frock.”</p>
+ Line 55:       <p>The sharp reprimand was not lost upon her, and in time it 
+came to pass that for “fay” she said “succeed.”</p>
+ Line 57:       <p>Catching, however, two words which sounded like the English 
+“White” and “Red,” I said “Yaw” after the last.</p>
+ Line 59:       <p>She hadn’t much reserve of patience, and at the end of the 
+second game, when Ella Stowbody sniffily asked her, “Are you going to send to 
 Minneapolis for your dress for the next soirée—heard you were,” Carol said 
 “Don’t know yet” with unnecessary sharpness.</p>
- 61:    <p>“Keep away from women and horses and, and—” he stopped “—eagles, 
-Billy.”</p>
- 63:    <p>When they told her to respond with “Amen,” she responded “Amen.”</p>
- 65:    <p>When told to “look closely,” I said “why?”</p>
- 67:    <p>“Forget that nonsense,” Andy exclaimed “forcefully.”</p>
- 70:    <p>“A chary enquiry is a ghost of the mind,” said Billy adroitly 
+ Line 61:       <p>“Keep away from women and horses and, and—” he stopped 
+“—eagles, Billy.”</p>
+ Line 63:       <p>When they told her to respond with “Amen,” she responded 
+“Amen.”</p>
+ Line 65:       <p>When told to “look closely,” I said “why?”</p>
+ Line 67:       <p>“Forget that nonsense,” Andy exclaimed “forcefully.”</p>
+ Line 70:       <p>“A chary enquiry is a ghost of the mind,” said Billy adroitly
 “unfortunately, that is wrong; on the contrary, their bathtub was, in this 
 moment, a petite underwear.”</p>
- 72:    <p>“Liars are perjured quills,” whispered someone sweetly “a bathroom is
-a lip's coal.”</p>
+ Line 72:       <p>“Liars are perjured quills,” whispered someone sweetly “a 
+bathroom is a lip's coal.”</p>

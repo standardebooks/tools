@@ -1,12 +1,14 @@
 t-057 [Manual Review] chapter-1.xhtml `<p>` starting with lowercase letter. 
 Hint: `<p>` that continues text after a `<blockquote>` requires the `continued` 
 class; and use `<br/>` to split one clause over many lines.
- 14:    <p><a href="https://standardebooks.org/">standardebooks.org</a></p>
+ Line 14:       <p><a 
+href="https://standardebooks.org/">standardebooks.org</a></p>
 y-003 [Manual Review] chapter-1.xhtml Possible typo: paragraph missing ending 
 punctuation.
- 12:    <p><a href="https://www.example.org/">Testing</a></p>
- 14:    <p><a href="https://standardebooks.org/">standardebooks.org</a></p>
+ Line 12:       <p><a href="https://www.example.org/">Testing</a></p>
+ Line 14:       <p><a 
+href="https://standardebooks.org/">standardebooks.org</a></p>
 y-034 [Manual Review] chapter-1.xhtml Possible typo: `.` embedded in word. Hint:
 Abbreviations must be in an `<abbr>` element.
- 20:    <p>“Why yes, so they are! But I thought the season.for apple blossom was
-over now,” said the historian.</p>
+ Line 20:       <p>“Why yes, so they are! But I thought the season.for apple 
+blossom was over now,” said the historian.</p>

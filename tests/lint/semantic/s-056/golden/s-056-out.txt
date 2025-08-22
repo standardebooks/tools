@@ -1,4 +1,4 @@
 x-018 [Error] content.opf Unused `id` attribute.
         noteref-2
 s-056 [Error] endnotes.xhtml Last `<p>` child of endnote missing backlink.
- 17:    <li id="note-2" epub:type="endnote">
+ Line 17:       <li id="note-2" epub:type="endnote">

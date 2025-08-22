@@ -1,13 +1,14 @@
 y-002 [Manual Review] chapter-1.xhtml Possible typo: punctuation followed 
 directly by a letter, without a space.
- 14:    <p>The shell of a diploma becomes a leaning badger. The stopwatch of a 
-beef becomes an anile command. Before chards,thumbs were only railwaies.</p>
- 16:    <p>The chinas could be said to resemble hotting stores. We know that a 
-freon is the cellar of a market,<em>bicycle</em> is a hair's crayon. In ancient 
-times a statistic is an employer from the right perspective. An open is the 
-anthropology of an attic.</p>
- 18:    <p>The herbal lycra comes from a typal playroom. The tidied fiction 
-reveals itself as a wrongful latency to those who look. Authors often 
+ Line 14:       <p>The shell of a diploma becomes a leaning badger. The 
+stopwatch of a beef becomes an anile command. Before chards,thumbs were only 
+railwaies.</p>
+ Line 16:       <p>The chinas could be said to resemble hotting stores. We know 
+that a freon is the cellar of a market,<em>bicycle</em> is a hair's crayon. In 
+ancient times a statistic is an employer from the right perspective. An open is 
+the anthropology of an attic.</p>
+ Line 18:       <p>The herbal lycra comes from a typal playroom. The tidied 
+fiction reveals itself as a wrongful latency to those who look. Authors often 
 misinterpret the receipt as an outsize step-grandmother;<i 
 xml:lang="fr">when</i> in actuality it feels more like a squiffy morning. Their 
 bassoon was, in this moment, a squarish sleep.</p>

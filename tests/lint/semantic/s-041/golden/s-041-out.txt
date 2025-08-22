@@ -1,7 +1,7 @@
 s-004 [Error] chapter-1.xhtml `img` element missing `alt` attribute.
- 11:    <img>
- 17:    <img>
- 21:    <img>
+ Line 11:       <img>
+ Line 17:       <img>
+ Line 21:       <img>
 s-041 [Manual Review] chapter-1.xhtml The text in `#f-5`'s LoI entry does not 
 match either its `<figcaption>` element or its `<img>` `alt` attribute.
 s-041 [Manual Review] chapter-1.xhtml The text in `#f-6`'s LoI entry does not 

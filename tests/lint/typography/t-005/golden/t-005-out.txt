@@ -1,2 +1,2 @@
 t-005 [Manual Review] chapter-1.xhtml Dialog without ending comma.
- 12:    ello” he said
+ Line 12:       ello” he said

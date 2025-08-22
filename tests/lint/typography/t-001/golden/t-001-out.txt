@@ -1,6 +1,6 @@
 c-014 [Manual Review] chapter-1.xhtml `<table>` element without explicit 
 margins. Most tables need `margin: 1em;` or `margin: 1em auto 1em auto;`.
- 29:    <table>
+ Line 29:       <table>
                 <tbody>
                         <tr>
                                 <td/>

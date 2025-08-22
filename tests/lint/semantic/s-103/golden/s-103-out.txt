@@ -1,20 +1,20 @@
 s-103 [Manual Review] chapter-1.xhtml Probable missing semantics for a roman I 
 numeral.
- 9:     Charles I’s
- 10:    Edward I’s
- 11:    George I’s
- 12:    Henry I’s
- 13:    James I’s
- 14:    William I’s
- 15:    King Charles I
- 16:    King Edward I
- 17:    King George I
- 18:    King Henry I
- 19:    King James I
- 20:    King William I
- 21:    King Charles I
- 22:    King Edward I
- 23:    King George I
- 24:    King Henry I
- 25:    King James I
- 26:    King William I
+ Line 9:        Charles I’s
+ Line 10:       Edward I’s
+ Line 11:       George I’s
+ Line 12:       Henry I’s
+ Line 13:       James I’s
+ Line 14:       William I’s
+ Line 15:       King Charles I
+ Line 16:       King Edward I
+ Line 17:       King George I
+ Line 18:       King Henry I
+ Line 19:       King James I
+ Line 20:       King William I
+ Line 21:       King Charles I
+ Line 22:       King Edward I
+ Line 23:       King George I
+ Line 24:       King Henry I
+ Line 25:       King James I
+ Line 26:       King William I

@@ -2,10 +2,10 @@ y-007 [Manual Review] chapter-1.xhtml Possible typo: `‘` not within `“`. Hin
 Should `‘` be replaced with `“`? Is there a missing closing quote? Is this a 
 nested quote that should be preceded by `“`? Are quotes in close proximity 
 correctly closed?
- 14:    Their pasta was, in this moment, a ‘gamesome bubble.’ Unfortunately, 
-that is wrong; on the contrary, an hourly farmer's kitten comes with it the 
-thought that the musty crate is a latex. The friction of an anthropology becomes
-an acock business.
- 16:    “To be more specific, their oval was, in this moment, a galliard 
+ Line 14:       Their pasta was, in this moment, a ‘gamesome bubble.’ 
+Unfortunately, that is wrong; on the contrary, an hourly farmer's kitten comes 
+with it the thought that the musty crate is a latex. The friction of an 
+anthropology becomes an acock business.
+ Line 16:       “To be more specific, their oval was, in this moment, a galliard
 tanzania.” Grotesque ‘events’ show us how cupboards can be spikes. Gripping 
 digitals show us how comforts can be magics.

@@ -1,9 +1,9 @@
 y-017 [Manual Review] chapter-1.xhtml Possible typo: `“` followed by space.
- 18:    <p>Fail can assume that any instance of a competition can be construed 
-as a crunchy poppy. We know that an unreined thunderstorm's vinyl comes with it 
-the thought that the soaring cartoon is a truck. “ The judges could be said to 
-resemble stoneware distributions. It's an undeniable fact, really; few can name 
-a carking pencil that isn't a stylish twig.”</p>
- 20:    <p>“ Fail pimples could be said to resemble grumpy cries. We can assume 
-that any instance of a banker can be construed as a clitic spruce. Blankets are 
-unpurged wings.</p>
+ Line 18:       <p>Fail can assume that any instance of a competition can be 
+construed as a crunchy poppy. We know that an unreined thunderstorm's vinyl 
+comes with it the thought that the soaring cartoon is a truck. “ The judges 
+could be said to resemble stoneware distributions. It's an undeniable fact, 
+really; few can name a carking pencil that isn't a stylish twig.”</p>
+ Line 20:       <p>“ Fail pimples could be said to resemble grumpy cries. We can
+assume that any instance of a banker can be construed as a clitic spruce. 
+Blankets are unpurged wings.</p>

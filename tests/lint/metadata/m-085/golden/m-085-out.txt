@@ -1,7 +1,7 @@
 m-085 [Error] colophon.xhtml Non-canonical PGDP URL. Expected 
 `https://www.pgdp.net/`.
- 20:    <a href="https://pgdp.net/">Distributed Proofreaders</a>
+ Line 20:       <a href="https://pgdp.net/">Distributed Proofreaders</a>
 m-085 [Error] content.opf Non-canonical PGDP URL. Expected 
 `https://www.pgdp.net/`.
- 63:    <meta property="se:url.homepage" 
+ Line 63:       <meta property="se:url.homepage" 
 refines="#producer-3">https://pgdp.net/</meta>

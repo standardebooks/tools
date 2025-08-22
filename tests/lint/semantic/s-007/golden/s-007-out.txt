@@ -1,22 +1,22 @@
 s-007 [Manual Review] chapter-1.xhtml Element requires at least one block-level 
 child.
- 13:    <blockquote>Fail 1, blockquote has no &lt;p&gt;.</blockquote>
- 14:    <blockquote>
+ Line 13:       <blockquote>Fail 1, blockquote has no &lt;p&gt;.</blockquote>
+ Line 14:       <blockquote>
                 <i>Fail 2, blockquote has italics but no &lt;p&gt;.</i>
         </blockquote>
- 17:    <blockquote>
+ Line 17:       <blockquote>
                 
                 Fail 3, blockquote has no &lt;p&gt;.
         </blockquote>
- 30:    <dd>Fail 4, dd has no &lt;p&gt;.</dd>
- 32:    <dd>
+ Line 30:       <dd>Fail 4, dd has no &lt;p&gt;.</dd>
+ Line 32:       <dd>
                         <i>Fail 5, dd has no &lt;p&gt;.</i>
                 </dd>
- 46:    <li>Fail 6, li has no &lt;p&gt;.</li>
- 47:    <li>
+ Line 46:       <li>Fail 6, li has no &lt;p&gt;.</li>
+ Line 47:       <li>
                         <i>Fail 7, li has italics but no &lt;p&gt;.</i>
                 </li>
- 50:    <li>
+ Line 50:       <li>
                         
                         Fail 8, li has no &lt;p&gt;.
                 </li>

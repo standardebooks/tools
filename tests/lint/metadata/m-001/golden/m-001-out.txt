@@ -1,6 +1,6 @@
 m-001 [Error] colophon.xhtml Non-canonical Faded Page URL. Expected 
 `https://www.fadedpage.com/showbook.php?pid=<BOOK-ID>`.
- 24:    <a href="https://www.fadedpage.com/showbook/1234">Faded Page</a>
+ Line 24:       <a href="https://www.fadedpage.com/showbook/1234">Faded Page</a>
 m-001 [Error] content.opf Non-canonical Faded Page URL. Expected 
 `https://www.fadedpage.com/showbook.php?pid=<BOOK-ID>`.
- 43:    <dc:source>https://www.fadedpage.com/showbook/1234</dc:source>
+ Line 43:       <dc:source>https://www.fadedpage.com/showbook/1234</dc:source>
