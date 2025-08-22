@@ -1,8 +1,8 @@
 m-076 [Error] colophon.xhtml Non-canonical Project Gutenberg Australia URL. 
 Expected `https://www.gutenberg.net.au/<PATH>/<FILENAME>.html` or 
 `https://www.gutenberg.net.au/`.
-        <a href="https://gutenberg.net.au/showbook/1234">Faded Page</a>
+ 24:    <a href="https://gutenberg.net.au/showbook/1234">Faded Page</a>
 m-076 [Error] content.opf Non-canonical Project Gutenberg Australia URL. 
 Expected `https://www.gutenberg.net.au/<PATH>/<FILENAME>.html` or 
 `https://www.gutenberg.net.au/`.
-        <dc:source>https://gutenberg.net.au/showbook/1234</dc:source>
+ 43:    <dc:source>https://gutenberg.net.au/showbook/1234</dc:source>

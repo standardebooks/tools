@@ -688,3 +688,11 @@ class EasyXmlElement:
 
 		for name, val in sorted(value.items()):
 			self.set_attr(name, val)
+
+	@property
+	def sourceline(self):
+		"""
+		Return line number of this element in the raw text
+		"""
+
+		return self.lxml_element.sourceline

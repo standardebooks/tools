@@ -1,4 +1,4 @@
 s-107 [Error] colophon.xhtml Anonymous contributors in the colophon must be 
 exactly `<b>An Anonymous Volunteer</b>` or `<b>An Unknown Artist</b>`. Hint: Is 
 there a missing `epub:type` semantic?
-        <b>an unidentified artist</b>
+ 30:    <b>an unidentified artist</b>
