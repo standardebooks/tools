@@ -7,6 +7,7 @@ Strictly speaking, the lint() function should be a class member of SeEpub. But
 the function is very big and it makes editing easier to put in a separate file.
 """
 
+from bisect import bisect_right
 from copy import deepcopy
 import filecmp
 from fnmatch import translate
@@ -25,7 +26,6 @@ import se
 import se.easy_xml
 import se.formatting
 import se.images
-import se.lint
 import se.spelling
 import se.typography
 
@@ -504,6 +504,106 @@ TYPOS
 "y-034", "Possible typo: [text].[/] embedded in word. Hint: Abbreviations must be in an [xhtml]<abbr>[/] element."
 "y-035", "Possible typo: single letter. Hints: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [xhtml]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?"
 """
+
+NEWLINE_PATTERN = regex.compile(r"\n")
+
+class SourceFile:
+	"""
+	A source file that can perform regex searches of input text that provides line
+	number references to matches.
+	"""
+
+	def __init__(self, filename: Path, contents: str, bounds: list[tuple[int, int]] | None = None):
+		self.filename = filename
+		self.contents = contents
+		self._lines = _ensure_line_bounds(contents, bounds)
+		# For binary searching line number lookups on regex matches.
+		self._offsets = [offset for (offset, _) in self._lines]
+
+	def sub(self, pattern: str | regex.Pattern, replacement: str = "") -> 'SourceFile':
+		"""
+		Creates a modified view of the source text that retains line number mappings
+		to the original text.
+		"""
+		if isinstance(pattern, str):
+			pattern = regex.compile(pattern)
+
+		contents, bounds = sub_with_line_mapping(self.contents, pattern, replacement, self._lines)
+		return SourceFile(self.filename, contents, bounds)
+
+	def search(self, pattern: str | regex.Pattern) -> tuple[str, int] | None:
+		"""
+		Search the file contents to find the first regex match, with line number.
+		"""
+		if isinstance(pattern, str):
+			pattern = regex.compile(pattern)
+
+		match = pattern.search(self.contents)
+		if match:
+			return (match.group(), self.line_num(match))
+
+		return None
+
+	def findall(self, pattern: str | regex.Pattern) -> list[tuple[str, int]]:
+		"""
+		Find all regex matches in the file contents, including line numbers.
+		"""
+		if isinstance(pattern, str):
+			pattern = regex.compile(pattern)
+
+		matches = []
+		for match in regex.finditer(pattern, self.contents):
+			matches.append((match.group(), self.line_num(match)))
+
+		return matches
+
+	def line_num(self, match: regex.Match) -> int:
+		"""
+		Get the original line number based on a regex match of contents.
+		"""
+		idx = bisect_right(self._offsets, match.start()) - 1
+		return 0 if idx < 0 else self._lines[idx][1]
+
+def sub_with_line_mapping(contents: str, pattern: regex.Pattern, replacement: str = "", bounds: list[tuple[int, int]] | None = None) -> tuple[str, list[tuple[int, int]]]:
+	"""
+	Processes the contents string, replacing matched patterns while building an
+	index mapping of byte offsets in the modified output to line numbers of the
+	original input string.
+	"""
+	bounds = _ensure_line_bounds(contents, bounds)
+
+	prev_idx = 0
+	removed_chars = 0
+	for match in pattern.finditer(contents):
+		# Updating offsets between the prior comment and current match.
+		while prev_idx < len(bounds) and bounds[prev_idx][0] <= match.start():
+			entry = bounds[prev_idx]
+			bounds[prev_idx] = (entry[0] - removed_chars, entry[1])
+			prev_idx += 1
+
+		removed_chars += (match.end() - match.start()) - len(replacement)
+
+		# Delete entries for matches that span multiple lines.
+		while prev_idx < len(bounds) and bounds[prev_idx][0] < match.end():
+			del bounds[prev_idx]
+
+	# Update offsets for lines after the final comment as-needed.
+	if removed_chars > 0:
+		while prev_idx < len(bounds):
+			entry = bounds[prev_idx]
+			bounds[prev_idx] = (entry[0] - removed_chars, entry[1])
+			prev_idx += 1
+
+	return (pattern.sub(replacement, contents), bounds)
+
+def _ensure_line_bounds(contents: str, bounds: list[tuple[int, int]] | None = None) -> list[tuple[int, int]]:
+	if bounds:
+		return list(bounds)
+
+	return [(0,1)] + [
+		(match.start() + 1, line)
+		for (line, match) in enumerate(NEWLINE_PATTERN.finditer(contents), 2)
+	]
 
 class LintSubmessage:
 	"""
@@ -1307,7 +1407,7 @@ def _lint_image_checks(self, filename: Path) -> list:
 
 	return messages
 
-def _lint_svg_checks(self, source_file: se.lint.SourceFile, svg_dom: se.easy_xml.EasyXmlTree, root: str) -> list:
+def _lint_svg_checks(self, source_file: SourceFile, svg_dom: se.easy_xml.EasyXmlTree, root: str) -> list:
 	"""
 	Perform several checks on SVG files.
 
@@ -1387,7 +1487,7 @@ def _lint_svg_checks(self, source_file: se.lint.SourceFile, svg_dom: se.easy_xml
 
 	return messages
 
-def _lint_special_file_checks(self, source_file: se.lint.SourceFile, dom: se.easy_xml.EasyXmlTree, ebook_flags: dict, special_file: str) -> list:
+def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.EasyXmlTree, ebook_flags: dict, special_file: str) -> list:
 	"""
 	Process error checks in “special” `.xhtml` files.
 
@@ -1653,7 +1753,7 @@ def _lint_special_file_checks(self, source_file: se.lint.SourceFile, dom: se.eas
 
 	return messages
 
-def _lint_xhtml_css_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.EasyXmlTree, local_css_path: Path) -> list:
+def _lint_xhtml_css_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTree, local_css_path: Path) -> list:
 	"""
 	Process CSS checks on an `.xhtml` file.
 
@@ -1785,7 +1885,7 @@ def _lint_xhtml_metadata_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTr
 
 	return messages
 
-def _lint_xhtml_syntax_checks(self, source_file: se.lint.SourceFile, dom: se.easy_xml.EasyXmlTree, ebook_flags: dict, language: str, section_tree: list[EbookSection]) -> list:
+def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.EasyXmlTree, ebook_flags: dict, language: str, section_tree: list[EbookSection]) -> list:
 	"""
 	Process syntax checks on an `.xhtml` file.
 
@@ -2372,7 +2472,7 @@ def _lint_xhtml_syntax_checks(self, source_file: se.lint.SourceFile, dom: se.eas
 
 	return messages
 
-def _lint_xhtml_typography_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.EasyXmlTree, special_file: str | None, ebook_flags: dict, missing_files: list, self) -> tuple:
+def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTree, special_file: str | None, ebook_flags: dict, missing_files: list, self) -> tuple:
 	"""
 	Process typography checks on an `.xhtml` file.
 
@@ -2913,7 +3013,7 @@ def _lint_xhtml_typography_checks(source_file: se.lint.SourceFile, dom: se.easy_
 
 	return (messages, missing_files)
 
-def _lint_xhtml_xhtml_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.EasyXmlTree, local_css_path: str) -> list:
+def _lint_xhtml_xhtml_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTree, local_css_path: str) -> list:
 	"""
 	Process XHTML checks on an `.xhtml` file.
 
@@ -2991,7 +3091,7 @@ def _lint_xhtml_xhtml_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.E
 
 	return messages
 
-def _lint_xhtml_typo_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.EasyXmlTree, special_file: str | None) -> list:
+def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTree, special_file: str | None) -> list:
 	"""
 	Process typo checks on an `.xhtml` file.
 
@@ -3646,7 +3746,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 			# Read the file and start doing some serious checks!
 			try:
-				source_file = se.lint.SourceFile(filename, self.get_file(filename))
+				source_file = SourceFile(filename, self.get_file(filename))
 			except UnicodeDecodeError:
 				# This is more to help developers find weird files that might choke `se lint`, hopefully unnecessary for end users.
 				messages.append(LintMessage("f-010", "Problem decoding file as utf-8.", se.MESSAGE_TYPE_ERROR, filename))

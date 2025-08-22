@@ -4,7 +4,11 @@ Test internal SE programming functions
 
 from se.se_epub_generate_toc import add_landmark
 import se.easy_xml
-from se.lint import sub_with_line_mapping, XML_COMMENT_PATTERN
+from se.se_epub_lint import sub_with_line_mapping
+
+import regex
+
+XML_COMMENT_PATTERN = regex.compile(r"<!--.+?-->", flags=regex.DOTALL)
 
 def test_add_landmark_empty_title():
 	"""
