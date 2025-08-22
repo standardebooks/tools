@@ -516,7 +516,7 @@ class SourceFile:
 	def __init__(self, filename: Path, contents: str, bounds: list[tuple[int, int]] | None = None):
 		self.filename = filename
 		self.contents = contents
-		self._lines = _ensure_line_bounds(contents, bounds)
+		self._lines = self._ensure_line_bounds(bounds)
 		# For binary searching line number lookups on regex matches.
 		self._offsets = [offset for (offset, _) in self._lines]
 
@@ -528,7 +528,7 @@ class SourceFile:
 		if isinstance(pattern, str):
 			pattern = regex.compile(pattern)
 
-		contents, bounds = sub_with_line_mapping(self.contents, pattern, replacement, self._lines)
+		contents, bounds = self._sub_with_line_mapping(pattern, replacement, self._lines)
 		return SourceFile(self.filename, contents, bounds)
 
 	def search(self, pattern: str | regex.Pattern) -> tuple[str, int] | None:
@@ -564,46 +564,46 @@ class SourceFile:
 		idx = bisect_right(self._offsets, match.start()) - 1
 		return 0 if idx < 0 else self._lines[idx][1]
 
-def sub_with_line_mapping(contents: str, pattern: regex.Pattern, replacement: str = "", bounds: list[tuple[int, int]] | None = None) -> tuple[str, list[tuple[int, int]]]:
-	"""
-	Processes the contents string, replacing matched patterns while building an
-	index mapping of byte offsets in the modified output to line numbers of the
-	original input string.
-	"""
-	bounds = _ensure_line_bounds(contents, bounds)
+	def _sub_with_line_mapping(self, pattern: regex.Pattern, replacement: str = "", bounds: list[tuple[int, int]] | None = None) -> tuple[str, list[tuple[int, int]]]:
+		"""
+		Processes the contents string, replacing matched patterns while building an
+		index mapping of byte offsets in the modified output to line numbers of the
+		original input string.
+		"""
+		bounds = self._ensure_line_bounds(bounds)
 
-	prev_idx = 0
-	removed_chars = 0
-	for match in pattern.finditer(contents):
-		# Updating offsets between the prior comment and current match.
-		while prev_idx < len(bounds) and bounds[prev_idx][0] <= match.start():
-			entry = bounds[prev_idx]
-			bounds[prev_idx] = (entry[0] - removed_chars, entry[1])
-			prev_idx += 1
+		prev_idx = 0
+		removed_chars = 0
+		for match in pattern.finditer(self.contents):
+			# Updating offsets between the prior comment and current match.
+			while prev_idx < len(bounds) and bounds[prev_idx][0] <= match.start():
+				entry = bounds[prev_idx]
+				bounds[prev_idx] = (entry[0] - removed_chars, entry[1])
+				prev_idx += 1
 
-		removed_chars += (match.end() - match.start()) - len(replacement)
+			removed_chars += (match.end() - match.start()) - len(replacement)
 
-		# Delete entries for matches that span multiple lines.
-		while prev_idx < len(bounds) and bounds[prev_idx][0] < match.end():
-			del bounds[prev_idx]
+			# Delete entries for matches that span multiple lines.
+			while prev_idx < len(bounds) and bounds[prev_idx][0] < match.end():
+				del bounds[prev_idx]
 
-	# Update offsets for lines after the final comment as-needed.
-	if removed_chars > 0:
-		while prev_idx < len(bounds):
-			entry = bounds[prev_idx]
-			bounds[prev_idx] = (entry[0] - removed_chars, entry[1])
-			prev_idx += 1
+		# Update offsets for lines after the final comment as-needed.
+		if removed_chars > 0:
+			while prev_idx < len(bounds):
+				entry = bounds[prev_idx]
+				bounds[prev_idx] = (entry[0] - removed_chars, entry[1])
+				prev_idx += 1
 
-	return (pattern.sub(replacement, contents), bounds)
+		return (pattern.sub(replacement, self.contents), bounds)
 
-def _ensure_line_bounds(contents: str, bounds: list[tuple[int, int]] | None = None) -> list[tuple[int, int]]:
-	if bounds:
-		return list(bounds)
+	def _ensure_line_bounds(self, bounds: list[tuple[int, int]] | None = None) -> list[tuple[int, int]]:
+		if bounds:
+			return list(bounds)
 
-	return [(0,1)] + [
-		(match.start() + 1, line)
-		for (line, match) in enumerate(NEWLINE_PATTERN.finditer(contents), 2)
-	]
+		return [(0,1)] + [
+			(match.start() + 1, line)
+			for (line, match) in enumerate(NEWLINE_PATTERN.finditer(self.contents), 2)
+		]
 
 class LintSubmessage:
 	"""
