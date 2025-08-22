@@ -53,10 +53,10 @@ def modernize_hyphenation(xhtml: str) -> str:
 
 	dictionary = initialize_dictionary()
 
-	# Easy fix for a common case
-	xhtml = regex.sub(r"\b([Nn])ow-a-days\b", r"\1owadays", xhtml)	# now-a-days -> nowadays
+	# Easy fix for a common case.
+	xhtml = regex.sub(r"\b([Nn])ow-a-days\b", r"\1owadays", xhtml)	# `now-a-days` -> `nowadays`.
 
-	# The non-capturing group at the beginning tries to prevent bad matches like stag's-horn -> stag'shorn or dog's-eared -> dog'seared
+	# The non-capturing group at the beginning tries to prevent bad matches like `stag's-horn` -> `stag'shorn` or `dog's-eared` -> `dog'seared`.
 	result = regex.findall(r"(?<![’\'])\b[^\W\d_]+\-[^\W\d_]+\b", xhtml)
 
 	for word in set(result): # `set()` removes duplicates.
@@ -135,7 +135,7 @@ def modernize_spelling(xhtml: str) -> str:
 	language = get_xhtml_language(xhtml)
 
 	# ADDING NEW WORDS TO THIS LIST:
-	# A good way to check if a word is "archaic" is to do a Google N-Gram search: <https://books.google.com/ngrams/graph?case_insensitive=on&year_start=1800&year_end=2000&smoothing=3>
+	# A good way to check if a word is "archaic" is to do a Google N-Gram search: <https://books.google.com/ngrams/graph?case_insensitive=on&year_start=1800&year_end=2000&smoothing=3>.
 	# Remember that en-US and en-GB differ significantly, and just because a word might seem strange to you, doesn't mean it's not the common case in the other variant.
 	# If Google N-Gram shows that a word has declined significantly in usage in *both* en-US and en-GB (or the SE editor-in-chief makes an exception) then it may be a good candidate to add to this list.
 
@@ -578,7 +578,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"([\p{Punctuation}\s])x-ray", r"\1X-ray", xhtml)
 
 	# Replace `2d` with `2nd` and `3d` with `3rd`.
-	# Check for a following abbr because `3<abbr>d.</abbr>` could mean `3 pence`
+	# Check for a following abbr because `3<abbr>d.</abbr>` could mean `3 pence`.
 	xhtml = regex.sub(r"\b([0-9]*2)d(?!</abbr>)", r"\1nd", xhtml)
 	xhtml = regex.sub(r"\b([0-9]*3)d(?!</abbr>)", r"\1rd", xhtml)
 

@@ -47,7 +47,7 @@ def word_count(plain_output: bool) -> int:
 						se.print_error(f"File is not UTF-8: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 						return se.InvalidEncodingException.code
 
-			# Remove HTML entities
+			# Remove HTML entities.
 			xhtml = regex.sub(r"&[^;\s\b]+?;", " ", xhtml)
 
 			is_ignored, dom = se.get_dom_if_not_ignored(xhtml, excluded_files)

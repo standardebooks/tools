@@ -807,7 +807,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 		except OSError as ex:
 			raise se.InvalidFileException(f"Couldn’t write to ebook directory. Exception: {ex}") from ex
 
-	# Copy over templates
+	# Copy over templates.
 	if args.verbose:
 		console.print(se.prep_output("Copying in standard files ...", plain_output))
 	_copy_template_file("gitignore", repo_path / ".gitignore")

@@ -1465,7 +1465,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			# Extract the thumbnail.
 			if os.path.isfile(work_compatible_epub_dir / "epub" / "images" / "cover.jpg"):
 				kindle_cover_thumbnail = Image.open(work_compatible_epub_dir / "epub" / "images" / "cover.jpg")
-				kindle_cover_thumbnail = kindle_cover_thumbnail.convert("RGB") # Remove alpha channel from PNG if necessary
+				kindle_cover_thumbnail = kindle_cover_thumbnail.convert("RGB") # Remove alpha channel from PNG if necessary.
 				kindle_cover_thumbnail = kindle_cover_thumbnail.resize((432, 648))
 				kindle_cover_thumbnail.save(output_dir / f"thumbnail_{asin}_EBOK_portrait.jpg")
 

@@ -86,13 +86,13 @@ SE_VARIABLES = [
 	"PAINTING"
 ]
 
-# See https://idpf.github.io/epub-vocabs/structure/
+# See <https://idpf.github.io/epub-vocabs/structure/>.
 EPUB_SEMANTIC_VOCABULARY = ["abstract", "acknowledgments", "afterword", "answer", "answers", "appendix", "aside", "assessment", "assessments", "backlink", "backmatter", "balloon", "biblioentry", "bibliography", "biblioref", "bodymatter", "bridgehead", "case-study", "chapter", "colophon", "concluding-sentence", "conclusion", "contributors", "copyright-page", "cover", "covertitle", "credit", "credits", "dedication", "division", "endnote", "endnotes", "epigraph", "epilogue", "errata", "feedback", "figure", "fill-in-the-blank-problem", "footnote", "footnotes", "foreword", "frontmatter", "fulltitle", "general-problem", "glossary", "glossdef", "glossref", "glossterm", "halftitle", "halftitlepage", "imprimatur", "imprint", "index", "index-editor-note", "index-entry", "index-entry-list", "index-group", "index-headnotes", "index-legend", "index-locator", "index-locator-list", "index-locator-range", "index-term", "index-term-categories", "index-term-category", "index-xref-preferred", "index-xref-related", "introduction", "keyword", "keywords", "label", "landmarks", "learning-objective", "learning-objectives", "learning-outcome", "learning-outcomes", "learning-resource", "learning-resources", "learning-standard", "learning-standards", "list", "list-item", "loa", "loi", "lot", "lov", "match-problem", "multiple-choice-problem", "noteref", "notice", "ordinal", "other-credits", "pagebreak", "page-list", "panel", "panel-group", "part", "practice", "practices", "preamble", "preface", "prologue", "pullquote", "qna", "question", "revision-history", "seriespage", "sound-area", "subtitle", "table", "table-cell", "table-row", "text-area", "tip", "title", "titlepage", "toc", "toc-brief", "topic-sentence", "true-false-problem", "volume"]
 
-# See https://www.daisy.org/z3998/2012/vocab/structure/
+# See <https://www.daisy.org/z3998/2012/vocab/structure/>.
 Z3998_SEMANTIC_VOCABULARY = ["abbreviations", "acknowledgments", "acronym", "actor", "afterword", "alteration", "annoref", "annotation", "appendix", "article", "aside", "attribution", "author", "award", "backmatter", "bcc", "bibliography", "biographical-note", "bodymatter", "cardinal", "catalogue", "cc", "chapter", "citation", "clarification", "collection", "colophon", "commentary", "commentator", "compound", "concluding-sentence", "conclusion", "continuation", "continuation-of", "contributors", "coordinate", "correction", "covertitle", "currency", "decimal", "decorative", "dedication", "diary", "diary-entry", "discography", "division", "drama", "dramatis-personae", "editor", "editorial-note", "email", "email-message", "epigraph", "epilogue", "errata", "essay", "event", "example", "family-name", "fiction", "figure", "filmography", "footnote", "footnotes", "foreword", "fraction", "from", "frontispiece", "frontmatter", "ftp", "fulltitle", "gallery", "general-editor", "geographic", "given-name", "glossary", "grant-acknowledgment", "grapheme", "halftitle", "halftitle-page", "help", "homograph", "http", "hymn", "illustration", "image-placeholder", "imprimatur", "imprint", "index", "initialism", "introduction", "introductory-note", "ip", "isbn", "keyword", "letter", "loi", "lot", "lyrics", "marginalia", "measure", "mixed", "morpheme", "name-title", "nationality", "non-fiction", "nonresolving-citation", "nonresolving-reference", "note", "noteref", "notice", "orderedlist", "ordinal", "organization", "other-credits", "pagebreak", "page-footer", "page-header", "part", "percentage", "persona", "personal-name", "pgroup", "phone", "phoneme", "photograph", "phrase", "place", "plate", "poem", "portmanteau", "postal", "postal-code", "postscript", "practice", "preamble", "preface", "prefix", "presentation", "primary", "product", "production", "prologue", "promotional-copy", "published-works", "publisher-address", "publisher-note", "publisher-logo", "range", "ratio", "rearnote", "rearnotes", "recipient", "recto", "reference", "republisher", "resolving-reference", "result", "role-description", "roman", "root", "salutation", "scene", "secondary", "section", "sender", "sentence", "sidebar", "signature", "song", "speech", "stage-direction", "stem", "structure", "subchapter", "subject", "subsection", "subtitle", "suffix", "surname", "taxonomy", "tertiary", "text", "textbook", "t-form", "timeline", "title", "title-page", "to", "toc", "topic-sentence", "translator", "translator-note", "truncation", "unorderedlist", "valediction", "verse", "verso", "v-form", "volume", "warning", "weight", "word"]
 
-# See https://standardebooks.org/vocab/1.0
+# See <https://standardebooks.org/vocab/1.0>.
 SE_SEMANTIC_VOCABULARY = ["collection", "compass", "compound", "diary", "diary.dateline", "era", "image", "image.color-depth", "image.color-depth.black-on-transparent", "image.style.realistic", "image.color-depth.default-on-transparent", "letter", "letter.dateline", "long-description", "name", "name.person", "name.person.full-name", "name.person.pen-name", "name.vehicle", "name.vehicle.airplane", "name.vehicle.auto", "name.vehicle.train", "name.vessel", "name.vessel.boat", "name.vessel.ship", "name.publication", "name.publication.book", "name.publication.essay", "name.publication.journal", "name.publication.newspaper", "name.publication.magazine", "name.publication.pamphlet", "name.publication.paper", "name.publication.play", "name.publication.poem", "name.publication.short-story", "name.music", "name.music.opera", "name.music.song", "name.visual-art", "name.visual-art.engraving", "name.visual-art.film", "name.visual-art.illustration", "name.visual-art.painting", "name.visual-art.photograph", "name.visual-art.sculpture", "name.visual-art.typeface", "name.broadcast", "name.broadcast.television-show", "name.legal-case", "novel", "novella", "publication-notes", "reading-ease", "reading-ease.flesch", "short-story", "sic", "temperature", "transform", "url", "url.authority", "url.authority.nacoaf", "url.homepage", "url.encyclopedia", "url.encyclopedia.wikipedia", "url.vcs", "url.vcs.github", "word-count"]
 
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Children’s", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
@@ -101,7 +101,7 @@ BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", 
 IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "toc.xhtml", "loi.xhtml"]
 SPECIAL_FILES = ["colophon", "endnotes", "imprint", "loi"]
 
-# These are partly defined in semos://1.0.0/8.10.9.2
+# These are partly defined in <semos://1.0.0/8.10.9.2>.
 INITIALISM_EXCEPTIONS = ["G", # As in `G-Force`.
 			"1D", "2D", "3D", "4D", # As in `n-dimensional`.
 			"MS.", "MSS.", # Manuscript(s).
@@ -558,7 +558,7 @@ class LintMessage:
 					submessage = LintSubmessage(submessage)
 				self.submessages.append(submessage)
 
-				# Try to flatten leading indentation
+				# Try to flatten leading indentation.
 				for indent in regex.findall(r"^\t+(?=<)", submessage.text, flags=regex.MULTILINE):
 					smallest_indent = min(smallest_indent, len(indent))
 
@@ -743,7 +743,7 @@ def _lint_metadata_checks(self) -> list:
 		if nodes:
 			messages.append(LintMessage("m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
-		# `US` -> `U.S.`
+		# `US` -> `U.S.`.
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']/*[re:test(., '\\bUS\\b')]")
 		if nodes:
 			messages.append(LintMessage("t-047", "[text]US[/] should be [text]U.S.[/]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
@@ -976,7 +976,7 @@ def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 	Get a list of URLs in the epub that don't match SE standards.
 
 	INPUTS
-	dom: A dom tree to check
+	dom: A ODM tree to check
 	filename: The filename being processed
 
 	OUTPUTS
@@ -1294,7 +1294,7 @@ def _lint_image_checks(self, filename: Path) -> list:
 
 		# Run some tests on distributable images in `./src/epub/images/` and the cover.
 		if filename.is_relative_to(self.content_path / "images") or (self.path / "images" / "cover.jpg" == filename):
-			if os.path.getsize(filename) > 1500000: # 1.5MB
+			if os.path.getsize(filename) > 1500000: # 1.5MB.
 				messages.append(LintMessage("f-016", "Image more than 1.5MB in size.", se.MESSAGE_TYPE_ERROR, filename))
 
 			# Make sure distributable images have reasonable dimensions.
@@ -1313,8 +1313,8 @@ def _lint_svg_checks(self, source_file: se.lint.SourceFile, svg_dom: se.easy_xml
 
 	INPUTS
 	self
-	source_file: The svg file being checked.
-	svg_dom: The dom of the svg file being checked.
+	source_file: The SVG file being checked.
+	svg_dom: The DOM of the SVG file being checked.
 	root: The top-level directory.
 
 	OUTPUTS
@@ -1394,7 +1394,7 @@ def _lint_special_file_checks(self, source_file: se.lint.SourceFile, dom: se.eas
 	INPUTS
   self
 	source_file: The source file being checked.
-	dom: The dom of the file being checked.
+	dom: The DOM of the file being checked.
 	ebook_flags: A dictionary containing ebook information.
 	special_file: A string identifying the type of special file being checked.
 
@@ -1518,7 +1518,7 @@ def _lint_special_file_checks(self, source_file: se.lint.SourceFile, dom: se.eas
 		if nodes:
 			messages.append(LintMessage("t-006", "Comma after producer name, but there are only two producers.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
-		# Check that the formula changed from the default if we added 'various sources'
+		# Check that the formula changed from the default if we added `various sources`.
 		if ebook_flags["has_multiple_transcriptions"] or ebook_flags["has_multiple_page_scans"]:
 			nodes = dom.xpath("/html/body//a[text() = 'various sources' and not(re:test(preceding-sibling::br[1]/preceding-sibling::node()[1], '(digital scans|transcriptions) from\\s*$'))]")
 			if nodes:
@@ -1575,7 +1575,7 @@ def _lint_special_file_checks(self, source_file: se.lint.SourceFile, dom: se.eas
 				if ("books.google.com" in link or "www.google.com/books/" in link) and f"<a href=\"{link}\">Google Books</a>" not in source_file.contents:
 					messages.append(LintMessage("m-037", f"Transcription/page scan source link not found. Expected: [xhtml]<a href=\"{link}\">Google Books</a>[/].", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Endnote checks
+	# Endnote checks.
 	elif special_file == "endnotes":
 		# Do we have to replace `Ibid.`? Only match `Ibid.` if the endnote does not appear to cite any names.
 		nodes = dom.xpath("/html/body//li[re:test(@epub:type, '\\bendnote\\b')]//abbr[re:test(., '\\b[Ii]bid\\b') and not(ancestor::li[1]//*[contains(@epub:type, 'se:name')])]")
@@ -1659,7 +1659,7 @@ def _lint_xhtml_css_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.Eas
 
 	INPUTS
 	source_file: The source file being checked.
-	dom: The dom of the file being checked.
+	dom: The DOM of the file being checked.
 	local_css_path: The path to the local CSS file.
 
 	OUTPUTS
@@ -1704,7 +1704,7 @@ def _lint_xhtml_css_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.Eas
 	if nodes:
 		messages.append(LintMessage("c-014", "[xhtml]<table>[/] element without explicit margins. Most tables need [css]margin: 1em;[/] or [css]margin: 1em auto 1em auto;[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
-	# Check for elements that follow salutations, but that don't have `text-indent: 0`;
+	# Check for elements that follow salutations, but that don't have `text-indent: 0`.
 	# We have to check both `<p>` elements that are salutations, and also `<p>` elements that have a first child inline element that is a salutation, and that does not have following siblings that are senders/valedictions, as that might indicate a letter in a prose context.
 	nodes = dom.xpath("/html/body//*[(contains(@epub:type, 'z3998:salutation') or ./preceding-sibling::*[1][contains(@epub:type, 'z3998:salutation') or (name() != 'blockquote' and count(./node()[normalize-space(.)]) = 1 and ./*[contains(@epub:type, 'z3998:salutation')])] or ./*[1][contains(@epub:type, 'z3998:salutation') and not((./following-sibling::node()[1][self::text()]))]) and @data-css-text-indent != '0']")
 	if nodes:
@@ -1750,7 +1750,7 @@ def _lint_xhtml_metadata_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTr
 
 	INPUTS
 	filename: The name of the file being checked.
-	dom: The dom of the file being checked.
+	dom: The DOM of the file being checked.
 	self
 
 	OUTPUTS
@@ -1791,7 +1791,7 @@ def _lint_xhtml_syntax_checks(self, source_file: se.lint.SourceFile, dom: se.eas
 
 	INPUTS
 	source_file: The source file being checked.
-	dom: The dom of the file being checked.
+	dom: The DOM of the file being checked.
 	ebook_flags: A dictionary containing several flags about an ebook.
 	language: The language identified in the metadata.
 
@@ -1802,7 +1802,7 @@ def _lint_xhtml_syntax_checks(self, source_file: se.lint.SourceFile, dom: se.eas
 	messages = []
 	filename = source_file.filename
 
-	# This block is useful for pretty-printing section_tree should we need to debug it in the future
+	# This block is useful for pretty-printing section_tree should we need to debug it in the future.
 	# def dump(item, char):
 	#	print(f"{char} {item.section_id} ({item.depth}) {item.has_header}")
 	#	for child in item.children:
@@ -2222,7 +2222,7 @@ def _lint_xhtml_syntax_checks(self, source_file: se.lint.SourceFile, dom: se.eas
 	if nodes:
 		messages.append(LintMessage("s-070", "[xhtml]<h#>[/] element without semantic inflection.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
-	# Check for sectioning elements with more than one heading element
+	# Check for sectioning elements with more than one heading element.
 	nodes = dom.xpath("/html/body//*[name()='article' or name()='section'][count(./*[name()='header' or name()='hgroup' or re:test(name(), '^h[1-6]$')]) > 1]")
 	if nodes:
 		messages.append(LintMessage("s-071", "Sectioning element with more than one heading element.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
@@ -2378,7 +2378,7 @@ def _lint_xhtml_typography_checks(source_file: se.lint.SourceFile, dom: se.easy_
 
 	INPUTS
 	source_file: The source file being checked.
-	dom: The dom of the file being checked.
+	dom: The DOM of the file being checked.
 	special_file: A string containing the type of special file the current file is, if any.
 	ebook_flags: A dictionary containing several flags about an ebook.
 	missing_files: A list of missing files.
@@ -2919,7 +2919,7 @@ def _lint_xhtml_xhtml_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.E
 
 	INPUTS
 	source_file: The source file being checked.
-	dom: The dom of the file being checked.
+	dom: The DOM of the file being checked.
 	local_css_path: Path to `local.css` file.
 
 	OUTPUTS
@@ -2997,7 +2997,7 @@ def _lint_xhtml_typo_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.Ea
 
 	INPUTS
 	source_file: The source file being checked.
-	dom: The dom of the file being checked.
+	dom: The DOM of the file being checked.
 	special_file: A string containing the type of special file the current file is, if any.
 
 	OUTPUTS
@@ -3009,7 +3009,7 @@ def _lint_xhtml_typo_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.Ea
 	typos = []
 
 	if special_file != "titlepage":
-		# Don't check the titlepage because it has a standard format and may raise false positives
+		# Don't check the titlepage because it has a standard format and may raise false positives.
 		typos = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?![-’])", source_file.contents, flags=regex.IGNORECASE)
 		typos += regex.findall(r"\ba a\b(?!-)", source_file.contents)
 
@@ -3104,7 +3104,7 @@ def _lint_xhtml_typo_checks(source_file: se.lint.SourceFile, dom: se.easy_xml.Ea
 	if typos:
 		messages.append(LintMessage("y-012", "Possible typo: [text]”[/] directly followed by letter.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
 
-	# Check for comma/period outside rsquo; ensure no rsquo following the punctuation to exclude elided false positives, e.g. ‘That was somethin’.’
+	# Check for comma/period outside rsquo; ensure no rsquo following the punctuation to exclude elided false positives, e.g. ‘That was somethin’.’.
 	typos = dom.xpath("/html/body//p[re:test(., '‘[^”’]+?’[\\.,](?!⁠? ⁠?…)(?![^‘]*’)')]")
 	if typos:
 		messages.append(LintMessage("y-013", "Possible typo: punctuation not within [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
@@ -3669,7 +3669,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 				messages += _lint_svg_checks(self, source_file, svg_dom, root)
 				if self.cover_path and filename.name == self.cover_path.name:
 					# For later comparison with titlepage.
-					cover_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The cover for ", "") # `<title>` can appear on any element in SVG, but we only want to check the root one
+					cover_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The cover for ", "") # `<title>` can appear on any element in SVG, but we only want to check the root one.
 				elif filename.name == "titlepage.svg":
 					# For later comparison with cover.
 					titlepage_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The titlepage for ", "") # `<title>` can appear on any element in SVG, but we only want to check the root one.

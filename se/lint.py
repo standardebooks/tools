@@ -22,7 +22,7 @@ class SourceFile:
 		self.filename = filename
 		self.contents = contents
 		self._lines = _ensure_line_bounds(contents, bounds)
-		# For binary searching line number lookups on regex matches
+		# For binary searching line number lookups on regex matches.
 		self._offsets = [offset for (offset, _) in self._lines]
 
 	def sub(self, pattern: str | regex.Pattern, replacement: str = "") -> 'SourceFile':
@@ -80,7 +80,7 @@ def sub_with_line_mapping(contents: str, pattern: regex.Pattern, replacement: st
 	prev_idx = 0
 	removed_chars = 0
 	for match in pattern.finditer(contents):
-		# Updating offsets between the prior comment and current match
+		# Updating offsets between the prior comment and current match.
 		while prev_idx < len(bounds) and bounds[prev_idx][0] <= match.start():
 			entry = bounds[prev_idx]
 			bounds[prev_idx] = (entry[0] - removed_chars, entry[1])
@@ -88,11 +88,11 @@ def sub_with_line_mapping(contents: str, pattern: regex.Pattern, replacement: st
 
 		removed_chars += (match.end() - match.start()) - len(replacement)
 
-		# Delete entries for matches that span multiple lines
+		# Delete entries for matches that span multiple lines.
 		while prev_idx < len(bounds) and bounds[prev_idx][0] < match.end():
 			del bounds[prev_idx]
 
-	# Update offsets for lines after the final comment as-needed
+	# Update offsets for lines after the final comment as-needed.
 	if removed_chars > 0:
 		while prev_idx < len(bounds):
 			entry = bounds[prev_idx]

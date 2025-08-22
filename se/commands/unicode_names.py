@@ -22,7 +22,7 @@ def unicode_names(plain_output: bool) -> int:
 	parser.add_argument("strings", metavar="STRING", nargs="*", help="a Unicode string")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths
+	console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths.
 	lines = []
 
 	if not sys.stdin.isatty():

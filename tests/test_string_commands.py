@@ -21,7 +21,7 @@ def test_stringcmds(cmd: str, capfd):
 	cmd_file = test_directory / cmd
 	with open(cmd_file, "r", encoding="utf-8") as cfile:
 		for line in cfile:
-			# each line in the file contains an input string and a "golden" string
+			# each line in the file contains an input string and a "golden" string.
 			in_str, golden_str = line.split(",")
 			must_run(f"se {cmd} {in_str}")
 			out, _ = capfd.readouterr()

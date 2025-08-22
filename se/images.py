@@ -14,7 +14,7 @@ from html import unescape
 from typing import Callable
 import regex
 from PIL import Image, ImageMath, PngImagePlugin, UnidentifiedImageError
-from PIL.Image import Image as Image_type # Separate import to satisfy type checking
+from PIL.Image import Image as Image_type # Separate import to satisfy type checking.
 from lxml import etree
 
 import se
@@ -505,12 +505,12 @@ def _walk_characters(text_string: str, font: dict, text_properties: dict, last_x
 		if ch0_ch1 in font["glyphs"]:
 			combo = font["glyphs"][ch0_ch1]
 		if text_properties["letter-spacing"] == 0 and index < len(text_string) - 2 and combo:
-			# If ligature or "wide" unicode character exists, don't use ligature if letter-spacing set to something interesting :-)
+			# If ligature or "wide" unicode character exists, don't use ligature if letter-spacing set to something interesting.
 			# Found combined characters ch+ch1.
 			_advance_by_glyph(font, text_properties, last_x, last_y, ch0 + ch1, ch2, use_glyph_callback)
 			index += 1
 		if text_properties["letter-spacing"] == 0 and index < len(text_string) and combo:
-			# If ligature or "wide" unicode character exists -- don't use ligature if letter-spacing set to something interesting :-)
+			# If ligature or "wide" unicode character exists -- don't use ligature if letter-spacing set to something interesting.
 			_advance_by_glyph(font, text_properties, last_x, last_y, ch0 + ch1, "", use_glyph_callback)
 		else:
 			_advance_by_glyph(font, text_properties, last_x, last_y, ch0, ch1, use_glyph_callback)
