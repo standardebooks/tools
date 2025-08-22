@@ -8,8 +8,8 @@ from pathlib import Path
 
 import regex
 from rich import box
+from rich.align import Align
 from rich.console import Console
-from rich.style import Style
 from rich.table import Table
 from rich.text import Text
 
@@ -119,9 +119,9 @@ def lint(plain_output: bool) -> int:
 							# Brackets don't need to be escaped in submessages if we instantiate them in `Text()`.
 							submessage_object = Text(submessage.text, style="dim")
 							if submessage.line_num:
-								submessage_line = Text(f"Line {submessage.line_num}", Style(link=f"file://{message.filename.resolve()}#L{submessage.line_num}"), justify="right")
+								submessage_line = Align(f"[link=file://{message.filename.resolve()}#L{submessage.line_num}]Line {submessage.line_num}[/link]", align="right")
 							else:
-								submessage_line = Text("→", justify="right")
+								submessage_line = Align("→", align="right")
 
 							table_data.append([" ", " ", submessage_line, submessage_object])
 
