@@ -4,11 +4,12 @@ Test internal SE programming functions
 
 from pathlib import Path
 
+import regex
+
 from se.se_epub_generate_toc import add_landmark
 import se.easy_xml
 from se.se_epub_lint import SourceFile
 
-import regex
 
 XML_COMMENT_PATTERN = regex.compile(r"<!--.+?-->", flags=regex.DOTALL)
 
@@ -64,7 +65,7 @@ def test_line_numbers_no_comments():
 
 	s = SourceFile(Path("/"), contents)
 
-	_, bounds = s._sub_with_line_mapping(XML_COMMENT_PATTERN)
+	_, bounds = s._sub_with_line_mapping(XML_COMMENT_PATTERN) # pylint: disable=protected-access
 	assert bounds == [(0, 1), (10, 2), (20, 3)]
 
 def test_line_numbers_leading_comments():
@@ -78,7 +79,7 @@ def test_line_numbers_leading_comments():
 
 	s = SourceFile(Path("/"), contents)
 
-	_, bounds = s._sub_with_line_mapping(XML_COMMENT_PATTERN)
+	_, bounds = s._sub_with_line_mapping(XML_COMMENT_PATTERN) # pylint: disable=protected-access
 	assert bounds == [(0, 1), (10, 2), (20, 3)]
 
 def test_line_numbers_trailing_comments():
@@ -92,7 +93,7 @@ def test_line_numbers_trailing_comments():
 
 	s = SourceFile(Path("/"), contents)
 
-	_, bounds = s._sub_with_line_mapping(XML_COMMENT_PATTERN)
+	_, bounds = s._sub_with_line_mapping(XML_COMMENT_PATTERN) # pylint: disable=protected-access
 	assert bounds == [(0, 1), (10, 2), (20, 3)]
 
 def test_line_numbers_inline_comments():
@@ -106,7 +107,7 @@ def test_line_numbers_inline_comments():
 
 	s = SourceFile(Path("/"), contents)
 
-	_, bounds = s._sub_with_line_mapping(XML_COMMENT_PATTERN)
+	_, bounds = s._sub_with_line_mapping(XML_COMMENT_PATTERN) # pylint: disable=protected-access
 	assert bounds == [(0, 1), (10, 2), (20, 3)]
 
 def test_line_numbers_line_comments():
@@ -122,7 +123,7 @@ def test_line_numbers_line_comments():
 
 	s = SourceFile(Path("/"), contents)
 
-	_, bounds = s._sub_with_line_mapping(XML_COMMENT_PATTERN)
+	_, bounds = s._sub_with_line_mapping(XML_COMMENT_PATTERN) # pylint: disable=protected-access
 	assert bounds == [(0, 1), (10, 2), (11, 3), (21, 4), (22, 5)]
 
 def test_line_numbers_multiline_comments():
@@ -145,5 +146,5 @@ def test_line_numbers_multiline_comments():
 
 	s = SourceFile(Path("/"), contents)
 
-	_, bounds = s._sub_with_line_mapping(XML_COMMENT_PATTERN)
+	_, bounds = s._sub_with_line_mapping(XML_COMMENT_PATTERN) # pylint: disable=protected-access
 	assert bounds == [(0, 1), (1, 3), (11, 4), (12, 7), (22, 8), (23, 10), (33, 11)]

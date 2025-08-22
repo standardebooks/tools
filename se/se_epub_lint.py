@@ -3013,13 +3013,13 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		messages.append(LintMessage("t-075", "Word in verse with acute accent for scansion instead of grave accent.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(filtered_nodes)))
 
 	# Check for graphemes or phonemes that are not italicized.
-	nodes = dom.xpath("/html/body//text()[re:test(., '\\s[a-z]’s\\b') and not(contains(., 'p’s and q’s'))]")
+	nodes = dom.xpath("/html/body//p[re:test(., '\\s[a-z]’s\\b') and not(contains(., 'p’s and q’s'))]")
 	if nodes:
-		messages.append(LintMessage("t-076", "Grapheme or phoneme not italicized. Hint: Dialect with missing letters should mark missing letters with [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, nodes))
+		messages.append(LintMessage("t-076", "Grapheme or phoneme not italicized. Hint: Dialect with missing letters should mark missing letters with [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
-	nodes = dom.xpath("/html/body//text()[re:test(., '[:;!\\?\\.][“‘]')]")
+	nodes = dom.xpath("/html/body//p[re:test(., '[:;!\\?\\.][“‘]')]")
 	if nodes:
-		messages.append(LintMessage("t-077", "Punctuation followed by opening quotation.", se.MESSAGE_TYPE_WARNING, filename, nodes))
+		messages.append(LintMessage("t-077", "Punctuation followed by opening quotation.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	return (messages, missing_files)
 
@@ -3150,10 +3150,10 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 		if typos:
 			messages.append(LintMessage("y-005", "Possible typo: question mark or exclamation mark followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
 
-	# Check for opening lsquo in quote that doesn't appear to have a matching `rsquo`, ignoring contractions/edlided words as false matches.
-	typos = dom.xpath("re:match(//*, '“[^‘”]*‘[^“]+?”', 'g')/text()[not(re:test(., '’[^A-Za-z]'))]")
+	# Check for opening `‘` in quote that doesn't appear to have a matching `’`, ignoring contractions/elided words as false matches.
+	typos = dom.xpath("/html/body//p[re:match(., '“[^‘”]*‘[^“]+?”', 'g') and not(re:test(., '’[^A-Za-z]'))]")
 	if typos:
-		messages.append(LintMessage("y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hint: [text]’[/] are used for abbreviations.", se.MESSAGE_TYPE_WARNING, filename, typos))
+		messages.append(LintMessage("y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hint: [text]’[/] are used for abbreviations.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
 
 	# Try to find top-level `lsquo;` for example, `<p>“Bah!” he said to the ‘minister.’</p>`.
 	# We can't do this on xpath because we can't iterate over the output of `re:replace()`.
