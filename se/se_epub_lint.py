@@ -3013,11 +3013,11 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		messages.append(LintMessage("t-075", "Word in verse with acute accent for scansion instead of grave accent.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(filtered_nodes)))
 
 	# Check for graphemes or phonemes that are not italicized.
-	nodes = dom.xpath("/html/body//p[re:test(., '\\s[a-z]’s\\b') and not(contains(., 'p’s and q’s'))]")
+	nodes = dom.xpath("/html/body//text()[re:test(., '\\s[a-z]’s\\b') and not(contains(., 'p’s and q’s')) and not(ancestor::*[1][name() = 'i'])]/ancestor::*[1]")
 	if nodes:
 		messages.append(LintMessage("t-076", "Grapheme or phoneme not italicized. Hint: Dialect with missing letters should mark missing letters with [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
-	nodes = dom.xpath("/html/body//p[re:test(., '[:;!\\?\\.][“‘]')]")
+	nodes = dom.xpath("/html/body//text()[re:test(., '[:;!\\?\\.][“‘]')]/ancestor::*[1]")
 	if nodes:
 		messages.append(LintMessage("t-077", "Punctuation followed by opening quotation.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
