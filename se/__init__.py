@@ -243,7 +243,7 @@ def get_target_filenames(targets: list, allowed_extensions: tuple | str) -> list
 			# If we're looking at an actual file, just add it regardless of whether it's ignored.
 			target_xhtml_filenames.add(target)
 
-	return natsorted(list(target_xhtml_filenames), key=lambda x: str(x.name), alg=ns.PATH)
+	return natsorted(list(target_xhtml_filenames), key=str, alg=ns.PATH)
 
 def is_called_from_parallel(return_none=True) -> bool | None:
 	"""
