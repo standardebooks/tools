@@ -74,8 +74,8 @@ def semanticate(xhtml: str) -> str:
 		"Pvt",
 		"Rev",
 	])
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(M\.?P\.?|H\.?M\.?S\.?|S\.?S\.?|K\.?C\.?|N\.?B\.?|W\.?C\.?|I\.?O\.?U\.?)(?!\b)", lambda result: """<abbr epub:type="z3998:initialism">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(R\.?A\.?|M\.?A\.?|M\.?D\.?)(?!\b)", lambda result: """<abbr epub:type="z3998:initialism z3998:name-title">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(M\.?P\.?|H\.?M\.?S\.?|S\.?S\.?|N\.?B\.?|W\.?C\.?|I\.?O\.?U\.?)(?!\b)", lambda result: """<abbr epub:type="z3998:initialism">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(R\.?A\.?|M\.?A\.?|M\.?D\.?|K\.?C\.?|Q\.?C\.?)(?!\b)", lambda result: """<abbr epub:type="z3998:initialism z3998:name-title">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))U\.?S\.?A\.?(?!\b)", r"""<abbr epub:type="z3998:initialism z3998:place">U.S.A.</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([NESW]\.?[NESW]\.?)(?!\b)", lambda result: """<abbr epub:type="se:compass">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Bros\.", r"<abbr>Bros.</abbr>", xhtml)
