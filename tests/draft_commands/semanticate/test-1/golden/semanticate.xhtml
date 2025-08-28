@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0" xml:lang="en-US">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xmlns:m="http://www.w3.org/1998/Math/MathML" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0" xml:lang="en-US">
 	<head>
 		<title>A Dreary Story</title>
 		<link href="../css/core.css" rel="stylesheet" type="text/css"/>
@@ -197,7 +197,7 @@
 			<!-- Nothing on this line should be tagged (trailing apostrophe). -->
 			<p>Roman numerals preceding an apostrophe are not tagged, such as V’s and l’histoire.</p>
 			<!-- The vix, although consisting of all valid roman characters, is not a valid roman
-					numeral and so should not be tagged. -->
+			numeral and so should not be tagged. -->
 			<p>Intra, si credere libet, vix homines magisque semiferi.</p>
 			<!-- Similarly `Cil` should not be tagged. -->
 			<p>My friends Cil and Cleo met me for coffee.</p>
@@ -206,7 +206,7 @@
 			<!-- Neither `LXVJI` nor `vijii` should be tagged. -->
 			<p>J must be the last character, so these are invalid: LXVJI, vijii.</p>
 			<!-- Although `di` and `mix` are valid roman numerals, they should not be tagged
-				 as they are more likely to be valid words, Italian and English respectively. -->
+			as they are more likely to be valid words, Italian and English respectively. -->
 			<p>The words di and mix, though valid roman numerals, should not be tagged.</p>
 			<!-- Nothing here should be tagged (ensures no stray ordinal suffixes are tagged). -->
 			<p>The 20th entry is ⅓rd of the total.</p>
@@ -216,6 +216,12 @@
 					<p>The above tag is a valid roman numeral, so must be excluded</p>
 				</li>
 			</ol>
+			<!-- MathML tag must be excluded -->
+			<p>
+				<m:math alttext="n">
+					<m:mi>n</m:mi>
+				</m:math>
+			</p>
 		</section>
 	</body>
 </html>
