@@ -2,7 +2,7 @@
 
 A collection of tools Standard Ebooks uses to produce its ebooks, including basic setup of ebooks, text processing, and build tools.
 
-Installing this toolset using `pipx` makes the `se` command line executable available. Its various commands are described below, or you can use `se help` to list them.
+Installing this toolset using `brew` makes the `se` command line executable available. Its various commands are described below, or you can use `se help` to list them.
 
 # Installation
 
@@ -84,22 +84,10 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 	brew update
 	```
 
-2. Install dependencies:
+2. Install the tools:
 
 	```shell
-	# Install some pre-flight dependencies.
-	brew install cairo calibre git openjdk pipx python@3.12
-	pipx ensurepath
-	sudo ln -sfn $(brew --prefix)/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
-
-	# Install the toolset.
-	pipx install --python "$(brew --prefix)"/bin/python3.12 standardebooks
-
-	# Optional: Bash users who have set up bash-completion via brew can install tab completion.
-	ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $(brew --prefix)/etc/bash_completion.d/se
-
-	# Optional: Fish users can install tab completion.
-	ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
+	brew install standardebooks
 	```
 
 ## OpenBSD 6.6 Users
