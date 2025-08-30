@@ -2,7 +2,7 @@
 
 A collection of tools Standard Ebooks uses to produce its ebooks, including basic setup of ebooks, text processing, and build tools.
 
-Installing this toolset using `brew` or `pipx` makes the `se` command line executable available. Its various commands are described below, or you can use `se help` to list them.
+Installing the toolset makes the `se` command line executable available. Its various commands are described below, or you can use `se help` to list them.
 
 # Installation
 
@@ -90,26 +90,25 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 	brew install standardebooks
 	```
 
-Required dependencies will be installed automatically.
-
 ### pipx
 
-Install the tools with pipx:
+Install the tools with `pipx`:
 
-	```shell
-	# Install some pre-flight dependencies.
-	brew install cairo calibre git openjdk pipx python@3.12
-	pipx ensurepath
-	sudo ln -sfn $(brew --prefix)/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
+```shell
+# Install some pre-flight dependencies.
+brew install cairo calibre git openjdk pipx python@3.12
+pipx ensurepath
+sudo ln -sfn $(brew --prefix)/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
 
-	# Install the toolset.
-	pipx install --python "$(brew --prefix)"/bin/python3.12 standardebooks
+# Install the toolset.
+pipx install --python "$(brew --prefix)"/bin/python3.12 standardebooks
 
-	# Optional: Bash users who have set up bash-completion via brew can install tab completion.
-	ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $(brew --prefix)/etc/bash_completion.d/se
+# Optional: Bash users who have set up bash-completion via brew can install tab completion.
+ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $(brew --prefix)/etc/bash_completion.d/se
 
-	# Optional: Fish users can install tab completion.
-	ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
+# Optional: Fish users can install tab completion.
+ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
+```
 
 ## OpenBSD 6.6 Users
 
