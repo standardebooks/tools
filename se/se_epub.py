@@ -532,7 +532,7 @@ class SeEpub:
 		"""
 
 		# Get some header data: title, core and local CSS.
-		title = self.metadata_dom.xpath("/package/metadata/dc:title/text()")[0]
+		title = self.metadata_dom.xpath("/package/metadata/dc:title/text()", True)
 		css = ""
 		namespaces: list[str] = []
 
@@ -1330,7 +1330,7 @@ class SeEpub:
 
 		worktype = "fiction"  # Default.
 
-		subjects = self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']/text()")
+		subjects = [str(s) for s in self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']/text()")]
 		if not subjects:
 			return worktype
 

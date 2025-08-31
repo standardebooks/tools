@@ -1,0 +1,8 @@
+t-001 [Error] chapter-1.xhtml Double spacing found. Sentences should be 
+single-spaced. (Note that double spaces might include Unicode no-break and/or 
+hair spaces!)
+t-063 [Manual Review] chapter-1.xhtml Non-English confusable phrase set without 
+italics.
+ Line 13:       Improper use of a priori.
+ Line 15:       Improper use of in absentia.
+ Line 17:       Improper use of par excellence.

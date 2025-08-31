@@ -660,7 +660,10 @@ class LintMessage:
 			smallest_indent = 1000
 			for submessage in submessages:
 				if not isinstance(submessage, LintSubmessage):
-					submessage = LintSubmessage(submessage)
+					line_num = None
+					if hasattr(submessage, 'getparent'):
+						line_num = submessage.getparent().sourceline
+					submessage = LintSubmessage(submessage, line_num)
 				self.submessages.append(submessage)
 
 				# Try to flatten leading indentation.
@@ -811,9 +814,9 @@ def _lint_metadata_checks(self) -> list:
 		# Is the first instance of the author's last name a hyperlink in the metadata?
 		authors = self.metadata_dom.xpath("/package/metadata/dc:creator")
 		for author in authors:
-			author_sort = self.metadata_dom.xpath(f"/package/metadata/meta[@property='file-as'][@refines='#{author.get_attr('id')}']/text()")
+			author_sort = self.metadata_dom.xpath(f"/package/metadata/meta[@property='file-as'][@refines='#{author.get_attr('id')}']/text()", True)
 			if author_sort:
-				author_last_name = regex.sub(r",.+$", "", author_sort[0])
+				author_last_name = regex.sub(r",.+$", "", author_sort)
 				# Typogrify apostrophes so that we correctly match in the long description.
 				author_last_name = author_last_name.replace("'", "’")
 
@@ -1515,7 +1518,7 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 
 	messages = []
 	filename = source_file.filename
-	source_links = self.metadata_dom.xpath("/package/metadata/dc:source/text()")
+	source_links = [str(s) for s in self.metadata_dom.xpath("/package/metadata/dc:source/text()")]
 
 	if self.is_se_ebook and special_file in ("colophon", "imprint"):
 		# Check that links back to sources are represented correctly.
@@ -3821,7 +3824,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 				messages += _get_malformed_urls(dom, filename)
 
 				# Extract `id` attributes for later checks.
-				id_attrs += dom.xpath("//*[name() != 'section' and name() != 'article' and name() != 'figure' and name() != 'nav']/@id")
+				id_attrs += [str(s) for s in dom.xpath("//*[name() != 'section' and name() != 'article' and name() != 'figure' and name() != 'nav']/@id")]
 
 				# Add to the short story count for later checks.
 				short_story_count += len(dom.xpath("/html/body//article[contains(@epub:type, 'se:short-story')]"))
