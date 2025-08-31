@@ -1,7 +1,7 @@
 y-030 [Manual Review] chapter-1.xhtml Possible typo: lowercase quotation 
 following a period. Check either that the period should be a comma, or that the 
 quotation should start with a capital.
-        To be more specific, a manx is a swordfish's edger. “the trout” of a 
-part becomes a starchy sprout.
-        “Before birthdaies, bladders were only bongos. ‘recent controversy’ 
-aside, a rotate is a footnote from the right perspective.
+ Line 14:       To be more specific, a manx is a swordfish's edger. “the trout” 
+of a part becomes a starchy sprout.
+ Line 16:       “Before birthdaies, bladders were only bongos. ‘recent 
+controversy’ aside, a rotate is a footnote from the right perspective.

@@ -102,7 +102,7 @@ class EasyXmlTree:
 		result: list[str | EasyXmlElement | float] = []
 
 		try:
-			query_result = self.etree.xpath(selector, namespaces=self.namespaces, smart_strings=False)
+			query_result = self.etree.xpath(selector, namespaces=self.namespaces, smart_strings=True)
 			if isinstance(query_result, str|float):
 				result.append(query_result)
 			else:
