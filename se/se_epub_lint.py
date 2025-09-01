@@ -1637,7 +1637,7 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 		if ebook_flags["has_multiple_transcriptions"] or ebook_flags["has_multiple_page_scans"]:
 			nodes = dom.xpath("/html/body//a[text() = 'various sources' and not(re:test(preceding-sibling::br[1]/preceding-sibling::node()[1], '(digital scans|transcriptions) from\\s*$'))]")
 			if nodes:
-				messages.append(LintMessage("t-072", "[text]various sources[/] link not preceded by [text]from[/].", se.MESSAGE_TYPE_ERROR, filename))
+				messages.append(LintMessage("t-072", "[text]various sources[/] link not preceded by [text]from[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 		# In this xpath, we select the 2nd node following `<br/>`, because the node following `<br/>` is white space.
 		nodes = dom.xpath("/html/body//p[./text()[re:test(., '\\bby$') and following-sibling::*[1][name() = 'br' and following-sibling::node()[2][name() != 'a' and name() != 'b']]]]")
