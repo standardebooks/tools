@@ -2986,11 +2986,15 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		messages.append(LintMessage("t-070", "[xhtml]<cite>[/] in epigraph ending in a period.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# If we have Greek text, try to normalize it.
+	greek_transcription_errors = []
 	for node in dom.xpath("/html/body//*[@xml:lang='grc' or @xml:lang='el']"):
 		node_text = node.inner_text()
 		expected_text = se.typography.normalize_greek(node_text)
 		if node_text != expected_text:
-			messages.append(LintMessage("t-073", f"Possible transcription error in Greek. Found: [text]{node_text}[/], but expected [text]{expected_text}[/text]. Hint: Use [bash]se unicode-names[/] to see differences in Unicode characters.", se.MESSAGE_TYPE_WARNING, filename))
+			greek_transcription_errors.append(LintSubmessage(f"Found: [text]{node_text}[/], but expected [text]{expected_text}[/text]", node.sourceline))
+
+	if greek_transcription_errors:
+		messages.append(LintMessage("t-073", "Possible transcription error in Greek. Hint: Use [bash]se unicode-names[/] to see differences in Unicode characters.", se.MESSAGE_TYPE_WARNING, filename, greek_transcription_errors))
 
 	# Check for hyphen-minus instead of non-breaking hyphen in sounds.
 	# Ignore very long `<i>` as they are more likely to be a sentence containing a dash, than a sound.
