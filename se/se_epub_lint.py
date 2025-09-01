@@ -1985,8 +1985,9 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 		messages.append(LintMessage("s-011", "Element without [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for `<pre>` elements.
-	if dom.xpath("/html/body//pre"):
-		messages.append(LintMessage("s-013", "Illegal [xhtml]<pre>[/] element.", se.MESSAGE_TYPE_ERROR, filename))
+	nodes = dom.xpath("/html/body//pre")
+	if nodes:
+		messages.append(LintMessage("s-013", "Illegal [xhtml]<pre>[/] element.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for `<br/>` after block-level elements.
 	nodes = dom.xpath("/html/body//*[self::p or self::blockquote or self::table or self::ol or self::ul or self::section or self::article][following-sibling::br]")
@@ -1994,8 +1995,9 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 		messages.append(LintMessage("s-014", "[xhtml]<br/>[/] after block-level element.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for `<hr>` elements before the end of a section, which is a common PG artifact.
-	if dom.xpath("/html/body//hr[count(following-sibling::*)=0]"):
-		messages.append(LintMessage("s-012", "Illegal [xhtml]<hr/>[/] as last child.", se.MESSAGE_TYPE_ERROR, filename))
+	nodes = dom.xpath("/html/body//hr[count(following-sibling::*)=0]")
+	if nodes:
+		messages.append(LintMessage("s-012", "Illegal [xhtml]<hr/>[/] as last child.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for `<hgroup>` elements with a subtitle but no title.
 	nodes = dom.xpath("/html/body//hgroup[./*[contains(@epub:type, 'subtitle')] and not(./*[contains(concat(' ', @epub:type, ' '), ' title ')])]")
