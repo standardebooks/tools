@@ -2339,7 +2339,7 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	# Check for `<body>` element without child `<section>` or `<article>`. Ignore the ToC because it has a unique structure.
 	nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and re:test(@epub:type, '\\b(toc|loi)\\b'))])]")
 	if nodes:
-		messages.append(LintMessage("s-069", "[xhtml]<body>[/] element missing direct child [xhtml]<section>[/] or [xhtml]<article>[/] element.", se.MESSAGE_TYPE_ERROR, filename))
+		messages.append(LintMessage("s-069", "[xhtml]<body>[/] element missing direct child [xhtml]<section>[/] or [xhtml]<article>[/] element.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for `<h#>` without semantics; `<h#>` that have child elements (which likely have the correct semantics) are OK.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(@epub:type)][not(./*[not(name()='a' and contains(@epub:type, 'noteref'))])]")
@@ -2371,12 +2371,12 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	# Check for incorrect children of `<body>`.
 	nodes = dom.xpath("/html/body/*[name() != 'section' and name() != 'article' and name() != 'nav']")
 	if nodes:
-		messages.append(LintMessage("s-075", "[xhtml]<body>[/] element with direct child that is not [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/].", se.MESSAGE_TYPE_ERROR, filename))
+		messages.append(LintMessage("s-075", "[xhtml]<body>[/] element with direct child that is not [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for dedications with letter semantics.
 	nodes = dom.xpath("/html/body//section[contains(@epub:type, 'dedication') and (descendant-or-self::*[contains(@epub:type, 'z3998:letter')] or .//*[re:test(@epub:type, 'z3998:(salutation|sender|valediction|recipient|postscript)')])]")
 	if nodes:
-		messages.append(LintMessage("s-076", "Dedication with letter semantics. Hint: Dedications are never letters, even if they appear to be addressed to someone.", se.MESSAGE_TYPE_ERROR, filename))
+		messages.append(LintMessage("s-076", "Dedication with letter semantics. Hint: Dedications are never letters, even if they appear to be addressed to someone.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for `<header>` preceded by non-sectioning elements.
 	nodes = dom.xpath("/html/body//header[./preceding-sibling::*[not(re:test(name(), '^(section|div|article)$'))]]")
@@ -2471,7 +2471,7 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	# Check that half titles without subtitles have the fulltitle semantic.
 	nodes = dom.xpath("/html/body//*[name()!='a' and contains(@epub:type, 'halftitlepage')]/*[re:test(name(), '^h[1-6]$') and not(contains(@epub:type, 'fulltitle'))]")
 	if nodes:
-		messages.append(LintMessage("s-096", "Heading element in half title page missing the [val]fulltitle[/] semantic.", se.MESSAGE_TYPE_ERROR, filename))
+		messages.append(LintMessage("s-096", "Heading element in half title page missing the [val]fulltitle[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for missing `href` attributes, sometimes a leftover from PG transcriptions.
 	nodes = dom.xpath("/html/body//a[not(@href)]")
