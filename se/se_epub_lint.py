@@ -983,7 +983,7 @@ def _lint_metadata_checks(self) -> list:
 			messages.append(LintMessage("m-020", "Illegal value for [xml]<meta property=\"se:subject\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_node_text(illegal_subjects)))
 
 		if sorted(node_string_values) != node_string_values:
-			messages.append(LintMessage("m-053", "[xml]<meta property=\"se:subject\">[/] elements not in alphabetical order.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+			messages.append(LintMessage("m-053", "[xml]<meta property=\"se:subject\">[/] elements not in alphabetical order.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage("", nodes[0].sourceline)]))
 
 	elif self.is_se_ebook:
 		messages.append(LintMessage("m-021", "No [xml]<meta property=\"se:subject\">[/] element found.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
