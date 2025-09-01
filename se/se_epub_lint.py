@@ -943,8 +943,9 @@ def _lint_metadata_checks(self) -> list:
 					messages.append(LintMessage("m-058", f"[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for `comprised of`.
-	if self.metadata_dom.xpath("/package/metadata/*[re:test(., '[Cc]omprised of')]"):
-		messages.append(LintMessage("m-069", "[text]comprised of[/] in metadata. Hint: Is there a better phrase to use here?", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+	nodes = self.metadata_dom.xpath("/package/metadata/*[re:test(., '[Cc]omprised of')]")
+	if nodes:
+		messages.append(LintMessage("m-069", "[text]comprised of[/] in metadata. Hint: Is there a better phrase to use here?", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	# Check for illegal em dashes in `<dc:subject>`.
 	nodes = self.metadata_dom.xpath("/package/metadata/dc:subject[contains(text(), '—')]")
