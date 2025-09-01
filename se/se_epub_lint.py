@@ -1029,11 +1029,11 @@ def _lint_metadata_checks(self) -> list:
 			try:
 				name = self.metadata_dom.xpath(f"/package/metadata/*[@id={se.easy_xml.escape_xpath(refines)}]")[0].text
 				if name == node.text:
-					duplicate_names.append(name)
+					duplicate_names.append(LintSubmessage(name, node.sourceline))
 			except Exception:
-				invalid_refines.append(refines)
+				invalid_refines.append(LintSubmessage(refines, node.sourceline))
 		except Exception:
-			invalid_refines.append("<meta property=\"se:name.person.full-name\">")
+			invalid_refines.append(LintSubmessage("<meta property=\"se:name.person.full-name\">", node.sourceline))
 
 	if duplicate_names:
 		messages.append(LintMessage("m-024", "[xml]<meta property=\"se:name.person.full-name\">[/] property identical to regular name. If the two are identical the full name [xml]<meta>[/] element must be removed.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_names))
