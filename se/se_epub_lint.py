@@ -1943,11 +1943,13 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 		for node in nodes:
 			# Get the first line of the poem, if it's a text node, so that we can include it in the error messages.
 			# If it's not a text node then just ignore it and add the error anyway.
+			submessage = LintSubmessage("", node.sourceline)
 			first_line = node.xpath("./descendant-or-self::text()[normalize-space(.)]", True)
 			if first_line:
 				match = first_line.strip()
 				if match: # Make sure we don't append an empty string.
-					submessages.append(match)
+					submessage.text = match
+			submessages.append(submessage)
 
 		messages.append(LintMessage("s-006", "Poem or verse [xhtml]<p>[/] (stanza) without [xhtml]<span>[/] (line) element.", se.MESSAGE_TYPE_WARNING, filename, submessages))
 
