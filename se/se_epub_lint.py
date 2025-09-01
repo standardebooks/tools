@@ -1013,9 +1013,9 @@ def _lint_metadata_checks(self) -> list:
 	# Check that our provided identifier matches the generated identifier.
 	if self.is_se_ebook:
 		try:
-			identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier")[0].text
-			if identifier != self.generated_identifier:
-				messages.append(LintMessage("m-023", f"[xml]<dc:identifier>[/] does not match expected: [text]{self.generated_identifier}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+			identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier")[0]
+			if identifier.text != self.generated_identifier:
+				messages.append(LintMessage("m-023", f"[xml]<dc:identifier>[/] does not match expected: [text]{self.generated_identifier}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(identifier.text, identifier.sourceline)]))
 		except Exception:
 			missing_metadata_elements.append("<dc:identifier>")
 
