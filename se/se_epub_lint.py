@@ -2842,8 +2842,9 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 	if nodes:
 		messages.append(LintMessage("t-045", "Element has [val]z3998:persona[/] semantic and is also set in italics.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
-	if "῾" in source_file.contents:
-		messages.append(LintMessage("t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead.", se.MESSAGE_TYPE_ERROR, filename))
+	matches = source_file.findall("῾")
+	if matches:
+		messages.append(LintMessage("t-046", "[text]῾[/] (U+1FFE) detected. Use [text]ʽ[/] (U+02BD) instead.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_matches(matches)))
 
 	# Check for all-caps first paragraphs in `<section>`s/`<article>`s.
 	# Note that we don't check for small-caps CSS, because there are lots of legitimate cases for that, and it would generate too many false positives.
@@ -2887,8 +2888,9 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		messages.append(LintMessage("t-054", "Epigraphs that are entirely non-English should be set in italics, not Roman.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for lone acute accents, which should always be combined or swapped for a more accurate Unicode chararacter.
-	if "´" in source_file.contents:
-		messages.append(LintMessage("t-055", "Lone acute accent ([val]´[/]). A more accurate Unicode character like prime for coordinates or measurements, or combining accent or breathing mark for Greek text, is required.", se.MESSAGE_TYPE_ERROR, filename))
+	matches = source_file.findall("´")
+	if matches:
+		messages.append(LintMessage("t-055", "Lone acute accent ([val]´[/]). A more accurate Unicode character like prime for coordinates or measurements, or combining accent or breathing mark for Greek text, is required.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_matches(matches)))
 
 	# Check for degree confusable.
 	nodes = dom.xpath("/html/body//*[re:test(text(), '[0-9]+º')]")
