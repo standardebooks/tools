@@ -1470,14 +1470,14 @@ def _lint_svg_checks(self, source_file: SourceFile, svg_dom: se.easy_xml.EasyXml
 	# Check for illegal `transform` or `id` attributes.
 	nodes = svg_dom.xpath("//*[@transform or @id]")
 	if nodes:
-		invalid_transform_attributes = set()
+		invalid_transform_attributes = []
 		invalid_id_attributes = []
 		for node in nodes:
 			if node.get_attr("transform"):
-				invalid_transform_attributes.add(f"transform=\"{node.get_attr('transform')}\"")
+				invalid_transform_attributes.append(LintSubmessage(f"transform=\"{node.get_attr('transform')}\"", node.sourceline))
 
 			if node.get_attr("id"):
-				invalid_id_attributes.append(f"id=\"{node.get_attr('id')}\"")
+				invalid_id_attributes.append(LintSubmessage(f"id=\"{node.get_attr('id')}\"", node.sourceline))
 
 		if invalid_transform_attributes:
 			messages.append(LintMessage("x-003", "Illegal [xml]transform[/] attribute. SVGs should be optimized to remove use of [xml]transform[/]. Try using Inkscape to save as an “optimized SVG”.", se.MESSAGE_TYPE_ERROR, filename, invalid_transform_attributes))
