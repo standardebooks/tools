@@ -1490,12 +1490,13 @@ def _lint_svg_checks(self, source_file: SourceFile, svg_dom: se.easy_xml.EasyXml
 	# Check for `fill: #000` which should simply be removed.
 	nodes = svg_dom.xpath("//*[contains(@fill, '#000') or contains(translate(@style, ' ', ''), 'fill:#000')]")
 	if nodes:
-		messages.append(LintMessage("x-004", "Illegal [xml]style=\"fill: #000\"[/] or [xml]fill=\"#000\"[/].", se.MESSAGE_TYPE_ERROR, filename))
+		messages.append(LintMessage("x-004", "Illegal [xml]style=\"fill: #000\"[/] or [xml]fill=\"#000\"[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for illegal `height` or `width` on root `<svg>` element.
 	if filename.name != "logo.svg": # Do as I say, not as I do...
-		if svg_dom.xpath("/svg[@height or @width]"):
-			messages.append(LintMessage("x-005", "Illegal [xml]height[/] or [xml]width[/] attribute on root [xml]<svg>[/] element. Size SVGs using the [xml]viewBox[/] attribute only.", se.MESSAGE_TYPE_ERROR, filename))
+		nodes = svg_dom.xpath("/svg[@height or @width]")
+		if nodes:
+			messages.append(LintMessage("x-005", "Illegal [xml]height[/] or [xml]width[/] attribute on root [xml]<svg>[/] element. Size SVGs using the [xml]viewBox[/] attribute only.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	nodes = svg_dom.xpath("/svg[not(@viewBox)]")
 	if nodes:
