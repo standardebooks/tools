@@ -2738,18 +2738,18 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		messages.append(LintMessage("t-028", "Possible mis-curled quotation mark.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(line_matches)))
 
 	# Check for periods followed by lowercase.
-	temp_xhtml = regex.sub(r"<title[^>]*?>.+?</title>", "", source_file.contents) # Remove `<title>` because it might contain something like `<title>Chapter 2: The Antechamber of M. de Tréville</title>`.
-	temp_xhtml = regex.sub(r"<abbr[^>]*?>", "<abbr>", temp_xhtml) # Replace things like `<abbr xml:lang="la">`.
-	temp_xhtml = regex.sub(r"<img[^>]*?>", "", temp_xhtml) # Remove `img@alt` attributes.
-	temp_xhtml = temp_xhtml.replace("A.B.C.", "X") # Remove `A.B.C.`, which is not an abbreviation.
-	temp_xhtml = temp_xhtml.replace("X.Y.Z.", "X") # Remove `X.Y.Z.`, which is usually used in the same sense as `A.B.C.` and is also not an abbreviation.
+	temp_xhtml = source_file.sub(r"<title[^>]*?>.+?</title>", "") # Remove `<title>` because it might contain something like `<title>Chapter 2: The Antechamber of M. de Tréville</title>`.
+	temp_xhtml = temp_xhtml.sub(r"<abbr[^>]*?>", "<abbr>") # Replace things like `<abbr xml:lang="la">`.
+	temp_xhtml = temp_xhtml.sub(r"<img[^>]*?>", "") # Remove `img@alt` attributes.
+	temp_xhtml = temp_xhtml.sub("A.B.C.", "X") # Remove `A.B.C.`, which is not an abbreviation.
+	temp_xhtml = temp_xhtml.sub("X.Y.Z.", "X") # Remove `X.Y.Z.`, which is usually used in the same sense as `A.B.C.` and is also not an abbreviation.
 	# Note the regex also excludes preceding numbers, so that we can have inline numbering like:
 	# `A number of questions: 1. regarding those who make heretics; 2. concerning those who were made heretics...`
-	matches = regex.findall(r"[^\s0-9]+\.\s+[\p{Lowercase_Letter}](?!’[\p{Uppercase_Letter}])[\p{Lowercase_Letter}]+", temp_xhtml)
+	matches = temp_xhtml.findall(r"[^\s0-9]+\.\s+[\p{Lowercase_Letter}](?!’[\p{Uppercase_Letter}])[\p{Lowercase_Letter}]+")
 	# If `<abbr>` is in the match, remove it from the matches so we exclude things like `<abbr>et. al.</abbr>`.
-	matches = [match for match in matches if "<abbr>" not in match]
+	matches = [match for match in matches if "<abbr>" not in match[0]]
 	if matches:
-		messages.append(LintMessage("t-029", "Period followed by lowercase letter. Hint: Abbreviations require an [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_WARNING, filename, matches))
+		messages.append(LintMessage("t-029", "Period followed by lowercase letter. Hint: Abbreviations require an [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(matches)))
 
 	# Check for initialisms without periods.
 	nodes = [node for node in dom.xpath("/html/body//abbr[contains(@epub:type, 'z3998:initialism') and not(re:test(., '^[0-9]*([a-zA-Z]\\.)+[0-9]*$'))]") if node.text not in INITIALISM_EXCEPTIONS]
