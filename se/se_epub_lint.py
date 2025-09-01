@@ -2180,11 +2180,13 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 		messages.append(LintMessage("s-035", "Endnote containing only [xhtml]<cite>[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for wrong semantics in frontmatter/backmatter.
-	if dom.xpath("/html/body/section[not(@data-parent) and re:test(@epub:type, '\\b(dedication|introduction|preface|foreword|preamble|titlepage|halftitlepage|imprint|epigraph|acknowledgements)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'frontmatter')])]"):
-		messages.append(LintMessage("s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename))
+	nodes = dom.xpath("/html/body/section[not(@data-parent) and re:test(@epub:type, '\\b(dedication|introduction|preface|foreword|preamble|titlepage|halftitlepage|imprint|epigraph|acknowledgements)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'frontmatter')])]")
+	if nodes:
+		messages.append(LintMessage("s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_node_tags(nodes)))
 
-	if dom.xpath("/html/body/section[not(@data-parent) and re:test(@epub:type, '\\b(endnotes|loi|afterword|appendix|colophon|copyright\\-page|lot)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'backmatter')])]"):
-		messages.append(LintMessage("s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename))
+	nodes = dom.xpath("/html/body/section[not(@data-parent) and re:test(@epub:type, '\\b(endnotes|loi|afterword|appendix|colophon|copyright\\-page|lot)\\b') and not(ancestor-or-self::*[contains(@epub:type, 'backmatter')])]")
+	if nodes:
+		messages.append(LintMessage("s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for leftover asterisms. Asterisms are sequences of any of these chars: `* . • -⁠ —`.
 	nodes = dom.xpath("/html/body//*[self::p or self::div][re:test(., '^\\s*[\\*\\.•\\-⁠—]\\s*([\\*\\.•\\-⁠—]\\s*)+$')]")
@@ -2192,8 +2194,9 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 		messages.append(LintMessage("s-038", "Illegal asterism. Section/scene breaks must be defined by an [xhtml]<hr/>[/] element.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for `<table>` element without a `<tbody>` child.
-	if dom.xpath("/html/body//table[not(tbody)]"):
-		messages.append(LintMessage("s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child.", se.MESSAGE_TYPE_ERROR, filename))
+	nodes = dom.xpath("/html/body//table[not(tbody)]")
+	if nodes:
+		messages.append(LintMessage("s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check that short stories are on an `<article>` element.
 	nodes = dom.xpath("/html/body/section[contains(@epub:type, 'se:short-story') or contains(@epub:type, 'se:novella')]")
@@ -2272,8 +2275,9 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 		messages.append(LintMessage("s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for `<th>` element without a `<thead>` ancestor. However, `<th scope="...">` and `<th/>` are allowed, for use in tables with headers in the middle of tables (https://standardebooks.org/ebooks/dorothy-day/the-eleventh-virgin) and vertical table headers (https://standardebooks.org/ebooks/charles-babbage/passages-from-the-life-of-a-philosopher).
-	if dom.xpath("/html/body//table//th[not(ancestor::thead)][not(@scope)][not(count(node())=0)]"):
-		messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Note: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute.", se.MESSAGE_TYPE_ERROR, filename))
+	nodes = dom.xpath("/html/body//table//th[not(ancestor::thead)][not(@scope)][not(count(node())=0)]")
+	if nodes:
+		messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Note: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for `z3998:stage-direction` on elements that are not `<i>`.
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:stage-direction') and name() !='i' and name() !='abbr' and name() !='p']")
