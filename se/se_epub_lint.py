@@ -791,7 +791,8 @@ def _lint_metadata_checks(self) -> list:
 
 	# Check the long description for some errors.
 	try:
-		long_description = self.metadata_dom.xpath("/package/metadata/meta[@property='se:long-description']")[0].text
+		long_description_node = self.metadata_dom.xpath("/package/metadata/meta[@property='se:long-description']")[0]
+		long_description = long_description_node.text
 
 		metadata_dom_with_parsed_long_description = deepcopy(self.metadata_dom)
 		for node in metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']"):
@@ -803,7 +804,7 @@ def _lint_metadata_checks(self) -> list:
 
 		# Make sure long-description is an escaped XHTML fragment.
 		if not regex.search(r"^\s*<p>", long_description) and long_description.strip() != "LONG_DESCRIPTION":
-			messages.append(LintMessage("m-016", "Long description must be an escaped XHTML fragment.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+			messages.append(LintMessage("m-016", "Long description must be an escaped XHTML fragment.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage('', long_description_node.sourceline)]))
 
 		# Check if there are non-typogrified quotes or em-dashes in metadata descriptions.
 		# Have to use `concat()` for the regex because it's not possible to escape both `'` and `"` in the same string in xpath 1.0. See <https://stackoverflow.com/a/57639969>.
@@ -860,15 +861,15 @@ def _lint_metadata_checks(self) -> list:
 		matches = regex.findall(r"</a>’s", long_description)
 		matches += regex.findall(r"s</a>’", long_description)
 		if matches:
-			messages.append(LintMessage("m-044", "Possessive [text]’[/] or [text]’s[/] outside of [xhtml]<a>[/] element in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+			messages.append(LintMessage("m-044", "Possessive [text]’[/] or [text]’s[/] outside of [xhtml]<a>[/] element in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, long_description_node.sourceline) for m in matches]))
 
 		# Check for HTML entities in long description, but allow `&amp;amp`;.
 		matches = regex.findall(r"&[a-z0-9]+?;", long_description.replace("&amp;", ""))
 		if matches:
-			messages.append(LintMessage("m-018", "HTML entities found. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+			messages.append(LintMessage("m-018", "HTML entities found. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, long_description_node.sourceline) for m in matches]))
 
 	except se.InvalidXmlException as ex:
-		messages.append(LintMessage("m-015", f"Metadata long description is not valid XHTML. LXML says: {ex}", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+		messages.append(LintMessage("m-015", "Metadata long description is not valid XHTML. LXML says:", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"{ex}", long_description_node.sourceline)]))
 
 	except Exception:
 		if self.is_se_ebook:
@@ -885,32 +886,32 @@ def _lint_metadata_checks(self) -> list:
 
 	# Check if there are non-typogrified quotes or em dashes in the title.
 	try:
-		title = self.metadata_dom.xpath("/package/metadata/dc:title")[0].text
-		matches = regex.findall(r"(?:['\"]|\-\-|\s-\s)", title)
+		title_node = self.metadata_dom.xpath("/package/metadata/dc:title")[0]
+		matches = regex.findall(r"(?:['\"]|\-\-|\s-\s)", title_node.text)
 		if matches:
-			messages.append(LintMessage("m-012", "Non-typogrified character in [xml]<dc:title>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+			messages.append(LintMessage("m-012", "Non-typogrified character in [xml]<dc:title>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, title_node.sourceline) for m in matches]))
 
 		# Do we need an `<dcterms:alternate>` meta element?
 		# Match spelled-out numbers with a word joiner, so for example we don't print `eight` if we matched `eighty`.
-		matches = regex.findall(r"(?:[0-9]+|\bone\b|\btwo\b|\bthree\b|\bfour\b|\bfive\b|\bsix\b|\bseven\b|\beight\b|\bnine\b|\bten\b|\beleven\b|\btwelve\b|\bthirteen\b|\bfourteen\b|\bfifteen\b|\bsixteen\b|\bseventeen\b|\beighteen\b|\bnineteen\b|\btwenty\b|\bthirty\b|\bforty\b|\bfifty\b|\bsixty\b|\bseventy\b|\beighty|\bninety)", title, flags=regex.IGNORECASE)
+		matches = regex.findall(r"(?:[0-9]+|\bone\b|\btwo\b|\bthree\b|\bfour\b|\bfive\b|\bsix\b|\bseven\b|\beight\b|\bnine\b|\bten\b|\beleven\b|\btwelve\b|\bthirteen\b|\bfourteen\b|\bfifteen\b|\bsixteen\b|\bseventeen\b|\beighteen\b|\bnineteen\b|\btwenty\b|\bthirty\b|\bforty\b|\bfifty\b|\bsixty\b|\bseventy\b|\beighty|\bninety)", title_node.text, flags=regex.IGNORECASE)
 		if matches and not self.metadata_dom.xpath("/package/metadata/meta[@property='dcterms:alternate']"):
-			messages.append(LintMessage("m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"dcterms:alternate\" refines=\"#title\"> element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+			messages.append(LintMessage("m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"dcterms:alternate\" refines=\"#title\"> element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, title_node.sourceline) for m in matches]))
 	except Exception:
 		missing_metadata_elements.append("<dc:title>")
 
 	try:
-		file_as = self.metadata_dom.xpath("/package/metadata/meta[@property='file-as' and @refines='#title']")[0].text
-		matches = regex.findall(r".(?:['\"]|\-\-|\s-\s).", file_as)
+		file_as_node = self.metadata_dom.xpath("/package/metadata/meta[@property='file-as' and @refines='#title']")[0]
+		matches = regex.findall(r".(?:['\"]|\-\-|\s-\s).", file_as_node.text)
 		if matches:
-			messages.append(LintMessage("m-050", "Non-typogrified character in [xml]<meta property=\"file-as\" refines=\"#title\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+			messages.append(LintMessage("m-050", "Non-typogrified character in [xml]<meta property=\"file-as\" refines=\"#title\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, file_as_node.sourceline) for m in matches]))
 	except Exception:
 		missing_metadata_elements.append("<meta property=\"file-as\" refines=\"#title\">")
 
 	try:
-		description = self.metadata_dom.xpath("/package/metadata/dc:description")[0].text
-		matches = regex.findall(r"(?:['\"]|\-\-|\s-\s)", description)
+		description_node = self.metadata_dom.xpath("/package/metadata/dc:description")[0]
+		matches = regex.findall(r"(?:['\"]|\-\-|\s-\s)", description_node.text)
 		if matches:
-			messages.append(LintMessage("m-013", "Non-typogrified character in [xml]<dc:description>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, matches))
+			messages.append(LintMessage("m-013", "Non-typogrified character in [xml]<dc:description>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, description_node.sourceline) for m in matches]))
 	except Exception:
 		missing_metadata_elements.append("<dc:description>")
 
@@ -1063,7 +1064,7 @@ def _lint_metadata_checks(self) -> list:
 		matches = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?![-’])", node.text, flags=regex.IGNORECASE)
 		matches += regex.findall(r"\ba a\b(?!-)", node.text)
 		if matches:
-			messages.append(LintMessage("y-001", "Possible typo: doubled [text]a/the/and/of/or/as/if[/].", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, matches))
+			messages.append(LintMessage("y-001", "Possible typo: doubled [text]a/the/and/of/or/as/if[/].", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, [LintSubmessage(m, node.sourceline) for m in matches]))
 
 	nodes = self.metadata_dom.xpath("/package/metadata//*[re:test(., '[,;][a-z]', 'i')]")
 	if nodes:
@@ -1271,9 +1272,8 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 
 	INPUTS
 	self
-	local_css: Dictionary of local CSS flags.
 	local_css_path: Path to `local.css` file.
-	local_css_rules: Dictionary of the local CSS rules.
+	abbr_with_whitespace: List of `abbr` selectors.
 
 	OUTPUTS
 	A list of `LintMessage` objects.
@@ -2543,10 +2543,10 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 			messages.append(LintMessage("t-007", "Possessive [text]’s[/] within name italics. If the name in italics is doing the possessing, [text]’s[/] goes outside italics.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for repeated punctuation, but first remove `&amp;` so we don't match `&amp;,`.
+	matches = source_file.sub("&amp;", "").findall(r"[,;]{2,}.{0,20}")
 	# Remove `<td>`s with repeated `”` as they are probably ditto marks.
-	matches = regex.findall(r"[,;]{2,}.{0,20}", source_file.contents.replace("&amp;", ""))
-	matches += regex.findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}", regex.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "", source_file.contents))
-	matches += regex.findall(r"[\p{Letter}][,\.:;]\s[,\.:;]\s?[\p{Letter}<].{0,20}", source_file.contents)
+	matches += source_file.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "").findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}")
+	matches += source_file.findall(r"[\p{Letter}][,\.:;]\s[,\.:;]\s?[\p{Letter}<].{0,20}")
 	if matches:
 		messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, filename, matches))
 
@@ -2564,15 +2564,15 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		node.remove()
 
 	nodes = dom_copy.xpath("/html/body//p[re:test(., '[^=]\\s[0-9]{1,2}\\.[0-9]{2}(?![0-9′″°%]|\\.[0-9]|\\scubic|\\smetric|\\smeters|\\smiles|\\sfeet|\\sinches)')]")
-	matches = set()
+	submessages: list[LintSubmessage] = []
 	for node in nodes:
 		for time_match in regex.findall(r"(?<=[^=]\s)[0-9]{1,2}\.[0-9]{2}(?![0-9′″°%]|\.[0-9]|\scubic|\smetric|\smeters|\smiles|\sfeet|\sinches)", node.inner_text()):
 			time = time_match.split(".")
 			if not time[0].startswith("0") and int(time[0]) >= 1 and int(time[0]) <= 12 and int(time[1]) >= 0 and int(time[1]) <= 59:
-				matches.add(time_match)
+				submessages.append(LintSubmessage(time_match, node.sourceline))
 
-	if matches:
-		messages.append(LintMessage("t-010", "Time set with [text].[/] instead of [text]:[/].", se.MESSAGE_TYPE_WARNING, filename, natsorted(list(matches))))
+	if submessages:
+		messages.append(LintMessage("t-010", "Time set with [text].[/] instead of [text]:[/].", se.MESSAGE_TYPE_WARNING, filename, submessages))
 
 	# Check for missing punctuation before closing quotes.
 	# Exclude signatures in footers as those are commonly quoted without ending punctuation.
@@ -2656,11 +2656,11 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 	# Check for correct typography around measurements like `2 ft.`.
 	# But first remove `@href` and `@id` attributes, because URLs and IDs may contain strings that look like measurements.
 	# Note that while we check `m,min` (minutes) and `h,hr` (hours) we don't check `s` (seconds) because we get too many false positives on years, like `the 1540s`.
-	matches = regex.findall(fr"\b[1-9][0-9]*[{se.NO_BREAK_SPACE}\-]?(?:[mck]?[mgl]|ft|in|min?|h|sec|hr)\.?\b", regex.sub(r"(href|id)=\"[^\"]*?\"", "", source_file.contents))
+	matches = source_file.sub(r"(href|id)=\"[^\"]*?\"", "").findall(fr"\b[1-9][0-9]*[{se.NO_BREAK_SPACE}\-]?(?:[mck]?[mgl]|ft|in|min?|h|sec|hr)\.?\b")
 	# Exclude number ordinals, they're not measurements.
-	matches = [match for match in matches if not regex.search(r"(st|nd|rd|th)", match)]
+	matches = [match for match in matches if not regex.search(r"(st|nd|rd|th)", match[0])]
 	if matches:
-		messages.append(LintMessage("t-021", "Measurement not to standard. Numbers are followed by a no-break space and abbreviated units require an [xhtml]<abbr>[/] element. See [path][link=https://standardebooks.org/manual/1.0.0/8-typography#8.8.5]semos://1.0.0/8.8.5[/][/].", se.MESSAGE_TYPE_WARNING, filename, matches))
+		messages.append(LintMessage("t-021", "Measurement not to standard. Numbers are followed by a no-break space and abbreviated units require an [xhtml]<abbr>[/] element. See [path][link=https://standardebooks.org/manual/1.0.0/8-typography#8.8.5]semos://1.0.0/8.8.5[/][/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(matches)))
 
 	# Check for `nbsp` within `<abbr epub:type="z3998:*-name">`, which is redundant.
 	nodes = dom.xpath(f"/html/body//abbr[re:test(@epub:type, '\\bz3998:[^\\s\"]+name\\b') and contains(text(), '{se.NO_BREAK_SPACE}')]")
@@ -2805,9 +2805,9 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		messages.append(LintMessage("t-040", "Subtitle with illegal ending period.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# If we don't include preceding characters, the regex is 6x faster.
-	matches = regex.findall(r"[^…]\s[!?;:,].{0,10}", source_file.contents)
+	matches = source_file.findall(r"[^…]\s[!?;:,].{0,10}")
 	if matches:
-		messages.append(LintMessage("t-041", "Illegal space before punctuation.", se.MESSAGE_TYPE_ERROR, filename, matches))
+		messages.append(LintMessage("t-041", "Illegal space before punctuation.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_matches(matches)))
 
 	# Check for `rsquo` and `lsquo` used as breathing marks in Greek.
 	# We can't merge this with `t-073` because given the quote + Greek character, we can't easily decide what the correct precomposed Unicode character should be (i.e. `‘Ε` -> `Ἑ`), so we give a generic message instead.
@@ -2895,10 +2895,9 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		messages.append(LintMessage("t-057", "[xhtml]<p>[/] starting with lowercase letter. Hint: [xhtml]<p>[/] that continues text after a [xhtml]<blockquote>[/] requires the [class]continued[/] class; and use [xhtml]<br/>[/] to split one clause over many lines.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for illegal characters.
-	matches = regex.findall(fr"({se.UNICODE_BOM}|{se.SHY_HYPHEN})", source_file.contents)
+	matches = source_file.findall(fr"({se.UNICODE_BOM}|{se.SHY_HYPHEN})")
 	if matches:
-		# Get the keys of a dict in order to create a list without duplicates.
-		messages.append(LintMessage("t-058", "Illegal character.", se.MESSAGE_TYPE_ERROR, filename, list({match.encode("unicode_escape").decode().replace("\\u", "U+").upper():None for match in matches}.keys())))
+		messages.append(LintMessage("t-058", "Illegal character.", se.MESSAGE_TYPE_ERROR, filename, [LintSubmessage(m[0].encode("unicode_escape").decode().replace("\\u", "U+").upper(), m[1]) for m in matches]))
 
 	# Check for period in `<cite>` in endnotes.
 	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]//cite[not((./node()[last()])[name() = 'abbr']) and ./following-sibling::*[1][contains(@epub:type, 'backlink')] and re:test(., '^—') and ( (re:test(., '\\.$') and ./following-sibling::node()[re:test(., '^\\s*$')]) or ./following-sibling::node()[re:test(., '^\\.\\s*$')])]")
@@ -3120,14 +3119,15 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 
 	messages = []
 	typos = []
+	typo_matches: list[tuple[str, int]] = []
 
 	if special_file != "titlepage":
 		# Don't check the titlepage because it has a standard format and may raise false positives.
-		typos = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?![-’])", source_file.contents, flags=regex.IGNORECASE)
-		typos += regex.findall(r"\ba a\b(?!-)", source_file.contents)
+		typo_matches = source_file.findall(regex.compile(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?![-’])", flags=regex.IGNORECASE))
+		typo_matches += source_file.findall(r"\ba a\b(?!-)")
 
-		if typos:
-			messages.append(LintMessage("y-001", "Possible typo: doubled [text]a/the/and/of/or/as/if[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
+		if typo_matches:
+			messages.append(LintMessage("y-001", "Possible typo: doubled [text]a/the/and/of/or/as/if[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(typo_matches)))
 
 	# Check for basic typo, but exclude MathML and endnotes. Some endnotes (like in _Ten Days that Shook the World_) may start with letters.
 	dom_copy = deepcopy(dom)
@@ -3228,9 +3228,9 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 		messages.append(LintMessage("y-014", "Possible typo: unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
 
 	# Check for some common OCR misspellings.
-	typos = regex.findall(r"\bbad (?:been|seen)\b", source_file.contents)
+	typos = source_file.findall(r"\bbad (?:been|seen)\b")
 	if typos:
-		messages.append(LintMessage("y-015", "Possible typo: misspelled word.", se.MESSAGE_TYPE_WARNING, filename, typos))
+		messages.append(LintMessage("y-015", "Possible typo: misspelled word.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(typos)))
 
 	# Check for two periods in a row, almost always a typo for one period or a `hellip`.
 	typos = dom.xpath("/html/body//p[re:test(., '[^\\.]\\.\\.[^\\.]')]")
