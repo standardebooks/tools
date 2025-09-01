@@ -837,7 +837,7 @@ def _lint_metadata_checks(self) -> list:
 				filtered_nodes.append(node)
 
 		if filtered_nodes:
-			messages.append(LintMessage("m-064", "S.E. ebook linked in long description but not italicized.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [node.to_string() for node in filtered_nodes]))
+			messages.append(LintMessage("m-064", "S.E. ebook linked in long description but not italicized.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(filtered_nodes)))
 
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']//a[not(re:test(@href, '^https?://standardebooks\\.org'))]")
 		if nodes:
