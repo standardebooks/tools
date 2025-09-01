@@ -1045,8 +1045,9 @@ def _lint_metadata_checks(self) -> list:
 	if nodes:
 		messages.append(LintMessage("m-008", "Non-canonical Library of Congress Name Authority URI. Expected [url]http://id.loc.gov/authorities/names/<IDENTIFIER>[/]. Hint: Must be [text]http[/] and without file extension.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
-	if self.metadata_dom.xpath("/package/metadata/dc:description[text()!='DESCRIPTION' and re:test(., '[^\\.”]$')]"):
-		messages.append(LintMessage("m-055", "[xml]dc:description[/] does not end with a period.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+	invalid_description = self.metadata_dom.xpath("/package/metadata/dc:description[text()!='DESCRIPTION' and re:test(., '[^\\.”]$')]")
+	if invalid_description:
+		messages.append(LintMessage("m-055", "[xml]dc:description[/] does not end with a period.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage("..."+invalid_description[0].text[-10:], invalid_description[0].sourceline)]))
 
 	# Does the manifest match the generated manifest?
 	try:
