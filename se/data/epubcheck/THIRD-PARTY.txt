@@ -10,26 +10,23 @@ Licenses of third-party dependencies
   jackson-databind, 2.18.2
     Apache License, Version 2.0
 
-  FindBugs-jsr305, 3.0.2
+  error-prone annotations, 2.36.0
     Apache License, Version 2.0
 
-  error-prone annotations, 2.18.0
+  Guava InternalFutureFailureAccess and InternalFutures, 1.0.3
     Apache License, Version 2.0
 
-  Guava InternalFutureFailureAccess and InternalFutures, 1.0.1
-    Apache License, Version 2.0
-
-  Guava: Google Core Libraries for Java, 32.0.0-jre
+  Guava: Google Core Libraries for Java, 33.4.8-jre
     Apache License, Version 2.0
 
   Guava ListenableFuture only, 9999.0-empty-to-avoid-conflict-with-guava
     Apache License, Version 2.0
 
-  J2ObjC Annotations, 2.8
+  J2ObjC Annotations, 3.0.0
     Apache License, Version 2.0
 
-  ICU4J, 72.1
-    Unicode/ICU License
+  ICU4J, 77.1
+    Unicode-3.0
 
   json-path, 2.8.0
     Apache License, Version 2.0
@@ -55,8 +52,11 @@ Licenses of third-party dependencies
   TwelveMonkeys :: ImageIO :: Metadata, 3.9.4
     The 3-Clause BSD License
 
-  Apache Commons Codec, 1.15
-    Apache License, Version 2.0
+  Apache Commons Codec, 1.19.0
+    Apache-2.0
+
+  Apache Commons IO, 2.20.0
+    Apache-2.0
 
   isorelax, 20030108
     The 3-clause BSD License
@@ -73,8 +73,11 @@ Licenses of third-party dependencies
   galimatias, 0.1.3
     The MIT License
 
-  Apache Commons Compress, 1.21
-    Apache License, Version 2.0
+  Apache Commons Compress, 1.28.0
+    Apache-2.0
+
+  Apache Commons Lang, 3.18.0
+    Apache-2.0
 
   Apache HttpClient, 5.1.3
     Apache License, Version 2.0
@@ -85,8 +88,8 @@ Licenses of third-party dependencies
   Apache HttpComponents Core HTTP/2, 5.1.3
     Apache License, Version 2.0
 
-  Checker Qual, 3.33.0
-    The MIT License
+  JSpecify annotations, 1.0.0
+    The Apache License, Version 2.0
 
   asm, 9.3
     BSD-3-Clause
