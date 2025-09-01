@@ -2124,8 +2124,8 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 		messages.append(LintMessage("s-030", "[val]z3998:nonfiction[/] should be [val]z3998:non-fiction[/].", se.MESSAGE_TYPE_ERROR, filename))
 
 	# Run some checks on `epub:type` values.
-	incorrect_attrs = set()
-	unnecessary_z3998_attrs = set()
+	incorrect_attrs = []
+	unnecessary_z3998_attrs = []
 	duplicate_attrs = []
 
 	for node in dom.xpath("//*[@epub:type]"):
@@ -2140,27 +2140,27 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 			if val.startswith("z3998:"):
 				bare_val = val.replace("z3998:", "")
 				if bare_val not in Z3998_SEMANTIC_VOCABULARY:
-					incorrect_attrs.add(val)
+					incorrect_attrs.append(LintSubmessage(val, node.sourceline))
 
 				elif bare_val in EPUB_SEMANTIC_VOCABULARY:
-					unnecessary_z3998_attrs.add((val, bare_val))
+					unnecessary_z3998_attrs.append(LintSubmessage(val, node.sourceline))
 
 			elif val.startswith("se:"):
 				bare_val = val.replace("se:", "")
 				if bare_val not in SE_SEMANTIC_VOCABULARY:
-					incorrect_attrs.add(val)
+					incorrect_attrs.append(LintSubmessage(val, node.sourceline))
 
 			else:
 				# Regular epub vocabulary.
 				if val not in EPUB_SEMANTIC_VOCABULARY:
-					incorrect_attrs.add(val)
+					incorrect_attrs.append(LintSubmessage(val, node.sourceline))
 
 	if duplicate_attrs:
 		messages.append(LintMessage("s-031", "Duplicate value in [attr]epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(duplicate_attrs)))
 	if incorrect_attrs:
 		messages.append(LintMessage("s-032", "Invalid value for [attr]epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, incorrect_attrs))
 	if unnecessary_z3998_attrs:
-		messages.append(LintMessage("s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary.", se.MESSAGE_TYPE_ERROR, filename, [attr for (attr, bare_attr) in unnecessary_z3998_attrs]))
+		messages.append(LintMessage("s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary.", se.MESSAGE_TYPE_ERROR, filename, unnecessary_z3998_attrs))
 
 	# Check if language tags in individual files match the language in the metadata file.
 	# `loi` is in `IGNORED_FILENAMES`, but should not be excluded from this particular test.
