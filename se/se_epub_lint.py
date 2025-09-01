@@ -3389,7 +3389,8 @@ def _lint_image_metadata_checks(self, has_images: bool) -> list:
 	messages = []
 
 	# Check for some accessibility metadata regarding images.
-	has_visual_accessmode = len(self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessMode' and text() = 'visual']")) > 0
+	visual_accessmode = self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessMode' and text() = 'visual']")
+	has_visual_accessmode = len(visual_accessmode) > 0
 	has_accessibility_feature_alt = len(self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'alternativeText']")) > 0
 	has_wat_role = len(self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text() = 'wat']")) > 0
 
@@ -3405,7 +3406,7 @@ def _lint_image_metadata_checks(self, has_images: bool) -> list:
 
 	if not has_images:
 		if has_visual_accessmode:
-			messages.append(LintMessage("m-038", "[attr]schema:accessMode[/] property set to [val]visual[/] in metadata, but no images in ebook.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+			messages.append(LintMessage("m-038", "[attr]schema:accessMode[/] property set to [val]visual[/] in metadata, but no images in ebook.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage("", visual_accessmode[0].sourceline)]))
 
 	return messages
 
