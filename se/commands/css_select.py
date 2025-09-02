@@ -24,7 +24,6 @@ def css_select(plain_output: bool) -> int:
 
 	for filepath in se.get_target_filenames(args.targets, ".xhtml"):
 		try:
-
 			with open(filepath, "r", encoding="utf-8") as file:
 				dom = se.easy_xml.EasyXmlTree(file.read())
 
@@ -56,5 +55,9 @@ def css_select(plain_output: bool) -> int:
 		except se.SeException as ex:
 			se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]. Exception: {ex}", plain_output=plain_output)
 			return ex.code
+
+		except FileNotFoundError:
+			se.print_error(f"Invalid file: [path][link=file://{filepath}]{filepath}[/][/].")
+			return se.InvalidFileException.code
 
 	return 0
