@@ -80,7 +80,7 @@ class TocItem:
 			self.subtitle = f"<span xml:lang=\"{self.lang}\">{self.subtitle}</span>"
 
 		# If the title is entirely roman numeral, put epub:type within `<a>`.
-		if regex.search(r"^<span epub:type=\"z3998:roman\">[IVXLC]+<\/span>$", self.title):
+		if regex.search(r"^<span epub:type=\"z3998:roman\">[^<]+<\/span>$", self.title):
 			# Title is a pure roman numeral.
 			if self.subtitle == "":  # Put the roman flag inside the `<a>` element.
 				out_string += f"<a href=\"text/{self.file_link}\" epub:type=\"z3998:roman\">{self.roman}</a>\n"
@@ -380,7 +380,7 @@ def extract_strings(node: EasyXmlElement) -> str:
 
 	out_string = node.inner_xml()
 	out_string = strip_notes(out_string)
-	out_string = out_string.replace("\n", "")
+	out_string = out_string.strip().replace("\n", " ") # Replace newlines with a space because we may have two elements in a row in a title, like `<abbr>S.S.</abbr> <i>Lusitania</i>`. When in `<h2>`, these elemetns will be on their own line, but in `<a>` they will be on the same line and require a space between them.
 	return regex.sub(r"[\n\t]", "", out_string)
 
 def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, single_file: bool, single_file_without_headers: bool) -> None:
