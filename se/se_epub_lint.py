@@ -3436,7 +3436,7 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 	"""
 
 	# This is a dict with where keys are the path and values are a list of code dicts.
-	# Each code dict has a key "code" which is the actual code, and a key "used" which is a bool indicating whether or not the code has actually been caught in the linting run.
+	# Each code dict has a key "code" which is XML element containing the code, and a key "used" which is a bool indicating whether or not the code has actually been caught in the linting run.
 	ignored_codes: dict[str, list[dict]] = {}
 
 	# First, check if we have an `se-lint-ignore.xml` file in the ebook root. If so, parse it. For an example `se-lint-ignore.xml` file, see <semos://1.0.0/2.3>.
@@ -3465,7 +3465,7 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 					has_reason = False
 					for child in ignore:
 						if child.tag == "code" and child.text.strip() not in allowed_messages:
-							ignored_codes[path].append({"code": child.text.strip(), "used": False})
+							ignored_codes[path].append({"code": se.easy_xml.EasyXmlElement(child), "used": False})
 
 						if child.tag == "reason" and child.text.strip() != "":
 							has_reason = True
@@ -3486,7 +3486,7 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 				for code in codes:
 					try:
 						# `fnmatch.translate()` converts shell-style globs into a regex pattern.
-						if regex.match(fr"{translate(path)}", str(message.filename.name) if message.filename else "") and message.code == code["code"]:
+						if regex.match(fr"{translate(path)}", str(message.filename.name) if message.filename else "") and message.code == code["code"].text.strip():
 							messages.remove(message)
 							code["used"] = True
 
@@ -3502,10 +3502,11 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 		for path, codes in ignored_codes.items():
 			for code in codes:
 				if not code["used"]:
-					unused_codes.append(f"{path}, {code['code']}")
+					code["code"].set_text(f"{path}: {code['code'].text}")
+					unused_codes.append(code["code"])
 
 		if unused_codes:
-			messages.append(LintMessage("m-048", f"Unused [path][link=file://{lint_ignore_path}]se-lint-ignore.xml[/][/] rule.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, unused_codes))
+			messages.append(LintMessage("m-048", f"Unused [path][link=file://{lint_ignore_path}]se-lint-ignore.xml[/][/] rule.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_text(unused_codes)))
 
 	return messages
 
