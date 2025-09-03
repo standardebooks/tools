@@ -206,7 +206,7 @@ METADATA
 "m-035", f"Unexpected S.E. identifier in colophon. Expected: [url]{se_url}[/]."
 "m-036", "Variable not replaced with value."
 "m-037", f"Transcription/page scan source link not found. Expected: [xhtml]{href}[/]."
-"m-038", "[attr]schema:accessMode[/] property set to [val]visual[/] in metadata, but no images in ebook."
+"m-038", "[attr]schema:accessMode[/] property set to [val]visual[/], but no images in ebook."
 "m-040", "Images found in ebook, but no [attr]role[/] property set to [val]wat[/] in metadata for the writer of the alt text."
 "m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
 "m-042", "[xml]<manifest>[/] element does not match expected structure."
@@ -3424,7 +3424,7 @@ def _lint_image_metadata_checks(self, has_images: bool) -> list:
 
 	if not has_images:
 		if has_visual_accessmode:
-			messages.append(LintMessage("m-038", "[attr]schema:accessMode[/] property set to [val]visual[/] in metadata, but no images in ebook.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage("", visual_accessmode[0].sourceline)]))
+			messages.append(LintMessage("m-038", "[attr]schema:accessMode[/] property set to [val]visual[/], but no images in ebook.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(visual_accessmode)))
 
 	return messages
 
