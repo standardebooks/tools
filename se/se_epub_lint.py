@@ -1319,9 +1319,9 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 	if matches:
 		messages.append(LintMessage("c-022", "Illegal [css]rem[/] unit. Hint: use [css]em[/] instead.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
-	matches = regex.search(r"font-size\s*:\s*[0-9\.]+(?![0-9\.]|em|ex)", self.local_css)
+	matches = source_file.findall(r"font-size\s*:\s*[0-9\.]+(?![0-9\.]|em|ex)")
 	if matches:
-		messages.append(LintMessage("c-023", "Illegal unit used to set [css]font-size[/]. Hint: Use [css]em[/] units.", se.MESSAGE_TYPE_ERROR, local_css_path))
+		messages.append(LintMessage("c-023", "Illegal unit used to set [css]font-size[/]. Hint: Use [css]em[/] units.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
 	matches = regex.search(r"line-height\s*:\s*[0-9\.]+(?!;|[0-9\.]+)", self.local_css)
 	if matches:
