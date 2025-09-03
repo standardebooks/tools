@@ -295,7 +295,7 @@ SEMANTICS & CONTENT
 "s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file."
 "s-038", "Illegal asterism. Section/scene breaks must be defined by an [xhtml]<hr/>[/] element."
 "s-039", "[text]Ibid[/] in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes"
-"s-041", f"The text in [attr]#{figure_ref}[/]'s LoI entry does not match either its [xhtml]<figcaption>[/] element or its [xhtml]<img>[/] [attr]alt[/] attribute."
+"s-041", "LoI entry text doesn't match either the referenced element's [xhtml]<figcaption>[/] element or its [xhtml]<img>[/] [attr]alt[/] attribute."
 "s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child."
 "s-043", "[val]se:short-story[/] semantic on element that is not [xhtml]<article>[/]."
 "s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element."
@@ -1733,6 +1733,8 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 
 	# Check LoI descriptions to see if they match associated `<figcaption>s`.
 	elif special_file == "loi":
+		mismatched_loi_nodes = []
+
 		for node in dom.xpath("/html/body/nav[contains(@epub:type, 'loi')]//li//a"):
 			figure_ref = node.get_attr("href").split("#")[1]
 			chapter_ref = regex.findall(r"(.*?)#.*", node.get_attr("href"))[0]
@@ -1772,7 +1774,11 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 					break
 
 			if not loi_text_matches_figure:
-				messages.append(LintMessage("s-041", f"The text in [attr]#{figure_ref}[/]'s LoI entry does not match either its [xhtml]<figcaption>[/] element or its [xhtml]<img>[/] [attr]alt[/] attribute.", se.MESSAGE_TYPE_WARNING, self.path / "src/epub/text" / chapter_ref))
+				print(node)
+				mismatched_loi_nodes.append(node)
+
+		if mismatched_loi_nodes:
+			messages.append(LintMessage("s-041", "LoI entry text doesn't match either the referenced element's [xhtml]<figcaption>[/] element or its [xhtml]<img>[/] [attr]alt[/] attribute.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(mismatched_loi_nodes)))
 
 	return messages
 
