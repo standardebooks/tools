@@ -464,7 +464,7 @@ XHTML
 "x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter."
 "x-017", "Duplicate value for [attr]id[/] attribute."
 "x-018", "Unused [xhtml]id[/] attribute."
-"x-019", "Unexpected value of [attr]id[/] attribute. Expected: [attr]{unexpected_id[1]}[/]."
+"x-019", "Unexpected value of [attr]id[/] attribute."
 "x-020", "Link to [path][link=file://{local_css_path}]se.css[/][/] in [xhtml]<head>[/], but not an SE boilerplate file."
 "x-021", "[xhtml]<figure>[/] element with no [attr]id[/] attribute."
 
@@ -3108,8 +3108,9 @@ def _lint_xhtml_xhtml_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTr
 
 	# Check for `id` attributes of numbered paragraphs (like `p-44`) that are used as refs in endnotes.
 	# Make sure their number is actually their correct sequence number in the text.
-	for unexpected_id in se.formatting.find_unexpected_ids(dom):
-		messages.append(LintMessage("x-019", f"Unexpected value of [attr]id[/] attribute. Expected: [attr]{unexpected_id[1]}[/].", se.MESSAGE_TYPE_ERROR, filename, [unexpected_id[0].to_tag_string()]))
+	unexpected_ids = se.formatting.find_unexpected_ids(dom)
+	if unexpected_ids:
+		messages.append(LintMessage("x-019", "Unexpected value of [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [LintSubmessage(f"Found {unexpected_id[0].get_attr('id')}, expected {unexpected_id[1]}.", unexpected_id[0].sourceline) for unexpected_id in unexpected_ids]))
 
 	if filename.name not in ("titlepage.xhtml", "imprint.xhtml", "colophon.xhtml", "uncopyright.xhtml"):
 		nodes = dom.xpath("/html/head/link[@href='../css/se.css']")
