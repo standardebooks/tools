@@ -17,7 +17,6 @@ import importlib.resources
 from unidecode import unidecode
 
 import cssutils
-import lxml.cssselect
 from PIL import Image, UnidentifiedImageError
 import regex
 from natsort import natsorted, ns
@@ -119,7 +118,7 @@ See the se.print_error function for a comprehensive list of allowed codes.
 LIST OF ALL SE LINT MESSAGES
 
 CSS
-"c-001", "Don’t use [css]*:first-of-type[/], [css]*:last-of-type[/], [css]*:nth-of-type[/] [css]*:nth-last-of-type[/], or [css]*:only-of-type[/] on [css]*[/]. Instead, specify an element to apply it to."
+"c-001", "Forbidden selector. Hint: Applying [css]:first-of-type[/], [css]:last-of-type[/], [css]:nth-of-type[/] [css]:nth-last-of-type[/], or [css]:only-of-type[/] to [css]*[/] is not implemented in the SE toolset. Instead of targeting [css]*[/], target an element, like [css]p[/]. Remember that [css]*[/] may be implicit."
 "c-002", "Unused CSS selectors."
 "c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/])."
 "c-004", "Don’t specify border colors, so that reading systems can adjust for night mode."
@@ -545,12 +544,13 @@ class SourceFile:
 
 		return None
 
-	def findall(self, pattern: str | regex.Pattern) -> list[tuple[str, int]]:
+	def findall(self, pattern: str | regex.Pattern, flags: int = 0) -> list[tuple[str, int]]:
 		"""
 		Find all regex matches in the file contents, including line numbers.
 		"""
+
 		if isinstance(pattern, str):
-			pattern = regex.compile(pattern)
+			pattern = regex.compile(pattern, flags)
 
 		matches = []
 		for match in regex.finditer(pattern, self.contents):
@@ -1289,11 +1289,14 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 	"""
 	messages = []
 
+	source_file = SourceFile(local_css_path, self.local_css)
+
 	# lxml has not implemented the following in cssselect: `*:first-of-type`, `*:last-of-type`, `*:nth-of-type`, `*:nth-last-of-type`, `*:only-of-type` *but only when used on `*`*. This includes for example: `section [epub|type~="test"]:first-of-type` (note the `*` is implicit).
 	# Therefore we can't simplify them in build or test against them.
-	matches = regex.findall(r"(?:^| )[^a-z\s][^\s]+?:(?:first-of-type|last-of-type|nth-of-type|nth-last-of-type|only-of-type)", self.local_css, flags=regex.MULTILINE)
+	matches = source_file.findall(r"(?:^| )(?:[^a-z\s][^\s]+?|\*|):(?:first-of-type|last-of-type|nth-of-type|nth-last-of-type|only-of-type)", flags=regex.MULTILINE)
+
 	if matches:
-		messages.append(LintMessage("c-001", "Don’t use [css]*:first-of-type[/], [css]*:last-of-type[/], [css]*:nth-of-type[/] [css]*:nth-last-of-type[/], or [css]*:only-of-type[/] on [css]*[/]. Instead, specify an element to apply it to.", se.MESSAGE_TYPE_ERROR, local_css_path, matches))
+		messages.append(LintMessage("c-001", "Forbidden selector. Hint: Applying [css]:first-of-type[/], [css]:last-of-type[/], [css]:nth-of-type[/] [css]:nth-last-of-type[/], or [css]:only-of-type[/] to [css]*[/] is not implemented in the SE toolset. Instead of targeting [css]*[/], target an element, like [css]p[/]. Remember that [css]*[/] may be implicit.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
 	# If we select on the `xml` namespace, make sure we define the namespace in the CSS, otherwise the selector won't work.
 	# We do this using a regex and not with cssutils, because cssutils will barf in this particular case and not even record the selector.
@@ -3862,7 +3865,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 						try:
 							if dom.css_select(selector):
 								unused_selectors.remove(selector)
-						except lxml.cssselect.ExpressionError:
+						except se.NotImplementedException:
 							# This gets thrown on some selectors not yet implemented by lxml, like `*:first-of-type`.
 							unused_selectors.remove(selector)
 							continue

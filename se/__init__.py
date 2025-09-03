@@ -122,6 +122,10 @@ class NoResults(SeException):
 	""" Invalid XHTML """
 	code = 18
 
+class NotImplementedException(SeException):
+	""" Function not implemented """
+	code = 19
+
 def strip_bom(string: str) -> str:
 	"""
 	Remove the Unicode Byte Order Mark from a string.

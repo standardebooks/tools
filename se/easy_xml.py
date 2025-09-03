@@ -87,6 +87,10 @@ class EasyXmlTree:
 				CSS_SELECTOR_CACHE[selector] = sel
 
 			return [EasyXmlElement(element, self.namespaces) for element in sel(self.etree)]
+
+		except cssselect.ExpressionError as ex:
+			raise se.NotImplementedException(f"Selector not implemented in the SE toolset: [css]{selector}[/]") from ex
+
 		except parser.SelectorSyntaxError as ex:
 			raise se.InvalidCssException(f"Invalid selector: [css]{selector}[/]") from ex
 
@@ -173,8 +177,12 @@ class EasyXmlTree:
 							for child in node.xpath(".//*"):
 								self._apply_css_declaration_to_node(child, declaration, 0)
 
-			except cssselect.ExpressionError:
+			except se.NotImplementedException:
 				# This gets thrown on some selectors not yet implemented by lxml, like `*:first-of-type`.
+				pass
+
+			except cssselect.ExpressionError:
+				# Invalid CSS, continue.
 				pass
 
 	def to_string(self) -> str:
