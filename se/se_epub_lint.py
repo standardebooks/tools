@@ -133,7 +133,7 @@ CSS
 "c-013", "Element with margin or padding not in increments of [css].5em[/]."
 "c-014", "[xhtml]<table>[/] element without explicit margins. Most tables need [css]margin: 1em;[/] or [css]margin: 1em auto 1em auto;[/]."
 "c-015", "Element after or containing [val]z3998:salutation[/] does not have [css]text-indent: 0;[/]."
-"c-016", "[css]text-align: left;[/] found. Use [css]text-align: initial;[/] instead."
+"c-016", "Illegal [css]text-align: left;[/]. Hint: use [css]text-align: initial;[/] instead."
 "c-017", "Element with [val]z3998:postscript[/] semantic, but without [css]margin-top: 1em;[/]."
 "c-018", "Element with [val]z3998:postscript[/] semantic, but without [css]text-indent: 0;[/]."
 "c-019", "Element with [val]z3998:signature[/] semantic, but without [css]font-variant: small-caps;[/] or [css]font-style: italic;[/]."
@@ -1311,9 +1311,9 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 	if matches:
 		messages.append(LintMessage("c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
-	matches = regex.search(r"text-align:\s*left\s*;", self.local_css)
+	matches = source_file.findall(r"text-align:\s*left\s*;")
 	if matches:
-		messages.append(LintMessage("c-016", "[css]text-align: left;[/] found. Use [css]text-align: initial;[/] instead.", se.MESSAGE_TYPE_ERROR, local_css_path))
+		messages.append(LintMessage("c-016", "Illegal [css]text-align: left;[/]. Hint: use [css]text-align: initial;[/] instead.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
 	matches = regex.search(r"[0-9\.]\s?rem;", self.local_css)
 	if matches:
