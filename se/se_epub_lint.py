@@ -139,7 +139,7 @@ CSS
 "c-019", "Element with [val]z3998:signature[/] semantic, but without [css]font-variant: small-caps;[/] or [css]font-style: italic;[/]."
 "c-020", "Multiple [xhtml]<article>[/]s or [xhtml]<section>[/]s in file, but missing [css]break-after: page;[/]."
 "c-021", "Element with [css]font-style: italic;[/], but child [xhtml]<i>[/] or [xhtml]<em>[/] does not have [css]font-style: normal;[/]. Hint: Italics within italics are typically set in Roman for contrast; if that’s not the case here, can [xhtml]<i>[/] be removed while still preserving italics and semantic inflection?"
-"c-022", "Illegal [css]rem[/] unit. Use [css]em[/] instead."
+"c-022", "Illegal [css]rem[/] unit. Hint: use [css]em[/] instead."
 "c-023", "Illegal unit used to set [css]font-size[/]. Hint: Use [css]em[/] units."
 "c-024", "Illegal unit used to set [css]line-height[/]. Hint: [css]line-height[/] is set without any units."
 "c-025", "Illegal percent unit used to set [css]height[/] or positioning property. Hint: Use [css]vh[/] to specify vertical-oriented properties like height or position."
@@ -1315,9 +1315,9 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 	if matches:
 		messages.append(LintMessage("c-016", "Illegal [css]text-align: left;[/]. Hint: use [css]text-align: initial;[/] instead.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
-	matches = regex.search(r"[0-9\.]\s?rem;", self.local_css)
+	matches = source_file.findall(r"[a-z\-]+\s*:\s*[0-9\.]\s?rem;")
 	if matches:
-		messages.append(LintMessage("c-022", "Illegal [css]rem[/] unit. Use [css]em[/] instead.", se.MESSAGE_TYPE_ERROR, local_css_path))
+		messages.append(LintMessage("c-022", "Illegal [css]rem[/] unit. Hint: use [css]em[/] instead.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
 	matches = regex.search(r"font-size\s*:\s*[0-9\.]+(?![0-9\.]|em|ex)", self.local_css)
 	if matches:
