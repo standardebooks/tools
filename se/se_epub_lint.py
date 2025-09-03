@@ -610,8 +610,7 @@ class LintSubmessage:
 	"""
 	An object representing a single instance of a lint error within a file.
 
-	Contains the original submessage text and can be extended with additional
-	properties like line numbers.
+	Contains the original submessage text and can be extended with additional properties like line numbers.
 	"""
 
 	def __init__(self, text: str, line_num: int | None = None, column_num: int | None = None):
@@ -624,22 +623,22 @@ class LintSubmessage:
 
 	@classmethod
 	def from_matches(cls, matches: list[tuple[str, int]]) -> list['LintSubmessage']:
-		"""Create a list of LintSubmessage objects from search match tuples."""
+		"""Create a list of `LintSubmessage` objects from search match tuples."""
 		return [cls(match_text, line_num) for match_text, line_num in matches]
 
 	@classmethod
 	def from_nodes(cls, nodes: list) -> list['LintSubmessage']:
-		"""Create a list of LintSubmessage objects from xpath node matches."""
+		"""Create a list of `LintSubmessage` objects from xpath node matches."""
 		return [cls(node.to_string(), node.sourceline) for node in nodes]
 
 	@classmethod
 	def from_node_tags(cls, nodes: list) -> list['LintSubmessage']:
-		"""Create a list of LintSubmessage objects from xpath node tag matches."""
+		"""Create a list of `LintSubmessage` objects from xpath node tag matches."""
 		return [cls(node.to_tag_string(), node.sourceline) for node in nodes]
 
 	@classmethod
 	def from_node_text(cls, nodes: list) -> list['LintSubmessage']:
-		"""Create a list of LintSubmessage objects from xpath node text values."""
+		"""Create a list of `LintSubmessage` objects from xpath node text values."""
 		return [cls(node.inner_text(), node.sourceline) for node in nodes]
 
 class LintMessage:
@@ -3029,9 +3028,9 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		messages.append(LintMessage("t-075", "Word in verse with acute accent for scansion instead of grave accent.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(filtered_nodes)))
 
 	# Check for graphemes or phonemes that are not italicized.
-	nodes = dom.xpath("/html/body//text()[re:test(., '\\s[a-z]’s\\b') and not(contains(., 'p’s and q’s')) and not(ancestor::*[1][name() = 'i'])]/ancestor::*[1]")
+	nodes = dom.xpath("/html/body//text()[re:test(., '\\s[a-z]’s\\b') and not(contains(., 'p’s and q’s'))]")
 	if nodes:
-		messages.append(LintMessage("t-076", "Grapheme or phoneme not italicized. Hint: Dialect with missing letters should mark missing letters with [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("t-076", "Grapheme or phoneme not italicized. Hint: Dialect with missing letters should mark missing letters with [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, nodes))
 
 	nodes = dom.xpath("/html/body//text()[re:test(., '[:;!\\?\\.][“‘]')]/ancestor::*[1]")
 	if nodes:
