@@ -120,7 +120,7 @@ LIST OF ALL SE LINT MESSAGES
 CSS
 "c-001", "Forbidden selector. Hint: Applying [css]:first-of-type[/], [css]:last-of-type[/], [css]:nth-of-type[/] [css]:nth-last-of-type[/], or [css]:only-of-type[/] to [css]*[/] is not implemented in the SE toolset. Instead of targeting [css]*[/], target an element, like [css]p[/]. Remember that [css]*[/] may be implicit."
 "c-002", "Unused CSS selectors."
-"c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/])."
+"c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared. Hint: Add [css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/] to the top of this CSS file."
 "c-004", "Don’t specify border colors, so that reading systems can adjust for night mode."
 "c-005", f"[css]abbr[/] selector does not need [css]white-space: nowrap;[/] as it inherits it from [path][link=file://{self.path / 'src/epub/css/core.css'}]core.css[/][/]."
 "c-006", f"Semantic found, but missing corresponding style in [path][link=file://{local_css_path}]local.css[/][/]."
@@ -1300,9 +1300,9 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 
 	# If we select on the `xml` namespace, make sure we define the namespace in the CSS, otherwise the selector won't work.
 	# We do this using a regex and not with cssutils, because cssutils will barf in this particular case and not even record the selector.
-	matches = regex.search(r"\[\s*xml\s*\|", self.local_css)
+	matches = source_file.findall(r"\[\s*xml\s*\|.+\]")
 	if matches and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
-		messages.append(LintMessage("c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/]).", se.MESSAGE_TYPE_ERROR, local_css_path))
+		messages.append(LintMessage("c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared. Hint: Add [css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/] to the top of this CSS file.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
 	if abbr_with_whitespace:
 		messages.append(LintMessage("c-005", f"[css]abbr[/] selector does not need [css]white-space: nowrap;[/] as it inherits it from [path][link=file://{self.path / 'src/epub/css/core.css'}]core.css[/][/].", se.MESSAGE_TYPE_ERROR, local_css_path, abbr_with_whitespace))
@@ -3640,9 +3640,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 		if "abbr" in selector and "nowrap" in rules:
 			abbr_with_whitespace.append(selector)
-
-		if regex.search(r"\[\s*xml\s*\|", selector, flags=regex.IGNORECASE) and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
-			messages.append(LintMessage("c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared ([css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/]).", se.MESSAGE_TYPE_ERROR, local_css_path))
 
 	messages += _lint_css_checks(self, local_css_path, abbr_with_whitespace)
 
