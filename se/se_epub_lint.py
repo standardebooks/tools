@@ -225,7 +225,7 @@ METADATA
 "m-055", "[xml]dc:description[/] does not end with a period."
 "m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not linked to their S.E. author page."
 "m-057", "[xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element should be [xml]lang[/]."
-"m-058", "[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/]."
+"m-058", "[val]se:subject[/] that implies other [val]se:subject[/]. Hint: Remove the [val]se:subject[/] that is implied."
 "m-059", f"Link to [url]{node.get_attr('href')}[/] found in colophon, but missing matching [xhtml]dc:source[/] element in metadata."
 "m-060", "Non-canonical Google Books URL. Expected [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/]."
 "m-061", "Link must be preceded by [text]the[/]."
@@ -936,11 +936,18 @@ def _lint_metadata_checks(self) -> list:
 
 	# Check for tags that imply other tags.
 	implied_tags = {"Fiction": ["Science Fiction", "Drama", "Fantasy"]}
+	nodes = []
+	dom_copy = deepcopy(self.metadata_dom)
 	for implied_tag, tags in implied_tags.items():
-		if self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text()={se.easy_xml.escape_xpath(implied_tag)}]"):
+		if dom_copy.xpath(f"/package/metadata/meta[@property='se:subject' and text()={se.easy_xml.escape_xpath(implied_tag)}]"):
 			for tag in tags:
-				if self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text()={se.easy_xml.escape_xpath(tag)}]"):
-					messages.append(LintMessage("m-058", f"[val]se:subject[/] of [text]{implied_tag}[/] found, but [text]{tag}[/] implies [text]{implied_tag}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+				implying_nodes = dom_copy.xpath(f"/package/metadata/meta[@property='se:subject' and text()={se.easy_xml.escape_xpath(tag)}]")
+				for node in implying_nodes:
+					node.set_text(f"{node.text} implies {implied_tag}")
+					nodes.append(node)
+
+	if nodes:
+		messages.append(LintMessage("m-058", "[val]se:subject[/] that implies other [val]se:subject[/]. Hint: Remove the [val]se:subject[/] that is implied.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_node_text(nodes)))
 
 	# Check for `comprised of`.
 	nodes = self.metadata_dom.xpath("/package/metadata/*[re:test(., '[Cc]omprised of')]")
