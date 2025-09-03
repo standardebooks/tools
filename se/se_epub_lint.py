@@ -3268,24 +3268,14 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 		messages.append(LintMessage("y-018", "Possible typo: [text]‘[/] followed by space.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
 
 	# Check for closing `rdquo` without opening `ldquo`.
-	# First, remove `<td>` and `<th>` in case rdquo means `ditto mark`. Also remove noterefs which may interfere with this test.
-	dom_copy = deepcopy(dom)
-	for node in dom_copy.xpath("/html/body//table//a[contains(@epub:type, 'noteref')]"):
-		node.remove()
-
-	for node in dom_copy.xpath("/html/body//table//*[re:test(name(), 'td|th') and re:test(., '\\s*”\\s*')]"):
-		node.remove()
-
-	typos = regex.findall(r"”[^“‘]+?”", regex.sub(r"<t[dh][^>]*?>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</t[dh]>", "", dom_copy.to_string()))
-
-	# We create a filter to try to exclude nested quotations.
-	# Remove tags in case they're enclosing punctuation we want to match against at the end of a sentence.
-	typos = [match for match in typos if not regex.search(r"(?:[.!?;…—]|”\s)’\s", se.formatting.remove_tags(match))]
-
-	# Try some additional matches before adding the lint message.
-	# Search for `<p>` elements that have an ending closing quote but no opening quote; but exclude `<p>`s that are preceded by a `<blockquote>`, or that have a `<blockquote>` ancestor, because that may indicate that the opening quote is elsewhere in the quotation.
-	for node in dom.xpath("//p[re:test(., '^[^“]+”') and not(./preceding-sibling::*[1][name() = 'blockquote']) and not(./ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]) and not(./ancestor::blockquote)]"):
-		typos.append(node.to_string())
+	# Exclude `<td>` and `<th>` in case rdquo means `ditto mark`; exclude noterefs, which may interfere with this test.
+	# The second regex attempts to filter out nested quotations.
+	# Union those results with `<p>` elements that have an ending closing quote but no opening quote; but exclude `<p>`s that are preceded by a `<blockquote>`, or that have a `<blockquote>` ancestor, because that may indicate that the opening quote is elsewhere in the quotation.
+	typos = dom.xpath("""
+		/html/body//text()[re:test(., '”[^“‘]+?”') and not(re:test(., '(?:[.!?;…—]|”\\s)’\\s')) and not(ancestor-or-self::td or ancestor-or-self::th or ancestor-or-self::a[contains(@epub:type, 'noteref')])]
+		|
+		/html/body//p[re:test(., '^[^“]+”') and not(./preceding-sibling::*[1][name() = 'blockquote']) and not(./ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn)')]) and not(./ancestor::blockquote)]/text()
+		""")
 
 	if typos:
 		messages.append(LintMessage("y-019", "Possible typo: [text]”[/] without opening [text]“[/].", se.MESSAGE_TYPE_WARNING, filename, typos))
