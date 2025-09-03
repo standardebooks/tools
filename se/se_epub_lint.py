@@ -295,7 +295,6 @@ SEMANTICS & CONTENT
 "s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file."
 "s-038", "Illegal asterism. Section/scene breaks must be defined by an [xhtml]<hr/>[/] element."
 "s-039", "[text]Ibid[/] in endnotes. “Ibid” means “The previous reference” which is meaningless with popup endnotes"
-"s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/]."
 "s-041", f"The text in [attr]#{figure_ref}[/]'s LoI entry does not match either its [xhtml]<figcaption>[/] element or its [xhtml]<img>[/] [attr]alt[/] attribute."
 "s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child."
 "s-043", "[val]se:short-story[/] semantic on element that is not [xhtml]<article>[/]."
@@ -365,6 +364,7 @@ SEMANTICS & CONTENT
 "s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?"
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 "s-030", "[val]z3998:nonfiction[/] should be [val]z3998:non-fiction[/]."
+"s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/]."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -1742,7 +1742,7 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 			try:
 				figure = file_dom.xpath(f"//*[@id={se.easy_xml.escape_xpath(figure_ref)}]")[0]
 			except Exception:
-				messages.append(LintMessage("s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
+				# Figure ref not in epub; this is an `epubcheck`-level error, not a `lint`-level error, so just continue.
 				continue
 
 			loi_text_matches_figure = False
