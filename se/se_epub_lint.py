@@ -1323,9 +1323,9 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 	if matches:
 		messages.append(LintMessage("c-023", "Illegal unit used to set [css]font-size[/]. Hint: Use [css]em[/] units.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
-	matches = regex.search(r"line-height\s*:\s*[0-9\.]+(?!;|[0-9\.]+)", self.local_css)
+	matches = source_file.findall(r"line-height\s*:\s*[0-9\.]+(?!;|[0-9\.]+)")
 	if matches:
-		messages.append(LintMessage("c-024", "Illegal unit used to set [css]line-height[/]. Hint: [css]line-height[/] is set without any units.", se.MESSAGE_TYPE_ERROR, local_css_path))
+		messages.append(LintMessage("c-024", "Illegal unit used to set [css]line-height[/]. Hint: [css]line-height[/] is set without any units.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
 	# Allow `max-height` in percentages which is useful because the percentage may refer to a parent container.
 	matches = regex.search(r"(?<!max-)(height|\stop|\sbottom)\s*:\s*[0-9\.]+%", self.local_css)
