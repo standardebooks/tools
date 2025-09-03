@@ -183,7 +183,7 @@ METADATA
 "m-012", "Non-typogrified character in [xml]<dc:title>[/] element."
 "m-013", "Non-typogrified character in [xml]<dc:description>[/] element."
 "m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element."
-"m-015", f"Metadata long description is not valid XHTML. LXML says: {ex}"
+"m-015", f"Metadata long description is not valid XHTML."
 "m-016", "Long description must be an escaped XHTML fragment."
 "m-017", "[xml]<!\\[CDATA\\[[/] found. Run [bash]se clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] sections."
 "m-018", "HTML entities found. Use Unicode equivalents instead."
@@ -869,7 +869,7 @@ def _lint_metadata_checks(self) -> list:
 			messages.append(LintMessage("m-018", "HTML entities found. Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, long_description_node.sourceline) for m in matches]))
 
 	except se.InvalidXmlException as ex:
-		messages.append(LintMessage("m-015", "Metadata long description is not valid XHTML. LXML says:", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"{ex}", long_description_node.sourceline)]))
+		messages.append(LintMessage("m-015", "Metadata long description is not valid XHTML", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"{ex}", long_description_node.sourceline)]))
 
 	except Exception:
 		if self.is_se_ebook:
