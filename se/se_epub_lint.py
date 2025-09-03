@@ -3167,9 +3167,9 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 			messages.append(LintMessage("y-005", "Possible typo: question mark or exclamation mark followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
 
 	# Check for opening `‘` in quote that doesn't appear to have a matching `’`, ignoring contractions/elided words as false matches.
-	typos = dom.xpath("/html/body//p[re:match(., '“[^‘”]*‘[^“]+?”', 'g') and not(re:test(., '’[^A-Za-z]'))]")
+	typos = dom.xpath("/html/body//text()[re:match(., '“[^‘”]*‘[^“]+?”', 'g')/text()[not(re:test(., '’[^A-Za-z]'))]]")
 	if typos:
-		messages.append(LintMessage("y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hint: [text]’[/] are used for abbreviations.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
+		messages.append(LintMessage("y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hint: [text]’[/] are used for abbreviations.", se.MESSAGE_TYPE_WARNING, filename, typos))
 
 	# Try to find top-level `lsquo;` for example, `<p>“Bah!” he said to the ‘minister.’</p>`.
 	# We can't do this on xpath because we can't iterate over the output of `re:replace()`.
