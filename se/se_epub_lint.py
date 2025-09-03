@@ -1752,7 +1752,7 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 				loi_text_to_compare = loi_text
 				if child.tag == "img":
 					figure_text = child.get_attr("alt")
-					# Replace/remove characters that don't appear in alt attributes.
+					# Replace/remove characters that don't appear in `@alt` attributes.
 					loi_text_to_compare = loi_text_to_compare.replace(se.NO_BREAK_SPACE, ' ').replace(se.WORD_JOINER, '')
 				elif child.tag == "figcaption":
 					# Remove endnotes.
