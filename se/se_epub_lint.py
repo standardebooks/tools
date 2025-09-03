@@ -286,7 +286,6 @@ SEMANTICS & CONTENT
 "s-027", f"{image_ref} missing [xhtml]<title>[/] element."
 "s-028", f"[path][link=file://{self.path / 'images/cover.svg'}]cover.svg[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match."
 "s-029", "Section with [attr]data-parent[/] attribute, but no section having that [attr]id[/] in ebook."
-"s-030", "[val]z3998:nonfiction[/] should be [val]z3998:non-fiction[/]."
 "s-031", "Duplicate value in [attr]epub:type[/] attribute."
 "s-032", "Invalid value for [attr]epub:type[/] attribute."
 "s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/]."
@@ -364,6 +363,8 @@ SEMANTICS & CONTENT
 "s-105", "Dates in the colophon need to be wrapped in an [xhtml]<time>[/] element."
 "s-106", "Proper names in the colophon must be wrapped in [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:personal-name\">[/], unless anonymous, in which case [xhtml]<b>[/]."
 "s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?"
+UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+"s-030", "[val]z3998:nonfiction[/] should be [val]z3998:non-fiction[/]."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -679,7 +680,7 @@ class LintMessage:
 
 class EbookSection:
 	"""
-	A convenience class representing a section, its expected <h#> level, and its children EbookSections
+	A convenience class representing a section, its expected <h#> level, and its children EbookSections.
 	"""
 
 	def __init__(self, section_id: str, depth: int, has_header: bool):
@@ -2123,11 +2124,6 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 		messages.append(LintMessage("s-029", "Section with [attr]data-parent[/] attribute, but no section having that [attr]id[/] in ebook.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(invalid_parent_ids)))
 	if invalid_headers:
 		messages.append(LintMessage("s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. Hint: Headings not in the title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(invalid_headers)))
-
-	# Check for a common typo.
-	matches = source_file.findall("z3998:nonfiction")
-	if matches:
-		messages.append(LintMessage("s-030", "[val]z3998:nonfiction[/] should be [val]z3998:non-fiction[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_matches(matches)))
 
 	# Run some checks on `epub:type` values.
 	incorrect_attrs = []
