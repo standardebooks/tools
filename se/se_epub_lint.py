@@ -1307,8 +1307,9 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 	if abbr_with_whitespace:
 		messages.append(LintMessage("c-005", f"[css]abbr[/] selector does not need [css]white-space: nowrap;[/] as it inherits it from [path][link=file://{self.path / 'src/epub/css/core.css'}]core.css[/][/].", se.MESSAGE_TYPE_ERROR, local_css_path, abbr_with_whitespace))
 
-	if regex.search(r"\s+hyphens:.+?;(?!\s+-epub-hyphens)", self.local_css):
-		messages.append(LintMessage("c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy.", se.MESSAGE_TYPE_ERROR, local_css_path))
+	matches = source_file.findall(r"(?<=\s+)hyphens:.+?;(?!\s+-epub-hyphens)")
+	if matches:
+		messages.append(LintMessage("c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
 	matches = regex.search(r"text-align:\s*left\s*;", self.local_css)
 	if matches:
