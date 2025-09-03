@@ -144,7 +144,7 @@ CSS
 "c-024", "Illegal unit used to set [css]line-height[/]. Hint: [css]line-height[/] is set without any units."
 "c-025", "Illegal percent unit used to set [css]height[/] or positioning property. Hint: Use [css]vh[/] to specify vertical-oriented properties like [css]height[/] or [css]position[/]."
 "c-026", "Table that appears to be listing numbers, but without [css]font-variant-numeric: tabular-nums;[/]."
-"c-027", "Font size below 1."
+"c-027", "Illegal [css]font-size[/] below [css]1[/]."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -1332,9 +1332,9 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 	if matches:
 		messages.append(LintMessage("c-025", "Illegal percent unit used to set [css]height[/] or positioning property. Hint: Use [css]vh[/] to specify vertical-oriented properties like [css]height[/] or [css]position[/].", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
-	matches = regex.search(r"font-size: 0?\.", self.local_css)
+	matches = source_file.findall(r"font-size: 0?\.[0-9]+")
 	if matches:
-		messages.append(LintMessage("c-027", "Font size below 1.", se.MESSAGE_TYPE_ERROR, local_css_path))
+		messages.append(LintMessage("c-027", "Illegal [css]font-size[/] below [css]1[/].", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
 	return messages
 
