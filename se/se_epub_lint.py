@@ -455,7 +455,7 @@ XHTML
 "x-010", "Illegal element in [xhtml]<title>[/] element."
 "x-011", "Illegal underscore in attribute. Use dashes instead of underscores."
 "x-012", "Illegal [attr]style[/] attribute. Don’t use inline styles, any element can be targeted with a clever enough selector."
-"x-013", f"CSS class found in XHTML, but not in [path][link=file://{local_css_path}]local.css[/][/]."
+"x-013", "CSS class found in XHTML, but not any CSS file."
 "x-014", "Illegal [xml]id[/] attribute."
 "x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed."
 "x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter."
@@ -563,11 +563,9 @@ class SourceFile:
 
 		# Try to find the selector using a regex.
 		matches = self.findall(fr"^[ \t]*{regex.escape(selector)}(?=\s*[,{{])", regex.MULTILINE)
-		if matches:
-			return matches
-		else:
-			# In case the regex didn't match anything, include the selector anyway at line 0 which will just show an arrow in the output.
-			return [(selector, 0)]
+
+		# In case the regex didn't match anything, include the selector anyway at line 0 which will just show an arrow in the output.
+		return matches or [(selector, 0)]
 
 	def line_num(self, match: regex.Match) -> int:
 		"""
@@ -1806,7 +1804,7 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 
 	return messages
 
-def _lint_xhtml_css_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTree, local_css_path: Path) -> list:
+def _lint_xhtml_css_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTree) -> list:
 	"""
 	Process CSS checks on an `.xhtml` file.
 
@@ -3577,7 +3575,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	typography_messages: list[LintMessage] = []
 	cover_svg_title = ""
 	titlepage_svg_title = ""
-	xhtml_css_classes: dict[str, int] = {}
+	xhtml_css_classes: dict[str, list[tuple[Path, se.easy_xml.EasyXmlElement]]] = {}
 	headings: list[tuple[str, str]] = []
 	double_spaced_files: list[Path] = []
 	unused_selectors: list[str] = []
@@ -3937,9 +3935,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 					for node in dom.xpath("//*[@class]"):
 						for css_class in node.get_attr("class").split():
 							if css_class in xhtml_css_classes:
-								xhtml_css_classes[css_class] += 1
+								xhtml_css_classes[css_class].append((filename, node))
 							else:
-								xhtml_css_classes[css_class] = 1
+								xhtml_css_classes[css_class] = [(filename, node)]
 
 				for node in dom.xpath("/html/body//*[@id]/@id"):
 					if node in id_values:
@@ -4013,7 +4011,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 				missing_styles += _update_missing_styles(filename, dom, local_css)
 
-				messages += _lint_xhtml_css_checks(source_file, dom, local_css_path)
+				messages += _lint_xhtml_css_checks(source_file, dom)
 
 				messages += _lint_xhtml_metadata_checks(self, source_file.filename, dom)
 
@@ -4041,23 +4039,16 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 			messages.append(LintMessage("m-077", "MathML found in ebook, but no [attr]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for classes used but not in CSS, and classes only used once.
-	missing_selectors = []
-	single_use_css_classes = []
+	for css_class, nodes_tuples in xhtml_css_classes.items():
+		# `nodes_tuples` is a list of tuples of `(Path, list[EasyXmlElement])`.
+		if css_class not in IGNORED_CLASSES and f".{css_class}" not in self.local_css:
+			nodes_tuple = nodes_tuples[0]
+			messages.append(LintMessage("x-013", "CSS class found in XHTML, but not any CSS file.", se.MESSAGE_TYPE_ERROR, nodes_tuple[0], LintSubmessage.from_node_tags([nodes_tuple[1]])))
 
-	for css_class, count in xhtml_css_classes.items():
-		if css_class not in IGNORED_CLASSES:
-			if f".{css_class}" not in self.local_css:
-				missing_selectors.append(css_class)
-
-		if count == 1 and css_class not in IGNORED_CLASSES and not regex.match(r"^i[0-9]+$", css_class):
+		if len(nodes_tuples) == 1 and css_class not in IGNORED_CLASSES and not regex.match(r"^i[0-9]+$", css_class):
 			# Don't count ignored classes *or* `i[0-9]` which are used for poetry styling.
-			single_use_css_classes.append(css_class)
-
-	if missing_selectors:
-		messages.append(LintMessage("x-013", f"CSS class found in XHTML, but not in [path][link=file://{local_css_path}]local.css[/][/].", se.MESSAGE_TYPE_ERROR, local_css_path, missing_selectors))
-
-	if single_use_css_classes:
-		messages.append(LintMessage("c-008", "CSS class only used once. Hint: Craft a selector instead of a single-use class.", se.MESSAGE_TYPE_WARNING, local_css_path, single_use_css_classes))
+			nodes_tuple = nodes_tuples[0]
+			messages.append(LintMessage("c-008", "CSS class only used once. Hint: Craft a selector instead of a single-use class.", se.MESSAGE_TYPE_WARNING, nodes_tuple[0], LintSubmessage.from_node_tags([nodes_tuple[1]])))
 
 	# We have a list of `id` attributes in the ebook. Now iterate over all XHTML files again to ensure each one has been used.
 	# Only run this check if we actually have `id` attributes to inspect.
