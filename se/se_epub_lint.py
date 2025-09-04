@@ -119,7 +119,7 @@ CSS
 "c-001", "Forbidden selector. Hint: Applying [css]:first-of-type[/], [css]:last-of-type[/], [css]:nth-of-type[/] [css]:nth-last-of-type[/], or [css]:only-of-type[/] to [css]*[/] is not implemented in the SE toolset. Instead of targeting [css]*[/], target an element, like [css]p[/]. Remember that [css]*[/] may be implicit."
 "c-002", "Unused CSS selectors."
 "c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared. Hint: Add [css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/] to the top of this CSS file."
-"c-004", "Don’t specify border colors, so that reading systems can adjust for night mode."
+"c-004", "Illegal [css]border-color[/] specified on element."
 "c-005", f"[css]abbr[/] selector does not need [css]white-space: nowrap;[/] as it inherits it from [path][link=file://{self.path / 'src/epub/css/core.css'}]core.css[/][/]."
 "c-006", f"Semantic found, but missing corresponding style in [path][link=file://{local_css_path}]local.css[/][/]."
 "c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy."
@@ -1807,8 +1807,9 @@ def _lint_xhtml_css_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTree
 
 	# Do we have any elements that have specified border color?
 	# `transparent` and `none` are allowed values for `border-color`.
-	if dom.xpath("/html/body//*[attribute::*[re:test(local-name(), 'data-css-border.+?-color') and text() != 'transparent' and text() != 'none']]"):
-		messages.append(LintMessage("c-004", "Don’t specify border colors, so that reading systems can adjust for night mode.", se.MESSAGE_TYPE_WARNING, local_css_path))
+	nodes = dom.xpath("/html/body//*[attribute::*[re:test(local-name(), 'data-css-border.+?-color') and not(text() = 'transparent' or text() = 'none')]]")
+	if nodes:
+		messages.append(LintMessage("c-004", "Illegal [css]border-color[/] specified on element.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check that `<footer>`s have the expected styling.
 	# `<footer>`s may sometimes be aligned with `text-align: center` as well as `text-align: right`.
