@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """
-Contains the LintMessage class and the Lint function, which is broken out of
-the SeEpub class for readability and maintainability.
+Contains the `LintMessage` class and the `SeEpub.Lint()` function, which is broken out of the `SeEpub` class for readability and maintainability.
 
-Strictly speaking, the lint() function should be a class member of SeEpub. But
-the function is very big and it makes editing easier to put in a separate file.
+Strictly speaking, `SeEpub.Lint()` should be a class member of `SeEpub`. But the function is very big and it makes editing easier to put in a separate file.
 """
 
 from bisect import bisect_right
@@ -113,7 +111,7 @@ INITIALISM_EXCEPTIONS = ["G", # As in `G-Force`.
 
 """
 POSSIBLE BBCODE TAGS
-See the se.print_error function for a comprehensive list of allowed codes.
+See the `se.print_error()` function for a comprehensive list of allowed codes.
 
 LIST OF ALL SE LINT MESSAGES
 
