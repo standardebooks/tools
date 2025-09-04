@@ -3154,7 +3154,7 @@ def _lint_xhtml_xhtml_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTr
 	# Make sure their number is actually their correct sequence number in the text.
 	unexpected_ids = se.formatting.find_unexpected_ids(dom)
 	if unexpected_ids:
-		messages.append(LintMessage("x-019", "Unexpected value of [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [LintSubmessage(f"Found {unexpected_id[0].get_attr('id')}, expected {unexpected_id[1]}.", unexpected_id[0].sourceline) for unexpected_id in unexpected_ids]))
+		messages.append(LintMessage("x-019", "Unexpected value of [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [LintSubmessage(f"Found: {unexpected_id[0].get_attr('id')}\nExpected: {unexpected_id[1]}", unexpected_id[0].sourceline) for unexpected_id in unexpected_ids]))
 
 	if filename.name not in ("titlepage.xhtml", "imprint.xhtml", "colophon.xhtml", "uncopyright.xhtml"):
 		nodes = dom.xpath("/html/head/link[@href='../css/se.css']")
@@ -3586,7 +3586,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	missing_styles: list[se.easy_xml.EasyXmlElement] = []
 	directories_not_url_safe = []
 	files_not_url_safe = []
-	id_values = {}
 	id_nodes: dict[str, list[tuple[Path, se.easy_xml.EasyXmlElement]]] = {}
 	does_ebook_look_like_collection = False
 	local_css = {
@@ -4124,7 +4123,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 	if id_nodes:
 		# Narrow down `id`s to a list of ones that appear more than once.
-		duplicate_ids = {}
+		duplicate_ids: dict[str, list[tuple[Path, se.easy_xml.EasyXmlElement]]] = {}
 
 		for _, nodes_tuple_list in id_nodes.items():
 			if len(nodes_tuple_list) > 1:
