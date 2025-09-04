@@ -286,7 +286,7 @@ SEMANTICS & CONTENT
 "s-029", "Section with [attr]data-parent[/] attribute, but no section having that [attr]id[/] in ebook."
 "s-031", "Duplicate value in [attr]epub:type[/] attribute."
 "s-032", "Invalid value for [attr]epub:type[/] attribute."
-"s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/]."
+"s-033", "[attr]xml:lang[/] value on [xhtml]<html>[/] element doesn't match language set in metadata."
 "s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary."
 "s-035", "Endnote containing only [xhtml]<cite>[/]."
 "s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file."
@@ -2116,7 +2116,7 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 				incorrectly_titlecased_titles.append(LintSubmessage(f"Found: {title}\nExpected: {titlecased_title}", node.sourceline))
 
 	if incorrectly_titlecased_titles:
-		messages.append(LintMessage("s-023", f"Title not correctly titlecased.", se.MESSAGE_TYPE_WARNING, filename, incorrectly_titlecased_titles))
+		messages.append(LintMessage("s-023", "Title not correctly titlecased.", se.MESSAGE_TYPE_WARNING, filename, incorrectly_titlecased_titles))
 
 	# Check for `<header>` elements that are entirely non-English.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
@@ -2196,9 +2196,11 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	# Check if language tags in individual files match the language in the metadata file.
 	# `loi` is in `IGNORED_FILENAMES`, but should not be excluded from this particular test.
 	if filename.name not in IGNORED_FILENAMES or filename.name == "loi.xhtml":
-		file_language = dom.xpath("/html/@xml:lang", True)
-		if language != file_language:
-			messages.append(LintMessage("s-033", f"File language is [val]{file_language}[/], but [path][link=file://{self.metadata_file_path}]{self.metadata_file_path.name}[/][/] language is [val]{language}[/].", se.MESSAGE_TYPE_WARNING, filename))
+		nodes = dom.xpath("/html[@xml:lang]")
+		for node in nodes:
+			file_language = node.get_attr("xml:lang")
+			if file_language != language:
+				messages.append(LintMessage("s-033", "[attr]xml:lang[/] value on [xhtml]<html>[/] element doesn't match language set in metadata.", se.MESSAGE_TYPE_WARNING, filename, [LintSubmessage(f"Found: {file_language}\nExpected: {language}", node.sourceline)]))
 
 	# Check for endnotes.
 	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]/p[not(preceding-sibling::*)]/cite[not(preceding-sibling::node()[normalize-space(.)]) and (following-sibling::node()[normalize-space(.)])[1][contains(@epub:type, 'backlink')]]")
