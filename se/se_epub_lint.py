@@ -213,7 +213,7 @@ METADATA
 "m-044", f"Possessive [text]’[/] or [text]’s[/] outside of [xhtml]<a>[/] element in long description."
 "m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC."
 "m-046", "[xml]<ignore>[/] element has missing or empty [xml]<reason>[/] child."
-"m-047", "Ignoring [path]*[/] is too general. Target specific files if possible."
+"m-047", "Illegal path. Hint: Ignoring [path]*[/] is too general; target specific files."
 "m-048", f"Unused [path][link=file://{lint_ignore_path}]se-lint-ignore.xml[/][/] rule."
 "m-049", "No [path]se-lint-ignore.xml[/] rules. Delete the file if there are no rules."
 "m-050", "Non-typogrified character in [xml]<meta property=\"file-as\" refines=\"#title\">[/] element."
@@ -3459,14 +3459,14 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 		if not elements:
 			messages.append(LintMessage("m-049", "No [path]se-lint-ignore.xml[/] rules. Delete the file if there are no rules.", se.MESSAGE_TYPE_ERROR, lint_ignore_path))
 
-		has_illegal_path = False
+		ignores_with_illegal_paths = []
 		ignores_without_reasons = []
 
 		for element in elements:
 			path = element.get_attr("path").strip()
 
 			if path == "*":
-				has_illegal_path = True # Set a bool so that we set a lint error later, to prevent adding it multiple times.
+				ignores_with_illegal_paths.append(element)
 
 			if path not in ignored_codes:
 				ignored_codes[path] = []
@@ -3484,8 +3484,8 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 					if not has_reason:
 						ignores_without_reasons.append(se.easy_xml.EasyXmlElement(ignore))
 
-		if has_illegal_path:
-			messages.append(LintMessage("m-047", "Ignoring [path]*[/] is too general. Target specific files if possible.", se.MESSAGE_TYPE_WARNING, lint_ignore_path))
+		if ignores_with_illegal_paths:
+			messages.append(LintMessage("m-047", "Illegal path. Hint: Ignoring [path]*[/] is too general; target specific files.", se.MESSAGE_TYPE_WARNING, lint_ignore_path, LintSubmessage.from_node_tags(ignores_with_illegal_paths)))
 
 		if ignores_without_reasons:
 			messages.append(LintMessage("m-046", "[xml]<ignore>[/] element has missing or empty [xml]<reason>[/] child.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_nodes(ignores_without_reasons)))
