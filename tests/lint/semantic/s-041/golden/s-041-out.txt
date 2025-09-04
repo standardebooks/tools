@@ -2,11 +2,10 @@ s-004 [Error] chapter-1.xhtml `img` element missing `alt` attribute.
  Line 11:       <img>
  Line 17:       <img>
  Line 21:       <img>
-s-041 [Manual Review] chapter-1.xhtml The text in `#f-5`'s LoI entry does not 
-match either its `<figcaption>` element or its `<img>` `alt` attribute.
-s-041 [Manual Review] chapter-1.xhtml The text in `#f-6`'s LoI entry does not 
-match either its `<figcaption>` element or its `<img>` `alt` attribute.
-s-041 [Manual Review] chapter-1.xhtml The text in `#f-7`'s LoI entry does not 
-match either its `<figcaption>` element or its `<img>` `alt` attribute.
-s-041 [Manual Review] chapter-1.xhtml The text in `#f-9`'s LoI entry does not 
-match either its `<figcaption>` element or its `<img>` `alt` attribute.
+s-041 [Manual Review] loi.xhtml LoI entry text doesn't match either the 
+referenced element's `<figcaption>` element or its `<img>` `alt` attribute.
+ Line 17:       <a href="chapter-1.xhtml#f-5">x</a>
+ Line 18:       <a href="chapter-1.xhtml#f-6">x</a>
+ Line 19:       <a href="chapter-1.xhtml#f-7">x</a>
+ Line 25:       <a href="chapter-1.xhtml#f-9"><abbr 
+epub:type="z3998:name-title">Mr.</abbr> Smith 2⁠–⁠3 years ago.</a>

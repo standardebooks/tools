@@ -1784,7 +1784,6 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 					break
 
 			if not loi_text_matches_figure:
-				print(node)
 				mismatched_loi_nodes.append(node)
 
 		if mismatched_loi_nodes:
