@@ -276,7 +276,7 @@ SEMANTICS & CONTENT
 "s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements. Hint: Images that are inline (i.e. that do not have parent [xhtml]<figure>[/]s do not have [attr]id[/] attributes."
 "s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute."
 "s-020", "Frontmatter found, but no half title page. Half title page is required when frontmatter is present."
-"s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)"
+"s-021", "Unexpected value for [xhtml]<title>[/] element. Hint: Beware hidden Unicode characters!"
 "s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/]."
 "s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/]."
 "s-024", "Header elements that are entirely non-English should not be set in italics. Instead, the [xhtml]<h#>[/] element has the [attr]xml:lang[/] attribute."
@@ -2054,8 +2054,12 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	if len(dom.xpath("/html/body/*[name()='section' or name()='article']/*[re:test(name(), '^h[1-6]$') or name()='hgroup'] | /html/body/*[name()='section' or name()='article']/header/*[re:test(name(), '^h[1-6]$') or name()='hgroup']"))==1:
 		title = se.formatting.generate_title(dom)
 
-		if not dom.xpath(f"/html/head/title[text()={se.easy_xml.escape_xpath(title.replace('&amp;', '&'))}]"):
-			messages.append(LintMessage("s-021", f"Unexpected value for [xhtml]<title>[/] element. Expected: [text]{title}[/]. (Beware hidden Unicode characters!)", se.MESSAGE_TYPE_ERROR, filename))
+		unexpected_titles = []
+		for node in dom.xpath(f"/html/head/title[text()!={se.easy_xml.escape_xpath(title.replace('&amp;', '&'))}]"):
+			unexpected_titles.append(LintSubmessage(f"Found: {node.text}\nExpected: {title}", node.sourceline))
+
+		if unexpected_titles:
+			messages.append(LintMessage("s-021", "Unexpected value for [xhtml]<title>[/] element. Hint: Beware hidden Unicode characters!", se.MESSAGE_TYPE_ERROR, filename, unexpected_titles))
 
 	# Check to see if `<h#>` elements are correctly titlecased.
 	# Ignore `<h#>` elements with an `xml:lang` attribute, as other languages have different titlecasing rules.
@@ -3009,7 +3013,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		node_text = node.inner_text()
 		expected_text = se.typography.normalize_greek(node_text)
 		if node_text != expected_text:
-			greek_transcription_errors.append(LintSubmessage(f"Found: [text]{node_text}[/], but expected [text]{expected_text}[/text]", node.sourceline))
+			greek_transcription_errors.append(LintSubmessage(f"Found: {node_text}\nExpected: {expected_text}", node.sourceline))
 
 	if greek_transcription_errors:
 		messages.append(LintMessage("t-073", "Possible transcription error in Greek. Hint: Use [bash]se unicode-names[/] to see differences in Unicode characters.", se.MESSAGE_TYPE_WARNING, filename, greek_transcription_errors))
