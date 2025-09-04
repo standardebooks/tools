@@ -3581,7 +3581,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	unused_selectors: list[str] = []
 	id_attrs: list[str] = []
 	abbr_elements_requiring_css: list[se.easy_xml.EasyXmlElement] = []
-	glossary_usage = []
+	unused_glossary_entries: list[se.easy_xml.EasyXmlElement] = []
 	short_story_count = 0
 	missing_styles: list[se.easy_xml.EasyXmlElement] = []
 	directories_not_url_safe = []
@@ -3864,13 +3864,13 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 					# Map the glossary to tuples of the values and whether they’re used (initially false).
 					# If a `<match>` has no `<value>` children, its `@value` must appear in the text.
 					# Otherwise, each of its `<value>` children's `@value` must appear.
-					for match in xml_dom.xpath("/search-key-map/search-key-group/match[@value]"):
-						values = match.xpath("./value[@value]")
-						if not values:
-							glossary_usage.append((match.get_attr("value"), False))
+					for node in xml_dom.xpath("/search-key-map/search-key-group/match[@value]"):
+						value_nodes = node.xpath("./value[@value]")
+						if not value_nodes:
+							unused_glossary_entries.append(node)
 						else:
-							for value in values:
-								glossary_usage.append((value.get_attr("value"), False))
+							for value_node in value_nodes:
+								unused_glossary_entries.append(value_node)
 
 			if filename.suffix == ".xhtml":
 				# Read file contents into a DOM for querying.
@@ -3982,9 +3982,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 					if dom.xpath("/html/body//section[contains(@epub:type, 'glossary')]"):
 						nodes = dom_copy.xpath("/html/body//dd[contains(@epub:type, 'glossdef')]")
 						source_text = " ".join([node.inner_text() for node in nodes])
-					for glossary_index, glossary_value in enumerate(glossary_usage):
-						if glossary_value[1] is False and regex.search(r"(?<!\w)\L<val>(?!\w)", source_text, flags=regex.IGNORECASE, val=[glossary_value[0]]):
-							glossary_usage[glossary_index] = (glossary_value[0], True)
+
+					# Remove unused glossary entries from our list if they appear in this file.
+					# This style of list comprehension seems to do an in-place replacement instead of copying the array; see <https://stackoverflow.com/a/1207461>.
+					unused_glossary_entries[:] = (node for node in unused_glossary_entries if not regex.search(r"(?<!\w)\L<val>(?!\w)", source_text, flags=regex.IGNORECASE, val=[node.get_attr("value")]))
 
 				# Test against word boundaries to not match `halftitlepage`.
 				if dom.xpath("/html/body/section[re:test(@epub:type, '\\btitlepage\\b')]"):
@@ -4179,14 +4180,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	if short_story_count and not self.metadata_dom.xpath("//meta[@property='se:subject' and text() = 'Shorts']"):
 		messages.append(LintMessage("m-027", "[val]se:short-story[/] semantic inflection found, but no [val]se:subject[/] with the value of [text]Shorts[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
-	if ebook_flags["has_glossary_search_key_map"]:
-		entries = []
-		for glossary_value in glossary_usage:
-			if glossary_value[1] is False:
-				entries.append(glossary_value[0])
-
-		if entries:
-			messages.append(LintMessage("m-070", "Glossary entry not found in the text.", se.MESSAGE_TYPE_ERROR, self.content_path / "glossary-search-key-map.xml", entries))
+	if unused_glossary_entries:
+		messages.append(LintMessage("m-070", "Glossary entry not found in the text.", se.MESSAGE_TYPE_ERROR, self.content_path / "glossary-search-key-map.xml", LintSubmessage.from_nodes(unused_glossary_entries)))
 
 	# Does this book look like a collection? It does if there is a `bodymatter` section that only contains `<article>` children.
 	if does_ebook_look_like_collection:

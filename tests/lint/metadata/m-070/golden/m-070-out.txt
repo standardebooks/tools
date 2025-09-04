@@ -1,3 +1,3 @@
 m-070 [Error] glossary-search-key-map.xml Glossary entry not found in the text.
-        foo
-        pariahsss
+ Line 4:        <match value="foo"/>
+ Line 21:       <value value="pariahsss"/>
