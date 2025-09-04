@@ -624,22 +624,22 @@ class LintSubmessage:
 	@classmethod
 	def from_matches(cls, matches: list[tuple[str, int]]) -> list['LintSubmessage']:
 		"""Create a list of `LintSubmessage` objects from search match tuples."""
-		return [cls(match_text, line_num) for match_text, line_num in matches]
+		return [cls(match_text, line_num) for match_text, line_num in sorted(matches, key=lambda x: x[1])]
 
 	@classmethod
 	def from_nodes(cls, nodes: list) -> list['LintSubmessage']:
 		"""Create a list of `LintSubmessage` objects from xpath node matches."""
-		return [cls(node.to_string(), node.sourceline) for node in nodes]
+		return [cls(node.to_string(), node.sourceline) for node in sorted(nodes, key=lambda x: x.sourceline)]
 
 	@classmethod
 	def from_node_tags(cls, nodes: list) -> list['LintSubmessage']:
 		"""Create a list of `LintSubmessage` objects from xpath node tag matches."""
-		return [cls(node.to_tag_string(), node.sourceline) for node in nodes]
+		return [cls(node.to_tag_string(), node.sourceline) for node in sorted(nodes, key=lambda x: x.sourceline)]
 
 	@classmethod
 	def from_node_text(cls, nodes: list) -> list['LintSubmessage']:
 		"""Create a list of `LintSubmessage` objects from xpath node text values."""
-		return [cls(node.inner_text(), node.sourceline) for node in nodes]
+		return [cls(node.inner_text(), node.sourceline) for node in sorted(nodes, key=lambda x: x.sourceline)]
 
 class LintMessage:
 	"""
@@ -1354,7 +1354,7 @@ def _update_missing_styles(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 	missing_styles: list[se.easy_xml.EasyXmlElement] = []
 
 	if not local_css["has_elision_style"]:
-		missing_styles += [node for node in dom.xpath("/html/body//span[contains(@class, 'elision')]")]
+		missing_styles += dom.xpath("/html/body//span[contains(@class, 'elision')]")
 
 	# Check to see if we included poetry or verse without the appropriate styling.
 	if filename.name not in IGNORED_FILENAMES:
