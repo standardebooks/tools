@@ -124,7 +124,7 @@ CSS
 "c-006", f"Semantic found, but missing corresponding style in [path][link=file://{local_css_path}]local.css[/][/]."
 "c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy."
 "c-008", "CSS class only used once. Hint: Craft a selector instead of a single-use class."
-"c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding S.E. base styles."
+"c-009", "Duplicate CSS selectors. Hint: Duplicates are only acceptable if overriding S.E. base styles."
 "c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [css]text-align[/] is usually set to [css]right[/]."
 "c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/]."
 "c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/]."
@@ -3638,7 +3638,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	local_css_rules, duplicate_selectors = _get_selectors_and_rules(self)
 
 	if duplicate_selectors:
-		messages.append(LintMessage("c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding S.E. base styles.", se.MESSAGE_TYPE_WARNING, local_css_path, list(set(duplicate_selectors))))
+		messages.append(LintMessage("c-009", "Duplicate CSS selectors. Hint: Duplicates are only acceptable if overriding S.E. base styles.", se.MESSAGE_TYPE_WARNING, local_css_path, list(set(duplicate_selectors))))
 
 	# Store a list of CSS selectors, and duplicate it into a list of unused selectors, for later checks.
 	# We use a regex to remove pseudo-elements like `::before`, because we want the *selectors* to see if they're unused.
