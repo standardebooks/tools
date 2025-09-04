@@ -120,7 +120,7 @@ CSS
 "c-002", "Unused CSS selectors."
 "c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared. Hint: Add [css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/] to the top of this CSS file."
 "c-004", "Illegal [css]border-color[/] specified on element."
-"c-005", "Illegal [css]white-space: nowrap;[/] in [css]abbr[/] selector."
+"c-005", "Illegal [css]white-space: nowrap;[/] applied to [css]abbr[/] selector."
 "c-006", f"Semantic found, but missing corresponding style in [path][link=file://{local_css_path}]local.css[/][/]."
 "c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy."
 "c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks."
@@ -1309,7 +1309,17 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 		messages.append(LintMessage("c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared. Hint: Add [css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/] to the top of this CSS file.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
 	if abbr_with_whitespace:
-		messages.append(LintMessage("c-005", "Illegal [css]white-space: nowrap;[/] in [css]abbr[/] selector.", se.MESSAGE_TYPE_ERROR, local_css_path, abbr_with_whitespace))
+		matches = []
+		for selector in abbr_with_whitespace:
+			# Try to find the selector using a regex. The CSS file must be pretty-printed using `se clean` for this to work well.
+			local_matches = source_file.findall(fr"^[ \t]*{regex.escape(selector)}(?=\s*[,{{])", regex.MULTILINE)
+			if local_matches:
+				matches += local_matches
+			else:
+				# In case the regex didn't match anything, include the selector anyway at line 0 which will just show an arrow in the output.
+				matches.append((selector, 0))
+
+		messages.append(LintMessage("c-005", "Illegal [css]white-space: nowrap;[/] applied to [css]abbr[/] selector.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
 	matches = source_file.findall(r"(?<=\s+)hyphens:.+?;(?!\s+-epub-hyphens)")
 	if matches:
