@@ -275,7 +275,7 @@ SEMANTICS & CONTENT
 "s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute."
 "s-020", "Frontmatter found, but no half title page. Half title page is required when frontmatter is present."
 "s-021", "Unexpected value for [xhtml]<title>[/] element. Hint: Beware hidden Unicode characters!"
-"s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/]."
+"s-022", "SVG [xhtml]<title>[/] element doesn't match its [xhtml]<img>[/] [attr]alt[/] attribute text."
 "s-023", "Title not correctly titlecased."
 "s-024", "Header elements that are entirely non-English should not be set in italics. Instead, the [xhtml]<h#>[/] element has the [attr]xml:lang[/] attribute."
 "s-026", "Invalid Roman numeral."
@@ -2720,6 +2720,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 	img_no_alt = []
 	img_alt_not_typogrified = []
 	img_alt_lacking_punctuation = []
+	svg_mismatched_alts = []
 	for node in nodes:
 		img_src = node.lxml_element.get("src")
 		# Avoid crashing if the `@src` attribute is missing.
@@ -2751,13 +2752,17 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 						messages.append(LintMessage("s-027", "[xhtml]<title>[/] element missing.", se.MESSAGE_TYPE_ERROR, svg_path))
 
 					if title_text != "" and alt != "" and title_text != alt:
-						messages.append(LintMessage("s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
+						svg_mismatched_alts.append(node)
 
 				except FileNotFoundError:
 					missing_files.append(str(Path("images") / image_ref))
 
 		else:
 			img_no_alt.append(node)
+
+	if svg_mismatched_alts:
+		messages.append(LintMessage("s-022", "SVG [xhtml]<title>[/] element doesn't match its [xhtml]<img>[/] [attr]alt[/] attribute text.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(svg_mismatched_alts)))
+
 
 	if img_alt_not_typogrified:
 		messages.append(LintMessage("t-025", "Non-typogrified [text]'[/], [text]\"[/] (as [xhtml]&quot;[/]), or [text]--[/] in image [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(img_alt_not_typogrified)))
