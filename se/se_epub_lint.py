@@ -191,7 +191,7 @@ METADATA
 "m-021", "No [xml]<meta property=\"se:subject\">[/] element found."
 "m-022", "Empty [xml]<meta property=\"se:production-notes\">[/] element."
 "m-023", "Unexpected value for [xml]<dc:identifier>[/]."
-"m-024", "[xml]<meta property=\"se:name.person.full-name\">[/] property identical to regular name. If the two are identical the full name [xml]<meta>[/] element must be removed."
+"m-024", "[xml]<meta property=\"se:name.person.full-name\">[/] property identical to regular name. Hint: If the two are identical the full name [xml]<meta>[/] element must be removed."
 "m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon."
 "m-026", "Non-canonical Wikipedia URL. Expected [url]http://en.wikipedia.org/wiki/<ARTICLE-ID>[/]."
 "m-027", f"[val]se:short-story[/] semantic inflection found, but no [val]se:subject[/] with the value of [text]Shorts[/]."
@@ -1050,7 +1050,7 @@ def _lint_metadata_checks(self) -> list:
 			invalid_refines.append(LintSubmessage("<meta property=\"se:name.person.full-name\">", node.sourceline))
 
 	if duplicate_names:
-		messages.append(LintMessage("m-024", "[xml]<meta property=\"se:name.person.full-name\">[/] property identical to regular name. If the two are identical the full name [xml]<meta>[/] element must be removed.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_names))
+		messages.append(LintMessage("m-024", "[xml]<meta property=\"se:name.person.full-name\">[/] property identical to regular name. Hint: If the two are identical the full name [xml]<meta>[/] element must be removed.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_names))
 
 	if invalid_refines:
 		messages.append(LintMessage("m-010", "Invalid [xml]refines[/] property.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, invalid_refines))
