@@ -280,7 +280,6 @@ SEMANTICS & CONTENT
 "s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/]."
 "s-023", "Title not correctly titlecased."
 "s-024", "Header elements that are entirely non-English should not be set in italics. Instead, the [xhtml]<h#>[/] element has the [attr]xml:lang[/] attribute."
-"s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/]."
 "s-026", "Invalid Roman numeral."
 "s-027", f"{image_ref} missing [xhtml]<title>[/] element."
 "s-028", f"[path][link=file://{self.path / 'images/cover.svg'}]cover.svg[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match."
@@ -364,6 +363,7 @@ SEMANTICS & CONTENT
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 "s-030", "[val]z3998:nonfiction[/] should be [val]z3998:non-fiction[/]."
 "s-040", f"[attr]#{figure_ref}[/] not found in file [path][link=file://{self.path / 'src/epub/text' / chapter_ref}]{chapter_ref}[/][/]."
+"s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/]."
 
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
@@ -3962,11 +3962,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 				# Test against word boundaries to not match `halftitlepage`.
 				if dom.xpath("/html/body/section[re:test(@epub:type, '\\btitlepage\\b')]"):
 					special_file = "titlepage"
-					# Check if the `<title>` element is set correctly, but only if there's no heading content.
-					# If there's heading content, then `<title>` should match the expected generated value from the heading content.
-					if dom.xpath("/html[not(./body//*[re:test(name(), '^h(group|[1-6])$')]) and ./head/title[text()!='Titlepage']]"):
-						messages.append(LintMessage("s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/].", se.MESSAGE_TYPE_ERROR, filename))
-
 				elif dom.xpath("/html/body/section[contains(@epub:type, 'colophon')]"):
 					special_file = "colophon"
 				elif dom.xpath("/html/body/section[contains(@epub:type, 'imprint')]"):
