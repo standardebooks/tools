@@ -212,7 +212,7 @@ METADATA
 "m-043", f"Non-canonical Wayback Machine URL. Expected [url]https://web.archive.org/web/<DATE>/<ARCHIVED-URL>[/]."
 "m-044", f"Possessive [text]’[/] or [text]’s[/] outside of [xhtml]<a>[/] element in long description."
 "m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC."
-"m-046", "Missing or empty [xml]<reason>[/] element."
+"m-046", "[xml]<ignore>[/] element has missing or empty [xml]<reason>[/] child."
 "m-047", "Ignoring [path]*[/] is too general. Target specific files if possible."
 "m-048", f"Unused [path][link=file://{lint_ignore_path}]se-lint-ignore.xml[/][/] rule."
 "m-049", "No [path]se-lint-ignore.xml[/] rules. Delete the file if there are no rules."
@@ -3460,6 +3460,7 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 			messages.append(LintMessage("m-049", "No [path]se-lint-ignore.xml[/] rules. Delete the file if there are no rules.", se.MESSAGE_TYPE_ERROR, lint_ignore_path))
 
 		has_illegal_path = False
+		ignores_without_reasons = []
 
 		for element in elements:
 			path = element.get_attr("path").strip()
@@ -3481,10 +3482,13 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 							has_reason = True
 
 					if not has_reason:
-						messages.append(LintMessage("m-046", "Missing or empty [xml]<reason>[/] element.", se.MESSAGE_TYPE_ERROR, lint_ignore_path))
+						ignores_without_reasons.append(se.easy_xml.EasyXmlElement(ignore))
 
 		if has_illegal_path:
 			messages.append(LintMessage("m-047", "Ignoring [path]*[/] is too general. Target specific files if possible.", se.MESSAGE_TYPE_WARNING, lint_ignore_path))
+
+		if ignores_without_reasons:
+			messages.append(LintMessage("m-046", "[xml]<ignore>[/] element has missing or empty [xml]<reason>[/] child.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_nodes(ignores_without_reasons)))
 
 	# Done parsing ignore list.
 
