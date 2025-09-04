@@ -195,6 +195,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					file.truncate()
 
 		# Update the release date in the metadata and colophon.
+		last_updated = None
 		if self.last_commit:
 			for file_path in work_compatible_epub_dir.glob("**/*.xhtml"):
 				dom = self.get_dom(file_path)
@@ -227,7 +228,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		# Output the pure epub3 file.
 		if not check_only:
-			se.epub.write_epub(work_compatible_epub_dir, output_dir / advanced_epub_output_filename)
+			se.epub.write_epub(work_compatible_epub_dir, output_dir / advanced_epub_output_filename, last_updated)
 
 		# Now add compatibility fixes for older ereaders.
 
@@ -802,7 +803,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			for file_path in work_kepub_dir.glob("**/*.opf"):
 				se.formatting.format_xml_file(file_path)
 
-			se.epub.write_epub(work_kepub_dir, output_dir / kobo_output_filename)
+			se.epub.write_epub(work_kepub_dir, output_dir / kobo_output_filename, last_updated)
 
 		# Now work on more compatibility fixes.
 
@@ -1157,7 +1158,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		# Write the compatible epub.
 		if not check_only:
-			se.epub.write_epub(work_compatible_epub_dir, output_dir / compatible_epub_output_filename)
+			se.epub.write_epub(work_compatible_epub_dir, output_dir / compatible_epub_output_filename, last_updated)
 
 		# Run checks, if specified.
 		build_messages = []
@@ -1435,7 +1436,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 					core_css_file.write("\n\n" + compatibility_css_file.read())
 
 			# Build an epub file we can send to Calibre.
-			se.epub.write_epub(work_compatible_epub_dir, work_dir / compatible_epub_output_filename)
+			se.epub.write_epub(work_compatible_epub_dir, work_dir / compatible_epub_output_filename, last_updated)
 
 			# Generate the Kindle file.
 			# We place it in the work directory because later we have to update the asin, and the `mobi.update_asin()` function will write to the final output directory.
