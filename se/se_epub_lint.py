@@ -459,7 +459,7 @@ XHTML
 "x-014", "Illegal [xml]id[/] attribute."
 "x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed."
 "x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter."
-"x-017", "Duplicate value for [attr]id[/] attribute."
+"x-017", "[attr]id[/] attribute value used more than once in ebook."
 "x-018", "Unused [xhtml]id[/] attribute."
 "x-019", "Unexpected value of [attr]id[/] attribute."
 "x-020", "Link to [path][link=file://{local_css_path}]se.css[/][/] in [xhtml]<head>[/], but not an SE boilerplate file."
@@ -3587,7 +3587,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	directories_not_url_safe = []
 	files_not_url_safe = []
 	id_values = {}
-	duplicate_id_values = []
+	id_nodes: dict[str, list[tuple[Path, se.easy_xml.EasyXmlElement]]] = {}
 	does_ebook_look_like_collection = False
 	local_css = {
 		"has_poem_style": False,
@@ -3939,11 +3939,12 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 							else:
 								xhtml_css_classes[css_class] = [(filename, node)]
 
-				for node in dom.xpath("/html/body//*[@id]/@id"):
-					if node in id_values:
-						duplicate_id_values.append(node)
+				for node in dom.xpath("//*[@id]"):
+					node_id = node.get_attr("id")
+					if node_id in id_nodes:
+						id_nodes[node_id].append((filename, node))
 					else:
-						id_values[node] = True
+						id_nodes[node_id] = [(filename, node)]
 
 				# Get the title of this file to compare against the ToC later.
 				# We ignore the ToC file itself.
@@ -4122,9 +4123,24 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 			url_safe_filename = se.formatting.make_url_safe(filepath.stem)
 			messages.append(LintMessage("f-008", f"Filename is not URL-safe. Expected: [path]{url_safe_filename}[/].", se.MESSAGE_TYPE_ERROR, filepath))
 
-	if duplicate_id_values:
-		duplicate_id_values = natsorted(list(set(duplicate_id_values)))
-		messages.append(LintMessage("x-017", "Duplicate value for [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_id_values))
+	if id_nodes:
+		# Narrow down `id`s to a list of ones that appear more than once.
+		duplicate_ids = {}
+
+		for _, nodes_tuple_list in id_nodes.items():
+			if len(nodes_tuple_list) > 1:
+				for nodes_tuple in nodes_tuple_list:
+					path_string = str(nodes_tuple[0])
+					if path_string in duplicate_ids:
+						duplicate_ids[path_string].append(nodes_tuple)
+					else:
+						duplicate_ids[path_string] = [nodes_tuple]
+
+		for _, nodes_tuples in duplicate_ids.items():
+			# `nodes_tuples` is a list of tuples of `(Path, list[EasyXmlElement])`.
+			nodes = [node for (_, node) in nodes_tuples]
+			filename = nodes_tuples[0][0]
+			messages.append(LintMessage("x-017", "[attr]id[/] attribute value used more than once in ebook.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check our headings against the ToC and landmarks.
 	headings = list(set(headings))
