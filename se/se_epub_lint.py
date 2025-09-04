@@ -1351,41 +1351,41 @@ def _update_missing_styles(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 	List of styles used in this file but missing from local CSS.
 	"""
 
-	missing_styles: list[str] = []
+	missing_styles: list[se.easy_xml.EasyXmlElement] = []
 
 	if not local_css["has_elision_style"]:
-		missing_styles += [node.to_tag_string() for node in dom.xpath("/html/body//span[contains(@class, 'elision')]")]
+		missing_styles += [node for node in dom.xpath("/html/body//span[contains(@class, 'elision')]")]
 
 	# Check to see if we included poetry or verse without the appropriate styling.
 	if filename.name not in IGNORED_FILENAMES:
 		nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')][./p/span]")
 		for node in nodes:
 			if "z3998:poem" in node.get_attr("epub:type") and not local_css["has_poem_style"]:
-				missing_styles.append(node.to_tag_string())
+				missing_styles.append(node)
 
 			if "z3998:verse" in node.get_attr("epub:type") and not local_css["has_verse_style"]:
-				missing_styles.append(node.to_tag_string())
+				missing_styles.append(node)
 
 			if "z3998:song" in node.get_attr("epub:type") and not local_css["has_song_style"]:
-				missing_styles.append(node.to_tag_string())
+				missing_styles.append(node)
 
 			if "z3998:hymn" in node.get_attr("epub:type") and not local_css["has_hymn_style"]:
-				missing_styles.append(node.to_tag_string())
+				missing_styles.append(node)
 
 			if "z3998:lyrics" in node.get_attr("epub:type") and not local_css["has_lyrics_style"]:
-				missing_styles.append(node.to_tag_string())
+				missing_styles.append(node)
 
 		# Check frontmatter for missing styling.
 		nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'epigraph') and not(.//h2)]")
 		for node in nodes:
 			if not local_css["has_epigraph_style"]:
-				missing_styles.append(node.to_tag_string())
+				missing_styles.append(node)
 
 		# Check for missing dedication styling, but not if the dedication is in a `<header>` as those are typically unstyled.
 		nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'dedication') and not(re:test(@epub:type, 'z3998:(poem|verse|hymn|song)')) and not(./ancestor::header) and not(.//h2) and not(count(.//p) > 3)]")
 		for node in nodes:
 			if not local_css["has_dedication_style"]:
-				missing_styles.append(node.to_tag_string())
+				missing_styles.append(node)
 
 	return missing_styles
 
@@ -3545,7 +3545,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	abbr_elements_requiring_css: list[se.easy_xml.EasyXmlElement] = []
 	glossary_usage = []
 	short_story_count = 0
-	missing_styles: list[str] = []
+	missing_styles: list[se.easy_xml.EasyXmlElement] = []
 	directories_not_url_safe = []
 	files_not_url_safe = []
 	id_values = {}
@@ -4115,12 +4115,12 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 		# All `<abbr>` elements have an `epub:type` because we selected them based on `epub:type` in the xpath.
 		for value in element.get_attr("epub:type").split():
 			if f"[epub|type~=\"{value}\"]" not in self.local_css:
-				missing_styles.append(element.to_tag_string())
+				missing_styles.append(element)
 
 	messages += _lint_image_metadata_checks(self, ebook_flags["has_images"])
 
 	if missing_styles:
-		messages.append(LintMessage("c-006", f"Semantic found, but missing corresponding style in [path][link=file://{local_css_path}]local.css[/][/].", se.MESSAGE_TYPE_ERROR, local_css_path, sorted(set(missing_styles))))
+		messages.append(LintMessage("c-006", f"Semantic found, but missing corresponding style in [path][link=file://{local_css_path}]local.css[/][/].", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_node_tags(missing_styles)))
 
 	for double_spaced_file in double_spaced_files:
 		messages.append(LintMessage("t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break and/or hair spaces!)", se.MESSAGE_TYPE_ERROR, double_spaced_file))

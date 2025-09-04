@@ -1,12 +1,12 @@
 c-006 [Error] local.css Semantic found, but missing corresponding style in 
 `local.css`.
-        <abbr epub:type="se:era">
-        <abbr epub:type="se:temperature">
-        <abbr epub:type="z3998:acronym">
-        <blockquote epub:type="epigraph">
-        <blockquote epub:type="z3998:hymn">
-        <blockquote epub:type="z3998:lyrics">
-        <blockquote epub:type="z3998:poem">
-        <blockquote epub:type="z3998:verse">
-        <section id="dedication" epub:type="dedication">
-        <span class="elision">
+ Line 9:        <section id="dedication" epub:type="dedication">
+ Line 12:       <blockquote epub:type="epigraph">
+ Line 16:       <abbr epub:type="se:era">
+ Line 16:       <abbr epub:type="se:temperature">
+ Line 16:       <abbr epub:type="z3998:acronym">
+ Line 17:       <blockquote epub:type="z3998:hymn">
+ Line 21:       <span class="elision">
+ Line 26:       <blockquote epub:type="z3998:lyrics">
+ Line 33:       <blockquote epub:type="z3998:poem">
+ Line 40:       <blockquote epub:type="z3998:verse">
