@@ -184,7 +184,7 @@ METADATA
 "m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element."
 "m-015", f"Metadata long description is not valid XHTML."
 "m-016", "Long description must be an escaped XHTML fragment."
-"m-017", "[xml]<!\\[CDATA\\[[/] found. Run [bash]se clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] sections."
+"m-017", "Illegal [xml]<!\\[CDATA\\[[/]. Hint: Run [bash]se clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] elements."
 "m-018", "HTML entities found. Use Unicode equivalents instead."
 "m-019", "Illegal em-dash in [xml]<dc:subject>[/] element; use [text]--[/]."
 "m-020", "Illegal value for [xml]<meta property=\"se:subject\">[/] element."
@@ -786,7 +786,6 @@ def _lint_metadata_checks(self) -> list:
 	"""
 
 	messages = []
-	metadata_xml = self.metadata_dom.to_string()
 	missing_metadata_elements = []
 
 	# Check the long description for some errors.
@@ -804,7 +803,7 @@ def _lint_metadata_checks(self) -> list:
 
 		# Make sure long-description is an escaped XHTML fragment.
 		if not regex.search(r"^\s*<p>", long_description) and long_description.strip() != "LONG_DESCRIPTION":
-			messages.append(LintMessage("m-016", "Long description must be an escaped XHTML fragment.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage('', long_description_node.sourceline)]))
+			messages.append(LintMessage("m-016", "Long description must be an escaped XHTML fragment.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_node_tags([long_description_node])))
 
 		# Check if there are non-typogrified quotes or em-dashes in metadata descriptions.
 		# Have to use `concat()` for the regex because it's not possible to escape both `'` and `"` in the same string in xpath 1.0. See <https://stackoverflow.com/a/57639969>.
@@ -1017,8 +1016,11 @@ def _lint_metadata_checks(self) -> list:
 		messages.append(LintMessage("m-068", "[xml]<dc:title>[/] missing matching [xml]<meta property=\"title-type\">[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(titles_missing_title_type)))
 
 	# Check for `CDATA` elements.
-	if "<![CDATA[" in metadata_xml:
-		messages.append(LintMessage("m-017", "[xml]<!\\[CDATA\\[[/] found. Run [bash]se clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] sections.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+	# We have to use `self.metadata_file_path.read_text()` to get the raw file contents because converting a DOM tree to string removes `CDATA` elements.
+	source_file = SourceFile(self.metadata_file_path, self.metadata_file_path.read_text())
+	matches = source_file.findall(r"<!\[CDATA\[")
+	if matches:
+		messages.append(LintMessage("m-017", "Illegal [xml]<!\\[CDATA\\[[/]. Hint: Run [bash]se clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] elements.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_matches(matches)))
 
 	# Check that our provided identifier matches the generated identifier.
 	if self.is_se_ebook:
