@@ -190,7 +190,7 @@ METADATA
 "m-020", "Illegal value for [xml]<meta property=\"se:subject\">[/] element."
 "m-021", "No [xml]<meta property=\"se:subject\">[/] element found."
 "m-022", "Empty [xml]<meta property=\"se:production-notes\">[/] element."
-"m-023", f"[xml]<dc:identifier>[/] does not match expected: [text]{self.generated_identifier}[/]."
+"m-023", "Unexpected value for [xml]<dc:identifier>[/]."
 "m-024", "[xml]<meta property=\"se:name.person.full-name\">[/] property identical to regular name. If the two are identical the full name [xml]<meta>[/] element must be removed."
 "m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon."
 "m-026", "Non-canonical Wikipedia URL. Expected [url]http://en.wikipedia.org/wiki/<ARTICLE-ID>[/]."
@@ -1029,7 +1029,7 @@ def _lint_metadata_checks(self) -> list:
 		try:
 			identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier")[0]
 			if identifier.text != self.generated_identifier:
-				messages.append(LintMessage("m-023", f"[xml]<dc:identifier>[/] does not match expected: [text]{self.generated_identifier}[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(identifier.text, identifier.sourceline)]))
+				messages.append(LintMessage("m-023", "Unexpected value for [xml]<dc:identifier>[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"Found: {identifier.text}\nExpected: {self.generated_identifier}", identifier.sourceline)]))
 		except Exception:
 			missing_metadata_elements.append("<dc:identifier>")
 
