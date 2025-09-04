@@ -1,4 +1,3 @@
-c-008 [Manual Review] local.css CSS class only used once. Can a clever selector 
-be crafted instead of a single-use class? When possible classes should not be 
-single-use style hooks.
+c-008 [Manual Review] local.css CSS class only used once. Hint: Craft a selector
+instead of a single-use class.
         onetimeclass

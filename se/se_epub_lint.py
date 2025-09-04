@@ -123,7 +123,7 @@ CSS
 "c-005", "Illegal [css]white-space: nowrap;[/] applied to [css]abbr[/] selector."
 "c-006", f"Semantic found, but missing corresponding style in [path][link=file://{local_css_path}]local.css[/][/]."
 "c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy."
-"c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks."
+"c-008", "CSS class only used once. Hint: Craft a selector instead of a single-use class."
 "c-009", "Duplicate CSS selectors. Duplicates are only acceptable if overriding S.E. base styles."
 "c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [css]text-align[/] is usually set to [css]right[/]."
 "c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/]."
@@ -4044,7 +4044,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 		messages.append(LintMessage("x-013", f"CSS class found in XHTML, but not in [path][link=file://{local_css_path}]local.css[/][/].", se.MESSAGE_TYPE_ERROR, local_css_path, missing_selectors))
 
 	if single_use_css_classes:
-		messages.append(LintMessage("c-008", "CSS class only used once. Can a clever selector be crafted instead of a single-use class? When possible classes should not be single-use style hooks.", se.MESSAGE_TYPE_WARNING, local_css_path, single_use_css_classes))
+		messages.append(LintMessage("c-008", "CSS class only used once. Hint: Craft a selector instead of a single-use class.", se.MESSAGE_TYPE_WARNING, local_css_path, single_use_css_classes))
 
 	# We have a list of `id` attributes in the ebook. Now iterate over all XHTML files again to ensure each one has been used.
 	# Only run this check if we actually have `id` attributes to inspect.
