@@ -211,7 +211,7 @@ METADATA
 "m-042", "[xml]<manifest>[/] element does not match expected structure."
 "m-043", f"Non-canonical Wayback Machine URL. Expected [url]https://web.archive.org/web/<DATE>/<ARCHIVED-URL>[/]."
 "m-044", f"Possessive [text]’[/] or [text]’s[/] outside of [xhtml]<a>[/] element in long description."
-"m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC."
+"m-045", "Heading not found in the ToC."
 "m-046", "[xml]<ignore>[/] element has missing or empty [xml]<reason>[/] child."
 "m-047", "Illegal path. Hint: Ignoring [path]*[/] is too general; target specific files."
 "m-048", f"Unused [path][link=file://{lint_ignore_path}]se-lint-ignore.xml[/][/] rule."
@@ -3547,7 +3547,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	cover_svg_title = ""
 	titlepage_svg_title = ""
 	xhtml_css_classes: dict[str, int] = {}
-	headings: list[tuple] = []
+	headings: list[tuple[str, str]] = []
 	double_spaced_files: list[Path] = []
 	unused_selectors: list[str] = []
 	id_attrs: list[str] = []
@@ -4114,11 +4114,20 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 		entry_file = self.content_path / regex.sub(r"#.+$", "", node.get_attr("href"))
 		toc_headings.append((node.inner_text(), str(entry_file)))
 
+	missing_headings: dict[str, list[str]] = {}
+
 	for heading in headings:
 		# Some compilations, like _Songs of a Sourdough_, have their title in the half title, so check against that before adding an error.
 		# Ignore the half title page, because its text may differ in collections with only one file, like _Father Goriot_ or _The Path to Rome_.
 		if heading not in toc_headings and Path(heading[1]).name != 'halftitlepage.xhtml' and (heading[0], str(self.path / "src/epub/text/halftitlepage.xhtml")) not in toc_headings:
-			messages.append(LintMessage("m-045", f"Heading [text]{heading[0]}[/] found, but not present for that file in the ToC.", se.MESSAGE_TYPE_ERROR, Path(heading[1])))
+			file_string = heading[1]
+			if file_string in missing_headings:
+				missing_headings[file_string].append(heading[0])
+			else:
+				missing_headings[file_string] = [heading[0]]
+
+	for file_string, headings_list in missing_headings.items():
+		messages.append(LintMessage("m-045", "Heading not found in the ToC.", se.MESSAGE_TYPE_ERROR, Path(file_string), headings_list))
 
 	for element in abbr_elements_requiring_css:
 		# All `<abbr>` elements have an `epub:type` because we selected them based on `epub:type` in the xpath.
