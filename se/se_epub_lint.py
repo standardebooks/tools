@@ -279,7 +279,7 @@ SEMANTICS & CONTENT
 "s-023", "Title not correctly titlecased."
 "s-024", "Header elements that are entirely non-English should not be set in italics. Instead, the [xhtml]<h#>[/] element has the [attr]xml:lang[/] attribute."
 "s-026", "Invalid Roman numeral."
-"s-027", f"{image_ref} missing [xhtml]<title>[/] element."
+"s-027", "[xhtml]<title>[/] element missing."
 "s-028", f"[path][link=file://{self.path / 'images/cover.svg'}]cover.svg[/][/] and [path][link=file://{self.path / 'images/titlepage.svg'}]titlepage.svg[/][/] [xhtml]<title>[/] elements don’t match."
 "s-029", "Section with [attr]data-parent[/] attribute, but no section having that [attr]id[/] in ebook."
 "s-031", "Duplicate value in [attr]epub:type[/] attribute."
@@ -2748,7 +2748,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 					try:
 						title_text = svg_dom.xpath("/svg/title")[0].text
 					except Exception:
-						messages.append(LintMessage("s-027", f"{image_ref} missing [xhtml]<title>[/] element.", se.MESSAGE_TYPE_ERROR, svg_path))
+						messages.append(LintMessage("s-027", "[xhtml]<title>[/] element missing.", se.MESSAGE_TYPE_ERROR, svg_path))
 
 					if title_text != "" and alt != "" and title_text != alt:
 						messages.append(LintMessage("s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/].", se.MESSAGE_TYPE_ERROR, filename))
