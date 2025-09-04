@@ -3579,7 +3579,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	headings: list[tuple[str, str]] = []
 	double_spaced_files: list[Path] = []
 	unused_selectors: list[str] = []
-	id_attrs: list[str] = []
+	unused_id_attrs: list[tuple[Path, list[se.easy_xml.EasyXmlElement]]] = []
 	abbr_elements_requiring_css: list[se.easy_xml.EasyXmlElement] = []
 	unused_glossary_entries: list[se.easy_xml.EasyXmlElement] = []
 	short_story_count = 0
@@ -3888,7 +3888,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 				messages += _get_malformed_urls(dom, filename)
 
 				# Extract `id` attributes for later checks.
-				id_attrs += [str(s) for s in dom.xpath("//*[name() != 'section' and name() != 'article' and name() != 'figure' and name() != 'nav']/@id")]
+				nodes = dom.xpath("//*[@id and name() != 'section' and name() != 'article' and name() != 'figure' and name() != 'nav']")
+				if nodes:
+					unused_id_attrs.append((filename, nodes))
 
 				# Add to the short story count for later checks.
 				short_story_count += len(dom.xpath("/html/body//article[contains(@epub:type, 'se:short-story')]"))
@@ -4053,10 +4055,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 			messages.append(LintMessage("c-008", "CSS class only used once. Hint: Craft a selector instead of a single-use class.", se.MESSAGE_TYPE_WARNING, nodes_tuple[0], LintSubmessage.from_node_tags([nodes_tuple[1]])))
 
 	# We have a list of `id` attributes in the ebook. Now iterate over all XHTML files again to ensure each one has been used.
-	# Only run this check if we actually have `id` attributes to inspect.
-	if id_attrs:
-		id_attrs = list(set(id_attrs))
-		unused_id_attrs = deepcopy(id_attrs)
+	if unused_id_attrs:
 		sorted_filenames: list[str] = []
 
 		# `href` links are mostly found in endnotes, so if there's an endnotes file process it first to try to speed things up a little.
@@ -4071,20 +4070,20 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 		for filename in sorted_filenames:
 			xhtml = self.get_file(filename)
 
-			for attr in id_attrs:
-				# We use a simple `in` check instead of xpath because it's an order of magnitude faster on really big ebooks with lots of IDs, like _Pepys_.
-				if f"#{attr}\"" in xhtml:
-					try:
-						unused_id_attrs.remove(attr)
-					except ValueError:
-						# We get here if we try to remove a value that has already been removed.
-						pass
+			for i, (file_path, nodes_list) in enumerate(unused_id_attrs):
+				for node in nodes_list:
+					attr = node.get_attr("id")
 
-			# Reduce the list of `id` attributes to check in the next pass, a time saver for big ebooks.
-			id_attrs = deepcopy(unused_id_attrs)
+					# We use a simple `in` check instead of xpath because it's an order of magnitude faster on really big ebooks with lots of IDs, like _Pepys_.
+					if f"#{attr}\"" in xhtml:
+						try:
+							unused_id_attrs.pop(i)
+						except IndexError:
+							# We get here if we try to remove a value that has already been removed.
+							pass
 
-		if unused_id_attrs:
-			messages.append(LintMessage("x-018", "Unused [xhtml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, natsorted(unused_id_attrs)))
+		for _, (file_path, nodes_list) in enumerate(unused_id_attrs):
+			messages.append(LintMessage("x-018", "Unused [xhtml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags(nodes_list)))
 
 	if files_not_url_safe:
 		try:
