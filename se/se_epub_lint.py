@@ -556,6 +556,19 @@ class SourceFile:
 
 		return matches
 
+	def find_selector(self, selector: str) -> list[tuple[str, int]]:
+		"""
+		If this file is a CSS file, try to find a CSS selector. If the selector can't be found, return it anyway with line number 0. The file must be pretty-printed using `se clean` for this to work well.
+		"""
+
+		# Try to find the selector using a regex.
+		matches = self.findall(fr"^[ \t]*{regex.escape(selector)}(?=\s*[,{{])", regex.MULTILINE)
+		if matches:
+			return matches
+		else:
+			# In case the regex didn't match anything, include the selector anyway at line 0 which will just show an arrow in the output.
+			return [(selector, 0)]
+
 	def line_num(self, match: regex.Match) -> int:
 		"""
 		Get the original line number based on a regex match of contents.
@@ -1311,13 +1324,7 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 	if abbr_with_whitespace:
 		matches = []
 		for selector in abbr_with_whitespace:
-			# Try to find the selector using a regex. The CSS file must be pretty-printed using `se clean` for this to work well.
-			local_matches = source_file.findall(fr"^[ \t]*{regex.escape(selector)}(?=\s*[,{{])", regex.MULTILINE)
-			if local_matches:
-				matches += local_matches
-			else:
-				# In case the regex didn't match anything, include the selector anyway at line 0 which will just show an arrow in the output.
-				matches.append((selector, 0))
+			matches += source_file.find_selector(selector)
 
 		messages.append(LintMessage("c-005", "Illegal [css]white-space: nowrap;[/] applied to [css]abbr[/] selector.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
@@ -3628,6 +3635,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	# Check `local.css` for various items, for later use.
 	try:
 		self.local_css = self.get_file(local_css_path)
+
+		css_source_file = SourceFile(local_css_path, self.local_css)
 	except Exception as ex:
 		raise se.InvalidSeEbookException(f"Couldn’t open [path]{local_css_path}[/].") from ex
 
@@ -3638,7 +3647,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	local_css_rules, duplicate_selectors = _get_selectors_and_rules(self)
 
 	if duplicate_selectors:
-		messages.append(LintMessage("c-009", "Duplicate CSS selectors. Hint: Duplicates are only acceptable if overriding S.E. base styles.", se.MESSAGE_TYPE_WARNING, local_css_path, list(set(duplicate_selectors))))
+		matches = []
+		for selector in duplicate_selectors:
+			matches += css_source_file.find_selector(selector)
+
+		messages.append(LintMessage("c-009", "Duplicate CSS selectors. Hint: Duplicates are only acceptable if overriding S.E. base styles.", se.MESSAGE_TYPE_WARNING, local_css_path, LintSubmessage.from_matches(matches)))
 
 	# Store a list of CSS selectors, and duplicate it into a list of unused selectors, for later checks.
 	# We use a regex to remove pseudo-elements like `::before`, because we want the *selectors* to see if they're unused.
@@ -4167,15 +4180,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 	if unused_selectors:
 		matches = []
-		source_file = SourceFile(local_css_path, self.local_css)
-		for unused_selector in unused_selectors:
-			# Try to find the unused selector using a regex. The CSS file must be pretty-printed using `se clean` for this to work well.
-			local_matches = source_file.findall(fr"^[ \t]*{regex.escape(unused_selector)}(?=\s*[,{{])", regex.MULTILINE)
-			if local_matches:
-				matches += local_matches
-			else:
-				# In case the regex didn't match anything, include the unused selector anyway at line 0 which will just show an arrow in the output.
-				matches.append((unused_selector, 0))
+		for selector in unused_selectors:
+			matches += css_source_file.find_selector(selector)
 
 		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
