@@ -4156,7 +4156,18 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 		messages.append(LintMessage("f-002", "Missing expected file or directory.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_files))
 
 	if unused_selectors:
-		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, local_css_path, unused_selectors))
+		matches = []
+		source_file = SourceFile(local_css_path, self.local_css)
+		for unused_selector in unused_selectors:
+			# Try to find the unused selector using a regex. The CSS file must be pretty-printed using `se clean` for this to work well.
+			local_matches = source_file.findall(fr"^[ \t]*{regex.escape(unused_selector)}(?=\s*[,{{])", regex.MULTILINE)
+			if local_matches:
+				matches += local_matches
+			else:
+				# In case the regex didn't match anything, include the unused selector anyway at line 0 which will just show an arrow in the output.
+				matches.append((unused_selector, 0))
+
+		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
 	if short_story_count and not self.metadata_dom.xpath("//meta[@property='se:subject' and text() = 'Shorts']"):
 		messages.append(LintMessage("m-027", "[val]se:short-story[/] semantic inflection found, but no [val]se:subject[/] with the value of [text]Shorts[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
