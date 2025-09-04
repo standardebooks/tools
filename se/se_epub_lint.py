@@ -193,7 +193,7 @@ METADATA
 "m-023", f"[xml]<dc:identifier>[/] does not match expected: [text]{self.generated_identifier}[/]."
 "m-024", "[xml]<meta property=\"se:name.person.full-name\">[/] property identical to regular name. If the two are identical the full name [xml]<meta>[/] element must be removed."
 "m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon."
-"m-026", f"Non-canonical Wikipedia URL. Expected [url]http://en.wikipedia.org/wiki/<ARTICLE-ID>[/]."
+"m-026", "Non-canonical Wikipedia URL. Expected [url]http://en.wikipedia.org/wiki/<ARTICLE-ID>[/]."
 "m-027", f"[val]se:short-story[/] semantic inflection found, but no [val]se:subject[/] with the value of [text]Shorts[/]."
 "m-028", "Images found in ebook, but no [attr]schema:accessMode[/] property set to [val]visual[/] in metadata."
 "m-029", "Images found in ebook, but no [attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata."
@@ -278,7 +278,7 @@ SEMANTICS & CONTENT
 "s-020", "Frontmatter found, but no half title page. Half title page is required when frontmatter is present."
 "s-021", "Unexpected value for [xhtml]<title>[/] element. Hint: Beware hidden Unicode characters!"
 "s-022", f"The [xhtml]<title>[/] element of [path][link=file://{svg_path}]{image_ref}[/][/] does not match the [attr]alt[/] attribute text in [path][link=file://{filename}]{filename.name}[/][/]."
-"s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/]."
+"s-023", "Title not correctly titlecased."
 "s-024", "Header elements that are entirely non-English should not be set in italics. Instead, the [xhtml]<h#>[/] element has the [attr]xml:lang[/] attribute."
 "s-025", "Titlepage [xhtml]<title>[/] elements must contain exactly: [text]Titlepage[/]."
 "s-026", "Invalid Roman numeral."
@@ -2063,6 +2063,7 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 
 	# Check to see if `<h#>` elements are correctly titlecased.
 	# Ignore `<h#>` elements with an `xml:lang` attribute, as other languages have different titlecasing rules.
+	incorrectly_titlecased_titles = []
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') or (name() = 'p' and parent::hgroup)][not(contains(@epub:type, 'z3998:roman')) and not(@xml:lang)]")
 	for node in nodes:
 		node_copy = deepcopy(node)
@@ -2105,14 +2106,17 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 
 				title = se.formatting.remove_tags(title).strip()
 				if title != titlecased_title:
-					messages.append(LintMessage("s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/].", se.MESSAGE_TYPE_WARNING, filename))
+					incorrectly_titlecased_titles.append(LintSubmessage(f"Found: {title}\nExpected: {titlecased_title}", node.sourceline))
 
 		# No subtitle? Much more straightforward.
 		else:
 			titlecased_title = se.formatting.titlecase(se.formatting.remove_tags(title))
 			title = se.formatting.remove_tags(title)
 			if title != titlecased_title:
-				messages.append(LintMessage("s-023", f"Title [text]{title}[/] not correctly titlecased. Expected: [text]{titlecased_title}[/].", se.MESSAGE_TYPE_WARNING, filename))
+				incorrectly_titlecased_titles.append(LintSubmessage(f"Found: {title}\nExpected: {titlecased_title}", node.sourceline))
+
+	if incorrectly_titlecased_titles:
+		messages.append(LintMessage("s-023", f"Title not correctly titlecased.", se.MESSAGE_TYPE_WARNING, filename, incorrectly_titlecased_titles))
 
 	# Check for `<header>` elements that are entirely non-English.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
