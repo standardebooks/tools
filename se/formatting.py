@@ -1569,6 +1569,15 @@ def generate_colophon_timestamp(timestamp: datetime) -> str:
 
 	return formatted_timestamp
 
+def generate_epoch_timestamp(timestamp: datetime) -> str:
+	"""
+	Given a `datetime` in UTC, generate a Unix epoch timestamp (seconds since 1970-01-01T00:00:00Z) as an integer string.
+	"""
+
+	formatted_timestamp = str(int(timestamp.timestamp()))
+
+	return formatted_timestamp
+
 def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> list[EasyXmlElement]:
 	"""
 	Helper function for `find_unexpected_ids()`.

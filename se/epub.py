@@ -3,8 +3,11 @@
 Defines several functions that are useful for interacting with epub files.
 """
 
+import os
+from datetime import datetime
 from pathlib import Path
 import zipfile
+from repro_zipfile import ReproducibleZipFile
 from lxml import etree
 import se
 import se.easy_xml
@@ -52,23 +55,32 @@ def convert_toc_to_ncx(epub_root_absolute_path: Path, toc_filename: str, xsl_fil
 
 	return toc_tree
 
-def write_epub(epub_root_absolute_path: Path, output_absolute_path: Path) -> None:
+def write_epub(epub_root_absolute_path: Path, output_absolute_path: Path, last_update_datetime: datetime | None) -> None:
 	"""
 	Given a root directory, compress it into a final epub file.
 
 	INPUTS
 	epub_root_absolute_path: The root directory of an unzipped epub
 	output_absolute_path: The filename of the output file
+	last_update_datetime: The datetime when the epub source was last updated
 
 	OUTPUTS
 	None
 	"""
 
+	# Set the timestamp used by ReproducibleZipFile to the timestamp of the last git commit, if available.
+	if last_update_datetime is not None:
+		os.environ["SOURCE_DATE_EPOCH"] = se.formatting.generate_epoch_timestamp(last_update_datetime)
+
 	# We can't enable global compression here because according to the spec, the `mimetype` file must be uncompressed. The rest of the files, however, can be compressed.
-	with zipfile.ZipFile(output_absolute_path, mode="w") as epub:
+	with ReproducibleZipFile(output_absolute_path, mode="w") as epub:
 		epub.write(epub_root_absolute_path / "mimetype", "mimetype")
 		epub.write(epub_root_absolute_path / "META-INF" / "container.xml", "META-INF/container.xml", compress_type=zipfile.ZIP_DEFLATED)
 
-		for file_path in epub_root_absolute_path.glob("**/*"):
+		for file_path in sorted(epub_root_absolute_path.glob("**/*")):
 			if file_path.name not in ("mimetype", "container.xml"):
 				epub.write(file_path, file_path.relative_to(epub_root_absolute_path), compress_type=zipfile.ZIP_DEFLATED)
+
+	# Unset the timestamp environment variable that was set for ReproducibleZipFile.
+	if last_update_datetime is not None:
+		del os.environ["SOURCE_DATE_EPOCH"]
