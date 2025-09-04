@@ -923,12 +923,14 @@ def _lint_metadata_checks(self) -> list:
 			break
 
 	# Check that the word count is correct, if it's currently set.
-	word_count = self.metadata_dom.xpath("/package/metadata/meta[@property='se:word-count']/text()", True)
 	if self.is_se_ebook:
-		if word_count is None:
+		word_count_elements = self.metadata_dom.xpath("/package/metadata/meta[@property='se:word-count']")
+		if word_count_elements:
+			word_count = word_count_elements[0].text
+			if word_count != "WORD_COUNT" and int(word_count) != self.get_word_count():
+				messages.append(LintMessage("m-065", "Word count in metadata doesn’t match actual word count.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(word_count_elements)))
+		else:
 			missing_metadata_elements.append("""<meta property="se:word-count">""")
-		elif word_count != "WORD_COUNT" and int(word_count) != self.get_word_count():
-			messages.append(LintMessage("m-065", "Word count in metadata doesn’t match actual word count.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check if we have a subtitle but no full title.
 	if self.metadata_dom.xpath("/package/metadata[./meta[@property='title-type' and text()='subtitle'] and not(./meta[@property='title-type' and text()='extended'])]"):
