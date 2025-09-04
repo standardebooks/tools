@@ -178,7 +178,7 @@ METADATA
 "m-008", "Non-canonical Library of Congress Name Authority URI. Expected [url]http://id.loc.gov/authorities/names/<IDENTIFIER>[/]. Hint: Must be [text]http[/] and without file extension."
 "m-009", f"[xml]<meta property=\"se:url.vcs.github\">[/] value does not match expected: [url]{self.generated_github_repo_url}[/]."
 "m-010", "Invalid [xml]refines[/] property."
-"m-011", "Subtitle in metadata, but no full/extended title element."
+"m-011", "Subtitle in metadata, but no extended title element."
 "m-012", "Non-typogrified character in [xml]<dc:title>[/] element."
 "m-013", "Non-typogrified character in [xml]<dc:description>[/] element."
 "m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element."
@@ -932,8 +932,10 @@ def _lint_metadata_checks(self) -> list:
 			missing_metadata_elements.append("""<meta property="se:word-count">""")
 
 	# Check if we have a subtitle but no full title.
-	if self.metadata_dom.xpath("/package/metadata[./meta[@property='title-type' and text()='subtitle'] and not(./meta[@property='title-type' and text()='extended'])]"):
-		messages.append(LintMessage("m-011", "Subtitle in metadata, but no full/extended title element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+	# There is no string replace function in xpath, but luckily `translate()` replaces exactly one character with another.
+	nodes = self.metadata_dom.xpath("/package/metadata[not(./meta[@property='title-type' and text()='extended'])]/dc:title[@id=translate(/package/metadata/meta[@property='title-type' and text()='subtitle']/@refines, '#', '')]")
+	if nodes:
+		messages.append(LintMessage("m-011", "Subtitle in metadata, but no extended title element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	# Check for tags that imply other tags.
 	implied_tags = {"Fiction": ["Science Fiction", "Drama", "Fantasy"]}
