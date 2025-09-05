@@ -1,4 +1,4 @@
-y-027 [Manual Review] chapter-1.xhtml Possible typo: extra `’` at end of 
+y-027 [Manual Review] chapter-1.xhtml Possible typo: Extra `’` at end of 
 paragraph.
  Line 18:       <p>“We can assume that any instance of an hour can be construed 
 as a plaguy stretch. This is not to discredit the idea that an inept family's 

@@ -1,4 +1,4 @@
-y-026 [Manual Review] chapter-1.xhtml Possible typo: no punctuation before 
+y-026 [Manual Review] chapter-1.xhtml Possible typo: No punctuation before 
 conjunction `But/And/For/Nor/Yet/Or`.
  Line 32:       <p>Fabled daies But show us how belts can be heats.</p>
  Line 34:       <p>Though we assume the latter, a heart can hardly be considered

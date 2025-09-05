@@ -1,4 +1,4 @@
-y-013 [Manual Review] chapter-1.xhtml Possible typo: punctuation not within `’`.
+y-013 [Manual Review] chapter-1.xhtml Possible typo: Punctuation not within `’`.
  Line 14:       <p>“Some nodding needs are thought of simply, quite ‘simply’, as
 indonesias.” A great-grandmother can hardly be considered a postponed lion 
 without also being an exclamation. The time of a production becomes a seedless 

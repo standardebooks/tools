@@ -3,7 +3,7 @@ Hint: `<p>` that continues text after a `<blockquote>` requires the `continued`
 class; and use `<br/>` to split one clause over many lines.
  Line 14:       <p><a 
 href="https://standardebooks.org/">standardebooks.org</a></p>
-y-003 [Manual Review] chapter-1.xhtml Possible typo: paragraph missing ending 
+y-003 [Manual Review] chapter-1.xhtml Possible typo: Paragraph missing ending 
 punctuation.
  Line 12:       <p><a href="https://www.example.org/">Testing</a></p>
  Line 14:       <p><a 

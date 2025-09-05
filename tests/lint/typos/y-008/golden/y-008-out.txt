@@ -1,9 +1,9 @@
-t-003 [Manual Review] chapter-1.xhtml `“` missing matching `”`. Note: When 
+t-003 [Manual Review] chapter-1.xhtml `“` missing matching `”`. Hint: When 
 dialog from the same speaker spans multiple `<p>` elements, it’s correct grammar
 to omit closing `”` until the last `<p>` of dialog.
-        “Extending this logic,’⁠—phoney rates show us how feathers can be 
+ Line 14:       “Extending this logic,’⁠—phoney rates show us how feathers can be
 thrones⁠—“
-y-008 [Manual Review] chapter-1.xhtml Possible typo: dialog interrupted by 
+y-008 [Manual Review] chapter-1.xhtml Possible typo: Dialog interrupted by 
 interjection but with incorrect closing quote.
  Line 14:       <p>We know that few can name an unpolled fox that isn't a 
 turbaned rowboat. “Extending this logic,’⁠—phoney rates show us how feathers can

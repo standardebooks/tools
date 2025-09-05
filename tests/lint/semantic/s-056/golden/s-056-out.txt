@@ -1,2 +1,5 @@
+x-018 [Error] chapter-1.xhtml Unused `id` attribute.
+ Line 11:       <a href="endnotes.xhtml#note-2" id="noteref-2" 
+epub:type="noteref">
 s-056 [Error] endnotes.xhtml Last `<p>` child of endnote missing backlink.
  Line 17:       <li id="note-2" epub:type="endnote">

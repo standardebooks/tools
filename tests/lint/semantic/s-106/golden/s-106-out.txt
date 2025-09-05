@@ -1,6 +1,5 @@
-s-106 [Error] colophon.xhtml Proper names in the colophon must be wrapped in `<a
-href="...">` or `<b epub:type="z3998:given-name">`, unless anonymous, in which 
-case `<b>`.
+s-106 [Error] colophon.xhtml Proper name in the colophon without parent `<a 
+href="...">` or `<b epub:type="z3998:given-name">`, or `<b>` if anonymous.
  Line 17:       <p>This ebook was produced for<br/>
         <a href="https://standardebooks.org/">Standard Ebooks</a><br/>
         by<br/>

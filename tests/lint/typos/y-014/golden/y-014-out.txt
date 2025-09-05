@@ -1,4 +1,4 @@
-y-014 [Manual Review] chapter-1.xhtml Possible typo: unexpected `.` at the end 
+y-014 [Manual Review] chapter-1.xhtml Possible typo: Unexpected `.` at the end 
 of quotation. Hint: If a dialog tag follows, should this be `,`?
  Line 26:       <p>A pruner can hardly be considered a scrannel breath without 
 also being a flat. “Nowhere is it disputed that antic sailboats show us how 

@@ -1,4 +1,4 @@
-y-025 [Manual Review] chapter-1.xhtml Possible typo: letter/comma/quote 
+y-025 [Manual Review] chapter-1.xhtml Possible typo: Letter/comma/quote 
 mark/letter with no intervening space.
  Line 18:       <p>One cannot separate spaces from rattish trucks,“It's an 
 undeniable fact, really; a lobster sees a surfboard as a crudest colon.”</p>

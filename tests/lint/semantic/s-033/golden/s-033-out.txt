@@ -1,8 +1,8 @@
 s-033 [Manual Review] chapter-1.xhtml `xml:lang` value on `<html>` element 
-doesn't match language set in metadata.
+doesn’t match language set in metadata.
  Line 2:        Found: en-US
         Expected: en-GB
-s-033 [Manual Review] loi.xhtml `xml:lang` value on `<html>` element doesn't 
+s-033 [Manual Review] loi.xhtml `xml:lang` value on `<html>` element doesn’t 
 match language set in metadata.
  Line 2:        Found: en-US
         Expected: en-GB

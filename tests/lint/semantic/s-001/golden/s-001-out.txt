@@ -1,4 +1,4 @@
-s-001 [Error] chapter-1.xhtml Illegal numeric entity (like `&#913;`).
+s-001 [Error] chapter-1.xhtml Illegal numeric entity.
  Line 10:       &#914;
  Line 12:       &#915;
  Line 13:       &#914;

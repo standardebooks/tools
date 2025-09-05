@@ -1,5 +1,5 @@
 c-014 [Manual Review] chapter-1.xhtml `<table>` element without explicit 
-margins. Most tables need `margin: 1em;` or `margin: 1em auto 1em auto;`.
+margins. Hint: Most tables need `margin: 1em;` or `margin: 1em auto 1em auto;`.
  Line 29:       <table>
                 <tbody>
                         <tr>
@@ -28,6 +28,5 @@ epub:type="z3998:roman">XV</span></a>.</td>
                         </tr>
                 </tbody>
         </table>
-t-001 [Error] chapter-1.xhtml Double spacing found. Sentences should be 
-single-spaced. (Note that double spaces might include Unicode no-break and/or 
-hair spaces!)
+t-001 [Error] chapter-1.xhtml Double spacing found. Hint: Sentences should be 
+single-spaced. Note that double spaces might include Unicode no-break spaces.

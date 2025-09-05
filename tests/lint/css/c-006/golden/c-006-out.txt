@@ -1,5 +1,4 @@
-c-006 [Error] local.css Semantic found, but missing corresponding style in 
-`local.css`.
+c-006 [Error] local.css Semantic found, but missing corresponding CSS style.
  Line 9:        <section id="dedication" epub:type="dedication">
  Line 12:       <blockquote epub:type="epigraph">
  Line 16:       <abbr epub:type="se:era">

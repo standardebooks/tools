@@ -1,4 +1,4 @@
-y-002 [Manual Review] chapter-1.xhtml Possible typo: punctuation followed 
+y-002 [Manual Review] chapter-1.xhtml Possible typo: Punctuation followed 
 directly by a letter, without a space.
  Line 14:       <p>The shell of a diploma becomes a leaning badger. The 
 stopwatch of a beef becomes an anile command. Before chards,thumbs were only 

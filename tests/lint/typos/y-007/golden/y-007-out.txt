@@ -1,4 +1,4 @@
-y-007 [Manual Review] chapter-1.xhtml Possible typo: `‘` not within `“`. Hints: 
+y-007 [Manual Review] chapter-1.xhtml Possible typo: `‘` not within `“`. Hint: 
 Should `‘` be replaced with `“`? Is there a missing closing quote? Is this a 
 nested quote that should be preceded by `“`? Are quotes in close proximity 
 correctly closed?

@@ -1,4 +1,4 @@
-y-035 [Manual Review] chapter-1.xhtml Possible typo: single letter. Hints: Does 
+y-035 [Manual Review] chapter-1.xhtml Possible typo: Single letter. Hint: Does 
 this need `z3998:grapheme` or `z3998:phoneme` or `xml:lang` semantics? Is this 
 dialect requiring `’` to signify an elided letter?
  Line 16:       <p>“Why yes, so they are! But I t hought the season for apple 
