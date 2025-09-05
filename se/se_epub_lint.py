@@ -637,8 +637,21 @@ class LintSubmessage:
 
 	@classmethod
 	def from_nodes(cls, nodes: list) -> list['LintSubmessage']:
-		"""Create a list of `LintSubmessage` objects from xpath node matches."""
-		return [cls(node.to_string(), node.sourceline) for node in sorted(nodes, key=lambda x: x.sourceline)]
+		"""Create a list of `LintSubmessage` objects from xpath nodes. Nodes can either be element or text nodes."""
+		submessages = []
+
+		for node in nodes:
+			if isinstance(node, se.easy_xml.EasyXmlElement):
+				submessages.append(cls(node.to_string(), node.sourceline))
+			elif hasattr(node, 'getparent'):
+				try:
+					submessages.append(cls(node, node.getparent().sourceline))
+				except AttributeError:
+					submessages.append(cls(node, 0))
+			else:
+				submessages.append(cls(node, 0))
+
+		return sorted(submessages, key=lambda x: x.line_num or 0)
 
 	@classmethod
 	def from_node_tags(cls, nodes: list) -> list['LintSubmessage']:
@@ -1639,11 +1652,12 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 
 		# Check that we have `<br/>`s at the end of lines.
 		# First, check for `<b>` or `<a>` elements that are preceded by a newline but not by a `<br>`.
-		nodes = [node.to_string() for node in dom.xpath("/html/body/section/p/*[name()='b' or name()='a'][(preceding-sibling::node()[1])[contains(., '\n')]][not((preceding-sibling::node()[2])[self::br]) or (normalize-space(preceding-sibling::node()[1]) and re:test(preceding-sibling::node()[1], '\\n\\s*$')) ]")]
+		nodes = dom.xpath("/html/body/section/p/*[ (name()='b' or name()='a' or name()='time') and (preceding-sibling::node()[1])[contains(., '\n')] and (not((preceding-sibling::node()[2])[self::br]) or (normalize-space(preceding-sibling::node()[1]) and re:test(preceding-sibling::node()[1], '\\n\\s*$'))) ]")
 		# Next, check for text nodes that contain newlines but are not preceded by `<br>`s.
-		nodes += [node.strip() for node in dom.xpath("/html/body/section/p/text()[contains(., '\n') and normalize-space(.)][(preceding-sibling::node()[1])[not(self::br)]]")]
+		nodes += dom.xpath("/html/body/section/p/text()[re:test(., '^\n') and normalize-space(.) and (preceding-sibling::node()[1])[not(self::br)]]")
+
 		if nodes:
-			messages.append(LintMessage("s-053", "Colophon line not preceded by [xhtml]<br/>[/].", se.MESSAGE_TYPE_ERROR, filename, nodes))
+			messages.append(LintMessage("s-053", "Colophon line not preceded by [xhtml]<br/>[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 		nodes = dom.xpath("/html/body//b[re:test(., 'anonymous', 'i') and re:test(@epub:type, 'z3998:.*?name')]")
 		if nodes:
