@@ -4092,19 +4092,23 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 			xhtml = self.get_file(filename)
 
 			for i, (file_path, nodes_list) in enumerate(unused_id_attrs):
-				for node in nodes_list:
+				indices_to_delete: list[int] = []
+
+				# Walk each node with an `id`. If we find the `id` in this file, mark the node to be deleted.
+				for j, node in enumerate(nodes_list):
 					attr = node.get_attr("id")
 
 					# We use a simple `in` check instead of xpath because it's an order of magnitude faster on really big ebooks with lots of IDs, like _Pepys_.
 					if f"#{attr}\"" in xhtml:
-						try:
-							unused_id_attrs.pop(i)
-						except IndexError:
-							# We get here if we try to remove a value that has already been removed.
-							pass
+						indices_to_delete.append(j)
+
+				if indices_to_delete:
+					# Rebuild the tuple for this file to use in the next iteration.
+					unused_id_attrs[i] = (file_path, [val for i, val in enumerate(nodes_list) if i not in indices_to_delete])
 
 		for _, (file_path, nodes_list) in enumerate(unused_id_attrs):
-			messages.append(LintMessage("x-018", "Unused [xhtml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags(nodes_list)))
+			if nodes_list:
+				messages.append(LintMessage("x-018", "Unused [xhtml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags(nodes_list)))
 
 	if files_not_url_safe:
 		try:
