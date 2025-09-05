@@ -1850,7 +1850,7 @@ def _lint_xhtml_css_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTree
 
 	# Do we have any elements that have specified border color?
 	# `transparent` and `none` are allowed values for `border-color`.
-	nodes = dom.xpath("/html/body//*[attribute::*[re:test(local-name(), 'data-css-border.+?-color') and not(text() = 'transparent' or text() = 'none')]]")
+	nodes = dom.xpath("/html/body//*[attribute::*[re:test(local-name(), '^data-css-border.*?-color$') and not(re:test(., '^transparent|none$'))]]")
 	if nodes:
 		messages.append(LintMessage("c-004", "Illegal [css]border-color[/] specified on element.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
