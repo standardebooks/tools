@@ -305,7 +305,7 @@ SEMANTICS & CONTENT
 "s-052", "[xhtml]<abbr>[/] element with illegal [attr]title[/] attribute."
 "s-053", "Colophon line not preceded by [xhtml]<br/>[/]."
 "s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/]."
-"s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Note: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute."
+"s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Hint: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute."
 "s-056", "Last [xhtml]<p>[/] child of endnote missing backlink."
 "s-057", "Backlink noteref fragment identifier doesn’t match endnote number."
 "s-058", "[attr]z3998:stage-direction[/] semantic only allowed on [xhtml]<i>[/], [xhtml]<abbr>[/], and [xhtml]<p>[/] elements."
@@ -366,7 +366,7 @@ UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 TYPOGRAPHY
 "t-001", "Double spacing found. Sentences should be single-spaced. (Note that double spaces might include Unicode no-break spaces!)"
 "t-002", "Comma or period outside of double quote. Generally punctuation goes within single and double quotes."
-"t-003", "[text]“[/] missing matching [text]”[/]. Note: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog."
+"t-003", "[text]“[/] missing matching [text]”[/]. Hint: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog."
 "t-004", "[text]‘[/] missing matching [text]’[/]."
 "t-005", "Dialog without ending comma."
 "t-006", "Comma after producer name, but there are only two producers."
@@ -2333,7 +2333,7 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	# Check for `<th>` element without a `<thead>` ancestor. However, `<th scope="...">` and `<th/>` are allowed, for use in tables with headers in the middle of tables (https://standardebooks.org/ebooks/dorothy-day/the-eleventh-virgin) and vertical table headers (https://standardebooks.org/ebooks/charles-babbage/passages-from-the-life-of-a-philosopher).
 	nodes = dom.xpath("/html/body//table//th[not(ancestor::thead)][not(@scope)][not(count(node())=0)]")
 	if nodes:
-		messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Note: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. Hint: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for `z3998:stage-direction` on elements that are not `<i>`.
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:stage-direction') and name() !='i' and name() !='abbr' and name() !='p']")
@@ -2578,16 +2578,24 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 
 	# Check for `ldquo` not correctly closed.
 	# Ignore closing paragraphs, line breaks, and closing cells in case `ldquo` means `ditto mark`.
-	matches = regex.findall(r"“[^‘”]+?“", source_file.contents)
-	matches = [match for match in matches if "</p" not in match and "<br/>" not in match and "</td>" not in match]
+	matches = source_file.findall(r"“[^‘”]+?“")
+	submessages: list[LintSubmessage] = LintSubmessage.from_matches([match for match in matches if "</p" not in match[0] and "<br/>" not in match[0] and "</td>" not in match[0]])
+
 	# Xpath to check for opening quote in `<p>`, without a next child `<p>` that starts with an opening quote or an opening bracket (for editorial insertions within paragraphs of quotation); or that consists of only an ellipses (like an elided part of a longer quotation).
 	# Matching `<p>`s can't have a poem/verse ancestor as formatting is often special for those.
-	matches += [regex.findall(r"“[^”]+</p>", node.to_string())[0] for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+$')][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')])][(following-sibling::*[1])[name()='p'][not(re:test(normalize-space(.), '^[“\\[]') or re:test(normalize-space(.), '^…$'))]]")]
+	# Union that with short `<p>` tags (< 100 characters) that lack closing quote, and whose direct siblings do have closing quotes (to exclude runs of same-speaker dialog), and that is not within a `<blockquote>`, verse, or letter.
+	nodes = dom.xpath("""
+				/html/body//p[re:test(., '“[^‘”]+$')][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')])][(following-sibling::*[1])[name()='p'][not(re:test(normalize-space(.), '^[“\\[]') or re:test(normalize-space(.), '^…$'))]]
+				|
+			    	/html/body//p[re:test(., '“[^‘”]+$') and not(re:test(., '[…:]$')) and string-length(normalize-space(.)) <=100][(following-sibling::*[1])[not(re:test(., '“[^”]+$'))] and (preceding-sibling::*[1])[not(re:test(., '“[^”]+$'))]][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')]) and not(ancestor::blockquote) and not (ancestor::*[contains(@epub:type, 'z3998:letter')])][(following-sibling::*[1])[name()='p'][re:test(normalize-space(.), '^[“\\[]') and not(contains(., 'continued'))]]
+			    """)
 
-	# Additionally, match short `<p>` tags (< 100 characters) that lack closing quote, and whose direct siblings do have closing quotes (to exclude runs of same-speaker dialog), and that is not within a `<blockquote>`, verse, or letter.
-	matches += [regex.findall(r"“[^”]+</p>", node.to_string())[0] for node in dom.xpath("/html/body//p[re:test(., '“[^‘”]+$') and not(re:test(., '[…:]$')) and string-length(normalize-space(.)) <=100][(following-sibling::*[1])[not(re:test(., '“[^”]+$'))] and (preceding-sibling::*[1])[not(re:test(., '“[^”]+$'))]][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')]) and not(ancestor::blockquote) and not (ancestor::*[contains(@epub:type, 'z3998:letter')])][(following-sibling::*[1])[name()='p'][re:test(normalize-space(.), '^[“\\[]') and not(contains(., 'continued'))]]")]
-	if matches:
-		messages.append(LintMessage("t-003", "[text]“[/] missing matching [text]”[/]. Note: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog.", se.MESSAGE_TYPE_WARNING, filename, matches))
+	for node in nodes:
+		# Use regex to select the relevant substring in the element, to help focus the user on where the problem is.
+		submessages.append(LintSubmessage(regex.findall(r"“[^”]+</p>", node.to_string())[0], node.sourceline))
+
+	if submessages:
+		messages.append(LintMessage("t-003", "[text]“[/] missing matching [text]”[/]. Hint: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog.", se.MESSAGE_TYPE_WARNING, filename, submessages))
 
 	# Check for `lsquo` not correctly closed.
 	line_matches = source_file.findall(r"‘[^“’]+?‘")
@@ -2631,7 +2639,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		node.remove()
 
 	nodes = dom_copy.xpath("/html/body//p[re:test(., '[^=]\\s[0-9]{1,2}\\.[0-9]{2}(?![0-9′″°%]|\\.[0-9]|\\scubic|\\smetric|\\smeters|\\smiles|\\sfeet|\\sinches)')]")
-	submessages: list[LintSubmessage] = []
+	submessages = []
 	for node in nodes:
 		for time_match in regex.findall(r"(?<=[^=]\s)[0-9]{1,2}\.[0-9]{2}(?![0-9′″°%]|\.[0-9]|\scubic|\smetric|\smeters|\smiles|\sfeet|\sinches)", node.inner_text()):
 			time = time_match.split(".")
