@@ -1,4 +1,4 @@
 t-075 [Manual Review] chapter-1.xhtml Word in verse with acute accent for 
 scansion instead of grave accent.
- Line 23:       <span>He forcéd</span>
- Line 32:       <span>The accurséd</span>
+ Line 23:       He forcéd
+ Line 32:       The accurséd

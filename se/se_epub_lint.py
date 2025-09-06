@@ -3083,8 +3083,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		messages.append(LintMessage("t-074", "Extended sound using hyphen-minus [text]-[/] instead of non-breaking hyphen [text]‑[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check if we have a word accented with an acute accent instead of a grave accent in verse scansion.
-	dom_copy = deepcopy(dom)
-	nodes = dom_copy.xpath("/html/body//*[not(@xml:lang) and re:test(@epub:type, 'z3998:(poem|verse|hymn|song)')]//span[not(ancestor-or-self::*[not(name() = 'html') and @xml:lang]) and not(./span) and re:test(., '[A-Za-z][áéíóú][A-za-z]')]")
+	nodes = dom.xpath("/html/body//*[not(@xml:lang) and re:test(@epub:type, 'z3998:(poem|verse|hymn|song)')]//span[not(ancestor-or-self::*[not(name() = 'html') and @xml:lang]) and not(./span)]//text()[re:test(., '[A-Za-z][áéíóú][A-za-z]') and not(ancestor::i[@xml:lang])]")
 	filtered_nodes = []
 
 	if nodes:
@@ -3095,15 +3094,11 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		dictionary = se.spelling.initialize_dictionary()
 
 		for node in nodes:
-			# Remove any child nodes that have a language specified.
-			for inner_node in node.xpath(".//*[@xml:lang]"):
-				inner_node.remove()
-
 			# Extract each accented word, then compare against our dictionary.
 			# If the word *is* in the dictionary, add it to the error list.
 			# Words that *are not* in the dictionary are more likely to be proper names.
 			# Note that this doesn't match word with two accent marks, like `résumé`. Such words are highly unlikely to have accents for scansion anyway.
-			for word in regex.findall(r"[A-Za-z]+[áéíóú]+[A-za-z]+", node.inner_text()):
+			for word in regex.findall(r"[A-Za-z]+[áéíóú]+[A-za-z]+", node):
 				unaccented_word = unidecode(word)
 				if unaccented_word in dictionary and unaccented_word not in ignored_words:
 					filtered_nodes.append(node)
