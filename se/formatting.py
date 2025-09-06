@@ -16,6 +16,7 @@ import regex
 import roman
 import tinycss2
 from lxml import etree
+from natsort import natsorted
 from titlecase import titlecase as pip_titlecase
 from unidecode import unidecode
 
@@ -564,8 +565,11 @@ def format_xml_file(filename: Path) -> None:
 			processed_xml = format_svg(xml)
 		elif filename.suffix == ".opf":
 			processed_xml = format_opf(xml)
+		elif filename.name == "se-lint-ignore.xml":
+			processed_xml = format_se_lint_ignore(xml)
 		else:
 			processed_xml = format_xml(xml)
+
 		if processed_xml != xml:
 			file.seek(0)
 			file.write(processed_xml)
@@ -660,6 +664,41 @@ def format_xml(xml: str) -> str:
 
 	try:
 		tree = _format_xml_str(xml)
+	except Exception as ex:
+		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
+
+	# Pull out the `doctype` if there is one, as etree seems to eat it.
+	doctypes = regex.search(r"<!doctype[^>]+?>", xml, flags=regex.IGNORECASE)
+
+	return _xml_tree_to_string(tree, doctypes.group(0) if doctypes else None)
+
+def format_se_lint_ignore(xml: str) -> str:
+	"""
+	Pretty-print well-formed XML of an S.E. lint ignore file, and order various elements.
+
+	INPUTS
+	xml: A string of well-formed XML representing an S.E. lint ignore file.
+
+	OUTPUTS
+	A string of pretty-printed XML.
+	"""
+
+	try:
+		dom = se.easy_xml.EasyXmlTree(xml)
+
+		root = dom.xpath("/se-lint-ignore")[0]
+
+		ordered_file_nodes = natsorted(root.xpath("./file[@path]"), key=lambda x: x.get_attr("path"))
+		for file_node in ordered_file_nodes:
+			ordered_ignore_nodes = natsorted(file_node.xpath("./ignore[./code]"), key=lambda x: x.inner_text())
+			for ignore_node in ordered_ignore_nodes:
+				ignore_node.prepend(ignore_node.xpath("./code")[0])
+
+			file_node.children = ordered_ignore_nodes
+
+		root.children = ordered_file_nodes
+
+		tree = _format_xml_str(root.to_string())
 	except Exception as ex:
 		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
 
