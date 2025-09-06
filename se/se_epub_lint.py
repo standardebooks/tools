@@ -2649,17 +2649,13 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 	# Only check `<p>`, because things like `<table>`/`<td>` are more likely to contain non-time numbers.
 	# Exclude numbers preceded by equals, or succeeded by some measurements.
 	# Also remove `<a>` first because they are likely to contain numbered section references.
-	dom_copy = deepcopy(dom)
-	for node in dom_copy.xpath("/html/body//p/a"):
-		node.remove()
-
-	nodes = dom_copy.xpath("/html/body//p[re:test(., '[^=]\\s[0-9]{1,2}\\.[0-9]{2}(?![0-9′″°%]|\\.[0-9]|\\scubic|\\smetric|\\smeters|\\smiles|\\sfeet|\\sinches)')]")
+	nodes = dom.xpath("/html/body//text()[re:test(., '[^=]\\s[0-9]{1,2}\\.[0-9]{2}(?![0-9′″°%]|\\.[0-9]|\\scubic|\\smetric|\\smeters|\\smiles|\\sfeet|\\sinches)') and not(ancestor::a or ancestor::table)]")
 	submessages = []
 	for node in nodes:
-		for time_match in regex.findall(r"(?<=[^=]\s)[0-9]{1,2}\.[0-9]{2}(?![0-9′″°%]|\.[0-9]|\scubic|\smetric|\smeters|\smiles|\sfeet|\sinches)", node.inner_text()):
+		for time_match in regex.findall(r"(?<=[^=]\s)[0-9]{1,2}\.[0-9]{2}(?![0-9′″°%]|\.[0-9]|\scubic|\smetric|\smeters|\smiles|\sfeet|\sinches)", node):
 			time = time_match.split(".")
 			if not time[0].startswith("0") and int(time[0]) >= 1 and int(time[0]) <= 12 and int(time[1]) >= 0 and int(time[1]) <= 59:
-				submessages.append(LintSubmessage(time_match, node.sourceline))
+				submessages.append(LintSubmessage(time_match, node.getparent().sourceline))
 
 	if submessages:
 		messages.append(LintMessage("t-010", "Time set with [text].[/] instead of [text]:[/].", se.MESSAGE_TYPE_WARNING, filename, submessages))
