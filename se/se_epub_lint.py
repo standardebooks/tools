@@ -206,7 +206,7 @@ METADATA
 "m-036", "Variable not replaced with value."
 "m-037", "Expected transcription/page scan source link not found."
 "m-038", "[attr]schema:accessMode[/] property set to [val]visual[/], but no images in ebook."
-"m-039", "[xml]<file>[/] element with duplicate path."
+"m-039", "[xml]<file>[/] element with duplicate [attr]path[/] attribute value."
 "m-040", "Images found in ebook, but no [attr]role[/] property set to [val]wat[/] in metadata for the writer of the alt text."
 "m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
 "m-042", "[xml]<manifest>[/] element doesn’t match expected structure."
@@ -3525,7 +3525,7 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 
 		nodes = lint_config.xpath("./file[@path=(preceding-sibling::file/@path) or @path=(following-sibling::file/@path)]")
 		if nodes:
-			messages.append(LintMessage("m-039", "[xml]<file>[/] element with duplicate path.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_tags(nodes)))
+			messages.append(LintMessage("m-039", "[xml]<file>[/] element with duplicate [attr]path[/] attribute value.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_tags(nodes)))
 
 		elements = lint_config.xpath("/se-lint-ignore/file")
 
