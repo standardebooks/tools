@@ -365,7 +365,7 @@ UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 "s-025", ""
 
 TYPOGRAPHY
-"t-001", "Double spacing found. Hint: Sentences should be single-spaced. Note that double spaces might include Unicode no-break spaces."
+"t-001", "Illegal double spacing. Hint: Sentences should be single-spaced. Spaces might include Unicode hair spaces and no-break spaces."
 "t-002", "Comma or period outside of double quote. Hint: Generally punctuation goes within single and double quotes."
 "t-003", "[text]“[/] missing matching [text]”[/]. Hint: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog."
 "t-004", "[text]‘[/] missing matching [text]’[/]."
@@ -3432,28 +3432,9 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 	if nodes:
 		messages.append(LintMessage("y-033", "Possible typo: Three-em-dash obscuring an entire word, but not preceded by a space.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
-	# Check for no space after periods, but first remove any `<a>` elements as that might match URLs like `standardebooks.org`.
-	dom_clone = deepcopy(dom)
-	for node in dom_clone.xpath("//a[@href]"):
-		# If the link text includes a TLD, clear out the text too.
-		if any(tld in node.inner_text() for tld in (".org", ".com", ".net", ".gov", ".edu", ".us", ".uk", ".nz", ".au", ".ca")):
-			node.remove()
-		else:
-			epub_type = node.get_attr("epub:type")
-			if epub_type and "noteref" in epub_type:
-				# If the link is a noteref, remove it, because some noterefs may start with letters (see <https://standardebooks.org/ebooks/john-reed/ten-days-that-shook-the-world>).
-				node.remove()
-			else:
-				node.remove_attr("href")
-
-	for node in dom_clone.xpath("//abbr"):
-		node.remove()
-
-	for node in dom_clone.xpath("//m:math"):
-		node.remove()
-
+	# Check for no space after periods. Exclude `<a>` elements and MathML because periods are commin in URLs/math.
 	# Exclude some common non-abbreviations, and don't match if the paragraph contains phonemes or graphemes as it's likely we're spelling something.
-	nodes = dom_clone.xpath("/html/body//p[re:test(.,'[a-z]{1,}\\.[a-z]{1,}', 'i') and not(re:test(., 'A.B.C.|X.Y.Z.') or .//*[re:test(@epub:type, 'grapheme|phoneme')])]")
+	nodes = dom.xpath("/html/body//text()[re:test(., '[a-z]{1,}\\.[a-z]{1,}', 'i') and not(re:test(., 'A.B.C.|X.Y.Z.') or ancestor::abbr or ancestor::m:math or ancestor::a or ancestor::*[re:test(@epub:type, 'grapheme|phoneme')])]")
 	if nodes:
 		messages.append(LintMessage("y-034", "Possible typo: [text].[/] embedded in word. Hint: Abbreviations must be in an [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
@@ -3618,7 +3599,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	titlepage_svg_title = ""
 	xhtml_css_classes: dict[str, list[tuple[Path, se.easy_xml.EasyXmlElement]]] = {}
 	headings: list[tuple[str, str]] = []
-	double_spaced_files: list[Path] = []
 	unused_selectors: list[str] = []
 	unused_id_attrs: list[tuple[Path, list[se.easy_xml.EasyXmlElement]]] = []
 	abbr_elements_requiring_css: list[se.easy_xml.EasyXmlElement] = []
@@ -3775,8 +3755,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 	messages += _lint_metadata_checks(self)
 	# Check for double spacing (done here so double_spaced_files doesn't have to be passed to function).
-	if self.metadata_dom.xpath(f"/package/metadata/*[re:test(., '[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}')]"):
-		double_spaced_files.append(self.metadata_file_path)
+	nodes = self.metadata_dom.xpath(f"/package/metadata//text()[re:test(., '[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}')]")
+	if nodes:
+		messages.append(LintMessage("t-001", "Illegal double spacing. Hint: Sentences should be single-spaced. Spaces might include Unicode hair spaces and no-break spaces.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	# Check for malformed URLs.
 	messages += _get_malformed_urls(self.metadata_dom, self.metadata_file_path)
@@ -3921,6 +3902,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 				# Read file contents into a DOM for querying.
 				dom = self.get_dom(filename, True)
 
+				# Inject the `m` namespace for MathML, even if there's no MathML in the file.
+				# This is because we later use xpaths that *might* select MathML elements, but if the namespace isn't declared, lxml crashes instead of not selecting.
+				dom.namespaces["m"] = "http://www.w3.org/1998/Math/MathML"
+
 				# Apply stylesheets.
 				# First apply the browser default stylesheet.
 				dom.apply_css(self.get_file(Path("default")), "default")
@@ -4006,13 +3991,15 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 						headings.append((header_text, str(filename)))
 
 				# Check for double spacing.
-				# First, remove any table cells which contain quotation marks followed by multiple spaces, as those are probably ditto marks.
-				dom_copy = deepcopy(dom)
-				for td_node in dom_copy.xpath(f"//td[re:test(., '”[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]+”')]"):
-					td_node.remove()
-				matches = regex.search(fr"[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}", dom_copy.to_string())
-				if matches:
-					double_spaced_files.append(filename)
+				# Exclude any table cells which contain quotation marks followed by multiple spaces, as those are probably ditto marks.
+				nodes = dom.xpath(f"//text()[re:test(., '[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]{{2,}}') and not(ancestor::td[re:test(., '”[{se.NO_BREAK_SPACE}{se.HAIR_SPACE} ]+”')])]")
+				if nodes:
+					if len(nodes) <= 10:
+						# Only include actual matching nodes if there's less than a certain number, because if we're linting a raw transcription, every single element might have double spaces!
+						messages.append(LintMessage("t-001", "Illegal double spacing. Hint: Sentences should be single-spaced. Spaces might include Unicode hair spaces and no-break spaces.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+					else:
+						# Only list the filename.
+						messages.append(LintMessage("t-001", "Illegal double spacing. Hint: Sentences should be single-spaced. Spaces might include Unicode hair spaces and no-break spaces.", se.MESSAGE_TYPE_ERROR, filename))
 
 				# Collect certain `<abbr>` elements to check that required styles are included, but not in the colophon.
 				if not dom.xpath("/html/body/*[contains(@epub:type, 'colophon')]"):
@@ -4227,9 +4214,6 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 	if missing_styles:
 		messages.append(LintMessage("c-006", "Semantic found, but missing corresponding CSS style.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_node_tags(missing_styles)))
-
-	for double_spaced_file in double_spaced_files:
-		messages.append(LintMessage("t-001", "Double spacing found. Hint: Sentences should be single-spaced. Note that double spaces might include Unicode no-break spaces.", se.MESSAGE_TYPE_ERROR, double_spaced_file))
 
 	if missing_files:
 		messages.append(LintMessage("f-002", "Missing expected file or directory.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_files))
