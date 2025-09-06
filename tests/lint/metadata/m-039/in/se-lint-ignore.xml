@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<se-lint-ignore>
+	<file path="book-4.xhtml">
+		<ignore>
+			<code>m-045</code>
+			<reason>Books 4-8 have the same title, so they are differentiated in the ToC by their subtitle.</reason>
+		</ignore>
+	</file>
+	<file path="book-5.xhtml">
+		<ignore>
+			<code>m-045</code>
+			<reason>Books 4-8 have the same title, so they are differentiated in the ToC by their subtitle.</reason>
+		</ignore>
+	</file>
+	<file path="book-6.xhtml">
+		<ignore>
+			<code>m-045</code>
+			<reason>Books 4-8 have the same title, so they are differentiated in the ToC by their subtitle.</reason>
+		</ignore>
+	</file>
+	<file path="book-7.xhtml">
+		<ignore>
+			<code>m-045</code>
+			<reason>Books 4-8 have the same title, so they are differentiated in the ToC by their subtitle.</reason>
+		</ignore>
+	</file>
+	<file path="book-8.xhtml">
+		<ignore>
+			<code>t-003</code>
+			<reason>Dialog from the same speaker continues in next paragraph.</reason>
+		</ignore>
+	</file>
+	<file path="book-8.xhtml">
+		<ignore>
+			<code>y-035</code>
+			<reason>Matched text is a code.</reason>
+		</ignore>
+	</file>
+	<file path="chapter-1-4.xhtml">
+		<ignore>
+			<code>t-011</code>
+			<reason>There is a quote that is deliberately styled without a period.</reason>
+		</ignore>
+	</file>
+</se-lint-ignore>
