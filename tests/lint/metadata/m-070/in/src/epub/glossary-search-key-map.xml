@@ -21,4 +21,7 @@
 			<value value="pariahsss"/>
 		</match>
 	</search-key-group>
+	<search-key-group href="text/glossary.xhtml#st-michaels-mount">
+		<match value="st. michael’s mount"/>
+	</search-key-group>
 </search-key-map>
