@@ -962,18 +962,16 @@ def _lint_metadata_checks(self) -> list:
 
 	# Check for tags that imply other tags.
 	implied_tags = {"Fiction": ["Science Fiction", "Drama", "Fantasy"]}
-	nodes = []
-	dom_copy = deepcopy(self.metadata_dom)
+	submessages: list[LintSubmessage] = []
 	for implied_tag, tags in implied_tags.items():
-		if dom_copy.xpath(f"/package/metadata/meta[@property='se:subject' and text()={se.easy_xml.escape_xpath(implied_tag)}]"):
+		if self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text()={se.easy_xml.escape_xpath(implied_tag)}]"):
 			for tag in tags:
-				implying_nodes = dom_copy.xpath(f"/package/metadata/meta[@property='se:subject' and text()={se.easy_xml.escape_xpath(tag)}]")
+				implying_nodes = self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:subject' and text()={se.easy_xml.escape_xpath(tag)}]")
 				for node in implying_nodes:
-					node.set_text(f"{node.text} implies {implied_tag}")
-					nodes.append(node)
+					submessages.append(LintSubmessage(f"{node.text} implies {implied_tag}", node.sourceline))
 
-	if nodes:
-		messages.append(LintMessage("m-058", "[val]se:subject[/] that implies other [val]se:subject[/]. Hint: Remove the [val]se:subject[/] that is implied.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_node_text(nodes)))
+	if submessages:
+		messages.append(LintMessage("m-058", "[val]se:subject[/] that implies other [val]se:subject[/]. Hint: Remove the [val]se:subject[/] that is implied.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, submessages))
 
 	# Check for `comprised of`.
 	nodes = self.metadata_dom.xpath("/package/metadata/*[re:test(., '[Cc]omprised of')]")
