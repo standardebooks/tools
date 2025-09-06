@@ -3222,7 +3222,7 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 
 	# Check for basic typo, but exclude MathML and endnotes. Some endnotes (like in _Ten Days that Shook the World_) may start with letters.
 	dom_copy = deepcopy(dom)
-	for node in dom_copy.xpath("//a[contains(@epub:type, 'noteref')]") + dom_copy.xpath("//*[namespace-uri() = 'http://www.w3.org/1998/Math/MathML']"):
+	for node in dom_copy.xpath("//a[contains(@epub:type, 'noteref')] | //*[namespace-uri() = 'http://www.w3.org/1998/Math/MathML']"):
 		node.remove()
 
 	typos = dom_copy.xpath("/html/body//p[re:match(., '[a-z][;,][a-z]', 'i')]")
