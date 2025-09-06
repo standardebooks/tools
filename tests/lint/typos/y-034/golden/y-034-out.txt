@@ -10,5 +10,5 @@ punctuation.
 href="https://standardebooks.org/">standardebooks.org</a></p>
 y-034 [Manual Review] chapter-1.xhtml Possible typo: `.` embedded in word. Hint:
 Abbreviations must be in an `<abbr>` element.
- Line 20:       <p>“Why yes, so they are! But I thought the season.for apple 
-blossom was over now,” said the historian.</p>
+ Line 20:       “Why yes, so they are! But I thought the season.for apple 
+blossom was over now,” said the historian.
