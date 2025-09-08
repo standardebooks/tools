@@ -39,18 +39,23 @@ def xpath(plain_output: bool) -> int:
 				console.print(se.prep_output(f"[path][link=file://{filepath}]{filepath}[/][/]", plain_output), highlight=False)
 				if not args.only_filenames:
 					for node in nodes:
+						# We only have to escape leading `[` to prevent Rich from converting it to a style. If we also escape `]` then Rich will print the slash.
+						# Explicitly exclude link markup in plain results because it doesn't make sense to offset line numbers with ```.
 						if isinstance(node, se.easy_xml.EasyXmlElement):
-							output = node.to_string()
+							if plain_output:
+								output = f"Line {node.sourceline}: {node.to_string()}"
+							else:
+								output = f"[path][link=file://{filepath.resolve()}#L{node.sourceline}]Line {node.sourceline}[/][/]: {node.to_string().replace("[", "\\[")}"
 						else:
 							# We may select `text()` nodes as a result.
-							output = str(node)
+							if plain_output:
+								output = f"Line {node.getparent().sourceline}: {str(node)}"
+							else:
+								output = f"[path][link=file://{filepath.resolve()}#L{node.getparent().sourceline}]Line {node.getparent().sourceline}[/][/]: {str(node).replace("[", "\\[")}"
 
 						output = "".join([f"\t{line}\n" for line in output.splitlines()])
 
-						# We only have to escape leading `[` to prevent Rich from converting it to a style. If we also escape `]` then Rich will print the slash.
-						output = output.replace("[", "\\[")
-
-						console.print(output)
+						console.print(se.prep_output(output, plain_output), highlight=False)
 
 		except etree.XPathEvalError:
 			se.print_error("Invalid xpath expression.")
