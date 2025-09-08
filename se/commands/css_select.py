@@ -38,15 +38,19 @@ def css_select(plain_output: bool) -> int:
 				if not args.only_filenames:
 					for node in nodes:
 						if isinstance(node, se.easy_xml.EasyXmlElement):
-							output = node.to_string()
+							if plain_output:
+								output = f"Line {node.sourceline}: {node.to_string()}"
+							else:
+								output = f"[path][link=file://{filepath.resolve()}#L{node.sourceline}]Line {node.sourceline}[/][/]: {node.to_string().replace("[", "\\[")}"
 						else:
 							# We may select `text()` nodes as a result.
-							output = str(node)
+							if plain_output:
+								output = f"Line {node.getparent().sourceline}: {str(node)}"
+							else:
+								output = f"[path][link=file://{filepath.resolve()}#L{node.getparent().sourceline}]Line {node.getparent().sourceline}[/][/]: {str(node).replace("[", "\\[")}"
+
 
 						output = "".join([f"\t{line}\n" for line in output.splitlines()])
-
-						# We only have to escape leading `[` to prevent Rich from converting it to a style. If we also escape `]` then Rich will print the slash.
-						output = output.replace("[", "\\[")
 
 						console.print(output)
 
