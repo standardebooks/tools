@@ -35,7 +35,7 @@ def _insert_css(se_epub: SeEpub, filename: str) -> None:
 		with open(src_path, "r", encoding="utf-8") as file:
 			template_css = file.read()
 
-	with open(se_epub.content_path / "css/local.css", "w+", encoding="utf-8") as file:
+	with open(se_epub.content_path / "css" / "local.css", "r+", encoding="utf-8") as file:
 		css = file.read()
 		css += "\n" + template_css
 
