@@ -72,6 +72,7 @@ def modernize_hyphenation(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Mm])anat-arms", r"\1an-at-arms", xhtml)
 	xhtml = regex.sub(r"\b([Tt])abled’hôte", r"\1able-d’hôte", xhtml)
 	xhtml = regex.sub(r"\b([Pp])ita-pat", r"\1it-a-pat", xhtml)
+	xhtml = regex.sub(r"\b([Mm])anat-arms", r"\1an-at-arms", xhtml)
 
 	return xhtml
 
