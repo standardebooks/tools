@@ -2906,7 +2906,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		messages.append(LintMessage("t-042", "[text]‘[/] used for Greek dasia or [text]’[/] used for Greek psili. Hint: Use a single precomposed Unicode character, or a combining mark if a precomposed character doesn’t exist.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for a list of some common English loan words that used to be italicized as foreign, but are no longer.
-	nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and re:test(., '^(fianc[eé]+|divorc[eé]+|menu|recherch[eé]|tour-de-force|outr[eé]|d[ée]but(ante)?|apropos|[eé]lite|prot[ée]g[ée]+|chef|salon|r[eé]gime|contretemps|[eé]clat|aides?|entr[ée]+|t[eê]te-[aà]-t[eê]tes?|blas[eé]|bourgeoisie)$')]")
+	nodes = dom.xpath("/html/body//*[@data-css-font-style='italic' and re:test(., '^(fianc[eé]+|divorc[eé]+|menu|recherch[eé]|tour-de-force|outr[eé]|d[ée]but(ante)?|apropos|[eé]lite|prot[ée]g[ée]+|chef|salon|r[eé]gime|contretemps|[eé]clat|aides?|entr[ée]+|t[eê]te-[aà]-t[eê]tes?|blas[eé]|bourgeoisie|vingt-et-un)$')]")
 	if nodes:
 		messages.append(LintMessage("t-043", "Non-English loan word set in italics, when modern typography omits italics. Hint: A word may be correctly italicized when emphasis is desired, if the word is meant to be pronounced with an accent, or if the word is part of non-English speech.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
