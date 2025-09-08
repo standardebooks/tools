@@ -480,7 +480,10 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])[uû]ret[eé]", r"\1ûreté", xhtml)			# Surete -> Sûreté
 	xhtml = regex.sub(r"([Tt])ete[ \-]a[ \-]tete", r"\1ête-à-tête", xhtml)		# tete-a-tete -> tête-à-tête
 	xhtml = regex.sub(r"([Vv])is-a-vis", r"\1is-à-vis", xhtml)			# vis-a-vis -> vis-à-vis
-
+	xhtml = regex.sub(r"([Bb])ogy", r"\1ogey", xhtml)				# bogy -> bogey
+	xhtml = regex.sub(r"(?<!\b([Rr]ue|[DdLl]es) )Capucin(\b|s)?", r"Capuchin\1\2", xhtml)	# Capucin -> Capuchin (but not `rue/des/les Capucines`, a common French place name, and `capucine`, a flower)
+	xhtml = regex.sub(r"\b([Uu])nder dog(s?)\b", r"\1nderdog\2", xhtml)		# under dog -> underdog
+	xhtml = regex.sub(r"Vingt-et-[Uu]n", r"vingt-et-un", xhtml)			# Vingt-et-un -> vingt-et-un
 
 	# Normalize some names.
 	xhtml = regex.sub(r"Barbadoes", r"Barbados", xhtml)				# Barbadoes -> Barbados
