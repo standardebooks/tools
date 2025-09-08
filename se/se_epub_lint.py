@@ -1049,7 +1049,8 @@ def _lint_metadata_checks(self) -> list:
 	if self.is_se_ebook:
 		try:
 			identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier")[0]
-			if identifier.text != self.generated_identifier:
+			# We make an exception for identifiers ending in `et al` because that indicates the identifier was set manually because there were too many contributors.
+			if identifier.text != self.generated_identifier and not regex.search(r"_et-al$", identifier.text):
 				messages.append(LintMessage("m-023", "Unexpected value for [xml]<dc:identifier>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"Found: {identifier.text}\nExpected: {self.generated_identifier}", identifier.sourceline)]))
 		except Exception:
 			missing_metadata_elements.append("<dc:identifier>")
