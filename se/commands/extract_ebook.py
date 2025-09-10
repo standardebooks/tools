@@ -9,8 +9,6 @@ import zipfile
 from io import BytesIO, TextIOWrapper
 from pathlib import Path
 
-from rich.console import Console
-
 import se
 from se.vendor.kindleunpack import kindleunpack
 
@@ -60,7 +58,7 @@ def extract_ebook(plain_output: bool) -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an epub, mobi, or azw3 file")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
+	console = se.init_console()
 
 	if args.output_dir and len(args.targets) > 1:
 		se.print_error("The [bash]--output-dir[/] option can’t be used when more than one ebook target is specified.", plain_output=plain_output)

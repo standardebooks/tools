@@ -5,8 +5,6 @@ This module implements the `se prepare-release` command.
 import argparse
 from pathlib import Path
 
-from rich.console import Console
-
 import se
 from se.se_epub import SeEpub
 
@@ -23,7 +21,7 @@ def prepare_release(plain_output: bool) -> int:
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
+	console =se.init_console()
 
 	for directory in args.directories:
 		directory = Path(directory).resolve()
@@ -53,7 +51,7 @@ def prepare_release(plain_output: bool) -> int:
 				if args.verbose:
 					console.print(" OK")
 		except se.SeException as ex:
-			se.print_error(ex, plain_output=plain_output)
+			se.print_error(ex)
 			return ex.code
 
 	return 0

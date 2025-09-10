@@ -5,7 +5,6 @@ This module implements the `se xpath` command.
 import argparse
 
 from lxml import etree
-from rich.console import Console
 import se
 import se.easy_xml
 
@@ -21,7 +20,7 @@ def xpath(plain_output: bool) -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
-	console = Console(highlight=True, theme=se.RICH_THEME)
+	console = se.init_console()
 
 	return_code = 0
 	has_results = False
@@ -36,7 +35,7 @@ def xpath(plain_output: bool) -> int:
 
 			if nodes:
 				has_results = True
-				console.print(se.prep_output(f"[path][link=file://{filepath}]{filepath}[/][/]", plain_output), highlight=False)
+				console.print(se.prep_output(f"[path][link=file://{filepath}]{filepath}[/][/]", plain_output))
 				if not args.only_filenames:
 					for node in nodes:
 						# We only have to escape leading `[` to prevent Rich from converting it to a style. If we also escape `]` then Rich will print the slash.
@@ -55,10 +54,10 @@ def xpath(plain_output: bool) -> int:
 
 						output = "".join([f"\t{line}\n" for line in output.splitlines()])
 
-						console.print(se.prep_output(output, plain_output), highlight=False)
+						console.print(se.prep_output(output, plain_output))
 
 		except etree.XPathEvalError:
-			se.print_error("Invalid xpath expression.")
+			se.print_error("Invalid xpath expression.", plain_output=plain_output)
 			return se.InvalidInputException.code
 
 		except se.SeException as ex:
@@ -66,7 +65,7 @@ def xpath(plain_output: bool) -> int:
 			return ex.code
 
 		except FileNotFoundError:
-			se.print_error(f"Invalid file: [path][link=file://{filepath}]{filepath}[/][/].")
+			se.print_error(f"Invalid file: [path][link=file://{filepath}]{filepath}[/][/].", plain_output=plain_output)
 			return se.InvalidFileException.code
 
 	if not has_results:

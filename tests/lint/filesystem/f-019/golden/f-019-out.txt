@@ -1,8 +1,4 @@
-f-019 [Error] illustration-1.png `.png` file without transparency. Hint: If an 
-image doesn’t have transparency, it should be saved as a `.jpg`.
-f-019 [Error] illustration-6.png `.png` file without transparency. Hint: If an 
-image doesn’t have transparency, it should be saved as a `.jpg`.
-f-019 [Error] illustration-7.png `.png` file without transparency. Hint: If an 
-image doesn’t have transparency, it should be saved as a `.jpg`.
-f-019 [Error] illustration-8.png `.png` file without transparency. Hint: If an 
-image doesn’t have transparency, it should be saved as a `.jpg`.
+f-019 [Error] illustration-1.png `.png` file without transparency. Hint: If an image doesn’t have transparency, it should be saved as a `.jpg`.
+f-019 [Error] illustration-6.png `.png` file without transparency. Hint: If an image doesn’t have transparency, it should be saved as a `.jpg`.
+f-019 [Error] illustration-7.png `.png` file without transparency. Hint: If an image doesn’t have transparency, it should be saved as a `.jpg`.
+f-019 [Error] illustration-8.png `.png` file without transparency. Hint: If an image doesn’t have transparency, it should be saved as a `.jpg`.

@@ -1,5 +1,4 @@
-m-039 [Error] se-lint-ignore.xml `<file>` element with duplicate `path` 
-attribute value.
+m-039 [Error] se-lint-ignore.xml `<file>` element with duplicate `path` attribute value.
  Line 27:       <file path="book-8.xhtml">
  Line 33:       <file path="book-8.xhtml">
 m-048 [Error] se-lint-ignore.xml Unused ignore rule.

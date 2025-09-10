@@ -14,7 +14,6 @@ import importlib.resources
 import git
 import regex
 import requests
-from rich.console import Console
 from ftfy import fix_text
 from lxml import etree
 from unidecode import unidecode
@@ -59,7 +58,7 @@ CONTRIBUTOR_BLOCK_TEMPLATE = """<dc:contributor id="CONTRIBUTOR_ID">CONTRIBUTOR_
 		<meta property="se:url.authority.nacoaf" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_NACOAF_URI</meta>
 		<meta property="role" refines="#CONTRIBUTOR_ID" scheme="marc:relators">CONTRIBUTOR_MARC</meta>"""
 
-console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
+console = se.init_console()
 
 def _replace_in_file(file_path: Path, search: str | list, replace: str | list) -> None:
 	"""
@@ -1091,7 +1090,7 @@ def create_draft(plain_output: bool) -> int:
 
 		_create_draft(args, plain_output)
 	except se.SeException as ex:
-		se.print_error(ex, plain_output=plain_output)
+		se.print_error(ex)
 		return ex.code
 
 	return 0

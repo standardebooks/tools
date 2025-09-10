@@ -5,6 +5,5 @@ x-021 [Error] chapter-1.xhtml `<figure>` element with no `id` attribute.
                         <p>Look ma, no picture</p>
                 </figcaption>
         </figure>
-y-003 [Manual Review] chapter-1.xhtml Possible typo: Paragraph missing ending 
-punctuation.
+y-003 [Manual Review] chapter-1.xhtml Possible typo: Paragraph missing ending punctuation.
  Line 93:       <p>This one should error</p>

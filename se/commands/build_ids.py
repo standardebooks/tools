@@ -5,7 +5,6 @@ This module implements the `se build-ids` command.
 import argparse
 
 import regex
-from rich.console import Console
 
 import se
 import se.easy_xml
@@ -24,7 +23,7 @@ def build_ids(plain_output: bool) -> int:
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
+	console = se.init_console()
 
 	for directory in args.directories:
 		try:

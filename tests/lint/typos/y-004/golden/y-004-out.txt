@@ -1,8 +1,2 @@
-y-004 [Manual Review] chapter-1.xhtml Possible typo: Mis-curled quotation mark 
-after dash.
- Line 12:       <p>We can assume that any instance of a point can be 
-construed-“as a themeless fisherman.” Framed in a different way, some picked 
-shakes are thought of simply as crabs. Nowhere is it disputed that a dinner sees
-a modem as a warming customer. The zeitgeist contends that we can assume that 
-any instance of a kenneth can be construed as an entranced belgian. A rotate is 
-a gaumless debt.</p>
+y-004 [Manual Review] chapter-1.xhtml Possible typo: Mis-curled quotation mark after dash.
+ Line 12:       <p>We can assume that any instance of a point can be construed-“as a themeless fisherman.” Framed in a different way, some picked shakes are thought of simply as crabs. Nowhere is it disputed that a dinner sees a modem as a warming customer. The zeitgeist contends that we can assume that any instance of a kenneth can be construed as an entranced belgian. A rotate is a gaumless debt.</p>

@@ -1,4 +1,2 @@
-m-084 [Error] content.opf `<meta property="se:url....">` element not containing 
-a URL.
- Line 52:       <meta property="se:url.authority.nacoaf" 
-refines="#author">id.loc.gov/authorities/names/n79032879</meta>
+m-084 [Error] content.opf `<meta property="se:url....">` element not containing a URL.
+ Line 52:       <meta property="se:url.authority.nacoaf" refines="#author">id.loc.gov/authorities/names/n79032879</meta>

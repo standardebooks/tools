@@ -1,13 +1,11 @@
-y-001 [Manual Review] chapter-1.xhtml Possible typo: Doubled 
-`a/the/and/of/or/as/if`.
+y-001 [Manual Review] chapter-1.xhtml Possible typo: Doubled `a/the/and/of/or/as/if`.
  Line 12:       of of
  Line 12:       as as
  Line 12:       The the
  Line 13:       If if
  Line 13:       or or
  Line 13:       and and
-y-001 [Manual Review] content.opf Possible typo: Doubled 
-`a/the/and/of/or/as/if`.
+y-001 [Manual Review] content.opf Possible typo: Doubled `a/the/and/of/or/as/if`.
  Line 39:       and and
  Line 39:       the the
  Line 39:       If if

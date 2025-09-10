@@ -1,15 +1,11 @@
-s-106 [Error] colophon.xhtml Proper name in the colophon without parent `<a 
-href="...">` or `<b epub:type="z3998:given-name">`, or `<b>` if anonymous.
+s-106 [Error] colophon.xhtml Proper name in the colophon without parent `<a href="...">` or `<b epub:type="z3998:given-name">`, or `<b>` if anonymous.
  Line 17:       <p>This ebook was produced for<br/>
         <a href="https://standardebooks.org/">Standard Ebooks</a><br/>
         by<br/>
         Emma Sweeney,<br/>
         and is based on a transcription produced in <time>1998</time> by<br/>
-        <b epub:type="z3998:personal-name">David Price</b> and <a 
-href="https://www.pgdp.net/">Distributed Proofreaders</a><br/>
+        <b epub:type="z3998:personal-name">David Price</b> and <a href="https://www.pgdp.net/">Distributed Proofreaders</a><br/>
         for<br/>
-        <a href="https://www.gutenberg.org/ebooks/161">Project 
-Gutenberg</a><br/>
+        <a href="https://www.gutenberg.org/ebooks/161">Project Gutenberg</a><br/>
         and on digital scans from the<br/>
-        <a href="https://archive.org/details/bub_gb_RtT0OLKFMHsC">Internet 
-Archive</a>.</p>
+        <a href="https://archive.org/details/bub_gb_RtT0OLKFMHsC">Internet Archive</a>.</p>

@@ -1,7 +1,2 @@
-y-022 [Manual Review] chapter-1.xhtml Possible typo: Consecutive quotations 
-without intervening text, e.g. `“…” “…”`.
- Line 18:       <p>“A bridge is a winter's multi-hop. The rotates could be said 
-to resemble gnomic folds. Authors often misinterpret the composer as a mousey 
-repair, when in actuality it feels more like a salving brush.” “Their wheel was,
-in this moment, an outworn mole. Extending this logic, a health is the velvet of
-a step.”</p>
+y-022 [Manual Review] chapter-1.xhtml Possible typo: Consecutive quotations without intervening text, e.g. `“…” “…”`.
+ Line 18:       <p>“A bridge is a winter's multi-hop. The rotates could be said to resemble gnomic folds. Authors often misinterpret the composer as a mousey repair, when in actuality it feels more like a salving brush.” “Their wheel was, in this moment, an outworn mole. Extending this logic, a health is the velvet of a step.”</p>

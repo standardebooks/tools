@@ -25,7 +25,7 @@ def renumber_endnotes(plain_output: bool) -> int:
 		try:
 			se_epub = SeEpub(directory)
 		except se.SeException as ex:
-			se.print_error(ex, plain_output=plain_output)
+			se.print_error(ex)
 			return_code = ex.code
 			return return_code
 
@@ -39,7 +39,7 @@ def renumber_endnotes(plain_output: bool) -> int:
 					for change in change_list:
 						print(f"{change.old_anchor}->{change.new_anchor} in {change.filename}")
 		except se.SeException as ex:
-			se.print_error(ex, plain_output=plain_output)
+			se.print_error(ex)
 			return_code = ex.code
 		except FileNotFoundError:
 			se.print_error("Couldn’t find [path]endnotes.xhtml[/].", plain_output=plain_output)

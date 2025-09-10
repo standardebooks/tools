@@ -43,7 +43,7 @@ def _insert_css(se_epub: SeEpub, filename: str) -> None:
 		file.write(css)
 		file.truncate()
 
-def add_file(plain_output: bool) -> int:
+def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 	"""
 	Entry point for `se add-file`.
 	"""
@@ -62,7 +62,7 @@ def add_file(plain_output: bool) -> int:
 		try:
 			se_epub = SeEpub(directory)
 		except se.SeException as ex:
-			se.print_error(ex, plain_output=plain_output)
+			se.print_error(ex)
 			return_code = ex.code
 			return return_code
 
@@ -144,7 +144,7 @@ def add_file(plain_output: bool) -> int:
 
 
 		except se.SeException as ex:
-			se.print_error(ex, plain_output=plain_output)
+			se.print_error(ex)
 			return_code = ex.code
 			return return_code
 

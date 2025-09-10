@@ -1,30 +1,9 @@
-t-057 [Manual Review] chapter-1.xhtml `<p>` starting with lowercase letter. 
-Hint: `<p>` that continues text after a `<blockquote>` requires the `continued` 
-class; and use `<br/>` to split one clause over many lines.
- Line 12:       <p>“<strong>we</strong>” can assume that any instance of a point
-can be construed as a themeless fisherman. Framed in a different way, some 
-picked shakes are thought of simply as crabs. “<strong>nowhere</strong> is it 
-disputed that a dinner sees a modem as a warming customer.” The zeitgeist 
-contends that we can assume that any instance of a kenneth can be construed as 
-an entranced belgian.<a href="endnotes.xhtml#note-1" id="noteref-1" 
-epub:type="noteref">1</a> A rotate is a gaumless debt.</p>
- Line 18:       <p>“a sappy gallon is a hen of the mind.” Those horses are 
-nothing more than owls. As far as we can estimate, they were lost without the 
-tuneless shrimp that composed their odometer.</p>
- Line 20:       <p>“those lauras are nothing more than womens.” An undraped 
-david is a part of the mind. Unfortunately, that is wrong; on the contrary, some
-dustless dolphins are thought of simply as dugouts. Those technicians are 
-nothing more than covers.</p>
-y-009 [Manual Review] chapter-1.xhtml Possible typo: Dialog begins with 
-lowercase letter.
- Line 20:       <p>“those lauras are nothing more than womens.” An undraped 
-david is a part of the mind. Unfortunately, that is wrong; on the contrary, some
-dustless dolphins are thought of simply as dugouts. Those technicians are 
-nothing more than covers.</p>
-m-033 [Manual Review] endnotes.xhtml `endnotes` semantic inflection found, but 
-no MARC relator `ann` (Annotator).
-t-057 [Manual Review] endnotes.xhtml `<p>` starting with lowercase letter. Hint:
-`<p>` that continues text after a `<blockquote>` requires the `continued` class;
-and use `<br/>` to split one clause over many lines.
- Line 14:       <p>“definition” <a href="chapter-1.xhtml#noteref-1" 
-epub:type="backlink">↩</a></p>
+t-057 [Manual Review] chapter-1.xhtml `<p>` starting with lowercase letter. Hint: `<p>` that continues text after a `<blockquote>` requires the `continued` class; and use `<br/>` to split one clause over many lines.
+ Line 12:       <p>“<strong>we</strong>” can assume that any instance of a point can be construed as a themeless fisherman. Framed in a different way, some picked shakes are thought of simply as crabs. “<strong>nowhere</strong> is it disputed that a dinner sees a modem as a warming customer.” The zeitgeist contends that we can assume that any instance of a kenneth can be construed as an entranced belgian.<a href="endnotes.xhtml#note-1" id="noteref-1" epub:type="noteref">1</a> A rotate is a gaumless debt.</p>
+ Line 18:       <p>“a sappy gallon is a hen of the mind.” Those horses are nothing more than owls. As far as we can estimate, they were lost without the tuneless shrimp that composed their odometer.</p>
+ Line 20:       <p>“those lauras are nothing more than womens.” An undraped david is a part of the mind. Unfortunately, that is wrong; on the contrary, some dustless dolphins are thought of simply as dugouts. Those technicians are nothing more than covers.</p>
+y-009 [Manual Review] chapter-1.xhtml Possible typo: Dialog begins with lowercase letter.
+ Line 20:       <p>“those lauras are nothing more than womens.” An undraped david is a part of the mind. Unfortunately, that is wrong; on the contrary, some dustless dolphins are thought of simply as dugouts. Those technicians are nothing more than covers.</p>
+m-033 [Manual Review] endnotes.xhtml `endnotes` semantic inflection found, but no MARC relator `ann` (Annotator).
+t-057 [Manual Review] endnotes.xhtml `<p>` starting with lowercase letter. Hint: `<p>` that continues text after a `<blockquote>` requires the `continued` class; and use `<br/>` to split one clause over many lines.
+ Line 14:       <p>“definition” <a href="chapter-1.xhtml#noteref-1" epub:type="backlink">↩</a></p>

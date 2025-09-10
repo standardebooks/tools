@@ -8,7 +8,6 @@ import urllib.parse
 import unicodedata
 
 from rich import box
-from rich.console import Console
 from rich.table import Table
 
 import se
@@ -22,7 +21,7 @@ def unicode_names(plain_output: bool) -> int:
 	parser.add_argument("strings", metavar="STRING", nargs="*", help="a Unicode string")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths.
+	console = se.init_console()
 	lines = []
 
 	if not sys.stdin.isatty():

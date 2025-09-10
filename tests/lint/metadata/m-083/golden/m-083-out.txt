@@ -1,7 +1,4 @@
-m-059 [Error] colophon.xhtml Link found in colophon, but missing matching 
-`<dc:source>` element in metadata.
- Line 24:       <a href="https://www.gutenberg.org/ebooks/161">Project 
-Gutenberg</a>
-m-083 [Error] content.opf `<meta property="title-type">` element without sibling
-element with contents of `main`, `subtitle`, `extended`, or `short`.
+m-059 [Error] colophon.xhtml Link found in colophon, but missing matching `<dc:source>` element in metadata.
+ Line 24:       <a href="https://www.gutenberg.org/ebooks/161">Project Gutenberg</a>
+m-083 [Error] content.opf `<meta property="title-type">` element without sibling element with contents of `main`, `subtitle`, `extended`, or `short`.
  Line 31:       <meta property="title-type" refines="#title">main</meta>

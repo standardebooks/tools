@@ -1,16 +1,8 @@
-m-004 [Error] colophon.xhtml Non-canonical Google Books URL. Expected: 
-`https://books.google.com/books?id=<BOOK-ID>`.
- Line 26:       <a 
-href="https://books.google.com/books?id=1234&amp;var=val#hash">Google Books</a>
-m-037 [Error] colophon.xhtml Expected transcription/page scan source link not 
-found.
-        Expected: <a 
-href="https://books.google.com/books?id=1234&var=val#hash">Google Books</a>
-m-004 [Error] content.opf Non-canonical Google Books URL. Expected: 
-`https://books.google.com/books?id=<BOOK-ID>`.
- Line 43:       
-<dc:source>https://books.google.com/books?id=1234&amp;var=val#hash</dc:source>
-m-037 [Error] imprint.xhtml Expected transcription/page scan source link not 
-found.
-        Expected: <a 
-href="https://books.google.com/books?id=1234&var=val#hash">Google Books</a>
+m-004 [Error] colophon.xhtml Non-canonical Google Books URL. Expected: `https://books.google.com/books?id=<BOOK-ID>`.
+ Line 26:       <a href="https://books.google.com/books?id=1234&amp;var=val#hash">Google Books</a>
+m-037 [Error] colophon.xhtml Expected transcription/page scan source link not found.
+        Expected: <a href="https://books.google.com/books?id=1234&var=val#hash">Google Books</a>
+m-004 [Error] content.opf Non-canonical Google Books URL. Expected: `https://books.google.com/books?id=<BOOK-ID>`.
+ Line 43:       <dc:source>https://books.google.com/books?id=1234&amp;var=val#hash</dc:source>
+m-037 [Error] imprint.xhtml Expected transcription/page scan source link not found.
+        Expected: <a href="https://books.google.com/books?id=1234&var=val#hash">Google Books</a>

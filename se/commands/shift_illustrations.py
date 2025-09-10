@@ -8,7 +8,7 @@ import se
 from se.se_epub import SeEpub
 
 
-def shift_illustrations(plain_output: bool) -> int:
+def shift_illustrations(plain_output: bool) -> int: # pylint: disable=unused-argument
 	"""
 	Entry point for `se shift-illustrations`.
 	"""
@@ -34,7 +34,7 @@ def shift_illustrations(plain_output: bool) -> int:
 		se_epub.shift_illustrations(args.target_illustration_number, step)
 
 	except se.SeException as ex:
-		se.print_error(ex, plain_output=plain_output)
+		se.print_error(ex)
 		return_code = ex.code
 
 	return return_code

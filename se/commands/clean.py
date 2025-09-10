@@ -4,8 +4,6 @@ This module implements the `se clean` command.
 
 import argparse
 
-from rich.console import Console
-
 import se
 import se.formatting
 
@@ -20,7 +18,7 @@ def clean(plain_output: bool) -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML, SVG, or CSS file, or a directory containing XHTML, SVG, or CSS files")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
+	console = se.init_console()
 
 	for filepath in se.get_target_filenames(args.targets, (".xhtml", ".svg", ".opf", ".ncx", ".xml", ".css")):
 		if args.verbose:
@@ -45,7 +43,7 @@ def clean(plain_output: bool) -> int:
 			try:
 				se.formatting.format_xml_file(filepath)
 			except se.MissingDependencyException as ex:
-				se.print_error(ex, plain_output=plain_output)
+				se.print_error(ex)
 				return ex.code
 			except se.SeException as ex:
 				se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]. Exception: {ex}", args.verbose, plain_output=plain_output)

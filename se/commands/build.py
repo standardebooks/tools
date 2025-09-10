@@ -57,7 +57,7 @@ def build(plain_output: bool) -> int:
 			exception = ex
 			messages = ex.messages
 		except se.SeException as ex:
-			se.print_error(ex, plain_output=plain_output)
+			se.print_error(ex)
 
 		# Print a separator newline if more than one table is printed.
 		if not first_output and (args.verbose or messages or exception):

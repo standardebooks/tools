@@ -4,8 +4,6 @@ This module implements the `se semanticate` command.
 
 import argparse
 
-from rich.console import Console
-
 import se
 import se.formatting
 
@@ -20,7 +18,7 @@ def semanticate(plain_output: bool) -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
+	console = se.init_console()
 	return_code = 0
 
 	for filename in se.get_target_filenames(args.targets, ".xhtml"):

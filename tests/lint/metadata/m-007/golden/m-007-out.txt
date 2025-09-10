@@ -1,9 +1,4 @@
-m-007 [Error] content.opf Non-canonical Internet Archive URL. Expected: 
-`https://archive.org/details/<BOOK-ID>`.
- Line 48:       
-<dc:source>https://archive.org/details/bub_gb_RtT0OLKFMHsC/asdf/mode/2up</dc:sou
-rce>
- Line 50:       
-<dc:source>https://archive.org/details/bub_gb_RtT0OLKFMHsC#12354</dc:source>
-m-075 [Error] imprint.xhtml Multiple page scans found in metadata, but no link 
-to `EBOOK_URL#page-scans`.
+m-007 [Error] content.opf Non-canonical Internet Archive URL. Expected: `https://archive.org/details/<BOOK-ID>`.
+ Line 48:       <dc:source>https://archive.org/details/bub_gb_RtT0OLKFMHsC/asdf/mode/2up</dc:source>
+ Line 50:       <dc:source>https://archive.org/details/bub_gb_RtT0OLKFMHsC#12354</dc:source>
+m-075 [Error] imprint.xhtml Multiple page scans found in metadata, but no link to `EBOOK_URL#page-scans`.

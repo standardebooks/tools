@@ -5,6 +5,7 @@ Common helper functions for tests.
 import shlex
 import shutil
 import subprocess
+import os
 from pathlib import Path
 import filecmp
 import pytest
@@ -15,7 +16,9 @@ def run(cmd: str) -> subprocess.CompletedProcess:
 	status object when the command completes.
 	"""
 	args = shlex.split(cmd)
-	return subprocess.run(args, stderr=subprocess.PIPE, check=False)
+	current_environment = os.environ.copy()
+	current_environment["COLUMNS"] = "1000000"
+	return subprocess.run(args, stderr=subprocess.PIPE, check=False, env=current_environment)
 
 def must_run(cmd: str) -> None:
 	"""

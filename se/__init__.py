@@ -142,12 +142,19 @@ def strip_bom(string: str) -> str:
 
 	return string
 
+def init_console() -> Console:
+	"""
+	Initialize a `rich.Console` object.
+	"""
+
+	return Console(highlight=False, theme=se.RICH_THEME, soft_wrap=True, force_terminal=se.is_called_from_parallel())
+
 def prep_output(message: str, plain_output: bool = False) -> str:
 	"""
 	Return a message formatted for the chosen output style, i.e., color or plain.
 	"""
 
-	if plain_output:
+	if plain_output or not sys.stdout.isatty():
 		# Replace color markup with `
 		message = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message)
 		message = regex.sub(r"`+", "`", message)
@@ -183,7 +190,10 @@ def print_error(message: SeException | str, verbose: bool = False, is_warning: b
 	if verbose:
 		message = str(message).replace("\n", f"\n{MESSAGE_INDENT}")
 
-	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
+	if not sys.stdout.isatty():
+		plain_output = True
+
+	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=is_called_from_parallel(), soft_wrap=True) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
 	if plain_output:
 		# Replace color markup with ```.

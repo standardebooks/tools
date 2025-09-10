@@ -1,5 +1,4 @@
-s-007 [Manual Review] chapter-1.xhtml Element requires at least one block-level 
-child.
+s-007 [Manual Review] chapter-1.xhtml Element requires at least one block-level child.
  Line 13:       <blockquote>Fail 1, blockquote has no &lt;p&gt;.</blockquote>
  Line 14:       <blockquote>
                 <i>Fail 2, blockquote has italics but no &lt;p&gt;.</i>

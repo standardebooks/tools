@@ -1,11 +1,9 @@
-c-014 [Manual Review] chapter-1.xhtml `<table>` element without explicit 
-margins. Hint: Most tables need `margin: 1em;` or `margin: 1em auto 1em auto;`.
+c-014 [Manual Review] chapter-1.xhtml `<table>` element without explicit margins. Hint: Most tables need `margin: 1em;` or `margin: 1em auto 1em auto;`.
  Line 29:       <table>
                 <tbody>
                         <tr>
                                 <td/>
-                                <th scope="rowgroup"><time 
-datetime="1865">1865</time>.</th>
+                                <th scope="rowgroup"><time datetime="1865">1865</time>.</th>
                                 <td/>
                                 <td/>
                                 <td/>
@@ -14,34 +12,18 @@ datetime="1865">1865</time>.</th>
                         <tr>
                                 <td>14</td>
                                 <td>
-                                        <time datetime="1865-06-21">June 
-21</time>
+                                        <time datetime="1865-06-21">June 21</time>
                                 </td>
                                 
                                 <td>”       ”</td>
                                 <td>Southeast face</td>
                                 <td>11,200?</td>
-                                <td>Guides⁠—Michel Croz, Christian Almer, Franz 
-Biener; porter⁠—Luc Meynet. See <a 
-href="chapter-15.xhtml#chapter-15-p-32">Chapter <span 
-epub:type="z3998:roman">XV</span></a>.</td>
+                                <td>Guides⁠—Michel Croz, Christian Almer, Franz Biener; porter⁠—Luc Meynet. See <a href="chapter-15.xhtml#chapter-15-p-32">Chapter <span epub:type="z3998:roman">XV</span></a>.</td>
                         </tr>
                 </tbody>
         </table>
-t-001 [Error] chapter-1.xhtml Illegal double spacing. Hint: Sentences should be 
-single-spaced. Spaces might include Unicode hair spaces and no-break spaces.
- Line 20:       We can assume that any instance of a point can be construed as a
-themeless fisherman. Framed in a different way, some picked shakes are thought 
-of simply as crabs.  Nowhere is it disputed that a dinner sees a modem as a 
-warming customer. The zeitgeist contends that we can assume that any instance of
-a kenneth can be construed as an entranced belgian. A rotate is a gaumless debt.
- Line 22:       Extending this logic, authors often misinterpret the plastic as 
-a zealous mint, when in actuality it feels more like a  khaki sidecar. Their 
-ticket was, in this moment, an ireful giraffe. A bee can hardly be considered an
-attached shape without also being a beaver. Few can name a creedal college that 
-isn't a plastics christmas. A step-sister is a zone from the right perspective.
- Line 24:         Redmond is a stitch of the mind. A sugar of the crocodile is 
-assumed to be a spheric parcel.
- Line 28:       Far from the truth, an innocent sees a glue as an unposed thumb.
-A Thursday of the lier is assumed to be an honied donna. Nowhere  is it disputed
-that the widest rutabaga comes from a flamy kendo.
+t-001 [Error] chapter-1.xhtml Illegal double spacing. Hint: Sentences should be single-spaced. Spaces might include Unicode hair spaces and no-break spaces.
+ Line 20:       We can assume that any instance of a point can be construed as a themeless fisherman. Framed in a different way, some picked shakes are thought of simply as crabs.  Nowhere is it disputed that a dinner sees a modem as a warming customer. The zeitgeist contends that we can assume that any instance of a kenneth can be construed as an entranced belgian. A rotate is a gaumless debt.
+ Line 22:       Extending this logic, authors often misinterpret the plastic as a zealous mint, when in actuality it feels more like a  khaki sidecar. Their ticket was, in this moment, an ireful giraffe. A bee can hardly be considered an attached shape without also being a beaver. Few can name a creedal college that isn't a plastics christmas. A step-sister is a zone from the right perspective.
+ Line 24:         Redmond is a stitch of the mind. A sugar of the crocodile is assumed to be a spheric parcel.
+ Line 28:       Far from the truth, an innocent sees a glue as an unposed thumb. A Thursday of the lier is assumed to be an honied donna. Nowhere  is it disputed that the widest rutabaga comes from a flamy kendo.

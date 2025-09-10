@@ -1,8 +1,4 @@
-m-043 [Error] colophon.xhtml Non-canonical Wayback Machine URL. Expected: 
-`https://web.archive.org/web/<DATE>/<ARCHIVED-URL>`.
- Line 26:       <a 
-href="https://web.archive.org/web/https://www.example.com">Internet Archive</a>
-m-043 [Error] content.opf Non-canonical Wayback Machine URL. Expected: 
-`https://web.archive.org/web/<DATE>/<ARCHIVED-URL>`.
- Line 44:       
-<dc:source>https://web.archive.org/web/https://www.example.com</dc:source>
+m-043 [Error] colophon.xhtml Non-canonical Wayback Machine URL. Expected: `https://web.archive.org/web/<DATE>/<ARCHIVED-URL>`.
+ Line 26:       <a href="https://web.archive.org/web/https://www.example.com">Internet Archive</a>
+m-043 [Error] content.opf Non-canonical Wayback Machine URL. Expected: `https://web.archive.org/web/<DATE>/<ARCHIVED-URL>`.
+ Line 44:       <dc:source>https://web.archive.org/web/https://www.example.com</dc:source>

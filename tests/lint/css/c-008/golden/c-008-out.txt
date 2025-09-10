@@ -1,3 +1,2 @@
-c-008 [Manual Review] chapter-1.xhtml CSS class only used once. Hint: Craft a 
-selector instead of a single-use class.
+c-008 [Manual Review] chapter-1.xhtml CSS class only used once. Hint: Craft a selector instead of a single-use class.
  Line 31:       <p class="onetimeclass">

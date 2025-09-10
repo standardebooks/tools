@@ -1,3 +1,2 @@
-s-062 [Error] glossary.xhtml `<dt>` element in a glossary without exactly one 
-`<dfn>` child.
+s-062 [Error] glossary.xhtml `<dt>` element in a glossary without exactly one `<dfn>` child.
  Line 30:       <dt>Aberrant</dt>

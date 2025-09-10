@@ -4,8 +4,6 @@ This module implements the `se modernize-spelling` command.
 
 import argparse
 
-from rich.console import Console
-
 import se
 import se.spelling
 
@@ -22,7 +20,7 @@ def modernize_spelling(plain_output: bool) -> int:
 	args = parser.parse_args()
 
 	return_code = 0
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
+	console = se.init_console()
 
 	for filename in se.get_target_filenames(args.targets, ".xhtml"):
 		if args.verbose:

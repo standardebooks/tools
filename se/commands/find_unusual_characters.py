@@ -7,7 +7,6 @@ import unicodedata
 
 import regex
 from rich import box
-from rich.console import Console
 from rich.table import Table
 
 import se
@@ -22,7 +21,7 @@ def find_unusual_characters(plain_output: bool) -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths.
+	console = se.init_console()
 	return_code = 0
 	unusual_characters: dict[str, int] = {} # key: word; value: count
 	target_filenames = se.get_target_filenames(args.targets, ".xhtml")

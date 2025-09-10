@@ -9,7 +9,7 @@ import se
 from se.se_epub import SeEpub
 
 
-def recompose_epub(plain_output: bool) -> int:
+def recompose_epub(plain_output: bool) -> int: # pylint: disable=unused-argument
 	"""
 	Entry point for `se recompose-epub`.
 	"""
@@ -32,7 +32,7 @@ def recompose_epub(plain_output: bool) -> int:
 		else:
 			print(recomposed_epub)
 	except se.SeException as ex:
-		se.print_error(ex, plain_output=plain_output)
+		se.print_error(ex)
 		return ex.code
 	except Exception as ex:
 		se.print_error(f"Couldn’t recompose epub. Exception: {ex}")

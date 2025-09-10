@@ -7,7 +7,6 @@ import urllib.parse
 
 import regex
 from rich import box
-from rich.console import Console
 from rich.table import Table
 
 import se
@@ -23,7 +22,7 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME) # Syntax highlighting will do weird things when printing paths.
+	console = se.init_console()
 	return_code = 0
 	dashed_words: dict[str, int] = {} # key: word; value: count
 	mismatches: dict[str, dict[str, tuple[int, int]]] = {} # key: base word; value: dict with key: plain word; value: (base count, plain count).

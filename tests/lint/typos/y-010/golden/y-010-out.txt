@@ -1,4 +1,2 @@
 y-010 [Manual Review] chapter-1.xhtml Possible typo: Comma ending dialogue.
- Line 25:       <p>Their ant was, in this moment, an untired taiwan. Few can 
-name a perverse zone that isn't a purblind politician. The soaring feature comes
-from a “plucky music,”</p>
+ Line 25:       <p>Their ant was, in this moment, an untired taiwan. Few can name a perverse zone that isn't a purblind politician. The soaring feature comes from a “plucky music,”</p>

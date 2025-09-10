@@ -1,3 +1,2 @@
 m-066 [Error] content.opf Subject identifiers must be IDs and not URLs.
- Line 34:       <meta property="term" 
-refines="#subject-1">https://id.loc.gov/authorities/subjects/sh2008114941</meta>
+ Line 34:       <meta property="term" refines="#subject-1">https://id.loc.gov/authorities/subjects/sh2008114941</meta>

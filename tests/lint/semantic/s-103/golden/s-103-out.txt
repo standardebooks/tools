@@ -1,5 +1,4 @@
-s-103 [Manual Review] chapter-1.xhtml Probable missing semantics for a roman I 
-numeral.
+s-103 [Manual Review] chapter-1.xhtml Probable missing semantics for a roman I numeral.
  Line 9:        Charles I’s
  Line 10:       Edward I’s
  Line 11:       George I’s

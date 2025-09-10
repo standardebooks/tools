@@ -12,7 +12,6 @@ import git
 from natsort import natsorted
 from PIL import Image, ImageChops
 from PIL.Image import Image as Image_type
-from rich.console import Console
 
 import se
 import se.browser
@@ -39,7 +38,7 @@ def compare_versions(plain_output: bool) -> int:
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="a directory containing XHTML files")
 	args = parser.parse_args()
 
-	console = Console(highlight=False, theme=se.RICH_THEME, force_terminal=se.is_called_from_parallel()) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
+	console = se.init_console()
 
 	# We wrap this whole thing in a try block, because we need to call `driver.quit()` if execution is interrupted (like by `ctrl + c`, or by an unhandled exception). If we don't call `driver.quit()`, Firefox will stay around as a zombie process even if the Python script is dead.
 	driver = None
@@ -183,7 +182,7 @@ def compare_versions(plain_output: bool) -> int:
 							file.write(html)
 
 	except se.MissingDependencyException as ex:
-		se.print_error(ex, plain_output=plain_output)
+		se.print_error(ex)
 		return ex.code
 
 	except KeyboardInterrupt as ex:
