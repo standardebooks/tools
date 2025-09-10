@@ -403,6 +403,6 @@ Many of these tools act on Standard Ebooks source directories. Such directories 
 |__ LICENSE.md
 ```
 
-`./images/` contains source images for the cover and titlepages, as well as ebook-specific source images. Source images should be in their maximum available resolution, then compressed and placed in `./src/epub/images/` for distribution.
+`./images/` contains source images for the cover and titlepages, as well as source images for illustrations or figures in the ebook. Source images should be in their maximum available resolution, then resized, compressed, or traced to SVG and placed in `./src/epub/images/` for distribution.
 
-`./src/epub/` contains the actual epub files.
+`./src/epub/` contains the files that make up the final distributable epub.
