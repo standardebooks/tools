@@ -1,3 +1,87 @@
+# 2.9.3
+
+## General
+
+- When sorting command targets, sort by full path and not just basename
+
+## se add-file
+
+- Add list of possible options to help text
+
+- Fix bug where sometimes CSS was overwritten
+
+## se build
+
+- Bump epubcheck to 5.3.0
+
+- Epub builds are now reproducible. Thanks to Michael Berg
+
+## se clean
+
+-  Order items in `se-lint-ignore.xml` files in alphabetical order
+
+## css-select
+
+- Fail gracefully if file not found
+
+- Fail gracefully if selector contains not-implemented part
+
+- Output line numbers with matches
+
+- Fix logic error if one file in set is not found
+
+## se lint
+
+- Remove s-030
+
+- Remove s-040
+
+- Add more exceptions to t-030
+
+- Add line numbers to messages. Thanks to Neil Pankey
+
+- Improve m-085
+
+- Improve algorithm used in m-070
+
+- Fix logic error in x-018
+
+- Normalize all messages
+
+- Add m-039, duplicate `<file>` element in `se-lint-ignore.xml` file
+
+- Improve t-001
+
+- Improve t-010
+
+- Improve t-075
+
+- Improve m-058
+
+- Improve t-043
+
+- Allow for custom identifiers in m-023
+
+## se modernize-spelling
+
+- Various additions
+
+## se semanticate
+
+- Semanticate K.C. and Q.C. as name-title. Thanks to Robin Whittleton
+
+- Exclude roman numerals at the end of a tag
+
+- Don't add roman semantics to `mi`
+
+## se build-toc
+
+- Fix edge case where title contains all element nodes and no text nodes
+
+## se xpath
+
+- Output line numbers with matches
+
 # 2.9.2
 
 ## se lint
