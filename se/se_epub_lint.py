@@ -465,6 +465,7 @@ XHTML
 "x-019", "Unexpected value of [attr]id[/] attribute."
 "x-020", "Link to [path]se.css[/] in [xhtml]<head>[/], but this file isn’t an S.E. boilerplate file."
 "x-021", "[xhtml]<figure>[/] element with no [attr]id[/] attribute."
+"x-022", "Illegal fractions in SVG [xml]viewBox[/] attribute, must be whole numbers only."
 
 TYPOS
 "y-001", "Possible typo: Doubled [text]a/the/and/of/or/as/if[/]."
@@ -1502,14 +1503,18 @@ def _lint_svg_checks(self, source_file: SourceFile, svg_dom: se.easy_xml.EasyXml
 		if svg_dom.xpath("//image[re:test(@xlink:href, '^.{299}A{50,}')]"):
 			messages.append(LintMessage("m-063", "Cover image has not been built.", se.MESSAGE_TYPE_ERROR, filename))
 
-	# Make images have reasonable dimensions.
 	viewbox = svg_dom.xpath("/svg/@viewBox", True)
 	if viewbox:
 		svg_dimensions = viewbox.split()
 		try:
+			# Make sure images have reasonable dimensions
 			if float(svg_dimensions[2]) * float(svg_dimensions[3]) > 4000000:
 				messages.append(LintMessage("f-018", "Image greater than 4,000,000 pixels square in dimension.", se.MESSAGE_TYPE_ERROR, filename))
+			# Make sure dimensions are integers
+			if "." in svg_dimensions[2] or "." in svg_dimensions[3]:
+				messages.append(LintMessage("x-022", "Illegal fractions in SVG [xml]viewBox[/] attribute, must be whole numbers only.", se.MESSAGE_TYPE_ERROR, filename))
 		except Exception as ex:
+			print(ex)
 			raise se.InvalidFileException(f"Couldn’t parse SVG [xhtml]viewBox[/] attribute in [path][link=file://{filename.resolve()}]{filename}[/][/].") from ex
 
 	# Check for illegal `transform` or `id` attributes.
