@@ -48,7 +48,7 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 	Entry point for `se add-file`.
 	"""
 
-	file_types = ["dedication", "endnotes", "epigraph", "glossary", "halftitlepage", "ignore"]
+	file_types = ["dedication", "dramatis-personae", "endnotes", "epigraph", "glossary", "halftitlepage", "ignore"]
 
 	parser = argparse.ArgumentParser(description="Add an SE template file and any accompanying CSS.")
 	parser.add_argument("-f", "--force", dest="force", action="store_true", help="overwrite any existing files")
