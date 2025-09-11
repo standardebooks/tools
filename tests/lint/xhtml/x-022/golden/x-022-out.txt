@@ -1,0 +1,1 @@
+x-022 [Error] illustration-1.svg Illegal fractions in SVG `viewBox` attribute, must be whole numbers only.
