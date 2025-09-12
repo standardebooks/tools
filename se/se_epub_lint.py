@@ -940,10 +940,13 @@ def _lint_metadata_checks(self) -> list:
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 	# We can't use xpath's built-in regex because it doesn't support Unicode classes.
+	matching_nodes = []
 	for node in self.metadata_dom.xpath("/package/metadata/*"):
 		if node.text and regex.search(r"[\p{Letter}]+”[,\.](?! …)", node.text):
-			messages.append(LintMessage("t-002", "Comma or period outside of double quote. Hint: Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, LintSubmessage.from_nodes(node)))
-			break
+			matching_nodes.append(node)
+
+	if matching_nodes:
+		messages.append(LintMessage("t-002", "Comma or period outside of double quote. Hint: Generally punctuation goes within single and double quotes.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, LintSubmessage.from_nodes(matching_nodes)))
 
 	# Check that the word count is correct, if it's currently set.
 	if self.is_se_ebook:
