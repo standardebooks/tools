@@ -466,6 +466,7 @@ XHTML
 "x-020", "Link to [path]se.css[/] in [xhtml]<head>[/], but this file isn’t an S.E. boilerplate file."
 "x-021", "[xhtml]<figure>[/] element with no [attr]id[/] attribute."
 "x-022", "Illegal fractions in SVG [xml]viewBox[/] attribute."
+"x-023", "[xml]title[/] should be the first child of [xml]svg[/]."
 
 TYPOS
 "y-001", "Possible typo: Doubled [text]a/the/and/of/or/as/if[/]."
@@ -1552,6 +1553,11 @@ def _lint_svg_checks(self, source_file: SourceFile, svg_dom: se.easy_xml.EasyXml
 	nodes = svg_dom.xpath("/svg[not(@viewBox)]")
 	if nodes:
 		messages.append(LintMessage("x-006", "SVG root without [xml]viewBox[/] attribute. Hint: [xml]viewBox[/] must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+
+	# Check for misplaced title
+	nodes = svg_dom.xpath("/svg/*/following-sibling::title")
+	if nodes:
+		messages.append(LintMessage("x-023", "[xml]title[/] should be the first child of [xml]svg[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	return messages
 
