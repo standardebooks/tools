@@ -2642,7 +2642,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 	# Check for repeated punctuation, but first remove `&amp;` so we don't match `&amp;,`.
 	matches = source_file.sub("&amp;", "").findall(r"[,;]{2,}.{0,20}")
 	# Remove `<td>`s with repeated `”` as they are probably ditto marks.
-	matches += source_file.sub(r"<td>[”\s]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "").findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}")
+	matches += source_file.sub(fr"<td[^>]*?>[”\s{se.NO_BREAK_SPACE}]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "").findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}")
 	matches += source_file.findall(r"[\p{Letter}][,\.:;]\s[,\.:;]\s?[\p{Letter}<].{0,20}")
 	if matches:
 		messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(matches)))
