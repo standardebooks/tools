@@ -834,7 +834,7 @@ def format_svg(svg: str) -> str:
 	except Exception as ex:
 		raise se.InvalidXmlException(f"Couldn’t parse SVG file. Exception: {ex}")
 
-	# Make sure `viewBox` is correctly-cased.
+	# Make sure `@viewBox` is correctly-cased.
 	for node in tree.xpath("/svg:svg", namespaces={"svg": "http://www.w3.org/2000/svg"}):
 		for key, value in node.items(): # Iterate over attributes.
 			if key.lower() == "viewbox":
@@ -842,7 +842,7 @@ def format_svg(svg: str) -> str:
 				node.attrib["viewBox"] = value # Re-add the attribute, correctly-cased.
 				break
 
-	# Make sure title is the first child.
+	# Make sure `<title>` is the first child.
 	for node in tree.xpath("/svg:svg/svg:title[preceding-sibling::*]", namespaces={"svg": "http://www.w3.org/2000/svg"}):
 		node.getparent().insert(0, node)
 		_indent(tree, space="\t")
