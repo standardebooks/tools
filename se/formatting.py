@@ -142,10 +142,10 @@ def semanticate(xhtml: str) -> str:
 	# Fix obscured names starting with `I`, `V`, or `X`.
 	xhtml = regex.sub(fr"""<span epub:type="z3998:roman">([IVX])</span>{se.WORD_JOINER}⸺""", fr"""\1{se.WORD_JOINER}⸺""", xhtml)
 
-	# Add abbrevations around some SI measurements.
+	# Add abbreviations around some SI measurements.
 	xhtml = regex.sub(r"([0-9]+)\s*([cmk][mgl])\b", fr"\1{se.NO_BREAK_SPACE}<abbr>\2</abbr>", xhtml)
 
-	# Add abbrevations around Imperial measurements.
+	# Add abbreviations around Imperial measurements.
 	xhtml = regex.sub(r"(?<![\$£0-9,])([0-9½¼⅙⅚⅛⅜⅝⅞]+)\s*(ft|yd|mi|pt|qt|gal|oz|lbs)\.?\b", fr"\1{se.NO_BREAK_SPACE}<abbr>\2.</abbr>", xhtml)
 
 	# Handle `in.` separately to require a period, because with an optional period there are too many false positives.
@@ -757,7 +757,7 @@ def format_xhtml(xhtml: str) -> str:
 		# Set the new class value.
 		node.set("class", " ".join(classes))
 
-	# Lowercase elemetn names.
+	# Lowercase element names.
 	for node in tree.xpath("//*[re:test(local-name(), '[A-Z]')]", namespaces=namespaces):
 		node.tag = node.tag.lower()
 
