@@ -121,15 +121,21 @@ def find_unusual_characters(plain_output: bool) -> int:
 	lines = []
 
 	for unusual_character, count in unusual_characters.items():
-		lines.append((unusual_character, unicodedata.name(unusual_character), count))
+		# The unicodedata package crashes on characters that don't have a name; see GitHub issue
+		# https://github.com/python/cpython/issues/91103
+		try:
+			unusual_character_name = unicodedata.name(unusual_character)
+		except Exception:
+			unusual_character_name = "Unrecognized"
+
+		lines.append((unusual_character, unusual_character_name, count))
 
 	lines.sort()
 
 	if lines:
 		if plain_output:
 			for unusual_character, unusual_character_name, unusual_character_count in lines:
-				console.print(f"{unusual_character} {unusual_character_name} ({unusual_character_count})")
-
+				console.print(unusual_character, "\tU+{:04X}".format(ord(unusual_character)), "\t", unusual_character_name, "\t", unusual_character_count) # pylint: disable=consider-using-f-string
 		else:
 			table = Table(show_header=False, show_lines=True, box=box.HORIZONTALS)
 			table.add_column("Character", style="bold", no_wrap=True)
@@ -138,6 +144,9 @@ def find_unusual_characters(plain_output: bool) -> int:
 			table.add_column("Count", style="dim", no_wrap=True)
 
 			for unusual_character, unusual_character_name, unusual_character_count in lines:
+				if unusual_character_name == "Unrecognized":
+					unusual_character_name = f"[white on red bold]{unusual_character_name}[/]"
+
 				table.add_row(unusual_character, "U+{:04X}".format(ord(unusual_character)), unusual_character_name, f"({unusual_character_count})") # pylint: disable=consider-using-f-string
 
 			console.print(table)
