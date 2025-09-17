@@ -40,13 +40,13 @@ def css_select(plain_output: bool) -> int:
 							if plain_output:
 								output = f"Line {node.sourceline}: {node.to_string()}"
 							else:
-								output = f"[path][link=file://{filepath.resolve()}#L{node.sourceline}]Line {node.sourceline}[/][/]: {node.to_string().replace("[", "\\[")}"
+								output = f"[path][link=file://{filepath.resolve()}#L{node.sourceline}]Line {node.sourceline}[/][/]: {node.to_string().replace('[', '\\[')}"
 						else:
 							# We may select `text()` nodes as a result.
 							if plain_output:
 								output = f"Line {node.getparent().sourceline}: {str(node)}"
 							else:
-								output = f"[path][link=file://{filepath.resolve()}#L{node.getparent().sourceline}]Line {node.getparent().sourceline}[/][/]: {str(node).replace("[", "\\[")}"
+								output = f"[path][link=file://{filepath.resolve()}#L{node.getparent().sourceline}]Line {node.getparent().sourceline}[/][/]: {str(node).replace('[', '\\[')}"
 
 
 						output = "".join([f"\t{line}\n" for line in output.splitlines()])

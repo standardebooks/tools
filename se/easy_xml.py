@@ -627,7 +627,7 @@ class EasyXmlElement:
 		return self.lxml_element.tag
 
 	@property
-	def parent(self): # This returns an `EasyXmlElement` but we can't type hint this until Python 3.10.
+	def parent(self): # This returns an `EasyXmlElement` but we can't type hint this until Python 3.14.
 		"""
 		Return an `EasyXmlElement` representing this node's parent node.
 		"""
