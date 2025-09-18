@@ -142,6 +142,18 @@ def strip_bom(string: str) -> str:
 
 	return string
 
+def abspath_relative_to(relative_path: Path, relative_to: Path) -> Path:
+	"""
+	Given a relative path, calculate its absolute path relative to another path.
+	"""
+
+	if relative_to.is_dir():
+		parent = relative_to
+	else:
+		parent = relative_to.parent
+
+	return (parent / relative_path).resolve()
+
 def init_console() -> Console:
 	"""
 	Initialize a `rich.Console` object.

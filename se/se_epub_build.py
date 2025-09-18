@@ -1202,7 +1202,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			with importlib.resources.as_file(importlib.resources.files("se.data.vnu").joinpath("vnu.jar")) as jar_path:
 				# We have to use a temp file to hold stdout, because if the output is too large for the output buffer in `subprocess.run()` (and thus `popen()`) it will be truncated.
 				with tempfile.TemporaryFile() as stdout:
-					subprocess.run(["java", "-jar", str(jar_path), "--format", "xml", str(self.epub_root_path / "epub" / "text")], stdout=stdout, stderr=stdout, check=False)
+					subprocess.run(["java", "-jar", str(jar_path), "--format", "xml", "--skip-non-html", str(self.content_path)], stdout=stdout, stderr=stdout, check=False)
 
 					stdout.seek(0)
 					vnu_dom = se.easy_xml.EasyXmlTree(stdout.read().decode().strip())

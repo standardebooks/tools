@@ -35,14 +35,13 @@ def build_svg_titles(plain_output: bool) -> int:
 				for img in dom.xpath(r"/html/body//img[re:test(@src,'\.svg$')]"):
 					img_src = img.get_attr("src")
 					img_alt = img.get_attr("alt")
-					image_ref = img_src.split("/").pop()
 
-					if not img_alt or image_ref in ("cover.svg", "logo.svg", "titlepage.svg"):
+					if not img_alt:
 						continue
 
 					# Update or add the title to the SVG.
+					svg_path = se.abspath_relative_to(img_src, filename)
 					try:
-						svg_path = se_epub.content_path / "images" / image_ref
 						svg_dom = se_epub.get_dom(svg_path)
 						svg_element = svg_dom.xpath("/svg")[0]
 
@@ -57,6 +56,7 @@ def build_svg_titles(plain_output: bool) -> int:
 							# Remove any additional `<title>` elements.
 							for title_element in title_elements[1:]:
 								title_element.remove()
+
 							# Select the first element for updating.
 							title_element = title_elements[0]
 

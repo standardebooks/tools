@@ -1796,7 +1796,7 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 			figure_ref = node.get_attr("href").split("#")[1]
 			chapter_ref = regex.findall(r"(.*?)#.*", node.get_attr("href"))[0]
 			loi_text = node.inner_text()
-			file_dom = self.get_dom(self.content_path / "text" / chapter_ref)
+			file_dom = self.get_dom(se.abspath_relative_to(Path(chapter_ref), filename))
 
 			try:
 				figure = file_dom.xpath(f"//*[@id={se.easy_xml.escape_xpath(figure_ref)}]")[0]
@@ -2800,7 +2800,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 				title_text = ""
 				image_ref = img_src.split("/").pop()
 				try:
-					svg_path = self.content_path / "images" / image_ref
+					svg_path = se.abspath_relative_to(img_src, filename)
 					svg_dom = self.get_dom(svg_path)
 					try:
 						title_text = svg_dom.xpath("/svg/title")[0].text
@@ -3827,7 +3827,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 				directories_not_url_safe.append(Path(root) / directory)
 
 		for filename in natsorted(filenames):
-			filename = (Path(root) / filename).resolve()
+			filename = se.abspath_relative_to(filename, Path(root))
 
 			if filename.stem != "LICENSE":
 				if filename.stem == "cover.source":
@@ -3862,7 +3862,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 			if filename.suffix == ".svg":
 				# If this is an SVG that is in the `./images/` folder, ignore it, because it's a source that could have any kind of internal formatting.
-				if self.path / "images" / filename.name == filename:
+				if filename.is_relative_to(self.path / "images"):
 					continue
 
 				# Get the original file from the cache.
