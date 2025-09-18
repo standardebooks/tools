@@ -20,6 +20,7 @@ case $state in
 			"build-loi[Update the LoI file based on all <figure> elements that contain an <img>.]" \
 			"build-manifest[Generate the <manifest> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.]" \
 			"build-spine[Generate the <spine> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.]" \
+			"build-svg-titles[Update or add SVG <title> elements based on the alt attributes from the <img> elements.]" \
 			"build-title[Generate the title of an XHTML file based on its headings and update the file’s <title> element.]" \
 			"build-toc[Generate the table of contents for the ebook’s source directory and update the ToC file.]" \
 			"clean[Prettify and canonicalize individual XHTML or SVG files.]" \
@@ -109,6 +110,12 @@ case $state in
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
 					{-s,--stdout}'[print to stdout instead of writing to the metadata file]' \
+					'*: :_directories'
+				;;
+			build-svg-titles)
+				_arguments -s \
+					{-h,--help}'[show a help message and exit]' \
+					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_directories'
 				;;
 			build-title)

@@ -242,6 +242,10 @@ We need volunteers to take the lead on the following goals:
 
 	Generate the `<spine>` element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.
 
+-	### `se build-svg-titles`
+
+	Update or add SVG `<title>` elements based on the alt attributes from the `<img>` elements.
+
 -	### `se build-title`
 
 	Generate the title of an XHTML file based on its headings and update the file’s `<title>` element.
