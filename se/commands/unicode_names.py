@@ -31,11 +31,10 @@ def unicode_names(plain_output: bool) -> int:
 	for line in args.strings:
 		lines.append(line)
 
+	# `unicodedata` emits an exception on characters that don't have a name; see <https://github.com/python/cpython/issues/91103>.
 	if plain_output:
 		for line in lines:
 			for character in line:
-				# The unicodedata package crashes on characters that don't have a name; see GitHub
-				# issue https://github.com/python/cpython/issues/91103
 				try:
 					character_name = unicodedata.name(character)
 				except Exception:
@@ -51,7 +50,6 @@ def unicode_names(plain_output: bool) -> int:
 
 		for line in lines:
 			for character in line:
-				# The unicodedata package crashes on characters that don't have a name
 				try:
 					character_name = unicodedata.name(character)
 				except Exception:
