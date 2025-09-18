@@ -1,6 +1,6 @@
 function __fish_se_no_subcommand --description "Test if se has yet to be given the subcommand"
 	for i in (commandline -opc)
-		if contains -- $i add-file british2american build build-ids build-images build-loi build-manifest build-spine build-title build-toc clean compare-versions create-draft css-select dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names version word-count xpath
+		if contains -- $i add-file british2american build build-ids build-images build-loi build-manifest build-spine build-svg-titles build-title build-toc clean compare-versions create-draft css-select dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names version word-count xpath
 			return 1
 		end
 	end
@@ -131,6 +131,10 @@ complete -c se -A -n "__fish_seen_subcommand_from build-manifest" -s s -l stdout
 complete -c se -n "__fish_se_no_subcommand" -a build-spine -d "Generate the <spine> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file."
 complete -c se -A -n "__fish_seen_subcommand_from build-spine" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from build-spine" -s s -l stdout -d "print to stdout instead of writing to the metadata file"
+
+complete -c se -n "__fish_se_no_subcommand" -a build-svg-titles -d "Update or add SVG <title> elements based on the alt attributes from the <img> elements."
+complete -c se -A -n "__fish_seen_subcommand_from build-svg-titles" -s h -l help -x -d "show this help message and exit"
+complete -c se -A -n "__fish_seen_subcommand_from build-svg-titles" -s v -l verbose -d "increase output verbosity"
 
 complete -c se -n "__fish_se_no_subcommand" -a build-title -d "Generate the title of an XHTML file based on its headings and update the file’s <title> element."
 complete -c se -A -n "__fish_seen_subcommand_from build-title" -s h -l help -x -d "show this help message and exit"
