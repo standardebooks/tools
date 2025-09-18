@@ -249,6 +249,13 @@ class SeEpub:
 			for title in self.metadata_dom.xpath("/package/metadata/dc:title[@id=\"title\"]"):
 				identifier += se.formatting.make_url_safe(title.text) + "/"
 
+			# If a book is a collection/omnibus and has more than 1 translator, or if any book has more than 3 translators, combine them into `various-translators` in the identifier.
+			has_various_translators = self.is_se_ebook and len(self.metadata_dom.xpath("//metadata[ (count(./meta[text()='trl']) > 1 and ./meta[@property='se:is-a-collection']) or (count(./meta[text()='trl']) > 3)]")) > 0
+			process_translators = True
+			if has_various_translators:
+				identifier += "various-translators/"
+				process_translators = False
+
 			# For contributors, we add both translators and illustrators.
 			# However, we may not include specific translators or illustrators in certain cases, namely if *some* contributors have a `display-seq` property, and others do not.
 			# According to the epub spec, if that is the case, we should only add those that *do* have the attribute.
@@ -268,7 +275,7 @@ class SeEpub:
 						contributor["include"] = False
 						display_seq = []
 
-					if role.text == "trl":
+					if role.text == "trl" and process_translators:
 						if display_seq:
 							contributor["display_seq"] = display_seq[0]
 							translators_have_display_seq = True
