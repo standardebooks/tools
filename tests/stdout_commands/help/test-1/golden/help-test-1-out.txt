@@ -7,6 +7,7 @@ build-images
 build-loi
 build-manifest
 build-spine
+build-svg-titles
 build-title
 build-toc
 clean
