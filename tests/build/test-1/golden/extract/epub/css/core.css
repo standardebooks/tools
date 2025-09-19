@@ -191,7 +191,7 @@ a.epub-type-noteref{
 	vertical-align: super;
 }
 
-section.epub-type-footnotes > ol > li{
+section.epub-type-endnotes > ol > li{
 	margin-top: 1em;
 	margin-right: 0;
 	margin-bottom: 1em;
