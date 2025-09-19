@@ -475,20 +475,6 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 						else:
 							node.set_attr("role", f"doc-{attr_values[0]}")
 
-				# To get popup footnotes in iBooks, we have to add the `footnote` and `footnotes` semantic.
-				# Still required as of 2021-05.
-				# Matching `endnote` will also catch `endnotes`.
-				for node in dom.xpath("/html/body//*[contains(@epub:type, 'endnote')]"):
-					plural = ""
-					if "endnotes" in node.get_attr("epub:type"):
-						plural = "s"
-
-					node.add_attr_value("epub:type", "footnote" + plural)
-
-					# Remember to get our custom style selectors that we added, too.
-					if "epub-type-endnote" + plural in (node.get_attr("class") or ""):
-						node.add_attr_value("class", "epub-type-footnote" + plural)
-
 				# If this file is an endnotes file, add it to our list for later processing.
 				if float(dom.xpath("count(/html/body//section[contains(@epub:type, 'endnotes')]/ol/li)", True)) > ENDNOTE_CHUNK_SIZE + 100:
 					endnote_files_to_be_chunked.append(file_path)
@@ -556,10 +542,6 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				with open(file_path, "r+", encoding="utf-8") as file:
 					css = file.read()
 					processed_css = css
-
-					# To get popup footnotes in iBooks, we have to change `epub:endnote` to `epub:footnote`.
-					# Remember to get our custom style selectors too.
-					processed_css = processed_css.replace("endnote", "footnote")
 
 					# `page-break-*` is deprecated in favor of `break-*`. Add `page-break-*` aliases for compatibility in older ereaders.
 					processed_css = regex.sub(r"(\s+)break-(.+?:\s.+?;)", "\\1break-\\2\t\\1page-break-\\2", processed_css)
