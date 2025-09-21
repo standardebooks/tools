@@ -846,7 +846,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				node.set_attr("src", src.replace(".svg", ".png"))
 
 				if not ibooks_srcset_bug_exists:
-					match = regex.search(r"(?<=/)[^/]+(?=\.svg)", src)
+					match = regex.search(r".*?(?=\.svg)", src)
 					filename = match[0] if match else None
 					if filename:
 						node.set_attr("srcset", f"{filename}-2x.png 2x, {filename}.png 1x")
