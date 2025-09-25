@@ -1,2 +1,5 @@
 "http://google.com", http-google-com
 "abc123.!-+d  xyz ", abc123-d-xyz
+"“fully quoted string”", fully-quoted-string
+"“leading quote", leading-quote
+"trailing quote”", trailing-quote
