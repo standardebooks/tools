@@ -1359,8 +1359,8 @@ def make_url_safe(text: str) -> str:
 	# 6. Convert any instance of one or more space to a dash.
 	text = regex.sub(r"\s+", "-", text)
 
-	# 7. Remove trailing dashes.
-	text = regex.sub(r"\-+$", "", text)
+	# 7. Remove leading and trailing dashes.
+	text = regex.sub(r"^\-+|\-+$", "", text)
 
 	return text
 
