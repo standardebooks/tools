@@ -41,22 +41,56 @@ def build_manifest(plain_output: bool) -> int:
 						node.append(se_epub.generate_manifest())
 
 				# If we have images in the manifest, add or remove some accessibility metadata while we're here.
-				access_mode_nodes = se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessMode' and text() = 'visual']")
-				access_mode_sufficient_nodes = se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'alternativeText']")
+				access_mode_visual_nodes = se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessMode' and text() = 'visual']")
+				access_mode_sufficient_nodes = se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessModeSufficient']")
+				accessibility_feature_alt_text_nodes = se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'alternativeText']")
 
-				if se_epub.metadata_dom.xpath("/package/manifest/item[starts-with(@media-type, 'image/') and not(re:test(@href, 'images/(cover\\.svg||logo\\.svg|titlepage\\.svg)$'))]"):
+				if se_epub.metadata_dom.xpath("/package/manifest/item[starts-with(@media-type, 'image/')]"):
+					# There are images in this epub!
+
+					# See <https://github.com/w3c/publ-a11y/issues/145#issuecomment-1421339961>.
+
+					is_missing_alt_attributes = False
+					has_significant_images = False
+					for filename in se.get_target_filenames([directory], ".xhtml"):
+						dom = se_epub.get_dom(filename)
+
+						# Do we have any images that are missing `@alt` attributes?
+						if dom.xpath("/html/body//img[not(@alt)]"):
+							is_missing_alt_attributes = True
+
+						# Do we have any images that are not decorative? See <https://kb.daisy.org/publishing/docs/metadata/schema.org/accessMode/visual.html>.
+						if dom.xpath("/html/body//img[not(re:test(@epub:type, '\\b(z3998:publisher-logo|titlepage|cover)\\b')) and not(ancestor::*[re:test(@epub:type, '\\b(titlepage|cover)\\b')])]"):
+							has_significant_images = True
+
 					# Add access modes if we have images.
-					if not access_mode_nodes:
-						se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessMode' and text() = 'textual']")[0].lxml_element.addnext(etree.XML("<meta property=\"schema:accessMode\">visual</meta>"))
+					if is_missing_alt_attributes or has_significant_images:
+						if not access_mode_visual_nodes:
+							se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessMode' and text() = 'textual']")[0].lxml_element.addnext(etree.XML("<meta property=\"schema:accessMode\">visual</meta>"))
 
-					if not access_mode_sufficient_nodes:
-						se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessModeSufficient']")[0].lxml_element.addnext(etree.XML("<meta property=\"schema:accessibilityFeature\">alternativeText</meta>"))
+						if is_missing_alt_attributes:
+							for node in accessibility_feature_alt_text_nodes:
+								node.remove()
+
+							for node in access_mode_sufficient_nodes:
+								node.text = "visual"
+
+						else:
+							for node in access_mode_sufficient_nodes:
+								node.text = "textual"
+
+					else:
+						for node in access_mode_visual_nodes:
+							node.remove()
+
+						if not accessibility_feature_alt_text_nodes:
+							se_epub.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessModeSufficient']")[0].lxml_element.addnext(etree.XML("<meta property=\"schema:accessibilityFeature\">alternativeText</meta>"))
 				else:
 					# If we don't have images, then remove any access modes that might be there erroneously.
-					for node in access_mode_nodes:
+					for node in access_mode_visual_nodes:
 						node.remove()
 
-					for node in access_mode_sufficient_nodes:
+					for node in accessibility_feature_alt_text_nodes:
 						node.remove()
 
 				# If we have MathML in the manifest, add some accessibility metadata while we're here.

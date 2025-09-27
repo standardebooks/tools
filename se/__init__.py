@@ -230,7 +230,7 @@ def is_positive_integer(value: str) -> int:
 
 	return int_value
 
-def get_target_filenames(targets: list, allowed_extensions: tuple | str) -> list:
+def get_target_filenames(targets: list, allowed_extensions: tuple | str) -> list[Path]:
 	"""
 	Helper function to convert a list of filenames or directories into a list of filenames based on some parameters.
 
