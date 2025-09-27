@@ -1242,6 +1242,49 @@ class SeEpub:
 
 		return (spine + spine_additions, filtered_items)
 
+	def __add_hierarchy_to_spine(self, spine: list[str], items: list[Path]) -> list[str]:
+		"""
+		Given a spine and a list of items, add the item to the spine in sorted hierarchical order.
+
+		Ensures that each file comes directly after its `data-parent`.
+
+		Returns an updated spine.
+		"""
+
+		file_path_to_id = {}
+		id_to_parent = {}
+		sort_keys = {}
+
+		# Index all files.
+		for file_path in items:
+			dom = self.get_dom(file_path)
+
+			# Get the `id` and `data-parent` for the top-level element.
+			toplevel = dom.xpath("/html/body/*[@id]")
+			if toplevel:
+				section_id = toplevel[0].get_attr("id")
+				file_path_to_id[file_path] = section_id
+				id_to_parent[section_id] = toplevel[0].get_attr("data-parent")
+
+		# Compute sort keys.
+		for file_path in items:
+			section_id = file_path_to_id.get(file_path, file_path.name)
+			key = []
+			# Add `id` for all parents.
+			while section_id:
+				key.append(section_id)
+				section_id = id_to_parent.get(section_id)
+			# Concatenate `id`s to create hierarchical sort key.
+			sort_keys[file_path.name] = '/'.join(reversed(key))
+
+		# Sort using sort keys, using filename as fallback option.
+		spine_additions = natsorted(
+			[file_path.name for file_path in items],
+			key=lambda name: sort_keys.get(name, name)
+		)
+
+		return spine + spine_additions
+
 	def generate_spine(self) -> se.easy_xml.EasyXmlElement:
 		"""
 		Return the `<spine>` element of this ebook as an `EasyXmlElement`, with a best guess as to the correct order. Manual review is required.
@@ -1292,10 +1335,11 @@ class SeEpub:
 		# The half title page is always the last front matter.
 		spine += halftitlepage
 
-		# Add bodymatter.
+		# The prologue comes at the start of the bodymatter.
 		spine, bodymatter = self.__add_to_spine(spine, bodymatter, "prologue")
 
-		spine += natsorted([file_path.name for file_path in bodymatter])
+		# Add bodymatter in hierarchical order.
+		spine = self.__add_hierarchy_to_spine(spine, bodymatter)
 
 		# Add backmatter.
 		spine, backmatter = self.__add_to_spine(spine, backmatter, "afterword")
