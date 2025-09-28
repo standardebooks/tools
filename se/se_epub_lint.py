@@ -283,6 +283,7 @@ SEMANTICS & CONTENT
 "s-027", "[xhtml]<title>[/] element missing."
 "s-028", "[xhtml]<title>[/] elements in cover SVG and titlepage SVG don’t match."
 "s-029", "Section with [attr]data-parent[/] attribute, but no section having that [attr]id[/] in ebook."
+"s-030", "[xhtml]<em>[/] outside of quotation marks."
 "s-031", "Duplicate value in [attr]epub:type[/] attribute."
 "s-032", "Invalid value for [attr]epub:type[/] attribute."
 "s-033", "[attr]xml:lang[/] value on [xhtml]<html>[/] element doesn’t match language set in metadata."
@@ -360,7 +361,6 @@ SEMANTICS & CONTENT
 "s-106", "Proper name in the colophon without parent [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], or [xhtml]<b>[/] if anonymous."
 "s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?"
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"s-030", ""
 "s-040", ""
 "s-025", ""
 
@@ -2249,6 +2249,10 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 			file_language = node.get_attr("xml:lang")
 			if file_language != language:
 				messages.append(LintMessage("s-033", "[attr]xml:lang[/] value on [xhtml]<html>[/] element doesn’t match language set in metadata.", se.MESSAGE_TYPE_WARNING, filename, [LintSubmessage(f"Found: {file_language}\nExpected: {language}", node.sourceline)]))
+
+	nodes = dom.xpath("/html/body//em[re:test(., '^“') and re:test(., '”$')]")
+	if nodes:
+		messages.append(LintMessage("s-030", "[xhtml]<em>[/] outside of quotation marks.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for endnotes.
 	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]/p[not(preceding-sibling::*)]/cite[not(preceding-sibling::node()[normalize-space(.)]) and (following-sibling::node()[normalize-space(.)])[1][contains(@epub:type, 'backlink')]]")
