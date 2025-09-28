@@ -2650,7 +2650,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 	# Check for `nbsp` before times.
 	nodes = dom.xpath(f"/html/body//text()[re:test(., '[0-9][^{se.NO_BREAK_SPACE}]?$')][(following-sibling::abbr[1])[re:test(., '^[ap]\\.m\\.$')]]")
 	if nodes:
-		messages.append(LintMessage("t-009", "Missing no-break space before time and [text]a.m.[/] or [text]p.m.[/].", se.MESSAGE_TYPE_WARNING, filename, [LintSubmessage(node[-10:] + "<abbr", node.sourceline) for node in nodes]))
+		messages.append(LintMessage("t-009", "Missing no-break space before time and [text]a.m.[/] or [text]p.m.[/].", se.MESSAGE_TYPE_WARNING, filename, [LintSubmessage(node[-10:] + "<abbr", node.getparent().sourceline) for node in nodes]))
 
 	# Check for times with periods instead of colons.
 	# Only check `<p>`, because things like `<table>`/`<td>` are more likely to contain non-time numbers.
