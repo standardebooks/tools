@@ -6,9 +6,9 @@ y-001 [Manual Review] chapter-1.xhtml Possible typo: Doubled `a/the/and/of/or/as
  Line 13:       or or
  Line 13:       and and
 y-001 [Manual Review] content.opf Possible typo: Doubled `a/the/and/of/or/as/if`.
- Line 39:       and and
- Line 39:       the the
- Line 39:       If if
- Line 39:       of of
- Line 39:       or or
- Line 39:       as as
+ Line 40:       and and
+ Line 40:       the the
+ Line 40:       If if
+ Line 40:       of of
+ Line 40:       or or
+ Line 40:       as as

@@ -2,6 +2,8 @@ s-004 [Error] chapter-1.xhtml `img` element missing `alt` attribute.
  Line 11:       <img>
  Line 17:       <img>
  Line 21:       <img>
+m-038 [Error] content.opf `schema:accessMode` property set to `visual`, but no images in ebook.
+ Line 21:       <meta property="schema:accessMode">visual</meta>
 s-041 [Manual Review] loi.xhtml LoI entry text doesn’t match either the referenced element’s `<figcaption>` element or its `<img>` `alt` attribute.
  Line 17:       <a href="chapter-1.xhtml#f-5">x</a>
  Line 18:       <a href="chapter-1.xhtml#f-6">x</a>
