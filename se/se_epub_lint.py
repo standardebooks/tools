@@ -2250,7 +2250,7 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 			if file_language != language:
 				messages.append(LintMessage("s-033", "[attr]xml:lang[/] value on [xhtml]<html>[/] element doesn’t match language set in metadata.", se.MESSAGE_TYPE_WARNING, filename, [LintSubmessage(f"Found: {file_language}\nExpected: {language}", node.sourceline)]))
 
-	nodes = dom.xpath("/html/body//em[re:test(., '^“|”$')]")
+	nodes = dom.xpath("/html/body//em[re:test(., '(^“[^”]+$|^[^“]+”$|^“.+”$)')]")
 	if nodes:
 		messages.append(LintMessage("s-030", "[xhtml]<em>[/] outside of quotation marks.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 

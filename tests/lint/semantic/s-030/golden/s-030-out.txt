@@ -1,0 +1,4 @@
+s-030 [Manual Review] chapter-1.xhtml `<em>` outside of quotation marks.
+ Line 14:       <em>“Hello!</em>
+ Line 16:       <em>“Hello!”</em>
+ Line 18:       <em>Hello!”</em>
