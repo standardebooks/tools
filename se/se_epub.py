@@ -1260,11 +1260,11 @@ class SeEpub:
 			dom = self.get_dom(file_path)
 
 			# Get the `id` and `data-parent` for the top-level element.
-			toplevel = dom.xpath("/html/body/*[@id]")
-			if toplevel:
-				section_id = toplevel[0].get_attr("id")
+			top_level = dom.xpath("/html/body/*[@id and @data-parent]")
+			if top_level:
+				section_id = top_level[0].get_attr("id")
 				file_path_to_id[file_path] = section_id
-				id_to_parent[section_id] = toplevel[0].get_attr("data-parent")
+				id_to_parent[section_id] = top_level[0].get_attr("data-parent")
 
 		# Compute sort keys.
 		for file_path in items:
