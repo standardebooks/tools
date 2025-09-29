@@ -15,7 +15,7 @@ import regex
 
 import se.easy_xml
 
-VERSION = "2.9.3"
+VERSION = "2.10.0"
 MESSAGE_INDENT = "    "
 UNICODE_BOM = "\ufeff"
 NO_BREAK_SPACE = "\u00a0"

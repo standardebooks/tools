@@ -1,3 +1,65 @@
+# 2.10.0
+
+## General
+
+- Fix Python 3.10 compatibility
+
+- Require that ebooks with many translators use 'various_translators' in the S.E. identifier
+
+## se add-file
+
+- Correctly list dramatis-personae as a file type
+
+## se build
+
+- Fix `srcset` to include full image path. Thanks to Vince Rice
+
+## se build-manifest
+
+- Correctly add accessibility metadata based on images and `alt` text
+
+## se build-spine
+
+- Sort in hierarchical order based on `data-parent` attributes. Thanks to Gijs van Tulder
+
+## se build-svg-titles
+
+- Add command. Thanks to Gijs van Tulder
+
+## se clean
+
+- Move SVG `<title>` element to top. Thanks to Robin Whittleton
+
+## se find-unusual-characters
+
+- Handle characters unicodedata doesn't. Thanks to Vince Rice
+
+- Handle characters with no unicode name in plain mode. Thanks to Vince Rice
+
+## se lint
+
+- Add x-022, fractions in SVG viewBox. Thanks to Vince Rice
+
+- Fix crash in t-002
+
+- Tweak x-022 message
+
+- Improve t-008
+
+- Fix crash in t-009
+
+- Add s-030, `<em>` outside of quotation marks
+
+## se make-url-safe
+
+- Remove leading dashes
+
+## se modernize-spelling
+
+- Fix a regex
+
+- Various additions
+
 # 2.9.3
 
 ## General
