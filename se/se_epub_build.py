@@ -581,6 +581,10 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				with importlib.resources.files("se.data.templates").joinpath("full-page-figure-compatibility.css").open("r", encoding="utf-8") as compatibility_css_file:
 					css_file.write("\n\n" + compatibility_css_file.read())
 
+		# Get the ToC dom for upcoming operations.
+		toc_relative_path = metadata_dom.xpath("/package/manifest/item[re:test(@properties, '\\bnav\\b')]/@href", True)
+		toc_dom = self.get_dom(work_compatible_epub_dir / "epub" / toc_relative_path)
+
 		# If we have any endnote files, split them if they contain more than 500 endnotes.
 		for endnote_file in endnote_files_to_be_chunked:
 			endnote_manifest_href = regex.sub(fr"^{regex.escape(str(work_compatible_epub_dir / 'epub') + os.sep)}", "", str(endnote_file.parent))
@@ -602,8 +606,6 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			endnotes_base.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol")[0].remove()
 			endnotes_base.xpath("/html/body/section[contains(@epub:type, 'endnotes')]")[0].append(se.easy_xml.EasyXmlElement("<ol></ol>"))
 			chunk_number = 1
-			toc_relative_path = metadata_dom.xpath("/package/manifest/item[re:test(@properties, '\\bnav\\b')]/@href", True)
-			toc_dom = self.get_dom(work_compatible_epub_dir / "epub" / toc_relative_path)
 			endnotes_manifest_entry = metadata_dom.xpath(f"/package/manifest/item[@href='{endnote_manifest_href}/{endnote_file.name}']")[0]
 			endnotes_spine_entry = metadata_dom.xpath(f"/package/spine/itemref[@idref='{endnotes_manifest_entry.get_attr('id')}']")[0]
 			endnotes_toc_entry = toc_dom.xpath(f"/html/body//*[re:test(@epub:type, '\\btoc\\b')]//li[./a[re:test(@href, '^{endnote_manifest_href}/{endnote_file.name}')]]")[0]
@@ -679,6 +681,17 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 						file.write(dom.to_string())
 
 			# Output the modified the ToC file.
+			with open(work_compatible_epub_dir / "epub" / toc_relative_path, "w", encoding="utf-8") as file:
+				file.write(se.formatting.format_xhtml(toc_dom.to_string()))
+
+		# Remove `<span>` and `<abbr>` from the ToC, which causes broken rendering in iOS 18. See <https://groups.google.com/g/standardebooks/c/dam7dmBcqW0/m/v4GaBkY7AgAJ>.
+		toc_dom = self.get_dom(work_compatible_epub_dir / "epub" / toc_relative_path)
+		write_toc = False
+		for node in toc_dom.xpath("/html/body//abbr | /html/body//span"):
+			node.unwrap()
+			write_toc = True
+
+		if write_toc:
 			with open(work_compatible_epub_dir / "epub" / toc_relative_path, "w", encoding="utf-8") as file:
 				file.write(se.formatting.format_xhtml(toc_dom.to_string()))
 
