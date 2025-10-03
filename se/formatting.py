@@ -136,8 +136,8 @@ def semanticate(xhtml: str) -> str:
 	# more likely to be Italian and English words, respectively.
 	xhtml = regex.sub(r"(?<!>)(?<!</?)\b(?=[CDILMVX]{2,})(?!MI\b|DI\b|MIX\b)(M{0,4}(?:C[MD]|D?C{0,3})(?:X[CL]|L?X{0,3})(?:I[XV]|V?I{0,3}J?))\b(?![\w’>-])", r"""<span epub:type="z3998:roman">\1</span>""", xhtml, flags=regex.IGNORECASE)
 
-	# We can assume a lowercase `i` is always a Roman numeral unless followed by `’`.
-	xhtml = regex.sub(r"""([^\p{Letter}<>/\"])i\b(?!’)(?![^<>]+>)""", r"""\1<span epub:type="z3998:roman">i</span>""", xhtml)
+	# We can assume a lowercase `i` is always a Roman numeral unless followed by `’` or `-` (hyphen minus) or `‑` (non-breaking hyphen).
+	xhtml = regex.sub(r"""([^\p{Letter}<>/\"])i\b(?![’‑-])(?![^<>]+>)""", r"""\1<span epub:type="z3998:roman">i</span>""", xhtml)
 
 	# Fix obscured names starting with `I`, `V`, or `X`.
 	xhtml = regex.sub(fr"""<span epub:type="z3998:roman">([IVX])</span>{se.WORD_JOINER}⸺""", fr"""\1{se.WORD_JOINER}⸺""", xhtml)
