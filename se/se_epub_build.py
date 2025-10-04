@@ -303,7 +303,7 @@ def _convert_cover_to_jpg(work_dir: Path, work_compatible_epub_dir: Path, metada
 		if cover_work_path.suffix in (".svg", ".png"):
 			# If the cover is SVG, convert to PNG first.
 			if cover_work_path.suffix == ".svg":
-				svg2png(url=str(cover_work_path), unsafe=True, write_to=str(work_dir / "cover.png")) # Remove unsafe flag when cairosvg > 2.7.0.
+				svg2png(url=str(cover_work_path), write_to=str(work_dir / "cover.png"))
 
 			# Now convert PNG to JPG.
 			cover = Image.open(work_dir / "cover.png")
