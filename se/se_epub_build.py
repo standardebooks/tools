@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import tempfile
 from copy import deepcopy
+from datetime import datetime
 from hashlib import sha1
 from html import unescape
 from pathlib import Path
@@ -130,7 +131,7 @@ def _add_proof_css(work_compatible_epub_dir: Path) -> None:
 			file.write(se.formatting.simplify_css(xhtml))
 			file.truncate()
 
-def _update_release_date(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_xml.EasyXmlTree) -> float | None:
+def _update_release_date(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_xml.EasyXmlTree) -> datetime | None:
 	"""
 	Update the release date in the metadata and colophon with the last commit date of the repository.
 
@@ -602,7 +603,7 @@ def _compatibility_replacements_css(file_path: Path) -> None:
 			file.write(processed_css)
 			file.truncate()
 
-def _split_endnote_files(self, work_compatible_epub_dir: Path, endnote_files_to_be_chunked: list, toc_relative_path: Path, toc_dom: se.easy_xml.EasyXmlTree) -> None:
+def _split_endnote_files(self, work_compatible_epub_dir: Path, endnote_files_to_be_chunked: list, metadata_dom: se.easy_xml.EasyXmlTree, toc_relative_path: Path, toc_dom: se.easy_xml.EasyXmlTree) -> None:
 	"""
 	Split endnote files with more than 600 endnotes into multiple files with a max of 500 endnotes each.
 
@@ -1002,7 +1003,7 @@ def _compatibility_css_additional_replacements(work_compatible_epub_dir: Path) -
 				file.write(processed_css)
 				file.truncate()
 
-def _build_kobo(self, work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kobo_output_filename: Path, last_updated: float | None) -> None:
+def _build_kobo(self, work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kobo_output_filename: str, last_updated: datetime | None) -> None:
 	"""
 	Build the Kobo .kepub file.
 
@@ -1442,7 +1443,7 @@ def _run_ace(self, work_compatible_epub_dir: Path) -> None:
 		except subprocess.CalledProcessError as ex:
 			raise se.BuildFailedException("[bash]ace[/] failed.") from ex
 
-def _build_kindle(self, work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kindle_output_filename: Path, toc_filename: str, metadata_dom: se.easy_xml.EasyXmlTree, compatible_epub_output_filename: Path, ebook_convert_path: Path, asin: str, last_updated: float | None) -> None:
+def _build_kindle(self, work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kindle_output_filename: str, toc_filename: str, metadata_dom: se.easy_xml.EasyXmlTree, compatible_epub_output_filename: str, ebook_convert_path: Path | None, asin: str, last_updated: datetime | None) -> None:
 	"""
 	Build the Kindle .azw3 file.
 
@@ -1684,7 +1685,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 	advanced_epub_output_filename = f"{identifier}{'.proof' if proof else ''}_advanced.epub"
 	kobo_output_filename = f"{identifier}{'.proof' if proof else ''}.kepub.epub"
 	kindle_output_filename = f"{identifier}{'.proof' if proof else ''}.azw3"
-	endnote_files_to_be_chunked = []
+	endnote_files_to_be_chunked: list[Path] = []
 	has_sequential_full_page_figures = False
 
 	# Create our temp work directory.
@@ -1752,7 +1753,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		# If we have any endnote files with more than 600 endnotes, split them
 		if endnote_files_to_be_chunked:
-			_split_endnote_files(self, work_compatible_epub_dir, endnote_files_to_be_chunked, toc_relative_path, toc_dom)
+			_split_endnote_files(self, work_compatible_epub_dir, endnote_files_to_be_chunked, metadata_dom, toc_relative_path, toc_dom)
 
 		# Remove `<span>` and `<abbr>` from the ToC, which causes broken rendering in iOS 18+. See <https://groups.google.com/g/standardebooks/c/dam7dmBcqW0/m/v4GaBkY7AgAJ>.
 		toc_dom = self.get_dom(work_compatible_epub_dir / "epub" / toc_relative_path)
