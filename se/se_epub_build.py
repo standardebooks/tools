@@ -1756,7 +1756,6 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 			_split_endnote_files(self, work_compatible_epub_dir, endnote_files_to_be_chunked, metadata_dom, toc_relative_path, toc_dom)
 
 		# Remove `<span>` and `<abbr>` from the ToC, which causes broken rendering in iOS 18+. See <https://groups.google.com/g/standardebooks/c/dam7dmBcqW0/m/v4GaBkY7AgAJ>.
-		toc_dom = self.get_dom(work_compatible_epub_dir / "epub" / toc_relative_path)
 		write_toc = False
 		for node in toc_dom.xpath("/html/body//abbr | /html/body//span"):
 			node.unwrap()
