@@ -442,6 +442,7 @@ TYPOGRAPHY
 "t-075", "Word in verse with acute accent for scansion instead of grave accent."
 "t-076", "Grapheme or phoneme not italicized. Hint: Dialect with missing letters should mark missing letters with [text]’[/]."
 "t-077", "Punctuation followed by opening quotation."
+"t-078", "Illegal hyphenated two-word phrasal adjective that begins with an adverb ending in [text]ly[/]."
 
 XHTML
 "x-001", "[text]utf-8[/] string incorrectly cased. Hint: [text]utf-8[/] must always be lowercase."
@@ -890,6 +891,10 @@ def _lint_metadata_checks(self) -> list:
 		matches = regex.findall(r"&[a-z0-9]+?;", long_description.replace("&amp;", ""))
 		if matches:
 			messages.append(LintMessage("m-018", "HTML entities found. Hint: Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, long_description_node.sourceline) for m in matches]))
+
+		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']/p[re:test(., '\\s[a-z]+ly-[a-z]')]")
+		if nodes:
+			messages.append(LintMessage("t-078", "Illegal hyphenated two-word phrasal adjective that begins with an adverb ending in [text]ly[/].", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	except se.InvalidXmlException as ex:
 		messages.append(LintMessage("m-015", "Metadata long description is not valid XHTML.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"{ex}", long_description_node.sourceline)]))
