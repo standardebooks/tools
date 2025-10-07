@@ -3400,7 +3400,7 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 		messages.append(LintMessage("y-025", "Possible typo: Letter/comma/quote mark/letter with no intervening space.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
 
 	# Check for punctuation missing before conjunctions. Ignore `<p>` with an `<i>` child starting in a conjunction, as those are probably book titles or non-English languages.
-	typos = dom.xpath(f"/html/body//p[not(parent::hgroup) and re:test(., '\\b[a-z]+\\s(But|And|For|Nor|Yet|Or)\\b[^’\\.\\?\\-{se.WORD_JOINER}]') and not(./i[re:test(., '^(But|And|For|Nor|Yet|Or)\\b')])]")
+	typos = dom.xpath(f"/html/body//p[not(parent::hgroup) and re:test(., '\\b[a-z]+\\s(But|And|For|Nor|Yet|Or)\\b[^’\\.\\?\\-{se.WORD_JOINER}]') and not(./*[(name()='i' or name()='q') and re:test(., '^(But|And|For|Nor|Yet|Or)\\b')])]")
 	if typos:
 		messages.append(LintMessage("y-026", "Possible typo: No punctuation before conjunction [text]But/And/For/Nor/Yet/Or[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
 
