@@ -37,6 +37,7 @@ PHRASING_TAGS = [
 	"{http://www.w3.org/1999/xhtml}strong",
 ]
 
+# When converting selectors to class names, use these words to form legal CSS class names instead of the characters, which are illegal in CSS class names.
 SELECTOR_REPLACEMENTS = {
 				"(n-": "-n-minus-",
 				"(-n": "-minus-n-",
@@ -1404,7 +1405,6 @@ def css_selector_to_class(selector: str) -> str:
 	"""
 
 	# When converting selectors to class names, use these words to form legal CSS class names instead of the characters, which are illegal in CSS class names.
-
 
 	# First, remove periods from string literals in the selector, like SE semantic inflection in `epub:type`. We can't remove periods in the entire selector because there might be class selectors involved.
 	epub_type = regex.search(r"\"[^\"]+?\"", selector)
