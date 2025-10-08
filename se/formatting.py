@@ -37,6 +37,27 @@ PHRASING_TAGS = [
 	"{http://www.w3.org/1999/xhtml}strong",
 ]
 
+# When converting selectors to class names, use these words to form legal CSS class names instead of the characters, which are illegal in CSS class names.
+SELECTOR_REPLACEMENTS = {
+				"(n-": "-n-minus-",
+				"(-n": "-minus-n-",
+				"+": "-plus-",
+				":": "-",
+				"(": "-",
+				")": "",
+				"[": "",
+				"]": "",
+				"~=": "-contains-word-",
+				"|=": "-equals-or-begins-with-",
+				"^=": "-starts-with-",
+				"$=": "-ends-with-",
+				"*=": "-contains-",
+				"\"": "",
+				# The next items must be last to prevent them from stepping on the previous replacements.
+				"=": "-equals-",
+				"|": "-",
+			}
+
 def semanticate(xhtml: str) -> str:
 	"""
 	Add semantics to well-formed XHTML
@@ -400,8 +421,16 @@ def get_word_count(xhtml: str) -> int:
 	# Get the word count.
 	return len(regex.findall(r"\b\w+\b", xhtml))
 
+def has_css_class(class_attribute: str, class_to_find: str) -> bool:
+	"""
+	Test if a `@class` attribute value contains a given class.
+	"""
+
+	return regex.search(rf'(?<!\S){regex.escape(class_to_find)}(?!\S)', class_attribute) is not None
+
 def _replace_character_references(match_object) -> str:
-	"""Replace most XML character references with literal characters.
+	"""
+	Replace most XML character references with literal characters.
 
 	This function excludes ", ', &, >, and < (&amp;, &lt;, and &gt;), since
 	un-escaping them would create an invalid document.
@@ -1364,24 +1393,31 @@ def make_url_safe(text: str) -> str:
 
 	return text
 
-def namespace_to_class(selector: str) -> str:
+def css_selector_to_class(selector: str) -> str:
 	"""
-	Helper function to remove namespace selectors from a single selector, and replace them with class names.
+	Convert a CSS selector to an equivalent class name, for example, `[epub|type~="z3998:verse"]` -> `epub-type-contains-word-z3998-verse`.
 
 	INPUTS
 	selector: A single CSS selector
 
 	OUTPUTS
-	A string representing the selector with namespaces replaced by classes
+	A CSS class representing the selector
 	"""
 
-	# First, remove periods from `epub:type`. We can't remove periods in the entire selector because there might be class selectors involved.
+	# First, remove periods from string literals in the selector, like SE semantic inflection in `epub:type`. We can't remove periods in the entire selector because there might be class selectors involved.
 	epub_type = regex.search(r"\"[^\"]+?\"", selector)
 	if epub_type:
 		selector = selector.replace(epub_type.group(), epub_type.group().replace(".", "-"))
 
-	# Now clean things up.
-	return selector.replace(":", "-").replace("|", "-").replace("~=", "-").replace("[", ".").replace("]", "").replace("\"", "")
+	# Continue converting the selector to a CSS class.
+	replacement_class = selector
+
+	for match, replacement in SELECTOR_REPLACEMENTS.items():
+		replacement_class = replacement_class.replace(match, replacement)
+
+	replacement_class = regex.sub(r"-{2,}", "-", replacement_class).strip("-")
+
+	return replacement_class
 
 def simplify_css(css: str) -> str:
 	"""
@@ -1404,11 +1440,14 @@ def simplify_css(css: str) -> str:
 		for selector_to_simplify in se.SELECTORS_TO_SIMPLIFY:
 			while selector_to_simplify in simplified_line:
 				split_selector = regex.split(fr"({selector_to_simplify}(\(.*?\))?)", simplified_line, 1)
-				replacement_class = split_selector[1].replace(":", ".").replace("(", "-").replace("n-", "n-minus-").replace("n+", "n-plus-").replace(")", "")
-				simplified_line = simplified_line.replace(split_selector[1], replacement_class)
+				replacement_class = css_selector_to_class(split_selector[1])
+				simplified_line = simplified_line.replace(split_selector[1], "." + replacement_class)
+
 		if simplified_line != line:
 			line = simplified_line + ",\n" + line
+
 		simplified_lines.append(line)
+
 	css = "\n".join(simplified_lines)
 
 	css = css.replace("{,", ",")
@@ -1429,12 +1468,11 @@ def simplify_css(css: str) -> str:
 
 	# Replace CSS namespace selectors with classes.
 	# For example, `p[epub|type~="z3998:salutation"]` becomes `p.epub-type-z3998-salutation`.
-	for line in regex.findall(r"\[[a-z]+\|[a-z]+(?:\~\=\"[^\"]*?\")?\]", css):
-		fixed_line = namespace_to_class(line)
-		css = css.replace(line, fixed_line)
+	for line in regex.findall(r"\[[a-z]+\|[a-z]+(?:[\~\|\^\$\*]?\=\"[^\"]*?\")?\]", css):
+		fixed_line = css_selector_to_class(line)
+		css = css.replace(line, "." + fixed_line)
 
 	return css
-
 
 def generate_title(xhtml: str | EasyXmlTree) -> str:
 	"""

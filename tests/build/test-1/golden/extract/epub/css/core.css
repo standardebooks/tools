@@ -185,13 +185,13 @@ section > header + *{
 	margin-top: 3em;
 }
 
-a.epub-type-noteref{
+a.epub-type-contains-word-noteref{
 	font-size: smaller;
 	font-style: normal !important;
 	vertical-align: super;
 }
 
-section.epub-type-footnotes > ol > li{
+section.epub-type-contains-word-footnotes > ol > li{
 	margin-top: 1em;
 	margin-right: 0;
 	margin-bottom: 1em;
@@ -200,11 +200,11 @@ section.epub-type-footnotes > ol > li{
 
 /* Invert images in dark mode. RMSDK requires a target media as well as a state. */
 @media all and (prefers-color-scheme: dark){
-	img.epub-type-se-image-color-depth-black-on-transparent{
+	img.epub-type-contains-word-se-image-color-depth-black-on-transparent{
 		filter: invert(100%);
 	}
 
-	img.epub-type-se-image-color-depth-black-on-transparent.epub-type-se-image-style-realistic{
+	img.epub-type-contains-word-se-image-color-depth-black-on-transparent.epub-type-contains-word-se-image-style-realistic{
 		background: currentColor;
 		filter: none;
 	}
@@ -225,42 +225,42 @@ section{
 }
 
 /* ADE can't handle the way we hide the title/author/contributor blocks in the titlepage, so hide them from ADE... */
-section.epub-type-titlepage h1,
-section.epub-type-titlepage p,
-section.epub-type-colophon h2,
-section.epub-type-imprint h2{
+section.epub-type-contains-word-titlepage h1,
+section.epub-type-contains-word-titlepage p,
+section.epub-type-contains-word-colophon h2,
+section.epub-type-contains-word-imprint h2{
 	display: none;
 }
 
 /* ...but enable them for accessibility in all other ereaders */
 @supports(font-size: 0){
-	section.epub-type-titlepage h1,
-	section.epub-type-titlepage p,
-	section.epub-type-colophon h2,
-	section.epub-type-imprint h2{
+	section.epub-type-contains-word-titlepage h1,
+	section.epub-type-contains-word-titlepage p,
+	section.epub-type-contains-word-colophon h2,
+	section.epub-type-contains-word-imprint h2{
 		display: block;
 	}
 }
 
 /* Epub2 compatibility CSS */
-img.epub-type-z3998-publisher-logo{
+img.epub-type-contains-word-z3998-publisher-logo{
 	width: 222px; /* This gets scaled up by 2px when adding the white outside path during the build process */
 }
 
 /* Give PNGs a white background for night mode compatibility... */
-img.epub-type-se-image-color-depth-black-on-transparent{
+img.epub-type-contains-word-se-image-color-depth-black-on-transparent{
 	background: #fff !important; /* `!important` is required to make sure readers respect the BG color */
 }
 
 /* ...except our house PNGs, which were rendered from SVGs with a white stroke... */
-.epub-type-titlepage img.epub-type-se-image-color-depth-black-on-transparent,
-img.epub-type-se-image-color-depth-black-on-transparent.epub-type-z3998-publisher-logo{
+.epub-type-contains-word-titlepage img.epub-type-contains-word-se-image-color-depth-black-on-transparent,
+img.epub-type-contains-word-se-image-color-depth-black-on-transparent.epub-type-contains-word-z3998-publisher-logo{
 	background: transparent !important;
 }
 
 /* ...or if the device supports prefers-color-scheme. We’ll invert the image in core.css. RMSDK requires a target media as well as a state. */
 @media all and (prefers-color-scheme){
-	img.epub-type-se-image-color-depth-black-on-transparent:not(.epub-type-se-image-style-realistic){
+	img.epub-type-contains-word-se-image-color-depth-black-on-transparent:not(.epub-type-contains-word-se-image-style-realistic){
 		background: transparent !important;
 	}
 }
@@ -297,12 +297,12 @@ img.mathml{
 
 /* Apple Books will load a pannable zoomable table view when clicked, which is useful unless you’re
    trying to read a piece of drama. */
-:root[__ibooks_internal_theme] .epub-type-z3998-drama table,
-:root[__ibooks_internal_theme] table.epub-type-z3998-drama{
+:root[__ibooks_internal_theme] .epub-type-contains-word-z3998-drama table,
+:root[__ibooks_internal_theme] table.epub-type-contains-word-z3998-drama{
 	pointer-events: none;
 }
 
-:root[__ibooks_internal_theme] .epub-type-z3998-drama table a,
-:root[__ibooks_internal_theme] table.epub-type-z3998-drama a{
+:root[__ibooks_internal_theme] .epub-type-contains-word-z3998-drama table a,
+:root[__ibooks_internal_theme] table.epub-type-contains-word-z3998-drama a{
 	pointer-events: auto;
 }
