@@ -292,13 +292,14 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 							split_selector = regex.split(fr"({selector_to_simplify}(\(.*?\))?)", selector, 1)
 							target_element_selector = "".join(split_selector[0:2])
 
-							replacement_class = split_selector[1].replace(":", "").replace("(", "-").replace("n-", "n-minus-").replace("n+", "n-plus-").replace(")", "")
+							replacement_class = se.formatting.css_selector_to_class(split_selector[1])
+
 							selector = selector.replace(split_selector[1], "." + replacement_class, 1)
 							for element in dom.css_select(target_element_selector):
-								current_class = element.get_attr("class") or ""
+								class_attribute = element.get_attr("class") or ""
 
-								if replacement_class not in current_class:
-									element.set_attr("class", f"{current_class} {replacement_class}".strip())
+								if not se.formatting.has_css_class(class_attribute, replacement_class):
+									element.set_attr("class", f"{class_attribute} {replacement_class}".strip())
 
 				except lxml.cssselect.ExpressionError:
 					# This gets thrown if we use pseudo-elements, which lxml doesn't support.
@@ -309,7 +310,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 				# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements.
 				if regex.search(r"\[[a-z]+\|[a-z]+", selector):
 					for namespace_selector in regex.findall(r"\[[a-z]+\|[a-z]+(?:[\~\^\|\$\*]?\=\"[^\"]*?\")?\]", selector):
-						new_class = regex.sub(r"^\.", "", se.formatting.namespace_to_class(namespace_selector))
+						new_class = regex.sub(r"^\.", "", se.formatting.css_selector_to_class(namespace_selector))
 
 						for element in dom.css_select(namespace_selector):
 							# If we're targeting `xml:lang` attributes, never add the class to `<html>` or `<body>`.
@@ -317,11 +318,11 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 							if namespace_selector == "[xml|lang]" and element.tag in ("html", "body"):
 								continue
 
-							current_class = element.get_attr("class") or ""
+							class_attribute = element.get_attr("class") or ""
 
-							if new_class not in current_class:
-								current_class = f"{current_class} {new_class}".strip()
-								element.set_attr("class", current_class)
+							if not se.formatting.has_css_class(class_attribute, new_class):
+								class_attribute = f"{class_attribute} {new_class}".strip()
+								element.set_attr("class", class_attribute)
 
 		# Done simplifying CSS and tags!
 

@@ -2,20 +2,20 @@
 @namespace epub "http://www.idpf.org/2007/ops";
 
 /* This may appear in the colophon */
-abbr.epub-type-se-era{
+abbr.epub-type-contains-word-se-era{
 	font-variant: small-caps;
 	text-transform: lowercase;
 }
 
-section.epub-type-titlepage h1,
-section.epub-type-titlepage p,
-section.epub-type-colophon h2,
-section.epub-type-imprint h2{
+section.epub-type-contains-word-titlepage h1,
+section.epub-type-contains-word-titlepage p,
+section.epub-type-contains-word-colophon h2,
+section.epub-type-contains-word-imprint h2{
 	left: -999em;
 	position: absolute;
 }
 
-section.epub-type-titlepage img{
+section.epub-type-contains-word-titlepage img{
 	display: block;
 	margin-top: 3em;
 	margin-right: auto;
@@ -24,24 +24,24 @@ section.epub-type-titlepage img{
 	width: 100%;
 }
 
-section.epub-type-colophon,
-section.epub-type-imprint{
+section.epub-type-contains-word-colophon,
+section.epub-type-contains-word-imprint{
 	text-align: center;
 }
 
-section.epub-type-colophon header,
-section.epub-type-imprint header{
+section.epub-type-contains-word-colophon header,
+section.epub-type-contains-word-imprint header{
 	line-height: 0;
 	margin-top: 3em;
 }
 
-img.epub-type-z3998-publisher-logo{
+img.epub-type-contains-word-z3998-publisher-logo{
 	max-width: 25%;
 	width: 220px;
 }
 
-section.epub-type-colophon p,
-section.epub-type-imprint p{
+section.epub-type-contains-word-colophon p,
+section.epub-type-contains-word-imprint p{
 	margin-top: 1em;
 	margin-right: auto;
 	margin-bottom: 0;
@@ -49,13 +49,13 @@ section.epub-type-imprint p{
 	text-indent: 0;
 }
 
-section.epub-type-imprint p{
+section.epub-type-contains-word-imprint p{
 	font-size: smaller;
 	text-align: justify;
 	width: 75%;
 }
 
-section.epub-type-colophon p + p::before{
+section.epub-type-contains-word-colophon p + p::before{
 	border-top: 1px solid;
 	content: "";
 	display: block;
@@ -66,17 +66,17 @@ section.epub-type-colophon p + p::before{
 	width: 25%;
 }
 
-section.epub-type-colophon p.nth-last-child-2 time,
-section.epub-type-colophon p:nth-last-child(2) time{
+section.epub-type-contains-word-colophon p.nth-last-child-2 time,
+section.epub-type-contains-word-colophon p:nth-last-child(2) time{
 	font-variant: small-caps;
 }
 
-section.epub-type-colophon a{
+section.epub-type-contains-word-colophon a{
 	font-variant: small-caps;
 }
 
-section.epub-type-imprint a,
-section.epub-type-colophon a{
+section.epub-type-contains-word-imprint a,
+section.epub-type-contains-word-colophon a{
 	hyphens: none;
 	adobe-text-layout: optimizeSpeed; /* For Nook */
 	adobe-hyphenate: none;
@@ -85,7 +85,7 @@ section.epub-type-colophon a{
 	-epub-hyphens: none;
 }
 
-section.epub-type-copyright-page p{
+section.epub-type-contains-word-copyright-page p{
 	margin-top: 1em;
 	margin-right: auto;
 	margin-bottom: 1em;
@@ -93,18 +93,18 @@ section.epub-type-copyright-page p{
 	text-indent: 0;
 }
 
-section.epub-type-copyright-page blockquote p{
+section.epub-type-contains-word-copyright-page blockquote p{
 	font-style: italic;
 	text-align: left;
 	text-indent: 0;
 }
 
-section.epub-type-copyright-page blockquote p span{
+section.epub-type-contains-word-copyright-page blockquote p span{
 	display: block;
 	padding-left: 1em;
 	text-indent: -1em;
 }
 
-section.epub-type-copyright-page blockquote br{
+section.epub-type-contains-word-copyright-page blockquote br{
 	display: none;
 }
