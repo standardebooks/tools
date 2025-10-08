@@ -1395,7 +1395,7 @@ def make_url_safe(text: str) -> str:
 
 def css_selector_to_class(selector: str) -> str:
 	"""
-	Convert a CSS selector to an equivalent class name, for example, `[epub|type~="z3998:verse"]` -> `epub-type-contains-word-z3998-verse`.
+	Convert a CSS selector to an equivalent class name, for example, `[epub|type~="z3998:verse"]` -> `epub-type-tilde-equals-z3998-verse`.
 
 	INPUTS
 	selector: A single CSS selector
@@ -1403,6 +1403,8 @@ def css_selector_to_class(selector: str) -> str:
 	OUTPUTS
 	A CSS class representing the selector
 	"""
+
+	# When converting selectors to class names, use these words to form legal CSS class names instead of the characters, which are illegal in CSS class names.
 
 	# First, remove periods from string literals in the selector, like SE semantic inflection in `epub:type`. We can't remove periods in the entire selector because there might be class selectors involved.
 	epub_type = regex.search(r"\"[^\"]+?\"", selector)
