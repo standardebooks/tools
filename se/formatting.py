@@ -1437,9 +1437,9 @@ def simplify_css(css: str) -> str:
 	simplified_lines = []
 	for line in lines:
 		simplified_line = line
-		for selector_to_simplify in se.SELECTORS_TO_SIMPLIFY:
-			while selector_to_simplify in simplified_line:
-				split_selector = regex.split(fr"({selector_to_simplify}(\(.*?\))?)", simplified_line, 1)
+		for pseudo_class_to_simplify in se.PSEUDO_CLASSES_TO_SIMPLIFY:
+			while pseudo_class_to_simplify in simplified_line:
+				split_selector = regex.split(fr"({pseudo_class_to_simplify}(\(.*?\))?)", simplified_line, 1)
 				replacement_class = css_selector_to_class(split_selector[1])
 				simplified_line = simplified_line.replace(split_selector[1], "." + replacement_class)
 
