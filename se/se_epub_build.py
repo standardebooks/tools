@@ -64,7 +64,7 @@ class BuildMessage:
 def __save_debug_epub(work_compatible_epub_dir: Path) -> Path:
 	"""
 	Copy the given epub directory to a fixed SE temp directory, and return the path to that directory.
-	
+
 	INPUTS
 	work_compatible_epub_dir: Path to the compatibility epub file in the temporary working directory.
 
@@ -137,7 +137,7 @@ def _update_release_date(self, work_compatible_epub_dir: Path, metadata_dom: se.
 
 	INPUTS
 	work_compatible_epub_dir: Path to the compatibility epub file in the temporary working directory.
-	metadata_dom: dom of the metadata file.	
+	metadata_dom: dom of the metadata file.
 
 	OUTPUTS
 	last_updated: timestamp of the last commit date (if any).
@@ -178,8 +178,8 @@ def _update_release_date(self, work_compatible_epub_dir: Path, metadata_dom: se.
 
 def _add_compatibility_css_and_simplify(self, work_compatible_epub_dir: Path) -> None:
 	"""
-	Add compatibility CSS to the local CSS file; simplify the CSS to convert several types of
-	selectors to classes, and add those classes to the appropriate places in the text files.
+	Add compatibility CSS to the local CSS file; modify the CSS to convert several types of
+	selectors to classes, and add those classes to the appropriate elements in the text files.
 
 	INPUTS
 	self.
@@ -198,11 +198,9 @@ def _add_compatibility_css_and_simplify(self, work_compatible_epub_dir: Path) ->
 		with importlib.resources.files("se.data.templates").joinpath(compatibility_css_filename).open("r", encoding="utf-8") as compatibility_css_file:
 			css_file.write("\n\n" + compatibility_css_file.read())
 
-	# Simplify CSS and tags.
+	# Simplify the CSS first.
 	total_css = ""
 
-	# Simplify the CSS first. Later we'll update the document to match our simplified selectors.
-	# While we're doing this, we store the original CSS into a single variable so we can extract the original selectors later.
 	for file_path in work_compatible_epub_dir.glob("**/*.css"):
 		with open(file_path, "r+", encoding="utf-8") as file:
 			css = file.read()
@@ -212,7 +210,7 @@ def _add_compatibility_css_and_simplify(self, work_compatible_epub_dir: Path) ->
 			file.write(se.formatting.simplify_css(css))
 			file.truncate()
 
-	# Now get a list of original selectors.
+	# Now get a list of original selectors into a variable.
 	# Remove `@supports` and `@media` queries.
 	total_css = regex.sub(r"@\s*(?:supports|media).+?{(.+?)}\s*}", r"\1}", total_css, flags=regex.DOTALL)
 
@@ -231,7 +229,34 @@ def _add_compatibility_css_and_simplify(self, work_compatible_epub_dir: Path) ->
 	# Construct a dictionary of the original selectors.
 	selectors = {line for line in total_css.splitlines() if line != ""}
 
-	# Get a list of `.xhtml` files to simplify.
+	# Now that we have a unique list of CSS selectors, identify the ones that contain elements we
+	# want to use classes for instead.
+	namespace_selectors = {}
+	pseudo_class_selectors = {}
+	for selector in selectors:
+		# Determine if this selector has a namespace, e.g. `xml|lang`, in it.
+		if regex.search(r"\[[a-z]+\|[a-z]+", selector):
+			# If so, find all namespace occurrences and create a corresponding class for each one.
+			for namespace_selector in regex.findall(r"\[[a-z]+\|[a-z]+(?:[\~\^\|\$\*]?\=\"[^\"]*?\")?\]", selector):
+				new_class = regex.sub(r"^\.", "", se.formatting.css_selector_to_class(namespace_selector))
+				namespace_selectors[namespace_selector] = new_class
+
+		for pseudo_class in se.PSEUDO_CLASSES_TO_SIMPLIFY:
+			# A selector can contain more than one instance of the pseudo-class, e.g.
+			# `table:first-of-type tr td:first-of-type`; process all of them, one at a time.
+			while pseudo_class in selector:
+				# The pseudo-class we’re simplifying might not be at the end of the selector,
+				# so temporarily remove the trailing part to target the right elements.
+				split_selector = regex.split(fr"({pseudo_class}(\(.*?\))?)", selector, 1)
+				target_element_selector = "".join(split_selector[0:2])
+
+				new_class = se.formatting.css_selector_to_class(split_selector[1])
+				pseudo_class_selectors[target_element_selector] = new_class
+				# Set the selector to the remainder and loop to see if it matches.
+				selector = selector.replace(split_selector[1], "." + new_class, 1)
+
+	# For every XHTML file, identify any elements that are targeted by any of the selectors we've
+	# collected, and add the associated class.
 	for file_path in work_compatible_epub_dir.glob("**/*.xhtml"):
 		dom = self.get_dom(file_path)
 
@@ -239,47 +264,33 @@ def _add_compatibility_css_and_simplify(self, work_compatible_epub_dir: Path) ->
 		if dom.xpath("/html/body//nav[contains(@epub:type, 'toc')]"):
 			continue
 
-		# Now iterate over each CSS selector and see if it's used in any of the files we found.
-		for selector in selectors:
-			try:
-				# Add classes to elements that match any of our selectors to simplify. For example, if we select `:first-child`, add a `first-child` class to all elements that match that.
-				for selector_to_simplify in se.SELECTORS_TO_SIMPLIFY:
-					while selector_to_simplify in selector:
-						# Potentially the pseudoclass we’ll simplify isn’t at the end of the selector, so we need to temporarily remove the trailing part to target the right elements.
-						split_selector = regex.split(fr"({selector_to_simplify}(\(.*?\))?)", selector, 1)
-						target_element_selector = "".join(split_selector[0:2])
+		# Update any elements selected by one of the namespace selectors with the associated class.
+		try:
+			for selector, new_class in namespace_selectors.items():
+				for element in dom.css_select(selector):
+					# If we're targeting `xml:lang` attributes, never add the class to `<html>` or `<body>`.
+					# We were most likely targeting `body [xml|lang]` but since by default we add classes to everything, that could result in `<html>` getting the `xml-lang` class and making everything italics.
+					if selector == "[xml|lang]" and element.tag in ("html", "body"):
+						continue
 
-						replacement_class = se.formatting.css_selector_to_class(split_selector[1])
+					class_attribute = element.get_attr("class") or ""
 
-						selector = selector.replace(split_selector[1], "." + replacement_class, 1)
-						for element in dom.css_select(target_element_selector):
-							class_attribute = element.get_attr("class") or ""
+					if not se.formatting.has_css_class(class_attribute, new_class):
+						element.set_attr("class", f"{class_attribute} {new_class}".strip())
 
-							if not se.formatting.has_css_class(class_attribute, replacement_class):
-								element.set_attr("class", f"{class_attribute} {replacement_class}".strip())
+			# Update any elements selected by one of the simplified pseudo-class selectors with the associated class.
+			for selector, new_class in pseudo_class_selectors.items():
+				for element in dom.css_select(selector):
+					class_attribute = element.get_attr("class") or ""
 
-			except lxml.cssselect.ExpressionError:
-				# This gets thrown if we use pseudo-elements, which lxml doesn't support.
-				pass
-			except lxml.cssselect.SelectorSyntaxError as ex:
-				raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
+					if not se.formatting.has_css_class(class_attribute, new_class):
+						element.set_attr("class", f"{class_attribute} {new_class}".strip())
 
-			# We've already replaced attribute/namespace selectors with classes in the CSS, now add those classes to the matching elements.
-			if regex.search(r"\[[a-z]+\|[a-z]+", selector):
-				for namespace_selector in regex.findall(r"\[[a-z]+\|[a-z]+(?:[\~\^\|\$\*]?\=\"[^\"]*?\")?\]", selector):
-					new_class = regex.sub(r"^\.", "", se.formatting.css_selector_to_class(namespace_selector))
-
-					for element in dom.css_select(namespace_selector):
-						# If we're targeting `xml:lang` attributes, never add the class to `<html>` or `<body>`.
-						# We were most likely targeting `body [xml|lang]` but since by default we add classes to everything, that could result in `<html>` getting the `xml-lang` class and making everything italics.
-						if namespace_selector == "[xml|lang]" and element.tag in ("html", "body"):
-							continue
-
-						class_attribute = element.get_attr("class") or ""
-
-						if not se.formatting.has_css_class(class_attribute, new_class):
-							class_attribute = f"{class_attribute} {new_class}".strip()
-							element.set_attr("class", class_attribute)
+		except lxml.cssselect.ExpressionError:
+			# This gets thrown if we use pseudo-elements, which lxml doesn't support.
+			pass
+		except lxml.cssselect.SelectorSyntaxError as ex:
+			raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}") # pylint: disable=undefined-loop-variable
 
 def _convert_cover_to_jpg(work_dir: Path, work_compatible_epub_dir: Path, metadata_dom: se.easy_xml.EasyXmlTree) -> None:
 	"""
@@ -288,7 +299,7 @@ def _convert_cover_to_jpg(work_dir: Path, work_compatible_epub_dir: Path, metada
 	INPUTS
 	work_dir: Path to the temporary working directory.
 	work_compatible_epub_dir: Path to the compatibility epub file in the temporary working directory.
-	metadata_dom: dom of the metadata file.	
+	metadata_dom: dom of the metadata file.
 
 	OUTPUTS
 	None.
@@ -782,7 +793,7 @@ def _replace_mathml(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_
 	INPUTS
 	self.
 	work_compatible_epub_dir: Path to the compatibility epub file in the temporary working directory.
-	metadata_dom: dom of the metadata file.	
+	metadata_dom: dom of the metadata file.
 	ibooks_srcset_bug_exists: Flag indicating whether the Apple Books srcset bug is still present.
 
 	OUTPUTS
@@ -1166,7 +1177,7 @@ def _generate_ncx(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_xm
 
 	INPUTS
 	work_compatible_epub_dir: Path to the compatibility epub file in the temporary working directory.
-	metadata_dom: dom of the metadata file.	
+	metadata_dom: dom of the metadata file.
 
 	OUTPUTS
 	toc_filename: The name of the table of contents file.
