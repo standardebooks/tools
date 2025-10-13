@@ -76,11 +76,11 @@
 		<meta property="se:name.person.full-name" refines="#editor-1">Henry Benjamin Wheatley</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#editor-1">https://en.wikipedia.org/wiki/Henry_B._Wheatley</meta>
 		<meta property="se:url.authority.nacoaf" refines="#editor-1">http://id.loc.gov/authorities/names/n87860971</meta>
-		<meta property="role" refines="#editor-1" scheme="marc:relators">aft</meta>
 		<meta property="role" refines="#editor-1" scheme="marc:relators">ann</meta>
-		<meta property="role" refines="#editor-1" scheme="marc:relators">aui</meta>
 		<meta property="role" refines="#editor-1" scheme="marc:relators">edt</meta>
 		<meta property="role" refines="#editor-1" scheme="marc:relators">trc</meta>
+		<meta property="role" refines="#editor-1" scheme="marc:relators">waw</meta>
+		<meta property="role" refines="#editor-1" scheme="marc:relators">win</meta>
 		<dc:contributor id="annotator-1">Richard Griffin</dc:contributor>
 		<meta property="display-seq" refines="#annotator-1">0</meta>
 		<meta property="file-as" refines="#annotator-1">Griffin, Richard</meta>

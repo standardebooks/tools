@@ -197,9 +197,9 @@ METADATA
 "m-027", "[val]se:short-story[/] semantic inflection found, but no [val]se:subject[/] with the value of [val]Shorts[/]."
 "m-028", "Images found in ebook, but no [attr]schema:accessMode[/] property set to [val]visual[/] in metadata."
 "m-029", "Images found in ebook, but no [attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata."
-"m-030", "[val]introduction[/] semantic inflection found, but no MARC relator [val]aui[/] (Author of introduction, but not the chief author) or [val]win[/] (Writer of introduction)."
+"m-030", "[val]introduction[/] semantic inflection found, but no MARC relator [val]win[/] (Writer of introduction)."
 "m-031", "[val]preface[/] semantic inflection found, but no MARC relator [val]wpr[/] (Writer of preface)."
-"m-032", "[val]afterword[/] semantic inflection found, but no MARC relator [val]aft[/] (Author of colophon, afterword, etc.)."
+"m-032", "[val]afterword[/] semantic inflection found, but no MARC relator [val]waw[/] (Writer of afterword)."
 "m-033", "[val]endnotes[/] semantic inflection found, but no MARC relator [val]ann[/] (Annotator)."
 "m-034", "[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator)."
 "m-035", "Unexpected S.E. identifier in colophon."
@@ -1954,14 +1954,14 @@ def _lint_xhtml_metadata_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTr
 	# Don't check the landmarks as that may introduce duplicate errors.
 	# Only check for top-level elements, to avoid intros in short stories or poems in compilation.
 	if not dom.xpath("/html/body//nav[contains(@epub:type, 'landmarks')]"):
-		if dom.xpath("/html/body/*[contains(@epub:type, 'introduction') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and (text()='aui' or text()='win')]"):
-			messages.append(LintMessage("m-030", "[val]introduction[/] semantic inflection found, but no MARC relator [val]aui[/] (Author of introduction, but not the chief author) or [val]win[/] (Writer of introduction).", se.MESSAGE_TYPE_WARNING, filename))
+		if dom.xpath("/html/body/*[contains(@epub:type, 'introduction') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='win']"):
+			messages.append(LintMessage("m-030", "[val]introduction[/] semantic inflection found, but no MARC relator [val]win[/] (Writer of introduction).", se.MESSAGE_TYPE_WARNING, filename))
 
 		if dom.xpath("/html/body/*[contains(@epub:type, 'preface') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='wpr']"):
 			messages.append(LintMessage("m-031", "[val]preface[/] semantic inflection found, but no MARC relator [val]wpr[/] (Writer of preface).", se.MESSAGE_TYPE_WARNING, filename))
 
-		if dom.xpath("/html/body/*[contains(@epub:type, 'afterword') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='aft']"):
-			messages.append(LintMessage("m-032", "[val]afterword[/] semantic inflection found, but no MARC relator [val]aft[/] (Author of colophon, afterword, etc.).", se.MESSAGE_TYPE_WARNING, filename))
+		if dom.xpath("/html/body/*[contains(@epub:type, 'afterword') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='waw']"):
+			messages.append(LintMessage("m-032", "[val]afterword[/] semantic inflection found, but no MARC relator [val]waw[/] (Writer of afterword).", se.MESSAGE_TYPE_WARNING, filename))
 
 		if dom.xpath("/html/body/*[contains(@epub:type, 'endnotes') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='ann']"):
 			messages.append(LintMessage("m-033", "[val]endnotes[/] semantic inflection found, but no MARC relator [val]ann[/] (Annotator).", se.MESSAGE_TYPE_WARNING, filename))
