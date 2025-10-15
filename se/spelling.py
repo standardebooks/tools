@@ -392,6 +392,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b[ée]tag[eè]re", r"étagère", xhtml)			# etagere -> étagère
 	xhtml = regex.sub(r"\b([Pp])oignard", r"\1oniard", xhtml)			# poignard -> poniard
 	xhtml = regex.sub(r" ’([Bb])ye\b", r" \1ye", xhtml)				# ’bye -> bye
+	xhtml = regex.sub(r"\b([Vv])izor", r"\1isor", xhtml)				# vizor -> visor
 
         # Remove elision quotes from words that no longer need them.
 	xhtml = regex.sub(r"’([Bb])us\b", r"\1us", xhtml)				# ’bus -> bus
