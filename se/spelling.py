@@ -391,19 +391,19 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b[ÉE]tag[eè]re", r"Étagère", xhtml)			# Etagere -> Étagère
 	xhtml = regex.sub(r"\b[ée]tag[eè]re", r"étagère", xhtml)			# etagere -> étagère
 	xhtml = regex.sub(r"\b([Pp])oignard", r"\1oniard", xhtml)			# poignard -> poniard
-	xhtml = regex.sub(r" ’([Bb])ye\b", r" \1ye", xhtml)				# ’bye -> bye
 	xhtml = regex.sub(r"\b([Vv])izor", r"\1isor", xhtml)				# vizor -> visor
 
         # Remove elision quotes from words that no longer need them.
-	xhtml = regex.sub(r"’([Bb])us\b", r"\1us", xhtml)				# ’bus -> bus
-	xhtml = regex.sub(r"’([Cc])ello(s?)\b", r"\1ello\2", xhtml)			# ’cello -> cello
-	xhtml = regex.sub(r"’([Cc])ellist", r"\1ellist", xhtml)				# ’cellist -> cellist
+	xhtml = regex.sub(r"([^\p{Letter}])’([Bb])us\b", r"\1\2us", xhtml)				# ’bus -> bus
+	xhtml = regex.sub(r"([^\p{Letter}])’([Cc])ello(s?)\b", r"\1\2ello\3", xhtml)			# ’cello -> cello
+	xhtml = regex.sub(r"([^\p{Letter}])’([Cc])ellist", r"\1\2ellist", xhtml)				# ’cellist -> cellist
 	xhtml = regex.sub(r"([^\p{Letter}])([Dd])amn’([^\p{Letter}])", r"\1\2amn\3", xhtml)	# damn' -> damn
-	xhtml = regex.sub(r"’([Ff])lu\b", r"\1lu", xhtml)				# ’flu -> flu
-	xhtml = regex.sub(r"’([Pp])hon(e|ing)", r"\1hon\2", xhtml)			# ’phone -> phone; note that we can't use \b on the left because it won't match for some reason
-	xhtml = regex.sub(r"’([Pp])lane\b", r"\1lane", xhtml)				# ’plane -> plane
-	xhtml = regex.sub(r"’([Pp])ossum", r"\1ossum", xhtml)				# ’possum -> possum
-	xhtml = regex.sub(r"’([Ss])cope(s?)\b", r"\1cope\2", xhtml)			# ’scope -> scope
+	xhtml = regex.sub(r"([^\p{Letter}])’([Ff])lu\b", r"\1\2lu", xhtml)				# ’flu -> flu
+	xhtml = regex.sub(r"([^\p{Letter}])’([Pp])hon(e|ing)", r"\1\2hon\3", xhtml)			# ’phone -> phone; note that we can't use \b on the left because it won't match for some reason
+	xhtml = regex.sub(r"([^\p{Letter}])’([Pp])lane\b", r"\1\2lane", xhtml)				# ’plane -> plane
+	xhtml = regex.sub(r"([^\p{Letter}])’([Pp])ossum", r"\1\2ossum", xhtml)				# ’possum -> possum
+	xhtml = regex.sub(r"([^\p{Letter}])’([Ss])cope(s?)\b", r"\1\2cope\3", xhtml)			# ’scope -> scope
+	xhtml = regex.sub(r"([^\p{Letter}])’([Bb])ye\b", r"\1\2ye", xhtml)			# ’bye -> bye
 
 
         # Remove diacritics from words that no longer need them.
