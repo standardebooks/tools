@@ -293,6 +293,7 @@ SEMANTICS & CONTENT
 "s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file."
 "s-038", "Illegal asterism. Hint: Section/scene breaks must be defined by an [xhtml]<hr/>[/] element."
 "s-039", "[text]Ibid[/] in endnotes. Hint: “Ibid” means “The previous reference” which is meaningless with popup endnotes"
+"s-040", "Element with [attr]data-parent[/] attribute, but its parent is in the same file."
 "s-041", "LoI entry text doesn’t match either the referenced element’s [xhtml]<figcaption>[/] element or its [xhtml]<img>[/] [attr]alt[/] attribute."
 "s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child."
 "s-043", "[val]se:short-story[/] semantic on element that is not [xhtml]<article>[/]."
@@ -361,7 +362,6 @@ SEMANTICS & CONTENT
 "s-106", "Proper name in the colophon without parent [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], or [xhtml]<b>[/] if anonymous."
 "s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?"
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"s-040", ""
 "s-025", ""
 
 TYPOGRAPHY
@@ -2277,6 +2277,10 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	nodes = dom.xpath("/html/body//*[self::p or self::div][re:test(., '^\\s*[\\*\\.•\\-⁠—]\\s*([\\*\\.•\\-⁠—]\\s*)+$')]")
 	if nodes:
 		messages.append(LintMessage("s-038", "Illegal asterism. Hint: Section/scene breaks must be defined by an [xhtml]<hr/>[/] element.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+
+	nodes = dom.xpath("/html/body//*[@data-parent = parent::*/@id]")
+	if nodes:
+		messages.append(LintMessage("s-040", "Element with [attr]data-parent[/] attribute, but its parent is in the same file.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for `<table>` element without a `<tbody>` child.
 	nodes = dom.xpath("/html/body//table[not(tbody)]")
