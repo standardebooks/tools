@@ -253,7 +253,6 @@ def process_landmarks(landmarks_list: list, work_title: str) -> str:
 		out_string += item.landmark_link()
 	return out_string
 
-
 def process_items(item_list: list) -> str:
 	"""
 	Runs through all found toc items and returns them as a string.
@@ -297,8 +296,6 @@ def process_items(item_list: list) -> str:
 				unclosed_ol -= 1
 				torepeat -= 1
 	return out_string
-
-
 
 def output_toc(item_list: list, landmark_list, toc_path: str, work_title: str) -> str:
 	"""
@@ -448,7 +445,7 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, single_file: 
 		toc_item.level = get_level(heading, toc_list)
 		toc_item.place = place
 
-		# Exception: The titlepage always has is titled `titlepage` in the ToC.
+		# Exception: The titlepage always is titled `titlepage` in the ToC.
 		if dom.xpath("//section[re:test(@epub:type, '\\btitlepage\\b')]"):
 			toc_item.title = "Titlepage"
 			toc_item.lang = "" # Reset in case the title is not English.
@@ -460,7 +457,6 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, single_file: 
 		is_toplevel = False
 		toc_list.append(toc_item)
 
-
 def get_toc_id_for_special_item(node: EasyXmlElement) -> str:
 	"""
 	Get the id for a 'special item' node.
@@ -471,7 +467,6 @@ def get_toc_id_for_special_item(node: EasyXmlElement) -> str:
 		if toc_id:
 			return toc_id
 	return ""
-
 
 def get_level(node: EasyXmlElement, toc_list: list) -> int:
 	"""
@@ -577,7 +572,6 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 
 	return toc_item
 
-
 def get_child_strings(node: EasyXmlElement) -> str:
 	"""
 	Get child strings.
@@ -588,7 +582,6 @@ def get_child_strings(node: EasyXmlElement) -> str:
 	for child in children:
 		child_strs += child.to_string() + "\n"
 	return child_strs
-
 
 def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem, textf: str) -> TocItem:
 	"""
@@ -746,6 +739,7 @@ def process_all_content(self, file_list: list) -> tuple[list, list]:
 		with open(textf, "r", encoding="utf-8") as file:
 			dom = se.easy_xml.EasyXmlTree(file.read())
 		process_headings(dom, textf.name, toc_list, single_file, single_file_without_headers)
+
 		# Only consider half title pages that are front matter. Some books, like C.S. Lewis's _Poetry_, may have half titles that are bodymatter.
 		if dom.xpath("/html/body//*[contains(@epub:type, 'halftitlepage') and ancestor-or-self::*[contains(@epub:type, 'frontmatter')]]"):
 			nest_under_halftitle = True
@@ -763,7 +757,7 @@ def process_all_content(self, file_list: list) -> tuple[list, list]:
 				passed_halftitle = True
 
 
-	# We add this dummy item because outputtoc always needs to look ahead to the next item.
+	# We add this dummy item because `output_toc()` always needs to look ahead to the next item.
 	last_toc = TocItem()
 	last_toc.level = 1
 	last_toc.title = "dummy"
