@@ -2682,7 +2682,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 
 	# Check for missing punctuation before closing quotes.
 	# Exclude signatures in footers as those are commonly quoted without ending punctuation.
-	nodes = dom.xpath("/html/body//p[not( (parent::header or parent::hgroup or (parent::footer and contains(@epub:type, 'z3998:signature'))) and position()=last())][re:test(., '[a-z]+[”’]$')]")
+	nodes = dom.xpath("/html/body//p[not( (parent::header or parent::hgroup or (ancestor::footer and contains(@epub:type, 'z3998:signature'))) and position()=last())][re:test(., '[a-z]+[”’]$')]")
 	if nodes:
 		messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, [LintSubmessage(node.to_string()[-30:], node.sourceline) for node in nodes]))
 
