@@ -1124,7 +1124,8 @@ def _lint_metadata_checks(self) -> list:
 	if nodes:
 		messages.append(LintMessage("m-066", "Subject identifiers must be IDs and not URLs.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
-	nodes = self.metadata_dom.xpath("/package/metadata/meta[re:test(@property, '^se:url\\.') and not(re:test(., 'https?://'))]")
+	# Exclude template variables.
+	nodes = self.metadata_dom.xpath("/package/metadata/meta[re:test(@property, '^se:url\\.') and not(re:test(., 'https?://')) and not(re:test(., '^[A-Z_]+$'))]")
 	if nodes:
 		messages.append(LintMessage("m-084", "[xhtml]<meta property=\"se:url....\">[/] element not containing a URL.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
