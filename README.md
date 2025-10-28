@@ -206,8 +206,6 @@ We need volunteers to take the lead on the following goals:
 
 - Currently, the toolset requires the whole Calibre package, which is very big, but it’s only used to convert epub to azw3. Can we inline Calibre’s azw3 conversion code into our `./vendor/` directory, to avoid having to install the entire Calibre package as a big dependency? If so, how do we keep it updated as Calibre evolves?
 
-- Over the years, `./se/se_epub_build.py` has evolved to become very large and unwieldy. Is there a better, clearer way to organize this code?
-
 # Tool descriptions
 
 -	### `se add-file`
