@@ -1768,7 +1768,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		with open(work_compatible_epub_dir / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
 			file.write(se.formatting.format_opf(metadata_dom.to_string()))
 
-		if build_kobo:
+		if build_kobo and not check_only:
 			_build_kobo(self, work_dir, work_compatible_epub_dir, output_dir, kobo_output_filename, last_updated)
 
 		# Now work on more compatibility fixes.
