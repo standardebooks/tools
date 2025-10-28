@@ -296,11 +296,11 @@ def _convert_cover_to_jpg(work_dir: Path, work_compatible_epub_dir: Path, metada
 
 	cover_local_path = metadata_dom.xpath("/package/manifest/item[@properties='cover-image'][1]/@href", True)
 
-	# If we have a cover …
+	# If we have a cover...
 	if cover_local_path:
 		cover_work_path = work_compatible_epub_dir / "epub" / cover_local_path
 
-		# … and it's not a JPG, convert it to one
+		# ...and it's not a JPG, convert it to one.
 		if cover_work_path.suffix in (".svg", ".png"):
 			# If the cover is SVG, convert to PNG first.
 			if cover_work_path.suffix == ".svg":
@@ -469,17 +469,16 @@ def _compatibility_replacements_xhtml(self, file_path: Path, has_sequential_full
 	processed_xhtml = processed_xhtml.replace(se.WORD_JOINER, se.ZERO_WIDTH_SPACE)
 
 	# We've disabled quote-align for now, because it causes more problems than expected.
-	# # Move quotation marks over periods and commas
+	# # Move quotation marks over periods and commas.
 	# # The negative lookahead is to prevent matching `.&hairsp;…`
 	# processed_xhtml = regex.sub(fr"([\\.…,])([’”{se.HAIR_SPACE}]+)(?!…)", r"""\1<span class="quote-align">\2</span>""", processed_xhtml)
 
-	# # The above replacement may replace text within `<img>` `alt` attributes. Remove those now until no replacements remain, since we may have
-	# # many matches in the same line
+	# # The above replacement may replace text within `<img>` `alt` attributes. Remove those now until no replacements remain, since we may have many matches in the same line.
 	# replacements = 1
 	# while replacements > 0:
 	# 	processed_xhtml, replacements = regex.subn(r"alt=\"([^<>\"]+?)<span class=\"quote-align\">([^<>\"]+?)</span>", r"""alt="\1\2""", processed_xhtml)
 
-	# # Do the same for `<title>` elements
+	# # Do the same for `<title>` elements.
 	# replacements = 1
 	# while replacements > 0:
 	# 	processed_xhtml, replacements = regex.subn(r"<title>([^<>]+?)<span class=\"quote-align\">([^<>]+?)</span>", r"""<title>\1\2""", processed_xhtml)
@@ -1720,10 +1719,10 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 		# Now add compatibility fixes for older ereaders.
 
-		# Add compatibility and simplify CSS
+		# Add compatibility and simplify CSS.
 		_add_compatibility_css_and_simplify(self, work_compatible_epub_dir)
 
-		# Convert cover to jpg if it's not already
+		# Convert cover to jpg if it's not already.
 		_convert_cover_to_jpg(work_dir, work_compatible_epub_dir, metadata_dom)
 
 		# Add an element noting the version of the SE tools that built this ebook, but only if the SE vocab prefix is present.
@@ -1751,7 +1750,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 		toc_relative_path = metadata_dom.xpath("/package/manifest/item[re:test(@properties, '\\bnav\\b')]/@href", True)
 		toc_dom = self.get_dom(work_compatible_epub_dir / "epub" / toc_relative_path)
 
-		# If we have any endnote files with more than 600 endnotes, split them
+		# If we have any endnote files with more than 600 endnotes, split them.
 		if endnote_files_to_be_chunked:
 			_split_endnote_files(self, work_compatible_epub_dir, endnote_files_to_be_chunked, metadata_dom, toc_relative_path, toc_dom)
 
