@@ -229,8 +229,7 @@ def _add_compatibility_css_and_simplify(self, work_compatible_epub_dir: Path) ->
 	# Construct a dictionary of the original selectors.
 	selectors = {line for line in total_css.splitlines() if line != ""}
 
-	# Now that we have a unique list of CSS selectors, identify the ones that contain elements we
-	# want to use classes for instead.
+	# Now that we have a unique list of CSS selectors, identify the ones that contain elements we want to use classes for instead.
 	namespace_selectors = {}
 	pseudo_class_selectors = {}
 	for selector in selectors:
@@ -242,11 +241,9 @@ def _add_compatibility_css_and_simplify(self, work_compatible_epub_dir: Path) ->
 				namespace_selectors[namespace_selector] = new_class
 
 		for pseudo_class in se.PSEUDO_CLASSES_TO_SIMPLIFY:
-			# A selector can contain more than one instance of the pseudo-class, e.g.
-			# `table:first-of-type tr td:first-of-type`; process all of them, one at a time.
+			# A selector can contain more than one instance of the pseudo-class, e.g. `table:first-of-type tr td:first-of-type`; process all of them, one at a time.
 			while pseudo_class in selector:
-				# The pseudo-class we’re simplifying might not be at the end of the selector,
-				# so temporarily remove the trailing part to target the right elements.
+				# The pseudo-class we’re simplifying might not be at the end of the selector, so temporarily remove the trailing part to target the right elements.
 				split_selector = regex.split(fr"({pseudo_class}(\(.*?\))?)", selector, 1)
 				target_element_selector = "".join(split_selector[0:2])
 
@@ -255,8 +252,7 @@ def _add_compatibility_css_and_simplify(self, work_compatible_epub_dir: Path) ->
 				# Set the selector to the remainder and loop to see if it matches.
 				selector = selector.replace(split_selector[1], "." + new_class, 1)
 
-	# For every XHTML file, identify any elements that are targeted by any of the selectors we've
-	# collected, and add the associated class.
+	# For every XHTML file, identify any elements that are targeted by any of the selectors we've collected, and add the associated class.
 	for file_path in work_compatible_epub_dir.glob("**/*.xhtml"):
 		dom = self.get_dom(file_path)
 
@@ -267,30 +263,36 @@ def _add_compatibility_css_and_simplify(self, work_compatible_epub_dir: Path) ->
 		# Update any elements selected by one of the namespace selectors with the associated class.
 		try:
 			for selector, new_class in namespace_selectors.items():
-				for element in dom.css_select(selector):
-					# If we're targeting `xml:lang` attributes, never add the class to `<html>` or `<body>`.
-					# We were most likely targeting `body [xml|lang]` but since by default we add classes to everything, that could result in `<html>` getting the `xml-lang` class and making everything italics.
-					if selector == "[xml|lang]" and element.tag in ("html", "body"):
-						continue
+				try:
+					for element in dom.css_select(selector):
+						# If we're targeting `xml:lang` attributes, never add the class to `<html>` or `<body>`.
+						# We were most likely targeting `body [xml|lang]` but since by default we add classes to everything, that could result in `<html>` getting the `xml-lang` class and making everything italics.
+						if selector == "[xml|lang]" and element.tag in ("html", "body"):
+							continue
 
-					class_attribute = element.get_attr("class") or ""
+						class_attribute = element.get_attr("class") or ""
 
-					if not se.formatting.has_css_class(class_attribute, new_class):
-						element.set_attr("class", f"{class_attribute} {new_class}".strip())
+						if not se.formatting.has_css_class(class_attribute, new_class):
+							element.set_attr("class", f"{class_attribute} {new_class}".strip())
+
+				except lxml.cssselect.SelectorSyntaxError as ex:
+					raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
 
 			# Update any elements selected by one of the simplified pseudo-class selectors with the associated class.
 			for selector, new_class in pseudo_class_selectors.items():
-				for element in dom.css_select(selector):
-					class_attribute = element.get_attr("class") or ""
+				try:
+					for element in dom.css_select(selector):
+						class_attribute = element.get_attr("class") or ""
 
-					if not se.formatting.has_css_class(class_attribute, new_class):
-						element.set_attr("class", f"{class_attribute} {new_class}".strip())
+						if not se.formatting.has_css_class(class_attribute, new_class):
+							element.set_attr("class", f"{class_attribute} {new_class}".strip())
+
+				except lxml.cssselect.SelectorSyntaxError as ex:
+					raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
 
 		except lxml.cssselect.ExpressionError:
 			# This gets thrown if we use pseudo-elements, which lxml doesn't support.
 			pass
-		except lxml.cssselect.SelectorSyntaxError as ex:
-			raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}") # pylint: disable=undefined-loop-variable
 
 def _convert_cover_to_jpg(work_dir: Path, work_compatible_epub_dir: Path, metadata_dom: se.easy_xml.EasyXmlTree) -> None:
 	"""
@@ -1431,7 +1433,7 @@ def _run_ace(self, work_compatible_epub_dir: Path) -> None:
 				# Unpack our sorted messages for output.
 				for (file_path_str, code), message_list in file_messages.items():
 					item_messages = []
-					for (message, html) in message_list: # pylint: disable=unused-variable
+					for (_, html) in message_list:
 						if html:
 							# Ace output includes namespaces on each element, remove them.
 							html = regex.sub(r" xmlns(?::.*?)?=\"[^\"]+?\"", "", html)
