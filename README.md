@@ -49,18 +49,17 @@ sudo ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/pytho
 ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se.fish $HOME/.config/fish/completions/
 ```
 
-## Fedora 41 users
+## Fedora 43 users
 
 ```shell
 # Install some pre-flight dependencies.
-sudo dnf install pipx python3.12 python3.12-devel gcc libxslt-devel calibre git java-21-openjdk-headless
+sudo dnf install pipx python3-devel gcc libxslt-devel calibre git java-25-openjdk-headless
 
 # Ensure `$PATH` environment variable is correctly set up for `pipx`.
 pipx ensurepath
 
 # Install the toolset.
-pipx install --python=3.12 standardebooks
-pipx inject standardebooks setuptools
+pipx install standardebooks
 ```
 
 ### Optional: Install shell completions
