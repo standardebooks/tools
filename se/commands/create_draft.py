@@ -378,7 +378,8 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> tuple[str | None, s
 	# We try to get the Wikipedia URL by the subject by taking advantage of the fact that Wikipedia's special search will redirect you immediately if there's an article match. So if the search page tries to redirect us, we use that redirect link as the Wiki URL. If the search page returns HTTP 200, then we didn't find a direct match and return nothing.
 
 	try:
-		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": "1"}, allow_redirects=False, timeout=60)
+		# Wikipedia requires a `User-Agent` header, otherwise it returns HTTP 403 Forbidden.
+		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": "1"}, allow_redirects=False, timeout=60, headers={'User-Agent': 'Standard Ebooks toolset'})
 	except Exception as ex:
 		raise se.RemoteCommandErrorException(f"Couldn’t contact Wikipedia. Exception: {ex}") from ex
 
