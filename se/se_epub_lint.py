@@ -3875,9 +3875,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 			# Remove comments before we do any further processing.
 			source_file = source_file.sub(regex.compile(r"<!--.+?-->", flags=regex.DOTALL), "")
 
-			line_matches = source_file.findall("UTF-8")
-			if line_matches:
-				messages.append(LintMessage("x-001", "[text]utf-8[/] string incorrectly cased. Hint: [text]utf-8[/] must always be lowercase.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_matches(line_matches)))
+			# Ignore XML files in `./images/` because we don't care how *source* SVGs/MusicXML are internally formatted.
+			if not file_path.is_relative_to(self.path / "images"):
+				line_matches = source_file.findall("UTF-8")
+				if line_matches:
+					messages.append(LintMessage("x-001", "[text]utf-8[/] string incorrectly cased. Hint: [text]utf-8[/] must always be lowercase.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_matches(line_matches)))
 
 			if file_path.suffix == ".svg":
 				# If this is an SVG that is in the `./images/` folder, ignore it, because it's a source that could have any kind of internal formatting.
