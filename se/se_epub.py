@@ -9,8 +9,10 @@ from datetime import datetime, timezone
 import os
 from pathlib import Path
 import importlib.resources
+from typing import cast
 
-import git
+from git import cmd
+from git.repo import Repo as Repo # pylint: disable=useless-import-alias # Import in this style to silence `mypy` type checking, see <https://github.com/microsoft/pyright/issues/5929#issuecomment-1714815796>.
 from lxml import etree
 from natsort import natsorted
 import regex
@@ -83,7 +85,7 @@ class SeEpub:
 	_endnotes: list[Endnote] | None = None
 	_endnotes_path = None
 	_loi_path = None
-	_cover_path = None
+	_cover_path: Path | None = None
 	_spine_file_paths: list[Path] | None = None
 
 	def __init__(self, epub_root_directory: str | Path):
@@ -185,14 +187,14 @@ class SeEpub:
 		return self._loi_path
 
 	@property
-	def repo(self) -> git.Repo:
+	def repo(self) -> Repo:
 		"""
 		Accessor.
 		"""
 
 		if not self._repo:
 			try:
-				self._repo = git.Repo(self.path)
+				self._repo = Repo(self.path)
 			except Exception as ex:
 				raise se.InvalidSeEbookException("Couldn’t access this ebook’s Git repository.") from ex
 
@@ -212,7 +214,7 @@ class SeEpub:
 				if "GIT_DIR" in os.environ:
 					del os.environ["GIT_DIR"]
 
-				git_command = git.cmd.Git(self.path)
+				git_command = cmd.Git(self.path)
 				output = git_command.show("-s", "--format=%h %ct", "HEAD").split()
 
 				self._last_commit = GitCommit(output[0], datetime.fromtimestamp(int(output[1]), timezone.utc))
@@ -761,6 +763,9 @@ class SeEpub:
 		dest_images_directory = self.content_path / "images"
 		dest_cover_svg_filename = self.cover_path
 
+		if dest_cover_svg_filename is None:
+			return
+
 		# Create output directory if it doesn't exist.
 		dest_images_directory.mkdir(parents=True, exist_ok=True)
 
@@ -1209,7 +1214,7 @@ class SeEpub:
 		# Assemble the manifest XML string.
 		manifest_xml = "<manifest>\n"
 
-		for line in manifest:
+		for line in cast(list[str], manifest):
 			manifest_xml = manifest_xml + "\t" + line + "\n"
 
 		manifest_xml = manifest_xml + "</manifest>"
@@ -1226,7 +1231,7 @@ class SeEpub:
 		"""
 
 		filtered_items = []
-		spine_additions = []
+		spine_additions: list[str] = []
 
 		for file_path in items:
 			dom = self.get_dom(file_path)
@@ -1238,7 +1243,7 @@ class SeEpub:
 				filtered_items.append(file_path)
 
 		# Sort the additions, for example if we have more than one dedication or introduction.
-		spine_additions = natsorted(spine_additions)
+		spine_additions = cast(list[str], natsorted(spine_additions))
 
 		return (spine + spine_additions, filtered_items)
 
@@ -1330,7 +1335,7 @@ class SeEpub:
 		halftitlepage, frontmatter = self.__add_to_spine([], frontmatter, "halftitlepage")
 
 		# Add any remaining frontmatter.
-		spine += natsorted([file_path.name for file_path in frontmatter])
+		spine += cast(list[str], natsorted([file_path.name for file_path in frontmatter]))
 
 		# The half title page is always the last front matter.
 		spine += halftitlepage
@@ -1353,7 +1358,7 @@ class SeEpub:
 		copyright_page, backmatter = self.__add_to_spine([], backmatter, "copyright-page")
 
 		# Add any remaining backmatter.
-		spine += natsorted([file_path.name for file_path in backmatter])
+		spine += cast(list[str], natsorted([file_path.name for file_path in backmatter]))
 
 		# Colophon and copyright page are always last.
 		spine += colophon

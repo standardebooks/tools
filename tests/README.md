@@ -3,7 +3,7 @@
 Similar to `pylint`, the `pytest` command can be injected into the venv `pipx` created for the `standardebooks` package:
 
 ```shell
-pipx inject standardebooks pytest==8.3.4
+pipx inject standardebooks pytest==8.4.2
 ```
 
 The tests are executed by calling `pytest` from the top level of your tools repo:

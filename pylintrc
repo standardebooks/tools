@@ -1,6 +1,6 @@
 [MASTER]
 # Third-party code that we don't want to lint
-ignore=vendor
+ignore-paths=^se/vendor
 
 # C extensions that pylint outputs lots of useless "errors" about
 extension-pkg-whitelist=lxml,math,unicodedata

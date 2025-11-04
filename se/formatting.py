@@ -604,7 +604,7 @@ def format_xml_file(filename: Path) -> None:
 			file.write(processed_xml)
 			file.truncate()
 
-def _format_style_elements(tree: etree.ElementTree):
+def _format_style_elements(tree: etree.Element):
 	"""
 	Find <style> elements in an XML etree, and pretty-print the CSS inside of them.
 	The passed tree is modified in-place.
@@ -634,7 +634,7 @@ def _format_style_elements(tree: etree.ElementTree):
 	except Exception as ex:
 		raise se.InvalidCssException(f"Couldn’t parse CSS. Exception: {ex}")
 
-def _format_xml_str(xml: str) -> etree.ElementTree:
+def _format_xml_str(xml: str) -> etree.Element:
 	"""
 	Given a string of well-formed XML, return a pretty-printed etree.
 
@@ -662,7 +662,7 @@ def _format_xml_str(xml: str) -> etree.ElementTree:
 
 	return tree
 
-def _xml_tree_to_string(tree: etree.ElementTree, doctype: str | None = None) -> str:
+def _xml_tree_to_string(tree: etree.Element, doctype: str | None = None) -> str:
 	"""
 	Given an XML etree, return a string representing the etree's XML.
 

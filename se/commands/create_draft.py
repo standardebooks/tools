@@ -11,7 +11,7 @@ from html import escape
 from pathlib import Path
 import importlib.resources
 
-import git
+from git.repo import Repo as Repo # pylint: disable=useless-import-alias # Import in this style to silence `mypy` type checking, see <https://github.com/microsoft/pyright/issues/5929#issuecomment-1714815796>.
 import regex
 import requests
 from ftfy import fix_text
@@ -1056,7 +1056,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 	# Set up local Git repo.
 	if args.verbose:
 		console.print(se.prep_output("Initialising git repository ...", plain_output))
-	repo = git.Repo.init(repo_path)
+	repo = Repo.init(repo_path)
 
 	if args.email:
 		with repo.config_writer() as config:

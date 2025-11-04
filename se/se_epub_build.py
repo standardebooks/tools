@@ -904,7 +904,7 @@ def _replace_mathml(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_
 
 					# If the node has no children, strip its text value.
 					if not node_clone.children:
-						node_clone.lxml_element.text = node_clone.lxml_element.text.strip()
+						node_clone.lxml_element.text = (node_clone.lxml_element.text or "").strip()
 
 					node.replace_with(node_clone)
 					node_clone.unwrap()
@@ -1224,16 +1224,19 @@ def _generate_ncx(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_xm
 			# Remove `epub:type`s that are not in the allow list, see <http://idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.6>.
 			new_node_types = []
 
-			for node_type in ref_node.get_attr("type").split():
-				# Include only types from the allow list that might possibly appear as landmark `epub:types`, plus `title-page` as we've manually set above.
-				if node_type in ("acknowledgements", "bibliography", "glossary", "index", "loi", "lot", "title-page"):
-					new_node_types.append(node_type)
-				# Manually set type for endnotes files.
-				elif node_type == "endnotes":
-					new_node_types.append("notes")
-				# Earlier in this file the endnote file `epub:type` was modified to include `footnotes`; ignore `footnotes` as we've just handled `endnotes`, and catch any remaining types.
-				elif node_type != "footnotes":
-					new_node_types.append(f"other.{node_type}")
+			attr = ref_node.get_attr("type")
+
+			if attr:
+				for node_type in attr.split():
+					# Include only types from the allow list that might possibly appear as landmark `epub:types`, plus `title-page` as we've manually set above.
+					if node_type in ("acknowledgements", "bibliography", "glossary", "index", "loi", "lot", "title-page"):
+						new_node_types.append(node_type)
+					# Manually set type for endnotes files.
+					elif node_type == "endnotes":
+						new_node_types.append("notes")
+					# Earlier in this file the endnote file `epub:type` was modified to include `footnotes`; ignore `footnotes` as we've just handled `endnotes`, and catch any remaining types.
+					elif node_type != "footnotes":
+						new_node_types.append(f"other.{node_type}")
 
 			ref_node.set_attr("type", " ".join(new_node_types))
 

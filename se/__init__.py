@@ -7,6 +7,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
+from typing import cast
 
 from rich.console import Console
 from rich.theme import Theme
@@ -258,7 +259,7 @@ def get_target_filenames(targets: list, allowed_extensions: tuple | str) -> list
 				if ".git" in directories:
 					directories.remove(".git")
 
-				for filename in natsorted(filenames):
+				for filename in cast(list[str], natsorted(filenames)):
 					file_path =Path(root) / Path(filename)
 					if allowed_extensions:
 						if file_path.suffix in allowed_extensions:

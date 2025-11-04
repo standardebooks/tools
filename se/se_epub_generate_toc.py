@@ -529,7 +529,7 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 		else:
 			toc_item.file_link = textf
 
-	toc_item.lang = node.get_attr("xml:lang")
+	toc_item.lang = node.get_attr("xml:lang") or ""
 
 	if node.get_attr("hidden"):
 		toc_item.hidden = True

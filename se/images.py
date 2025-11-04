@@ -332,17 +332,22 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 
 	style = xml.find(svg_ns + "style")
 
+	if style is None:
+		style = etree.Element("<style>")
+
 	# Possibly remove `<style> element if caller wants that.
 	def filter_predicate(elem: etree.Element):
-		if remove_style and elem.tag.endswith("style"):
+		if remove_style and str(elem.tag).endswith("style"):
 			return None # Remove `<style>` element.
 		return elem # Keep all other elements.
 	if remove_style:
-		xml = _traverse_element(xml, filter_predicate)
+		xml_element = _traverse_element(xml, filter_predicate)
+		if xml_element is not None:
+			xml = xml_element
 
 	for elem in xml.iter():
-		if elem.tag.endswith("text"):
-			properties = _apply_css(elem, style.text)
+		if str(elem.tag).endswith("text"):
+			properties = _apply_css(elem, style.text or "")
 			_get_properties_from_text_elem(properties, elem)
 			_add_font_to_properties(properties, fonts)
 			text = elem.text
@@ -387,7 +392,7 @@ def _apply_css(elem: etree.Element, css_text: str) -> dict:
 		if selector[0] == "." and len(selector) >= 2:
 			if selector[1:] == elem.get("class"):
 				apply_css(kvs)
-		elif elem.tag.endswith(selector):
+		elif str(elem.tag).endswith(selector):
 			apply_css(kvs)
 
 	return result_css
@@ -405,7 +410,7 @@ def _traverse_children(return_elem: etree.Element, old_elem: etree.Element, trav
 		final_child.tail = new_child.tail
 		return_elem.append(final_child)
 
-def _traverse_element(elem: etree.Element, traverser: Callable) -> etree.Element:
+def _traverse_element(elem: etree._Element, traverser: Callable) -> etree._Element | None:
 	return_elem = traverser(elem)
 	if return_elem is None:
 		return None
@@ -416,7 +421,7 @@ def _traverse_element(elem: etree.Element, traverser: Callable) -> etree.Element
 	_traverse_children(return_elem, elem, traverser)
 	return return_elem
 
-def _get_properties_from_text_elem(properties: dict, elem: etree.Element) -> None:
+def _get_properties_from_text_elem(properties: dict, elem: etree._Element) -> None:
 	properties["text"] = elem.text
 	if elem.get("x"):
 		properties["x"] = elem.get("x")
@@ -442,7 +447,7 @@ def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: dict) -> Non
 	# Required properties to make any progress.
 	for key in "x y font text font-size".split():
 		if key not in text_properties:
-			raise se.InvalidCssException(f"svg_text_to_paths: Missing key [text]{key}[/] in [text]text_properties[/] for [xml]<{g_elem.tag}>[/] element in [path]./images/titlepage.svg[/] or [path]./images/cover.svg[/].")
+			raise se.InvalidCssException(f"svg_text_to_paths: Missing key [text]{key}[/] in [text]text_properties[/] for [xml]<{str(g_elem.tag)}>[/] element in [path]./images/titlepage.svg[/] or [path]./images/cover.svg[/].")
 	# We know we have `x`, `y`, `text`, `font-size`, and font so we can render vectors.
 	# Now set up some defaults if not specified.
 	text_properties["font-size"] = float(text_properties["font-size"].replace("px", "")) # *Note*: assumes pixels and ignores it.
@@ -608,7 +613,7 @@ def _parse_font(font_path: Path) -> dict:
 	meta = font["meta"]
 	g_name_to_unicode = {}
 	for elem in xml.iter():
-		tag = elem.tag.replace("{http://www.w3.org/2000/svg}", "")
+		tag = str(elem.tag).replace("{http://www.w3.org/2000/svg}", "")
 		if tag == "font":
 			meta["id"] = elem.attrib["id"]
 			meta["horiz-adv-x"] = float(elem.attrib["horiz-adv-x"])
@@ -648,7 +653,7 @@ def _parse_font(font_path: Path) -> dict:
 						glyphs[uni]["d"] = elem.attrib["d"]
 	# Must parse `<hkern>` (horizontal kerning) elements after glyphs so we have `g_name_to_unicode` map available.
 	for elem in xml.iter():
-		tag = elem.tag.replace("{http://www.w3.org/2000/svg}", "")
+		tag = str(elem.tag).replace("{http://www.w3.org/2000/svg}", "")
 		if tag == "hkern":
 			if "k" in elem.attrib:
 				kerning = elem.attrib["k"]

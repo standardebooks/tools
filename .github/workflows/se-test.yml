@@ -19,7 +19,7 @@ jobs:
     - name: Install pipx packages
       run: |
         pipx install .
-        pipx inject standardebooks pylint==3.3.3 mypy==1.14.0 types-requests==2.32.0.20241016 types-setuptools==75.6.0.20241223 types-Pillow==10.2.0.20240822 pytest==8.3.4
+        pipx inject standardebooks pylint==4.0.2 mypy==1.18.1 types-requests==2.32.4.20250913 types-setuptools==80.9.0.20250822 types-Pillow==10.2.0.20240822 types-lxml==2025.8.25 pytest==8.4.2
     - name: Check type annotations with mypy
       run: $PIPX_HOME/venvs/standardebooks/bin/mypy
     - name: Check code with pylint

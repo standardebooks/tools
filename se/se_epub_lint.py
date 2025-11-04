@@ -12,6 +12,7 @@ from fnmatch import translate
 import os
 from pathlib import Path
 import importlib.resources
+from typing import cast
 from unidecode import unidecode
 
 import cssutils
@@ -688,7 +689,7 @@ class LintMessage:
 				if not isinstance(submessage, LintSubmessage):
 					line_num = None
 					if hasattr(submessage, 'getparent'):
-						line_num = submessage.getparent().sourceline
+						line_num = submessage.getparent().sourceline  # pyright: ignore # `etree` return a special `str` with the `getparent()` method.
 					submessage = LintSubmessage(submessage, line_num)
 				self.submessages.append(submessage)
 
@@ -3621,8 +3622,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	unused_glossary_entries: list[se.easy_xml.EasyXmlElement] = []
 	short_story_count = 0
 	missing_styles: list[se.easy_xml.EasyXmlElement] = []
-	directories_not_url_safe = []
-	files_not_url_safe = []
+	directories_not_url_safe: list[Path] = []
+	files_not_url_safe: list[Path] = []
 	files_not_matching_templates: list[Path] = []
 	id_nodes: dict[str, list[tuple[Path, se.easy_xml.EasyXmlElement]]] = {}
 	does_ebook_look_like_collection = False
@@ -3836,7 +3837,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 		if ".git" in directories:
 			directories.remove(".git")
 
-		for directory in natsorted(directories):
+		for directory in cast(list[str], natsorted(directories)):
 			if directory == "META-INF":
 				continue
 
@@ -3844,31 +3845,31 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 			if directory != url_safe_filename:
 				directories_not_url_safe.append(Path(root) / directory)
 
-		for filename in natsorted(filenames):
-			filename = se.abspath_relative_to(filename, Path(root))
+		for filename in cast(list[str], natsorted(filenames)):
+			file_path = se.abspath_relative_to(Path(filename), Path(root))
 
-			if filename.stem != "LICENSE":
-				if filename.stem == "cover.source":
+			if file_path.stem != "LICENSE":
+				if file_path.stem == "cover.source":
 					ebook_flags["has_cover_source"] = True
 				else:
-					url_safe_filename = se.formatting.make_url_safe(filename.stem) + filename.suffix
-					if filename.name != url_safe_filename:
-						files_not_url_safe.append(filename)
+					url_safe_filename = se.formatting.make_url_safe(file_path.stem) + file_path.suffix
+					if file_path.name != url_safe_filename:
+						files_not_url_safe.append(file_path)
 
-			if "-0" in filename.name:
-				messages.append(LintMessage("f-009", "Illegal leading [text]0[/] in filename.", se.MESSAGE_TYPE_ERROR, filename))
+			if "-0" in file_path.name:
+				messages.append(LintMessage("f-009", "Illegal leading [text]0[/] in filename.", se.MESSAGE_TYPE_ERROR, file_path))
 
-			if filename.suffix in BINARY_EXTENSIONS or filename.name == "core.css":
-				if filename.suffix in (".jpg", ".jpeg", ".tif", ".tiff", ".png"):
-					messages += _lint_image_checks(self, filename)
+			if file_path.suffix in BINARY_EXTENSIONS or file_path.name == "core.css":
+				if file_path.suffix in (".jpg", ".jpeg", ".tif", ".tiff", ".png"):
+					messages += _lint_image_checks(self, file_path)
 				continue
 
 			# Read the file and start doing some serious checks!
 			try:
-				source_file = SourceFile(filename, self.get_file(filename))
+				source_file = SourceFile(file_path, self.get_file(file_path))
 			except UnicodeDecodeError:
 				# This is more to help developers find weird files that might choke `se lint`, hopefully unnecessary for end users.
-				messages.append(LintMessage("f-010", "Problem decoding file as utf-8.", se.MESSAGE_TYPE_ERROR, filename))
+				messages.append(LintMessage("f-010", "Problem decoding file as utf-8.", se.MESSAGE_TYPE_ERROR, file_path))
 				continue
 
 			# Remove comments before we do any further processing.
@@ -3876,32 +3877,32 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 			line_matches = source_file.findall("UTF-8")
 			if line_matches:
-				messages.append(LintMessage("x-001", "[text]utf-8[/] string incorrectly cased. Hint: [text]utf-8[/] must always be lowercase.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_matches(line_matches)))
+				messages.append(LintMessage("x-001", "[text]utf-8[/] string incorrectly cased. Hint: [text]utf-8[/] must always be lowercase.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_matches(line_matches)))
 
-			if filename.suffix == ".svg":
+			if file_path.suffix == ".svg":
 				# If this is an SVG that is in the `./images/` folder, ignore it, because it's a source that could have any kind of internal formatting.
-				if filename.is_relative_to(self.path / "images"):
+				if file_path.is_relative_to(self.path / "images"):
 					continue
 
 				# Get the original file from the cache.
-				svg_dom = self.get_dom(filename)
+				svg_dom = self.get_dom(file_path)
 				messages += _lint_svg_checks(self, source_file, svg_dom, root)
-				if self.cover_path and filename.name == self.cover_path.name:
+				if self.cover_path and file_path.name == self.cover_path.name:
 					# For later comparison with titlepage.
 					cover_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The cover for ", "") # `<title>` can appear on any element in SVG, but we only want to check the root one.
-				elif filename.name == "titlepage.svg":
+				elif file_path.name == "titlepage.svg":
 					# For later comparison with cover.
 					titlepage_svg_title = svg_dom.xpath("/svg/title/text()", True).replace("The titlepage for ", "") # `<title>` can appear on any element in SVG, but we only want to check the root one.
 
-			if filename.suffix == ".xml":
-				xml_dom = self.get_dom(filename)
+			if file_path.suffix == ".xml":
+				xml_dom = self.get_dom(file_path)
 
-				if xml_dom.xpath("/search-key-map") and filename.name != "glossary-search-key-map.xml":
-					messages.append(LintMessage("f-013", "Glossary search key map must be named [path]glossary-search-key-map.xml[/].", se.MESSAGE_TYPE_ERROR, filename))
+				if xml_dom.xpath("/search-key-map") and file_path.name != "glossary-search-key-map.xml":
+					messages.append(LintMessage("f-013", "Glossary search key map must be named [path]glossary-search-key-map.xml[/].", se.MESSAGE_TYPE_ERROR, file_path))
 
 				# Make sure that everything in glossaries are in the rest of the text.
 				# We’ll check the files later, and log any errors at the end.
-				if filename.name == "glossary-search-key-map.xml":
+				if file_path.name == "glossary-search-key-map.xml":
 					ebook_flags["has_glossary_search_key_map"] = True
 					# Map the glossary to tuples of the values and whether they’re used (initially false).
 					# If a `<match>` has no `<value>` children, its `@value` must appear in the text.
@@ -3914,9 +3915,9 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 							for value_node in value_nodes:
 								unused_glossary_entries.append(value_node)
 
-			if filename.suffix == ".xhtml":
+			if file_path.suffix == ".xhtml":
 				# Read file contents into a DOM for querying.
-				dom = self.get_dom(filename, True)
+				dom = self.get_dom(file_path, True)
 
 				# Inject the `m` namespace for MathML, even if there's no MathML in the file.
 				# This is because we later use xpaths that *might* select MathML elements, but if the namespace isn't declared, lxml crashes instead of not selecting.
@@ -3928,15 +3929,15 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 				# Apply any CSS files in the DOM.
 				for node in dom.xpath("/html/head/link[@rel='stylesheet']"):
-					css_filename = (filename.parent / node.get_attr("href")).resolve()
+					css_filename = (file_path.parent / node.get_attr("href")).resolve()
 					dom.apply_css(self.get_file(css_filename), str(css_filename))
 
-				messages += _get_malformed_urls(dom, filename)
+				messages += _get_malformed_urls(dom, file_path)
 
 				# Extract `id` attributes for later checks.
 				nodes = dom.xpath("//*[@id and name() != 'section' and name() != 'article' and name() != 'figure' and name() != 'nav']")
 				if nodes:
-					unused_id_attrs.append((filename, nodes))
+					unused_id_attrs.append((file_path, nodes))
 
 				# Add to the short story count for later checks.
 				short_story_count += len(dom.xpath("/html/body//article[contains(@epub:type, 'se:short-story')]"))
@@ -3946,8 +3947,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 				# Ignore `<body>`s with more than 1 `<article>`s, as those are probably short story collections.
 				nodes = dom.xpath("/html/body[count(./article) < 2]//*[(name() = 'section' or name() = 'article') and @id]")
 
-				if nodes and filename.stem not in [node.get_attr("id") for node in nodes]:
-					messages.append(LintMessage("f-015", "Filename doesn’t match [attr]id[/] attribute of primary [xhtml]<section>[/] or [xhtml]<article>[/]. Hint: [attr]id[/] attributes don’t include the file extension.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags([nodes[0]])))
+				if nodes and file_path.stem not in [node.get_attr("id") for node in nodes]:
+					messages.append(LintMessage("f-015", "Filename doesn’t match [attr]id[/] attribute of primary [xhtml]<section>[/] or [xhtml]<article>[/]. Hint: [attr]id[/] attributes don’t include the file extension.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags([nodes[0]])))
 
 				# Check for unused selectors.
 				if dom.xpath("/html/head/link[contains(@href, 'local.css')]"):
@@ -3979,20 +3980,20 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 					ebook_flags["has_halftitle"] = True
 
 				# Add new CSS classes to global list.
-				if filename.name not in IGNORED_FILENAMES:
+				if file_path.name not in IGNORED_FILENAMES:
 					for node in dom.xpath("//*[@class]"):
 						for css_class in node.get_attr("class").split():
 							if css_class in xhtml_css_classes:
-								xhtml_css_classes[css_class].append((filename, node))
+								xhtml_css_classes[css_class].append((file_path, node))
 							else:
-								xhtml_css_classes[css_class] = [(filename, node)]
+								xhtml_css_classes[css_class] = [(file_path, node)]
 
 				for node in dom.xpath("//*[@id]"):
 					node_id = node.get_attr("id")
 					if node_id in id_nodes:
-						id_nodes[node_id].append((filename, node))
+						id_nodes[node_id].append((file_path, node))
 					else:
-						id_nodes[node_id] = [(filename, node)]
+						id_nodes[node_id] = [(file_path, node)]
 
 				# Get the title of this file to compare against the ToC later.
 				# We ignore the ToC file itself.
@@ -4004,7 +4005,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 						header_text = ""
 
 					if header_text != "":
-						headings.append((header_text, str(filename)))
+						headings.append((header_text, str(file_path)))
 
 				# Check for double spacing.
 				# Exclude any table cells which contain quotation marks followed by multiple spaces, as those are probably ditto marks.
@@ -4012,10 +4013,10 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 				if nodes:
 					if len(nodes) <= 10:
 						# Only include actual matching nodes if there's less than a certain number, because if we're linting a raw transcription, every single element might have double spaces!
-						messages.append(LintMessage("t-001", "Illegal double spacing. Hint: Sentences should be single-spaced. Spaces might include Unicode hair spaces and no-break spaces.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+						messages.append(LintMessage("t-001", "Illegal double spacing. Hint: Sentences should be single-spaced. Spaces might include Unicode hair spaces and no-break spaces.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_nodes(nodes)))
 					else:
 						# Only list the filename.
-						messages.append(LintMessage("t-001", "Illegal double spacing. Hint: Sentences should be single-spaced. Spaces might include Unicode hair spaces and no-break spaces.", se.MESSAGE_TYPE_ERROR, filename))
+						messages.append(LintMessage("t-001", "Illegal double spacing. Hint: Sentences should be single-spaced. Spaces might include Unicode hair spaces and no-break spaces.", se.MESSAGE_TYPE_ERROR, file_path))
 
 				# Collect certain `<abbr>` elements to check that required styles are included, but not in the colophon.
 				if not dom.xpath("/html/body/*[contains(@epub:type, 'colophon')]"):
@@ -4023,7 +4024,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 					abbr_elements_requiring_css += dom.xpath("/html/body//abbr[re:test(@epub:type, '\\b(se:temperature|se:era|z3998:acronym)\\b')]")
 
 				# Check and log missing glossary keys.
-				if ebook_flags["has_glossary_search_key_map"] and filename.name not in IGNORED_FILENAMES:
+				if ebook_flags["has_glossary_search_key_map"] and file_path.name not in IGNORED_FILENAMES:
 					# Remove all noterefs, as their anchor text will otherwise immediately follow a potential glossary term, defeating the below regex.
 					dom_copy = deepcopy(dom)
 					for node in dom_copy.xpath(".//a[contains(@epub:type, 'noteref')]"):
@@ -4055,13 +4056,13 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 				if special_file in SPECIAL_FILES:
 					messages += _lint_special_file_checks(self, source_file, dom, ebook_flags, special_file)
 
-				if filename.name not in IGNORED_FILENAMES:
+				if file_path.name not in IGNORED_FILENAMES:
 					# Does this book look like a collection? It does if there is a `bodymatter` section that only contains `<article>` children, and none of the titles are roman numerals.
 					nodes = dom.xpath("/html/body[contains(@epub:type, 'bodymatter') and ./article and count(./*[name() != 'article']) = 0 and not(./article/*[re:test(name(), '^h[1-6]$') and contains(@epub:type, 'ordinal')]) and not(./article/hgroup//*[contains(@epub:type, 'ordinal')]) and not(./article/header/hgroup//*[contains(@epub:type, 'ordinal')])]")
 					if nodes:
 						does_ebook_look_like_collection = True
 
-				missing_styles += _update_missing_styles(filename, dom, local_css)
+				missing_styles += _update_missing_styles(file_path, dom, local_css)
 
 				messages += _lint_xhtml_css_checks(source_file, dom)
 
@@ -4104,7 +4105,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 	# We have a list of `id` attributes in the ebook. Now iterate over all XHTML files again to ensure each one has been used.
 	if unused_id_attrs:
-		sorted_filenames: list[str] = []
+		sorted_filenames: list[Path] = []
 
 		# `href` links are mostly found in endnotes, so if there's an endnotes file process it first to try to speed things up a little.
 		for file_path in self.content_path.glob("**/*"):
@@ -4115,8 +4116,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 				else:
 					sorted_filenames.append(file_path)
 
-		for filename in sorted_filenames:
-			xhtml = self.get_file(filename)
+		for file_path in sorted_filenames:
+			xhtml = self.get_file(file_path)
 
 			for i, (file_path, nodes_list) in enumerate(unused_id_attrs):
 				indices_to_delete: list[int] = []
@@ -4138,39 +4139,42 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 				messages.append(LintMessage("x-018", "Unused [xhtml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags(nodes_list)))
 
 	if files_not_url_safe:
+		files_not_url_safe_strings: list[str] = []
 		try:
-			files_not_url_safe = self.repo.git.ls_files([str(f.relative_to(self.path)) for f in files_not_url_safe]).split("\n")
-			if files_not_url_safe and files_not_url_safe[0] == "":
-				files_not_url_safe = []
+			files_not_url_safe_strings = self.repo.git.files_not_url_safe_strings([str(f.relative_to(self.path)) for f in files_not_url_safe]).split("\n")
+			if files_not_url_safe_strings and files_not_url_safe[0] == "":
+				files_not_url_safe_strings = []
 		except Exception:
 			# If we can't initialize Git, then just pass through the list of illegal files.
 			pass
 
-		for filepath in files_not_url_safe:
-			filepath = Path(filepath)
+		for filepath_string in files_not_url_safe_strings:
+			filepath = Path(filepath_string)
 			url_safe_filename = se.formatting.make_url_safe(filepath.stem) + filepath.suffix
 			messages.append(LintMessage("f-008", "Filename is not URL-safe.", se.MESSAGE_TYPE_ERROR, filepath, [LintSubmessage(f"Found: {filepath.name}\nExpected: {url_safe_filename}")]))
 
 	if directories_not_url_safe:
+		directories_not_url_safe_strings: list[str] = []
 		try:
-			directories_not_url_safe = self.repo.git.ls_files([str(f.relative_to(self.path)) for f in directories_not_url_safe]).split("\n")
+			directories_not_url_safe_strings = self.repo.git.ls_files([str(f.relative_to(self.path)) for f in directories_not_url_safe]).split("\n")
 
-			if directories_not_url_safe and directories_not_url_safe[0] == "":
-				directories_not_url_safe = []
+			if directories_not_url_safe_strings and directories_not_url_safe_strings[0] == "":
+				directories_not_url_safe_strings = []
 
 			# Git doesn't store directories, only files. So the above output will be a list of files within a badly-named directory.
 			# To get the directory name, get the parent of the file that Git outputs.
-			for index, filepath in enumerate(directories_not_url_safe):
-				directories_not_url_safe[index] = str(Path(filepath).parent.name)
+			for index, filepath_string in enumerate(directories_not_url_safe_strings):
+				filepath = Path(filepath_string)
+				directories_not_url_safe_strings[index] = filepath.parent.name
 
 			# Remove duplicates.
-			directories_not_url_safe = list(set(directories_not_url_safe))
+			directories_not_url_safe_strings = list(set(directories_not_url_safe_strings))
 		except Exception:
 			# If we can't initialize Git, then just pass through the list of illegal files.
 			pass
 
-		for filepath in directories_not_url_safe:
-			filepath = Path(filepath)
+		for filepath_string in directories_not_url_safe_strings:
+			filepath = Path(filepath_string)
 			url_safe_filename = se.formatting.make_url_safe(filepath.stem)
 			messages.append(LintMessage("f-008", f"Filename is not URL-safe. Expected: [path]{url_safe_filename}[/].", se.MESSAGE_TYPE_ERROR, filepath))
 
@@ -4190,8 +4194,8 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 		for _, nodes_tuples in duplicate_ids.items():
 			# `nodes_tuples` is a list of tuples of `(Path, list[EasyXmlElement])`.
 			nodes = [node for (_, node) in nodes_tuples]
-			filename = nodes_tuples[0][0]
-			messages.append(LintMessage("x-017", "[attr]id[/] attribute value used more than once in ebook.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+			file_path = nodes_tuples[0][0]
+			messages.append(LintMessage("x-017", "[attr]id[/] attribute value used more than once in ebook.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags(nodes)))
 
 	# Check our headings against the ToC and landmarks.
 	headings = list(set(headings))
@@ -4222,9 +4226,11 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 	for element in abbr_elements_requiring_css:
 		# All `<abbr>` elements have an `epub:type` because we selected them based on `epub:type` in the xpath.
-		for value in element.get_attr("epub:type").split():
-			if f"[epub|type~=\"{value}\"]" not in self.local_css:
-				missing_styles.append(element)
+		attr = element.get_attr("epub:type")
+		if attr:
+			for value in attr.split():
+				if f"[epub|type~=\"{value}\"]" not in self.local_css:
+					missing_styles.append(element)
 
 	messages += _lint_image_metadata_checks(self, ebook_flags["has_images"])
 

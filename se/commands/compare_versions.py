@@ -7,8 +7,9 @@ import shutil
 import tempfile
 from pathlib import Path
 import importlib.resources
+from typing import cast
 
-import git
+from git import cmd
 from natsort import natsorted
 from PIL import Image, ImageChops
 from PIL.Image import Image as Image_type
@@ -72,7 +73,7 @@ def compare_versions(plain_output: bool) -> int:
 					else:
 						target_filenames.add(file_path)
 
-				git_command = git.cmd.Git(work_directory_name)
+				git_command = cmd.Git(work_directory_name)
 
 				if "nothing to commit" in git_command.status():
 					se.print_error("Repo is clean. This command must be run on a dirty repo.", args.verbose, plain_output=plain_output)
@@ -172,7 +173,7 @@ def compare_versions(plain_output: bool) -> int:
 						# Generate an HTML file with diffs side by side.
 						html = ""
 
-						for filename in natsorted(list(files_with_differences)):
+						for filename in cast(list[Path], natsorted(list(files_with_differences))):
 							html += f"\t\t<section>\n\t\t\t<h1>{filename.name}</h1>\n\t\t\t<img src=\"{filename.name}-original.png\">\n\t\t\t<img src=\"{filename.name}-new.png\">\n\t\t</section>\n"
 
 						with importlib.resources.files("se.data.templates").joinpath("diff-template.html").open("r", encoding="utf-8") as file:

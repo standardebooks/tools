@@ -215,7 +215,9 @@ class EasyXmlElement:
 	Represents an lxml element.
 	"""
 
-	def __init__(self, lxml_element: str | etree._ElementTree, namespaces: dict[str,str] | None = None):
+	lxml_element: etree._Element
+
+	def __init__(self, lxml_element: str | etree._Element, namespaces: dict[str,str] | None = None):
 		if namespaces is None:
 			namespaces = {}
 
@@ -223,7 +225,7 @@ class EasyXmlElement:
 
 		if isinstance(lxml_element, str):
 			dom = EasyXmlTree(lxml_element)
-			self.lxml_element = dom.etree
+			self.lxml_element = dom.etree # Actually an `_Element` class.
 		else:
 			self.lxml_element = lxml_element
 
@@ -267,7 +269,7 @@ class EasyXmlElement:
 
 				attrs += f" {short_name}=\"{value}\""
 
-		tag_name = self.lxml_element.tag
+		tag_name: str = str(self.lxml_element.tag)
 		for namespace, identifier in self.namespaces.items():
 			tag_name = tag_name.replace(f"{{{identifier}}}", f"{namespace}:")
 
@@ -306,7 +308,7 @@ class EasyXmlElement:
 
 		return output
 
-	def get_css_property(self, property_name: str):
+	def get_css_property(self, property_name: str) -> str | None:
 		"""
 		Return the applied CSS value for the given property name, like `border-color`, or `None` if it does not exist.
 		"""
@@ -357,26 +359,28 @@ class EasyXmlElement:
 		`<p class="foo bar">` -> `<p class="foo">`
 		"""
 
-		if self.get_attr(attribute):
-			self.set_attr(attribute, regex.sub(fr"\s*\b{regex.escape(value)}\b\s*", "", self.get_attr(attribute)))
+		attr = self.get_attr(attribute)
+
+		if attr:
+			self.set_attr(attribute, regex.sub(fr"\s*\b{regex.escape(value)}\b\s*", "", attr))
 
 			# If the attribute is now empty, remove it.
 			if not self.get_attr(attribute):
 				self.remove_attr(attribute)
 
-	def get_attr(self, attribute: str) -> str:
+	def get_attr(self, attribute: str) -> str | None:
 		"""
 		Return the value of an attribute on this element.
 		"""
 
 		return self.lxml_element.get(self._replace_shorthand_namespaces(attribute))
 
-	def set_attr(self, attribute: str, value: str) -> str:
+	def set_attr(self, attribute: str, value: str) -> None:
 		"""
 		Set the value of an attribute on this element.
 		"""
 
-		return self.lxml_element.set(self._replace_shorthand_namespaces(attribute), value)
+		self.lxml_element.set(self._replace_shorthand_namespaces(attribute), value)
 
 	def xpath(self, selector: str, return_string: bool = False) -> Any:
 		"""
@@ -449,10 +453,11 @@ class EasyXmlElement:
 			prev = self.lxml_element.getprevious()
 			if prev is not None: # We can't do `if prev` because we get a `FutureWarning` from lxml.
 				prev.tail = (prev.tail or "") + self.lxml_element.tail
-			else:
+			elif parent is not None:
 				parent.text = (parent.text or "") + self.lxml_element.tail
 
-		parent.remove(self.lxml_element)
+		if parent is not None:
+			parent.remove(self.lxml_element)
 
 	def wrap_with(self, node) -> None:
 		"""
@@ -596,6 +601,7 @@ class EasyXmlElement:
 		"""
 		Return a list representing of this node's direct children.
 		"""
+
 		children = []
 
 		for child in self.lxml_element:
@@ -624,7 +630,7 @@ class EasyXmlElement:
 		Return a string representing this node's tag name, like `body` or `section`.
 		"""
 
-		return self.lxml_element.tag
+		return str(self.lxml_element.tag)
 
 	@property
 	def parent(self): # This returns an `EasyXmlElement` but we can't type hint this until Python 3.14.
@@ -646,7 +652,7 @@ class EasyXmlElement:
 		`<p>Hello there, <abbr>Mr.</abbr> Smith!</p>` -> `Hello there, `
 		"""
 
-		return self.lxml_element.text
+		return str(self.lxml_element.text)
 
 	@text.setter
 	def text(self, value: str) -> None:
@@ -668,7 +674,7 @@ class EasyXmlElement:
 		`<p class="test">Hello there!</p> he said.` -> ` he said.`
 		"""
 
-		return self.lxml_element.tail
+		return str(self.lxml_element.tail)
 
 	@tail.setter
 	def tail(self, value: str) -> None:
@@ -684,7 +690,7 @@ class EasyXmlElement:
 		Return a `dict` of attributes for this node.
 		"""
 
-		return self.lxml_element.attrib
+		return dict(self.lxml_element.attrib)
 
 	@attrs.setter
 	def attrs(self, value: dict) -> None:
