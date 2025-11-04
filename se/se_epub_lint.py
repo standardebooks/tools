@@ -253,6 +253,7 @@ METADATA
 "m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]extended[/], or [val]short[/]."
 "m-084", "[xhtml]<meta property=\"se:url....\">[/] element not containing a URL."
 "m-085", "Non-canonical PGDP URL. Expected: [url]https://www.pgdp.net/[/]."
+"m-086", "[val]foreword[/] semantic inflection found, but no MARC relator [val]wfw[/] (Writer of foreword)."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1963,6 +1964,9 @@ def _lint_xhtml_metadata_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTr
 
 		if dom.xpath("/html/body/*[contains(@epub:type, 'afterword') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='waw']"):
 			messages.append(LintMessage("m-032", "[val]afterword[/] semantic inflection found, but no MARC relator [val]waw[/] (Writer of afterword).", se.MESSAGE_TYPE_WARNING, filename))
+
+		if dom.xpath("/html/body/*[contains(@epub:type, 'foreword') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='wfw']"):
+			messages.append(LintMessage("m-086", "[val]foreword[/] semantic inflection found, but no MARC relator [val]wfw[/] (Writer of foreword).", se.MESSAGE_TYPE_WARNING, filename))
 
 		if dom.xpath("/html/body/*[contains(@epub:type, 'endnotes') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='ann']"):
 			messages.append(LintMessage("m-033", "[val]endnotes[/] semantic inflection found, but no MARC relator [val]ann[/] (Annotator).", se.MESSAGE_TYPE_WARNING, filename))
