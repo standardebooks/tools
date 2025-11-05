@@ -118,7 +118,7 @@ class EasyXmlTree:
 
 		except etree.XPathEvalError as ex:
 			# If we ask for an undefined namespace prefix, just return nothing instead of crashing.
-			if str(ex) != "Undefined namespace prefix":
+			if not regex.match("Undefined namespace prefix", str(ex)):
 				raise ex
 
 		if return_string and result:
