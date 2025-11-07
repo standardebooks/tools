@@ -28,7 +28,7 @@ pipx install standardebooks
 # Install some pre-flight dependencies.
 sudo apt install -y calibre default-jre git python3-dev python3-pip python3-venv
 
-# Install `pipx`.
+# Install pipx.
 python3 -m pip install --user pipx
 python3 -m pipx ensurepath
 
@@ -55,7 +55,7 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 # Install some pre-flight dependencies.
 sudo dnf install pipx python3-devel gcc libxslt-devel calibre git java-25-openjdk-headless
 
-# Ensure `$PATH` environment variable is correctly set up for `pipx`.
+# Ensure $PATH environment variable is correctly set up for pipx.
 pipx ensurepath
 
 # Install the toolset.
