@@ -1165,8 +1165,7 @@ def _build_kobo_process_css(file_path: Path) -> None:
 		processed_css = css
 
 		# Retarget `span` selectors at SE `<span>`s (i.e. not `koboSpan`s) only.
-		# Ignore `span` followed by a colon (this would be a CSS property like `column-span`).
-		processed_css = regex.sub(r"""(?<=\s)span(?=[^\w:])""", r"""span.se""", processed_css)
+		processed_css = regex.sub(r"""(?<=\s)span(?=.*[,{]\n)""", r"""span.se""", processed_css)
 
 		if processed_css != css:
 			file.seek(0)
