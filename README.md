@@ -43,7 +43,8 @@ pipx install --python=3.12 --fetch-missing-python standardebooks
 sudo ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
 
 # Install Bash completions.
-sudo ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completion/completions/se
+mkdir -p $HOME/.local/share/bash-completion/completions/
+ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $HOME/.local/share/bash-completion/completions/se
 
 # Install Fish completions.
 ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se.fish $HOME/.config/fish/completions/
@@ -69,8 +70,8 @@ pipx install standardebooks
 sudo ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
 
 # Install Bash completions.
-sudo ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se /usr/share/bash-completion/completions/se
-
+mkdir -p $HOME/.local/share/bash-completion/completions/
+ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $HOME/.local/share/bash-completion/completions/se
 # Install Fish completions.
 ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 ```
