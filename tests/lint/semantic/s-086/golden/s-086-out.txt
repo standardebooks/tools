@@ -1,0 +1,4 @@
+s-086 [Manual Review] chapter-1.xhtml `Op. Cit.` or `Loc. Cit.` in endnote. Hint: `Op. Cit.` and `Loc. Cit.` mean `the previous reference`, which usually doesn’t make sense in a popup endnote. Such references should be expanded.
+ Line 10:       <li epub:type="endnote">
+ Line 13:       <li epub:type="endnote">
+ Line 16:       <li epub:type="endnote">
