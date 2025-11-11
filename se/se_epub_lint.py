@@ -281,6 +281,7 @@ SEMANTICS & CONTENT
 "s-022", "SVG [xhtml]<title>[/] element doesn’t match its [xhtml]<img>[/] [attr]alt[/] attribute text."
 "s-023", "Title not correctly titlecased."
 "s-024", "Entirely non-English header set in italics. Hint: Don’t use italics, and put the [attr]xml:lang[/] attribute on the [xhtml]<h#>[/] element."
+"s-025", "Illegal scare quotes or ending punctuation in title of media. Hint: surrounding punctuation is not a part of a title."
 "s-026", "Invalid Roman numeral."
 "s-027", "[xhtml]<title>[/] element missing."
 "s-028", "[xhtml]<title>[/] elements in cover SVG and titlepage SVG don’t match."
@@ -363,8 +364,6 @@ SEMANTICS & CONTENT
 "s-105", "Date without parent [xhtml]<time>[/] element."
 "s-106", "Proper name in the colophon without parent [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], or [xhtml]<b>[/] if anonymous."
 "s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?"
-UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-"s-025", ""
 
 TYPOGRAPHY
 "t-001", "Illegal double spacing. Hint: Sentences should be single-spaced. Spaces might include Unicode hair spaces and no-break spaces."
@@ -2181,6 +2180,10 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
 	if nodes:
 		messages.append(LintMessage("s-024", "Entirely non-English header set in italics. Hint: Don’t use italics, and put the [attr]xml:lang[/] attribute on the [xhtml]<h#>[/] element.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+
+	nodes = dom.xpath("//span[re:test(@epub:type, 'se:name\\.(music\\.song|publication\\.poem)') and (re:test(., '^[“‘].+[”’]$') or (re:test(., '[\\.,]$') and not(./abbr[last()])))]")
+	if nodes:
+		messages.append(LintMessage("s-025", "Illegal scare quotes or ending punctuation in title of media. Hint: surrounding punctuation is not a part of a title.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for `z3998:roman elements with invalid values. Roman numerals can occasionally end in `j` as an alias for ending `i`. See _The Worm Ouroboros_.
 	# We also allow the numeral to end in a digit, because that might be an endnote. For example `<h2 epub:type="ordinal z3998:roman">II<a href="..." epub:type="noteref">3</a></h2>`.
