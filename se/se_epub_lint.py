@@ -475,7 +475,7 @@ TYPOS
 "y-002", "Possible typo: Punctuation followed directly by a letter, without a space."
 "y-003", "Possible typo: Paragraph missing ending punctuation."
 "y-004", "Possible typo: Mis-curled quotation mark after dash."
-"y-005", "Possible typo: Question mark or exclamation mark followed by period or comma."
+"y-005", "Possible typo: Punctuation followed by period or comma."
 "y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hint: [text]’[/] are used for elisions;	commas and periods must go inside quotation marks."
 "y-007", "Possible typo: [text]‘[/] not within [text]“[/]. Hint: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?"
 "y-008", "Possible typo: Dialog interrupted by interjection but with incorrect closing quote."
@@ -3294,9 +3294,9 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 
 	# Check for commas or periods following exclamation or question marks. Exclude the colophon because we may have painting names with punctuation.
 	if special_file != "colophon":
-		typos = dom.xpath("//p[re:test(., '[!?][\\.,]([^”’]|$)')]")
+		typos = dom.xpath("//p[re:test(., '(?<!&amp)[!?:;][\\.,]([^”’]|$)')]")
 		if typos:
-			messages.append(LintMessage("y-005", "Possible typo: Question mark or exclamation mark followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
+			messages.append(LintMessage("y-005", "Possible typo: Punctuation followed by period or comma.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
 
 	# Check for opening `‘` in quote that doesn't appear to have a matching `’`, ignoring contractions/elided words as false matches.
 	typos = dom.xpath("/html/body//text()[re:match(., '“[^‘”]*‘[^“]+?”', 'g')/text()[not(re:test(., '’[^A-Za-z]'))]]")
