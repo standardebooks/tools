@@ -255,6 +255,7 @@ METADATA
 "m-084", "[xhtml]<meta property=\"se:url....\">[/] element not containing a URL."
 "m-085", "Non-canonical PGDP URL. Expected: [url]https://www.pgdp.net/[/]."
 "m-086", "[val]foreword[/] semantic inflection found, but no MARC relator [val]wfw[/] (Writer of foreword)."
+"m-087", "MARC relators not in alphabetical order."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -813,6 +814,7 @@ def _lint_metadata_checks(self) -> list:
 
 	messages = []
 	missing_metadata_elements = []
+	long_description_node = None
 
 	# Check the long description for some errors.
 	try:
@@ -898,7 +900,8 @@ def _lint_metadata_checks(self) -> list:
 			messages.append(LintMessage("t-078", "Illegal hyphenated two-word phrasal adjective that begins with an adverb ending in [text]ly[/].", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	except se.InvalidXmlException as ex:
-		messages.append(LintMessage("m-015", "Metadata long description is not valid XHTML.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"{ex}", long_description_node.sourceline)]))
+		if long_description_node:
+			messages.append(LintMessage("m-015", "Metadata long description is not valid XHTML.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"{ex}", long_description_node.sourceline)]))
 
 	except Exception:
 		if self.is_se_ebook:
@@ -1129,6 +1132,26 @@ def _lint_metadata_checks(self) -> list:
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[re:test(@property, '^se:url\\.') and not(re:test(., 'https?://')) and not(re:test(., '^[A-Z_]+$'))]")
 	if nodes:
 		messages.append(LintMessage("m-084", "[xhtml]<meta property=\"se:url....\">[/] element not containing a URL.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+
+	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='role' and @scheme='marc:relators']")
+	marc_relator_groups: dict[str, list[str]] = {}
+	non_alphabetized_marc_relator_groups = []
+
+	for node in nodes:
+		refines = node.get_attr('refines')
+		if refines in marc_relator_groups:
+			marc_relator_groups[refines].append(node.text)
+		else:
+			marc_relator_groups[refines] = [node.text]
+
+	for group, items in marc_relator_groups.items():
+		unsorted_items = items.copy()
+		items.sort()
+		if not unsorted_items == items:
+			non_alphabetized_marc_relator_groups.append(group)
+
+	if non_alphabetized_marc_relator_groups:
+		messages.append(LintMessage("m-087", "MARC relators not in alphabetical order.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(non_alphabetized_marc_relator_groups)))
 
 	return messages
 
