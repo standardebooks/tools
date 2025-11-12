@@ -559,6 +559,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"chianti", r"Chianti", xhtml)				# chianti -> Chianti
 	xhtml = regex.sub(r"([a-z]) Zeppelin", r"\1 zeppelin", xhtml)			# Zeppelin -> zeppelin
 	xhtml = regex.sub(r"Sevres", r"Sèvres", xhtml)					# Sevres -> Sèvres
+	xhtml = regex.sub(r"Hong-?kong", r"Hong Kong", xhtml)				# Hongkong -> Hong Kong
 
 	# Remove archaic diphthongs.
 	xhtml = xhtml.replace("\bæon\b", r"aeon")
