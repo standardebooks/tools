@@ -224,7 +224,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ff])idgetted", r"\1idgeted", xhtml)			# fidgetted -> fidgeted
 	xhtml = regex.sub(r"\b([Ff])iord", r"\1jord", xhtml)				# fiord -> fjord
 	xhtml = regex.sub(r"\b([Ff])ocuss", r"\1ocus", xhtml)				# focuss -> focus
-	xhtml = regex.sub(r"([Ff])or ever\b(?!\s+so long)",r"\1orever", xhtml)		# for ever -> forever
+	xhtml = regex.sub(r"\b([Ff])or ever\b(?!\s+so long)",r"\1orever", xhtml)	# for ever -> forever
+	xhtml = regex.sub(r"\b([Ff])or evermore\b",r"\1orevermore", xhtml)		# for evermore -> forevermore
 	xhtml = regex.sub(r"\b([Ff])oretel\b", r"\1oretell", xhtml)			# foretel -> foretell
 	xhtml = regex.sub(r"\bfrench window\b", r"French window", xhtml)		# french window -> French window
 	xhtml = regex.sub(r"\b([Ff])rolick\b", r"\1rolic", xhtml)			# frolick -> frolic
