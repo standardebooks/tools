@@ -353,6 +353,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Ss])treet[\s\-][Aa]rab(s?)\b", r"\1treet arab\2", xhtml)	# street-arab -> street arab
 	xhtml = regex.sub(r"\b([Ss])ubtile?(?!(ize|izing))", r"\1ubtle", xhtml)		# subtil -> subtle (but "subtilize" and "subtilizing")
 	xhtml = regex.sub(r"\b([Ss])uch like\b", r"\1uchlike", xhtml)			# such like -> suchlike
+	xhtml = regex.sub(r"\b([Ss])upercede", r"\1upersede", xhtml)			# supercede -> supersede
 	xhtml = regex.sub(r"\b([Ss])urpriz(e|ing)", r"\1urpris\2", xhtml)		# surprize->surprise, surprizing->surprising
 	xhtml = regex.sub(r"\b([Ss])uttee", r"\1ati", xhtml)				# suttee -> sati
 	xhtml = regex.sub(r"\b([Ss])wop", r"\1wap", xhtml)				# swop -> swap
