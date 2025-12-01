@@ -58,6 +58,22 @@ SELECTOR_REPLACEMENTS = {
 				"|": "-",
 			}
 
+def _is_roman(numeral: str) -> bool:
+	numeral = regex.sub(r"(st|[nr]d|th)$", "", numeral)
+
+	# `j` may be used as fancy terminal lowercase `i` in lowercase roman numerals.
+	numeral = regex.sub(r"([a-z])+j", r"\1i", numeral)
+
+	if regex.search(r"[\p{Uppercase_Letter}]", numeral) and regex.search(r"[\p{Lowercase_letter}]", numeral):
+		return False
+
+	try:
+		roman.fromRoman(numeral.upper())
+	except roman.InvalidRomanNumeralError:
+		return False
+
+	return True
+
 def semanticate(xhtml: str) -> str:
 	"""
 	Add semantics to well-formed XHTML
@@ -150,12 +166,12 @@ def semanticate(xhtml: str) -> str:
 	# First, get valid roman numerals containing the characters `IXV`; exclude `I`s, any that look
 	# like they've already been tagged or are in a tag, and any followed by a dash, to prevent false
 	# positives like `x-ray` or `v-shaped`.
-	xhtml = regex.sub(r"(?<![<>/\"])\b(?=[IXV]+(?:st\b|[nr]\b|th\b)?)(?!I\b)((?:X{0,3})(?:I[XV]|V?I{0,3}J?)(?:\b|st\b|[nr]d\b|th\b))(?![\w’-])", r"""<span epub:type="z3998:roman">\1</span>""", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"(?<![<>/\"])\b(?=[IXV]+)(?:st\b|[nr]\b|th\b)?(?!I\b)((?:X{0,3})(?:I[XV]|V?I{0,3}J?))(\b|st\b|[nr]d\b|th\b)(?![\w’-])", lambda result: fr"""<span epub:type="z3998:roman">{result.group(1)}</span>{result.group(2) or ""}""" if _is_roman(result.group(1)) else result.group(1), xhtml, flags=regex.IGNORECASE)
 
 	# Wrap all remaining valid roman numerals that are at least two characters; single characters
 	# containing `CDLM` cause too many false-positives. Also exclude `MI`, `DI` and `MIX`, as they are
 	# more likely to be Italian and English words, respectively.
-	xhtml = regex.sub(r"(?<!>)(?<!</?)\b(?=[CDILMVX]{2,})(?!MI\b|DI\b|MIX\b)(M{0,4}(?:C[MD]|D?C{0,3})(?:X[CL]|L?X{0,3})(?:I[XV]|V?I{0,3}J?))\b(?![\w’>-])", r"""<span epub:type="z3998:roman">\1</span>""", xhtml, flags=regex.IGNORECASE)
+	xhtml = regex.sub(r"(?<!>)(?<!</?)\b(?=[CDILMVX]{2,})(?!MI\b|DI\b|MIX\b)(M{0,4}(?:C[MD]|D?C{0,3})(?:X[CL]|L?X{0,3})(?:I[XV]|V?I{0,3}J?))\b(?![\w’>-])", lambda result: fr"""<span epub:type="z3998:roman">{result.group(1)}</span>""" if _is_roman(result.group(1)) else result.group(1), xhtml, flags=regex.IGNORECASE)
 
 	# We can assume a lowercase `i` is always a Roman numeral unless followed by `’` or `-` (hyphen minus) or `‑` (non-breaking hyphen).
 	xhtml = regex.sub(r"""([^\p{Letter}<>/\"])i\b(?![’‑-])(?![^<>]+>)""", r"""\1<span epub:type="z3998:roman">i</span>""", xhtml)
