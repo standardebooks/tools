@@ -297,7 +297,7 @@ def process_items(item_list: list) -> str:
 				torepeat -= 1
 	return out_string
 
-def output_toc(item_list: list, landmark_list, toc_path: str, work_title: str) -> str:
+def output_toc(item_list: list, landmark_list, toc_path: str, work_title: str, language: str) -> str:
 	"""
 	Outputs the contructed ToC based on the lists of items and landmarks found, either to stdout or overwriting the existing ToC file.
 
@@ -339,6 +339,11 @@ def output_toc(item_list: list, landmark_list, toc_path: str, work_title: str) -
 	landmark_ol = EasyXmlElement(etree.Element("ol"), toc_dom.namespaces)
 	landmark_ol.lxml_element.text = "LANDMARK_ITEMS"
 	navs[1].append(landmark_ol)
+
+	# Set the file language.
+	for node in toc_dom.xpath("/html[@xml:lang]"):
+		node.set_attr("xml:lang", language)
+
 	xhtml = toc_dom.to_string()
 	xhtml = xhtml.replace("TOC_ITEMS", process_items(item_list))
 	xhtml = xhtml.replace("LANDMARK_ITEMS", process_landmarks(landmark_list, work_title))
@@ -774,4 +779,4 @@ def generate_toc(self) -> str:
 
 	landmarks, toc_list = process_all_content(self, self.spine_file_paths)
 
-	return output_toc(toc_list, landmarks, self.toc_path, work_title)
+	return output_toc(toc_list, landmarks, self.toc_path, work_title, self.language)
