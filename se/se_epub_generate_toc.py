@@ -348,7 +348,17 @@ def output_toc(item_list: list, landmark_list, toc_path: str, work_title: str, l
 	xhtml = xhtml.replace("TOC_ITEMS", process_items(item_list))
 	xhtml = xhtml.replace("LANDMARK_ITEMS", process_landmarks(landmark_list, work_title))
 
-	return se.formatting.format_xhtml(xhtml)
+	# A common case is for there to be several epigraphs, differentiated by roman numerals in the `<title>` elements. But, since `<title>` can't contain sub-elements, there is no roman semantic. Try to add it here.
+	toc_dom = EasyXmlTree(xhtml)
+	for node in toc_dom.xpath("//nav[re:test(@epub:type, '\\btoc\\b')]/ol//li/a[re:test(., '^Epigraph [IVX]+$')]"):
+		numeral = node.text.replace("Epigraph ", "")
+		roman_node = EasyXmlElement("<span/>", {"epub": "http://www.idpf.org/2007/ops"})
+		roman_node.set_attr("epub:type", "z3998:roman")
+		roman_node.set_text(numeral)
+		node.set_text("Epigraph ")
+		node.append(roman_node)
+
+	return se.formatting.format_xhtml(toc_dom.to_string())
 
 def get_parent_id(hchild: EasyXmlElement) -> str:
 	"""
