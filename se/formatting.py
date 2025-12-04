@@ -130,7 +130,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Cc])f\.", r"<abbr>\1f.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))ed\.", r"<abbr>ed.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(Jan\.|Feb\.|Mar\.|Apr\.|Jun\.|Jul\.|Aug\.|Sep\.|Sept\.|Oct\.|Nov\.|Dec\.)", r"<abbr>\1</abbr>", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))No\.(\s+[0-9]+)", r"<abbr>No.</abbr>\1", xhtml)
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))No(s?)\.(\s+[0-9]+)", r"<abbr>No\1.</abbr>\2", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Vv])s\.", r"<abbr>\1s.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Ff])f\.", r"<abbr>\1f.</abbr>", xhtml) # `ff.` typically used in footnotes, means `and following`.
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Ll])ib\.", r"<abbr>\1ib.</abbr>", xhtml) # `Lib.` = `Liber` = `Book`.
