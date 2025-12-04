@@ -191,7 +191,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# We added an nbsp after `St.` above. But, sometimes a name can be abbreviated, like `Bob St. M.`. In this case we don't want an `nbsp` because `<abbr>` is already `white-space: nowrap;`.
 	xhtml = regex.sub(fr"""<abbr epub:type="(z3998:[^"\s]+?name)">St\.{se.NO_BREAK_SPACE}([A-Z])""", r"""<abbr epub:type="\1">St. \2""", xhtml)
 
-	xhtml = regex.sub(r"\bNo\.\s+([0-9]+)", fr"No.{se.NO_BREAK_SPACE}\1", xhtml)
+	xhtml = regex.sub(r"\bNo(s?)\.\s+([0-9]+)", fr"No\1.{se.NO_BREAK_SPACE}\2", xhtml)
 	xhtml = regex.sub(r"<abbr>No\.</abbr>\s+", fr"<abbr>No.</abbr>{se.NO_BREAK_SPACE}", xhtml)
 
 	xhtml = regex.sub(r"([0-9]+)\s<abbr", fr"\1{se.NO_BREAK_SPACE}<abbr", xhtml)
