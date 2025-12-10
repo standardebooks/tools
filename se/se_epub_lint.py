@@ -220,7 +220,7 @@ METADATA
 "m-049", "No rules in ignore file. Hint: Delete the file if there are no rules."
 "m-050", "Non-typogrified character in [xml]<meta property=\"file-as\" refines=\"#title\">[/] element."
 "m-051", "Missing expected element in metadata."
-"m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"dcterms:alternate\" refines="#title"> element in metadata."
+"m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"dcterms:alternative\" refines="#title"> element in metadata."
 "m-053", "[xml]<meta property=\"se:subject\">[/] elements not in alphabetical order."
 "m-054", "Non-canonical Standard Ebooks URL. Expected: [url]https://standardebooks.org/ebooks/<AUTHOR>/<TITLE>\\[/<CONTRIBUTOR> ...][/]. Hint: No trailing slash."
 "m-055", "[xml]<dc:description>[/] element doesn’t end with a period."
@@ -923,11 +923,11 @@ def _lint_metadata_checks(self) -> list:
 		if matches:
 			messages.append(LintMessage("m-012", "Non-typogrified character in [xml]<dc:title>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, title_node.sourceline) for m in matches]))
 
-		# Do we need an `<dcterms:alternate>` meta element?
+		# Do we need an `<dcterms:alternative>` meta element?
 		# Match spelled-out numbers with a word joiner, so for example we don't print `eight` if we matched `eighty`.
 		matches = regex.findall(r"(?:[0-9]+|\bone\b|\btwo\b|\bthree\b|\bfour\b|\bfive\b|\bsix\b|\bseven\b|\beight\b|\bnine\b|\bten\b|\beleven\b|\btwelve\b|\bthirteen\b|\bfourteen\b|\bfifteen\b|\bsixteen\b|\bseventeen\b|\beighteen\b|\bnineteen\b|\btwenty\b|\bthirty\b|\bforty\b|\bfifty\b|\bsixty\b|\bseventy\b|\beighty|\bninety)", title_node.text, flags=regex.IGNORECASE)
-		if matches and not self.metadata_dom.xpath("/package/metadata/meta[@property='dcterms:alternate']"):
-			messages.append(LintMessage("m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"dcterms:alternate\" refines=\"#title\"> element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, title_node.sourceline) for m in matches]))
+		if matches and not self.metadata_dom.xpath("/package/metadata/meta[@property='dcterms:alternative']"):
+			messages.append(LintMessage("m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"dcterms:alternative\" refines=\"#title\"> element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, title_node.sourceline) for m in matches]))
 	except Exception:
 		missing_metadata_elements.append("<dc:title>")
 
