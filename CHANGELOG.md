@@ -1,3 +1,79 @@
+# 2.10.1
+
+## General
+
+- Update deprecated MARC roles
+
+- `easy_xml`: Correctly catch exception thrown by newer libxml2 version
+
+## se build
+
+- Remove `<span>` and `<abbr>` from ToC in compatible builds
+
+- Improve conversion of complex selectors to CSS classes, and correctly check whether a @class attribute contains a class
+
+- Code regorganization and refactor. Thanks to Vince Rice
+
+- Don't build Kobo if we're doing a check-only run
+
+## se build-toc
+
+- Use content.opf language for file language
+
+- Attempt to add roman numeral semantics to cases where there are multiple roman-numeral-denominated epigraphs
+
+## se create-draft
+
+- Send user-agent header to Wikipedia to correctly get URL
+
+## se lint
+
+- Add t-078, Illegal hyphenated two-word phrasal adjective that begins with an adverb ending in -ly
+
+- Add s-040, element with data-parent attribute, but its parent is in the same file.
+
+- Improve t-011
+
+- Improve m-084
+
+- Improve y-026
+
+- Add m-086, foreword but no wfw MARC relator
+
+- Don't check x-001 in the ./images directory, because we don't care how *source* SVGs/MusicXML are formatted
+
+- Fix y-006 error message
+
+- Improve s-086
+
+- Add s-025, illegal scare quotes in title of media
+
+- Add m-087, MARC relators must be in alphabetical order
+
+- Improve y-005
+
+- Improve m-016 message
+
+## se modernize-spelling
+
+- Various additions
+
+- Improve some regexes for elision quotes
+
+## se semanticate
+
+- Don't add Roman numeral semantics to lowercase i followed by hyphen minus or non-breaking hyphen. Thanks to Erin Endrei
+
+- Include titlepage and halftitlepage
+
+- Validate that a number we're tagging as roman is actually roman
+
+- Deal with `Nos.` as well as `No.`. Thanks to Robin Whittleton
+
+## se typogrify
+
+- Deal with `Nos.` as well as `No.`. Thanks to Robin Whittleton
+
 # 2.10.0
 
 ## General
