@@ -63,7 +63,10 @@ setup(
 		],
 	},
 	project_urls={
-		"Source": "https://standardebooks.org/tools",
+		"source": "https://standardebooks.org/tools",
+		"changelog": "https://github.com/standardebooks/tools/blob/master/CHANGELOG.md",
+		"issues": "https://github.com/standardebooks/tools/issues",
+		"funding": "https://standardebooks.org/donate"
 	},
 
 	############################################################
@@ -80,28 +83,28 @@ setup(
 	############################################################
 	python_requires=">=3.10.12",
 	install_requires=[
-		"cairosvg==2.7.1",
+		"cairosvg==2.8.2",
 		"chardet==5.2.0",
 		"cssselect==1.3.0",
 		"cssutils==2.11.1",
 		"ftfy==6.3.1",
-		"gitpython==3.1.44",
+		"gitpython==3.1.45",
 		"importlib_resources==1.0.2",
-		"lxml==5.3.2",
+		"lxml==6.0.2",
 		"natsort==8.4.0",
-		"pillow==11.3.0",
-		"psutil==7.0.0",
+		"pillow==12.0.0",
+		"psutil==7.1.3",
 		"pyphen==0.17.2",
-		"regex==2024.11.6",
-		"repro_zipfile==0.4.0",
-		"requests==2.32.4",
-		"rich==14.0.0",
+		"regex==2025.11.3",
+		"repro_zipfile==0.4.1",
+		"requests==2.32.5",
+		"rich==14.2.0",
 		"roman==5.0",
-		"selenium==4.31.0",
-		"setuptools==78.1.1",
+		"selenium==4.39.0",
+		"setuptools==80.9.0",
 		"smartypants==2.0.2",
-		"tinycss2==1.4.0",
+		"tinycss2==1.5.1",
 		"titlecase==2.4.1",
-		"unidecode==1.3.8"
+		"unidecode==1.4.0"
 	]
 )
