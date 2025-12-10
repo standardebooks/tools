@@ -1,3 +1,9 @@
+# 2.10.2
+
+## se lint
+
+- Really fix `dcterms:alternative` checks
+
 # 2.10.1
 
 ## General
