@@ -9,6 +9,7 @@ from pathlib import Path
 import zipfile
 from repro_zipfile import ReproducibleZipFile
 from lxml import etree
+from se.formatting import generate_epoch_timestamp
 import se
 import se.easy_xml
 
@@ -70,7 +71,7 @@ def write_epub(epub_root_absolute_path: Path, output_absolute_path: Path, last_u
 
 	# Set the timestamp used by ReproducibleZipFile to the timestamp of the last git commit, if available.
 	if last_update_datetime is not None:
-		os.environ["SOURCE_DATE_EPOCH"] = se.formatting.generate_epoch_timestamp(last_update_datetime)
+		os.environ["SOURCE_DATE_EPOCH"] = generate_epoch_timestamp(last_update_datetime)
 
 	# We can't enable global compression here because according to the spec, the `mimetype` file must be uncompressed. The rest of the files, however, can be compressed.
 	with ReproducibleZipFile(output_absolute_path, mode="w") as epub:

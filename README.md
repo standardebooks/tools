@@ -174,7 +174,7 @@ We export `COLUMNS` because `se lint` needs to know the width of the terminal so
 Before we can use `pylint` or `mypy` on the toolset source, we have to inject them (and additional typings) into the venv `pipx` created for the `standardebooks` package:
 
 ```shell
-pipx inject standardebooks pylint==4.0.2 mypy==1.18.1 types-requests==2.32.4.20250913 types-setuptools==80.9.0.20250822 types-Pillow==10.2.0.20240822 types-lxml==2026.8.25
+pipx inject standardebooks pylint==4.0.4 mypy==1.19.0 types-requests==2.32.4.20250913 types-setuptools==80.9.0.20250822 types-lxml==2025.11.25 pytest==9.0.2
 ```
 
 Then make sure to call the `pylint` and `mypy` binaries that `pipx` installed in the `standardebooks` venv, *not* any other globally-installed binaries:
@@ -197,6 +197,8 @@ Instructions are found in the testing [README](tests/README.md).
 # Help wanted
 
 We need volunteers to take the lead on the following goals:
+
+- In `se --version`, detect whether we're currently installed as an `--editable` install and output that information.
 
 - Add more test cases to the test framework.
 

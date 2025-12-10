@@ -320,9 +320,9 @@ def _convert_cover_to_jpg(work_dir: Path, work_compatible_epub_dir: Path, metada
 				svg2png(url=str(cover_work_path), write_to=str(work_dir / "cover.png"))
 
 			# Now convert PNG to JPG.
-			cover = Image.open(work_dir / "cover.png")
-			cover = cover.convert("RGB") # Remove alpha channel from PNG if necessary.
-			cover.save(work_compatible_epub_dir / "epub" / "images" / "cover.jpg")
+			cover_file = Image.open(work_dir / "cover.png")
+			cover_image = cover_file.convert("RGB") # Remove alpha channel from PNG if necessary.
+			cover_image.save(work_compatible_epub_dir / "epub" / "images" / "cover.jpg")
 
 			cover_work_path.unlink()
 
@@ -927,9 +927,9 @@ def _replace_mathml(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_
 					if ibooks_srcset_bug_exists:
 						# Calculate the "normal" height/width from the 2x image.
 						ifile = work_compatible_epub_dir / "epub" / "images" / f"mathml-{mathml_count}-2x.png"
-						image = Image.open(ifile)
-						img_width = image.size[0]
-						img_height = image.size[1]
+						image_file = Image.open(ifile)
+						img_width = image_file.size[0]
+						img_height = image_file.size[1]
 
 						# If either dimension is odd, add a pixel.
 						right = img_width % 2
@@ -938,7 +938,7 @@ def _replace_mathml(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_
 						# If either dimension was odd, expand the canvas.
 						if (right != 0 or bottom != 0):
 							border = (0, 0, right, bottom)
-							image = ImageOps.expand(image, border)
+							image = ImageOps.expand(image_file, border)
 							image.save(ifile)
 
 						# Get the "display" dimensions.
@@ -1615,10 +1615,10 @@ def _build_kindle(self, work_dir: Path, work_compatible_epub_dir: Path, output_d
 
 	# Extract the thumbnail.
 	if os.path.isfile(work_compatible_epub_dir / "epub" / "images" / "cover.jpg"):
-		kindle_cover_thumbnail = Image.open(work_compatible_epub_dir / "epub" / "images" / "cover.jpg")
-		kindle_cover_thumbnail = kindle_cover_thumbnail.convert("RGB") # Remove alpha channel from PNG if necessary.
-		kindle_cover_thumbnail = kindle_cover_thumbnail.resize((432, 648))
-		kindle_cover_thumbnail.save(output_dir / f"thumbnail_{asin}_EBOK_portrait.jpg")
+		kindle_cover_thumbnail_file = Image.open(work_compatible_epub_dir / "epub" / "images" / "cover.jpg")
+		kindle_cover_thumbnail_image = kindle_cover_thumbnail_file.convert("RGB") # Remove alpha channel from PNG if necessary.
+		kindle_cover_thumbnail_image = kindle_cover_thumbnail_image.resize((432, 648))
+		kindle_cover_thumbnail_image.save(output_dir / f"thumbnail_{asin}_EBOK_portrait.jpg")
 
 def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_kindle: bool, output_dir: Path, proof: bool) -> None:
 	"""

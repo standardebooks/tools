@@ -115,28 +115,28 @@ def compare_versions(plain_output: bool) -> int:
 						driver.find_element("tag name", "html").screenshot(str(file_new_screenshot_path))
 
 						has_difference = False
-						original_image = Image.open(file_original_screenshot_path)
-						new_image = Image.open(file_new_screenshot_path)
+						original_image_file = Image.open(file_original_screenshot_path)
+						new_image_file = Image.open(file_new_screenshot_path)
 
 						# Make sure the original and new images are the same size.
 						# If they're not, add pixels in either direction until they match.
-						original_width, original_height = original_image.size
-						new_width, new_height = new_image.size
+						original_width, original_height = original_image_file.size
+						new_width, new_height = new_image_file.size
 
 						if original_height > new_height:
-							new_image = _resize_canvas(new_image, new_width, original_height)
+							new_image = _resize_canvas(new_image_file, new_width, original_height)
 							new_image.save(file_new_screenshot_path)
 
 						if original_width > new_width:
-							new_image = _resize_canvas(new_image, original_width, new_height)
+							new_image = _resize_canvas(new_image_file, original_width, new_height)
 							new_image.save(file_new_screenshot_path)
 
 						if new_height > original_height:
-							original_image = _resize_canvas(original_image, original_width, new_height)
+							original_image = _resize_canvas(original_image_file, original_width, new_height)
 							original_image.save(file_original_screenshot_path)
 
 						if new_width > original_width:
-							original_image = _resize_canvas(original_image, new_width, original_height)
+							original_image = _resize_canvas(original_image_file, new_width, original_height)
 							original_image.save(file_original_screenshot_path)
 
 						# Now get the diff.
@@ -160,8 +160,8 @@ def compare_versions(plain_output: bool) -> int:
 									shutil.copy(file_new_screenshot_path, output_directory)
 									shutil.copy(file_original_screenshot_path, output_directory)
 
-									original_image.paste(diff.convert("RGB"), mask=diff)
-									original_image.save(output_directory / (filename.name + "-diff.png"))
+									original_image_file.paste(diff.convert("RGB"), mask=diff)
+									original_image_file.save(output_directory / (filename.name + "-diff.png"))
 
 								except Exception:
 									pass

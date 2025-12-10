@@ -75,7 +75,7 @@ def _color_to_alpha(image: Image_type, color: tuple[int, int, int, int]) -> Imag
 	img_bands = [band.convert("F") for band in image.split()]
 
 	# Find the maximum difference rate between source and color. I had to use two difference functions because ImageMath.eval only evaluates the expression once.
-	alpha = ImageMath.eval(
+	alpha = ImageMath.unsafe_eval(
 		"""float(
 				max(
 					max(
@@ -106,7 +106,7 @@ def _color_to_alpha(image: Image_type, color: tuple[int, int, int, int]) -> Imag
 
 	# Calculate the new image colors after the removal of the selected color.
 	new_bands = [
-		ImageMath.eval(
+		ImageMath.unsafe_eval(
 			"convert((image - color) / alpha + color, 'L')",
 			image=img_bands[i],
 			color=color_list[i],
@@ -116,7 +116,7 @@ def _color_to_alpha(image: Image_type, color: tuple[int, int, int, int]) -> Imag
 	]
 
 	# Add the new alpha band.
-	new_bands.append(ImageMath.eval(
+	new_bands.append(ImageMath.unsafe_eval(
 		"convert(alpha_band * alpha, 'L')",
 		alpha=alpha,
 		alpha_band=img_bands[3]
@@ -134,7 +134,7 @@ def _color_to_alpha(image: Image_type, color: tuple[int, int, int, int]) -> Imag
 	width, height = new_image.size
 	for image_y in range(height):
 		for image_x in range(width):
-			if pixdata[image_x, image_y] == (255, 255, 255, 0):
+			if pixdata and pixdata[image_x, image_y] == (255, 255, 255, 0):
 				pixdata[image_x, image_y] = (0, 0, 0, 0)
 
 	return new_image
@@ -146,18 +146,23 @@ def has_transparency(image: Image_type) -> bool:
 
 	if image.mode == "P":
 		transparent = image.info.get("transparency", -1)
+		index: int
 		if isinstance(transparent, bytes):
-			for _, index in image.getcolors():
+			colors = image.getcolors() or []
+			# `image.getcolors()` returns different values depending on `image.mode()`.
+			for _, index in colors: # type: ignore
 				if index >= len(transparent):
 					return False
 				if transparent[index] < 255:
 					return True
 		else:
-			for _, index in image.getcolors():
+			# `image.getcolors()` returns different values depending on `image.mode()`.
+			colors = image.getcolors() or []
+			for _, index in colors: # type: ignore
 				if index == transparent:
 					return True
 	elif image.mode in ("LA", "RGBA"):
-		extrema = image.getextrema()
+		extrema: tuple[tuple[int, int]] = image.getextrema() # type: ignore
 		if extrema[-1][0] < 255:
 			return True
 
@@ -190,8 +195,8 @@ def render_mathml_to_png(driver, mathml: str, output_filename: Path, output_file
 			driver.find_element("tag name", "html").screenshot(png_file.name)
 
 			# Save hiDPI 2x version.
-			image = Image.open(png_file.name)
-			image = _color_to_alpha(image, (255, 255, 255, 255))
+			image_file = Image.open(png_file.name)
+			image = _color_to_alpha(image_file, (255, 255, 255, 255))
 			image = image.crop(image.getbbox())
 
 			image.save(output_filename_2x)
@@ -275,9 +280,9 @@ def remove_image_metadata(filename: Path) -> None:
 			# Some metadata, like chromaticity and gamma, are useful to preserve in PNGs.
 			new_exif = PngImagePlugin.PngInfo()
 			for key, value in image.info.items():
-				if key.lower() == "gamma":
+				if key.lower() == "gamma": # type: ignore
 					new_exif.add(b"gAMA", struct.pack("!1I", int(value * 100000)))
-				elif key.lower() == "chromaticity":
+				elif key.lower() == "chromaticity": # type: ignore
 					new_exif.add(b"cHRM", struct.pack("!8I", \
 							int(value[0] * 100000), \
 							int(value[1] * 100000), \
