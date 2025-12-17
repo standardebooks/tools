@@ -1,0 +1,14 @@
+c-010 [Manual Review] chapter-1.xhtml `<footer>` missing `margin-top: 1em; text-align: <value>;`. Hint: `text-align` is usually set to `right`.
+ Line 19:       <footer role="presentation">
+                <p epub:type="z3998:valediction">—Your loving Husband,</p>
+                <p><span epub:type="z3998:sender z3998:signature"><abbr epub:type="z3998:given-name">H.</abbr> Earlforward</span>.’ ”</p>
+        </footer>
+c-015 [Manual Review] chapter-1.xhtml Element after or containing `z3998:salutation` semantic doesn’t have `text-indent: 0;`.
+ Line 18:       <p>As you may guess, I am torn with anxiety about you. It was a severe shock when Elsie told me the doctor had taken you off to the hospital without a moment’s delay. However, I know you are very brave and have an excellent constitution, and I feel sure that before a week is out you will be feeling better than you have done for months. And, of course, the hospital is a very good one, one of the best in London, if not the best. It has been established for nearly eight hundred years. If it was only to be under the same roof as you I should have come to the hospital myself today, but I feel so much better that really it is not necessary, and I feel sure that if you were here to see me you would agree with me. There is the business to be thought of. I am glad to say that Elsie is looking after me splendidly, but, of course, that does not surprise me. Now, my dear Violet, you must get better quickly for my sake as well as your own. Be of good courage and do not worry about me. My little illness is nothing. It is your illness that has made me realize that.</p>
+c-019 [Error] chapter-1.xhtml Element with `z3998:signature` semantic, but without `font-variant: small-caps;` or `font-style: italic;`.
+ Line 21:       <span epub:type="z3998:sender z3998:signature"><abbr epub:type="z3998:given-name">H.</abbr> Earlforward</span>
+y-019 [Manual Review] chapter-1.xhtml Possible typo: `”` without opening `“`.
+ Line 27:       Save us from the consequences of our own actions, and from the cruel fairy, 
+ Line 27:        Bedonebyasyoudid!’ Do not you think that you would be a little tempted then to tell what you know, laddie?”
+y-036 [Manual Review] chapter-1.xhtml Possible typo: `’` after punctuation, but no `‘`. Hints: Is `‘` missing or mis-curled? `’` that elides a word is placed before punctuation.
+ Line 11:       <p>“That’s what you call musicians,” he announced gravely. “ ’Home, Sweet Home,’ played upon a trombone. Think of that! Art could go no farther.”</p>
