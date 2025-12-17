@@ -506,6 +506,7 @@ TYPOS
 "y-033", "Possible typo: Three-em-dash obscuring an entire word, but not preceded by a space."
 "y-034", "Possible typo: [text].[/] embedded in word. Hint: Abbreviations must be in an [xhtml]<abbr>[/] element."
 "y-035", "Possible typo: Single letter. Hints: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [xhtml]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?"
+"y-036", "Possible typo: [text]’[/] after punctuation, but no [text]‘[/]. Hint: Is [text]‘[/] missing or mis-curled?"
 """
 
 NEWLINE_PATTERN = regex.compile(r"\n")
@@ -3485,6 +3486,10 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 	nodes = dom.xpath("/html/body//*[re:test(., '\\s[b-xz]\\s') and not(ancestor-or-self::*[re:test(@xml:lang, '^(?!en-).')]) and not(descendant::*[re:test(., '\\b[b-xz]\\b')]) and not(descendant::i[re:test(@epub:type, 'z3998:(grapheme|phoneme|roman)')])]")
 	if nodes:
 		messages.append(LintMessage("y-035", "Possible typo: Single letter. Hint: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [xhtml]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
+
+	nodes = dom.xpath("/html/body//p[re:test(., '^[^‘]+[^A-Z][\\!\\.\\,\\?\\:\\;]’') and not(.//abbr[following-sibling::text()[re:test(., '^’')]]) and not(./ancestor-or-self::blockquote[re:test(., '‘')]) and not(contains(@class, 'continued') and ./preceding-sibling::*[1][contains(., '‘')])]")
+	if nodes:
+		messages.append(LintMessage("y-036", "Possible typo: [text]’[/] after punctuation, but no [text]‘[/]. Hint: Is [text]‘[/] missing or mis-curled?", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	return messages
 
