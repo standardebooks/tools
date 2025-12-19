@@ -990,15 +990,15 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 		titlepage_xhtml = titlepage_xhtml.replace("TITLE", escape(title))
 
-		titlepage_xhtml = titlepage_xhtml.replace("AUTHOR", _generate_titlepage_string(authors, "author"))
+		titlepage_xhtml = titlepage_xhtml.replace("AUTHOR_NAME", _generate_titlepage_string(authors, "author"))
 
 		if translators:
-			titlepage_xhtml = titlepage_xhtml.replace("TRANSLATOR", _generate_titlepage_string(translators, "translator"))
+			titlepage_xhtml = titlepage_xhtml.replace("TRANSLATOR_NAME", _generate_titlepage_string(translators, "translator"))
 		else:
 			titlepage_xhtml = regex.sub(r"<p>Translated by.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)
 
 		if illustrators:
-			titlepage_xhtml = titlepage_xhtml.replace("ILLUSTRATOR", _generate_titlepage_string(illustrators, "illustrator"))
+			titlepage_xhtml = titlepage_xhtml.replace("ILLUSTRATOR_NAME", _generate_titlepage_string(illustrators, "illustrator"))
 		else:
 			titlepage_xhtml = regex.sub(r"<p>Illustrated by.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)
 
@@ -1039,7 +1039,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 		epub.generate_titlepage_svg()
 
 		if transcription_url:
-			_replace_in_file(content_path / "epub" / "text" / "imprint.xhtml", "PG_URL", transcription_url)
+			_replace_in_file(content_path / "epub" / "text" / "imprint.xhtml", "TRANSCRIPTION_URL", transcription_url)
 
 		# Fill out the colophon.
 		with open(content_path / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
@@ -1051,19 +1051,19 @@ def _create_draft(args: Namespace, plain_output: bool):
 			contributor_string = _generate_contributor_string(authors, True)
 
 			if contributor_string == "":
-				colophon_xhtml = colophon_xhtml.replace(" by<br/>\n\t\t\t<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", escape(contributor_string))
+				colophon_xhtml = colophon_xhtml.replace(" by<br/>\n\t\t\t<a href=\"AUTHOR_WIKI_URL\">AUTHOR_NAME</a>", escape(contributor_string))
 			else:
-				colophon_xhtml = colophon_xhtml.replace("<a href=\"AUTHOR_WIKI_URL\">AUTHOR</a>", contributor_string)
+				colophon_xhtml = colophon_xhtml.replace("<a href=\"AUTHOR_WIKI_URL\">AUTHOR_NAME</a>", contributor_string)
 
 			if translators:
 				translator_block = f"It was translated from ORIGINAL_LANGUAGE in <time>TRANSLATION_YEAR</time> by<br/>\n\t\t\t{_generate_contributor_string(translators, True)}.</p>"
 				colophon_xhtml = colophon_xhtml.replace("</p>\n\t\t\t<p>This ebook was produced for<br/>", f"<br/>\n\t\t\t{translator_block}\n\t\t\t<p>This ebook was produced for<br/>")
 
 			if transcription_url:
-				colophon_xhtml = colophon_xhtml.replace("PG_URL", transcription_url)
+				colophon_xhtml = colophon_xhtml.replace("TRANSCRIPTION_URL", transcription_url)
 
 			if transcription_publication_year:
-				colophon_xhtml = colophon_xhtml.replace("PG_YEAR", transcription_publication_year)
+				colophon_xhtml = colophon_xhtml.replace("TRANSCRIPTION_YEAR", transcription_publication_year)
 
 			if transcription_producers:
 				producer_count = len(transcription_producers)
@@ -1090,7 +1090,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 				producers_xhtml = producers_xhtml + "<br/>"
 
-				colophon_xhtml = colophon_xhtml.replace("""<b epub:type="z3998:personal-name">TRANSCRIBER_1</b>, <b epub:type="z3998:personal-name">TRANSCRIBER_2</b>, and <a href="https://www.pgdp.net/">Distributed Proofreaders</a><br/>""", producers_xhtml)
+				colophon_xhtml = colophon_xhtml.replace("""<b epub:type="z3998:personal-name">TRANSCRIBER_1_NAME</b>, <b epub:type="z3998:personal-name">TRANSCRIBER_2_NAME</b>, and <a href="https://www.pgdp.net/">Distributed Proofreaders</a><br/>""", producers_xhtml)
 
 			file.seek(0)
 			file.write(colophon_xhtml)
@@ -1141,7 +1141,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 				i = i + 1
 
 			# Replace the first transcriber line with a placeholder.
-			metadata_xml = regex.sub(r"\t\t<dc:contributor id=\"transcriber-1\">TRANSCRIBER_1</dc:contributor>", "\t\tCREDITS_PLACEHOLDER", metadata_xml)
+			metadata_xml = regex.sub(r"\t\t<dc:contributor id=\"transcriber-1\">TRANSCRIBER_1_NAME</dc:contributor>", "\t\tCREDITS_PLACEHOLDER", metadata_xml)
 			# Remove the remaining transcriber lines.
 			metadata_xml = regex.sub(r"^.+?transcriber.+?\n", "", metadata_xml, flags=regex.MULTILINE)
 			# Replace the placeholder with the actual transcribers.
@@ -1152,7 +1152,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 		authors_xml = _generate_metadata_contributor_xml(authors, "author")
 		authors_xml = authors_xml.replace("dc:contributor", "dc:creator")
-		metadata_xml = regex.sub(r"<dc:creator id=\"author\">AUTHOR</dc:creator>.+?scheme=\"marc:relators\">aut</meta>", authors_xml, metadata_xml, flags=regex.DOTALL)
+		metadata_xml = regex.sub(r"<dc:creator id=\"author\">AUTHOR_NAME</dc:creator>.+?scheme=\"marc:relators\">aut</meta>", authors_xml, metadata_xml, flags=regex.DOTALL)
 
 		if translators:
 			translators_xml = _generate_metadata_contributor_xml(translators, "translator")
@@ -1210,7 +1210,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 			metadata_xml = metadata_xml.replace("<dc:language>LANG</dc:language>", f"<dc:language>{transcription_language}</dc:language>")
 
 		if transcription_url:
-			metadata_xml = metadata_xml.replace("<dc:source>PG_URL</dc:source>", f"<dc:source>{transcription_url}</dc:source>")
+			metadata_xml = metadata_xml.replace("<dc:source>TRANSCRIPTION_URL</dc:source>", f"<dc:source>{transcription_url}</dc:source>")
 
 		file.seek(0)
 		file.write(metadata_xml)

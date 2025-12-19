@@ -29,28 +29,28 @@
 		<meta property="term" refines="#subject-2">LCSH_ID_2</meta>
 		<dc:description id="description">DESCRIPTION</dc:description>
 		<dc:language>LANG</dc:language>
-		<dc:source>PG_URL</dc:source>
-		<dc:source>IA_URL</dc:source>
+		<dc:source>TRANSCRIPTION_URL</dc:source>
+		<dc:source>PAGE_SCANS_URL</dc:source>
 		<meta property="se:word-count">WORD_COUNT</meta>
 		<meta property="se:url.encyclopedia.wikipedia">EBOOK_WIKI_URL</meta>
-		<dc:creator id="author">AUTHOR</dc:creator>
+		<dc:creator id="author">AUTHOR_NAME</dc:creator>
 		<meta property="file-as" refines="#author">AUTHOR_SORT</meta>
 		<meta property="se:name.person.full-name" refines="#author">AUTHOR_FULL_NAME</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#author">AUTHOR_WIKI_URL</meta>
 		<meta property="se:url.authority.nacoaf" refines="#author">AUTHOR_NACOAF_URI</meta>
 		<meta property="role" refines="#author" scheme="marc:relators">aut</meta>
-		<dc:contributor id="translator">TRANSLATOR</dc:contributor>
+		<dc:contributor id="translator">TRANSLATOR_NAME</dc:contributor>
 		<meta property="file-as" refines="#translator">TRANSLATOR_SORT</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#translator">TRANSLATOR_WIKI_URL</meta>
 		<meta property="se:url.authority.nacoaf" refines="#translator">TRANSLATOR_NACOAF_URI</meta>
 		<meta property="display-seq" refines="#translator">1</meta>
 		<meta property="role" refines="#translator" scheme="marc:relators">trl</meta>
-		<dc:contributor id="artist">COVER_ARTIST</dc:contributor>
+		<dc:contributor id="artist">COVER_ARTIST_NAME</dc:contributor>
 		<meta property="file-as" refines="#artist">COVER_ARTIST_SORT</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#artist">COVER_ARTIST_WIKI_URL</meta>
 		<meta property="se:url.authority.nacoaf" refines="#artist">COVER_ARTIST_NACOAF_URI</meta>
 		<meta property="role" refines="#artist" scheme="marc:relators">art</meta>
-		<dc:contributor id="producer-1">PRODUCER</dc:contributor>
+		<dc:contributor id="producer-1">PRODUCER_NAME</dc:contributor>
 		<meta property="file-as" refines="#producer-1">PRODUCER_SORT</meta>
 		<meta property="se:url.homepage" refines="#producer-1">PRODUCER_URL</meta>
 		<meta property="role" refines="#producer-1" scheme="marc:relators">bkp</meta>

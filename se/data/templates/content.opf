@@ -41,40 +41,40 @@
 			LONG_DESCRIPTION
 		</meta>
 		<dc:language>LANG</dc:language>
-		<dc:source>PG_URL</dc:source>
-		<dc:source>IA_URL</dc:source>
+		<dc:source>TRANSCRIPTION_URL</dc:source>
+		<dc:source>PAGE_SCANS_URL</dc:source>
 		<meta property="se:production-notes">PRODUCTION_NOTES</meta>
 		<meta property="se:word-count">WORD_COUNT</meta>
 		<meta property="se:reading-ease.flesch">READING_EASE</meta>
 		<meta property="se:url.encyclopedia.wikipedia">EBOOK_WIKI_URL</meta>
 		<meta property="se:url.vcs.github">https://github.com/standardebooks/VCS_IDENTIFIER</meta>
-		<dc:creator id="author">AUTHOR</dc:creator>
+		<dc:creator id="author">AUTHOR_NAME</dc:creator>
 		<meta property="file-as" refines="#author">AUTHOR_SORT</meta>
 		<meta property="se:name.person.full-name" refines="#author">AUTHOR_FULL_NAME</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#author">AUTHOR_WIKI_URL</meta>
 		<meta property="se:url.authority.nacoaf" refines="#author">AUTHOR_NACOAF_URI</meta>
 		<meta property="role" refines="#author" scheme="marc:relators">aut</meta>
-		<dc:contributor id="translator">TRANSLATOR</dc:contributor>
+		<dc:contributor id="translator">TRANSLATOR_NAME</dc:contributor>
 		<meta property="file-as" refines="#translator">TRANSLATOR_SORT</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#translator">TRANSLATOR_WIKI_URL</meta>
 		<meta property="se:url.authority.nacoaf" refines="#translator">TRANSLATOR_NACOAF_URI</meta>
 		<meta property="display-seq" refines="#translator">1</meta>
 		<meta property="role" refines="#translator" scheme="marc:relators">trl</meta>
-		<dc:contributor id="artist">COVER_ARTIST</dc:contributor>
+		<dc:contributor id="artist">COVER_ARTIST_NAME</dc:contributor>
 		<meta property="file-as" refines="#artist">COVER_ARTIST_SORT</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#artist">COVER_ARTIST_WIKI_URL</meta>
 		<meta property="se:url.authority.nacoaf" refines="#artist">COVER_ARTIST_NACOAF_URI</meta>
 		<meta property="role" refines="#artist" scheme="marc:relators">art</meta>
-		<dc:contributor id="illustrator">ILLUSTRATOR</dc:contributor>
+		<dc:contributor id="illustrator">ILLUSTRATOR_NAME</dc:contributor>
 		<meta property="file-as" refines="#illustrator">ILLUSTRATOR_SORT</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#illustrator">ILLUSTRATOR_WIKI_URL</meta>
 		<meta property="se:url.authority.nacoaf" refines="#illustrator">ILLUSTRATOR_NACOAF_URI</meta>
 		<meta property="role" refines="#illustrator" scheme="marc:relators">ill</meta>
-		<dc:contributor id="transcriber-1">TRANSCRIBER_1</dc:contributor>
+		<dc:contributor id="transcriber-1">TRANSCRIBER_1_NAME</dc:contributor>
 		<meta property="file-as" refines="#transcriber-1">TRANSCRIBER_1_SORT</meta>
 		<meta property="se:url.homepage" refines="#transcriber-1">TRANSCRIBER_1_URL</meta>
 		<meta property="role" refines="#transcriber-1" scheme="marc:relators">trc</meta>
-		<dc:contributor id="transcriber-2">TRANSCRIBER_2</dc:contributor>
+		<dc:contributor id="transcriber-2">TRANSCRIBER_2_NAME</dc:contributor>
 		<meta property="file-as" refines="#transcriber-2">TRANSCRIBER_2_SORT</meta>
 		<meta property="se:url.homepage" refines="#transcriber-2">TRANSCRIBER_2_URL</meta>
 		<meta property="role" refines="#transcriber-2" scheme="marc:relators">trc</meta>
@@ -82,7 +82,7 @@
 		<meta property="file-as" refines="#transcriber-3">Distributed Proofreaders</meta>
 		<meta property="se:url.homepage" refines="#transcriber-3">https://www.pgdp.net/</meta>
 		<meta property="role" refines="#transcriber-3" scheme="marc:relators">trc</meta>
-		<dc:contributor id="producer-1">PRODUCER</dc:contributor>
+		<dc:contributor id="producer-1">PRODUCER_NAME</dc:contributor>
 		<meta property="file-as" refines="#producer-1">PRODUCER_SORT</meta>
 		<meta property="se:url.homepage" refines="#producer-1">PRODUCER_URL</meta>
 		<meta property="role" refines="#producer-1" scheme="marc:relators">bkp</meta>
