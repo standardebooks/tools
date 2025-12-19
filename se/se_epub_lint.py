@@ -1548,7 +1548,6 @@ def _lint_svg_checks(self, source_file: SourceFile, svg_dom: se.easy_xml.EasyXml
 			if "." in svg_dimensions[2] or "." in svg_dimensions[3]:
 				messages.append(LintMessage("x-022", "Illegal fractions in SVG [xml]viewBox[/] attribute.", se.MESSAGE_TYPE_ERROR, filename))
 		except Exception as ex:
-			print(ex)
 			raise se.InvalidFileException(f"Couldn’t parse SVG [xhtml]viewBox[/] attribute in [path][link=file://{filename.resolve()}]{filename}[/][/].") from ex
 
 	# Check for illegal `transform` or `id` attributes.
