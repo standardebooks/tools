@@ -567,6 +567,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 	transcription_publication_year = None
 	transcription_language = None
 	transcription_local_path = None
+	transcription_source = None
 	html_parser = etree.HTMLParser()
 	title = se.formatting.titlecase(args.title.replace("'", "’"))
 
@@ -697,6 +698,8 @@ def _create_draft(args: Namespace, plain_output: bool):
 		except Exception as ex:
 			raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Faded Page HTML file. Exception: {ex}") from ex
 
+		transcription_source = "Faded Page"
+
 	# Download PG HTML and do some fixups.
 	if args.pg_id:
 		transcription_url = f"https://www.gutenberg.org/ebooks/{args.pg_id}"
@@ -745,6 +748,8 @@ def _create_draft(args: Namespace, plain_output: bool):
 			transcription_ebook_html = se.strip_bom(fixed_external_ebook_html)
 		except Exception as ex:
 			raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Project Gutenberg HTML file. Exception: {ex}") from ex
+
+		transcription_source = "Project Gutenberg"
 
 	if transcription_ebook_html:
 		# Try to guess the ebook language.
@@ -1041,6 +1046,10 @@ def _create_draft(args: Namespace, plain_output: bool):
 		if transcription_url:
 			_replace_in_file(content_path / "epub" / "text" / "imprint.xhtml", "TRANSCRIPTION_URL", transcription_url)
 
+		if transcription_source:
+			_replace_in_file(content_path / "epub" / "text" / "imprint.xhtml", "TRANSCRIPTION_SOURCE", escape(transcription_source))
+
+
 		# Fill out the colophon.
 		with open(content_path / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
 			colophon_xhtml = file.read()
@@ -1091,6 +1100,10 @@ def _create_draft(args: Namespace, plain_output: bool):
 				producers_xhtml = producers_xhtml + "<br/>"
 
 				colophon_xhtml = colophon_xhtml.replace("""<b epub:type="z3998:personal-name">TRANSCRIBER_1_NAME</b>, <b epub:type="z3998:personal-name">TRANSCRIBER_2_NAME</b>, and <a href="https://www.pgdp.net/">Distributed Proofreaders</a><br/>""", producers_xhtml)
+
+			if transcription_source:
+				colophon_xhtml = colophon_xhtml.replace("TRANSCRIPTION_SOURCE", escape(transcription_source))
+
 
 			file.seek(0)
 			file.write(colophon_xhtml)
