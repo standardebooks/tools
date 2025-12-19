@@ -867,6 +867,17 @@ def _create_draft(args: Namespace, plain_output: bool):
 		file.write(se.formatting.format_xhtml(titlepage_xhtml))
 		file.truncate()
 
+	# Set the language in the ToC, so that `se modernize-spelling` doesn't crash when we try to run it.
+	if args.pg_id and pg_language:
+		with open(content_path / "epub" / "toc.xhtml", "r+", encoding="utf-8") as file:
+			toc_xhtml = file.read()
+
+			toc_xhtml = toc_xhtml.replace("LANG", pg_language)
+
+			file.seek(0)
+			file.write(toc_xhtml)
+			file.truncate()
+
 	if not args.white_label:
 		# Create the titlepage SVG.
 		contributors = {}
