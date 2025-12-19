@@ -3081,7 +3081,8 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 	incorrectly_cased_titles = []
 	for node in dom.xpath("/html/body//*[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'se:name.legal-case')) and not(@xml:lang) and not(./*) and string-length(.) <= 150]"):
 		# Replace any space that is not a hair space or nbsp with a regular space.
-		if se.formatting.titlecase(node.inner_text()) != regex.sub(fr"[^\S{se.HAIR_SPACE}{se.NO_BREAK_SPACE}]+", " ", node.inner_text()):
+		# Ignore this if we're in the colophon and we matched with `PAINTING`, because we'll also output m-036 to alert us of this missing variable.
+		if se.formatting.titlecase(node.inner_text()) != regex.sub(fr"[^\S{se.HAIR_SPACE}{se.NO_BREAK_SPACE}]+", " ", node.inner_text()) and not (dom.xpath("/html/body//section[contains(@epub:type, 'colophon')]") and node.inner_text() == "PAINTING"):
 			incorrectly_cased_titles.append(LintSubmessage(node.to_string(), node.sourceline))
 
 	if incorrectly_cased_titles:
