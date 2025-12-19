@@ -38,7 +38,7 @@ def modernize_spelling(plain_output: bool) -> int:
 						console.print(se.prep_output(f"{('[path][link=file://' + str(filename) + ']' + filename.name + '[/][/]') + ': ' if not args.verbose else ''}{problem_spelling}", plain_output))
 
 				except se.InvalidLanguageException as ex:
-					se.print_error(f"{ex}{' File: [path][link=file://' + str(filename) + ']' + str(filename) + '[/][/]' if not args else ''}", plain_output=plain_output)
+					se.print_error(f"{ex} File: [path][link=file://{filename}]{filename}[/][/]", plain_output=plain_output)
 					return ex.code
 
 				if args.modernize_hyphenation:
