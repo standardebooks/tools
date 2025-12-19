@@ -58,6 +58,9 @@ CONTRIBUTOR_BLOCK_TEMPLATE = """<dc:contributor id="CONTRIBUTOR_ID">CONTRIBUTOR_
 		<meta property="se:url.authority.nacoaf" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_NACOAF_URI</meta>
 		<meta property="role" refines="#CONTRIBUTOR_ID" scheme="marc:relators">CONTRIBUTOR_MARC</meta>"""
 
+USER_AGENT = "Standard Ebooks toolset <https://standardebooks.org/tools>"
+XPATH_NAMESPACES = {"re": "http://exslt.org/regular-expressions"}
+
 console = se.init_console()
 
 def _replace_in_file(file_path: Path, search: str | list, replace: str | list) -> None:
@@ -379,7 +382,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> tuple[str | None, s
 
 	try:
 		# Wikipedia requires a `User-Agent` header, otherwise it returns HTTP 403 Forbidden.
-		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": "1"}, allow_redirects=False, timeout=60, headers={'User-Agent': 'Standard Ebooks toolset'})
+		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": "1"}, allow_redirects=False, timeout=60, headers={'User-Agent': USER_AGENT})
 	except Exception as ex:
 		raise se.RemoteCommandErrorException(f"Couldn’t contact Wikipedia. Exception: {ex}") from ex
 
@@ -392,7 +395,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> tuple[str | None, s
 
 		if get_nacoaf_uri:
 			try:
-				response = requests.get(wiki_url, timeout=60)
+				response = requests.get(wiki_url, timeout=60, headers={'User-Agent': USER_AGENT})
 			except Exception as ex:
 				raise se.RemoteCommandErrorException(f"Couldn’t contact Wikipedia. Exception: {ex}") from ex
 
@@ -557,13 +560,13 @@ def _create_draft(args: Namespace, plain_output: bool):
 	authors = []
 	translators = []
 	illustrators = []
-	pg_producers = []
-	pg_subjects = []
-	pg_ebook_html = None
-	pg_url = None
-	pg_publication_year = None
-	pg_language = None
-	pg_file_local_path = None
+	transcription_producers = []
+	transcription_subjects = []
+	transcription_ebook_html = None
+	transcription_url = None
+	transcription_publication_year = None
+	transcription_language = None
+	transcription_local_path = None
 	html_parser = etree.HTMLParser()
 	title = se.formatting.titlecase(args.title.replace("'", "’"))
 
@@ -641,18 +644,68 @@ def _create_draft(args: Namespace, plain_output: bool):
 			if not args.offline and illustrator["name"].lower() != "anonymous":
 				illustrator["wiki_url"], illustrator["nacoaf_uri"] = _get_wikipedia_url(illustrator["name"], True)
 
-	# Download PG HTML and do some fixups.
-	if args.pg_id:
-		if args.offline:
-			raise se.RemoteCommandErrorException("Cannot download Project Gutenberg ebook when offline option is enabled.")
-
-		pg_url = f"https://www.gutenberg.org/ebooks/{args.pg_id}"
+	if args.fp_id:
+		transcription_url = f"https://www.fadedpage.com/showbook.php?pid={args.fp_id}"
 
 		# Get the ebook metadata.
 		if args.verbose:
-			console.print(se.prep_output(f"Downloading ebook metadata from [path][link={pg_url}]{pg_url}[/][/] ...", plain_output))
+			console.print(se.prep_output(f"Downloading ebook metadata from [path][link={transcription_url}]{transcription_url}[/][/] ...", plain_output))
 		try:
-			response = requests.get(pg_url, timeout=60)
+			response = requests.get(transcription_url, timeout=60, headers={'User-Agent': USER_AGENT})
+			fp_metadata_html = response.text
+			fp_cookie = response.cookies['PHPSESSID']
+		except Exception as ex:
+			raise se.RemoteCommandErrorException(f"Couldn’t download Faded Page ebook metadata page. Exception: {ex}") from ex
+
+		dom = etree.parse(StringIO(fp_metadata_html), html_parser)
+
+		# Get the ebook HTML URL from the metadata.
+		fp_ebook_url = None
+		for node in dom.xpath(f"/html/body//a[contains(@href, '{args.fp_id}.html')]"):
+			fp_ebook_url = "https://www.fadedpage.com/" + node.get("href")
+
+		if not fp_ebook_url:
+			raise se.RemoteCommandErrorException("Could download ebook metadata, but couldn’t find URL for the ebook HTML.")
+
+		# Get the actual ebook transcription.
+		# Faded Page requires you to set a session cookie at the ebook's metadata page before you can access the actual ebook transcription.
+		# We got that session cookie earlier, and we pass it below in order to actually be able to download the ebook.
+		if args.verbose:
+			console.print(se.prep_output(f"Downloading ebook transcription from [path][link={fp_ebook_url}]{fp_ebook_url}[/][/] ...", plain_output))
+		try:
+			response = requests.get(fp_ebook_url, timeout=60, cookies={"PHPSESSID": fp_cookie}, headers={'User-Agent': USER_AGENT})
+			transcription_ebook_html = response.text
+		except Exception as ex:
+			raise se.RemoteCommandErrorException(f"Couldn’t download Faded Page ebook HTML. Exception: {ex}") from ex
+
+		fp_html_dom = etree.parse(StringIO(transcription_ebook_html), html_parser)
+
+		# Make sure we actually got the ebook HTML, and didn't get redirected by Faded Page.
+		if not fp_html_dom.xpath("/html/head/meta[re:test(@http-equiv, '^Content-Type$', 'i') and re:test(@content, 'text/html;\\s*charset=utf-8', 'i')]", namespaces=XPATH_NAMESPACES):
+			raise se.RemoteCommandErrorException("Tried to download Faded Page ebook HTML, but response doesn't look like a Faded Page ebook.")
+
+		# Get the FP publication date.
+		for node in fp_html_dom.xpath("//p[re:test(., '^\\s*Date first posted:', 'i')]", namespaces=XPATH_NAMESPACES):
+			text = etree.tostring(node, encoding=str, method="text", with_tail=False)
+			transcription_publication_year = regex.sub(r".+?([0-9]{4})$", "\\1", text)
+			# Quit on the first match.
+			break
+
+		try:
+			fixed_external_ebook_html = fix_text(transcription_ebook_html, uncurl_quotes=False)
+			transcription_ebook_html = se.strip_bom(fixed_external_ebook_html)
+		except Exception as ex:
+			raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Faded Page HTML file. Exception: {ex}") from ex
+
+	# Download PG HTML and do some fixups.
+	if args.pg_id:
+		transcription_url = f"https://www.gutenberg.org/ebooks/{args.pg_id}"
+
+		# Get the ebook metadata.
+		if args.verbose:
+			console.print(se.prep_output(f"Downloading ebook metadata from [path][link={transcription_url}]{transcription_url}[/][/] ...", plain_output))
+		try:
+			response = requests.get(transcription_url, timeout=60, headers={'User-Agent': USER_AGENT})
 			pg_metadata_html = response.text
 		except Exception as ex:
 			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page. Exception: {ex}") from ex
@@ -672,32 +725,32 @@ def _create_draft(args: Namespace, plain_output: bool):
 		for node in dom.xpath("/html/body//td[contains(@property, 'dcterms:subject')]"):
 			if node.get("datatype") == "dcterms:LCSH":
 				for subject_link in node.xpath("./a"):
-					pg_subjects.append(subject_link.text.strip())
+					transcription_subjects.append(subject_link.text.strip())
 
 		# Get the PG publication date.
-		pg_publication_year = None
 		for node in dom.xpath("//td[@itemprop='datePublished']"):
-			pg_publication_year = regex.sub(r".+?([0-9]{4})", "\\1", node.text)
+			transcription_publication_year = regex.sub(r".+?([0-9]{4})", "\\1", node.text)
 
 		# Get the actual ebook URL.
 		if args.verbose:
 			console.print(se.prep_output(f"Downloading ebook transcription from [path][link={pg_ebook_url}]{pg_ebook_url}[/][/] ...", plain_output))
 		try:
-			response = requests.get(pg_ebook_url, timeout=60)
-			pg_ebook_html = response.text
+			response = requests.get(pg_ebook_url, timeout=60, headers={'User-Agent': USER_AGENT})
+			transcription_ebook_html = response.text
 		except Exception as ex:
 			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook HTML. Exception: {ex}") from ex
 
 		try:
-			fixed_pg_ebook_html = fix_text(pg_ebook_html, uncurl_quotes=False)
-			pg_ebook_html = se.strip_bom(fixed_pg_ebook_html)
+			fixed_external_ebook_html = fix_text(transcription_ebook_html, uncurl_quotes=False)
+			transcription_ebook_html = se.strip_bom(fixed_external_ebook_html)
 		except Exception as ex:
 			raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Project Gutenberg HTML file. Exception: {ex}") from ex
 
+	if transcription_ebook_html:
 		# Try to guess the ebook language.
-		pg_language = "en-US"
-		if "colour" in pg_ebook_html or "favour" in pg_ebook_html or "honour" in pg_ebook_html:
-			pg_language = "en-GB"
+		transcription_language = "en-US"
+		if "colour" in transcription_ebook_html or "favour" in transcription_ebook_html or "honour" in transcription_ebook_html:
+			transcription_language = "en-GB"
 
 	# Create necessary directories.
 	if args.verbose:
@@ -711,72 +764,66 @@ def _create_draft(args: Namespace, plain_output: bool):
 	if not args.white_label:
 		(repo_path / "images").mkdir(parents=True)
 
-	is_pg_html_parsed = True
+	is_external_html_parsed = True
 
 	# Write PG data if we have it.
-	if args.pg_id and pg_ebook_html:
+	if transcription_ebook_html:
 		if args.verbose:
 			console.print(se.prep_output("Cleaning transcription ...", plain_output))
-		pg_file_local_path = content_path / "epub" / "text" / "body.xhtml"
-		try:
-			dom = etree.parse(StringIO(regex.sub(r"encoding=(?P<quote>[\'\"]).+?(?P=quote)", "", pg_ebook_html)), html_parser)
-			namespaces = {"re": "http://exslt.org/regular-expressions"}
 
-			for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*Produced by.+')] | //section[@id='pg-header']//p[re:test(., 'Credits: ')]", namespaces=namespaces):
-				node_html = etree.tostring(node, encoding=str, method="html", with_tail=False)
+		transcription_local_path = content_path / "epub" / "text" / "body.xhtml"
+		output = ""
 
-				# Sometimes, lxml returns the entire HTML instead of the node HTML for a node.
-				# It's unclear why this happens. An example is <https://www.gutenberg.org/ebooks/21721>.
-				# If the HTML is larger than some large size, abort trying to find producers.
-				if len(node_html) > 3000:
-					continue
+		if args.fp_id:
+			try:
+				dom = etree.parse(StringIO(regex.sub(r"encoding=(?P<quote>[\'\"]).+?(?P=quote)", "", transcription_ebook_html)), html_parser)
 
-				# Strip tags.
-				producers_text = node_html
-				producers_text = regex.sub(r"<.+?>", " ", producers_text, flags=regex.DOTALL)
+				for node in dom.xpath("//*[re:test(., 'ebook was produced by.+', 'i')]", namespaces=XPATH_NAMESPACES):
+					node_html = etree.tostring(node, encoding=str, method="html", with_tail=False)
 
-				producers_text = regex.sub(r"^<[^>]+?>", "", producers_text)
-				producers_text = regex.sub(r"<[^>]+?>$", "", producers_text)
+					# Sometimes, lxml returns the entire HTML instead of the node HTML for a node.
+					# It's unclear why this happens. An example is <https://www.gutenberg.org/ebooks/21721>.
+					# If the HTML is larger than some large size, abort trying to find producers.
+					if len(node_html) > 3000:
+						continue
 
-				producers_text = regex.sub(r".+?(Produced by|Credits\s*:\s*) (.+?)\s*$", "\\2", producers_text, flags=regex.DOTALL)
-				# Workaround for what appears to be a PG bug where the credits start as `Credits: Produced by Name1`.
-				producers_text = regex.sub(r"Produced by ", "", producers_text)
-				producers_text = regex.sub(r"\(.+?\)", "", producers_text, flags=regex.DOTALL)
-				producers_text = regex.sub(r" \s+", " ", producers_text, flags=regex.DOTALL)
-				producers_text = regex.sub(r"(at )?https?://www\.pgdp\.net", "", producers_text)
-				producers_text = regex.sub(r"[\r\n]+", " ", producers_text)
-				producers_text = regex.sub(r",? and ", ", and ", producers_text)
-				producers_text = producers_text.replace(", and ", ", ").strip()
+					# Strip tags.
+					producers_text = node_html
+					producers_text = regex.sub(r"<.+?>", " ", producers_text, flags=regex.DOTALL)
 
-				pg_producers = [producer.strip() for producer in regex.split(',|;', producers_text)]
+					producers_text = regex.sub(r"^<[^>]+?>", "", producers_text)
+					producers_text = regex.sub(r"<[^>]+?>$", "", producers_text)
 
-				for key, producer in enumerate(pg_producers):
-					if "Distributed Proofread" in producer:
-						pg_producers[key] = "Distributed Proofreaders"
+					producers_text = regex.sub(r"^\s*This eBook was produced by:\s*", "", producers_text, flags=regex.IGNORECASE)
+					producers_text = regex.sub(r" \s+", " ", producers_text, flags=regex.DOTALL)
+					producers_text = regex.sub(r"(at )?https?://www\.pgdp(canada)?\.net", "", producers_text)
+					producers_text = regex.sub(r"[\r\n]+", " ", producers_text)
+					producers_text = regex.sub(r",? (and|&amp;) ", ", and ", producers_text)
+					producers_text = producers_text.replace(", and ", ", ").strip()
 
-			# Strip everything in `<head>`.
-			for node in dom.xpath("/html/head//*"):
-				easy_node = se.easy_xml.EasyXmlElement(node)
-				easy_node.remove()
+					transcription_producers = [producer.strip() for producer in regex.split(',|;', producers_text)]
 
-			# Try to strip out the PG header and footer for new PG ebooks.
-			nodes = dom.xpath("//section[contains(@class, 'pg-boilerplate')]")
-			if nodes:
-				for node in nodes:
+				# Strip `<head>` and `<script>`.
+				for node in dom.xpath("/html/head | /html//script"):
 					easy_node = se.easy_xml.EasyXmlElement(node)
 					easy_node.remove()
-			else:
-				# Old PG ebooks might have a different structure.
-				for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*START OF (THE|THIS)')]", namespaces=namespaces):
+
+				# Try to strip out the header and footer.
+				for node in dom.xpath("//p[re:test(., 'This eBook was produced by', 'i')]", namespaces=XPATH_NAMESPACES):
 					for sibling_node in node.xpath("./preceding-sibling::*"):
 						easy_node = se.easy_xml.EasyXmlElement(sibling_node)
+						easy_node.remove()
+
+					# If there's an `<hr/>` directly following this node, remove it too.
+					for hr_node in node.xpath("./following-sibling::*[1][name() = 'hr']"):
+						easy_node = se.easy_xml.EasyXmlElement(hr_node)
 						easy_node.remove()
 
 					easy_node = se.easy_xml.EasyXmlElement(node)
 					easy_node.remove()
 
-				# Try to strip out the PG license footer.
-				for node in dom.xpath("//*[re:test(text(), 'End of (the )?Project Gutenberg')]", namespaces=namespaces):
+				# Try to strip out the footer.
+				for node in dom.xpath("/html/body/p[re:test(., '^\\s*\\[The end of')][last()]", namespaces=XPATH_NAMESPACES):
 					for sibling_node in node.xpath("./following-sibling::*"):
 						easy_node = se.easy_xml.EasyXmlElement(sibling_node)
 						easy_node.remove()
@@ -784,25 +831,117 @@ def _create_draft(args: Namespace, plain_output: bool):
 					easy_node = se.easy_xml.EasyXmlElement(node)
 					easy_node.remove()
 
-			# lxml will put the XML declaration in a weird place, remove it first.
-			output = regex.sub(r"<\?xml.+?\?>", "", etree.tostring(dom, encoding="unicode"))
+				# Strip all comments.
+				for node in dom.xpath("//comment()"):
+					easy_node = se.easy_xml.EasyXmlElement(node)
+					easy_node.remove()
 
-			# Now re-add it.
-			output = """<?xml version="1.0" encoding="utf-8"?>\n""" + output
+				# lxml will put the XML declaration in a weird place, remove it first.
+				output = regex.sub(r"<\?xml.+?\?>", "", etree.tostring(dom, encoding="unicode"))
 
-			# lxml can also output duplicate default namespace declarations so remove the first one only.
-			output = regex.sub(r"(xmlns=\".+?\")(\sxmlns=\".+?\")+", r"\1", output)
+				# Now re-add it.
+				output = """<?xml version="1.0" encoding="utf-8"?>\n""" + output
 
-			# lxml may also create duplicate `xml:lang` attributes on the root element. Not sure why. Remove them.
-			output = regex.sub(r'(xml:lang="[^"]+?" lang="[^"]+?") xml:lang="[^"]+?"', r"\1", output)
+				# lxml can also output duplicate default namespace declarations so remove the first one only.
+				output = regex.sub(r"(xmlns=\".+?\")(\sxmlns=\".+?\")+", r"\1", output)
 
-		except Exception:
-			# Save this error for later; we still want to save the book text and complete the `create-draft` process even if we've failed to parse PG's HTML source.
-			is_pg_html_parsed = False
-			output = pg_ebook_html
+				# lxml may also create duplicate `xml:lang` attributes on the root element. Not sure why. Remove them.
+				output = regex.sub(r'(xml:lang="[^"]+?" lang="[^"]+?") xml:lang="[^"]+?"', r"\1", output)
+
+			except Exception:
+				# Save this error for later; we still want to save the book text and complete the `create-draft` process even if we've failed to parse PG's HTML source.
+				is_external_html_parsed = False
+				output = transcription_ebook_html
+
+		if args.pg_id:
+			try:
+				dom = etree.parse(StringIO(regex.sub(r"encoding=(?P<quote>[\'\"]).+?(?P=quote)", "", transcription_ebook_html)), html_parser)
+
+				for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*Produced by.+')] | //section[@id='pg-header']//p[re:test(., 'Credits: ')]", namespaces=XPATH_NAMESPACES):
+					node_html = etree.tostring(node, encoding=str, method="html", with_tail=False)
+
+					# Sometimes, lxml returns the entire HTML instead of the node HTML for a node.
+					# It's unclear why this happens. An example is <https://www.gutenberg.org/ebooks/21721>.
+					# If the HTML is larger than some large size, abort trying to find producers.
+					if len(node_html) > 3000:
+						continue
+
+					# Strip tags.
+					producers_text = node_html
+					producers_text = regex.sub(r"<.+?>", " ", producers_text, flags=regex.DOTALL)
+
+					producers_text = regex.sub(r"^<[^>]+?>", "", producers_text)
+					producers_text = regex.sub(r"<[^>]+?>$", "", producers_text)
+
+					producers_text = regex.sub(r".+?(Produced by|Credits\s*:\s*) (.+?)\s*$", "\\2", producers_text, flags=regex.DOTALL)
+					# Workaround for what appears to be a PG bug where the credits start as `Credits: Produced by Name1`.
+					producers_text = regex.sub(r"Produced by ", "", producers_text)
+					producers_text = regex.sub(r"\(.+?\)", "", producers_text, flags=regex.DOTALL)
+					producers_text = regex.sub(r" \s+", " ", producers_text, flags=regex.DOTALL)
+					producers_text = regex.sub(r"(at )?https?://www\.pgdp\.net", "", producers_text)
+					producers_text = regex.sub(r"[\r\n]+", " ", producers_text)
+					producers_text = regex.sub(r",? and ", ", and ", producers_text)
+					producers_text = producers_text.replace(", and ", ", ").strip()
+
+					transcription_producers = [producer.strip() for producer in regex.split(',|;', producers_text)]
+
+				# Strip everything in `<head>`.
+				for node in dom.xpath("/html/head//*"):
+					easy_node = se.easy_xml.EasyXmlElement(node)
+					easy_node.remove()
+
+				# Try to strip out the PG header and footer for new PG ebooks.
+				nodes = dom.xpath("//section[contains(@class, 'pg-boilerplate')]")
+				if nodes:
+					for node in nodes:
+						easy_node = se.easy_xml.EasyXmlElement(node)
+						easy_node.remove()
+				else:
+					# Old PG ebooks might have a different structure.
+					for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*START OF (THE|THIS)')]", namespaces=XPATH_NAMESPACES):
+						for sibling_node in node.xpath("./preceding-sibling::*"):
+							easy_node = se.easy_xml.EasyXmlElement(sibling_node)
+							easy_node.remove()
+
+						easy_node = se.easy_xml.EasyXmlElement(node)
+						easy_node.remove()
+
+					# Try to strip out the PG license footer.
+					for node in dom.xpath("//*[re:test(text(), 'End of (the )?Project Gutenberg')]", namespaces=XPATH_NAMESPACES):
+						for sibling_node in node.xpath("./following-sibling::*"):
+							easy_node = se.easy_xml.EasyXmlElement(sibling_node)
+							easy_node.remove()
+
+						easy_node = se.easy_xml.EasyXmlElement(node)
+						easy_node.remove()
+
+				# lxml will put the XML declaration in a weird place, remove it first.
+				output = regex.sub(r"<\?xml.+?\?>", "", etree.tostring(dom, encoding="unicode"))
+
+				# Now re-add it.
+				output = """<?xml version="1.0" encoding="utf-8"?>\n""" + output
+
+				# lxml can also output duplicate default namespace declarations so remove the first one only.
+				output = regex.sub(r"(xmlns=\".+?\")(\sxmlns=\".+?\")+", r"\1", output)
+
+				# lxml may also create duplicate `xml:lang` attributes on the root element. Not sure why. Remove them.
+				output = regex.sub(r'(xml:lang="[^"]+?" lang="[^"]+?") xml:lang="[^"]+?"', r"\1", output)
+
+			except Exception:
+				# Save this error for later; we still want to save the book text and complete the `create-draft` process even if we've failed to parse PG's HTML source.
+				is_external_html_parsed = False
+				output = transcription_ebook_html
+
+
+		if transcription_producers:
+			for key, producer in enumerate(transcription_producers):
+				if "Distributed Proofreaders Canada" in producer:
+					transcription_producers[key] = "Distributed Proofreaders Canada"
+				elif "Distributed Proofreader" in producer:
+					transcription_producers[key] = "Distributed Proofreaders"
 
 		try:
-			with open(pg_file_local_path, "w", encoding="utf-8") as file:
+			with open(transcription_local_path, "w", encoding="utf-8") as file:
 				file.write(output)
 		except OSError as ex:
 			raise se.InvalidFileException(f"Couldn’t write to ebook directory. Exception: {ex}") from ex
@@ -868,11 +1007,11 @@ def _create_draft(args: Namespace, plain_output: bool):
 		file.truncate()
 
 	# Set the language in the ToC, so that `se modernize-spelling` doesn't crash when we try to run it.
-	if args.pg_id and pg_language:
+	if args.pg_id and transcription_language:
 		with open(content_path / "epub" / "toc.xhtml", "r+", encoding="utf-8") as file:
 			toc_xhtml = file.read()
 
-			toc_xhtml = toc_xhtml.replace("LANG", pg_language)
+			toc_xhtml = toc_xhtml.replace("LANG", transcription_language)
 
 			file.seek(0)
 			file.write(toc_xhtml)
@@ -899,8 +1038,8 @@ def _create_draft(args: Namespace, plain_output: bool):
 		epub.generate_cover_svg()
 		epub.generate_titlepage_svg()
 
-		if args.pg_id and pg_url:
-			_replace_in_file(content_path / "epub" / "text" / "imprint.xhtml", "PG_URL", pg_url)
+		if transcription_url:
+			_replace_in_file(content_path / "epub" / "text" / "imprint.xhtml", "PG_URL", transcription_url)
 
 		# Fill out the colophon.
 		with open(content_path / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
@@ -920,37 +1059,38 @@ def _create_draft(args: Namespace, plain_output: bool):
 				translator_block = f"It was translated from ORIGINAL_LANGUAGE in <time>TRANSLATION_YEAR</time> by<br/>\n\t\t\t{_generate_contributor_string(translators, True)}.</p>"
 				colophon_xhtml = colophon_xhtml.replace("</p>\n\t\t\t<p>This ebook was produced for<br/>", f"<br/>\n\t\t\t{translator_block}\n\t\t\t<p>This ebook was produced for<br/>")
 
-			if args.pg_id:
-				if pg_url:
-					colophon_xhtml = colophon_xhtml.replace("PG_URL", pg_url)
+			if transcription_url:
+				colophon_xhtml = colophon_xhtml.replace("PG_URL", transcription_url)
 
-				if pg_publication_year:
-					colophon_xhtml = colophon_xhtml.replace("PG_YEAR", pg_publication_year)
+			if transcription_publication_year:
+				colophon_xhtml = colophon_xhtml.replace("PG_YEAR", transcription_publication_year)
 
-				if pg_producers:
-					producer_count = len(pg_producers)
-					producers_xhtml = ""
-					for i, producer in enumerate(pg_producers):
-						if "Distributed Proofread" in producer:
-							producers_xhtml = producers_xhtml + """<a href="https://www.pgdp.net/">Distributed Proofreaders</a>"""
-						elif "anonymous" in producer.lower():
-							producers_xhtml = producers_xhtml + """<b epub:type="z3998:personal-name">An Anonymous Volunteer</b>"""
+			if transcription_producers:
+				producer_count = len(transcription_producers)
+				producers_xhtml = ""
+				for i, producer in enumerate(transcription_producers):
+					if "Distributed Proofreaders Canada" in producer:
+						producers_xhtml = producers_xhtml + """<a href="https://www.pgdpcanada.net/">Distributed Proofreaders Canada</a>"""
+					elif "Distributed Proofread" in producer:
+						producers_xhtml = producers_xhtml + """<a href="https://www.pgdp.net/">Distributed Proofreaders</a>"""
+					elif "anonymous" in producer.lower():
+						producers_xhtml = producers_xhtml + """<b epub:type="z3998:personal-name">An Anonymous Volunteer</b>"""
+					else:
+						producers_xhtml = producers_xhtml + f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(producer)).strip('.')}</b>"""
+
+					if i < producer_count - 1:
+						# If exactly two producers, we don't want a comma between them.
+						if producer_count == 2:
+							producers_xhtml = producers_xhtml + " "
 						else:
-							producers_xhtml = producers_xhtml + f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(producer)).strip('.')}</b>"""
+							producers_xhtml = producers_xhtml + ", "
 
-						if i < producer_count - 1:
-							# If exactly two producers, we don't want a comma between them.
-							if producer_count == 2:
-								producers_xhtml = producers_xhtml + " "
-							else:
-								producers_xhtml = producers_xhtml + ", "
+					if i == producer_count - 2:
+						producers_xhtml = producers_xhtml + "and "
 
-						if i == producer_count - 2:
-							producers_xhtml = producers_xhtml + "and "
+				producers_xhtml = producers_xhtml + "<br/>"
 
-					producers_xhtml = producers_xhtml + "<br/>"
-
-					colophon_xhtml = colophon_xhtml.replace("""<b epub:type="z3998:personal-name">TRANSCRIBER_1</b>, <b epub:type="z3998:personal-name">TRANSCRIBER_2</b>, and <a href="https://www.pgdp.net/">Distributed Proofreaders</a><br/>""", producers_xhtml)
+				colophon_xhtml = colophon_xhtml.replace("""<b epub:type="z3998:personal-name">TRANSCRIBER_1</b>, <b epub:type="z3998:personal-name">TRANSCRIBER_2</b>, and <a href="https://www.pgdp.net/">Distributed Proofreaders</a><br/>""", producers_xhtml)
 
 			file.seek(0)
 			file.write(colophon_xhtml)
@@ -965,20 +1105,30 @@ def _create_draft(args: Namespace, plain_output: bool):
 		metadata_xml = metadata_xml.replace(">TITLE<", f">{escape(title)}<")
 		metadata_xml = metadata_xml.replace("VCS_IDENTIFIER", str(repo_name[0:100]))
 
-		if pg_producers:
+		if transcription_producers:
 			producers_xhtml = ""
 			i = 1
-			for producer in pg_producers:
+			for producer in transcription_producers:
 				# Name and File-As.
-				if "Distributed Proofread" in producer:
+				if "Distributed Proofreaders Canada" in producer:
+					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">Distributed Proofreaders Canada</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Distributed Proofreaders</meta>\n"
+				elif "Distributed Proofread" in producer:
 					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">Distributed Proofreaders</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Distributed Proofreaders</meta>\n"
 				elif "anonymous" in producer.lower():
 					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">An Anonymous Volunteer</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Anonymous Volunteer, An</meta>\n"
 				else:
-					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">{escape(producer.strip('.'))}</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">TRANSCRIBER_SORT</meta>\n"
+					# Try to naively sort the transcriber.
+					matches = regex.search(r"^([\p{Letter}]+) ([\p{Letter}]+)$", producer)
+					sorted_transcriber = "TRANSCRIBER_SORT"
+					if matches:
+						sorted_transcriber = f"{matches[1]}, {matches[2]}"
+
+					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">{escape(producer.strip('.'))}</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">{sorted_transcriber}</meta>\n"
 
 				# Homepage.
-				if "Distributed Proofread" in producer:
+				if "Distributed Proofreaders Canada" in producer:
+					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{i}\">https://www.pgdpcanada.net/</meta>\n"
+				elif "Distributed Proofread" in producer:
 					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{i}\">https://www.pgdp.net/</meta>\n"
 
 				# LCCN.
@@ -1016,49 +1166,51 @@ def _create_draft(args: Namespace, plain_output: bool):
 		else:
 			metadata_xml = regex.sub(r"<dc:contributor id=\"illustrator\">.+?scheme=\"marc:relators\">ill</meta>\n\t\t", "", metadata_xml, flags=regex.DOTALL)
 
-		if args.pg_id:
-			if pg_subjects:
-				subject_xhtml = ""
+		if transcription_subjects:
+			subject_xhtml = ""
 
-				i = 1
-				for subject in pg_subjects:
-					subject_xhtml = subject_xhtml + f"\t\t<dc:subject id=\"subject-{i}\">{subject}</dc:subject>\n"
-					i = i + 1
+			i = 1
+			for subject in transcription_subjects:
+				subject_xhtml = subject_xhtml + f"\t\t<dc:subject id=\"subject-{i}\">{subject}</dc:subject>\n"
+				i = i + 1
 
-				i = 1
-				for subject in pg_subjects:
-					subject_xhtml = subject_xhtml + f"\t\t<meta property=\"authority\" refines=\"#subject-{i}\">LCSH</meta>\n"
+			i = 1
+			for subject in transcription_subjects:
+				subject_xhtml = subject_xhtml + f"\t\t<meta property=\"authority\" refines=\"#subject-{i}\">LCSH</meta>\n"
 
-					# Now, get the LCSH ID by querying LCSH directly.
-					try:
-						search_url = "https://id.loc.gov/search/?q=cs:http://id.loc.gov/authorities/{}&q=\"" + urllib.parse.quote(subject) + "\""
-						record_link = "<a title=\"Click to view record\" href=\"/authorities/{}/([^\"]+?)\">" + regex.escape(subject.replace(' -- ', '--')) + "</a>"
-						loc_id = "Unknown"
+				# Now, get the LCSH ID by querying LCSH directly.
+				try:
+					search_url = "https://id.loc.gov/search/?q=cs:http://id.loc.gov/authorities/{}&q=\"" + urllib.parse.quote(subject) + "\""
+					record_link = "<a title=\"Click to view record\" href=\"/authorities/{}/([^\"]+?)\">" + regex.escape(subject.replace(' -- ', '--')) + "</a>"
+					loc_id = "Unknown"
 
-						response = requests.get(search_url.format("subjects"), timeout=60)
-						result = regex.search(record_link.format("subjects"), response.text, regex.IGNORECASE)
+					response = requests.get(search_url.format("subjects"), timeout=60, headers={'User-Agent': USER_AGENT})
+					result = regex.search(record_link.format("subjects"), response.text, regex.IGNORECASE)
 
-						# If Subject authority does not exist we can also check the Names authority.
-						if result is None:
-							response = requests.get(search_url.format("names"), timeout=60)
-							result = regex.search(record_link.format("names"), response.text)
-						else:
-							try:
-								loc_id = result.group(1)
-							except Exception:
-								pass
+					# If Subject authority does not exist we can also check the Names authority.
+					if result is None:
+						response = requests.get(search_url.format("names"), timeout=60, headers={'User-Agent': USER_AGENT})
+						result = regex.search(record_link.format("names"), response.text)
+					else:
+						try:
+							loc_id = result.group(1)
+						except Exception:
+							pass
 
-						subject_xhtml = subject_xhtml + f"\t\t<meta property=\"term\" refines=\"#subject-{i}\">{loc_id}</meta>\n"
+					subject_xhtml = subject_xhtml + f"\t\t<meta property=\"term\" refines=\"#subject-{i}\">{loc_id}</meta>\n"
 
-					except Exception as ex:
-						raise se.RemoteCommandErrorException(f"Couldn’t connect to [url][link=https://id.loc.gov]https://id.loc.gov[/][/]. Exception: {ex}") from ex
+				except Exception as ex:
+					raise se.RemoteCommandErrorException(f"Couldn’t connect to [url][link=https://id.loc.gov]https://id.loc.gov[/][/]. Exception: {ex}") from ex
 
-					i = i + 1
+				i = i + 1
 
-				metadata_xml = regex.sub(r"\t\t<dc:subject id=\"subject-1\">SUBJECT_1</dc:subject>\s*<dc:subject id=\"subject-2\">SUBJECT_2</dc:subject>\s*<meta property=\"authority\" refines=\"#subject-1\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-1\">LCSH_ID_1</meta>\s*<meta property=\"authority\" refines=\"#subject-2\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-2\">LCSH_ID_2</meta>", "\t\t" + subject_xhtml.strip(), metadata_xml)
+			metadata_xml = regex.sub(r"\t\t<dc:subject id=\"subject-1\">SUBJECT_1</dc:subject>\s*<dc:subject id=\"subject-2\">SUBJECT_2</dc:subject>\s*<meta property=\"authority\" refines=\"#subject-1\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-1\">LCSH_ID_1</meta>\s*<meta property=\"authority\" refines=\"#subject-2\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-2\">LCSH_ID_2</meta>", "\t\t" + subject_xhtml.strip(), metadata_xml)
 
-			metadata_xml = metadata_xml.replace("<dc:language>LANG</dc:language>", f"<dc:language>{pg_language}</dc:language>")
-			metadata_xml = metadata_xml.replace("<dc:source>PG_URL</dc:source>", f"<dc:source>{pg_url}</dc:source>")
+		if transcription_language:
+			metadata_xml = metadata_xml.replace("<dc:language>LANG</dc:language>", f"<dc:language>{transcription_language}</dc:language>")
+
+		if transcription_url:
+			metadata_xml = metadata_xml.replace("<dc:source>PG_URL</dc:source>", f"<dc:source>{transcription_url}</dc:source>")
 
 		file.seek(0)
 		file.write(metadata_xml)
@@ -1066,15 +1218,15 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 	# Set up local Git repo.
 	if args.verbose:
-		console.print(se.prep_output("Initialising git repository ...", plain_output))
+		console.print(se.prep_output("Initializing git repository ...", plain_output))
 	repo = Repo.init(repo_path)
 
 	if args.email:
 		with repo.config_writer() as config:
 			config.set_value("user", "email", args.email)
 
-	if args.pg_id and pg_ebook_html and not is_pg_html_parsed:
-		raise se.InvalidXhtmlException(f"Couldn’t parse Project Gutenberg ebook source; this is usually due to invalid HTML in the ebook. The raw text was saved to [path][link={pg_file_local_path}]{pg_file_local_path}[/][/].")
+	if args.pg_id and transcription_ebook_html and not is_external_html_parsed:
+		raise se.InvalidXhtmlException(f"Couldn’t parse Project Gutenberg ebook source; this is usually due to invalid HTML in the ebook. The raw text was saved to [path][link={transcription_local_path}]{transcription_local_path}[/][/].")
 
 def create_draft(plain_output: bool) -> int:
 	"""
@@ -1091,6 +1243,7 @@ def create_draft(plain_output: bool) -> int:
 	parser.add_argument("-t", "--title", dest="title", required=True, help="the title of the ebook")
 	parser.add_argument("-w", "--white-label", action="store_true", help="create a generic epub skeleton without S.E. branding")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("-f", "--fp-id", dest="fp_id", type=se.is_positive_integer, help="the Faded Page ID number of the ebook to download")
 	args = parser.parse_args()
 
 	try:
@@ -1099,6 +1252,14 @@ def create_draft(plain_output: bool) -> int:
 			console.print(se.prep_output("Titles should not include a subtitle, as subtitles are separate metadata elements in [path]content.opf[/]. Are you sure you want to continue? \\[y/N]", plain_output))
 			if input().lower() not in {"yes", "y"}:
 				return se.InvalidInputException.code
+
+		# `--pg-id` and `--fp-id` are mutually exclusive.
+		if args.pg_id and args.fp_id:
+			console.print(se.prep_output("Can’t specify [bash]--pg-id[/] and [bash]--fp-id[/] at the same time.", plain_output))
+			return se.InvalidArgumentsException.code
+
+		if (args.pg_id or args.fp_id) and args.offline:
+			raise se.RemoteCommandErrorException("Can’t specify [bash]--pg-id[/] or [bash]--fp-id[/], and also [bash]--offline[/].")
 
 		_create_draft(args, plain_output)
 	except se.SeException as ex:

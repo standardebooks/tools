@@ -149,6 +149,7 @@ case $state in
 				_arguments -s \
 					{-a,--author}'[the author of the ebook]' \
 					{-e,--email}'[use this email address as the main committer for the local Git repository]' \
+					{-f,--fp-id}'[the Faded Page ID number of the ebook to download]' \
 					{-h,--help}'[show a help message and exit]' \
 					{-i,--illustrator}'[the illustrator of the ebook]' \
 					{-o,--offline}'[create draft without network access]' \

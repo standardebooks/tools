@@ -53,6 +53,7 @@ complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s v -l verb
 complete -c se -n "__fish_se_no_subcommand" -a create-draft -d "Create a skeleton of a new Standard Ebook."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s a -l author -d "the author of the ebook"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s e -l email -d "use this email address as the main committer for the local Git repository"
+complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s f -l fp-id -d "the Faded Page ID number of the ebook to download"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s i -l illustrator -d "the illustrator of the ebook"
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s p -l pg-id -d "the Project Gutenberg ID number of the ebook to download"
