@@ -3601,17 +3601,14 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 		for message in messages[:]:
 			for path, codes in ignored_codes.items():
 				for code in codes:
-					try:
-						if fnmatch.fnmatch(str(message.filename.name) if message.filename else "", path) and message.code == code["code"].text.strip():
+					if fnmatch.fnmatch(str(message.filename.name) if message.filename else "", path) and message.code == code["code"].text.strip():
+						try:
 							messages.remove(message)
 							code["used"] = True
-
-					except ValueError:
-						# This gets raised if the message has already been removed by a previous rule.
-						# For example, `chapter-*.xhtml` gets `t-001` removed, then subsequently `*.xhtml` gets `t-001` removed.
-						pass
-					except Exception as ex:
-						raise se.InvalidInputException(f"Invalid path in [path][link=file://{lint_ignore_path}]se-lint-ignore.xml[/][/] rule: [path]{path}[/].") from ex
+						except ValueError:
+							# This gets raised if the message has already been removed by a previous rule.
+							# For example, `chapter-*.xhtml` gets `t-001` removed, then subsequently `*.xhtml` gets `t-001` removed.
+							pass
 
 		# Check for unused ignore rules.
 		unused_codes: list[str] = []
