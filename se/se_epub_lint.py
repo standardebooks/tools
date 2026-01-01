@@ -8,7 +8,7 @@ Strictly speaking, `SeEpub.Lint()` should be a class member of `SeEpub`. But the
 from bisect import bisect_right
 from copy import deepcopy
 import filecmp
-from fnmatch import translate
+import fnmatch
 import os
 from pathlib import Path
 import importlib.resources
@@ -3602,8 +3602,7 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 			for path, codes in ignored_codes.items():
 				for code in codes:
 					try:
-						# `fnmatch.translate()` converts shell-style globs into a regex pattern.
-						if regex.match(fr"{translate(path)}", str(message.filename.name) if message.filename else "") and message.code == code["code"].text.strip():
+						if fnmatch.fnmatch(str(message.filename.name) if message.filename else "", path) and message.code == code["code"].text.strip():
 							messages.remove(message)
 							code["used"] = True
 
