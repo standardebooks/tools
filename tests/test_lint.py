@@ -37,6 +37,8 @@ def test_lint(testbook__directory: Path, work__directory: Path, lint_subtype: st
 
 	# All books with errors should return a non-zero return code
 	assert result.returncode != 0
+	# Exit codes 1 and 2 indicate a problem with `se lint` itself
+	assert result.returncode not in {1, 2}
 
 	# Output of stderr should always be empty
 	out, err = capfd.readouterr()
