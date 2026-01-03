@@ -202,6 +202,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Dd])oat\b", r"\1ote", xhtml)				# doat -> dote
 	xhtml = regex.sub(r"\b([Dd])oat(ed|ing)", r"\1ot\2", xhtml)			# doating -> doting
 	xhtml = regex.sub(r"(?<!up and )(?<!up or )\b([Dd])own stairs\b", r"\1ownstairs", xhtml)		# down stairs -> downstairs, but not "up (or|and) down stairs"
+	xhtml = regex.sub(r"\b([Dd])ropt\b", r"\1ropped", xhtml)			# dropt -> dropped
 	xhtml = regex.sub(r"\b([Dd])ulness", r"\1ullness", xhtml)			# dulness -> dullness
 	xhtml = regex.sub(r"\b([Dd])umbfounder", r"\1umbfound", xhtml)			# dumbfoundered -> dumbfounded
 	xhtml = regex.sub(r"\b([Dd])umfound", r"\1umbfound", xhtml)			# dumfound -> dumbfound
