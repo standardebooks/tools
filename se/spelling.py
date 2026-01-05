@@ -304,8 +304,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bper cent(s|ages?)?\b", r"percent\1", xhtml)		# per cent -> percent
 	xhtml = regex.sub(r"\bpercent\.([,;:\!\?])", r"percent\1", xhtml)		# percent. -> percent
 	xhtml = regex.sub(r"\bpercent\.(\s+[\p{Lowercase_Letter}])", r"percent\1", xhtml)	# percent. followed by lowercase -> percent
-	xhtml = regex.sub(r"\bPhantas(y|ie)", r"Fantasy", xhtml)			# Phantasie -> Fantasy
-	xhtml = regex.sub(r"\bphantas(y|ie)", r"fantasy", xhtml)			# phantasie -> fantasy
+	xhtml = regex.sub(r"\bPhantas(y|ie)\b", r"Fantasy", xhtml)			# Phantasie -> Fantasy
+	xhtml = regex.sub(r"\bphantas(y|ie)\b", r"fantasy", xhtml)			# phantasie -> fantasy
 	xhtml = regex.sub(r"\bPhantasies", r"Fantasies", xhtml)				# Phantasies -> Fantasies
 	xhtml = regex.sub(r"\bphantasies", r"fantasies", xhtml)				# phantasies -> fantasies
 	xhtml = regex.sub(r"\bPhantastic", r"Fantastic", xhtml)				# Phantastic -> Fantastic
