@@ -763,7 +763,8 @@ def format_xhtml(xhtml: str) -> str:
 	A string of pretty-printed XHTML.
 	"""
 
-	namespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "re": "http://exslt.org/regular-expressions"} # `re` enables regular expressions in xpath.
+	# `re` enables regular expressions in xpath.
+	namespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "re": "http://exslt.org/regular-expressions"}
 
 	# Epub3 doesn't allow named entities, so convert them to their unicode equivalents.
 	# But, don't unescape the metadata file long-description accidentally.
@@ -783,11 +784,21 @@ def format_xhtml(xhtml: str) -> str:
 	except Exception as ex:
 		raise se.InvalidXhtmlException(f"Couldn’t parse XHTML file. Exception: {ex}")
 
+	xml_default_namespace = "http://www.w3.org/XML/1998/namespace"
+
 	# Lowercase attribute names.
 	for node in tree.xpath("//*[attribute::*[re:test(local-name(), '[A-Z]')]]", namespaces=namespaces):
 		for key, value in node.items(): # Iterate over attributes.
 			node.attrib.pop(key) # Remove the attribute.
-			node.attrib[key.lower()] = value # Re-add the attribute, lowercased.
+
+			# Re-add the lowercased attribute, but if it's in the `xml:` namespace (like `xml:lang`), then we need a special case.
+			if key.startswith(f"{{{xml_default_namespace}}}"):
+				# We have to do this roundabout way for the default `xml:` namespace because lxml sucks.
+				node.set(etree.QName(xml_default_namespace, key.replace(f"{{{xml_default_namespace}}}", "").lower()), value)
+			else:
+				node.set(key.lower(), value)
+
+			print(_xml_tree_to_string(node))
 
 	# Sort classes alphabetically, except the `eoc` class always comes last.
 	for node in tree.xpath("//*[re:test(@class, '\\s')]", namespaces=namespaces):
