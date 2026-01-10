@@ -1064,7 +1064,7 @@ def _build_kobo(self, work_dir: Path, work_compatible_epub_dir: Path, output_dir
 
 	se.epub.write_epub(work_kepub_dir, output_dir / kobo_output_filename, last_updated)
 
-# Kobo `.kepub` files need each clause wrapped in a special `<span>` tag to enable highlighting.
+# Kobo `.kepub` files need each clause wrapped in a special `<span>` element to enable highlighting.
 # Do this here. Hopefully Kobo will get their act together soon and drop this requirement.
 def _build_kobo_process_xhtml(work_kepub: SeEpub, file_path: Path) -> None:
 	"""
@@ -1080,6 +1080,7 @@ def _build_kobo_process_xhtml(work_kepub: SeEpub, file_path: Path) -> None:
 
 	kobo.paragraph_counter = 1
 	kobo.segment_counter = 1
+	has_spans_with_id = False
 
 	# Note: Kobo supports CSS hyphenation, but it can be improved with soft hyphens.
 	# However we can't insert them, because soft hyphens break the dictionary search when a word is highlighted.
@@ -1093,13 +1094,20 @@ def _build_kobo_process_xhtml(work_kepub: SeEpub, file_path: Path) -> None:
 	# for node in dom.xpath("/html/body//span[contains(@class, 'quote-align')]"):
 	# 	node.unwrap()
 
-	# Inserted `koboSpan`s don't play nicely with CSS that targets all spans, especially poetry.
-	# Mark up spans with `se` so that we can rewrite CSS rules to target only spans we inserted.
 	for node in dom.xpath("//span"):
+		# Inserted `koboSpan`s don't play nicely with CSS that targets all spans, especially poetry.
+		# Mark up spans with `se` so that we can rewrite CSS rules to target only spans we inserted.
 		if node.get_attr("class"):
 			node.set_attr("class", node.get_attr("class") + " se")
 		else:
 			node.set_attr("class", "se")
+
+		# When adding Kobo `<span>`s, the existing `@id` will be overwritten with a new one.
+		# This will break links, for example in endnotes pointing to specific `<span>`s.
+		# Copy our `@id` attribute to a temporary attribute to process later.
+		if node.get_attr("id"):
+			node.set_attr("data-se-id", node.get_attr("id"))
+			has_spans_with_id = True
 
 	# Change `noteref` to `endnote` so that popup endnotes work in Kobo. Kobo doesn't understand `noteref`, only `endnote`.
 	for node in dom.xpath("/html/body//a[contains(@epub:type, 'noteref')]"):
@@ -1136,6 +1144,35 @@ def _build_kobo_process_xhtml(work_kepub: SeEpub, file_path: Path) -> None:
 		# We use xpath to select the Kobo `<span>`s that we just inserted.
 		for node in dom.xpath("/html/body//a[contains(@epub:type, 'backlink')]/*[local-name()='span']"):
 			node.set_text("←")
+
+	# Do we need to replace our own `@id`s with Kobo's?
+	if has_spans_with_id:
+		# Iterate over each XHTML file to see if it contains links that refer to `@id`s that were overwritten by Kobo.
+		for filename in work_kepub.epub_root_path.glob("**/*.xhtml"):
+			file_dom = work_kepub.get_dom(filename)
+			has_replacements = False
+			for span_with_id in dom.xpath("//span[@data-se-id]"):
+				old_id_val = span_with_id.get_attr("data-se-id")
+				new_id_val = span_with_id.get_attr("id")
+				if old_id_val != new_id_val:
+					for node in file_dom.xpath(f"/html/body//a[re:test(@href, '#{old_id_val}$')]"):
+						# This link refers to a dead `@id`, so replace it with the new value.
+						has_replacements = True
+						node.set_attr("href", regex.sub(fr"#{old_id_val}$", f"#{new_id_val}", node.get_attr("href")))
+
+			if has_replacements and filename != file_path:
+				with open(filename, "w", encoding="utf-8") as file:
+					xhtml = file_dom.to_string()
+					# Remove namespaces from the output that were added by `kobo.add_kobo_spans_to_node()`.
+					xhtml = xhtml.replace(" xmlns:html=\"http://www.w3.org/1999/xhtml\"", "")
+					xhtml = regex.sub(r"<(/?)html:span", r"<\1span", xhtml)
+
+					file.write(xhtml)
+
+				work_kepub.flush_dom_cache_entry(filename)
+
+		for span_with_id in dom.xpath("//span[@data-se-id]"):
+			span_with_id.remove_attr("data-se-id")
 
 	xhtml = dom.to_string()
 
