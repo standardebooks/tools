@@ -425,14 +425,11 @@ def get_word_count(xhtml: str) -> int:
 	xhtml = regex.sub(r"<title[^>]*?>.+?</title>", " ", xhtml)
 	xhtml = regex.sub(r"<.+?>", " ", xhtml, flags=regex.DOTALL)
 
+	# Remove word-connecting dashes, apostrophes, commas, and slashes (e.g. `and/or`). They count as a word boundry but they shouldn't.
+	xhtml = regex.sub(fr"[\p{{Letter}}0-9][\-\'’‘\,\.\/{se.NO_BREAK_HYPHEN}{se.SHY_HYPHEN}][\p{{Letter}}0-9]", "x", xhtml)
+
 	# Replace some formatting characters.
 	xhtml = regex.sub(r"[…–—― ‘’“”\{\}\(\)]", " ", xhtml)
-
-	# Remove word-connecting dashes, apostrophes, commas, and slashes (and/or), they count as a word boundry but they shouldn't.
-	xhtml = regex.sub(fr"[\p{{Letter}}0-9][\-\'\,\.\/{se.NO_BREAK_HYPHEN}{se.SHY_HYPHEN}][\p{{Letter}}0-9]", "aa", xhtml)
-
-	# Replace sequential spaces with one space.
-	xhtml = regex.sub(r"\s+", " ", xhtml)
 
 	# Get the word count.
 	return len(regex.findall(r"\b\w+\b", xhtml))
