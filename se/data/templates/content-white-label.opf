@@ -5,11 +5,11 @@
 		<dc:date>1900-01-01T00:00:00Z</dc:date>
 		<meta property="dcterms:modified">1900-01-01T00:00:00Z</meta>
 		<dc:rights>RIGHTS</dc:rights>
-		<dc:publisher id="publisher">PUBLISHER</dc:publisher>
+		<dc:publisher id="publisher">PUBLISHER_NAME</dc:publisher>
 		<meta property="file-as" refines="#publisher">PUBLISHER_SORT</meta>
 		<meta property="se:url.homepage" refines="#publisher">PUBLISHER_URL</meta>
 		<link href="http://www.idpf.org/epub/a11y/accessibility-20170105.html#wcag-aa" rel="dcterms:conformsTo"/>
-		<meta property="a11y:certifiedBy">PUBLISHER</meta>
+		<meta property="a11y:certifiedBy">PUBLISHER_NAME</meta>
 		<meta property="schema:accessMode">textual</meta>
 		<meta property="schema:accessModeSufficient">textual</meta>
 		<meta property="schema:accessibilityFeature">alternativeText</meta>
@@ -24,9 +24,9 @@
 		<dc:subject id="subject-1">SUBJECT_1</dc:subject>
 		<dc:subject id="subject-2">SUBJECT_2</dc:subject>
 		<meta property="authority" refines="#subject-1">LCSH</meta>
-		<meta property="term" refines="#subject-1">LCSH_ID_1</meta>
+		<meta property="term" refines="#subject-1">SUBJECT_1_LCSH_ID</meta>
 		<meta property="authority" refines="#subject-2">LCSH</meta>
-		<meta property="term" refines="#subject-2">LCSH_ID_2</meta>
+		<meta property="term" refines="#subject-2">SUBJECT_2_LCSH_ID</meta>
 		<dc:description id="description">DESCRIPTION</dc:description>
 		<dc:language>LANG</dc:language>
 		<dc:source>TRANSCRIPTION_URL</dc:source>

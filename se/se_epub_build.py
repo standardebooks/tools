@@ -171,7 +171,7 @@ def _update_release_date(self, work_compatible_epub_dir: Path, metadata_dom: se.
 					file.write(xhtml)
 					file.truncate()
 
-				self.flush_dom_cache_entry(file_path)
+				self.flush_dom(file_path)
 				break
 
 	return last_updated
@@ -503,7 +503,7 @@ def _compatibility_replacements_xhtml(self, file_path: Path, has_sequential_full
 		file.write(processed_xhtml)
 
 	# Since we changed the DOM string using regex, we have to flush its cache entry so we can re-build it later.
-	self.flush_dom_cache_entry(file_path)
+	self.flush_dom(file_path)
 
 	return has_sequential_full_page_figures, endnote_files_to_be_chunked
 
@@ -1169,7 +1169,7 @@ def _build_kobo_process_xhtml(work_kepub: SeEpub, file_path: Path) -> None:
 
 					file.write(xhtml)
 
-				work_kepub.flush_dom_cache_entry(filename)
+				work_kepub.flush_dom(filename)
 
 		for span_with_id in dom.xpath("//span[@data-se-id]"):
 			span_with_id.remove_attr("data-se-id")
@@ -1718,7 +1718,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 	try:
 		identifier = metadata_dom.xpath("//dc:identifier")[0].inner_xml()
 		if identifier == "":
-			identifier = self.generated_identifier
+			identifier = self.generate_identifier()
 
 		asin = sha1(identifier.encode("utf-8")).hexdigest()
 

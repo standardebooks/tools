@@ -1783,3 +1783,25 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tup
 					replacements.append((node, expected_id))
 
 	return replacements
+
+
+def format_list(items: list[str]) -> str:
+	"""
+	Given a list of strings, return a string like `item1, item2, and item3`.
+	"""
+
+	output = ""
+	i = 0
+	for item in items:
+		output += item
+
+		if i == 0 and len(items) == 2:
+			output += " and "
+		elif i == len(items) - 2:
+			output += ", and "
+		elif i < len(items) - 1:
+			output += ", "
+
+		i = i + 1
+
+	return output

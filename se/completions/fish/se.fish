@@ -36,7 +36,7 @@ complete -c se -A -n "__fish_seen_subcommand_from build-ids" -s h -l help -x -d 
 complete -c se -A -n "__fish_seen_subcommand_from build-ids" -s n -l no-endnotes -x -d "exclude endnotes"
 complete -c se -A -n "__fish_seen_subcommand_from build-ids" -s v -l verbose -d "increase output verbosity"
 
-complete -c se -n "__fish_se_no_subcommand" -a build-images -d "Build ebook cover and titlepage images in a Standard Ebook source directory."
+complete -c se -n "__fish_se_no_subcommand" -a build-images -d "Generate ebook cover and titlepages for Standard Ebooks ebooks, and then build ebook covers and titlepages."
 complete -c se -A -n "__fish_seen_subcommand_from build-images" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from build-images" -s v -l verbose -d "increase output verbosity"
 

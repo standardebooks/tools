@@ -10,46 +10,18 @@ from argparse import Namespace
 from html import escape
 from pathlib import Path
 import importlib.resources
+import tempfile
 
 from git.repo import Repo as Repo # pylint: disable=useless-import-alias # Import in this style to silence `mypy` type checking, see <https://github.com/microsoft/pyright/issues/5929#issuecomment-1714815796>.
 import regex
 import requests
 from ftfy import fix_text
 from lxml import etree
-from unidecode import unidecode
 
 import se
 import se.formatting
 import se.easy_xml
 from se.se_epub import SeEpub
-
-
-COVER_TITLE_BOX_Y = 1620 # In px; note that in SVG, Y starts from the *top* of the image.
-COVER_TITLE_BOX_HEIGHT = 430
-COVER_TITLE_BOX_WIDTH = 1300
-COVER_TITLE_BOX_PADDING = 100
-COVER_TITLE_MARGIN = 20
-COVER_TITLE_HEIGHT = 80
-COVER_TITLE_SMALL_HEIGHT = 60
-COVER_TITLE_XSMALL_HEIGHT = 50
-COVER_AUTHOR_SPACING = 60
-COVER_AUTHOR_HEIGHT = 40
-COVER_AUTHOR_MARGIN = 20
-TITLEPAGE_VERTICAL_PADDING = 50
-TITLEPAGE_HORIZONTAL_PADDING = 100
-TITLEPAGE_TITLE_HEIGHT = 80 # Height of each title line.
-TITLEPAGE_TITLE_MARGIN = 20 # Space between consecutive title lines.
-TITLEPAGE_AUTHOR_SPACING = 100 # Space between last title line and first author line.
-TITLEPAGE_AUTHOR_HEIGHT = 60 # Height of each author line.
-TITLEPAGE_AUTHOR_MARGIN = 20 # Space between consecutive author lines.
-TITLEPAGE_CONTRIBUTORS_SPACING = 150 # Space between last author line and first contributor descriptor.
-TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT = 40 # Height of each contributor descriptor line.
-TITLEPAGE_CONTRIBUTOR_HEIGHT = 40 # Height of each contributor line.
-TITLEPAGE_CONTRIBUTOR_MARGIN = 20 # Space between contributor descriptor and contributor line, and between sequential contributor lines.
-TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN = 80 # Space between last contributor line and next contributor descriptor (if more than one contributor descriptor).
-LEAGUE_SPARTAN_KERNING = 5 # In px.
-LEAGUE_SPARTAN_AVERAGE_SPACING = 7 # Guess at average default spacing between letters, in px.
-LEAGUE_SPARTAN_100_WIDTHS = {" ": 40.0, "A": 98.245, "B": 68.1875, "C": 83.97625, "D": 76.60875, "E": 55.205, "F": 55.79, "G": 91.57875, "H": 75.0875, "I": 21.98875, "J": 52.631254, "K": 87.83625, "L": 55.205, "M": 106.9, "N": 82.5725, "O": 97.1925, "P": 68.1875, "Q": 98.83, "R": 79.41599, "S": 72.63125, "T": 67.83625, "U": 75.32125, "V": 98.245, "W": 134.62, "X": 101.28625, "Y": 93.1, "Z": 86.19875, ".": 26.78375, ",": 26.78375, "/": 66.08125, "\\": 66.08125, "-": 37.66125, ":": 26.78375, ";": 26.78375, "’": 24.3275, "!": 26.78375, "?": 64.3275, "&": 101.87125, "0": 78.48, "1": 37.895, "2": 75.205, "3": 72.04625, "4": 79.29875, "5": 70.175, "6": 74.26875, "7": 76.95875, "8": 72.16375, "9": 74.26875, "—": 126.31475}
 
 CONTRIBUTOR_BLOCK_TEMPLATE = """<dc:contributor id="CONTRIBUTOR_ID">CONTRIBUTOR_NAME</dc:contributor>
 		<meta property="file-as" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_SORT</meta>
@@ -83,288 +55,6 @@ def _replace_in_file(file_path: Path, search: str | list, replace: str | list) -
 			file.seek(0)
 			file.write(processed_data)
 			file.truncate()
-
-def _get_word_widths(string: str, target_height: int) -> list:
-	"""
-	Helper function.
-
-	Given a string and a target letter height, return an array of words with their corresponding widths.
-
-	INPUTS
-	string: The string to inspect.
-	target_height: The target letter height, in pixels.
-
-	OUTPUTS
-	An array of objects. Each object represents a word and its corresponding width in pixels.
-	"""
-
-	words = []
-	# Forcing a split on ` ` means that we can use non-breaking spaces to tie together blocks (e.g. `Mrs. Seacole`).
-	for word in reversed(string.strip().split(" ")):
-		width = 0
-
-		for char in word:
-			# Convert accented characters to unaccented characters.
-			char = unidecode(char)
-
-			# Oops! unidecode also converts `’` to `'`. Change it back here.
-			if char == "'":
-				char = "’"
-
-			# `unidecode` also converts `—` to `--`.
-			if char == "--":
-				char = "—"
-
-			width += int(LEAGUE_SPARTAN_100_WIDTHS[char] * target_height / 100) + LEAGUE_SPARTAN_KERNING + LEAGUE_SPARTAN_AVERAGE_SPACING
-
-		width = width - LEAGUE_SPARTAN_KERNING - LEAGUE_SPARTAN_AVERAGE_SPACING
-
-		words.append({"word": word, "width": width})
-
-	return words
-
-def _calculate_image_lines(string: str, target_height: int, canvas_width: int) -> list:
-	"""
-	Helper function.
-
-	Given a string, a target letter height, and the canvas width, return an array representing the string broken down into enough lines to fill the canvas without overflowing. Lines are ordered with the widest at the bottom.
-
-	INPUTS
-	string: The string to inspect.
-	target_height: The target letter height, in pixels.
-	canvas_width: The width of the canvas, in pixels.
-
-	OUTPUTS
-	An array of strings. Each string represents one line of text in the final image. The lines are ordered with the widest at the bottom.
-	"""
-	words = _get_word_widths(string, target_height)
-	lines = []
-	current_line = ""
-	current_width = 0
-
-	for word in words:
-		if current_width == 0:
-			current_width = word["width"]
-		else:
-			current_width = current_width + (LEAGUE_SPARTAN_100_WIDTHS[" "] * target_height / 100) + word["width"]
-
-		if current_width < canvas_width:
-			current_line = word["word"] + " " + current_line
-		else:
-			if current_line.strip() != "":
-				lines.append(current_line.strip())
-			current_line = word["word"]
-			current_width = word["width"]
-
-	lines.append(current_line.strip())
-
-	lines.reverse()
-
-	# If the first line is a single short word, move up the first word of the next line.
-	if len(lines[0]) <= 3 and len(lines) > 1:
-		first_word = regex.match(r"^[\p{Letter}]+(?=\s)", lines[1])
-
-		if first_word:
-			lines[0] = lines[0] + " " + first_word.group(0)
-			lines[1] = regex.sub(rf"^{regex.escape(first_word.group(0))}\s+", "", lines[1])
-
-	return lines
-
-def _generate_titlepage_svg(title: str, authors: list[str], contributors: dict, title_string: str) -> str:
-	"""
-	Generate a draft of the titlepage SVG.
-
-	The function tries to build the title with the widest line at the bottom, moving up.
-
-	We approximate a few values, like the width of a space, which are variable in the font.
-
-	INPUTS
-	title: The title.
-	authors: An author, or an array of authors.
-	contributors: A dict in the form of: `{"contributor descriptor": "contributor name(s)" ... }`.
-	title_string: The SE titlestring (e.g. `The Rubáiyát of Omar Khayyám. Translated by Edward Fitzgerald. Illustrated by Edmund Dulac`).
-
-	OUTPUTS
-	A string representing the complete SVG source code of the titlepage.
-	"""
-
-	# Don't include "anonymous" authors in the cover.
-	authors = [author for author in authors if author.lower() != "anonymous"]
-
-	svg = ""
-	canvas_width = se.TITLEPAGE_WIDTH - (TITLEPAGE_HORIZONTAL_PADDING * 2)
-
-	# Read our template SVG to get some values before we begin.
-	with importlib.resources.files("se.data.templates").joinpath("titlepage.svg").open("r", encoding="utf-8") as file:
-		svg = file.read()
-
-	# Remove the template text elements from the SVG source, we'll write out to it later.
-	svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
-
-	# Calculate the title lines.
-	title_lines = _calculate_image_lines(title.upper(), TITLEPAGE_TITLE_HEIGHT, canvas_width)
-
-	# Calculate the author lines.
-	authors_lines = []
-	for author in authors:
-		authors_lines.append(_calculate_image_lines(author.upper(), TITLEPAGE_AUTHOR_HEIGHT, canvas_width))
-
-	# Calculate the contributor lines.
-	contributor_lines = []
-	for descriptor, contributor in contributors.items():
-		contributor_lines.append([descriptor, _calculate_image_lines(contributor.upper(), TITLEPAGE_CONTRIBUTOR_HEIGHT, canvas_width)])
-
-	# Construct the output.
-	text_elements = ""
-	element_y = TITLEPAGE_VERTICAL_PADDING
-
-	# Add the title.
-	for line in title_lines:
-		element_y += TITLEPAGE_TITLE_HEIGHT
-		text_elements += f"\t<text class=\"title\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
-		element_y += TITLEPAGE_TITLE_MARGIN
-
-	element_y -= TITLEPAGE_TITLE_MARGIN
-
-	# Add the author(s).
-	if authors:
-		element_y += TITLEPAGE_AUTHOR_SPACING
-
-	for author_lines in authors_lines:
-		for line in author_lines:
-			element_y += TITLEPAGE_AUTHOR_HEIGHT
-			text_elements += f"\t<text class=\"author\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
-			element_y += TITLEPAGE_AUTHOR_MARGIN
-
-	if authors:
-		element_y -= TITLEPAGE_AUTHOR_MARGIN
-
-	# Add the contributor(s).
-	if contributor_lines:
-		element_y += TITLEPAGE_CONTRIBUTORS_SPACING
-		for contributor in contributor_lines:
-			element_y += TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT
-			text_elements += f"\t<text class=\"contributor-descriptor\" x=\"700\" y=\"{element_y:.0f}\">{escape(contributor[0])}</text>\n"
-			element_y += TITLEPAGE_CONTRIBUTOR_MARGIN
-
-			for person in contributor[1]:
-				element_y += TITLEPAGE_CONTRIBUTOR_HEIGHT
-				text_elements += f"\t<text class=\"contributor\" x=\"700\" y=\"{element_y:.0f}\">{escape(person)}</text>\n"
-				element_y += TITLEPAGE_CONTRIBUTOR_MARGIN
-
-			element_y -= TITLEPAGE_CONTRIBUTOR_MARGIN
-
-			element_y += TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
-
-		element_y -= TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
-	else:
-		# Remove unused CSS.
-		svg = regex.sub(r"\n\t\t\.contributor-descriptor{.+?}\n", "", svg, flags=regex.DOTALL)
-		svg = regex.sub(r"\n\t\t\.contributor{.+?}\n", "", svg, flags=regex.DOTALL)
-
-	element_y += TITLEPAGE_VERTICAL_PADDING
-
-	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLE_STRING", escape(title_string))
-	svg = regex.sub(r"viewBox=\".+?\"", f"viewBox=\"0 0 {se.TITLEPAGE_WIDTH} {element_y:.0f}\"", svg)
-
-	return svg
-
-def _generate_cover_svg(title: str, authors: list[str], title_string: str) -> str:
-	"""
-	Generate a draft of the cover SVG.
-
-	The function tries to build the title box with the widest line at the bottom, moving up.
-
-	We approximate a few values, like the width of a space, which are variable in the font.
-
-	INPUTS
-	title: The title.
-	authors: An author, or an array of authors.
-	title_string: The SE titlestring (e.g. `The Rubáiyát of Omar Khayyám. Translated by Edward Fitzgerald. Illustrated by Edmund Dulac`).
-
-	OUTPUTS
-	A string representing the complete SVG source code of the cover page.
-	"""
-
-	# Don't include "anonymous" authors in the cover.
-	authors = [author for author in authors if author.lower() != "anonymous"]
-
-	svg = ""
-	canvas_width = COVER_TITLE_BOX_WIDTH - (COVER_TITLE_BOX_PADDING * 2)
-
-	# Read our template SVG to get some values before we begin.
-	with importlib.resources.files("se.data.templates").joinpath("cover.svg").open("r", encoding="utf-8") as file:
-		svg = file.read()
-
-	# Remove the template text elements from the SVG source, we'll write out to it later.
-	svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
-
-	# Calculate the title lines.
-	title_height = COVER_TITLE_HEIGHT
-	title_class = "title"
-	title_lines = _calculate_image_lines(title.upper(), title_height, canvas_width)
-
-	if len(title_lines) > 2:
-		title_height = COVER_TITLE_SMALL_HEIGHT
-		title_class = "title-small"
-		title_lines = _calculate_image_lines(title.upper(), title_height, canvas_width)
-
-	if len(title_lines) > 2:
-		title_height = COVER_TITLE_XSMALL_HEIGHT
-		title_class = "title-xsmall"
-		title_lines = _calculate_image_lines(title.upper(), title_height, canvas_width)
-
-	# Calculate the author lines.
-	authors_lines = []
-	for author in authors:
-		authors_lines.append(_calculate_image_lines(author.upper(), COVER_AUTHOR_HEIGHT, canvas_width))
-
-	# Construct the output.
-	text_elements = ""
-	spacing = COVER_AUTHOR_SPACING
-	if not authors:
-		spacing = 0
-	element_y = COVER_TITLE_BOX_Y + \
-		+ ((COVER_TITLE_BOX_HEIGHT \
-			- ((len(title_lines) * title_height) \
-				+ ((len(title_lines) - 1) * COVER_TITLE_MARGIN) \
-				+ spacing \
-				+ (len(authors_lines) * COVER_AUTHOR_HEIGHT) \
-		)) / 2)
-
-	# Add the title.
-	for line in title_lines:
-		element_y += title_height
-		text_elements += f"\t<text class=\"{title_class}\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
-		element_y += COVER_TITLE_MARGIN
-
-	element_y -= COVER_TITLE_MARGIN
-
-	# Add the author(s).
-	if authors:
-		element_y += COVER_AUTHOR_SPACING
-
-		for author_lines in authors_lines:
-			for line in author_lines:
-				element_y += COVER_AUTHOR_HEIGHT
-				text_elements += f"\t<text class=\"author\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
-				element_y += COVER_AUTHOR_MARGIN
-
-		element_y -= COVER_AUTHOR_MARGIN
-
-	# Remove unused CSS.
-	if title_class != "title":
-		svg = regex.sub(r"\n\n\t\t\.title\{.+?\}", "", svg, flags=regex.DOTALL)
-
-	if title_class != "title-small":
-		svg = regex.sub(r"\n\n\t\t\.title-small\{.+?\}", "", svg, flags=regex.DOTALL)
-
-	if title_class != "title-xsmall":
-		svg = regex.sub(r"\n\n\t\t\.title-xsmall\{.+?\}", "", svg, flags=regex.DOTALL)
-
-	svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLE_STRING", escape(title_string))
-
-	return svg
 
 def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> tuple[str | None, str | None]:
 	"""
@@ -424,7 +114,7 @@ def _add_name_abbr(contributor: str) -> str:
 
 	return contributor
 
-def _generate_contributor_string(contributors: list[dict], include_xhtml: bool) -> str:
+def _generate_contributor_string(contributors: list[dict], include_xhtml: bool, use_nbsp: bool=False) -> str:
 	"""
 	Given a list of contributors, generate a contributor string like `Bob Smith, Jane Doe, and Sam Johnson`.
 
@@ -433,6 +123,7 @@ def _generate_contributor_string(contributors: list[dict], include_xhtml: bool) 
 	INPUTS
 	contributors: A list of contributor dicts.
 	include_xhtml: Include `<b>` or `<a>` for each contributor, making the output suitable for the colophon.
+	use_nbsp: If `True`, use no-break spaces in contributor names. Only has effect if `include_xhtml` is `False`.
 
 	OUTPUTS
 	A string of XML representing the contributors.
@@ -450,7 +141,10 @@ def _generate_contributor_string(contributors: list[dict], include_xhtml: bool) 
 			else:
 				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributors[0]['name']))}</b>"""
 		else:
-			output += contributors[0]["name"]
+			if use_nbsp:
+				output += contributors[0]["name"].replace(" ", " ")
+			else:
+				output += contributors[0]["name"]
 
 	elif len(contributors) == 2:
 		if include_xhtml:
@@ -466,7 +160,10 @@ def _generate_contributor_string(contributors: list[dict], include_xhtml: bool) 
 			else:
 				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributors[1]['name']))}</b>"""
 		else:
-			output += contributors[0]["name"] + " and " + contributors[1]["name"]
+			if use_nbsp:
+				output += contributors[0]["name"].replace(" ", " ") + " and " + contributors[1]["name"].replace(" ", " ")
+			else:
+				output += contributors[0]["name"] + " and " + contributors[1]["name"]
 
 	else:
 		for i, contributor in enumerate(contributors):
@@ -482,7 +179,10 @@ def _generate_contributor_string(contributors: list[dict], include_xhtml: bool) 
 				else:
 					output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributor['name']))}</b>"""
 			else:
-				output += contributor["name"]
+				if use_nbsp:
+					output += contributor["name"].replace(" ", " ")
+				else:
+					output += contributor["name"]
 
 	return output
 
@@ -569,7 +269,8 @@ def _create_draft(args: Namespace, plain_output: bool):
 	transcription_local_path = None
 	transcription_source = None
 	html_parser = etree.HTMLParser()
-	title = se.formatting.titlecase(args.title.replace("'", "’"))
+	title = se.formatting.titlecase(args.title.replace("'", "’").replace("...", f"{se.HAIR_SPACE}…"))
+	sorted_title = regex.sub(r"^(A|An|The) (.+)$", "\\2, \\1", title)
 
 	for author in args.author:
 		authors.append({"name": author.replace("'", "’"), "wiki_url": None, "nacoaf_uri": None})
@@ -582,53 +283,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 		for illustrator in args.illustrator:
 			illustrators.append({"name": illustrator.replace("'", "’"), "wiki_url": None, "nacoaf_uri": None})
 
-	title_string = title
-	if authors and authors[0]["name"].lower() != "anonymous":
-		title_string += ", by " + _generate_contributor_string(authors, False)
-
-	identifier = ""
-	for author in authors:
-		identifier += se.formatting.make_url_safe(author["name"]) + "_"
-
-	identifier = identifier.rstrip("_") + "/" + se.formatting.make_url_safe(title)
-
-	sorted_title = regex.sub(r"^(A|An|The) (.+)$", "\\2, \\1", title)
-
-	if translators:
-		title_string = title_string + ". Translated by " + _generate_contributor_string(translators, False)
-
-		identifier = identifier + "/"
-
-		for translator in translators:
-			identifier += se.formatting.make_url_safe(translator["name"]) + "_"
-
-		identifier = identifier.rstrip("_")
-
-	if illustrators:
-		title_string = title_string + ". Illustrated by " + _generate_contributor_string(illustrators, False)
-
-		identifier = identifier + "/"
-
-		for illustrator in illustrators:
-			identifier += se.formatting.make_url_safe(illustrator["name"]) + "_"
-
-		identifier = identifier.rstrip("_")
-
-	repo_name = identifier.replace("/", "_")
-
-	repo_path = Path(repo_name).resolve()
-
-	if repo_path.is_dir():
-		raise se.InvalidInputException(f"Directory already exists: [path][link=file://{repo_path}]{repo_path}[/][/].")
-
-	if args.verbose:
-		console.print(se.prep_output(f"Creating ebook directory at [path][link=file://{repo_path}]{repo_path}[/][/] ...", plain_output))
-
-	content_path = repo_path / "src"
-
-	if args.white_label:
-		content_path = repo_path
-
+	# Get more metadata on contributors.
 	if not args.white_label:
 		# Get data on authors.
 		for _, author in enumerate(authors):
@@ -645,553 +300,239 @@ def _create_draft(args: Namespace, plain_output: bool):
 			if not args.offline and illustrator["name"].lower() != "anonymous":
 				illustrator["wiki_url"], illustrator["nacoaf_uri"] = _get_wikipedia_url(illustrator["name"], True)
 
-	if args.fp_id:
-		transcription_url = f"https://www.fadedpage.com/showbook.php?pid={args.fp_id}"
+	# Create a temp directory and copy all template files over.
+	with tempfile.TemporaryDirectory() as directory_name:
+		work_path = Path(directory_name)
+		content_path = Path(work_path) / "src"
 
-		# Get the ebook metadata.
 		if args.verbose:
-			console.print(se.prep_output(f"Downloading ebook metadata from [path][link={transcription_url}]{transcription_url}[/][/] ...", plain_output))
-		try:
-			response = requests.get(transcription_url, timeout=60, headers={'User-Agent': USER_AGENT})
-			fp_metadata_html = response.text
-			fp_cookie = response.cookies['PHPSESSID']
-		except Exception as ex:
-			raise se.RemoteCommandErrorException(f"Couldn’t download Faded Page ebook metadata page. Exception: {ex}") from ex
+			console.print(se.prep_output("Building ebook structure ...", plain_output))
 
-		dom = etree.parse(StringIO(fp_metadata_html), html_parser)
+		(content_path / "epub" / "css").mkdir(parents=True)
+		(content_path / "epub" / "images").mkdir()
+		(content_path / "epub" / "text").mkdir()
+		(content_path / "META-INF").mkdir()
 
-		# Get the ebook HTML URL from the metadata.
-		fp_ebook_url = None
-		for node in dom.xpath(f"/html/body//a[contains(@href, '{args.fp_id}.html')]"):
-			fp_ebook_url = "https://www.fadedpage.com/" + node.get("href")
+		if not args.white_label:
+			(work_path / "images").mkdir()
 
-		if not fp_ebook_url:
-			raise se.RemoteCommandErrorException("Could download ebook metadata, but couldn’t find URL for the ebook HTML.")
-
-		# Get the actual ebook transcription.
-		# Faded Page requires you to set a session cookie at the ebook's metadata page before you can access the actual ebook transcription.
-		# We got that session cookie earlier, and we pass it below in order to actually be able to download the ebook.
+		# Copy over templates.
 		if args.verbose:
-			console.print(se.prep_output(f"Downloading ebook transcription from [path][link={fp_ebook_url}]{fp_ebook_url}[/][/] ...", plain_output))
-		try:
-			response = requests.get(fp_ebook_url, timeout=60, cookies={"PHPSESSID": fp_cookie}, headers={'User-Agent': USER_AGENT})
-			transcription_ebook_html = response.text
-		except Exception as ex:
-			raise se.RemoteCommandErrorException(f"Couldn’t download Faded Page ebook HTML. Exception: {ex}") from ex
+			console.print(se.prep_output("Copying in standard files ...", plain_output))
+
+		_copy_template_file("gitignore", work_path / ".gitignore")
+		_copy_template_file("container.xml", content_path / "META-INF")
+		_copy_template_file("mimetype", content_path)
+		_copy_template_file("core.css", content_path / "epub" / "css")
+
+		if args.white_label:
+			_copy_template_file("content-white-label.opf", content_path / "epub" / "content.opf")
+			_copy_template_file("titlepage-white-label.xhtml", content_path / "epub" / "text" / "titlepage.xhtml")
+			_copy_template_file("cover.jpg", content_path / "epub" / "images")
+			_copy_template_file("local-white-label.css", content_path / "epub" / "css" / "local.css")
+			_copy_template_file("toc-white-label.xhtml", content_path / "epub" / "toc.xhtml")
 
-		fp_html_dom = etree.parse(StringIO(transcription_ebook_html), html_parser)
-
-		# Make sure we actually got the ebook HTML, and didn't get redirected by Faded Page.
-		if not fp_html_dom.xpath("/html/head/meta[re:test(@http-equiv, '^Content-Type$', 'i') and re:test(@content, 'text/html;\\s*charset=utf-8', 'i')]", namespaces=XPATH_NAMESPACES):
-			raise se.RemoteCommandErrorException("Tried to download Faded Page ebook HTML, but response doesn't look like a Faded Page ebook.")
-
-		# Get the FP publication date.
-		for node in fp_html_dom.xpath("//p[re:test(., '^\\s*Date first posted:', 'i')]", namespaces=XPATH_NAMESPACES):
-			text = etree.tostring(node, encoding=str, method="text", with_tail=False)
-			transcription_publication_year = regex.sub(r".+?([0-9]{4})$", "\\1", text)
-			# Quit on the first match.
-			break
-
-		try:
-			fixed_external_ebook_html = fix_text(transcription_ebook_html, uncurl_quotes=False)
-			transcription_ebook_html = se.strip_bom(fixed_external_ebook_html)
-		except Exception as ex:
-			raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Faded Page HTML file. Exception: {ex}") from ex
-
-		transcription_source = "Faded Page"
-
-	# Download PG HTML and do some fixups.
-	if args.pg_id:
-		transcription_url = f"https://www.gutenberg.org/ebooks/{args.pg_id}"
-
-		# Get the ebook metadata.
-		if args.verbose:
-			console.print(se.prep_output(f"Downloading ebook metadata from [path][link={transcription_url}]{transcription_url}[/][/] ...", plain_output))
-		try:
-			response = requests.get(transcription_url, timeout=60, headers={'User-Agent': USER_AGENT})
-			pg_metadata_html = response.text
-		except Exception as ex:
-			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page. Exception: {ex}") from ex
-
-		dom = etree.parse(StringIO(pg_metadata_html), html_parser)
-
-		# Get the ebook HTML URL from the metadata.
-		pg_ebook_url = None
-		for node in dom.xpath("/html/body//a[contains(@type, 'text/html')]"):
-			pg_ebook_url = regex.sub(r"^//", "https://", node.get("href"))
-			pg_ebook_url = regex.sub(r"^/", "https://www.gutenberg.org/", pg_ebook_url)
-
-		if not pg_ebook_url:
-			raise se.RemoteCommandErrorException("Could download ebook metadata, but couldn’t find URL for the ebook HTML.")
-
-		# Get the ebook LCSH categories.
-		for node in dom.xpath("/html/body//td[contains(@property, 'dcterms:subject')]"):
-			if node.get("datatype") == "dcterms:LCSH":
-				for subject_link in node.xpath("./a"):
-					transcription_subjects.append(subject_link.text.strip())
-
-		# Get the PG publication date.
-		for node in dom.xpath("//td[@itemprop='datePublished']"):
-			transcription_publication_year = regex.sub(r".+?([0-9]{4})", "\\1", node.text)
-
-		# Get the actual ebook URL.
-		if args.verbose:
-			console.print(se.prep_output(f"Downloading ebook transcription from [path][link={pg_ebook_url}]{pg_ebook_url}[/][/] ...", plain_output))
-		try:
-			response = requests.get(pg_ebook_url, timeout=60, headers={'User-Agent': USER_AGENT})
-			transcription_ebook_html = response.text
-		except Exception as ex:
-			raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook HTML. Exception: {ex}") from ex
-
-		try:
-			fixed_external_ebook_html = fix_text(transcription_ebook_html, uncurl_quotes=False)
-			transcription_ebook_html = se.strip_bom(fixed_external_ebook_html)
-		except Exception as ex:
-			raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Project Gutenberg HTML file. Exception: {ex}") from ex
-
-		transcription_source = "Project Gutenberg"
-
-	if transcription_ebook_html:
-		# Try to guess the ebook language.
-		transcription_language = "en-US"
-		if "colour" in transcription_ebook_html or "favour" in transcription_ebook_html or "honour" in transcription_ebook_html:
-			transcription_language = "en-GB"
-
-	# Create necessary directories.
-	if args.verbose:
-		console.print(se.prep_output(f"Building ebook structure in [path][link=file://{repo_path}]{repo_path}[/][/] ...", plain_output))
-
-	(content_path / "epub" / "css").mkdir(parents=True)
-	(content_path / "epub" / "images").mkdir(parents=True)
-	(content_path / "epub" / "text").mkdir(parents=True)
-	(content_path / "META-INF").mkdir(parents=True)
-
-	if not args.white_label:
-		(repo_path / "images").mkdir(parents=True)
-
-	is_external_html_parsed = True
-
-	# Write PG data if we have it.
-	if transcription_ebook_html:
-		if args.verbose:
-			console.print(se.prep_output("Cleaning transcription ...", plain_output))
-
-		transcription_local_path = content_path / "epub" / "text" / "body.xhtml"
-		output = ""
-
-		if args.fp_id:
-			try:
-				dom = etree.parse(StringIO(regex.sub(r"encoding=(?P<quote>[\'\"]).+?(?P=quote)", "", transcription_ebook_html)), html_parser)
-
-				for node in dom.xpath("//*[re:test(., 'ebook was produced by.+', 'i')]", namespaces=XPATH_NAMESPACES):
-					node_html = etree.tostring(node, encoding=str, method="html", with_tail=False)
-
-					# Sometimes, lxml returns the entire HTML instead of the node HTML for a node.
-					# It's unclear why this happens. An example is <https://www.gutenberg.org/ebooks/21721>.
-					# If the HTML is larger than some large size, abort trying to find producers.
-					if len(node_html) > 3000:
-						continue
-
-					# Strip tags.
-					producers_text = node_html
-					producers_text = regex.sub(r"<.+?>", " ", producers_text, flags=regex.DOTALL)
-
-					producers_text = regex.sub(r"^<[^>]+?>", "", producers_text)
-					producers_text = regex.sub(r"<[^>]+?>$", "", producers_text)
-
-					producers_text = regex.sub(r"^\s*This eBook was produced by:\s*", "", producers_text, flags=regex.IGNORECASE)
-					producers_text = regex.sub(r" \s+", " ", producers_text, flags=regex.DOTALL)
-					producers_text = regex.sub(r"(at )?https?://www\.pgdp(canada)?\.net", "", producers_text)
-					producers_text = regex.sub(r"[\r\n]+", " ", producers_text)
-					producers_text = regex.sub(r",? (and|&amp;) ", ", and ", producers_text)
-					producers_text = producers_text.replace(", and ", ", ").strip()
-
-					transcription_producers = [producer.strip() for producer in regex.split(',|;', producers_text)]
-
-				# Strip `<head>` and `<script>`.
-				for node in dom.xpath("/html/head | /html//script"):
-					easy_node = se.easy_xml.EasyXmlElement(node)
-					easy_node.remove()
-
-				# Try to strip out the header and footer.
-				for node in dom.xpath("//p[re:test(., 'This eBook was produced by', 'i')]", namespaces=XPATH_NAMESPACES):
-					for sibling_node in node.xpath("./preceding-sibling::*"):
-						easy_node = se.easy_xml.EasyXmlElement(sibling_node)
-						easy_node.remove()
-
-					# If there's an `<hr/>` directly following this node, remove it too.
-					for hr_node in node.xpath("./following-sibling::*[1][name() = 'hr']"):
-						easy_node = se.easy_xml.EasyXmlElement(hr_node)
-						easy_node.remove()
-
-					easy_node = se.easy_xml.EasyXmlElement(node)
-					easy_node.remove()
-
-				# Try to strip out the footer.
-				for node in dom.xpath("/html/body/p[re:test(., '^\\s*\\[The end of')][last()]", namespaces=XPATH_NAMESPACES):
-					for sibling_node in node.xpath("./following-sibling::*"):
-						easy_node = se.easy_xml.EasyXmlElement(sibling_node)
-						easy_node.remove()
-
-					easy_node = se.easy_xml.EasyXmlElement(node)
-					easy_node.remove()
-
-				# Strip all comments.
-				for node in dom.xpath("//comment()"):
-					easy_node = se.easy_xml.EasyXmlElement(node)
-					easy_node.remove()
-
-				# lxml will put the XML declaration in a weird place, remove it first.
-				output = regex.sub(r"<\?xml.+?\?>", "", etree.tostring(dom, encoding="unicode"))
-
-				# Now re-add it.
-				output = """<?xml version="1.0" encoding="utf-8"?>\n""" + output
-
-				# lxml can also output duplicate default namespace declarations so remove the first one only.
-				output = regex.sub(r"(xmlns=\".+?\")(\sxmlns=\".+?\")+", r"\1", output)
-
-				# lxml may also create duplicate `xml:lang` attributes on the root element. Not sure why. Remove them.
-				output = regex.sub(r'(xml:lang="[^"]+?" lang="[^"]+?") xml:lang="[^"]+?"', r"\1", output)
-
-			except Exception:
-				# Save this error for later; we still want to save the book text and complete the `create-draft` process even if we've failed to parse PG's HTML source.
-				is_external_html_parsed = False
-				output = transcription_ebook_html
-
-		if args.pg_id:
-			try:
-				dom = etree.parse(StringIO(regex.sub(r"encoding=(?P<quote>[\'\"]).+?(?P=quote)", "", transcription_ebook_html)), html_parser)
-
-				for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*Produced by.+')] | //section[@id='pg-header']//p[re:test(., 'Credits: ')]", namespaces=XPATH_NAMESPACES):
-					node_html = etree.tostring(node, encoding=str, method="html", with_tail=False)
-
-					# Sometimes, lxml returns the entire HTML instead of the node HTML for a node.
-					# It's unclear why this happens. An example is <https://www.gutenberg.org/ebooks/21721>.
-					# If the HTML is larger than some large size, abort trying to find producers.
-					if len(node_html) > 3000:
-						continue
-
-					# Strip tags.
-					producers_text = node_html
-					producers_text = regex.sub(r"<.+?>", " ", producers_text, flags=regex.DOTALL)
-
-					producers_text = regex.sub(r"^<[^>]+?>", "", producers_text)
-					producers_text = regex.sub(r"<[^>]+?>$", "", producers_text)
-
-					producers_text = regex.sub(r".+?(Produced by|Credits\s*:\s*) (.+?)\s*$", "\\2", producers_text, flags=regex.DOTALL)
-					# Workaround for what appears to be a PG bug where the credits start as `Credits: Produced by Name1`.
-					producers_text = regex.sub(r"Produced by ", "", producers_text)
-					producers_text = regex.sub(r"\(.+?\)", "", producers_text, flags=regex.DOTALL)
-					producers_text = regex.sub(r" \s+", " ", producers_text, flags=regex.DOTALL)
-					producers_text = regex.sub(r"(at )?https?://www\.pgdp\.net", "", producers_text)
-					producers_text = regex.sub(r"[\r\n]+", " ", producers_text)
-					producers_text = regex.sub(r",? and ", ", and ", producers_text)
-					producers_text = producers_text.replace(", and ", ", ").strip()
-
-					transcription_producers = [producer.strip() for producer in regex.split(',|;', producers_text)]
-
-				# Strip everything in `<head>`.
-				for node in dom.xpath("/html/head//*"):
-					easy_node = se.easy_xml.EasyXmlElement(node)
-					easy_node.remove()
-
-				# Try to strip out the PG header and footer for new PG ebooks.
-				nodes = dom.xpath("//section[contains(@class, 'pg-boilerplate')]")
-				if nodes:
-					for node in nodes:
-						easy_node = se.easy_xml.EasyXmlElement(node)
-						easy_node.remove()
-				else:
-					# Old PG ebooks might have a different structure.
-					for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*START OF (THE|THIS)')]", namespaces=XPATH_NAMESPACES):
-						for sibling_node in node.xpath("./preceding-sibling::*"):
-							easy_node = se.easy_xml.EasyXmlElement(sibling_node)
-							easy_node.remove()
-
-						easy_node = se.easy_xml.EasyXmlElement(node)
-						easy_node.remove()
-
-					# Try to strip out the PG license footer.
-					for node in dom.xpath("//*[re:test(text(), 'End of (the )?Project Gutenberg')]", namespaces=XPATH_NAMESPACES):
-						for sibling_node in node.xpath("./following-sibling::*"):
-							easy_node = se.easy_xml.EasyXmlElement(sibling_node)
-							easy_node.remove()
-
-						easy_node = se.easy_xml.EasyXmlElement(node)
-						easy_node.remove()
-
-				# lxml will put the XML declaration in a weird place, remove it first.
-				output = regex.sub(r"<\?xml.+?\?>", "", etree.tostring(dom, encoding="unicode"))
-
-				# Now re-add it.
-				output = """<?xml version="1.0" encoding="utf-8"?>\n""" + output
-
-				# lxml can also output duplicate default namespace declarations so remove the first one only.
-				output = regex.sub(r"(xmlns=\".+?\")(\sxmlns=\".+?\")+", r"\1", output)
-
-				# lxml may also create duplicate `xml:lang` attributes on the root element. Not sure why. Remove them.
-				output = regex.sub(r'(xml:lang="[^"]+?" lang="[^"]+?") xml:lang="[^"]+?"', r"\1", output)
-
-			except Exception:
-				# Save this error for later; we still want to save the book text and complete the `create-draft` process even if we've failed to parse PG's HTML source.
-				is_external_html_parsed = False
-				output = transcription_ebook_html
-
-
-		if transcription_producers:
-			for key, producer in enumerate(transcription_producers):
-				if "Distributed Proofreaders Canada" in producer:
-					transcription_producers[key] = "Distributed Proofreaders Canada"
-				elif "Distributed Proofreader" in producer:
-					transcription_producers[key] = "Distributed Proofreaders"
-
-		try:
-			with open(transcription_local_path, "w", encoding="utf-8") as file:
-				file.write(output)
-		except OSError as ex:
-			raise se.InvalidFileException(f"Couldn’t write to ebook directory. Exception: {ex}") from ex
-
-	# Copy over templates.
-	if args.verbose:
-		console.print(se.prep_output("Copying in standard files ...", plain_output))
-	_copy_template_file("gitignore", repo_path / ".gitignore")
-	_copy_template_file("container.xml", content_path / "META-INF")
-	_copy_template_file("mimetype", content_path)
-	_copy_template_file("core.css", content_path / "epub" / "css")
-
-	if args.white_label:
-		_copy_template_file("content-white-label.opf", content_path / "epub" / "content.opf")
-		_copy_template_file("titlepage-white-label.xhtml", content_path / "epub" / "text" / "titlepage.xhtml")
-		_copy_template_file("cover.jpg", content_path / "epub" / "images")
-		_copy_template_file("local-white-label.css", content_path / "epub" / "css" / "local.css")
-		_copy_template_file("toc-white-label.xhtml", content_path / "epub" / "toc.xhtml")
-
-	else:
-		_copy_template_file("cover.jpg", repo_path / "images")
-		_copy_template_file("cover.svg", repo_path / "images")
-		_copy_template_file("titlepage.svg", repo_path / "images")
-		_copy_template_file("local.css", content_path / "epub" / "css")
-		_copy_template_file("se.css", content_path / "epub" / "css")
-		_copy_template_file("logo.svg", content_path / "epub" / "images")
-		_copy_template_file("colophon.xhtml", content_path / "epub" / "text")
-		_copy_template_file("imprint.xhtml", content_path / "epub" / "text")
-		_copy_template_file("uncopyright.xhtml", content_path / "epub" / "text")
-		_copy_template_file("titlepage.xhtml", content_path / "epub" / "text")
-		_copy_template_file("content.opf", content_path / "epub")
-		_copy_template_file("toc.xhtml", content_path / "epub")
-		_copy_template_file("LICENSE.md", repo_path)
-
-	if args.verbose:
-		console.print(se.prep_output("Setting up ebook metadata ...", plain_output))
-
-	# Try to find Wikipedia links if possible.
-	ebook_wiki_url = None
-
-	if not args.offline and title not in ("Short Fiction", "Poetry", "Essays", "Plays"):
-		ebook_wiki_url, _ = _get_wikipedia_url(title, False)
-
-	with open(content_path / "epub" / "text" / "titlepage.xhtml", "r+", encoding="utf-8") as file:
-		titlepage_xhtml = file.read()
-
-		titlepage_xhtml = titlepage_xhtml.replace("TITLE", escape(title))
-
-		titlepage_xhtml = titlepage_xhtml.replace("AUTHOR_NAME", _generate_titlepage_string(authors, "author"))
-
-		if translators:
-			titlepage_xhtml = titlepage_xhtml.replace("TRANSLATOR_NAME", _generate_titlepage_string(translators, "translator"))
 		else:
-			titlepage_xhtml = regex.sub(r"<p>Translated by.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)
+			_copy_template_file("cover.jpg", work_path / "images")
+			_copy_template_file("cover.svg", work_path / "images")
+			_copy_template_file("titlepage.svg", work_path / "images")
+			_copy_template_file("local.css", content_path / "epub" / "css")
+			_copy_template_file("se.css", content_path / "epub" / "css")
+			_copy_template_file("logo.svg", content_path / "epub" / "images")
+			_copy_template_file("colophon.xhtml", content_path / "epub" / "text")
+			_copy_template_file("imprint.xhtml", content_path / "epub" / "text")
+			_copy_template_file("uncopyright.xhtml", content_path / "epub" / "text")
+			_copy_template_file("titlepage.xhtml", content_path / "epub" / "text")
+			_copy_template_file("content.opf", content_path / "epub")
+			_copy_template_file("toc.xhtml", content_path / "epub")
+			_copy_template_file("LICENSE.md", work_path)
 
-		if illustrators:
-			titlepage_xhtml = titlepage_xhtml.replace("ILLUSTRATOR_NAME", _generate_titlepage_string(illustrators, "illustrator"))
-		else:
-			titlepage_xhtml = regex.sub(r"<p>Illustrated by.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)
+		# Fill out some basic data in the metadata file that will let is generate further variables.
+		with open(content_path / "epub" / "content.opf", "r+", encoding="utf-8") as file:
+			metadata_xml = file.read()
 
-		file.seek(0)
-		file.write(se.formatting.format_xhtml(titlepage_xhtml))
-		file.truncate()
+			metadata_xml = metadata_xml.replace(">TITLE_SORT<", f">{escape(sorted_title)}<")
+			metadata_xml = metadata_xml.replace(">TITLE<", f">{escape(title)}<")
 
-	# Set the language in the ToC, so that `se modernize-spelling` doesn't crash when we try to run it.
-	if args.pg_id and transcription_language:
-		with open(content_path / "epub" / "toc.xhtml", "r+", encoding="utf-8") as file:
-			toc_xhtml = file.read()
-
-			toc_xhtml = toc_xhtml.replace("LANG", transcription_language)
-
-			file.seek(0)
-			file.write(toc_xhtml)
-			file.truncate()
-
-	if not args.white_label:
-		# Create the titlepage SVG.
-		contributors = {}
-		if translators:
-			contributors["translated by"] = _generate_contributor_string(translators, False)
-
-		if illustrators:
-			contributors["illustrated by"] = _generate_contributor_string(illustrators, False)
-
-		with open(repo_path / "images" / "titlepage.svg", "w", encoding="utf-8") as file:
-			file.write(_generate_titlepage_svg(title, [author["name"] for author in authors], contributors, title_string))
-
-		# Create the cover SVG.
-		with open(repo_path / "images" / "cover.svg", "w", encoding="utf-8") as file:
-			file.write(_generate_cover_svg(title, [author["name"] for author in authors], title_string))
-
-		# Build the cover/titlepage for distribution.
-		epub = SeEpub(repo_path)
-		epub.generate_cover_svg()
-		epub.generate_titlepage_svg()
-
-		if transcription_url:
-			_replace_in_file(content_path / "epub" / "text" / "imprint.xhtml", "TRANSCRIPTION_URL", transcription_url)
-
-		if transcription_source:
-			_replace_in_file(content_path / "epub" / "text" / "imprint.xhtml", "TRANSCRIPTION_SOURCE", escape(transcription_source))
-
-
-		# Fill out the colophon.
-		with open(content_path / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
-			colophon_xhtml = file.read()
-
-			colophon_xhtml = colophon_xhtml.replace("SE_IDENTIFIER", identifier)
-			colophon_xhtml = colophon_xhtml.replace("TITLE", escape(title))
-
-			contributor_string = _generate_contributor_string(authors, True)
-
-			if contributor_string == "":
-				colophon_xhtml = colophon_xhtml.replace(" by<br/>\n\t\t\t<a href=\"AUTHOR_WIKI_URL\">AUTHOR_NAME</a>", escape(contributor_string))
-			else:
-				colophon_xhtml = colophon_xhtml.replace("<a href=\"AUTHOR_WIKI_URL\">AUTHOR_NAME</a>", contributor_string)
+			authors_xml = _generate_metadata_contributor_xml(authors, "author")
+			authors_xml = authors_xml.replace("dc:contributor", "dc:creator")
+			metadata_xml = regex.sub(r"<dc:creator id=\"author\">AUTHOR_NAME</dc:creator>.+?scheme=\"marc:relators\">aut</meta>", authors_xml, metadata_xml, flags=regex.DOTALL)
 
 			if translators:
-				translator_block = f"It was translated from ORIGINAL_LANGUAGE in <time>TRANSLATION_YEAR</time> by<br/>\n\t\t\t{_generate_contributor_string(translators, True)}.</p>"
-				colophon_xhtml = colophon_xhtml.replace("</p>\n\t\t\t<p>This ebook was produced for<br/>", f"<br/>\n\t\t\t{translator_block}\n\t\t\t<p>This ebook was produced for<br/>")
+				translators_xml = _generate_metadata_contributor_xml(translators, "translator")
+				metadata_xml = regex.sub(r"<dc:contributor id=\"translator\">.+?scheme=\"marc:relators\">trl</meta>", translators_xml, metadata_xml, flags=regex.DOTALL)
+			else:
+				metadata_xml = regex.sub(r"<dc:contributor id=\"translator\">.+?scheme=\"marc:relators\">trl</meta>\n\t\t", "", metadata_xml, flags=regex.DOTALL)
 
-			if transcription_url:
-				colophon_xhtml = colophon_xhtml.replace("TRANSCRIPTION_URL", transcription_url)
-
-			if transcription_publication_year:
-				colophon_xhtml = colophon_xhtml.replace("TRANSCRIPTION_YEAR", transcription_publication_year)
-
-			if transcription_producers:
-				producer_count = len(transcription_producers)
-				producers_xhtml = ""
-				for i, producer in enumerate(transcription_producers):
-					if "Distributed Proofreaders Canada" in producer:
-						producers_xhtml = producers_xhtml + """<a href="https://www.pgdpcanada.net/">Distributed Proofreaders Canada</a>"""
-					elif "Distributed Proofread" in producer:
-						producers_xhtml = producers_xhtml + """<a href="https://www.pgdp.net/">Distributed Proofreaders</a>"""
-					elif "anonymous" in producer.lower():
-						producers_xhtml = producers_xhtml + """<b epub:type="z3998:personal-name">An Anonymous Volunteer</b>"""
-					else:
-						producers_xhtml = producers_xhtml + f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(producer)).strip('.')}</b>"""
-
-					if i < producer_count - 1:
-						# If exactly two producers, we don't want a comma between them.
-						if producer_count == 2:
-							producers_xhtml = producers_xhtml + " "
-						else:
-							producers_xhtml = producers_xhtml + ", "
-
-					if i == producer_count - 2:
-						producers_xhtml = producers_xhtml + "and "
-
-				producers_xhtml = producers_xhtml + "<br/>"
-
-				colophon_xhtml = colophon_xhtml.replace("""<b epub:type="z3998:personal-name">TRANSCRIBER_1_NAME</b>, <b epub:type="z3998:personal-name">TRANSCRIBER_2_NAME</b>, and <a href="https://www.pgdp.net/">Distributed Proofreaders</a><br/>""", producers_xhtml)
-
-			if transcription_source:
-				colophon_xhtml = colophon_xhtml.replace("TRANSCRIPTION_SOURCE", escape(transcription_source))
-
+			if illustrators:
+				illustrators_xml = _generate_metadata_contributor_xml(illustrators, "illustrator")
+				metadata_xml = regex.sub(r"<dc:contributor id=\"illustrator\">.+?scheme=\"marc:relators\">ill</meta>", illustrators_xml, metadata_xml, flags=regex.DOTALL)
+			else:
+				metadata_xml = regex.sub(r"<dc:contributor id=\"illustrator\">.+?scheme=\"marc:relators\">ill</meta>\n\t\t", "", metadata_xml, flags=regex.DOTALL)
 
 			file.seek(0)
-			file.write(colophon_xhtml)
+			file.write(metadata_xml)
 			file.truncate()
 
-	# Fill out the metadata file.
-	with open(content_path / "epub" / "content.opf", "r+", encoding="utf-8") as file:
-		metadata_xml = file.read()
+		# Basic metadata is done, now work on an `SeEpub` object instead of raw files.
+		epub = SeEpub(work_path)
 
-		metadata_xml = metadata_xml.replace("SE_IDENTIFIER", identifier)
-		metadata_xml = metadata_xml.replace(">TITLE_SORT<", f">{escape(sorted_title)}<")
-		metadata_xml = metadata_xml.replace(">TITLE<", f">{escape(title)}<")
-		metadata_xml = metadata_xml.replace("VCS_IDENTIFIER", str(repo_name[0:100]))
+		# We have to set this here because we haven't created the epub identifier yet.
+		epub.is_se_ebook = not args.white_label
 
-		if transcription_producers:
-			producers_xhtml = ""
-			i = 1
-			for producer in transcription_producers:
-				# Name and File-As.
-				if "Distributed Proofreaders Canada" in producer:
-					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">Distributed Proofreaders Canada</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Distributed Proofreaders</meta>\n"
-				elif "Distributed Proofread" in producer:
-					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">Distributed Proofreaders</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Distributed Proofreaders</meta>\n"
-				elif "anonymous" in producer.lower():
-					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">An Anonymous Volunteer</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">Anonymous Volunteer, An</meta>\n"
-				else:
-					# Try to naively sort the transcriber.
-					matches = regex.search(r"^([\p{Letter}]+) ([\p{Letter}]+)$", producer)
-					sorted_transcriber = "TRANSCRIBER_SORT"
-					if matches:
-						sorted_transcriber = f"{matches[1]}, {matches[2]}"
+		# Can we create the output directory?
+		repo_path = Path(epub.generate_repo_name()).resolve()
 
-					producers_xhtml = producers_xhtml + f"\t\t<dc:contributor id=\"transcriber-{i}\">{escape(producer.strip('.'))}</dc:contributor>\n\t\t<meta property=\"file-as\" refines=\"#transcriber-{i}\">{sorted_transcriber}</meta>\n"
+		if repo_path.is_dir():
+			raise se.InvalidInputException(f"Directory already exists: [path][link=file://{repo_path}]{repo_path}[/][/].")
 
-				# Homepage.
-				if "Distributed Proofreaders Canada" in producer:
-					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{i}\">https://www.pgdpcanada.net/</meta>\n"
-				elif "Distributed Proofread" in producer:
-					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"se:url.homepage\" refines=\"#transcriber-{i}\">https://www.pgdp.net/</meta>\n"
+		for node in epub.metadata_dom.xpath("//*[contains(., 'IDENTIFIER') and not(./*)]"):
+			node.set_text(node.inner_text().replace('IDENTIFIER', epub.generate_identifier()))
 
-				# LCCN.
-				if "David Widger" in producer:
-					producers_xhtml = producers_xhtml + f"\t\t<meta property=\"se:url.authority.nacoaf\" refines=\"#transcriber-{i}\">http://id.loc.gov/authorities/names/no2011017869</meta>\n"
+		if epub.is_se_ebook:
+			for node in epub.metadata_dom.xpath("//*[contains(., 'VCS_URL') and not(./*)]"):
+				node.set_text(node.inner_text().replace('VCS_URL', epub.generate_vcs_url()))
 
-				# Role.
-				producers_xhtml = producers_xhtml + f"\t\t<meta property=\"role\" refines=\"#transcriber-{i}\" scheme=\"marc:relators\">trc</meta>\n"
+			# Try to find Wikipedia links if possible.
+			ebook_wiki_url = None
 
-				i = i + 1
+			if not args.offline and title not in ("Short Fiction", "Poetry", "Essays", "Plays"):
+				ebook_wiki_url, _ = _get_wikipedia_url(title, False)
 
-			# Replace the first transcriber line with a placeholder.
-			metadata_xml = regex.sub(r"\t\t<dc:contributor id=\"transcriber-1\">TRANSCRIBER_1_NAME</dc:contributor>", "\t\tCREDITS_PLACEHOLDER", metadata_xml)
-			# Remove the remaining transcriber lines.
-			metadata_xml = regex.sub(r"^.+?transcriber.+?\n", "", metadata_xml, flags=regex.MULTILINE)
-			# Replace the placeholder with the actual transcribers.
-			metadata_xml = regex.sub(r"\t\tCREDITS_PLACEHOLDER", "\t\t" + producers_xhtml.strip(), metadata_xml, flags=regex.DOTALL)
+			if ebook_wiki_url:
+				for node in epub.metadata_dom.xpath("//*[contains(., 'EBOOK_WIKI_URL') and not(./*)]"):
+					node.set_text(node.inner_text().replace('EBOOK_WIKI_URL', ebook_wiki_url))
 
-		if ebook_wiki_url:
-			metadata_xml = metadata_xml.replace(">EBOOK_WIKI_URL<", f">{ebook_wiki_url}<")
+		# Download transcriptions if required.
+		if args.fp_id:
+			transcription_url = f"https://www.fadedpage.com/showbook.php?pid={args.fp_id}"
 
-		authors_xml = _generate_metadata_contributor_xml(authors, "author")
-		authors_xml = authors_xml.replace("dc:contributor", "dc:creator")
-		metadata_xml = regex.sub(r"<dc:creator id=\"author\">AUTHOR_NAME</dc:creator>.+?scheme=\"marc:relators\">aut</meta>", authors_xml, metadata_xml, flags=regex.DOTALL)
+			# Get the ebook metadata.
+			if args.verbose:
+				console.print(se.prep_output(f"Downloading ebook metadata from [path][link={transcription_url}]{transcription_url}[/][/] ...", plain_output))
+			try:
+				response = requests.get(transcription_url, timeout=60, headers={'User-Agent': USER_AGENT})
+				fp_metadata_html = response.text
+				fp_cookie = response.cookies['PHPSESSID']
+			except Exception as ex:
+				raise se.RemoteCommandErrorException(f"Couldn’t download Faded Page ebook metadata page. Exception: {ex}") from ex
 
-		if translators:
-			translators_xml = _generate_metadata_contributor_xml(translators, "translator")
-			metadata_xml = regex.sub(r"<dc:contributor id=\"translator\">.+?scheme=\"marc:relators\">trl</meta>", translators_xml, metadata_xml, flags=regex.DOTALL)
-		else:
-			metadata_xml = regex.sub(r"<dc:contributor id=\"translator\">.+?scheme=\"marc:relators\">trl</meta>\n\t\t", "", metadata_xml, flags=regex.DOTALL)
+			dom = etree.parse(StringIO(fp_metadata_html), html_parser)
 
-		if illustrators:
-			illustrators_xml = _generate_metadata_contributor_xml(illustrators, "illustrator")
-			metadata_xml = regex.sub(r"<dc:contributor id=\"illustrator\">.+?scheme=\"marc:relators\">ill</meta>", illustrators_xml, metadata_xml, flags=regex.DOTALL)
-		else:
-			metadata_xml = regex.sub(r"<dc:contributor id=\"illustrator\">.+?scheme=\"marc:relators\">ill</meta>\n\t\t", "", metadata_xml, flags=regex.DOTALL)
+			# Get the ebook HTML URL from the metadata.
+			fp_ebook_url = None
+			for node in dom.xpath(f"/html/body//a[contains(@href, '{args.fp_id}.html')]"):
+				fp_ebook_url = "https://www.fadedpage.com/" + node.get("href")
+
+			if not fp_ebook_url:
+				raise se.RemoteCommandErrorException("Could download ebook metadata, but couldn’t find URL for the ebook HTML.")
+
+			# Get the actual ebook transcription.
+			# Faded Page requires you to set a session cookie at the ebook's metadata page before you can access the actual ebook transcription.
+			# We got that session cookie earlier, and we pass it below in order to actually be able to download the ebook.
+			if args.verbose:
+				console.print(se.prep_output(f"Downloading ebook transcription from [path][link={fp_ebook_url}]{fp_ebook_url}[/][/] ...", plain_output))
+			try:
+				response = requests.get(fp_ebook_url, timeout=60, cookies={"PHPSESSID": fp_cookie}, headers={'User-Agent': USER_AGENT})
+				transcription_ebook_html = response.text
+			except Exception as ex:
+				raise se.RemoteCommandErrorException(f"Couldn’t download Faded Page ebook HTML. Exception: {ex}") from ex
+
+			fp_html_dom = etree.parse(StringIO(transcription_ebook_html), html_parser)
+
+			# Make sure we actually got the ebook HTML, and didn't get redirected by Faded Page.
+			if not fp_html_dom.xpath("/html/head/meta[re:test(@http-equiv, '^Content-Type$', 'i') and re:test(@content, 'text/html;\\s*charset=utf-8', 'i')]", namespaces=XPATH_NAMESPACES):
+				raise se.RemoteCommandErrorException("Tried to download Faded Page ebook HTML, but response doesn't look like a Faded Page ebook.")
+
+			# Get the FP publication date.
+			for node in fp_html_dom.xpath("//p[re:test(., '^\\s*Date first posted:', 'i')]", namespaces=XPATH_NAMESPACES):
+				text = etree.tostring(node, encoding=str, method="text", with_tail=False)
+				transcription_publication_year = regex.sub(r".+?([0-9]{4})$", "\\1", text)
+				# Quit on the first match.
+				break
+
+			try:
+				fixed_external_ebook_html = fix_text(transcription_ebook_html, uncurl_quotes=False)
+				transcription_ebook_html = se.strip_bom(fixed_external_ebook_html)
+			except Exception as ex:
+				raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Faded Page HTML file. Exception: {ex}") from ex
+
+			transcription_source = "Faded Page"
+
+		if args.pg_id:
+			transcription_url = f"https://www.gutenberg.org/ebooks/{args.pg_id}"
+
+			# Get the ebook metadata.
+			if args.verbose:
+				console.print(se.prep_output(f"Downloading ebook metadata from [path][link={transcription_url}]{transcription_url}[/][/] ...", plain_output))
+			try:
+				response = requests.get(transcription_url, timeout=60, headers={'User-Agent': USER_AGENT})
+				pg_metadata_html = response.text
+			except Exception as ex:
+				raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page. Exception: {ex}") from ex
+
+			dom = etree.parse(StringIO(pg_metadata_html), html_parser)
+
+			# Get the ebook HTML URL from the metadata.
+			pg_ebook_url = None
+			for node in dom.xpath("/html/body//a[contains(@type, 'text/html')]"):
+				pg_ebook_url = regex.sub(r"^//", "https://", node.get("href"))
+				pg_ebook_url = regex.sub(r"^/", "https://www.gutenberg.org/", pg_ebook_url)
+
+			if not pg_ebook_url:
+				raise se.RemoteCommandErrorException("Could download ebook metadata, but couldn’t find URL for the ebook HTML.")
+
+			# Get the ebook LCSH categories.
+			for node in dom.xpath("/html/body//td[contains(@property, 'dcterms:subject')]"):
+				if node.get("datatype") == "dcterms:LCSH":
+					for subject_link in node.xpath("./a"):
+						transcription_subjects.append(subject_link.text.strip())
+
+			# Get the PG publication date.
+			for node in dom.xpath("//td[@itemprop='datePublished']"):
+				transcription_publication_year = regex.sub(r".+?([0-9]{4})", "\\1", node.text)
+
+			# Get the actual ebook URL.
+			if args.verbose:
+				console.print(se.prep_output(f"Downloading ebook transcription from [path][link={pg_ebook_url}]{pg_ebook_url}[/][/] ...", plain_output))
+			try:
+				response = requests.get(pg_ebook_url, timeout=60, headers={'User-Agent': USER_AGENT})
+				transcription_ebook_html = response.text
+			except Exception as ex:
+				raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook HTML. Exception: {ex}") from ex
+
+			try:
+				fixed_external_ebook_html = fix_text(transcription_ebook_html, uncurl_quotes=False)
+				transcription_ebook_html = se.strip_bom(fixed_external_ebook_html)
+			except Exception as ex:
+				raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Project Gutenberg HTML file. Exception: {ex}") from ex
+
+			transcription_source = "Project Gutenberg"
+
+		if transcription_ebook_html:
+			# Try to guess the ebook language.
+			transcription_language = "en-US"
+			if "colour" in transcription_ebook_html or "favour" in transcription_ebook_html or "honour" in transcription_ebook_html:
+				transcription_language = "en-GB"
+
+			for node in epub.metadata_dom.xpath("//*[contains(., 'LANG') and not(./*)]"):
+				node.set_text(node.inner_text().replace("LANG", transcription_language))
+
+			for node in epub.get_dom(epub.toc_path).xpath("//*[contains(., 'LANG') and not(./*)]"):
+				node.set_text(node.inner_text().replace("LANG", transcription_language))
+
+		if transcription_url:
+			for node in epub.metadata_dom.xpath("//*[contains(., 'TRANSCRIPTION_URL') and not(./*)]"):
+				node.set_text(node.inner_text().replace("TRANSCRIPTION_URL", transcription_url))
 
 		if transcription_subjects:
-			subject_xhtml = ""
+			# First, remove existing subjects.
+			for node in epub.metadata_dom.xpath("//dc:subject | //meta[@property='authority' or @property='term']"):
+				node.remove()
 
 			i = 1
 			for subject in transcription_subjects:
-				subject_xhtml = subject_xhtml + f"\t\t<dc:subject id=\"subject-{i}\">{subject}</dc:subject>\n"
-				i = i + 1
-
-			i = 1
-			for subject in transcription_subjects:
-				subject_xhtml = subject_xhtml + f"\t\t<meta property=\"authority\" refines=\"#subject-{i}\">LCSH</meta>\n"
-
-				# Now, get the LCSH ID by querying LCSH directly.
+				# Get the LCSH ID by querying LCSH directly.
 				try:
 					search_url = "https://id.loc.gov/search/?q=cs:http://id.loc.gov/authorities/{}&q=\"" + urllib.parse.quote(subject) + "\""
 					record_link = "<a title=\"Click to view record\" href=\"/authorities/{}/([^\"]+?)\">" + regex.escape(subject.replace(' -- ', '--')) + "</a>"
@@ -1204,39 +545,385 @@ def _create_draft(args: Namespace, plain_output: bool):
 					if result is None:
 						response = requests.get(search_url.format("names"), timeout=60, headers={'User-Agent': USER_AGENT})
 						result = regex.search(record_link.format("names"), response.text)
-					else:
-						try:
-							loc_id = result.group(1)
-						except Exception:
-							pass
 
-					subject_xhtml = subject_xhtml + f"\t\t<meta property=\"term\" refines=\"#subject-{i}\">{loc_id}</meta>\n"
+					if result:
+						loc_id = result.group(1)
+
+					etree.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
+					element = etree.Element(etree.QName("http://purl.org/dc/elements/1.1/", "subject"))
+					subject_node = se.easy_xml.EasyXmlElement(element)
+					subject_node.set_attr("id", f"subject-{i}")
+					subject_node.set_text(subject)
+					authority_node = se.easy_xml.EasyXmlElement(f"<meta property=\"authority\" refines=\"subject-{i}\">LCHS</meta>")
+					term_node = se.easy_xml.EasyXmlElement(f"<meta property=\"term\" refines=\"subject-{i}\">{loc_id}</meta>")
+
+					for node in epub.metadata_dom.xpath("//meta[@property='se:subject'][1]"):
+						node.insert_before(subject_node)
+						node.insert_before(authority_node)
+						node.insert_before(term_node)
 
 				except Exception as ex:
 					raise se.RemoteCommandErrorException(f"Couldn’t connect to [url][link=https://id.loc.gov]https://id.loc.gov[/][/]. Exception: {ex}") from ex
 
 				i = i + 1
 
-			metadata_xml = regex.sub(r"\t\t<dc:subject id=\"subject-1\">SUBJECT_1</dc:subject>\s*<dc:subject id=\"subject-2\">SUBJECT_2</dc:subject>\s*<meta property=\"authority\" refines=\"#subject-1\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-1\">LCSH_ID_1</meta>\s*<meta property=\"authority\" refines=\"#subject-2\">LCSH</meta>\s*<meta property=\"term\" refines=\"#subject-2\">LCSH_ID_2</meta>", "\t\t" + subject_xhtml.strip(), metadata_xml)
+		is_external_html_parsed = True
 
+		# Write transcription XHTML, if we have it.
+		if transcription_ebook_html:
+			if args.verbose:
+				console.print(se.prep_output("Cleaning transcription ...", plain_output))
+
+			transcription_local_path = content_path / "epub" / "text" / "body.xhtml"
+			output = ""
+
+			if args.fp_id:
+				try:
+					dom = etree.parse(StringIO(regex.sub(r"encoding=(?P<quote>[\'\"]).+?(?P=quote)", "", transcription_ebook_html)), html_parser)
+
+					for node in dom.xpath("//*[re:test(., 'ebook was produced by.+', 'i')]", namespaces=XPATH_NAMESPACES):
+						node_html = etree.tostring(node, encoding=str, method="html", with_tail=False)
+
+						# Sometimes, lxml returns the entire HTML instead of the node HTML for a node.
+						# It's unclear why this happens. An example is <https://www.gutenberg.org/ebooks/21721>.
+						# If the HTML is larger than some large size, abort trying to find producers.
+						if len(node_html) > 3000:
+							continue
+
+						# Strip tags.
+						producers_text = node_html
+						producers_text = regex.sub(r"<.+?>", " ", producers_text, flags=regex.DOTALL)
+
+						producers_text = regex.sub(r"^<[^>]+?>", "", producers_text)
+						producers_text = regex.sub(r"<[^>]+?>$", "", producers_text)
+
+						producers_text = regex.sub(r"^\s*This eBook was produced by:\s*", "", producers_text, flags=regex.IGNORECASE)
+						producers_text = regex.sub(r" \s+", " ", producers_text, flags=regex.DOTALL)
+						producers_text = regex.sub(r"(at )?https?://www\.pgdp(canada)?\.net", "", producers_text)
+						producers_text = regex.sub(r"[\r\n]+", " ", producers_text)
+						producers_text = regex.sub(r",? (and|&amp;) ", ", and ", producers_text)
+						producers_text = producers_text.replace(", and ", ", ").strip()
+
+						transcription_producers = [producer.strip() for producer in regex.split(',|;', producers_text)]
+
+					# Strip `<head>` and `<script>`.
+					for node in dom.xpath("/html/head | /html//script"):
+						easy_node = se.easy_xml.EasyXmlElement(node)
+						easy_node.remove()
+
+					# Try to strip out the header and footer.
+					for node in dom.xpath("//p[re:test(., 'This eBook was produced by', 'i')]", namespaces=XPATH_NAMESPACES):
+						for sibling_node in node.xpath("./preceding-sibling::*"):
+							easy_node = se.easy_xml.EasyXmlElement(sibling_node)
+							easy_node.remove()
+
+						# If there's an `<hr/>` directly following this node, remove it too.
+						for hr_node in node.xpath("./following-sibling::*[1][name() = 'hr']"):
+							easy_node = se.easy_xml.EasyXmlElement(hr_node)
+							easy_node.remove()
+
+						easy_node = se.easy_xml.EasyXmlElement(node)
+						easy_node.remove()
+
+					# Try to strip out the footer.
+					for node in dom.xpath("/html/body/p[re:test(., '^\\s*\\[The end of')][last()]", namespaces=XPATH_NAMESPACES):
+						for sibling_node in node.xpath("./following-sibling::*"):
+							easy_node = se.easy_xml.EasyXmlElement(sibling_node)
+							easy_node.remove()
+
+						easy_node = se.easy_xml.EasyXmlElement(node)
+						easy_node.remove()
+
+					# Strip all comments.
+					for node in dom.xpath("//comment()"):
+						easy_node = se.easy_xml.EasyXmlElement(node)
+						easy_node.remove()
+
+					# lxml will put the XML declaration in a weird place, remove it first.
+					output = regex.sub(r"<\?xml.+?\?>", "", etree.tostring(dom, encoding="unicode"))
+
+					# Now re-add it.
+					output = """<?xml version="1.0" encoding="utf-8"?>\n""" + output
+
+					# lxml can also output duplicate default namespace declarations so remove the first one only.
+					output = regex.sub(r"(xmlns=\".+?\")(\sxmlns=\".+?\")+", r"\1", output)
+
+					# lxml may also create duplicate `xml:lang` attributes on the root element. Not sure why. Remove them.
+					output = regex.sub(r'(xml:lang="[^"]+?" lang="[^"]+?") xml:lang="[^"]+?"', r"\1", output)
+
+				except Exception:
+					# Save this error for later; we still want to save the book text and complete the `create-draft` process even if we've failed to parse PG's HTML source.
+					is_external_html_parsed = False
+					output = transcription_ebook_html
+
+			if args.pg_id:
+				try:
+					dom = etree.parse(StringIO(regex.sub(r"encoding=(?P<quote>[\'\"]).+?(?P=quote)", "", transcription_ebook_html)), html_parser)
+
+					for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*Produced by.+')] | //section[@id='pg-header' or @id='pg-machine-header']//p[re:test(., 'Credits: ')]", namespaces=XPATH_NAMESPACES):
+						node_html = etree.tostring(node, encoding=str, method="html", with_tail=False)
+
+						# Sometimes, lxml returns the entire HTML instead of the node HTML for a node.
+						# It's unclear why this happens. An example is <https://www.gutenberg.org/ebooks/21721>.
+						# If the HTML is larger than some large size, abort trying to find producers.
+						if len(node_html) > 3000:
+							continue
+
+						# Strip tags.
+						producers_text = node_html
+						producers_text = regex.sub(r"<.+?>", " ", producers_text, flags=regex.DOTALL)
+
+						producers_text = regex.sub(r"^<[^>]+?>", "", producers_text)
+						producers_text = regex.sub(r"<[^>]+?>$", "", producers_text)
+
+						producers_text = regex.sub(r".+?(Produced by|Credits\s*:\s*) (.+?)\s*$", "\\2", producers_text, flags=regex.DOTALL)
+						# Workaround for what appears to be a PG bug where the credits start as `Credits: Produced by Name1`.
+						producers_text = regex.sub(r"Produced by ", "", producers_text)
+						producers_text = regex.sub(r"\(.+?\)", "", producers_text, flags=regex.DOTALL)
+						producers_text = regex.sub(r" \s+", " ", producers_text, flags=regex.DOTALL)
+						producers_text = regex.sub(r"(at )?https?://www\.pgdp\.net", "", producers_text)
+						producers_text = regex.sub(r"[\r\n]+", " ", producers_text)
+						producers_text = regex.sub(r",? and ", ", and ", producers_text)
+						producers_text = producers_text.replace(", and ", ", ").strip()
+
+						transcription_producers = [producer.strip() for producer in regex.split(',|;', producers_text)]
+
+					# Strip everything in `<head>`.
+					for node in dom.xpath("/html/head//*"):
+						easy_node = se.easy_xml.EasyXmlElement(node)
+						easy_node.remove()
+
+					# Try to strip out the PG header and footer for new PG ebooks.
+					nodes = dom.xpath("//section[contains(@class, 'pg-boilerplate')]")
+					if nodes:
+						for node in nodes:
+							easy_node = se.easy_xml.EasyXmlElement(node)
+							easy_node.remove()
+					else:
+						# Old PG ebooks might have a different structure.
+						for node in dom.xpath("//*[re:test(text(), '\\*\\*\\*\\s*START OF (THE|THIS)')]", namespaces=XPATH_NAMESPACES):
+							for sibling_node in node.xpath("./preceding-sibling::*"):
+								easy_node = se.easy_xml.EasyXmlElement(sibling_node)
+								easy_node.remove()
+
+							easy_node = se.easy_xml.EasyXmlElement(node)
+							easy_node.remove()
+
+						# Try to strip out the PG license footer.
+						for node in dom.xpath("//*[re:test(text(), 'End of (the )?Project Gutenberg')]", namespaces=XPATH_NAMESPACES):
+							for sibling_node in node.xpath("./following-sibling::*"):
+								easy_node = se.easy_xml.EasyXmlElement(sibling_node)
+								easy_node.remove()
+
+							easy_node = se.easy_xml.EasyXmlElement(node)
+							easy_node.remove()
+
+					# lxml will put the XML declaration in a weird place, remove it first.
+					output = regex.sub(r"<\?xml.+?\?>", "", etree.tostring(dom, encoding="unicode"))
+
+					# Now re-add it.
+					output = """<?xml version="1.0" encoding="utf-8"?>\n""" + output
+
+					# lxml can also output duplicate default namespace declarations so remove the first one only.
+					output = regex.sub(r"(xmlns=\".+?\")(\sxmlns=\".+?\")+", r"\1", output)
+
+					# lxml may also create duplicate `xml:lang` attributes on the root element. Not sure why. Remove them.
+					output = regex.sub(r'(xml:lang="[^"]+?" lang="[^"]+?") xml:lang="[^"]+?"', r"\1", output)
+
+				except Exception:
+					# Save this error for later; we still want to save the book text and complete the `create-draft` process even if we've failed to parse PG's HTML source.
+					is_external_html_parsed = False
+					output = transcription_ebook_html
+
+			if transcription_producers:
+				for key, producer in enumerate(transcription_producers):
+					if "Distributed Proofreaders Canada" in producer:
+						transcription_producers[key] = "Distributed Proofreaders Canada"
+					elif "Distributed Proofreader" in producer:
+						transcription_producers[key] = "Distributed Proofreaders"
+
+				# Add transcribers to metadata.
+				# First remove all placeholder metatata.
+				for node in epub.metadata_dom.xpath("//dc:contributor[starts-with(@id, 'transcriber-')] | //meta[starts-with(@refines, '#transcriber-')]"):
+					node.remove()
+
+				i = 1
+				for producer in transcription_producers:
+					etree.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
+					element = etree.Element(etree.QName("http://purl.org/dc/elements/1.1/", "subject"))
+					transcriber_id = f"transcriber-{i}"
+					contributor_node = se.easy_xml.EasyXmlElement(element)
+					contributor_node.set_attr("id", transcriber_id)
+					contributor_file_as_node = se.easy_xml.EasyXmlElement(f"<meta property=\"file-as\" refines=\"#{transcriber_id}\">TRANSCRIBER_{i}_SORT</meta>")
+					contributor_homepage_node = None
+					contributor_role_node = se.easy_xml.EasyXmlElement(f"<meta property=\"role\" refines=\"#{transcriber_id}\" scheme=\"marc:relators\">trc</meta>")
+					contributor_lccn_node = None
+
+					if "Distributed Proofreaders Canada" in producer:
+						contributor_node.set_text("Distributed Proofreaders Canada")
+						contributor_file_as_node.set_text("Distributed Proofreaders Canada")
+						contributor_homepage_node = se.easy_xml.EasyXmlElement(f"<meta property=\"se:url.homepage\" refines=\"#{transcriber_id}\">https://www.pgdpcanada.net/</meta>")
+
+					elif "Distributed Proofread" in producer:
+						contributor_node.set_text("Distributed Proofreaders")
+						contributor_file_as_node.set_text("Distributed Proofreaders")
+						contributor_homepage_node = se.easy_xml.EasyXmlElement(f"<meta property=\"se:url.homepage\" refines=\"#{transcriber_id}\">https://www.pgdp.net/</meta>")
+
+					elif "anonymous" in producer.lower():
+						contributor_node.set_text("An Anonymous Volunteer")
+						contributor_file_as_node.set_text("Anonymous Volunteer, An")
+
+					else:
+						contributor_node.set_text(producer.strip("."))
+						# Try to naively sort the transcriber.
+						matches = regex.search(r"^([\p{Letter}]+) ([\p{Letter}]+)$", producer)
+
+						if matches:
+							contributor_file_as_node.set_text( f"{matches[1]}, {matches[2]}")
+
+					# Known special cases.
+					if "David Widger" in producer:
+						contributor_lccn_node = se.easy_xml.EasyXmlElement(f"<meta property=\"se:url.authority.nacoaf\" refines=\"#{transcriber_id}\">http://id.loc.gov/authorities/names/no2011017869</meta>")
+
+					# Add nodes to metadata.
+					for node in epub.metadata_dom.xpath("//dc:contributor[@id='producer-1'][1]"):
+						node.insert_before(contributor_node)
+						node.insert_before(contributor_file_as_node)
+
+						if contributor_homepage_node:
+							node.insert_before(contributor_homepage_node)
+						if contributor_lccn_node:
+							node.insert_before(contributor_lccn_node)
+
+						node.insert_before(contributor_role_node)
+
+					i = i + 1
+
+			try:
+				with open(transcription_local_path, "w", encoding="utf-8") as file:
+					file.write(output)
+			except OSError as ex:
+				raise se.InvalidFileException(f"Couldn’t write to ebook directory. Exception: {ex}") from ex
+
+		# Fill out the titlepage.
+		with open(content_path / "epub" / "text" / "titlepage.xhtml", "r+", encoding="utf-8") as file:
+			titlepage_xhtml = file.read()
+
+			titlepage_xhtml = titlepage_xhtml.replace("TITLE", escape(title))
+
+			titlepage_xhtml = titlepage_xhtml.replace("AUTHOR_NAME", _generate_titlepage_string(authors, "author"))
+
+			if translators:
+				titlepage_xhtml = titlepage_xhtml.replace("TRANSLATOR_NAME", _generate_titlepage_string(translators, "translator"))
+			else:
+				titlepage_xhtml = regex.sub(r"<p>Translated by.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)
+
+			if illustrators:
+				titlepage_xhtml = titlepage_xhtml.replace("ILLUSTRATOR_NAME", _generate_titlepage_string(illustrators, "illustrator"))
+			else:
+				titlepage_xhtml = regex.sub(r"<p>Illustrated by.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)
+
+			file.seek(0)
+			file.write(se.formatting.format_xhtml(titlepage_xhtml))
+			file.truncate()
+
+		# Set the language in the ToC, so that `se modernize-spelling` doesn't crash when we try to run it.
 		if transcription_language:
-			metadata_xml = metadata_xml.replace("<dc:language>LANG</dc:language>", f"<dc:language>{transcription_language}</dc:language>")
+			toc_dom = epub.get_dom(epub.toc_path)
+			for node in toc_dom.xpath("//*[contains(@xml:lang, 'LANG')]"):
+				node.set_attr("xml:lang", transcription_language)
 
-		if transcription_url:
-			metadata_xml = metadata_xml.replace("<dc:source>TRANSCRIPTION_URL</dc:source>", f"<dc:source>{transcription_url}</dc:source>")
+			epub.write_dom(epub.toc_path)
 
-		file.seek(0)
-		file.write(metadata_xml)
-		file.truncate()
+		if not args.white_label:
+			# Fill out the colophon.
+			with open(content_path / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
+				colophon_xhtml = file.read()
 
-	# Set up local Git repo.
-	if args.verbose:
-		console.print(se.prep_output("Initializing git repository ...", plain_output))
-	repo = Repo.init(repo_path)
+				colophon_xhtml = colophon_xhtml.replace("SE_SLUG", epub.generate_url_slug())
+				colophon_xhtml = colophon_xhtml.replace("TITLE", escape(title))
 
-	if args.email:
-		with repo.config_writer() as config:
-			config.set_value("user", "email", args.email)
+				contributor_string = _generate_contributor_string(authors, True)
+
+				if contributor_string == "":
+					colophon_xhtml = colophon_xhtml.replace(" by<br/>\n\t\t\t<a href=\"AUTHOR_WIKI_URL\">AUTHOR_NAME</a>", escape(contributor_string))
+				else:
+					colophon_xhtml = colophon_xhtml.replace("<a href=\"AUTHOR_WIKI_URL\">AUTHOR_NAME</a>", contributor_string)
+
+				if translators:
+					translator_block = f"It was translated from ORIGINAL_LANGUAGE in <time>TRANSLATION_YEAR</time> by<br/>\n\t\t\t{_generate_contributor_string(translators, True)}.</p>"
+					colophon_xhtml = colophon_xhtml.replace("</p>\n\t\t\t<p>This ebook was produced for<br/>", f"<br/>\n\t\t\t{translator_block}\n\t\t\t<p>This ebook was produced for<br/>")
+
+				if transcription_url:
+					colophon_xhtml = colophon_xhtml.replace("TRANSCRIPTION_URL", transcription_url)
+
+				if transcription_publication_year:
+					colophon_xhtml = colophon_xhtml.replace("TRANSCRIPTION_YEAR", transcription_publication_year)
+
+				if transcription_producers:
+					producer_count = len(transcription_producers)
+					producers_xhtml = ""
+					for i, producer in enumerate(transcription_producers):
+						if "Distributed Proofreaders Canada" in producer:
+							producers_xhtml = producers_xhtml + """<a href="https://www.pgdpcanada.net/">Distributed Proofreaders Canada</a>"""
+						elif "Distributed Proofread" in producer:
+							producers_xhtml = producers_xhtml + """<a href="https://www.pgdp.net/">Distributed Proofreaders</a>"""
+						elif "anonymous" in producer.lower():
+							producers_xhtml = producers_xhtml + """<b epub:type="z3998:personal-name">An Anonymous Volunteer</b>"""
+						else:
+							producers_xhtml = producers_xhtml + f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(producer)).strip('.')}</b>"""
+
+						if i < producer_count - 1:
+							# If exactly two producers, we don't want a comma between them.
+							if producer_count == 2:
+								producers_xhtml = producers_xhtml + " "
+							else:
+								producers_xhtml = producers_xhtml + ", "
+
+						if i == producer_count - 2:
+							producers_xhtml = producers_xhtml + "and "
+
+					producers_xhtml = producers_xhtml + "<br/>"
+
+					colophon_xhtml = colophon_xhtml.replace("""<b epub:type="z3998:personal-name">TRANSCRIBER_1_NAME</b>, <b epub:type="z3998:personal-name">TRANSCRIBER_2_NAME</b>, and <a href="https://www.pgdp.net/">Distributed Proofreaders</a><br/>""", producers_xhtml)
+
+				if transcription_source:
+					colophon_xhtml = colophon_xhtml.replace("TRANSCRIPTION_SOURCE", escape(transcription_source))
+
+				file.seek(0)
+				file.write(colophon_xhtml)
+				file.truncate()
+
+			# Build the cover/titlepage for distribution.
+			epub.generate_titlepage_svg()
+			epub.build_titlepage_svg()
+
+			epub.generate_cover_svg()
+			epub.build_cover_svg()
+
+			if transcription_url:
+				_replace_in_file(content_path / "epub" / "text" / "imprint.xhtml", "TRANSCRIPTION_URL", transcription_url)
+
+			if transcription_source:
+				_replace_in_file(content_path / "epub" / "text" / "imprint.xhtml", "TRANSCRIPTION_SOURCE", escape(transcription_source))
+
+		metadata_xml = epub.metadata_dom.to_string()
+		metadata_xml = se.formatting.format_opf(metadata_xml)
+		with open(epub.metadata_file_path, "w", encoding="utf-8") as file:
+			file.write(metadata_xml)
+
+		# Set up local Git repo.
+		if args.verbose:
+			console.print(se.prep_output("Initializing git repository ...", plain_output))
+
+		repo = Repo.init(work_path)
+
+		if args.email:
+			with repo.config_writer() as config:
+				config.set_value("user", "email", args.email)
+
+		# Move the result to the final destination
+		shutil.move(work_path, repo_path)
 
 	if args.pg_id and transcription_ebook_html and not is_external_html_parsed:
 		raise se.InvalidXhtmlException(f"Couldn’t parse Project Gutenberg ebook source; this is usually due to invalid HTML in the ebook. The raw text was saved to [path][link={transcription_local_path}]{transcription_local_path}[/][/].")
@@ -1275,6 +962,7 @@ def create_draft(plain_output: bool) -> int:
 			raise se.RemoteCommandErrorException("Can’t specify [bash]--pg-id[/] or [bash]--fp-id[/], and also [bash]--offline[/].")
 
 		_create_draft(args, plain_output)
+
 	except se.SeException as ex:
 		se.print_error(ex)
 		return ex.code

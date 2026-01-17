@@ -586,6 +586,16 @@ class EasyXmlElement:
 		else:
 			self.lxml_element.addprevious(node)
 
+	def insert_after(self, node) -> None:
+		"""
+		Place a node after this node.
+		"""
+
+		if isinstance(node, EasyXmlElement):
+			self.lxml_element.addnext(node.lxml_element)
+		else:
+			self.lxml_element.addnext(node)
+
 	def set_text(self, string: str) -> None:
 		"""
 		Replace all contents of this node, including text and any child nodes, with a text string.

@@ -15,8 +15,9 @@ def build_images(plain_output: bool) -> int:
 	Entry point for `se build-images`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Build ebook covers and titlepages for a Standard Ebook source directory, and place the output in DIRECTORY/src/epub/images/.")
+	parser = argparse.ArgumentParser(description="Generate ebook cover and titlepages for Standard Ebooks ebooks, and then build ebook covers and titlepages, placing the output in `DIRECTORY/src/epub/images/`.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+	parser.add_argument("-g", "--no-generate", action="store_true", help="don't generate new source cover/titlepage SVGs, only build existing ones")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
 	args = parser.parse_args()
 
@@ -38,17 +39,33 @@ def build_images(plain_output: bool) -> int:
 			for file_path in directory.glob("**/cover.*"):
 				se.images.remove_image_metadata(file_path)
 
+			# Only generate the cover if this is an SE ebook.
+			if se_epub.is_se_ebook and not args.no_generate:
+				if args.verbose:
+					console.print(" OK")
+					console.print(se.prep_output(f"\tGenerating [path][link=file://{directory / 'images/cover.svg'}]cover.svg[/][/] ...", plain_output), end="")
+
+				se_epub.generate_cover_svg()
+
 			if args.verbose:
 				console.print(" OK")
 				console.print(se.prep_output(f"\tBuilding [path][link=file://{directory / 'src/epub/images/cover.svg'}]cover.svg[/][/] ...", plain_output), end="")
 
-			se_epub.generate_cover_svg()
+			se_epub.build_cover_svg()
+
+			# Only generate the titlepage if this is an SE ebook.
+			if se_epub.is_se_ebook and  not args.no_generate:
+				if args.verbose:
+					console.print(" OK")
+					console.print(se.prep_output(f"\tGenerating [path][link=file://{directory / 'images/titlepage.svg'}]titlepage.svg[/][/] ...", plain_output), end="")
+
+				se_epub.generate_titlepage_svg()
 
 			if args.verbose:
 				console.print(" OK")
 				console.print(se.prep_output(f"\tBuilding [path][link=file://{directory / 'src/epub/images/titlepage.svg'}]titlepage.svg[/][/] ...", plain_output), end="")
 
-			se_epub.generate_titlepage_svg()
+			se_epub.build_titlepage_svg()
 
 			if args.verbose:
 				console.print(" OK")

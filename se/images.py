@@ -13,12 +13,147 @@ import importlib.resources
 from html import unescape
 from typing import Callable
 import regex
-from PIL import Image, ImageMath, PngImagePlugin, UnidentifiedImageError
+from PIL import Image, ImageFont, ImageMath, PngImagePlugin, UnidentifiedImageError
 from PIL.Image import Image as Image_type # Separate import to satisfy type checking.
 from lxml import etree
 
 import se
 import se.formatting
+
+COVER_TITLE_BOX_Y = 1620 # In px; note that in SVG, Y starts from the *top* of the image.
+COVER_TITLE_BOX_HEIGHT = 430
+COVER_TITLE_BOX_WIDTH = 1300
+COVER_TITLE_BOX_HORIZONTAL_PADDING = 100
+COVER_TITLE_BOX_VERTICAL_PADDING = 65
+COVER_TITLE_MARGIN = 20
+COVER_TITLE_HEIGHT = 80
+COVER_TITLE_SMALL_HEIGHT = 60
+COVER_TITLE_XSMALL_HEIGHT = 50
+COVER_AUTHOR_SPACING = 60
+COVER_AUTHOR_HEIGHT = 40
+COVER_AUTHOR_MARGIN = 20
+TITLEPAGE_VERTICAL_PADDING = 50
+TITLEPAGE_HORIZONTAL_PADDING = 100
+TITLEPAGE_TITLE_HEIGHT = 80 # Height of each title line.
+TITLEPAGE_TITLE_MARGIN = 20 # Space between consecutive title lines.
+TITLEPAGE_AUTHOR_SPACING = 100 # Space between last title line and first author line.
+TITLEPAGE_AUTHOR_HEIGHT = 60 # Height of each author line.
+TITLEPAGE_AUTHOR_MARGIN = 20 # Space between consecutive author lines.
+TITLEPAGE_CONTRIBUTORS_SPACING = 150 # Space between last author line and first contributor descriptor.
+TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT = 40 # Height of each contributor descriptor line.
+TITLEPAGE_CONTRIBUTOR_HEIGHT = 40 # Height of each contributor line.
+TITLEPAGE_CONTRIBUTOR_MARGIN = 20 # Space between contributor descriptor and contributor line, and between sequential contributor lines.
+TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN = 80 # Space between last contributor line and next contributor descriptor (if more than one contributor descriptor).
+LEAGUE_SPARTAN_CSS_LETTER_SPACING = 5 # The SVG file specify `letter-spacing` in their CSS, so this accounts for that, in px.
+LEAGUE_SPARTAN_DIACRITIC_RATIO = 6 # When a line contains a letter with a diacritic like `ö`, add an amount of y offset of that line based on `LINE_HEIGHT / LEAGUE_SPARTAN_DIACRITIC_RATIO`, in px.
+LEAGUE_SPARTAN_HEIGHT_RATIO = 0.8549999849 # Font size of 93.56725311px * 0.8549999849 = 80px of real text height
+
+def get_image_lines_width(lines: list[str], line_height: int) -> float:
+	"""
+	Get the largest pixel width of a set of lines, given the real pixel height of one line.
+	"""
+
+	with importlib.resources.as_file(importlib.resources.files("se.data.fonts.league_spartan").joinpath("league-spartan-bold.otf")) as path:
+		font_path = path
+
+	# The font requires a pixel *font* height, which is not the same as the real height of the resulting text.
+	# Our `target_height` is a *real pixel* height, so divide by this magic ratio to get the desired *font* height.
+	font = ImageFont.truetype(str(font_path), line_height / LEAGUE_SPARTAN_HEIGHT_RATIO)
+
+	max_width = 0.0
+
+	for line in lines:
+		current_width = _get_league_spartan_line_width(line, font)
+
+		max_width = max(max_width, current_width)
+
+	return max_width
+
+def _get_league_spartan_line_width(text: str, font: ImageFont.FreeTypeFont) -> float:
+	kerning_width = max(len(text) - 1, 0) * LEAGUE_SPARTAN_CSS_LETTER_SPACING
+
+	return font.getlength(text) + kerning_width
+
+def calculate_image_lines(string: str, target_height: int, canvas_width: int) -> list:
+	"""
+	Helper function.
+
+	Given a string, a target letter height, and the canvas width, return an array representing the string broken down into enough lines to fill the canvas without overflowing. Lines are ordered with the widest at the bottom.
+
+	INPUTS
+	string: The string to inspect.
+	target_height: The target letter height, in pixels.
+	canvas_width: The width of the canvas, in pixels.
+	top_to_bottom: If `True`, try to place the widest lines at the top instead of the bottom.
+
+	OUTPUTS
+	An array of strings. Each string represents one line of text in the final image. The lines are ordered with the widest at the bottom.
+	"""
+
+	with importlib.resources.as_file(importlib.resources.files("se.data.fonts.league_spartan").joinpath("league-spartan-bold.otf")) as path:
+		font_path = path
+
+	# The font requires a pixel *font* height, which is not the same as the real height of the resulting text.
+	# Our `target_height` is a *real pixel* height, so divide by this magic ratio to get the desired *font* height.
+	font = ImageFont.truetype(str(font_path), target_height / LEAGUE_SPARTAN_HEIGHT_RATIO)
+
+	lines = []
+	current_line = ""
+	current_line_width = 0.0
+	for word in reversed(string.strip().split(" ")):
+		previous_line = current_line
+
+		if current_line == "":
+			current_line = word
+		else:
+			current_line = f"{word} {current_line}"
+
+		current_line_width = _get_league_spartan_line_width(current_line, font)
+
+		if current_line_width > canvas_width:
+			if previous_line == "":
+				previous_line = word
+				current_line = ""
+			else:
+				current_line = word
+
+			lines.append(previous_line)
+
+	lines.append(current_line)
+
+	lines.reverse()
+
+	# If the first line is a single short word, move up the first word of the next line, even if it causes the top line to be larger than the bottom.
+	if len(lines[0]) <= 3 and len(lines) > 1:
+		first_word = regex.match(r"^[\p{Letter}’]+(?=\s)", lines[1])
+
+		if first_word:
+			lines[0] = lines[0] + " " + first_word.group(0)
+			lines[1] = regex.sub(rf"^{regex.escape(first_word.group(0))}\s+", "", lines[1])
+
+	# If there are two lines, try to balance the visual appearance of both by repeatedly moving the first word of the second line up, while the top line is still smaller than the bottom.
+	if len(lines) == 2:
+		top_width = _get_league_spartan_line_width(lines[0], font)
+		bottom_width = _get_league_spartan_line_width(lines[1], font)
+
+		while top_width < bottom_width:
+			bottom_line_words = lines[1].split(" ")
+
+			proposed_top_line = lines[0] + f" {bottom_line_words.pop(0)}"
+			proposed_bottom_line = " ".join(bottom_line_words)
+
+			top_width = _get_league_spartan_line_width(proposed_top_line, font)
+			bottom_width = _get_league_spartan_line_width(proposed_bottom_line, font)
+
+			# Proposed top line is now wider than the bottom, abort.
+			if top_width > bottom_width:
+				break
+
+			# Proposed top line is narrower than the bottom, rebuild the bottom line and restart the loop.
+			lines[0] = proposed_top_line
+			lines[1] = proposed_bottom_line
+
+	return lines
 
 def get_data_url(image_path: Path) -> str:
 	"""

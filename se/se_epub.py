@@ -6,10 +6,13 @@ Defines the SeEpub class, the master class for representing and operating on Sta
 import base64
 from copy import deepcopy
 from datetime import datetime, timezone
+from html import escape
+from math import floor
 import os
 from pathlib import Path
 import importlib.resources
 from typing import cast
+from unicodedata import normalize
 
 from git import cmd
 from git.repo import Repo as Repo # pylint: disable=useless-import-alias # Import in this style to silence `mypy` type checking, see <https://github.com/microsoft/pyright/issues/5929#issuecomment-1714815796>.
@@ -73,20 +76,20 @@ class SeEpub:
 	metadata_file_path: Path = Path() # The path to the metadata file, i.e. `self.content_path / content.opf`.
 	toc_path: Path = Path()  # The path to the ToC file, i.e. `self.content_path / toc.xhtml`.
 	glossary_search_key_map_path = None # The path to the glossary search key map, or `None` if there isn't one.
+	identifier = None
 	local_css = ""
 	is_se_ebook = True
 	_language = None
 	_file_cache: dict[str, str] = {}
 	_dom_cache: dict[str, se.easy_xml.EasyXmlTree] = {}
-	_generated_identifier = None
-	_generated_github_repo_url = None
 	_repo = None # git.Repo object
 	_last_commit = None # GitCommit object
 	_endnotes: list[Endnote] | None = None
-	_endnotes_path = None
-	_loi_path = None
+	_endnotes_path: Path | None = None
+	_loi_path: Path | None = None
 	_cover_path: Path | None = None
 	_spine_file_paths: list[Path] | None = None
+	_title: str | None = None
 
 	def __init__(self, epub_root_directory: str | Path):
 		try:
@@ -129,9 +132,20 @@ class SeEpub:
 			self.glossary_search_key_map_path = self.content_path / gskm_href
 
 		# If our identifier isn't SE-style, we're not an SE ebook.
-		identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier/text()", True)
-		if not identifier or not identifier.startswith("https://standardebooks.org/ebooks/"):
+		self.identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier/text()", True)
+		if not self.identifier or not self.identifier.startswith("https://standardebooks.org/ebooks/"):
 			self.is_se_ebook = False
+
+	@property
+	def title(self):
+		"""
+		Accessor
+		"""
+
+		if not self._title:
+			self._title = self.metadata_dom.xpath("/package/metadata/dc:title/text()", True)
+
+		return self._title
 
 	@property
 	def language(self):
@@ -224,118 +238,6 @@ class SeEpub:
 		return self._last_commit
 
 	@property
-	def generated_identifier(self) -> str:
-		"""
-		Accessor.
-
-		Generate an SE identifier based on the metadata in the metadata file.
-		"""
-
-		if not self._generated_identifier:
-			identifier = "https://standardebooks.org/ebooks/"
-
-			if not self.is_se_ebook:
-				identifier = ""
-				for publisher in self.metadata_dom.xpath("/package/metadata/dc:publisher"):
-					identifier += se.formatting.make_url_safe(publisher.text) + "_"
-
-			# Add authors.
-			authors = []
-			for author in self.metadata_dom.xpath("/package/metadata/dc:creator"):
-				authors.append(author.text)
-				identifier += se.formatting.make_url_safe(author.text) + "_"
-
-			identifier = identifier.strip("_") + "/"
-
-			# Add title.
-			for title in self.metadata_dom.xpath("/package/metadata/dc:title[@id=\"title\"]"):
-				identifier += se.formatting.make_url_safe(title.text) + "/"
-
-			# If a book is a collection/omnibus and has more than 1 translator, or if any book has more than 3 translators, combine them into `various-translators` in the identifier.
-			has_various_translators = self.is_se_ebook and len(self.metadata_dom.xpath("//metadata[ (count(./meta[text()='trl']) > 1 and ./meta[@property='se:is-a-collection']) or (count(./meta[text()='trl']) > 3)]")) > 0
-			process_translators = True
-			if has_various_translators:
-				identifier += "various-translators/"
-				process_translators = False
-
-			# For contributors, we add both translators and illustrators.
-			# However, we may not include specific translators or illustrators in certain cases, namely if *some* contributors have a `display-seq` property, and others do not.
-			# According to the epub spec, if that is the case, we should only add those that *do* have the attribute.
-			# By SE convention, any contributor with `display-seq == 0` will be excluded from the identifier string.
-			translators = []
-			illustrators = []
-			translators_have_display_seq = False
-			illustrators_have_display_seq = False
-			for role in self.metadata_dom.xpath("/package/metadata/meta[@property='role']"):
-				contributor_id = role.get_attr("refines").lstrip("#")
-				contributor_element = self.metadata_dom.xpath("/package/metadata/dc:contributor[@id=\"" + contributor_id + "\"]")
-				if contributor_element:
-					contributor = {"name": contributor_element[0].text, "include": True, "display_seq": None}
-					display_seq = self.metadata_dom.xpath("/package/metadata/meta[@property=\"display-seq\"][@refines=\"#" + contributor_id + "\"]")
-
-					if display_seq and int(display_seq[0].text) == 0:
-						contributor["include"] = False
-						display_seq = []
-
-					if role.text == "trl" and process_translators:
-						if display_seq:
-							contributor["display_seq"] = display_seq[0]
-							translators_have_display_seq = True
-
-						translators.append(contributor)
-
-					if role.text == "ill":
-						if display_seq:
-							contributor["display_seq"] = display_seq[0]
-							illustrators_have_display_seq = True
-
-						illustrators.append(contributor)
-
-			for translator in translators:
-				if (not translators_have_display_seq and translator["include"]) or translator["display_seq"]:
-					identifier += se.formatting.make_url_safe(translator["name"]) + "_"
-
-			if translators:
-				identifier = identifier.strip("_") + "/"
-
-			for illustrator in illustrators:
-				include_illustrator = True
-
-				# If the translator is also the illustrator, don't include them twice.
-				for translator in translators:
-					if illustrator["name"] == translator["name"]:
-						include_illustrator = False
-						break
-
-				if (include_illustrator and not illustrators_have_display_seq and illustrator["include"]) or illustrator["display_seq"]:
-					identifier += se.formatting.make_url_safe(illustrator["name"]) + "_"
-
-			identifier = identifier.strip("_/")
-
-			self._generated_identifier = identifier
-
-		return self._generated_identifier
-
-	@property
-	def generated_github_repo_url(self) -> str:
-		"""
-		Accessor.
-
-		Generate a GitHub repository URL based on the *generated* SE identifier, *not* the SE identifier in the metadata file.
-
-		INPUTS
-		None.
-
-		OUTPUTS
-		A string representing the GitHub repository URL (capped at maximum 100 characters).
-		"""
-
-		if not self._generated_github_repo_url:
-			self._generated_github_repo_url = "https://github.com/standardebooks/" + self.generated_identifier.replace("https://standardebooks.org/ebooks/", "").replace("/", "_")[0:100]
-
-		return self._generated_github_repo_url
-
-	@property
 	def endnotes(self) -> list:
 		"""
 		Accessor
@@ -399,12 +301,212 @@ class SeEpub:
 
 		return self._spine_file_paths
 
-	def write_metadata_file(self) -> None:
+	def generate_repo_name(self) -> str:
 		"""
-		Write the metadata file to disk.
+		Generate a repo name like `omar-khayyam_the-rubaiyat-of-omar-khayyam_edward-fitzgerald`.
 		"""
-		with open(self.metadata_file_path, "w", encoding="utf-8") as file:
-			file.write(self.metadata_dom.to_string())
+
+		identifier = self.generate_identifier()
+
+		if self.is_se_ebook:
+			identifier = regex.sub(r"^https://standardebooks\.org/ebooks/", "", identifier)
+
+		return identifier.replace("/", "_")
+
+	def generate_url_slug(self) -> str:
+		"""
+		Generate a URL slug like `omar-khayyam/the-rubaiyat-of-omar-khayyam/edward-fitzgerald`.
+		"""
+
+		slug = self.generate_identifier()
+
+		if self.is_se_ebook:
+			slug = regex.sub(r"^https://standardebooks\.org/ebooks/", "", slug)
+
+		return slug
+
+	def generate_identifier(self) -> str:
+		"""
+		Generate an ebook identifier based on the metadata in the metadata file.
+		"""
+
+		identifier = "https://standardebooks.org/ebooks/"
+
+		if not self.is_se_ebook:
+			identifier = ""
+
+		# Add authors.
+		authors = []
+		for author in self.metadata_dom.xpath("/package/metadata/dc:creator"):
+			authors.append(author.text)
+			identifier += se.formatting.make_url_safe(author.text) + "_"
+
+		identifier = identifier.strip("_") + "/"
+
+		# Add title.
+		for title in self.metadata_dom.xpath("/package/metadata/dc:title[@id=\"title\"]"):
+			identifier += se.formatting.make_url_safe(title.text) + "/"
+
+		# If a book is a collection/omnibus and has more than 1 translator, or if any book has more than 3 translators, combine them into `various-translators` in the identifier.
+		has_various_translators = self.is_se_ebook and len(self.metadata_dom.xpath("//metadata[ (count(./meta[text()='trl']) > 1 and ./meta[@property='se:is-a-collection']) or (count(./meta[text()='trl']) > 3)]")) > 0
+		process_translators = True
+		if has_various_translators:
+			identifier += "various-translators/"
+			process_translators = False
+
+		# For contributors, we add both translators and illustrators.
+		# However, we may not include specific translators or illustrators in certain cases, namely if *some* contributors have a `display-seq` property, and others do not.
+		# According to the epub spec, if that is the case, we should only add those that *do* have the attribute.
+		# By SE convention, any contributor with `display-seq == 0` will be excluded from the identifier string.
+		translators = []
+		illustrators = []
+		translators_have_display_seq = False
+		illustrators_have_display_seq = False
+		for role in self.metadata_dom.xpath("/package/metadata/meta[@property='role']"):
+			contributor_id = role.get_attr("refines").lstrip("#")
+			contributor_element = self.metadata_dom.xpath("/package/metadata/dc:contributor[@id=\"" + contributor_id + "\"]")
+			if contributor_element:
+				contributor = {"name": contributor_element[0].text, "include": True, "display_seq": None}
+				display_seq = self.metadata_dom.xpath("/package/metadata/meta[@property=\"display-seq\"][@refines=\"#" + contributor_id + "\"]")
+
+				if display_seq and int(display_seq[0].text) == 0:
+					contributor["include"] = False
+					display_seq = []
+
+				if role.text == "trl" and process_translators:
+					if display_seq:
+						contributor["display_seq"] = display_seq[0]
+						translators_have_display_seq = True
+
+					translators.append(contributor)
+
+				if role.text == "ill":
+					if display_seq:
+						contributor["display_seq"] = display_seq[0]
+						illustrators_have_display_seq = True
+
+					illustrators.append(contributor)
+
+		for translator in translators:
+			if (not translators_have_display_seq and translator["include"]) or translator["display_seq"]:
+				identifier += se.formatting.make_url_safe(translator["name"]) + "_"
+
+		if translators:
+			identifier = identifier.strip("_") + "/"
+
+		for illustrator in illustrators:
+			include_illustrator = True
+
+			# If the translator is also the illustrator, don't include them twice.
+			for translator in translators:
+				if illustrator["name"] == translator["name"]:
+					include_illustrator = False
+					break
+
+			if (include_illustrator and not illustrators_have_display_seq and illustrator["include"]) or illustrator["display_seq"]:
+				identifier += se.formatting.make_url_safe(illustrator["name"]) + "_"
+
+		identifier = identifier.strip("_/")
+
+		return identifier
+
+	def generate_vcs_url(self) -> str:
+		"""
+		Generate a GitHub repository URL based on the *generated* SE identifier, *not* the SE identifier in the metadata file.
+
+		OUTPUTS
+		A string representing the GitHub repository URL (capped at maximum 100 characters).
+		"""
+
+		if not self.is_se_ebook:
+			return "https://github.com/PUBLISHER/" + self.generate_repo_name()[0:100]
+
+		return "https://github.com/standardebooks/" + self.generate_repo_name()[0:100]
+
+	def generate_title_string(self) -> str:
+		"""
+		Return a string representing the book's title string, like `The Rubáiyát of Omar Khayyám. Translated by Edward Fitzgerald. Illustrated by Edmund Dulac`.
+		"""
+
+		output = self.get_title()
+
+		authors = self.get_display_contributors("aut")
+
+		if authors and authors[0] != "Anonymous":
+			output += ", by " + se.formatting.format_list(authors)
+
+		translators = self.get_display_contributors("trl", ignore_list=authors)
+
+		if translators:
+			output += ". Translated by " + se.formatting.format_list(translators)
+
+		illustrators = se.formatting.format_list(self.get_display_contributors("ill", ignore_list=authors + translators))
+
+		if illustrators:
+			output += ". Illustrated by " + illustrators
+
+		return output
+
+	def get_display_contributors(self, marc_role: str, use_nbsp: bool=False, ignore_list: list[str]|None=None) -> list[str]:
+		"""
+		Return a list of strings representing contributors of the given MARC role, displayed and ordered according to their `display-seq` property.
+
+		With `use_nbsp`, use no-break spaces in each contributor name.
+
+		With `ignore_list`, don't include contributors who are in this list.
+		"""
+
+		contributors = []
+		raw_contributors = []
+		contributors_have_display_seq = False
+		for role in self.metadata_dom.xpath(f"/package/metadata/meta[@property='role' and @scheme='marc:relators' and text()='{marc_role}']"):
+			contributor_id = role.get_attr("refines").lstrip("#")
+			contributor_element = (self.metadata_dom.xpath("/package/metadata/*[@id=\"" + contributor_id + "\"]") or [None])[0]
+			if contributor_element:
+				add_contributor = True
+				contributor_name = contributor_element.text
+
+				if ignore_list:
+					for item in ignore_list:
+						if item.replace(" ", " ") == contributor_name.replace(" ", " "):
+							add_contributor = False
+							break
+
+				if not add_contributor:
+					continue
+
+				if use_nbsp:
+					contributor_name = contributor_name.replace(" ", " ")
+
+				contributor = {"name": contributor_name, "include": True, "display_seq": 0}
+				display_seq = (self.metadata_dom.xpath("/package/metadata/meta[@property=\"display-seq\"][@refines=\"#" + contributor_id + "\"]") or [None])[0]
+
+				if display_seq and int(display_seq.text) == 0:
+					contributor["include"] = False
+					display_seq = []
+
+				if display_seq:
+					contributor["display_seq"] = int(display_seq.text)
+					contributors_have_display_seq = True
+
+				raw_contributors.append(contributor)
+
+		raw_contributors.sort(key=lambda x: x["display_seq"])
+
+		for raw_contributor in raw_contributors:
+			if (not contributors_have_display_seq and raw_contributor["include"]) or raw_contributor["display_seq"]:
+				contributors.append(raw_contributor["name"])
+		return contributors
+
+	def write_dom(self, file_path: Path) -> None:
+		"""
+		Write the DOM for the given `Path` to disk.
+
+		INPUTS
+		file_path: A `Path` pointing to the file.
+		"""
+		with open(file_path, "w", encoding="utf-8") as file:
+			file.write(self.get_dom(file_path).to_string())
 
 	def get_file(self, file_path: Path) -> str:
 		"""
@@ -432,7 +534,7 @@ class SeEpub:
 
 		return self._file_cache[file_path_str]
 
-	def flush_dom_cache_entry(self, file_path: Path) -> None:
+	def flush_dom(self, file_path: Path) -> None:
 		"""
 		Remove a DOM cache entry for the given file, regardless of whether comments were removed.
 
@@ -454,7 +556,6 @@ class SeEpub:
 		except Exception:
 			pass
 
-	# Cache DOM objects so we don't have to create them multiple times.
 	def get_dom(self, file_path: Path, remove_comments=False) -> se.easy_xml.EasyXmlTree:
 		"""
 		Get an `EasyXmlTree` DOM object for a given file.
@@ -727,7 +828,162 @@ class SeEpub:
 
 		return output_xhtml
 
+	def _does_line_require_vertical_offset(self, line: str, previous_line:str|None) -> bool:
+		"""
+		Return `True` if the previous line contains a low diacritic like `ç`, or if there was a previous line and this line contains a high diacritic like `ö`.
+		"""
+
+		# U+0327 = combining cedilla
+		# U+0328 = combining okonek
+		# In the regex we first normalize the text to separate out diacritics, then use `\p{M}` to match any combining mark.
+
+		if previous_line and (regex.search(r"[\u0327\u0328]", normalize("NFD", previous_line), flags=regex.IGNORECASE) or regex.search(r"[aeiou]\p{M}", normalize("NFD", line), flags=regex.IGNORECASE)):
+			return True
+
+		return False
+
 	def generate_titlepage_svg(self) -> None:
+		"""
+		Generate the titlepage SVG and place it in `./images/titlepage.svg`.
+
+		The function tries to build the title with the widest line at the bottom, moving up.
+
+		We approximate a few values, like the width of a space, which are variable in the font.
+
+		Some useful test ebooks:
+
+		- <https://standardebooks.org/ebooks/anonymous/beowulf/john-lesslie-hall>
+
+		- <https://standardebooks.org/ebooks/edgar-allan-poe/the-narrative-of-arthur-gordon-pym-of-nantucket>
+
+		- <https://standardebooks.org/ebooks/omar-khayyam/the-rubaiyat-of-omar-khayyam/edward-fitzgerald>
+
+		- <https://standardebooks.org/ebooks/selma-lagerlof/the-story-of-gosta-berling/pauline-bancroft-flach>
+
+		- <https://standardebooks.org/ebooks/william-wordsworth_samuel-taylor-coleridge/lyrical-ballads>
+
+		- <https://standardebooks.org/ebooks/karl-marx_friedrich-engels/the-communist-manifesto/samuel-moore>
+
+		- <https://standardebooks.org/ebooks/abu-al-ala-al-maarri/the-luzumiyat/ameen-rihani>
+		"""
+
+		authors = self.get_display_contributors("aut", False)
+		title = self.title or ""
+		title_string = self.generate_title_string()
+
+		contributors = {}
+
+		translators = self.get_display_contributors("trl", True, authors)
+
+		if translators:
+			contributors["translated by"] = se.formatting.format_list(translators)
+
+		illustrators = self.get_display_contributors("ill", True, authors + translators)
+
+		if illustrators:
+			contributors["illustrated by"] = se.formatting.format_list(illustrators)
+
+		# Don't include "anonymous" authors in the cover.
+		# League Spartan doesn't have good character support for turned commas, so replace them with single quotes.
+		authors = [author.replace("ʻ", "‘").replace("ʼ", "’") for author in authors if author.lower() != "anonymous"]
+
+		svg = ""
+
+		# Read our template SVG to get some values before we begin.
+		with importlib.resources.files("se.data.templates").joinpath("titlepage.svg").open("r", encoding="utf-8") as file:
+			svg = file.read()
+
+		# Remove the template text elements from the SVG source, we'll write out to it later.
+		svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
+
+		# Calculate the title lines.
+		# We use the cover title box canvas width here, because we want the titlepage to roughly match the cover arrangement.
+		# Note that we can't *always* match the cover layout because the cover text is allowed to be resized, while the titlepage text is not.
+		canvas_width = se.images.COVER_TITLE_BOX_WIDTH - (se.images.COVER_TITLE_BOX_HORIZONTAL_PADDING * 2)
+		title_lines = se.images.calculate_image_lines(title.upper(), se.images.COVER_TITLE_HEIGHT, canvas_width)
+
+		# Now reset the canvas width to the full width of the titlepage canvas for author/contributor lines.
+		canvas_width = se.TITLEPAGE_WIDTH - (se.images.TITLEPAGE_HORIZONTAL_PADDING * 2)
+
+		# Calculate the author lines.
+		authors_lines = []
+		for author in authors:
+			authors_lines.append(se.images.calculate_image_lines(author.upper(), se.images.TITLEPAGE_AUTHOR_HEIGHT, canvas_width))
+
+		# Calculate the contributor lines.
+		contributor_lines = []
+		for descriptor, contributor_name in contributors.items():
+			contributor_lines.append(
+							{
+								"descriptor": descriptor,
+								"lines": se.images.calculate_image_lines(contributor_name.upper(), se.images.TITLEPAGE_CONTRIBUTOR_HEIGHT, canvas_width)
+							}
+						)
+
+		# Construct the output.
+		text_elements = ""
+		element_y = se.images.TITLEPAGE_VERTICAL_PADDING
+
+		# Add the title.
+		i = 0
+		for line in title_lines:
+			if self._does_line_require_vertical_offset(line, title_lines[i - 1] if i > 0 else None):
+				element_y += floor(se.images.COVER_TITLE_HEIGHT / se.images.LEAGUE_SPARTAN_DIACRITIC_RATIO)
+
+			element_y += se.images.TITLEPAGE_TITLE_HEIGHT
+			text_elements += f"\t<text class=\"title\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
+			element_y += se.images.TITLEPAGE_TITLE_MARGIN
+
+			i = i + 1
+
+		element_y -= se.images.TITLEPAGE_TITLE_MARGIN
+
+		# Add the author(s).
+		if authors:
+			element_y += se.images.TITLEPAGE_AUTHOR_SPACING
+
+		for author_lines in authors_lines:
+			for line in author_lines:
+				element_y += se.images.TITLEPAGE_AUTHOR_HEIGHT
+				text_elements += f"\t<text class=\"author\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
+				element_y += se.images.TITLEPAGE_AUTHOR_MARGIN
+
+		if authors:
+			element_y -= se.images.TITLEPAGE_AUTHOR_MARGIN
+
+		# Add the contributor(s).
+		if contributor_lines:
+			element_y += se.images.TITLEPAGE_CONTRIBUTORS_SPACING
+			for contributor in contributor_lines:
+				element_y += se.images.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT
+				text_elements += f"\t<text class=\"contributor-descriptor\" x=\"700\" y=\"{element_y:.0f}\">{escape(contributor["descriptor"])}</text>\n" # type: ignore
+				element_y += se.images.TITLEPAGE_CONTRIBUTOR_MARGIN
+
+				for person in contributor["lines"]:
+					element_y += se.images.TITLEPAGE_CONTRIBUTOR_HEIGHT
+					text_elements += f"\t<text class=\"contributor\" x=\"700\" y=\"{element_y:.0f}\">{escape(person.replace(" ", " "))}</text>\n"
+					element_y += se.images.TITLEPAGE_CONTRIBUTOR_MARGIN
+
+				element_y -= se.images.TITLEPAGE_CONTRIBUTOR_MARGIN
+
+				element_y += se.images.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
+
+			element_y -= se.images.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN
+		else:
+			# Remove unused CSS.
+			svg = regex.sub(r"\n\t\t\.contributor-descriptor{.+?}\n", "", svg, flags=regex.DOTALL)
+			svg = regex.sub(r"\n\t\t\.contributor{.+?}\n", "", svg, flags=regex.DOTALL)
+
+		element_y += se.images.TITLEPAGE_VERTICAL_PADDING
+
+		svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLE_STRING", escape(title_string))
+		svg = regex.sub(r"viewBox=\".+?\"", f"viewBox=\"0 0 {se.TITLEPAGE_WIDTH} {element_y:.0f}\"", svg)
+
+		with open(self.path / "images" / "titlepage.svg" , "w", encoding="utf-8") as file:
+			file.write(svg)
+			file.truncate()
+
+	def build_titlepage_svg(self) -> None:
 		"""
 		Generate a distributable titlepage SVG in `./src/epub/images/` based on the titlepage file in `./images/`.
 
@@ -746,7 +1002,167 @@ class SeEpub:
 			# Convert text to paths.
 			se.images.svg_text_to_paths(source_titlepage_svg_filename, dest_titlepage_svg_filename)
 
+	def _get_cover_title_box_contents_height(self, title_lines: list[str], title_line_height: int, author_lines: list[str]) -> int:
+		title_line_count = len(title_lines)
+		author_line_count = len(author_lines)
+
+		spacing = se.images.COVER_AUTHOR_SPACING
+		if author_line_count == 0:
+			spacing = 0
+
+		additional_author_line_count = max(author_line_count - 1, 0)
+
+		lines_with_diacritic_offset = 0
+
+		# xsmall sizing doesn't require an offset.
+		if title_line_height != se.images.COVER_TITLE_XSMALL_HEIGHT:
+			i = 0
+			for line in title_lines:
+				if self._does_line_require_vertical_offset(line, title_lines[i - 1] if i > 0 else None):
+					lines_with_diacritic_offset = lines_with_diacritic_offset + 1
+
+				i = i + 1
+
+		return (title_line_count * title_line_height) \
+			+ lines_with_diacritic_offset * floor(title_line_height / se.images.LEAGUE_SPARTAN_DIACRITIC_RATIO) \
+ 			+ ( (title_line_count - 1) * se.images.COVER_TITLE_MARGIN) \
+ 			+ spacing \
+ 			+ (author_line_count * se.images.COVER_AUTHOR_HEIGHT) \
+ 			+ ( additional_author_line_count * se.images.COVER_AUTHOR_MARGIN)
+
 	def generate_cover_svg(self) -> None:
+		"""
+		Generate the cover SVG and place it in `./images/cover.svg`.
+
+		The function tries to build the title box with the widest line at the bottom, moving up.
+
+		We approximate a few values, like the width of a space, which are variable in the font.
+
+		Some useful test ebooks:
+
+		- <https://standardebooks.org/ebooks/anonymous/beowulf/john-lesslie-hall>
+
+		- <https://standardebooks.org/ebooks/edgar-allan-poe/the-narrative-of-arthur-gordon-pym-of-nantucket>
+
+		- <https://standardebooks.org/ebooks/omar-khayyam/the-rubaiyat-of-omar-khayyam/edward-fitzgerald>
+
+		- <https://standardebooks.org/ebooks/selma-lagerlof/the-story-of-gosta-berling/pauline-bancroft-flach>
+
+		- <https://standardebooks.org/ebooks/william-wordsworth_samuel-taylor-coleridge/lyrical-ballads>
+
+		- <https://standardebooks.org/ebooks/karl-marx_friedrich-engels/the-communist-manifesto/samuel-moore>
+
+		- <https://standardebooks.org/ebooks/abu-al-ala-al-maarri/the-luzumiyat/ameen-rihani>
+		"""
+
+		authors = self.get_display_contributors("aut", False)
+		title = self.title or ""
+		title_string = self.generate_title_string()
+
+		contributors = {}
+		translators = self.get_display_contributors("trl", True, authors)
+		if translators:
+			contributors["translated by"] = se.formatting.format_list(translators)
+
+		illustrators = self.get_display_contributors("ill", True, authors)
+		if illustrators:
+			contributors["illustrated by"] = se.formatting.format_list(illustrators)
+
+		# Don't include "anonymous" authors in the cover.
+		# League Spartan doesn't have good character support for turned commas, so replace them with single quotes.
+		authors = [author.replace("ʻ", "‘").replace("ʼ", "’") for author in authors if author.lower() != "anonymous"]
+
+		svg = ""
+		canvas_width = se.images.COVER_TITLE_BOX_WIDTH - (se.images.COVER_TITLE_BOX_HORIZONTAL_PADDING * 2)
+
+		# Read our template SVG to get some values before we begin.
+		with importlib.resources.files("se.data.templates").joinpath("cover.svg").open("r", encoding="utf-8") as file:
+			svg = file.read()
+
+		# Remove the template text elements from the SVG source, we'll write out to it later.
+		svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
+
+		# Calculate the author lines.
+		authors_lines = []
+		for author in authors:
+			authors_lines.append(se.images.calculate_image_lines(author.upper(), se.images.COVER_AUTHOR_HEIGHT, canvas_width))
+
+		# Calculate the title lines.
+		title_upper = title.upper()
+		title_height = se.images.COVER_TITLE_HEIGHT
+		title_class = "title"
+		title_lines = se.images.calculate_image_lines(title_upper, title_height, canvas_width)
+
+		# Construct the output.
+		text_elements = ""
+
+		# Decide if we have to shrink the title text to fit the title box.
+		max_cover_title_box_canvas_height = se.images.COVER_TITLE_BOX_HEIGHT - (se.images.COVER_TITLE_BOX_VERTICAL_PADDING * 2)
+		cover_title_box_contents_height = self._get_cover_title_box_contents_height(title_lines, title_height, authors)
+		cover_title_box_contents_width = se.images.get_image_lines_width(title_lines, title_height)
+
+		while (cover_title_box_contents_height > max_cover_title_box_canvas_height or cover_title_box_contents_width > canvas_width) and title_class != "title-xsmall":
+			if title_class == "title-small":
+				title_class = "title-xsmall"
+				title_height = se.images.COVER_TITLE_XSMALL_HEIGHT
+
+			if title_class == "title":
+				title_class = "title-small"
+				title_height = se.images.COVER_TITLE_SMALL_HEIGHT
+
+			title_lines = se.images.calculate_image_lines(title_upper, title_height, canvas_width)
+			cover_title_box_contents_height = self._get_cover_title_box_contents_height(title_lines, title_height, authors)
+			cover_title_box_contents_width = se.images.get_image_lines_width(title_lines, title_height)
+
+		element_y = se.images.COVER_TITLE_BOX_Y + \
+			+ ((se.images.COVER_TITLE_BOX_HEIGHT \
+				- cover_title_box_contents_height \
+			) / 2)
+
+		# Add the title.
+		i = 0
+		for line in title_lines:
+			# xsmall sizing doesn't require an offset.
+			if title_height != se.images.COVER_TITLE_XSMALL_HEIGHT:
+				if self._does_line_require_vertical_offset(line, title_lines[i - 1] if i > 0 else None):
+					element_y += floor(title_height / se.images.LEAGUE_SPARTAN_DIACRITIC_RATIO)
+
+			element_y += title_height
+			text_elements += f"\t<text class=\"{title_class}\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
+			element_y += se.images.COVER_TITLE_MARGIN
+			i = i + 1
+
+		element_y -= se.images.COVER_TITLE_MARGIN
+
+		# Add the author(s).
+		if authors:
+			element_y += se.images.COVER_AUTHOR_SPACING
+
+			for author_lines in authors_lines:
+				for line in author_lines:
+					element_y += se.images.COVER_AUTHOR_HEIGHT
+					text_elements += f"\t<text class=\"author\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
+					element_y += se.images.COVER_AUTHOR_MARGIN
+
+			element_y -= se.images.COVER_AUTHOR_MARGIN
+
+		# Remove unused CSS.
+		if title_class != "title":
+			svg = regex.sub(r"\n\n\t\t\.title\{.+?\}", "", svg, flags=regex.DOTALL)
+
+		if title_class != "title-small":
+			svg = regex.sub(r"\n\n\t\t\.title-small\{.+?\}", "", svg, flags=regex.DOTALL)
+
+		if title_class != "title-xsmall":
+			svg = regex.sub(r"\n\n\t\t\.title-xsmall\{.+?\}", "", svg, flags=regex.DOTALL)
+
+		svg = svg.replace("</svg>", "\n" + text_elements + "</svg>\n").replace("TITLE_STRING", escape(title_string))
+
+		with open(self.path / "images" / "cover.svg" , "w", encoding="utf-8") as file:
+			file.write(svg)
+			file.truncate()
+
+	def build_cover_svg(self) -> None:
 		"""
 		Generate a distributable cover SVG in `./src/epub/images/` based on the cover file in `./images/`.
 
@@ -791,6 +1207,7 @@ class SeEpub:
 
 			with open(dest_cover_svg_filename, "w", encoding="utf-8") as file:
 				file.write(dom.to_string())
+				file.truncate()
 
 	def shift_endnotes(self, target_endnote_number: int, step: int = 1) -> None:
 		"""
@@ -1040,7 +1457,7 @@ class SeEpub:
 			for node in self.metadata_dom.xpath("/package/metadata/meta[@property='dcterms:modified']"):
 				node.set_text(now_iso)
 
-			self.write_metadata_file()
+			self.write_dom(self.metadata_file_path)
 
 			for file_path in self.content_path.glob("**/*.xhtml"):
 				dom = self.get_dom(file_path)
@@ -1081,7 +1498,7 @@ class SeEpub:
 		for node in self.metadata_dom.xpath("/package/metadata/meta[@property='se:reading-ease.flesch']"):
 			node.set_text(str(se.formatting.get_flesch_reading_ease(text)))
 
-		self.write_metadata_file()
+		self.write_dom(self.metadata_file_path)
 
 	def get_word_count(self) -> int:
 		"""
@@ -1123,7 +1540,7 @@ class SeEpub:
 		for node in self.metadata_dom.xpath("/package/metadata/meta[@property='se:word-count']"):
 			node.set_text(str(self.get_word_count()))
 
-		self.write_metadata_file()
+		self.write_dom(self.metadata_file_path)
 
 	def generate_manifest(self) -> se.easy_xml.EasyXmlElement:
 		"""
@@ -1838,13 +2255,13 @@ class SeEpub:
 						file_path.unlink()
 					else:
 						# Flush the DOM cache entry because since the filename is the same, we changed the DOM earlier.
-						self.flush_dom_cache_entry(file_path)
+						self.flush_dom(file_path)
 
 					# Generate the new manifest.
 					for node in self.metadata_dom.xpath("/package/manifest"):
 						node.replace_with(self.generate_manifest())
 
-					self.write_metadata_file()
+					self.write_dom(self.metadata_file_path)
 
 					se.formatting.format_xml_file(self.metadata_file_path)
 

@@ -232,7 +232,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se build-images`
 
-	Build ebook cover and titlepage images in a Standard Ebook source directory and place the output in `DIRECTORY/src/epub/images/`.
+	Generate ebook cover and titlepages for Standard Ebooks ebooks, and then build ebook covers and titlepages, placing the output in `DIRECTORY/src/epub/images/`.
 
 -	### `se build-manifest`
 

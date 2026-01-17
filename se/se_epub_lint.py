@@ -28,13 +28,14 @@ import se.spelling
 import se.typography
 
 SE_VARIABLES = [
-	"SE_IDENTIFIER",
+	"IDENTIFIER",
+	"SE_SLUG",
 	"TITLE",
 	"TITLE_SORT",
 	"SUBJECT_1",
 	"SUBJECT_2",
-	"LCSH_ID_1",
-	"LCSH_ID_2",
+	"SUBJECT_1_LCSH_ID",
+	"SUBJECT_2_LCSH_ID",
 	"TAG",
 	"DESCRIPTION",
 	"LONG_DESCRIPTION",
@@ -44,7 +45,7 @@ SE_VARIABLES = [
 	"PAGE_SCANS_URL",
 	"PRODUCTION_NOTES",
 	"EBOOK_WIKI_URL",
-	"VCS_IDENTIFIER",
+	"VCS_URL",
 	"AUTHOR_NAME",
 	"AUTHOR_SORT",
 	"AUTHOR_FULL_NAME",
@@ -1009,9 +1010,10 @@ def _lint_metadata_checks(self) -> list:
 		messages.append(LintMessage("m-022", "Empty element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	# Check for illegal VCS URLs.
-	nodes = self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:url.vcs.github' and not(text()='{self.generated_github_repo_url}')]")
+	expected_vcs_url = self.generate_vcs_url()
+	nodes = self.metadata_dom.xpath(f"/package/metadata/meta[@property='se:url.vcs.github' and not(text()='{expected_vcs_url}')]")
 	if nodes:
-		messages.append(LintMessage("m-009", "Unexpected value for [xml]<meta property=\"se:url.vcs.github\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"Found: {node.inner_text()}\nExpected: {self.generated_github_repo_url}", node.sourceline) for node in nodes]))
+		messages.append(LintMessage("m-009", "Unexpected value for [xml]<meta property=\"se:url.vcs.github\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"Found: {node.inner_text()}\nExpected: {expected_vcs_url}", node.sourceline) for node in nodes]))
 
 	# Check for illegal `se:subject` values.
 	illegal_subjects = []
@@ -1064,9 +1066,10 @@ def _lint_metadata_checks(self) -> list:
 	if self.is_se_ebook:
 		try:
 			identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier")[0]
+			expected_identifier = self.generate_identifier()
 			# We make an exception for identifiers ending in `et al` because that indicates the identifier was set manually because there were too many contributors.
-			if identifier.text != self.generated_identifier and not regex.search(r"_et-al$", identifier.text):
-				messages.append(LintMessage("m-023", "Unexpected value for [xml]<dc:identifier>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"Found: {identifier.text}\nExpected: {self.generated_identifier}", identifier.sourceline)]))
+			if identifier.text != expected_identifier and not regex.search(r"_et-al$", identifier.text):
+				messages.append(LintMessage("m-023", "Unexpected value for [xml]<dc:identifier>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"Found: {identifier.text}\nExpected: {expected_identifier}", identifier.sourceline)]))
 		except Exception:
 			missing_metadata_elements.append("<dc:identifier>")
 
@@ -1636,7 +1639,7 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 		if self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text()='trl']") and "translated from" not in source_file.contents:
 			messages.append(LintMessage("m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
 
-		nodes = dom.xpath(f"/html/body//a[re:test(@href, '^https?://standardebooks.org/ebooks/') and re:test(., '^https?://standardebooks.org/ebooks/') and text()!='{self.generated_identifier.replace('https://', '')}']")
+		nodes = dom.xpath(f"/html/body//a[re:test(@href, '^https?://standardebooks.org/ebooks/') and re:test(., '^https?://standardebooks.org/ebooks/') and text()!='{self.identifier.replace('https://', '')}']")
 		if nodes:
 			messages.append(LintMessage("m-035", "Unexpected S.E. identifier in colophon.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
