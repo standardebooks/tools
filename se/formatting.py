@@ -207,7 +207,7 @@ def semanticate(xhtml: str) -> str:
 
 	# We may have added HTML tags within title tags. Remove those here.
 	for node in dom.xpath("/html/head/title"):
-		replacement_node = se.easy_xml.EasyXmlElement(f"<title>{node.inner_text()}</title>")
+		replacement_node = se.easy_xml.EasyXmlElement(f"<title>{escape_xml(node.inner_text())}</title>")
 		node.replace_with(replacement_node)
 
 	# We may have added `eoc` classes twice, so remove duplicates here.
@@ -1784,6 +1784,12 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tup
 
 	return replacements
 
+def escape_xml(xml: str) -> str:
+	"""
+	Escape a string for use in XML.
+	"""
+
+	return xml.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 def format_list(items: list[str]) -> str:
 	"""
