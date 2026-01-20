@@ -175,7 +175,7 @@ case $state in
 					{-h,--help}'[show a help message and exit]' \
 					{-o,--output-dir}'=[a directory to place output files in; will be created if it doesn’t exist]: :_directories' \
 					{-v,--verbose}'[increase output verbosity]' \
-					'*: :_files -g \*.\(mobi\|azw3\|epub\)'
+					'*: :_files -g \*.\(mobi\|azw3\|epub\|kepub\)'
 				;;
 			find-mismatched-dashes)
 				_arguments -s \
