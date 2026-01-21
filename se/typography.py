@@ -345,6 +345,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 	# Remove periods from `O.K.`. (Also, it is not an abbreviation.)
 	xhtml = regex.sub(r"O\.K\.", r"OK", xhtml)
+	xhtml = regex.sub(r"OK([”’]</p>)", r"OK.\1", xhtml)
 	xhtml = regex.sub(r"OK([”’]\s+[\p{Uppercase_Letter}])", r"OK.\1", xhtml)
 	xhtml = regex.sub(r"(“[^”]+?)OK ([\p{Uppercase_Letter}]\w+)", r"\1OK.” \2", xhtml)
 
