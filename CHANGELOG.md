@@ -1,8 +1,58 @@
+# 2.11.0
+
+## se build
+
+- Convert `<span>` to `<se-span>` in Kobo builds to work around various kepub issues, including poor performance, broken IDs, and broken CSS selectors
+
+## se clean
+
+- Correctly lowercase attributes in the default xml: namespace
+
+## se create-draft
+
+- Set the language of the ToC if using a PG ebook
+
+- Add the --fp-id option to download transcriptions from Faded Page
+
+- Attempt to pre-sort transcribers
+
+- Replace some template variables with clearer, more generic names
+
+- Rewrite cover and titlepage generation code to use accurate measurements for text width, account for diacritics, and better arrange title lines
+
+## se lint
+
+- Add y-036, ’ after punctuation, but no ‘
+
+- Don't output t-064 for missing colophon variable
+
+- Fix crash introduced by undocumented change in Python 3.14. Thanks to Nicholas Wiltsie
+
+## se modernize-spelling
+
+- Various additions
+
+- Always print filename on error
+
+## se semanticate
+
+- Correct handling of optional period on imperial units, allow singular lb, plural yds. Thanks to Vince Rice
+
+- Don't crash when titles contain &
+
+## se typogrify
+
+- Add period back to OK if at end of a paragraph. Thanks to Vince Rice
+
 # 2.10.2
 
 ## se lint
 
 - Really fix `dcterms:alternative` checks
+
+## se word-count
+
+- Correctly count words with apostrophes
 
 # 2.10.1
 
