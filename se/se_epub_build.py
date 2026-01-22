@@ -1080,7 +1080,6 @@ def _build_kobo_process_xhtml(work_kepub: SeEpub, file_path: Path) -> None:
 
 	kobo.paragraph_counter = 1
 	kobo.segment_counter = 1
-	has_spans_with_id = False
 
 	# Note: Kobo supports CSS hyphenation, but it can be improved with soft hyphens.
 	# However we can't insert them, because soft hyphens break the dictionary search when a word is highlighted.
@@ -1094,20 +1093,12 @@ def _build_kobo_process_xhtml(work_kepub: SeEpub, file_path: Path) -> None:
 	# for node in dom.xpath("/html/body//span[contains(@class, 'quote-align')]"):
 	# 	node.unwrap()
 
+	# In the kepub format we must add special `<span>`s for Kobo to read. However these `<span>`s:
+	# 1. Interact badly with CSS selectors like `span` or `span > span`.
+	# 2. If not nested correctly will slow Kobo to a crawl, see <https://groups.google.com/g/standardebooks/c/Mrfu6nbWMpM/m/KaTW1RpgCAAJ>.
+	# To work around this, we simply rename any existing `<span>`s in our epub to `<se-span>`. This is still a valid element in HTML, is easy to replace in CSS selectors, and doesn't conflict with Kobo `<span>`s.
 	for node in dom.xpath("//span"):
-		# Inserted `koboSpan`s don't play nicely with CSS that targets all spans, especially poetry.
-		# Mark up spans with `se` so that we can rewrite CSS rules to target only spans we inserted.
-		if node.get_attr("class"):
-			node.set_attr("class", node.get_attr("class") + " se")
-		else:
-			node.set_attr("class", "se")
-
-		# When adding Kobo `<span>`s, the existing `@id` will be overwritten with a new one.
-		# This will break links, for example in endnotes pointing to specific `<span>`s.
-		# Copy our `@id` attribute to a temporary attribute to process later.
-		if node.get_attr("id"):
-			node.set_attr("data-se-id", node.get_attr("id"))
-			has_spans_with_id = True
+		node.lxml_element.tag = "se-span"
 
 	# Change `noteref` to `endnote` so that popup endnotes work in Kobo. Kobo doesn't understand `noteref`, only `endnote`.
 	for node in dom.xpath("/html/body//a[contains(@epub:type, 'noteref')]"):
@@ -1115,24 +1106,6 @@ def _build_kobo_process_xhtml(work_kepub: SeEpub, file_path: Path) -> None:
 
 	# Now add the Kobo `<span>`s.
 	kobo.add_kobo_spans_to_node(dom.xpath("/html/body")[0].lxml_element)
-
-	# The above will often nest `<span>`s within `<span>`s, which can surprise CSS selectors present in `local.css`.
-	# Try to remove those kinds of nested `<span>`s, which are the only children of other `<span>`s.
-	# The xpath uses `local-name()` instead of directly selecting `<span>` because the `add_kobo_spans_to_node()` function adds its `<span>`s with the `html` namespace (i.e. added `<span>`s are `html:span`), and `EasyXml` can't cope with new namespaces after the object has already been instantiated.
-	for node in dom.xpath("/html/body//*[local-name() = 'span' and parent::span and contains(@class, 'koboSpan') and not(following-sibling::node()[normalize-space(.)] or preceding-sibling::node()[normalize-space(.)])]"):
-		if node.get_attr("id"):
-			node.parent.set_attr("id", node.get_attr("id"))
-
-		if node.get_attr("class"):
-			parent_class = node.parent.get_attr("class")
-			if parent_class:
-				parent_class = parent_class + " "
-			else:
-				parent_class = ""
-
-			node.parent.set_attr("class", parent_class + node.get_attr("class"))
-
-		node.unwrap()
 
 	# `<time>` without a `@datetime` attribute cannot contain child elements, so remove Kobo `<span>`s in that case.
 	# The xpath uses `local-name()` instead of directly selecting `<span>` because the `add_kobo_spans_to_node()` function adds its `<span>`s with the `html` namespace (i.e. added `<span>`s are `html:span`), and `EasyXml` can't cope with new namespaces after the object has already been instantiated.
@@ -1144,35 +1117,6 @@ def _build_kobo_process_xhtml(work_kepub: SeEpub, file_path: Path) -> None:
 		# We use xpath to select the Kobo `<span>`s that we just inserted.
 		for node in dom.xpath("/html/body//a[contains(@epub:type, 'backlink')]/*[local-name()='span']"):
 			node.set_text("←")
-
-	# Do we need to replace our own `@id`s with Kobo's?
-	if has_spans_with_id:
-		# Iterate over each XHTML file to see if it contains links that refer to `@id`s that were overwritten by Kobo.
-		for filename in work_kepub.epub_root_path.glob("**/*.xhtml"):
-			file_dom = work_kepub.get_dom(filename)
-			has_replacements = False
-			for span_with_id in dom.xpath("//span[@data-se-id]"):
-				old_id_val = span_with_id.get_attr("data-se-id")
-				new_id_val = span_with_id.get_attr("id")
-				if old_id_val != new_id_val:
-					for node in file_dom.xpath(f"/html/body//a[re:test(@href, '#{old_id_val}$')]"):
-						# This link refers to a dead `@id`, so replace it with the new value.
-						has_replacements = True
-						node.set_attr("href", regex.sub(fr"#{old_id_val}$", f"#{new_id_val}", node.get_attr("href")))
-
-			if has_replacements and filename != file_path:
-				with open(filename, "w", encoding="utf-8") as file:
-					xhtml = file_dom.to_string()
-					# Remove namespaces from the output that were added by `kobo.add_kobo_spans_to_node()`.
-					xhtml = xhtml.replace(" xmlns:html=\"http://www.w3.org/1999/xhtml\"", "")
-					xhtml = regex.sub(r"<(/?)html:span", r"<\1span", xhtml)
-
-					file.write(xhtml)
-
-				work_kepub.flush_dom(filename)
-
-		for span_with_id in dom.xpath("//span[@data-se-id]"):
-			span_with_id.remove_attr("data-se-id")
 
 	xhtml = dom.to_string()
 
@@ -1202,7 +1146,7 @@ def _build_kobo_process_css(file_path: Path) -> None:
 		processed_css = css
 
 		# Retarget `span` selectors at SE `<span>`s (i.e. not `koboSpan`s) only.
-		processed_css = regex.sub(r"""(?<=\s)span(?=.*[,{]\n)""", r"""span.se""", processed_css)
+		processed_css = regex.sub(r"""(?<=\s)span(?=.*[,{]\n)""", r"""se-span""", processed_css)
 
 		if processed_css != css:
 			file.seek(0)
