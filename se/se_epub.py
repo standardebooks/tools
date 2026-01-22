@@ -468,7 +468,7 @@ class SeEpub:
 
 				if ignore_list:
 					for item in ignore_list:
-						if item.replace(" ", " ") == contributor_name.replace(" ", " "):
+						if item.replace(se.NO_BREAK_SPACE, " ") == contributor_name.replace(se.NO_BREAK_SPACE, " "):
 							add_contributor = False
 							break
 
@@ -476,7 +476,7 @@ class SeEpub:
 					continue
 
 				if use_nbsp:
-					contributor_name = contributor_name.replace(" ", " ")
+					contributor_name = contributor_name.replace(" ", se.NO_BREAK_SPACE)
 
 				contributor = {"name": contributor_name, "include": True, "display_seq": 0}
 				display_seq = (self.metadata_dom.xpath("/package/metadata/meta[@property=\"display-seq\"][@refines=\"#" + contributor_id + "\"]") or [None])[0]
@@ -956,12 +956,14 @@ class SeEpub:
 			element_y += se.images.TITLEPAGE_CONTRIBUTORS_SPACING
 			for contributor in contributor_lines:
 				element_y += se.images.TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_HEIGHT
-				text_elements += f"\t<text class=\"contributor-descriptor\" x=\"700\" y=\"{element_y:.0f}\">{escape(contributor["descriptor"])}</text>\n" # type: ignore
+				descriptor = contributor["descriptor"] # type: ignore
+				text_elements += f"\t<text class=\"contributor-descriptor\" x=\"700\" y=\"{element_y:.0f}\">{escape(descriptor)}</text>\n"
 				element_y += se.images.TITLEPAGE_CONTRIBUTOR_MARGIN
 
 				for person in contributor["lines"]:
 					element_y += se.images.TITLEPAGE_CONTRIBUTOR_HEIGHT
-					text_elements += f"\t<text class=\"contributor\" x=\"700\" y=\"{element_y:.0f}\">{escape(person.replace(" ", " "))}</text>\n"
+					line = person.replace(se.NO_BREAK_SPACE, " ")
+					text_elements += f"\t<text class=\"contributor\" x=\"700\" y=\"{element_y:.0f}\">{escape(line)}</text>\n"
 					element_y += se.images.TITLEPAGE_CONTRIBUTOR_MARGIN
 
 				element_y -= se.images.TITLEPAGE_CONTRIBUTOR_MARGIN

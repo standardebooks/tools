@@ -142,7 +142,7 @@ def _generate_contributor_string(contributors: list[dict], include_xhtml: bool, 
 				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributors[0]['name']))}</b>"""
 		else:
 			if use_nbsp:
-				output += contributors[0]["name"].replace(" ", " ")
+				output += contributors[0]["name"].replace(" ", se.NO_BREAK_SPACE)
 			else:
 				output += contributors[0]["name"]
 
@@ -161,7 +161,7 @@ def _generate_contributor_string(contributors: list[dict], include_xhtml: bool, 
 				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributors[1]['name']))}</b>"""
 		else:
 			if use_nbsp:
-				output += contributors[0]["name"].replace(" ", " ") + " and " + contributors[1]["name"].replace(" ", " ")
+				output += contributors[0]["name"].replace(" ", se.NO_BREAK_SPACE) + " and " + contributors[1]["name"].replace(" ", se.NO_BREAK_SPACE)
 			else:
 				output += contributors[0]["name"] + " and " + contributors[1]["name"]
 
@@ -180,7 +180,7 @@ def _generate_contributor_string(contributors: list[dict], include_xhtml: bool, 
 					output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributor['name']))}</b>"""
 			else:
 				if use_nbsp:
-					output += contributor["name"].replace(" ", " ")
+					output += contributor["name"].replace(" ", se.NO_BREAK_SPACE)
 				else:
 					output += contributor["name"]
 

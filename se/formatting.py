@@ -429,7 +429,7 @@ def get_word_count(xhtml: str) -> int:
 	xhtml = regex.sub(fr"[\p{{Letter}}0-9][\-\'’‘\,\.\/{se.NO_BREAK_HYPHEN}{se.SHY_HYPHEN}][\p{{Letter}}0-9]", "x", xhtml)
 
 	# Replace some formatting characters.
-	xhtml = regex.sub(r"[…–—― ‘’“”\{\}\(\)]", " ", xhtml)
+	xhtml = regex.sub(fr"[…–—―{se.NO_BREAK_SPACE}‘’“”\{{\}}\(\)]", " ", xhtml)
 
 	# Get the word count.
 	return len(regex.findall(r"\b\w+\b", xhtml))

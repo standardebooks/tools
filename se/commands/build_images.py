@@ -54,7 +54,7 @@ def build_images(plain_output: bool) -> int:
 			se_epub.build_cover_svg()
 
 			# Only generate the titlepage if this is an SE ebook.
-			if se_epub.is_se_ebook and  not args.no_generate:
+			if se_epub.is_se_ebook and not args.no_generate:
 				if args.verbose:
 					console.print(" OK")
 					console.print(se.prep_output(f"\tGenerating [path][link=file://{directory / 'images/titlepage.svg'}]titlepage.svg[/][/] ...", plain_output), end="")
