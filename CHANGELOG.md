@@ -1,3 +1,15 @@
+# 2.11.2
+
+## se clean
+
+- Fix incorrect metadata in new drafts, causing `epubcheck`  to fail by default. Thanks to Robin Whittleton
+
+## se create-draft
+
+# 2.11.1
+
+Minor syntax fixes.
+
 # 2.11.0
 
 ## se build
