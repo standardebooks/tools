@@ -750,7 +750,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 				i = 1
 				for producer in transcription_producers:
 					etree.register_namespace("dc", "http://purl.org/dc/elements/1.1/")
-					element = etree.Element(etree.QName("http://purl.org/dc/elements/1.1/", "subject"))
+					element = etree.Element(etree.QName("http://purl.org/dc/elements/1.1/", "contributor"))
 					transcriber_id = f"transcriber-{i}"
 					contributor_node = se.easy_xml.EasyXmlElement(element)
 					contributor_node.set_attr("id", transcriber_id)
