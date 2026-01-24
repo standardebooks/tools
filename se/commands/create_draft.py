@@ -554,8 +554,8 @@ def _create_draft(args: Namespace, plain_output: bool):
 					subject_node = se.easy_xml.EasyXmlElement(element)
 					subject_node.set_attr("id", f"subject-{i}")
 					subject_node.set_text(subject)
-					authority_node = se.easy_xml.EasyXmlElement(f"<meta property=\"authority\" refines=\"subject-{i}\">LCHS</meta>")
-					term_node = se.easy_xml.EasyXmlElement(f"<meta property=\"term\" refines=\"subject-{i}\">{loc_id}</meta>")
+					authority_node = se.easy_xml.EasyXmlElement(f"<meta property=\"authority\" refines=\"#subject-{i}\">LCHS</meta>")
+					term_node = se.easy_xml.EasyXmlElement(f"<meta property=\"term\" refines=\"#subject-{i}\">{loc_id}</meta>")
 
 					for node in epub.metadata_dom.xpath("//meta[@property='se:subject'][1]"):
 						node.insert_before(subject_node)
