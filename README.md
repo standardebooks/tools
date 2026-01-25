@@ -198,8 +198,6 @@ Instructions are found in the testing [README](tests/README.md).
 
 We need volunteers to take the lead on the following goals:
 
-- In `se --version`, detect whether we're currently installed as an `--editable` install and output that information.
-
 - Add more test cases to the test framework.
 
 - When a test fails, the output is usually inscrutable. Can we get better, more readable error messages when a test fails?
