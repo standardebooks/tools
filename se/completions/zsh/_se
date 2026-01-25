@@ -147,15 +147,15 @@ case $state in
 				;;
 			create-draft)
 				_arguments -s \
-					{-a,--author}'[the author of the ebook]' \
-					{-e,--email}'[use this email address as the main committer for the local Git repository]' \
-					{-f,--fp-id}'[the Faded Page ID number of the ebook to download]' \
+					{-a,--author}'[the author of the ebook]:name' \
+					{-e,--email}'[use this email address as the main committer for the local Git repository]:email' \
+					{-f,--fp-id}'[the Faded Page ID number of the ebook to download]:id' \
 					{-h,--help}'[show a help message and exit]' \
-					{-i,--illustrator}'[the illustrator of the ebook]' \
+					{-i,--illustrator}'[the illustrator of the ebook]:name' \
 					{-o,--offline}'[create draft without network access]' \
-					{-p,--pg-id}'[the Project Gutenberg ID number of the ebook to download]' \
-					{-r,--translator}'[the translator of the ebook]' \
-					{-t,--title}'[the title of the ebook]' \
+					{-p,--pg-id}'[the Project Gutenberg ID number of the ebook to download]:id' \
+					{-r,--translator}'[the translator of the ebook]:name' \
+					{-t,--title}'[the title of the ebook]:title' \
 					{-w,--white-label}'[create a generic epub skeleton without S.E. branding]' \
 					{-v,--verbose}'[increase output verbosity]'
 				;;
@@ -198,7 +198,7 @@ case $state in
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
 					{-i,--ignore-h-tags}'[don’t add soft hyphens to text in <h1-6> tags]' \
-					{-l,--language}'specify the language for the XHTML files; if unspecified, defaults to the `xml:lang` or `lang` attribute of the root <html> element' \
+					{-l,--language}'[specify the language for the XHTML files; if unspecified, defaults to the `xml:lang` or `lang` attribute of the root <html> element]:language' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_files -g \*.xhtml'
 				;;
@@ -243,7 +243,6 @@ case $state in
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
 					{-o,--output}'=[a file to write output to instead of printing to standard output]: :_files' \
-					'*: :_files -g \*.xhtml' \
 					{-x,--xhtml}'[output XHTML instead of HTML5]' \
 					{-e,--extra-css-file}'=[the path to an additional CSS file to include after any CSS files in the epub]: :_files' \
 					{-i,--image-files}'[leave image src attributes as relative URLs instead of inlining as data: URIs]' \
@@ -288,7 +287,7 @@ case $state in
 					{-f,--filename-format}'[a format string for the output files; `%n` is replaced with the current chapter number; defaults to `chapter-%n.xhtml`]' \
 					{-h,--help}'[show a help message and exit]' \
 					{-s,--start-at}'[start numbering chapters at this number, instead of at 1]' \
-					{-t,--template-file}'[a file containing an XHTML template to use for each chapter; the string `NUMBER` is replaced by the chapter number, the string `NUMERAL` is replaced by the chapter Roman numeral, and the string `TEXT` is replaced by the chapter body]' \
+					{-t,--template-file}'[a file containing an XHTML template to use for each chapter; the string `NUMBER` is replaced by the chapter number, the string `NUMERAL` is replaced by the chapter Roman numeral, and the string `TEXT` is replaced by the chapter body]:file:_files' \
 					'*: :_files -g \*.\(htm\|html\|xhtml\)'
 				;;
 			titlecase)
