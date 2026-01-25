@@ -9,7 +9,6 @@ import se
 import se.images
 from se.se_epub import SeEpub
 
-
 def build_images(plain_output: bool) -> int:
 	"""
 	Entry point for `se build-images`.
@@ -69,6 +68,17 @@ def build_images(plain_output: bool) -> int:
 
 			if args.verbose:
 				console.print(" OK")
+
+			if args.verbose:
+				console.print("\tOptimizing PNGs ...", end="")
+
+			# Optimize PNGs that we're distributing.
+			for file_path in directory.glob("src/epub/**/*.png"):
+				se.images.optimize_png(file_path)
+
+			if args.verbose:
+				console.print(" OK")
+
 		except se.SeException as ex:
 			se.print_error(ex)
 			return ex.code

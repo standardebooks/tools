@@ -3,7 +3,7 @@
 ignore-paths=^se/vendor
 
 # C extensions that pylint outputs lots of useless "errors" about
-extension-pkg-whitelist=lxml,math,unicodedata
+extension-pkg-whitelist=lxml,math,unicodedata,oxipng
 
 [MESSAGES CONTROL]
 disable=line-too-long,too-many-nested-blocks,too-many-branches,too-many-statements,too-many-boolean-expressions,too-many-lines,too-many-locals,broad-except,too-few-public-methods,too-many-arguments,too-many-instance-attributes,too-many-public-methods,duplicate-code,too-many-positional-arguments

@@ -16,6 +16,7 @@ import regex
 from PIL import Image, ImageFont, ImageMath, PngImagePlugin, UnidentifiedImageError
 from PIL.Image import Image as Image_type # Separate import to satisfy type checking.
 from lxml import etree
+from oxipng import optimize
 
 import se
 import se.formatting
@@ -47,6 +48,13 @@ TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN = 80 # Space between last contributor li
 LEAGUE_SPARTAN_CSS_LETTER_SPACING = 5 # The SVG file specify `letter-spacing` in their CSS, so this accounts for that, in px.
 LEAGUE_SPARTAN_DIACRITIC_RATIO = 6 # When a line contains a letter with a diacritic like `ö`, add an amount of y offset of that line based on `LINE_HEIGHT / LEAGUE_SPARTAN_DIACRITIC_RATIO`, in px.
 LEAGUE_SPARTAN_HEIGHT_RATIO = 0.8549999849 # Font size of 93.56725311px * 0.8549999849 = 80px of real text height
+
+def optimize_png(path: Path) -> None:
+	"""
+	Use `oxipng` to optimize a PNG file.
+	"""
+
+	optimize(path, level=6)
 
 def get_image_lines_width(lines: list[str], line_height: int) -> float:
 	"""
@@ -333,12 +341,13 @@ def render_mathml_to_png(driver, mathml: str, output_filename: Path, output_file
 			image_file = Image.open(png_file.name)
 			image = _color_to_alpha(image_file, (255, 255, 255, 255))
 			image = image.crop(image.getbbox())
-
 			image.save(output_filename_2x)
+			optimize_png(output_filename_2x)
 
 			# Save normal version.
 			image = image.resize((image.width // 2, image.height // 2))
 			image.save(output_filename)
+			optimize_png(output_filename)
 
 def remove_image_metadata(filename: Path) -> None:
 	"""

@@ -95,6 +95,7 @@ setup(
 		"pillow==12.0.0",
 		"psutil==7.1.3",
 		"pyphen==0.17.2",
+		"pyoxipng==9.1.1",
 		"regex==2025.11.3",
 		"repro_zipfile==0.4.1",
 		"requests==2.32.5",

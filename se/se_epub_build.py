@@ -760,10 +760,14 @@ def _convert_svg_to_png(self, work_compatible_epub_dir: Path, metadata_dom: se.e
 	for file_path in work_compatible_epub_dir.glob("**/*.svg"):
 		# Convert SVGs to PNGs at 2x resolution.
 		# Path arguments must be cast to string.
-		svg2png(url=str(file_path), write_to=str(file_path.parent / (str(file_path.stem) + ".png")))
+		png_path = file_path.parent / (str(file_path.stem) + ".png")
+		svg2png(url=str(file_path), write_to=str(png_path))
+		se.images.optimize_png(png_path)
 
 		if not ibooks_srcset_bug_exists:
-			svg2png(url=str(file_path), write_to=str(file_path.parent / (str(file_path.stem) + "-2x.png")), scale=2)
+			png_path = file_path.parent / (str(file_path.stem) + "-2x.png")
+			svg2png(url=str(file_path), write_to=str(png_path), scale=2)
+			se.images.optimize_png(png_path)
 
 		# Remove the SVG.
 		(file_path).unlink()
