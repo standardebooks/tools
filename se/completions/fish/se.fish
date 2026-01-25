@@ -89,8 +89,8 @@ complete -c se -n "__fish_se_no_subcommand" -f -a help -d "List available S.E. c
 
 complete -c se -n "__fish_se_no_subcommand" -a hyphenate -d "Insert soft hyphens at syllable breaks in an XHTML file."
 complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s h -l help -x -d "show this help message and exit"
-complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s i -l ignore-h-tags -d "don’t add soft hyphens to text in <h1-6> tags"
-complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s l -l language -d "specify the language for the XHTML files; if unspecified, defaults to the `xml:lang` or `lang` attribute of the root <html> element"
+complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s i -l ignore-h-tags -d "don’t add soft hyphens to text in `<h1-6>` tags"
+complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s l -l language -d "specify the language for the XHTML files; if unspecified, defaults to the `xml:lang` or `lang` attribute of the root `<html>` element"
 complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s v -l verbose -d "increase output verbosity"
 
 complete -c se -n "__fish_se_no_subcommand" -a interactive-replace -d "Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (c) Center on match. (q) Save this file and quit."
@@ -121,23 +121,23 @@ complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s r -l no-re
 complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s w -l no-word-count -d "don’t calculate word count"
 complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s v -l verbose -d "increase output verbosity"
 
-complete -c se -n "__fish_se_no_subcommand" -a build-loi -d "Update the LoI file based on all <figure> elements that contain an <img>."
+complete -c se -n "__fish_se_no_subcommand" -a build-loi -d "Update the LoI file based on all `<figure>` elements that contain an `<img>`."
 complete -c se -A -n "__fish_seen_subcommand_from build-loi" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from build-loi" -s s -l stdout -d "print to stdout instead of writing to the LoI file"
 
-complete -c se -n "__fish_se_no_subcommand" -a build-manifest -d "Generate the <manifest> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file."
+complete -c se -n "__fish_se_no_subcommand" -a build-manifest -d "Generate the `<manifest>` element for the given Standard Ebooks source directory and write it to the ebook’s metadata file."
 complete -c se -A -n "__fish_seen_subcommand_from build-manifest" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from build-manifest" -s s -l stdout -d "print to stdout instead of writing to the metadata file"
 
-complete -c se -n "__fish_se_no_subcommand" -a build-spine -d "Generate the <spine> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file."
+complete -c se -n "__fish_se_no_subcommand" -a build-spine -d "Generate the `<spine>` element for the given Standard Ebooks source directory and write it to the ebook’s metadata file."
 complete -c se -A -n "__fish_seen_subcommand_from build-spine" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from build-spine" -s s -l stdout -d "print to stdout instead of writing to the metadata file"
 
-complete -c se -n "__fish_se_no_subcommand" -a build-svg-titles -d "Update or add SVG <title> elements based on the alt attributes from the <img> elements."
+complete -c se -n "__fish_se_no_subcommand" -a build-svg-titles -d "Update or add SVG `<title>` elements based on the alt attributes from the `<img>` elements."
 complete -c se -A -n "__fish_seen_subcommand_from build-svg-titles" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from build-svg-titles" -s v -l verbose -d "increase output verbosity"
 
-complete -c se -n "__fish_se_no_subcommand" -a build-title -d "Generate the title of an XHTML file based on its headings and update the file’s <title> element."
+complete -c se -n "__fish_se_no_subcommand" -a build-title -d "Generate the title of an XHTML file based on its headings and update the file’s `<title>` element."
 complete -c se -A -n "__fish_seen_subcommand_from build-title" -s h -l help -x -d "show this help message and exit"
 complete -c se -A -n "__fish_seen_subcommand_from build-title" -s n -l no-newline -d "with --stdout, don’t end output with a newline"
 complete -c se -A -n "__fish_seen_subcommand_from build-title" -s s -l stdout -d "print to stdout instead of writing to the file"
