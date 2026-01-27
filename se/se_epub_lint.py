@@ -1219,7 +1219,7 @@ def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 	# Search the `www.` subdomain specifically because we have a different check for the Wayback Machine, `web.archive.org`.
 	# Some archive.org IDs may contains forward slashes!
 	search_regex = r"^https?://(www\.)?archive\.org/"
-	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and re:test(., '/mode/|\\?|#|&')] | /html/body//a[re:test(@href, '{search_regex}') and re:test(., '/mode/|\\?|#|&')]")
+	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and re:test(., '/mode/|[\\?#&]|/$|^http://|^https://www\\.')] | /html/body//a[re:test(@href, '{search_regex}') and re:test(@href, '/mode/|[\\?#&]|/$|^http://|^https://www\\.')]")
 	if nodes:
 		messages.append(LintMessage("m-007", "Non-canonical Internet Archive URL. Expected: [url]https://archive.org/details/<BOOK-ID>[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
