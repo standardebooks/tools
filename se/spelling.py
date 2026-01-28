@@ -165,6 +165,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Bb])owlder(s?)\b", r"\1oulder\2", xhtml)		# bowlder/bowlders -> boulder/boulders
 	xhtml = regex.sub(r"\b([Bb])rand([\- ])new\b", r"\1rand\2new", xhtml)		# bran new -> brand new
 	xhtml = regex.sub(r"\b([Bb])rief case", r"\1riefcase", xhtml)			# brief case -> briefcase
+	xhtml = regex.sub(r"\b([Bb])rusk(ly|ness)?\b", r"\1rusque\2", xhtml)		# brusk(ly|ness) -> brusque(ly|ness)
 	xhtml = regex.sub(r"\b([Bb])urthen", r"\1urden", xhtml)				# burthen -> burden
 	xhtml = regex.sub(r"([Bb])ye?-and-([Bb])ye?\b", r"\1y-and-\2y", xhtml)		# by-and-bye, bye-and-by -> by-and-by (Note, may be capitalized in a song title)
 	xhtml = regex.sub(r"\b([Bb])y-by\b", r"\1ye-bye", xhtml)			# by-by -> bye-bye
