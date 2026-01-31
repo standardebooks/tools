@@ -865,6 +865,8 @@ class SeEpub:
 		- <https://standardebooks.org/ebooks/karl-marx_friedrich-engels/the-communist-manifesto/samuel-moore>
 
 		- <https://standardebooks.org/ebooks/abu-al-ala-al-maarri/the-luzumiyat/ameen-rihani>
+
+		- <https://standardebooks.org/ebooks/hans-jakob-christoffel-von-grimmelshausen/the-adventurous-simplicissimus/alfred-thomas-scrope-goodrick>
 		"""
 
 		authors = self.get_display_contributors("aut", False)
@@ -1004,9 +1006,10 @@ class SeEpub:
 			# Convert text to paths.
 			se.images.svg_text_to_paths(source_titlepage_svg_filename, dest_titlepage_svg_filename)
 
-	def _get_cover_title_box_contents_height(self, title_lines: list[str], title_line_height: int, author_lines: list[str]) -> int:
+	def _get_cover_title_box_contents_height(self, title_lines: list[str], title_line_height: int, author_lines: list[list[str]]) -> int:
 		title_line_count = len(title_lines)
-		author_line_count = len(author_lines)
+		# author_lines can have multiple authors with multiple lines per author, so flatten before counting
+		author_line_count = len([y for x in author_lines for y in x])
 
 		spacing = se.images.COVER_AUTHOR_SPACING
 		if author_line_count == 0:
@@ -1055,6 +1058,8 @@ class SeEpub:
 		- <https://standardebooks.org/ebooks/karl-marx_friedrich-engels/the-communist-manifesto/samuel-moore>
 
 		- <https://standardebooks.org/ebooks/abu-al-ala-al-maarri/the-luzumiyat/ameen-rihani>
+
+		- <https://standardebooks.org/ebooks/hans-jakob-christoffel-von-grimmelshausen/the-adventurous-simplicissimus/alfred-thomas-scrope-goodrick>
 		"""
 
 		authors = self.get_display_contributors("aut", False)
@@ -1100,7 +1105,7 @@ class SeEpub:
 
 		# Decide if we have to shrink the title text to fit the title box.
 		max_cover_title_box_canvas_height = se.images.COVER_TITLE_BOX_HEIGHT - (se.images.COVER_TITLE_BOX_VERTICAL_PADDING * 2)
-		cover_title_box_contents_height = self._get_cover_title_box_contents_height(title_lines, title_height, authors)
+		cover_title_box_contents_height = self._get_cover_title_box_contents_height(title_lines, title_height, authors_lines)
 		cover_title_box_contents_width = se.images.get_image_lines_width(title_lines, title_height)
 
 		while (cover_title_box_contents_height > max_cover_title_box_canvas_height or cover_title_box_contents_width > canvas_width) and title_class != "title-xsmall":
@@ -1113,7 +1118,7 @@ class SeEpub:
 				title_height = se.images.COVER_TITLE_SMALL_HEIGHT
 
 			title_lines = se.images.calculate_image_lines(title_upper, title_height, canvas_width)
-			cover_title_box_contents_height = self._get_cover_title_box_contents_height(title_lines, title_height, authors)
+			cover_title_box_contents_height = self._get_cover_title_box_contents_height(title_lines, title_height, authors_lines)
 			cover_title_box_contents_width = se.images.get_image_lines_width(title_lines, title_height)
 
 		element_y = se.images.COVER_TITLE_BOX_Y + \
