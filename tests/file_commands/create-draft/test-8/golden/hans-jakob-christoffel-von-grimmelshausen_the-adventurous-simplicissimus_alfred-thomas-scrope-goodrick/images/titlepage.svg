@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1400 770">
+	<title>The titlepage for the Standard Ebooks edition of The Adventurous Simplicissimus, by Hans Jakob Christoffel von Grimmelshausen. Translated by Alfred Thomas Scrope Goodrick</title>
+	<style type="text/css">
+		text{
+			font-family: "League Spartan";
+			letter-spacing: 5px;
+			text-anchor: middle;
+		}
+
+		.title{
+			font-size: 93.56725311px;
+		}
+
+		.author{
+			font-size: 70.17543793px;
+		}
+
+		.contributor-descriptor{
+			font-family: "OFL Sorts Mill Goudy";
+			font-size: 42.5079689px;
+			font-style: italic;
+			letter-spacing: 0;
+		}
+
+		.contributor{
+			font-size: 46.78362656px;
+		}
+	</style>
+	<text class="title" x="700" y="130">THE ADVENTUROUS</text>
+	<text class="title" x="700" y="230">SIMPLICISSIMUS</text>
+	<text class="author" x="700" y="390">HANS JAKOB CHRISTOFFEL</text>
+	<text class="author" x="700" y="470">VON GRIMMELSHAUSEN</text>
+	<text class="contributor-descriptor" x="700" y="660">translated by</text>
+	<text class="contributor" x="700" y="720">ALFRED THOMAS SCROPE GOODRICK</text>
+</svg>
