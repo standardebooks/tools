@@ -570,7 +570,7 @@ class SourceFile:
 		"""
 
 		# Try to find the selector using a regex.
-		matches = self.findall(fr"^[ \t]*{regex.escape(selector)}(?=\s*[,{{])", regex.MULTILINE)
+		matches = self.findall(fr"(?<=^[ \t]*){regex.escape(selector)}(?=(::?[a-z]+)?\s*[,{{])", regex.MULTILINE)
 
 		# In case the regex didn't match anything, include the selector anyway at line 0 which will just show an arrow in the output.
 		return matches or [(selector, 0)]
