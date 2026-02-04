@@ -162,6 +162,7 @@ case $state in
 			css-select)
 				_arguments -s \
 					{-f,--only-filenames}'[only output filenames of files that contain matches, not the matches themselves]' \
+					{-q,--quiet}'[don’t output anything, only a return code if matches exist in any files]' \
 					{-h,--help}'[show a help message and exit]' \
 					'*: :_files -g \*.xhtml'
 				;;
@@ -319,6 +320,7 @@ case $state in
 			xpath)
 				_arguments -s \
 					{-f,--only-filenames}'[only output filenames of files that contain matches, not the matches themselves]' \
+					{-q,--quiet}'[don’t output anything, only a return code if matches exist in any files]' \
 					{-h,--help}'[show a help message and exit]' \
 					'*: :_files -g \*.xhtml'
 				;;

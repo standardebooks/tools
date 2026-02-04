@@ -65,6 +65,7 @@ complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s v -l verbose 
 
 complete -c se -n "__fish_se_no_subcommand" -a css-select -d "Print the results of a CSS selector evaluated against a set of XHTML files."
 complete -c se -A -n "__fish_seen_subcommand_from css-select" -s f -l only-files -x -d "only output filenames of files that contain matches, not the matches themselves"
+complete -c se -A -n "__fish_seen_subcommand_from css-select" -s q -l quiet -x -d "don’t output anything, only a return code if matches exist in any files"
 complete -c se -A -n "__fish_seen_subcommand_from css-select" -s h -l help -x -d "show this help message and exit"
 
 complete -c se -n "__fish_se_no_subcommand" -a dec2roman -d "Convert a decimal number to a Roman numeral."
@@ -206,4 +207,5 @@ complete -c se -A -n "__fish_seen_subcommand_from word-count" -s h -l help -x -d
 
 complete -c se -n "__fish_se_no_subcommand" -a xpath -d "Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed."
 complete -c se -A -n "__fish_seen_subcommand_from xpath" -s f -l only-files -x -d "only output filenames of files that contain matches, not the matches themselves"
+complete -c se -A -n "__fish_seen_subcommand_from xpath" -s q -l quiet -x -d "don’t output anything, only a return code if matches exist in any files"
 complete -c se -A -n "__fish_seen_subcommand_from xpath" -s h -l help -x -d "show this help message and exit"

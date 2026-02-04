@@ -16,6 +16,7 @@ def xpath(plain_output: bool) -> int:
 
 	parser = argparse.ArgumentParser(description="Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed.")
 	parser.add_argument("-f", "--only-filenames", action="store_true", help="only output filenames of files that contain matches, not the matches themselves")
+	parser.add_argument("-q", "--quiet", action="store_true", help="don’t output anything, only a return code if matches exist in any files")
 	parser.add_argument("xpath", metavar="XPATH", help="an xpath expression")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()
@@ -35,6 +36,11 @@ def xpath(plain_output: bool) -> int:
 
 			if nodes:
 				has_results = True
+
+				if args.quiet:
+					# Quit early without printing anything.
+					break
+
 				console.print(se.prep_output(f"[path][link=file://{filepath}]{filepath}[/][/]", plain_output))
 				if not args.only_filenames:
 					for node in nodes:
