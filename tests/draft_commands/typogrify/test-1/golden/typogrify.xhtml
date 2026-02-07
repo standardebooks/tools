@@ -8,10 +8,10 @@
 	<body epub:type="bodymatter z3998:fiction">
 		<section id="chapter-1" epub:type="chapter">
 			<h2 epub:type="title">A Dreary Story</h2>
-			<!-- Straight quotes converted to curly quotes -->
+			<!-- Straight quotes converted to curly quotes. -->
 			<p>content of “chapter 1”</p>
 			<img alt="“Typography’s great …”—you can quote me on that."/>
-			<!-- Appropriate quotes for ’tis or equivalent -->
+			<!-- Appropriate quotes for ’tis or equivalent. -->
 			<ul>
 				<li>’tis</li>
 				<li>’Tis</li>
@@ -36,7 +36,7 @@
 				<li>“ ’tis</li>
 				<li>“ ’Tis</li>
 			</ul>
-			<!-- Remove space between number and fraction -->
+			<!-- Remove space between number and fraction. -->
 			<ul>
 				<li>123½</li>
 				<li>123¾</li>
@@ -45,6 +45,18 @@
 				<li>1,234¼</li>
 				<li>keep space after comma, ¹⁄₈₀₀</li>
 			</ul>
+			<!-- Saint vs Street abbreviation handling. -->
+			<!-- This should not get a following no-break space. -->
+			<p>I am going to Main St. later today.</p>
+			<!-- This should get a following no-break space. -->
+			<p>I am going to St. Louis tomorrow.</p>
+			<p>St. Francis of Assissi.</p>
+			<!-- These have ordinals preceding them, so should not get the no-break space. -->
+			<p>She came to the intersection of Oak and First St. She turned left.</p>
+			<p>She came to the intersection of Main and Fourth St. She turned left.</p>
+			<!-- False positives; we don't want them to get the NBS, but they currently do. -->
+			<p>She came to the intersection of Fourth and Main St. She turned left.</p>
+			<p>She came to the intersection of Fourth and Main St. She turned left.</p>
 		</section>
 	</body>
 </html>
