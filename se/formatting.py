@@ -114,10 +114,10 @@ def semanticate(xhtml: str) -> str:
 	])
 	# Only add name-title to St. if it appears to be an abbreviation for Saint, i.e. has a following no-break space added by typogrify.
 	xhtml = regex.sub(fr"(?<!\.|\B)(St\.)(?={se.NO_BREAK_SPACE})", r"""<abbr epub:type="z3998:name-title">St.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(M\.?P\.?|H\.?M\.?S\.?|S\.?S\.?|N\.?B\.?|W\.?C\.?|I\.?O\.?U\.?)(?!\b)", lambda result: """<abbr epub:type="z3998:initialism">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(R\.?A\.?|M\.?A\.?|M\.?D\.?|K\.?C\.?|Q\.?C\.?)(?!\b)", lambda result: """<abbr epub:type="z3998:initialism z3998:name-title">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(M\.?P\.?|H\.?M\.?S\.?|S\.?S\.?|N\.?B\.?|W\.?C\.?|I\.?O\.?U\.?)(?!\B)", lambda result: """<abbr epub:type="z3998:initialism">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(R\.?A\.?|M\.?A\.?|M\.?D\.?|K\.?C\.?|Q\.?C\.?)(?!\B)", lambda result: """<abbr epub:type="z3998:initialism z3998:name-title">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))U\.?S\.?A\.?(?!\b)", r"""<abbr epub:type="z3998:initialism z3998:place">U.S.A.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([NESW]\.?[NESW]\.?)(?!\b)", lambda result: """<abbr epub:type="se:compass">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([NESW]\.?[NESW]\.?)(?!\B)", lambda result: """<abbr epub:type="se:compass">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Bros\.", r"<abbr>Bros.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))Mt\.", r"<abbr>Mt.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Vv])ol(s?)\.", r"<abbr>\1ol\2.</abbr>", xhtml)
