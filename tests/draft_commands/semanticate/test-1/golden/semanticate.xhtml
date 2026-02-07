@@ -14,12 +14,12 @@
 			<p>What to do, <abbr epub:type="z3998:initialism">e.g.</abbr> what to do.</p>
 			<p>The picture was almost <abbr epub:type="z3998:initialism">3D</abbr>.</p>
 			<p><abbr epub:type="z3998:initialism">P.S.</abbr> What now?</p>
-			<p>What to do, <abbr epub:type="z3998:initialism">N.B.</abbr> what to do.</p>
-			<p>What to do, <abbr epub:type="z3998:initialism">N.B.</abbr> what to do.</p>
-			<p>What to do, <abbr epub:type="z3998:initialism">N.B.</abbr>, what to do.</p>
-			<p>What to do, <abbr epub:type="z3998:initialism">N.B.</abbr>, what to do.</p>
-			<p>I gave an IOU to John.</p>
+			<p>What to do, <abbr epub:type="z3998:initialism">N.B.</abbr>. what to do.</p>
+			<p>What to do, <abbr epub:type="z3998:initialism">N.B.</abbr>. what to do.</p>
+			<p>What to do, <abbr epub:type="z3998:initialism">N.B.</abbr>., what to do.</p>
+			<p>What to do, <abbr epub:type="z3998:initialism">N.B.</abbr>., what to do.</p>
 			<p>I gave an <abbr epub:type="z3998:initialism">I.O.U.</abbr> to John.</p>
+			<p>I gave an <abbr epub:type="z3998:initialism">I.O.U.</abbr>. to John.</p>
 			<p>I gave a <abbr epub:type="z3998:initialism">TV</abbr> to John.</p>
 			<p>I gave a <abbr epub:type="z3998:initialism">TV</abbr> to John.</p>
 			<p>You wouldn’t want a <abbr epub:type="z3998:initialism">TV</abbr>, would you?</p>
@@ -80,14 +80,14 @@
 			<p>“John said, ‘I was concerned, <abbr class="eoc">etc.</abbr>’ ‘Will this ever happen?’</p>
 			<p>I said I was concerned, <abbr class="eoc">etc.</abbr> “But what happened?”</p>
 			<p>His name was abbreviated <abbr class="eoc" epub:type="z3998:given-name">Chas.</abbr></p>
-			<p>I gave him an <abbr class="eoc" epub:type="z3998:initialism">I.O.U.</abbr></p>
-			<p>I gave him an <abbr class="eoc" epub:type="z3998:initialism">I.O.U.</abbr></p>
-			<p>“I gave him an <abbr class="eoc" epub:type="z3998:initialism">I.O.U.</abbr>”</p>
-			<p>“I gave him an <abbr class="eoc" epub:type="z3998:initialism">I.O.U.</abbr>”</p>
-			<p>I gave him an <abbr class="eoc" epub:type="z3998:initialism">N.B.</abbr></p>
-			<p>I gave him an <abbr class="eoc" epub:type="z3998:initialism">N.B.</abbr></p>
-			<p>“ ‘I gave him an <abbr class="eoc" epub:type="z3998:initialism">N.B.</abbr>’</p>
-			<p>“ ‘I gave him an <abbr class="eoc" epub:type="z3998:initialism">N.B.</abbr>’</p>
+			<p>I gave him an <abbr epub:type="z3998:initialism">I.O.U.</abbr>.</p>
+			<p>I gave him an <abbr epub:type="z3998:initialism">I.O.U.</abbr>.</p>
+			<p>“I gave him an <abbr epub:type="z3998:initialism">I.O.U.</abbr>.”</p>
+			<p>“I gave him an <abbr epub:type="z3998:initialism">I.O.U.</abbr>.”</p>
+			<p>I gave him an <abbr epub:type="z3998:initialism">N.B.</abbr>.</p>
+			<p>I gave him an <abbr epub:type="z3998:initialism">N.B.</abbr>.</p>
+			<p>“ ‘I gave him an <abbr epub:type="z3998:initialism">N.B.</abbr>.’</p>
+			<p>“ ‘I gave him an <abbr epub:type="z3998:initialism">N.B.</abbr>.’</p>
 			<p>She woke up around 3 <abbr class="eoc">a.m.</abbr></p>
 			<p>She woke up around 3 <abbr class="eoc">a.m.</abbr></p>
 			<p>She woke up around 3 <abbr class="eoc">a.m.</abbr></p>
@@ -121,6 +121,7 @@
 			<p>John worked for U.P.P. on the weekend.</p>
 			<p>John worked for P.P.S.T. on the weekend.</p>
 			<p>John worked for U.P.P.S. on the weekend.</p>
+			<p>RAYON IS SSORRY NBS NEAR SWISH.</p>
 			<!-- has tag, should get eoc -->
 			<p>What to do, <abbr class="eoc">i.e.</abbr></p>
 			<p>“What to do, <abbr class="eoc">i.e.</abbr>”</p>
@@ -224,6 +225,12 @@
 			</p>
 			<!--Lowercase `i` followed by hyphen minus or non-breaking hyphen should not be tagged-->
 			<p>The initial letter in the string `i-dont-know-why` should not be tagged as a roman numeral, nor should the initial letter in the string `i‑it`.</p>
+			<!-- SAINT/STREET ABBREVIATIONS -->
+			<!-- If NBSP is present, it gets name-title tag, if not it doesn't -->
+			<p>I am going to <abbr epub:type="z3998:name-title">St.</abbr> Louis tomorrow.</p>
+			<p><abbr epub:type="z3998:name-title">St.</abbr> Francis of Assissi.</p>
+			<p>She came to the intersection of Fourth and Main <abbr epub:type="z3998:name-title">St.</abbr> She turned left.</p>
+			<p>She came to the intersection of Fourth and Main <abbr>St.</abbr> She turned left.</p>
 		</section>
 	</body>
 </html>
