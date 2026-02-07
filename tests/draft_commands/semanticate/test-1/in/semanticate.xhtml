@@ -121,6 +121,7 @@
 			<p>John worked for U.P.P. on the weekend.</p>
 			<p>John worked for P.P.S.T. on the weekend.</p>
 			<p>John worked for U.P.P.S. on the weekend.</p>
+			<p>RAYON IS SSORRY NBS NEAR SWISH.</p>
 			<!-- has tag, should get eoc -->
 			<p>What to do, <abbr>i.e.</abbr></p>
 			<p>“What to do, <abbr>i.e.</abbr>”</p>
@@ -224,6 +225,12 @@
 			</p>
 			<!--Lowercase `i` followed by hyphen minus or non-breaking hyphen should not be tagged-->
 			<p>The initial letter in the string `i-dont-know-why` should not be tagged as a roman numeral, nor should the initial letter in the string `i‑it`.</p>
+			<!-- SAINT/STREET ABBREVIATIONS -->
+			<!-- If NBSP is present, it gets name-title tag, if not it doesn't -->
+			<p>I am going to St. Louis tomorrow.</p>
+			<p>St. Francis of Assissi.</p>
+			<p>She came to the intersection of Fourth and Main St. She turned left.</p>
+			<p>She came to the intersection of Fourth and Main St. She turned left.</p>
 		</section>
 	</body>
 </html>
