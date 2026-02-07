@@ -176,8 +176,14 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# Remove `nbsp`s between words.
 	xhtml = regex.sub(fr"([^>…]){se.NO_BREAK_SPACE}([\p{{Letter}}\p{{Digit}}])", r"\1 \2", xhtml)
 
-	# Replace `Mr.`, `Mrs.`, and other abbreviations, and include a non-breaking space.
-	xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?|Hon|Mdlle)\.?(</abbr>)?\s+", fr"\1.\2{se.NO_BREAK_SPACE}", xhtml)
+	# Ensure `Mr.`, `Mrs.`, and other abbreviations have a trailing period, and include a non-breaking space.
+	xhtml = regex.sub(r"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|MM|Mmes?|Mlles?|Hon|Mdlle)\.?(</abbr>)?\s+", fr"\1.\2{se.NO_BREAK_SPACE}", xhtml)
+
+	# Add a period to any St abbreviations missing one.
+	xhtml = regex.sub(r"\b(St)(?!\.)\b", r"\1.", xhtml)
+
+	# St. can be an abbreviation for Saint, e.g. St. Louis, or street, e.g. 123 Main St. We only want the "Saint" abbreviations to get the following non-breaking space. We attempt to identify them by a St. followed by an uppercase word, and not preceded by an ordinal. There could still be false positives, e.g. "He lived at 73 Oak St. She got there at noon." However, these are rare, and will have to be handled manually.
+	xhtml = regex.sub(r"""(?<!(?:st|nd|rd|th) )(St\.)\s+([A-Z])""", fr"\1{se.NO_BREAK_SPACE}\2", xhtml)
 
 	# Add a period to `Messrs`, without a non-breaking space.
 	xhtml = regex.sub(r"\bMessrs\.?(</abbr>)?\s+", r"Messrs.\1 ", xhtml)
@@ -188,7 +194,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	# `\P{}` is the inverse of `\p{}`, so this regex matches any of the abbrs followed by any punctuation except a period. We also `or` against a word joiner, in case `Mr.` is run up against an em dash.
 	xhtml = regex.sub(fr"\b(Mr|Mr?s|Drs?|Profs?|Lieut|Fr|Lt|Capt|Pvt|Esq|Mt|St|MM|Mmes?|Mlles?)\.?(</abbr>)?([^\P{{Punctuation}}\.]|{se.WORD_JOINER})", r"\1.\2\3", xhtml)
 
-	# We added an nbsp after `St.` above. But, sometimes a name can be abbreviated, like `Bob St. M.`. In this case we don't want an `nbsp` because `<abbr>` is already `white-space: nowrap;`.
+	# We added an nbsp after some `St.` above. But, sometimes a name can be abbreviated, like `Bob St. M.`. In this case we don't want an `nbsp` because `<abbr>` is already `white-space: nowrap;`.
 	xhtml = regex.sub(fr"""<abbr epub:type="(z3998:[^"\s]+?name)">St\.{se.NO_BREAK_SPACE}([A-Z])""", r"""<abbr epub:type="\1">St. \2""", xhtml)
 
 	xhtml = regex.sub(r"\bNo(s?)\.\s+([0-9]+)", fr"No\1.{se.NO_BREAK_SPACE}\2", xhtml)
