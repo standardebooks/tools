@@ -415,7 +415,7 @@ def remove_image_metadata(filename: Path) -> None:
 		except UnidentifiedImageError as ex:
 			raise se.InvalidFileException(f"Couldn’t identify image type of [path][link=file://{filename.resolve()}]{filename}[/].") from ex
 
-		data = list(image.getdata())
+		data = list(image.get_flattened_data())
 
 		image_without_exif = Image.new(image.mode, image.size)
 		image_without_exif.putdata(data)
