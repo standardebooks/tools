@@ -2696,8 +2696,8 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 	if matches:
 		messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(matches)))
 
-	# Check for `nbsp` before times.
-	nodes = dom.xpath(f"/html/body//text()[re:test(., '[0-9][^{se.NO_BREAK_SPACE}]?$')][(following-sibling::abbr[1])[re:test(., '^[ap]\\.m\\.$')]]")
+	# Check for `nbsp` before times, except in the ToC, since no-break spaces are removed from `<title>`, which is used to generate ToC entries.
+	nodes = dom.xpath(f"/html/body//*[not(ancestor-or-self::*[re:test(@epub:type, '\\btoc\\b')])]/text()[re:test(., '[0-9][^{se.NO_BREAK_SPACE}]?$')][(following-sibling::abbr[1])[re:test(., '^[ap]\\.m\\.$')]]")
 	if nodes:
 		messages.append(LintMessage("t-009", "Missing no-break space before time and [text]a.m.[/] or [text]p.m.[/].", se.MESSAGE_TYPE_WARNING, filename, [LintSubmessage(node[-10:] + "<abbr", node.getparent().sourceline) for node in nodes]))
 
