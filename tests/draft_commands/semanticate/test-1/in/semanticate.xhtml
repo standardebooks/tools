@@ -206,6 +206,10 @@
 			<p>Do you need an X-ray, do you think?</p>
 			<!-- Neither `LXVJI` nor `vijii` should be tagged. -->
 			<p>J must be the last character, so these are invalid: LXVJI, vijii.</p>
+			<!-- Don't add roman semantics to numerals that are MathML. -->
+			<p>
+				<m:ci type="real">v</m:ci>
+			</p>
 			<!-- Although `di` and `mix` are valid roman numerals, they should not be tagged
 			as they are more likely to be valid words, Italian and English respectively. -->
 			<p>The words di and mix, though valid roman numerals, should not be tagged.</p>
