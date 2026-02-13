@@ -41,6 +41,9 @@ def semanticate(plain_output: bool) -> int:
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return_code = se.InvalidInputException.code
+		except (se.InvalidXmlException, se.InvalidXhtmlException) as ex:
+			se.print_error(f"Invalid XML: [path][link=file://{filename}]{filename}[/][/]. Exception: {ex}", plain_output=plain_output)
+			return_code = se.InvalidInputException.code
 
 		if args.verbose:
 			console.print(" OK")
