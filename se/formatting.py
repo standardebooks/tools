@@ -1379,10 +1379,6 @@ def titlecase(text: str) -> str:
 	# Like `Will-o’-the-Wisp`.
 	text = regex.sub(r"(?<=-)(O’|The)-", lambda result: result.group(1).lower() + "-", text)
 
-	# Fix non-breaking spaces; we can assume that they’re intentionally used in names.
-	# If `titlecase` is fixed we can remove this, see <https://github.com/ppannuto/python-titlecase/issues/95>.
-	text = regex.sub(fr"{se.NO_BREAK_SPACE}([a-z])", lambda result: " " + result.group(1).upper(), text)
-
 	# Finally, some special exceptions.
 	text = regex.sub(r"des Moines", "Des Moines", text)
 
