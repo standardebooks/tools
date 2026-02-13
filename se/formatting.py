@@ -1368,10 +1368,13 @@ def titlecase(text: str) -> str:
 	# Lowercase `etc.`.
 	text = text.replace("Etc.", "etc.")
 
+	# `a.m.` and `p.m.` are always lowercased.
+	text = regex.sub(r"(?<![a-z])([AP]\.M\.)(?![a-z])", lambda result: result.group(1).lower(), text, flags=regex.IGNORECASE)
+
 	# Initialisms followed by `of` should have `of` lowercased.
 	text = regex.sub(r"\b(([A-Z]\.)+) Of", r"\1 of", text)
 	# Lowercase some special cases.
-	text = regex.sub(r"((A|P)\.M\.) To", r"\1 to", text)
+	text = regex.sub(r"([ap]\.m\.) To", r"\1 to", text)
 
 	# Like `Will-o’-the-Wisp`.
 	text = regex.sub(r"(?<=-)(O’|The)-", lambda result: result.group(1).lower() + "-", text)
