@@ -156,6 +156,7 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 
 	# Finally fix some other mistakes.
 	xhtml = xhtml.replace("—-", "—")
+	xhtml = regex.sub(r"\s—\s", f"{se.WORD_JOINER}—{se.WORD_JOINER}", xhtml)
 
 	# Possessives after inline elements need to be corrected after `smartypants`.
 	xhtml = regex.sub(r"</(i|em|b|strong|q|span)>‘(s|d)", r"</\1>’\2", xhtml)
