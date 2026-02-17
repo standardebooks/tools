@@ -3378,7 +3378,7 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 		messages.append(LintMessage("y-014", "Possible typo: Unexpected [text].[/] at the end of quotation. Hint: If a dialog tag follows, should this be [text],[/]?", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
 
 	# Check for some common OCR misspellings.
-	typos = source_file.findall(r"\bbad (?:been|seen)\b")
+	typos = source_file.findall(r"\bbad (?:been|seen)\b|\scf\s")
 	if typos:
 		messages.append(LintMessage("y-015", "Possible typo: Misspelled word.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(typos)))
 
