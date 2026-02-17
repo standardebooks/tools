@@ -91,6 +91,7 @@ case $state in
 			build-images)
 				_arguments -s \
 					{-h,--help}'[show a help message and exit]' \
+					{-n,--no-generate}'[don’t generate new source cover/titlepage SVGs, only build existing ones]' \
 					{-v,--verbose}'[increase output verbosity]' \
 					'*: :_directories'
 				;;

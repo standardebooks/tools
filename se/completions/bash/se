@@ -28,7 +28,7 @@ _se(){
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			build-images)
-				COMPREPLY+=($(compgen -W "-h --help -v --verbose" -- "${cur}"))
+				COMPREPLY+=($(compgen -W "-h --help -g --no-generate -v --verbose" -- "${cur}"))
 				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
 				;;
 			build-loi)
