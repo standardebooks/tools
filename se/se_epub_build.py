@@ -1043,6 +1043,10 @@ def _build_kobo(self, work_dir: Path, work_compatible_epub_dir: Path, output_dir
 		with importlib.resources.files("se.data.templates").joinpath("se-kobo.css").open("r", encoding="utf-8") as compatibility_css_file:
 			css_file.write("\n\n" + compatibility_css_file.read())
 
+	with open(work_kepub_dir / "epub" / "css" / "core.css", "a", encoding="utf-8") as css_file:
+		with importlib.resources.files("se.data.templates").joinpath("kobo.css").open("r", encoding="utf-8") as compatibility_css_file:
+			css_file.write("\n\n" + compatibility_css_file.read())
+
 	# Kobos don't support `break-*` CSS, so attempt to single-file collections into multiple files to create a page break effect.
 	work_kepub.split_collection_files()
 
@@ -1092,6 +1096,25 @@ def _build_kobo_process_xhtml(work_kepub: SeEpub, file_path: Path) -> None:
 	# Don't add spans to the ToC.
 	if dom.xpath("/html/body//nav[contains(@epub:type, 'toc')]"):
 		return
+
+	# First, add child `<span>`s to each `<a>` element, allowing us to set the correct bottom border color for dark mode.
+	# Kobo forces a black bottom border on each `<a>` that we can't override, but it doesn't change the border to white in dark mode!
+	# This makes links undiscernable from regular text, without this fix.
+	for node in dom.xpath("//a"):
+		tag_string = node.to_tag_string().replace("<a ", "<a xmlns:epub=\"http://www.idpf.org/2007/ops\" ") + "</a>"
+
+		# Wrap the contents of the `<a>` by replacing the `<a>` with a `<span>`, then recreating the `<a>` around it.
+		link_node = se.easy_xml.EasyXmlElement(tag_string)
+		link_node.tail = node.lxml_element.tail
+		node.lxml_element.tail = ""
+		node.lxml_element.tag = "span"
+
+		# Remove all attributes.
+		for name, _ in sorted(node.lxml_element.items()):
+			node.remove_attr(name)
+
+		node.set_attr("class", "kobo-link")
+		node.wrap_with(link_node)
 
 	# # Remove `quote-align` `<span>`s we inserted above, since Kobo has weird spacing problems with them.
 	# for node in dom.xpath("/html/body//span[contains(@class, 'quote-align')]"):

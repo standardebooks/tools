@@ -6,3 +6,14 @@ section[epub|type~="colophon"] h2,
 section[epub|type~="imprint"] h2{
 	font-size: 0; /* Required for Kobo not to add an extra page to the title */
 }
+
+/*
+Kobo forces a black border on all links, but doesn't change to white when dark mode is enabled!
+This means that in dark mode, links are not underlined.
+We can't override Kobo's style for `<a>`, but we *can* insert a `<span>` into each `<a>`, which we then style with the correct border color.
+We have to use `currentColor` to account for the case of non-dark-mode, because Kobo doesn't support `@media` queries.
+Kobo default styling is for dotted underlines, see <https://www.mobileread.com/forums/showpost.php?p=4468413&postcount=2>.
+*/
+span.kobo-link{
+	border-bottom: 1px dotted currentColor !important;
+}
