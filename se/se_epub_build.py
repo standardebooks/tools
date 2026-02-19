@@ -1131,6 +1131,9 @@ def _build_kobo_process_xhtml(work_kepub: SeEpub, file_path: Path) -> None:
 	xhtml = xhtml.replace(" xmlns:html=\"http://www.w3.org/1999/xhtml\"", "")
 	xhtml = regex.sub(r"<(/?)html:span", r"<\1span", xhtml)
 
+	# Currently, our house soft-hyphenation is better than Kobo's built-in hyphenation.
+	xhtml = se.typography.hyphenate(xhtml, None, True)
+
 	with open(file_path, "w", encoding="utf-8") as file:
 		file.write(xhtml)
 
