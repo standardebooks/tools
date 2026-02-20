@@ -577,6 +577,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = xhtml.replace("Æneas", r"Aeneas")
 	xhtml = xhtml.replace("Æneid", r"Aeneid")
 	xhtml = xhtml.replace("Æschylus", r"Aeschylus")
+	xhtml = xhtml.replace("Æsop", r"Aesop")
 	xhtml = xhtml.replace("æsthet", r"aesthet") # aesthetic, aesthete, etc.
 	xhtml = xhtml.replace("Æsthet", r"Aesthet") # Aesthetic, Aesthete, etc.
 	xhtml = xhtml.replace("Cæsar", r"Caesar")
