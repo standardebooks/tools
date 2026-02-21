@@ -2705,7 +2705,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 	# Only check `<p>`, because things like `<table>`/`<td>` are more likely to contain non-time numbers.
 	# Exclude numbers preceded by equals, or succeeded by some measurements.
 	# Also remove `<a>` first because they are likely to contain numbered section references.
-	nodes = dom.xpath("/html/body//text()[re:test(., '[^=]\\s[0-9]{1,2}\\.[0-9]{2}(?![0-9′″°%]|\\.[0-9]|\\scubic|\\smetric|\\smeters|\\smiles|\\sfeet|\\sinches)') and not(ancestor::a or ancestor::table)]")
+	nodes = dom.xpath("/html/body//text()[re:test(., '[^=]\\s[0-9]{1,2}\\.[0-9]{2}(?![0-9′″°%]|\\.[0-9]|\\scubic|\\smetric|\\smeters|\\smiles|\\sfeet|\\sinches)') and not(ancestor::a or ancestor::table) and not(following-sibling::abbr[not(re:test(., '^[ap]\\.m\\.$'))]) ]")
 	submessages = []
 	for node in nodes:
 		for time_match in regex.findall(r"(?<=[^=]\s)[0-9]{1,2}\.[0-9]{2}(?![0-9′″°%]|\.[0-9]|\scubic|\smetric|\smeters|\smiles|\sfeet|\sinches)", node):
