@@ -92,7 +92,6 @@ def calculate_image_lines(string: str, target_height: int, canvas_width: int) ->
 	string: The string to inspect.
 	target_height: The target letter height, in pixels.
 	canvas_width: The width of the canvas, in pixels.
-	top_to_bottom: If `True`, try to place the widest lines at the top instead of the bottom.
 
 	OUTPUTS
 	An array of strings. Each string represents one line of text in the final image. The lines are ordered with the widest at the bottom.
