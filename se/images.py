@@ -86,7 +86,7 @@ def calculate_image_lines(string: str, target_height: int, canvas_width: int) ->
 	"""
 	Helper function.
 
-	Given a string, a target letter height, and the canvas width, return an array representing the string broken down into enough lines to fill the canvas without overflowing. Lines are ordered with the widest at the bottom.
+	Given a string, a target letter height, and the canvas width, return an array representing the string broken down into enough lines to fill the canvas without overflowing. Lines are typically ordered with the widest at the bottom.
 
 	INPUTS
 	string: The string to inspect.
@@ -94,7 +94,7 @@ def calculate_image_lines(string: str, target_height: int, canvas_width: int) ->
 	canvas_width: The width of the canvas, in pixels.
 
 	OUTPUTS
-	An array of strings. Each string represents one line of text in the final image. The lines are ordered with the widest at the bottom.
+	An array of strings. Each string represents one line of text in the final image. The lines are typically ordered with the widest at the bottom.
 	"""
 
 	with importlib.resources.as_file(importlib.resources.files("se.data.fonts.league_spartan").joinpath("league-spartan-bold.otf")) as path:
@@ -149,12 +149,18 @@ def calculate_image_lines(string: str, target_height: int, canvas_width: int) ->
 			proposed_top_line = lines[0] + f" {bottom_line_words.pop(0)}"
 			proposed_bottom_line = " ".join(bottom_line_words)
 
-			top_width = _get_league_spartan_line_width(proposed_top_line, font)
-			bottom_width = _get_league_spartan_line_width(proposed_bottom_line, font)
+			proposed_top_width = _get_league_spartan_line_width(proposed_top_line, font)
+			proposed_bottom_width = _get_league_spartan_line_width(proposed_bottom_line, font)
 
-			# Proposed top line is now wider than the bottom, abort.
-			if top_width > bottom_width:
-				break
+			current_lines_ratio = bottom_width / top_width
+
+			# If proposed top line is now wider than the bottom and a further balancing step isn’t necessary, abort.
+			if proposed_top_width > proposed_bottom_width:
+				if current_lines_ratio < 2:
+					break
+
+			top_width = proposed_top_width
+			bottom_width = proposed_bottom_width
 
 			# Proposed top line is narrower than the bottom, rebuild the bottom line and restart the loop.
 			lines[0] = proposed_top_line
