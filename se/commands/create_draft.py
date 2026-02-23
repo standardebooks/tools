@@ -811,7 +811,10 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 			titlepage_xhtml = titlepage_xhtml.replace("TITLE", escape(title))
 
-			titlepage_xhtml = titlepage_xhtml.replace("AUTHOR_NAME", _generate_titlepage_string(authors, "author"))
+			if not(len(authors) == 1 and authors[0]["name"] == "Anonymous"):
+				titlepage_xhtml = titlepage_xhtml.replace("AUTHOR_NAME", _generate_titlepage_string(authors, "author"))
+			else:
+				titlepage_xhtml = regex.sub(r"<p>By.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)
 
 			if translators:
 				titlepage_xhtml = titlepage_xhtml.replace("TRANSLATOR_NAME", _generate_titlepage_string(translators, "translator"))
