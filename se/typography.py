@@ -82,11 +82,9 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 		# When we encounter an actual `rsquo`, it's 99% correct as-is.
 		xhtml = xhtml.replace("’", "!#se:rsquo#!")
 
-		xhtml = smartypants.smartypants(xhtml) # `attr.u` *should* output unicode characters instead of HTML entities, but it doesn't work.
-
-		# Convert entities again.
-		xhtml = html.unescape(xhtml) # This converts HTML entities to unicode.
-		xhtml = regex.sub(r"&(?![#\p{Lowercase_Letter}]+;)", "&amp;", xhtml) # Oops! `html.unescape()` also unescapes plain ampersands...
+		# Have smartypants return unicode characters rather than HTML entities
+		attrs = smartypants.Attr.default | smartypants.Attr.u
+		xhtml = smartypants.smartypants(xhtml, attrs)
 
 	# Replace no-break hyphen with regular hyphen.
 	# We don't do this anymore and leave this check to `se find-unusual-characters`.
