@@ -779,7 +779,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 						matches = regex.search(r"^([\p{Letter}]+) ([\p{Letter}]+)$", producer)
 
 						if matches:
-							contributor_file_as_node.set_text( f"{matches[1]}, {matches[2]}")
+							contributor_file_as_node.set_text( f"{matches[2]}, {matches[1]}")
 
 					# Known special cases.
 					if "David Widger" in producer:
