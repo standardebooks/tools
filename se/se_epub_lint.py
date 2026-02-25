@@ -4056,7 +4056,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 				# Collect certain `<abbr>` elements to check that required styles are included, but not in the colophon.
 				if not dom.xpath("/html/body/*[contains(@epub:type, 'colophon')]"):
 					# For now, temperature, acronym, and era are the only `<abbr>`s with required styles.
-					abbr_elements_requiring_css += dom.xpath(f"/html/body//abbr[re:test(@epub:type, '\\b({"|".join(ABBR_REQUIRING_STYLES)})\\b')]")
+					abbr_elements_requiring_css += dom.xpath(f"/html/body//abbr[re:test(@epub:type, '\\b({'|'.join(ABBR_REQUIRING_STYLES)})\\b')]")
 
 				# Check and log missing glossary keys.
 				if ebook_flags["has_glossary_search_key_map"] and file_path.name not in IGNORED_FILENAMES:
