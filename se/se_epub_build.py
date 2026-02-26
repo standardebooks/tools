@@ -316,11 +316,13 @@ def _convert_cover_to_jpg(work_dir: Path, work_compatible_epub_dir: Path, metada
 		# ...and it's not a JPG, convert it to one.
 		if cover_work_path.suffix in (".svg", ".png"):
 			# If the cover is SVG, convert to PNG first.
+			png_path = cover_work_path
 			if cover_work_path.suffix == ".svg":
-				svg2png(url=str(cover_work_path), write_to=str(work_dir / "cover.png"))
+				png_path = work_dir / "cover.png"
+				svg2png(url=str(cover_work_path), write_to=str(png_path))
 
 			# Now convert PNG to JPG.
-			cover_file = Image.open(work_dir / "cover.png")
+			cover_file = Image.open(png_path)
 			cover_image = cover_file.convert("RGB") # Remove alpha channel from PNG if necessary.
 			cover_image.save(work_compatible_epub_dir / "epub" / "images" / "cover.jpg")
 
