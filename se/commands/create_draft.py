@@ -28,6 +28,7 @@ CONTRIBUTOR_BLOCK_TEMPLATE = """<dc:contributor id="CONTRIBUTOR_ID">CONTRIBUTOR_
 		<meta property="se:name.person.full-name" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_FULL_NAME</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_WIKI_URL</meta>
 		<meta property="se:url.authority.nacoaf" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_NACOAF_URI</meta>
+		<meta property="display-seq" refines="#CONTRIBUTOR_ID">1</meta>
 		<meta property="role" refines="#CONTRIBUTOR_ID" scheme="marc:relators">CONTRIBUTOR_MARC</meta>"""
 
 USER_AGENT = "Standard Ebooks toolset <https://standardebooks.org/tools>"
@@ -199,9 +200,17 @@ def _generate_metadata_contributor_xml(contributors: list[dict], contributor_typ
 	"""
 
 	output = ""
+	display_seq = 1
 
 	for i, contributor in enumerate(contributors):
 		contributor_block = CONTRIBUTOR_BLOCK_TEMPLATE
+
+		# Only keep `display-seq` for illustrators.
+		if contributor_type == "illustrator":
+			contributor_block = contributor_block.replace("""<meta property="display-seq" refines="#CONTRIBUTOR_ID">1</meta>""", f"""<meta property="display-seq" refines="#CONTRIBUTOR_ID">{display_seq}</meta>""")
+			display_seq = display_seq + 1
+		else:
+			contributor_block = contributor_block.replace("""<meta property="display-seq" refines="#CONTRIBUTOR_ID">1</meta>""", "")
 
 		if contributor["wiki_url"]:
 			contributor_block = contributor_block.replace(">CONTRIBUTOR_WIKI_URL<", f">{contributor['wiki_url']}<")
@@ -216,9 +225,9 @@ def _generate_metadata_contributor_xml(contributors: list[dict], contributor_typ
 
 		if contributor["name"].lower() == "anonymous":
 			contributor_block = contributor_block.replace(">CONTRIBUTOR_SORT<", ">Anonymous<")
-			contributor_block = contributor_block.replace("""<meta property="se:name.person.full-name" refines="#ID">CONTRIBUTOR_FULL_NAME</meta>""", "")
-			contributor_block = contributor_block.replace("""<meta property="se:url.encyclopedia.wikipedia" refines="#ID">CONTRIBUTOR_WIKI_URL</meta>""", "")
-			contributor_block = contributor_block.replace("""<meta property="se:url.authority.nacoaf" refines="#ID">CONTRIBUTOR_NACOAF_URI</meta>""", "")
+			contributor_block = contributor_block.replace("""<meta property="se:name.person.full-name" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_FULL_NAME</meta>""", "")
+			contributor_block = contributor_block.replace("""<meta property="se:url.encyclopedia.wikipedia" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_WIKI_URL</meta>""", "")
+			contributor_block = contributor_block.replace("""<meta property="se:url.authority.nacoaf" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_NACOAF_URI</meta>""", "")
 
 		contributor_block = contributor_block.replace(">CONTRIBUTOR_NAME<", f">{escape(contributor['name'])}<")
 		contributor_block = contributor_block.replace("id=\"CONTRIBUTOR_ID\"", f"id=\"{contributor_type}-{i + 1}\"")

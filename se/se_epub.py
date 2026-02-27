@@ -354,14 +354,14 @@ class SeEpub:
 			identifier += "various-translators/"
 			process_translators = False
 
-		# For contributors, we add both translators and illustrators.
-		# However, we may not include specific translators or illustrators in certain cases, namely if *some* contributors have a `display-seq` property, and others do not.
+		# For contributors, we always add translators except in certain cases, namely if *some* translators have a `display-seq` property, and others do not.
 		# According to the epub spec, if that is the case, we should only add those that *do* have the attribute.
+		# We only add illustrators and editors if they have `display-seq` set to a nonzero value.
 		# By SE convention, any contributor with `display-seq == 0` will be excluded from the identifier string.
 		translators = []
 		illustrators = []
+		editors = []
 		translators_have_display_seq = False
-		illustrators_have_display_seq = False
 		for role in self.metadata_dom.xpath("/package/metadata/meta[@property='role']"):
 			contributor_id = role.get_attr("refines").lstrip("#")
 			contributor_element = self.metadata_dom.xpath("/package/metadata/dc:contributor[@id=\"" + contributor_id + "\"]")
@@ -380,12 +380,15 @@ class SeEpub:
 
 					translators.append(contributor)
 
-				if role.text == "ill":
-					if display_seq:
-						contributor["display_seq"] = display_seq[0]
-						illustrators_have_display_seq = True
+				if role.text == "ill" and display_seq:
+					contributor["display_seq"] = display_seq[0]
 
 					illustrators.append(contributor)
+
+				if role.text == "edt" and display_seq:
+					contributor["display_seq"] = display_seq[0]
+
+					editors.append(contributor)
 
 		for translator in translators:
 			if (not translators_have_display_seq and translator["include"]) or translator["display_seq"]:
@@ -394,16 +397,24 @@ class SeEpub:
 		if translators:
 			identifier = identifier.strip("_") + "/"
 
+		for editor in editors:
+			identifier += se.formatting.make_url_safe(editor["name"]) + "_"
+
 		for illustrator in illustrators:
 			include_illustrator = True
 
-			# If the translator is also the illustrator, don't include them twice.
+			# If the translator or editor is also the illustrator, don't include them twice.
 			for translator in translators:
 				if illustrator["name"] == translator["name"]:
 					include_illustrator = False
 					break
 
-			if (include_illustrator and not illustrators_have_display_seq and illustrator["include"]) or illustrator["display_seq"]:
+			for editor in editors:
+				if illustrator["name"] == editor["name"]:
+					include_illustrator = False
+					break
+
+			if include_illustrator and (illustrator["include"] or illustrator["display_seq"]):
 				identifier += se.formatting.make_url_safe(illustrator["name"]) + "_"
 
 		identifier = identifier.strip("_/")
@@ -440,10 +451,15 @@ class SeEpub:
 		if translators:
 			output += ". Translated by " + se.formatting.format_list(translators)
 
-		illustrators = se.formatting.format_list(self.get_display_contributors("ill", ignore_list=authors + translators))
+		editors = self.get_display_contributors("edt", ignore_list=authors)
+
+		if editors:
+			output += ". Edited by " + se.formatting.format_list(editors)
+
+		illustrators = self.get_display_contributors("ill", ignore_list=authors + translators + editors)
 
 		if illustrators:
-			output += ". Illustrated by " + illustrators
+			output += ". Illustrated by " + se.formatting.format_list(illustrators)
 
 		return output
 
@@ -480,6 +496,11 @@ class SeEpub:
 
 				contributor = {"name": contributor_name, "include": True, "display_seq": 0}
 				display_seq = (self.metadata_dom.xpath("/package/metadata/meta[@property=\"display-seq\"][@refines=\"#" + contributor_id + "\"]") or [None])[0]
+
+				# Only include illustrators and editors if they have a `display-seq` set.
+				if not display_seq and marc_role in ("ill", "edt"):
+					contributor["include"] = False
+					display_seq = []
 
 				if display_seq and int(display_seq.text) == 0:
 					contributor["include"] = False
@@ -880,7 +901,12 @@ class SeEpub:
 		if translators:
 			contributors["translated by"] = se.formatting.format_list(translators)
 
-		illustrators = self.get_display_contributors("ill", True, authors + translators)
+		editors = self.get_display_contributors("edt", True, authors)
+
+		if editors:
+			contributors["edited by"] = se.formatting.format_list(editors)
+
+		illustrators = self.get_display_contributors("ill", True, authors + translators + editors)
 
 		if illustrators:
 			contributors["illustrated by"] = se.formatting.format_list(illustrators)
@@ -1065,15 +1091,6 @@ class SeEpub:
 		authors = self.get_display_contributors("aut", False)
 		title = self.title or ""
 		title_string = self.generate_title_string()
-
-		contributors = {}
-		translators = self.get_display_contributors("trl", True, authors)
-		if translators:
-			contributors["translated by"] = se.formatting.format_list(translators)
-
-		illustrators = self.get_display_contributors("ill", True, authors)
-		if illustrators:
-			contributors["illustrated by"] = se.formatting.format_list(illustrators)
 
 		# Don't include "anonymous" authors in the cover.
 		# League Spartan doesn't have good character support for turned commas, so replace them with single quotes.
