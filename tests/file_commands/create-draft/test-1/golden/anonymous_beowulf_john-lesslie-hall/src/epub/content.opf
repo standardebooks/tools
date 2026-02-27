@@ -50,9 +50,6 @@
 		<meta property="se:url.vcs.github">https://github.com/standardebooks/anonymous_beowulf_john-lesslie-hall</meta>
 		<dc:creator id="author">Anonymous</dc:creator>
 		<meta property="file-as" refines="#author">Anonymous</meta>
-		<meta property="se:name.person.full-name" refines="#author">CONTRIBUTOR_FULL_NAME</meta>
-		<meta property="se:url.encyclopedia.wikipedia" refines="#author">CONTRIBUTOR_WIKI_URL</meta>
-		<meta property="se:url.authority.nacoaf" refines="#author">CONTRIBUTOR_NACOAF_URI</meta>
 		<meta property="role" refines="#author" scheme="marc:relators">aut</meta>
 		<dc:contributor id="translator">John Lesslie Hall</dc:contributor>
 		<meta property="file-as" refines="#translator">Hall, John Lesslie</meta>
