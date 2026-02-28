@@ -182,7 +182,7 @@ METADATA
 "m-007", "Non-canonical Internet Archive URL. Expected: [url]https://archive.org/details/<BOOK-ID>[/]."
 "m-008", "Non-canonical Library of Congress Name Authority URI. Expected: [url]http://id.loc.gov/authorities/names/<IDENTIFIER>[/]. Hint: Must be [text]http[/] and without file extension."
 "m-009", "Unexpected value for [xml]<meta property=\"se:url.vcs.github\">[/] element."
-"m-010", "Invalid [xml]refines[/] attribute value."
+"m-010", "Invalid [attr]refines[/] attribute value."
 "m-011", "Subtitle in metadata, but no extended title element."
 "m-012", "Non-typogrified character in [xml]<dc:title>[/] element."
 "m-013", "Non-typogrified character in [xml]<dc:description>[/] element."
@@ -229,7 +229,7 @@ METADATA
 "m-054", "Non-canonical Standard Ebooks URL. Expected: [url]https://standardebooks.org/ebooks/<AUTHOR>/<TITLE>\\[/<CONTRIBUTOR> ...][/]. Hint: No trailing slash."
 "m-055", "[xml]<dc:description>[/] element doesn’t end with a period."
 "m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not linked to their S.E. author page."
-"m-057", "Illegal [xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element. Hint: [xml]xml:lang[/] should be [xml]lang[/]."
+"m-057", "Illegal [attr]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element. Hint: [attr]xml:lang[/] should be [attr]lang[/]."
 "m-058", "[val]se:subject[/] that implies other [val]se:subject[/]. Hint: Remove the [val]se:subject[/] that is implied."
 "m-059", "Link found in colophon, but missing matching [xhtml]<dc:source>[/] element in metadata."
 "m-060", "Non-canonical Google Books URL. Expected: [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/]."
@@ -260,12 +260,13 @@ METADATA
 "m-085", "Non-canonical PGDP URL. Expected: [url]https://www.pgdp.net/[/]."
 "m-086", "[val]foreword[/] semantic inflection found, but no MARC relator [val]wfw[/] (Writer of foreword)."
 "m-087", "MARC relators not in alphabetical order."
+"m-088", "[xhtml]<ignore>[/] element ignores a specific line, but a sibling [xhtml]<ignore>[/] element ignores the entire file."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
 "s-002", "Lowercase letters in cover. Hint: Cover text must be all uppercase."
 "s-003", "Lowercase letters in titlepage. Hint: Titlepage text must be all uppercase except [text]translated by[/] and [text]illustrated by[/]."
-"s-004", "[xhtml]img[/] element missing [attr]alt[/] attribute."
+"s-004", "[xhtml]<img>[/] element missing [attr]alt[/] attribute."
 "s-005", "Nested [xhtml]<blockquote>[/] element."
 "s-006", "Poem or verse [xhtml]<p>[/] (stanza) without [xhtml]<span>[/] (line) element."
 "s-007", "Element requires at least one block-level child."
@@ -358,9 +359,9 @@ SEMANTICS & CONTENT
 "s-094", "Element has an [attr]xml:lang[/] attribute that incorrectly contains [val]-latn[/] instead of [val]-Latn[/]."
 "s-095", "[xhtml]<p>[/] child of [xhtml]<hgroup>[/] in poetry/verse doesn’t have [css]text-align: center;[/] CSS."
 "s-096", "Heading element in half title page missing [val]fulltitle[/] semantic."
-"s-097", "[xhtml]a[/] element without [attr]href[/] attribute."
+"s-097", "[xhtml]<a>[/] element without [attr]href[/] attribute."
 "s-098", "[xhtml]<header>[/] element with only one child."
-"s-099", "List item in endnotes missing [xhtml]endnote[/] semantic."
+"s-099", "List item in endnotes missing [val]endnote[/] semantic."
 "s-100", "Anonymous digital contributor value not exactly [text]An Anonymous Volunteer[/]."
 "s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/]."
 "s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead."
@@ -453,10 +454,10 @@ TYPOGRAPHY
 XHTML
 "x-001", "[text]utf-8[/] string incorrectly cased. Hint: [text]utf-8[/] must always be lowercase."
 "x-002", "Uppercase in attribute value. Hint: Attribute values must be all lowercase."
-"x-003", "Illegal [xml]transform[/] attribute. Hint: SVGs should be optimized to remove use of [xml]transform[/]. Try using Inkscape to save as an “optimized SVG”."
+"x-003", "Illegal [attr]transform[/] attribute. Hint: SVGs should be optimized to remove use of [attr]transform[/]. Try using Inkscape to save as an “optimized SVG”."
 "x-004", "Illegal [xml]style=\"fill: #000\"[/] or [xml]fill=\"#000\"[/]."
-"x-005", "Illegal [xml]height[/] or [xml]width[/] attribute on root [xml]<svg>[/] element. Hint: Size SVGs using the [xml]viewBox[/] attribute only."
-"x-006", "SVG root without [xml]viewBox[/] attribute. Hint: [xml]viewBox[/] must be correctly capitalized."
+"x-005", "Illegal [attr]height[/] or [attr]width[/] attribute on root [xml]<svg>[/] element. Hint: Size SVGs using the [attr]viewBox[/] attribute only."
+"x-006", "SVG root without [attr]viewBox[/] attribute. Hint: [attr]viewBox[/] must be correctly capitalized."
 "x-007", "Illegal [attr]id[/] attribute starting with a number."
 "x-008", "Illegal stray ending [text]>[/]."
 "x-009", "Illegal leading 0 in [attr]id[/] attribute."
@@ -464,15 +465,15 @@ XHTML
 "x-011", "Illegal underscore in attribute. Hint: Use dashes instead of underscores."
 "x-012", "Illegal [attr]style[/] attribute. Hint: Don’t use inline styles; any element can be targeted with a thoughtful selector."
 "x-013", "CSS class found in XHTML, but not any CSS file."
-"x-014", "Illegal [xml]id[/] attribute."
+"x-014", "Illegal [attr]id[/] attribute."
 "x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed."
 "x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter."
 "x-017", "[attr]id[/] attribute value used more than once in ebook."
-"x-018", "Unused [xhtml]id[/] attribute."
+"x-018", "Unused [attr]id[/] attribute."
 "x-019", "Unexpected value of [attr]id[/] attribute."
 "x-020", "Link to [path]se.css[/] in [xhtml]<head>[/], but this file isn’t an S.E. boilerplate file."
 "x-021", "[xhtml]<figure>[/] element with no [attr]id[/] attribute."
-"x-022", "Illegal fractions in SVG [xml]viewBox[/] attribute."
+"x-022", "Illegal fractions in SVG [attr]viewBox[/] attribute."
 
 TYPOS
 "y-001", "Possible typo: Doubled [text]a/the/and/of/or/as/if[/]."
@@ -509,7 +510,7 @@ TYPOS
 "y-032", "Possible typo: Italics running into preceding or following characters."
 "y-033", "Possible typo: Three-em-dash obscuring an entire word, but not preceded by a space."
 "y-034", "Possible typo: [text].[/] embedded in word. Hint: Abbreviations must be in an [xhtml]<abbr>[/] element."
-"y-035", "Possible typo: Single letter. Hints: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [xhtml]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?"
+"y-035", "Possible typo: Single letter. Hints: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [attr]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?"
 "y-036", "Possible typo: [text]’[/] after punctuation, but no [text]‘[/]. Hints: Is [text]‘[/] missing or mis-curled? [text]’[/] that elides a word is placed before punctuation."
 """
 
@@ -829,7 +830,7 @@ def _lint_metadata_checks(self) -> list:
 		metadata_dom_with_parsed_long_description = deepcopy(self.metadata_dom)
 		for node in metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']"):
 			opening_tag = node.to_tag_string()
-			tag_name = node.lxml_element.tag
+			tag_name = node.tag
 			# If the HTML is malformed, this will emit `se.InvalidXmlException` which we catch below.
 			new_element = se.easy_xml.EasyXmlElement(f"<?xml version=\"1.0\" encoding=\"utf-8\"?>{opening_tag}{long_description}</{tag_name}>")
 			node.replace_with(new_element)
@@ -882,7 +883,7 @@ def _lint_metadata_checks(self) -> list:
 		# `xml:lang` is correct for the rest of the publication, but should be lang in the long description.
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']//*[@xml:lang]")
 		if nodes:
-			messages.append(LintMessage("m-057", "Illegal [xml]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element. Hint: [xml]xml:lang[/] should be [xml]lang[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+			messages.append(LintMessage("m-057", "Illegal [attr]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element. Hint: [attr]xml:lang[/] should be [attr]lang[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 		# `US` -> `U.S.`.
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']/*[re:test(., '\\bUS\\b')]")
@@ -1095,7 +1096,7 @@ def _lint_metadata_checks(self) -> list:
 		messages.append(LintMessage("m-024", "[xml]<meta property=\"se:name.person.full-name\">[/] property identical to regular name. Hint: If the two are identical, then the full name [xml]<meta>[/] element must be removed.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_names))
 
 	if invalid_refines:
-		messages.append(LintMessage("m-010", "Invalid [xml]refines[/] attribute value.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, invalid_refines))
+		messages.append(LintMessage("m-010", "Invalid [attr]refines[/] attribute value.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, invalid_refines))
 
 	nodes = self.metadata_dom.xpath("/package/metadata/*[re:test(., '^https?://id\\.loc\\.gov/authorities/(names/)?n[^/]+$') and not(re:test(., '^http://id\\.loc\\.gov/authorities/names/[^/\\.]+$'))]")
 	if nodes:
@@ -1552,9 +1553,9 @@ def _lint_svg_checks(self, source_file: SourceFile, svg_dom: se.easy_xml.EasyXml
 				messages.append(LintMessage("f-018", "Image greater than 4,000,000 pixels square in dimension.", se.MESSAGE_TYPE_ERROR, filename))
 			# Make sure dimensions are integers
 			if "." in svg_dimensions[2] or "." in svg_dimensions[3]:
-				messages.append(LintMessage("x-022", "Illegal fractions in SVG [xml]viewBox[/] attribute.", se.MESSAGE_TYPE_ERROR, filename))
+				messages.append(LintMessage("x-022", "Illegal fractions in SVG [attr]viewBox[/] attribute.", se.MESSAGE_TYPE_ERROR, filename))
 		except Exception as ex:
-			raise se.InvalidFileException(f"Couldn’t parse SVG [xhtml]viewBox[/] attribute in [path][link=file://{filename.resolve()}]{filename}[/][/].") from ex
+			raise se.InvalidFileException(f"Couldn’t parse SVG [attr]viewBox[/] attribute in [path][link=file://{filename.resolve()}]{filename}[/][/].") from ex
 
 	# Check for illegal `transform` or `id` attributes.
 	nodes = svg_dom.xpath("//*[@transform or @id]")
@@ -1569,10 +1570,10 @@ def _lint_svg_checks(self, source_file: SourceFile, svg_dom: se.easy_xml.EasyXml
 				invalid_id_attributes.append(LintSubmessage(f"id=\"{node.get_attr('id')}\"", node.sourceline))
 
 		if invalid_transform_attributes:
-			messages.append(LintMessage("x-003", "Illegal [xml]transform[/] attribute. Hint: SVGs should be optimized to remove use of [xml]transform[/]. Try using Inkscape to save as an “optimized SVG”.", se.MESSAGE_TYPE_ERROR, filename, invalid_transform_attributes))
+			messages.append(LintMessage("x-003", "Illegal [attr]transform[/] attribute. Hint: SVGs should be optimized to remove use of [attr]transform[/]. Try using Inkscape to save as an “optimized SVG”.", se.MESSAGE_TYPE_ERROR, filename, invalid_transform_attributes))
 
 		if invalid_id_attributes:
-			messages.append(LintMessage("x-014", "Illegal [xml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, invalid_id_attributes))
+			messages.append(LintMessage("x-014", "Illegal [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, invalid_id_attributes))
 
 	# Check for `fill: #000` which should simply be removed.
 	nodes = svg_dom.xpath("//*[contains(@fill, '#000') or contains(translate(@style, ' ', ''), 'fill:#000')]")
@@ -1583,11 +1584,11 @@ def _lint_svg_checks(self, source_file: SourceFile, svg_dom: se.easy_xml.EasyXml
 	if filename.name != "logo.svg": # Do as I say, not as I do...
 		nodes = svg_dom.xpath("/svg[@height or @width]")
 		if nodes:
-			messages.append(LintMessage("x-005", "Illegal [xml]height[/] or [xml]width[/] attribute on root [xml]<svg>[/] element. Hint: Size SVGs using the [xml]viewBox[/] attribute only.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+			messages.append(LintMessage("x-005", "Illegal [attr]height[/] or [attr]width[/] attribute on root [xml]<svg>[/] element. Hint: Size SVGs using the [attr]viewBox[/] attribute only.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	nodes = svg_dom.xpath("/svg[not(@viewBox)]")
 	if nodes:
-		messages.append(LintMessage("x-006", "SVG root without [xml]viewBox[/] attribute. Hint: [xml]viewBox[/] must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("x-006", "SVG root without [attr]viewBox[/] attribute. Hint: [attr]viewBox[/] must be correctly capitalized.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	return messages
 
@@ -1817,7 +1818,7 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 		# Did we forget the endnote semantic on `<li>` elements?
 		nodes = dom.xpath("/html/body/section/ol/li[not(re:test(@epub:type, '\\bendnote\\b'))]")
 		if nodes:
-			messages.append(LintMessage("s-099", "List item in endnotes missing [xhtml]endnote[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+			messages.append(LintMessage("s-099", "List item in endnotes missing [val]endnote[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 		# Match backlink elements whose preceding node doesn't end with ` `, and is also not all whitespace.
 		nodes = dom.xpath("/html/body//a[@epub:type='backlink'][(preceding-sibling::node()[1])[not(re:test(., ' $')) and not(normalize-space(.)='')]]")
@@ -2605,7 +2606,7 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	# Check for missing `href` attributes, sometimes a leftover from PG transcriptions.
 	nodes = dom.xpath("/html/body//a[not(@href)]")
 	if nodes:
-		messages.append(LintMessage("s-097", "[xhtml]a[/] element without [attr]href[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("s-097", "[xhtml]<a>[/] element without [attr]href[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for `<headers>`s with only one child.
 	nodes = dom.xpath("/html/body/*[name() = 'section' or name() = 'article']/header[./*[not(name() = 'p') and not(preceding-sibling::* or following-sibling::*)]]")
@@ -2829,7 +2830,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 	img_alt_lacking_punctuation = []
 	svg_mismatched_alts = []
 	for node in nodes:
-		img_src = node.lxml_element.get("src")
+		img_src = node.get_attr("src")
 		# Avoid crashing if the `@src` attribute is missing.
 		if img_src and "titlepage.svg" not in img_src:
 			ebook_flags["has_images"] = True # Save for a later check.
@@ -2876,7 +2877,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 	if img_alt_lacking_punctuation:
 		messages.append(LintMessage("t-026", "[attr]alt[/] attribute doesn’t end with punctuation. Hint: [attr]alt[/] attributes must be composed of complete sentences ending in appropriate punctuation.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(img_alt_lacking_punctuation)))
 	if img_no_alt:
-		messages.append(LintMessage("s-004", "[xhtml]img[/] element missing [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(img_no_alt)))
+		messages.append(LintMessage("s-004", "[xhtml]<img>[/] element missing [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(img_no_alt)))
 
 	# Check for low-hanging misquoted fruit.
 	line_matches = source_file.findall(r"[\p{Letter}]+[“‘]")
@@ -3491,7 +3492,7 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 	# Exclude nodes that have `@xml:lang` or are graphemes, phonemes, or roman numerals.
 	nodes = dom.xpath("/html/body//*[re:test(., '\\s[b-xz]\\s') and not(ancestor-or-self::*[re:test(@xml:lang, '^(?!en-).')]) and not(descendant::*[re:test(., '\\b[b-xz]\\b')]) and not(descendant::i[re:test(@epub:type, 'z3998:(grapheme|phoneme|roman)')])]")
 	if nodes:
-		messages.append(LintMessage("y-035", "Possible typo: Single letter. Hint: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [xhtml]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("y-035", "Possible typo: Single letter. Hint: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [attr]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	nodes = dom.xpath("/html/body//p[re:test(., '^[^‘]+[^A-Z][\\!\\.\\,\\?\\:\\;]’') and not(.//abbr[following-sibling::text()[re:test(., '^’')]]) and not(./ancestor-or-self::blockquote[re:test(., '‘')]) and not(contains(@class, 'continued') and ./preceding-sibling::*[1][contains(., '‘')])]")
 	if nodes:
@@ -3535,15 +3536,15 @@ def _lint_image_metadata_checks(self, has_images: bool) -> list:
 
 	return messages
 
-def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: list, messages: list) -> list:
+def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: list[str] | None, messages: list[LintMessage]) -> list:
 	"""
 	Parse a lint ignore file if pressent and if applicable remove its ignored messages.
 
 	INPUTS
 	self
 	skip_lint_ignore: Flag indicating whether the lint ignore file should be respected.
-	messages: The list of `LintMessage`s that have been generated so far.
 	allowed_messages: A list of messages from the lint ignore file to allow for this run.
+	messages: The list of `LintMessage`s that have been generated so far.
 
 	OUTPUTS
 	A list of `LintMessage` objects.
@@ -3552,6 +3553,7 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 	# This is a dict with where keys are the path and values are a list of code dicts.
 	# Each code dict has a key "code" which is XML element containing the code, and a key "used" which is a bool indicating whether or not the code has actually been caught in the linting run.
 	ignored_codes: dict[str, list[dict]] = {}
+	allowed_messages = allowed_messages or []
 
 	# First, check if we have an `se-lint-ignore.xml` file in the ebook root. If so, parse it. For an example `se-lint-ignore.xml` file, see <semos://1.0.0/2.3>.
 	lint_ignore_path = self.path / "se-lint-ignore.xml"
@@ -3561,6 +3563,10 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 		nodes = lint_config.xpath("./file[@path=(preceding-sibling::file/@path) or @path=(following-sibling::file/@path)]")
 		if nodes:
 			messages.append(LintMessage("m-039", "[xml]<file>[/] element with duplicate [attr]path[/] attribute value.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_tags(nodes)))
+
+		nodes = lint_config.xpath("./file/ignore[@line and (./code/text() = (preceding-sibling::ignore[not(@line)]/code/text()) or ./code/text() = (following-sibling::ignore[not(@line)]/code/text()))]")
+		if nodes:
+			messages.append(LintMessage("m-088", "[xhtml]<ignore>[/] element ignores a specific line, but a sibling [xhtml]<ignore>[/] element ignores the entire file.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_tags(nodes)))
 
 		elements = lint_config.xpath("/se-lint-ignore/file")
 
@@ -3579,18 +3585,20 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 			if path not in ignored_codes:
 				ignored_codes[path] = []
 
-			for ignore in element.lxml_element:
-				if ignore.tag == "ignore":
-					has_reason = False
-					for child in ignore:
-						if child.tag == "code" and child.text.strip() not in allowed_messages:
-							ignored_codes[path].append({"code": se.easy_xml.EasyXmlElement(child), "used": False})
+			for ignore in element.xpath("./ignore"):
+				has_reason = False
+				for child in ignore.children:
+					if child.tag == "code" and child.text.strip() not in allowed_messages:
+						line = ignore.get_attr("line")
+						if line:
+							line = int(line)
+						ignored_codes[path].append({"code": child, "used": False, "line": line})
 
-						if child.tag == "reason" and child.text.strip() != "":
-							has_reason = True
+					if child.tag == "reason" and child.text.strip() != "":
+						has_reason = True
 
-					if not has_reason:
-						ignores_without_reasons.append(se.easy_xml.EasyXmlElement(ignore))
+				if not has_reason:
+					ignores_without_reasons.append(ignore)
 
 		if ignores_with_illegal_paths:
 			messages.append(LintMessage("m-047", "Illegal path. Hint: Ignoring [path]*[/] is too general; target specific files.", se.MESSAGE_TYPE_WARNING, lint_ignore_path, LintSubmessage.from_node_tags(ignores_with_illegal_paths)))
@@ -3607,13 +3615,29 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 			for path, codes in ignored_codes.items():
 				for code in codes:
 					if fnmatch.fnmatch(str(message.filename.name) if message.filename else "", path) and message.code == code["code"].text.strip():
-						try:
-							messages.remove(message)
-							code["used"] = True
-						except ValueError:
-							# This gets raised if the message has already been removed by a previous rule.
-							# For example, `chapter-*.xhtml` gets `t-001` removed, then subsequently `*.xhtml` gets `t-001` removed.
-							pass
+						if code["line"] and message.submessages:
+							# If we're ignoring a specific line, check submessages.
+							for submessage in message.submessages[:]:
+								if code["line"] == submessage.line_num:
+									try:
+										message.submessages.remove(submessage)
+										# If this operation removed message's last submessage, remove the message itself entirely.
+										if not message.submessages:
+											messages.remove(message)
+										code["used"] = True
+									except ValueError:
+										# This gets raised if the message has already been removed by a previous rule.
+										# For example, `chapter-*.xhtml` gets `t-001` removed, then subsequently `*.xhtml` gets `t-001` removed.
+										pass
+						else:
+							# We're ignoring the entire file.
+							try:
+								messages.remove(message)
+								code["used"] = True
+							except ValueError:
+								# This gets raised if the message has already been removed by a previous rule.
+								# For example, `chapter-*.xhtml` gets `t-001` removed, then subsequently `*.xhtml` gets `t-001` removed.
+								pass
 
 		# Check for unused ignore rules.
 		unused_codes: list[str] = []
@@ -4171,7 +4195,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 		for _, (file_path, nodes_list) in enumerate(unused_id_attrs):
 			if nodes_list:
-				messages.append(LintMessage("x-018", "Unused [xhtml]id[/] attribute.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags(nodes_list)))
+				messages.append(LintMessage("x-018", "Unused [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags(nodes_list)))
 
 	if files_not_url_safe:
 		files_not_url_safe_strings: list[str] = []

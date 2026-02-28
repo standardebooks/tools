@@ -737,7 +737,8 @@ def format_se_lint_ignore(xml: str) -> str:
 
 		ordered_file_nodes = natsorted(root.xpath("./file[@path]"), key=lambda x: x.get_attr("path"))
 		for file_node in ordered_file_nodes:
-			ordered_ignore_nodes = natsorted(file_node.xpath("./ignore[./code]"), key=lambda x: x.inner_text())
+			# Sort nodes by code first, then by line. If there is no line, the line is 0.
+			ordered_ignore_nodes = natsorted(file_node.xpath("./ignore[./code]"), key=lambda x: x.xpath("./code")[0].inner_text() + "-" + (x.get_attr("line") if x.get_attr("line") else "0"))
 			for ignore_node in ordered_ignore_nodes:
 				ignore_node.prepend(ignore_node.xpath("./code")[0])
 

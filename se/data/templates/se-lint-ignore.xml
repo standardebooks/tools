@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <se-lint-ignore>
 	<file path="">
-		<ignore>
+		<ignore line="">
 			<code></code>
 			<reason></reason>
 		</ignore>

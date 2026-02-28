@@ -1,4 +1,4 @@
-s-004 [Error] chapter-1.xhtml `img` element missing `alt` attribute.
+s-004 [Error] chapter-1.xhtml `<img>` element missing `alt` attribute.
  Line 11:       <img>
  Line 17:       <img>
  Line 21:       <img>
