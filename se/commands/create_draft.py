@@ -28,7 +28,6 @@ CONTRIBUTOR_BLOCK_TEMPLATE = """<dc:contributor id="CONTRIBUTOR_ID">CONTRIBUTOR_
 		<meta property="se:name.person.full-name" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_FULL_NAME</meta>
 		<meta property="se:url.encyclopedia.wikipedia" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_WIKI_URL</meta>
 		<meta property="se:url.authority.nacoaf" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_NACOAF_URI</meta>
-		<meta property="display-seq" refines="#CONTRIBUTOR_ID">1</meta>
 		<meta property="role" refines="#CONTRIBUTOR_ID" scheme="marc:relators">CONTRIBUTOR_MARC</meta>"""
 
 USER_AGENT = "Standard Ebooks toolset <https://standardebooks.org/tools>"
@@ -193,24 +192,16 @@ def _generate_metadata_contributor_xml(contributors: list[dict], contributor_typ
 
 	INPUTS
 	contributors: A list of contributor dicts.
-	contributor_type: Either `author`, `translator`, or `illustrator`.
+	contributor_type: Either `author` or `translator`
 
 	OUTPUTS
 	A string of XML representing the contributor block.
 	"""
 
 	output = ""
-	display_seq = 1
 
 	for i, contributor in enumerate(contributors):
 		contributor_block = CONTRIBUTOR_BLOCK_TEMPLATE
-
-		# Only keep `display-seq` for illustrators.
-		if contributor_type == "illustrator":
-			contributor_block = contributor_block.replace("""<meta property="display-seq" refines="#CONTRIBUTOR_ID">1</meta>""", f"""<meta property="display-seq" refines="#CONTRIBUTOR_ID">{display_seq}</meta>""")
-			display_seq = display_seq + 1
-		else:
-			contributor_block = contributor_block.replace("""<meta property="display-seq" refines="#CONTRIBUTOR_ID">1</meta>""", "")
 
 		if contributor["wiki_url"]:
 			contributor_block = contributor_block.replace(">CONTRIBUTOR_WIKI_URL<", f">{contributor['wiki_url']}<")
@@ -239,9 +230,6 @@ def _generate_metadata_contributor_xml(contributors: list[dict], contributor_typ
 		if contributor_type == "translator":
 			contributor_block = contributor_block.replace("CONTRIBUTOR_MARC", "trl")
 
-		if contributor_type == "illustrator":
-			contributor_block = contributor_block.replace("CONTRIBUTOR_MARC", "ill")
-
 		output += contributor_block + "\n\t\t"
 
 	if len(contributors) == 1:
@@ -253,10 +241,7 @@ def _generate_titlepage_string(contributors: list[dict], contributor_type: str) 
 	output = _generate_contributor_string(contributors, True)
 	output = regex.sub(r"<a href[^<>]+?>", "<b epub:type=\"z3998:personal-name\">", output)
 	output = output.replace("</a>", "</b>")
-
-	if contributor_type != "illustrator":
-		# There's no `z3998:illustrator` term.
-		output = output.replace("\"z3998:personal-name", f"\"z3998:{contributor_type} z3998:personal-name")
+	output = output.replace("\"z3998:personal-name", f"\"z3998:{contributor_type} z3998:personal-name")
 
 	return output
 
@@ -268,7 +253,6 @@ def _create_draft(args: Namespace, plain_output: bool):
 	# Put together some variables for later use.
 	authors = []
 	translators = []
-	illustrators = []
 	transcription_producers = []
 	transcription_subjects = []
 	transcription_ebook_html = None
@@ -288,10 +272,6 @@ def _create_draft(args: Namespace, plain_output: bool):
 		for translator in args.translator:
 			translators.append({"name": translator.replace("'", "’"), "wiki_url": None, "nacoaf_uri": None})
 
-	if args.illustrator:
-		for illustrator in args.illustrator:
-			illustrators.append({"name": illustrator.replace("'", "’"), "wiki_url": None, "nacoaf_uri": None})
-
 	# Get more metadata on contributors.
 	if not args.white_label:
 		# Get data on authors.
@@ -303,11 +283,6 @@ def _create_draft(args: Namespace, plain_output: bool):
 		for _, translator in enumerate(translators):
 			if not args.offline and translator["name"].lower() != "anonymous":
 				translator["wiki_url"], translator["nacoaf_uri"] = _get_wikipedia_url(translator["name"], True)
-
-		# Get data on illustrators.
-		for _, illustrator in enumerate(illustrators):
-			if not args.offline and illustrator["name"].lower() != "anonymous":
-				illustrator["wiki_url"], illustrator["nacoaf_uri"] = _get_wikipedia_url(illustrator["name"], True)
 
 	# Create a temp directory and copy all template files over.
 	with tempfile.TemporaryDirectory() as directory_name:
@@ -372,12 +347,6 @@ def _create_draft(args: Namespace, plain_output: bool):
 				metadata_xml = regex.sub(r"<dc:contributor id=\"translator\">.+?scheme=\"marc:relators\">trl</meta>", translators_xml, metadata_xml, flags=regex.DOTALL)
 			else:
 				metadata_xml = regex.sub(r"<dc:contributor id=\"translator\">.+?scheme=\"marc:relators\">trl</meta>\n\t\t", "", metadata_xml, flags=regex.DOTALL)
-
-			if illustrators:
-				illustrators_xml = _generate_metadata_contributor_xml(illustrators, "illustrator")
-				metadata_xml = regex.sub(r"<dc:contributor id=\"illustrator\">.+?scheme=\"marc:relators\">ill</meta>", illustrators_xml, metadata_xml, flags=regex.DOTALL)
-			else:
-				metadata_xml = regex.sub(r"<dc:contributor id=\"illustrator\">.+?scheme=\"marc:relators\">ill</meta>\n\t\t", "", metadata_xml, flags=regex.DOTALL)
 
 			file.seek(0)
 			file.write(metadata_xml)
@@ -830,11 +799,6 @@ def _create_draft(args: Namespace, plain_output: bool):
 			else:
 				titlepage_xhtml = regex.sub(r"<p>Translated by.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)
 
-			if illustrators:
-				titlepage_xhtml = titlepage_xhtml.replace("ILLUSTRATOR_NAME", _generate_titlepage_string(illustrators, "illustrator"))
-			else:
-				titlepage_xhtml = regex.sub(r"<p>Illustrated by.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)
-
 			file.seek(0)
 			file.write(se.formatting.format_xhtml(titlepage_xhtml))
 			file.truncate()
@@ -946,7 +910,6 @@ def create_draft(plain_output: bool) -> int:
 	"""
 
 	parser = argparse.ArgumentParser(description="Create a skeleton of a new Standard Ebook in the current directory.")
-	parser.add_argument("-i", "--illustrator", dest="illustrator", nargs="+", help="an illustrator of the ebook")
 	parser.add_argument("-r", "--translator", dest="translator", nargs="+", help="a translator of the ebook")
 	parser.add_argument("-p", "--pg-id", dest="pg_id", type=se.is_positive_integer, help="the Project Gutenberg ID number of the ebook to download")
 	parser.add_argument("-e", "--email", dest="email", help="use this email address as the main committer for the local Git repository")

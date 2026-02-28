@@ -152,7 +152,6 @@ case $state in
 					{-e,--email}'[use this email address as the main committer for the local Git repository]:email' \
 					{-f,--fp-id}'[the Faded Page ID number of the ebook to download]:id' \
 					{-h,--help}'[show a help message and exit]' \
-					{-i,--illustrator}'[the illustrator of the ebook]:name' \
 					{-o,--offline}'[create draft without network access]' \
 					{-p,--pg-id}'[the Project Gutenberg ID number of the ebook to download]:id' \
 					{-r,--translator}'[the translator of the ebook]:name' \
