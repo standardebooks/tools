@@ -1352,6 +1352,7 @@ def titlecase(text: str) -> str:
 	# Uppercase some known initialisms.
 	text = regex.sub(r"(\s|^)(sos|md)(?:\b|$)", lambda result: result.group(1) + result.group(2).upper(), text, flags=regex.IGNORECASE)
 	text = regex.sub(r"(\s)(bc|ad)(?:\b|$)", lambda result: result.group(1) + result.group(2).upper(), text, flags=regex.IGNORECASE)
+	text = regex.sub(r"^(bc\s|ad\s[0-9]+)", lambda result: result.group(1).upper(), text, flags=regex.IGNORECASE)
 
 	# Lowercase `À` (as in `À La Carte`) unless it's the first word.
 	text = regex.sub(r"(?<!^)\bÀ\b", "à", text)
