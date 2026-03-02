@@ -836,6 +836,9 @@ def _lint_metadata_checks(self) -> list:
 			new_element = se.easy_xml.EasyXmlElement(f"<?xml version=\"1.0\" encoding=\"utf-8\"?>{opening_tag}{long_description}</{tag_name}>")
 			node.replace_with(new_element)
 
+		# Recreate the DOM from the text source, so that line numbers for errors in the long description are correct.
+		metadata_dom_with_parsed_long_description = se.easy_xml.EasyXmlTree(metadata_dom_with_parsed_long_description.to_string())
+
 		# Make sure long-description is an escaped XHTML fragment.
 		if not regex.search(r"^\s*<p>", long_description) and long_description.strip() != "LONG_DESCRIPTION":
 			messages.append(LintMessage("m-016", "Long description must be an escaped XHTML fragment beginning with [xhtml]<p>[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_node_tags([long_description_node])))
