@@ -19,6 +19,7 @@ import cssutils
 from PIL import Image, UnidentifiedImageError
 import regex
 from natsort import natsorted, ns
+from lxml import etree
 
 import se
 import se.easy_xml
@@ -218,10 +219,9 @@ METADATA
 "m-043", "Non-canonical Wayback Machine URL. Expected: [url]https://web.archive.org/web/<DATE>/<ARCHIVED-URL>[/]."
 "m-044", "Possessive [text]’[/] or [text]’s[/] outside of [xhtml]<a>[/] element in long description."
 "m-045", "Heading not found in the ToC."
-"m-046", "[xml]<ignore>[/] element has missing or empty [xml]<reason>[/] child."
+"m-046", "[xml]<file>[/] element contains wildcard, but [xml]<ignore>[/] child specifies a line number."
 "m-047", "Illegal path. Hint: Ignoring [path]*[/] is too general; target specific files."
 "m-048", "Unused ignore rule."
-"m-049", "No rules in ignore file. Hint: Delete the file if there are no rules."
 "m-050", "Non-typogrified character in [xml]<meta property=\"file-as\" refines=\"#title\">[/] element."
 "m-051", "Missing expected element in metadata."
 "m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"dcterms:alternative\" refines="#title"> element in metadata."
@@ -261,6 +261,7 @@ METADATA
 "m-086", "[val]foreword[/] semantic inflection found, but no MARC relator [val]wfw[/] (Writer of foreword)."
 "m-087", "MARC relators not in alphabetical order."
 "m-088", "[xhtml]<ignore>[/] element ignores a specific line, but a sibling [xhtml]<ignore>[/] element ignores the entire file."
+"m-049", "No rules in ignore file. Hint: Delete the file if there are no rules."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -695,7 +696,7 @@ class LintMessage:
 				if not isinstance(submessage, LintSubmessage):
 					line_num = None
 					if hasattr(submessage, 'getparent'):
-						line_num = submessage.getparent().sourceline  # pyright: ignore # `etree` return a special `str` with the `getparent()` method.
+						line_num = submessage.getparent().sourceline  # pyright: ignore # `etree` returns a special `str` with the `getparent()` method.
 					submessage = LintSubmessage(submessage, line_num)
 				self.submessages.append(submessage)
 
@@ -3536,48 +3537,44 @@ def _lint_image_metadata_checks(self, has_images: bool) -> list:
 
 	return messages
 
-def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: list[str] | None, messages: list[LintMessage]) -> list:
+def _lint_process_ignore_file(self, lint_ignore_dom: se.easy_xml.EasyXmlTree | None, allowed_messages: list[str] | None, messages: list[LintMessage]) -> list:
 	"""
-	Parse a lint ignore file if pressent and if applicable remove its ignored messages.
+	Given a DOM of a lint ignore file, remove any ignored `LintMessage`s from the list of passed `LintMessage`s.
 
 	INPUTS
 	self
-	skip_lint_ignore: Flag indicating whether the lint ignore file should be respected.
+	lint_ignore_dom: A DOM for the lint ignore file, or `None` to skip the check.
 	allowed_messages: A list of messages from the lint ignore file to allow for this run.
 	messages: The list of `LintMessage`s that have been generated so far.
 
 	OUTPUTS
-	A list of `LintMessage` objects.
+	The original `messages` parameter, but with any ignored `LintMessage` removed.
 	"""
 
 	# This is a dict with where keys are the path and values are a list of code dicts.
 	# Each code dict has a key "code" which is XML element containing the code, and a key "used" which is a bool indicating whether or not the code has actually been caught in the linting run.
 	ignored_codes: dict[str, list[dict]] = {}
 	allowed_messages = allowed_messages or []
+	lint_ignore_path = self.path / "se-lint-ignore.xml"
 
 	# First, check if we have an `se-lint-ignore.xml` file in the ebook root. If so, parse it. For an example `se-lint-ignore.xml` file, see <semos://1.0.0/2.3>.
-	lint_ignore_path = self.path / "se-lint-ignore.xml"
-	if not skip_lint_ignore and lint_ignore_path.exists():
-		lint_config = self.get_dom(lint_ignore_path)
-
-		nodes = lint_config.xpath("./file[@path=(preceding-sibling::file/@path) or @path=(following-sibling::file/@path)]")
+	if lint_ignore_dom:
+		nodes = lint_ignore_dom.xpath("./file[@path=(preceding-sibling::file/@path) or @path=(following-sibling::file/@path)]")
 		if nodes:
 			messages.append(LintMessage("m-039", "[xml]<file>[/] element with duplicate [attr]path[/] attribute value.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_tags(nodes)))
 
-		nodes = lint_config.xpath("./file/ignore[@line and (./code/text() = (preceding-sibling::ignore[not(@line)]/code/text()) or ./code/text() = (following-sibling::ignore[not(@line)]/code/text()))]")
+		nodes = lint_ignore_dom.xpath("./file/ignore[./line and (@code = (preceding-sibling::ignore[not(./line)]/@code) or @code = (following-sibling::ignore[not(./line)]/@code))]")
 		if nodes:
 			messages.append(LintMessage("m-088", "[xhtml]<ignore>[/] element ignores a specific line, but a sibling [xhtml]<ignore>[/] element ignores the entire file.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_tags(nodes)))
 
-		elements = lint_config.xpath("/se-lint-ignore/file")
-
-		if not elements:
-			messages.append(LintMessage("m-049", "No rules in ignore file. Hint: Delete the file if there are no rules.", se.MESSAGE_TYPE_ERROR, lint_ignore_path))
+		nodes = lint_ignore_dom.xpath("./file[re:test(@path, '[\\*\\?\\!\\[\\]]') and ./ignore/line]")
+		if nodes:
+			messages.append(LintMessage("m-046", "[xml]<file>[/] element contains wildcard, but [xml]<ignore>[/] child specifies a line number.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_tags(nodes)))
 
 		ignores_with_illegal_paths = []
-		ignores_without_reasons = []
 
-		for element in elements:
-			path = element.get_attr("path").strip()
+		for element in lint_ignore_dom.xpath("/se-lint-ignore/file"):
+			path = element.get_attr("path")
 
 			if path == "*":
 				ignores_with_illegal_paths.append(element)
@@ -3586,25 +3583,19 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 				ignored_codes[path] = []
 
 			for ignore in element.xpath("./ignore"):
-				has_reason = False
-				for child in ignore.children:
-					if child.tag == "code" and child.text.strip() not in allowed_messages:
-						line = ignore.get_attr("line")
-						if line:
-							line = int(line)
-						ignored_codes[path].append({"code": child, "used": False, "line": line})
+				code = ignore.get_attr("code")
 
-					if child.tag == "reason" and child.text.strip() != "":
-						has_reason = True
-
-				if not has_reason:
-					ignores_without_reasons.append(ignore)
+				if code not in allowed_messages:
+					lines = ignore.xpath("./line")
+					if lines:
+						for line in lines:
+							line_number = int(line.text)
+							ignored_codes[path].append({"ignore_element": ignore, "used": False, "line": line_number})
+					else:
+						ignored_codes[path].append({"ignore_element": ignore, "used": False, "line": None})
 
 		if ignores_with_illegal_paths:
 			messages.append(LintMessage("m-047", "Illegal path. Hint: Ignoring [path]*[/] is too general; target specific files.", se.MESSAGE_TYPE_WARNING, lint_ignore_path, LintSubmessage.from_node_tags(ignores_with_illegal_paths)))
-
-		if ignores_without_reasons:
-			messages.append(LintMessage("m-046", "[xml]<ignore>[/] element has missing or empty [xml]<reason>[/] child.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_nodes(ignores_without_reasons)))
 
 	# Done parsing ignore list.
 
@@ -3614,7 +3605,7 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 		for message in messages[:]:
 			for path, codes in ignored_codes.items():
 				for code in codes:
-					if fnmatch.fnmatch(str(message.filename.name) if message.filename else "", path) and message.code == code["code"].text.strip():
+					if fnmatch.fnmatch(str(message.filename.name) if message.filename else "", path) and message.code == code["ignore_element"].get_attr("code"):
 						if code["line"] and message.submessages:
 							# If we're ignoring a specific line, check submessages.
 							for submessage in message.submessages[:]:
@@ -3644,8 +3635,15 @@ def _lint_process_ignore_file(self, skip_lint_ignore: bool, allowed_messages: li
 		for path, codes in ignored_codes.items():
 			for code in codes:
 				if not code["used"]:
-					code["code"].set_text(f"{path}: {code['code'].text}")
-					unused_codes.append(code["code"])
+					error_message = path
+
+					if code["line"]:
+						error_message += f" line {code['line']}"
+
+					error_message += f": {code['ignore_element'].get_attr("code")}"
+
+					code["ignore_element"].set_text(error_message)
+					unused_codes.append(code["ignore_element"])
 
 		if unused_codes:
 			messages.append(LintMessage("m-048", "Unused ignore rule.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_text(unused_codes)))
@@ -3706,6 +3704,20 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 		"has_other_sources": False,
 		"has_mathml": False
 	}
+
+	# Before we begin, validate the `se-lint-ignore.xml` file, if it exists.
+	lint_ignore_path = self.path / "se-lint-ignore.xml"
+	lint_ignore_dom = None
+	if not skip_lint_ignore and lint_ignore_path.exists():
+		with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("se-lint-ignore.rng")) as rng_path:
+			relaxng = etree.RelaxNG(etree.parse(rng_path))
+
+			try:
+				dom = etree.parse(lint_ignore_path)
+				relaxng.assertValid(dom)
+				lint_ignore_dom = se.easy_xml.EasyXmlTree(dom)
+			except Exception as ex:
+				raise se.InvalidFileException(f"[path][link=file://{lint_ignore_path.resolve()}]se-lint-ignore.xml[/][/] is invalid: {ex}")
 
 	# Cache the browser default stylesheet for later use.
 	with importlib.resources.files("se.data").joinpath("browser.css").open("r", encoding="utf-8") as css:
@@ -4324,7 +4336,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	if not allowed_messages:
 		allowed_messages = []
 
-	messages = _lint_process_ignore_file(self, skip_lint_ignore, allowed_messages, messages)
+	messages = _lint_process_ignore_file(self, lint_ignore_dom, allowed_messages, messages)
 
 	messages = natsorted(messages, key=lambda x: ((str(x.filename.name) if x.filename else "") + " " + x.code), alg=ns.PATH)
 

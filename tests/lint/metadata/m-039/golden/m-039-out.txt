@@ -1,11 +1,11 @@
 m-039 [Error] se-lint-ignore.xml `<file>` element with duplicate `path` attribute value.
+ Line 22:       <file path="book-8.xhtml">
  Line 27:       <file path="book-8.xhtml">
- Line 33:       <file path="book-8.xhtml">
 m-048 [Error] se-lint-ignore.xml Unused ignore rule.
- Line 5:        book-4.xhtml: m-045
- Line 11:       book-5.xhtml: m-045
- Line 17:       book-6.xhtml: m-045
- Line 23:       book-7.xhtml: m-045
- Line 29:       book-8.xhtml: t-003
- Line 35:       book-8.xhtml: y-035
- Line 41:       chapter-1-4.xhtml: t-011
+ Line 3:        book-4.xhtml: m-045
+ Line 8:        book-5.xhtml: m-045
+ Line 13:       book-6.xhtml: m-045
+ Line 18:       book-7.xhtml: m-045
+ Line 23:       book-8.xhtml: t-003
+ Line 28:       book-8.xhtml: y-035
+ Line 33:       chapter-1-4.xhtml: t-011

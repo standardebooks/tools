@@ -735,18 +735,23 @@ def format_se_lint_ignore(xml: str) -> str:
 
 		root = dom.xpath("/se-lint-ignore")[0]
 
+		# Sort `<line>` nodes first.
+		for ignore_node in root.xpath("./file/ignore[./line]"):
+			ordered_line_nodes = natsorted(ignore_node.xpath("./line"), key=lambda x: x.text)
+
+			ignore_node.children = ordered_line_nodes + ignore_node.xpath("./reason")
+
 		ordered_file_nodes = natsorted(root.xpath("./file[@path]"), key=lambda x: x.get_attr("path"))
 		for file_node in ordered_file_nodes:
-			# Sort nodes by code first, then by line. If there is no line, the line is 0.
-			ordered_ignore_nodes = natsorted(file_node.xpath("./ignore[./code]"), key=lambda x: x.xpath("./code")[0].inner_text() + "-" + (x.get_attr("line") if x.get_attr("line") else "0"))
-			for ignore_node in ordered_ignore_nodes:
-				ignore_node.prepend(ignore_node.xpath("./code")[0])
+			# Sort nodes by code.
+			ordered_ignore_nodes = natsorted(file_node.xpath("./ignore[@code]"), key=lambda x: x.get_attr("code"))
 
 			file_node.children = ordered_ignore_nodes
 
 		root.children = ordered_file_nodes
 
 		tree = _format_xml_str(root.to_string())
+
 	except Exception as ex:
 		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
 

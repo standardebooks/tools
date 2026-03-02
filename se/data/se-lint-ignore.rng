@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<element name="se-lint-ignore" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+	<oneOrMore>
+		<element name="file">
+			<attribute name="path">
+				<data type="string">
+					<!-- Allow ASCII alphanumeric, forward slashes, `.`, and the glob characters supported by Python's `fnmatch.fnmatch()` function: `*` `!` `[` `]`. -->
+					<param name="pattern">[/a-z0-9\.\-\*\?\[\]\!]+</param>
+				</data>
+			</attribute>
+			<oneOrMore>
+				<element name="ignore">
+					<attribute name="code">
+						<data type="string">
+							<!-- Allow all legal lint codes. -->
+							<param name="pattern">[cfmxtsy]-[0-9]{3}</param>
+						</data>
+					</attribute>
+					<zeroOrMore>
+						<element name="line">
+							<data type="string">
+								<!-- Allow only non-zero integers without leading zeros. -->
+								<param name="pattern">[1-9][0-9]*</param>
+							</data>
+						</element>
+					</zeroOrMore>
+					<element name="reason">
+						<text/>
+					</element>
+				</element>
+			</oneOrMore>
+		</element>
+	</oneOrMore>
+</element>

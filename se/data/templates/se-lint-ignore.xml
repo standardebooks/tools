@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <se-lint-ignore>
-	<file path="">
-		<ignore line="">
-			<code></code>
-			<reason></reason>
+	<file path="PATH_RELATIVE_TO_REPO_ROOT">
+		<ignore code="LINT_CODE">
+			<line>LINE_NUMBER</line>
+			<reason>REASON</reason>
 		</ignore>
 	</file>
 </se-lint-ignore>
