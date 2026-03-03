@@ -1,3 +1,123 @@
+# 3.0.1
+
+## General
+
+- Fix ZSH completion problems. Thanks to HackerNCoder
+
+- Escape HTML in shell completion help text
+
+- Show whether the toolset is installed as editable via `--version`. Thanks to Vince Rice
+
+- Don't list contributors besides author/translator if they don't have `display-seq` set
+
+## se build
+
+- Optimize output PNGs
+
+- Add soft hyphens to kepub builds
+
+- Return error code if build failed
+
+- Add workaround for link underlines in Kobo dark mode
+
+- Ignore useless VNU warning about times being mistyped
+
+- Fix PNG cover image path in se build. Thanks to Andrew Paseltiner
+
+## se build-images
+
+- Optimize output PNGs
+
+- Add missing options to shell completions
+
+- Rebalance multilines in extreme cases. Thanks to Robin Whittleton
+
+## se clean
+
+- Preserve `<pre>` whitespace. Thanks to Robin Whittleton
+
+## se create-draft
+
+- Fix covers for authors with long names. Thanks to Robin Whittleton
+
+- Fix empty Anonymous author attribution on `titlepage.xhtml`. Thanks to Robin Whittleton
+
+- Correct 'naive' transcriber sort
+
+- Remove `--illustrator` option
+
+## css-select
+
+- Add the `--quiet` option to not output anything, only the return code
+
+## se lint
+
+- Improve check for canonical IA URLs and fix broken xpath
+
+- Correctly find line number for unsed selectors with pseudo-elements
+
+- Don't include the ToC in t-009
+
+- Improve s-023
+
+- Improve y-015
+
+- Ignore eras in t-032
+
+- Allow `se-lint-ignore.xml` files to ignore specific lines
+
+- Restructure `se-lint-ignore.xml` file, validate it using RelaxNG schema, and allow more than one line per ignore statement
+
+- Output correct line numbers for errors relating to the long description
+
+## se modernize-spelling
+
+- Various additions
+
+## se semanticate
+
+- Add `z3998:name-title` semantic to St. followed by a no-break space (added by typogrify). Thanks to Vince Rice
+
+- Correct negative lookahead on a few regexes. Thanks to Vince Rice
+
+- Don't crash on invalid XML
+
+- Don't add roman semantics to MathML
+
+- Automatically add initialism/acronym semantics to some obvious candidates
+
+- Add `z3998:initialism` semantics to `AD`/`BC`
+
+## se titlecase
+
+- Always lowercase `a.m.`/`p.m.`
+
+- Remove workaround for titlecase library bug that has since been fixed
+
+- Improve `BC`/`AD` capitalization at the start of titles
+
+## se typogrify
+
+- Fix `'tis` directly after an opening quote. Thanks to Robin Whittleton
+
+- Attempt to only add no-break space following `St.` abbrs if it's for Saint. Thanks to Vince Rice
+
+- Improve em dash standardization
+
+- Typogrify `PhD`
+
+- Have smartypants return unicode characters rather than HTML entities. Thanks to Vince Rice
+
+## xpath
+
+- Add the `--quiet` option to not output anything, only the return code
+
+- Correctly output float and string results
+
+# 3.0.0
+
+Yanked release functionally identical to 3.0.1.
+
 # 2.11.2
 
 ## se clean
