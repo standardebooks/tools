@@ -174,7 +174,7 @@ We export `COLUMNS` because `se lint` needs to know the width of the terminal so
 Before we can use `pylint` or `mypy` on the toolset source, we have to inject them (and additional typings) into the venv `pipx` created for the `standardebooks` package:
 
 ```shell
-pipx inject standardebooks pylint==4.0.4 mypy==1.19.0 types-requests==2.32.4.20250913 types-setuptools==80.9.0.20250822 types-lxml==2025.11.25 pytest==9.0.2
+pipx inject standardebooks pylint==4.0.4 mypy==1.19.0 types-requests==2.32.4.20250913 types-setuptools==80.9.0.20250822 types-lxml==2026.2.16 pytest==9.0.2
 ```
 
 Then make sure to call the `pylint` and `mypy` binaries that `pipx` installed in the `standardebooks` venv, *not* any other globally-installed binaries:
