@@ -521,6 +521,10 @@ def _indent_children(elem, level, one_space, indentations, has_child_tails=False
 
 	# Recursively indent all children.
 	for child in elem:
+		# Pre elements preserve whitespace
+		if child.tag == "{http://www.w3.org/1999/xhtml}pre":
+			break
+
 		if len(child) > 0:
 			if has_child_tails:
 				next_level = level
