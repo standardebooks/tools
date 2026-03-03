@@ -3643,7 +3643,7 @@ def _lint_process_ignore_file(self, lint_ignore_dom: se.easy_xml.EasyXmlTree | N
 					if code["line"]:
 						error_message += f" line {code['line']}"
 
-					error_message += f": {code['ignore_element'].get_attr("code")}"
+					error_message += f": {code['ignore_element'].get_attr('code')}"
 
 					code["ignore_element"].set_text(error_message)
 					unused_codes.append(code["ignore_element"])
