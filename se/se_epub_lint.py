@@ -222,6 +222,7 @@ METADATA
 "m-046", "[xml]<file>[/] element contains wildcard, but [xml]<ignore>[/] child specifies a line number."
 "m-047", "Illegal path. Hint: Ignoring [path]*[/] is too general; target specific files."
 "m-048", "Unused ignore rule."
+"m-049", "No rules in ignore file. Hint: Delete the file if there are no rules."
 "m-050", "Non-typogrified character in [xml]<meta property=\"file-as\" refines=\"#title\">[/] element."
 "m-051", "Missing expected element in metadata."
 "m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"dcterms:alternative\" refines="#title"> element in metadata."
@@ -261,7 +262,7 @@ METADATA
 "m-086", "[val]foreword[/] semantic inflection found, but no MARC relator [val]wfw[/] (Writer of foreword)."
 "m-087", "MARC relators not in alphabetical order."
 "m-088", "[xhtml]<ignore>[/] element ignores a specific line, but a sibling [xhtml]<ignore>[/] element ignores the entire file."
-"m-049", "No rules in ignore file. Hint: Delete the file if there are no rules."
+"m-089", "Ignore rule ignores the same line more than once."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -3573,6 +3574,10 @@ def _lint_process_ignore_file(self, lint_ignore_dom: se.easy_xml.EasyXmlTree | N
 		nodes = lint_ignore_dom.xpath("./file[re:test(@path, '[\\*\\?\\!\\[\\]]') and ./ignore/line]")
 		if nodes:
 			messages.append(LintMessage("m-046", "[xml]<file>[/] element contains wildcard, but [xml]<ignore>[/] child specifies a line number.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_tags(nodes)))
+
+		nodes = lint_ignore_dom.xpath("./file/ignore[./line[text() = preceding-sibling::line/text() or text() = following-sibling::line/text()]]")
+		if nodes:
+			messages.append(LintMessage("m-089", "Ignore rule ignores the same line more than once.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_tags(nodes)))
 
 		ignores_with_illegal_paths = []
 
