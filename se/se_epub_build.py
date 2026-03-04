@@ -1157,7 +1157,8 @@ def _build_kobo_process_xhtml(work_kepub: SeEpub, file_path: Path) -> None:
 	xhtml = regex.sub(r"<(/?)html:span", r"<\1span", xhtml)
 
 	# Currently, our house soft-hyphenation is better than Kobo's built-in hyphenation.
-	xhtml = se.typography.hyphenate(xhtml, None, True)
+	# But, we can't hyphenate because Kobo doesn't remove soft hyphens when looking up dictionary words. Therefore any user dictionary lookup will result in "can't find entry."
+	# xhtml = se.typography.hyphenate(xhtml, None, True)
 
 	with open(file_path, "w", encoding="utf-8") as file:
 		file.write(xhtml)
