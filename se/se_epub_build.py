@@ -271,7 +271,7 @@ def _add_compatibility_css_and_simplify(self: 'SeEpub', work_compatible_epub_dir
 						if selector == "[xml|lang]" and element.tag in ("html", "body"):
 							continue
 
-						class_attribute = element.get_attr("class") or ""
+						class_attribute = element.get_attr("class")
 
 						if not se.formatting.has_css_class(class_attribute, new_class):
 							element.set_attr("class", f"{class_attribute} {new_class}".strip())
@@ -283,7 +283,7 @@ def _add_compatibility_css_and_simplify(self: 'SeEpub', work_compatible_epub_dir
 			for selector, new_class in pseudo_class_selectors.items():
 				try:
 					for element in dom.css_select(selector):
-						class_attribute = element.get_attr("class") or ""
+						class_attribute = element.get_attr("class")
 
 						if not se.formatting.has_css_class(class_attribute, new_class):
 							element.set_attr("class", f"{class_attribute} {new_class}".strip())
@@ -308,33 +308,35 @@ def _convert_cover_to_jpg(work_dir: Path, work_compatible_epub_dir: Path, metada
 	None.
 	"""
 
-	cover_local_path = metadata_dom.xpath("/package/manifest/item[@properties='cover-image'][1]/@href", True)
+	try:
+		cover_local_path = metadata_dom.xpath("/package/manifest/item[@properties='cover-image'][1]/@href", str)[0]
+	except IndexError:
+		# No cover found.
+		return
 
-	# If we have a cover...
-	if cover_local_path:
-		cover_work_path = work_compatible_epub_dir / "epub" / cover_local_path
+	cover_work_path = work_compatible_epub_dir / "epub" / cover_local_path
 
-		# ...and it's not a JPG, convert it to one.
-		if cover_work_path.suffix in (".svg", ".png"):
-			# If the cover is SVG, convert to PNG first.
-			png_path = cover_work_path
-			if cover_work_path.suffix == ".svg":
-				png_path = work_dir / "cover.png"
-				svg2png(url=str(cover_work_path), write_to=str(png_path))
+	# If the cover isn't a JPG, convert it to one.
+	if cover_work_path.suffix in (".svg", ".png"):
+		# If the cover is SVG, convert to PNG first.
+		png_path = cover_work_path
+		if cover_work_path.suffix == ".svg":
+			png_path = work_dir / "cover.png"
+			svg2png(url=str(cover_work_path), write_to=str(png_path))
 
-			# Now convert PNG to JPG.
-			cover_file = Image.open(png_path)
-			cover_image = cover_file.convert("RGB") # Remove alpha channel from PNG if necessary.
-			cover_image.save(work_compatible_epub_dir / "epub" / "images" / "cover.jpg")
+		# Now convert PNG to JPG.
+		cover_file = Image.open(png_path)
+		cover_image = cover_file.convert("RGB") # Remove alpha channel from PNG if necessary.
+		cover_image.save(work_compatible_epub_dir / "epub" / "images" / "cover.jpg")
 
-			cover_work_path.unlink()
+		cover_work_path.unlink()
 
-			# Replace `.svg`/`.png` with `.jpg` in the metadata.
-			for node in metadata_dom.xpath(f"/package/manifest//item[contains(@href, '{cover_local_path}')]"):
-				for name, value in node.lxml_element.items():
-					node.set_attr(name, regex.sub(r"\.(svg|png)$", ".jpg", value))
+		# Replace `.svg`/`.png` with `.jpg` in the metadata.
+		for node in metadata_dom.xpath(f"/package/manifest//item[contains(@href, '{cover_local_path}')]"):
+			for name, value in node.lxml_element.items():
+				node.set_attr(name, regex.sub(r"\.(svg|png)$", ".jpg", value))
 
-				node.set_attr("media-type", "image/jpeg")
+			node.set_attr("media-type", "image/jpeg")
 
 def _compatibility_replacements_svg(self: 'SeEpub', file_path: Path) -> None:
 	"""
@@ -367,7 +369,7 @@ def _compatibility_replacements_svg(self: 'SeEpub', file_path: Path) -> None:
 		# Get all path elements and add a white stroke to each one.
 		# We clone each node and add it to a list, which we will insert into the original SVG later.
 		for node in dom.xpath("//path"):
-			style = node.get_attr("style") or ""
+			style = node.get_attr("style")
 			style = style + f" stroke: #ffffff; stroke-width: {stroke_width}px;"
 
 			node_clone = deepcopy(node)
@@ -444,7 +446,7 @@ def _compatibility_replacements_xhtml(self: 'SeEpub', file_path: Path, has_seque
 		node.add_attr_value("epub:type", "footnote" + plural)
 
 		# Remember to get our custom style selectors that we added, too.
-		if "epub-type-endnote" + plural in (node.get_attr("class") or ""):
+		if "epub-type-endnote" + plural in node.get_attr("class"):
 			node.add_attr_value("class", "epub-type-footnote" + plural)
 
 	# Include extra lang tag for accessibility compatibility.
@@ -461,7 +463,12 @@ def _compatibility_replacements_xhtml(self: 'SeEpub', file_path: Path, has_seque
 		processed_xhtml = processed_xhtml.replace("\u21a9", "\u21a9\ufe0e")
 
 		# If this is a large endnote file, add it to our list for later processing.
-		if float(dom.xpath("count(/html/body//section[contains(@epub:type, 'endnotes')]/ol/li)", True)) > ENDNOTE_CHUNK_SIZE + 100:
+		try:
+			endnote_count = dom.xpath("count(/html/body//section[contains(@epub:type, 'endnotes')]/ol/li)", float)[0]
+		except IndexError:
+			endnote_count = 0
+
+		if endnote_count > ENDNOTE_CHUNK_SIZE + 100:
 			endnote_files_to_be_chunked.append(file_path)
 
 	# Typography: replace double and triple em dash characters with extra em dashes.
@@ -655,7 +662,7 @@ def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote
 		endnotes_manifest_entry = metadata_dom.xpath(f"/package/manifest/item[@href='{endnote_manifest_href}/{endnote_file.name}']")[0]
 		endnotes_spine_entry = metadata_dom.xpath(f"/package/spine/itemref[@idref='{endnotes_manifest_entry.get_attr('id')}']")[0]
 		endnotes_toc_entry = toc_dom.xpath(f"/html/body//*[re:test(@epub:type, '\\btoc\\b')]//li[./a[re:test(@href, '^{endnote_manifest_href}/{endnote_file.name}')]]")[0]
-		endnotes_id_map = {}
+		endnotes_id_map: dict[str, str] = {}
 
 		# Update the landmarks entry right away; we only want to point it to the first endnotes file on the assumption that the rest will be in sequence.
 		endnotes_landmarks_entry = toc_dom.xpath(f"/html/body//*[re:test(@epub:type, '\\blandmarks\\b')]//a[re:test(@href, '^{endnote_manifest_href}/{endnote_file.name}')]")[0]
@@ -837,7 +844,8 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 				for child in node_clone.xpath(".//m:msup/*[2]"):
 					replacement_node = EasyXmlElement("<sup/>", {"m": "http://www.w3.org/1998/Math/MathML"})
 
-					child.parent.unwrap()
+					if child.parent:
+						child.parent.unwrap()
 
 					mrows = child.xpath(".//m:mrow")
 					for mrow in mrows:
@@ -850,7 +858,8 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 				for child in node_clone.xpath(".//m:msub/*[2]"):
 					replacement_node = EasyXmlElement("<sub/>", {"m": "http://www.w3.org/1998/Math/MathML"})
 
-					child.parent.unwrap()
+					if child.parent:
+						child.parent.unwrap()
 
 					mrows = child.xpath(".//m:mrow")
 					for mrow in mrows:
@@ -885,20 +894,23 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 					# Strip white space we may have added in previous operations, and re-add white space around operators.
 					for child in node_clone.lxml_element.iter("*"):
 						if child.text is not None:
-							child.text = child.text.strip()
-							child.text = child.text.replace("|se:mo|", " ")
-							child.text = regex.sub(r"\s+([\)\]])", r"\1", child.text)
-							child.text = regex.sub(r"([\(\[])\s+", r"\1", child.text)
-							child.text = regex.sub(r"([0-9])\s+\(", r"\1(", child.text)
+							text = child.text.strip()
+							text = text.replace("|se:mo|", " ")
+							text = regex.sub(r"\s+([\)\]])", r"\1", text)
+							text = regex.sub(r"([\(\[])\s+", r"\1", text)
+							text = regex.sub(r"([0-9])\s+\(", r"\1(", text)
+							child.text = text
 						if child.tail is not None:
-							child.tail = child.tail.strip()
-							child.tail = child.tail.replace("|se:mo|", " ")
-							child.tail = regex.sub(r"\s+([\)\]])", r"\1", child.tail)
-							child.tail = regex.sub(r"([\(\[])\s+", r"\1", child.tail)
-							child.tail = regex.sub(r"([0-9])\s+\(", r"\1(", child.tail)
+							tail = child.tail.strip()
+							tail = tail.replace("|se:mo|", " ")
+							tail = regex.sub(r"\s+([\)\]])", r"\1", tail)
+							tail = regex.sub(r"([\(\[])\s+", r"\1", tail)
+							tail = regex.sub(r"([0-9])\s+\(", r"\1(", tail)
 
 							if child.tag == "var":
-								child.tail = regex.sub(r"\s+([\(\[])", r"\1", child.tail)
+								tail = regex.sub(r"\s+([\(\[])", r"\1", tail)
+
+							child.tail = tail
 
 					# Remove leading spaces from the root.
 					if node_clone.lxml_element.text is not None:
@@ -1108,7 +1120,7 @@ def _build_kobo_process_xhtml(work_kepub: 'SeEpub', file_path: Path) -> None:
 
 		# Wrap the contents of the `<a>` by replacing the `<a>` with a `<span>`, then recreating the `<a>` around it.
 		link_node = EasyXmlElement(tag_string)
-		link_node.tail = node.lxml_element.tail
+		link_node.tail = node.lxml_element.tail or ""
 		node.lxml_element.tail = ""
 		node.lxml_element.tag = "span"
 
@@ -1200,7 +1212,11 @@ def _generate_ncx(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: 
 	"""
 
 	# First find the ToC file.
-	toc_filename = metadata_dom.xpath("//item[@properties=\"nav\"][1]/@href", True)
+	try:
+		toc_filename = metadata_dom.xpath("//item[@properties=\"nav\"][1]/@href", str)[0]
+	except IndexError as ex:
+		raise se.InvalidSeEbookException("Couldn’t determine ToC filename.") from ex
+
 	for node in metadata_dom.xpath("/package/spine"):
 		node.set_attr("toc", "ncx")
 
@@ -1231,8 +1247,8 @@ def _generate_ncx(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: 
 			# Set the `type` attribute and remove any `z3998` items, as well as front/body/backmatter.
 			# Removing bodymatter is OK because, as above, we're appending a titlepage reference element to the guide, so we do not also need one whose type attribute is `text`. If we include both a titlepage reference element whose type attribute is `title-page` and a bodymatter reference element whose `type` attribute is `text`, ebooks will open on Kindle at the relevant bodymatter `href`, not at the titlepage.
 			ref_node.set_attr("type", node.get_attr("epub:type"))
-			ref_node.set_attr("type", regex.sub(r"\s*\b(front|body|back)matter\b\s*", "", ref_node.get_attr("type") or ""))
-			ref_node.set_attr("type", regex.sub(r"\s*\bz3998:.+\b\s*", "", ref_node.get_attr("type") or ""))
+			ref_node.set_attr("type", regex.sub(r"\s*\b(front|body|back)matter\b\s*", "", ref_node.get_attr("type")))
+			ref_node.set_attr("type", regex.sub(r"\s*\bz3998:.+\b\s*", "", ref_node.get_attr("type")))
 
 		if ref_node.get_attr("type"):
 			# Remove `epub:type`s that are not in the allow list, see <http://idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.6>.
@@ -1240,17 +1256,16 @@ def _generate_ncx(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: 
 
 			attr = ref_node.get_attr("type")
 
-			if attr:
-				for node_type in attr.split():
-					# Include only types from the allow list that might possibly appear as landmark `epub:types`, plus `title-page` as we've manually set above.
-					if node_type in ("acknowledgements", "bibliography", "glossary", "index", "loi", "lot", "title-page"):
-						new_node_types.append(node_type)
-					# Manually set type for endnotes files.
-					elif node_type == "endnotes":
-						new_node_types.append("notes")
-					# Earlier in this file the endnote file `epub:type` was modified to include `footnotes`; ignore `footnotes` as we've just handled `endnotes`, and catch any remaining types.
-					elif node_type != "footnotes":
-						new_node_types.append(f"other.{node_type}")
+			for node_type in attr.split():
+				# Include only types from the allow list that might possibly appear as landmark `epub:types`, plus `title-page` as we've manually set above.
+				if node_type in ("acknowledgements", "bibliography", "glossary", "index", "loi", "lot", "title-page"):
+					new_node_types.append(node_type)
+				# Manually set type for endnotes files.
+				elif node_type == "endnotes":
+					new_node_types.append("notes")
+				# Earlier in this file the endnote file `epub:type` was modified to include `footnotes`; ignore `footnotes` as we've just handled `endnotes`, and catch any remaining types.
+				elif node_type != "footnotes":
+					new_node_types.append(f"other.{node_type}")
 
 			ref_node.set_attr("type", " ".join(new_node_types))
 
@@ -1382,7 +1397,7 @@ def _run_epubcheck(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 					submessage = [submessage]
 
 				file_path = Path(regex.sub(r"^file:", "", message.get_attr("url")))
-				build_messages.append(BuildMessage("vnu", "", message_text, file_path, message.get_attr("last-line"), message.get_attr("first-column"), submessage))
+				build_messages.append(BuildMessage("vnu", "", message_text, file_path, int(message.get_attr("last-line")), int(message.get_attr("first-column")), submessage))
 
 			if messages:
 				raise se.BuildFailedException("[bash]vnu[/] failed.", build_messages)
@@ -1499,8 +1514,10 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 		dom = EasyXmlTree(file.read())
 
 		for node in dom.xpath("//ol/li/ol/li/ol"):
-			node.lxml_element.getparent().addnext(node.lxml_element)
-			node.unwrap()
+			parent = node.lxml_element.getparent()
+			if parent:
+				parent.addnext(node.lxml_element)
+				node.unwrap()
 
 		file.seek(0)
 		file.write(dom.to_string())
@@ -1608,7 +1625,7 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 	# Generate the Kindle file.
 	# We place it in the work directory because later we have to update the asin, and the `mobi.update_asin()` function will write to the final output directory.
 	cover_path = None
-	for href in metadata_dom.xpath("//item[@properties=\"cover-image\"]/@href"):
+	for href in metadata_dom.xpath("//item[@properties=\"cover-image\"]/@href", str):
 		cover_path = work_compatible_epub_dir / "epub" / href
 
 	# Path arguments must be cast to string for Windows compatibility.
@@ -1783,7 +1800,13 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 					css_file.write("\n\n" + compatibility_css_file.read())
 
 		# Get the ToC dom for upcoming operations.
-		toc_relative_path = metadata_dom.xpath("/package/manifest/item[re:test(@properties, '\\bnav\\b')]/@href", True)
+		try:
+			toc_relative_filename = metadata_dom.xpath("/package/manifest/item[re:test(@properties, '\\bnav\\b')]/@href", str)[0]
+		except IndexError as ex:
+			raise se.InvalidSeEbookException("Couldn’t determine ToC filename") from ex
+
+		toc_relative_path = Path(toc_relative_filename)
+
 		toc_dom = self.get_dom(work_compatible_epub_dir / "epub" / toc_relative_path)
 
 		# If we have any endnote files with more than 600 endnotes, split them.
@@ -1818,7 +1841,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 			_replace_mathml(self, work_compatible_epub_dir, metadata_dom, ibooks_srcset_bug_exists)
 
 		# Include cover metadata for older ereaders.
-		for cover_id in metadata_dom.xpath("//item[@properties=\"cover-image\"]/@id"):
+		for cover_id in metadata_dom.xpath("//item[@properties=\"cover-image\"]/@id", str):
 			for node in metadata_dom.xpath("/package/metadata"):
 				node.append(etree.fromstring(f"""<meta content="{cover_id}" name="cover"/>"""))
 

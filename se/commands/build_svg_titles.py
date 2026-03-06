@@ -3,6 +3,7 @@ This module implements the `se build-svg-titles` command.
 """
 
 import argparse
+from pathlib import Path
 
 import se
 import se.easy_xml
@@ -40,7 +41,7 @@ def build_svg_titles(plain_output: bool) -> int:
 						continue
 
 					# Update or add the title to the SVG.
-					svg_path = se.abspath_relative_to(img_src, filename)
+					svg_path = se.abspath_relative_to(Path(img_src), filename)
 					try:
 						svg_dom = se_epub.get_dom(svg_path)
 						svg_element = svg_dom.xpath("/svg")[0]

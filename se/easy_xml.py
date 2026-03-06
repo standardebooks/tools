@@ -4,7 +4,7 @@ Defines the EasyXmlTree class, which is a convenience wrapper around etree.
 The class exposes some helpful functions like css_select() and xpath().
 """
 
-from typing import Any
+from typing import Any, overload, Literal
 import unicodedata
 
 import regex
@@ -39,176 +39,6 @@ def escape_xpath(string: str) -> str:
 	# Can't use f-strings here because f-strings can't contain `\` escapes.
 	return "concat('%s')" % string.replace("'", "',\"'\",'")
 
-class EasyXmlTree:
-	"""
-	A helper class to make some lxml operations a little less painful. Represents an entire lxml tree.
-
-	This is not a complete XML parser. It only works if namespaces are only declared on the root element.
-	"""
-
-	def __init__(self, xml: str | etree.ElementTree):
-		self.namespaces = {"re": "http://exslt.org/regular-expressions", "xml": "http://www.w3.org/XML/1998/namespace"} # Enable regular expressions in xpath; `xml` is the default XML namespace.
-		self.default_namespace = None
-
-		if isinstance(xml, etree.ElementTree):
-			xml_string = etree.tostring(xml, encoding="unicode", with_tail=False)
-		else:
-			xml_string = xml
-
-		# Save the default namespace for later.
-		for namespace in regex.findall(r" xmlns=\"([^\"]+?)\"", xml_string):
-			self.default_namespace = namespace
-
-		# Always remove the default namespaces, otherwise xpath with lxml is a huge pain.
-		xml_string = regex.sub(r" xmlns=\"[^\"]+?\"", "", xml_string)
-
-		# Add additional namespaces we may have.
-		for match in regex.findall(r" xmlns:(.+?)=\"([^\"]+?)\"", xml_string):
-			self.namespaces[match[0]] = match[1]
-
-		try:
-			# `huge_tree` allows XML files of arbitrary size, like _The Personal Memoirs of Ulysses S. Grant_.
-			custom_parser = etree.XMLParser(huge_tree=True)
-			self.etree = etree.fromstring(str.encode(xml_string), parser=custom_parser)
-		except etree.XMLSyntaxError as ex:
-			raise se.InvalidXmlException(f"Couldn’t parse XML. Exception: {ex}") from ex
-
-		self.is_css_applied = False
-
-	def css_select(self, selector: str):
-		"""
-		Shortcut to select elements based on CSS selector.
-		"""
-
-		try:
-			sel = CSS_SELECTOR_CACHE.get(selector)
-			if not sel:
-				sel = cssselect.CSSSelector(selector, translator="xhtml", namespaces=self.namespaces)
-				CSS_SELECTOR_CACHE[selector] = sel
-
-			return [EasyXmlElement(element, self.namespaces) for element in sel(self.etree)]
-
-		except cssselect.ExpressionError as ex:
-			raise se.NotImplementedException(f"Selector not implemented in the SE toolset: [css]{selector}[/]") from ex
-
-		except parser.SelectorSyntaxError as ex:
-			raise se.InvalidCssException(f"Invalid selector: [css]{selector}[/]") from ex
-
-	def xpath(self, selector: str, return_string: bool = False) -> Any:
-		"""
-		Shortcut to select elements based on xpath selector.
-
-		If `return_string` is `True`, return a single string value instead of a list.
-
-		Return `Any` to quiet `pyright` for now. Should be upgraded to a real type hint ASAP.
-		"""
-
-		result: list[str | EasyXmlElement | float] = []
-
-		try:
-			query_result = self.etree.xpath(selector, namespaces=self.namespaces, smart_strings=True)
-			if isinstance(query_result, str|float):
-				result.append(query_result)
-			else:
-				for element in query_result:
-					if isinstance(element, str):
-						result.append(element)
-					else:
-						result.append(EasyXmlElement(element, self.namespaces))
-
-		except etree.XPathEvalError as ex:
-			# If we ask for an undefined namespace prefix, just return nothing instead of crashing.
-			if not regex.match("Undefined namespace prefix", str(ex)):
-				raise ex
-
-		if return_string and result:
-			return str(result[0])
-		if return_string and not result:
-			return None
-
-		return result
-
-	@staticmethod
-	def _apply_css_declaration_to_node(node: 'EasyXmlElement', declaration: se.css.CssDeclaration, specificity_number: int):
-		if declaration.applies_to == "all" or (declaration.applies_to == "block" and node.tag in se.css.CSS_BLOCK_ELEMENTS):
-			existing_specificity = node.get_attr(f"data-css-{declaration.name}-specificity") or 0
-
-			if declaration.important:
-				specificity_number = specificity_number + 1000
-
-			if int(existing_specificity) <= specificity_number:
-				node.set_attr(f"data-css-{declaration.name}", declaration.value)
-				node.set_attr(f"data-css-{declaration.name}-specificity", str(specificity_number))
-
-	def apply_css(self, css: str, filename: str | None = None):
-		"""
-		Apply a CSS stylesheet to an XHTML tree. The application is naive and should not be expected to be browser-grade. CSS properties on specific elements can be returned using `EasyXmlElement.get_css_property()`.
-
-		With `filename`, save the resulting rules in a cache to prevent having to re-parse the same stylesheet over and over.
-
-		Currently this does not support rules/declarations in `@` blocks, like `@supports`.
-
-		For example,
-
-		```python
-		for node in dom.xpath("//em")
-			print(node.get_css_property("font-style"))
-		```
-		"""
-		self.is_css_applied = True
-
-		if filename and filename in CSS_RULES_CACHE:
-			rules = CSS_RULES_CACHE[filename]
-		else:
-			rules = se.css.parse_rules(css)
-			if filename:
-				CSS_RULES_CACHE[filename] = rules
-
-		# We've parsed the CSS, now apply it to the DOM tree.
-		for rule in rules:
-			try:
-				for node in self.css_select(rule.selector):
-					for declaration in rule.declarations:
-						self._apply_css_declaration_to_node(node, declaration, rule.specificity_number)
-
-						# If the property is inherited, apply it to its descendants.
-						# However inherited properties get `0` specificity, because they can be overriden.
-						if declaration.inherited:
-							for child in node.xpath(".//*"):
-								self._apply_css_declaration_to_node(child, declaration, 0)
-
-			except se.NotImplementedException:
-				# This gets thrown on some selectors not yet implemented by lxml, like `*:first-of-type`.
-				pass
-
-			except cssselect.ExpressionError:
-				# Invalid CSS, continue.
-				pass
-
-	def to_string(self) -> str:
-		"""
-		Serialize the tree to a string.
-		"""
-
-		# If we applied a CSS file to this tree, remove the special attributes we added before printing it out.
-		if self.is_css_applied:
-			for node in self.xpath("//@*[starts-with(name(), 'data-css-')]/parent::*"):
-				for attr in node.lxml_element.attrib:
-					if attr.startswith("data-css-"):
-						node.remove_attr(attr)
-
-		xml = etree.tostring(self.etree, encoding="unicode")
-
-		# Re-insert the default namespace if we removed it earlier.
-		if self.default_namespace:
-			xml = regex.sub(r"^<([a-zA-Z0-9\-]+)\b", fr'<\1 xmlns="{self.default_namespace}"', xml)
-
-		xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + xml + "\n"
-
-		# Normalize unicode characters.
-		xml = unicodedata.normalize("NFC", xml)
-
-		return xml
 
 class EasyXmlElement:
 	"""
@@ -342,7 +172,7 @@ class EasyXmlElement:
 		`<p class="foo">` -> `<p class="foo bar">`
 		"""
 
-		existing_value = self.get_attr(attribute) or ""
+		existing_value = self.get_attr(attribute)
 
 		self.set_attr(attribute, (existing_value + " " + value).strip())
 
@@ -359,7 +189,7 @@ class EasyXmlElement:
 		`<p class="foo bar">` -> `<p class="foo">`
 		"""
 
-		attr = self.get_attr(attribute)
+		attr = self.get_attr(attribute, True)
 
 		if attr:
 			self.set_attr(attribute, regex.sub(fr"\s*\b{regex.escape(value)}\b\s*", "", attr))
@@ -368,12 +198,31 @@ class EasyXmlElement:
 			if not self.get_attr(attribute):
 				self.remove_attr(attribute)
 
-	def get_attr(self, attribute: str) -> str | None:
+	@overload
+	def get_attr(self, attribute: str, empty_if_not_exists: Literal[True]) -> str:
+		...
+
+	@overload
+	def get_attr(self, attribute: str, empty_if_not_exists: Literal[False]) -> str | None:
+		...
+
+	@overload
+	def get_attr(self, attribute: str) -> str:
+		...
+
+	def get_attr(self, attribute: str, empty_if_not_exists: bool=True) -> str | None:
 		"""
 		Return the value of an attribute on this element.
+
+		Return an empty string if the attribute doesn't exist, unless `empty_if_not_exists` is `False`, in which case return `None`.
 		"""
 
-		return self.lxml_element.get(self._replace_shorthand_namespaces(attribute))
+		value = self.lxml_element.get(self._replace_shorthand_namespaces(attribute))
+
+		if empty_if_not_exists and not value:
+			return ""
+
+		return value
 
 	def set_attr(self, attribute: str, value: str) -> None:
 		"""
@@ -382,31 +231,86 @@ class EasyXmlElement:
 
 		self.lxml_element.set(self._replace_shorthand_namespaces(attribute), value)
 
-	def xpath(self, selector: str, return_string: bool = False) -> Any:
+	@overload
+	def xpath(self, selector: str) -> list['EasyXmlElement']:
+		...
+
+	@overload
+	def xpath(self, selector: str, return_list_type: type['EasyXmlElement']) -> list['EasyXmlElement']:
+		...
+
+	@overload
+	def xpath(self, selector: str, return_list_type: type[str]) -> list[str]:
+		...
+
+	@overload
+	def xpath(self, selector: str, return_list_type: type[float]) -> list[float]:
+		...
+
+	@overload
+	def xpath(self, selector: str, return_list_type: Any) -> list[Any]:
+		...
+		# Keep this overload last. It is the fallback for passing typing.Any.
+
+	def xpath(self, selector: str, return_list_type: 'EasyXmlElement | type[str] | type[float] | Any' = 'EasyXmlElement') -> list['EasyXmlElement'] | list[str] | list[float] | list[Any]:
 		"""
-		Shortcut to select elements based on xpath selector.
+		Select elements or values using an xpath expression.
 
-		Return `Any` to quiet `pyright` for now. Should be upgraded to a real type hint ASAP.
+		`return_list_type` can be one of `EasyXmlElement`, `str`, `float`, or `Any`. If `str`, lxml's "smart strings" are returned, which contain a `.getparent()` method. If `Any`, the return list is untyped.
 		"""
 
-		result: list[str | EasyXmlElement | float] = []
+		try:
+			query_result = self.lxml_element.xpath(selector, namespaces=self.namespaces, smart_strings=False)
+			# For typing purposes we have to default to a string here, and not a real type, because the type is our own class.
+			if return_list_type == 'EasyXmlElement':
+				element_result: list[EasyXmlElement] = []
 
-		query_result = self.lxml_element.xpath(selector, namespaces=self.namespaces, smart_strings=False)
-		if isinstance(query_result, str|float):
-			result.append(query_result)
-		else:
-			for element in query_result:
-				if isinstance(element, str):
-					result.append(element)
+				for element in query_result:
+					element_result.append(EasyXmlElement(element, self.namespaces))
+
+				return element_result
+
+			if return_list_type is str:
+				str_result: list[str] = []
+
+				for element in query_result:
+					# If we're already a string, then we're a special lxml string featuring a `sourceline` attribute.
+					if isinstance(element, str):
+						str_result.append(element)
+					else:
+						str_result.append(str(element))
+
+				return str_result
+
+			if return_list_type is float:
+				float_result: list[float] = []
+
+				if isinstance(query_result, float):
+					float_result.append(query_result)
 				else:
-					result.append(EasyXmlElement(element, self.namespaces))
+					for element in query_result:
+						float_result.append(float(element))
 
-		if return_string and result:
-			return str(result[0])
-		if return_string and not result:
-			return None
+				return float_result
 
-		return result
+
+			if return_list_type is Any:
+				result: list[Any] = []
+				for element in query_result:
+					if isinstance(element, etree.Element):
+						element = EasyXmlElement(element, self.namespaces)
+
+					result.append(element)
+
+				return result
+
+		except etree.XPathEvalError as ex:
+			# If we ask for an undefined namespace prefix, just return nothing instead of crashing.
+			if not regex.match("Undefined namespace prefix", str(ex)):
+				raise ex
+
+		# Fallback to satisfy type check, we should never reach here.
+		return []
 
 	def inner_xml(self) -> str:
 		"""
@@ -726,3 +630,221 @@ class EasyXmlElement:
 		"""
 
 		return self.lxml_element.sourceline
+
+
+class EasyXmlTree:
+	"""
+	A helper class to make some lxml operations a little less painful. Represents an entire lxml tree.
+
+	This is not a complete XML parser. It only works if namespaces are only declared on the root element.
+	"""
+
+	def __init__(self, xml: str | etree.ElementTree):
+		self.namespaces = {"re": "http://exslt.org/regular-expressions", "xml": "http://www.w3.org/XML/1998/namespace"} # Enable regular expressions in xpath; `xml` is the default XML namespace.
+		self.default_namespace = None
+
+		if isinstance(xml, etree.ElementTree):
+			xml_string = etree.tostring(xml, encoding="unicode", with_tail=False)
+		else:
+			xml_string = xml
+
+		# Save the default namespace for later.
+		for namespace in regex.findall(r" xmlns=\"([^\"]+?)\"", xml_string):
+			self.default_namespace = namespace
+
+		# Always remove the default namespaces, otherwise xpath with lxml is a huge pain.
+		xml_string = regex.sub(r" xmlns=\"[^\"]+?\"", "", xml_string)
+
+		# Add additional namespaces we may have.
+		for match in regex.findall(r" xmlns:(.+?)=\"([^\"]+?)\"", xml_string):
+			self.namespaces[match[0]] = match[1]
+
+		try:
+			# `huge_tree` allows XML files of arbitrary size, like _The Personal Memoirs of Ulysses S. Grant_.
+			custom_parser = etree.XMLParser(huge_tree=True)
+			self.etree = etree.fromstring(str.encode(xml_string), parser=custom_parser)
+		except etree.XMLSyntaxError as ex:
+			raise se.InvalidXmlException(f"Couldn’t parse XML. Exception: {ex}") from ex
+
+		self.is_css_applied = False
+
+	def css_select(self, selector: str):
+		"""
+		Shortcut to select elements based on CSS selector.
+		"""
+
+		try:
+			sel = CSS_SELECTOR_CACHE.get(selector)
+			if not sel:
+				sel = cssselect.CSSSelector(selector, translator="xhtml", namespaces=self.namespaces)
+				CSS_SELECTOR_CACHE[selector] = sel
+
+			return [EasyXmlElement(element, self.namespaces) for element in sel(self.etree)]
+
+		except cssselect.ExpressionError as ex:
+			raise se.NotImplementedException(f"Selector not implemented in the SE toolset: [css]{selector}[/]") from ex
+
+		except parser.SelectorSyntaxError as ex:
+			raise se.InvalidCssException(f"Invalid selector: [css]{selector}[/]") from ex
+
+	@overload
+	def xpath(self, selector: str) -> list[EasyXmlElement]:
+		...
+
+	@overload
+	def xpath(self, selector: str, return_list_type: type[EasyXmlElement]) -> list[EasyXmlElement]:
+		...
+
+	@overload
+	def xpath(self, selector: str, return_list_type: type[str]) -> list[str]:
+		...
+
+	@overload
+	def xpath(self, selector: str, return_list_type: type[float]) -> list[float]:
+		...
+
+	@overload
+	def xpath(self, selector: str, return_list_type: Any) -> list[Any]:
+		...
+		# Keep this overload last. It is the fallback for passing typing.Any.
+
+	def xpath(self, selector: str, return_list_type: EasyXmlElement | type[str] | type[float] | Any = EasyXmlElement) -> list[EasyXmlElement] | list[str] | list[float] | list[Any]:
+		"""
+		Select elements or values using an xpath expression.
+
+		`return_list_type` can be one of `EasyXmlElement`, `str`, `float`, or `Any`. If `str`, lxml's "smart strings" are returned, which contain a `.getparent()` method. If `Any`, the return list is untyped.
+		"""
+
+		try:
+			query_result = self.etree.xpath(selector, namespaces=self.namespaces, smart_strings=True)
+
+			if return_list_type is EasyXmlElement:
+				element_result: list[EasyXmlElement] = []
+
+				for element in query_result:
+					element_result.append(EasyXmlElement(element, self.namespaces))
+
+				return element_result
+
+			if return_list_type is str:
+				str_result: list[str] = []
+
+				for element in query_result:
+					# If we're already a string, then we're a special lxml string featuring a `sourceline` attribute.
+					if isinstance(element, str):
+						str_result.append(element)
+					else:
+						str_result.append(str(element))
+
+				return str_result
+
+			if return_list_type is float:
+				float_result: list[float] = []
+
+				if isinstance(query_result, float):
+					float_result.append(query_result)
+				else:
+					for element in query_result:
+						float_result.append(float(element))
+
+				return float_result
+
+			if return_list_type is Any:
+				result: list[Any] = []
+				for element in query_result:
+					if isinstance(element, etree.Element):
+						element = EasyXmlElement(element, self.namespaces)
+
+					result.append(element)
+
+				return result
+
+		except etree.XPathEvalError as ex:
+			# If we ask for an undefined namespace prefix, just return nothing instead of crashing.
+			if not regex.match("Undefined namespace prefix", str(ex)):
+				raise ex
+
+		# Fallback to satisfy type check, we should never reach here.
+		return []
+
+	@staticmethod
+	def _apply_css_declaration_to_node(node: EasyXmlElement, declaration: se.css.CssDeclaration, specificity_number: int):
+		if declaration.applies_to == "all" or (declaration.applies_to == "block" and node.tag in se.css.CSS_BLOCK_ELEMENTS):
+			existing_specificity = node.get_attr(f"data-css-{declaration.name}-specificity", True) or 0
+
+			if declaration.important:
+				specificity_number = specificity_number + 1000
+
+			if int(existing_specificity) <= specificity_number:
+				node.set_attr(f"data-css-{declaration.name}", declaration.value)
+				node.set_attr(f"data-css-{declaration.name}-specificity", str(specificity_number))
+
+	def apply_css(self, css: str, filename: str | None = None):
+		"""
+		Apply a CSS stylesheet to an XHTML tree. The application is naive and should not be expected to be browser-grade. CSS properties on specific elements can be returned using `EasyXmlElement.get_css_property()`.
+
+		With `filename`, save the resulting rules in a cache to prevent having to re-parse the same stylesheet over and over.
+
+		Currently this does not support rules/declarations in `@` blocks, like `@supports`.
+
+		For example,
+
+		```python
+		for node in dom.xpath("//em")
+			print(node.get_css_property("font-style"))
+		```
+		"""
+		self.is_css_applied = True
+
+		if filename and filename in CSS_RULES_CACHE:
+			rules = CSS_RULES_CACHE[filename]
+		else:
+			rules = se.css.parse_rules(css)
+			if filename:
+				CSS_RULES_CACHE[filename] = rules
+
+		# We've parsed the CSS, now apply it to the DOM tree.
+		for rule in rules:
+			try:
+				for node in self.css_select(rule.selector):
+					for declaration in rule.declarations:
+						self._apply_css_declaration_to_node(node, declaration, rule.specificity_number)
+
+						# If the property is inherited, apply it to its descendants.
+						# However inherited properties get `0` specificity, because they can be overriden.
+						if declaration.inherited:
+							for child in node.xpath(".//*"):
+								self._apply_css_declaration_to_node(child, declaration, 0)
+
+			except se.NotImplementedException:
+				# This gets thrown on some selectors not yet implemented by lxml, like `*:first-of-type`.
+				pass
+
+			except cssselect.ExpressionError:
+				# Invalid CSS, continue.
+				pass
+
+	def to_string(self) -> str:
+		"""
+		Serialize the tree to a string.
+		"""
+
+		# If we applied a CSS file to this tree, remove the special attributes we added before printing it out.
+		if self.is_css_applied:
+			for node in self.xpath("//@*[starts-with(name(), 'data-css-')]/parent::*"):
+				for attr in node.lxml_element.attrib:
+					if attr.startswith("data-css-"):
+						node.remove_attr(attr)
+
+		xml = etree.tostring(self.etree, encoding="unicode")
+
+		# Re-insert the default namespace if we removed it earlier.
+		if self.default_namespace:
+			xml = regex.sub(r"^<([a-zA-Z0-9\-]+)\b", fr'<\1 xmlns="{self.default_namespace}"', xml)
+
+		xml = """<?xml version="1.0" encoding="utf-8"?>\n""" + xml + "\n"
+
+		# Normalize unicode characters.
+		xml = unicodedata.normalize("NFC", xml)
+
+		return xml

@@ -3,6 +3,7 @@ This module implements the `se xpath` command.
 """
 
 import argparse
+from typing import Any
 
 from lxml import etree
 import se
@@ -32,7 +33,7 @@ def xpath(plain_output: bool) -> int:
 			with open(filepath, "r", encoding="utf-8") as file:
 				dom = se.easy_xml.EasyXmlTree(file.read())
 
-			nodes = dom.xpath(args.xpath)
+			nodes = dom.xpath(args.xpath, Any)
 
 			if nodes:
 				has_results = True
@@ -44,6 +45,8 @@ def xpath(plain_output: bool) -> int:
 				console.print(se.prep_output(f"[path][link=file://{filepath}]{filepath}[/][/]", plain_output))
 				if not args.only_filenames:
 					for node in nodes:
+						output = ""
+
 						# We only have to escape leading `[` to prevent Rich from converting it to a style. If we also escape `]` then Rich will print the slash.
 						# Explicitly exclude link markup in plain results because it doesn't make sense to offset line numbers with ```.
 						if isinstance(node, se.easy_xml.EasyXmlElement):
@@ -62,12 +65,14 @@ def xpath(plain_output: bool) -> int:
 						elif isinstance(node, float):
 							output = str(node)
 
-						else:
-							if plain_output:
-								output = f"Line {node.getparent().sourceline}: {str(node)}"
-							else:
-								node_string = str(node).replace('[', '\\[')
-								output = f"[path][link=file://{filepath.resolve()}#L{node.getparent().sourceline}]Line {node.getparent().sourceline}[/][/]: {node_string}"
+						elif isinstance(node, etree.Element):
+							parent = node.getparent()
+							if parent:
+								if plain_output:
+									output = f"Line {parent.sourceline}: {str(node)}"
+								else:
+									node_string = str(node).replace('[', '\\[')
+									output = f"[path][link=file://{filepath.resolve()}#L{parent.sourceline}]Line {parent.sourceline}[/][/]: {node_string}"
 
 						output = "".join([f"\t{line}\n" for line in output.splitlines()])
 

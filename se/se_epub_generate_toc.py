@@ -222,9 +222,9 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list[TocItem]) -> None
 			landmark.title = "Titlepage"
 			landmark.lang = "" # Reset the language in case the ebook is title is not English.
 		else:
-			landmark.title = dom.xpath("//head/title/text()", True)  # Use the page title as the landmark entry title.
-			if landmark.title is None:
-				# This is a bit desperate, use this only if there's no proper `<title>` element in file.
+			try:
+				landmark.title = dom.xpath("//head/title/text()", str)[0]  # Use the page title as the landmark entry title.
+			except IndexError:
 				landmark.title = landmark.epub_type.capitalize()
 
 		landmarks.append(landmark)
@@ -442,9 +442,11 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list[TocItem], sing
 				special_item.level = 1
 		else:
 			raise se.InvalidInputException(f"Unable to find heading or content item (p, header or img) in file: [path][link=file://{textf}]{textf}[/][/].")
-		special_item.title = dom.xpath("//head/title/text()", True)  # Use the page title as the ToC entry title.
-		if special_item.title is None:
-			special_item.title = "NO TITLE"
+		try:
+			title = dom.xpath("//head/title/text()", str)[0] # Use the page title as the ToC entry title.
+		except IndexError:
+			title = "NO TITLE"
+		special_item.title = title
 		special_item.file_link = textf
 		special_item.toc_id = get_toc_id_for_special_item(content_item[0])
 		if not special_item.toc_id: # No luck so use quick and dirty method.
@@ -455,7 +457,7 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list[TocItem], sing
 
 	for heading in heads:
 		# Don't process a heading separately if it's within a `<hgroup>`.
-		if heading.parent.tag == "hgroup":
+		if heading.parent and heading.parent.tag == "hgroup":
 			continue  # Skip it.
 
 		if place == Position.BODY:
@@ -485,7 +487,7 @@ def get_toc_id_for_special_item(node: EasyXmlElement) -> str:
 	"""
 	parent_sections = node.xpath("./ancestor::*[name() = 'section' or name() = 'article']")
 	for parent in parent_sections:
-		toc_id = parent.get_attr("id")
+		toc_id = parent.get_attr("id", True)
 		if toc_id:
 			return toc_id
 	return ""
@@ -551,12 +553,12 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 		else:
 			toc_item.file_link = textf
 
-	toc_item.lang = node.get_attr("xml:lang") or ""
+	toc_item.lang = node.get_attr("xml:lang")
 
 	if node.get_attr("hidden"):
 		toc_item.hidden = True
 
-	epub_type = node.get_attr("epub:type")
+	epub_type = node.get_attr("epub:type", True)
 
 	# It may be an empty header element eg `<h3>`, so we pass its parent rather than itself to evaluate the parent's descendants.
 	if not epub_type and node.tag in ["h1", "h2", "h3", "h4", "h5", "h6"]:
@@ -687,7 +689,7 @@ def get_book_division(node: EasyXmlElement) -> BookDivision:
 		parent_sections = node.xpath("./ancestor::body")
 
 	if not parent_sections:  # Couldn't find a parent, so throw an error.
-		raise se.InvalidInputException
+		raise se.InvalidInputException("Couldn’t find division type.")
 
 	section_epub_type = parent_sections[-1].get_attr("epub:type")
 	retval = BookDivision.NONE
@@ -760,6 +762,7 @@ def process_all_content(self: 'SeEpub', file_list: list[Path]) -> tuple[list[Toc
 	for textf in file_list:
 		with open(textf, "r", encoding="utf-8") as file:
 			dom = se.easy_xml.EasyXmlTree(file.read())
+
 		process_headings(dom, textf.name, toc_list, single_file, single_file_without_headers)
 
 		# Only consider half title pages that are front matter. Some books, like C.S. Lewis's _Poetry_, may have half titles that are bodymatter.
@@ -791,6 +794,9 @@ def generate_toc(self: 'SeEpub') -> str:
 	"""
 	Entry point for `SeEpub.generate_toc()`.
 	"""
+
+	if not self.language:
+		raise se.InvalidSeEbookException("Couldn’t determine ebook language.")
 
 	work_title = self.get_title()
 

@@ -12,7 +12,6 @@ from math import floor
 import os
 from pathlib import Path
 import importlib.resources
-from typing import cast
 from unicodedata import normalize
 
 from git import cmd
@@ -137,11 +136,13 @@ class SeEpub:
 			self.epub_root_path = self.path
 			self.is_se_ebook = False
 
+		container_tree = self.get_dom(self.epub_root_path / "META-INF" / "container.xml")
 		try:
-			container_tree = self.get_dom(self.epub_root_path / "META-INF" / "container.xml")
-			self.metadata_file_path = self.epub_root_path / container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path")[0]
-		except Exception as ex:
+			path = container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path", str)[0]
+		except IndexError as ex:
 			raise se.InvalidSeEbookException("Target doesn’t appear to be an epub: no [path]container.xml[/] or no metadata file.") from ex
+
+		self.metadata_file_path = self.epub_root_path / path
 
 		try:
 			self.content_path = self.metadata_file_path.parent
@@ -149,57 +150,71 @@ class SeEpub:
 		except Exception as ex:
 			raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]. Exception: {ex}") from ex
 
-		toc_href = self.metadata_dom.xpath("/package/manifest/item[contains(@properties, 'nav')]/@href", True)
-		if toc_href:
+		try:
+			toc_href = self.metadata_dom.xpath("/package/manifest/item[contains(@properties, 'nav')]/@href", str)[0]
 			self.toc_path = self.content_path / toc_href
-		else:
-			raise se.InvalidSeEbookException("Couldn’t find table of contents.")
+		except IndexError as ex:
+			raise se.InvalidSeEbookException("Couldn’t find table of contents.") from ex
 
-		gskm_href = self.metadata_dom.xpath("/package/manifest/item[contains(@properties, 'search-key-map')]/@href", True)
-		if gskm_href:
+		try:
+			gskm_href = self.metadata_dom.xpath("/package/manifest/item[contains(@properties, 'search-key-map')]/@href", str)[0]
 			self.glossary_search_key_map_path = self.content_path / gskm_href
+		except IndexError:
+			pass
 
 		# If our identifier isn't SE-style, we're not an SE ebook.
-		self.identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier/text()", True)
-		if not self.identifier or not self.identifier.startswith("https://standardebooks.org/ebooks/"):
+		try:
+			self.identifier = self.metadata_dom.xpath("/package/metadata/dc:identifier/text()", str)[0]
+
+			if not self.identifier.startswith("https://standardebooks.org/ebooks/"):
+				self.is_se_ebook = False
+		except IndexError:
 			self.is_se_ebook = False
 
 	@property
-	def title(self):
+	def title(self) -> str|None:
 		"""
 		Accessor
 		"""
 
 		if not self._title:
-			self._title = self.metadata_dom.xpath("/package/metadata/dc:title/text()", True)
+			try:
+				self._title = self.metadata_dom.xpath("/package/metadata/dc:title/text()", str)[0]
+			except IndexError:
+				pass
 
 		return self._title
 
 	@property
-	def language(self):
+	def language(self) -> str|None:
 		"""
 		Accessor
 		"""
 
 		if not self._language:
-			self._language = self.metadata_dom.xpath("/package/metadata/dc:language/text()", True)
+			try:
+				self._language = self.metadata_dom.xpath("/package/metadata/dc:language/text()", str)[0]
+			except IndexError:
+				pass
 
 		return self._language
 
 	@property
-	def cover_path(self):
+	def cover_path(self) -> Path|None:
 		"""
 		Accessor.
 		"""
 
 		if not self._cover_path:
-			for file_href in self.metadata_dom.xpath("/package/manifest/item[contains(@properties, 'cover-image')]/@href"):
-				self._cover_path = self.content_path / file_href
+			try:
+				self._cover_path = self.content_path / self.metadata_dom.xpath("/package/manifest/item[contains(@properties, 'cover-image')]/@href", str)[0]
+			except IndexError:
+				pass
 
 		return self._cover_path
 
 	@property
-	def endnotes_path(self):
+	def endnotes_path(self) -> Path|None:
 		"""
 		Accessor.
 		"""
@@ -214,7 +229,7 @@ class SeEpub:
 		return self._endnotes_path
 
 	@property
-	def loi_path(self):
+	def loi_path(self) -> Path|None:
 		"""
 		Accessor
 		"""
@@ -293,12 +308,13 @@ class SeEpub:
 					except ValueError:
 						note.number = 0
 					note.contents = node.xpath("./*")
-					note.anchor = node.get_attr("id") or ""
+					note.anchor = node.get_attr("id")
 
-					for back_link in node.xpath(".//a[contains(@epub:type, 'backlink')]/@href"):
-						note.back_link = back_link
-					if not note.back_link:
-						raise se.InvalidInputException(f"No backlink found in note {note.anchor} in existing endnotes file.")
+					try:
+						note.back_link = node.xpath(".//a[contains(@epub:type, 'backlink')]/@href", str)[0]
+					except IndexError as ex:
+						raise se.InvalidInputException(f"No backlink found in note {note.anchor} in existing endnotes file.") from ex
+
 					self._endnotes.append(note)
 
 		return self._endnotes
@@ -318,14 +334,15 @@ class SeEpub:
 		"""
 
 		if not self._spine_file_paths:
-
 			self._spine_file_paths = []
 
-			for idref in self.metadata_dom.xpath("/package/spine/itemref/@idref"):
+			for idref in self.metadata_dom.xpath("/package/spine/itemref/@idref", str):
 				try:
-					self._spine_file_paths.append(self.content_path / self.metadata_dom.xpath(f"/package/manifest/item[@id='{idref}']/@href", True))
-				except Exception as ex:
+					path = self.metadata_dom.xpath(f"/package/manifest/item[@id='{idref}']/@href", str)[0]
+				except IndexError as ex:
 					raise se.InvalidSeEbookException(f"Couldn’t find spine item: {idref}") from ex
+
+				self._spine_file_paths.append(self.content_path / path)
 
 		return self._spine_file_paths
 
@@ -403,18 +420,18 @@ class SeEpub:
 
 				if role.text == "trl" and process_translators:
 					if display_seq:
-						contributor.display_seq = display_seq[0]
+						contributor.display_seq = int(display_seq[0].text)
 						translators_have_display_seq = True
 
 					translators.append(contributor)
 
 				if role.text == "ill" and display_seq:
-					contributor.display_seq = display_seq[0]
+					contributor.display_seq = int(display_seq[0].text)
 
 					illustrators.append(contributor)
 
 				if role.text == "edt" and display_seq:
-					contributor.display_seq = display_seq[0]
+					contributor.display_seq = int(display_seq[0].text)
 
 					editors.append(contributor)
 
@@ -692,7 +709,11 @@ class SeEpub:
 		"""
 
 		# Get some header data: title, core and local CSS.
-		title = self.metadata_dom.xpath("/package/metadata/dc:title/text()", True)
+		try:
+			title = self.metadata_dom.xpath("/package/metadata/dc:title/text()", str)[0]
+		except IndexError as ex:
+			raise se.InvalidSeEbookException("Couldn’t determine ebook title.") from ex
+
 		css = ""
 		namespaces: list[str] = []
 
@@ -780,7 +801,7 @@ class SeEpub:
 				needs_wrapper_css = True
 
 				# Wrap the sections in a `<div>` that we style later.
-				wrapper_element = cast(etree.Element, etree.SubElement(node.lxml_element, "div"))
+				wrapper_element = etree.SubElement(node.lxml_element, "div")
 				wrapper_element.set("class", "positioning-wrapper")
 				for child in node.xpath("./*[(name() = 'figure' or name() = 'img')]"):
 					wrapper_element.append(child.lxml_element) # `.append()` will *move* the element to the end of `wrapper_element`.
@@ -1429,7 +1450,8 @@ class SeEpub:
 			with importlib.resources.files("se.data.templates").joinpath("loi.xhtml").open("r", encoding="utf-8") as file:
 				loi_dom = EasyXmlTree(file.read())
 
-			loi_dom.xpath("/html")[0].set_attr("xml:lang", self.language)
+			if self.language:
+				loi_dom.xpath("/html")[0].set_attr("xml:lang", self.language)
 		else:
 			loi_dom = self.get_dom(self.loi_path)
 
@@ -1442,10 +1464,10 @@ class SeEpub:
 		for file_path in self.spine_file_paths:
 			dom = self.get_dom(file_path)
 
-			for figure in dom.xpath("/html/body//figure[@id and img]"):
+			for figure in dom.xpath("/html/body//figure[@id and ./img]"):
 				figure_id = figure.get_attr("id")
 
-				entry = (figure.xpath("./img")[0].get_attr("alt") or "").strip()
+				entry = figure.xpath("./img")[0].get_attr("alt").strip()
 
 				figcaption = figure.xpath("./figcaption")
 				if figcaption:
@@ -1462,7 +1484,6 @@ class SeEpub:
 						if not has_block:
 							entry = deepcopy(figcaption[0])
 
-						if isinstance(entry, EasyXmlElement):
 							# Remove endnote references.
 							for noteref in entry.xpath("a[contains(@epub:type, 'noteref')]"):
 								noteref.remove()
@@ -1851,7 +1872,7 @@ class SeEpub:
 
 		worktype = "fiction"  # Default.
 
-		subjects = [str(s) for s in self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']/text()")]
+		subjects = self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']/text()", str)
 		if not subjects:
 			return worktype
 
@@ -1881,8 +1902,10 @@ class SeEpub:
 		OUTPUTS:
 		Either the title of the book, or `TITLE` if the required metadata element doesn't exist.
 		"""
-
-		return self.metadata_dom.xpath("/package/metadata/dc:title/text()", True) or "TITLE"
+		try:
+			return self.metadata_dom.xpath("/package/metadata/dc:title/text()", str)[0]
+		except IndexError:
+			return "TITLE"
 
 	def get_subtitle(self) -> str | None:
 		"""
@@ -1894,11 +1917,13 @@ class SeEpub:
 		OUTPUTS:
 		Either the title of the book, or `None` if there is no subtitle.
 		"""
-		nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='title-type' and text()='subtitle']/@refines")
-		subtitle_element_id = nodes[0].replace("#", "") if nodes else None
-
-		nodes = self.metadata_dom.xpath(f"/package/metadata/dc:title[@id='{subtitle_element_id}']")
-		subtitle = nodes[0].inner_text() if nodes else None
+		subtitle = None
+		try:
+			subtitle_anchor = self.metadata_dom.xpath("/package/metadata/meta[@property='title-type' and text()='subtitle']/@refines", str)[0]
+			subtitle_element_id = subtitle_anchor.replace("#", "")
+			subtitle = self.metadata_dom.xpath(f"/package/metadata/dc:title[@id='{subtitle_element_id}']/text()", str)[0]
+		except IndexError:
+			pass
 
 		return subtitle
 
@@ -1953,12 +1978,11 @@ class SeEpub:
 
 			for link in dom.xpath("/html/body//a[contains(@epub:type, 'noteref')]"):
 				anchor = ""
-				href = link.get_attr("href") or ""
-				if href:
-					# Extract just the anchor from a URL (i.e., what follows a hash symbol).
-					hash_position = href.find("#") + 1  # We want the characters *after* the hash.
-					if hash_position > 0:
-						anchor = href[hash_position:]
+				href = link.get_attr("href")
+				# Extract just the anchor from a URL (i.e., what follows a hash symbol).
+				hash_position = href.find("#") + 1  # We want the characters *after* the hash.
+				if hash_position > 0:
+					anchor = href[hash_position:]
 				references.append(anchor)  # Keep these for later reverse check.
 				# Now try to find anchor in endnotes.
 				matches = list(filter(lambda x, old=anchor: x.anchor == old, self.endnotes)) # type: ignore [arg-type, var-annotated]
@@ -2146,20 +2170,19 @@ class SeEpub:
 		if self.endnotes_path is None:
 			return False
 
-		epub_type = link.get_attr("epub:type") or ""
+		epub_type = link.get_attr("epub:type", True)
 		if not epub_type: # It wasn't an actual endnote reference but a direct link (we hope!).
-			href = link.get_attr("href") or ""
-			if href:
-				# Extract just the anchor from a URL (i.e., what follows a hash symbol).
-				hash_position = href.find("#") + 1  # We want the characters *after* the hash.
-				if hash_position > 0:
-					old_anchor = href[hash_position:]
-					try:
-						change = next(ch for ch in change_list if ch.old_anchor == old_anchor)
-						link.set_attr("href", f"{self.endnotes_path.name}#{change.new_anchor}")
-						return True
-					except StopIteration:  # Didn't find the old anchor, keep going.
-						pass
+			href = link.get_attr("href")
+			# Extract just the anchor from a URL (i.e., what follows a hash symbol).
+			hash_position = href.find("#") + 1  # We want the characters *after* the hash.
+			if hash_position > 0:
+				old_anchor = href[hash_position:]
+				try:
+					change = next(ch for ch in change_list if ch.old_anchor == old_anchor)
+					link.set_attr("href", f"{self.endnotes_path.name}#{change.new_anchor}")
+					return True
+				except StopIteration:  # Didn't find the old anchor, keep going.
+					pass
 		return False
 
 	def __process_noteref_link(self, change_list: list[EndnoteChange], current_note_number: int, file_name: str, link: EasyXmlElement, needs_rewrite: bool, notes_changed: int) -> tuple[bool, int]:
@@ -2173,12 +2196,11 @@ class SeEpub:
 			return (False, 0)
 
 		old_anchor = ""
-		href = link.get_attr("href") or ""
-		if href:
-			# Extract just the anchor from a URL (i.e., what follows a hash symbol).
-			hash_position = href.find("#") + 1  # We want the characters *after* the hash.
-			if hash_position > 0:
-				old_anchor = href[hash_position:]
+		href = link.get_attr("href")
+		# Extract just the anchor from a URL (i.e., what follows a hash symbol).
+		hash_position = href.find("#") + 1  # We want the characters *after* the hash.
+		if hash_position > 0:
+			old_anchor = href[hash_position:]
 
 		new_anchor = f"note-{current_note_number:d}"
 		if new_anchor != old_anchor:
@@ -2261,7 +2283,7 @@ class SeEpub:
 						se.formatting.format_xml_file(file_path.parent / new_filename)
 
 						# Get a list of all IDs contained in this new DOM, so we can adjust any links in the ebook later.
-						id_attrs = new_dom.xpath("/html/body/*[name() = 'article' or name() = 'section']//@id")
+						id_attrs = new_dom.xpath("/html/body/*[name() = 'article' or name() = 'section']//@id", str)
 
 						new_files.append(SplitFile(new_filename, article_node.get_attr("id"), title, id_attrs))
 

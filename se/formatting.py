@@ -1559,7 +1559,7 @@ def generate_title(xhtml: str | EasyXmlTree) -> str:
 			raise se.InvalidSeEbookException("No [xhtml]<section>[/] or [xhtml]<article>[/] element for [xhtml]<hgroup>[/].")
 
 		# If the closest parent `<section>` or `<article>` is a part, division, or volume, then keep all `<hgroup>` children.
-		closest_parent_section_epub_type = closest_parent_section.get_attr("epub:type")
+		closest_parent_section_epub_type = closest_parent_section.get_attr("epub:type", True)
 		if not closest_parent_section_epub_type or (closest_parent_section_epub_type and ("part" not in closest_parent_section_epub_type and "division" not in closest_parent_section_epub_type and "volume" not in closest_parent_section_epub_type)):
 			# Else, if the closest parent `<section>` or `<article>` is a halftitlepage, then discard `<hgroup>` subtitles.
 			if closest_parent_section_epub_type and "halftitlepage" in closest_parent_section_epub_type:
@@ -1700,7 +1700,7 @@ def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> list[Ea
 		is_endnote = False
 		is_glossdef = False
 		if child.get_attr("epub:type"):
-			epub_type = child.get_attr("epub:type") or ""
+			epub_type = child.get_attr("epub:type")
 			is_endnote = regex.search(r"\bendnote\b", epub_type)
 			is_glossdef = "glossdef" in epub_type
 
@@ -1751,7 +1751,7 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tup
 		section_id = section.get_attr("id")
 		allow_header = not is_poem
 
-		section_epub_type = section.get_attr("epub:type")
+		section_epub_type = section.get_attr("epub:type", True)
 		if section_epub_type:
 			# If this section is a poem or an endnotes container, reset the counters.
 			if "z3998:poem" in section_epub_type:
@@ -1780,7 +1780,7 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tup
 			if is_poem and node.tag == "span" and node.parent and node.parent.tag == "p":
 				line_number = line_number + 1
 
-			id_attr = node.get_attr("id")
+			id_attr = node.get_attr("id", True)
 			# If the element has an ID attribute and it's not an endnote node (i.e. `<li epub:type="endnote">`).
 			if id_attr:
 				expected_id = id_attr
