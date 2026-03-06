@@ -1,3 +1,17 @@
 {
 	"venv": "standardebooks",
+	"ignore": ["se/vendor", "build"],
+	"strictListInference": true,
+	"strictDictionaryInference": true,
+	"strictSetInference": true,
+	"stubPath": "se/vendor/typings",
+	"typeCheckingMode": "strict",
+	"reportUnusedImport": true,
+	"reportUnusedClass": true,
+	"reportUnusedFunction": true,
+	"reportUnusedVariable": true,
+	"reportDuplicateImport": true,
+	"reportUnreachable": true,
+	"reportUnusedExpression": true,
+	"reportMatchNotExhaustive": true,
 }

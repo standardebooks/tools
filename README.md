@@ -169,19 +169,22 @@ The toolset tries to detect when it’s being invoked from `parallel`, and it ad
 
 We export `COLUMNS` because `se lint` needs to know the width of the terminal so that it can format its tabular output correctly. We pass the `--keep-order` flag to output results in the order we passed them in, which is useful if comparing the results of multiple runs.
 
-### Linting with `pylint` and `mypy`
+### Linting with `pylint` and `pyright`
 
-Before we can use `pylint` or `mypy` on the toolset source, we have to inject them (and additional typings) into the venv `pipx` created for the `standardebooks` package:
+Before we can use `pylint` or `pyright` on the toolset source, we have to inject them (and additional typings) into the venv `pipx` created for the `standardebooks` package:
 
 ```shell
-pipx inject standardebooks pylint==4.0.4 mypy==1.19.0 types-requests==2.32.4.20250913 types-setuptools==80.9.0.20250822 types-lxml==2026.2.16 pytest==9.0.2
+pipx inject standardebooks pylint==4.0.5 pyright==1.1.408 types-requests==2.32.4.20250913 types-setuptools==80.9.0.20250822 types-lxml==2026.2.16
 ```
 
-Then make sure to call the `pylint` and `mypy` binaries that `pipx` installed in the `standardebooks` venv, *not* any other globally-installed binaries:
+Then make sure to call the `pylint` and `pyright` binaries that `pipx` installed in the `standardebooks` venv, *not* any other globally-installed binaries:
 
 ```shell
 cd /path/to/tools/repo
-$HOME/.local/pipx/venvs/standardebooks/bin/pylint tests/*.py se
+$HOME/.local/share/pipx/venvs/standardebooks/bin/pylint .
+
+# Specify the venv path to `pyright` so that it knows where to look for libraries.
+$HOME/.local/share/pipx/venvs/standardebooks/bin/pyright --venvpath=$HOME/.local/share/pipx/venvs/ .
 ```
 
 ### Testing with `pytest`
@@ -193,6 +196,8 @@ Instructions are found in the testing [README](tests/README.md).
 - In general, we follow a relaxed version of [PEP 8](https://www.python.org/dev/peps/pep-0008/). In particular, we use tabs instead of spaces, and there is no line length limit.
 
 - Always use the `regex` module instead of the `re` module.
+
+- Complete type hints are required at all times. A run of `pylint` using the provided configuration should finish with zero output.
 
 # Help wanted
 

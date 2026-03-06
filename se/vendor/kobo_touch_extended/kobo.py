@@ -48,7 +48,7 @@ def append_kobo_spans_from_text(node, text):
 			return True
 	return True
 
-def add_kobo_spans_to_node(node):
+def add_kobo_spans_to_node(node: etree.Element) -> etree.Element:
 	global paragraph_counter
 	global segment_counter
 

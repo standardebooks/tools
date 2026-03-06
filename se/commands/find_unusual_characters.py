@@ -118,7 +118,7 @@ def find_unusual_characters(plain_output: bool) -> int:
 			return_code = ex.code
 
 	# Sort and prepare the output.
-	lines = []
+	lines: list[tuple[str, str, int]] = []
 
 	for unusual_character, count in unusual_characters.items():
 		# The unicodedata package crashes on characters that don't have a name; see GitHub issue

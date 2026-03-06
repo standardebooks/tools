@@ -20,7 +20,7 @@ def roman2dec(plain_output: bool) -> int:
 	parser.add_argument("numbers", metavar="NUMERAL", nargs="+", help="a Roman numeral")
 	args = parser.parse_args()
 
-	lines = []
+	lines: list[str] = []
 
 	if not sys.stdin.isatty():
 		for line in sys.stdin:

@@ -8,6 +8,7 @@ from copy import deepcopy
 import regex
 import tinycss2
 import tinycss2.color3
+from tinycss2.ast import Declaration, IdentToken, DimensionToken, Node, ParseError, QualifiedRule
 
 import se
 
@@ -47,9 +48,9 @@ class CssDeclaration:
 	A CSS declaration, i.e., <declaration>: <value>;
 	"""
 
-	def __init__(self, name: str, values, important: bool):
+	def __init__(self, name: str, values: list[Node], important: bool):
 		self.name = name
-		self.value = tinycss2.serialize(values).strip()
+		self.value = tinycss2.serializer.serialize(values).strip()
 		self.important = important
 		self.raw_values = values
 
@@ -60,12 +61,12 @@ class CssDeclaration:
 			self.applies_to = "all"
 			self.inherited = True
 
-	def expand(self):
+	def expand(self) -> list['CssDeclaration']:
 		"""
 		Given a declaration, if it is shorthand like `margin` (short for `margin-left`, `margin-top`, etc.) then break it apart into its complete component declarations.
 		"""
 
-		output = []
+		output: list['CssDeclaration'] = []
 
 		if self.name in ("margin", "padding", "border-color", "border-style", "border-width"):
 			matches = regex.split(r"\s", self.value)
@@ -162,9 +163,9 @@ class CssDeclaration:
 					if border_color:
 						border_color = f"rgba({border_color[0]},{border_color[1]},{border_color[2]},{border_color[3]})"
 
-				if item.type == "ident":
+				if isinstance(item, IdentToken):
 					border_style = item.value
-				elif item.type == "dimension":
+				if isinstance(item, DimensionToken):
 					if item.int_value:
 						border_width = str(item.int_value) + item.lower_unit
 					else:
@@ -203,15 +204,15 @@ class CssRule():
 
 	def __init__(self, selector: str):
 		self.selector = selector
-		self.specificity: tuple = (0, 0, 0)
+		self.specificity: tuple[int, int, int] = (0, 0, 0)
 		self.specificity_number = 0
 		self.declarations: list[CssDeclaration] = []
 
-def parse_rules(css: str):
+def parse_rules(css: str) -> list[CssRule]:
 	"""
 	Apply a CSS stylesheet to an XHTML tree.
 	The application is naive and should not be expected to be browser-grade.
-	CSS properties on specific elements can be returned using EasyXmlElement.get_css_property()
+	CSS properties on specific elements can be returned using `EasyXmlElement.get_css_property()`.
 
 	For example,
 
@@ -219,25 +220,24 @@ def parse_rules(css: str):
 		print(node.get_css_property("font-style"))
 	"""
 
-	rules = []
-
+	rules: list[CssRule] = []
 	# Parse the stylesheet to break it into rules and their associated properties.
-	for token in tinycss2.parse_stylesheet(css, skip_comments=True):
-		if token.type == "error":
+	for token in tinycss2.parser.parse_stylesheet(css, skip_comments=True):
+		if isinstance(token, ParseError):
 			raise se.InvalidCssException(token.message)
 
 		# A CSS rule.
-		if token.type == "qualified-rule":
-			selectors = tinycss2.serialize(token.prelude).strip()
+		if isinstance(token, QualifiedRule):
+			selectors= tinycss2.serializer.serialize(token.prelude).strip()
 
 			# First, get a list of declarations within the `{}` block.
 			# Parse each declaration and add it to the rule.
-			declarations = []
-			for item in tinycss2.parse_declaration_list(token.content):
-				if item.type == "error":
-					raise se.InvalidCssException("Couldn’t parse CSS. Exception: {token.message}")
+			declarations: list[CssDeclaration] = []
+			for item in tinycss2.parser.parse_declaration_list(token.content):
+				if isinstance(item, ParseError):
+					raise se.InvalidCssException(f"Couldn’t parse CSS. Exception: {item.message}")
 
-				if item.type == "declaration":
+				if isinstance(item, Declaration):
 					declaration = CssDeclaration(item.lower_name, item.value, item.important)
 					declarations += declaration.expand()
 

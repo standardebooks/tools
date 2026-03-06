@@ -3,16 +3,17 @@ This module implements the `se create_draft` command.
 """
 
 import argparse
+from argparse import Namespace
+from dataclasses import dataclass
 from io import StringIO
 import shutil
 import urllib.parse
-from argparse import Namespace
 from html import escape
 from pathlib import Path
 import importlib.resources
 import tempfile
 
-from git.repo import Repo as Repo # pylint: disable=useless-import-alias # Import in this style to silence `mypy` type checking, see <https://github.com/microsoft/pyright/issues/5929#issuecomment-1714815796>.
+from git.repo import Repo
 import regex
 import requests
 from ftfy import fix_text
@@ -35,7 +36,17 @@ XPATH_NAMESPACES = {"re": "http://exslt.org/regular-expressions"}
 
 console = se.init_console()
 
-def _replace_in_file(file_path: Path, search: str | list, replace: str | list) -> None:
+@dataclass
+class Contributor:
+	"""
+	A data class to store contributor values.
+	"""
+
+	name: str
+	wiki_url: str|None = None
+	nacoaf_uri: str|None = None
+
+def _replace_in_file(file_path: Path, search: str | list[str], replace: str | list[str]) -> None:
 	"""
 	Helper function to replace in a file.
 	"""
@@ -46,8 +57,7 @@ def _replace_in_file(file_path: Path, search: str | list, replace: str | list) -
 
 		if isinstance(search, list):
 			for index, val in enumerate(search):
-				if replace[index] is not None:
-					processed_data = processed_data.replace(val, replace[index])
+				processed_data = processed_data.replace(val, replace[index])
 		else:
 			processed_data = processed_data.replace(search, str(replace))
 
@@ -114,7 +124,7 @@ def _add_name_abbr(contributor: str) -> str:
 
 	return contributor
 
-def _generate_contributor_string(contributors: list[dict], include_xhtml: bool, use_nbsp: bool=False) -> str:
+def _generate_contributor_string(contributors: list[Contributor], include_xhtml: bool, use_nbsp: bool=False) -> str:
 	"""
 	Given a list of contributors, generate a contributor string like `Bob Smith, Jane Doe, and Sam Johnson`.
 
@@ -132,38 +142,38 @@ def _generate_contributor_string(contributors: list[dict], include_xhtml: bool, 
 	output = ""
 
 	# Don't include "anonymous" contributors.
-	contributors = [contributor for contributor in contributors if contributor["name"].lower() != "anonymous"]
+	contributors = [contributor for contributor in contributors if contributor.name.lower() != "anonymous"]
 
 	if len(contributors) == 1:
 		if include_xhtml:
-			if contributors[0]["wiki_url"]:
-				output += f"""<a href="{contributors[0]['wiki_url']}">{_add_name_abbr(escape(contributors[0]['name']))}</a>"""
+			if contributors[0].wiki_url:
+				output += f"""<a href="{contributors[0].wiki_url}">{_add_name_abbr(escape(contributors[0].name))}</a>"""
 			else:
-				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributors[0]['name']))}</b>"""
+				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributors[0].name))}</b>"""
 		else:
 			if use_nbsp:
-				output += contributors[0]["name"].replace(" ", se.NO_BREAK_SPACE)
+				output += contributors[0].name.replace(" ", se.NO_BREAK_SPACE)
 			else:
-				output += contributors[0]["name"]
+				output += contributors[0].name
 
 	elif len(contributors) == 2:
 		if include_xhtml:
-			if contributors[0]["wiki_url"]:
-				output += f"""<a href="{contributors[0]['wiki_url']}">{_add_name_abbr(escape(contributors[0]['name']))}</a>"""
+			if contributors[0].wiki_url:
+				output += f"""<a href="{contributors[0].wiki_url}">{_add_name_abbr(escape(contributors[0].name))}</a>"""
 			else:
-				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributors[0]['name']))}</b>"""
+				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributors[0].name))}</b>"""
 
 			output += " and "
 
-			if contributors[1]["wiki_url"]:
-				output += f"""<a href="{contributors[1]['wiki_url']}">{_add_name_abbr(escape(contributors[1]['name']))}</a>"""
+			if contributors[1].wiki_url:
+				output += f"""<a href="{contributors[1].wiki_url}">{_add_name_abbr(escape(contributors[1].name))}</a>"""
 			else:
-				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributors[1]['name']))}</b>"""
+				output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributors[1].name))}</b>"""
 		else:
 			if use_nbsp:
-				output += contributors[0]["name"].replace(" ", se.NO_BREAK_SPACE) + " and " + contributors[1]["name"].replace(" ", se.NO_BREAK_SPACE)
+				output += contributors[0].name.replace(" ", se.NO_BREAK_SPACE) + " and " + contributors[1].name.replace(" ", se.NO_BREAK_SPACE)
 			else:
-				output += contributors[0]["name"] + " and " + contributors[1]["name"]
+				output += contributors[0].name + " and " + contributors[1].name
 
 	else:
 		for i, contributor in enumerate(contributors):
@@ -174,19 +184,19 @@ def _generate_contributor_string(contributors: list[dict], include_xhtml: bool, 
 				output += ", and "
 
 			if include_xhtml:
-				if contributor["wiki_url"]:
-					output += f"""<a href="{contributor['wiki_url']}">{_add_name_abbr(escape(contributor['name']))}</a>"""
+				if contributor.wiki_url:
+					output += f"""<a href="{contributor.wiki_url}">{_add_name_abbr(escape(contributor.name))}</a>"""
 				else:
-					output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributor['name']))}</b>"""
+					output += f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(contributor.name))}</b>"""
 			else:
 				if use_nbsp:
-					output += contributor["name"].replace(" ", se.NO_BREAK_SPACE)
+					output += contributor.name.replace(" ", se.NO_BREAK_SPACE)
 				else:
-					output += contributor["name"]
+					output += contributor.name
 
 	return output
 
-def _generate_metadata_contributor_xml(contributors: list[dict], contributor_type: str) -> str:
+def _generate_metadata_contributor_xml(contributors: list[Contributor], contributor_type: str) -> str:
 	"""
 	Given a list of contributors, generate a metadata XML block.
 
@@ -203,24 +213,24 @@ def _generate_metadata_contributor_xml(contributors: list[dict], contributor_typ
 	for i, contributor in enumerate(contributors):
 		contributor_block = CONTRIBUTOR_BLOCK_TEMPLATE
 
-		if contributor["wiki_url"]:
-			contributor_block = contributor_block.replace(">CONTRIBUTOR_WIKI_URL<", f">{contributor['wiki_url']}<")
+		if contributor.wiki_url:
+			contributor_block = contributor_block.replace(">CONTRIBUTOR_WIKI_URL<", f">{contributor.wiki_url}<")
 
-		if contributor["nacoaf_uri"]:
-			contributor_block = contributor_block.replace(">CONTRIBUTOR_NACOAF_URI<", f">{contributor['nacoaf_uri']}<")
+		if contributor.nacoaf_uri:
+			contributor_block = contributor_block.replace(">CONTRIBUTOR_NACOAF_URI<", f">{contributor.nacoaf_uri}<")
 
 		# Make an attempt at figuring out the file-as name. We check for some common two-word last names.
-		matches = regex.findall(r"^(.+?)\s+((?:(?:Da|Das|De|Del|Della|Di|Du|El|La|Le|Van|Van Der|Von)\s+)?[^\s]+)$", contributor["name"])
+		matches = regex.findall(r"^(.+?)\s+((?:(?:Da|Das|De|Del|Della|Di|Du|El|La|Le|Van|Van Der|Von)\s+)?[^\s]+)$", contributor.name)
 		if matches:
 			contributor_block = contributor_block.replace(">CONTRIBUTOR_SORT<", f">{escape(matches[0][1])}, {escape(matches[0][0])}<")
 
-		if contributor["name"].lower() == "anonymous":
+		if contributor.name.lower() == "anonymous":
 			contributor_block = contributor_block.replace(">CONTRIBUTOR_SORT<", ">Anonymous<")
 			contributor_block = contributor_block.replace("""<meta property="se:name.person.full-name" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_FULL_NAME</meta>""", "")
 			contributor_block = contributor_block.replace("""<meta property="se:url.encyclopedia.wikipedia" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_WIKI_URL</meta>""", "")
 			contributor_block = contributor_block.replace("""<meta property="se:url.authority.nacoaf" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_NACOAF_URI</meta>""", "")
 
-		contributor_block = contributor_block.replace(">CONTRIBUTOR_NAME<", f">{escape(contributor['name'])}<")
+		contributor_block = contributor_block.replace(">CONTRIBUTOR_NAME<", f">{escape(contributor.name)}<")
 		contributor_block = contributor_block.replace("id=\"CONTRIBUTOR_ID\"", f"id=\"{contributor_type}-{i + 1}\"")
 		contributor_block = contributor_block.replace("#CONTRIBUTOR_ID", f"#{contributor_type}-{i + 1}")
 
@@ -237,7 +247,7 @@ def _generate_metadata_contributor_xml(contributors: list[dict], contributor_typ
 
 	return output.strip()
 
-def _generate_titlepage_string(contributors: list[dict], contributor_type: str) -> str:
+def _generate_titlepage_string(contributors: list[Contributor], contributor_type: str) -> str:
 	output = _generate_contributor_string(contributors, True)
 	output = regex.sub(r"<a href[^<>]+?>", "<b epub:type=\"z3998:personal-name\">", output)
 	output = output.replace("</a>", "</b>")
@@ -251,10 +261,10 @@ def _create_draft(args: Namespace, plain_output: bool):
 	"""
 
 	# Put together some variables for later use.
-	authors = []
-	translators = []
+	authors: list[Contributor] = []
+	translators: list[Contributor] = []
 	transcription_producers = []
-	transcription_subjects = []
+	transcription_subjects: list[str] = []
 	transcription_ebook_html = None
 	transcription_url = None
 	transcription_publication_year = None
@@ -266,23 +276,23 @@ def _create_draft(args: Namespace, plain_output: bool):
 	sorted_title = regex.sub(r"^(A|An|The) (.+)$", "\\2, \\1", title)
 
 	for author in args.author:
-		authors.append({"name": author.replace("'", "’"), "wiki_url": None, "nacoaf_uri": None})
+		authors.append(Contributor(name=author.replace("'", "’")))
 
 	if args.translator:
 		for translator in args.translator:
-			translators.append({"name": translator.replace("'", "’"), "wiki_url": None, "nacoaf_uri": None})
+			translators.append(Contributor(name=translator.replace("'", "’")))
 
 	# Get more metadata on contributors.
 	if not args.white_label:
 		# Get data on authors.
 		for _, author in enumerate(authors):
-			if not args.offline and author["name"].lower() != "anonymous":
-				author["wiki_url"], author["nacoaf_uri"] = _get_wikipedia_url(author["name"], True)
+			if not args.offline and author.name.lower() != "anonymous":
+				author.wiki_url, author.nacoaf_uri = _get_wikipedia_url(author.name, True)
 
 		# Get data on translators.
 		for _, translator in enumerate(translators):
-			if not args.offline and translator["name"].lower() != "anonymous":
-				translator["wiki_url"], translator["nacoaf_uri"] = _get_wikipedia_url(translator["name"], True)
+			if not args.offline and translator.name.lower() != "anonymous":
+				translator.wiki_url, translator.nacoaf_uri = _get_wikipedia_url(translator.name, True)
 
 	# Create a temp directory and copy all template files over.
 	with tempfile.TemporaryDirectory() as directory_name:
@@ -789,7 +799,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 			titlepage_xhtml = titlepage_xhtml.replace("TITLE", escape(title))
 
-			if not(len(authors) == 1 and authors[0]["name"] == "Anonymous"):
+			if not(len(authors) == 1 and authors[0].name == "Anonymous"):
 				titlepage_xhtml = titlepage_xhtml.replace("AUTHOR_NAME", _generate_titlepage_string(authors, "author"))
 			else:
 				titlepage_xhtml = regex.sub(r"<p>By.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)

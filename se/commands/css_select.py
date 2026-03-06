@@ -42,20 +42,11 @@ def css_select(plain_output: bool) -> int:
 				console.print(se.prep_output(f"[path][link=file://{filepath}]{filepath}[/][/]", plain_output))
 				if not args.only_filenames:
 					for node in nodes:
-						if isinstance(node, se.easy_xml.EasyXmlElement):
-							if plain_output:
-								output = f"Line {node.sourceline}: {node.to_string()}"
-							else:
-								node_string = str(node).replace('[', '\\[')
-								output = f"[path][link=file://{filepath.resolve()}#L{node.sourceline}]Line {node.sourceline}[/][/]: {node_string}"
+						if plain_output:
+							output = f"Line {node.sourceline}: {node.to_string()}"
 						else:
-							# We may select `text()` nodes as a result.
-							if plain_output:
-								output = f"Line {node.getparent().sourceline}: {str(node)}"
-							else:
-								node_string = str(node).replace('[', '\\[')
-								output = f"[path][link=file://{filepath.resolve()}#L{node.getparent().sourceline}]Line {node.getparent().sourceline}[/][/]: {node_string}"
-
+							node_string = str(node).replace('[', '\\[')
+							output = f"[path][link=file://{filepath.resolve()}#L{node.sourceline}]Line {node.sourceline}[/][/]: {node_string}"
 
 						output = "".join([f"\t{line}\n" for line in output.splitlines()])
 

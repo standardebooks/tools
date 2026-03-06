@@ -5,13 +5,16 @@ Customization functions for pytest.
 import os
 import shutil
 from pathlib import Path
-from typing import Generator
+from typing import Generator, TYPE_CHECKING
 
 import pytest
 
+if TYPE_CHECKING:
+	from _pytest.config import Config
+
 pytest.register_assert_rewrite("helpers")
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: pytest.Parser):
 	"""
 	Additional pytest command-line options.
 	"""
@@ -34,7 +37,7 @@ def fixture_testbook__name():
 	return "jane-austen_test-novel"
 
 @pytest.fixture(scope="session")
-def draftbook__directory(tmp_path_factory, draftbook__name: str) -> Generator:
+def draftbook__directory(tmp_path_factory: pytest.TempPathFactory, draftbook__name: str) -> Generator[Path, None, None]:
 	"""
 	Return the Path object for a temporary copy of the draft book content.
 	"""
@@ -45,7 +48,7 @@ def draftbook__directory(tmp_path_factory, draftbook__name: str) -> Generator:
 	yield dest_directory
 
 @pytest.fixture(scope="session")
-def testbook__directory(tmp_path_factory, testbook__name: str) -> Generator:
+def testbook__directory(tmp_path_factory: pytest.TempPathFactory, testbook__name: str) -> Generator[Path, None, None]:
 	"""
 	Return the Path object for a temporary copy of the test book content.
 	"""
@@ -56,7 +59,7 @@ def testbook__directory(tmp_path_factory, testbook__name: str) -> Generator:
 	yield dest_directory
 
 @pytest.fixture
-def work__directory(tmp_path: Path) -> Generator:
+def work__directory(tmp_path: Path) -> Generator[Path, None, None]:
 	"""Return the Path object for a temporary working directory. The current working
 	directory is updated to this temporary directory until the test returns.
 	"""
@@ -66,7 +69,7 @@ def work__directory(tmp_path: Path) -> Generator:
 	os.chdir(old_working_directory)
 
 @pytest.fixture(scope="session")
-def update_golden(pytestconfig) -> bool:
+def update_golden(pytestconfig: 'Config') -> bool:
 	"""
 	Save updated versions of all golden output files when this flag is True.
 	"""

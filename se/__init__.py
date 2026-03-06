@@ -7,7 +7,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING
 
 from rich.console import Console
 from rich.theme import Theme
@@ -15,6 +15,10 @@ from natsort import natsorted, ns
 import regex
 
 import se.easy_xml
+
+if TYPE_CHECKING:
+	from se.se_epub_build import BuildMessage # Import under type checking guard to prevent circular import error.
+
 
 VERSION = "3.0.1"
 MESSAGE_INDENT = "    "
@@ -115,7 +119,7 @@ class BuildFailedException(SeException):
 	""" Build failed """
 	code = 17
 
-	def __init__(self, message, messages: list | None = None):
+	def __init__(self, message: str, messages: list['BuildMessage'] | None = None):
 		super().__init__(message)
 		self.messages = messages if messages else []
 
@@ -231,7 +235,7 @@ def is_positive_integer(value: str) -> int:
 
 	return int_value
 
-def get_target_filenames(targets: list, allowed_extensions: tuple | str) -> list[Path]:
+def get_target_filenames(targets: list[str]|list[Path], allowed_extensions: tuple[str, ...] | str) -> list[Path]:
 	"""
 	Helper function to convert a list of filenames or directories into a list of filenames based on some parameters.
 
@@ -245,7 +249,7 @@ def get_target_filenames(targets: list, allowed_extensions: tuple | str) -> list
 	A set of file paths and filenames contained in the target list.
 	"""
 
-	target_xhtml_filenames = set()
+	target_xhtml_filenames: set[Path] = set()
 
 	if isinstance(allowed_extensions, str):
 		allowed_extensions = (allowed_extensions,)
@@ -259,12 +263,9 @@ def get_target_filenames(targets: list, allowed_extensions: tuple | str) -> list
 				if ".git" in directories:
 					directories.remove(".git")
 
-				for filename in cast(list[str], natsorted(filenames)):
-					file_path =Path(root) / Path(filename)
-					if allowed_extensions:
-						if file_path.suffix in allowed_extensions:
-							target_xhtml_filenames.add(file_path)
-					else:
+				for filename in natsorted(filenames):
+					file_path = Path(root) / Path(filename)
+					if file_path.suffix in allowed_extensions:
 						target_xhtml_filenames.add(file_path)
 		else:
 			# If we're looking at an actual file, just add it regardless of whether it's ignored.
@@ -272,7 +273,7 @@ def get_target_filenames(targets: list, allowed_extensions: tuple | str) -> list
 
 	return natsorted(list(target_xhtml_filenames), key=str, alg=ns.PATH)
 
-def is_called_from_parallel(return_none=True) -> bool | None:
+def is_called_from_parallel(return_none:bool=True) -> bool | None:
 	"""
 	Decide if we're being called from GNU parallel.
 

@@ -19,13 +19,13 @@ The command `help` is special in that it does not take any input.
 import os
 from pathlib import Path
 import pytest
-from helpers import assemble_draftbook, must_run, output_is_golden
+from helpers import assemble_draftbook, must_run, output_is_golden # pylint: disable=import-error
 
 no_ebook_directory_commands = ["unicode-names", "help"]
 stdout_argument_commands = ["build-loi", "build-manifest", "build-spine", "build-title", "build-toc"]
 command_file_commands = stdout_argument_commands + ["unicode-names"]
 module_directory = Path(__file__).parent / "stdout_commands"
-module_tests = []
+module_tests: list[list[str]] = []
 
 # the module directory should not be created until at least one test exists
 if module_directory.is_dir():
@@ -42,7 +42,7 @@ if module_directory.is_dir():
 # pass the plain command and test name so the test ids are easy to read, e.g. build-manifest-test-1
 @pytest.mark.parametrize("command, test", module_tests)
 
-def test_stdout_commands(draftbook__directory: Path, work__directory: Path, command: str, test: Path, update_golden: bool, capfd):
+def test_stdout_commands(draftbook__directory: Path, work__directory: Path, command: str, test: Path, update_golden: bool, capfd: pytest.CaptureFixture[str]):
 	"""
 	Run each command on assembled draft book, capture output and compare it to "golden" output
 	"""

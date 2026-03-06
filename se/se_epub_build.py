@@ -17,18 +17,18 @@ from html import unescape
 from pathlib import Path
 import importlib.resources
 
-from cairosvg import svg2png
+from cairosvg import svg2png # type: ignore Not going to hand-write the type hint for this crazy huge function right now.
 from PIL import Image, ImageOps
 import lxml.cssselect
 from lxml import etree
 import regex
 
 import se
-import se.easy_xml
 import se.epub
 import se.formatting
 import se.images
 import se.typography
+from se.easy_xml import EasyXmlElement, EasyXmlTree
 from se.se_epub import SeEpub # pylint: disable=cyclic-import
 from se.vendor.kobo_touch_extended import kobo
 from se.vendor.mobi import mobi
@@ -44,6 +44,7 @@ ENDNOTE_CHUNK_SIZE = 500
 # Without preceding `doc-`.
 ARIA_ROLES = ["abstract", "acknowledgments", "afterword", "appendix", "backlink", "bibliography", "biblioref", "chapter", "colophon", "conclusion", "cover", "credit", "credits", "dedication", "endnotes", "epigraph", "epilogue", "errata", "example", "footnote", "foreword", "glossary", "glossref", "index", "introduction", "noteref", "notice", "pagebreak", "pagelist", "part", "preface", "prologue", "pullquote", "qna", "subtitle", "tip", "toc"]
 
+
 class BuildMessage:
 	"""
 	An object representing an output message for the build function.
@@ -51,7 +52,7 @@ class BuildMessage:
 	Contains information like message text, severity, and the epub filename that generated the message.
 	"""
 
-	def __init__(self, source: str, code: str, text: str, filename: Path | None = None, line: int | None = None, col: int | None = None, submessages: list | None = None):
+	def __init__(self, source: str, code: str, text: str, filename: Path | None = None, line: int | None = None, col: int | None = None, submessages: list[str] | None = None):
 		self.source = source
 		self.code = code
 		self.text = text.strip()
@@ -84,7 +85,7 @@ def __save_debug_epub(work_compatible_epub_dir: Path) -> Path:
 
 	return epub_temp_dir
 
-def _add_metadata(metadata_dom: se.easy_xml.EasyXmlTree, node_type: str) -> se.easy_xml.EasyXmlTree:
+def _add_metadata(metadata_dom: EasyXmlTree, node_type: str) -> EasyXmlTree:
 	"""
 	Add a property to the metadata file.
 
@@ -131,7 +132,7 @@ def _add_proof_css(work_compatible_epub_dir: Path) -> None:
 			file.write(se.formatting.simplify_css(xhtml))
 			file.truncate()
 
-def _update_release_date(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_xml.EasyXmlTree) -> datetime | None:
+def _update_release_date(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree) -> datetime | None:
 	"""
 	Update the release date in the metadata and colophon with the last commit date of the repository.
 
@@ -144,7 +145,7 @@ def _update_release_date(self, work_compatible_epub_dir: Path, metadata_dom: se.
 	"""
 
 	last_updated = None
-	if self.last_commit:
+	if self.last_commit and self.last_commit.timestamp:
 		for file_path in work_compatible_epub_dir.glob("**/*.xhtml"):
 			dom = self.get_dom(file_path)
 
@@ -176,7 +177,7 @@ def _update_release_date(self, work_compatible_epub_dir: Path, metadata_dom: se.
 
 	return last_updated
 
-def _add_compatibility_css_and_simplify(self, work_compatible_epub_dir: Path) -> None:
+def _add_compatibility_css_and_simplify(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 	"""
 	Add compatibility CSS to the local CSS file; modify the CSS to convert several types of
 	selectors to classes, and add those classes to the appropriate elements in the text files.
@@ -230,8 +231,8 @@ def _add_compatibility_css_and_simplify(self, work_compatible_epub_dir: Path) ->
 	selectors = {line for line in total_css.splitlines() if line != ""}
 
 	# Now that we have a unique list of CSS selectors, identify the ones that contain elements we want to use classes for instead.
-	namespace_selectors = {}
-	pseudo_class_selectors = {}
+	namespace_selectors: dict[str, str] = {}
+	pseudo_class_selectors: dict[str, str] = {}
 	for selector in selectors:
 		# Determine if this selector has a namespace, e.g. `xml|lang`, in it.
 		if regex.search(r"\[[a-z]+\|[a-z]+", selector):
@@ -294,7 +295,7 @@ def _add_compatibility_css_and_simplify(self, work_compatible_epub_dir: Path) ->
 			# This gets thrown if we use pseudo-elements, which lxml doesn't support.
 			pass
 
-def _convert_cover_to_jpg(work_dir: Path, work_compatible_epub_dir: Path, metadata_dom: se.easy_xml.EasyXmlTree) -> None:
+def _convert_cover_to_jpg(work_dir: Path, work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree) -> None:
 	"""
 	Convert the cover to a JPG if it's not one already.
 
@@ -335,7 +336,7 @@ def _convert_cover_to_jpg(work_dir: Path, work_compatible_epub_dir: Path, metada
 
 				node.set_attr("media-type", "image/jpeg")
 
-def _compatibility_replacements_svg(self, file_path: Path) -> None:
+def _compatibility_replacements_svg(self: 'SeEpub', file_path: Path) -> None:
 	"""
 	For night mode compatibility, give the logo/titlepage a 1px white stroke attribute.
 
@@ -357,7 +358,7 @@ def _compatibility_replacements_svg(self, file_path: Path) -> None:
 		else:
 			stroke_width = SVG_OUTER_STROKE_WIDTH
 
-		new_elements = []
+		new_elements: list[etree.Element] = []
 
 		# First remove some useless elements.
 		for node in dom.xpath("/svg/*[name() != 'g' and name() != 'path']"):
@@ -402,7 +403,7 @@ def _compatibility_replacements_svg(self, file_path: Path) -> None:
 		with open(file_path, "w", encoding="utf-8") as file:
 			file.write(dom.to_string())
 
-def _compatibility_replacements_xhtml(self, file_path: Path, has_sequential_full_page_figures: bool, endnote_files_to_be_chunked: list) -> tuple:
+def _compatibility_replacements_xhtml(self: 'SeEpub', file_path: Path, has_sequential_full_page_figures: bool, endnote_files_to_be_chunked: list[Path]) -> tuple[bool, list[Path]]:
 	"""
 	Make several replacements needed for compatibility epubs.
 
@@ -509,7 +510,7 @@ def _compatibility_replacements_xhtml(self, file_path: Path, has_sequential_full
 
 	return has_sequential_full_page_figures, endnote_files_to_be_chunked
 
-def _compatibility_replacements_xhtml_mathml_to_presentational(dom: se.easy_xml.EasyXmlTree) -> se.easy_xml.EasyXmlTree:
+def _compatibility_replacements_xhtml_mathml_to_presentational(dom: EasyXmlTree) -> EasyXmlTree:
 	"""
 	Convert any "content" MathML to "presentational".
 
@@ -550,7 +551,7 @@ def _compatibility_replacements_xhtml_mathml_to_presentational(dom: se.easy_xml.
 
 	return dom
 
-def _compatibility_replacements_xhtml_add_aria_roles(dom: se.easy_xml.EasyXmlTree) -> se.easy_xml.EasyXmlTree:
+def _compatibility_replacements_xhtml_add_aria_roles(dom: EasyXmlTree) -> EasyXmlTree:
 	"""
 	Add ARIA roles alongside existing epub types.
 
@@ -617,7 +618,7 @@ def _compatibility_replacements_css(file_path: Path) -> None:
 			file.write(processed_css)
 			file.truncate()
 
-def _split_endnote_files(self, work_compatible_epub_dir: Path, endnote_files_to_be_chunked: list, metadata_dom: se.easy_xml.EasyXmlTree, toc_relative_path: Path, toc_dom: se.easy_xml.EasyXmlTree) -> None:
+def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote_files_to_be_chunked: list[Path], metadata_dom: EasyXmlTree, toc_relative_path: Path, toc_dom: EasyXmlTree) -> None:
 	"""
 	Split endnote files with more than 600 endnotes into multiple files with a max of 500 endnotes each.
 
@@ -642,14 +643,14 @@ def _split_endnote_files(self, work_compatible_epub_dir: Path, endnote_files_to_
 		endnotes = dom.xpath("/html/body//*[re:test(@epub:type, '\\bendnote\\b')]")
 
 		# Split our endnotes into chunks of 500 endnotes each.
-		chunked_endnotes = []
+		chunked_endnotes: list[list[EasyXmlElement]] = []
 		for i in range(0, len(endnotes), ENDNOTE_CHUNK_SIZE):
 			chunked_endnotes.append(endnotes[i:i + ENDNOTE_CHUNK_SIZE])
 
 		# We use our endnotes file DOM as as base for the split endnotes. Remove all endnotes and add an empty `<ol>` to start.
 		endnotes_base = deepcopy(dom)
 		endnotes_base.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol")[0].remove()
-		endnotes_base.xpath("/html/body/section[contains(@epub:type, 'endnotes')]")[0].append(se.easy_xml.EasyXmlElement("<ol></ol>"))
+		endnotes_base.xpath("/html/body/section[contains(@epub:type, 'endnotes')]")[0].append(EasyXmlElement("<ol></ol>"))
 		chunk_number = 1
 		endnotes_manifest_entry = metadata_dom.xpath(f"/package/manifest/item[@href='{endnote_manifest_href}/{endnote_file.name}']")[0]
 		endnotes_spine_entry = metadata_dom.xpath(f"/package/spine/itemref[@idref='{endnotes_manifest_entry.get_attr('id')}']")[0]
@@ -729,7 +730,7 @@ def _split_endnote_files(self, work_compatible_epub_dir: Path, endnote_files_to_
 		with open(work_compatible_epub_dir / "epub" / toc_relative_path, "w", encoding="utf-8") as file:
 			file.write(se.formatting.format_xhtml(toc_dom.to_string()))
 
-def _convert_svg_to_png(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_xml.EasyXmlTree, ibooks_srcset_bug_exists) -> None:
+def _convert_svg_to_png(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree, ibooks_srcset_bug_exists: bool) -> None:
 	"""
 	Convert SVG illustrations to PNG.
 
@@ -794,7 +795,7 @@ def _convert_svg_to_png(self, work_compatible_epub_dir: Path, metadata_dom: se.e
 			with open(file_path, "w", encoding="utf-8") as file:
 				file.write(dom.to_string())
 
-def _replace_mathml(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_xml.EasyXmlTree, ibooks_srcset_bug_exists: bool) -> None:
+def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree, ibooks_srcset_bug_exists: bool) -> None:
 	"""
 	Replace MathML with either plain characters or an image of the equation.
 
@@ -834,7 +835,7 @@ def _replace_mathml(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_
 					child.remove()
 
 				for child in node_clone.xpath(".//m:msup/*[2]"):
-					replacement_node = se.easy_xml.EasyXmlElement("<sup/>", {"m": "http://www.w3.org/1998/Math/MathML"})
+					replacement_node = EasyXmlElement("<sup/>", {"m": "http://www.w3.org/1998/Math/MathML"})
 
 					child.parent.unwrap()
 
@@ -847,7 +848,7 @@ def _replace_mathml(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_
 						child.wrap_with(replacement_node)
 
 				for child in node_clone.xpath(".//m:msub/*[2]"):
-					replacement_node = se.easy_xml.EasyXmlElement("<sub/>", {"m": "http://www.w3.org/1998/Math/MathML"})
+					replacement_node = EasyXmlElement("<sub/>", {"m": "http://www.w3.org/1998/Math/MathML"})
 
 					child.parent.unwrap()
 
@@ -860,7 +861,7 @@ def _replace_mathml(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_
 						child.wrap_with(replacement_node)
 
 				for child in node_clone.xpath(".//m:mi[not(./*)]"):
-					replacement_node = se.easy_xml.EasyXmlElement("<var/>")
+					replacement_node = EasyXmlElement("<var/>")
 					replacement_node.text = child.text
 					child.replace_with(replacement_node)
 
@@ -923,7 +924,7 @@ def _replace_mathml(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_
 					# Have Firefox render the fragment.
 					se.images.render_mathml_to_png(driver, namespaced_line, work_compatible_epub_dir / "epub" / "images" / f"mathml-{mathml_count}.png", work_compatible_epub_dir / "epub" / "images" / f"mathml-{mathml_count}-2x.png")
 
-					img_node = se.easy_xml.EasyXmlElement("<img/>", {"epub": "http://www.idpf.org/2007/ops"})
+					img_node = EasyXmlElement("<img/>", {"epub": "http://www.idpf.org/2007/ops"})
 					img_node.set_attr("class", "mathml epub-type-se-image-color-depth-black-on-transparent")
 					img_node.set_attr("epub:type", "se:image.color-depth.black-on-transparent")
 					img_node.set_attr("src", f"../images/mathml-{mathml_count}-2x.png")
@@ -1021,7 +1022,7 @@ def _compatibility_css_additional_replacements(work_compatible_epub_dir: Path) -
 				file.write(processed_css)
 				file.truncate()
 
-def _build_kobo(self, work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kobo_output_filename: str, last_updated: datetime | None) -> None:
+def _build_kobo(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kobo_output_filename: str, last_updated: datetime | None) -> None:
 	"""
 	Build the Kobo .kepub file.
 
@@ -1076,7 +1077,7 @@ def _build_kobo(self, work_dir: Path, work_compatible_epub_dir: Path, output_dir
 
 # Kobo `.kepub` files need each clause wrapped in a special `<span>` element to enable highlighting.
 # Do this here. Hopefully Kobo will get their act together soon and drop this requirement.
-def _build_kobo_process_xhtml(work_kepub: SeEpub, file_path: Path) -> None:
+def _build_kobo_process_xhtml(work_kepub: 'SeEpub', file_path: Path) -> None:
 	"""
 	Support function for _build_kobo: Make changes to XHTML files needed for .kepub output.
 
@@ -1106,7 +1107,7 @@ def _build_kobo_process_xhtml(work_kepub: SeEpub, file_path: Path) -> None:
 		tag_string = node.to_tag_string().replace("<a ", "<a xmlns:epub=\"http://www.idpf.org/2007/ops\" ") + "</a>"
 
 		# Wrap the contents of the `<a>` by replacing the `<a>` with a `<span>`, then recreating the `<a>` around it.
-		link_node = se.easy_xml.EasyXmlElement(tag_string)
+		link_node = EasyXmlElement(tag_string)
 		link_node.tail = node.lxml_element.tail
 		node.lxml_element.tail = ""
 		node.lxml_element.tag = "span"
@@ -1186,7 +1187,7 @@ def _build_kobo_process_css(file_path: Path) -> None:
 			file.write(processed_css)
 			file.truncate()
 
-def _generate_ncx(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_xml.EasyXmlTree) -> str:
+def _generate_ncx(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree) -> str:
 	"""
 	Generate an toc.ncx file from the ToC for older readers.
 
@@ -1215,10 +1216,10 @@ def _generate_ncx(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_xm
 	# Note: The `text` type attribute usually sets where the ebook opens on Kindle, but in its absence, the book will open at the titlepage even when the `type` attribute of the titlepage reference element is not `text` but `title-page`.
 	# Given this, and the fact that we currently want books to open at the titlepage, we do not need to add a reference element to the guide whose `type` attribute is `text`.
 	# SE books will also open on Kindle at the titlepage if there is neither a reference element whose `type` attribute is`text`, nor one whose `type` attribute is `titlepage`.
-	guide_root_node = se.easy_xml.EasyXmlElement("<guide/>")
+	guide_root_node = EasyXmlElement("<guide/>")
 	# In an earlier version of tools the titlepage was in the landmarks, but it is no longer, so use union in xpath to get its node from the ToC.
 	for node in toc_tree.xpath("//nav[@epub:type=\"toc\"]/ol/li[1]/a | //nav[@epub:type=\"landmarks\"]/ol/li/a"):
-		ref_node = se.easy_xml.EasyXmlElement("<reference/>")
+		ref_node = EasyXmlElement("<reference/>")
 		ref_node.set_attr("title", node.text)
 		ref_node.set_attr("href", node.get_attr("href"))
 
@@ -1230,12 +1231,12 @@ def _generate_ncx(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_xm
 			# Set the `type` attribute and remove any `z3998` items, as well as front/body/backmatter.
 			# Removing bodymatter is OK because, as above, we're appending a titlepage reference element to the guide, so we do not also need one whose type attribute is `text`. If we include both a titlepage reference element whose type attribute is `title-page` and a bodymatter reference element whose `type` attribute is `text`, ebooks will open on Kindle at the relevant bodymatter `href`, not at the titlepage.
 			ref_node.set_attr("type", node.get_attr("epub:type"))
-			ref_node.set_attr("type", regex.sub(r"\s*\b(front|body|back)matter\b\s*", "", ref_node.get_attr("type")))
-			ref_node.set_attr("type", regex.sub(r"\s*\bz3998:.+\b\s*", "", ref_node.get_attr("type")))
+			ref_node.set_attr("type", regex.sub(r"\s*\b(front|body|back)matter\b\s*", "", ref_node.get_attr("type") or ""))
+			ref_node.set_attr("type", regex.sub(r"\s*\bz3998:.+\b\s*", "", ref_node.get_attr("type") or ""))
 
 		if ref_node.get_attr("type"):
 			# Remove `epub:type`s that are not in the allow list, see <http://idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.6>.
-			new_node_types = []
+			new_node_types: list[str] = []
 
 			attr = ref_node.get_attr("type")
 
@@ -1262,7 +1263,7 @@ def _generate_ncx(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_xm
 
 	# Add an ONIX record based on our transformed metadata.
 	for node in metadata_dom.xpath("/package/metadata/dc:title[1]"):
-		node.insert_before(se.easy_xml.EasyXmlElement("""<link href="onix.xml" media-type="application/xml" properties="onix" rel="record"/>"""))
+		node.insert_before(EasyXmlElement("""<link href="onix.xml" media-type="application/xml" properties="onix" rel="record"/>"""))
 
 	onix_dom = self.generate_onix(metadata_dom)
 	with open(work_compatible_epub_dir / "epub" / "onix.xml", "w", encoding="utf-8") as file:
@@ -1289,7 +1290,7 @@ def _generate_ncx(self, work_compatible_epub_dir: Path, metadata_dom: se.easy_xm
 
 	return toc_filename
 
-def _run_epubcheck(self, work_compatible_epub_dir: Path) -> None:
+def _run_epubcheck(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 	"""
 	Run epubcheck and the Nu XHTML5 validator on the compatibility epub.
 
@@ -1301,7 +1302,7 @@ def _run_epubcheck(self, work_compatible_epub_dir: Path) -> None:
 	None.
 	"""
 
-	build_messages = []
+	build_messages: list[BuildMessage] = []
 
 	# Path arguments must be cast to string for Windows compatibility.
 	with importlib.resources.as_file(importlib.resources.files("se.data.epubcheck").joinpath("epubcheck.jar")) as jar_path:
@@ -1313,7 +1314,7 @@ def _run_epubcheck(self, work_compatible_epub_dir: Path) -> None:
 			stdout.seek(0)
 			output = stdout.read().decode().strip()
 
-			epubcheck_dom = se.easy_xml.EasyXmlTree(output)
+			epubcheck_dom = EasyXmlTree(output)
 
 			messages = epubcheck_dom.xpath("/jhove/repInfo/messages/message")
 
@@ -1326,12 +1327,12 @@ def _run_epubcheck(self, work_compatible_epub_dir: Path) -> None:
 				output = output.replace(str(work_compatible_epub_dir) + ".epub", str(epub_debug_dir))
 
 				for message in messages:
-					error_text = regex.search(r"(\[(.+)\]), ", message.text)
-					file_text = regex.search(r"\], (.+?) \(([0-9]+)-([0-9]+)\)$", message.text)
+					error_text = regex.search(r"(\[(.+)\]), ", message.text) or []
+					file_text = regex.search(r"\], (.+?) \(([0-9]+)-([0-9]+)\)$", message.text) or []
 
 					if file_text:
 						file_path = epub_debug_dir / file_text[1]
-						build_messages.append(BuildMessage("epubcheck", message.get_attr("id"), error_text[2], file_path, file_text[2], file_text[3]))
+						build_messages.append(BuildMessage("epubcheck", message.get_attr("id"), error_text[2], file_path, int(file_text[2]), int(file_text[3])))
 					else:
 						build_messages.append(BuildMessage("epubcheck", message.get_attr("id"), error_text[2]))
 
@@ -1344,7 +1345,7 @@ def _run_epubcheck(self, work_compatible_epub_dir: Path) -> None:
 			subprocess.run(["java", "-jar", str(jar_path), "--format", "xml", "--skip-non-html", str(self.content_path)], stdout=stdout, stderr=stdout, check=False)
 
 			stdout.seek(0)
-			vnu_dom = se.easy_xml.EasyXmlTree(stdout.read().decode().strip())
+			vnu_dom = EasyXmlTree(stdout.read().decode().strip())
 
 			# The Nu Validator will return errors for epub-specific attributes (like `epub:prefix` and `epub:type`) because they're not defined in the XHTML5 spec. So, we simply filter out those errors.
 			# Also filter out:
@@ -1386,7 +1387,7 @@ def _run_epubcheck(self, work_compatible_epub_dir: Path) -> None:
 			if messages:
 				raise se.BuildFailedException("[bash]vnu[/] failed.", build_messages)
 
-def _run_ace(self, work_compatible_epub_dir: Path) -> None:
+def _run_ace(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 	"""
 	Run the Ace validator on the compatibility epub.
 
@@ -1398,7 +1399,7 @@ def _run_ace(self, work_compatible_epub_dir: Path) -> None:
 	None.
 	"""
 
-	build_messages = []
+	build_messages: list[BuildMessage] = []
 
 	# We have to use a temp file to hold `stdout`, because if the output is too large for the output buffer in `subprocess.run()` (and thus `popen()`) it will be truncated.
 	with tempfile.TemporaryFile() as stdout:
@@ -1450,7 +1451,7 @@ def _run_ace(self, work_compatible_epub_dir: Path) -> None:
 
 				# Unpack our sorted messages for output.
 				for (file_path_str, code), message_list in file_messages.items():
-					item_messages = []
+					item_messages: list[str] = []
 					for (_, html) in message_list:
 						if html:
 							# Ace output includes namespaces on each element, remove them.
@@ -1473,7 +1474,7 @@ def _run_ace(self, work_compatible_epub_dir: Path) -> None:
 		except subprocess.CalledProcessError as ex:
 			raise se.BuildFailedException("[bash]ace[/] failed.") from ex
 
-def _build_kindle(self, work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kindle_output_filename: str, toc_filename: str, metadata_dom: se.easy_xml.EasyXmlTree, compatible_epub_output_filename: str, ebook_convert_path: Path | None, asin: str, last_updated: datetime | None) -> None:
+def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kindle_output_filename: str, toc_filename: str, metadata_dom: EasyXmlTree, compatible_epub_output_filename: str, ebook_convert_path: Path | None, asin: str, last_updated: datetime | None) -> None:
 	"""
 	Build the Kindle .azw3 file.
 
@@ -1495,7 +1496,7 @@ def _build_kindle(self, work_dir: Path, work_compatible_epub_dir: Path, output_d
 
 	# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
 	with open(work_compatible_epub_dir / "epub" / toc_filename, "r+", encoding="utf-8") as file:
-		dom = se.easy_xml.EasyXmlTree(file.read())
+		dom = EasyXmlTree(file.read())
 
 		for node in dom.xpath("//ol/li/ol/li/ol"):
 			node.lxml_element.getparent().addnext(node.lxml_element)
@@ -1556,7 +1557,7 @@ def _build_kindle(self, work_dir: Path, work_compatible_epub_dir: Path, output_d
 				if first_p:
 					first_p = first_p[0]
 				else:
-					first_p = se.easy_xml.EasyXmlElement("<p/>")
+					first_p = EasyXmlElement("<p/>")
 					endnote.prepend(first_p)
 
 				first_p.set_attr("id", endnote.get_attr("id"))
@@ -1611,6 +1612,7 @@ def _build_kindle(self, work_dir: Path, work_compatible_epub_dir: Path, output_d
 		cover_path = work_compatible_epub_dir / "epub" / href
 
 	# Path arguments must be cast to string for Windows compatibility.
+	calibre_result = None
 	try:
 		calibre_args = [str(ebook_convert_path), str(work_dir / compatible_epub_output_filename), str(work_dir / kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover"]
 
@@ -1620,7 +1622,10 @@ def _build_kindle(self, work_dir: Path, work_compatible_epub_dir: Path, output_d
 		calibre_result = subprocess.run(calibre_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
 		calibre_result.check_returncode()
 	except subprocess.CalledProcessError as ex:
-		output = calibre_result.stdout.decode().strip() # pyright: ignore # `calibre_result` is always bound because this exception is thrown from `calibre_result.check_returncode()`.
+		if calibre_result:
+			output = calibre_result.stdout.decode().strip()
+		else:
+			output = "No output."
 
 		raise se.BuildFailedException(f"[bash]ebook-convert[/] failed with:\n{output}") from ex
 
@@ -1633,10 +1638,10 @@ def _build_kindle(self, work_dir: Path, work_compatible_epub_dir: Path, output_d
 	if os.path.isfile(work_compatible_epub_dir / "epub" / "images" / "cover.jpg"):
 		kindle_cover_thumbnail_file = Image.open(work_compatible_epub_dir / "epub" / "images" / "cover.jpg")
 		kindle_cover_thumbnail_image = kindle_cover_thumbnail_file.convert("RGB") # Remove alpha channel from PNG if necessary.
-		kindle_cover_thumbnail_image = kindle_cover_thumbnail_image.resize((432, 648))
+		kindle_cover_thumbnail_image = kindle_cover_thumbnail_image.resize((432, 648)) # type: ignore This is an error in Pillow's type stub.
 		kindle_cover_thumbnail_image.save(output_dir / f"thumbnail_{asin}_EBOK_portrait.jpg")
 
-def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_kindle: bool, output_dir: Path, proof: bool) -> None:
+def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: bool, build_kindle: bool, output_dir: Path, proof: bool) -> None:
 	"""
 	Entry point for `se build`.
 	"""
@@ -1721,7 +1726,7 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 	# Create our temp work directory.
 	with tempfile.TemporaryDirectory() as temp_dir:
 		work_dir = Path(temp_dir)
-		work_compatible_epub_dir = work_dir / self.path.name
+		work_compatible_epub_dir: Path = work_dir / self.path.name
 
 		shutil.copytree(self.epub_root_path, str(work_compatible_epub_dir), dirs_exist_ok=True)
 
@@ -1844,5 +1849,5 @@ def build(self, run_epubcheck: bool, check_only: bool, build_kobo: bool, build_k
 
 	# Build is all done!
 	# Since we made heavy changes to the ebook's DOM, flush the DOM cache in case we use this class again.
-	self._dom_cache = [] # pylint: disable=protected-access
-	self._file_cache = [] # pylint: disable=protected-access
+	self._dom_cache = [] # type: ignore # pylint: disable=protected-access
+	self._file_cache = [] # type: ignore # pylint: disable=protected-access

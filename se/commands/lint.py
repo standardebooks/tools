@@ -41,7 +41,7 @@ def lint(plain_output: bool) -> int:
 		directory = Path(directory).resolve()
 		messages = []
 		exception = None
-		table_data = []
+		table_data: list[list[str|Align|Text]] = []
 		has_output = False
 
 		try:
@@ -118,7 +118,7 @@ def lint(plain_output: bool) -> int:
 						for submessage in message.submessages:
 							# Brackets don't need to be escaped in submessages if we instantiate them in `Text()`.
 							submessage_object = Text(submessage.text, style="dim")
-							if submessage.line_num:
+							if submessage.line_num and message.filename:
 								submessage_line = Align(f"[link=file://{message.filename.resolve()}#L{submessage.line_num}]Line {submessage.line_num}[/link]", align="right")
 							else:
 								submessage_line = Align("→", align="right")

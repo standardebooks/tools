@@ -11,7 +11,7 @@ from rich import box
 from rich.table import Table
 
 import se
-
+from se.easy_xml import EasyXmlTree
 
 def find_mismatched_diacritics(plain_output: bool) -> int:
 	"""
@@ -27,14 +27,14 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 	accented_words: dict[str, int] = {} # key: word; value: count
 	mismatches: dict[str, dict[str, tuple[int, int]]] = {} # key: base word; value: dict with key: plain word; value: (base count, plain count)
 	target_filenames = se.get_target_filenames(args.targets, ".xhtml")
-	files_xhtml = []
+	files_xhtml: list[str] = []
 
 	# Read files and cache for later.
 	for filename in target_filenames:
 		try:
 			with open(filename, "r", encoding="utf-8") as file:
 				xhtml = file.read()
-				dom = se.easy_xml.EasyXmlTree(xhtml)
+				dom = EasyXmlTree(xhtml)
 
 				# Save any `alt` and `title` attributes because we may be interested in their contents.
 				for node in dom.xpath("//*[@alt or @title]"):
@@ -121,7 +121,7 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 	# Sort and prepare the output.
 	mismatches = filtered_mismatches
 
-	lines = []
+	lines: list[tuple[str, int, str, int]] = []
 
 	for accented_word, child in mismatches.items():
 		for plain_word, counts in child.items():

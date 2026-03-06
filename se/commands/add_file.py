@@ -142,6 +142,10 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 
 					_copy_file("se-lint-ignore.xml", dest_path, args.force)
 
+				case _:
+					# Unrecognized, do nothing.
+					pass
+
 
 		except se.SeException as ex:
 			se.print_error(ex)

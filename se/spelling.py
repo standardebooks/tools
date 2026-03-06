@@ -76,7 +76,7 @@ def modernize_hyphenation(xhtml: str) -> str:
 
 	return xhtml
 
-def detect_problem_spellings(xhtml: str) -> list:
+def detect_problem_spellings(xhtml: str) -> list[str]:
 	"""
 	Return a list of potential problem spellings, that cannot be scripted due to a word having various meanings.
 
@@ -91,7 +91,7 @@ def detect_problem_spellings(xhtml: str) -> list:
 
 	# Uncomment if we eventually need the document language.
 	# language = get_xhtml_language(xhtml)
-	output = []
+	output: list[str] = []
 
 	if regex.search(r"\bstaid\b", xhtml, flags=regex.I):
 		output.append("“staid” detected. This should be modernized if it is the past tense of “stay,” but not if used as an adjective meaning “sedate or prim.”")

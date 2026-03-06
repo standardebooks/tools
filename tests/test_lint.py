@@ -6,11 +6,11 @@ to the lint error id, e.g. c-001, t-040, etc.
 import os
 from pathlib import Path
 import pytest
-from helpers import assemble_testbook, run, output_is_golden
+from helpers import assemble_testbook, run, output_is_golden # pylint: disable=import-error
 
 lint_subtypes = ["css", "filesystem", "metadata", "semantic", "typography", "typos", "xhtml"]
 module_directory = Path(__file__).parent / "lint"
-module_tests = []
+module_tests: list[list[str]] = []
 
 # get list of each subtype's tests from the subdirectory names
 for lint_subtype in lint_subtypes:
@@ -24,7 +24,7 @@ for lint_subtype in lint_subtypes:
 module_tests.sort()
 @pytest.mark.parametrize("lint_subtype, test", module_tests)
 
-def test_lint(testbook__directory: Path, work__directory: Path, lint_subtype: str, test: str, update_golden: bool, capfd): # pylint: disable=redefined-outer-name
+def test_lint(testbook__directory: Path, work__directory: Path, lint_subtype: str, test: str, update_golden: bool, capfd: pytest.CaptureFixture[str]): # pylint: disable=redefined-outer-name
 	"""
 	Run lint command on assembled test book, i.e. stock test book plus files from test,
 	and capture output to compare with "golden" output.

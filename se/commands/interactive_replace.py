@@ -40,7 +40,7 @@ def _get_text_dimensions(text: str) -> tuple[int, int]:
 
 	return (text_height + 1, text_width + 1)
 
-def _print_ui(screen, filepath: Path) -> None:
+def _print_ui(screen: curses.window, filepath: Path) -> None:
 	"""
 	Print the header and footer bars to the screen.
 	"""
@@ -149,7 +149,7 @@ def _get_center_of_match(text: str, match_start: int, match_end: int, screen_hei
 
 	return (pad_y, pad_x)
 
-def _print_screen(screen, filepath: Path, text: str, start_matching_at: int, regex_search: str, regex_flags: int):
+def _print_screen(screen: curses.window, filepath: Path, text: str, start_matching_at: int, regex_search: str, regex_flags: int):
 	"""
 	Print the complete UI to the screen.
 
@@ -214,7 +214,7 @@ def _print_screen(screen, filepath: Path, text: str, start_matching_at: int, reg
 
 	return (pad, line_numbers_pad, pad_y, pad_x, match_start, match_end)
 
-def _init_screen(screen):
+def _init_screen(screen: curses.window | None) -> curses.window:
 	# Initialize curses.
 
 	# Only initialize the screen if it's not already initialized.
@@ -255,7 +255,7 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 	os.environ.setdefault("ESCDELAY", "0")
 
 	# Save errors for later, because we can only print them after curses is deinitialized.
-	errors = []
+	errors: list[str] = []
 	has_results = False
 	return_code = 0
 	screen = None
@@ -320,7 +320,7 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 
 				raise ex
 
-			while pad:
+			while pad and line_numbers_pad:
 				# Wait for input.
 				char = pad.getch()
 

@@ -46,11 +46,11 @@ class EasyXmlTree:
 	This is not a complete XML parser. It only works if namespaces are only declared on the root element.
 	"""
 
-	def __init__(self, xml: str | etree._ElementTree):
+	def __init__(self, xml: str | etree.ElementTree):
 		self.namespaces = {"re": "http://exslt.org/regular-expressions", "xml": "http://www.w3.org/XML/1998/namespace"} # Enable regular expressions in xpath; `xml` is the default XML namespace.
 		self.default_namespace = None
 
-		if isinstance(xml, etree._ElementTree):
+		if isinstance(xml, etree.ElementTree):
 			xml_string = etree.tostring(xml, encoding="unicode", with_tail=False)
 		else:
 			xml_string = xml
@@ -100,7 +100,7 @@ class EasyXmlTree:
 
 		If `return_string` is `True`, return a single string value instead of a list.
 
-		Return `Any` to quiet `mypy` for now. Should be upgraded to a real type hint ASAP.
+		Return `Any` to quiet `pyright` for now. Should be upgraded to a real type hint ASAP.
 		"""
 
 		result: list[str | EasyXmlElement | float] = []
@@ -129,7 +129,7 @@ class EasyXmlTree:
 		return result
 
 	@staticmethod
-	def _apply_css_declaration_to_node(node, declaration: se.css.CssDeclaration, specificity_number: int):
+	def _apply_css_declaration_to_node(node: 'EasyXmlElement', declaration: se.css.CssDeclaration, specificity_number: int):
 		if declaration.applies_to == "all" or (declaration.applies_to == "block" and node.tag in se.css.CSS_BLOCK_ELEMENTS):
 			existing_specificity = node.get_attr(f"data-css-{declaration.name}-specificity") or 0
 
@@ -215,9 +215,9 @@ class EasyXmlElement:
 	Represents an lxml element.
 	"""
 
-	lxml_element: etree._Element
+	lxml_element: etree.Element
 
-	def __init__(self, lxml_element: str | etree._Element, namespaces: dict[str,str] | None = None):
+	def __init__(self, lxml_element: str | etree.Element, namespaces: dict[str,str] | None = None):
 		if namespaces is None:
 			namespaces = {}
 
@@ -296,12 +296,12 @@ class EasyXmlElement:
 
 		return value
 
-	def get_css(self) -> dict:
+	def get_css(self) -> dict[str, str]:
 		"""
 		Return a `dict` of CSS properties applied to this node.
 		"""
 
-		output = {}
+		output: dict[str, str] = {}
 		for attr, value in self.lxml_element.attrib.items():
 			if attr.startswith("data-css-"):
 				output[attr.replace("data-css-", "")] = value
@@ -386,7 +386,7 @@ class EasyXmlElement:
 		"""
 		Shortcut to select elements based on xpath selector.
 
-		Return `Any` to quiet `mypy` for now. Should be upgraded to a real type hint ASAP.
+		Return `Any` to quiet `pyright` for now. Should be upgraded to a real type hint ASAP.
 		"""
 
 		result: list[str | EasyXmlElement | float] = []
@@ -459,7 +459,7 @@ class EasyXmlElement:
 		if parent is not None:
 			parent.remove(self.lxml_element)
 
-	def wrap_with(self, node) -> None:
+	def wrap_with(self, node: 'EasyXmlElement') -> None:
 		"""
 		Wrap this node in the passed node.
 		"""
@@ -478,7 +478,7 @@ class EasyXmlElement:
 
 		parent = self.lxml_element.getparent()
 
-		children = self.lxml_element.getchildren()
+		children = list(self.lxml_element)
 
 		children.reverse()
 
@@ -516,7 +516,7 @@ class EasyXmlElement:
 		# This calls the `EasyXmlTree.remove()` function, not an lxml function.
 		self.remove()
 
-	def replace_outer(self, node) -> None:
+	def replace_outer(self, node: 'EasyXmlElement') -> None:
 		"""
 		Replace this node's wrapping element with the wrapping element of the passed node, but keep this node's children.
 
@@ -534,7 +534,7 @@ class EasyXmlElement:
 		self.lxml_element.addnext(node.lxml_element)
 		self.unwrap()
 
-	def replace_with(self, node) -> None:
+	def replace_with(self, node: 'EasyXmlElement|etree.Element') -> None:
 		"""
 		Remove this node and replace it with the passed node.
 		"""
@@ -547,7 +547,7 @@ class EasyXmlElement:
 
 		self.remove()
 
-	def append(self, node) -> None:
+	def append(self, node: 'EasyXmlElement|etree.Element') -> None:
 		"""
 		Place node as the last child of this node.
 		"""
@@ -557,15 +557,16 @@ class EasyXmlElement:
 		else:
 			self.lxml_element.append(node)
 
-	def prepend(self, node) -> None:
+	def prepend(self, node: 'EasyXmlElement|etree.Element') -> None:
 		"""
 		Place node as the first child of this node.
 		"""
 
 		# If the node we're inserting in to has text, lxml will insert the new node *after* the text. So, we have to make the node's lxml `.text` the new node's lxml `.tail`.
-		target = node
 		if isinstance(node, EasyXmlElement):
 			target = node.lxml_element
+		else:
+			target = node
 
 		if self.lxml_element.text:
 			if target.tail:
@@ -576,7 +577,7 @@ class EasyXmlElement:
 		self.lxml_element.insert(0, target)
 		self.lxml_element.text = ""
 
-	def insert_before(self, node) -> None:
+	def insert_before(self, node: 'EasyXmlElement|etree.Element') -> None:
 		"""
 		Place a node before this node.
 		"""
@@ -586,7 +587,7 @@ class EasyXmlElement:
 		else:
 			self.lxml_element.addprevious(node)
 
-	def insert_after(self, node) -> None:
+	def insert_after(self, node: 'EasyXmlElement|etree.Element') -> None:
 		"""
 		Place a node after this node.
 		"""
@@ -607,12 +608,12 @@ class EasyXmlElement:
 		self.lxml_element.text = string
 
 	@property
-	def children(self) -> list:
+	def children(self) -> list['EasyXmlElement']:
 		"""
 		Return a list representing of this node's direct children.
 		"""
 
-		children = []
+		children: list[EasyXmlElement] = []
 
 		for child in self.lxml_element:
 			children.append(EasyXmlElement(child, self.namespaces))
@@ -620,7 +621,7 @@ class EasyXmlElement:
 		return children
 
 	@children.setter
-	def children(self, children) -> None:
+	def children(self, children: list['EasyXmlElement']|list[etree.Element]) -> None:
 		"""
 		Set the node's children.
 		"""
@@ -645,10 +646,15 @@ class EasyXmlElement:
 	@property
 	def parent(self): # This returns an `EasyXmlElement` but we can't type hint this until Python 3.14.
 		"""
-		Return an `EasyXmlElement` representing this node's parent node.
+		Return an `EasyXmlElement` representing this node's parent node, or `None` if this element is the root node.
 		"""
 
-		return EasyXmlElement(self.lxml_element.getparent(), self.namespaces)
+		parent = self.lxml_element.getparent()
+
+		if parent is not None:
+			return EasyXmlElement(parent, self.namespaces)
+
+		return None
 
 	@property
 	def text(self) -> str:
@@ -695,7 +701,7 @@ class EasyXmlElement:
 		self.lxml_element.tail = value
 
 	@property
-	def attrs(self) -> dict:
+	def attrs(self) -> dict[str, str]:
 		"""
 		Return a `dict` of attributes for this node.
 		"""
@@ -703,9 +709,9 @@ class EasyXmlElement:
 		return dict(self.lxml_element.attrib)
 
 	@attrs.setter
-	def attrs(self, value: dict) -> None:
+	def attrs(self, value: dict[str, str]) -> None:
 		"""
-		Return a `dict` of attributes for this node.
+		Set attributes to the provided values.
 		"""
 
 		self.lxml_element.attrib.clear()

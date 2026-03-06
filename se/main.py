@@ -15,7 +15,7 @@ def get_commands() -> list[str]:
 	Helper function to generate a list of available commands from all of the submodules in the se.cmd package
 	"""
 
-	commands = []
+	commands: list[str] = []
 	for module_info in pkgutil.iter_modules(se.commands.__path__):
 		command = module_info.name.replace("_", "-")
 		if command != "version":
@@ -46,8 +46,8 @@ def main() -> None:
 		parser.add_argument("arguments", metavar="ARGS", nargs="*", help="arguments for the subcommand")
 
 		# We do some hand-parsing of high-level arguments, because `argparse` can expect flags at any point in the command. We'll pass any arguments up to and including the subcommand to the main `argparse` instance, then pass the subcommand and its arguments to the final function we call.
-		main_args = []
-		subcommand_args = []
+		main_args: list[str] = []
+		subcommand_args: list[str] = []
 		parsing_subcommand = False
 		for arg in sys.argv[1:]:
 			if not parsing_subcommand and arg.startswith("-"):

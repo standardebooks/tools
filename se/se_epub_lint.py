@@ -7,12 +7,13 @@ Strictly speaking, `SeEpub.Lint()` should be a class member of `SeEpub`. But the
 
 from bisect import bisect_right
 from copy import deepcopy
+from dataclasses import dataclass
 import filecmp
 import fnmatch
 import os
 from pathlib import Path
 import importlib.resources
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from unidecode import unidecode
 
 import cssutils
@@ -27,6 +28,10 @@ import se.formatting
 import se.images
 import se.spelling
 import se.typography
+from se.easy_xml import EasyXmlElement, EasyXmlTree
+
+if TYPE_CHECKING:
+	from se.se_epub import SeEpub # Import under type checking guard to prevent circular import error.
 
 SE_VARIABLES = [
 	"IDENTIFIER",
@@ -518,6 +523,16 @@ TYPOS
 
 NEWLINE_PATTERN = regex.compile(r"\n")
 
+@dataclass
+class IgnoreItem:
+	"""
+	A data class to store ignore values
+	"""
+
+	ignore_element: EasyXmlElement
+	used: bool
+	line: int|None = None
+
 class SourceFile:
 	"""
 	A source file that can perform regex searches of input text that provides line
@@ -531,7 +546,7 @@ class SourceFile:
 		# For binary searching line number lookups on regex matches.
 		self._offsets = [offset for (offset, _) in self._lines]
 
-	def sub(self, pattern: str | regex.Pattern, replacement: str = "") -> 'SourceFile':
+	def sub(self, pattern: str | regex.Pattern[str], replacement: str = "") -> 'SourceFile':
 		"""
 		Creates a modified view of the source text that retains line number mappings
 		to the original text.
@@ -542,7 +557,7 @@ class SourceFile:
 		contents, bounds = self._sub_with_line_mapping(pattern, replacement, self._lines)
 		return SourceFile(self.filename, contents, bounds)
 
-	def search(self, pattern: str | regex.Pattern) -> tuple[str, int] | None:
+	def search(self, pattern: str | regex.Pattern[str]) -> tuple[str, int] | None:
 		"""
 		Search the file contents to find the first regex match, with line number.
 		"""
@@ -555,7 +570,7 @@ class SourceFile:
 
 		return None
 
-	def findall(self, pattern: str | regex.Pattern, flags: int = 0) -> list[tuple[str, int]]:
+	def findall(self, pattern: str | regex.Pattern[str], flags: int = 0) -> list[tuple[str, int]]:
 		"""
 		Find all regex matches in the file contents, including line numbers.
 		"""
@@ -563,7 +578,7 @@ class SourceFile:
 		if isinstance(pattern, str):
 			pattern = regex.compile(pattern, flags)
 
-		matches = []
+		matches: list[tuple[str, int]] = []
 		for match in regex.finditer(pattern, self.contents):
 			matches.append((match.group(), self.line_num(match)))
 
@@ -580,14 +595,14 @@ class SourceFile:
 		# In case the regex didn't match anything, include the selector anyway at line 0 which will just show an arrow in the output.
 		return matches or [(selector, 0)]
 
-	def line_num(self, match: regex.Match) -> int:
+	def line_num(self, match: regex.Match[str]) -> int:
 		"""
 		Get the original line number based on a regex match of contents.
 		"""
 		idx = bisect_right(self._offsets, match.start()) - 1
 		return 0 if idx < 0 else self._lines[idx][1]
 
-	def _sub_with_line_mapping(self, pattern: regex.Pattern, replacement: str = "", bounds: list[tuple[int, int]] | None = None) -> tuple[str, list[tuple[int, int]]]:
+	def _sub_with_line_mapping(self, pattern: regex.Pattern[str], replacement: str = "", bounds: list[tuple[int, int]] | None = None) -> tuple[str, list[tuple[int, int]]]:
 		"""
 		Processes the contents string, replacing matched patterns while building an
 		index mapping of byte offsets in the modified output to line numbers of the
@@ -649,16 +664,16 @@ class LintSubmessage:
 		return [cls(match_text, line_num) for match_text, line_num in sorted(matches, key=lambda x: x[1])]
 
 	@classmethod
-	def from_nodes(cls, nodes: list) -> list['LintSubmessage']:
+	def from_nodes(cls, nodes: list[EasyXmlElement]|list[str]) -> list['LintSubmessage']:
 		"""Create a list of `LintSubmessage` objects from xpath nodes. Nodes can either be element or text nodes."""
-		submessages = []
+		submessages: list[LintSubmessage] = []
 
 		for node in nodes:
-			if isinstance(node, se.easy_xml.EasyXmlElement):
+			if isinstance(node, EasyXmlElement):
 				submessages.append(cls(node.to_string(), node.sourceline))
 			elif hasattr(node, 'getparent'):
 				try:
-					submessages.append(cls(node, node.getparent().sourceline))
+					submessages.append(cls(node, node.getparent().sourceline)) # type: ignore # `etree` returns a special `str` with the `getparent()` method.
 				except AttributeError:
 					submessages.append(cls(node, 0))
 			else:
@@ -667,14 +682,14 @@ class LintSubmessage:
 		return sorted(submessages, key=lambda x: x.line_num or 0)
 
 	@classmethod
-	def from_node_tags(cls, nodes: list) -> list['LintSubmessage']:
+	def from_node_tags(cls, nodes: list[EasyXmlElement]) -> list['LintSubmessage']:
 		"""Create a list of `LintSubmessage` objects from xpath node tag matches."""
-		return [cls(node.to_tag_string(), node.sourceline) for node in sorted(nodes, key=lambda x: x.sourceline)]
+		return [cls(node.to_tag_string(), node.sourceline) for node in sorted(nodes, key=lambda node: node.sourceline or 0)]
 
 	@classmethod
-	def from_node_text(cls, nodes: list) -> list['LintSubmessage']:
+	def from_node_text(cls, nodes: list[EasyXmlElement]) -> list['LintSubmessage']:
 		"""Create a list of `LintSubmessage` objects from xpath node text values."""
-		return [cls(node.inner_text(), node.sourceline) for node in sorted(nodes, key=lambda x: x.sourceline)]
+		return [cls(node.inner_text(), node.sourceline) for node in sorted(nodes, key=lambda x: x.sourceline or 0)]
 
 class LintMessage:
 	"""
@@ -683,7 +698,7 @@ class LintMessage:
 	Contains information like message text, severity, and the epub filename that generated the message.
 	"""
 
-	def __init__(self, code: str, text: str, message_type=se.MESSAGE_TYPE_WARNING, filename: Path | None = None, submessages: list[str] | set[str] | list[LintSubmessage] | None = None):
+	def __init__(self, code: str, text: str, message_type:int=se.MESSAGE_TYPE_WARNING, filename: Path | None = None, submessages: list[str] | set[str] | list[LintSubmessage] | None = None):
 		self.code = code
 		self.text = text.strip()
 		self.filename = filename
@@ -697,8 +712,8 @@ class LintMessage:
 				if not isinstance(submessage, LintSubmessage):
 					line_num = None
 					if hasattr(submessage, 'getparent'):
-						line_num = submessage.getparent().sourceline  # pyright: ignore # `etree` returns a special `str` with the `getparent()` method.
-					submessage = LintSubmessage(submessage, line_num)
+						line_num = submessage.getparent().sourceline # type: ignore # `etree` returns a special `str` with the `getparent()` method.
+					submessage = LintSubmessage(submessage, cast(int|None, line_num)) # We have to `cast()` here because of the special `getparent()` method.
 				self.submessages.append(submessage)
 
 				# Try to flatten leading indentation.
@@ -724,7 +739,7 @@ class EbookSection:
 		# `<h#>` can't go past 6, but we may go deeper in real life like in _Wealth of Nations_ by Adam Smith.
 		self.depth = depth if depth <= 6 else 6
 
-def _build_section_tree(self) -> list[EbookSection]:
+def _build_section_tree(self: 'SeEpub') -> list[EbookSection]:
 	"""
 	Helper function used in `self.lint()`.
 
@@ -809,7 +824,7 @@ def _find_ebook_section(section_id: str, sections: list[EbookSection]) -> EbookS
 
 	return None
 
-def _lint_metadata_checks(self) -> list:
+def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	"""
 	Process main metadata checks.
 
@@ -820,8 +835,8 @@ def _lint_metadata_checks(self) -> list:
 	A list of `LintMessage` objects.
 	"""
 
-	messages = []
-	missing_metadata_elements = []
+	messages: list[LintMessage] = []
+	missing_metadata_elements: list[str] = []
 	long_description_node = None
 
 	# Check the long description for some errors.
@@ -834,11 +849,11 @@ def _lint_metadata_checks(self) -> list:
 			opening_tag = node.to_tag_string()
 			tag_name = node.tag
 			# If the HTML is malformed, this will emit `se.InvalidXmlException` which we catch below.
-			new_element = se.easy_xml.EasyXmlElement(f"<?xml version=\"1.0\" encoding=\"utf-8\"?>{opening_tag}{long_description}</{tag_name}>")
+			new_element = EasyXmlElement(f"<?xml version=\"1.0\" encoding=\"utf-8\"?>{opening_tag}{long_description}</{tag_name}>")
 			node.replace_with(new_element)
 
 		# Recreate the DOM from the text source, so that line numbers for errors in the long description are correct.
-		metadata_dom_with_parsed_long_description = se.easy_xml.EasyXmlTree(metadata_dom_with_parsed_long_description.to_string())
+		metadata_dom_with_parsed_long_description = EasyXmlTree(metadata_dom_with_parsed_long_description.to_string())
 
 		# Make sure long-description is an escaped XHTML fragment.
 		if not regex.search(r"^\s*<p>", long_description) and long_description.strip() != "LONG_DESCRIPTION":
@@ -869,7 +884,7 @@ def _lint_metadata_checks(self) -> list:
 		# Only match if the title appears to contain an uppercase letter. This prevents matches on a non-title link like `<a href="...">short stories</a>`. Xpath 1.0 doesn't support Unicode character classes like `\p{Letter}` so we do an additional filtering step.
 		# Also don't match if preceded by `“` as that might refer to a short work that doesn't need italics (like `“The Vampire”`).
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']//a[re:test(@href, '^https://standardebooks\\.org/ebooks/[^/]+/[^/]+') and not(parent::i) and not(.//i) and not(preceding-sibling::node()[re:test(., '“$')])]")
-		filtered_nodes = []
+		filtered_nodes: list[EasyXmlElement] = []
 		for node in nodes:
 			if regex.search(r"[\p{Uppercase_Letter}]", node.inner_text()):
 				filtered_nodes.append(node)
@@ -918,7 +933,7 @@ def _lint_metadata_checks(self) -> list:
 		if self.is_se_ebook:
 			missing_metadata_elements.append("""<meta id="long-description" property="se:long-description" refines="#description">""")
 
-	missing_metadata_vars = []
+	missing_metadata_vars: list[LintSubmessage] = []
 	for node in self.metadata_dom.xpath("/package/metadata/*[re:test(., '[A-Z_]{2,}') or re:test(@*, '[A-Z_]{2,}')]"):
 		for var in SE_VARIABLES:
 			if regex.search(fr"\b{var}\b", node.text):
@@ -960,7 +975,7 @@ def _lint_metadata_checks(self) -> list:
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 	# We can't use xpath's built-in regex because it doesn't support Unicode classes.
-	matching_nodes = []
+	matching_nodes: list[EasyXmlElement] = []
 	for node in self.metadata_dom.xpath("/package/metadata/*"):
 		if node.text and regex.search(r"[\p{Letter}]+”[,\.](?! …)", node.text):
 			matching_nodes.append(node)
@@ -1024,10 +1039,10 @@ def _lint_metadata_checks(self) -> list:
 		messages.append(LintMessage("m-009", "Unexpected value for [xml]<meta property=\"se:url.vcs.github\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"Found: {node.inner_text()}\nExpected: {expected_vcs_url}", node.sourceline) for node in nodes]))
 
 	# Check for illegal `se:subject` values.
-	illegal_subjects = []
+	illegal_subjects: list[EasyXmlElement] = []
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']")
 	if nodes:
-		node_string_values = []
+		node_string_values: list[str] = []
 
 		for node in nodes:
 			node_inner_text = node.inner_text()
@@ -1046,8 +1061,8 @@ def _lint_metadata_checks(self) -> list:
 		messages.append(LintMessage("m-021", "No [xml]<meta property=\"se:subject\">[/] element found.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check that each `<dc:title>` has a file-as and title-type, if applicable.
-	titles_missing_file_as = []
-	titles_missing_title_type = []
+	titles_missing_file_as: list[EasyXmlElement] = []
+	titles_missing_title_type: list[EasyXmlElement] = []
 	titles = self.metadata_dom.xpath("/package/metadata/dc:title")
 	for node in titles:
 		if not self.metadata_dom.xpath(f"/package/metadata/meta[@property='file-as' and @refines='#{node.get_attr('id')}']"):
@@ -1082,8 +1097,8 @@ def _lint_metadata_checks(self) -> list:
 			missing_metadata_elements.append("<dc:identifier>")
 
 	# Check if `se:name.person.full-name` matches their titlepage name.
-	duplicate_names = []
-	invalid_refines = []
+	duplicate_names: list[LintSubmessage] = []
+	invalid_refines: list[LintSubmessage] = []
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='se:name.person.full-name']")
 	for node in nodes:
 		try:
@@ -1148,7 +1163,7 @@ def _lint_metadata_checks(self) -> list:
 
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='role' and @scheme='marc:relators']")
 	marc_relator_groups: dict[str, list[str]] = {}
-	non_alphabetized_marc_relator_groups = []
+	non_alphabetized_marc_relator_groups: list[str] = []
 
 	for node in nodes:
 		refines = node.get_attr('refines')
@@ -1168,7 +1183,7 @@ def _lint_metadata_checks(self) -> list:
 
 	return messages
 
-def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
+def _get_malformed_urls(dom: EasyXmlTree, filename: Path) -> list[LintMessage]:
 	"""
 	Helper function used in self.lint()
 	Get a list of URLs in the epub that don't match SE standards.
@@ -1181,7 +1196,7 @@ def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 	A list of LintMessage objects.
 	"""
 
-	messages = []
+	messages: list[LintMessage] = []
 
 	search_regex = r"^https?://[^/]+[^/]$"
 	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}')] | /html/body//a[re:test(@href, '{search_regex}')]")
@@ -1267,7 +1282,7 @@ def _get_malformed_urls(dom: se.easy_xml.EasyXmlTree, filename: Path) -> list:
 
 	return messages
 
-def _get_selectors_and_rules (self) -> tuple:
+def _get_selectors_and_rules(self: 'SeEpub') -> tuple[dict[str, str], list[str]]:
 	"""
 	Helper function used in `self.lint()`.
 
@@ -1280,7 +1295,7 @@ def _get_selectors_and_rules (self) -> tuple:
 	2-tuple (local_css_rules, duplicate_selectors) to be used by the `lint` function.
 	"""
 
-	def _recursive_helper(rules: cssutils.css.cssstylesheet.CSSStyleSheet, local_css_rules: dict, duplicate_selectors: list, single_selectors: list, top_level: bool):
+	def _recursive_helper(rules: cssutils.css.CSSRuleList, local_css_rules: dict[str, str], duplicate_selectors: list[str], single_selectors: list[str], top_level: bool):
 		"""
 		Because of the possibilty of nested `@supports` and `@media` at-rules, we need to use recursion to get to rules and selectors within at-rules. This function is the helper for `_get_selectors_and_rules()` and does the actual work.
 
@@ -1294,6 +1309,7 @@ def _get_selectors_and_rules (self) -> tuple:
 		OUTPUTS
 		2-tuple (local_css_rules, duplicate_selectors) to be used by the lint function.
 		"""
+
 		for rule in rules:
 			# I.e. `@supports` or `@media`.
 			if isinstance(rule, cssutils.css.CSSMediaRule):
@@ -1335,7 +1351,7 @@ def _get_selectors_and_rules (self) -> tuple:
 
 	return (local_css_rules, duplicate_selectors)
 
-def files_not_in_spine(self) -> set:
+def files_not_in_spine(self: 'SeEpub') -> set[Path]:
 	"""
 	Check the spine against the actual files.
 
@@ -1350,7 +1366,7 @@ def files_not_in_spine(self) -> set:
 	spine_files = set(self.spine_file_paths + [self.toc_path])
 	return xhtml_files.difference(spine_files)
 
-def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> list:
+def _lint_css_checks(self: 'SeEpub', local_css_path: Path, abbr_with_whitespace: list[str]) -> list[LintMessage]:
 	"""
 	Process main CSS checks.
 
@@ -1362,7 +1378,7 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 	OUTPUTS
 	A list of `LintMessage` objects.
 	"""
-	messages = []
+	messages: list[LintMessage] = []
 
 	source_file = SourceFile(local_css_path, self.local_css)
 
@@ -1380,7 +1396,7 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 		messages.append(LintMessage("c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared. Hint: Add [css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/] to the top of this CSS file.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
 	if abbr_with_whitespace:
-		matches = []
+		matches: list[tuple[str, int]] = []
 		for selector in abbr_with_whitespace:
 			matches += source_file.find_selector(selector)
 
@@ -1417,7 +1433,7 @@ def _lint_css_checks(self, local_css_path: Path, abbr_with_whitespace: list) -> 
 
 	return messages
 
-def _update_missing_styles(filename: Path, dom: se.easy_xml.EasyXmlTree, local_css: dict) -> list:
+def _update_missing_styles(filename: Path, dom: EasyXmlTree, local_css: dict[str, bool]) -> list[EasyXmlElement]:
 	"""
 	Identify any missing CSS styles in the file being checked.
 
@@ -1430,7 +1446,7 @@ def _update_missing_styles(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 	List of styles used in this file but missing from local CSS.
 	"""
 
-	missing_styles: list[se.easy_xml.EasyXmlElement] = []
+	missing_styles: list[EasyXmlElement] = []
 
 	if not local_css["has_elision_style"]:
 		missing_styles += dom.xpath("/html/body//span[contains(@class, 'elision')]")
@@ -1468,7 +1484,7 @@ def _update_missing_styles(filename: Path, dom: se.easy_xml.EasyXmlTree, local_c
 
 	return missing_styles
 
-def _lint_image_checks(self, filename: Path) -> list:
+def _lint_image_checks(self: 'SeEpub', filename: Path) -> list[LintMessage]:
 	"""
 	Process image checks.
 
@@ -1479,7 +1495,7 @@ def _lint_image_checks(self, filename: Path) -> list:
 	OUTPUTS
 	A list of `LintMessage` objects.
 	"""
-	messages = []
+	messages: list[LintMessage] = []
 
 	if filename.suffix == ".jpeg":
 		messages.append(LintMessage("f-011", "JPEG files must end in [path].jpg[/].", se.MESSAGE_TYPE_ERROR, filename))
@@ -1513,7 +1529,7 @@ def _lint_image_checks(self, filename: Path) -> list:
 
 	return messages
 
-def _lint_svg_checks(self, source_file: SourceFile, svg_dom: se.easy_xml.EasyXmlTree, root: str) -> list:
+def _lint_svg_checks(self: 'SeEpub', source_file: SourceFile, svg_dom: EasyXmlTree, root: str) -> list[LintMessage]:
 	"""
 	Perform several checks on SVG files.
 
@@ -1528,7 +1544,7 @@ def _lint_svg_checks(self, source_file: SourceFile, svg_dom: se.easy_xml.EasyXml
 	"""
 
 	filename = source_file.filename
-	messages = []
+	messages: list[LintMessage] = []
 
 	if f"{os.sep}src{os.sep}images{os.sep}" not in root:
 		if self.cover_path and filename.name == self.cover_path.name:
@@ -1565,8 +1581,8 @@ def _lint_svg_checks(self, source_file: SourceFile, svg_dom: se.easy_xml.EasyXml
 	# Check for illegal `transform` or `id` attributes.
 	nodes = svg_dom.xpath("//*[@transform or @id]")
 	if nodes:
-		invalid_transform_attributes = []
-		invalid_id_attributes = []
+		invalid_transform_attributes: list[LintSubmessage] = []
+		invalid_id_attributes: list[LintSubmessage] = []
 		for node in nodes:
 			if node.get_attr("transform"):
 				invalid_transform_attributes.append(LintSubmessage(f"transform=\"{node.get_attr('transform')}\"", node.sourceline))
@@ -1597,7 +1613,7 @@ def _lint_svg_checks(self, source_file: SourceFile, svg_dom: se.easy_xml.EasyXml
 
 	return messages
 
-def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.EasyXmlTree, ebook_flags: dict, special_file: str) -> list:
+def _lint_special_file_checks(self: 'SeEpub', source_file: SourceFile, dom: EasyXmlTree, ebook_flags: dict[str, bool], special_file: str) -> list[LintMessage]:
 	"""
 	Process error checks in “special” `.xhtml` files.
 
@@ -1612,7 +1628,7 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	A list of `LintMessage` objects.
 	"""
 
-	messages = []
+	messages: list[LintMessage] = []
 	filename = source_file.filename
 	source_links = [str(s) for s in self.metadata_dom.xpath("/package/metadata/dc:source/text()")]
 	missing_source_links: list[str] = []
@@ -1647,7 +1663,8 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 		if self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text()='trl']") and "translated from" not in source_file.contents:
 			messages.append(LintMessage("m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
 
-		nodes = dom.xpath(f"/html/body//a[re:test(@href, '^https?://standardebooks.org/ebooks/') and re:test(., '^https?://standardebooks.org/ebooks/') and text()!='{self.identifier.replace('https://', '')}']")
+		identifier = (self.identifier or "").replace('https://', '')
+		nodes = dom.xpath(f"/html/body//a[re:test(@href, '^https?://standardebooks.org/ebooks/') and re:test(., '^https?://standardebooks.org/ebooks/') and text()!='{identifier}']")
 		if nodes:
 			messages.append(LintMessage("m-035", "Unexpected S.E. identifier in colophon.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
@@ -1680,7 +1697,7 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 			messages.append(LintMessage("m-037", "Expected transcription/page scan source link not found.", se.MESSAGE_TYPE_ERROR, filename, [LintSubmessage(f"Expected: {text}") for text in missing_source_links]))
 
 		# Is there a page scan link in the colophon, but missing in the metadata?
-		missing_page_scan_links: list[se.easy_xml.EasyXmlElement] = []
+		missing_page_scan_links: list[EasyXmlElement] = []
 		for node in dom.xpath("/html/body//a[re:test(@href, '(gutenberg\\.org/ebooks/[0-9]+|hathitrust\\.org|/archive\\.org|books\\.google\\.com|www\\.google\\.com/books/)')]"):
 			if not self.metadata_dom.xpath(f"/package/metadata/dc:source[contains(text(), {se.easy_xml.escape_xpath(node.get_attr('href'))})]"):
 				missing_page_scan_links.append(node)
@@ -1832,7 +1849,7 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 
 	# Check LoI descriptions to see if they match associated `<figcaption>s`.
 	elif special_file == "loi":
-		mismatched_loi_nodes = []
+		mismatched_loi_nodes: list[EasyXmlElement] = []
 
 		for node in dom.xpath("/html/body/nav[contains(@epub:type, 'loi')]//li//a"):
 			figure_ref = node.get_attr("href").split("#")[1]
@@ -1880,7 +1897,7 @@ def _lint_special_file_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 
 	return messages
 
-def _lint_xhtml_css_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTree) -> list:
+def _lint_xhtml_css_checks(source_file: SourceFile, dom: EasyXmlTree) -> list[LintMessage]:
 	"""
 	Process CSS checks on an `.xhtml` file.
 
@@ -1893,7 +1910,7 @@ def _lint_xhtml_css_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTree
 	A list of `LintMessage` objects.
 	"""
 
-	messages = []
+	messages: list[LintMessage] = []
 	filename = source_file.filename
 
 	# Do we have any elements that have specified border color?
@@ -1972,7 +1989,7 @@ def _lint_xhtml_css_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTree
 
 	return messages
 
-def _lint_xhtml_metadata_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTree) -> list:
+def _lint_xhtml_metadata_checks(self: 'SeEpub', filename: Path, dom: EasyXmlTree) -> list[LintMessage]:
 	"""
 	Process metadata checks on an `.xhtml` file.
 
@@ -1985,7 +2002,7 @@ def _lint_xhtml_metadata_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTr
 	A list of `LintMessage` objects.
 	"""
 
-	messages = []
+	messages: list[LintMessage] = []
 
 	# Check for missing MARC relators.
 	# Don't check the landmarks as that may introduce duplicate errors.
@@ -2016,7 +2033,7 @@ def _lint_xhtml_metadata_checks(self, filename: Path, dom: se.easy_xml.EasyXmlTr
 
 	return messages
 
-def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.EasyXmlTree, ebook_flags: dict, language: str, section_tree: list[EbookSection]) -> list:
+def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: EasyXmlTree, ebook_flags: dict[str, bool], language: str, section_tree: list[EbookSection]) -> list[LintMessage]:
 	"""
 	Process syntax checks on an `.xhtml` file.
 
@@ -2030,8 +2047,9 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	A list of LintMessage objects
 	"""
 
-	messages = []
+	messages: list[LintMessage] = []
 	filename = source_file.filename
+	nodes: list[EasyXmlElement]
 
 	# This block is useful for pretty-printing section_tree should we need to debug it in the future.
 	# def dump(item, char):
@@ -2057,7 +2075,7 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	# This xpath selects the `<p>` elements, whose parents are poem/verse, and whose first child is not a `<span>`.
 	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(poem|verse|song|hymn|lyrics)')]/p[not(./*[name()='span' and position()=1])]")
 	if nodes:
-		submessages = []
+		submessages: list[LintSubmessage] = []
 		for node in nodes:
 			# Get the first line of the poem, if it's a text node, so that we can include it in the error messages.
 			# If it's not a text node then just ignore it and add the error anyway.
@@ -2147,7 +2165,7 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	if len(dom.xpath("/html/body/*[name()='section' or name()='article']/*[re:test(name(), '^h[1-6]$') or name()='hgroup'] | /html/body/*[name()='section' or name()='article']/header/*[re:test(name(), '^h[1-6]$') or name()='hgroup']"))==1:
 		title = se.formatting.generate_title(dom)
 
-		unexpected_titles = []
+		unexpected_titles: list[LintSubmessage] = []
 		for node in dom.xpath(f"/html/head/title[text()!={se.easy_xml.escape_xpath(title.replace('&amp;', '&'))}]"):
 			unexpected_titles.append(LintSubmessage(f"Found: {node.text}\nExpected: {title}", node.sourceline))
 
@@ -2156,7 +2174,7 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 
 	# Check to see if `<h#>` elements are correctly titlecased.
 	# Ignore `<h#>` elements with an `xml:lang` attribute, as other languages have different titlecasing rules.
-	incorrectly_titlecased_titles = []
+	incorrectly_titlecased_titles: list[LintSubmessage] = []
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') or (name() = 'p' and parent::hgroup)][not(contains(@epub:type, 'z3998:roman')) and not(@xml:lang)]")
 	for node in nodes:
 		node_copy = deepcopy(node)
@@ -2229,8 +2247,8 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	# Check for `<h#>` elements that are higher or lower than their expected level based on how deep they are in `<section>`s or `<article>`s. Exclude `<nav>` in the ToC.
 	# Get all `<h#>` elements not preceded by other `<h#>` elements (this includes the 1st item of an `<hgroup>` but not the next items).
 	# Exclude the ToC and landmarks.
-	invalid_headers = []
-	invalid_parent_ids = []
+	invalid_headers: list[EasyXmlElement] = []
+	invalid_parent_ids: list[EasyXmlElement] = []
 	for heading in dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and not(./preceding-sibling::*[re:test(name(), '^h[1-6]$')]) and not(./ancestor::*[re:test(@epub:type, '\\b(toc|landmarks)\\b')])]"):
 		# Get the IDs of the direct parent section.
 		parent_section = heading.xpath("./ancestor::*[@id and re:test(name(), '^(section|article|nav)$')][1]")
@@ -2252,12 +2270,12 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 		messages.append(LintMessage("s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. Hint: Headings not in the title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(invalid_headers)))
 
 	# Run some checks on `epub:type` values.
-	incorrect_attrs = []
-	unnecessary_z3998_attrs = []
-	duplicate_attrs = []
+	incorrect_attrs: list[LintSubmessage] = []
+	unnecessary_z3998_attrs: list[LintSubmessage] = []
+	duplicate_attrs: list[EasyXmlElement] = []
 
 	for node in dom.xpath("//*[@epub:type]"):
-		attrs = set()
+		attrs: set[str] = set()
 
 		for val in regex.split(r"\s+", node.get_attr("epub:type")):
 			if val in attrs:
@@ -2345,14 +2363,14 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 	# Check for `<abbr>` elements that have two or more letters/periods, that don't have a semantic `epub:type`.
 	# `SS.` is the French abbreviation for `Saints`.
 	nodes = dom.xpath("/html/body//abbr[not(@epub:type)][text() != 'U.S.' and text() != 'SS.'][re:test(., '([A-Z]\\.?){2,}')]")
-	filtered_nodes = []
+	filtered_nodes: list[EasyXmlElement] = []
 	for node in nodes:
 		add_node = True
 
 		if node.text in INITIALISM_EXCEPTIONS:
 			add_node = False
 		elif node.get_attr("class"):
-			for attr_value in node.get_attr("class").split():
+			for attr_value in (node.get_attr("class") or "").split():
 				if attr_value in IGNORED_CLASSES:
 					add_node = False
 					break
@@ -2631,7 +2649,7 @@ def _lint_xhtml_syntax_checks(self, source_file: SourceFile, dom: se.easy_xml.Ea
 
 	return messages
 
-def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTree, special_file: str | None, ebook_flags: dict, missing_files: list, self) -> tuple:
+def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: EasyXmlTree, special_file: str | None, ebook_flags: dict[str, bool], missing_files: list[str]) -> tuple[list[LintMessage], list[str]]:
 	"""
 	Process typography checks on an `.xhtml` file.
 
@@ -2647,7 +2665,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 	tuple
 	"""
 
-	messages = []
+	messages: list[LintMessage] = []
 	filename = source_file.filename
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
@@ -2830,10 +2848,10 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 
 	# Check `@alt` attributes on images, except for the logo.
 	nodes = dom.xpath("/html/body//img[not(re:test(@src, '/(logo|titlepage)\\.(svg|png)$'))]")
-	img_no_alt = []
-	img_alt_not_typogrified = []
-	img_alt_lacking_punctuation = []
-	svg_mismatched_alts = []
+	img_no_alt: list[EasyXmlElement] = []
+	img_alt_not_typogrified: list[EasyXmlElement] = []
+	img_alt_lacking_punctuation: list[EasyXmlElement] = []
+	svg_mismatched_alts: list[EasyXmlElement] = []
 	for node in nodes:
 		img_src = node.get_attr("src")
 		# Avoid crashing if the `@src` attribute is missing.
@@ -3089,7 +3107,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 
 	# Check that all names are correctly titlecased. Ignore titles with `xml:lang` since non-English languages have different titlecasing rules, and ignore titles that have children elements, because `se.titlecase()` can't handle XML-like titles right now.
 	# Ignore titles longer than 150 characters, as long titles are likely old-timey super-long titles that should be mostly sentence-cased.
-	incorrectly_cased_titles = []
+	incorrectly_cased_titles: list[LintSubmessage] = []
 	for node in dom.xpath("/html/body//*[contains(@epub:type, 'se:name') and not(contains(@epub:type, 'se:name.legal-case')) and not(@xml:lang) and not(./*) and string-length(.) <= 150]"):
 		# Replace any space that is not a hair space or nbsp with a regular space.
 		# Ignore this if we're in the colophon and we matched with `PAINTING`, because we'll also output m-036 to alert us of this missing variable.
@@ -3131,7 +3149,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 		messages.append(LintMessage("t-070", "[xhtml]<cite>[/] in epigraph ending in a period.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# If we have Greek text, try to normalize it.
-	greek_transcription_errors = []
+	greek_transcription_errors: list[LintSubmessage] = []
 	for node in dom.xpath("/html/body//*[@xml:lang='grc' or @xml:lang='el']"):
 		node_text = node.inner_text()
 		expected_text = se.typography.normalize_greek(node_text)
@@ -3149,7 +3167,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 
 	# Check if we have a word accented with an acute accent instead of a grave accent in verse scansion.
 	nodes = dom.xpath("/html/body//*[not(@xml:lang) and re:test(@epub:type, 'z3998:(poem|verse|hymn|song)')]//span[not(ancestor-or-self::*[not(name() = 'html') and @xml:lang]) and not(./span)]//text()[re:test(., '[A-Za-z][áéíóú][A-za-z]') and not(ancestor::i[@xml:lang])]")
-	filtered_nodes = []
+	filtered_nodes: list[EasyXmlElement] = []
 
 	if nodes:
 		# These words are English but have acute accents. Don't include the accent in this list because below we compare against the unaccented version.
@@ -3182,7 +3200,7 @@ def _lint_xhtml_typography_checks(source_file: SourceFile, dom: se.easy_xml.Easy
 
 	return (messages, missing_files)
 
-def _lint_xhtml_xhtml_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTree) -> list:
+def _lint_xhtml_xhtml_checks(source_file: SourceFile, dom: EasyXmlTree) -> list[LintMessage]:
 	"""
 	Process XHTML checks on an `.xhtml` file.
 
@@ -3195,7 +3213,7 @@ def _lint_xhtml_xhtml_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTr
 	A list of `LintMessage` objects.
 	"""
 
-	messages = []
+	messages: list[LintMessage] = []
 	filename = source_file.filename
 
 	# Check for uppercase letters in IDs or classes.
@@ -3261,7 +3279,7 @@ def _lint_xhtml_xhtml_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTr
 
 	return messages
 
-def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTree, special_file: str | None) -> list:
+def _lint_xhtml_typo_checks(source_file: SourceFile, dom: EasyXmlTree, special_file: str | None) -> list[LintMessage]:
 	"""
 	Process typo checks on an `.xhtml` file.
 
@@ -3275,7 +3293,7 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 	"""
 	filename = source_file.filename
 
-	messages = []
+	messages: list[LintMessage] = []
 	typos = []
 	typo_matches: list[tuple[str, int]] = []
 
@@ -3345,13 +3363,13 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 		(temp_xhtml, replacement_count) = regex.subn(r"“[^“”]+?$", " ", temp_xhtml)
 
 	# Match problem `‘` using regex, and if found, get the actual node text from the DOM to return.
-	typos = []
+	typo_messages: list[LintSubmessage] = []
 	for match in regex.findall(r"""<p id="lint-([0-9]+?)">.*‘[\p{Letter}\s]""", temp_xhtml):
 		for node in dom_copy.xpath(f"/html/body//p[@id='lint-{match}' and re:test(., '‘[A-Za-z\\s]')]"):
-			typos.append(LintSubmessage(node.inner_text(), node.sourceline))
+			typo_messages.append(LintSubmessage(node.inner_text(), node.sourceline))
 
-	if typos:
-		messages.append(LintMessage("y-007", "Possible typo: [text]‘[/] not within [text]“[/]. Hint: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?", se.MESSAGE_TYPE_WARNING, filename, typos))
+	if typo_messages:
+		messages.append(LintMessage("y-007", "Possible typo: [text]‘[/] not within [text]“[/]. Hint: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?", se.MESSAGE_TYPE_WARNING, filename, typo_messages))
 
 	# Check for single quotes when there should be double quotes in an interjection in dialog.
 	typos = dom.xpath("//p[re:test(., '“[^”]+?’⁠—[^”]+?—“')]")
@@ -3505,7 +3523,7 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: se.easy_xml.EasyXmlTre
 
 	return messages
 
-def _lint_image_metadata_checks(self, has_images: bool) -> list:
+def _lint_image_metadata_checks(self: 'SeEpub', has_images: bool) -> list[LintMessage]:
 	"""
 	Process metadata checks on an image file
 
@@ -3517,7 +3535,7 @@ def _lint_image_metadata_checks(self, has_images: bool) -> list:
 	A list of `LintMessage` objects.
 	"""
 
-	messages = []
+	messages: list[LintMessage] = []
 
 	# Check for some accessibility metadata regarding images.
 	visual_accessmode = self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessMode' and text() = 'visual']")
@@ -3541,7 +3559,7 @@ def _lint_image_metadata_checks(self, has_images: bool) -> list:
 
 	return messages
 
-def _lint_process_ignore_file(self, lint_ignore_dom: se.easy_xml.EasyXmlTree | None, allowed_messages: list[str] | None, messages: list[LintMessage]) -> list:
+def _lint_process_ignore_file(self: 'SeEpub', lint_ignore_dom: EasyXmlTree | None, allowed_messages: list[str] | None, messages: list[LintMessage]) -> list[LintMessage]:
 	"""
 	Given a DOM of a lint ignore file, remove any ignored `LintMessage`s from the list of passed `LintMessage`s.
 
@@ -3557,7 +3575,7 @@ def _lint_process_ignore_file(self, lint_ignore_dom: se.easy_xml.EasyXmlTree | N
 
 	# This is a dict with where keys are the path and values are a list of code dicts.
 	# Each code dict has a key "code" which is XML element containing the code, and a key "used" which is a bool indicating whether or not the code has actually been caught in the linting run.
-	ignored_codes: dict[str, list[dict]] = {}
+	ignored_codes: dict[str, list[IgnoreItem]] = {}
 	allowed_messages = allowed_messages or []
 	lint_ignore_path = self.path / "se-lint-ignore.xml"
 
@@ -3579,7 +3597,7 @@ def _lint_process_ignore_file(self, lint_ignore_dom: se.easy_xml.EasyXmlTree | N
 		if nodes:
 			messages.append(LintMessage("m-089", "Ignore rule ignores the same line more than once.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_tags(nodes)))
 
-		ignores_with_illegal_paths = []
+		ignores_with_illegal_paths: list[EasyXmlElement] = []
 
 		for element in lint_ignore_dom.xpath("/se-lint-ignore/file"):
 			path = element.get_attr("path")
@@ -3590,6 +3608,7 @@ def _lint_process_ignore_file(self, lint_ignore_dom: se.easy_xml.EasyXmlTree | N
 			if path not in ignored_codes:
 				ignored_codes[path] = []
 
+			ignore: EasyXmlElement
 			for ignore in element.xpath("./ignore"):
 				code = ignore.get_attr("code")
 
@@ -3598,9 +3617,9 @@ def _lint_process_ignore_file(self, lint_ignore_dom: se.easy_xml.EasyXmlTree | N
 					if lines:
 						for line in lines:
 							line_number = int(line.text)
-							ignored_codes[path].append({"ignore_element": ignore, "used": False, "line": line_number})
+							ignored_codes[path].append(IgnoreItem(ignore_element=ignore, used=False, line=line_number))
 					else:
-						ignored_codes[path].append({"ignore_element": ignore, "used": False, "line": None})
+						ignored_codes[path].append(IgnoreItem(ignore_element=ignore, used=False, line=None))
 
 		if ignores_with_illegal_paths:
 			messages.append(LintMessage("m-047", "Illegal path. Hint: Ignoring [path]*[/] is too general; target specific files.", se.MESSAGE_TYPE_WARNING, lint_ignore_path, LintSubmessage.from_node_tags(ignores_with_illegal_paths)))
@@ -3613,17 +3632,17 @@ def _lint_process_ignore_file(self, lint_ignore_dom: se.easy_xml.EasyXmlTree | N
 		for message in messages[:]:
 			for path, codes in ignored_codes.items():
 				for code in codes:
-					if fnmatch.fnmatch(str(message.filename.name) if message.filename else "", path) and message.code == code["ignore_element"].get_attr("code"):
-						if code["line"] and message.submessages:
+					if fnmatch.fnmatch(str(message.filename.name) if message.filename else "", path) and message.code == code.ignore_element.get_attr("code"):
+						if code.line and message.submessages:
 							# If we're ignoring a specific line, check submessages.
 							for submessage in message.submessages[:]:
-								if code["line"] == submessage.line_num:
+								if code.line == submessage.line_num:
 									try:
 										message.submessages.remove(submessage)
 										# If this operation removed message's last submessage, remove the message itself entirely.
 										if not message.submessages:
 											messages.remove(message)
-										code["used"] = True
+										code.used = True
 									except ValueError:
 										# This gets raised if the message has already been removed by a previous rule.
 										# For example, `chapter-*.xhtml` gets `t-001` removed, then subsequently `*.xhtml` gets `t-001` removed.
@@ -3632,26 +3651,26 @@ def _lint_process_ignore_file(self, lint_ignore_dom: se.easy_xml.EasyXmlTree | N
 							# We're ignoring the entire file.
 							try:
 								messages.remove(message)
-								code["used"] = True
+								code.used = True
 							except ValueError:
 								# This gets raised if the message has already been removed by a previous rule.
 								# For example, `chapter-*.xhtml` gets `t-001` removed, then subsequently `*.xhtml` gets `t-001` removed.
 								pass
 
 		# Check for unused ignore rules.
-		unused_codes: list[str] = []
+		unused_codes: list[EasyXmlElement] = []
 		for path, codes in ignored_codes.items():
 			for code in codes:
-				if not code["used"]:
+				if not code.used:
 					error_message = path
 
-					if code["line"]:
-						error_message += f" line {code['line']}"
+					if code.line:
+						error_message += f" line {code.line}"
 
-					error_message += f": {code['ignore_element'].get_attr('code')}"
+					error_message += f": {code.ignore_element.get_attr('code')}"
 
-					code["ignore_element"].set_text(error_message)
-					unused_codes.append(code["ignore_element"])
+					code.ignore_element.set_text(error_message)
+					unused_codes.append(code.ignore_element)
 
 		if unused_codes:
 			messages.append(LintMessage("m-048", "Unused ignore rule.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_text(unused_codes)))
@@ -3659,7 +3678,7 @@ def _lint_process_ignore_file(self, lint_ignore_dom: se.easy_xml.EasyXmlTree | N
 	return messages
 
 
-def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None) -> list:
+def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | None = None) -> list[LintMessage]:
 	"""
 	Check this ebook for some common SE style errors.
 
@@ -3677,18 +3696,18 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	typography_messages: list[LintMessage] = []
 	cover_svg_title = ""
 	titlepage_svg_title = ""
-	xhtml_css_classes: dict[str, list[tuple[Path, se.easy_xml.EasyXmlElement]]] = {}
+	xhtml_css_classes: dict[str, list[tuple[Path, EasyXmlElement]]] = {}
 	headings: list[tuple[str, str]] = []
 	unused_selectors: list[str] = []
-	unused_id_attrs: list[tuple[Path, list[se.easy_xml.EasyXmlElement]]] = []
-	abbr_elements_requiring_css: list[se.easy_xml.EasyXmlElement] = []
-	unused_glossary_entries: list[se.easy_xml.EasyXmlElement] = []
+	unused_id_attrs: list[tuple[Path, list[EasyXmlElement]]] = []
+	abbr_elements_requiring_css: list[EasyXmlElement] = []
+	unused_glossary_entries: list[EasyXmlElement] = []
 	short_story_count = 0
-	missing_styles: list[se.easy_xml.EasyXmlElement] = []
+	missing_styles: list[EasyXmlElement] = []
 	directories_not_url_safe: list[Path] = []
 	files_not_url_safe: list[Path] = []
 	files_not_matching_templates: list[Path] = []
-	id_nodes: dict[str, list[tuple[Path, se.easy_xml.EasyXmlElement]]] = {}
+	id_nodes: dict[str, list[tuple[Path, EasyXmlElement]]] = {}
 	does_ebook_look_like_collection = False
 	local_css = {
 		"has_poem_style": False,
@@ -3723,13 +3742,13 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 			try:
 				dom = etree.parse(lint_ignore_path)
 				relaxng.assertValid(dom)
-				lint_ignore_dom = se.easy_xml.EasyXmlTree(dom)
+				lint_ignore_dom = EasyXmlTree(dom)
 			except Exception as ex:
 				raise se.InvalidFileException(f"[path][link=file://{lint_ignore_path.resolve()}]se-lint-ignore.xml[/][/] is invalid: {ex}")
 
 	# Cache the browser default stylesheet for later use.
 	with importlib.resources.files("se.data").joinpath("browser.css").open("r", encoding="utf-8") as css:
-		self._file_cache["default"] = css.read() # pylint: disable=protected-access
+		self._file_cache["default"] = css.read() # type: ignore # pylint: disable=protected-access
 
 	# Check that the spine has all the expected files in the book.
 	missing_spine_files = files_not_in_spine(self)
@@ -3772,7 +3791,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	unused_selectors = local_css_selectors.copy()
 
 	# Iterate over rules to do some other checks.
-	abbr_with_whitespace = []
+	abbr_with_whitespace: list[str] = []
 	for selector, rules in local_css_rules.items():
 		if "z3998:poem" in selector:
 			local_css["has_poem_style"] = True
@@ -3914,7 +3933,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 		if ".git" in directories:
 			directories.remove(".git")
 
-		for directory in cast(list[str], natsorted(directories)):
+		for directory in natsorted(directories):
 			if directory == "META-INF":
 				continue
 
@@ -3922,7 +3941,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 			if directory != url_safe_filename:
 				directories_not_url_safe.append(Path(root) / directory)
 
-		for filename in cast(list[str], natsorted(filenames)):
+		for filename in natsorted(filenames):
 			file_path = se.abspath_relative_to(Path(filename), Path(root))
 
 			if file_path.stem != "LICENSE":
@@ -4149,7 +4168,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 				messages += _lint_xhtml_syntax_checks(self, source_file, dom, ebook_flags, language, section_tree)
 
-				(typography_messages, missing_files) = _lint_xhtml_typography_checks(source_file, dom, special_file, ebook_flags, missing_files, self)
+				(typography_messages, missing_files) = _lint_xhtml_typography_checks(self, source_file, dom, special_file, ebook_flags, missing_files)
 				messages += typography_messages
 
 				messages += _lint_xhtml_xhtml_checks(source_file, dom)
@@ -4221,7 +4240,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 		files_not_url_safe_strings: list[str] = []
 		try:
 			files_not_url_safe_strings = self.repo.git.files_not_url_safe_strings([str(f.relative_to(self.path)) for f in files_not_url_safe]).split("\n")
-			if files_not_url_safe_strings and files_not_url_safe[0] == "":
+			if files_not_url_safe_strings and str(files_not_url_safe[0]) == "":
 				files_not_url_safe_strings = []
 		except Exception:
 			# If we can't initialize Git, then just pass through the list of illegal files.
@@ -4259,7 +4278,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 
 	if id_nodes:
 		# Narrow down `id`s to a list of ones that appear more than once.
-		duplicate_ids: dict[str, list[tuple[Path, se.easy_xml.EasyXmlElement]]] = {}
+		duplicate_ids: dict[str, list[tuple[Path, EasyXmlElement]]] = {}
 
 		for _, nodes_tuple_list in id_nodes.items():
 			if len(nodes_tuple_list) > 1:
@@ -4279,7 +4298,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 	# Check our headings against the ToC and landmarks.
 	headings = list(set(headings))
 	toc_dom = self.get_dom(self.toc_path)
-	toc_headings = []
+	toc_headings: list[tuple[str, str]] = []
 	toc_entries = toc_dom.xpath("/html/body/nav[@epub:type='toc']//a")
 
 	# Match ToC headings against text headings.
@@ -4320,7 +4339,7 @@ def lint(self, skip_lint_ignore: bool, allowed_messages: list[str] | None = None
 		messages.append(LintMessage("f-002", "Missing expected file or directory.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_files))
 
 	if unused_selectors:
-		matches = []
+		matches: list[tuple[str, int]] = []
 		for selector in unused_selectors:
 			matches += css_source_file.find_selector(selector)
 

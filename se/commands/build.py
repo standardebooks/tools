@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 from rich import box
-from rich.console import Console
+from rich.console import Console, RenderableType
 from rich.table import Table
 from rich.text import Text
 
@@ -47,7 +47,7 @@ def build(plain_output: bool) -> int:
 		directory = Path(directory).resolve()
 		messages = []
 		exception = None
-		table_data = []
+		table_data: list[list[RenderableType]] = []
 		has_output = False
 
 		try:

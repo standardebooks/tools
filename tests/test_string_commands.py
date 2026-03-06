@@ -7,14 +7,17 @@ This includes:
 import os
 from pathlib import Path
 import pytest
-from helpers import must_run
+
+from helpers import must_run # pylint: disable=import-error
+
 import se
+
 
 test_directory = Path(__file__).parent / "string_commands"
 cmds = [os.path.basename(fname) for fname in os.scandir(test_directory) if fname.is_file()]
 @pytest.mark.parametrize("cmd", cmds)
 
-def test_stringcmds(cmd: str, capfd):
+def test_stringcmds(cmd: str, capfd: pytest.CaptureFixture[str]):
 	"""
 	Execute command and check output.
 	"""
@@ -27,7 +30,7 @@ def test_stringcmds(cmd: str, capfd):
 			out, _ = capfd.readouterr()
 			assert out.rstrip() == golden_str.strip()
 
-def test_version(capfd):
+def test_version(capfd: pytest.CaptureFixture[str]):
 	"""
 	Verify that the version command returns the version. This is a separate test within
 	the module because it uses an SE internal command to return the "golden" text.

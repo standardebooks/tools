@@ -11,12 +11,14 @@ import math
 import string
 import unicodedata
 from pathlib import Path
+from typing import cast
 
 import regex
 import roman
 import tinycss2
 from lxml import etree
 from natsort import natsorted
+from tinycss2.ast import AtRule, Comment, Declaration, DimensionToken, HashToken, LiteralToken, Node, IdentToken, NumberToken, FunctionBlock, ParenthesesBlock, PercentageToken, QualifiedRule, SquareBracketsBlock, StringToken, URLToken, WhitespaceToken, ParseError
 from titlecase import titlecase as pip_titlecase
 from unidecode import unidecode
 
@@ -26,7 +28,6 @@ from se.easy_xml import EasyXmlTree, EasyXmlElement
 
 
 # This list of phrasing elements is not intended to be exhaustive. The list is only used to resolve the uncommon situation where there is no plain text in a paragraph. The `<span>` and `<br>` elements are explicitly omitted because of how they are used in poetry formatting, which differs from the normal formatting.
-
 PHRASING_TAGS = [
 	"{http://www.w3.org/1999/xhtml}a",
 	"{http://www.w3.org/1999/xhtml}abbr",
@@ -446,7 +447,7 @@ def has_css_class(class_attribute: str, class_to_find: str) -> bool:
 
 	return regex.search(rf'(?<!\S){regex.escape(class_to_find)}(?!\S)', class_attribute) is not None
 
-def _replace_character_references(match_object) -> str:
+def _replace_character_references(match_object: regex.Match[str]) -> str:
 	"""
 	Replace most XML character references with literal characters.
 
@@ -476,7 +477,7 @@ def _replace_character_references(match_object) -> str:
 
 	return retval
 
-def _indent(tree, space="\t"):
+def _indent(tree: etree.Element, space:str="\t"):
 	"""
 	Indent an lxml tree using the given space characters.
 	"""
@@ -488,7 +489,7 @@ def _indent(tree, space="\t"):
 	else:
 		tree.text = "\n"
 
-def _indent_children(elem, level, one_space, indentations, has_child_tails=False):
+def _indent_children(elem: etree.Element, level: int, one_space: str, indentations: list[str], has_child_tails: bool=False):
 	"""
 	Recursive helper function implementing indent levels for lxml tree.
 	"""
@@ -572,28 +573,28 @@ def _indent_children(elem, level, one_space, indentations, has_child_tails=False
 			# Add special indentation for `<br>` element with non-empty tail.
 			if child.tag == "{http://www.w3.org/1999/xhtml}br":
 				child_indentation = indentations[level - 1]
-				child.tail = child_indentation + child.tail
+				child.tail = child_indentation + (child.tail or "")
 
 def _unwrap_text(elem: etree.Element, remove_trailing_space: bool):
 	"""
 	Remove line wraps from text content of element.
 	"""
-	elem.text = regex.sub(r"^\n[\n\t ]*", "", elem.text)
+	elem.text = regex.sub(r"^\n[\n\t ]*", "", elem.text or "")
 	if remove_trailing_space:
-		elem.text = regex.sub(r"\n[\n\t ]*$", "", elem.text)
-	elem.text = regex.sub(r" *\n[\n\t ]*", " ", elem.text)
+		elem.text = regex.sub(r"\n[\n\t ]*$", "", elem.text or "")
+	elem.text = regex.sub(r" *\n[\n\t ]*", " ", elem.text or "")
 
 def _unwrap_tail(elem: etree.Element, remove_trailing_space: bool):
 	"""
 	Remove line wraps from tail content of element.
 	"""
 	if elem.tag == "{http://www.w3.org/1999/xhtml}br":
-		elem.tail = regex.sub(r"^\n[\n\t ]*", "", elem.tail)
+		elem.tail = regex.sub(r"^\n[\n\t ]*", "", elem.tail or "")
 	else:
-		elem.tail = regex.sub(r"^\n[\n\t ]*", " ", elem.tail)
+		elem.tail = regex.sub(r"^\n[\n\t ]*", " ", elem.tail or "")
 	if remove_trailing_space:
-		elem.tail = regex.sub(r"\n[\n\t ]*$", "", elem.tail)
-	elem.tail = regex.sub(r" *\n[\n\t ]*", " ", elem.tail)
+		elem.tail = regex.sub(r"\n[\n\t ]*$", "", elem.tail or "")
+	elem.tail = regex.sub(r" *\n[\n\t ]*", " ", elem.tail or "")
 
 def format_xml_file(filename: Path) -> None:
 	"""
@@ -920,7 +921,7 @@ def format_svg(svg: str) -> str:
 
 	return _xml_tree_to_string(tree)
 
-def _format_css_component_list(content: list, in_selector=False, in_paren_block=False) -> str:
+def _format_css_component_list(content: list[Node], in_selector:bool=False, in_paren_block:bool=False) -> str:
 	"""
 	Helper function for CSS formatting that formats a series of CSS components, like the individual parts of a selector.
 
@@ -934,7 +935,7 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 	output = ""
 
 	for token in content:
-		if token.type == "ident":
+		if isinstance(token, IdentToken):
 			if output.endswith("| ") or output.endswith("|= ") or output.endswith("^= ") or output.endswith("~= ") or output.endswith("*= ") or output.endswith("|| "):
 				output = output.rstrip()
 
@@ -943,7 +944,7 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 			else:
 				output += token.lower_value
 
-		if token.type == "literal":
+		elif isinstance(token, LiteralToken):
 			if token.value == ":" and in_paren_block:
 				output += token.value + " "
 			elif token.value == ";":
@@ -970,41 +971,41 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 			else:
 				output += token.value
 
-		if token.type == "dimension":
+		elif isinstance(token, DimensionToken):
 			if token.representation == "0":
 				output += "0"
 			else:
 				# Remove leading `0` from dimensions.
 				output += token.representation.lstrip("0") + token.lower_unit
 
-		if token.type == "number":
+		elif isinstance(token, NumberToken):
 			output += token.representation
 
-		if token.type == "function":
+		elif isinstance(token, FunctionBlock):
 			output += token.name + "(" + _format_css_component_list(token.arguments, in_selector, True) + ")"
 
-		if token.type == "url":
+		elif isinstance(token, URLToken):
 			output += f"url(\"{token.value}\")"
 
-		if token.type == "percentage":
+		elif isinstance(token, PercentageToken):
 			if token.representation == "0":
 				output += "0"
 			else:
 				output += token.representation + "%"
 
-		if token.type == "whitespace":
+		elif isinstance(token, WhitespaceToken):
 			output += " "
 
-		if token.type == "hash":
+		elif isinstance(token, HashToken):
 			output += f"#{token.value}"
 
-		if token.type == "string":
+		elif isinstance(token, StringToken):
 			output += token.representation
 
-		if token.type == "() block":
+		elif isinstance(token, ParenthesesBlock):
 			output += f"({_format_css_component_list(token.content, in_selector, True)})"
 
-		if token.type == "[] block":
+		elif isinstance(token, SquareBracketsBlock):
 			output += f"[{_format_css_component_list(token.content, in_selector, True)}]"
 
 	# Collapse multiple spaces, and spaces at the start of lines.
@@ -1025,7 +1026,7 @@ def _format_css_component_list(content: list, in_selector=False, in_paren_block=
 
 	return output.strip()
 
-def _format_css_rules(content: list, indent_level: int) -> str:
+def _format_css_rules(content: list[Node], indent_level: int) -> str:
 	"""
 	Helper function for CSS formatting that formats a list of CSS selectors.
 
@@ -1038,17 +1039,17 @@ def _format_css_rules(content: list, indent_level: int) -> str:
 
 	output = ""
 
-	for token in tinycss2.parse_rule_list(content):
-		if token.type == "error":
-			raise se.InvalidCssException("Couldn’t parse CSS. Exception: {token.message}")
+	for token in tinycss2.parser.parse_rule_list(content):
+		if isinstance(token, ParseError):
+			raise se.InvalidCssException(f"Couldn’t parse CSS. Exception: {token.message}")
 
-		if token.type == "qualified-rule":
+		if isinstance(token, QualifiedRule):
 			output += ("\t" * indent_level) + _format_css_component_list(token.prelude, True).replace("\n", "\n" + ("\t" * indent_level)) + "{\n" + _format_css_declarations(token.content, indent_level + 1) + "\n" + ("\t" * indent_level) + "}\n\n"
 
-		if token.type == "at-rule":
-			output += ("\t" * indent_level) + "@" + token.lower_at_keyword + " " + _format_css_component_list(token.prelude, True).replace("\n", " ") + "{\n" + _format_css_rules(token.content, indent_level + 1) + "\n" + ("\t" * indent_level) + "}\n\n"
+		elif isinstance(token, AtRule):
+			output += ("\t" * indent_level) + "@" + token.lower_at_keyword + " " + _format_css_component_list(token.prelude, True).replace("\n", " ") + "{\n" + _format_css_rules(token.content or [], indent_level + 1) + "\n" + ("\t" * indent_level) + "}\n\n"
 
-		if token.type == "comment":
+		elif isinstance(token, Comment):
 			# House style: If the comment starts with `/* End`, then attach it to the previous block.
 			if token.value.strip().lower().startswith("end"):
 				output = output.rstrip() + "\n"
@@ -1060,12 +1061,12 @@ def _format_css_rules(content: list, indent_level: int) -> str:
 
 	return output.rstrip()
 
-def _format_css_declarations(content: list, indent_level: int) -> str:
+def _format_css_declarations(content: list[Node], indent_level: int) -> str:
 	"""
 	Helper function for CSS formatting that formats a list of CSS properties, like `margin: 1em;`.
 
 	INPUTS
-	content: A list of component values generated by the tinycss2 library
+	content: A list of component values generated by the `tinycss2` library.
 
 	OUTPUTS
 	A string of formatted CSS
@@ -1073,32 +1074,36 @@ def _format_css_declarations(content: list, indent_level: int) -> str:
 
 	output = ""
 
-	tokens = tinycss2.parse_declaration_list(content)
+	tokens = tinycss2.parser.parse_declaration_list(content)
 
 	# Hold on to your butts...
 	# When we alpha-sort declarations, we want to keep comments that are on the same line attached to that declaration after it's reordered.
 	# To do this, first create a list of sorted_declarations that is list of tuples.
 	# The first tuple value is the declaration itself, and the second is a comment on the same line, if it exists.
 	# While we do this, remove those same-line comments from our master list of tokens, so that we don't process them twice later when we iterate over the master list again.
-	sorted_declarations = []
+	sorted_declarations: list[tuple[Declaration, Comment|None]] = []
 	i = 0
 	while i < len(tokens):
-		if tokens[i].type == "declaration":
-			if i + 1 < len(tokens) and tokens[i + 1].type == "comment":
-				sorted_declarations.append((tokens[i], tokens[i + 1]))
+		token = tokens[i]
+		if isinstance(token, Declaration):
+			next_token = tokens[i + 1] if i + 1 < len(tokens) else None
+			next_next_token = tokens[i + 2] if i + 2 < len(tokens) else None
+
+			if i + 1 < len(tokens) and isinstance(next_token, Comment):
+				sorted_declarations.append((token, next_token))
 				tokens.pop(i + 1) # Remove from the master list.
 
 			# Use regex to test if the token is on the same line, i.e. if the intervening white space doesn't include a newline.
-			elif i + 2 < len(tokens) and tokens[i + 1].type == "whitespace" and regex.match(r"[^\n]+", tokens[i + 1].value) and tokens[i + 2].type == "comment":
-				sorted_declarations.append((tokens[i], tokens[i + 2]))
+			elif i + 2 < len(tokens) and isinstance(next_token, WhitespaceToken) and regex.match(r"[^\n]+", next_token.value) and isinstance(next_next_token, Comment):
+				sorted_declarations.append((token, next_next_token))
 				tokens.pop(i + 1) # Remove from the master list
 				tokens.pop(i + 1)
 
 			else:
 				# Special case in alpha-sorting: Sort `-epub-*` properties as if `-epub-` didn't exist.
 				# Note that we modify `token.name`, which *doesn't* change `token.lower_name`; and we use `token.name` for sorting, but `token.lower_name` for output, so we don't have to undo this before outputting.
-				tokens[i].name = regex.sub(r"^-([a-z]+?)-(.+)", r"\2-\1-\2", tokens[i].name)
-				sorted_declarations.append((tokens[i], None))
+				token.name = regex.sub(r"^-([a-z]+?)-(.+)", r"\2-\1-\2", token.name)
+				sorted_declarations.append((token, None))
 
 		i = i + 1
 
@@ -1108,15 +1113,15 @@ def _format_css_declarations(content: list, indent_level: int) -> str:
 	# Now, sort the master token list using an intermediary list, `output_tokens`.
 	# This will iterate over all tokens, including non-declaration tokens. If we encounter a declaration, pull the nth declaration out of our sorted list instead.
 
-	output_tokens = []
+	output_tokens: list[tuple[Node, Comment|None]] = []
 	current_declaration_number = 0
 	for token in tokens:
-		if token.type == "error":
-			raise se.InvalidCssException("Couldn’t parse CSS. Exception: {token.message}")
+		if isinstance(token, ParseError):
+			raise se.InvalidCssException(f"Couldn’t parse CSS. Exception: {token.message}")
 
 		# Append the declaration to the output based on its sorted index.
 		# This will sort declarations but keep things like comments before and after declarations in the expected order.
-		if token.type == "declaration":
+		if isinstance(token, Declaration):
 			output_tokens.append(sorted_declarations[current_declaration_number])
 			current_declaration_number = current_declaration_number + 1
 		else:
@@ -1126,15 +1131,13 @@ def _format_css_declarations(content: list, indent_level: int) -> str:
 	tokens = output_tokens
 
 	for token in tokens:
-		comment = None
-		if isinstance(token, tuple):
-			comment = token[1]
-			token = token[0]
+		comment = token[1]
+		token = token[0]
 
-		if token.type == "error":
-			raise se.InvalidCssException("Couldn’t parse CSS. Exception: {token.message}")
+		if isinstance(token, ParseError):
+			raise se.InvalidCssException(f"Couldn’t parse CSS. Exception: {token.message}")
 
-		if token.type == "declaration":
+		if isinstance(token, Declaration):
 			output += ("\t" * indent_level) + token.lower_name + ": "
 
 			output += _format_css_component_list(token.value)
@@ -1149,7 +1152,7 @@ def _format_css_declarations(content: list, indent_level: int) -> str:
 
 			output += "\n"
 
-		if token.type == "comment":
+		if isinstance(token, Comment):
 			output = output.rstrip()
 			if output == "":
 				output += ("\t" * indent_level) + "/* " + token.value.strip() + " */\n"
@@ -1172,34 +1175,34 @@ def format_css(css: str) -> str:
 	css_header = ""
 	css_body = ""
 
-	for token in tinycss2.parse_stylesheet(css, skip_comments=False):
-		if token.type == "error":
+	for token in tinycss2.parser.parse_stylesheet(css, skip_comments=False):
+		if isinstance(token, ParseError):
 			raise se.InvalidCssException(token.message)
 
-		if token.type == "at-rule":
+		if isinstance(token, AtRule):
 			# These three (should) occur at the head of the CSS.
 			if token.lower_at_keyword == "charset":
-				css_header += "@" + token.lower_at_keyword + " \"" + token.prelude[1].value.lower() + "\";\n"
+				css_header += "@" + token.lower_at_keyword + " \"" + cast(StringToken, token.prelude[1]).value.lower() + "\";\n"
 
 			if token.lower_at_keyword == "namespace":
-				css_header += "@" + token.lower_at_keyword + " " + token.prelude[1].value + " \"" + token.prelude[3].value + "\";\n"
+				css_header += "@" + token.lower_at_keyword + " " + cast(IdentToken, token.prelude[1]).value + " \"" + cast(StringToken, token.prelude[3]).value + "\";\n"
 
 			if token.lower_at_keyword == "font-face":
-				css_header += "\n@" + token.lower_at_keyword + "{\n" + _format_css_declarations(token.content, 1) + "\n}\n"
+				css_header += "\n@" + token.lower_at_keyword + "{\n" + _format_css_declarations(token.content or [], 1) + "\n}\n"
 
 			# Unlike the previous items, these occur in the CSS body.
 			if token.lower_at_keyword == "supports":
-				css_body += "@" + token.lower_at_keyword + _format_css_component_list(token.prelude, False, True) + "{\n" + _format_css_rules(token.content, 1) + "\n}\n\n"
+				css_body += "@" + token.lower_at_keyword + _format_css_component_list(token.prelude, False, True) + "{\n" + _format_css_rules(token.content or [], 1) + "\n}\n\n"
 
 			if token.lower_at_keyword == "media":
-				css_body += "@" + token.lower_at_keyword + " " + _format_css_component_list(token.prelude).replace("\n", " ", True) + "{\n" + _format_css_rules(token.content, 1) + "\n}\n\n"
+				css_body += "@" + token.lower_at_keyword + " " + _format_css_component_list(token.prelude).replace("\n", " ", True) + "{\n" + _format_css_rules(token.content or [], 1) + "\n}\n\n"
 
 		# Selectors, including their rules.
 		# tinycss2 differentiates between selectors and their rules that are at the top level, and selectors and rules in nested blocks (like `@supports`).
-		if token.type == "qualified-rule":
+		elif isinstance(token, QualifiedRule):
 			css_body += _format_css_component_list(token.prelude, True) + "{\n" + _format_css_declarations(token.content, 1) + "\n}\n\n"
 
-		if token.type == "comment":
+		elif isinstance(token, Comment):
 			# House style: If the comment starts with `/* End`, then attach it to the previous block.
 			if token.value.strip().lower().startswith("end"):
 				css_body = css_body.rstrip() + "\n"
@@ -1473,7 +1476,7 @@ def simplify_css(css: str) -> str:
 	# Currently this replacement isn't perfect, because occasionally lxml generates an xpath expression from the CSS selector that lxml itself can't evaluate, even though the `xpath` binary can!
 	# We don't *replace* the selector, we *add* it, because lxml has problems selecting the first child sometimes.
 	lines = css.splitlines()
-	simplified_lines = []
+	simplified_lines: list[str] = []
 	for line in lines:
 		simplified_line = line
 		for pseudo_class_to_simplify in se.PSEUDO_CLASSES_TO_SIMPLIFY:
@@ -1687,7 +1690,7 @@ def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> list[Ea
 
 	"""
 
-	result = []
+	result: list[EasyXmlElement] = []
 	sectioning_elements = ["section", "article", "figure", "nav", "hgroup"]
 
 	if not allow_header:
@@ -1697,8 +1700,9 @@ def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> list[Ea
 		is_endnote = False
 		is_glossdef = False
 		if child.get_attr("epub:type"):
-			is_endnote = regex.search(r"\bendnote\b", child.get_attr("epub:type"))
-			is_glossdef = "glossdef" in child.get_attr("epub:type")
+			epub_type = child.get_attr("epub:type") or ""
+			is_endnote = regex.search(r"\bendnote\b", epub_type)
+			is_glossdef = "glossdef" in epub_type
 
 		if child.tag not in sectioning_elements and not is_endnote and not is_glossdef:
 			result.append(child)
@@ -1721,7 +1725,7 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tup
 	"""
 
 	dom_copy = deepcopy(dom)
-	replacements = []
+	replacements: list[tuple[EasyXmlElement, str]] = []
 
 	# Remove `noteref`s as they have their own ID rules.
 	for node in dom_copy.xpath("/html/body//*[contains(@epub:type, 'noteref')]"):
@@ -1773,7 +1777,7 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tup
 				counts[node.tag] = 1
 
 			# If the line is a line of poetry, increment the line count.
-			if is_poem and node.tag == "span" and node.parent.tag == "p":
+			if is_poem and node.tag == "span" and node.parent and node.parent.tag == "p":
 				line_number = line_number + 1
 
 			id_attr = node.get_attr("id")
@@ -1791,7 +1795,7 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tup
 				else:
 					expected_id = f"{section_id}-{node.tag}-{counts[node.tag]}"
 
-					if is_poem and node.tag == "span" and node.parent.tag == "p":
+					if is_poem and node.tag == "span" and node.parent and node.parent.tag == "p":
 						expected_id = f"{container_poem_section_id}-line-{line_number}"
 
 				if id_attr != expected_id:

@@ -14,11 +14,11 @@ are identical.
 import os
 from pathlib import Path
 import pytest
-from helpers import assemble_testbook, must_run, build_is_golden
+from helpers import assemble_testbook, must_run, build_is_golden # pylint: disable=import-error
 
 test_command = "build"	# pylint: disable=invalid-name
 module_directory = Path(__file__).parent / test_command
-module_tests = []
+module_tests: list[list[str]] = []
 
 # the module directory should not be created until at least one test exists
 if module_directory.is_dir():

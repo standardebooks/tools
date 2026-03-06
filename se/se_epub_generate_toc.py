@@ -2,17 +2,24 @@
 """
 This module contains the make-toc function which tries to create a valid table of contents file for SE projects.
 
-Strictly speaking, the generate_toc() function should be a class member of SeEpub. But the function is very big and it makes editing easier to put in a separate file.
+Strictly speaking, the `SeEpub.generate_toc()` function should be a class member of `SeEpub`. But the function is very big and it makes editing easier to put in a separate file.
 """
 
 from enum import Enum
+from pathlib import Path
+from typing import TYPE_CHECKING
+
 import regex
 import roman
 from lxml import etree
+
 import se
 import se.formatting
 import se.easy_xml
 from se.easy_xml import EasyXmlTree, EasyXmlElement
+
+if TYPE_CHECKING:
+	from se.se_epub import SeEpub # Import under type checking guard to prevent circular import error.
 
 
 class BookDivision(Enum):
@@ -157,7 +164,7 @@ def get_place(node: EasyXmlElement) -> Position:
 
 	return retval
 
-def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list) -> None:
+def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list[TocItem]) -> None:
 	"""
 	Adds an item to landmark list with appropriate details.
 
@@ -222,7 +229,7 @@ def add_landmark(dom: EasyXmlTree, textf: str, landmarks: list) -> None:
 
 		landmarks.append(landmark)
 
-def process_landmarks(landmarks_list: list, work_title: str) -> str:
+def process_landmarks(landmarks_list: list[TocItem], work_title: str) -> str:
 	"""
 	Runs through all found landmark items and writes them to the toc file.
 
@@ -253,7 +260,7 @@ def process_landmarks(landmarks_list: list, work_title: str) -> str:
 		out_string += item.landmark_link()
 	return out_string
 
-def process_items(item_list: list) -> str:
+def process_items(item_list: list[TocItem]) -> str:
 	"""
 	Runs through all found toc items and returns them as a string.
 
@@ -297,7 +304,7 @@ def process_items(item_list: list) -> str:
 				torepeat -= 1
 	return out_string
 
-def output_toc(item_list: list, landmark_list, toc_path: str, work_title: str, language: str) -> str:
+def output_toc(item_list: list[TocItem], landmark_list: list[TocItem], toc_path: Path, work_title: str, language: str) -> str:
 	"""
 	Outputs the contructed ToC based on the lists of items and landmarks found, either to stdout or overwriting the existing ToC file.
 
@@ -395,7 +402,7 @@ def extract_strings(node: EasyXmlElement) -> str:
 	out_string = out_string.strip().replace("\n", " ") # Replace newlines with a space because we may have two elements in a row in a title, like `<abbr>S.S.</abbr> <i>Lusitania</i>`. When in `<h2>`, these elemetns will be on their own line, but in `<a>` they will be on the same line and require a space between them.
 	return regex.sub(r"[\n\t]", "", out_string)
 
-def process_headings(dom: EasyXmlTree, textf: str, toc_list: list, single_file: bool, single_file_without_headers: bool) -> None:
+def process_headings(dom: EasyXmlTree, textf: str, toc_list: list[TocItem], single_file: bool, single_file_without_headers: bool) -> None:
 	"""
 	Find headings in current file and extract title data into items added to `toc_list`.
 
@@ -483,7 +490,7 @@ def get_toc_id_for_special_item(node: EasyXmlElement) -> str:
 			return toc_id
 	return ""
 
-def get_level(node: EasyXmlElement, toc_list: list) -> int:
+def get_level(node: EasyXmlElement, toc_list: list[TocItem]) -> int:
 	"""
 	Get level of a node.
 	"""
@@ -715,7 +722,7 @@ def strip_notes(text: str) -> str:
 
 	return regex.sub(r"""<a[^>]*?epub:type="noteref"[^>]*?>.*?<\/a>""", "", text)
 
-def process_all_content(self, file_list: list) -> tuple[list, list]:
+def process_all_content(self: 'SeEpub', file_list: list[Path]) -> tuple[list[TocItem], list[TocItem]]:
 	"""
 	Analyze the whole content of the project, build and return lists of `toc_items` and landmarks.
 
@@ -780,7 +787,7 @@ def process_all_content(self, file_list: list) -> tuple[list, list]:
 
 	return landmarks, toc_list
 
-def generate_toc(self) -> str:
+def generate_toc(self: 'SeEpub') -> str:
 	"""
 	Entry point for `SeEpub.generate_toc()`.
 	"""

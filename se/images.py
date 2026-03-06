@@ -9,17 +9,20 @@ import tempfile
 import struct
 import urllib.parse
 import importlib.resources
-
+from typing import TYPE_CHECKING, Callable
 from html import unescape
-from typing import Callable
+
 import regex
 from PIL import Image, ImageFont, ImageMath, PngImagePlugin, UnidentifiedImageError
 from PIL.Image import Image as Image_type # Separate import to satisfy type checking.
 from lxml import etree
-from oxipng import optimize
+from oxipng import optimize # type: ignore Error in built-in type stub. # pylint: disable=no-name-in-module
 
 import se
 import se.formatting
+
+if TYPE_CHECKING:
+	from selenium import webdriver
 
 COVER_TITLE_BOX_Y = 1620 # In px; note that in SVG, Y starts from the *top* of the image.
 COVER_TITLE_BOX_HEIGHT = 430
@@ -48,6 +51,48 @@ TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN = 80 # Space between last contributor li
 LEAGUE_SPARTAN_CSS_LETTER_SPACING = 5 # The SVG file specify `letter-spacing` in their CSS, so this accounts for that, in px.
 LEAGUE_SPARTAN_DIACRITIC_RATIO = 6 # When a line contains a letter with a diacritic like `ö`, add an amount of y offset of that line based on `LINE_HEIGHT / LEAGUE_SPARTAN_DIACRITIC_RATIO`, in px.
 LEAGUE_SPARTAN_HEIGHT_RATIO = 0.8549999849 # Font size of 93.56725311px * 0.8549999849 = 80px of real text height
+
+class FontMeta:
+	"""
+	Data class for holding font metadata when converting text to paths in SVG.
+	"""
+
+	id: str
+	horiz_adv_x: float
+	font_face: dict[str, str]
+	missing_glyph: dict[str, str]
+
+	def __init__(self) -> None:
+		self.id = ""
+		self.horiz_adv_x = 0
+		self.font_face = {}
+		self.missing_glyph = {}
+
+class Font:
+	"""
+	Data class for holding font data when converting text to paths in SVG.
+	"""
+
+	glyphs: dict[str, dict[str, str]]
+	hkern: dict[str, float]
+	meta: FontMeta
+
+	def __init__(self) -> None:
+		self.meta = FontMeta()
+		self.glyphs = {}
+		self.hkern = {}
+
+class TextProperties:
+	"""
+	Data class for holding various font properties when converting text to paths in SVG.
+	"""
+
+	text_properties: dict[str, str]
+	font: Font
+
+	def __init__(self) -> None:
+		self.font = Font()
+		self.text_properties = {}
 
 def optimize_png(path: Path) -> None:
 	"""
@@ -82,7 +127,7 @@ def _get_league_spartan_line_width(text: str, font: ImageFont.FreeTypeFont) -> f
 
 	return font.getlength(text) + kerning_width
 
-def calculate_image_lines(string: str, target_height: int, canvas_width: int) -> list:
+def calculate_image_lines(string: str, target_height: int, canvas_width: int) -> list[str]:
 	"""
 	Helper function.
 
@@ -104,7 +149,7 @@ def calculate_image_lines(string: str, target_height: int, canvas_width: int) ->
 	# Our `target_height` is a *real pixel* height, so divide by this magic ratio to get the desired *font* height.
 	font = ImageFont.truetype(str(font_path), target_height / LEAGUE_SPARTAN_HEIGHT_RATIO)
 
-	lines = []
+	lines: list[str] = []
 	current_line = ""
 	current_line_width = 0.0
 	for word in reversed(string.strip().split(" ")):
@@ -232,7 +277,7 @@ def _color_to_alpha(image: Image_type, color: tuple[int, int, int, int]) -> Imag
 	color_list = list(map(float, color))
 	img_bands = [band.convert("F") for band in image.split()]
 
-	# Find the maximum difference rate between source and color. I had to use two difference functions because ImageMath.eval only evaluates the expression once.
+	# Find the maximum difference rate between source and color. I had to use two difference functions because `ImageMath.eval()` only evaluates the expression once.
 	alpha = ImageMath.unsafe_eval(
 		"""float(
 				max(
@@ -252,8 +297,8 @@ def _color_to_alpha(image: Image_type, color: tuple[int, int, int, int]) -> Imag
 					)
 				)
 		)""",
-		difference1=lambda source, color: (source - color) / (255.0 - color),
-		difference2=lambda source, color: (color - source) / color,
+		difference1=lambda source, color: (source - color) / (255.0 - color), # type: ignore
+		difference2=lambda source, color: (color - source) / color, # type: ignore
 		red_band=img_bands[0],
 		green_band=img_bands[1],
 		blue_band=img_bands[2],
@@ -327,7 +372,7 @@ def has_transparency(image: Image_type) -> bool:
 	return False
 
 # Note: We can't type hint driver, because we conditionally import Selenium for performance reasons.
-def render_mathml_to_png(driver, mathml: str, output_filename: Path, output_filename_2x: Path) -> None:
+def render_mathml_to_png(driver: 'webdriver.firefox.webdriver.WebDriver', mathml: str, output_filename: Path, output_filename_2x: Path) -> None:
 	"""
 	Render a string of MathML into a transparent PNG file.
 
@@ -360,7 +405,7 @@ def render_mathml_to_png(driver, mathml: str, output_filename: Path, output_file
 			optimize_png(output_filename_2x)
 
 			# Save normal version.
-			image = image.resize((image.width // 2, image.height // 2))
+			image = image.resize((image.width // 2, image.height // 2)) # type: ignore This is an error in Pillow's type stub.
 			image.save(output_filename)
 			optimize_png(output_filename)
 
@@ -389,7 +434,7 @@ def remove_image_metadata(filename: Path) -> None:
 			if jpeg_data[0:2] != b"\xff\xd8":
 				raise se.InvalidFileException(f"Invalid JPEG file: [path][link=file://{filename.resolve()}]{filename}[/].")
 
-			exif_segments = []
+			exif_segments: list[bytes] = []
 			head = 2
 
 			# Get a list of metadata segments from the JPG.
@@ -433,24 +478,25 @@ def remove_image_metadata(filename: Path) -> None:
 		data = list(image.get_flattened_data())
 
 		image_without_exif = Image.new(image.mode, image.size)
-		image_without_exif.putdata(data)
+		image_without_exif.putdata(data) # type: ignore This is an error in Pillow's type stub.
 
 		if image.format == "PNG":
 			# Some metadata, like chromaticity and gamma, are useful to preserve in PNGs.
 			new_exif = PngImagePlugin.PngInfo()
 			for key, value in image.info.items():
-				if key.lower() == "gamma": # type: ignore
-					new_exif.add(b"gAMA", struct.pack("!1I", int(value * 100000)))
-				elif key.lower() == "chromaticity": # type: ignore
-					new_exif.add(b"cHRM", struct.pack("!8I", \
-							int(value[0] * 100000), \
-							int(value[1] * 100000), \
-							int(value[2] * 100000), \
-							int(value[3] * 100000), \
-							int(value[4] * 100000), \
-							int(value[5] * 100000), \
-							int(value[6] * 100000), \
-							int(value[7] * 100000)))
+				if isinstance(key, str):
+					if key.lower() == "gamma":
+						new_exif.add(b"gAMA", struct.pack("!1I", int(value * 100000)))
+					elif key.lower() == "chromaticity":
+						new_exif.add(b"cHRM", struct.pack("!8I", \
+								int(value[0] * 100000), \
+								int(value[1] * 100000), \
+								int(value[2] * 100000), \
+								int(value[3] * 100000), \
+								int(value[4] * 100000), \
+								int(value[5] * 100000), \
+								int(value[6] * 100000), \
+								int(value[7] * 100000)))
 
 			image_without_exif.save(filename, optimize=True, pnginfo=new_exif)
 		elif image.format == "TIFF":
@@ -459,7 +505,7 @@ def remove_image_metadata(filename: Path) -> None:
 		else:
 			image_without_exif.save(str(filename))
 
-def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
+def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style: bool=True) -> None:
 	"""
 	Convert SVG <text> elements into <path> elements, using SVG document's `<style>` element and external font files.
 
@@ -475,13 +521,14 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 	None.
 	"""
 
-	font_paths = []
+	font_paths: list[Path] = []
 	name_list = {"league_spartan": ["league-spartan-bold.svg"], "sorts_mill_goudy": ["sorts-mill-goudy-italic.svg", "sorts-mill-goudy.svg"]}
 	for font_family, font_names in name_list.items():
 		for font_name in font_names:
 			with importlib.resources.as_file(importlib.resources.files(f"se.data.fonts.{font_family}").joinpath(font_name)) as font_path:
 				font_paths.append(font_path)
-	fonts = []
+
+	fonts: list[Font] = []
 	for font_path in font_paths:
 		font = _parse_font(font_path)
 		fonts.append(font)
@@ -500,7 +547,7 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 		style = etree.Element("<style>")
 
 	# Possibly remove `<style> element if caller wants that.
-	def filter_predicate(elem: etree.Element):
+	def filter_predicate(elem: etree.Element) -> etree.Element|None:
 		if remove_style and str(elem.tag).endswith("style"):
 			return None # Remove `<style>` element.
 		return elem # Keep all other elements.
@@ -511,7 +558,8 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 
 	for elem in xml.iter():
 		if str(elem.tag).endswith("text"):
-			properties = _apply_css(elem, style.text or "")
+			properties = TextProperties()
+			properties.text_properties = _apply_css(elem, style.text or "")
 			_get_properties_from_text_elem(properties, elem)
 			_add_font_to_properties(properties, fonts)
 			text = elem.text
@@ -537,11 +585,11 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style=True) -> None:
 	with open(out_svg, "wt", encoding="utf-8") as output:
 		output.write(result_all_text)
 
-def _apply_css(elem: etree.Element, css_text: str) -> dict:
+def _apply_css(elem: etree.Element, css_text: str) -> dict[str, str]:
 	chunks = [[y.strip() for y in x.split("\n") if y.strip() != ""] for x in css_text.replace("\r", "").split("}")]
-	result_css = {}
+	result_css: dict[str, str] = {}
 
-	def apply_css(kvs):
+	def apply_css(kvs: list[str]):
 		for pair in kvs:
 			k, css = [selector.strip() for selector in pair.split(":")]
 			result_css[k] = css.replace("\"", "") # Values may have quotes, like `font-family: "League Spartan"`.
@@ -551,7 +599,7 @@ def _apply_css(elem: etree.Element, css_text: str) -> dict:
 			continue
 
 		selector = chunk[0].replace("{", "")
-		kvs = [x.replace(";", "") for x in chunk[1:]]
+		kvs: list[str] = [x.replace(";", "") for x in chunk[1:]]
 
 		if selector[0] == "." and len(selector) >= 2:
 			if selector[1:] == elem.get("class"):
@@ -563,7 +611,7 @@ def _apply_css(elem: etree.Element, css_text: str) -> dict:
 
 # Assumes `return_elem` is a new copy with no children, e.g. `xml = _traverse_element(xml, traverser)`.
 # This returns the original tree when `traverser` is `lambda x: x`.
-def _traverse_children(return_elem: etree.Element, old_elem: etree.Element, traverser: Callable) -> None:
+def _traverse_children(return_elem: etree.Element, old_elem: etree.Element, traverser: Callable[[etree.Element], etree.Element|None]) -> None:
 	for child in old_elem:
 		new_child = traverser(child)
 		if new_child is None:
@@ -574,7 +622,7 @@ def _traverse_children(return_elem: etree.Element, old_elem: etree.Element, trav
 		final_child.tail = new_child.tail
 		return_elem.append(final_child)
 
-def _traverse_element(elem: etree._Element, traverser: Callable) -> etree._Element | None:
+def _traverse_element(elem: etree.Element, traverser: Callable[[etree.Element], etree.Element|None]) -> etree.Element | None:
 	return_elem = traverser(elem)
 	if return_elem is None:
 		return None
@@ -585,64 +633,71 @@ def _traverse_element(elem: etree._Element, traverser: Callable) -> etree._Eleme
 	_traverse_children(return_elem, elem, traverser)
 	return return_elem
 
-def _get_properties_from_text_elem(properties: dict, elem: etree._Element) -> None:
-	properties["text"] = elem.text
-	if elem.get("x"):
-		properties["x"] = elem.get("x")
-	if elem.get("y"):
-		properties["y"] = elem.get("y")
+def _get_properties_from_text_elem(properties: TextProperties, elem: etree.Element) -> None:
+	text = elem.text
+	if text:
+		properties.text_properties["text"] = text
 
-def _add_font_to_properties(properties: dict, fonts: list) -> None:
+	x = elem.get("x")
+	if x:
+		properties.text_properties["x"] = x
+
+	y = elem.get("y")
+	if y:
+		properties.text_properties["y"] = y
+
+def _add_font_to_properties(properties: TextProperties, fonts: list[Font]) -> None:
 	# Wire up with actual font object.
 	for font in fonts:
-		face = font["meta"]["font-face"]
-		if face["font-family"] != properties["font-family"]:
+		face = font.meta.font_face
+		if face["font-family"] != properties.text_properties["font-family"]:
 			continue
-		if "font-style" in face and "font-style" in properties: # Fine if either do not mention style, so defaults to regular or not italic.
-			if face["font-style"] != properties["font-style"]:
+		if "font-style" in face and "font-style" in properties.text_properties: # Fine if either do not mention style, so defaults to regular or not italic.
+			if face["font-style"] != properties.text_properties["font-style"]:
 				continue
-		properties["font"] = font
+		properties.font = font
 		return # One chunk of text can only have one font/variant.
 
 def _float_to_str(float_value: float) -> str:
 	return "{0:.2f}".format(round(float_value, 2)) # pylint: disable=consider-using-f-string
 
-def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: dict) -> None:
+def _add_svg_paths_to_group(g_elem: etree.Element, properties: TextProperties) -> None:
 	# Required properties to make any progress.
-	for key in "x y font text font-size".split():
-		if key not in text_properties:
+	for key in ["x", "y", "text", "font-size"]:
+		if key not in properties.text_properties:
 			raise se.InvalidCssException(f"svg_text_to_paths: Missing key [text]{key}[/] in [text]text_properties[/] for [xml]<{str(g_elem.tag)}>[/] element in [path]./images/titlepage.svg[/] or [path]./images/cover.svg[/].")
+
 	# We know we have `x`, `y`, `text`, `font-size`, and font so we can render vectors.
 	# Now set up some defaults if not specified.
-	text_properties["font-size"] = float(text_properties["font-size"].replace("px", "")) # *Note*: assumes pixels and ignores it.
-	font = text_properties["font"]
-	if "letter-spacing" not in text_properties:
-		text_properties["letter-spacing"] = 0
+	properties.text_properties["font-size"] = str(properties.text_properties["font-size"]).replace("px", "") # *Note*: assumes pixels and ignores it.
+	font = properties.font
+	if "letter-spacing" not in properties.text_properties:
+		properties.text_properties["letter-spacing"] = "0"
 	else:
-		text_properties["letter-spacing"] = float(text_properties["letter-spacing"].replace("px", ""))
-	if "text-anchor" not in text_properties:
-		text_properties["text-anchor"] = "left"
-	if "units-per-em" not in text_properties:
-		text_properties["units-per-em"] = float(font["meta"]["font-face"]["units-per-em"])
-	if "horiz-adv-x" not in text_properties:
-		text_properties["horiz-adv-x"] = float(font["meta"]["horiz-adv-x"])
-	font = text_properties["font"]
-	text_string = text_properties["text"]
+		properties.text_properties["letter-spacing"] = str(properties.text_properties["letter-spacing"]).replace("px", "")
+	if "text-anchor" not in properties.text_properties:
+		properties.text_properties["text-anchor"] = "left"
+	if "units-per-em" not in properties.text_properties and font:
+		properties.text_properties["units-per-em"] = font.meta.font_face["units-per-em"]
+	if "horiz-adv-x" not in properties.text_properties and font:
+		properties.text_properties["horiz-adv-x"] = str(font.meta.horiz_adv_x)
+	font = properties.font
+	text_string = str(properties.text_properties["text"])
 
 	width = 0.0
-	if text_properties["text-anchor"] == "middle" or text_properties["text-anchor"] == "center" or \
-		text_properties["text-anchor"] == "right" or text_properties["text-anchor"] == "end":
-		width = _get_text_width(text_string, font, text_properties)
+	if properties.text_properties["text-anchor"] == "middle" or properties.text_properties["text-anchor"] == "center" or \
+		properties.text_properties["text-anchor"] == "right" or properties.text_properties["text-anchor"] == "end":
+		width = _get_text_width(text_string, font, properties)
 
 	last_xy = [0.0, 0.0]
-	last_xy[0] = float(text_properties["x"])
-	if text_properties["text-anchor"] == "middle" or text_properties["text-anchor"] == "center":
+	last_xy[0] = float(properties.text_properties["x"])
+	if properties.text_properties["text-anchor"] == "middle" or properties.text_properties["text-anchor"] == "center":
 		last_xy[0] -= width / 2.0
-	elif text_properties["text-anchor"] == "right" or text_properties["text-anchor"] == "end":
+	elif properties.text_properties["text-anchor"] == "right" or properties.text_properties["text-anchor"] == "end":
 		last_xy[0] -= width
-	last_xy[1] = float(text_properties["y"])
+	last_xy[1] = float(properties.text_properties["y"])
 
-	path_ds = []
+	path_ds: list[str] = []
 	def walker(d_attrib: str, size: float, delta_x: float, delta_y: float) -> None:
 		# Render a glyph (text representaiton of a path outline) to a properly translated and scaled path outline.
 		d_attrib = _d_translate_and_scale(d_attrib, last_xy[0], last_xy[1], size, -size)
@@ -650,69 +705,66 @@ def _add_svg_paths_to_group(g_elem: etree.Element, text_properties: dict) -> Non
 			path_ds.append(d_attrib)
 		last_xy[0] += delta_x
 		last_xy[1] += delta_y
-	_walk_characters(text_string, font, text_properties, last_xy[0], last_xy[1], walker)
+	_walk_characters(text_string, font, properties, last_xy[0], last_xy[1], walker)
 	# Append each glyph outline as its own `<path>` element, as Inkscape would do.
 	for d_attr in path_ds:
 		path_elem = etree.Element("path", {"d": d_attr})
 		path_elem.tail = "\n"
 		g_elem.append(path_elem)
 
-def _get_text_width(text_string: str, font: dict, text_properties: dict) -> float:
-	last_xy = [0, 0]
-	def callback(_d, _size, delta_x, delta_y):
+def _get_text_width(text_string: str, font: Font, properties: TextProperties) -> float:
+	last_xy: list[float] = [0, 0]
+	def callback(_d: str, _size: float, delta_x: float, delta_y: float):
 		last_xy[0] += delta_x
 		last_xy[1] += delta_y
-	_walk_characters(text_string, font, text_properties, last_xy[0], last_xy[1], callback)
+	_walk_characters(text_string, font, properties, last_xy[0], last_xy[1], callback)
 	return last_xy[0]
 
-def _walk_characters(text_string: str, font: dict, text_properties: dict, last_x: float, last_y: float, use_glyph_callback: Callable) -> None:
+def _walk_characters(text_string: str, font: Font, properties: TextProperties, last_x: float, last_y: float, use_glyph_callback: Callable[[str, float, float, float], None]) -> None:
 	for index, ch0 in enumerate(text_string):
 		ch1 = text_string[index + 1] if index < len(text_string) - 1 else ""
 		ch2 = text_string[index + 2] if index < len(text_string) - 2 else ""
 		combo = None
 		ch0_ch1 = ch0 + ch1
-		if ch0_ch1 in font["glyphs"]:
-			combo = font["glyphs"][ch0_ch1]
-		if text_properties["letter-spacing"] == 0 and index < len(text_string) - 2 and combo:
+		if ch0_ch1 in font.glyphs:
+			combo = font.glyphs[ch0_ch1]
+		if int(properties.text_properties["letter-spacing"]) == 0 and index < len(text_string) - 2 and combo:
 			# If ligature or "wide" unicode character exists, don't use ligature if letter-spacing set to something interesting.
 			# Found combined characters ch+ch1.
-			_advance_by_glyph(font, text_properties, last_x, last_y, ch0 + ch1, ch2, use_glyph_callback)
+			_advance_by_glyph(font, properties, last_x, last_y, ch0 + ch1, ch2, use_glyph_callback)
 			index += 1
-		if text_properties["letter-spacing"] == 0 and index < len(text_string) and combo:
+		if int(properties.text_properties["letter-spacing"]) == 0 and index < len(text_string) and combo:
 			# If ligature or "wide" unicode character exists -- don't use ligature if letter-spacing set to something interesting.
-			_advance_by_glyph(font, text_properties, last_x, last_y, ch0 + ch1, "", use_glyph_callback)
+			_advance_by_glyph(font, properties, last_x, last_y, ch0 + ch1, "", use_glyph_callback)
 		else:
-			_advance_by_glyph(font, text_properties, last_x, last_y, ch0, ch1, use_glyph_callback)
+			_advance_by_glyph(font, properties, last_x, last_y, ch0, ch1, use_glyph_callback)
 
-def _advance_by_glyph(font: dict, text_properties: dict, _last_x, _last_y, uni: str, uni_next: str, callback: Callable) -> None:
-	glyphs = font["glyphs"]
+def _advance_by_glyph(font: Font, properties: TextProperties, _last_x: float, _last_y: float, uni: str, uni_next: str, callback: Callable[[str, float, float, float], None]) -> None:
+	glyphs = font.glyphs
 	glyph = {} # Default, but not `None`, to appease type-checker.
 	if uni in glyphs:
 		glyph = glyphs[uni]
 	if not uni:
-		glyph = font["meta"]["missing-glyph"]
+		glyph = font.meta.missing_glyph
 	d_attrib = None
 	if "d" in glyph:
 		d_attrib = glyph["d"]
 	if not d_attrib:
 		# `""` for Space character, not `None`.
 		d_attrib = ""
-	size = text_properties["font-size"] / text_properties["units-per-em"]
-	horiz_adv_x = float(glyph["horiz-adv-x"]) if "horiz-adv-x" in glyph else text_properties["horiz-adv-x"]
+	size = float(properties.text_properties["font-size"]) / float(properties.text_properties["units-per-em"])
+	horiz_adv_x = float(glyph["horiz-adv-x"]) if "horiz-adv-x" in glyph else float(properties.text_properties["horiz-adv-x"])
 	hkern = 0.0
 	kern_key = uni + "," + uni_next
-	if kern_key in font["hkern"]:
-		advance_x = float(font["hkern"][kern_key])
+	if kern_key in font.hkern:
+		advance_x = font.hkern[kern_key]
 		hkern = advance_x
 	horiz_adv_x -= hkern
-	delta_x = horiz_adv_x * size + (text_properties["letter-spacing"] if uni_next != "" else 0)
+	delta_x = horiz_adv_x * size + (float(properties.text_properties["letter-spacing"]) if uni_next != "" else 0)
 	callback(d_attrib, size, delta_x, 0) # --> result outline d. Input = ("d"), delta_x, delta_y
 
 def _d_translate_and_scale(d_attrib: str, translate_x: float, translate_y: float, scale_x: float, scale_y: float) -> str:
 	return _d_apply_matrix(d_attrib, [scale_x, 0, 0, scale_y, translate_x, translate_y])
-
-def _d_scale(d_attrib: str, scale_x=1.0, scale_y=1.0) -> str:
-	return _d_apply_matrix(d_attrib, [scale_x, 0.0, 0.0, scale_y, 0.0, 0.0])
 
 # This is the main interesting part of SVG glyph rendering process.
 # The `d` attribute (path outline data, see <https://www.w3.org/TR/SVG/paths.html#DProperty>) from a single glyph or ligature will have its coordinates translated and scaled by the matrix transform passed in, and a return `d` attribute string will be created, showing the glyph in the correct location and size.
@@ -725,15 +777,15 @@ COMMA_MINUS_REGEX = regex.compile(",-")
 def _clean_comma_minus(d_attrib: str) -> str:
 	return COMMA_MINUS_REGEX.sub("-", d_attrib)
 
-def _d_apply_matrix_one_shape(d_attrib: str, matrix: list) -> str:
-	new_coords: list = []
+def _d_apply_matrix_one_shape(d_attrib: str, matrix: list[float]) -> str:
+	new_coords: list[float] = []
 	matrix_a = 0
 	matrix_b = 0
 	matrix_c = 0
 	matrix_d = 0
 	matrix_e = 0
 	matrix_f = 0
-	ret = []
+	ret: list[str] = []
 	for instruction in AZ_NOTAZ_REGEX.findall(d_attrib):
 		i = NOTAZ_REGEX.sub("", instruction)
 		coords = [float(x) for x in NUMBER_REGEX.findall(instruction)]
@@ -763,58 +815,57 @@ def _d_apply_matrix_one_shape(d_attrib: str, matrix: list) -> str:
 		ret.append(new_instruction)
 	return "".join(ret) + " "
 
-def _d_apply_matrix(d_attrib: str, matrix: list) -> str:
+def _d_apply_matrix(d_attrib: str, matrix: list[float]) -> str:
 	matches = M_NOTZ_Z_REGEX.findall(d_attrib)
 	shapes = [_d_apply_matrix_one_shape(shape, matrix) for shape in matches if shape]
 	return " ".join(shapes).strip()
 
-def _parse_font(font_path: Path) -> dict:
+def _parse_font(font_path: Path) -> Font:
 	with open(font_path, "rt", encoding="utf-8") as font_svg_raw:
 		xml = etree.fromstring(str.encode(font_svg_raw.read()))
-	font: dict = {"glyphs": {}, "hkern": {}, "meta": {}}
-	glyphs = font["glyphs"]
-	hkern = font["hkern"]
-	meta = font["meta"]
-	g_name_to_unicode = {}
+	font = Font()
+	font.meta = FontMeta()
+	g_name_to_unicode: dict[str, str] = {}
 	for elem in xml.iter():
 		tag = str(elem.tag).replace("{http://www.w3.org/2000/svg}", "")
 		if tag == "font":
-			meta["id"] = elem.attrib["id"]
-			meta["horiz-adv-x"] = float(elem.attrib["horiz-adv-x"])
+			font.meta.id = elem.attrib["id"]
+			font.meta.horiz_adv_x = float(elem.attrib["horiz-adv-x"])
 		elif tag == "font-face":
-			meta["font-face"] = dict(elem.attrib)
+			font.meta.font_face = dict(elem.attrib)
 		elif tag == "missing-glyph":
-			meta["missing-glyph"] = dict(elem.attrib)
+			font.meta.missing_glyph = dict(elem.attrib)
 		elif tag == "glyph" and elem.attrib:
 			# Normalize keys for glyphs dictionary to be unicode strings and not glyph-name (which we presume are entity names, e.g. `rdquo` as in `&rdquo;`).
 			if "unicode" in elem.attrib:
-				g_name = elem.attrib["glyph-name"] if "glyph-name" in elem.attrib else None
+				glyph_name = elem.attrib["glyph-name"] if "glyph-name" in elem.attrib else None
 				uni = elem.attrib["unicode"]
 				if uni.startswith("&#x") and uni.endswith(";"):
 					uni = uni.replace(";", "")
 					uni = chr(int(uni[2:], 16))
-				if g_name:
-					g_name_to_unicode[g_name] = uni
+				if glyph_name:
+					g_name_to_unicode[glyph_name] = uni
 				else:
 					g_name_to_unicode[uni] = uni
-				glyphs[uni] = {}
+				font.glyphs[uni] = {}
 				if "horiz-adv-x" in elem.attrib:
-					glyphs[uni]["horiz-adv-x"] = elem.attrib["horiz-adv-x"]
+					font.glyphs[uni]["horiz-adv-x"] = elem.attrib["horiz-adv-x"]
 				if "d" in elem.attrib:
-					glyphs[uni]["d"] = elem.attrib["d"]
+					font.glyphs[uni]["d"] = elem.attrib["d"]
 			elif "glyph-name" in elem.attrib:
-				g_name = elem.attrib["glyph-name"]
-				if g_name.find(".") >= 0:
-					g_name = g_name[:g_name.find(".")] # remove .1 .002 .sc   etc.
-				fake_entity = "&" + g_name + ";"
+				glyph_name = elem.attrib["glyph-name"]
+				if glyph_name.find(".") >= 0:
+					glyph_name = glyph_name[:glyph_name.find(".")] # remove .1 .002 .sc   etc.
+				fake_entity = "&" + glyph_name + ";"
 				uni = unescape(fake_entity)
 				if uni and fake_entity != uni and len(uni) <= 2:
-					g_name_to_unicode[g_name] = uni
-					glyphs[uni] = {}
+					g_name_to_unicode[glyph_name] = uni
+					font.glyphs[uni] = {}
 					if "horiz-adv-x" in elem.attrib:
-						glyphs[uni]["horiz-adv-x"] = elem.attrib["horiz-adv-x"]
+						font.glyphs[uni]["horiz-adv-x"] = elem.attrib["horiz-adv-x"]
 					if "d" in elem.attrib:
-						glyphs[uni]["d"] = elem.attrib["d"]
+						font.glyphs[uni]["d"] = elem.attrib["d"]
+
 	# Must parse `<hkern>` (horizontal kerning) elements after glyphs so we have `g_name_to_unicode` map available.
 	for elem in xml.iter():
 		tag = str(elem.tag).replace("{http://www.w3.org/2000/svg}", "")
@@ -834,12 +885,13 @@ def _parse_font(font_path: Path) -> dict:
 						if glyph2 not in g_name_to_unicode:
 							continue
 						pair = g_name_to_unicode[glyph1] +"," + g_name_to_unicode[glyph2]
-						hkern[pair] = kerning
+						font.hkern[pair] = float(kerning)
 			if "u1" in elem.attrib and "u2" in elem.attrib:
 				unicodes1 = elem.attrib["u1"].split(",")
 				unicodes2 = elem.attrib["u2"].split(",")
 				for uni1 in unicodes1:
 					for uni2 in unicodes2:
 						pair = uni1 + "," + uni2
-						hkern[pair] = kerning
+						font.hkern[pair] = float(kerning)
+
 	return font

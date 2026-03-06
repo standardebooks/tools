@@ -8,10 +8,11 @@ from pathlib import Path
 
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 import se
 
-def initialize_selenium_firefox_webdriver() -> webdriver.Firefox:
+def initialize_selenium_firefox_webdriver() -> webdriver.firefox.webdriver.WebDriver:
 	"""
 	Initialize a Selenium Firefox driver and return it for use in other applications.
 
@@ -29,17 +30,17 @@ def initialize_selenium_firefox_webdriver() -> webdriver.Firefox:
 
 	# We have to use the headless option, otherwise it will pop up a Firefox window.
 	options = Options()
-	options.add_argument('-headless')
+	options.add_argument("-headless")
 
 	# Disable the history, because otherwise links to (for example to end notes) may appear as "visited" in visits to other pages, and thus cause a fake diff.
-	profile = webdriver.FirefoxProfile()
-	profile.set_preference("places.history.enabled", False)
-	profile.set_preference("browser.cache.disk.enable", False)
-	profile.set_preference("browser.cache.memory.enable", False)
-	profile.set_preference("browser.cache.offline.enable", False)
-	profile.set_preference("browser.http.use-cache", False)
-	profile.set_preference("layout.css.devPixelsPerPx", "2.0")
+	profile = FirefoxProfile()
+	profile.set_preference("places.history.enabled", False) # type: ignore This is an error in Seleniums's type stub.
+	profile.set_preference("browser.cache.disk.enable", False) # type: ignore This is an error in Seleniums's type stub.
+	profile.set_preference("browser.cache.memory.enable", False) # type: ignore This is an error in Seleniums's type stub.
+	profile.set_preference("browser.cache.offline.enable", False) # type: ignore This is an error in Seleniums's type stub.
+	profile.set_preference("browser.http.use-cache", False) # type: ignore This is an error in Seleniums's type stub.
+	profile.set_preference("layout.css.devPixelsPerPx", "2.0") # type: ignore This is an error in Seleniums's type stub.
 
 	options.profile = profile
 
-	return webdriver.Firefox(options=options)
+	return webdriver.Firefox(options=options) # type: ignore This is an error in Seleniums's type stub.

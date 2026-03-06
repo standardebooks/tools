@@ -7,7 +7,6 @@ import shutil
 import tempfile
 from pathlib import Path
 import importlib.resources
-from typing import cast
 
 from git import cmd
 from natsort import natsorted
@@ -60,7 +59,7 @@ def compare_versions(plain_output: bool) -> int:
 				# Copy the Git repo to a temp folder, so we can stash and pop with impunity.
 				shutil.copytree(target, work_directory_name, dirs_exist_ok=True)
 
-				target_filenames = set()
+				target_filenames: set[Path] = set()
 
 				for file_path in Path(work_directory_name).glob("**/*.xhtml"):
 					if not args.include_se_files:
@@ -99,7 +98,7 @@ def compare_versions(plain_output: bool) -> int:
 					# Pop the stash.
 					git_command.stash("pop")
 
-					files_with_differences = set()
+					files_with_differences: set[Path] = set()
 
 					# Generate screenshots of the post-change repo, and compare them to the old screenshots.
 					for filename in target_filenames:
@@ -122,6 +121,8 @@ def compare_versions(plain_output: bool) -> int:
 						# If they're not, add pixels in either direction until they match.
 						original_width, original_height = original_image_file.size
 						new_width, new_height = new_image_file.size
+						new_image = None
+						original_image = None
 
 						if original_height > new_height:
 							new_image = _resize_canvas(new_image_file, new_width, original_height)
@@ -140,31 +141,32 @@ def compare_versions(plain_output: bool) -> int:
 							original_image.save(file_original_screenshot_path)
 
 						# Now get the diff.
-						diff = ImageChops.difference(original_image, new_image)
+						if new_image and original_image:
+							diff = ImageChops.difference(original_image, new_image)
 
-						# Process every pixel to see if there's a difference, and then convert that difference to red.
-						width, height = diff.size
-						for image_x in range(0, width - 1):
-							for image_y in range(0, height - 1):
-								if diff.getpixel((image_x, image_y)) != (0, 0, 0, 0):
-									has_difference = True
-									diff.putpixel((image_x, image_y), (255, 0, 0, 255)) # Change the mask color to red.
+							# Process every pixel to see if there's a difference, and then convert that difference to red.
+							width, height = diff.size
+							for image_x in range(0, width - 1):
+								for image_y in range(0, height - 1):
+									if diff.getpixel((image_x, image_y)) != (0, 0, 0, 0):
+										has_difference = True
+										diff.putpixel((image_x, image_y), (255, 0, 0, 255)) # Change the mask color to red.
 
-						if has_difference:
-							files_with_differences.add(filename)
+							if has_difference:
+								files_with_differences.add(filename)
 
-							if args.copy_images:
-								try:
-									output_directory.mkdir(parents=True, exist_ok=True)
+								if args.copy_images:
+									try:
+										output_directory.mkdir(parents=True, exist_ok=True)
 
-									shutil.copy(file_new_screenshot_path, output_directory)
-									shutil.copy(file_original_screenshot_path, output_directory)
+										shutil.copy(file_new_screenshot_path, output_directory)
+										shutil.copy(file_original_screenshot_path, output_directory)
 
-									original_image_file.paste(diff.convert("RGB"), mask=diff)
-									original_image_file.save(output_directory / (filename.name + "-diff.png"))
+										original_image_file.paste(diff.convert("RGB"), mask=diff)
+										original_image_file.save(output_directory / (filename.name + "-diff.png"))
 
-								except Exception:
-									pass
+									except Exception:
+										pass
 
 					for filename in natsorted(list(files_with_differences)):
 						console.print(se.prep_output("{}Difference in {}".format("\t" if args.verbose else "", f"[path][link=file://{filename}]{filename.name}[/][/]"), plain_output))
@@ -173,7 +175,7 @@ def compare_versions(plain_output: bool) -> int:
 						# Generate an HTML file with diffs side by side.
 						html = ""
 
-						for filename in cast(list[Path], natsorted(list(files_with_differences))):
+						for filename in natsorted(list(files_with_differences)):
 							html += f"\t\t<section>\n\t\t\t<h1>{filename.name}</h1>\n\t\t\t<img src=\"{filename.name}-original.png\">\n\t\t\t<img src=\"{filename.name}-new.png\">\n\t\t</section>\n"
 
 						with importlib.resources.files("se.data.templates").joinpath("diff-template.html").open("r", encoding="utf-8") as file:

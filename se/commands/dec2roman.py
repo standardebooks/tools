@@ -20,7 +20,7 @@ def dec2roman(plain_output: bool) -> int: # pylint: disable=unused-argument
 	parser.add_argument("numbers", metavar="INTEGER", type=se.is_positive_integer, nargs="*", help="an integer")
 	args = parser.parse_args()
 
-	lines = []
+	lines: list[str] = []
 
 	if not sys.stdin.isatty():
 		for line in sys.stdin:

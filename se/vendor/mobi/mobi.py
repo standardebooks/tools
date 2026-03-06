@@ -16,6 +16,8 @@ from __future__ import unicode_literals, division, absolute_import, print_functi
 import sys
 import struct
 
+from pathlib import Path
+
 text_type = str
 binary_type = bytes
 
@@ -172,6 +174,6 @@ class DualMobiMetaFix:
 	def getresult(self):
 		return self.datain
 
-def update_asin(asin, infile, outfile):
+def update_asin(asin: str, infile: Path|str, outfile: Path|str) -> None:
 	dmf = DualMobiMetaFix(infile, asin)
 	open(pathof(outfile),'wb').write(dmf.getresult())

@@ -22,7 +22,7 @@ def unicode_names(plain_output: bool) -> int:
 	args = parser.parse_args()
 
 	console = se.init_console()
-	lines = []
+	lines: list[str] = []
 
 	if not sys.stdin.isatty():
 		for line in sys.stdin:

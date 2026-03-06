@@ -27,7 +27,7 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 	dashed_words: dict[str, int] = {} # key: word; value: count
 	mismatches: dict[str, dict[str, tuple[int, int]]] = {} # key: base word; value: dict with key: plain word; value: (base count, plain count).
 	target_filenames = se.get_target_filenames(args.targets, ".xhtml")
-	files_xhtml = []
+	files_xhtml: list[str] = []
 
 	# Read files and cache for later.
 	for filename in target_filenames:
@@ -85,7 +85,7 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 						mismatches[dashed_word][plain_word] = (count, len(matches))
 
 	# Sort and prepare the output.
-	lines = []
+	lines: list[tuple[str, int, str, int]] = []
 
 	for dashed_word, child in mismatches.items():
 		for plain_word, counts in child.items():

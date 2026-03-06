@@ -10,7 +10,7 @@ from pathlib import Path
 import filecmp
 import pytest
 
-def run(cmd: str) -> subprocess.CompletedProcess:
+def run(cmd: str) -> subprocess.CompletedProcess[bytes]:
 	"""
 	Run the provided shell string as a command in a subprocess. Returns a
 	status object when the command completes.

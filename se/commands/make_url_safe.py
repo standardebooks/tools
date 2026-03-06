@@ -19,7 +19,7 @@ def make_url_safe(plain_output: bool) -> int: # pylint: disable=unused-argument
 	parser.add_argument("strings", metavar="STRING", nargs="*", help="a string")
 	args = parser.parse_args()
 
-	lines = []
+	lines: list[str] = []
 
 	if not sys.stdin.isatty():
 		for line in sys.stdin:
