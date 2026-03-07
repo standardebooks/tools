@@ -13,6 +13,7 @@ import unicodedata
 from pathlib import Path
 from typing import cast
 
+from collections import defaultdict
 import regex
 import roman
 import tinycss2
@@ -1746,7 +1747,7 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tup
 	endnote_number = 0
 	container_poem_section_id = ""
 	for section in dom_copy.xpath("/html/body//*[@id and (name() = 'section' or name() = 'article' or re:test(@epub:type, '\\bendnote\\b'))]"):
-		counts: dict[str, int] = {}
+		counts: dict[str, int] = defaultdict(int)
 		is_poem = bool(section.xpath("./ancestor-or-self::*[contains(@epub:type, 'z3998:poem')]"))
 		section_id = section.get_attr("id")
 		allow_header = not is_poem
@@ -1771,10 +1772,7 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tup
 					replacements.append((section, expected_id))
 
 		for node in _get_flattened_children(section, allow_header):
-			if node.tag in counts:
-				counts[node.tag] = counts[node.tag] + 1
-			else:
-				counts[node.tag] = 1
+			counts[node.tag] += 1
 
 			# If the line is a line of poetry, increment the line count.
 			if is_poem and node.tag == "span" and node.parent and node.parent.tag == "p":

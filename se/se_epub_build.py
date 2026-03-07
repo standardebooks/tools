@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
 from hashlib import sha1
@@ -1433,7 +1434,7 @@ def _run_ace(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 
 				# Ace outputs a flat list of errors, so here we try to arrange them so that each combination of `(file, error)` has a list of errors below it, instead of repeating the filename and code over and over.
 				# A dict whose keys are a tuple of `(filename, code)` and whose values are an array of `(message, html)`.
-				file_messages: dict[tuple[str, str], list[tuple[str, str]]] = {}
+				file_messages: dict[tuple[str, str], list[tuple[str, str]]] = defaultdict(list)
 
 				for assertion in ace_dom["assertions"]:
 					if assertion["earl:result"]["earl:outcome"] != "pass":
@@ -1459,9 +1460,6 @@ def _run_ace(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 
 								if emit_result:
 									code = file_assertion["earl:test"]["dct:title"]
-									if (str(file), code) not in file_messages:
-										file_messages[(str(file), code)] = []
-
 									file_messages[(str(file), code)].append((file_assertion["earl:result"]["dct:description"], file_assertion["earl:result"]["html"] if "html" in file_assertion["earl:result"].keys() else ""))
 
 				# Unpack our sorted messages for output.

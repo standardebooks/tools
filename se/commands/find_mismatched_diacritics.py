@@ -6,6 +6,7 @@ import argparse
 import urllib.parse
 import unicodedata
 
+from collections import defaultdict
 import regex
 from rich import box
 from rich.table import Table
@@ -24,8 +25,8 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 
 	console = se.init_console()
 	return_code = 0
-	accented_words: dict[str, int] = {} # key: word; value: count
-	mismatches: dict[str, dict[str, tuple[int, int]]] = {} # key: base word; value: dict with key: plain word; value: (base count, plain count)
+	accented_words: dict[str, int] = defaultdict(int) # key: word; value: count
+	mismatches: dict[str, dict[str, tuple[int, int]]] = defaultdict(dict) # key: base word; value: dict with key: plain word; value: (base count, plain count)
 	target_filenames = se.get_target_filenames(args.targets, ".xhtml")
 	files_xhtml: list[str] = []
 
@@ -66,10 +67,7 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 			word = unicodedata.normalize("NFKC", decomposed_word).lower()
 
 			if len(word) > 2:
-				if word in accented_words:
-					accented_words[word] = accented_words[word] + 1
-				else:
-					accented_words[word] = 1
+				accented_words[word] += 1
 
 	# Now iterate over the list and search files for unaccented versions of the words.
 	if accented_words:
@@ -80,14 +78,9 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 				matches = regex.findall(fr"\b{plain_word}\b", xhtml, flags=regex.IGNORECASE)
 
 				if matches:
-					if accented_word in mismatches:
-						if plain_word in mismatches[accented_word]:
-							mismatches[accented_word][plain_word] = (count, mismatches[accented_word][plain_word][1] + len(matches))
-						else:
-							mismatches[accented_word][plain_word] = (count, len(matches))
-
+					if plain_word in mismatches[accented_word]:
+						mismatches[accented_word][plain_word] = (count, mismatches[accented_word][plain_word][1] + len(matches))
 					else:
-						mismatches[accented_word] = {}
 						mismatches[accented_word][plain_word] = (count, len(matches))
 
 	# Find accented words with multiple variants.
