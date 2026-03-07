@@ -6,6 +6,7 @@ Strictly speaking, `SeEpub.Lint()` should be a class member of `SeEpub`. But the
 """
 
 from bisect import bisect_right
+from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
 import filecmp
@@ -1165,15 +1166,12 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		messages.append(LintMessage("m-084", "[xhtml]<meta property=\"se:url....\">[/] element not containing a URL.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='role' and @scheme='marc:relators']")
-	marc_relator_groups: dict[str, list[str]] = {}
+	marc_relator_groups: dict[str, list[str]] = defaultdict(list)
 	non_alphabetized_marc_relator_groups: list[str] = []
 
 	for node in nodes:
 		refines = node.get_attr('refines')
-		if refines in marc_relator_groups:
-			marc_relator_groups[refines].append(node.text)
-		else:
-			marc_relator_groups[refines] = [node.text]
+		marc_relator_groups[refines].append(node.text)
 
 	for group, items in marc_relator_groups.items():
 		unsorted_items = items.copy()
@@ -3580,7 +3578,7 @@ def _lint_process_ignore_file(self: 'SeEpub', lint_ignore_dom: EasyXmlTree | Non
 
 	# This is a dict with where keys are the path and values are a list of code dicts.
 	# Each code dict has a key "code" which is XML element containing the code, and a key "used" which is a bool indicating whether or not the code has actually been caught in the linting run.
-	ignored_codes: dict[str, list[IgnoreItem]] = {}
+	ignored_codes: dict[str, list[IgnoreItem]] = defaultdict(list)
 	allowed_messages = allowed_messages or []
 	lint_ignore_path = self.path / "se-lint-ignore.xml"
 
@@ -3609,9 +3607,6 @@ def _lint_process_ignore_file(self: 'SeEpub', lint_ignore_dom: EasyXmlTree | Non
 
 			if path == "*":
 				ignores_with_illegal_paths.append(element)
-
-			if path not in ignored_codes:
-				ignored_codes[path] = []
 
 			ignore: EasyXmlElement
 			for ignore in element.xpath("./ignore"):
@@ -3701,7 +3696,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 	typography_messages: list[LintMessage] = []
 	cover_svg_title = ""
 	titlepage_svg_title = ""
-	xhtml_css_classes: dict[str, list[tuple[Path, EasyXmlElement]]] = {}
+	xhtml_css_classes: dict[str, list[tuple[Path, EasyXmlElement]]] = defaultdict(list)
 	headings: list[tuple[str, str]] = []
 	unused_selectors: list[str] = []
 	unused_id_attrs: list[tuple[Path, list[EasyXmlElement]]] = []
@@ -3712,7 +3707,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 	directories_not_url_safe: list[Path] = []
 	files_not_url_safe: list[Path] = []
 	files_not_matching_templates: list[Path] = []
-	id_nodes: dict[str, list[tuple[Path, EasyXmlElement]]] = {}
+	id_nodes: dict[str, list[tuple[Path, EasyXmlElement]]] = defaultdict(list)
 	does_ebook_look_like_collection = False
 	local_css = {
 		"has_poem_style": False,
@@ -4094,17 +4089,11 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 				if file_path.name not in IGNORED_FILENAMES:
 					for node in dom.xpath("//*[@class]"):
 						for css_class in node.get_attr("class").split():
-							if css_class in xhtml_css_classes:
-								xhtml_css_classes[css_class].append((file_path, node))
-							else:
-								xhtml_css_classes[css_class] = [(file_path, node)]
+							xhtml_css_classes[css_class].append((file_path, node))
 
 				for node in dom.xpath("//*[@id]"):
 					node_id = node.get_attr("id", True)
-					if node_id in id_nodes:
-						id_nodes[node_id].append((file_path, node))
-					else:
-						id_nodes[node_id] = [(file_path, node)]
+					id_nodes[node_id].append((file_path, node))
 
 				# Get the title of this file to compare against the ToC later.
 				# We ignore the ToC file itself.
@@ -4291,16 +4280,13 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 
 	if id_nodes:
 		# Narrow down `id`s to a list of ones that appear more than once.
-		duplicate_ids: dict[str, list[tuple[Path, EasyXmlElement]]] = {}
+		duplicate_ids: dict[str, list[tuple[Path, EasyXmlElement]]] = defaultdict(list)
 
 		for _, nodes_tuple_list in id_nodes.items():
 			if len(nodes_tuple_list) > 1:
 				for nodes_tuple in nodes_tuple_list:
 					path_string = str(nodes_tuple[0])
-					if path_string in duplicate_ids:
-						duplicate_ids[path_string].append(nodes_tuple)
-					else:
-						duplicate_ids[path_string] = [nodes_tuple]
+					duplicate_ids[path_string].append(nodes_tuple)
 
 		for _, nodes_tuples in duplicate_ids.items():
 			# `nodes_tuples` is a list of tuples of `(Path, list[EasyXmlElement])`.
@@ -4320,17 +4306,14 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 		entry_file = self.content_path / regex.sub(r"#.+$", "", node.get_attr("href"))
 		toc_headings.append((node.inner_text(), str(entry_file)))
 
-	missing_headings: dict[str, list[str]] = {}
+	missing_headings: dict[str, list[str]] = defaultdict(list)
 
 	for heading in headings:
 		# Some compilations, like _Songs of a Sourdough_, have their title in the half title, so check against that before adding an error.
 		# Ignore the half title page, because its text may differ in collections with only one file, like _Father Goriot_ or _The Path to Rome_.
 		if heading not in toc_headings and Path(heading[1]).name != 'halftitlepage.xhtml' and (heading[0], str(self.path / "src/epub/text/halftitlepage.xhtml")) not in toc_headings:
 			file_string = heading[1]
-			if file_string in missing_headings:
-				missing_headings[file_string].append(heading[0])
-			else:
-				missing_headings[file_string] = [heading[0]]
+			missing_headings[file_string].append(heading[0])
 
 	for file_string, headings_list in missing_headings.items():
 		messages.append(LintMessage("m-045", "Heading not found in the ToC.", se.MESSAGE_TYPE_ERROR, Path(file_string), headings_list))

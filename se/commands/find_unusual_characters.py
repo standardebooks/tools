@@ -5,6 +5,7 @@ This module implements the `se find-unusual-characters` command.
 import argparse
 import unicodedata
 
+from collections import defaultdict
 import regex
 from rich import box
 from rich.table import Table
@@ -23,7 +24,7 @@ def find_unusual_characters(plain_output: bool) -> int:
 
 	console = se.init_console()
 	return_code = 0
-	unusual_characters: dict[str, int] = {} # key: word; value: count
+	unusual_characters: dict[str, int] = defaultdict(int) # key: word; value: count
 	target_filenames = se.get_target_filenames(args.targets, ".xhtml")
 
 	# Create a regex for unusual characters.
@@ -104,10 +105,7 @@ def find_unusual_characters(plain_output: bool) -> int:
 				xhtml = regex.sub(r"<[^>]+?>", " ", xhtml)
 
 				for character in regex.findall(unusual_character_set, xhtml):
-					if character in unusual_characters:
-						unusual_characters[character] = unusual_characters[character] + len(character)
-					else:
-						unusual_characters[character] = len(character)
+					unusual_characters[character] += len(character)
 
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)

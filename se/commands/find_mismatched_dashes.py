@@ -5,6 +5,7 @@ This module implements the `se find-mismatched-dashes` command.
 import argparse
 import urllib.parse
 
+from collections import defaultdict
 import regex
 from rich import box
 from rich.table import Table
@@ -24,8 +25,8 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 
 	console = se.init_console()
 	return_code = 0
-	dashed_words: dict[str, int] = {} # key: word; value: count
-	mismatches: dict[str, dict[str, tuple[int, int]]] = {} # key: base word; value: dict with key: plain word; value: (base count, plain count).
+	dashed_words: dict[str, int] = defaultdict(int) # key: word; value: count
+	mismatches: dict[str, dict[str, tuple[int, int]]] = defaultdict(dict) # key: base word; value: dict with key: plain word; value: (base count, plain count).
 	target_filenames = se.get_target_filenames(args.targets, ".xhtml")
 	files_xhtml: list[str] = []
 
@@ -59,11 +60,7 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 		# This regex excludes words with three dashes like `bric-a-brac`, because removing dashes may erroneously match regular words. Don't match `’` to prevent matches like `life’s-end` -> `s-end`.
 		for word in regex.findall(r"(?<![\-’])\b\w+\-\w+\b(?![\-’])", xhtml):
 			lower_word = word.lower()
-
-			if lower_word in dashed_words:
-				dashed_words[lower_word] = dashed_words[lower_word] + 1
-			else:
-				dashed_words[lower_word] = 1
+			dashed_words[lower_word] += 1
 
 	# Now iterate over the list and search files for undashed versions of the words.
 	if dashed_words:
@@ -74,14 +71,9 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 				matches = regex.findall(fr"\b{plain_word}\b", xhtml, flags=regex.IGNORECASE)
 
 				if matches:
-					if dashed_word in mismatches:
-						if plain_word in mismatches[dashed_word]:
-							mismatches[dashed_word][plain_word] = (count, mismatches[dashed_word][plain_word][1] + len(matches))
-						else:
-							mismatches[dashed_word][plain_word] = (count, len(matches))
-
+					if plain_word in mismatches[dashed_word]:
+						mismatches[dashed_word][plain_word] = (count, mismatches[dashed_word][plain_word][1] + len(matches))
 					else:
-						mismatches[dashed_word] = {}
 						mismatches[dashed_word][plain_word] = (count, len(matches))
 
 	# Sort and prepare the output.
