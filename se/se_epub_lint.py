@@ -4348,7 +4348,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 		messages.append(LintMessage("m-070", "Glossary entry not found in the text.", se.MESSAGE_TYPE_ERROR, self.content_path / "glossary-search-key-map.xml", LintSubmessage.from_nodes(unused_glossary_entries)))
 
 	# Does this book look like a collection? It does if there is a `bodymatter` section that only contains `<article>` children.
-	if does_ebook_look_like_collection:
+	if does_ebook_look_like_collection and self.is_se_ebook:
 		nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='se:is-a-collection' and text()='true']")
 		if not nodes:
 			messages.append(LintMessage("m-079", "Ebook looks like a collection, but no [xml]<meta property=\"se:is-a-collection\">true</meta>[/] element in metadata.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path))
