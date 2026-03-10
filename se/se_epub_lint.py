@@ -4303,7 +4303,8 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 	# Match ToC headings against text headings.
 	for node in toc_entries:
 		# Remove `#` anchors after filenames (for books like Aesop's _Fables_).
-		entry_file = self.content_path / regex.sub(r"#.+$", "", node.get_attr("href"))
+		# Resolve the path to ensure that symlinks are compared consistently, as `headings` will contain only resolved paths.
+		entry_file = (self.content_path / regex.sub(r"#.+$", "", node.get_attr("href"))).resolve()
 		toc_headings.append((node.inner_text(), str(entry_file)))
 
 	missing_headings: dict[str, list[str]] = defaultdict(list)
