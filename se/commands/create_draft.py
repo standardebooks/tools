@@ -297,7 +297,9 @@ def _create_draft(args: Namespace, plain_output: bool):
 	# Create a temp directory and copy all template files over.
 	with tempfile.TemporaryDirectory() as directory_name:
 		work_path = Path(directory_name)
-		content_path = Path(work_path) / "src"
+		content_path = Path(work_path)
+		if not args.white_label:
+			content_path = content_path / "src"
 
 		if args.verbose:
 			console.print(se.prep_output("Building ebook structure ...", plain_output))
