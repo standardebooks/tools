@@ -1770,6 +1770,11 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 
 		# Now add compatibility fixes for older ereaders.
 
+		# Replace MathML with either plain characters or an image of the equation.
+		# Do this before simplifying CSS because this may add new `epub:type`s.
+		if metadata_dom.xpath("/package/manifest/*[contains(@properties, 'mathml')]"):
+			_replace_mathml(self, work_compatible_epub_dir, metadata_dom, ibooks_srcset_bug_exists)
+
 		# Add compatibility and simplify CSS.
 		_add_compatibility_css_and_simplify(self, work_compatible_epub_dir)
 
@@ -1833,10 +1838,6 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 
 		# Recurse over CSS files to make some compatibility replacements.
 		_compatibility_css_additional_replacements(work_compatible_epub_dir)
-
-		# Replace MathML with either plain characters or an image of the equation.
-		if metadata_dom.xpath("/package/manifest/*[contains(@properties, 'mathml')]"):
-			_replace_mathml(self, work_compatible_epub_dir, metadata_dom, ibooks_srcset_bug_exists)
 
 		# Include cover metadata for older ereaders.
 		for cover_id in metadata_dom.xpath("//item[@properties=\"cover-image\"]/@id", str):
