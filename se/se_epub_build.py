@@ -831,7 +831,7 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 
 		mathml_count = 1
 		for metadata_item_node in metadata_dom.xpath("//item[contains(@properties, 'mathml')]"):
-			filename = Path(work_compatible_epub_dir) / "epub" / metadata_item_node.get_attr("href")
+			filename = (Path(work_compatible_epub_dir) / "epub" / metadata_item_node.get_attr("href")).resolve()
 
 			dom = self.get_dom(filename)
 
