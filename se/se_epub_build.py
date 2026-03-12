@@ -1513,7 +1513,7 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 
 		for node in dom.xpath("//ol/li/ol/li/ol"):
 			parent = node.lxml_element.getparent()
-			if parent:
+			if parent is not None:
 				parent.addnext(node.lxml_element)
 				node.unwrap()
 
