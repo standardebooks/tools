@@ -647,19 +647,19 @@ def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem, textf: str) ->
 				toc_item.title_is_ordinal = True
 		if "subtitle" in epub_type:
 			toc_item.subtitle = extract_strings(child)
-		else:
-			if "title" in epub_type:  # This allows for `fulltitle` to work here, too.
-				if toc_item.title or toc_item.roman or toc_item.title_is_ordinal:  # If the title is already filled, must be a subtitle.
-					toc_item.subtitle = extract_strings(child)
-					if toc_item.roman or toc_item.title_is_ordinal:  # In these cases, we want to check language on subtitle.
-						toc_item.lang = child.get_attr("xml:lang")
-				else:
-					toc_item.title = extract_strings(child)
-					if not toc_item.lang:
-						toc_item.lang = child.get_attr("xml:lang")
+		elif "title" in epub_type:  # This allows for `fulltitle` to work here, too.
+			if toc_item.title or toc_item.roman or toc_item.title_is_ordinal:  # If the title is already filled, must be a subtitle.
+				toc_item.subtitle = extract_strings(child)
+				if toc_item.roman or toc_item.title_is_ordinal:  # In these cases, we want to check language on subtitle.
+					toc_item.lang = child.get_attr("xml:lang")
+			else:
+				toc_item.title = extract_strings(child)
+				if not toc_item.lang:
+					toc_item.lang = child.get_attr("xml:lang")
 
 		if toc_item.title and toc_item.subtitle:  # Then we're done, get out of loop by returning.
 			return toc_item
+
 	return toc_item
 
 def get_book_division(node: EasyXmlElement) -> BookDivision:
