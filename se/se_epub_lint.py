@@ -1968,7 +1968,8 @@ def _lint_xhtml_css_checks(source_file: SourceFile, dom: EasyXmlTree) -> list[Li
 
 	# Check for signature semantic without small caps.
 	# Ignore signatures that are only capital letters.
-	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:signature') and not(@data-css-font-variant = 'small-caps') and not(@data-css-font-style = 'italic') and not(re:test(., '^[A-Z\\.\\s]+$'))]")
+	# Exclude signatures in telegrams, which should have `all-small-caps`.
+	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:signature') and not(@data-css-font-variant = 'small-caps') and not(@data-css-font-style = 'italic') and not(re:test(., '^[A-Z\\.\\s]+$')) and not(ancestor-or-self::*[re:test(@class, '\\btelegram\\b')])]")
 	if nodes:
 		messages.append(LintMessage("c-019", "Element with [val]z3998:signature[/] semantic, but without [css]font-variant: small-caps;[/] or [css]font-style: italic;[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
