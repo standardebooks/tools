@@ -1498,10 +1498,10 @@ def simplify_css(css: str) -> str:
 	css = css.replace(",,", ",")
 
 	# Replace shorthand CSS with longhand properties, another ADE screwup.
-	css = regex.sub(r"margin:\s*([^\s]+?)\s*;", "margin-top: \\1;\n\tmargin-right: \\1;\n\tmargin-bottom: \\1;\n\tmargin-left: \\1;", css)
-	css = regex.sub(r"margin:\s*([^\s]+?)\s+([^\s]+?)\s*;", "margin-top: \\1;\n\tmargin-right: \\2;\n\tmargin-bottom: \\1;\n\tmargin-left: \\2;", css)
-	css = regex.sub(r"margin:\s*([^\s]+?)\s+([^\s]+?)\s+([^\s]+?)\s*;", "margin-top: \\1;\n\tmargin-right: \\2;\n\tmargin-bottom: \\3;\n\tmargin-left: \\2;", css)
-	css = regex.sub(r"margin:\s*([^\s]+?)\s+([^\s]+?)\s+([^\s]+?)\s+([^\s]+?)\s*;", "margin-top: \\1;\n\tmargin-right: \\2;\n\tmargin-bottom: \\3;\n\tmargin-left: \\4;", css)
+	css = regex.sub(r"margin:\s*([0-9]+[^\s]*|auto)(\s!important)?\s*;", "margin-top: \\1\\2;\n\tmargin-right: \\1\\2;\n\tmargin-bottom: \\1\\2;\n\tmargin-left: \\1\\2;", css)
+	css = regex.sub(r"margin:\s*([0-9]+[^\s]*|auto)\s+([0-9]+[^\s]*|auto)(\s!important)?\s*;", "margin-top: \\1\\3;\n\tmargin-right: \\2\\3;\n\tmargin-bottom: \\1\\3;\n\tmargin-left: \\2\\3;", css)
+	css = regex.sub(r"margin:\s*([0-9]+[^\s]*|auto)\s+([0-9]+[^\s]*|auto)\s+([0-9]+[^\s]*|auto)(\s!important)?\s*;", "margin-top: \\1\\4;\n\tmargin-right: \\2\\4;\n\tmargin-bottom: \\3\\4;\n\tmargin-left: \\2\\4;", css)
+	css = regex.sub(r"margin:\s*([0-9]+[^\s]*|auto)\s+([0-9]+[^\s]*|auto)\s+([0-9]+[^\s]*|auto)\s+([0-9]+[^\s]*|auto)(\s!important)?\s*;", "margin-top: \\1\\5;\n\tmargin-right: \\2\\5;\n\tmargin-bottom: \\3\\5;\n\tmargin-left: \\4\\5;", css)
 
 	# Replace some more poorly-supported CSS attributes.
 	css = css.replace("all-small-caps;", "small-caps;\n\ttext-transform: lowercase;")
