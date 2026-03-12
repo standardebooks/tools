@@ -446,6 +446,7 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list[TocItem], sing
 			title = dom.xpath("//head/title/text()", str)[0] # Use the page title as the ToC entry title.
 		except IndexError:
 			title = "NO TITLE"
+
 		special_item.title = title
 		special_item.file_link = textf
 		special_item.toc_id = get_toc_id_for_special_item(content_item[0])
@@ -596,17 +597,6 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 
 	return toc_item
 
-def get_child_strings(node: EasyXmlElement) -> str:
-	"""
-	Get child strings.
-	"""
-
-	children = node.xpath("./*")
-	child_strs = ""
-	for child in children:
-		child_strs += child.to_string() + "\n"
-	return child_strs
-
 def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem, textf: str) -> TocItem:
 	"""
 	Burrow down into a hgroup structure to qualify the ToC item.
@@ -626,7 +616,7 @@ def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem, textf: str) ->
 
 		if not epub_type:
 			# Should be a label/ordinal grouping.
-			child_strings = get_child_strings(child)
+			child_strings = child.inner_xml()
 			if "label" in child_strings and "ordinal" in child_strings:
 				toc_item.title_is_ordinal = True
 				# Strip label.
