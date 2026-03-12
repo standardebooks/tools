@@ -1458,6 +1458,7 @@ def css_selector_to_class(selector: str) -> str:
 	for match, replacement in SELECTOR_REPLACEMENTS.items():
 		replacement_class = replacement_class.replace(match, replacement)
 
+	replacement_class = regex.sub(r"\s+", "", replacement_class)
 	replacement_class = regex.sub(r"-{2,}", "-", replacement_class).strip("-")
 
 	return replacement_class
