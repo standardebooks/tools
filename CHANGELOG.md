@@ -1,3 +1,39 @@
+# 3.0.2
+
+## General
+
+- Fully type hint codebase and switch from `mypy` to `pyright`
+
+- Simplify list/int accumulations with dictionaries using `defaultdict`. Thanks to Andrew Paseltiner
+
+- Fix f-string errors causing some crashes
+
+## se build
+
+- Don't hyphenate Kobo builds after all, because it breaks the dictionary
+
+- Process MathML compatibility before simplifying CSS to ensure classes are correct
+
+- Correctly generate class name without spaces when simplifying CSS selector
+
+## se build-toc
+
+- Correctly get inner XML of a ToC item node
+
+## se create-draft
+
+- Omit `src` directory for white-label drafts. Thanks to Andrew Paseltiner
+
+## se lint
+
+- Add m-089, gnore rule ignores the same line more than once.
+
+- Don't apply t-030 to personal names
+
+- Resolve paths to ensure they are compared consistently in m-045. Thanks to Andrew Paseltiner
+
+- Improve c-019
+
 # 3.0.1
 
 ## General
