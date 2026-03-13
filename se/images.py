@@ -221,6 +221,13 @@ def calculate_image_lines(string: str, target_height: int, canvas_width: int) ->
 				lines[0] = top_line
 				lines[1] = bottom_line
 
+	# If the first line is one word, and the second line begins with a word followed by `:`, move that word up. See <https://standardebooks.org/ebooks/may-sinclair/mary-olivier-a-life>.
+	if len(lines) > 1 and " " not in lines[0]:
+		word_to_move = regex.match(r"^[\p{Letter}\p{Digit}]+:", lines[1], flags=regex.IGNORECASE)
+		if word_to_move:
+			lines[0] += f" {word_to_move[0]}"
+			lines[1] = regex.sub(r"^[\p{Letter}\p{Digit}]+:\s", "", lines[1])
+
 	return lines
 
 def get_data_url(image_path: Path) -> str:
