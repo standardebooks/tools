@@ -15,7 +15,17 @@
 			<!--no match-->
 			<p>The song “<span epub:type="se:name.music.song">Eleanor Rigby</span>.”</p>
 			<!--no match-->
+			<p>The song “<span epub:type="se:name.music.song">Eleanor Rigby and <abbr>Co.</abbr></span>”</p>
+			<!--no match-->
 			<p>The song “<span epub:type="se:name.music.song">Help, Help Divinity, <abbr>etc.</abbr></span>”</p>
+			<!-- match -->
+			<p>Test <span epub:type="se:name.publication.essay">Pestilence, Right-Hand Section of the Triptych.</span></p>
+			<!-- No match, quotes are a valid part of the name. -->
+			<p><i epub:type="se:name.visual-art.painting">Pestilence, Right-Hand Section of the Triptych “Disaster”</i>.</p>
+			<!-- No match, single quote is part of the name. -->
+			<p><i epub:type="se:name.publication.magazine">Scribblers’</i>.</p>
+			<!-- No match, quotes are a valid part of the name. -->
+			<p><i epub:type="se:name.visual-art.painting">“Why It’s a Dragon!” He Cried</i>.</p>
 		</section>
 	</body>
 </html>

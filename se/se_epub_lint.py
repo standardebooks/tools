@@ -2238,7 +2238,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	if nodes:
 		messages.append(LintMessage("s-024", "Entirely non-English header set in italics. Hint: Don’t use italics, and put the [attr]xml:lang[/] attribute on the [xhtml]<h#>[/] element.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
-	nodes = dom.xpath("//span[re:test(@epub:type, 'se:name\\.(music\\.song|publication\\.poem)') and (re:test(., '^[“‘].+[”’]$') or (re:test(., '[\\.,]$') and not(./abbr[last()])))]")
+	nodes = dom.xpath("//*[re:test(@epub:type, '\\bse:name\\.') and re:test(., '^[“][^”]+”?$|^[^“]+”$|^‘|[\\.,;]$') and not(name()='abbr' or .//abbr[position()=last()]) and not(ancestor-or-self::section[contains(@epub:type, 'colophon')])]")
 	if nodes:
 		messages.append(LintMessage("s-025", "Illegal scare quotes or ending punctuation in title of media. Hint: surrounding punctuation is not a part of a title.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
