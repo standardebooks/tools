@@ -2,6 +2,7 @@ __pycache__
 /build
 /dist
 /*.egg-info
+/.eggs
 /.pytest_cache
 /.vscode
 /todo
