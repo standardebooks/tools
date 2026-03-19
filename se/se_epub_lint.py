@@ -3670,8 +3670,10 @@ def _lint_process_ignore_file(self: 'SeEpub', lint_ignore_dom: EasyXmlTree | Non
 
 					error_message += f": {code.ignore_element.get_attr('code')}"
 
-					code.ignore_element.set_text(error_message)
-					unused_codes.append(code.ignore_element)
+					# Make a clone of the node to set its text, because we may two unused items in the same file but on a different line.
+					node = deepcopy(code.ignore_element)
+					node.set_text(error_message)
+					unused_codes.append(node)
 
 		if unused_codes:
 			messages.append(LintMessage("m-048", "Unused ignore rule.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_text(unused_codes)))
