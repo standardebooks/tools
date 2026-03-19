@@ -1,4 +1,4 @@
-t-005 [Manual Review] chapter-1.xhtml Dialog without ending comma.
+y-037 [Manual Review] chapter-1.xhtml Possible typo: Dialog without ending comma.
  Line 12:       “Hello is said to be a corruption of” he said
  Line 14:       “Hello is said to be a corruption of” said Bill
  Line 16:       “Hello is said to be a corruption of” he asked

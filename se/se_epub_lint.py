@@ -384,7 +384,6 @@ TYPOGRAPHY
 "t-002", "Comma or period outside of double quote. Hint: Generally punctuation goes within single and double quotes."
 "t-003", "[text]“[/] missing matching [text]”[/]. Hint: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog."
 "t-004", "[text]‘[/] missing matching [text]’[/]."
-"t-005", "Dialog without ending comma."
 "t-006", "Comma after producer name, but there are only two producers."
 "t-007", "Possessive [text]’s[/] within name italics. Hint: If the name in italics is doing the possessing, [text]’s[/] goes outside italics."
 "t-008", "Repeated punctuation."
@@ -458,6 +457,8 @@ TYPOGRAPHY
 "t-076", "Grapheme or phoneme not italicized. Hint: Dialect with missing letters should mark missing letters with [text]’[/]."
 "t-077", "Punctuation followed by opening quotation."
 "t-078", "Illegal hyphenated two-word phrasal adjective that begins with an adverb ending in [text]ly[/]."
+UNUSED
+"t-005", "Dialog without ending comma."
 
 XHTML
 "x-001", "[text]utf-8[/] string incorrectly cased. Hint: [text]utf-8[/] must always be lowercase."
@@ -520,6 +521,7 @@ TYPOS
 "y-034", "Possible typo: [text].[/] embedded in word. Hint: Abbreviations must be in an [xhtml]<abbr>[/] element."
 "y-035", "Possible typo: Single letter. Hints: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [attr]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?"
 "y-036", "Possible typo: [text]’[/] after punctuation, but no [text]‘[/]. Hints: Is [text]‘[/] missing or mis-curled? [text]’[/] that elides a word is placed before punctuation."
+"y-037", "Possible typo: Dialog without ending comma."
 """
 
 NEWLINE_PATTERN = regex.compile(r"\n")
@@ -2704,12 +2706,6 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 	if line_matches:
 		messages.append(LintMessage("t-004", "[text]‘[/] missing matching [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(line_matches)))
 
-	# Check for closing dialog without comma.
-	# Exclude `is said` as that's usually not indicative of dialog.
-	line_matches = source_file.findall(r"“[\p{Uppercase_letter}][^”]{20,}[\p{Lowercase_letter}]” (s?he (said|[\p{Lowercase_letter}]{2,}ed)|(said|[\p{Lowercase_letter}]{2,}ed) [\p{Uppercase_letter}][\p{Lowercase_letter}]+)")
-	if line_matches:
-		messages.append(LintMessage("t-005", "Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(line_matches)))
-
 	# Check for possessive `'s` within name italics, but not in ignored files like the colophon which we know have no possessives.
 	# Allow some known exceptions like `Harper's`, etc.
 	if filename.name not in IGNORED_FILENAMES:
@@ -3523,6 +3519,12 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: EasyXmlTree, special_f
 	nodes = dom.xpath("/html/body//p[re:test(., '^[^‘]+[^A-Z][\\!\\.\\,\\?\\:\\;]’') and not(.//abbr[following-sibling::text()[re:test(., '^’')]]) and not(./ancestor-or-self::blockquote[re:test(., '‘')]) and not(contains(@class, 'continued') and ./preceding-sibling::*[1][contains(., '‘')])]")
 	if nodes:
 		messages.append(LintMessage("y-036", "Possible typo: [text]’[/] after punctuation, but no [text]‘[/]. Hints: Is [text]‘[/] missing or mis-curled? [text]’[/] that elides a word is placed before punctuation.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
+
+	# Check for closing dialog without comma.
+	# Exclude `is said` as that's usually not indicative of dialog.
+	line_matches = source_file.findall(r"“[\p{Uppercase_letter}][^”]{20,}[\p{Lowercase_letter}]” (s?he (said|[\p{Lowercase_letter}]{2,}ed)|(said|[\p{Lowercase_letter}]{2,}ed) [\p{Uppercase_letter}][\p{Lowercase_letter}]+)")
+	if line_matches:
+		messages.append(LintMessage("y-037", "Possible typo: Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(line_matches)))
 
 	return messages
 
