@@ -2706,8 +2706,7 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 
 	# Check for closing dialog without comma.
 	# Exclude `is said` as that's usually not indicative of dialog.
-	line_matches = source_file.findall(r"[\p{Lowercase_Letter}]+?” [\p{Letter}]+? said")
-	line_matches = [match for match in line_matches if " is said" not in match[0]]
+	line_matches = source_file.findall(r"“[\p{Uppercase_letter}][^”]{20,}[\p{Lowercase_letter}]” (s?he (said|[\p{Lowercase_letter}]{2,}ed)|(said|[\p{Lowercase_letter}]{2,}ed) [\p{Uppercase_letter}][\p{Lowercase_letter}]+)")
 	if line_matches:
 		messages.append(LintMessage("t-005", "Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(line_matches)))
 
