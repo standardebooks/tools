@@ -3856,9 +3856,9 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 	other_source_count = 0
 	sources = self.metadata_dom.xpath("/package/metadata/dc:source")
 	for source in sources:
-		if regex.search(r"(gutenberg\.org|wikisource\.org|fadedpage\.com|gutenberg\.net\.au|gutenberg\.ca)", source.inner_text()):
+		if regex.search(r"^https://[a-z\.]*(gutenberg\.org|wikisource\.org/wiki/(?!File:)|fadedpage\.com|gutenberg\.net\.au|gutenberg\.ca)", source.inner_text()):
 			transcription_source_count = transcription_source_count + 1
-		elif regex.search(r"(hathitrust\.org|/archive\.org|books\.google\.com|google\.com/books)", source.inner_text()):
+		elif regex.search(r"^https://[a-z\.]*(hathitrust\.org|/archive\.org|books\.google\.com|google\.com/books|en\.wikisource\.org/wiki/File:|commons\.wikimedia\.org/wiki/File:)", source.inner_text()):
 			page_scan_source_count = page_scan_source_count + 1
 		else:
 			other_source_count = other_source_count + 1
