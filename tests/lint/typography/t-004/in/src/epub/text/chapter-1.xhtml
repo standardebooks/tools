@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0" xml:lang="en-GB">
+	<head>
+		<title>I</title>
+		<link href="../css/core.css" rel="stylesheet" type="text/css"/>
+		<link href="../css/local.css" rel="stylesheet" type="text/css"/>
+	</head>
+	<body epub:type="bodymatter z3998:fiction">
+		<section id="chapter-1" epub:type="chapter">
+			<h2 epub:type="ordinal z3998:roman">I</h2>
+			<!-- ERROR 1, missing closing quote at end -->
+			<p>“I met the man who buries the dead today,” said Francis, our valet de chambre, “as he was coming back from the churchyard with his empty carriage. ‘One or two more taken there?’ I asked. ‘Oh yes; six or seven⁠—about half-a-dozen every day, sometimes even more; and it does happen sometimes that one or other gives a grunt or so inside the hearse there; but that makes no matter, in he goes into the trench, the d⁠⸺⁠d Prussian.”</p>
+			<!-- VALID 1, nested quote continues to next paragraph -->
+			<p>“I artlessly replied: ‘Well⁠—I shall leave as soon as my boots are returned.’ My uncle replied: ‘No joking if you please. The colonel has resolved to blow out your brains as soon as he sees you, and you may be sure it is not a vain threat. I suggested a duel, but he replied: “No, I tell you I will blow his brains out.”</p>
+			<p>“ ‘Let us now look at this question from another standpoint.</p>
+			<!-- VALID 2, nested quote in blockquote -->
+			<blockquote epub:type="z3998:verse">
+				<p>
+					<span>‘Full many a flower is born to blush unseen,</span>
+					<br/>
+					<span>‘And waste its fragrance on the desert air.’</span>
+				</p>
+			</blockquote>
+			<!-- VALID 3, running quote broken by <br/> -->
+			<p epub:type="z3998:valediction">“ ‘I am, sir,<br/>
+			‘Yours truly</p>
+		</section>
+	</body>
+</html>

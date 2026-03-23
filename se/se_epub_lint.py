@@ -2701,10 +2701,9 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 		messages.append(LintMessage("t-003", "[text]“[/] missing matching [text]”[/]. Hint: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog.", se.MESSAGE_TYPE_WARNING, filename, submessages))
 
 	# Check for `lsquo` not correctly closed.
-	line_matches = source_file.findall(r"‘[^“’]+?‘")
-	line_matches = [match for match in line_matches if "</p" not in match[0] and "<br/>" not in match[0]]
-	if line_matches:
-		messages.append(LintMessage("t-004", "[text]‘[/] missing matching [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(line_matches)))
+	nodes = dom.xpath("//p[ (re:test(., '‘[^“’]+?‘') or (re:test(., '‘[^’]+”$') and not(re:test(., '“\\s?‘') or (following-sibling::*[1])[re:test(., '^“\\s?‘')]))) and not(ancestor-or-self::*[re:test(@epub:type, 'z3998:(hymn|poem|song|verse)')] or ./br)]")
+	if nodes:
+		messages.append(LintMessage("t-004", "[text]‘[/] missing matching [text]’[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for possessive `'s` within name italics, but not in ignored files like the colophon which we know have no possessives.
 	# Allow some known exceptions like `Harper's`, etc.

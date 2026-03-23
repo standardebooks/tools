@@ -1,0 +1,4 @@
+t-004 [Manual Review] chapter-1.xhtml `‘` missing matching `’`.
+ Line 12:       <p>“I met the man who buries the dead today,” said Francis, our valet de chambre, “as he was coming back from the churchyard with his empty carriage. ‘One or two more taken there?’ I asked. ‘Oh yes; six or seven⁠—about half-a-dozen every day, sometimes even more; and it does happen sometimes that one or other gives a grunt or so inside the hearse there; but that makes no matter, in he goes into the trench, the d⁠⸺⁠d Prussian.”</p>
+c-006 [Error] local.css Semantic found, but missing corresponding CSS style.
+ Line 17:       <blockquote epub:type="z3998:verse">
