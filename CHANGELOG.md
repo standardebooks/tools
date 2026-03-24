@@ -1,3 +1,35 @@
+# 3.0.3
+
+## se build
+
+- Improve CSS simplification when !important is involved
+
+## se build-images
+
+- Reorder lines in edge case with short top and longer bottom that contains a colon
+
+## se lint
+
+- Improve s-025
+
+- Allow Wikisource page scans in m-037
+
+- Correctly output unused codes that occur in more than one line
+
+- Improve t-005 and rename to y-037
+
+- Improve t-004
+
+- Fix broken m-035
+
+## se recompose-epub
+
+- Fix broken data string when inlining SVGs
+
+## se modernize-spelling
+
+- Various additions
+
 # 3.0.2
 
 ## General
