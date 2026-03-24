@@ -1670,7 +1670,10 @@ def _lint_special_file_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 			messages.append(LintMessage("m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
 
 		identifier = (self.identifier or "").replace('https://', '')
-		nodes = dom.xpath(f"/html/body//a[re:test(@href, '^https?://standardebooks.org/ebooks/') and re:test(., '^https?://standardebooks.org/ebooks/') and text()!='{identifier}']")
+		# We can have:
+		# 1. The identifier at the final ebook link, which must have a `@href` that exactly matches the identifier *and* text that matches the identifier.
+		# 2. The identifier in a page scans link in the case of multiple page scans, in which case the identifier must match but an anchor is allowed after the identifier.
+		nodes = dom.xpath(f"/html/body//a[re:test(@href, '^https?://standardebooks.org/ebooks/') and (not(re:test(@href, '^https://{identifier}(#.+)?$')) or (not(contains(@href, '#')) and text()!='{identifier}'))]")
 		if nodes:
 			messages.append(LintMessage("m-035", "Unexpected S.E. identifier in colophon.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
