@@ -253,7 +253,7 @@ def get_data_url(image_path: Path) -> str:
 
 			svg_uri = urllib.parse.quote(svg_contents.replace("\n", ""), safe="")
 
-			data_url = f"data:image/svg+xml;encoding={encoding},{svg_uri}"
+			data_url = f"data:image/svg+xml;charset={encoding},{svg_uri}"
 	else:
 		with open(image_path, "rb") as binary_file:
 			mime_type = f"image/{image_path.suffix.replace('.', '')}"
