@@ -2720,6 +2720,7 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 	# Remove `<td>`s with repeated `”` as they are probably ditto marks.
 	matches += source_file.sub(fr"<td[^>]*?>[”\s{se.NO_BREAK_SPACE}]+?(<a .+?epub:type=\"noteref\">.+?</a>)?</td>", "").findall(r"(?:“\s*“|”\s*”|’ ’|‘\s*‘).{0,20}")
 	matches += source_file.findall(r"[\p{Letter}][,\.:;]\s[,\.:;]\s?[\p{Letter}<].{0,20}")
+	matches += source_file.findall(r"[\p{Letter}]\.((</abbr>|</b>|</a>)|</abbr>(</b>|</a>))?\.</p>")
 	if matches:
 		messages.append(LintMessage("t-008", "Repeated punctuation.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(matches)))
 
