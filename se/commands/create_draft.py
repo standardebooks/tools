@@ -194,6 +194,9 @@ def _generate_contributor_string(contributors: list[Contributor], include_xhtml:
 				else:
 					output += contributor.name
 
+	output = output.replace(" Jr.", " <abbr>Jr.</abbr>")
+	output = regex.sub(r"<abbr([^>]*?)>([^<]+)</abbr></b>$", r"""<abbr class="eoc"\1>\2</abbr></b>""", output)
+
 	return output
 
 def _generate_metadata_contributor_xml(contributors: list[Contributor], contributor_type: str) -> str:
@@ -811,6 +814,9 @@ def _create_draft(args: Namespace, plain_output: bool):
 			else:
 				titlepage_xhtml = regex.sub(r"<p>Translated by.+?</p>", "", titlepage_xhtml, flags=regex.DOTALL)
 
+			# If there are terminal abbreviations like `Jr.`, remove duplicated periods.
+			titlepage_xhtml = regex.sub(r"([\p{Letter}]\.(</abbr>|</b>|</abbr></b>)?)\.", r"\1", titlepage_xhtml)
+
 			file.seek(0)
 			file.write(se.formatting.format_xhtml(titlepage_xhtml))
 			file.truncate()
@@ -877,6 +883,9 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 				if transcription_source:
 					colophon_xhtml = colophon_xhtml.replace("TRANSCRIPTION_SOURCE", escape(transcription_source))
+
+				# If there are terminal abbreviations like `Jr.`, remove duplicated periods.
+				colophon_xhtml = regex.sub(r"([\p{Letter}]\.(</abbr>|</b>|</abbr></b>)?)\.", r"\1", colophon_xhtml)
 
 				file.seek(0)
 				file.write(colophon_xhtml)
