@@ -98,7 +98,7 @@ setup(
 		"pyoxipng==9.1.1",
 		"regex==2026.2.28",
 		"repro_zipfile==0.4.1",
-		"requests==2.32.5",
+		"requests==2.33.0",
 		"rich==14.3.3",
 		"roman==5.2",
 		"selenium==4.41.0",
