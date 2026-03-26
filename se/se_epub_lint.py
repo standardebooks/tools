@@ -2487,7 +2487,8 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 		messages.append(LintMessage("s-067", "Header element with a [val]label[/] semantic child, but without an [val]ordinal[/] semantic child.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for header elements with a `z3998:roman` semantic but without an `ordinal` semantic.
-	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][contains(@epub:type, 'z3998:roman') and not(contains(@epub:type, 'ordinal'))]")
+	# Exclude 4-digit numbers that start with `17`, `18`, or `19`, as those are likely years and not ordinals.
+	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][contains(@epub:type, 'z3998:roman') and not(contains(@epub:type, 'ordinal'))] | /html/body//header/p[not(re:test(@epub:type, '\\bordinal\\b')) and ((re:test(., '^[0-9,]+$') and not(re:test(., '^1[789][0-9]{2}'))) or re:test(@epub:type, '\\bz3998:roman\\b'))]")
 	if nodes:
 		messages.append(LintMessage("s-068", "Header element missing [val]ordinal[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
