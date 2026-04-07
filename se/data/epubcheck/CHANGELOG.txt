@@ -330,7 +330,7 @@ EPUBCheck is also available in the Maven Central Repository as [`org.w3c:epubche
 * downgrade RSC-004 (cannot decrypt resource) to INFO ([#1136](https://github.com/w3c/epubcheck/issues/1136)) ([e732068](https://github.com/w3c/epubcheck/commit/e732068))
 * report empty `title` elements in XHTML Content Documents ([#1135](https://github.com/w3c/epubcheck/issues/1135)) ([f115730](https://github.com/w3c/epubcheck/commit/f115730)), closes [#1093](https://github.com/w3c/epubcheck/issues/1093)
 * **ARIA:** allow doc-epigraph on 'section' and doc-cover on 'img' ([84a0979](https://github.com/w3c/epubcheck/commit/84a0979))
-* update the XML output to the new JHOVE schema ([0b346fd](https://github.com/w3c/epubcheck/commit/0b346fd)) (thanks @tledoux!)
+* update the XML ouput to the new JHOVE schema ([0b346fd](https://github.com/w3c/epubcheck/commit/0b346fd)) (thanks @tledoux!)
 
 ### Bug Fixes
 
