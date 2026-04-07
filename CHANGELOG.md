@@ -58,7 +58,7 @@
 
 ## se lint
 
-- Add m-089, gnore rule ignores the same line more than once.
+- Add m-089, ignore rule ignores the same line more than once.
 
 - Don't apply t-030 to personal names
 
@@ -122,7 +122,7 @@
 
 - Improve check for canonical IA URLs and fix broken xpath
 
-- Correctly find line number for unsed selectors with pseudo-elements
+- Correctly find line number for unused selectors with pseudo-elements
 
 - Don't include the ToC in t-009
 
@@ -268,7 +268,7 @@ Minor syntax fixes.
 
 - Improve conversion of complex selectors to CSS classes, and correctly check whether a @class attribute contains a class
 
-- Code regorganization and refactor. Thanks to Vince Rice
+- Code reorganization and refactor. Thanks to Vince Rice
 
 - Don't build Kobo if we're doing a check-only run
 
@@ -756,7 +756,7 @@ Minor syntax fixes.
 
 - Remove dash after two- or three-em-dashes
 
-- Fix common erro in opening double quote
+- Fix common error in opening double quote
 
 # 2.7.4
 
@@ -926,7 +926,7 @@ Minor syntax fixes.
 
 ## se build
 
-- Only include Kobo/Kindle se.css compatiblity fixes in those particular builds, not all builds
+- Only include Kobo/Kindle se.css compatibility fixes in those particular builds, not all builds
 
 ## se lint
 
@@ -2350,7 +2350,7 @@ Minor syntax fixes.
 
 ## se recompose-epub
 
-- Improve fix for positioning figures/images with `positon: absolute;` during recomposition
+- Improve fix for positioning figures/images with `position: absolute;` during recomposition
 
 - Remove `data-css` classes from output
 
@@ -3397,7 +3397,7 @@ Released in error; no changes.
 
 - Add s-056, last `<p>` child of endnote missing backlink
 
-- Add s-057, backlink notereef fragment identifier doesn't match endnote number
+- Add s-057, backlink noteref fragment identifier doesn't match endnote number
 
 - Add m-056, author name present in long description but first instance isn't hyperlinked
 

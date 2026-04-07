@@ -324,7 +324,7 @@ provides the following options:
 
 #### --no-stream
 
-    Forces all documents to be be parsed in buffered mode instead of streaming
+    Forces all documents to be parsed in buffered mode instead of streaming
     mode (causes some parse errors to be treated as non-fatal document errors
     instead of as fatal document errors).
 
