@@ -215,6 +215,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bempale", r"impale", xhtml)				# empale -> impale
 	xhtml = regex.sub(r"\bEncreas", r"Increas", xhtml)				# Encreas(e|ing) -> Increas(e|ing)
 	xhtml = regex.sub(r"\bencreas", r"increas", xhtml)				# encreas(e|ing) -> increas(e|ing)
+	xhtml = regex.sub(r"\b([Ee])ngulph", r"\1ngulf", xhtml)				# engulph -> engulf
 	xhtml = regex.sub(r"\b([Ee])nterpriz", r"\1nterpris", xhtml)			# enterprize -> enterprise
 	xhtml = regex.sub(r"\b([Ee])very body\b", r"\1verybody", xhtml)			# every body -> everybody
 	xhtml = regex.sub(r"\b([Ee])very thing\b", r"\1verything", xhtml)		# every thing -> everything
