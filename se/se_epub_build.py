@@ -655,7 +655,7 @@ def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote
 		for i in range(0, len(endnotes), ENDNOTE_CHUNK_SIZE):
 			chunked_endnotes.append(endnotes[i:i + ENDNOTE_CHUNK_SIZE])
 
-		# We use our endnotes file DOM as as base for the split endnotes. Remove all endnotes and add an empty `<ol>` to start.
+		# We use our endnotes file DOM as a base for the split endnotes. Remove all endnotes and add an empty `<ol>` to start.
 		endnotes_base = deepcopy(dom)
 		endnotes_base.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol")[0].remove()
 		endnotes_base.xpath("/html/body/section[contains(@epub:type, 'endnotes')]")[0].append(EasyXmlElement("<ol></ol>"))
@@ -1240,7 +1240,7 @@ def _generate_ncx(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: 
 		ref_node.set_attr("title", node.text)
 		ref_node.set_attr("href", node.get_attr("href"))
 
-		# Set the `type` attribute for the titlepage reference element, using the `title` attribute to identify the the titlepage `<a>` element from the ToC, because it has no `epub:type`.
+		# Set the `type` attribute for the titlepage reference element, using the `title` attribute to identify the titlepage `<a>` element from the ToC, because it has no `epub:type`.
 		if ref_node.get_attr("title") == "Titlepage":
 			ref_node.set_attr("type", "title-page")
 
