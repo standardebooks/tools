@@ -266,6 +266,8 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"incumber", r"encumber", xhtml)				# incumber -> encumber
 	xhtml = regex.sub(r"\bIndors(e|ing)", r"Endors\1", xhtml)			# Indorse -> Endorse
 	xhtml = regex.sub(r"\bindors(e|ing)", r"endors\1", xhtml)			# indorse -> endorse
+	xhtml = regex.sub(r"\bIngulph", r"Engulf", xhtml)				# Ingulph -> Engulf
+	xhtml = regex.sub(r"\bingulph", r"engulf", xhtml)				# ingulph -> engulf
 	xhtml = regex.sub(r"\bIntrust", r"Entrust", xhtml)				# Intrust -> Entrust
 	xhtml = regex.sub(r"\bintrust", r"entrust", xhtml)				# intrust -> entrust
 	xhtml = regex.sub(r"\b([Kk])idnaping\b", r"\1idnapping", xhtml)			# kidnaping -> kidnapping
