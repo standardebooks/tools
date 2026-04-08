@@ -268,6 +268,7 @@ METADATA
 "m-087", "MARC relators not in alphabetical order."
 "m-088", "[xhtml]<ignore>[/] element ignores a specific line, but a sibling [xhtml]<ignore>[/] element ignores the entire file."
 "m-089", "Ignore rule ignores the same line more than once."
+"m-090", "[val]dedication[/] semantic inflection found, but no MARC relator [val]dto[/] (Dedicator)."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -2031,6 +2032,9 @@ def _lint_xhtml_metadata_checks(self: 'SeEpub', filename: Path, dom: EasyXmlTree
 
 		if dom.xpath("/html/body/*[contains(@epub:type, 'loi') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and (text()='ill' or text()='pht')]"):
 			messages.append(LintMessage("m-034", "[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator).", se.MESSAGE_TYPE_WARNING, filename))
+
+		if dom.xpath("/html/body/*[contains(@epub:type, 'dedication') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='dto']"):
+			messages.append(LintMessage("m-090", "[val]dedication[/] semantic inflection found, but no MARC relator [val]dto[/] (Dedicator).", se.MESSAGE_TYPE_WARNING, filename))
 
 	# Check that `Internet Archive` and `HathiTrust` are preceded by `the`. They might have an immediate preceding text node that ends in `the`, or they might be preceded by a white space node, then a `<br/>`, then a text node ending in `the`.
 	nodes = dom.xpath("/html/body//a[(re:test(text(), '[Hh]athi') and re:test(@href, '^https://[^\"]*?hathitrust\\.org')) or (re:test(text(), 'Internet Archive') and re:test(@href, 'https://[^\"]*?archive\\.org'))][(preceding-sibling::node()[2][not(self::br)] and preceding-sibling::node()[1][not(re:test(., '\\sthe $'))]) or (preceding-sibling::node()[2][self::br] and preceding-sibling::node()[3][not(re:test(., '\\sthe$'))]) ]")
