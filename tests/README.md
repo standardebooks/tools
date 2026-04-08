@@ -27,9 +27,9 @@ The modules are:
 
     * The `build-loi`, `build-manifest`, `build-spine`, `build-title`, and `build-toc` commands can all either update file(s) in the ebook structure, or output to stdout. These commands can thus be tested as part of both this module (when updating files) or the `stdout_commands` module, when writing their output to stdout. When testing within this module, therefore, tests for these commands, if they have command files (see `Creating a test` below), cannot include the `--stdout` argument.
 
-3. `ebook_commands`—These take a feature-complete SE ebook directory structure as input, combined with the file(s) provided for the test, and update one or more of the files. The test directory structure is the same as for draft_commands.
+3. `ebook_commands`—These take a feature-complete SE ebook directory structure as input, combined with the file(s) provided for the test, and update one or more of the files. The test directory structure is the same as for `draft_commands`.
 
-4. `file_commands`—These take one file as input, or in the case of create-draft, nothing, and produce files (possibly in a directory tree) as output. The test directory structure is the same as for draft_commands, but the `in` directory only contains a single file, or, in the case of `create-draft`, is not needed.
+4. `file_commands`—These take one file as input, or in the case of create-draft, nothing, and produce files (possibly in a directory tree) as output. The test directory structure is the same as for `draft_commands`, but the `in` directory only contains a single file, or, in the case of `create-draft`, is not needed.
 
 5. `stdout_commands`—These take a draft (i.e. incomplete) SE ebook directory structure as input, combined with the file(s) provided for the test, and output text to stdout. The test directory structure is the same as for draft_commands. There are two sets of special cases within this module:
 
@@ -51,13 +51,13 @@ For the first five modules above (build, draft, ebook, file, stdout), creating a
 
 2. Create a subdirectory beneath the command directory labeled `test-X`, where X is the next test number in sequence. For example, if `test-1` through `test-5` already exists, then create a `test-6` directory.
 
-3. Within that new test directory, create `golden` and `in` subdirectories. As noted above, there are a few commands that do not require or do not use the `in` subdirectory, e.g. the `build` command can have input files but do not require them, and the `create-draft` command does not take any input and therefore does not need an `in` subdirectory.
+3. Within that new test directory, create `golden` and `in` subdirectories. As noted above, there are a few commands that do not require or do not use the `in` subdirectory, e.g. the `build` command can have input files but does not require them, and the `create-draft` command does not take any input and therefore does not need an `in` subdirectory.
 
 4. Within the `in` directory, create the minimum SE ebook directory tree needed for the file(s) being used in the test. For example, if only a chapter file is needed for the test, then create an `src/epub/text` directory structure. If a css file is needed for the test, create a `src/epub/css` directory structure. And so forth.
 
 5. Copy/create the file(s) needed for the test into that directory structure, putting the file(s) in the appropriate directory(ies).
 
-6. If no arguments are necessary for the `se` command being tested, that is all that is needed in the `text-X` directory. However, if arguments are needed for the test, then a file named `{command}-command`, e.g. `build-manifest-command`, should be created in the test directory. That file should contain a single line, with the command name and arguments on it. Thus, to test that the standard out argument to the `build-manifest` command is working, create a `build-manifest-command` file in the `test-X` directory and populate it with a line containing `build-manifest --stdout`.
+6. If no arguments are necessary for the `se` command being tested, that is all that is needed in the `test-X` directory. However, if arguments are needed for the test, then a file named `{command}-command`, e.g. `build-manifest-command`, should be created in the test directory. That file should contain a single line, with the command name and arguments on it. Thus, to test that the standard-output argument to the `build-manifest` command is working, create a `build-manifest-command` file in the `test-X` directory and populate it with a line containing `build-manifest --stdout`.
 
 7. Run the new test (and _only_ the new test) with the `--save-golden-files` option to create valid “golden” file(s) for the test, i.e. the files that future tests will be compared against. See Running tests below for how to run a single test. After creating the golden files, review them to ensure that the output is valid, i.e. that the command produced the file changes that were expected.
 
@@ -89,7 +89,7 @@ To run a single test, include the module file basename and the test id in the fo
 
 For lint, the format is `tests_lint.py::test_lint[{lint-subtype}-{lint-error-id}]`, e.g. `pytest tests/test_lint.py::test_lint[css-c-003]`.
 
-To see test ids, run pytest in collect-only mode, e.g. `pytest --collect-only tests` or `pytest --collect-only tests:/test_lint.py`, or pass the -v[v] option when running the tests, e.g. `pytest -v tests`.
+To see test ids, run pytest in collect-only mode, e.g. `pytest --collect-only tests` or `pytest --collect-only tests/test_lint.py`, or pass the -v[v] option when running the tests, e.g. `pytest -v tests`.
 
 The testing directory structure:
 ```
