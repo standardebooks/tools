@@ -173,7 +173,6 @@ FILESYSTEM
 "f-018", "Image greater than 4,000,000 pixels square in dimension."
 "f-019", "[path].png[/] file without transparency. Hint: If an image doesn’t have transparency, it should be saved as a [path].jpg[/]."
 UNUSEDvvvvvvvvvvvvvvvvv
-"f-003", ""
 "f-004", ""
 "f-005", ""
 "f-006", ""
