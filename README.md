@@ -22,7 +22,7 @@ sudo apt install -y calibre default-jre git python3-dev python3-pip python3-venv
 pipx install standardebooks
 ```
 
-## Ubuntu 20.04 (Trusty) users
+## Ubuntu 20.04 (Focal) users
 
 ```shell
 # Install some pre-flight dependencies.
@@ -110,9 +110,9 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 ```
 
-## OpenBSD 6.6 Users
+## OpenBSD 6.6 users
 
-These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 release as well.
+These instructions were tested on OpenBSD 6.6, but may also work on 6.5.
 
 1. Create a text file to feed into `pkg_add` called `~/standard-ebooks-packages`. It should contain the following:
 
@@ -125,7 +125,7 @@ These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 rele
 	git--
 	```
 
-2. Install dependencies using `doas pkg_add -ivl ~/standard-ebooks-packages`. Follow linking instructions provided by `pkg_add` to save keystrokes, unless you want to have multiple python versions and pip versions. In my case, I ran `doas ln -sf /usr/local/bin/pip3.7 /usr/local/bin/pip`.
+2. Install dependencies using `doas pkg_add -ivl ~/standard-ebooks-packages`. Follow the linking instructions provided by `pkg_add` to save keystrokes, unless you want multiple Python and pip versions installed. In my case, I ran `doas ln -sf /usr/local/bin/pip3.7 /usr/local/bin/pip`.
 
 3. Add `~/.local/bin` to your path.
 
@@ -269,7 +269,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se create-draft`
 
-	Create a skeleton of a new Standard Ebook.
+	Create the skeleton of a new Standard Ebook.
 
 -	### `se css-select`
 
@@ -305,7 +305,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se interactive-replace`
 
-	Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (c) Center on match. (q) Save this file and quit.
+	Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with Alt for page-at-a-time scrolling in any direction. Basic Emacs (default) or Vim-style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (c) Center on match. (q) Save this file and quit.
 
 -	### `se lint`
 
@@ -369,7 +369,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se xpath`
 
-	Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed.
+	Print the results of an XPath expression evaluated against a set of XHTML files. The default namespace is removed.
 
 # What a Standard Ebooks source directory looks like
 
