@@ -233,7 +233,7 @@ METADATA
 "m-051", "Missing expected element in metadata."
 "m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"dcterms:alternative\" refines="#title"> element in metadata."
 "m-053", "[xml]<meta property=\"se:subject\">[/] elements not in alphabetical order."
-"m-054", "Non-canonical Standard Ebooks URL. Expected: [url]https://standardebooks.org/ebooks/<AUTHOR>/<TITLE>\\[/<CONTRIBUTOR> ...][/]. Hint: No trailing slash."
+"m-054", "Non-canonical tolstoy.life URL. Expected: [url]https://tolstoy.life/ebooks/<AUTHOR>/<TITLE>\\[/<CONTRIBUTOR> ...][/]. Hint: No trailing slash."
 "m-055", "[xml]<dc:description>[/] element doesn’t end with a period."
 "m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not linked to their S.E. author page."
 "m-057", "Illegal [attr]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element. Hint: [attr]xml:lang[/] should be [attr]lang[/]."
@@ -1267,7 +1267,7 @@ def _get_malformed_urls(dom: EasyXmlTree, filename: Path) -> list[LintMessage]:
 	expected_regex = r"https://standardebooks\.org(/|(/[a-z0-9\-_]+)+)($|[#\"<])"
 	nodes = dom.xpath(f"/package/metadata/*[not(@property='se:production-notes') and re:test(., '{search_regex}') and not(re:test(., '{expected_regex}'))] | /html/body//a[re:test(@href, '{search_regex}') and not(re:test(@href, '{expected_regex}'))]")
 	if nodes:
-		messages.append(LintMessage("m-054", "Non-canonical Standard Ebooks URL. Expected: [url]https://standardebooks.org/ebooks/<AUTHOR>/<TITLE>\\[/<CONTRIBUTOR> ...][/]. Hint: No trailing slash.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("m-054", "Non-canonical tolstoy.life URL. Expected: [url]https://tolstoy.life/ebooks/<AUTHOR>/<TITLE>\\[/<CONTRIBUTOR> ...][/]. Hint: No trailing slash.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	search_regex = r"^https?://(.+\.)?gutenberg\.ca/"
 	expected_regex = r"^https://gutenberg\.ca/.+\.html$"

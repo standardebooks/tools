@@ -39,7 +39,7 @@ def main() -> None:
 
 		commands = get_commands()
 
-		parser = argparse.ArgumentParser(description="The entry point for the Standard Ebooks toolset.")
+		parser = argparse.ArgumentParser(description="The entry point for the tolstoy.life ebook toolset.")
 		parser.add_argument("-p", "--plain", dest="plain_output", action="store_true", help="print plain text output, without tables or formatting")
 		parser.add_argument("-v", "--version", action="store_true", help="print version number and exit")
 		parser.add_argument("command", metavar="COMMAND", choices=commands, help="one of: " + " ".join(commands))

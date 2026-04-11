@@ -355,7 +355,7 @@ def _compatibility_replacements_svg(self: 'SeEpub', file_path: Path) -> None:
 
 	# If we're adding stroke to the logo, make sure it's SE files only.
 	# 3rd party files will get mangled.
-	if dom.xpath("/svg/title[contains(., 'Standard Ebooks')]"):
+	if dom.xpath("/svg/title[contains(., 'tolstoy.life')]"):
 		if dom.xpath("/svg/title[contains(., 'titlepage')]"):
 			stroke_width = SVG_TITLEPAGE_OUTER_STROKE_WIDTH
 		else:
@@ -1844,7 +1844,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 			for node in metadata_dom.xpath("/package/metadata"):
 				node.append(etree.fromstring(f"""<meta content="{cover_id}" name="cover"/>"""))
 
-		# Add metadata to the metadata file indicating this file is a Standard Ebooks compatibility build.
+		# Add metadata to the metadata file indicating this file is a tolstoy.life compatibility build.
 		metadata_dom = _add_metadata(metadata_dom, "compatibility")
 
 		# Generate our NCX file for compatibility with older ereaders.

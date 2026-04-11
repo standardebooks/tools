@@ -13,7 +13,7 @@ def semanticate(plain_output: bool) -> int:
 	Entry point for `se semanticate`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Automatically add semantics to Standard Ebooks source directories.")
+	parser = argparse.ArgumentParser(description="Automatically add semantics to tolstoy.life source directories.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
 	args = parser.parse_args()

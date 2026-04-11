@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Defines the SeEpub class, the master class for representing and operating on Standard Ebooks epub3 files.
+Defines the SeEpub class, the master class for representing and operating on tolstoy.life epub3 files.
 """
 
 import base64

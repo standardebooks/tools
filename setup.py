@@ -6,7 +6,7 @@ To build the project, enter the project's root directory and do:
 python3 setup.py bdist_wheel
 
 After the project has been built, you can install it locally:
-pip3 install dist/standardebooks-*.whl
+pip3 install dist/tolstoylife-*.whl
 
 To upload the build to pypi, twine is required:
 pip3 install twine
@@ -40,13 +40,13 @@ def _get_version() -> str:
 
 setup(
 	version=_get_version(),
-	name="standardebooks",
-	description="The toolset used to produce Standard Ebooks epub ebooks.",
+	name="tolstoylife",
+	description="The toolset used to produce tolstoy.life epub ebooks.",
 	long_description=_get_file_contents(Path(__file__).resolve().parent / "README.md"),
 	long_description_content_type="text/markdown",
-	url="https://standardebooks.org/",
-	author="Standard Ebooks",
-	author_email="admin@standardebooks.org",
+	url="https://tolstoy.life/",
+	author="tolstoy.life",
+	author_email="admin@tolstoy.life",
 	classifiers=[
 		"Development Status :: 5 - Production/Stable",
 		"Intended Audience :: Developers",
@@ -63,10 +63,10 @@ setup(
 		],
 	},
 	project_urls={
-		"source": "https://standardebooks.org/tools",
-		"changelog": "https://github.com/standardebooks/tools/blob/master/CHANGELOG.md",
-		"issues": "https://github.com/standardebooks/tools/issues",
-		"funding": "https://standardebooks.org/donate"
+		"source": "https://tolstoy.life/tools",
+		"changelog": "https://github.com/tolstoylife/tools/blob/master/CHANGELOG.md",
+		"issues": "https://github.com/tolstoylife/tools/issues",
+		"funding": "https://tolstoy.life/donate"
 	},
 
 	############################################################

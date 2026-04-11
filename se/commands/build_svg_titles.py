@@ -17,7 +17,7 @@ def build_svg_titles(plain_output: bool) -> int:
 
 	parser = argparse.ArgumentParser(description="Update or add SVG <title> elements based on the alt attributes from the <img> elements.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a tolstoy.life source directory")
 	args = parser.parse_args()
 
 	console = se.init_console()

@@ -19,7 +19,7 @@ def build(plain_output: bool) -> int:
 	Entry point for `se build`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Build compatible .epub and advanced .epub ebooks from a Standard Ebook source directory. Output is placed in the current directory, or the target directory with --output-dir.")
+	parser = argparse.ArgumentParser(description="Build compatible .epub and advanced .epub ebooks from a tolstoy.life source directory. Output is placed in the current directory, or the target directory with --output-dir.")
 	parser.add_argument("-b", "--kobo", dest="build_kobo", action="store_true", help="also build a .kepub.epub file for Kobo")
 	parser.add_argument("-c", "--check", action="store_true", help="use epubcheck to validate the compatible .epub file, and the Nu Validator (v.Nu) to validate XHTML5; if Ace is installed, also validate using Ace; if --kindle is also specified and epubcheck, v.Nu, or Ace fail, don’t create a Kindle file")
 	parser.add_argument("-k", "--kindle", dest="build_kindle", action="store_true", help="also build an .azw3 file for Kindle")
@@ -27,7 +27,7 @@ def build(plain_output: bool) -> int:
 	parser.add_argument("-p", "--proof", dest="proof", action="store_true", help="insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("-y", "--check-only", action="store_true", help="run tests used by --check but don’t output any ebook files and exit after checking")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a tolstoy.life source directory")
 	args = parser.parse_args()
 
 	called_from_parallel = se.is_called_from_parallel(False)

@@ -18,7 +18,7 @@ def prepare_release(plain_output: bool) -> int:
 	parser.add_argument("-w", "--no-word-count", dest="word_count", action="store_false", help="don’t calculate word count")
 	parser.add_argument("-r", "--no-revision", dest="revision", action="store_false", help="don’t increment the revision number")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a tolstoy.life source directory")
 	args = parser.parse_args()
 
 	console =se.init_console()

@@ -14,12 +14,12 @@ def recompose_epub(plain_output: bool) -> int: # pylint: disable=unused-argument
 	Entry point for `se recompose-epub`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Recompose a Standard Ebooks source directory into a single (X?)HTML5 file, and print to standard output.")
+	parser = argparse.ArgumentParser(description="Recompose a tolstoy.life source directory into a single (X?)HTML5 file, and print to standard output.")
 	parser.add_argument("-o", "--output", metavar="FILE", type=str, default="", help="a file to write output to instead of printing to standard output")
 	parser.add_argument("-x", "--xhtml", action="store_true", help="output XHTML instead of HTML5")
 	parser.add_argument("-e", "--extra-css-file", metavar="FILE", type=str, default=None, help="the path to an additional CSS file to include after any CSS files in the epub")
 	parser.add_argument("-i", "--image-files", action="store_true", help="leave image src attributes as relative URLs instead of inlining as data: URIs")
-	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
+	parser.add_argument("directory", metavar="DIRECTORY", help="a tolstoy.life source directory")
 	args = parser.parse_args()
 
 	try:

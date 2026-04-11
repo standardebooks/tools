@@ -31,7 +31,7 @@ CONTRIBUTOR_BLOCK_TEMPLATE = """<dc:contributor id="CONTRIBUTOR_ID">CONTRIBUTOR_
 		<meta property="se:url.authority.nacoaf" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_NACOAF_URI</meta>
 		<meta property="role" refines="#CONTRIBUTOR_ID" scheme="marc:relators">CONTRIBUTOR_MARC</meta>"""
 
-USER_AGENT = "Standard Ebooks toolset <https://standardebooks.org/tools>"
+USER_AGENT = "tolstoy.life ebook toolset <https://tolstoy.life/>"
 XPATH_NAMESPACES = {"re": "http://exslt.org/regular-expressions"}
 
 console = se.init_console()
@@ -930,7 +930,7 @@ def create_draft(plain_output: bool) -> int:
 	Entry point for `se create-draft`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Create a skeleton of a new Standard Ebook in the current directory.")
+	parser = argparse.ArgumentParser(description="Create a skeleton of a new tolstoy.life ebook in the current directory.")
 	parser.add_argument("-r", "--translator", dest="translator", nargs="+", help="a translator of the ebook")
 	parser.add_argument("-p", "--pg-id", dest="pg_id", type=se.is_positive_integer, help="the Project Gutenberg ID number of the ebook to download")
 	parser.add_argument("-e", "--email", dest="email", help="use this email address as the main committer for the local Git repository")

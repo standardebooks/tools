@@ -14,9 +14,9 @@ def build_spine(plain_output: bool) -> int:
 	Entry point for `se build-spine`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Generate the <spine> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.")
+	parser = argparse.ArgumentParser(description="Generate the <spine> element for the given tolstoy.life source directory and write it to the ebook’s metadata file.")
 	parser.add_argument("-s", "--stdout", action="store_true", help="print to stdout instead of writing to the metadata file")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a tolstoy.life source directory")
 	args = parser.parse_args()
 
 	if args.stdout and len(args.directories) > 1:

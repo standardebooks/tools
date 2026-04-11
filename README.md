@@ -1,6 +1,6 @@
 # About
 
-A collection of tools Standard Ebooks uses to produce its ebooks, including basic setup of ebooks, text processing, and build tools.
+A collection of tools tolstoy.life uses to produce its ebooks, including basic setup of ebooks, text processing, and build tools.
 
 Installing the toolset makes the `se` command line executable available. Its various commands are described below, or you can use `se help` to list them.
 
@@ -229,7 +229,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se build`
 
-	Build an ebook from a Standard Ebook source directory.
+	Build an ebook from a tolstoy.life source directory.
 
 -	### `se build-ids`
 
@@ -237,15 +237,15 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se build-images`
 
-	Generate ebook cover and titlepages for Standard Ebooks ebooks, and then build ebook covers and titlepages, placing the output in `DIRECTORY/src/epub/images/`.
+	Generate ebook cover and titlepages for tolstoy.life ebooks, and then build ebook covers and titlepages, placing the output in `DIRECTORY/src/epub/images/`.
 
 -	### `se build-manifest`
 
-	Generate the `<manifest>` element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.
+	Generate the `<manifest>` element for the given tolstoy.life source directory and write it to the ebook’s metadata file.
 
 -	### `se build-spine`
 
-	Generate the `<spine>` element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.
+	Generate the `<spine>` element for the given tolstoy.life source directory and write it to the ebook’s metadata file.
 
 -	### `se build-svg-titles`
 
@@ -269,7 +269,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se create-draft`
 
-	Create a skeleton of a new Standard Ebook.
+	Create a skeleton of a new tolstoy.life ebook.
 
 -	### `se css-select`
 
@@ -309,7 +309,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se lint`
 
-	Check for various Standard Ebooks style errors.
+	Check for various tolstoy.life style errors.
 
 -	### `se make-url-safe`
 
@@ -325,7 +325,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se recompose-epub`
 
-	Recompose a Standard Ebooks source directory into a single HTML5 file, and print to standard output.
+	Recompose a tolstoy.life source directory into a single HTML5 file, and print to standard output.
 
 -	### `se renumber-endnotes`
 
@@ -337,7 +337,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se semanticate`
 
-	Apply some scriptable semantics rules from the Standard Ebooks semantics manual to a Standard Ebook source directory.
+	Apply some scriptable semantics rules from the tolstoy.life semantics manual to a tolstoy.life source directory.
 
 -	### `se shift-endnotes`
 
@@ -357,7 +357,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se typogrify`
 
-	Apply some scriptable typography rules from the Standard Ebooks typography manual to a Standard Ebook source directory.
+	Apply some scriptable typography rules from the tolstoy.life typography manual to a tolstoy.life source directory.
 
 -	### `se unicode-names`
 
@@ -371,9 +371,9 @@ We need volunteers to take the lead on the following goals:
 
 	Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed.
 
-# What a Standard Ebooks source directory looks like
+# What a tolstoy.life source directory looks like
 
-Many of these tools act on Standard Ebooks source directories. Such directories have a consistent minimal structure:
+Many of these tools act on tolstoy.life source directories. Such directories have a consistent minimal structure:
 
 ```
 .

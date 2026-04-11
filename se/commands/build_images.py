@@ -14,10 +14,10 @@ def build_images(plain_output: bool) -> int:
 	Entry point for `se build-images`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Generate ebook cover and titlepages for Standard Ebooks ebooks, and then build ebook covers and titlepages, placing the output in `DIRECTORY/src/epub/images/`.")
+	parser = argparse.ArgumentParser(description="Generate ebook cover and titlepages for tolstoy.life ebooks, and then build ebook covers and titlepages, placing the output in `DIRECTORY/src/epub/images/`.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 	parser.add_argument("-g", "--no-generate", action="store_true", help="don’t generate new source cover/titlepage SVGs, only build existing ones")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a tolstoy.life source directory")
 	args = parser.parse_args()
 
 	console = se.init_console()

@@ -16,7 +16,7 @@ def renumber_endnotes(plain_output: bool) -> int:
 	parser = argparse.ArgumentParser(description="Renumber all endnotes and noterefs sequentially from the beginning, taking care to match noterefs and endnotes if possible.")
 	parser.add_argument("-b", "--brute-force", action="store_true", help="renumber without checking that noterefs and endnotes match; may result in endnotes with empty backlinks or noterefs without matching endnotes")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a tolstoy.life source directory")
 	args = parser.parse_args()
 
 	return_code = 0

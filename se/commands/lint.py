@@ -21,11 +21,11 @@ def lint(plain_output: bool) -> int:
 	Entry point for `se lint`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Check for various Standard Ebooks style errors.")
+	parser = argparse.ArgumentParser(description="Check for various tolstoy.life style errors.")
 	parser.add_argument("-a", "--allow", dest="allowed_messages", nargs="+", help="if an se-lint-ignore.xml file is present, allow these specific codes to be raised by lint")
 	parser.add_argument("-s", "--skip-lint-ignore", action="store_true", help="ignore all rules in the se-lint-ignore.xml file")
 	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a tolstoy.life source directory")
 	args = parser.parse_args()
 
 	called_from_parallel = se.is_called_from_parallel(False)
