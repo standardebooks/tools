@@ -269,6 +269,7 @@ METADATA
 "m-088", "[xhtml]<ignore>[/] element ignores a specific line, but a sibling [xhtml]<ignore>[/] element ignores the entire file."
 "m-089", "Ignore rule ignores the same line more than once."
 "m-090", "[val]dedication[/] semantic inflection found, but no MARC relator [val]dto[/] (Dedicator)."
+"m-091", "Possibly misspelled MARC relator found."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1170,10 +1171,16 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='role' and @scheme='marc:relators']")
 	marc_relator_groups: dict[str, list[str]] = defaultdict(list)
 	non_alphabetized_marc_relator_groups: list[str] = []
+	valid_marc_relators: list[str] = ['abr','acp','act','adi','adp','anc','anl','anm','ann','ant','ape','apl','app','aqt','arc','ard','arr','art','asg','asn','ato','att','auc','aud','aue','aup','aus','aut','bdd','bjd','bka','bkd','bkp','blw','bnd','bpd','brd','brl','bsl','cad','cas','ccp','chr','cli','cll','clr','clt','cmm','cmp','cmt','cnd','cng','cns','coe','col','com','con','cop','cor','cos','cot','cou','cov','cpc','cpe','cph','cpl','cpt','cre','crp','crr','crt','csl','csp','cst','ctb','cte','ctg','ctr','cts','ctt','cur','cwt','dbd','dbp','dfd','dfe','dft','dgc','dgg','dgs','dis','djo','dln','dnc','dnr','dpc','dpt','drm','drt','dsr','dst','dtc','dte','dtm','dto','dub','edc','edd','edm','edt','egr','elg','elt','eng','enj','etr','evp','exp','fac','fds','fld','flm','fmd','fmk','fmo','fmp','fnd','fon','fpy','frg','gdv','gis','grt','gst','his','hnr','hst','ill','ilu','ink','ins','inv','isb','itr','ive','ivr','jud','jug','lbr','lbt','ldr','led','lee','lel','len','let','lgd','lie','lil','lit','lsa','lse','lso','ltg','ltr','lyr','mcp','mdc','med','mfp','mfr','mka','mod','mon','mrb','mrk','msd','mte','mtk','mup','mus','mxe','nan','nrt','onp','opn','org','orm','osp','oth','own','pad','pan','pat','pbd','pbl','pdr','pfr','pht','plt','pma','pmn','pnc','pop','ppm','ppt','pra','prc','prd','pre','prf','prg','prm','prn','pro','prp','prs','prt','prv','pta','pte','ptf','pth','ptt','pup','rap','rbr','rcd','rce','rcp','rdd','red','ren','res','rev','rpc','rps','rpt','rpy','rse','rsg','rsp','rsr','rst','rth','rtm','rxa','sad','sce','scl','scr','sde','sds','sec','sfx','sgd','sgn','sht','sll','sng','spk','spn','spy','srv','std','stg','stl','stm','stn','str','swd','tad','tau','tcd','tch','ths','tld','tlg','tlh','tlp','trc','trl','tyd','tyg','uvp','vac','vdg','vfx','wac','wal','wam','wat','waw','wdc','wde','wfs','wft','wfw','win','wit','wpr','wst','wts']
+	invalid_marc_relators_nodes: list[EasyXmlElement] = []
 
 	for node in nodes:
 		refines = node.get_attr('refines')
 		marc_relator_groups[refines].append(node.text)
+
+		# Check for misspelled MARC relators.
+		if node.text not in valid_marc_relators:
+			invalid_marc_relators_nodes.append(node)
 
 	for group, items in marc_relator_groups.items():
 		unsorted_items = items.copy()
@@ -1183,6 +1190,9 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 
 	if non_alphabetized_marc_relator_groups:
 		messages.append(LintMessage("m-087", "MARC relators not in alphabetical order.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(non_alphabetized_marc_relator_groups)))
+
+	if invalid_marc_relators_nodes:
+		messages.append(LintMessage("m-091", "Possibly misspelled MARC relator found.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_node_text(invalid_marc_relators_nodes)))
 
 	return messages
 
