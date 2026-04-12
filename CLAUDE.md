@@ -18,7 +18,9 @@ This toolset sits alongside `website/` and `corpus/` as a specialist component �
 
 ## What this tool is
 
-This is a fork of the [Standard Ebooks toolset](https://github.com/standardebooks/tools), adapted for the tolstoy.life project. It is a Python command-line toolkit (invoked via the `se` command) that handles the full lifecycle of producing a production-quality EPUB ebook from a marked-up source directory.
+This is a fork of the [Standard Ebooks toolset](https://github.com/standardebooks/tools), adapted for the tolstoy.life project. It is a Python command-line toolkit (invoked via the `tl` command) that handles the full lifecycle of producing a production-quality EPUB ebook from a marked-up source directory.
+
+The CLI is called `tl` (not `se`) so it can coexist with an upstream Standard Ebooks installation. Under the hood, the Python package is still `se/` — only the console entry point differs.
 
 It is **not** a general-purpose ebook converter. It is an opinionated editorial pipeline that enforces consistent typography, accessibility, metadata, and structural standards across every ebook produced under the tolstoy.life imprint.
 
@@ -51,7 +53,7 @@ my-ebook/
             └── *.xhtml   ← chapter files
 ```
 
-This structure is created by `se create-draft` and then populated with the source text.
+This structure is created by `tl create-draft` and then populated with the source text.
 
 ---
 
@@ -59,18 +61,21 @@ This structure is created by `se create-draft` and then populated with the sourc
 
 | Command | What it does |
 |---|---|
-| `se create-draft` | Scaffold a new ebook source directory from templates |
-| `se build` | Compile a source directory into a distributable `.epub` |
-| `se build-images` | Generate cover and titlepage SVGs from templates |
-| `se lint` | Check the source directory for style and structural errors |
-| `se typogrify` | Apply typography rules (smart quotes, em-dashes, etc.) |
-| `se semanticate` | Auto-add EPUB semantic markup to XHTML files |
-| `se build-toc` | Generate the table of contents |
-| `se build-manifest` | Generate the OPF manifest |
-| `se recompose-epub` | Collapse an EPUB into a single HTML file (for the PWA reader) |
-| `se prepare-release` | Final pre-release checks and metadata updates |
+| `tl create-draft` | Scaffold a new ebook source directory from templates |
+| `tl build` | Compile a source directory into a distributable `.epub` |
+| `tl build-images` | Generate cover and titlepage SVGs from templates |
+| `tl lint` | Check the source directory for style and structural errors |
+| `tl typogrify` | Apply typography rules (smart quotes, em-dashes, etc.) |
+| `tl semanticate` | Auto-add EPUB semantic markup to XHTML files |
+| `tl build-toc` | Generate the table of contents |
+| `tl build-manifest` | Generate the OPF manifest |
+| `tl recompose-epub` | Collapse an EPUB into a single HTML file (for the PWA reader) |
+| `tl prepare-release` | Final pre-release checks and metadata updates |
+| `tl import-text` | Import a local .txt, .md, .html, or .epub into chapter files |
+| `tl ia-import` | Download from Internet Archive, scaffold, and import in one step |
+| `tl export-wiki` | Export ebook text + metadata as wiki-ready Obsidian Markdown |
 
-Run `se help` for the full list, or `se <command> --help` for per-command options.
+Run `tl help` for the full list, or `tl <command> --help` for per-command options.
 
 ---
 
@@ -98,9 +103,10 @@ This fork replaces Standard Ebooks branding with tolstoy.life throughout. Key th
 
 - **Publisher name:** `tolstoy.life` (lowercase, with dot)
 - **Publisher URL:** `https://tolstoy.life/`
+- **CLI command:** `tl` (not `se` — avoids collision with upstream Standard Ebooks)
 - **Logo:** `se/data/templates/logo.svg` — a simple text wordmark (placeholder; update when final brand assets are ready)
 - **SE vocabulary namespace** (`se: https://standardebooks.org/vocab/1.0`) is retained intentionally — it is a technical EPUB standard, not visible branding
-- **Copy review files** for imprint, colophon, and uncopyright pages live in `copy-review/` — these need final copy from the Tolstoy project before the first ebook release
+- **Copy review files** for imprint, colophon, and uncopyright pages live in `_scratch/copy-review/` — final copy has been applied to the templates
 
 ---
 
@@ -111,6 +117,7 @@ This repository tracks upstream changes from `standardebooks/tools`. When pullin
 1. Review any changes to files in `se/data/templates/` — these are the primary rebranded files and upstream changes may overwrite tolstoy.life copy
 2. The files most likely to conflict are: `colophon.xhtml`, `imprint.xhtml`, `uncopyright.xhtml`, `logo.svg`, `cover.svg`, `titlepage.svg`, `content.opf`, `setup.py`
 3. Lint rules and Python logic in `se_epub_lint.py` and `se_epub_build.py` can generally be taken from upstream without conflict
+4. The `setup.py` entry point (`tl`) must be preserved — upstream uses `se`
 
 ---
 
@@ -127,3 +134,5 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -e . --break-system-packages
 ```
+
+After installation, verify with `tl --version`. If you also have the upstream Standard Ebooks toolset installed, both `se` and `tl` will be available side by side.

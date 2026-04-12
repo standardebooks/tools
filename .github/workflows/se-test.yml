@@ -1,4 +1,4 @@
-name: Standard Ebooks toolset tests
+name: tolstoy.life ebook toolset tests
 
 on: [push, pull_request]
 
@@ -19,10 +19,10 @@ jobs:
     - name: Install pipx packages
       run: |
         pipx install .
-        pipx inject standardebooks pylint==4.0.5 pyright==1.1.408 types-requests==2.32.4.20250913 types-setuptools==80.9.0.20250822 types-lxml==2026.2.16 pytest==9.0.2
+        pipx inject tolstoylife pylint==4.0.5 pyright==1.1.408 types-requests==2.32.4.20250913 types-setuptools==80.9.0.20250822 types-lxml==2026.2.16 pytest==9.0.2
     - name: Check type annotations with pyright
-      run: $PIPX_HOME/venvs/standardebooks/bin/pyright --venvpath=$PIPX_HOME/venvs/ .
+      run: $PIPX_HOME/venvs/tolstoylife/bin/pyright --venvpath=$PIPX_HOME/venvs/ .
     - name: Check code with pylint
-      run: $PIPX_HOME/venvs/standardebooks/bin/pylint .
+      run: $PIPX_HOME/venvs/tolstoylife/bin/pylint .
     - name: Test with pytest
-      run: $PIPX_HOME/venvs/standardebooks/bin/pytest
+      run: $PIPX_HOME/venvs/tolstoylife/bin/pytest

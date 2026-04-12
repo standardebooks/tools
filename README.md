@@ -2,7 +2,7 @@
 
 A collection of tools tolstoy.life uses to produce its ebooks, including basic setup of ebooks, text processing, and build tools.
 
-Installing the toolset makes the `se` command line executable available. Its various commands are described below, or you can use `se help` to list them.
+Installing the toolset makes the `tl` command line executable available. Its various commands are described below, or you can use `tl help` to list them.
 
 # Installation
 
@@ -10,7 +10,7 @@ The toolset requires Python >= 3.10.12.
 
 To install the toolset locally for development and debugging, see [Installation for toolset developers](#installation-for-toolset-developers).
 
-Optionally, install [Ace](https://daisy.github.io/ace/) and the `se build --check` command will automatically run it as part of the checking process.
+Optionally, install [Ace](https://daisy.github.io/ace/) and the `tl build --check` command will automatically run it as part of the checking process.
 
 ## Ubuntu 24.04 (Noble) users
 
@@ -19,7 +19,7 @@ Optionally, install [Ace](https://daisy.github.io/ace/) and the `se build --chec
 sudo apt install -y calibre default-jre git python3-dev python3-pip python3-venv pipx
 
 # Install the toolset.
-pipx install standardebooks
+pipx install tolstoylife
 ```
 
 ## Ubuntu 20.04 (Trusty) users
@@ -33,21 +33,21 @@ python3 -m pip install --user pipx
 python3 -m pipx ensurepath
 
 # Install the toolset.
-pipx install --python=3.12 --fetch-missing-python standardebooks
+pipx install --python=3.12 --fetch-missing-python tolstoylife
 ```
 
 ### Optional: Install shell completions
 
 ```shell
 # Install ZSH completions.
-sudo ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
+sudo ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/tolstoylife/lib/python3.*/site-packages/se/completions/zsh/_tl /usr/share/zsh/vendor-completions/_tl && hash -rf && compinit
 
 # Install Bash completions.
 mkdir -p $HOME/.local/share/bash-completion/completions/
-ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $HOME/.local/share/bash-completion/completions/se
+ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/tolstoylife/lib/python3.*/site-packages/se/completions/bash/tl $HOME/.local/share/bash-completion/completions/tl
 
 # Install Fish completions.
-ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se.fish $HOME/.config/fish/completions/
+ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/tolstoylife/lib/python3.*/site-packages/se/completions/fish/tl.fish $HOME/.config/fish/completions/
 ```
 
 ## Fedora 43 users
@@ -60,20 +60,20 @@ sudo dnf install pipx python3-devel gcc libxslt-devel calibre git java-25-openjd
 pipx ensurepath
 
 # Install the toolset.
-pipx install standardebooks
+pipx install tolstoylife
 ```
 
 ### Optional: Install shell completions
 
 ```shell
 # Install ZSH completions.
-sudo ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
+sudo ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/tolstoylife/lib/python3.*/site-packages/se/completions/zsh/_tl /usr/share/zsh/vendor-completions/_tl && hash -rf && compinit
 
 # Install Bash completions.
 mkdir -p $HOME/.local/share/bash-completion/completions/
-ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $HOME/.local/share/bash-completion/completions/se
+ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/tolstoylife/lib/python3.*/site-packages/se/completions/bash/tl $HOME/.local/share/bash-completion/completions/tl
 # Install Fish completions.
-ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
+ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/tolstoylife/lib/python3.*/site-packages/se/completions/fish/tl.fish $HOME/.config/fish/completions/tl.fish
 ```
 
 ## macOS users
@@ -87,7 +87,7 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 2. Install the tools with Homebrew:
 
 	```shell
-	brew install standardebooks
+	brew install tolstoylife
 	```
 
 ### pipx
@@ -101,13 +101,13 @@ pipx ensurepath
 sudo ln -sfn $(brew --prefix)/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
 
 # Install the toolset.
-pipx install --python "$(brew --prefix)"/bin/python3.12 standardebooks
+pipx install --python "$(brew --prefix)"/bin/python3.12 tolstoylife
 
 # Optional: Bash users who have set up bash-completion via brew can install tab completion.
-ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $(brew --prefix)/etc/bash_completion.d/se
+ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/tolstoylife/lib/python3.*/site-packages/se/completions/bash/tl $(brew --prefix)/etc/bash_completion.d/tl
 
 # Optional: Fish users can install tab completion.
-ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
+ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/tolstoylife/lib/python3.*/site-packages/se/completions/fish/tl.fish $HOME/.config/fish/completions/tl.fish
 ```
 
 ## OpenBSD 6.6 Users
@@ -137,54 +137,54 @@ These instructions were tested on OpenBSD 6.6, but may also work on the 6.5 rele
 
 	```shell
 	# Install the toolset.
-	pipx install standardebooks
+	pipx install tolstoylife
 	```
 
 ## Installation for toolset developers
 
 If you want to work on the toolset source, it’s helpful to tell `pipx` to install the package in “editable” mode. This will allow you to edit the source of the package live and see changes immediately, without having to uninstall and re-install the package.
 
-To do that, follow the general installation instructions above; but instead of doing `pipx install standardebooks`, do the following:
+To do that, follow the general installation instructions above; but instead of doing `pipx install tolstoylife`, do the following:
 
 ```shell
-git clone https://github.com/standardebooks/tools.git
+git clone https://github.com/tolstoylife/tools.git
 pipx install --editable ./tools
 ```
 
-Now the `se` binary is in your path, and any edits you make to source files in the `tools/` directory are immediately reflected when executing the binary.
+Now the `tl` binary is in your path, and any edits you make to source files in the `tools/` directory are immediately reflected when executing the binary.
 
 ### Running commands on the entire corpus
 
-As a developer, it’s often useful to run an `se` command like `se lint` or `se build` on the entire corpus for testing purposes. This can be very time-consuming in a regular invocation (like `se lint /path/to/ebook/repos/*`), because each argument is processed sequentially. Instead of waiting for a single invocation to process all of its arguments sequentially, use [GNU Parallel](https://www.gnu.org/software/parallel/) to start multiple invocations in parallel, with each one processing a single argument. For example:
+As a developer, it’s often useful to run a `tl` command like `tl lint` or `tl build` on the entire corpus for testing purposes. This can be very time-consuming in a regular invocation (like `tl lint /path/to/ebook/repos/*`), because each argument is processed sequentially. Instead of waiting for a single invocation to process all of its arguments sequentially, use [GNU Parallel](https://www.gnu.org/software/parallel/) to start multiple invocations in parallel, with each one processing a single argument. For example:
 
 ```shell
 # Slow: Each argument is processed in sequence.
-se lint /path/to/ebook/repos/*
+tl lint /path/to/ebook/repos/*
 
 # Fast: Multiple invocations each process a single argument in parallel.
-export COLUMNS; parallel --keep-order se lint ::: /path/to/ebook/repos/*
+export COLUMNS; parallel --keep-order tl lint ::: /path/to/ebook/repos/*
 ```
 
 The toolset tries to detect when it’s being invoked from `parallel`, and it adjusts its output to accommodate.
 
-We export `COLUMNS` because `se lint` needs to know the width of the terminal so that it can format its tabular output correctly. We pass the `--keep-order` flag to output results in the order we passed them in, which is useful if comparing the results of multiple runs.
+We export `COLUMNS` because `tl lint` needs to know the width of the terminal so that it can format its tabular output correctly. We pass the `--keep-order` flag to output results in the order we passed them in, which is useful if comparing the results of multiple runs.
 
 ### Linting with `pylint` and `pyright`
 
-Before we can use `pylint` or `pyright` on the toolset source, we have to inject them (and additional typings) into the venv `pipx` created for the `standardebooks` package:
+Before we can use `pylint` or `pyright` on the toolset source, we have to inject them (and additional typings) into the venv `pipx` created for the `tolstoylife` package:
 
 ```shell
-pipx inject standardebooks pylint==4.0.5 pyright==1.1.408 types-requests==2.32.4.20250913 types-setuptools==80.9.0.20250822 types-lxml==2026.2.16
+pipx inject tolstoylife pylint==4.0.5 pyright==1.1.408 types-requests==2.32.4.20250913 types-setuptools==80.9.0.20250822 types-lxml==2026.2.16
 ```
 
-Then make sure to call the `pylint` and `pyright` binaries that `pipx` installed in the `standardebooks` venv, *not* any other globally-installed binaries:
+Then make sure to call the `pylint` and `pyright` binaries that `pipx` installed in the `tolstoylife` venv, *not* any other globally-installed binaries:
 
 ```shell
 cd /path/to/tools/repo
-$HOME/.local/share/pipx/venvs/standardebooks/bin/pylint .
+$HOME/.local/share/pipx/venvs/tolstoylife/bin/pylint .
 
 # Specify the venv path to `pyright` so that it knows where to look for libraries.
-$HOME/.local/share/pipx/venvs/standardebooks/bin/pyright --venvpath=$HOME/.local/share/pipx/venvs/ .
+$HOME/.local/share/pipx/venvs/tolstoylife/bin/pyright --venvpath=$HOME/.local/share/pipx/venvs/ .
 ```
 
 ### Testing with `pytest`
@@ -211,163 +211,163 @@ We need volunteers to take the lead on the following goals:
 
 - Currently, the toolset requires the whole Calibre package, which is very big, but it’s only used to convert epub to azw3. Can we inline Calibre’s azw3 conversion code into our `./vendor/` directory, to avoid having to install the entire Calibre package as a big dependency? If so, how do we keep it updated as Calibre evolves?
 
-- The `se lint` tool uses Python logic and XPath to help validate various S.E. style requirements in an ebook metadata file, `content.opf`. Can this be done instead using an XML Schema?
+- The `tl lint` tool uses Python logic and XPath to help validate various S.E. style requirements in an ebook metadata file, `content.opf`. Can this be done instead using an XML Schema?
 
 # Tool descriptions
 
--	### `se add-file`
+-	### `tl add-file`
 
 	Add an SE template file and any accompanying CSS.
 
--	### `se british2american`
+-	### `tl british2american`
 
 	Try to convert British quote style to American quote style in `DIRECTORY/src/epub/text/`.
 
-	Quotes must already be typogrified using the `se typogrify` tool.
+	Quotes must already be typogrified using the `tl typogrify` tool.
 
 	This script isn’t perfect; proofreading is required, especially near closing quotes near to em-dashes.
 
--	### `se build`
+-	### `tl build`
 
 	Build an ebook from a tolstoy.life source directory.
 
--	### `se build-ids`
+-	### `tl build-ids`
 
 	Change ID attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced, and the ebook spine must be complete.
 
--	### `se build-images`
+-	### `tl build-images`
 
 	Generate ebook cover and titlepages for tolstoy.life ebooks, and then build ebook covers and titlepages, placing the output in `DIRECTORY/src/epub/images/`.
 
--	### `se build-manifest`
+-	### `tl build-manifest`
 
 	Generate the `<manifest>` element for the given tolstoy.life source directory and write it to the ebook’s metadata file.
 
--	### `se build-spine`
+-	### `tl build-spine`
 
 	Generate the `<spine>` element for the given tolstoy.life source directory and write it to the ebook’s metadata file.
 
--	### `se build-svg-titles`
+-	### `tl build-svg-titles`
 
 	Update or add SVG `<title>` elements based on the alt attributes from the `<img>` elements.
 
--	### `se build-title`
+-	### `tl build-title`
 
 	Generate the title of an XHTML file based on its headings and update the file’s `<title>` element.
 
--	### `se build-toc`
+-	### `tl build-toc`
 
 	Generate the table of contents for the ebook’s source directory and update the ToC file.
 
--	### `se clean`
+-	### `tl clean`
 
 	Prettify and canonicalize individual XHTML, SVG, or CSS files, or all XHTML, SVG, or CSS files in a source directory.
 
--	### `se compare-versions`
+-	### `tl compare-versions`
 
 	Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, place screenshots of the new, original, and diff (if available) renderings in the current working directory. A file called diff.html is created to allow for side-by-side comparisons of original and new files.
 
--	### `se create-draft`
+-	### `tl create-draft`
 
 	Create a skeleton of a new tolstoy.life ebook.
 
--	### `se css-select`
+-	### `tl css-select`
 
 	Print the results of a CSS selector evaluated against a set of XHTML files.
 
--	### `se dec2roman`
+-	### `tl dec2roman`
 
 	Convert a decimal number to a Roman numeral.
 
--	### `se extract-ebook`
+-	### `tl extract-ebook`
 
 	Extract an .epub, .mobi, or .azw3 ebook into `./FILENAME.extracted/` or a target directory.
 
--	### `se find-mismatched-dashes`
+-	### `tl find-mismatched-dashes`
 
 	Find words with mismatched dashes in a set of XHTML files. For example, `extra-physical` in one file and `extraphysical` in another.
 
--	### `se find-mismatched-diacritics`
+-	### `tl find-mismatched-diacritics`
 
 	Find words with mismatched diacritics in a set of XHTML files. For example, `cafe` in one file and `café` in another.
 
--	### `se find-unusual-characters`
+-	### `tl find-unusual-characters`
 
 	Find characters outside a nominal expected range in a set of XHTML files. This can be useful to find transcription mistakes and mojibake.
 
--	### `se help`
+-	### `tl help`
 
 	List available SE commands.
 
--	### `se hyphenate`
+-	### `tl hyphenate`
 
 	Insert soft hyphens at syllable breaks in an XHTML file.
 
--	### `se interactive-replace`
+-	### `tl interactive-replace`
 
 	Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (c) Center on match. (q) Save this file and quit.
 
--	### `se lint`
+-	### `tl lint`
 
 	Check for various tolstoy.life style errors.
 
--	### `se make-url-safe`
+-	### `tl make-url-safe`
 
 	Make a string URL-safe.
 
--	### `se modernize-spelling`
+-	### `tl modernize-spelling`
 
 	Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling. For example, replace `ash-tray` with `ashtray`.
 
--	### `se prepare-release`
+-	### `tl prepare-release`
 
 	Calculate work word count, insert release date if not yet set, and update modified date and revision number.
 
--	### `se recompose-epub`
+-	### `tl recompose-epub`
 
 	Recompose a tolstoy.life source directory into a single HTML5 file, and print to standard output.
 
--	### `se renumber-endnotes`
+-	### `tl renumber-endnotes`
 
 	Renumber all endnotes and noterefs sequentially from the beginning.
 
--	### `se roman2dec`
+-	### `tl roman2dec`
 
 	Convert a Roman numeral to a decimal number.
 
--	### `se semanticate`
+-	### `tl semanticate`
 
 	Apply some scriptable semantics rules from the tolstoy.life semantics manual to a tolstoy.life source directory.
 
--	### `se shift-endnotes`
+-	### `tl shift-endnotes`
 
 	Increment or decrement the specified endnote and all following endnotes by 1 or a specified amount.
 
--	### `se shift-illustrations`
+-	### `tl shift-illustrations`
 
 	Increment or decrement the specified illustration and all following illustrations by 1 or a specified amount.
 
--	### `se split-file`
+-	### `tl split-file`
 
 	Split an XHTML file into many files at all instances of `<!--se:split-->`, and include a header template for each file.
 
--	### `se titlecase`
+-	### `tl titlecase`
 
 	Convert a string to titlecase.
 
--	### `se typogrify`
+-	### `tl typogrify`
 
 	Apply some scriptable typography rules from the tolstoy.life typography manual to a tolstoy.life source directory.
 
--	### `se unicode-names`
+-	### `tl unicode-names`
 
 	Display Unicode code points, descriptions, and links to more details for each character in a string. Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.
 
--	### `se word-count`
+-	### `tl word-count`
 
 	Count the number of words in an HTML file and optionally categorize by length.
 
--	### `se xpath`
+-	### `tl xpath`
 
 	Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed.
 

@@ -944,7 +944,8 @@ def create_draft(plain_output: bool) -> int:
 
 	try:
 		# Before we continue, confirm that there isn't a subtitle passed in with the title.
-		if ":" in args.title:
+		# Skip the interactive prompt when running in --offline mode (e.g., called programmatically from ia-import).
+		if ":" in args.title and not args.offline:
 			console.print(se.prep_output("Titles should not include a subtitle, as subtitles are separate metadata elements in [path]content.opf[/]. Are you sure you want to continue? \\[y/N]", plain_output))
 			if input().lower() not in {"yes", "y"}:
 				return se.InvalidInputException.code

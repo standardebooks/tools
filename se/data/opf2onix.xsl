@@ -165,7 +165,7 @@
 	<xsl:template match="/opf:package">
 		<!-- Title and associated metadata -->
 		<xsl:variable name="url" select="normalize-space(opf:metadata/dc:identifier[@id='uid'])"/>
-		<xsl:variable name="filename" select="translate(substring-after($url, 'https://standardebooks.org/ebooks/'), '/', '_')"/> <!-- Remove `https://standardebooks.org/ebooks/` from the identifier, and replace `/` with `_` -->
+		<xsl:variable name="filename" select="translate(substring-after($url, 'https://tolstoy.life/ebooks/'), '/', '_')"/> <!-- Remove `https://tolstoy.life/ebooks/` from the identifier, and replace `/` with `_` -->
 		<xsl:variable name="titleNode" select="opf:metadata/dc:title[1]"/>
 		<xsl:variable name="titleText" select="normalize-space($titleNode)"/>
 		<xsl:variable name="titleId" select="concat('#', $titleNode/@id)"/>
@@ -264,16 +264,16 @@
 						</ProductFormFeature>
 					</xsl:if>
 
-					<xsl:if test="opf:metadata/dc:identifier[starts-with(., 'https://standardebooks.org/')]">
+					<xsl:if test="opf:metadata/dc:identifier[starts-with(., ‘https://tolstoy.life/’)]">
 						<ProductFormFeature>
 							<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
 							<ProductFormFeatureValue>96</ProductFormFeatureValue> <!-- 96 = Publisher’s web page for detailed accessibility information -->
-							<ProductFormFeatureDescription>https://standardebooks.org/about/accessibility</ProductFormFeatureDescription>
+							<ProductFormFeatureDescription>https://tolstoy.life/about/accessibility</ProductFormFeatureDescription>
 						</ProductFormFeature>
 						<ProductFormFeature>
 							<ProductFormFeatureType>09</ProductFormFeatureType> <!-- 09 = E-publication accessibility detail -->
 							<ProductFormFeatureValue>99</ProductFormFeatureValue> <!-- 99 = Publisher contact for further accessibility information -->
-							<ProductFormFeatureDescription>https://standardebooks.org/about#editor-in-chief</ProductFormFeatureDescription>
+							<ProductFormFeatureDescription>https://tolstoy.life/about</ProductFormFeatureDescription>
 						</ProductFormFeature>
 					</xsl:if>
 
@@ -442,10 +442,10 @@
 				<PublishingDetail>
 					<Publisher>
 						<PublishingRole>01</PublishingRole> <!-- 01 = Publisher -->
-						<PublisherName>Standard Ebooks</PublisherName>
+						<PublisherName>tolstoy.life</PublisherName>
 						<Website>
 							<WebsiteRole>01</WebsiteRole> <!-- 01 = Publisher’s corporate website -->
-							<WebsiteLink>https://standardebooks.org/</WebsiteLink>
+							<WebsiteLink>https://tolstoy.life/</WebsiteLink>
 						</Website>
 					</Publisher>
 					<PublishingDate>

@@ -12,8 +12,8 @@ def version() -> int:
 	"""
 
 	# This API is discussed in https://github.com/pypa/setuptools/issues/4186. At some point (python 3.12 or 13?), an origin method was added to Distribution, which allows this to be done without needing json, e.g.
-	# 	pkg_is_editable = Distribution.from_name("standardebooks").origin.dir_info.editable
-	direct_url = Distribution.from_name("standardebooks").read_text("direct_url.json")
+	# 	pkg_is_editable = Distribution.from_name("tolstoylife").origin.dir_info.editable
+	direct_url = Distribution.from_name("tolstoylife").read_text("direct_url.json")
 	if direct_url is None:
 		pkg_is_editable = False
 	else:

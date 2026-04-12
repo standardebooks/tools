@@ -1,5 +1,5 @@
 {
-	"venv": "standardebooks",
+	"venv": "tolstoylife",
 	"ignore": ["se/vendor", "build"],
 	"strictListInference": true,
 	"strictDictionaryInference": true,
