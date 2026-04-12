@@ -7,3 +7,4 @@ __pycache__
 /todo
 .DS_Store
 _scratch
+.claude
