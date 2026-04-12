@@ -1,5 +1,14 @@
 # CLAUDE.md — tolstoy.life ebook toolset
 
+> **⚠️ DEPRECATED** — This file is no longer maintained. 
+> All project documentation has been consolidated into the parent CLAUDE.md at `../CLAUDE.md`. 
+> Please refer to that file for the authoritative reference on architecture, schema, vocabulary, and operations.
+> The ebook toolset section is now documented there under "Tools: ebook build toolset".
+>
+> This file is kept for reference only and may become stale.
+
+---
+
 ## Parent project
 
 This repository is a child project of the Tolstoy Research Project at `/Volumes/Graugear/Tolstoy/`. The parent `CLAUDE.md` at that path defines the shared mission, vocabulary, data flow, and content standards that apply across all projects. Read it for context before making changes that affect ebook content, metadata, or copy.
