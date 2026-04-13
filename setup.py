@@ -92,7 +92,7 @@ setup(
 		"importlib_resources==1.0.2",
 		"lxml==6.0.2",
 		"natsort==8.4.0",
-		"pillow==12.1.1",
+		"pillow==12.2.0",
 		"psutil==7.2.2",
 		"pyphen==0.17.2",
 		"pyoxipng==9.1.1",
