@@ -3937,9 +3937,14 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 
 	# Now iterate over individual files for some checks.
 	# We use `os.walk()` and not `Path.glob()` so that we can ignore `.git` and its children.
+	# OS_JUNK: system files that are never part of an ebook project.
+	OS_JUNK = {".DS_Store", "Thumbs.db", "desktop.ini"}
 	for root, directories, filenames in os.walk(self.path):
 		if ".git" in directories:
 			directories.remove(".git")
+
+		# Skip OS junk files
+		filenames = [f for f in filenames if f not in OS_JUNK]
 
 		for directory in natsorted(directories):
 			if directory == "META-INF":

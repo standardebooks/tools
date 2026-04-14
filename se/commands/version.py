@@ -19,7 +19,7 @@ def version() -> int:
 	else:
 		pkg_is_editable = json.loads(direct_url).get("dir_info", {}).get("editable", False)
 
-	se_version = f"{se.VERSION}"
+	se_version = f"{se.VERSION} (based on se {se.UPSTREAM_VERSION})"
 	if pkg_is_editable:
 		se_version += ", editable"
 

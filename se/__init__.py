@@ -20,7 +20,8 @@ if TYPE_CHECKING:
 	from se.se_epub_build import BuildMessage # Import under type checking guard to prevent circular import error.
 
 
-VERSION = "3.0.3"
+VERSION = "1.0.0"
+UPSTREAM_VERSION = "3.0.3"  # Standard Ebooks toolset version this fork is based on
 MESSAGE_INDENT = "    "
 UNICODE_BOM = "\ufeff"
 NO_BREAK_SPACE = "\u00a0"

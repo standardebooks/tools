@@ -1,3 +1,28 @@
+# 1.0.0
+
+Forked from Standard Ebooks toolset 3.0.3. CLI entry point renamed from `se` to `tl`.
+
+## New commands
+
+- `tl ocr` — batch OCR JP2 scans with Tesseract LSTM engine
+- `tl merge-pages` — combine corrected per-page OCR into chapter XHTML
+- `tl import-text` — import local .txt, .md, .html, or .epub into chapter files
+- `tl ia-import` — download from Internet Archive, scaffold, and import in one step
+- `tl export-wiki` — export ebook text and metadata as wiki-ready Obsidian Markdown
+
+## tl lint
+
+- Ignore OS system files (.DS_Store, Thumbs.db, desktop.ini) when walking project directories
+
+## Branding
+
+- Publisher name: tolstoy.life
+- Templates updated: colophon, imprint, uncopyright, cover, titlepage, content.opf
+
+---
+
+# Upstream changelog (Standard Ebooks toolset)
+
 # 3.0.3
 
 ## se build
