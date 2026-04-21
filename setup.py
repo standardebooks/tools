@@ -90,7 +90,7 @@ setup(
 		"ftfy==6.3.1",
 		"gitpython==3.1.46",
 		"importlib_resources==1.0.2",
-		"lxml==6.0.2",
+		"lxml==6.1.0",
 		"natsort==8.4.0",
 		"pillow==12.2.0",
 		"psutil==7.2.2",
