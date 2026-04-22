@@ -1,0 +1,4 @@
+s-020 [Error] content.opf Frontmatter found, but no half title page.
+m-090 [Manual Review] dedication.xhtml `dedication` semantic inflection found, but no MARC relator `dto` (Dedicator).
+c-006 [Error] local.css Semantic found, but missing corresponding CSS style.
+ Line 9:        <section id="dedication" epub:type="dedication">
