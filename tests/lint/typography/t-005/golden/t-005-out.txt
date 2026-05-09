@@ -1,0 +1,5 @@
+t-005 [Manual Review] chapter-1.xhtml Newspaper name not italicized.
+ Line 18:       He read the Times at breakfast.
+ Line 20:       He read the Gazette at breakfast.
+ Line 22:       He read the Observer at breakfast.
+ Line 24:       He read the Dispatch at breakfast.

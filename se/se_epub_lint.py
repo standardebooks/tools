@@ -385,6 +385,7 @@ TYPOGRAPHY
 "t-002", "Comma or period outside of double quote. Hint: Generally punctuation goes within single and double quotes."
 "t-003", "[text]“[/] missing matching [text]”[/]. Hint: When dialog from the same speaker spans multiple [xhtml]<p>[/] elements, it’s correct grammar to omit closing [text]”[/] until the last [xhtml]<p>[/] of dialog."
 "t-004", "[text]‘[/] missing matching [text]’[/]."
+"t-005", "Newspaper name not italicized."
 "t-006", "Comma after producer name, but there are only two producers."
 "t-007", "Possessive [text]’s[/] within name italics. Hint: If the name in italics is doing the possessing, [text]’s[/] goes outside italics."
 "t-008", "Repeated punctuation."
@@ -458,8 +459,6 @@ TYPOGRAPHY
 "t-076", "Grapheme or phoneme not italicized. Hint: Dialect with missing letters should mark missing letters with [text]’[/]."
 "t-077", "Punctuation followed by opening quotation."
 "t-078", "Illegal hyphenated two-word phrasal adjective that begins with an adverb ending in [text]ly[/]."
-UNUSED
-"t-005", "Dialog without ending comma."
 
 XHTML
 "x-001", "[text]utf-8[/] string incorrectly cased. Hint: [text]utf-8[/] must always be lowercase."
@@ -3214,6 +3213,14 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 	nodes = dom.xpath("/html/body//text()[re:test(., '[:;!\\?\\.][“‘]')]", str)
 	if nodes:
 		messages.append(LintMessage("t-077", "Punctuation followed by opening quotation.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
+
+	# Check for newspaper names that should have either the capitalized word or the whole phrase in italics.
+	# Ignore names followed by a capitalized word, which could be something like `the Times Building` or `the Times Square district`.
+	# Don't inclue `Herald` or `Examiner` because they are also common titles.
+	# Don't include `Post` because `the Post` usually means the post office or a station.
+	nodes = dom.xpath("/html/body//text()[re:test(., '\\bthe (Times|Gazette|Observer|Dispatch)\\b(?! [A-Z][a-z]+)') and not(ancestor::*[@data-css-font-style='italic'])]", str)
+	if nodes:
+		messages.append(LintMessage("t-005", "Newspaper name not italicized.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	return (messages, missing_files)
 
