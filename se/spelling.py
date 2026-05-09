@@ -586,6 +586,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = xhtml.replace("Cæsar", r"Caesar")
 	xhtml = xhtml.replace("Crœsus", r"Croesus")
 	xhtml = regex.sub(r"\b([Ff])œtus", r"\1oetus", xhtml)
+	xhtml = regex.sub(r"\b([Hh])æmorrhage", r"\1aemorrhage", xhtml)
 	xhtml = regex.sub(r"\b([Hh])yæna", r"\1yena", xhtml)
 	xhtml = regex.sub(r"\b([Ll])arvæ", r"\1arvae", xhtml)
 	xhtml = xhtml.replace("Linnæus", r"Linnaeus")
