@@ -2938,8 +2938,10 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 	if matches:
 		messages.append(LintMessage("t-029", "Period followed by lowercase letter. Hint: Abbreviations require an [xhtml]<abbr>[/] element.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(matches)))
 
-	# Check for initialisms without periods, except `se:era`, which are initialisms styled without periods.
-	nodes = [node for node in dom.xpath("/html/body//abbr[contains(@epub:type, 'z3998:initialism') and not(re:test(@epub:type, 'se:era|z3998:personal-name')) and not(re:test(., '^[0-9]*([a-zA-Z]\\.)+[0-9]*$'))]") if node.text not in INITIALISM_EXCEPTIONS]
+	# Check for initialisms with spaces or without periods, except:
+	# - `se:compass`, which are initialisms with spaces
+	# - `se:era`, which are initialisms styled without periods
+	nodes = [node for node in dom.xpath("/html/body//abbr[contains(@epub:type, 'z3998:initialism') and not(re:test(@epub:type, 'se:compass|se:era|z3998:personal-name')) and not(re:test(., '^[0-9]*([a-zA-Z]\\.)+[0-9]*$'))]") if node.text not in INITIALISM_EXCEPTIONS]
 	if nodes:
 		messages.append(LintMessage("t-030", "Initialism with spaces or without periods.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
