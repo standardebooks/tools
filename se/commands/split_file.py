@@ -74,7 +74,12 @@ def split_file(plain_output: bool) -> int:
 
 	for line in xhtml.splitlines():
 		if "<!--se:split-->" in line:
-			prefix, suffix = line.split("<!--se:split-->")
+			try:
+				prefix, suffix = line.split("<!--se:split-->")
+			except ValueError:
+				se.print_error(f"File has two or more [xml]<!--se:split-->[/] elements in a row: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
+				return se.InvalidFileException.code
+
 			chapter_xhtml = chapter_xhtml + prefix
 			_split_file_output_file(args.filename_format, args.start_at, template_xhtml, chapter_xhtml)
 
