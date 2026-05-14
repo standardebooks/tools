@@ -379,6 +379,7 @@ SEMANTICS & CONTENT
 "s-105", "Date without parent [xhtml]<time>[/] element."
 "s-106", "Proper name in the colophon without parent [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], or [xhtml]<b>[/] if anonymous."
 "s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?"
+"s-108", "[xhtml]<thead>[/] element with non-empty [xhtml]<td>[/] descendant. Hint: Use [xhtml]<th>[/] instead."
 
 TYPOGRAPHY
 "t-001", "Illegal double spacing. Hint: Sentences should be single-spaced. Spaces might include Unicode hair spaces and no-break spaces."
@@ -2668,6 +2669,11 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	matches = source_file.findall(fr"King {regent_regex}|{regent_regex}’s")
 	if matches:
 		messages.append(LintMessage("s-103", "Probable missing semantics for a roman I numeral.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(matches)))
+
+	# Check for `<thead>` elements with `<td>` descendants. Empty `<td/>` is allowed for accessibility reasons. Only check the first `<tr>`, because non-heading cells may be group in `<thead>` in following rows.
+	nodes = dom.xpath("//thead/tr[count(preceding-sibling::*) = 0]/td[.!='']")
+	if nodes:
+		messages.append(LintMessage("s-108", "[xhtml]<thead>[/] element with non-empty [xhtml]<td>[/] descendant. Hint: Use [xhtml]<th>[/] instead.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	return messages
 
