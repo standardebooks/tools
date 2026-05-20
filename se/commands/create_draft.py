@@ -468,7 +468,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 			# Get the ebook HTML URL from the metadata.
 			pg_ebook_url = None
-			for node in dom.xpath("/html/body//a[contains(@type, 'text/html')]"):
+			for node in dom.xpath("(/html/body//a[re:test(@href, '^(https://(www\\.)?gutenberg\\.org|/)?/cache/.+\\.html$')])[1]", namespaces=XPATH_NAMESPACES):
 				pg_ebook_url = regex.sub(r"^//", "https://", node.get("href"))
 				pg_ebook_url = regex.sub(r"^/", "https://www.gutenberg.org/", pg_ebook_url)
 
