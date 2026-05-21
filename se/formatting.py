@@ -1780,13 +1780,13 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tup
 			if "endnotes" in section_epub_type:
 				endnote_number = 0
 
-			# If this section is an endnote, increment the note number and check the ID right now.
-			if section.xpath("./parent::ol/parent::section[re:test(@epub:type, '\\bendnotes\\b')]"):
-				endnote_number = endnote_number + 1
-				expected_id = f"note-{endnote_number}"
+		# If this section is an endnote, increment the note number and check the ID right now.
+		if section.xpath("./parent::ol/parent::section[re:test(@epub:type, '\\bendnotes\\b')]"):
+			endnote_number = endnote_number + 1
+			expected_id = f"note-{endnote_number}"
 
-				if section_id != expected_id:
-					replacements.append((section, expected_id))
+			if section_id != expected_id:
+				replacements.append((section, expected_id))
 
 		for node in _get_flattened_children(section, allow_header):
 			counts[node.tag] += 1
