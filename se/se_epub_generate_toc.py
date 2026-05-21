@@ -258,6 +258,7 @@ def process_landmarks(landmarks_list: list[TocItem], work_title: str) -> str:
 		out_string += body_items[0].landmark_link(work_title)  # Just the first bodymatter item.
 	for item in back_items:
 		out_string += item.landmark_link()
+
 	return out_string
 
 def process_items(item_list: list[TocItem]) -> str:
@@ -579,7 +580,7 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 				raise se.InvalidInputException(f"Heading tagged as roman numeral is invalid: {toc_item.roman} in [path][link=file://{textf}]{textf}[/][/].") from err
 			toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
 			return toc_item
-		if "ordinal" in epub_type:  # But not a roman numeral (e.g. in Nietzche's _Beyond Good and Evil_).
+		if "z3998:ordinal" in epub_type:  # But not a roman numeral (e.g. in Nietzche's _Beyond Good and Evil_).
 			toc_item.title = extract_strings(node)
 			toc_item.title_is_ordinal = True
 			return toc_item
@@ -617,14 +618,14 @@ def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem, textf: str) ->
 		if not epub_type:
 			# Should be a label/ordinal grouping.
 			child_strings = child.inner_xml()
-			if "label" in child_strings and "ordinal" in child_strings:
+			if "se:label" in child_strings and "z3998:ordinal" in child_strings:
 				toc_item.title_is_ordinal = True
 				# Strip label.
-				child_strings = regex.sub(r"<span epub:type=\"label\">(.*?)</span>", " \\1 ", child_strings)
+				child_strings = regex.sub(r"<span epub:type=\"se:label\">(.*?)</span>", " \\1 ", child_strings)
 				# Remove ordinal if it's by itself in a `<span>`.
-				child_strings = regex.sub(r"<span epub:type=\"ordinal\">(.*?)</span>", " \\1 ", child_strings)
+				child_strings = regex.sub(r"<span epub:type=\"z3998:ordinal\">(.*?)</span>", " \\1 ", child_strings)
 				# Remove ordinal if it's joined with a roman numeral (which we want to keep).
-				child_strings = regex.sub(r"\bordinal\b", "", child_strings)
+				child_strings = regex.sub(r"\bz3998:ordinal\b", "", child_strings)
 				# Remove extra spaces.
 				child_strings = regex.sub(r"[ ]{2,}", " ", child_strings)
 				# Remove any carriage returns.
@@ -641,7 +642,7 @@ def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem, textf: str) ->
 				raise se.InvalidInputException(f"Heading tagged as roman numeral is invalid: {toc_item.roman} in [path][link=file://{textf}]{textf}[/][/].") from err
 			if not toc_item.title:
 				toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
-		elif "ordinal" in epub_type:  # But not a roman numeral or a labeled item, cases caught caught above.
+		elif "z3998:ordinal" in epub_type:  # But not a roman numeral or a labeled item, cases caught caught above.
 			if not toc_item.title:
 				toc_item.title = extract_strings(child)
 				toc_item.title_is_ordinal = True

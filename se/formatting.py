@@ -1698,10 +1698,8 @@ def _get_flattened_children(node: EasyXmlElement, allow_header: bool) -> list[Ea
 	for child in node.children:
 		is_endnote = False
 		is_glossdef = False
-		if child.get_attr("epub:type"):
-			epub_type = child.get_attr("epub:type")
-			is_endnote = regex.search(r"\bendnote\b", epub_type)
-			is_glossdef = "glossdef" in epub_type
+		is_endnote = child.tag == "li" and len(child.xpath("./parent::ol/parent::section[re:test(@epub:type, '\\bendnotes\\b')]"))
+		is_glossdef = "glossdef" in child.get_attr("epub:type")
 
 		if child.tag not in sectioning_elements and not is_endnote and not is_glossdef:
 			result.append(child)
@@ -1732,7 +1730,7 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tup
 
 	# The `build-ids` command has an option to exclude endnotes; if true, then remove endnotes as well.
 	if no_endnotes:
-		for node in dom_copy.xpath("/html/body//*[contains(@epub:type, 'endnote')]"):
+		for node in dom_copy.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol"):
 			node.remove()
 
 	# IDs are set to `{closest_parent_sectioning_element_id}-{tag_name}-{n}`.
@@ -1744,7 +1742,7 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tup
 	line_number = 0
 	endnote_number = 0
 	container_poem_section_id = ""
-	for section in dom_copy.xpath("/html/body//*[@id and (name() = 'section' or name() = 'article' or re:test(@epub:type, '\\bendnote\\b'))]"):
+	for section in dom_copy.xpath("/html/body//*[@id and (name() = 'section' or name() = 'article' or (name() = 'li' and ./parent::ol/parent::section[re:test(@epub:type, '\\bendnotes\\b')] ))]"):
 		counts: dict[str, int] = defaultdict(int)
 		is_poem = bool(section.xpath("./ancestor-or-self::*[contains(@epub:type, 'z3998:poem')]"))
 		section_id = section.get_attr("id")
@@ -1762,7 +1760,7 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tup
 				endnote_number = 0
 
 			# If this section is an endnote, increment the note number and check the ID right now.
-			if regex.search(r"\bendnote\b", section.get_attr("epub:type")):
+			if section.xpath("./parent::ol/parent::section[re:test(@epub:type, '\\bendnotes\\b')]"):
 				endnote_number = endnote_number + 1
 				expected_id = f"note-{endnote_number}"
 
@@ -1777,7 +1775,7 @@ def find_unexpected_ids(dom: EasyXmlTree, no_endnotes: bool = False) -> list[tup
 				line_number = line_number + 1
 
 			id_attr = node.get_attr("id", True)
-			# If the element has an ID attribute and it's not an endnote node (i.e. `<li epub:type="endnote">`).
+			# If the element has an ID attribute and it's not an endnote node.
 			if id_attr:
 				expected_id = id_attr
 

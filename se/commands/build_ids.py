@@ -48,9 +48,9 @@ def build_ids(plain_output: bool) -> int:
 				# First, get a list of all eligible elements with an ID.
 				# We want to wipe their IDs so that we don't accidentally introduce duplicates.
 				if args.no_endnotes:
-					nodes = dom.xpath("//*[@id and not(re:test(@epub:type, 'endnote|noteref')) and not(re:test(local-name(), '(section|article|nav|figure|dt|tr)'))]")
+					nodes = dom.xpath("//*[@id and not(re:test(@epub:type, '\\bnoteref\\b')) and not(re:test(local-name(), '(section|article|nav|figure|dt|tr)')) and not(./parent::ol/parent::section[re:test(@epub:type, '\\bendnotes\\b')])]")
 				else:
-					nodes = dom.xpath("//*[@id and not(re:test(@epub:type, 'noteref')) and not(re:test(local-name(), '(section|article|nav|figure|dt|tr)'))]")
+					nodes = dom.xpath("//*[@id and not(re:test(@epub:type, '\\bnoteref\\b')) and not(re:test(local-name(), '(section|article|nav|figure|dt|tr)'))]")
 
 				for node in nodes:
 					old_id = node.get_attr("id")

@@ -95,14 +95,14 @@ SE_VARIABLES = [
 
 ABBR_REQUIRING_STYLES = ["se:era", "se:temperature", "z3998:acronym"]
 
-# See <https://idpf.github.io/epub-vocabs/structure/>.
-EPUB_SEMANTIC_VOCABULARY = ["abstract", "acknowledgments", "afterword", "answer", "answers", "appendix", "aside", "assessment", "assessments", "backlink", "backmatter", "balloon", "biblioentry", "bibliography", "biblioref", "bodymatter", "bridgehead", "case-study", "chapter", "colophon", "concluding-sentence", "conclusion", "contributors", "copyright-page", "cover", "covertitle", "credit", "credits", "dedication", "division", "endnote", "endnotes", "epigraph", "epilogue", "errata", "feedback", "figure", "fill-in-the-blank-problem", "footnote", "footnotes", "foreword", "frontmatter", "fulltitle", "general-problem", "glossary", "glossdef", "glossref", "glossterm", "halftitle", "halftitlepage", "imprimatur", "imprint", "index", "index-editor-note", "index-entry", "index-entry-list", "index-group", "index-headnotes", "index-legend", "index-locator", "index-locator-list", "index-locator-range", "index-term", "index-term-categories", "index-term-category", "index-xref-preferred", "index-xref-related", "introduction", "keyword", "keywords", "label", "landmarks", "learning-objective", "learning-objectives", "learning-outcome", "learning-outcomes", "learning-resource", "learning-resources", "learning-standard", "learning-standards", "list", "list-item", "loa", "loi", "lot", "lov", "match-problem", "multiple-choice-problem", "noteref", "notice", "ordinal", "other-credits", "pagebreak", "page-list", "panel", "panel-group", "part", "practice", "practices", "preamble", "preface", "prologue", "pullquote", "qna", "question", "revision-history", "seriespage", "sound-area", "subtitle", "table", "table-cell", "table-row", "text-area", "tip", "title", "titlepage", "toc", "toc-brief", "topic-sentence", "true-false-problem", "volume"]
+# See <https://www.w3.org/TR/epub-ssv-11/>.
+EPUB_SEMANTIC_VOCABULARY = ["abstract", "acknowledgments", "afterword", "antonym-group", "appendix", "aside", "assessment", "backlink", "backmatter", "balloon", "bibliography", "biblioref", "bodymatter", "chapter", "colophon", "concluding-sentence", "conclusion", "condensed-entry", "contributors", "copyright-page", "cover", "covertitle", "credit", "credits", "dedication", "def", "dictentry", "dictionary", "division", "endnotes", "epigraph", "epilogue", "errata", "etymology", "example", "figure", "footnote", "footnotes", "foreword", "frontmatter", "fulltitle", "glossary", "glossdef", "glossref", "glossterm", "gram-info", "halftitle", "halftitlepage", "idiom", "imprimatur", "imprint", "index", "index-editor-note", "index-entry", "index-entry-list", "index-group", "index-headnotes", "index-legend", "index-locator", "index-locator-list", "index-locator-range", "index-term", "index-term-categories", "index-term-category", "index-xref-preferred", "index-xref-related", "introduction", "keyword", "landmarks", "learning-objective", "learning-resource", "list", "list-item", "loa", "loi", "lot", "lov", "noteref", "notice", "other-credits", "page-list", "pagebreak", "panel", "panel-group", "part", "part-of-speech", "part-of-speech-group", "part-of-speech-list", "phonetic-transcription", "phrase-group", "phrase-list", "preamble", "preface", "prologue", "pullquote", "qna", "revision-history", "sense-group", "sense-list", "sound-area", "subtitle", "synonym-group", "table", "table-cell", "table-row", "text-area", "tip", "title", "titlepage", "toc", "topic-sentence", "tran", "tran-info", "volume"]
 
 # See <https://www.daisy.org/z3998/2012/vocab/structure/>.
 Z3998_SEMANTIC_VOCABULARY = ["abbreviations", "acknowledgments", "acronym", "actor", "afterword", "alteration", "annoref", "annotation", "appendix", "article", "aside", "attribution", "author", "award", "backmatter", "bcc", "bibliography", "biographical-note", "bodymatter", "cardinal", "catalogue", "cc", "chapter", "citation", "clarification", "collection", "colophon", "commentary", "commentator", "compound", "concluding-sentence", "conclusion", "continuation", "continuation-of", "contributors", "coordinate", "correction", "covertitle", "currency", "decimal", "decorative", "dedication", "diary", "diary-entry", "discography", "division", "drama", "dramatis-personae", "editor", "editorial-note", "email", "email-message", "epigraph", "epilogue", "errata", "essay", "event", "example", "family-name", "fiction", "figure", "filmography", "footnote", "footnotes", "foreword", "fraction", "from", "frontispiece", "frontmatter", "ftp", "fulltitle", "gallery", "general-editor", "geographic", "given-name", "glossary", "grant-acknowledgment", "grapheme", "halftitle", "halftitle-page", "help", "homograph", "http", "hymn", "illustration", "image-placeholder", "imprimatur", "imprint", "index", "initialism", "introduction", "introductory-note", "ip", "isbn", "keyword", "letter", "loi", "lot", "lyrics", "marginalia", "measure", "mixed", "morpheme", "name-title", "nationality", "non-fiction", "nonresolving-citation", "nonresolving-reference", "note", "noteref", "notice", "orderedlist", "ordinal", "organization", "other-credits", "pagebreak", "page-footer", "page-header", "part", "percentage", "persona", "personal-name", "pgroup", "phone", "phoneme", "photograph", "phrase", "place", "plate", "poem", "portmanteau", "postal", "postal-code", "postscript", "practice", "preamble", "preface", "prefix", "presentation", "primary", "product", "production", "prologue", "promotional-copy", "published-works", "publisher-address", "publisher-note", "publisher-logo", "range", "ratio", "rearnote", "rearnotes", "recipient", "recto", "reference", "republisher", "resolving-reference", "result", "role-description", "roman", "root", "salutation", "scene", "secondary", "section", "sender", "sentence", "sidebar", "signature", "song", "speech", "stage-direction", "stem", "structure", "subchapter", "subject", "subsection", "subtitle", "suffix", "surname", "taxonomy", "tertiary", "text", "textbook", "t-form", "timeline", "title", "title-page", "to", "toc", "topic-sentence", "translator", "translator-note", "truncation", "unorderedlist", "valediction", "verse", "verso", "v-form", "volume", "warning", "weight", "word"]
 
 # See <https://standardebooks.org/vocab/1.0>.
-SE_SEMANTIC_VOCABULARY = ["collection", "compass", "compound", "diary", "diary.dateline", "era", "image", "image.color-depth", "image.color-depth.black-on-transparent", "image.style.realistic", "image.color-depth.default-on-transparent", "letter", "letter.dateline", "long-description", "name", "name.person", "name.person.full-name", "name.person.pen-name", "name.vehicle", "name.vehicle.airplane", "name.vehicle.auto", "name.vehicle.train", "name.vessel", "name.vessel.boat", "name.vessel.ship", "name.publication", "name.publication.book", "name.publication.essay", "name.publication.journal", "name.publication.newspaper", "name.publication.magazine", "name.publication.pamphlet", "name.publication.paper", "name.publication.play", "name.publication.poem", "name.publication.short-story", "name.music", "name.music.opera", "name.music.song", "name.visual-art", "name.visual-art.engraving", "name.visual-art.film", "name.visual-art.illustration", "name.visual-art.painting", "name.visual-art.photograph", "name.visual-art.sculpture", "name.visual-art.typeface", "name.broadcast", "name.broadcast.television-show", "name.legal-case", "novel", "novella", "publication-notes", "reading-ease", "reading-ease.flesch", "short-story", "sic", "temperature", "transform", "url", "url.authority", "url.authority.nacoaf", "url.homepage", "url.encyclopedia", "url.encyclopedia.wikipedia", "url.vcs", "url.vcs.github", "word-count"]
+SE_SEMANTIC_VOCABULARY = ["bridgehead", "collection", "compass", "compound", "diary", "diary.dateline", "era", "image", "image.color-depth", "image.color-depth.black-on-transparent", "image.style.realistic", "image.color-depth.default-on-transparent", "label", "letter", "letter.dateline", "long-description", "name", "name.person", "name.person.full-name", "name.person.pen-name", "name.vehicle", "name.vehicle.airplane", "name.vehicle.auto", "name.vehicle.train", "name.vessel", "name.vessel.boat", "name.vessel.ship", "name.publication", "name.publication.book", "name.publication.essay", "name.publication.journal", "name.publication.newspaper", "name.publication.magazine", "name.publication.pamphlet", "name.publication.paper", "name.publication.play", "name.publication.poem", "name.publication.short-story", "name.music", "name.music.opera", "name.music.song", "name.visual-art", "name.visual-art.engraving", "name.visual-art.film", "name.visual-art.illustration", "name.visual-art.painting", "name.visual-art.photograph", "name.visual-art.sculpture", "name.visual-art.typeface", "name.broadcast", "name.broadcast.television-show", "name.legal-case", "novel", "novella", "publication-notes", "reading-ease", "reading-ease.flesch", "short-story", "sic", "temperature", "transform", "url", "url.authority", "url.authority.nacoaf", "url.homepage", "url.encyclopedia", "url.encyclopedia.wikipedia", "url.vcs", "url.vcs.github", "word-count"]
 
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Children’s", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
 IGNORED_CLASSES = ["continued", "dl2", "dl3", "elision", "eoc", "full-page", "together", "telegram"]
@@ -337,14 +337,14 @@ SEMANTICS & CONTENT
 "s-063", "[val]z3998:persona[/] semantic on element that is not a [xhtml]<b>[/] or [xhtml]<td>[/]."
 "s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Hint: Em dashes go within [xhtml]<cite>[/] and it are preceded by exactly one space."
 "s-065", "[val]fulltitle[/] semantic on element that is not in the half title."
-"s-066", "Header element missing [val]label[/] semantic."
-"s-067", "Header element with a [val]label[/] semantic child, but without an [val]ordinal[/] semantic child."
-"s-068", "Header element missing [val]ordinal[/] semantic."
+"s-066", "Header element missing [val]se:label[/] semantic."
+"s-067", "Header element with a [val]se:label[/] semantic child, but without an [val]z3998:ordinal[/] semantic child."
+"s-068", "Header element missing [val]z3998:ordinal[/] semantic."
 "s-069", "[xhtml]<body>[/] element missing direct child [xhtml]<section>[/] or [xhtml]<article>[/] element."
 "s-070", "[xhtml]<h#>[/] element without semantic inflection."
 "s-071", "Sectioning element with more than one heading element."
 "s-072", "Element with single [xhtml]<span>[/] child. Hint: Remove the [xhtml]<span>[/] and promote its attributes to its parent element."
-"s-073", "Header element that requires [val]label[/] and [val]ordinal[/] semantic children."
+"s-073", "Header element that requires [val]se:label[/] and [val]z3998:ordinal[/] semantic children."
 "s-074", "[xhtml]<th>[/] element with no text content should be a [xhtml]<td>[/] element instead."
 "s-075", "[xhtml]<body>[/] element with direct children that aren’t [xhtml]<section>[/], [xhtml]<article>[/], or [xhtml]<nav>[/]."
 "s-076", "Dedication with letter semantics. Hint: Dedications are never letters, even if they appear to be addressed to someone."
@@ -370,16 +370,17 @@ SEMANTICS & CONTENT
 "s-096", "Heading element in half title page missing [val]fulltitle[/] semantic."
 "s-097", "[xhtml]<a>[/] element without [attr]href[/] attribute."
 "s-098", "[xhtml]<header>[/] element with only one child."
-"s-099", "List item in endnotes missing [val]endnote[/] semantic."
 "s-100", "Anonymous digital contributor value not exactly [text]An Anonymous Volunteer[/]."
 "s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/]."
 "s-102", "[attr]lang[/] attribute detected. Hint: Use [attr]xml:lang[/] instead."
 "s-103", "Probable missing semantics for a roman I numeral."
-"s-104", "Header element with incompatible semantics. Hint: Headers should be either [val]title[/] or [val]ordinal[/], not both."
+"s-104", "Header element with incompatible semantics. Hint: Headers should be either [val]title[/] or [val]z3998:ordinal[/], not both."
 "s-105", "Date without parent [xhtml]<time>[/] element."
 "s-106", "Proper name in the colophon without parent [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], or [xhtml]<b>[/] if anonymous."
 "s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?"
 "s-108", "[xhtml]<thead>[/] element with non-empty [xhtml]<td>[/] descendant. Hint: Use [xhtml]<th>[/] instead."
+UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+"s-099", "List item in endnotes missing [val]endnote[/] semantic."
 
 TYPOGRAPHY
 "t-001", "Illegal double spacing. Hint: Sentences should be single-spaced. Spaces might include Unicode hair spaces and no-break spaces."
@@ -1836,30 +1837,25 @@ def _lint_special_file_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	# Endnote checks.
 	elif special_file == "endnotes":
 		# Do we have to replace `Ibid.`? Only match `Ibid.` if the endnote doesn't appear to cite any names.
-		nodes = dom.xpath("/html/body//li[re:test(@epub:type, '\\bendnote\\b')]//abbr[re:test(., '\\b[Ii]bid\\b') and not(ancestor::li[1]//*[contains(@epub:type, 'se:name')])]")
+		nodes = dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li//abbr[re:test(., '\\b[Ii]bid\\b') and not(ancestor::li[1]//*[contains(@epub:type, 'se:name')])]")
 		if nodes:
 			messages.append(LintMessage("s-039", "[text]Ibid[/] in endnotes. Hint: “Ibid” means “The previous reference” which is meaningless with popup endnotes, and must be replaced by the actual thing [text]Ibid[/] refers to, unless it refers to text within the same endnote.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 		# Check that endnotes have their backlink in the last `<p>` element child of the `<li>`. This also highlights backlinks that are totally missing.
-		nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')][./p[last()][not(a[contains(@epub:type, 'backlink')])] or not(./p[last()])]")
+		nodes = dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li[./p[last()][not(a[contains(@epub:type, 'backlink')])] or not(./p[last()])]")
 		if nodes:
 			messages.append(LintMessage("s-056", "Last [xhtml]<p>[/] child of endnote missing backlink.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 		# Make sure the backlink points to the same note number as the parent endnote ID.
-		nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]//a[contains(@epub:type, 'backlink')][not(re:match(@href, '\\-[0-9]+$')=re:match(ancestor::li/@id, '\\-[0-9]+$'))]")
+		nodes = dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li//a[contains(@epub:type, 'backlink')][not(re:match(@href, '\\-[0-9]+$')=re:match(ancestor::li/@id, '\\-[0-9]+$'))]")
 		if nodes:
 			messages.append(LintMessage("s-057", "Backlink noteref fragment identifier doesn’t match endnote number.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 		# Check that citations at the end of endnotes are in a `<cite>` element. If not typogrify will run the last space together with the em dash.
 		# This tries to catch that, but limits the match to 20 characterss so that we don't accidentally match a whole sentence that happens to be at the end of an endnote.
-		nodes = dom.xpath(f"/html/body//li[contains(@epub:type, 'endnote')]/p[last()][re:test(., '\\.”?{se.WORD_JOINER}?—[A-Z].{{0,20}}\\s*↩$')]")
+		nodes = dom.xpath(f"/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li/p[last()][re:test(., '\\.”?{se.WORD_JOINER}?—[A-Z].{{0,20}}\\s*↩$')]")
 		if nodes:
 			messages.append(LintMessage("s-064", "Endnote citation not wrapped in [xhtml]<cite>[/]. Hint: Em dashes go within [xhtml]<cite>[/] and it are preceded by exactly one space.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
-
-		# Did we forget the endnote semantic on `<li>` elements?
-		nodes = dom.xpath("/html/body/section/ol/li[not(re:test(@epub:type, '\\bendnote\\b'))]")
-		if nodes:
-			messages.append(LintMessage("s-099", "List item in endnotes missing [val]endnote[/] semantic.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 		# Match backlink elements whose preceding node doesn't end with ` `, and is also not all whitespace.
 		nodes = dom.xpath("/html/body//a[@epub:type='backlink'][(preceding-sibling::node()[1])[not(re:test(., ' $')) and not(normalize-space(.)='')]]")
@@ -2037,7 +2033,7 @@ def _lint_xhtml_metadata_checks(self: 'SeEpub', filename: Path, dom: EasyXmlTree
 		if dom.xpath("/html/body/*[contains(@epub:type, 'foreword') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='wfw']"):
 			messages.append(LintMessage("m-086", "[val]foreword[/] semantic inflection found, but no MARC relator [val]wfw[/] (Writer of foreword).", se.MESSAGE_TYPE_WARNING, filename))
 
-		if dom.xpath("/html/body/*[contains(@epub:type, 'endnotes') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='ann']"):
+		if dom.xpath("/html/body/section[re:test(@epub:type, '\\bendnotes\\b') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='ann']"):
 			messages.append(LintMessage("m-033", "[val]endnotes[/] semantic inflection found, but no MARC relator [val]ann[/] (Annotator).", se.MESSAGE_TYPE_WARNING, filename))
 
 		if dom.xpath("/html/body/*[contains(@epub:type, 'loi') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and (text()='ill' or text()='pht')]"):
@@ -2261,7 +2257,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 		messages.append(LintMessage("s-025", "Illegal scare quotes or ending punctuation in title of media. Hint: surrounding punctuation is not a part of a title.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for `z3998:roman elements with invalid values. Roman numerals can occasionally end in `j` as an alias for ending `i`. See _The Worm Ouroboros_.
-	# We also allow the numeral to end in a digit, because that might be an endnote. For example `<h2 epub:type="ordinal z3998:roman">II<a href="..." epub:type="noteref">3</a></h2>`.
+	# We also allow the numeral to end in a digit, because that might be an endnote. For example `<h2 epub:type="z3998:ordinal z3998:roman">II<a href="..." epub:type="noteref">3</a></h2>`.
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:roman') and not(re:test(normalize-space(.), '^[ivxlcdmIVXLCDM]+j?[0-9]*?$'))]")
 	if nodes:
 		messages.append(LintMessage("s-026", "Invalid Roman numeral.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
@@ -2344,7 +2340,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 		messages.append(LintMessage("s-030", "[xhtml]<em>[/] outside of quotation marks.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for endnotes.
-	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]/p[not(preceding-sibling::*)]/cite[not(preceding-sibling::node()[normalize-space(.)]) and (following-sibling::node()[normalize-space(.)])[1][contains(@epub:type, 'backlink')]]")
+	nodes = dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li/p[not(preceding-sibling::*)]/cite[not(preceding-sibling::node()[normalize-space(.)]) and (following-sibling::node()[normalize-space(.)])[1][contains(@epub:type, 'backlink')]]")
 	if nodes:
 		messages.append(LintMessage("s-035", "Endnote containing only [xhtml]<cite>[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
@@ -2469,7 +2465,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 
 	# Check for `<h#>` elements followed by header content, that are not children of `<header>`.
 	# Only match if there is a following `<p>`, because we could have the case where there's an epigraph after a division title.
-	nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][following-sibling::*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'bridgehead')]][following-sibling::p][not(parent::header)]")
+	nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][following-sibling::*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'se:bridgehead')]][following-sibling::p][not(parent::header)]")
 	if nodes:
 		messages.append(LintMessage("s-061", "Title and following header content not in a [xhtml]<header>[/] element.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
@@ -2488,27 +2484,27 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	if nodes:
 		messages.append(LintMessage("s-065", "[val]fulltitle[/] semantic on element that is not in the half title.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
-	# Check for header elements that have a label, but are missing the `label` semantic.
+	# Check for header elements that have a label, but are missing the `se:label` semantic.
 	# Find `<h#>` elements whose first child is a text node matching a label type, and where that text node's next sibling is a semantic roman numeral.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./node()[1][self::text() and not(./*) and re:test(normalize-space(.), '^(Part|Book|Volume|Section|Act|Scene)$') and following-sibling::*[1][contains(@epub:type, 'z3998:roman')]]]")
 	if nodes:
-		messages.append(LintMessage("s-066", "Header element missing [val]label[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("s-066", "Header element missing [val]se:label[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
-	# Check for header elements that have a `label` semantic, but are missing an `ordinal` sibling.
-	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./span[contains(@epub:type, 'label')]][not(./span[contains(@epub:type, 'ordinal')])]")
+	# Check for header elements that have a `se:label` semantic, but are missing an `z3998:ordinal` sibling.
+	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./span[contains(@epub:type, 'se:label')]][not(./span[contains(@epub:type, 'z3998:ordinal')])]")
 	if nodes:
-		messages.append(LintMessage("s-067", "Header element with a [val]label[/] semantic child, but without an [val]ordinal[/] semantic child.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("s-067", "Header element with a [val]se:label[/] semantic child, but without an [val]z3998:ordinal[/] semantic child.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
-	# Check for header elements with a `z3998:roman` semantic but without an `ordinal` semantic.
+	# Check for header elements with a `z3998:roman` semantic but without an `z3998:ordinal` semantic.
 	# Exclude 4-digit numbers that start with `17`, `18`, or `19`, as those are likely years and not ordinals.
-	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][contains(@epub:type, 'z3998:roman') and not(contains(@epub:type, 'ordinal'))] | /html/body//header/p[not(re:test(@epub:type, '\\bordinal\\b')) and ((re:test(., '^[0-9,]+$') and not(re:test(., '^1[789][0-9]{2}'))) or re:test(@epub:type, '\\bz3998:roman\\b'))]")
+	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][contains(@epub:type, 'z3998:roman') and not(contains(@epub:type, 'z3998:ordinal'))] | /html/body//header/p[not(re:test(@epub:type, '\\bz3998:ordinal\\b')) and ((re:test(., '^[0-9,]+$') and not(re:test(., '^1[789][0-9]{2}'))) or re:test(@epub:type, '\\bz3998:roman\\b'))]")
 	if nodes:
-		messages.append(LintMessage("s-068", "Header element missing [val]ordinal[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("s-068", "Header element missing [val]z3998:ordinal[/] semantic.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
-	# Check for header elements with both a `title` and `ordinal` semantics.
-	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][contains(@epub:type, 'title') and contains(@epub:type, 'ordinal')]")
+	# Check for header elements with both a `title` and `z3998:ordinal` semantics.
+	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][contains(@epub:type, 'title') and contains(@epub:type, 'z3998:ordinal')]")
 	if nodes:
-		messages.append(LintMessage("s-104", "Header element with incompatible semantics. Hint: Headers should be either [val]title[/] or [val]ordinal[/], not both.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("s-104", "Header element with incompatible semantics. Hint: Headers should be either [val]title[/] or [val]z3998:ordinal[/], not both.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for `<body>` element without child `<section>` or `<article>`. Ignore the ToC because it has a unique structure.
 	nodes = dom.xpath("/html/body[not(./*[name()='section' or name()='article' or (name()='nav' and re:test(@epub:type, '\\b(toc|loi)\\b'))])]")
@@ -2531,10 +2527,10 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	if nodes:
 		messages.append(LintMessage("s-072", "Element with single [xhtml]<span>[/] child. Hint: Remove the [xhtml]<span>[/] and promote its attributes to its parent element.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
-	# Check for header elements that are missing both label and ordinal semantics.
+	# Check for header elements that are missing both `se:label` and `z3998:ordinal` semantics.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][not(./*) and re:test(normalize-space(.), '^(Part|Book|Volume|Section|Act|Scene)\\s+[ixvIXVmcd]+$')]")
 	if nodes:
-		messages.append(LintMessage("s-073", "Header element that requires [val]label[/] and [val]ordinal[/] semantic children.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("s-073", "Header element that requires [val]se:label[/] and [val]z3998:ordinal[/] semantic children.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for table headers that don't have content, which is an accessibility issue.
 	# Note that `@aria-label` and `@title` should (apparently) not be used for table headers.
@@ -2594,7 +2590,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 		messages.append(LintMessage("s-084", "Poem has incorrect semantics.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for `Op. Cit.` in endnotes. `Op. Cit.` means `the previous reference` which doesn't make sense in popup endnotes. But, if the endnote has a book reference, then allow it as it might be referring to that.
-	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote') and (re:test(., '(Loc\\.|Op\\.) Cit\\.', 'i') or re:test(., '[^\\.]l\\.c\\.[^a-z]', 'i')) and not(.//*[contains(@epub:type, 'se:name.publication')])]")
+	nodes = dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li[(re:test(., '(Loc\\.|Op\\.) Cit\\.', 'i') or re:test(., '[^\\.]l\\.c\\.[^a-z]', 'i')) and not(.//*[contains(@epub:type, 'se:name.publication')])]")
 	if nodes:
 		messages.append(LintMessage("s-086", "[text]Op. Cit.[/] or [text]Loc. Cit.[/] in endnote. Hint: [text]Op. Cit.[/] and [text]Loc. Cit.[/] mean [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_node_tags(nodes)))
 
@@ -3068,7 +3064,7 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 		messages.append(LintMessage("t-053", "Stage direction starting in lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Epigraphs that are entirely non-English should still be in italics, not Roman.
-	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'bridgehead')]//p[./i[@xml:lang and @data-css-font-style='normal' and ( (./preceding-sibling::node()='“' and ./following-sibling::node()='”') or not(./preceding-sibling::node()[normalize-space(.)] or ./following-sibling::node()[normalize-space(.)]) ) ]]")
+	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'epigraph') or contains(@epub:type, 'se:bridgehead')]//p[./i[@xml:lang and @data-css-font-style='normal' and ( (./preceding-sibling::node()='“' and ./following-sibling::node()='”') or not(./preceding-sibling::node()[normalize-space(.)] or ./following-sibling::node()[normalize-space(.)]) ) ]]")
 	if nodes:
 		messages.append(LintMessage("t-054", "Epigraphs is entirely non-English, but is set in Roman. Hint: Set it in italics.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
@@ -3098,7 +3094,7 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 		messages.append(LintMessage("t-058", "Illegal character.", se.MESSAGE_TYPE_ERROR, filename, [LintSubmessage(m[0].encode("unicode_escape").decode().replace("\\u", "U+").upper(), m[1]) for m in matches]))
 
 	# Check for period in `<cite>` in endnotes.
-	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]//cite[not((./node()[last()])[name() = 'abbr']) and ./following-sibling::*[1][contains(@epub:type, 'backlink')] and re:test(., '^—') and ( (re:test(., '\\.$') and ./following-sibling::node()[re:test(., '^\\s*$')]) or ./following-sibling::node()[re:test(., '^\\.\\s*$')])]")
+	nodes = dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li//cite[not((./node()[last()])[name() = 'abbr']) and ./following-sibling::*[1][contains(@epub:type, 'backlink')] and re:test(., '^—') and ( (re:test(., '\\.$') and ./following-sibling::node()[re:test(., '^\\s*$')]) or ./following-sibling::node()[re:test(., '^\\.\\s*$')])]")
 	if nodes:
 		messages.append(LintMessage("t-059", "Period at the end of [xhtml]<cite>[/] element before endnote backlink.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
@@ -3109,7 +3105,7 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 
 	# Check for summary-style bridgeheads not ending in punctuation.
 	# Decide if it's a summary-style bridgehead if it contains two or more em dashes. We use Python regex because xpath can't count the number of occurances of a string.
-	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'bridgehead') and re:test(., '[^\\.\\!\\?”]”?$')]")
+	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'se:bridgehead') and re:test(., '[^\\.\\!\\?”]”?$')]")
 	nodes = [node for node in nodes if len(regex.findall(r"—", node.to_string())) >= 2]
 	if nodes:
 		messages.append(LintMessage("t-061", "Summary-style bridgehead without ending punctuation.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
@@ -3157,7 +3153,7 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 		messages.append(LintMessage("t-067", "Plural [val]z3998:grapheme[/], [val]z3998:phoneme[/], or [val]z3998:morpheme[/] formed without apostrophe ([text]’[/]).", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Find citations not offset by em dashes. We're only interested in `<cite>`s in endnotes that are directly followed by the backlink; ignore `<cite>`s starting with `Cf.` which means `Compare` and was often used to mean `see`.
-	nodes = dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]/p[last()]/cite[following-sibling::node()[normalize-space(.)][1][name() = 'a' and contains(@epub:type, 'backlink')] and re:test(., '^[^—]') and not(re:test(., '^(Cf\\.|\\()'))]")
+	nodes = dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li/p[last()]/cite[following-sibling::node()[normalize-space(.)][1][name() = 'a' and contains(@epub:type, 'backlink')] and re:test(., '^[^—]') and not(re:test(., '^(Cf\\.|\\()'))]")
 	if nodes:
 		messages.append(LintMessage("t-068", "Citation not offset with em dash.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
@@ -3408,7 +3404,7 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: EasyXmlTree, special_f
 		messages.append(LintMessage("y-008", "Possible typo: Dialog interrupted by interjection but with incorrect closing quote.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
 
 	# Check for dialog starting with a lowercase letter. Only check the first child text node of `<p>`, because other first children might be valid lowercase, like `<m:math>` or `<b>`; exclude `<p>` inside or preceded by `<blockquote>`; and exclude `<p>` inside endnotes, as definitions may start with lowercase letters.
-	typos = dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::li[contains(@epub:type, 'endnote')]) and not(preceding-sibling::*[1][name()='blockquote'])][re:test(./node()[1], '^“[a-z]')]")
+	typos = dom.xpath("/html/body//p[not(ancestor::blockquote or ancestor::li/parent::ol/parent::section[re:test(@epub:type, '\\bendnotes\\b')]) and not(preceding-sibling::*[1][name()='blockquote'])][re:test(./node()[1], '^“[a-z]')]")
 	if typos:
 		messages.append(LintMessage("y-009", "Possible typo: Dialog begins with lowercase letter.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(typos)))
 
@@ -4194,7 +4190,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 
 				if file_path.name not in IGNORED_FILENAMES:
 					# Does this book look like a collection? It does if there is a `bodymatter` section that only contains `<article>` children, and none of the titles are roman numerals.
-					nodes = dom.xpath("/html/body[contains(@epub:type, 'bodymatter') and ./article and count(./*[name() != 'article']) = 0 and not(./article/*[re:test(name(), '^h[1-6]$') and contains(@epub:type, 'ordinal')]) and not(./article/hgroup//*[contains(@epub:type, 'ordinal')]) and not(./article/header/hgroup//*[contains(@epub:type, 'ordinal')])]")
+					nodes = dom.xpath("/html/body[contains(@epub:type, 'bodymatter') and ./article and count(./*[name() != 'article']) = 0 and not(./article/*[re:test(name(), '^h[1-6]$') and contains(@epub:type, 'z3998:ordinal')]) and not(./article/hgroup//*[contains(@epub:type, 'z3998:ordinal')]) and not(./article/header/hgroup//*[contains(@epub:type, 'z3998:ordinal')])]")
 					if nodes:
 						does_ebook_look_like_collection = True
 

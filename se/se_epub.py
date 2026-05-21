@@ -300,7 +300,7 @@ class SeEpub:
 			if self.endnotes_path is not None:
 				dom = self.get_dom(self.endnotes_path)
 
-				for node in dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol/li[contains(@epub:type, 'endnote')]"):
+				for node in dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li"):
 					note = Endnote()
 					note.node = node
 					try:
@@ -1299,7 +1299,7 @@ class SeEpub:
 
 		# Get a list of all the integer endnote IDs (we have books with non-integer endnote ids; this command won't work on them).
 		all_endnote_numbers: list[int] = []
-		for node in dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]"):
+		for node in dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li"):
 			endnote_number = regex.sub("note-", "", node.get_attr("id"))
 			if endnote_number.isdigit():
 				all_endnote_numbers.append(int(endnote_number))
@@ -1317,7 +1317,7 @@ class SeEpub:
 			new_endnote_number = endnote_number + step
 
 			# Update all the actual endnotes in the endnotes file.
-			for node in dom.xpath(f"/html/body//li[contains(@epub:type, 'endnote') and @id='note-{endnote_number}']"):
+			for node in dom.xpath(f"/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li[@id='note-{endnote_number}']"):
 				node.set_attr("id", f"note-{new_endnote_number}")
 
 			# Update all backlinks in the endnotes file.
@@ -2040,7 +2040,7 @@ class SeEpub:
 		# Renumber all endnotes starting from 1.
 		current_note_number = 1
 		endnotes_dom = self.get_dom(self.endnotes_path)
-		for node in endnotes_dom.xpath("/html/body//li[contains(@epub:type, 'endnote')]"):
+		for node in endnotes_dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li"):
 			node.set_attr("id", f"note-{current_note_number}")
 			for backlink in node.xpath(".//a[contains(@epub:type, 'backlink')]"):
 				filename = noteref_locations[current_note_number].name if current_note_number in noteref_locations else ""
@@ -2079,7 +2079,7 @@ class SeEpub:
 			dom = self.get_dom(file_path)
 
 			# Skip the actual endnotes file, we'll handle that later.
-			if dom.xpath("/html/body//*[contains(@epub:type, 'endnotes')]"):
+			if dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]"):
 				continue
 
 			processed += 1
@@ -2108,8 +2108,8 @@ class SeEpub:
 		if notes_changed > 0:
 			# Now we need to recreate the endnotes file.
 			endnotes_dom = self.get_dom(self.endnotes_path)
-			for ol_node in endnotes_dom.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol[1]"):
-				for node in ol_node.xpath("./li[contains(@epub:type, 'endnote')]"):
+			for ol_node in endnotes_dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol[1]"):
+				for node in ol_node.xpath("./li"):
 					node.remove()
 
 				self.endnotes.sort(key=lambda endnote: endnote.number)

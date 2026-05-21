@@ -439,16 +439,24 @@ def _compatibility_replacements_xhtml(self: 'SeEpub', file_path: Path, has_seque
 	# To get popup footnotes in iBooks, we have to add the `footnote` and `footnotes` semantic.
 	# Still required as of 2021-05.
 	# Matching `endnote` will also catch `endnotes`.
-	for node in dom.xpath("/html/body//*[contains(@epub:type, 'endnote')]"):
-		plural = ""
-		if "endnotes" in node.get_attr("epub:type"):
-			plural = "s"
-
-		node.add_attr_value("epub:type", "footnote" + plural)
+	for node in dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]"):
+		node.add_attr_value("epub:type", "footnotes")
 
 		# Remember to get our custom style selectors that we added, too.
-		if "epub-type-endnote" + plural in node.get_attr("class"):
-			node.add_attr_value("class", "epub-type-footnote" + plural)
+		if "epub-type-endnotes" in node.get_attr("class"):
+			node.add_attr_value("class", "epub-type-footnotes")
+
+
+	# Add both `endnote` (which is legacy epub vocabulary) and `foonote` semantics to endnote items.
+	for node in dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li"):
+		if "endnote" not in node.get_attr("epub:type"):
+			node.add_attr_value("epub:type", "endnote")
+
+		node.add_attr_value("epub:type", "footnote")
+
+		# Remember to get our custom style selectors that we added, too.
+		if "epub-type-endnote" in node.get_attr("class"):
+			node.add_attr_value("class", "epub-type-footnote")
 
 	# Include extra lang tag for accessibility compatibility.
 	for node in dom.xpath("//*[@xml:lang]"):
@@ -456,7 +464,7 @@ def _compatibility_replacements_xhtml(self: 'SeEpub', file_path: Path, has_seque
 
 	processed_xhtml = se.formatting.format_xhtml(dom.to_string())
 
-	if dom.xpath("/html/body//section[contains(@epub:type, 'endnotes')]"):
+	if dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]"):
 		# iOS renders the left-arrow-hook character as an emoji; this fixes it and forces it to render as text.
 		# See:
 		# - <https://github.com/standardebooks/tools/issues/73>
@@ -465,7 +473,7 @@ def _compatibility_replacements_xhtml(self: 'SeEpub', file_path: Path, has_seque
 
 		# If this is a large endnote file, add it to our list for later processing.
 		try:
-			endnote_count = dom.xpath("count(/html/body//section[contains(@epub:type, 'endnotes')]/ol/li)", float)[0]
+			endnote_count = dom.xpath("count(/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li)", float)[0]
 		except IndexError:
 			endnote_count = 0
 
@@ -610,8 +618,6 @@ def _compatibility_replacements_css(file_path: Path) -> None:
 
 		# To get popup footnotes in iBooks, we have to change `epub:endnote` to `epub:footnote`.
 		# Remember to get our custom style selectors too.
-		processed_css = processed_css.replace("endnote", "footnote")
-
 		# `page-break-*` is deprecated in favor of `break-*`. Add `page-break-*` aliases for compatibility in older ereaders.
 		processed_css = regex.sub(r"(\s+)break-(.+?:\s.+?;)", "\\1break-\\2\t\\1page-break-\\2", processed_css)
 
@@ -648,7 +654,7 @@ def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote
 		for node in dom.xpath("/html/body//a[re:test(@href, '^#')]"):
 			node.set_attr("href", f"{endnote_file.name}{node.get_attr('href')}")
 
-		endnotes = dom.xpath("/html/body//*[re:test(@epub:type, '\\bendnote\\b')]")
+		endnotes = dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li")
 
 		# Split our endnotes into chunks of 500 endnotes each.
 		chunked_endnotes: list[list[EasyXmlElement]] = []
@@ -657,8 +663,8 @@ def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote
 
 		# We use our endnotes file DOM as a base for the split endnotes. Remove all endnotes and add an empty `<ol>` to start.
 		endnotes_base = deepcopy(dom)
-		endnotes_base.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol")[0].remove()
-		endnotes_base.xpath("/html/body/section[contains(@epub:type, 'endnotes')]")[0].append(EasyXmlElement("<ol></ol>"))
+		endnotes_base.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol")[0].remove()
+		endnotes_base.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]")[0].append(EasyXmlElement("<ol></ol>"))
 		chunk_number = 1
 		endnotes_manifest_entry = metadata_dom.xpath(f"/package/manifest/item[@href='{endnote_manifest_href}/{endnote_file.name}']")[0]
 		endnotes_spine_entry = metadata_dom.xpath(f"/package/spine/itemref[@idref='{endnotes_manifest_entry.get_attr('id')}']")[0]
@@ -672,7 +678,7 @@ def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote
 		# Chunk the endnotes and write the new endnote files to disk.
 		for chunk in chunked_endnotes:
 			current_endnotes_file = deepcopy(endnotes_base)
-			ol_node = current_endnotes_file.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/ol")[0]
+			ol_node = current_endnotes_file.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol")[0]
 			chunk_start = ((chunk_number - 1) * ENDNOTE_CHUNK_SIZE) + 1
 			chunk_end = chunk_start - 1 + len(chunk)
 			new_filename = f"{endnote_file.stem}-{chunk_number}.xhtml"
@@ -686,7 +692,7 @@ def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote
 
 			# Generate and set the new title element of the new endnotes file.
 			endnotes_title = f"Endnotes {format(chunk_start, ',d')}⁠–⁠{format(chunk_end, ',d')}"
-			endnotes_header_node = current_endnotes_file.xpath("/html/body/section[contains(@epub:type, 'endnotes')]/*[re:test(@epub:type, '\\btitle\\b')]")[0]
+			endnotes_header_node = current_endnotes_file.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/*[re:test(@epub:type, '\\btitle\\b')]")[0]
 			endnotes_header_node.set_text(endnotes_title)
 			endnotes_title_node = current_endnotes_file.xpath("/html/head/title")[0]
 			endnotes_title_node.set_text(endnotes_title.replace("⁠", ""))
@@ -1156,7 +1162,7 @@ def _build_kobo_process_xhtml(work_kepub: 'SeEpub', file_path: Path) -> None:
 		node.unwrap()
 
 	# Kobos don't have fonts that support the `↩` character in endnotes, so replace it with `←`.
-	if dom.xpath("/html/body//section[contains(@epub:type, 'endnotes')]"):
+	if dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]"):
 		# We use xpath to select the Kobo `<span>`s that we just inserted.
 		for node in dom.xpath("/html/body//a[contains(@epub:type, 'backlink')]/*[local-name()='span']"):
 			node.set_text("←")
@@ -1552,19 +1558,19 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 		# If this is the endnotes file, convert endnotes to Kindle popup compatible notes.
 		# To do this, we move the backlink to the front of the endnote's first `<p>` (or we create a first `<p>` if there isn't one) and change its text to the note number instead of a back arrow.
 		# Then, we remove all endnote `<li>` wrappers and put their IDs on the first `<p>` child, leaving just a series of `<p>`s.
-		if dom.xpath("/html/body//section[contains(@epub:type, 'endnotes')]"):
+		if dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]"):
 			# While Kindle now supports soft hyphens, popup endnotes break words but don't insert the hyphen characters. So for now, remove soft hyphens from the endnotes file.
 			replace_shy_hyphens = True
 
 			# Loop over each endnote and move the ending backlink to the front of the endnote for Kindles.
-			note_container = dom.xpath("/html/body//section[contains(@epub:type, 'endnotes')]/ol")[0]
+			note_container = dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol")[0]
 
 			note_number = 1
 
 			if note_container.get_attr("start"):
 				note_number = int(note_container.get_attr("start"))
 
-			for endnote in dom.xpath("//li[re:test(@epub:type, '\\b(endnote|footnote)\\b')]"):
+			for endnote in note_container.xpath("./li"):
 				first_p = endnote.xpath("(./p[not(preceding-sibling::*)])[1]")
 
 				# Sometimes there is no leading `<p>` element (for example, if the endnote starts with a blockquote.
