@@ -824,6 +824,27 @@ def format_xhtml(xhtml: str) -> str:
 		# Set the new class value.
 		node.set("class", " ".join(classes))
 
+	# Sort `epub:type` alphabetically, but put semantics that are part of the epub spec (i.e., without a namespace) first.
+	for node in tree.xpath("//*[re:test(@epub:type, '\\s')]", namespaces=namespaces):
+		items = regex.split(r"\s+", node.get("{http://www.idpf.org/2007/ops}type"))
+
+		epub_items: list[str] = []
+		namespaced_items: list[str] = []
+
+		for item in items:
+			if ":" in item:
+				namespaced_items.append(item)
+			else:
+				epub_items.append(item)
+
+		epub_items = sorted(epub_items, key=str.lower)
+		namespaced_items = sorted(namespaced_items, key=str.lower)
+
+		value = " ".join(epub_items) + " " + " ".join(namespaced_items)
+		value = value.strip()
+
+		node.set("{http://www.idpf.org/2007/ops}type", value)
+
 	# Lowercase element names.
 	for node in tree.xpath("//*[re:test(local-name(), '[A-Z]')]", namespaces=namespaces):
 		node.tag = node.tag.lower()
