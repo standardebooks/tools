@@ -1,3 +1,9 @@
+m-033 [Manual Review] chapter-1.xhtml `endnotes` semantic inflection found, but no MARC relator `ann` (Annotator).
+s-056 [Error] chapter-1.xhtml Last `<p>` child of endnote missing backlink.
+ Line 10:       <li>
+ Line 13:       <li>
+ Line 16:       <li>
+ Line 19:       <li>
 s-086 [Manual Review] chapter-1.xhtml `Op. Cit.` or `Loc. Cit.` in endnote. Hint: `Op. Cit.` and `Loc. Cit.` mean `the previous reference`, which usually doesn’t make sense in a popup endnote. Such references should be expanded.
  Line 10:       <li>
  Line 13:       <li>
