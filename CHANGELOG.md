@@ -1,3 +1,49 @@
+# 3.0.4
+
+## General
+
+- Use the latest epub structural semantics vocabulary across the toolset
+
+## se clean
+
+- Alphabetize `epub:type` values
+
+## se create-draft
+
+- Add semantics to name with Jr. and remove duplicate terminal periods
+
+- Update to new PG link style
+
+## se lint
+
+- Improve t-008
+
+- Improve s-068
+
+- Improve t-011
+
+- Check for dedicator role. Thanks to Robin Whittleton
+
+- Add t-005, newspaper name not in italics
+
+- Add s-108, `<thead>` element with non-empty `<td>` descendant
+
+## se modernizes-spelling
+
+- Various additions
+
+## se semanticate
+
+- Add semantics to Jr.
+
+- Consolidate some regexes
+
+- Don’t add initialism to compass semantics. Thanks to Robin Whittleton
+
+## se split-file
+
+- Don't crash if there are two or more `se:split` elements in a row
+
 # 3.0.3
 
 ## se build
