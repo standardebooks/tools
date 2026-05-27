@@ -303,7 +303,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"([Pp])artizan", r"\1artisan", xhtml)			# partizan -> partisan
 	xhtml = regex.sub(r"\b([Pp])art[iy]-?colo(u?)r", r"\1arti-colo\2r", xhtml)	# party-color -> parti-color
 	xhtml = regex.sub(r"\b([Pp])aultry", r"\1altry", xhtml)				# paultry -> paltry
-	xhtml = regex.sub(r"\b([Pp])ease\b(?![ \-]pudding)", r"\1eas", xhtml)		# pease -> peas (but "pease pudding")
+	xhtml = regex.sub(r"\b([Pp])ease\b(?![ \-]pudding)(?![ \-]porridge)", r"\1eas", xhtml)		# pease -> peas (but "pease pudding")
 	xhtml = regex.sub(r"\b([Pp])edler", r"\1eddler", xhtml)				# pedler -> peddler
 	xhtml = regex.sub(r"\bper cent(s|ages?)?\b", r"percent\1", xhtml)		# per cent -> percent
 	xhtml = regex.sub(r"\bpercent\.([,;:\!\?])", r"percent\1", xhtml)		# percent. -> percent
