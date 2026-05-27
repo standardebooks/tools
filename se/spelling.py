@@ -622,14 +622,13 @@ def modernize_spelling(xhtml: str) -> str:
 		xhtml = regex.sub(r"\b([Cc])osey", r"\1osy", xhtml)
 
 	# US spelling is unique.
+	# Don't match leading `\b` to catch `outmananœuvre`.
+	# Omit last letter to catch both `maneuvers`, `maneuvered`, `maneuvering`, etc.
 	if language == "en-US":
-		xhtml = regex.sub(r"\b([Mm])anœuvred", r"\1aneuvered", xhtml)
-		xhtml = regex.sub(r"\b([Mm])anœuv(?:er|re)", r"\1aneuver", xhtml) # Omit last letter to catch both `maneuvers and `maneuvering`.
-		xhtml = regex.sub(r"\b([Mm])anœuvering", r"\1aneuvering", xhtml)
+		xhtml = regex.sub(r"([Mm])an(?:œ|oe)uv(?:er|re)", r"\1aneuver", xhtml)
+		xhtml = regex.sub(r"([Mm])an(?:œ|oe)uvering", r"\1aneuvering", xhtml)
 	else:
-		xhtml = regex.sub(r"\b([Mm])anœuvred", r"\1anoeuvred", xhtml)
-		xhtml = regex.sub(r"\b([Mm])anœuv(?:er|re)", r"\1anoeuvre", xhtml)
-		xhtml = regex.sub(r"\b([Mm])anœuvring", r"\1anoeuvring", xhtml)
-		xhtml = regex.sub(r"\b([Mm])anoeuvreing", r"\1anoeuvring", xhtml)
+		xhtml = regex.sub(r"([Mm])an(?:œ|oe)uv(?:er|re)", r"\1anoeuvre", xhtml)
+		xhtml = regex.sub(r"([Mm])an(?:œ|oe)uvring", r"\1anoeuvring", xhtml)
 
 	return xhtml
