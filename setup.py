@@ -95,7 +95,7 @@ setup(
 		"pillow==12.2.0",
 		"psutil==7.2.2",
 		"pyphen==0.17.2",
-		"pyoxipng==9.1.1",
+		"oxipng-pybind==10.1.1.post1",
 		"regex==2026.2.28",
 		"repro_zipfile==0.4.1",
 		"requests==2.33.0",

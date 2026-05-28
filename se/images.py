@@ -16,7 +16,7 @@ import regex
 from PIL import Image, ImageFont, ImageMath, PngImagePlugin, UnidentifiedImageError
 from PIL.Image import Image as Image_type # Separate import to satisfy type checking.
 from lxml import etree
-from oxipng import optimize # type: ignore Error in built-in type stub. # pylint: disable=no-name-in-module
+from oxipng import optimize
 
 import se
 import se.formatting
