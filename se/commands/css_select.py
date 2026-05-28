@@ -45,12 +45,12 @@ def css_select(plain_output: bool) -> int:
 						if plain_output:
 							output = f"Line {node.sourceline}: {node.to_string()}"
 						else:
-							node_string = str(node).replace('[', '\\[')
+							node_string = node.to_string().replace('[', '\\[')
 							output = f"[path][link=file://{filepath.resolve()}#L{node.sourceline}]Line {node.sourceline}[/][/]: {node_string}"
 
-						output = "".join([f"\t{line}\n" for line in output.splitlines()])
+						output = "".join(f"\t{line}\n" for line in output.splitlines())
 
-						console.print(output, plain_output)
+						console.print(se.prep_output(output, plain_output))
 
 		except se.InvalidCssException as ex:
 			se.print_error(ex)
