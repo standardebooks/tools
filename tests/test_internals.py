@@ -4,10 +4,12 @@ Test internal SE programming functions
 
 from pathlib import Path
 
+from PIL import Image, ImageDraw
 import regex
 
 from se.se_epub_generate_toc import add_landmark, TocItem
 import se.easy_xml
+import se.images
 from se.se_epub_lint import SourceFile
 
 
@@ -53,6 +55,33 @@ def test_inner_text():
 	p = dom.xpath("//p")[0]
 
 	assert p.inner_text() == "a <b \tΑ c\nd"
+
+def test_optimize_png(tmp_path: Path):
+	"""
+	Verify the oxipng binding optimizes a PNG file in place without changing the image.
+	"""
+	image_path = tmp_path / "test.png"
+	image = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+	draw = ImageDraw.Draw(image)
+	draw.rectangle((4, 4, 18, 18), fill=(255, 0, 0, 255))
+	draw.ellipse((12, 12, 28, 28), fill=(0, 0, 255, 255))
+	image.save(image_path, compress_level=0)
+	original_size = image_path.stat().st_size
+
+	with Image.open(image_path) as original_image:
+		original_image.load()
+		original_pixels = original_image.convert("RGBA").tobytes()
+
+	se.images.optimize_png(image_path)
+
+	with Image.open(image_path) as optimized_image:
+		optimized_image.load()
+
+		assert optimized_image.format == "PNG"
+		assert optimized_image.size == (32, 32)
+		assert optimized_image.convert("RGBA").tobytes() == original_pixels
+
+	assert image_path.stat().st_size < original_size
 
 def test_line_numbers_no_comments():
 	"""
