@@ -1,12 +1,112 @@
-usage: se [-h] [-p] [-v] COMMAND [ARGS ...]
+[1;32mUSAGE[0m
 
-The entry point for the Standard Ebooks toolset.
+        [32mse[0m[39m [0m[39m[[0m[94m-h[0m[39m,[0m[94m--help[0m[39m][0m[39m [0m[39m[[0m[94m-p[0m[39m,[0m[94m--plain[0m[39m][0m[39m [0m[39m[[0m[94m-v[0m[39m,[0m[94m--version[0m[39m][0m[39m [0m[36m<COMMAND>[0m[39m [0m[39m[[0m[36m<ARGS>[0m[39m [0m[36m...[0m[39m][0m
 
-positional arguments:
-  COMMAND        one of: add-file british2american build build-ids build-images build-loi build-manifest build-spine build-svg-titles build-title build-toc clean compare-versions create-draft css-select dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names word-count xpath
-  ARGS           arguments for the subcommand
+[1;32mDESCRIPTION[0m
 
-options:
-  -h, --help     show this help message and exit
-  -p, --plain    print plain text output, without tables or formatting
-  -v, --version  print version number and exit
+        The entry point for the Standard Ebooks toolset.
+
+[1;32mPOSITIONAL ARGUMENTS[0m
+
+        [36m<COMMAND>[0m
+
+                The command to execute; one of:
+
+                • [36madd-file[0m
+
+                • [36mbritish2american[0m
+
+                • [36mbuild[0m
+
+                • [36mbuild-ids[0m
+
+                • [36mbuild-images[0m
+
+                • [36mbuild-loi[0m
+
+                • [36mbuild-manifest[0m
+
+                • [36mbuild-spine[0m
+
+                • [36mbuild-svg-titles[0m
+
+                • [36mbuild-title[0m
+
+                • [36mbuild-toc[0m
+
+                • [36mclean[0m
+
+                • [36mcompare-versions[0m
+
+                • [36mcreate-draft[0m
+
+                • [36mcss-select[0m
+
+                • [36mdec2roman[0m
+
+                • [36mextract-ebook[0m
+
+                • [36mfind-mismatched-dashes[0m
+
+                • [36mfind-mismatched-diacritics[0m
+
+                • [36mfind-unusual-characters[0m
+
+                • [36mhelp[0m
+
+                • [36mhyphenate[0m
+
+                • [36minteractive-replace[0m
+
+                • [36mlint[0m
+
+                • [36mmake-url-safe[0m
+
+                • [36mmodernize-spelling[0m
+
+                • [36mprepare-release[0m
+
+                • [36mrecompose-epub[0m
+
+                • [36mrenumber-endnotes[0m
+
+                • [36mroman2dec[0m
+
+                • [36msemanticate[0m
+
+                • [36mshift-endnotes[0m
+
+                • [36mshift-illustrations[0m
+
+                • [36msplit-file[0m
+
+                • [36mtitlecase[0m
+
+                • [36mtypogrify[0m
+
+                • [36municode-names[0m
+
+                • [36mword-count[0m
+
+                • [36mxpath[0m
+
+
+        [39m[[0m[36m<ARGS>[0m[39m [0m[36m...[0m[39m][0m
+
+                Arguments for [36m<COMMAND>[0m.
+
+[1;32mOPTIONS[0m
+
+        [94m-h[0m[39m,[0m[94m--help[0m
+
+                Show this help message and exit.
+
+
+        [94m-p[0m[39m,[0m[94m--plain[0m
+
+                Print plain text output, without tables, colors, or other formatting. For tabular output but without colors, set the [36mNO_COLOR[0m environmental variable to a non-empty value instead of this option.
+
+
+        [94m-v[0m[39m,[0m[94m--version[0m
+
+                Print version number and exit.

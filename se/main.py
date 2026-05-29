@@ -8,6 +8,7 @@ import pkgutil
 import sys
 
 import se.commands
+from se.se_help_formatter import SeHelpFormatter
 
 
 def get_commands() -> list[str]:
@@ -39,11 +40,16 @@ def main() -> None:
 
 		commands = get_commands()
 
-		parser = argparse.ArgumentParser(description="The entry point for the Standard Ebooks toolset.")
-		parser.add_argument("-p", "--plain", dest="plain_output", action="store_true", help="print plain text output, without tables or formatting")
-		parser.add_argument("-v", "--version", action="store_true", help="print version number and exit")
-		parser.add_argument("command", metavar="COMMAND", choices=commands, help="one of: " + " ".join(commands))
-		parser.add_argument("arguments", metavar="ARGS", nargs="*", help="arguments for the subcommand")
+		commands_string = ""
+
+		for command in commands:
+			commands_string = f"{commands_string}\n\n• [parameter]{command}[/]"
+
+		parser = argparse.ArgumentParser(description="The entry point for the Standard Ebooks toolset.", formatter_class=SeHelpFormatter)
+		parser.add_argument("-p", "--plain", dest="plain_output", action="store_true", help="Print plain text output, without tables, colors, or other formatting. For tabular output but without colors, set the [parameter]NO_COLOR[/] environmental variable to a non-empty value instead of this option.")
+		parser.add_argument("-v", "--version", action="store_true", help="Print version number and exit.")
+		parser.add_argument("command", metavar="COMMAND", choices=commands, help="The command to execute; one of: " + commands_string)
+		parser.add_argument("arguments", metavar="ARGS", nargs="*", help="Arguments for [parameter]<COMMAND>[/].")
 
 		# We do some hand-parsing of high-level arguments, because `argparse` can expect flags at any point in the command. We'll pass any arguments up to and including the subcommand to the main `argparse` instance, then pass the subcommand and its arguments to the final function we call.
 		main_args: list[str] = []
