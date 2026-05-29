@@ -2305,7 +2305,7 @@ class SeEpub:
 						toc_node = toc_dom.xpath(f"/html/body/nav[@epub:type='toc']/ol//li[./a[re:test(@href, '^text/{file_path.name}')]]")[0]
 						for new_file in new_files:
 							li_node = EasyXmlElement("<li/>")
-							li_node.append(EasyXmlElement(f"""<a href="text/{new_file.filename}">{new_file.title}</a>"""))
+							li_node.append(EasyXmlElement(f"""<a href="text/{new_file.filename}">{se.formatting.escape_xml(new_file.title)}</a>"""))
 							toc_node.insert_before(li_node)
 
 						# Remove any ToC nodes that mention this file.
