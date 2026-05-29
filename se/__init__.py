@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 	from se.se_epub_build import BuildMessage # Import under type checking guard to prevent circular import error.
 
 
-VERSION = "3.0.4"
+VERSION = "3.0.5"
 MESSAGE_INDENT = "    "
 UNICODE_BOM = "\ufeff"
 NO_BREAK_SPACE = "\u00a0"

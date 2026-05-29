@@ -1,3 +1,29 @@
+# 3.0.5
+
+## General
+
+- Add color and formatting to all `--help` text
+
+- Bring all shell completions up-to-date
+
+- Switch to oxipng-pybind. Thanks to ConcaveTrillion
+
+## se build
+
+- XML escape ToC item title when splitting files in Kobo builds
+
+## se build-ids
+
+- Fix error in endnote logic
+
+## se css-select
+
+- Fix error in output
+
+## se modernizes-spelling
+
+- Various additions
+
 # 3.0.4
 
 ## General
