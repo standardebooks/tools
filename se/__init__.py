@@ -41,6 +41,7 @@ COVER_WIDTH = 1400
 TITLEPAGE_WIDTH = 1400
 RICH_THEME = Theme({
 	"command": "green",
+	"branch": "dark_goldenrod",
 	"xhtml": "purple",
 	"xml": "purple",
 	"val": "bright_blue",
@@ -178,7 +179,7 @@ def prep_output(message: str, plain_output: bool = False) -> str:
 
 	if plain_output or not sys.stdout.isatty():
 		# Replace color markup with `
-		message = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|link|command|email|flag|header|parameter|user)(?:=[^\]]*?)*\]", "`", message)
+		message = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|link|command|branch|email|flag|header|parameter|user)(?:=[^\]]*?)*\]", "`", message)
 		message = regex.sub(r"`+", "`", message)
 
 	return message
@@ -198,6 +199,7 @@ def print_error(message: SeException | str, verbose: bool = False, is_warning: b
 	[url] - A URL
 	[text] - Non-semantic text that requires color
 	[command] - A command
+	[branch] - A git branch
 	[email] - An email address
 	[flag] - A command-line flag
 	[header] - A header
