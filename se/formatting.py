@@ -222,7 +222,7 @@ def semanticate(xhtml: str) -> str:
 	for node in dom.xpath("/html/body//abbr[(re:test(., '^([A-Z]\\.)+') or re:test(., '^AD|BC$')) and not(re:test(@epub:type, 'z3998:(initialism|given-name)|se:compass'))]"):
 		node.add_attr_value("epub:type", "z3998:initialism")
 
-	for node in dom.xpath("/html/body//abbr[re:test(., '^[A-Z]+$') and not(re:test(@epub:type, 'z3998:(acronym|initialism)|se:era'))]"):
+	for node in dom.xpath("/html/body//abbr[re:test(., '^[A-Z]+$') and not(re:test(@epub:type, 'z3998:(acronym|initialism|place)|se:era'))]"):
 		node.add_attr_value("epub:type", "z3998:acronym")
 
 	xhtml = dom.to_string()
