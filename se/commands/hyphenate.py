@@ -5,6 +5,7 @@ This module implements the `se hyphenate` command.
 import argparse
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 import se.typography
 
 
@@ -13,11 +14,11 @@ def hyphenate(plain_output: bool) -> int:
 	Entry point for `se hyphenate`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Insert soft hyphens at syllable breaks in XHTML files.")
-	parser.add_argument("-i", "--ignore-h-tags", action="store_true", help="don’t add soft hyphens to text in <h1-6> tags")
-	parser.add_argument("-l", "--language", action="store", help="specify the language for the XHTML files; if unspecified, defaults to the `xml:lang` or `lang` attribute of the root <html> element")
-	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
+	parser = argparse.ArgumentParser(description="Insert soft hyphens at syllable breaks in XHTML files.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-i", "--ignore-h-tags", action="store_true", help="Don’t add soft hyphens to text in [xhtml]<h1-6>[/] tags.")
+	parser.add_argument("-l", "--language", action="store", help="Specify the language for the XHTML files; if unspecified, defaults to the [attr]xml:lang[/] or [attr]lang[/] attribute of the root [xhtml]<html>[/] element.")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()
 
 	console = se.init_console()

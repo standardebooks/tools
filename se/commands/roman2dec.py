@@ -8,6 +8,7 @@ import sys
 import roman
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 
 
 def roman2dec(plain_output: bool) -> int:
@@ -15,9 +16,9 @@ def roman2dec(plain_output: bool) -> int:
 	Entry point for `se roman2dec`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Convert a Roman numeral to a decimal number.")
-	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="don’t end output with a newline")
-	parser.add_argument("numbers", metavar="NUMERAL", nargs="+", help="a Roman numeral")
+	parser = argparse.ArgumentParser(description="Convert a Roman numeral to a decimal number.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="Don’t end output with a newline.")
+	parser.add_argument("numbers", metavar="NUMERAL", nargs="+", help="A Roman numeral.")
 	args = parser.parse_args()
 
 	lines: list[str] = []

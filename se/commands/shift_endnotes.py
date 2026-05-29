@@ -5,6 +5,7 @@ This module implements the `se shift-endnotes` command.
 import argparse
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 from se.se_epub import SeEpub
 
 
@@ -13,13 +14,13 @@ def shift_endnotes(plain_output: bool) -> int: # pylint: disable=unused-argument
 	Entry point for `se shift-endnotes`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Increment or decrement the specified endnote and all following endnotes by 1 or a specified amount.")
+	parser = argparse.ArgumentParser(description="Increment or decrement the specified endnote and all following endnotes by 1 or a specified amount.", formatter_class=SeHelpFormatter)
 	group = parser.add_mutually_exclusive_group(required=True)
-	group.add_argument("-d", "--decrement", action="store_true", help="decrement the target endnote number and all following endnotes")
-	group.add_argument("-i", "--increment", action="store_true", help="increment the target endnote number and all following endnotes")
-	parser.add_argument("-a", "--amount", metavar="NUMBER", dest="amount", default=1, type=se.is_positive_integer, help="the amount to increment or decrement by; defaults to 1")
-	parser.add_argument("target_endnote_number", metavar="ENDNOTE-NUMBER", type=se.is_positive_integer, help="the endnote number to start shifting at")
-	parser.add_argument("directory", metavar="DIRECTORY", help="a Standard Ebooks source directory")
+	parser.add_argument("-a", "--amount", metavar="NUMBER", dest="amount", default=1, type=se.is_positive_integer, help="The amount to increment or decrement by; defaults to [parameter]1[/].")
+	group.add_argument("-d", "--decrement", action="store_true", help="Decrement the target endnote number and all following endnotes.")
+	group.add_argument("-i", "--increment", action="store_true", help="Increment the target endnote number and all following endnotes.")
+	parser.add_argument("target_endnote_number", metavar="ENDNOTE-NUMBER", type=se.is_positive_integer, help="The endnote number to start shifting at.")
+	parser.add_argument("directory", metavar="DIRECTORY", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 
 	return_code = 0

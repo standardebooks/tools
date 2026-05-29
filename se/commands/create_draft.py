@@ -22,6 +22,7 @@ from lxml import etree
 import se
 import se.formatting
 import se.easy_xml
+from se.se_help_formatter import SeHelpFormatter
 from se.se_epub import SeEpub
 
 CONTRIBUTOR_BLOCK_TEMPLATE = """<dc:contributor id="CONTRIBUTOR_ID">CONTRIBUTOR_NAME</dc:contributor>
@@ -930,16 +931,16 @@ def create_draft(plain_output: bool) -> int:
 	Entry point for `se create-draft`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Create a skeleton of a new Standard Ebook in the current directory.")
-	parser.add_argument("-r", "--translator", dest="translator", nargs="+", help="a translator of the ebook")
-	parser.add_argument("-p", "--pg-id", dest="pg_id", type=se.is_positive_integer, help="the Project Gutenberg ID number of the ebook to download")
-	parser.add_argument("-e", "--email", dest="email", help="use this email address as the main committer for the local Git repository")
-	parser.add_argument("-o", "--offline", dest="offline", action="store_true", help="create draft without network access")
-	parser.add_argument("-a", "--author", dest="author", required=True, nargs="+", help="an author of the ebook")
-	parser.add_argument("-t", "--title", dest="title", required=True, help="the title of the ebook")
-	parser.add_argument("-w", "--white-label", action="store_true", help="create a generic epub skeleton without S.E. branding")
-	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("-f", "--fp-id", dest="fp_id", type=se.is_positive_integer, help="the Faded Page ID number of the ebook to download")
+	parser = argparse.ArgumentParser(description="Create a skeleton of a new Standard Ebook in the current directory.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-a", "--author", dest="author", required=True, nargs="+", help="An author of the ebook.")
+	parser.add_argument("-e", "--email", dest="email", help="Use this email address as the main committer for the local Git repository.")
+	parser.add_argument("-f", "--fp-id", dest="fp_id", type=se.is_positive_integer, help="The Faded Page ID number of the ebook to download.")
+	parser.add_argument("-o", "--offline", dest="offline", action="store_true", help="Create draft without network access.")
+	parser.add_argument("-p", "--pg-id", dest="pg_id", type=se.is_positive_integer, help="The Project Gutenberg ID number of the ebook to download.")
+	parser.add_argument("-r", "--translator", dest="translator", nargs="+", help="A translator of the ebook.")
+	parser.add_argument("-t", "--title", dest="title", required=True, help="The title of the ebook.")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
+	parser.add_argument("-w", "--white-label", action="store_true", help="Create a generic epub skeleton without S.E. branding.")
 	args = parser.parse_args()
 
 	try:
@@ -951,11 +952,11 @@ def create_draft(plain_output: bool) -> int:
 
 		# `--pg-id` and `--fp-id` are mutually exclusive.
 		if args.pg_id and args.fp_id:
-			console.print(se.prep_output("Can’t specify [bash]--pg-id[/] and [bash]--fp-id[/] at the same time.", plain_output))
+			console.print(se.prep_output("Can’t specify [flag]--pg-id[/] and [flag]--fp-id[/] at the same time.", plain_output))
 			return se.InvalidArgumentsException.code
 
 		if (args.pg_id or args.fp_id) and args.offline:
-			raise se.RemoteCommandErrorException("Can’t specify [bash]--pg-id[/] or [bash]--fp-id[/], and also [bash]--offline[/].")
+			raise se.RemoteCommandErrorException("Can’t specify [flag]--pg-id[/] or [flag]--fp-id[/], and also [flag]--offline[/].")
 
 		_create_draft(args, plain_output)
 

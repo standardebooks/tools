@@ -5,6 +5,7 @@ This module implements the `se build-toc` command.
 import argparse
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 from se.se_epub import SeEpub
 
 
@@ -15,13 +16,13 @@ def build_toc(plain_output: bool) -> int:
 	The meat of this function is broken out into the `se_epub_generate_toc.py` module for readability and maintainability.
 	"""
 
-	parser = argparse.ArgumentParser(description="Generate the table of contents for the ebook’s source directory and update the ToC file.")
-	parser.add_argument("-s", "--stdout", action="store_true", help="print to stdout instead of writing to the ToC file")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	parser = argparse.ArgumentParser(description="Generate the table of contents for the ebook’s source directory and update the ToC file.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-s", "--stdout", action="store_true", help="Print to stdout instead of writing to the ToC file.")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 
 	if args.stdout and len(args.directories) > 1:
-		se.print_error("Multiple directories are not allowed with the [bash]--stdout[/] option.", plain_output=plain_output)
+		se.print_error("Multiple directories are not allowed with the [flag]--stdout[/] option.", plain_output=plain_output)
 		return se.InvalidArgumentsException.code
 
 	for directory in args.directories:

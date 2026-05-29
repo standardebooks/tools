@@ -5,6 +5,7 @@ This module implements the `se semanticate` command.
 import argparse
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 import se.formatting
 
 
@@ -13,9 +14,9 @@ def semanticate(plain_output: bool) -> int:
 	Entry point for `se semanticate`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Automatically add semantics to Standard Ebooks source directories.")
-	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
+	parser = argparse.ArgumentParser(description="Automatically add semantics to Standard Ebooks source directories.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()
 
 	console = se.init_console()

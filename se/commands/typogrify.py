@@ -6,6 +6,7 @@ import argparse
 import html
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 import se.typography
 
 
@@ -14,10 +15,10 @@ def typogrify(plain_output: bool) -> int:
 	Entry point for `se typogrify`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Apply some scriptable typography rules from the Standard Ebooks typography manual to XHTML files.")
-	parser.add_argument("-n", "--no-quotes", dest="quotes", action="store_false", help="don’t convert to smart quotes before doing other adjustments")
-	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
+	parser = argparse.ArgumentParser(description="Apply some scriptable typography rules from the Standard Ebooks typography manual to XHTML files.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-n", "--no-quotes", dest="quotes", action="store_false", help="Don’t convert to smart quotes before doing other adjustments.")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()
 
 	console = se.init_console()

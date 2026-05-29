@@ -40,16 +40,21 @@ COVER_HEIGHT = 2100
 COVER_WIDTH = 1400
 TITLEPAGE_WIDTH = 1400
 RICH_THEME = Theme({
-	"xhtml": "bright_blue",
-	"xml": "bright_blue",
+	"command": "green",
+	"xhtml": "purple",
+	"xml": "purple",
 	"val": "bright_blue",
-	"attr": "bright_blue",
-	"class": "bright_blue",
+	"attr": "hot_pink",
+	"class": "hot_pink",
 	"path": "bright_blue",
 	"url": "bright_blue",
-	"text": "bright_blue",
-	"bash": "bright_blue",
-	"css": "bright_blue"
+	"text": "dark_orange",
+	"css": "bright_blue",
+	"email": "magenta",
+	"flag": "bright_blue",
+	"header": "bold green",
+	"parameter": "cyan",
+	"user": "magenta"
 })
 
 class SeException(Exception):
@@ -173,7 +178,7 @@ def prep_output(message: str, plain_output: bool = False) -> str:
 
 	if plain_output or not sys.stdout.isatty():
 		# Replace color markup with `
-		message = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|bash|link)(?:=[^\]]*?)*\]", "`", message)
+		message = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|link|command|email|flag|header|parameter|user)(?:=[^\]]*?)*\]", "`", message)
 		message = regex.sub(r"`+", "`", message)
 
 	return message
@@ -192,7 +197,12 @@ def print_error(message: SeException | str, verbose: bool = False, is_warning: b
 	[path] - Filesystem path or glob
 	[url] - A URL
 	[text] - Non-semantic text that requires color
-	[bash] - A command or flag of a command
+	[command] - A command
+	[email] - An email address
+	[flag] - A command-line flag
+	[header] - A header
+	[parameter] - A command-line parameter
+	[user] - A username
 	"""
 
 	label = "Error" if not is_warning else "Warning"

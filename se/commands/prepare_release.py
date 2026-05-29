@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 from se.se_epub import SeEpub
 
 
@@ -14,11 +15,11 @@ def prepare_release(plain_output: bool) -> int:
 	Entry point for `se prepare-release`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Calculate work word count, insert release date if not yet set, and update modified date and revision number.")
-	parser.add_argument("-w", "--no-word-count", dest="word_count", action="store_false", help="don’t calculate word count")
-	parser.add_argument("-r", "--no-revision", dest="revision", action="store_false", help="don’t increment the revision number")
-	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	parser = argparse.ArgumentParser(description="Calculate work word count, insert release date if not yet set, and update modified date and revision number.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-r", "--no-revision", dest="revision", action="store_false", help="Don’t increment the revision number.")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
+	parser.add_argument("-w", "--no-word-count", dest="word_count", action="store_false", help="Don’t calculate word count.")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 
 	console =se.init_console()

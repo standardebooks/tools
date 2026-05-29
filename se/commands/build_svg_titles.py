@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 import se.easy_xml
 from se.se_epub import SeEpub
 
@@ -15,9 +16,9 @@ def build_svg_titles(plain_output: bool) -> int:
 	Entry point for `se build-svg-titles`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Update or add SVG <title> elements based on the alt attributes from the <img> elements.")
-	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	parser = argparse.ArgumentParser(description="Update or add SVG [xhtml]<title>[/] elements based on the [attr]alt[/] attributes from the [xhtml]<img>[/] elements.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 
 	console = se.init_console()

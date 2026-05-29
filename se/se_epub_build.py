@@ -1358,7 +1358,7 @@ def _run_epubcheck(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 					else:
 						build_messages.append(BuildMessage("epubcheck", message.get_attr("id"), error_text[2]))
 
-				raise se.BuildFailedException("[bash]epubcheck[/] failed.", build_messages)
+				raise se.BuildFailedException("[command]epubcheck[/] failed.", build_messages)
 
 	# Now run the Nu Validator.
 	with importlib.resources.as_file(importlib.resources.files("se.data.vnu").joinpath("vnu.jar")) as jar_path:
@@ -1407,7 +1407,7 @@ def _run_epubcheck(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 				build_messages.append(BuildMessage("vnu", "", message_text, file_path, int(message.get_attr("last-line")), int(message.get_attr("first-column")), submessage))
 
 			if messages:
-				raise se.BuildFailedException("[bash]vnu[/] failed.", build_messages)
+				raise se.BuildFailedException("[command]vnu[/] failed.", build_messages)
 
 def _run_ace(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 	"""
@@ -1481,17 +1481,17 @@ def _run_ace(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 					build_messages.append(BuildMessage("ace", code, message_list[0][0], Path(file_path_str), None, None, item_messages))
 
 				if build_messages:
-					raise se.BuildFailedException("[bash]ace[/] failed.", build_messages)
+					raise se.BuildFailedException("[command]ace[/] failed.", build_messages)
 
 				# We had to copy the epub dir to a temp dir so that we could get the real file paths for Ace messages.
 				# But if we got here, then Ace had no real messages to emit, so we have to clean up the temp dir we created.
 				shutil.rmtree(epub_debug_dir, ignore_errors=True)
 
 				if output:
-					raise se.BuildFailedException(f"[bash]ace[/] failed with:\n\n{output.strip()}")
+					raise se.BuildFailedException(f"[command]ace[/] failed with:\n\n{output.strip()}")
 
 		except subprocess.CalledProcessError as ex:
-			raise se.BuildFailedException("[bash]ace[/] failed.") from ex
+			raise se.BuildFailedException("[command]ace[/] failed.") from ex
 
 def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kindle_output_filename: str, toc_filename: str, metadata_dom: EasyXmlTree, compatible_epub_output_filename: str, ebook_convert_path: Path | None, asin: str, last_updated: datetime | None) -> None:
 	"""
@@ -1648,7 +1648,7 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 		else:
 			output = "No output."
 
-		raise se.BuildFailedException(f"[bash]ebook-convert[/] failed with:\n{output}") from ex
+		raise se.BuildFailedException(f"[command]ebook-convert[/] failed with:\n{output}") from ex
 
 	# Success, extract the Kindle cover thumbnail.
 
@@ -1684,7 +1684,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 			# Look for default Mac calibre app path if none found in path.
 			ebook_convert_path = Path("/Applications/calibre.app/Contents/MacOS/ebook-convert")
 			if not ebook_convert_path.exists():
-				raise se.MissingDependencyException("Couldn’t locate [bash]ebook-convert[/]. Is [bash]calibre[/] installed?")
+				raise se.MissingDependencyException("Couldn’t locate [command]ebook-convert[/]. Is [command]calibre[/] installed?")
 
 	run_ace = False
 	if run_epubcheck:
@@ -1701,7 +1701,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 				java_present = False
 
 		if not java_present:
-			raise se.MissingDependencyException("Couldn’t locate [bash]java[/]. Is it installed?")
+			raise se.MissingDependencyException("Couldn’t locate [command]java[/]. Is it installed?")
 
 		if shutil.which("ace"):
 			run_ace = True

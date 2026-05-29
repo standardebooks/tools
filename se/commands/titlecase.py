@@ -6,6 +6,7 @@ import argparse
 import sys
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 import se.formatting
 
 
@@ -14,9 +15,9 @@ def titlecase(plain_output: bool) -> int: # pylint: disable=unused-argument
 	Entry point for `se titlecase`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Convert a string to titlecase.")
-	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="don’t end output with a newline")
-	parser.add_argument("titles", metavar="STRING", nargs="*", help="a string")
+	parser = argparse.ArgumentParser(description="Convert a string to titlecase.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="Don’t end output with a newline.")
+	parser.add_argument("titles", metavar="STRING", nargs="*", help="A string.")
 	args = parser.parse_args()
 
 	lines: list[str] = []

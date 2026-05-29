@@ -10,6 +10,7 @@ from io import BytesIO, TextIOWrapper
 from pathlib import Path
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 from se.vendor.kindleunpack import kindleunpack
 
 
@@ -52,16 +53,16 @@ def extract_ebook(plain_output: bool) -> int:
 	Entry point for `se extract-ebook`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Extract an .epub, .mobi, or .azw3 ebook into ./FILENAME.extracted/ or a target directory.")
-	parser.add_argument("-o", "--output-dir", type=str, help="a target directory to extract into")
-	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an epub, mobi, or azw3 file")
+	parser = argparse.ArgumentParser(description="Extract an [path].epub[/], [path].mobi[/], or [path].azw3[/] ebook into [path]./FILENAME.extracted/[/] or a target directory.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-o", "--output-dir", type=str, help="A target directory to extract into.")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An epub, mobi, or azw3 file.")
 	args = parser.parse_args()
 
 	console = se.init_console()
 
 	if args.output_dir and len(args.targets) > 1:
-		se.print_error("The [bash]--output-dir[/] option can’t be used when more than one ebook target is specified.", plain_output=plain_output)
+		se.print_error("The [flag]--output-dir[/] option can’t be used when more than one ebook target is specified.", plain_output=plain_output)
 		return se.InvalidArgumentsException.code
 
 	for target in args.targets:

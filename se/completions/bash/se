@@ -1,193 +1,231 @@
+#!/usr/bin/env bash
+
+_se_compgen_words(){
+	local words="$1"
+	local current="$2"
+	local matches=()
+	mapfile -t matches < <(compgen -W "${words}" -- "${current}")
+	COMPREPLY+=("${matches[@]}")
+}
+
+_se_compgen_dirs(){
+	local exclude="$1"
+	local current="${2:-}"
+	local matches=()
+	if [[ -n ${current} ]]; then
+		mapfile -t matches < <(compgen -d -X "${exclude}" -- "${current}")
+	else
+		mapfile -t matches < <(compgen -d -X "${exclude}")
+	fi
+	COMPREPLY+=("${matches[@]}")
+}
+
+_se_compgen_files(){
+	local exclude="$1"
+	local current="${2:-}"
+	local matches=()
+	if [[ -n ${current} ]]; then
+		mapfile -t matches < <(compgen -f -X "${exclude}" -- "${current}")
+	else
+		mapfile -t matches < <(compgen -f -X "${exclude}")
+	fi
+	COMPREPLY+=("${matches[@]}")
+}
+
 _se(){
 	COMPREPLY=()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local prev="${COMP_WORDS[COMP_CWORD-1]}"
-	local commands="--help --plain --version add-file british2american build build-ids build-images build-loi build-manifest build-spine build-svg-titles build-title build-toc clean compare-versions create-draft css-select dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names version word-count xpath"
+	local commands="--help --plain --version add-file british2american build build-ids build-images build-loi build-manifest build-spine build-svg-titles build-title build-toc clean compare-versions create-draft css-select dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names word-count xpath"
 	if [[ $COMP_CWORD -gt 1 ]]; then
 		case "${COMP_WORDS[1]}" in
 			add-file)
-				COMPREPLY+=($(compgen -W "-f --force -h --help dedication dramatis-personae endnotes epigraph glossary halftitlepage ignore" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-f --force -h --help" "${cur}"
+				_se_compgen_words "dedication dramatis-personae endnotes epigraph glossary halftitlepage ignore" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			british2american)
-				COMPREPLY+=($(compgen -W "-f --force -h --help -v --verbose" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				_se_compgen_words "-f --force -h --help -v --verbose" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
+				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 			build)
 				# Complete directory names after -o= --output-dir=
 				if [[ ${prev} == "-"* && ${cur} == "=" ]] ; then
-					COMPREPLY+=($(compgen -d -X ".*"))
+					_se_compgen_dirs ".*"
 					return 0
 				fi
-				COMPREPLY+=($(compgen -W "-b --kobo -c --check -h --help -k --kindle -o= --output-dir= -p --proof -v --verbose -y --check-only" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-b --kobo -c --check -h --help -k --kindle -o --output-dir= -p --proof -v --verbose -y --check-only" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			build-ids)
-				COMPREPLY+=($(compgen -W "-h --help -n --no-endnotes -v --verbose" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-h --help -n --no-endnotes -v --verbose" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			build-images)
-				COMPREPLY+=($(compgen -W "-h --help -g --no-generate -v --verbose" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-g --no-generate -h --help -v --verbose" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			build-loi)
-				COMPREPLY+=($(compgen -W "-h --help -s --stdout" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-h --help -s --stdout" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			build-manifest)
-				COMPREPLY+=($(compgen -W "-h --help -s --stdout" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-h --help -s --stdout" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			build-spine)
-				COMPREPLY+=($(compgen -W "-h --help -s --stdout" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-h --help -s --stdout" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			build-svg-titles)
-				COMPREPLY+=($(compgen -W "-h --help -v --verbose" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-h --help -v --verbose" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			build-title)
-				COMPREPLY+=($(compgen -W "-h --help -n --no-newline -s --stdout" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X "!*.xhtml" -- "${cur}"))
+				_se_compgen_words "-h --help -n --no-newline -s --stdout" "${cur}"
+				_se_compgen_dirs "!*.xhtml" "${cur}"
 				;;
 			build-toc)
-				COMPREPLY+=($(compgen -W "-h --help -s --stdout" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-h --help -s --stdout" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			clean)
-				COMPREPLY+=($(compgen -W "-h --help -v --verbose" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.svg" -- "${cur}"))
+				_se_compgen_words "-h --help -v --verbose" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
+				_se_compgen_files "!*.xhtml" "${cur}"
+				_se_compgen_files "!*.svg" "${cur}"
+				_se_compgen_files "!*.css" "${cur}"
 				;;
 			compare-versions)
-				COMPREPLY+=($(compgen -W "-h --help -i --include-se-files -n --no-images -v --verbose" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-h --help -i --include-se-files -n --no-images -v --verbose" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			create-draft)
-				COMPREPLY+=($(compgen -W "-a --author -e --email -f --fp-id -h --help -o --offline -p --pg-id -r --translator -t --title -w --white-label -v --verbose" -- "${cur}"))
+				_se_compgen_words "-a --author= -e --email= -f --fp-id= -h --help -o --offline -p --pg-id= -r --translator= -t --title= -v --verbose -w --white-label" "${cur}"
 				;;
 			css-select)
-				COMPREPLY+=($(compgen -W "-h --help -f --only-filenames" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				_se_compgen_words "-f --only-filenames -h --help -q --quiet" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
+				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 			dec2roman)
-				COMPREPLY+=($(compgen -W "-h --help -n --no-newline" -- "${cur}"))
+				_se_compgen_words "-h --help -n --no-newline" "${cur}"
 				;;
 			extract-ebook)
 				# Complete directory names after -o= --output-dir=
 				if [[ ${prev} == "-"* && ${cur} == "=" ]] ; then
-					COMPREPLY+=($(compgen -d -X ".*"))
+					_se_compgen_dirs ".*"
 					return 0
 				fi
-				COMPREPLY+=($(compgen -W "-h --help -o= --output-dir= -v --verbose" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.mobi" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.azw3" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.epub" -- "${cur}"))
+				_se_compgen_words "-h --help -o --output-dir= -v --verbose" "${cur}"
+				_se_compgen_files "!*.mobi" "${cur}"
+				_se_compgen_files "!*.azw3" "${cur}"
+				_se_compgen_files "!*.epub" "${cur}"
 				;;
 			find-mismatched-dashes)
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				_se_compgen_words "-h --help" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
+				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 			find-mismatched-diacritics)
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				_se_compgen_words "-h --help" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
+				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 			find-unusual-characters)
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				_se_compgen_words "-h --help" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
+				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 			help)
 				;;
 			hyphenate)
-				COMPREPLY+=($(compgen -W "-h --help -i --ignore-h-tags -l --language -v --verbose" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				_se_compgen_words "-h --help -i --ignore-h-tags -l --language= -v --verbose" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
+				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 			interactive-replace)
-				COMPREPLY+=($(compgen -W "-h --help -i --ignore-case -m --multiline -d --dotall -v --vim" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-d --dot-all -h --help -i --ignore-case -m --multiline -v --vim" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			lint)
-				COMPREPLY+=($(compgen -W "-h --help -a= --allow= -s --skip-lint-ignore -v --verbose" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-a --allow= -h --help -s --skip-lint-ignore -v --verbose" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			make-url-safe)
-				COMPREPLY+=($(compgen -W "-h --help -n --no-newline" -- "${cur}"))
+				_se_compgen_words "-h --help -n --no-newline" "${cur}"
 				;;
 			modernize-spelling)
-				COMPREPLY+=($(compgen -W "-h --help -n --no-hyphens -v --verbose" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				_se_compgen_words "-h --help -n --no-hyphens -v --verbose" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
+				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 			prepare-release)
-				COMPREPLY+=($(compgen -W "-h --help -r --no-revision -w --no-word-count -v --verbose" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-h --help -r --no-revision -v --verbose -w --no-word-count" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			recompose-epub)
-				# Complete directory names after -o= --output=
+				# Complete file names after -o= --output=
 				if [[ ${prev} == "-"* && ${cur} == "=" ]] ; then
-					COMPREPLY+=($(compgen -f -X ".*"))
+					_se_compgen_files ".*"
 					return 0
 				fi
-				COMPREPLY+=($(compgen -W "-h --help -o= --output= -x --xhtml -e --extra-css-file -i --image-files" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-e --extra-css-file= -h --help -i --image-files -o --output= -x --xhtml" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			renumber-endnotes)
-				COMPREPLY+=($(compgen -W "-h --help -b --brute-force -v --verbose" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-b --brute-force -h --help -v --verbose" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			roman2dec)
-				COMPREPLY+=($(compgen -W "-h --help -n --no-newline" -- "${cur}"))
+				_se_compgen_words "-h --help -n --no-newline" "${cur}"
 				;;
 			semanticate)
-				COMPREPLY+=($(compgen -W "-h --help -v --verbose" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				_se_compgen_words "-h --help -v --verbose" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
+				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 			shift-endnotes)
-				COMPREPLY+=($(compgen -W "-a --amount -d --decrement -h --help -i --increment" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-a --amount= -d --decrement -h --help -i --increment" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			shift-illustrations)
-				COMPREPLY+=($(compgen -W "-a --amount -d --decrement -h --help -i --increment" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
+				_se_compgen_words "-a --amount= -d --decrement -h --help -i --increment" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
 				;;
 			split-file)
-				COMPREPLY+=($(compgen -W "-f --filename-format= -h --help -s --start-at= -t --template-file=" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.htm" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.html" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				_se_compgen_words "-f --filename-format= -h --help -s --start-at= -t --template-file=" "${cur}"
+				_se_compgen_files "!*.htm" "${cur}"
+				_se_compgen_files "!*.html" "${cur}"
+				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 			titlecase)
-				COMPREPLY+=($(compgen -W "-h --help -n --no-newline" -- "${cur}"))
+				_se_compgen_words "-h --help -n --no-newline" "${cur}"
 				;;
 			typogrify)
-				COMPREPLY+=($(compgen -W "-h --help -n --no-quotes -v --verbose" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				_se_compgen_words "-h --help -n --no-quotes -v --verbose" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
+				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 			unicode-names)
-				;;
-			version)
+				_se_compgen_words "-h --help" "${cur}"
 				;;
 			word-count)
-				COMPREPLY+=($(compgen -W "-c --categorize -h --help -p --ignore-pg-boilerplate -x --exclude-se-files" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.htm" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.html" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				_se_compgen_words "-c --categorize -h --help -p --ignore-pg-boilerplate -x --exclude-se-files" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
+				_se_compgen_files "!*.htm" "${cur}"
+				_se_compgen_files "!*.html" "${cur}"
+				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 			xpath)
-				COMPREPLY+=($(compgen -W "-h --help -f --only-filenames" -- "${cur}"))
-				COMPREPLY+=($(compgen -d -X ".*" -- "${cur}"))
-				COMPREPLY+=($(compgen -f -X "!*.xhtml" -- "${cur}"))
+				_se_compgen_words "-f --only-filenames -h --help -q --quiet" "${cur}"
+				_se_compgen_dirs ".*" "${cur}"
+				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 		esac
 	else
-		COMPREPLY+=($(compgen -W "${commands}" -- "${cur}"))
+		_se_compgen_words "${commands}" "${cur}"
 	fi
 }
 

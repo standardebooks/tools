@@ -11,6 +11,7 @@ from math import floor
 import regex
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 
 
 TAB_SIZE = 8
@@ -240,14 +241,14 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 	Entry point for `se interactive-replace`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (c) Center on match. (q) Save this file and quit.")
-	parser.add_argument("-i", "--ignore-case", action="store_true", help="ignore case when matching; equivalent to regex.IGNORECASE")
-	parser.add_argument("-m", "--multiline", action="store_true", help="make `^` and `$` consider each line; equivalent to regex.MULTILINE")
-	parser.add_argument("-d", "--dot-all", action="store_true", help="make `.` match newlines; equivalent to regex.DOTALL")
-	parser.add_argument("-v", "--vim", action="store_true", help="use basic Vim-like navigation shortcuts")
-	parser.add_argument("regex", metavar="REGEX", help="a regex of the type accepted by Python’s `regex` library.")
-	parser.add_argument("replace", metavar="REPLACE", help="a replacement regex of the type accepted by Python’s `regex` library.")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="a file or directory on which to perform the search and replace")
+	parser = argparse.ArgumentParser(description="Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (c) Center on match. (q) Save this file and quit.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-d", "--dot-all", action="store_true", help="Make [text].[/] match newlines; equivalent to [text]regex.DOTALL[/].")
+	parser.add_argument("-i", "--ignore-case", action="store_true", help="Ignore case when matching; equivalent to [text]regex.IGNORECASE[/].")
+	parser.add_argument("-m", "--multiline", action="store_true", help="Make [text]^[/] and [text]$[/] consider each line; equivalent to [text]regex.MULTILINE[/].")
+	parser.add_argument("-v", "--vim", action="store_true", help="Use basic Vim-like navigation shortcuts.")
+	parser.add_argument("regex", metavar="REGEX", help="A regex of the type accepted by Python’s [text]regex[/] library.")
+	parser.add_argument("replace", metavar="REPLACE", help="A replacement regex of the type accepted by Python’s [text]regex[/] library.")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="A file or directory on which to perform the search and replace.")
 	args = parser.parse_args()
 
 	# By default, the esc key has a delay before its delivered to curses.

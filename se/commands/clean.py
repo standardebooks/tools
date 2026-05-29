@@ -5,6 +5,7 @@ This module implements the `se clean` command.
 import argparse
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 import se.formatting
 
 
@@ -13,9 +14,9 @@ def clean(plain_output: bool) -> int:
 	Entry point for `se clean`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Prettify and canonicalize individual XHTML, SVG, or CSS files, or all XHTML, SVG, or CSS files in a source directory.")
-	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML, SVG, or CSS file, or a directory containing XHTML, SVG, or CSS files")
+	parser = argparse.ArgumentParser(description="Prettify and canonicalize individual XHTML, SVG, or CSS files, or all XHTML, SVG, or CSS files in a source directory.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML, SVG, or CSS file, or a directory containing XHTML, SVG, or CSS files.")
 	args = parser.parse_args()
 
 	console = se.init_console()

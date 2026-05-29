@@ -7,6 +7,7 @@ import argparse
 from lxml import etree
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 import se.formatting
 from se.se_epub import SeEpub
 
@@ -16,13 +17,13 @@ def build_manifest(plain_output: bool) -> int:
 	Entry point for `se build-manifest`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Generate the <manifest> element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.")
-	parser.add_argument("-s", "--stdout", action="store_true", help="print to stdout instead of writing to the metadata file")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	parser = argparse.ArgumentParser(description="Generate the [xhtml]<manifest>[/] element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-s", "--stdout", action="store_true", help="Print to stdout instead of writing to the metadata file.")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 
 	if args.stdout and len(args.directories) > 1:
-		se.print_error("Multiple directories are not allowed with the [bash]--stdout[/] option.", plain_output=plain_output)
+		se.print_error("Multiple directories are not allowed with the [flag]--stdout[/] option.", plain_output=plain_output)
 		return se.InvalidArgumentsException.code
 
 	for directory in args.directories:

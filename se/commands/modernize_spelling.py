@@ -5,6 +5,7 @@ This module implements the `se modernize-spelling` command.
 import argparse
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 import se.spelling
 
 
@@ -13,10 +14,10 @@ def modernize_spelling(plain_output: bool) -> int:
 	Entry point for `se modernize-spelling`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling. For example, replace `ash-tray` with `ashtray`.")
-	parser.add_argument("-n", "--no-hyphens", dest="modernize_hyphenation", action="store_false", help="don’t modernize hyphenation")
-	parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
+	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling. For example, replace [text]ash-tray[/] with [text]ashtray[/].", formatter_class=SeHelpFormatter)
+	parser.add_argument("-n", "--no-hyphens", dest="modernize_hyphenation", action="store_false", help="Don’t modernize hyphenation.")
+	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()
 
 	return_code = 0

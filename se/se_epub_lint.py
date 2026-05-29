@@ -195,7 +195,7 @@ METADATA
 "m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element."
 "m-015", "Metadata long description is not valid XHTML."
 "m-016", "Long description must be an escaped XHTML fragment beginning with [xhtml]<p>[/]."
-"m-017", "Illegal [xml]<!\\[CDATA\\[[/]. Hint: Run [bash]se clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] elements."
+"m-017", "Illegal [xml]<!\\[CDATA\\[[/]. Hint: Run [command]se[/] [parameter]clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] elements."
 "m-018", "HTML entities found. Hint: Use Unicode equivalents instead."
 "m-019", "Illegal em dash in [xml]<dc:subject>[/] element. Hint: Use [text]--[/]."
 "m-020", "Illegal value for [xml]<meta property=\"se:subject\">[/] element."
@@ -1091,7 +1091,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	source_file = SourceFile(self.metadata_file_path, self.metadata_file_path.read_text())
 	matches = source_file.findall(r"<!\[CDATA\[")
 	if matches:
-		messages.append(LintMessage("m-017", "Illegal [xml]<!\\[CDATA\\[[/]. Hint: Run [bash]se clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] elements.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_matches(matches)))
+		messages.append(LintMessage("m-017", "Illegal [xml]<!\\[CDATA\\[[/]. Hint: Run [command]se[/] [parameter]clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] elements.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_matches(matches)))
 
 	# Check that our provided identifier matches the generated identifier.
 	if self.is_se_ebook:
@@ -3176,7 +3176,7 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 			greek_transcription_errors.append(LintSubmessage(f"Found: {node_text}\nExpected: {expected_text}", node.sourceline))
 
 	if greek_transcription_errors:
-		messages.append(LintMessage("t-073", "Possible transcription error in Greek. Hint: Use [bash]se unicode-names[/] to see differences in Unicode characters.", se.MESSAGE_TYPE_WARNING, filename, greek_transcription_errors))
+		messages.append(LintMessage("t-073", "Possible transcription error in Greek. Hint: Use [command]se[/] [parameter]unicode-names[/] to see differences in Unicode characters.", se.MESSAGE_TYPE_WARNING, filename, greek_transcription_errors))
 
 	# Check for hyphen-minus instead of non-breaking hyphen in sounds.
 	# Ignore very long `<i>` as they are more likely to be a sentence containing a dash, than a sound.

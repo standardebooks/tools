@@ -5,6 +5,7 @@ This module implements the `se build-loi` command.
 import argparse
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 from se.se_epub import SeEpub
 
 def build_loi(plain_output: bool) -> int:
@@ -12,13 +13,13 @@ def build_loi(plain_output: bool) -> int:
 	Entry point for `se build-loi`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Update the LoI file based on all <figure> elements that contain an <img>.")
-	parser.add_argument("-s", "--stdout", action="store_true", help="print to stdout instead of writing to the LoI file")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	parser = argparse.ArgumentParser(description="Update the LoI file based on all [xhtml]<figure>[/] elements that contain an [xhtml]<img>[/].", formatter_class=SeHelpFormatter)
+	parser.add_argument("-s", "--stdout", action="store_true", help="Print to stdout instead of writing to the LoI file.")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 
 	if args.stdout and len(args.directories) > 1:
-		se.print_error("Multiple directories are not allowed with the [bash]--stdout[/] option.", plain_output=plain_output)
+		se.print_error("Multiple directories are not allowed with the [flag]--stdout[/] option.", plain_output=plain_output)
 		return se.InvalidArgumentsException.code
 
 	for directory in args.directories:

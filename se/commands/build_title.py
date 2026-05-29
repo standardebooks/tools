@@ -5,6 +5,7 @@ This module implements the `se build-title` command.
 import argparse
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 import se.easy_xml
 import se.formatting
 
@@ -14,20 +15,20 @@ def build_title(plain_output: bool) -> int:
 	Entry point for `se build-title`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Generate the title of an XHTML file based on its headings and update the file’s <title> element.")
-	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="with --stdout, don’t end output with a newline")
-	parser.add_argument("-s", "--stdout", action="store_true", help="print to stdout instead of writing to the file")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
+	parser = argparse.ArgumentParser(description="Generate the title of an XHTML file based on its headings and update the file’s [xhtml]<title>[/] element.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="With [flag]--stdout[/], don’t end output with a newline.")
+	parser.add_argument("-s", "--stdout", action="store_true", help="Print to stdout instead of writing to the file.")
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()
 
 	targets = se.get_target_filenames(args.targets, ".xhtml")
 
 	if args.stdout and (len(targets) > 1):
-		se.print_error("Multiple targets or directories are not allowed with the [bash]--stdout[/] option.", plain_output=plain_output)
+		se.print_error("Multiple targets or directories are not allowed with the [flag]--stdout[/] option.", plain_output=plain_output)
 		return se.InvalidArgumentsException.code
 
 	if not args.newline and not args.stdout:
-		se.print_error("The [bash]--no-newline[/] option can only be used with the [bash]--stdout[/] option.", plain_output=plain_output)
+		se.print_error("The [flag]--no-newline[/] option can only be used with the [flag]--stdout[/] option.", plain_output=plain_output)
 
 	return_code = 0
 

@@ -24,7 +24,7 @@ def initialize_selenium_firefox_webdriver() -> webdriver.firefox.webdriver.WebDr
 	"""
 
 	if not shutil.which("firefox") and not Path("/Applications/Firefox.app/Contents/MacOS/firefox").exists():
-		raise se.MissingDependencyException("Couldn’t locate [bash]firefox[/]. Is it installed?")
+		raise se.MissingDependencyException("Couldn’t locate [command]firefox[/]. Is it installed?")
 
 	# Initialize the selenium driver to take screenshots.
 

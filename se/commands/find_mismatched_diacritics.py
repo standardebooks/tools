@@ -12,6 +12,7 @@ from rich import box
 from rich.table import Table
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 from se.easy_xml import EasyXmlTree
 
 def find_mismatched_diacritics(plain_output: bool) -> int:
@@ -19,8 +20,8 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 	Entry point for `se find-mismatched-diacritics`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Find words with mismatched diacritics in a set of XHTML files. For example, `cafe` in one file and `café` in another.")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="an XHTML file, or a directory containing XHTML files")
+	parser = argparse.ArgumentParser(description="Find words with mismatched diacritics in a set of XHTML files. For example, [text]cafe[/] in one file and [text]café[/] in another.", formatter_class=SeHelpFormatter)
+	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()
 
 	console = se.init_console()

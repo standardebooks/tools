@@ -11,14 +11,15 @@ from rich import box
 from rich.table import Table
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 
 def unicode_names(plain_output: bool) -> int:
 	"""
 	Entry point for `se unicode-names`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Display Unicode code points, descriptions, and links to more details for each character in a string. Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.")
-	parser.add_argument("strings", metavar="STRING", nargs="*", help="a Unicode string")
+	parser = argparse.ArgumentParser(description="Display Unicode code points, descriptions, and links to more details for each character in a string. Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.", formatter_class=SeHelpFormatter)
+	parser.add_argument("strings", metavar="STRING", nargs="*", help="A Unicode string.")
 	args = parser.parse_args()
 
 	console = se.init_console()

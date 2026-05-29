@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 
 import se
+from se.se_help_formatter import SeHelpFormatter
 from se.se_epub import SeEpub
 
 def _copy_file(filename: str, dest_path: Path, force: bool) -> None:
@@ -50,10 +51,10 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 
 	file_types = ["dedication", "dramatis-personae", "endnotes", "epigraph", "glossary", "halftitlepage", "ignore"]
 
-	parser = argparse.ArgumentParser(description="Add an SE template file and any accompanying CSS.")
-	parser.add_argument("-f", "--force", dest="force", action="store_true", help="overwrite any existing files")
-	parser.add_argument("file_type", metavar="FILE_TYPE", choices=file_types, help="the type of file to add; one of (" + ", ".join(file_types) + ")")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="a Standard Ebooks source directory")
+	parser = argparse.ArgumentParser(description="Add an SE template file and any accompanying CSS.", formatter_class=SeHelpFormatter)
+	parser.add_argument("-f", "--force", dest="force", action="store_true", help="Overwrite any existing files.")
+	parser.add_argument("file_type", metavar="FILE_TYPE", choices=file_types, help="The type of file to add; one of: " + ", ".join(file_types) + ".")
+	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 
 	return_code = 0
