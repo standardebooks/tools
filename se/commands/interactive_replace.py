@@ -369,37 +369,12 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 					# Throw a blank exception so that we break out of the loop and disinitialize curses in `finally`.
 					raise Exception # pylint: disable=broad-exception-raised
 
-				if curses.keyname(char) in (b"y", b"Y"):
-					# Do the replacement, but starting from the beginning of the match in case we skipped replacements earlier.
-					new_xhtml = xhtml[:match_start] + regex.sub(fr"{args.regex}", fr"{args.replace}", xhtml[match_start:], 1, flags=regex_flags)
-
-					# Our replacement has changed the XHTML string, so the `match_end` doesn't point to the right place any more.
-					# Update `match_end` to account for the change in string length caused by the replacement before passing it to `_print_screen()`.
-					match_end = match_end + (len(new_xhtml) - len(xhtml))
-
-					is_file_dirty = True
-
-					# OK, now set our XHMTL to the replaced version.
-					xhtml = new_xhtml
-
-					pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = _print_screen(screen, filepath, xhtml, match_end, args.regex, regex_flags)
-
-				if curses.keyname(char) in (b"n", b"N"):
-					# Skip this match.
-					pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = _print_screen(screen, filepath, xhtml, match_end, args.regex, regex_flags)
-
 				# Center on the match.
 				if curses.keyname(char) in (b"c", b"C"):
 					pad_y, pad_x = _get_center_of_match(xhtml, match_start, match_end, screen_height, screen_width)
 
 					pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
 					line_numbers_pad.refresh(pad_y, 0, 1, 0, screen_height - 2, line_numbers_width)
-
-				# The terminal has been resized, redraw the UI.
-				if curses.keyname(char) == b"KEY_RESIZE":
-					screen_height, screen_width = screen.getmaxyx()
-					# Note that we pass `match_start` instead of `match_end` to print screen, so that we don't appear to increment the search when we resize!
-					pad, line_numbers_pad, pad_y, pad_x, _, _ = _print_screen(screen, filepath, xhtml, match_start, args.regex, regex_flags)
 
 				if curses.keyname(char) in (b"KEY_DOWN", nav_down):
 					if pad_height - pad_y - screen_height >= 0:
@@ -452,6 +427,31 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 					if pad_x > 0:
 						pad_x = max(pad_x - screen_width, 0)
 						pad.refresh(pad_y, pad_x, 1, line_numbers_width, screen_height - 2, screen_width - 1)
+
+				if curses.keyname(char) in (b"y", b"Y"):
+					# Do the replacement, but starting from the beginning of the match in case we skipped replacements earlier.
+					new_xhtml = xhtml[:match_start] + regex.sub(fr"{args.regex}", fr"{args.replace}", xhtml[match_start:], 1, flags=regex_flags)
+
+					# Our replacement has changed the XHTML string, so the `match_end` doesn't point to the right place any more.
+					# Update `match_end` to account for the change in string length caused by the replacement before passing it to `_print_screen()`.
+					match_end = match_end + (len(new_xhtml) - len(xhtml))
+
+					is_file_dirty = True
+
+					# OK, now set our XHMTL to the replaced version.
+					xhtml = new_xhtml
+
+					pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = _print_screen(screen, filepath, xhtml, match_end, args.regex, regex_flags)
+
+				if curses.keyname(char) in (b"n", b"N"):
+					# Skip this match.
+					pad, line_numbers_pad, pad_y, pad_x, match_start, match_end = _print_screen(screen, filepath, xhtml, match_end, args.regex, regex_flags)
+
+				# The terminal has been resized, redraw the UI.
+				if curses.keyname(char) == b"KEY_RESIZE":
+					screen_height, screen_width = screen.getmaxyx()
+					# Note that we pass `match_start` instead of `match_end` to print screen, so that we don't appear to increment the search when we resize!
+					pad, line_numbers_pad, pad_y, pad_x, _, _ = _print_screen(screen, filepath, xhtml, match_start, args.regex, regex_flags)
 
 			if is_file_dirty:
 				with open(filepath, "w", encoding="utf-8") as file:

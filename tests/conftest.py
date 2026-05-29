@@ -73,4 +73,4 @@ def update_golden(pytestconfig: 'Config') -> bool:
 	"""
 	Save updated versions of all golden output files when this flag is True.
 	"""
-	return pytestconfig.getoption("--save-golden-files")
+	return pytestconfig.getoption("--save-golden-files") or False
