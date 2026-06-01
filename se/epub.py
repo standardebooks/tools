@@ -79,7 +79,7 @@ def write_epub(epub_root_absolute_path: Path, output_absolute_path: Path, last_u
 		epub.write(epub_root_absolute_path / "META-INF" / "container.xml", "META-INF/container.xml", compress_type=zipfile.ZIP_DEFLATED)
 
 		for file_path in sorted(epub_root_absolute_path.glob("**/*")):
-			if file_path.name not in ("mimetype", "container.xml"):
+			if file_path.name not in ("mimetype", "container.xml", "se-lint-ignore.xml"):
 				epub.write(file_path, file_path.relative_to(epub_root_absolute_path), compress_type=zipfile.ZIP_DEFLATED)
 
 	# Unset the timestamp environment variable that was set for ReproducibleZipFile.
