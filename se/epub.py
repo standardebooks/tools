@@ -73,14 +73,14 @@ def write_epub(epub_root_absolute_path: Path, output_absolute_path: Path, last_u
 	if last_update_datetime is not None:
 		os.environ["SOURCE_DATE_EPOCH"] = generate_epoch_timestamp(last_update_datetime)
 
-	# We can't enable global compression here because according to the spec, the `mimetype` file must be uncompressed. The rest of the files, however, can be compressed.
-	with ReproducibleZipFile(output_absolute_path, mode="w") as epub:
-		epub.write(epub_root_absolute_path / "mimetype", "mimetype")
-		epub.write(epub_root_absolute_path / "META-INF" / "container.xml", "META-INF/container.xml", compress_type=zipfile.ZIP_DEFLATED)
+	with ReproducibleZipFile(output_absolute_path, mode="w", compression=zipfile.ZIP_DEFLATED) as epub:
+		# According to the spec, the `mimetype` file must be uncompressed. The rest of the files, however, can be compressed.
+		epub.write(epub_root_absolute_path / "mimetype", "mimetype", compress_type=zipfile.ZIP_STORED)
+		epub.write(epub_root_absolute_path / "META-INF" / "container.xml", "META-INF/container.xml")
 
 		for file_path in sorted(epub_root_absolute_path.glob("**/*")):
 			if file_path.name not in ("mimetype", "container.xml"):
-				epub.write(file_path, file_path.relative_to(epub_root_absolute_path), compress_type=zipfile.ZIP_DEFLATED)
+				epub.write(file_path, file_path.relative_to(epub_root_absolute_path))
 
 	# Unset the timestamp environment variable that was set for ReproducibleZipFile.
 	if last_update_datetime is not None:
