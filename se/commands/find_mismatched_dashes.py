@@ -21,7 +21,7 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 	"""
 
 	parser = argparse.ArgumentParser(description="Find words with mismatched dashes in a set of XHTML files. For example, [text]extra-physical[/] in one file and [text]extraphysical[/] in another.", prog="[command]se[/] [subcommand]find-mismatched-dashes[/]", formatter_class=SeHelpFormatter)
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
+	parser.add_argument("targets", metavar="[path]TARGET[/]", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()
 
 	console = se.init_console()

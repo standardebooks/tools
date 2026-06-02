@@ -248,7 +248,7 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 	parser.add_argument("-v", "--vim", action="store_true", help="Use basic Vim-like navigation shortcuts.")
 	parser.add_argument("regex", metavar="REGEX", help="A regex of the type accepted by Python’s [text]regex[/] library.")
 	parser.add_argument("replace", metavar="REPLACE", help="A replacement regex of the type accepted by Python’s [text]regex[/] library.")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="A file or directory on which to perform the search and replace.")
+	parser.add_argument("targets", metavar="[path]TARGET[/]", nargs="+", help="A file or directory on which to perform the search and replace.")
 	args = parser.parse_args()
 
 	# By default, the esc key has a delay before its delivered to curses.

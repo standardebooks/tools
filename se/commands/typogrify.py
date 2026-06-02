@@ -18,7 +18,7 @@ def typogrify(plain_output: bool) -> int:
 	parser = argparse.ArgumentParser(description="Apply some scriptable typography rules from the Standard Ebooks typography manual to XHTML files.", prog="[command]se[/] [subcommand]typogrify[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-n", "--no-quotes", dest="quotes", action="store_false", help="Don’t convert to smart quotes before doing other adjustments.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
+	parser.add_argument("targets", metavar="[path]TARGET[/]", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()
 
 	console = se.init_console()

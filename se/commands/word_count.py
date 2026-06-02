@@ -24,7 +24,7 @@ def word_count(plain_output: bool) -> int:
 	parser.add_argument("-c", "--categorize", action="store_true", help="Include length categorization in output.")
 	parser.add_argument("-p", "--ignore-pg-boilerplate", action="store_true", help="Attempt to ignore Project Gutenberg boilerplate headers and footers before counting.")
 	parser.add_argument("-x", "--exclude-se-files", action="store_true", help="Exclude some non-bodymatter files common to S.E. ebooks, like the ToC and colophon.")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
+	parser.add_argument("targets", metavar="[path]TARGET[/]", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()
 
 	total_word_count = 0

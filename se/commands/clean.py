@@ -16,7 +16,7 @@ def clean(plain_output: bool) -> int:
 
 	parser = argparse.ArgumentParser(description="Prettify and canonicalize individual XHTML, SVG, or CSS files, or all XHTML, SVG, or CSS files in a source directory.", prog="[command]se[/] [subcommand]clean[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML, SVG, or CSS file, or a directory containing XHTML, SVG, or CSS files.")
+	parser.add_argument("targets", metavar="[path]TARGET[/]", nargs="+", help="An XHTML, SVG, or CSS file, or a directory containing XHTML, SVG, or CSS files.")
 	args = parser.parse_args()
 
 	console = se.init_console()

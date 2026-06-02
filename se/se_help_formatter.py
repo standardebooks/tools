@@ -9,6 +9,7 @@ import re
 from collections.abc import Iterable
 
 from rich.console import Console
+from rich.style import Style
 from rich.text import Text
 
 import se
@@ -94,17 +95,31 @@ class SeHelpFormatter(argparse.HelpFormatter):
 			line.rstrip()
 			self._help_parts.append(indent_text + line + Text("\n"))
 
-	def _format_metavar(self, action: argparse.Action) -> str:
+	def _format_metavar(self, action: argparse.Action) -> Text:
 		"""
 		Return an angle-bracketed metavar for an action.
 		"""
 
-		metavar = str(action.metavar if action.metavar else action.dest.upper())
+		metavar_string = str(action.metavar if action.metavar else action.dest.upper())
 
-		if metavar.startswith("<") and metavar.endswith(">"):
-			return metavar
+		if metavar_string.startswith("<") and metavar_string.endswith(">"):
+			metavar_string = metavar_string[1:-1]
 
-		return f"<{metavar}>"
+		metavar = self._parse_markup(metavar_string)
+		if not metavar.spans:
+			return Text(f"<{metavar_string}>", style="parameter")
+
+		parameter_style = se.RICH_THEME.styles["parameter"]
+		path_style = se.RICH_THEME.styles["path"]
+		underlined_parameter_style = Style.combine([parameter_style, Style(underline=path_style.underline)])
+
+		for span in list(metavar.spans):
+			if span.style == "path":
+				metavar.stylize(underlined_parameter_style, span.start, span.end)
+			else:
+				metavar.stylize(parameter_style, span.start, span.end)
+
+		return Text("<", style="parameter") + metavar + Text(">", style="parameter")
 
 	def _format_args_for_action(self, action: argparse.Action) -> Text:
 		"""
@@ -117,18 +132,18 @@ class SeHelpFormatter(argparse.HelpFormatter):
 		metavar = self._format_metavar(action)
 
 		if action.nargs == "+":
-			return Text.assemble((metavar, "cyan"), (" [", "default"), (metavar, "cyan"), (" ", "default"), ("...", "cyan"), ("]", "default"))
+			return metavar.copy() + Text(" [", style="default") + metavar.copy() + Text(" ", style="default") + Text("...", style="parameter") + Text("]", style="default")
 
 		if action.nargs == "*":
-			return Text.assemble(("[", "default"), (metavar, "cyan"), (" ", "default"), ("...", "cyan"), ("]", "default"))
+			return Text("[", style="default") + metavar.copy() + Text(" ", style="default") + Text("...", style="parameter") + Text("]", style="default")
 
 		if action.nargs == "?":
-			return Text.assemble(("[", "default"), (metavar, "cyan"), ("]", "default"))
+			return Text("[", style="default") + metavar.copy() + Text("]", style="default")
 
 		if isinstance(action.nargs, int):
-			return Text(" ").join(Text(metavar, style="cyan") for _ in range(action.nargs))
+			return Text(" ", style="default").join(metavar.copy() for _ in range(action.nargs))
 
-		return Text(metavar, style="cyan")
+		return metavar
 
 	def _format_option_invocation(self, action: argparse.Action) -> Text:
 		"""

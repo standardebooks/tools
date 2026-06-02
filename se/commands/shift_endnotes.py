@@ -20,7 +20,7 @@ def shift_endnotes(plain_output: bool) -> int: # pylint: disable=unused-argument
 	group.add_argument("-d", "--decrement", action="store_true", help="Decrement the target endnote number and all following endnotes.")
 	group.add_argument("-i", "--increment", action="store_true", help="Increment the target endnote number and all following endnotes.")
 	parser.add_argument("target_endnote_number", metavar="ENDNOTE-NUMBER", type=se.is_positive_integer, help="The endnote number to start shifting at.")
-	parser.add_argument("directory", metavar="DIRECTORY", help="A Standard Ebooks source directory.")
+	parser.add_argument("directory", metavar="[path]DIRECTORY[/]", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 
 	return_code = 0

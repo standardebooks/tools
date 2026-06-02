@@ -48,7 +48,7 @@ RICH_THEME = Theme({
 	"val": "bright_blue",
 	"attr": "hot_pink",
 	"class": "hot_pink",
-	"path": "bright_blue",
+	"path": "cornflower_blue underline",
 	"url": "bright_blue",
 	"text": "dark_orange",
 	"css": "bright_blue",

@@ -54,7 +54,7 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 	parser = argparse.ArgumentParser(description="Add an SE template file and any accompanying CSS.", prog="[command]se[/] [subcommand]add-file[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-f", "--force", dest="force", action="store_true", help="Overwrite any existing files.")
 	parser.add_argument("file_type", metavar="FILE_TYPE", choices=file_types, help="The type of file to add; one of: " + ", ".join(file_types) + ".")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
+	parser.add_argument("directories", metavar="[path]DIRECTORY[/]", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 
 	return_code = 0

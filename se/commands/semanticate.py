@@ -16,7 +16,7 @@ def semanticate(plain_output: bool) -> int:
 
 	parser = argparse.ArgumentParser(description="Automatically add semantics to Standard Ebooks source directories.", prog="[command]se[/] [subcommand]semanticate[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
+	parser.add_argument("targets", metavar="[path]TARGET[/]", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()
 
 	console = se.init_console()

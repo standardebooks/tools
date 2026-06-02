@@ -26,7 +26,7 @@ def lint(plain_output: bool) -> int:
 	parser.add_argument("-a", "--allow", dest="allowed_messages", nargs="+", help="If an [path]se-lint-ignore.xml[/] file is present, allow these specific codes to be raised by lint.")
 	parser.add_argument("-s", "--skip-lint-ignore", action="store_true", help="Ignore all rules in the [path]se-lint-ignore.xml[/] file.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
+	parser.add_argument("directories", metavar="[path]DIRECTORY[/]", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 
 	called_from_parallel = se.is_called_from_parallel(False)

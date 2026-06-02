@@ -17,7 +17,7 @@ def build_spine(plain_output: bool) -> int:
 
 	parser = argparse.ArgumentParser(description="Generate the [xhtml]<spine>[/] element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.", prog="[command]se[/] [subcommand]build-spine[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-s", "--stdout", action="store_true", help="Print to stdout instead of writing to the metadata file.")
-	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
+	parser.add_argument("directories", metavar="[path]DIRECTORY[/]", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 
 	if args.stdout and len(args.directories) > 1:

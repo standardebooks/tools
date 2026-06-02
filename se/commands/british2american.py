@@ -17,7 +17,7 @@ def british2american(plain_output: bool) -> int:
 	parser = argparse.ArgumentParser(description="Try to convert British quote style to American quote style. Quotes must already be typogrified using the [command]typogrify[/] tool. This script isn’t perfect; proofreading is required, especially near closing quotes near to em-dashes.", prog="[command]se[/] [subcommand]british2american[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-f", "--force", action="store_true", help="Force conversion of quote style.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
+	parser.add_argument("targets", metavar="[path]TARGET[/]", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()
 
 	return_code = 0

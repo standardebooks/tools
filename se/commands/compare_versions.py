@@ -36,7 +36,7 @@ def compare_versions(plain_output: bool) -> int:
 	parser.add_argument("-i", "--include-se-files", dest="include_se_files", action="store_true", help="Include commonly-excluded S.E. files like imprint, titlepage, and colophon.")
 	parser.add_argument("-n", "--no-images", dest="copy_images", action="store_false", help="Don’t create images of diffs.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
-	parser.add_argument("targets", metavar="TARGET", nargs="+", help="A directory containing XHTML files.")
+	parser.add_argument("targets", metavar="[path]TARGET[/]", nargs="+", help="A directory containing XHTML files.")
 	args = parser.parse_args()
 
 	console = se.init_console()
