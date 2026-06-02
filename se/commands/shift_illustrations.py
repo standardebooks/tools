@@ -14,7 +14,7 @@ def shift_illustrations(plain_output: bool) -> int: # pylint: disable=unused-arg
 	Entry point for `se shift-illustrations`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Increment or decrement the specified illustration and all following illustrations by 1 or a specified amount.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Increment or decrement the specified illustration and all following illustrations by 1 or a specified amount.", prog="[command]se[/] [subcommand]shift-illustrations[/]", formatter_class=SeHelpFormatter)
 	group = parser.add_mutually_exclusive_group(required=True)
 	parser.add_argument("-a", "--amount", metavar="NUMBER", dest="amount", default=1, type=se.is_positive_integer, help="The amount to increment or decrement by; defaults to [parameter]1[/].")
 	group.add_argument("-d", "--decrement", action="store_true", help="Decrement the target illustration number and all following illustrations.")

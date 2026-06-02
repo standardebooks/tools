@@ -22,7 +22,7 @@ def lint(plain_output: bool) -> int:
 	Entry point for `se lint`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Check for various Standard Ebooks style errors.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Check for various Standard Ebooks style errors.", prog="[command]se[/] [subcommand]lint[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-a", "--allow", dest="allowed_messages", nargs="+", help="If an [path]se-lint-ignore.xml[/] file is present, allow these specific codes to be raised by lint.")
 	parser.add_argument("-s", "--skip-lint-ignore", action="store_true", help="Ignore all rules in the [path]se-lint-ignore.xml[/] file.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")

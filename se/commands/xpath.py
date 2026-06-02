@@ -16,7 +16,7 @@ def xpath(plain_output: bool) -> int:
 	Entry point for `se xpath`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed.", prog="[command]se[/] [subcommand]xpath[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-f", "--only-filenames", action="store_true", help="Only output filenames of files that contain matches, not the matches themselves.")
 	parser.add_argument("-q", "--quiet", action="store_true", help="Don’t output anything, only a return code if matches exist in any files.")
 	parser.add_argument("xpath", metavar="XPATH", help="An xpath expression.")

@@ -18,7 +18,7 @@ def unicode_names(plain_output: bool) -> int:
 	Entry point for `se unicode-names`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Display Unicode code points, descriptions, and links to more details for each character in a string. Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Display Unicode code points, descriptions, and links to more details for each character in a string. Useful for differentiating between different flavors of spaces, dashes, and invisible characters like word joiners.", prog="[command]se[/] [subcommand]unicode-names[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("strings", metavar="STRING", nargs="*", help="A Unicode string.")
 	args = parser.parse_args()
 

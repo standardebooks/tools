@@ -18,7 +18,7 @@ def build_ids(plain_output: bool) -> int:
 	Entry point for `se build-ids`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Change [attr]id[/] attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced, and the ebook spine must be complete.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Change [attr]id[/] attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced, and the ebook spine must be complete.", prog="[command]se[/] [subcommand]build-ids[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-n", "--no-endnotes", action="store_true", help="Exclude endnotes.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")

@@ -20,7 +20,7 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 	Entry point for `se find-mismatched-diacritics`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Find words with mismatched diacritics in a set of XHTML files. For example, [text]cafe[/] in one file and [text]café[/] in another.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Find words with mismatched diacritics in a set of XHTML files. For example, [text]cafe[/] in one file and [text]café[/] in another.", prog="[command]se[/] [subcommand]find-mismatched-diacritics[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()
 

@@ -15,7 +15,7 @@ def make_url_safe(plain_output: bool) -> int: # pylint: disable=unused-argument
 	Entry point for `se make-url-safe`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Make a string URL-safe.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Make a string URL-safe.", prog="[command]se[/] [subcommand]make-url-safe[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="Don’t end output with a newline.")
 	parser.add_argument("strings", metavar="STRING", nargs="*", help="A string.")
 	args = parser.parse_args()

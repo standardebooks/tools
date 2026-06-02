@@ -931,7 +931,7 @@ def create_draft(plain_output: bool) -> int:
 	Entry point for `se create-draft`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Create a skeleton of a new Standard Ebook in the current directory.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Create a skeleton of a new Standard Ebook in the current directory.", prog="[command]se[/] [subcommand]create-draft[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-a", "--author", dest="author", required=True, nargs="+", help="An author of the ebook.")
 	parser.add_argument("-e", "--email", dest="email", help="Use this email address as the main committer for the local Git repository.")
 	parser.add_argument("-f", "--fp-id", dest="fp_id", type=se.is_positive_integer, help="The Faded Page ID number of the ebook to download.")

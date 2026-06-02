@@ -20,7 +20,7 @@ def build(plain_output: bool) -> int:
 	Entry point for `se build`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Build compatible [path].epub[/] and advanced [path].epub[/] ebooks from a Standard Ebook source directory. Output is placed in the current directory, or the target directory with [flag]--output-dir[/].", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Build compatible [path].epub[/] and advanced [path].epub[/] ebooks from a Standard Ebook source directory. Output is placed in the current directory, or the target directory with [flag]--output-dir[/].", prog="[command]se[/] [subcommand]build[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-b", "--kobo", dest="build_kobo", action="store_true", help="Also build a [path].kepub.epub[/] file for Kobo.")
 	parser.add_argument("-c", "--check", action="store_true", help="Use epubcheck to validate the compatible [path].epub[/] file, and the Nu Validator (v.Nu) to validate XHTML5; if Ace is installed, also validate using Ace; if [flag]--kindle[/] is also specified and epubcheck, v.Nu, or Ace fail, don’t create a Kindle file.")
 	parser.add_argument("-k", "--kindle", dest="build_kindle", action="store_true", help="Also build an [path].azw3[/] file for Kindle.")

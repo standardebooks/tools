@@ -14,7 +14,7 @@ def modernize_spelling(plain_output: bool) -> int:
 	Entry point for `se modernize-spelling`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling. For example, replace [text]ash-tray[/] with [text]ashtray[/].", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Modernize spelling of some archaic words, and replace words that may be archaically compounded with a dash to a more modern spelling. For example, replace [text]ash-tray[/] with [text]ashtray[/].", prog="[command]se[/] [subcommand]modernize-spelling[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-n", "--no-hyphens", dest="modernize_hyphenation", action="store_false", help="Don’t modernize hyphenation.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")

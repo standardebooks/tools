@@ -33,7 +33,7 @@ def split_file(plain_output: bool) -> int:
 	Entry point for `se split-file`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Split an XHTML file into many files at all instances of [xml]<!--se:split-->[/], and include a header template for each file.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Split an XHTML file into many files at all instances of [xml]<!--se:split-->[/], and include a header template for each file.", prog="[command]se[/] [subcommand]split-file[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-f", "--filename-format", metavar="STRING", type=str, default="chapter-%n.xhtml", help="A format string for the output files; [text]%%n[/] is replaced with the current chapter number; defaults to [path]chapter-%%n.xhtml[/].")
 	parser.add_argument("-s", "--start-at", metavar="INTEGER", type=se.is_positive_integer, default="1", help="Start numbering chapters at this number, instead of at 1.")
 	parser.add_argument("-t", "--template-file", metavar="FILE", type=str, default="", help="A file containing an XHTML template to use for each chapter; the string [text]LANG[/] is replaced by the guessed language, the string [text]NUMBER[/] is replaced by the chapter number, the string [text]NUMERAL[/] is replaced by the chapter Roman numeral, and the string [text]TEXT[/] is replaced by the chapter body.")

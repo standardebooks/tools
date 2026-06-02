@@ -17,7 +17,7 @@ def build_manifest(plain_output: bool) -> int:
 	Entry point for `se build-manifest`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Generate the [xhtml]<manifest>[/] element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Generate the [xhtml]<manifest>[/] element for the given Standard Ebooks source directory and write it to the ebook’s metadata file.", prog="[command]se[/] [subcommand]build-manifest[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-s", "--stdout", action="store_true", help="Print to stdout instead of writing to the metadata file.")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()

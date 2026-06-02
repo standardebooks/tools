@@ -41,6 +41,7 @@ COVER_WIDTH = 1400
 TITLEPAGE_WIDTH = 1400
 RICH_THEME = Theme({
 	"command": "green",
+	"subcommand": "dark_sea_green1",
 	"branch": "dark_goldenrod",
 	"xhtml": "purple",
 	"xml": "purple",

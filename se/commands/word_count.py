@@ -20,7 +20,7 @@ def word_count(plain_output: bool) -> int:
 	Entry point for `se word-count`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Count the number of words in an XHTML file and optionally categorize by length. If multiple files are specified, show the total word count for all.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Count the number of words in an XHTML file and optionally categorize by length. If multiple files are specified, show the total word count for all.", prog="[command]se[/] [subcommand]word-count[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-c", "--categorize", action="store_true", help="Include length categorization in output.")
 	parser.add_argument("-p", "--ignore-pg-boilerplate", action="store_true", help="Attempt to ignore Project Gutenberg boilerplate headers and footers before counting.")
 	parser.add_argument("-x", "--exclude-se-files", action="store_true", help="Exclude some non-bodymatter files common to S.E. ebooks, like the ToC and colophon.")

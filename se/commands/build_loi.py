@@ -13,7 +13,7 @@ def build_loi(plain_output: bool) -> int:
 	Entry point for `se build-loi`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Update the LoI file based on all [xhtml]<figure>[/] elements that contain an [xhtml]<img>[/].", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Update the LoI file based on all [xhtml]<figure>[/] elements that contain an [xhtml]<img>[/].", prog="[command]se[/] [subcommand]build-loi[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-s", "--stdout", action="store_true", help="Print to stdout instead of writing to the LoI file.")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()

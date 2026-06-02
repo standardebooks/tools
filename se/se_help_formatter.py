@@ -177,7 +177,11 @@ class SeHelpFormatter(argparse.HelpFormatter):
 		if usage is argparse.SUPPRESS:
 			return
 
-		chunks: list[Text] = [Text(self._prog, style="green")]
+		prog = self._parse_markup(self._prog)
+		if not prog.spans:
+			prog.stylize("green")
+
+		chunks: list[Text] = [prog]
 
 		for action in actions:
 			if action.help is argparse.SUPPRESS:

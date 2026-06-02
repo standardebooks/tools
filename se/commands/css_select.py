@@ -14,7 +14,7 @@ def css_select(plain_output: bool) -> int:
 	Entry point for `se css-select`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Print the results of a CSS selector evaluated against a set of XHTML files.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Print the results of a CSS selector evaluated against a set of XHTML files.", prog="[command]se[/] [subcommand]css-select[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-f", "--only-filenames", action="store_true", help="Only output filenames of files that contain matches, not the matches themselves.")
 	parser.add_argument("-q", "--quiet", action="store_true", help="Don’t output anything, only a return code if matches exist in any files.")
 	parser.add_argument("selector", metavar="SELECTOR", help="A CSS selector.")

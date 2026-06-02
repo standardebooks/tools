@@ -16,7 +16,7 @@ def build_svg_titles(plain_output: bool) -> int:
 	Entry point for `se build-svg-titles`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Update or add SVG [xhtml]<title>[/] elements based on the [attr]alt[/] attributes from the [xhtml]<img>[/] elements.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Update or add SVG [xhtml]<title>[/] elements based on the [attr]alt[/] attributes from the [xhtml]<img>[/] elements.", prog="[command]se[/] [subcommand]build-svg-titles[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()

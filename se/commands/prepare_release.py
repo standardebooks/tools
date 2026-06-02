@@ -15,7 +15,7 @@ def prepare_release(plain_output: bool) -> int:
 	Entry point for `se prepare-release`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Calculate work word count, insert release date if not yet set, and update modified date and revision number.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Calculate work word count, insert release date if not yet set, and update modified date and revision number.", prog="[command]se[/] [subcommand]prepare-release[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-r", "--no-revision", dest="revision", action="store_false", help="Don’t increment the revision number.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
 	parser.add_argument("-w", "--no-word-count", dest="word_count", action="store_false", help="Don’t calculate word count.")

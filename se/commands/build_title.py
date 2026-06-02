@@ -15,7 +15,7 @@ def build_title(plain_output: bool) -> int:
 	Entry point for `se build-title`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Generate the title of an XHTML file based on its headings and update the file’s [xhtml]<title>[/] element.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Generate the title of an XHTML file based on its headings and update the file’s [xhtml]<title>[/] element.", prog="[command]se[/] [subcommand]build-title[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="With [flag]--stdout[/], don’t end output with a newline.")
 	parser.add_argument("-s", "--stdout", action="store_true", help="Print to stdout instead of writing to the file.")
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")

@@ -15,7 +15,7 @@ def build_images(plain_output: bool) -> int:
 	Entry point for `se build-images`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Generate ebook cover and titlepages for Standard Ebooks ebooks, and then build ebook covers and titlepages, placing the output in [path]DIRECTORY/src/epub/images/[/].", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Generate ebook cover and titlepages for Standard Ebooks ebooks, and then build ebook covers and titlepages, placing the output in [path]DIRECTORY/src/epub/images/[/].", prog="[command]se[/] [subcommand]build-images[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-g", "--no-generate", action="store_true", help="Don’t generate new source cover/titlepage SVGs, only build existing ones.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
 	parser.add_argument("directories", metavar="DIRECTORY", nargs="+", help="A Standard Ebooks source directory.")

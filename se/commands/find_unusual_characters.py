@@ -19,7 +19,7 @@ def find_unusual_characters(plain_output: bool) -> int:
 	Entry point for `se find-unusual-characters`.
 	"""
 
-	parser = argparse.ArgumentParser(description="Find characters outside a nominal expected range in a set of XHTML files. This can be useful to find transcription mistakes and mojibake.", formatter_class=SeHelpFormatter)
+	parser = argparse.ArgumentParser(description="Find characters outside a nominal expected range in a set of XHTML files. This can be useful to find transcription mistakes and mojibake.", prog="[command]se[/] [subcommand]find-unusual-characters[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("targets", metavar="TARGET", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()
 
