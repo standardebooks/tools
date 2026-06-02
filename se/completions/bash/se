@@ -32,12 +32,61 @@ _se_compgen_files(){
 	COMPREPLY+=("${matches[@]}")
 }
 
+_se_option_takes_argument(){
+	local command_name="$1"
+	local option="$2"
+
+	case "${command_name}:${option}" in
+		build:-o|build:--output-dir|extract-ebook:-o|extract-ebook:--output-dir|recompose-epub:-e|recompose-epub:--extra-css-file|recompose-epub:-o|recompose-epub:--output|split-file:-f|split-file:--filename-format|split-file:-s|split-file:--start-at|split-file:-t|split-file:--template-file|hyphenate:-l|hyphenate:--language|shift-endnotes:-a|shift-endnotes:--amount|shift-illustrations:-a|shift-illustrations:--amount|lint:-a|lint:--allow|create-draft:-a|create-draft:--author|create-draft:-e|create-draft:--email|create-draft:-f|create-draft:--fp-id|create-draft:-p|create-draft:--pg-id|create-draft:-r|create-draft:--translator|create-draft:-t|create-draft:--title)
+			return 0
+			;;
+	esac
+
+	return 1
+}
+
+_se_count_positionals(){
+	local command_name="$1"
+	local count=0
+	local index=0
+	local skip_next=0
+	local word=""
+
+	for ((index = 2; index < COMP_CWORD; index++)); do
+		word="${COMP_WORDS[index]}"
+
+		if [[ ${skip_next} -eq 1 ]]; then
+			skip_next=0
+			continue
+		fi
+
+		if [[ ${word} == --*=* ]]; then
+			continue
+		fi
+
+		if [[ ${word} == "-"* ]]; then
+			if _se_option_takes_argument "${command_name}" "${word}"; then
+				skip_next=1
+			fi
+
+			continue
+		fi
+
+		((count++))
+	done
+
+	printf "%s" "${count}"
+}
+
 _se(){
 	COMPREPLY=()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local prev="${COMP_WORDS[COMP_CWORD-1]}"
+	local positional_count=0
 	local commands="--help --plain --version add-file british2american build build-ids build-images build-loi build-manifest build-spine build-svg-titles build-title build-toc clean compare-versions create-draft css-select dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names word-count xpath"
 	if [[ $COMP_CWORD -gt 1 ]]; then
+		positional_count="$(_se_count_positionals "${COMP_WORDS[1]}")"
+
 		case "${COMP_WORDS[1]}" in
 			add-file)
 				_se_compgen_words "-f --force -h --help" "${cur}"
@@ -106,8 +155,10 @@ _se(){
 				;;
 			css-select)
 				_se_compgen_words "-f --only-filenames -h --help -q --quiet" "${cur}"
-				_se_compgen_dirs ".*" "${cur}"
-				_se_compgen_files "!*.xhtml" "${cur}"
+				if [[ ${positional_count} -ge 1 ]]; then
+					_se_compgen_dirs ".*" "${cur}"
+					_se_compgen_files "!*.xhtml" "${cur}"
+				fi
 				;;
 			dec2roman)
 				_se_compgen_words "-h --help -n --no-newline" "${cur}"
@@ -147,7 +198,10 @@ _se(){
 				;;
 			interactive-replace)
 				_se_compgen_words "-d --dot-all -h --help -i --ignore-case -m --multiline -v --vim" "${cur}"
-				_se_compgen_dirs ".*" "${cur}"
+				if [[ ${positional_count} -ge 2 ]]; then
+					_se_compgen_dirs ".*" "${cur}"
+					_se_compgen_files ".*" "${cur}"
+				fi
 				;;
 			lint)
 				_se_compgen_words "-a --allow= -h --help -s --skip-lint-ignore -v --verbose" "${cur}"
@@ -188,11 +242,15 @@ _se(){
 				;;
 			shift-endnotes)
 				_se_compgen_words "-a --amount= -d --decrement -h --help -i --increment" "${cur}"
-				_se_compgen_dirs ".*" "${cur}"
+				if [[ ${positional_count} -ge 1 ]]; then
+					_se_compgen_dirs ".*" "${cur}"
+				fi
 				;;
 			shift-illustrations)
 				_se_compgen_words "-a --amount= -d --decrement -h --help -i --increment" "${cur}"
-				_se_compgen_dirs ".*" "${cur}"
+				if [[ ${positional_count} -ge 1 ]]; then
+					_se_compgen_dirs ".*" "${cur}"
+				fi
 				;;
 			split-file)
 				_se_compgen_words "-f --filename-format= -h --help -s --start-at= -t --template-file=" "${cur}"
@@ -220,8 +278,10 @@ _se(){
 				;;
 			xpath)
 				_se_compgen_words "-f --only-filenames -h --help -q --quiet" "${cur}"
-				_se_compgen_dirs ".*" "${cur}"
-				_se_compgen_files "!*.xhtml" "${cur}"
+				if [[ ${positional_count} -ge 1 ]]; then
+					_se_compgen_dirs ".*" "${cur}"
+					_se_compgen_files "!*.xhtml" "${cur}"
+				fi
 				;;
 		esac
 	else

@@ -940,7 +940,7 @@ def create_draft(plain_output: bool) -> int:
 	parser.add_argument("-r", "--translator", dest="translator", nargs="+", help="A translator of the ebook.")
 	parser.add_argument("-t", "--title", dest="title", required=True, help="The title of the ebook.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
-	parser.add_argument("-w", "--white-label", action="store_true", help="Create a generic epub skeleton without S.E. branding.")
+	parser.add_argument("-w", "--white-label", action="store_true", help="Create a generic epub skeleton without Standard Ebooks branding.")
 	args = parser.parse_args()
 
 	try:

@@ -19,7 +19,7 @@ def shift_illustrations(plain_output: bool) -> int: # pylint: disable=unused-arg
 	parser.add_argument("-a", "--amount", metavar="NUMBER", dest="amount", default=1, type=se.is_positive_integer, help="The amount to increment or decrement by; defaults to [parameter]1[/].")
 	group.add_argument("-d", "--decrement", action="store_true", help="Decrement the target illustration number and all following illustrations.")
 	group.add_argument("-i", "--increment", action="store_true", help="Increment the target illustration number and all following illustrations.")
-	parser.add_argument("target_illustration_number", metavar="ILLUSTRATION-NUMBER", type=se.is_positive_integer, help="The illustration number to start shifting at.")
+	parser.add_argument("target_illustration_number", metavar="ILLUSTRATION_NUMBER", type=se.is_positive_integer, help="The illustration number to start shifting at.")
 	parser.add_argument("directory", metavar="[path]DIRECTORY[/]", help="A Standard Ebooks source directory.")
 	args = parser.parse_args()
 

@@ -8,15 +8,15 @@ function __fish_se_no_subcommand --description "Test if se has yet to be given t
 end
 
 complete -c se -n "__fish_se_no_subcommand" -s h -l help -x -d "Show this help message and exit."
-complete -c se -n "__fish_se_no_subcommand" -s p -l plain -x -d "print plain text output, without tables or formatting"
-complete -c se -n "__fish_se_no_subcommand" -s v -l version -x -d "print version number and exit"
+complete -c se -n "__fish_se_no_subcommand" -s p -l plain -x -d "Print plain text output, without tables, colors, or other formatting. For tabular output but without colors, set the NO_COLOR environmental variable to a non-empty value instead of this option."
+complete -c se -n "__fish_se_no_subcommand" -s v -l version -x -d "Print version number and exit."
 
-complete -c se -n "__fish_se_no_subcommand" -a add-file -d "Add an SE template file and any accompanying CSS."
+complete -c se -n "__fish_se_no_subcommand" -a add-file -d "Add a Standard Ebooks template file and any accompanying CSS."
 complete -c se -A -n "__fish_seen_subcommand_from add-file" -s f -l force -x -d "Overwrite any existing files."
 complete -c se -A -n "__fish_seen_subcommand_from add-file" -s h -l help -x -d "Show this help message and exit."
 complete -c se -A -n "__fish_seen_subcommand_from add-file" -a "dedication dramatis-personae endnotes epigraph glossary halftitlepage ignore" -d "The type of file to add."
 
-complete -c se -n "__fish_se_no_subcommand" -a british2american -d "Try to convert British quote style to American quote style. Quotes must already be typogrified using the typogrify tool. This script isn’t perfect; proofreading is required, especially near closing quotes near to em-dashes."
+complete -c se -n "__fish_se_no_subcommand" -a british2american -d "Try to convert British quote style to American quote style. Quotes must already be typogrified using se typogrify. This script isn’t perfect; proofreading is required, especially near closing quotes near to em-dashes."
 complete -c se -A -n "__fish_seen_subcommand_from british2american" -s f -l force -x -d "Force conversion of quote style."
 complete -c se -A -n "__fish_seen_subcommand_from british2american" -s h -l help -x -d "Show this help message and exit."
 complete -c se -A -n "__fish_seen_subcommand_from british2american" -s v -l verbose -x -d "Increase output verbosity."
@@ -72,7 +72,7 @@ complete -c se -A -n "__fish_seen_subcommand_from clean" -s v -l verbose -x -d "
 
 complete -c se -n "__fish_se_no_subcommand" -a compare-versions -d "Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, place screenshots of the new, original, and diff (if available) renderings in the current working directory. A file called diff.html is created to allow for side-by-side comparisons of original and new files."
 complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s h -l help -x -d "Show this help message and exit."
-complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s i -l include-se-files -x -d "Include commonly-excluded S.E. files like imprint, titlepage, and colophon."
+complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s i -l include-se-files -x -d "Include commonly-excluded Standard Ebooks files like imprint, titlepage, and colophon."
 complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s n -l no-images -x -d "Don’t create images of diffs."
 complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s v -l verbose -x -d "Increase output verbosity."
 
@@ -86,7 +86,7 @@ complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s p -l pg-id -d
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s r -l translator -d "A translator of the ebook."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s t -l title -d "The title of the ebook."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s v -l verbose -x -d "Increase output verbosity."
-complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s w -l white-label -x -d "Create a generic epub skeleton without S.E. branding."
+complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s w -l white-label -x -d "Create a generic epub skeleton without Standard Ebooks branding."
 
 complete -c se -n "__fish_se_no_subcommand" -a css-select -d "Print the results of a CSS selector evaluated against a set of XHTML files."
 complete -c se -A -n "__fish_seen_subcommand_from css-select" -s f -l only-filenames -x -d "Only output filenames of files that contain matches, not the matches themselves."
@@ -111,7 +111,7 @@ complete -c se -A -n "__fish_seen_subcommand_from find-mismatched-diacritics" -s
 complete -c se -n "__fish_se_no_subcommand" -a find-unusual-characters -d "Find characters outside a nominal expected range in a set of XHTML files. This can be useful to find transcription mistakes and mojibake."
 complete -c se -A -n "__fish_seen_subcommand_from find-unusual-characters" -s h -l help -x -d "Show this help message and exit."
 
-complete -c se -n "__fish_se_no_subcommand" -a help -d "List available S.E. commands."
+complete -c se -n "__fish_se_no_subcommand" -a help -d "List available Standard Ebooks commands."
 
 complete -c se -n "__fish_se_no_subcommand" -a hyphenate -d "Insert soft hyphens at syllable breaks in XHTML files."
 complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s h -l help -x -d "Show this help message and exit."
@@ -201,7 +201,7 @@ complete -c se -n "__fish_se_no_subcommand" -a word-count -d "Count the number o
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s c -l categorize -x -d "Include length categorization in output."
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s h -l help -x -d "Show this help message and exit."
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s p -l ignore-pg-boilerplate -x -d "Attempt to ignore Project Gutenberg boilerplate headers and footers before counting."
-complete -c se -A -n "__fish_seen_subcommand_from word-count" -s x -l exclude-se-files -x -d "Exclude some non-bodymatter files common to S.E. ebooks, like the ToC and colophon."
+complete -c se -A -n "__fish_seen_subcommand_from word-count" -s x -l exclude-se-files -x -d "Exclude some non-bodymatter files common to Standard Ebooks ebooks, like the ToC and colophon."
 
 complete -c se -n "__fish_se_no_subcommand" -a xpath -d "Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed."
 complete -c se -A -n "__fish_seen_subcommand_from xpath" -s f -l only-filenames -x -d "Only output filenames of files that contain matches, not the matches themselves."

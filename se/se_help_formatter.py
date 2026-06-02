@@ -8,14 +8,13 @@ import os
 import re
 import sys
 from collections.abc import Iterable
+from typing import NoReturn
 
 from rich.console import Console
 from rich.style import Style
 from rich.text import Text
 
 import se
-
-_ORIGINAL_ARGUMENT_PARSER_ERROR = argparse.ArgumentParser.error
 
 class SeHelpFormatter(argparse.HelpFormatter):
 	"""
@@ -308,17 +307,13 @@ class SeHelpFormatter(argparse.HelpFormatter):
 
 		return output.getvalue()
 
-def _format_error(parser: argparse.ArgumentParser, message: str) -> None:
+def _format_error(self: argparse.ArgumentParser, message: str) -> NoReturn:
 	"""
 	Print a usage message and exit with a formatted error.
 	"""
 
-	if parser.formatter_class is not SeHelpFormatter:
-		_ORIGINAL_ARGUMENT_PARSER_ERROR(parser, message)
-		return
-
-	parser.print_usage(sys.stderr)
-	se.print_error(SeHelpFormatter(parser.prog).format_error(message))
-	parser.exit(2)
+	self.print_usage(sys.stderr)
+	se.print_error(SeHelpFormatter(self.prog).format_error(message))
+	self.exit(2)
 
 argparse.ArgumentParser.error = _format_error

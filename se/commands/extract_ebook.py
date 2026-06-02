@@ -56,7 +56,7 @@ def extract_ebook(plain_output: bool) -> int:
 	parser = argparse.ArgumentParser(description="Extract an [path].epub[/], [path].mobi[/], or [path].azw3[/] ebook into [path]./FILENAME.extracted/[/] or a target directory.", prog="[command]se[/] [subcommand]extract-ebook[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-o", "--output-dir", metavar="[path]DIRECTORY[/]", type=str, help="A target directory to extract into.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
-	parser.add_argument("targets", metavar="[path]TARGET[/]", nargs="+", help="An epub, mobi, or azw3 file.")
+	parser.add_argument("targets", metavar="[path]TARGET[/]", nargs="+", help="An [path].epub[/], [path].mobi[/], or [path].azw3[/] file.")
 	args = parser.parse_args()
 
 	console = se.init_console()

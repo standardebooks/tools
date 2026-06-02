@@ -5,16 +5,16 @@ local state line
 
 _arguments -C \
 	'(- :)'{-h,--help}'[Show this help message and exit.]' \
-	'(-p --plain)'{-p,--plain}'[print plain text output, without tables or formatting]' \
-	'(- :)'{-v,--version}'[print version number and exit]' \
+	'(-p --plain)'{-p,--plain}'[Print plain text output, without tables, colors, or other formatting. For tabular output but without colors, set the NO_COLOR environmental variable to a non-empty value instead of this option.]' \
+	'(- :)'{-v,--version}'[Print version number and exit.]' \
 	'(-): :->cmds' \
 	'(-)*:: :->args'
 
 case $state in
 	cmds)
 		_values "se command" \
-			"add-file[Add an SE template file and any accompanying CSS.]" \
-			"british2american[Try to convert British quote style to American quote style. Quotes must already be typogrified using the typogrify tool. This script isn’t perfect; proofreading is required, especially near closing quotes near to em-dashes.]" \
+			"add-file[Add a Standard Ebooks template file and any accompanying CSS.]" \
+			"british2american[Try to convert British quote style to American quote style. Quotes must already be typogrified using se typogrify. This script isn’t perfect; proofreading is required, especially near closing quotes near to em-dashes.]" \
 			"build[Build compatible .epub and advanced .epub ebooks from a Standard Ebook source directory. Output is placed in the current directory, or the target directory with --output-dir.]" \
 			"build-ids[Change id attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced, and the ebook spine must be complete.]" \
 			"build-images[Generate ebook cover and titlepages for Standard Ebooks ebooks, and then build ebook covers and titlepages, placing the output in DIRECTORY/src/epub/images/.]" \
@@ -33,7 +33,7 @@ case $state in
 			"find-mismatched-dashes[Find words with mismatched dashes in a set of XHTML files. For example, extra-physical in one file and extraphysical in another.]" \
 			"find-mismatched-diacritics[Find words with mismatched diacritics in a set of XHTML files. For example, cafe in one file and café in another.]" \
 			"find-unusual-characters[Find characters outside a nominal expected range in a set of XHTML files. This can be useful to find transcription mistakes and mojibake.]" \
-			"help[List available S.E. commands.]" \
+			"help[List available Standard Ebooks commands.]" \
 			"hyphenate[Insert soft hyphens at syllable breaks in XHTML files.]" \
 			"interactive-replace[Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible\: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (c) Center on match. (q) Save this file and quit.]" \
 			"lint[Check for various Standard Ebooks style errors.]" \
@@ -59,15 +59,15 @@ case $state in
 				_arguments -s \
 					{-f,--force}'[Overwrite any existing files.]' \
 					{-h,--help}'[Show this help message and exit.]' \
-					'1:file:(dedication dramatis-personae endnotes epigraph glossary halftitlepage ignore)' \
-					'*: :_directories'
+					'1:The type of file to add.:(dedication dramatis-personae endnotes epigraph glossary halftitlepage ignore)' \
+					'*:A Standard Ebooks source directory.:_directories'
 				;;
 			british2american)
 				_arguments -s \
 					{-f,--force}'[Force conversion of quote style.]' \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \
-					'*: :_files -g \*.xhtml'
+					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
 			build)
 				_arguments -s \
@@ -79,72 +79,72 @@ case $state in
 					{-p,--proof}'[Insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \
 					{-y,--check-only}'[Run tests used by --check, but don’t output any ebook files, and exit after checking.]' \
-					'*: :_directories'
+					'*:A Standard Ebooks source directory.:_directories'
 				;;
 			build-ids)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-n,--no-endnotes}'[Exclude endnotes.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \
-					'*: :_directories'
+					'*:A Standard Ebooks source directory.:_directories'
 				;;
 			build-images)
 				_arguments -s \
 					{-g,--no-generate}'[Don’t generate new source cover/titlepage SVGs, only build existing ones.]' \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \
-					'*: :_directories'
+					'*:A Standard Ebooks source directory.:_directories'
 				;;
 			build-loi)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-s,--stdout}'[Print to stdout instead of writing to the LoI file.]' \
-					'*: :_directories'
+					'*:A Standard Ebooks source directory.:_directories'
 				;;
 			build-manifest)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-s,--stdout}'[Print to stdout instead of writing to the metadata file.]' \
-					'*: :_directories'
+					'*:A Standard Ebooks source directory.:_directories'
 				;;
 			build-spine)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-s,--stdout}'[Print to stdout instead of writing to the metadata file.]' \
-					'*: :_directories'
+					'*:A Standard Ebooks source directory.:_directories'
 				;;
 			build-svg-titles)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \
-					'*: :_directories'
+					'*:A Standard Ebooks source directory.:_directories'
 				;;
 			build-title)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-n,--no-newline}'[With --stdout, don’t end output with a newline.]' \
 					{-s,--stdout}'[Print to stdout instead of writing to the file.]' \
-					'*: :_files -g \*.xhtml'
+					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
 			build-toc)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-s,--stdout}'[Print to stdout instead of writing to the ToC file.]' \
-					'*: :_directories'
+					'*:A Standard Ebooks source directory.:_directories'
 				;;
 			clean)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \
-					'*: :_files -g \*.\(css\|svg\|xhtml\)'
+					'*:An XHTML, SVG, or CSS file, or a directory containing XHTML, SVG, or CSS files.:_files -g \*.\(css\|svg\|xhtml\)'
 				;;
 			compare-versions)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
-					{-i,--include-se-files}'[Include commonly-excluded S.E. files like imprint, titlepage, and colophon.]' \
+					{-i,--include-se-files}'[Include commonly-excluded Standard Ebooks files like imprint, titlepage, and colophon.]' \
 					{-n,--no-images}'[Don’t create images of diffs.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \
-					'*: :_directories'
+					'*:A directory containing XHTML files.:_directories'
 				;;
 			create-draft)
 				_arguments -s \
@@ -157,41 +157,43 @@ case $state in
 					{-r,--translator}'[A translator of the ebook.]:name' \
 					{-t,--title}'[The title of the ebook.]:title' \
 					{-v,--verbose}'[Increase output verbosity.]' \
-					{-w,--white-label}'[Create a generic epub skeleton without S.E. branding.]'
+					{-w,--white-label}'[Create a generic epub skeleton without Standard Ebooks branding.]'
 				;;
 			css-select)
 				_arguments -s \
 					{-f,--only-filenames}'[Only output filenames of files that contain matches, not the matches themselves.]' \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-q,--quiet}'[Don’t output anything, only a return code if matches exist in any files.]' \
-					'*: :_files -g \*.xhtml'
+					'1:A CSS selector.:' \
+					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
 			dec2roman)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
-					{-n,--no-newline}'[Don’t end output with a newline.]'
+					{-n,--no-newline}'[Don’t end output with a newline.]' \
+					'*:An integer.:'
 				;;
 			extract-ebook)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-o,--output-dir}'[A target directory to extract into.]: :_directories' \
 					{-v,--verbose}'[Increase output verbosity.]' \
-					'*: :_files -g \*.\(mobi\|azw3\|epub\|kepub\)'
+					'*:An .epub, .mobi, or .azw3 file.:_files -g \*.\(epub\|mobi\|azw3\)'
 				;;
 			find-mismatched-dashes)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
-					'*: :_files -g \*.xhtml'
+					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
 			find-mismatched-diacritics)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
-					'*: :_files -g \*.xhtml'
+					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
 			find-unusual-characters)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
-					'*: :_files -g \*.xhtml'
+					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
 			help)
 				;;
@@ -201,7 +203,7 @@ case $state in
 					{-i,--ignore-h-tags}'[Don’t add soft hyphens to text in <h1-6> tags.]' \
 					{-l,--language}'[Specify the language for the XHTML files; if unspecified, defaults to the xml\:lang or lang attribute of the root <html> element.]:language' \
 					{-v,--verbose}'[Increase output verbosity.]' \
-					'*: :_files -g \*.xhtml'
+					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
 			interactive-replace)
 				_arguments -s \
@@ -210,7 +212,9 @@ case $state in
 					{-i,--ignore-case}'[Ignore case when matching; equivalent to regex.IGNORECASE.]' \
 					{-m,--multiline}'[Make ^ and $ consider each line; equivalent to regex.MULTILINE.]' \
 					{-v,--vim}'[Use basic Vim-like navigation shortcuts.]' \
-					'*: :_files'
+					'1:A regex of the type accepted by Python’s regex library.:' \
+					'2:A replacement regex of the type accepted by Python’s regex library.:' \
+					'*:A file or directory on which to perform the search and replace.:_files'
 				;;
 			lint)
 				_arguments -s \
@@ -218,19 +222,20 @@ case $state in
 					{-h,--help}'[Show this help message and exit.]' \
 					{-s,--skip-lint-ignore}'[Ignore all rules in the se-lint-ignore.xml file.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \
-					'*: :_directories'
+					'*:A Standard Ebooks source directory.:_directories'
 				;;
 			make-url-safe)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
-					{-n,--no-newline}'[Don’t end output with a newline.]'
+					{-n,--no-newline}'[Don’t end output with a newline.]' \
+					'*:A string.:'
 				;;
 			modernize-spelling)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-n,--no-hyphens}'[Don’t modernize hyphenation.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \
-					'*: :_files -g \*.xhtml'
+					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
 			prepare-release)
 				_arguments -s \
@@ -238,7 +243,7 @@ case $state in
 					{-r,--no-revision}'[Don’t increment the revision number.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \
 					{-w,--no-word-count}'[Don’t calculate word count.]' \
-					'*: :_directories'
+					'*:A Standard Ebooks source directory.:_directories'
 				;;
 			recompose-epub)
 				_arguments -s \
@@ -247,25 +252,26 @@ case $state in
 					{-i,--image-files}'[Leave image src attributes as relative URLs instead of inlining as data\: URIs.]' \
 					{-o,--output}'[A file to write output to instead of printing to standard output.]: :_files' \
 					{-x,--xhtml}'[Output XHTML instead of HTML5.]' \
-					'*: :_directories'
+					'1:A Standard Ebooks source directory.:_directories'
 				;;
 			renumber-endnotes)
 				_arguments -s \
 					{-b,--brute-force}'[Renumber without checking that noterefs and endnotes match; may result in endnotes with empty backlinks or noterefs without matching endnotes.]' \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \
-					'*: :_directories'
+					'*:A Standard Ebooks source directory.:_directories'
 				;;
 			roman2dec)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
-					{-n,--no-newline}'[Don’t end output with a newline.]'
+					{-n,--no-newline}'[Don’t end output with a newline.]' \
+					'*:A Roman numeral.:'
 				;;
 			semanticate)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \
-					'*: :_files -g \*.xhtml'
+					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
 			shift-endnotes)
 				_arguments -s \
@@ -273,7 +279,8 @@ case $state in
 					{-d,--decrement}'[Decrement the target endnote number and all following endnotes.]' \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-i,--increment}'[Increment the target endnote number and all following endnotes.]' \
-					'*: :_directories'
+					'1:The endnote number to start shifting at.:' \
+					'2:A Standard Ebooks source directory.:_directories'
 				;;
 			shift-illustrations)
 				_arguments -s \
@@ -281,7 +288,8 @@ case $state in
 					{-d,--decrement}'[Decrement the target illustration number and all following illustrations.]' \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-i,--increment}'[Increment the target illustration number and all following illustrations.]' \
-					'*: :_directories'
+					'1:The illustration number to start shifting at.:' \
+					'2:A Standard Ebooks source directory.:_directories'
 				;;
 			split-file)
 				_arguments -s \
@@ -289,38 +297,41 @@ case $state in
 					{-h,--help}'[Show this help message and exit.]' \
 					{-s,--start-at}'[Start numbering chapters at this number, instead of at 1.]:value' \
 					{-t,--template-file}'[A file containing an XHTML template to use for each chapter; the string LANG is replaced by the guessed language, the string NUMBER is replaced by the chapter number, the string NUMERAL is replaced by the chapter Roman numeral, and the string TEXT is replaced by the chapter body.]: :_files' \
-					'*: :_files -g \*.\(htm\|html\|xhtml\)'
+					'1:An HTML/XHTML file.:_files -g \*.\(htm\|html\|xhtml\)'
 				;;
 			titlecase)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
-					{-n,--no-newline}'[Don’t end output with a newline.]'
+					{-n,--no-newline}'[Don’t end output with a newline.]' \
+					'*:A string.:'
 				;;
 			typogrify)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-n,--no-quotes}'[Don’t convert to smart quotes before doing other adjustments.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \
-					'*: :_files -g \*.xhtml'
+					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
 			unicode-names)
 				_arguments -s \
-					{-h,--help}'[Show this help message and exit.]'
+					{-h,--help}'[Show this help message and exit.]' \
+					'*:A Unicode string.:'
 				;;
 			word-count)
 				_arguments -s \
 					{-c,--categorize}'[Include length categorization in output.]' \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-p,--ignore-pg-boilerplate}'[Attempt to ignore Project Gutenberg boilerplate headers and footers before counting.]' \
-					{-x,--exclude-se-files}'[Exclude some non-bodymatter files common to S.E. ebooks, like the ToC and colophon.]' \
-					'*: :_files -g \*.\(htm\|html\|xhtml\)'
+					{-x,--exclude-se-files}'[Exclude some non-bodymatter files common to Standard Ebooks ebooks, like the ToC and colophon.]' \
+					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.\(htm\|html\|xhtml\)'
 				;;
 			xpath)
 				_arguments -s \
 					{-f,--only-filenames}'[Only output filenames of files that contain matches, not the matches themselves.]' \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-q,--quiet}'[Don’t output anything, only a return code if matches exist in any files.]' \
-					'*: :_files -g \*.xhtml'
+					'1:An xpath expression.:' \
+					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
 		esac
 		;;

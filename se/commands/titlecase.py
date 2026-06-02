@@ -17,7 +17,7 @@ def titlecase(plain_output: bool) -> int: # pylint: disable=unused-argument
 
 	parser = argparse.ArgumentParser(description="Convert a string to titlecase.", prog="[command]se[/] [subcommand]titlecase[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="Don’t end output with a newline.")
-	parser.add_argument("titles", metavar="STRING", nargs="*", help="A string.")
+	parser.add_argument("titles", metavar="STRING", nargs="+", help="A string.")
 	args = parser.parse_args()
 
 	lines: list[str] = []
