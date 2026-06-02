@@ -6,6 +6,7 @@ import argparse
 import io
 import os
 import re
+import sys
 from collections.abc import Iterable
 
 from rich.console import Console
@@ -13,6 +14,8 @@ from rich.style import Style
 from rich.text import Text
 
 import se
+
+_ORIGINAL_ARGUMENT_PARSER_ERROR = argparse.ArgumentParser.error
 
 class SeHelpFormatter(argparse.HelpFormatter):
 	"""
@@ -62,6 +65,19 @@ class SeHelpFormatter(argparse.HelpFormatter):
 		"""
 
 		return Text.from_markup(text)
+
+	def format_error(self, message: str) -> str:
+		"""
+		Format parameter names in an `argparse` error message.
+		"""
+
+		formatted_message = re.sub(r"\b([A-Z][A-Z0-9_-]*)\b", r"[parameter]<\1>[/]", message)
+		formatted_message = formatted_message[0].upper() + formatted_message[1:]
+
+		if formatted_message[-1] not in ".!?":
+			formatted_message = f"{formatted_message}."
+
+		return formatted_message
 
 	def _append_usage_chunks(self, chunks: Iterable[Text], indent: str = "\t") -> None:
 		"""
@@ -291,3 +307,18 @@ class SeHelpFormatter(argparse.HelpFormatter):
 		console.print(text, end="")
 
 		return output.getvalue()
+
+def _format_error(parser: argparse.ArgumentParser, message: str) -> None:
+	"""
+	Print a usage message and exit with a formatted error.
+	"""
+
+	if parser.formatter_class is not SeHelpFormatter:
+		_ORIGINAL_ARGUMENT_PARSER_ERROR(parser, message)
+		return
+
+	parser.print_usage(sys.stderr)
+	se.print_error(SeHelpFormatter(parser.prog).format_error(message))
+	parser.exit(2)
+
+argparse.ArgumentParser.error = _format_error
