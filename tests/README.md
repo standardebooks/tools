@@ -10,7 +10,7 @@ The tests are executed by calling `pytest` from the top level of your tools repo
 
 ```shell
 cd /path/to/tools/repo
-$HOME/.local/pipx/venvs/standardebooks/bin/pytest
+$HOME/.local/share/pipx/venvs/standardebooks/bin/pytest
 ```
 
 ## Test structure
