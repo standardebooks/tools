@@ -2776,7 +2776,7 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 
 	# Check for period following Roman numeral, which is an old-timey style we must fix.
 	# But ignore the numeral if it's the first item in a `<p>` element, as that suggests it might be a kind of list item.
-	nodes = dom.xpath("/html/body//node()[name()='span' and contains(@epub:type, 'z3998:roman') and not(position()=1)][(following-sibling::node()[1])[re:test(., '^\\.\\s*[a-z]')]]")
+	nodes = dom.xpath("/html/body//node()[name()='span' and contains(@epub:type, 'z3998:roman') and not(position()=1)][(following-sibling::node()[1])[re:test(., '^\\.\\s*[,\\?\\!:;a-z]')]]")
 	if nodes:
 		messages.append(LintMessage("t-013", "Roman numeral followed by a period. Hint: When in mid-sentence Roman numerals must not be followed by a period.", se.MESSAGE_TYPE_WARNING, filename, [LintSubmessage(node.to_string() + ".", node.sourceline) for node in nodes]))
 
