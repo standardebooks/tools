@@ -522,7 +522,7 @@ def _indent_children(elem: etree.Element, level: int, one_space: str, indentatio
 	for child in elem:
 		# Pre elements preserve whitespace
 		if child.tag == "{http://www.w3.org/1999/xhtml}pre":
-			break
+			continue
 
 		if len(child) > 0:
 			if has_child_tails:
