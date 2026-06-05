@@ -19,6 +19,8 @@ from git.repo import Repo
 from lxml import etree
 from natsort import natsorted
 import regex
+import tinycss2
+from tinycss2.ast import AtRule, Node, ParseError, QualifiedRule
 
 import se
 import se.css
@@ -695,6 +697,84 @@ class SeEpub:
 			for img in section.xpath("//img[starts-with(@src, '../images/')]"):
 				img.set_attr("src", se.images.get_data_url(self.content_path / img.get_attr("src").replace("../", "")))
 
+	def _scope_recompose_css_selector(self, selector: str, css_class: str) -> str:
+		"""
+		Prefix a selector with the stylesheet scoping class used during recomposition.
+		"""
+
+		selector = selector.strip()
+
+		if not selector:
+			return selector
+
+		if selector == "body":
+			return f".{css_class}"
+
+		selector = regex.sub(r"^body\s*>\s*", "", selector)
+		selector = regex.sub(r"^body\s+", "", selector)
+
+		if regex.match(r"^(section|article)(?=$|[#\.\[:\s>+~])", selector):
+			return regex.sub(r"^(section|article)", rf"\1.{css_class}", selector, count=1)
+
+		return f".{css_class} {selector}"
+
+	def _scope_recompose_css_selectors(self, selectors: str, css_class: str) -> str:
+		"""
+		Prefix each selector in a selector list with the stylesheet scoping class.
+		"""
+
+		current_selector = ""
+		depth = 0
+		quote = ""
+		scoped_selectors: list[str] = []
+
+		for character in selectors:
+			if quote:
+				current_selector += character
+				if character == quote:
+					quote = ""
+			elif character in ("'", '"'):
+				current_selector += character
+				quote = character
+			elif character in ("(", "["):
+				current_selector += character
+				depth += 1
+			elif character in (")", "]"):
+				current_selector += character
+				depth -= 1
+			elif character == "," and depth == 0:
+				scoped_selectors.append(self._scope_recompose_css_selector(current_selector, css_class))
+				current_selector = ""
+			else:
+				current_selector += character
+
+		if current_selector:
+			scoped_selectors.append(self._scope_recompose_css_selector(current_selector, css_class))
+
+		return ", ".join(scoped_selectors)
+
+	def _scope_recompose_css_tokens(self, tokens: list[Node], css_class: str) -> str:
+		"""
+		Return CSS serialized from parsed tokens after scoping qualified-rule selectors.
+		"""
+
+		output = ""
+
+		for token in tokens:
+			if isinstance(token, ParseError):
+				raise se.InvalidCssException(token.message)
+
+			if isinstance(token, QualifiedRule):
+				selectors = tinycss2.serializer.serialize(token.prelude).strip()
+				output += self._scope_recompose_css_selectors(selectors, css_class) + "{" + tinycss2.serializer.serialize(token.content) + "}"
+			elif isinstance(token, AtRule) and token.content is not None and token.lower_at_keyword in ("container", "media", "supports"):
+				rules = tinycss2.parser.parse_rule_list(token.content, skip_comments=False, skip_whitespace=False)
+				output += "@" + token.lower_at_keyword + " " + tinycss2.serializer.serialize(token.prelude).strip() + "{" + self._scope_recompose_css_tokens(rules, css_class) + "}"
+			else:
+				output += tinycss2.serializer.serialize([token])
+
+		return output
+
 	def recompose(self, output_xhtml5: bool, extra_css_file: Path | None = None, use_image_files: bool = False) -> str:
 		"""
 		Iterate over the XHTML files in this epub and "recompose" them into a single XHTML string representing this ebook.
@@ -708,7 +788,7 @@ class SeEpub:
 		A string of HTML5 representing the entire recomposed ebook.
 		"""
 
-		# Get some header data: title, core and local CSS.
+		# Get some header data.
 		try:
 			title = self.metadata_dom.xpath("/package/metadata/dc:title/text()", str)[0]
 		except IndexError as ex:
@@ -716,26 +796,22 @@ class SeEpub:
 
 		css = ""
 		namespaces: list[str] = []
+		css_filenames: list[Path] = []
+		css_classes_by_file_path: dict[Path, list[str]] = {}
 
-		css_filenames: list[Path] = list(self.content_path.glob("**/*.css"))
+		# Collect stylesheets in spine order, keeping each stylesheet's first occurrence.
+		for file_path in self.spine_file_paths:
+			dom = self.get_dom(file_path)
+			css_classes_by_file_path[file_path] = []
 
-		# If we have standard SE CSS files, attempt to sort them in the order we expect them to appear in the ebook.
-		# `core.css` -> `se.css` -> `local.css`.
-		sorted_css_filenames: dict[int, Path] = {}
-		for filepath in css_filenames:
-			if filepath.name == "core.css":
-				sorted_css_filenames[0] = filepath
-			if filepath.name == "se.css":
-				sorted_css_filenames[1] = filepath
-			if filepath.name == "local.css":
-				sorted_css_filenames[2] = filepath
+			for node in dom.xpath("/html/head/link[re:test(@rel, '\\bstylesheet\\b') and @href]"):
+				href = regex.sub(r"[?#].*$", "", node.get_attr("href"))
+				css_filename = (file_path.parent / href).resolve()
 
-		# Turn the dict into a list, sorting by key.
-		sorted_css_filenames_list = [sorted_css_filenames[key] for key in sorted(sorted_css_filenames.keys())]
+				if css_filename not in css_filenames:
+					css_filenames.append(css_filename)
 
-		# If we hit all 3 files then we're probably an SE ebook, replace our list of CSS files with the sorted list.
-		if len(sorted_css_filenames_list) == 3:
-			css_filenames = sorted_css_filenames_list
+				css_classes_by_file_path[file_path].append(se.formatting.make_url_safe(css_filename.name))
 
 		# Add the extra CSS file if present.
 		if extra_css_file:
@@ -761,6 +837,10 @@ class SeEpub:
 						# If the file isn't found, continue silently.
 						# File may not be found for example in `web.css`, which points to an image on the web server, not in the ebook.
 						pass
+
+			if not extra_css_file or filepath != extra_css_file:
+				tokens = tinycss2.parser.parse_stylesheet(file_css, skip_comments=False, skip_whitespace=False)
+				file_css = self._scope_recompose_css_tokens(tokens, se.formatting.make_url_safe(filepath.name))
 
 			css = css + f"\n\n\n/* {filepath.name} */\n" + file_css
 
@@ -791,6 +871,12 @@ class SeEpub:
 		needs_wrapper_css = False
 		for file_path in self.spine_file_paths:
 			dom = self.get_dom(file_path)
+
+			# Add stylesheet scoping classes to top-level sectioning nodes in the DOM.
+			for node in dom.xpath("/html/body/*[name() = 'section' or name() = 'article']"):
+				for css_class in css_classes_by_file_path[file_path]:
+					if not se.formatting.has_css_class(node.get_attr("class"), css_class):
+						node.add_attr_value("class", css_class)
 
 			# Apply the stylesheet to see if we have `position: absolute` on any items. If so, apply `position: relative` to its closest `<section`> ancestor.
 			# See <https://standardebooks.org/ebooks/jean-toomer/cane> for an example of this in action.
