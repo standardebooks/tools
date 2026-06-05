@@ -881,7 +881,7 @@ class SeEpub:
 			output_xhtml = output_xhtml.replace("<?xml version=\"1.0\" encoding=\"utf-8\"?>", "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE html>")
 		else:
 			# Remove XML declaration and re-add the doctype.
-			output_xhtml = regex.sub(r"<\?xml.+?\?>", "<!doctype html>", output_xhtml)
+			output_xhtml = regex.sub(r"<\?xml.+?\?>", "<!DOCTYPE html>", output_xhtml)
 
 			# Remove `CDATA`.
 			output_xhtml = output_xhtml.replace("<![CDATA[", "")
