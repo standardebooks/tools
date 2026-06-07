@@ -19,7 +19,7 @@ The command `help` is special in that it does not take any input.
 import os
 from pathlib import Path
 import pytest
-from helpers import assemble_draftbook, must_run, output_is_golden # pylint: disable=import-error
+from helpers import assemble_draftbook, fail_test, must_run, output_is_golden # pylint: disable=import-error
 
 no_ebook_directory_commands = ["unicode-names", "help"]
 stdout_argument_commands = ["build-loi", "build-manifest", "build-spine", "build-title", "build-toc"]
@@ -50,6 +50,7 @@ def test_stdout_commands(draftbook__directory: Path, work__directory: Path, comm
 	# the default command to call is the name of the command directory
 	command_to_use = command
 	test_directory = module_directory / command / test
+	test_context = f"stdout_commands/{command}/{test}"
 	# if a file exists in test_directory with the name of {command}-command, e.g. word-count-command,
 	# the first line should contain the command to use, with any arguments, e.g.`command --arg1`
 	command_file = test_directory / (command + "-command")
@@ -58,15 +59,15 @@ def test_stdout_commands(draftbook__directory: Path, work__directory: Path, comm
 			command_full = cfile.readline().strip()
 		# the command must be in the command file
 		if command not in command_full:
-			assert "" == f"'{command_full}' does not contain the command '{command}'"
+			fail_test(f"Test: {test_context}\n\n'{command_full}' does not contain the command '{command}'.")
 		# for the commands requiring --stdout, it must be in the command file
 		elif command in stdout_argument_commands and "--stdout" not in command_full:
-			assert "" == f"{command_full} does not contain --stdout argument"
+			fail_test(f"Test: {test_context}\n\n{command_full} does not contain --stdout argument.")
 		else:
 			command_to_use = command_full
 	# these commands require a command file
 	elif command in command_file_commands:
-		assert "" == f"{command} requires a command file and none was found"
+		fail_test(f"Test: {test_context}\n\n{command} requires a command file and none was found.")
 	# no command file, automatically add the --stdout argument to the commands requiring it
 	elif command in stdout_argument_commands:
 		command_to_use += " --stdout"
@@ -83,7 +84,8 @@ def test_stdout_commands(draftbook__directory: Path, work__directory: Path, comm
 
 	# Output of stderr should always be empty
 	out, err = capfd.readouterr()
-	assert err == ""
+	if err:
+		fail_test(f"Test: {test_context}\n\nStderr was not empty.\n\n{err}")
 
 	golden_file = test_directory / "golden" / f"{command}-{test}-out.txt"
-	assert output_is_golden(out, golden_file, update_golden)
+	output_is_golden(out, golden_file, update_golden, test_context)

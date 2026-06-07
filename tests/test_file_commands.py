@@ -10,7 +10,7 @@ helper function.
 import os
 from pathlib import Path
 import pytest
-from helpers import must_run, files_are_golden # pylint: disable=import-error
+from helpers import fail_test, must_run, files_are_golden # pylint: disable=import-error
 
 module_directory = Path(__file__).parent / "file_commands"
 module_tests: list[list[str]] = []
@@ -39,6 +39,7 @@ def test_file_commands(work__directory: Path, command: str, test: Path, update_g
 	# the default command to call is the name of the command directory
 	command_to_use = command
 	test_directory = module_directory / command / test
+	test_context = f"file_commands/{command}/{test}"
 	# if a file exists in test_directory with the name of {command}-command, e.g. create-draft-command,
 	# the first line should contain the command to use, with any arguments, e.g.`command --arg1`
 	command_file = test_directory / (command + "-command")
@@ -49,7 +50,7 @@ def test_file_commands(work__directory: Path, command: str, test: Path, update_g
 		if command in command_full:
 			command_to_use = command_full
 		else:
-			assert "" == f"'{command_full}' does not contain the command '{command}'"
+			fail_test(f"Test: {test_context}\n\n'{command_full}' does not contain the command '{command}'.")
 
 	# contains the files specific to the particular test being run
 	in_directory = test_directory / "in"
@@ -68,4 +69,4 @@ def test_file_commands(work__directory: Path, command: str, test: Path, update_g
 
 	# run the command on that file and verify the output
 	must_run(f"se {command_to_use}")
-	files_are_golden(command, in_directory, work__directory, golden_directory, update_golden)
+	files_are_golden(command, in_directory, work__directory, golden_directory, update_golden, test_context)

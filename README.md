@@ -205,13 +205,9 @@ We need volunteers to take the lead on the following goals:
 
 - Add more test cases to the test framework.
 
-- When a test fails, the output is usually inscrutable. Can we get better, more readable error messages when a test fails?
-
 - Writing installation instructions for Bash and ZSH completions for macOS.
 
 - Currently, the toolset requires the whole Calibre package, which is very big, but it’s only used to convert epub to azw3. Can we inline Calibre’s azw3 conversion code into our `./vendor/` directory, to avoid having to install the entire Calibre package as a big dependency? If so, how do we keep it updated as Calibre evolves?
-
-- The `se lint` tool uses Python logic and XPath to help validate various S.E. style requirements in an ebook metadata file, `content.opf`. Can this be done instead using an XML Schema?
 
 # Tool descriptions
 

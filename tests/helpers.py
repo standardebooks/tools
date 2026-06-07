@@ -2,13 +2,76 @@
 Common helper functions for tests.
 """
 
+import difflib
+import filecmp
+import os
 import shlex
 import shutil
 import subprocess
-import os
 from pathlib import Path
-import filecmp
 import pytest
+
+def fail_test(message: str) -> None:
+	"""
+	Fail a test with a clean message and without pytest showing helper internals.
+	"""
+	__tracebackhide__ = True # pylint: disable=unused-variable
+
+	pytest.fail(message, pytrace=False)
+
+def _format_test_context(test_context: str | None) -> str:
+	"""
+	Return the display text for an optional test context.
+	"""
+	if test_context is None:
+		return ""
+
+	return f"\n\nTest: {test_context}"
+
+def _format_text_diff(expected: str, received: str, expected_label: str, received_label: str) -> str:
+	"""
+	Return a unified diff for two text strings.
+	"""
+	diff_lines = difflib.unified_diff(
+		expected.splitlines(keepends=True),
+		received.splitlines(keepends=True),
+		fromfile=f"Expected: {expected_label}",
+		tofile=f"Received: {received_label}"
+	)
+
+	return "".join(diff_lines)
+
+def assert_text_matches(expected: str, received: str, expected_label: str, received_label: str, test_context: str | None = None) -> None:
+	"""
+	Fail with a readable expected-vs-received diff when two text strings do not match.
+	"""
+	__tracebackhide__ = True # pylint: disable=unused-variable
+
+	if expected == received:
+		return
+
+	diff = _format_text_diff(expected, received, expected_label, received_label)
+	fail_test(f"Text output mismatch.{_format_test_context(test_context)}\n\n{diff}")
+
+def fail_file_set_mismatch(mismatch_type: str, expected_files: list[Path], received_files: list[Path], test_context: str | None = None) -> None:
+	"""
+	Fail with an organized list of missing and unexpected files.
+	"""
+	__tracebackhide__ = True # pylint: disable=unused-variable
+
+	message = f"{mismatch_type} file set mismatch.{_format_test_context(test_context)}"
+
+	if expected_files:
+		message += "\n\nExpected files missing from received output:"
+		for file in sorted(expected_files):
+			message += f"\n- {file}"
+
+	if received_files:
+		message += "\n\nUnexpected files in received output:"
+		for file in sorted(received_files):
+			message += f"\n- {file}"
+
+	fail_test(message)
 
 def run(cmd: str) -> subprocess.CompletedProcess[bytes]:
 	"""
@@ -29,12 +92,12 @@ def must_run(cmd: str) -> None:
 	if result.returncode == 0:
 		if not result.stderr:
 			return
-		pytest.fail(f"stderr was not empty after command '{cmd}'\n{result.stderr.decode()}")
+		fail_test(f"Stderr was not empty after command: {cmd}\n\n{result.stderr.decode()}")
 	else:
-		fail_msg = f"error code {result.returncode} from command '{cmd}'"
+		fail_msg = f"Error code {result.returncode} from command: {cmd}"
 		if result.stderr:
-			fail_msg += "\n" + result.stderr.decode()
-		pytest.fail(fail_msg)
+			fail_msg += "\n\n" + result.stderr.decode()
+		fail_test(fail_msg)
 
 def assemble_draftbook(draftbook__dir: Path, input_dir: Path, work__dir: Path) -> Path:
 	"""
@@ -112,15 +175,14 @@ def get_files(file_dir: Path, file_filter: str = "**/*", excluded_files: list[st
 	file_list = [f.relative_to(file_dir) for f in file_dir.glob(f"{file_filter}") if f.is_file() and f.name not in excluded_files and str(f.parent).find("/.git") == -1]
 	return file_list
 
-def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update_golden: bool) -> bool:
+def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update_golden: bool, test_context: str | None = None) -> bool:
 	"""
-	Verify the results of both the build and the extract are the same as the corresponding "golden"
-	files.
+	Verify the results of both the build and the extract are the same as the corresponding "golden" files.
 
 	INPUTS
 	build_dir: the directory containing the build output
 	extract_dir: the directory containing the extracted epub files
-	golden_dir: the directory containing the “golden” files, i.e. what the test should produce
+	golden_dir: the directory containing the "golden" files, i.e. what the test should produce
 	update_golden: Whether to update golden_dir with the files in results_dir before the comparison
 	"""
 	__tracebackhide__ = True # pylint: disable=unused-variable
@@ -135,12 +197,13 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 	# Get the list of build files (only a single level).
 	build_files = []
 	build_files = get_files(build_dir, "*")
-	assert build_files
+	if not build_files:
+		fail_test(f"Build output was empty.{_format_test_context(test_context)}\n\nDirectory: {build_dir}")
 
 	# Get the list of extract files (directory tree)
-	extract_files = []
 	extract_files = get_files(extract_dir, excluded_files=excluded_extract_files)
-	assert extract_files
+	if not extract_files:
+		fail_test(f"Extract output was empty.{_format_test_context(test_context)}\n\nDirectory: {extract_dir}")
 
 	# Either update the golden files from the results…
 	if update_golden:
@@ -170,47 +233,41 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 	else:
 		# Get the list of golden build files (only a single level)
 		golden_build_files = get_files(golden_build_dir, "*")
-		assert golden_build_files
+		if not golden_build_files:
+			fail_test(f"Golden build output was empty.{_format_test_context(test_context)}\n\nDirectory: {golden_build_dir}")
 
 		# Get the list of golden extract files (directory tree)
 		golden_extract_files = get_files(golden_extract_dir, excluded_files=excluded_extract_files)
-		assert golden_extract_files
+		if not golden_extract_files:
+			fail_test(f"Golden extract output was empty.{_format_test_context(test_context)}\n\nDirectory: {golden_extract_dir}")
 
-		# get files in build or golden_build but not both
-		build_diffs = list(set(build_files).symmetric_difference(golden_build_files))
-		for file in build_diffs:
-			if file not in build_files:
-				assert "" == f"Golden build file {file} not present in test build results"
-			else:
-				assert "" == f"Extraneous build file {file} not present in golden build files"
+		missing_build_files = list(set(golden_build_files) - set(build_files))
+		extraneous_build_files = list(set(build_files) - set(golden_build_files))
+		if missing_build_files or extraneous_build_files:
+			fail_file_set_mismatch("Build", missing_build_files, extraneous_build_files, test_context)
 
 		# extract files are checked as normal, i.e. for equality
 		extract_same = list(set(extract_files).intersection(golden_extract_files))
-		extract_diffs = list(set(extract_files).symmetric_difference(golden_extract_files))
-
-		# files in both are compared for equality
 		for file in extract_same:
 			# image files aren't utf-8, and a dump isn't useful, so let filecmp handle them
 			if file.suffix in (".bmp", ".jpg", ".png", ".tif"):
 				if not filecmp.cmp(extract_dir / file, golden_extract_dir / file):
-					assert "" == f"Extract image file {file} different than golden file"
+					fail_test(f"Extract image file mismatch.{_format_test_context(test_context)}\n\nFile: {file}")
 			else:
 				with open(golden_extract_dir / file, encoding="utf-8") as gfile:
 					golden_text = gfile.read()
 				with open(extract_dir / file, encoding="utf-8") as rfile:
 					extract_text = rfile.read()
-				assert extract_text == golden_text
+				assert_text_matches(golden_text, extract_text, f"{golden_extract_dir / file}", f"{extract_dir / file}", test_context)
 
-		# files in one but not the other are errors
-		for file in extract_diffs:
-			if file not in extract_files:
-				assert "" == f"Golden extract file {file} not present in test extract results"
-			else:
-				assert "" == f"Extraneous extract file {file} not present in golden extract files"
+		missing_extract_files = list(set(golden_extract_files) - set(extract_files))
+		extraneous_extract_files = list(set(extract_files) - set(golden_extract_files))
+		if missing_extract_files or extraneous_extract_files:
+			fail_file_set_mismatch("Extract", missing_extract_files, extraneous_extract_files, test_context)
 
 	return True
 
-def files_are_golden(command: str, in_dir: Path, results_dir: Path, golden_dir: Path, update_golden: bool) -> bool:
+def files_are_golden(command: str, in_dir: Path, results_dir: Path, golden_dir: Path, update_golden: bool, test_context: str | None = None) -> bool:
 	"""
 	Verify the results of a test are the same as the "golden" files.
 
@@ -219,14 +276,13 @@ def files_are_golden(command: str, in_dir: Path, results_dir: Path, golden_dir: 
 	in_dir: the directory containing the input files of the test; this is used to build the list
 			of files that will be compared between the results and the golden files
 	results_dir: the directory containing the results of the test
-	golden_dir: the directory containing the “golden” files, i.e. what the test should produce
+	golden_dir: the directory containing the "golden" files, i.e. what the test should produce
 	update_golden: Whether to update golden_dir with the files in results_dir before the comparison
 	"""
-	#__tracebackhide__ = True # pylint: disable=unused-variable
+	__tracebackhide__ = True # pylint: disable=unused-variable
 
 	file_commands = ["create-draft", "extract-ebook", "split-file"]
 	result_list_from_results_commands = file_commands + ["build-loi", "shift-illustrations"]
-	results_files = []
 
 	if command in result_list_from_results_commands:
 		# Commands in the file_commands group do not update ebook files, so have to use the actual
@@ -241,7 +297,8 @@ def files_are_golden(command: str, in_dir: Path, results_dir: Path, golden_dir: 
 		# having to be compared that aren't impacted by the commands.
 		results_files = get_files(in_dir)
 
-	assert results_files
+	if not results_files:
+		fail_test(f"Results output was empty.{_format_test_context(test_context)}\n\nDirectory: {results_dir}")
 
 	# Either update the golden files from the results…
 	if update_golden:
@@ -262,35 +319,33 @@ def files_are_golden(command: str, in_dir: Path, results_dir: Path, golden_dir: 
 	else:
 		# Get the golden files
 		golden_files = get_files(golden_dir)
-		assert golden_files
+		if not golden_files:
+			fail_test(f"Golden output was empty.{_format_test_context(test_context)}\n\nDirectory: {golden_dir}")
 
 		# get the list of files in both results/golden, and the list in one but not the other
 		results_same = list(set(results_files).intersection(golden_files))
-		results_diffs = list(set(results_files).symmetric_difference(golden_files))
 
 		# files in both are compared for equality
 		for file in results_same:
 			# image files aren't utf-8, and a dump isn't useful, so let filecmp handle them
 			if file.suffix in (".bmp", ".jpg", ".png", ".tif"):
 				if not filecmp.cmp(results_dir / file, golden_dir / file):
-					assert "" == f"Results image file {file} different than golden file"
+					fail_test(f"Results image file mismatch.{_format_test_context(test_context)}\n\nFile: {file}")
 			else:
 				with open(golden_dir / file, encoding="utf-8") as gfile:
 					golden_text = gfile.read()
 				with open(results_dir / file, encoding="utf-8") as rfile:
 					results_text = rfile.read()
-				assert results_text == golden_text
+				assert_text_matches(golden_text, results_text, f"{golden_dir / file}", f"{results_dir / file}", test_context)
 
-		# files in one but not the other are errors
-		for file in results_diffs:
-			if file not in results_files:
-				assert "" == f"Golden file {file} not present in results"
-			else:
-				assert "" == f"Extraneous results file {file} not present in golden files"
+		missing_files = list(set(golden_files) - set(results_files))
+		extraneous_files = list(set(results_files) - set(golden_files))
+		if missing_files or extraneous_files:
+			fail_file_set_mismatch("Results", missing_files, extraneous_files, test_context)
 
 	return True
 
-def output_is_golden(results: str, golden_file: Path, update_golden: bool) ->bool:
+def output_is_golden(results: str, golden_file: Path, update_golden: bool, test_context: str | None = None) -> bool:
 	"""
 	Verify the output from a test matches the contents of the golden file.
 	"""
@@ -302,6 +357,6 @@ def output_is_golden(results: str, golden_file: Path, update_golden: bool) ->boo
 
 	# Output of stdout should match expected output
 	with open(golden_file, encoding="utf-8") as file:
-		assert file.read() == results
+		assert_text_matches(file.read(), results, f"{golden_file}", "command output", test_context)
 
 	return True

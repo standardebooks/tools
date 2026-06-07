@@ -6,7 +6,7 @@ to the lint error id, e.g. c-001, t-040, etc.
 import os
 from pathlib import Path
 import pytest
-from helpers import assemble_testbook, run, output_is_golden # pylint: disable=import-error
+from helpers import assemble_testbook, fail_test, run, output_is_golden # pylint: disable=import-error
 
 lint_subtypes = ["css", "filesystem", "metadata", "semantic", "typography", "typos", "xhtml"]
 module_directory = Path(__file__).parent / "lint"
@@ -30,19 +30,23 @@ def test_lint(testbook__directory: Path, work__directory: Path, lint_subtype: st
 	and capture output to compare with "golden" output.
 	"""
 	test_directory = module_directory / lint_subtype / test
+	test_context = f"lint/{lint_subtype}/{test}"
 	in_directory = test_directory / "in"
 	book_directory = assemble_testbook(testbook__directory, in_directory, work__directory)
 
 	result = run(f"se --plain lint {book_directory}")
 
 	# All books with errors should return a non-zero return code
-	assert result.returncode != 0
+	if result.returncode == 0:
+		fail_test(f"Test: {test_context}\n\nExpected lint to return a non-zero exit code.")
 	# Exit codes 1 and 2 indicate a problem with `se lint` itself
-	assert result.returncode not in {1, 2}
+	if result.returncode in {1, 2}:
+		fail_test(f"Test: {test_context}\n\nLint returned error code {result.returncode}, which indicates a problem with `se lint` itself.")
 
 	# Output of stderr should always be empty
 	out, err = capfd.readouterr()
-	assert err == ""
+	if err:
+		fail_test(f"Test: {test_context}\n\nStderr was not empty.\n\n{err}")
 
 	golden_file = test_directory / "golden" / f"{test}-out.txt"
-	assert output_is_golden(out, golden_file, update_golden)
+	output_is_golden(out, golden_file, update_golden, test_context)

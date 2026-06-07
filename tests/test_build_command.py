@@ -14,7 +14,7 @@ are identical.
 import os
 from pathlib import Path
 import pytest
-from helpers import assemble_testbook, must_run, build_is_golden # pylint: disable=import-error
+from helpers import assemble_testbook, fail_test, must_run, build_is_golden # pylint: disable=import-error
 
 test_command = "build"	# pylint: disable=invalid-name
 module_directory = Path(__file__).parent / test_command
@@ -40,6 +40,7 @@ def test_build_command(testbook__directory: Path, work__directory: Path, command
 	# the default command to call
 	command_to_use = command
 	test_directory = module_directory / test
+	test_context = f"build/{test}"
 	# if a file exists in test_directory with the same name as {command}-command, e.g.
 	# build-command, the first line should contain the command to use, with any arguments, e.g.
 	# `build --arg1 --arg2`
@@ -52,7 +53,7 @@ def test_build_command(testbook__directory: Path, work__directory: Path, command
 		if command in command_full:
 			command_to_use = command_full
 		else:
-			assert "" == f"{command_full} does not contain the command '{command}'"
+			fail_test(f"Test: {test_context}\n\n{command_full} does not contain the command '{command}'.")
 
 	# contains the files specific to the particular test being run
 	in_directory = test_directory / "in"
@@ -75,4 +76,4 @@ def test_build_command(testbook__directory: Path, work__directory: Path, command
 			break
 
 	# verify the build and extract files against the golden ones
-	build_is_golden(build_directory, extract_directory, golden_directory, update_golden)
+	build_is_golden(build_directory, extract_directory, golden_directory, update_golden, test_context)

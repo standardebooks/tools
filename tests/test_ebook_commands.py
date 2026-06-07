@@ -8,7 +8,7 @@ The ebook commands are:
 import os
 from pathlib import Path
 import pytest
-from helpers import assemble_testbook, must_run, files_are_golden # pylint: disable=import-error
+from helpers import assemble_testbook, fail_test, must_run, files_are_golden # pylint: disable=import-error
 
 module_directory = Path(__file__).parent / "ebook_commands"
 module_tests: list[list[str]] = []
@@ -37,6 +37,7 @@ def test_ebook_commands(testbook__directory: Path, work__directory: Path, comman
 	# the default command to call is the name of the command directory
 	command_to_use = command
 	test_directory = module_directory / command / test
+	test_context = f"ebook_commands/{command}/{test}"
 	# if a file exists in test_directory with the name of {command}-command, e.g. build-ids-command,
 	# each line should contain the command to use, with any arguments, e.g. `command --arg1 --arg2`
 	command_file = test_directory / (command + "-command")
@@ -45,10 +46,10 @@ def test_ebook_commands(testbook__directory: Path, work__directory: Path, comman
 			command_full = cfile.readline().strip()
 		# the command must be in the command file
 		if command not in command_full:
-			assert "" == f"'{command_full}' does not contain the command '{command}'"
+			fail_test(f"Test: {test_context}\n\n'{command_full}' does not contain the command '{command}'.")
 		# make sure the --stdout argument isn't part of the command file
 		elif "--stdout" in command_full:
-			assert "" == f"{command_full} cannot contain --stdout argument"
+			fail_test(f"Test: {test_context}\n\n{command_full} cannot contain --stdout argument.")
 		else:
 			command_to_use = command_full
 
@@ -62,4 +63,4 @@ def test_ebook_commands(testbook__directory: Path, work__directory: Path, comman
 	# run the command against the book directory
 	must_run(f"se {command_to_use} {book_directory}")
 	# verify the result files against the golden ones
-	files_are_golden(command, in_directory, book_directory, golden_directory, update_golden)
+	files_are_golden(command, in_directory, book_directory, golden_directory, update_golden, test_context)
