@@ -298,7 +298,7 @@ class SeHelpFormatter(argparse.HelpFormatter):
 		"""
 
 		text = Text().join(self._help_parts)
-		if "NO_COLOR" in os.environ and os.environ["NO_COLOR"] != "":
+		if ("NO_COLOR" in os.environ and os.environ["NO_COLOR"] != "") or not sys.stdout.isatty():
 			return text.plain
 
 		output = io.StringIO()

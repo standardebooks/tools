@@ -1,112 +1,112 @@
-[1;32mUSAGE[0m
+USAGE
 
-        [32mse[0m[39m [0m[39m[[0m[94m-h[0m[39m,[0m[94m--help[0m[39m][0m[39m [0m[39m[[0m[94m-p[0m[39m,[0m[94m--plain[0m[39m][0m[39m [0m[39m[[0m[94m-v[0m[39m,[0m[94m--version[0m[39m][0m[39m [0m[36m<COMMAND>[0m[39m [0m[39m[[0m[36m<ARGS>[0m[39m [0m[36m...[0m[39m][0m
+	se [-h,--help] [-p,--plain] [-v,--version] <COMMAND> [<ARGS> ...]
 
-[1;32mDESCRIPTION[0m
+DESCRIPTION
 
-        The entry point for the Standard Ebooks toolset.
+	The entry point for the Standard Ebooks toolset.
 
-[1;32mPOSITIONAL ARGUMENTS[0m
+POSITIONAL ARGUMENTS
 
-        [36m<COMMAND>[0m
+	<COMMAND>
 
-                The command to execute; one of:
+		The command to execute; one of:
 
-                • [36madd-file[0m
+		• add-file
 
-                • [36mbritish2american[0m
+		• british2american
 
-                • [36mbuild[0m
+		• build
 
-                • [36mbuild-ids[0m
+		• build-ids
 
-                • [36mbuild-images[0m
+		• build-images
 
-                • [36mbuild-loi[0m
+		• build-loi
 
-                • [36mbuild-manifest[0m
+		• build-manifest
 
-                • [36mbuild-spine[0m
+		• build-spine
 
-                • [36mbuild-svg-titles[0m
+		• build-svg-titles
 
-                • [36mbuild-title[0m
+		• build-title
 
-                • [36mbuild-toc[0m
+		• build-toc
 
-                • [36mclean[0m
+		• clean
 
-                • [36mcompare-versions[0m
+		• compare-versions
 
-                • [36mcreate-draft[0m
+		• create-draft
 
-                • [36mcss-select[0m
+		• css-select
 
-                • [36mdec2roman[0m
+		• dec2roman
 
-                • [36mextract-ebook[0m
+		• extract-ebook
 
-                • [36mfind-mismatched-dashes[0m
+		• find-mismatched-dashes
 
-                • [36mfind-mismatched-diacritics[0m
+		• find-mismatched-diacritics
 
-                • [36mfind-unusual-characters[0m
+		• find-unusual-characters
 
-                • [36mhelp[0m
+		• help
 
-                • [36mhyphenate[0m
+		• hyphenate
 
-                • [36minteractive-replace[0m
+		• interactive-replace
 
-                • [36mlint[0m
+		• lint
 
-                • [36mmake-url-safe[0m
+		• make-url-safe
 
-                • [36mmodernize-spelling[0m
+		• modernize-spelling
 
-                • [36mprepare-release[0m
+		• prepare-release
 
-                • [36mrecompose-epub[0m
+		• recompose-epub
 
-                • [36mrenumber-endnotes[0m
+		• renumber-endnotes
 
-                • [36mroman2dec[0m
+		• roman2dec
 
-                • [36msemanticate[0m
+		• semanticate
 
-                • [36mshift-endnotes[0m
+		• shift-endnotes
 
-                • [36mshift-illustrations[0m
+		• shift-illustrations
 
-                • [36msplit-file[0m
+		• split-file
 
-                • [36mtitlecase[0m
+		• titlecase
 
-                • [36mtypogrify[0m
+		• typogrify
 
-                • [36municode-names[0m
+		• unicode-names
 
-                • [36mword-count[0m
+		• word-count
 
-                • [36mxpath[0m
-
-
-        [39m[[0m[36m<ARGS>[0m[39m [0m[36m...[0m[39m][0m
-
-                Arguments for [36m<COMMAND>[0m.
-
-[1;32mOPTIONS[0m
-
-        [94m-h[0m[39m,[0m[94m--help[0m
-
-                Show this help message and exit.
+		• xpath
 
 
-        [94m-p[0m[39m,[0m[94m--plain[0m
+	[<ARGS> ...]
 
-                Print plain text output, without tables, colors, or other formatting. For tabular output but without colors, set the [36mNO_COLOR[0m environmental variable to a non-empty value instead of this option.
+		Arguments for <COMMAND>.
+
+OPTIONS
+
+	-h,--help
+
+		Show this help message and exit.
 
 
-        [94m-v[0m[39m,[0m[94m--version[0m
+	-p,--plain
 
-                Print version number and exit.
+		Print plain text output, without tables, colors, or other formatting. For tabular output but without colors, set the NO_COLOR environmental variable to a non-empty value instead of this option.
+
+
+	-v,--version
+
+		Print version number and exit.
