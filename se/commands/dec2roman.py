@@ -16,14 +16,16 @@ def dec2roman(plain_output: bool) -> int: # pylint: disable=unused-argument
 	Entry point for `se dec2roman`.
 	"""
 
+	is_stdin_pipe = not sys.stdin.isatty()
+
 	parser = argparse.ArgumentParser(description="Convert a decimal number to a Roman numeral.", prog="[command]se[/] [subcommand]dec2roman[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="Don’t end output with a newline.")
-	parser.add_argument("numbers", metavar="INTEGER", type=se.is_positive_integer, nargs="+", help="An integer.")
+	parser.add_argument("numbers", metavar="INTEGER", type=se.is_positive_integer, nargs="*" if is_stdin_pipe else "+", help="An integer.")
 	args = parser.parse_args()
 
 	lines: list[str] = []
 
-	if not sys.stdin.isatty():
+	if is_stdin_pipe:
 		for line in sys.stdin:
 			lines.append(line.rstrip("\n"))
 

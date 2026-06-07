@@ -15,14 +15,16 @@ def titlecase(plain_output: bool) -> int: # pylint: disable=unused-argument
 	Entry point for `se titlecase`.
 	"""
 
+	is_stdin_pipe = not sys.stdin.isatty()
+
 	parser = argparse.ArgumentParser(description="Convert a string to titlecase.", prog="[command]se[/] [subcommand]titlecase[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="Don’t end output with a newline.")
-	parser.add_argument("titles", metavar="STRING", nargs="+", help="A string.")
+	parser.add_argument("titles", metavar="STRING", nargs="*" if is_stdin_pipe else "+", help="A string.")
 	args = parser.parse_args()
 
 	lines: list[str] = []
 
-	if not sys.stdin.isatty():
+	if is_stdin_pipe:
 		for line in sys.stdin:
 			lines.append(line.rstrip("\r\n"))
 

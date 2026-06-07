@@ -16,14 +16,16 @@ def roman2dec(plain_output: bool) -> int:
 	Entry point for `se roman2dec`.
 	"""
 
+	is_stdin_pipe = not sys.stdin.isatty()
+
 	parser = argparse.ArgumentParser(description="Convert a Roman numeral to a decimal number.", prog="[command]se[/] [subcommand]roman2dec[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-n", "--no-newline", dest="newline", action="store_false", help="Don’t end output with a newline.")
-	parser.add_argument("numbers", metavar="NUMERAL", nargs="+", help="A Roman numeral.")
+	parser.add_argument("numbers", metavar="NUMERAL", nargs="*" if is_stdin_pipe else "+", help="A Roman numeral.")
 	args = parser.parse_args()
 
 	lines: list[str] = []
 
-	if not sys.stdin.isatty():
+	if is_stdin_pipe:
 		for line in sys.stdin:
 			lines.append(line.rstrip("\n"))
 
