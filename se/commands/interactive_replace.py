@@ -6,6 +6,7 @@ import argparse
 import curses
 from pathlib import Path
 import os
+import sys
 from math import floor
 
 import regex
@@ -258,6 +259,7 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 	# Save errors for later, because we can only print them after curses is deinitialized.
 	errors: list[str] = []
 	has_results = False
+	has_saved_cursor_position = False
 	return_code = 0
 	screen = None
 
@@ -301,6 +303,12 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 			# We only consider text after the last completed match.
 			if regex.search(fr"{args.regex}", original_xhtml, flags=regex_flags):
 				has_results = True
+				if screen is None and sys.stdout.isatty():
+					# Save the caller's cursor position before curses takes over the terminal.
+					sys.stdout.write("\033[s")
+					sys.stdout.flush()
+					has_saved_cursor_position = True
+
 				screen = _init_screen(screen)
 			else:
 				continue
@@ -468,6 +476,10 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 	finally:
 		if screen is not None:
 			curses.endwin()
+			if has_saved_cursor_position:
+				# Restore the caller's cursor position so inline status output can continue.
+				sys.stdout.write("\033[u")
+				sys.stdout.flush()
 
 	for error in errors:
 		se.print_error(error)
