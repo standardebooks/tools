@@ -112,7 +112,7 @@ def lint(plain_output: bool) -> int:
 					# Add hyperlinks around message filenames.
 					message_filename = ""
 					if message.filename:
-						message_filename = f"[link=file://{message.filename.resolve()}]{message.filename.name}[/link]"
+						message_filename = f"[path][link=file://{message.filename.resolve()}]{message.filename.name}[/link][/path]"
 
 					table_data.append([message.code, alert, message_filename, message.text])
 
