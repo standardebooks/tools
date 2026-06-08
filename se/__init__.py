@@ -51,6 +51,8 @@ RICH_THEME = Theme({
 	"class": "hot_pink",
 	"path": "cornflower_blue underline",
 	"url": "bright_blue",
+	"error": "red",
+	"warning": "orange1",
 	"text": "dark_orange",
 	"css": "bright_blue",
 	"email": "magenta",
