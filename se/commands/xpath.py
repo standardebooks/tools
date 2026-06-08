@@ -27,6 +27,7 @@ def xpath(plain_output: bool) -> int:
 
 	return_code = 0
 	has_results = False
+	has_previous_file = False
 
 	for filepath in se.get_target_filenames(args.targets, ".xhtml"):
 		try:
@@ -42,6 +43,9 @@ def xpath(plain_output: bool) -> int:
 				if args.quiet:
 					# Quit early without printing anything.
 					break
+
+				if has_previous_file:
+					console.print("")
 
 				console.print(se.prep_output(f"[path][link=file://{filepath}]{filepath}[/][/]", plain_output))
 				if not args.only_filenames:
@@ -75,9 +79,11 @@ def xpath(plain_output: bool) -> int:
 									node_string = str(node).replace('[', '\\[')
 									output = f"[path][link=file://{filepath.resolve()}#L{parent.sourceline}]Line {parent.sourceline}[/][/]: {node_string}"
 
-						output = "".join([f"\t{line}\n" for line in output.splitlines()])
+						output = "".join([f"\n\t{line}" for line in output.splitlines()])
 
 						console.print(se.prep_output(output, plain_output))
+
+				has_previous_file = True
 
 		except etree.XPathEvalError:
 			se.print_error("Invalid xpath expression.", plain_output=plain_output)

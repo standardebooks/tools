@@ -25,6 +25,7 @@ def css_select(plain_output: bool) -> int:
 
 	return_code = 0
 	has_results = False
+	has_previous_file = False
 
 	for filepath in se.get_target_filenames(args.targets, ".xhtml"):
 		try:
@@ -40,6 +41,9 @@ def css_select(plain_output: bool) -> int:
 					# Quit early without printing anything.
 					break
 
+				if has_previous_file:
+					console.print("")
+
 				console.print(se.prep_output(f"[path][link=file://{filepath}]{filepath}[/][/]", plain_output))
 				if not args.only_filenames:
 					for node in nodes:
@@ -49,9 +53,11 @@ def css_select(plain_output: bool) -> int:
 							node_string = node.to_string().replace('[', '\\[')
 							output = f"[path][link=file://{filepath.resolve()}#L{node.sourceline}]Line {node.sourceline}[/][/]: {node_string}"
 
-						output = "".join(f"\t{line}\n" for line in output.splitlines())
+						output = "".join(f"\n\t{line}" for line in output.splitlines())
 
 						console.print(se.prep_output(output, plain_output))
+
+				has_previous_file = True
 
 		except se.InvalidCssException as ex:
 			se.print_error(ex)
