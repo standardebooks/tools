@@ -4,10 +4,11 @@ This module implements Standard Ebooks command-line help formatting.
 
 import argparse
 import io
-import re
 import sys
 from collections.abc import Iterable
 from typing import NoReturn
+
+import regex
 
 from rich.console import Console
 from rich.style import Style
@@ -69,7 +70,9 @@ class SeHelpFormatter(argparse.HelpFormatter):
 		Format parameter names in an `argparse` error message.
 		"""
 
-		formatted_message = re.sub(r"\b([A-Z][A-Z0-9_-]*)\b", r"[parameter]<\1>[/]", message)
+		formatted_message = regex.sub(r"\b([A-Z][A-Z0-9_-]*)\b", r"[parameter]<\1>[/]", message)
+		# Format flags when a mutually-exclusive flag is used, e.g. `Argument -p/--pg-id: not allowed with argument -f/--fp-id.`.
+		formatted_message = regex.sub(r"([\s\/])(-[a-z0-9]|--[a-z0-9][a-z0-9_-]*[a-z0-9])\b", r"\1[flag]\2[/]", formatted_message, flags=regex.IGNORECASE)
 		formatted_message = formatted_message[0].upper() + formatted_message[1:]
 
 		if formatted_message[-1] not in ".!?":
@@ -193,10 +196,10 @@ class SeHelpFormatter(argparse.HelpFormatter):
 		if help_text == "show this help message and exit":
 			help_text = "Show this help message and exit."
 
-		def replace_help_placeholder(match: re.Match[str]) -> str:
+		def replace_help_placeholder(match: regex.Match[str]) -> str:
 			return str(getattr(action, match[1]))
 
-		return re.sub(r"%\(([^)]+)\)s", replace_help_placeholder, help_text)
+		return regex.sub(r"%\(([^)]+)\)s", replace_help_placeholder, help_text)
 
 	def add_usage(self, usage: str | None, actions: Iterable[argparse.Action], groups: Iterable[object], prefix: str | None = None) -> None:
 		"""
