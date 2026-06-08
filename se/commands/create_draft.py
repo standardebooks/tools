@@ -936,7 +936,7 @@ def create_draft(plain_output: bool) -> int:
 	parser.add_argument("-a", "--author", dest="author", required=True, nargs="+", help="An author of the ebook.")
 	parser.add_argument("-e", "--email", dest="email", help="Use this email address as the main committer for the local Git repository.")
 	source_group.add_argument("-f", "--fp-id", dest="fp_id", type=se.is_positive_integer, help="The Faded Page ID number of the ebook to download.")
-	source_group.add_argument("-o", "--offline", dest="offline", action="store_true", help="Create draft without network access.")
+	source_group.add_argument("-o", "--offline", dest="offline", action="store_true", help="Create a draft without network access.")
 	source_group.add_argument("-p", "--pg-id", dest="pg_id", type=se.is_positive_integer, help="The Project Gutenberg ID number of the ebook to download.")
 	parser.add_argument("-r", "--translator", dest="translator", nargs="+", help="A translator of the ebook.")
 	parser.add_argument("-t", "--title", dest="title", required=True, help="The title of the ebook.")

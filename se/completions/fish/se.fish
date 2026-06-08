@@ -98,7 +98,7 @@ complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s a -l author -
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s e -l email -d "Use this email address as the main committer for the local Git repository."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft; and not __fish_se_seen_argument -f --fp-id -o --offline -p --pg-id" -s f -l fp-id -d "The Faded Page ID number of the ebook to download."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s h -l help -x -d "Show this help message and exit."
-complete -c se -A -n "__fish_seen_subcommand_from create-draft; and not __fish_se_seen_argument -f --fp-id -o --offline -p --pg-id" -s o -l offline -x -d "Create draft without network access."
+complete -c se -A -n "__fish_seen_subcommand_from create-draft; and not __fish_se_seen_argument -f --fp-id -o --offline -p --pg-id" -s o -l offline -x -d "Create a draft without network access."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft; and not __fish_se_seen_argument -f --fp-id -o --offline -p --pg-id" -s p -l pg-id -d "The Project Gutenberg ID number of the ebook to download."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s r -l translator -d "A translator of the ebook."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s t -l title -d "The title of the ebook."

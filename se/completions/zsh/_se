@@ -170,7 +170,7 @@ case $state in
 				if ! _se_has_option -f --fp-id -o --offline -p --pg-id; then
 					source_options=(
 						{-f,--fp-id}'[The Faded Page ID number of the ebook to download.]:id'
-						{-o,--offline}'[Create draft without network access.]'
+						{-o,--offline}'[Create a draft without network access.]'
 						{-p,--pg-id}'[The Project Gutenberg ID number of the ebook to download.]:id'
 					)
 				fi
