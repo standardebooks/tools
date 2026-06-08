@@ -45,6 +45,24 @@ _se_option_takes_argument(){
 	return 1
 }
 
+_se_has_option(){
+	local option=""
+	local word=""
+	local index=0
+
+	for ((index = 1; index < COMP_CWORD; index++)); do
+		word="${COMP_WORDS[index]}"
+
+		for option in "$@"; do
+			if [[ ${word} == "${option}" || ${word} == "${option}="* ]]; then
+				return 0
+			fi
+		done
+	done
+
+	return 1
+}
+
 _se_count_positionals(){
 	local command_name="$1"
 	local count=0
@@ -83,7 +101,10 @@ _se(){
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local prev="${COMP_WORDS[COMP_CWORD-1]}"
 	local positional_count=0
-	local commands="--color --help --plain --version add-file british2american build build-ids build-images build-loi build-manifest build-spine build-svg-titles build-title build-toc clean compare-versions create-draft css-select dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names word-count xpath"
+	local commands="--help --version add-file british2american build build-ids build-images build-loi build-manifest build-spine build-svg-titles build-title build-toc clean compare-versions create-draft css-select dec2roman extract-ebook find-mismatched-dashes find-mismatched-diacritics find-unusual-characters help hyphenate interactive-replace lint make-url-safe modernize-spelling prepare-release recompose-epub renumber-endnotes roman2dec semanticate shift-endnotes shift-illustrations split-file titlecase typogrify unicode-names word-count xpath"
+	if ! _se_has_option "--color" "-p" "--plain"; then
+		commands="--color --plain ${commands}"
+	fi
 	if [[ $COMP_CWORD -gt 1 ]]; then
 		positional_count="$(_se_count_positionals "${COMP_WORDS[1]}")"
 
@@ -151,10 +172,18 @@ _se(){
 				_se_compgen_dirs ".*" "${cur}"
 				;;
 			create-draft)
-				_se_compgen_words "-a --author= -e --email= -f --fp-id= -h --help -o --offline -p --pg-id= -r --translator= -t --title= -v --verbose -w --white-label" "${cur}"
+				local options="-a --author= -e --email= -h --help -r --translator= -t --title= -v --verbose -w --white-label"
+				if ! _se_has_option "-f" "--fp-id" "-o" "--offline" "-p" "--pg-id"; then
+					options="${options} -f --fp-id= -o --offline -p --pg-id="
+				fi
+				_se_compgen_words "${options}" "${cur}"
 				;;
 			css-select)
-				_se_compgen_words "-f --only-filenames -h --help -q --quiet" "${cur}"
+				local options="-h --help"
+				if ! _se_has_option "-f" "--only-filenames" "-q" "--quiet"; then
+					options="${options} -f --only-filenames -q --quiet"
+				fi
+				_se_compgen_words "${options}" "${cur}"
 				if [[ ${positional_count} -ge 1 ]]; then
 					_se_compgen_dirs ".*" "${cur}"
 					_se_compgen_files "!*.xhtml" "${cur}"
@@ -204,7 +233,11 @@ _se(){
 				fi
 				;;
 			lint)
-				_se_compgen_words "-a --allow= -h --help -s --skip-lint-ignore -v --verbose" "${cur}"
+				local options="-h --help -v --verbose"
+				if ! _se_has_option "-a" "--allow" "-s" "--skip-lint-ignore"; then
+					options="${options} -a --allow= -s --skip-lint-ignore"
+				fi
+				_se_compgen_words "${options}" "${cur}"
 				_se_compgen_dirs ".*" "${cur}"
 				;;
 			make-url-safe)
@@ -277,7 +310,11 @@ _se(){
 				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 			xpath)
-				_se_compgen_words "-f --only-filenames -h --help -q --quiet" "${cur}"
+				local options="-h --help"
+				if ! _se_has_option "-f" "--only-filenames" "-q" "--quiet"; then
+					options="${options} -f --only-filenames -q --quiet"
+				fi
+				_se_compgen_words "${options}" "${cur}"
 				if [[ ${positional_count} -ge 1 ]]; then
 					_se_compgen_dirs ".*" "${cur}"
 					_se_compgen_files "!*.xhtml" "${cur}"

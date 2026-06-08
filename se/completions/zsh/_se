@@ -154,10 +154,10 @@ case $state in
 				_arguments -s \
 					{-a,--author}'[An author of the ebook.]:name' \
 					{-e,--email}'[Use this email address as the main committer for the local Git repository.]:email' \
-					{-f,--fp-id}'[The Faded Page ID number of the ebook to download.]:id' \
+					'(-f --fp-id -o --offline -p --pg-id)'{-f,--fp-id}'[The Faded Page ID number of the ebook to download.]:id' \
 					{-h,--help}'[Show this help message and exit.]' \
-					{-o,--offline}'[Create draft without network access.]' \
-					{-p,--pg-id}'[The Project Gutenberg ID number of the ebook to download.]:id' \
+					'(-f --fp-id -o --offline -p --pg-id)'{-o,--offline}'[Create draft without network access.]' \
+					'(-f --fp-id -o --offline -p --pg-id)'{-p,--pg-id}'[The Project Gutenberg ID number of the ebook to download.]:id' \
 					{-r,--translator}'[A translator of the ebook.]:name' \
 					{-t,--title}'[The title of the ebook.]:title' \
 					{-v,--verbose}'[Increase output verbosity.]' \
@@ -165,9 +165,9 @@ case $state in
 				;;
 			css-select)
 				_arguments -s \
-					{-f,--only-filenames}'[Only output filenames of files that contain matches, not the matches themselves.]' \
+					'(-f --only-filenames -q --quiet)'{-f,--only-filenames}'[Only output filenames of files that contain matches, not the matches themselves.]' \
 					{-h,--help}'[Show this help message and exit.]' \
-					{-q,--quiet}'[Don’t output anything, only a return code if matches exist in any files.]' \
+					'(-f --only-filenames -q --quiet)'{-q,--quiet}'[Don’t output anything, only a return code if matches exist in any files.]' \
 					'1:A CSS selector.:' \
 					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
@@ -222,9 +222,9 @@ case $state in
 				;;
 			lint)
 				_arguments -s \
-					{-a,--allow}'[If an se-lint-ignore.xml file is present, allow these specific codes to be raised by lint.]:value' \
+					'(-a --allow -s --skip-lint-ignore)'{-a,--allow}'[If an se-lint-ignore.xml file is present, allow these specific codes to be raised by lint.]:value' \
 					{-h,--help}'[Show this help message and exit.]' \
-					{-s,--skip-lint-ignore}'[Ignore all rules in the se-lint-ignore.xml file.]' \
+					'(-a --allow -s --skip-lint-ignore)'{-s,--skip-lint-ignore}'[Ignore all rules in the se-lint-ignore.xml file.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \
 					'*:A Standard Ebooks source directory.:_directories'
 				;;
@@ -331,9 +331,9 @@ case $state in
 				;;
 			xpath)
 				_arguments -s \
-					{-f,--only-filenames}'[Only output filenames of files that contain matches, not the matches themselves.]' \
+					'(-f --only-filenames -q --quiet)'{-f,--only-filenames}'[Only output filenames of files that contain matches, not the matches themselves.]' \
 					{-h,--help}'[Show this help message and exit.]' \
-					{-q,--quiet}'[Don’t output anything, only a return code if matches exist in any files.]' \
+					'(-f --only-filenames -q --quiet)'{-q,--quiet}'[Don’t output anything, only a return code if matches exist in any files.]' \
 					'1:An xpath expression.:' \
 					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;

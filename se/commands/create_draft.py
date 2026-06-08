@@ -932,11 +932,12 @@ def create_draft(plain_output: bool) -> int:
 	"""
 
 	parser = argparse.ArgumentParser(description="Create a skeleton of a new Standard Ebook in the current directory.", prog="[command]se[/] [subcommand]create-draft[/]", formatter_class=SeHelpFormatter)
+	source_group = parser.add_mutually_exclusive_group()
 	parser.add_argument("-a", "--author", dest="author", required=True, nargs="+", help="An author of the ebook.")
 	parser.add_argument("-e", "--email", dest="email", help="Use this email address as the main committer for the local Git repository.")
-	parser.add_argument("-f", "--fp-id", dest="fp_id", type=se.is_positive_integer, help="The Faded Page ID number of the ebook to download.")
-	parser.add_argument("-o", "--offline", dest="offline", action="store_true", help="Create draft without network access.")
-	parser.add_argument("-p", "--pg-id", dest="pg_id", type=se.is_positive_integer, help="The Project Gutenberg ID number of the ebook to download.")
+	source_group.add_argument("-f", "--fp-id", dest="fp_id", type=se.is_positive_integer, help="The Faded Page ID number of the ebook to download.")
+	source_group.add_argument("-o", "--offline", dest="offline", action="store_true", help="Create draft without network access.")
+	source_group.add_argument("-p", "--pg-id", dest="pg_id", type=se.is_positive_integer, help="The Project Gutenberg ID number of the ebook to download.")
 	parser.add_argument("-r", "--translator", dest="translator", nargs="+", help="A translator of the ebook.")
 	parser.add_argument("-t", "--title", dest="title", required=True, help="The title of the ebook.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
@@ -949,14 +950,6 @@ def create_draft(plain_output: bool) -> int:
 			console.print(se.prep_output("Titles should not include a subtitle, as subtitles are separate metadata elements in [path]content.opf[/]. Are you sure you want to continue? \\[y/N]", plain_output))
 			if input().lower() not in {"yes", "y"}:
 				return se.InvalidInputException.code
-
-		# `--pg-id` and `--fp-id` are mutually exclusive.
-		if args.pg_id and args.fp_id:
-			console.print(se.prep_output("Can’t specify [flag]--pg-id[/] and [flag]--fp-id[/] at the same time.", plain_output))
-			return se.InvalidArgumentsException.code
-
-		if (args.pg_id or args.fp_id) and args.offline:
-			raise se.RemoteCommandErrorException("Can’t specify [flag]--pg-id[/] or [flag]--fp-id[/], and also [flag]--offline[/].")
 
 		_create_draft(args, plain_output)
 

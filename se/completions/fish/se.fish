@@ -8,8 +8,8 @@ function __fish_se_no_subcommand --description "Test if se has yet to be given t
 end
 
 complete -c se -n "__fish_se_no_subcommand" -s h -l help -x -d "Show this help message and exit."
-complete -c se -n "__fish_se_no_subcommand" -l color -x -d "Print output in color, even when not connected to an interactive terminal, but not if the NO_COLOR environmental variable is set."
-complete -c se -n "__fish_se_no_subcommand" -s p -l plain -x -d "Print plain text output, without tables, colors, or other formatting. For tabular output but without colors, set the NO_COLOR environmental variable to a non-empty value instead of this option."
+complete -c se -n "__fish_se_no_subcommand; and not __fish_seen_argument -l color -s p -l plain" -l color -x -d "Print output in color, even when not connected to an interactive terminal, but not if the NO_COLOR environmental variable is set."
+complete -c se -n "__fish_se_no_subcommand; and not __fish_seen_argument -l color -s p -l plain" -s p -l plain -x -d "Print plain text output, without tables, colors, or other formatting. For tabular output but without colors, set the NO_COLOR environmental variable to a non-empty value instead of this option."
 complete -c se -n "__fish_se_no_subcommand" -s v -l version -x -d "Print version number and exit."
 
 complete -c se -n "__fish_se_no_subcommand" -a add-file -d "Add a Standard Ebooks template file and any accompanying CSS."
@@ -80,19 +80,19 @@ complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s v -l verb
 complete -c se -n "__fish_se_no_subcommand" -a create-draft -d "Create a skeleton of a new Standard Ebook in the current directory."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s a -l author -d "An author of the ebook."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s e -l email -d "Use this email address as the main committer for the local Git repository."
-complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s f -l fp-id -d "The Faded Page ID number of the ebook to download."
+complete -c se -A -n "__fish_seen_subcommand_from create-draft; and not __fish_seen_argument -s f -l fp-id -s o -l offline -s p -l pg-id" -s f -l fp-id -d "The Faded Page ID number of the ebook to download."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s h -l help -x -d "Show this help message and exit."
-complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s o -l offline -x -d "Create draft without network access."
-complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s p -l pg-id -d "The Project Gutenberg ID number of the ebook to download."
+complete -c se -A -n "__fish_seen_subcommand_from create-draft; and not __fish_seen_argument -s f -l fp-id -s o -l offline -s p -l pg-id" -s o -l offline -x -d "Create draft without network access."
+complete -c se -A -n "__fish_seen_subcommand_from create-draft; and not __fish_seen_argument -s f -l fp-id -s o -l offline -s p -l pg-id" -s p -l pg-id -d "The Project Gutenberg ID number of the ebook to download."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s r -l translator -d "A translator of the ebook."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s t -l title -d "The title of the ebook."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s v -l verbose -x -d "Increase output verbosity."
 complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s w -l white-label -x -d "Create a generic epub skeleton without Standard Ebooks branding."
 
 complete -c se -n "__fish_se_no_subcommand" -a css-select -d "Print the results of a CSS selector evaluated against a set of XHTML files."
-complete -c se -A -n "__fish_seen_subcommand_from css-select" -s f -l only-filenames -x -d "Only output filenames of files that contain matches, not the matches themselves."
+complete -c se -A -n "__fish_seen_subcommand_from css-select; and not __fish_seen_argument -s f -l only-filenames -s q -l quiet" -s f -l only-filenames -x -d "Only output filenames of files that contain matches, not the matches themselves."
 complete -c se -A -n "__fish_seen_subcommand_from css-select" -s h -l help -x -d "Show this help message and exit."
-complete -c se -A -n "__fish_seen_subcommand_from css-select" -s q -l quiet -x -d "Don’t output anything, only a return code if matches exist in any files."
+complete -c se -A -n "__fish_seen_subcommand_from css-select; and not __fish_seen_argument -s f -l only-filenames -s q -l quiet" -s q -l quiet -x -d "Don’t output anything, only a return code if matches exist in any files."
 
 complete -c se -n "__fish_se_no_subcommand" -a dec2roman -d "Convert a decimal number to a Roman numeral."
 complete -c se -A -n "__fish_seen_subcommand_from dec2roman" -s h -l help -x -d "Show this help message and exit."
@@ -128,9 +128,9 @@ complete -c se -A -n "__fish_seen_subcommand_from interactive-replace" -s m -l m
 complete -c se -A -n "__fish_seen_subcommand_from interactive-replace" -s v -l vim -x -d "Use basic Vim-like navigation shortcuts."
 
 complete -c se -n "__fish_se_no_subcommand" -a lint -d "Check for various Standard Ebooks style errors."
-complete -c se -A -n "__fish_seen_subcommand_from lint" -s a -l allow -d "If an se-lint-ignore.xml file is present, allow these specific codes to be raised by lint."
+complete -c se -A -n "__fish_seen_subcommand_from lint; and not __fish_seen_argument -s a -l allow -s s -l skip-lint-ignore" -s a -l allow -d "If an se-lint-ignore.xml file is present, allow these specific codes to be raised by lint."
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s h -l help -x -d "Show this help message and exit."
-complete -c se -A -n "__fish_seen_subcommand_from lint" -s s -l skip-lint-ignore -x -d "Ignore all rules in the se-lint-ignore.xml file."
+complete -c se -A -n "__fish_seen_subcommand_from lint; and not __fish_seen_argument -s a -l allow -s s -l skip-lint-ignore" -s s -l skip-lint-ignore -x -d "Ignore all rules in the se-lint-ignore.xml file."
 complete -c se -A -n "__fish_seen_subcommand_from lint" -s v -l verbose -x -d "Increase output verbosity."
 
 complete -c se -n "__fish_se_no_subcommand" -a make-url-safe -d "Make a string URL-safe."
@@ -205,6 +205,6 @@ complete -c se -A -n "__fish_seen_subcommand_from word-count" -s p -l ignore-pg-
 complete -c se -A -n "__fish_seen_subcommand_from word-count" -s x -l exclude-se-files -x -d "Exclude some non-bodymatter files common to Standard Ebooks ebooks, like the ToC and colophon."
 
 complete -c se -n "__fish_se_no_subcommand" -a xpath -d "Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed."
-complete -c se -A -n "__fish_seen_subcommand_from xpath" -s f -l only-filenames -x -d "Only output filenames of files that contain matches, not the matches themselves."
+complete -c se -A -n "__fish_seen_subcommand_from xpath; and not __fish_seen_argument -s f -l only-filenames -s q -l quiet" -s f -l only-filenames -x -d "Only output filenames of files that contain matches, not the matches themselves."
 complete -c se -A -n "__fish_seen_subcommand_from xpath" -s h -l help -x -d "Show this help message and exit."
-complete -c se -A -n "__fish_seen_subcommand_from xpath" -s q -l quiet -x -d "Don’t output anything, only a return code if matches exist in any files."
+complete -c se -A -n "__fish_seen_subcommand_from xpath; and not __fish_seen_argument -s f -l only-filenames -s q -l quiet" -s q -l quiet -x -d "Don’t output anything, only a return code if matches exist in any files."
