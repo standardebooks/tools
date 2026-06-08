@@ -1,7 +1,22 @@
 #compdef se
-# shellcheck shell=bash disable=SC1087,SC1112,SC2168
+# shellcheck shell=bash disable=SC1087,SC1112,SC2154,SC2168
 
 local state line ret
+
+# Check if we've already seen a command line option with a value demarcated by a space of an equals.
+_se_has_option(){
+	local option word
+
+	for word in "${words[@]}"; do
+		for option in "$@"; do
+			if [[ ${word} == "${option}" || ${word} == "${option}="* ]]; then
+				return 0
+			fi
+		done
+	done
+
+	return 1
+}
 
 _arguments -C \
 	'(- :)'{-h,--help}'[Show this help message and exit.]' \
@@ -151,23 +166,37 @@ case $state in
 					'*:A directory containing XHTML files.:_directories'
 				;;
 			create-draft)
+				local source_options=()
+				if ! _se_has_option -f --fp-id -o --offline -p --pg-id; then
+					source_options=(
+						{-f,--fp-id}'[The Faded Page ID number of the ebook to download.]:id'
+						{-o,--offline}'[Create draft without network access.]'
+						{-p,--pg-id}'[The Project Gutenberg ID number of the ebook to download.]:id'
+					)
+				fi
+
 				_arguments -s \
 					{-a,--author}'[An author of the ebook.]:name' \
 					{-e,--email}'[Use this email address as the main committer for the local Git repository.]:email' \
-					'(-f --fp-id -o --offline -p --pg-id)'{-f,--fp-id}'[The Faded Page ID number of the ebook to download.]:id' \
 					{-h,--help}'[Show this help message and exit.]' \
-					'(-f --fp-id -o --offline -p --pg-id)'{-o,--offline}'[Create draft without network access.]' \
-					'(-f --fp-id -o --offline -p --pg-id)'{-p,--pg-id}'[The Project Gutenberg ID number of the ebook to download.]:id' \
+					"${source_options[@]}" \
 					{-r,--translator}'[A translator of the ebook.]:name' \
 					{-t,--title}'[The title of the ebook.]:title' \
 					{-v,--verbose}'[Increase output verbosity.]' \
 					{-w,--white-label}'[Create a generic epub skeleton without Standard Ebooks branding.]'
 				;;
 			css-select)
+				local output_options=()
+				if ! _se_has_option -f --only-filenames -q --quiet; then
+					output_options=(
+						{-f,--only-filenames}'[Only output filenames of files that contain matches, not the matches themselves.]'
+						{-q,--quiet}'[Don’t output anything, only a return code if matches exist in any files.]'
+					)
+				fi
+
 				_arguments -s \
-					'(-f --only-filenames -q --quiet)'{-f,--only-filenames}'[Only output filenames of files that contain matches, not the matches themselves.]' \
 					{-h,--help}'[Show this help message and exit.]' \
-					'(-f --only-filenames -q --quiet)'{-q,--quiet}'[Don’t output anything, only a return code if matches exist in any files.]' \
+					"${output_options[@]}" \
 					'1:A CSS selector.:' \
 					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
@@ -221,10 +250,17 @@ case $state in
 					'*:A file or directory on which to perform the search and replace.:_files'
 				;;
 			lint)
+				local lint_ignore_options=()
+				if ! _se_has_option -a --allow -s --skip-lint-ignore; then
+					lint_ignore_options=(
+						{-a,--allow}'[If an se-lint-ignore.xml file is present, allow these specific codes to be raised by lint.]:value'
+						{-s,--skip-lint-ignore}'[Ignore all rules in the se-lint-ignore.xml file.]'
+					)
+				fi
+
 				_arguments -s \
-					'(-a --allow -s --skip-lint-ignore)'{-a,--allow}'[If an se-lint-ignore.xml file is present, allow these specific codes to be raised by lint.]:value' \
 					{-h,--help}'[Show this help message and exit.]' \
-					'(-a --allow -s --skip-lint-ignore)'{-s,--skip-lint-ignore}'[Ignore all rules in the se-lint-ignore.xml file.]' \
+					"${lint_ignore_options[@]}" \
 					{-v,--verbose}'[Increase output verbosity.]' \
 					'*:A Standard Ebooks source directory.:_directories'
 				;;
@@ -330,10 +366,17 @@ case $state in
 					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.\(htm\|html\|xhtml\)'
 				;;
 			xpath)
+				local output_options=()
+				if ! _se_has_option -f --only-filenames -q --quiet; then
+					output_options=(
+						{-f,--only-filenames}'[Only output filenames of files that contain matches, not the matches themselves.]'
+						{-q,--quiet}'[Don’t output anything, only a return code if matches exist in any files.]'
+					)
+				fi
+
 				_arguments -s \
-					'(-f --only-filenames -q --quiet)'{-f,--only-filenames}'[Only output filenames of files that contain matches, not the matches themselves.]' \
 					{-h,--help}'[Show this help message and exit.]' \
-					'(-f --only-filenames -q --quiet)'{-q,--quiet}'[Don’t output anything, only a return code if matches exist in any files.]' \
+					"${output_options[@]}" \
 					'1:An xpath expression.:' \
 					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
