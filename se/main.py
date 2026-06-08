@@ -7,6 +7,7 @@ import importlib
 import pkgutil
 import sys
 
+import se
 import se.commands
 from se.se_help_formatter import SeHelpFormatter
 
@@ -46,7 +47,9 @@ def main() -> None:
 			commands_string = f"{commands_string}\n\n• [parameter]{command}[/]"
 
 		parser = argparse.ArgumentParser(description="The entry point for the Standard Ebooks toolset.", formatter_class=SeHelpFormatter)
-		parser.add_argument("-p", "--plain", dest="plain_output", action="store_true", help="Print plain text output, without tables, colors, or other formatting. For tabular output but without colors, set the [parameter]NO_COLOR[/] environmental variable to a non-empty value instead of this option.")
+		output_group = parser.add_mutually_exclusive_group()
+		output_group.add_argument("--color", dest="color_output", action="store_true", help="Print output in color, even when not connected to an interactive terminal, but not if the [parameter]NO_COLOR[/] environmental variable is set.")
+		output_group.add_argument("-p", "--plain", dest="plain_output", action="store_true", help="Print plain text output, without tables, colors, or other formatting. For tabular output but without colors, set the [parameter]NO_COLOR[/] environmental variable to a non-empty value instead of this option.")
 		parser.add_argument("-v", "--version", action="store_true", help="Print version number and exit.")
 		parser.add_argument("command", metavar="COMMAND", choices=commands, help="The command to execute; one of: " + commands_string)
 		parser.add_argument("arguments", metavar="ARGS", nargs="*", help="Arguments for [parameter]<COMMAND>[/].")
@@ -66,6 +69,7 @@ def main() -> None:
 				subcommand_args.append(arg)
 
 		args = parser.parse_args(main_args)
+		se.COLOR_OUTPUT = args.color_output
 
 		# Change `argv` to our subcommand values, so that argument parsing by child functions works as expected.
 		sys.argv = subcommand_args

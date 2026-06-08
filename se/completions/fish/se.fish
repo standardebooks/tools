@@ -8,6 +8,7 @@ function __fish_se_no_subcommand --description "Test if se has yet to be given t
 end
 
 complete -c se -n "__fish_se_no_subcommand" -s h -l help -x -d "Show this help message and exit."
+complete -c se -n "__fish_se_no_subcommand" -l color -x -d "Print output in color, even when not connected to an interactive terminal, but not if the NO_COLOR environmental variable is set."
 complete -c se -n "__fish_se_no_subcommand" -s p -l plain -x -d "Print plain text output, without tables, colors, or other formatting. For tabular output but without colors, set the NO_COLOR environmental variable to a non-empty value instead of this option."
 complete -c se -n "__fish_se_no_subcommand" -s v -l version -x -d "Print version number and exit."
 

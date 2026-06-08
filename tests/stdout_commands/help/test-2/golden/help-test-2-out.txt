@@ -1,6 +1,6 @@
 USAGE
 
-	se [-h,--help] [-p,--plain] [-v,--version] <COMMAND> [<ARGS> ...]
+	se [-h,--help] [--color] [-p,--plain] [-v,--version] <COMMAND> [<ARGS> ...]
 
 DESCRIPTION
 
@@ -100,6 +100,11 @@ OPTIONS
 	-h,--help
 
 		Show this help message and exit.
+
+
+	--color
+
+		Print output in color, even when not connected to an interactive terminal, but not if the NO_COLOR environmental variable is set.
 
 
 	-p,--plain

@@ -4,7 +4,6 @@ This module implements Standard Ebooks command-line help formatting.
 
 import argparse
 import io
-import os
 import re
 import sys
 from collections.abc import Iterable
@@ -298,7 +297,7 @@ class SeHelpFormatter(argparse.HelpFormatter):
 		"""
 
 		text = Text().join(self._help_parts)
-		if ("NO_COLOR" in os.environ and os.environ["NO_COLOR"] != "") or not sys.stdout.isatty():
+		if not se.should_output_color():
 			return text.plain
 
 		output = io.StringIO()

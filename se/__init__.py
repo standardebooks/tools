@@ -7,7 +7,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TextIO
 
 from rich.console import Console
 from rich.theme import Theme
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 
 VERSION = "3.0.5"
 MESSAGE_INDENT = "    "
+COLOR_OUTPUT = False
 UNICODE_BOM = "\ufeff"
 NO_BREAK_SPACE = "\u00a0"
 WORD_JOINER = "\u2060"
@@ -171,17 +172,42 @@ def init_console() -> Console:
 	Initialize a `rich.Console` object.
 	"""
 
-	return Console(highlight=False, theme=se.RICH_THEME, soft_wrap=True, force_terminal=se.is_called_from_parallel())
+	return Console(highlight=False, theme=se.RICH_THEME, soft_wrap=True, force_terminal=se.should_output_color())
+
+def is_no_color_set() -> bool:
+	"""
+	Return whether color output has been disabled by the NO_COLOR environmental variable.
+	"""
+
+	return os.environ.get("NO_COLOR", "") != ""
+
+def should_output_color(output_file: TextIO = sys.stdout) -> bool:
+	"""
+	Return whether output should include color markup.
+	"""
+
+	# If we set the `NO_COLOR` environmental variable, then don't output color.
+	if se.is_no_color_set():
+		return False
+
+	# If we invoked this with `se --color`, then output color.
+	if se.COLOR_OUTPUT and not se.is_no_color_set():
+		return True
+
+	# Otherwise, if we're an interactive session, or called from `parallel`, output color.
+	return output_file.isatty() or bool(se.is_called_from_parallel(return_none=False))
 
 def prep_output(message: str, plain_output: bool = False) -> str:
 	"""
 	Return a message formatted for the chosen output style, i.e., color or plain.
 	"""
 
-	if plain_output or not sys.stdout.isatty():
-		# Replace color markup with `
-		message = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|link|command|branch|email|flag|header|parameter|user)(?:=[^\]]*?)*\]", "`", message)
-		message = regex.sub(r"`+", "`", message)
+	if plain_output or not se.should_output_color():
+		replacement = "" if se.COLOR_OUTPUT else "`"
+		# Replace color markup with the configured plain-text marker.
+		message = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|link|command|branch|email|flag|header|parameter|user)(?:=[^\]]*?)*\]", replacement, message)
+		if replacement:
+			message = regex.sub(r"`+", "`", message)
 
 	return message
 
@@ -220,10 +246,10 @@ def print_error(message: SeException | str, verbose: bool = False, is_warning: b
 	if verbose:
 		message = str(message).replace("\n", f"\n{MESSAGE_INDENT}")
 
-	if not sys.stdout.isatty():
+	if not se.should_output_color(output_file):
 		plain_output = True
 
-	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=is_called_from_parallel(), soft_wrap=True) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
+	console = Console(file=output_file, highlight=False, theme=RICH_THEME, force_terminal=se.should_output_color(output_file), soft_wrap=True) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
 
 	if plain_output:
 		# Replace color markup with ```.

@@ -5,7 +5,8 @@ local state line ret
 
 _arguments -C \
 	'(- :)'{-h,--help}'[Show this help message and exit.]' \
-	'(-p --plain)'{-p,--plain}'[Print plain text output, without tables, colors, or other formatting. For tabular output but without colors, set the NO_COLOR environmental variable to a non-empty value instead of this option.]' \
+	'(--color -p --plain)'--color'[Print output in color, even when not connected to an interactive terminal, but not if the NO_COLOR environmental variable is set.]' \
+	'(--color -p --plain)'{-p,--plain}'[Print plain text output, without tables, colors, or other formatting. For tabular output but without colors, set the NO_COLOR environmental variable to a non-empty value instead of this option.]' \
 	'(- :)'{-v,--version}'[Print version number and exit.]' \
 	'(-): :->cmds' \
 	'(-)*:: :->args'
