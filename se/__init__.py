@@ -53,13 +53,17 @@ RICH_THEME = Theme({
 	"url": "bright_blue",
 	"error": "red",
 	"warning": "orange1",
+	"queued": "gray69",
+	"running": "blue_violet",
+	"finished": "pale_green3",
 	"text": "dark_orange",
 	"css": "bright_blue",
 	"email": "magenta",
 	"flag": "bright_blue",
 	"header": "bold green",
 	"parameter": "cyan",
-	"user": "magenta"
+	"user": "magenta",
+	"dim": "gray69"
 })
 
 class SeException(Exception):
