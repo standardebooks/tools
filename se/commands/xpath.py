@@ -91,7 +91,7 @@ def xpath(plain_output: bool) -> int:
 			return se.InvalidInputException.code
 
 		except se.SeException as ex:
-			se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]. Exception: {ex}", plain_output=plain_output)
+			se.print_error(f"File: [path][link=file://{filepath}]{filepath}[/][/]: {ex}", plain_output=plain_output)
 			return ex.code
 
 		except FileNotFoundError:

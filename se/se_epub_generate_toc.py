@@ -327,7 +327,7 @@ def output_toc(item_list: list[TocItem], landmark_list: list[TocItem], toc_path:
 		with open(toc_path, "r", encoding="utf-8") as file:
 			toc_dom = se.easy_xml.EasyXmlTree(file.read())
 	except Exception as ex:
-		raise se.InvalidInputException(f"Existing ToC not found. Exception: {ex}")
+		raise se.InvalidInputException(f"Existing ToC not found: {ex}")
 
 	# There should be exactly two nav sections.
 	navs = toc_dom.xpath("//nav")
@@ -739,7 +739,7 @@ def process_all_content(self: 'SeEpub', file_list: list[Path]) -> tuple[list[Toc
 		try:
 			dom = self.get_dom(textf)
 		except Exception as ex:
-			raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{textf}]{textf}[/][/]. Exception: {ex}") from ex
+			raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{textf}]{textf}[/][/]: {ex}") from ex
 
 		add_landmark(dom, textf.name, landmarks)
 

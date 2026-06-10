@@ -235,7 +235,7 @@ def parse_rules(css: str) -> list[CssRule]:
 			declarations: list[CssDeclaration] = []
 			for item in tinycss2.parser.parse_declaration_list(token.content):
 				if isinstance(item, ParseError):
-					raise se.InvalidCssException(f"Couldn’t parse CSS. Exception: {item.message}")
+					raise se.InvalidCssException(f"Couldn’t parse CSS: {item.message}")
 
 				if isinstance(item, Declaration):
 					declaration = CssDeclaration(item.lower_name, item.value, item.important)

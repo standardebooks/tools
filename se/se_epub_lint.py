@@ -4099,7 +4099,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 							unused_selectors.remove(selector)
 							continue
 						except Exception as ex:
-							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
+							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]: {ex}")
 
 				# Update our list of `local.css` selectors to check in the next file.
 				local_css_selectors = list(unused_selectors)

@@ -653,7 +653,7 @@ def _format_style_elements(tree: etree.Element):
 	except se.InvalidCssException as ex:
 		raise ex
 	except Exception as ex:
-		raise se.InvalidCssException(f"Couldn’t parse CSS. Exception: {ex}")
+		raise se.InvalidCssException(f"Couldn’t parse CSS: {ex}")
 
 def _format_xml_str(xml: str) -> etree.Element:
 	"""
@@ -715,7 +715,7 @@ def format_xml(xml: str) -> str:
 	try:
 		tree = _format_xml_str(xml)
 	except Exception as ex:
-		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
+		raise se.InvalidXmlException(f"Couldn’t parse XML file: {ex}")
 
 	# Pull out the `doctype` if there is one, as etree seems to eat it.
 	doctypes = regex.search(r"<!doctype[^>]+?>", xml, flags=regex.IGNORECASE)
@@ -756,7 +756,7 @@ def format_se_lint_ignore(xml: str) -> str:
 		tree = _format_xml_str(root.to_string())
 
 	except Exception as ex:
-		raise se.InvalidXmlException(f"Couldn’t parse XML file. Exception: {ex}")
+		raise se.InvalidXmlException(f"Couldn’t parse XML file: {ex}")
 
 	# Pull out the `doctype` if there is one, as etree seems to eat it.
 	doctypes = regex.search(r"<!doctype[^>]+?>", xml, flags=regex.IGNORECASE)
@@ -793,7 +793,7 @@ def format_xhtml(xhtml: str) -> str:
 	try:
 		tree = _format_xml_str(xhtml)
 	except Exception as ex:
-		raise se.InvalidXhtmlException(f"Couldn’t parse XHTML file. Exception: {ex}")
+		raise se.InvalidXhtmlException(f"Couldn’t parse XHTML file: {ex}")
 
 	xml_default_namespace = "http://www.w3.org/XML/1998/namespace"
 
@@ -878,7 +878,7 @@ def format_opf(xml: str) -> str:
 	try:
 		tree = _format_xml_str(xml)
 	except Exception as ex:
-		raise se.InvalidXmlException(f"Couldn’t parse OPF file. Exception: {ex}")
+		raise se.InvalidXmlException(f"Couldn’t parse OPF file: {ex}")
 
 	# Format the long description, then escape it.
 	for node in tree.xpath("/opf:package/opf:metadata/opf:meta[@property='se:long-description']", namespaces={"opf": "http://www.idpf.org/2007/opf"}):
@@ -920,7 +920,7 @@ def format_svg(svg: str) -> str:
 	try:
 		tree = _format_xml_str(svg)
 	except Exception as ex:
-		raise se.InvalidXmlException(f"Couldn’t parse SVG file. Exception: {ex}")
+		raise se.InvalidXmlException(f"Couldn’t parse SVG file: {ex}")
 
 	# Make sure `@viewBox` is correctly-cased.
 	for node in tree.xpath("/svg:svg", namespaces={"svg": "http://www.w3.org/2000/svg"}):
@@ -1060,7 +1060,7 @@ def _format_css_rules(content: list[Node], indent_level: int) -> str:
 
 	for token in tinycss2.parser.parse_rule_list(content):
 		if isinstance(token, ParseError):
-			raise se.InvalidCssException(f"Couldn’t parse CSS. Exception: {token.message}")
+			raise se.InvalidCssException(f"Couldn’t parse CSS: {token.message}")
 
 		if isinstance(token, QualifiedRule):
 			output += ("\t" * indent_level) + _format_css_component_list(token.prelude, True).replace("\n", "\n" + ("\t" * indent_level)) + "{\n" + _format_css_declarations(token.content, indent_level + 1) + "\n" + ("\t" * indent_level) + "}\n\n"
@@ -1136,7 +1136,7 @@ def _format_css_declarations(content: list[Node], indent_level: int) -> str:
 	current_declaration_number = 0
 	for token in tokens:
 		if isinstance(token, ParseError):
-			raise se.InvalidCssException(f"Couldn’t parse CSS. Exception: {token.message}")
+			raise se.InvalidCssException(f"Couldn’t parse CSS: {token.message}")
 
 		# Append the declaration to the output based on its sorted index.
 		# This will sort declarations but keep things like comments before and after declarations in the expected order.
@@ -1154,7 +1154,7 @@ def _format_css_declarations(content: list[Node], indent_level: int) -> str:
 		token = token[0]
 
 		if isinstance(token, ParseError):
-			raise se.InvalidCssException(f"Couldn’t parse CSS. Exception: {token.message}")
+			raise se.InvalidCssException(f"Couldn’t parse CSS: {token.message}")
 
 		if isinstance(token, Declaration):
 			output += ("\t" * indent_level) + token.lower_name + ": "
@@ -1553,7 +1553,7 @@ def generate_title(xhtml: str | EasyXmlTree) -> str:
 		else:
 			dom = deepcopy(xhtml)
 	except Exception as ex:
-		raise se.InvalidXhtmlException(f"Couldn’t parse XHTML file. Exception: {ex}")
+		raise se.InvalidXhtmlException(f"Couldn’t parse XHTML file: {ex}")
 
 	# Titlepages are the exception.
 	if dom.xpath("/html/body//section[re:test(@epub:type, '\\btitlepage\\b')]"):

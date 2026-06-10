@@ -85,7 +85,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> tuple[str | None, s
 		# Wikipedia requires a `User-Agent` header, otherwise it returns HTTP 403 Forbidden.
 		response = requests.get("https://en.wikipedia.org/wiki/Special:Search", params={"search": string, "go": "Go", "ns0": "1"}, allow_redirects=False, timeout=60, headers={'User-Agent': USER_AGENT})
 	except Exception as ex:
-		raise se.RemoteCommandErrorException(f"Couldn’t contact Wikipedia. Exception: {ex}") from ex
+		raise se.RemoteCommandErrorException(f"Couldn’t contact Wikipedia: {ex}") from ex
 
 	if response.status_code == 302:
 		nacoaf_uri = None
@@ -98,7 +98,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> tuple[str | None, s
 			try:
 				response = requests.get(wiki_url, timeout=60, headers={'User-Agent': USER_AGENT})
 			except Exception as ex:
-				raise se.RemoteCommandErrorException(f"Couldn’t contact Wikipedia. Exception: {ex}") from ex
+				raise se.RemoteCommandErrorException(f"Couldn’t contact Wikipedia: {ex}") from ex
 
 			for match in regex.findall(r"https?://id\.loc\.gov/authorities/(?:names/)?(n[a-z0-9]+)", response.text):
 				nacoaf_uri = "http://id.loc.gov/authorities/names/" + match
@@ -409,7 +409,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 				fp_metadata_html = response.text
 				fp_cookie = response.cookies['PHPSESSID']
 			except Exception as ex:
-				raise se.RemoteCommandErrorException(f"Couldn’t download Faded Page ebook metadata page. Exception: {ex}") from ex
+				raise se.RemoteCommandErrorException(f"Couldn’t download Faded Page ebook metadata page: {ex}") from ex
 
 			dom = etree.parse(StringIO(fp_metadata_html), html_parser)
 
@@ -430,7 +430,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 				response = requests.get(fp_ebook_url, timeout=60, cookies={"PHPSESSID": fp_cookie}, headers={'User-Agent': USER_AGENT})
 				transcription_ebook_html = response.text
 			except Exception as ex:
-				raise se.RemoteCommandErrorException(f"Couldn’t download Faded Page ebook HTML. Exception: {ex}") from ex
+				raise se.RemoteCommandErrorException(f"Couldn’t download Faded Page ebook HTML: {ex}") from ex
 
 			fp_html_dom = etree.parse(StringIO(transcription_ebook_html), html_parser)
 
@@ -449,7 +449,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 				fixed_external_ebook_html = fix_text(transcription_ebook_html, uncurl_quotes=False)
 				transcription_ebook_html = se.strip_bom(fixed_external_ebook_html)
 			except Exception as ex:
-				raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Faded Page HTML file. Exception: {ex}") from ex
+				raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Faded Page HTML file: {ex}") from ex
 
 			transcription_source = "Faded Page"
 
@@ -463,7 +463,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 				response = requests.get(transcription_url, timeout=60, headers={'User-Agent': USER_AGENT})
 				pg_metadata_html = response.text
 			except Exception as ex:
-				raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page. Exception: {ex}") from ex
+				raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page: {ex}") from ex
 
 			dom = etree.parse(StringIO(pg_metadata_html), html_parser)
 
@@ -493,13 +493,13 @@ def _create_draft(args: Namespace, plain_output: bool):
 				response = requests.get(pg_ebook_url, timeout=60, headers={'User-Agent': USER_AGENT})
 				transcription_ebook_html = response.text
 			except Exception as ex:
-				raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook HTML. Exception: {ex}") from ex
+				raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook HTML: {ex}") from ex
 
 			try:
 				fixed_external_ebook_html = fix_text(transcription_ebook_html, uncurl_quotes=False)
 				transcription_ebook_html = se.strip_bom(fixed_external_ebook_html)
 			except Exception as ex:
-				raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Project Gutenberg HTML file. Exception: {ex}") from ex
+				raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Project Gutenberg HTML file: {ex}") from ex
 
 			transcription_source = "Project Gutenberg"
 
@@ -557,7 +557,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 						node.insert_before(term_node)
 
 				except Exception as ex:
-					raise se.RemoteCommandErrorException(f"Couldn’t connect to [url][link=https://id.loc.gov]https://id.loc.gov[/][/]. Exception: {ex}") from ex
+					raise se.RemoteCommandErrorException(f"Couldn’t connect to [url][link=https://id.loc.gov]https://id.loc.gov[/][/]: {ex}") from ex
 
 				i = i + 1
 
@@ -797,7 +797,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 				with open(transcription_local_path, "w", encoding="utf-8") as file:
 					file.write(output)
 			except OSError as ex:
-				raise se.InvalidFileException(f"Couldn’t write to ebook directory. Exception: {ex}") from ex
+				raise se.InvalidFileException(f"Couldn’t write to ebook directory: {ex}") from ex
 
 		# Fill out the titlepage.
 		with open(content_path / "epub" / "text" / "titlepage.xhtml", "r+", encoding="utf-8") as file:

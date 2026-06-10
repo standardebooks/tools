@@ -278,7 +278,7 @@ def _add_compatibility_css_and_simplify(self: 'SeEpub', work_compatible_epub_dir
 							element.set_attr("class", f"{class_attribute} {new_class}".strip())
 
 				except lxml.cssselect.SelectorSyntaxError as ex:
-					raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
+					raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]: {ex}")
 
 			# Update any elements selected by one of the simplified pseudo-class selectors with the associated class.
 			for selector, new_class in pseudo_class_selectors.items():
@@ -290,7 +290,7 @@ def _add_compatibility_css_and_simplify(self: 'SeEpub', work_compatible_epub_dir
 							element.set_attr("class", f"{class_attribute} {new_class}".strip())
 
 				except lxml.cssselect.SelectorSyntaxError as ex:
-					raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]. Exception: {ex}")
+					raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]: {ex}")
 
 		except lxml.cssselect.ExpressionError:
 			# This gets thrown if we use pseudo-elements, which lxml doesn't support.

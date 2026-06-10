@@ -36,7 +36,7 @@ def recompose_epub(plain_output: bool) -> int: # pylint: disable=unused-argument
 		se.print_error(ex)
 		return ex.code
 	except Exception as ex:
-		se.print_error(f"Couldn’t recompose epub. Exception: {ex}")
+		se.print_error(f"Couldn’t recompose epub: {ex}")
 		return se.InvalidFileException.code
 
 	return 0

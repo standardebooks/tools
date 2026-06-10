@@ -150,7 +150,7 @@ class SeEpub:
 			self.content_path = self.metadata_file_path.parent
 			self.metadata_dom = self.get_dom(self.metadata_file_path)
 		except Exception as ex:
-			raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]. Exception: {ex}") from ex
+			raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]: {ex}") from ex
 
 		try:
 			toc_href = self.metadata_dom.xpath("/package/manifest/item[contains(@properties, 'nav')]/@href", str)[0]
@@ -651,11 +651,11 @@ class SeEpub:
 						node.remove()
 
 			except etree.XMLSyntaxError as ex:
-				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]. Exception: {ex}") from ex
+				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]: {ex}") from ex
 			except FileNotFoundError as ex:
 				raise ex
 			except se.InvalidXmlException as ex:
-				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]. Exception: {ex.__cause__}") from ex
+				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]: {ex.__cause__}") from ex
 			except Exception as ex:
 				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/].") from ex
 

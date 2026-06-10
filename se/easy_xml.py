@@ -664,7 +664,7 @@ class EasyXmlTree:
 			custom_parser = etree.XMLParser(huge_tree=True)
 			self.etree = etree.fromstring(str.encode(xml_string), parser=custom_parser)
 		except etree.XMLSyntaxError as ex:
-			raise se.InvalidXmlException(f"Couldn’t parse XML. Exception: {ex}") from ex
+			raise se.InvalidXmlException(f"Couldn’t parse XML: {ex}") from ex
 
 		self.is_css_applied = False
 
