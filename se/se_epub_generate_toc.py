@@ -65,6 +65,7 @@ class TocItem:
 	division = BookDivision.NONE
 	place = Position.FRONT
 	has_headers = True
+	epub_content_path: Path
 
 	@property
 	def toc_link(self) -> str:
@@ -80,7 +81,7 @@ class TocItem:
 
 		out_string = ""
 		if not self.title:
-			raise se.InvalidInputException(f"Couldn’t find title in: [path][link=file://{self.file_link}]{self.file_link}[/][/].")
+			raise se.InvalidInputException(f"Couldn’t find title in: [path][link=file://{self.epub_content_path}/text/{self.file_link}]{self.file_link}[/][/].")
 
 		if self.subtitle and self.lang:
 			# Test for a foreign language subtitle, and adjust accordingly.
@@ -403,7 +404,7 @@ def extract_strings(node: EasyXmlElement) -> str:
 	out_string = out_string.strip().replace("\n", " ") # Replace newlines with a space because we may have two elements in a row in a title, like `<abbr>S.S.</abbr> <i>Lusitania</i>`. When in `<h2>`, these elemetns will be on their own line, but in `<a>` they will be on the same line and require a space between them.
 	return regex.sub(r"[\n\t]", "", out_string)
 
-def process_headings(dom: EasyXmlTree, textf: str, toc_list: list[TocItem], single_file: bool, single_file_without_headers: bool) -> None:
+def process_headings(dom: EasyXmlTree, textf: str, toc_list: list[TocItem], single_file: bool, single_file_without_headers: bool, content_path: Path) -> None:
 	"""
 	Find headings in current file and extract title data into items added to `toc_list`.
 
@@ -412,6 +413,7 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list[TocItem], sing
 	textf: The path to the file.
 	toc_list: The list of ToC items we are building.
 	single_file: Is there only a single content item in the production?
+	content_path: The path to the epub's content directory, used when outputting error messages.
 
 	OUTPUTS:
 	None.
@@ -463,10 +465,10 @@ def process_headings(dom: EasyXmlTree, textf: str, toc_list: list[TocItem], sing
 			continue  # Skip it.
 
 		if place == Position.BODY:
-			toc_item = process_a_heading(heading, textf, is_toplevel, single_file)
+			toc_item = process_a_heading(heading, textf, is_toplevel, single_file, content_path)
 		else:
 			# If it's not a bodymatter item we don't care about whether it's `single_file`.
-			toc_item = process_a_heading(heading, textf, is_toplevel, False)
+			toc_item = process_a_heading(heading, textf, is_toplevel, False, content_path)
 
 		toc_item.level = get_level(heading, toc_list)
 		toc_item.place = place
@@ -524,7 +526,7 @@ def get_level(node: EasyXmlElement, toc_list: list[TocItem]) -> int:
 
 	return depth
 
-def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, single_file: bool) -> TocItem:
+def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, single_file: bool, content_path: Path) -> TocItem:
 	"""
 	Generate and return a single TocItem from this heading.
 
@@ -533,12 +535,14 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 	text: The path to the file.
 	is_toplevel: Is this heading at the top-most level in the file?
 	single_file: Is there only one content file in the production (like some Poetry volumes)?
+	content_path: The path to the epub's content directory, used when outputting error messages.
 
 	OUTPUTS:
 	A qualified `TocItem` object.
 	"""
 
 	toc_item = TocItem()
+	toc_item.epub_content_path = content_path
 
 	toc_item.division = get_book_division(node)
 
@@ -754,7 +758,7 @@ def process_all_content(self: 'SeEpub', file_list: list[Path]) -> tuple[list[Toc
 		with open(textf, "r", encoding="utf-8") as file:
 			dom = se.easy_xml.EasyXmlTree(file.read())
 
-		process_headings(dom, textf.name, toc_list, single_file, single_file_without_headers)
+		process_headings(dom, textf.name, toc_list, single_file, single_file_without_headers, self.content_path)
 
 		# Only consider half title pages that are front matter. Some books, like C.S. Lewis's _Poetry_, may have half titles that are bodymatter.
 		if dom.xpath("/html/body//*[contains(@epub:type, 'halftitlepage') and ancestor-or-self::*[contains(@epub:type, 'frontmatter')]]"):
