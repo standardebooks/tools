@@ -377,7 +377,7 @@ SEMANTICS & CONTENT
 "s-104", "Header element with incompatible semantics. Hint: Headers should be either [val]title[/] or [val]z3998:ordinal[/], not both."
 "s-105", "Date without parent [xhtml]<time>[/] element."
 "s-106", "Proper name in the colophon without parent [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], or [xhtml]<b>[/] if anonymous."
-"s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?"
+"s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/] or [xhtml]<b>An Anonymous Sponsor</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?"
 "s-108", "[xhtml]<thead>[/] element with non-empty [xhtml]<td>[/] descendant. Hint: Use [xhtml]<th>[/] instead."
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 "s-099", "List item in endnotes missing [val]endnote[/] semantic."
@@ -1785,9 +1785,9 @@ def _lint_special_file_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 		if nodes:
 			messages.append(LintMessage("s-106", "Proper name in the colophon without parent [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], or [xhtml]<b>[/] if anonymous.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
-		nodes = dom.xpath("/html/body//p/b[not(@epub:type) and text() != 'An Unknown Artist' and text() != 'An Anonymous Volunteer']")
+		nodes = dom.xpath("/html/body//p/b[not(@epub:type) and text() != 'An Unknown Artist' and text() != 'An Anonymous Volunteer' and text() != 'An Anonymous Sponsor']")
 		if nodes:
-			messages.append(LintMessage("s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+			messages.append(LintMessage("s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/] or [xhtml]<b>An Anonymous Sponsor</b>[/]. Hint: Is there a missing [attr]epub:type[/] semantic?", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# If we're in the imprint, are the sources represented correctly?
 	# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
