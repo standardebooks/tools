@@ -97,6 +97,9 @@ class EasyXmlElement:
 				for namespace, identifier in self.namespaces.items():
 					short_name = short_name.replace(f"{{{identifier}}}", f"{namespace}:")
 
+				# Reinstate potentially necessary entities that LXML has stripped
+				value = value.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
 				attrs += f" {short_name}=\"{value}\""
 
 		tag_name: str = str(self.lxml_element.tag)
