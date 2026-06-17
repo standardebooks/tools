@@ -1,3 +1,59 @@
+# 3.1.0
+
+## General
+
+- Continue improving formatting of `--help` text
+
+- Bring shell completions up to date with real command functions and descriptions
+
+- Improve test suite output on failure
+
+- Add the `--color` option to the se command to force color even if in a pipe
+
+## se build-toc
+
+- Improve error message
+
+## se clean
+
+- Fix clean not running on elements after `<pre>`. Thanks to Robin Whittleton
+
+## se create-draft
+
+- Fix LCSH typo in generated metadata
+
+## se css-select
+
+- Don't output extra newline
+
+## se interactive-replace
+
+- Save the terminal cursor position and restore it when the tool exits
+
+## se lint
+
+- Improve t-013
+
+- Update s-107 to accept anonymous sponsors
+
+## se modernize-spelling
+
+- Various additions
+
+## se recompose-epub
+
+- Uppercase doctype in output
+
+- Isolate CSS for included files by prepending a special class
+
+## se semanticate
+
+- Don't add acronym semantics to abbreviated places
+
+## se xpath
+
+- Don't output extra newline
+
 # 3.0.5
 
 ## General
