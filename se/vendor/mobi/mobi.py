@@ -175,5 +175,16 @@ class DualMobiMetaFix:
 		return self.datain
 
 def update_asin(asin: str, infile: Path|str, outfile: Path|str) -> None:
+	"""
+	Update an ebook's ASIN and normalize its nondeterministic MOBI header fields.
+	"""
+
 	dmf = DualMobiMetaFix(infile, asin)
-	open(pathof(outfile),'wb').write(dmf.getresult())
+	dataout = bytearray(dmf.getresult())
+	first_section_start, _ = getsecaddr(dataout, 0)
+
+	# Normalize the Palm database timestamps and the randomly generated MOBI UID.
+	struct.pack_into(b'>II', dataout, 36, 0, 0)
+	struct.pack_into(b'>I', dataout, first_section_start + 32, int(asin[:8], 16))
+
+	open(pathof(outfile),'wb').write(dataout)

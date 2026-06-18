@@ -1635,13 +1635,20 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 	# Path arguments must be cast to string for Windows compatibility.
 	calibre_result = None
 	try:
-		calibre_args = [str(ebook_convert_path), str(work_dir / compatible_epub_output_filename), str(work_dir / kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover"]
+		calibre_args = [str(work_dir / compatible_epub_output_filename), str(work_dir / kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover"]
 
 		if cover_path:
 			calibre_args.append(f"--cover={cover_path}")
 
-		calibre_result = subprocess.run(calibre_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
-		calibre_result.check_returncode()
+		# Here we attempt to use Calibre to generate a deterministic AZW3 file.
+		# By default, Calibre generates a random UUID for use throughout the result file. Calibre also randomly orders CSS and changes image names.
+		# Instead of trying to manipulate Calibre's outputted AZW3 file, instead we instruct Calibre to order CSS and use a deterministic UUID during its build procerss, via the `calibre-debug` command which is passed a special Python script to do that.
+		with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("calibre_deterministic_build.py")) as calibre_helper_filename:
+			calibre_environment = os.environ.copy()
+			calibre_environment["PYTHONHASHSEED"] = "0"
+			calibre_result = subprocess.run([str(ebook_convert_path), "-e", str(calibre_helper_filename), "--", asin, *calibre_args], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False, env=calibre_environment)
+			calibre_result.check_returncode()
+
 	except subprocess.CalledProcessError as ex:
 		if calibre_result:
 			output = calibre_result.stdout.decode().strip()
@@ -1677,14 +1684,14 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 	# Check for some required tools.
 	ebook_convert_path = None
 	if build_kindle:
-		which_ebook_convert = shutil.which("ebook-convert")
+		which_ebook_convert = shutil.which("calibre-debug")
 		if which_ebook_convert:
 			ebook_convert_path = Path(which_ebook_convert)
 		else:
 			# Look for default Mac calibre app path if none found in path.
-			ebook_convert_path = Path("/Applications/calibre.app/Contents/MacOS/ebook-convert")
+			ebook_convert_path = Path("/Applications/calibre.app/Contents/MacOS/calibre-debug")
 			if not ebook_convert_path.exists():
-				raise se.MissingDependencyException("Couldn’t locate [command]ebook-convert[/]. Is [command]calibre[/] installed?")
+				raise se.MissingDependencyException("Couldn’t locate [command]calibre-debug[/]. Is [command]calibre[/] installed?")
 
 	run_ace = False
 	if run_epubcheck:
