@@ -90,9 +90,9 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 	brew install standardebooks
 	```
 
-### pipx
+### Alternative: pipx
 
-Install the tools with `pipx`:
+If you want a more granular install you can install the dependencies manually and the toolset with `pipx`:
 
 ```shell
 # Install some pre-flight dependencies.
