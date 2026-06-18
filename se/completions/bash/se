@@ -209,7 +209,7 @@ _se(){
 				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 			find-mismatched-diacritics)
-				_se_compgen_words "-h --help" "${cur}"
+				_se_compgen_words "-h --help -a --all" "${cur}"
 				_se_compgen_dirs ".*" "${cur}"
 				_se_compgen_files "!*.xhtml" "${cur}"
 				;;

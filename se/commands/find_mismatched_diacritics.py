@@ -21,6 +21,7 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 	"""
 
 	parser = argparse.ArgumentParser(description="Find words with mismatched diacritics in a set of XHTML files. For example, [text]cafe[/] in one file and [text]café[/] in another.", prog="[command]se[/] [subcommand]find-mismatched-diacritics[/]", formatter_class=SeHelpFormatter)
+	parser.add_argument("-a", "--all", action="store_true", help="Consider words less than 3 characters in length.")
 	parser.add_argument("targets", metavar="[path]TARGET[/]", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()
 
@@ -67,7 +68,7 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 		for decomposed_word in regex.findall(r"\b[\w’\-]*\p{M}[\w’\-]*\b", decomposed_xhtml):
 			word = unicodedata.normalize("NFKC", decomposed_word).lower()
 
-			if len(word) > 2:
+			if args.all or len(word) > 2:
 				accented_words[word] += 1
 
 	# Now iterate over the list and search files for unaccented versions of the words.

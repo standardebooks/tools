@@ -124,6 +124,7 @@ complete -c se -A -n "__fish_seen_subcommand_from find-mismatched-dashes" -s h -
 
 complete -c se -n "__fish_se_no_subcommand" -a find-mismatched-diacritics -d "Find words with mismatched diacritics in a set of XHTML files. For example, cafe in one file and café in another."
 complete -c se -A -n "__fish_seen_subcommand_from find-mismatched-diacritics" -s h -l help -x -d "Show this help message and exit."
+complete -c se -A -n "__fish_seen_subcommand_from find-mismatched-diacritics" -s a -l all -x -d "Consider words less than 3 characters in length."
 
 complete -c se -n "__fish_se_no_subcommand" -a find-unusual-characters -d "Find characters outside a nominal expected range in a set of XHTML files. This can be useful to find transcription mistakes and mojibake."
 complete -c se -A -n "__fish_seen_subcommand_from find-unusual-characters" -s h -l help -x -d "Show this help message and exit."

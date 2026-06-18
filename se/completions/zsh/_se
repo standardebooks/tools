@@ -221,6 +221,7 @@ case $state in
 			find-mismatched-diacritics)
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
+					{-a,--all}'[Consider words less than 3 characters in length.]' \
 					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'
 				;;
 			find-unusual-characters)
