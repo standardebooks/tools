@@ -3,10 +3,11 @@ Test the build command.
 Testing build is done in two steps:
 1. The `build` command itself is run, either using the default command, or a command-file. The 
    output is directed to book_directory/build.
-2. The `extract-epub` command is run against the generated compatible .epub. The output is directed
-   to book_directory/extract.
+2. For tests that validate EPUB contents, the `extract-epub` command is run against the generated
+   compatible .epub. The output is directed to book_directory/extract.
 
-The build files are verified against the golden build files for existence only.
+The standard EPUB build files are verified against the golden build files for existence only.
+Kindle AZW3 and Kobo KEPUB build files are compared byte-for-byte with their golden files.
 The extract files are verified against the golden extract files, that they exist in both places and
 are identical.
 """
@@ -68,12 +69,14 @@ def test_build_command(testbook__directory: Path, work__directory: Path, command
 
 	# run the build command itself
 	must_run(f"se {command_to_use} --output={build_directory} {book_directory}")
-	# extract the compatible epub, if one was created
-	epub_glob = build_directory.glob("*.epub")
-	for epub_file in epub_glob:
-		if "_advanced" not in epub_file.name:
-			must_run(f"se extract-ebook --output={extract_directory} {epub_file}")
-			break
+	# Extract the compatible EPUB unless this test only validates a device build artifact.
+	is_device_build_test = "--kindle" in command_to_use or "--kobo" in command_to_use
+	if not is_device_build_test:
+		epub_glob = build_directory.glob("*.epub")
+		for epub_file in epub_glob:
+			if "_advanced" not in epub_file.name:
+				must_run(f"se extract-ebook --output={extract_directory} {epub_file}")
+				break
 
 	# verify the build and extract files against the golden ones
 	build_is_golden(build_directory, extract_directory, golden_directory, update_golden, test_context)

@@ -175,6 +175,12 @@ def get_files(file_dir: Path, file_filter: str = "**/*", excluded_files: list[st
 	file_list = [f.relative_to(file_dir) for f in file_dir.glob(f"{file_filter}") if f.is_file() and f.name not in excluded_files and str(f.parent).find("/.git") == -1]
 	return file_list
 
+def _is_device_build_file(file: Path) -> bool:
+	"""
+	Return whether a build file is a Kindle AZW3 or Kobo KEPUB artifact.
+	"""
+	return file.suffix == ".azw3" or file.name.endswith(".kepub.epub")
+
 def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update_golden: bool, test_context: str | None = None) -> bool:
 	"""
 	Verify the results of both the build and the extract are the same as the corresponding "golden" files.
@@ -200,9 +206,11 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 	if not build_files:
 		fail_test(f"Build output was empty.{_format_test_context(test_context)}\n\nDirectory: {build_dir}")
 
-	# Get the list of extract files (directory tree)
-	extract_files = get_files(extract_dir, excluded_files=excluded_extract_files)
-	if not extract_files:
+	is_device_build_test = any(_is_device_build_file(file) for file in build_files)
+
+	# Get the list of extract files when this test validates extracted EPUB contents.
+	extract_files = get_files(extract_dir, excluded_files=excluded_extract_files) if extract_dir.is_dir() else []
+	if not is_device_build_test and not extract_files:
 		fail_test(f"Extract output was empty.{_format_test_context(test_context)}\n\nDirectory: {extract_dir}")
 
 	# Either update the golden files from the results…
@@ -220,14 +228,15 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 				shutil.copy(build_dir / file, golden_build_dir / file)
 				continue
 
-		for file in extract_files:
-			try:
-				shutil.copy(extract_dir / file, golden_extract_dir / file)
-			except FileNotFoundError:
-				golden_file_dir = (golden_extract_dir / file).parent
-				golden_file_dir.mkdir(parents=True, exist_ok=True)
-				shutil.copy(extract_dir / file, golden_extract_dir / file)
-				continue
+		if not is_device_build_test:
+			for file in extract_files:
+				try:
+					shutil.copy(extract_dir / file, golden_extract_dir / file)
+				except FileNotFoundError:
+					golden_file_dir = (golden_extract_dir / file).parent
+					golden_file_dir.mkdir(parents=True, exist_ok=True)
+					shutil.copy(extract_dir / file, golden_extract_dir / file)
+					continue
 
 	# … or check all the result files against the existing golden files
 	else:
@@ -236,9 +245,9 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 		if not golden_build_files:
 			fail_test(f"Golden build output was empty.{_format_test_context(test_context)}\n\nDirectory: {golden_build_dir}")
 
-		# Get the list of golden extract files (directory tree)
-		golden_extract_files = get_files(golden_extract_dir, excluded_files=excluded_extract_files)
-		if not golden_extract_files:
+		# Get the list of golden extract files when this test validates extracted EPUB contents.
+		golden_extract_files = get_files(golden_extract_dir, excluded_files=excluded_extract_files) if golden_extract_dir.is_dir() else []
+		if not is_device_build_test and not golden_extract_files:
 			fail_test(f"Golden extract output was empty.{_format_test_context(test_context)}\n\nDirectory: {golden_extract_dir}")
 
 		missing_build_files = list(set(golden_build_files) - set(build_files))
@@ -246,24 +255,31 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 		if missing_build_files or extraneous_build_files:
 			fail_file_set_mismatch("Build", missing_build_files, extraneous_build_files, test_context)
 
-		# extract files are checked as normal, i.e. for equality
-		extract_same = list(set(extract_files).intersection(golden_extract_files))
-		for file in extract_same:
-			# image files aren't utf-8, and a dump isn't useful, so let filecmp handle them
-			if file.suffix in (".bmp", ".jpg", ".png", ".tif"):
-				if not filecmp.cmp(extract_dir / file, golden_extract_dir / file):
-					fail_test(f"Extract image file mismatch.{_format_test_context(test_context)}\n\nFile: {file}")
-			else:
-				with open(golden_extract_dir / file, encoding="utf-8") as gfile:
-					golden_text = gfile.read()
-				with open(extract_dir / file, encoding="utf-8") as rfile:
-					extract_text = rfile.read()
-				assert_text_matches(golden_text, extract_text, f"{golden_extract_dir / file}", f"{extract_dir / file}", test_context)
+		# Kindle and Kobo build files must be byte-for-byte identical to their golden files.
+		build_same = list(set(build_files).intersection(golden_build_files))
+		for file in build_same:
+			if _is_device_build_file(file) and not filecmp.cmp(build_dir / file, golden_build_dir / file, shallow=False):
+				fail_test(f"Build file mismatch.{_format_test_context(test_context)}\n\nFile: {file}")
 
-		missing_extract_files = list(set(golden_extract_files) - set(extract_files))
-		extraneous_extract_files = list(set(extract_files) - set(golden_extract_files))
-		if missing_extract_files or extraneous_extract_files:
-			fail_file_set_mismatch("Extract", missing_extract_files, extraneous_extract_files, test_context)
+		if not is_device_build_test:
+			# Extract files are checked as normal, i.e. for equality.
+			extract_same = list(set(extract_files).intersection(golden_extract_files))
+			for file in extract_same:
+				# Image files are not UTF-8, and a dump is not useful, so let filecmp handle them.
+				if file.suffix in (".bmp", ".jpg", ".png", ".tif"):
+					if not filecmp.cmp(extract_dir / file, golden_extract_dir / file):
+						fail_test(f"Extract image file mismatch.{_format_test_context(test_context)}\n\nFile: {file}")
+				else:
+					with open(golden_extract_dir / file, encoding="utf-8") as gfile:
+						golden_text = gfile.read()
+					with open(extract_dir / file, encoding="utf-8") as rfile:
+						extract_text = rfile.read()
+					assert_text_matches(golden_text, extract_text, f"{golden_extract_dir / file}", f"{extract_dir / file}", test_context)
+
+			missing_extract_files = list(set(golden_extract_files) - set(extract_files))
+			extraneous_extract_files = list(set(extract_files) - set(golden_extract_files))
+			if missing_extract_files or extraneous_extract_files:
+				fail_file_set_mismatch("Extract", missing_extract_files, extraneous_extract_files, test_context)
 
 	return True
 
