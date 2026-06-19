@@ -15,7 +15,7 @@ jobs:
     - name: Install Ubuntu packages
       run: |
         sudo apt update
-        sudo apt install calibre default-jre git python3-venv
+        sudo apt install default-jre git python3-venv
     - name: Install pipx packages
       run: |
         pipx install .

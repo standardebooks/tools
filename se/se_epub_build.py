@@ -33,8 +33,8 @@ import se.images
 import se.typography
 from se.easy_xml import EasyXmlElement, EasyXmlTree
 from se.se_epub import SeEpub # pylint: disable=cyclic-import
+from se.vendor.calibre_azw3 import convert_epub_to_azw3
 from se.vendor.kobo_touch_extended import kobo
-from se.vendor.mobi import mobi
 
 if TYPE_CHECKING:
 	from selenium import webdriver
@@ -1669,12 +1669,12 @@ def _run_ace(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 				shutil.rmtree(epub_debug_dir, ignore_errors=True)
 
 				if output:
-					raise se.BuildFailedException(f"[command]ace[/] failed with:\n\n{output.strip()}")
+					raise se.BuildFailedException(f"[command]ace[/] failed:\n\n{output.strip()}")
 
 		except subprocess.CalledProcessError as ex:
 			raise se.BuildFailedException("[command]ace[/] failed.") from ex
 
-def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kindle_output_filename: str, toc_filename: str, metadata_dom: EasyXmlTree, compatible_epub_output_filename: str, ebook_convert_path: Path | None, asin: str, last_updated: datetime | None) -> None:
+def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path, output_dir: Path, kindle_output_filename: str, toc_filename: str, metadata_dom: EasyXmlTree, compatible_epub_output_filename: str, asin: str, last_updated: datetime | None) -> None:
 	"""
 	Build the Kindle .azw3 file.
 
@@ -1686,7 +1686,6 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 	toc_filename: Name of the table of contents file.
 	metadata_dom: dom of the metadata file.
 	compatible_epub_output_filename: Name of the compatible epub file.
-	ebook_convert_path: Path to the calibre `ebook-convert` command.
 	asin: The calculated asin of the compatibility epub.
 	last_updated: timestamp of the last commit date.
 
@@ -1808,40 +1807,16 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 	se.epub.write_epub(work_compatible_epub_dir, work_dir / compatible_epub_output_filename, last_updated)
 
 	# Generate the Kindle file.
-	# We place it in the work directory because later we have to update the asin, and the `mobi.update_asin()` function will write to the final output directory.
 	cover_path = None
 	for href in metadata_dom.xpath("//item[@properties=\"cover-image\"]/@href", str):
 		cover_path = work_compatible_epub_dir / "epub" / href
 
-	# Path arguments must be cast to string for Windows compatibility.
-	calibre_result = None
 	try:
-		calibre_args = [str(work_dir / compatible_epub_output_filename), str(work_dir / kindle_output_filename), "--pretty-print", "--no-inline-toc", "--max-toc-links=0", "--prefer-metadata-cover"]
-
-		if cover_path:
-			calibre_args.append(f"--cover={cover_path}")
-
-		# Here we attempt to use Calibre to generate a deterministic AZW3 file.
-		# By default, Calibre generates a random UUID for use throughout the result file. Calibre also randomly orders CSS and changes image names.
-		# Instead of trying to manipulate Calibre's outputted AZW3 file, instead we instruct Calibre to order CSS and use a deterministic UUID during its build procerss, via the `calibre-debug` command which is passed a special Python script to do that.
-		with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("calibre_deterministic_build.py")) as calibre_helper_filename:
-			calibre_environment = os.environ.copy()
-			calibre_environment["PYTHONHASHSEED"] = "0"
-			calibre_result = subprocess.run([str(ebook_convert_path), "-e", str(calibre_helper_filename), "--", asin, *calibre_args], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False, env=calibre_environment)
-			calibre_result.check_returncode()
-
-	except subprocess.CalledProcessError as ex:
-		if calibre_result:
-			output = calibre_result.stdout.decode().strip()
-		else:
-			output = "No output."
-
-		raise se.BuildFailedException(f"[command]ebook-convert[/] failed with:\n{output}") from ex
+		convert_epub_to_azw3(work_dir / compatible_epub_output_filename, output_dir / kindle_output_filename, cover_path, asin)
+	except Exception as ex:
+		raise se.BuildFailedException(f"AZW3 conversion failed:\n{ex}") from ex
 
 	# Success, extract the Kindle cover thumbnail.
-
-	# Update the ASIN in the generated file.
-	mobi.update_asin(asin, work_dir / kindle_output_filename, output_dir / kindle_output_filename)
 
 	# Extract the thumbnail.
 	if os.path.isfile(work_compatible_epub_dir / "epub" / "images" / "cover.jpg"):
@@ -1863,17 +1838,6 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 		build_kindle = False
 
 	# Check for some required tools.
-	ebook_convert_path = None
-	if build_kindle:
-		which_ebook_convert = shutil.which("calibre-debug")
-		if which_ebook_convert:
-			ebook_convert_path = Path(which_ebook_convert)
-		else:
-			# Look for default Mac calibre app path if none found in path.
-			ebook_convert_path = Path("/Applications/calibre.app/Contents/MacOS/calibre-debug")
-			if not ebook_convert_path.exists():
-				raise se.MissingDependencyException("Couldn’t locate [command]calibre-debug[/]. Is [command]calibre[/] installed?")
-
 	run_ace = False
 	if run_epubcheck:
 		java_present = True
@@ -2083,7 +2047,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 			return
 
 		if build_kindle:
-			_build_kindle(self, work_dir, work_compatible_epub_dir, output_dir, kindle_output_filename, toc_filename, metadata_dom, compatible_epub_output_filename, ebook_convert_path, asin, last_updated)
+			_build_kindle(self, work_dir, work_compatible_epub_dir, output_dir, kindle_output_filename, toc_filename, metadata_dom, compatible_epub_output_filename, asin, last_updated)
 
 	# Build is all done!
 	# Since we made heavy changes to the ebook's DOM, flush the DOM cache in case we use this class again.
