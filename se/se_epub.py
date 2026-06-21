@@ -1722,20 +1722,45 @@ class SeEpub:
 			mime_type = None
 			properties: list[str] = []
 
-			if file_path.suffix == ".css":
-				mime_type="text/css"
+			# Add core media types: https://www.w3.org/TR/epub/#sec-core-media-types
+			if file_path.suffix == ".gif":
+				mime_type = "image/gif"
 
-			if file_path.suffix in (".ttf", ".otf", ".woff", ".woff2"):
-				mime_type="application/vnd.ms-opentype"
-
-			if file_path.suffix == ".svg":
-				mime_type = "image/svg+xml"
+			if file_path.suffix == ".jpg":
+				mime_type = "image/jpeg"
 
 			if file_path.suffix == ".png":
 				mime_type = "image/png"
 
-			if file_path.suffix == ".jpg":
-				mime_type = "image/jpeg"
+			if file_path.suffix == ".svg":
+				mime_type = "image/svg+xml"
+
+			if file_path.suffix == ".webp":
+				mime_type = "image/webp"
+
+			if file_path.suffix == ".mp3":
+				mime_type = "audio/mpeg"
+
+			if file_path.suffix == ".mp4":
+				mime_type = "audio/mp4"
+
+			if file_path.suffix == ".ogg":
+				mime_type = "audio/ogg; codecs=opus"
+
+			if file_path.suffix == ".css":
+				mime_type="text/css"
+
+			if file_path.suffix == ".ttf":
+				mime_type="application/font-sfnt"
+
+			if file_path.suffix == ".otf":
+				mime_type="application/vnd.ms-opentype"
+
+			if file_path.suffix == ".woff":
+				mime_type="font/woff"
+
+			if file_path.suffix == ".woff2":
+				mime_type="font/woff2"
 
 			if file_path.stem == "cover":
 				properties.append("cover-image")
