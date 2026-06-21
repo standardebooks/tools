@@ -106,7 +106,8 @@ SE_SEMANTIC_VOCABULARY = ["bridgehead", "collection", "compass", "compound", "di
 
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Children’s", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
 IGNORED_CLASSES = ["continued", "dl2", "dl3", "elision", "eoc", "full-page", "together", "telegram"]
-BINARY_EXTENSIONS = [".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".png", ".epub", ".xcf", ".otf", ".jp2"]
+BINARY_IMAGE_EXTENSIONS = [".bmp", ".gif", ".jp2", ".jpg", ".jpeg", ".png", ".tif", ".tiff", ".webp", ".xcf"]
+BINARY_OTHER_EXTENSIONS = [".mp3", ".mp4", ".ogg", ".ttf", ".otf", ".woff", ".woff2", ".epub"]
 IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "toc.xhtml", "loi.xhtml"]
 SPECIAL_FILES = ["colophon", "endnotes", "imprint", "loi"]
 
@@ -3987,9 +3988,11 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 			if "-0" in file_path.name:
 				messages.append(LintMessage("f-009", "Illegal leading [text]0[/] in filename.", se.MESSAGE_TYPE_ERROR, file_path))
 
-			if file_path.suffix in BINARY_EXTENSIONS or file_path.name == "core.css":
-				if file_path.suffix in (".jpg", ".jpeg", ".tif", ".tiff", ".png"):
-					messages += _lint_image_checks(self, file_path)
+			if file_path.suffix in BINARY_IMAGE_EXTENSIONS:
+				messages += _lint_image_checks(self, file_path)
+				continue
+
+			if file_path.suffix in BINARY_OTHER_EXTENSIONS or file_path.name == "core.css":
 				continue
 
 			# Read the file and start doing some serious checks!
