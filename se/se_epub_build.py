@@ -13,11 +13,13 @@ import tempfile
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
-from hashlib import sha1
+from hashlib import sha1, sha256
 from html import unescape
 from pathlib import Path
 import importlib.resources
+from typing import TYPE_CHECKING
 
+import cairosvg
 from cairosvg import svg2png # type: ignore Not going to hand-write the type hint for this crazy huge function right now.
 from PIL import Image, ImageOps
 import lxml.cssselect
@@ -34,12 +36,16 @@ from se.se_epub import SeEpub # pylint: disable=cyclic-import
 from se.vendor.kobo_touch_extended import kobo
 from se.vendor.mobi import mobi
 
+if TYPE_CHECKING:
+	from selenium import webdriver
+
 
 COVER_THUMBNAIL_WIDTH = int(se.COVER_WIDTH / 4) # Cast to int required for PIL.
 COVER_THUMBNAIL_HEIGHT = int(se.COVER_HEIGHT / 4) # Cast to int required for PIL.
 SVG_OUTER_STROKE_WIDTH = 2
 SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
 ENDNOTE_CHUNK_SIZE = 500
+SE_LOGO_SVG_SHA256 = "ab04478bf16d277777374e29abf5146be957cc7b49394ec9f4ceb2ea1becb367"
 
 # See <https://www.w3.org/TR/dpub-aria-1.0/>.
 # Without preceding `doc-`.
@@ -62,6 +68,173 @@ class BuildMessage:
 		self.col = col
 		self.location = f"({line}:{col})" if self.line and self.col else None
 		self.submessages = submessages if submessages else []
+
+def get_file_sha256(filename: Path) -> str:
+	"""
+	Return the SHA-256 hash of a file.
+
+	See <https://stackoverflow.com/a/44873382>.
+
+	# TODO: On Python 3.11+, replace this function with `file_digest()`.
+	"""
+
+	h = sha256()
+	b = bytearray(128 * 1024)
+	mv = memoryview(b)
+	with open(filename, "rb", buffering=0) as f:
+		while n := f.readinto(mv):
+			h.update(mv[:n])
+
+	return h.hexdigest()
+
+def __convert_image(input_path: Path, output_path: Path, scale: int, build_cache_images_directory: Path|None) -> Path | None:
+	"""
+	Convert an image from one format to another, using a local cache to speed up repeat operations if possible.
+
+	INPUTS
+	input_path: The path to the image to convert from.
+	output_path: The path to the image to convert to.
+	scale: The output scale.
+	build_cache_images_directory: The images cache directory for this ebook, or `None` to disable the cache.
+
+	OUTPUTS
+	The paths to cache entry for the created image, or `None` if the cache is disabled.
+	"""
+	cache_path = None
+
+	# TODO: On Python 3.11+, use the following to calculate file hash:
+	# with open(input_path, 'rb', buffering=0) as file:
+	#	input_file_sha256 = file_digest(file, 'sha256').hexdigest()
+
+	input_file_sha256 = get_file_sha256(input_path)
+
+	if build_cache_images_directory:
+		try:
+			cache_key = "\n".join((
+				"sha256=" + input_file_sha256,
+				"suffix=" + input_path.suffix,
+				"scale=" + str(scale),
+				"oxipng-level=" + str(se.images.OXIPNG_OPTIMIZATION_LEVEL),
+				"cairosvg-version=" + getattr(cairosvg, "__version__", "unknown"),
+				"pillow-version=" + getattr(Image, "__version__", "unknown")
+			))
+
+			cache_key = sha256(cache_key.encode("utf-8")).hexdigest()
+
+			cache_path = build_cache_images_directory / (cache_key + output_path.suffix)
+		except Exception:
+			cache_path = None
+
+	try:
+		if cache_path and cache_path.exists():
+			shutil.copyfile(cache_path, output_path)
+			return cache_path
+	except Exception:
+		pass
+
+	if input_path.suffix == ".svg" and output_path.suffix == ".png":
+		if scale == 1 and input_file_sha256 == SE_LOGO_SVG_SHA256:
+			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("logo.png")) as logo_png_path:
+				shutil.copyfile(logo_png_path, output_path)
+
+			return None
+
+		if scale == 1:
+			svg2png(url=str(input_path), write_to=str(output_path))
+		else:
+			svg2png(url=str(input_path), write_to=str(output_path), scale=scale)
+
+		se.images.optimize_png(output_path)
+
+	elif input_path.suffix in (".svg", ".png") and output_path.suffix == ".jpg":
+		# If the input file is an SVG and the output file is a JPG, we have to convert SVG -> PNG -> JPG.
+		if input_path.suffix == ".svg":
+			with tempfile.NamedTemporaryFile() as temp_file:
+				png_path = Path(temp_file.name)
+				svg2png(url=str(input_path), write_to=str(png_path))
+
+				cover_file = Image.open(png_path)
+				cover_image = cover_file.convert("RGB") # Remove alpha channel from PNG if necessary.
+				cover_image.save(output_path)
+
+		else:
+			cover_file = Image.open(input_path)
+			cover_image = cover_file.convert("RGB") # Remove alpha channel from PNG if necessary.
+			cover_image.save(output_path)
+
+	if cache_path:
+		try:
+			shutil.copyfile(output_path, cache_path)
+		except Exception:
+			pass
+
+	return cache_path
+
+def __convert_mathml_to_png(mathml_fragment: str, output_path: Path, output_path_2x: Path, build_cache_images_directory: Path|None, driver: 'webdriver.firefox.webdriver.WebDriver|None') -> tuple[set[Path], 'webdriver.firefox.webdriver.WebDriver|None']:
+	"""
+	Convert a MathML fragment to PNG images, using a local cache to speed up repeat operations if possible.
+
+	We break this out into a separate function instead of putting it in `__convert_image()` because this function creates two scaled images at once to minimize usage of the Selenium webdriver.
+
+	INPUTS
+	mathml_fragment: The MathML fragment to convert.
+	output_path: The path to the 1x PNG to create.
+	output_path_2x: The path to the 2x PNG to create.
+	build_cache_images_directory: The images cache directory for this ebook, or `None` to disable the cache.
+	driver: A Selenium webdriver to reuse, or `None` if one has not been initialized yet.
+
+	OUTPUTS
+	The paths to cache entries for the created images, and the Selenium webdriver to reuse.
+	"""
+
+	current_cache_paths: set[Path] = set()
+	cache_paths: dict[int, Path] = {}
+	mathml_fragment_sha256 = sha256(mathml_fragment.encode("utf-8")).hexdigest()
+
+	if build_cache_images_directory:
+		for scale, output_filename in ((1, output_path), (2, output_path_2x)):
+			try:
+				cache_key = "\n".join((
+					"sha256=" + mathml_fragment_sha256,
+					"suffix=.png",
+					"scale=" + str(scale),
+					"oxipng-level=" + str(se.images.OXIPNG_OPTIMIZATION_LEVEL),
+					"pillow-version=" + getattr(Image, "__version__", "unknown")
+				))
+
+				cache_key = sha256(cache_key.encode("utf-8")).hexdigest()
+				cache_paths[scale] = build_cache_images_directory / (cache_key + output_filename.suffix)
+			except Exception:
+				cache_paths = {}
+				break
+
+	try:
+		if cache_paths and all(cache_path.exists() for cache_path in cache_paths.values()):
+			shutil.copyfile(cache_paths[1], output_path)
+			shutil.copyfile(cache_paths[2], output_path_2x)
+			return set(cache_paths.values()), driver
+	except Exception:
+		pass
+
+	if driver is None:
+		# We import this late because we don't want to load selenium if we're not going to use it.
+		from se import browser # pylint: disable=import-outside-toplevel
+
+		driver = browser.initialize_selenium_firefox_webdriver()
+
+	# `render_mathml_to_png()` screenshots the 2x image once, then downscales it to create the 1x image.
+	se.images.render_mathml_to_png(driver, mathml_fragment, output_path, output_path_2x)
+
+	for scale, output_filename in ((1, output_path), (2, output_path_2x)):
+		cache_path = cache_paths.get(scale)
+		if cache_path:
+			try:
+				shutil.copyfile(output_filename, cache_path)
+				current_cache_paths.add(cache_path)
+			except Exception:
+				pass
+
+	return current_cache_paths, driver
 
 def __save_debug_epub(work_compatible_epub_dir: Path) -> Path:
 	"""
@@ -296,39 +469,36 @@ def _add_compatibility_css_and_simplify(self: 'SeEpub', work_compatible_epub_dir
 			# This gets thrown if we use pseudo-elements, which lxml doesn't support.
 			pass
 
-def _convert_cover_to_jpg(work_dir: Path, work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree) -> None:
+def _convert_cover_to_jpg(work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree, build_cache_images_directory: Path|None) -> set[Path]:
 	"""
 	Convert the cover to a JPG if it's not one already.
 
 	INPUTS
-	work_dir: Path to the temporary working directory.
+	self.
 	work_compatible_epub_dir: Path to the compatibility epub file in the temporary working directory.
 	metadata_dom: dom of the metadata file.
+	build_cache_images_directory: The images cache directory for this ebook, or `None` to disable the cache.
 
 	OUTPUTS
-	None.
+	The paths to cache entries matching all images created.
 	"""
+
+	current_cache_paths: set[Path] = set()
 
 	try:
 		cover_local_path = metadata_dom.xpath("/package/manifest/item[@properties='cover-image'][1]/@href", str)[0]
 	except IndexError:
 		# No cover found.
-		return
+		return current_cache_paths
 
-	cover_work_path = work_compatible_epub_dir / "epub" / cover_local_path
+	epub_root_directory = work_compatible_epub_dir / "epub"
+	cover_work_path = epub_root_directory / cover_local_path
 
 	# If the cover isn't a JPG, convert it to one.
 	if cover_work_path.suffix in (".svg", ".png"):
-		# If the cover is SVG, convert to PNG first.
-		png_path = cover_work_path
-		if cover_work_path.suffix == ".svg":
-			png_path = work_dir / "cover.png"
-			svg2png(url=str(cover_work_path), write_to=str(png_path))
-
-		# Now convert PNG to JPG.
-		cover_file = Image.open(png_path)
-		cover_image = cover_file.convert("RGB") # Remove alpha channel from PNG if necessary.
-		cover_image.save(work_compatible_epub_dir / "epub" / "images" / "cover.jpg")
+		cache_path = __convert_image(cover_work_path, epub_root_directory / "images" / "cover.jpg", 1, build_cache_images_directory)
+		if cache_path:
+			current_cache_paths.add(cache_path)
 
 		cover_work_path.unlink()
 
@@ -338,6 +508,8 @@ def _convert_cover_to_jpg(work_dir: Path, work_compatible_epub_dir: Path, metada
 				node.set_attr(name, regex.sub(r"\.(svg|png)$", ".jpg", value))
 
 			node.set_attr("media-type", "image/jpeg")
+
+	return current_cache_paths
 
 def _compatibility_replacements_svg(self: 'SeEpub', file_path: Path) -> None:
 	"""
@@ -445,7 +617,6 @@ def _compatibility_replacements_xhtml(self: 'SeEpub', file_path: Path, has_seque
 		# Remember to get our custom style selectors that we added, too.
 		if "epub-type-endnotes" in node.get_attr("class"):
 			node.add_attr_value("class", "epub-type-footnotes")
-
 
 	# Add both `endnote` (which is legacy epub vocabulary) and `foonote` semantics to endnote items.
 	for node in dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li"):
@@ -744,7 +915,7 @@ def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote
 		with open(work_compatible_epub_dir / "epub" / toc_relative_path, "w", encoding="utf-8") as file:
 			file.write(se.formatting.format_xhtml(toc_dom.to_string()))
 
-def _convert_svg_to_png(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree, ibooks_srcset_bug_exists: bool) -> None:
+def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree, ibooks_srcset_bug_exists: bool, build_cache_images_directory: Path|None) -> set[Path]:
 	"""
 	Convert SVG illustrations to PNG.
 
@@ -752,9 +923,10 @@ def _convert_svg_to_png(self: 'SeEpub', work_compatible_epub_dir: Path, metadata
 	work_compatible_epub_dir: Path to the compatibility epub file in the temporary working directory.
 	metadata_dom: dom of the metadata file.
 	ibooks_srcset_bug_exists: Flag indicating whether the Apple Books srcset bug is still present.
+	build_cache_images_directory: The root directory for build caches.
 
 	OUTPUTS
-	None.
+	The paths to cache entries matching all images created.
 	"""
 
 	# Prep for SVG to PNG conversion. First, remove SVG item properties in the metadata file.
@@ -773,21 +945,25 @@ def _convert_svg_to_png(self: 'SeEpub', work_compatible_epub_dir: Path, metadata
 			filename_2x = Path(regex.sub(r"\.png$", "-2x.png", node.get_attr("href")))
 			node.lxml_element.addnext(etree.fromstring(f"""<item href="{filename_2x}" id="{filename_2x.stem}-2x.png" media-type="image/png"/>"""))
 
+	current_cache_paths: set[Path] = set()
+
 	# Now convert the SVGs.
 	for file_path in work_compatible_epub_dir.glob("**/*.svg"):
 		# Convert SVGs to PNGs at 2x resolution.
 		# Path arguments must be cast to string.
 		png_path = file_path.parent / (str(file_path.stem) + ".png")
-		svg2png(url=str(file_path), write_to=str(png_path))
-		se.images.optimize_png(png_path)
+		cache_path = __convert_image(file_path, png_path, 1, build_cache_images_directory)
+		if cache_path:
+			current_cache_paths.add(cache_path)
 
 		if not ibooks_srcset_bug_exists:
 			png_path = file_path.parent / (str(file_path.stem) + "-2x.png")
-			svg2png(url=str(file_path), write_to=str(png_path), scale=2)
-			se.images.optimize_png(png_path)
+			cache_path = __convert_image(file_path, png_path, 2, build_cache_images_directory)
+			if cache_path:
+				current_cache_paths.add(cache_path)
 
 		# Remove the SVG.
-		(file_path).unlink()
+		file_path.unlink()
 
 	# We converted SVGs to PNGs, so replace references.
 	for file_path in work_compatible_epub_dir.glob("**/*.xhtml"):
@@ -809,7 +985,9 @@ def _convert_svg_to_png(self: 'SeEpub', work_compatible_epub_dir: Path, metadata
 			with open(file_path, "w", encoding="utf-8") as file:
 				file.write(dom.to_string())
 
-def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree, ibooks_srcset_bug_exists: bool) -> None:
+	return current_cache_paths
+
+def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree, ibooks_srcset_bug_exists: bool, build_cache_images_directory: Path|None) -> set[Path]:
 	"""
 	Replace MathML with either plain characters or an image of the equation.
 
@@ -818,23 +996,22 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 	work_compatible_epub_dir: Path to the compatibility epub file in the temporary working directory.
 	metadata_dom: dom of the metadata file.
 	ibooks_srcset_bug_exists: Flag indicating whether the Apple Books srcset bug is still present.
+	build_cache_images_directory: The images cache directory for this ebook, or `None` to disable the cache.
 
 	OUTPUTS
-	None.
+	The paths to cache entries for the created images.
 	"""
-
-	# We import this late because we don't want to load selenium if we're not going to use it!
-	from se import browser # pylint: disable=import-outside-toplevel
 
 	# Remove MathML / `describedMath` `accessibilityFeature`s as we’re not going to use MathML.
 	for node in metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and (text() = 'describedMath' or text() = 'MathML')]"):
 		node.remove()
 
+	current_cache_paths: set[Path] = set()
+	epub_root_directory = work_compatible_epub_dir / "epub"
+
 	# We wrap this whole thing in a `try` block, because we need to call `driver.quit()` if execution is interrupted (like by `ctrl + c`, or by an unhandled exception). If we don't call `driver.quit()`, Firefox will stay around as a zombie process even if the Python script is dead.
 	driver = None
 	try:
-		driver = browser.initialize_selenium_firefox_webdriver()
-
 		mathml_count = 1
 		for metadata_item_node in metadata_dom.xpath("//item[contains(@properties, 'mathml')]"):
 			filename = (Path(work_compatible_epub_dir) / "epub" / metadata_item_node.get_attr("href")).resolve()
@@ -940,8 +1117,11 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 					namespaced_line = regex.sub(r"<(/?)m:", "<\\1", node.to_string())
 					namespaced_line = namespaced_line.replace("<math", "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"")
 
-					# Have Firefox render the fragment.
-					se.images.render_mathml_to_png(driver, namespaced_line, work_compatible_epub_dir / "epub" / "images" / f"mathml-{mathml_count}.png", work_compatible_epub_dir / "epub" / "images" / f"mathml-{mathml_count}-2x.png")
+					# Have Firefox render the fragment if it isn't already cached.
+					output_path = epub_root_directory / "images" / f"mathml-{mathml_count}.png"
+					output_path_2x = epub_root_directory / "images" / f"mathml-{mathml_count}-2x.png"
+					cache_paths, driver = __convert_mathml_to_png(namespaced_line, output_path, output_path_2x, build_cache_images_directory, driver)
+					current_cache_paths.update(cache_paths)
 
 					img_node = EasyXmlElement("<img/>", {"epub": "http://www.idpf.org/2007/ops"})
 					img_node.set_attr("class", "mathml epub-type-se-image-color-depth-black-on-transparent")
@@ -952,8 +1132,7 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 
 					if ibooks_srcset_bug_exists:
 						# Calculate the "normal" height/width from the 2x image.
-						ifile = work_compatible_epub_dir / "epub" / "images" / f"mathml-{mathml_count}-2x.png"
-						image_file = Image.open(ifile)
+						image_file = Image.open(output_path_2x)
 						img_width = image_file.size[0]
 						img_height = image_file.size[1]
 
@@ -965,7 +1144,7 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 						if (right != 0 or bottom != 0):
 							border = (0, 0, right, bottom)
 							image = ImageOps.expand(image_file, border)
-							image.save(ifile)
+							image.save(output_path_2x)
 
 						# Get the "display" dimensions.
 						img_width = img_width // 2
@@ -975,7 +1154,7 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 						img_node.set_attr("height", str(img_height))
 
 						# We don't need the 1x file if we're not using `srcset`.
-						os.unlink(work_compatible_epub_dir / "epub" / "images" / f"mathml-{mathml_count}.png")
+						output_path.unlink(missing_ok=True)
 
 						# Add any new MathML images we generated to the manifest.
 						for metadata_manifest_node in metadata_dom.xpath("/package/manifest"):
@@ -1013,6 +1192,8 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 		except Exception:
 			# We might get here if we `ctrl + c` before Selenium has finished initializing the driver.
 			pass
+
+	return current_cache_paths
 
 def _compatibility_css_additional_replacements(work_compatible_epub_dir: Path) -> None:
 	"""
@@ -1669,7 +1850,7 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 		kindle_cover_thumbnail_image = kindle_cover_thumbnail_image.resize((432, 648)) # type: ignore This is an error in Pillow's type stub.
 		kindle_cover_thumbnail_image.save(output_dir / f"thumbnail_{asin}_EBOK_portrait.jpg")
 
-def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: bool, build_kindle: bool, output_dir: Path, proof: bool) -> None:
+def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: bool, build_kindle: bool, output_dir: Path, proof: bool, build_cache_directory: Path|None) -> None:
 	"""
 	Entry point for `se build`.
 	"""
@@ -1719,6 +1900,17 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 		output_dir.mkdir(parents=True, exist_ok=True)
 	except Exception as ex:
 		raise se.FileExistsException(f"Couldn’t create output directory: [path][link=file://{output_dir}]{output_dir}[/][/].") from ex
+
+	# Set up our cache.
+	build_cache_images_directory = None
+	if build_cache_directory:
+		build_cache_images_directory = build_cache_directory / "images"
+
+		try:
+			build_cache_images_directory.mkdir(parents=True, exist_ok=True)
+		except Exception:
+			build_cache_directory = None
+			build_cache_images_directory = None
 
 	# All clear to start building!
 
@@ -1783,16 +1975,18 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 
 		# Now add compatibility fixes for older ereaders.
 
+		current_cache_paths: set[Path] = set()
+
 		# Replace MathML with either plain characters or an image of the equation.
 		# Do this before simplifying CSS because this may add new `epub:type`s.
 		if metadata_dom.xpath("/package/manifest/*[contains(@properties, 'mathml')]"):
-			_replace_mathml(self, work_compatible_epub_dir, metadata_dom, ibooks_srcset_bug_exists)
+			current_cache_paths.update(_replace_mathml(self, work_compatible_epub_dir, metadata_dom, ibooks_srcset_bug_exists, build_cache_images_directory))
 
 		# Add compatibility and simplify CSS.
 		_add_compatibility_css_and_simplify(self, work_compatible_epub_dir)
 
-		# Convert cover to jpg if it's not already.
-		_convert_cover_to_jpg(work_dir, work_compatible_epub_dir, metadata_dom)
+		# Convert cover to JPG if it's not already.
+		current_cache_paths.update(_convert_cover_to_jpg(work_compatible_epub_dir, metadata_dom, build_cache_images_directory))
 
 		# Add an element noting the version of the SE tools that built this ebook, but only if the SE vocab prefix is present.
 		metadata_dom = _add_metadata(metadata_dom, "version")
@@ -1847,7 +2041,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 			_build_kobo(self, work_dir, work_compatible_epub_dir, output_dir, kobo_output_filename, last_updated)
 
 		# Now work on more compatibility fixes.
-		_convert_svg_to_png(self, work_compatible_epub_dir, metadata_dom, ibooks_srcset_bug_exists)
+		current_cache_paths.update(_convert_svgs_to_pngs(self, work_compatible_epub_dir, metadata_dom, ibooks_srcset_bug_exists, build_cache_images_directory))
 
 		# Recurse over CSS files to make some compatibility replacements.
 		_compatibility_css_additional_replacements(work_compatible_epub_dir)
@@ -1874,6 +2068,15 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 			# Now run Ace.
 			if run_ace:
 				_run_ace(self, work_compatible_epub_dir)
+
+		# Prune unused images from the cache.
+		if build_cache_images_directory:
+			try:
+				for cache_path in build_cache_images_directory.glob("*"):
+					if cache_path.is_file() and cache_path not in current_cache_paths:
+						cache_path.unlink()
+			except Exception:
+				pass
 
 		# If we're only checking, quit now.
 		if check_only:

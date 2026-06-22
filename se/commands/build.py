@@ -5,15 +5,18 @@ This module implements the `se build` command.
 import argparse
 import os
 from pathlib import Path
+from hashlib import sha256
 
 from rich import box
 from rich.console import Console, RenderableType
 from rich.table import Table
 from rich.text import Text
+import regex
 
 import se
 from se.se_epub import SeEpub
 from se.se_help_formatter import SeHelpFormatter
+from se.formatting import make_url_safe
 
 def build(plain_output: bool) -> int:
 	"""
@@ -24,6 +27,7 @@ def build(plain_output: bool) -> int:
 	parser.add_argument("-b", "--kobo", dest="build_kobo", action="store_true", help="Also build a [path].kepub.epub[/] file for Kobo.")
 	parser.add_argument("-c", "--check", action="store_true", help="Use epubcheck to validate the compatible [path].epub[/] file, and the Nu Validator (v.Nu) to validate XHTML5; if Ace is installed, also validate using Ace; if [flag]--kindle[/] is also specified and epubcheck, v.Nu, or Ace fail, don’t create a Kindle file.")
 	parser.add_argument("-k", "--kindle", dest="build_kindle", action="store_true", help="Also build an [path].azw3[/] file for Kindle.")
+	parser.add_argument("-n", "--no-cache", action="store_true", help="Don’t use cached generated images; always rebuild them.")
 	parser.add_argument("-o", "--output-dir", metavar="[path]DIRECTORY[/]", type=str, default="", help="A directory to place output files in; will be created if it doesn’t exist.")
 	parser.add_argument("-p", "--proof", dest="proof", action="store_true", help="Insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
@@ -36,6 +40,8 @@ def build(plain_output: bool) -> int:
 	first_output = True
 	return_code = 0
 
+	build_cache_directory = se.get_cache_directory() / "build" / "ebooks"
+
 	# Rich needs to know the terminal width in order to format tables.
 	# If we're called from Parallel, there is no width because Parallel is not a terminal. Thus we must export `$COLUMNS` before invoking Parallel, and then get that value here.
 	console = Console(width=int(os.environ["COLUMNS"]) if called_from_parallel and "COLUMNS" in os.environ else None, highlight=False, theme=se.RICH_THEME, force_terminal=force_terminal) # Syntax highlighting will do weird things when printing paths; `force_terminal` prints colors when called from GNU Parallel.
@@ -43,6 +49,9 @@ def build(plain_output: bool) -> int:
 	if args.check_only and (args.check or args.build_kindle or args.build_kobo or args.proof or args.output_dir):
 		se.print_error("The [flag]--check-only[/] option can’t be combined with any other flags except for [flag]--verbose[/].", plain_output=plain_output)
 		return se.InvalidArgumentsException.code
+
+	if args.verbose and not called_from_parallel:
+		console.print(f"Using [path][link={build_cache_directory}]{build_cache_directory}[/][/] to cache files.")
 
 	for directory in args.directories:
 		directory = Path(directory).resolve()
@@ -53,7 +62,40 @@ def build(plain_output: bool) -> int:
 
 		try:
 			se_epub = SeEpub(directory)
-			se_epub.build(args.check, args.check_only, args.build_kobo, args.build_kindle, Path(args.output_dir), args.proof)
+
+			if se_epub.identifier is None:
+				raise se.InvalidSeEbookException("Couldn’t determine ebook identifier.")
+
+			if args.no_cache:
+				ebook_cache_directory = None
+			else:
+				identifier = regex.sub(r"^https://standardebooks\.org/ebooks/", "", se_epub.identifier)
+				ebook_cache_directory = build_cache_directory / f"{sha256(se_epub.identifier.encode('utf-8')).hexdigest()}-{make_url_safe(identifier)}"
+
+				try:
+					ebook_cache_directory.mkdir(parents=True, exist_ok=True)
+
+					if not os.access(ebook_cache_directory, os.W_OK):
+						raise se.SeException()
+
+				except Exception:
+					# If we failed to write the cache directory, notify the user in verbose mode and continue anyway without the cache.
+					if args.verbose:
+						console.print(f"Couldn’t write to [path][link={ebook_cache_directory}]{ebook_cache_directory}[/][/]; continuing without cache.")
+
+					ebook_cache_directory = None
+
+			# Now build the ebook!
+			se_epub.build(args.check, args.check_only, args.build_kobo, args.build_kindle, Path(args.output_dir), args.proof, ebook_cache_directory)
+
+			# If our cache directory is empty after building, then delete it.
+			if ebook_cache_directory:
+				try:
+					if ebook_cache_directory.is_dir() and not any(ebook_cache_directory.iterdir()):
+						ebook_cache_directory.unlink()
+				except Exception:
+					pass
+
 		except se.BuildFailedException as ex:
 			exception = ex
 			messages = ex.messages

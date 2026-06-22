@@ -43,6 +43,7 @@ complete -c se -A -n "__fish_seen_subcommand_from build" -s b -l kobo -x -d "Als
 complete -c se -A -n "__fish_seen_subcommand_from build" -s c -l check -x -d "Use epubcheck to validate the compatible `.epub` file, and the Nu Validator (v.Nu) to validate XHTML5; if Ace is installed, also validate using Ace; if `--kindle` is also specified and epubcheck, v.Nu, or Ace fail, don’t create a Kindle file."
 complete -c se -A -n "__fish_seen_subcommand_from build" -s h -l help -x -d "Show this help message and exit."
 complete -c se -A -n "__fish_seen_subcommand_from build" -s k -l kindle -x -d "Also build an `.azw3` file for Kindle."
+complete -c se -A -n "__fish_seen_subcommand_from build" -s n -l no-cache -x -d "Don’t use cached generated images; always rebuild them."
 complete -c se -A -n "__fish_seen_subcommand_from build" -s o -l output-dir -d "A directory to place output files in; will be created if it doesn’t exist."
 complete -c se -A -n "__fish_seen_subcommand_from build" -s p -l proof -x -d "Insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof."
 complete -c se -A -n "__fish_seen_subcommand_from build" -s v -l verbose -x -d "Increase output verbosity."

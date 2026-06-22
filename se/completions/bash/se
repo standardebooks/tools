@@ -125,7 +125,7 @@ _se(){
 					_se_compgen_dirs ".*"
 					return 0
 				fi
-				_se_compgen_words "-b --kobo -c --check -h --help -k --kindle -o --output-dir= -p --proof -v --verbose -y --check-only" "${cur}"
+				_se_compgen_words "-b --kobo -c --check -h --help -k --kindle -n --no-cache -o --output-dir= -p --proof -v --verbose -y --check-only" "${cur}"
 				_se_compgen_dirs ".*" "${cur}"
 				;;
 			build-ids)

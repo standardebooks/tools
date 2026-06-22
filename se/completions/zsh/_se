@@ -94,6 +94,7 @@ case $state in
 					{-c,--check}'[Use epubcheck to validate the compatible `.epub` file, and the Nu Validator (v.Nu) to validate XHTML5; if Ace is installed, also validate using Ace; if `--kindle` is also specified and epubcheck, v.Nu, or Ace fail, don’t create a Kindle file.]' \
 					{-h,--help}'[Show this help message and exit.]' \
 					{-k,--kindle}'[Also build an `.azw3` file for Kindle.]' \
+					{-n,--no-cache}'[Don’t use cached generated images; always rebuild them.]' \
 					{-o,--output-dir}'[A directory to place output files in; will be created if it doesn’t exist.]: :_directories' \
 					{-p,--proof}'[Insert additional CSS rules that are helpful for proofreading; output filenames will end in .proof.]' \
 					{-v,--verbose}'[Increase output verbosity.]' \

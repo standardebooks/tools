@@ -2,11 +2,17 @@
 Test internal SE programming functions
 """
 
+# pylint: disable=protected-access
+# pyright: reportPrivateUsage=false
+
 from pathlib import Path
 
 from PIL import Image, ImageDraw
+from pytest import MonkeyPatch
 import regex
 
+import se.se_epub_build
+from se.se_epub_build import __convert_image, __convert_mathml_to_png
 from se.se_epub_generate_toc import add_landmark, TocItem
 import se.easy_xml
 import se.images
@@ -82,6 +88,138 @@ def test_optimize_png(tmp_path: Path):
 		assert optimized_image.convert("RGBA").tobytes() == original_pixels
 
 	assert image_path.stat().st_size < original_size
+
+def test_cache_directory_uses_xdg_cache_home(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify the Standard Ebooks cache directory honors XDG_CACHE_HOME on any platform.
+	"""
+
+	monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+
+	assert se.get_cache_directory() == tmp_path / "se"
+
+def test_cache_directory_uses_localappdata_on_windows(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify the Standard Ebooks cache directory honors LOCALAPPDATA on Windows when XDG_CACHE_HOME is unset.
+	"""
+
+	monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
+	monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+	monkeypatch.setattr(se.sys, "platform", "win32")
+
+	assert se.get_cache_directory() == tmp_path / "se"
+
+def test_cache_directory_uses_dot_cache_on_non_windows(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify the Standard Ebooks cache directory defaults to ~/.cache/se on non-Windows platforms.
+	"""
+
+	monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
+	monkeypatch.setattr(se.sys, "platform", "linux")
+	monkeypatch.setattr(se.Path, "home", lambda: tmp_path)
+
+	assert se.get_cache_directory() == tmp_path / ".cache" / "se"
+
+def test_cache_directory_uses_library_caches_on_macos(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify the Standard Ebooks cache directory defaults to ~/Library/Caches/se on macOS.
+	"""
+
+	monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
+	monkeypatch.setattr(se.sys, "platform", "darwin")
+	monkeypatch.setattr(se.Path, "home", lambda: tmp_path)
+
+	assert se.get_cache_directory() == tmp_path / "Library" / "Caches" / "se"
+
+def test_svg_png_cache_key_changes_with_render_inputs(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify SVG-to-PNG cache keys change when render inputs change.
+	"""
+
+	epub_root_directory = tmp_path / "epub-root"
+	image_directory = epub_root_directory / "epub" / "images"
+	cache_directory = tmp_path / "cache"
+	image_directory.mkdir(parents=True)
+	cache_directory.mkdir()
+	svg_path = image_directory / "illustration.svg"
+	png_path = image_directory / "illustration.png"
+	svg_path.write_text("<svg/>", encoding="utf-8")
+
+	def fake_svg2png(**_kwargs: object) -> int:
+		"""
+		Write fake SVG conversion output.
+		"""
+
+		return png_path.write_bytes(b"png")
+
+	def fake_optimize_png(_filename: Path) -> None:
+		"""
+		Skip PNG optimization in cache key tests.
+		"""
+
+	monkeypatch.setattr(se.se_epub_build.cairosvg, "__version__", "1")
+	monkeypatch.setattr(se.se_epub_build, "svg2png", fake_svg2png)
+	monkeypatch.setattr(se.images, "optimize_png", fake_optimize_png)
+	key = __convert_image(svg_path, png_path, 1, cache_directory)
+
+	assert __convert_image(svg_path, png_path, 1, cache_directory) == key
+	assert __convert_image(svg_path, image_directory / "other-path.png", 2, cache_directory) != key
+	svg_path.write_text("<svg><path/></svg>", encoding="utf-8")
+	assert __convert_image(svg_path, png_path, 1, cache_directory) != key
+	monkeypatch.setattr(se.se_epub_build.cairosvg, "__version__", "2")
+	assert __convert_image(svg_path, png_path, 1, cache_directory) != key
+
+def test_copy_template_svg_png_for_known_logo(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify known SVGs can use template PNGs instead of local cache entries.
+	"""
+
+	svg_contents = b"<svg>logo</svg>"
+	svg_sha256 = se.se_epub_build.sha256(svg_contents).hexdigest()
+	svg_path = tmp_path / "logo.svg"
+	png_path = tmp_path / "logo.png"
+	svg_path.write_bytes(svg_contents)
+	monkeypatch.setattr(se.se_epub_build, "SE_LOGO_SVG_SHA256", svg_sha256)
+
+	assert __convert_image(svg_path, png_path, 1, tmp_path / "cache") is None
+
+	assert png_path.read_bytes() == (Path("se") / "data" / "templates" / "logo.png").read_bytes()
+
+def test_mathml_png_cache_avoids_rendering(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify MathML-to-PNG cache hits avoid rendering the MathML fragment.
+	"""
+
+	driver = object()
+	mathml_fragment = "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mi>x</mi></math>"
+	cache_directory = tmp_path / "cache"
+	cache_directory.mkdir()
+	output_path = tmp_path / "mathml.png"
+	output_path_2x = tmp_path / "mathml-2x.png"
+	render_calls: list[str] = []
+
+	def fake_render_mathml_to_png(_driver: object, mathml: str, output_filename: Path, output_filename_2x: Path) -> None:
+		"""
+		Write fake MathML render outputs.
+		"""
+
+		render_calls.append(mathml)
+		output_filename.write_bytes(b"1x")
+		output_filename_2x.write_bytes(b"2x")
+
+	monkeypatch.setattr(se.images, "render_mathml_to_png", fake_render_mathml_to_png)
+
+	cache_paths, reused_driver = __convert_mathml_to_png(mathml_fragment, output_path, output_path_2x, cache_directory, driver)
+	output_path.unlink()
+	output_path_2x.unlink()
+	cached_paths, cached_driver = __convert_mathml_to_png(mathml_fragment, output_path, output_path_2x, cache_directory, driver)
+
+	assert cache_paths == cached_paths
+	assert reused_driver is driver
+	assert cached_driver is driver
+	assert render_calls == [mathml_fragment]
+	assert output_path.read_bytes() == b"1x"
+	assert output_path_2x.read_bytes() == b"2x"
 
 def test_line_numbers_no_comments():
 	"""

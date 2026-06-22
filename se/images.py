@@ -51,6 +51,7 @@ TITLEPAGE_CONTRIBUTOR_DESCRIPTOR_MARGIN = 80 # Space between last contributor li
 LEAGUE_SPARTAN_CSS_LETTER_SPACING = 5 # The SVG file specify `letter-spacing` in their CSS, so this accounts for that, in px.
 LEAGUE_SPARTAN_DIACRITIC_RATIO = 6 # When a line contains a letter with a diacritic like `ö`, add an amount of y offset of that line based on `LINE_HEIGHT / LEAGUE_SPARTAN_DIACRITIC_RATIO`, in px.
 LEAGUE_SPARTAN_HEIGHT_RATIO = 0.8549999849 # Font size of 93.56725311px * 0.8549999849 = 80px of real text height
+OXIPNG_OPTIMIZATION_LEVEL = 6
 
 class FontMeta:
 	"""
@@ -99,7 +100,7 @@ def optimize_png(path: Path) -> None:
 	Use `oxipng` to optimize a PNG file.
 	"""
 
-	optimize(path, level=6)
+	optimize(path, level=OXIPNG_OPTIMIZATION_LEVEL)
 
 def get_image_lines_width(lines: list[str], line_height: int) -> float:
 	"""

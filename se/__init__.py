@@ -180,6 +180,25 @@ def init_console() -> Console:
 
 	return Console(highlight=False, theme=se.RICH_THEME, soft_wrap=True, force_terminal=se.should_output_color())
 
+def get_cache_directory() -> Path:
+	"""
+	Return the Standard Ebooks cache directory for this local machine.
+	"""
+
+	if os.environ.get("XDG_CACHE_HOME"):
+		return Path(os.environ["XDG_CACHE_HOME"]) / "se"
+
+	if sys.platform == "win32":
+		if os.environ.get("LOCALAPPDATA"):
+			return Path(os.environ["LOCALAPPDATA"]) / "se"
+
+		return Path.home() / "AppData" / "Local" / "se"
+
+	if sys.platform == "darwin":
+		return Path.home() / "Library" / "Caches" / "se"
+
+	return Path.home() / ".cache" / "se"
+
 def is_no_color_set() -> bool:
 	"""
 	Return whether color output has been disabled by the NO_COLOR environmental variable.
