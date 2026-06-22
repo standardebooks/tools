@@ -1,5 +1,6 @@
 {
 	"venv": "standardebooks",
+	"exclude": ["se/vendor", "build", "se/data/calibre_deterministic_build.py"],
 	"ignore": ["se/vendor", "build", "se/data/calibre_deterministic_build.py"],
 	"strictListInference": true,
 	"strictDictionaryInference": true,
