@@ -11,6 +11,9 @@ import subprocess
 from pathlib import Path
 import pytest
 
+BINARY_IMAGE_EXTENSIONS = [".bmp", ".gif", ".jp2", ".jpg", ".jpeg", ".png", ".tif", ".tiff", ".webp", ".xcf"]
+BINARY_OTHER_EXTENSIONS = [".mp3", ".mp4", ".ogg", ".ttf", ".otf", ".woff", ".woff2", ".epub"]
+
 def fail_test(message: str) -> None:
 	"""
 	Fail a test with a clean message and without pytest showing helper internals.
@@ -265,10 +268,10 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 			# Extract files are checked as normal, i.e. for equality.
 			extract_same = list(set(extract_files).intersection(golden_extract_files))
 			for file in extract_same:
-				# Image files are not UTF-8, and a dump is not useful, so let filecmp handle them.
-				if file.suffix in (".bmp", ".jpg", ".png", ".tif"):
+				# Image and font files are not UTF-8, and a dump is not useful, so let filecmp handle them.
+				if file.suffix in BINARY_IMAGE_EXTENSIONS or file.suffix in BINARY_OTHER_EXTENSIONS:
 					if not filecmp.cmp(extract_dir / file, golden_extract_dir / file):
-						fail_test(f"Extract image file mismatch.{_format_test_context(test_context)}\n\nFile: {file}")
+						fail_test(f"Extract image or font file mismatch.{_format_test_context(test_context)}\n\nFile: {file}")
 				else:
 					with open(golden_extract_dir / file, encoding="utf-8") as gfile:
 						golden_text = gfile.read()
@@ -343,10 +346,10 @@ def files_are_golden(command: str, in_dir: Path, results_dir: Path, golden_dir: 
 
 		# files in both are compared for equality
 		for file in results_same:
-			# image files aren't utf-8, and a dump isn't useful, so let filecmp handle them
-			if file.suffix in (".bmp", ".jpg", ".png", ".tif"):
+			# image or font files aren't utf-8, and a dump isn't useful, so let filecmp handle them
+			if file.suffix in BINARY_IMAGE_EXTENSIONS or file.suffix in BINARY_OTHER_EXTENSIONS:
 				if not filecmp.cmp(results_dir / file, golden_dir / file):
-					fail_test(f"Results image file mismatch.{_format_test_context(test_context)}\n\nFile: {file}")
+					fail_test(f"Results image or font file mismatch.{_format_test_context(test_context)}\n\nFile: {file}")
 			else:
 				with open(golden_dir / file, encoding="utf-8") as gfile:
 					golden_text = gfile.read()
