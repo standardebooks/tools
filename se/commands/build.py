@@ -4,6 +4,7 @@ This module implements the `se build` command.
 
 import argparse
 import os
+import shutil
 from pathlib import Path
 from hashlib import sha256
 
@@ -40,7 +41,8 @@ def build(plain_output: bool) -> int:
 	first_output = True
 	return_code = 0
 
-	build_cache_directory = se.get_cache_directory() / "build" / "ebooks"
+	build_cache_root_directory = se.get_cache_directory() / "build"
+	build_cache_directory = build_cache_root_directory / "ebooks"
 
 	# Rich needs to know the terminal width in order to format tables.
 	# If we're called from Parallel, there is no width because Parallel is not a terminal. Thus we must export `$COLUMNS` before invoking Parallel, and then get that value here.
@@ -49,6 +51,15 @@ def build(plain_output: bool) -> int:
 	if args.check_only and (args.check or args.build_kindle or args.build_kobo or args.proof or args.output_dir):
 		se.print_error("The [flag]--check-only[/] option can’t be combined with any other flags except for [flag]--verbose[/].", plain_output=plain_output)
 		return se.InvalidArgumentsException.code
+
+	try:
+		max_cache_size = se.parse_size_string(se.get_config_value("/configuration/build/@max-cache-size"))
+		if max_cache_size <= 0:
+			max_cache_size = None
+
+	except se.InvalidArgumentsException as ex:
+		se.print_error(ex, plain_output=plain_output)
+		return ex.code
 
 	if args.verbose and not called_from_parallel:
 		console.print(f"Using [path][link={build_cache_directory}]{build_cache_directory}[/][/] to cache files.")
@@ -176,5 +187,21 @@ def build(plain_output: bool) -> int:
 		# Print a newline if we're called from Parallel and we just printed something, to better visually separate output blocks.
 		if called_from_parallel and has_output:
 			console.print("")
+
+	if max_cache_size is not None:
+		# Check if we have to prune the cache before exiting.
+		# We prune if `max_cache_size` is set, *and* if there is more than one cached ebook.
+		if build_cache_directory.is_dir():
+			ebook_cache_directories = [path for path in build_cache_directory.iterdir() if path.is_dir()]
+
+			while len(ebook_cache_directories) > 1 and se.get_directory_size(build_cache_directory) > max_cache_size:
+				try:
+					oldest_cache_directory = min(ebook_cache_directories, key=lambda path: path.stat().st_mtime)
+				except OSError:
+					continue
+
+				print(f"Pruning {oldest_cache_directory}")
+				shutil.rmtree(oldest_cache_directory, ignore_errors=True)
+				ebook_cache_directories.remove(oldest_cache_directory)
 
 	return return_code

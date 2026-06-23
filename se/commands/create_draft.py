@@ -944,6 +944,11 @@ def create_draft(plain_output: bool) -> int:
 	parser.add_argument("-w", "--white-label", action="store_true", help="Create a generic epub skeleton without Standard Ebooks branding.")
 	args = parser.parse_args()
 
+	if args.email is None:
+		default_email = se.get_config_value("/configuration/create-draft/@default-email")
+		if default_email:
+			args.email = default_email
+
 	try:
 		# Before we continue, confirm that there isn't a subtitle passed in with the title.
 		if ":" in args.title:

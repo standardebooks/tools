@@ -199,6 +199,18 @@ Instructions are found in the testing [README](tests/README.md).
 
 - Complete type hints are required at all times. A run of `pylint` using the provided configuration should finish with zero output.
 
+# Configuration
+
+A small number of configuration options are available. To enable configuration, copy the file `./se/data/configuration.xml` into `$XDG_CONFIG_HOME/se/`. Default locations:
+
+- Linux: `~/.config/se/`
+
+- Mac: `~/Library/Application Support/se/`
+
+- Windows: `~\AppData\Roaming\se\`.
+
+Configuration documentation is located in `configuration.xml`.
+
 # Help wanted
 
 We need volunteers to take the lead on the following goals:

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+	<!--
+		se build
+
+			- max-cache-size
+
+				Type: A size string, like `50MB`, or an empty string.
+
+				Default: 50MB
+
+				Defines the maximum size of the local build cache. If the cache grows beyond this size, the oldest cached items are removed until the cache is below this size. `se build` may create a cache entry that temporarily pushes the cache size above this value before the cache is pruned at the end of the build process.
+
+				If this value is not set, the default value is used. If this value is set to an empty string, the cache size is defined as unlimited.
+	-->
+	<build
+		max-cache-size="50MB"
+	/>
+
+	<!--
+		se create-draft
+
+			- default-email
+
+				Type: An email address.
+
+				Default: Empty string.
+
+				Defines the default email address used to initialize the Git repository of the draft.
+
+				If this value is not set or is set to an empty string, the Git repository is initialized using your local Git configuration values.
+	-->
+	<create-draft
+			default-email=""
+	/>
+</configuration>

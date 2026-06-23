@@ -4,6 +4,7 @@ Defines various package-level constants and helper functions.
 """
 
 import argparse
+import functools
 import os
 import sys
 from pathlib import Path
@@ -40,6 +41,10 @@ MESSAGE_TYPE_ERROR = 2
 COVER_HEIGHT = 2100
 COVER_WIDTH = 1400
 TITLEPAGE_WIDTH = 1400
+DEFAULT_CONFIG_VALUES = {
+	"/configuration/build/@max-cache-size": "50MB",
+	"/configuration/create-draft/@default-email": ""
+}
 RICH_THEME = Theme({
 	"command": "green",
 	"subcommand": "dark_sea_green1",
@@ -198,6 +203,99 @@ def get_cache_directory() -> Path:
 		return Path.home() / "Library" / "Caches" / "se"
 
 	return Path.home() / ".cache" / "se"
+
+def get_config_directory() -> Path:
+	"""
+	Return the Standard Ebooks config directory for this local machine.
+	"""
+
+	if os.environ.get("XDG_CONFIG_HOME"):
+		return Path(os.environ["XDG_CONFIG_HOME"]) / "se"
+
+	if sys.platform == "win32":
+		if os.environ.get("APPDATA"):
+			return Path(os.environ["APPDATA"]) / "se"
+
+		return Path.home() / "AppData" / "Roaming" / "se"
+
+	if sys.platform == "darwin":
+		return Path.home() / "Library" / "Application Support" / "se"
+
+	return Path.home() / ".config" / "se"
+
+@functools.cache
+def _get_config_dom() -> se.easy_xml.EasyXmlTree | None:
+	"""
+	Return the cached local configuration DOM, if one exists and is readable.
+	"""
+
+	config_file_path = se.get_config_directory() / "configuration.xml"
+
+	try:
+		with open(config_file_path, "r", encoding="utf-8") as file:
+			return se.easy_xml.EasyXmlTree(file.read())
+	except (OSError, se.InvalidXmlException):
+		return None
+
+def get_config_value(key: str) -> str:
+	"""
+	Return the configured value for a Standard Ebooks tool setting.
+	"""
+
+	default_value = DEFAULT_CONFIG_VALUES.get(key, "")
+	config_dom = _get_config_dom()
+	if config_dom is None:
+		return default_value
+
+	config_values = config_dom.xpath(key, str)
+
+	if not config_values:
+		return default_value
+
+	return config_values[0].strip()
+
+def parse_size_string(size_string: str) -> int:
+	"""
+	Parse a size string, like `30MB`, into bytes.
+	"""
+
+	size_string = size_string.strip()
+
+	size_units = {
+		"KB": 1024,
+		"MB": 1024 ** 2,
+		"GB": 1024 ** 3,
+		"TB": 1024 ** 4
+	}
+
+	if size_string == "":
+		return 0
+
+	match = regex.fullmatch(r"(\d+(?:\.\d+)?)(KB|MB|GB|TB)", size_string, flags=regex.IGNORECASE)
+
+	if not match:
+		raise se.InvalidArgumentsException(f"Invalid value: [val]{size_string}[/].")
+
+	return int(float(match.group(1)) * size_units[match.group(2).upper()])
+
+def get_directory_size(directory: Path) -> int:
+	"""
+	Return the total size, in bytes, of all files contained in a directory.
+	"""
+
+	total_size = 0
+
+	try:
+		for path in directory.rglob("*"):
+			try:
+				if path.is_file():
+					total_size += path.stat().st_size
+			except OSError:
+				pass
+	except OSError:
+		pass
+
+	return total_size
 
 def is_no_color_set() -> bool:
 	"""

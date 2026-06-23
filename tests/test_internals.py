@@ -5,6 +5,7 @@ Test internal SE programming functions
 # pylint: disable=protected-access
 # pyright: reportPrivateUsage=false
 
+import builtins
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -58,7 +59,7 @@ def test_inner_text():
 	returns both named and numeric entities as their corresponding characters.
 	"""
 	dom = se.easy_xml.EasyXmlTree('<?xml version="1.0" encoding="utf-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en-US"><body><p epub:type="foo"> a <i>&lt;</i>b <span epub:type="bar">\t&#913; </span>c<br/>\nd </p>e</body></html>')
-	p = dom.xpath("//p")[0]
+	p = next(iter(dom.xpath("//p")))
 
 	assert p.inner_text() == "a <b \tΑ c\nd"
 
@@ -130,6 +131,157 @@ def test_cache_directory_uses_library_caches_on_macos(monkeypatch: MonkeyPatch, 
 	monkeypatch.setattr(se.Path, "home", lambda: tmp_path)
 
 	assert se.get_cache_directory() == tmp_path / "Library" / "Caches" / "se"
+
+def test_config_directory_uses_xdg_config_home(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify the Standard Ebooks config directory honors XDG_CONFIG_HOME on any platform.
+	"""
+
+	monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+	assert se.get_config_directory() == tmp_path / "se"
+
+def test_config_directory_uses_appdata_on_windows(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify the Standard Ebooks config directory honors APPDATA on Windows when XDG_CONFIG_HOME is unset.
+	"""
+
+	monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+	monkeypatch.setenv("APPDATA", str(tmp_path))
+	monkeypatch.setattr(se.sys, "platform", "win32")
+
+	assert se.get_config_directory() == tmp_path / "se"
+
+def test_config_directory_uses_dot_config_on_non_windows(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify the Standard Ebooks config directory defaults to ~/.config/se on non-Windows platforms.
+	"""
+
+	monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+	monkeypatch.setattr(se.sys, "platform", "linux")
+	monkeypatch.setattr(se.Path, "home", lambda: tmp_path)
+
+	assert se.get_config_directory() == tmp_path / ".config" / "se"
+
+def test_config_directory_uses_library_application_support_on_macos(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify the Standard Ebooks config directory defaults to ~/Library/Application Support/se on macOS.
+	"""
+
+	monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+	monkeypatch.setattr(se.sys, "platform", "darwin")
+	monkeypatch.setattr(se.Path, "home", lambda: tmp_path)
+
+	assert se.get_config_directory() == tmp_path / "Library" / "Application Support" / "se"
+
+def test_config_value_uses_default_when_file_does_not_exist(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify config values fall back to defaults when no local configuration file exists.
+	"""
+
+	config_directory = tmp_path / "config"
+	monkeypatch.setattr(se, "get_config_directory", lambda: config_directory)
+	se._get_config_dom.cache_clear()
+
+	assert se.get_config_value("/configuration/build/@max-cache-size") == "50MB"
+	assert not config_directory.exists()
+
+def test_config_value_uses_configuration_file(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify config values are read from the local configuration file when present.
+	"""
+
+	config_directory = tmp_path / "config"
+	config_directory.mkdir()
+	(config_directory / "configuration.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+	<build max-cache-size="100MB"/>
+</configuration>
+	""", encoding="utf-8")
+	monkeypatch.setattr(se, "get_config_directory", lambda: config_directory)
+	se._get_config_dom.cache_clear()
+
+	assert se.get_config_value("/configuration/build/@max-cache-size") == "100MB"
+
+def test_config_value_caches_configuration_dom(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify the parsed configuration DOM is reused between config value lookups.
+	"""
+
+	config_directory = tmp_path / "config"
+	config_directory.mkdir()
+	config_file_path = config_directory / "configuration.xml"
+	config_file_path.write_text("""<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+	<build max-cache-size="100MB"/>
+</configuration>
+	""", encoding="utf-8")
+	monkeypatch.setattr(se, "get_config_directory", lambda: config_directory)
+	se._get_config_dom.cache_clear()
+
+	assert se.get_config_value("/configuration/build/@max-cache-size") == "100MB"
+
+	config_file_path.write_text("""<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+	<build max-cache-size="200MB"/>
+</configuration>
+""", encoding="utf-8")
+
+	assert se.get_config_value("/configuration/build/@max-cache-size") == "100MB"
+
+def test_config_value_uses_default_when_key_is_missing(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify config values fall back to defaults when the requested key is missing.
+	"""
+
+	config_directory = tmp_path / "config"
+	config_directory.mkdir()
+	(config_directory / "configuration.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+	<build/>
+</configuration>
+	""", encoding="utf-8")
+	monkeypatch.setattr(se, "get_config_directory", lambda: config_directory)
+	se._get_config_dom.cache_clear()
+
+	assert se.get_config_value("/configuration/build/@max-cache-size") == "50MB"
+
+def test_config_value_supports_empty_values(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify config values can be empty strings.
+	"""
+
+	config_directory = tmp_path / "config"
+	config_directory.mkdir()
+	(config_directory / "configuration.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+	<create-draft default-email=""/>
+</configuration>
+	""", encoding="utf-8")
+	monkeypatch.setattr(se, "get_config_directory", lambda: config_directory)
+	se._get_config_dom.cache_clear()
+
+	assert se.get_config_value("/configuration/create-draft/@default-email") == ""
+
+def test_config_value_uses_default_when_file_is_not_readable(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+	"""
+	Verify config values fall back to defaults when the local configuration file is not readable.
+	"""
+
+	def unreadable_open(_file: object, *args: object, **kwargs: object) -> object:
+		"""
+		Raise an OSError to simulate an unreadable configuration file.
+		"""
+
+		del args
+		del kwargs
+		raise OSError
+
+	monkeypatch.setattr(se, "get_config_directory", lambda: tmp_path)
+	se._get_config_dom.cache_clear()
+	monkeypatch.setattr(builtins, "open", unreadable_open)
+
+	assert se.get_config_value("/configuration/build/@max-cache-size") == "50MB"
 
 def test_svg_png_cache_key_changes_with_render_inputs(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
 	"""
