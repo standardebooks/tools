@@ -581,7 +581,11 @@ def process_a_heading(node: EasyXmlElement, textf: str, is_toplevel: bool, singl
 			try:
 				roman.fromRoman(toc_item.roman)
 			except roman.InvalidRomanNumeralError as err:
-				raise se.InvalidInputException(f"Heading tagged as roman numeral is invalid: {toc_item.roman} in [path][link=file://{textf}]{textf}[/][/].") from err
+				error_string = toc_item.roman
+				if not error_string:
+					error_string = "[text]<empty string>[/]"
+
+				raise se.InvalidInputException(f"Heading tagged as roman numeral is invalid: {error_string} in [path][link=file://{textf}]{textf}[/][/].") from err
 			toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
 			return toc_item
 		if "z3998:ordinal" in epub_type:  # But not a roman numeral (e.g. in Nietzche's _Beyond Good and Evil_).
@@ -643,7 +647,11 @@ def evaluate_descendants(node: EasyXmlElement, toc_item: TocItem, textf: str) ->
 			try:
 				roman.fromRoman(toc_item.roman)
 			except roman.InvalidRomanNumeralError as err:
-				raise se.InvalidInputException(f"Heading tagged as roman numeral is invalid: {toc_item.roman} in [path][link=file://{textf}]{textf}[/][/].") from err
+				error_string = toc_item.roman
+				if not error_string:
+					error_string = "[text]<empty string>[/]"
+
+				raise se.InvalidInputException(f"Heading tagged as roman numeral is invalid: {error_string} in [path][link=file://{textf}]{textf}[/][/].") from err
 			if not toc_item.title:
 				toc_item.title = f"<span epub:type=\"z3998:roman\">{toc_item.roman}</span>"
 		elif "z3998:ordinal" in epub_type:  # But not a roman numeral or a labeled item, cases caught caught above.
