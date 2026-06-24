@@ -58,7 +58,7 @@ def build(plain_output: bool) -> int:
 			max_cache_size = None
 
 	except se.InvalidArgumentsException as ex:
-		se.print_error(ex, plain_output=plain_output)
+		se.print_error(f"Invalid value for maximum cache size in [link=file://{se.get_config_file()}]configuration file[/].", plain_output=plain_output)
 		return ex.code
 
 	if args.verbose and not called_from_parallel:
@@ -188,20 +188,20 @@ def build(plain_output: bool) -> int:
 		if called_from_parallel and has_output:
 			console.print("")
 
-	if max_cache_size is not None:
-		# Check if we have to prune the cache before exiting.
-		# We prune if `max_cache_size` is set, *and* if there is more than one cached ebook.
-		if build_cache_directory.is_dir():
-			ebook_cache_directories = [path for path in build_cache_directory.iterdir() if path.is_dir()]
+		if max_cache_size is not None:
+			# Check if we have to prune the cache before continuing to the next ebook.
+			# We prune if `max_cache_size` is set, *and* if there is more than one cached ebook.
+			if build_cache_directory.is_dir():
+				ebook_cache_directories = [path for path in build_cache_directory.iterdir() if path.is_dir()]
 
-			while len(ebook_cache_directories) > 1 and se.get_directory_size(build_cache_directory) > max_cache_size:
-				try:
-					oldest_cache_directory = min(ebook_cache_directories, key=lambda path: path.stat().st_mtime)
-				except OSError:
-					continue
+				while len(ebook_cache_directories) > 1 and se.get_directory_size(build_cache_directory) > max_cache_size:
+					try:
+						oldest_cache_directory = min(ebook_cache_directories, key=lambda path: path.stat().st_mtime)
+					except OSError:
+						continue
 
-				print(f"Pruning {oldest_cache_directory}")
-				shutil.rmtree(oldest_cache_directory, ignore_errors=True)
-				ebook_cache_directories.remove(oldest_cache_directory)
+					print(f"Pruning {oldest_cache_directory}")
+					shutil.rmtree(oldest_cache_directory, ignore_errors=True)
+					ebook_cache_directories.remove(oldest_cache_directory)
 
 	return return_code

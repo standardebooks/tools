@@ -223,13 +223,19 @@ def get_config_directory() -> Path:
 
 	return Path.home() / ".config" / "se"
 
+def get_config_file() -> Path:
+	"""
+	Return the Standard Ebooks config file path for this local machine.
+	"""
+	return se.get_config_directory() / "configuration.xml"
+
 @functools.cache
 def _get_config_dom() -> se.easy_xml.EasyXmlTree | None:
 	"""
 	Return the cached local configuration DOM, if one exists and is readable.
 	"""
 
-	config_file_path = se.get_config_directory() / "configuration.xml"
+	config_file_path = get_config_file()
 
 	try:
 		with open(config_file_path, "r", encoding="utf-8") as file:
