@@ -493,7 +493,7 @@ TYPOS
 "y-003", "Possible typo: Paragraph missing ending punctuation."
 "y-004", "Possible typo: Mis-curled quotation mark after dash."
 "y-005", "Possible typo: Punctuation followed by period or comma."
-"y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hint: [text]’[/] are used for elisions;	commas and periods must go inside quotation marks."
+"y-006", "Possible typo: [text]‘[/] without matching [text]’[/]. Hint: [text]’[/] are used for elisions; commas and periods must go inside quotation marks."
 "y-007", "Possible typo: [text]‘[/] not within [text]“[/]. Hint: Should [text]‘[/] be replaced with [text]“[/]? Is there a missing closing quote? Is this a nested quote that should be preceded by [text]“[/]? Are quotes in close proximity correctly closed?"
 "y-008", "Possible typo: Dialog interrupted by interjection but with incorrect closing quote."
 "y-009", "Possible typo: Dialog begins with lowercase letter."
@@ -2705,11 +2705,14 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 
 	# Xpath to check for opening quote in `<p>`, without a next child `<p>` that starts with an opening quote or an opening bracket (for editorial insertions within paragraphs of quotation); or that consists of only an ellipses (like an elided part of a longer quotation).
 	# Matching `<p>`s can't have a poem/verse ancestor as formatting is often special for those.
-	# Union that with short `<p>` tags (< 100 characters) that lack closing quote, and whose direct siblings do have closing quotes (to exclude runs of same-speaker dialog), and that is not within a `<blockquote>`, verse, or letter.
+	# Union that with short `<p>` elements (< 100 characters) that lack closing quote, and whose direct siblings do have closing quotes (to exclude runs of same-speaker dialog), and that is not within a `<blockquote>`, verse, or letter.
+	# Union that with `<p>` elements that contain a missing closing quote, and have no following siblings, except if they're in verse, blockqutes, headers, tables, or lists.
 	nodes = dom.xpath("""
 				/html/body//p[re:test(., '“[^‘”]+$')][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')])][(following-sibling::*[1])[name()='p'][not(re:test(normalize-space(.), '^[“\\[]') or re:test(normalize-space(.), '^…$'))]]
 				|
 			    	/html/body//p[re:test(., '“[^‘”]+$') and not(re:test(., '[…:]$')) and string-length(normalize-space(.)) <=100][(following-sibling::*[1])[not(re:test(., '“[^”]+$'))] and (preceding-sibling::*[1])[not(re:test(., '“[^”]+$'))]][not(ancestor::*[re:test(@epub:type, 'z3998:(verse|poem|song|hymn|lyrics)')]) and not(ancestor::blockquote) and not (ancestor::*[contains(@epub:type, 'z3998:letter')])][(following-sibling::*[1])[name()='p'][re:test(normalize-space(.), '^[“\\[]') and not(contains(., 'continued'))]]
+			    	|
+			    	/html/body//p[re:test(., '“[^”]+$') and not(following-sibling::*) and not(ancestor::*[re:test(@epub:type, 'z3998:(poem|verse|hymn|song)') or re:test(name(), '^(blockquote|header|ol|ul|table)$')]) and not(parent::section[following-sibling::section[1]/p[1][re:test(., '^“')]])]
 			    """)
 
 	for node in nodes:

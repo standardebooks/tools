@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0" xml:lang="en-GB">
+	<head>
+		<title>I</title>
+		<link href="../css/core.css" rel="stylesheet" type="text/css"/>
+		<link href="../css/local.css" rel="stylesheet" type="text/css"/>
+	</head>
+	<body epub:type="bodymatter z3998:fiction">
+		<section id="chapter-1" epub:type="chapter">
+			<h2 epub:type="z3998:ordinal z3998:roman">I</h2>
+			<!-- Valid because a following section continues the quotation. -->
+			<section id="chapter-1-1">
+				<p>“This speech continues across sections.</p>
+			</section>
+			<section id="chapter-1-2">
+				<p>“This paragraph begins the continuation properly.”</p>
+			</section>
+			<section id="chapter-1-3">
+				<header>
+					<p>“This heading line is exempt.</p>
+				</header>
+			</section>
+			<blockquote>
+				<p>“This quoted block is exempt.</p>
+			</blockquote>
+			<ul>
+				<li>
+					<p>“This list item is exempt.</p>
+				</li>
+			</ul>
+			<table>
+				<tbody>
+					<tr>
+						<td>
+							<p>“This table cell is exempt.</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<!-- Error, missing closing quote at the end of the file. -->
+			<p>“This final speech remains unfinished.</p>
+		</section>
+	</body>
+</html>
