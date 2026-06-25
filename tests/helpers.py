@@ -8,7 +8,9 @@ import os
 import shlex
 import shutil
 import subprocess
+import zipfile
 from pathlib import Path
+import regex
 import pytest
 
 BINARY_IMAGE_EXTENSIONS = [".bmp", ".gif", ".jp2", ".jpg", ".jpeg", ".png", ".tif", ".tiff", ".webp", ".xcf"]
@@ -184,6 +186,36 @@ def _is_device_build_file(file: Path) -> bool:
 	"""
 	return file.suffix == ".azw3" or file.name.endswith(".kepub.epub")
 
+def _normalize_built_with_metadata(xml: bytes) -> str:
+	"""
+	Return OPF XML with the build tool version metadata normalized.
+	"""
+	text = xml.decode("utf-8")
+	return regex.sub(r"(<meta\b[^>]*\bproperty=['\"]se:built-with['\"][^>]*>).*?(</meta>)", r"\1</meta>", text, flags=regex.DOTALL)
+
+def _epub_files_match(expected_file: Path, received_file: Path) -> bool:
+	"""
+	Return whether two EPUB files match while ignoring the OPF build tool version metadata.
+	"""
+	with zipfile.ZipFile(expected_file) as expected_epub, zipfile.ZipFile(received_file) as received_epub:
+		expected_files = expected_epub.namelist()
+		received_files = received_epub.namelist()
+
+		if expected_files != received_files:
+			return False
+
+		for file in expected_files:
+			expected_content = expected_epub.read(file)
+			received_content = received_epub.read(file)
+
+			if file.endswith("content.opf"):
+				if _normalize_built_with_metadata(expected_content) != _normalize_built_with_metadata(received_content):
+					return False
+			elif expected_content != received_content:
+				return False
+
+	return True
+
 def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update_golden: bool, test_context: str | None = None) -> bool:
 	"""
 	Verify the results of both the build and the extract are the same as the corresponding "golden" files.
@@ -258,10 +290,12 @@ def build_is_golden(build_dir: Path, extract_dir: Path, golden_dir: Path, update
 		if missing_build_files or extraneous_build_files:
 			fail_file_set_mismatch("Build", missing_build_files, extraneous_build_files, test_context)
 
-		# Kindle and Kobo build files must be byte-for-byte identical to their golden files.
+		# Device build files must match their golden files, excluding volatile KEPUB build metadata.
 		build_same = list(set(build_files).intersection(golden_build_files))
 		for file in build_same:
-			if _is_device_build_file(file) and not filecmp.cmp(build_dir / file, golden_build_dir / file, shallow=False):
+			if file.name.endswith(".kepub.epub") and not _epub_files_match(golden_build_dir / file, build_dir / file):
+				fail_test(f"Build file mismatch.{_format_test_context(test_context)}\n\nFile: {file}")
+			if file.suffix == ".azw3" and not filecmp.cmp(build_dir / file, golden_build_dir / file, shallow=False):
 				fail_test(f"Build file mismatch.{_format_test_context(test_context)}\n\nFile: {file}")
 
 		if not is_device_build_test:
