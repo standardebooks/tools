@@ -161,6 +161,7 @@ FILESYSTEM
 "f-001", "Illegal file or directory."
 "f-002", "Missing expected file or directory."
 "f-003", "File doesn’t match template."
+"f-004", "MusicXML files must end in [path].musicxml[/]."
 "f-007", "File not listed in [xml]<spine>[/]."
 "f-008", "Filename is not URL-safe."
 "f-009", "Illegal leading [text]0[/] in filename."
@@ -174,7 +175,6 @@ FILESYSTEM
 "f-018", "Image greater than 4,000,000 pixels square in dimension."
 "f-019", "[path].png[/] file without transparency. Hint: If an image doesn’t have transparency, it should be saved as a [path].jpg[/]."
 UNUSEDvvvvvvvvvvvvvvvvv
-"f-004", ""
 "f-005", ""
 "f-006", ""
 "f-014", ""
@@ -4010,7 +4010,10 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 			# Remove comments before we do any further processing.
 			source_file = source_file.sub(regex.compile(r"<!--.+?-->", flags=regex.DOTALL), "")
 
-			# Check for MusicXML associated role
+			# Check for potential MusicXML errors
+			if file_path.suffix == ".xml" and source_file.findall("http://www.musicxml.org/dtds/"):
+				messages.append(LintMessage("f-004", "MusicXML files must end in [path].musicxml[/].", se.MESSAGE_TYPE_ERROR, file_path))
+
 			if file_path.suffix == ".musicxml" and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='mcp']"):
 				messages.append(LintMessage("m-092", "MusicXML files found, but no MARC relator [val]mcp[/] (Music copyist).", se.MESSAGE_TYPE_WARNING, file_path))
 
