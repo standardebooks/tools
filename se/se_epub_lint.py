@@ -271,6 +271,7 @@ METADATA
 "m-089", "Ignore rule ignores the same line more than once."
 "m-090", "[val]dedication[/] semantic inflection found, but no MARC relator [val]dto[/] (Dedicator)."
 "m-091", "Possibly misspelled MARC relator found."
+"m-092", "MusicXML files found, but no MARC relator [val]mcp[/] (Music copyist)."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -4008,6 +4009,10 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 
 			# Remove comments before we do any further processing.
 			source_file = source_file.sub(regex.compile(r"<!--.+?-->", flags=regex.DOTALL), "")
+
+			# Check for MusicXML associated role
+			if file_path.suffix == ".musicxml" and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='mcp']"):
+				messages.append(LintMessage("m-092", "MusicXML files found, but no MARC relator [val]mcp[/] (Music copyist).", se.MESSAGE_TYPE_WARNING, file_path))
 
 			# Ignore XML files in `./images/` because we don't care how *source* SVGs/MusicXML are internally formatted.
 			if not file_path.is_relative_to(self.path / "images"):
