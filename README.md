@@ -16,7 +16,7 @@ Optionally, install [Ace](https://daisy.github.io/ace/) and the `se build --chec
 
 ```shell
 # Install some pre-flight dependencies.
-sudo apt install -y calibre default-jre git python3-dev python3-pip python3-venv pipx
+sudo apt install -y default-jre git python3-dev python3-pip python3-venv pipx
 
 # Install the toolset.
 pipx install standardebooks
@@ -26,7 +26,7 @@ pipx install standardebooks
 
 ```shell
 # Install some pre-flight dependencies.
-sudo apt install -y calibre default-jre git python3-dev python3-pip python3-venv
+sudo apt install -y default-jre git python3-dev python3-pip python3-venv
 
 # Install pipx.
 python3 -m pip install --user pipx
@@ -54,7 +54,7 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 
 ```shell
 # Install some pre-flight dependencies.
-sudo dnf install pipx python3-devel gcc libxslt-devel calibre git java-25-openjdk-headless
+sudo dnf install pipx python3-devel gcc libxslt-devel git java-25-openjdk-headless
 
 # Ensure $PATH environment variable is correctly set up for pipx.
 pipx ensurepath
@@ -96,7 +96,7 @@ If you want a more granular install you can install the dependencies manually an
 
 ```shell
 # Install some pre-flight dependencies.
-brew install cairo calibre git openjdk pipx python@3.12
+brew install cairo git openjdk pipx python@3.12
 pipx ensurepath
 sudo ln -sfn $(brew --prefix)/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
 
@@ -121,7 +121,6 @@ These instructions were tested on OpenBSD 6.6, but may also work on 6.5.
 	py3-virtualenv--
 	py3-gitdb--
 	jdk--%11
-	calibre--
 	git--
 	```
 
@@ -218,8 +217,6 @@ We need volunteers to take the lead on the following goals:
 - Add more test cases to the test framework.
 
 - Writing installation instructions for Bash and ZSH completions for macOS.
-
-- Currently, the toolset requires the whole Calibre package, which is very big, but it’s only used to convert epub to azw3. Can we inline Calibre’s azw3 conversion code into our `./vendor/` directory, to avoid having to install the entire Calibre package as a big dependency? If so, how do we keep it updated as Calibre evolves?
 
 # Tool descriptions
 

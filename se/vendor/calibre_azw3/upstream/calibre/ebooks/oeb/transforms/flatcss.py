@@ -1,0 +1,708 @@
+'''
+CSS flattening transform.
+'''
+
+
+__license__   = 'GPL v3'
+__copyright__ = '2008, Marshall T. Vandegrift <llasram@gmail.com>'
+
+import math
+import numbers
+import operator
+import re
+from collections import defaultdict
+from xml.dom import SyntaxErr
+
+import css_parser
+from css_parser.css import Property
+from lxml import etree
+
+from calibre import guess_type
+from calibre.ebooks import unit_convert
+from calibre.ebooks.oeb.base import CSS_MIME, OEB_STYLES, SVG, SVG_NS, XHTML, XHTML_NS, XPath, barename, css_text, namespace
+from calibre.ebooks.oeb.stylizer import Stylizer
+from calibre.utils.filenames import ascii_filename, ascii_text
+from calibre.utils.icu import numeric_sort_key
+
+COLLAPSE = re.compile(r'[ \t\r\n\v]+')
+STRIPNUM = re.compile(r'[-0-9]+$')
+
+
+def asfloat(value, default):
+    if not isinstance(value, numbers.Number):
+        value = default
+    return float(value)
+
+
+class KeyMapper:
+
+    def __init__(self, sbase, dbase, dkey):
+        self.sbase = float(sbase)
+        self.dprop = [(self.relate(x, dbase), float(x)) for x in dkey]
+        self.cache = {}
+
+    @staticmethod
+    def relate(size, base):
+        if size == 0:
+            return base
+        size = float(size)
+        base = float(base)
+        if abs(size - base) < 0.1:
+            return 0
+        sign = -1 if size < base else 1
+        endp = 0 if size < base else 36
+        diff = (abs(base - size) * 3) + ((36 - size) / 100)
+        logb = abs(base - endp)
+        if logb == 1.0:
+            logb = 1.1
+        try:
+            result = sign * math.log(diff, logb)
+        except ValueError:
+            if diff < 0:
+                # Size is both very large and close to base
+                return 0
+            if logb == 0:
+                logb = 1e-6
+            if diff == 0:
+                diff = 1e-6
+            result = sign * math.log(diff, logb)
+        return result
+
+    def __getitem__(self, ssize):
+        ssize = asfloat(ssize, 0)
+        if ssize in self.cache:
+            return self.cache[ssize]
+        dsize = self.map(ssize)
+        self.cache[ssize] = dsize
+        return dsize
+
+    def map(self, ssize):
+        sbase = self.sbase
+        prop = self.relate(ssize, sbase)
+        diff = [(abs(prop - p), s) for p, s in self.dprop]
+        dsize = min(diff)[1]
+        return dsize
+
+
+class ScaleMapper:
+
+    def __init__(self, sbase, dbase):
+        self.dscale = float(dbase) / float(sbase)
+
+    def __getitem__(self, ssize):
+        ssize = asfloat(ssize, 0)
+        dsize = ssize * self.dscale
+        return dsize
+
+
+class NullMapper:
+
+    def __init__(self):
+        pass
+
+    def __getitem__(self, ssize):
+        return ssize
+
+
+def FontMapper(sbase=None, dbase=None, dkey=None):
+    if sbase and dbase and dkey:
+        return KeyMapper(sbase, dbase, dkey)
+    elif sbase and dbase:
+        return ScaleMapper(sbase, dbase)
+    else:
+        return NullMapper()
+
+
+class EmbedFontsCSSRules:
+
+    def __init__(self, body_font_family, rules):
+        self.body_font_family, self.rules = body_font_family, rules
+        self.href = None
+
+    def __call__(self, oeb):
+        if not self.body_font_family:
+            return None
+        if not self.href:
+            iid, href = oeb.manifest.generate('page_styles', 'page_styles.css')
+            rules = [css_text(x) for x in self.rules]
+            rules = '\n\n'.join(rules)
+            sheet = css_parser.parseString(rules, validate=False)
+            self.href = oeb.manifest.add(iid, href, guess_type(href)[0],
+                    data=sheet).href
+        return self.href
+
+
+class CSSFlattener:
+
+    def __init__(self, fbase=None, fkey=None, lineh=None, unfloat=False,
+                 untable=False, page_break_on_body=False, specializer=None,
+                 transform_css_rules=()):
+        self.fbase = fbase
+        self.transform_css_rules = transform_css_rules
+        if self.transform_css_rules:
+            from calibre.ebooks.css_transform_rules import compile_rules
+            self.transform_css_rules = compile_rules(self.transform_css_rules)
+        self.fkey = fkey
+        self.lineh = lineh
+        self.unfloat = unfloat
+        self.untable = untable
+        self.specializer = specializer
+        self.page_break_on_body = page_break_on_body
+
+    @classmethod
+    def config(cls, cfg):
+        return cfg
+
+    @classmethod
+    def generate(cls, opts):
+        return cls()
+
+    def __call__(self, oeb, context):
+        oeb.logger.info('Flattening CSS and remapping font sizes...')
+        self.context = self.opts = context
+        self.oeb = oeb
+        self.items = list(self.oeb.spine)
+        titlepage = self.oeb.guide.get('titlepage')
+        if titlepage is not None:
+            titlepage = titlepage.item
+            if titlepage is not None and titlepage not in self.items:
+                self.items.append(titlepage)
+        epub3_nav = None
+        if getattr(self.opts, 'epub3_nav_href', None):
+            epub3_nav = self.oeb.manifest.hrefs.get(self.opts.epub3_nav_href)
+            if epub3_nav is not None and epub3_nav not in self.items:
+                self.items.append(epub3_nav)
+
+        self.filter_css = frozenset()
+        if self.opts.filter_css:
+            try:
+                self.filter_css = {x.strip().lower() for x in
+                    self.opts.filter_css.split(',')}
+            except Exception:
+                self.oeb.log.warning('Failed to parse filter_css, ignoring')
+            else:
+                from calibre.ebooks.oeb.normalize_css import normalize_filter_css
+                self.filter_css = frozenset(normalize_filter_css(self.filter_css))
+                self.oeb.log.debug('Filtering CSS properties: {}'.format(', '.join(self.filter_css)))
+
+        for item in oeb.manifest.values():
+            # Make all links to resources absolute, as these sheets will be
+            # consolidated into a single stylesheet at the root of the document
+            if item.media_type in OEB_STYLES:
+                css_parser.replaceUrls(item.data, item.abshref,
+                        ignoreImportRules=True)
+
+        self.body_font_family, self.embed_font_rules = self.get_embed_font_info(
+                self.opts.embed_font_family)
+        # Store for use in output plugins/transforms that generate content,
+        # like the AZW3 output inline ToC.
+        self.oeb.store_embed_font_rules = EmbedFontsCSSRules(self.body_font_family,
+                self.embed_font_rules)
+        self.stylize_spine()
+        self.sbase = self.baseline_spine() if self.fbase else None
+        self.fmap = FontMapper(self.sbase, self.fbase, self.fkey)
+        self.flatten_spine()
+        if epub3_nav is not None:
+            self.opts.epub3_nav_parsed = epub3_nav.data
+
+        self.store_page_margins()
+
+    def store_page_margins(self):
+        self.opts._stored_page_margins = {}
+        for item, stylizer in self.stylizers.items():
+            margins = self.opts._stored_page_margins[item.href] = {}
+            for prop, val in stylizer.page_rule.items():
+                p, w = prop.partition('-')[::2]
+                if p == 'margin':
+                    margins[w] = unit_convert(
+                            val, stylizer.profile.width_pts, stylizer.body_font_size,
+                            stylizer.profile.dpi, body_font_size=stylizer.body_font_size)
+
+    def get_embed_font_info(self, family, failure_critical=True):
+        efi = []
+        body_font_family = None
+        if not family:
+            return body_font_family, efi
+        from calibre.utils.fonts.scanner import NoFonts, font_scanner
+        from calibre.utils.fonts.utils import panose_to_css_generic_family
+        try:
+            faces = font_scanner.fonts_for_family(family)
+        except NoFonts:
+            msg = (f'No embeddable fonts found for family: {family!r}')
+            if failure_critical:
+                raise ValueError(msg)
+            self.oeb.log.warn(msg)
+            return body_font_family, efi
+        if not faces:
+            msg = (f'No embeddable fonts found for family: {family!r}')
+            if failure_critical:
+                raise ValueError(msg)
+            self.oeb.log.warn(msg)
+            return body_font_family, efi
+
+        from calibre.ebooks.oeb.polish.utils import OEB_FONTS
+        for i, font in enumerate(faces):
+            ext = 'otf' if font['is_otf'] else 'ttf'
+            font_data = font_scanner.get_font_data(font)
+            for x in self.oeb.manifest:
+                if x.media_type in OEB_FONTS:
+                    matches = x.data == font_data
+                    x.unload_data_from_memory()
+                    if matches:
+                        item = x
+                        href = item.href
+                        break
+            else:
+                fid, href = self.oeb.manifest.generate(id='font',
+                    href='fonts/{}.{}'.format(ascii_filename(font['full_name']).replace(' ', '-'), ext))
+                item = self.oeb.manifest.add(fid, href,
+                        guess_type('dummy.'+ext)[0],
+                        data=font_data)
+                item.unload_data_from_memory()
+
+            cfont = {
+                'font-family': '"{}"'.format(font['font-family']),
+                'src': f'url({item.href})',
+            }
+
+            if i == 0:
+                generic_family = panose_to_css_generic_family(font['panose'])
+                body_font_family = "'{}',{}".format(font['font-family'], generic_family)
+                self.oeb.log('Embedding font: {}'.format(font['font-family']))
+            for k in ('font-weight', 'font-style', 'font-stretch'):
+                if font[k] != 'normal':
+                    cfont[k] = font[k]
+            rule = '@font-face {{ {} }}'.format('; '.join(f'{k}:{v}' for k, v in cfont.items()))
+            rule = css_parser.parseString(rule)
+            efi.append(rule)
+
+        return body_font_family, efi
+
+    def stylize_spine(self):
+        self.stylizers = {}
+        profile = self.context.source
+        css = ''
+        for item in self.items:
+            html = item.data
+            body = html.find(XHTML('body'))
+            if 'style' in html.attrib:
+                b = body.attrib.get('style', '')
+                body.set('style', html.get('style') + ';' + b)
+                del html.attrib['style']
+            bs = body.get('style', '').split(';')
+            bs.append('margin-top: 0pt')
+            bs.append('margin-bottom: 0pt')
+            if float(self.context.margin_left) >= 0:
+                bs.append(f'margin-left : {float(self.context.margin_left):g}pt')
+            if float(self.context.margin_right) >= 0:
+                bs.append(f'margin-right : {float(self.context.margin_right):g}pt')
+            bs.extend(['padding-left: 0pt', 'padding-right: 0pt'])
+            if self.page_break_on_body:
+                bs.extend(['page-break-before: always'])
+            if self.context.change_justification != 'original':
+                bs.append('text-align: '+ self.context.change_justification)
+            if self.body_font_family:
+                bs.append('font-family: '+self.body_font_family)
+            body.set('style', '; '.join(bs))
+            stylizer = Stylizer(html, item.href, self.oeb, self.context, profile,
+                    user_css=self.context.extra_css,
+                    extra_css=css)
+            self.stylizers[item] = stylizer
+
+    def baseline_node(self, node, stylizer, sizes, csize):
+        csize = stylizer.style(node)['font-size']
+        if node.text:
+            sizes[csize] += len(COLLAPSE.sub(' ', node.text))
+        for child in node:
+            self.baseline_node(child, stylizer, sizes, csize)
+            if child.tail:
+                sizes[csize] += len(COLLAPSE.sub(' ', child.tail))
+
+    def baseline_spine(self):
+        sizes = defaultdict(float)
+        for item in self.items:
+            html = item.data
+            stylizer = self.stylizers[item]
+            body = html.find(XHTML('body'))
+            fsize = self.context.source.fbase
+            self.baseline_node(body, stylizer, sizes, fsize)
+        try:
+            sbase = max(list(sizes.items()), key=operator.itemgetter(1))[0]
+        except Exception:
+            sbase = 12.0
+        self.oeb.logger.info(
+            f'Source base font size is {sbase:0.5f}pt')
+        return sbase
+
+    def clean_edges(self, cssdict, style, fsize):
+        slineh = self.sbase * 1.26
+        dlineh = self.lineh
+        for kind in ('margin', 'padding'):
+            for edge in ('bottom', 'top'):
+                property = f'{kind}-{edge}'
+                if property not in cssdict:
+                    continue
+                if '%' in cssdict[property]:
+                    continue
+                value = style[property]
+                if value == 0 or not isinstance(value, numbers.Number):
+                    continue
+                if value <= slineh:
+                    cssdict[property] = f'{dlineh/fsize:0.5f}em'
+                else:
+                    try:
+                        value = round(value / slineh) * dlineh
+                    except Exception:
+                        self.oeb.logger.warning(
+                                'Invalid length:', value)
+                        value = 0.0
+                    cssdict[property] = f'{value/fsize:0.5f}em'
+
+    def flatten_node(self, node, stylizer, names, styles, pseudo_styles, psize, item_id, recurse=True):
+        if not isinstance(node.tag, (str, bytes)) or namespace(node.tag) not in (XHTML_NS, SVG_NS):
+            return
+        tag = barename(node.tag)
+        style = stylizer.style(node)
+        cssdict = style.cssdict()
+        try:
+            font_size = style['font-size']
+        except Exception:
+            font_size = self.sbase if self.sbase is not None else \
+                self.context.source.fbase
+        if tag == 'body' and isinstance(font_size, numbers.Number):
+            stylizer.body_font_size = font_size
+        if 'align' in node.attrib:
+            if tag != 'img':
+                cssdict['text-align'] = node.attrib['align']
+                if cssdict['text-align'] == 'center':
+                    # align=center causes tables to be center aligned,
+                    # which text-align does not. And the ever trustworthy Word
+                    # uses this construct in its HTML output. See
+                    # https://bugs.launchpad.net/bugs/1569583
+                    if tag == 'table':
+                        if 'margin-left' not in cssdict and 'margin-right' not in cssdict:
+                            cssdict['margin-left'] = cssdict['margin-right'] = 'auto'
+                    else:
+                        for table in node.iterchildren(XHTML('table')):
+                            ts = stylizer.style(table)
+                            if ts.get('margin-left') is None and ts.get('margin-right') is None:
+                                ts.set('margin-left', 'auto')
+                                ts.set('margin-right', 'auto')
+            else:
+                val = node.attrib['align']
+                if val in ('middle', 'bottom', 'top'):
+                    cssdict['vertical-align'] = val
+                elif val in ('left', 'right'):
+                    cssdict['float'] = val
+            del node.attrib['align']
+        if 'valign' in node.attrib and tag == 'td':
+            if cssdict.get('vertical-align') == 'inherit':
+                cssdict['vertical-align'] = node.attrib['valign']
+            del node.attrib['valign']
+        if node.tag == XHTML('font'):
+            tags = [f'descendant::h:{x}' for x in ('p', 'div', 'table', 'h1',
+                'h2', 'h3', 'h4', 'h5', 'h6', 'ol', 'ul', 'dl', 'blockquote')]
+            tag = 'div' if XPath('|'.join(tags))(node) else 'span'
+            node.tag = XHTML(tag)
+            if 'size' in node.attrib:
+                def force_int(raw):
+                    return int(re.search(r'([0-9+-]+)', raw).group(1))
+                size = node.attrib['size'].strip()
+                if size:
+                    fnums = self.context.source.fnums
+                    if size[0] in ('+', '-'):
+                        # Oh, the warcrimes
+                        try:
+                            esize = 3 + force_int(size)
+                        except Exception:
+                            esize = 3
+                        esize = min(max(esize, 1), 7)
+                        font_size = fnums[esize]
+                    else:
+                        try:
+                            font_size = fnums[force_int(size)]
+                        except Exception:
+                            font_size = fnums[3]
+                    cssdict['font-size'] = f'{font_size:.1f}pt'
+                del node.attrib['size']
+            if 'face' in node.attrib:
+                cssdict['font-family'] = node.attrib['face']
+                del node.attrib['face']
+        if 'color' in node.attrib:
+            try:
+                cssdict['color'] = Property('color', node.attrib['color']).value
+            except (ValueError, SyntaxErr):
+                pass
+            del node.attrib['color']
+        if 'bgcolor' in node.attrib:
+            try:
+                cssdict['background-color'] = Property('background-color', node.attrib['bgcolor']).value
+            except (ValueError, SyntaxErr):
+                pass
+            del node.attrib['bgcolor']
+        if tag == 'ol' and 'type' in node.attrib:
+            del node.attrib['type']
+        if cssdict.get('font-weight', '').lower() == 'medium':
+            cssdict['font-weight'] = 'normal'  # ADE chokes on font-weight medium
+
+        fsize = font_size
+        is_drop_cap = (cssdict.get('float', None) == 'left' and 'font-size' in cssdict and len(node) == 0 and node.text and (
+            len(node.text) == 1 or (len(node.text) == 2 and 0x2000 <= ord(node.text[0]) <= 0x206f)))
+        # Detect drop caps generated by the docx input plugin
+        if node.tag and node.tag.endswith('}p') and len(node) == 0 and node.text and len(node.text.strip()) == 1 and \
+                not node.tail and 'line-height' in cssdict and 'font-size' in cssdict:
+            dp = node.getparent()
+            if dp.tag and dp.tag.endswith('}div') and len(dp) == 1 and not dp.text:
+                if stylizer.style(dp).cssdict().get('float', None) == 'left':
+                    is_drop_cap = True
+        if style.viewport_relative_font_size:
+            cssdict['font-size'] = style.viewport_relative_font_size
+        elif not self.context.disable_font_rescaling and not is_drop_cap:
+            _sbase = self.sbase if self.sbase is not None else \
+                self.context.source.fbase
+            dyn_rescale = node.attrib.pop('data-calibre-rescale', None)
+            if dyn_rescale is not None:
+                try:
+                    dyn_rescale = float(dyn_rescale) / 100
+                except Exception:
+                    dyn_rescale = 1
+                fsize = self.fmap[_sbase]
+                fsize *= dyn_rescale
+                cssdict['font-size'] = f'{fsize/psize:0.5f}em'
+                psize = fsize
+            elif 'font-size' in cssdict or tag == 'body':
+                fsize = self.fmap[font_size]
+                try:
+                    cssdict['font-size'] = f'{fsize/psize:0.5f}em'
+                except ZeroDivisionError:
+                    cssdict['font-size'] = f'{fsize:.1f}pt'
+                psize = fsize
+
+        try:
+            minlh = self.context.minimum_line_height / 100.
+            slh = style['line-height']
+            if not is_drop_cap and isinstance(slh, numbers.Number) and slh < minlh * fsize:
+                cssdict['line-height'] = str(minlh)
+        except Exception:
+            self.oeb.logger.exception('Failed to set minimum line-height')
+
+        if cssdict:
+            for x in self.filter_css:
+                popval = cssdict.pop(x, None)
+                if self.body_font_family and popval and x == 'font-family' \
+                    and popval.partition(',')[0][1:-1] == self.body_font_family.partition(',')[0][1:-1]:
+                    cssdict[x] = popval
+
+        if cssdict:
+            if self.lineh and self.fbase and tag not in ('body', 'html'):
+                self.clean_edges(cssdict, style, psize)
+            if 'display' in cssdict and cssdict['display'] == 'in-line':
+                cssdict['display'] = 'inline'
+            if self.unfloat and 'float' in cssdict \
+               and cssdict.get('display', 'none') != 'none':
+                del cssdict['display']
+            if self.untable and 'display' in cssdict \
+               and cssdict['display'].startswith('table'):
+                display = cssdict['display']
+                if display == 'table-cell':
+                    cssdict['display'] = 'inline'
+                else:
+                    cssdict['display'] = 'block'
+            if 'vertical-align' in cssdict \
+               and cssdict['vertical-align'] == 'sup':
+                cssdict['vertical-align'] = 'super'
+        if self.lineh and 'line-height' not in cssdict and tag != 'html':
+            lineh = self.lineh / psize
+            cssdict['line-height'] = f'{lineh:0.5f}em'
+
+        if (self.context.remove_paragraph_spacing or self.context.insert_blank_line) and tag in ('p', 'div'):
+            if item_id != 'calibre_jacket' or self.context.output_profile.name == 'Kindle':
+                for prop in ('margin', 'padding', 'border'):
+                    for edge in ('top', 'bottom'):
+                        cssdict[f'{prop}-{edge}'] = '0pt'
+            if self.context.insert_blank_line:
+                cssdict['margin-top'] = cssdict['margin-bottom'] = \
+                    f'{self.context.insert_blank_line_size:f}em'
+            indent_size = self.context.remove_paragraph_spacing_indent_size
+            keep_indents = indent_size < 0.0
+            if (self.context.remove_paragraph_spacing and not keep_indents and cssdict.get('text-align', None) not in ('center', 'right')):
+                cssdict['text-indent'] = f'{indent_size:1.1f}em'
+
+        pseudo_classes = style.pseudo_classes(self.filter_css)
+        if cssdict or pseudo_classes:
+            keep_classes = set()
+
+            if cssdict:
+                items = sorted(cssdict.items())
+                css = ';\n'.join(f'{key}: {val}' for key, val in items)
+                classes = node.get('class', '').strip() or 'se'
+                classes_list = classes.split()
+                # lower() because otherwise if the document uses the same class
+                # name with different case, both cases will apply, leading
+                # to incorrect results.
+                klass = ascii_text(STRIPNUM.sub('', classes_list[0])).lower().strip().replace(' ', '_')
+                if css in styles:
+                    match = styles[css]
+                else:
+                    match = klass + str(names[klass] or '')
+                    styles[css] = match
+                    names[klass] += 1
+                node.attrib['class'] = match
+                keep_classes.add(match)
+
+            for psel, cssdict in pseudo_classes.items():
+                items = sorted(cssdict.items())
+                css = ';\n'.join(f'{key}: {val}' for key, val in items)
+                pstyles = pseudo_styles[psel]
+                if css in pstyles:
+                    match = pstyles[css]
+                else:
+                    # We have to use a different class for each psel as
+                    # otherwise you can have incorrect styles for a situation
+                    # like: a:hover { color: red } a:link { color: blue } a.x:hover { color: green }
+                    # If the pse class for a:hover and a:link is the same,
+                    # then the class attribute for a.x tags will contain both
+                    # that class and the class for a.x:hover, which is wrong.
+                    klass = 'pse'
+                    match = klass + str(names[klass] or '')
+                    pstyles[css] = match
+                    names[klass] += 1
+                keep_classes.add(match)
+                node.attrib['class'] = ' '.join(sorted(keep_classes))
+
+        elif 'class' in node.attrib:
+            del node.attrib['class']
+        if 'style' in node.attrib:
+            del node.attrib['style']
+        if recurse:
+            for child in node:
+                self.flatten_node(child, stylizer, names, styles, pseudo_styles, psize, item_id)
+        if node.get('class'):
+            node.set('class', ' '.join(sorted(node.get('class').split())))
+
+    def flatten_head(self, item, href, global_href):
+        html = item.data
+        head = html.find(XHTML('head'))
+
+        def safe_lower(x):
+            try:
+                x = x.lower()
+            except Exception:
+                pass
+            return x
+
+        for node in html.xpath('//*[local-name()="style" or local-name()="link"]'):
+            if node.tag == XHTML('link') \
+               and safe_lower(node.get('rel', 'stylesheet')) == 'stylesheet' \
+               and safe_lower(node.get('type', CSS_MIME)) in OEB_STYLES:
+                node.getparent().remove(node)
+            elif node.tag in (XHTML('style'), SVG('style')) \
+                 and node.get('type', CSS_MIME) in OEB_STYLES:
+                node.getparent().remove(node)
+        href = item.relhref(href)
+        l = etree.SubElement(head, XHTML('link'),
+            rel='stylesheet', type=CSS_MIME, href=href)
+        l.tail='\n'
+        if global_href:
+            href = item.relhref(global_href)
+            l = etree.SubElement(head, XHTML('link'),
+                rel='stylesheet', type=CSS_MIME, href=href)
+            l.tail = '\n'
+
+    def replace_css(self, css):
+        manifest = self.oeb.manifest
+        for item in manifest.values():
+            if item.media_type in OEB_STYLES:
+                manifest.remove(item)
+        id, href = manifest.generate('css', 'stylesheet.css')
+        sheet = css_parser.parseString(css, validate=False)
+        if self.transform_css_rules:
+            from calibre.ebooks.css_transform_rules import transform_sheet
+            transform_sheet(self.transform_css_rules, sheet)
+        item = manifest.add(id, href, CSS_MIME, data=sheet)
+        self.oeb.manifest.main_stylesheet = item
+        return href
+
+    def collect_global_css(self):
+        def rules_in(sheets):
+            for s in sheets:
+                yield from s.cssRules
+        def unique_font_face_rules(*rules):
+            seen = set()
+            for rule in rules:
+                try:
+                    ff = rule.style.getPropertyValue('font-family')
+                    src = rule.style.getPropertyValue('src')
+                    w = rule.style.getPropertyValue('font-weight')
+                    s = rule.style.getPropertyValue('font-style')
+                except Exception:
+                    yield rule
+                else:
+                    key = ff, src, w, s
+                    if key not in seen:
+                        seen.add(key)
+                        yield rule
+
+        global_css = defaultdict(list)
+        for item in self.items:
+            stylizer = self.stylizers[item]
+            if float(self.context.margin_top) >= 0:
+                stylizer.page_rule['margin-top'] = f'{float(self.context.margin_top):g}pt'
+            if float(self.context.margin_bottom) >= 0:
+                stylizer.page_rule['margin-bottom'] = f'{float(self.context.margin_bottom):g}pt'
+            items = sorted(stylizer.page_rule.items())
+            css = ';\n'.join(f'{key}: {val}' for key, val in items)
+            css = (f'@page {{\n{css}\n}}\n') if items else ''
+            rules = [css_text(r) for r in unique_font_face_rules(*stylizer.font_face_rules, *rules_in(self.embed_font_rules))]
+            raw = '\n\n'.join(rules)
+            css += '\n\n' + raw
+            global_css[css].append(item)
+
+        gc_map = {}
+        manifest = self.oeb.manifest
+        for css in global_css:
+            href = None
+            if css.strip():
+                id_, href = manifest.generate('page_css', 'page_styles.css')
+                sheet = css_parser.parseString(css, validate=False)
+                if self.transform_css_rules:
+                    from calibre.ebooks.css_transform_rules import transform_sheet
+                    transform_sheet(self.transform_css_rules, sheet)
+                manifest.add(id_, href, CSS_MIME, data=sheet)
+            gc_map[css] = href
+
+        ans = {}
+        for css, items in global_css.items():
+            for item in items:
+                ans[item] = gc_map[css]
+        return ans
+
+    def flatten_spine(self):
+        names = defaultdict(int)
+        styles, pseudo_styles = {}, defaultdict(dict)
+        for item in self.items:
+            html = item.data
+            stylizer = self.stylizers[item]
+            if self.specializer is not None:
+                self.specializer(item, stylizer)
+            fsize = self.context.dest.fbase
+            self.flatten_node(html, stylizer, names, styles, pseudo_styles, fsize, item.id, recurse=False)
+            self.flatten_node(html.find(XHTML('body')), stylizer, names, styles, pseudo_styles, fsize, item.id)
+        items = sorted(((key, val) for (val, key) in styles.items()), key=lambda x: numeric_sort_key(x[0]))
+        # :hover must come after link and :active must come after :hover
+        psels = sorted(pseudo_styles, key=lambda x:
+                {'hover':1, 'active':2}.get(x, 0))
+        for psel in psels:
+            styles = pseudo_styles[psel]
+            if not styles:
+                continue
+            x = sorted(((k+':'+psel, v) for v, k in styles.items()))
+            items.extend(x)
+
+        css = ''.join(f'.{key} {{\n{val};\n}}\n\n' for key, val in items)
+
+        href = self.replace_css(css)
+        global_css = self.collect_global_css()
+        for item in self.items:
+            stylizer = self.stylizers[item]
+            self.flatten_head(item, href, global_css[item])
