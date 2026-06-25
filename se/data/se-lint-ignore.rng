@@ -4,8 +4,8 @@
 		<element name="file">
 			<attribute name="path">
 				<data type="string">
-					<!-- Allow ASCII alphanumeric, forward slashes, `.`, and the glob characters supported by Python's `fnmatch.fnmatch()` function: `*` `!` `[` `]`. -->
-					<param name="pattern">[/a-z0-9\.\-\*\?\[\]\!]+</param>
+					<!-- Allow ASCII alphanumeric, forward slashes, `.`, and the glob characters supported by Python's `fnmatch.fnmatch()` function: `*` `!` `[` `]`. Don't escape `.`, `*`, `?`, or `!` with a backslash because that will cause some versions of Python to crash. -->
+					<param name="pattern">[-/a-z0-9.*?!\[\]]+</param>
 				</data>
 			</attribute>
 			<oneOrMore>
