@@ -55,3 +55,5 @@ The imported source is intentionally close to upstream calibre, but several loca
 - w-b-yeats_poetry
 
 - george-macdonald_unspoken-sermons
+
+- alexandre-dumas_the-count-of-monte-cristo_chapman-and-hall

@@ -127,10 +127,14 @@ def init_soup():
 
 
 def parse(utf8_data, stack_size=16 * 1024, keep_doctype=False, return_root=True):
-    from html5_parser import html_parser
+    from html5_parser import escape_bare_ampersands, html_parser
     bs, soup, new_tag, Comment, append, NavigableString = init_soup()
     if not isinstance(utf8_data, bytes):
         utf8_data = utf8_data.encode('utf-8')
+
+    if html_parser is None:
+        ans = bs.BeautifulSoup(escape_bare_ampersands(utf8_data.decode('utf-8')), 'lxml')
+        return ans.find('html') if return_root else ans
 
     def add_doctype(name, public_id, system_id):
         soup.append(bs.Doctype.for_name_and_ids(name, public_id or None, system_id or None))

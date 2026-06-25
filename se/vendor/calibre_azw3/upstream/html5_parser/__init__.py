@@ -9,15 +9,18 @@ import importlib
 import sys
 from collections import namedtuple
 from locale import getpreferredencoding
+from typing import Any
 
 if not hasattr(sys, 'generating_docs_via_sphinx'):
     from lxml import etree  # Must be imported before html_parser to initialize libxml
 
     try:
         from . import html_parser
-    except ImportError:
-        raise
+    except ImportError as err:
+        html_parser = None
+        html_parser_import_error = err
     else:
+        html_parser_import_error = None
         version = namedtuple('Version', 'major minor patch')(
             html_parser.MAJOR, html_parser.MINOR, html_parser.PATCH)
 
@@ -116,6 +119,109 @@ def normalize_treebuilder(x):
 
 
 NAMESPACE_SUPPORTING_BUILDERS = frozenset('lxml stdlib_etree dom lxml_html'.split())
+XHTML_NAMESPACE = 'http://www.w3.org/1999/xhtml'
+EPUB_NAMESPACE = 'http://www.idpf.org/2007/ops'
+XML_NAMESPACE = 'http://www.w3.org/XML/1998/namespace'
+KNOWN_ATTRIBUTE_NAMESPACES = {
+    'epub': EPUB_NAMESPACE,
+    'xml': XML_NAMESPACE,
+}
+
+
+def sanitize_name(name: str) -> str:
+    return ''.join(char if (char.isalnum() or char in '_-.') else '_' for char in name)
+
+
+def sanitize_attributes(attrib: Any, sanitize_names: bool) -> dict[str, str]:
+    ans = {}
+
+    for name, value in attrib.items():
+        if name == 'xmlns' or name.startswith('xmlns:'):
+            continue
+
+        if ':' in name:
+            prefix, local_name = name.split(':', 1)
+            namespace = KNOWN_ATTRIBUTE_NAMESPACES.get(prefix)
+            if namespace is not None:
+                ans['{' + namespace + '}' + local_name] = value
+                continue
+
+        ans[sanitize_name(name) if sanitize_names else name] = value
+
+    return ans
+
+
+def add_xhtml_namespace(elem: Any, sanitize_names: bool = True) -> Any:
+    def clone_node(node: Any, parent: Any = None) -> Any:
+        if not isinstance(node.tag, str):
+            return None
+
+        local_name = sanitize_name(node.tag) if sanitize_names else node.tag
+        tag = local_name if local_name.startswith('{') else '{' + XHTML_NAMESPACE + '}' + local_name
+        attrib = sanitize_attributes(node.attrib, sanitize_names)
+        ans = etree.Element(tag, attrib=attrib, nsmap={None: XHTML_NAMESPACE, 'epub': EPUB_NAMESPACE}) if parent is None else etree.SubElement(parent, tag, attrib=attrib)
+        ans.text = node.text
+        ans.tail = node.tail
+
+        for child in node:
+            clone_node(child, ans)
+
+        return ans
+
+    return clone_node(elem)
+
+
+def add_line_number_attribute(elem: Any, line_number_attr: str | None) -> None:
+    if line_number_attr:
+        for node in elem.iter():
+            if getattr(node, 'sourceline', None) is not None:
+                node.set(line_number_attr, str(node.sourceline))
+
+
+def escape_bare_ampersands(data: str) -> str:
+    import regex
+
+    return regex.sub(r'&(?!(?:#[0-9]+|#x[0-9A-Fa-f]+|[A-Za-z][A-Za-z0-9]+);)', '&amp;', data)
+
+
+def parse_with_lxml(
+    data: bytes,
+    namespace_elements: bool = False,
+    treebuilder: str = 'lxml',
+    return_root: bool = True,
+    line_number_attr: str | None = None,
+    maybe_xhtml: bool = False,
+    sanitize_names: bool = True,
+) -> Any:
+    from lxml import html
+    from xml.dom import minidom
+    import xml.etree.ElementTree as stdlib_etree
+
+    data = escape_bare_ampersands(data.decode('utf-8'))
+
+    if treebuilder == 'lxml_html':
+        root = html.document_fromstring(data)
+    else:
+        parser = etree.HTMLParser(recover=True)
+        root = html.document_fromstring(data, parser=parser)
+
+    add_line_number_attribute(root, line_number_attr)
+
+    if namespace_elements or maybe_xhtml:
+        root = add_xhtml_namespace(root, sanitize_names=sanitize_names)
+
+    if treebuilder in ('lxml', 'lxml_html'):
+        return root if return_root else root.getroottree()
+    if treebuilder == 'stdlib_etree':
+        raw = etree.tostring(root)
+        ans = stdlib_etree.fromstring(raw)
+        return ans if return_root else stdlib_etree.ElementTree(ans)
+    if treebuilder == 'dom':
+        raw = etree.tostring(root)
+        ans = minidom.parseString(raw)
+        return ans.documentElement if return_root else ans
+
+    raise ImportError('The html5-parser C backend is unavailable and cannot build treebuilder: {}'.format(treebuilder)) from html_parser_import_error
 
 
 def parse(
@@ -192,6 +298,20 @@ def parse(
     '''
     data = as_utf8(html or b'', transport_encoding, fallback_encoding)
     treebuilder = normalize_treebuilder(treebuilder)
+    if html_parser is None:
+        if treebuilder == 'soup':
+            from .soup import parse
+            return parse(
+                data, return_root=return_root, keep_doctype=keep_doctype, stack_size=stack_size)
+        return parse_with_lxml(
+            data,
+            namespace_elements=namespace_elements,
+            treebuilder=treebuilder,
+            return_root=return_root,
+            line_number_attr=line_number_attr,
+            maybe_xhtml=maybe_xhtml,
+            sanitize_names=sanitize_names,
+        )
     if treebuilder == 'soup':
         from .soup import parse
         return parse(

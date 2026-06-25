@@ -954,7 +954,7 @@ class Manifest:
             if not data:
                 return
             data = xml_to_unicode(data, strip_encoding_pats=True,
-                    assume_utf8=True, resolve_entities=True)[0]
+                    assume_utf8=True, resolve_entities=self.media_type != NCX_MIME)[0]
             return safe_xml_fromstring(data)
 
         def _parse_xhtml(self, data):
