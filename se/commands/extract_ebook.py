@@ -3,16 +3,21 @@ This module implements the `se extract-ebook` command.
 """
 
 import argparse
+import datetime
 from os import path
+import shutil
 import sys
+import tempfile
 import zipfile
 from io import BytesIO, TextIOWrapper
 from pathlib import Path
+from xml.etree import ElementTree
 
 import se
 from se.se_help_formatter import SeHelpFormatter
 from se.vendor.kindleunpack import kindleunpack
 
+_FALLBACK_ZIP_MTIME: tuple[int, int, int, int, int, int] = (1980, 1, 1, 0, 0, 0)
 
 def _is_epub(file_bytes: bytes) -> bool:
 	"""
@@ -47,6 +52,53 @@ def _is_mobi(file_bytes: bytes) -> bool:
 	"""
 
 	return file_bytes[:78][0x3C:0x3C+8] in (b"BOOKMOBI", b"TEXtREAd")
+
+def _get_publication_mtime(content_opf_path: Path) -> tuple[int, int, int, int, int, int]:
+	"""
+	Get the publication date from an OPF file and convert it to an mtime tuple suitable for use in the zip format.
+	"""
+
+	dom = ElementTree.parse(content_opf_path)
+	namespaces = {
+		"dc": "http://purl.org/dc/elements/1.1/",
+		"opf": "http://www.idpf.org/2007/opf"
+	}
+	publication_date_node = dom.find(".//dc:date[@opf:event='publication']", namespaces)
+
+	if publication_date_node is None or publication_date_node.text is None:
+		return _FALLBACK_ZIP_MTIME
+
+	publication_datetime = datetime.datetime.fromisoformat(publication_date_node.text.strip())
+
+	if publication_datetime.tzinfo is not None:
+		publication_datetime = publication_datetime.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+
+	# Zip files store seconds at two-second precision.
+	second = publication_datetime.second - (publication_datetime.second % 2)
+
+	return (publication_datetime.year, publication_datetime.month, publication_datetime.day, publication_datetime.hour, publication_datetime.minute, second)
+
+def _normalize_zip_mtimes(epub_path: Path, mtime: tuple[int, int, int, int, int, int]) -> None:
+	"""
+	Rewrite a zip file so that each entry has the given modification time.
+	"""
+
+	with tempfile.TemporaryDirectory() as temp_directory:
+		temp_epub_path = Path(temp_directory) / epub_path.name
+
+		with zipfile.ZipFile(epub_path, "r") as input_zip:
+			with zipfile.ZipFile(temp_epub_path, "w") as output_zip:
+				for input_info in input_zip.infolist():
+					output_info = zipfile.ZipInfo(input_info.filename, mtime)
+					output_info.comment = input_info.comment
+					output_info.compress_type = input_info.compress_type
+					output_info.create_system = input_info.create_system
+					output_info.external_attr = input_info.external_attr
+					output_info.internal_attr = input_info.internal_attr
+
+					output_zip.writestr(output_info, input_zip.read(input_info.filename))
+
+		shutil.move(temp_epub_path, epub_path)
 
 def extract_ebook(plain_output: bool) -> int:
 	"""
@@ -92,11 +144,19 @@ def extract_ebook(plain_output: bool) -> int:
 			old_stdout = sys.stdout
 			sys.stdout = TextIOWrapper(BytesIO(), sys.stdout.encoding)
 
-			kindleunpack.unpackBook(str(target), str(extracted_path))
+			try:
+				kindleunpack.unpackBook(str(target), str(extracted_path))
+			finally:
+				# Restore `stdout`.
+				sys.stdout.close()
+				sys.stdout = old_stdout
 
-			# Restore `stdout`.
-			sys.stdout.close()
-			sys.stdout = old_stdout
+			# KindleUnpack re-generates an epub file inside the output folder. In doing this it changes the epub's file mtime, which makes the output non-reproducible.
+			# Here, we explicitly set the mtime of the internal epub file to the publication date in `content.opf`, thus making the output reproducible.
+			publication_mtime = _get_publication_mtime(extracted_path / "mobi8" / "OEBPS" / "content.opf")
+
+			for epub_path in sorted((extracted_path / "mobi8").glob("*.epub")):
+				_normalize_zip_mtimes(epub_path, publication_mtime)
 		elif _is_epub(file_bytes):
 			with zipfile.ZipFile(target, "r") as file:
 				file.extractall(extracted_path)
