@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 	from se.se_epub_build import BuildMessage # Import under type checking guard to prevent circular import error.
 
 
-VERSION = "3.1.0"
+VERSION = "3.2.0"
 MESSAGE_INDENT = "    "
 COLOR_OUTPUT = False
 UNICODE_BOM = "\ufeff"

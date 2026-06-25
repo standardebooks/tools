@@ -1,3 +1,47 @@
+# 3.2.0
+
+## General
+
+- Add configuration file support, and options for `se build` and `se create-draft`
+
+- More improvements to help text
+
+## se build
+
+- Use a local image cache to cache all rendered images during the build process, speeding up subsequent builds
+
+- Make AZW3 builds reproducible
+
+- Include Calibre as vendored source to remove the dependency on the Calibre binary app
+
+- Fix Kobo builds on links with `&amp;` entities. Thanks to Robin Whittleton
+
+## se build-manifest
+
+- Add all core epub MIME types
+
+## se build-toc
+
+- Improve error message
+
+## se extract-ebook
+
+- Make extracted AZW3 ebooks reproducible by removing the generated EPUB from AZW3 extraction output
+
+## se find-mismatched-diacritics
+
+- Consider curly apostrophes and hyphens as parts of words
+
+- Add the `--all` option to find all mismatches, even in short words
+
+## se lint
+
+- Improve t-003
+
+- Recognize more common binary file extensions
+
+- Update `se-lint-ignore.rng` regexes for cross-platform compatibility
+
 # 3.1.0
 
 ## General
