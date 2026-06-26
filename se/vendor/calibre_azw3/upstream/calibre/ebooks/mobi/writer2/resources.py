@@ -20,23 +20,23 @@ from calibre.utils.imghdr import what
 PLACEHOLDER_GIF = b'GIF89a\x01\x00\x01\x00\xf0\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04\x01\x00\x00\x00\x00!\xfe calibre-placeholder-gif-for-azw3\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'  # noqa: E501
 
 
-def process_jpegs_for_amazon(data: bytes) -> bytes:
+def process_jpegs_for_amazon(data: bytes, is_cover: bool = False) -> bytes:
     img = Image.open(BytesIO(data))
     if img.format == 'JPEG':
-        # Amazon's MOBI renderer can't render JPEG images without JFIF metadata
-        # and images with EXIF data don't get displayed on the cover screen
-        changed = not img.info
-        has_exif = False
-        if hasattr(img, 'getexif'):
-            exif = img.getexif()
-            has_exif = bool(exif)
-            if exif.get(0x0112) in (2,3,4,5,6,7,8):
-                changed = True
+        # Amazon's MOBI renderer can't render JPEG images without JFIF metadata, and cover-screen images with EXIF data don't display reliably.
+        has_jfif = 'jfif' in img.info
+        exif = img.getexif() if hasattr(img, 'getexif') else {}
+        has_rotated_exif = exif.get(0x0112) in (2, 3, 4, 5, 6, 7, 8)
+        has_exif = bool(exif)
+
+        if not has_jfif or has_rotated_exif or (is_cover and has_exif):
+            if has_rotated_exif:
                 img = ImageOps.exif_transpose(img)
-        if changed or has_exif:
+
             out = BytesIO()
-            img.save(out, 'JPEG')
+            img.save(out, 'JPEG', quality=95)
             data = out.getvalue()
+
     return data
 
 
@@ -59,12 +59,12 @@ class Resources:
 
         self.add_resources(add_fonts)
 
-    def process_image(self, data):
+    def process_image(self, data: bytes, is_cover: bool = False) -> bytes:
         if not self.process_images:
-            return process_jpegs_for_amazon(data)
+            return process_jpegs_for_amazon(data, is_cover)
         func = mobify_image if self.opts.mobi_keep_original_images else rescale_image
         try:
-            return process_jpegs_for_amazon(func(data))
+            return process_jpegs_for_amazon(func(data), is_cover)
         except Exception:
             if 'png' != what(None, data):
                 raise
@@ -111,7 +111,7 @@ class Resources:
             if item.media_type.lower() == 'image/webp':
                 self.convert_webp(item)
             try:
-                data = self.process_image(item.data)
+                data = self.process_image(item.data, item.href == cover_href)
             except Exception:
                 self.log.warn(f'Bad image file {item.href!r}')
                 continue

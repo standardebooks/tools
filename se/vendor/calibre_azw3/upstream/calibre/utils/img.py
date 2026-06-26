@@ -89,7 +89,12 @@ def save_cover_data_to(data: bytes, path: str | None = None, **kwargs: object) -
 
 	compression_quality = int(kwargs.get("compression_quality", 90))
 	fmt = str(kwargs.get("data_fmt", "jpeg"))
-	result = image_to_data(image_from_data(data), compression_quality=compression_quality, fmt=fmt)
+	source = Image.open(BytesIO(data))
+
+	if fmt.lower() in {"jpeg", "jpg"} and source.format == "JPEG" and "A" not in source.getbands():
+		result = data
+	else:
+		result = image_to_data(ImageWrapper(source.copy()), compression_quality=compression_quality, fmt=fmt)
 
 	if path is not None:
 		with open(path, "wb") as file:
