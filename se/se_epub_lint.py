@@ -2169,8 +2169,8 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	if nodes:
 		messages.append(LintMessage("s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. Hint: [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements. Images that are inline (i.e. that do not have a parent [xhtml]<figure>[/]) do not have [attr]id[/] attributes.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
-	# Check for `id`s on `<h#>` elements.
-	nodes = dom.xpath("/html/body//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][@id]")
+	# Check for `id` attributes on `<h#>` elements, but allow them if used by an `aria-labelledby` attribute elsewhere in the document.
+	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and @id and not(//*/@aria-labelledby=@id)]")
 	if nodes:
 		messages.append(LintMessage("s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. Hint: [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_node_tags(nodes)))
 
@@ -4272,8 +4272,8 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 				for j, node in enumerate(nodes_list):
 					attr = node.get_attr("id")
 
-					# We use a simple `in` check instead of xpath because it's an order of magnitude faster on really big ebooks with lots of IDs, like _Pepys_.
-					if f"#{attr}\"" in xhtml:
+					# We use a simple `in` check instead of xpath or regex because it's an order of magnitude faster on really big ebooks with lots of IDs, like _Pepys_.
+					if f"#{attr}\"" in xhtml or f"aria-labelledby=\"{attr}\"" in xhtml:
 						indices_to_delete.append(j)
 
 				if indices_to_delete:
