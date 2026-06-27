@@ -200,7 +200,6 @@ def build(plain_output: bool) -> int:
 					except OSError:
 						continue
 
-					print(f"Pruning {oldest_cache_directory}")
 					shutil.rmtree(oldest_cache_directory, ignore_errors=True)
 					ebook_cache_directories.remove(oldest_cache_directory)
 
