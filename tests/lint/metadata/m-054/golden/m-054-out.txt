@@ -5,4 +5,4 @@ m-035 [Error] colophon.xhtml Unexpected S.E. identifier in colophon.
 m-054 [Error] colophon.xhtml Non-canonical Standard Ebooks URL. Expected: `https://standardebooks.org/ebooks/<AUTHOR>/<TITLE>[/<CONTRIBUTOR> ...]`. Hint: No trailing slash.
  Line 38:       <a href="https://standardebooks.org/ebooks/jane-austen/unknown-novel/">standardebooks.org/ebooks/jane-austen/unknown-novel</a>
 m-003 [Error] content.opf Bare URL without trailing slash.
- Line 10:       <meta property="se:url.homepage" refines="#publisher">https://standardebooks.org</meta>
+ Line 11:       <link href="https://standardebooks.org" refines="#publisher" rel="schema:url"/>

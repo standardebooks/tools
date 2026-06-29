@@ -1,3 +1,3 @@
 m-007 [Error] content.opf Non-canonical Internet Archive URL. Expected: `https://archive.org/details/<BOOK-ID>`.
- Line 49:       <dc:source>https://archive.org/details/bub_gb_RtT0OLKFMHsC/asdf/mode/2up</dc:source>
- Line 51:       <dc:source>https://archive.org/details/bub_gb_RtT0OLKFMHsC#12354</dc:source>
+ Line 50:       <dc:source>https://archive.org/details/bub_gb_RtT0OLKFMHsC/asdf/mode/2up</dc:source>
+ Line 52:       <dc:source>https://archive.org/details/bub_gb_RtT0OLKFMHsC#12354</dc:source>

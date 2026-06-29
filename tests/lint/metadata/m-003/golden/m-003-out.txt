@@ -1,2 +1,2 @@
 m-003 [Error] content.opf Bare URL without trailing slash.
- Line 65:       <meta property="se:url.homepage" refines="#producer-3">https://www.example.com</meta>
+ Line 68:       <link href="https://www.example.com" refines="#producer-3" rel="schema:url"/>

@@ -191,7 +191,7 @@ def _normalize_built_with_metadata(xml: bytes) -> str:
 	Return OPF XML with the build tool version metadata normalized.
 	"""
 	text = xml.decode("utf-8")
-	return regex.sub(r"(<meta\b[^>]*\bproperty=['\"]se:built-with['\"][^>]*>).*?(</meta>)", r"\1</meta>", text, flags=regex.DOTALL)
+	return regex.sub(r"(<meta\b[^>]*\bproperty=['\"]schema:version['\"][^>]*>).*?(</meta>)", r"\1</meta>", text, flags=regex.DOTALL)
 
 def _epub_files_match(expected_file: Path, received_file: Path) -> bool:
 	"""

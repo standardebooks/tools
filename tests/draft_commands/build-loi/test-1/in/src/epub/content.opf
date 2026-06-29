@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<package xmlns="http://www.idpf.org/2007/opf" dir="ltr" prefix="se: https://standardebooks.org/vocab/1.0" unique-identifier="uid" version="3.0" xml:lang="en-US">
+<package xmlns="http://www.idpf.org/2007/opf" dir="ltr" prefix="se: https://standardebooks.org/vocab/1.0 rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#" unique-identifier="uid" version="3.0" xml:lang="en-US">
 	<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
 		<dc:identifier id="uid">https://standardebooks.org/ebooks/samuel-pepys/the-diary</dc:identifier>
 		<dc:date>2019-08-21T18:40:45Z</dc:date>
 		<meta property="dcterms:modified">2019-08-21T18:40:45Z</meta>
 		<dc:rights>The source text and artwork in this ebook are believed to be in the United States public domain; that is, they are believed to be free of copyright restrictions in the United States. They may still be copyrighted in other countries, so users located outside of the United States must check their local laws before using this ebook. The creators of, and contributors to, this ebook dedicate their contributions to the worldwide public domain via the terms in the [CC0 1.0 Universal Public Domain Dedication](https://creativecommons.org/publicdomain/zero/1.0/).</dc:rights>
+		<meta property="rdf:type">http://schema.org/Book</meta>
 		<dc:publisher id="publisher">Standard Ebooks</dc:publisher>
 		<meta property="file-as" refines="#publisher">Standard Ebooks</meta>
-		<meta property="se:url.homepage" refines="#publisher">https://standardebooks.org/</meta>
+		<link href="https://standardebooks.org/" refines="#publisher" rel="schema:url"/>
 		<meta property="role" refines="#publisher" scheme="marc:relators">bkd</meta>
 		<meta property="role" refines="#publisher" scheme="marc:relators">mdc</meta>
 		<meta property="role" refines="#publisher" scheme="marc:relators">pbl</meta>
 		<dc:contributor id="type-designer">The League of Moveable Type</dc:contributor>
 		<meta property="file-as" refines="#type-designer">League of Moveable Type, The</meta>
-		<meta property="se:url.homepage" refines="#type-designer">https://www.theleagueofmoveabletype.com/</meta>
+		<link href="https://www.theleagueofmoveabletype.com/" refines="#type-designer" rel="schema:url"/>
 		<meta property="role" refines="#type-designer" scheme="marc:relators">tyd</meta>
 		<link href="http://www.idpf.org/epub/a11y/accessibility-20170105.html#wcag-aa" rel="dcterms:conformsTo"/>
 		<meta property="a11y:certifiedBy">Standard Ebooks</meta>
@@ -41,8 +42,8 @@
 		<meta property="term" refines="#subject-4">sh2007100274</meta>
 		<meta property="authority" refines="#subject-5">LCSH</meta>
 		<meta property="term" refines="#subject-5">sh2008115250</meta>
-		<meta property="se:subject">Autobiography</meta>
-		<meta property="se:subject">Nonfiction</meta>
+		<meta property="schema:genre">Autobiography</meta>
+		<meta property="schema:genre">Nonfiction</meta>
 		<dc:description id="description">The diary of a man living in London in the 17th century.</dc:description>
 		<meta id="long-description" property="se:long-description" refines="#description">
 			&lt;p&gt;Pepys’ &lt;i&gt;Diary&lt;/i&gt; is an incredibly frank decade-long snapshot of the life of an up and coming naval administrator in mid-17th century London. In it he describes everything from battles against the Dutch and the intrigues of court, down to the plays he saw, his marital infidelities, and the quality of the meat provided for his supper. His observations have proved invaluable in establishing an accurate record of the daily life of the people of London of that period.&lt;/p&gt;
@@ -52,30 +53,27 @@
 		<dc:language>en-GB</dc:language>
 		<dc:source>https://www.gutenberg.org/ebooks/4200</dc:source>
 		<dc:source>https://archive.org/details/diaryofsamuelpep01pepy</dc:source>
-		<meta property="se:production-notes">
-			• Volumes 9 and 10 (appendix and Pepysiana) of the original series have been omitted from the production due to time constraints.
-			• Each diary entry has a time element to start. The datetime attribute is ISO8601 compliant (Gregorian), but the actual dates Pepys uses are Julian, so they don’t appear to match. This is correct.
-			• This date is copied into the `entry-x` id attribute for each diary entry. Unfortunately, this causes linting to fail with leading 0 errors, so we remove those for the id.
-		</meta>
-		<meta property="se:word-count">1209949</meta>
-		<meta property="se:reading-ease.flesch">70.57</meta>
-		<meta property="se:url.encyclopedia.wikipedia">https://en.wikipedia.org/wiki/Samuel_Pepys#The_diary</meta>
-		<meta property="se:url.vcs.github">https://github.com/standardebooks/samuel-pepys_the-diary</meta>
+		<meta property="schema:wordCount">1209949</meta>
+		<meta property="schema:educationalLevel">70.57</meta>
+		<link href="https://en.wikipedia.org/wiki/Samuel_Pepys#The_diary" rel="schema:sameAs"/>
+		<meta id="vcs-repository" property="schema:workExample">schema:workExample</meta>
+		<meta property="rdf:type" refines="#vcs-repository">http://schema.org/SoftwareSourceCode</meta>
+		<link href="https://github.com/standardebooks/samuel-pepys_the-diary" refines="#vcs-repository" rel="schema:codeRepository"/>
 		<dc:creator id="author">Samuel Pepys</dc:creator>
 		<meta property="file-as" refines="#author">Pepys, Samuel</meta>
-		<meta property="se:url.encyclopedia.wikipedia" refines="#author">https://en.wikipedia.org/wiki/Samuel_Pepys</meta>
-		<meta property="se:url.authority.nacoaf" refines="#author">http://id.loc.gov/authorities/names/n79018796</meta>
+		<link href="https://en.wikipedia.org/wiki/Samuel_Pepys" refines="#author" rel="schema:sameAs"/>
+		<link href="https://id.loc.gov/authorities/names/n79018796.html" refines="#author" rel="schema:sameAs"/>
 		<meta property="role" refines="#author" scheme="marc:relators">aut</meta>
 		<dc:contributor id="artist">John Hayls</dc:contributor>
 		<meta property="file-as" refines="#artist">Hayls, John</meta>
-		<meta property="se:url.encyclopedia.wikipedia" refines="#artist">https://en.wikipedia.org/wiki/John_Hayls</meta>
-		<meta property="se:url.authority.nacoaf" refines="#artist">http://id.loc.gov/authorities/names/nr94041870</meta>
+		<link href="https://en.wikipedia.org/wiki/John_Hayls" refines="#artist" rel="schema:sameAs"/>
+		<link href="https://id.loc.gov/authorities/names/nr94041870.html" refines="#artist" rel="schema:sameAs"/>
 		<meta property="role" refines="#artist" scheme="marc:relators">art</meta>
 		<dc:contributor id="editor-1">Henry B. Wheatley</dc:contributor>
 		<meta property="file-as" refines="#editor-1">Wheatley, Henry B.</meta>
-		<meta property="se:name.person.full-name" refines="#editor-1">Henry Benjamin Wheatley</meta>
-		<meta property="se:url.encyclopedia.wikipedia" refines="#editor-1">https://en.wikipedia.org/wiki/Henry_B._Wheatley</meta>
-		<meta property="se:url.authority.nacoaf" refines="#editor-1">http://id.loc.gov/authorities/names/n87860971</meta>
+		<meta property="schema:alternateName" refines="#editor-1">Henry Benjamin Wheatley</meta>
+		<link href="https://en.wikipedia.org/wiki/Henry_B._Wheatley" refines="#editor-1" rel="schema:sameAs"/>
+		<link href="https://id.loc.gov/authorities/names/n87860971.html" refines="#editor-1" rel="schema:sameAs"/>
 		<meta property="role" refines="#editor-1" scheme="marc:relators">ann</meta>
 		<meta property="role" refines="#editor-1" scheme="marc:relators">edt</meta>
 		<meta property="role" refines="#editor-1" scheme="marc:relators">trc</meta>
@@ -84,18 +82,18 @@
 		<dc:contributor id="annotator-1">Richard Griffin</dc:contributor>
 		<meta property="display-seq" refines="#annotator-1">0</meta>
 		<meta property="file-as" refines="#annotator-1">Griffin, Richard</meta>
-		<meta property="se:url.encyclopedia.wikipedia" refines="#annotator-1">https://en.wikipedia.org/wiki/Richard_Griffin,_3rd_Baron_Braybrooke</meta>
-		<meta property="se:url.authority.nacoaf" refines="#annotator-1">http://id.loc.gov/authorities/names/n50014973</meta>
+		<link href="https://en.wikipedia.org/wiki/Richard_Griffin,_3rd_Baron_Braybrooke" refines="#annotator-1" rel="schema:sameAs"/>
+		<link href="https://id.loc.gov/authorities/names/n50014973.html" refines="#annotator-1" rel="schema:sameAs"/>
 		<meta property="role" refines="#annotator-1" scheme="marc:relators">ann</meta>
 		<meta property="role" refines="#annotator-1" scheme="marc:relators">cns</meta>
 		<meta property="role" refines="#annotator-1" scheme="marc:relators">ill</meta>
 		<dc:contributor id="transcriber-1">David Widger</dc:contributor>
 		<meta property="file-as" refines="#transcriber-1">Widger, David</meta>
-		<meta property="se:url.authority.nacoaf" refines="#transcriber-1">http://id.loc.gov/authorities/names/no2011017869</meta>
+		<link href="https://id.loc.gov/authorities/names/no2011017869.html" refines="#transcriber-1" rel="schema:sameAs"/>
 		<meta property="role" refines="#transcriber-1" scheme="marc:relators">trc</meta>
 		<dc:contributor id="producer-1">Robin Whittleton</dc:contributor>
 		<meta property="file-as" refines="#producer-1">Whittleton, Robin</meta>
-		<meta property="se:url.homepage" refines="#producer-1">https://www.robinwhittleton.com/</meta>
+		<link href="https://www.robinwhittleton.com/" refines="#producer-1" rel="schema:url"/>
 		<meta property="role" refines="#producer-1" scheme="marc:relators">bkp</meta>
 		<meta property="role" refines="#producer-1" scheme="marc:relators">blw</meta>
 		<meta property="role" refines="#producer-1" scheme="marc:relators">cov</meta>
@@ -105,7 +103,7 @@
 		<meta property="role" refines="#producer-1" scheme="marc:relators">tyg</meta>
 		<dc:contributor id="producer-2">David Grigg</dc:contributor>
 		<meta property="file-as" refines="#producer-2">Grigg, David</meta>
-		<meta property="se:url.homepage" refines="#producer-2">https://rightword.com.au/david.php</meta>
+		<link href="https://rightword.com.au/david.php" refines="#producer-2" rel="schema:url"/>
 		<meta property="role" refines="#producer-2" scheme="marc:relators">pfr</meta>
 	</metadata>
 	<manifest>

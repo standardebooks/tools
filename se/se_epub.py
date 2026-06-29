@@ -65,6 +65,7 @@ class GitCommit:
 	Object used to represent the last Git commit.
 	"""
 
+	sha: str
 	short_sha: str
 	timestamp: datetime
 
@@ -274,9 +275,9 @@ class SeEpub:
 					del os.environ["GIT_DIR"]
 
 				git_command = cmd.Git(self.path)
-				output = git_command.show("-s", "--format=%h %ct", "HEAD").split()
+				output = git_command.show("-s", "--format=%H %h %ct", "HEAD").split()
 
-				self._last_commit = GitCommit(output[0], datetime.fromtimestamp(int(output[1]), timezone.utc))
+				self._last_commit = GitCommit(output[0], output[1], datetime.fromtimestamp(int(output[2]), timezone.utc))
 			except Exception:
 				self._last_commit = None
 
@@ -395,7 +396,7 @@ class SeEpub:
 			identifier += se.formatting.make_url_safe(title.text) + "/"
 
 		# If a book is a collection/omnibus and has more than 1 translator, or if any book has more than 3 translators, combine them into `various-translators` in the identifier.
-		has_various_translators = self.is_se_ebook and len(self.metadata_dom.xpath("//metadata[ (count(./meta[text()='trl']) > 1 and ./meta[@property='se:is-a-collection']) or (count(./meta[text()='trl']) > 3)]")) > 0
+		has_various_translators = self.is_se_ebook and len(self.metadata_dom.xpath("//metadata[ (count(./meta[text()='trl']) > 1 and ./meta[@property='schema:additionalType' and text()='http://schema.org/Collection']) or (count(./meta[text()='trl']) > 3)]")) > 0
 		process_translators = True
 		if has_various_translators:
 			identifier += "various-translators/"
@@ -1650,7 +1651,7 @@ class SeEpub:
 			if not is_ignored:
 				text += xhtml
 
-		for node in self.metadata_dom.xpath("/package/metadata/meta[@property='se:reading-ease.flesch']"):
+		for node in self.metadata_dom.xpath("/package/metadata/meta[@property='schema:educationalLevel']"):
 			node.set_text(str(se.formatting.get_flesch_reading_ease(text)))
 
 		self.write_dom(self.metadata_file_path)
@@ -1692,7 +1693,7 @@ class SeEpub:
 		None.
 		"""
 
-		for node in self.metadata_dom.xpath("/package/metadata/meta[@property='se:word-count']"):
+		for node in self.metadata_dom.xpath("/package/metadata/meta[@property='schema:wordCount']"):
 			node.set_text(str(self.get_word_count()))
 
 		self.write_dom(self.metadata_file_path)
@@ -1972,7 +1973,7 @@ class SeEpub:
 
 	def get_work_type(self) -> str:
 		"""
-		Returns either `fiction` or `non-fiction`, based on analysis of `se:subject`s in the metadata file.
+		Returns either `fiction` or `non-fiction`, based on analysis of `schema:genre`s in the metadata file.
 
 		INPUTS:
 		None.
@@ -1983,7 +1984,7 @@ class SeEpub:
 
 		worktype = "fiction"  # Default.
 
-		subjects = self.metadata_dom.xpath("/package/metadata/meta[@property='se:subject']/text()", str)
+		subjects = self.metadata_dom.xpath("/package/metadata/meta[@property='schema:genre']/text()", str)
 		if not subjects:
 			return worktype
 

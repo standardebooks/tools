@@ -32,7 +32,7 @@ import se.formatting
 import se.images
 import se.typography
 from se.easy_xml import EasyXmlElement, EasyXmlTree
-from se.se_epub import SeEpub # pylint: disable=cyclic-import
+from se.se_epub import SeEpub, GitCommit # pylint: disable=cyclic-import
 from se.vendor.calibre_azw3 import convert_epub_to_azw3
 from se.vendor.kobo_touch_extended import kobo
 
@@ -259,25 +259,34 @@ def __save_debug_epub(work_compatible_epub_dir: Path) -> Path:
 
 	return epub_temp_dir
 
-def _add_metadata(metadata_dom: EasyXmlTree, node_type: str) -> EasyXmlTree:
+def _add_metadata(metadata_dom: EasyXmlTree, last_commit: GitCommit|None,  build_type: str) -> EasyXmlTree:
 	"""
-	Add a property to the metadata file.
+	Add or update the `schema:version` metadata in the metadata file.
 
 	INPUTS
-	metadata_dom: dom of the metadata file.
-	node_type: Type of metadata property to be added.
+	metadata_dom: DOM of the metadata file.
+	commit_sha: The SHA of the Git commit used to build this ebook.
+	build_type: The type of build, one of `epub`, `epub/compatible`, `kobo`, `azw3`.
 
 	OUTPUTS
-	metadata_dom: updated dom of the metadata file.
+	metadata_dom: The updated DOM of the metadata file.
 	"""
 
-	for node in metadata_dom.xpath("/package[contains(@prefix, 'se:')]/metadata"):
-		if node_type == "version":
-			node.append(etree.fromstring(f"<meta property=\"se:built-with\">{se.VERSION}</meta>"))
-		elif node_type == "compatibility":
-			node.append(etree.fromstring("""<meta property="se:transform">compatibility</meta>"""))
-		elif node_type == "kobo":
-			node.append(etree.fromstring("""<meta property="se:transform">kobo</meta>"""))
+	version_string = f"{se.VERSION}-{build_type}"
+
+	if last_commit:
+		version_string = f"{last_commit.sha}-{version_string}"
+
+	nodes = metadata_dom.xpath("/package/metadata/meta[@property='schema:version']")
+
+	if nodes:
+		for node in nodes:
+			node.set_text(version_string)
+	else:
+		metadata_elements = metadata_dom.xpath("/package/metadata")
+
+		if metadata_elements:
+			metadata_elements[0].prepend(etree.fromstring(f"""<meta property="schema:version">{version_string}</meta>"""))
 
 	return metadata_dom
 
@@ -1257,7 +1266,7 @@ def _build_kobo(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path, 
 		# Add a note to the metadata file indicating this is a transform build.
 		if file_path.name == self.metadata_file_path.name:
 			dom = work_kepub.get_dom(file_path)
-			dom = _add_metadata(dom, "kobo")
+			dom = _add_metadata(dom, self.last_commit, "kobo")
 
 			with open(file_path, "w", encoding="utf-8") as file:
 				file.write(dom.to_string())
@@ -1693,6 +1702,9 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 	None.
 	"""
 
+	# Calibre conversion removes this anyway, so don't add it to begin with.
+	# metadata_dom = _add_metadata(metadata_dom, self.last_commit, "azw3")
+
 	# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
 	with open(work_compatible_epub_dir / "epub" / toc_filename, "r+", encoding="utf-8") as file:
 		dom = EasyXmlTree(file.read())
@@ -1933,8 +1945,13 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 		# Update the release date in the metadata and colophon.
 		last_updated = _update_release_date(self, work_compatible_epub_dir, metadata_dom)
 
-		# Output the pure epub3 file.
+		_add_metadata(metadata_dom, self.last_commit, "epub")
+
+		# Output the pure epub file.
 		if not check_only:
+			with open(work_compatible_epub_dir / "epub" / self.metadata_file_path.name, "w", encoding="utf-8") as file:
+				file.write(se.formatting.format_opf(metadata_dom.to_string()))
+
 			se.epub.write_epub(work_compatible_epub_dir, output_dir / advanced_epub_output_filename, last_updated)
 
 		# Now add compatibility fixes for older ereaders.
@@ -1951,9 +1968,6 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 
 		# Convert cover to JPG if it's not already.
 		current_cache_paths.update(_convert_cover_to_jpg(work_compatible_epub_dir, metadata_dom, build_cache_images_directory))
-
-		# Add an element noting the version of the SE tools that built this ebook, but only if the SE vocab prefix is present.
-		metadata_dom = _add_metadata(metadata_dom, "version")
 
 		# Loop over files to make some compatibility replacements.
 		for file_path in work_compatible_epub_dir.glob("**/*"):
@@ -2016,7 +2030,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 				node.append(etree.fromstring(f"""<meta content="{cover_id}" name="cover"/>"""))
 
 		# Add metadata to the metadata file indicating this file is a Standard Ebooks compatibility build.
-		metadata_dom = _add_metadata(metadata_dom, "compatibility")
+		metadata_dom = _add_metadata(metadata_dom, self.last_commit, "epub/compatible")
 
 		# Generate our NCX file for compatibility with older ereaders.
 		toc_filename = _generate_ncx(self, work_compatible_epub_dir, metadata_dom)

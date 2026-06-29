@@ -27,9 +27,9 @@ from se.se_epub import SeEpub
 
 CONTRIBUTOR_BLOCK_TEMPLATE = """<dc:contributor id="CONTRIBUTOR_ID">CONTRIBUTOR_NAME</dc:contributor>
 		<meta property="file-as" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_SORT</meta>
-		<meta property="se:name.person.full-name" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_FULL_NAME</meta>
-		<meta property="se:url.encyclopedia.wikipedia" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_WIKI_URL</meta>
-		<meta property="se:url.authority.nacoaf" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_NACOAF_URI</meta>
+		<meta property="schema:alternateName" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_FULL_NAME</meta>
+		<link href="CONTRIBUTOR_WIKI_URL" refines="#CONTRIBUTOR_ID" rel="schema:sameAs"/>
+		<link href="CONTRIBUTOR_NACOAF_URI" refines="#CONTRIBUTOR_ID" rel="schema:sameAs"/>
 		<meta property="role" refines="#CONTRIBUTOR_ID" scheme="marc:relators">CONTRIBUTOR_MARC</meta>"""
 
 USER_AGENT = "Standard Ebooks toolset <https://standardebooks.org/tools>"
@@ -101,7 +101,7 @@ def _get_wikipedia_url(string: str, get_nacoaf_uri: bool) -> tuple[str | None, s
 				raise se.RemoteCommandErrorException(f"Couldn’t contact Wikipedia: {ex}") from ex
 
 			for match in regex.findall(r"https?://id\.loc\.gov/authorities/(?:names/)?(n[a-z0-9]+)", response.text):
-				nacoaf_uri = "http://id.loc.gov/authorities/names/" + match
+				nacoaf_uri = "https://id.loc.gov/authorities/names/" + match + ".html"
 
 		return wiki_url, nacoaf_uri
 
@@ -218,10 +218,10 @@ def _generate_metadata_contributor_xml(contributors: list[Contributor], contribu
 		contributor_block = CONTRIBUTOR_BLOCK_TEMPLATE
 
 		if contributor.wiki_url:
-			contributor_block = contributor_block.replace(">CONTRIBUTOR_WIKI_URL<", f">{contributor.wiki_url}<")
+			contributor_block = contributor_block.replace("\"CONTRIBUTOR_WIKI_URL\"", f"\"{contributor.wiki_url}\"")
 
 		if contributor.nacoaf_uri:
-			contributor_block = contributor_block.replace(">CONTRIBUTOR_NACOAF_URI<", f">{contributor.nacoaf_uri}<")
+			contributor_block = contributor_block.replace("\"CONTRIBUTOR_NACOAF_URI\"", f"\"{contributor.nacoaf_uri}\"")
 
 		# Make an attempt at figuring out the file-as name. We check for some common two-word last names.
 		matches = regex.findall(r"^(.+?)\s+((?:(?:Da|Das|De|Del|Della|Di|Du|El|La|Le|Van|Van Der|Von)\s+)?[^\s]+)$", contributor.name)
@@ -230,9 +230,9 @@ def _generate_metadata_contributor_xml(contributors: list[Contributor], contribu
 
 		if contributor.name.lower() == "anonymous":
 			contributor_block = contributor_block.replace(">CONTRIBUTOR_SORT<", ">Anonymous<")
-			contributor_block = contributor_block.replace("""<meta property="se:name.person.full-name" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_FULL_NAME</meta>""", "")
-			contributor_block = contributor_block.replace("""<meta property="se:url.encyclopedia.wikipedia" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_WIKI_URL</meta>""", "")
-			contributor_block = contributor_block.replace("""<meta property="se:url.authority.nacoaf" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_NACOAF_URI</meta>""", "")
+			contributor_block = contributor_block.replace("""<meta property="schema:alternateName" refines="#CONTRIBUTOR_ID">CONTRIBUTOR_FULL_NAME</meta>""", "")
+			contributor_block = contributor_block.replace("""<link href="CONTRIBUTOR_WIKI_URL" refines="#CONTRIBUTOR_ID" rel="schema:sameAs"/>""", "")
+			contributor_block = contributor_block.replace("""<link href="CONTRIBUTOR_NACOAF_URI" refines="#CONTRIBUTOR_ID" rel="schema:sameAs"/>""", "")
 
 		contributor_block = contributor_block.replace(">CONTRIBUTOR_NAME<", f">{escape(contributor.name)}<")
 		contributor_block = contributor_block.replace("id=\"CONTRIBUTOR_ID\"", f"id=\"{contributor_type}-{i + 1}\"")
@@ -324,6 +324,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 		_copy_template_file("container.xml", content_path / "META-INF")
 		_copy_template_file("mimetype", content_path)
 		_copy_template_file("core.css", content_path / "epub" / "css")
+		_copy_template_file("production-notes.md", work_path)
 
 		if args.white_label:
 			_copy_template_file("content-white-label.opf", content_path / "epub" / "content.opf")
@@ -384,8 +385,8 @@ def _create_draft(args: Namespace, plain_output: bool):
 			node.set_text(node.inner_text().replace('IDENTIFIER', epub.generate_identifier()))
 
 		if epub.is_se_ebook:
-			for node in epub.metadata_dom.xpath("//*[contains(., 'VCS_URL') and not(./*)]"):
-				node.set_text(node.inner_text().replace('VCS_URL', epub.generate_vcs_url()))
+			for node in epub.metadata_dom.xpath("//link[@href='VCS_URL']"):
+				node.set_attr('href', epub.generate_vcs_url())
 
 			# Try to find Wikipedia links if possible.
 			ebook_wiki_url = None
@@ -394,8 +395,8 @@ def _create_draft(args: Namespace, plain_output: bool):
 				ebook_wiki_url, _ = _get_wikipedia_url(title, False)
 
 			if ebook_wiki_url:
-				for node in epub.metadata_dom.xpath("//*[contains(., 'EBOOK_WIKI_URL') and not(./*)]"):
-					node.set_text(node.inner_text().replace('EBOOK_WIKI_URL', ebook_wiki_url))
+				for node in epub.metadata_dom.xpath("//link[@href='EBOOK_WIKI_URL']"):
+					node.set_attr('href', ebook_wiki_url)
 
 		# Download transcriptions if required.
 		if args.fp_id:
@@ -551,7 +552,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 					authority_node = se.easy_xml.EasyXmlElement(f"<meta property=\"authority\" refines=\"#subject-{i}\">LCSH</meta>")
 					term_node = se.easy_xml.EasyXmlElement(f"<meta property=\"term\" refines=\"#subject-{i}\">{loc_id}</meta>")
 
-					for node in epub.metadata_dom.xpath("//meta[@property='se:subject'][1]"):
+					for node in epub.metadata_dom.xpath("//meta[@property='schema:genre'][1]"):
 						node.insert_before(subject_node)
 						node.insert_before(authority_node)
 						node.insert_before(term_node)
@@ -756,12 +757,12 @@ def _create_draft(args: Namespace, plain_output: bool):
 					if "Distributed Proofreaders Canada" in producer:
 						contributor_node.set_text("Distributed Proofreaders Canada")
 						contributor_file_as_node.set_text("Distributed Proofreaders Canada")
-						contributor_homepage_node = se.easy_xml.EasyXmlElement(f"<meta property=\"se:url.homepage\" refines=\"#{transcriber_id}\">https://www.pgdpcanada.net/</meta>")
+						contributor_homepage_node = se.easy_xml.EasyXmlElement(f"<link href=\"https://www.pgdpcanada.net/\" refines=\"#{transcriber_id}\" rel=\"schema:url\"/>")
 
 					elif "Distributed Proofread" in producer:
 						contributor_node.set_text("Distributed Proofreaders")
 						contributor_file_as_node.set_text("Distributed Proofreaders")
-						contributor_homepage_node = se.easy_xml.EasyXmlElement(f"<meta property=\"se:url.homepage\" refines=\"#{transcriber_id}\">https://www.pgdp.net/</meta>")
+						contributor_homepage_node = se.easy_xml.EasyXmlElement(f"<link href=\"https://www.pgdp.net/\" refines=\"#{transcriber_id}\" rel=\"schema:url\"/>")
 
 					elif "anonymous" in producer.lower():
 						contributor_node.set_text("An Anonymous Volunteer")
@@ -777,7 +778,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 					# Known special cases.
 					if "David Widger" in producer:
-						contributor_lccn_node = se.easy_xml.EasyXmlElement(f"<meta property=\"se:url.authority.nacoaf\" refines=\"#{transcriber_id}\">http://id.loc.gov/authorities/names/no2011017869</meta>")
+						contributor_lccn_node = se.easy_xml.EasyXmlElement(f"<link href=\"https://id.loc.gov/authorities/names/no2011017869.html\" refines=\"#{transcriber_id}\" rel=\"schema:sameAs\"/>")
 
 					# Add nodes to metadata.
 					for node in epub.metadata_dom.xpath("//dc:contributor[@id='producer-1'][1]"):
