@@ -655,12 +655,13 @@ def _format_style_elements(tree: etree.Element):
 	except Exception as ex:
 		raise se.InvalidCssException(f"Couldn’t parse CSS: {ex}")
 
-def _format_xml_str(xml: str) -> etree.Element:
+def _format_xml_str(xml: str, canonicalize: bool=True) -> etree.Element:
 	"""
 	Given a string of well-formed XML, return a pretty-printed etree.
 
 	INPUTS
 	xml: A string of well-formed XML.
+	canonicalize: Whether to canonicalize the XML before formatting.
 
 	OUTPUTS
 	An etree representing the pretty-printed XML.
@@ -669,8 +670,13 @@ def _format_xml_str(xml: str) -> etree.Element:
 	# `huge_tree` allows XML files of arbitrary size, like _The Personal Memoirs of Ulysses S. Grant_.
 	custom_parser = etree.XMLParser(huge_tree=True)
 	tree = etree.fromstring(str.encode(xml), parser=custom_parser)
-	canonical_bytes = etree.tostring(tree, method="c14n")
-	tree = etree.fromstring(canonical_bytes, parser=custom_parser)
+
+	if canonicalize:
+		canonical_bytes = etree.tostring(tree, method="c14n")
+		tree = etree.fromstring(canonical_bytes, parser=custom_parser)
+	else:
+		_sort_xml_attributes(tree)
+
 	_indent(tree, space="\t")
 
 	# Remove white space around attribute values.
@@ -682,6 +688,21 @@ def _format_xml_str(xml: str) -> etree.Element:
 			node.set(attribute, value)
 
 	return tree
+
+def _sort_xml_attributes(tree: etree.Element) -> None:
+	"""
+	Sort attributes in-place using canonical XML attribute order.
+	"""
+
+	for node in tree.iter():
+		if not isinstance(node.tag, str) or len(node.attrib) < 2:
+			continue
+
+		attributes = sorted(node.attrib.items(), key=lambda item: (etree.QName(item[0]).namespace or "", etree.QName(item[0]).localname))
+		node.attrib.clear()
+
+		for name, value in attributes:
+			node.set(name, value)
 
 def _xml_tree_to_string(tree: etree.Element, doctype: str | None = None) -> str:
 	"""
@@ -779,7 +800,7 @@ def format_xhtml(xhtml: str) -> str:
 
 	# Epub3 doesn't allow named entities, so convert them to their unicode equivalents.
 	# But, don't unescape the metadata file long-description accidentally.
-	xhtml = regex.sub(r"&#?\w+;", _replace_character_references, xhtml)
+	xhtml = regex.sub(r"&(?!(amp|lt|gt|quot|apos|#38|#60|#62|#x26|#x3c|#x3e);)#?\w+;", _replace_character_references, xhtml, flags=regex.IGNORECASE)
 
 	# Remove unnecessary `doctype`s which can cause `xmllint` to hang.
 	xhtml = regex.sub(r"<!DOCTYPE[^>]+?>", "", xhtml)
@@ -791,7 +812,7 @@ def format_xhtml(xhtml: str) -> str:
 	xhtml = regex.sub(r"([^\s>])\s+(</[^>]+?>)", r"\1\2", xhtml)
 
 	try:
-		tree = _format_xml_str(xhtml)
+		tree = _format_xml_str(xhtml, canonicalize=False)
 	except Exception as ex:
 		raise se.InvalidXhtmlException(f"Couldn’t parse XHTML file: {ex}")
 
