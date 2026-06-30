@@ -1005,11 +1005,12 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 
 	# Check if `production-notes.md` is empty.
 	production_notes_path = self.path / "production-notes.md"
-	with open(production_notes_path, "r", encoding="utf-8") as file:
-		first_char = file.read(1)
+	if production_notes_path.exists():
+		with open(production_notes_path, "r", encoding="utf-8") as file:
+			first_char = file.read(1)
 
-		if not first_char:
-			messages.append(LintMessage("m-084", "Empty file.", se.MESSAGE_TYPE_ERROR, production_notes_path))
+			if not first_char:
+				messages.append(LintMessage("m-084", "Empty file.", se.MESSAGE_TYPE_ERROR, production_notes_path))
 
 	# Check if we have a subtitle but no full title.
 	# There is no string replace function in xpath, but luckily `translate()` replaces exactly one character with another.
