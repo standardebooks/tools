@@ -1,3 +1,45 @@
+# 4.0.0
+
+## General
+
+- Update metadata to new schema.org-based standards
+
+## se build
+
+- Add `schema:version` metadata to built EPUBs with the source commit and build type
+
+- Remove stray cache pruning notification
+
+- Fix AZW3 JPEG compression behavior for reproducible builds
+
+## se build-toc
+
+- Update ToC templates for ARIA accessibility
+
+## se create-draft
+
+- Create an empty `production-notes.md` file when creating new drafts
+
+- Use canonical HTTPS Library of Congress Name Authority URLs
+
+## se lint
+
+- Confirm that `production-notes.md` exists before testing it
+
+- Update s-019 and x-018 to accept `aria-labelledby` as valid uses of ID attributes
+
+- Report MusicXML files with incorrect file extensions. Thanks to Robin Whittleton
+
+- Add a check for missing mcp role (Music copyist) if music found Thanks to Robin Whittleton
+
+## se recompose-epub
+
+- Use less memory by not canonicalizing XML unless needed
+
+## se shift-endnotes
+
+- Remove the `--amount` option, and make `--increment` and `--decrement` take an integer argument
+
 # 3.2.0
 
 ## General
