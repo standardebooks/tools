@@ -3866,9 +3866,9 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 	missing_files = []
 	if self.is_se_ebook:
 		root_files = os.listdir(self.path)
-		expected_root_files = ["images", "src", "LICENSE.md", "production-notes.md"]
-		illegal_files = [root_file for root_file in root_files if root_file not in expected_root_files and root_file != "se-lint-ignore.xml"] # se-lint-ignore.xml is optional
-		missing_files = [expected_root_file for expected_root_file in expected_root_files if expected_root_file not in root_files and expected_root_file != "LICENSE.md"] # We add more to this later on. LICENSE.md gets checked later on, so we don't want to add it twice.
+		expected_root_files = ["images", "src", "LICENSE.md"]
+		illegal_files = [root_file for root_file in root_files if root_file not in expected_root_files and root_file != "se-lint-ignore.xml" and root_file != "production-notes.md"] # `se-lint-ignore.xml` and `production-notes.md` are optional
+		missing_files = [expected_root_file for expected_root_file in expected_root_files if expected_root_file not in root_files and expected_root_file != "LICENSE.md"] # We add more to this later on. `LICENSE.md` gets checked later on, so we don't want to add it twice.
 
 		# If we have illegal files, check if they are tracked in Git.
 		# If they are, then they're still illegal.
