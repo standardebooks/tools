@@ -346,7 +346,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se shift-endnotes`
 
-	Increment or decrement the specified endnote and all following endnotes by 1 or a specified amount.
+	Increment or decrement the specified endnote and all following endnotes by a specified amount.
 
 -	### `se shift-illustrations`
 

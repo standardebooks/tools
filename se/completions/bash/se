@@ -37,7 +37,7 @@ _se_option_takes_argument(){
 	local option="$2"
 
 	case "${command_name}:${option}" in
-		build:-o|build:--output-dir|extract-ebook:-o|extract-ebook:--output-dir|recompose-epub:-e|recompose-epub:--extra-css-file|recompose-epub:-o|recompose-epub:--output|split-file:-f|split-file:--filename-format|split-file:-s|split-file:--start-at|split-file:-t|split-file:--template-file|hyphenate:-l|hyphenate:--language|shift-endnotes:-a|shift-endnotes:--amount|shift-illustrations:-a|shift-illustrations:--amount|lint:-a|lint:--allow|create-draft:-a|create-draft:--author|create-draft:-e|create-draft:--email|create-draft:-f|create-draft:--fp-id|create-draft:-p|create-draft:--pg-id|create-draft:-r|create-draft:--translator|create-draft:-t|create-draft:--title)
+		build:-o|build:--output-dir|extract-ebook:-o|extract-ebook:--output-dir|recompose-epub:-e|recompose-epub:--extra-css-file|recompose-epub:-o|recompose-epub:--output|split-file:-f|split-file:--filename-format|split-file:-s|split-file:--start-at|split-file:-t|split-file:--template-file|hyphenate:-l|hyphenate:--language|shift-endnotes:-d|shift-endnotes:--decrement|shift-endnotes:-i|shift-endnotes:--increment|shift-illustrations:-a|shift-illustrations:--amount|lint:-a|lint:--allow|create-draft:-a|create-draft:--author|create-draft:-e|create-draft:--email|create-draft:-f|create-draft:--fp-id|create-draft:-p|create-draft:--pg-id|create-draft:-r|create-draft:--translator|create-draft:-t|create-draft:--title)
 			return 0
 			;;
 	esac
@@ -274,7 +274,7 @@ _se(){
 				_se_compgen_files "!*.xhtml" "${cur}"
 				;;
 			shift-endnotes)
-				_se_compgen_words "-a --amount= -d --decrement -h --help -i --increment" "${cur}"
+				_se_compgen_words "-d --decrement= -h --help -i --increment=" "${cur}"
 				if [[ ${positional_count} -ge 1 ]]; then
 					_se_compgen_dirs ".*" "${cur}"
 				fi

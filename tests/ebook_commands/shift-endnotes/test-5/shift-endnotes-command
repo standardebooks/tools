@@ -1,1 +1,1 @@
-shift-endnotes --decrement --amount 3 14
+shift-endnotes --decrement 3 14

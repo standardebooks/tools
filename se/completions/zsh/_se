@@ -62,7 +62,7 @@ case $state in
 			"renumber-endnotes[Renumber all endnotes and noterefs sequentially from the beginning, taking care to match noterefs and endnotes if possible.]" \
 			"roman2dec[Convert a Roman numeral to a decimal number.]" \
 			"semanticate[Automatically add semantics to Standard Ebooks source directories.]" \
-			"shift-endnotes[Increment or decrement the specified endnote and all following endnotes by 1 or a specified amount.]" \
+			"shift-endnotes[Increment or decrement the specified endnote and all following endnotes by a specified amount.]" \
 			"shift-illustrations[Increment or decrement the specified illustration and all following illustrations by 1 or a specified amount.]" \
 			"split-file[Split an XHTML file into many files at all instances of \`<!--se\:split-->\`, and include a header template for each file.]" \
 			"titlecase[Convert a string to titlecase.]" \
@@ -317,10 +317,9 @@ case $state in
 				;;
 			shift-endnotes)
 				_arguments -s \
-					{-a,--amount}'[The amount to increment or decrement by; defaults to `1`.]:value' \
-					{-d,--decrement}'[Decrement the target endnote number and all following endnotes.]' \
+					{-d,--decrement}'[Decrement the target endnote number and all following endnotes by this amount.]:value' \
 					{-h,--help}'[Show this help message and exit.]' \
-					{-i,--increment}'[Increment the target endnote number and all following endnotes.]' \
+					{-i,--increment}'[Increment the target endnote number and all following endnotes by this amount.]:value' \
 					'1:The endnote number to start shifting at.:' \
 					'2:A Standard Ebooks source directory.:_directories'
 				;;
