@@ -403,7 +403,7 @@ def render_mathml_to_png(driver: 'webdriver.firefox.webdriver.WebDriver', mathml
 			driver.get(f"file://{mathml_file.name}")
 			# We have to take a screenshot of the HTML element, because otherwise we screenshot the viewport, which would result in a truncated image.
 
-			driver.find_element("tag name", "html").screenshot(png_file.name)
+			driver.find_element("tag name", "html").screenshot(png_file.name) # pyright: ignore Broken selenium type hint here.
 
 			# Save hiDPI 2x version.
 			image_file = Image.open(png_file.name)

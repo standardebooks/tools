@@ -7,10 +7,12 @@ Test internal SE programming functions
 
 import builtins
 from pathlib import Path
+from typing import cast
 
 from PIL import Image, ImageDraw
 from pytest import MonkeyPatch
 import regex
+from selenium.webdriver.firefox.webdriver import WebDriver
 
 import se.se_epub_build
 from se.se_epub_build import __convert_image, __convert_mathml_to_png
@@ -342,7 +344,7 @@ def test_mathml_png_cache_avoids_rendering(monkeypatch: MonkeyPatch, tmp_path: P
 	Verify MathML-to-PNG cache hits avoid rendering the MathML fragment.
 	"""
 
-	driver = object()
+	driver = cast(WebDriver, object())
 	mathml_fragment = "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mi>x</mi></math>"
 	cache_directory = tmp_path / "cache"
 	cache_directory.mkdir()

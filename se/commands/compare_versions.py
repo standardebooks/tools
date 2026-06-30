@@ -94,7 +94,7 @@ def compare_versions(plain_output: bool) -> int:
 
 						driver.get(f"file://{filename}")
 						# We have to take a screenshot of the HTML element, because otherwise we screenshot the viewport, which would result in a truncated image.
-						driver.find_element("tag name", "html").screenshot(f"{temp_directory_name}/{filename.name}-original.png")
+						driver.find_element("tag name", "html").screenshot(f"{temp_directory_name}/{filename.name}-original.png") # pyright: ignore Broken selenium type hint here.
 
 					# Pop the stash.
 					git_command.stash("pop")
@@ -112,7 +112,7 @@ def compare_versions(plain_output: bool) -> int:
 
 						driver.get(f"file://{filename}")
 						# We have to take a screenshot of the HTML element, because otherwise we screenshot the viewport, which would result in a truncated image.
-						driver.find_element("tag name", "html").screenshot(str(file_new_screenshot_path))
+						driver.find_element("tag name", "html").screenshot(str(file_new_screenshot_path)) # pyright: ignore Broken selenium type hint here.
 
 						has_difference = False
 						original_image_file = Image.open(file_original_screenshot_path)
