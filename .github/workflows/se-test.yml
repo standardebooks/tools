@@ -19,7 +19,7 @@ jobs:
     - name: Install pipx packages
       run: |
         pipx install .
-        pipx inject standardebooks pylint==4.0.5 pyright==1.1.408 types-requests==2.32.4.20250913 types-setuptools==80.9.0.20250822 types-lxml==2026.2.16 pytest==9.0.2
+        pipx inject standardebooks pylint==4.0.6 pyright==1.1.411 types-requests==2.33.0.20260518 types-setuptools==82.0.0.20260518 types-lxml==2026.2.16 pytest==9.1.1
     - name: Check type annotations with pyright
       run: $PIPX_HOME/venvs/standardebooks/bin/pyright --venvpath=$PIPX_HOME/venvs/ .
     - name: Check code with pylint
