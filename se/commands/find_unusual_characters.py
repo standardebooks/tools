@@ -120,8 +120,7 @@ def find_unusual_characters(plain_output: bool) -> int:
 	lines: list[tuple[str, str, int]] = []
 
 	for unusual_character, count in unusual_characters.items():
-		# The unicodedata package crashes on characters that don't have a name; see GitHub issue
-		# https://github.com/python/cpython/issues/91103
+		# The `unicodedata` package crashes on characters that don't have a name; see <https://github.com/python/cpython/issues/91103>.
 		try:
 			unusual_character_name = unicodedata.name(unusual_character)
 		except Exception:
