@@ -89,7 +89,6 @@ setup(
 		"cssutils==2.15.0",
 		"ftfy==6.3.1",
 		"gitpython==3.1.50",
-		"importlib_resources==1.0.2",
 		"lxml==6.1.1",
 		"natsort==8.4.0",
 		"pillow==12.2.0",
