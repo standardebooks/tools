@@ -709,7 +709,7 @@ def get_book_division(node: EasyXmlElement) -> BookDivision:
 		retval = BookDivision.SUBCHAPTER
 	if "chapter" in section_epub_type:
 		retval = BookDivision.CHAPTER
-	if "article" in parent_sections[-1].tag:
+	if retval == BookDivision.NONE and "article" in parent_sections[-1].tag:
 		retval = BookDivision.ARTICLE
 
 	return retval
