@@ -628,6 +628,7 @@ def modernize_spelling(xhtml: str) -> str:
 	# Don't match leading `\b` to catch `outmananœuvre`.
 	# Omit last letter to catch both `maneuvers`, `maneuvered`, `maneuvering`, etc.
 	if language == "en-US":
+		xhtml = regex.sub(r"([Mm])an(?:œ|oe|e)uvred", r"\1aneuvered", xhtml)
 		xhtml = regex.sub(r"([Mm])an(?:œ|oe)uv(?:er|re)", r"\1aneuver", xhtml)
 		xhtml = regex.sub(r"([Mm])an(?:œ|oe)uvering", r"\1aneuvering", xhtml)
 	else:
