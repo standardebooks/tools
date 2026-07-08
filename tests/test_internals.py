@@ -299,12 +299,12 @@ def test_svg_png_cache_key_changes_with_render_inputs(monkeypatch: MonkeyPatch, 
 	png_path = image_directory / "illustration.png"
 	svg_path.write_text("<svg/>", encoding="utf-8")
 
-	def fake_svg2png(**_kwargs: object) -> int:
+	def fake_svg2png(**kwargs: object) -> int:
 		"""
 		Write fake SVG conversion output.
 		"""
 
-		return png_path.write_bytes(b"png")
+		return Path(str(kwargs["write_to"])).write_bytes(b"png")
 
 	def fake_optimize_png(_filename: Path) -> None:
 		"""
@@ -318,6 +318,7 @@ def test_svg_png_cache_key_changes_with_render_inputs(monkeypatch: MonkeyPatch, 
 
 	assert __convert_image(svg_path, png_path, 1, cache_directory) == key
 	assert __convert_image(svg_path, image_directory / "other-path.png", 2, cache_directory) != key
+	assert __convert_image(svg_path, png_path, 1, cache_directory, 700) != key
 	svg_path.write_text("<svg><path/></svg>", encoding="utf-8")
 	assert __convert_image(svg_path, png_path, 1, cache_directory) != key
 	monkeypatch.setattr(se.se_epub_build.cairosvg, "__version__", "2")

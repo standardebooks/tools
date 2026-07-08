@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import urllib.parse
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
@@ -44,6 +45,7 @@ COVER_THUMBNAIL_WIDTH = int(se.COVER_WIDTH / 4) # Cast to int required for PIL.
 COVER_THUMBNAIL_HEIGHT = int(se.COVER_HEIGHT / 4) # Cast to int required for PIL.
 SVG_OUTER_STROKE_WIDTH = 2
 SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
+SVG_CANONICAL_VIEWPORT_WIDTH = 700 # Viewport width at which to render a whole page when calculating the width that we should raster SVGs to PNGs at.
 ENDNOTE_CHUNK_SIZE = 500
 SE_LOGO_SVG_SHA256 = "ab04478bf16d277777374e29abf5146be957cc7b49394ec9f4ceb2ea1becb367"
 
@@ -87,7 +89,7 @@ def get_file_sha256(filename: Path) -> str:
 
 	return h.hexdigest()
 
-def __convert_image(input_path: Path, output_path: Path, scale: int, build_cache_images_directory: Path|None) -> Path | None:
+def __convert_image(input_path: Path, output_path: Path, scale: int, build_cache_images_directory: Path|None, output_width: int|None=None) -> Path | None:
 	"""
 	Convert an image from one format to another, using a local cache to speed up repeat operations if possible.
 
@@ -96,6 +98,7 @@ def __convert_image(input_path: Path, output_path: Path, scale: int, build_cache
 	output_path: The path to the image to convert to.
 	scale: The output scale.
 	build_cache_images_directory: The images cache directory for this ebook, or `None` to disable the cache.
+	output_width: The desired 1x output width for SVG-to-PNG conversions, or `None` to use the SVG intrinsic width.
 
 	OUTPUTS
 	The paths to cache entry for the created image, or `None` if the cache is disabled.
@@ -114,6 +117,7 @@ def __convert_image(input_path: Path, output_path: Path, scale: int, build_cache
 				"sha256=" + input_file_sha256,
 				"suffix=" + input_path.suffix,
 				"scale=" + str(scale),
+				"output-width=" + str(output_width),
 				"oxipng-level=" + str(se.images.OXIPNG_OPTIMIZATION_LEVEL),
 				"cairosvg-version=" + getattr(cairosvg, "__version__", "unknown"),
 				"pillow-version=" + getattr(Image, "__version__", "unknown")
@@ -133,13 +137,20 @@ def __convert_image(input_path: Path, output_path: Path, scale: int, build_cache
 		pass
 
 	if input_path.suffix == ".svg" and output_path.suffix == ".png":
-		if scale == 1 and input_file_sha256 == SE_LOGO_SVG_SHA256:
-			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("logo.png")) as logo_png_path:
-				shutil.copyfile(logo_png_path, output_path)
+		if output_width is None and input_file_sha256 == SE_LOGO_SVG_SHA256:
+			if scale == 1:
+				with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("logo.png")) as logo_png_path:
+					shutil.copyfile(logo_png_path, output_path)
+
+			elif scale == 2:
+				with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("logo-2x.png")) as logo_png_path:
+					shutil.copyfile(logo_png_path, output_path)
 
 			return None
 
-		if scale == 1:
+		if output_width:
+			svg2png(url=str(input_path), write_to=str(output_path), output_width=output_width * scale)
+		elif scale == 1:
 			svg2png(url=str(input_path), write_to=str(output_path))
 		else:
 			svg2png(url=str(input_path), write_to=str(output_path), scale=scale)
@@ -924,6 +935,64 @@ def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote
 		with open(work_compatible_epub_dir / "epub" / toc_relative_path, "w", encoding="utf-8") as file:
 			file.write(se.formatting.format_xhtml(toc_dom.to_string()))
 
+def __get_svg_rendered_widths(files_with_svg: list[Path]) -> dict[Path, int]:
+	"""
+	Return the *largest* rendered width of each SVG in the ebook, for a known viewport width.
+	"""
+
+	rendered_widths: dict[Path, int] = {}
+
+	# We import this late because we don't want to load selenium if we're not going to use it.
+	from se import browser # pylint: disable=import-outside-toplevel
+
+	driver: 'webdriver.firefox.webdriver.WebDriver|None' = None
+	try:
+		driver = browser.initialize_selenium_firefox_webdriver()
+
+		# Set the viewport width.
+		viewport_width = SVG_CANONICAL_VIEWPORT_WIDTH
+		driver.set_window_size(viewport_width, 1000) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
+
+		# Sometimes, Selenium doesn't set the width correctly. Loop a few times until the viewport width is the actual width we specified.
+		for _ in range(5):
+			inner_width = int(driver.execute_script("return window.innerWidth;")) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
+			if inner_width == viewport_width:
+				break
+
+			driver.set_window_size(viewport_width + (viewport_width - inner_width), 1000) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
+
+		for file_path in files_with_svg:
+			driver.get(file_path.resolve().as_uri())
+			measurement_script = """
+				return Array.from(document.querySelectorAll('img[src$=".svg"]')).map((image) => {
+					return {
+						src: image.getAttribute('src'),
+						width: Math.ceil(image.getBoundingClientRect().width)
+					};
+				});
+			"""
+			measurements = driver.execute_script(measurement_script) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
+
+			for measurement in measurements:
+				src = measurement.get("src")
+				width = int(measurement.get("width", 0))
+
+				if not src or width <= 0:
+					continue
+
+				src = urllib.parse.unquote(regex.sub(r"#.*$", "", src))
+				svg_path = (file_path.parent / src).resolve()
+				rendered_widths[svg_path] = max(width, rendered_widths.get(svg_path, 0))
+	finally:
+		try:
+			if driver:
+				driver.quit()
+		except Exception:
+			# We might get here if we `ctrl + c` before Selenium has finished initializing the driver.
+			pass
+
+	return rendered_widths
+
 def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree, ibooks_srcset_bug_exists: bool, build_cache_images_directory: Path|None) -> set[Path]:
 	"""
 	Convert SVG illustrations to PNG.
@@ -937,6 +1006,17 @@ def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metada
 	OUTPUTS
 	The paths to cache entries matching all images created.
 	"""
+
+	current_cache_paths: set[Path] = set()
+	svg_file_paths = list(work_compatible_epub_dir.glob("**/*.svg"))
+	svg_rendered_widths: dict[Path, int] = {}
+	files_with_svg = list(work_compatible_epub_dir / "epub" / Path(href) for href in metadata_dom.xpath("/package/manifest/item[contains(concat(' ', normalize-space(@properties), ' '), ' svg ') and @media-type='application/xhtml+xml']/@href", str))
+	has_convertible_svgs = not self.is_se_ebook or {file_path.name for file_path in svg_file_paths} != {"logo.svg", "titlepage.svg"}
+
+	# Only get rendered widths if this is an SE ebook, and we have SVGs in the ebook that are not `titlepage.svg` or `logo.svg`.
+	# `titlepage.svg` will get rendered at its native viewport width; `logo.svg` will be replaced by a prerendered PNG from our data files, instead of rendering live.
+	if svg_file_paths and has_convertible_svgs:
+		svg_rendered_widths = __get_svg_rendered_widths(files_with_svg)
 
 	# Prep for SVG to PNG conversion. First, remove SVG item properties in the metadata file.
 	for node in metadata_dom.xpath("/package/manifest/item[contains(@properties, 'svg')]"):
@@ -954,20 +1034,21 @@ def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metada
 			filename_2x = Path(regex.sub(r"\.png$", "-2x.png", node.get_attr("href")))
 			node.lxml_element.addnext(etree.fromstring(f"""<item href="{filename_2x}" id="{filename_2x.stem}-2x.png" media-type="image/png"/>"""))
 
-	current_cache_paths: set[Path] = set()
-
 	# Now convert the SVGs.
-	for file_path in work_compatible_epub_dir.glob("**/*.svg"):
-		# Convert SVGs to PNGs at 2x resolution.
+	for file_path in svg_file_paths:
+		output_width = svg_rendered_widths.get(file_path.resolve())
+
+		# Convert SVGs to PNGs at the rendered CSS width when available.
 		# Path arguments must be cast to string.
 		png_path = file_path.parent / (str(file_path.stem) + ".png")
-		cache_path = __convert_image(file_path, png_path, 1, build_cache_images_directory)
+
+		cache_path = __convert_image(file_path, png_path, 1, build_cache_images_directory, output_width)
 		if cache_path:
 			current_cache_paths.add(cache_path)
 
 		if not ibooks_srcset_bug_exists:
 			png_path = file_path.parent / (str(file_path.stem) + "-2x.png")
-			cache_path = __convert_image(file_path, png_path, 2, build_cache_images_directory)
+			cache_path = __convert_image(file_path, png_path, 2, build_cache_images_directory, output_width)
 			if cache_path:
 				current_cache_paths.add(cache_path)
 
@@ -975,7 +1056,7 @@ def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metada
 		file_path.unlink()
 
 	# We converted SVGs to PNGs, so replace references.
-	for file_path in work_compatible_epub_dir.glob("**/*.xhtml"):
+	for file_path in files_with_svg:
 		dom = self.get_dom(file_path)
 		has_svg = False
 
