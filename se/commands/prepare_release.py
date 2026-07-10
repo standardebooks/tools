@@ -41,7 +41,7 @@ def prepare_release(plain_output: bool) -> int:
 				se_epub.update_flesch_reading_ease()
 
 				if args.verbose:
-					console.print(" OK")
+					console.print(" done.")
 
 			if args.revision:
 				if args.verbose:
@@ -50,7 +50,7 @@ def prepare_release(plain_output: bool) -> int:
 				se_epub.set_release_timestamp()
 
 				if args.verbose:
-					console.print(" OK")
+					console.print(" done.")
 		except se.SeException as ex:
 			se.print_error(ex)
 			return ex.code

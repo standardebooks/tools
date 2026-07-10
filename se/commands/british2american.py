@@ -52,6 +52,9 @@ def british2american(plain_output: bool) -> int:
 						file.write(new_xhtml)
 						file.truncate()
 
+			if args.verbose:
+				console.print(" done.")
+
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return_code = se.InvalidInputException.code

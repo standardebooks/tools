@@ -41,6 +41,6 @@ def hyphenate(plain_output: bool) -> int:
 					file.truncate()
 
 		if args.verbose:
-			console.print(" OK")
+			console.print(" done.")
 
 	return 0

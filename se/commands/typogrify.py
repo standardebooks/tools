@@ -77,7 +77,7 @@ def typogrify(plain_output: bool) -> int:
 						file.truncate()
 
 			if args.verbose:
-				console.print(" OK")
+				console.print(" done.")
 
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)

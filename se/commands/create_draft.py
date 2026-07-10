@@ -306,7 +306,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 			content_path = content_path / "src"
 
 		if args.verbose:
-			console.print(se.prep_output("Building ebook structure ...", plain_output))
+			console.print(se.prep_output("Building ebook structure ...", plain_output), end="")
 
 		(content_path / "epub" / "css").mkdir(parents=True)
 		(content_path / "epub" / "images").mkdir()
@@ -316,9 +316,12 @@ def _create_draft(args: Namespace, plain_output: bool):
 		if not args.white_label:
 			(work_path / "images").mkdir()
 
+		if args.verbose:
+			console.print(" done.")
+
 		# Copy over templates.
 		if args.verbose:
-			console.print(se.prep_output("Copying in standard files ...", plain_output))
+			console.print(se.prep_output("Copying in standard files ...", plain_output), end="")
 
 		_copy_template_file("gitignore", work_path / ".gitignore")
 		_copy_template_file("container.xml", content_path / "META-INF")
@@ -369,6 +372,9 @@ def _create_draft(args: Namespace, plain_output: bool):
 			file.write(metadata_xml)
 			file.truncate()
 
+		if args.verbose:
+			console.print(" done.")
+
 		# Basic metadata is done, now work on an `SeEpub` object instead of raw files.
 		epub = SeEpub(work_path)
 
@@ -404,11 +410,15 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 			# Get the ebook metadata.
 			if args.verbose:
-				console.print(se.prep_output(f"Downloading ebook metadata from [path][link={transcription_url}]{transcription_url}[/][/] ...", plain_output))
+				console.print(se.prep_output(f"Downloading ebook metadata from [path][link={transcription_url}]{transcription_url}[/][/] ...", plain_output), end="")
 			try:
 				response = requests.get(transcription_url, timeout=60, headers={'User-Agent': USER_AGENT})
 				fp_metadata_html = response.text
 				fp_cookie = response.cookies['PHPSESSID']
+
+				if args.verbose:
+					console.print(" done.")
+
 			except Exception as ex:
 				raise se.RemoteCommandErrorException(f"Couldn’t download Faded Page ebook metadata page: {ex}") from ex
 
@@ -426,10 +436,11 @@ def _create_draft(args: Namespace, plain_output: bool):
 			# Faded Page requires you to set a session cookie at the ebook's metadata page before you can access the actual ebook transcription.
 			# We got that session cookie earlier, and we pass it below in order to actually be able to download the ebook.
 			if args.verbose:
-				console.print(se.prep_output(f"Downloading ebook transcription from [path][link={fp_ebook_url}]{fp_ebook_url}[/][/] ...", plain_output))
+				console.print(se.prep_output(f"Downloading ebook transcription from [path][link={fp_ebook_url}]{fp_ebook_url}[/][/] ...", plain_output), end="")
 			try:
 				response = requests.get(fp_ebook_url, timeout=60, cookies={"PHPSESSID": fp_cookie}, headers={'User-Agent': USER_AGENT})
 				transcription_ebook_html = response.text
+
 			except Exception as ex:
 				raise se.RemoteCommandErrorException(f"Couldn’t download Faded Page ebook HTML: {ex}") from ex
 
@@ -454,15 +465,22 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 			transcription_source = "Faded Page"
 
+			if args.verbose:
+				console.print(" done.")
+
 		if args.pg_id:
 			transcription_url = f"https://www.gutenberg.org/ebooks/{args.pg_id}"
 
 			# Get the ebook metadata.
 			if args.verbose:
-				console.print(se.prep_output(f"Downloading ebook metadata from [path][link={transcription_url}]{transcription_url}[/][/] ...", plain_output))
+				console.print(se.prep_output(f"Downloading ebook metadata from [path][link={transcription_url}]{transcription_url}[/][/] ...", plain_output), end="")
 			try:
 				response = requests.get(transcription_url, timeout=60, headers={'User-Agent': USER_AGENT})
 				pg_metadata_html = response.text
+
+				if args.verbose:
+					console.print(" done.")
+
 			except Exception as ex:
 				raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook metadata page: {ex}") from ex
 
@@ -489,10 +507,11 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 			# Get the actual ebook URL.
 			if args.verbose:
-				console.print(se.prep_output(f"Downloading ebook transcription from [path][link={pg_ebook_url}]{pg_ebook_url}[/][/] ...", plain_output))
+				console.print(se.prep_output(f"Downloading ebook transcription from [path][link={pg_ebook_url}]{pg_ebook_url}[/][/] ...", plain_output), end="")
 			try:
 				response = requests.get(pg_ebook_url, timeout=60, headers={'User-Agent': USER_AGENT})
 				transcription_ebook_html = response.text
+
 			except Exception as ex:
 				raise se.RemoteCommandErrorException(f"Couldn’t download Project Gutenberg ebook HTML: {ex}") from ex
 
@@ -503,6 +522,9 @@ def _create_draft(args: Namespace, plain_output: bool):
 				raise se.InvalidEncodingException(f"Couldn’t determine text encoding of Project Gutenberg HTML file: {ex}") from ex
 
 			transcription_source = "Project Gutenberg"
+
+			if args.verbose:
+				console.print(" done.")
 
 		if transcription_ebook_html:
 			# Try to guess the ebook language.
@@ -567,7 +589,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 		# Write transcription XHTML, if we have it.
 		if transcription_ebook_html:
 			if args.verbose:
-				console.print(se.prep_output("Cleaning transcription ...", plain_output))
+				console.print(se.prep_output("Cleaning transcription ...", plain_output), end="")
 
 			transcription_local_path = content_path / "epub" / "text" / "body.xhtml"
 			output = ""
@@ -800,6 +822,9 @@ def _create_draft(args: Namespace, plain_output: bool):
 			except OSError as ex:
 				raise se.InvalidFileException(f"Couldn’t write to ebook directory: {ex}") from ex
 
+			if args.verbose:
+				console.print(" done.")
+
 		# Fill out the titlepage.
 		with open(content_path / "epub" / "text" / "titlepage.xhtml", "r+", encoding="utf-8") as file:
 			titlepage_xhtml = file.read()
@@ -913,7 +938,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 		# Set up local Git repo.
 		if args.verbose:
-			console.print(se.prep_output("Initializing git repository ...", plain_output))
+			console.print(se.prep_output("Initializing git repository ...", plain_output), end="")
 
 		repo = Repo.init(work_path)
 
@@ -923,6 +948,9 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 		# Move the result to the final destination
 		shutil.move(work_path, repo_path)
+
+		if args.verbose:
+			console.print(" done.")
 
 	if args.pg_id and transcription_ebook_html and not is_external_html_parsed:
 		raise se.InvalidXhtmlException(f"Couldn’t parse Project Gutenberg ebook source; this is usually due to invalid HTML in the ebook. The raw text was saved to [path][link={transcription_local_path}]{transcription_local_path}[/][/].")

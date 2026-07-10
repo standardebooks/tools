@@ -108,6 +108,6 @@ def extract_ebook(plain_output: bool) -> int:
 			return se.InvalidFileException.code
 
 		if args.verbose:
-			console.print(" OK")
+			console.print(" done.")
 
 	return 0

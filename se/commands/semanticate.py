@@ -47,6 +47,6 @@ def semanticate(plain_output: bool) -> int:
 			return_code = se.InvalidInputException.code
 
 		if args.verbose:
-			console.print(" OK")
+			console.print(" done.")
 
 	return return_code

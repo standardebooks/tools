@@ -201,9 +201,12 @@ def compare_versions(plain_output: bool) -> int:
 						filename = Path(filename).resolve()
 
 						if args.verbose:
-							console.print(se.prep_output(f"\tProcessing original [path][link=file://{filename}]{filename.name}[/][/] ...", plain_output))
+							console.print(se.prep_output(f"\tProcessing original [path][link=file://{filename}]{filename.name}[/][/] ...", plain_output), end="")
 
 						_screenshot_html_element(driver, filename, Path(temp_directory_name) / (filename.name + "-original.png"))
+
+						if args.verbose:
+							console.print(" done.")
 
 					# Pop the stash.
 					git_command.stash("pop")
@@ -217,7 +220,7 @@ def compare_versions(plain_output: bool) -> int:
 						file_original_screenshot_path = Path(temp_directory_name) / (filename.name + "-original.png")
 
 						if args.verbose:
-							console.print(se.prep_output(f"\tProcessing new [path][link=file://{filename}]{filename.name}[/][/] ...", plain_output))
+							console.print(se.prep_output(f"\tProcessing new [path][link=file://{filename}]{filename.name}[/][/] ...", plain_output), end="")
 
 						_screenshot_html_element(driver, filename, file_new_screenshot_path)
 
@@ -270,8 +273,11 @@ def compare_versions(plain_output: bool) -> int:
 								except Exception:
 									pass
 
+						if args.verbose:
+							console.print(" done.")
+
 					for filename in natsorted(list(files_with_differences)):
-						console.print(se.prep_output("{}Difference in {}".format("\t" if args.verbose else "", f"[path][link=file://{filename}]{filename.name}[/][/]"), plain_output))
+						console.print(se.prep_output("{}Difference in {}".format("\t" if args.verbose else "", f"[path][link=file://{filename}]{filename.name}[/][/]."), plain_output))
 
 					if files_with_differences and args.copy_images:
 						# Generate an HTML file with diffs side by side.

@@ -26,7 +26,7 @@ def build_svg_titles(plain_output: bool) -> int:
 	for directory in args.directories:
 		try:
 			if args.verbose:
-				console.print(se.prep_output(f"Processing [path][link=file://{directory}]{directory}[/][/] ...", plain_output))
+				console.print(se.prep_output(f"Processing [path][link=file://{directory}]{directory}[/][/] ...", plain_output), end="")
 
 			se_epub = SeEpub(directory)
 
@@ -70,6 +70,9 @@ def build_svg_titles(plain_output: bool) -> int:
 
 					except FileNotFoundError:
 						se.print_error(f"Couldn’t open file: [path][link=file://{svg_path}]{svg_path}[/][/].", plain_output=plain_output)
+
+			if args.verbose:
+				console.print(" done.")
 
 		except se.SeException as ex:
 			se.print_error(ex)

@@ -29,7 +29,7 @@ def build_ids(plain_output: bool) -> int:
 	for directory in args.directories:
 		try:
 			if args.verbose:
-				console.print(se.prep_output(f"Processing [path][link=file://{directory}]{directory}[/][/] ...", plain_output))
+				console.print(se.prep_output(f"Processing [path][link=file://{directory}]{directory}[/][/] ...", plain_output), end="")
 
 			se_epub = SeEpub(directory)
 
@@ -96,6 +96,9 @@ def build_ids(plain_output: bool) -> int:
 					file.seek(0)
 					file.write(file_contents)
 					file.truncate()
+
+			if args.verbose:
+				console.print(" done.")
 
 		except se.SeException as ex:
 			se.print_error(ex)
