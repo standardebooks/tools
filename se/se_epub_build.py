@@ -18,7 +18,7 @@ from hashlib import sha1, sha256
 from html import unescape
 from pathlib import Path
 import importlib.resources
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import cairosvg
 from cairosvg import svg2png # type: ignore Not going to hand-write the type hint for this crazy huge function right now.
@@ -38,7 +38,7 @@ from se.vendor.calibre_azw3 import convert_epub_to_azw3
 from se.vendor.kobo_touch_extended import kobo
 
 if TYPE_CHECKING:
-	from selenium import webdriver
+	from selenium.webdriver.remote.webdriver import WebDriver
 
 
 COVER_THUMBNAIL_WIDTH = int(se.COVER_WIDTH / 4) # Cast to int required for PIL.
@@ -181,7 +181,7 @@ def __convert_image(input_path: Path, output_path: Path, scale: int, build_cache
 
 	return cache_path
 
-def __convert_mathml_to_png(mathml_fragment: str, output_path: Path, output_path_2x: Path, build_cache_images_directory: Path|None, driver: 'webdriver.firefox.webdriver.WebDriver|None') -> tuple[set[Path], 'webdriver.firefox.webdriver.WebDriver|None']:
+def __convert_mathml_to_png(mathml_fragment: str, output_path: Path, output_path_2x: Path, build_cache_images_directory: Path|None, driver: 'WebDriver|None') -> tuple[set[Path], 'WebDriver|None']:
 	"""
 	Convert a MathML fragment to PNG images, using a local cache to speed up repeat operations if possible.
 
@@ -231,7 +231,7 @@ def __convert_mathml_to_png(mathml_fragment: str, output_path: Path, output_path
 		# We import this late because we don't want to load selenium if we're not going to use it.
 		from se import browser # pylint: disable=import-outside-toplevel
 
-		driver = browser.initialize_selenium_firefox_webdriver()
+		driver = browser.initialize_selenium_webdriver()
 
 	# `render_mathml_to_png()` screenshots the 2x image once, then downscales it to create the 1x image.
 	se.images.render_mathml_to_png(driver, mathml_fragment, output_path, output_path_2x)
@@ -945,9 +945,14 @@ def __get_svg_rendered_widths(files_with_svg: list[Path]) -> dict[Path, int]:
 	# We import this late because we don't want to load selenium if we're not going to use it.
 	from se import browser # pylint: disable=import-outside-toplevel
 
-	driver: 'webdriver.firefox.webdriver.WebDriver|None' = None
+	driver: 'WebDriver|None' = None
 	try:
-		driver = browser.initialize_selenium_firefox_webdriver()
+		try:
+			driver = browser.initialize_selenium_webdriver()
+		except se.MissingDependencyException:
+			# If we failed to initialize the browser, don't return any widths, and we'll render SVGs using their native viewbox.
+			se.print_error("Couldn't start [command]chrome[/] or [command]firefox[/] to calculate SVG widths; falling back to viewbox widths.", False, True)
+			return rendered_widths
 
 		# Set the viewport width.
 		viewport_width = SVG_CANONICAL_VIEWPORT_WIDTH
@@ -955,7 +960,7 @@ def __get_svg_rendered_widths(files_with_svg: list[Path]) -> dict[Path, int]:
 
 		# Sometimes, Selenium doesn't set the width correctly. Loop a few times until the viewport width is the actual width we specified.
 		for _ in range(5):
-			inner_width = int(driver.execute_script("return window.innerWidth;")) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
+			inner_width = cast(int, driver.execute_script("return window.innerWidth;")) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
 			if inner_width == viewport_width:
 				break
 
@@ -971,13 +976,13 @@ def __get_svg_rendered_widths(files_with_svg: list[Path]) -> dict[Path, int]:
 					};
 				});
 			"""
-			measurements = driver.execute_script(measurement_script) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
+			measurements = cast(list[dict[str, str | int | None]], driver.execute_script(measurement_script)) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
 
 			for measurement in measurements:
 				src = measurement.get("src")
-				width = int(measurement.get("width", 0))
+				width = measurement.get("width", 0)
 
-				if not src or width <= 0:
+				if not isinstance(src, str) or not isinstance(width, int) or width <= 0:
 					continue
 
 				src = urllib.parse.unquote(regex.sub(r"#.*$", "", src))
@@ -1099,7 +1104,7 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 	current_cache_paths: set[Path] = set()
 	epub_root_directory = work_compatible_epub_dir / "epub"
 
-	# We wrap this whole thing in a `try` block, because we need to call `driver.quit()` if execution is interrupted (like by `ctrl + c`, or by an unhandled exception). If we don't call `driver.quit()`, Firefox will stay around as a zombie process even if the Python script is dead.
+	# We wrap this whole thing in a `try` block, because we need to call `driver.quit()` if execution is interrupted (like by `ctrl + c`, or by an unhandled exception). If we don't call `driver.quit()`, the browser will stay around as a zombie process even if the Python script is dead.
 	driver = None
 	try:
 		mathml_count = 1
@@ -1202,12 +1207,12 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 					node.replace_with(node_clone)
 					node_clone.unwrap()
 				else:
-					# Failure! Abandon all hope, and use Firefox to convert the MathML to PNG.
+					# Failure! Abandon all hope, and use Selenium to convert the MathML to PNG.
 					# First, remove the `m:` namespace shorthand and add the actual namespace to our fragment.
 					namespaced_line = regex.sub(r"<(/?)m:", "<\\1", node.to_string())
 					namespaced_line = namespaced_line.replace("<math", "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"")
 
-					# Have Firefox render the fragment if it isn't already cached.
+					# Have Selenium render the fragment if it isn't already cached.
 					output_path = epub_root_directory / "images" / f"mathml-{mathml_count}.png"
 					output_path_2x = epub_root_directory / "images" / f"mathml-{mathml_count}-2x.png"
 					cache_paths, driver = __convert_mathml_to_png(namespaced_line, output_path, output_path_2x, build_cache_images_directory, driver)

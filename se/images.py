@@ -22,7 +22,7 @@ import se
 import se.formatting
 
 if TYPE_CHECKING:
-	from selenium import webdriver
+	from selenium.webdriver.remote.webdriver import WebDriver
 
 COVER_TITLE_BOX_Y = 1620 # In px; note that in SVG, Y starts from the *top* of the image.
 COVER_TITLE_BOX_HEIGHT = 430
@@ -380,12 +380,12 @@ def has_transparency(image: Image_type) -> bool:
 	return False
 
 # Note: We can't type hint driver, because we conditionally import Selenium for performance reasons.
-def render_mathml_to_png(driver: 'webdriver.firefox.webdriver.WebDriver', mathml: str, output_filename: Path, output_filename_2x: Path) -> None:
+def render_mathml_to_png(driver: 'WebDriver', mathml: str, output_filename: Path, output_filename_2x: Path) -> None:
 	"""
 	Render a string of MathML into a transparent PNG file.
 
 	INPUTS
-	driver: A Selenium webdriver, usually initialized from `se.browser.initialize_selenium_firefox_webdriver()`.
+	driver: A Selenium webdriver, usually initialized from `se.browser.initialize_selenium_webdriver()`.
 	mathml: A string of MathML.
 	output_filename: A filename to store PNG output to.
 	output_filename_2x: A filename to store hiDPI PNG output to.

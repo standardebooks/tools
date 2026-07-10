@@ -10,3 +10,6 @@ disable=line-too-long,too-many-nested-blocks,too-many-branches,too-many-statemen
 
 [FORMAT]
 indent-string=\t
+
+[REPORTS]
+score=no

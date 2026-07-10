@@ -43,7 +43,7 @@ case $state in
 			"build-title[Generate the title of an XHTML file based on its headings and update the file’s \`<title>\` element.]" \
 			"build-toc[Generate the table of contents for the ebook’s source directory and update the ToC file.]" \
 			"clean[Prettify and canonicalize individual XHTML, SVG, or CSS files, or all XHTML, SVG, or CSS files in a source directory.]" \
-			"compare-versions[Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, place screenshots of the new, original, and diff (if available) renderings in the current working directory. A file called \`diff.html\` is created to allow for side-by-side comparisons of original and new files.]" \
+			"compare-versions[Use a web browser to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, place screenshots of the new, original, and diff (if available) renderings in the current working directory. A file called \`diff.html\` is created to allow for side-by-side comparisons of original and new files.]" \
 			"create-draft[Create a skeleton of a new Standard Ebook in the current directory.]" \
 			"css-select[Print the results of a CSS selector evaluated against a set of XHTML files.]" \
 			"dec2roman[Convert a decimal number to a Roman numeral.]" \

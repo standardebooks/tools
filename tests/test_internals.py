@@ -12,7 +12,7 @@ from typing import cast
 from PIL import Image, ImageDraw
 from pytest import MonkeyPatch
 import regex
-from selenium.webdriver.firefox.webdriver import WebDriver
+from selenium.webdriver.remote.webdriver import WebDriver
 
 import se.se_epub_build
 from se.se_epub_build import __convert_image, __convert_mathml_to_png

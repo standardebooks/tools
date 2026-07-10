@@ -88,7 +88,7 @@ complete -c se -n "__fish_se_no_subcommand" -a clean -d "Prettify and canonicali
 complete -c se -A -n "__fish_seen_subcommand_from clean" -s h -l help -x -d "Show this help message and exit."
 complete -c se -A -n "__fish_seen_subcommand_from clean" -s v -l verbose -x -d "Increase output verbosity."
 
-complete -c se -n "__fish_se_no_subcommand" -a compare-versions -d "Use Firefox to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, place screenshots of the new, original, and diff (if available) renderings in the current working directory. A file called `diff.html` is created to allow for side-by-side comparisons of original and new files."
+complete -c se -n "__fish_se_no_subcommand" -a compare-versions -d "Use a web browser to render and compare XHTML files in an ebook repository. Run on a dirty repository to visually compare the repository’s dirty state with its clean state. If a file renders differently, place screenshots of the new, original, and diff (if available) renderings in the current working directory. A file called `diff.html` is created to allow for side-by-side comparisons of original and new files."
 complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s h -l help -x -d "Show this help message and exit."
 complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s i -l include-se-files -x -d "Include commonly-excluded Standard Ebooks files like imprint, titlepage, and colophon."
 complete -c se -A -n "__fish_seen_subcommand_from compare-versions" -s n -l no-images -x -d "Don’t create images of diffs."
