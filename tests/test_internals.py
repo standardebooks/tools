@@ -15,6 +15,7 @@ import regex
 from selenium.webdriver.remote.webdriver import WebDriver
 
 import se.se_epub_build
+from se.browser import Browser, BrowserType, InstallationType
 from se.se_epub_build import __convert_image, __convert_mathml_to_png
 from se.se_epub_generate_toc import add_landmark, TocItem
 import se.easy_xml
@@ -346,6 +347,8 @@ def test_mathml_png_cache_avoids_rendering(monkeypatch: MonkeyPatch, tmp_path: P
 	"""
 
 	driver = cast(WebDriver, object())
+	browser = Browser(BrowserType.FIREFOX, InstallationType.NATIVE, tmp_path / "firefox")
+	browser.driver = driver
 	mathml_fragment = "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mi>x</mi></math>"
 	cache_directory = tmp_path / "cache"
 	cache_directory.mkdir()
@@ -364,14 +367,14 @@ def test_mathml_png_cache_avoids_rendering(monkeypatch: MonkeyPatch, tmp_path: P
 
 	monkeypatch.setattr(se.images, "render_mathml_to_png", fake_render_mathml_to_png)
 
-	cache_paths, reused_driver = __convert_mathml_to_png(mathml_fragment, output_path, output_path_2x, cache_directory, driver)
+	cache_paths, reused_browser = __convert_mathml_to_png(mathml_fragment, output_path, output_path_2x, cache_directory, browser)
 	output_path.unlink()
 	output_path_2x.unlink()
-	cached_paths, cached_driver = __convert_mathml_to_png(mathml_fragment, output_path, output_path_2x, cache_directory, driver)
+	cached_paths, cached_browser = __convert_mathml_to_png(mathml_fragment, output_path, output_path_2x, cache_directory, browser)
 
 	assert cache_paths == cached_paths
-	assert reused_driver is driver
-	assert cached_driver is driver
+	assert reused_browser is browser
+	assert cached_browser is browser
 	assert render_calls == [mathml_fragment]
 	assert output_path.read_bytes() == b"1x"
 	assert output_path_2x.read_bytes() == b"2x"

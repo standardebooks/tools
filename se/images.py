@@ -22,7 +22,7 @@ import se
 import se.formatting
 
 if TYPE_CHECKING:
-	from selenium.webdriver.remote.webdriver import WebDriver
+	from se.browser import Browser
 
 COVER_TITLE_BOX_Y = 1620 # In px; note that in SVG, Y starts from the *top* of the image.
 COVER_TITLE_BOX_HEIGHT = 430
@@ -379,13 +379,13 @@ def has_transparency(image: Image_type) -> bool:
 
 	return False
 
-# Note: We can't type hint driver, because we conditionally import Selenium for performance reasons.
-def render_mathml_to_png(driver: 'WebDriver', mathml: str, output_filename: Path, output_filename_2x: Path) -> None:
+# Note: We can't import Browser at runtime because Browser conditionally imports Selenium for performance reasons.
+def render_mathml_to_png(browser: 'Browser', mathml: str, output_filename: Path, output_filename_2x: Path) -> None:
 	"""
 	Render a string of MathML into a transparent PNG file.
 
 	INPUTS
-	driver: A Selenium webdriver, usually initialized from `se.browser.initialize_selenium_webdriver()`.
+	browser: A browser, usually initialized from `se.browser.initialize_selenium_webdriver()`.
 	mathml: A string of MathML.
 	output_filename: A filename to store PNG output to.
 	output_filename_2x: A filename to store hiDPI PNG output to.
@@ -395,15 +395,15 @@ def render_mathml_to_png(driver: 'WebDriver', mathml: str, output_filename: Path
 	"""
 
 	# For some reason, we must use an `.xhtml` suffix. Without that, some MathML expressions don't render.
-	with tempfile.NamedTemporaryFile(mode="w+", suffix=".xhtml", encoding="utf-8") as mathml_file:
+	with tempfile.NamedTemporaryFile(mode="w+", suffix=".xhtml", encoding="utf-8", dir=browser.get_temporary_directory()) as mathml_file:
 		with tempfile.NamedTemporaryFile(mode="w+", suffix=".png", encoding="utf-8") as png_file:
 			mathml_file.write(f"<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title>MathML</title></head><body>{mathml}</body></html>")
 			mathml_file.seek(0)
 
-			driver.get(f"file://{mathml_file.name}")
+			browser.driver.get(f"file://{mathml_file.name}")
 			# We have to take a screenshot of the HTML element, because otherwise we screenshot the viewport, which would result in a truncated image.
 
-			driver.find_element("tag name", "html").screenshot(png_file.name) # pyright: ignore Broken selenium type hint here.
+			browser.driver.find_element("tag name", "html").screenshot(png_file.name) # pyright: ignore Broken selenium type hint here.
 
 			# Save hiDPI 2x version.
 			image_file = Image.open(png_file.name)

@@ -6,13 +6,17 @@ Defines functions for interacting with headless browser sessions.
 import atexit
 from contextlib import ExitStack
 from enum import Enum
+import os
+from pathlib import Path
 import tempfile
 
 import installed_browsers
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.remote.webdriver import WebDriver
 
 import se
@@ -48,7 +52,65 @@ class BrowserType(Enum):
 
 		return None
 
-def _initialize_selenium_chrome_webdriver() -> WebDriver:
+	@staticmethod
+	def flatpak_application_id(browser_type: "BrowserType") -> str:
+		"""
+		Return the Flatpak application ID for the given browser type.
+		"""
+
+		if browser_type == BrowserType.FIREFOX:
+			return "org.mozilla.firefox"
+
+		return "org.chromium.Chromium"
+
+class InstallationType(Enum):
+	"""
+	One of the supported browser installation types.
+	"""
+
+	NATIVE = 1
+	SNAP = 2
+	FLATPAK = 3
+
+class Browser:
+	"""
+	A supported browser and its Selenium webdriver.
+	"""
+
+	def __init__(self, browser_type: BrowserType, installation_type: InstallationType, executable_path: Path):
+		"""
+		Initialize a browser wrapper for the given browser and installation types.
+		"""
+
+		self.type = browser_type
+		self.installation_type = installation_type
+		self.executable_path = executable_path
+		self.driver: WebDriver
+
+	def get_temporary_directory(self) -> Path | None:
+		"""
+		Return a temporary directory accessible to a sandboxed browser, or `None` if the browser doesn't require one.
+		"""
+		# Flatpak exposes this application-specific runtime directory at the same path inside and outside its sandbox.
+		if self.installation_type == InstallationType.FLATPAK:
+			runtime_directory = os.environ.get("XDG_RUNTIME_DIR", "/run/user/" + str(os.getuid()))
+			flatpak_temporary_directory = Path(runtime_directory) / "app" / BrowserType.flatpak_application_id(self.type) / "tmp"
+			flatpak_temporary_directory.mkdir(parents=True, exist_ok=True)
+			return flatpak_temporary_directory
+
+		if self.installation_type == InstallationType.SNAP and self.type == BrowserType.FIREFOX:
+			firefox_snap_common_directory = Path.home() / "snap" / "firefox" / "common"
+			if firefox_snap_common_directory.is_dir():
+				return firefox_snap_common_directory
+
+		if self.installation_type == InstallationType.SNAP and self.type == BrowserType.CHROME:
+			chromium_snap_common_directory = Path.home() / "snap" / "chromium" / "common"
+			if chromium_snap_common_directory.is_dir():
+				return chromium_snap_common_directory
+
+		return None
+
+def _initialize_selenium_chrome_webdriver(browser: Browser) -> WebDriver:
 	"""
 	Initialize a Selenium Chrome-compatible driver and return it for use in other applications.
 	"""
@@ -59,9 +121,12 @@ def _initialize_selenium_chrome_webdriver() -> WebDriver:
 	options.add_argument("--headless=new")
 	options.add_argument("--disable-dev-shm-usage")
 	options.add_argument("--no-sandbox")
-	options.add_argument("--remote-debugging-pipe")
+	if browser.installation_type == InstallationType.FLATPAK and browser.executable_path:
+		options.binary_location = str(browser.executable_path)
+	else:
+		options.add_argument("--remote-debugging-pipe")
 
-	chrome_profile_directory = _TEMP_DIRECTORY_STACK.enter_context(tempfile.TemporaryDirectory(prefix="se-selenium-chrome-"))
+	chrome_profile_directory = _TEMP_DIRECTORY_STACK.enter_context(tempfile.TemporaryDirectory(prefix="se-selenium-chrome-", dir=browser.get_temporary_directory()))
 	options.add_argument("--user-data-dir=" + chrome_profile_directory)
 
 	# Disable history and caches so repeated screenshots do not inherit session state.
@@ -75,9 +140,13 @@ def _initialize_selenium_chrome_webdriver() -> WebDriver:
 	}
 	options.add_experimental_option("prefs", chrome_prefs) # type: ignore This is an error in Selenium's type stub.
 
+	# The Chromium Snap's chromedriver must run in the same Snap sandbox as Chromium. Specifying it also prevents Selenium Manager from treating the Snap launcher as the Chromium executable.
+	if browser.installation_type == InstallationType.SNAP:
+		return webdriver.Chrome(options=options, service=ChromeService(executable_path="/snap/bin/chromium.chromedriver")) # type: ignore This is an error in Selenium's type stub.
+
 	return webdriver.Chrome(options=options) # type: ignore This is an error in Selenium's type stub.
 
-def _initialize_selenium_firefox_webdriver() -> WebDriver:
+def _initialize_selenium_firefox_webdriver(browser: Browser) -> WebDriver:
 	"""
 	Initialize a Selenium Firefox driver and return it for use in other applications.
 	"""
@@ -88,6 +157,8 @@ def _initialize_selenium_firefox_webdriver() -> WebDriver:
 	# Force a wide viewport, otherwise Firefox may crash.
 	options.add_argument("--width=1400")
 	options.add_argument("--height=1000")
+	if browser.installation_type == InstallationType.FLATPAK and browser.executable_path:
+		options.binary_location = str(browser.executable_path)
 
 	# Disable the history, because otherwise links to (for example to end notes) may appear as "visited" in visits to other pages, and thus cause a fake diff.
 	profile = FirefoxProfile()
@@ -100,27 +171,75 @@ def _initialize_selenium_firefox_webdriver() -> WebDriver:
 
 	options.profile = profile
 
+	# The Firefox Snap's geckodriver must run in the same Snap sandbox as Firefox. Specifying it also prevents Selenium Manager from treating the Snap launcher as the Firefox executable.
+	if browser.installation_type == InstallationType.SNAP:
+		return webdriver.Firefox(options=options, service=FirefoxService(executable_path="/snap/bin/geckodriver")) # type: ignore This is an error in Selenium's type stub.
+
+	if browser.installation_type == InstallationType.FLATPAK:
+		# Geckodriver must create profiles in a directory that the Flatpak Firefox process can access.
+		flatpak_temporary_directory = browser.get_temporary_directory()
+		if flatpak_temporary_directory:
+			service_environment = os.environ.copy()
+			service_environment["TMPDIR"] = str(flatpak_temporary_directory)
+			service = FirefoxService(service_args=["--profile-root", str(flatpak_temporary_directory)], env=service_environment)
+			return webdriver.Firefox(options=options, service=service) # type: ignore This is an error in Selenium's type stub.
+
 	return webdriver.Firefox(options=options) # type: ignore This is an error in Selenium's type stub.
 
-def initialize_selenium_webdriver() -> WebDriver:
+def _initialize_browser_webdriver(browser: Browser) -> WebDriver:
+	"""
+	Initialize and return a Selenium webdriver for the given browser.
+	"""
+
+	if browser.type == BrowserType.CHROME:
+		return _initialize_selenium_chrome_webdriver(browser)
+
+	return _initialize_selenium_firefox_webdriver(browser)
+
+def initialize_selenium_webdriver() -> Browser:
 	"""
 	Initialize a Selenium driver for the user's default browser and return it for use in other applications.
 
 	RETURNS
-	A Selenium webdriver for Chrome or Firefox.
+	A browser containing a Selenium webdriver for Chrome or Firefox.
 	"""
 
 	try:
-		for browser in installed_browsers.browsers():
-			browser_type = BrowserType.from_string(browser["name"])
+		for installed_browser in installed_browsers.browsers():
+			browser_type = BrowserType.from_string(installed_browser["name"])
 
-			if browser_type == BrowserType.CHROME:
-				return _initialize_selenium_chrome_webdriver()
+			if browser_type:
+				installed_browser_location = str(installed_browser["location"])
+				installation_type = InstallationType.NATIVE
 
-			if browser_type == BrowserType.FIREFOX:
-				return _initialize_selenium_firefox_webdriver()
+				# `installed_browsers.browsers()` doesn't identify browsers installed via Flatpak, but in case it does on some platforms, check that here.
+				if "org.mozilla.firefox" in installed_browser_location or "org.chromium.Chromium" in installed_browser_location:
+					installation_type = InstallationType.FLATPAK
+				elif (browser_type == BrowserType.FIREFOX and Path("/snap/bin/geckodriver").is_file()) or (browser_type == BrowserType.CHROME and Path("/snap/bin/chromium.chromedriver").is_file()):
+					installation_type = InstallationType.SNAP
+
+				browser = Browser(browser_type, installation_type, Path(installed_browser_location))
+				browser.driver = _initialize_browser_webdriver(browser)
+
+				return browser
+
+		# `installed_browsers.browsers()` doesn't identify browsers installed via Flatpak. Try to identify them here.
+		flatpak_browser_types = (BrowserType.FIREFOX, BrowserType.CHROME)
+		flatpak_export_directories = (
+			Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local" / "share"))) / "flatpak" / "exports" / "bin",
+			Path("/var/lib/flatpak/exports/bin")
+		)
+
+		for browser_type in flatpak_browser_types:
+			for flatpak_export_directory in flatpak_export_directories:
+				executable_path = flatpak_export_directory / BrowserType.flatpak_application_id(browser_type)
+				if executable_path.is_file():
+					browser = Browser(browser_type, InstallationType.FLATPAK, executable_path)
+					browser.executable_path = executable_path
+					browser.driver = _initialize_browser_webdriver(browser)
+					return browser
 
 	except Exception as ex:
 		raise se.MissingDependencyException(f"Couldn’t start web browser. Message: {ex}")
 
-	raise se.MissingDependencyException("Couldn’t start [command]chrome[/] or [command]firefox[/].")
+	raise se.MissingDependencyException("Couldn’t start [command]chrome[/], [command]chromium[/], or [command]firefox[/].")

@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 import urllib.parse
 from collections import defaultdict
+from contextlib import ExitStack
 from copy import deepcopy
 from datetime import datetime
 from hashlib import sha1, sha256
@@ -38,7 +39,7 @@ from se.vendor.calibre_azw3 import convert_epub_to_azw3
 from se.vendor.kobo_touch_extended import kobo
 
 if TYPE_CHECKING:
-	from selenium.webdriver.remote.webdriver import WebDriver
+	from se.browser import Browser
 
 
 COVER_THUMBNAIL_WIDTH = int(se.COVER_WIDTH / 4) # Cast to int required for PIL.
@@ -181,21 +182,21 @@ def __convert_image(input_path: Path, output_path: Path, scale: int, build_cache
 
 	return cache_path
 
-def __convert_mathml_to_png(mathml_fragment: str, output_path: Path, output_path_2x: Path, build_cache_images_directory: Path|None, driver: 'WebDriver|None') -> tuple[set[Path], 'WebDriver|None']:
+def __convert_mathml_to_png(mathml_fragment: str, output_path: Path, output_path_2x: Path, build_cache_images_directory: Path|None, browser: 'Browser|None') -> tuple[set[Path], 'Browser|None']:
 	"""
 	Convert a MathML fragment to PNG images, using a local cache to speed up repeat operations if possible.
 
-	We break this out into a separate function instead of putting it in `__convert_image()` because this function creates two scaled images at once to minimize usage of the Selenium webdriver.
+	We break this out into a separate function instead of putting it in `__convert_image()` because this function creates two scaled images at once to minimize usage of the browser.
 
 	INPUTS
 	mathml_fragment: The MathML fragment to convert.
 	output_path: The path to the 1x PNG to create.
 	output_path_2x: The path to the 2x PNG to create.
 	build_cache_images_directory: The images cache directory for this ebook, or `None` to disable the cache.
-	driver: A Selenium webdriver to reuse, or `None` if one has not been initialized yet.
+	browser: A browser to reuse, or `None` if one has not been initialized yet.
 
 	OUTPUTS
-	The paths to cache entries for the created images, and the Selenium webdriver to reuse.
+	The paths to cache entries for the created images, and the browser to reuse.
 	"""
 
 	current_cache_paths: set[Path] = set()
@@ -223,18 +224,18 @@ def __convert_mathml_to_png(mathml_fragment: str, output_path: Path, output_path
 		if cache_paths and all(cache_path.exists() for cache_path in cache_paths.values()):
 			shutil.copyfile(cache_paths[1], output_path)
 			shutil.copyfile(cache_paths[2], output_path_2x)
-			return set(cache_paths.values()), driver
+			return set(cache_paths.values()), browser
 	except Exception:
 		pass
 
-	if driver is None:
+	if browser is None:
 		# We import this late because we don't want to load selenium if we're not going to use it.
-		from se import browser # pylint: disable=import-outside-toplevel
+		from se import browser as browser_module # pylint: disable=import-outside-toplevel
 
-		driver = browser.initialize_selenium_webdriver()
+		browser = browser_module.initialize_selenium_webdriver()
 
 	# `render_mathml_to_png()` screenshots the 2x image once, then downscales it to create the 1x image.
-	se.images.render_mathml_to_png(driver, mathml_fragment, output_path, output_path_2x)
+	se.images.render_mathml_to_png(browser, mathml_fragment, output_path, output_path_2x)
 
 	for scale, output_filename in ((1, output_path), (2, output_path_2x)):
 		cache_path = cache_paths.get(scale)
@@ -245,7 +246,7 @@ def __convert_mathml_to_png(mathml_fragment: str, output_path: Path, output_path
 			except Exception:
 				pass
 
-	return current_cache_paths, driver
+	return current_cache_paths, browser
 
 def __save_debug_epub(work_compatible_epub_dir: Path) -> Path:
 	"""
@@ -935,7 +936,7 @@ def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote
 		with open(work_compatible_epub_dir / "epub" / toc_relative_path, "w", encoding="utf-8") as file:
 			file.write(se.formatting.format_xhtml(toc_dom.to_string()))
 
-def __get_svg_rendered_widths(files_with_svg: list[Path]) -> dict[Path, int]:
+def __get_svg_rendered_widths(files_with_svg: list[Path], work_compatible_epub_dir: Path) -> dict[Path, int]:
 	"""
 	Return the *largest* rendered width of each SVG in the ebook, for a known viewport width.
 	"""
@@ -943,31 +944,42 @@ def __get_svg_rendered_widths(files_with_svg: list[Path]) -> dict[Path, int]:
 	rendered_widths: dict[Path, int] = {}
 
 	# We import this late because we don't want to load selenium if we're not going to use it.
-	from se import browser # pylint: disable=import-outside-toplevel
+	from se import browser as browser_module # pylint: disable=import-outside-toplevel
 
-	driver: 'WebDriver|None' = None
+	browser: 'Browser|None' = None
+	browser_temp_directory_stack = ExitStack()
 	try:
 		try:
-			driver = browser.initialize_selenium_webdriver()
+			browser = browser_module.initialize_selenium_webdriver()
 		except se.MissingDependencyException:
 			# If we failed to initialize the browser, don't return any widths, and we'll render SVGs using their native viewbox.
-			se.print_error("Couldn't start [command]chrome[/] or [command]firefox[/] to calculate SVG widths; falling back to viewbox widths.", False, True)
+			se.print_error("Couldn't start [command]chrome[/], [command]chromium[/], or [command]firefox[/] to calculate SVG widths; falling back to viewbox widths.", False, True)
 			return rendered_widths
 
 		# Set the viewport width.
 		viewport_width = SVG_CANONICAL_VIEWPORT_WIDTH
-		driver.set_window_size(viewport_width, 1000) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
+		browser.driver.set_window_size(viewport_width, 1000) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
 
 		# Sometimes, Selenium doesn't set the width correctly. Loop a few times until the viewport width is the actual width we specified.
 		for _ in range(5):
-			inner_width = cast(int, driver.execute_script("return window.innerWidth;")) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
+			inner_width = cast(int, browser.driver.execute_script("return window.innerWidth;")) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
 			if inner_width == viewport_width:
 				break
 
-			driver.set_window_size(viewport_width + (viewport_width - inner_width), 1000) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
+			browser.driver.set_window_size(viewport_width + (viewport_width - inner_width), 1000) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
+
+		# If the browser is sandboxed, we need to copy the work epub into its special temp directory so that it can render the files.
+		browser_epub_directory = work_compatible_epub_dir
+		browser_temporary_directory = browser.get_temporary_directory()
+		if browser_temporary_directory:
+			# The browser is sandboxed, do the copy here.
+			browser_temp_directory_name = browser_temp_directory_stack.enter_context(tempfile.TemporaryDirectory(dir=browser_temporary_directory))
+			browser_epub_directory = Path(browser_temp_directory_name) / work_compatible_epub_dir.name
+			shutil.copytree(work_compatible_epub_dir, browser_epub_directory)
 
 		for file_path in files_with_svg:
-			driver.get(file_path.resolve().as_uri())
+			browser_file_path = browser_epub_directory / file_path.relative_to(work_compatible_epub_dir)
+			browser.driver.get(browser_file_path.resolve().as_uri())
 			measurement_script = """
 				return Array.from(document.querySelectorAll('img[src$=".svg"]')).map((image) => {
 					return {
@@ -976,7 +988,7 @@ def __get_svg_rendered_widths(files_with_svg: list[Path]) -> dict[Path, int]:
 					};
 				});
 			"""
-			measurements = cast(list[dict[str, str | int | None]], driver.execute_script(measurement_script)) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
+			measurements = cast(list[dict[str, str | int | None]], browser.driver.execute_script(measurement_script)) # pyright: ignore[reportUnknownMemberType] Broken Selenium type hint here.
 
 			for measurement in measurements:
 				src = measurement.get("src")
@@ -990,11 +1002,13 @@ def __get_svg_rendered_widths(files_with_svg: list[Path]) -> dict[Path, int]:
 				rendered_widths[svg_path] = max(width, rendered_widths.get(svg_path, 0))
 	finally:
 		try:
-			if driver:
-				driver.quit()
+			if browser:
+				browser.driver.quit()
 		except Exception:
 			# We might get here if we `ctrl + c` before Selenium has finished initializing the driver.
 			pass
+
+		browser_temp_directory_stack.close()
 
 	return rendered_widths
 
@@ -1021,7 +1035,7 @@ def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metada
 	# Only get rendered widths if this is an SE ebook, and we have SVGs in the ebook that are not `titlepage.svg` or `logo.svg`.
 	# `titlepage.svg` will get rendered at its native viewport width; `logo.svg` will be replaced by a prerendered PNG from our data files, instead of rendering live.
 	if svg_file_paths and has_convertible_svgs:
-		svg_rendered_widths = __get_svg_rendered_widths(files_with_svg)
+		svg_rendered_widths = __get_svg_rendered_widths(files_with_svg, work_compatible_epub_dir)
 
 	# Prep for SVG to PNG conversion. First, remove SVG item properties in the metadata file.
 	for node in metadata_dom.xpath("/package/manifest/item[contains(@properties, 'svg')]"):
@@ -1104,8 +1118,8 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 	current_cache_paths: set[Path] = set()
 	epub_root_directory = work_compatible_epub_dir / "epub"
 
-	# We wrap this whole thing in a `try` block, because we need to call `driver.quit()` if execution is interrupted (like by `ctrl + c`, or by an unhandled exception). If we don't call `driver.quit()`, the browser will stay around as a zombie process even if the Python script is dead.
-	driver = None
+	# We wrap this whole thing in a `try` block, because we need to quit the browser if execution is interrupted (like by `ctrl + c`, or by an unhandled exception). If we don't quit it, the browser will stay around as a zombie process even if the Python script is dead.
+	browser: 'Browser|None' = None
 	try:
 		mathml_count = 1
 		for metadata_item_node in metadata_dom.xpath("//item[contains(@properties, 'mathml')]"):
@@ -1215,7 +1229,7 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 					# Have Selenium render the fragment if it isn't already cached.
 					output_path = epub_root_directory / "images" / f"mathml-{mathml_count}.png"
 					output_path_2x = epub_root_directory / "images" / f"mathml-{mathml_count}-2x.png"
-					cache_paths, driver = __convert_mathml_to_png(namespaced_line, output_path, output_path_2x, build_cache_images_directory, driver)
+					cache_paths, browser = __convert_mathml_to_png(namespaced_line, output_path, output_path_2x, build_cache_images_directory, browser)
 					current_cache_paths.update(cache_paths)
 
 					img_node = EasyXmlElement("<img/>", {"epub": "http://www.idpf.org/2007/ops"})
@@ -1278,12 +1292,12 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 				file.write(dom.to_string())
 
 	except KeyboardInterrupt as ex:
-		# Bubble the exception up, but proceed to `finally` so we quit the driver.
+		# Bubble the exception up, but proceed to `finally` so we quit the browser.
 		raise ex
 	finally:
 		try:
-			if driver:
-				driver.quit()
+			if browser:
+				browser.driver.quit()
 		except Exception:
 			# We might get here if we `ctrl + c` before Selenium has finished initializing the driver.
 			pass
