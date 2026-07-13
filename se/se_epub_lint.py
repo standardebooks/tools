@@ -272,6 +272,7 @@ METADATA
 "m-090", "[val]dedication[/] semantic inflection found, but no MARC relator [val]dto[/] (Dedicator)."
 "m-091", "Possibly misspelled MARC relator found."
 "m-092", "MusicXML files found, but no MARC relator [val]mcp[/] (Music copyist)."
+"m-093", "When a work uses MusicXML the following should be added to [xml]<meta property=\"schema:accessibilitySummary\">[/]: MusicXML files for the music in this book are available in its code repository."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -4025,6 +4026,9 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 
 			if file_path.suffix == ".musicxml" and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='mcp']"):
 				messages.append(LintMessage("m-092", "MusicXML files found, but no MARC relator [val]mcp[/] (Music copyist).", se.MESSAGE_TYPE_WARNING, file_path))
+
+			if file_path.suffix == ".musicxml" and not self.metadata_dom.xpath("/package/metadata/meta[(@property='schema:accessibilitySummary') and contains(text(), 'MusicXML files for the music in this book are available in its code repository.')]"):
+				messages.append(LintMessage("m-093", "When a work uses MusicXML the following should be added to [xml]<meta property=\"schema:accessibilitySummary\">[/]: MusicXML files for the music in this book are available in its code repository.", se.MESSAGE_TYPE_ERROR, file_path))
 
 			# Ignore XML files in `./images/` because we don't care how *source* SVGs/MusicXML are internally formatted.
 			if not file_path.is_relative_to(self.path / "images"):
