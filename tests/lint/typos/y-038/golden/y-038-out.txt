@@ -1,0 +1,2 @@
+y-038 [Manual Review] chapter-1.xhtml Possible typo: Dash after punctuation.
+ Line 12:       He paused:-then continued.

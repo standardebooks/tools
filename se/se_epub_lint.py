@@ -526,6 +526,7 @@ TYPOS
 "y-035", "Possible typo: Single letter. Hints: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [attr]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?"
 "y-036", "Possible typo: [text]’[/] after punctuation, but no [text]‘[/]. Hints: Is [text]‘[/] missing or mis-curled? [text]’[/] that elides a word is placed before punctuation."
 "y-037", "Possible typo: Dialog without ending comma."
+"y-038", "Possible typo: Dash after punctuation."
 """
 
 NEWLINE_PATTERN = regex.compile(r"\n")
@@ -3562,6 +3563,10 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: EasyXmlTree, special_f
 	line_matches = source_file.findall(r"“[\p{Uppercase_letter}][^”]{20,}[\p{Lowercase_letter}]” (s?he (said|[\p{Lowercase_letter}]{2,}ed)|(said|[\p{Lowercase_letter}]{2,}ed) [\p{Uppercase_letter}][\p{Lowercase_letter}]+)")
 	if line_matches:
 		messages.append(LintMessage("y-037", "Possible typo: Dialog without ending comma.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_matches(line_matches)))
+
+	nodes = dom.xpath("/html/body//text()[re:test(., '[^<][!?:;]-')]", str)
+	if nodes:
+		messages.append(LintMessage("y-038", "Possible typo: Dash after punctuation.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	return messages
 
