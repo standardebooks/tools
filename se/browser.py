@@ -110,13 +110,17 @@ def initialize_selenium_webdriver() -> WebDriver:
 	A Selenium webdriver for Chrome or Firefox.
 	"""
 
-	for browser in installed_browsers.browsers():
-		browser_type = BrowserType.from_string(browser["name"])
+	try:
+		for browser in installed_browsers.browsers():
+			browser_type = BrowserType.from_string(browser["name"])
 
-		if browser_type == BrowserType.CHROME:
-			return _initialize_selenium_chrome_webdriver()
+			if browser_type == BrowserType.CHROME:
+				return _initialize_selenium_chrome_webdriver()
 
-		if browser_type == BrowserType.FIREFOX:
-			return _initialize_selenium_firefox_webdriver()
+			if browser_type == BrowserType.FIREFOX:
+				return _initialize_selenium_firefox_webdriver()
+
+	except Exception as ex:
+		raise se.MissingDependencyException(f"Couldn’t start web browser. Message: {ex}")
 
 	raise se.MissingDependencyException("Couldn’t start [command]chrome[/] or [command]firefox[/].")
