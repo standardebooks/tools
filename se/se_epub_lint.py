@@ -190,7 +190,7 @@ METADATA
 "m-008", "Non-canonical Library of Congress Name Authority URI. Expected: [url]https://id.loc.gov/authorities/names/<IDENTIFIER>.html[/]."
 "m-009", "Unexpected value for [attr]href[/] attribute in [xml]<link rel=\"schema:codeRepository\">[/] element."
 "m-010", "Invalid [attr]refines[/] attribute value."
-"m-011", "Subtitle in metadata, but no extended title element."
+"m-011", "Subtitle in metadata, but no expanded title element."
 "m-012", "Non-typogrified character in [xml]<dc:title>[/] element."
 "m-013", "Non-typogrified character in [xml]<dc:description>[/] element."
 "m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element."
@@ -262,7 +262,7 @@ METADATA
 "m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/]."
 "m-081", "When a work was published or completed between a range of years, the text must be [text]between year1 and year2[/]."
 "m-082", "Faded Page link text must be exactly [text]Faded Page[/]."
-"m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]extended[/], or [val]short[/]."
+"m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]expanded[/], or [val]short[/]."
 "m-084", "Empty file."
 "m-085", "Non-canonical PGDP URL. Expected: [url]https://www.pgdp.net/[/]."
 "m-086", "[val]foreword[/] semantic inflection found, but no MARC relator [val]wfw[/] (Writer of foreword)."
@@ -1015,9 +1015,9 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 
 	# Check if we have a subtitle but no full title.
 	# There is no string replace function in xpath, but luckily `translate()` replaces exactly one character with another.
-	nodes = self.metadata_dom.xpath("/package/metadata[not(./meta[@property='title-type' and text()='extended'])]/dc:title[@id=translate(/package/metadata/meta[@property='title-type' and text()='subtitle']/@refines, '#', '')]")
+	nodes = self.metadata_dom.xpath("/package/metadata[not(./meta[@property='title-type' and text()='expanded'])]/dc:title[@id=translate(/package/metadata/meta[@property='title-type' and text()='subtitle']/@refines, '#', '')]")
 	if nodes:
-		messages.append(LintMessage("m-011", "Subtitle in metadata, but no extended title element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("m-011", "Subtitle in metadata, but no expanded title element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	# Check for tags that imply other tags.
 	implied_tags = {"Fiction": ["Science Fiction", "Drama", "Fantasy"]}
@@ -1168,9 +1168,9 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	if nodes:
 		messages.append(LintMessage("y-002", "Possible typo: Punctuation followed directly by a letter, without a space.", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
-	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='title-type' and text()='main' and not(following-sibling::meta[@property='title-type'])] | /package/metadata/meta[@property='title-type' and (text()='subtitle' or text()='extended' or text()='short') and not(preceding-sibling::meta[@property='title-type' and text()='main'])]")
+	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='title-type' and text()='main' and not(following-sibling::meta[@property='title-type'])] | /package/metadata/meta[@property='title-type' and (text()='subtitle' or text()='expanded' or text()='short') and not(preceding-sibling::meta[@property='title-type' and text()='main'])]")
 	if nodes:
-		messages.append(LintMessage("m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]extended[/], or [val]short[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]expanded[/], or [val]short[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='term' and re:test(., '^https?://')]")
 	if nodes:
