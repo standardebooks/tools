@@ -385,7 +385,7 @@ def render_mathml_to_png(browser: 'Browser', mathml: str, output_filename: Path,
 	Render a string of MathML into a transparent PNG file.
 
 	INPUTS
-	browser: A browser, usually initialized from `se.browser.initialize_selenium_webdriver()`.
+	browser: A browser with a Selenium webdriver.
 	mathml: A string of MathML.
 	output_filename: A filename to store PNG output to.
 	output_filename_2x: A filename to store hiDPI PNG output to.

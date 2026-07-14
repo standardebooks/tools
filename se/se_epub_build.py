@@ -230,9 +230,9 @@ def __convert_mathml_to_png(mathml_fragment: str, output_path: Path, output_path
 
 	if browser is None:
 		# We import this late because we don't want to load selenium if we're not going to use it.
-		from se import browser as browser_module # pylint: disable=import-outside-toplevel
+		from se.browser import Browser # pylint: disable=import-outside-toplevel
 
-		browser = browser_module.initialize_selenium_webdriver()
+		browser = Browser()
 
 	# `render_mathml_to_png()` screenshots the 2x image once, then downscales it to create the 1x image.
 	se.images.render_mathml_to_png(browser, mathml_fragment, output_path, output_path_2x)
@@ -944,13 +944,13 @@ def __get_svg_rendered_widths(files_with_svg: list[Path], work_compatible_epub_d
 	rendered_widths: dict[Path, int] = {}
 
 	# We import this late because we don't want to load selenium if we're not going to use it.
-	from se import browser as browser_module # pylint: disable=import-outside-toplevel
+	from se.browser import Browser # pylint: disable=import-outside-toplevel
 
-	browser: 'Browser|None' = None
+	browser: "Browser|None" = None
 	browser_temp_directory_stack = ExitStack()
 	try:
 		try:
-			browser = browser_module.initialize_selenium_webdriver()
+			browser = Browser()
 		except se.MissingDependencyException:
 			# If we failed to initialize the browser, don't return any widths, and we'll render SVGs using their native viewbox.
 			se.print_error("Couldn't start [command]chrome[/], [command]chromium[/], or [command]firefox[/] to calculate SVG widths; falling back to viewbox widths.", False, True)

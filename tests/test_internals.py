@@ -15,7 +15,7 @@ import regex
 from selenium.webdriver.remote.webdriver import WebDriver
 
 import se.se_epub_build
-from se.browser import Browser, BrowserType, InstallationType
+from se.browser import Browser
 from se.se_epub_build import __convert_image, __convert_mathml_to_png
 from se.se_epub_generate_toc import add_landmark, TocItem
 import se.easy_xml
@@ -347,8 +347,32 @@ def test_mathml_png_cache_avoids_rendering(monkeypatch: MonkeyPatch, tmp_path: P
 	"""
 
 	driver = cast(WebDriver, object())
-	browser = Browser(BrowserType.FIREFOX, InstallationType.NATIVE, tmp_path / "firefox")
-	browser.driver = driver
+
+	def fake_installed_browsers() -> list[dict[str, str]]:
+		"""
+		Return a fake Firefox installation for the browser wrapper.
+		"""
+
+		return [{"name": "firefox", "location": str(tmp_path / "firefox")}]
+
+	def fake_firefox_webdriver(**_kwargs: object) -> WebDriver:
+		"""
+		Return the fake Selenium webdriver.
+		"""
+
+		return driver
+
+	def fake_is_file(_path: Path) -> bool:
+		"""
+		Report that optional browser installation files are absent.
+		"""
+
+		return False
+
+	monkeypatch.setattr("se.browser.installed_browsers.browsers", fake_installed_browsers)
+	monkeypatch.setattr("se.browser.webdriver.Firefox", fake_firefox_webdriver)
+	monkeypatch.setattr(Path, "is_file", fake_is_file)
+	browser = Browser()
 	mathml_fragment = "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mi>x</mi></math>"
 	cache_directory = tmp_path / "cache"
 	cache_directory.mkdir()
