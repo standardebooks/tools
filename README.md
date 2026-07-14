@@ -218,6 +218,8 @@ We need volunteers to take the lead on the following goals:
 
 - Writing installation instructions for Bash and ZSH completions for macOS.
 
+- Add support for detecting Safari on Mac and initializing a Selenium instance using it for `browser.py` and `compare_versions.py`.
+
 # Tool descriptions
 
 -	### `se add-file`
