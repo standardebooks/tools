@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Callable
 from html import unescape
 
 import regex
-from PIL import Image, ImageFont, ImageMath, PngImagePlugin, UnidentifiedImageError
+from PIL import Image, ImageFont, ImageOps, ImageMath, PngImagePlugin, UnidentifiedImageError
 from PIL.Image import Image as Image_type # Separate import to satisfy type checking.
 from lxml import etree
 from oxipng import optimize
@@ -409,10 +409,24 @@ def render_mathml_to_png(browser: 'Browser', mathml: str, output_filename: Path,
 			image_file = Image.open(png_file.name)
 			image = _color_to_alpha(image_file, (255, 255, 255, 255))
 			image = image.crop(image.getbbox())
+
+			# Get height/width of the 2x image.
+			img_2x_width = image.size[0]
+			img_2x_height = image.size[1]
+
+			# If either dimension is odd, add a pixel.
+			right = img_2x_width % 2
+			bottom = img_2x_height % 2
+
+			# If either dimension was odd, expand the canvas.
+			if (right != 0 or bottom != 0):
+				border = (0, 0, right, bottom)
+				image = ImageOps.expand(image, border)
+
 			image.save(output_filename_2x)
 			optimize_png(output_filename_2x)
 
-			# Save normal version.
+			# Save the 1x version.
 			image = image.resize((image.width // 2, image.height // 2)) # type: ignore This is an error in Pillow's type stub.
 			image.save(output_filename)
 			optimize_png(output_filename)

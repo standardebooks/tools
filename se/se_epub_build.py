@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, cast
 
 import cairosvg
 from cairosvg import svg2png # type: ignore Not going to hand-write the type hint for this crazy huge function right now.
-from PIL import Image, ImageOps
+from PIL import Image
 import lxml.cssselect
 from lxml import etree
 import regex
@@ -1012,14 +1012,13 @@ def __get_svg_rendered_widths(files_with_svg: list[Path], work_compatible_epub_d
 
 	return rendered_widths
 
-def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree, ibooks_srcset_bug_exists: bool, build_cache_images_directory: Path|None) -> set[Path]:
+def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree, build_cache_images_directory: Path|None) -> set[Path]:
 	"""
 	Convert SVG illustrations to PNG.
 
 	INPUTS
 	work_compatible_epub_dir: Path to the compatibility epub file in the temporary working directory.
 	metadata_dom: dom of the metadata file.
-	ibooks_srcset_bug_exists: Flag indicating whether the Apple Books srcset bug is still present.
 	build_cache_images_directory: The root directory for build caches.
 
 	OUTPUTS
@@ -1048,10 +1047,8 @@ def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metada
 		for name, value in node.lxml_element.items():
 			node.set_attr(name, regex.sub(r"\.svg$", ".png", value))
 
-		# Once iBooks allows srcset we can remove this check.
-		if not ibooks_srcset_bug_exists:
-			filename_2x = Path(regex.sub(r"\.png$", "-2x.png", node.get_attr("href")))
-			node.lxml_element.addnext(etree.fromstring(f"""<item href="{filename_2x}" id="{filename_2x.stem}-2x.png" media-type="image/png"/>"""))
+		filename_2x = Path(regex.sub(r"\.png$", "-2x.png", node.get_attr("href")))
+		node.lxml_element.addnext(etree.fromstring(f"""<item href="{filename_2x}" id="{filename_2x.stem}-2x.png" media-type="image/png"/>"""))
 
 	# Now convert the SVGs.
 	for file_path in svg_file_paths:
@@ -1065,11 +1062,10 @@ def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metada
 		if cache_path:
 			current_cache_paths.add(cache_path)
 
-		if not ibooks_srcset_bug_exists:
-			png_path = file_path.parent / (str(file_path.stem) + "-2x.png")
-			cache_path = __convert_image(file_path, png_path, 2, build_cache_images_directory, output_width)
-			if cache_path:
-				current_cache_paths.add(cache_path)
+		png_path = file_path.parent / (str(file_path.stem) + "-2x.png")
+		cache_path = __convert_image(file_path, png_path, 2, build_cache_images_directory, output_width)
+		if cache_path:
+			current_cache_paths.add(cache_path)
 
 		# Remove the SVG.
 		file_path.unlink()
@@ -1084,11 +1080,10 @@ def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metada
 			src = node.get_attr("src")
 			node.set_attr("src", src.replace(".svg", ".png"))
 
-			if not ibooks_srcset_bug_exists:
-				match = regex.search(r".*?(?=\.svg)", src)
-				filename = match[0] if match else None
-				if filename:
-					node.set_attr("srcset", f"{filename}-2x.png 2x, {filename}.png 1x")
+			match = regex.search(r".*?(?=\.svg)", src)
+			filename = match[0] if match else None
+			if filename:
+				node.set_attr("srcset", f"{filename}-2x.png 2x, {filename}.png 1x")
 
 		if has_svg:
 			with open(file_path, "w", encoding="utf-8") as file:
@@ -1096,7 +1091,7 @@ def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metada
 
 	return current_cache_paths
 
-def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree, ibooks_srcset_bug_exists: bool, build_cache_images_directory: Path|None) -> set[Path]:
+def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: EasyXmlTree, build_cache_images_directory: Path|None) -> set[Path]:
 	"""
 	Replace MathML with either plain characters or an image of the equation.
 
@@ -1104,7 +1099,6 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 	self.
 	work_compatible_epub_dir: Path to the compatibility epub file in the temporary working directory.
 	metadata_dom: dom of the metadata file.
-	ibooks_srcset_bug_exists: Flag indicating whether the Apple Books srcset bug is still present.
 	build_cache_images_directory: The images cache directory for this ebook, or `None` to disable the cache.
 
 	OUTPUTS
@@ -1236,45 +1230,23 @@ def _replace_mathml(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom
 					img_node.set_attr("class", "mathml epub-type-se-image-color-depth-black-on-transparent")
 					img_node.set_attr("epub:type", "se:image.color-depth.black-on-transparent")
 					img_node.set_attr("src", f"../images/mathml-{mathml_count}-2x.png")
+					img_node.set_attr("srcset", f"../images/mathml-{mathml_count}-2x.png 2x, ../images/mathml-{mathml_count}.png 1x")
+
 					if node.get_attr("alttext"):
 						img_node.set_attr("alt", node.get_attr("alttext"))
 
-					if ibooks_srcset_bug_exists:
-						# Calculate the "normal" height/width from the 2x image.
-						image_file = Image.open(output_path_2x)
-						img_width = image_file.size[0]
-						img_height = image_file.size[1]
+					# Get the 1x dimensions and set the `height`/`width` attributes in case a renderer doesn't supporte `srcset`.
+					image_file = Image.open(output_path)
+					img_width = image_file.size[0]
+					img_height = image_file.size[1]
 
-						# If either dimension is odd, add a pixel.
-						right = img_width % 2
-						bottom = img_height % 2
+					img_node.set_attr("width", str(img_width))
+					img_node.set_attr("height", str(img_height))
 
-						# If either dimension was odd, expand the canvas.
-						if (right != 0 or bottom != 0):
-							border = (0, 0, right, bottom)
-							image = ImageOps.expand(image_file, border)
-							image.save(output_path_2x)
-
-						# Get the "display" dimensions.
-						img_width = img_width // 2
-						img_height = img_height // 2
-
-						img_node.set_attr("width", str(img_width))
-						img_node.set_attr("height", str(img_height))
-
-						# We don't need the 1x file if we're not using `srcset`.
-						output_path.unlink(missing_ok=True)
-
-						# Add any new MathML images we generated to the manifest.
-						for metadata_manifest_node in metadata_dom.xpath("/package/manifest"):
-							metadata_manifest_node.append(etree.fromstring(f"""<item href="images/mathml-{mathml_count}-2x.png" id="mathml-{mathml_count}-2x.png" media-type="image/png"/>"""))
-					else:
-						img_node.set_attr("srcset", f"../images/mathml-{mathml_count}-2x.png 2x, ../images/mathml-{mathml_count}.png 1x")
-
-						# Add any new MathML images we generated to the manifest.
-						for metadata_manifest_node in metadata_dom.xpath("/package/manifest"):
-							metadata_manifest_node.append(etree.fromstring(f"""<item href="images/mathml-{mathml_count}.png" id="mathml-{mathml_count}.png" media-type="image/png"/>"""))
-							metadata_manifest_node.append(etree.fromstring(f"""<item href="images/mathml-{mathml_count}-2x.png" id="mathml-{mathml_count}-2x.png" media-type="image/png"/>"""))
+					# Add any new MathML images we generated to the manifest.
+					for metadata_manifest_node in metadata_dom.xpath("/package/manifest"):
+						metadata_manifest_node.append(etree.fromstring(f"""<item href="images/mathml-{mathml_count}.png" id="mathml-{mathml_count}.png" media-type="image/png"/>"""))
+						metadata_manifest_node.append(etree.fromstring(f"""<item href="images/mathml-{mathml_count}-2x.png" id="mathml-{mathml_count}-2x.png" media-type="image/png"/>"""))
 
 					node.replace_with(img_node)
 
@@ -1942,8 +1914,6 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 	Entry point for `se build`.
 	"""
 
-	ibooks_srcset_bug_exists = True
-
 	if check_only:
 		run_epubcheck = True
 		build_kobo = False
@@ -2061,7 +2031,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 		# Replace MathML with either plain characters or an image of the equation.
 		# Do this before simplifying CSS because this may add new `epub:type`s.
 		if metadata_dom.xpath("/package/manifest/*[contains(@properties, 'mathml')]"):
-			current_cache_paths.update(_replace_mathml(self, work_compatible_epub_dir, metadata_dom, ibooks_srcset_bug_exists, build_cache_images_directory))
+			current_cache_paths.update(_replace_mathml(self, work_compatible_epub_dir, metadata_dom, build_cache_images_directory))
 
 		# Add compatibility and simplify CSS.
 		_add_compatibility_css_and_simplify(self, work_compatible_epub_dir)
@@ -2119,7 +2089,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 			_build_kobo(self, work_dir, work_compatible_epub_dir, output_dir, kobo_output_filename, last_updated)
 
 		# Now work on more compatibility fixes.
-		current_cache_paths.update(_convert_svgs_to_pngs(self, work_compatible_epub_dir, metadata_dom, ibooks_srcset_bug_exists, build_cache_images_directory))
+		current_cache_paths.update(_convert_svgs_to_pngs(self, work_compatible_epub_dir, metadata_dom, build_cache_images_directory))
 
 		# Recurse over CSS files to make some compatibility replacements.
 		_compatibility_css_additional_replacements(work_compatible_epub_dir)
