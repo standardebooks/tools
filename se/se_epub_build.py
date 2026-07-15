@@ -48,7 +48,7 @@ SVG_OUTER_STROKE_WIDTH = 2
 SVG_TITLEPAGE_OUTER_STROKE_WIDTH = 4
 SVG_CANONICAL_VIEWPORT_WIDTH = 700 # Viewport width at which to render a whole page when calculating the width that we should raster SVGs to PNGs at.
 ENDNOTE_CHUNK_SIZE = 500
-SE_LOGO_SVG_SHA256 = "ab04478bf16d277777374e29abf5146be957cc7b49394ec9f4ceb2ea1becb367"
+SE_LOGO_SVG_SHA256 = "ab04478bf16d277777374e29abf5146be957cc7b49394ec9f4ceb2ea1becb367" # This is the sha256 sum of copy of `logo.svg` that we modifed during the build process, with paths outlined for dark mode compatibility.
 
 # See <https://www.w3.org/TR/dpub-aria-1.0/>.
 # Without preceding `doc-`.
@@ -1030,6 +1030,11 @@ def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metada
 	svg_rendered_widths: dict[Path, int] = {}
 	files_with_svg = list(work_compatible_epub_dir / "epub" / Path(href) for href in metadata_dom.xpath("/package/manifest/item[contains(concat(' ', normalize-space(@properties), ' '), ' svg ') and @media-type='application/xhtml+xml']/@href", str))
 	has_convertible_svgs = not self.is_se_ebook or {file_path.name for file_path in svg_file_paths} != {"logo.svg", "titlepage.svg"}
+
+ 	# If we're an S.E. ebook, we don't want to compute the actual render width of of `titlepage.svg` or `logo.svg`; we'll use the `viewbox` width.
+ 	# So, exclude the files that mention them.
+	if self.is_se_ebook:
+		files_with_svg = [file for file in files_with_svg if file.name not in ("imprint.xhtml", "titlepage.xhtml", "colophon.xhtml")]
 
 	# Only get rendered widths if this is an SE ebook, and we have SVGs in the ebook that are not `titlepage.svg` or `logo.svg`.
 	# `titlepage.svg` will get rendered at its native viewport width; `logo.svg` will be replaced by a prerendered PNG from our data files, instead of rendering live.
