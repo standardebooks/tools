@@ -5,6 +5,7 @@ This module contains the make-toc function which tries to create a valid table o
 Strictly speaking, the `SeEpub.generate_toc()` function should be a class member of `SeEpub`. But the function is very big and it makes editing easier to put in a separate file.
 """
 
+import importlib.resources
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -306,9 +307,9 @@ def process_items(item_list: list[TocItem]) -> str:
 				torepeat -= 1
 	return out_string
 
-def output_toc(item_list: list[TocItem], landmark_list: list[TocItem], toc_path: Path, work_title: str, language: str) -> str:
+def output_toc(item_list: list[TocItem], landmark_list: list[TocItem], work_title: str, language: str) -> str:
 	"""
-	Outputs the contructed ToC based on the lists of items and landmarks found, either to stdout or overwriting the existing ToC file.
+	Outputs a new ToC based on the items and landmarks parameters.
 
 	INPUTS:
 	item_list: list of ToC items (the first part of the ToC).
@@ -323,11 +324,8 @@ def output_toc(item_list: list[TocItem], landmark_list: list[TocItem], toc_path:
 	if len(item_list) < 2:
 		raise se.InvalidInputException("Too few ToC items found.")
 
-	try:
-		with open(toc_path, "r", encoding="utf-8") as file:
-			toc_dom = se.easy_xml.EasyXmlTree(file.read())
-	except Exception as ex:
-		raise se.InvalidInputException(f"Existing ToC not found: {ex}")
+	with importlib.resources.files("se.data.templates").joinpath("toc.xhtml").open("r", encoding="utf-8") as file:
+		toc_dom = se.easy_xml.EasyXmlTree(file.read())
 
 	# There should be exactly two nav sections.
 	navs = toc_dom.xpath("//nav")
@@ -805,4 +803,4 @@ def generate_toc(self: 'SeEpub') -> str:
 
 	landmarks, toc_list = process_all_content(self, self.spine_file_paths)
 
-	return output_toc(toc_list, landmarks, self.toc_path, work_title, self.language)
+	return output_toc(toc_list, landmarks, work_title, self.language)
