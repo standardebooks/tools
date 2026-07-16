@@ -90,6 +90,12 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 	brew install standardebooks
 	```
 
+When building a project with images, a browser instance is used to render SVGs to PNGs. If you don’t have Chrome or Firefox installed then you need to manually enable Safari to be used to do this:
+
+```shell
+safaridriver --enable
+```
+
 ### Alternative: pipx
 
 If you want a more granular install you can install the dependencies manually and the toolset with `pipx`:
