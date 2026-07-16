@@ -1029,17 +1029,18 @@ def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metada
 	svg_file_paths = list(work_compatible_epub_dir.glob("**/*.svg"))
 	svg_rendered_widths: dict[Path, int] = {}
 	files_with_svg = list(work_compatible_epub_dir / "epub" / Path(href) for href in metadata_dom.xpath("/package/manifest/item[contains(concat(' ', normalize-space(@properties), ' '), ' svg ') and @media-type='application/xhtml+xml']/@href", str))
+	files_with_measurable_svg = files_with_svg
 	has_convertible_svgs = not self.is_se_ebook or {file_path.name for file_path in svg_file_paths} != {"logo.svg", "titlepage.svg"}
 
- 	# If we're an S.E. ebook, we don't want to compute the actual render width of of `titlepage.svg` or `logo.svg`; we'll use the `viewbox` width.
- 	# So, exclude the files that mention them.
+	# If we're an S.E. ebook, we don't want to compute the actual render width of `titlepage.svg` or `logo.svg`; we'll use the `viewbox` width.
+	# So, exclude the files that mention them from width measurement.
 	if self.is_se_ebook:
-		files_with_svg = [file for file in files_with_svg if file.name not in ("imprint.xhtml", "titlepage.xhtml", "colophon.xhtml")]
+		files_with_measurable_svg = [file for file in files_with_svg if file.name not in ("imprint.xhtml", "titlepage.xhtml", "colophon.xhtml")]
 
 	# Only get rendered widths if this is an SE ebook, and we have SVGs in the ebook that are not `titlepage.svg` or `logo.svg`.
 	# `titlepage.svg` will get rendered at its native viewport width; `logo.svg` will be replaced by a prerendered PNG from our data files, instead of rendering live.
 	if svg_file_paths and has_convertible_svgs:
-		svg_rendered_widths = __get_svg_rendered_widths(files_with_svg, work_compatible_epub_dir)
+		svg_rendered_widths = __get_svg_rendered_widths(files_with_measurable_svg, work_compatible_epub_dir)
 
 	# Prep for SVG to PNG conversion. First, remove SVG item properties in the metadata file.
 	for node in metadata_dom.xpath("/package/manifest/item[contains(@properties, 'svg')]"):
