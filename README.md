@@ -90,11 +90,13 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 	brew install standardebooks
 	```
 
-When building a project with images, a browser instance is used to render SVGs to PNGs. If you don’t have Chrome or Firefox installed then you need to manually enable Safari to be used to do this:
+When building a project with SVG images, a browser instance is used to render SVGs to PNGs. If you don’t have Chrome or Firefox installed then you need to manually allow Safari to be instantiated by the toolset:
 
 ```shell
 safaridriver --enable
 ```
+
+Note that Safari currently doesn't support "headless" mode, so you may see Safari windows appear and disappear as `se build` processes SVGs. If these windows annoy you, install Firefox or Chrome and `se build` will use them instead of Safari.
 
 ### Alternative: pipx
 

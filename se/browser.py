@@ -94,7 +94,7 @@ class Browser:
 
 		browsers = list(installed_browsers.browsers())
 
-		# Safari is a backup choice so make sure it’s last
+		# Safari is a backup choice so make sure it’s last.
 		safari_entry = next((browser for browser in browsers if browser['name'] == 'safari'), None)
 		if safari_entry:
 			browsers.append(browsers.pop(browsers.index(safari_entry)))
