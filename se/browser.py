@@ -92,8 +92,15 @@ class Browser:
 		self.executable_path: Path
 		self._driver: WebDriver | None = None
 
+		browsers = list(installed_browsers.browsers())
+
+		# Safari is a backup choice so make sure it’s last
+		safari_entry = next((browser for browser in browsers if browser['name'] == 'safari'), None)
+		if safari_entry:
+			browsers.append(browsers.pop(browsers.index(safari_entry)))
+
 		try:
-			for installed_browser in installed_browsers.browsers():
+			for installed_browser in browsers:
 				browser_type = BrowserType.from_string(installed_browser["name"])
 				if browser_type:
 					installed_browser_location = str(installed_browser["location"])
