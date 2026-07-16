@@ -17,6 +17,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.safari.options import Options as SafariOptions
 from selenium.webdriver.remote.webdriver import WebDriver
 
 import se
@@ -32,6 +33,7 @@ class BrowserType(Enum):
 
 	FIREFOX = 1
 	CHROME = 2
+	SAFARI = 3
 
 	@staticmethod
 	def from_string(value: str|None) -> "BrowserType | None":
@@ -49,6 +51,9 @@ class BrowserType(Enum):
 
 		if "chrome" in value or "chromium" in value:
 			return BrowserType.CHROME
+
+		if "safari" in value:
+			return BrowserType.SAFARI
 
 		return None
 
@@ -120,7 +125,7 @@ class Browser:
 		except Exception as ex:
 			raise se.MissingDependencyException(f"Couldn’t find web browser. Message: {ex}")
 
-		raise se.MissingDependencyException("Couldn’t find [command]chrome[/], [command]chromium[/], or [command]firefox[/].")
+		raise se.MissingDependencyException("Couldn’t find [command]chrome[/], [command]chromium[/], [command]firefox[/], or [command]safari[/].")
 
 	@property
 	def driver(self) -> WebDriver:
@@ -136,8 +141,11 @@ class Browser:
 				elif self.type == BrowserType.FIREFOX:
 					self._driver = self._initialize_selenium_firefox_webdriver()
 
+				elif self.type == BrowserType.SAFARI:
+					self._driver = self._initialize_selenium_safari_webdriver()
+
 				else:
-					raise se.MissingDependencyException("Couldn’t find [command]chrome[/], [command]chromium[/], or [command]firefox[/].")
+					raise se.MissingDependencyException("Couldn’t find [command]chrome[/], [command]chromium[/], [command]firefox[/], or [command]safari[/].")
 
 			except Exception as ex:
 				raise se.MissingDependencyException(f"Couldn’t start web browser. Message: {ex}")
@@ -242,3 +250,12 @@ class Browser:
 				return webdriver.Firefox(options=options, service=service) # type: ignore This is an error in Selenium's type stub.
 
 		return webdriver.Firefox(options=options) # type: ignore This is an error in Selenium's type stub.
+
+	def _initialize_selenium_safari_webdriver(self) -> WebDriver:
+		"""
+		Initialize a Selenium Safari-compatible driver and return it for use in other applications.
+		"""
+
+		options = SafariOptions()
+
+		return webdriver.Safari(options=options) # type: ignore This is an error in Selenium's type stub.
