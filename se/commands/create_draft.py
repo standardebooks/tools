@@ -328,13 +328,13 @@ def _create_draft(args: Namespace, plain_output: bool):
 		_copy_template_file("mimetype", content_path)
 		_copy_template_file("core.css", content_path / "epub" / "css")
 		_copy_template_file("production-notes.md", work_path)
+		_copy_template_file("toc.xhtml", content_path / "epub")
 
 		if args.white_label:
 			_copy_template_file("content-white-label.opf", content_path / "epub" / "content.opf")
 			_copy_template_file("titlepage-white-label.xhtml", content_path / "epub" / "text" / "titlepage.xhtml")
 			_copy_template_file("cover.jpg", content_path / "epub" / "images")
 			_copy_template_file("local-white-label.css", content_path / "epub" / "css" / "local.css")
-			_copy_template_file("toc-white-label.xhtml", content_path / "epub" / "toc.xhtml")
 
 		else:
 			_copy_template_file("cover.jpg", work_path / "images")
@@ -348,7 +348,6 @@ def _create_draft(args: Namespace, plain_output: bool):
 			_copy_template_file("uncopyright.xhtml", content_path / "epub" / "text")
 			_copy_template_file("titlepage.xhtml", content_path / "epub" / "text")
 			_copy_template_file("content.opf", content_path / "epub")
-			_copy_template_file("toc.xhtml", content_path / "epub")
 			_copy_template_file("LICENSE.md", work_path)
 
 		# Fill out some basic data in the metadata file that will let is generate further variables.
