@@ -61,15 +61,19 @@ def _screenshot_html_element(browser: 'Browser', filename: Path, output_path: Pa
 		try:
 			browser.driver.find_element("tag name", "html").screenshot(str(output_path)) # pyright: ignore Broken Selenium type hint here.
 		except WebDriverException:
-			# Firefox might throw an exception of the viewport is too large. In that case, fall back to a special function to stich to together viewport-sized screenshots.
-			_screenshot_firefox_full_page(browser, output_path)
+			# Firefox might throw an exception of the viewport is too large. In that case, fall back to a special function to stitch to together viewport-sized screenshots.
+			_screenshot_firefox_or_safari_full_page(browser, output_path)
+
+	# Safari needs to stitch together multiple screenshots to produce a full page image
+	elif browser.type == BrowserType.SAFARI:
+		_screenshot_firefox_or_safari_full_page(browser, output_path)
 
 	else:
 		raise se.MissingDependencyException("Couldn't initialize default web browser.")
 
-def _screenshot_firefox_full_page(browser: 'Browser', output_path: Path) -> None:
+def _screenshot_firefox_or_safari_full_page(browser: 'Browser', output_path: Path) -> None:
 	"""
-	Save a full-page Firefox screenshot by stitching together viewport-sized screenshots.
+	Save a full-page Firefox or Safari screenshot by stitching together viewport-sized screenshots.
 	"""
 
 	get_dimensions_script = """
