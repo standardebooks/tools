@@ -52,8 +52,9 @@ class BrowserType(Enum):
 		if "chrome" in value or "chromium" in value:
 			return BrowserType.CHROME
 
-		if "safari" in value:
-			return BrowserType.SAFARI
+		# Disable Safari for now, see below for rationale.
+		#if "safari" in value:
+		#	return BrowserType.SAFARI
 
 		return None
 
@@ -92,15 +93,8 @@ class Browser:
 		self.executable_path: Path
 		self._driver: WebDriver | None = None
 
-		browsers = list(installed_browsers.browsers())
-
-		# Safari is a backup choice so make sure it’s last.
-		safari_entry = next((browser for browser in browsers if browser['name'] == 'safari'), None)
-		if safari_entry:
-			browsers.append(browsers.pop(browsers.index(safari_entry)))
-
 		try:
-			for installed_browser in browsers:
+			for installed_browser in list(installed_browsers.browsers()):
 				browser_type = BrowserType.from_string(installed_browser["name"])
 				if browser_type:
 					installed_browser_location = str(installed_browser["location"])
@@ -132,7 +126,7 @@ class Browser:
 		except Exception as ex:
 			raise se.MissingDependencyException(f"Couldn’t find web browser. Message: {ex}")
 
-		raise se.MissingDependencyException("Couldn’t find [command]chrome[/], [command]chromium[/], [command]firefox[/], or [command]safari[/].")
+		raise se.MissingDependencyException("Couldn’t find [command]chrome[/], [command]chromium[/], or [command]firefox[/].")
 
 	@property
 	def driver(self) -> WebDriver:
@@ -148,11 +142,13 @@ class Browser:
 				elif self.type == BrowserType.FIREFOX:
 					self._driver = self._initialize_selenium_firefox_webdriver()
 
-				elif self.type == BrowserType.SAFARI:
-					self._driver = self._initialize_selenium_safari_webdriver()
+				# 2026-07-17: Safari doesn't have a headless mode, which means windows pop up over the CLI, and it also fails when stitching screenshots together in `compare-versions`, so for now, disable Safari support and require either Firefox or Chrome.
+				# See <https://github.com/standardebooks/tools/pull/992> and <https://github.com/standardebooks/tools/pull/994>.
+				#elif self.type == BrowserType.SAFARI:
+				#	self._driver = self._initialize_selenium_safari_webdriver()
 
 				else:
-					raise se.MissingDependencyException("Couldn’t find [command]chrome[/], [command]chromium[/], [command]firefox[/], or [command]safari[/].")
+					raise se.MissingDependencyException("Couldn’t find [command]chrome[/], [command]chromium[/], or [command]firefox[/].")
 
 			except Exception as ex:
 				raise se.MissingDependencyException(f"Couldn’t start web browser. Message: {ex}")
