@@ -92,7 +92,7 @@ setup(
 		"installed_browsers==0.1.5",
 		"lxml==6.1.1",
 		"natsort==8.4.0",
-		"pillow==12.2.0",
+		"pillow==12.3.0",
 		"psutil==7.2.2",
 		"pyphen==0.17.2",
 		"oxipng-pybind==10.1.1.post2",
