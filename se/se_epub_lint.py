@@ -2773,7 +2773,8 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 	# Exclude signatures in footers as those are commonly quoted without ending punctuation.
 	# Also ignore `<figcaption>` since they often don't need ending punctuation.
 	# Also exclude very short paragraphs in epigraphs.
-	nodes = dom.xpath("/html/body//p[not( (parent::header or (ancestor-or-self::*[contains(@epub:type, 'epigraph')] and string-length(.) < 50) or  parent::hgroup or ancestor::figcaption or (ancestor::footer and contains(@epub:type, 'z3998:signature'))) and position()=last())][re:test(., '[a-z]+[”’]$')]")
+	# Also exclude titles and subtitles.
+	nodes = dom.xpath("/html/body//p[not( re:test(@epub:type, '\\b(title|subtitle)\\b') or (parent::header or (ancestor-or-self::*[contains(@epub:type, 'epigraph')] and string-length(.) < 50) or parent::hgroup or ancestor::figcaption or (ancestor::footer and contains(@epub:type, 'z3998:signature'))) and position()=last()) and re:test(., '[a-z]+[”’]$')]")
 	if nodes:
 		messages.append(LintMessage("t-011", "Missing punctuation before closing quotes.", se.MESSAGE_TYPE_WARNING, filename, [LintSubmessage(node.to_string()[-30:], node.sourceline) for node in nodes]))
 
