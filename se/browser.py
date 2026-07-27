@@ -110,6 +110,23 @@ class Browser:
 
 					return
 
+			# installed_browsers 0.1.5 fails to return machine-wide browser installations on Windows when no browser is registered for the current user.
+			if os.name == 'nt':
+				import winreg # pylint: disable=import-error,import-outside-toplevel
+
+				for browser_type, executable_name in ((BrowserType.FIREFOX, 'firefox.exe'), (BrowserType.CHROME, 'chrome.exe')):
+					for registry_hive in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+						try:
+							with winreg.OpenKey(registry_hive, 'Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\' + executable_name) as registry_key:
+								executable_path = Path(winreg.QueryValue(registry_key, None))
+								if executable_path.is_file():
+									self.type = browser_type
+									self.installation_type = InstallationType.NATIVE
+									self.executable_path = executable_path
+									return
+						except FileNotFoundError:
+							pass
+
 			# `installed_browsers.browsers()` doesn't identify browsers installed via Flatpak. Try to identify them here.
 			for browser_type in (BrowserType.FIREFOX, BrowserType.CHROME):
 				for flatpak_export_directory in (
