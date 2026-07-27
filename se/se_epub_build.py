@@ -9,6 +9,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import urllib.parse
 from collections import defaultdict
@@ -1932,7 +1933,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 		if not shutil.which("java"):
 			java_present = False
 		# Mac Big Sur+ has a "dummy" `/usr/bin/java`; test `-version` to see if Java is really installed.
-		elif os.uname()[0] == "Darwin":
+		elif sys.platform == "darwin":
 			try:
 				java_check = subprocess.run(["java", "-version"], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=False)
 				if java_check.stderr.decode().find("Unable to locate") >= 0:
