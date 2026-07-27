@@ -598,7 +598,8 @@ def _compatibility_replacements_svg(self: 'SeEpub', file_path: Path) -> None:
 				element.lxml_element.insert(0, fragment)
 
 		# All done, write the SVG so that we can convert to PNG.
-		with open(file_path, "w", encoding="utf-8") as file:
+		# Force newlines to be `\n` to avoid calculating the wrong hash on Windows, where newlines are `\r\n`.
+		with open(file_path, "w", encoding="utf-8", newline="\n") as file:
 			file.write(dom.to_string())
 
 def _compatibility_replacements_xhtml(self: 'SeEpub', file_path: Path, has_sequential_full_page_figures: bool, endnote_files_to_be_chunked: list[Path]) -> tuple[bool, list[Path]]:
@@ -1056,7 +1057,7 @@ def _convert_svgs_to_pngs(self: 'SeEpub', work_compatible_epub_dir: Path, metada
 			node.set_attr(name, regex.sub(r"\.svg$", ".png", value))
 
 		filename_2x = Path(regex.sub(r"\.png$", "-2x.png", node.get_attr("href")))
-		node.lxml_element.addnext(etree.fromstring(f"""<item href="{filename_2x}" id="{filename_2x.stem}-2x.png" media-type="image/png"/>"""))
+		node.lxml_element.addnext(etree.fromstring(f"""<item href="{filename_2x.as_posix()}" id="{filename_2x.stem}-2x.png" media-type="image/png"/>"""))
 
 	# Now convert the SVGs.
 	for file_path in svg_file_paths:
