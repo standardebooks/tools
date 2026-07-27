@@ -118,6 +118,32 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 ```
 
+## Windows 11 users
+
+These instructions install the toolset directly in Windows, without Windows Subsystem for Linux.
+
+1. Open PowerShell and use `WinGet` to install various dependencies:
+
+	```powershell
+	winget install --exact --id Python.Python.3.12
+	winget install --exact --id Git.Git
+	winget install --exact --id Microsoft.OpenJDK.21
+	winget install --exact --id tschoonj.GTKForWindows
+	```
+
+2.  Close PowerShell and open it again , then install `pipx` and configure its executable directory in your `PATH`:
+
+	```powershell
+	py -3.12 -m pip install --user pipx
+	py -3.12 -m pipx ensurepath
+	```
+
+3. Close PowerShell and open it again, then install the toolset:
+
+	```powershell
+	pipx install --python 3.12 standardebooks
+	```
+
 ## OpenBSD 6.6 users
 
 These instructions were tested on OpenBSD 6.6, but may also work on 6.5.
