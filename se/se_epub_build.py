@@ -162,8 +162,9 @@ def __convert_image(input_path: Path, output_path: Path, scale: int, build_cache
 	elif input_path.suffix in (".svg", ".png") and output_path.suffix == ".jpg":
 		# If the input file is an SVG and the output file is a JPG, we have to convert SVG -> PNG -> JPG.
 		if input_path.suffix == ".svg":
-			with tempfile.NamedTemporaryFile() as temp_file:
-				png_path = Path(temp_file.name)
+			# Use a temporary directory with a fixed name instead of a named temporary file, because Windows will lock the file and Cairo will be unable to write to it.
+			with tempfile.TemporaryDirectory() as temp_directory:
+				png_path = Path(temp_directory) / "cover.png"
 				svg2png(url=str(input_path), write_to=str(png_path))
 
 				cover_file = Image.open(png_path)
