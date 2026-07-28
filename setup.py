@@ -88,7 +88,7 @@ setup(
 		"cssselect==1.4.0",
 		"cssutils==2.15.0",
 		"ftfy==6.3.1",
-		"gitpython==3.1.52",
+		"gitpython==3.1.54",
 		"installed_browsers==0.1.5",
 		"lxml==6.1.1",
 		"natsort==8.4.0",
