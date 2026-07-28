@@ -9,7 +9,6 @@ from bisect import bisect_right
 from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
-import filecmp
 import fnmatch
 import os
 from pathlib import Path
@@ -110,6 +109,13 @@ BINARY_IMAGE_EXTENSIONS = [".bmp", ".gif", ".jp2", ".jpg", ".jpeg", ".png", ".ti
 BINARY_OTHER_EXTENSIONS = [".mp3", ".mp4", ".ogg", ".ttf", ".otf", ".woff", ".woff2", ".epub"]
 IGNORED_FILENAMES = ["colophon.xhtml", "titlepage.xhtml", "imprint.xhtml", "uncopyright.xhtml", "toc.xhtml", "loi.xhtml"]
 SPECIAL_FILES = ["colophon", "endnotes", "imprint", "loi"]
+
+def _file_matches_template(template_file_path: Path, file_path: Path) -> bool:
+	"""
+	Compare a file to a template regardless of whether either file uses Windows line endings.
+	"""
+
+	return template_file_path.read_bytes().replace(b"\r\n", b"\n") == file_path.read_bytes().replace(b"\r\n", b"\n")
 
 # These are partly defined in <semos://1.0.0/8.10.9.2>.
 INITIALISM_EXCEPTIONS = ["G", # As in `G-Force`.
@@ -1100,7 +1106,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 
 	# Check for `CDATA` elements.
 	# We have to use `self.metadata_file_path.read_text()` to get the raw file contents because converting a DOM tree to string removes `CDATA` elements.
-	source_file = SourceFile(self.metadata_file_path, self.metadata_file_path.read_text())
+	source_file = SourceFile(self.metadata_file_path, self.metadata_file_path.read_text(encoding="utf-8"))
 	matches = source_file.findall(r"<!\[CDATA\[")
 	if matches:
 		messages.append(LintMessage("m-017", "Illegal [xml]<!\\[CDATA\\[[/]. Hint: Run [command]se[/] [subcommand]clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] elements.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_matches(matches)))
@@ -3926,14 +3932,14 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 	if self.is_se_ebook:
 		try:
 			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("LICENSE.md")) as license_file_path:
-				if not filecmp.cmp(license_file_path, self.path / "LICENSE.md"):
+				if not _file_matches_template(license_file_path, self.path / "LICENSE.md"):
 					files_not_matching_templates.append(self.path / "LICENSE.md")
 		except Exception:
 			missing_files.append("LICENSE.md")
 
 		try:
 			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("core.css")) as core_css_file_path:
-				if not filecmp.cmp(core_css_file_path, self.content_path / "css/core.css"):
+				if not _file_matches_template(core_css_file_path, self.content_path / "css/core.css"):
 					files_not_matching_templates.append(self.content_path / "css/core.css")
 
 		except Exception:
@@ -3941,7 +3947,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 
 		try:
 			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("logo.svg")) as logo_svg_file_path:
-				if not filecmp.cmp(logo_svg_file_path, self.content_path / "images/logo.svg"):
+				if not _file_matches_template(logo_svg_file_path, self.content_path / "images/logo.svg"):
 					files_not_matching_templates.append(self.content_path / "images/logo.svg")
 
 		except Exception:
@@ -3949,7 +3955,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 
 		try:
 			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("uncopyright.xhtml")) as uncopyright_file_path:
-				if not filecmp.cmp(uncopyright_file_path, self.content_path / "text/uncopyright.xhtml"):
+				if not _file_matches_template(uncopyright_file_path, self.content_path / "text/uncopyright.xhtml"):
 					files_not_matching_templates.append(self.content_path / "text/uncopyright.xhtml")
 
 		except Exception:
@@ -3957,7 +3963,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 
 		try:
 			with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath("se.css")) as se_css_file_path:
-				if not filecmp.cmp(se_css_file_path, self.content_path / "css/se.css"):
+				if not _file_matches_template(se_css_file_path, self.content_path / "css/se.css"):
 					files_not_matching_templates.append(self.content_path / "css/se.css")
 
 		except Exception:
