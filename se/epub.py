@@ -6,6 +6,7 @@ Defines several functions that are useful for interacting with epub files.
 import os
 from datetime import datetime
 from pathlib import Path
+import sys
 import zipfile
 from repro_zipfile import ReproducibleZipFile
 from lxml import etree
@@ -13,6 +14,15 @@ from se.formatting import generate_epoch_timestamp
 import se
 import se.easy_xml
 
+
+def _write_epub_file(epub: ReproducibleZipFile, input_path: Path, output_path: str | Path, compress_type: int | None = None) -> None:
+	"""
+	Write a file to an EPUB with platform-independent ZIP metadata.
+	"""
+	epub.write(input_path, output_path, compress_type=compress_type)
+
+	# This sets the zip file's `created on platform` value to `unix`.
+	epub.filelist[-1].create_system = 3
 
 def convert_toc_to_ncx(epub_root_absolute_path: Path, toc_filename: str, xsl_filename: Path) -> se.easy_xml.EasyXmlTree:
 	"""
@@ -69,18 +79,32 @@ def write_epub(epub_root_absolute_path: Path, output_absolute_path: Path, last_u
 	None
 	"""
 
+	# Windows text writes use CRLF line endings by default, so normalize every UTF-8 file immediately before creating any build type.
+	if sys.platform == "win32":
+		for file_path in epub_root_absolute_path.glob("**/*"):
+			if file_path.is_file():
+				try:
+					file_bytes = file_path.read_bytes()
+					file_contents = file_bytes.decode("utf-8")
+					normalized_file_bytes = file_contents.replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+					if normalized_file_bytes != file_bytes:
+						file_path.write_bytes(normalized_file_bytes)
+				except UnicodeDecodeError:
+					pass
+
 	# Set the timestamp used by ReproducibleZipFile to the timestamp of the last git commit, if available.
 	if last_update_datetime is not None:
 		os.environ["SOURCE_DATE_EPOCH"] = generate_epoch_timestamp(last_update_datetime)
 
 	with ReproducibleZipFile(output_absolute_path, mode="w", compression=zipfile.ZIP_DEFLATED) as epub:
 		# According to the spec, the `mimetype` file must be uncompressed. The rest of the files, however, can be compressed.
-		epub.write(epub_root_absolute_path / "mimetype", "mimetype", compress_type=zipfile.ZIP_STORED)
-		epub.write(epub_root_absolute_path / "META-INF" / "container.xml", "META-INF/container.xml")
+		_write_epub_file(epub, epub_root_absolute_path / "mimetype", "mimetype", zipfile.ZIP_STORED)
+		_write_epub_file(epub, epub_root_absolute_path / "META-INF" / "container.xml", "META-INF/container.xml")
 
-		for file_path in sorted(epub_root_absolute_path.glob("**/*")):
+		# Sort paths `as_posix()` because Windows orders files differently depending on case, and we want to preserve the same order so we can make byte-identical zip files.
+		for file_path in sorted(epub_root_absolute_path.glob("**/*"), key=lambda path: path.relative_to(epub_root_absolute_path).as_posix()):
 			if file_path.name not in ("mimetype", "container.xml"):
-				epub.write(file_path, file_path.relative_to(epub_root_absolute_path))
+				_write_epub_file(epub, file_path, file_path.relative_to(epub_root_absolute_path))
 
 	# Unset the timestamp environment variable that was set for ReproducibleZipFile.
 	if last_update_datetime is not None:
