@@ -150,6 +150,27 @@ class NotImplementedException(SeException):
 	""" Function not implemented """
 	code = 19
 
+def convert_directory_line_endings(directory: Path, to_windows: bool) -> None:
+	"""
+	Convert all UTF-8 files in a directory to or from Windows-style line endings.
+	"""
+
+	for file_path in directory.glob("**/*"):
+		if file_path.is_file():
+			try:
+				file_bytes = file_path.read_bytes()
+				file_contents = file_bytes.decode("utf-8")
+				file_contents = file_contents.replace("\r\n", "\n").replace("\r", "\n")
+
+				if to_windows:
+					file_contents = file_contents.replace("\n", "\r\n")
+
+				normalized_file_bytes = file_contents.encode("utf-8")
+				if normalized_file_bytes != file_bytes:
+					file_path.write_bytes(normalized_file_bytes)
+			except UnicodeDecodeError:
+				pass
+
 def strip_bom(string: str) -> str:
 	"""
 	Remove the Unicode Byte Order Mark from a string.

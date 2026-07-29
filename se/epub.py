@@ -81,16 +81,7 @@ def write_epub(epub_root_absolute_path: Path, output_absolute_path: Path, last_u
 
 	# Windows text writes use CRLF line endings by default, so normalize every UTF-8 file immediately before creating any build type.
 	if sys.platform == "win32":
-		for file_path in epub_root_absolute_path.glob("**/*"):
-			if file_path.is_file():
-				try:
-					file_bytes = file_path.read_bytes()
-					file_contents = file_bytes.decode("utf-8")
-					normalized_file_bytes = file_contents.replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
-					if normalized_file_bytes != file_bytes:
-						file_path.write_bytes(normalized_file_bytes)
-				except UnicodeDecodeError:
-					pass
+		se.convert_directory_line_endings(epub_root_absolute_path, False)
 
 	# Set the timestamp used by ReproducibleZipFile to the timestamp of the last git commit, if available.
 	if last_update_datetime is not None:
