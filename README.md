@@ -12,21 +12,21 @@ To install the toolset locally for development and debugging, see [Installation 
 
 Optionally, install [Ace](https://daisy.github.io/ace/) and the `se build --check` command will automatically run it as part of the checking process.
 
-## Ubuntu 24.04 (Noble) users
+## Ubuntu 24.04 (Noble)
 
 ```shell
 # Install some pre-flight dependencies.
-sudo apt install -y default-jre git python3-dev python3-pip python3-venv pipx
+sudo apt install --yes default-jre git python3-dev python3-pip python3-venv pipx
 
 # Install the toolset.
 pipx install standardebooks
 ```
 
-## Ubuntu 20.04 (Focal) users
+## Ubuntu 20.04 (Focal)
 
 ```shell
 # Install some pre-flight dependencies.
-sudo apt install -y default-jre git python3-dev python3-pip python3-venv
+sudo apt install --yes default-jre git python3-dev python3-pip python3-venv
 
 # Install pipx.
 python3 -m pip install --user pipx
@@ -40,17 +40,17 @@ pipx install --python=3.12 --fetch-missing-python standardebooks
 
 ```shell
 # Install ZSH completions.
-sudo ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
+sudo ln --symbolic $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
 
 # Install Bash completions.
-mkdir -p $HOME/.local/share/bash-completion/completions/
-ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $HOME/.local/share/bash-completion/completions/se
+mkdir --parents $HOME/.local/share/bash-completion/completions/
+ln --symbolic $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $HOME/.local/share/bash-completion/completions/se
 
 # Install Fish completions.
-ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se.fish $HOME/.config/fish/completions/
+ln --symbolic $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se.fish $HOME/.config/fish/completions/
 ```
 
-## Fedora 43 users
+## Fedora 43
 
 ```shell
 # Install some pre-flight dependencies.
@@ -67,16 +67,16 @@ pipx install standardebooks
 
 ```shell
 # Install ZSH completions.
-sudo ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
+sudo ln --symbolic $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/zsh/_se /usr/share/zsh/vendor-completions/_se && hash -rf && compinit
 
 # Install Bash completions.
-mkdir -p $HOME/.local/share/bash-completion/completions/
-ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $HOME/.local/share/bash-completion/completions/se
+mkdir --parents $HOME/.local/share/bash-completion/completions/
+ln --symbolic $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $HOME/.local/share/bash-completion/completions/se
 # Install Fish completions.
-ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
+ln --symbolic $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 ```
 
-## macOS users
+## macOS
 
 1. Install the [Homebrew package manager](https://brew.sh). Or, if you already have it installed, make sure it’s up-to-date:
 
@@ -118,7 +118,7 @@ ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/
 ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/fish/se $HOME/.config/fish/completions/se.fish
 ```
 
-## Windows 11 users
+## Windows 11
 
 These instructions install the toolset directly in Windows, without Windows Subsystem for Linux.
 
@@ -144,7 +144,7 @@ These instructions install the toolset directly in Windows, without Windows Subs
 	pipx install --python 3.12 standardebooks
 	```
 
-## OpenBSD 6.6 users
+## OpenBSD 6.6
 
 These instructions were tested on OpenBSD 6.6, but may also work on 6.5.
 
