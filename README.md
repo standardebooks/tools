@@ -254,6 +254,8 @@ We need volunteers to take the lead on the following goals:
 
 - Add support for detecting Safari on Mac and initializing a Selenium instance using it for `browser.py` and `compare_versions.py`.
 
+- Replace the Cairo dependency, which is only used for `svg2png`, with an invocation of the user's default browser to render PNGs. N.B.: detecting and invoking the default browser is currently still flaky; as of writing, Safari has no headless mode and thus opens and closes windows when invoked.
+
 # Tool descriptions
 
 -	### `se add-file`
