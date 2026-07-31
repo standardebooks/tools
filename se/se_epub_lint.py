@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import importlib.resources
 from typing import TYPE_CHECKING, cast
+from urllib.parse import urlsplit
 from unidecode import unidecode
 
 import cssutils
@@ -281,6 +282,7 @@ METADATA
 "m-090", "[val]dedication[/] semantic inflection found, but no MARC relator [val]dto[/] (Dedicator)."
 "m-091", "Possibly misspelled MARC relator found."
 "m-092", "MusicXML files found, but no MARC relator [val]mcp[/] (Music copyist)."
+"m-093", "A single contributor has multiple schema:sameAs URLs to the same site."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1208,6 +1210,38 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 
 	if invalid_marc_relators_nodes:
 		messages.append(LintMessage("m-091", "Possibly misspelled MARC relator found.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_node_text(invalid_marc_relators_nodes)))
+
+	# Check for single contributors that have multiple schema:sameAs URLs pointing at the same site
+	nodes = self.metadata_dom.xpath("/package/metadata/link[@rel='schema:sameAs']")
+	same_as_entries: dict[str, list[tuple[str, 'EasyXmlElement']]] = {}
+	# Group entries by role
+	for node in nodes:
+		refines = node.get_attr("refines", False)
+		domain = ''
+		href = node.get_attr("href", False)
+		if href:
+			domain = urlsplit(href).netloc
+
+		if refines and domain:
+			if not refines in same_as_entries:
+				same_as_entries[refines] = []
+			same_as_entries[refines].append((domain, node))
+
+	# Check to see if each group has duplicate domains
+	for _, v in same_as_entries.items():
+		domains: list[str] = []
+		for entry in v:
+			domains.append(entry[0])
+
+		duplicate_domains = {domain for domain in domains if domains.count(domain) > 1}
+
+		invalid_nodes: list['EasyXmlElement'] = []
+		for entry in v:
+			if entry[0] in duplicate_domains:
+				invalid_nodes.append(entry[1])
+
+		if invalid_nodes:
+			messages.append(LintMessage("m-093", "A single contributor has multiple schema:sameAs URLs to the same site.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(invalid_nodes)))
 
 	return messages
 
