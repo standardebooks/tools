@@ -1435,7 +1435,7 @@ def _build_kobo_process_xhtml(work_kepub: 'SeEpub', file_path: Path) -> None:
 	# Kobos don't have fonts that support the `↩` character in endnotes, so replace it with `←`.
 	if dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]"):
 		# We use xpath to select the Kobo `<span>`s that we just inserted.
-		for node in dom.xpath("/html/body//a[contains(@epub:type, 'backlink')]/*[local-name()='span']"):
+		for node in dom.xpath("/html/body//a[contains(@epub:type, 'backlink')]//*[not(./*) and text() = '\u21a9\ufe0e']"):
 			node.set_text("←")
 
 	xhtml = dom.to_string()
