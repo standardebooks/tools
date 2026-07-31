@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<package xmlns="http://www.idpf.org/2007/opf" dir="ltr" prefix="se: https://standardebooks.org/vocab/1.0 rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#" unique-identifier="uid" version="3.0" xml:lang="en-US">
+<package xmlns="http://www.idpf.org/2007/opf" dir="ltr" prefix="rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#" unique-identifier="uid" version="3.0" xml:lang="en-US">
 	<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
 		<dc:identifier id="uid">https://standardebooks.org/ebooks/jane-austen/unknown-novel</dc:identifier>
 		<dc:date>1900-01-01T00:00:00Z</dc:date>
@@ -37,10 +37,10 @@
 		<meta property="authority" refines="#subject-2">LCSH</meta>
 		<meta property="term" refines="#subject-2">sh2008111400</meta>
 		<meta property="schema:genre">Fiction</meta>
-		<dc:description id="description">A short test novel for lint testing.</dc:description>
-		<meta id="long-description" property="se:long-description" refines="#description">
+		<dc:abstract>A short test novel for lint testing.</dc:abstract>
+		<dc:description>
 			&lt;p&gt;A short test novel for lint testing.&lt;/p&gt;
-		</meta>
+		</dc:description>
 		<dc:language>en-GB</dc:language>
 		<dc:source>https://www.gutenberg.org/cache/epub/2701/pg2701-images.html</dc:source>
 		<dc:source>https://archive.org/details/bub_gb_RtT0OLKFMHsC</dc:source>

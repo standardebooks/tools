@@ -533,11 +533,11 @@ def _indent_children(elem: etree.Element, level: int, one_space: str, indentatio
 
 		next_child = child.getnext()
 
-		# Remove line wraps and extra whitespace from child text (except `<meta>` elements).
+		# Remove line wraps and extra whitespace from child text, except in metadata elements containing escaped XHTML.
 		if child.text and not regex.match(r"^[\n\t ]+$", child.text):
 			if child.tag is etree.Comment:
 				child.text = regex.sub(r" *\n[\n\t ]*", child_indentation, child.text)
-			elif child.tag != "{http://www.idpf.org/2007/opf}meta":
+			elif child.tag not in {"{http://purl.org/dc/elements/1.1/}description"}:
 				_unwrap_text(child, remove_trailing_space=True)
 				child.text = regex.sub(r"[\t ]+", " ", child.text)
 
@@ -799,7 +799,7 @@ def format_xhtml(xhtml: str) -> str:
 	namespaces = {"xhtml": "http://www.w3.org/1999/xhtml", "epub": "http://www.idpf.org/2007/ops", "re": "http://exslt.org/regular-expressions"}
 
 	# Epub3 doesn't allow named entities, so convert them to their unicode equivalents.
-	# But, don't unescape the metadata file long-description accidentally.
+	# But, don't unescape the metadata file `dc:description` accidentally.
 	xhtml = regex.sub(r"&(?!(amp|lt|gt|quot|apos|#38|#60|#62|#x26|#x3c|#x3e);)#?\w+;", _replace_character_references, xhtml, flags=regex.IGNORECASE)
 
 	# Remove unnecessary `doctype`s which can cause `xmllint` to hang.
@@ -901,8 +901,8 @@ def format_opf(xml: str) -> str:
 	except Exception as ex:
 		raise se.InvalidXmlException(f"Couldn’t parse OPF file: {ex}")
 
-	# Format the long description, then escape it.
-	for node in tree.xpath("/opf:package/opf:metadata/opf:meta[@property='se:long-description']", namespaces={"opf": "http://www.idpf.org/2007/opf"}):
+	# Format the description, then escape it.
+	for node in tree.xpath("/opf:package/opf:metadata/dc:description", namespaces={"dc": "http://purl.org/dc/elements/1.1/", "opf": "http://www.idpf.org/2007/opf"}):
 		# Convert the node contents to escaped text.
 		xhtml = node.text # This preserves the initial newline and indentation.
 

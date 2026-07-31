@@ -41,7 +41,7 @@ def typogrify(plain_output: bool) -> int:
 						# Is this a metadata file?
 						# Typogrify metadata except for URLs, dates, and LoC subjects.
 						if dom.xpath("/package"):
-							for node in dom.xpath("/package/metadata/dc:*[normalize-space(.) and local-name() != 'subject' and local-name() != 'source' and local-name() != 'date' and local-name() != 'identifier']") + dom.xpath("/package/metadata/meta[normalize-space(.) and not(re:test(., '^[a-z]+://[^\\s]+$') or @property='dcterms:modified')]"):
+							for node in dom.xpath("/package/metadata/dc:*[normalize-space(.) and local-name() != 'subject' and local-name() != 'source' and local-name() != 'date' and local-name() != 'identifier'] | /package/metadata/meta[normalize-space(.) and not(re:test(., '^[a-z]+://[^\\s]+$') or @property='dcterms:modified')]"):
 								node.text = html.unescape(node.text)
 
 								node.text = se.typography.typogrify(node.text)
@@ -51,7 +51,7 @@ def typogrify(plain_output: bool) -> int:
 								node.text = node.text.replace(se.NO_BREAK_SPACE, " ")
 
 								# Typogrify escapes ampersands, and then lxml will also escape them again, so we unescape them before passing to lxml.
-								if node.get_attr("property") != "se:long-description":
+								if node.tag != "{http://purl.org/dc/elements/1.1/}description":
 									node.text = node.text.replace("&amp;", "&").strip()
 
 								processed_xhtml = dom.to_string()

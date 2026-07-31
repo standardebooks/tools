@@ -10,6 +10,7 @@ from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
 import fnmatch
+from html import unescape
 import os
 from pathlib import Path
 import importlib.resources
@@ -101,7 +102,7 @@ EPUB_SEMANTIC_VOCABULARY = ["abstract", "acknowledgments", "afterword", "antonym
 Z3998_SEMANTIC_VOCABULARY = ["abbreviations", "acknowledgments", "acronym", "actor", "afterword", "alteration", "annoref", "annotation", "appendix", "article", "aside", "attribution", "author", "award", "backmatter", "bcc", "bibliography", "biographical-note", "bodymatter", "cardinal", "catalogue", "cc", "chapter", "citation", "clarification", "collection", "colophon", "commentary", "commentator", "compound", "concluding-sentence", "conclusion", "continuation", "continuation-of", "contributors", "coordinate", "correction", "covertitle", "currency", "decimal", "decorative", "dedication", "diary", "diary-entry", "discography", "division", "drama", "dramatis-personae", "editor", "editorial-note", "email", "email-message", "epigraph", "epilogue", "errata", "essay", "event", "example", "family-name", "fiction", "figure", "filmography", "footnote", "footnotes", "foreword", "fraction", "from", "frontispiece", "frontmatter", "ftp", "fulltitle", "gallery", "general-editor", "geographic", "given-name", "glossary", "grant-acknowledgment", "grapheme", "halftitle", "halftitle-page", "help", "homograph", "http", "hymn", "illustration", "image-placeholder", "imprimatur", "imprint", "index", "initialism", "introduction", "introductory-note", "ip", "isbn", "keyword", "letter", "loi", "lot", "lyrics", "marginalia", "measure", "mixed", "morpheme", "name-title", "nationality", "non-fiction", "nonresolving-citation", "nonresolving-reference", "note", "noteref", "notice", "orderedlist", "ordinal", "organization", "other-credits", "pagebreak", "page-footer", "page-header", "part", "percentage", "persona", "personal-name", "pgroup", "phone", "phoneme", "photograph", "phrase", "place", "plate", "poem", "portmanteau", "postal", "postal-code", "postscript", "practice", "preamble", "preface", "prefix", "presentation", "primary", "product", "production", "prologue", "promotional-copy", "published-works", "publisher-address", "publisher-note", "publisher-logo", "range", "ratio", "rearnote", "rearnotes", "recipient", "recto", "reference", "republisher", "resolving-reference", "result", "role-description", "roman", "root", "salutation", "scene", "secondary", "section", "sender", "sentence", "sidebar", "signature", "song", "speech", "stage-direction", "stem", "structure", "subchapter", "subject", "subsection", "subtitle", "suffix", "surname", "taxonomy", "tertiary", "text", "textbook", "t-form", "timeline", "title", "title-page", "to", "toc", "topic-sentence", "translator", "translator-note", "truncation", "unorderedlist", "valediction", "verse", "verso", "v-form", "volume", "warning", "weight", "word"]
 
 # See <https://standardebooks.org/vocab/1.0>.
-SE_SEMANTIC_VOCABULARY = ["bridgehead", "collection", "compass", "compound", "diary", "diary.dateline", "era", "image", "image.color-depth", "image.color-depth.black-on-transparent", "image.style.realistic", "image.color-depth.default-on-transparent", "label", "letter", "letter.dateline", "long-description", "name", "name.person", "name.person.full-name", "name.person.pen-name", "name.vehicle", "name.vehicle.airplane", "name.vehicle.auto", "name.vehicle.train", "name.vessel", "name.vessel.boat", "name.vessel.ship", "name.publication", "name.publication.book", "name.publication.essay", "name.publication.journal", "name.publication.newspaper", "name.publication.magazine", "name.publication.pamphlet", "name.publication.paper", "name.publication.play", "name.publication.poem", "name.publication.short-story", "name.music", "name.music.opera", "name.music.song", "name.visual-art", "name.visual-art.engraving", "name.visual-art.film", "name.visual-art.illustration", "name.visual-art.painting", "name.visual-art.photograph", "name.visual-art.sculpture", "name.visual-art.typeface", "name.broadcast", "name.broadcast.television-show", "name.legal-case", "novel", "novella", "publication-notes", "short-story", "sic", "temperature"]
+SE_SEMANTIC_VOCABULARY = ["bridgehead", "collection", "compass", "compound", "diary", "diary.dateline", "era", "image", "image.color-depth", "image.color-depth.black-on-transparent", "image.style.realistic", "image.color-depth.default-on-transparent", "label", "letter", "letter.dateline", "name", "name.person", "name.person.full-name", "name.person.pen-name", "name.vehicle", "name.vehicle.airplane", "name.vehicle.auto", "name.vehicle.train", "name.vessel", "name.vessel.boat", "name.vessel.ship", "name.publication", "name.publication.book", "name.publication.essay", "name.publication.journal", "name.publication.newspaper", "name.publication.magazine", "name.publication.pamphlet", "name.publication.paper", "name.publication.play", "name.publication.poem", "name.publication.short-story", "name.music", "name.music.opera", "name.music.song", "name.visual-art", "name.visual-art.engraving", "name.visual-art.film", "name.visual-art.illustration", "name.visual-art.painting", "name.visual-art.photograph", "name.visual-art.sculpture", "name.visual-art.typeface", "name.broadcast", "name.broadcast.television-show", "name.legal-case", "novel", "novella", "publication-notes", "short-story", "sic", "temperature"]
 
 SE_GENRES = ["Adventure", "Autobiography", "Biography", "Children’s", "Comedy", "Drama", "Fantasy", "Fiction", "Horror", "Memoir", "Mystery", "Nonfiction", "Philosophy", "Poetry", "Satire", "Science Fiction", "Shorts", "Spirituality", "Tragedy", "Travel"]
 IGNORED_CLASSES = ["continued", "dl2", "dl3", "elision", "eoc", "full-page", "together", "telegram"]
@@ -198,8 +199,8 @@ METADATA
 "m-010", "Invalid [attr]refines[/] attribute value."
 "m-011", "Subtitle in metadata, but no expanded title element."
 "m-012", "Non-typogrified character in [xml]<dc:title>[/] element."
-"m-013", "Non-typogrified character in [xml]<dc:description>[/] element."
-"m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element."
+"m-013", "Non-typogrified character in [xml]<dc:abstract>[/] element."
+"m-014", "Non-typogrified character in [xml]<dc:description>[/] element."
 "m-015", "Metadata long description is not valid XHTML."
 "m-016", "Long description must be an escaped XHTML fragment beginning with [xhtml]<p>[/]."
 "m-017", "Illegal [xml]<!\\[CDATA\\[[/]. Hint: Run [command]se[/] [subcommand]clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] elements."
@@ -240,9 +241,9 @@ METADATA
 "m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"dcterms:alternative\" refines="#title"> element in metadata."
 "m-053", "[xml]<meta property=\"schema:genre\">[/] elements not in alphabetical order."
 "m-054", "Non-canonical Standard Ebooks URL. Expected: [url]https://standardebooks.org/ebooks/<AUTHOR>/<TITLE>\\[/<CONTRIBUTOR> ...][/]. Hint: No trailing slash."
-"m-055", "[xml]<dc:description>[/] element doesn’t end with a period."
-"m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not linked to their S.E. author page."
-"m-057", "Illegal [attr]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element. Hint: [attr]xml:lang[/] should be [attr]lang[/]."
+"m-055", "[xml]<dc:abstract>[/] element doesn’t end with a period."
+"m-056", "Author name present in [xml]<dc:description>[/] element, but the first instance of their name is not linked to their S.E. author page."
+"m-057", "Illegal [attr]xml:lang[/] attribute in [xml]<dc:description>[/] element. Hint: [attr]xml:lang[/] should be [attr]lang[/]."
 "m-058", "[val]schema:genre[/] that implies other [val]schema:genre[/]. Hint: Remove the [val]schema:genre[/] that is implied."
 "m-059", "Link found in colophon, but missing matching [xhtml]<dc:source>[/] element in metadata."
 "m-060", "Non-canonical Google Books URL. Expected: [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/]."
@@ -855,29 +856,27 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 
 	# Check the long description for some errors.
 	try:
-		long_description_node = self.metadata_dom.xpath("/package/metadata/meta[@property='se:long-description']")[0]
-		long_description = long_description_node.text
+		long_description_node = self.metadata_dom.xpath("/package/metadata/dc:description")[0]
+		long_description = unescape(long_description_node.inner_xml())
 
 		metadata_dom_with_parsed_long_description = deepcopy(self.metadata_dom)
-		for node in metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']"):
-			opening_tag = node.to_tag_string()
-			tag_name = node.tag
+		for node in metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description"):
 			# If the HTML is malformed, this will emit `se.InvalidXmlException` which we catch below.
-			new_element = EasyXmlElement(f"<?xml version=\"1.0\" encoding=\"utf-8\"?>{opening_tag}{long_description}</{tag_name}>")
-			node.replace_with(new_element)
+			new_element = EasyXmlElement(f"<?xml version=\"1.0\" encoding=\"utf-8\"?><root xmlns:dc=\"http://purl.org/dc/elements/1.1/\">{node.to_tag_string()}{long_description}</dc:description></root>")
+			node.replace_with(new_element.children[0])
 
 		# Recreate the DOM from the text source, so that line numbers for errors in the long description are correct.
 		metadata_dom_with_parsed_long_description = EasyXmlTree(metadata_dom_with_parsed_long_description.to_string())
 
-		# Make sure long-description is an escaped XHTML fragment.
+		# Make sure the contents of `<dc:description>` are an escaped XHTML fragment.
 		if not regex.search(r"^\s*<p>", long_description) and long_description.strip() != "LONG_DESCRIPTION":
 			messages.append(LintMessage("m-016", "Long description must be an escaped XHTML fragment beginning with [xhtml]<p>[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_node_tags([long_description_node])))
 
 		# Check if there are non-typogrified quotes or em dashes in metadata descriptions.
 		# Have to use `concat()` for the regex because it's not possible to escape both `'` and `"` in the same string in xpath 1.0. See <https://stackoverflow.com/a/57639969>.
-		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']/*[re:test(., concat('([', \"'\", '\"]|\\-\\-|\\s-\\s)'))]")
+		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description/*[re:test(., concat('([', \"'\", '\"]|\\-\\-|\\s-\\s)'))]")
 		if nodes:
-			messages.append(LintMessage("m-014", "Non-typogrified character in [xml]<meta property=\"se:long-description\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+			messages.append(LintMessage("m-014", "Non-typogrified character in [xml]<dc:description>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 		# Is the first instance of the author's last name a hyperlink in the metadata?
 		authors = self.metadata_dom.xpath("/package/metadata/dc:creator")
@@ -893,14 +892,14 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 
 			# We ignore `<i>` elements that contain the author name, because sometimes the author name might be in the book title. See _The Education of Henry Adams_.
 			# Use `\\b` in the regex to avoid matching words like `Dickensian`.
-			nodes = metadata_dom_with_parsed_long_description.xpath(f"/package/metadata/meta[@property='se:long-description']/p[.//text()[re:test(., '\\b{regex.escape(author_last_name)}\\b', 'i') and not(./ancestor-or-self::i or ./ancestor-or-self::a) and not((./ancestor-or-self::p/preceding-sibling::p//a|./preceding-sibling::a)[re:test(@href, '^https://standardebooks\\.org/.+') and re:test(., '\\b{regex.escape(author_last_name)}\\b', 'i')])]]")
+			nodes = metadata_dom_with_parsed_long_description.xpath(f"/package/metadata/dc:description/p[.//text()[re:test(., '\\b{regex.escape(author_last_name)}\\b', 'i') and not(./ancestor-or-self::i or ./ancestor-or-self::a) and not((./ancestor-or-self::p/preceding-sibling::p//a|./preceding-sibling::a)[re:test(@href, '^https://standardebooks\\.org/.+') and re:test(., '\\b{regex.escape(author_last_name)}\\b', 'i')])]]")
 			if nodes:
-				messages.append(LintMessage("m-056", "Author name present in [xml]<meta property=\"se:long-description\">[/] element, but the first instance of their name is not linked to their S.E. author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+				messages.append(LintMessage("m-056", "Author name present in [xml]<dc:description>[/] element, but the first instance of their name is not linked to their S.E. author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 		# Did we mention an SE book in the long description, but without italics?
 		# Only match if the title appears to contain an uppercase letter. This prevents matches on a non-title link like `<a href="...">short stories</a>`. Xpath 1.0 doesn't support Unicode character classes like `\p{Letter}` so we do an additional filtering step.
 		# Also don't match if preceded by `“` as that might refer to a short work that doesn't need italics (like `“The Vampire”`).
-		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']//a[re:test(@href, '^https://standardebooks\\.org/ebooks/[^/]+/[^/]+') and not(parent::i) and not(.//i) and not(preceding-sibling::node()[re:test(., '“$')])]")
+		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description//a[re:test(@href, '^https://standardebooks\\.org/ebooks/[^/]+/[^/]+') and not(parent::i) and not(.//i) and not(preceding-sibling::node()[re:test(., '“$')])]")
 		filtered_nodes: list[EasyXmlElement] = []
 		for node in nodes:
 			if regex.search(r"[\p{Uppercase_Letter}]", node.inner_text()):
@@ -909,21 +908,21 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		if filtered_nodes:
 			messages.append(LintMessage("m-064", "S.E. ebook linked in long description but not italicized.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(filtered_nodes)))
 
-		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']//a[not(re:test(@href, '^https?://standardebooks\\.org'))]")
+		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description//a[not(re:test(@href, '^https?://standardebooks\\.org'))]")
 		if nodes:
 			messages.append(LintMessage("m-067", "Non-S.E. link in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
-		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']/p[re:test(., 'Nobel prize\\b') or re:test(., 'Nobel Prize for\\b')]")
+		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description/p[re:test(., 'Nobel prize\\b') or re:test(., 'Nobel Prize for\\b')]")
 		if nodes:
 			messages.append(LintMessage("m-078", "Nobel Prize strings must read [text]Nobel Prize in ...[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 		# `xml:lang` is correct for the rest of the publication, but should be lang in the long description.
-		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']//*[@xml:lang]")
+		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description//*[@xml:lang]")
 		if nodes:
-			messages.append(LintMessage("m-057", "Illegal [attr]xml:lang[/] attribute in [xml]<meta property=\"se:long-description\">[/] element. Hint: [attr]xml:lang[/] should be [attr]lang[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+			messages.append(LintMessage("m-057", "Illegal [attr]xml:lang[/] attribute in [xml]<dc:description>[/] element. Hint: [attr]xml:lang[/] should be [attr]lang[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 		# `US` -> `U.S.`.
-		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']/*[re:test(., '\\bUS\\b')]")
+		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description/*[re:test(., '\\bUS\\b')]")
 		if nodes:
 			messages.append(LintMessage("t-047", "[text]US[/] set without periods. Hint: Use [text]U.S.[/]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
@@ -938,7 +937,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		if matches:
 			messages.append(LintMessage("m-018", "HTML entities found. Hint: Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, long_description_node.sourceline) for m in matches]))
 
-		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/meta[@property='se:long-description']/p[re:test(., '\\s[a-z]+ly-[a-z]')]")
+		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description/p[re:test(., '\\s[a-z]+ly-[a-z]')]")
 		if nodes:
 			messages.append(LintMessage("t-078", "Illegal hyphenated two-word phrasal adjective that begins with an adverb ending in [text]ly[/].", se.MESSAGE_TYPE_WARNING, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
@@ -948,7 +947,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 
 	except Exception:
 		if self.is_se_ebook:
-			missing_metadata_elements.append("""<meta id="long-description" property="se:long-description" refines="#description">""")
+			missing_metadata_elements.append("""<dc:description>""")
 
 	missing_metadata_vars: list[LintSubmessage] = []
 	for node in self.metadata_dom.xpath("/package/metadata/*[re:test(., '[A-Z_]{2,}') or re:test(@*, '[A-Z_]{2,}')]"):
@@ -983,12 +982,12 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		missing_metadata_elements.append("<meta property=\"file-as\" refines=\"#title\">")
 
 	try:
-		description_node = self.metadata_dom.xpath("/package/metadata/dc:description")[0]
+		description_node = self.metadata_dom.xpath("/package/metadata/dc:abstract")[0]
 		matches = regex.findall(r"(?:['\"]|\-\-|\s-\s)", description_node.text)
 		if matches:
-			messages.append(LintMessage("m-013", "Non-typogrified character in [xml]<dc:description>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, description_node.sourceline) for m in matches]))
+			messages.append(LintMessage("m-013", "Non-typogrified character in [xml]<dc:abstract>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, description_node.sourceline) for m in matches]))
 	except Exception:
-		missing_metadata_elements.append("<dc:description>")
+		missing_metadata_elements.append("<dc:abstract>")
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 	# We can't use xpath's built-in regex because it doesn't support Unicode classes.
@@ -1148,9 +1147,9 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	if nodes:
 		messages.append(LintMessage("m-008", "Non-canonical Library of Congress Name Authority URI. Expected: [url]https://id.loc.gov/authorities/names/<IDENTIFIER>.html[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
-	invalid_description = self.metadata_dom.xpath("/package/metadata/dc:description[text()!='DESCRIPTION' and re:test(., '[^\\.”]$')]")
+	invalid_description = self.metadata_dom.xpath("/package/metadata/dc:abstract[text()!='DESCRIPTION' and re:test(., '[^\\.”]$')]")
 	if invalid_description:
-		messages.append(LintMessage("m-055", "[xml]<dc:description>[/] element doesn’t end with a period.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage("..." + invalid_description[0].text[-10:], invalid_description[0].sourceline)]))
+		messages.append(LintMessage("m-055", "[xml]<dc:abstract>[/] element doesn’t end with a period.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage("..." + invalid_description[0].text[-10:], invalid_description[0].sourceline)]))
 
 	# Does the manifest match the generated manifest?
 	try:
@@ -1164,7 +1163,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		messages.append(LintMessage("m-051", "Missing expected element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_metadata_elements))
 
 	# Check for common typos in description.
-	for node in self.metadata_dom.xpath("/package/metadata/dc:description") + self.metadata_dom.xpath("/package/metadata/meta[@property='se:long-description']"):
+	for node in self.metadata_dom.xpath("/package/metadata/dc:abstract") + self.metadata_dom.xpath("/package/metadata/dc:description"):
 		matches = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?![-’])", node.text, flags=regex.IGNORECASE)
 		matches += regex.findall(r"\ba a\b(?!-)", node.text)
 		if matches:
