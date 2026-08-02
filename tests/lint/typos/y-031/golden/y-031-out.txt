@@ -11,3 +11,5 @@ y-031 [Manual Review] chapter-1.xhtml Possible typo: Dialog tag missing punctuat
  Line 67:       <p>“Forget that nonsense,” Andy exclaimed “forcefully.”</p>
  Line 70:       <p>“A chary enquiry is a ghost of the mind,” said Billy adroitly “unfortunately, that is wrong; on the contrary, their bathtub was, in this moment, a petite underwear.”</p>
  Line 72:       <p>“Liars are perjured quills,” whispered someone sweetly “a bathroom is a lip's coal.”</p>
+f-003 [Error] core.css File doesn’t match template.
+f-003 [Error] se.css File doesn’t match template.

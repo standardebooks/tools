@@ -1,3 +1,5 @@
 m-007 [Error] content.opf Non-canonical Internet Archive URL. Expected: `https://archive.org/details/<BOOK-ID>`.
  Line 50:       <dc:source>https://archive.org/details/bub_gb_RtT0OLKFMHsC/asdf/mode/2up</dc:source>
  Line 52:       <dc:source>https://archive.org/details/bub_gb_RtT0OLKFMHsC#12354</dc:source>
+f-003 [Error] core.css File doesn’t match template.
+f-003 [Error] se.css File doesn’t match template.

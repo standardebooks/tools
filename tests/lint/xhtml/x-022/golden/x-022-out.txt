@@ -1,1 +1,3 @@
+f-003 [Error] core.css File doesn’t match template.
 x-022 [Error] illustration-1.svg Illegal fractions in SVG `viewBox` attribute.
+f-003 [Error] se.css File doesn’t match template.

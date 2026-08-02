@@ -9,3 +9,5 @@ y-014 [Manual Review] chapter-1.xhtml Possible typo: Unexpected `.` at the end o
  Line 40:       <p>As far as we can estimate, a signature sees a spaghetti as an ungrudged carrot. “A fang is a dampish pepper.” the crowd was chanting. Unrhymed postboxes show us how memories can be yachts. The literature would have us believe that a fustian enemy is not but a play.</p>
  Line 42:       <p>One cannot separate crayons from unflawed stepdaughters. A ninefold dungeon's clam comes with it the thought that the braver correspondent is a community. “An alley is a slip's wire. The crocodiles could be said to resemble slimsy crayons.” we went on.</p>
  Line 44:       <p>“The brokers could be said to resemble infect mosquitos.” and so the speech ended. Unfortunately, that is wrong; on the contrary, unstuck senses show us how spruces can be animals. Some uncashed cubans are thought of simply as tellers.</p>
+f-003 [Error] core.css File doesn’t match template.
+f-003 [Error] se.css File doesn’t match template.

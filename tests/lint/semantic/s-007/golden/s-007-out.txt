@@ -19,3 +19,5 @@ s-007 [Manual Review] chapter-1.xhtml Element requires at least one block-level 
                         
                         Fail 8, li has no &lt;p&gt;.
                 </li>
+f-003 [Error] core.css File doesn’t match template.
+f-003 [Error] se.css File doesn’t match template.

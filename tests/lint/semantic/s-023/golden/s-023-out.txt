@@ -1,2 +1,4 @@
 t-010 [Manual Review] chapter-1.xhtml Time set with `.` instead of `:`.
  Line 9:        4.50
+f-003 [Error] core.css File doesn’t match template.
+f-003 [Error] se.css File doesn’t match template.

@@ -142,7 +142,6 @@ CSS
 "c-004", "Illegal [css]border-color[/] specified on element."
 "c-005", "Illegal [css]white-space: nowrap;[/] applied to [css]abbr[/] selector."
 "c-006", "Semantic found, but missing corresponding style CSS style."
-"c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy."
 "c-008", "CSS class only used once. Hint: Craft a selector instead of a single-use class."
 "c-009", "Duplicate CSS selectors. Hint: Duplicates are only acceptable if overriding S.E. base styles."
 "c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. Hint: [css]text-align[/] is usually set to [css]right[/]."
@@ -163,6 +162,8 @@ CSS
 "c-025", "Illegal percent unit used to set [css]height[/] or positioning property. Hint: Use [css]vh[/] to specify vertical-oriented properties like [css]height[/] or [css]position[/]."
 "c-026", "Table that appears to be listing numbers, but without [css]font-variant-numeric: tabular-nums;[/]."
 "c-027", "Illegal [css]font-size[/] below [css]1[/]."
+UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+"c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy."
 
 FILESYSTEM
 "f-001", "Illegal file or directory."
@@ -1427,10 +1428,6 @@ def _lint_css_checks(self: 'SeEpub', local_css_path: Path, abbr_with_whitespace:
 			matches += source_file.find_selector(selector)
 
 		messages.append(LintMessage("c-005", "Illegal [css]white-space: nowrap;[/] applied to [css]abbr[/] selector.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
-
-	matches = source_file.findall(r"(?<=\s+)hyphens:.+?;(?!\s+-epub-hyphens)")
-	if matches:
-		messages.append(LintMessage("c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
 
 	matches = source_file.findall(r"text-align:\s*left\s*;")
 	if matches:

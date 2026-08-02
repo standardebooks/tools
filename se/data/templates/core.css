@@ -4,7 +4,6 @@
 body{
 	font-variant-numeric: oldstyle-nums;
 	hyphens: auto;
-	-epub-hyphens: auto;
 	text-wrap: pretty;
 }
 
@@ -41,7 +40,6 @@ hgroup{
 	break-inside: avoid;
 	font-variant: small-caps;
 	hyphens: none;
-	-epub-hyphens: none;
 	margin: 3em 0;
 	text-align: center;
 }
@@ -178,7 +176,6 @@ header{
 	break-after: avoid;
 	break-inside: avoid;
 	hyphens: none;
-	-epub-hyphens: none;
 	text-align: center;
 }
 

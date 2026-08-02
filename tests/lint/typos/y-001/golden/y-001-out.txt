@@ -12,3 +12,5 @@ y-001 [Manual Review] content.opf Possible typo: Doubled `a/the/and/of/or/as/if`
  Line 41:       of of
  Line 41:       or or
  Line 41:       as as
+f-003 [Error] core.css File doesn’t match template.
+f-003 [Error] se.css File doesn’t match template.

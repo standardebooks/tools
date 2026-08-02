@@ -3,3 +3,5 @@ s-001 [Error] chapter-1.xhtml Illegal numeric entity.
  Line 12:       &#915;
  Line 13:       &#914;
  Line 13:       &#913;
+f-003 [Error] core.css File doesn’t match template.
+f-003 [Error] se.css File doesn’t match template.

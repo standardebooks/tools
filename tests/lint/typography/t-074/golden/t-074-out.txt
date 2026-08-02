@@ -1,3 +1,5 @@
 t-074 [Manual Review] chapter-1.xhtml Extended sound using hyphen-minus `-` instead of non-breaking hyphen `‑`.
  Line 24:       <i>Bor-r-r-r-n!</i>
  Line 26:       <em>Ow-w-w-w!</em>
+f-003 [Error] core.css File doesn’t match template.
+f-003 [Error] se.css File doesn’t match template.

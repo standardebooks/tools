@@ -1,3 +1,5 @@
 y-032 [Manual Review] chapter-1.xhtml Possible typo: Italics running into preceding or following characters.
  Line 22:       <i epub:type="se:name.publication.play">Hamlet</i>
  Line 24:       <i epub:type="se:name.publication.book">Threatful Flood</i>
+f-003 [Error] core.css File doesn’t match template.
+f-003 [Error] se.css File doesn’t match template.

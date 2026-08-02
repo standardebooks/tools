@@ -1,2 +1,4 @@
 s-108 [Error] chapter-1.xhtml `<thead>` element with non-empty `<td>` descendant. Hint: Use `<th>` instead.
  Line 13:       <td>
+f-003 [Error] core.css File doesn’t match template.
+f-003 [Error] se.css File doesn’t match template.

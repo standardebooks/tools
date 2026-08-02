@@ -2,3 +2,5 @@ m-002 [Error] colophon.xhtml Non-canonical Project Gutenberg Canada URL. Expecte
  Line 24:       <a href="https://www.gutenberg.ca/books/1234">Project Gutenberg Canada</a>
 m-002 [Error] content.opf Non-canonical Project Gutenberg Canada URL. Expected: `https://gutenberg.ca/<PATH>/<FILENAME>.html`.
  Line 45:       <dc:source>https://www.gutenberg.ca/books/1234</dc:source>
+f-003 [Error] core.css File doesn’t match template.
+f-003 [Error] se.css File doesn’t match template.

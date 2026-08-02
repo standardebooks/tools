@@ -1,2 +1,4 @@
 m-091 [Error] content.opf Possibly misspelled MARC relator found.
  Line 58:       xyz
+f-003 [Error] core.css File doesn’t match template.
+f-003 [Error] se.css File doesn’t match template.

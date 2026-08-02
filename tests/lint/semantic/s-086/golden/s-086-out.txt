@@ -8,3 +8,5 @@ s-086 [Manual Review] chapter-1.xhtml `Op. Cit.` or `Loc. Cit.` in endnote. Hint
  Line 10:       <li>
  Line 13:       <li>
  Line 16:       <li>
+f-003 [Error] core.css File doesn’t match template.
+f-003 [Error] se.css File doesn’t match template.
