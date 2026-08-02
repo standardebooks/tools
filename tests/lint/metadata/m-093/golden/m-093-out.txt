@@ -1,0 +1,6 @@
+m-093 [Error] content.opf A single contributor has multiple schema:sameAs URLs to the same site.
+ Line 56:       <link href="https://id.loc.gov/authorities/names/n79032879.html" refines="#author" rel="schema:sameAs"/>
+ Line 57:       <link href="https://id.loc.gov/authorities/names/n79032880.html" refines="#author" rel="schema:sameAs"/>
+m-093 [Error] content.opf A single contributor has multiple schema:sameAs URLs to the same site.
+ Line 61:       <link href="https://en.wikipedia.org/wiki/Georg_Friedrich_Kersting" refines="#artist" rel="schema:sameAs"/>
+ Line 62:       <link href="https://en.wikipedia.org/wiki/Georg_Friedrich_Kersting_Jr." refines="#artist" rel="schema:sameAs"/>
