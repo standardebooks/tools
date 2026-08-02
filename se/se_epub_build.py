@@ -1501,6 +1501,27 @@ def _generate_ncx(self: 'SeEpub', work_compatible_epub_dir: Path, metadata_dom: 
 	for node in metadata_dom.xpath("/package/manifest"):
 		node.append(etree.fromstring("""<item href="toc.ncx" id="ncx" media-type="application/x-dtbncx+xml"/>"""))
 
+	# As of 2026 iBooks uses the `<landmarks>` element to determine where to start a new ebook at, instead of looking at the spine.
+	# It only recognizes certain values of `epub:type` in `<landmarks>`; see <https://help.apple.com/itc/booksassetguide/en.lproj/itc0f175a5b9.html>.
+	# However, it only allows *one value* for `epub:type` in `<landmarks>`, and if there is more than one value, the entry is skipped.
+	# So, insert an entry for the "start" of the book in `<landmarks>` here.
+	try:
+		# Don't use `self.spine_file_paths` because those are the *absolute* paths, and we want the *relative* paths.n
+		first_spine_href = metadata_dom.xpath("/package/manifest/item[@id = /package/spine/itemref[1]/@idref]/@href", str)[0]
+	except IndexError as ex:
+		raise se.InvalidSeEbookException("Couldn’t determine the first spine item.") from ex
+
+	toc_path = work_compatible_epub_dir / "epub" / toc_filename
+	toc_dom = self.get_dom(toc_path)
+	try:
+		toc_dom.xpath("//nav[re:test(@epub:type, '\\blandmarks\\b')]/ol")[0].prepend(EasyXmlElement(f"""<li xmlns:epub="http://www.idpf.org/2007/ops"><a href="{first_spine_href}" epub:type="frontmatter">Frontmatter</a></li>"""))
+	except Exception:
+		# No valid `<landmarks>`, pass.
+		pass
+
+	with open(toc_path, "w", encoding="utf-8") as file:
+		file.write(se.formatting.format_xhtml(toc_dom.to_string()))
+
 	# Now use an XSL transform to generate the NCX.
 	with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("navdoc2ncx.xsl")) as navdoc2ncx_xsl_filename:
 		toc_tree = se.epub.convert_toc_to_ncx(work_compatible_epub_dir, toc_filename, navdoc2ncx_xsl_filename)
