@@ -66,8 +66,7 @@ section.epub-type-contains-word-colophon p + p::before{
 	width: 25%;
 }
 
-section.epub-type-contains-word-colophon p.nth-last-child-2 time,
-section.epub-type-contains-word-colophon p:nth-last-child(2) time{
+section.epub-type-contains-word-colophon p.nth-last-child-2 time{
 	font-variant: small-caps;
 }
 

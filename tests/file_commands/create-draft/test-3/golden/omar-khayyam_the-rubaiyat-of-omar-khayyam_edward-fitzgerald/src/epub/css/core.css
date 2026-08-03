@@ -44,7 +44,31 @@ hgroup{
 	text-align: center;
 }
 
-hgroup{
+hgroup:has(h1){
+	margin: 6em 0;
+}
+
+hgroup:has(h2){
+	margin: 4.5em 0;
+}
+
+hgroup:has(h3){
+	margin: 3.51em 0;
+}
+
+hgroup:has(h4){
+	margin: 3em 0;
+}
+
+hgroup:has(h5){
+	margin: 2.49em 0;
+}
+
+hgroup:has(h6){
+	margin: 2.01em 0;
+}
+
+hgroup > *{
 	margin: 0;
 }
 

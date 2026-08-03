@@ -65,7 +65,49 @@ hgroup{
 	text-align: center;
 }
 
-hgroup{
+hgroup.has-h1{
+	margin-top: 6em;
+	margin-right: 0;
+	margin-bottom: 6em;
+	margin-left: 0;
+}
+
+hgroup.has-h2{
+	margin-top: 4.5em;
+	margin-right: 0;
+	margin-bottom: 4.5em;
+	margin-left: 0;
+}
+
+hgroup.has-h3{
+	margin-top: 3.51em;
+	margin-right: 0;
+	margin-bottom: 3.51em;
+	margin-left: 0;
+}
+
+hgroup.has-h4{
+	margin-top: 3em;
+	margin-right: 0;
+	margin-bottom: 3em;
+	margin-left: 0;
+}
+
+hgroup.has-h5{
+	margin-top: 2.49em;
+	margin-right: 0;
+	margin-bottom: 2.49em;
+	margin-left: 0;
+}
+
+hgroup.has-h6{
+	margin-top: 2.01em;
+	margin-right: 0;
+	margin-bottom: 2.01em;
+	margin-left: 0;
+}
+
+hgroup > *{
 	margin-top: 0;
 	margin-right: 0;
 	margin-bottom: 0;
@@ -117,43 +159,36 @@ hgroup > p + h6{
 }
 
 /* Simulate the `margin-bottom` of `<h1>`. */
-hgroup > h1 ~ p.last-child,
-hgroup > h1 ~ p:last-child{
+hgroup > h1 ~ p.last-child{
 	margin-bottom: 6em;
 }
 
 /* Simulate the `margin-bottom` of `<h2>`. */
-hgroup > h2 ~ p.last-child,
-hgroup > h2 ~ p:last-child{
+hgroup > h2 ~ p.last-child{
 	margin-bottom: 3.84615385em;
 }
 
 /* Simulate the `margin-bottom` of `<h3>`. */
-hgroup > h3 ~ p.last-child,
-hgroup > h3 ~ p:last-child{
+hgroup > h3 ~ p.last-child{
 	margin-bottom: 3.51em;
 }
 
 /* Simulate the `margin-bottom` of `<h4>`. */
-hgroup > h4 ~ p.last-child,
-hgroup > h4 ~ p:last-child{
+hgroup > h4 ~ p.last-child{
 	margin-bottom: 3.61445783em;
 }
 
 /* Simulate the `margin-bottom` of `<h5>`. */
-hgroup > h5 ~ p.last-child,
-hgroup > h5 ~ p:last-child{
+hgroup > h5 ~ p.last-child{
 	margin-bottom: 3.71641791em;
 }
 
 /* Simulate the `margin-bottom` of `<h6>`. */
-hgroup > h6 ~ p.last-child,
-hgroup > h6 ~ p:last-child{
+hgroup > h6 ~ p.last-child{
 	margin-bottom: 2.01em;
 }
 
-hgroup > p.first-child,
-hgroup > p:first-child{
+hgroup > p.first-child{
 	font-weight: bold;
 }
 
@@ -170,8 +205,7 @@ h6 + p,
 header + p,
 hr + p,
 hgroup + p,
-p.first-child,
-p:first-child{
+p.first-child{
 	hanging-punctuation: first last;
 	text-indent: 0;
 }
@@ -335,13 +369,11 @@ img.mathml{
 :root[__ibooks_internal_theme] ul + p,
 :root[__ibooks_internal_theme] table + p,
 :root[__ibooks_internal_theme] hgroup + p,
-:root[__ibooks_internal_theme] p.first-child,
-:root[__ibooks_internal_theme] p:first-child{
+:root[__ibooks_internal_theme] p.first-child{
 	hanging-punctuation: none !important;
 }
 
-:root[__ibooks_internal_theme] blockquote p.first-child,
-:root[__ibooks_internal_theme] blockquote p:first-child{
+:root[__ibooks_internal_theme] blockquote p.first-child{
 	hanging-punctuation: first last !important;
 }
 

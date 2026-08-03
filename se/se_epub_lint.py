@@ -143,7 +143,6 @@ CSS
 "c-004", "Illegal [css]border-color[/] specified on element."
 "c-005", "Illegal [css]white-space: nowrap;[/] applied to [css]abbr[/] selector."
 "c-006", "Semantic found, but missing corresponding style CSS style."
-"c-007", "[xhtml]<hgroup>[/] with unexpected top or bottom margin. Expected: [css]{expected_em_string}em[/] to match the calculated [css]em[/] margin of the child [xhtml]<h#>[/] element if there were no [xhtml]<hgroup>[/]."
 "c-008", "CSS class only used once. Hint: Craft a selector instead of a single-use class."
 "c-009", "Duplicate CSS selectors. Hint: Duplicates are only acceptable if overriding S.E. base styles."
 "c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. Hint: [css]text-align[/] is usually set to [css]right[/]."
@@ -1953,7 +1952,7 @@ def _lint_special_file_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 
 	return messages
 
-def _lint_xhtml_css_checks(source_file: SourceFile, dom: EasyXmlTree, stylesheets: list[tuple[str, str]]) -> list[LintMessage]:
+def _lint_xhtml_css_checks(source_file: SourceFile, dom: EasyXmlTree) -> list[LintMessage]:
 	"""
 	Process CSS checks on an `.xhtml` file.
 
@@ -1968,76 +1967,6 @@ def _lint_xhtml_css_checks(source_file: SourceFile, dom: EasyXmlTree, stylesheet
 
 	messages: list[LintMessage] = []
 	filename = source_file.filename
-
-	# Check that an `<hgroup>` beginning with a `<p>` has the same outer margins as its child `<h#>` would have had without the `<hgroup>` parent.
-	hgroups = dom.xpath("/html/body//hgroup[./p[not(preceding-sibling::*)] and ./*[re:test(name(), '^h[1-6]$')]]")
-	if hgroups:
-		root_font_size_string = dom.xpath("/html")[0].get_css_property("font-size") or ""
-		root_font_size_match = regex.fullmatch(r"([0-9]*\.?[0-9]+)px", root_font_size_string)
-		if root_font_size_match:
-			root_font_size = float(root_font_size_match.group(1))
-
-			for hgroup in hgroups:
-				heading = hgroup.xpath("./*[re:test(name(), '^h[1-6]$')]")[0]
-				first_child = hgroup.xpath("./*[1]")[0]
-
-				# Build a minimal copy of the heading and its ancestors without the `<hgroup>` wrapper, then apply the ebook stylesheets to get the hypothetical heading styles.
-				hypothetical_node = deepcopy(heading.lxml_element)
-				for node in hypothetical_node.iter():
-					for attribute_name in list(node.attrib):
-						if attribute_name.startswith("data-css-"):
-							del node.attrib[attribute_name]
-
-				for ancestor in reversed(hgroup.xpath("./ancestor::*")):
-					ancestor_copy = etree.Element(ancestor.tag)
-					for attribute_name, attribute_value in ancestor.attrs.items():
-						if not attribute_name.startswith("data-css-"):
-							ancestor_copy.set(attribute_name, attribute_value)
-
-					ancestor_copy.append(hypothetical_node)
-					hypothetical_node = ancestor_copy
-
-				hypothetical_dom = EasyXmlTree(etree.ElementTree(hypothetical_node))
-				for stylesheet, cache_key in stylesheets:
-					hypothetical_dom.apply_css(stylesheet, cache_key)
-
-				hypothetical_heading = hypothetical_dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')]")[0]
-
-				# Resolve relative font sizes against their ancestors so that margins can be compared in pixels.
-				font_sizes: dict[EasyXmlElement, float] = {}
-				for child in (hypothetical_heading, first_child):
-					font_size = root_font_size
-					for ancestor in child.xpath("./ancestor-or-self::*[name() != 'html']"):
-						value = ancestor.get_css_property("font-size")
-						specificity = ancestor.get_attr("data-css-font-size-specificity", True)
-						if value and specificity != "0":
-							match = regex.fullmatch(r"([0-9]*\.?[0-9]+)(em|px|%)", value)
-							if match:
-								amount = float(match.group(1))
-								if match.group(2) == "em":
-									font_size *= amount
-								elif match.group(2) == "px":
-									font_size = amount
-								else:
-									font_size *= amount / 100
-
-					font_sizes[child] = font_size
-
-				heading_margin = hypothetical_heading.get_css_property("margin-top") or ""
-				heading_margin_match = regex.fullmatch(r"([0-9]*\.?[0-9]+)em", heading_margin)
-				if heading_margin_match:
-					expected_pixels = float(heading_margin_match.group(1)) * font_sizes[hypothetical_heading]
-					expected_em = expected_pixels / font_sizes[first_child]
-					expected_em_string = f"{expected_em:.8f}".rstrip("0").rstrip(".")
-					has_unexpected_margin = False
-					for property_name in ("margin-top", "margin-bottom"):
-						actual_margin = hgroup.get_css_property(property_name) or ""
-						actual_margin_match = regex.fullmatch(r"([0-9]*\.?[0-9]+)em", actual_margin)
-						if not actual_margin_match or abs(float(actual_margin_match.group(1)) - expected_em) >= .001:
-							has_unexpected_margin = True
-
-					if has_unexpected_margin:
-						messages.append(LintMessage("c-007", f"[xhtml]<hgroup>[/] with unexpected top or bottom margin. Expected: [css]{expected_em_string}em[/] to match the calculated [css]em[/] margin of the child [xhtml]<h#>[/] element if there were no [xhtml]<hgroup>[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes([hgroup])))
 
 	# Do we have any elements that have specified border color?
 	# `transparent` and `none` are allowed values for `border-color`.
@@ -4330,7 +4259,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 
 				missing_styles += _update_missing_styles(file_path, dom, local_css)
 
-				messages += _lint_xhtml_css_checks(source_file, dom, stylesheets)
+				messages += _lint_xhtml_css_checks(source_file, dom)
 
 				messages += _lint_xhtml_metadata_checks(self, source_file.filename, dom)
 
