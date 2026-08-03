@@ -1515,7 +1515,6 @@ def simplify_css(css: str) -> str:
 
 	# First we replace some more "complex" selectors (like `:first-child`) with an equivalent class (like `.first-child`), since ADE doesn't handle them.
 	# Currently this replacement isn't perfect, because occasionally lxml generates an xpath expression from the CSS selector that lxml itself can't evaluate, even though the `xpath` binary can!
-	# We don't *replace* the selector, we *add* it, because lxml has problems selecting the first child sometimes.
 	lines = css.splitlines()
 	simplified_lines: list[str] = []
 	for line in lines:
@@ -1527,7 +1526,7 @@ def simplify_css(css: str) -> str:
 				simplified_line = simplified_line.replace(split_selector[1], "." + replacement_class)
 
 		if simplified_line != line:
-			line = simplified_line + ",\n" + line
+			line = simplified_line
 
 		simplified_lines.append(line)
 
