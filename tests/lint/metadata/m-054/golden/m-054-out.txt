@@ -6,5 +6,3 @@ m-054 [Error] colophon.xhtml Non-canonical Standard Ebooks URL. Expected: `https
  Line 38:       <a href="https://standardebooks.org/ebooks/jane-austen/unknown-novel/">standardebooks.org/ebooks/jane-austen/unknown-novel</a>
 m-003 [Error] content.opf Bare URL without trailing slash.
  Line 11:       <link href="https://standardebooks.org" refines="#publisher" rel="schema:url"/>
-f-003 [Error] core.css File doesn’t match template.
-f-003 [Error] se.css File doesn’t match template.

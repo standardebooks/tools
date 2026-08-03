@@ -5,5 +5,3 @@ y-003 [Manual Review] chapter-1.xhtml Possible typo: Paragraph missing ending pu
  Line 14:       <p><a href="https://standardebooks.org/">standardebooks.org</a></p>
 y-034 [Manual Review] chapter-1.xhtml Possible typo: `.` embedded in word. Hint: Abbreviations must be in an `<abbr>` element.
  Line 20:       “Why yes, so they are! But I thought the season.for apple blossom was over now,” said the historian.
-f-003 [Error] core.css File doesn’t match template.
-f-003 [Error] se.css File doesn’t match template.

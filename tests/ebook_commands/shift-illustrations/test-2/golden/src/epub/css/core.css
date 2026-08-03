@@ -4,7 +4,6 @@
 body{
 	font-variant-numeric: oldstyle-nums;
 	hyphens: auto;
-	-epub-hyphens: auto;
 	text-wrap: pretty;
 }
 
@@ -41,43 +40,89 @@ hgroup{
 	break-inside: avoid;
 	font-variant: small-caps;
 	hyphens: none;
-	-epub-hyphens: none;
 	margin: 3em 0;
 	text-align: center;
 }
 
-/* simulate h3 in an hgroup */
-hgroup h2 + p{
-	font-size: 1.17em;
-}
-
-/* simulate h4 in an hgroup */
-hgroup h2 + p + p,
-hgroup h3 + p{
-	font-size: 1em;
-}
-
-/* simulate h5 in an hgroup */
-hgroup h2 + p + p + p,
-hgroup h3 + p + p,
-hgroup h4 + p{
-	font-size: .83em;
-}
-
-/* simulate h6 in an hgroup */
-hgroup h2 + p + p + p + p,
-hgroup h3 + p + p + p,
-hgroup h4 + p + p,
-hgroup h5 + p{
-	font-size: .67em;
-}
-
-hgroup > *{
-	font-weight: normal;
+hgroup{
 	margin: 0;
 }
 
-hgroup > *:first-child{
+/* Simulate `<h3>` in an `<hgroup>`. */
+hgroup > h2 + p{
+	font-size: 1.17em;
+}
+
+/* Simulate `<h4>` in an `<hgroup>`. */
+hgroup > h2 + p + p,
+hgroup > h3 + p{
+	font-size: 1em;
+}
+
+/* Simulate `<h5>` in an `<hgroup>`. */
+hgroup > h2 + p + p + p,
+hgroup > h3 + p + p,
+hgroup > h4 + p{
+	font-size: .83em;
+}
+
+/* Simulate `<h6>` in an `<hgroup>`. */
+hgroup > h2 + p + p + p + p,
+hgroup > h3 + p + p + p,
+hgroup > h4 + p + p,
+hgroup > h5 + p{
+	font-size: .67em;
+}
+
+hgroup > h1,
+hgroup > h2,
+hgroup > h3,
+hgroup > h4,
+hgroup > h5,
+hgroup > h6{
+	margin-bottom: 0;
+}
+
+hgroup > p + h1,
+hgroup > p + h2,
+hgroup > p + h3,
+hgroup > p + h4,
+hgroup > p + h5,
+hgroup > p + h6{
+	margin-top: 0;
+}
+
+/* Simulate the `margin-bottom` of `<h1>`. */
+hgroup > h1 ~ p:last-child{
+	margin-bottom: 6em;
+}
+
+/* Simulate the `margin-bottom` of `<h2>`. */
+hgroup > h2 ~ p:last-child{
+	margin-bottom: 3.84615385em;
+}
+
+/* Simulate the `margin-bottom` of `<h3>`. */
+hgroup > h3 ~ p:last-child{
+	margin-bottom: 3.51em;
+}
+
+/* Simulate the `margin-bottom` of `<h4>`. */
+hgroup > h4 ~ p:last-child{
+	margin-bottom: 3.61445783em;
+}
+
+/* Simulate the `margin-bottom` of `<h5>`. */
+hgroup > h5 ~ p:last-child{
+	margin-bottom: 3.71641791em;
+}
+
+/* Simulate the `margin-bottom` of `<h6>`. */
+hgroup > h6 ~ p:last-child{
+	margin-bottom: 2.01em;
+}
+
+hgroup > p:first-child{
 	font-weight: bold;
 }
 
@@ -140,7 +185,6 @@ header{
 	break-after: avoid;
 	break-inside: avoid;
 	hyphens: none;
-	-epub-hyphens: none;
 	text-align: center;
 }
 

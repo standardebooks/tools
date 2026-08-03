@@ -1,7 +1,7 @@
 @charset "utf-8";
 @namespace epub "http://www.idpf.org/2007/ops";
 
-/* This may appear in the colophon */
+/* This may appear in the colophon. */
 abbr.epub-type-contains-word-se-era{
 	font-variant: small-caps;
 	text-transform: lowercase;
@@ -82,7 +82,6 @@ section.epub-type-contains-word-colophon a{
 	adobe-hyphenate: none;
 	-webkit-hyphens: none;
 	-moz-hyphens: none;
-	-epub-hyphens: none;
 }
 
 section.epub-type-contains-word-copyright-page p{

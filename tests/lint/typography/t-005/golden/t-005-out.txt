@@ -3,5 +3,3 @@ t-005 [Manual Review] chapter-1.xhtml Newspaper name not italicized.
  Line 20:       He read the Gazette at breakfast.
  Line 22:       He read the Observer at breakfast.
  Line 24:       He read the Dispatch at breakfast.
-f-003 [Error] core.css File doesn’t match template.
-f-003 [Error] se.css File doesn’t match template.

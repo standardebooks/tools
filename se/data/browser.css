@@ -35,6 +35,10 @@ body{
 	margin: .5em;
 }
 
+html{
+	font-size: 16px;
+}
+
 p,
 dl{
 	margin: 1em;

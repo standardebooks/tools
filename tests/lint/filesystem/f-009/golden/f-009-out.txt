@@ -1,3 +1,1 @@
 f-009 [Error] chapter-0.xhtml Illegal leading `0` in filename.
-f-003 [Error] core.css File doesn’t match template.
-f-003 [Error] se.css File doesn’t match template.

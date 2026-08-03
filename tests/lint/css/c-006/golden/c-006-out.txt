@@ -1,4 +1,3 @@
-f-003 [Error] core.css File doesn’t match template.
 c-006 [Error] local.css Semantic found, but missing corresponding CSS style.
  Line 9:        <section id="dedication" epub:type="dedication">
  Line 12:       <blockquote epub:type="epigraph">
@@ -10,4 +9,3 @@ c-006 [Error] local.css Semantic found, but missing corresponding CSS style.
  Line 26:       <blockquote epub:type="z3998:lyrics">
  Line 33:       <blockquote epub:type="z3998:poem">
  Line 40:       <blockquote epub:type="z3998:verse">
-f-003 [Error] se.css File doesn’t match template.

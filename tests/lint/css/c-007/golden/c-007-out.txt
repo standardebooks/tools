@@ -1,0 +1,19 @@
+c-007 [Error] chapter-1.xhtml `<hgroup>` with unexpected top or bottom margin. Expected: `4.5em` to match the calculated `em` margin of the child `<h#>` element if there were no `<hgroup>`.
+ Line 10:       <hgroup>
+                <p epub:type="subtitle">A Book of Strife</p>
+                <p>In the Form Of</p>
+                <h2 epub:type="title">The Diary of an Old Soul</h2>
+        </hgroup>
+m-045 [Error] chapter-1.xhtml Heading not found in the ToC.
+ Line 4:        A Book of Strife: In the Form Of
+c-007 [Error] chapter-2.xhtml `<hgroup>` with unexpected top or bottom margin. Expected: `3.51em` to match the calculated `em` margin of the child `<h#>` element if there were no `<hgroup>`.
+ Line 10:       <hgroup>
+                <p epub:type="title">The Rejected Statement</p>
+                <h3>
+                        <span epub:type="se:label">Part</span>
+                        <span epub:type="z3998:ordinal z3998:roman">II</span>
+                </h3>
+                <p epub:type="subtitle">The Licensing of Theatres</p>
+        </hgroup>
+m-045 [Error] chapter-2.xhtml Heading not found in the ToC.
+ Line 4:        The Rejected Statement: Part II

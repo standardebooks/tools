@@ -147,5 +147,3 @@ t-060 [Manual Review] chapter-1.xhtml Old style Bible citation.
  Line 786:      <cite>Jude <span epub:type="z3998:roman">i</span> 2</cite>
  Line 791:      <cite>Revelation, <span epub:type="z3998:roman">xxi</span>, 4</cite>
  Line 796:      <cite><abbr>Rev.</abbr>, <span epub:type="z3998:roman">xxi</span>, 4</cite>
-f-003 [Error] core.css File doesn’t match template.
-f-003 [Error] se.css File doesn’t match template.

@@ -7,7 +7,6 @@ body{
 	adobe-hyphenate: auto;
 	-webkit-hyphens: auto;
 	-moz-hyphens: auto;
-	-epub-hyphens: auto;
 	text-wrap: pretty;
 }
 
@@ -59,7 +58,6 @@ hgroup{
 	adobe-hyphenate: none;
 	-webkit-hyphens: none;
 	-moz-hyphens: none;
-	-epub-hyphens: none;
 	margin-top: 3em;
 	margin-right: 0;
 	margin-bottom: 3em;
@@ -67,42 +65,95 @@ hgroup{
 	text-align: center;
 }
 
-/* simulate h3 in an hgroup */
-hgroup h2 + p{
-	font-size: 1.17em;
-}
-
-/* simulate h4 in an hgroup */
-hgroup h2 + p + p,
-hgroup h3 + p{
-	font-size: 1em;
-}
-
-/* simulate h5 in an hgroup */
-hgroup h2 + p + p + p,
-hgroup h3 + p + p,
-hgroup h4 + p{
-	font-size: .83em;
-}
-
-/* simulate h6 in an hgroup */
-hgroup h2 + p + p + p + p,
-hgroup h3 + p + p + p,
-hgroup h4 + p + p,
-hgroup h5 + p{
-	font-size: .67em;
-}
-
-hgroup > *{
-	font-weight: normal;
+hgroup{
 	margin-top: 0;
 	margin-right: 0;
 	margin-bottom: 0;
 	margin-left: 0;
 }
 
-hgroup > *.first-child,
-hgroup > *:first-child{
+/* Simulate `<h3>` in an `<hgroup>`. */
+hgroup > h2 + p{
+	font-size: 1.17em;
+}
+
+/* Simulate `<h4>` in an `<hgroup>`. */
+hgroup > h2 + p + p,
+hgroup > h3 + p{
+	font-size: 1em;
+}
+
+/* Simulate `<h5>` in an `<hgroup>`. */
+hgroup > h2 + p + p + p,
+hgroup > h3 + p + p,
+hgroup > h4 + p{
+	font-size: .83em;
+}
+
+/* Simulate `<h6>` in an `<hgroup>`. */
+hgroup > h2 + p + p + p + p,
+hgroup > h3 + p + p + p,
+hgroup > h4 + p + p,
+hgroup > h5 + p{
+	font-size: .67em;
+}
+
+hgroup > h1,
+hgroup > h2,
+hgroup > h3,
+hgroup > h4,
+hgroup > h5,
+hgroup > h6{
+	margin-bottom: 0;
+}
+
+hgroup > p + h1,
+hgroup > p + h2,
+hgroup > p + h3,
+hgroup > p + h4,
+hgroup > p + h5,
+hgroup > p + h6{
+	margin-top: 0;
+}
+
+/* Simulate the `margin-bottom` of `<h1>`. */
+hgroup > h1 ~ p.last-child,
+hgroup > h1 ~ p:last-child{
+	margin-bottom: 6em;
+}
+
+/* Simulate the `margin-bottom` of `<h2>`. */
+hgroup > h2 ~ p.last-child,
+hgroup > h2 ~ p:last-child{
+	margin-bottom: 3.84615385em;
+}
+
+/* Simulate the `margin-bottom` of `<h3>`. */
+hgroup > h3 ~ p.last-child,
+hgroup > h3 ~ p:last-child{
+	margin-bottom: 3.51em;
+}
+
+/* Simulate the `margin-bottom` of `<h4>`. */
+hgroup > h4 ~ p.last-child,
+hgroup > h4 ~ p:last-child{
+	margin-bottom: 3.61445783em;
+}
+
+/* Simulate the `margin-bottom` of `<h5>`. */
+hgroup > h5 ~ p.last-child,
+hgroup > h5 ~ p:last-child{
+	margin-bottom: 3.71641791em;
+}
+
+/* Simulate the `margin-bottom` of `<h6>`. */
+hgroup > h6 ~ p.last-child,
+hgroup > h6 ~ p:last-child{
+	margin-bottom: 2.01em;
+}
+
+hgroup > p.first-child,
+hgroup > p:first-child{
 	font-weight: bold;
 }
 
@@ -172,7 +223,6 @@ header{
 	adobe-hyphenate: none;
 	-webkit-hyphens: none;
 	-moz-hyphens: none;
-	-epub-hyphens: none;
 	text-align: center;
 }
 

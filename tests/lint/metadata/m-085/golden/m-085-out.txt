@@ -2,5 +2,3 @@ m-085 [Error] colophon.xhtml Non-canonical PGDP URL. Expected: `https://www.pgdp
  Line 20:       <a href="https://pgdp.net/">Distributed Proofreaders</a>
 m-085 [Error] content.opf Non-canonical PGDP URL. Expected: `https://www.pgdp.net/`.
  Line 67:       <link href="https://pgdp.net/" refines="#producer-3" rel="schema:url"/>
-f-003 [Error] core.css File doesn’t match template.
-f-003 [Error] se.css File doesn’t match template.

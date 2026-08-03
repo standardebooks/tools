@@ -14,5 +14,3 @@ y-019 [Manual Review] chapter-1.xhtml Possible typo: `”` without opening `“`
  Line 27:        Bedonebyasyoudid!’ Do not you think that you would be a little tempted then to tell what you know, laddie?”
 y-036 [Manual Review] chapter-1.xhtml Possible typo: `’` after punctuation, but no `‘`. Hints: Is `‘` missing or mis-curled? `’` that elides a word is placed before punctuation.
  Line 11:       <p>“That’s what you call musicians,” he announced gravely. “ ’Home, Sweet Home,’ played upon a trombone. Think of that! Art could go no farther.”</p>
-f-003 [Error] core.css File doesn’t match template.
-f-003 [Error] se.css File doesn’t match template.

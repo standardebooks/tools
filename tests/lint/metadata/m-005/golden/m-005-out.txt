@@ -2,5 +2,3 @@ m-005 [Error] colophon.xhtml Non-canonical HathiTrust URL. Expected: `https://ca
  Line 26:       <a href="https://hdl.handle.net/record/1234">HathiTrust Digital Library</a>
 m-005 [Error] content.opf Non-canonical HathiTrust URL. Expected: `https://catalog.hathitrust.org/Record/<BOOK-ID>`.
  Line 46:       <dc:source>https://hdl.handle.net/record/1234</dc:source>
-f-003 [Error] core.css File doesn’t match template.
-f-003 [Error] se.css File doesn’t match template.

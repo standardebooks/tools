@@ -1,4 +1,2 @@
 m-082 [Error] colophon.xhtml Faded Page link text must be exactly `Faded Page`.
  Line 24:       <a href="https://www.fadedpage.com/showbook.php?pid=20160413">Faded Page Canada</a>
-f-003 [Error] core.css File doesn’t match template.
-f-003 [Error] se.css File doesn’t match template.

@@ -17,5 +17,3 @@ s-103 [Manual Review] chapter-1.xhtml Probable missing semantics for a roman I n
  Line 24:       King Henry I
  Line 25:       King James I
  Line 26:       King William I
-f-003 [Error] core.css File doesn’t match template.
-f-003 [Error] se.css File doesn’t match template.

@@ -1,4 +1,2 @@
 m-071 [Error] colophon.xhtml DP link must be exactly `Distributed Proofreaders`.
  Line 22:       <a href="https://www.pgdp.net/">Distributed Proofreading Team</a>
-f-003 [Error] core.css File doesn’t match template.
-f-003 [Error] se.css File doesn’t match template.

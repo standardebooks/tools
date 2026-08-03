@@ -1,4 +1,2 @@
-f-003 [Error] core.css File doesn’t match template.
 s-062 [Error] glossary.xhtml `<dt>` element in a glossary without exactly one `<dfn>` child.
  Line 30:       <dt>Aberrant</dt>
-f-003 [Error] se.css File doesn’t match template.
