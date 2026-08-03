@@ -1,3 +1,9 @@
+# 4.0.2
+
+## General
+
+- Remove unused CSS in `core.css`
+
 # 4.0.1
 
 ## General
