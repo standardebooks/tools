@@ -1,3 +1,83 @@
+# 4.0.1
+
+## General
+
+- Remove vestigial importlib_resources dependency from `setup.py`
+
+- Also allow Chrome as a possible browser to use when initializing a headless browser
+
+- Improve error messages when Selenium fails to start
+
+- Add compatibility for Firefox and Chromium installed via snap
+
+- Standardize verbose output processing/done text
+
+- Fix typo in `title-type` metadata
+
+- Fix browser detection in Windows
+
+- Add installation instructions for Windows 11
+
+- Migrate former `<dc:description>` to `<dc:abstract>`, and prompte the old long description to `<dc:description>`
+
+- Improve margins around `<hgroup>` in `core.css`
+
+- Remove deprecated `-epub-hyphens` property from core stylesheets
+
+## se build
+
+- Use prerendered 2x logo images
+
+- Calculate rendered SVG widths using a web browser when converting to PNG
+
+- Remove check for iBooks srcset bug
+
+- Use cross-platform method of checking platform
+
+- Fix Cairo-related crash on Windows
+
+- Fix SVG rasterizing errors when invoking on Windows
+
+- Make epubs build on Windows byte identical to ones built on Unixes
+
+- Fix broken Kobo backlink arrow replacement
+
+- In the compatible epub build, add a new landmarks link to the frontmatter so that iBooks opens to the start of the ebook instead of the bodymatter
+
+- replace, instead of add to, selectors with pseudoclasses
+
+- Also simplify `:has()` selectors
+
+## se build-toc
+
+- Don't overwrite a predetermined book division if we run into an article during processing
+
+- Build a ToC based on the template ToC, not the `toc.xhtml` file found in the ebook
+
+## se create-draft
+
+- Remove white-label ToC file and simplify generic ToC file
+
+## se lint
+
+- Add y-038, dash after punctuation
+
+- Ignore title/subtitles in t-011
+
+- Improve Windows compatibility
+
+- Add m-093, test for duplicate contributor entries to the same domain. Thanks to Robin Whittleton
+
+## se modernize-spelling
+
+- Various additions
+
+- Fix `maneuvered` spelling
+
+## se semanticate
+
+- Don't add initialism semantic to abbreviations in some cases
+
 # 4.0.0
 
 ## General
