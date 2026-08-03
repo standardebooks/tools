@@ -1994,7 +1994,7 @@ def _lint_xhtml_css_checks(source_file: SourceFile, dom: EasyXmlTree) -> list[Li
 		messages.append(LintMessage("c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for padding and margin not in `.5` increments, except for table headers/cells which usually need `.25em` increments, and `<hgroup>` including `<h#>` followed by `<p>`, which have special margins set in `core.css`.
-	nodes = dom.xpath("/html/body//*[not(re:test(name(), '^(h[1-6]|td|th)$')) and not(parent::hgroup and not(following-sibling::*))][attribute::*[re:test(local-name(), 'data-css-(margin|padding)')][re:test(., '^[0-9]*\\.[^5]')]]")
+	nodes = dom.xpath("/html/body//*[not(re:test(name(), '^(h[1-6]|td|th|hgroup)$')) and not(parent::hgroup and not(following-sibling::*))][attribute::*[re:test(local-name(), 'data-css-(margin|padding)')][re:test(., '^[0-9]*\\.[^5]')]]")
 	if nodes:
 		messages.append(LintMessage("c-013", "Element with margin or padding not in increments of [css].5em[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
