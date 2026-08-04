@@ -36,7 +36,7 @@
 		<meta property="authority" refines="#subject-2">LCSH</meta>
 		<meta property="term" refines="#subject-2">Test id 2</meta>
 		<meta property="schema:genre">Fiction</meta>
-		<dc:abstract>Test book description.</dc:abstract>
+		<meta property="schema:abstract">Test book description.</meta>
 		<dc:description>
 			&lt;p&gt;Test book long description&lt;/p&gt;
 		</dc:description>

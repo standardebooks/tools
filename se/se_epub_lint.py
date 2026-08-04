@@ -201,7 +201,7 @@ METADATA
 "m-010", "Invalid [attr]refines[/] attribute value."
 "m-011", "Subtitle in metadata, but no expanded title element."
 "m-012", "Non-typogrified character in [xml]<dc:title>[/] element."
-"m-013", "Non-typogrified character in [xml]<dc:abstract>[/] element."
+"m-013", "Non-typogrified character in [xml]<meta property=\"schema:abstract\">[/] element."
 "m-014", "Non-typogrified character in [xml]<dc:description>[/] element."
 "m-015", "Metadata long description is not valid XHTML."
 "m-016", "Long description must be an escaped XHTML fragment beginning with [xhtml]<p>[/]."
@@ -243,7 +243,7 @@ METADATA
 "m-052", "[xml]<dc:title>[/] element contains numbers, but no [xml]<meta property=\"dcterms:alternative\" refines="#title"> element in metadata."
 "m-053", "[xml]<meta property=\"schema:genre\">[/] elements not in alphabetical order."
 "m-054", "Non-canonical Standard Ebooks URL. Expected: [url]https://standardebooks.org/ebooks/<AUTHOR>/<TITLE>\\[/<CONTRIBUTOR> ...][/]. Hint: No trailing slash."
-"m-055", "[xml]<dc:abstract>[/] element doesn’t end with a period."
+"m-055", "[xml]<meta property=\"schema:abstract\">[/] element doesn’t end with a period."
 "m-056", "Author name present in [xml]<dc:description>[/] element, but the first instance of their name is not linked to their S.E. author page."
 "m-057", "Illegal [attr]xml:lang[/] attribute in [xml]<dc:description>[/] element. Hint: [attr]xml:lang[/] should be [attr]lang[/]."
 "m-058", "[val]schema:genre[/] that implies other [val]schema:genre[/]. Hint: Remove the [val]schema:genre[/] that is implied."
@@ -985,12 +985,12 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		missing_metadata_elements.append("<meta property=\"file-as\" refines=\"#title\">")
 
 	try:
-		description_node = self.metadata_dom.xpath("/package/metadata/dc:abstract")[0]
+		description_node = self.metadata_dom.xpath("/package/metadata/meta[@property=\"schema:abstract\"]")[0]
 		matches = regex.findall(r"(?:['\"]|\-\-|\s-\s)", description_node.text)
 		if matches:
-			messages.append(LintMessage("m-013", "Non-typogrified character in [xml]<dc:abstract>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, description_node.sourceline) for m in matches]))
+			messages.append(LintMessage("m-013", "Non-typogrified character in [xml]<meta property=\"schema:abstract\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, description_node.sourceline) for m in matches]))
 	except Exception:
-		missing_metadata_elements.append("<dc:abstract>")
+		missing_metadata_elements.append("<meta property=\"schema:abstract\">")
 
 	# Check for punctuation outside quotes. We don't check single quotes because contractions are too common.
 	# We can't use xpath's built-in regex because it doesn't support Unicode classes.
@@ -1150,9 +1150,9 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	if nodes:
 		messages.append(LintMessage("m-008", "Non-canonical Library of Congress Name Authority URI. Expected: [url]https://id.loc.gov/authorities/names/<IDENTIFIER>.html[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
-	invalid_description = self.metadata_dom.xpath("/package/metadata/dc:abstract[text()!='DESCRIPTION' and re:test(., '[^\\.”]$')]")
+	invalid_description = self.metadata_dom.xpath("/package/metadata/meta[@property=\"schema:abstract\" and text()!='DESCRIPTION' and re:test(., '[^\\.”]$')]")
 	if invalid_description:
-		messages.append(LintMessage("m-055", "[xml]<dc:abstract>[/] element doesn’t end with a period.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage("..." + invalid_description[0].text[-10:], invalid_description[0].sourceline)]))
+		messages.append(LintMessage("m-055", "[xml]<meta property=\"schema:abstract\">[/] element doesn’t end with a period.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage("..." + invalid_description[0].text[-10:], invalid_description[0].sourceline)]))
 
 	# Does the manifest match the generated manifest?
 	try:
@@ -1166,7 +1166,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		messages.append(LintMessage("m-051", "Missing expected element in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, missing_metadata_elements))
 
 	# Check for common typos in description.
-	for node in self.metadata_dom.xpath("/package/metadata/dc:abstract") + self.metadata_dom.xpath("/package/metadata/dc:description"):
+	for node in self.metadata_dom.xpath("/package/metadata/meta[@property=\"schema:abstract\"]") + self.metadata_dom.xpath("/package/metadata/dc:description"):
 		matches = regex.findall(r"(?<!’)\b(and and|the the|if if|of of|or or|as as)\b(?![-’])", node.text, flags=regex.IGNORECASE)
 		matches += regex.findall(r"\ba a\b(?!-)", node.text)
 		if matches:

@@ -44,7 +44,7 @@
 		<meta property="term" refines="#subject-5">sh2008115250</meta>
 		<meta property="schema:genre">Autobiography</meta>
 		<meta property="schema:genre">Nonfiction</meta>
-		<dc:abstract>The diary of a man living in London in the 17th century.</dc:abstract>
+		<meta property="schema:abstract">The diary of a man living in London in the 17th century.</meta>
 		<dc:description>
 			&lt;p&gt;Pepys’ &lt;i&gt;Diary&lt;/i&gt; is an incredibly frank decade-long snapshot of the life of an up and coming naval administrator in mid-17th century London. In it he describes everything from battles against the Dutch and the intrigues of court, down to the plays he saw, his marital infidelities, and the quality of the meat provided for his supper. His observations have proved invaluable in establishing an accurate record of the daily life of the people of London of that period.&lt;/p&gt;
 			&lt;p&gt;Pepys eventually stopped writing his diary due to progressively worse eyesight, a condition he feared. He did consider employing an amanuensis to transcribe future entries for him, but worried that the content he wanted written would be too personal. Luckily for Pepys, his eyesight difficulties never progressed to blindness and he was able to go on to become both a Member of Parliament and the President of the Royal Society.&lt;/p&gt;

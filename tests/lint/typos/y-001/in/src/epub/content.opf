@@ -37,7 +37,7 @@
 		<meta property="authority" refines="#subject-2">LCSH</meta>
 		<meta property="term" refines="#subject-2">sh2008111400</meta>
 		<meta property="schema:genre">Fiction</meta>
-		<dc:abstract>A short test novel for lint testing.</dc:abstract>
+		<meta property="schema:abstract">A short test novel for lint testing.</meta>
 		<dc:description>
 			&lt;p&gt;A short test novel for lint testing. Testing for doubled and and. Testing for doubled the the as well.&lt;/p&gt;
 			&lt;p&gt;If if should also be tested, along with of of. We don’t want to forget or or as as, either.&lt;/p&gt;
