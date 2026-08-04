@@ -1,3 +1,13 @@
+# 4.0.3
+
+## General
+
+- Migrate `<dc:abstract>` to `<meta property="schema:abstract">`
+
+## se lint
+
+- Ignore `<hgroup>` in c-013
+
 # 4.0.2
 
 ## General
