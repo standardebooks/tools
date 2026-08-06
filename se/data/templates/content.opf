@@ -37,9 +37,9 @@
 		<meta property="authority" refines="#subject-2">LCSH</meta>
 		<meta property="term" refines="#subject-2">SUBJECT_2_LCSH_ID</meta>
 		<meta property="schema:genre">TAG</meta>
-		<meta property="schema:abstract">DESCRIPTION</meta>
+		<meta property="schema:abstract">ABSTRACT</meta>
 		<dc:description>
-			LONG_DESCRIPTION
+			DESCRIPTION
 		</dc:description>
 		<dc:language>LANG</dc:language>
 		<dc:source>TRANSCRIPTION_URL</dc:source>
