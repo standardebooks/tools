@@ -872,7 +872,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		metadata_dom_with_parsed_long_description = EasyXmlTree(metadata_dom_with_parsed_long_description.to_string())
 
 		# Make sure the contents of `<dc:description>` are an escaped XHTML fragment.
-		if not regex.search(r"^\s*<p>", long_description) and long_description.strip() != "LONG_DESCRIPTION":
+		if not regex.search(r"^\s*<p>", long_description) and not regex.match(r"^[A-Z_]+$", long_description.strip()):
 			messages.append(LintMessage("m-016", "Long description must be an escaped XHTML fragment beginning with [xhtml]<p>[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_node_tags([long_description_node])))
 
 		# Check if there are non-typogrified quotes or em dashes in metadata descriptions.
@@ -1150,7 +1150,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	if nodes:
 		messages.append(LintMessage("m-008", "Non-canonical Library of Congress Name Authority URI. Expected: [url]https://id.loc.gov/authorities/names/<IDENTIFIER>.html[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
-	invalid_description = self.metadata_dom.xpath("/package/metadata/meta[@property=\"schema:abstract\" and text()!='DESCRIPTION' and re:test(., '[^\\.”]$')]")
+	invalid_description = self.metadata_dom.xpath("/package/metadata/meta[@property=\"schema:abstract\" and not(re:test(., '^[A-Z_]+$')) and re:test(., '[^\\.”]$')]")
 	if invalid_description:
 		messages.append(LintMessage("m-055", "[xml]<meta property=\"schema:abstract\">[/] element doesn’t end with a period.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage("..." + invalid_description[0].text[-10:], invalid_description[0].sourceline)]))
 
