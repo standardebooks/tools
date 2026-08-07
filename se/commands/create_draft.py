@@ -935,6 +935,14 @@ def _create_draft(args: Namespace, plain_output: bool):
 		with open(epub.metadata_file_path, "w", encoding="utf-8") as file:
 			file.write(metadata_xml)
 
+		# Replace placeholders that have values in the local configuration file.
+		ignored_attributes = ["default-email"]
+		placeholder_values = {name.replace("-", "_").upper(): value for name, value in se.get_config_attributes("/configuration/create-draft").items() if name not in ignored_attributes}
+		for file_path in work_path.rglob("*"):
+			if file_path.is_file() and file_path.suffix in {".css", ".md", ".opf", ".svg", ".xhtml"}:
+				replacement_values = [escape(value) for value in placeholder_values.values()] if file_path.suffix in {".opf", ".svg", ".xhtml"} else list(placeholder_values.values())
+				_replace_in_file(file_path, list(placeholder_values), replacement_values)
+
 		# Set up local Git repo.
 		if args.verbose:
 			console.print(se.prep_output("Initializing git repository ...", plain_output), end="")

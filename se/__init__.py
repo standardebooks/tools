@@ -281,6 +281,21 @@ def get_config_value(key: str) -> str:
 
 	return config_values[0].strip()
 
+def get_config_attributes(key: str) -> dict[str, str]:
+	"""
+	Return the configured attributes for a Standard Ebooks tool setting.
+	"""
+
+	config_dom = _get_config_dom()
+	if config_dom is None:
+		return {}
+
+	config_nodes = config_dom.xpath(key)
+	if not config_nodes:
+		return {}
+
+	return {str(name): value.strip() for name, value in config_nodes[0].lxml_element.attrib.items()}
+
 def parse_size_string(size_string: str) -> int:
 	"""
 	Parse a size string, like `30MB`, into bytes.
