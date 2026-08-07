@@ -14,7 +14,7 @@ from se.se_epub import SeEpub
 
 def _copy_file(filename: str, dest_path: Path, force: bool) -> None:
 	if not force and os.path.exists(dest_path):
-		raise se.FileExistsException(f"File `{dest_path}` exists. Use `--force` to overwrite.")
+		raise se.FileExistsException(f"File [path][link={dest_path}]{dest_path}[/][/] exists. Use [flag]--force[/] to overwrite.")
 
 	with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath(filename)) as src_path:
 		shutil.copyfile(src_path, dest_path)
