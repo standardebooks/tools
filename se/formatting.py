@@ -119,7 +119,7 @@ def semanticate(xhtml: str) -> str:
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(M\.?P\.?|H\.?M\.?S\.?|S\.?S\.?|N\.?B\.?|W\.?C\.?|I\.?O\.?U\.?)(?!\B)", lambda result: """<abbr epub:type="z3998:initialism">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(R\.?A\.?|M\.?A\.?|M\.?D\.?|K\.?C\.?|Q\.?C\.?)(?!\B)", lambda result: """<abbr epub:type="z3998:initialism z3998:name-title">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))U\.?S\.?A\.?(?!\b)", r"""<abbr epub:type="z3998:initialism z3998:place">U.S.A.</abbr>""", xhtml)
-	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([NESW]\.?[NESW]\.?)(?!\B)", lambda result: """<abbr epub:type="se:compass">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
+	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([NESW]\.?[NESW](?:\.?[NESW])?(?:\.|(?=\b)))", lambda result: """<abbr epub:type="se:compass">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(Bros\.|Mt\.|Jr\.|etc\.|ed\.)", r"<abbr>\1</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Vv])ol(s?)\.", r"<abbr>\1ol\2.</abbr>", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))([Cc])hap\. ([0-9])", r"<abbr>\1hap.</abbr> \2", xhtml) # The number allows us to avoid phrases like `Hello, old chap.`.
