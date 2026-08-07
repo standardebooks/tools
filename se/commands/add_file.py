@@ -49,7 +49,7 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 	Entry point for `se add-file`.
 	"""
 
-	file_types = ["dedication", "dramatis-personae", "endnotes", "epigraph", "glossary", "halftitlepage", "ignore"]
+	file_types = ["dedication", "dramatis-personae", "endnotes", "epigraph", "glossary", "halftitlepage", "ignore", "loi"]
 
 	parser = argparse.ArgumentParser(description="Add a Standard Ebooks template file and any accompanying CSS.", prog="[command]se[/] [subcommand]add-file[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-f", "--force", dest="force", action="store_true", help="Overwrite any existing files.")
@@ -142,6 +142,13 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 					dest_path = se_epub.path / "se-lint-ignore.xml"
 
 					_copy_file("se-lint-ignore.xml", dest_path, args.force)
+
+				case "loi":
+					dest_path = se_epub.content_path / "text/loi.xhtml"
+
+					_copy_file("loi.xhtml", dest_path, args.force)
+
+					_replace_languague(dest_path, se_epub.language)
 
 				case _:
 					# Unrecognized, do nothing.
