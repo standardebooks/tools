@@ -222,7 +222,7 @@ METADATA
 "m-031", "[val]preface[/] semantic inflection found, but no MARC relator [val]wpr[/] (Writer of preface)."
 "m-032", "[val]afterword[/] semantic inflection found, but no MARC relator [val]waw[/] (Writer of afterword)."
 "m-033", "[val]endnotes[/] semantic inflection found, but no MARC relator [val]ann[/] (Annotator)."
-"m-034", "[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator)."
+"m-034", "[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator) or [val]pht[/] (Photographer)."
 "m-035", "Unexpected S.E. identifier in colophon."
 "m-036", "Variable not replaced with value."
 "m-037", "Expected transcription/page scan source link not found."
@@ -2080,7 +2080,7 @@ def _lint_xhtml_metadata_checks(self: 'SeEpub', filename: Path, dom: EasyXmlTree
 			messages.append(LintMessage("m-033", "[val]endnotes[/] semantic inflection found, but no MARC relator [val]ann[/] (Annotator).", se.MESSAGE_TYPE_WARNING, filename))
 
 		if dom.xpath("/html/body/*[contains(@epub:type, 'loi') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and (text()='ill' or text()='pht')]"):
-			messages.append(LintMessage("m-034", "[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator).", se.MESSAGE_TYPE_WARNING, filename))
+			messages.append(LintMessage("m-034", "[val]loi[/] semantic inflection found, but no MARC relator [val]ill[/] (Illustrator) or [val]pht[/] (Photographer).", se.MESSAGE_TYPE_WARNING, filename))
 
 		if dom.xpath("/html/body/*[contains(@epub:type, 'dedication') and not(@data-parent)]") and not self.metadata_dom.xpath("/package/metadata/meta[(@property='role') and text()='dto']"):
 			messages.append(LintMessage("m-090", "[val]dedication[/] semantic inflection found, but no MARC relator [val]dto[/] (Dedicator).", se.MESSAGE_TYPE_WARNING, filename))
