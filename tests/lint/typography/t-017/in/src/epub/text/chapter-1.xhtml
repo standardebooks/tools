@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/" xml:lang="en-GB">
+	<head>
+		<title>I</title>
+		<link href="../css/core.css" rel="stylesheet" type="text/css"/>
+		<link href="../css/local.css" rel="stylesheet" type="text/css"/>
+	</head>
+	<body epub:type="bodymatter z3998:fiction">
+		<section id="chapter-1" epub:type="chapter">
+			<h2 epub:type="z3998:ordinal z3998:roman">I</h2>
+			<!-- invalid -->
+			<p>Hello <em>there.</em></p>
+			<p>He ran <em>rather quickly,</em> then stopped.</p>
+			<!-- this differs from the valid one below because it is all lower-case -->
+			<p>He was Chief of <em>wehrmachtnachrichtungenverhindungen.</em></p>
+			<!-- valid -->
+			<!-- long example to detect performance regressions (https://github.com/standardebooks/tools/issues/1003) -->
+			<p>He was Chief of <em>Wehrmachtnachrichtungenverhindungen</em>.</p>
+		</section>
+	</body>
+</html>
