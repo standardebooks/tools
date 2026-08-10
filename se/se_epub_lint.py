@@ -2856,7 +2856,8 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 
 		# ...and also check for ending punctuation inside `<em>` elements, if it looks like a *part* of a clause instead of a whole clause.
 		# If the `<em>` is preceded by an em dash or quotes, or if there's punctuation and a space before it, then it's presumed to be a whole clause.
-		line_matches = [ (match.strip(), line_num) for (match, line_num) in source_file.findall(r"(?<!.[—“‘>]|[!\.\?…;:]\s)<em>(?:\w+?\s*)+[\.,\!\?;]</em>") if match.islower()]
+		# The `++` is used to avoid catastrophic backtracking (https://github.com/standardebooks/tools/issues/1003)
+		line_matches = [ (match.strip(), line_num) for (match, line_num) in source_file.findall(r"(?<!.[—“‘>]|[!\.\?…;:]\s)<em>(?:\w+?\s*)++[\.,\!\?;]</em>") if match.islower()]
 
 		submessages = LintSubmessage.from_nodes(nodes) + LintSubmessage.from_matches(line_matches)
 		if submessages:

@@ -1,0 +1,4 @@
+t-017 [Manual Review] chapter-1.xhtml Ending punctuation inside formatting like bold, small caps, or italics. Hint: Ending punctuation is only allowed within formatting if the phrase is an independent clause.
+ Line 12:       <em>there.</em>
+ Line 13:       <em>rather quickly,</em>
+ Line 15:       <em>wehrmachtnachrichtungenverhindungen.</em>
