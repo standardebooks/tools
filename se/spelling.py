@@ -94,31 +94,31 @@ def detect_problem_spellings(xhtml: str) -> list[str]:
 	output: list[str] = []
 
 	if regex.search(r"\bstaid\b", xhtml, flags=regex.I):
-		output.append("“staid” detected. This should be modernized if it is the past tense of “stay,” but not if used as an adjective meaning “sedate or prim.”")
+		output.append("[text]staid[/] detected. This should be modernized if it is the past tense of [text]stay[/], but not if used as an adjective meaning “sedate or prim.”")
 
 	if regex.search(r"\bcozen\b", xhtml, flags=regex.I):
-		output.append("“cozen” detected. This should be modernized if it means “cousin,” but not if used to mean “to deceive or win over.”")
+		output.append("[text]cozen[/] detected. This should be modernized if it means [text]cousin[/], but not if used to mean “to deceive or win over.”")
 
 	if regex.search(r"\bgrown-?up\b", xhtml, flags=regex.I):
-		output.append("“grownup” or “grown-up” detected. Confirm that “grownup” is strictly a noun, and “grown-up” is strictly an adjective.")
+		output.append("[text]grownup[/] or [text]grown-up[/] detected. Confirm that [text]grownup[/] is strictly a noun, and [text]grown-up[/] is strictly an adjective.")
 
 	if regex.search(r"\bcommon[\-\s]?sense\b", xhtml, flags=regex.I):
-		output.append("“commonsense” or “common sense” or “common-sense” detected. Confirm that “common sense” and “common-sense” are strictly nouns, and that “commonsense” is strictly an adjective.")
+		output.append("[text]commonsense[/] or [text]common sense[/] or [text]common-sense[/] detected. Confirm that [text]common sense[/] and [text]common-sense[/] are strictly nouns, and that [text]commonsense[/] is strictly an adjective.")
 
 	if regex.search(r"\bmann?ikin\b", xhtml, flags=regex.I):
-		output.append("“mannikin” or “manikin” detected. Confirm that “mannikin” is used in the sense of a small person, and “mannequin” is used in the sense of a dummy or figure.")
+		output.append("[text]mannikin[/] or [text]manikin[/] detected. Confirm that [text]mannikin[/] is used in the sense of a small person, and [text]mannequin[/] is used in the sense of a dummy or figure.")
 
 	if regex.search(r"\bgripe", xhtml, flags=regex.I):
-		output.append("“gripe” or “griped” detected. Confirm that “gripe” is used in the sense of illness or complaint, not in the sense of “grip” or “gripped.”")
+		output.append("[text]gripe[/] or [text]griped[/] detected. Confirm that [text]gripe[/] is used in the sense of illness or complaint, not in the sense of [text]grip[/] or [text]gripped[/].")
 
 	if regex.search(r"\bmay[\-\s]?day", xhtml, flags=regex.I):
-		output.append("“mayday” or “may day” or “may-day” detected. Confirm that “may day” and “may-day” refer to the day, and that “mayday” is used in the sense of a distress signal.")
+		output.append("[text]mayday[/] or [text]may day[/] or [text]may-day[/] detected. Confirm that [text]may day[/] and [text]may-day[/] refer to the day, and that [text]mayday[/] is used in the sense of a distress signal.")
 
 	if regex.search(r"\bfree[\-\s]?will", xhtml, flags=regex.I):
-		output.append("“freewill” or “free will” or “free-will” detected. Confirm that “free will” and “free-will” are strictly nouns, and that “freewill” is strictly an adjective.")
+		output.append("[text]freewill[/] or [text]free will[/] or [text]free-will[/] detected. Confirm that [text]free will[/] and [text]free-will[/] are strictly nouns, and that [text]freewill[/] is strictly an adjective.")
 
 	if regex.search(r"\bna[iï]f", xhtml, flags=regex.I):
-		output.append("“naif” or “naïf” detected. Confirm that “naïf” is strictly a noun, and “naive” is strictly an adjective.")
+		output.append("[text]naif[/] or [text]naïf[/] detected. Confirm that [text]naïf[/] is strictly a noun, and [text]naive[/] is strictly an adjective.")
 
 	return output
 
