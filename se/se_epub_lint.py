@@ -272,7 +272,7 @@ METADATA
 "m-081", "When a work was published or completed between a range of years, the text must be [text]between year1 and year2[/]."
 "m-082", "Faded Page link text must be exactly [text]Faded Page[/]."
 "m-083", "[xhtml]<meta property=\"title-type\">[/] element without sibling element with contents of [val]main[/], [val]subtitle[/], [val]expanded[/], or [val]short[/]."
-"m-084", "Empty file."
+"m-084", "Empty file. Hint: Empty files should be deleted.."
 "m-085", "Non-canonical PGDP URL. Expected: [url]https://www.pgdp.net/[/]."
 "m-086", "[val]foreword[/] semantic inflection found, but no MARC relator [val]wfw[/] (Writer of foreword)."
 "m-087", "MARC relators not in alphabetical order."
@@ -1019,7 +1019,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 			first_char = file.read(1)
 
 			if not first_char:
-				messages.append(LintMessage("m-084", "Empty file.", se.MESSAGE_TYPE_ERROR, production_notes_path))
+				messages.append(LintMessage("m-084", "Empty file. Hint: Empty files should be deleted.", se.MESSAGE_TYPE_ERROR, production_notes_path))
 
 	# Check if we have a subtitle but no full title.
 	# There is no string replace function in xpath, but luckily `translate()` replaces exactly one character with another.
