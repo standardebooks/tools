@@ -1,0 +1,5 @@
+m-094 [Error] content.opf `<dc:description>` contains illegal element or attribute. Hint: Only `<p>`, `<i>`, `<em>`, `<b>`, `<strong>`, `<u>`, `<s>`, `<a @href>` are allowed.
+ Line 42:       <b class="emphasis">short</b>
+ Line 42:       <span>lint testing</span>
+ Line 42:       <a href="https://standardebooks.org/" title="Standard Ebooks">link attribute</a>
+ Line 42:       <div>permitted container</div>
