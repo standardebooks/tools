@@ -39,7 +39,7 @@
 		<meta property="schema:genre">Fiction</meta>
 		<meta property="schema:abstract">A short test novel for lint testing.</meta>
 		<dc:description>
-			&lt;p&gt;A &lt;b class="emphasis"&gt;short&lt;/b&gt; test &lt;i&gt;novel&lt;/i&gt; for &lt;span&gt;lint testing&lt;/span&gt; with &lt;em&gt;an&lt;/em&gt; &lt;strong&gt;illegal&lt;/strong&gt; &lt;a href="https://standardebooks.org/" title="Standard Ebooks"&gt;link attribute&lt;/a&gt;, a &lt;a href="https://standardebooks.org/"&gt;permitted link&lt;/a&gt;, &lt;u&gt;underlined text&lt;/u&gt;, &lt;s&gt;struck text&lt;/s&gt;, and a &lt;div&gt;permitted container&lt;/div&gt;.&lt;/p&gt;
+			&lt;p&gt;A &lt;b class="emphasis"&gt;short&lt;/b&gt; test &lt;i&gt;novel&lt;/i&gt; for &lt;span&gt;lint testing&lt;/span&gt; with &lt;em&gt;an&lt;/em&gt; &lt;strong&gt;illegal&lt;/strong&gt; &lt;a href="https://standardebooks.org/" title="Standard Ebooks"&gt;link attribute&lt;/a&gt;, a &lt;a href="https://standardebooks.org/"&gt;permitted link&lt;/a&gt;, &lt;u&gt;underlined text&lt;/u&gt;, &lt;s&gt;struck text&lt;/s&gt;, and a &lt;b lang="es"&gt;permitted attribute&lt;/b&gt;.&lt;/p&gt;
 		</dc:description>
 		<dc:language>en-GB</dc:language>
 		<dc:source>https://www.gutenberg.org/ebooks/161</dc:source>
