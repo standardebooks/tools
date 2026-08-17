@@ -889,11 +889,11 @@ def format_opf(xml: str) -> str:
 	A string of pretty-printed XML.
 	"""
 
-	# Replace HTML entities in the long description so we can clean it too.
-	# We re-establish them later. Don't use `html.unescape()` because that will unescape things like `&amp;` which would make an invalid XML document. (`&amp;` may appear in translator info, or other parts of the metadata that are not the long description.
+	# Replace HTML entities in `<dc:description>` so we can clean it too.
+	# We re-establish them later. Don't use `html.unescape()` because that will unescape things like `&amp;` which would make an invalid XML document. (`&amp;` may appear in translator info, or other parts of the metadata that are not `<dc:description>`.
 	xml = xml.replace("&lt;", "<")
 	xml = xml.replace("&gt;", ">")
-	xml = xml.replace("&amp;amp;", "&amp;") # Unescape escaped ampersands, which appear in the long description only.
+	xml = xml.replace("&amp;amp;", "&amp;") # Unescape escaped ampersands, which appear in `<dc:description>` only.
 
 	# Canonicalize and format XML.
 	try:

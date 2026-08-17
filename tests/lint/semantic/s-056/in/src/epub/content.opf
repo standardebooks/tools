@@ -36,9 +36,9 @@
 		<meta property="authority" refines="#subject-2">LCSH</meta>
 		<meta property="term" refines="#subject-2">Test id 2</meta>
 		<meta property="schema:genre">Fiction</meta>
-		<meta property="schema:abstract">Test book description.</meta>
+		<meta property="schema:abstract">Test book abstract.</meta>
 		<dc:description>
-			&lt;p&gt;Test book long description&lt;/p&gt;
+			&lt;p&gt;Test book description&lt;/p&gt;
 		</dc:description>
 		<dc:language>en-GB</dc:language>
 		<dc:source>https://www.gutenberg.org/ebooks/1</dc:source>

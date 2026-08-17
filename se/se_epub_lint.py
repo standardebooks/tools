@@ -203,7 +203,7 @@ METADATA
 "m-012", "Non-typogrified character in [xml]<dc:title>[/] element."
 "m-013", "Non-typogrified character in [xml]<meta property=\"schema:abstract\">[/] element."
 "m-014", "Non-typogrified character in [xml]<dc:description>[/] element."
-"m-015", "Metadata long description is not valid XHTML."
+"m-015", "Contents of [xml]<dc:description>[/] are not valid XHTML."
 "m-016", "[xml]<dc:description[/] must contain an escaped XHTML fragment beginning with [xhtml]<p>[/]."
 "m-017", "Illegal [xml]<!\\[CDATA\\[[/]. Hint: Run [command]se[/] [subcommand]clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] elements."
 "m-018", "HTML entities found. Hint: Use Unicode equivalents instead."
@@ -232,7 +232,7 @@ METADATA
 "m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
 "m-042", "[xml]<manifest>[/] element doesn’t match expected structure."
 "m-043", "Non-canonical Wayback Machine URL. Expected: [url]https://web.archive.org/web/<DATE>/<ARCHIVED-URL>[/]."
-"m-044", "Possessive [text]’[/] or [text]’s[/] outside of [xhtml]<a>[/] element in long description."
+"m-044", "Possessive [text]’[/] or [text]’s[/] outside of [xhtml]<a>[/] element in [xml]<dc:description>[/]."
 "m-045", "Heading not found in the ToC."
 "m-046", "[xml]<file>[/] element contains wildcard, but [xml]<ignore>[/] child specifies a line number."
 "m-047", "Illegal path. Hint: Ignoring [path]*[/] is too general; target specific files."
@@ -252,10 +252,10 @@ METADATA
 "m-061", "Link must be preceded by [text]the[/]."
 "m-063", "Cover image has not been built."
 "m-062", "[xml]<dc:title>[/] element missing matching [xml]<meta property=\"file-as\">[/] element."
-"m-064", "S.E. ebook linked in long description but not italicized."
+"m-064", "S.E. ebook linked in [xml]<dc:description>[/] but not italicized."
 "m-065", "Word count in metadata doesn’t match actual word count."
 "m-066", "Subject identifiers must be IDs and not URLs."
-"m-067", "Non-S.E. link in long description."
+"m-067", "Non-S.E. link in [xml]<dc:description>[/]."
 "m-068", "[xml]<dc:title>[/] element missing matching [xml]<meta property=\"title-type\">[/] element."
 "m-069", "[text]comprised of[/] in metadata. Hint: Is there a better phrase to use here?"
 "m-070", "Glossary entries not present in the text:"
@@ -266,7 +266,7 @@ METADATA
 "m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/]."
 "m-076", "Non-canonical Project Gutenberg Australia URL. Expected: [url]https://www.gutenberg.net.au/<PATH>/<FILENAME>.html[/] or [url]https://www.gutenberg.net.au/[/]."
 "m-077", "MathML found in ebook, but no [attr]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata."
-"m-078", "Nobel Prize strings must read [text]Nobel Prize in ...[/] in long description."
+"m-078", "Nobel Prize strings must read [text]Nobel Prize in ...[/]."
 "m-079", "Ebook looks like a collection, but no [xml]<meta property=\"schema:additionalType\">http://schema.org/Collection</meta>[/] element in metadata."
 "m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/]."
 "m-081", "When a work was published or completed between a range of years, the text must be [text]between year1 and year2[/]."
@@ -858,7 +858,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	missing_metadata_elements: list[str] = []
 	long_description_node = None
 
-	# Check the long description for some errors.
+	# Check `<dc:description>` for some errors.
 	try:
 		long_description_node = self.metadata_dom.xpath("/package/metadata/dc:description")[0]
 		long_description = unescape(long_description_node.inner_xml())
@@ -869,7 +869,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 			new_element = EasyXmlElement(f"<?xml version=\"1.0\" encoding=\"utf-8\"?><root xmlns:dc=\"http://purl.org/dc/elements/1.1/\">{node.to_tag_string()}{long_description}</dc:description></root>")
 			node.replace_with(new_element.children[0])
 
-		# Recreate the DOM from the text source, so that line numbers for errors in the long description are correct.
+		# Recreate the DOM from the text source, so that line numbers for errors in `<dc:description>` are correct.
 		metadata_dom_with_parsed_long_description = EasyXmlTree(metadata_dom_with_parsed_long_description.to_string())
 
 		# Make sure the contents of `<dc:description>` are an escaped XHTML fragment.
@@ -896,7 +896,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 				continue
 
 			author_last_name = regex.sub(r",.+$", "", author_sort)
-			# Typogrify apostrophes so that we correctly match in the long description.
+			# Typogrify apostrophes so that we correctly match in `<dc:description>`.
 			author_last_name = author_last_name.replace("'", "’")
 
 			# We ignore `<i>` elements that contain the author name, because sometimes the author name might be in the book title. See _The Education of Henry Adams_.
@@ -905,7 +905,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 			if nodes:
 				messages.append(LintMessage("m-056", "Author name present in [xml]<dc:description>[/] element, but the first instance of their name is not linked to their S.E. author page.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
-		# Did we mention an SE book in the long description, but without italics?
+		# Did we mention an SE book in the `<dc:description>`, but without italics?
 		# Only match if the title appears to contain an uppercase letter. This prevents matches on a non-title link like `<a href="...">short stories</a>`. Xpath 1.0 doesn't support Unicode character classes like `\p{Letter}` so we do an additional filtering step.
 		# Also don't match if preceded by `“` as that might refer to a short work that doesn't need italics (like `“The Vampire”`).
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description//a[re:test(@href, '^https://standardebooks\\.org/ebooks/[^/]+/[^/]+') and not(parent::i) and not(.//i) and not(preceding-sibling::node()[re:test(., '“$')])]")
@@ -915,17 +915,17 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 				filtered_nodes.append(node)
 
 		if filtered_nodes:
-			messages.append(LintMessage("m-064", "S.E. ebook linked in long description but not italicized.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(filtered_nodes)))
+			messages.append(LintMessage("m-064", "S.E. ebook linked in [xml]<dc:description>[/] but not italicized.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(filtered_nodes)))
 
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description//a[not(re:test(@href, '^https?://standardebooks\\.org'))]")
 		if nodes:
-			messages.append(LintMessage("m-067", "Non-S.E. link in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+			messages.append(LintMessage("m-067", "Non-S.E. link in [xml]<dc:description>[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description/p[re:test(., 'Nobel prize\\b') or re:test(., 'Nobel Prize for\\b')]")
 		if nodes:
 			messages.append(LintMessage("m-078", "Nobel Prize strings must read [text]Nobel Prize in ...[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
-		# `xml:lang` is correct for the rest of the publication, but should be lang in the long description.
+		# `xml:lang` is correct for the rest of the publication, but should be `lang` in `<dc:description>`.
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description//*[@xml:lang]")
 		if nodes:
 			messages.append(LintMessage("m-057", "Illegal [attr]xml:lang[/] attribute in [xml]<dc:description>[/] element. Hint: [attr]xml:lang[/] should be [attr]lang[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
@@ -935,13 +935,13 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		if nodes:
 			messages.append(LintMessage("t-047", "[text]US[/] set without periods. Hint: Use [text]U.S.[/]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
-		# Check for apostrophes outside links in long description.
+		# Check for apostrophes outside links in `<dc:description>`.
 		matches = regex.findall(r"</a>’s", long_description)
 		matches += regex.findall(r"s</a>’", long_description)
 		if matches:
-			messages.append(LintMessage("m-044", "Possessive [text]’[/] or [text]’s[/] outside of [xhtml]<a>[/] element in long description.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, long_description_node.sourceline) for m in matches]))
+			messages.append(LintMessage("m-044", "Possessive [text]’[/] or [text]’s[/] outside of [xhtml]<a>[/] element in [xml]<dc:description>[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, long_description_node.sourceline) for m in matches]))
 
-		# Check for HTML entities in long description, but allow `&amp;amp`;.
+		# Check for HTML entities in `<dc:description>`, but allow `&amp;amp`;.
 		matches = regex.findall(r"&[a-z0-9]+?;", long_description.replace("&amp;", ""))
 		if matches:
 			messages.append(LintMessage("m-018", "HTML entities found. Hint: Use Unicode equivalents instead.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(m, long_description_node.sourceline) for m in matches]))
@@ -952,7 +952,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 
 	except se.InvalidXmlException as ex:
 		if long_description_node:
-			messages.append(LintMessage("m-015", "Metadata long description is not valid XHTML.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"{ex}", long_description_node.sourceline)]))
+			messages.append(LintMessage("m-015", "Contents of [xml]<dc:description>[/] are not valid XHTML.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"{ex}", long_description_node.sourceline)]))
 
 	except Exception:
 		if self.is_se_ebook:
