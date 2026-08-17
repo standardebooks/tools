@@ -1623,10 +1623,12 @@ def _run_epubcheck(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 		# We have to use a temp file to hold `stdout`, because if the output is too large for the output buffer in `subprocess.run()` (and thus `popen()`) it will be truncated.
 		with tempfile.TemporaryFile() as stdout:
 			# We can't check the return code, because if only warnings are returned then epubcheck will return `0` (success).
-			subprocess.run(["java", "-jar", str(jar_path), "--quiet", "--out", "-", "--mode", "exp", str(work_compatible_epub_dir)], stdout=stdout, stderr=subprocess.DEVNULL, check=False)
+			# Force encoding for Windows compatibility.
+			subprocess.run(["java", "-Dfile.encoding=UTF-8", "-Dsun.jnu.encoding=UTF-8", "-jar", str(jar_path), "--quiet", "--out", "-", "--mode", "exp", str(work_compatible_epub_dir)], stdout=stdout, stderr=subprocess.DEVNULL, check=False)
 
 			stdout.seek(0)
-			output = stdout.read().decode().strip()
+			# Sometimes Java on Windows encodes output using the system code page anyway, so force UTF8 again.
+			output = stdout.read().decode("utf-8", errors="replace").strip()
 
 			epubcheck_dom = EasyXmlTree(output)
 
@@ -1656,10 +1658,12 @@ def _run_epubcheck(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 	with importlib.resources.as_file(importlib.resources.files("se.data.vnu").joinpath("vnu.jar")) as jar_path:
 		# We have to use a temp file to hold stdout, because if the output is too large for the output buffer in `subprocess.run()` (and thus `popen()`) it will be truncated.
 		with tempfile.TemporaryFile() as stdout:
-			subprocess.run(["java", "-jar", str(jar_path), "--format", "xml", "--skip-non-html", str(self.content_path)], stdout=stdout, stderr=stdout, check=False)
+			# Force encoding for Windows compatibility.
+			subprocess.run(["java", "-Dfile.encoding=UTF-8", "-Dsun.jnu.encoding=UTF-8", "-jar", str(jar_path), "--format", "xml", "--skip-non-html", str(self.content_path)], stdout=stdout, stderr=stdout, check=False)
 
 			stdout.seek(0)
-			vnu_dom = EasyXmlTree(stdout.read().decode().strip())
+			# Sometimes Java on Windows encodes output using the system code page anyway, so force UTF8 again.
+			vnu_dom = EasyXmlTree(stdout.read().decode("utf-8", errors="replace").strip())
 
 			# The Nu Validator will return errors for epub-specific attributes (like `epub:prefix` and `epub:type`) because they're not defined in the XHTML5 spec. So, we simply filter out those errors.
 			# Also filter out:
