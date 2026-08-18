@@ -157,6 +157,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Aa])ny thing\b", r"\1nything", xhtml)			# any thing -> anything
 	xhtml = regex.sub(r"\b([Aa])ny where\b", r"\1nywhere", xhtml)			# any where -> anywhere
 	xhtml = regex.sub(r"\b([Aa])ukward", r"\1wkward", xhtml)			# aukward -> awkward
+	xhtml = regex.sub(r"Bagdad", r"Baghdad", xhtml)				# Bagdad -> Baghdad
 	xhtml = regex.sub(r"\b([Bb])awble", r"\1auble", xhtml)				# bawble -> bauble
 	xhtml = regex.sub(r"\b([Bb])bee[’']s[ \-]wax\b", r"\1eeswax", xhtml)		# bee’s-wax -> beeswax
 	xhtml = regex.sub(r"\b([Bb])efal(s?)\b", r"\1efall\2", xhtml)			# befal -> befall
