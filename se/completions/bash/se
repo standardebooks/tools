@@ -111,7 +111,7 @@ _se(){
 		case "${COMP_WORDS[1]}" in
 			add-file)
 				_se_compgen_words "-f --force -h --help" "${cur}"
-				_se_compgen_words "dedication dramatis-personae endnotes epigraph glossary halftitlepage ignore loi" "${cur}"
+				_se_compgen_words "chapter dedication dramatis-personae endnotes epigraph glossary halftitlepage ignore loi part" "${cur}"
 				_se_compgen_dirs ".*" "${cur}"
 				;;
 			british2american)

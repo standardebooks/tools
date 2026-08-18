@@ -49,7 +49,7 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 	Entry point for `se add-file`.
 	"""
 
-	file_types = ["dedication", "dramatis-personae", "endnotes", "epigraph", "glossary", "halftitlepage", "ignore", "loi"]
+	file_types = ["chapter", "dedication", "dramatis-personae", "endnotes", "epigraph", "glossary", "halftitlepage", "ignore", "loi", "part"]
 
 	parser = argparse.ArgumentParser(description="Add a Standard Ebooks template file and any accompanying CSS.", prog="[command]se[/] [subcommand]add-file[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-f", "--force", dest="force", action="store_true", help="Overwrite any existing files.")
@@ -69,6 +69,13 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 
 		try:
 			match args.file_type:
+				case "chapter":
+					dest_path = se_epub.content_path / "text/chapter-.xhtml"
+
+					_copy_file("chapter-template-add-file.xhtml", dest_path, args.force)
+
+					_replace_languague(dest_path, se_epub.language)
+
 				case "dedication":
 					dest_path = se_epub.content_path / "text/dedication.xhtml"
 
@@ -147,6 +154,13 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 					dest_path = se_epub.content_path / "text/loi.xhtml"
 
 					_copy_file("loi.xhtml", dest_path, args.force)
+
+					_replace_languague(dest_path, se_epub.language)
+
+				case "part":
+					dest_path = se_epub.content_path / "text/part-.xhtml"
+
+					_copy_file("part-template.xhtml", dest_path, args.force)
 
 					_replace_languague(dest_path, se_epub.language)
 
