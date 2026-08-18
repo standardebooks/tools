@@ -78,7 +78,7 @@ case $state in
 				_arguments -s \
 					{-f,--force}'[Overwrite any existing files.]' \
 					{-h,--help}'[Show this help message and exit.]' \
-					'1:The type of file to add.:(dedication dramatis-personae endnotes epigraph glossary halftitlepage ignore loi)' \
+					'1:The type of file to add.:(chapter dedication dramatis-personae endnotes epigraph glossary halftitlepage ignore loi part)' \
 					'*:A Standard Ebooks source directory.:_directories'
 				;;
 			british2american)

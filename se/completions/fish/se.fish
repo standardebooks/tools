@@ -31,7 +31,7 @@ complete -c se -n "__fish_se_no_subcommand" -s v -l version -x -d "Print version
 complete -c se -n "__fish_se_no_subcommand" -a add-file -d "Add a Standard Ebooks template file and any accompanying CSS."
 complete -c se -A -n "__fish_seen_subcommand_from add-file" -s f -l force -x -d "Overwrite any existing files."
 complete -c se -A -n "__fish_seen_subcommand_from add-file" -s h -l help -x -d "Show this help message and exit."
-complete -c se -A -n "__fish_seen_subcommand_from add-file" -a "dedication dramatis-personae endnotes epigraph glossary halftitlepage ignore loi" -d "The type of file to add."
+complete -c se -A -n "__fish_seen_subcommand_from add-file" -a "chapter dedication dramatis-personae endnotes epigraph glossary halftitlepage ignore loi part" -d "The type of file to add."
 
 complete -c se -n "__fish_se_no_subcommand" -a british2american -d "Try to convert British quote style to American quote style. Quotes must already be typogrified using `se` `typogrify`. This script isn’t perfect; proofreading is required, especially near closing quotes near to em-dashes."
 complete -c se -A -n "__fish_seen_subcommand_from british2american" -s f -l force -x -d "Force conversion of quote style."
