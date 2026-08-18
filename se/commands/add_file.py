@@ -20,7 +20,7 @@ def _copy_file(filename: str, dest_path: Path, force: bool) -> None:
 		shutil.copyfile(src_path, dest_path)
 
 
-def _replace_languague(file_path: Path, language: str | None) -> None:
+def _replace_language(file_path: Path, language: str | None) -> None:
 	if language:
 		with open(file_path, "r+", encoding="utf-8") as file:
 			xhtml = file.read()
@@ -74,14 +74,14 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 
 					_copy_file("chapter-template-add-file.xhtml", dest_path, args.force)
 
-					_replace_languague(dest_path, se_epub.language)
+					_replace_language(dest_path, se_epub.language)
 
 				case "dedication":
 					dest_path = se_epub.content_path / "text/dedication.xhtml"
 
 					_copy_file("dedication.xhtml", dest_path, args.force)
 
-					_replace_languague(dest_path, se_epub.language)
+					_replace_language(dest_path, se_epub.language)
 
 					_insert_css(se_epub, "dedication.css")
 
@@ -90,7 +90,7 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 
 					_copy_file("dramatis-personae.xhtml", dest_path, args.force)
 
-					_replace_languague(dest_path, se_epub.language)
+					_replace_language(dest_path, se_epub.language)
 
 					_insert_css(se_epub, "dramatis-personae.css")
 
@@ -99,14 +99,14 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 
 					_copy_file("endnotes.xhtml", dest_path, args.force)
 
-					_replace_languague(dest_path, se_epub.language)
+					_replace_language(dest_path, se_epub.language)
 
 				case "epigraph":
 					dest_path = se_epub.content_path / "text/epigraph.xhtml"
 
 					_copy_file("epigraph.xhtml", dest_path, args.force)
 
-					_replace_languague(dest_path, se_epub.language)
+					_replace_language(dest_path, se_epub.language)
 
 					_insert_css(se_epub, "epigraph.css")
 
@@ -115,7 +115,7 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 
 					_copy_file("glossary.xhtml", dest_path, args.force)
 
-					_replace_languague(dest_path, se_epub.language)
+					_replace_language(dest_path, se_epub.language)
 
 					_insert_css(se_epub, "glossary.css")
 
@@ -131,7 +131,7 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 
 					_copy_file(src_path, dest_path, args.force)
 
-					_replace_languague(dest_path, se_epub.language)
+					_replace_language(dest_path, se_epub.language)
 
 					with open(dest_path, "r+", encoding="utf-8") as file:
 						xhtml = file.read()
@@ -155,14 +155,14 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 
 					_copy_file("loi.xhtml", dest_path, args.force)
 
-					_replace_languague(dest_path, se_epub.language)
+					_replace_language(dest_path, se_epub.language)
 
 				case "part":
 					dest_path = se_epub.content_path / "text/part-.xhtml"
 
 					_copy_file("part-template.xhtml", dest_path, args.force)
 
-					_replace_languague(dest_path, se_epub.language)
+					_replace_language(dest_path, se_epub.language)
 
 				case _:
 					# Unrecognized, do nothing.
