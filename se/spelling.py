@@ -406,6 +406,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Mm])usquet", r"\1usket", xhtml)				# musquet -> musket
 	xhtml = regex.sub(r"\b([Qq])uartette", r"\1uartet", xhtml)			# quartette -> quartet
 	xhtml = regex.sub(r"\b([Mm])ah?[\-\s][Jj]ongg?", r"\1ah-jongg", xhtml)		# mah jong -> mah-jongg
+	xhtml = regex.sub(r"\b([Mm])izen", r"\1izzen", xhtml)				# mizen -> mizzen
 
         # Remove elision quotes from words that no longer need them.
 	xhtml = regex.sub(r"([^\p{Letter}])’([Bb])us\b", r"\1\2us", xhtml)				# ’bus -> bus
