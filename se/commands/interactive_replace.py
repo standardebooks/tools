@@ -10,7 +10,7 @@ import sys
 from math import floor
 
 from pygments import lex
-from pygments.lexers.markup import XmlLexer
+from pygments.lexers import find_lexer_class_by_name
 from pygments.token import Comment, Error, Name, String
 import regex
 
@@ -197,21 +197,21 @@ def _print_screen(screen: curses.window, filepath: Path, text: str, start_matchi
 
 	# Syntax highlight the XHTML while retaining the exact source text.
 	text_index = 0
-	for token_type, token_text in lex(text, XmlLexer(ensurenl=False)):
+	for token_type, token_text in lex(text, find_lexer_class_by_name("xml")(ensurenl=False)):
 		token_style = curses.A_NORMAL
 		if curses.has_colors():
 			if token_type in Comment.Preproc:
-				token_style = curses.color_pair(1)
+				token_style = curses.color_pair(5)
 			elif token_type in Comment:
-				token_style = curses.A_DIM
+				token_style = curses.color_pair(5)
 			elif token_type in Name.Tag:
 				token_style = curses.color_pair(1)
 			elif token_type in Name.Attribute:
-				token_style = curses.color_pair(1) | curses.A_BOLD
+				token_style = curses.color_pair(2)
 			elif token_type in String:
-				token_style = curses.color_pair(2) | curses.A_BOLD
-			elif token_type in Name.Entity:
 				token_style = curses.color_pair(3)
+			elif token_type in Name.Entity:
+				token_style = curses.color_pair(2)
 			elif token_type in Error:
 				token_style = curses.color_pair(4) | curses.A_BOLD
 
@@ -251,10 +251,10 @@ def _init_screen(screen: curses.window | None) -> curses.window:
 	curses.start_color()
 	if curses.has_colors():
 		curses.use_default_colors()
-		curses.init_pair(1, curses.COLOR_MAGENTA, -1)
-		curses.init_pair(2, curses.COLOR_BLUE, -1)
-		curses.init_pair(3, curses.COLOR_YELLOW, -1)
-		curses.init_pair(4, curses.COLOR_RED, -1)
+		for pair_number, style_name in enumerate(("xhtml", "attr", "val", "error", "dim"), start=1):
+			color = se.RICH_THEME.styles[style_name].color
+			foreground_color = color.number if color is not None and color.number is not None and color.number < curses.COLORS else -1
+			curses.init_pair(pair_number, foreground_color, -1)
 
 	# Disable the blinking cursor.
 	try:
