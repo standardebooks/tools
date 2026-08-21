@@ -94,6 +94,7 @@ setup(
 		"natsort==8.4.0",
 		"pillow==12.3.0",
 		"psutil==7.2.2",
+		"pygments==2.21.0",
 		"pyphen==0.17.2",
 		"oxipng-pybind==10.1.1.post2",
 		"regex==2026.6.28",

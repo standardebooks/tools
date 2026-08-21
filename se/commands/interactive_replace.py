@@ -9,6 +9,9 @@ import os
 import sys
 from math import floor
 
+from pygments import lex
+from pygments.lexers.markup import XmlLexer
+from pygments.token import Comment, Error, Name, String
 import regex
 
 import se
@@ -192,12 +195,38 @@ def _print_screen(screen: curses.window, filepath: Path, text: str, start_matchi
 	match_start = start_matching_at + match.start()
 	match_end = start_matching_at + match.end()
 
-	# Print the text preceding the match.
-	pad.addstr(text[:match_start])
-	# Print the match itself using the terminal's reversed colors.
-	pad.addstr(text[match_start:match_end], curses.A_REVERSE | curses.A_BOLD)
-	# Print the text after the match.
-	pad.addstr(text[match_end:len(text)])
+	# Syntax highlight the XHTML while retaining the exact source text.
+	text_index = 0
+	for token_type, token_text in lex(text, XmlLexer(ensurenl=False)):
+		token_style = curses.A_NORMAL
+		if curses.has_colors():
+			if token_type in Comment.Preproc:
+				token_style = curses.color_pair(1)
+			elif token_type in Comment:
+				token_style = curses.A_DIM
+			elif token_type in Name.Tag:
+				token_style = curses.color_pair(1)
+			elif token_type in Name.Attribute:
+				token_style = curses.color_pair(1) | curses.A_BOLD
+			elif token_type in String:
+				token_style = curses.color_pair(2) | curses.A_BOLD
+			elif token_type in Name.Entity:
+				token_style = curses.color_pair(3)
+			elif token_type in Error:
+				token_style = curses.color_pair(4) | curses.A_BOLD
+
+		token_end = text_index + len(token_text)
+		if token_end <= match_start or text_index >= match_end:
+			pad.addstr(token_text, token_style)
+		else:
+			# Render the portions around the match with their syntax color, then render the match using reversed terminal colors.
+			match_start_in_token = max(match_start - text_index, 0)
+			match_end_in_token = min(match_end - text_index, len(token_text))
+			pad.addstr(token_text[:match_start_in_token], token_style)
+			pad.addstr(token_text[match_start_in_token:match_end_in_token], curses.A_REVERSE | curses.A_BOLD)
+			pad.addstr(token_text[match_end_in_token:], token_style)
+
+		text_index = token_end
 
 	pad_y, pad_x = _get_center_of_match(text, match_start, match_end, screen_height, screen_width)
 
@@ -222,6 +251,10 @@ def _init_screen(screen: curses.window | None) -> curses.window:
 	curses.start_color()
 	if curses.has_colors():
 		curses.use_default_colors()
+		curses.init_pair(1, curses.COLOR_MAGENTA, -1)
+		curses.init_pair(2, curses.COLOR_BLUE, -1)
+		curses.init_pair(3, curses.COLOR_YELLOW, -1)
+		curses.init_pair(4, curses.COLOR_RED, -1)
 
 	# Disable the blinking cursor.
 	try:
