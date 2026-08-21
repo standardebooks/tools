@@ -43,7 +43,9 @@ COVER_WIDTH = 1400
 TITLEPAGE_WIDTH = 1400
 DEFAULT_CONFIG_VALUES = {
 	"/configuration/build/@max-cache-size": "50MB",
-	"/configuration/create-draft/@default-email": ""
+	"/configuration/create-draft/@default-email": "",
+	"/configuration/@line-column-number-style": "#L$lineC$column",
+	"/configuration/@line-number-style": "#L$line"
 }
 RICH_THEME = Theme({
 	"command": "green",
@@ -295,6 +297,16 @@ def get_config_attributes(key: str) -> dict[str, str]:
 		return {}
 
 	return {str(name): value.strip() for name, value in config_nodes[0].lxml_element.attrib.items()}
+
+def format_line_number(line_number: int, column_number: int | None = None) -> str:
+	"""
+	Format a line number and optional column number according to the configured styles.
+	"""
+
+	if column_number is None:
+		return get_config_value("/configuration/@line-number-style").replace("$line", str(line_number))
+
+	return get_config_value("/configuration/@line-column-number-style").replace("$line", str(line_number)).replace("$column", str(column_number))
 
 def parse_size_string(size_string: str) -> int:
 	"""

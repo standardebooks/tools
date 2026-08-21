@@ -153,7 +153,7 @@ def build(plain_output: bool) -> int:
 					# Add hyperlinks around message filenames.
 					message_filename = ""
 					if message.filename:
-						message_filename = f"[link=file://{message.filename}]{message.filename.name}[/link]{message.location if message.location else ''}"
+						message_filename = f"[link=file://{message.filename}{message.link_location if message.link_location else ''}]{message.filename.name}[/link]{message.location if message.location else ''}"
 
 					table_data.append([message.source, message.code, message_filename, message.text])
 

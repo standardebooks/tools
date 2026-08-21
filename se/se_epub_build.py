@@ -71,6 +71,7 @@ class BuildMessage:
 		self.line = line
 		self.col = col
 		self.location = f"({line}:{col})" if self.line and self.col else None
+		self.link_location = se.format_line_number(line, col) if line is not None else None
 		self.submessages = submessages if submessages else []
 
 def get_file_sha256(filename: Path) -> str:

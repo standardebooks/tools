@@ -1,5 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<configuration>
+<configuration
+	line-column-number-style=":L:C"
+	line-number-style=":L"
+>
+	<!--
+		# Global configuration
+
+		## Configuration options
+
+			- `line-number-style`
+
+				Type: A format string containing `$line`.
+
+				Default: #L$line
+
+				Description:
+
+					Defines how line numbers are appended to filenames in tool output when no column number is available. `$line` is replaced by the line number. For example, `#$line` produces `#L123`.
+
+			- `line-column-number-style`
+
+				Type: A format string containing `$line` and `$column`.
+
+				Default: #L$line#C$column
+
+				Description:
+
+					Defines how line and column numbers are appended to filenames in tool output when a column number is available. `$line` is replaced by the line number and `$column` is replaced by the column number. For example, `#L$lineC$column` produces `#L123C456`.
+	-->
 	<!--
 		# se build
 

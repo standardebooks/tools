@@ -121,7 +121,8 @@ def lint(plain_output: bool) -> int:
 							# Brackets don't need to be escaped in submessages if we instantiate them in `Text()`.
 							submessage_object = Text(submessage.text, style="dim")
 							if submessage.line_num and message.filename:
-								submessage_line = Align(f"[link=file://{message.filename.resolve()}#L{submessage.line_num}]Line {submessage.line_num}[/link]", align="right")
+								line_number = se.format_line_number(submessage.line_num, submessage.column_num)
+								submessage_line = Align(f"[link=file://{message.filename.resolve()}{line_number}]Line {submessage.line_num}[/link]", align="right")
 							else:
 								submessage_line = Align("→", align="right")
 

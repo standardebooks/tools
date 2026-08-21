@@ -60,7 +60,7 @@ def xpath(plain_output: bool) -> int:
 								output = f"Line {node.sourceline}: {node.to_string()}"
 							else:
 								node_string = node.to_string().replace('[', '\\[')
-								output = f"[path][link=file://{filepath.resolve()}#L{node.sourceline}]Line {node.sourceline}[/][/]: {node_string}"
+								output = f"[path][link=file://{filepath.resolve()}{se.format_line_number(node.sourceline) if node.sourceline is not None else ''}]Line {node.sourceline}[/][/]: {node_string}"
 
 						elif isinstance(node, str):
 							if plain_output:
@@ -78,7 +78,7 @@ def xpath(plain_output: bool) -> int:
 									output = f"Line {parent.sourceline}: {str(node)}"
 								else:
 									node_string = str(node).replace('[', '\\[')
-									output = f"[path][link=file://{filepath.resolve()}#L{parent.sourceline}]Line {parent.sourceline}[/][/]: {node_string}"
+									output = f"[path][link=file://{filepath.resolve()}{se.format_line_number(parent.sourceline) if parent.sourceline is not None else ''}]Line {parent.sourceline}[/][/]: {node_string}"
 
 						output = "".join([f"\n\t{line}" for line in output.splitlines()])
 

@@ -52,7 +52,7 @@ def css_select(plain_output: bool) -> int:
 							output = f"Line {node.sourceline}: {node.to_string()}"
 						else:
 							node_string = node.to_string().replace('[', '\\[')
-							output = f"[path][link=file://{filepath.resolve()}#L{node.sourceline}]Line {node.sourceline}[/][/]: {node_string}"
+							output = f"[path][link=file://{filepath.resolve()}{se.format_line_number(node.sourceline) if node.sourceline is not None else ''}]Line {node.sourceline}[/][/]: {node_string}"
 
 						output = "".join(f"\n\t{line}" for line in output.splitlines())
 
