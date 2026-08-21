@@ -194,13 +194,8 @@ def _print_screen(screen: curses.window, filepath: Path, text: str, start_matchi
 
 	# Print the text preceding the match.
 	pad.addstr(text[:match_start])
-	# Print the match itself, in reversed color.
-	if curses.has_colors():
-		pad.addstr(text[match_start:match_end], curses.color_pair(1) | curses.A_BOLD)
-	else:
-		pad.attron(curses.A_REVERSE)
-		pad.addstr(text[match_start:match_end])
-		pad.attroff(curses.A_REVERSE)
+	# Print the match itself using the terminal's reversed colors.
+	pad.addstr(text[match_start:match_end], curses.A_REVERSE | curses.A_BOLD)
 	# Print the text after the match.
 	pad.addstr(text[match_end:len(text)])
 
@@ -226,7 +221,7 @@ def _init_screen(screen: curses.window | None) -> curses.window:
 	screen = curses.initscr()
 	curses.start_color()
 	if curses.has_colors():
-		curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)
+		curses.use_default_colors()
 
 	# Disable the blinking cursor.
 	try:
