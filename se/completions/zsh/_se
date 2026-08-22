@@ -30,6 +30,11 @@ ret=$?
 
 case $state in
 	cmds)
+		# Only complete command names when the current word is not an option.
+		if [[ ${PREFIX} == -* ]]; then
+			return ${ret}
+		fi
+
 		_values "se command" \
 			"add-file[Add a Standard Ebooks template file and any accompanying CSS.]" \
 			"british2american[Try to convert British quote style to American quote style. Quotes must already be typogrified using \`se\` \`typogrify\`. This script isn’t perfect; proofreading is required, especially near closing quotes near to em-dashes.]" \
