@@ -561,7 +561,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bStrassbo?urgh?\b", r"Strasbourg", xhtml)			# Strassburgh -> Strasbourg
 	xhtml = regex.sub(r"\bT?[Cc]hekh?o(v|ff)", r"Chekhov", xhtml)			# Tchekhov/Chekov/Chekoff -> Chekhov
 	xhtml = regex.sub(r"\bThibet", r"Tibet", xhtml)					# Thibet -> Tibet
-	xhtml = regex.sub(r"\bTimbuctoo", r"Timbuktu", xhtml)				# Timbuctoo -> Timbuktu
+	xhtml = regex.sub(r"\bTimbu[kc]too", r"Timbuktu", xhtml)			# Timbuctoo -> Timbuktu
 	xhtml = regex.sub(r"\bTokio", r"Tokyo", xhtml)					# Tokio -> Tokyo
 	xhtml = regex.sub(r"Tolstoi", r"Tolstoy", xhtml)				# Tolstoi -> Tolstoy
 	xhtml = regex.sub(r"Turgenieff", r"Turgenev", xhtml)				# Turgenieff -> Turgenev
