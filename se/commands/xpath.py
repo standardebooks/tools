@@ -3,12 +3,25 @@ This module implements the `se xpath` command.
 """
 
 import argparse
-from typing import Any
+from typing import Any, Protocol, cast
 
 from lxml import etree
 import se
 from se.se_help_formatter import SeHelpFormatter
 import se.easy_xml
+
+
+class XPathStringParent(Protocol):
+	"""Describe the parent information exposed by an XPath string result."""
+
+	sourceline: int | None
+
+
+class XPathString(Protocol):
+	"""Describe the lxml smart string interface used by this command."""
+
+	def getparent(self) -> XPathStringParent | None:
+		"""Return the element from which the XPath string result originated."""
 
 
 def xpath(plain_output: bool) -> int:
@@ -50,23 +63,21 @@ def xpath(plain_output: bool) -> int:
 
 				console.print(se.prep_output(f"[path][link=file://{filepath}]{filepath}[/][/]", plain_output))
 				if not args.only_filenames:
+					results: list[tuple[int, str]] = []
 					for node in nodes:
+						line_number = 1
 						output = ""
 
 						# We only have to escape leading `[` to prevent Rich from converting it to a style. If we also escape `]` then Rich will print the slash.
-						# Explicitly exclude link markup in plain results because it doesn't make sense to offset line numbers with ```.
 						if isinstance(node, se.easy_xml.EasyXmlElement):
-							if plain_output:
-								output = f"Line {node.sourceline}: {node.to_string()}"
-							else:
-								node_string = node.to_string().replace('[', '\\[')
-								output = f"[path][link=file://{filepath.resolve()}{se.format_line_number(node.sourceline) if node.sourceline is not None else ''}]Line {node.sourceline}[/][/]: {node_string}"
+							line_number = node.sourceline if node.sourceline is not None else line_number
+							output = node.to_string()
 
 						elif isinstance(node, str):
-							if plain_output:
-								output = node
-							else:
-								output = node.replace('[', '\\[')
+							parent = cast(XPathString, node).getparent() if hasattr(node, "getparent") else None
+							if parent is not None and parent.sourceline is not None:
+								line_number = parent.sourceline
+							output = node
 
 						elif isinstance(node, float):
 							output = str(node)
@@ -74,14 +85,22 @@ def xpath(plain_output: bool) -> int:
 						elif isinstance(node, etree.Element):
 							parent = node.getparent()
 							if parent:
-								if plain_output:
-									output = f"Line {parent.sourceline}: {str(node)}"
-								else:
-									node_string = str(node).replace('[', '\\[')
-									output = f"[path][link=file://{filepath.resolve()}{se.format_line_number(parent.sourceline) if parent.sourceline is not None else ''}]Line {parent.sourceline}[/][/]: {node_string}"
+								line_number = parent.sourceline if parent.sourceline is not None else line_number
+								output = str(node)
 
-						output = "".join([f"\n\t{line}" for line in output.splitlines()])
+						results.append((line_number, output))
 
+					maximum_label_length = max(len(f"Line {line_number}:") for line_number, _ in results)
+					for line_number, output in results:
+						if not plain_output:
+							output = output.replace('[', '\\[')
+							line_output = f"[path][link=file://{filepath.resolve()}{se.format_line_number(line_number)}]Line {line_number}:[/][/]"
+						else:
+							line_output = f"Line {line_number}:"
+
+						# Add the minimum number of tabs required to align every result after the longest line label.
+						tab_count = 1 + (maximum_label_length // 8) - (len(f"Line {line_number}:") // 8)
+						console.print(se.prep_output(line_output, plain_output), end="\t" * tab_count)
 						console.print(se.prep_output(output, plain_output))
 
 				has_previous_file = True
