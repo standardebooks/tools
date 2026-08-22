@@ -224,4 +224,5 @@ complete -c se -A -n "__fish_seen_subcommand_from word-count" -s x -l exclude-se
 complete -c se -n "__fish_se_no_subcommand" -a xpath -d "Print the results of an xpath expression evaluated against a set of XHTML files. The default namespace is removed."
 complete -c se -A -n "__fish_seen_subcommand_from xpath; and not __fish_se_seen_argument -f --only-filenames -q --quiet" -s f -l only-filenames -x -d "Only output filenames of files that contain matches, not the matches themselves."
 complete -c se -A -n "__fish_seen_subcommand_from xpath" -s h -l help -x -d "Show this help message and exit."
+complete -c se -A -n "__fish_seen_subcommand_from xpath" -s n -l no-line-numbers -x -d "Don’t output line numbers."
 complete -c se -A -n "__fish_seen_subcommand_from xpath; and not __fish_se_seen_argument -f --only-filenames -q --quiet" -s q -l quiet -x -d "Don’t output anything, only a return code if matches exist in any files."
