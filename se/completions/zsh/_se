@@ -378,6 +378,7 @@ case $state in
 
 				_arguments -s \
 					{-h,--help}'[Show this help message and exit.]' \
+					{-n,--no-line-numbers}'[Don’t output line numbers.]' \
 					"${output_options[@]}" \
 					'1:An xpath expression.:' \
 					'*:An XHTML file, or a directory containing XHTML files.:_files -g \*.xhtml'

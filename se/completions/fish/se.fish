@@ -109,6 +109,7 @@ complete -c se -A -n "__fish_seen_subcommand_from create-draft" -s w -l white-la
 complete -c se -n "__fish_se_no_subcommand" -a css-select -d "Print the results of a CSS selector evaluated against a set of XHTML files."
 complete -c se -A -n "__fish_seen_subcommand_from css-select; and not __fish_se_seen_argument -f --only-filenames -q --quiet" -s f -l only-filenames -x -d "Only output filenames of files that contain matches, not the matches themselves."
 complete -c se -A -n "__fish_seen_subcommand_from css-select" -s h -l help -x -d "Show this help message and exit."
+complete -c se -A -n "__fish_seen_subcommand_from css-select" -s n -l no-line-numbers -x -d "Don’t output line numbers."
 complete -c se -A -n "__fish_seen_subcommand_from css-select; and not __fish_se_seen_argument -f --only-filenames -q --quiet" -s q -l quiet -x -d "Don’t output anything, only a return code if matches exist in any files."
 
 complete -c se -n "__fish_se_no_subcommand" -a dec2roman -d "Convert a decimal number to a Roman numeral."

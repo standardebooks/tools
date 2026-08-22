@@ -179,7 +179,7 @@ _se(){
 				_se_compgen_words "${options}" "${cur}"
 				;;
 			css-select)
-				local options="-h --help"
+				local options="-h --help -n --no-line-numbers"
 				if ! _se_has_option "-f" "--only-filenames" "-q" "--quiet"; then
 					options="${options} -f --only-filenames -q --quiet"
 				fi
