@@ -10,7 +10,11 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, TextIO
 
+from pygments import lex
+from pygments.lexers import find_lexer_class_by_name
+from pygments.token import Comment, Error, Name, String
 from rich.console import Console
+from rich.text import Text
 from rich.theme import Theme
 from natsort import natsorted, ns
 import regex
@@ -207,6 +211,29 @@ def init_console() -> Console:
 	"""
 
 	return Console(highlight=False, theme=se.RICH_THEME, soft_wrap=True, force_terminal=se.should_output_color())
+
+def highlight_xml(text: str) -> Text:
+	"""
+	Syntax highlight XML using the Standard Ebooks theme.
+	"""
+
+	output = Text()
+	for token_type, token_text in lex(text, find_lexer_class_by_name("xml")(ensurenl=False)):
+		style: str | None = None
+		if token_type in Comment:
+			style = "dim"
+		elif token_type in Name.Tag:
+			style = "xhtml"
+		elif token_type in Name.Attribute or token_type in Name.Entity:
+			style = "attr"
+		elif token_type in String:
+			style = "val"
+		elif token_type in Error:
+			style = "bold error"
+
+		output.append(token_text, style=style)
+
+	return output
 
 def get_cache_directory() -> Path:
 	"""

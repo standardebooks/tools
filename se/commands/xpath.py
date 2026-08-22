@@ -93,11 +93,17 @@ def xpath(plain_output: bool) -> int:
 
 					maximum_label_length = max(len(f"Line {line_number}:") for line_number, _ in results) if not args.no_line_numbers else 0
 					for line_number, output in results:
-						if not plain_output:
-							output = output.replace('[', '\\[')
+						color_output = not plain_output and se.should_output_color()
+						if color_output:
+							formatted_output = se.highlight_xml(output)
+						else:
+							if not plain_output:
+								output = output.replace('[', '\\[')
+
+							formatted_output = se.prep_output(output, plain_output)
 
 						if args.no_line_numbers:
-							console.print(se.prep_output(output, plain_output))
+							console.print(formatted_output)
 							continue
 
 						if not plain_output:
@@ -108,7 +114,7 @@ def xpath(plain_output: bool) -> int:
 						# Add the minimum number of tabs required to align every result after the longest line label.
 						tab_count = 1 + (maximum_label_length // 8) - (len(f"Line {line_number}:") // 8)
 						console.print(se.prep_output(line_output, plain_output), end="\t" * tab_count)
-						console.print(se.prep_output(output, plain_output))
+						console.print(formatted_output)
 
 				has_previous_file = True
 
