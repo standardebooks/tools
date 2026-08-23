@@ -641,10 +641,9 @@ class SeEpub:
 		file_path_str = str(file_path) + "_" + str(remove_comments)
 
 		if file_path_str not in self._dom_cache:
-			file_contents = self.get_file(file_path)
-
 			try:
-				self._dom_cache[file_path_str] = EasyXmlTree(file_contents)
+				with open(file_path, "rb") as file:
+					self._dom_cache[file_path_str] = EasyXmlTree(file.read())
 
 				# Remove comments.
 				if remove_comments:
@@ -1534,7 +1533,7 @@ class SeEpub:
 
 		loi_dom = None
 		if not self.loi_path:
-			with importlib.resources.files("se.data.templates").joinpath("loi.xhtml").open("r", encoding="utf-8") as file:
+			with importlib.resources.files("se.data.templates").joinpath("loi.xhtml").open("rb") as file:
 				loi_dom = EasyXmlTree(file.read())
 
 			if self.language:
@@ -2267,7 +2266,8 @@ class SeEpub:
 			metadata_dom = self.metadata_dom
 
 		with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("opf2onix.xsl")) as opf2onix_xsl_filename:
-			transform = etree.XSLT(etree.parse(str(opf2onix_xsl_filename)))
+			with open(opf2onix_xsl_filename, "rb") as file:
+				transform = etree.XSLT(etree.parse(file))
 			onix_dom = EasyXmlTree(transform(etree.fromstring(str.encode(metadata_dom.to_string())), cwd=f"'{self.epub_root_path.as_posix()}/'"))
 
 		return onix_dom

@@ -843,8 +843,8 @@ def _d_apply_matrix(d_attrib: str, matrix: list[float]) -> str:
 	return " ".join(shapes).strip()
 
 def _parse_font(font_path: Path) -> Font:
-	with open(font_path, "rt", encoding="utf-8") as font_svg_raw:
-		xml = etree.fromstring(str.encode(font_svg_raw.read()))
+	with open(font_path, "rb") as font_svg_raw:
+		xml = etree.fromstring(font_svg_raw.read())
 	font = Font()
 	font.meta = FontMeta()
 	g_name_to_unicode: dict[str, str] = {}

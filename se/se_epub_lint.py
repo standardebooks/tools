@@ -3827,10 +3827,12 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 	lint_ignore_dom = None
 	if not skip_lint_ignore and lint_ignore_path.exists():
 		with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("se-lint-ignore.rng")) as rng_path:
-			relaxng = etree.RelaxNG(etree.parse(rng_path))
+			with open(rng_path, "rb") as file:
+				relaxng = etree.RelaxNG(etree.parse(file))
 
 			try:
-				dom = etree.parse(lint_ignore_path)
+				with open(lint_ignore_path, "rb") as file:
+					dom = etree.parse(file)
 				relaxng.assertValid(dom)
 				lint_ignore_dom = EasyXmlTree(dom)
 			except Exception as ex:

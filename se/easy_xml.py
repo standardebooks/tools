@@ -642,7 +642,7 @@ class EasyXmlTree:
 	This is not a complete XML parser. It only works if namespaces are only declared on the root element.
 	"""
 
-	def __init__(self, xml: str | etree.ElementTree):
+	def __init__(self, xml: str | bytes | etree.ElementTree):
 		self.namespaces = {"re": "http://exslt.org/regular-expressions", "xml": "http://www.w3.org/XML/1998/namespace"} # Enable regular expressions in xpath; `xml` is the default XML namespace.
 		self.default_namespace = None
 
@@ -651,21 +651,33 @@ class EasyXmlTree:
 		else:
 			xml_string = xml
 
-		# Save the default namespace for later.
-		for namespace in regex.findall(r" xmlns=\"([^\"]+?)\"", xml_string):
-			self.default_namespace = namespace
+		if isinstance(xml_string, bytes):
+			# Preserve the original bytes so that lxml can interpret the XML encoding declaration.
+			for namespace in regex.findall(rb" xmlns=\"([^\"]+?)\"", xml_string):
+				self.default_namespace = namespace.decode("utf-8")
 
-		# Always remove the default namespaces, otherwise xpath with lxml is a huge pain.
-		xml_string = regex.sub(r" xmlns=\"[^\"]+?\"", "", xml_string)
+			# Always remove the default namespaces, otherwise xpath with lxml is a huge pain.
+			xml_string = regex.sub(rb" xmlns=\"[^\"]+?\"", b"", xml_string)
 
-		# Add additional namespaces we may have.
-		for match in regex.findall(r" xmlns:(.+?)=\"([^\"]+?)\"", xml_string):
-			self.namespaces[match[0]] = match[1]
+			# Add additional namespaces we may have.
+			for match in regex.findall(rb" xmlns:(.+?)=\"([^\"]+?)\"", xml_string):
+				self.namespaces[match[0].decode("utf-8")] = match[1].decode("utf-8")
+		else:
+			# Save the default namespace for later.
+			for namespace in regex.findall(r" xmlns=\"([^\"]+?)\"", xml_string):
+				self.default_namespace = namespace
+
+			# Always remove the default namespaces, otherwise xpath with lxml is a huge pain.
+			xml_string = regex.sub(r" xmlns=\"[^\"]+?\"", "", xml_string)
+
+			# Add additional namespaces we may have.
+			for match in regex.findall(r" xmlns:(.+?)=\"([^\"]+?)\"", xml_string):
+				self.namespaces[match[0]] = match[1]
 
 		try:
 			# `huge_tree` allows XML files of arbitrary size, like _The Personal Memoirs of Ulysses S. Grant_.
 			custom_parser = etree.XMLParser(huge_tree=True)
-			self.etree = etree.fromstring(str.encode(xml_string), parser=custom_parser)
+			self.etree = etree.fromstring(xml_string if isinstance(xml_string, bytes) else str.encode(xml_string), parser=custom_parser)
 		except etree.XMLSyntaxError as ex:
 			raise se.InvalidXmlException(f"Couldn’t parse XML: {ex}") from ex
 

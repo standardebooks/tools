@@ -40,12 +40,13 @@ def convert_toc_to_ncx(epub_root_absolute_path: Path, toc_filename: str, xsl_fil
 	"""
 
 	# Use an XSLT transform to generate the NCX.
-	with open(epub_root_absolute_path / "epub" / toc_filename, "r", encoding="utf-8") as file:
+	with open(epub_root_absolute_path / "epub" / toc_filename, "rb") as file:
 		xhtml = file.read()
 
 	toc_tree = se.easy_xml.EasyXmlTree(xhtml)
-	transform = etree.XSLT(etree.parse(str(xsl_filename)))
-	ncx_dom = se.easy_xml.EasyXmlTree(transform(etree.fromstring(str.encode(xhtml)), cwd=f"'{epub_root_absolute_path.as_posix()}/'"))
+	with open(xsl_filename, "rb") as file:
+		transform = etree.XSLT(etree.parse(file))
+	ncx_dom = se.easy_xml.EasyXmlTree(transform(etree.fromstring(xhtml), cwd=f"'{epub_root_absolute_path.as_posix()}/'"))
 
 	# Remove empty `xml:lang` attributes.
 	for node in ncx_dom.xpath("//*[@xml:lang and re:test(@xml:lang, '^\\s*$')]"):

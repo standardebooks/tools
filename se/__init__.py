@@ -288,7 +288,7 @@ def _get_config_dom() -> se.easy_xml.EasyXmlTree | None:
 	config_file_path = get_config_file()
 
 	try:
-		with open(config_file_path, "r", encoding="utf-8") as file:
+		with open(config_file_path, "rb") as file:
 			return se.easy_xml.EasyXmlTree(file.read())
 	except (OSError, se.InvalidXmlException):
 		return None

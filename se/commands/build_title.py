@@ -34,7 +34,7 @@ def build_title(plain_output: bool) -> int:
 
 	for filename in targets:
 		try:
-			with open(filename, "r+", encoding="utf-8") as file:
+			with open(filename, "rb+") as file:
 				dom = se.easy_xml.EasyXmlTree(file.read())
 
 				title = se.formatting.generate_title(dom)
@@ -54,7 +54,7 @@ def build_title(plain_output: bool) -> int:
 								node.set_text(title)
 
 							file.seek(0)
-							file.write(dom.to_string())
+							file.write(dom.to_string().encode("utf-8"))
 							file.truncate()
 
 		except FileNotFoundError:

@@ -31,7 +31,7 @@ def css_select(plain_output: bool) -> int:
 
 	for filepath in se.get_target_filenames(args.targets, ".xhtml"):
 		try:
-			with open(filepath, "r", encoding="utf-8") as file:
+			with open(filepath, "rb") as file:
 				dom = se.easy_xml.EasyXmlTree(file.read())
 
 			nodes = dom.css_select(args.selector)

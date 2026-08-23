@@ -324,7 +324,7 @@ def output_toc(item_list: list[TocItem], landmark_list: list[TocItem], work_titl
 	if len(item_list) < 2:
 		raise se.InvalidInputException("Too few ToC items found.")
 
-	with importlib.resources.files("se.data.templates").joinpath("toc.xhtml").open("r", encoding="utf-8") as file:
+	with importlib.resources.files("se.data.templates").joinpath("toc.xhtml").open("rb") as file:
 		toc_dom = se.easy_xml.EasyXmlTree(file.read())
 
 	# There should be exactly two nav sections.
@@ -761,7 +761,7 @@ def process_all_content(self: 'SeEpub', file_list: list[Path]) -> tuple[list[Toc
 	nest_under_halftitle = False
 
 	for textf in file_list:
-		with open(textf, "r", encoding="utf-8") as file:
+		with open(textf, "rb") as file:
 			dom = se.easy_xml.EasyXmlTree(file.read())
 
 		process_headings(dom, textf.name, toc_list, single_file, single_file_without_headers, self.content_path)

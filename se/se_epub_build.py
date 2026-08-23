@@ -747,7 +747,8 @@ def _compatibility_replacements_xhtml_mathml_to_presentational(dom: EasyXmlTree)
 		# Initialize the transform object, if we haven't yet.
 		if not mathml_transform:
 			with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("mathmlcontent2presentation.xsl")) as mathml_xsl_filename:
-				mathml_transform = etree.XSLT(etree.parse(str(mathml_xsl_filename)))
+				with open(mathml_xsl_filename, "rb") as file:
+					mathml_transform = etree.XSLT(etree.parse(file))
 
 		# Transform the MathML and get a string representation.
 		# XSLT comes from <https://github.com/fred-wang/webextension-content-mathml-polyfill>.
@@ -1813,7 +1814,7 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 	# metadata_dom = _add_metadata(metadata_dom, self.last_commit, "azw3")
 
 	# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
-	with open(work_compatible_epub_dir / "epub" / toc_filename, "r+", encoding="utf-8") as file:
+	with open(work_compatible_epub_dir / "epub" / toc_filename, "rb+") as file:
 		dom = EasyXmlTree(file.read())
 
 		for node in dom.xpath("//ol/li/ol/li/ol"):
@@ -1823,7 +1824,7 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 				node.unwrap()
 
 		file.seek(0)
-		file.write(dom.to_string())
+		file.write(dom.to_string().encode("utf-8"))
 		file.truncate()
 
 	# Rebuild the NCX.
