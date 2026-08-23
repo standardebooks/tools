@@ -676,7 +676,7 @@ class SeEpub:
 
 		# Quick sanity check before we begin.
 		if not section.get_attr("id") or (section.parent and section.parent.tag.lower() != "body" and not section.parent.get_attr("id")):
-			raise se.InvalidXhtmlException(f"Section without [attr]@id[/] attribute: [html]{section.to_tag_string()}[/]")
+			raise se.InvalidXhtmlException(f"Section without [attr]@id[/] attribute: [xhtml]{section.to_tag_string()}[/]")
 
 		if section.parent and section.parent.tag.lower() == "body" and not section.get_attr("data-parent"):
 			section.set_attr("epub:type", f"{section.get_attr('epub:type')} {section.parent.get_attr('epub:type')}".strip())
@@ -1543,7 +1543,7 @@ class SeEpub:
 
 		ols = loi_dom.xpath("/html/body/nav/ol")
 		if len(ols) != 1:
-			raise se.InvalidSeEbookException(f"LoI contains unexpected number of [html]<ol/>[/]: [path][link=file://{self.loi_path}]{self.loi_path}[/][/].")
+			raise se.InvalidSeEbookException(f"LoI contains unexpected number of [xhtml]<ol/>[/]: [path][link=file://{self.loi_path}]{self.loi_path}[/][/].")
 
 		etree.strip_elements(ols[0].lxml_element, "li")
 

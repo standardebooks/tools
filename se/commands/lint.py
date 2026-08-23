@@ -19,7 +19,7 @@ from se.se_epub import SeEpub
 
 def _highlight_markup(text: str) -> Text:
 	"""Apply syntax highlighting to explicitly tagged XML, XHTML, HTML, and CSS fragments."""
-	text_object = Text.from_markup(text.replace("[html]", "[xhtml]"))
+	text_object = Text.from_markup(text)
 
 	for span in text_object.spans.copy():
 		if span.style in {"xml", "xhtml", "css", "css-selector"}:
