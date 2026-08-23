@@ -281,8 +281,9 @@ METADATA
 "m-090", "[val]dedication[/] semantic inflection found, but no MARC relator [val]dto[/] (Dedicator)."
 "m-091", "Possibly misspelled MARC relator found."
 "m-092", "MusicXML files found, but no MARC relator [val]mcp[/] (Music copyist)."
-"m-093", "A single contributor has multiple schema:sameAs URLs to the same site."
+"m-093", "A single contributor has multiple [val]schema:sameAs[/] URLs to the same site."
 "m-094", "[xml]<dc:description>[/] contains illegal element or attribute. Hint: Only [xhtml]<p>[/], [xhtml]<i>[/], [xhtml]<em>[/], [xhtml]<b>[/], [xhtml]<strong>[/], [xhtml]<u>[/], [xhtml]<s>[/], [xhtml]<a @href>[/], and [attr]@lang[/] are allowed."
+"m-095", "[val]schema:genre[/] is [val]Drama[/], but no [val]z3998:drama[/] element."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1246,7 +1247,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 				invalid_nodes.append(entry[1])
 
 		if invalid_nodes:
-			messages.append(LintMessage("m-093", "A single contributor has multiple schema:sameAs URLs to the same site.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(invalid_nodes)))
+			messages.append(LintMessage("m-093", "A single contributor has multiple [val]schema:sameAs[/] URLs to the same site.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(invalid_nodes)))
 
 	return messages
 
@@ -3793,6 +3794,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 	abbr_elements_requiring_css: list[EasyXmlElement] = []
 	unused_glossary_entries: list[EasyXmlElement] = []
 	short_story_count = 0
+	is_drama = bool(self.metadata_dom.xpath("//meta[@property='schema:genre' and text() = 'Drama']"))
 	missing_styles: list[EasyXmlElement] = []
 	directories_not_url_safe: list[Path] = []
 	files_not_url_safe: list[Path] = []
@@ -3811,6 +3813,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 	}
 	ebook_flags = {
 		"has_cover_source": False,
+		"has_drama_table": False,
 		"has_frontmatter": False,
 		"has_glossary_search_key_map": False,
 		"has_halftitle": False,
@@ -4152,6 +4155,10 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 				# Add to the short story count for later checks.
 				short_story_count += len(dom.xpath("/html/body//article[contains(@epub:type, 'se:short-story')]"))
 
+				# Check for a drama table outside an epigraph for later comparison with the ebook genre.
+				if is_drama and not ebook_flags["has_drama_table"] and dom.xpath("/html/body//table[ancestor-or-self::*[contains(@epub:type, 'z3998:drama')] and not(ancestor-or-self::*[contains(@epub:type, 'epigraph')])]"):
+					ebook_flags["has_drama_table"] = True
+
 				# Check for `id` attributes that don't match the filename.
 				# We simply check if there are *any* IDs that match, because we can have multiple IDs 0 for example, works that are part of a volume or subchapters with IDs.
 				# Ignore `<body>`s with more than 1 `<article>`s, as those are probably short story collections.
@@ -4448,6 +4455,9 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 
 	if short_story_count and not self.metadata_dom.xpath("//meta[@property='schema:genre' and text() = 'Shorts']"):
 		messages.append(LintMessage("m-027", "[val]se:short-story[/] semantic inflection found, but no [val]schema:genre[/] with the value of [val]Shorts[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+
+	if is_drama and not ebook_flags["has_drama_table"]:
+		messages.append(LintMessage("m-095", "[val]schema:genre[/] is [val]Drama[/], but no [val]z3998:drama[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	if unused_glossary_entries:
 		messages.append(LintMessage("m-070", "Glossary entry not found in the text.", se.MESSAGE_TYPE_ERROR, self.content_path / "glossary-search-key-map.xml", LintSubmessage.from_nodes(unused_glossary_entries)))
