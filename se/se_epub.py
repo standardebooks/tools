@@ -2327,9 +2327,9 @@ class SeEpub:
 		# Now try to find this in endnotes.
 		matches = list(filter(lambda x, old=old_anchor: x.anchor == old, self.endnotes)) # type: ignore [arg-type, var-annotated]
 		if not matches:
-			raise se.InvalidInputException(f"Couldn’t find endnote with anchor [attr]{old_anchor}[/].")
+			raise se.InvalidInputException(f"Couldn’t find endnote with anchor [val]{old_anchor}[/].")
 		if len(matches) > 1:
-			raise se.InvalidInputException(f"Duplicate anchors in endnotes file for anchor [attr]{old_anchor}[/].")
+			raise se.InvalidInputException(f"Duplicate anchors in endnotes file for anchor [val]{old_anchor}[/].")
 		# Found a single match, which is what we want.
 		endnote = matches[0]
 		endnote.number = current_note_number
