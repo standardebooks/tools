@@ -118,8 +118,13 @@ def lint(plain_output: bool) -> int:
 
 					if message.submessages:
 						for submessage in message.submessages:
-							# Brackets don't need to be escaped in submessages if we instantiate them in `Text()`.
-							submessage_object = Text(submessage.text, style="dim")
+							# Syntax highlight any XML or XHTML nodes in submessages.
+							submessage_object = se.highlight_xml(submessage.text)
+
+							# If a submessages is text, make it dim instead.
+							if not any(span.style == "xhtml" for span in submessage_object.spans):
+								submessage_object.stylize("dim")
+
 							if submessage.line_num and message.filename:
 								line_number = se.format_line_number(submessage.line_num, submessage.column_num)
 								submessage_line = Align(f"[link=file://{message.filename.resolve()}{line_number}]Line {submessage.line_num}[/link]", align="right")
