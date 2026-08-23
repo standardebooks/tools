@@ -217,8 +217,8 @@ METADATA
 "m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon."
 "m-026", "Non-canonical Wikipedia URL. Expected: [url]https://en.wikipedia.org/wiki/<ARTICLE-ID>[/]."
 "m-027", "[val]se:short-story[/] semantic inflection found, but no [val]schema:genre[/] with the value of [val]Shorts[/]."
-"m-028", "Images found in ebook, but no [attr]schema:accessMode[/] property set to [val]visual[/] in metadata."
-"m-029", "Images found in ebook, but no [attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata."
+"m-028", "Images found in ebook, but no [val]schema:accessMode[/] property set to [val]visual[/] in metadata."
+"m-029", "Images found in ebook, but no [val]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata."
 "m-030", "[val]introduction[/] semantic inflection found, but no MARC relator [val]win[/] (Writer of introduction)."
 "m-031", "[val]preface[/] semantic inflection found, but no MARC relator [val]wpr[/] (Writer of preface)."
 "m-032", "[val]afterword[/] semantic inflection found, but no MARC relator [val]waw[/] (Writer of afterword)."
@@ -227,7 +227,7 @@ METADATA
 "m-035", "Unexpected S.E. identifier in colophon."
 "m-036", "Variable not replaced with value."
 "m-037", "Expected transcription/page scan source link not found."
-"m-038", "[attr]schema:accessMode[/] property set to [val]visual[/], but no images in ebook."
+"m-038", "[val]schema:accessMode[/] property set to [val]visual[/], but no images in ebook."
 "m-039", "[xml]<file>[/] element with duplicate [attr]path[/] attribute value."
 "m-040", "Images found in ebook, but no [attr]role[/] property set to [val]wat[/] in metadata for the writer of the alt text."
 "m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
@@ -266,7 +266,7 @@ METADATA
 "m-074", "Multiple transcriptions found in metadata, but no link to [text]EBOOK_URL#transcriptions[/]."
 "m-075", "Multiple page scans found in metadata, but no link to [text]EBOOK_URL#page-scans[/]."
 "m-076", "Non-canonical Project Gutenberg Australia URL. Expected: [url]https://www.gutenberg.net.au/<PATH>/<FILENAME>.html[/] or [url]https://www.gutenberg.net.au/[/]."
-"m-077", "MathML found in ebook, but no [attr]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata."
+"m-077", "MathML found in ebook, but no [val]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata."
 "m-078", "Nobel Prize strings must read [text]Nobel Prize in ...[/]."
 "m-079", "Ebook looks like a collection, but no [xml]<meta property=\"schema:additionalType\">http://schema.org/Collection</meta>[/] element in metadata."
 "m-080", "DP link must be exactly [text]Distributed Proofreaders Canada[/]."
@@ -3638,17 +3638,17 @@ def _lint_image_metadata_checks(self: 'SeEpub', has_images: bool) -> list[LintMe
 
 	if has_images:
 		if not has_visual_accessmode:
-			messages.append(LintMessage("m-028", "Images found in ebook, but no [attr]schema:accessMode[/] property set to [val]visual[/] in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+			messages.append(LintMessage("m-028", "Images found in ebook, but no [val]schema:accessMode[/] property set to [val]visual[/] in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 		if not has_accessibility_feature_alt:
-			messages.append(LintMessage("m-029", "Images found in ebook, but no [attr]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+			messages.append(LintMessage("m-029", "Images found in ebook, but no [val]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 		if not has_wat_role:
 			messages.append(LintMessage("m-040", "Images found in ebook, but no [attr]role[/] property set to [val]wat[/] in metadata for the writer of the alt text.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	if not has_images:
 		if has_visual_accessmode:
-			messages.append(LintMessage("m-038", "[attr]schema:accessMode[/] property set to [val]visual[/], but no images in ebook.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(visual_accessmode)))
+			messages.append(LintMessage("m-038", "[val]schema:accessMode[/] property set to [val]visual[/], but no images in ebook.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(visual_accessmode)))
 
 	return messages
 
@@ -4301,7 +4301,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 	if ebook_flags["has_mathml"]:
 		# Check for MathML, and no `MathML` / `describedMath` `accessibilityFeature`.
 		if not self.metadata_dom.xpath("/package/metadata/meta[@property='schema:accessibilityFeature' and text() = 'describedMath']"):
-			messages.append(LintMessage("m-077", "MathML found in ebook, but no [attr]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+			messages.append(LintMessage("m-077", "MathML found in ebook, but no [val]schema:accessibilityFeature[/] properties set to [val]MathML[/] and [val]describedMath[/] in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	# Check for classes used but not in CSS, and classes only used once.
 	for css_class, nodes_tuples in xhtml_css_classes.items():
