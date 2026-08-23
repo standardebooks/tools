@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, TextIO
 
 from pygments import lex
 from pygments.lexers import find_lexer_class_by_name
-from pygments.token import Comment, Error, Name, String
+from pygments.token import Comment, Error, Keyword, Literal, Name, String
 from rich.console import Console
 from rich.text import Text
 from rich.theme import Theme
@@ -20,6 +20,7 @@ from natsort import natsorted, ns
 import regex
 
 import se.easy_xml
+from se.css_constants import CSS_BLOCK_ELEMENTS, CSS_PROPERTIES
 
 if TYPE_CHECKING:
 	from se.se_epub_build import BuildMessage # Import under type checking guard to prevent circular import error.
@@ -69,6 +70,8 @@ RICH_THEME = Theme({
 	"finished": "pale_green3",
 	"text": "sandy_brown",
 	"css": "steel_blue3",
+	"css-property": "plum3",
+	"css-selector": "indian_red",
 	"email": "plum3",
 	"flag": "steel_blue3",
 	"header": "bold pale_green3",
@@ -233,6 +236,84 @@ def highlight_xml(text: str) -> Text:
 			style = "bold error"
 
 		output.append(token_text, style=style)
+
+	return output
+
+def highlight_css(text: str) -> Text:
+	"""
+	Syntax highlight CSS using the Standard Ebooks theme.
+	"""
+	# Pygments treats isolated CSS properties and keyword values as element selectors, so classify these fragments using the toolset’s supported property and element lists.
+	fragment = text.strip()
+	if fragment in CSS_PROPERTIES:
+		return Text().append(text, style="attr")
+	if regex.fullmatch(r"[a-z-]+", fragment) and fragment not in CSS_BLOCK_ELEMENTS:
+		return Text().append(text, style="val")
+
+	# Place declaration-list fragments in a dummy rule so that Pygments doesn't interpret property names and values as selectors.
+	css = text
+	content_start = 0
+	content_end = len(text)
+	if "{" not in text and regex.search(r"(?:^|;)\s*[-a-z]+\s*:", text):
+		css = "*{" + text + "}"
+		content_start = 2
+		content_end += content_start
+
+	output = Text()
+	position = 0
+	for token_type, token_text in lex(css, find_lexer_class_by_name("css")(ensurenl=False)):
+		token_start = position
+		token_end = token_start + len(token_text)
+		position = token_end
+		if token_end <= content_start or token_start >= content_end:
+			continue
+		token_text = token_text[max(content_start - token_start, 0):len(token_text) - max(token_end - content_end, 0)]
+
+		style: str | None = "css"
+		if token_type in Comment:
+			style = "dim"
+		elif token_type in Name.Tag:
+			style = "xhtml"
+		elif token_type in Name.Class or token_type in Name.Decorator:
+			style = "class"
+		elif token_type in Name.Attribute or token_type == Keyword:
+			style = "attr"
+		elif token_type in Literal or token_type in Keyword.Type or token_type in Keyword.Constant or token_type in Name:
+			style = "val"
+		elif token_type in Error:
+			style = "bold error"
+
+		output.append(token_text, style=style)
+
+	return output
+
+def highlight_css_selector(text: str) -> Text:
+	"""
+	Syntax highlight a CSS selector using the Standard Ebooks theme.
+	"""
+
+	output = Text()
+	in_attribute_selector = False
+	for token_type, token_text in lex(text, find_lexer_class_by_name("css")(ensurenl=False)):
+		if token_text == "[":
+			in_attribute_selector = True
+
+		style: str | None = "css"
+		if token_type in Comment:
+			style = "dim"
+		elif token_type in Name.Class or token_type in Name.Decorator or token_type in Name.Namespace:
+			style = "class"
+		elif token_type in Name.Tag:
+			style = "attr" if in_attribute_selector else "xhtml"
+		elif token_type in Literal:
+			style = "val"
+		elif token_type in Error:
+			style = "bold error"
+
+		output.append(token_text, style=style)
+
+		if token_text == "]":
+			in_attribute_selector = False
 
 	return output
 
@@ -411,7 +492,7 @@ def prep_output(message: str, plain_output: bool = False) -> str:
 		replacement = "" if se.COLOR_OUTPUT else "`"
 		message = regex.sub(r"\[/?hint\]", "", message)
 		# Replace color markup with the configured plain-text marker.
-		message = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|link|command|branch|email|flag|header|parameter|user)(?:=[^\]]*?)*\]", replacement, message)
+		message = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|css-property|css-selector|val|class|path|url|text|link|command|branch|email|flag|header|parameter|user)(?:=[^\]]*?)*\]", replacement, message)
 		if replacement:
 			message = regex.sub(r"`+", "`", message)
 

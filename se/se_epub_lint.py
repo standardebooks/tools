@@ -21,6 +21,7 @@ from unidecode import unidecode
 import cssutils
 from PIL import Image, UnidentifiedImageError
 import regex
+from rich.markup import escape
 from natsort import natsorted, ns
 from lxml import etree
 
@@ -137,16 +138,16 @@ See the `se.print_error()` function for a comprehensive list of allowed codes.
 LIST OF ALL SE LINT MESSAGES
 
 CSS
-"c-001", "Illegal selector. [hint]Hint: Applying [css]:first-of-type[/], [css]:last-of-type[/], [css]:nth-of-type[/] [css]:nth-last-of-type[/], or [css]:only-of-type[/] to [css]*[/] is not implemented in the SE toolset. Instead of targeting [css]*[/], target an element, like [css]p[/]. Remember that [css]*[/] may be implicit.[/hint]"
+"c-001", "Illegal selector. [hint]Hint: Applying [css-selector]:first-of-type[/], [css-selector]:last-of-type[/], [css-selector]:nth-of-type[/] [css-selector]:nth-last-of-type[/], or [css-selector]:only-of-type[/] to [css-selector]*[/] is not implemented in the SE toolset. Instead of targeting [css-selector]*[/], target an element, like [css-selector]p[/]. Remember that [css-selector]*[/] may be implicit.[/hint]"
 "c-002", "Unused CSS selectors."
-"c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared. [hint]Hint: Add [css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/] to the top of this CSS file.[/hint]"
-"c-004", "Illegal [css]border-color[/] specified on element."
-"c-005", "Illegal [css]white-space: nowrap;[/] applied to [css]abbr[/] selector."
+"c-003", "[css-selector]\\[xml|attr][/] selector in CSS, but no XML namespace declared. [hint]Hint: Add [css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/] to the top of this CSS file.[/hint]"
+"c-004", "Illegal [css-property]border-color[/] specified on element."
+"c-005", "Illegal [css]white-space: nowrap;[/] applied to [css-selector]abbr[/] selector."
 "c-006", "Semantic found, but missing corresponding style CSS style."
 "c-008", "CSS class only used once. [hint]Hint: Craft a selector instead of a single-use class.[/hint]"
 "c-009", "Duplicate CSS selectors. [hint]Hint: Duplicates are only acceptable if overriding S.E. base styles.[/hint]"
-"c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [hint]Hint: [css]text-align[/] is usually set to [css]right[/].[/hint]"
-"c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/]."
+"c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [hint]Hint: [css-property]text-align[/] is usually set to [val]right[/].[/hint]"
+"c-011", "Element with [css]text-align: center;[/] but [css-property]text-indent[/] is [val]1em[/]."
 "c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/]."
 "c-013", "Element with margin or padding not in increments of [css].5em[/]."
 "c-014", "[xhtml]<table>[/] element without explicit margins. [hint]Hint: Most tables need [css]margin: 1em;[/] or [css]margin: 1em auto 1em auto;[/].[/hint]"
@@ -157,12 +158,12 @@ CSS
 "c-019", "Element with [val]z3998:signature[/] semantic, but without [css]font-variant: small-caps;[/] or [css]font-style: italic;[/]."
 "c-020", "Multiple [xhtml]<article>[/]s or [xhtml]<section>[/]s in file, but missing [css]break-after: page;[/]."
 "c-021", "Element with [css]font-style: italic;[/], but child [xhtml]<i>[/] or [xhtml]<em>[/] doesn’t have [css]font-style: normal;[/]. [hint]Hint: Italics within italics are typically set in Roman for contrast; if that’s not the case here, can [xhtml]<i>[/] be removed while still preserving italics and semantic inflection?[/hint]"
-"c-022", "Illegal [css]rem[/] unit. [hint]Hint: use [css]em[/] instead.[/hint]"
-"c-023", "Illegal unit used to set [css]font-size[/]. [hint]Hint: Use [css]em[/] units.[/hint]"
-"c-024", "Illegal unit used to set [css]line-height[/]. [hint]Hint: [css]line-height[/] is set without any units.[/hint]"
-"c-025", "Illegal percent unit used to set [css]height[/] or positioning property. [hint]Hint: Use [css]vh[/] to specify vertical-oriented properties like [css]height[/] or [css]position[/].[/hint]"
+"c-022", "Illegal [val]rem[/] unit. [hint]Hint: use [val]em[/] instead.[/hint]"
+"c-023", "Illegal unit used to set [css-property]font-size[/]. [hint]Hint: Use [val]em[/] units.[/hint]"
+"c-024", "Illegal unit used to set [css-property]line-height[/]. [hint]Hint: [css-property]line-height[/] is set without any units.[/hint]"
+"c-025", "Illegal percent unit used to set [css-property]height[/] or positioning property. [hint]Hint: Use [val]vh[/] to specify vertical-oriented properties like [css-property]height[/] or [css-property]position[/].[/hint]"
 "c-026", "Table that appears to be listing numbers, but without [css]font-variant-numeric: tabular-nums;[/]."
-"c-027", "Illegal [css]font-size[/] below [css]1[/]."
+"c-027", "Illegal [css-property]font-size[/] below [val]1[/]."
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 "c-007", "[css]hyphens[/css] CSS property without [css]-epub-hyphens[/css] copy."
 
@@ -679,9 +680,9 @@ class LintSubmessage:
 		return self.text
 
 	@classmethod
-	def from_matches(cls, matches: list[tuple[str, int]]) -> list['LintSubmessage']:
+	def from_matches(cls, matches: list[tuple[str, int]], formatting_tag: str | None = None) -> list['LintSubmessage']:
 		"""Create a list of `LintSubmessage` objects from search match tuples."""
-		return [cls(match_text, line_num) for match_text, line_num in sorted(matches, key=lambda x: x[1])]
+		return [cls(f"[{formatting_tag}]{escape(match_text)}[/]" if formatting_tag else match_text, line_num) for match_text, line_num in sorted(matches, key=lambda x: x[1])]
 
 	@classmethod
 	def from_nodes(cls, nodes: list[EasyXmlElement]|list[str]) -> list['LintSubmessage']:
@@ -1455,45 +1456,45 @@ def _lint_css_checks(self: 'SeEpub', local_css_path: Path, abbr_with_whitespace:
 	matches = source_file.findall(r"(?:^| )(?:[^a-z\s][^\s]+?|\*|):(?:first-of-type|last-of-type|nth-of-type|nth-last-of-type|only-of-type)", flags=regex.MULTILINE)
 
 	if matches:
-		messages.append(LintMessage("c-001", "Illegal selector. [hint]Hint: Applying [css]:first-of-type[/], [css]:last-of-type[/], [css]:nth-of-type[/] [css]:nth-last-of-type[/], or [css]:only-of-type[/] to [css]*[/] is not implemented in the SE toolset. Instead of targeting [css]*[/], target an element, like [css]p[/]. Remember that [css]*[/] may be implicit.[/hint]", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
+		messages.append(LintMessage("c-001", "Illegal selector. [hint]Hint: Applying [css-selector]:first-of-type[/], [css-selector]:last-of-type[/], [css-selector]:nth-of-type[/] [css-selector]:nth-last-of-type[/], or [css-selector]:only-of-type[/] to [css-selector]*[/] is not implemented in the SE toolset. Instead of targeting [css-selector]*[/], target an element, like [css-selector]p[/]. Remember that [css-selector]*[/] may be implicit.[/hint]", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches, formatting_tag="css-selector")))
 
 	# If we select on the `xml` namespace, make sure we define the namespace in the CSS, otherwise the selector won't work.
 	# We do this using a regex and not with cssutils, because cssutils will barf in this particular case and not even record the selector.
 	matches = source_file.findall(r"\[\s*xml\s*\|.+\]")
 	if matches and "@namespace xml \"http://www.w3.org/XML/1998/namespace\";" not in self.local_css:
-		messages.append(LintMessage("c-003", "[css]\\[xml|attr][/] selector in CSS, but no XML namespace declared. [hint]Hint: Add [css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/] to the top of this CSS file.[/hint]", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
+		messages.append(LintMessage("c-003", "[css-selector]\\[xml|attr][/] selector in CSS, but no XML namespace declared. [hint]Hint: Add [css]@namespace xml \"http://www.w3.org/XML/1998/namespace\";[/] to the top of this CSS file.[/hint]", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches, formatting_tag="css-selector")))
 
 	if abbr_with_whitespace:
 		matches: list[tuple[str, int]] = []
 		for selector in abbr_with_whitespace:
 			matches += source_file.find_selector(selector)
 
-		messages.append(LintMessage("c-005", "Illegal [css]white-space: nowrap;[/] applied to [css]abbr[/] selector.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
+		messages.append(LintMessage("c-005", "Illegal [css]white-space: nowrap;[/] applied to [css-selector]abbr[/] selector.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches, formatting_tag="css-selector")))
 
 	matches = source_file.findall(r"text-align:\s*left\s*;")
 	if matches:
-		messages.append(LintMessage("c-016", "Illegal [css]text-align: left;[/]. [hint]Hint: use [css]text-align: initial;[/] instead.[/hint]", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
+		messages.append(LintMessage("c-016", "Illegal [css]text-align: left;[/]. [hint]Hint: use [css]text-align: initial;[/] instead.[/hint]", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches, formatting_tag="css")))
 
 	matches = source_file.findall(r"[a-z\-]+\s*:\s*[0-9\.]\s?rem;")
 	if matches:
-		messages.append(LintMessage("c-022", "Illegal [css]rem[/] unit. [hint]Hint: use [css]em[/] instead.[/hint]", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
+		messages.append(LintMessage("c-022", "Illegal [val]rem[/] unit. [hint]Hint: use [val]em[/] instead.[/hint]", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches, formatting_tag="css")))
 
 	matches = source_file.findall(r"font-size\s*:\s*[0-9\.]+(?![0-9\.]|em|ex)")
 	if matches:
-		messages.append(LintMessage("c-023", "Illegal unit used to set [css]font-size[/]. [hint]Hint: Use [css]em[/] units.[/hint]", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
+		messages.append(LintMessage("c-023", "Illegal unit used to set [css-property]font-size[/]. [hint]Hint: Use [val]em[/] units.[/hint]", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches, formatting_tag="css")))
 
 	matches = source_file.findall(r"line-height\s*:\s*[0-9\.]+(?!;|[0-9\.]+)")
 	if matches:
-		messages.append(LintMessage("c-024", "Illegal unit used to set [css]line-height[/]. [hint]Hint: [css]line-height[/] is set without any units.[/hint]", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
+		messages.append(LintMessage("c-024", "Illegal unit used to set [css-property]line-height[/]. [hint]Hint: [css-property]line-height[/] is set without any units.[/hint]", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches, formatting_tag="css")))
 
 	# Allow `max-height` in percentages which is useful because the percentage may refer to a parent container.
 	matches = source_file.findall(r"(?<!max-)(height|\stop|\sbottom)\s*:\s*[0-9\.]+%")
 	if matches:
-		messages.append(LintMessage("c-025", "Illegal percent unit used to set [css]height[/] or positioning property. [hint]Hint: Use [css]vh[/] to specify vertical-oriented properties like [css]height[/] or [css]position[/].[/hint]", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
+		messages.append(LintMessage("c-025", "Illegal percent unit used to set [css-property]height[/] or positioning property. [hint]Hint: Use [val]vh[/] to specify vertical-oriented properties like [css-property]height[/] or [css-property]position[/].[/hint]", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches, formatting_tag="css")))
 
 	matches = source_file.findall(r"font-size: 0?\.[0-9]+")
 	if matches:
-		messages.append(LintMessage("c-027", "Illegal [css]font-size[/] below [css]1[/].", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
+		messages.append(LintMessage("c-027", "Illegal [css-property]font-size[/] below [val]1[/].", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches, formatting_tag="css")))
 
 	return messages
 
@@ -1979,19 +1980,19 @@ def _lint_xhtml_css_checks(source_file: SourceFile, dom: EasyXmlTree) -> list[Li
 	# `transparent` and `none` are allowed values for `border-color`.
 	nodes = dom.xpath("/html/body//*[attribute::*[re:test(local-name(), '^data-css-border.*?-color$') and not(re:test(., '^transparent|none$'))]]")
 	if nodes:
-		messages.append(LintMessage("c-004", "Illegal [css]border-color[/] specified on element.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("c-004", "Illegal [css-property]border-color[/] specified on element.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check that `<footer>`s have the expected styling.
 	# `<footer>`s may sometimes be aligned with `text-align: center` as well as `text-align: right`.
 	# We also ignore ``text-align` on any `<footer>`s whose only child is a postscript, which is typically left-aligned.
 	nodes = dom.xpath("/html/body//footer[not(@data-css-margin-top='1em') or (not(@data-css-text-align) and not(./*[contains(@epub:type, 'z3998:postscript') and not(following-sibling::*) and not(preceding-sibling::*) ]))]")
 	if nodes:
-		messages.append(LintMessage("c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [hint]Hint: [css]text-align[/] is usually set to [css]right[/].[/hint]", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [hint]Hint: [css-property]text-align[/] is usually set to [val]right[/].[/hint]", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for elements that have `text-align: center` but also `text-indent: 1em`.
 	nodes = dom.xpath("/html/body//*[@data-css-text-align='center' and @data-css-text-indent='1em']")
 	if nodes:
-		messages.append(LintMessage("c-011", "Element with [css]text-align: center;[/] but [css]text-indent[/] is [css]1em[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("c-011", "Element with [css]text-align: center;[/] but [css-property]text-indent[/] is [val]1em[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for sections that don't have heading elements, and that do not have `margin-top: 8em`.
 	# This tries to find the first `<section>` or `<article>` whose first child is `<p>`, and that doesn't have any ancestor `<section>`s or `<articles>`s with heading content, and that doesn't have the correct top margin.
@@ -2003,7 +2004,7 @@ def _lint_xhtml_css_checks(source_file: SourceFile, dom: EasyXmlTree) -> list[Li
 	# Check for padding and margin not in `.5` increments, except for table headers/cells which usually need `.25em` increments, and `<hgroup>` including `<h#>` followed by `<p>`, which have special margins set in `core.css`.
 	nodes = dom.xpath("/html/body//*[not(re:test(name(), '^(h[1-6]|td|th|hgroup)$')) and not(parent::hgroup and not(following-sibling::*))][attribute::*[re:test(local-name(), 'data-css-(margin|padding)')][re:test(., '^[0-9]*\\.[^5]')]]")
 	if nodes:
-		messages.append(LintMessage("c-013", "Element with margin or padding not in increments of [css].5em[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("c-013", "Element with margin or padding not in increments of [val].5em[/].", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for `<table>` without set margins. We ignore tables that are for drama structuring, and tables that are ancestors of `<blockquote>`, because `<blockquote>` has its own margin.
 	# We also ignore tables whose preceding sibling sets a bottom margin that is not `0`.
@@ -3878,7 +3879,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 		for selector in duplicate_selectors:
 			matches += css_source_file.find_selector(selector)
 
-		messages.append(LintMessage("c-009", "Duplicate CSS selectors. [hint]Hint: Duplicates are only acceptable if overriding S.E. base styles.[/hint]", se.MESSAGE_TYPE_WARNING, local_css_path, LintSubmessage.from_matches(matches)))
+		messages.append(LintMessage("c-009", "Duplicate CSS selectors. [hint]Hint: Duplicates are only acceptable if overriding S.E. base styles.[/hint]", se.MESSAGE_TYPE_WARNING, local_css_path, LintSubmessage.from_matches(matches, formatting_tag="css-selector")))
 
 	# Store a list of CSS selectors, and duplicate it into a list of unused selectors, for later checks.
 	# We use a regex to remove pseudo-elements like `::before`, because we want the *selectors* to see if they're unused.
@@ -4178,7 +4179,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 							unused_selectors.remove(selector)
 							continue
 						except Exception as ex:
-							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css]{selector}[/]: {ex}")
+							raise se.InvalidCssException(f"Couldn’t parse CSS in or near this line: [css-selector]{selector}[/]: {ex}")
 
 				# Update our list of `local.css` selectors to check in the next file.
 				local_css_selectors = list(unused_selectors)
@@ -4451,7 +4452,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 		for selector in unused_selectors:
 			matches += css_source_file.find_selector(selector)
 
-		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches)))
+		messages.append(LintMessage("c-002", "Unused CSS selectors.", se.MESSAGE_TYPE_ERROR, local_css_path, LintSubmessage.from_matches(matches, formatting_tag="css-selector")))
 
 	if short_story_count and not self.metadata_dom.xpath("//meta[@property='schema:genre' and text() = 'Shorts']"):
 		messages.append(LintMessage("m-027", "[val]se:short-story[/] semantic inflection found, but no [val]schema:genre[/] with the value of [val]Shorts[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))

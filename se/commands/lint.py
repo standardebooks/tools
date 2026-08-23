@@ -17,6 +17,24 @@ import se
 from se.se_help_formatter import SeHelpFormatter
 from se.se_epub import SeEpub
 
+def _highlight_markup(text: str) -> Text:
+	"""Apply syntax highlighting to explicitly tagged XML, XHTML, HTML, and CSS fragments."""
+	text_object = Text.from_markup(text.replace("[html]", "[xhtml]"))
+
+	for span in text_object.spans.copy():
+		if span.style in {"xml", "xhtml", "css", "css-selector"}:
+			text_object.spans.remove(span)
+			if span.style == "css":
+				highlighted_text = se.highlight_css(text_object.plain[span.start:span.end])
+			elif span.style == "css-selector":
+				highlighted_text = se.highlight_css_selector(text_object.plain[span.start:span.end])
+			else:
+				highlighted_text = se.highlight_xml(text_object.plain[span.start:span.end])
+			for highlighted_span in highlighted_text.spans:
+				text_object.stylize(highlighted_span.style, span.start + highlighted_span.start, span.start + highlighted_span.end)
+
+	return text_object
+
 def lint(plain_output: bool) -> int:
 	"""
 	Entry point for `se lint`.
@@ -114,27 +132,20 @@ def lint(plain_output: bool) -> int:
 					if message.filename:
 						message_filename = f"[path][link=file://{message.filename.resolve()}]{message.filename.name}[/link][/path]"
 
-					message_object = Text.from_markup(message.text.replace("[html]", "[xhtml]"))
-
-					# Syntax highlight fragments explicitly marked as XML, XHTML, or HTML.
-					for span in message_object.spans.copy():
-						if span.style in {"xml", "xhtml"}:
-							message_object.spans.remove(span)
-							for highlighted_span in se.highlight_xml(message_object.plain[span.start:span.end]).spans:
-								message_object.stylize(highlighted_span.style, span.start + highlighted_span.start, span.start + highlighted_span.end)
+					message_object = _highlight_markup(message.text)
 
 					table_data.append([message.code, alert, message_filename, message_object])
 
 					if message.submessages:
 						for submessage in message.submessages:
-							if "[hint]" in submessage.text:
-								submessage_object = Text.from_markup(submessage.text)
+							if "[hint]" in submessage.text or "[css]" in submessage.text or "[css-property]" in submessage.text or "[css-selector]" in submessage.text:
+								submessage_object = _highlight_markup(submessage.text)
 							else:
 								# Syntax highlight any XML or XHTML nodes in submessages.
 								submessage_object = se.highlight_xml(submessage.text)
 
 							# If a submessages is text, make it dim instead.
-							if not any(span.style == "xhtml" for span in submessage_object.spans):
+							if not any(span.style in {"attr", "class", "css", "css-property", "css-selector", "val", "xhtml"} for span in submessage_object.spans):
 								submessage_object.stylize("dim")
 
 							if submessage.line_num and message.filename:
