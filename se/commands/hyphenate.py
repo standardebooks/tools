@@ -16,7 +16,7 @@ def hyphenate(plain_output: bool) -> int:
 
 	parser = argparse.ArgumentParser(description="Insert soft hyphens at syllable breaks in XHTML files.", prog="[command]se[/] [subcommand]hyphenate[/]", formatter_class=SeHelpFormatter)
 	parser.add_argument("-i", "--ignore-h-tags", action="store_true", help="Don’t add soft hyphens to text in [xhtml]<h1-6>[/] tags.")
-	parser.add_argument("-l", "--language", action="store", help="Specify the language for the XHTML files; if unspecified, defaults to the [attr]xml:lang[/] or [attr]lang[/] attribute of the root [xhtml]<html>[/] element.")
+	parser.add_argument("-l", "--language", action="store", help="Specify the language for the XHTML files; if unspecified, defaults to the [attr]@xml:lang[/] or [attr]@lang[/] attribute of the root [xhtml]<html>[/] element.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity.")
 	parser.add_argument("targets", metavar="[path]TARGET[/]", nargs="+", help="An XHTML file, or a directory containing XHTML files.")
 	args = parser.parse_args()

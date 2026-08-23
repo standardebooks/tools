@@ -276,7 +276,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se build-ids`
 
-	Change ID attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced, and the ebook spine must be complete.
+	Change `@id` attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced, and the ebook spine must be complete.
 
 -	### `se build-images`
 
@@ -292,7 +292,7 @@ We need volunteers to take the lead on the following goals:
 
 -	### `se build-svg-titles`
 
-	Update or add SVG `<title>` elements based on the alt attributes from the `<img>` elements.
+	Update or add SVG `<title>` elements based on the `@alt` attributes from the `<img>` elements.
 
 -	### `se build-title`
 

@@ -49,7 +49,7 @@ complete -c se -A -n "__fish_seen_subcommand_from build" -s p -l proof -x -d "In
 complete -c se -A -n "__fish_seen_subcommand_from build" -s v -l verbose -x -d "Increase output verbosity."
 complete -c se -A -n "__fish_seen_subcommand_from build" -s y -l check-only -x -d "Run tests used by `--check`, but don’t output any ebook files, and exit after checking."
 
-complete -c se -n "__fish_se_no_subcommand" -a build-ids -d "Change `id` attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced, and the ebook spine must be complete."
+complete -c se -n "__fish_se_no_subcommand" -a build-ids -d "Change `@id` attributes for non-sectioning content to their expected values across the entire ebook. IDs must be globally unique and correctly referenced, and the ebook spine must be complete."
 complete -c se -A -n "__fish_seen_subcommand_from build-ids" -s h -l help -x -d "Show this help message and exit."
 complete -c se -A -n "__fish_seen_subcommand_from build-ids" -s n -l no-endnotes -x -d "Exclude endnotes."
 complete -c se -A -n "__fish_seen_subcommand_from build-ids" -s v -l verbose -x -d "Increase output verbosity."
@@ -71,7 +71,7 @@ complete -c se -n "__fish_se_no_subcommand" -a build-spine -d "Generate the `<sp
 complete -c se -A -n "__fish_seen_subcommand_from build-spine" -s h -l help -x -d "Show this help message and exit."
 complete -c se -A -n "__fish_seen_subcommand_from build-spine" -s s -l stdout -x -d "Print to stdout instead of writing to the metadata file."
 
-complete -c se -n "__fish_se_no_subcommand" -a build-svg-titles -d "Update or add SVG `<title>` elements based on the `alt` attributes from the `<img>` elements."
+complete -c se -n "__fish_se_no_subcommand" -a build-svg-titles -d "Update or add SVG `<title>` elements based on the `@alt` attributes from the `<img>` elements."
 complete -c se -A -n "__fish_seen_subcommand_from build-svg-titles" -s h -l help -x -d "Show this help message and exit."
 complete -c se -A -n "__fish_seen_subcommand_from build-svg-titles" -s v -l verbose -x -d "Increase output verbosity."
 
@@ -136,7 +136,7 @@ complete -c se -n "__fish_se_no_subcommand" -a help -d "List available Standard 
 complete -c se -n "__fish_se_no_subcommand" -a hyphenate -d "Insert soft hyphens at syllable breaks in XHTML files."
 complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s h -l help -x -d "Show this help message and exit."
 complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s i -l ignore-h-tags -x -d "Don’t add soft hyphens to text in `<h1-6>` tags."
-complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s l -l language -d "Specify the language for the XHTML files; if unspecified, defaults to the `xml:lang` or `lang` attribute of the root `<html>` element."
+complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s l -l language -d "Specify the language for the XHTML files; if unspecified, defaults to the `@xml:lang` or `@lang` attribute of the root `<html>` element."
 complete -c se -A -n "__fish_seen_subcommand_from hyphenate" -s v -l verbose -x -d "Increase output verbosity."
 
 complete -c se -n "__fish_se_no_subcommand" -a interactive-replace -d "Perform an interactive search and replace on a list of files using Python-flavored regex. The view is scrolled using the arrow keys, with alt to scroll by page in any direction. Basic Emacs (default) or Vim style navigation is available. The following actions are possible: (y) Accept replacement. (n) Reject replacement. (a) Accept all remaining replacements in this file. (r) Reject all remaining replacements in this file. (c) Center on match. (q) Save this file and quit."
@@ -170,7 +170,7 @@ complete -c se -A -n "__fish_seen_subcommand_from prepare-release" -s w -l no-wo
 complete -c se -n "__fish_se_no_subcommand" -a recompose-epub -d "Recompose a Standard Ebooks source directory into a single (X?)HTML5 file, and print to standard output."
 complete -c se -A -n "__fish_seen_subcommand_from recompose-epub" -s e -l extra-css-file -d "The path to an additional CSS file to include after any CSS files in the epub."
 complete -c se -A -n "__fish_seen_subcommand_from recompose-epub" -s h -l help -x -d "Show this help message and exit."
-complete -c se -A -n "__fish_seen_subcommand_from recompose-epub" -s i -l image-files -x -d "Leave image `src` attributes as relative URLs instead of inlining as `data:` URIs."
+complete -c se -A -n "__fish_seen_subcommand_from recompose-epub" -s i -l image-files -x -d "Leave image `@src` attributes as relative URLs instead of inlining as `data:` URIs."
 complete -c se -A -n "__fish_seen_subcommand_from recompose-epub" -s o -l output -d "A file to write output to instead of printing to standard output."
 complete -c se -A -n "__fish_seen_subcommand_from recompose-epub" -s x -l xhtml -x -d "Output XHTML instead of HTML5."
 

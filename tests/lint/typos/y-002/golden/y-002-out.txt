@@ -1,4 +1,4 @@
-x-018 [Error] chapter-1.xhtml Unused `id` attribute.
+x-018 [Error] chapter-1.xhtml Unused `@id` attribute.
  Line 14:       <a href="endnotes.xhtml#note-a" id="noteref-a" epub:type="noteref">
 y-002 [Manual Review] chapter-1.xhtml Possible typo: Punctuation followed directly by a letter, without a space.
  Line 16:       <p>The shell of a diploma becomes a leaning badger. The stopwatch of a beef becomes an anile command. Before chards,thumbs were only railwaies.</p>

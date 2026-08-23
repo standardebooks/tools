@@ -179,7 +179,7 @@ FILESYSTEM
 "f-011", "JPEG files must end in [path].jpg[/]."
 "f-012", "TIFF files must end in [path].tif[/]."
 "f-013", "Glossary search key map must be named [path]glossary-search-key-map.xml[/]."
-"f-015", "Filename doesn’t match [attr]id[/] attribute of primary [xhtml]<section>[/] or [xhtml]<article>[/]. [hint]Hint: [attr]id[/] attributes don’t include the file extension.[/hint]"
+"f-015", "Filename doesn’t match [attr]@id[/] attribute of primary [xhtml]<section>[/] or [xhtml]<article>[/]. [hint]Hint: [attr]@id[/] attributes don’t include the file extension.[/hint]"
 "f-016", "Image more than 1.5MB in size."
 "f-017", f"[path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}."
 "f-018", "Image greater than 4,000,000 pixels square in dimension."
@@ -198,8 +198,8 @@ METADATA
 "m-006", "Non-canonical Project Gutenberg URL. Expected: [url]https://www.gutenberg.org/ebooks/<BOOK-ID>[/] or [url]https://www.gutenberg.org/[/]."
 "m-007", "Non-canonical Internet Archive URL. Expected: [url]https://archive.org/details/<BOOK-ID>[/]."
 "m-008", "Non-canonical Library of Congress Name Authority URI. Expected: [url]https://id.loc.gov/authorities/names/<IDENTIFIER>.html[/]."
-"m-009", "Unexpected value for [attr]href[/] attribute in [xml]<link rel=\"schema:codeRepository\">[/] element."
-"m-010", "Invalid [attr]refines[/] attribute value."
+"m-009", "Unexpected value for [attr]@href[/] attribute in [xml]<link rel=\"schema:codeRepository\">[/] element."
+"m-010", "Invalid [attr]@refines[/] attribute value."
 "m-011", "Subtitle in metadata, but no expanded title element."
 "m-012", "Non-typogrified character in [xml]<dc:title>[/] element."
 "m-013", "Non-typogrified character in [xml]<meta property=\"schema:abstract\">[/] element."
@@ -228,8 +228,8 @@ METADATA
 "m-036", "Variable not replaced with value."
 "m-037", "Expected transcription/page scan source link not found."
 "m-038", "[val]schema:accessMode[/] property set to [val]visual[/], but no images in ebook."
-"m-039", "[xml]<file>[/] element with duplicate [attr]path[/] attribute value."
-"m-040", "Images found in ebook, but no [attr]role[/] property set to [val]wat[/] in metadata for the writer of the alt text."
+"m-039", "[xml]<file>[/] element with duplicate [attr]@path[/] attribute value."
+"m-040", "Images found in ebook, but no [attr]@role[/] property set to [val]wat[/] in metadata for the writer of the alt text."
 "m-041", "Hathi Trust link text must be exactly [text]HathiTrust Digital Library[/]."
 "m-042", "[xml]<manifest>[/] element doesn’t match expected structure."
 "m-043", "Non-canonical Wayback Machine URL. Expected: [url]https://web.archive.org/web/<DATE>/<ARCHIVED-URL>[/]."
@@ -246,7 +246,7 @@ METADATA
 "m-054", "Non-canonical Standard Ebooks URL. Expected: [url]https://standardebooks.org/ebooks/<AUTHOR>/<TITLE>\\[/<CONTRIBUTOR> ...][/]. [hint]Hint: No trailing slash.[/hint]"
 "m-055", "[xml]<meta property=\"schema:abstract\">[/] element doesn’t end with a period."
 "m-056", "Author name present in [xml]<dc:description>[/] element, but the first instance of their name is not linked to their S.E. author page."
-"m-057", "Illegal [attr]xml:lang[/] attribute in [xml]<dc:description>[/] element. [hint]Hint: [attr]xml:lang[/] should be [attr]lang[/].[/hint]"
+"m-057", "Illegal [attr]@xml:lang[/] attribute in [xml]<dc:description>[/] element. [hint]Hint: [attr]@xml:lang[/] should be [attr]@lang[/].[/hint]"
 "m-058", "[val]schema:genre[/] that implies other [val]schema:genre[/]. [hint]Hint: Remove the [val]schema:genre[/] that is implied.[/hint]"
 "m-059", "Link found in colophon, but missing matching [xhtml]<dc:source>[/] element in metadata."
 "m-060", "Non-canonical Google Books URL. Expected: [url]https://www.google.com/books/edition/<BOOK-NAME>/<BOOK-ID>[/]."
@@ -290,44 +290,44 @@ SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
 "s-002", "Lowercase letters in cover. [hint]Hint: Cover text must be all uppercase.[/hint]"
 "s-003", "Lowercase letters in titlepage. [hint]Hint: Titlepage text must be all uppercase except [text]translated by[/] and [text]illustrated by[/].[/hint]"
-"s-004", "[xhtml]<img>[/] element missing [attr]alt[/] attribute."
+"s-004", "[xhtml]<img>[/] element missing [attr]@alt[/] attribute."
 "s-005", "Nested [xhtml]<blockquote>[/] element."
 "s-006", "Poem or verse [xhtml]<p>[/] (stanza) without [xhtml]<span>[/] (line) element."
 "s-007", "Element requires at least one block-level child."
 "s-008", "[xhtml]<br/>[/] element found before closing tag of block-level element."
 "s-009", "[xhtml]<hgroup>[/] element with only one child."
 "s-010", "Empty element. [hint]Hint: Use [xhtml]<hr/>[/] for thematic breaks if appropriate.[/hint]"
-"s-011", "Element without [attr]id[/] attribute."
+"s-011", "Element without [attr]@id[/] attribute."
 "s-012", "Illegal [xhtml]<hr/>[/] as last child."
 "s-013", "Illegal [xhtml]<pre>[/] element."
 "s-014", "[xhtml]<br/>[/] after block-level element."
 "s-015", "Element has [val]subtitle[/] semantic, but without a sibling having a [val]title[/] semantic."
 "s-016", "Incorrect [text]the[/] before Google Books link."
 "s-017", "Illegal [xhtml]<m:mfenced>[/]. [hint]Hint: Use [xhtml]<m:mrow><m:mo fence=\"true\">(</m:mo>...<m:mo fence=\"true\">)</m:mo></m:mrow>[/].[/hint]"
-"s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [hint]Hint: [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements. Images that are inline (i.e. that do not have a parent [xhtml]<figure>[/]) do not have [attr]id[/] attributes.[/hint]"
-"s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [hint]Hint: [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute.[/hint]"
+"s-018", "[xhtml]<img>[/] element with [attr]@id[/] attribute. [hint]Hint: [attr]@id[/] attributes go on parent [xhtml]<figure>[/] elements. Images that are inline (i.e. that do not have a parent [xhtml]<figure>[/]) do not have [attr]@id[/] attributes.[/hint]"
+"s-019", "[xhtml]<h#>[/] element with [attr]@id[/] attribute. [hint]Hint: [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]@id[/] attribute.[/hint]"
 "s-020", "Frontmatter found, but no half title page."
 "s-021", "Unexpected value for [xhtml]<title>[/] element. [hint]Hint: Beware hidden Unicode characters![/hint]"
-"s-022", "SVG [xhtml]<title>[/] element doesn’t match its [xhtml]<img>[/] [attr]alt[/] attribute text."
+"s-022", "SVG [xhtml]<title>[/] element doesn’t match its [xhtml]<img>[/] [attr]@alt[/] attribute text."
 "s-023", "Title not correctly titlecased."
-"s-024", "Entirely non-English header set in italics. [hint]Hint: Don’t use italics, and put the [attr]xml:lang[/] attribute on the [xhtml]<h#>[/] element.[/hint]"
+"s-024", "Entirely non-English header set in italics. [hint]Hint: Don’t use italics, and put the [attr]@xml:lang[/] attribute on the [xhtml]<h#>[/] element.[/hint]"
 "s-025", "Illegal scare quotes or ending punctuation in title of media. [hint]Hint: surrounding punctuation is not a part of a title.[/hint]"
 "s-026", "Invalid Roman numeral."
 "s-027", "[xhtml]<title>[/] element missing."
 "s-028", "[xhtml]<title>[/] elements in cover SVG and titlepage SVG don’t match."
-"s-029", "Section with [attr]data-parent[/] attribute, but no section having that [attr]id[/] in ebook."
+"s-029", "Section with [attr]@data-parent[/] attribute, but no section having that [attr]@id[/] in ebook."
 "s-030", "[xhtml]<em>[/] outside of quotation marks."
-"s-031", "Duplicate value in [attr]epub:type[/] attribute."
-"s-032", "Invalid value for [attr]epub:type[/] attribute."
-"s-033", "[attr]xml:lang[/] value on [xhtml]<html>[/] element doesn’t match language set in metadata."
+"s-031", "Duplicate value in [attr]@epub:type[/] attribute."
+"s-032", "Invalid value for [attr]@epub:type[/] attribute."
+"s-033", "[attr]@xml:lang[/] value on [xhtml]<html>[/] element doesn’t match language set in metadata."
 "s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary."
 "s-035", "Endnote containing only [xhtml]<cite>[/]."
 "s-036", "No [val]frontmatter[/] semantic inflection for what looks like a frontmatter file."
 "s-037", "No [val]backmatter[/] semantic inflection for what looks like a backmatter file."
 "s-038", "Illegal asterism. [hint]Hint: Section/scene breaks must be defined by an [xhtml]<hr/>[/] element.[/hint]"
 "s-039", "[text]Ibid[/] in endnotes. [hint]Hint: “Ibid” means “The previous reference” which is meaningless with popup endnotes[/hint]"
-"s-040", "Element with [attr]data-parent[/] attribute, but its parent is in the same file."
-"s-041", "LoI entry text doesn’t match either the referenced element’s [xhtml]<figcaption>[/] element or its [xhtml]<img>[/] [attr]alt[/] attribute."
+"s-040", "Element with [attr]@data-parent[/] attribute, but its parent is in the same file."
+"s-041", "LoI entry text doesn’t match either the referenced element’s [xhtml]<figcaption>[/] element or its [xhtml]<img>[/] [attr]@alt[/] attribute."
 "s-042", "[xhtml]<table>[/] element without [xhtml]<tbody>[/] child."
 "s-043", "[val]se:short-story[/] semantic on element that is not [xhtml]<article>[/]."
 "s-044", "Element with poem or verse semantic, without descendant [xhtml]<p>[/] (stanza) element."
@@ -336,15 +336,15 @@ SEMANTICS & CONTENT
 "s-047", "[val]noteref[/] as a direct child of element with poem or verse semantic. [hint]Hint: [val]noteref[/]s should be in their parent [xhtml]<span>[/].[/hint]"
 "s-048", "[val]se:name[/] semantic on block element. [hint]Hint: [val]se:name[/] indicates the contents is the name of something.[/hint]"
 "s-049", "[xhtml]<header>[/] element whose only child is an [xhtml]<h#>[/] element."
-"s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [hint]Hint: [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element.[/hint]"
+"s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]@epub:type[/]. [hint]Hint: [attr]@epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element.[/hint]"
 "s-051", "Illegal [val]unk[/] value for language. [hint]Hint: Did you mean [val]und[/] (undefined)?[/hint]"
-"s-052", "[xhtml]<abbr>[/] element with illegal [attr]title[/] attribute."
+"s-052", "[xhtml]<abbr>[/] element with illegal [attr]@title[/] attribute."
 "s-053", "Colophon line not preceded by [xhtml]<br/>[/]."
 "s-054", "[xhtml]<cite>[/] as child of [xhtml]<p>[/] in [xhtml]<blockquote>[/]. [hint]Hint: [xhtml]<cite>[/] should be the direct child of [xhtml]<blockquote>[/].[/hint]"
-"s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. [hint]Hint: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute.[/hint]"
+"s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. [hint]Hint: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]@scope[/] attribute.[/hint]"
 "s-056", "Last [xhtml]<p>[/] child of endnote missing backlink."
 "s-057", "Backlink noteref fragment identifier doesn’t match endnote number."
-"s-058", "Illegal [attr]z3998:stage-direction[/] semantic. [hint]Hint: [attr]z3998:stage-direction[/] is only allowed on [xhtml]<i>[/], [xhtml]<abbr>[/], and [xhtml]<p>[/] elements.[/hint]"
+"s-058", "Illegal [attr]@z3998:stage-direction[/] semantic. [hint]Hint: [attr]@z3998:stage-direction[/] is only allowed on [xhtml]<i>[/], [xhtml]<abbr>[/], and [xhtml]<p>[/] elements.[/hint]"
 "s-059", "Internal link beginning with [val]../text/[/]."
 "s-060", "Italics on name that requires quotes instead."
 "s-061", "Title and following header content not in a [xhtml]<header>[/] element."
@@ -368,31 +368,31 @@ SEMANTICS & CONTENT
 "s-079", "Element containing only white space."
 "s-080", "[xhtml]<td>[/] in drama containing both inline text and a block-level element. [hint]Hint: All children of [xhtml]<td>[/] should either be only text, or only block-level elements.[/hint]"
 "s-081", "[xhtml]<p>[/] preceded by [xhtml]<figure>[/], [xhtml]<blockquote>[/xhtml], or [xhtml]<table>[/], but without [val]continued[/] class."
-"s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. [hint]Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/].[/hint]"
+"s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]@xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. [hint]Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/].[/hint]"
 "s-083", "[xhtml]<td epub:type=\"z3998:persona\">[/] element with child [xhtml]<p>[/] element."
 "s-084", "Poem has incorrect semantics."
 "s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. [hint]Hint: Headings not in the half title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?[/hint]"
 "s-086", "[text]Op. Cit.[/] or [text]Loc. Cit.[/] in endnote. [hint]Hint: [text]Op. Cit.[/] and [text]Loc. Cit.[/] mean [text]the previous reference[/], which usually doesn’t make sense in a popup endnote. Such references should be expanded.[/hint]"
 "s-087", "Subtitle in metadata, but no subtitle in the half title page."
 "s-088", "Subtitle in half title page, but no subtitle in metadata."
-"s-089", "MathML missing [attr]alttext[/] attribute."
+"s-089", "MathML missing [attr]@alttext[/] attribute."
 "s-090", "Invalid language tag."
 "s-091", "[xhtml]<span>[/] not followed by [xhtml]<br/>[/] in poetry."
 "s-092", "Anonymous contributor with [val]z3998:*-name[/] semantic."
 "s-093", "Nested [xhtml]<abbr>[/] element."
-"s-094", "Element has an [attr]xml:lang[/] attribute that incorrectly contains [val]-latn[/] instead of [val]-Latn[/]."
+"s-094", "Element has an [attr]@xml:lang[/] attribute that incorrectly contains [val]-latn[/] instead of [val]-Latn[/]."
 "s-095", "[xhtml]<p>[/] child of [xhtml]<hgroup>[/] in poetry/verse doesn’t have [css]text-align: center;[/] CSS."
 "s-096", "Heading element in half title page missing [val]fulltitle[/] semantic."
-"s-097", "[xhtml]<a>[/] element without [attr]href[/] attribute."
+"s-097", "[xhtml]<a>[/] element without [attr]@href[/] attribute."
 "s-098", "[xhtml]<header>[/] element with only one child."
 "s-100", "Anonymous digital contributor value not exactly [text]An Anonymous Volunteer[/]."
 "s-101", "Anonymous primary contributor value not exactly [text]Anonymous[/]."
-"s-102", "[attr]lang[/] attribute detected. [hint]Hint: Use [attr]xml:lang[/] instead.[/hint]"
+"s-102", "[attr]@lang[/] attribute detected. [hint]Hint: Use [attr]@xml:lang[/] instead.[/hint]"
 "s-103", "Probable missing semantics for a roman I numeral."
 "s-104", "Header element with incompatible semantics. [hint]Hint: Headers should be either [val]title[/] or [val]z3998:ordinal[/], not both.[/hint]"
 "s-105", "Date without parent [xhtml]<time>[/] element."
 "s-106", "Proper name in the colophon without parent [xhtml]<a href=\"...\">[/] or [xhtml]<b epub:type=\"z3998:given-name\">[/], or [xhtml]<b>[/] if anonymous."
-"s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/] or [xhtml]<b>An Anonymous Sponsor</b>[/]. [hint]Hint: Is there a missing [attr]epub:type[/] semantic?[/hint]"
+"s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/] or [xhtml]<b>An Anonymous Sponsor</b>[/]. [hint]Hint: Is there a missing [attr]@epub:type[/] semantic?[/hint]"
 "s-108", "[xhtml]<thead>[/] element with non-empty [xhtml]<td>[/] descendant. [hint]Hint: Use [xhtml]<th>[/] instead.[/hint]"
 UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 "s-099", ""
@@ -422,8 +422,8 @@ TYPOGRAPHY
 "t-022", "No-break space in [xhtml]<abbr epub:type=\"z3998:*-name\">[/]."
 "t-023", "Comma inside [xhtml]<i>[/] element before closing dialog."
 "t-024", "Italics outside quotation marks. [hint]Hint: When italicizing language in dialog, italics go inside quotation marks.[/hint]"
-"t-025", "Non-typogrified [text]'[/], [text]\"[/] (as [xhtml]&quot;[/]), or [text]--[/] in image [attr]alt[/] attribute."
-"t-026", "[attr]alt[/] attribute doesn’t end with punctuation. [hint]Hint: [attr]alt[/] attributes must be composed of complete sentences ending in appropriate punctuation.[/hint]"
+"t-025", "Non-typogrified [text]'[/], [text]\"[/] (as [xhtml]&quot;[/]), or [text]--[/] in image [attr]@alt[/] attribute."
+"t-026", "[attr]@alt[/] attribute doesn’t end with punctuation. [hint]Hint: [attr]@alt[/] attributes must be composed of complete sentences ending in appropriate punctuation.[/hint]"
 "t-027", "Endnote backlink not preceded by exactly one space."
 "t-028", "Possible mis-curled quotation mark."
 "t-029", "Period followed by lowercase letter. [hint]Hint: Abbreviations require an [xhtml]<abbr>[/] element.[/hint]"
@@ -461,7 +461,7 @@ TYPOGRAPHY
 "t-061", "Summary-style bridgehead without ending punctuation."
 "t-062", "Uppercased [text]a.m.[/] and [text]p.m.[/]"
 "t-063", "Non-English confusable phrase set without italics."
-"t-064", "Title not correctly titlecased. [hint]Hint: Non-English titles should have an [attr]xml:lang[/] attribute as they have different titlecasing rules.[/hint]"
+"t-064", "Title not correctly titlecased. [hint]Hint: Non-English titles should have an [attr]@xml:lang[/] attribute as they have different titlecasing rules.[/hint]"
 "t-065", "Header ending in a period."
 "t-066", "Regnal ordinal preceded by [text]the[/]."
 "t-067", "Plural [val]z3998:grapheme[/], [val]z3998:phoneme[/], or [val]z3998:morpheme[/] formed without apostrophe ([text]’[/])."
@@ -480,26 +480,26 @@ TYPOGRAPHY
 XHTML
 "x-001", "[text]utf-8[/] string incorrectly cased. [hint]Hint: [text]utf-8[/] must always be lowercase.[/hint]"
 "x-002", "Uppercase in attribute value. [hint]Hint: Attribute values must be all lowercase.[/hint]"
-"x-003", "Illegal [attr]transform[/] attribute. [hint]Hint: SVGs should be optimized to remove use of [attr]transform[/]. Try using Inkscape to save as an “optimized SVG”.[/hint]"
+"x-003", "Illegal [attr]@transform[/] attribute. [hint]Hint: SVGs should be optimized to remove use of [attr]@transform[/]. Try using Inkscape to save as an “optimized SVG”.[/hint]"
 "x-004", "Illegal [xml]style=\"fill: #000\"[/] or [xml]fill=\"#000\"[/]."
-"x-005", "Illegal [attr]height[/] or [attr]width[/] attribute on root [xml]<svg>[/] element. [hint]Hint: Size SVGs using the [attr]viewBox[/] attribute only.[/hint]"
-"x-006", "SVG root without [attr]viewBox[/] attribute. [hint]Hint: [attr]viewBox[/] must be correctly capitalized.[/hint]"
-"x-007", "Illegal [attr]id[/] attribute starting with a number."
+"x-005", "Illegal [attr]@height[/] or [attr]@width[/] attribute on root [xml]<svg>[/] element. [hint]Hint: Size SVGs using the [attr]@viewBox[/] attribute only.[/hint]"
+"x-006", "SVG root without [attr]@viewBox[/] attribute. [hint]Hint: [attr]@viewBox[/] must be correctly capitalized.[/hint]"
+"x-007", "Illegal [attr]@id[/] attribute starting with a number."
 "x-008", "Illegal stray ending [text]>[/]."
-"x-009", "Illegal leading 0 in [attr]id[/] attribute."
+"x-009", "Illegal leading 0 in [attr]@id[/] attribute."
 "x-010", "Illegal element in [xhtml]<title>[/] element."
 "x-011", "Illegal underscore in attribute. [hint]Hint: Use dashes instead of underscores.[/hint]"
-"x-012", "Illegal [attr]style[/] attribute. [hint]Hint: Don’t use inline styles; any element can be targeted with a thoughtful selector.[/hint]"
+"x-012", "Illegal [attr]@style[/] attribute. [hint]Hint: Don’t use inline styles; any element can be targeted with a thoughtful selector.[/hint]"
 "x-013", "CSS class found in XHTML, but not any CSS file."
-"x-014", "Illegal [attr]id[/] attribute."
+"x-014", "Illegal [attr]@id[/] attribute."
 "x-015", "Illegal element in [xhtml]<head>[/]. Only [xhtml]<title>[/] and [xhtml]<link rel=\"stylesheet\">[/] are allowed."
-"x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter."
-"x-017", "[attr]id[/] attribute value used more than once in ebook."
-"x-018", "Unused [attr]id[/] attribute."
-"x-019", "Unexpected value of [attr]id[/] attribute."
+"x-016", "[attr]@xml:lang[/] attribute with value starting in uppercase letter."
+"x-017", "[attr]@id[/] attribute value used more than once in ebook."
+"x-018", "Unused [attr]@id[/] attribute."
+"x-019", "Unexpected value of [attr]@id[/] attribute."
 "x-020", "Link to [path]se.css[/] in [xhtml]<head>[/], but this file isn’t an S.E. boilerplate file."
-"x-021", "[xhtml]<figure>[/] element with no [attr]id[/] attribute."
-"x-022", "Illegal fractions in SVG [attr]viewBox[/] attribute."
+"x-021", "[xhtml]<figure>[/] element with no [attr]@id[/] attribute."
+"x-022", "Illegal fractions in SVG [attr]@viewBox[/] attribute."
 
 TYPOS
 "y-001", "Possible typo: Doubled [text]a/the/and/of/or/as/if[/]."
@@ -536,7 +536,7 @@ TYPOS
 "y-032", "Possible typo: Italics running into preceding or following characters."
 "y-033", "Possible typo: Three-em-dash obscuring an entire word, but not preceded by a space."
 "y-034", "Possible typo: [text].[/] embedded in word. [hint]Hint: Abbreviations must be in an [xhtml]<abbr>[/] element.[/hint]"
-"y-035", "Possible typo: Single letter. [hint]Hints: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [attr]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?[/hint]"
+"y-035", "Possible typo: Single letter. [hint]Hints: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [attr]@xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?[/hint]"
 "y-036", "Possible typo: [text]’[/] after punctuation, but no [text]‘[/]. [hint]Hints: Is [text]‘[/] missing or mis-curled? [text]’[/] that elides a word is placed before punctuation.[/hint]"
 "y-037", "Possible typo: Dialog without ending comma."
 "y-038", "Possible typo: Dash after punctuation."
@@ -930,7 +930,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		# `xml:lang` is correct for the rest of the publication, but should be `lang` in `<dc:description>`.
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description//*[@xml:lang]")
 		if nodes:
-			messages.append(LintMessage("m-057", "Illegal [attr]xml:lang[/] attribute in [xml]<dc:description>[/] element. [hint]Hint: [attr]xml:lang[/] should be [attr]lang[/].[/hint]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+			messages.append(LintMessage("m-057", "Illegal [attr]@xml:lang[/] attribute in [xml]<dc:description>[/] element. [hint]Hint: [attr]@xml:lang[/] should be [attr]@lang[/].[/hint]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 		# `US` -> `U.S.`.
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description/*[re:test(., '\\bUS\\b')]")
@@ -1072,7 +1072,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	expected_vcs_url = self.generate_vcs_url()
 	nodes = self.metadata_dom.xpath(f"/package/metadata/link[@rel='schema:codeRepository' and not(@href='{expected_vcs_url}')]")
 	if nodes:
-		messages.append(LintMessage("m-009", "Unexpected value for [attr]href[/] attribute in [xml]<link rel=\"schema:codeRepository\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"Found: {node.get_attr('href')}\nExpected: {expected_vcs_url}", node.sourceline) for node in nodes]))
+		messages.append(LintMessage("m-009", "Unexpected value for [attr]@href[/] attribute in [xml]<link rel=\"schema:codeRepository\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"Found: {node.get_attr('href')}\nExpected: {expected_vcs_url}", node.sourceline) for node in nodes]))
 
 	# Check for illegal `schema:genre` values.
 	illegal_subjects: list[EasyXmlElement] = []
@@ -1152,7 +1152,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		messages.append(LintMessage("m-024", "[xml]<meta property=\"schema:alternateName\">[/] property identical to regular name. [hint]Hint: If the two are identical, then the full name [xml]<meta>[/] element must be removed.[/hint]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, duplicate_names))
 
 	if invalid_refines:
-		messages.append(LintMessage("m-010", "Invalid [attr]refines[/] attribute value.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, invalid_refines))
+		messages.append(LintMessage("m-010", "Invalid [attr]@refines[/] attribute value.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, invalid_refines))
 
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[re:test(., '^https?://id\\.loc\\.gov/authorities/(names/)?n[^/]+$') and not(re:test(., '^https://id\\.loc\\.gov/authorities/names/[^/\\.]+\\.html$'))] | /package/metadata/link[re:test(@href, '^https?://id\\.loc\\.gov/authorities/(names/)?n[^/]+$') and not(re:test(@href, '^https://id\\.loc\\.gov/authorities/names/[^/\\.]+\\.html$'))]")
 	if nodes:
@@ -1639,9 +1639,9 @@ def _lint_svg_checks(self: 'SeEpub', source_file: SourceFile, svg_dom: EasyXmlTr
 				messages.append(LintMessage("f-018", "Image greater than 4,000,000 pixels square in dimension.", se.MESSAGE_TYPE_ERROR, filename))
 			# Make sure dimensions are integers
 			if "." in svg_dimensions[2] or "." in svg_dimensions[3]:
-				messages.append(LintMessage("x-022", "Illegal fractions in SVG [attr]viewBox[/] attribute.", se.MESSAGE_TYPE_ERROR, filename))
+				messages.append(LintMessage("x-022", "Illegal fractions in SVG [attr]@viewBox[/] attribute.", se.MESSAGE_TYPE_ERROR, filename))
 		except Exception as ex:
-			raise se.InvalidFileException(f"Couldn’t parse SVG [attr]viewBox[/] attribute in [path][link=file://{filename.resolve()}]{filename}[/][/].") from ex
+			raise se.InvalidFileException(f"Couldn’t parse SVG [attr]@viewBox[/] attribute in [path][link=file://{filename.resolve()}]{filename}[/][/].") from ex
 	except IndexError:
 		# No viewbox.
 		pass
@@ -1659,10 +1659,10 @@ def _lint_svg_checks(self: 'SeEpub', source_file: SourceFile, svg_dom: EasyXmlTr
 				invalid_id_attributes.append(LintSubmessage(f"id=\"{node.get_attr('id')}\"", node.sourceline))
 
 		if invalid_transform_attributes:
-			messages.append(LintMessage("x-003", "Illegal [attr]transform[/] attribute. [hint]Hint: SVGs should be optimized to remove use of [attr]transform[/]. Try using Inkscape to save as an “optimized SVG”.[/hint]", se.MESSAGE_TYPE_ERROR, filename, invalid_transform_attributes))
+			messages.append(LintMessage("x-003", "Illegal [attr]@transform[/] attribute. [hint]Hint: SVGs should be optimized to remove use of [attr]@transform[/]. Try using Inkscape to save as an “optimized SVG”.[/hint]", se.MESSAGE_TYPE_ERROR, filename, invalid_transform_attributes))
 
 		if invalid_id_attributes:
-			messages.append(LintMessage("x-014", "Illegal [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, invalid_id_attributes))
+			messages.append(LintMessage("x-014", "Illegal [attr]@id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, invalid_id_attributes))
 
 	# Check for `fill: #000` which should simply be removed.
 	nodes = svg_dom.xpath("//*[contains(@fill, '#000') or contains(translate(@style, ' ', ''), 'fill:#000')]")
@@ -1673,11 +1673,11 @@ def _lint_svg_checks(self: 'SeEpub', source_file: SourceFile, svg_dom: EasyXmlTr
 	if filename.name != "logo.svg": # Do as I say, not as I do...
 		nodes = svg_dom.xpath("/svg[@height or @width]")
 		if nodes:
-			messages.append(LintMessage("x-005", "Illegal [attr]height[/] or [attr]width[/] attribute on root [xml]<svg>[/] element. [hint]Hint: Size SVGs using the [attr]viewBox[/] attribute only.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+			messages.append(LintMessage("x-005", "Illegal [attr]@height[/] or [attr]@width[/] attribute on root [xml]<svg>[/] element. [hint]Hint: Size SVGs using the [attr]@viewBox[/] attribute only.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	nodes = svg_dom.xpath("/svg[not(@viewBox)]")
 	if nodes:
-		messages.append(LintMessage("x-006", "SVG root without [attr]viewBox[/] attribute. [hint]Hint: [attr]viewBox[/] must be correctly capitalized.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("x-006", "SVG root without [attr]@viewBox[/] attribute. [hint]Hint: [attr]@viewBox[/] must be correctly capitalized.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	return messages
 
@@ -1838,7 +1838,7 @@ def _lint_special_file_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 
 		nodes = dom.xpath("/html/body//p/b[not(@epub:type) and text() != 'An Unknown Artist' and text() != 'An Anonymous Volunteer' and text() != 'An Anonymous Sponsor']")
 		if nodes:
-			messages.append(LintMessage("s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/] or [xhtml]<b>An Anonymous Sponsor</b>[/]. [hint]Hint: Is there a missing [attr]epub:type[/] semantic?[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+			messages.append(LintMessage("s-107", "Anonymous contributors in the colophon must be exactly [xhtml]<b>An Anonymous Volunteer</b>[/] or [xhtml]<b>An Unknown Artist</b>[/] or [xhtml]<b>An Anonymous Sponsor</b>[/]. [hint]Hint: Is there a missing [attr]@epub:type[/] semantic?[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# If we're in the imprint, are the sources represented correctly?
 	# We don't have a standard yet for more than two sources (transcription and scan) so just ignore that case for now.
@@ -1956,7 +1956,7 @@ def _lint_special_file_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 				mismatched_loi_nodes.append(node)
 
 		if mismatched_loi_nodes:
-			messages.append(LintMessage("s-041", "LoI entry text doesn’t match either the referenced element’s [xhtml]<figcaption>[/] element or its [xhtml]<img>[/] [attr]alt[/] attribute.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(mismatched_loi_nodes)))
+			messages.append(LintMessage("s-041", "LoI entry text doesn’t match either the referenced element’s [xhtml]<figcaption>[/] element or its [xhtml]<img>[/] [attr]@alt[/] attribute.", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(mismatched_loi_nodes)))
 
 	return messages
 
@@ -2185,7 +2185,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	# Ignore items within `<blockquote>` as that is a new sectioning root and we don't need to address sectioning elements in quotations.
 	nodes = dom.xpath("/html/body//*[self::section or self::article][not(@id)][not(ancestor::blockquote)]")
 	if nodes:
-		messages.append(LintMessage("s-011", "Element without [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("s-011", "Element without [attr]@id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for `<pre>` elements.
 	nodes = dom.xpath("/html/body//pre")
@@ -2216,12 +2216,12 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	# Check for `<figure>` elements without `id` attributes.
 	nodes = dom.xpath("/html/body//img[@id]")
 	if nodes:
-		messages.append(LintMessage("s-018", "[xhtml]<img>[/] element with [attr]id[/] attribute. [hint]Hint: [attr]id[/] attributes go on parent [xhtml]<figure>[/] elements. Images that are inline (i.e. that do not have a parent [xhtml]<figure>[/]) do not have [attr]id[/] attributes.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("s-018", "[xhtml]<img>[/] element with [attr]@id[/] attribute. [hint]Hint: [attr]@id[/] attributes go on parent [xhtml]<figure>[/] elements. Images that are inline (i.e. that do not have a parent [xhtml]<figure>[/]) do not have [attr]@id[/] attributes.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for `id` attributes on `<h#>` elements, but allow them if used by an `aria-labelledby` attribute elsewhere in the document.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$') and @id and not(//*/@aria-labelledby=@id)]")
 	if nodes:
-		messages.append(LintMessage("s-019", "[xhtml]<h#>[/] element with [attr]id[/] attribute. [hint]Hint: [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]id[/] attribute.[/hint]", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("s-019", "[xhtml]<h#>[/] element with [attr]@id[/] attribute. [hint]Hint: [xhtml]<h#>[/] elements should be wrapped in [xhtml]<section>[/] elements, which should hold the [attr]@id[/] attribute.[/hint]", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for legal cases that aren't italicized.
 	# We can't use this because `v.` appears as short for `volume`, and we may also have sporting events without italics.
@@ -2301,7 +2301,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	# Check for `<header>` elements that are entirely non-English.
 	nodes = dom.xpath("/html/body//*[re:test(name(), '^h[1-6]$')][./i[@xml:lang][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
 	if nodes:
-		messages.append(LintMessage("s-024", "Entirely non-English header set in italics. [hint]Hint: Don’t use italics, and put the [attr]xml:lang[/] attribute on the [xhtml]<h#>[/] element.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("s-024", "Entirely non-English header set in italics. [hint]Hint: Don’t use italics, and put the [attr]@xml:lang[/] attribute on the [xhtml]<h#>[/] element.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	nodes = dom.xpath("//*[re:test(@epub:type, '\\bse:name\\.') and re:test(., '^[“][^”]+”?$|^[^“]+”$|^‘|[\\.,;]$') and not(name()='abbr' or .//abbr[position()=last()]) and not(ancestor-or-self::section[contains(@epub:type, 'colophon')])]")
 	if nodes:
@@ -2334,7 +2334,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 					invalid_headers.append(heading)
 
 	if invalid_parent_ids:
-		messages.append(LintMessage("s-029", "Section with [attr]data-parent[/] attribute, but no section having that [attr]id[/] in ebook.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(invalid_parent_ids)))
+		messages.append(LintMessage("s-029", "Section with [attr]@data-parent[/] attribute, but no section having that [attr]@id[/] in ebook.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(invalid_parent_ids)))
 	if invalid_headers:
 		messages.append(LintMessage("s-085", "[xhtml]<h#>[/] element found in a [xhtml]<section>[/] or a [xhtml]<article>[/] at an unexpected level. [hint]Hint: Headings not in the title page start at [xhtml]<h2>[/]. If this work has parts, should this header be [xhtml]<h3>[/] or higher?[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(invalid_headers)))
 
@@ -2371,9 +2371,9 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 					incorrect_attrs.append(LintSubmessage(val, node.sourceline))
 
 	if duplicate_attrs:
-		messages.append(LintMessage("s-031", "Duplicate value in [attr]epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(duplicate_attrs)))
+		messages.append(LintMessage("s-031", "Duplicate value in [attr]@epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(duplicate_attrs)))
 	if incorrect_attrs:
-		messages.append(LintMessage("s-032", "Invalid value for [attr]epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, incorrect_attrs))
+		messages.append(LintMessage("s-032", "Invalid value for [attr]@epub:type[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, incorrect_attrs))
 	if unnecessary_z3998_attrs:
 		messages.append(LintMessage("s-034", "Semantic used from the z3998 vocabulary, but the same semantic exists in the EPUB vocabulary.", se.MESSAGE_TYPE_ERROR, filename, unnecessary_z3998_attrs))
 
@@ -2384,7 +2384,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 		for node in nodes:
 			file_language = node.get_attr("xml:lang")
 			if file_language != language:
-				messages.append(LintMessage("s-033", "[attr]xml:lang[/] value on [xhtml]<html>[/] element doesn’t match language set in metadata.", se.MESSAGE_TYPE_WARNING, filename, [LintSubmessage(f"Found: {file_language}\nExpected: {language}", node.sourceline)]))
+				messages.append(LintMessage("s-033", "[attr]@xml:lang[/] value on [xhtml]<html>[/] element doesn’t match language set in metadata.", se.MESSAGE_TYPE_WARNING, filename, [LintSubmessage(f"Found: {file_language}\nExpected: {language}", node.sourceline)]))
 
 	nodes = dom.xpath("/html/body//em[re:test(., '(^“[^”]+$|^[^“]+”$|^“.+”$)')]")
 	if nodes:
@@ -2411,7 +2411,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 
 	nodes = dom.xpath("/html/body//*[@data-parent = parent::*/@id]")
 	if nodes:
-		messages.append(LintMessage("s-040", "Element with [attr]data-parent[/] attribute, but its parent is in the same file.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("s-040", "Element with [attr]@data-parent[/] attribute, but its parent is in the same file.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for `<table>` element without a `<tbody>` child.
 	nodes = dom.xpath("/html/body//table[not(tbody)]")
@@ -2478,7 +2478,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	# Check for `<span>`s that only exist to apply `epub:type`.
 	nodes = dom.xpath("/html/body//*[span[@epub:type][count(preceding-sibling::node()[normalize-space(.)]) + count(following-sibling::node()[normalize-space(.)])=0]]")
 	if nodes:
-		messages.append(LintMessage("s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]epub:type[/]. [hint]Hint: [attr]epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("s-050", "[xhtml]<span>[/] element appears to exist only to apply [attr]@epub:type[/]. [hint]Hint: [attr]@epub:type[/] should go on the parent element instead, without a [xhtml]<span>[/] element.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for language tags misusing the `unk` lang code.
 	nodes = dom.xpath("//*[@xml:lang='unk']")
@@ -2488,7 +2488,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	# Check for `title` attributes on `<abbr>` elements.
 	nodes = dom.xpath("/html/body//abbr[@title]")
 	if nodes:
-		messages.append(LintMessage("s-052", "[xhtml]<abbr>[/] element with illegal [attr]title[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("s-052", "[xhtml]<abbr>[/] element with illegal [attr]@title[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	nodes = dom.xpath("/html/body//blockquote//p[parent::*[name()='footer'] or parent::*[name()='blockquote']]//cite") # Sometimes the `<p>` may be in a `<footer>`.
 	if nodes:
@@ -2497,12 +2497,12 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	# Check for `<th>` element without a `<thead>` ancestor. However, `<th scope="...">` and `<th/>` are allowed, for use in tables with headers in the middle of tables (https://standardebooks.org/ebooks/dorothy-day/the-eleventh-virgin) and vertical table headers (https://standardebooks.org/ebooks/charles-babbage/passages-from-the-life-of-a-philosopher).
 	nodes = dom.xpath("/html/body//table//th[not(ancestor::thead)][not(@scope)][not(count(node())=0)]")
 	if nodes:
-		messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. [hint]Hint: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]scope[/] attribute.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("s-055", "[xhtml]<th>[/] element not in [xhtml]<thead>[/] ancestor. [hint]Hint: [xhtml]<th>[/] elements used as mid-table headings or horizontal row headings require the [attr]@scope[/] attribute.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for `z3998:stage-direction` on elements that are not `<i>`.
 	nodes = dom.xpath("/html/body//*[contains(@epub:type, 'z3998:stage-direction') and name() !='i' and name() !='abbr' and name() !='p']")
 	if nodes:
-		messages.append(LintMessage("s-058", "Illegal [attr]z3998:stage-direction[/] semantic. [hint]Hint: [attr]z3998:stage-direction[/] is only allowed on [xhtml]<i>[/], [xhtml]<abbr>[/], and [xhtml]<p>[/] elements.[/hint]", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("s-058", "Illegal [attr]@z3998:stage-direction[/] semantic. [hint]Hint: [attr]@z3998:stage-direction[/] is only allowed on [xhtml]<i>[/], [xhtml]<abbr>[/], and [xhtml]<p>[/] elements.[/hint]", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check that internal links don't begin with `../`.
 	nodes = dom.xpath("/html/body//a[re:test(@href, '^\\.\\./text/')]")
@@ -2628,7 +2628,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	# Check for language tags transliterated into Latin script but missing `-Latn` suffix.
 	nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '^(he|ru|el|zh|bn|hi|sa|uk|yi|grc|ja|ko|ar)$') and re:test(., '[a-zA-Z]')]")
 	if nodes:
-		messages.append(LintMessage("s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. [hint]Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/].[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("s-082", "Element containing Latin script for a non-Latin-script language, but its [attr]@xml:lang[/] attribute value is missing the [val]-Latn[/] language tag suffix. [hint]Hint: For example Russian transliterated into Latin script would be [val]ru-Latn[/].[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for persona `<td>`s that have child `<p>` elements.
 	nodes = dom.xpath("/html/body//td[contains(@epub:type, 'z3998:persona') and ./p]")
@@ -2663,7 +2663,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	# Check for MathML without `alttext`.
 	nodes = dom.xpath("/html/body//m:math[not(@alttext)]")
 	if nodes:
-		messages.append(LintMessage("s-089", "MathML missing [attr]alttext[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("s-089", "MathML missing [attr]@alttext[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for common errors in language tags.
 	# `gr` is often used instead of `el`, `sp` instead of `es`, and `ge` instead of `de` (`ge` is the Georgian geographic region subtag but not a language subtag itself).
@@ -2684,7 +2684,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	# Check for language tags transliterated into Latin script with incorrect `-latn` suffix (lowercase `l`).
 	nodes = dom.xpath("/html/body//*[re:test(@xml:lang, '-latn')]")
 	if nodes:
-		messages.append(LintMessage("s-094", "Element has an [attr]xml:lang[/] attribute that incorrectly contains [val]-latn[/] instead of [val]-Latn[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("s-094", "Element has an [attr]@xml:lang[/] attribute that incorrectly contains [val]-latn[/] instead of [val]-Latn[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for poetry/verse that has an `<hgroup>` but which doesn't have the correct text alignment.
 	nodes = dom.xpath("/html/body//*[re:test(@epub:type, 'z3998:(hymn|poem|song|verse)')]//hgroup/p[@data-css-text-align != 'center']")
@@ -2699,7 +2699,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	# Check for missing `href` attributes, sometimes a leftover from PG transcriptions.
 	nodes = dom.xpath("/html/body//a[not(@href)]")
 	if nodes:
-		messages.append(LintMessage("s-097", "[xhtml]<a>[/] element without [attr]href[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("s-097", "[xhtml]<a>[/] element without [attr]@href[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for `<headers>`s with only one child.
 	nodes = dom.xpath("/html/body/*[name() = 'section' or name() = 'article']/header[./*[not(name() = 'p') and not(preceding-sibling::* or following-sibling::*)]]")
@@ -2709,7 +2709,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 	# Check for `@lang` attributes.
 	nodes = dom.xpath("//*[@lang]")
 	if nodes:
-		messages.append(LintMessage("s-102", "[attr]lang[/] attribute detected. [hint]Hint: Use [attr]xml:lang[/] instead.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("s-102", "[attr]@lang[/] attribute detected. [hint]Hint: Use [attr]@xml:lang[/] instead.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for common missing roman semantics for `I`.
 	regent_regex = r"(?:Charles|Edward|George|Henry|James|William) I\b"
@@ -2967,15 +2967,15 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 			img_no_alt.append(node)
 
 	if svg_mismatched_alts:
-		messages.append(LintMessage("s-022", "SVG [xhtml]<title>[/] element doesn’t match its [xhtml]<img>[/] [attr]alt[/] attribute text.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(svg_mismatched_alts)))
+		messages.append(LintMessage("s-022", "SVG [xhtml]<title>[/] element doesn’t match its [xhtml]<img>[/] [attr]@alt[/] attribute text.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(svg_mismatched_alts)))
 
 
 	if img_alt_not_typogrified:
-		messages.append(LintMessage("t-025", "Non-typogrified [text]'[/], [text]\"[/] (as [xhtml]&quot;[/]), or [text]--[/] in image [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(img_alt_not_typogrified)))
+		messages.append(LintMessage("t-025", "Non-typogrified [text]'[/], [text]\"[/] (as [xhtml]&quot;[/]), or [text]--[/] in image [attr]@alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(img_alt_not_typogrified)))
 	if img_alt_lacking_punctuation:
-		messages.append(LintMessage("t-026", "[attr]alt[/] attribute doesn’t end with punctuation. [hint]Hint: [attr]alt[/] attributes must be composed of complete sentences ending in appropriate punctuation.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(img_alt_lacking_punctuation)))
+		messages.append(LintMessage("t-026", "[attr]@alt[/] attribute doesn’t end with punctuation. [hint]Hint: [attr]@alt[/] attributes must be composed of complete sentences ending in appropriate punctuation.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(img_alt_lacking_punctuation)))
 	if img_no_alt:
-		messages.append(LintMessage("s-004", "[xhtml]<img>[/] element missing [attr]alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(img_no_alt)))
+		messages.append(LintMessage("s-004", "[xhtml]<img>[/] element missing [attr]@alt[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(img_no_alt)))
 
 	# Check for low-hanging misquoted fruit.
 	line_matches = source_file.findall(r"[\p{Letter}]+[“‘]")
@@ -3190,7 +3190,7 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 			incorrectly_cased_titles.append(LintSubmessage(node.to_string(), node.sourceline))
 
 	if incorrectly_cased_titles:
-		messages.append(LintMessage("t-064", "Title not correctly titlecased. [hint]Hint: Non-English titles should have an [attr]xml:lang[/] attribute as they have different titlecasing rules.[/hint]", se.MESSAGE_TYPE_WARNING, filename, incorrectly_cased_titles))
+		messages.append(LintMessage("t-064", "Title not correctly titlecased. [hint]Hint: Non-English titles should have an [attr]@xml:lang[/] attribute as they have different titlecasing rules.[/hint]", se.MESSAGE_TYPE_WARNING, filename, incorrectly_cased_titles))
 
 	# Check for headers ending in periods.
 	# Allow periods at the end of headers that both start and end with double quotes; but headers that only end in double quotes probably don't need periods.
@@ -3306,7 +3306,7 @@ def _lint_xhtml_xhtml_checks(source_file: SourceFile, dom: EasyXmlTree) -> list[
 
 	nodes = dom.xpath("//*[re:test(@id, '^[0-9]+')]")
 	if nodes:
-		messages.append(LintMessage("x-007", "Illegal [attr]id[/] attribute starting with a number.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("x-007", "Illegal [attr]@id[/] attribute starting with a number.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for double greater-than at the end of a closing tag.
 	matches = source_file.findall(r"(>>|>&gt;)")
@@ -3317,7 +3317,7 @@ def _lint_xhtml_xhtml_checks(source_file: SourceFile, dom: EasyXmlTree) -> list[
 	# We only check for *leading* `0`s in numbers; this allows IDs like `wind-force-0` in the _Worst Journey in the World_ glossary.
 	nodes = dom.xpath("//*[re:test(@id, '-0[0-9]')]")
 	if nodes:
-		messages.append(LintMessage("x-009", "Illegal leading 0 in [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("x-009", "Illegal leading 0 in [attr]@id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for elements in `<title>` tags.
 	nodes = dom.xpath("/html/head/title/*")
@@ -3332,7 +3332,7 @@ def _lint_xhtml_xhtml_checks(source_file: SourceFile, dom: EasyXmlTree) -> list[
 	# Check for style attributes.
 	nodes = dom.xpath("/html/body//*[@style]")
 	if nodes:
-		messages.append(LintMessage("x-012", "Illegal [attr]style[/] attribute. [hint]Hint: Don’t use inline styles; any element can be targeted with a thoughtful selector.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("x-012", "Illegal [attr]@style[/] attribute. [hint]Hint: Don’t use inline styles; any element can be targeted with a thoughtful selector.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for illegal elements in `<head>`.
 	nodes = dom.xpath("/html/head/*[not(self::title) and not(self::link[@rel='stylesheet'])]")
@@ -3342,13 +3342,13 @@ def _lint_xhtml_xhtml_checks(source_file: SourceFile, dom: EasyXmlTree) -> list[
 	# Check for `xml:lang` attribute starting in uppercase.
 	nodes = dom.xpath("//*[re:test(@xml:lang, '^[A-Z]')]")
 	if nodes:
-		messages.append(LintMessage("x-016", "[attr]xml:lang[/] attribute with value starting in uppercase letter.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
+		messages.append(LintMessage("x-016", "[attr]@xml:lang[/] attribute with value starting in uppercase letter.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_node_tags(nodes)))
 
 	# Check for `id` attributes of numbered paragraphs (like `p-44`) that are used as refs in endnotes.
 	# Make sure their number is actually their correct sequence number in the text.
 	unexpected_ids = se.formatting.find_unexpected_ids(dom)
 	if unexpected_ids:
-		messages.append(LintMessage("x-019", "Unexpected value of [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [LintSubmessage(f"Found: {unexpected_id[0].get_attr('id')}\nExpected: {unexpected_id[1]}", unexpected_id[0].sourceline) for unexpected_id in unexpected_ids]))
+		messages.append(LintMessage("x-019", "Unexpected value of [attr]@id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [LintSubmessage(f"Found: {unexpected_id[0].get_attr('id')}\nExpected: {unexpected_id[1]}", unexpected_id[0].sourceline) for unexpected_id in unexpected_ids]))
 
 	if filename.name not in ("titlepage.xhtml", "imprint.xhtml", "colophon.xhtml", "uncopyright.xhtml"):
 		nodes = dom.xpath("/html/head/link[@href='../css/se.css']")
@@ -3358,7 +3358,7 @@ def _lint_xhtml_xhtml_checks(source_file: SourceFile, dom: EasyXmlTree) -> list[
 	# Check that all `<img>` elements have an `@id` attribute. If the `<img>` has a parent `<figure>`, then the `<figure>` should have the `@id`.
 	nodes = dom.xpath("/html/body//figure[not(@id)]")
 	if nodes:
-		messages.append(LintMessage("x-021", "[xhtml]<figure>[/] element with no [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("x-021", "[xhtml]<figure>[/] element with no [attr]@id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	return messages
 
@@ -3598,7 +3598,7 @@ def _lint_xhtml_typo_checks(source_file: SourceFile, dom: EasyXmlTree, special_f
 	# Exclude nodes that have `@xml:lang` or are graphemes, phonemes, or roman numerals.
 	nodes = dom.xpath("/html/body//*[re:test(., '\\s[b-xz]\\s') and not(ancestor-or-self::*[re:test(@xml:lang, '^(?!en-).')]) and not(descendant::*[re:test(., '\\b[b-xz]\\b')]) and not(descendant::i[re:test(@epub:type, 'z3998:(grapheme|phoneme|roman)')])]")
 	if nodes:
-		messages.append(LintMessage("y-035", "Possible typo: Single letter. [hint]Hint: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [attr]xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?[/hint]", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("y-035", "Possible typo: Single letter. [hint]Hint: Does this need [val]z3998:grapheme[/] or [val]z3998:phoneme[/] or [attr]@xml:lang[/] semantics? Is this dialect requiring [text]’[/] to signify an elided letter?[/hint]", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	nodes = dom.xpath("/html/body//p[re:test(., '^[^‘]+[^A-Z][\\!\\.\\,\\?\\:\\;]’') and not(.//abbr[following-sibling::text()[re:test(., '^’')]]) and not(./ancestor-or-self::blockquote[re:test(., '‘')]) and not(contains(@class, 'continued') and ./preceding-sibling::*[1][contains(., '‘')])]")
 	if nodes:
@@ -3644,7 +3644,7 @@ def _lint_image_metadata_checks(self: 'SeEpub', has_images: bool) -> list[LintMe
 			messages.append(LintMessage("m-029", "Images found in ebook, but no [val]schema:accessibilityFeature[/] property set to [val]alternativeText[/] in metadata.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 		if not has_wat_role:
-			messages.append(LintMessage("m-040", "Images found in ebook, but no [attr]role[/] property set to [val]wat[/] in metadata for the writer of the alt text.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
+			messages.append(LintMessage("m-040", "Images found in ebook, but no [attr]@role[/] property set to [val]wat[/] in metadata for the writer of the alt text.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 
 	if not has_images:
 		if has_visual_accessmode:
@@ -3676,7 +3676,7 @@ def _lint_process_ignore_file(self: 'SeEpub', lint_ignore_dom: EasyXmlTree | Non
 	if lint_ignore_dom:
 		nodes = lint_ignore_dom.xpath("./file[@path=(preceding-sibling::file/@path) or @path=(following-sibling::file/@path)]")
 		if nodes:
-			messages.append(LintMessage("m-039", "[xml]<file>[/] element with duplicate [attr]path[/] attribute value.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_tags(nodes)))
+			messages.append(LintMessage("m-039", "[xml]<file>[/] element with duplicate [attr]@path[/] attribute value.", se.MESSAGE_TYPE_ERROR, lint_ignore_path, LintSubmessage.from_node_tags(nodes)))
 
 		nodes = lint_ignore_dom.xpath("./file/ignore[./line and (@code = (preceding-sibling::ignore[not(./line)]/@code) or @code = (following-sibling::ignore[not(./line)]/@code))]")
 		if nodes:
@@ -4166,7 +4166,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 				nodes = dom.xpath("/html/body[count(./article) < 2]//*[(name() = 'section' or name() = 'article') and @id]")
 
 				if nodes and file_path.stem not in [node.get_attr("id") for node in nodes]:
-					messages.append(LintMessage("f-015", "Filename doesn’t match [attr]id[/] attribute of primary [xhtml]<section>[/] or [xhtml]<article>[/]. [hint]Hint: [attr]id[/] attributes don’t include the file extension.[/hint]", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags([nodes[0]])))
+					messages.append(LintMessage("f-015", "Filename doesn’t match [attr]@id[/] attribute of primary [xhtml]<section>[/] or [xhtml]<article>[/]. [hint]Hint: [attr]@id[/] attributes don’t include the file extension.[/hint]", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags([nodes[0]])))
 
 				# Check for unused selectors.
 				if dom.xpath("/html/head/link[contains(@href, 'local.css')]"):
@@ -4348,7 +4348,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 
 		for _, (file_path, nodes_list) in enumerate(unused_id_attrs):
 			if nodes_list:
-				messages.append(LintMessage("x-018", "Unused [attr]id[/] attribute.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags(nodes_list)))
+				messages.append(LintMessage("x-018", "Unused [attr]@id[/] attribute.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags(nodes_list)))
 
 	if files_not_url_safe:
 		files_not_url_safe_strings: list[str] = []
@@ -4404,7 +4404,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 			# `nodes_tuples` is a list of tuples of `(Path, list[EasyXmlElement])`.
 			nodes = [node for (_, node) in nodes_tuples]
 			file_path = nodes_tuples[0][0]
-			messages.append(LintMessage("x-017", "[attr]id[/] attribute value used more than once in ebook.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags(nodes)))
+			messages.append(LintMessage("x-017", "[attr]@id[/] attribute value used more than once in ebook.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags(nodes)))
 
 	# Check our headings against the ToC and landmarks.
 	headings = list(set(headings))

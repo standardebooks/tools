@@ -417,7 +417,7 @@ def hyphenate(xhtml: str | EasyXmlTree, language: str | None, ignore_h_tags: boo
 		try:
 			language = dom.xpath("/html/@xml:lang | /html/@lang", str)[0]
 		except Exception as ex:
-			raise se.InvalidLanguageException("No [attr]xml:lang[/] or [attr]lang[/] attribute on [xhtml]<html>[/] element; couldn’t guess file language.") from ex
+			raise se.InvalidLanguageException("No [attr]@xml:lang[/] or [attr]@lang[/] attribute on [xhtml]<html>[/] element; couldn’t guess file language.") from ex
 
 	# Cope with known missing languages.
 	if language in ["en-AU", "en-CA", "en-IE"] :

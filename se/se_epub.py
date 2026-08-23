@@ -676,7 +676,7 @@ class SeEpub:
 
 		# Quick sanity check before we begin.
 		if not section.get_attr("id") or (section.parent and section.parent.tag.lower() != "body" and not section.parent.get_attr("id")):
-			raise se.InvalidXhtmlException(f"Section without [attr]id[/] attribute: [html]{section.to_tag_string()}[/]")
+			raise se.InvalidXhtmlException(f"Section without [attr]@id[/] attribute: [html]{section.to_tag_string()}[/]")
 
 		if section.parent and section.parent.tag.lower() == "body" and not section.get_attr("data-parent"):
 			section.set_attr("epub:type", f"{section.get_attr('epub:type')} {section.parent.get_attr('epub:type')}".strip())
