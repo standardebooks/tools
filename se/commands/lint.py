@@ -98,7 +98,7 @@ def lint(plain_output: bool) -> int:
 					if message.submessages:
 						for submessage in message.submessages:
 							# Indent each line in case we have a multi-line submessage.
-							text = regex.sub(r"^", "\t", submessage.text, flags=regex.MULTILINE)
+							text = regex.sub(r"^", "\t", se.prep_output(submessage.text, True), flags=regex.MULTILINE)
 							if submessage.line_num:
 								text = f" Line {submessage.line_num}:{text}"
 							console.print(text)
@@ -127,8 +127,11 @@ def lint(plain_output: bool) -> int:
 
 					if message.submessages:
 						for submessage in message.submessages:
-							# Syntax highlight any XML or XHTML nodes in submessages.
-							submessage_object = se.highlight_xml(submessage.text)
+							if "[hint]" in submessage.text:
+								submessage_object = Text.from_markup(submessage.text)
+							else:
+								# Syntax highlight any XML or XHTML nodes in submessages.
+								submessage_object = se.highlight_xml(submessage.text)
 
 							# If a submessages is text, make it dim instead.
 							if not any(span.style == "xhtml" for span in submessage_object.spans):

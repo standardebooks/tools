@@ -72,6 +72,7 @@ RICH_THEME = Theme({
 	"email": "plum3",
 	"flag": "steel_blue3",
 	"header": "bold pale_green3",
+	"hint": "italic",
 	"parameter": "cadet_blue",
 	"user": "plum3",
 	"dim": "gray69"
@@ -408,6 +409,7 @@ def prep_output(message: str, plain_output: bool = False) -> str:
 
 	if plain_output or not se.should_output_color():
 		replacement = "" if se.COLOR_OUTPUT else "`"
+		message = regex.sub(r"\[/?hint\]", "", message)
 		# Replace color markup with the configured plain-text marker.
 		message = regex.sub(r"\[(?:/|xhtml|xml|val|attr|css|val|class|path|url|text|link|command|branch|email|flag|header|parameter|user)(?:=[^\]]*?)*\]", replacement, message)
 		if replacement:
