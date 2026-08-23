@@ -146,7 +146,7 @@ CSS
 "c-006", "Semantic found, but missing corresponding style CSS style."
 "c-008", "CSS class only used once. [hint]Hint: Craft a selector instead of a single-use class.[/hint]"
 "c-009", "Duplicate CSS selectors. [hint]Hint: Duplicates are only acceptable if overriding S.E. base styles.[/hint]"
-"c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [hint]Hint: [css-property]text-align[/] is usually set to [val]right[/].[/hint]"
+"c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: VALUE;[/]. [hint]Hint: [css-property]text-align[/] is usually set to [val]right[/].[/hint]"
 "c-011", "Element with [css]text-align: center;[/] but [css-property]text-indent[/] is [val]1em[/]."
 "c-012", "Sectioning element without heading content, and without [css]margin-top: 20vh;[/]."
 "c-013", "Element with margin or padding not in increments of [css].5em[/]."
@@ -1987,7 +1987,7 @@ def _lint_xhtml_css_checks(source_file: SourceFile, dom: EasyXmlTree) -> list[Li
 	# We also ignore ``text-align` on any `<footer>`s whose only child is a postscript, which is typically left-aligned.
 	nodes = dom.xpath("/html/body//footer[not(@data-css-margin-top='1em') or (not(@data-css-text-align) and not(./*[contains(@epub:type, 'z3998:postscript') and not(following-sibling::*) and not(preceding-sibling::*) ]))]")
 	if nodes:
-		messages.append(LintMessage("c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: <value>;[/]. [hint]Hint: [css-property]text-align[/] is usually set to [val]right[/].[/hint]", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("c-010", "[xhtml]<footer>[/] missing [css]margin-top: 1em; text-align: VALUE;[/]. [hint]Hint: [css-property]text-align[/] is usually set to [val]right[/].[/hint]", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for elements that have `text-align: center` but also `text-indent: 1em`.
 	nodes = dom.xpath("/html/body//*[@data-css-text-align='center' and @data-css-text-indent='1em']")

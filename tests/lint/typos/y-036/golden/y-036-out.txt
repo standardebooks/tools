@@ -1,4 +1,4 @@
-c-010 [Manual Review] chapter-1.xhtml `<footer>` missing `margin-top: 1em; text-align: <value>;`. Hint: `text-align` is usually set to `right`.
+c-010 [Manual Review] chapter-1.xhtml `<footer>` missing `margin-top: 1em; text-align: VALUE;`. Hint: `text-align` is usually set to `right`.
  Line 19:       <footer role="presentation">
                 <p epub:type="z3998:valediction">—Your loving Husband,</p>
                 <p><span epub:type="z3998:sender z3998:signature"><abbr epub:type="z3998:given-name">H.</abbr> Earlforward</span>.’ ”</p>
