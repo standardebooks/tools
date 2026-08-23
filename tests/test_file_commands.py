@@ -30,7 +30,7 @@ if module_directory.is_dir():
 # pass the plain command and test name so the test ids are easy to read, e.g. create-draft-test-1
 @pytest.mark.parametrize("command, test", module_tests)
 
-def test_file_commands(work__directory: Path, command: str, test: Path, update_golden: bool):
+def test_file_commands(work__directory: Path, command: str, test: Path, update_golden: bool, monkeypatch: pytest.MonkeyPatch):
 	"""
 	Run each command on the input content and validate that the output of the command
 	matches the expected output content.
@@ -66,6 +66,9 @@ def test_file_commands(work__directory: Path, command: str, test: Path, update_g
 			if infile.is_file():
 				command_to_use += f" {infile}"
 				break
+	else:
+		# Use an empty configuration root so that create-draft uses its default configuration values.
+		monkeypatch.setenv("XDG_CONFIG_HOME", str(work__directory / "config"))
 
 	# run the command on that file and verify the output
 	must_run(f"se {command_to_use}")
