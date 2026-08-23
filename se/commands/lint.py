@@ -114,7 +114,16 @@ def lint(plain_output: bool) -> int:
 					if message.filename:
 						message_filename = f"[path][link=file://{message.filename.resolve()}]{message.filename.name}[/link][/path]"
 
-					table_data.append([message.code, alert, message_filename, message.text])
+					message_object = Text.from_markup(message.text.replace("[html]", "[xhtml]"))
+
+					# Syntax highlight fragments explicitly marked as XML, XHTML, or HTML.
+					for span in message_object.spans.copy():
+						if span.style in {"xml", "xhtml"}:
+							message_object.spans.remove(span)
+							for highlighted_span in se.highlight_xml(message_object.plain[span.start:span.end]).spans:
+								message_object.stylize(highlighted_span.style, span.start + highlighted_span.start, span.start + highlighted_span.end)
+
+					table_data.append([message.code, alert, message_filename, message_object])
 
 					if message.submessages:
 						for submessage in message.submessages:
