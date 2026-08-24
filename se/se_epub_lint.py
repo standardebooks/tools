@@ -283,7 +283,7 @@ METADATA
 "m-091", "Possibly misspelled MARC relator found."
 "m-092", "MusicXML files found, but no MARC relator [val]mcp[/] (Music copyist)."
 "m-093", "A single contributor has multiple [val]schema:sameAs[/] URLs to the same site."
-"m-094", "[xml]<dc:description>[/] contains illegal element or attribute. [hint]Hint: Only [xhtml]<p>[/], [xhtml]<i>[/], [xhtml]<em>[/], [xhtml]<b>[/], [xhtml]<strong>[/], [xhtml]<u>[/], [xhtml]<s>[/], [xhtml]<a @href>[/], and [attr]@lang[/] are allowed.[/hint]"
+"m-094", "[xml]<dc:description>[/] contains illegal element or attribute. [hint]Hint: Only [xhtml]<p>[/], [xhtml]<i>[/], [xhtml]<em>[/], [xhtml]<b>[/], [xhtml]<strong>[/], [xhtml]<u>[/], [xhtml]<s>[/], [xhtml]<a>[/] with [attr]@href[/], and [attr]@lang[/] are allowed.[/hint]"
 "m-095", "[val]schema:genre[/] is [val]Drama[/], but no [val]z3998:drama[/] element."
 
 SEMANTICS & CONTENT
@@ -881,7 +881,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		# Check that `<dc:description>` doesn't contain any exotic elements.
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description//*[not(self::p or self::b or self::i or self::em or self::strong or self::u or self::s or self::a) or @*[not( (local-name() = 'href' and parent::a) or local-name() = 'lang')]]")
 		if nodes:
-			messages.append(LintMessage("m-094", "[xml]<dc:description>[/] contains illegal element or attribute. [hint]Hint: Only [xhtml]<p>[/], [xhtml]<i>[/], [xhtml]<em>[/], [xhtml]<b>[/], [xhtml]<strong>[/], [xhtml]<u>[/], [xhtml]<s>[/], [xhtml]<a @href>[/], and [attr]@lang[/] are allowed., [xhtml]<i>[/], [xhtml]<em>[/], [xhtml]<b>[/], [xhtml]<strong>[/], [xhtml]<u>[/], [xhtml]<s>[/], [xhtml]<a @href>[/] are allowed.[/hint]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+			messages.append(LintMessage("m-094", "[xml]<dc:description>[/] contains illegal element or attribute. [hint]Hint: Only [xhtml]<p>[/], [xhtml]<i>[/], [xhtml]<em>[/], [xhtml]<b>[/], [xhtml]<strong>[/], [xhtml]<u>[/], [xhtml]<s>[/], [xhtml]<a>[/] with [attr]@href[/], and [attr]@lang[/] are allowed.[/hint]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 		# Check if there are non-typogrified quotes or em dashes in metadata descriptions.
 		# Have to use `concat()` for the regex because it's not possible to escape both `'` and `"` in the same string in xpath 1.0. See <https://stackoverflow.com/a/57639969>.
