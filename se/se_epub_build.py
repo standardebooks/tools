@@ -627,6 +627,19 @@ def _compatibility_replacements_xhtml(self: 'SeEpub', file_path: Path, has_seque
 
 	dom = _compatibility_replacements_xhtml_mathml_to_presentational(dom)
 
+	# In the SE titlepage, we hide the `<h1>` and `<p>` elements using CSS, but some ereaders don't support this. This results in the text appearing, and the image appearing just below it. To accomodate these ereaders, simply remove any non-`<img>` nodes from the titlepage in the compatible build.
+	if self.is_se_ebook:
+		nodes = dom.xpath("/html/body//section[re:test(@epub:type, '\\btitlepage\\b')]")
+		if nodes:
+			titlepage_section = nodes[0]
+			title_string = self.generate_title_string()
+
+			for node in titlepage_section.xpath(".//img"):
+				node.set_attr("alt", title_string)
+
+			for node in titlepage_section.xpath("./*[not(self::img)]"):
+				node.remove()
+
 	# Since we added an outlining stroke to the titlepage/publisher logo images, we want to remove the `se:image.color-depth.black-on-transparent` semantic.
 	for node in dom.xpath("/html/body//img[ (contains(@epub:type, 'z3998:publisher-logo') or ancestor-or-self::*[re:test(@epub:type, '\\btitlepage\\b')]) and contains(@epub:type, 'se:image.color-depth.black-on-transparent')]"):
 		node.remove_attr_value("epub:type", "se:image.color-depth.black-on-transparent")
