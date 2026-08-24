@@ -1016,7 +1016,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		if word_count_elements:
 			word_count = word_count_elements[0].text
 			if word_count != "WORD_COUNT" and int(word_count) != self.get_word_count():
-				messages.append(LintMessage("m-065", "Word count in metadata doesn’t match actual word count.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(word_count_elements)))
+				messages.append(LintMessage("m-065", "Word count in metadata doesn’t match actual word count.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path))
 		else:
 			missing_metadata_elements.append("""<meta property="schema:wordCount">""")
 
