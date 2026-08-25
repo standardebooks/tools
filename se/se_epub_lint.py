@@ -789,6 +789,9 @@ def _build_section_tree(self: 'SeEpub') -> list[EbookSection]:
 	section_tree: list[EbookSection] = []
 
 	for filename in self.spine_file_paths:
+		if not filename.is_file():
+			continue
+
 		dom = self.get_dom(filename)
 		for dom_section in dom.xpath("/html/body//*[re:test(name(), '^(section|article|nav)$')][@id]"):
 			# Start at `<h2>` by default except for the titlepage, which is always `<h1>`.
