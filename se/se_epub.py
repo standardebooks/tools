@@ -1970,39 +1970,6 @@ class SeEpub:
 
 		return EasyXmlElement(etree.fromstring(str.encode(spine_xml)))
 
-	def get_work_type(self) -> str:
-		"""
-		Returns either `fiction` or `non-fiction`, based on analysis of `schema:genre`s in the metadata file.
-
-		INPUTS:
-		None.
-
-		OUTPUTS:
-		The `fiction` or `non-fiction` type.
-		"""
-
-		worktype = "fiction"  # Default.
-
-		subjects = self.metadata_dom.xpath("/package/metadata/meta[@property='schema:genre']/text()", str)
-		if not subjects:
-			return worktype
-
-		# Unfortunately, some works are tagged `Philosophy` but are nevertheless fiction, so we have to double-check.
-		if "Nonfiction" in subjects:
-			return "non-fiction"
-
-		nonfiction_types = ["Autobiography", "Memoir", "Philosophy", "Spirituality", "Travel"]
-		for nonfiction_type in nonfiction_types:
-			if nonfiction_type in subjects:
-				worktype = "non-fiction"
-
-		fiction_types = ["Fantasy", "Fiction", "Horror", "Mystery", "Science Fiction"]
-		for fiction_type in fiction_types:
-			if fiction_type in subjects:
-				worktype = "fiction"
-
-		return worktype
-
 	def get_title(self) -> str:
 		"""
 		Returns the title of the book from the metadata file, which we assume has already been correctly completed.

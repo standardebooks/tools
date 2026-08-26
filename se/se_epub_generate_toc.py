@@ -123,7 +123,6 @@ class TocItem:
 		Generates the landmark item (including list item tags) for the ToC item.
 
 		INPUTS:
-		work_type: `fiction` or `non-fiction`.
 		work_title: the title of the book, eg `Don Quixote`.
 
 		OUTPUTS:
@@ -237,7 +236,6 @@ def process_landmarks(landmarks_list: list[TocItem], work_title: str) -> str:
 
 	INPUTS:
 	landmarks_list: the completed list of landmark items.
-	work_type: `fiction` or `non-fiction`.
 	work_title: the title of the book.
 	"""
 
@@ -314,7 +312,6 @@ def output_toc(item_list: list[TocItem], landmark_list: list[TocItem], work_titl
 	INPUTS:
 	item_list: list of ToC items (the first part of the ToC).
 	landmark_list: list of landmark items (the second part of the ToC).
-	work_type: `fiction` or `non-fiction`.
 	work_title: the title of the book.
 
 	OUTPUTS:
