@@ -4,6 +4,7 @@ Convert EPUB files to AZW3 using the vendored calibre conversion source.
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from threading import Lock
@@ -25,6 +26,8 @@ def _configure_runtime() -> None:
 
 	vendor_root = Path(__file__).parent
 	upstream_root = vendor_root / "upstream"
+	# The converter does not display Calibre's interface, so use a fixed locale.
+	os.environ["CALIBRE_OVERRIDE_LANG"] = "en_US"
 	sys.path.insert(0, str(upstream_root))
 	setattr(sys, "extensions_location", str(upstream_root / "calibre_extensions"))
 	setattr(sys, "resources_location", str(vendor_root / "resources"))
