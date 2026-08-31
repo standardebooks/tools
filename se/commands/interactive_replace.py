@@ -197,7 +197,12 @@ def _print_screen(screen: curses.window, filepath: Path, text: str, start_matchi
 
 	# Syntax highlight the XHTML while retaining the exact source text.
 	text_index = 0
-	for token_type, token_text in lex(text, find_lexer_class_by_name("xml")(ensurenl=False)):
+	if text.startswith("\ufeff"):
+		# Pygments removes a leading byte order mark before lexing, so render it separately to keep the token offsets aligned with the source text.
+		pad.addstr("\ufeff")
+		text_index = 1
+
+	for token_type, token_text in lex(text, find_lexer_class_by_name("xml")(stripnl=False, ensurenl=False)):
 		token_style = curses.A_NORMAL
 		if curses.has_colors():
 			if token_type in Comment.Preproc:
