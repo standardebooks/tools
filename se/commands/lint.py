@@ -144,9 +144,8 @@ def lint(plain_output: bool) -> int:
 								# Syntax highlight any XML or XHTML nodes in submessages.
 								submessage_object = se.highlight_xml(submessage.text)
 
-							# If a submessages is text, make it dim instead.
-							if not any(span.style in {"attr", "class", "css", "css-property", "css-selector", "val", "xhtml"} for span in submessage_object.spans):
-								submessage_object.stylize("dim")
+							# Make submessages dim while retaining any syntax highlighting.
+							submessage_object.stylize_before("dim")
 
 							if submessage.line_num and message.filename:
 								line_number = se.format_line_number(submessage.line_num, submessage.column_num)
