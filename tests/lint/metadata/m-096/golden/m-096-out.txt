@@ -1,0 +1,2 @@
+m-096 [Error] content.opf Whitespace around `--` in LCSH `<dc:subject>` element.
+ Line 34:       <dc:subject id="subject-2">Sisters -- Fiction</dc:subject>

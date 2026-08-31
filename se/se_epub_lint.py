@@ -285,6 +285,7 @@ METADATA
 "m-093", "A single contributor has multiple [val]schema:sameAs[/] URLs to the same site."
 "m-094", "[xml]<dc:description>[/] contains illegal element or attribute. [hint]Hint: Only [xhtml]<p>[/], [xhtml]<i>[/], [xhtml]<em>[/], [xhtml]<b>[/], [xhtml]<strong>[/], [xhtml]<u>[/], [xhtml]<s>[/], [xhtml]<a>[/] with [attr]@href[/], and [attr]@lang[/] are allowed.[/hint]"
 "m-095", "[val]schema:genre[/] is [val]Drama[/], but no [val]z3998:drama[/] element."
+"m-096", "Whitespace around [text]--[/] in LCSH [xml]<dc:subject>[/] element."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1060,6 +1061,11 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	nodes = self.metadata_dom.xpath("/package/metadata/dc:subject[contains(text(), '—')]")
 	if nodes:
 		messages.append(LintMessage("m-019", "Illegal em dash in [xml]<dc:subject>[/] element. [hint]Hint: Use [text]--[/].[/hint]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(node.text, node.sourceline) for node in nodes]))
+
+	# Check for whitespace around double hyphens in LCSH subjects.
+	nodes = self.metadata_dom.xpath("/package/metadata/dc:subject[re:test(., '\\s--|--\\s') and concat('#', @id) = /package/metadata/meta[@property='authority' and text()='LCSH']/@refines]")
+	if nodes:
+		messages.append(LintMessage("m-096", "Whitespace around [text]--[/] in LCSH [xml]<dc:subject>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	# Check for incorrect `anonymous` strings in metadata.
 	nodes = self.metadata_dom.xpath("/package/metadata/dc:contributor[re:test(., 'anonymous', 'i') and text() != 'Anonymous'] | /package/metadata/meta[@property='file-as' and re:test(., 'anonymous', 'i') and text() != 'Anonymous']")
