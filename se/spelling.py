@@ -76,6 +76,24 @@ def modernize_hyphenation(xhtml: str) -> str:
 
 	return xhtml
 
+def _format_problem_spelling_matches(matches: list[str]) -> str:
+	"""
+	Format problem spelling matches with their case-insensitive occurrence counts.
+	"""
+
+	match_counts: dict[str, int] = {}
+	for match in matches:
+		match = match.lower()
+		match_counts[match] = match_counts.get(match, 0) + 1
+
+	formatted_matches = [f"[text]{match}[/] ({match_count})" for match, match_count in match_counts.items()]
+	if len(formatted_matches) == 1:
+		return formatted_matches[0]
+	if len(formatted_matches) == 2:
+		return " and ".join(formatted_matches)
+
+	return ", ".join(formatted_matches[:-1]) + ", and " + formatted_matches[-1]
+
 def detect_problem_spellings(xhtml: str) -> list[str]:
 	"""
 	Return a list of potential problem spellings, that cannot be scripted due to a word having various meanings.
@@ -93,32 +111,41 @@ def detect_problem_spellings(xhtml: str) -> list[str]:
 	# language = get_xhtml_language(xhtml)
 	output: list[str] = []
 
-	if regex.search(r"\bstaid\b", xhtml, flags=regex.I):
-		output.append("[text]staid[/] detected. This should be modernized if it is the past tense of [text]stay[/], but not if used as an adjective meaning “sedate or prim.”")
+	matches = regex.findall(r"\bstaid\b", xhtml, flags=regex.I)
+	if matches:
+		output.append(f"{_format_problem_spelling_matches(matches)} found. This should be modernized if it is the past tense of [text]stay[/], but not if used as an adjective meaning “sedate or prim.”")
 
-	if regex.search(r"\bcozen\b", xhtml, flags=regex.I):
-		output.append("[text]cozen[/] detected. This should be modernized if it means [text]cousin[/], but not if used to mean “to deceive or win over.”")
+	matches = regex.findall(r"\bcozen\b", xhtml, flags=regex.I)
+	if matches:
+		output.append(f"{_format_problem_spelling_matches(matches)} found. This should be modernized if it means [text]cousin[/], but not if used to mean “to deceive or win over.”")
 
-	if regex.search(r"\bgrown-?up\b", xhtml, flags=regex.I):
-		output.append("[text]grownup[/] or [text]grown-up[/] detected. Confirm that [text]grownup[/] is strictly a noun, and [text]grown-up[/] is strictly an adjective.")
+	matches = regex.findall(r"\bgrown-?up\b", xhtml, flags=regex.I)
+	if matches:
+		output.append(f"{_format_problem_spelling_matches(matches)} found. Confirm that [text]grownup[/] is strictly a noun, and [text]grown-up[/] is strictly an adjective.")
 
-	if regex.search(r"\bcommon[\-\s]?sense\b", xhtml, flags=regex.I):
-		output.append("[text]commonsense[/] or [text]common sense[/] or [text]common-sense[/] detected. Confirm that [text]common sense[/] and [text]common-sense[/] are strictly nouns, and that [text]commonsense[/] is strictly an adjective.")
+	matches = regex.findall(r"\bcommon[\-\s]?sense\b", xhtml, flags=regex.I)
+	if matches:
+		output.append(f"{_format_problem_spelling_matches(matches)} found. Confirm that [text]common sense[/] and [text]common-sense[/] are strictly nouns, and that [text]commonsense[/] is strictly an adjective.")
 
-	if regex.search(r"\bmann?ikin\b", xhtml, flags=regex.I):
-		output.append("[text]mannikin[/] or [text]manikin[/] detected. Confirm that [text]mannikin[/] is used in the sense of a small person, and [text]mannequin[/] is used in the sense of a dummy or figure.")
+	matches = regex.findall(r"\bmann?ikin\b", xhtml, flags=regex.I)
+	if matches:
+		output.append(f"{_format_problem_spelling_matches(matches)} found. Confirm that [text]mannikin[/] is used in the sense of a small person, and [text]mannequin[/] is used in the sense of a dummy or figure.")
 
-	if regex.search(r"\bgripe", xhtml, flags=regex.I):
-		output.append("[text]gripe[/] or [text]griped[/] detected. Confirm that [text]gripe[/] is used in the sense of illness or complaint, not in the sense of [text]grip[/] or [text]gripped[/].")
+	matches = regex.findall(r"\bgriped|\bgripe", xhtml, flags=regex.I)
+	if matches:
+		output.append(f"{_format_problem_spelling_matches(matches)} found. Confirm that [text]gripe[/] is used in the sense of illness or complaint, not in the sense of [text]grip[/] or [text]gripped[/].")
 
-	if regex.search(r"\bmay[\-\s]?day", xhtml, flags=regex.I):
-		output.append("[text]mayday[/] or [text]may day[/] or [text]may-day[/] detected. Confirm that [text]may day[/] and [text]may-day[/] refer to the day, and that [text]mayday[/] is used in the sense of a distress signal.")
+	matches = regex.findall(r"\bmay[\-\s]?day", xhtml, flags=regex.I)
+	if matches:
+		output.append(f"{_format_problem_spelling_matches(matches)} found. Confirm that [text]may day[/] and [text]may-day[/] refer to the day, and that [text]mayday[/] is used in the sense of a distress signal.")
 
-	if regex.search(r"\bfree[\-\s]?will", xhtml, flags=regex.I):
-		output.append("[text]freewill[/] or [text]free will[/] or [text]free-will[/] detected. Confirm that [text]free will[/] and [text]free-will[/] are strictly nouns, and that [text]freewill[/] is strictly an adjective.")
+	matches = regex.findall(r"\bfree[\-\s]?will", xhtml, flags=regex.I)
+	if matches:
+		output.append(f"{_format_problem_spelling_matches(matches)} found. Confirm that [text]free will[/] and [text]free-will[/] are strictly nouns, and that [text]freewill[/] is strictly an adjective.")
 
-	if regex.search(r"\bna[iï]f", xhtml, flags=regex.I):
-		output.append("[text]naif[/] or [text]naïf[/] detected. Confirm that [text]naïf[/] is strictly a noun, and [text]naive[/] is strictly an adjective.")
+	matches = regex.findall(r"\bna[iï]f", xhtml, flags=regex.I)
+	if matches:
+		output.append(f"{_format_problem_spelling_matches(matches)} found. Confirm that [text]naïf[/] is strictly a noun, and [text]naive[/] is strictly an adjective.")
 
 	return output
 

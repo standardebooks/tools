@@ -33,10 +33,6 @@ def modernize_spelling(plain_output: bool) -> int:
 
 				try:
 					new_xhtml = se.spelling.modernize_spelling(xhtml)
-					problem_spellings = se.spelling.detect_problem_spellings(xhtml)
-
-					for problem_spelling in problem_spellings:
-						console.print(se.prep_output(f"{('[path][link=file://' + str(filename) + ']' + filename.name + '[/][/]') + ': ' if not args.verbose else ''}{problem_spelling}", plain_output))
 
 				except se.InvalidLanguageException as ex:
 					se.print_error(f"{ex} File: [path][link=file://{filename}]{filename}[/][/]", plain_output=plain_output)
@@ -44,6 +40,11 @@ def modernize_spelling(plain_output: bool) -> int:
 
 				if args.modernize_hyphenation:
 					new_xhtml = se.spelling.modernize_hyphenation(new_xhtml)
+
+				problem_spellings = se.spelling.detect_problem_spellings(new_xhtml)
+
+				for problem_spelling in problem_spellings:
+					console.print(se.prep_output(f"{('[path][link=file://' + str(filename) + ']' + filename.name + '[/][/]') + ': ' if not args.verbose else ''}{problem_spelling}", plain_output))
 
 				if new_xhtml != xhtml:
 					file.seek(0)
