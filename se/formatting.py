@@ -114,6 +114,8 @@ def semanticate(xhtml: str) -> str:
 		"Pvt",
 		"Rev",
 	])
+	# Treat `M.` as Monsieur when it precedes a name, but is not itself preceded by a capitalized word, or the words `an`, `letter`, or `the`, or an initial (which suggests the `M.` is a personal name).
+	xhtml = regex.sub(r"(?<!\b(?:\p{Uppercase_Letter}\p{Lowercase_Letter}*|an|letter|the| [A-Z]\.) )(?<!(?:\.|\B|\<abbr[^>]*?\>))(M\.)(?= (?:\p{Uppercase_Letter}\p{Lowercase_Letter}|(?:le|la|de|des|von|van)\b))", r"""<abbr epub:type="z3998:name-title">\1</abbr>""", xhtml)
 	# Only add name-title to St. if it appears to be an abbreviation for Saint, i.e. has a following no-break space added by typogrify.
 	xhtml = regex.sub(fr"(?<!\.|\B)(St\.)(?={se.NO_BREAK_SPACE})", r"""<abbr epub:type="z3998:name-title">St.</abbr>""", xhtml)
 	xhtml = regex.sub(r"(?<!(?:\.|\B|\<abbr[^>]*?\>))(M\.?P\.?|H\.?M\.?S\.?|S\.?S\.?|N\.?B\.?|W\.?C\.?|I\.?O\.?U\.?)(?!\B)", lambda result: """<abbr epub:type="z3998:initialism">""" + regex.sub(r"([A-Z])", r"\1.", result.group(1).replace(".", "")) + "</abbr>", xhtml)
