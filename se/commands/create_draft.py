@@ -498,7 +498,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 			for node in dom.xpath("/html/body//td[contains(@property, 'dcterms:subject')]"):
 				if node.get("datatype") == "dcterms:LCSH":
 					for subject_link in node.xpath("./a"):
-						transcription_subjects.append(subject_link.text.strip())
+						transcription_subjects.append(regex.sub(r"\s*\-\-\s*", "--", subject_link.text.strip()))
 
 			# Get the PG publication date.
 			for node in dom.xpath("//td[@itemprop='datePublished']"):
