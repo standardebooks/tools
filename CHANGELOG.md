@@ -1,3 +1,95 @@
+# 4.1.0
+
+## General
+
+- More syntax highlighting and formatted/colorized output improvements
+
+- Make references to the long description consistently refer to <dc:description> instead
+
+- Add configuration option for line and column number styling in output
+
+- Fix ZSH completions when specifying flags to the base SE invocation
+
+- Open all XML files in binary mode
+
+- Prefix all instances where attributes are referenced with '@'
+
+## se add-file
+
+- Add LoI option
+
+- Add chapter and part options. Thanks to Erin Endrei
+
+## se build
+
+- Fix Windows encoding error when reading output from epubcheck/vnu
+
+- In SE ebooks, remove non-image items in the titlepage in the compatible build
+
+- Hard-code a locale in vendored Calibre code to work around a Mac crash
+
+## se create-draft
+
+- Change variable names to ABSTRACT/DESCRIPTION
+
+- Add configuration options to prefill draft placeholder variables
+
+- Format dashes in LCSH entries
+
+## se css-select
+
+- Add line numbers
+
+- Add the --no-line-numbers option
+
+## se lint
+
+- Improve m-016 and m-055 by testing a generic regex instead of a hard-coded variable name
+
+- Improve m-034 message
+
+- Avoid catastrophic bactracking in t-017. Thanks to Andrew Paseltiner
+
+- Add hint to m-084. Thanks to Weijia Cheng
+
+- Add m-094, illegal element in <dc:description>
+
+- Make m-016 message clearer
+
+- Allow @lang in m-094
+
+- Add m-095, Drama genre but no z3998:drama element
+
+- Correct formatting tag for 'schema:' values
+
+- Use standardized VALUE string for c-010 message
+
+- Improve m-094 message
+
+- Remove submessage from m-065
+
+- Don't crash if a file is listed in the spine but is missing
+
+- Add m-096, white space around -- in LCSH subject
+
+## se modernize-spelling
+
+- Various additions
+
+- Output problematic spellings after changing spelling, and print the exact matches
+
+## se semanticate
+
+- Add semantics to three-letter compass directions, and don't add extra period after compass directions
+
+- Add semantics for M. (Monsieur)
+
+## se xpath
+
+- Output line numbers
+
+- Add the --no-line-numbers option
+
 # 4.0.3
 
 ## General
