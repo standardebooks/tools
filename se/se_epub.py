@@ -139,9 +139,11 @@ class SeEpub:
 			self.epub_root_path = self.path
 			self.is_se_ebook = False
 
-		container_tree = self.get_dom(self.epub_root_path / "META-INF" / "container.xml")
 		try:
+			container_tree = self.get_dom(self.epub_root_path / "META-INF" / "container.xml")
 			path = container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path", str)[0]
+		except FileNotFoundError as ex:
+			raise se.InvalidSeEbookException(f"Not a valid ebook, file not found: [path]{self.epub_root_path / 'META-INF' / 'container.xml'}[/].") from ex
 		except IndexError as ex:
 			raise se.InvalidSeEbookException("Target doesn’t appear to be an epub: no [path]container.xml[/] or no metadata file.") from ex
 
