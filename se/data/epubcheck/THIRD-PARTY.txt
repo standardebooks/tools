@@ -1,13 +1,13 @@
 Licenses of third-party dependencies
 ------------------------------------
 
-  Jackson-annotations, 2.18.2
+  Jackson-annotations, 2.18.9
     Apache License, Version 2.0
 
-  Jackson-core, 2.18.2
+  Jackson-core, 2.18.8
     Apache License, Version 2.0
 
-  jackson-databind, 2.18.2
+  jackson-databind, 2.18.9
     Apache License, Version 2.0
 
   error-prone annotations, 2.36.0
