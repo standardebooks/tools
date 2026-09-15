@@ -1686,7 +1686,8 @@ def _run_epubcheck(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 			# - Warnings about potentially bad values for datetimes, which are raised for years < 1000. This can occur in works like _Omega_ by Camille Flammarion.
 			# - Errors about `<p>` being a child of `<hgroup>`. The spec changed but our current VNU version has not caught up.
 			# - `Year may be mistyped.` errors, because they are warnings about incorrect years, which may be correct for far-future sci fi (like `AD <time>4000</time>`).
-			messages = vnu_dom.xpath("/messages/*[not(re:test(./message, '^(Attribute (prefix|type) not allowed|(Section|Article) lacks heading\\.|Potentially bad value.+datetime|Element p not allowed as child of element hgroup in this context\\.|Double-check the text content of element.+Year may be mistyped\\.)'))]")
+			# - `This document has heading elements but none of them has a computed heading level of 1.` errors, because by convention we start at `<h2>` in documents.
+			messages = vnu_dom.xpath("/messages/*[not(re:test(./message, '^(Attribute (prefix|type) not allowed|(Section|Article) lacks heading\\.|Potentially bad value.+datetime|Element p not allowed as child of element hgroup in this context\\.|Double-check the text content of element.+Year may be mistyped\\.|This document has heading elements but none of them has a computed heading level of 1\\.)'))]")
 
 			for message in messages:
 				message_text = message.xpath("./message")[0].inner_xml()
