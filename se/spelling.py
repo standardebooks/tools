@@ -436,6 +436,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\b([Mm])izen", r"\1izzen", xhtml)				# mizen -> mizzen
 	xhtml = regex.sub(r"\bJinn([is]?)\b", r"Djinn\1", xhtml)			# jinn -> djinn (technically less common, but more common in the corpus and editorial override)
 	xhtml = regex.sub(r"\bjinn([is]?)\b", r"djinn\1", xhtml)			# jinn -> djinn (technically less common, but more common in the corpus and editorial override)
+	xhtml = regex.sub(r"\b([Mm])anifestoes\b", r"\1anifestos", xhtml)		# manifestoes -> manifestos
 
         # Remove elision quotes from words that no longer need them.
 	xhtml = regex.sub(r"([^\p{Letter}])’([Bb])us\b", r"\1\2us", xhtml)				# ’bus -> bus
