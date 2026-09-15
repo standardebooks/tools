@@ -1690,15 +1690,10 @@ def _run_epubcheck(self: 'SeEpub', work_compatible_epub_dir: Path) -> None:
 			messages = vnu_dom.xpath("/messages/*[not(re:test(./message, '^(Attribute (prefix|type) not allowed|(Section|Article) lacks heading\\.|Potentially bad value.+datetime|Element p not allowed as child of element hgroup in this context\\.|Double-check the text content of element.+Year may be mistyped\\.|This document has heading elements but none of them has a computed heading level of 1\\.)'))]")
 
 			for message in messages:
-				message_text = message.xpath("./message")[0].inner_xml()
-				submessage = None
-
-				# Colorize output.
-				message_text = regex.sub(r"([Aa]ttribute) <code>", r"\1 [attr]", message_text)
-				message_text = regex.sub(r"([Ee]lement) <code>(.+?)</code>", r"\1 [xhtml]<\2>[/]", message_text)
-				message_text = message_text.replace("<code>", "[xhtml]")
-				message_text = message_text.replace("</code>", "[/]")
+				# Preserve code fragments as quoted plain text.
+				message_text = message.xpath("./message")[0].inner_xml().replace("<code>", "“").replace("</code>", "”")
 				message_text = unescape(message_text)
+				submessage = None
 
 				# Do we have a submessage?
 				extract = message.xpath("./extract")

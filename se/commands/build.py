@@ -12,12 +12,49 @@ from rich import box
 from rich.console import Console, RenderableType
 from rich.table import Table
 from rich.text import Text
+from rich.style import Style
 import regex
 
 import se
 from se.se_epub import SeEpub
 from se.se_help_formatter import SeHelpFormatter
 from se.formatting import make_url_safe
+
+def _highlight_checker_message(text: str, filename: Path | None) -> Text:
+	"""Apply semantic colors to checker diagnostics without interpreting external text as markup."""
+	output = Text(text)
+	for match in regex.finditer(r"(?P<xml><(?:[^>\"']|\"[^\"]*\"|'[^']*')+>)|(?P<url>https?://[^\s<>\"’”]+)|[\"“‘'](?P<quoted>[^\"”’'\n]+)[\"”’']", output.plain):
+		start, end = match.span()
+		if match.group("xml"):
+			for span in se.highlight_xml(match.group()).spans:
+				output.stylize(span.style, start + span.start, start + span.end)
+		elif match.group("url"):
+			url = match.group().rstrip(".,;)")
+			output.stylize("url", start, start + len(url))
+			output.stylize(Style(link=url), start, start + len(url))
+		else:
+			start, end = match.span("quoted")
+			value = match.group("quoted")
+			context = output.plain[:match.start()]
+			style = "val"
+			if regex.search(r"\b(?:attribute|attributes)\s+$", context, regex.IGNORECASE):
+				style = "attr"
+			elif regex.search(r"\b(?:element|elements|tag)\s+$", context, regex.IGNORECASE):
+				style = "xhtml"
+			elif regex.search(r"\.(?:xhtml|html|opf|ncx|css|svg|png|jpe?g|epub|woff2?|ttf|otf)(?:#.*)?$", value, regex.IGNORECASE):
+				style = "path"
+				if filename:
+					path, _, fragment = value.partition("#")
+					url = (filename.parent / path).resolve().as_uri()
+					output.stylize(Style(link=f"{url}#{fragment}" if fragment else url), start, end)
+			output.stylize(style, start, end)
+
+	# Highlight attribute assignments separately so fragments inside diagnostic quotes retain XML syntax colors.
+	for match in regex.finditer(r"(?<![\w:.-])(?P<attribute>[\p{L}_:][\w:.-]*)\s*=\s*(?P<value>\"[^\"]*\"|'[^']*')", output.plain):
+		output.stylize("attr", *match.span("attribute"))
+		output.stylize("val", *match.span("value"))
+
+	return output
 
 def build(plain_output: bool) -> int:
 	"""
@@ -37,7 +74,7 @@ def build(plain_output: bool) -> int:
 	args = parser.parse_args()
 
 	called_from_parallel = se.is_called_from_parallel(False)
-	force_terminal = True if called_from_parallel else None # `True` will force colors, `None` will guess whether colors are enabled, `False` will disable colors.
+	force_terminal = se.should_output_color()
 	first_output = True
 	return_code = 0
 
@@ -140,27 +177,27 @@ def build(plain_output: bool) -> int:
 
 			if plain_output:
 				for message in messages:
-					# Replace color markup with ```.
-					message.text = se.prep_output(message.text, True)
-
 					message_filename = ""
 					if message.filename:
 						message_filename = message.filename.name
 
-					console.print(f"{message.source}: {message.code} {message_filename}{message.location if message.location else ''} {message.text}")
+					console.print(f"{message.source}: {message.code} {message_filename}{message.location if message.location else ''} {message.text}", markup=False)
 			else:
 				for message in messages:
 					# Add hyperlinks around message filenames.
-					message_filename = ""
+					message_filename = Text()
 					if message.filename:
-						message_filename = f"[link=file://{message.filename}{message.link_location if message.link_location else ''}]{message.filename.name}[/link]{message.location if message.location else ''}"
+						message_filename.append(message.filename.name, style="path")
+						message_filename.stylize(Style(link=f"{message.filename.resolve().as_uri()}{message.link_location or ''}"))
+						message_filename.append(message.location or "")
 
-					table_data.append([message.source, message.code, message_filename, message.text])
+					table_data.append([Text(message.source, style="command"), Text(message.code, style="text"), message_filename, _highlight_checker_message(message.text, message.filename)])
 
 					if message.submessages:
 						for submessage in message.submessages:
-							# Brackets don't need to be escaped in submessages if we instantiate them in `Text()`.
-							submessage_object = Text(submessage, style="dim")
+							# Keep excerpts dim while retaining semantic XML syntax colors.
+							submessage_object = se.highlight_xml(submessage)
+							submessage_object.stylize_before("dim")
 
 							table_data.append([" ", " ", Text("→", justify="right"), submessage_object])
 
