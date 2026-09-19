@@ -965,9 +965,9 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 			missing_metadata_elements.append("""<dc:description>""")
 
 	missing_metadata_vars: list[LintSubmessage] = []
-	for node in self.metadata_dom.xpath("/package/metadata/*[re:test(., '[A-Z_]{2,}') or re:test(@*, '[A-Z_]{2,}')]"):
+	for node in self.metadata_dom.xpath("/package/metadata/*[re:test(., '[A-Z_]{2,}') or re:test(@href, '[A-Z_]{2,}')]"):
 		for var in SE_VARIABLES:
-			if regex.search(fr"\b{var}\b", node.text):
+			if regex.search(fr"\b{var}\b", node.text) or regex.search(fr"\b{var}\b", node.get_attr("href")):
 				missing_metadata_vars.append(LintSubmessage(var, node.sourceline))
 
 	if missing_metadata_vars:

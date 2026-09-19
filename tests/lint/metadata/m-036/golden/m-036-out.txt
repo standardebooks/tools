@@ -1,0 +1,40 @@
+s-033 [Manual Review] chapter-1.xhtml `@xml:lang` value on `<html>` element doesn’t match language set in metadata.
+ Line 2:        Found: en-GB
+        Expected: LANG
+m-009 [Error] content.opf Unexpected value for `@href` attribute in `<link rel="schema:codeRepository">` element.
+ Line 52:       Found: VCS_URL
+        Expected: https://github.com/PUBLISHER/author-name_title_translator-name
+m-036 [Error] content.opf Variable not replaced with value.
+ Line 4:        IDENTIFIER
+ Line 31:       TITLE
+ Line 32:       TITLE_SORT
+ Line 33:       SUBJECT_1
+ Line 34:       SUBJECT_2
+ Line 36:       SUBJECT_1_LCSH_ID
+ Line 38:       SUBJECT_2_LCSH_ID
+ Line 39:       TAG
+ Line 40:       ABSTRACT
+ Line 41:       DESCRIPTION
+ Line 44:       LANG
+ Line 45:       TRANSCRIPTION_URL
+ Line 46:       PAGE_SCANS_URL
+ Line 49:       EBOOK_WIKI_URL
+ Line 52:       VCS_URL
+ Line 53:       AUTHOR_NAME
+ Line 54:       AUTHOR_SORT
+ Line 55:       AUTHOR_FULL_NAME
+ Line 56:       AUTHOR_WIKI_URL
+ Line 57:       AUTHOR_NACOAF_URI
+ Line 59:       TRANSLATOR_NAME
+ Line 60:       TRANSLATOR_SORT
+ Line 61:       TRANSLATOR_WIKI_URL
+ Line 62:       TRANSLATOR_NACOAF_URI
+ Line 65:       COVER_ARTIST_NAME
+ Line 67:       COVER_ARTIST_WIKI_URL
+ Line 68:       COVER_ARTIST_NACOAF_URI
+ Line 70:       TRANSCRIBER_1_NAME
+ Line 75:       TRANSCRIBER_2_NAME
+ Line 80:       PRODUCER_NAME
+ Line 81:       PRODUCER_SORT
+x-016 [Error] toc.xhtml `@xml:lang` attribute with value starting in uppercase letter.
+ Line 2:        <html epub:prefix="z3998: http://www.daisy.org/z3998/2012/vocab/structure/, se: https://standardebooks.org/vocab/1.0" xml:lang="LANG">
