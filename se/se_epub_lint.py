@@ -205,7 +205,7 @@ METADATA
 "m-013", "Non-typogrified character in [xml]<meta property=\"schema:abstract\">[/] element."
 "m-014", "Non-typogrified character in [xml]<dc:description>[/] element."
 "m-015", "Contents of [xml]<dc:description>[/] are not valid XHTML."
-"m-016", "[xml]<dc:description[/] must contain an escaped XHTML fragment beginning with [xhtml]<p>[/]."
+"m-016", "[xml]<dc:description>[/] must contain an escaped XHTML fragment beginning with [xhtml]<p>[/]."
 "m-017", "Illegal [xml]<!\\[CDATA\\[[/]. [hint]Hint: Run [command]se[/] [subcommand]clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] elements.[/hint]"
 "m-018", "HTML entities found. [hint]Hint: Use Unicode equivalents instead.[/hint]"
 "m-019", "Illegal em dash in [xml]<dc:subject>[/] element. [hint]Hint: Use [text]--[/].[/hint]"
@@ -880,7 +880,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 
 		# Make sure the contents of `<dc:description>` are an escaped XHTML fragment.
 		if not regex.search(r"^\s*<p>", long_description) and not regex.match(r"^[A-Z_]+$", long_description.strip()):
-			messages.append(LintMessage("m-016", "[xml]<dc:description[/] must contain an escaped XHTML fragment beginning with [xhtml]<p>[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_node_tags([long_description_node])))
+			messages.append(LintMessage("m-016", "[xml]<dc:description>[/] must contain an escaped XHTML fragment beginning with [xhtml]<p>[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_node_tags([long_description_node])))
 
 		# Check that `<dc:description>` doesn't contain any exotic elements.
 		nodes = metadata_dom_with_parsed_long_description.xpath("/package/metadata/dc:description//*[not(self::p or self::b or self::i or self::em or self::strong or self::u or self::s or self::a) or @*[not( (local-name() = 'href' and parent::a) or local-name() = 'lang')]]")
