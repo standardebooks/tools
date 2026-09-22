@@ -13,17 +13,20 @@ import os
 from pathlib import Path
 import importlib.resources
 from unicodedata import normalize
+from urllib.parse import quote as url_quote, unquote, urlsplit
 
 from git import cmd
 from git.repo import Repo
 from lxml import etree
 from natsort import natsorted
 import regex
+import rich.markup
 import tinycss2
 from tinycss2.ast import AtRule, Node, ParseError, QualifiedRule
 
 import se
 import se.css
+import se.easy_xml
 from se.easy_xml import EasyXmlElement, EasyXmlTree
 import se.formatting
 import se.images
@@ -662,6 +665,277 @@ class SeEpub:
 				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/].") from ex
 
 		return self._dom_cache[file_path_str]
+
+	def simplify_cfis(self) -> None:
+		"""
+		Replace intra-publication EPUB CFI links with links to `@id` attributes.
+
+		If the CFI points to a range, link it to the parent element of the range starting point. If the CFI points to an element, link to that element directly with an `@id` attribute.
+
+		If the target already has an `@id` attribute, it's re-used, otherwise a new `@id` attribute is generated based on the CFI and added to the target element.
+		"""
+
+		# Resolve intra-publication EPUB CFI links to ordinary fragment links.
+		cfi_links: list[tuple[Path, EasyXmlElement, str]] = []
+		for file_path in self.epub_root_path.glob("**/*.xhtml"):
+			# Get a list of `@href` attributes that are *intra-publication* EPUB CFIs, i.e. they point to a metadata file instead of a separate epub file.
+			for link in self.get_dom(file_path).xpath("//a[re:test(@href, '\\.opf#epubcfi\\(')]"):
+				href = link.get_attr("href")
+				uri = urlsplit(href)
+				if not uri.scheme and not uri.netloc and not uri.query and unquote(uri.fragment).startswith("epubcfi(") and (file_path.parent / unquote(uri.path)).resolve() == self.metadata_file_path:
+					cfi_links.append((file_path, link, href))
+
+		if cfi_links:
+			cfi_documents = {path: self.get_dom(path) for path in self.epub_root_path.glob("**/*") if path.suffix in (".xhtml", ".html", ".svg", ".xml", ".opf")}
+			cfi_documents[self.metadata_file_path] = self.metadata_dom
+			used_ids = {value for dom in cfi_documents.values() for value in dom.xpath("//@id", str)}
+			changed_documents: set[Path] = set()
+			for file_path, link, href in cfi_links:
+				try:
+					target = self.resolve_epub_cfi(href)
+				except Exception as ex:
+					raise se.InvalidInputException(f"Couldn’t parse EPUB CFI [text]{rich.markup.escape(href)}[/] in [path][link={url_quote(str(file_path))}]{rich.markup.escape(str(file_path))}[/][/]: {rich.markup.escape(str(ex))}")
+
+				# Get the path for the specified target.
+				target_root = target.lxml_element.getroottree().getroot()
+				target_path = next((path for path, dom in cfi_documents.items() if dom.etree is target_root), None)
+				if target_path is None:
+					raise se.InvalidInputException(f"Couldn’t locate the EPUB CFI target document: [text]{rich.markup.escape(href)}[/].")
+
+				# Does the target currently have an `@id` attribute?
+				target_id = target.get_attr("id")
+
+				if not target_id:
+					# Create a new `@id` attribute for the target, using the original EPUB CFI but modifying it to point to the actual element we're targeting.
+					cfi = unquote(urlsplit(href).fragment)[8:-1]
+					paths = regex.split(r"\[(?:\^.|[^\]^])*\](*SKIP)(*FAIL)|,", cfi)
+					endpoint = paths[0] + (paths[1] if len(paths) == 3 else "")
+
+					for step in regex.finditer(r"\[(?:\^.|[^\]^])*\](*SKIP)(*FAIL)|/([0-9]+)(?:\[(?:\^.|[^\]^])*\])?", endpoint):
+						if int(step[1]) == 0 or int(step[1]) % 2:
+							continue
+
+						candidate_id = f"epubcfi({endpoint[:step.end()]})"
+
+						if self.resolve_epub_cfi(candidate_id).lxml_element is target.lxml_element:
+							target_id = candidate_id
+							break
+
+					if not target_id:
+						raise se.InvalidInputException(f"Couldn’t determine the EPUB CFI target's element path: [text]{rich.markup.escape(href)}[/].")
+
+					if target_id in used_ids:
+						raise se.InvalidInputException(f"The EPUB CFI target ID is already in use: [attr]{rich.markup.escape(target_id)}[/]: [text]{rich.markup.escape(href)}[/].")
+
+					target.set_attr("id", target_id)
+					used_ids.add(target_id)
+					changed_documents.add(target_path)
+
+				relative_path = url_quote(os.path.relpath(target_path, file_path.parent)) if target_path != file_path else ""
+				fragment = url_quote(target_id, safe="/?:@!$&'()*+,;=")
+				link.set_attr("href", f"{relative_path}#{fragment}")
+				changed_documents.add(file_path)
+
+			for file_path in changed_documents:
+				file_path.write_text(cfi_documents[file_path].to_string(), encoding="utf-8")
+
+	def resolve_epub_cfi(self, epub_cfi: str) -> EasyXmlElement:
+		"""
+		Resolve an intra-publication EPUB CFI to its element, or the closest parent element of a text position.
+		If the EPUB CFI points to a range, return the start element, or if the start point is a text position, the closest parent element of the start point.
+
+		INPUTS:
+		epub_cfi: A bare `epubcfi(...)` or a URI referencing this ebook's package document.
+		"""
+
+		package_path = self.metadata_file_path.resolve()
+		fragment = epub_cfi
+		# Validate `epub_cfi` before continuing.
+		if not fragment.startswith("epubcfi("):
+			# Intra-publication links can be relative to a content document in a subdirectory.
+			uri = urlsplit(epub_cfi)
+			package_reference = Path(unquote(uri.path))
+			if uri.scheme or uri.netloc or uri.query or package_reference.is_absolute() or not uri.fragment:
+				raise se.InvalidInputException("Expected an intra-publication EPUB CFI.")
+			if uri.path and not any(
+				(base / package_reference).resolve() == package_path
+				for base in [self.content_path, self.epub_root_path, *[(self.content_path / unquote(urlsplit(href).path)).parent for href in self.metadata_dom.xpath("/package/manifest/item/@href", str)]]
+			):
+				raise se.InvalidInputException("EPUB CFI doesn’t reference this ebook’s package document.")
+			fragment = unquote(uri.fragment, errors="strict")
+
+		# Validate the grammar.
+		grammar = r"""(?x)
+			(?(DEFINE)
+				(?P<integer>0|[1-9][0-9]*)
+				(?P<number>(?&integer)(?:\.[0-9]*[1-9])?)
+				(?P<value>(?:\^[\^\[\](),;=]|[^\^\[\](),;=])+)
+				(?P<name>(?:\^[\^\[\](),;=]|[^\^\[\](),;= ])+)
+				(?P<parameter>;(?&name)=(?&value)(?:,(?&value))*)
+				(?P<assertion>\[(?:(?&value)(?:,(?&value))?|,(?&value)|(?&parameter))(?&parameter)*\])
+				(?P<step>/(?&integer)(?&assertion)?)
+				(?P<offset>(?::(?&integer)|@(?&number):(?&number)|~(?&number)(?:@(?&number):(?&number))?)(?&assertion)?)
+				(?P<local>(?&step)*(?:!(?:(?&offset)|(?&path))|(?&offset)?))
+				(?P<path>(?&step)(?&local))
+			)
+			epubcfi\((?&path)(?:,(?&local),(?&local))?\)
+		"""
+		if regex.search(r"[^\x09\x0a\x0d\x20-\ud7ff\ue000-\ufffd\U00010000-\U0010ffff]", fragment) or not regex.fullmatch(grammar, fragment):
+			raise se.InvalidInputException("Invalid EPUB CFI syntax.")
+
+		tokens = regex.findall(r"\[(?:\^.|[^\]^])*\]|[@/~:][0-9]+(?:\.[0-9]+)?|[!,]", fragment[8:-1])
+		paths: list[list[str]] = [[]]
+		for token in tokens:
+			if token == ",":
+				paths.append([])
+			else:
+				paths[-1].append(token)
+
+		is_range = len(paths) == 3
+		if is_range and any(token.startswith((":", "~", "@")) for token in paths[0]):
+			raise se.InvalidInputException("Range parent must end at a step.")
+
+		def resolve_path(path: list[str]) -> tuple[EasyXmlElement, Path, tuple[tuple[int, float], ...]]:
+			"""
+			Resolve a complete endpoint.
+			"""
+
+			document_path = package_path
+			dom = self.metadata_dom
+			node = dom.xpath("/*")[0]
+			text: str | None = None
+			text_prefix = ""
+			is_virtual = False
+			position_step: int | None = None
+			offset = 0
+			last_token_type = ""
+			order: list[tuple[int, float]] = []
+			for index, token in enumerate(path):
+				token_type = token[0]
+				if token_type == "[":
+					# Split before unescaping so escaped commas and semicolons remain literal text.
+					parts = regex.split(r"\^.(*SKIP)(*FAIL)|;", token[1:-1])
+					values = [regex.sub(r"\^(.)", r"\1", value) for value in regex.split(r"\^.(*SKIP)(*FAIL)|,", parts[0])]
+					for parameter in parts[1:]:
+						if parameter.startswith("s=") and (parameter not in ("s=a", "s=b") or is_range or index != len(path) - 1 or any(item.startswith("@") for item in path)):
+							raise se.InvalidInputException("Invalid side bias.")
+					if parts[0]:
+						if last_token_type == "/" and text is None and not is_virtual and len(values) == 1:
+							if values[0] not in (node.get_attr("id"), node.get_attr("xml:id")):
+								matches = dom.xpath(f"//*[@id={se.easy_xml.escape_xpath(values[0])} or @xml:id={se.easy_xml.escape_xpath(values[0])}]")
+								if len(matches) != 1:
+									raise se.InvalidInputException("Unresolvable ID assertion.")
+								node = matches[0]
+						elif last_token_type == ":" and text is not None:
+							before = text_prefix + text.encode("utf-16-le")[:offset * 2].decode("utf-16-le", errors="surrogatepass")
+							after = "".join(dom.xpath("//text()", str))[len(before):]
+							if node.tag == "img":
+								after = text.encode("utf-16-le")[offset * 2:].decode("utf-16-le", errors="surrogatepass")
+							before = regex.sub(r"[\x20\t\r\n]+", " ", before)
+							after = regex.sub(r"[\x20\t\r\n]+", " ", after)
+							if not before.endswith(values[0]) or (len(values) == 2 and not after.startswith(values[1])):
+								raise se.InvalidInputException("Unresolvable text assertion.")
+						else:
+							raise se.InvalidInputException("Invalid assertion for this location.")
+					continue
+				if token_type == "/":
+					if text is not None or is_virtual:
+						raise se.InvalidInputException("An EPUB CFI can’t descend from a text or virtual location.")
+					step = int(token[1:])
+					children = node.xpath("./*")
+					if step % 2:
+						if step > len(children) * 2 + 1:
+							raise se.InvalidInputException("Text location doesn’t exist.")
+						# Comments and processing instructions do not divide character-data chunks.
+						chunks = [node.lxml_element.text or ""]
+						for child in node.children:
+							if isinstance(child.lxml_element.tag, str):
+								chunks.append("")
+							chunks[-1] += child.lxml_element.tail or ""
+						text = chunks[step // 2]
+						position_step = step
+						text_prefix = "".join(node.xpath("preceding::text()", str))
+						for child_index in range(step // 2):
+							text_prefix += chunks[child_index] + "".join(children[child_index].xpath(".//text()", str))
+					elif step in (0, len(children) * 2 + 2):
+						is_virtual = True
+						position_step = step
+					elif step > len(children) * 2:
+						raise se.InvalidInputException("Element doesn’t exist.")
+					else:
+						node = children[step // 2 - 1]
+				elif token_type == "!":
+					if text is not None or is_virtual:
+						raise se.InvalidInputException("Invalid indirection.")
+					reference = ""
+					if node.tag == "itemref" and document_path == package_path and node.xpath("parent::spine"):
+						items = self.metadata_dom.xpath(f"/package/manifest/item[@id={se.easy_xml.escape_xpath(node.get_attr('idref'))}]")
+						if len(items) == 1:
+							reference = items[0].get_attr("href")
+					elif node.tag in ("iframe", "embed"):
+						reference = node.get_attr("src")
+					elif node.tag == "object":
+						reference = node.get_attr("data")
+					elif node.tag in ("image", "use", "{http://www.w3.org/2000/svg}image", "{http://www.w3.org/2000/svg}use"):
+						reference = node.lxml_element.get("{http://www.w3.org/1999/xlink}href", "")
+					if not reference:
+						raise se.InvalidInputException("The element has no supported embedded reference.")
+					# Resolve the local resource reference without leaving the publication.
+					uri = urlsplit(reference)
+					if uri.scheme or uri.netloc or uri.query or uri.path.startswith("/"):
+						raise se.InvalidInputException("References must remain inside the publication.")
+					document_path = (document_path.parent / unquote(uri.path)).resolve() if uri.path else document_path
+					if not document_path.is_relative_to(self.epub_root_path.resolve()):
+						raise se.InvalidInputException("References must remain inside the publication.")
+					target_id = unquote(uri.fragment, errors="strict")
+					dom = self.get_dom(document_path)
+					matches = dom.xpath(f"//*[@id={se.easy_xml.escape_xpath(target_id)} or @xml:id={se.easy_xml.escape_xpath(target_id)}]") if target_id else dom.xpath("/*")
+					if len(matches) != 1:
+						raise se.InvalidInputException("Embedded fragment doesn’t exist.")
+					node = matches[0]
+				elif token_type == ":" and last_token_type != "@":
+					if text is None and node.tag == "img" and not is_virtual:
+						text = node.get_attr("alt", False)
+					if text is None or is_virtual:
+						raise se.InvalidInputException("Character offset requires text or an image’s [attr]@alt[/] text.")
+					offset = int(token[1:])
+					if offset > len(text.encode("utf-16-le")) // 2:
+						raise se.InvalidInputException("Character offset exceeds the available text.")
+					order.append((0, offset))
+				else:
+					if text is not None or is_virtual:
+						raise se.InvalidInputException("Media offset requires an element.")
+					value = float(token[1:])
+					if token_type in ("@", ":") and value > 100:
+						raise se.InvalidInputException("Spatial coordinates must be between 0 and 100.")
+					if token_type == "~" and node.tag not in ("audio", "video"):
+						raise se.InvalidInputException("Temporal offset requires audio or video.")
+					if token_type == "@" and node.tag not in ("img", "image", "svg", "video", "{http://www.w3.org/2000/svg}image", "{http://www.w3.org/2000/svg}svg"):
+						raise se.InvalidInputException("Spatial offset requires an image or video.")
+					order.append((2, value))
+					if token_type == ":":
+						order[-2:] = [order[-1], order[-2]]
+				last_token_type = token_type
+			if text is not None and last_token_type == "/":
+				order.append((0, 0))
+
+			# Compare resolved document locations so ID correction can't conceal a reversed range.
+			ancestors = [*node.xpath("ancestor::*"), node]
+			steps = [(1, len(ancestor.xpath("preceding-sibling::*")) * 2 + 2) for ancestor in ancestors[1:]]
+			if position_step is not None:
+				steps.append((1, position_step))
+			return node, document_path, tuple([*steps, *order])
+
+		if not is_range:
+			return resolve_path(paths[0])[0]
+
+		start, start_document, start_order = resolve_path(paths[0] + paths[1])
+		_, end_document, end_order = resolve_path(paths[0] + paths[2])
+
+		if start_document != end_document or start_order > end_order:
+			raise se.InvalidInputException("Range must have ordered endpoints in the same document.")
+
+		return start
 
 	def _recompose_xhtml(self, section: EasyXmlElement, output_dom: EasyXmlTree, use_image_files: bool = False) -> None:
 		"""

@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, cast
 import cairosvg
 from cairosvg import svg2png # type: ignore Not going to hand-write the type hint for this crazy huge function right now.
 from PIL import Image
+from rich.markup import escape
 import lxml.cssselect
 from lxml import etree
 import regex
@@ -1990,7 +1991,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 		output_dir = output_dir.resolve()
 		output_dir.mkdir(parents=True, exist_ok=True)
 	except Exception as ex:
-		raise se.FileExistsException(f"Couldn’t create output directory: [path][link=file://{output_dir}]{output_dir}[/][/].") from ex
+		raise se.FileExistsException(f"Couldn’t create output directory: [path][link=file://{urllib.parse.quote(str(output_dir))}]{escape(str(output_dir))}[/][/].") from ex
 
 	# Set up our cache.
 	build_cache_images_directory = None
@@ -2022,10 +2023,10 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 		safe_pieces = [se.formatting.make_url_safe(piece) for piece in pieces]
 		identifier = "_".join(safe_pieces)
 	except Exception as ex:
-		raise se.InvalidSeEbookException(f"Missing [xml]<dc:identifier>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/].") from ex
+		raise se.InvalidSeEbookException(f"Missing [xml]<dc:identifier>[/] element in [path][link=file://{urllib.parse.quote(str(self.metadata_file_path))}]{escape(str(self.metadata_file_path))}[/][/].") from ex
 
 	if not metadata_dom.xpath("//dc:title"):
-		raise se.InvalidSeEbookException(f"Missing [xml]<dc:title>[/] element in [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/].")
+		raise se.InvalidSeEbookException(f"Missing [xml]<dc:title>[/] element in [path][link=file://{urllib.parse.quote(str(self.metadata_file_path))}]{escape(str(self.metadata_file_path))}[/][/].")
 
 	compatible_epub_output_filename = f"{identifier}{'.proof' if proof else ''}.epub"
 	advanced_epub_output_filename = f"{identifier}{'.proof' if proof else ''}_advanced.epub"
@@ -2070,6 +2071,12 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 			se.epub.write_epub(work_compatible_epub_dir, output_dir / advanced_epub_output_filename, last_updated)
 
 		# Now add compatibility fixes for older ereaders.
+
+		# Simplify CFI links before compatibility replacements change their target locations.
+		# As of 2026-09, only kepub supports EPUB CFIs, however in practice they don't work well since by adding the kepub `<span>`s we alter the document structure and break the actual CFI links; so we also simplify them for kepub anyway.
+		compatible_epub = SeEpub(work_compatible_epub_dir)
+		compatible_epub.metadata_dom = metadata_dom
+		compatible_epub.simplify_cfis()
 
 		current_cache_paths: set[Path] = set()
 

@@ -501,6 +501,7 @@ XHTML
 "x-020", "Link to [path]se.css[/] in [xhtml]<head>[/], but this file isn’t an S.E. boilerplate file."
 "x-021", "[xhtml]<figure>[/] element with no [attr]@id[/] attribute."
 "x-022", "Illegal fractions in SVG [attr]@viewBox[/] attribute."
+"x-023", "Invalid CFI."
 
 TYPOS
 "y-001", "Possible typo: Doubled [text]a/the/and/of/or/as/if[/]."
@@ -4078,7 +4079,19 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 			# Remove comments before we do any further processing.
 			source_file = source_file.sub(regex.compile(r"<!--.+?-->", flags=regex.DOTALL), "")
 
-			# Check for potential MusicXML errors
+			# Validate any intra-publication CFIs, as this isn't done by `epubcheck`.
+			if file_path.suffix in (".xhtml", ".html", ".svg", ".xml", ".opf", ".ncx"):
+				cfi_errors: list[LintSubmessage] = []
+				for node in self.get_dom(file_path).xpath("//*[@*[local-name()='href' or local-name()='src' or local-name()='data']]"):
+					for cfi in node.xpath("@*[(local-name()='href' or local-name()='src' or local-name()='data') and re:test(., '\\.opf#epubcfi\\(')]", str):
+						try:
+							self.resolve_epub_cfi(cfi)
+						except Exception as ex:
+							cfi_errors.append(LintSubmessage(escape(str(ex)), node.sourceline))
+				if cfi_errors:
+					messages.append(LintMessage("x-023", "Invalid CFI.", se.MESSAGE_TYPE_ERROR, file_path, cfi_errors))
+
+			# Check for potential MusicXML errors.
 			if file_path.suffix == ".xml" and source_file.findall("http://www.musicxml.org/dtds/"):
 				messages.append(LintMessage("f-004", "MusicXML files must end in [path].musicxml[/].", se.MESSAGE_TYPE_ERROR, file_path))
 

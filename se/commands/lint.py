@@ -138,7 +138,7 @@ def lint(plain_output: bool) -> int:
 
 					if message.submessages:
 						for submessage in message.submessages:
-							if "[hint]" in submessage.text or "[css]" in submessage.text or "[css-property]" in submessage.text or "[css-selector]" in submessage.text:
+							if "[hint]" in submessage.text or "[text]" in submessage.text or "[css]" in submessage.text or "[css-property]" in submessage.text or "[css-selector]" in submessage.text:
 								submessage_object = _highlight_markup(submessage.text)
 							else:
 								# Syntax highlight any XML or XHTML nodes in submessages.
