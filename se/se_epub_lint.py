@@ -2851,7 +2851,7 @@ def _lint_xhtml_typography_checks(self: 'SeEpub', source_file: SourceFile, dom: 
 		messages.append(LintMessage("t-014", "Two or more em dashes in a row found. [hint]Hint: Elided words should use the two- or three-em-dash Unicode character, and dialog ending in em dashes should only end in a single em dash.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	# Check for money not separated by commas.
-	nodes = dom.xpath("/html/body//*[(name() = 'p' or name() = 'td') and (re:test(., '[£\\$][0-9]{4,}') or re:test(., '(?<!\\.)[0-9]{4,}(°|\\s+(square\\s|meter|metre|inch|feet|foot|centi|kilo|milli|degree|dollar|pound|gram))'))]")
+	nodes = dom.xpath("/html/body//*[(name() = 'p' or name() = 'td') and (re:test(., '[£\\$][0-9]{4,}') or re:test(., '(?<!\\.)[0-9]{4,}(°|[\\s\\-]+(square\\s|meter|metre|inch|feet|foot|centi|kilo|milli|degree|dollar|pound|gram))'))]")
 	if nodes:
 		messages.append(LintMessage("t-015", "Numbers not grouped by commas. [hint]Hint: Separate numbers greater than 1,000 with commas at every three numerals.[/hint]", se.MESSAGE_TYPE_WARNING, filename, LintSubmessage.from_nodes(nodes)))
 
