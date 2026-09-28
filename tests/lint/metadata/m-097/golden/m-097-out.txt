@@ -1,0 +1,3 @@
+m-097 [Error] content.opf Illegal `@xml:lang` attribute on `<meta property="alternate-script">` element.
+ Line 33:       <meta property="alternate-script" refines="#title" xml:lang="fr">Roman inconnu</meta>
+ Line 34:       <meta property="alternate-script" refines="#title" xml:lang="">Unbekannter Roman</meta>

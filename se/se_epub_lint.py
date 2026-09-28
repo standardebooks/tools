@@ -286,6 +286,7 @@ METADATA
 "m-094", "[xml]<dc:description>[/] contains illegal element or attribute. [hint]Hint: Only [xhtml]<p>[/], [xhtml]<i>[/], [xhtml]<em>[/], [xhtml]<b>[/], [xhtml]<strong>[/], [xhtml]<u>[/], [xhtml]<s>[/], [xhtml]<a>[/] with [attr]@href[/], and [attr]@lang[/] are allowed.[/hint]"
 "m-095", "[val]schema:genre[/] is [val]Drama[/], but no [val]z3998:drama[/] element."
 "m-096", "Whitespace around [text]--[/] in LCSH [xml]<dc:subject>[/] element."
+"m-097", "Illegal [attr]@xml:lang[/] attribute on [xml]<meta property=\"alternate-script\">[/] element."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1123,6 +1124,11 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 
 	if titles_missing_title_type:
 		messages.append(LintMessage("m-068", "[xml]<dc:title>[/] element missing matching [xml]<meta property=\"title-type\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(titles_missing_title_type)))
+
+	# Check for illegal language attributes on alternate-script metadata.
+	nodes = self.metadata_dom.xpath("/package/metadata/meta[@property='alternate-script' and @xml:lang]")
+	if nodes:
+		messages.append(LintMessage("m-097", "Illegal [attr]@xml:lang[/] attribute on [xml]<meta property=\"alternate-script\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	# Check for `CDATA` elements.
 	# We have to use `self.metadata_file_path.read_text()` to get the raw file contents because converting a DOM tree to string removes `CDATA` elements.
