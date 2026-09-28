@@ -918,7 +918,11 @@ def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote
 				file.write(current_endnotes_file.to_string())
 
 			# Update the manifest and spine.
-			endnotes_manifest_entry.lxml_element.addprevious(etree.XML(f"""<item href="{endnote_manifest_href}/{new_filename}" id="{new_filename}" media-type="application/xhtml+xml"/>"""))
+			new_manifest_entry = etree.XML(f"""<item href="{endnote_manifest_href}/{new_filename}" id="{new_filename}" media-type="application/xhtml+xml"/>""")
+			# Mark chunks containing SVG images so their references are updated during conversion.
+			if current_endnotes_file.xpath("//img[re:test(@src, '\\.svg$')]"):
+				new_manifest_entry.set("properties", "svg")
+			endnotes_manifest_entry.lxml_element.addprevious(new_manifest_entry)
 			endnotes_spine_entry.lxml_element.addprevious(etree.XML(f"""<itemref idref="{new_filename}"/>"""))
 
 			# Update the ToC.
