@@ -42,7 +42,7 @@ def initialize_dictionary() -> set[str]:
 
 def modernize_hyphenation(xhtml: str) -> str:
 	"""
-	Convert old-timey hyphenated compounds into single words based on the passed DICTIONARY.
+	Convert old-timey hyphenated compounds into single words.
 
 	INPUTS
 	xhtml: A string of XHTML to modernize.
