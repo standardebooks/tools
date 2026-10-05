@@ -6,34 +6,20 @@ Installing the toolset makes the `se` command line executable available. Its var
 
 # Installation
 
-The toolset requires Python >= 3.10.12.
+The toolset requires Python >= 3.14.4.
 
 To install the toolset locally for development and debugging, see [Installation for toolset developers](#installation-for-toolset-developers).
 
 Optionally, install [Ace](https://daisy.github.io/ace/) and the `se build --check` command will automatically run it as part of the checking process.
 
-## Ubuntu 24.04 (Noble)
+## Ubuntu 26.04 through 22.04
 
 ```shell
 # Install some pre-flight dependencies.
 sudo apt install --yes default-jre git python3-dev python3-pip python3-venv pipx
 
 # Install the toolset.
-pipx install standardebooks
-```
-
-## Ubuntu 20.04 (Focal)
-
-```shell
-# Install some pre-flight dependencies.
-sudo apt install --yes default-jre git python3-dev python3-pip python3-venv
-
-# Install pipx.
-python3 -m pip install --user pipx
-python3 -m pipx ensurepath
-
-# Install the toolset.
-pipx install --python=3.12 --fetch-missing-python standardebooks
+pipx install --python=3.14 standardebooks
 ```
 
 ### Optional: Install shell completions
@@ -104,12 +90,12 @@ If you want a more granular install you can install the dependencies manually an
 
 ```shell
 # Install some pre-flight dependencies.
-brew install cairo git openjdk pipx python@3.12
+brew install cairo git openjdk pipx python@3.14
 pipx ensurepath
 sudo ln -sfn $(brew --prefix)/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
 
 # Install the toolset.
-pipx install --python "$(brew --prefix)"/bin/python3.12 standardebooks
+pipx install --python "$(brew --prefix)"/bin/python3.14 standardebooks
 
 # Optional: Bash users who have set up bash-completion via brew can install tab completion.
 ln -s $(pipx environment --value PIPX_LOCAL_VENVS)/standardebooks/lib/python3.*/site-packages/se/completions/bash/se $(brew --prefix)/etc/bash_completion.d/se
@@ -125,7 +111,7 @@ These instructions install the toolset directly in Windows, without Windows Subs
 1. Open PowerShell and use `WinGet` to install various dependencies:
 
 	```powershell
-	winget install --exact --id Python.Python.3.12
+	winget install --exact --id Python.Python.3.14
 	winget install --exact --id Git.Git
 	winget install --exact --id Microsoft.OpenJDK.21
 	winget install --exact --id tschoonj.GTKForWindows
@@ -134,14 +120,14 @@ These instructions install the toolset directly in Windows, without Windows Subs
 2.  Close PowerShell and open it again , then install `pipx` and configure its executable directory in your `PATH`:
 
 	```powershell
-	py -3.12 -m pip install --user pipx
-	py -3.12 -m pipx ensurepath
+	py -3.14 -m pip install --user pipx
+	py -3.14 -m pipx ensurepath
 	```
 
 3. Close PowerShell and open it again, then install the toolset:
 
 	```powershell
-	pipx install --python 3.12 standardebooks
+	pipx install --python 3.14 standardebooks
 	```
 
 ## OpenBSD 6.6
@@ -158,7 +144,7 @@ These instructions were tested on OpenBSD 6.6, but may also work on 6.5.
 	git--
 	```
 
-2. Install dependencies using `doas pkg_add -ivl ~/standard-ebooks-packages`. Follow the linking instructions provided by `pkg_add` to save keystrokes, unless you want multiple Python and pip versions installed. In my case, I ran `doas ln -sf /usr/local/bin/pip3.7 /usr/local/bin/pip`.
+2. Install dependencies using `doas pkg_add -ivl ~/standard-ebooks-packages`. Follow the linking instructions provided by `pkg_add` to save keystrokes, unless you want multiple Python and pip versions installed. In my case, I ran `doas ln -sf /usr/local/bin/pip3.14 /usr/local/bin/pip`.
 
 3. Add `~/.local/bin` to your path.
 
