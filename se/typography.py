@@ -384,10 +384,13 @@ def typogrify(xhtml: str, smart_quotes: bool = True) -> str:
 	xhtml = regex.sub(r"(⸺|⸻)-", r"\1", xhtml)
 
 	# Fix a common error.
-	xhtml = regex.sub(r"<p>”⁠ ⁠…", "<p>“⁠ ⁠…", xhtml)
+	xhtml = regex.sub(fr"<p>”{se.WORD_JOINER}{se.HAIR_SPACE}{se.WORD_JOINER}…", f"<p>“{se.WORD_JOINER}{se.HAIR_SPACE}{se.WORD_JOINER}…", xhtml)
 
 	# `Ph. D.` should have a hair space.
-	xhtml = regex.sub(r"\bPh\.?\s?[Dd]\.", "Ph. D.", xhtml)
+	xhtml = regex.sub(r"\bPh\.?\s?[Dd]\.", f"Ph.{se.HAIR_SPACE}.", xhtml)
+
+	# Add en dashes between date ranges.
+	xhtml = regex.sub(r"([0-9](st|nd|rd|th))\-([0-9])", fr"\1{se.WORD_JOINER}–{se.WORD_JOINER}\3", xhtml)
 
 	return xhtml
 
