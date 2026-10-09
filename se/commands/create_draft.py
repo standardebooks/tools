@@ -446,7 +446,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 			fp_html_dom = etree.parse(StringIO(transcription_ebook_html), html_parser)
 
 			# Make sure we actually got the ebook HTML, and didn't get redirected by Faded Page.
-			if not fp_html_dom.xpath("/html/head/meta[re:test(@http-equiv, '^Content-Type$', 'i') and re:test(@content, 'text/html;\\s*charset=utf-8', 'i')]", namespaces=XPATH_NAMESPACES):
+			if not fp_html_dom.xpath("/html/head/meta[(re:test(@http-equiv, '^Content-Type$', 'i') and re:test(@content, 'text/html;\\s*charset=utf-8', 'i')) or re:test(@charset, '^utf-8$', 'i')]", namespaces=XPATH_NAMESPACES):
 				raise se.RemoteCommandErrorException("Tried to download Faded Page ebook HTML, but response doesn't look like a Faded Page ebook.")
 
 			# Get the FP publication date.
