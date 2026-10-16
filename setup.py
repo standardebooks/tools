@@ -83,7 +83,7 @@ setup(
 	############################################################
 	python_requires=">=3.10.12",
 	install_requires=[
-		"cairosvg==2.9.0",
+		"cairosvg==2.9.1",
 		"chardet==7.4.3",
 		"cssselect==1.4.0",
 		"cssutils==2.15.0",
