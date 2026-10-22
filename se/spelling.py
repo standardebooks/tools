@@ -440,6 +440,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"\bIntitled\b", r"Entitled", xhtml)				# intitled -> entitled
 	xhtml = regex.sub(r"\bintitled\b", r"entitled", xhtml)				# intitled -> entitled
 	xhtml = regex.sub(r"\b([Ee])ery\b", r"\1erie", xhtml)				# eery -> eerie
+	xhtml = regex.sub(r"\b([Jj])anizar(y|ies)\b", r"\1anissar\2", xhtml)		# janizary -> janissary
 
         # Remove elision quotes from words that no longer need them.
 	xhtml = regex.sub(r"([^\p{Letter}])’([Bb])us\b", r"\1\2us", xhtml)				# ’bus -> bus
