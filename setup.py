@@ -88,7 +88,7 @@ setup(
 		"cssselect==1.4.0",
 		"cssutils==2.15.0",
 		"ftfy==6.3.1",
-		"gitpython==3.1.62",
+		"gitpython==3.2.1",
 		# `installed_browsers` has compatiblity changes in their master branch, which has not been published yet. At the time of writing the latest release is 0.1.5.
 		"installed_browsers @ git+https://github.com/undeflorate/installed_browsers.git@c4343160662be716d211d0ef3989328352fd4106",
 		"lxml==6.1.1",
