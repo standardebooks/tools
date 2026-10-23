@@ -81,7 +81,7 @@ setup(
 	# This toolset targets a specific version of Python, and libraries are
 	# pinned to specific versions to prevent surprise breakage. Don't edit this!
 	############################################################
-	python_requires=">=3.10.12",
+	python_requires=">=3.14.4",
 	install_requires=[
 		"cairosvg==2.9.1",
 		"chardet==7.4.3",
@@ -89,7 +89,8 @@ setup(
 		"cssutils==2.15.0",
 		"ftfy==6.3.1",
 		"gitpython==3.1.62",
-		"installed_browsers==0.1.5",
+		# `installed_browsers` has compatiblity changes in their master branch, which has not been published yet. At the time of writing the latest release is 0.1.5.
+		"installed_browsers @ git+https://github.com/undeflorate/installed_browsers.git@c4343160662be716d211d0ef3989328352fd4106",
 		"lxml==6.1.1",
 		"natsort==8.4.0",
 		"pillow==12.3.0",
@@ -107,6 +108,7 @@ setup(
 		"smartypants==2.0.2",
 		"tinycss2==1.5.1",
 		"titlecase==2.4.1",
-		"unidecode==1.4.0"
+		"unidecode==1.4.0",
+		"windows-curses==2.4.2; sys_platform == 'win32'",
 	]
 )
