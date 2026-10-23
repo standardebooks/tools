@@ -93,7 +93,7 @@ setup(
 		"installed_browsers @ git+https://github.com/undeflorate/installed_browsers.git@c4343160662be716d211d0ef3989328352fd4106",
 		"lxml==6.1.1",
 		"natsort==8.4.0",
-		"pillow==12.3.0",
+		"pillow==13.0.0",
 		"psutil==7.2.2",
 		"pygments==2.21.0",
 		"pyphen==0.17.2",
