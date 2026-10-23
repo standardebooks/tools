@@ -1,3 +1,4 @@
+# Comments start with `#`.
 aalii
 aardvark
 aardvarks
@@ -16740,7 +16741,7 @@ commonplaceness
 commonplacenesses
 commonplaces
 commons
-commonsense
+# commonsense
 commonsensical
 commonweal
 commonwealth
