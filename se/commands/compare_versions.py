@@ -170,7 +170,7 @@ def compare_versions(plain_output: bool) -> int:
 				for file_path in Path(work_directory_name).glob("**/*.xhtml"):
 					if not args.include_se_files:
 						with open(file_path, "r", encoding="utf-8") as file:
-							is_ignored, _ = se.get_dom_if_not_ignored(file.read())
+							is_ignored, _ = se.get_dom_if_not_ignored(se.read_utf8(file))
 
 						if not is_ignored:
 							target_filenames.add(file_path)
@@ -281,7 +281,7 @@ def compare_versions(plain_output: bool) -> int:
 							html += f"\t\t<section>\n\t\t\t<h1>{filename.name}</h1>\n\t\t\t<img src=\"{filename.name}-original.png\">\n\t\t\t<img src=\"{filename.name}-new.png\">\n\t\t</section>\n"
 
 						with importlib.resources.files("se.data.templates").joinpath("diff-template.html").open("r", encoding="utf-8") as file:
-							html = file.read().replace("<!--se:sections-->", html.strip())
+							html = se.read_utf8(file).replace("<!--se:sections-->", html.strip())
 
 						with open(output_directory / "diff.html", "w", encoding="utf-8") as file:
 							file.write(html)

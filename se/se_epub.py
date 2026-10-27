@@ -155,6 +155,8 @@ class SeEpub:
 		try:
 			self.content_path = self.metadata_file_path.parent
 			self.metadata_dom = self.get_dom(self.metadata_file_path)
+		except se.InvalidEncodingException:
+			raise
 		except Exception as ex:
 			raise se.InvalidXmlException(f"Couldn’t parse [path][link=file://{self.metadata_file_path}]{self.metadata_file_path}[/][/]: {ex}") from ex
 
@@ -601,7 +603,9 @@ class SeEpub:
 		if file_path_str not in self._file_cache:
 			try:
 				with open(file_path, "r", encoding="utf-8") as file:
-					file_contents = file.read()
+					file_contents = se.read_utf8(file)
+			except se.InvalidEncodingException:
+				raise
 			except Exception as ex:
 				raise se.InvalidFileException(f"Couldn’t read file: [path]{file_path_str}[/]") from ex
 
@@ -648,13 +652,15 @@ class SeEpub:
 		if file_path_str not in self._dom_cache:
 			try:
 				with open(file_path, "rb") as file:
-					self._dom_cache[file_path_str] = EasyXmlTree(file.read())
+					self._dom_cache[file_path_str] = EasyXmlTree(se.read_utf8(file))
 
 				# Remove comments.
 				if remove_comments:
 					for node in self._dom_cache[file_path_str].xpath("//comment()"):
 						node.remove()
 
+			except se.InvalidEncodingException:
+				raise
 			except etree.XMLSyntaxError as ex:
 				raise se.InvalidXhtmlException(f"Couldn’t parse XML in [path][link=file://{file_path.resolve()}]{file_path}[/][/]: {ex}") from ex
 			except FileNotFoundError as ex:
@@ -1331,7 +1337,7 @@ class SeEpub:
 
 		# Read our template SVG to get some values before we begin.
 		with importlib.resources.files("se.data.templates").joinpath("titlepage.svg").open("r", encoding="utf-8") as file:
-			svg = file.read()
+			svg = se.read_utf8(file)
 
 		# Remove the template text elements from the SVG source, we'll write out to it later.
 		svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
@@ -1507,7 +1513,7 @@ class SeEpub:
 
 		# Read our template SVG to get some values before we begin.
 		with importlib.resources.files("se.data.templates").joinpath("cover.svg").open("r", encoding="utf-8") as file:
-			svg = file.read()
+			svg = se.read_utf8(file)
 
 		# Remove the template text elements from the SVG source, we'll write out to it later.
 		svg = regex.sub(r"\s*<text.+</svg>", "</svg>", svg, flags=regex.DOTALL).strip()
@@ -1810,7 +1816,7 @@ class SeEpub:
 		loi_dom = None
 		if not self.loi_path:
 			with importlib.resources.files("se.data.templates").joinpath("loi.xhtml").open("rb") as file:
-				loi_dom = EasyXmlTree(file.read())
+				loi_dom = EasyXmlTree(se.read_utf8(file))
 
 			if self.language:
 				loi_dom.xpath("/html")[0].set_attr("xml:lang", self.language)
@@ -2510,6 +2516,8 @@ class SeEpub:
 
 		with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("opf2onix.xsl")) as opf2onix_xsl_filename:
 			with open(opf2onix_xsl_filename, "rb") as file:
+				se.read_utf8(file)
+				file.seek(0)
 				transform = etree.XSLT(etree.parse(file))
 			onix_dom = EasyXmlTree(transform(etree.fromstring(str.encode(metadata_dom.to_string())), cwd=f"'{self.epub_root_path.as_posix()}/'"))
 

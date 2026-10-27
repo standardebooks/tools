@@ -322,7 +322,7 @@ def output_toc(item_list: list[TocItem], landmark_list: list[TocItem], work_titl
 		raise se.InvalidInputException("Too few ToC items found.")
 
 	with importlib.resources.files("se.data.templates").joinpath("toc.xhtml").open("rb") as file:
-		toc_dom = se.easy_xml.EasyXmlTree(file.read())
+		toc_dom = se.easy_xml.EasyXmlTree(se.read_utf8(file))
 
 	# There should be exactly two nav sections.
 	navs = toc_dom.xpath("//nav")
@@ -741,6 +741,8 @@ def process_all_content(self: 'SeEpub', file_list: list[Path]) -> tuple[list[Toc
 	for textf in file_list:
 		try:
 			dom = self.get_dom(textf)
+		except se.InvalidEncodingException:
+			raise
 		except Exception as ex:
 			raise se.InvalidFileException(f"Couldn’t open file: [path][link=file://{textf}]{textf}[/][/]: {ex}") from ex
 
@@ -759,7 +761,7 @@ def process_all_content(self: 'SeEpub', file_list: list[Path]) -> tuple[list[Toc
 
 	for textf in file_list:
 		with open(textf, "rb") as file:
-			dom = se.easy_xml.EasyXmlTree(file.read())
+			dom = se.easy_xml.EasyXmlTree(se.read_utf8(file))
 
 		process_headings(dom, textf.name, toc_list, single_file, single_file_without_headers, self.content_path)
 

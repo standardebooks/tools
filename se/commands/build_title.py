@@ -35,7 +35,7 @@ def build_title(plain_output: bool) -> int:
 	for filename in targets:
 		try:
 			with open(filename, "rb+") as file:
-				dom = se.easy_xml.EasyXmlTree(file.read())
+				dom = se.easy_xml.EasyXmlTree(se.read_utf8(file))
 
 				title = se.formatting.generate_title(dom)
 

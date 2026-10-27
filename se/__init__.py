@@ -8,7 +8,7 @@ import functools
 import os
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, TextIO
+from typing import TYPE_CHECKING, IO, TextIO
 
 from pygments import lex
 from pygments.lexers import find_lexer_class_by_name
@@ -159,6 +159,20 @@ class NoResults(SeException):
 class NotImplementedException(SeException):
 	""" Function not implemented """
 	code = 19
+
+def read_utf8[T: (str, bytes)](file: IO[T]) -> T:
+	"""
+	Read a text or XML file, rejecting invalid UTF-8 before returning its contents.
+	"""
+
+	try:
+		contents = file.read()
+		if isinstance(contents, bytes):
+			contents.decode("utf-8")
+		return contents
+	except UnicodeDecodeError as ex:
+		filename = Path(file.name).resolve()
+		raise InvalidEncodingException(f"File is not UTF-8: [path][link=file://{filename}]{filename}[/][/].") from ex
 
 def convert_directory_line_endings(directory: Path, to_windows: bool) -> None:
 	"""
@@ -371,7 +385,7 @@ def _get_config_dom() -> se.easy_xml.EasyXmlTree | None:
 
 	try:
 		with open(config_file_path, "rb") as file:
-			return se.easy_xml.EasyXmlTree(file.read())
+			return se.easy_xml.EasyXmlTree(read_utf8(file))
 	except (OSError, se.InvalidXmlException):
 		return None
 

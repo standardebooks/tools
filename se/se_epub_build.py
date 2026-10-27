@@ -113,6 +113,10 @@ def __convert_image(input_path: Path, output_path: Path, scale: int, build_cache
 	# with open(input_path, 'rb', buffering=0) as file:
 	#	input_file_sha256 = file_digest(file, 'sha256').hexdigest()
 
+	if input_path.suffix == ".svg":
+		with open(input_path, "rb") as file:
+			se.read_utf8(file)
+
 	input_file_sha256 = get_file_sha256(input_path)
 
 	if build_cache_images_directory:
@@ -319,12 +323,12 @@ def _add_proof_css(work_compatible_epub_dir: Path) -> None:
 
 	with open(work_compatible_epub_dir / "epub" / "css" / "local.css", "a", encoding="utf-8") as local_css_file:
 		with importlib.resources.files("se.data.templates").joinpath("proofreading.css").open("r", encoding="utf-8") as proofreading_css_file:
-			local_css_file.write("\n" + proofreading_css_file.read())
+			local_css_file.write("\n" + se.read_utf8(proofreading_css_file))
 
 	# Wrap no-break hyphens and no-break spaces in a class that will colorize them when proofing.
 	for file_path in work_compatible_epub_dir.glob("**/*.xhtml"):
 		with open(file_path, "r+", encoding="utf-8") as file:
-			xhtml = file.read()
+			xhtml = se.read_utf8(file)
 
 			xhtml = regex.sub(fr"([{se.NO_BREAK_HYPHEN}{se.NO_BREAK_SPACE}])", r"""<span class="proofreading">\1</span>""", xhtml)
 			file.seek(0)
@@ -363,7 +367,7 @@ def _update_release_date(self: 'SeEpub', work_compatible_epub_dir: Path, metadat
 
 				# Update the colophon with release info.
 				with open(file_path, "r+", encoding="utf-8") as file:
-					xhtml = file.read()
+					xhtml = se.read_utf8(file)
 
 					xhtml = xhtml.replace("<p>The first edition of this ebook was released on<br/>", f"<p>This edition was released on<br/>\n\t\t\t<b><time datetime=\"{last_updated_iso}\">{last_updated_friendly}</time></b><br/>\n\t\t\tand is based on<br/>\n\t\t\t<b>revision {self.last_commit.short_sha}</b>.<br/>\n\t\t\tThe first edition of this ebook was released on<br/>")
 
@@ -396,14 +400,14 @@ def _add_compatibility_css_and_simplify(self: 'SeEpub', work_compatible_epub_dir
 
 	with open(work_compatible_epub_dir / "epub" / "css" / "core.css", "a", encoding="utf-8") as css_file:
 		with importlib.resources.files("se.data.templates").joinpath(compatibility_css_filename).open("r", encoding="utf-8") as compatibility_css_file:
-			css_file.write("\n\n" + compatibility_css_file.read())
+			css_file.write("\n\n" + se.read_utf8(compatibility_css_file))
 
 	# Simplify the CSS first.
 	total_css = ""
 
 	for file_path in work_compatible_epub_dir.glob("**/*.css"):
 		with open(file_path, "r+", encoding="utf-8") as file:
-			css = file.read()
+			css = se.read_utf8(file)
 
 			total_css = total_css + css + "\n"
 			file.seek(0)
@@ -762,6 +766,8 @@ def _compatibility_replacements_xhtml_mathml_to_presentational(dom: EasyXmlTree)
 		if not mathml_transform:
 			with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("mathmlcontent2presentation.xsl")) as mathml_xsl_filename:
 				with open(mathml_xsl_filename, "rb") as file:
+					se.read_utf8(file)
+					file.seek(0)
 					mathml_transform = etree.XSLT(etree.parse(file))
 
 		# Transform the MathML and get a string representation.
@@ -824,7 +830,7 @@ def _compatibility_replacements_css(file_path: Path) -> None:
 	"""
 
 	with open(file_path, "r+", encoding="utf-8") as file:
-		css = file.read()
+		css = se.read_utf8(file)
 		processed_css = css
 
 		# To get popup footnotes in iBooks, we have to change `epub:endnote` to `epub:footnote`.
@@ -1318,7 +1324,7 @@ def _compatibility_css_additional_replacements(work_compatible_epub_dir: Path) -
 
 	for file_path in work_compatible_epub_dir.glob("**/*.css"):
 		with open(file_path, "r+", encoding="utf-8") as file:
-			css = file.read()
+			css = se.read_utf8(file)
 			processed_css = css
 
 			processed_css = regex.sub(r"^\s*hyphens\s*:\s*(.+)", "\thyphens: \\1\n\tadobe-hyphenate: \\1\n\t-webkit-hyphens: \\1\n\t-moz-hyphens: \\1", processed_css, flags=regex.MULTILINE)
@@ -1354,11 +1360,11 @@ def _build_kobo(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path, 
 
 	with open(work_kepub_dir / "epub" / "css" / "se.css", "a", encoding="utf-8") as css_file:
 		with importlib.resources.files("se.data.templates").joinpath("se-kobo.css").open("r", encoding="utf-8") as compatibility_css_file:
-			css_file.write("\n\n" + compatibility_css_file.read())
+			css_file.write("\n\n" + se.read_utf8(compatibility_css_file))
 
 	with open(work_kepub_dir / "epub" / "css" / "core.css", "a", encoding="utf-8") as css_file:
 		with importlib.resources.files("se.data.templates").joinpath("kobo.css").open("r", encoding="utf-8") as compatibility_css_file:
-			css_file.write("\n\n" + compatibility_css_file.read())
+			css_file.write("\n\n" + se.read_utf8(compatibility_css_file))
 
 	# Kobos don't support `break-*` CSS, so attempt to single-file collections into multiple files to create a page break effect.
 	work_kepub.split_collection_files()
@@ -1486,7 +1492,7 @@ def _build_kobo_process_css(file_path: Path) -> None:
 	"""
 
 	with open(file_path, "r+", encoding="utf-8") as file:
-		css = file.read()
+		css = se.read_utf8(file)
 		processed_css = css
 
 		# Retarget `span` selectors at SE `<span>`s (i.e. not `koboSpan`s) only.
@@ -1829,7 +1835,7 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 
 	# Kindle doesn't go more than 2 levels deep for ToC, so flatten it here.
 	with open(work_compatible_epub_dir / "epub" / toc_filename, "rb+") as file:
-		dom = EasyXmlTree(file.read())
+		dom = EasyXmlTree(se.read_utf8(file))
 
 		for node in dom.xpath("//ol/li/ol/li/ol"):
 			parent = node.lxml_element.getparent()
@@ -1935,7 +1941,7 @@ def _build_kindle(self: 'SeEpub', work_dir: Path, work_compatible_epub_dir: Path
 	# Include compatibility CSS.
 	with open(work_compatible_epub_dir / "epub" / "css" / "core.css", "a", encoding="utf-8") as core_css_file:
 		with importlib.resources.files("se.data.templates").joinpath("kindle.css").open("r", encoding="utf-8") as compatibility_css_file:
-			core_css_file.write("\n\n" + compatibility_css_file.read())
+			core_css_file.write("\n\n" + se.read_utf8(compatibility_css_file))
 
 	# Build an epub file we can send to Calibre.
 	se.epub.write_epub(work_compatible_epub_dir, work_dir / compatible_epub_output_filename, last_updated)
@@ -2111,7 +2117,7 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 		if has_sequential_full_page_figures:
 			with open(work_compatible_epub_dir / "epub" / "css" / "core.css", "a", encoding="utf-8") as css_file:
 				with importlib.resources.files("se.data.templates").joinpath("full-page-figure-compatibility.css").open("r", encoding="utf-8") as compatibility_css_file:
-					css_file.write("\n\n" + compatibility_css_file.read())
+					css_file.write("\n\n" + se.read_utf8(compatibility_css_file))
 
 		# Get the ToC dom for upcoming operations.
 		try:

@@ -44,7 +44,7 @@ def split_file(plain_output: bool) -> int:
 
 	try:
 		with open(filename, "r", encoding="utf-8") as file:
-			xhtml = se.strip_bom(file.read())
+			xhtml = se.strip_bom(se.read_utf8(file))
 	except FileNotFoundError:
 		se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 		return se.InvalidFileException.code
@@ -53,13 +53,13 @@ def split_file(plain_output: bool) -> int:
 		try:
 			filename = Path(args.template_file).resolve()
 			with open(filename, "r", encoding="utf-8") as file:
-				template_xhtml = file.read()
+				template_xhtml = se.read_utf8(file)
 		except FileNotFoundError:
 			se.print_error(f"Couldn’t open file: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
 			return se.InvalidFileException.code
 	else:
 		with importlib.resources.files("se.data.templates").joinpath("chapter-template.xhtml").open("r", encoding="utf-8") as file:
-			template_xhtml = file.read()
+			template_xhtml = se.read_utf8(file)
 
 	# Try to guess the ebook language and update the template accordingly.
 	pg_language = "en-US"

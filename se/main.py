@@ -84,6 +84,10 @@ def main() -> None:
 		# Import command module and call command entrypoint.
 		module = importlib.import_module(command_module)
 
-		sys.exit(getattr(module, command_function)(args.plain_output))
+		try:
+			sys.exit(getattr(module, command_function)(args.plain_output))
+		except se.InvalidEncodingException as ex:
+			se.print_error(ex, plain_output=args.plain_output)
+			sys.exit(ex.code)
 	except KeyboardInterrupt:
 		sys.exit(130) # See <http://www.tldp.org/LDP/abs/html/exitcodes.html>.

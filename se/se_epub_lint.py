@@ -1030,7 +1030,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	production_notes_path = self.path / "production-notes.md"
 	if production_notes_path.exists():
 		with open(production_notes_path, "r", encoding="utf-8") as file:
-			first_char = file.read(1)
+			first_char = se.read_utf8(file)[:1]
 
 			if not first_char:
 				messages.append(LintMessage("m-084", "Empty file. [hint]Hint: Empty files should be deleted.[/hint]", se.MESSAGE_TYPE_ERROR, production_notes_path))
@@ -1131,8 +1131,8 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		messages.append(LintMessage("m-097", "Illegal [attr]@xml:lang[/] attribute on [xml]<meta property=\"alternate-script\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	# Check for `CDATA` elements.
-	# We have to use `self.metadata_file_path.read_text()` to get the raw file contents because converting a DOM tree to string removes `CDATA` elements.
-	source_file = SourceFile(self.metadata_file_path, self.metadata_file_path.read_text(encoding="utf-8"))
+	# Read the raw file contents because converting a DOM tree to string removes `CDATA` elements.
+	source_file = SourceFile(self.metadata_file_path, self.get_file(self.metadata_file_path))
 	matches = source_file.findall(r"<!\[CDATA\[")
 	if matches:
 		messages.append(LintMessage("m-017", "Illegal [xml]<!\\[CDATA\\[[/]. [hint]Hint: Run [command]se[/] [subcommand]clean[/] to canonicalize [xml]<!\\[CDATA\\[[/] elements.[/hint]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_matches(matches)))
@@ -3848,19 +3848,25 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 	if not skip_lint_ignore and lint_ignore_path.exists():
 		with importlib.resources.as_file(importlib.resources.files("se.data").joinpath("se-lint-ignore.rng")) as rng_path:
 			with open(rng_path, "rb") as file:
+				se.read_utf8(file)
+				file.seek(0)
 				relaxng = etree.RelaxNG(etree.parse(file))
 
 			try:
 				with open(lint_ignore_path, "rb") as file:
+					se.read_utf8(file)
+					file.seek(0)
 					dom = etree.parse(file)
 				relaxng.assertValid(dom)
 				lint_ignore_dom = EasyXmlTree(dom)
+			except se.InvalidEncodingException:
+				raise
 			except Exception as ex:
 				raise se.InvalidFileException(f"[path][link=file://{lint_ignore_path.resolve()}]se-lint-ignore.xml[/][/] is invalid: {ex}")
 
 	# Cache the browser default stylesheet for later use.
 	with importlib.resources.files("se.data").joinpath("browser.css").open("r", encoding="utf-8") as css:
-		self._file_cache["default"] = css.read() # type: ignore # pylint: disable=protected-access
+		self._file_cache["default"] = se.read_utf8(css) # type: ignore # pylint: disable=protected-access
 
 	# Check that the spine has all the expected files in the book.
 	missing_spine_files = files_not_in_spine(self)
@@ -3881,6 +3887,8 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 		self.local_css = self.get_file(local_css_path)
 
 		css_source_file = SourceFile(local_css_path, self.local_css)
+	except se.InvalidEncodingException:
+		raise
 	except Exception as ex:
 		raise se.InvalidSeEbookException(f"Couldn’t open [path]{local_css_path}[/].") from ex
 
@@ -4077,7 +4085,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 			# Read the file and start doing some serious checks!
 			try:
 				source_file = SourceFile(file_path, self.get_file(file_path))
-			except UnicodeDecodeError:
+			except se.InvalidEncodingException:
 				# This is more to help developers find weird files that might choke `se lint`, hopefully unnecessary for end users.
 				messages.append(LintMessage("f-010", "Problem decoding file as utf-8.", se.MESSAGE_TYPE_ERROR, file_path))
 				continue

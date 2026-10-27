@@ -321,7 +321,11 @@ def interactive_replace(plain_output: bool) -> int: # pylint: disable=unused-arg
 		for filepath in se.get_target_filenames(args.targets, ".xhtml"):
 			try:
 				with open(filepath, "r", encoding="utf-8") as file:
-					xhtml = file.read()
+					xhtml = se.read_utf8(file)
+			except se.InvalidEncodingException as ex:
+				errors.append(str(ex))
+				return_code = ex.code
+				continue
 			except Exception:
 				errors.append(f"Couldn’t open file: {filepath}")
 				return_code = se.InvalidFileException.code

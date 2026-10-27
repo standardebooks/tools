@@ -3,7 +3,6 @@ This module implements the `se word-count` command.
 """
 
 import argparse
-import chardet
 
 import regex
 
@@ -36,17 +35,7 @@ def word_count(plain_output: bool) -> int:
 	for filename in se.get_target_filenames(args.targets, (".xhtml", ".html", ".htm")):
 		try:
 			with open(filename, "r", encoding="utf-8") as file:
-				try:
-					xhtml = file.read()
-				except UnicodeDecodeError:
-					# The file we're passed isn't utf-8. Try to convert it here.
-					try:
-						with open(filename, "rb") as binary_file:
-							binary_xhtml = binary_file.read()
-							xhtml = binary_xhtml.decode(chardet.detect(binary_xhtml)["encoding"] or "")
-					except UnicodeDecodeError:
-						se.print_error(f"File is not UTF-8: [path][link=file://{filename}]{filename}[/][/].", plain_output=plain_output)
-						return se.InvalidEncodingException.code
+				xhtml = se.read_utf8(file)
 
 			# Remove HTML entities.
 			xhtml = regex.sub(r"&[^;\s\b]+?;", " ", xhtml)

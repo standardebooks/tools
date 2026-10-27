@@ -53,7 +53,7 @@ def _replace_in_file(file_path: Path, search: str | list[str], replace: str | li
 	"""
 
 	with open(file_path, "r+", encoding="utf-8") as file:
-		data = file.read()
+		data = se.read_utf8(file)
 		processed_data = data
 
 		if isinstance(search, list):
@@ -352,7 +352,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 		# Fill out some basic data in the metadata file that will let is generate further variables.
 		with open(content_path / "epub" / "content.opf", "r+", encoding="utf-8") as file:
-			metadata_xml = file.read()
+			metadata_xml = se.read_utf8(file)
 
 			metadata_xml = metadata_xml.replace(">TITLE_SORT<", f">{escape(sorted_title)}<")
 			metadata_xml = metadata_xml.replace(">TITLE<", f">{escape(title)}<")
@@ -826,7 +826,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 
 		# Fill out the titlepage.
 		with open(content_path / "epub" / "text" / "titlepage.xhtml", "r+", encoding="utf-8") as file:
-			titlepage_xhtml = file.read()
+			titlepage_xhtml = se.read_utf8(file)
 
 			titlepage_xhtml = titlepage_xhtml.replace("TITLE", escape(title))
 
@@ -858,7 +858,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 		if not args.white_label:
 			# Fill out the colophon.
 			with open(content_path / "epub" / "text" / "colophon.xhtml", "r+", encoding="utf-8") as file:
-				colophon_xhtml = file.read()
+				colophon_xhtml = se.read_utf8(file)
 
 				colophon_xhtml = colophon_xhtml.replace("SE_SLUG", epub.generate_url_slug())
 				colophon_xhtml = colophon_xhtml.replace("TITLE", escape(title))

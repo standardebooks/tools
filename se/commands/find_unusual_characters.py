@@ -94,7 +94,7 @@ def find_unusual_characters(plain_output: bool) -> int:
 	for filename in target_filenames:
 		try:
 			with open(filename, "r", encoding="utf-8") as file:
-				xhtml = file.read()
+				xhtml = se.read_utf8(file)
 				dom = se.easy_xml.EasyXmlTree(xhtml)
 
 				# Save any `alt` and `title` attributes because we may be interested in their contents.
@@ -148,7 +148,7 @@ def find_unusual_characters(plain_output: bool) -> int:
 				table.add_row(unusual_character, "U+{:04X}".format(ord(unusual_character)), unusual_character_name, f"({unusual_character_count})") # pylint: disable=consider-using-f-string
 
 			console.print(table)
-	else:
+	elif return_code == 0:
 		return_code = se.NoResults.code
 
 	return return_code

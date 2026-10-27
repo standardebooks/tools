@@ -88,7 +88,7 @@ def build_ids(plain_output: bool) -> int:
 
 			for filename in files:
 				with open(filename, "r+", encoding="utf-8") as file:
-					file_contents = file.read()
+					file_contents = se.read_utf8(file)
 
 					for node, new_id in replacements:
 						file_contents = regex.sub(fr"( id=\"|#){node.get_attr('id')}\"",  fr'\1{new_id}"', file_contents)

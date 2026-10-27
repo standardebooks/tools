@@ -35,7 +35,7 @@ def initialize_dictionary() -> set[str]:
 
 	if not DICTIONARY:
 		with importlib.resources.files("se.data").joinpath("words").open("r", encoding="utf-8") as dictionary:
-			return {line.strip().lower() for line in dictionary if not line.startswith("#")}
+			return {line.strip().lower() for line in se.read_utf8(dictionary).splitlines() if not line.startswith("#")}
 
 	else:
 		return DICTIONARY

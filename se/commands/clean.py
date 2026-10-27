@@ -27,7 +27,7 @@ def clean(plain_output: bool) -> int:
 
 		if filepath.suffix == ".css":
 			with open(filepath, "r+", encoding="utf-8") as file:
-				css = file.read()
+				css = se.read_utf8(file)
 
 				try:
 					processed_css = se.formatting.format_css(css)

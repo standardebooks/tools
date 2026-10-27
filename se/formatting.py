@@ -609,7 +609,7 @@ def format_xml_file(filename: Path) -> None:
 	"""
 
 	with open(filename, "r+", encoding="utf-8") as file:
-		xml = file.read()
+		xml = se.read_utf8(file)
 
 		if filename.suffix == ".xhtml":
 			processed_xml = format_xhtml(xml)

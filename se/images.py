@@ -248,6 +248,8 @@ def get_data_url(image_path: Path) -> str:
 	if image_path.suffix == ".svg":
 		with open(image_path, "rb") as binary_file:
 			# We parse the XML using LXML because otherwise, Python might guess that the file is encoded in ASCII and throw errors when unexpected characters are found.
+			se.read_utf8(binary_file)
+			binary_file.seek(0)
 			tree = etree.parse(binary_file)
 			encoding = tree.docinfo.encoding
 			svg_contents = etree.tostring(tree, encoding=encoding, xml_declaration=True).decode(encoding)
@@ -556,6 +558,8 @@ def svg_text_to_paths(in_svg: Path, out_svg: Path, remove_style: bool=True) -> N
 		fonts.append(font)
 
 	with open(in_svg, "rb") as binary_file:
+		se.read_utf8(binary_file)
+		binary_file.seek(0)
 		try:
 			xml = etree.parse(binary_file).getroot()
 		except Exception as ex:
@@ -844,7 +848,7 @@ def _d_apply_matrix(d_attrib: str, matrix: list[float]) -> str:
 
 def _parse_font(font_path: Path) -> Font:
 	with open(font_path, "rb") as font_svg_raw:
-		xml = etree.fromstring(font_svg_raw.read())
+		xml = etree.fromstring(se.read_utf8(font_svg_raw))
 	font = Font()
 	font.meta = FontMeta()
 	g_name_to_unicode: dict[str, str] = {}

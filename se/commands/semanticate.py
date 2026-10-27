@@ -28,7 +28,7 @@ def semanticate(plain_output: bool) -> int:
 
 		try:
 			with open(filename, "r+", encoding="utf-8") as file:
-				xhtml = file.read()
+				xhtml = se.read_utf8(file)
 
 				is_ignored, _ = se.get_dom_if_not_ignored(xhtml, ["imprint", "copyright-page", "toc", "loi"])
 

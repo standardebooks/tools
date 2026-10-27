@@ -36,7 +36,7 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 	for filename in target_filenames:
 		try:
 			with open(filename, "r", encoding="utf-8") as file:
-				xhtml = file.read()
+				xhtml = se.read_utf8(file)
 				dom = EasyXmlTree(xhtml)
 
 				# Save any `alt` and `title` attributes because we may be interested in their contents.
@@ -140,7 +140,7 @@ def find_mismatched_diacritics(plain_output: bool) -> int:
 				table.add_row(f"[link=https://www.merriam-webster.com/dictionary/{urllib.parse.quote(accented_word)}]{accented_word}[/]", f"({accented_word_count})", f"[link=https://www.merriam-webster.com/dictionary/{urllib.parse.quote(plain_word)}]{plain_word}[/]", f"({plain_word_count})")
 
 			console.print(table)
-	else:
+	elif return_code == 0:
 		return_code = se.NoResults.code
 
 	return return_code

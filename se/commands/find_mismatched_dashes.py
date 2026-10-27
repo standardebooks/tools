@@ -35,7 +35,7 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 	for filename in target_filenames:
 		try:
 			with open(filename, "r", encoding="utf-8") as file:
-				xhtml = file.read()
+				xhtml = se.read_utf8(file)
 				dom = se.easy_xml.EasyXmlTree(xhtml)
 
 				# Save any `alt` and `title` attributes because we may be interested in their contents.
@@ -103,7 +103,7 @@ def find_mismatched_dashes(plain_output: bool) -> int:
 
 			console.print(table)
 
-	else:
+	elif return_code == 0:
 		return_code = se.NoResults.code
 
 	return return_code

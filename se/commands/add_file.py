@@ -23,7 +23,7 @@ def _copy_file(filename: str, dest_path: Path, force: bool) -> None:
 def _replace_language(file_path: Path, language: str | None) -> None:
 	if language:
 		with open(file_path, "r+", encoding="utf-8") as file:
-			xhtml = file.read()
+			xhtml = se.read_utf8(file)
 			xhtml = xhtml.replace("\"LANG\"", f"\"{language}\"")
 
 			file.seek(0)
@@ -34,10 +34,10 @@ def _insert_css(se_epub: SeEpub, filename: str) -> None:
 	with importlib.resources.as_file(importlib.resources.files("se.data.templates").joinpath(filename)) as src_path:
 		template_css = ""
 		with open(src_path, "r", encoding="utf-8") as file:
-			template_css = file.read()
+			template_css = se.read_utf8(file)
 
 	with open(se_epub.content_path / "css" / "local.css", "r+", encoding="utf-8") as file:
-		css = file.read()
+		css = se.read_utf8(file)
 		css += "\n" + template_css
 
 		file.seek(0)
@@ -134,7 +134,7 @@ def add_file(plain_output: bool) -> int: # pylint: disable=unused-argument
 					_replace_language(dest_path, se_epub.language)
 
 					with open(dest_path, "r+", encoding="utf-8") as file:
-						xhtml = file.read()
+						xhtml = se.read_utf8(file)
 
 						xhtml = xhtml.replace(">TITLE<", f">{se_epub.get_title()}<")
 

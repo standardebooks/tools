@@ -28,7 +28,7 @@ def hyphenate(plain_output: bool) -> int:
 			console.print(se.prep_output(f"Processing [path][link=file://{filename}]{filename}[/][/] ...", plain_output), end="")
 
 		with open(filename, "r+", encoding="utf-8") as file:
-			xhtml = file.read()
+			xhtml = se.read_utf8(file)
 
 			is_ignored, dom = se.get_dom_if_not_ignored(xhtml, ["toc"])
 
