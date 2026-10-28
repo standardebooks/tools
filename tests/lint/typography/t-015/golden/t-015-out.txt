@@ -1,0 +1,6 @@
+t-015 [Manual Review] chapter-1.xhtml Numbers not grouped by commas. Hint: Separate numbers greater than 1,000 with commas at every three numerals.
+ Line 12:       <p>It is 1000 inches long.</p>
+ Line 13:       <p>It is 12345 feet long.</p>
+ Line 14:       <p>It is 1000°.</p>
+ Line 15:       <p>It costs £1000.</p>
+ Line 16:       <p>It costs $1000.</p>
