@@ -1,0 +1,4 @@
+m-098 [Error] content.opf `<dc:contributor>` or `<dc:creator>` element missing a MARC role.
+ Line 53:       <dc:creator id="author">Jane Austen</dc:creator>
+ Line 57:       <dc:contributor id="artist">Georg Friedrich Kersting</dc:contributor>
+ Line 61:       <dc:contributor id="transcriber-1">Anonymous</dc:contributor>

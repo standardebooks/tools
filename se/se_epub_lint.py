@@ -287,6 +287,7 @@ METADATA
 "m-095", "[val]schema:genre[/] is [val]Drama[/], but no [val]z3998:drama[/] element."
 "m-096", "Whitespace around [text]--[/] in LCSH [xml]<dc:subject>[/] element."
 "m-097", "Illegal [attr]@xml:lang[/] attribute on [xml]<meta property=\"alternate-script\">[/] element."
+"m-098", "[xml]<dc:contributor>[/] or [xml]<dc:creator>[/] element missing a MARC role."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1233,6 +1234,11 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 
 	if invalid_marc_relators_nodes:
 		messages.append(LintMessage("m-091", "Possibly misspelled MARC relator found.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_node_text(invalid_marc_relators_nodes)))
+
+	# Check that each contributor and creator has at least one MARC role.
+	nodes = [node for node in self.metadata_dom.xpath("/package/metadata/dc:contributor | /package/metadata/dc:creator") if f"#{node.get_attr('id')}" not in marc_relator_groups]
+	if nodes:
+		messages.append(LintMessage("m-098", "[xml]<dc:contributor>[/] or [xml]<dc:creator>[/] element missing a MARC role.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	# Check for single contributors that have multiple schema:sameAs URLs pointing at the same site
 	nodes = self.metadata_dom.xpath("/package/metadata/link[@rel='schema:sameAs']")
