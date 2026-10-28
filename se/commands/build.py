@@ -118,7 +118,7 @@ def build(plain_output: bool) -> int:
 				ebook_cache_directory = None
 			else:
 				identifier = regex.sub(r"^https://standardebooks\.org/ebooks/", "", se_epub.identifier)
-				ebook_cache_directory = build_cache_directory / f"{sha256(se_epub.identifier.encode('utf-8')).hexdigest()}-{make_url_safe(identifier)}"
+				ebook_cache_directory = build_cache_directory / f"{sha256(se_epub.identifier.encode("utf-8")).hexdigest()}-{make_url_safe(identifier)}"
 
 				try:
 					ebook_cache_directory.mkdir(parents=True, exist_ok=True)
@@ -181,14 +181,14 @@ def build(plain_output: bool) -> int:
 					if message.filename:
 						message_filename = message.filename.name
 
-					console.print(f"{message.source}: {message.code} {message_filename}{message.location if message.location else ''} {message.text}", markup=False)
+					console.print(f"{message.source}: {message.code} {message_filename}{message.location if message.location else ""} {message.text}", markup=False)
 			else:
 				for message in messages:
 					# Add hyperlinks around message filenames.
 					message_filename = Text()
 					if message.filename:
 						message_filename.append(message.filename.name, style="path")
-						message_filename.stylize(Style(link=f"{message.filename.resolve().as_uri()}{message.link_location or ''}"))
+						message_filename.stylize(Style(link=f"{message.filename.resolve().as_uri()}{message.link_location or ""}"))
 						message_filename.append(message.location or "")
 
 					table_data.append([Text(message.source, style="command"), Text(message.code, style="text"), message_filename, _highlight_checker_message(message.text, message.filename)])

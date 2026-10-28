@@ -65,7 +65,7 @@ def _print_ui(screen: curses.window, filepath: Path) -> None:
 	fill_space = max(floor((screen_width - len(header_bar)) / 2), 0)
 
 	if fill_space:
-		header_bar = f"{' ': <{fill_space}}{header_bar}{' ': <{fill_space}}"
+		header_bar = f"{" ": <{fill_space}}{header_bar}{" ": <{fill_space}}"
 
 	if len(header_bar) < screen_width:
 		header_bar = header_bar + " "
@@ -83,7 +83,7 @@ def _print_ui(screen: curses.window, filepath: Path) -> None:
 	fill_space = max(screen_width - len(footer_bar) - 1, 0)
 
 	if fill_space:
-		footer_bar = f"{footer_bar}{' ': <{fill_space}}"
+		footer_bar = f"{footer_bar}{" ": <{fill_space}}"
 
 	# Print the header and footer.
 	screen.attron(curses.A_REVERSE)

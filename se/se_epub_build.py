@@ -864,12 +864,12 @@ def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote
 	"""
 
 	for endnote_file in endnote_files_to_be_chunked:
-		endnote_manifest_href = regex.sub(fr"^{regex.escape(str(work_compatible_epub_dir / 'epub') + os.sep)}", "", str(endnote_file.parent))
+		endnote_manifest_href = regex.sub(fr"^{regex.escape(str(work_compatible_epub_dir / "epub") + os.sep)}", "", str(endnote_file.parent))
 
 		dom = self.get_dom(endnote_file)
 		# Before we continue, update any `a@href` that are only anchors.
 		for node in dom.xpath("/html/body//a[re:test(@href, '^#')]"):
-			node.set_attr("href", f"{endnote_file.name}{node.get_attr('href')}")
+			node.set_attr("href", f"{endnote_file.name}{node.get_attr("href")}")
 
 		endnotes = dom.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/ol/li")
 
@@ -884,7 +884,7 @@ def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote
 		endnotes_base.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]")[0].append(EasyXmlElement("<ol></ol>"))
 		chunk_number = 1
 		endnotes_manifest_entry = metadata_dom.xpath(f"/package/manifest/item[@href='{endnote_manifest_href}/{endnote_file.name}']")[0]
-		endnotes_spine_entry = metadata_dom.xpath(f"/package/spine/itemref[@idref='{endnotes_manifest_entry.get_attr('id')}']")[0]
+		endnotes_spine_entry = metadata_dom.xpath(f"/package/spine/itemref[@idref='{endnotes_manifest_entry.get_attr("id")}']")[0]
 		endnotes_toc_entry = toc_dom.xpath(f"/html/body//*[re:test(@epub:type, '\\btoc\\b')]//li[./a[re:test(@href, '^{endnote_manifest_href}/{endnote_file.name}')]]")[0]
 		endnotes_id_map: dict[str, str] = {}
 
@@ -908,7 +908,7 @@ def _split_endnote_files(self: 'SeEpub', work_compatible_epub_dir: Path, endnote
 				ol_node.append(endnote)
 
 			# Generate and set the new title element of the new endnotes file.
-			endnotes_title = f"Endnotes {format(chunk_start, ',d')}⁠–⁠{format(chunk_end, ',d')}"
+			endnotes_title = f"Endnotes {format(chunk_start, ",d")}⁠–⁠{format(chunk_end, ",d")}"
 			endnotes_header_node = current_endnotes_file.xpath("/html/body//section[re:test(@epub:type, '\\bendnotes\\b')]/*[re:test(@epub:type, '\\btitle\\b')]")[0]
 			endnotes_header_node.set_text(endnotes_title)
 			endnotes_title_node = current_endnotes_file.xpath("/html/head/title")[0]
@@ -2038,10 +2038,10 @@ def build(self: 'SeEpub', run_epubcheck: bool, check_only: bool, build_kobo: boo
 	if not metadata_dom.xpath("//dc:title"):
 		raise se.InvalidSeEbookException(f"Missing [xml]<dc:title>[/] element in [path][link=file://{urllib.parse.quote(str(self.metadata_file_path))}]{escape(str(self.metadata_file_path))}[/][/].")
 
-	compatible_epub_output_filename = f"{identifier}{'.proof' if proof else ''}.epub"
-	advanced_epub_output_filename = f"{identifier}{'.proof' if proof else ''}_advanced.epub"
-	kobo_output_filename = f"{identifier}{'.proof' if proof else ''}.kepub.epub"
-	kindle_output_filename = f"{identifier}{'.proof' if proof else ''}.azw3"
+	compatible_epub_output_filename = f"{identifier}{".proof" if proof else ""}.epub"
+	advanced_epub_output_filename = f"{identifier}{".proof" if proof else ""}_advanced.epub"
+	kobo_output_filename = f"{identifier}{".proof" if proof else ""}.kepub.epub"
+	kindle_output_filename = f"{identifier}{".proof" if proof else ""}.azw3"
 	endnote_files_to_be_chunked: list[Path] = []
 	has_sequential_full_page_figures = False
 

@@ -43,13 +43,13 @@ def build_images(plain_output: bool) -> int:
 			if se_epub.is_se_ebook and not args.no_generate:
 				if args.verbose:
 					console.print(" done.")
-					console.print(se.prep_output(f"\tGenerating [path][link=file://{directory / 'images/cover.svg'}]cover.svg[/][/] ...", plain_output), end="")
+					console.print(se.prep_output(f"\tGenerating [path][link=file://{directory / "images/cover.svg"}]cover.svg[/][/] ...", plain_output), end="")
 
 				se_epub.generate_cover_svg()
 
 			if args.verbose:
 				console.print(" done.")
-				console.print(se.prep_output(f"\tBuilding [path][link=file://{directory / 'src/epub/images/cover.svg'}]cover.svg[/][/] ...", plain_output), end="")
+				console.print(se.prep_output(f"\tBuilding [path][link=file://{directory / "src/epub/images/cover.svg"}]cover.svg[/][/] ...", plain_output), end="")
 
 			se_epub.build_cover_svg()
 
@@ -57,13 +57,13 @@ def build_images(plain_output: bool) -> int:
 			if se_epub.is_se_ebook and not args.no_generate:
 				if args.verbose:
 					console.print(" done.")
-					console.print(se.prep_output(f"\tGenerating [path][link=file://{directory / 'images/titlepage.svg'}]titlepage.svg[/][/] ...", plain_output), end="")
+					console.print(se.prep_output(f"\tGenerating [path][link=file://{directory / "images/titlepage.svg"}]titlepage.svg[/][/] ...", plain_output), end="")
 
 				se_epub.generate_titlepage_svg()
 
 			if args.verbose:
 				console.print(" done.")
-				console.print(se.prep_output(f"\tBuilding [path][link=file://{directory / 'src/epub/images/titlepage.svg'}]titlepage.svg[/][/] ...", plain_output), end="")
+				console.print(se.prep_output(f"\tBuilding [path][link=file://{directory / "src/epub/images/titlepage.svg"}]titlepage.svg[/][/] ...", plain_output), end="")
 
 			se_epub.build_titlepage_svg()
 

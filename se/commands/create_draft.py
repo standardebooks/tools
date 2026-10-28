@@ -891,7 +891,7 @@ def _create_draft(args: Namespace, plain_output: bool):
 						elif "anonymous" in producer.lower():
 							producers_xhtml = producers_xhtml + """<b epub:type="z3998:personal-name">An Anonymous Volunteer</b>"""
 						else:
-							producers_xhtml = producers_xhtml + f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(producer)).strip('.')}</b>"""
+							producers_xhtml = producers_xhtml + f"""<b epub:type="z3998:personal-name">{_add_name_abbr(escape(producer)).strip(".")}</b>"""
 
 						if i < producer_count - 1:
 							# If exactly two producers, we don't want a comma between them.

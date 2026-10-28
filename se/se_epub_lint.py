@@ -900,7 +900,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		authors = self.metadata_dom.xpath("/package/metadata/dc:creator")
 		for author in authors:
 			try:
-				author_sort = self.metadata_dom.xpath(f"/package/metadata/meta[@property='file-as'][@refines='#{author.get_attr('id')}']/text()", str)[0]
+				author_sort = self.metadata_dom.xpath(f"/package/metadata/meta[@property='file-as'][@refines='#{author.get_attr("id")}']/text()", str)[0]
 			except IndexError:
 				continue
 
@@ -1084,7 +1084,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	expected_vcs_url = self.generate_vcs_url()
 	nodes = self.metadata_dom.xpath(f"/package/metadata/link[@rel='schema:codeRepository' and not(@href='{expected_vcs_url}')]")
 	if nodes:
-		messages.append(LintMessage("m-009", "Unexpected value for [attr]@href[/] attribute in [xml]<link rel=\"schema:codeRepository\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"Found: {node.get_attr('href')}\nExpected: {expected_vcs_url}", node.sourceline) for node in nodes]))
+		messages.append(LintMessage("m-009", "Unexpected value for [attr]@href[/] attribute in [xml]<link rel=\"schema:codeRepository\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"Found: {node.get_attr("href")}\nExpected: {expected_vcs_url}", node.sourceline) for node in nodes]))
 
 	# Check for illegal `schema:genre` values.
 	illegal_subjects: list[EasyXmlElement] = []
@@ -1113,11 +1113,11 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	titles_missing_title_type: list[EasyXmlElement] = []
 	titles = self.metadata_dom.xpath("/package/metadata/dc:title")
 	for node in titles:
-		if not self.metadata_dom.xpath(f"/package/metadata/meta[@property='file-as' and @refines='#{node.get_attr('id')}']"):
+		if not self.metadata_dom.xpath(f"/package/metadata/meta[@property='file-as' and @refines='#{node.get_attr("id")}']"):
 			titles_missing_file_as.append(node)
 
 		# Only check for title-type if there is more than one `<dc:title>`.
-		if len(titles) > 1 and not self.metadata_dom.xpath(f"/package/metadata/meta[@property='title-type' and @refines='#{node.get_attr('id')}']"):
+		if len(titles) > 1 and not self.metadata_dom.xpath(f"/package/metadata/meta[@property='title-type' and @refines='#{node.get_attr("id")}']"):
 			titles_missing_title_type.append(node)
 
 	if titles_missing_file_as:
@@ -1236,7 +1236,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 		messages.append(LintMessage("m-091", "Possibly misspelled MARC relator found.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_node_text(invalid_marc_relators_nodes)))
 
 	# Check that each contributor and creator has at least one MARC role.
-	nodes = [node for node in self.metadata_dom.xpath("/package/metadata/dc:contributor | /package/metadata/dc:creator") if f"#{node.get_attr('id')}" not in marc_relator_groups]
+	nodes = [node for node in self.metadata_dom.xpath("/package/metadata/dc:contributor | /package/metadata/dc:creator") if f"#{node.get_attr("id")}" not in marc_relator_groups]
 	if nodes:
 		messages.append(LintMessage("m-098", "[xml]<dc:contributor>[/] or [xml]<dc:creator>[/] element missing a MARC role.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
@@ -1599,7 +1599,7 @@ def _lint_image_checks(self: 'SeEpub', filename: Path) -> list[LintMessage]:
 		# Check the source cover image.
 		if self.path / "images" / "cover.jpg" == filename:
 			if image.size != (se.COVER_WIDTH, se.COVER_HEIGHT):
-				messages.append(LintMessage("f-017", f"[path][link=file://{self.path / 'images/cover.jpg'}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}.", se.MESSAGE_TYPE_ERROR, filename))
+				messages.append(LintMessage("f-017", f"[path][link=file://{self.path / "images/cover.jpg"}]cover.jpg[/][/] must be exactly {se.COVER_WIDTH} × {se.COVER_HEIGHT}.", se.MESSAGE_TYPE_ERROR, filename))
 
 		# Run some tests on distributable images in `./src/epub/images/` and the cover.
 		if filename.is_relative_to(self.content_path / "images") or (self.path / "images" / "cover.jpg" == filename):
@@ -1675,10 +1675,10 @@ def _lint_svg_checks(self: 'SeEpub', source_file: SourceFile, svg_dom: EasyXmlTr
 		invalid_id_attributes: list[LintSubmessage] = []
 		for node in nodes:
 			if node.get_attr("transform"):
-				invalid_transform_attributes.append(LintSubmessage(f"transform=\"{node.get_attr('transform')}\"", node.sourceline))
+				invalid_transform_attributes.append(LintSubmessage(f"transform=\"{node.get_attr("transform")}\"", node.sourceline))
 
 			if node.get_attr("id"):
-				invalid_id_attributes.append(LintSubmessage(f"id=\"{node.get_attr('id')}\"", node.sourceline))
+				invalid_id_attributes.append(LintSubmessage(f"id=\"{node.get_attr("id")}\"", node.sourceline))
 
 		if invalid_transform_attributes:
 			messages.append(LintMessage("x-003", "Illegal [attr]@transform[/] attribute. [hint]Hint: SVGs should be optimized to remove use of [attr]@transform[/]. Try using Inkscape to save as an “optimized SVG”.[/hint]", se.MESSAGE_TYPE_ERROR, filename, invalid_transform_attributes))
@@ -1792,7 +1792,7 @@ def _lint_special_file_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 		# Is there a page scan link in the colophon, but missing in the metadata?
 		missing_page_scan_links: list[EasyXmlElement] = []
 		for node in dom.xpath("/html/body//a[re:test(@href, '(gutenberg\\.org/ebooks/[0-9]+|hathitrust\\.org|/archive\\.org|books\\.google\\.com|www\\.google\\.com/books/)')]"):
-			if not self.metadata_dom.xpath(f"/package/metadata/dc:source[contains(text(), {se.easy_xml.escape_xpath(node.get_attr('href'))})]"):
+			if not self.metadata_dom.xpath(f"/package/metadata/dc:source[contains(text(), {se.easy_xml.escape_xpath(node.get_attr("href"))})]"):
 				missing_page_scan_links.append(node)
 
 		if missing_page_scan_links:
@@ -2257,7 +2257,7 @@ def _lint_xhtml_syntax_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 		title = se.formatting.generate_title(dom)
 
 		unexpected_titles: list[LintSubmessage] = []
-		for node in dom.xpath(f"/html/head/title[text()!={se.easy_xml.escape_xpath(title.replace('&amp;', '&'))}]"):
+		for node in dom.xpath(f"/html/head/title[text()!={se.easy_xml.escape_xpath(title.replace("&amp;", "&"))}]"):
 			unexpected_titles.append(LintSubmessage(f"Found: {node.text}\nExpected: {title}", node.sourceline))
 
 		if unexpected_titles:
@@ -3370,7 +3370,7 @@ def _lint_xhtml_xhtml_checks(source_file: SourceFile, dom: EasyXmlTree) -> list[
 	# Make sure their number is actually their correct sequence number in the text.
 	unexpected_ids = se.formatting.find_unexpected_ids(dom)
 	if unexpected_ids:
-		messages.append(LintMessage("x-019", "Unexpected value of [attr]@id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [LintSubmessage(f"Found: {unexpected_id[0].get_attr('id')}\nExpected: {unexpected_id[1]}", unexpected_id[0].sourceline) for unexpected_id in unexpected_ids]))
+		messages.append(LintMessage("x-019", "Unexpected value of [attr]@id[/] attribute.", se.MESSAGE_TYPE_ERROR, filename, [LintSubmessage(f"Found: {unexpected_id[0].get_attr("id")}\nExpected: {unexpected_id[1]}", unexpected_id[0].sourceline) for unexpected_id in unexpected_ids]))
 
 	if filename.name not in ("titlepage.xhtml", "imprint.xhtml", "colophon.xhtml", "uncopyright.xhtml"):
 		nodes = dom.xpath("/html/head/link[@href='../css/se.css']")
@@ -3779,7 +3779,7 @@ def _lint_process_ignore_file(self: 'SeEpub', lint_ignore_dom: EasyXmlTree | Non
 					if code.line:
 						error_message += f" line {code.line}"
 
-					error_message += f": {code.ignore_element.get_attr('code')}"
+					error_message += f": {code.ignore_element.get_attr("code")}"
 
 					# Make a clone of the node to set its text, because we may two unused items in the same file but on a different line.
 					node = deepcopy(code.ignore_element)
@@ -4275,7 +4275,7 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 				# Collect certain `<abbr>` elements to check that required styles are included, but not in the colophon.
 				if not dom.xpath("/html/body/*[contains(@epub:type, 'colophon')]"):
 					# For now, temperature, acronym, and era are the only `<abbr>`s with required styles.
-					abbr_elements_requiring_css += dom.xpath(f"/html/body//abbr[re:test(@epub:type, '\\b({'|'.join(ABBR_REQUIRING_STYLES)})\\b')]")
+					abbr_elements_requiring_css += dom.xpath(f"/html/body//abbr[re:test(@epub:type, '\\b({"|".join(ABBR_REQUIRING_STYLES)})\\b')]")
 
 				# Check and log missing glossary keys.
 				if ebook_flags["has_glossary_search_key_map"] and file_path.name not in IGNORED_FILENAMES:

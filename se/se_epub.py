@@ -146,7 +146,7 @@ class SeEpub:
 			container_tree = self.get_dom(self.epub_root_path / "META-INF" / "container.xml")
 			path = container_tree.xpath("/container/rootfiles/rootfile[@media-type=\"application/oebps-package+xml\"]/@full-path", str)[0]
 		except FileNotFoundError as ex:
-			raise se.InvalidSeEbookException(f"Not a valid ebook, file not found: [path]{self.epub_root_path / 'META-INF' / 'container.xml'}[/].") from ex
+			raise se.InvalidSeEbookException(f"Not a valid ebook, file not found: [path]{self.epub_root_path / "META-INF" / "container.xml"}[/].") from ex
 		except IndexError as ex:
 			raise se.InvalidSeEbookException("Target doesn’t appear to be an epub: no [path]container.xml[/] or no metadata file.") from ex
 
@@ -875,7 +875,7 @@ class SeEpub:
 						raise se.InvalidInputException("Invalid indirection.")
 					reference = ""
 					if node.tag == "itemref" and document_path == package_path and node.xpath("parent::spine"):
-						items = self.metadata_dom.xpath(f"/package/manifest/item[@id={se.easy_xml.escape_xpath(node.get_attr('idref'))}]")
+						items = self.metadata_dom.xpath(f"/package/manifest/item[@id={se.easy_xml.escape_xpath(node.get_attr("idref"))}]")
 						if len(items) == 1:
 							reference = items[0].get_attr("href")
 					elif node.tag in ("iframe", "embed"):
@@ -961,12 +961,12 @@ class SeEpub:
 			raise se.InvalidXhtmlException(f"Section without [attr]@id[/] attribute: [xhtml]{section.to_tag_string()}[/]")
 
 		if section.parent and section.parent.tag.lower() == "body" and not section.get_attr("data-parent"):
-			section.set_attr("epub:type", f"{section.get_attr('epub:type')} {section.parent.get_attr('epub:type')}".strip())
+			section.set_attr("epub:type", f"{section.get_attr("epub:type")} {section.parent.get_attr("epub:type")}".strip())
 
 		# Try to find our parent element in the current output DOM, by ID.
 		# If it's not in the output, then append this element to the elements's closest parent by ID (or `<body>`), then iterate over its children and do the same.
 		existing_section = None
-		existing_section = output_dom.xpath(f"//*[@id='{section.get_attr('data-parent')}']")
+		existing_section = output_dom.xpath(f"//*[@id='{section.get_attr("data-parent")}']")
 
 		if existing_section:
 			existing_section[0].append(section)

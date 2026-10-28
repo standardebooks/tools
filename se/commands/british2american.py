@@ -42,7 +42,7 @@ def british2american(plain_output: bool) -> int:
 						convert = False
 						if args.verbose:
 							console.print("")
-						se.print_error(f"File appears to already use American quote style, ignoring. Use [flag]--force[/] to convert anyway.{f' File: [path][link=file://{filename}]{filename}[/][/]' if not args.verbose else ''}", args.verbose, plain_output=plain_output)
+						se.print_error(f"File appears to already use American quote style, ignoring. Use [flag]--force[/] to convert anyway.{f" File: [path][link=file://{filename}]{filename}[/][/]" if not args.verbose else ""}", args.verbose, plain_output=plain_output)
 
 				if convert:
 					new_xhtml = se.typography.convert_british_to_american(xhtml)

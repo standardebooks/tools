@@ -259,7 +259,7 @@ def get_data_url(image_path: Path) -> str:
 			data_url = f"data:image/svg+xml;charset={encoding},{svg_uri}"
 	else:
 		with open(image_path, "rb") as binary_file:
-			mime_type = f"image/{image_path.suffix.replace('.', '')}"
+			mime_type = f"image/{image_path.suffix.replace(".", "")}"
 
 			if image_path.suffix == ".jpg":
 				mime_type = "image/jpeg"

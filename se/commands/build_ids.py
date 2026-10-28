@@ -91,7 +91,7 @@ def build_ids(plain_output: bool) -> int:
 					file_contents = se.read_utf8(file)
 
 					for node, new_id in replacements:
-						file_contents = regex.sub(fr"( id=\"|#){node.get_attr('id')}\"",  fr'\1{new_id}"', file_contents)
+						file_contents = regex.sub(fr"( id=\"|#){node.get_attr("id")}\"",  fr'\1{new_id}"', file_contents)
 
 					file.seek(0)
 					file.write(file_contents)

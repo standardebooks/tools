@@ -555,9 +555,9 @@ def print_error(message: SeException | str, verbose: bool = False, is_warning: b
 	if plain_output:
 		# Replace color markup with ```.
 		message = prep_output(message, True)
-		console.print(f"{MESSAGE_INDENT if verbose else ''}[{label}] {message}")
+		console.print(f"{MESSAGE_INDENT if verbose else ""}[{label}] {message}")
 	else:
-		console.print(f"{MESSAGE_INDENT if verbose else ''}[white on {bg_color} bold] {label} [/] {message}")
+		console.print(f"{MESSAGE_INDENT if verbose else ""}[white on {bg_color} bold] {label} [/] {message}")
 
 def is_positive_integer(value: str) -> int:
 	"""
