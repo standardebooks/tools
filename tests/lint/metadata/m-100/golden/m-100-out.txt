@@ -1,0 +1,6 @@
+m-093 [Error] content.opf A single contributor has multiple `schema:sameAs` URLs to the same site.
+ Line 60:       <link href="https://en.wikipedia.org/wiki/Georg_Friedrich_Kersting" refines="#artist" rel="schema:sameAs"/>
+ Line 61:       <link href="https://en.wikipedia.org/wiki/Georg_Friedrich_Kersting_Jr." refines="#artist" rel="schema:sameAs"/>
+m-100 [Error] content.opf A single contributor has multiple Wikipedia URLs.
+ Line 60:       <link href="https://en.wikipedia.org/wiki/Georg_Friedrich_Kersting" refines="#artist" rel="schema:sameAs"/>
+ Line 61:       <link href="https://en.wikipedia.org/wiki/Georg_Friedrich_Kersting_Jr." refines="#artist" rel="schema:sameAs"/>

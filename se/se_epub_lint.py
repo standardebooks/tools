@@ -288,6 +288,8 @@ METADATA
 "m-096", "Whitespace around [text]--[/] in LCSH [xml]<dc:subject>[/] element."
 "m-097", "Illegal [attr]@xml:lang[/] attribute on [xml]<meta property=\"alternate-script\">[/] element."
 "m-098", "[xml]<dc:contributor>[/] or [xml]<dc:creator>[/] element missing a MARC role."
+"m-099", "A single contributor has multiple NACOAF URLs."
+"m-100", "A single contributor has multiple Wikipedia URLs."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1240,10 +1242,10 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	if nodes:
 		messages.append(LintMessage("m-098", "[xml]<dc:contributor>[/] or [xml]<dc:creator>[/] element missing a MARC role.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
-	# Check for single contributors that have multiple schema:sameAs URLs pointing at the same site
+	# Check for single contributors that have multiple `schema:sameAs` URLs pointing at the same site.
 	nodes = self.metadata_dom.xpath("/package/metadata/link[@rel='schema:sameAs']")
 	same_as_entries: dict[str, list[tuple[str, 'EasyXmlElement']]] = {}
-	# Group entries by role
+	# Group entries by role.
 	for node in nodes:
 		refines = node.get_attr("refines", False)
 		domain = ''
@@ -1256,8 +1258,17 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 				same_as_entries[refines] = []
 			same_as_entries[refines].append((domain, node))
 
-	# Check to see if each group has duplicate domains
+	# Check to see if each group has duplicate domains.
 	for _, v in same_as_entries.items():
+		# Check for multiple authority records or Wikipedia articles for the same contributor.
+		nacoaf_nodes: list[EasyXmlElement] = [node for domain, node in v if domain == "id.loc.gov" and urlsplit(node.get_attr("href")).path.startswith("/authorities/names/")]
+		if len(nacoaf_nodes) > 1:
+			messages.append(LintMessage("m-099", "A single contributor has multiple NACOAF URLs.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nacoaf_nodes)))
+
+		wikipedia_nodes: list[EasyXmlElement] = [node for domain, node in v if domain == "wikipedia.org" or domain.endswith(".wikipedia.org")]
+		if len(wikipedia_nodes) > 1:
+			messages.append(LintMessage("m-100", "A single contributor has multiple Wikipedia URLs.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(wikipedia_nodes)))
+
 		domains: list[str] = []
 		for entry in v:
 			domains.append(entry[0])
