@@ -290,6 +290,7 @@ METADATA
 "m-098", "[xml]<dc:contributor>[/] or [xml]<dc:creator>[/] element missing a MARC role."
 "m-099", "A single contributor has multiple NACOAF URLs."
 "m-100", "A single contributor has multiple Wikipedia URLs."
+"m-101", "[attr]@refines[/] attribute must start with [val]#[/]."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1150,6 +1151,11 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 				messages.append(LintMessage("m-023", "Unexpected value for [xml]<dc:identifier>[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, [LintSubmessage(f"Found: {identifier.text}\nExpected: {expected_identifier}", identifier.sourceline)]))
 		except Exception:
 			missing_metadata_elements.append("<dc:identifier>")
+
+	# Check that metadata refinements start with a fragment identifier.
+	nodes = self.metadata_dom.xpath("/package/metadata/*[self::meta or self::link][@refines and not(starts-with(@refines, '#'))]")
+	if nodes:
+		messages.append(LintMessage("m-101", "[attr]@refines[/] attribute must start with [val]#[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	# Check if `schema:alternateName` matches their titlepage name.
 	duplicate_names: list[LintSubmessage] = []
