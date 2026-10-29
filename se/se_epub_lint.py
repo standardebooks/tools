@@ -291,6 +291,7 @@ METADATA
 "m-099", "A single contributor has multiple NACOAF URLs."
 "m-100", "A single contributor has multiple Wikipedia URLs."
 "m-101", "[attr]@refines[/] attribute must start with [val]#[/]."
+"m-102", "Illegal family name suffix formatting. [hint]Hint: Family name suffixes should be listed as [text]NAME ABBREVIATED_SUFFIX[/], e.g. [text]John Doe Jr.[/].[/]"
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1077,6 +1078,11 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	nodes = self.metadata_dom.xpath("/package/metadata/dc:contributor[re:test(., 'anonymous', 'i') and text() != 'Anonymous'] | /package/metadata/meta[@property='file-as' and re:test(., 'anonymous', 'i') and text() != 'Anonymous']")
 	if nodes:
 		messages.append(LintMessage("m-073", "Anonymous contributor values must be exactly [text]Anonymous[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+
+	# Check for illegal family name suffix formatting in contributor names.
+	nodes = self.metadata_dom.xpath("/package/metadata/*[self::dc:creator or self::dc:contributor or self::meta[@property='schema:alternateName']][re:test(., ', (Jr\\.|Sr\\.|Junior|Senior|[XIV]+)$| (Junior|Senior)$')]")
+	if nodes:
+		messages.append(LintMessage("m-102", "Illegal family name suffix formatting. [hint]Hint: Family name suffixes should be listed as [text]NAME ABBREVIATED_SUFFIX[/], e.g. [text]John Doe Jr.[/].[/]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	# Check for metadata elements.
 	nodes = self.metadata_dom.xpath("/package/metadata/*[not(name()='link') and not(normalize-space(.)) and not(./*)]")
