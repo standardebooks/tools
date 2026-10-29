@@ -1,0 +1,18 @@
+m-103 [Error] content.opf Illegal honorific in contributor name.
+ Line 53:       <dc:creator id="author">Sir Jane Austen</dc:creator>
+ Line 74:       <dc:contributor id="editor-1">Sir John Doe</dc:contributor>
+ Line 77:       <meta property="schema:alternateName" refines="#editor-1">Sir John Doe Smith</meta>
+ Line 78:       <dc:contributor id="editor-2">Comte John Doe</dc:contributor>
+ Line 81:       <meta property="schema:alternateName" refines="#editor-2">Comte John Doe Smith</meta>
+ Line 82:       <dc:contributor id="editor-3">Graf John Doe</dc:contributor>
+ Line 85:       <meta property="schema:alternateName" refines="#editor-3">Graf John Doe Smith</meta>
+ Line 86:       <dc:contributor id="editor-4">Count John Doe</dc:contributor>
+ Line 89:       <meta property="schema:alternateName" refines="#editor-4">Count John Doe Smith</meta>
+ Line 90:       <dc:contributor id="editor-5">Baron John Doe</dc:contributor>
+ Line 93:       <meta property="schema:alternateName" refines="#editor-5">Baron John Doe Smith</meta>
+ Line 94:       <dc:contributor id="editor-6">Duke John Doe</dc:contributor>
+ Line 97:       <meta property="schema:alternateName" refines="#editor-6">Duke John Doe Smith</meta>
+ Line 98:       <dc:contributor id="editor-7">Baroness Jane Doe</dc:contributor>
+ Line 101:      <meta property="schema:alternateName" refines="#editor-7">Baroness Jane Doe Smith</meta>
+ Line 102:      <dc:contributor id="editor-8">Sir-John Doe</dc:contributor>
+ Line 105:      <meta property="schema:alternateName" refines="#editor-8">Sir-John Doe Smith</meta>
