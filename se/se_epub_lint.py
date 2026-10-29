@@ -293,6 +293,7 @@ METADATA
 "m-101", "[attr]@refines[/] attribute must start with [val]#[/]."
 "m-102", "Illegal family name suffix formatting. [hint]Hint: Family name suffixes should be listed as [text]NAME ABBREVIATED_SUFFIX[/], e.g. [text]John Doe Jr.[/].[/]"
 "m-103", "Illegal honorific in contributor name."
+"m-104", "URL includes unescaped characters. [hint]Hint: Characters not in the unreserved character set must be percent escaped.[/]"
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1317,6 +1318,11 @@ def _get_malformed_urls(dom: EasyXmlTree, filename: Path) -> list[LintMessage]:
 	"""
 
 	messages: list[LintMessage] = []
+
+	# Allow URI delimiters and percent escapes, but reject characters that require escaping in href attributes.
+	nodes = dom.xpath(r"""//*[re:test(@href, "[^a-zA-Z0-9._~:/?#\[\]@!$&'()*+,;=%-]")]""")
+	if nodes:
+		messages.append(LintMessage("m-104", "URL includes unescaped characters. [hint]Hint: Characters not in the unreserved character set must be percent escaped.[/]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	search_regex = r"^https?://[^/]+[^/]$"
 	nodes = dom.xpath(f"/package/metadata/*[(re:test(., '{search_regex}') or re:test(@href, '{search_regex}'))] | /html/body//a[re:test(@href, '{search_regex}')]")
