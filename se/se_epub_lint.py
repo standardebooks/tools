@@ -514,6 +514,7 @@ XHTML
 "x-021", "[xhtml]<figure>[/] element with no [attr]@id[/] attribute."
 "x-022", "Illegal fractions in SVG [attr]@viewBox[/] attribute."
 "x-023", "Invalid CFI."
+"x-024", "Illegal character in [attr]@id[/] attribute."
 
 TYPOS
 "y-001", "Possible typo: Doubled [text]a/the/and/of/or/as/if[/]."
@@ -4195,6 +4196,13 @@ def lint(self: 'SeEpub', skip_lint_ignore: bool, allowed_messages: list[str] | N
 							cfi_errors.append(LintSubmessage(escape(str(ex)), node.sourceline))
 				if cfi_errors:
 					messages.append(LintMessage("x-023", "Invalid CFI.", se.MESSAGE_TYPE_ERROR, file_path, cfi_errors))
+
+				# IDs use the lowercase ASCII letters, digits, and hyphens produced by make_url_safe().
+				# Manifest item IDs use filenames, which include periods.
+				if not file_path.is_relative_to(self.path / "images"):
+					nodes = self.get_dom(file_path).xpath("//*[@id and not(self::item and parent::manifest) and re:test(@id, '[^a-z0-9-]')]")
+					if nodes:
+						messages.append(LintMessage("x-024", "Illegal character in [attr]@id[/] attribute.", se.MESSAGE_TYPE_ERROR, file_path, LintSubmessage.from_node_tags(nodes)))
 
 			# Check for potential MusicXML errors.
 			if file_path.suffix == ".xml" and source_file.findall("http://www.musicxml.org/dtds/"):

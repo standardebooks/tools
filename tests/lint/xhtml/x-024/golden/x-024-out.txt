@@ -1,0 +1,10 @@
+x-024 [Error] chapter-1.xhtml Illegal character in `@id` attribute.
+ Line 12:       <section id="curly’apostrophe">
+ Line 15:       <section id="straight'apostrophe">
+ Line 18:       <section id="accent-é">
+ Line 21:       <section id="bad space">
+ Line 24:       <section id="bad.period">
+ Line 27:       <section id="bad:colon">
+ Line 30:       <section id="bad%percent">
+x-024 [Error] content.opf Illegal character in `@id` attribute.
+ Line 9:        <dc:publisher id="publisher’">
