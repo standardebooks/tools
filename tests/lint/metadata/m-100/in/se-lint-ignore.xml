@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<se-lint-ignore>
+	<file path="content.opf">
+		<ignore code="m-093">
+			<reason>Multiple canonical Wikipedia URLs necessarily share a domain; this fixture tests m-100.</reason>
+		</ignore>
+	</file>
+</se-lint-ignore>

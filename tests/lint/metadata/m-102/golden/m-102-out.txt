@@ -1,14 +1,14 @@
 m-102 [Error] content.opf Illegal family name suffix formatting. Hint: Family name suffixes should be listed as `NAME ABBREVIATED_SUFFIX`, e.g. `John Doe Jr.`.`
  Line 74:       <dc:contributor id="editor-1">John Doe, Jr.</dc:contributor>
- Line 77:       <dc:contributor id="editor-2">John Doe, Sr.</dc:contributor>
- Line 80:       <dc:contributor id="editor-3">John Doe Junior</dc:contributor>
- Line 83:       <dc:contributor id="editor-4">John Doe Senior</dc:contributor>
- Line 86:       <dc:contributor id="editor-5">John Doe, Junior</dc:contributor>
- Line 89:       <dc:contributor id="editor-6">John Doe, Senior</dc:contributor>
- Line 110:      <meta property="schema:alternateName" refines="#editor-1">James John Doe, Jr.</meta>
- Line 111:      <meta property="schema:alternateName" refines="#editor-2">James John Doe, Sr.</meta>
- Line 112:      <meta property="schema:alternateName" refines="#editor-3">James John Doe Junior</meta>
- Line 113:      <meta property="schema:alternateName" refines="#editor-4">James John Doe Senior</meta>
+ Line 77:       <meta property="schema:alternateName" refines="#editor-1">James John Doe, Jr.</meta>
+ Line 78:       <dc:contributor id="editor-2">John Doe, Sr.</dc:contributor>
+ Line 81:       <meta property="schema:alternateName" refines="#editor-2">James John Doe, Sr.</meta>
+ Line 82:       <dc:contributor id="editor-3">John Doe Junior</dc:contributor>
+ Line 85:       <meta property="schema:alternateName" refines="#editor-3">James John Doe Junior</meta>
+ Line 86:       <dc:contributor id="editor-4">John Doe Senior</dc:contributor>
+ Line 89:       <meta property="schema:alternateName" refines="#editor-4">James John Doe Senior</meta>
+ Line 90:       <dc:contributor id="editor-5">John Doe, Junior</dc:contributor>
+ Line 94:       <dc:contributor id="editor-6">John Doe, Senior</dc:contributor>
  Line 118:      <dc:contributor id="editor-13">John Doe, II</dc:contributor>
  Line 121:      <meta property="schema:alternateName" refines="#editor-13">James John Doe, II</meta>
  Line 122:      <dc:contributor id="editor-14">John Doe, III</dc:contributor>

@@ -74,27 +74,35 @@
 		<dc:contributor id="editor-1">John Doe, Jr.</dc:contributor>
 		<meta property="file-as" refines="#editor-1">John Doe, Jr.</meta>
 		<meta property="role" refines="#editor-1" scheme="marc:relators">edt</meta>
+		<meta property="schema:alternateName" refines="#editor-1">James John Doe, Jr.</meta>
 		<dc:contributor id="editor-2">John Doe, Sr.</dc:contributor>
 		<meta property="file-as" refines="#editor-2">John Doe, Sr.</meta>
 		<meta property="role" refines="#editor-2" scheme="marc:relators">edt</meta>
+		<meta property="schema:alternateName" refines="#editor-2">James John Doe, Sr.</meta>
 		<dc:contributor id="editor-3">John Doe Junior</dc:contributor>
 		<meta property="file-as" refines="#editor-3">John Doe Junior</meta>
 		<meta property="role" refines="#editor-3" scheme="marc:relators">edt</meta>
+		<meta property="schema:alternateName" refines="#editor-3">James John Doe Junior</meta>
 		<dc:contributor id="editor-4">John Doe Senior</dc:contributor>
 		<meta property="file-as" refines="#editor-4">John Doe Senior</meta>
 		<meta property="role" refines="#editor-4" scheme="marc:relators">edt</meta>
+		<meta property="schema:alternateName" refines="#editor-4">James John Doe Senior</meta>
 		<dc:contributor id="editor-5">John Doe, Junior</dc:contributor>
 		<meta property="file-as" refines="#editor-5">John Doe, Junior</meta>
 		<meta property="role" refines="#editor-5" scheme="marc:relators">edt</meta>
+		<meta property="schema:alternateName" refines="#editor-5">James John Doe Jr.</meta>
 		<dc:contributor id="editor-6">John Doe, Senior</dc:contributor>
 		<meta property="file-as" refines="#editor-6">John Doe, Senior</meta>
 		<meta property="role" refines="#editor-6" scheme="marc:relators">edt</meta>
+		<meta property="schema:alternateName" refines="#editor-6">James John Doe Sr.</meta>
 		<dc:contributor id="editor-7">John Doe Jr.</dc:contributor>
 		<meta property="file-as" refines="#editor-7">John Doe Jr.</meta>
 		<meta property="role" refines="#editor-7" scheme="marc:relators">edt</meta>
+		<meta property="schema:alternateName" refines="#editor-7">James Junior Doe</meta>
 		<dc:contributor id="editor-8">John Doe Sr.</dc:contributor>
 		<meta property="file-as" refines="#editor-8">John Doe Sr.</meta>
 		<meta property="role" refines="#editor-8" scheme="marc:relators">edt</meta>
+		<meta property="schema:alternateName" refines="#editor-8">James Senior Doe</meta>
 		<dc:contributor id="editor-9">Junior Doe</dc:contributor>
 		<meta property="file-as" refines="#editor-9">Junior Doe</meta>
 		<meta property="role" refines="#editor-9" scheme="marc:relators">edt</meta>
@@ -107,14 +115,6 @@
 		<dc:contributor id="editor-12">John Doe, Jr. Smith</dc:contributor>
 		<meta property="file-as" refines="#editor-12">John Doe, Jr. Smith</meta>
 		<meta property="role" refines="#editor-12" scheme="marc:relators">edt</meta>
-		<meta property="schema:alternateName" refines="#editor-1">James John Doe, Jr.</meta>
-		<meta property="schema:alternateName" refines="#editor-2">James John Doe, Sr.</meta>
-		<meta property="schema:alternateName" refines="#editor-3">James John Doe Junior</meta>
-		<meta property="schema:alternateName" refines="#editor-4">James John Doe Senior</meta>
-		<meta property="schema:alternateName" refines="#editor-5">James John Doe Jr.</meta>
-		<meta property="schema:alternateName" refines="#editor-6">James John Doe Sr.</meta>
-		<meta property="schema:alternateName" refines="#editor-7">James Junior Doe</meta>
-		<meta property="schema:alternateName" refines="#editor-8">James Senior Doe</meta>
 		<dc:contributor id="editor-13">John Doe, II</dc:contributor>
 		<meta property="file-as" refines="#editor-13">John Doe, II</meta>
 		<meta property="role" refines="#editor-13" scheme="marc:relators">edt</meta>

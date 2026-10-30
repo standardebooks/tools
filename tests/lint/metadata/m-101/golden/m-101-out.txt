@@ -1,6 +1,5 @@
 m-101 [Error] content.opf `@refines` attribute must start with `#`.
  Line 11:       <link href="https://standardebooks.org/" refines="publisher" rel="schema:url"/>
- Line 17:       <link href="https://www.theleagueofmoveabletype.com/" refines="" rel="schema:url"/>
  Line 35:       <meta property="authority" refines="subject-1">LCSH</meta>
  Line 36:       <meta property="term" refines="">sh2008114941</meta>
  Line 37:       <meta property="authority" refines="subject#2">LCSH</meta>

@@ -41,7 +41,7 @@
 		<dc:description>
 			DESCRIPTION
 		</dc:description>
-		<dc:language>LANG</dc:language>
+		<dc:language>en-GB</dc:language>
 		<dc:source>TRANSCRIPTION_URL</dc:source>
 		<dc:source>PAGE_SCANS_URL</dc:source>
 		<meta property="schema:wordCount">WORD_COUNT</meta>
@@ -49,7 +49,7 @@
 		<link href="EBOOK_WIKI_URL" rel="schema:sameAs"/>
 		<meta id="vcs-repository" property="schema:workExample">schema:workExample</meta>
 		<meta property="rdf:type" refines="#vcs-repository">http://schema.org/SoftwareSourceCode</meta>
-		<link href="VCS_URL" refines="#vcs-repository" rel="schema:codeRepository"/>
+		<link href="https://github.com/PUBLISHER/author-name_title_translator-name" refines="#vcs-repository" rel="schema:codeRepository"/>
 		<dc:creator id="author">AUTHOR_NAME</dc:creator>
 		<meta property="file-as" refines="#author">AUTHOR_SORT</meta>
 		<meta property="schema:alternateName" refines="#author">AUTHOR_FULL_NAME</meta>
@@ -74,7 +74,7 @@
 		<meta property="role" refines="#transcriber-1" scheme="marc:relators">trc</meta>
 		<dc:contributor id="transcriber-2">TRANSCRIBER_2_NAME</dc:contributor>
 		<meta property="file-as" refines="#transcriber-2">TRANSCRIBER_2_SORT</meta>
-		<meta property="role" refines="#transcriber-1" scheme="marc:relators">trc</meta>
+		<meta property="role" refines="#transcriber-2" scheme="marc:relators">trc</meta>
 		<link href="TRANSCRIBER_2_URL" refines="#transcriber-2" rel="schema:url"/>
 		<meta property="role" refines="#transcriber-2" scheme="marc:relators">trc</meta>
 		<dc:contributor id="producer-1">PRODUCER_NAME</dc:contributor>

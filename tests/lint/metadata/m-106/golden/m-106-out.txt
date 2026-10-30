@@ -1,0 +1,3 @@
+m-106 [Error] content.opf `<meta>` element refines an ID outside its contributor block.
+ Line 58:       <meta property="schema:alternateName" refines="#artist">Georg Kersting</meta>
+ Line 79:       <meta property="role" refines="#author" scheme="marc:relators">mrk</meta>

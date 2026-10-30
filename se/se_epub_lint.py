@@ -295,6 +295,8 @@ METADATA
 "m-103", "Illegal honorific in contributor name."
 "m-104", "URL includes unescaped characters. [hint]Hint: Characters not in the unreserved character set must be percent escaped.[/]"
 "m-105", "Contributor missing [xml]<meta property=\"file-as\">[/] element."
+"m-106", "[xml]<meta>[/] element refines an ID outside its contributor block."
+"m-107", "Contributor has a [val]schema:url[/] or [val]schema:sameAs[/] element in the metadata but isn’t linked in the colophon, or vice versa."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1267,6 +1269,11 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	if nodes:
 		messages.append(LintMessage("m-105", "Contributor missing [xml]<meta property=\"file-as\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
+	# Check for `<meta refines="...">` in the wrong block.
+	nodes = self.metadata_dom.xpath("/package/metadata/meta[@refines][preceding-sibling::*[not(@refines)][1][self::dc:contributor or self::dc:creator]][not(@refines = concat('#', preceding-sibling::*[not(@refines)][1]/@id))]")
+	if nodes:
+		messages.append(LintMessage("m-106", "[xml]<meta>[/] element refines an ID outside its contributor block.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+
 	# Check for single contributors that have multiple `schema:sameAs` URLs pointing at the same site.
 	nodes = self.metadata_dom.xpath("/package/metadata/link[@rel='schema:sameAs']")
 	same_as_entries: dict[str, list[tuple[str, 'EasyXmlElement']]] = {}
@@ -1791,6 +1798,37 @@ def _lint_special_file_checks(self: 'SeEpub', source_file: SourceFile, dom: Easy
 			messages.append(LintMessage("t-071", "Multiple transcriptions listed, but preceding text is [text]a transcription[/].", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	if self.is_se_ebook and special_file == "colophon":
+		# Compare ebook producer identity links in both directions, excluding name authority records.
+		colophon_contributor_urls: dict[str, set[str]] = defaultdict(set)
+		for node in dom.xpath("/html/body//a[@href]"):
+			url = node.get_attr("href")
+			parsed_url = urlsplit(url)
+			if parsed_url.netloc != "id.loc.gov" or not parsed_url.path.startswith("/authorities/names/"):
+				colophon_contributor_urls[" ".join(node.inner_text().split())].add(url)
+
+		mismatched_contributors: list[EasyXmlElement] = []
+		colophon_text = " ".join("".join(dom.xpath("/html/body//text()", str)).split())
+		for node in self.metadata_dom.xpath("/package/metadata/dc:contributor[concat('#', @id) = /package/metadata/meta[@property='role' and text()='bkp']/@refines]"):
+			# Contributors absent from the colophon do not need matching links there.
+			contributor_name = " ".join(node.inner_text().split())
+			if not contributor_name or not regex.search(fr"(?<!\w){regex.escape(contributor_name)}(?!\w)", colophon_text):
+				continue
+
+			refines = se.easy_xml.escape_xpath(f"#{node.get_attr('id')}")
+			metadata_contributor_urls: set[str] = set()
+			# Contributor websites can use schema:url instead of schema:sameAs.
+			for link in self.metadata_dom.xpath(f"/package/metadata/link[@refines={refines} and (@rel='schema:sameAs' or @rel='schema:url')]"):
+				url = link.get_attr("href")
+				parsed_url = urlsplit(url)
+				if parsed_url.netloc != "id.loc.gov" or not parsed_url.path.startswith("/authorities/names/"):
+					metadata_contributor_urls.add(url)
+
+			if metadata_contributor_urls != colophon_contributor_urls[contributor_name]:
+				mismatched_contributors.append(node)
+
+		if mismatched_contributors:
+			messages.append(LintMessage("m-107", "Contributor has a [val]schema:url[/] or [val]schema:sameAs[/] element in the metadata but isn’t linked in the colophon, or vice versa.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(mismatched_contributors)))
+
 		if self.metadata_dom.xpath("/package/metadata/meta[@property='role' and text()='trl']") and "translated from" not in source_file.contents:
 			messages.append(LintMessage("m-025", "Translator found in metadata, but no [text]translated from LANG[/] block in colophon.", se.MESSAGE_TYPE_ERROR, filename))
 

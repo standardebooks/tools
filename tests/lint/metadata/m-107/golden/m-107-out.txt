@@ -1,0 +1,3 @@
+m-107 [Error] content.opf Contributor has a `schema:url` or `schema:sameAs` element in the metadata but isn’t linked in the colophon, or vice versa.
+ Line 67:       <dc:contributor id="producer-1">John Doe</dc:contributor>
+ Line 87:       <dc:contributor id="producer-2">Jane Doe</dc:contributor>
