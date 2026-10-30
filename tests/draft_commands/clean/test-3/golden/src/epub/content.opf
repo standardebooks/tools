@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf">
+	<metadata>
+		<link href="https://example.com/caf%C3%A9/%E4%BD%9C%E5%93%81/a%20b?name=%C3%B8#%C3%B8"/>
+		<link href="https://example.com/a%20b/%c3%b8?x=1&amp;y=2#fragment"/>
+		<link href="../text/a%20b.xhtml#caf%C3%A9"/>
+		<link href="https://example.com/%7B%7D%7C%5C%5E%60%22"/>
+		<link href="https://user:pass@[::1]/AZaz09-._~!$&amp;'()*+,;=/?q=x#y"/>
+		<link href=""/>
+	</metadata>
+	<manifest>
+		<item href="text/caf%C3%A9.xhtml"/>
+	</manifest>
+</package>

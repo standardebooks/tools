@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<title>URL escaping</title>
+		<link href="../css/café.css" rel="stylesheet"/>
+	</head>
+	<body>
+		<p><a href="https://example.com/café/作品/a b?name=ø#ø">Unicode and spaces</a></p>
+		<p><a href="https://example.com/a%20b/%c3%b8?x=1&amp;y=2#fragment">Existing escapes</a></p>
+		<p><a href="../text/a b.xhtml#café">Relative URL</a></p>
+		<p><a href="https://example.com/{}|\^`&quot;">Unsafe punctuation</a></p>
+		<p><a href="https://user:pass@[::1]/AZaz09-._~!$&amp;'()*+,;=/?q=x#y">Allowed characters</a></p>
+		<p><a href="">Empty URL</a></p>
+	</body>
+</html>

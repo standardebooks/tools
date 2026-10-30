@@ -10,6 +10,7 @@ import html.entities
 import math
 import string
 import unicodedata
+from urllib.parse import quote
 from pathlib import Path
 from typing import cast
 
@@ -691,6 +692,14 @@ def _format_xml_str(xml: str, canonicalize: bool=True) -> etree.Element:
 
 	return tree
 
+def _escape_href_attributes(tree: etree.Element) -> None:
+	"""
+	Percent-escape href attributes while preserving URI delimiters and existing escapes.
+	"""
+
+	for node in tree.xpath("//*[@href]"):
+		node.set("href", quote(node.get("href"), safe=":/?#[]@!$&'()*+,;=%"))
+
 def _sort_xml_attributes(tree: etree.Element) -> None:
 	"""
 	Sort attributes in-place using canonical XML attribute order.
@@ -875,6 +884,8 @@ def format_xhtml(xhtml: str) -> str:
 	# Format `<style>` elements.
 	_format_style_elements(tree)
 
+	_escape_href_attributes(tree)
+
 	# Remove white space between non-tags and `<br/>`.
 	xhtml = regex.sub(r"([^>\s])\s+<br/>", r"\1<br/>", _xml_tree_to_string(tree))
 
@@ -902,6 +913,8 @@ def format_opf(xml: str) -> str:
 		tree = _format_xml_str(xml)
 	except Exception as ex:
 		raise se.InvalidXmlException(f"Couldn’t parse OPF file: {ex}")
+
+	_escape_href_attributes(tree)
 
 	# Format the description, then escape it.
 	for node in tree.xpath("/opf:package/opf:metadata/dc:description", namespaces={"dc": "http://purl.org/dc/elements/1.1/", "opf": "http://www.idpf.org/2007/opf"}):
