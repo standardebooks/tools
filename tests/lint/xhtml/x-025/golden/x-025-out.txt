@@ -1,9 +1,9 @@
-m-104 [Error] chapter-1.xhtml URL includes unescaped characters. Hint: Characters not in the unreserved character set must be percent escaped.`
+x-025 [Error] chapter-1.xhtml URL includes unescaped characters. Hint: Characters not in the unreserved character set must be percent escaped.`
  Line 12:       <a href="https://en.wikipedia.org/wiki/Vilhelm_Hammershøi">Example</a>
  Line 13:       <a href="https://example.com/café">Example</a>
  Line 14:       <a href="https://example.com/作品">Example</a>
  Line 15:       <a href="https://example.com/a b">Example</a>
  Line 20:       <a href="https://example.com/path?name=ø">Example</a>
  Line 21:       <a href="https://example.com/path#ø">Example</a>
-m-104 [Error] content.opf URL includes unescaped characters. Hint: Characters not in the unreserved character set must be percent escaped.`
+x-025 [Error] content.opf URL includes unescaped characters. Hint: Characters not in the unreserved character set must be percent escaped.`
  Line 68:       <link href="https://en.wikipedia.org/wiki/Vilhelm_Hammershøi" refines="#producer-1" rel="schema:sameAs"/>

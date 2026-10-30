@@ -293,12 +293,13 @@ METADATA
 "m-101", "[attr]@refines[/] attribute must start with [val]#[/]."
 "m-102", "Illegal family name suffix formatting. [hint]Hint: Family name suffixes should be listed as [text]NAME ABBREVIATED_SUFFIX[/], e.g. [text]John Doe Jr.[/].[/]"
 "m-103", "Illegal honorific in contributor name."
-"m-104", "URL includes unescaped characters. [hint]Hint: Characters not in the unreserved character set must be percent escaped.[/]"
 "m-105", "Contributor missing [xml]<meta property=\"file-as\">[/] element."
 "m-106", "[xml]<meta>[/] element refines an ID outside its contributor block."
 "m-107", "Contributor has a [val]schema:url[/] or [val]schema:sameAs[/] element in the metadata but isn’t linked in the colophon, or vice versa."
 "m-108", "[val]schema:sameAs[/] URL not pointing to [url]https://en.wikipedia.org/[/] or [url]https://id.loc.gov/[/]. [hint]Hint: Other URLs should be [val]schema:url[/].[/hint]"
 "m-109", "Non-canonical GitHub URL. [hint]Hint: URLs must start with [url]https://github.com/[/] and have no trailing slash.[/hint]"
+UNUSEDvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+"m-104", ""
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -516,6 +517,7 @@ XHTML
 "x-022", "Illegal fractions in SVG [attr]@viewBox[/] attribute."
 "x-023", "Invalid CFI."
 "x-024", "Illegal character in [attr]@id[/] attribute."
+"x-025", "URL includes unescaped characters. [hint]Hint: Characters not in the unreserved character set must be percent escaped.[/]"
 
 TYPOS
 "y-001", "Possible typo: Doubled [text]a/the/and/of/or/as/if[/]."
@@ -1343,7 +1345,7 @@ def _get_malformed_urls(dom: EasyXmlTree, filename: Path) -> list[LintMessage]:
 	# Allow URI delimiters and percent escapes, but reject characters that require escaping in href attributes.
 	nodes = dom.xpath(r"""//*[re:test(@href, "[^a-zA-Z0-9._~:/?#\[\]@!$&'()*+,;=%-]")]""")
 	if nodes:
-		messages.append(LintMessage("m-104", "URL includes unescaped characters. [hint]Hint: Characters not in the unreserved character set must be percent escaped.[/]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+		messages.append(LintMessage("x-025", "URL includes unescaped characters. [hint]Hint: Characters not in the unreserved character set must be percent escaped.[/]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	search_regex = r"^https?://[^/]+[^/]$"
 	nodes = dom.xpath(f"/package/metadata/*[(re:test(., '{search_regex}') or re:test(@href, '{search_regex}'))] | /html/body//a[re:test(@href, '{search_regex}')]")
