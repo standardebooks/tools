@@ -294,6 +294,7 @@ METADATA
 "m-102", "Illegal family name suffix formatting. [hint]Hint: Family name suffixes should be listed as [text]NAME ABBREVIATED_SUFFIX[/], e.g. [text]John Doe Jr.[/].[/]"
 "m-103", "Illegal honorific in contributor name."
 "m-104", "URL includes unescaped characters. [hint]Hint: Characters not in the unreserved character set must be percent escaped.[/]"
+"m-105", "Contributor missing [xml]<meta property=\"file-as\">[/] element."
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1260,6 +1261,11 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	nodes = [node for node in self.metadata_dom.xpath("/package/metadata/dc:contributor | /package/metadata/dc:creator") if f"#{node.get_attr("id")}" not in marc_relator_groups]
 	if nodes:
 		messages.append(LintMessage("m-098", "[xml]<dc:contributor>[/] or [xml]<dc:creator>[/] element missing a MARC role.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+
+	# Check that each contributor and creator has a matching file-as refinement.
+	nodes = self.metadata_dom.xpath("/package/metadata/*[self::dc:contributor or self::dc:creator][not(concat('#', @id) = /package/metadata/meta[@property='file-as']/@refines)]")
+	if nodes:
+		messages.append(LintMessage("m-105", "Contributor missing [xml]<meta property=\"file-as\">[/] element.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	# Check for single contributors that have multiple `schema:sameAs` URLs pointing at the same site.
 	nodes = self.metadata_dom.xpath("/package/metadata/link[@rel='schema:sameAs']")
