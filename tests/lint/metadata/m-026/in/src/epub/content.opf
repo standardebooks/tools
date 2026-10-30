@@ -46,7 +46,7 @@
 		<dc:source>https://archive.org/details/bub_gb_RtT0OLKFMHsC</dc:source>
 		<meta property="schema:wordCount">WORD_COUNT</meta>
 		<meta property="schema:educationalLevel">READING_EASE</meta>
-		<link href="https://m.wikipedia.org/wiki/Unknown_Jane_Austen_Novel" rel="schema:sameAs"/>
+		<link href="https://en.wikipedia.org/wiki/Unknown_Jane_Austen_Novel/extra" rel="schema:sameAs"/>
 		<meta id="vcs-repository" property="schema:workExample">schema:workExample</meta>
 		<meta property="rdf:type" refines="#vcs-repository">http://schema.org/SoftwareSourceCode</meta>
 		<link href="https://github.com/standardebooks/jane-austen_unknown-novel" refines="#vcs-repository" rel="schema:codeRepository"/>

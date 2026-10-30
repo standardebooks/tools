@@ -1,2 +1,2 @@
 m-026 [Error] content.opf Non-canonical Wikipedia URL. Expected: `https://en.wikipedia.org/wiki/<ARTICLE-ID>`.
- Line 49:       <link href="https://m.wikipedia.org/wiki/Unknown_Jane_Austen_Novel" rel="schema:sameAs"/>
+ Line 49:       <link href="https://en.wikipedia.org/wiki/Unknown_Jane_Austen_Novel/extra" rel="schema:sameAs"/>

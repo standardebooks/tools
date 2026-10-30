@@ -297,6 +297,7 @@ METADATA
 "m-105", "Contributor missing [xml]<meta property=\"file-as\">[/] element."
 "m-106", "[xml]<meta>[/] element refines an ID outside its contributor block."
 "m-107", "Contributor has a [val]schema:url[/] or [val]schema:sameAs[/] element in the metadata but isn’t linked in the colophon, or vice versa."
+"m-108", "[val]schema:sameAs[/] URL not pointing to [url]https://en.wikipedia.org/[/] or [url]https://id.loc.gov/[/]. [hint]Hint: Other URLs should be [val]schema:url[/].[/hint]"
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1273,6 +1274,11 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	nodes = self.metadata_dom.xpath("/package/metadata/meta[@refines][preceding-sibling::*[not(@refines)][1][self::dc:contributor or self::dc:creator]][not(@refines = concat('#', preceding-sibling::*[not(@refines)][1]/@id))]")
 	if nodes:
 		messages.append(LintMessage("m-106", "[xml]<meta>[/] element refines an ID outside its contributor block.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
+
+	# Only Wikipedia and Library of Congress URLs can use schema:sameAs.
+	nodes = self.metadata_dom.xpath("/package/metadata/link[@rel='schema:sameAs' and not(starts-with(@href, 'https://en.wikipedia.org/') or starts-with(@href, 'https://id.loc.gov/'))]")
+	if nodes:
+		messages.append(LintMessage("m-108", "[val]schema:sameAs[/] URL not pointing to [url]https://en.wikipedia.org/[/] or [url]https://id.loc.gov/[/]. [hint]Hint: Other URLs should be [val]schema:url[/].[/hint]", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 
 	# Check for single contributors that have multiple `schema:sameAs` URLs pointing at the same site.
 	nodes = self.metadata_dom.xpath("/package/metadata/link[@rel='schema:sameAs']")

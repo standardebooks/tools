@@ -4,3 +4,8 @@ m-093 [Error] content.opf A single contributor has multiple `schema:sameAs` URLs
 m-093 [Error] content.opf A single contributor has multiple `schema:sameAs` URLs to the same site.
  Line 70:       <link href="https://example.org/first" refines="#producer-1" rel="schema:sameAs"/>
  Line 71:       <link href="https://example.org/second" refines="#producer-1" rel="schema:sameAs"/>
+m-108 [Error] content.opf `schema:sameAs` URL not pointing to `https://en.wikipedia.org/` or `https://id.loc.gov/`. Hint: Other URLs should be `schema:url`.
+ Line 65:       <link href="https://example.com/first" refines="#transcriber-1" rel="schema:sameAs"/>
+ Line 66:       <link href="https://example.com/second" refines="#transcriber-1" rel="schema:sameAs"/>
+ Line 70:       <link href="https://example.org/first" refines="#producer-1" rel="schema:sameAs"/>
+ Line 71:       <link href="https://example.org/second" refines="#producer-1" rel="schema:sameAs"/>

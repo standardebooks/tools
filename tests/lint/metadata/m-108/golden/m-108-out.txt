@@ -1,0 +1,6 @@
+m-108 [Error] content.opf `schema:sameAs` URL not pointing to `https://en.wikipedia.org/` or `https://id.loc.gov/`. Hint: Other URLs should be `schema:url`.
+ Line 74:       <link href="https://example.com/profile" rel="schema:sameAs"/>
+ Line 75:       <link href="http://example.com/profile" rel="schema:sameAs"/>
+ Line 76:       <link href="https://en.wikipedia.org.example.com/profile" rel="schema:sameAs"/>
+ Line 77:       <link href="https://id.loc.gov.example.com/profile" rel="schema:sameAs"/>
+ Line 78:       <link href="//en.wikipedia.org/wiki/Example" rel="schema:sameAs"/>

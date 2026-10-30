@@ -28,3 +28,11 @@ m-036 [Error] content.opf Variable not replaced with value.
  Line 75:       TRANSCRIBER_2_NAME
  Line 80:       PRODUCER_NAME
  Line 81:       PRODUCER_SORT
+m-108 [Error] content.opf `schema:sameAs` URL not pointing to `https://en.wikipedia.org/` or `https://id.loc.gov/`. Hint: Other URLs should be `schema:url`.
+ Line 49:       <link href="EBOOK_WIKI_URL" rel="schema:sameAs"/>
+ Line 56:       <link href="AUTHOR_WIKI_URL" refines="#author" rel="schema:sameAs"/>
+ Line 57:       <link href="AUTHOR_NACOAF_URI" refines="#author" rel="schema:sameAs"/>
+ Line 61:       <link href="TRANSLATOR_WIKI_URL" refines="#translator" rel="schema:sameAs"/>
+ Line 62:       <link href="TRANSLATOR_NACOAF_URI" refines="#translator" rel="schema:sameAs"/>
+ Line 67:       <link href="COVER_ARTIST_WIKI_URL" refines="#artist" rel="schema:sameAs"/>
+ Line 68:       <link href="COVER_ARTIST_NACOAF_URI" refines="#artist" rel="schema:sameAs"/>
