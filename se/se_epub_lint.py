@@ -1196,7 +1196,7 @@ def _lint_metadata_checks(self: 'SeEpub') -> list[LintMessage]:
 	if invalid_refines:
 		messages.append(LintMessage("m-010", "Invalid [attr]@refines[/] attribute value.", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, invalid_refines))
 
-	nodes = self.metadata_dom.xpath("/package/metadata/meta[re:test(., '^https?://id\\.loc\\.gov/authorities/(names/)?n[^/]+$') and not(re:test(., '^https://id\\.loc\\.gov/authorities/names/[^/\\.]+\\.html$'))] | /package/metadata/link[re:test(@href, '^https?://id\\.loc\\.gov/authorities/(names/)?n[^/]+$') and not(re:test(@href, '^https://id\\.loc\\.gov/authorities/names/[^/\\.]+\\.html$'))]")
+	nodes = self.metadata_dom.xpath("/package/metadata/meta[re:test(., '^https?://id\\.loc\\.gov/authorities/(names/)?n[^/]+/?$') and not(re:test(., '^https://id\\.loc\\.gov/authorities/names/[^/\\.]+\\.html$'))] | /package/metadata/link[re:test(@href, '^https?://id\\.loc\\.gov/authorities/(names/)?n[^/]+/?$') and not(re:test(@href, '^https://id\\.loc\\.gov/authorities/names/[^/\\.]+\\.html$'))]")
 	if nodes:
 		messages.append(LintMessage("m-008", "Non-canonical Library of Congress Name Authority URI. Expected: [url]https://id.loc.gov/authorities/names/<IDENTIFIER>.html[/].", se.MESSAGE_TYPE_ERROR, self.metadata_file_path, LintSubmessage.from_nodes(nodes)))
 

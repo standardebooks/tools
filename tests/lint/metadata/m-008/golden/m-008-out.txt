@@ -1,0 +1,8 @@
+m-008 [Error] content.opf Non-canonical Library of Congress Name Authority URI. Expected: `https://id.loc.gov/authorities/names/<IDENTIFIER>.html`.
+ Line 74:       <link href="http://id.loc.gov/authorities/n80046721/" rel="schema:url"/>
+ Line 75:       <link href="https://id.loc.gov/authorities/n80046721/" rel="schema:url"/>
+ Line 76:       <link href="https://id.loc.gov/authorities/names/n80046721/" rel="schema:url"/>
+ Line 77:       <link href="https://id.loc.gov/authorities/names/n80046721.html/" rel="schema:url"/>
+ Line 78:       <link href="http://id.loc.gov/authorities/n80046721" rel="schema:url"/>
+ Line 79:       <meta property="schema:url">http://id.loc.gov/authorities/n80046721/</meta>
+ Line 80:       <meta property="schema:url">https://id.loc.gov/authorities/names/n80046721/</meta>
