@@ -298,6 +298,7 @@ METADATA
 "m-106", "[xml]<meta>[/] element refines an ID outside its contributor block."
 "m-107", "Contributor has a [val]schema:url[/] or [val]schema:sameAs[/] element in the metadata but isn’t linked in the colophon, or vice versa."
 "m-108", "[val]schema:sameAs[/] URL not pointing to [url]https://en.wikipedia.org/[/] or [url]https://id.loc.gov/[/]. [hint]Hint: Other URLs should be [val]schema:url[/].[/hint]"
+"m-109", "Non-canonical GitHub URL. [hint]Hint: URLs must start with [url]https://github.com/[/] and have no trailing slash.[/hint]"
 
 SEMANTICS & CONTENT
 "s-001", "Illegal numeric entity."
@@ -1348,6 +1349,13 @@ def _get_malformed_urls(dom: EasyXmlTree, filename: Path) -> list[LintMessage]:
 	nodes = dom.xpath(f"/package/metadata/*[(re:test(., '{search_regex}') or re:test(@href, '{search_regex}'))] | /html/body//a[re:test(@href, '{search_regex}')]")
 	if nodes:
 		messages.append(LintMessage("m-003", "Bare URL without trailing slash.", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
+
+	# Require canonical GitHub URLs in metadata and XHTML links.
+	search_regex = r"^([a-zA-Z][a-zA-Z0-9+.-]*:)?//([^/?#]*\.)?github\.com([/:?#]|$)"
+	expected_regex = r"^https://github\.com/.*[^/]$"
+	nodes = dom.xpath(f"/package/metadata/*[((re:test(., '{search_regex}', 'i') and not(re:test(., '{expected_regex}'))) or (re:test(@href, '{search_regex}', 'i') and not(re:test(@href, '{expected_regex}'))))] | /html/body//a[re:test(@href, '{search_regex}', 'i') and not(re:test(@href, '{expected_regex}'))]")
+	if nodes:
+		messages.append(LintMessage("m-109", "Non-canonical GitHub URL. [hint]Hint: URLs must start with [url]https://github.com/[/] and have no trailing slash.[/hint]", se.MESSAGE_TYPE_ERROR, filename, LintSubmessage.from_nodes(nodes)))
 
 	search_regex = r"^https?://(.+\.)?fadedpage\.com/"
 	expected_regex = r"^https://www\.fadedpage\.com/showbook\.php\?pid=[a-zA-Z0-9]+$"
