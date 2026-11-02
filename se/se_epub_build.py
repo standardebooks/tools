@@ -5,6 +5,7 @@ This module contains the build function.
 Strictly speaking, the `build()` function should be a class member of `SeEpub`. But the function is very big and it makes editing easier to put it in a separate file.
 """
 
+import ctypes
 import json
 import os
 import shutil
@@ -22,6 +23,15 @@ from pathlib import Path
 import importlib.resources
 from typing import TYPE_CHECKING, cast
 
+# Load Cairo by its full path on Windows so its DLL dependencies resolve even in terminals with an outdated PATH.
+if sys.platform.startswith("win"):
+	for _cairo_directory in [*os.environ.get("CAIROCFFI_DLL_DIRECTORIES", "").split(os.pathsep), *os.get_exec_path(), str(Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "GTK3-Runtime Win64" / "bin")]:
+		if _cairo_directory and (Path(_cairo_directory) / "libcairo-2.dll").is_file():
+			_cairo_library = ctypes.CDLL(str((Path(_cairo_directory) / "libcairo-2.dll").resolve()))
+			break
+
+# These imports must follow the Windows Cairo initialization above.
+# pylint: disable=wrong-import-position
 import cairosvg
 from cairosvg import svg2png # type: ignore Not going to hand-write the type hint for this crazy huge function right now.
 from PIL import Image
@@ -39,6 +49,7 @@ from se.easy_xml import EasyXmlElement, EasyXmlTree
 from se.se_epub import SeEpub, GitCommit # pylint: disable=cyclic-import
 from se.vendor.calibre_azw3 import convert_epub_to_azw3
 from se.vendor.kobo_touch_extended import kobo
+# pylint: enable=wrong-import-position
 
 if TYPE_CHECKING:
 	from se.browser import Browser
