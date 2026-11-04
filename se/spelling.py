@@ -546,7 +546,7 @@ def modernize_spelling(xhtml: str) -> str:
 	xhtml = regex.sub(r"Barbadoes", r"Barbados", xhtml)				# Barbadoes -> Barbados
 	xhtml = regex.sub(r"\bBehring", r"Bering", xhtml)				# Behring -> Bering (i.e. the Bering Straight)
 	xhtml = regex.sub(r"Bronte\b", r"Brontë", xhtml)				# Bronte -> Brontë
-	xhtml = regex.sub(r"Buda-Pest\b", r"Budapest", xhtml)				# Buda-Pest -> Budapest
+	xhtml = regex.sub(r"Buda-Pesth?\b", r"Budapest", xhtml)				# Buda-Pest -> Budapest
 	xhtml = regex.sub(r"\bBuenos Ayres\b", r"Buenos Aires", xhtml)			# Buenos Ayres -> Buenos Aires
 	xhtml = regex.sub(r"Buonaparte", r"Bonaparte", xhtml)				# Buonaparte -> Bonaparte
 	xhtml = regex.sub(r"Burmah", r"Burma", xhtml)					# Burmah -> Burma
